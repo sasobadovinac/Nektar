@@ -275,6 +275,12 @@ namespace Nektar
         enum ConstFactorType
             {
                 eFactorLambda,
+                eFactorCoeffD00,
+                eFactorCoeffD11,
+                eFactorCoeffD22,
+                eFactorCoeffD01,
+                eFactorCoeffD02,
+                eFactorCoeffD12,
                 eFactorTau,
                 eFactorTime,
                 eFactorSVVCutoffRatio,
@@ -289,6 +295,12 @@ namespace Nektar
 
         const char* const ConstFactorTypeMap[] = {
             "FactorLambda",
+            "FactorCoeffD00",
+            "FactorCoeffD11",
+            "FactorCoeffD22",
+            "FactorCoeffD01",
+            "FactorCoeffD02",
+            "FactorCoeffD12",
             "FactorTau",
             "FactorTime",
             "FactorSVVCutoffRatio",
@@ -301,8 +313,11 @@ namespace Nektar
         };
         typedef std::map<ConstFactorType, NekDouble> ConstFactorMap;
         static ConstFactorMap NullConstFactorMap;
+        
+        // FactorMap
+        typedef ConstFactorMap FactorMap;
+        static FactorMap NullFactorMap;
 
-	
         enum Orientation
         {
             eNoOrientation,

@@ -65,14 +65,13 @@ class PhysDeriv_StdMat : public Operator
         {
         }
 
-       void operator()(const Array<OneD, const NekDouble> &input,
-                       Array<OneD, NekDouble> &output0,
-                       Array<OneD, NekDouble> &output1,
-                       Array<OneD, NekDouble> &output2,
-                       Array<OneD, NekDouble> &wsp,
-                       const StdRegions::ConstFactorMap   &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(factors);
 
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -183,6 +182,13 @@ class PhysDeriv_StdMat : public Operator
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         Array<OneD, DNekMatSharedPtr>   m_derivMat;
@@ -193,8 +199,9 @@ class PhysDeriv_StdMat : public Operator
     private:
         PhysDeriv_StdMat(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors)
         {
             int nqtot = 1;
             LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
@@ -276,14 +283,14 @@ class PhysDeriv_MatrixFree : public Operator, MatrixFreeOneInMultiOut
     {
     }
 
-    void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output0,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD,NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+    void operator()(
+             const Array<OneD, const NekDouble> &input,
+                   Array<OneD,       NekDouble> &output0,
+                   Array<OneD,       NekDouble> &output1,
+                   Array<OneD,       NekDouble> &output2,
+                   Array<OneD,       NekDouble> &wsp) final
     {
-        boost::ignore_unused(wsp,factors);
+        boost::ignore_unused(wsp);
 
         if (m_isPadded)
         {
@@ -338,14 +345,22 @@ class PhysDeriv_MatrixFree : public Operator, MatrixFreeOneInMultiOut
         }
         Vmath::Vcopy(m_nOut, m_output[dir], 1, output, 1);
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
 
 private:
     std::shared_ptr<MatrixFree::PhysDeriv> m_oper;
     
     PhysDeriv_MatrixFree(
-                         vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                         CoalescedGeomDataSharedPtr                pGeomData)
-        : Operator(pCollExp, pGeomData),
+                    vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                    CoalescedGeomDataSharedPtr                pGeomData,
+                    StdRegions::FactorMap                     factors)
+        : Operator(pCollExp, pGeomData, factors),
           MatrixFreeOneInMultiOut(pCollExp[0]->GetCoordim(),
                                   pCollExp[0]->GetStdExp()->GetTotPoints(),
                                   pCollExp[0]->GetStdExp()->GetTotPoints(),
@@ -437,13 +452,11 @@ public:
     }
 
     void operator()( const Array<OneD, const NekDouble> &input,
-                     Array<OneD, NekDouble> &output0,
-                     Array<OneD, NekDouble> &output1,
-                     Array<OneD, NekDouble> &output2,
-                     Array<OneD, NekDouble> &wsp,
-                     const StdRegions::ConstFactorMap   &factors) final
-        {
-            boost::ignore_unused(factors);            
+                            Array<OneD,       NekDouble> &output0,
+                            Array<OneD,       NekDouble> &output1,
+                            Array<OneD,       NekDouble> &output2,
+                            Array<OneD,       NekDouble> &wsp) final
+        {      
 
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -553,6 +566,13 @@ public:
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         Array<TwoD, const NekDouble>    m_derivFac;
@@ -562,8 +582,9 @@ public:
     private:
         PhysDeriv_IterPerExp(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+        : Operator(pCollExp, pGeomData, factors)
         {
             int nqtot = 1;
             LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
@@ -627,14 +648,14 @@ class PhysDeriv_NoCollection : public Operator
         {
         }
 
-        void operator()(const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output0,
-                        Array<OneD, NekDouble> &output1,
-                        Array<OneD, NekDouble> &output2,
-                        Array<OneD, NekDouble> &wsp,
-                        const StdRegions::ConstFactorMap   &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(wsp,factors);
+            boost::ignore_unused(wsp);
 
             const int nPhys   = m_expList[0]->GetTotPoints();
             Array<OneD, NekDouble> tmp0,tmp1,tmp2;
@@ -694,6 +715,13 @@ class PhysDeriv_NoCollection : public Operator
                                              tmp = output + i*nPhys);
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         vector<StdRegions::StdExpansionSharedPtr> m_expList;
@@ -701,8 +729,9 @@ class PhysDeriv_NoCollection : public Operator
     private:
         PhysDeriv_NoCollection(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp,pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors)
         {
             m_expList = pCollExp;
         }
@@ -756,14 +785,13 @@ class PhysDeriv_SumFac_Seg : public Operator
         {
         }
 
-        void operator()(const Array<OneD, const NekDouble> &input,
-                        Array<OneD,       NekDouble> &output0,
-                        Array<OneD,       NekDouble> &output1,
-                        Array<OneD,       NekDouble> &output2,
-                        Array<OneD,       NekDouble> &wsp,
-                        const StdRegions::ConstFactorMap   &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(factors);
 
             const int nqcol   = m_nquad0*m_numElmt;
 
@@ -856,6 +884,13 @@ class PhysDeriv_SumFac_Seg : public Operator
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         int                             m_coordim;
@@ -866,8 +901,9 @@ class PhysDeriv_SumFac_Seg : public Operator
     private:
         PhysDeriv_SumFac_Seg(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0 (m_stdExp->GetNumPoints(0))
         {
             LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
@@ -901,14 +937,13 @@ class PhysDeriv_SumFac_Quad : public Operator
         {
         }
 
-        void operator()(const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output0,
-                        Array<OneD, NekDouble> &output1,
-                        Array<OneD, NekDouble> &output2,
-                        Array<OneD, NekDouble> &wsp,
-                        const StdRegions::ConstFactorMap &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(factors);
 
             const int nqtot   = m_nquad0 * m_nquad1;
             const int nqcol   = nqtot*m_numElmt;
@@ -1028,6 +1063,13 @@ class PhysDeriv_SumFac_Quad : public Operator
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         int                             m_coordim;
@@ -1040,8 +1082,9 @@ class PhysDeriv_SumFac_Quad : public Operator
     private:
         PhysDeriv_SumFac_Quad(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0 (m_stdExp->GetNumPoints(0)),
               m_nquad1 (m_stdExp->GetNumPoints(1))
         {
@@ -1076,14 +1119,13 @@ class PhysDeriv_SumFac_Tri : public Operator
         {
         }
 
-        void operator()(const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output0,
-                        Array<OneD, NekDouble> &output1,
-                        Array<OneD, NekDouble> &output2,
-                        Array<OneD, NekDouble> &wsp,
-                        const StdRegions::ConstFactorMap   &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(factors);
 
             const int nqtot   = m_nquad0 * m_nquad1;
             const int nqcol   = nqtot*m_numElmt;
@@ -1221,6 +1263,13 @@ class PhysDeriv_SumFac_Tri : public Operator
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         int                             m_coordim;
@@ -1235,8 +1284,9 @@ class PhysDeriv_SumFac_Tri : public Operator
     private:
         PhysDeriv_SumFac_Tri(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0 (m_stdExp->GetNumPoints(0)),
               m_nquad1 (m_stdExp->GetNumPoints(1))
         {
@@ -1300,14 +1350,13 @@ class PhysDeriv_SumFac_Hex : public Operator
         {
         }
 
-        void operator()(const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output0,
-                        Array<OneD, NekDouble> &output1,
-                        Array<OneD, NekDouble> &output2,
-                        Array<OneD, NekDouble> &wsp,
-                        const StdRegions::ConstFactorMap   &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(factors);
 
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -1449,6 +1498,13 @@ class PhysDeriv_SumFac_Hex : public Operator
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         Array<TwoD, const NekDouble>    m_derivFac;
@@ -1463,8 +1519,9 @@ class PhysDeriv_SumFac_Hex : public Operator
     private:
         PhysDeriv_SumFac_Hex(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2))
@@ -1504,14 +1561,13 @@ class PhysDeriv_SumFac_Tet : public Operator
         {
         }
 
-        void operator()(const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output0,
-                        Array<OneD, NekDouble> &output1,
-                        Array<OneD, NekDouble> &output2,
-                        Array<OneD, NekDouble> &wsp,
-                        const StdRegions::ConstFactorMap   &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(factors);
 
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -1724,6 +1780,13 @@ class PhysDeriv_SumFac_Tet : public Operator
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         Array<TwoD, const NekDouble>    m_derivFac;
@@ -1742,8 +1805,9 @@ class PhysDeriv_SumFac_Tet : public Operator
     private:
         PhysDeriv_SumFac_Tet(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2))
@@ -1815,14 +1879,13 @@ class PhysDeriv_SumFac_Prism : public Operator
         {
         }
 
-        void operator()(const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output0,
-                        Array<OneD, NekDouble> &output1,
-                        Array<OneD, NekDouble> &output2,
-                        Array<OneD, NekDouble> &wsp,
-                        const StdRegions::ConstFactorMap   &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(factors);
 
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -1991,6 +2054,13 @@ class PhysDeriv_SumFac_Prism : public Operator
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         Array<TwoD, const NekDouble>    m_derivFac;
@@ -2007,8 +2077,9 @@ class PhysDeriv_SumFac_Prism : public Operator
     private:
         PhysDeriv_SumFac_Prism(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2))
@@ -2069,14 +2140,13 @@ class PhysDeriv_SumFac_Pyr : public Operator
         {
         }
 
-         void operator()(const Array<OneD, const NekDouble> &input,
-                         Array<OneD,       NekDouble> &output0,
-                         Array<OneD,       NekDouble> &output1,
-                         Array<OneD,       NekDouble> &output2,
-                         Array<OneD,       NekDouble> &wsp,
-                         const StdRegions::ConstFactorMap   &factors) final
+        void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output0,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
         {
-            boost::ignore_unused(factors);
 
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -2259,6 +2329,13 @@ class PhysDeriv_SumFac_Pyr : public Operator
                 }
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         Array<TwoD, const NekDouble>    m_derivFac;
@@ -2276,8 +2353,9 @@ class PhysDeriv_SumFac_Pyr : public Operator
     private:
         PhysDeriv_SumFac_Pyr(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2))

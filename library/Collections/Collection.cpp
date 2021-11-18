@@ -53,7 +53,16 @@ Collection::Collection(
     m_geomData = MemoryManager<CoalescedGeomData>::AllocateSharedPtr();
 }
 
-void Collection::Initialise(const OperatorType opType)
+void Collection::CheckFactors(const OperatorType opType,
+                              StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+{
+    m_ops[opType]->CheckFactors(factors, coll_phys_offset);
+}
+
+
+void Collection::Initialise(const OperatorType opType, 
+                                  StdRegions::FactorMap factors)
 {
     if(!HasOperator(opType))
     {
@@ -71,7 +80,7 @@ void Collection::Initialise(const OperatorType opType)
                      "Requested unknown operator "+ss.str());
             
             m_ops[opType] = GetOperatorFactory().CreateInstance(
-                                          opKey, m_collExp, m_geomData);
+                                          opKey, m_collExp, m_geomData, factors);
         }
         else
         {
