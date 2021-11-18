@@ -1765,7 +1765,7 @@ namespace Nektar
                     {
                         if(perid[i] > -1)
                         {
-                                perComps[i] = perid[i]; 
+                            perComps[i] = perid[i]; 
                         }
                     }
 
