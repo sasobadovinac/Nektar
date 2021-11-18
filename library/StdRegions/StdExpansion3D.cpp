@@ -307,7 +307,7 @@ namespace Nektar
                       Array<OneD,NekDouble> &outarray,
                 const StdRegions::StdMatrixKey &mkey)
         {
-            if ( mkey.GetNVarCoeff() == 0 &&
+            if ( mkey.GetNVarCoeff() == 0 && !mkey.ConstFactorExists(StdRegions::eFactorCoeffD00) &&
                 !mkey.ConstFactorExists(eFactorSVVCutoffRatio))
             {
                 // This implementation is only valid when there are no
@@ -349,7 +349,7 @@ namespace Nektar
                       Array<OneD,NekDouble> &outarray,
                 const StdRegions::StdMatrixKey &mkey)
         {
-            if(mkey.GetNVarCoeff() == 0)
+            if(mkey.GetNVarCoeff() == 0 && !mkey.ConstFactorExists(StdRegions::eFactorCoeffD00))
             {
                 using std::max;
 

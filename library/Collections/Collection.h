@@ -58,14 +58,18 @@ class Collection
                 std::vector<StdRegions::StdExpansionSharedPtr>  pCollExp,
                 OperatorImpMap                                 &impTypes);
 
-        COLLECTIONS_EXPORT void Initialise(const OperatorType opType);
+        COLLECTIONS_EXPORT void CheckFactors(const OperatorType opType,
+                                StdRegions::FactorMap factors,
+                                int coll_phys_offset = 0);
+
+        COLLECTIONS_EXPORT void Initialise(const OperatorType opType,
+                              StdRegions::FactorMap factors =
+                              StdRegions::NullFactorMap);
 
         inline void ApplyOperator(
                 const OperatorType                           &op,
                 const Array<OneD, const NekDouble>           &inarray,
-                      Array<OneD,       NekDouble>           &output,
-                const StdRegions::ConstFactorMap             &factors =
-                      StdRegions::NullConstFactorMap);
+                      Array<OneD,       NekDouble>           &output);
     
         inline void ApplyOperator(
                 const OperatorType                           &op,
@@ -78,9 +82,7 @@ class Collection
                 const Array<OneD, const NekDouble>           &inarray,
                       Array<OneD,       NekDouble>           &output0,
                       Array<OneD,       NekDouble>           &output1,
-                      Array<OneD,       NekDouble>           &output2, 
-                const StdRegions::ConstFactorMap             &factors =
-                      StdRegions::NullConstFactorMap);
+                      Array<OneD,       NekDouble>           &output2);
 
         inline void ApplyOperator(
                 const OperatorType                           &op,
@@ -112,19 +114,17 @@ class Collection
 typedef std::vector<Collection> CollectionVector;
 typedef std::shared_ptr<CollectionVector> CollectionVectorSharedPtr;
 
-
 /**
  *
  */
 inline void Collection::ApplyOperator(
         const OperatorType                 &op,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD,       NekDouble>       &output,
-        const StdRegions::ConstFactorMap   &factors)
+        Array<OneD,       NekDouble>       &output)
 {
     Array<OneD, NekDouble> wsp(m_ops[op]->GetWspSize());
     (*m_ops[op])(inarray, output, NullNekDouble1DArray,
-                 NullNekDouble1DArray, wsp, factors);
+                 NullNekDouble1DArray, wsp);
 }
 
 
@@ -150,11 +150,10 @@ inline void Collection::ApplyOperator(
         const Array<OneD, const NekDouble> &inarray,
               Array<OneD,       NekDouble> &output0,
               Array<OneD,       NekDouble> &output1,
-              Array<OneD,       NekDouble> &output2,
-        const StdRegions::ConstFactorMap   &factors)
+              Array<OneD,       NekDouble> &output2)
 {
     Array<OneD, NekDouble> wsp(m_ops[op]->GetWspSize());
-    (*m_ops[op])(inarray, output0, output1, output2, wsp, factors);
+    (*m_ops[op])(inarray, output0, output1, output2, wsp);
 }
 
 /**

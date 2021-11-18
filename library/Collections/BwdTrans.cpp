@@ -65,13 +65,12 @@ public:
     }
     
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD,       NekDouble> &output,
+                            Array<OneD,       NekDouble> &output1,
+                            Array<OneD,       NekDouble> &output2,
+                            Array<OneD,       NekDouble> &wsp)
     {
-        boost::ignore_unused(output1, output2, wsp, factors);
+        boost::ignore_unused(output1, output2, wsp);
         Blas::Dgemm('N', 'N', m_mat->GetRows(), m_numElmt,
                     m_mat->GetColumns(), 1.0, m_mat->GetRawPtr(),
                     m_mat->GetRows(), input.get(), m_stdExp->GetNcoeffs(),
@@ -86,14 +85,22 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
 
 protected:
     DNekMatSharedPtr m_mat;
     
 private:
     BwdTrans_StdMat(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                    CoalescedGeomDataSharedPtr                pGeomData)
-        : Operator(pCollExp, pGeomData)
+                    CoalescedGeomDataSharedPtr                pGeomData,
+                    StdRegions::FactorMap                     factors)
+        : Operator(pCollExp, pGeomData, factors)
     {
         StdRegions::StdMatrixKey  key(StdRegions::eBwdTrans,
                                       m_stdExp->DetShapeType(), *m_stdExp);
@@ -153,10 +160,9 @@ public:
                     Array<OneD, NekDouble> &output0,
                     Array<OneD, NekDouble> &output1,
                     Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                    Array<OneD, NekDouble> &wsp) final
     {
-        boost::ignore_unused(output1, output2, wsp, factors);
+        boost::ignore_unused(output1, output2, wsp);
 
         if (m_isPadded)
         {
@@ -181,13 +187,22 @@ public:
         NEKERROR(ErrorUtil::efatal,
                  "BwdTrans_MatrixFree: Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
 
 private:
     std::shared_ptr<MatrixFree::BwdTrans> m_oper;
 
     BwdTrans_MatrixFree(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                        CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData),
+                        CoalescedGeomDataSharedPtr pGeomData,
+                        StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors),
           MatrixFreeOneInOneOut(pCollExp[0]->GetStdExp()->GetNcoeffs(),
                                 pCollExp[0]->GetStdExp()->GetTotPoints(),
                                 pCollExp.size())
@@ -252,13 +267,12 @@ public:
     }
     
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD,       NekDouble> &output,
+                            Array<OneD,       NekDouble> &output1,
+                            Array<OneD,       NekDouble> &output2,
+                            Array<OneD,       NekDouble> &wsp)
     {
-        boost::ignore_unused(output1, output2, wsp, factors);
+        boost::ignore_unused(output1, output2, wsp);
         
         const int nCoeffs = m_stdExp->GetNcoeffs();
         const int nPhys   = m_stdExp->GetTotPoints();
@@ -278,11 +292,20 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
 
 private:
     BwdTrans_IterPerExp(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                        CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData)
+                        CoalescedGeomDataSharedPtr pGeomData,
+                        StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors)
     {
     }
 };
@@ -334,13 +357,12 @@ public:
     }
 
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD,       NekDouble> &output,
+                            Array<OneD,       NekDouble> &output1,
+                            Array<OneD,       NekDouble> &output2,
+                            Array<OneD,       NekDouble> &wsp)
     {
-        boost::ignore_unused(output1, output2, wsp, factors);
+        boost::ignore_unused(output1, output2, wsp);
         
         const int nCoeffs = m_expList[0]->GetNcoeffs();
         const int nPhys   = m_expList[0]->GetTotPoints();
@@ -361,14 +383,22 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
 
 protected:
     vector<StdRegions::StdExpansionSharedPtr> m_expList;
     
 private:
     BwdTrans_NoCollection(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                          CoalescedGeomDataSharedPtr                pGeomData)
-        : Operator(pCollExp, pGeomData)
+                          CoalescedGeomDataSharedPtr                pGeomData,
+                          StdRegions::FactorMap                     factors)
+        : Operator(pCollExp, pGeomData, factors)
     {
         m_expList = pCollExp;
     }
@@ -421,13 +451,12 @@ public:
     }
     
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD,       NekDouble> &output,
+                            Array<OneD,       NekDouble> &output1,
+                            Array<OneD,       NekDouble> &output2,
+                            Array<OneD,       NekDouble> &wsp)
     {
-        boost::ignore_unused(output1, output2, wsp, factors);
+        boost::ignore_unused(output1, output2, wsp);
         if(m_colldir0)
         {
             Vmath::Vcopy(m_numElmt*m_nmodes0,input.get(),1,output.get(),1);
@@ -450,6 +479,14 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
 
 protected:
     const int m_nquad0;
@@ -459,8 +496,9 @@ protected:
 
 private:
     BwdTrans_SumFac_Seg(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                        CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData), m_nquad0(m_stdExp->GetNumPoints(0)),
+                        CoalescedGeomDataSharedPtr pGeomData,
+                        StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors), m_nquad0(m_stdExp->GetNumPoints(0)),
           m_nmodes0(m_stdExp->GetBasisNumModes(0)),
           m_colldir0(m_stdExp->GetBasis(0)->Collocation()),
           m_base0(m_stdExp->GetBasis(0)->GetBdata())
@@ -488,13 +526,12 @@ public:
     }
 
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD, NekDouble> &output,
+                            Array<OneD, NekDouble> &output1,
+                            Array<OneD, NekDouble> &output2,
+                            Array<OneD, NekDouble> &wsp)
     {
-        boost::ignore_unused(output1, output2,factors);
+        boost::ignore_unused(output1, output2);
 
         int i = 0;
         if (m_colldir0 && m_colldir1)
@@ -548,6 +585,14 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
 
 protected:
     const int m_nquad0;
@@ -561,8 +606,9 @@ protected:
 
 private:
     BwdTrans_SumFac_Quad(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                         CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData), m_nquad0(m_stdExp->GetNumPoints(0)),
+                         CoalescedGeomDataSharedPtr pGeomData,
+                         StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors), m_nquad0(m_stdExp->GetNumPoints(0)),
           m_nquad1(m_stdExp->GetNumPoints(1)),
           m_nmodes0(m_stdExp->GetBasisNumModes(0)),
           m_nmodes1(m_stdExp->GetBasisNumModes(1)),
@@ -594,13 +640,12 @@ public:
     }
 
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD,       NekDouble> &output,
+                            Array<OneD,       NekDouble> &output1,
+                            Array<OneD,       NekDouble> &output2,
+                            Array<OneD,       NekDouble> &wsp)
     {
-        boost::ignore_unused(output1, output2, factors);
+        boost::ignore_unused(output1, output2);
         
         ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
         
@@ -640,6 +685,14 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
 
 protected:
     const int m_nquad0;
@@ -652,8 +705,9 @@ protected:
 
 private:
     BwdTrans_SumFac_Tri(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                        CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData), m_nquad0(m_stdExp->GetNumPoints(0)),
+                        CoalescedGeomDataSharedPtr pGeomData,
+                        StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors), m_nquad0(m_stdExp->GetNumPoints(0)),
           m_nquad1(m_stdExp->GetNumPoints(1)),
           m_nmodes0(m_stdExp->GetBasisNumModes(0)),
           m_nmodes1(m_stdExp->GetBasisNumModes(1)),
@@ -689,13 +743,12 @@ public:
     }
 
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD, NekDouble> &output,
+                            Array<OneD, NekDouble> &output1,
+                            Array<OneD, NekDouble> &output2,
+                            Array<OneD, NekDouble> &wsp)
  {
-     boost::ignore_unused(output1, output2,factors);
+     boost::ignore_unused(output1, output2);
      
      if (m_colldir0 && m_colldir1 && m_colldir2)
      {
@@ -736,13 +789,20 @@ public:
      }
  }
 
-void operator()(int dir, const Array<OneD, const NekDouble> &input,
-                Array<OneD, NekDouble> &output,
-                Array<OneD, NekDouble> &wsp) final
-{
-    boost::ignore_unused(dir, input, output, wsp);
-    ASSERTL0(false, "Not valid for this operator.");
-}
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                            Array<OneD, NekDouble> &output,
+                            Array<OneD, NekDouble> &wsp) final
+    {
+        boost::ignore_unused(dir, input, output, wsp);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
 
 protected:
     const int m_nquad0;
@@ -760,8 +820,9 @@ protected:
 
 private:
     BwdTrans_SumFac_Hex(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                        CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData), m_nquad0(pCollExp[0]->GetNumPoints(0)),
+                        CoalescedGeomDataSharedPtr pGeomData,
+                        StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors), m_nquad0(pCollExp[0]->GetNumPoints(0)),
           m_nquad1(pCollExp[0]->GetNumPoints(1)),
           m_nquad2(pCollExp[0]->GetNumPoints(2)),
           m_nmodes0(pCollExp[0]->GetBasisNumModes(0)),
@@ -798,13 +859,12 @@ public:
     }
 
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD, NekDouble> &output,
+                            Array<OneD, NekDouble> &output1,
+                            Array<OneD, NekDouble> &output2,
+                            Array<OneD, NekDouble> &wsp) final
     {
-        boost::ignore_unused(output1, output2, factors);
+        boost::ignore_unused(output1, output2);
         
         ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
         
@@ -907,6 +967,14 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
 
 protected:
     const int m_nquad0;
@@ -922,8 +990,9 @@ protected:
 
 private:
     BwdTrans_SumFac_Tet(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                        CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData), m_nquad0(m_stdExp->GetNumPoints(0)),
+                        CoalescedGeomDataSharedPtr pGeomData,
+                        StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors), m_nquad0(m_stdExp->GetNumPoints(0)),
           m_nquad1(m_stdExp->GetNumPoints(1)),
           m_nquad2(m_stdExp->GetNumPoints(2)),
           m_nmodes0(m_stdExp->GetBasisNumModes(0)),
@@ -967,13 +1036,12 @@ public:
     }
 
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap &factors) final
+                            Array<OneD, NekDouble> &output,
+                            Array<OneD, NekDouble> &output1,
+                            Array<OneD, NekDouble> &output2,
+                            Array<OneD, NekDouble> &wsp) final
     {
-        boost::ignore_unused(output1, output2, factors);
+        boost::ignore_unused(output1, output2);
 
         ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
 
@@ -1046,6 +1114,14 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
 
 protected:
     const int m_nquad0;
@@ -1061,8 +1137,9 @@ protected:
 
 private:
     BwdTrans_SumFac_Prism(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                          CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData), m_nquad0(m_stdExp->GetNumPoints(0)),
+                          CoalescedGeomDataSharedPtr pGeomData,
+                          StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors), m_nquad0(m_stdExp->GetNumPoints(0)),
           m_nquad1(m_stdExp->GetNumPoints(1)),
           m_nquad2(m_stdExp->GetNumPoints(2)),
           m_nmodes0(m_stdExp->GetBasisNumModes(0)),
@@ -1105,13 +1182,12 @@ public:
     }
 
     void operator()(const Array<OneD, const NekDouble> &input,
-                    Array<OneD, NekDouble> &output,
-                    Array<OneD, NekDouble> &output1,
-                    Array<OneD, NekDouble> &output2,
-                    Array<OneD, NekDouble> &wsp,
-                    const StdRegions::ConstFactorMap   &factors) final
+                            Array<OneD, NekDouble> &output,
+                            Array<OneD, NekDouble> &output1,
+                            Array<OneD, NekDouble> &output2,
+                            Array<OneD, NekDouble> &wsp) final
     {
-        boost::ignore_unused(output1, output2, factors);
+        boost::ignore_unused(output1, output2);
 
         ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
 
@@ -1204,6 +1280,14 @@ public:
         boost::ignore_unused(dir, input, output, wsp);
         ASSERTL0(false, "Not valid for this operator.");
     }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
 
 protected:
     const int m_nquad0;
@@ -1219,8 +1303,9 @@ protected:
 
 private:
     BwdTrans_SumFac_Pyr(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                        CoalescedGeomDataSharedPtr pGeomData)
-        : Operator(pCollExp, pGeomData), m_nquad0(m_stdExp->GetNumPoints(0)),
+                        CoalescedGeomDataSharedPtr pGeomData,
+                        StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors), m_nquad0(m_stdExp->GetNumPoints(0)),
           m_nquad1(m_stdExp->GetNumPoints(1)),
           m_nquad2(m_stdExp->GetNumPoints(2)),
           m_nmodes0(m_stdExp->GetBasisNumModes(0)),
