@@ -109,29 +109,26 @@ namespace Nektar
         SetUpExtrapolation();
         SetUpSVV();
 
-        if(m_session->DefinesSolverInfo("GJPStabilisation"))
+        // check to see if it is explicity turned off
+        m_session->MatchSolverInfo("GJPStabilisation", "False",
+                                   m_useGJPStabilisation, true);
+        
+        // if GJPStabilisation set to False bool will be true and
+        // if not false so negate/revese bool 
+        m_useGJPStabilisation = !m_useGJPStabilisation;
+        
+        m_session->MatchSolverInfo("GJPNormalVelocity", "True",
+                                   m_useGJPNormalVel, false);
+        
+        if(m_useGJPNormalVel)
         {
-            // check to see if it is explicity turned off
-            m_session->MatchSolverInfo("GJPStabilisation", "False",
-                                       m_useGJPStabilisation, false);
-
-            // if GJPStabilisation set to False bool will be true and
-            // if not false so negate/revese bool 
-            m_useGJPStabilisation = !m_useGJPStabilisation;
-
-            m_session->MatchSolverInfo("GJPNormalVelocity", "True",
-                                       m_useGJPNormalVel, false);
-
-            if(m_useGJPNormalVel)
-            {
-                ASSERTL0(boost::iequals(m_session->GetSolverInfo
-                                        ("GJPStabilisation"),"Explicit"),
-                         "Can only specify GJPNormalVelocity with"
-                         " GJPStabilisation set to Explicit currently");
-            }
-            
-            m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
+            ASSERTL0(boost::iequals(m_session->GetSolverInfo
+                                    ("GJPStabilisation"),"Explicit"),
+                     "Can only specify GJPNormalVelocity with"
+                     " GJPStabilisation set to Explicit currently");
         }
+        
+        m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
 
         
         m_session->MatchSolverInfo("SmoothAdvection", "True",

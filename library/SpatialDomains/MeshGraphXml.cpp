@@ -3248,12 +3248,23 @@ CompositeOrdering MeshGraphXml::CreateCompositeOrdering()
 
     for (auto &c : m_meshComposites)
     {
-        std::vector<unsigned int> ids;
-        for (auto &elmt : c.second->m_geomVec)
+        bool fillComp = true; 
+        for (auto &d : m_domain[0])
         {
-            ids.push_back(elmt->GetGlobalID());
+            if (c.second == d.second)
+            {
+                fillComp = false;
+            }
         }
-        ret[c.first] = ids;
+        if(fillComp)
+        {
+            std::vector<unsigned int> ids;
+            for (auto &elmt : c.second->m_geomVec)
+            {
+                ids.push_back(elmt->GetGlobalID());
+            }
+            ret[c.first] = ids;
+        }
     }
 
     return ret;

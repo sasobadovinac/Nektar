@@ -1435,14 +1435,39 @@ namespace Nektar
                         {
                             const NormalVector norm     = GetTraceNormal(t);
 
+
+                            LibUtilities::BasisKey fromkey0
+                                = GetTraceBasisKey(t,0);
+                            LibUtilities::BasisKey fromkey1
+                                = GetTraceBasisKey(t,1);
+                            LibUtilities::BasisKey tokey0
+                                = traceExp[t]->GetBasis(0)->GetBasisKey();
+                            LibUtilities::BasisKey tokey1
+                                = traceExp[t]->GetBasis(1)->GetBasisKey();
+                            bool DoInterp = (fromkey0 != tokey0) ||
+                                (fromkey1 != tokey1); 
+
                             // for variable p need add check and
                             // interpolation here.
                             
+                            Array<OneD, NekDouble> n(tracepts[t]);;
                             for(int d = 0; d < ncoords; ++d)
                             {
+                                // if variable p may need to interpolate
+                                if(DoInterp)
+                                {
+                                    LibUtilities::Interp2D(fromkey0,fromkey1,
+                                                           norm[d],
+                                                           tokey0,tokey1,n);
+                                }
+                                else
+                                {
+                                    n = norm[d]; 
+                                }
+
                                 GetTracePhysVals(t,traceExp[t],Deriv[d],val,
                                                  v_GetTraceOrient(t));
-                                Vmath::Vvtvp(tracepts[t],norm[d],1,val,1,
+                                Vmath::Vvtvp(tracepts[t],n,1,val,1,
                                              tmp  = dphidn[t] + i*tracepts[t],1,
                                              tmp1 = dphidn[t] + i*tracepts[t],1);
                             }
