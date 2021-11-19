@@ -245,7 +245,8 @@ namespace Nektar
             // load 1/rho
             T oneOrho = 1.0 / inaverg[0]; // load 1x
             // get vel, vel^2, sum of vel^2
-            std::array<T, 3> u, u2;
+            std::array<T, 3> u  = {{0.0, 0.0, 0.0}};
+            std::array<T, 3> u2 = {{0.0, 0.0, 0.0}};
             T u2sum{};
             for (unsigned short d = 0; d < nDim; ++d)
             {
