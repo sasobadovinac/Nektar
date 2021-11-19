@@ -85,16 +85,13 @@ namespace Nektar
         m_session->MatchSolverInfo(
             "SpectralVanishingViscosity", "True", m_useSpecVanVisc, false);
 
-        if(m_session->DefinesSolverInfo("GJPStabilisation"))
-        {
-            // check to see if it is explicity turned off
-            m_session->MatchSolverInfo("GJPStabilisation", "False",
-                                       m_useGJPStabilisation, false);
+        // check to see if it is explicity turned off
+        m_session->MatchSolverInfo("GJPStabilisation", "False",
+                                   m_useGJPStabilisation, true);
 
-            // if GJPStabilisation set to False bool will be true and
-            // if not false so negate/revese bool 
-            m_useGJPStabilisation = !m_useGJPStabilisation; 
-        }
+        // if GJPStabilisation set to False bool will be true and
+        // if not false so negate/revese bool 
+        m_useGJPStabilisation = !m_useGJPStabilisation; 
 
         m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
 

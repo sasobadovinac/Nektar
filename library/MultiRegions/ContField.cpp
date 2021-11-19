@@ -930,7 +930,7 @@ namespace Nektar
 
             StdRegions::MatrixType mtype = StdRegions::eHelmholtz;
 
-            StdRegions::VarCoeffMap varcoeff;
+            StdRegions::VarCoeffMap varcoeff(pvarcoeff);
             if(factors.count(StdRegions::eFactorGJP))
             {
                 // initialize if required

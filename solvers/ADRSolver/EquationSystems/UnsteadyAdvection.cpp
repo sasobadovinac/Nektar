@@ -66,16 +66,13 @@ namespace Nektar
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
         // Read the advection velocities from session file
 
-        if(m_session->DefinesSolverInfo("GJPStabilisation"))
-        {
-            // check to see if it is explicity turned off
-            m_session->MatchSolverInfo("GJPStabilisation", "False",
-                                       m_useGJPStabilisation, false);
-
-            // if GJPStabilisation set to False bool will be true and
-            // if not false so negate/revese bool 
-            m_useGJPStabilisation = !m_useGJPStabilisation; 
-        }
+        // check to see if it is explicity turned off
+        m_session->MatchSolverInfo("GJPStabilisation", "False",
+                                   m_useGJPStabilisation, true);
+        
+        // if GJPStabilisation set to False bool will be true and
+        // if not false so negate/revese bool 
+        m_useGJPStabilisation = !m_useGJPStabilisation; 
 
         m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
 
