@@ -338,8 +338,6 @@ namespace Nektar
                 RotPeriodicInfoSharedPtr perRotInfo = m_locToGloMapVec[0]->GetPerRotInfo();
                 Array<OneD, int> periodicRotBndMap = m_locToGloMapVec[0]->GetPeriodicRotBndMap();
 
-                //cout << "GlobalLinSysIterativeStaticCondVec::v_DoMatrixMultiply " << endl;
-
                 // Do matrix multiply locally, using direct BLAS calls
                 for(n = cnt = 0; n < nvec; cnt += nGlobal[n], ++n)
                 {                    

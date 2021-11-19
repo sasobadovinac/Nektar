@@ -732,39 +732,6 @@ namespace Nektar
                     m_locToGloMapVec[n] = m_fields[n]->GetLocToGloMap();
                     fields[n] = m_fields[n];
                 }
-                
-                // for(int n  = 0; n < m_nConvectiveFields; ++n)
-                // {
-                //     cout << " n=" << n << " " << m_locToGloMapVec.num_elements() <<endl;
-                //     m_locToGloMapVec[n]->PrintStats(std::cout, m_session->GetVariable(n));
-                //     auto a = m_locToGloMapVec[n]->GetLocalToGlobalMap();
-                //     cout << " GetLocalToGlobalMap ";
-                //     for(auto &it: a) cout << it << ", ";
-                //     cout << endl;
-                //     auto b = m_locToGloMapVec[n]->GetGlobalToUniversalMap();
-                //     cout << " GetGlobalToUniversalMap ";
-                //     for(auto &it: b) cout << it << ", ";
-                //     cout << endl;
-                //     auto c = m_locToGloMapVec[n]->GetGlobalToUniversalMapUnique();
-                //     cout << " GetGlobalToUniversalMapUnique ";
-                //     for(auto &it: c) cout << it << ", ";
-                //     cout << endl;
-                //     auto d = m_locToGloMapVec[n]->GetLocalToGlobalBndMap();
-                //     cout << " GetLocalToGlobalBndMap ";
-                //     for(auto &it: d) cout << it << ", ";
-                //     cout << endl;
-
-                //     cout << " Field[" << n << "] " << m_session->GetVariable(n) << " | ";
-                //     auto e = m_fields[n]->GetPhys();
-                //     for(auto &it: e) cout << it << ", ";
-                //     cout << endl;
-                // }
-                // Array<OneD, NekDouble> x(m_fields[0]->GetNpoints()) ,y(m_fields[0]->GetNpoints());
-                // m_fields[0]->GetCoords(x,y);//Get GetCoords(x,y,z;)
-                // for(int i =0; i<x.num_elements(); i++)
-                // {
-                //     cout << i << " " <<  m_locToGloMapVec[0]->GetLocalToGlobalMap(i) << "\t" << x[i] << " " <<y[i] <<endl;
-                // }
 
                 GlobalLinSysKey key(
                                     StdRegions::eHelmholtz, m_locToGloMapVec[0], factors, varCoeffMap, varFactorsMap);

@@ -116,7 +116,7 @@ namespace Nektar
             int nGlobDofs   = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
             int nLocBndDofs = m_locToGloMapVec[0]->GetNumLocalBndCoeffs();
             int nIntDofs    = nGlobDofs - m_locToGloMapVec[0]->GetNumGlobalBndCoeffs();
-
+            
             Array<OneD, Array<OneD, NekDouble > > F(nvec), V_locbnd(nvec), F_bnd(nvec);
             Array<OneD, NekDouble > tmp;
                         
@@ -136,6 +136,8 @@ namespace Nektar
                 V_locbnd[n] = m_wsp + 2*nvec*nLocBndDofs + n*nLocBndDofs;
                 F[n]        = m_wsp + 3*nvec*nLocBndDofs + n*nGlobDofs;
                 F_bnd[n]    = m_wsp + n*nLocBndDofs;
+
+                m_locToGloMapVec[n]->LocalToLocalBnd(in[n], F_bnd[n]);
             }
             
             DNekScalBlkMatSharedPtr sc = v_PreSolve(0, F_bnd);

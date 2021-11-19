@@ -2215,39 +2215,22 @@ namespace Nektar
                 locExp.GetSession()->GetBndRegionOrdering();
             compId = bndRegOrder.find(PerRegionID)->second[0];
 
-            cout << "comid=" << compId << " PerRegionID=" << PerRegionID << endl;
             // Get hold of periodic maps
             
             PeriodicMap perVerts, perEdges, perFaces; 
             
-            vector<int> VertsOnComp, EdgesOnComp, FacesOnComp;
-            vector<int> localcoeffs;
-            set<pair<int, int> > perVertKeyPairSet, perEdgesKeyPairSet, perFaceKeyPairSet;
+            set<int> VertsOnComp, EdgesOnComp, FacesOnComp;
+            set<int> localcoeffs;
             
             // search over vertices for entries and add to rotation index map; 
             for (auto &perIt : periodicVerts)
             {
                 ASSERTL1(perIt.second.size() == 1,"This routine is only "
                          "set up for singly periodic domains");
-                cout << "PeriodicVerts: " << periodicVerts.size() << " " << perIt.first << " " << perIt.second[0].m_id << " " << perIt.second[0].m_compid << endl;
                 
-                int id1 = perIt.first > perIt.second[0].m_id ? perIt.first : perIt.second[0].m_id;
-                int id2 = perIt.first < perIt.second[0].m_id ? perIt.first : perIt.second[0].m_id;
-                pair<int, int> keyPair = make_pair(id1, id2);
-                // cout << keyPair.first << " " << keyPair.second << endl;
-
-                if(perVertKeyPairSet.count(keyPair)==0)
+                if(perIt.second[0].m_compid != compId) //implies this is in composite
                 {
-                    //perVertKeyPairSet.insert(keyPair);
-                    if(perIt.second[0].m_compid != compId) //implies this is in composite
-                    {
-                        VertsOnComp.push_back(perIt.first);
-                        cout << " this " << endl;
-                    }
-                    if(perIt.first == perIt.second[0].m_id)
-                    {
-                        cout << "This vertex is the rotation pivot, condition should be Dirihlet on it?" << endl;
-                    }
+                    VertsOnComp.insert(perIt.first);
                 }
             }
 
@@ -2255,21 +2238,10 @@ namespace Nektar
             {
                 ASSERTL1(perIt.second.size() == 1,"This routine is only "
                          "set up for singly periodic domains");
-                cout << "periodicEdges: " << periodicEdges.size() << " " << perIt.first << " " << perIt.second[0].m_id << " " << perIt.second[0].m_compid << endl;
                 
-                int id1 = perIt.first > perIt.second[0].m_id ? perIt.first : perIt.second[0].m_id;
-                int id2 = perIt.first < perIt.second[0].m_id ? perIt.first : perIt.second[0].m_id;
-                pair<int, int> keyPair = make_pair(id1, id2);
-                // cout << keyPair.first << " " << keyPair.second << endl;
-
-                if(perEdgesKeyPairSet.count(keyPair)==0)
+                if(perIt.second[0].m_compid != compId) //implies this is in composite
                 {
-                    //perEdgesKeyPairSet.insert(keyPair);
-                    if(perIt.second[0].m_compid != compId) //implies this is in composite
-                    {
-                        EdgesOnComp.push_back(perIt.first);
-                        cout << " this " << endl;
-                    }
+                    EdgesOnComp.insert(perIt.first);
                 }
             }
 
@@ -2277,21 +2249,10 @@ namespace Nektar
             {
                 ASSERTL1(perIt.second.size() == 1,"This routine is only "
                          "set up for singly periodic domains");
-                cout << "periodicFaces: " << periodicFaces.size() << " " << perIt.first << " " << perIt.second[0].m_id << " " << perIt.second[0].m_compid << endl;
                 
-                int id1 = perIt.first > perIt.second[0].m_id ? perIt.first : perIt.second[0].m_id;
-                int id2 = perIt.first < perIt.second[0].m_id ? perIt.first : perIt.second[0].m_id;
-                pair<int, int> keyPair = make_pair(id1, id2);
-                // cout << keyPair.first << " " << keyPair.second << endl;
-
-                if(perFaceKeyPairSet.count(keyPair)==0)
+                if(perIt.second[0].m_compid != compId) //implies this is in composite
                 {
-                    //perFaceKeyPairSet.insert(keyPair);
-                    if(perIt.second[0].m_compid != compId) //implies this is in composite
-                    {
-                        FacesOnComp.push_back(perIt.first);
-                        cout << " this " << endl;
-                    }
+                    FacesOnComp.insert(perIt.first);
                 }
             }
 
@@ -2301,26 +2262,20 @@ namespace Nektar
                 
                 for(int i = 0; i < locExpVector[n]->GetNverts(); ++i)
                 {
-                    //if(VertsOnComp.count(locExpVector[n]->GetGeom()->GetVid(i)) == 1)
-                    if(std::find(VertsOnComp.begin(), VertsOnComp.end(),
-                    locExpVector[n]->GetGeom()->GetVid(i)) != VertsOnComp.end())
+                    if(VertsOnComp.count(locExpVector[n]->GetGeom()->GetVid(i)) == 1)
                     {
                         int locid = cnt + locExpVector[n]->GetVertexMap(i);
                         // add to list if not on Dirichlet boundary
                         if(m_localToGlobalMap[locid] >= m_numGlobalDirBndCoeffs)
                         {
-                            localcoeffs.push_back(locid);
-                            cout << " VertsOnComp n=" << n << " locid=" << locid <<
-                            " locExpVector[n]->GetGeom()->GetVid(i)=" << locExpVector[n]->GetGeom()->GetVid(i) << endl;
+                            localcoeffs.insert(locid);
                         }
                     }
                 }
 
                 for(int i = 0; i < locExpVector[n]->GetNedges(); ++i)
                 {
-                    //if(EdgesOnComp.count(locExpVector[n]->GetGeom()->GetEid(i)) == 1)
-                    if(std::find(EdgesOnComp.begin(), EdgesOnComp.end(),
-                    locExpVector[n]->GetGeom()->GetEid(i)) != EdgesOnComp.end())
+                    if(EdgesOnComp.count(locExpVector[n]->GetGeom()->GetEid(i)) == 1)
                     { 
                         Array<OneD, unsigned int> maparray;
                         Array<OneD, int> signarray;
@@ -2335,9 +2290,7 @@ namespace Nektar
                         {
                             for(int j = 0; j < maparray.num_elements(); ++j)
                             {
-                                localcoeffs.push_back(cnt + maparray[j]);
-                                cout << " EdgesOnComp n=" << n << " locid=" << cnt + maparray[j] <<
-                                " locExpVector[n]->GetGeom()->GetEid(i)=" << locExpVector[n]->GetGeom()->GetEid(i) << endl;
+                                localcoeffs.insert(cnt + maparray[j]);
                             }
                         }
                     }
@@ -2345,9 +2298,7 @@ namespace Nektar
 
                 for(int i = 0; i < locExpVector[n]->GetNfaces(); ++i)
                 {
-                    //if(FacesOnComp.count(locExpVector[n]->GetGeom()->GetFid(i)) == 1)
-                    if(std::find(FacesOnComp.begin(), FacesOnComp.end(),
-                    locExpVector[n]->GetGeom()->GetFid(i)) != FacesOnComp.end())
+                    if(FacesOnComp.count(locExpVector[n]->GetGeom()->GetFid(i)) == 1)
                     {
                         Array<OneD, unsigned int> maparray;
                         Array<OneD, int> signarray;
@@ -2360,8 +2311,7 @@ namespace Nektar
                         // all interior face modes are independent
                         for(int j = 0; j < maparray.num_elements(); ++j)
                         {
-                            localcoeffs.push_back(cnt + maparray[j]);
-                            cout << " FacesOnComp " << n << " " << cnt + maparray[j] << endl;
+                            localcoeffs.insert(cnt + maparray[j]);
                         }
                     }
                 }
@@ -2382,30 +2332,9 @@ namespace Nektar
             
             for (auto &setIt : localcoeffs)
             {
-                cout << "m_periodicRotMap " << cnt << " " << setIt << " " << invLocToLocBndMap[setIt] << endl;
                 m_periodicRotMap[cnt] = setIt;
                 m_periodicRotBndMap[cnt++] = invLocToLocBndMap[setIt];
             }
-
-            cout << "AssemblyMapCG periodicVerts" << endl;
-            for (auto &perIt : periodicVerts)
-            {
-                cout << perIt.first << " " ;//<< perIt.second.size() << " ";
-                cout << perIt.second[0].m_id << " " << perIt.second[0].m_compid << endl;
-            }
-            cout << "AssemblyMapCG periodicEdges" << endl;
-            for (auto &perIt : periodicEdges)
-            {
-                cout << perIt.first << " " ;//<< perIt.second.size() << " ";
-                cout << perIt.second[0].m_id << " " << perIt.second[0].m_compid << endl;
-            }
-            cout << "AssemblyMapCG periodicFaces" << endl;
-            for (auto &perIt : periodicFaces)
-            {
-                cout << perIt.first << " " ;//<< perIt.second.size() << " ";
-                cout << perIt.second[0].m_id << " " << perIt.second[0].m_compid << endl;
-            }
-
 
         }
 
