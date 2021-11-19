@@ -2059,7 +2059,6 @@ namespace Nektar
                     // periodic composites to determine pairs of periodic faces.
                     for (auto &cIt : perComps)
                     {
-                        SpatialDomains::CompositeSharedPtr c[2];
                         const int   id1  = cIt.first;
                         const int   id2  = cIt.second;
                         std::string id1s = boost::lexical_cast<string>(id1);
