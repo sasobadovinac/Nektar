@@ -2169,9 +2169,17 @@ namespace Nektar
                 {
                     for (int i = 0; i < m_collections.size(); ++i)
                     {
-                        m_collections[i].Initialise(Collections::eHelmholtz);
+                        m_collections[i].Initialise(Collections::eHelmholtz, gkey.GetConstFactors());
                     }
                     m_collectionsDoInit[Collections::eHelmholtz] = false; 
+                }
+                else
+                {
+                    for (int i = 0; i < m_collections.size(); ++i)
+                    {
+                        m_collections[i].CheckFactors(Collections::eHelmholtz, gkey.GetConstFactors(),  
+                                                      m_coll_phys_offset[i]);
+                    }
                 }
 
                 Array<OneD, NekDouble> tmp;
@@ -2180,8 +2188,7 @@ namespace Nektar
                     m_collections[i].ApplyOperator
                         (Collections::eHelmholtz,
                          inarray + m_coll_coeff_offset[i],
-                         tmp = outarray + m_coll_coeff_offset[i],
-                         gkey.GetConstFactors());
+                         tmp = outarray + m_coll_coeff_offset[i]);
                 }
             }
             else

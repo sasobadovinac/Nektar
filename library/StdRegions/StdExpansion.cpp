@@ -683,6 +683,12 @@ namespace Nektar
                     {eVarCoeffD01, eVarCoeffD11, eVarCoeffD12},
                     {eVarCoeffD02, eVarCoeffD12, eVarCoeffD22}
             };
+            
+            ConstFactorType constcoefftypes[3][3]
+                = { {eFactorCoeffD00, eFactorCoeffD01, eFactorCoeffD02},
+                    {eFactorCoeffD01, eFactorCoeffD11, eFactorCoeffD12},
+                    {eFactorCoeffD02, eFactorCoeffD12, eFactorCoeffD22}
+            };
 
             v_BwdTrans(inarray,tmp);
             v_PhysDeriv(k2,tmp,dtmp);
@@ -705,6 +711,33 @@ namespace Nektar
                     {
                         Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k2]), 1, dtmp, 1, dtmp, 1);
                         v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
+                    }
+                    else
+                    {
+                        Vmath::Zero(GetNcoeffs(), outarray, 1);
+                    }
+                }
+                
+            }
+            else if (mkey.ConstFactorExists(eFactorCoeffD00)&&
+                (!mkey.ConstFactorExists(eFactorSVVDiffCoeff)))
+            {
+                if (k1 == k2)
+                {
+                    // By default, k1 == k2 has \sigma = 1 (diagonal entries)
+                    if(mkey.ConstFactorExists(constcoefftypes[k1][k1]))
+                    {
+                        Vmath::Smul(nq, mkey.GetConstFactor(constcoefftypes[k1][k1]), dtmp, 1, dtmp, 1);
+                    }
+                    v_IProductWRTDerivBase(k1, dtmp, outarray);
+                }
+                else
+                {
+                    // By default, k1 != k2 has \sigma = 0 (off-diagonal entries)
+                    if(mkey.ConstFactorExists(constcoefftypes[k1][k2]))
+                    {
+                        Vmath::Smul(nq, mkey.GetConstFactor(constcoefftypes[k1][k2]), dtmp, 1, dtmp, 1);
+                        v_IProductWRTDerivBase(k1, dtmp, outarray);
                     }
                     else
                     {
@@ -736,7 +769,7 @@ namespace Nektar
             Array<OneD,NekDouble> store(m_ncoeffs);
             Array<OneD,NekDouble> store2(m_ncoeffs,0.0);
 
-            if(mkey.GetNVarCoeff() == 0||mkey.ConstFactorExists(eFactorSVVDiffCoeff))
+            if((mkey.GetNVarCoeff() == 0 && !mkey.ConstFactorExists(eFactorCoeffD00))||mkey.ConstFactorExists(eFactorSVVDiffCoeff))
             {
                 // just call diagonal matrix form of laplcian operator
                 for(i = 0; i < dim; ++i)
@@ -893,7 +926,7 @@ namespace Nektar
                                  mkey.GetConstFactors(),
                                  mkey.GetVarCoeffs(),
                                  mkey.GetNodalPointsType());
-
+            
             MassMatrixOp(inarray,tmp,mkeymass);
             LaplacianMatrixOp(inarray,outarray,mkeylap);
 

@@ -418,6 +418,7 @@ namespace Nektar
 
             StdRegions::VarCoeffMap varcoeffs;
             varcoeffs[StdRegions::eVarCoeffD00] = variablecoeffs[0];
+            varcoeffs[StdRegions::eVarCoeffD01] = variablecoeffs[1];
             varcoeffs[StdRegions::eVarCoeffD11] = variablecoeffs[3];
             varcoeffs[StdRegions::eVarCoeffD22] = variablecoeffs[5];
             StdRegions::ConstFactorMap factors;

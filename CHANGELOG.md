@@ -34,6 +34,7 @@ v5.1.0
 - Fix compiler warning of maybe-uninitialized elType in InputStar (!1217)
 - Extend vectoisation to include all elements and initialise collections on first call (!1162)
 - Add vectorisation of most element on basix operations (!1158)
+- Add constant coefficients to matrix-free Helmholtz operator (!1284)
 - Limit MPI methods based on core count (!1208)
 - Split out IProduct.cpp and IProductWRTDerivBase.cpp in order to avoid long time compilations (!1228)
 - Refactored time integration code using factory pattern (!1034, !1103)
@@ -54,6 +55,7 @@ v5.1.0
 - Enable very high order (>100) quadrature use (!1262)
 - Add rotation and improve performance of MovingReferenceFrame forcing (!1185)
 - Fix BODYFORCE defined by a file (!1215, !1264)
+- Add multi-level partitioning strategy for HDF5 geometry (!1209)
 - Fix the URL of ccmio library (!1288)
 
 **FieldConvert**:
