@@ -348,17 +348,6 @@ namespace Nektar
                 // put in bwd rotation term here.
                 if(perRotInfo.get())
                 {
-                    // tmp  = m_wsp + nLocal;
-
-                    // cout << "---------------------------------------VCS.cpp RotateBwd "  << m_wsp.num_elements() <<
-                    // " " << periodicRotBndMap.num_elements() << " -------------------------------" << endl;
-                    // for(auto &it : periodicRotBndMap) cout << it << endl;
-                    
-                    // for(auto &it : m_wsp) cout << it << ", ";
-                    // cout << endl;
-                    // for(auto &it : tmp) cout << it << ", ";
-                    // cout << endl;
-
                     if(nvec == 1)
                         perRotInfo->RotateBwd(periodicRotBndMap,m_wsp,
                                           tmp, tmp1);
@@ -370,12 +359,6 @@ namespace Nektar
                         perRotInfo->RotateBwd(periodicRotBndMap,m_wsp,
                                           tmp  = m_wsp + nLocal,
                                           tmp1 = m_wsp+ 2*nLocal);
-
-                    // cout << "-------------------------------------------------------" << endl;
-                    // for(auto &it : m_wsp) cout << it << ", ";
-                    // cout << endl;
-                    // for(auto &it : tmp) cout << it << ", ";
-                    // cout << endl;
                 }
             
                 Array<OneD, NekDouble> tmpout = m_wsp + nLocal*nvec;
@@ -396,18 +379,6 @@ namespace Nektar
                 // put in fwd rotation term here.
                 if(perRotInfo.get())
                 {
-                    // tmp  = m_wsp + nLocal*nvec;
-                    // tmp1 = m_wsp + nLocal*(nvec+1);
-
-                    // cout << "---------------------------------------VCS.cpp RotateFwd "  << tmp.num_elements() <<
-                    // " " << periodicRotBndMap.num_elements() << " -------------------------------" << endl;
-                    // for(auto &it : periodicRotBndMap) cout << it << endl;
-                    
-                    // for(auto &it : tmp) cout << it << ", ";
-                    // cout << endl;
-                    // for(auto &it : tmp1) cout << it << ", ";
-                    // cout << endl;
-
                     if(nvec == 1)
                         perRotInfo->RotateFwd(periodicRotBndMap,tmp = m_wsp + nLocal*nvec,
                                           tmp1, tmp2);
@@ -418,12 +389,6 @@ namespace Nektar
                         perRotInfo->RotateFwd(periodicRotBndMap,tmp = m_wsp + nLocal*nvec,
                                           tmp1 = m_wsp + nLocal*(nvec+1),
                                           tmp2 = m_wsp + nLocal*(nvec+2));
-                    
-                    // cout << " ----------------------------------------------- " << endl;
-                    // for(auto &it : tmp) cout << it << ", ";
-                    // cout << endl;
-                    // for(auto &it : tmp1) cout << it << ", ";
-                    // cout << endl;
 
                 }
 

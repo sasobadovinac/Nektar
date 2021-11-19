@@ -835,6 +835,7 @@ namespace Nektar
 
                 // Construct set containing all periodic edges on this process
                 SpatialDomains::Composite c = it.second->begin()->second;
+
                 vector<unsigned int> tmpOrder;
                 
                 // store the rotation info of this 
@@ -1060,7 +1061,7 @@ namespace Nektar
             
             // For simplicity's sake create a map of edge id -> orientation.
             map<int, StdRegions::Orientation> orientMap;
-            map<int, vector<int> >            vertMap; // edgeId -> verts
+            map<int, vector<int> >            vertMap;
 
             // Rotation maps for the end of this method, see 3D verison
             // These final two maps are required for determining the relative

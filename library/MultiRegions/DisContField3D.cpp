@@ -819,6 +819,7 @@ using namespace boost::assign;
                     }
                 }
 
+
                 SpatialDomains::Composite c = it.second->begin()->second;
                 vector<unsigned int> tmpOrder;
 
@@ -1205,6 +1206,7 @@ using namespace boost::assign;
                 // periodic faces, regardless of whether they are on this
                 // process.
                 map<int,int> compPairs;
+
 
                 ASSERTL0(compOrder.count(id1) > 0,
                          "Unable to find id1 composite "+id1s+" in order map.");
