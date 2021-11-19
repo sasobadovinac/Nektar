@@ -117,10 +117,6 @@ namespace Nektar
             int nLocBndDofs = m_locToGloMapVec[0]->GetNumLocalBndCoeffs();
             int nIntDofs    = nGlobDofs - m_locToGloMapVec[0]->GetNumGlobalBndCoeffs();
 
-            // cout << "GlobalLinSysStaticCondVec::v_SolveVec nGlobDofs " << nGlobDofs <<
-            // " nLocBndDofs " << nLocBndDofs << " nIntDofs " << nIntDofs << endl;
-            // cout << "GlobalLinSysStaticCondVec::v_SolveVec nvec " << nvec << endl;
-            
             Array<OneD, Array<OneD, NekDouble > > F(nvec), V_locbnd(nvec), F_bnd(nvec);
             Array<OneD, NekDouble > tmp;
                         
@@ -134,28 +130,12 @@ namespace Nektar
                 // This value can change if number of Dirichlet BCs
                 // different in each component
                 nDirBndDofs[n]   = m_locToGloMapVec[n]->GetNumGlobalDirBndCoeffs();
-                // cout << "n=" << n << " nGlobBndDofs[n] " << nGlobBndDofs[n] <<
-                //                      " nDirBndDofs[n] " << nDirBndDofs[n] <<endl;
 
                 // These first two arrays need to be untouched until end
                 // First space is used in Multiply_a operation 
                 V_locbnd[n] = m_wsp + 2*nvec*nLocBndDofs + n*nLocBndDofs;
                 F[n]        = m_wsp + 3*nvec*nLocBndDofs + n*nGlobDofs;
                 F_bnd[n]    = m_wsp + n*nLocBndDofs;
-
-                // cout << " in["<<n<<"]: ";
-                // for(auto &it: in[n]) cout << it << ", ";
-                //     cout << endl;
-                // cout << " F_bnd["<<n<<"]: ";
-                // for(int i=0; i<nLocBndDofs; ++i) cout << F_bnd[n][i] << ", ";
-                //     cout << endl;
-                // m_locToGloMapVec[n]->LocalToLocalBnd(in[n], F_bnd[n]);
-                // cout << " in["<<n<<"]: ";
-                // for(auto &it: in[n]) cout << it << ", ";
-                //     cout << endl;
-                // cout << " F_bnd["<<n<<"]: ";
-                // for(int i=0; i<nLocBndDofs; ++i) cout << F_bnd[n][i] << ", ";;
-                //     cout << endl;
             }
             
             DNekScalBlkMatSharedPtr sc = v_PreSolve(0, F_bnd);
@@ -186,10 +166,6 @@ namespace Nektar
                     // include dirichlet boundary forcing
                     DNekScalBlkMat &SchurCompl = *sc;
                     F_Bnd = SchurCompl*V_LocBnd;
-
-                    // cout << " F_bnd["<<n<<"]: ";
-                    // for(int i=0; i<nLocBndDofs; ++i) cout << F_bnd[n][i] << ", ";
-                    // cout << endl;
                 }
 
                 Vmath::Vsub(nLocBndDofs, &F_bnd[n][0],1, &F_Bnd[0], 1,
@@ -201,34 +177,10 @@ namespace Nektar
 
             RotPeriodicInfoSharedPtr perRotInfo = m_locToGloMapVec[0]->GetPerRotInfo();
             Array<OneD, int> periodicRotBndMap = m_locToGloMapVec[0]->GetPeriodicRotBndMap();
-            Array<OneD, int> periodicRotMap = m_locToGloMapVec[0]->GetPeriodicRotMap();
-
-            // cout << "periodicRotMap: ";
-            // for(auto &it: periodicRotMap) cout << it << ", ";
-            // cout << endl << "periodicRotBndMap: ";
-            // for(auto &it: periodicRotBndMap) cout << it << ", ";
-            // cout << endl;
-            // for(auto &it: periodicRotBndMap)
-            // {
-            //     cout << "\t\t\t id=" << it << endl;
-            //     cout << m_locToGloMapVec[0]->GetLocalToGlobalMap(it) << endl;
-            //     // cout << m_locToGloMapVec[0]->GetGlobalToUniversalMap(it) << endl;
-            // }
-            
+           
             // put in fwd rotation term here.
             if(perRotInfo.get())
             {
-                // cout << "---------------------------------------VCS.cpp RotateFwd "  << F_bnd[0].num_elements() <<
-                // " " << periodicRotBndMap.num_elements() << " -------------------------------" << endl;
-                // for(auto &it : periodicRotBndMap) cout << it << endl;
-                
-                // cout << " F_bnd["<<0<<"]: ";
-                // for(int i=0; i<nLocBndDofs; ++i) cout << F_bnd[0][i] << ", ";
-                // cout << endl;
-                // cout << " F_bnd["<<1<<"]: ";
-                // for(int i=0; i<nLocBndDofs; ++i) cout << F_bnd[1][i] << ", ";
-                // cout << endl;
-
                 Array<OneD, NekDouble> tmp;
                 if(nvec == 1)
                     perRotInfo->RotateFwd(periodicRotBndMap,F_bnd[0],tmp, tmp);
@@ -238,23 +190,12 @@ namespace Nektar
                 else
                     perRotInfo->RotateFwd(periodicRotBndMap,F_bnd[0],F_bnd[1],
                                         F_bnd[2]);
-
-                // cout << " F_bnd["<<0<<"]: ";
-                // for(int i=0; i<nLocBndDofs; ++i) cout << F_bnd[0][i] << ", ";
-                // cout << endl;
-                // cout << " F_bnd["<<1<<"]: ";
-                // for(int i=0; i<nLocBndDofs; ++i) cout << F_bnd[1][i] << ", ";
-                // cout << endl;
             }
 
             // calculate globally  condensed forcing
             for(n = 0; n < nvec; ++n)
             {
                 m_locToGloMapVec[n]->AssembleBnd(F_bnd[n], F[n]);
-
-                // cout << " F_bnd["<<n<<"]: ";
-                // for(int i=0; i<nLocBndDofs; ++i) cout << F_bnd[n][i] << ", ";
-                // cout << endl;
             }
 
             // solve boundary system
@@ -276,15 +217,6 @@ namespace Nektar
             // periodic rotate bwd
             if(perRotInfo.get())
             {
-                // cout << "---------------------------------------VCS.cpp RotateBwd "  << outloc[0].num_elements() <<
-                // " " << periodicRotBndMap.num_elements() << " -------------------------------" << endl;
-                // for(auto &it : periodicRotBndMap) cout << it << endl;
-                
-                // for(auto &it : outloc[0]) cout << it << ", ";
-                // cout << endl;
-                // for(auto &it : outloc[1]) cout << it << ", ";
-                // cout << endl;
-
                 Array<OneD, NekDouble> tmp;
                 if(nvec == 1)
                     perRotInfo->RotateBwd(periodicRotBndMap,outloc[0],tmp, tmp);
@@ -294,11 +226,6 @@ namespace Nektar
                 else
                     perRotInfo->RotateBwd(periodicRotBndMap,outloc[0],outloc[1],
                                       outloc[2]);
-
-                // for(auto &it : outloc[0]) cout << it << ", ";
-                // cout << endl;
-                // for(auto &it : outloc[1]) cout << it << ", ";
-                // cout << endl;
             }
             
             Array<OneD, NekDouble> V_int = m_wsp + 3*nvec*nLocBndDofs + nvec*nGlobDofs;
@@ -355,9 +282,7 @@ namespace Nektar
 
             int nLocalBnd  = m_locToGloMapVec[0]->GetNumLocalBndCoeffs();
             int nGlobal = m_locToGloMapVec[0]->GetNumGlobalCoeffs();
-            cout << "GlobalLinSysStaticCondVec::v_Initialise: " << "nLocalBnd=" << nLocalBnd << " nGlobal=" << nGlobal << endl;
             m_wsp = Array<OneD, NekDouble>(nvec*3*nLocalBnd + (nvec+1)*nGlobal, 0.0);
-            cout << "GlobalLinSysStaticCondVec::v_Initialise: " << "m_wsp.size()=" << m_wsp.num_elements() << " or=" << nvec*3*nLocalBnd + (nvec+1)*nGlobal << endl;
             v_AssembleSchurComplement(m_locToGloMapVec[0]);
         }
 

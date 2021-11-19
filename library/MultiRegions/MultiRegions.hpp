@@ -223,7 +223,6 @@ namespace Nektar
 
             void RotateFwd(NekDouble &u, NekDouble &v, NekDouble &w)
             {
-                ASSERTL0(false, "Not to be used");
                 // Set up just
                 switch(m_dir)
                 {
@@ -292,7 +291,6 @@ namespace Nektar
             
             void RotateBwd(NekDouble &u, NekDouble &v, NekDouble &w)
             {
-                ASSERTL0(false, "Not to be used");
                 // Set up just
                 switch(m_dir)
                 {
