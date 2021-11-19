@@ -734,10 +734,13 @@ namespace Nektar
             // Unique collection of pairs of periodic composites (i.e. if
             // composites 1 and 2 are periodic then this map will contain either
             // the pair (1,2) or (2,1) but not both).
-            map<int,int>                     perComps;
-            map<int,vector<int> >            allVerts;
-            set<int>                         locVerts;
-            map<int,StdRegions::Orientation> allEdges;
+            map<int,RotPeriodicInfo>                        rotComp;  // In 2D rotation might happen too
+            map<int,int>                                    perComps;
+            map<int,vector<int> >                           allVerts;
+            map<int,SpatialDomains::PointGeomVector>        allCoord;  // In 2D rotation might happen too
+            set<int>                                        locVerts;
+            map<int,StdRegions::Orientation>                allEdges;
+            set<int>                                        locEdges;  // In 2D rotation might happen too
             
             int region1ID, region2ID, i, j, k, cnt;
             SpatialDomains::BoundaryConditionShPtr locBCond;
@@ -749,6 +752,12 @@ namespace Nektar
                 {
                     int id = (*m_exp)[i]->GetGeom()->GetVid(j);
                     locVerts.insert(id);
+                }
+                // In 2D rotation might happen too
+                for(j = 0; j < (*m_exp)[i]->GetNedges(); ++j)
+                {
+                    int id = (*m_exp)[i]->GetGeom()->GetEid(j);
+                    locEdges.insert(id);
                 }
             }
 
@@ -788,11 +797,50 @@ namespace Nektar
                          "Boundary region "+boost::lexical_cast<string>(
                              region1ID)+" should only contain 1 composite.");
 
+                // In 2D rotation might happen too
+                // check to see if boundary is rotationally aligned
+                if(boost::iequals(locBCond->GetUserDefined(),"NoUserDefined") == false)
+                {
+                    vector<string> tmpstr;
+
+                    boost::split(tmpstr,locBCond->GetUserDefined(), boost::is_any_of(":"));
+
+                    if(boost::iequals(tmpstr[0],"Rotated"))
+                    {
+                        ASSERTL1(tmpstr.size() > 2,
+                                 "Expected Rotated user defined string to "
+                                 "contain direction and rotation anlge "
+                                 "and optionally a tolerance, "
+                                 "i.e. Rotated:dir:PI/2:1e-6");
+
+                        RotPeriodicInfo RotInfo;
+                        RotInfo.m_dir = (tmpstr[1] == "x")? 0:
+                            (tmpstr[1] == "y")? 1:2;
+
+                        LibUtilities::AnalyticExpressionEvaluator strEval;
+                        int ExprId = strEval.DefineFunction(" ", tmpstr[2]);
+                        RotInfo.m_angle = strEval.Evaluate(ExprId);
+
+                        if(tmpstr.size() == 4)
+                        {
+                            RotInfo.m_tol = boost::lexical_cast<NekDouble>(tmpstr[3]);
+                        }
+                        else
+                        {
+                            RotInfo.m_tol = 1e-8;
+                        }
+                        rotComp[cId1] = RotInfo;
+                    }
+                }
+
                 // Construct set containing all periodic edges on this process
                 SpatialDomains::Composite c = it.second->begin()->second;
-
                 vector<unsigned int> tmpOrder;
                 
+                // store the rotation info of this 
+                // From the composite, we now construct the allCoord map
+                // so that it can be transferred across
+                // processors. Based on the 3D version
                 for (i = 0; i < c->size(); ++i)
                 {
                     SpatialDomains::SegGeomSharedPtr segGeom =
@@ -821,9 +869,15 @@ namespace Nektar
                     }
                     
                     vector<int> vertList(2);
+                    SpatialDomains::PointGeomVector coordVec;
+
                     vertList[0] = segGeom->GetVid(0);
                     vertList[1] = segGeom->GetVid(1);
+                    coordVec.push_back(segGeom->GetVertex(0));
+                    coordVec.push_back(segGeom->GetVertex(1));
+
                     allVerts[(*c)[i]->GetGlobalID()] = vertList;
+                    allCoord[(*c)[i]->GetGlobalID()] = coordVec;
                 }
 
                 if (vComm->GetSize() == 1)
@@ -866,6 +920,52 @@ namespace Nektar
             Array<OneD, int> edgeoffset(n,0);
             Array<OneD, int> vertoffset(n,0);
 
+            // In 2D rotation might happen too
+            Array<OneD, int> rotcounts(n,0);
+            Array<OneD, int> rotoffset(n,0);
+
+            rotcounts[p] = rotComp.size();
+            vComm->AllReduce(rotcounts, LibUtilities::ReduceSum);
+            int totrot  = Vmath::Vsum(n,rotcounts,1);
+
+            if(totrot)
+            {
+                for (i = 1; i < n ; ++i)
+                {
+                    rotoffset[i] = rotoffset[i-1] + rotcounts[i-1];
+                }
+
+                Array<OneD, int> compid(totrot,0);
+                Array<OneD, int> rotdir(totrot,0);
+                Array<OneD, NekDouble> rotangle(totrot,0.0);
+                Array<OneD, NekDouble> rottol(totrot,0.0);
+
+                // fill in rotational informaiton
+                auto rIt = rotComp.begin();
+                
+                for(i = 0; rIt != rotComp.end(); ++rIt)
+                {
+                    compid  [rotoffset[p] + i  ] = rIt->first; 
+                    rotdir  [rotoffset[p] + i  ] = rIt->second.m_dir; 
+                    rotangle[rotoffset[p] + i  ] = rIt->second.m_angle; 
+                    rottol  [rotoffset[p] + i++] = rIt->second.m_tol; 
+                }
+
+                vComm->AllReduce(compid, LibUtilities::ReduceSum);
+                vComm->AllReduce(rotdir, LibUtilities::ReduceSum);
+                vComm->AllReduce(rotangle, LibUtilities::ReduceSum);
+                vComm->AllReduce(rottol, LibUtilities::ReduceSum);
+
+                // Fill in full rotational composite list
+                for(i =0; i < totrot; ++i)
+                {
+                    RotPeriodicInfo rinfo(rotdir[i],rotangle[i], rottol[i]);
+
+                    rotComp[compid[i]] = rinfo; 
+                }
+            }
+
+            // First exchange the number of edges on each process.
             edgecounts[p] = allEdges.size();
             vComm->AllReduce(edgecounts, LibUtilities::ReduceSum);
 
@@ -927,7 +1027,13 @@ namespace Nektar
                 vertoffset[i] = vertoffset[i-1] + procVerts[i-1];
             }
 
+            // At this point we exchange all vertex IDs, edge IDs and vertex
+            // coordinates for each face. The coordinates are necessary because
+            // we need to calculate relative face orientations between periodic
+            // faces to determined edge and vertex connectivity.
             Array<OneD, int> vertIds(nTotVerts, 0);
+            Array<OneD, NekDouble> vertX  (nTotVerts, 0.0);
+            Array<OneD, NekDouble> vertY  (nTotVerts, 0.0);
             for (i = 0, sIt = allEdges.begin(); sIt != allEdges.end(); ++sIt)
             {
                 for (j = 0; j < allVerts[sIt->first].size(); ++j)
@@ -935,12 +1041,35 @@ namespace Nektar
                     vertIds[vertoffset[p] + i++] = allVerts[sIt->first][j];
                 }
             }
+            auto lIt = locEdges.begin();
+            for (cnt = 0, lIt = locEdges.begin();
+                    lIt != locEdges.end(); ++lIt)
+            {
+                for (j = 0; j < allVerts[*lIt].size(); ++j)
+                {
+                    int vertId = allVerts[*lIt][j];
+                    vertIds[vertoffset[p] + cnt  ] = vertId;
+                    vertX  [vertoffset[p] + cnt  ] = (*allCoord[*lIt][j])(0);
+                    vertY  [vertoffset[p] + cnt++] = (*allCoord[*lIt][j])(1);
+                }
+            }
 
             vComm->AllReduce(vertIds, LibUtilities::ReduceSum);
+            vComm->AllReduce(vertX,   LibUtilities::ReduceSum);
+            vComm->AllReduce(vertY,   LibUtilities::ReduceSum);
             
             // For simplicity's sake create a map of edge id -> orientation.
             map<int, StdRegions::Orientation> orientMap;
-            map<int, vector<int> >            vertMap;
+            map<int, vector<int> >            vertMap; // edgeId -> verts
+
+            // Rotation maps for the end of this method, see 3D verison
+            // These final two maps are required for determining the relative
+            // orientation of periodic edges. vCoMap associates vertex IDs with
+            // their coordinates, and eIdMap maps an edge ID to the two vertices
+            // which construct it.
+            map<int, SpatialDomains::PointGeomSharedPtr>    vCoMap;
+            // This is the same as vertMap, an edge can only have 2 verts
+            //map<int, pair<int, int> >                       eIdMap;
 
             for (cnt = i = 0; i < totEdges; ++i)
             {
@@ -949,10 +1078,15 @@ namespace Nektar
                 orientMap[edgeIds[i]] = (StdRegions::Orientation)edgeOrient[i];
 
                 vector<int> verts(edgeVerts[i]);
+                SpatialDomains::PointGeomVector coord(verts.size());
 
-                for (j = 0; j < edgeVerts[i]; ++j)
+                for (j = 0; j < edgeVerts[i]; ++j, ++cnt)
                 {
-                    verts[j] = vertIds[cnt++];
+                    verts[j] = vertIds[cnt];
+                    coord[j]  = MemoryManager<SpatialDomains::PointGeom>
+                        ::AllocateSharedPtr(
+                            2, verts[j], vertX[cnt], vertY[cnt], 0.0);
+                    vCoMap[vertIds[cnt]] = coord[j];
                 }
                 vertMap[edgeIds[i]] = verts;
             }
@@ -961,6 +1095,10 @@ namespace Nektar
             // parallel from original ordering in session file. This includes
             // composites which are not necessarily on this process.
             map<int,int> allCompPairs;
+
+            // Collect composite ides of each periodic edge for use if
+            // rotation is required
+            map<int,int> eIdToCompId;
 
             // Store temporary map of periodic vertices which will hold all
             // periodic vertices on the entire mesh so that doubly periodic
@@ -1020,6 +1158,10 @@ namespace Nektar
                         ASSERTL0(compPairs[eId2] == eId1, "Pairing incorrect");
                     }
                     compPairs[eId1] = eId2;
+
+                    // store  a map of face ids to composite ids
+                    eIdToCompId[eId1] = id1;
+                    eIdToCompId[eId2] = id2;
                 }
 
                 // Construct set of all edges that we have locally on this
@@ -1071,7 +1213,7 @@ namespace Nektar
                         
                         // !!! Note other shoudl be fIDtoCompID (see 3D case)
                         PeriodicEntity ent(ids  [other],
-                                           other, o,
+                                           eIdToCompId[ids[other]], o,
                                            local[other]);
                         m_periodicEdges[ids[i]].push_back(ent);
                     }
@@ -1111,7 +1253,7 @@ namespace Nektar
                             // already.  !!! Note seocnd argument
                             // should be fIDtoCompID (see 3D case)
                             PeriodicEntity ent2(mIt.second.first, 
-                                                mIt.second.second,
+                                                eIdToCompId[ids[other]],
                                                StdRegions::eNoOrientation,
                                                 mIt.second.second);
                             auto perIt = periodicVerts.find(mIt.first);
@@ -1178,6 +1320,31 @@ namespace Nektar
                 allCompPairs[first[cnt]] = second[cnt];
             }
 
+            // make global list of faces to composite ids if rotComp is non-zero
+            if(rotComp.size())
+            {
+                Vmath::Zero(totPairSizes,first,1);
+                Vmath::Zero(totPairSizes,second,1);
+            
+                cnt = pairOffsets[p];
+                
+                for (auto &pIt : eIdToCompId)
+                {
+                    first [cnt  ] = pIt.first;
+                    second[cnt++] = pIt.second;
+                }
+                
+                vComm->AllReduce(first,  LibUtilities::ReduceSum);
+                vComm->AllReduce(second, LibUtilities::ReduceSum);
+                
+                eIdToCompId.clear();
+                
+                for(cnt = 0; cnt < totPairSizes; ++cnt)
+                {
+                    eIdToCompId[first[cnt]] = second[cnt];
+                }
+            }
+
             // Search for periodic vertices and edges which are not in
             // a periodic composite but lie in this process. First, loop
             // over all information we have from other processors.
@@ -1209,7 +1376,7 @@ namespace Nektar
                         // !!! Note seocnd argument should be
                         // !!! fIDtoCompID (see 3D case)
                         PeriodicEntity ent(perVertexId,
-                                           perVertexId,
+                                           eIdToCompId[perEdgeId],
                                            StdRegions::eNoOrientation,
                                            locVerts.count(perVertexId) > 0);
 
@@ -1261,6 +1428,88 @@ namespace Nektar
                 if (locVerts.count(perIt.first) > 0)
                 {
                     m_periodicVerts.insert(perIt);
+                }
+            }
+
+            // In 2D rotation might happen too
+            // In the tranlational periodic case orientation is reversed,
+            // assuming that edges rotate in the CCW direction the "left"
+            // is directed down and the "right" goes up.
+            // In case of the rotational periodicity the same logic as in 3D
+            // should be used
+            // Loop over periodic edges to determine relative edge orientations.
+            for (auto &perIt : m_periodicEdges)
+            {
+                bool rotbnd = false;
+                int dir;
+                NekDouble angle;
+                NekDouble tol = 1e-8;
+
+                // check to see if perioid boundary is rotated
+                if(rotComp.count(perIt.second[0].m_compid))
+                {
+                    rotbnd = true;
+                    dir   = rotComp[perIt.second[0].m_compid].m_dir;
+                    angle = rotComp[perIt.second[0].m_compid].m_angle;
+                    tol   = rotComp[perIt.second[0].m_compid].m_tol;
+                }
+                else
+                    continue;
+
+                // Find edge coordinates
+                auto eIt = vertMap.find(perIt.first);
+                SpatialDomains::PointGeom v[2] = {
+                    *vCoMap[eIt->second[0]],
+                    *vCoMap[eIt->second[1]]
+                };
+
+                // Loop over each edge, and construct a vector that takes us
+                // from one vertex to another. Use this to figure out which
+                // vertex maps to which.
+                for (i = 0; i < perIt.second.size(); ++i)
+                {
+                    eIt = vertMap.find(perIt.second[i].m_id);
+
+                    SpatialDomains::PointGeom w[2] = {
+                        *vCoMap[eIt->second[0]],
+                        *vCoMap[eIt->second[1]]
+                    };
+
+                    int vMap[2] = {-1,-1};
+                    if(rotbnd)
+                    {
+                        
+                        SpatialDomains::PointGeom r;
+
+                        r.rotate(v[0],dir,angle);
+                        
+                        if(r.dist(w[0])< tol)
+                        {
+                            vMap[0] = 0;
+                        }
+                        else
+                        {
+                            r.rotate(v[1],dir,angle);
+                            if(r.dist(w[0]) < tol)
+                            {
+                                vMap[0] = 1;
+                            }
+                            else
+                            {
+                                ASSERTL0(false,"Unable to align rotationally periodic edge vertex");
+                            }
+                        }
+                    }
+                    // else {}
+                    // translation is the defoult and should be realized if
+                    // no rotation present
+                    
+                    // If 0 -> 0 then edges are aligned already; otherwise
+                    // reverse the orientation.
+                    if (vMap[0] != 0)
+                    {
+                        perIt.second[i].m_orient = StdRegions::eBackwards;
+                    }
                 }
             }
         }

@@ -179,27 +179,27 @@ namespace Nektar
 
             RotPeriodicInfoSharedPtr perRotInfo = m_locToGloMapVec[0]->GetPerRotInfo();
             Array<OneD, int> periodicRotBndMap = m_locToGloMapVec[0]->GetPeriodicRotBndMap();
-            for(auto &it: periodicRotBndMap)
-            {
-                cout << "\t\t\t id=" << it << endl;
-                cout << m_locToGloMapVec[0]->GetLocalToGlobalMap(it) << endl;
-                // cout << m_locToGloMapVec[0]->GetGlobalToUniversalMap(it) << endl;
-                // cout << m_locToGloMapVec[0]->GetGlobalToUniversalMapUnique(it) << endl;
-                // cout << m_locToGloMapVec[0]->GetLocalToGlobalBndMap(it) << endl;
-                // cout << m_locToGloMapVec[0]->GetBndCondCoeffsToGlobalCoeffsMap(it) << endl;
-            }
+            // for(auto &it: periodicRotBndMap)
+            // {
+            //     cout << "\t\t\t id=" << it << endl;
+            //     cout << m_locToGloMapVec[0]->GetLocalToGlobalMap(it) << endl;
+            //     // cout << m_locToGloMapVec[0]->GetGlobalToUniversalMap(it) << endl;
+            //     // cout << m_locToGloMapVec[0]->GetGlobalToUniversalMapUnique(it) << endl;
+            //     // cout << m_locToGloMapVec[0]->GetLocalToGlobalBndMap(it) << endl;
+            //     // cout << m_locToGloMapVec[0]->GetBndCondCoeffsToGlobalCoeffsMap(it) << endl;
+            // }
             
             // put in fwd rotation term here.
             if(perRotInfo.get())
             {
-                cout << "---------------------------------------VCS.cpp RotateFwd "  << F_bnd[0].num_elements() <<
-                " " << periodicRotBndMap.num_elements() << " -------------------------------" << endl;
-                for(auto &it : periodicRotBndMap) cout << it << endl;
+                // cout << "---------------------------------------VCS.cpp RotateFwd "  << F_bnd[0].num_elements() <<
+                // " " << periodicRotBndMap.num_elements() << " -------------------------------" << endl;
+                // for(auto &it : periodicRotBndMap) cout << it << endl;
                 
-                for(auto &it : F_bnd[0]) cout << it << ", ";
-                cout << endl;
-                for(auto &it : F_bnd[1]) cout << it << ", ";
-                cout << endl;
+                // for(auto &it : F_bnd[0]) cout << it << ", ";
+                // cout << endl;
+                // for(auto &it : F_bnd[1]) cout << it << ", ";
+                // cout << endl;
 
                 Array<OneD, NekDouble> tmp;
                 if(nvec == 1)

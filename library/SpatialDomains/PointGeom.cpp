@@ -200,7 +200,12 @@ namespace Nektar
                 break;
             case 2:
                 {
-                    ASSERTL0(false,"Set up z axis rotation");
+                    NekDouble xrot = cos(angle)*a.x() - sin(angle)*a.y();
+                    NekDouble yrot = sin(angle)*a.x() + cos(angle)*a.y();
+                    
+                    (*this)(0) = xrot;
+                    (*this)(1) = yrot;
+                    (*this)(2) = a.z();
                 }
                 break;
             }
