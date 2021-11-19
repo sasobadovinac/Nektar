@@ -1,5 +1,13 @@
 Changelog
 =========
+v5.2.0
+------
+
+**IncNavierStokesSolver**
+- Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
+
+**ADRSolver:**
+- Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
 
 v5.1.0
 ------
