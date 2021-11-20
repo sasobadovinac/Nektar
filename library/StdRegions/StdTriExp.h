@@ -137,10 +137,6 @@ namespace Nektar
                 const int dir,
                 const Array<OneD, const NekDouble>& inarray,
                       Array<OneD,       NekDouble>& outarray);
-            STD_REGIONS_EXPORT virtual void v_IProductWRTStdDerivBase(
-                const int dir,
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD,       NekDouble>& outarray);
             STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_MatOp(
                 const int dir,
                 const Array<OneD, const NekDouble>& inarray,

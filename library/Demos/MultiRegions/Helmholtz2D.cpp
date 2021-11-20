@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
         fce = Array<OneD,NekDouble>(nq);
         LibUtilities::EquationSharedPtr ffunc = vSession->GetFunction("Forcing",0);
         ffunc->Evaluate(xc0, xc1, xc2, fce);
+
         //----------------------------------------------
 
         //----------------------------------------------

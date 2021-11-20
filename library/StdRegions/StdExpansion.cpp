@@ -1155,15 +1155,6 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal, "This method has not been defined");
         }
 
-        void  StdExpansion::v_IProductWRTStdDerivBase
-        (const int dir,
-         const Array<OneD, const NekDouble>& inarray,
-         Array<OneD, NekDouble> &outarray)
-        {
-            boost::ignore_unused(dir, inarray, outarray);
-            NEKERROR(ErrorUtil::efatal, "This method has not been defined");
-        }
-
         /**
          *
          */

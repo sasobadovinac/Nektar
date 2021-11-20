@@ -113,11 +113,6 @@ namespace Nektar
                           Array<OneD, NekDouble> &outarray,
                           int coll_check) override;
 
-            LOCAL_REGIONS_EXPORT virtual void v_IProductWRTStdDerivBase(
-                    const int dir,
-                    const Array<OneD, const NekDouble>& inarray,
-                    Array<OneD, NekDouble> & outarray) override;
-
             LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDerivBase(
                     const int dir,
                     const Array<OneD, const NekDouble>& inarray,

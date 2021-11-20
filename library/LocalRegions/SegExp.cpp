@@ -562,21 +562,6 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
 
 
-        // This is a rather specialised call that is currently used in
-        // the GJP stabilisation. It takes the inner product with
-        // respect to the standard derivative basis because any
-        // geometric factors have been absorbed into the inarray
-        // already
-        void SegExp::v_IProductWRTStdDerivBase(const int dir,
-                                               const Array<OneD, const NekDouble>& inarray,
-                                               Array<OneD, NekDouble> & outarray)
-        {
-            boost::ignore_unused(dir);
-            ASSERTL1(dir == 0 ,"input dir is out of range");
-
-            v_IProductWRTBase(m_base[0]->GetDbdata(),inarray,outarray,1);
-        }
-
         void SegExp::v_IProductWRTDerivBase(
                 const int dir,
                 const Array<OneD, const NekDouble>& inarray,

@@ -478,13 +478,6 @@ namespace Nektar
             StdSegExp::IProductWRTDerivBase_SumFac(dir,inarray,outarray);
         }
 
-        void StdSegExp::v_IProductWRTStdDerivBase(const int dir,
-                            const Array<OneD, const NekDouble>& inarray,
-                            Array<OneD, NekDouble> & outarray)
-        {
-            StdSegExp::IProductWRTDerivBase_SumFac(dir,inarray,outarray);
-        }
-
         void StdSegExp::v_IProductWRTDerivBase_SumFac(
                 const int dir,
                 const Array<OneD, const NekDouble>& inarray,

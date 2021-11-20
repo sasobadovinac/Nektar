@@ -280,20 +280,6 @@ namespace Nektar
             return x->second;
         }
 
-        const NormalVector &Expansion::GetTraceNormal(const int id)
-        {
-            std::map<int, NormalVector>::const_iterator x;
-            x = m_traceNormals.find(id);
-            
-            // if edge normal not defined compute it
-            if(x == m_traceNormals.end())
-            {
-                v_ComputeTraceNormal(id);
-                x = m_traceNormals.find(id);
-            }
-            return x->second;
-        }
-
         DNekScalMatSharedPtr Expansion::v_GetLocMatrix(const LocalRegions::MatrixKey &mkey)
         {
             boost::ignore_unused(mkey);
@@ -938,14 +924,6 @@ namespace Nektar
                      "Method does not exist for this shape or library" );
         }
         
-
-        void Expansion::v_GenTraceExp(const int traceid,
-                                      ExpansionSharedPtr &exp)
-        {
-            boost::ignore_unused(traceid,exp);
-            NEKERROR(ErrorUtil::efatal,
-                     "Method does not exist for this shape or library" );
-        }
 
         void Expansion::v_ComputeTraceNormal(const int id)
         {

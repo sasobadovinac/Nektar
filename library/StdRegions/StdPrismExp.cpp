@@ -548,14 +548,6 @@ namespace Nektar
             v_IProductWRTDerivBase_SumFac(dir,inarray,outarray);
         }
 
-        void StdPrismExp::v_IProductWRTStdDerivBase(
-            const int                           dir,
-            const Array<OneD, const NekDouble>& inarray,
-                  Array<OneD,       NekDouble>& outarray)
-        {
-            v_IProductWRTDerivBase_SumFac(dir,inarray,outarray);
-        }
-        
         void StdPrismExp::v_IProductWRTDerivBase_MatOp(
             const int                           dir,
             const Array<OneD, const NekDouble>& inarray,
