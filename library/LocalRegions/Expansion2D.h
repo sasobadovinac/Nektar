@@ -125,7 +125,6 @@ namespace Nektar
             virtual void v_GenTraceExp(const int traceid,
                                        ExpansionSharedPtr &exp);
         protected:
-            // std::vector<Expansion1DWeakPtr>    m_edgeExp; no longer required? 
             std::vector<bool>                  m_requireNeg;
 
             LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMF(
