@@ -38,6 +38,8 @@
 #include <SpatialDomains/Geometry3D.h>
 #include <LocalRegions/Expansion3D.h>
 #include <LocalRegions/Expansion2D.h>
+#include <LocalRegions/TriExp.h>
+#include <LocalRegions/QuadExp.h>
 #include <LocalRegions/MatrixKey.h>
 #include <LibUtilities/Foundations/Interp.h>
 
@@ -437,6 +439,276 @@ namespace Nektar
                 SetFaceToGeomOrientation(i, f_tmp = inout + cnt);
                 cnt += GetTraceNcoeffs(i);
             }
+        }
+
+        DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
+        {
+            DNekScalMatSharedPtr returnval;
+            LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
+
+            ASSERTL2(m_metricinfo->GetGtype() != SpatialDomains::eNoGeomType,"Geometric information is not set up");
+
+            switch(mkey.GetMatrixType())
+            {
+            case StdRegions::eMass:
+                {
+                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
+                            mkey.GetNVarCoeff())
+                    {
+                        NekDouble one = 1.0;
+                        DNekMatSharedPtr mat = GenMatrix(mkey);
+                        returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
+                    }
+                    else
+                    {
+                        NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
+                        DNekMatSharedPtr mat = GetStdMatrix(mkey);
+                        returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(jac,mat);
+                    }
+                }
+                break;
+            case StdRegions::eInvMass:
+                {
+                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+                    {
+                        NekDouble one = 1.0;
+                        StdRegions::StdMatrixKey masskey(StdRegions::eMass,DetShapeType(),
+                                                         *this);
+                        DNekMatSharedPtr mat = GenMatrix(masskey);
+                        mat->Invert();
+                        returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
+                    }
+                    else
+                    {
+                        NekDouble fac = 1.0/(m_metricinfo->GetJac(ptsKeys))[0];
+                        DNekMatSharedPtr mat = GetStdMatrix(mkey);
+                        returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(fac,mat);
+                    }
+                }
+                break;
+            case StdRegions::eWeakDeriv0:
+            case StdRegions::eWeakDeriv1:
+            case StdRegions::eWeakDeriv2:
+                {
+                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
+                            mkey.GetNVarCoeff())
+                    {
+                        NekDouble one = 1.0;
+                        DNekMatSharedPtr mat = GenMatrix(mkey);
+
+                        returnval = MemoryManager<DNekScalMat>
+                                                ::AllocateSharedPtr(one,mat);
+                    }
+                    else
+                    {
+                        NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
+                        Array<TwoD, const NekDouble> df
+                                    = m_metricinfo->GetDerivFactors(ptsKeys);
+                        int dir = 0;
+
+                        switch(mkey.GetMatrixType())
+                        {
+                            case StdRegions::eWeakDeriv0:
+                                dir = 0;
+                                break;
+                            case StdRegions::eWeakDeriv1:
+                                dir = 1;
+                                break;
+                            case StdRegions::eWeakDeriv2:
+                                dir = 2;
+                                break;
+                            default:
+                                break;
+                        }
+
+                        MatrixKey deriv0key(StdRegions::eWeakDeriv0,
+                                            mkey.GetShapeType(), *this);
+                        MatrixKey deriv1key(StdRegions::eWeakDeriv1,
+                                            mkey.GetShapeType(), *this);
+                        MatrixKey deriv2key(StdRegions::eWeakDeriv2,
+                                            mkey.GetShapeType(), *this);
+
+                        DNekMat &deriv0 = *GetStdMatrix(deriv0key);
+                        DNekMat &deriv1 = *GetStdMatrix(deriv1key);
+                        DNekMat &deriv2 = *GetStdMatrix(deriv2key);
+
+                        int rows = deriv0.GetRows();
+                        int cols = deriv1.GetColumns();
+
+                        DNekMatSharedPtr WeakDeriv = MemoryManager<DNekMat>
+                                                ::AllocateSharedPtr(rows,cols);
+                        (*WeakDeriv) = df[3*dir][0]*deriv0
+                                     + df[3*dir+1][0]*deriv1
+                                     + df[3*dir+2][0]*deriv2;
+
+                        returnval = MemoryManager<DNekScalMat>
+                                            ::AllocateSharedPtr(jac,WeakDeriv);
+                    }
+                }
+                break;
+            case StdRegions::eLaplacian:
+                {
+                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
+                       (mkey.GetNVarCoeff() > 0)||
+                       (mkey.ConstFactorExists(StdRegions::eFactorSVVCutoffRatio)))
+                    {
+                        NekDouble one = 1.0;
+                        DNekMatSharedPtr mat = GenMatrix(mkey);
+
+                        returnval = MemoryManager<DNekScalMat>
+                                                ::AllocateSharedPtr(one,mat);
+                    }
+                    else
+                    {
+                        MatrixKey lap00key(StdRegions::eLaplacian00,
+                                           mkey.GetShapeType(), *this);
+                        MatrixKey lap01key(StdRegions::eLaplacian01,
+                                           mkey.GetShapeType(), *this);
+                        MatrixKey lap02key(StdRegions::eLaplacian02,
+                                           mkey.GetShapeType(), *this);
+                        MatrixKey lap11key(StdRegions::eLaplacian11,
+                                           mkey.GetShapeType(), *this);
+                        MatrixKey lap12key(StdRegions::eLaplacian12,
+                                           mkey.GetShapeType(), *this);
+                        MatrixKey lap22key(StdRegions::eLaplacian22,
+                                           mkey.GetShapeType(), *this);
+
+                        DNekMat &lap00 = *GetStdMatrix(lap00key);
+                        DNekMat &lap01 = *GetStdMatrix(lap01key);
+                        DNekMat &lap02 = *GetStdMatrix(lap02key);
+                        DNekMat &lap11 = *GetStdMatrix(lap11key);
+                        DNekMat &lap12 = *GetStdMatrix(lap12key);
+                        DNekMat &lap22 = *GetStdMatrix(lap22key);
+
+                        NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
+                        Array<TwoD, const NekDouble> gmat
+                                            = m_metricinfo->GetGmat(ptsKeys);
+
+                        int rows = lap00.GetRows();
+                        int cols = lap00.GetColumns();
+
+                        DNekMatSharedPtr lap = MemoryManager<DNekMat>
+                                                ::AllocateSharedPtr(rows,cols);
+
+                        (*lap)  = gmat[0][0]*lap00
+                                + gmat[4][0]*lap11
+                                + gmat[8][0]*lap22
+                                + gmat[3][0]*(lap01 + Transpose(lap01))
+                                + gmat[6][0]*(lap02 + Transpose(lap02))
+                                + gmat[7][0]*(lap12 + Transpose(lap12));
+
+                        returnval = MemoryManager<DNekScalMat>
+                                                ::AllocateSharedPtr(jac,lap);
+                    }
+                }
+                break;
+            case StdRegions::eHelmholtz:
+                {
+                    NekDouble factor = mkey.GetConstFactor(StdRegions::eFactorLambda);
+                    MatrixKey masskey(StdRegions::eMass, mkey.GetShapeType(), *this);
+                    DNekScalMat &MassMat = *GetLocMatrix(masskey);
+                    MatrixKey lapkey(StdRegions::eLaplacian, mkey.GetShapeType(),
+                                     *this, mkey.GetConstFactors(), mkey.GetVarCoeffs());
+                    DNekScalMat &LapMat = *GetLocMatrix(lapkey);
+
+                    int rows = LapMat.GetRows();
+                    int cols = LapMat.GetColumns();
+
+                    DNekMatSharedPtr helm = MemoryManager<DNekMat>::AllocateSharedPtr(rows, cols);
+
+                    NekDouble one = 1.0;
+                    (*helm) = LapMat + factor*MassMat;
+
+                    returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one, helm);
+                }
+                break;
+            case StdRegions::eIProductWRTBase:
+                {
+                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+                    {
+                        NekDouble one = 1.0;
+                        DNekMatSharedPtr mat = GenMatrix(mkey);
+                        returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
+                    }
+                    else
+                    {
+                        NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
+                        DNekMatSharedPtr mat = GetStdMatrix(mkey);
+                        returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(jac,mat);
+                    }
+                }
+                break;
+            case StdRegions::eInvHybridDGHelmholtz:
+                {
+                    NekDouble one = 1.0;
+
+                    MatrixKey hkey(StdRegions::eHybridDGHelmholtz, DetShapeType(), *this, mkey.GetConstFactors(), mkey.GetVarCoeffs());
+                    DNekMatSharedPtr mat = GenMatrix(hkey);
+
+                    mat->Invert();
+                    returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
+                }
+                break;
+            case StdRegions::ePreconLinearSpace:
+                {
+                    NekDouble one = 1.0;
+                    MatrixKey helmkey(StdRegions::eHelmholtz, mkey.GetShapeType(), *this, mkey.GetConstFactors(), mkey.GetVarCoeffs());
+                    DNekScalBlkMatSharedPtr helmStatCond = GetLocStaticCondMatrix(helmkey);
+                    DNekScalMatSharedPtr A =helmStatCond->GetBlock(0,0);
+                    DNekMatSharedPtr R=BuildVertexMatrix(A);
+
+                    returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,R);
+                }
+                break;
+            case StdRegions::ePreconLinearSpaceMass:
+                {
+                    NekDouble one = 1.0;
+                    MatrixKey masskey(StdRegions::eMass, mkey.GetShapeType(), *this);
+                    DNekScalBlkMatSharedPtr massStatCond = GetLocStaticCondMatrix(masskey);
+                    DNekScalMatSharedPtr A =massStatCond->GetBlock(0,0);
+                    DNekMatSharedPtr R=BuildVertexMatrix(A);
+
+                    returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,R);
+                }
+                break;
+            case StdRegions::ePreconR:
+                {
+                    NekDouble one = 1.0;
+                    MatrixKey helmkey(StdRegions::eHelmholtz, mkey.GetShapeType(), *this,mkey.GetConstFactors(), mkey.GetVarCoeffs());
+                    DNekScalBlkMatSharedPtr helmStatCond = GetLocStaticCondMatrix(helmkey);
+                    DNekScalMatSharedPtr A =helmStatCond->GetBlock(0,0);
+
+                    DNekScalMatSharedPtr Atmp;
+                    DNekMatSharedPtr R=BuildTransformationMatrix(A,mkey.GetMatrixType());
+
+                    returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,R);
+                }
+                break;
+            case StdRegions::ePreconRMass:
+                {
+                    NekDouble one = 1.0;
+                    MatrixKey masskey(StdRegions::eMass, mkey.GetShapeType(), *this);
+                    DNekScalBlkMatSharedPtr StatCond = GetLocStaticCondMatrix(masskey);
+                    DNekScalMatSharedPtr A =StatCond->GetBlock(0,0);
+
+                    DNekScalMatSharedPtr Atmp;
+                    DNekMatSharedPtr R=BuildTransformationMatrix(A,mkey.GetMatrixType());
+
+                    returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,R);
+                }
+                break;
+            default:
+                {
+                    //ASSERTL0(false, "Missing definition for " + (*StdRegions::MatrixTypeMap[mkey.GetMatrixType()]));
+                    NekDouble        one = 1.0;
+                    DNekMatSharedPtr mat = GenMatrix(mkey);
+
+                    returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
+                }
+                break;
+            }
+
+            return returnval;
         }
 
         /**
@@ -2291,6 +2563,24 @@ namespace Nektar
             // Reshuffule points as required and put into outarray.
             v_ReOrientTracePhysMap(orient,faceids, nq0,nq1);
             Vmath::Scatr(nq0*nq1,o_tmp2,faceids,outarray);
+        }
+
+        void Expansion3D::v_GenTraceExp(const int traceid,
+                                      ExpansionSharedPtr &exp)
+        {
+            SpatialDomains::GeometrySharedPtr faceGeom = m_geom->GetFace(traceid);
+            if(faceGeom->GetNumVerts() == 3)
+            {
+                exp = MemoryManager<LocalRegions::TriExp>::AllocateSharedPtr
+                    (GetTraceBasisKey(traceid,0),GetTraceBasisKey(traceid,1),
+                     m_geom->GetFace(traceid));
+            }
+            else
+            {
+                exp = MemoryManager<LocalRegions::QuadExp>::AllocateSharedPtr
+                    (GetTraceBasisKey(traceid,0),GetTraceBasisKey(traceid,1),
+                     m_geom->GetFace(traceid));
+            }
         }
 
         void Expansion3D::v_ReOrientTracePhysMap
