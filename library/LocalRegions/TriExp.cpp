@@ -1189,6 +1189,7 @@ namespace Nektar
             return tmp->GetStdMatrix(mkey);
         }
 
+        
         DNekScalMatSharedPtr TriExp::v_GetLocMatrix(const MatrixKey &mkey)
         {
             return m_matrixManager[mkey];

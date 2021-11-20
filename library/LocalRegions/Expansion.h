@@ -228,7 +228,11 @@ namespace Nektar
             }
 
             const NormalVector &GetTraceNormal(const int id);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> feature/GJP-Base
             inline void ComputeTraceNormal(const int id)
             {
                 v_ComputeTraceNormal(id);
@@ -410,7 +414,7 @@ namespace Nektar
             
             
             virtual void v_ComputeTraceNormal(const int id);
-
+            
             virtual const Array<OneD, const NekDouble>& v_GetPhysNormals(void);
 
             virtual void v_SetPhysNormals(Array<OneD, const NekDouble> &normal);

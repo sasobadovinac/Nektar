@@ -121,6 +121,12 @@ namespace Nektar
             
             LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr  CreateMatrix(
                 const MatrixKey &mkey);
+<<<<<<< HEAD
+=======
+
+        protected:
+            std::map<int, NormalVector> m_faceNormals;
+>>>>>>> feature/GJP-Base
 
         protected:
             virtual void v_DGDeriv(

@@ -503,7 +503,6 @@ namespace Nektar
             boost::ignore_unused(traceid); 
             h = GetGeom()->GetVertex(1)->dist(*GetGeom()->GetVertex(0));
             p = m_ncoeffs-1;
-
         }
         
     } //end of namespace

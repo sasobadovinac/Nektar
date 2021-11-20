@@ -136,9 +136,9 @@ namespace Nektar
                                                                            const int dir,
                                                                            const StdRegions::VarCoeffMap   &varcoeffs);
 
-            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMFMag(
-                                                                           const int dir,
-                                                                           const StdRegions::VarCoeffMap   &varcoeffs);
+            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble>
+                    v_GetMFMag(const int dir,
+                               const StdRegions::VarCoeffMap   &varcoeffs);
 
 
             // Hybridized DG routines

@@ -260,15 +260,56 @@ namespace Nektar
             return returnval;
         }
 
+        const SpatialDomains::GeomFactorsSharedPtr&
+                               Expansion::GetMetricInfo() const
+        {
+            return m_metricinfo;
+        }
+
+        const NormalVector &Expansion::GetTraceNormal(const int id)
+        {
+            std::map<int, NormalVector>::const_iterator x;
+            x = m_traceNormals.find(id);
+            
+            // if edge normal not defined compute it
+            if(x == m_traceNormals.end())
+            {
+                v_ComputeTraceNormal(id);
+                x = m_traceNormals.find(id);
+            }
+            return x->second;
+        }
+
+        const NormalVector &Expansion::GetTraceNormal(const int id)
+        {
+            std::map<int, NormalVector>::const_iterator x;
+            x = m_traceNormals.find(id);
+            
+            // if edge normal not defined compute it
+            if(x == m_traceNormals.end())
+            {
+                v_ComputeTraceNormal(id);
+                x = m_traceNormals.find(id);
+            }
+            return x->second;
+        }
+
+        DNekScalMatSharedPtr Expansion::v_GetLocMatrix(const LocalRegions::MatrixKey &mkey)
+        {
+            boost::ignore_unused(mkey);
+            NEKERROR(ErrorUtil::efatal, "This function is only valid for LocalRegions");
+            return NullDNekScalMatSharedPtr;
+        }
+
         DNekScalBlkMatSharedPtr Expansion::CreateStaticCondMatrix(
             const MatrixKey &mkey)
         {
             DNekScalBlkMatSharedPtr returnval;
-
+            
             ASSERTL2(m_metricinfo->GetGtype()
                      != SpatialDomains::eNoGeomType,
                      "Geometric information is not set up");
-
+            
             // set up block matrix system
             unsigned int nbdry = NumBndryCoeffs();
             unsigned int nint = (unsigned int)(m_ncoeffs - nbdry);
@@ -387,34 +428,6 @@ namespace Nektar
                 }
             }
             return returnval;
-        }
-
-
-        const SpatialDomains::GeomFactorsSharedPtr& Expansion::GetMetricInfo() const
-        {
-            return m_metricinfo;
-        }
-
-
-        const NormalVector &Expansion::GetTraceNormal(const int id)
-        {
-            std::map<int, NormalVector>::const_iterator x;
-            x = m_traceNormals.find(id);
-            
-            // if edge normal not defined compute it
-            if(x == m_traceNormals.end())
-            {
-                v_ComputeTraceNormal(id);
-                x = m_traceNormals.find(id);
-            }
-            return x->second;
-        }
-
-        DNekScalMatSharedPtr Expansion::v_GetLocMatrix(const LocalRegions::MatrixKey &mkey)
-        {
-            boost::ignore_unused(mkey);
-            NEKERROR(ErrorUtil::efatal, "This function is only valid for LocalRegions");
-            return NullDNekScalMatSharedPtr;
         }
 
         void Expansion::v_MultiplyByQuadratureMetric(const Array<OneD, const NekDouble>& inarray,
@@ -925,6 +938,14 @@ namespace Nektar
                      "Method does not exist for this shape or library" );
         }
         
+
+        void Expansion::v_GenTraceExp(const int traceid,
+                                      ExpansionSharedPtr &exp)
+        {
+            boost::ignore_unused(traceid,exp);
+            NEKERROR(ErrorUtil::efatal,
+                     "Method does not exist for this shape or library" );
+        }
 
         void Expansion::v_ComputeTraceNormal(const int id)
         {
