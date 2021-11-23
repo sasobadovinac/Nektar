@@ -238,7 +238,7 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
     // Perform movement of zones based on time in field files metadata map
     for (int i = 0; i < m_f->m_exp.size(); ++i)
     {
-        if(!m_f->m_exp[i]->GetMovement()->GetZones().empty())
+        if(m_f->m_exp[i]->GetMovement() != nullptr) // @TODO: Think this should be something else to stop the movement if no zones
         {
             m_f->m_exp[i]->GetMovement()->PerformMovement(
                 boost::lexical_cast<NekDouble>(m_f->m_fieldMetaDataMap["Time"]));

@@ -11,12 +11,14 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
 {
     m_fieldsALE = fields;
 
-    // Initialise grid velocity as 0s
+    // Initialise grid velocities as 0s
     int spaceDim = pGraph->GetSpaceDimension();
     m_gridVelocity = Array<OneD, Array<OneD, NekDouble>>(spaceDim);
+    m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble>>(spaceDim);
     for (int i = 0; i < spaceDim; ++i)
     {
         m_gridVelocity[i] = Array<OneD, NekDouble>(fields[0]->GetTotPoints(), 0.0);
+        m_gridVelocityTrace[i] = Array<OneD, NekDouble>(fields[0]->GetTrace()->GetTotPoints(), 0.0);
     }
 
     // Create map from element ID to expansion ID
@@ -148,6 +150,16 @@ void ALEHelper::ALEDoOdeRhs(const Array<OneD, const  Array<OneD, NekDouble> >&in
     // RHS computation using the new advection base class
     advObject->AdvectCoeffs(nVariables, m_fieldsALE, velocity, tmpin,
                                  outarray, time);
+}
+
+const Array<OneD, const Array<OneD, NekDouble> > &ALEHelper::GetGridVelocityTrace()
+{
+    for (int i = 0; i < m_gridVelocityTrace.size(); ++i)
+    {
+        m_fieldsALE[0]->ExtractTracePhys(m_gridVelocity[i], m_gridVelocityTrace[i]);
+    }
+
+    return m_gridVelocityTrace;
 }
 
 ALEFixed::ALEFixed(SpatialDomains::ZoneBaseShPtr zone) :

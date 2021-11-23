@@ -386,12 +386,18 @@ public:
 
     void GenGeomFactors();
 
+    inline const bool &GetMoveFlag() const
+    {
+        return m_moveFlag;
+    }
+
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
     std::map<int, ZoneBaseShPtr> m_zones;
+    bool m_moveFlag = false;
 
 
 private:

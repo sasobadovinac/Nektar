@@ -249,6 +249,10 @@ namespace Nektar
             "vecLocs", &CompressibleFlowSystem::GetVecLocs, this);
         riemannSolver->SetVector(
             "N",       &CompressibleFlowSystem::GetNormals, this);
+        riemannSolver->SetVector(
+            "vg",      &ALEHelper::GetGridVelocity, this);
+        riemannSolver->SetVector(
+            "vgt",     &ALEHelper::GetGridVelocityTrace, this);
 
         // Concluding initialisation of advection / diffusion operators
         m_advObject->SetRiemannSolver   (riemannSolver);
@@ -264,7 +268,7 @@ namespace Nektar
         const NekDouble                                   time)
     {
         int nvariables = inarray.size();
-        int npoints    = GetNpoints();
+        //int npoints    = GetNpoints();
         int nTracePts  = GetTraceTotPoints();
 
         m_BndEvaluateTime   = time;
@@ -298,7 +302,7 @@ timer.AccumulateRegion("DoAdvection");
         // Negate results
         for (int i = 0; i < nvariables; ++i)
         {
-            Vmath::Neg(npoints, outarray[i], 1);
+            Vmath::Neg(outarray[i].size(), outarray[i], 1);
         }
 
         // Add diffusion terms
@@ -349,16 +353,24 @@ timer.AccumulateRegion("DoDiffusion");
     {
         int nvariables = inarray.size();
 
+        // Perform ALE movement
+        if (m_ALESolver)
+        {
+            MoveMesh(time, m_traceNormals);
+        }
+
         switch(m_projectionType)
         {
             case MultiRegions::eDiscontinuous:
             {
                 // Just copy over array
-                int npoints = GetNpoints();
+                //int npoints = GetNpoints();
 
                 for (int i = 0; i < nvariables; ++i)
                 {
-                    Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                    //std::cout << "POINTS??? : " << GetNpoints() << " " << inarray[i].size() << " " << outarray[i].size() << std::endl;
+                    Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1); // @TODO: This used to be npoints not inarray[i].size(), not sure why, something to do with ALEHelper::ALEPreMultiplyMass(fields) changing field size
+
                     if (m_useFiltering)
                     {
                         m_fields[i]->ExponentialFilter(outarray[i],
@@ -394,8 +406,16 @@ timer.AccumulateRegion("DoDiffusion");
         int nvariables = inarray.size();
         Array<OneD, Array<OneD, NekDouble> > advVel(m_spacedim);
 
-        m_advObject->Advect(nvariables, m_fields, advVel, inarray,
-                            outarray, time, pFwd, pBwd);
+        if(m_ALESolver)
+        {
+            ALEHelper::ALEDoOdeRhs(inarray, outarray, time, m_advObject,
+                                   advVel);
+        }
+        else
+        {
+            m_advObject->Advect(nvariables, m_fields, advVel, inarray, outarray,
+                                time, pFwd, pBwd);
+        }
     }
 
     /**
@@ -823,6 +843,21 @@ timer.AccumulateRegion("DoDiffusion");
         {
             Vmath::Vmul(nq, velocity[j], 1, pressure, 1,
                         flux[m_spacedim+1][j], 1);
+        }
+
+        // @TODO : for each row (3 columns) negative grid velocity component (d * d + 2 (4 rows)) rho, rhou, rhov, rhow, E,
+        // @TODO : top row is flux for rho etc... each row subtract v_g * conserved variable for that row...
+        // For grid velocity subtract v_g * conserved variable
+        for (i = 0; i < m_spacedim + 2; ++i)
+        {
+            for (j = 0; j < m_spacedim; ++j)
+            {
+                for (int k = 0; k < nq; ++k)
+                {
+                    break;
+                    //flux[i][j][k] = physfield[i][j] * (m_gridVelocity[j][k] - flux[i][j][k]);
+                }
+            }
         }
 
         // For the smooth viscosity model

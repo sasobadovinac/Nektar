@@ -37,15 +37,18 @@ public:
                      AdvectionSharedPtr advObject,
                      Array<OneD, Array<OneD, NekDouble> > &velocity);
 
-    inline Array<OneD, Array<OneD, NekDouble>> GetGridVelocity()
+    inline const Array<OneD, const Array<OneD, NekDouble> >  &GetGridVelocity()
     {
         return m_gridVelocity;
     }
+
+    const Array<OneD, const Array<OneD, NekDouble> > &GetGridVelocityTrace();
 
 protected:
     Array<OneD, MultiRegions::ExpListSharedPtr> m_fieldsALE;
     std::map<int, int> m_elmtToExpId;
     Array<OneD, Array<OneD, NekDouble>> m_gridVelocity;
+    Array<OneD, Array<OneD, NekDouble>> m_gridVelocityTrace;
     std::vector<ALEBaseShPtr> m_ALEs;
     bool m_ALESolver = false;
     NekDouble m_prevStageTime = 0.0;

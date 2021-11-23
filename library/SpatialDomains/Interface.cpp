@@ -429,6 +429,8 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
 
             zone = ZoneRotateShPtr(MemoryManager<ZoneRotate>::AllocateSharedPtr(
                 indx, domain, coordDim, origin, axis, angularVel));
+
+            m_moveFlag = true;
         }
         else if (zoneType == "T" || zoneType == "TRANSLATE" ||
                  zoneType == "TRANSLATING")
@@ -442,6 +444,8 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             zone = ZoneTranslateShPtr(
                 MemoryManager<ZoneTranslate>::AllocateSharedPtr(
                     indx, domain, coordDim, velocity));
+
+            m_moveFlag = true;
         }
         else if (zoneType == "F" || zoneType == "FIXED")
         {
@@ -467,6 +471,8 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             zone = ZonePrescribeShPtr(
                 MemoryManager<ZonePrescribe>::AllocateSharedPtr(
                     indx, domain, coordDim, xDeformEqn, yDeformEqn));
+
+            m_moveFlag = true;
         }
         else
         {
