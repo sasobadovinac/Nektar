@@ -54,7 +54,6 @@ namespace Nektar
 
             void Apply(const Array<OneD, NekDouble>  &inarray,
                        Array<OneD, NekDouble> &outarray,
-                       bool OutArrayInCoeffSpace,
                        const Array<OneD, NekDouble> &pUnorm = NullNekDouble1DArray,
                        const NekDouble scale = 1.0) const;
             
@@ -76,11 +75,6 @@ namespace Nektar
         private:
             int m_coordDim; 
             int m_traceDim; 
-
-            /// Number of planes in expansion to be stabilised for
-            /// Homgoeneous expansion
-            int m_nplanes;
-            
             bool m_useGJPSemiImplicit; 
 
             // Trace normals 

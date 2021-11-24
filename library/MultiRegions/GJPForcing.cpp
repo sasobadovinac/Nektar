@@ -45,17 +45,6 @@ namespace Nektar
             session->MatchSolverInfo("GJPStabilisation",
                                    "SemiImplicit", m_useGJPSemiImplicit, false);
 
-            bool isHomogeneous1D;
-            session->MatchSolverInfo("Homogeneous", "1D", isHomogeneous1D, false);
-            if(isHomogeneous1D)
-            {
-                m_nplanes = pField->GetZIDs().size();
-            }
-            else
-            {
-                m_nplanes = 1;
-            }
-
             // Call GetTrace on the initialising field will set up
             // DG. Store a copoy so that if we make a soft copy of
             // this class we can re-used this field for operators.
@@ -221,7 +210,6 @@ namespace Nektar
         void GJPForcing::Apply(
                         const Array<OneD, NekDouble>  &inarray,
                         Array<OneD, NekDouble> &outarray,
-                        bool OutarrayInCoeffSpace,
                         const Array<OneD, NekDouble> &pUnorm,
                         NekDouble scale) const 
         {
@@ -243,8 +231,8 @@ namespace Nektar
             }
         
             int nmax = std::max(ncoeffs,nphys);
-            Array<OneD, NekDouble> FilterCoeffs(nmax);
-            Array<OneD, NekDouble> GradJumpOnTrace(nTracePts); 
+            Array<OneD, NekDouble> FilterCoeffs(nmax,0.0);
+            Array<OneD, NekDouble> GradJumpOnTrace(nTracePts,0.0); 
             Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts); 
             
             Array<OneD, NekDouble> wsp(nLocETrace), tmp;
@@ -274,108 +262,86 @@ namespace Nektar
                 
             }
             
-            for(int p = 0; p < m_nplanes; ++p)
+            if(m_useGJPSemiImplicit)
             {
-                Vmath::Zero(nmax,FilterCoeffs,1);
-                Vmath::Zero(nTracePts,GradJumpOnTrace,1);
-                if(m_useGJPSemiImplicit)
-                {
-                    Vmath::Zero(nTracePts,GradJumpOnTraceBwd,1);
-                }
+                Vmath::Zero(nTracePts,GradJumpOnTraceBwd,1);
+            }
+            
+            // calculate derivative 
+            m_dgfield->PhysDeriv(inarray,deriv[0],deriv[1], deriv[2]);
                 
-                // calculate derivative 
-                m_dgfield->PhysDeriv(inarray + p*nphys,deriv[0],
-                                     deriv[1], deriv[2]);
-                
-                // Evaluate the  normal derivative jump on the trace
-                for(int n = 0; n < m_coordDim; ++n)
-                {
-                    m_dgfield->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true,true);
-                    
-                    if(m_useGJPSemiImplicit)
-                    {
-                        // want to put Fwd vals on bwd trace and vice versa
-                        Vmath::Vvtvp(nTracePts,Bwd,1,m_traceNormals[n],1,
-                                     GradJumpOnTrace,1,GradJumpOnTrace,1);
-                        Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
-                                     GradJumpOnTraceBwd,1,GradJumpOnTraceBwd,1);
-                    }
-                    else
-                    {
-                        // Multiply by normal and add to trace evaluation
-                        Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);
-                        Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
-                                     GradJumpOnTrace,1,GradJumpOnTrace,1);
-                    }
-                }
-
-                if(m_useGJPSemiImplicit)
-                {
-                    // Need to negate Bwd case when  using Fwd normal
-                    Vmath::Neg(nTracePts,GradJumpOnTrace,1);
-                }
-                
-                Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTrace,1,
-                            GradJumpOnTrace,1);
-                
-                // Interpolate GradJumpOnTrace to Local elemental traces.
-                m_locTraceToTraceMap->InterpTraceToLocTrace
-                    (0,GradJumpOnTrace, wsp);
-                m_locTraceToTraceMap->UnshuffleLocTraces
-                    (0,wsp,LocElmtTracePhys);
+            // Evaluate the  normal derivative jump on the trace
+            for(int n = 0; n < m_coordDim; ++n)
+            {
+                m_dgfield->GetFwdBwdTracePhys(deriv[n],Fwd,Bwd,true,true);
                 
                 if(m_useGJPSemiImplicit)
                 {
-                    //Vmath::Neg(nTracePts,GradJumpOnTraceBwd,1);
-                    Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTraceBwd,1,
-                                GradJumpOnTraceBwd,1);
-                    m_locTraceToTraceMap->InterpTraceToLocTrace
-                        (1,GradJumpOnTraceBwd, wsp);
-                    m_locTraceToTraceMap->UnshuffleLocTraces
-                        (1,wsp,LocElmtTracePhys);
+                    // want to put Fwd vals on bwd trace and vice versa
+                    Vmath::Vvtvp(nTracePts,Bwd,1,m_traceNormals[n],1,
+                                 GradJumpOnTrace,1,GradJumpOnTrace,1);
+                    Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
+                                 GradJumpOnTraceBwd,1,GradJumpOnTraceBwd,1);
                 }
                 else
                 {
-                    m_locTraceToTraceMap->InterpTraceToLocTrace
-                        (1,GradJumpOnTrace, wsp);
-                    m_locTraceToTraceMap->UnshuffleLocTraces
-                        (1,wsp,LocElmtTracePhys);
-                }
-                
-                // Scale jump on trace
-                Vmath::Vmul(nLocETrace,m_scalTrace[0],1,LocElmtTracePhys,1,
-                            wsp,1);
-                MultiplyByStdDerivBaseOnTraceMat(0,wsp,FilterCoeffs);
-                
-                for(int i = 0; i < m_traceDim; ++i)
-                {
-                    // Scale jump on trace
-                    Vmath::Vmul(nLocETrace,m_scalTrace[i+1],1,
-                                LocElmtTracePhys,1,wsp,1);
-                    MultiplyByStdDerivBaseOnTraceMat(i+1,wsp,deriv[0]);
-                    Vmath::Vadd(ncoeffs,deriv[0],1,FilterCoeffs,1,
-                                FilterCoeffs,1);
-                }
-
-                
-                if(OutarrayInCoeffSpace) // add to coeff array
-                {
-                    Vmath::Svtvp(ncoeffs,scale,FilterCoeffs,1,
-                                 outarray+p*ncoeffs,1,
-                                 tmp = outarray+p*ncoeffs,1);
-                    //Vmath::Vadd(ncoeffs,outarray+p*ncoeffs,1,FilterCoeffs,1,
-                }
-                else // project to phys space and subtract
-                {
-                    Vmath::Neg(ncoeffs,FilterCoeffs,1);
-                    
-                    m_dgfield->MultiplyByElmtInvMass(FilterCoeffs,deriv[0]);
-                    
-                    m_dgfield->BwdTrans(deriv[0],FilterCoeffs);
-                    Vmath::Vadd(nphys,outarray+p*nphys,1,FilterCoeffs,1,
-                                tmp = outarray+p*nphys,1);
+                    // Multiply by normal and add to trace evaluation
+                    Vmath::Vsub(nTracePts,Fwd,1,Bwd,1,Fwd,1);
+                    Vmath::Vvtvp(nTracePts,Fwd,1,m_traceNormals[n],1,
+                                 GradJumpOnTrace,1,GradJumpOnTrace,1);
                 }
             }
+                
+            if(m_useGJPSemiImplicit)
+            {
+                // Need to negate Bwd case when  using Fwd normal
+                Vmath::Neg(nTracePts,GradJumpOnTrace,1);
+            }
+            
+            Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTrace,1,
+                        GradJumpOnTrace,1);
+            
+            // Interpolate GradJumpOnTrace to Local elemental traces.
+            m_locTraceToTraceMap->InterpTraceToLocTrace
+                (0,GradJumpOnTrace, wsp);
+            m_locTraceToTraceMap->UnshuffleLocTraces
+                (0,wsp,LocElmtTracePhys);
+            
+            if(m_useGJPSemiImplicit)
+            {
+                //Vmath::Neg(nTracePts,GradJumpOnTraceBwd,1);
+                Vmath::Vmul(nTracePts,unorm,1,GradJumpOnTraceBwd,1,
+                            GradJumpOnTraceBwd,1);
+                m_locTraceToTraceMap->InterpTraceToLocTrace
+                    (1,GradJumpOnTraceBwd, wsp);
+                m_locTraceToTraceMap->UnshuffleLocTraces
+                    (1,wsp,LocElmtTracePhys);
+            }
+            else
+            {
+                m_locTraceToTraceMap->InterpTraceToLocTrace
+                    (1,GradJumpOnTrace, wsp);
+                m_locTraceToTraceMap->UnshuffleLocTraces
+                    (1,wsp,LocElmtTracePhys);
+            }
+            
+            // Scale jump on trace
+            Vmath::Vmul(nLocETrace,m_scalTrace[0],1,LocElmtTracePhys,1,
+                        wsp,1);
+            MultiplyByStdDerivBaseOnTraceMat(0,wsp,FilterCoeffs);
+            
+            for(int i = 0; i < m_traceDim; ++i)
+            {
+                // Scale jump on trace
+                Vmath::Vmul(nLocETrace,m_scalTrace[i+1],1,
+                            LocElmtTracePhys,1,wsp,1);
+                MultiplyByStdDerivBaseOnTraceMat(i+1,wsp,deriv[0]);
+                    Vmath::Vadd(ncoeffs,deriv[0],1,FilterCoeffs,1,
+                                FilterCoeffs,1);
+            }
+            
+            Vmath::Svtvp(ncoeffs,scale,FilterCoeffs,1,
+                         outarray,1,outarray,1);
         }
 
         void GJPForcing::SetUpExpansionInfoMapForGJP

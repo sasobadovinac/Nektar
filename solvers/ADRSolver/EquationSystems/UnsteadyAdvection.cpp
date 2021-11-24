@@ -340,7 +340,7 @@ namespace Nektar
                         // physical space
                         NekDouble scale = -1.0*factors[StdRegions::eFactorGJP];
                         
-                        GJPData->Apply(inarray[i],wsp,true,
+                        GJPData->Apply(inarray[i],wsp,
                                        NullNekDouble1DArray, scale);
                     }
                 

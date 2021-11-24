@@ -1118,7 +1118,6 @@ namespace Nektar
         }
 
         
-
         void PyrExp::v_ComputeLaplacianMetric()
         {
             if (m_metrics.count(eMetricQuadrature) == 0)

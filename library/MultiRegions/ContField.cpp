@@ -952,7 +952,7 @@ namespace Nektar
                 NekDouble scale = -1.0*factors.
                     find(StdRegions::eFactorGJP)->second; 
 
-                m_GJPData->Apply(phys, wsp, true,
+                m_GJPData->Apply(phys, wsp,
                                  pvarcoeff.count(StdRegions::eVarCoeffGJPNormVel)?
                                  pvarcoeff.find(StdRegions::eVarCoeffGJPNormVel)->second :
                                  NullNekDouble1DArray,
