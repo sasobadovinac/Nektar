@@ -1,0 +1,6 @@
+build*
+docs/tutorial
+docker
+pkg
+ThirdParty
+nektar++*.tar.gz

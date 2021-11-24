@@ -14,11 +14,11 @@ MARK_AS_ADVANCED(HTLATEX)
 
 ADD_CUSTOM_TARGET(developer-guide-html
     TEXINPUTS=${DEVGUIDESRC}//:
-    ${HTLATEX} ${DEVGUIDESRC}/developers-guide.tex 
+    ${HTLATEX} ${DEVGUIDESRC}/developer-guide.tex 
     "${DEVGUIDESRC}/styling.cfg,html,3,next,NoFonts"
-    COMMAND BIBINPUTS=${DEVGUIDESRC} ${BIBTEX} developers-guide.aux
+    COMMAND BIBINPUTS=${DEVGUIDESRC} ${BIBTEX} developer-guide.aux
     COMMAND TEXINPUTS=${DEVGUIDESRC}//:
-    ${HTLATEX} ${DEVGUIDESRC}/developers-guide.tex 
+    ${HTLATEX} ${DEVGUIDESRC}/developer-guide.tex 
     "${DEVGUIDESRC}/styling.cfg,html,3,next,NoFonts"
     WORKING_DIRECTORY ${DEVGUIDE}/html
 )
@@ -43,11 +43,11 @@ FOREACH(pdf ${pdffiles})
 ENDFOREACH()
 
 ADD_CUSTOM_TARGET(developer-guide-pdf
-    ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developers-guide.tex
-    COMMAND TEXMFOUTPUT=${DEVGUIDE} ${BIBTEX} ${DEVGUIDE}/developers-guide.aux
-    COMMAND TEXMFOUTPUT=${DEVGUIDE} ${MAKEINDEX} ${DEVGUIDE}/developers-guide.idx
-    COMMAND ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developers-guide.tex
-    COMMAND ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developers-guide.tex
+    ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developer-guide.tex
+    COMMAND TEXMFOUTPUT=${DEVGUIDE} ${BIBTEX} ${DEVGUIDE}/developer-guide.aux
+    COMMAND TEXMFOUTPUT=${DEVGUIDE} ${MAKEINDEX} ${DEVGUIDE}/developer-guide.idx
+    COMMAND ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developer-guide.tex
+    COMMAND ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developer-guide.tex
     WORKING_DIRECTORY ${DEVGUIDESRC}
 )
 
@@ -57,10 +57,10 @@ INSTALL(CODE "IF (EXISTS ${DEVGUIDE}/html)
     LIST(LENGTH DGHTML DGHTML_LEN)
     IF(DGHTML_LEN GREATER 0)
         FILE(INSTALL ${DEVGUIDE}/html
-             DESTINATION \${CMAKE_INSTALL_PREFIX}/${NEKTAR_DOC_DIR}/developers-guide)
+             DESTINATION \${CMAKE_INSTALL_PREFIX}/${NEKTAR_DOC_DIR}/developer-guide)
     ENDIF()
 ENDIF()
-IF (EXISTS ${DEVGUIDE}/developers-guide.pdf)
-    FILE(INSTALL ${DEVGUIDE}/developers-guide.pdf
-         DESTINATION \${CMAKE_INSTALL_PREFIX}/${NEKTAR_DOC_DIR}/developers-guide)
+IF (EXISTS ${DEVGUIDE}/developer-guide.pdf)
+    FILE(INSTALL ${DEVGUIDE}/developer-guide.pdf
+         DESTINATION \${CMAKE_INSTALL_PREFIX}/${NEKTAR_DOC_DIR}/developer-guide)
 ENDIF()")
