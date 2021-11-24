@@ -7,7 +7,11 @@ stages:
   - package-build
   - package-build-dev
   - package-test
+  - package-deploy-dev
   - package-deploy
+
+include:
+  - local: .gitlab-ci/packaging.yml
 
 .execution-conditions: &execution-conditions
   only:
@@ -561,17 +565,21 @@ dockerhub-test-nektar-dev:
 # Deployment
 dockerhub-deploy-nektar:
   <<: *dockerhub_deploy_template
+  needs: [ "dockerhub-test-nektar" ]
   variables:
     image_name: nektar
 dockerhub-deploy-nektar-env:
   <<: *dockerhub_deploy_template
+  needs: [ "dockerhub-build-env" ]
   variables:
     image_name: nektar-env
 dockerhub-deploy-nektar-dev:
   <<: *dockerhub_deploy_template
+  needs: [ "dockerhub-test-nektar-dev" ]
   variables:
     image_name: nektar-dev
 dockerhub-deploy-nektar-workbook:
   <<: *dockerhub_deploy_template
+  needs: [ "dockerhub-build-workbook" ]
   variables:
     image_name: nektar-workbook

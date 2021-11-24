@@ -1,0 +1,198 @@
+Source: nektar++
+Section: science
+Priority: optional
+Maintainer: Chris Cantwell <c.cantwell@imperial.ac.uk>
+Homepage: https://www.nektar.info
+Standards-Version: 4.4.0
+Build-Depends: cmake (>= 2.8.11),
+    debhelper (>= 9),
+    quilt,
+    libarpack2-dev,
+    libblas-dev,
+    libboost-thread-dev (>= 1.56.0),
+    libboost-iostreams-dev (>= 1.56.0),
+    libboost-filesystem-dev (>= 1.56.0),
+    libboost-system-dev (>= 1.56.0),
+    libboost-program-options-dev (>= 1.56.0),
+    libboost-regex-dev (>= 1.56.0),
+    libboost-timer-dev (>= 1.56.0),
+    libfftw3-dev,
+    liblapack-dev,
+    libhdf5-mpi-dev,
+    libptscotch-dev,
+    libtinyxml-dev,
+    mpi-default-dev,
+    zlib1g-dev
+
+Package: libnektar++
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Nektar++ spectral/hp element framework libraries
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains the libraries which implement the spectral/hp element
+ discretisation and associated support classes.
+
+Package: libnektar++-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}
+Description: Nektar++ spectral/hp element framework libraries documentation
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains the source code documentation and developer guide.
+
+Package: nektar++-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}
+Description: Nektar++ spectral/hp element framework user guide
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains the user guide.
+
+Package: nektar++-fieldconvert
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+    mpi-default-bin, libnektar++ (= ${binary:Version})
+Description: Nektar++ post-processing utility
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ FieldConvert is a parallel post-processing utility for Nektar++ which is
+ capable of basic tasks such as: converting field files to VTK or Tecplot
+ formats; interpolating point data onto a Nektar++ mesh; and calculating
+ quantities such as the  vorticity field or wall-shear stress of a flow
+ solution.
+
+Package: nektar++-adr-solver
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+    mpi-default-bin, libnektar++ (= ${binary:Version})
+Description: Nektar++ advection-diffusion-reaction system solver
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains the Nektar++ solver for a range of scalar partial
+ differential equations incorporating advection, diffusion and/or reaction
+ components.
+
+Package: nektar++-cardiacep-solver
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+    mpi-default-bin, libnektar++ (= ${binary:Version})
+Description: Nektar++ cardiac electrophysiology solver
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains a solver for the modelling the electrophysiology of the
+ heart using the monodomain or bidomain equations. The solver includes a range
+ of common ionic cell models.
+
+Package: nektar++-compressibleflow-solver
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+    mpi-default-bin, libnektar++ (= ${binary:Version})
+Description: Nektar++ compressible Navier-Stokes solver
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains a solver for compressible flows modelled using either
+ the Euler or Navier-Stokes equations.
+
+Package: nektar++-incnavierstokes-solver
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+    mpi-default-bin, libnektar++ (= ${binary:Version})
+Description: Nektar++ incompressible Navier-Stokes solver
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains the Nektar++ incompressible Navier-Stokes solver.
+
+Package: nektar++-pulsewave-solver
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+    mpi-default-bin, libnektar++ (= ${binary:Version})
+Description: Nektar++ pulse-wave solver
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains a solver for modelling pulse wave propagation through
+ a 1-dimensional network of arteries.
+
+Package: nektar++-shallowwater-solver
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+    mpi-default-bin, libnektar++ (= ${binary:Version})
+Description: Nektar++ shallow water equations solver
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains a solver for the shallow-water equations.
+
+Package: libnektar++-dev
+Section: libdevel
+Architecture: any
+Depends: ${misc:Depends},
+         libarpack2-dev,
+         libblas-dev,
+         libboost-thread-dev (>= 1.56.0),
+         libboost-iostreams-dev (>= 1.56.0),
+         libboost-filesystem-dev (>= 1.56.0),
+         libboost-system-dev (>= 1.56.0),
+         libboost-program-options-dev (>= 1.56.0),
+         libboost-regex-dev (>= 1.56.0),
+         libfftw3-dev,
+         libhdf5-dev,
+         libhdf5-mpi-dev,
+         liblapack-dev,
+         libnektar++ (= ${binary:Version}),
+         liboce-foundation-dev,
+         liboce-modeling-dev,
+         libptscotch-dev,
+         libtinyxml-dev,
+         mpi-default-dev,
+         zlib1g-dev
+Recommends: cmake
+Description: Nektar++ spectral/hp element framework development files
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This package contains the headers files necessary to develop applications
+ which use the Nektar++ framework libraries.
+
+Package: nekmesh
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+    mpi-default-bin, libnektar++ (= ${binary:Version})
+Description: Nektar++ post-processing utility
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ NekMesh is an open-source high-order mesh generator for 3D unstructured
+ complex geometries.
+
+
+Package: nektar++
+Architecture: any
+Depends: ${misc:Depends},
+         nektar++-fieldconvert (= ${binary:Version}),
+         nektar++-incnavierstokes-solver(= ${binary:Version}),
+         nektar++-adr-solver (= ${binary:Version}),
+         nektar++-cardiacep-solver (= ${binary:Version}),
+         nektar++-shallowwater-solver (= ${binary:Version}),
+         nektar++-compressibleflow-solver (= ${binary:Version}),
+         nektar++-pulsewave-solver (= ${binary:Version}),
+         nekmesh (= ${binary:Version} )
+Description: Nektar++ spectral/hp element solver suite
+ Nektar++ is a C++ framework for the development of computational solvers for
+ partial differential equations based on the spectral/hp element method.
+ .
+ This metapackage depends on the complete suite of Nektar++ libraries, solvers
+ and tools.
