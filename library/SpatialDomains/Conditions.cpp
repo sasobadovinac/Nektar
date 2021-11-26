@@ -173,7 +173,7 @@ std::set<int> ShareAllBoundaryIDs(
  */
 void BoundaryConditions::CreateBoundaryComms()
 {
-    LibUtilities::CommSharedPtr comm = m_session->GetComm();
+    LibUtilities::CommSharedPtr comm = m_session->GetComm()->GetRowComm();
 
     if (comm->IsSerial())
     {

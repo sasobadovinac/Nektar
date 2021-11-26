@@ -576,8 +576,8 @@ namespace Nektar
                 }
             }
 
-            int nproc   = m_comm->GetSize(); // number of processors
-            int tracepr = m_comm->GetRank(); // ID processor
+            int nproc   = m_comm->GetRowComm()->GetSize(); // number of processors
+            int tracepr = m_comm->GetRowComm()->GetRank(); // ID processor
 
             if (nproc > 1)
             {
@@ -593,7 +593,8 @@ namespace Nektar
                 // edge IDs, then reduce this across processors.
                 Array<OneD, int> tracesCnt(nproc, 0);
                 tracesCnt[tracepr] = tCnt;
-                m_comm->AllReduce(tracesCnt, LibUtilities::ReduceSum);
+                m_comm->GetRowComm()->
+                    AllReduce(tracesCnt, LibUtilities::ReduceSum);
 
                 // Set up offset array.
                 int totTraceCnt = Vmath::Vsum(nproc, tracesCnt, 1);
@@ -649,9 +650,9 @@ namespace Nektar
                     }
                 }
 
-                m_comm->AllReduce(TracesTotID,    LibUtilities::ReduceSum);
-                m_comm->AllReduce(TracesTotNm0,   LibUtilities::ReduceSum);
-                m_comm->AllReduce(TracesTotPnts0, LibUtilities::ReduceSum);
+                m_comm->GetRowComm()->AllReduce(TracesTotID,    LibUtilities::ReduceSum);
+                m_comm->GetRowComm()->AllReduce(TracesTotNm0,   LibUtilities::ReduceSum);
+                m_comm->GetRowComm()->AllReduce(TracesTotPnts0, LibUtilities::ReduceSum);
                 if(m_expType == e2D)
                 {
                     m_comm->AllReduce(TracesTotNm1,   LibUtilities::ReduceSum);
