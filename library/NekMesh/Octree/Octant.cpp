@@ -157,6 +157,7 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
         }
 
         SetDelta(minDif);
+        std::cout << "\n\nSetDelta: " << minDif << "\n\n";
 
         //encourage subdivision to keep spec smooth
         if (GetDelta() < 5.0 * DX())

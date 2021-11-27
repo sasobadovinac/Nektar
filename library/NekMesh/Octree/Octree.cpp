@@ -818,13 +818,13 @@ void Octree::CompileSourcePointList()
     int totalEnt = 0;
     if(m_mesh->m_cad->Is2D())
     {
-        totalEnt += m_mesh->m_cad->GetNumCurve();
+        totalEnt += m_mesh->m_cad->GetNumCurve();  // Why += ?
         for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
         {
             m_log(VERBOSE).Progress(i, totalEnt, "  - Compiling source points");
 
             CADCurveSharedPtr curve = m_mesh->m_cad->GetCurve(i);
-            Array<OneD, NekDouble> bds = curve->GetBounds();
+            Array<OneD, NekDouble> bds = curve->GetBounds(); // Is this a bounding box around the curve?
             //this works assuming the curves are not distorted
             int samples  = ceil(curve->Length(bds[0],bds[1]) / m_minDelta) * 2;
             samples = max(40, samples);
@@ -844,13 +844,28 @@ void Octree::CompileSourcePointList()
                 {
                     NekDouble del = 2.0 * (1.0 / C) * sqrt(m_eps * (2.0 - m_eps));
 
-                    if (del > m_maxDelta)
+                    NekDouble t_maxDelta = m_maxDelta;
+                    NekDouble t_minDelta = m_minDelta;
+                    if(i == 1)
                     {
-                        del = m_maxDelta;
+                        t_minDelta = 0.0025;
                     }
-                    if (del < m_minDelta)
+
+                    if (del > t_maxDelta)
                     {
-                        del = m_minDelta;
+                        del = t_maxDelta;
+                    }
+                    if (del < t_minDelta)
+                    {
+                        del = t_minDelta;
+                    }
+
+                    // if((i == 1 || i == 3) && j == 1)
+                    if(i == 1)
+                    {
+                        std::cout << "\n\ncurve number: " << i << " and sample point " << j << "\n";
+                        std::cout << "uv -- loc: " << uv[0] << ", " << uv[1] << " -- " << loc[0] << ", " << loc[1] << "\n";
+                        std::cout << "delta: " << del << "\n\n";
                     }
 
                     CPointSharedPtr newCPoint =
@@ -861,6 +876,7 @@ void Octree::CompileSourcePointList()
                 }
                 else
                 {
+                    // std::cout << "curve number: " << i << " is a boundary with no del value\n";
                     BPointSharedPtr newBPoint =
                         MemoryManager<BPoint>::AllocateSharedPtr(
                             ss[0].first.lock()->GetId(), uv, loc);
@@ -1029,6 +1045,8 @@ void Octree::CompileSourcePointList()
             x2[2] = data[5];
 
             m_lsources.push_back(linesource(x1, x2, data[6], data[7]));
+
+            std::cout << "testing source points: " << data[6] << " -- " << data[7] << "\n";
         }
 
         // this takes any existing sourcepoints within the influence range

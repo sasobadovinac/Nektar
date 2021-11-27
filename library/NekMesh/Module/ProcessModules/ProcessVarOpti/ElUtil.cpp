@@ -806,6 +806,8 @@ void ElUtil::UpdateMapping()
     {
         for (int j = 0; j < 9; ++j)
         {
+            // std::cout << "\ni: " << i << " -- j: " << j << "\n";
+            // std::cout << "m_maps: " << m_maps[i][j] << " -- m_mapsStd: " << m_mapsStd[i][j] << "\n";
             maps[i][j]    = m_maps[i][j] / scaling;
             mapsStd[i][j] = m_mapsStd[i][j] / scaling;
         }
