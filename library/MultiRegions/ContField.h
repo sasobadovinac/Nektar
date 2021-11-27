@@ -179,6 +179,12 @@ namespace Nektar
                 return m_GJPData;
             }
 
+            MULTI_REGIONS_EXPORT void SetGJPForcing
+                                      (const GJPForcingSharedPtr &GJPData)
+            {
+                m_GJPData = GJPData; 
+            }
+
         protected:
 
             //private:

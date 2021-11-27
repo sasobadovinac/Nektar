@@ -284,6 +284,19 @@ namespace Nektar
                 smode = true;
             }
 
+
+            if(factors.count(StdRegions::eFactorGJP))
+            {
+                ContFieldSharedPtr zero_plane =
+                    std::dynamic_pointer_cast<ContField> (m_planes[0]);
+                for(n = 1; n < m_planes.size(); ++n)
+                {
+                    std::dynamic_pointer_cast<ContField> (m_planes[n])
+                        ->SetGJPForcing(zero_plane->GetGJPForcing());
+                }
+            }
+
+            
             for(n = 0; n < m_planes.size(); ++n)
             {
                 if(n != 1 || m_transposition->GetK(n) != 0 || smode)
