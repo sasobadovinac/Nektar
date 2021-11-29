@@ -1118,7 +1118,7 @@ namespace Nektar
                             compOrder[it.second->begin()->first] = tmpOrder;
                         }
 
-
+                    
                         // See if we already have either region1 or
                         // region2 stored in perComps map.
                         if (perComps.count(cId1) == 0)
@@ -1162,15 +1162,12 @@ namespace Nektar
                         perid[cIt.first] = cIt.second; 
                     }
                     vComm->AllReduce(perid,LibUtilities::ReduceMax);
-                    // update all partitions which contains perComps
-                    if(perComps.size())
+                    // update all partitions 
+                    for (int i = 0; i < idmax; ++i)
                     {
-                        for (int i = 0; i < idmax; ++i)
+                        if(perid[i] > -1)
                         {
-                            if(perid[i] > -1)
-                            {
-                                perComps[i] = perid[i]; 
-                            }
+                            perComps[i] = perid[i]; 
                         }
                     }
 
@@ -1308,7 +1305,7 @@ namespace Nektar
                     // vertices are copied into m_periodicVerts at the end of the
                     // function.
                     PeriodicMap periodicVerts;
-
+                
                     for (auto &cIt : perComps)
                     {
                         SpatialDomains::CompositeSharedPtr c[2];
@@ -1807,15 +1804,12 @@ namespace Nektar
                         perid[cIt.first] = cIt.second; 
                     }
                     vComm->AllReduce(perid,LibUtilities::ReduceMax);
-                    // update all partitions which contains perComps
-                    if(perComps.size())
+                    // update all partitions 
+                    for (int i = 0; i < idmax; ++i)
                     {
-                        for (int i = 0; i < idmax; ++i)
+                        if(perid[i] > -1)
                         {
-                            if(perid[i] > -1)
-                            {
-                                perComps[i] = perid[i]; 
-                            }
+                            perComps[i] = perid[i]; 
                         }
                     }
 
@@ -2172,7 +2166,7 @@ namespace Nektar
                             // Loop up coordinates of the faces, check they have the
                             // same number of vertices.
                             SpatialDomains::PointGeomVector tmpVec[2]
-                        = { coordMap[ids[0]], coordMap[ids[1]] };
+                                = { coordMap[ids[0]], coordMap[ids[1]] };
 
                             ASSERTL0(tmpVec[0].size() == tmpVec[1].size(),
                                      "Two periodic faces have different number "
@@ -2407,7 +2401,8 @@ namespace Nektar
                         int faceId    = faceIds[i];
 
                         ASSERTL0(allCompPairs.count(faceId) > 0,
-                                 "Unable to find matching periodic face.");
+                                 "Unable to find matching periodic face. faceId = "
+                                 + boost::lexical_cast<string>(faceId));
 
                         int perFaceId = allCompPairs[faceId];
 
