@@ -826,7 +826,9 @@ void Octree::CompileSourcePointList()
 
             if(i == 1)
             {
+                std::cout << "\n\ntesting curve number: " << i << "\n";
                 m_esources.push_back(edgesource(curve,0.001,0.01));
+                std::cout << "Length of curve from esources: " << m_esources[i-1].Length() << "\n";
             }
 
             Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
@@ -868,9 +870,9 @@ void Octree::CompileSourcePointList()
                     // if((i == 1 || i == 3) && j == 1)
                     if(i == 1)
                     {
-                        std::cout << "\n\ncurve number: " << i << " and sample point " << j << "\n";
-                        std::cout << "uv -- loc: " << uv[0] << ", " << uv[1] << " -- " << loc[0] << ", " << loc[1] << "\n";
-                        std::cout << "delta: " << del << "\n\n";
+                        // std::cout << "\n\ncurve number: " << i << " and sample point " << j << "\n";
+                        // std::cout << "uv -- loc: " << uv[0] << ", " << uv[1] << " -- " << loc[0] << ", " << loc[1] << "\n";
+                        // std::cout << "delta: " << del << "\n\n";
                     }
 
                     CPointSharedPtr newCPoint =
@@ -1051,7 +1053,7 @@ void Octree::CompileSourcePointList()
 
             m_lsources.push_back(linesource(x1, x2, data[6], data[7]));
 
-            std::cout << "testing source points: " << data[6] << " -- " << data[7] << "\n";
+            // std::cout << "testing source points: " << data[6] << " -- " << data[7] << "\n";
         }
 
         // this takes any existing sourcepoints within the influence range

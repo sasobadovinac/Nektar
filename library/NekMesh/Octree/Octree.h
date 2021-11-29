@@ -74,7 +74,8 @@ struct edgesource
     // returns the distance between a point and the CAD edge.
     NekDouble Length()
     {
-        return false;
+        Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
+        return (bds[1] - bds[0]);
     }
 };
 
