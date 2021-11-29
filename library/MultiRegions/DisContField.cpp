@@ -1115,15 +1115,12 @@ namespace Nektar
                         perid[cIt.first] = cIt.second; 
                     }
                     vComm->AllReduce(perid,LibUtilities::ReduceMax);
-                    // update all partitions which contains perComps
-                    if(perComps.size())
+                    // update all partitions 
+                    for (int i = 0; i < idmax; ++i)
                     {
-                        for (int i = 0; i < idmax; ++i)
+                        if(perid[i] > -1)
                         {
-                            if(perid[i] > -1)
-                            {
-                                perComps[i] = perid[i]; 
-                            }
+                            perComps[i] = perid[i]; 
                         }
                     }
 
