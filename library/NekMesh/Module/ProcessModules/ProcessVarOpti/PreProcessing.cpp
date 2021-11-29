@@ -49,6 +49,8 @@ namespace NekMesh
 map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
     int o)
 {
+    // build DerivUtil struct (Vandermonde, basisDeriv, pts/ptsStd + ...)
+
     // build Vandermonde information
     map<LibUtilities::ShapeType, DerivUtilSharedPtr> ret;
 
@@ -62,18 +64,13 @@ map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
 
     if (m_mesh->m_nummode + o <= 11)
     {
-        typeMap[LibUtilities::eTriangle] =
-            PTypes(LibUtilities::eNodalTriSPI, LibUtilities::eNodalTriElec);
-        typeMap[LibUtilities::eTetrahedron] =
-            PTypes(LibUtilities::eNodalTetSPI, LibUtilities::eNodalTetElec);
-        typeMap[LibUtilities::ePrism] =
-            PTypes(LibUtilities::eNodalPrismSPI, LibUtilities::eNodalPrismElec);
+        typeMap[LibUtilities::eTriangle] = PTypes(LibUtilities::eNodalTriSPI, LibUtilities::eNodalTriElec);
+        typeMap[LibUtilities::eTetrahedron] = PTypes(LibUtilities::eNodalTetSPI, LibUtilities::eNodalTetElec);
+        typeMap[LibUtilities::ePrism] = PTypes(LibUtilities::eNodalPrismSPI, LibUtilities::eNodalPrismElec);
     }
 
-    typeMap[LibUtilities::eQuadrilateral] =
-        PTypes(LibUtilities::eNodalQuadElec, LibUtilities::eNodalQuadElec);
-    // typeMap[LibUtilities::eHexahedron] =
-    //    PTypes(LibUtilities::eNodalHexElec, LibUtilities::eNodalHexElec);
+    typeMap[LibUtilities::eQuadrilateral] = PTypes(LibUtilities::eNodalQuadElec, LibUtilities::eNodalQuadElec);
+    // typeMap[LibUtilities::eHexahedron] = PTypes(LibUtilities::eNodalHexElec, LibUtilities::eNodalHexElec);
 
     for (auto &it : typeMap)
     {
@@ -98,10 +95,8 @@ map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
             }
             case 3:
             {
-                LibUtilities::PointsManager()[pkey1]->GetPoints(u1[0], u1[1],
-                                                                u1[2]);
-                LibUtilities::PointsManager()[pkey2]->GetPoints(u2[0], u2[1],
-                                                                u2[2]);
+                LibUtilities::PointsManager()[pkey1]->GetPoints(u1[0], u1[1], u1[2]);
+                LibUtilities::PointsManager()[pkey2]->GetPoints(u2[0], u2[1], u2[2]);
                 break;
             }
         }
@@ -113,8 +108,7 @@ map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
 
         if (it.first == LibUtilities::eTriangle)
         {
-            nodalUtil =
-                new LibUtilities::NodalUtilTriangle(order, u1[0], u1[1]);
+            nodalUtil = new LibUtilities::NodalUtilTriangle(order, u1[0], u1[1]);
         }
         else if (it.first == LibUtilities::eQuadrilateral)
         {
@@ -122,23 +116,19 @@ map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
         }
         else if (it.first == LibUtilities::eTetrahedron)
         {
-            nodalUtil = new LibUtilities::NodalUtilTetrahedron(order, u1[0],
-                                                               u1[1], u1[2]);
+            nodalUtil = new LibUtilities::NodalUtilTetrahedron(order, u1[0], u1[1], u1[2]);
         }
         else if (it.first == LibUtilities::ePrism)
         {
-            nodalUtil =
-                new LibUtilities::NodalUtilPrism(order, u1[0], u1[1], u1[2]);
+            nodalUtil =  new LibUtilities::NodalUtilPrism(order, u1[0], u1[1], u1[2]);
         }
         else if (it.first == LibUtilities::eHexahedron)
         {
-            nodalUtil =
-                new LibUtilities::NodalUtilHex(order, u1[0], u1[1], u1[2]);
+            nodalUtil = new LibUtilities::NodalUtilHex(order, u1[0], u1[1], u1[2]);
         }
         else
         {
-            ASSERTL0(false,
-                     "Unknown element type for derivative utility setup");
+            ASSERTL0(false, "Unknown element type for derivative utility setup");
         }
 
         NekMatrix<NekDouble> interp = *nodalUtil->GetInterpolationMatrix(u2);
@@ -148,13 +138,11 @@ map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
 
         for (int i = 0; i < pDim; ++i)
         {
-            der->VdmDStd[i] =
-                *nodalUtil->GetVandermondeForDeriv(i) * VandermondeI;
-            der->VdmD[i] = interp * der->VdmDStd[i];
+            der->VdmDStd[i] = *nodalUtil->GetVandermondeForDeriv(i) * VandermondeI;
+            der->VdmD[i]    = interp * der->VdmDStd[i];
         }
 
-        Array<OneD, NekDouble> qds =
-            LibUtilities::PointsManager()[pkey2]->GetW();
+        Array<OneD, NekDouble> qds = LibUtilities::PointsManager()[pkey2]->GetW();
         NekVector<NekDouble> quadWi(qds);
         der->quadW = quadWi;
 

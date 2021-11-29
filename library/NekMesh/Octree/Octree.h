@@ -47,6 +47,37 @@ namespace Nektar
 namespace NekMesh
 {
 
+// struct to assist in the creation of edgesources in the code
+struct edgesource
+{
+    CADCurveSharedPtr curve;
+    NekDouble R, delta;
+    edgesource(CADCurveSharedPtr c,
+               NekDouble r,
+               NekDouble d)
+        : curve(c), R(r), delta(d)
+          // I need to add the edge ID and/or edge object here so it can be used to test for distances
+    {
+    }
+
+    // tests if a point is within a specified range, r, from the edge
+    bool withinRange(Array<OneD, NekDouble> p)
+    {
+        if(p[0] == 0.)
+        {
+            return false;
+        }
+        else
+            return false;
+    }
+
+    // returns the distance between a point and the CAD edge.
+    NekDouble Length()
+    {
+        return false;
+    }
+};
+
 //struct to assist in the creation of linesources in the code
 struct linesource
 {
@@ -240,6 +271,7 @@ private:
 
     std::string m_refinement;
     std::vector<linesource> m_lsources;
+    std::vector<edgesource> m_esources;
 };
 typedef std::shared_ptr<Octree> OctreeSharedPtr;
 

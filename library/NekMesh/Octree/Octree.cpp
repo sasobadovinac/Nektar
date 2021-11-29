@@ -278,8 +278,7 @@ void Octree::SubDivide()
         VerifyNeigbours();
 
         // neeed to create a divide list, in the first list will be m_octants
-        // which need to
-        // subdivide based on curvature,
+        // which need to subdivide based on curvature;
         // in the next list will be ocants which need to subdivide to make sure
         // level criteria is statisified for the previous list and so on
         // the list will keep building till no more lists are required.

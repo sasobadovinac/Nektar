@@ -148,6 +148,7 @@ void ProcessVarOpti::Process()
 
     // m_mesh->m_nummode = m_config["nq"].as<int>();
 
+    // Whatdoes fd stand for?
     bool fd = false;
 
     if (m_config["nq"].beenSet)
@@ -185,20 +186,20 @@ void ProcessVarOpti::Process()
                      << " in 3D)." << endl;
     }
 
+    // initialise residual struct
     m_res      = std::shared_ptr<Residual>(new Residual);
     m_res->val = 1.0;
-    m_mesh->MakeOrder(m_mesh->m_nummode - 1,
-                      LibUtilities::eGaussLobattoLegendre,
-                      m_log);
+    m_mesh->MakeOrder(m_mesh->m_nummode - 1, LibUtilities::eGaussLobattoLegendre, m_log);
 
+    // What does analytics do?
     if (m_config["analytics"].beenSet)
     {
         Analytics();
+        std::cout << "finished Analytics()" << "\n";
         return;
     }
 
-    map<LibUtilities::ShapeType, DerivUtilSharedPtr> derivUtils =
-        BuildDerivUtil(intOrder);
+    map<LibUtilities::ShapeType, DerivUtilSharedPtr> derivUtils = BuildDerivUtil(intOrder);
 
     GetElementMap(intOrder, derivUtils);
 
@@ -310,8 +311,7 @@ void ProcessVarOpti::Process()
     int ctr = 0;
     Thread::ThreadMaster tms;
     tms.SetThreadingType("ThreadManagerBoost");
-    Thread::ThreadManagerSharedPtr tm =
-        tms.CreateInstance(Thread::ThreadMaster::SessionJob, nThreads);
+    Thread::ThreadManagerSharedPtr tm = tms.CreateInstance(Thread::ThreadMaster::SessionJob, nThreads);
 
     LibUtilities::Timer t;
     t.Start();
@@ -348,6 +348,7 @@ void ProcessVarOpti::Process()
             for (int j = 0; j < optiNodes[i].size(); j++)
             {
                 jobs[j] = optiNodes[i][j]->GetJob();
+                // node->Optimise();
             }
 
             tm->SetNumWorkers(0);
@@ -366,6 +367,7 @@ void ProcessVarOpti::Process()
         for (int i = 0; i < m_dataSet.size(); i++)
         {
             elJobs[i] = m_dataSet[i]->GetJob(update);
+            // el->Evaluate();
         }
 
         tm->SetNumWorkers(0);
