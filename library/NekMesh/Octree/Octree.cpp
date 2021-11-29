@@ -823,7 +823,13 @@ void Octree::CompileSourcePointList()
             m_log(VERBOSE).Progress(i, totalEnt, "  - Compiling source points");
 
             CADCurveSharedPtr curve = m_mesh->m_cad->GetCurve(i);
-            Array<OneD, NekDouble> bds = curve->GetBounds(); // Is this a bounding box around the curve?
+
+            if(i == 1)
+            {
+                m_esources.push_back(edgesource(curve,0.001,0.01));
+            }
+
+            Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
             //this works assuming the curves are not distorted
             int samples  = ceil(curve->Length(bds[0],bds[1]) / m_minDelta) * 2;
             samples = max(40, samples);
