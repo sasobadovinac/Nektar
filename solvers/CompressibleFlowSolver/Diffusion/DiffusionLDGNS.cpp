@@ -104,7 +104,7 @@ void DiffusionLDGNS::v_InitObject(
             {
                 LocalRegions::Expansion3DSharedPtr exp3D;
                 exp3D = pFields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
-                for (std::size_t i = 0; i < exp3D->GetNedges(); ++i)
+                for(std::size_t i = 0; i < exp3D->GetNtraces(); ++i)
                 {
                     h = std::min(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->
                         dist(*(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
@@ -116,7 +116,7 @@ void DiffusionLDGNS::v_InitObject(
             {
                 LocalRegions::Expansion2DSharedPtr exp2D;
                 exp2D = pFields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
-                for (std::size_t i = 0; i < exp2D->GetNedges(); ++i)
+                for(std::size_t i = 0; i < exp2D->GetNtraces(); ++i)
                 {
                     h = std::min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
                         dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
@@ -130,7 +130,6 @@ void DiffusionLDGNS::v_InitObject(
 
                 h = std::min(h, exp1D->GetGeom1D()->GetVertex(0)->
                     dist(*(exp1D->GetGeom1D()->GetVertex(1))));
-
             break;
             }
             default:
@@ -243,8 +242,6 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     std::size_t nScalars  = inarray.size();
     std::size_t nTracePts = fields[0]->GetTrace()->GetTotPoints();
 
-    Array<OneD, NekDouble>               tmp1{nCoeffs};
-    Array<OneD, Array<OneD, NekDouble> > tmp2{nConvectiveFields};
 
     TensorOfArray3D<NekDouble> derivativesO1{m_spaceDim};
 
@@ -258,7 +255,7 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         }
     }
 
-    DiffuseCalculateDerivative(fields, inarray, derivativesO1, pFwd, pBwd);
+    DiffuseCalcDerivative(fields, inarray, derivativesO1, pFwd, pBwd);
 
     // Initialisation viscous tensor
     m_viscTensor = TensorOfArray3D<NekDouble> {m_spaceDim};
@@ -285,25 +282,28 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     DiffuseTraceFlux(fields, inarray, derivativesO1, m_viscTensor, viscousFlux,
                         pFwd, pBwd);
 
+    Array<OneD, NekDouble>               tmpOut{nCoeffs};
+    Array<OneD, Array<OneD, NekDouble>>  tmpIn{nDim};
+
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
-        tmp2[i] = Array<OneD, NekDouble>{nCoeffs, 0.0};
-
+        // Temporary fix to call collection op
+        // we can reorder m_viscTensor later
         for (std::size_t j = 0; j < nDim; ++j)
         {
-            fields[i]->IProductWRTDerivBase(j, m_viscTensor[j][i], tmp1);
-            Vmath::Vadd(nCoeffs, tmp1, 1, tmp2[i], 1, tmp2[i], 1);
+            tmpIn[j] = m_viscTensor[j][i];
         }
+        fields[i]->IProductWRTDerivBase(tmpIn, tmpOut);
 
         // Evaulate  <\phi, \hat{F}\cdot n> - outarray[i]
-        Vmath::Neg                      (nCoeffs, tmp2[i], 1);
-        fields[i]->AddTraceIntegral     (viscousFlux[i], tmp2[i]);
+        Vmath::Neg                      (nCoeffs, tmpOut, 1);
+        fields[i]->AddTraceIntegral     (viscousFlux[i], tmpOut);
         fields[i]->SetPhysState         (false);
-        fields[i]->MultiplyByElmtInvMass(tmp2[i], outarray[i]);
+        fields[i]->MultiplyByElmtInvMass(tmpOut, outarray[i]);
     }
 }
 
-void DiffusionLDGNS::v_DiffuseCalculateDerivative(
+void DiffusionLDGNS::v_DiffuseCalcDerivative(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble> >        &inarray,
     TensorOfArray3D<NekDouble>                        &qfields,
@@ -814,5 +814,23 @@ void DiffusionLDGNS::ApplyBCsO2(
             }
         }
     }
+}
+
+/**
+ * @brief Compute primary variables
+ *
+ */
+void DiffusionLDGNS::v_GetPrimVar(
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>>         &inarray,
+            Array<OneD, Array<OneD, NekDouble>>         &primVar)
+{
+    int nDim = fields[0]->GetCoordim(0);
+    int nPts = fields[0]->GetTotPoints();
+    for(int i = 0; i < nDim; ++i)
+        {
+            primVar[i] = Array<OneD, NekDouble>(nPts, 0.0);
+            primVar[i] = inarray[i];
+        }
 }
 }//end of namespace Nektar

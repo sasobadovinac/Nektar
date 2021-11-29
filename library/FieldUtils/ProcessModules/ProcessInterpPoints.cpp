@@ -96,6 +96,8 @@ ProcessInterpPoints::ProcessInterpPoints(FieldSharedPtr f) : ProcessModule(f)
     m_config["cp"] =
         ConfigOption(false, "NotSet",
                      "Parameters p0 and q to determine pressure coefficients");
+    m_config["realmodetoimag"] = ConfigOption(
+        false, "NotSet", "Take fields as sin mode");
 }
 
 ProcessInterpPoints::~ProcessInterpPoints()
@@ -104,6 +106,8 @@ ProcessInterpPoints::~ProcessInterpPoints()
 
 void ProcessInterpPoints::Process(po::variables_map &vm)
 {
+    m_f->SetUpExp(vm);
+
     CreateFieldPts(vm);
 
     FieldSharedPtr fromField = std::shared_ptr<Field>(new Field());
@@ -118,8 +122,8 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
             LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0));
 
     // Set up range based on min and max of local parallel partition
-    SpatialDomains::DomainRangeShPtr rng =
-        MemoryManager<SpatialDomains::DomainRange>::AllocateSharedPtr();
+    LibUtilities::DomainRangeShPtr rng =
+        MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
     
     int coordim = m_f->m_fieldPts->GetDim();
     int npts    = m_f->m_fieldPts->GetNpoints();
@@ -168,8 +172,8 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
         SpatialDomains::MeshGraph::Read(fromField->m_session, rng);
 
     // Read in local from field partitions
-    const SpatialDomains::ExpansionMap &expansions =
-        fromField->m_graph->GetExpansions();
+    const SpatialDomains::ExpansionInfoMap &expansions =
+        fromField->m_graph->GetExpansionInfo();
     Array<OneD, int> ElementGIDs(expansions.size());
 
     int i = 0;
@@ -186,21 +190,48 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
         fromfld, fromField->m_fielddef, fromField->m_data,
         LibUtilities::NullFieldMetaDataMap, ElementGIDs);
     int NumHomogeneousDir = fromField->m_fielddef[0]->m_numHomogeneousDir;
-    
+    for (i=0; i<fromField->m_fielddef.size(); ++i)
+    {
+        int d1 = fromField->m_fielddef[i]->m_basis.size();
+        d1 -= 1;
+        if (d1 >= 0 &&
+            (fromField->m_fielddef[i]->m_basis[d1] ==
+                LibUtilities::eFourierHalfModeRe ||
+             fromField->m_fielddef[i]->m_basis[d1] ==
+                LibUtilities::eFourierHalfModeIm) )
+        {
+            fromField->m_fielddef[i]->m_homogeneousZIDs[0] += 2;
+            fromField->m_fielddef[i]->m_numModes[d1] = 4;
+            fromField->m_fielddef[i]->m_basis[d1] = LibUtilities::eFourier;
+        }
+    }
+
     //----------------------------------------------
     // Set up Expansion information to use mode order from field
-    fromField->m_graph->SetExpansions(fromField->m_fielddef);
+    fromField->m_graph->SetExpansionInfo(fromField->m_fielddef);
     int nfields = fromField->m_fielddef[0]->m_fields.size();
     fromField->m_exp.resize(nfields);
     fromField->m_exp[0] = fromField->SetUpFirstExpList(NumHomogeneousDir, true);
     m_f->m_exp.resize(nfields);
-    
+
     // declare auxiliary fields.
     for (i = 1; i < nfields; ++i)
     {
         fromField->m_exp[i] = fromField->AppendExpList(NumHomogeneousDir);
     }
     // load field into expansion in fromfield.
+    set<int> sinmode;
+    if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
+    {
+        vector<int> value;
+        ASSERTL0(ParseUtils::GenerateVector(
+            m_config["realmodetoimag"].as<string>(), value),
+            "Failed to interpret realmodetoimag string");
+        for (int j: value)
+        {
+            sinmode.insert(j);
+        }
+    }
     for (int j = 0; j < nfields; ++j)
     {
         for (i = 0; i < fromField->m_fielddef.size(); i++)
@@ -209,6 +240,19 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
                 fromField->m_fielddef[i], fromField->m_data[i],
                 fromField->m_fielddef[0]->m_fields[j],
                 fromField->m_exp[j]->UpdateCoeffs());
+        }
+        if (NumHomogeneousDir == 1)
+        {
+            fromField->m_exp[j]->SetWaveSpace(true);
+            if (sinmode.count(j))
+            {
+                int Ncoeff = fromField->m_exp[j]->GetPlane(2)->GetNcoeffs();
+                Vmath::Smul(Ncoeff, -1.,
+                    fromField->m_exp[j]->GetPlane(2)->GetCoeffs()   , 1,
+                    fromField->m_exp[j]->GetPlane(3)->UpdateCoeffs(), 1);
+                Vmath::Zero(Ncoeff,
+                    fromField->m_exp[j]->GetPlane(2)->UpdateCoeffs(), 1);
+            }
         }
         fromField->m_exp[j]->BwdTrans(fromField->m_exp[j]->GetCoeffs(),
                                       fromField->m_exp[j]->UpdatePhys());
@@ -221,46 +265,6 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     NekDouble clamp_low = m_config["clamptolowervalue"].as<NekDouble>();
     NekDouble clamp_up  = m_config["clamptouppervalue"].as<NekDouble>();
     NekDouble def_value = m_config["defaultvalue"].as<NekDouble>();
-    
-    // If 3DH1D must ensure that z-coordinate of all points corresponds to a
-    // Fourier plane. Therefore we reset all points that lie outside
-    // of a plane to the nearest plane. This means care must be taken when
-    // analysing the points after interpolation. This should works after
-    // having set up rng as the bounding box doesn't seem to affect the 3rd
-    // direction in 3DH1D cases.
-    if (NumHomogeneousDir == 1 && coordim == 3)
-    {
-        int nPlanes = fromField->m_exp[0]->GetHomogeneousBasis()->GetZ().size();
-        NekDouble lHom = fromField->m_exp[0]->GetHomoLen();
-        for (int pt = 0; pt < npts; ++pt)
-        {
-            int targetPlane =
-                std::round((m_f->m_fieldPts->GetPts(2)[pt] * nPlanes) / lHom);
-            if (targetPlane == nPlanes) // Reset to plane 0
-            {
-                targetPlane = 0;
-            }
-            NekDouble targetZ = (fromField->m_exp[0]
-                                     ->GetHomogeneousBasis()
-                                     ->GetZ())[targetPlane];
-            targetZ           = (targetZ + 1) * lHom / 2;
-
-            // If point is out of plane, reset z-location to closest plane
-            if (fabs(m_f->m_fieldPts->GetPts(2)[pt] - targetZ) > 
-                NekConstants::kVertexTheSameDouble)
-            {
-                cout << "Resetting point from (x,y,z) = ("
-                        << m_f->m_fieldPts->GetPts(0)[pt] << ", "
-                        << m_f->m_fieldPts->GetPts(1)[pt] << ", "
-                        << m_f->m_fieldPts->GetPts(2)[pt] << ") to (x,y,z) = ("
-                        << m_f->m_fieldPts->GetPts(0)[pt] << ", "
-                        << m_f->m_fieldPts->GetPts(1)[pt] << ", " << targetZ
-                        << ")" << endl;
-            
-                m_f->m_fieldPts->GetPts(2)[pt] = targetZ;
-            }
-        }
-    }
 
     InterpolateFieldToPts(fromField->m_exp, m_f->m_fieldPts, clamp_low,
                           clamp_up, def_value);

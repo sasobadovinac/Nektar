@@ -125,7 +125,6 @@ namespace Nektar
         /// Auxiliary variables
         LibUtilities::NektarFFTSharedPtr m_FFT;
         LibUtilities::NektarFFTSharedPtr m_FFTCoeffs;
-
         LibUtilities::NektarFFTSharedPtr m_FFTD;
 
         // Interface for 'v_SolveUnsteadyStokesSystem'
@@ -204,4 +203,3 @@ namespace Nektar
 } // end of namespace
 
 #endif // SMOOTHEDPROFILEMETHOD_H
- 

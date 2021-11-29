@@ -111,7 +111,7 @@ protected:
 
     explicit CommMpi(MPI_Comm pComm);
 
-    virtual void v_Finalise() final;
+    virtual void v_Finalise() override;
     virtual int v_GetRank() final;
     virtual void v_Block() final;
     virtual double v_Wtime() final;
@@ -179,6 +179,9 @@ protected:
 
     virtual void v_SplitComm(int pRows, int pColumns) override;
     virtual CommSharedPtr v_CommCreateIf(int flag) final;
+
+    virtual std::pair<CommSharedPtr, CommSharedPtr> v_SplitCommNode() final;
+
 };
 } // namespace LibUtilities
 } // namespace Nektar

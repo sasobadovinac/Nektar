@@ -67,11 +67,11 @@ public:
         return MemoryManager<MeshGraphHDF5>::AllocateSharedPtr();
     }
 
-    static std::string className;
+    static std::string className, cmdSwitch;
 
 protected:
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        DomainRangeShPtr rng,
+        LibUtilities::DomainRangeShPtr rng,
         bool             fillGraph);
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session);

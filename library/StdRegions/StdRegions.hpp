@@ -122,10 +122,14 @@ namespace Nektar
             eNBasisTrans,
             eInvNBasisTrans,
             eBwdTrans,
+            eBwdMat,
             eIProductWRTBase,
             eIProductWRTDerivBase0,
             eIProductWRTDerivBase1,
             eIProductWRTDerivBase2,
+            eDerivBase0,
+            eDerivBase1,
+            eDerivBase2,
             eHelmholtz,
             eHybridDGHelmholtz,
             eInvHybridDGHelmholtz,
@@ -171,10 +175,14 @@ namespace Nektar
             "NBasisTrans",
             "InvNBasisTrans",
             "BwdTrans",
+            "BwdMat",
             "IProductWRTBase",
             "IProductWRTDerivBase0",
             "IProductWRTDerivBase1",
             "IProductWRTDerivBase2",
+            "DerivBase0",
+            "DerivBase1",
+            "DerivBase2",
             "Helmholtz",
             "HybridDGHelmholz",
             "InvHybridDGHelmholtz",
@@ -267,6 +275,12 @@ namespace Nektar
         enum ConstFactorType
             {
                 eFactorLambda,
+                eFactorCoeffD00,
+                eFactorCoeffD11,
+                eFactorCoeffD22,
+                eFactorCoeffD01,
+                eFactorCoeffD02,
+                eFactorCoeffD12,
                 eFactorTau,
                 eFactorTime,
                 eFactorSVVCutoffRatio,
@@ -281,6 +295,12 @@ namespace Nektar
 
         const char* const ConstFactorTypeMap[] = {
             "FactorLambda",
+            "FactorCoeffD00",
+            "FactorCoeffD11",
+            "FactorCoeffD22",
+            "FactorCoeffD01",
+            "FactorCoeffD02",
+            "FactorCoeffD12",
             "FactorTau",
             "FactorTime",
             "FactorSVVCutoffRatio",
@@ -293,27 +313,11 @@ namespace Nektar
         };
         typedef std::map<ConstFactorType, NekDouble> ConstFactorMap;
         static ConstFactorMap NullConstFactorMap;
-
-        enum IndexMapType
-            {
-                eEdgeToElement,
-                eFaceToElement,
-                eEdgeInterior,
-                eFaceInterior,
-                eBoundary,
-                eVertex
-		};
         
-        const char* const IndexMapTypeMap[] =
-            {
-                "EdgeToElement",
-                "FaceToElement",
-                "EdgeInterior",
-                "FaceInterior",
-                "Boundary",
-                "Vertex"
-            };
-	
+        // FactorMap
+        typedef ConstFactorMap FactorMap;
+        static FactorMap NullFactorMap;
+
         enum Orientation
         {
             eNoOrientation,

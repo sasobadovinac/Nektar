@@ -35,20 +35,16 @@
 
 #include <IncNavierStokesSolver/EquationSystems/SmoothedProfileMethod.h>
 #include <IncNavierStokesSolver/Filters/FilterAeroForcesSPM.h>
-#include <MultiRegions/ContField1D.h>
-#include <MultiRegions/ContField2D.h>
-#include <MultiRegions/ContField3D.h>
+#include <MultiRegions/ContField.h>
 #include <MultiRegions/ContField3DHomogeneous1D.h>
 #include <MultiRegions/ContField3DHomogeneous2D.h>
 
-#include <iostream>
-#include <fstream>
-
 using namespace std;
-# define my_sizeof(type) ((char *)(&type+1)-(char*)(&type))
+
 namespace Nektar
 {
     using namespace MultiRegions;
+
     string SmoothedProfileMethod::className =
         SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
             "SmoothedProfileMethod",
@@ -95,22 +91,22 @@ namespace Nektar
             case 1:
                 if (m_projectionType == eGalerkin)
                 {
-                    SetUpExpansions<ContField1D>(nvel);
+                    SetUpExpansions<ContField>(nvel);
                 }
                 else if (m_projectionType == eDiscontinuous)
                 {
-                    SetUpExpansions<DisContField1D>(nvel);
+                    SetUpExpansions<DisContField>(nvel);
                 }
                 break;
 
             case 2:
                 if (m_projectionType == eGalerkin)
                 {
-                    SetUpExpansions<ContField2D>(nvel);
+                    SetUpExpansions<ContField>(nvel);
                 }
                 else if (m_projectionType == eDiscontinuous)
                 {
-                    SetUpExpansions<DisContField2D>(nvel);
+                    SetUpExpansions<DisContField>(nvel);
                 }
                 break;
 
@@ -119,7 +115,7 @@ namespace Nektar
                 {
                     if (m_HomogeneousType == EquationSystem::eNotHomogeneous)
                     {
-                        SetUpExpansions<ContField3D>(nvel);
+                        SetUpExpansions<ContField>(nvel);
                     }
                     else if (m_HomogeneousType ==
                              EquationSystem::eHomogeneous1D)
@@ -138,7 +134,11 @@ namespace Nektar
                 {
                     if (m_HomogeneousType == EquationSystem::eNotHomogeneous)
                     {
+<<<<<<< HEAD
                         SetUpExpansions<DisContField3D>(nvel);
+=======
+                        SetUpExpansions<DisContField>(nvel);
+>>>>>>> master
                     }
                     else if (m_HomogeneousType ==
                              EquationSystem::eHomogeneous1D)
@@ -182,11 +182,27 @@ namespace Nektar
         // Make sure that m_phi and m_up are defined
         UpdatePhiUp(0.0);
 
+        // Get the time integration scheme.
+        LibUtilities::TimeIntScheme timeInt;
+        if (m_session->DefinesTimeIntScheme())
+        {
+            timeInt = m_session->GetTimeIntScheme();
+        }
+        else
+        {
+            timeInt.method = m_session->GetSolverInfo("TimeIntegrationMethod");
+            timeInt.order = timeInt.method.back() - '0';
+
+	    // Remove everything past the IMEX.
+	    timeInt.method = timeInt.method.substr(0,4);
+        }
+
         // Select 'm_gamma0' depending on IMEX order
-        string intType = m_session->GetSolverInfo("TimeIntegrationMethod");
-        ASSERTL0(boost::iequals(intType.substr(0, 9), "IMEXOrder"),
-                 "TimeIntegrationMethod must be 'IMEXOrder1' to '4'.")
-        switch (intType.back()-'0')
+        ASSERTL0(boost::iequals(timeInt.method, "IMEX") &&
+                 1 <= timeInt.order && timeInt.order <= 4,
+                 "The TimeIntegrationMethod scheme must be IMEX with order '1' to '4'.")
+
+        switch (timeInt.order)
         {
         case 1:
             m_gamma0 = 1.0;
@@ -249,7 +265,7 @@ namespace Nektar
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble time,
                     const NekDouble a_iixDt)
-    {   
+    {
         VelocityCorrectionScheme::SolveUnsteadyStokesSystem(inarray,
                                                             outarray,
                                                             time,
@@ -285,7 +301,6 @@ namespace Nektar
 
         // Add presure to outflow bc if using convective like BCs
         m_extrapolation->AddPressureToOutflowBCs(m_kinvis);
-
     }
 
     /**
@@ -529,7 +544,6 @@ namespace Nektar
               
                
             }            
-        
         }
     }
 
@@ -652,7 +666,7 @@ namespace Nektar
     }
 
     void SmoothedProfileMethod::ReadPhi()
-    {   
+    {
         // Function evaluator for Phi and Up
         m_phiEvaluator = GetFunction("ShapeFunction");
 

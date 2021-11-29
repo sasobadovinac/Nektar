@@ -69,7 +69,7 @@ ProcessMultiShear::~ProcessMultiShear()
 
 void ProcessMultiShear::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -148,7 +148,7 @@ void ProcessMultiShear::Process(po::variables_map &vm)
         }
 
         // Set up Expansion information to use mode order from field
-        fromField[i]->m_graph->SetExpansions(fromField[i]->m_fielddef);
+        fromField[i]->m_graph->SetExpansionInfo(fromField[i]->m_fielddef);
 
         // Set up expansions, and extract data.
         fromField[i]->m_exp.resize(nfields);

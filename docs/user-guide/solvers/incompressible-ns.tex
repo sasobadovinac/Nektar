@@ -553,13 +553,17 @@ must be set to \inltt{SmoothedProfileMethod}, while the immersed boundaries are
 defined in a function called \inltt{ShapeFunction}. Besides, the property
 \inltt{ForceBoundary} can be set to \inltt{True} if equation
 \eqref{eq:SPM:compressiblePressure} is preferred over
-\eqref{eq:SPM:incompressiblePressure}. Thus, the \inltt{SOLVERINFO} section
-could be similar to:
+\eqref{eq:SPM:incompressiblePressure}. Thus, the \inltt{TIMEINTEGRATIONSCHEME}
+and \inltt{SOLVERINFO} section could be similar to:
 
 \begin{lstlisting}[style=XMLStyle]
+<TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 3 </ORDER>
+</TIMEINTEGRATIONSCHEME>
+
 <SOLVERINFO>
     <I PROPERTY="SolverType"            VALUE="SmoothedProfileMethod" />
-    <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder3"            />
     ...
     <I PROPERTY="ForceBoundary"         VALUE="True"                  />
 </SOLVERINFO>
@@ -639,6 +643,12 @@ in a splitting scheme. Further, the solution of the full coupled
 velocity system allows the introduction of a spatially varying
 viscosity, which arise for non-Newtonian flows, with only minor
 modifications.
+
+\begin{notebox}
+  The coupled solver is only supported for two-dimensional or quasi-3D problems,
+  and only using a direct solver (e.g. \inltt{DirectStaticCond}) which prevents
+  its use in parallel.
+\end{notebox}
 
 We consider the weak form of the Stokes problem for the velocity field
 $\boldsymbol{u}=[u,v]^{T}$ and the pressure field $p$:
@@ -937,7 +947,7 @@ Possible values are:
 Velocity Correction Scheme (VCS) & \texttt{VelocityCorrectionScheme} & 2D, Quasi-3D, 3D & CG, CG-DG\\
 Smoothed Profile Method (SPM)    & \texttt{SmoothedProfileMethod}    & 2D, Quasi-3D, 3D & CG, CG-DG\\
 VCS with weak pressure & \texttt{VCSWeakPressure} & 2D, Quasi-3D, 3D & CG, CG-DG\\
-Direct solver & \texttt{CoupledLinearisedNS} & 2D, Quasi-3D, 3D &CG\\
+Direct solver & \texttt{CoupledLinearisedNS} & 2D, Quasi-3D &CG\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -975,9 +985,12 @@ Mixed CG and DG (CG-DG) & \texttt{Mixed\_CG\_Discontinuous} & 2D,3D & just UNS &
 \end{center}
 
 
-\item \inltt{TimeIntegrationMethod}:  sets the time integration method as
+\item \inltt{TimeIntegrationScheme}:  sets the time integration as
 \begin{lstlisting}[style=XMLStyle]
-<I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2"/>
+<TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 2 </ORDER>
+</TIMEINTEGRATIONSCHEME>
 \end{lstlisting}
 
 Possible values are
@@ -985,14 +998,14 @@ Possible values are
 \footnotesize
 \begin{tabular}{lcccccc}
 \toprule
-{Time-Integration Method} & \texttt{TimeIntegrationMethod} &{Dimensions}&{Equations}&Projections\\
+{Time-Integration Scheme} & \texttt{Method} & \texttt{Order} &{Dimensions}&{Equations}&Projections\\
 \midrule
-IMEX Order 1 & \texttt{IMEXOrder1} & all & US, UNS &  CG \\
-IMEX Order 2 & \texttt{IMEXOrder2} & all & US, UNS &  CG \\
-IMEX Order 3 & \texttt{IMEXOrder3} & all & US, UNS & CG \\
-Backward Euler & \texttt{BackwardEuler} & all & US, UNS &  CG-DG \\
-BDF Order 1 & \texttt{BDFImplicitOrder1} & all & US, UNS & CG-DG \\
-BDF Order 2 & \texttt{BDFImplicitOrder2} & all & US, UNS & CG-DG \\
+IMEX Order 1 & \texttt{IMEX} & \texttt{ 1} & all & US, UNS & CG \\
+IMEX Order 2 & \texttt{IMEX} & \texttt{ 2} & all & US, UNS & CG \\
+IMEX Order 3 & \texttt{IMEX} & \texttt{ 3} & all & US, UNS & CG \\
+Backward Euler & \texttt{BackwardEuler} & \texttt{ 1} & all & US, UNS & CG-DG \\
+BDF Order 1 & \texttt{BDFImplicit} & \texttt{ 1} & all & US, UNS & CG-DG \\
+BDF Order 2 & \texttt{BDFImplicit} & \texttt{ 2} & all & US, UNS & CG-DG \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1020,18 +1033,18 @@ Possible values are
 \footnotesize
 \begin{tabular}{lc}
 \toprule
-{Time-Integration Method} & \texttt{SubStepIntScheme} \\
+{Time-Integration Scheme} & \texttt{SubStepIntScheme} \\
 \midrule
-Forward Euler & \texttt{ForwardEuler}  \\
-RK 2          & \texttt{RungeKutta2\_ImprovedEuler}  \\
+ForwardEuler, Order 1 & \texttt{ForwardEuler, Order 1}  \\
+RungeKutta, Order 2 & \texttt{RungeKutta, Variant SSP, Order 2}  \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 This option is useful if you wish to use an overall scheme that is
-first order accurate for example with
-TimeIntegrationMethod as BDFImplicitOrder1 but using a second order
-RungeKutta2\_ImprovedEuler for greater stability in the substep.
+first order accurate for example with TimeIntegrationScheme as
+BDFImplicit Order 1 but using a second order RungeKutta, Variant SSP,
+Order 2 for greater stability in the substep.
 
 \item \inltt{GlobalSysSoln}: sets the approach we use to solve the the linear
 systems of the type $Ax=b$ appearing in the solution steps, such as the Poisson
@@ -1230,16 +1243,27 @@ This force type allows the user to solve the interaction system of an incompress
 </FORCE>
 \end{lstlisting}
 
-Available options of the motion type for the moving body include free, constrained and forced vibrations, which can be specified in the \inltt{SOLVERINFO} section. The free type of motion allows the body to move in both streamwise and crossflow directions, while the constrained type limits the motion only in the crossflow direction. For the forced type, the vibration profiles of the body should be specified as a given function or read from input file in \inltt{MovingBody} section. For example:
+Available options of the motion type for the moving body include free,
+constrained and forced vibrations, which can be specified in the
+\inltt{TIMEINTEGRATIONSCHEME} and \inltt{SOLVERINFO} section. The free
+type of motion allows the body to move in both streamwise and
+crossflow directions, while the constrained type limits the motion
+only in the crossflow direction. For the forced type, the vibration
+profiles of the body should be specified as a given function or read
+from input file in \inltt{MovingBody} section. For example:
 
 \begin{lstlisting}[style=XMLStyle]
+<TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 2 </ORDER>
+</TIMEINTEGRATIONSCHEME>
+
 <SOLVERINFO>
     <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />
     <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
     <I PROPERTY="EvolutionOperator"     VALUE="SkewSymmetric"            />
     <I PROPERTY="Projection"            VALUE="Galerkin"                 />
     <I PROPERTY="GlobalSysSoln"         VALUE="DirectStaticCond"         />
-    <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2"               />
     <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                       />
     <I PROPERTY="USEFFT"                VALUE="FFTW"                     />
     <I PROPERTY="VibrationType"         VALUE="FREE"                     />
@@ -1319,6 +1343,7 @@ available for this solver.
   \item \inltt{Aerodynamic forces} (section \ref{filters:AeroForces})
   \item \inltt{Aerodynamic forces SPM} (section \ref{filters:sub:ForcesSPM})
   \item \inltt{Kinetic energy and enstrophy} (section \ref{filters:Energy})
+  \item \inltt{Mean value} (section \ref{filters:MeanValue})
   \item \inltt{Modal energy} (section \ref{filters:ModalEnergy})
   \item \inltt{Moving body} (section \ref{filters:MovingBody})
   \item \inltt{Reynolds stresses} (section \ref{filters:ReynoldsStresses})
@@ -1407,8 +1432,11 @@ The following parameters can be specified in the \texttt{PARAMETERS} section of 
 \item \inltt{imagShift}: provide an imaginary shift to the direct solver eigenvalue problem by the specified value to improve convergence. Can be used with: \inltt{Arpack} only.
 \item \inltt{LZ}:  sets the length in the spanswise direction $L_z$. Can be used with \inltt{Homogeneous} set to \inltt{1D}. Default value: 1.
 \item \inltt{HomModesZ}: sets the number of planes in the homogeneous directions. Can be used with \inltt{Homogeneous} set to \inltt{1D} and \inltt{ModeType} set to \inltt{MultipleModes}.
-\item \inltt{N\_slices}: sets the number of temporal slices for Floquet stability analysis.
-\item \inltt{period}: sets the periodicity of the base flow.
+\item \inltt{N\_start}: sets the start number of temporal slices for Floquet stability analysis. Default value: 0.
+\item \inltt{N\_skip}: sets the number skip of temporal slices for Floquet stability analysis. Default value: 1.
+\item \inltt{N\_slices}: sets the number of temporal slices for Floquet stability analysis. Files sequence \inltt{N\_start, N\_start + N\_skip, ..., N\_start + N\_skip * (N\_slices-1)} will be loaded.
+\item \inltt{BaseFlow\_interporder}: sets the interpolation order of temporal slices for Floquet stability analysis. If \inltt{BaseFlow\_interporder} < 2, the baseflow is taken as periodic and trigonometric functions are used for interpolation. It should be noted that the file \inltt{N\_start + N\_skip * N\_slices} is at t = \inltt{period} and should not be loaded for the periodic case. If \inltt{BaseFlow\_interporder} >= 2, the flow is taken as aperiodic and Lagrange interpolation is used. In this case, the file \inltt{N\_start + N\_skip * (N\_slices-1)} is at  t = \inltt{period} and should be loaded. Default value: 0.
+\item \inltt{period}: sets the time span (if \inltt{BaseFlow\_interporder} >= 2) or period (if \inltt{BaseFlow\_interporder} < 2) of the base flow. Default value: 1.
 \end{itemize}
 
 \subsection{Functions}
@@ -1452,7 +1480,7 @@ specific way.
 
 \subsubsection{Solver Info}
 
-The definition of \inltt{Eqtype}, \inltt{TimeIntegrationMethod} and
+The definition of \inltt{Eqtype}, \inltt{TimeIntegrationScheme} and
 \inltt{Projection} is similar as what is explained in
 \ref{SectionIncNS_SolverInfo_Stab}. The use of the steady-state solver
 is enforced through the definition of the \inltt{Driver} which has to be
@@ -1864,18 +1892,23 @@ definition.
 </EXPANSIONS>
 \end{lstlisting}
 
-We next specify the solver information for our problem. In particular, we select
-the velocity correction scheme formulation, using a continuous Galerkin
-projection. For this scheme, an implicit-explicit ime-integration scheme must be
-used and we choose one of second order.
+We next specify the time integration scheme and solver information for
+our problem. In particular, we select the velocity correction scheme
+formulation, using a continuous Galerkin projection. For this scheme,
+an implicit-explicit time-integration scheme must be used and we choose
+one of second order.
 \begin{lstlisting}[style=XMLStyle]
-<SOLVERINFO>
+ <TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 2 </ORDER>
+ </TIMEINTEGRATIONSCHEME>
+
+ <SOLVERINFO>
     <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />
     <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
     <I PROPERTY="AdvectionForm"         VALUE="Convective"               />
     <I PROPERTY="Projection"            VALUE="Galerkin"                 />
-    <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2"               />
-</SOLVERINFO>
+ </SOLVERINFO>
 \end{lstlisting}
 
 The key parameters are listed below. Since the problem is unsteady we prescribe
@@ -2579,6 +2612,14 @@ In order to capture the physics of the flow in the boundary layer, a thin layer 
 </EXPANSIONS>
 \end{lstlisting}
 
+\subsubsection{Time Integration Scheme information:~}
+\begin{lstlisting}[style=XMLStyle]
+<TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 1 </ORDER>
+</TIMEINTEGRATIONSCHEME>
+\end{lstlisting}
+
 \subsubsection{Solver information:~}
 \begin{lstlisting}[style=XMLStyle]
 <SOLVERINFO>
@@ -2586,7 +2627,6 @@ In order to capture the physics of the flow in the boundary layer, a thin layer 
     <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />
     <I PROPERTY="AdvectionForm"         VALUE="Convective"               />
     <I PROPERTY="Projection"            VALUE="Galerkin"                 />
-    <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1"               />
 </SOLVERINFO>
 \end{lstlisting}
 
@@ -2817,6 +2857,18 @@ Finally, collections of elements are listed in the \texttt{COMPOSITE} section an
 </EXPANSIONS>
   \end{lstlisting}
 
+  \subsubsection{Time Integration Scheme}
+
+For this scheme, an implicit-explicit time-integration scheme is used
+and we choose one of first order.
+
+    \begin{lstlisting}[style=XMLStyle]
+  <TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 1 </ORDER>
+  </TIMEINTEGRATIONSCHEME>
+      \end{lstlisting}
+    
   \subsubsection{Solver Info}
 
   In this example the \texttt{EvolutionOperator} must be \texttt{Direct} to consider the linearised Navier-Stokes equations and the \texttt{Driver} was set up to \texttt{ModifiedArnoldi} for the solution of the eigenproblem.
@@ -2827,8 +2879,7 @@ Finally, collections of elements are listed in the \texttt{COMPOSITE} section an
     <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />
     <I PROPERTY="EvolutionOperator"     VALUE="Direct"                   />
     <I PROPERTY="Projection"            VALUE="Galerkin"                 />
-    <I PROPERTY="Driver"                VALUE= "ModifiedArnoldi"         />
-    <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1"               />
+    <I PROPERTY="Driver"                VALUE="ModifiedArnoldi"         />
   </SOLVERINFO>
       \end{lstlisting}
 
@@ -2895,7 +2946,30 @@ We need to set up the base flow that can be specified as a function \texttt{Base
         </FUNCTION>
                          \end{lstlisting}
 
+\subsubsection{Mask region}
+If the \texttt{ModifiedArnoldi} driver is used, a subregion of the computational domain can be used to calculate the eigenvalues and eigenvectors by defining an unmask function. This can be used to improve the accuracy and to accelerate convergence if the computational domain is large and contains very coarse elements.
 
+\begin{lstlisting}[style=XMLStyle]
+<FUNCTION NAME="Unmask0">
+    <E VAR="C0" VALUE=" x" />
+    <E VAR="C1" VALUE="-x+1." />
+    <E VAR="C2" VALUE=" y+1.5" />
+    <E VAR="C3" VALUE="-y+1.5" />
+</FUNCTION>
+
+<FUNCTION NAME="Unmask1">
+    <E VAR="C0" VALUE=" x" />
+    <E VAR="C1" VALUE="-x+1." />
+    <E VAR="C2" VALUE=" y+1.5" />
+    <E VAR="C3" VALUE="-y+1.5" />
+</FUNCTION>
+
+...
+\end{lstlisting}
+
+Each function \texttt{Unmask0} selects elements whose center satisfies C0>0 and C1>0 and C2>0, and so on. More than one unmasked function can be defined, and the finally selected region is the union of all unmasked regions.
+
+If the unmask function is defined, both the unmasked eigenvector and masked eigenvector (with \_masked) will be output.
 
 \subsubsection{Usage}
 
@@ -2942,18 +3016,29 @@ The stability simulation takes about 250 iterations to converge and the dominant
 
  The geometry and mesh are the same ones used for the direct stability analysis in the previous example.
 
+  \subsubsection{Time Integration Scheme}
+
+For this scheme, an implicit-explicit time-integration scheme is used
+and we choose one of first order.
+
+    \begin{lstlisting}[style=XMLStyle]
+  <TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 1 </ORDER>
+  </TIMEINTEGRATIONSCHEME>
+      \end{lstlisting}
  \subsubsection{Solver Info}
 
  This sections defines the problem solved. In this example the \texttt{EvolutionOperator} must be \texttt{Adjoint} to consider the adjoint Navier-Stokes equations and the \texttt{Driver} was set up to \texttt{ModifiedArnoldi} for the solution of the eigenproblem.
 
     \begin{lstlisting}[style=XMLStyle]
+
 <SOLVERINFO>
       <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
       <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />
       <I PROPERTY="EvolutionOperator"     VALUE="Adjoint"                  />
       <I PROPERTY="Projection"            VALUE="Galerkin"                 />
       <I PROPERTY="Driver"                VALUE= "ModifiedArnoldi"         />
-      <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1"               />
 </SOLVERINFO>
   \end{subequations}
 
@@ -3118,7 +3203,19 @@ For this example we will use a 6th order polynomial, i.e. $P=7$:
 </EXPANSIONS>
         \end{lstlisting}
 
-\subsubsection{Solver Information}
+\subsubsection{Time Integration Scheme}
+
+For this scheme, an implicit-explicit time-integration scheme is used
+and we choose one of second order.
+
+    \begin{lstlisting}[style=XMLStyle]
+<TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 2 </ORDER>
+</TIMEINTEGRATIONSCHEME>
+      \end{lstlisting}
+
+\subsubsection{Solver Info}
 
 This sections defines the problem solved. In this example the \texttt{EvolutionOperator} must be \texttt{TransientGrowth} and the \texttt{Driver} was set up to \texttt{Arpack} for the solution of the eigenproblem.
 
@@ -3127,7 +3224,6 @@ This sections defines the problem solved. In this example the \texttt{EvolutionO
     <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />
     <I PROPERTY="EvolutionOperator"     VALUE="TransientGrowth"          />
     <I PROPERTY="Projection"            VALUE="Galerkin"                 />
-    <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2"               />
     <I PROPERTY="SOLVERTYPE"            VALUE="VelocityCorrectionScheme" />
     <I PROPERTY="Driver"                VALUE="Arpack"                   />
     <I PROPERTY="ArpackProblemType"     VALUE="LargestMag"               />
@@ -3264,6 +3360,11 @@ In this example we will use a 6th order polynomial expansion, i.e. $P=7$.
 \subsubsection{Parameters}
 
  \begin{lstlisting}[style=XMLStyle]
+<TIMEINTEGRATIONSCHEME>
+    <METHOD> IMEX </METHOD>
+    <ORDER> 2 </ORDER>
+</TIMEINTEGRATIONSCHEME>
+
 <SOLVERINFO>
     <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
     <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />
@@ -3272,7 +3373,6 @@ In this example we will use a 6th order polynomial expansion, i.e. $P=7$.
     <I PROPERTY="ModeType"              VALUE="HalfMode"                 />
     <I PROPERTY="Driver"                VALUE= "ModifiedArnoldi"         />
     <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                       />
-    <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2"               />
 </SOLVERINFO>
                                             \end{lstlisting}
 

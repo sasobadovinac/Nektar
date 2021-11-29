@@ -58,11 +58,19 @@ class Collection
                 std::vector<StdRegions::StdExpansionSharedPtr>  pCollExp,
                 OperatorImpMap                                 &impTypes);
 
+        COLLECTIONS_EXPORT void CheckFactors(const OperatorType opType,
+                                StdRegions::FactorMap factors,
+                                int coll_phys_offset = 0);
+
+        COLLECTIONS_EXPORT void Initialise(const OperatorType opType,
+                              StdRegions::FactorMap factors =
+                              StdRegions::NullFactorMap);
+
         inline void ApplyOperator(
                 const OperatorType                           &op,
                 const Array<OneD, const NekDouble>           &inarray,
                       Array<OneD,       NekDouble>           &output);
-
+    
         inline void ApplyOperator(
                 const OperatorType                           &op,
                 const Array<OneD, const NekDouble>           &inarray,
@@ -84,17 +92,27 @@ class Collection
 
         inline bool HasOperator(const OperatorType &op);
 
-    protected:
-        StdRegions::StdExpansionSharedPtr                             m_stdExp;
-        std::vector<SpatialDomains::GeometrySharedPtr>                m_geom;
-        std::unordered_map<OperatorType, OperatorSharedPtr, EnumHash> m_ops;
-        CoalescedGeomDataSharedPtr                                    m_geomData;
+        inline OperatorSharedPtr GetOpSharedPtr(const OperatorType &op)
+        {
+            return m_ops[op];
+        }
 
+        inline CoalescedGeomDataSharedPtr GetGeomSharedPtr()
+        {
+            return m_geomData;
+        }
+
+    
+    protected:
+    std::unordered_map<OperatorType, OperatorSharedPtr, EnumHash> m_ops;
+    CoalescedGeomDataSharedPtr                                    m_geomData;
+    // store details for initialisation on call rather than default initialisation
+    std::vector<StdRegions::StdExpansionSharedPtr>                m_collExp; 
+    OperatorImpMap                                                m_impTypes;
 };
 
 typedef std::vector<Collection> CollectionVector;
 typedef std::shared_ptr<CollectionVector> CollectionVectorSharedPtr;
-
 
 /**
  *
@@ -102,7 +120,7 @@ typedef std::shared_ptr<CollectionVector> CollectionVectorSharedPtr;
 inline void Collection::ApplyOperator(
         const OperatorType                 &op,
         const Array<OneD, const NekDouble> &inarray,
-              Array<OneD,       NekDouble> &output)
+        Array<OneD,       NekDouble>       &output)
 {
     Array<OneD, NekDouble> wsp(m_ops[op]->GetWspSize());
     (*m_ops[op])(inarray, output, NullNekDouble1DArray,
@@ -155,6 +173,7 @@ inline bool Collection::HasOperator(const OperatorType &op)
 {
     return (m_ops.find(op) != m_ops.end());
 }
+
 
 }
 }

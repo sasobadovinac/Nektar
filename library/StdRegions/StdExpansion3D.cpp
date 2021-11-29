@@ -139,30 +139,128 @@ namespace Nektar
             v_IProductWRTBase_SumFacKernel(base0, base1, base2, inarray, outarray, wsp, doCheckCollDir0, doCheckCollDir1, doCheckCollDir2);
         }
 
+        void StdExpansion3D::v_GenStdMatBwdDeriv(
+            const int dir,
+                  DNekMatSharedPtr &mat)
+        {
+            ASSERTL1((dir==0)||(dir==1)||(dir==2),"Invalid direction.");
+
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
+            const int nq  = nq0*nq1*nq2;
+            const int nm0 = m_base[0]->GetNumModes();
+            const int nm1 = m_base[1]->GetNumModes();
+ 
+            Array<OneD, NekDouble> alloc(4*nq + m_ncoeffs + nm0*nq2*(nq1+nm1),0.0);
+            Array<OneD, NekDouble> tmp1 (alloc);               // Quad metric
+            Array<OneD, NekDouble> tmp2 (alloc +   nq);        // Dir1 metric
+            Array<OneD, NekDouble> tmp3 (alloc + 2*nq);        // Dir2 metric
+            Array<OneD, NekDouble> tmp4 (alloc + 3*nq);        // Dir3 metric
+            Array<OneD, NekDouble> tmp5 (alloc + 4*nq);        // iprod tmp
+            Array<OneD, NekDouble> wsp  (tmp5  +   m_ncoeffs); // Wsp
+            switch(dir)
+            {
+            case 0:
+                for(int i=0; i<nq;i++)
+                {
+                    tmp2[i] =   1.0;
+                    IProductWRTBase_SumFacKernel(m_base[0]->GetDbdata(),
+                                         m_base[1]->GetBdata(),
+                                         m_base[2]->GetBdata(),
+                                         tmp2,tmp5,wsp,
+                                         false,true,true);
+
+                    tmp2[i] =   0.0;
+                    
+                    for(int j=0; j<m_ncoeffs;j++)
+                    {
+                        (*mat)(j,i) =   tmp5[j];
+                    }
+                }
+                break;
+            case 1:
+                for(int i=0; i<nq;i++)
+                {
+                    tmp2[i] =   1.0;
+                    IProductWRTBase_SumFacKernel(m_base[0]->GetBdata(),
+                                         m_base[1]->GetDbdata(),
+                                         m_base[2]->GetBdata(),
+                                         tmp2,tmp5,wsp,
+                                         true,false,true);
+
+                    tmp2[i] =   0.0;
+                    
+                    for(int j=0; j<m_ncoeffs;j++)
+                    {
+                        (*mat)(j,i) =   tmp5[j];
+                    }
+                }
+                break;
+            case 2:
+                for(int i=0; i<nq;i++)
+                {
+                    tmp2[i] =   1.0;
+                    IProductWRTBase_SumFacKernel(m_base[0]->GetBdata(),
+                                         m_base[1]->GetBdata(),
+                                         m_base[2]->GetDbdata(),
+                                         tmp2,tmp5,wsp,
+                                         true,true,false);
+                    tmp2[i] =   0.0;
+                    
+                    for(int j=0; j<m_ncoeffs;j++)
+                    {
+                        (*mat)(j,i) =   tmp5[j];
+                    }
+                }
+                break;
+            default:
+                NEKERROR(ErrorUtil::efatal, "Not a 2D expansion.");
+                break;
+            }
+        }
+
         NekDouble StdExpansion3D::v_PhysEvaluate(
             const Array<OneD, const NekDouble> &coords,
             const Array<OneD, const NekDouble> &physvals)
         {
-            Array<OneD, NekDouble> eta = Array<OneD, NekDouble>(3);
-            Array<OneD, DNekMatSharedPtr>  I(3);
+            Array<OneD, NekDouble> eta(3);
 
-            WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,"coord[0] < -1");
-            WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,"coord[0] >  1");
-            WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,"coord[1] < -1");
-            WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,"coord[1] >  1");
-            WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,"coord[2] < -1");
-            WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,"coord[2] >  1");
+            WARNINGL2(coords[0] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[0] < -1");
+            WARNINGL2(coords[0] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[0] >  1");
+            WARNINGL2(coords[1] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[1] < -1");
+            WARNINGL2(coords[1] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[1] >  1");
+            WARNINGL2(coords[2] >= -1 - NekConstants::kNekZeroTol,
+                      "coord[2] < -1");
+            WARNINGL2(coords[2] <=  1 + NekConstants::kNekZeroTol,
+                      "coord[2] >  1");
 
-            // Obtain local collapsed corodinate from
-            // cartesian coordinate.
-            LocCoordToLocCollapsed(coords,eta);
+            // Obtain local collapsed corodinate from Cartesian coordinate.
+            LocCoordToLocCollapsed(coords, eta);
 
-            // Get Lagrange interpolants.
-            I[0] = m_base[0]->GetI(eta);
-            I[1] = m_base[1]->GetI(eta+1);
-            I[2] = m_base[2]->GetI(eta+2);
+            const int nq0 = m_base[0]->GetNumPoints();
+            const int nq1 = m_base[1]->GetNumPoints();
+            const int nq2 = m_base[2]->GetNumPoints();
 
-            return v_PhysEvaluate(I,physvals);
+            Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+
+            // Construct the 2D square...
+            const NekDouble *ptr = &physvals[0];
+            for (int i = 0; i < nq1 * nq2; ++i, ptr += nq0)
+            {
+                wsp1[i] = StdExpansion::BaryEvaluate<0>(eta[0], ptr);
+            }
+
+            for (int i = 0; i < nq2; ++i)
+            {
+                wsp2[i] = StdExpansion::BaryEvaluate<1>(eta[1], &wsp1[i * nq1]);
+            }
+
+            return StdExpansion::BaryEvaluate<2>(eta[2], &wsp2[0]);
         }
 
         NekDouble StdExpansion3D::v_PhysEvaluate(
@@ -198,7 +296,7 @@ namespace Nektar
             return value;
         }
 
-
+        
         /**
          * @param   inarray     Input coefficients.
          * @param   output      Output coefficients.
@@ -209,7 +307,7 @@ namespace Nektar
                       Array<OneD,NekDouble> &outarray,
                 const StdRegions::StdMatrixKey &mkey)
         {
-            if ( mkey.GetNVarCoeff() == 0 &&
+            if ( mkey.GetNVarCoeff() == 0 && !mkey.ConstFactorExists(StdRegions::eFactorCoeffD00) &&
                 !mkey.ConstFactorExists(eFactorSVVCutoffRatio))
             {
                 // This implementation is only valid when there are no
@@ -251,7 +349,7 @@ namespace Nektar
                       Array<OneD,NekDouble> &outarray,
                 const StdRegions::StdMatrixKey &mkey)
         {
-            if(mkey.GetNVarCoeff() == 0)
+            if(mkey.GetNVarCoeff() == 0 && !mkey.ConstFactorExists(StdRegions::eFactorCoeffD00))
             {
                 using std::max;
 
@@ -306,21 +404,6 @@ namespace Nektar
             {
                 StdExpansion::HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
             }
-
-        }
-
-        const NormalVector & StdExpansion3D::v_GetSurfaceNormal(
-                const int id) const
-        {
-            return v_GetFaceNormal(id);
-        }
-
-        const NormalVector & StdExpansion3D::v_GetFaceNormal(const int face) const
-        {
-            auto x = m_faceNormals.find(face);
-            ASSERTL0 (x != m_faceNormals.end(),
-                      "face normal not computed.");
-            return x->second;
         }
 
         NekDouble StdExpansion3D::v_Integral(
@@ -328,10 +411,32 @@ namespace Nektar
         {
             const int nqtot = GetTotPoints();
             Array<OneD, NekDouble> tmp(GetTotPoints());
-            MultiplyByStdQuadratureMetric(inarray, tmp);
+            v_MultiplyByStdQuadratureMetric(inarray, tmp);
             return Vmath::Vsum(nqtot, tmp, 1);
         }
 
+        int StdExpansion3D::v_GetNedges(void) const
+        {
+            NEKERROR(ErrorUtil::efatal, "This function is not valid or not defined");
+            return 0;
+        }
+
+        int StdExpansion3D::v_GetEdgeNcoeffs(const int i) const
+        {
+            boost::ignore_unused(i);
+            NEKERROR(ErrorUtil::efatal, "This function is not valid or not defined");
+            return 0;
+        }
+
+        void StdExpansion3D::v_GetEdgeInteriorToElementMap(
+               const int                  tid,
+               Array<OneD, unsigned int> &maparray,
+               Array<OneD,          int> &signarray,
+               Orientation                traceOrient)
+        {
+            boost::ignore_unused(tid,maparray,signarray,traceOrient);
+            NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
+        }
 
         LibUtilities::BasisKey EvaluateQuadFaceBasisKey(
             const int                     facedir,
@@ -382,7 +487,7 @@ namespace Nektar
                 }
                 default:
                 {
-                    ASSERTL0(false, "expansion type unknown");
+                    NEKERROR(ErrorUtil::efatal, "expansion type unknown");
                     break;
                 }
             }
@@ -434,7 +539,7 @@ namespace Nektar
                         default:
                         {
 
-                            ASSERTL0(false,"invalid value to flag");
+                            NEKERROR(ErrorUtil::efatal,"invalid value to flag");
                             break;
                         }
                     }
@@ -463,7 +568,7 @@ namespace Nektar
                         }
                         default:
                         {
-                            ASSERTL0(false,"invalid value to flag");
+                            NEKERROR(ErrorUtil::efatal,"invalid value to flag");
                             break;
                         }
                     }
@@ -495,7 +600,7 @@ namespace Nektar
                         }
                         default:
                         {
-                            ASSERTL0(false,"invalid value to flag");
+                            NEKERROR(ErrorUtil::efatal,"invalid value to flag");
                             break;
                         }
                     }
@@ -503,7 +608,7 @@ namespace Nektar
                 }
                 default:
                 {
-                    ASSERTL0(false,"expansion type unknown");
+                    NEKERROR(ErrorUtil::efatal,"expansion type unknown");
                     break;
                 }
             }

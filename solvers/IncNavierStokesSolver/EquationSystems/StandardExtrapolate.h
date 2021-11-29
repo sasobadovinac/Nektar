@@ -100,16 +100,19 @@ namespace Nektar
                   NekDouble                                    kinvis );
 
         virtual void v_SubStepAdvance(
-            const LibUtilities::TimeIntegrationScheme::TimeIntegrationSolutionSharedPtr & integrationSoln, 
-                  int                                                                     nstep, 
-                  NekDouble                                                               time );
+            int nstep,
+            NekDouble time );
 
         virtual void v_MountHOPBCs(
             int HBCdata, 
             NekDouble kinvis, 
             Array<OneD, NekDouble> &Q, 
             Array<OneD, const NekDouble> &Advection);
-        
+
+        virtual void v_AccelerationBDF(
+            Array<OneD, Array<OneD, NekDouble> > &array);
+
+        static NekDouble DuDt_Coeffs[3][4];
     };
     
 }

@@ -1,0 +1,16 @@
+Description: Patch tester application to enable allow-run-as-root MPI option.
+Author: Chris Cantwell <c.cantwell@imperial.ac.uk>
+Origin: upstream
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/tests/Tester.cpp.in
++++ b/tests/Tester.cpp.in
+@@ -272,7 +272,7 @@
+                     continue;
+                 }
+ 
+-                command += "\"@MPIEXEC@\" ";
++                command += "\"@MPIEXEC@\" --allow-run-as-root --mca mpi_yield_when_idle 1 ";
+                 if (std::string("@NEKTAR_TEST_USE_HOSTFILE@") == "ON")
+                 {
+                     command += "-hostfile hostfile ";

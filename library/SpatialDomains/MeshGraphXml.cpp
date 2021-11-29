@@ -129,7 +129,7 @@ void MeshGraphXml::PartitionMesh(
                      "The 'part-only' option should be used in serial.");
 
             // Read 'lite' geometry information
-            ReadGeometry(NullDomainRangeShPtr, false);
+            ReadGeometry(LibUtilities::NullDomainRangeShPtr, false);
 
             // Number of partitions is specified by the parameter.
             int nParts;
@@ -137,8 +137,8 @@ void MeshGraphXml::PartitionMesh(
 
             MeshPartitionSharedPtr partitioner =
                 GetMeshPartitionFactory().CreateInstance(
-                    partitionerName, session, m_meshDimension,
-                    CreateMeshEntities(), comp);
+                    partitionerName, session, session->GetComm(),
+                    m_meshDimension, CreateMeshEntities(), comp);
 
             if (session->DefinesCmdLineArgument("part-only"))
             {
@@ -186,7 +186,7 @@ void MeshGraphXml::PartitionMesh(
                 if (isRoot)
                 {
                     // Read 'lite' geometry information
-                    ReadGeometry(NullDomainRangeShPtr, false);
+                    ReadGeometry(LibUtilities::NullDomainRangeShPtr, false);
 
                     // Store composite ordering and boundary information.
                     m_compOrder = CreateCompositeOrdering();
@@ -195,8 +195,8 @@ void MeshGraphXml::PartitionMesh(
                     // Create mesh partitioner.
                     MeshPartitionSharedPtr partitioner =
                         GetMeshPartitionFactory().CreateInstance(
-                            partitionerName, session, m_meshDimension,
-                            CreateMeshEntities(), comp);
+                            partitionerName, session, session->GetComm(),
+                            m_meshDimension, CreateMeshEntities(), comp);
 
                     partitioner->PartitionMesh(nParts, true);
 
@@ -318,7 +318,7 @@ void MeshGraphXml::PartitionMesh(
             else
             {
                 m_session->InitSession();
-                ReadGeometry(NullDomainRangeShPtr, false);
+                ReadGeometry(LibUtilities::NullDomainRangeShPtr, false);
 
                 m_compOrder = CreateCompositeOrdering();
                 auto comp = CreateCompositeDescriptor();
@@ -328,8 +328,8 @@ void MeshGraphXml::PartitionMesh(
                 // file to the working directory.
                 MeshPartitionSharedPtr partitioner =
                     GetMeshPartitionFactory().CreateInstance(
-                        partitionerName, session, m_meshDimension,
-                        CreateMeshEntities(), comp);
+                        partitionerName, session, session->GetComm(),
+                        m_meshDimension, CreateMeshEntities(), comp);
 
                 partitioner->PartitionMesh(nParts, false);
 
@@ -371,7 +371,7 @@ void MeshGraphXml::PartitionMesh(
 }
 
 void MeshGraphXml::ReadGeometry(
-    DomainRangeShPtr rng,
+    LibUtilities::DomainRangeShPtr rng,
     bool             fillGraph)
 {
     // Reset member variables.

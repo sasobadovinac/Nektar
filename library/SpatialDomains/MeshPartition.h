@@ -57,6 +57,7 @@ CompositeDescriptor;
 /// the EquationSystem class.
 typedef LibUtilities::NekFactory<std::string, MeshPartition,
                                  const LibUtilities::SessionReaderSharedPtr,
+                                 LibUtilities::CommSharedPtr,
                                  int, std::map<int, MeshEntity>,
                                  CompositeDescriptor>
     MeshPartitionFactory;
@@ -68,6 +69,7 @@ class MeshPartition
 
 public:
     MeshPartition(const LibUtilities::SessionReaderSharedPtr session,
+                  LibUtilities::CommSharedPtr                comm,
                   int                                        meshDim,
                   std::map<int, MeshEntity>                  element,
                   CompositeDescriptor                        compMap);
@@ -91,8 +93,8 @@ protected:
     // Element in a mesh
     struct GraphVertexProperties
     {
-        int id;             ///< Universal ID of the vertex
-        int partition;      ///< Index of the partition to which it belongs
+        int id = 0;         ///< Universal ID of the vertex
+        int partition = 0;  ///< Index of the partition to which it belongs
         MultiWeight weight; ///< Weightings to this graph vertex
         MultiWeight bndWeight;
         MultiWeight edgeWeight;
@@ -101,7 +103,7 @@ protected:
     // Face/Edge/Vertex between two adjacent elements
     struct GraphEdgeProperties
     {
-        int id;
+        int id = 0;
         std::vector<MeshVertex> vertices;
         std::vector<MeshEdge> edges;
     };
@@ -124,6 +126,7 @@ protected:
     typedef std::map<std::string, NumModes> NummodesPerField;
 
     LibUtilities::SessionReaderSharedPtr m_session;
+    LibUtilities::CommSharedPtr m_comm;
 
     int m_dim;
     int m_numFields;
@@ -145,9 +148,7 @@ protected:
     std::map<int, MultiWeight> m_edgeWeights;
 
     BoostGraph m_graph;
-    std::vector<std::vector<unsigned int>> m_localPartition;
-
-    LibUtilities::CommSharedPtr m_comm;
+    std::map<int, std::vector<unsigned int>> m_localPartition;
 
     bool m_weightingRequired;
     bool m_weightBnd;

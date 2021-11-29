@@ -138,8 +138,11 @@ template<> void WriteStream(std::ostream &outfile, std::string data)
 template<typename T> void WriteStream(std::ostream &outfile,
                                       Array<OneD, T> data)
 {
-    outfile.write(reinterpret_cast<char *>(&data[0]),
+    if (data.size())
+    {
+        outfile.write(reinterpret_cast<char *>(&data[0]),
                   data.size() * sizeof(T));
+    }
 }
 
 /**
@@ -148,8 +151,11 @@ template<typename T> void WriteStream(std::ostream &outfile,
 template<typename T> void WriteStream(std::ostream  &outfile,
                                       std::vector<T> data)
 {
-    outfile.write(reinterpret_cast<char *>(&data[0]),
+    if (data.size())
+    {
+        outfile.write(reinterpret_cast<char *>(&data[0]),
                   data.size() * sizeof(T));
+    }
 }
 
 void OutputTecplot::OutputFromPts(po::variables_map &vm)
@@ -385,7 +391,7 @@ void OutputTecplot::WriteTecplotFile(po::variables_map &vm)
 {
     // Variable names
     std::string coordVars[] = { "x", "y", "z" };
-    vector<string> variables = m_f->m_variables;
+    std::vector<string> variables = m_f->m_variables;
     variables.insert(variables.begin(), coordVars, coordVars + m_coordim);
 
     int nprocs = m_f->m_comm->GetSize();
@@ -681,7 +687,7 @@ void OutputTecplotBinary::WriteDoubleOrFloat(std::ofstream          &outfile,
     {
         // For single precision, needs typecast first.
         int nPts = data.size();
-        vector<float> tmp(data.size());
+        std::vector<float> tmp(data.size());
         std::copy(&data[0], &data[0] + nPts, &tmp[0]);
         WriteStream(outfile, tmp);
     }

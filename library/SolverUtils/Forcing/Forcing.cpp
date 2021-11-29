@@ -78,6 +78,49 @@ namespace Nektar
             v_Apply(fields, inarray, outarray, time);
         }
 
+        void Forcing::PreApply(
+                const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+                const Array<OneD, Array<OneD, NekDouble> >&        inarray,
+                Array<OneD, Array<OneD, NekDouble> >&              outarray,
+                const NekDouble&                                   time)
+        {
+            v_PreApply(fields, inarray, outarray, time);
+        }
+
+        void Forcing::v_PreApply(
+                const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+                const Array<OneD, Array<OneD, NekDouble> >&        inarray,
+                Array<OneD, Array<OneD, NekDouble> >&              outarray,
+                const NekDouble&                                   time)
+        {
+            boost::ignore_unused(fields, time);
+            if (&inarray != &outarray)
+            {
+                int nvar = std::min(inarray.size(), outarray.size());
+                for (int i=0; i < nvar; ++i)
+                {
+                    if (&inarray[i] != &outarray[i])
+                    {
+                        int np = std::min(inarray[i].size(), outarray[i].size());
+                        Vmath::Vcopy(np, inarray[i], 1, outarray[i], 1);
+                    }
+                }
+            }
+        }
+
+        /**
+         * @param   fields      Expansion lists corresponding to input arrays
+         * @param   inarray     u^n from previous timestep
+         * @param   outarray    output array to append forcing to
+         */
+        void Forcing::ApplyCoeff(
+                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+                Array<OneD, Array<OneD, NekDouble> >              &outarray,
+                const NekDouble&                                  time)
+        {
+            v_ApplyCoeff(fields, inarray, outarray, time);
+        }
 
         /**
          *
@@ -182,5 +225,14 @@ namespace Nektar
             }
         }
 
+        void Forcing::v_ApplyCoeff(
+                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+                Array<OneD, Array<OneD, NekDouble> >              &outarray,
+                const NekDouble                                   &time)
+        {
+            boost::ignore_unused(fields, inarray, outarray, time);
+            ASSERTL0(false, "v_ApplyCoeff not defined");
+        }
     }
 }

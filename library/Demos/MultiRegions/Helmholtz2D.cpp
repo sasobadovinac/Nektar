@@ -4,7 +4,7 @@
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/Communication/Comm.h>
-#include <MultiRegions/ContField2D.h>
+#include <MultiRegions/ContField.h>
 #include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     LibUtilities::SessionReaderSharedPtr vSession
             = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
-    MultiRegions::ContField2DSharedPtr Exp,Fce;
+    MultiRegions::ContFieldSharedPtr Exp,Fce;
     int     i, nq,  coordim;
     Array<OneD,NekDouble>  fce;
     Array<OneD,NekDouble>  xc0,xc1,xc2;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
         //----------------------------------------------
         // Print summary of solution details
         factors[StdRegions::eFactorLambda] = vSession->GetParameter("Lambda");
-        const SpatialDomains::ExpansionMap &expansions = graph2D->GetExpansions();
+        const SpatialDomains::ExpansionInfoMap &expansions = graph2D->GetExpansionInfo();
         LibUtilities::BasisKey bkey0 = expansions.begin()->second->m_basisKeyVector[0];
 
         if (vSession->GetComm()->GetRank() == 0)
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Define Expansion
-        Exp = MemoryManager<MultiRegions::ContField2D>::
+        Exp = MemoryManager<MultiRegions::ContField>::
             AllocateSharedPtr(vSession,graph2D,vSession->GetVariable(0));
         //----------------------------------------------
 
@@ -109,6 +109,15 @@ int main(int argc, char *argv[])
             d00func->Evaluate(xc0, xc1, xc2, d00);
             varcoeffs[StdRegions::eVarCoeffD00] = d00;
         }
+        
+        if (vSession->DefinesFunction("d01"))
+        {
+            Array<OneD, NekDouble> d01(nq,0.0);
+            LibUtilities::EquationSharedPtr d01func = vSession->GetFunction("d01",0);
+            d01func->Evaluate(xc0, xc1, xc2, d01);
+            varcoeffs[StdRegions::eVarCoeffD01] = d01;
+        }
+        
         if (vSession->DefinesFunction("d11"))
         {
             Array<OneD, NekDouble> d11(nq,0.0);
@@ -119,6 +128,30 @@ int main(int argc, char *argv[])
         //----------------------------------------------
 
         //----------------------------------------------
+        // Set up const diffusion coefficients if defined
+        if (vSession->DefinesParameter("d00"))
+        {
+            NekDouble d00;
+            vSession->LoadParameter("d00",d00,1.0);            
+            factors[StdRegions::eFactorCoeffD00] = d00;
+        }
+        
+        if (vSession->DefinesParameter("d01"))
+        {
+            NekDouble d01;
+            vSession->LoadParameter("d01",d01,1.0);            
+            factors[StdRegions::eFactorCoeffD01] = d01;
+        }
+
+        if (vSession->DefinesParameter("d11"))
+        {
+            NekDouble d11;
+            vSession->LoadParameter("d11",d11,1.0);
+            factors[StdRegions::eFactorCoeffD11] = d11;
+        }
+        //----------------------------------------------
+        
+        //----------------------------------------------
         // Define forcing function for first variable defined in file
         fce = Array<OneD,NekDouble>(nq);
         LibUtilities::EquationSharedPtr ffunc = vSession->GetFunction("Forcing",0);
@@ -128,7 +161,7 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Setup expansion containing the  forcing function
-        Fce = MemoryManager<MultiRegions::ContField2D>::AllocateSharedPtr(*Exp);
+        Fce = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(*Exp);
         Fce->SetPhys(fce);
         //----------------------------------------------
         Timing("Define forcing ..");

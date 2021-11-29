@@ -336,6 +336,7 @@ void ProcessPhiFromFile::GetPhifromSTL(
         // Append Phi expansion to 'm_f'
         MultiRegions::ExpListSharedPtr phi;
         phi = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+
         // Parallelisation is highly recommended here
         for (int i = 0; i < nPts; ++i)
         {
@@ -347,9 +348,8 @@ void ProcessPhiFromFile::GetPhifromSTL(
 
             // Find the shortest distance to the body(ies)
             double dist = numeric_limits<double>::max();         
-
             FindShortestDist(file, tmpCoords, dist);
-                   
+
             // Get corresponding value of Phi
             phi->UpdatePhys()[i] = PhiFunction(dist, 
                                                m_config["scale"].as<double>());
@@ -400,6 +400,7 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
     normalVec[0] = Dvec[0] / normDvec;
     normalVec[1] = Dvec[1] / normDvec;
     normalVec[2] = Dvec[2] / normDvec;	
+
     // Edge vectors
     Array<OneD, NekDouble> E1(3);
     Array<OneD, NekDouble> E2(3);
@@ -540,7 +541,7 @@ void ProcessPhiFromFile::FindShortestDist(
             // giving contradictory information and, if so, use the one
             // closer to 'x'. Otherwise, some exterior points will be treated
             // as interior and viceversa
-			if (currentDist < best_dist)
+            if (currentDist < best_dist)
             {
                 best_dist = currentDist;
             }

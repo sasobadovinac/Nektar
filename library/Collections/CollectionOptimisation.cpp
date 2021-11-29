@@ -53,7 +53,6 @@ CollectionOptimisation::CollectionOptimisation(
         LibUtilities::SessionReaderSharedPtr pSession,
         ImplementationType defaultType)
 {
-    int i;
     map<ElmtOrder, ImplementationType> defaults, defaultsPhysDeriv;
     bool verbose  = (pSession.get()) &&
                     (pSession->DefinesCmdLineArgument("verbose")) &&
@@ -102,7 +101,7 @@ CollectionOptimisation::CollectionOptimisation(
     }
 
     map<string, OperatorType> opTypes;
-    for (i = 0; i < SIZE_OperatorType; ++i)
+    for (int i = 0; i < SIZE_OperatorType; ++i)
     {
         opTypes[OperatorTypeMap[i]] = (OperatorType)i;
         switch ((OperatorType)i)
@@ -116,7 +115,7 @@ CollectionOptimisation::CollectionOptimisation(
     }
 
     map<string, ImplementationType> impTypes;
-    for (i = 0; i < SIZE_ImplementationType; ++i)
+    for (int i = 0; i < SIZE_ImplementationType; ++i)
     {
         impTypes[ImplementationTypeMap[i]] = (ImplementationType)i;
     }
@@ -149,18 +148,20 @@ CollectionOptimisation::CollectionOptimisation(
 
                 if (!m_autotune)
                 {
-                    for(i = 1; i < Collections::SIZE_ImplementationType; ++i)
+                    bool collectionFound{false};
+                    for(int i = 1; i < Collections::SIZE_ImplementationType; ++i)
                     {
                         if(boost::iequals(collinfo,
                                 Collections::ImplementationTypeMap[i]))
                         {
                             m_defaultType = (Collections::ImplementationType) i;
+                            collectionFound = true;
                             break;
                         }
                     }
 
-                    ASSERTL0(i != Collections::SIZE_ImplementationType,
-                         "Unknown default collection scheme: "+collinfo);
+                    ASSERTL0(collectionFound,
+                        "Unknown default collection scheme: "+collinfo);
 
                     defaults.clear();
                     // Override default types
@@ -169,7 +170,7 @@ CollectionOptimisation::CollectionOptimisation(
                         defaults[ElmtOrder(it2.second, -1)] = m_defaultType;
                     }
 
-                    for (i = 0; i < SIZE_OperatorType; ++i)
+                    for (int i = 0; i < SIZE_OperatorType; ++i)
                     {
                         m_global[(OperatorType)i] = defaults;
                     }
@@ -356,6 +357,10 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
     }
     // set  up an array of collections
     CollectionVector coll;
+    
+    StdRegions::ConstFactorMap factors; // required for helmholtz operator
+    factors[StdRegions::eFactorLambda] = 1.5; 
+    
     for(int imp = 1; imp < SIZE_ImplementationType; ++imp)
     {
         ImplementationType impType = (ImplementationType)imp;
@@ -376,8 +381,12 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
             }
         }
 
-        Collection collloc(pCollExp,impTypes);
-        coll.push_back(collloc);
+        Collection collLoc(pCollExp,impTypes);
+        for (int i = 0; i < SIZE_OperatorType; ++i)
+        {
+            collLoc.Initialise((OperatorType)i, factors);
+        }
+        coll.push_back(collLoc);
     }
 
     // Determine the number of tests to do in one second
@@ -387,11 +396,10 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
         OperatorType OpType = (OperatorType)i;
 
         t.Start();
-        coll[0].ApplyOperator(OpType,
-                           inarray,
-                           outarray1,
-                           outarray2,
-                           outarray3);
+
+        coll[0].ApplyOperator(OpType,    inarray,
+                              outarray1, outarray2,
+                              outarray3);
         t.Stop();
 
         NekDouble oneTest = t.TimePerTest(1);
@@ -413,11 +421,9 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
                 t.Start();
                 for(int n = 0; n < Ntest[i]; ++n)
                 {
-                    coll[imp].ApplyOperator(OpType,
-                                      inarray,
-                                      outarray1,
-                                      outarray2,
-                                      outarray3);
+                    coll[imp].ApplyOperator(OpType,    inarray,
+                                            outarray1, outarray2,
+                                            outarray3);
                 }
                 t.Stop();
                 timing[imp] = t.TimePerTest(Ntest[i]);
