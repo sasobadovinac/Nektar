@@ -105,12 +105,21 @@ NekDouble Octree::Query(Array<OneD, NekDouble> loc)
         }
     }
 
+    for (int i = 0; i < m_esources.size(); i++)
+    {
+        if (m_esources[i].withinRange(loc))
+        {
+            // std::cout << "\ntesting: " << m_esources[i].Dist(loc) << "\n\n";
+            tmp = min(m_esources[i].delta, tmp);
+        }
+    }
+
     OctantSharedPtr n = m_masteroct;
     int quad = 0;
 
     bool found = false;
 
-    while (!found)
+    while (!found) // Logic can be improved with nested conditionals.
     {
         Array<OneD, NekDouble> octloc = n->GetLoc();
 
@@ -185,6 +194,11 @@ NekDouble Octree::GetMinDelta()
     for (int i = 0; i < m_lsources.size(); i++)
     {
         tmp = min(m_lsources[i].delta, tmp);
+    }
+
+    for (int i = 0; i < m_esources.size(); i++)
+    {
+        tmp = min(m_esources[i].delta, tmp);
     }
     return min(m_minDelta, tmp);
 }
@@ -826,9 +840,9 @@ void Octree::CompileSourcePointList()
 
             if(i == 1)
             {
-                std::cout << "\n\ntesting curve number: " << i << "\n";
-                m_esources.push_back(edgesource(curve,0.001,0.01));
-                std::cout << "Length of curve from esources: " << m_esources[i-1].Length() << "\n";
+                // std::cout << "\n\ntesting curve number: " << i << "\n";
+                m_esources.push_back(edgesource(curve,0.005,0.0015));
+                // std::cout << "Length of curve from esources: " << m_esources[i-1].Length() << "\n";
             }
 
             Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
@@ -853,10 +867,6 @@ void Octree::CompileSourcePointList()
 
                     NekDouble t_maxDelta = m_maxDelta;
                     NekDouble t_minDelta = m_minDelta;
-                    if(i == 1)
-                    {
-                        t_minDelta = 0.0025;
-                    }
 
                     if (del > t_maxDelta)
                     {
@@ -867,13 +877,13 @@ void Octree::CompileSourcePointList()
                         del = t_minDelta;
                     }
 
-                    // if((i == 1 || i == 3) && j == 1)
-                    if(i == 1)
-                    {
-                        // std::cout << "\n\ncurve number: " << i << " and sample point " << j << "\n";
-                        // std::cout << "uv -- loc: " << uv[0] << ", " << uv[1] << " -- " << loc[0] << ", " << loc[1] << "\n";
-                        // std::cout << "delta: " << del << "\n\n";
-                    }
+                    // if(i == 1)
+                    // {
+                    //     NekDouble t;
+                    //     std::cout << "\n\ncurve number: " << i << " and sample point " << j << "\n";
+                    //     std::cout << "uv -- loc: " << uv[0] << ", " << uv[1] << " -- " << loc[0] << ", " << loc[1] << "\n";
+                    //     std::cout << "curve dist: " << curve->loct(loc,t) << "\n\n";
+                    // }
 
                     CPointSharedPtr newCPoint =
                         MemoryManager<CPoint>::AllocateSharedPtr(
