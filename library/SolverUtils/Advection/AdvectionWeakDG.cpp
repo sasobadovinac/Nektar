@@ -229,6 +229,8 @@ namespace Nektar
 
             LibUtilities::Timer timer;
             timer.Start();
+            // Hack in advection velocity (subtract from Fwd, Bwd here...)
+
             m_riemann->Solve(m_spaceDim, Fwd, Bwd, TraceFlux);
             timer.Stop();
             timer.AccumulateRegion("m_riemann");

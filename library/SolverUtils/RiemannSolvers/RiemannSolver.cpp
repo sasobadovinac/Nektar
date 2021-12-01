@@ -131,8 +131,31 @@ namespace Nektar
                     }
                 }
 
-                rotateToNormal  (Fwd, normals, vecLocs, m_rotStorage[0]);
-                rotateToNormal  (Bwd, normals, vecLocs, m_rotStorage[1]);
+                //auto vgt = m_vectors["vgt"]();
+                //Array<OneD, Array<OneD, NekDouble>> rot1(nFields);
+                //Array<OneD, Array<OneD, NekDouble>> veclocs(1);
+                //veclocs[0] = Array<OneD, NekDouble>(2);
+                //veclocs[0][0] = 0.0;
+                //veclocs[0][1] = 1.0;
+                //for (int i =0; i < nFields; ++i)
+                //{
+                //    rot1[i] = Array<OneD, NekDouble>(nPts);
+                //}
+                //rotateToNormal(vgt, normals, veclocs, rot1);
+
+                rotateToNormal(Fwd, normals, vecLocs, m_rotStorage[0]);
+                rotateToNormal(Bwd, normals, vecLocs, m_rotStorage[1]);
+
+                //for (int i = 0; i < 2; ++i)
+                //{
+                //    std::cout << "nfields = " << nFields << std::endl;
+                //    for (int j = 0; j < m_rotStorage[0][0].size(); ++j)
+                //    {
+                //        m_rotStorage[0][i+1][j] -= rot1[i][j] * m_rotStorage[0][0][j];
+                //        m_rotStorage[1][i+1][j] -= rot1[i][j] * m_rotStorage[0][0][j];
+                //    }
+                //}
+
                 v_Solve         (nDim, m_rotStorage[0], m_rotStorage[1],
                                        m_rotStorage[2]);
                 rotateFromNormal(m_rotStorage[2], normals, vecLocs, flux);

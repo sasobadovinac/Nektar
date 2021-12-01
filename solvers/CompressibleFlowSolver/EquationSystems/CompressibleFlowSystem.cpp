@@ -250,8 +250,6 @@ namespace Nektar
         riemannSolver->SetVector(
             "N",       &CompressibleFlowSystem::GetNormals, this);
         riemannSolver->SetVector(
-            "vg",      &ALEHelper::GetGridVelocity, this);
-        riemannSolver->SetVector(
             "vgt",     &ALEHelper::GetGridVelocityTrace, this);
 
         // Concluding initialisation of advection / diffusion operators
@@ -760,6 +758,8 @@ timer.AccumulateRegion("DoDiffusion");
             Array<OneD, Array<OneD, NekDouble> >             &physarray,
             NekDouble                                         time)
     {
+
+        return; // @TODO: This is only for no boundary case - REMOVE IN FUTURE!!!
         int nTracePts  = GetTraceTotPoints();
         int nvariables = physarray.size();
 
@@ -854,8 +854,7 @@ timer.AccumulateRegion("DoDiffusion");
             {
                 for (int k = 0; k < nq; ++k)
                 {
-                    break;
-                    //flux[i][j][k] = physfield[i][j] * (m_gridVelocity[j][k] - flux[i][j][k]);
+                    flux[i][j][k] -= physfield[i][k] * m_gridVelocity[j][k];
                 }
             }
         }
