@@ -287,7 +287,7 @@ void Octree::SubDivide()
         repeat = false;
         m_octants.clear();
         // grab a list of the leaves curently in the octree
-        m_masteroct->CompileLeaves(m_octants);
+        m_masteroct->CompileLeaves(m_octants); // leaves are m_octants?
 
         VerifyNeigbours();
 
@@ -298,15 +298,16 @@ void Octree::SubDivide()
         // the list will keep building till no more lists are required.
         // the list will then be iterated through backwards to subdivide all the
         // sublists in turn.
-        vector<vector<OctantSharedPtr> > dividelist;
+        vector<vector<OctantSharedPtr>> dividelist;
         set<int> inlist;
         // build initial list
         {
             vector<OctantSharedPtr> sublist;
             for (int i = 0; i < m_octants.size(); i++)
             {
+                // std::cout << "\n\nOct -- NeedDivide -- m_minDelta -- getDelta -- DX / 4 : " << i << " -- " << m_octants[i]->NeedDivide() << " -- " << m_minDelta << " -- " << m_octants[i]->GetDelta() << " -- " << m_octants[i]->DX() / 4.0 << "\n";
                 if (m_octants[i]->NeedDivide() &&
-                    m_octants[i]->DX() / 4.0 > m_minDelta)
+                    m_octants[i]->DX() / 4.0 > (m_octants[i]->HasDelta()? min(m_minDelta,m_octants[i]->GetDelta()) : m_minDelta))
                 {
                     sublist.push_back(m_octants[i]);
                     inlist.insert(m_octants[i]->GetId());
@@ -325,9 +326,8 @@ void Octree::SubDivide()
                 previouslist = dividelist.back();
             for (int i = 0; i < previouslist.size(); i++)
             {
-                map<OctantFace, vector<OctantSharedPtr> > nlist =
-                    previouslist[i]->GetNeigbours();
-                map<OctantFace, vector<OctantSharedPtr> >::iterator it;
+                map<OctantFace, vector<OctantSharedPtr>> nlist = previouslist[i]->GetNeigbours();
+                map<OctantFace, vector<OctantSharedPtr>>::iterator it;
                 for (it = nlist.begin(); it != nlist.end(); it++)
                 {
                     for (int j = 0; j < it->second.size(); j++)
@@ -838,12 +838,12 @@ void Octree::CompileSourcePointList()
 
             CADCurveSharedPtr curve = m_mesh->m_cad->GetCurve(i);
 
-            if(i == 1)
-            {
+            // if(i == 1)
+            // {
                 // std::cout << "\n\ntesting curve number: " << i << "\n";
-                m_esources.push_back(edgesource(curve,0.005,0.0015));
+                // m_esources.push_back(edgesource(curve,0.005,0.0015));
                 // std::cout << "Length of curve from esources: " << m_esources[i-1].Length() << "\n";
-            }
+            // }
 
             Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
             //this works assuming the curves are not distorted
@@ -876,18 +876,25 @@ void Octree::CompileSourcePointList()
                     {
                         del = t_minDelta;
                     }
+                    CPointSharedPtr newCPoint;
 
-                    // if(i == 1)
-                    // {
+                    if(i <= 4)
+                    {
                     //     NekDouble t;
                     //     std::cout << "\n\ncurve number: " << i << " and sample point " << j << "\n";
                     //     std::cout << "uv -- loc: " << uv[0] << ", " << uv[1] << " -- " << loc[0] << ", " << loc[1] << "\n";
                     //     std::cout << "curve dist: " << curve->loct(loc,t) << "\n\n";
-                    // }
+                        newCPoint =
+                            MemoryManager<CPoint>::AllocateSharedPtr(
+                                ss[0].first.lock()->GetId(), uv, loc, del, 0.0015);
+                    }
 
-                    CPointSharedPtr newCPoint =
-                        MemoryManager<CPoint>::AllocateSharedPtr(
-                            ss[0].first.lock()->GetId(), uv, loc, del);
+                    else
+                    {
+                        newCPoint =
+                            MemoryManager<CPoint>::AllocateSharedPtr(
+                                ss[0].first.lock()->GetId(), uv, loc, del);
+                    }
 
                     m_SPList.push_back(newCPoint);
                 }

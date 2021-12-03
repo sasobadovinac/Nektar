@@ -60,30 +60,16 @@ struct edgesource
     {
     }
 
-    // tests if a point is within a specified range, r, from the edge
+    // tests if a point is within a specified range, R, from the edge
     bool withinRange(Array<OneD, NekDouble> p)
     {
-        NekDouble t;
+        NekDouble t; // overload loct to work also without t?
         if(curve->loct(p,t) <= R)
         {
             return true;
         }
         else
             return false;
-    }
-
-    // returns the distance between a point and the CAD edge.
-    NekDouble Dist(Array<OneD, NekDouble> loc)
-    {
-        NekDouble t;
-        return (curve->loct(loc,t));
-    }
-
-    // returns the distance between a point and the CAD edge.
-    NekDouble Length()
-    {
-        // Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
-        return (curve->GetTotLength());
     }
 };
 
