@@ -58,7 +58,7 @@ void DiffusionIP::v_InitObject(
 
     m_session->LoadSolverInfo("ShockCaptureType", m_shockCaptureType, "Off");
 
-    m_session->LoadParameter("IPSymmFluxCoeff", m_IPSymmFluxCoeff, 0.0); // 0.5
+    m_session->LoadParameter("IPSymmFluxCoeff", m_IPSymmFluxCoeff, 1.0); // SIP=1.0; NIP=-1.0; IIP=0.0 
 
     m_session->LoadParameter("IP2ndDervCoeff", m_IP2ndDervCoeff,
                              0.0); // 1.0/12.0
