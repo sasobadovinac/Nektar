@@ -49,21 +49,18 @@ namespace LibUtilities
 template
 <
     class T1, class T2,
-    class = typename std::enable_if
+    class = std::enable_if_t
     <
         std::is_floating_point
         <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type
+            std::remove_cv_t <std::remove_reference_t<T1>>
         >::value &&
         std::is_same
         <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type,
-            typename std::remove_cv<
-                typename std::remove_reference<T2>::type>::type
+            std::remove_cv_t <std::remove_reference_t<T1>>,
+            std::remove_cv_t <std::remove_reference_t<T2>>
         >::value
-    >::type
+    >
 >
 inline bool IsRealEqual(T1&& lhs, T2&& rhs,
     const unsigned int factor = NekConstants::kNekFloatCompFact)
@@ -78,23 +75,21 @@ inline bool IsRealEqual(T1&& lhs, T2&& rhs,
 template
 <
     class T1, class T2,
-    class = typename std::enable_if
+    class = std::enable_if_t
     <
         std::is_floating_point
         <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type
+            std::remove_cv_t <std::remove_reference_t<T1>>
         >::value &&
         std::is_same
         <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type,
-            typename std::remove_cv<
-                typename std::remove_reference<T2>::type>::type
+            std::remove_cv_t <std::remove_reference_t<T1>>,
+            std::remove_cv_t <std::remove_reference_t<T2>>
         >::value
-    >::type
+    >
 >
-inline bool IsRealClose(T1&& lhs, T2&& rhs, 
+
+inline bool IsRealClose(T1&& lhs, T2&& rhs,
     const NekDouble tol = NekConstants::kNekMachineEpsilon)
 {
     // Check if tolerance is positive

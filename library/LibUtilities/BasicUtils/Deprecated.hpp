@@ -39,19 +39,8 @@
  * Defines a deprecated macro. Note that gcc 4.5+ and it seems virtually all
  * clang versions support supplying a macro, as does MSVC from VS 2015 onwards.
  */
-#if defined(__GNUC__) || defined(__clang__)
-#  if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 5)) || defined(__clang__)
-#    define DEPRECATED(since, alt) \
-    __attribute__ ((deprecated(\
-                        "since version " #since "; use '" #alt "' instead")))
-#  else
-#    define DEPRECATED(since, alt) __attribute__ ((deprecated))
-#  endif
-#elif defined(_MSC_VER) && _MSC_VER >= 1900
-#  define DEPRECATED(since, alt) \
-    __declspec(deprecated, "since version " #since "; use '" #alt "' instead")
-#else
-#  define DEPRECATED(since, alt)
-#endif
+#define DEPRECATED(since, alt) \
+[[deprecated("since version " #since "; use '" #alt "' instead")]]
+
 
 #endif
