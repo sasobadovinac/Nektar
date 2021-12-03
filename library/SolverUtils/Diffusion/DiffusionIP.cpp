@@ -656,6 +656,8 @@ void DiffusionIP::GetPenaltyFactor(
 
     NekDouble spaceDim = NekDouble(fields[0]->GetCoordim(0));
 
+    int ntmp, numModes;
+
     for (int ntrace = 0; ntrace < ntotTrac; ++ntrace)
     {
         noffset  = tracelist->GetPhys_Offset(ntrace);
@@ -668,10 +670,13 @@ void DiffusionIP::GetPenaltyFactor(
         {
             if (LRAdjflag[nlr][ntrace])
             {
-                int numModes = fields[0]->GetNcoeffs(LRAdjExpid[nlr][ntrace]);
-                NekDouble numModesdir =
-                    pow(NekDouble(numModes), (1.0 / spaceDim));
-                factorFwdBwd[nlr] = 1.0 * numModesdir * (numModesdir + 1.0);
+                numModes = 0;
+                for(int nd=0;nd<spaceDim;nd++)
+                {
+                    ntmp = fields[0]->GetExp(LRAdjExpid[nlr][ntrace])->GetBasisNumModes(nd);
+                    numModes = std::max(ntmp,numModes);
+                }
+                factorFwdBwd[nlr] = (numModes) * (numModes);
             }
         }
 
@@ -830,9 +835,11 @@ void DiffusionIP::CalcTraceNumFlux(
     timer.Stop();
     timer.AccumulateRegion("DiffIP:_ConsVarAveJump",1);
 
+    Array<OneD, NekDouble> penaltyCoeff(nTracePts,0.0);
+    GetPenaltyFactor(fields, penaltyCoeff);
     for (size_t p = 0; p < nTracePts; ++p)
     {
-        NekDouble PenaltyFactor = m_IPPenaltyCoeff * m_traceNormDirctnElmtLengthRecip[p]; // load 1x
+        NekDouble PenaltyFactor = penaltyCoeff[p] * m_traceNormDirctnElmtLengthRecip[p]; // load 1x
 
         for (size_t f = 0; f < nConvectiveFields; ++f)
         {
