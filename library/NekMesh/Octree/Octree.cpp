@@ -838,12 +838,12 @@ void Octree::CompileSourcePointList()
 
             CADCurveSharedPtr curve = m_mesh->m_cad->GetCurve(i);
 
-            // if(i == 1)
-            // {
+            if(i == 1)
+            {
                 // std::cout << "\n\ntesting curve number: " << i << "\n";
-                // m_esources.push_back(edgesource(curve,0.005,0.0015));
+                m_esources.push_back(edgesource(curve,0.005,0.0015));
                 // std::cout << "Length of curve from esources: " << m_esources[i-1].Length() << "\n";
-            // }
+            }
 
             Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
             //this works assuming the curves are not distorted
@@ -878,12 +878,8 @@ void Octree::CompileSourcePointList()
                     }
                     CPointSharedPtr newCPoint;
 
-                    if(i <= 4)
+                    if(i <= 4) // if curve has refine flag, set the refined delta for source points on the curve.
                     {
-                    //     NekDouble t;
-                    //     std::cout << "\n\ncurve number: " << i << " and sample point " << j << "\n";
-                    //     std::cout << "uv -- loc: " << uv[0] << ", " << uv[1] << " -- " << loc[0] << ", " << loc[1] << "\n";
-                    //     std::cout << "curve dist: " << curve->loct(loc,t) << "\n\n";
                         newCPoint =
                             MemoryManager<CPoint>::AllocateSharedPtr(
                                 ss[0].first.lock()->GetId(), uv, loc, del, 0.0015);
@@ -900,7 +896,6 @@ void Octree::CompileSourcePointList()
                 }
                 else
                 {
-                    // std::cout << "curve number: " << i << " is a boundary with no del value\n";
                     BPointSharedPtr newBPoint =
                         MemoryManager<BPoint>::AllocateSharedPtr(
                             ss[0].first.lock()->GetId(), uv, loc);
@@ -910,7 +905,7 @@ void Octree::CompileSourcePointList()
             }
         }
     }
-    else
+    else // 3D or also 2D boundary layer?
     {
         totalEnt = m_mesh->m_cad->GetNumSurf();
         for (int i = 1; i <= totalEnt; i++)
@@ -1024,6 +1019,8 @@ void Octree::CompileSourcePointList()
                             del = m_minDelta;
                         }
 
+                        /// TODO Add refinement curve CPoints here.
+
                         CPointSharedPtr newCPoint =
                             MemoryManager<CPoint>::AllocateSharedPtr(
                                 surf->GetId(), uv, surf->P(uv), del);
@@ -1069,8 +1066,6 @@ void Octree::CompileSourcePointList()
             x2[2] = data[5];
 
             m_lsources.push_back(linesource(x1, x2, data[6], data[7]));
-
-            // std::cout << "testing source points: " << data[6] << " -- " << data[7] << "\n";
         }
 
         // this takes any existing sourcepoints within the influence range
@@ -1094,7 +1089,7 @@ void Octree::CompileSourcePointList()
                 }
             }
         }*/
-        /// TODO add extra source points from the line souce to the octree
+        /// TODO add extra source points from the line source to the octree
     }
 }
 

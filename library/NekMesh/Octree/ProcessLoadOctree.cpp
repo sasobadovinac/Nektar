@@ -88,6 +88,11 @@ void ProcessLoadOctree::Process()
         m_mesh->m_octree->Refinement(m_config["refinement"].as<string>());
     }
 
+    if(m_config["edge_refinement"].beenSet)
+    {
+        m_mesh->m_octree->EdgeRefinement(m_config["edge_refinement"].as<string>());
+    }
+
     m_mesh->m_octree->Process();
 
     if(m_config["writeoctree"].beenSet)

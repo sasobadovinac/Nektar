@@ -139,14 +139,12 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
                     minDif = SourcePointList[i]->GetDelta();
                 }
                 m_numValidPoints++;
-                // std::cout << "Regular source point " << i << "! minDif -- maxDif " << minDif << " -- " << maxDif << "\n";
             }
             if (SourcePointList[i]->HasRDelta())
             {
                 if(SourcePointList[i]->GetRDelta() < minDif)
                 {
                     minDif = SourcePointList[i]->GetRDelta();
-                    // std::cout << "Refined source point " << i << " found! minDif -- maxDif " << minDif << " -- " << maxDif << "\n";
                 }
             }
             if (SourcePointList[i]->Isboundary())
@@ -163,11 +161,9 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
         if (maxDif / minDif > 1.5)
         {
             m_needToDivide = true;
-            // std::cout << "numValidCurvePoints -- minDif -- maxDif -- maxDif / minDif: " << NumValidCurvePoint() << " -- " << minDif << " -- " << maxDif << " -- " << maxDif / minDif << "\n";
         }
 
         SetDelta(minDif);
-        // std::cout << "\n\nSetDelta: " << minDif << "\n\n";
 
         //encourage subdivision to keep spec smooth
         if (GetDelta() < 5.0 * DX())

@@ -144,6 +144,7 @@ void InputMCF::ParseFile(string nm)
     }
 
     set<string> refinement;
+    set<string> edge_refinement;
     if (pSession->DefinesElement("NEKTAR/MESHING/REFINEMENT"))
     {
         TiXmlElement *refine = mcf->FirstChildElement("REFINEMENT");
@@ -173,6 +174,23 @@ void InputMCF::ParseFile(string nm)
 
             L = L->NextSiblingElement("LINE");
         }
+
+        TiXmlElement *C      = refine->FirstChildElement("CURVE");
+        while (C)
+        {
+            stringstream ss;
+            TiXmlElement *T = C->FirstChildElement("ID");
+            ss << T->GetText() << ",";
+            T = C->FirstChildElement("Delta");
+            ss << T->GetText() << ",";
+            T = C->FirstChildElement("Radius");
+            ss << T->GetText();
+
+            edge_refinement.insert(ss.str());
+
+            C = C->NextSiblingElement("CURVE");
+        }
+
     }
 
     set<string> periodic;
@@ -403,6 +421,19 @@ void InputMCF::ParseFile(string nm)
         m_refinement.erase(m_refinement.end() - 1);
     }
 
+    m_edgerefine = edge_refinement.size() > 0;
+    if (m_edgerefine)
+    {
+        stringstream ss;
+        for (sit = edge_refinement.begin(); sit != edge_refinement.end(); sit++)
+        {
+            ss << *sit;
+            ss << ":";
+        }
+        m_edgerefinement = ss.str();
+        m_edgerefinement.erase(m_edgerefinement.end() - 1); // why do I need this?
+    }
+
     if (periodic.size() > 0)
     {
         stringstream ss;
@@ -457,6 +488,10 @@ void InputMCF::Process()
     if (m_refine)
     {
         module->RegisterConfig("refinement", m_refinement);
+    }
+    if (m_edgerefine)
+    {
+        module->RegisterConfig("edge_refinement", m_edgerefinement);
     }
     if (m_woct)
     {

@@ -183,13 +183,23 @@ public:
     void WriteOctree(std::string nm);
 
     /**
-     * @brief informs the octree there is a user defined spacing file
+     * @brief informs the octree there is a user defined line spacing file
      *
      * @param nm name of the user defined spacing file
      */
     void Refinement(std::string nm)
     {
         m_refinement = nm;
+    }
+
+    /**
+     * @brief informs the octree there is a user defined edge spacing file
+     *
+     * @param nm name of the user defined spacing file
+     */
+    void EdgeRefinement(std::string nm)
+    {
+        m_edgerefinement = nm;
     }
 
 private:
@@ -265,6 +275,7 @@ private:
     Logger m_log;
 
     std::string m_refinement;
+    std::string m_edgerefinement;
     std::vector<linesource> m_lsources;
     std::vector<edgesource> m_esources;
 };
