@@ -304,7 +304,8 @@ void Octree::SubDivide()
             vector<OctantSharedPtr> sublist;
             for (int i = 0; i < m_octants.size(); i++)
             {
-                if (m_octants[i]->NeedDivide() && m_octants[i]->DX() / 4.0 > (m_octants[i]->HasDelta()? min(m_minDelta,m_octants[i]->GetDelta()) : m_minDelta))
+                if (m_octants[i]->NeedDivide() &&
+                    m_octants[i]->DX() / 4.0 > (m_octants[i]->HasDelta()? min(m_minDelta,m_octants[i]->GetDelta()) : m_minDelta))
                 {
                     sublist.push_back(m_octants[i]);
                     inlist.insert(m_octants[i]->GetId());
@@ -825,7 +826,7 @@ int Octree::CountElemt()
 
 void Octree::CompileSourcePointList()
 {
-    /// find any curves that contain refinement data
+    // Get the information of any curves that contain refinement data
     map<int,pair<NekDouble,NekDouble>> curve_refinement;
     if (m_curverefinement.size() > 0)
     {
@@ -838,7 +839,6 @@ void Octree::CompileSourcePointList()
             vector<NekDouble> data;
             ParseUtils::GenerateVector(curves[i], data);
             curve_refinement[int(data[0])] = {data[1],data[2]};
-            // std::cout << "\n\ntesting curve data! " << data[0] << " -- " << data[1] << "\n\n";
         }
     }
 
@@ -852,14 +852,19 @@ void Octree::CompileSourcePointList()
 
             CADCurveSharedPtr curve = m_mesh->m_cad->GetCurve(i);
 
+            // Check if curve i has refinement data
             map<int,pair<NekDouble,NekDouble>>::iterator it;
             it = curve_refinement.find(i);
+            // Add curve as a refinement source. This works akin to line sources
+            // and does not affect the octree. /
+            /// TODO figure out why adding one curve affects (all?) other curves.
+            /// Suspecting the use of loct for range finding.
             if(it != curve_refinement.end())
             {
                 m_csources.push_back(curvesource(curve,it->second.second,it->second.first));
             }
 
-            Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
+            Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds
             //this works assuming the curves are not distorted
             int samples  = ceil(curve->Length(bds[0],bds[1]) / m_minDelta) * 2;
             samples = max(40, samples);
@@ -892,13 +897,16 @@ void Octree::CompileSourcePointList()
                     }
                     CPointSharedPtr newCPoint;
 
+                    // Adds a curve source point with additional refinement
+                    // delta. This promotes the octree to continue refining the
+                    // octant containing the source point until the refinement
+                    // delta is reached.
                     if(it != curve_refinement.end())
                     {
                         newCPoint =
                             MemoryManager<CPoint>::AllocateSharedPtr(
                                 ss[0].first.lock()->GetId(), uv, loc, del, it->second.first);
                     }
-
                     else
                     {
                         newCPoint =
