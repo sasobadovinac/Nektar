@@ -47,20 +47,19 @@ namespace Nektar
 namespace NekMesh
 {
 
-// struct to assist in the creation of edgesources in the code
-struct edgesource
+// struct to assist in the creation of curvesources in the code
+struct curvesource
 {
     CADCurveSharedPtr curve;
     NekDouble R, delta;
-    edgesource(CADCurveSharedPtr c,
+    curvesource(CADCurveSharedPtr c,
                NekDouble r,
                NekDouble d)
         : curve(c), R(r), delta(d)
-          // I need to add the edge ID and/or edge object here so it can be used to test for distances
     {
     }
 
-    // tests if a point is within a specified range, R, from the edge
+    // tests if a point is within a specified range, R, from the curve
     bool withinRange(Array<OneD, NekDouble> p)
     {
         NekDouble t; // overload loct to work also without t?
@@ -193,13 +192,13 @@ public:
     }
 
     /**
-     * @brief informs the octree there is a user defined edge spacing file
+     * @brief informs the octree there is a user defined curve spacing file
      *
      * @param nm name of the user defined spacing file
      */
-    void EdgeRefinement(std::string nm)
+    void CurveRefinement(std::string nm)
     {
-        m_edgerefinement = nm;
+        m_curverefinement = nm;
     }
 
 private:
@@ -275,9 +274,9 @@ private:
     Logger m_log;
 
     std::string m_refinement;
-    std::string m_edgerefinement;
+    std::string m_curverefinement;
     std::vector<linesource> m_lsources;
-    std::vector<edgesource> m_esources;
+    std::vector<curvesource> m_csources;
 };
 typedef std::shared_ptr<Octree> OctreeSharedPtr;
 

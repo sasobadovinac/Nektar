@@ -105,12 +105,11 @@ NekDouble Octree::Query(Array<OneD, NekDouble> loc)
         }
     }
 
-    for (int i = 0; i < m_esources.size(); i++)
+    for (int i = 0; i < m_csources.size(); i++)
     {
-        if (m_esources[i].withinRange(loc))
+        if (m_csources[i].withinRange(loc))
         {
-            // std::cout << "\ntesting: " << m_esources[i].Dist(loc) << "\n\n";
-            tmp = min(m_esources[i].delta, tmp);
+            tmp = min(m_csources[i].delta, tmp);
         }
     }
 
@@ -196,9 +195,9 @@ NekDouble Octree::GetMinDelta()
         tmp = min(m_lsources[i].delta, tmp);
     }
 
-    for (int i = 0; i < m_esources.size(); i++)
+    for (int i = 0; i < m_csources.size(); i++)
     {
-        tmp = min(m_esources[i].delta, tmp);
+        tmp = min(m_csources[i].delta, tmp);
     }
     return min(m_minDelta, tmp);
 }
@@ -305,9 +304,7 @@ void Octree::SubDivide()
             vector<OctantSharedPtr> sublist;
             for (int i = 0; i < m_octants.size(); i++)
             {
-                // std::cout << "\n\nOct -- NeedDivide -- m_minDelta -- getDelta -- DX / 4 : " << i << " -- " << m_octants[i]->NeedDivide() << " -- " << m_minDelta << " -- " << m_octants[i]->GetDelta() << " -- " << m_octants[i]->DX() / 4.0 << "\n";
-                if (m_octants[i]->NeedDivide() &&
-                    m_octants[i]->DX() / 4.0 > (m_octants[i]->HasDelta()? min(m_minDelta,m_octants[i]->GetDelta()) : m_minDelta))
+                if (m_octants[i]->NeedDivide() && m_octants[i]->DX() / 4.0 > (m_octants[i]->HasDelta()? min(m_minDelta,m_octants[i]->GetDelta()) : m_minDelta))
                 {
                     sublist.push_back(m_octants[i]);
                     inlist.insert(m_octants[i]->GetId());
@@ -828,6 +825,23 @@ int Octree::CountElemt()
 
 void Octree::CompileSourcePointList()
 {
+    /// find any curves that contain refinement data
+    map<int,pair<NekDouble,NekDouble>> curve_refinement;
+    if (m_curverefinement.size() > 0)
+    {
+        m_log(VERBOSE) << "        Modifying based on refinement lines" << endl;
+        // now deal with the user defined spacing
+        vector<string> curves;
+        boost::split(curves, m_curverefinement, boost::is_any_of(":"));
+        for (int i = 0; i < curves.size(); i++)
+        {
+            vector<NekDouble> data;
+            ParseUtils::GenerateVector(curves[i], data);
+            curve_refinement[int(data[0])] = {data[1],data[2]};
+            // std::cout << "\n\ntesting curve data! " << data[0] << " -- " << data[1] << "\n\n";
+        }
+    }
+
     int totalEnt = 0;
     if(m_mesh->m_cad->Is2D())
     {
@@ -838,11 +852,11 @@ void Octree::CompileSourcePointList()
 
             CADCurveSharedPtr curve = m_mesh->m_cad->GetCurve(i);
 
-            if(i == 1)
+            map<int,pair<NekDouble,NekDouble>>::iterator it;
+            it = curve_refinement.find(i);
+            if(it != curve_refinement.end())
             {
-                // std::cout << "\n\ntesting curve number: " << i << "\n";
-                m_esources.push_back(edgesource(curve,0.005,0.0015));
-                // std::cout << "Length of curve from esources: " << m_esources[i-1].Length() << "\n";
+                m_csources.push_back(curvesource(curve,it->second.second,it->second.first));
             }
 
             Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds box around the curve?
@@ -878,11 +892,11 @@ void Octree::CompileSourcePointList()
                     }
                     CPointSharedPtr newCPoint;
 
-                    if(i <= 4) // if curve has refine flag, set the refined delta for source points on the curve.
+                    if(it != curve_refinement.end())
                     {
                         newCPoint =
                             MemoryManager<CPoint>::AllocateSharedPtr(
-                                ss[0].first.lock()->GetId(), uv, loc, del, 0.0015);
+                                ss[0].first.lock()->GetId(), uv, loc, del, it->second.first);
                     }
 
                     else

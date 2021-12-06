@@ -56,6 +56,8 @@ ProcessLoadOctree::ProcessLoadOctree(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(false, "0", "mindelta.");
     m_config["refinement"] =
         ConfigOption(false, "", "mindelta.");
+    m_config["curve_refinement"] =
+        ConfigOption(false, "", "mindelta.");
     m_config["writeoctree"] =
         ConfigOption(true, "0", "dump octree as xml mesh");
 }
@@ -88,9 +90,9 @@ void ProcessLoadOctree::Process()
         m_mesh->m_octree->Refinement(m_config["refinement"].as<string>());
     }
 
-    if(m_config["edge_refinement"].beenSet)
+    if(m_config["curve_refinement"].beenSet)
     {
-        m_mesh->m_octree->EdgeRefinement(m_config["edge_refinement"].as<string>());
+        m_mesh->m_octree->CurveRefinement(m_config["curve_refinement"].as<string>());
     }
 
     m_mesh->m_octree->Process();
