@@ -159,6 +159,17 @@ namespace Nektar
                 v_Solve         (nDim, m_rotStorage[0], m_rotStorage[1],
                                        m_rotStorage[2]);
                 rotateFromNormal(m_rotStorage[2], normals, vecLocs, flux);
+
+                // Attempt to subtract (\vec{U}\vec{vg})\dot n
+                auto vgt = m_vectors["vgt"]();
+                auto N = m_vectors["N"]();
+                for (int i = 0; i < flux.size(); ++i)
+                {
+                    for (int j = 0; j < flux[i].size(); ++j)
+                    {
+                        flux[i][j] -= 0.5 * (Fwd[i][j] + Bwd[i][j]) * (N[0][j] * vgt[0][j] + N[1][j] * vgt[1][j]);
+                    }
+                }
             }
             else
             {

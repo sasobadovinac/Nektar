@@ -66,6 +66,7 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
               Array<OneD,       Array<OneD, NekDouble> > &flux)
     {
+        /*
         //------------------------------
         auto vgt = m_vectors["vgt"]();
         auto normals = m_vectors["N"]();
@@ -90,7 +91,7 @@ namespace Nektar
 
         rotateToNormal(vgt, normals, veclocs, vgtRot);
          //-------------------------------
-
+         */
         if (m_pointSolve)
         {
             int expDim      = nDim;
@@ -111,8 +112,8 @@ namespace Nektar
                 for (int i = 0; i < Fwd[0].size(); ++i)
                 {
                     v_PointSolve(
-                        Fwd[0][i],  Fwd[1][i],  Fwd[2][i],  vgtRot[0][i],   Fwd[3][i],
-                        Bwd[0][i],  Bwd[1][i],  Bwd[2][i],  vgtRot[1][i],   Bwd[3][i],
+                        Fwd[0][i],  Fwd[1][i],  Fwd[2][i],  0.0,   Fwd[3][i],
+                        Bwd[0][i],  Bwd[1][i],  Bwd[2][i],  0.0,   Bwd[3][i],
                         flux[0][i], flux[1][i], flux[2][i], rhovf,      flux[3][i]);
                 }
             }
