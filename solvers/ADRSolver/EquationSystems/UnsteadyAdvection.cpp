@@ -40,7 +40,51 @@ using namespace std;
 
 namespace Nektar
 {
-    string UnsteadyAdvection::className = SolverUtils::GetEquationSystemFactory().
+
+class LaxFriedrichsSolver : public SolverUtils::RiemannSolver
+{
+public:
+    static SolverUtils::RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr& pSession)
+    {
+        return SolverUtils::RiemannSolverSharedPtr(
+            new LaxFriedrichsSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    LaxFriedrichsSolver(
+        const LibUtilities::SessionReaderSharedPtr& pSession)
+        : SolverUtils::RiemannSolver(pSession)
+    {
+    }
+
+    void v_Solve(
+        const int                                         nDim,
+        const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
+        const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
+              Array<OneD,       Array<OneD, NekDouble> > &flux) final
+    {
+        boost::ignore_unused(nDim);
+        const Array<OneD, NekDouble> &traceVel = m_scalars["Vn"]();
+        const Array<OneD, NekDouble> &gridTraceVel = m_scalars["GridVn"]();
+
+        for (int j = 0; j < traceVel.size(); ++j)
+        {
+            flux[0][j] = 0.5 * traceVel[j] * (Fwd[0][j] + Bwd[0][j]) +
+                0.5 * abs(traceVel[j]) * (Fwd[0][j] - Bwd[0][j]);
+
+            flux[0][j] -= gridTraceVel[j] * 0.5 * (Fwd[0][j] + Bwd[0][j]);
+        }
+    }
+};
+std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFactory().
+    RegisterCreatorFunction("LaxFriedrichs", LaxFriedrichsSolver::create,
+                            "L-F solver");
+
+
+string UnsteadyAdvection::className = SolverUtils::GetEquationSystemFactory().
         RegisterCreatorFunction("UnsteadyAdvection",
                                 UnsteadyAdvection::create,
                                 "Unsteady Advection equation.");
@@ -110,6 +154,7 @@ namespace Nektar
                 if (m_fields[0]->GetTrace())
                 {
                     m_traceVn = Array<OneD, NekDouble>(GetTraceNpoints());
+                    m_traceGridVn = Array<OneD, NekDouble>(GetTraceNpoints());
                 }
 
                 string advName;
@@ -135,6 +180,8 @@ namespace Nektar
                         riemName, m_session);
                 m_riemannSolver->SetScalar(
                     "Vn", &UnsteadyAdvection::GetNormalVelocity, this);
+                m_riemannSolver->SetScalar(
+                    "GridVn", &UnsteadyAdvection::GetNormalGridVelocity, this);
 
                 m_advObject->SetRiemannSolver(m_riemannSolver);
                 m_advObject->InitObject(m_session, m_fields);
@@ -175,10 +222,11 @@ namespace Nektar
         // Number of trace (interface) points
         int i;
         int nTracePts = GetTraceNpoints();
-        int nPts = m_velocity[0].size();
+        //int nPts = m_velocity[0].size();
 
         // Auxiliary variable to compute the normal velocity
-        Array<OneD, NekDouble> tmp(nPts), tmp2(nTracePts);
+        Array<OneD, NekDouble> tmp2(nTracePts);
+        //Array<OneD, NekDouble> tmp(nPts), tmp2(nTracePts);
 
         // Reset the normal velocity
         Vmath::Zero(nTracePts, m_traceVn, 1);
@@ -187,9 +235,10 @@ namespace Nektar
         {
             // Subtract grid velocity here from velocity
             // velocity - grid velocity
-            Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
+            //Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
+            //m_fields[0]->ExtractTracePhys(tmp, tmp2);
 
-            m_fields[0]->ExtractTracePhys(tmp, tmp2);
+            m_fields[0]->ExtractTracePhys(m_velocity[i], tmp2);
 
             Vmath::Vvtvp(nTracePts,
                          m_traceNormals[i], 1,
@@ -199,6 +248,40 @@ namespace Nektar
         }
 
         return m_traceVn;
+    }
+
+    /**
+     * @brief Get the normal velocity for the linear advection equation.
+     */
+    Array<OneD, NekDouble> &UnsteadyAdvection::GetNormalGridVelocity()
+    {
+        // Number of trace (interface) points
+        int i;
+        int nTracePts = GetTraceNpoints();
+        //int nPts = m_velocity[0].size();
+
+        // Auxiliary variable to compute the normal velocity
+        Array<OneD, NekDouble> tmp2(nTracePts);//tmp(nPts), tmp2(nTracePts);
+
+        // Reset the normal velocity
+        Vmath::Zero(nTracePts, m_traceGridVn, 1);
+
+        for (i = 0; i < m_velocity.size(); ++i)
+        {
+            // Subtract grid velocity here from velocity
+            // velocity - grid velocity
+            //Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
+
+            m_fields[0]->ExtractTracePhys(m_gridVelocity[i], tmp2);
+
+            Vmath::Vvtvp(nTracePts,
+                         m_traceNormals[i], 1,
+                         tmp2,              1,
+                         m_traceGridVn,     1,
+                         m_traceGridVn,     1);
+        }
+
+        return m_traceGridVn;
     }
 
     /**

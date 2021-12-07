@@ -68,6 +68,7 @@ namespace Nektar
         /// Advection velocity
         Array<OneD, Array<OneD, NekDouble> >    m_velocity;
         Array<OneD, NekDouble>                  m_traceVn;
+        Array<OneD, NekDouble>                  m_traceGridVn;
 
         // Plane (used only for Discontinous projection
         //        with 3DHomogenoeus1D expansion)
@@ -101,6 +102,9 @@ namespace Nektar
 
         /// Get the normal velocity
         Array<OneD, NekDouble> &GetNormalVelocity();
+
+        /// Get the normal velocity
+        Array<OneD, NekDouble> &GetNormalGridVelocity();
 
         /// Initialise the object
         virtual void v_InitObject();

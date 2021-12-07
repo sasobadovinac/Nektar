@@ -4,6 +4,7 @@
 
 namespace Nektar
 {
+/*
 class LaxFriedrichsSolver : public SolverUtils::RiemannSolver
 {
 public:
@@ -43,6 +44,7 @@ std::string LaxFriedrichsSolver::solverName = SolverUtils::GetRiemannSolverFacto
     RegisterCreatorFunction("LaxFriedrichs", LaxFriedrichsSolver::create,
                             "L-F solver");
 
+*/
 
     class ALEDemo : public SolverUtils::EquationSystem
     {
