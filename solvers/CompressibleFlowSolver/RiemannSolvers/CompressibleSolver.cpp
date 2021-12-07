@@ -66,33 +66,35 @@ namespace Nektar
         const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
               Array<OneD,       Array<OneD, NekDouble> > &flux)
     {
-        auto gridVelTrace = m_vectors["vgt"]();
+        //------------------------------
+        auto vgt = m_vectors["vgt"]();
+        auto normals = m_vectors["N"]();
 
-        // Create fwd/bwd variables for grid velocity to be applied to
-        //Array<OneD, Array<OneD, NekDouble>> fwdTmp;
-        //Array<OneD, Array<OneD, NekDouble>> bwdTmp;
-        //CopyArray(Fwd, fwdTmp);
-        //CopyArray(Bwd, bwdTmp);
+        int nFields = Fwd.size();
+        int nPts = Fwd[0].size();
 
+        std::cout << "nFields = " << nFields << std::endl;
+        std::cout << "nPts = " << nPts << std::endl;
+        std::cout << "normals.size() = (" << normals[0].size() << ", " << normals[1].size() << ")" << std::endl;
+
+        Array<OneD, Array<OneD, NekDouble>> veclocs(1);
+        veclocs[0] = Array<OneD, NekDouble>(2);
+        veclocs[0][0] = 0.0;
+        veclocs[0][1] = 1.0;
+
+        Array<OneD, Array<OneD, NekDouble>> vgtRot(nFields - 2);
+        for (int i = 0; i < nFields - 2; ++i)
+        {
+            vgtRot[i] = Array<OneD, NekDouble>(nPts);
+        }
+
+        rotateToNormal(vgt, normals, veclocs, vgtRot);
+         //-------------------------------
 
         if (m_pointSolve)
         {
             int expDim      = nDim;
-            int nvariables  = Fwd.size();
-
             NekDouble rhouf{}, rhovf{};
-
-            // @TODO: Idea here is to multiply the grid velocity by rhoL/rhoR and
-            //  @TODO: then subtract from rho(u/v/w)/(L/R), instead of doing it in the HLLCsolver
-            // Loop skips first entry which is rho
-            //for (int i = 1; i < gridVelTrace.size() + 1; ++i)
-            //{
-            //    for (int j = 0; j < Fwd[0].size(); ++j)
-            //    {
-            //        fwdTmp[i][j] -= Fwd[0][j] * gridVelTrace[i - 1][j];
-            //        bwdTmp[i][j] -= Bwd[0][j]  gridVelTrace[i - 1][j];
-            //    }
-            //}
 
             if (expDim == 1)
             {
@@ -109,9 +111,9 @@ namespace Nektar
                 for (int i = 0; i < Fwd[0].size(); ++i)
                 {
                     v_PointSolve(
-                        Fwd[0][i],  Fwd[1][i],  Fwd[2][i],  0.0,   Fwd[3][i],
-                        Bwd[0][i],  Bwd[1][i],  Bwd[2][i],  0.0,   Bwd[3][i],
-                        flux[0][i], flux[1][i], flux[2][i], rhovf, flux[3][i]);
+                        Fwd[0][i],  Fwd[1][i],  Fwd[2][i],  vgtRot[0][i],   Fwd[3][i],
+                        Bwd[0][i],  Bwd[1][i],  Bwd[2][i],  vgtRot[1][i],   Bwd[3][i],
+                        flux[0][i], flux[1][i], flux[2][i], rhovf,      flux[3][i]);
                 }
             }
             else if (expDim == 3)

@@ -55,6 +55,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         RiemannSolvers/HLLSolver.cpp
         RiemannSolvers/HLLCSolver.cpp
         RiemannSolvers/LaxFriedrichsSolver.cpp
+        RiemannSolvers/LaxFriedrichsSolverALE.cpp
         RiemannSolvers/RoeSolver.cpp
         RiemannSolvers/RoeSolverSIMD.cpp
         )
