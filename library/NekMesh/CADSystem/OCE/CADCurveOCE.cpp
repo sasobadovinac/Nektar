@@ -77,13 +77,10 @@ NekDouble CADCurveOCE::Length(NekDouble ti, NekDouble tf)
 NekDouble CADCurveOCE::loct(Array<OneD, NekDouble> xyz, NekDouble &t)
 {
     t = 0.0;
-
     gp_Pnt loc(xyz[0] * 1000.0, xyz[1] * 1000.0, xyz[2] * 1000.0);
-
     ShapeAnalysis_Curve sac;
     gp_Pnt p;
     sac.Project(m_c, loc, Precision::Confusion(), p, t);
-
     return p.Distance(loc) / 1000.0;
 }
 

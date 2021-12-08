@@ -57,19 +57,40 @@ struct curvesource
                NekDouble d)
         : curve(c), R(r), delta(d)
     {
+        Array<OneD, NekDouble> min_max = curve->GetMinMax();
+        min_loc_x = std::min(min_max[0],min_max[3]) - R;
+        min_loc_y = std::min(min_max[1],min_max[4]) - R;
+        min_loc_z = std::min(min_max[2],min_max[5]) - R;
+        max_loc_x = std::max(min_max[0],min_max[3]) + R;
+        max_loc_y = std::max(min_max[1],min_max[4]) + R;
+        max_loc_z = std::max(min_max[2],min_max[5]) + R;
     }
 
     // tests if a point is within a specified range, R, from the curve
     bool withinRange(Array<OneD, NekDouble> p)
     {
-        NekDouble t; // overload loct to work also without t?
-        if(curve->loct(p,t) <= R)
+        if(p[0] >= min_loc_x &&  p[1] >= min_loc_y && p[2] >= min_loc_z &&
+           p[0] <= max_loc_x &&  p[1] <= max_loc_y && p[2] <= max_loc_z)
         {
-            return true;
+            NekDouble t;
+            if(curve->loct(p,t) <= R)
+            {
+                return true;
+            }
+            else
+                return false;
         }
         else
             return false;
     }
+
+    private:
+        NekDouble min_loc_x;
+        NekDouble min_loc_y;
+        NekDouble min_loc_z;
+        NekDouble max_loc_x;
+        NekDouble max_loc_y;
+        NekDouble max_loc_z;
 };
 
 //struct to assist in the creation of linesources in the code
