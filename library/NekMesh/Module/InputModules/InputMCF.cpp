@@ -181,9 +181,9 @@ void InputMCF::ParseFile(string nm)
             stringstream ss;
             TiXmlElement *T = C->FirstChildElement("ID");
             ss << T->GetText() << ",";
-            T = C->FirstChildElement("Delta");
+            T = C->FirstChildElement("R");
             ss << T->GetText() << ",";
-            T = C->FirstChildElement("Radius");
+            T = C->FirstChildElement("D");
             ss << T->GetText();
 
             curve_refinement.insert(ss.str());
@@ -431,7 +431,7 @@ void InputMCF::ParseFile(string nm)
             ss << ":";
         }
         m_curverefinement = ss.str();
-        m_curverefinement.erase(m_curverefinement.end() - 1); // why do I need this?
+        m_curverefinement.erase(m_curverefinement.end() - 1);
     }
 
     if (periodic.size() > 0)

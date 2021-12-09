@@ -857,11 +857,11 @@ void Octree::CompileSourcePointList()
             it = curve_refinement.find(i);
             // Add curve as a refinement source. This works akin to line sources
             // and does not affect the octree. /
-            /// TODO figure out why adding one curve affects (all?) other curves.
-            /// Suspecting the use of loct for range finding.
             if(it != curve_refinement.end())
             {
-                m_csources.push_back(curvesource(curve,it->second.second,it->second.first));
+                // it->second.first = radius; it->second.second = delta
+                // std::cout << "\nnew formating check: -- ID: " << i << " -- R: " << it->second.first << " -- D: " << it->second.second << "\n";
+                m_csources.push_back(curvesource(curve,it->second.first,it->second.second));
             }
 
             Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds
@@ -905,7 +905,7 @@ void Octree::CompileSourcePointList()
                     {
                         newCPoint =
                             MemoryManager<CPoint>::AllocateSharedPtr(
-                                ss[0].first.lock()->GetId(), uv, loc, del, it->second.first);
+                                ss[0].first.lock()->GetId(), uv, loc, del, it->second.second);
                     }
                     else
                     {

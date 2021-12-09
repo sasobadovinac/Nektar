@@ -511,6 +511,7 @@ void ProcessVarOpti::GetElementMap(
         m_dataSet.push_back(d);
     }
 
+    // r-adaption stuff!!!
     if (m_config["scalingfile"].beenSet)
     {
         LibUtilities::Interpolator interp =

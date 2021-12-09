@@ -74,6 +74,19 @@ NekDouble CADCurveOCE::Length(NekDouble ti, NekDouble tf)
     return System.Mass() / 1000.0;
 }
 
+NekDouble CADCurveOCE::GetMinDistance(Array<OneD, NekDouble> xyz)
+{
+    std::cout << "Testing GetMinDistance:  1\n";
+    gp_Pnt loc(xyz[0] * 1000.0, xyz[1] * 1000.0, xyz[2] * 1000.0);
+    std::cout << "Testing GetMinDistance:  2\n";
+    GeomAPI_ProjectPointOnCurve proj(loc, m_c, m_b[0], m_b[1]);
+    std::cout << "Testing GetMinDistance:  3\n";
+    // proj.Init(loc, m_c, m_b[0], m_b[1]);
+    std::cout << "Testing GetMinDistance:  NBPoints " << proj.NbPoints() << "\n";
+    std::cout << "Testing GetMinDistance:  dist = " <<  proj.LowerDistance() << "\n";
+    return proj.LowerDistance();
+}
+
 NekDouble CADCurveOCE::loct(Array<OneD, NekDouble> xyz, NekDouble &t)
 {
     t = 0.0;

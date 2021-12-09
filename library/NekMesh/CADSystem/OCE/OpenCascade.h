@@ -79,6 +79,7 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <GeomAPI_PointsToBSpline.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <Geom_TrimmedCurve.hxx>
 
