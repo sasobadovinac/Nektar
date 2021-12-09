@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v5.1.1
+------
+**Python**
+- Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication
+  being recreated. (!1296)
+
 v5.1.0
 ------
 **Library**
