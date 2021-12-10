@@ -102,7 +102,7 @@ public:
     bool HasDelta()
     {
         bool ret;
-        if(m_type == eCBoundary || m_type == eSrcPoint || m_type == eRCBoundary)
+        if(m_type == eCBoundary || m_type == eRCBoundary)
         {
             ret = true;
         }
@@ -116,7 +116,7 @@ public:
     bool HasRDelta()
     {
         bool ret;
-        if(m_type == eRCBoundary)
+        if(m_type == eRCBoundary || m_type == eSrcPoint )
         {
             ret = true;
         }
@@ -130,7 +130,7 @@ public:
     bool Isboundary()
     {
         bool ret;
-        if(m_type == eCBoundary || m_type == ePBoundary)
+        if(m_type == eCBoundary || m_type == ePBoundary || m_type == eRCBoundary)
         {
             ret = true;
         }
@@ -245,18 +245,6 @@ public:
 
     ~BPoint(){};
 
-    NekDouble GetDelta()
-    {
-        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
-        return 0.0;
-    }
-
-    void SetDelta(NekDouble i)
-    {
-        boost::ignore_unused(i);
-        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
-    }
-
     /**
      * @brief gets the corresponding cad information for the point
      */
@@ -266,12 +254,36 @@ public:
         uv   = m_uv;
     }
 
-    CPointSharedPtr ChangeType()
+    NekDouble GetDelta()
     {
-        CPointSharedPtr ret = MemoryManager<CPoint>::
-            AllocateSharedPtr(sid, m_uv, m_loc, -1.0);
-        return ret;
+        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
+        return 0.0;
     }
+
+    void SetDelta(NekDouble i)
+    {
+        boost::ignore_unused(i);
+        NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
+    }
+
+    NekDouble GetRDelta()
+    {
+        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
+        return 0.0;
+    }
+
+    void SetRDelta(NekDouble i)
+    {
+        boost::ignore_unused(i);
+        NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
+    }
+
+    // CPointSharedPtr ChangeType()
+    // {
+    //     CPointSharedPtr ret = MemoryManager<CPoint>::
+    //         AllocateSharedPtr(sid, m_uv, m_loc, -1.0);
+    //     return ret;
+    // }
 
 private:
     /// surf id
@@ -294,7 +306,7 @@ public:
      * @brief constructor for a boundary point without delta
      */
     SrcPoint(Array<OneD, NekDouble> l, NekDouble d)
-            : SPBase(l), m_delta(d)
+            : SPBase(l), m_rdelta(d)
     {
         m_type = eSrcPoint;
     }
@@ -304,14 +316,26 @@ public:
     /**
      * @brief get mesh spacing paramter
      */
+    NekDouble GetRDelta()
+    {
+        return m_rdelta;
+    }
+
+    void SetRDelta(NekDouble i)
+    {
+        m_rdelta = i;
+    }
+
     NekDouble GetDelta()
     {
-        return m_delta;
+        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
+        return 0.0;
     }
 
     void SetDelta(NekDouble i)
     {
-        m_delta = i;
+        boost::ignore_unused(i);
+        NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
     }
 
     void GetCAD(int &surf, Array<OneD, NekDouble> &uv)
@@ -321,7 +345,9 @@ public:
     }
 
 private:
-    NekDouble m_delta;
+    // NekDouble m_delta;
+    /// refinement delta parameter
+    NekDouble m_rdelta;
 };
 typedef std::shared_ptr<SrcPoint> SrcPointSharedPtr;
 

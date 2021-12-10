@@ -62,6 +62,7 @@ struct curvesource
     // tests if a point is within a specified range, R, from the curve
     bool withinRange(Array<OneD, NekDouble> p)
     {
+        // if(curve->loct(p,t) <= R)
         if(curve->GetMinDistance(p) <= R)
         {
             return true;

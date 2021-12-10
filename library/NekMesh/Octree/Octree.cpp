@@ -830,14 +830,14 @@ void Octree::CompileSourcePointList()
     map<int,pair<NekDouble,NekDouble>> curve_refinement;
     if (m_curverefinement.size() > 0)
     {
-        m_log(VERBOSE) << "        Modifying based on refinement lines" << endl;
-        // now deal with the user defined spacing
+        m_log(VERBOSE) << "        Modifying based on refinement curves" << endl;
         vector<string> curves;
         boost::split(curves, m_curverefinement, boost::is_any_of(":"));
         for (int i = 0; i < curves.size(); i++)
         {
             vector<NekDouble> data;
             ParseUtils::GenerateVector(curves[i], data);
+            // data[0] = curve ID; data[1]= radius(R); data[2] = delta(D).
             curve_refinement[int(data[0])] = {data[1],data[2]};
         }
     }
@@ -860,7 +860,6 @@ void Octree::CompileSourcePointList()
             if(it != curve_refinement.end())
             {
                 // it->second.first = radius; it->second.second = delta
-                // std::cout << "\nnew formating check: -- ID: " << i << " -- R: " << it->second.first << " -- D: " << it->second.second << "\n";
                 m_csources.push_back(curvesource(curve,it->second.first,it->second.second));
             }
 
@@ -1041,7 +1040,7 @@ void Octree::CompileSourcePointList()
                             del = m_minDelta;
                         }
 
-                        /// TODO Add refinement curve CPoints here.
+                        /// TODO Add refinement surface CPoints here.
 
                         CPointSharedPtr newCPoint =
                             MemoryManager<CPoint>::AllocateSharedPtr(
@@ -1088,8 +1087,27 @@ void Octree::CompileSourcePointList()
             x2[2] = data[5];
 
             m_lsources.push_back(linesource(x1, x2, data[6], data[7]));
-        }
 
+            // add non-boundary source points on the line to inform the octree of
+            // additional subdivisions
+            NekDouble length = sqrt((x1[0]-x2[0])*(x1[0]-x2[0]) +
+                                    (x1[1]-x2[1])*(x1[1]-x2[1]) +
+                                    (x1[2]-x2[2])*(x1[2]-x2[2]));
+            int num_points = max(40, int(ceil(length / data[7])*2));
+            NekDouble dx = (x2[0]-x1[0]) / (num_points + 1);
+            NekDouble dy = (x2[1]-x1[1]) / (num_points + 1);
+            NekDouble dz = (x2[2]-x1[2]) / (num_points + 1);
+
+            for(size_t j = 0; j < num_points; j++)
+            {
+                Array<OneD, NekDouble> loc(3);
+                loc[0] = x1[0]+dx*j;
+                loc[1] = x1[1]+dy*j;
+                loc[2] = x1[2]+dz*j;
+                SrcPointSharedPtr newSPoint = MemoryManager<SrcPoint>::AllocateSharedPtr(loc,data[7]);
+                m_SPList.push_back(newSPoint);
+            }
+        }
         // this takes any existing sourcepoints within the influence range
         // and modifies them
         /*for (int i = 0; i < m_SPList.size(); i++)
