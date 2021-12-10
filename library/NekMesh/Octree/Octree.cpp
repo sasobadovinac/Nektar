@@ -845,7 +845,7 @@ void Octree::CompileSourcePointList()
     int totalEnt = 0;
     if(m_mesh->m_cad->Is2D())
     {
-        totalEnt += m_mesh->m_cad->GetNumCurve();  // Why += ?
+        totalEnt = m_mesh->m_cad->GetNumCurve();  // Why was there a += here?
         for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
         {
             m_log(VERBOSE).Progress(i, totalEnt, "  - Compiling source points");
@@ -864,7 +864,7 @@ void Octree::CompileSourcePointList()
             }
 
             Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds
-            //this works assuming the curves are not distorted
+            // this works assuming the curves are not distorted
             int samples  = ceil(curve->Length(bds[0],bds[1]) / m_minDelta) * 2;
             samples = max(40, samples);
             NekDouble dt = (bds[1] - bds[0]) / (samples + 1);
@@ -899,7 +899,7 @@ void Octree::CompileSourcePointList()
                     // Adds a curve source point with additional refinement
                     // delta. This promotes the octree to continue refining the
                     // octant containing the source point until the refinement
-                    // delta is reached.
+                    // delta is reached. it->second.second = delta(D);
                     if(it != curve_refinement.end())
                     {
                         newCPoint =
@@ -912,7 +912,6 @@ void Octree::CompileSourcePointList()
                             MemoryManager<CPoint>::AllocateSharedPtr(
                                 ss[0].first.lock()->GetId(), uv, loc, del);
                     }
-
                     m_SPList.push_back(newCPoint);
                 }
                 else
@@ -926,7 +925,7 @@ void Octree::CompileSourcePointList()
             }
         }
     }
-    else // 3D or also 2D boundary layer?
+    else
     {
         totalEnt = m_mesh->m_cad->GetNumSurf();
         for (int i = 1; i <= totalEnt; i++)
@@ -1094,7 +1093,7 @@ void Octree::CompileSourcePointList()
             NekDouble dy = x2[1]-x1[1];
             NekDouble dz = x2[2]-x1[2];
             NekDouble length = sqrt(dx*dx+dy*dy+dz*dz);
-            int num_points = max(40, int(ceil(length / data[7])*2));
+            int num_points = ceil(length / data[7])*2;
             // update dx, dy & dz to now be the increment in each direction.
             dx = dx / (num_points + 1);
             dy = dy / (num_points + 1);
