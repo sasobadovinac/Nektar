@@ -278,6 +278,7 @@ public:
         NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
     }
 
+    // Leaving for posterity -- this function is not needed as far as I can tell.
     // CPointSharedPtr ChangeType()
     // {
     //     CPointSharedPtr ret = MemoryManager<CPoint>::

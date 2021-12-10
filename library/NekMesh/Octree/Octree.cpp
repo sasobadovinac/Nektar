@@ -856,10 +856,10 @@ void Octree::CompileSourcePointList()
             map<int,pair<NekDouble,NekDouble>>::iterator it;
             it = curve_refinement.find(i);
             // Add curve as a refinement source. This works akin to line sources
-            // and does not affect the octree. /
+            // and does not affect the octree.
             if(it != curve_refinement.end())
             {
-                // it->second.first = radius; it->second.second = delta
+                // it->second.first = radius(R); it->second.second = delta(D).
                 m_csources.push_back(curvesource(curve,it->second.first,it->second.second));
             }
 
@@ -1040,7 +1040,7 @@ void Octree::CompileSourcePointList()
                             del = m_minDelta;
                         }
 
-                        /// TODO Add refinement surface CPoints here.
+                        /// TODO Add refinement surface CPoints.
 
                         CPointSharedPtr newCPoint =
                             MemoryManager<CPoint>::AllocateSharedPtr(
@@ -1090,13 +1090,15 @@ void Octree::CompileSourcePointList()
 
             // add non-boundary source points on the line to inform the octree of
             // additional subdivisions
-            NekDouble length = sqrt((x1[0]-x2[0])*(x1[0]-x2[0]) +
-                                    (x1[1]-x2[1])*(x1[1]-x2[1]) +
-                                    (x1[2]-x2[2])*(x1[2]-x2[2]));
+            NekDouble dx = x2[0]-x1[0];
+            NekDouble dy = x2[1]-x1[1];
+            NekDouble dz = x2[2]-x1[2];
+            NekDouble length = sqrt(dx*dx+dy*dy+dz*dz);
             int num_points = max(40, int(ceil(length / data[7])*2));
-            NekDouble dx = (x2[0]-x1[0]) / (num_points + 1);
-            NekDouble dy = (x2[1]-x1[1]) / (num_points + 1);
-            NekDouble dz = (x2[2]-x1[2]) / (num_points + 1);
+            // update dx, dy & dz to now be the increment in each direction.
+            dx = dx / (num_points + 1);
+            dy = dy / (num_points + 1);
+            dz = dz / (num_points + 1);
 
             for(size_t j = 0; j < num_points; j++)
             {
@@ -1108,6 +1110,11 @@ void Octree::CompileSourcePointList()
                 m_SPList.push_back(newSPoint);
             }
         }
+
+        // OLD code left for posterity -- using the new approach oh having an
+        // octant delta and a refinement delta there should be no need to change
+        // the existing sourcpoints anymore, nor add any more source points.
+
         // this takes any existing sourcepoints within the influence range
         // and modifies them
         /*for (int i = 0; i < m_SPList.size(); i++)
