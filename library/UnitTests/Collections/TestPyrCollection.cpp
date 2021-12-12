@@ -2649,6 +2649,100 @@ namespace Nektar
                 BOOST_CHECK_CLOSE(coeffs1[i],coeffs2[i], epsilon);
             }
         }
+        
+        BOOST_AUTO_TEST_CASE(TestPyrHelmholtz_IterPerExp_UniformP_ConstVarDiff)
+        {
+            SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(3u, 0u, -1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(3u, 1u,  1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(3u, 2u,  1.0,  1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(3u, 3u, -1.0,  1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v4(new SpatialDomains::PointGeom(3u, 4u, -1.0, -1.0,  1.0));
+
+            SpatialDomains::PyrGeomSharedPtr pyrGeom = CreatePyr(v0, v1, v2, v3, v4);
+
+            unsigned int numQuadPoints = 5;
+            unsigned int numModes = 4;
+
+            Nektar::LibUtilities::PointsType     PointsTypeDir1 = Nektar::LibUtilities::eGaussLobattoLegendre;
+            const Nektar::LibUtilities::PointsKey PointsKeyDir1(numQuadPoints, PointsTypeDir1);
+            Nektar::LibUtilities::BasisType       basisTypeDir1 = Nektar::LibUtilities::eModified_A;
+            const Nektar::LibUtilities::BasisKey  basisKeyDir1(basisTypeDir1,numModes,PointsKeyDir1);
+
+            Nektar::LibUtilities::PointsType      PointsTypeDir2 = Nektar::LibUtilities::eGaussLobattoLegendre;
+            const Nektar::LibUtilities::PointsKey PointsKeyDir2(numQuadPoints, PointsTypeDir2);
+            Nektar::LibUtilities::BasisType       basisTypeDir2 = Nektar::LibUtilities::eModified_A;
+            const Nektar::LibUtilities::BasisKey  basisKeyDir2(basisTypeDir2,numModes,PointsKeyDir2);
+
+            Nektar::LibUtilities::PointsType      PointsTypeDir3 = Nektar::LibUtilities::eGaussRadauMAlpha2Beta0;
+            const Nektar::LibUtilities::PointsKey PointsKeyDir3(numQuadPoints-1, PointsTypeDir3);
+            Nektar::LibUtilities::BasisType       basisTypeDir3 = Nektar::LibUtilities::eModifiedPyr_C;
+            const Nektar::LibUtilities::BasisKey  basisKeyDir3(basisTypeDir3,numModes,PointsKeyDir3);
+
+
+            Nektar::LocalRegions::PyrExpSharedPtr Exp =
+                MemoryManager<Nektar::LocalRegions::PyrExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir2, basisKeyDir3, pyrGeom);
+            
+            int nelmts = 10;
+            
+            std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+            for(int i = 0; i < nelmts; ++i)
+            {
+                CollExp.push_back(Exp);
+            }
+            
+            LibUtilities::SessionReaderSharedPtr dummySession;
+            Collections::CollectionOptimisation colOpt(dummySession,
+                                                   Collections::eIterPerExp);
+            Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(Exp);
+            Collections::Collection     c(CollExp, impTypes);
+            StdRegions::ConstFactorMap factors;
+            factors[StdRegions::eFactorLambda] = 1.5; 
+            factors[StdRegions::eFactorCoeffD00] = 1.25;
+            factors[StdRegions::eFactorCoeffD01] = 0.25;
+            factors[StdRegions::eFactorCoeffD11] = 1.25;
+            factors[StdRegions::eFactorCoeffD02] = 0.25;
+            factors[StdRegions::eFactorCoeffD12] = 0.25;
+            factors[StdRegions::eFactorCoeffD22] = 1.25;
+            
+            c.Initialise (Collections::eHelmholtz, factors);
+            
+            const int nm = Exp->GetNcoeffs();
+            Array<OneD, NekDouble> coeffsIn(nelmts*nm);
+            Array<OneD, NekDouble> coeffsRef(nelmts*nm);
+            Array<OneD, NekDouble> coeffs(nelmts*nm), tmp;
+            
+            for (int i = 0; i < nm; ++i)
+            {
+                coeffsIn[i] = 1.0; 
+            }
+            
+            for(int i = 1; i < nelmts; ++i)
+            {
+                Vmath::Vcopy(nm,coeffsIn,1,tmp = coeffsIn + i*nm,1);
+            }
+            
+            StdRegions::StdMatrixKey mkey(StdRegions::eHelmholtz,
+                                          Exp->DetShapeType(),
+                                          *Exp, factors);
+            
+            for(int i = 0; i < nelmts; ++i)
+            {            
+                // Standard routines
+                Exp->GeneralMatrixOp(coeffsIn + i*nm,
+                                     tmp = coeffsRef + i*nm, mkey);
+            }
+            
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
+            
+            double epsilon = 1.0e-8;
+            for(int i = 0; i < coeffsRef.size(); ++i)
+            {
+                coeffsRef[i] = (std::abs(coeffsRef[i]) < 1e-14)? 0.0: coeffsRef[i];
+                coeffs[i] = (std::abs(coeffs[i]) < 1e-14)? 0.0: coeffs[i];
+                BOOST_CHECK_CLOSE(coeffsRef[i], coeffs[i], epsilon);
+            }
+        }
 
         BOOST_AUTO_TEST_CASE(TestPyrHelmholtz_MatrixFree_UniformP)
         {
@@ -2696,10 +2790,10 @@ namespace Nektar
                                                    Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(Exp);
             Collections::Collection     c(CollExp, impTypes);
-            c.Initialise (Collections::eHelmholtz);
             StdRegions::ConstFactorMap factors;
-            
             factors[StdRegions::eFactorLambda] = 1.5; 
+            
+            c.Initialise (Collections::eHelmholtz, factors);
             
             const int nm = Exp->GetNcoeffs();
             Array<OneD, NekDouble> coeffsIn(nelmts*nm);
@@ -2727,7 +2821,7 @@ namespace Nektar
                                      tmp = coeffsRef + i*nm, mkey);
             }
             
-            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs,factors);
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
             
             double epsilon = 1.0e-8;
             for(int i = 0; i < coeffsRef.size(); ++i)
@@ -2784,10 +2878,10 @@ namespace Nektar
                                                    Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(Exp);
             Collections::Collection     c(CollExp, impTypes);
-            c.Initialise (Collections::eHelmholtz);
             StdRegions::ConstFactorMap factors;
-            
             factors[StdRegions::eFactorLambda] = 1.5; 
+            
+            c.Initialise (Collections::eHelmholtz, factors);
             
             const int nm = Exp->GetNcoeffs();
             Array<OneD, NekDouble> coeffsIn(nelmts*nm);
@@ -2815,7 +2909,101 @@ namespace Nektar
                                      tmp = coeffsRef + i*nm, mkey);
             }
             
-            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs,factors);
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
+            
+            double epsilon = 1.0e-8;
+            for(int i = 0; i < coeffsRef.size(); ++i)
+            {
+                coeffsRef[i] = (std::abs(coeffsRef[i]) < 1e-14)? 0.0: coeffsRef[i];
+                coeffs[i] = (std::abs(coeffs[i]) < 1e-14)? 0.0: coeffs[i];
+                BOOST_CHECK_CLOSE(coeffsRef[i], coeffs[i], epsilon);
+            }
+        }
+        
+        BOOST_AUTO_TEST_CASE(TestPyrHelmholtz_MatrixFree_UniformP_ConstVarDiff)
+        {
+            SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(3u, 0u, -1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(3u, 1u,  1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(3u, 2u,  1.0,  1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(3u, 3u, -1.0,  1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v4(new SpatialDomains::PointGeom(3u, 4u, -1.0, -1.0,  1.0));
+
+            SpatialDomains::PyrGeomSharedPtr pyrGeom = CreatePyr(v0, v1, v2, v3, v4);
+
+            unsigned int numQuadPoints = 5;
+            unsigned int numModes = 4;
+
+            Nektar::LibUtilities::PointsType     PointsTypeDir1 = Nektar::LibUtilities::eGaussLobattoLegendre;
+            const Nektar::LibUtilities::PointsKey PointsKeyDir1(numQuadPoints, PointsTypeDir1);
+            Nektar::LibUtilities::BasisType       basisTypeDir1 = Nektar::LibUtilities::eModified_A;
+            const Nektar::LibUtilities::BasisKey  basisKeyDir1(basisTypeDir1,numModes,PointsKeyDir1);
+
+            Nektar::LibUtilities::PointsType      PointsTypeDir2 = Nektar::LibUtilities::eGaussLobattoLegendre;
+            const Nektar::LibUtilities::PointsKey PointsKeyDir2(numQuadPoints, PointsTypeDir2);
+            Nektar::LibUtilities::BasisType       basisTypeDir2 = Nektar::LibUtilities::eModified_A;
+            const Nektar::LibUtilities::BasisKey  basisKeyDir2(basisTypeDir2,numModes,PointsKeyDir2);
+
+            Nektar::LibUtilities::PointsType      PointsTypeDir3 = Nektar::LibUtilities::eGaussRadauMAlpha2Beta0;
+            const Nektar::LibUtilities::PointsKey PointsKeyDir3(numQuadPoints-1, PointsTypeDir3);
+            Nektar::LibUtilities::BasisType       basisTypeDir3 = Nektar::LibUtilities::eModifiedPyr_C;
+            const Nektar::LibUtilities::BasisKey  basisKeyDir3(basisTypeDir3,numModes,PointsKeyDir3);
+
+
+            Nektar::LocalRegions::PyrExpSharedPtr Exp =
+                MemoryManager<Nektar::LocalRegions::PyrExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir2, basisKeyDir3, pyrGeom);
+            
+            int nelmts = 10;
+            
+            std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+            for(int i = 0; i < nelmts; ++i)
+            {
+                CollExp.push_back(Exp);
+            }
+            
+            LibUtilities::SessionReaderSharedPtr dummySession;
+            Collections::CollectionOptimisation colOpt(dummySession,
+                                                   Collections::eMatrixFree);
+            Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(Exp);
+            Collections::Collection     c(CollExp, impTypes);
+            StdRegions::ConstFactorMap factors;
+            factors[StdRegions::eFactorLambda] = 1.5; 
+            factors[StdRegions::eFactorCoeffD00] = 1.25;
+            factors[StdRegions::eFactorCoeffD01] = 0.25;
+            factors[StdRegions::eFactorCoeffD11] = 1.25;
+            factors[StdRegions::eFactorCoeffD02] = 0.25;
+            factors[StdRegions::eFactorCoeffD12] = 0.25;
+            factors[StdRegions::eFactorCoeffD22] = 1.25;
+            
+            c.Initialise (Collections::eHelmholtz, factors);
+            
+            const int nm = Exp->GetNcoeffs();
+            Array<OneD, NekDouble> coeffsIn(nelmts*nm);
+            Array<OneD, NekDouble> coeffsRef(nelmts*nm);
+            Array<OneD, NekDouble> coeffs(nelmts*nm), tmp;
+            
+            for (int i = 0; i < nm; ++i)
+            {
+                coeffsIn[i] = 1.0; 
+            }
+            
+            for(int i = 1; i < nelmts; ++i)
+            {
+                Vmath::Vcopy(nm,coeffsIn,1,tmp = coeffsIn + i*nm,1);
+            }
+            
+            StdRegions::StdMatrixKey mkey(StdRegions::eHelmholtz,
+                                          Exp->DetShapeType(),
+                                          *Exp, factors);
+            
+            for(int i = 0; i < nelmts; ++i)
+            {            
+                // Standard routines
+                Exp->GeneralMatrixOp(coeffsIn + i*nm,
+                                     tmp = coeffsRef + i*nm, mkey);
+            }
+            
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
             
             double epsilon = 1.0e-8;
             for(int i = 0; i < coeffsRef.size(); ++i)

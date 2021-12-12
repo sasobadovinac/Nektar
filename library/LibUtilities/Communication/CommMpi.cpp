@@ -504,5 +504,31 @@ CommSharedPtr CommMpi::v_CommCreateIf(int flag)
         return std::shared_ptr<Comm>(new CommMpi(newComm));
     }
 }
+
+std::pair<CommSharedPtr, CommSharedPtr> CommMpi::v_SplitCommNode()
+{
+    std::pair<CommSharedPtr, CommSharedPtr> ret;
+
+#if MPI_VERSION < 3
+    ASSERTL0(false, "Not implemented for non-MPI-3 versions.");
+#else
+    // Create an intra-node communicator.
+    MPI_Comm nodeComm;
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, m_rank,
+                        MPI_INFO_NULL, &nodeComm);
+
+    // For rank 0 of the intra-node communicator, split the main
+    // communicator. Everyone else will get a null communicator.
+    ret.first = std::shared_ptr<Comm>(new CommMpi(nodeComm));
+    ret.second = CommMpi::v_CommCreateIf(ret.first->GetRank() == 0);
+    if(ret.first->GetRank() == 0)
+    {
+        ret.second->SplitComm(1, ret.second->GetSize());
+    }
+#endif
+
+    return ret;
+}
+
 } // namespace LibUtilities
 } // namespace Nektar

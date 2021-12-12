@@ -117,6 +117,12 @@ SET(NEKTAR_SHARE_DIR share/nektar++)
 SET(NEKTAR_DOC_DIR share/doc/nektar++)
 SET(NEKTAR_CMAKE_DIR ${LIB_DIR}/nektar++/cmake)
 
+# Set ThirdParty locations for source files, building and collating outputs
+SET(TPSRC   ${CMAKE_SOURCE_DIR}/ThirdParty)
+SET(TPBUILD ${CMAKE_BINARY_DIR}/ThirdParty)
+SET(TPDIST  ${CMAKE_BINARY_DIR}/ThirdParty/dist)
+
+# INSTALLATION PATHS
 # Allow for overriding final include header directory (for Fedora/CentOS
 # packaging)
 IF (DEFINED NEKTAR_INCLUDE_ROOT)
@@ -124,13 +130,8 @@ IF (DEFINED NEKTAR_INCLUDE_ROOT)
 ELSE()
     SET(NEKTAR_INCLUDE_DIST_DIR ${CMAKE_INSTALL_PREFIX}/${NEKTAR_INCLUDE_DIR})
 ENDIF()
-
-# Set ThirdParty locations.
-SET(TPSRC   ${CMAKE_SOURCE_DIR}/ThirdParty)
-SET(TPBUILD ${CMAKE_BINARY_DIR}/ThirdParty)
-SET(TPDIST  ${CMAKE_BINARY_DIR}/ThirdParty/dist)
-SET(TPINC   ${NEKTAR_INCLUDE_DIST_DIR}/ThirdParty)
-SET(TPLIB   ${CMAKE_INSTALL_PREFIX}/${NEKTAR_LIB_DIR}/nektar++/thirdparty)
+SET(TP_INCLUDE_DIR ${NEKTAR_INCLUDE_DIR})
+SET(TP_LIB_DIR     ${CMAKE_INSTALL_PREFIX}/${NEKTAR_LIB_DIR}/nektar++)
 
 # Create ThirdParty source directory if it doesn't exist already.
 IF (NOT EXISTS ${TPSRC})
@@ -142,14 +143,15 @@ SET(NEKTAR_LIBRARY_TYPE "SHARED")
 
 # Set up RPATH
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-SET(CMAKE_BUILD_RPATH "${TPLIB}")
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+SET(CMAKE_BUILD_RPATH "${TP_LIB_DIR}")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
      "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" isSystemDir)
 IF("${isSystemDir}" STREQUAL "-1")
-    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" "${TPLIB}/")
+    SET(CMAKE_INSTALL_RPATH 
+        "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" "${TP_LIB_DIR}/")
 ELSE()
-    SET(CMAKE_INSTALL_RPATH "${TPLIB}")
+    SET(CMAKE_INSTALL_RPATH "${TP_LIB_DIR}")
 ENDIF()
 
 # Enable the use of @rpath in macOS install names so that we can use multiple
@@ -344,26 +346,31 @@ INSTALL(FILES ${CMAKE_BINARY_DIR}/Nektar++Config.cmake
     DESTINATION ${NEKTAR_CMAKE_DIR}
     COMPONENT dev)
 
+# THIRDPARTY SOFTWARE DISTRIBUTION
+# Install shared libraries
 INSTALL(CODE "FILE(GLOB tplibs ${TPDIST}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*)
     IF (NOT tplibs STREQUAL \"\")
-        FILE(INSTALL \${tplibs} DESTINATION ${TPLIB})
+        FILE(INSTALL \${tplibs} DESTINATION ${TP_LIB_DIR})
+    ENDIF()
+")
+
+# Install cmake configuration files
+IF (EXISTS ${TPDIST}/lib/cmake)
+    INSTALL(DIRECTORY ${TPDIST}/lib/cmake/
+            DESTINATION ${TP_LIB_DIR}/cmake
+            COMPONENT libutilities)
+ENDIF()
+INSTALL(CODE "FILE(GLOB tpcmake ${TPDIST}/lib/*/*.cmake)
+    IF (NOT tpcmake STREQUAL \"\")
+        FILE(INSTALL \${tpcmake} DESTINATION ${TP_LIB_DIR}/cmake)
     ENDIF()
 ")
 
 # Install ThirdParty headers to subdirectory of ${NEKTAR_INCLUDE_DIR}
 INSTALL(DIRECTORY ${TPDIST}/include/
-    DESTINATION ${NEKTAR_INCLUDE_DIR}/ThirdParty
+    DESTINATION ${TP_INCLUDE_DIR}
     COMPONENT dev
     OPTIONAL
     )
-
-# Install ThirdParty libraries into ${NEKTAR_LIB_DIR}. These are shipped with
-# the LibUtilities library.
-IF (EXISTS ${TPDIST}/lib)
-    INSTALL(DIRECTORY ${TPDIST}/lib/
-        DESTINATION ${NEKTAR_LIB_DIR}
-        COMPONENT libutilities
-        )
-ENDIF()
 
 ADD_SUBDIRECTORY(docs)

@@ -149,19 +149,34 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
         // product kernels.
         constexpr auto wspInnerProd = NQ1;
         constexpr auto wspBwdTrans = NQ0 * NM0;
-        constexpr auto wspSize = wspInnerProd > wspBwdTrans ? wspInnerProd : wspBwdTrans;
+        constexpr auto wspSize = wspInnerProd > wspBwdTrans ?
+            wspInnerProd : wspBwdTrans;
 
         vec_t wsp[wspSize]; // workspace for kernels
 
         std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
-        std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot), deriv1(nqTot);
+        std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot),
+            deriv1(nqTot);
 
         const vec_t* jac_ptr;
         const vec_t* df_ptr;
 
         vec_t df0,df1,df2,df3;
-        vec_t metric00,metric01,metric11; 
+        vec_t metric00,metric01,metric11;
         
+        vec_t d00 = {1.0};
+        vec_t d01 = {0.0};
+        vec_t d11 = {1.0}; // var diffusion terms
+        vec_t dtmp0,dtmp1,dtmp2,dtmp3; // temp for vardiff
+        boost::ignore_unused(d00,d01,d11,dtmp0,dtmp1,dtmp2,dtmp3);
+        
+        if (this->m_isConstVarDiff)
+        {
+            d00 = this->m_constVarDiff[0];
+            d01 = this->m_constVarDiff[1];
+            d11 = this->m_constVarDiff[2];
+        }
+                
         // Get size of derivative factor block
         auto dfSize = ndf;
         if (DEFORMED)
@@ -182,12 +197,33 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                 df0 = df_ptr[0];  df1 = df_ptr[1];
                 df2 = df_ptr[2];  df3 = df_ptr[3];
 
-                metric00 = df0*df0;
-                metric00.fma(df2,df2);
-                metric01 = df0 * df1; 
-                metric01.fma(df2,df3);
-                metric11 = df1*df1;
-                metric11.fma(df3,df3);
+                if (!this->m_isConstVarDiff && !this->m_isVarDiff)
+                {
+                    metric00 = df0*df0;
+                    metric00.fma(df2,df2);
+                    metric01 = df0*df1; 
+                    metric01.fma(df2,df3);
+                    metric11 = df1*df1;
+                    metric11.fma(df3,df3);
+                }
+                else if (this->m_isConstVarDiff)
+                {
+                    dtmp0 = df0 * d00;
+                    dtmp0.fma(df2,d01);
+                    dtmp1 = df0 * d01;
+                    dtmp1.fma(df2,d11);
+                    dtmp2 = df1 * d00;
+                    dtmp2.fma(df3,d01);
+                    dtmp3 = df1 * d01;
+                    dtmp3.fma(df3,d11);
+                    
+                    metric00 = df0 * dtmp0;
+                    metric00.fma(df2,dtmp1);
+                    metric01 = df1 * dtmp0;
+                    metric01.fma(df3,dtmp1);
+                    metric11 = df1 * dtmp2;
+                    metric11.fma(df3,dtmp3);
+                }
 
                 jac_ptr = &((*this->m_jac)[e]);
             }
@@ -208,53 +244,163 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
             // Step 3: take derivatives in quadrature space
             PhysDerivTensor2DKernel<NQ0, NQ1>
                 (bwd, this->m_D[0], this->m_D[1], deriv0, deriv1);
-
+            
             // Step 4: Apply Laplacian metrics & inner product
-            if(DEFORMED)
+            if (!this->m_isVarDiff) 
             {
-                for(size_t j = 0, cnt = 0; j < NQ1; ++j)
+                if(DEFORMED)
                 {
-                    for (size_t i = 0; i < NQ0; ++i, ++cnt)
+                    for(size_t j = 0, cnt = 0; j < NQ1; ++j)
                     {
-                        df0 = df_ptr[cnt * ndf];
-                        df1 = df_ptr[cnt * ndf + 1];
-                        df2 = df_ptr[cnt * ndf + 2];
-                        df3 = df_ptr[cnt * ndf + 3];
+                        for (size_t i = 0; i < NQ0; ++i, ++cnt)
+                        {
+                            df0 = df_ptr[cnt * ndf];
+                            df1 = df_ptr[cnt * ndf + 1];
+                            df2 = df_ptr[cnt * ndf + 2];
+                            df3 = df_ptr[cnt * ndf + 3];
+                            
+                            if (!this->m_isConstVarDiff)
+                            {
+                                metric00 = df0*df0;
+                                metric00.fma(df2,df2);
+                                metric01 = df0*df1; 
+                                metric01.fma(df2,df3);
+                                metric11 = df1*df1;
+                                metric11.fma(df3,df3);
+                            }
+                            else
+                            {
+                                dtmp0 = df0 * d00;
+                                dtmp0.fma(df2,d01);
+                                dtmp1 = df0 * d01;
+                                dtmp1.fma(df2,d11);
+                                dtmp2 = df1 * d00;
+                                dtmp2.fma(df3,d01);
+                                dtmp3 = df1 * d01;
+                                dtmp3.fma(df3,d11);
+                                
+                                metric00 = df0 * dtmp0;
+                                metric00.fma(df2,dtmp1);
+                                metric01 = df1 * dtmp0;
+                                metric01.fma(df3,dtmp1);
+                                metric11 = df1 * dtmp2;
+                                metric11.fma(df3,dtmp3);
+                            }
 
-                        metric00 = df0*df0;
-                        metric00.fma(df2,df2);
-                        metric01 = df0 * df1; 
-                        metric01.fma(df2,df3);
-                        metric11 = df1*df1;
-                        metric11.fma(df3,df3);
+                            vec_t d0 = deriv0[cnt];
+                            vec_t d1 = deriv1[cnt];
 
-                        vec_t d0 = deriv0[cnt];
-                        vec_t d1 = deriv1[cnt];
+                            vec_t tmp = metric00 * d0;
+                            tmp.fma(metric01, d1);
+                            bwd[cnt]  = tmp;
+                            
+                            tmp = metric01 * d0;
+                            tmp.fma(metric11, d1);
+                            deriv0[cnt] = tmp;
+                        }
+                    }
+                }
+                else
+                {   
+                    for (int i = 0; i < nqTot; ++i)
+                    {
+                        vec_t d0 = deriv0[i];
+                        vec_t d1 = deriv1[i];
 
                         vec_t tmp = metric00 * d0;
                         tmp.fma(metric01, d1);
-                        bwd[cnt]  = tmp;
+                        bwd[i] = tmp;
                         
                         tmp = metric01 * d0;
                         tmp.fma(metric11, d1);
-                        deriv0[cnt] = tmp;
+                        deriv0[i] = tmp; 
                     }
                 }
             }
             else
             {
-                for (int i = 0; i < nqTot; ++i)
+                if(DEFORMED)
                 {
-                    vec_t d0 = deriv0[i];
-                    vec_t d1 = deriv1[i];
+                    for(size_t j = 0, cnt = 0; j < NQ1; ++j)
+                    {
+                        for (size_t i = 0; i < NQ0; ++i, ++cnt)
+                        {
+                            df0 = df_ptr[cnt * ndf];
+                            df1 = df_ptr[cnt * ndf + 1];
+                            df2 = df_ptr[cnt * ndf + 2];
+                            df3 = df_ptr[cnt * ndf + 3];
+                            
+                            d00 = m_varD00[cnt];
+                            d01 = m_varD01[cnt];
+                            d11 = m_varD11[cnt];
+                            
+                            dtmp0 = df0 * d00;
+                            dtmp0.fma(df2,d01);
+                            dtmp1 = df0 * d01;
+                            dtmp1.fma(df2,d11);
+                            dtmp2 = df1 * d00;
+                            dtmp2.fma(df3,d01);
+                            dtmp3 = df1 * d01;
+                            dtmp3.fma(df3,d11);
+                            
+                            metric00 = df0 * dtmp0;
+                            metric00.fma(df2,dtmp1);
+                            metric01 = df1 * dtmp0;
+                            metric01.fma(df3,dtmp1);
+                            metric11 = df1 * dtmp2;
+                            metric11.fma(df3,dtmp3);
 
-                    vec_t tmp = metric00 * d0;
-                    tmp.fma(metric01, d1);
-                    bwd[i] = tmp;
-                    
-                    tmp = metric01 * d0;
-                    tmp.fma(metric11, d1);
-                    deriv0[i] = tmp; 
+                            vec_t d0 = deriv0[cnt];
+                            vec_t d1 = deriv1[cnt];
+
+                            vec_t tmp = metric00 * d0;
+                            tmp.fma(metric01, d1);
+                            bwd[cnt]  = tmp;
+                            
+                            tmp = metric01 * d0;
+                            tmp.fma(metric11, d1);
+                            deriv0[cnt] = tmp;
+                        }
+                    }
+                }
+                else
+                {   
+                    for(size_t j = 0, cnt = 0; j < NQ1; ++j)
+                    {
+                        for (size_t i = 0; i < NQ0; ++i, ++cnt)
+                        {
+                            d00 = m_varD00[cnt];
+                            d01 = m_varD01[cnt];
+                            d11 = m_varD11[cnt];
+                            
+                            dtmp0 = df0 * d00;
+                            dtmp0.fma(df2,d01);
+                            dtmp1 = df0 * d01;
+                            dtmp1.fma(df2,d11);
+                            dtmp2 = df1 * d00;
+                            dtmp2.fma(df3,d01);
+                            dtmp3 = df1 * d01;
+                            dtmp3.fma(df3,d11);
+                            
+                            metric00 = df0 * dtmp0;
+                            metric00.fma(df2,dtmp1);
+                            metric01 = df1 * dtmp0;
+                            metric01.fma(df3,dtmp1);
+                            metric11 = df1 * dtmp2;
+                            metric11.fma(df3,dtmp3);
+
+                            vec_t d0 = deriv0[cnt];
+                            vec_t d1 = deriv1[cnt];
+
+                            vec_t tmp = metric00 * d0;
+                            tmp.fma(metric01, d1);
+                            bwd[cnt]  = tmp;
+                            
+                            tmp = metric01 * d0;
+                            tmp.fma(metric11, d1);
+                            deriv0[cnt] = tmp;
+                        }
+                    }
                 }
             }
             
@@ -530,7 +676,20 @@ struct HelmholtzTri : public Helmholtz, public Helper<2, DEFORMED>
 
         vec_t df0,df1,df2,df3;
         vec_t metric00,metric01,metric11; 
-
+        
+        vec_t d00 = {1.0};
+        vec_t d01 = {0.0};
+        vec_t d11 = {1.0}; // var diffusion terms
+        vec_t dtmp0,dtmp1,dtmp2,dtmp3; // metric products
+        boost::ignore_unused(d00,d01,d11,dtmp0,dtmp1,dtmp2,dtmp3);
+        
+        if (this->m_isConstVarDiff)
+        {
+            d00 = this->m_constVarDiff[0];
+            d01 = this->m_constVarDiff[1];
+            d11 = this->m_constVarDiff[2];
+        }
+        
         // Get size of derivative factor block
         auto dfSize = ndf;
         if (DEFORMED)
@@ -550,13 +709,6 @@ struct HelmholtzTri : public Helmholtz, public Helper<2, DEFORMED>
             {
                 df0 = df_ptr[0];  df1 = df_ptr[1];
                 df2 = df_ptr[2];  df3 = df_ptr[3];
-
-                metric00 = df0*df0;
-                metric00.fma(df2,df2);
-                metric01 = df0 * df1; 
-                metric01.fma(df2,df3);
-                metric11 = df1*df1;
-                metric11.fma(df3,df3);
 
                 jac_ptr = &((*this->m_jac)[e]);
             }
@@ -593,16 +745,47 @@ struct HelmholtzTri : public Helmholtz, public Helper<2, DEFORMED>
                     }
 
                     vec_t h0i = m_h0[i];
-                    metric00 = h1j * (df0 + h0i * df1);
-                    metric01 = metric00 * df1;
-                    metric00 = metric00 * metric00;
+                    
+                    // M = [M_00, df1; M_10; df3]
+                    metric00 = h1j * (df0 + h0i * df1);  // M_00
+                    vec_t tmp = h1j * (df2 + h0i * df3); // M_10
+                    
+                    if (!this->m_isConstVarDiff && !this->m_isVarDiff)
+                    {
+                        metric01 = metric00 * df1;
+                        metric00 = metric00 * metric00;
 
-                    vec_t tmp = h1j * (df2 + h0i * df3);
-                    metric01.fma(tmp, df3);
-                    metric00.fma(tmp, tmp);
+                        metric01.fma(tmp, df3);
+                        metric00.fma(tmp, tmp);
 
-                    metric11 = df1 * df1;
-                    metric11.fma(df3, df3);
+                        metric11 = df1 * df1;
+                        metric11.fma(df3, df3);
+                    }
+                    else
+                    {
+                        if (this->m_isVarDiff)
+                        {
+                            d00 = m_varD00[cnt];
+                            d01 = m_varD01[cnt];
+                            d11 = m_varD11[cnt];
+                        }
+                        // M = [M_00, df1; M_10; df3]
+                        dtmp0 = metric00 * d00;
+                        dtmp0.fma(tmp,d01);
+                        dtmp1 = metric00 * d01;
+                        dtmp1.fma(tmp,d11);
+                        dtmp2 = df1 * d00;
+                        dtmp2.fma(df3,d01);
+                        dtmp3 = df1 * d01;
+                        dtmp3.fma(df3,d11);
+                        
+                        metric00 = metric00 * dtmp0;
+                        metric00.fma(tmp,dtmp1);
+                        metric01 = df1 * dtmp0;
+                        metric01.fma(df3,dtmp1);
+                        metric11 = df1 * dtmp2;
+                        metric11.fma(df3,dtmp3);
+                    }
 
                     vec_t d0 = deriv0[cnt];
                     vec_t d1 = deriv1[cnt];
@@ -784,7 +967,26 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
         const vec_t* df_ptr;
 
         vec_t df0,df1,df2,df3,df4,df5,df6,df7,df8;
-        vec_t metric00,metric01,metric02,metric11,metric12, metric22; 
+        vec_t metric00,metric01,metric02,metric11,metric12, metric22;
+        vec_t d00 = {1.0};
+        vec_t d01 = {0.0};
+        vec_t d11 = {1.0};
+        vec_t d02 = {0.0};
+        vec_t d12 = {0.0};
+        vec_t d22 = {1.0}; // var diffusion terms
+        vec_t td0,td1,td2,td3,td4,td5,td6,td7,td8; // temp terms for vardiff
+        boost::ignore_unused(d00,d01,d11,d02,d12,d22,
+                             td0,td1,td2,td3,td4,td5,td6,td7,td8);
+        
+        if (this->m_isConstVarDiff)
+        {
+            d00 = this->m_constVarDiff[0];
+            d01 = this->m_constVarDiff[1];
+            d11 = this->m_constVarDiff[2];
+            d02 = this->m_constVarDiff[3];
+            d12 = this->m_constVarDiff[4];
+            d22 = this->m_constVarDiff[5];
+        } 
         
         // Get size of derivative factor block
         auto dfSize = ndf;
@@ -807,30 +1009,96 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
                 df0 = df_ptr[0];  df1 = df_ptr[1]; df2 = df_ptr[2];
                 df3 = df_ptr[3];  df4 = df_ptr[4]; df5 = df_ptr[5];
                 df6 = df_ptr[6];  df7 = df_ptr[7]; df8 = df_ptr[8];
-
-                metric00 = df0 * df0;
-                metric00.fma(df3, df3);
-                metric00.fma(df6, df6);
                 
-                metric01 = df0 * df1;
-                metric01.fma(df3, df4);
-                metric01.fma(df6, df7);
+                if (!this->m_isConstVarDiff && !this->m_isConstVarDiff)
+                { 
+                    metric00 = df0 * df0;
+                    metric00.fma(df3, df3);
+                    metric00.fma(df6, df6);
+                    
+                    metric01 = df0 * df1;
+                    metric01.fma(df3, df4);
+                    metric01.fma(df6, df7);
+                    
+                    metric02 = df0 * df2;
+                    metric02.fma(df3, df5);
+                    metric02.fma(df6, df8);
+                    
+                    metric11 = df1 * df1;
+                    metric11.fma(df4, df4);
+                    metric11.fma(df7, df7);
+                    
+                    metric12 = df1 * df2;
+                    metric12.fma(df4, df5);
+                    metric12.fma(df7, df8);
+                    
+                    metric22 = df2 * df2;
+                    metric22.fma(df5, df5);
+                    metric22.fma(df8, df8);
+                }
+                else if (this->m_isConstVarDiff)
+                {   // with vardiff
+                    td0 = df0 * d00;
+                    td0.fma(df3,d01);
+                    td0.fma(df6,d02);
+                    
+                    td1 = df0 * d01;
+                    td1.fma(df3,d11);
+                    td1.fma(df6,d12);
+                    
+                    td2 = df0 * d02;
+                    td2.fma(df3,d12);
+                    td2.fma(df6,d22);
                 
-                metric02 = df0 * df2;
-                metric02.fma(df3, df5);
-                metric02.fma(df6, df8);
-                
-                metric11 = df1 * df1;
-                metric11.fma(df4, df4);
-                metric11.fma(df7, df7);
-                
-                metric12 = df1 * df2;
-                metric12.fma(df4, df5);
-                metric12.fma(df7, df8);
-                
-                metric22 = df2 * df2;
-                metric22.fma(df5, df5);
-                metric22.fma(df8, df8);
+                    td3 = df1 * d00;
+                    td3.fma(df4,d01);
+                    td3.fma(df7,d02);
+                    
+                    td4 = df1 * d01;
+                    td4.fma(df4,d11);
+                    td4.fma(df7,d12);
+                    
+                    td5 = df1 * d02;
+                    td5.fma(df4,d12);
+                    td5.fma(df7,d22);
+                                        
+                    td6 = df2 * d00;
+                    td6.fma(df5,d01);
+                    td6.fma(df8,d02);
+                    
+                    td7 = df2 * d01;
+                    td7.fma(df5,d11);
+                    td7.fma(df8,d12);
+                    
+                    td8 = df2 * d02;
+                    td8.fma(df5,d12);
+                    td8.fma(df8,d22);
+                    
+                    metric00 = td0 * df0;
+                    metric00.fma(td1,df3);
+                    metric00.fma(td2,df6);
+                    
+                    metric01 = td0 * df1;
+                    metric01.fma(td1,df4);
+                    metric01.fma(td2,df7);
+                    
+                    metric02 = td0 * df2;
+                    metric02.fma(td1,df5);
+                    metric02.fma(td2,df8);
+                    
+                    metric11 = td3 * df1;
+                    metric11.fma(td4,df4);
+                    metric11.fma(td5,df7);
+                    
+                    metric12 = td3 * df2;
+                    metric12.fma(td4,df5);
+                    metric12.fma(td5,df8);
+                    
+                    metric22 = td6 * df2;
+                    metric22.fma(td7,df5);
+                    metric22.fma(td8,df8);
+                    
+                }
                 
                 jac_ptr = &((*this->m_jac)[e]);
             }
@@ -856,7 +1124,7 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
                  deriv0, deriv1, deriv2);
 
             // Step 4: Apply Laplacian metrics & inner product
-            if (DEFORMED)
+            if (DEFORMED || this->m_isVarDiff)
             {
                 for (size_t k = 0,cnt=0; k < NQ2; k++)
                 {
@@ -864,39 +1132,119 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
                     {
                         for (size_t i = 0; i < NQ0; i++, ++cnt)
                         {
-                            df0 = df_ptr[cnt * ndf];
-                            df1 = df_ptr[cnt * ndf + 1];
-                            df2 = df_ptr[cnt * ndf + 2];
-                            df3 = df_ptr[cnt * ndf + 3];
-                            df4 = df_ptr[cnt * ndf + 4];
-                            df5 = df_ptr[cnt * ndf + 5];
-                            df6 = df_ptr[cnt * ndf + 6];
-                            df7 = df_ptr[cnt * ndf + 7];
-                            df8 = df_ptr[cnt * ndf + 8];
+                            if (DEFORMED)
+                            {
+                                df0 = df_ptr[cnt * ndf];
+                                df1 = df_ptr[cnt * ndf + 1];
+                                df2 = df_ptr[cnt * ndf + 2];
+                                df3 = df_ptr[cnt * ndf + 3];
+                                df4 = df_ptr[cnt * ndf + 4];
+                                df5 = df_ptr[cnt * ndf + 5];
+                                df6 = df_ptr[cnt * ndf + 6];
+                                df7 = df_ptr[cnt * ndf + 7];
+                                df8 = df_ptr[cnt * ndf + 8];
+                            }
                             
-                            metric00 = df0 * df0;
-                            metric00.fma(df3, df3);
-                            metric00.fma(df6, df6);
+                            if (!this->m_isConstVarDiff && !this->m_isVarDiff)
+                            {
+                                metric00 = df0 * df0;
+                                metric00.fma(df3, df3);
+                                metric00.fma(df6, df6);
 
-                            metric01 = df0 * df1;
-                            metric01.fma(df3, df4);
-                            metric01.fma(df6, df7);
+                                metric01 = df0 * df1;
+                                metric01.fma(df3, df4);
+                                metric01.fma(df6, df7);
 
-                            metric02 = df0 * df2;
-                            metric02.fma(df3, df5);
-                            metric02.fma(df6, df8);
+                                metric02 = df0 * df2;
+                                metric02.fma(df3, df5);
+                                metric02.fma(df6, df8);
 
-                            metric11 = df1 * df1;
-                            metric11.fma(df4, df4);
-                            metric11.fma(df7, df7);
+                                metric11 = df1 * df1;
+                                metric11.fma(df4, df4);
+                                metric11.fma(df7, df7);
 
-                            metric12 = df1 * df2;
-                            metric12.fma(df4, df5);
-                            metric12.fma(df7, df8);
+                                metric12 = df1 * df2;
+                                metric12.fma(df4, df5);
+                                metric12.fma(df7, df8);
 
-                            metric22 = df2 * df2;
-                            metric22.fma(df5, df5);
-                            metric22.fma(df8, df8);
+                                metric22 = df2 * df2;
+                                metric22.fma(df5, df5);
+                                metric22.fma(df8, df8);
+                            }
+                            else
+                            {   // with vardiff
+                                
+                                if (this->m_isVarDiff)
+                                {
+                                    d00 = m_varD00[cnt];
+                                    d01 = m_varD01[cnt];
+                                    d11 = m_varD11[cnt];
+                                    d02 = m_varD02[cnt];
+                                    d12 = m_varD12[cnt];
+                                    d22 = m_varD22[cnt];
+                                }
+                                
+                                td0 = df0 * d00;
+                                td0.fma(df3,d01);
+                                td0.fma(df6,d02);
+                                
+                                td1 = df0 * d01;
+                                td1.fma(df3,d11);
+                                td1.fma(df6,d12);
+                                
+                                td2 = df0 * d02;
+                                td2.fma(df3,d12);
+                                td2.fma(df6,d22);
+                            
+                                td3 = df1 * d00;
+                                td3.fma(df4,d01);
+                                td3.fma(df7,d02);
+                                
+                                td4 = df1 * d01;
+                                td4.fma(df4,d11);
+                                td4.fma(df7,d12);
+                                
+                                td5 = df1 * d02;
+                                td5.fma(df4,d12);
+                                td5.fma(df7,d22);
+                                                    
+                                td6 = df2 * d00;
+                                td6.fma(df5,d01);
+                                td6.fma(df8,d02);
+                                
+                                td7 = df2 * d01;
+                                td7.fma(df5,d11);
+                                td7.fma(df8,d12);
+                                
+                                td8 = df2 * d02;
+                                td8.fma(df5,d12);
+                                td8.fma(df8,d22);
+                                
+                                metric00 = td0 * df0;
+                                metric00.fma(td1,df3);
+                                metric00.fma(td2,df6);
+                                
+                                metric01 = td0 * df1;
+                                metric01.fma(td1,df4);
+                                metric01.fma(td2,df7);
+                                
+                                metric02 = td0 * df2;
+                                metric02.fma(td1,df5);
+                                metric02.fma(td2,df8);
+                                
+                                metric11 = td3 * df1;
+                                metric11.fma(td4,df4);
+                                metric11.fma(td5,df7);
+                                
+                                metric12 = td3 * df2;
+                                metric12.fma(td4,df5);
+                                metric12.fma(td5,df8);
+                                
+                                metric22 = td6 * df2;
+                                metric22.fma(td7,df5);
+                                metric22.fma(td8,df8);
+                                
+                            }
 
                             vec_t d0 = deriv0[cnt];
                             vec_t d1 = deriv1[cnt];
@@ -922,6 +1270,7 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
             }
             else
             {
+                /*
                 metric00 = df0 * df0;
                 metric00.fma(df3, df3);
                 metric00.fma(df6, df6);
@@ -945,6 +1294,7 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
                 metric22 = df2 * df2;
                 metric22.fma(df5, df5);
                 metric22.fma(df8, df8);
+                */
                 
                 for (int i = 0; i < nqTot; ++i)
                 {
@@ -1310,6 +1660,26 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
         const vec_t* df_ptr;
 
         vec_t df0,df1,df2,df3,df4,df5,df6,df7,df8;
+        vec_t g0,g1,g2,g3,g4,g5; // metrics
+        vec_t d00 = {1.0};
+        vec_t d01 = {0.0};
+        vec_t d11 = {1.0};
+        vec_t d02 = {0.0};
+        vec_t d12 = {0.0};
+        vec_t d22 = {1.0}; // var diffusion terms
+        vec_t td0,td1,td2,td3,td4,td5,td6,td7,td8; // temp terms for vardiff
+        boost::ignore_unused(d00,d01,d11,d02,d12,d22,
+                             td0,td1,td2,td3,td4,td5,td6,td7,td8);
+                             
+        if (this->m_isConstVarDiff)
+        {
+            d00 = this->m_constVarDiff[0];
+            d01 = this->m_constVarDiff[1];
+            d11 = this->m_constVarDiff[2];
+            d02 = this->m_constVarDiff[3];
+            d12 = this->m_constVarDiff[4];
+            d22 = this->m_constVarDiff[5];
+        }
         
         // Get size of derivative factor block
         auto dfSize = ndf;
@@ -1384,30 +1754,107 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
                         vec_t tmp1 = h1 * (h0 * df2 + df0);
                         vec_t tmp2 = h1 * (h0 * df5 + df3);
                         vec_t tmp3 = h1 * (h0 * df8 + df6);
-
-                        vec_t g0 = tmp1 * tmp1;
-                        g0.fma(tmp2, tmp2);
-                        g0.fma(tmp3, tmp3);
-
-                        vec_t g3 = df1 * tmp1;
-                        g3.fma(df4, tmp2);
-                        g3.fma(df7, tmp3);
                         
-                        vec_t g4 = df2 * tmp1;
-                        g4.fma(df5, tmp2);
-                        g4.fma(df8, tmp3);
+                        if (!this->m_isConstVarDiff && !this->m_isVarDiff)
+                        {
+                            g0 = tmp1 * tmp1;
+                            g0.fma(tmp2, tmp2);
+                            g0.fma(tmp3, tmp3);
 
-                        vec_t g1 = df1 * df1;
-                        g1.fma(df4, df4);
-                        g1.fma(df7, df7);
+                            g3 = df1 * tmp1;
+                            g3.fma(df4, tmp2);
+                            g3.fma(df7, tmp3);
+                            
+                            g4 = df2 * tmp1;
+                            g4.fma(df5, tmp2);
+                            g4.fma(df8, tmp3);
 
-                        vec_t g2 = df2 * df2;
-                        g2.fma(df5, df5);
-                        g2.fma(df8, df8);
+                            g1 = df1 * df1;
+                            g1.fma(df4, df4);
+                            g1.fma(df7, df7);
 
-                        vec_t g5 = df1 * df2;
-                        g5.fma(df4, df5);
-                        g5.fma(df7, df8);
+                            g2 = df2 * df2;
+                            g2.fma(df5, df5);
+                            g2.fma(df8, df8);
+
+                            g5 = df1 * df2;
+                            g5.fma(df4, df5);
+                            g5.fma(df7, df8);
+                        }
+                        else 
+                        {
+                            // vardiff
+                            if (this->m_isVarDiff)
+                            {
+                                d00 = m_varD00[cnt];
+                                d01 = m_varD01[cnt];
+                                d11 = m_varD11[cnt];
+                                d02 = m_varD02[cnt];
+                                d12 = m_varD12[cnt];
+                                d22 = m_varD22[cnt];
+                            }
+                            
+                            td0 = tmp1 * d00;
+                            td0.fma(tmp2,d01);
+                            td0.fma(tmp3,d02);
+                            
+                            td1 = tmp1 * d01;
+                            td1.fma(tmp2,d11);
+                            td1.fma(tmp3,d12);
+                            
+                            td2 = tmp1 * d02;
+                            td2.fma(tmp2,d12);
+                            td2.fma(tmp3,d22);
+                        
+                            td3 = df1 * d00;
+                            td3.fma(df4,d01);
+                            td3.fma(df7,d02);
+                            
+                            td4 = df1 * d01;
+                            td4.fma(df4,d11);
+                            td4.fma(df7,d12);
+                            
+                            td5 = df1 * d02;
+                            td5.fma(df4,d12);
+                            td5.fma(df7,d22);
+                                                
+                            td6 = df2 * d00;
+                            td6.fma(df5,d01);
+                            td6.fma(df8,d02);
+                            
+                            td7 = df2 * d01;
+                            td7.fma(df5,d11);
+                            td7.fma(df8,d12);
+                            
+                            td8 = df2 * d02;
+                            td8.fma(df5,d12);
+                            td8.fma(df8,d22);
+                            
+                            g0 = td0 * tmp1;
+                            g0.fma(td1,tmp2);
+                            g0.fma(td2,tmp3);
+                            
+                            g3 = td0 * df1;
+                            g3.fma(td1,df4);
+                            g3.fma(td2,df7);
+                            
+                            g4 = td0 * df2;
+                            g4.fma(td1,df5);
+                            g4.fma(td2,df8);
+                            
+                            g1 = td3 * df1;
+                            g1.fma(td4,df4);
+                            g1.fma(td5,df7);
+                            
+                            g5 = td3 * df2;
+                            g5.fma(td4,df5);
+                            g5.fma(td5,df8);
+                            
+                            g2 = td6 * df2;
+                            g2.fma(td7,df5);
+                            g2.fma(td8,df8);
+                        
+                        }
 
                         vec_t d0 = deriv0[cnt];
                         vec_t d1 = deriv1[cnt];
@@ -1790,6 +2237,26 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
         const vec_t* df_ptr;
 
         vec_t df0,df1,df2,df3,df4,df5,df6,df7,df8;
+        vec_t g0,g1,g2,g3,g4,g5; // metrics
+        vec_t d00 = {1.0};
+        vec_t d01 = {0.0};
+        vec_t d11 = {1.0};
+        vec_t d02 = {0.0};
+        vec_t d12 = {0.0};
+        vec_t d22 = {1.0}; // var diffusion terms
+        vec_t td0,td1,td2,td3,td4,td5,td6,td7,td8; // temp terms for vardiff
+        boost::ignore_unused(d00,d01,d11,d02,d12,d22,
+                             td0,td1,td2,td3,td4,td5,td6,td7,td8);
+                             
+        if (this->m_isConstVarDiff)
+        {
+            d00 = this->m_constVarDiff[0];
+            d01 = this->m_constVarDiff[1];
+            d11 = this->m_constVarDiff[2];
+            d02 = this->m_constVarDiff[3];
+            d12 = this->m_constVarDiff[4];
+            d22 = this->m_constVarDiff[5];
+        }
         
         // Get size of derivative factor block
         auto dfSize = ndf;
@@ -1848,8 +2315,8 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
                     vec_t h1h2 = h1 * h2;
                     for (size_t i = 0; i < NQ0; ++i, cnt++)
                     {
-                       vec_t  h0 = m_h0[i];
-                       vec_t  h0h2 = h0 * h2;
+                        vec_t  h0 = m_h0[i];
+                        vec_t  h0h2 = h0 * h2;
 
                         if(DEFORMED)
                         {
@@ -1878,30 +2345,105 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
                         vec_t tmp5 = h2*df7;
                         tmp5.fma(h1h2,df8);
                         
-                        vec_t g0 = tmp0 * tmp0;
-                        g0.fma(tmp1, tmp1);
-                        g0.fma(tmp2, tmp2);
+                        if (!this->m_isConstVarDiff && !this->m_isVarDiff)
+                        {
+                            g0 = tmp0 * tmp0;
+                            g0.fma(tmp1, tmp1);
+                            g0.fma(tmp2, tmp2);
 
-                        vec_t g1 = tmp3 * tmp3;
-                        g1.fma(tmp4, tmp4);
-                        g1.fma(tmp5, tmp5);
-                        
-                        vec_t g2 = df2 * df2;
-                        g2.fma(df5, df5);
-                        g2.fma(df8, df8);
-                        
-                        vec_t g3 = tmp0 * tmp3;
-                        g3.fma(tmp1, tmp4);
-                        g3.fma(tmp2, tmp5);
-                        
-                        vec_t g4 = df2 * tmp0;
-                        g4.fma(df5, tmp1);
-                        g4.fma(df8, tmp2);
+                            g1 = tmp3 * tmp3;
+                            g1.fma(tmp4, tmp4);
+                            g1.fma(tmp5, tmp5);
+                            
+                            g2 = df2 * df2;
+                            g2.fma(df5, df5);
+                            g2.fma(df8, df8);
+                            
+                            g3 = tmp0 * tmp3;
+                            g3.fma(tmp1, tmp4);
+                            g3.fma(tmp2, tmp5);
+                            
+                            g4 = df2 * tmp0;
+                            g4.fma(df5, tmp1);
+                            g4.fma(df8, tmp2);
 
-                        vec_t g5 = df2 * tmp3;
-                        g5.fma(df5, tmp4);
-                        g5.fma(df8, tmp5);
-
+                            g5 = df2 * tmp3;
+                            g5.fma(df5, tmp4);
+                            g5.fma(df8, tmp5);
+                        }
+                        else
+                        {
+                            if (this->m_isVarDiff)
+                            {
+                                d00 = m_varD00[cnt];
+                                d01 = m_varD01[cnt];
+                                d11 = m_varD11[cnt];
+                                d02 = m_varD02[cnt];
+                                d12 = m_varD12[cnt];
+                                d22 = m_varD22[cnt];
+                            }
+                            
+                            td0 = tmp0 * d00;
+                            td0.fma(tmp1,d01);
+                            td0.fma(tmp2,d02);
+                            
+                            td1 = tmp0 * d01;
+                            td1.fma(tmp1,d11);
+                            td1.fma(tmp2,d12);
+                            
+                            td2 = tmp0 * d02;
+                            td2.fma(tmp1,d12);
+                            td2.fma(tmp2,d22);
+                        
+                            td3 = tmp3 * d00;
+                            td3.fma(tmp4,d01);
+                            td3.fma(tmp5,d02);
+                            
+                            td4 = tmp3 * d01;
+                            td4.fma(tmp4,d11);
+                            td4.fma(tmp5,d12);
+                            
+                            td5 = tmp3 * d02;
+                            td5.fma(tmp4,d12);
+                            td5.fma(tmp5,d22);
+                                                
+                            td6 = df2 * d00;
+                            td6.fma(df5,d01);
+                            td6.fma(df8,d02);
+                            
+                            td7 = df2 * d01;
+                            td7.fma(df5,d11);
+                            td7.fma(df8,d12);
+                            
+                            td8 = df2 * d02;
+                            td8.fma(df5,d12);
+                            td8.fma(df8,d22);
+                            
+                            g0 = td0 * tmp0;
+                            g0.fma(td1,tmp1);
+                            g0.fma(td2,tmp2);
+                            
+                            g3 = td0 * tmp3;
+                            g3.fma(td1,tmp4);
+                            g3.fma(td2,tmp5);
+                            
+                            g4 = td0 * df2;
+                            g4.fma(td1,df5);
+                            g4.fma(td2,df8);
+                            
+                            g1 = td3 * tmp3;
+                            g1.fma(td4,tmp4);
+                            g1.fma(td5,tmp5);
+                            
+                            g5 = td3 * df2;
+                            g5.fma(td4,df5);
+                            g5.fma(td5,df8);
+                            
+                            g2 = td6 * df2;
+                            g2.fma(td7,df5);
+                            g2.fma(td8,df8);
+                        
+                        }
 
                         vec_t d0 = deriv0[cnt];
                         vec_t d1 = deriv1[cnt];
@@ -2283,8 +2825,28 @@ struct HelmholtzTet : public Helmholtz, public Helper<3, DEFORMED>
 
         const vec_t* jac_ptr;
         const vec_t* df_ptr;
-
+        
         vec_t df0,df1,df2,df3,df4,df5,df6,df7,df8;
+        vec_t g0,g1,g2,g3,g4,g5;
+        vec_t d00 = {1.0};
+        vec_t d01 = {0.0};
+        vec_t d11 = {1.0};
+        vec_t d02 = {0.0};
+        vec_t d12 = {0.0};
+        vec_t d22 = {1.0}; // var diffusion terms
+        vec_t td0,td1,td2,td3,td4,td5,td6,td7,td8; // temp terms for vardiff
+        boost::ignore_unused(d00,d01,d11,d02,d12,d22,
+                             td0,td1,td2,td3,td4,td5,td6,td7,td8);
+                             
+        if (this->m_isConstVarDiff)
+        {
+            d00 = this->m_constVarDiff[0];
+            d01 = this->m_constVarDiff[1];
+            d11 = this->m_constVarDiff[2];
+            d02 = this->m_constVarDiff[3];
+            d12 = this->m_constVarDiff[4];
+            d22 = this->m_constVarDiff[5];
+        }
         
         // Get size of derivative factor block
         auto dfSize = ndf;
@@ -2368,36 +2930,111 @@ struct HelmholtzTet : public Helmholtz, public Helper<3, DEFORMED>
                         vec_t tmp3 = h0h2h3 * (df7 + df8);
                         tmp3.fma(df6, h2h3);
 
-                        vec_t g0 = tmp1 * tmp1;
-                        g0.fma(tmp2, tmp2);
-                        g0.fma(tmp3, tmp3);
-
-                        vec_t g4 = df2 * tmp1;
-                        g4.fma(df5, tmp2);
-                        g4.fma(df8, tmp3);
-
                         vec_t tmp4 = df1 * h3;
                         tmp4.fma(df2, h1h3);
                         vec_t tmp5 = df4 * h3;
                         tmp5.fma(df5, h1h3);
                         vec_t tmp6 = df7 * h3;
                         tmp6.fma(df8, h1h3);
+                        
+                        if (!this->m_isConstVarDiff && !this->m_isVarDiff)
+                        {
+                            g0 = tmp1 * tmp1;
+                            g0.fma(tmp2, tmp2);
+                            g0.fma(tmp3, tmp3);
 
-                        vec_t g3 = tmp1 * tmp4;
-                        g3.fma(tmp2, tmp5);
-                        g3.fma(tmp3, tmp6);
+                            g4 = df2 * tmp1;
+                            g4.fma(df5, tmp2);
+                            g4.fma(df8, tmp3);
 
-                        vec_t g1 = tmp4 * tmp4;
-                        g1.fma(tmp5, tmp5);
-                        g1.fma(tmp6, tmp6);
+                            g3 = tmp1 * tmp4;
+                            g3.fma(tmp2, tmp5);
+                            g3.fma(tmp3, tmp6);
 
-                        vec_t g5 = df2 * tmp4;
-                        g5.fma(df5, tmp5);
-                        g5.fma(df8, tmp6);
+                            g1 = tmp4 * tmp4;
+                            g1.fma(tmp5, tmp5);
+                            g1.fma(tmp6, tmp6);
 
-                        vec_t g2 = df2 * df2;
-                        g2.fma(df5, df5);
-                        g2.fma(df8, df8);
+                            g5 = df2 * tmp4;
+                            g5.fma(df5, tmp5);
+                            g5.fma(df8, tmp6);
+
+                            g2 = df2 * df2;
+                            g2.fma(df5, df5);
+                            g2.fma(df8, df8);
+                        }
+                        else
+                        {
+                            if (this->m_isVarDiff)
+                            {
+                                d00 = m_varD00[cnt];
+                                d01 = m_varD01[cnt];
+                                d02 = m_varD02[cnt];
+                                d12 = m_varD12[cnt];
+                                d22 = m_varD22[cnt];
+                            }
+                                
+                            td0 = tmp1 * d00;
+                            td0.fma(tmp2,d01);
+                            td0.fma(tmp3,d02);
+                            
+                            td1 = tmp1 * d01;
+                            td1.fma(tmp2,d11);
+                            td1.fma(tmp3,d12);
+                            
+                            td2 = tmp1 * d02;
+                            td2.fma(tmp2,d12);
+                            td2.fma(tmp3,d22);
+                        
+                            td3 = tmp4 * d00;
+                            td3.fma(tmp5,d01);
+                            td3.fma(tmp6,d02);
+                            
+                            td4 = tmp4 * d01;
+                            td4.fma(tmp5,d11);
+                            td4.fma(tmp6,d12);
+                            
+                            td5 = tmp4 * d02;
+                            td5.fma(tmp5,d12);
+                            td5.fma(tmp6,d22);
+                                                
+                            td6 = df2 * d00;
+                            td6.fma(df5,d01);
+                            td6.fma(df8,d02);
+                            
+                            td7 = df2 * d01;
+                            td7.fma(df5,d11);
+                            td7.fma(df8,d12);
+                            
+                            td8 = df2 * d02;
+                            td8.fma(df5,d12);
+                            td8.fma(df8,d22);
+                            
+                            g0 = td0 * tmp1;
+                            g0.fma(td1,tmp2);
+                            g0.fma(td2,tmp3);
+                            
+                            g3 = td0 * tmp4;
+                            g3.fma(td1,tmp5);
+                            g3.fma(td2,tmp6);
+                            
+                            g4 = td0 * df2;
+                            g4.fma(td1,df5);
+                            g4.fma(td2,df8);
+                            
+                            g1 = td3 * tmp4;
+                            g1.fma(td4,tmp5);
+                            g1.fma(td5,tmp6);
+                            
+                            g5 = td3 * df2;
+                            g5.fma(td4,df5);
+                            g5.fma(td5,df8);
+                            
+                            g2 = td6 * df2;
+                            g2.fma(td7,df5);
+                            g2.fma(td8,df8);
+                        
+                        }
 
                         vec_t d0 = deriv0[cnt];
                         vec_t d1 = deriv1[cnt];
