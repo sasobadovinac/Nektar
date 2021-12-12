@@ -49,8 +49,6 @@ namespace NekMesh
 map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
     int o)
 {
-    // build DerivUtil struct (Vandermonde, basisDeriv, pts/ptsStd + ...)
-
     // build Vandermonde information
     map<LibUtilities::ShapeType, DerivUtilSharedPtr> ret;
 
