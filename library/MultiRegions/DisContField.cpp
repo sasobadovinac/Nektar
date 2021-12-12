@@ -1167,6 +1167,12 @@ namespace Nektar
                     {
                         if(perid[i] > -1)
                         {
+                            // skip if complemetary relationship has
+                            // already been speficied in list
+                            if(perComps.count(perid[i]))
+                            {
+                                continue;
+                            }
                             perComps[i] = perid[i]; 
                         }
                     }
@@ -1323,9 +1329,6 @@ namespace Nektar
                         {
                             c[1] = compMap[id2];
                         }
-
-                        ASSERTL0(c[0] || c[1],
-                                 "Both composites not found on this process!");
 
                         // Loop over composite ordering to construct list of all
                         // periodic edges regardless of whether they are on this
@@ -1809,6 +1812,12 @@ namespace Nektar
                     {
                         if(perid[i] > -1)
                         {
+                            // skip if equivlaent relationship has
+                            // already been speficied in list
+                            if(perComps.count(perid[i]))
+                            {
+                                continue;
+                            }
                             perComps[i] = perid[i]; 
                         }
                     }
@@ -2103,7 +2112,6 @@ namespace Nektar
                     // periodic composites to determine pairs of periodic faces.
                     for (auto &cIt : perComps)
                     {
-                        SpatialDomains::CompositeSharedPtr c[2];
                         const int   id1  = cIt.first;
                         const int   id2  = cIt.second;
                         std::string id1s = boost::lexical_cast<string>(id1);
