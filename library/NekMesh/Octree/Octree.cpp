@@ -863,7 +863,7 @@ void Octree::CompileSourcePointList()
             if(it != curve_refinement.end())
             {
                 // it->second.first = radius(R); it->second.second = delta(D).
-                m_csources.pus
+                m_csources.push_back(curvesource(curve,it->second.first,it->second.second));
             }
 
             Array<OneD, NekDouble> bds = curve->GetBounds();
@@ -885,9 +885,6 @@ void Octree::CompileSourcePointList()
                 if (C != 0.0)
                 {
                     NekDouble del = 2.0 * (1.0 / C) * sqrt(m_eps * (2.0 - m_eps));
-
-                    // NekDouble t_maxDelta = m_maxDelta;
-                    // NekDouble t_minDelta = m_minDelta;
 
                     if (del > m_maxDelta)
                     {
