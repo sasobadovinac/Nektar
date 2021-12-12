@@ -263,12 +263,12 @@ public:
     void SetDelta(NekDouble i)
     {
         boost::ignore_unused(i);
-        NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
+        NEKERROR(ErrorUtil::efatal, "Cannot assign refinement delta to this type");
     }
 
     NekDouble GetRDelta()
     {
-        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
+        NEKERROR(ErrorUtil::efatal, "Cannot retrieve refinment delta from this type");
         return 0.0;
     }
 
@@ -346,7 +346,6 @@ public:
     }
 
 private:
-    // NekDouble m_delta;
     /// refinement delta parameter
     NekDouble m_rdelta;
 };
