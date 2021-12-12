@@ -48,9 +48,9 @@ namespace NekMesh
 enum SPType
 {
     eCBoundary,  // on a curved boundary
-    eRCBoundary,  // on a curved boundary with refinement
-    ePBoundary, // on a planar boundary (R=inf)
-    eSrcPoint   // source point
+    eRCBoundary, // on a curved boundary with refinement
+    ePBoundary,  // on a planar boundary (R=inf)
+    eSrcPoint    // source point
 };
 
 /**

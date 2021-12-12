@@ -118,7 +118,7 @@ NekDouble Octree::Query(Array<OneD, NekDouble> loc)
 
     bool found = false;
 
-    while (!found) // Logic can be improved with nested conditionals.
+    while (!found)
     {
         Array<OneD, NekDouble> octloc = n->GetLoc();
 
@@ -286,12 +286,12 @@ void Octree::SubDivide()
         repeat = false;
         m_octants.clear();
         // grab a list of the leaves curently in the octree
-        m_masteroct->CompileLeaves(m_octants); // leaves are m_octants?
+        m_masteroct->CompileLeaves(m_octants);
 
         VerifyNeigbours();
 
         // neeed to create a divide list, in the first list will be m_octants
-        // which need to subdivide based on curvature;
+        // which need to subdivide based on curvature
         // in the next list will be ocants which need to subdivide to make sure
         // level criteria is statisified for the previous list and so on
         // the list will keep building till no more lists are required.
@@ -863,7 +863,7 @@ void Octree::CompileSourcePointList()
                 m_csources.push_back(curvesource(curve,it->second.first,it->second.second));
             }
 
-            Array<OneD, NekDouble> bds = curve->GetBounds(); // Parametric bounds
+            Array<OneD, NekDouble> bds = curve->GetBounds();
             // this works assuming the curves are not distorted
             int samples  = ceil(curve->Length(bds[0],bds[1]) / m_minDelta) * 2;
             samples = max(40, samples);
