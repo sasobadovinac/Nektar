@@ -2,7 +2,7 @@
     <MESHING>
 
         <INFORMATION>
-            <I PROPERTY="CADFile" VALUE="/home/mashy/Application/Nektar++/nektar++_release/utilities/NekMesh/Tests/MeshGen/STEP/2d_bl_aerofoil.stp"	/>
+            <I PROPERTY="CADFile" VALUE="2d_bl_aerofoil.stp"	/>
             <I PROPERTY="MeshType" VALUE="2DBndLayer"			/>
         </INFORMATION>
 
