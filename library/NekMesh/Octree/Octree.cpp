@@ -291,7 +291,7 @@ void Octree::SubDivide()
         VerifyNeigbours();
 
         // neeed to create a divide list, in the first list will be m_octants
-        // which need to subdivide based on curvature
+        // which need to subdivide based on curvature,
         // in the next list will be ocants which need to subdivide to make sure
         // level criteria is statisified for the previous list and so on
         // the list will keep building till no more lists are required.
@@ -305,7 +305,9 @@ void Octree::SubDivide()
             for (int i = 0; i < m_octants.size(); i++)
             {
                 if (m_octants[i]->NeedDivide() &&
-                    m_octants[i]->DX() / 4.0 > (m_octants[i]->HasDelta()? min(m_minDelta,m_octants[i]->GetDelta()) : m_minDelta))
+                    m_octants[i]->DX() / 4.0 >
+                    (m_octants[i]->HasDelta()?
+                     min(m_minDelta,m_octants[i]->GetDelta()) : m_minDelta))
                 {
                     sublist.push_back(m_octants[i]);
                     inlist.insert(m_octants[i]->GetId());
@@ -324,7 +326,8 @@ void Octree::SubDivide()
                 previouslist = dividelist.back();
             for (int i = 0; i < previouslist.size(); i++)
             {
-                map<OctantFace, vector<OctantSharedPtr>> nlist = previouslist[i]->GetNeigbours();
+                map<OctantFace, vector<OctantSharedPtr>> nlist =
+                    previouslist[i]->GetNeigbours();
                 map<OctantFace, vector<OctantSharedPtr>>::iterator it;
                 for (it = nlist.begin(); it != nlist.end(); it++)
                 {
