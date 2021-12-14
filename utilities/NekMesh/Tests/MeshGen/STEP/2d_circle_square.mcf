@@ -1,0 +1,39 @@
+<NEKTAR>
+    <MESHING>
+
+        <INFORMATION>
+            <I PROPERTY="CADFile" VALUE="2d_circle_square.stp"/>
+            <I PROPERTY="MeshType" VALUE="2D"/>
+        </INFORMATION>
+
+        <PARAMETERS>
+            <P PARAM="MinDelta" VALUE="0.01"/>
+            <P PARAM="MaxDelta" VALUE="0.01"/>
+            <P PARAM="EPS"      VALUE="0.1"/>
+            <P PARAM="Order"    VALUE="4"/>
+        </PARAMETERS>
+
+        <REFINEMENT>
+            <CURVE>
+                <ID> 1 </ID>
+                <R> 0.0045 </R>
+                <D> 0.0015 </D>
+            </CURVE>
+            <CURVE>
+                <ID> 2 </ID>
+                <R> 0.0045 </R>
+                <D> 0.0015 </D>
+            </CURVE>
+            <CURVE>
+                <ID> 3 </ID>
+                <R> 0.0045 </R>
+                <D> 0.0015 </D>
+            </CURVE>
+            <CURVE>
+                <ID> 4 </ID>
+                <R> 0.0045 </R>
+                <D> 0.0015 </D>
+            </CURVE>
+        </REFINEMENT>
+    </MESHING>
+</NEKTAR>
