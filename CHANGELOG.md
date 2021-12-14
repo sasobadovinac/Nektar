@@ -3,8 +3,12 @@ Changelog
 
 v5.1.1
 ------
-**Library**
-- Fix a boost headers incompatibility with boost-1.77 (!1297) 
+**NekMesh**
+- Add option to refine curves in the same manner as the line refinement functionality 
+- Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached
+
+v5.1.1
+------
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication
   being recreated. (!1296)
