@@ -36,6 +36,7 @@
 #define NEKTAR_TESTS_METRIC_H
 
 #include <tinyxml.h>
+#include <memory>
 #include <string>
 #include <map>
 #include <boost/filesystem.hpp>
