@@ -3,6 +3,8 @@ Changelog
 
 v5.1.1
 ------
+**Library**
+- Fix a boost headers incompatibility with boost-1.77 (!1297) 
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication
   being recreated. (!1296)
