@@ -4,8 +4,8 @@
     <executable>NekMesh</executable>
     <parameters>-m jac:list 2d_circle_square.mcf 2d_circle_square-out.xml:xml:test</parameters>
     <files>
-        <file description="Input File">2d_circle_square_bl_aerofoil.mcf</file>
-        <file description="Input File 2">2d_circle_square_aerofoil.stp</file>
+        <file description="Input File">2d_circle_square.mcf</file>
+        <file description="Input File 2">2d_circle_square.stp</file>
     </files>
     <metrics>
         <metric type="regex" id="1">
