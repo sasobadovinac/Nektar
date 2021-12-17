@@ -39,7 +39,7 @@ v5.1.0
 - Use base MPI functions instead of the GS library in the trace exchange
   for parallel DG simulations (!1112)
 - Replace PhysIntegral with Integral (!1246)
-- Change the way periodic boundary conditions in parallel is setup to reduce excessive memory usage (!1235)
+- Change the way periodic boundary conditions in parallel is setup to reduce excessive memory usage (!1235) (!1289)
 - Add exponential and fractional-in-time integration schemes (!1106, !1111, !1210)
 - Add nonlinear and linear system solvers (!1196)
 - Add ESDIRK3 and ESDIRK4 time integration schemes (!1196)
