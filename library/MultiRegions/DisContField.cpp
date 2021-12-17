@@ -2112,10 +2112,21 @@ namespace Nektar
                     // periodic composites to determine pairs of periodic faces.
                     for (auto &cIt : perComps)
                     {
+                        SpatialDomains::CompositeSharedPtr c[2];
                         const int   id1  = cIt.first;
                         const int   id2  = cIt.second;
                         std::string id1s = boost::lexical_cast<string>(id1);
                         std::string id2s = boost::lexical_cast<string>(id2);
+
+                        if (compMap.count(id1) > 0)
+                        {
+                            c[0] = compMap[id1];
+                        }
+
+                        if (compMap.count(id2) > 0)
+                        {
+                            c[1] = compMap[id2];
+                        }
 
                         // Loop over composite ordering to construct list of all
                         // periodic faces, regardless of whether they are on this
@@ -2390,6 +2401,12 @@ namespace Nektar
                             }
                         }
                     }
+
+                    // Make sure that the nubmer of face pairs and the
+                    // face Id to composite Id map match in size
+                    ASSERTL1(allCompPairs.size() == fIdToCompId.size(),
+                            "At this point the size of allCompPairs "
+                            "should have been the same as fIdToCompId");
 
                     // also will need an edge id to composite id at
                     // end of routine
