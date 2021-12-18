@@ -297,6 +297,7 @@ Under this section it is possible to set the solver information.
   <I PROPERTY="ProblemType"                   VALUE="General"                 />
   <I PROPERTY="ViscosityType"                 VALUE="Constant"                />
   <I PROPERTY="EquationOfState"               VALUE="IdealGas"                />
+  <I PROPERTY="Driver"                        VALUE="Standard"                />
 </SOLVERINFO>
 \end{lstlisting}
 \begin{itemize}
@@ -376,6 +377,13 @@ accounting for non-ideal gas behaviour:
 \item \inltt{RedlichKwong} (requires additional parameters \inltt{Tcrit} and \inltt{Pcrit}).
 \item \inltt{PengRobinson} (requires additional parameters \inltt{Tcrit}, \inltt{Pcrit} and
 \inltt{AcentricFactor}).
+\end{itemize}
+\item \inltt{Driver} specifies the type of problem to be solved:
+\begin{itemize}
+\item \inltt{Standard} (default option to solve the unsteady equations).
+\item \inltt{SteadyState} (uses the Selective Frequency Damping method 
+(see Sec. \ref{SectionSFD}) to obtain a steady-state solution of the
+Navier-Stokes equations (explicit or implicit)).
 \end{itemize}
 \end{itemize}
 
