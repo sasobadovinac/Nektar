@@ -136,7 +136,8 @@ void DriverSteadyState::v_Execute(ostream &out)
     }
     // Condition necessary to run SFD for the compressible case
     if (m_session->GetSolverInfo("EqType") == "EulerCFE" ||
-        m_session->GetSolverInfo("EqType") == "NavierStokesCFE")
+        m_session->GetSolverInfo("EqType") == "NavierStokesCFE" ||
+        m_session->GetSolverInfo("EqType") == "NavierStokesImplicitCFE")
     {
         // Number of variables for the compressible equations
         NumVar_SFD += 2;
