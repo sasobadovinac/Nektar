@@ -78,6 +78,7 @@ v5.1.0
 - Add flow rate forcing with a scalar (!1026)
 
 **CompressibleFlowSolver**
+- Added the selective frequency damping support for the implicit solver (!!1267)
 - Added vectorisation of the Interior Penalty method (!!223)
 - Added a simplified implicit solver with naive preconditioner (!!1196)
 - Add BRJ preconditioner to the implicit solver (!!1212)
