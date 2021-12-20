@@ -192,7 +192,7 @@ void DiffusionIP::v_DiffuseCoeffs(
     Array<OneD, NekDouble> Fwd{nTracePts, 0.0};
     Array<OneD, NekDouble> Bwd{nTracePts, 0.0};
     TensorOfArray3D<NekDouble> elmtFlux{nDim};
-    TensorOfArray3D<NekDouble> qfield{nDim};
+    TensorOfArray3D<NekDouble> qfield{nDim};    
 
     for (int j = 0; j < nDim; ++j)
     {
@@ -528,36 +528,30 @@ void DiffusionIP::DiffuseTraceSymmFlux(
     boost::ignore_unused(inarray, qfield, VolumeFlux, pFwd, pBwd);
     size_t nDim = fields[0]->GetCoordim(0);
 
-    CalcTraceSymFlux(nConvectiveFields, nDim, fields, m_traceAver, m_traceJump,
+    CalcTraceSymFlux(nConvectiveFields, nDim, m_traceAver, m_traceJump,
                     nonZeroIndex, SymmFlux);
 }
 
 void DiffusionIP::CalcTraceSymFlux(
     const std::size_t nConvectiveFields, const size_t nDim,
-    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    //const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     const Array<OneD, Array<OneD, NekDouble>> &solution_Aver,
     Array<OneD, Array<OneD, NekDouble>> &solution_jump,
     Array<OneD, int> &nonZeroIndexsymm,
     TensorOfArray3D<NekDouble> &traceSymflux)
 {
     size_t nTracePts = solution_jump[nConvectiveFields - 1].size();
-    
-    for (int i = 0; i < nConvectiveFields; ++i)
-    {
-        Vmath::Smul(nTracePts, m_IPSymmFluxCoeff, solution_jump[i], 1,
-                    solution_jump[i], 1);
-    }
 
     m_FunctorSymmetricfluxCons(nDim, solution_Aver, solution_jump, traceSymflux,
                                nonZeroIndexsymm, m_traceNormals);
 
-    for (int i = 0; i < nConvectiveFields; ++i)
+    for (int nd=0;nd<nDim;++nd)  
     {
-        MultiRegions::ExpListSharedPtr tracelist = fields[i]->GetTrace();
-        for (int nd = 0; nd < nDim; ++nd)
+        for (int j=0;j<nonZeroIndexsymm.size();++j)
         {
-            tracelist->MultiplyByQuadratureMetric(traceSymflux[nd][i],
-                                                  traceSymflux[nd][i]);
+            int i = nonZeroIndexsymm[j];
+            Vmath::Smul(nTracePts,-0.5*m_IPSymmFluxCoeff,traceSymflux[nd][i],1,
+                        traceSymflux[nd][i],1);
         }
     }
 }
@@ -583,9 +577,12 @@ void DiffusionIP::AddSymmFluxIntegralToCoeff(
     for (int j = 0; j < nonZeroIndex.size(); ++j)
     {
         nv = nonZeroIndex[j];
+        MultiRegions::ExpListSharedPtr tracelist = fields[nv]->GetTrace(); 
         for (int nd = 0; nd < nDim; ++nd)
         {
             Vmath::Zero(nPts, tmpfield[nd], 1);
+
+            tracelist->MultiplyByQuadratureMetric(tracflux[nd][nv],tracflux[nd][nv]); 
 
             fields[nv]->AddTraceQuadPhysToField(tracflux[nd][nv],
                                                 tracflux[nd][nv], tmpfield[nd]);

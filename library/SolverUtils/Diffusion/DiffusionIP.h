@@ -151,7 +151,7 @@ protected:
     /// Calculate symmetric flux on traces
     void CalcTraceSymFlux(
         const std::size_t nConvectiveFields, const size_t nDim,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        //const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &solution_Aver,
         Array<OneD, Array<OneD, NekDouble>> &solution_jump,
         Array<OneD, int> &nonZeroIndexsymm,
