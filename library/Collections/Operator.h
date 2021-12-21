@@ -75,11 +75,11 @@ enum OperatorType
 
 const char* const OperatorTypeMap[] =
 {
-    "BwdTrans",
-    "Helmholtz",
-    "IProductWRTBase",
-    "IProductWRTDerivBase",
-    "PhysDeriv"
+    "BwdTrans  ",
+    "Helmholtz ",
+    "IPWrtBase ",
+    "IPWrtDBase",
+    "PhysDeriv "
 };
 
 enum ImplementationType
@@ -96,11 +96,11 @@ enum ImplementationType
 const char* const ImplementationTypeMap[] =
 {
     "NoImplementationType",
-    "NoCollection",
-    "IterPerExp",
-    "StdMat",
-    "SumFac",
-    "MatrixFree"
+    "IterLocExp", // formerly "NoCollection"
+    "IterStdExp", // formerly "IterPerExp"
+    "StdMat    ",
+    "SumFac    ",
+    "MatFree   "  // formerly "MatrixFree"
 };
 
 typedef bool ExpansionIsNodal;

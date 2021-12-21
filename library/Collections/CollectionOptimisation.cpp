@@ -325,6 +325,7 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
 {
     boost::ignore_unused(impTypes);
 
+    cout << "Verbose = " << verbose << endl;
     OperatorImpMap ret;
 
     StdRegions::StdExpansionSharedPtr pExp = pCollExp[0];
@@ -408,6 +409,14 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
     }
 
     Array<OneD, NekDouble> timing(SIZE_ImplementationType);
+
+
+    if(verbose)
+    {
+        cout << "\t " << "   Op.    "  << ":\t"
+                 << "opt. Impl."  << "\t (IterLocExp,  IterStdExp,  StdMat,     SumFac,      MatrixFree)" << endl;
+    }
+
     // loop over all operators and determine fastest implementation
     for(int i = 0; i < SIZE_OperatorType; ++i)
     {
@@ -439,13 +448,13 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
 
         if(verbose)
         {
-            cout << "\t " << OperatorTypeMap[i] << ": "
+            cout << "\t " << OperatorTypeMap[i] << ": \t"
                  << ImplementationTypeMap[minImp] << "\t (";
             for(int j = 0; j < coll.size(); ++j)
             {
                 if (timing[j] > 999.0)
                 {
-                    cout << "-";
+                    cout << "     --    ";
                 }
                 else
                 {

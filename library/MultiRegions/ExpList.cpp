@@ -5021,7 +5021,8 @@ namespace Nektar
                 collections;
 
             //Set up initialisation flags
-            m_collectionsDoInit = std::vector<bool>(Collections::SIZE_OperatorType,true); 
+            m_collectionsDoInit = std::vector<bool>
+                (Collections::SIZE_OperatorType,true); 
             
             // Figure out optimisation parameters if provided in
             // session file or default given
@@ -5034,7 +5035,7 @@ namespace Nektar
             int  collmax    = (colOpt.GetMaxCollectionSize() > 0
                                         ? colOpt.GetMaxCollectionSize()
                                         : 2*m_exp->size());
-
+            
             // clear vectors in case previously called
             m_collections.clear();
             m_coll_coeff_offset.clear();
@@ -5070,8 +5071,8 @@ namespace Nektar
                     // impTypes using timings
                     if(autotuning)
                     {
-                        impTypes = colOpt.SetWithTimings(collExp,
-                                                         impTypes, verbose);
+                        impTypes = colOpt.SetWithTimings(collExp,impTypes,
+                                                         verbose);
                     }
 
                     Collections::Collection tmp(collExp, impTypes);
@@ -5083,15 +5084,17 @@ namespace Nektar
                     collExp.push_back(it.second[0].first);
                     int prevnCoeff = it.second[0].first->GetNcoeffs();
                     int prevnPhys  = it.second[0].first->GetTotPoints();
-                    bool prevDeformed = it.second[0].first->GetMetricInfo()->GetGtype()
-                        == SpatialDomains::eDeformed; 
+                    bool prevDeformed = it.second[0].first->
+                                        GetMetricInfo()->GetGtype()
+                                        == SpatialDomains::eDeformed; 
                     collcnt = 1;
 
                     for (int i = 1; i < it.second.size(); ++i)
                     {
                         int nCoeffs     = it.second[i].first->GetNcoeffs();
                         int nPhys       = it.second[i].first->GetTotPoints();
-                        bool Deformed   = it.second[i].first->GetMetricInfo()->GetGtype()
+                        bool Deformed   = it.second[i].first->
+                            GetMetricInfo()->GetGtype()
                             == SpatialDomains::eDeformed; 
                         int coeffOffset = m_coeff_offset[it.second[i].second];
                         int physOffset  = m_phys_offset [it.second[i].second];
@@ -5140,8 +5143,9 @@ namespace Nektar
                             // settign in xml file.
                             if(autotuning)
                             {
-                                impTypes = colOpt.SetWithTimings(collExp,
-                                                                 impTypes,verbose);
+                                impTypes = colOpt.
+                                    SetWithTimings(collExp,impTypes,
+                                                   verbose);
                             }
 
                             Collections::Collection tmp(collExp, impTypes);
@@ -5149,7 +5153,6 @@ namespace Nektar
 
                             collExp.clear();
                             collcnt = 0;
-
                         }
 
                         prevCoeffOffset = coeffOffset;
