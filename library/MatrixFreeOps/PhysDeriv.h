@@ -243,7 +243,7 @@ struct PhysDerivSeg : public PhysDeriv, public Helper<1, DEFORMED>
         }
         break;
         default:
-            NEKERROR(ErrorUtil::efatal,"Incorrection dimension");
+            NEKERROR(ErrorUtil::efatal,"Incorrect dimension");
             break;
         }
     }
@@ -283,43 +283,39 @@ struct PhysDerivQuad : public PhysDeriv, public Helper<2, DEFORMED>
         ASSERTL0(m_basis[0]->GetNumPoints() == m_basis[1]->GetNumPoints(),
             "MatrixFree op requires homogenous points");
         ASSERTL0(out.size() > 1, "Cannot call 2D routine with one output");
-        ASSERTL0(out.size() != 3, "Routine needs setting up for 3D coordinates"); 
-
-        Array<OneD, NekDouble> out_d0 = out[0];
-        Array<OneD, NekDouble> out_d1 = out[1];
 
         switch(m_basis[0]->GetNumPoints())
         {
             case 2:
-                PhysDerivQuadImpl<2,2>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<2,2>(in, out); break;
             case 3:
-                PhysDerivQuadImpl<3,3>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<3,3>(in, out); break;
             case 4:
-                PhysDerivQuadImpl<4,4>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<4,4>(in, out); break;
             case 5:
-                PhysDerivQuadImpl<5,5>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<5,5>(in, out); break;
             case 6:
-                PhysDerivQuadImpl<6,6>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<6,6>(in, out); break;
             case 7:
-                PhysDerivQuadImpl<7,7>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<7,7>(in, out); break;
             case 8:
-                PhysDerivQuadImpl<8,8>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<8,8>(in, out); break;
             case 9:
-                PhysDerivQuadImpl<9,9>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<9,9>(in, out); break;
             case 10:
-                PhysDerivQuadImpl<10,10>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<10,10>(in, out); break;
             case 11:
-                PhysDerivQuadImpl<11,11>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<11,11>(in, out); break;
             case 12:
-                PhysDerivQuadImpl<12,12>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<12,12>(in, out); break;
             case 13:
-                PhysDerivQuadImpl<13,13>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<13,13>(in, out); break;
             case 14:
-                PhysDerivQuadImpl<14,14>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<14,14>(in, out); break;
             case 15:
-                PhysDerivQuadImpl<15,15>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<15,15>(in, out); break;
             case 16:
-                PhysDerivQuadImpl<16,16>(in, out_d0, out_d1); break;
+                PhysDerivQuadImpl<16,16>(in, out); break;
             default: NEKERROR(ErrorUtil::efatal,
                 "PhysDerivQuad: # of modes / points combo not implemented.");
         }
@@ -328,14 +324,15 @@ struct PhysDerivQuad : public PhysDeriv, public Helper<2, DEFORMED>
     template<int NQ0, int NQ1>
     void PhysDerivQuadImpl(
         const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &out_d0,
-              Array<OneD,       NekDouble> &out_d1)
+        Array<OneD, Array<OneD, NekDouble> >&out)
     {
         auto* inptr = &input[0];
-        auto* outptr_d0 = &out_d0[0];
-        auto* outptr_d1 = &out_d1[0];
+        auto* outptr_d0 = &out[0][0];
+        auto* outptr_d1 = &out[1][0];
 
-        constexpr auto ndf = 4;
+        int outdim = out.size();
+        
+        auto ndf = 2*outdim;
         constexpr auto nqTot = NQ0 * NQ1;
         constexpr auto nqBlocks = nqTot * vec_t::width;
 
@@ -346,31 +343,151 @@ struct PhysDerivQuad : public PhysDeriv, public Helper<2, DEFORMED>
             dfSize *= nqTot;
         }
 
-        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut_d0(nqTot),
-            tmpOut_d1(nqTot);
-        const vec_t* df_ptr;
-        for (int e = 0; e < this->m_nBlocks; ++e)
+        switch(outdim)
         {
-            df_ptr = &((*this->m_df)[dfSize*e]);
+        case 2:
+            {
+             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut_d0(nqTot),
+                 tmpOut_d1(nqTot);
+             const vec_t* df_ptr;
+             vec_t df0, df1, df2, df3;
+             
+             for (int e = 0; e < this->m_nBlocks; ++e)
+             {
+                 df_ptr = &((*this->m_df)[dfSize*e]);
+                 
+                 // Load and transpose data
+                 load_interleave(inptr, nqTot, tmpIn);
+                 
+                 PhysDerivTensor2DKernel<NQ0, NQ1>(tmpIn,
+                                 this->m_D[0], this->m_D[1],
+                                 tmpOut_d0, tmpOut_d1);
 
-            // Load and transpose data
-            load_interleave(inptr, nqTot, tmpIn);
+                 if (!DEFORMED)
+                 {
+                     df0 = df_ptr[0];
+                     df1 = df_ptr[1];
+                     df2 = df_ptr[2];
+                     df3 = df_ptr[3];
+                 }
+                 
+                 int cnt_ji = 0;
+                 for (int j = 0; j < NQ0; ++j)
+                 {
+                     for (int i = 0; i < NQ1; ++i, ++cnt_ji)
+                     {
+                         vec_t d0 = tmpOut_d0[cnt_ji];// Load 1x
+                         vec_t d1 = tmpOut_d1[cnt_ji]; //Load 1x
+                         
+                         if (DEFORMED)
+                         {
+                             df0 = df_ptr[cnt_ji * ndf];
+                             df1 = df_ptr[cnt_ji * ndf + 1];
+                             df2 = df_ptr[cnt_ji * ndf + 2];
+                             df3 = df_ptr[cnt_ji * ndf + 3];
+                         }
+                         
+                         //Multiply by derivative factors
+                         vec_t out0 = d0 * df0; //d0 * df0 + d1 * df1
+                         out0.fma(d1, df1);
+                         tmpOut_d0[cnt_ji] = out0; //Store 1x
 
-            PhysDerivQuadKernel<NQ0, NQ1, DEFORMED>(
-                tmpIn,
-                this->m_Z[0], this->m_Z[1],
-                this->m_D[0], this->m_D[1],
-                df_ptr,
-                tmpOut_d0, tmpOut_d1);
+                         vec_t out1 = d0 * df2; //d0 * df2 + d1 * df3
+                         out1.fma(d1, df3);
+                         tmpOut_d1[cnt_ji] = out1; //Store 1x
+                     }
+                 }
+                 
+                 // de-interleave and store data
+                 deinterleave_store(tmpOut_d0, nqTot, outptr_d0);
+                 deinterleave_store(tmpOut_d1, nqTot, outptr_d1);
+                 
+                 inptr += nqBlocks;
+                 outptr_d0 += nqBlocks;
+                 outptr_d1 += nqBlocks;
+             }
+         }
+         break;
+        case 3:
+        {
+             auto* outptr_d2 = &out[2][0];
+             
+             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut_d0(nqTot),
+                 tmpOut_d1(nqTot),tmpOut_d2(nqTot);
+             const vec_t* df_ptr;
 
-            // de-interleave and store data
-            deinterleave_store(tmpOut_d0, nqTot, outptr_d0);
-            deinterleave_store(tmpOut_d1, nqTot, outptr_d1);
+             for (int e = 0; e < this->m_nBlocks; ++e)
+             {
+                 df_ptr = &((*this->m_df)[dfSize*e]);
+                 
+                 // Load and transpose data
+                 load_interleave(inptr, nqTot, tmpIn);
+                 
+                 PhysDerivTensor2DKernel<NQ0, NQ1>(tmpIn,
+                                 this->m_D[0], this->m_D[1],
+                                 tmpOut_d0, tmpOut_d1);
 
-            inptr += nqBlocks;
-            outptr_d0 += nqBlocks;
-            outptr_d1 += nqBlocks;
+                 vec_t df0, df1, df2, df3, df4, df5;
+                 if (!DEFORMED)
+                 {
+                     df0 = df_ptr[0];
+                     df1 = df_ptr[1];
+                     df2 = df_ptr[2];
+                     df3 = df_ptr[3];
+                     df4 = df_ptr[4];
+                     df5 = df_ptr[5];
+                 }
+                 
+                 int cnt_ji = 0;
+                 for (int j = 0; j < NQ0; ++j)
+                 {
+                     for (int i = 0; i < NQ1; ++i, ++cnt_ji)
+                     {
+                         vec_t d0 = tmpOut_d0[cnt_ji];// Load 1x
+                         vec_t d1 = tmpOut_d1[cnt_ji]; //Load 1x
+                         
+                         if (DEFORMED)
+                         {
+                             df0 = df_ptr[cnt_ji * ndf];
+                             df1 = df_ptr[cnt_ji * ndf + 1];
+                             df2 = df_ptr[cnt_ji * ndf + 2];
+                             df3 = df_ptr[cnt_ji * ndf + 3];
+                             df4 = df_ptr[cnt_ji * ndf + 4];
+                             df5 = df_ptr[cnt_ji * ndf + 5];
+                         }
+                         
+                         //Multiply by derivative factors
+                         vec_t out0 = d0 * df0; //d0 * df0 + d1 * df1
+                         out0.fma(d1, df1);
+                         tmpOut_d0[cnt_ji] = out0; //Store 1x
+
+                         vec_t out1 = d0 * df2; //d0 * df2 + d1 * df3
+                         out1.fma(d1, df3);
+                         tmpOut_d1[cnt_ji] = out1; //Store 1x
+
+                         vec_t out2 = d0 * df4; //d0 * df4 + d1 * df5
+                         out2.fma(d1, df5);
+                         tmpOut_d2[cnt_ji] = out2; //Store 1x
+                     }
+                 }
+                
+                 // de-interleave and store data
+                 deinterleave_store(tmpOut_d0, nqTot, outptr_d0);
+                 deinterleave_store(tmpOut_d1, nqTot, outptr_d1);
+                 deinterleave_store(tmpOut_d2, nqTot, outptr_d2);
+                 
+                 inptr += nqBlocks;
+                 outptr_d0 += nqBlocks;
+                 outptr_d1 += nqBlocks;
+                 outptr_d2 += nqBlocks;
+             }
         }
+        break;
+        default:
+            NEKERROR(ErrorUtil::efatal,"Incorrect dimension");
+            break;
+        }
+                     
     }
 
 private:
@@ -410,45 +527,41 @@ struct PhysDerivTri : public PhysDeriv, public Helper<2,DEFORMED>
         ASSERTL0(m_basis[0]->GetNumPoints() == (m_basis[1]->GetNumPoints()+1),
             "MatrixFree op requires homogenous points");
         ASSERTL0(out.size() > 1, "Cannot call 2D routine with one output");
-        ASSERTL0(out.size() != 3, "Routine needs setting up for 3D coordinates"); 
-
-        Array<OneD, NekDouble> out_d0 = out[0];
-        Array<OneD, NekDouble> out_d1 = out[1];
 
         switch(m_basis[0]->GetNumPoints())
         {
             case 2:
-                PhysDerivTriImpl<2,1>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<2,1>(in, out); break;
             case 3:
-                PhysDerivTriImpl<3,2>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<3,2>(in, out); break;
             case 4:
-                PhysDerivTriImpl<4,3>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<4,3>(in, out); break;
             case 5:
-                PhysDerivTriImpl<5,4>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<5,4>(in, out); break;
             case 6:
-                PhysDerivTriImpl<6,5>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<6,5>(in, out); break;
             case 7:
-                PhysDerivTriImpl<7,6>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<7,6>(in, out); break;
             case 8:
-                PhysDerivTriImpl<8,7>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<8,7>(in, out); break;
             case 9:
-                PhysDerivTriImpl<9,8>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<9,8>(in, out); break;
             case 10:
-                PhysDerivTriImpl<10,9>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<10,9>(in, out); break;
             case 11:
-                PhysDerivTriImpl<11,10>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<11,10>(in, out); break;
             case 12:
-                PhysDerivTriImpl<12,11>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<12,11>(in, out); break;
             case 13:
-                PhysDerivTriImpl<13,12>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<13,12>(in, out); break;
             case 14:
-                PhysDerivTriImpl<14,13>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<14,13>(in, out); break;
             case 15:
-                PhysDerivTriImpl<15,14>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<15,14>(in, out); break;
             case 16:
-                PhysDerivTriImpl<16,15>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<16,15>(in, out); break;
             case 17:
-                PhysDerivTriImpl<17,16>(in, out_d0, out_d1); break;
+                PhysDerivTriImpl<17,16>(in, out); break;
             default: NEKERROR(ErrorUtil::efatal,
                 "PhysDerivTri: # of modes / points combo not implemented.");
         }
@@ -457,14 +570,15 @@ struct PhysDerivTri : public PhysDeriv, public Helper<2,DEFORMED>
     template<int NQ0, int NQ1>
     void PhysDerivTriImpl(
         const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &out_d0,
-              Array<OneD,       NekDouble> &out_d1)
+        Array<OneD, Array<OneD, NekDouble> >&out)
     {
         auto* inptr = &input[0];
-        auto* outptr_d0 = &out_d0[0];
-        auto* outptr_d1 = &out_d1[0];
+        auto* outptr_d0 = &out[0][0];
+        auto* outptr_d1 = &out[1][0];
 
-        constexpr auto ndf = 4;
+        int outdim = out.size();
+
+        auto ndf = 2*outdim;
         constexpr auto nqTot = NQ0 * NQ1;
         constexpr auto nqBlocks = nqTot * vec_t::width;
 
@@ -475,32 +589,166 @@ struct PhysDerivTri : public PhysDeriv, public Helper<2,DEFORMED>
             dfSize *= nqTot;
         }
 
-        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut_d0(nqTot),
-            tmpOut_d1(nqTot);
-        const vec_t* df_ptr;
-        for (int e = 0; e < this->m_nBlocks; ++e)
+        switch(outdim)
         {
-            df_ptr = &((*this->m_df)[dfSize*e]);
+        case 2:
+        {
+            std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot),
+            tmpOut_d0(nqTot),tmpOut_d1(nqTot);
+            const vec_t* df_ptr;
+            
+            vec_t df0, df1, df2, df3;
+            
+            for (int e = 0; e < this->m_nBlocks; ++e)
+            {
+                df_ptr = &((*this->m_df)[dfSize*e]);
+                
+                // Load and transpose data
+                load_interleave(inptr, nqTot, tmpIn);
 
-            // Load and transpose data
-            load_interleave(inptr, nqTot, tmpIn);
+                PhysDerivTensor2DKernel<NQ0, NQ1>(tmpIn,
+                                     this->m_D[0], this->m_D[1],
+                                     tmpOut_d0, tmpOut_d1); 
 
-            PhysDerivTriKernel<NQ0, NQ1, DEFORMED>(
-                tmpIn,
-                this->m_Z[0], this->m_Z[1],
-                this->m_D[0], this->m_D[1],
-                df_ptr,
-                tmpOut_d0, tmpOut_d1);
-
-            // de-interleave and store data
-            deinterleave_store(tmpOut_d0, nqTot, outptr_d0);
-            deinterleave_store(tmpOut_d1, nqTot, outptr_d1);
-
-            inptr += nqBlocks;
-            outptr_d0 += nqBlocks;
-            outptr_d1 += nqBlocks;
+                if (!DEFORMED) //Optimized out by compiler
+                {
+                    df0 = df_ptr[0];
+                    df1 = df_ptr[1];
+                    df2 = df_ptr[2];
+                    df3 = df_ptr[3];
+                }
+                
+                int cnt_ji = 0;
+                for (int j = 0; j < NQ1; ++j)
+                {
+                    vec_t xfrm0 = 2.0 / (1.0 - this->m_Z[1][j]); //Load 1x
+                    
+                    for (int i = 0; i < NQ0; ++i, ++cnt_ji)
+                    {
+                        if (DEFORMED)
+                        {
+                            df0 = df_ptr[cnt_ji * ndf];
+                            df1 = df_ptr[cnt_ji * ndf + 1];
+                            df2 = df_ptr[cnt_ji * ndf + 2];
+                            df3 = df_ptr[cnt_ji * ndf + 3];
+                        }
+                        
+                        //moving from standard to collapsed coordinates
+                        vec_t d0 = xfrm0 * tmpOut_d0[cnt_ji]; //Load 1x
+                        vec_t d1 = tmpOut_d1[cnt_ji]; //Load 1x
+                        vec_t xfrm1 = 0.5 * (1.0 + this->m_Z[0][i]); //Load 1x
+                        d1.fma(d0, xfrm1);
+                        
+                        //Multiply by derivative factors
+                        vec_t out0 = d0 * df0; //d0 * df0 + d1 * df10
+                        out0.fma(d1, df1);
+                        tmpOut_d0[cnt_ji] = out0; // store 1x
+                        
+                        vec_t out1 = d0 * df2; //d0 * df2 + d1 * df3
+                        out1.fma(d1, df3);
+                        tmpOut_d1[cnt_ji] = out1; //Store 1x
+                    }
+                }
+                
+                // de-interleave and store data
+                deinterleave_store(tmpOut_d0, nqTot, outptr_d0);
+                deinterleave_store(tmpOut_d1, nqTot, outptr_d1);
+                
+                inptr += nqBlocks;
+                outptr_d0 += nqBlocks;
+                outptr_d1 += nqBlocks;
+            }
         }
+        break;
+        case 3:
+        {
+             auto* outptr_d2 = &out[2][0];
+             
+             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot),
+                 tmpOut_d0(nqTot),tmpOut_d1(nqTot),tmpOut_d2(nqTot);
+             const vec_t* df_ptr;
+
+             vec_t df0, df1, df2, df3, df4, df5;
+
+             for (int e = 0; e < this->m_nBlocks; ++e)
+             {
+                 df_ptr = &((*this->m_df)[dfSize*e]);
+                
+                 // Load and transpose data
+                 load_interleave(inptr, nqTot, tmpIn);
+                 
+                 PhysDerivTensor2DKernel<NQ0, NQ1>(tmpIn,
+                                     this->m_D[0], this->m_D[1],
+                                     tmpOut_d0, tmpOut_d1); 
+
+                if (!DEFORMED) //Optimized out by compiler
+                {
+                    df0 = df_ptr[0];
+                    df1 = df_ptr[1];
+                    df2 = df_ptr[2];
+                    df3 = df_ptr[3];
+                    df4 = df_ptr[4];
+                    df5 = df_ptr[5];
+                }
+                
+                int cnt_ji = 0;
+                for (int j = 0; j < NQ1; ++j)
+                {
+                    vec_t xfrm0 = 2.0 / (1.0 - this->m_Z[1][j]); //Load 1x
+                    
+                    for (int i = 0; i < NQ0; ++i, ++cnt_ji)
+                    {
+                        
+                        if (DEFORMED)
+                        {
+                            df0 = df_ptr[cnt_ji * ndf];
+                            df1 = df_ptr[cnt_ji * ndf + 1];
+                            df2 = df_ptr[cnt_ji * ndf + 2];
+                            df3 = df_ptr[cnt_ji * ndf + 3];
+                            df4 = df_ptr[cnt_ji * ndf + 4];
+                            df5 = df_ptr[cnt_ji * ndf + 5];
+                        }
+                        
+                        //moving from standard to collapsed coordinates
+                        vec_t d0 = xfrm0 * tmpOut_d0[cnt_ji]; //Load 1x
+                        vec_t d1 = tmpOut_d1[cnt_ji]; //Load 1x
+                        vec_t xfrm1 = 0.5 * (1.0 + this->m_Z[0][i]); //Load 1x
+                        d1.fma(d0, xfrm1);
+                        
+                        //Multiply by derivative factors
+                        vec_t out0 = d0 * df0; //d0 * df0 + d1 * df10
+                        out0.fma(d1, df1);
+                        tmpOut_d0[cnt_ji] = out0; // store 1x
+                        
+                        vec_t out1 = d0 * df2; //d0 * df2 + d1 * df3
+                        out1.fma(d1, df3);
+                        tmpOut_d1[cnt_ji] = out1; //Store 1x
+                        
+                        vec_t out2 = d0 * df4; //d0 * df4 + d1 * df5
+                        out2.fma(d1, df5);
+                        tmpOut_d2[cnt_ji] = out2; //Store 1x
+                    }
+                }
+                
+                // de-interleave and store data
+                deinterleave_store(tmpOut_d0, nqTot, outptr_d0);
+                deinterleave_store(tmpOut_d1, nqTot, outptr_d1);
+                deinterleave_store(tmpOut_d2, nqTot, outptr_d2);
+                
+                inptr += nqBlocks;
+                outptr_d0 += nqBlocks;
+                outptr_d1 += nqBlocks;
+                outptr_d2 += nqBlocks;
+            }
+        }
+        break;
+        default:
+            NEKERROR(ErrorUtil::efatal,"Incorrect dimension");
+            break;
+        }
+                     
     }
+        
 private:
     int m_nmTot;
 };
@@ -594,7 +842,7 @@ struct PhysDerivHex : public PhysDeriv, public Helper<3,DEFORMED>
         auto* outptr_d1 = &out_d1[0];
         auto* outptr_d2 = &out_d2[0];
 
-        constexpr auto ndf = 9;
+        auto ndf = 9;
         constexpr auto nqTot = NQ0 * NQ1 * NQ2;
         constexpr auto nqBlocks = nqTot * vec_t::width;
 

@@ -1807,6 +1807,79 @@ namespace Nektar
         }
     }
 
+ 
+    BOOST_AUTO_TEST_CASE(TestTriPhysDeriv_MatrixFree_UniformP_Deformed_3D)
+    {
+        SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(3u,
+            0u, -1.0, -1.0, 0.0));
+        SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(3u,
+            1u,  1.0, -1.0, 1.0));
+        SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(3u,
+            2u, -1.0,  2.0, 0.0));
+
+        SpatialDomains::TriGeomSharedPtr triGeom = CreateTri(v0, v1, v2);
+
+
+        unsigned int numQuadPoints = 5;
+        unsigned int numModes = 2;
+        Nektar::LibUtilities::PointsType triPointsTypeDir1 =
+            Nektar::LibUtilities::eGaussLobattoLegendre;
+        const Nektar::LibUtilities::PointsKey triPointsKeyDir1(numQuadPoints,
+            triPointsTypeDir1);
+        Nektar::LibUtilities::BasisType basisTypeDir1 =
+            Nektar::LibUtilities::eModified_A;
+        const Nektar::LibUtilities::BasisKey basisKeyDir1(basisTypeDir1,
+            numModes, triPointsKeyDir1);
+
+        Nektar::LibUtilities::PointsType triPointsTypeDir2 =
+            Nektar::LibUtilities::eGaussRadauMAlpha1Beta0;
+        const Nektar::LibUtilities::PointsKey triPointsKeyDir2(numQuadPoints-1,
+            triPointsTypeDir2);
+        Nektar::LibUtilities::BasisType basisTypeDir2 =
+            Nektar::LibUtilities::eModified_B;
+        const Nektar::LibUtilities::BasisKey basisKeyDir2(basisTypeDir2,
+            numModes, triPointsKeyDir2);
+        Nektar::LocalRegions::TriExpSharedPtr Exp =
+            MemoryManager<Nektar::LocalRegions::TriExp>::AllocateSharedPtr(
+            basisKeyDir1, basisKeyDir2, triGeom);
+
+        std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+        CollExp.push_back(Exp);
+
+
+        LibUtilities::SessionReaderSharedPtr dummySession;
+        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(Exp);
+
+        // ... only one op at the time ...
+        impTypes[Collections::ePhysDeriv] = Collections::eMatrixFree;
+        Collections::Collection     c(CollExp, impTypes);
+        c.Initialise(Collections::ePhysDeriv);
+
+        const int nq = Exp->GetTotPoints();
+        Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
+        Array<OneD, NekDouble> phys(nq),tmp,tmp1;
+        Array<OneD, NekDouble> diffRef(3*nq);
+        Array<OneD, NekDouble> diff(3*nq);
+
+        Exp->GetCoords(xc, yc, zc);
+
+        for (int i = 0; i < nq; ++i)
+        {
+            phys[i] = sin(xc[i])*cos(yc[i])*sin(zc[i]);
+        }
+
+        Exp->PhysDeriv(phys,diffRef,tmp = diffRef+nq, tmp1 = diffRef+2*nq);
+        c.ApplyOperator(Collections::ePhysDeriv, phys, diff, tmp = diff+nq,
+                        tmp1 = diff+2*nq);
+
+        double epsilon = 1.0e-8;
+        for(int i = 0; i < diffRef.size(); ++i)
+        {
+            BOOST_CHECK_CLOSE(diffRef[i], diff[i], epsilon);
+        }
+    }
+       
         BOOST_AUTO_TEST_CASE(TestTriIProductWRTDerivBase_IterPerExp_UniformP)
         {
             SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(2u, 0u, -1.5, -1.5, 0.0));

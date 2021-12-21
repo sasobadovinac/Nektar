@@ -1417,6 +1417,72 @@ namespace QuadCollectionTests
         }
     }
 
+
+    BOOST_AUTO_TEST_CASE(TestQuadPhysDeriv_MatrixFree_UniformP_Deformed_3D)
+    {
+        SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(3u,
+            0u, -1.0, -2.0, 0.0));
+        SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(3u,
+            1u,  1.0, -1.0, 0.0));
+        SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(3u,
+            2u,  1.0, 1.0, 1.0));
+        SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(3u,
+            3u, -1.0, 1.0, 1.0));
+
+        SpatialDomains::QuadGeomSharedPtr quadGeom = CreateQuad(v0, v1, v2, v3);
+
+        Nektar::LibUtilities::PointsType quadPointsTypeDir1 =
+            Nektar::LibUtilities::eGaussLobattoLegendre;
+        Nektar::LibUtilities::BasisType basisTypeDir1 =
+            Nektar::LibUtilities::eModified_A;
+        unsigned int numQuadPoints = 4;
+        unsigned int numModes = 2;
+        const Nektar::LibUtilities::PointsKey quadPointsKeyDir1(numQuadPoints,
+            quadPointsTypeDir1);
+        const Nektar::LibUtilities::BasisKey basisKeyDir1(basisTypeDir1,
+            numModes, quadPointsKeyDir1);
+
+        Nektar::LocalRegions::QuadExpSharedPtr Exp =
+            MemoryManager<Nektar::LocalRegions::QuadExp>::AllocateSharedPtr(
+            basisKeyDir1, basisKeyDir1, quadGeom);
+
+        std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+        CollExp.push_back(Exp);
+
+        LibUtilities::SessionReaderSharedPtr dummySession;
+        Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::eMatrixFree);
+        Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(Exp);
+        Collections::Collection     c(CollExp, impTypes);
+        c.Initialise(Collections::ePhysDeriv);
+
+        const int nq = Exp->GetTotPoints();
+        Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
+        Array<OneD, NekDouble> phys(nq), tmp, tmp1;
+        Array<OneD, NekDouble> derivRef(3*nq);
+        Array<OneD, NekDouble> deriv(3*nq);
+
+        Exp->GetCoords(xc, yc, zc);
+
+        for (int i = 0; i < nq; ++i)
+        {
+            phys[i] = sin(xc[i])*cos(yc[i])*sin(zc[i]);
+        }
+
+        Exp->PhysDeriv(phys, derivRef, tmp = derivRef + nq,
+                       tmp1 = derivRef + 2*nq);
+        c.ApplyOperator(Collections::ePhysDeriv, phys, deriv, tmp = deriv + nq,
+                         tmp1 = deriv + 2*nq);
+
+        double epsilon = 1.0e-8;
+        for (int i = 0; i < derivRef.size(); ++i)
+        {
+            derivRef[i] = (std::abs(derivRef[i]) < 1e-14)? 0.0: derivRef[i];
+            deriv[i] = (std::abs(deriv[i]) < 1e-14)? 0.0: deriv[i];
+            BOOST_CHECK_CLOSE(derivRef[i], deriv[i], epsilon);
+        }
+    }
+    
     
     BOOST_AUTO_TEST_CASE(TestQuadPhysDeriv_Directional_MatrixFree_UniformP_Undeformed)
     {
