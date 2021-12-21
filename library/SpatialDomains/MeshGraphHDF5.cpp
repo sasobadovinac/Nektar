@@ -408,6 +408,7 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
                 id2row[tmpIds[i]] = row2id[rowCount];
                 e.id = rowCount;
                 e.origId = tmpIds[i];
+                e.ghost = false;
                 e.list = std::vector<unsigned int>(
                     &tmpElmts[cnt], &tmpElmts[cnt+nGeomData]);
                 elmts.push_back(e);
