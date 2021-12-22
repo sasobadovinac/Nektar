@@ -491,7 +491,8 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
     }
 
     // LDG needs a consistent flux definition so swap Fwd/Bwd for right-hand side
-    // of the interface. Disabled for now.
+    // of the interface.
+    // @TODO: Disabled for now.
     for (auto &localInterface : m_localInterfaces)
     {
         if (localInterface->GetInterface()->GetSide() == SpatialDomains::InterfaceSide::eRight && false)
@@ -609,13 +610,15 @@ void InterfaceExchange::SendFwdTrace(
 
     for (auto &i : m_foundRankCoords)
     {
+        int traceId = m_geomIdToTraceId[i.second.first];
         Array<OneD, NekDouble> locCoord = i.second.second;
-        int edgeId                      = i.second.first;
+
 
         Array<OneD, NekDouble> edgePhys =
-            Fwd + m_trace->GetPhys_Offset(m_geomIdToTraceId.at(edgeId));
-        m_sendTrace[i.first] = m_trace->GetExp(m_geomIdToTraceId.at(edgeId))
-                                   ->StdPhysEvaluate(locCoord, edgePhys);
+            Fwd + m_trace->GetPhys_Offset(traceId);
+
+        m_sendTrace[i.first] = m_trace->GetExp(traceId)
+            ->StdPhysEvaluate(locCoord, edgePhys);
     }
 
     m_comm->Isend(m_rank, m_sendTrace, m_sendTrace.size(), requestSend,
@@ -632,6 +635,9 @@ void InterfaceExchange::SendFwdTrace(
 // GetFound() to communicate ?
 void InterfaceExchange::CalcRankDistances()
 {
+    // Clear old found coordinates. This took ages to find >:(
+    m_foundRankCoords.clear();
+
     Array<OneD, NekDouble> disp(m_recvSize.size() + 1, 0.0);
     std::partial_sum(m_recvSize.begin(), m_recvSize.end(), &disp[1]); // @TODO: Use partial sum for other displacement calculations
 
@@ -673,6 +679,10 @@ void InterfaceExchange::CalcRankDistances()
             }
         }
     }
+
+    //@TODO: Could communicate how many found here to avoid sending "nan" placeholder values, probably improvement for heavily partitioned meshes?
+    //@TODO: Currently a semi all-to-all approach with pairwise send/recv communicating for all points whether found or not? Worth the extra communication?
+
 }
 
 } // namespace MultiRegions
