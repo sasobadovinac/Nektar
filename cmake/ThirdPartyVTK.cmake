@@ -33,19 +33,28 @@ IF( NEKTAR_USE_VTK )
         SET(VTK_USE_FILE ${VTK_DIR}/UseVTK.cmake)
         INCLUDE (${VTK_DIR}/VTKConfig.cmake)
     ELSE()
-        FIND_PACKAGE(VTK COMPONENTS
-            vtkFiltersGeometry vtkIOLegacy vtkIOXML vtkIOImage vtkRenderingCore)
+        option( NEKTAR_USE_VTK9
+        "Compile vmtk against VTK 9. OFF is VTK < 9" OFF)
+        if (NEKTAR_USE_VTK9)
+            FIND_PACKAGE(VTK COMPONENTS
+                FiltersCore IOLegacy IOXML IOImage RenderingCore)
+        else()
+            FIND_PACKAGE(VTK COMPONENTS
+                vtkFiltersGeometry vtkIOLegacy vtkIOXML vtkIOImage vtkRenderingCore)
+        endif()
         IF (VTK_FOUND)
             MESSAGE(STATUS "Found VTK: ${VTK_USE_FILE}")
             IF (VTK_MAJOR_VERSION EQUAL 6 AND VTK_MINOR_VERSION EQUAL 0 AND VTK_BUILD_VERSION EQUAL 0)
                 ADD_DEFINITIONS(-DNEKTAR_HAS_VTK_6_0_0)
             ENDIF()
+
+            IF (VTK_MAJOR_VERSION LESS 9)
+                INCLUDE(${VTK_USE_FILE})
+            ENDIF()
         ELSE (VTK_FOUND)
             MESSAGE(FATAL_ERROR "VTK not found")
         ENDIF (VTK_FOUND)
     ENDIF()
-    
-    INCLUDE (${VTK_USE_FILE})
 
     # Force VTK headers to be treated as system headers.
     INCLUDE_DIRECTORIES(SYSTEM ${VTK_INCLUDE_DIRS})

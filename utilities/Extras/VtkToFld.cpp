@@ -15,7 +15,7 @@ namespace po = boost::program_options;
 #include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/BasicUtils/HashUtils.hpp>
 #include <SpatialDomains/MeshGraph.h>
-#include <MultiRegions/ExpList2D.h>
+#include <MultiRegions/ExpList.h>
 #include <LocalRegions/Expansion2D.h>
 
 using namespace std;
@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
     std::vector<std::string> vFilenames;
     LibUtilities::SessionReaderSharedPtr vSession;
     SpatialDomains::MeshGraphSharedPtr graph2D;
-    MultiRegions::ExpList2DSharedPtr Exp;
+    MultiRegions::ExpListSharedPtr Exp;
 
     vFilenames.push_back(vFiles[0]);
     vSession = LibUtilities::SessionReader::CreateInstance(2, argv, vFilenames);
@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 
         //----------------------------------------------
         // Define Expansion
-        Exp = MemoryManager<MultiRegions::ExpList2D>::
+        Exp = MemoryManager<MultiRegions::ExpList>::
                     AllocateSharedPtr(vSession,graph2D);
         //----------------------------------------------
 
