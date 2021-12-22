@@ -325,7 +325,6 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
 {
     boost::ignore_unused(impTypes);
 
-    cout << "Verbose = " << verbose << endl;
     OperatorImpMap ret;
 
     StdRegions::StdExpansionSharedPtr pExp = pCollExp[0];
@@ -375,10 +374,6 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
             if (GetOperatorFactory().ModuleExists(opKey))
             {
                 impTypes[opType] = impType;
-            }
-            else
-            {
-                cout << "Note: Implementation does not exist: " << opKey << endl;
             }
         }
 
@@ -465,8 +460,9 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
                     cout <<", ";
                 }
             }
-            cout << ")" <<endl;
+            cout << ")" << endl;
         }
+
         // could reset global map if reusing  method?
         //m_global[OpType][pExp->DetShapeType()] = (ImplementationType)minImp;
         // set up new map

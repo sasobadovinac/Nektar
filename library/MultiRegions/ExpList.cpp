@@ -5031,7 +5031,7 @@ namespace Nektar
 
             bool autotuning = colOpt.IsUsingAutotuning();
             bool verbose    = (m_session->DefinesCmdLineArgument("verbose")) &&
-                              (m_comm->GetRank() == 0);
+                (m_session->GetComm()->GetRank() == 0);
             int  collmax    = (colOpt.GetMaxCollectionSize() > 0
                                         ? colOpt.GetMaxCollectionSize()
                                         : 2*m_exp->size());
