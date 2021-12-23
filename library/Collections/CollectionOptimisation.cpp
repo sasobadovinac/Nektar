@@ -39,6 +39,11 @@
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+
+#include <tinyxml.h>
+
 using namespace std;
 
 namespace Nektar
@@ -178,77 +183,9 @@ CollectionOptimisation::CollectionOptimisation(
             }
 
             // Now process operator-specific implementation selections
-            TiXmlElement *elmt = xmlCol->FirstChildElement();
-            while (elmt)
-            {
-                m_setByXml = true;
+            ReadCollOps(xmlCol,m_global,m_setByXml);
 
-                string tagname = elmt->ValueStr();
-
-                ASSERTL0(boost::iequals(tagname, "OPERATOR"),
-                        "Only OPERATOR tags are supported inside the "
-                        "COLLECTIONS tag.");
-
-                const char *attr = elmt->Attribute("TYPE");
-                ASSERTL0(attr, "Missing TYPE in OPERATOR tag.");
-                string opType(attr);
-
-                ASSERTL0(opTypes.count(opType) > 0,
-                        "Unknown OPERATOR type " + opType + ".");
-
-                OperatorType ot = opTypes[opType];
-
-                TiXmlElement *elmt2 = elmt->FirstChildElement();
-
-                while (elmt2)
-                {
-                    string tagname = elmt2->ValueStr();
-                    ASSERTL0(boost::iequals(tagname, "ELEMENT"),
-                            "Only ELEMENT tags are supported inside the "
-                            "OPERATOR tag.");
-
-                    const char *attr = elmt2->Attribute("TYPE");
-                    ASSERTL0(attr, "Missing TYPE in ELEMENT tag.");
-
-                    string elType(attr);
-                    auto it2 = elTypes.find(elType);
-                    ASSERTL0(it2 != elTypes.end(),
-                            "Unknown element type "+elType+" in ELEMENT "
-                            "tag");
-
-                    const char *attr2 = elmt2->Attribute("IMPTYPE");
-                    ASSERTL0(attr2, "Missing IMPTYPE in ELEMENT tag.");
-                    string impType(attr2);
-                    ASSERTL0(impTypes.count(impType) > 0,
-                            "Unknown IMPTYPE type " + impType + ".");
-
-                    const char *attr3 = elmt2->Attribute("ORDER");
-                    ASSERTL0(attr3, "Missing ORDER in ELEMENT tag.");
-                    string order(attr3);
-
-                    if (order == "*")
-                    {
-                        m_global[ot][ElmtOrder(it2->second, -1)]
-                                     = impTypes[impType];
-                    }
-                    else
-                    {
-                        vector<unsigned int> orders;
-                        ParseUtils::GenerateSeqVector(order, orders);
-
-                        for (int i = 0; i < orders.size(); ++i)
-                        {
-                            m_global[ot][ElmtOrder(it2->second, orders[i])]
-                                         = impTypes[impType];
-                        }
-                    }
-
-                    elmt2 = elmt2->NextSiblingElement();
-                }
-
-                elmt = elmt->NextSiblingElement();
-            }
-
+            
             // Print out operator map
             if (verbose)
             {
@@ -280,6 +217,103 @@ CollectionOptimisation::CollectionOptimisation(
     }
 }
 
+void  CollectionOptimisation::ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &global, bool &setByXml)
+{
+    map<string, LibUtilities::ShapeType> elTypes;
+    elTypes["S"] = LibUtilities::eSegment;
+    elTypes["T"] = LibUtilities::eTriangle;
+    elTypes["Q"] = LibUtilities::eQuadrilateral;
+    elTypes["A"] = LibUtilities::eTetrahedron;
+    elTypes["P"] = LibUtilities::ePyramid;
+    elTypes["R"] = LibUtilities::ePrism;
+    elTypes["H"] = LibUtilities::eHexahedron;
+
+    map<string, OperatorType> opTypes;
+    for (int i = 0; i < SIZE_OperatorType; ++i)
+    {
+        opTypes[OperatorTypeMap[i]] = (OperatorType)i;
+    }
+
+    map<string, ImplementationType> impTypes;
+    for (int i = 0; i < SIZE_ImplementationType; ++i)
+    {
+        impTypes[ImplementationTypeMap[i]] = (ImplementationType)i;
+    }
+    
+
+    TiXmlElement *elmt = xmlCol->FirstChildElement();
+    while (elmt)
+    {
+        setByXml = true;
+        
+        string tagname = elmt->ValueStr();
+        
+        ASSERTL0(boost::iequals(tagname, "OPERATOR"),
+                 "Only OPERATOR tags are supported inside the "
+                 "COLLECTIONS tag.");
+        
+        const char *attr = elmt->Attribute("TYPE");
+        ASSERTL0(attr, "Missing TYPE in OPERATOR tag.");
+        string opType(attr);
+
+        ASSERTL0(opTypes.count(opType) > 0,
+                 "Unknown OPERATOR type " + opType + ".");
+        
+        OperatorType ot = opTypes[opType];
+        
+        
+        TiXmlElement *elmt2 = elmt->FirstChildElement();
+
+        while (elmt2)
+        {
+            string tagname = elmt2->ValueStr();
+            ASSERTL0(boost::iequals(tagname, "ELEMENT"),
+                     "Only ELEMENT tags are supported inside the "
+                     "OPERATOR tag.");
+            
+            const char *attr = elmt2->Attribute("TYPE");
+            ASSERTL0(attr, "Missing TYPE in ELEMENT tag.");
+            
+            string elType(attr);
+            auto it2 = elTypes.find(elType);
+            ASSERTL0(it2 != elTypes.end(),
+                     "Unknown element type "+elType+" in ELEMENT "
+                     "tag");
+            
+            const char *attr2 = elmt2->Attribute("IMPTYPE");
+            ASSERTL0(attr2, "Missing IMPTYPE in ELEMENT tag.");
+            string impType(attr2);
+            ASSERTL0(impTypes.count(impType) > 0,
+                     "Unknown IMPTYPE type " + impType + ".");
+            
+            const char *attr3 = elmt2->Attribute("ORDER");
+            ASSERTL0(attr3, "Missing ORDER in ELEMENT tag.");
+            string order(attr3);
+            
+            if (order == "*")
+            {
+                global[ot][ElmtOrder(it2->second, -1)]
+                    = impTypes[impType];
+            }
+            else
+            {
+                vector<unsigned int> orders;
+                ParseUtils::GenerateSeqVector(order, orders);
+                
+                for (int i = 0; i < orders.size(); ++i)
+                {
+                    global[ot][ElmtOrder(it2->second, orders[i])]
+                        = impTypes[impType];
+                }
+            }
+            
+            elmt2 = elmt2->NextSiblingElement();
+        }
+        
+        elmt = elmt->NextSiblingElement();
+    }
+}
+    
 OperatorImpMap  CollectionOptimisation::GetOperatorImpMap(
         StdRegions::StdExpansionSharedPtr pExp)
 {
@@ -409,7 +443,8 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
     if(verbose)
     {
         cout << "\t " << "   Op.    "  << ":\t"
-                 << "opt. Impl."  << "\t (IterLocExp,  IterStdExp,  StdMat,     SumFac,      MatrixFree)" << endl;
+             << "opt. Impl."  << "\t (IterLocExp,  IterStdExp,  "
+            "StdMat,     SumFac,      MatrixFree)" << endl;
     }
 
     // loop over all operators and determine fastest implementation
@@ -443,8 +478,8 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
 
         if(verbose)
         {
-            cout << "\t " << OperatorTypeMap[i] << ": \t"
-                 << ImplementationTypeMap[minImp] << "\t (";
+            cout << "\t " << OperatorTypeMap1[i] << ": \t"
+                 << ImplementationTypeMap1[minImp] << "\t (";
             for(int j = 0; j < coll.size(); ++j)
             {
                 if (timing[j] > 999.0)
@@ -472,6 +507,117 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
     // store map for use by another expansion.
     m_opImpMap[OpKey] = ret;
     return ret;
+}
+
+void CollectionOptimisation::UpdateOptFile(std::string sessName,
+                                           LibUtilities::CommSharedPtr &comm)
+{
+    std::string outname = sessName + "_opt.xml"; 
+    
+    TiXmlDocument doc;
+    TiXmlElement *root;
+    TiXmlElement *xmlCol;
+    GlobalOpMap  global;
+    int rank = comm->GetRank();
+    int nprocs = comm->GetSize(); 
+    if(rank == 0)
+    {
+        if(!doc.LoadFile(outname)) // set up new file
+        {
+            TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "utf-8", "");
+            doc.LinkEndChild(decl);
+            root = new TiXmlElement("NEKTAR");
+            doc.LinkEndChild(root);
+            xmlCol = new TiXmlElement("COLLECTIONS");
+            root->LinkEndChild(xmlCol);
+        }
+        else  // load file and read operator information
+        {
+            root   = doc.FirstChildElement("NEKTAR");
+            xmlCol = root->FirstChildElement("COLLECTIONS");
+            
+            bool setbyxml; 
+            ReadCollOps(xmlCol,global,setbyxml);
+        }
+    }
+        
+    // update global with m_opImpMap info
+    for(auto &opimp : m_opImpMap)
+    {
+        for(auto &op : opimp.second)
+        {
+            global[op.first]
+                [ElmtOrder(opimp.first.GetShapeType(),-1)] = op.second;
+        }
+    }
+    
+    // share 
+    if(nprocs)
+    {
+        // loop over operators
+        for(auto &op : global)
+        {
+            // check to see which shapes are defined in this proc
+            Array<OneD, int>  ElmtImp(LibUtilities::SIZE_ShapeType,-1);
+            Array<OneD, bool> ElmtDef(LibUtilities::SIZE_ShapeType,false);
+            for(auto &el : op.second)
+            {
+                ElmtImp[el.first.first] = el.second;
+                ElmtDef[el.first.first] = true; 
+            }
+
+            comm->AllReduce(ElmtImp,LibUtilities::ReduceMax);
+
+            // loop over elements and update if not already defined
+            if(rank == 0)
+            {
+                for(int i = 1; i < LibUtilities::SIZE_ShapeType; ++i)
+                {
+                    if((ElmtImp[i] != -1)&&(ElmtDef[i] == false))
+                    {
+                        global[op.first]
+                            [ElmtOrder((LibUtilities::ShapeType) i,-1)]
+                            = (ImplementationType) ElmtImp[i]; 
+                        cout << "Shared Elmt " << endl;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Update Collection section with global data on root 
+    if(rank == 0)
+    {
+        xmlCol->Clear();
+        
+        map<LibUtilities::ShapeType,string>
+                ShapeLetMap = {{LibUtilities::eSegment,      "S"},
+                               {LibUtilities::eTriangle,     "T"},
+                               {LibUtilities::eQuadrilateral,"Q"},
+                               {LibUtilities::eTetrahedron,  "A"},
+                               {LibUtilities::ePyramid,      "P"},
+                               {LibUtilities::ePrism,        "R"},
+                               {LibUtilities::eHexahedron,   "H"}};
+        
+        for(auto &op : global)
+        {
+            TiXmlElement* ColOp = new TiXmlElement("OPERATOR");
+            xmlCol->LinkEndChild(ColOp);
+            ColOp->SetAttribute("TYPE", OperatorTypeMap[op.first]);
+            
+            for(auto &el : op.second)
+            {
+                TiXmlElement* ElmtOp = new TiXmlElement("ELEMENT");
+                ColOp->LinkEndChild(ElmtOp);
+                
+                ElmtOp->SetAttribute("TYPE",ShapeLetMap[el.first.first]);
+                ElmtOp->SetAttribute("ORDER","*");
+                ElmtOp->SetAttribute("IMPTYPE",ImplementationTypeMap[el.second]);
+            }
+        }
+        
+        doc.SaveFile(outname);
+    }
 }
 
 }

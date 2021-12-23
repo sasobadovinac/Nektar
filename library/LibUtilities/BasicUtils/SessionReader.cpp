@@ -404,6 +404,7 @@ namespace Nektar
                 ("cwipi",        po::value<std::string>(),
                                  "set CWIPI name")
 #endif
+                ("writeoptfile",  "write an optimisation file")
             ;
 
             for (auto &cmdIt : GetCmdLineArgMap())

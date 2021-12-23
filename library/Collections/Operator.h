@@ -75,13 +75,22 @@ enum OperatorType
 
 const char* const OperatorTypeMap[] =
 {
-    "BwdTrans  ",
-    "Helmholtz ",
-    "IPWrtBase ",
+    "BwdTrans",
+    "Helmholtz",
+    "IProductWRTBase",
+    "IProductWRTDerivBase",
+    "PhysDeriv"
+};
+
+const char* const OperatorTypeMap1[] =
+{
+    "BwdTrans",
+    "Helmholtz",
+    "IPWrtBase",
     "IPWrtDBase",
     "PhysDeriv "
 };
-
+    
 enum ImplementationType
 {
     eNoImpType,
@@ -94,6 +103,16 @@ enum ImplementationType
 };
 
 const char* const ImplementationTypeMap[] =
+{
+    "NoImplementationType",
+    "NoCollection",
+    "IterPerExp",
+    "StdMat",
+    "SumFac",
+    "MatrixFree"
+};
+
+const char* const ImplementationTypeMap1[] =
 {
     "NoImplementationType",
     "IterLocExp", // formerly "NoCollection"

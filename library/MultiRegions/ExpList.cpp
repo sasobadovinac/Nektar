@@ -5029,7 +5029,8 @@ namespace Nektar
             Collections::CollectionOptimisation colOpt(m_session, ImpType);
             ImpType = colOpt.GetDefaultImplementationType();
 
-            bool autotuning = colOpt.IsUsingAutotuning();
+            bool autotuning = colOpt.IsUsingAutotuning() ||
+                (m_session->DefinesCmdLineArgument("writeoptfile"));
             bool verbose    = (m_session->DefinesCmdLineArgument("verbose")) &&
                 (m_session->GetComm()->GetRank() == 0);
             int  collmax    = (colOpt.GetMaxCollectionSize() > 0
@@ -5162,6 +5163,12 @@ namespace Nektar
                         prevnPhys       = nPhys;
                     }
                 }
+            }
+
+            // update optimisation file
+            if(m_session->DefinesCmdLineArgument("writeoptfile"))
+            {
+                colOpt.UpdateOptFile(m_session->GetSessionName(),m_comm);
             }
         }
 

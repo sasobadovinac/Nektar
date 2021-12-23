@@ -62,6 +62,15 @@ class OpImpTimingKey
         {
         }
 
+        LibUtilities::ShapeType GetShapeType(void) const
+        {
+            return m_exp->DetShapeType();
+        }
+    
+        int GetExpOrder() const
+        {
+            return m_exp->GetBasis(0)->GetNumModes(); 
+        }
 
         bool operator<(const OpImpTimingKey &rhs) const
         {
@@ -145,6 +154,10 @@ class CollectionOptimisation
                 OperatorImpMap &impTypes,
                 bool verbose = true);
 
+        // Wite out autotuning testing to file
+        COLLECTIONS_EXPORT void UpdateOptFile(std::string sessName,
+                                              LibUtilities::CommSharedPtr &comm);
+    
         bool SetByXml(void)
         {
             return m_setByXml;
@@ -152,13 +165,16 @@ class CollectionOptimisation
 
     private:
         typedef std::pair<LibUtilities::ShapeType, int> ElmtOrder;
-
+        typedef std::map<OperatorType, std::map<ElmtOrder, ImplementationType> > GlobalOpMap; 
         static std::map<OpImpTimingKey,OperatorImpMap> m_opImpMap;
-        std::map<OperatorType, std::map<ElmtOrder, ImplementationType> > m_global;
+        GlobalOpMap m_global;
         bool m_setByXml;
         bool m_autotune;
         ImplementationType m_defaultType;
         unsigned int m_maxCollSize;
+
+        void  ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &global, bool &setByXml);
+
 };
 
 }
