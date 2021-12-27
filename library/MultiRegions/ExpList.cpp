@@ -5036,7 +5036,7 @@ namespace Nektar
             int  collmax    = (colOpt.GetMaxCollectionSize() > 0
                                         ? colOpt.GetMaxCollectionSize()
                                         : 2*m_exp->size());
-            
+
             // clear vectors in case previously called
             m_collections.clear();
             m_coll_coeff_offset.clear();
