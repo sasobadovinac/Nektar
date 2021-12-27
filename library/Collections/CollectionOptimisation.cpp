@@ -58,7 +58,8 @@ CollectionOptimisation::CollectionOptimisation(
         LibUtilities::SessionReaderSharedPtr pSession,
         ImplementationType defaultType)
 {
-    map<ElmtOrder, ImplementationType> defaults, defaultsPhysDeriv;
+    map<ElmtOrder, ImplementationType> defaults, defaultsPhysDeriv,
+        defaultsHelmholtz;
     bool verbose  = (pSession.get()) &&
                     (pSession->DefinesCmdLineArgument("verbose")) &&
                     (pSession->GetComm()->GetRank() == 0);
@@ -82,6 +83,7 @@ CollectionOptimisation::CollectionOptimisation(
     {
         defaults          [ElmtOrder(it2.second, -1)] = m_defaultType;
         defaultsPhysDeriv [ElmtOrder(it2.second, -1)] = m_defaultType;
+        defaultsHelmholtz [ElmtOrder(it2.second, -1)] = m_defaultType;
     }
 
     if (defaultType == eNoImpType)
@@ -102,6 +104,9 @@ CollectionOptimisation::CollectionOptimisation(
             {
                 defaultsPhysDeriv[ElmtOrder(it2.second, i)] = eSumFac;
             }
+
+            // Use IterPerExp 
+            defaultsHelmholtz[ElmtOrder(it2.second, -1)] = eMatrixFree;
         }
     }
 
@@ -111,11 +116,14 @@ CollectionOptimisation::CollectionOptimisation(
         opTypes[OperatorTypeMap[i]] = (OperatorType)i;
         switch ((OperatorType)i)
         {
-            case ePhysDeriv:
-                m_global[(OperatorType)i] = defaultsPhysDeriv;
-                break;
-            default:
-                m_global[(OperatorType)i] = defaults;
+        case eHelmholtz:
+            m_global[(OperatorType)i] = defaultsHelmholtz;
+            break;
+        case ePhysDeriv:
+            m_global[(OperatorType)i] = defaultsPhysDeriv;
+            break;
+        default:
+            m_global[(OperatorType)i] = defaults;
         }
     }
 
