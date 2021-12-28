@@ -321,6 +321,7 @@ void Generator2D::MakeBL(int faceid)
     int eid = 0;
     for (auto &it : m_blCurves)
     {
+        std::cout << "checking what it is in m_blCurces: " << it << " and on what faceid: " << faceid << "\n";
         CADOrientation::Orientation edgeo =
             m_mesh->m_cad->GetCurve(it)->GetOrienationWRT(faceid);
         vector<EdgeSharedPtr> es = m_curvemeshes[it]->GetMeshEdges();
@@ -331,6 +332,7 @@ void Generator2D::MakeBL(int faceid)
         for (auto &ie : es)
         {
             ie->m_id = eid++;
+            // std::cout << "checking what ie->m_id is in es with it: " << ie-> m_id << " -- " << it << "\n";
             Array<OneD, NekDouble> p1, p2;
             p1 = ie->m_n1->GetCADSurfInfo(faceid);
             p2 = ie->m_n2->GetCADSurfInfo(faceid);
