@@ -1181,16 +1181,22 @@ struct PhysDerivTet : public PhysDeriv, public Helper<3, DEFORMED>
                     Array<OneD, Array<OneD, NekDouble> >&out) final
     {
         // Check preconditions
-        ASSERTL0(m_basis[0]->GetNumPoints() == (m_basis[1]->GetNumPoints()+1) &&
-            m_basis[0]->GetNumPoints() == (m_basis[2]->GetNumPoints()+1),
-            "MatrixFree op requires homogenous points");
+        //ASSERTL0(m_basis[0]->GetNumPoints() == (m_basis[1]->GetNumPoints()+1) &&
+        //m_basis[0]->GetNumPoints() == (m_basis[2]->GetNumPoints()+1),
+        //"MatrixFree op requires homogenous points");
         ASSERTL0(out.size() == 3,"Cannot call 3D routine with 1 or 2 outputs");
 
         Array<OneD, NekDouble> out_d0 = out[0];
         Array<OneD, NekDouble> out_d1 = out[1];
         Array<OneD, NekDouble> out_d2 = out[2];
 
-        switch(m_basis[0]->GetNumPoints())
+        const auto nq0 = m_basis[0]->GetNumPoints(); 
+        const auto nq1 = m_basis[1]->GetNumPoints(); 
+        const auto nq2 = m_basis[2]->GetNumPoints(); 
+
+        if((nq0 == nq1 + 1)&&(nq0 == nq2 + 1))
+        {
+        switch(nq0)
         {
             case 3:
                 PhysDerivTetImpl<3,2,2>(in, out_d0, out_d1, out_d2); break;
@@ -1220,8 +1226,13 @@ struct PhysDerivTet : public PhysDeriv, public Helper<3, DEFORMED>
                 PhysDerivTetImpl<15,14,14>(in, out_d0, out_d1, out_d2); break;
             case 16:
                 PhysDerivTetImpl<16,15,15>(in, out_d0, out_d1, out_d2); break;
-            default: NEKERROR(ErrorUtil::efatal,
-                "PhysDerivTet: # of points combo not implemented.");
+            default:
+                PhysDerivTetImpl(nq0,nq1,nq2,in, out_d0, out_d1, out_d2);
+        }
+        }
+        else
+        {
+            PhysDerivTetImpl(nq0,nq1,nq2,in, out_d0, out_d1, out_d2);
         }
     }
 
@@ -1282,6 +1293,64 @@ struct PhysDerivTet : public PhysDeriv, public Helper<3, DEFORMED>
             outptr_d2 += nqBlocks;
         }
     }
+
+    void PhysDerivTetImpl(
+              const int nq0, const int nq1, const int nq2, 
+              const Array<OneD, const NekDouble> &input,
+              Array<OneD,       NekDouble> &out_d0,
+              Array<OneD,       NekDouble> &out_d1,
+              Array<OneD,       NekDouble> &out_d2)
+    {
+        const auto* inptr = input.data();
+        auto* outptr_d0 = out_d0.data();
+        auto* outptr_d1 = out_d1.data();
+        auto* outptr_d2 = out_d2.data();
+
+        const auto nqTot = nq0 * nq1 * nq2; 
+
+        constexpr auto ndf = 9;
+        const auto nqBlocks = nqTot * vec_t::width;
+
+        // Get size of derivative factor block
+        auto dfSize = ndf;
+        if (DEFORMED)
+        {
+            dfSize *= nqTot;
+        }
+
+        std::vector<vec_t, allocator<vec_t>> diff0(nqTot), diff1(nqTot),
+            diff2(nqTot);
+
+        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut_d0(nqTot),
+            tmpOut_d1(nqTot), tmpOut_d2(nqTot);
+        const vec_t* df_ptr;
+
+        for (int e = 0; e < this->m_nBlocks; ++e)
+        {
+            df_ptr = &((*this->m_df)[dfSize*e]);
+
+            // Load and transpose data
+            load_interleave(inptr, nqTot, tmpIn);
+
+            PhysDerivTetKernel(nq0, nq1, nq2, DEFORMED,
+                tmpIn,
+                this->m_Z[0], this->m_Z[1], this->m_Z[2],
+                this->m_D[0], this->m_D[1], this->m_D[2],
+                df_ptr,
+                diff0, diff1, diff2,
+                tmpOut_d0, tmpOut_d1, tmpOut_d2);
+
+            // de-interleave and store data
+            deinterleave_store(tmpOut_d0, nqTot, outptr_d0);
+            deinterleave_store(tmpOut_d1, nqTot, outptr_d1);
+            deinterleave_store(tmpOut_d2, nqTot, outptr_d2);
+
+            inptr += nqBlocks;
+            outptr_d0 += nqBlocks;
+            outptr_d1 += nqBlocks;
+            outptr_d2 += nqBlocks;
+        }
+    }    
 private:
     int m_nmTot;
 };

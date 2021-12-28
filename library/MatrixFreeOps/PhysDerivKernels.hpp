@@ -243,6 +243,80 @@ inline static void PhysDerivTensor3DKernel(
 
 }
 
+inline void PhysDerivTensor3DKernel(
+    const int nq0, const int nq1, const int nq2, 
+    const std::vector<vec_t, allocator<vec_t>> &in,
+    const std::vector<vec_t, allocator<vec_t>> &D0,
+    const std::vector<vec_t, allocator<vec_t>> &D1,
+    const std::vector<vec_t, allocator<vec_t>> &D2,
+          std::vector<vec_t, allocator<vec_t>> &out_d0,
+          std::vector<vec_t, allocator<vec_t>> &out_d1,
+          std::vector<vec_t, allocator<vec_t>> &out_d2)
+{
+    //Direction 1
+    for (int i = 0; i < nq0; ++i)
+    {
+        for (int j = 0; j < nq1*nq2; ++j)
+        {
+            vec_t prod_sum = 0.0;
+            for (int k = 0; k < nq0; ++k)
+            {
+                vec_t v1 = D0[k*nq0+i];
+                vec_t v2 = in[j*nq0+k];
+
+                prod_sum.fma(v1, v2);
+            }
+
+            out_d0[j*nq0+i] = prod_sum;
+
+        }
+    }
+
+    // Direction 2
+    for (int block = 0; block < nq2; ++block)
+    {
+        int start = block * nq0 * nq1;
+
+        for (int i = 0; i < nq0; ++i)
+        {
+            for (int j = 0; j < nq1; ++j)
+            {
+
+                vec_t prod_sum = 0.0;
+                for (int k = 0; k < nq1; ++k)
+                {
+                    vec_t v1 = in[start + k*nq0+i];
+                    vec_t v2 = D1[k*nq1 + j];
+
+                    prod_sum.fma(v1,v2);
+                }
+
+                out_d1[ start + j*nq0+i] = prod_sum;
+            }
+        }
+
+    }
+
+    //Direction 3
+    for (int i = 0; i < nq0 * nq1; ++i)
+    {
+        for (int j = 0; j < nq2; ++j)
+        {
+
+            vec_t prod_sum = 0.0;
+            for (int k = 0; k < nq2; ++k)
+            {
+                vec_t v1 = in[k*nq0*nq1 + i];
+                vec_t v2 = D2[k*nq2 + j];
+
+                prod_sum.fma(v1,v2);
+            }
+
+            out_d2[j*nq0*nq1 + i] = prod_sum;
+        }
+    }
+}
+
 template<int NUMQUAD0, int NUMQUAD1, int NUMQUAD2, bool DEFORMED>
 static void PhysDerivHexKernel(
     const std::vector<vec_t, allocator<vec_t>> &inptr,
@@ -642,7 +716,147 @@ static void PhysDerivTetKernel(
             }
         }
     }
+}
 
+inline static void PhysDerivTetKernel(
+    const int nq0, const int nq1, const int nq2,
+    const bool Deformed, const std::vector<vec_t, allocator<vec_t>>& in,
+    const std::vector<vec_t, allocator<vec_t>>& Z0,
+    const std::vector<vec_t, allocator<vec_t>>& Z1,
+    const std::vector<vec_t, allocator<vec_t>>& Z2,
+    const std::vector<vec_t, allocator<vec_t>>& D0,
+    const std::vector<vec_t, allocator<vec_t>>& D1,
+    const std::vector<vec_t, allocator<vec_t>>& D2,
+    const vec_t* df_ptr,
+    std::vector<vec_t, allocator<vec_t>>& diff0, // tmp store
+    std::vector<vec_t, allocator<vec_t>>& diff1, // tmp store
+    std::vector<vec_t, allocator<vec_t>>& diff2, // tmp store
+    std::vector<vec_t, allocator<vec_t>>& out_d0,
+    std::vector<vec_t, allocator<vec_t>>& out_d1,
+    std::vector<vec_t, allocator<vec_t>>& out_d2)
+{
+
+    constexpr auto ndf = 9;
+
+    PhysDerivTensor3DKernel(nq0, nq1, nq2,
+                            in, D0, D1, D2,
+                            diff0, diff1, diff2);
+
+    vec_t df0, df1, df2, df3, df4, df5, df6, df7, df8;
+    if (!Deformed)
+    {
+        df0 = df_ptr[0];
+        df1 = df_ptr[1];
+        df2 = df_ptr[2];
+        df3 = df_ptr[3];
+        df4 = df_ptr[4];
+        df5 = df_ptr[5];
+        df6 = df_ptr[6];
+        df7 = df_ptr[7];
+        df8 = df_ptr[8];
+    }
+
+    for (int k = 0, eta0 = 0; k < nq2; ++k)
+    {
+        vec_t xfrm_eta2 = 2.0 / (1.0 - Z2[k]); //Load 1x
+
+        for (int j = 0; j < nq1; ++j)
+        {
+
+            vec_t xfrm_eta1 = 2.0 / (1.0 -  Z1[j]); //Load 1x
+            vec_t xfrm = xfrm_eta1 * xfrm_eta2;
+
+            for (int i = 0; i < nq0; ++i, ++eta0)
+            {
+                vec_t d0 = xfrm * diff0[eta0]; //Load 1x
+
+                out_d0[eta0] = d0; //Store 1x
+                diff0[eta0] = d0; //Store 1x partial form for reuse
+
+            }
+        }
+    }
+
+    for (int k = 0, eta0 = 0; k < nq2; ++k)
+    {
+        vec_t xfrm_eta2 = 2.0 / (1.0 - Z2[k]); //Load 1x
+
+        for (int j = 0; j < nq1; ++j)
+        {
+            for (int i = 0; i < nq0; ++i, ++eta0)
+            {
+                vec_t xfrm_eta0 = 0.5 * (1.0 + Z0[i]); //Load 1x
+
+                vec_t out0 = xfrm_eta0 * diff0[eta0]; //Load 1x
+                diff0[eta0] = out0; //2 * (1 + eta_0) / (1 - eta_1)(1-eta2) | store 1x
+
+                vec_t d1 = diff1[eta0]; //Load 1x
+                d1 = xfrm_eta2 * d1;
+
+                out_d1[eta0] = out0 + d1; //store 1x
+                diff1[eta0] = d1; //store 1x
+            }
+        }
+    }
+
+    for (int k = 0, eta0 = 0; k < nq2; ++k)
+    {
+        for (int j = 0; j < nq1; ++j)
+        {
+            vec_t xfrm_eta1 = 0.5 * (1.0 + Z1[j]); //Load 1x
+
+            for (int i = 0; i < nq0; ++i, ++eta0)
+            {
+                vec_t out = diff0[eta0]; //Load 1x
+                vec_t d1 = diff1[eta0];  //Load 1x
+                out.fma(d1, xfrm_eta1);
+                out = out + diff2[eta0]; //Load 1x
+                out_d2[eta0] = out;      //Store 1x
+            }
+        }
+    }
+
+    for (int k = 0, cnt_kji = 0; k < nq2; ++k)
+    {
+        for (int j = 0; j < nq1; ++j)
+        {
+            for (int i = 0; i < nq0; ++i, ++cnt_kji)
+            {
+                vec_t d0 = out_d0[cnt_kji]; //Load 1x
+                vec_t d1 = out_d1[cnt_kji]; //Load 1x
+                vec_t d2 = out_d2[cnt_kji]; //Load 1x
+
+                if (Deformed)
+                {
+                    df0 = df_ptr[cnt_kji*ndf + 0];
+                    df1 = df_ptr[cnt_kji*ndf + 1];
+                    df2 = df_ptr[cnt_kji*ndf + 2];
+                    df3 = df_ptr[cnt_kji*ndf + 3];
+                    df4 = df_ptr[cnt_kji*ndf + 4];
+                    df5 = df_ptr[cnt_kji*ndf + 5];
+                    df6 = df_ptr[cnt_kji*ndf + 6];
+                    df7 = df_ptr[cnt_kji*ndf + 7];
+                    df8 = df_ptr[cnt_kji*ndf + 8];
+                }
+
+                vec_t out0 = d0 * df0;
+                out0.fma(d1, df1);
+                out0.fma(d2, df2);
+                out_d0[cnt_kji] = out0; //Store 1x
+
+                vec_t out1 = d0 * df3;
+                out1.fma(d1, df4);
+                out1.fma(d2, df5);
+                out_d1[cnt_kji] = out1; //Store 1x
+
+                vec_t out2 = d0 * df6;
+                out2.fma(d1, df7);
+                out2.fma(d2, df8);
+                out_d2[cnt_kji] = out2; //Store 1x
+            }
+        }
+    }
+   
 }
 
 } // namespace MatrixFree
