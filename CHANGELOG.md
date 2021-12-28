@@ -11,9 +11,11 @@ v5.1.1
 ------
 **Library**
 - Fix a boost headers incompatibility with boost-1.77 (!1297) 
+- Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
+- Fix initialisation warning when using HDF5 (!1299)
+
 **Python**
-- Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication
-  being recreated. (!1296)
+- Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
 
 v5.1.0
 ------
@@ -45,7 +47,7 @@ v5.1.0
 - Use base MPI functions instead of the GS library in the trace exchange
   for parallel DG simulations (!1112)
 - Replace PhysIntegral with Integral (!1246)
-- Change the way periodic boundary conditions in parallel is setup to reduce excessive memory usage (!1235)
+- Change the way periodic boundary conditions in parallel is setup to reduce excessive memory usage (!1235) (!1289)
 - Add exponential and fractional-in-time integration schemes (!1106, !1111, !1210)
 - Add nonlinear and linear system solvers (!1196)
 - Add ESDIRK3 and ESDIRK4 time integration schemes (!1196)
@@ -83,6 +85,7 @@ v5.1.0
 - Add flow rate forcing with a scalar (!1026)
 
 **CompressibleFlowSolver**
+- Added the selective frequency damping support for the implicit solver (!!1267)
 - Added vectorisation of the Interior Penalty method (!!223)
 - Added a simplified implicit solver with naive preconditioner (!!1196)
 - Add BRJ preconditioner to the implicit solver (!!1212)
