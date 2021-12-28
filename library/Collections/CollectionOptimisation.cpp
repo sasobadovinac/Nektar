@@ -524,7 +524,7 @@ void CollectionOptimisation::UpdateOptFile(std::string sessName,
     
     TiXmlDocument doc;
     TiXmlElement *root;
-    TiXmlElement *xmlCol;
+    TiXmlElement *xmlCol = new TiXmlElement("COLLECTIONS");
     GlobalOpMap  global;
     int rank = comm->GetRank();
     int nprocs = comm->GetSize(); 
@@ -536,7 +536,6 @@ void CollectionOptimisation::UpdateOptFile(std::string sessName,
             doc.LinkEndChild(decl);
             root = new TiXmlElement("NEKTAR");
             doc.LinkEndChild(root);
-            xmlCol = new TiXmlElement("COLLECTIONS");
             root->LinkEndChild(xmlCol);
         }
         else  // load file and read operator information
