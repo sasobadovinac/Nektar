@@ -810,7 +810,7 @@ namespace Nektar
 
                     for (int f = 0; f < nConvectiveFields; ++f)
                     {
-                        outarray[d][f][p] += normal[d][p] * outTmp[f];
+                        outarray[d][f][p] += normal[nderiv][p] * outTmp[f];
                     }
                 }
             }
