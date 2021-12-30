@@ -148,17 +148,17 @@ namespace Nektar
             const NekDouble                                 time);
 
         void DoAdvection(
-            const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-                  Array<OneD,       Array<OneD, NekDouble>> &outarray,
+            const Array<OneD, Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
             const NekDouble                                 time,
-            const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
-            const Array<OneD, const Array<OneD, NekDouble>> &pBwd);
+            const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+            const Array<OneD, Array<OneD, NekDouble>> &pBwd);
 
         void DoDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-                  Array<OneD,       Array<OneD, NekDouble>> &outarray,
-            const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
-            const Array<OneD, const Array<OneD, NekDouble>> &pBwd);
+            const Array<OneD, Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+            const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+            const Array<OneD, Array<OneD, NekDouble>> &pBwd);
 
         void GetFluxVector(
             const Array<OneD, const Array<OneD, NekDouble>> &physfield,
@@ -204,10 +204,10 @@ namespace Nektar
             std::vector<std::string>             &variables);
 
         virtual void v_DoDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-                  Array<OneD,       Array<OneD, NekDouble>> &outarray,
-            const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
-            const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
+            const Array<OneD, Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+            const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+            const Array<OneD, Array<OneD, NekDouble>> &pBwd)
         {
             boost::ignore_unused(inarray, outarray, pFwd, pBwd);
             // Do nothing by default
