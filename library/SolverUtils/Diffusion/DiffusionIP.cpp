@@ -44,7 +44,7 @@ namespace Nektar
 namespace SolverUtils
 {
 std::string DiffusionIP::type = GetDiffusionFactory().RegisterCreatorFunction(
-    "InteriorPenalty", DiffusionIP::create);
+                    "InteriorPenalty", DiffusionIP::create, "Interior Penalty");
 
 DiffusionIP::DiffusionIP()
 {

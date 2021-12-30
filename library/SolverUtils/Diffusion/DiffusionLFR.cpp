@@ -50,15 +50,15 @@ namespace Nektar
     {
         std::string DiffusionLFR::type[] = {
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRDG", DiffusionLFR::create),
+                              "LFRDG", DiffusionLFR::create,"LFRDG"),
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRSD", DiffusionLFR::create),
+                              "LFRSD", DiffusionLFR::create,"LRFSD"),
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRHU", DiffusionLFR::create),
+                              "LFRHU", DiffusionLFR::create,"LFRHU"),
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRcmin", DiffusionLFR::create),
+                               "LFRcmin", DiffusionLFR::create,"LFRcmin"),
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRcinf", DiffusionLFR::create)};
+                               "LFRcinf", DiffusionLFR::create,"LFRcinf")};
 
         /**
          * @brief DiffusionLFR uses the Flux Reconstruction (FR) approach to
