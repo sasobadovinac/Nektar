@@ -984,18 +984,10 @@ void LocTraceToTraceMap::AddLocTracesToField(
 {
     size_t nfield  =   field.size();
     Array<OneD, NekDouble> tmp {nfield, 0.0};
-#if 0 
-    Vmath::Scatr(m_fieldToLocTraceMap.size(),
-                 faces,
-                 m_fieldToLocTraceMap,
-                 tmp);
-#else
     Vmath::Assmb(m_fieldToLocTraceMap.size(),
                  &faces[0],
                  &m_fieldToLocTraceMap[0],
                  &tmp[0]);
-#endif
-    
     Vmath::Vadd(nfield, tmp, 1, field, 1, field, 1);
 }
 
@@ -1157,9 +1149,9 @@ void LocTraceToTraceMap::RightIPTWLocEdgesToTraceInterpMat(
     // Array<OneD, size_t> ... or at least the same type as
     // m_LocTraceToTraceMap.size() ...
     Vmath::Gathr(static_cast<int>(m_LocTraceToTraceMap[dir].size()),
-                 edges,
-                 m_LocTraceToTraceMap[dir],
-                 tmp);
+                 edges.get(),
+                 m_LocTraceToTraceMap[dir].get(),
+                 tmp.get());
 
     for (int i = 0; i < m_interpTrace[dir].size(); ++i)
     {
@@ -1492,9 +1484,9 @@ void LocTraceToTraceMap::RightIPTWLocFacesToTraceInterpMat(
     // Array<OneD, size_t> ... or at least the same type as
     // m_LocTraceToTraceMap.size() ...
     Vmath::Gathr(static_cast<int>(m_LocTraceToTraceMap[dir].size()),
-                 traces,
-                 m_LocTraceToTraceMap[dir],
-                 tmp);
+                 traces.get(),
+                 m_LocTraceToTraceMap[dir].get(),
+                 tmp.get());
 
     for (int i = 0; i < m_interpTrace[dir].size(); ++i)
     {
