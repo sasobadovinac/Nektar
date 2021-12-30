@@ -984,10 +984,18 @@ void LocTraceToTraceMap::AddLocTracesToField(
 {
     size_t nfield  =   field.size();
     Array<OneD, NekDouble> tmp {nfield, 0.0};
+#if 0 
     Vmath::Scatr(m_fieldToLocTraceMap.size(),
                  faces,
                  m_fieldToLocTraceMap,
                  tmp);
+#else
+    Vmath::Assmb(m_fieldToLocTraceMap.size(),
+                 &faces[0],
+                 &m_fieldToLocTraceMap[0],
+                 &tmp[0]);
+#endif
+    
     Vmath::Vadd(nfield, tmp, 1, field, 1, field, 1);
 }
 
