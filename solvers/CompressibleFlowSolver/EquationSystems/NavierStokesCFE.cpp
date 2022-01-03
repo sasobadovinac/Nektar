@@ -800,7 +800,8 @@ namespace Nektar
                     }
                     
                     // get temp
-                    NekDouble temperature = m_varConv->GetTemperature(inTmp.data());
+                    NekDouble temperature = m_varConv->GetTemperature
+                                                         (inAvgTmp.data());
                     // get viscosity
                     NekDouble mu;
                     GetViscosityFromTempKernel(temperature, mu);
