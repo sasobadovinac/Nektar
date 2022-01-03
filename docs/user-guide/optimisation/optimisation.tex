@@ -28,18 +28,31 @@ are available:
         perform the operation.
 \end{itemize}
 All configuration relating to Collections is given in the \inltt{COLLECTIONS}
-XML element within the \inltt{NEKTAR} XML element.
+Xml element within the \inltt{NEKTAR} XML element.
 
 \subsection{Default implementation}
-The default implementation for all operators may be chosen through setting the
-\inltt{DEFAULT} attribute of the \inltt{COLLECTIONS} XML element to one of
-\inltt{StdMat}, \inltt{SumFac}, \inltt{IterPerExp} or \inltt{NoCollection}. For
-example, the following uses the collated matrix-matrix type elemental operation
-for all operators and expansion orders:
+The default implementation for all operators may be chosen through
+setting the \inltt{DEFAULT} attribute of the \inltt{COLLECTIONS} XML
+element to one of \inltt{StdMat}, \inltt{SumFac}, \inltt{IterPerExp},
+\inltt{NoCollection} or \inltt{Matrixfree}. The \inltt{StdMat} sets up
+a stanard matrix for the element in the collection as the underlying
+operator. The following uses the collated matrix-matrix type elemental
+operation for all operators and expansion orders:
 
 \begin{lstlisting}[style=XmlStyle]
 <COLLECTIONS DEFAULT="StdMat" />
 \end{lstlisting}
+
+The \inltt{NoCollection} option iterates over each expansion
+in the local region calling the lcoal operator which is implemented in
+a sum factorisation method within the element. The \inltt{IterPerExp}
+holds a standard expansion and then also holds an expanded copy of the
+geometric factors wihtin the collection operator. \inltt{SumFac} is a
+sum factorisation implementation which undertakes each direction of
+the method over multiple elements in the collection. Finally
+\inltt{MatrixFree} implements a vectorisation suitable version of the
+sum factorisation which has minimal memory movement but requires some
+intial data re-orientation when vectorising over multiple elements. 
 
 \subsection{Auto-tuning}
 The choice of implementation for each operator, for the given mesh and
@@ -54,14 +67,17 @@ file:
 This will collate elements from the given mesh and given expansion orders,
 run and time each implementation strategy in turn, and select the fastest
 performing case. Note that the selections will be mesh- and order- specific.
-The selections made via auto-tuning are output if the \inlsh{--verbose}
+The selections made via auto-tuning are output if the \inltt{--verbose}
 command-line switch is given.
 
-\subsection{Manual selection}
-The choice of implementation for each operator may be set manually within the
-\inltt{COLLECTIONS} tag as shown in the following example. Different implementations may be chosen for different element shapes and expansion orders.
-Specifying \inltt{*} for \inltt{ORDER} sets the default implementation for any
-expansion orders not explicity defined.
+\subsection{Manual selection and the --writeoptfile command line option}
+The choice of implementation for each operator may also be set
+manually within the \inltt{COLLECTIONS} tag as shown in the following
+example. Different implementations may be chosen for different element
+shapes and expansion orders.  Specifying \inltt{*} for \inltt{ORDER}
+sets the default implementation for any expansion orders not explicity
+defined.
+
 \begin{lstlisting}[style=XmlStyle]
 <COLLECTIONS>
     <OPERATOR TYPE="BwdTrans">
@@ -75,12 +91,22 @@ expansion orders not explicity defined.
 \end{lstlisting}
 
 Manual selection is intended to document the optimal selections on a given
-hardware platform after extensive prior testing, to avoid the need to run the
+hardware platform after  prior testing, to avoid the need to run the
 auto-tuning for each run.
 
+A related option is the \inltt{--writeoptfile} command line option which
+will run the auto-tuning method on section file \inltt{session.xml}
+and then write out a file called \inltt{session\_opt.xml} containing a
+\inltt{COLLECTIONS} xml section. If run in parallel it will write out
+the root partition details but will also include any elements not on
+the root partition. This XML section can hten be included in teh
+original \inltt{sessoin.xml} file which can then be run wihout the
+--writeoptfile command line option.
+
+
 \subsection{Collection size}
-The maximum number of elements within a single collection can be enforced using
-the \inltt{MAXSIZE} attribute.
+The maximum number of elements within a single collection can be
+enforced using the \inltt{MAXSIZE} attribute.
 
 %%% Local Variables:
 %%% mode: latex
