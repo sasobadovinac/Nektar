@@ -1099,8 +1099,39 @@ namespace Nektar
                         }
                     }
 
+                    // In case of periodic partition being split over many composites
+                    // may not have all periodic matches so check this
+                    int idmax  = -1; 
+                    for (auto &cIt : perComps)
+                    {
+                        idmax = max(idmax,cIt.first);
+                        idmax = max(idmax,cIt.second);
+                    }
+                    vComm->AllReduce(idmax,LibUtilities::ReduceMax);
+                    idmax++; 
+                    Array<OneD, int> perid(idmax,-1);
+                    for (auto &cIt : perComps)
+                    {
+                        perid[cIt.first] = cIt.second; 
+                    }
+                    vComm->AllReduce(perid,LibUtilities::ReduceMax);
+                    // update all partitions 
+                    for (int i = 0; i < idmax; ++i)
+                    {
+                        if(perid[i] > -1)
+                        {
+                            // skip if complemetary relationship has
+                            // already been speficied in list
+                            if(perComps.count(perid[i]))
+                            {
+                                continue;
+                            }
+                            perComps[i] = perid[i]; 
+                        }
+                    }
 
-                    // Process local edge list to obtain relative edge orientations.
+                    // Process local edge list to obtain relative edge
+                    // orientations.
                     int              n = vComm->GetSize();
                     int              p = vComm->GetRank();
                     int              totEdges;
@@ -1252,9 +1283,6 @@ namespace Nektar
                             c[1] = compMap[id2];
                         }
 
-                        ASSERTL0(c[0] || c[1],
-                                 "Both composites not found on this process!");
-
                         // Loop over composite ordering to construct list of all
                         // periodic edges regardless of whether they are on this
                         // process.
@@ -1402,47 +1430,6 @@ namespace Nektar
                                 }
                             }
                         }
-                    }
-
-                    // Distribute the size of the periodic boundary to all 
-                    // processes. We assume that all processes who own periodic
-                    // faces have the same local copy of allCompPairs
-                    int NPairs  = allCompPairs.size();
-                    vComm->AllReduce(NPairs, LibUtilities::ReduceMax);
-
-                    // Check that the previous assertion regarding allCompPairs
-                    // is correct
-                    ASSERTL0(
-                        allCompPairs.size() == NPairs || allCompPairs.size() == 0,
-                        "Local copy of allCompPairs not the same for all ranks"
-                    );
-
-                    // Allocate local vectors that will contain the content of
-                    // allCompPairs if process owns faces on periodic boundary
-                    Array<OneD, int> first(NPairs, -1);
-                    Array<OneD, int> second(NPairs, -1);
-                    cnt = 0;
-                    for(const auto &it : allCompPairs)
-                    {
-                        first[cnt]    = it.first;
-                        second[cnt++] = it.second;
-                    }
-                    
-                    // Distribute the content in first and second to all processes
-                    vComm->AllReduce(first,  LibUtilities::ReduceMax);
-                    vComm->AllReduce(second, LibUtilities::ReduceMax);
-
-                    // Check that the MPI Allreduce routine worked
-                    ASSERTL0(std::count(first.begin(), first.end(), -1) == 0, 
-                        "Distribution of allCompPairs failed");
-                    ASSERTL0(std::count(second.begin(), second.end(), -1) == 0, 
-                        "Distribution of allCompParis failed")
-
-                    // Put content back in allCompPairs
-                    allCompPairs.clear();
-                    for(cnt = 0; cnt < NPairs; ++cnt)
-                    {
-                        allCompPairs[first[cnt]] = second[cnt];
                     }
 
                     // Search for periodic vertices and edges which are not in
@@ -1757,7 +1744,39 @@ namespace Nektar
                         }
                     }
 
-                    // The next routines process local face lists to exchange vertices,
+                    // In case of periodic partition being split over many composites
+                    // may not have all periodic matches so check this
+                    int idmax  = -1; 
+                    for (auto &cIt : perComps)
+                    {
+                        idmax = max(idmax,cIt.first);
+                        idmax = max(idmax,cIt.second);
+                    }
+                    vComm->AllReduce(idmax,LibUtilities::ReduceMax);
+                    idmax++; 
+                    Array<OneD, int> perid(idmax,-1);
+                    for (auto &cIt : perComps)
+                    {
+                        perid[cIt.first] = cIt.second; 
+                    }
+                    vComm->AllReduce(perid,LibUtilities::ReduceMax);
+                    // update all partitions 
+                    for (int i = 0; i < idmax; ++i)
+                    {
+                        if(perid[i] > -1)
+                        {
+                            // skip if equivlaent relationship has
+                            // already been speficied in list
+                            if(perComps.count(perid[i]))
+                            {
+                                continue;
+                            }
+                            perComps[i] = perid[i]; 
+                        }
+                    }
+
+                    // The next routines process local face lists to
+                    // exchange vertices,
                     // edges and faces.
                     int              n = vComm->GetSize();
                     int              p = vComm->GetRank();
@@ -2062,9 +2081,6 @@ namespace Nektar
                             c[1] = compMap[id2];
                         }
 
-                        ASSERTL0(c[0] || c[1],
-                                 "Neither composite not found on this process!");
-
                         // Loop over composite ordering to construct list of all
                         // periodic faces, regardless of whether they are on this
                         // process.
@@ -2345,78 +2361,8 @@ namespace Nektar
                             "At this point the size of allCompPairs "
                             "should have been the same as fIdToCompId");
 
-                    // Distribute the size of the periodic boundary to all 
-                    // processes. We assume that all processes who own periodic
-                    // faces have the same local copy of allCompPairs
-                    int NPairs  = allCompPairs.size();
-                    vComm->AllReduce(NPairs, LibUtilities::ReduceMax);
-
-                    // Check that the previous assertion regarding allCompPairs
-                    // is correct
-                    ASSERTL0(
-                        allCompPairs.size() == NPairs || allCompPairs.size() == 0,
-                        "Local copy of allCompPairs not the same for all ranks"
-                    );
-
-                    // Allocate local vectors that will contain the content of
-                    // allCompPairs if process owns faces on periodic boundary
-                    Array<OneD, int> first(NPairs, -1);
-                    Array<OneD, int> second(NPairs, -1);
-                    cnt = 0;
-                    for(const auto &it : allCompPairs)
-                    {
-                        first[cnt]    = it.first;
-                        second[cnt++] = it.second;
-                    }
-                    
-                    // Distribute the content in first and second to all processes
-                    vComm->AllReduce(first,  LibUtilities::ReduceMax);
-                    vComm->AllReduce(second, LibUtilities::ReduceMax);
-
-                    // Check that the MPI Allreduce routine worked
-                    ASSERTL0(std::count(first.begin(), first.end(), -1) == 0, 
-                        "Distribution of allCompPairs failed");
-                    ASSERTL0(std::count(second.begin(), second.end(), -1) == 0, 
-                        "Distribution of allCompPairs failed")
-
-                    // Put content back in allCompPairs
-                    allCompPairs.clear();
-                    for(cnt = 0; cnt < NPairs; ++cnt)
-                    {
-                        allCompPairs[first[cnt]] = second[cnt];
-                    }
-
-                    // Store face ID to composite ID map for rotational boundaries
-                    if(rotComp.size())
-                    {   
-                        // Set values to -1
-                        std::fill(first.begin(), first.end(), -1);
-                        std::fill(second.begin(), second.end(), -1);
-
-                        cnt = 0;
-                        for (const auto &pIt : fIdToCompId)
-                        {
-                            first [cnt  ] = pIt.first;
-                            second[cnt++] = pIt.second;
-                        }
-
-                        vComm->AllReduce(first,  LibUtilities::ReduceMax);
-                        vComm->AllReduce(second, LibUtilities::ReduceMax);
-
-                        // Check that the MPI Allreduce routine worked
-                        ASSERTL0(std::count(first.begin(), first.end(), -1) == 0,
-                            "Distribution of fIdToCompId failed");
-                        ASSERTL0(std::count(second.begin(), second.end(), -1) == 0,
-                            "Distribution of fIdToCompId failed")
-
-                        fIdToCompId.clear();
-                        for(cnt = 0; cnt < NPairs; ++cnt)
-                        {
-                            fIdToCompId[first[cnt]] = second[cnt];
-                        }
-                    }
-
-                    // also will need an edge id to composite id at end of routine
+                    // also will need an edge id to composite id at
+                    // end of routine
                     map<int,int> eIdToCompId;
 
                     // Search for periodic vertices and edges which are not

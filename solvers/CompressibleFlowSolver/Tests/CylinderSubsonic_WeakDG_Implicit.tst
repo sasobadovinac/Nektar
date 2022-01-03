@@ -6,7 +6,7 @@
     <files>
         <file description="Session File">CylinderSubsonic_WeakDG_Implicit.xml</file>
     </files>
-    <metrics>
+    <metrics>  
         <metric type="L2" id="1">
             <value variable="rho" tolerance="1e-12">10.7744</value>
             <value variable="rhou" tolerance="1e-12">1.09375</value>

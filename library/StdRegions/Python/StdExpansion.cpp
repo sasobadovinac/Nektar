@@ -61,7 +61,7 @@ Array<OneD, NekDouble> StdExpansion_IProductWRTBase(
     const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetNcoeffs());
-    exp->BwdTrans(in, out);
+    exp->IProductWRTBase(in, out);
     return out;
 }
 

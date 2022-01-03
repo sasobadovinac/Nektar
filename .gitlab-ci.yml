@@ -455,10 +455,7 @@ win10-mpi-default-build-and-test:
 # correct image version can be grabbed from the container registry.
 .dockerhub_build_template: &dockerhub_build_template
   image: docker:stable
-  only:
-    - master@nektar/nektar
-    - /^docker\/.*$/@nektar/nektar
-    - tags@nektar/nektar
+  <<: *execution-conditions
   script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - IMAGE=$CI_REGISTRY_IMAGE/${image_name}
@@ -473,11 +470,8 @@ win10-mpi-default-build-and-test:
 # registry on a particular SHA commit.
 .dockerhub-test-template: &dockerhub_test_template
   image: ${CI_REGISTRY_IMAGE}/${image_name}:$CI_COMMIT_SHORT_SHA
+  <<: *execution-conditions
   stage: package-test
-  only:
-    - master@nektar/nektar
-    - /^docker\/.*$/@nektar/nektar
-    - tags@nektar/nektar
 
 # Docker Hub deployment template. Only builds for master or tags on the main
 # Nektar repository. The strategy is to login to the container registry and pull
@@ -510,6 +504,7 @@ win10-mpi-default-build-and-test:
 dockerhub-build-env:
   <<: *dockerhub_build_template
   stage: package-env
+  needs: []
   variables:
     image_name: nektar-env
     dockerfile: docker/nektar-env/Dockerfile
@@ -560,7 +555,7 @@ dockerhub-test-nektar-dev:
     image_name: nektar-dev
   script:
     - cd $CI_PROJECT_DIR/templates/executable
-    - ./test.sh /usr/local/lib64/nektar++/cmake 3
+    - ./test.sh /usr/local/lib64/nektar++/cmake 3 /usr/bin/cmake
 
 # Deployment
 dockerhub-deploy-nektar:

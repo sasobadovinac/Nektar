@@ -1,0 +1,107 @@
+<!-- test case for selevtive frequency damping in implicit compressible flow solver -->
+<?xml version="1.0" encoding="utf-8"?>
+
+<NEKTAR>  
+  <EXPANSIONS>    
+    <E COMPOSITE="C[100,101]" NUMMODES="2" FIELDS="rho,rhou,rhov,E" TYPE="MODIFIED" />	  
+  </EXPANSIONS>
+  
+  <CONDITIONS>    
+    <SOLVERINFO>
+      <I PROPERTY="EQType"                VALUE="NavierStokesImplicitCFE"/>
+      <I PROPERTY="Projection"            VALUE="DisContinuous"       />
+      <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+      <I PROPERTY="DiffusionType"         VALUE="InteriorPenalty"     />
+      <I PROPERTY="AdvectionAdvancement"  VALUE="Implicit"            />
+      <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"            />
+      <I PROPERTY="TimeIntegrationMethod" VALUE="DIRKOrder2"          />
+      <I PROPERTY="UpwindType"            VALUE="Roe"                 />
+      <I PROPERTY="ProblemType"           VALUE="General"             />
+      <I PROPERTY="ViscosityType"         VALUE="Constant"            />
+      <I PROPERTY="Driver"                VALUE="SteadyState"         />
+    </SOLVERINFO>
+    <PARAMETERS>
+      <!-- Flow parameters -->
+      <P> Gamma                 = 1.4                       </P>
+      <P> Ma                    = 0.5                       </P>
+      <P> GasConstant           = 1.0/(Gamma*Ma^2)          </P>
+      <P> Re                    = 8511686.0                 </P>
+      <P> mu                    = 1.0/Re                    </P>
+      <P> Tref                  = 277.1                     </P>
+      <!--[K], ref. for Sutherland's law-->
+      <P> Pr                    = 0.72                      </P>
+
+      <!-- Customized parameters -->
+      <P> rhoInf                = 1.0                       </P>
+      <P> TInf                  = 1.0                       </P>
+      <!--[1], scaled farfield parameter-->
+      <P> Twall                 = TInf                      </P>
+      <P> pInf                  = rhoInf*GasConstant*TInf   </P>
+      <P> Sweep                 = 37.3   /180.0*PI          </P>
+      <P> AoA                   = 1.44848/180.0*PI          </P>
+      <P> uInf                  = cos(Sweep)*cos(AoA)       </P>
+      <P> vInf                  = cos(Sweep)*sin(AoA)       </P>
+      <P> wInf                  = sin(Sweep)                </P>
+
+      <!-- Number of steps-->
+      <P> Timestep              = 2.0e-3                </P>
+      <P> NumSteps              = 2000                 </P>
+      <P> IO_InfoSteps          = 1                     </P>
+      <P> IO_CheckSteps         = 200                   </P> 
+      
+      <!--<P> TOL = 2e-8</P>-->  
+    </PARAMETERS>
+    
+    <VARIABLES>      
+      <V ID="0"> rho  </V>      
+      <V ID="1"> rhou </V>      
+      <V ID="2"> rhov </V>      
+      <V ID="3"> E    </V>        
+    </VARIABLES>
+    
+    <BOUNDARYREGIONS>
+      <B ID="0"> C[2] </B>  	<!-- wall -->
+      <B ID="1"> C[1] </B>  	<!-- inflow -->
+      <B ID="2"> C[3] </B>  	<!-- outflow -->
+      <B ID="3"> C[4] </B>  	<!-- freestream -->
+    </BOUNDARYREGIONS>
+
+    <BOUNDARYCONDITIONS>
+      <REGION REF="0">   <!-- wall -->        
+        <D VAR="rho"  USERDEFINEDTYPE="WallViscous" VALUE="0" />
+        <D VAR="rhou" USERDEFINEDTYPE="WallViscous" VALUE="0" />
+        <D VAR="rhov" USERDEFINEDTYPE="WallViscous" VALUE="0" />
+        <D VAR="E"    USERDEFINEDTYPE="WallViscous" VALUE="0" />      
+      </REGION>      
+      <REGION REF="1">   <!-- inflow -->
+        <D VAR="rho"  VALUE="1.0" />
+	<D VAR="rhou" VALUE="(-6.786e16*y^6 + 2.985e14*y^5 -2.197e11*y^4 -5.139e8*y^3 + 2.852e5*y^2 + 1136*y)*(y<0.002) + 1.0*(y>=0.002)" />
+	<D VAR="rhov" VALUE="0.0" />
+	<D VAR="E"    VALUE="pInf/(Gamma-1)+0.5*rhoInf*(((-6.786e16*y^6 + 2.985e14*y^5 -2.197e11*y^4 -5.139e8*y^3 + 2.852e5*y^2 + 1136*y)*(y<0.002) + 1.0*(y>=0.002))*((-6.786e16*y^6 + 2.985e14*y^5 -2.197e11*y^4 -5.139e8*y^3 + 2.852e5*y^2 + 1136*y)*(y<0.002) + 1.0*(y>=0.002)))" />
+      </REGION>      
+      <REGION REF="2">  <!-- outflow -->
+	<D VAR="rho"  USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+	<D VAR="rhou" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="rhov" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="E"    USERDEFINEDTYPE="PressureOutflow" VALUE="pInf" />
+      </REGION>
+      <REGION REF="3">  <!-- freestream -->
+        <D VAR="rho"  USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="rhou" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="rhov" USERDEFINEDTYPE="PressureOutflow" VALUE="0" />
+        <D VAR="E"    USERDEFINEDTYPE="PressureOutflow" VALUE="pInf" />
+      </REGION>
+    </BOUNDARYCONDITIONS>
+    
+    <FUNCTION NAME="InitialConditions">
+      <F VAR="rho,rhou,rhov,E" FILE="implicitSolverCallsSFD.fld" />
+      <!--
+      <E VAR="rho"  VALUE="rhoInf" />
+      <E VAR="rhou" VALUE="rhoInf*uInf" />
+      <E VAR="rhov" VALUE="rhoInf*vInf" />
+      <E VAR="E"    VALUE="pInf/(Gamma-1) + 0.5*rhoInf*(uInf*uInf + vInf*vInf)" />
+      -->          
+    </FUNCTION>
+  
+  </CONDITIONS>
+</NEKTAR>

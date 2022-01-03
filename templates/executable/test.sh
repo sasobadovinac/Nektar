@@ -2,6 +2,14 @@
 
 set -e
 
+if [ "$#" -ne 3 ]; then
+    echo "Usage: test.sh /path/to/nektar++/cmake/dir ncpus /usr/bin/cmake"
+    echo ""
+    echo "Given a path to the Nektar++ CMake files, this script compiles and runs a simulation"
+    echo "using ncpus, using the CMake executable given in the third parameter."
+    exit 1
+fi
+
 # Create a build directory and compile against Nektar++
 rm -rf build && mkdir build && cd build
 $3 -DNektar++_DIR=$1 ..
