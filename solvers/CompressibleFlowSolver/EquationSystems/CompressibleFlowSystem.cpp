@@ -266,7 +266,7 @@ namespace Nektar
         const NekDouble                                   time)
     {
         int nvariables = inarray.size();
-        //int npoints    = GetNpoints();
+        int npoints    = GetNpoints();
         int nTracePts  = GetTraceTotPoints();
 
         m_BndEvaluateTime   = time;
@@ -286,7 +286,13 @@ namespace Nektar
             {
                 Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
                 Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-                m_fields[i]->GetFwdBwdTracePhys(inarray[i], Fwd[i], Bwd[i]);
+
+                // @TODO: Do we want to BwdTrans here? i.e. go from coeffs to phys...
+                // @TODO: Do we even need Fwd/Bwd except for artificial diffusion so flag if m_ALESolver and skip this chunk?
+                // @TODO: DoAdvection already flags and uses ALEHelper method without needing Fwd/Bwd
+                Array<OneD, NekDouble> tmp(npoints);
+                m_fields[i]->BwdTrans(inarray[i], tmp);
+                m_fields[i]->GetFwdBwdTracePhys(tmp, Fwd[i], Bwd[i]);
             }
         }
 
