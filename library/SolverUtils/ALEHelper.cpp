@@ -105,6 +105,26 @@ void ALEHelper::ALEDoElmtInvMass(Array<OneD, Array<OneD, NekDouble> > &traceNorm
     }
 }
 
+void ALEHelper::ALEDoElmtInvMassBwdTrans(
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray)
+{
+    const int nc   = m_fieldsALE[0]->GetNcoeffs();
+    int nVariables = inarray.size();
+
+    // General idea is that we are time-integrating the quantity (Mu), so we
+    // need to multiply input by inverse mass matrix to get coefficients u,
+    // and then backwards transform to physical space so we can apply the DG
+    // operator.
+    Array<OneD, NekDouble> tmp(nc);
+    for (int i = 0; i < nVariables; ++i)
+    {
+        outarray[i] = Array<OneD, NekDouble>(m_fieldsALE[0]->GetNpoints());
+        m_fieldsALE[i]->MultiplyByElmtInvMass(inarray[i], tmp);
+        m_fieldsALE[i]->BwdTrans(tmp, outarray[i]);
+    }
+}
+
 void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDouble> > &traceNormals)
 {
     if (time != m_prevStageTime)

@@ -28,6 +28,10 @@ public:
                           Array<OneD, Array<OneD, NekDouble> > &fields,
                           NekDouble time);
 
+    void ALEDoElmtInvMassBwdTrans(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
+
     void MoveMesh(const NekDouble &time,
                             Array<OneD, Array<OneD, NekDouble>> &traceNormals);
 

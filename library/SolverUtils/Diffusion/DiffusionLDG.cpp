@@ -92,9 +92,19 @@ void DiffusionLDG::v_Diffuse(
     DiffusionLDG::v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp,
                                     pFwd, pBwd);
 
+    // Multiply by inverse mass matrix     // @TODO: We don't want MultiplyByElmtInvMassfor ALE so we moved out of the diffusecoeffs method
+    LibUtilities::Timer timer;
+    for (int i = 0; i < nConvectiveFields; ++i)
+    {
+        timer.Start();
+        fields[i]->MultiplyByElmtInvMass(tmp[i], tmp[i]);
+        timer.Stop();
+        timer.AccumulateRegion("MultiplyByElmtInvMass");
+    }
+
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
-        fields[i]->BwdTrans             (tmp[i], outarray[i]);
+        fields[i]->BwdTrans(tmp[i], outarray[i]);
     }
 }
 
@@ -110,8 +120,6 @@ void DiffusionLDG::v_DiffuseCoeffs(
     std::size_t nPts      = fields[0]->GetTotPoints();
     std::size_t nCoeffs   = fields[0]->GetNcoeffs();
     std::size_t nTracePts = fields[0]->GetTrace()->GetTotPoints();
-
-    Array<OneD, NekDouble>  tmp{nCoeffs};
 
     TensorOfArray3D<NekDouble> qfield{nDim};
     for (std::size_t j = 0; j < nDim; ++j)
@@ -145,19 +153,17 @@ void DiffusionLDG::v_DiffuseCoeffs(
     DiffuseTraceFlux(fields, inarray, qfield, viscTensor, traceflux, pFwd, pBwd);
 
     Array<OneD, Array<OneD, NekDouble> > qdbase{nDim};
-
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
         for (std::size_t j = 0; j < nDim; ++j)
         {
             qdbase[j] = viscTensor[j][i];
         }
-        fields[i]->IProductWRTDerivBase(qdbase, tmp);
+        fields[i]->IProductWRTDerivBase(qdbase, outarray[i]);
 
-        Vmath::Neg                      (nCoeffs, tmp, 1);
-        fields[i]->AddTraceIntegral     (traceflux[i], tmp);
+        Vmath::Neg                      (nCoeffs, outarray[i], 1);
+        fields[i]->AddTraceIntegral     (traceflux[i], outarray[i]);
         fields[i]->SetPhysState         (false);
-        fields[i]->MultiplyByElmtInvMass(tmp, outarray[i]);
     }
 }
 
