@@ -3006,47 +3006,19 @@ namespace Nektar
             LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
             if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange)
             {
-                switch(m_expType)
-                {
-                case e2D:
-                {
-                    Array<OneD, NekDouble> edgevals(m_locTraceToTraceMap->
-                                               GetNLocTracePts(), 0.0);
+                Array<OneD, NekDouble> tracevals(m_locTraceToTraceMap->
+                                                GetNLocTracePts(), 0.0);
 
-                    Array<OneD, NekDouble> invals = edgevals +
-                        m_locTraceToTraceMap->GetNFwdLocTracePts();
-                    
-                    m_locTraceToTraceMap->RightIPTWLocEdgesToTraceInterpMat(
-                                            1, Bwd, invals);
+                Array<OneD, NekDouble> invals = tracevals +
+                    m_locTraceToTraceMap->GetNFwdLocTracePts();
 
-                    m_locTraceToTraceMap->RightIPTWLocEdgesToTraceInterpMat(
-                                            0, Fwd, edgevals);
+                m_locTraceToTraceMap->InterpTraceToLocTraces(
+                                        1, Bwd, invals);
 
-                    m_locTraceToTraceMap->AddLocTracesToField(edgevals, field);
-                }
-                break;
-                case e3D:
-                {
-                    Array<OneD, NekDouble> facevals(m_locTraceToTraceMap->
-                                                   GetNLocTracePts(),0.0);
-
-                    Array<OneD, NekDouble> invals = facevals +
-                                m_locTraceToTraceMap->GetNFwdLocTracePts();
-                    
-                    m_locTraceToTraceMap->RightIPTWLocFacesToTraceInterpMat(
-                                            1, Fwd, invals);
-            
-                    m_locTraceToTraceMap->RightIPTWLocFacesToTraceInterpMat(
-                                            0, Bwd, facevals);
-
-                    m_locTraceToTraceMap->AddLocTracesToField(facevals,field);
-                }
-                break;
-                default:
-                    NEKERROR(ErrorUtil::efatal, 
-                        "AddTraceQuadPhysToField not defined");
-                break;
-                }
+                m_locTraceToTraceMap->InterpTraceToLocTraces(
+                                        0, Fwd, tracevals);
+                
+                m_locTraceToTraceMap->AddLocTracesToField(tracevals,field);
             }
             else
             {
@@ -4363,41 +4335,18 @@ namespace Nektar
                 Array<OneD,       NekDouble>        &locTraceFwd,
                 Array<OneD,       NekDouble>        &locTraceBwd)
         {
-            if (NullNekDouble1DArray != locTraceBwd)
+            if (locTraceFwd != NullNekDouble1DArray)
             {
-                switch(m_expType)
-                {
-                case e2D:
-                    m_locTraceToTraceMap->RightIPTWLocEdgesToTraceInterpMat(
-                        1, Bwd, locTraceBwd);
-                    break;
-                case e3D:
-                    m_locTraceToTraceMap->RightIPTWLocFacesToTraceInterpMat(
-                        1, Bwd, locTraceBwd);
-                    break;
-                default:
-                    NEKERROR(ErrorUtil::efatal, 
-                        "GetLocTraceFromTracePts not defined");
-                }
+                m_locTraceToTraceMap->InterpTraceToLocTraces(
+                        0, Fwd, locTraceFwd);
             }
 
-            if (NullNekDouble1DArray != locTraceFwd)
+            if (locTraceBwd != NullNekDouble1DArray)
             {
-                switch(m_expType)
-                {
-                case e2D:
-                    m_locTraceToTraceMap->RightIPTWLocEdgesToTraceInterpMat(
-                        0, Fwd, locTraceFwd);
-                    break;
-                case e3D:
-                    m_locTraceToTraceMap->RightIPTWLocFacesToTraceInterpMat(
-                        0, Fwd, locTraceFwd);
-                    break;
-                default:
-                    NEKERROR(ErrorUtil::efatal, 
-                        "GetLocTraceFromTracePts not defined");
-                }
+                m_locTraceToTraceMap->InterpTraceToLocTraces(
+                        1, Bwd, locTraceBwd);
             }
+
         }
 
         void DisContField::v_AddTraceIntegralToOffDiag(

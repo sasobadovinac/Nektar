@@ -192,19 +192,25 @@ public:
         const Array<OneD, const NekDouble> &locfaces,
         Array<OneD, NekDouble> edges);
 
-    /// Right inner product with(IPTW) localedgetoTrace Interpolation Matrix.
-    MULTI_REGIONS_EXPORT void RightIPTWLocEdgesToTraceInterpMat(
-        const int                           dir,
-        const Array<OneD, const NekDouble>  &edges,
-        Array<OneD, NekDouble>              &locedges);
-
     MULTI_REGIONS_EXPORT void InterpLocFacesToTrace(
         const int dir,
         const Array<OneD, const NekDouble> &locfaces,
         Array<OneD, NekDouble> faces);
 
-    /// Right inner product with(IPTW) FacesToTrace Interpolation Matrix.
-    MULTI_REGIONS_EXPORT void RightIPTWLocFacesToTraceInterpMat(
+    MULTI_REGIONS_EXPORT void InterpTraceToLocTraces(
+        const int dir,
+        const Array<OneD, const NekDouble> &traces,
+        Array<OneD, NekDouble> &loctraces);
+
+    /// Interp Trace to local edges
+    MULTI_REGIONS_EXPORT void InterpTraceToLocEdges(
+        const int                           dir,
+        const Array<OneD, const NekDouble>  &edges,
+        Array<OneD, NekDouble>              &locedges);
+
+
+    /// Interp Trace to local faces 
+    MULTI_REGIONS_EXPORT void InterpTraceToLocFaces(
         const int                           dir,
         const Array<OneD, const NekDouble>  &traces,
         Array<OneD, NekDouble>              &loctraces);
