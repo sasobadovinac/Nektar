@@ -125,7 +125,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
     }
 }
 
-void ALEHelper::ALEDoOdeRhs(const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
+void ALEHelper::ALEDoAdvection(const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
                             Array<OneD,        Array<OneD, NekDouble> >&outarray,
                             const NekDouble time,
                             AdvectionSharedPtr advObject,
@@ -139,7 +139,6 @@ void ALEHelper::ALEDoOdeRhs(const Array<OneD, const  Array<OneD, NekDouble> >&in
     // and then backwards transform so we can apply the DG operator.
     Array<OneD, NekDouble> tmp(nc);
     Array<OneD, Array<OneD, NekDouble>> tmpin(nVariables);
-
     for (int i = 0; i < nVariables; ++i)
     {
         tmpin[i] = Array<OneD, NekDouble>(m_fieldsALE[0]->GetNpoints());

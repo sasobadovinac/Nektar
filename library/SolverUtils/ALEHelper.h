@@ -31,7 +31,7 @@ public:
     void MoveMesh(const NekDouble &time,
                             Array<OneD, Array<OneD, NekDouble>> &traceNormals);
 
-    void ALEDoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    void ALEDoAdvection(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                      Array<OneD, Array<OneD, NekDouble>> &outarray,
                      const NekDouble time,
                      AdvectionSharedPtr advObject,

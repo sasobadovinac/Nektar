@@ -223,7 +223,7 @@ namespace Nektar
         if(m_ALESolver)
         {
 timer.Start();
-            ALEHelper::ALEDoOdeRhs(inarray, outarray, time, m_advObject, m_velocity);
+        ALEHelper::ALEDoAdvection(inarray, outarray, time, m_advObject, m_velocity);
 timer.Stop();
         }
         else

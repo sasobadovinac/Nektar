@@ -412,8 +412,8 @@ timer.AccumulateRegion("DoDiffusion");
 
         if(m_ALESolver)
         {
-            ALEHelper::ALEDoOdeRhs(inarray, outarray, time, m_advObject,
-                                   advVel);
+            ALEHelper::ALEDoAdvection(inarray, outarray, time, m_advObject,
+                                      advVel);
         }
         else
         {
