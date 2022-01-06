@@ -833,7 +833,7 @@ void Octree::CompileSourcePointList()
     map<int,pair<NekDouble,NekDouble>> curve_refinement;
     if (m_curverefinement.size() > 0)
     {
-        m_log(VERBOSE) << "        Modifying based on refinement curves" << endl;
+        m_log(VERBOSE) << "Modifying based on refinement curves" << endl;
         vector<string> curves;
         boost::split(curves, m_curverefinement, boost::is_any_of(":"));
         for (int i = 0; i < curves.size(); i++)
@@ -848,7 +848,7 @@ void Octree::CompileSourcePointList()
     int totalEnt = 0;
     if(m_mesh->m_cad->Is2D())
     {
-        totalEnt = m_mesh->m_cad->GetNumCurve();  // Why was there a += here?
+        totalEnt = m_mesh->m_cad->GetNumCurve();  // Why was there += here?
         for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
         {
             m_log(VERBOSE).Progress(i, totalEnt, "  - Compiling source points");

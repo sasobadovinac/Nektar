@@ -166,7 +166,7 @@ void Generator2D::Process()
     {
         // we need to do the boundary layer generation in a face by face basis
         MakeBLPrep();
-        for (int i = 1; i <= m_mesh->m_cad->GetNumSurf(); i++)
+        for (int i = 2; i <= m_mesh->m_cad->GetNumSurf(); i++)
         {
             MakeBL(i);
         }

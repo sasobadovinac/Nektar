@@ -62,8 +62,9 @@ class ElUtilJob;
 class ElUtil : public std::enable_shared_from_this<ElUtil>
 {
 public:
+    // TODO find a better way to pass the curve information than in the ElUtil constructor
     ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d,
-           ResidualSharedPtr, int n, int o);
+           ResidualSharedPtr, int n, int o, std::vector<CADCurveSharedPtr> curves);
 
     ElUtilJob *GetJob(bool update = false);
 
@@ -107,6 +108,8 @@ public:
 
     void UpdateMapping();
 
+    void UpdateMappingByCurve(std::vector<CADCurveSharedPtr> curves);
+
 private:
 
     void MappingIdealToRef();
@@ -128,6 +131,8 @@ private:
 
     // Initial maps
     std::vector<std::vector<NekDouble>> m_maps, m_mapsStd;
+    std::vector<CADCurveSharedPtr> m_adaptcurves;
+
 };
 typedef std::shared_ptr<ElUtil> ElUtilSharedPtr;
 

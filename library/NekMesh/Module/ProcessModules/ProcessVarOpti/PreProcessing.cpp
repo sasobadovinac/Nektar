@@ -513,13 +513,20 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
 void ProcessVarOpti::GetElementMap(
     int o, map<LibUtilities::ShapeType, DerivUtilSharedPtr> derMap)
 {
+
+    for (int i = 1; i < 5; i++)
+    {
+        m_adaptcurves.push_back(m_mesh->m_cad->GetCurve(i));
+        std::cout << "Adding curve: " << m_mesh->m_cad->GetCurve(i)->GetId() << " -- " << i << "\n";
+    }
+
     for (int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); i++)
     {
         ElementSharedPtr el = m_mesh->m_element[m_mesh->m_expDim][i];
         vector<NodeSharedPtr> ns;
         el->GetCurvedNodes(ns);
         ElUtilSharedPtr d = std::shared_ptr<ElUtil>(new ElUtil(
-            el, derMap[el->GetShapeType()], m_res, m_mesh->m_nummode, o));
+            el, derMap[el->GetShapeType()], m_res, m_mesh->m_nummode, o, m_adaptcurves));
         m_dataSet.push_back(d);
     }
 
@@ -746,7 +753,7 @@ LibUtilities::Interpolator ProcessVarOpti::GetScalingFieldFromFile(string file)
         }
     }
 
-    return GetField(inPts);
+    return GetField(inPts);  // returns an interpolator class with m_ptsInField from inPts
 }
 
 LibUtilities::Interpolator ProcessVarOpti::GetField(

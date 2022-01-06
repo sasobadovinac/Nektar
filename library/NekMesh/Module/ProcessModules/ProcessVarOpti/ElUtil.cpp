@@ -48,7 +48,7 @@ namespace NekMesh
 std::mutex mtx2;
 
 ElUtil::ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d, ResidualSharedPtr r,
-               int n, int o)
+               int n, int o, std::vector<CADCurveSharedPtr> curves)
 {
     m_el        = e;
     m_derivUtil = d;
@@ -56,6 +56,7 @@ ElUtil::ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d, ResidualSharedPtr r,
     m_mode      = n;
     m_order     = o;
     m_dim       = m_el->GetDim();
+    m_adaptcurves = curves;
     vector<NodeSharedPtr> ns;
     m_el->GetCurvedNodes(ns);
     nodes.resize(ns.size());
@@ -751,57 +752,168 @@ void ElUtil::InitialMinJac()
 
 void ElUtil::UpdateMapping()
 {
-    if (m_interp.GetInField())
+    // std::cout << "UpdateMapping() called!!!!\n";
+    // if (!m_interp.GetInField()){
+    //     maps = m_maps;
+    //     mapsStd = m_mapsStd;
+    //     return;
+    // }
+
+    // if (!m_interpField)
+    // {
+    //     Array<OneD, Array<OneD, NekDouble> > centre(m_dim + 1);
+    //     for (int i = 0; i < m_dim + 1; ++i)
+    //     {
+    //         centre[i] = Array<OneD, NekDouble>(1, 0.0);
+    //     }
+
+    //     vector<string> fieldNames;
+    //     fieldNames.push_back("");
+
+    //     map<LibUtilities::PtsInfo, int> ptsInfo =
+    //         LibUtilities::NullPtsInfoMap;
+
+    //     m_interpField = MemoryManager<LibUtilities::PtsField>
+    //         ::AllocateSharedPtr(m_dim, fieldNames, centre, ptsInfo);
+    // }
+
+    // vector<NodeSharedPtr> nodes = m_el->GetVertexList();
+
+    // vector<NekDouble> centre(m_dim, 0.0);
+    // for (int i = 0; i < nodes.size(); ++i)
+    // {
+    //     centre[0] += nodes[i]->m_x;
+    //     centre[1] += nodes[i]->m_y;
+    //     if (m_dim > 2)
+    //     {
+    //         centre[2] += nodes[i]->m_z;
+    //     }
+    // }
+
+    // m_interpField->SetPointVal(0, 0, centre[0] / nodes.size());
+    // m_interpField->SetPointVal(1, 0, centre[1] / nodes.size());
+    // if (m_dim > 2)
+    // {
+    //     m_interpField->SetPointVal(2, 0, centre[2] / nodes.size());
+    // }
+
+    // m_interp.CalcWeights(m_interp.GetInField(), m_interpField, true);
+    // m_interp.Interpolate(m_interp.GetInField(), m_interpField);
+
+    // NekDouble scaling = m_interpField->GetPointVal(m_dim + 0, 0);  // what's the point of having + 0 ?
+    // NekDouble scaling = m_interpField->GetPointVal(m_dim, 0);  // what's the point of having + 0 ?
+
+    NekDouble scaling = 0;
+
+    // // Using elements with a node with a radius from the curve
+    // NekDouble radius = 0.0025;
+    // vector<NodeSharedPtr> ns = m_el->GetVertexList();
+    // [&]{
+    //     for (int i = 0; i < ns.size(); i++)
+    //     {
+    //         Array<OneD, NekDouble> x(3);
+    //         x[0]   = ns[i]->m_x;
+    //         x[1]   = ns[i]->m_y;
+    //         x[2]   = ns[i]->m_z;
+    //         for (auto &curve : m_adaptcurves){
+    //             // TODO find a way to perform clever searching here instead of brute force
+    //             if (curve->GetMinDistance(x) < radius){
+    //                 scaling = 0.5;
+    //                 return;
+    //             }
+    //         }
+    //     }
+    // }();
+
+    // Using only elements with a node on the curve
+    vector<NodeSharedPtr> ns = m_el->GetVertexList();
+    [&]{
+        for (int i = 0; i < ns.size(); i++)
+        {
+            for (auto &curve : ns[i]->GetCADCurves())
+            {
+                if (curve->GetId() < 5){
+                    scaling = 0.5;
+                    return;
+                }
+            }
+        }
+    }();
+
+
+    if (!scaling) scaling = 1.0;
+    for (int i = 0; i < m_maps.size(); ++i)
     {
-        if (!m_interpField)
+        for (int j = 0; j < 9; ++j)
         {
-            Array<OneD, Array<OneD, NekDouble> > centre(m_dim + 1);
-            for (int i = 0; i < m_dim + 1; ++i)
-            {
-                centre[i] = Array<OneD, NekDouble>(1, 0.0);
-            }
-
-            vector<string> fieldNames;
-            fieldNames.push_back("");
-
-            map<LibUtilities::PtsInfo, int> ptsInfo =
-                LibUtilities::NullPtsInfoMap;
-
-            m_interpField = MemoryManager<LibUtilities::PtsField>
-                ::AllocateSharedPtr(m_dim, fieldNames, centre, ptsInfo);
+            maps[i][j]    = m_maps[i][j] / scaling;
+            mapsStd[i][j] = m_mapsStd[i][j] / scaling;
         }
 
-        vector<NodeSharedPtr> nodes = m_el->GetVertexList();
-
-        vector<NekDouble> centre(m_dim, 0.0);
-        for (int i = 0; i < nodes.size(); ++i)
+        if (m_dim == 2)
         {
-            centre[0] += nodes[i]->m_x;
-            centre[1] += nodes[i]->m_y;
-            if (m_dim > 2)
-            {
-                centre[2] += nodes[i]->m_z;
-            }
+            maps[i][9]    = m_maps[i][9] * scaling * scaling;
+            mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling;
         }
-
-        m_interpField->SetPointVal(0, 0, centre[0] / nodes.size());
-        m_interpField->SetPointVal(1, 0, centre[1] / nodes.size());
-        if (m_dim > 2)
+        else if (m_dim == 3)
         {
-            m_interpField->SetPointVal(2, 0, centre[2] / nodes.size());
+            maps[i][9]    = m_maps[i][9] * scaling * scaling * scaling;
+            mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling * scaling;
         }
+        else
+        {
+            ASSERTL0(false, "not coded");
+        }
+    }
+}
 
-        m_interp.CalcWeights(m_interp.GetInField(), m_interpField, true);
-        m_interp.Interpolate(m_interp.GetInField(), m_interpField);
+void ElUtil::UpdateMappingByCurve(std::vector<CADCurveSharedPtr> curves)
+{
+    std::cout << "updatemappingbycurve num curves: " << curves.size() << "\n";
+    for (auto &curve : curves){
+        std::cout << "updatemappingbycurve curve #: " << curve->GetId() << "\n";
     }
 
-    NekDouble scaling = 1.0;
+    NekDouble scaling = 0;
 
-    if (m_interp.GetInField())
-    {
-        scaling = m_interpField->GetPointVal(m_dim + 0, 0);
-    }
+    // // Using elements with a node with a radius from the curve
+    // NekDouble radius = 0.0025;
+    // vector<NodeSharedPtr> ns = m_el->GetVertexList();
+    // [&]{
+    //     for (int i = 0; i < ns.size(); i++)
+    //     {
+    //         Array<OneD, NekDouble> x(3);
+    //         x[0]   = ns[i]->m_x;
+    //         x[1]   = ns[i]->m_y;
+    //         x[2]   = ns[i]->m_z;
+    //         for (auto &curve : m_adaptcurves){
+    //             // TODO find a way to perform clever searching here instead of brute force
+    //             if (curve->GetMinDistance(x) < radius){
+    //                 scaling = 0.5;
+    //                 return;
+    //             }
+    //         }
+    //     }
+    // }();
 
+    // Using only elements with a node on the curve
+    vector<NodeSharedPtr> ns = m_el->GetVertexList();
+    [&]{
+        for (int i = 0; i < ns.size(); i++)
+        {
+            for (auto &curve : ns[i]->GetCADCurves())
+            {
+                // TODO a vector of the curve IDs be refined with r-adaption is needed here - Get from pre?
+                if (curve->GetId() < 5){
+                    scaling = 0.5;
+                    return;
+                }
+            }
+        }
+    }();
+
+    if (!scaling) return;
+    std::cout << "updatemappingbycurve scaling = " << scaling << "\n";
     for (int i = 0; i < m_maps.size(); ++i)
     {
         for (int j = 0; j < 9; ++j)
@@ -831,5 +943,6 @@ ElUtilJob *ElUtil::GetJob(bool update)
 {
     return new ElUtilJob(this, update);
 }
+
 }
 }
