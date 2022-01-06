@@ -36,83 +36,80 @@
 #define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYADVECTION_H
 
 #include <SolverUtils/UnsteadySystem.h>
-#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <SolverUtils/AdvectionSystem.h>
 
 namespace Nektar
 {
-    class UnsteadyAdvection : public SolverUtils::AdvectionSystem
+class UnsteadyAdvection final : public SolverUtils::AdvectionSystem
+{
+public:
+    friend class MemoryManager<UnsteadyAdvection>;
+
+    /// Creates an instance of this class
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<UnsteadyAdvection>;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<UnsteadyAdvection>::AllocateSharedPtr(pSession,
+                                                                pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            SolverUtils::EquationSystemSharedPtr p = MemoryManager<
-                UnsteadyAdvection>::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        /// Destructor
-        virtual ~UnsteadyAdvection();
+    /// Destructor
+    ~UnsteadyAdvection() final = default;
 
-    protected:
-        SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
+protected:
+    SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
 
-        /// Advection velocity
-        Array<OneD, Array<OneD, NekDouble> >    m_velocity;
-        Array<OneD, NekDouble>                  m_traceVn;
+    /// Advection velocity
+    Array<OneD, Array<OneD, NekDouble>> m_velocity;
+    Array<OneD, NekDouble> m_traceVn;
 
-        // Plane (used only for Discontinous projection
-        //        with 3DHomogenoeus1D expansion)
-        int                                     m_planeNumber;
+    /// Plane (used only for discontinuous projection with 3DH1D expansion)
+    int m_planeNumber;
 
-        /// Session reader
-        UnsteadyAdvection(const LibUtilities::SessionReaderSharedPtr& pSession,
-                          const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    /// Session reader
+    UnsteadyAdvection(const LibUtilities::SessionReaderSharedPtr &pSession,
+                      const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        /// Evaluate the flux at each solution point
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+    /// Evaluate the flux at each solution point
+    void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
+                       Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-        /// Evaluate the flux at each solution point using dealiasing
-        void GetFluxVectorDeAlias(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+    /// Evaluate the flux at each solution point using dealiasing
+    void GetFluxVectorDeAlias(
+        const Array<OneD, Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-        /// Compute the RHS
-        void DoOdeRhs(
-            const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,         Array<OneD, NekDouble> > &outarray,
-            const NekDouble time);
+    /// Compute the RHS
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
-        /// Compute the projection
-        void DoOdeProjection(
-            const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,         Array<OneD, NekDouble> > &outarray,
-            const NekDouble time);
+    /// Compute the projection
+    void DoOdeProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        /// Get the normal velocity
-        Array<OneD, NekDouble> &GetNormalVelocity();
+    /// Get the normal velocity
+    Array<OneD, NekDouble> &GetNormalVelocity();
 
-        /// Initialise the object
-        virtual void v_InitObject();
+    /// Initialise the object
+    void v_InitObject() final;
 
-        /// Print Summary
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    /// Print Summary
+    void v_GenerateSummary(SolverUtils::SummaryList &s) final;
 
-        virtual bool v_PreIntegrate(int step) final;
+    bool v_PreIntegrate(int step) final;
 
-    private:
-        NekDouble m_waveFreq;
-    };
-}
+private:
+    NekDouble m_waveFreq;
+};
+} // namespace Nektar
 
 #endif

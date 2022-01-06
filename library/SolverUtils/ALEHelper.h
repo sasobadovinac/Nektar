@@ -2,7 +2,6 @@
 #define NEKTAR_ALEHELPER_H
 
 #include <MultiRegions/ExpList.h>
-#include <SolverUtils/Advection/Advection.h>
 
 namespace Nektar
 {
@@ -34,12 +33,6 @@ public:
 
     void MoveMesh(const NekDouble &time,
                             Array<OneD, Array<OneD, NekDouble>> &traceNormals);
-
-    void ALEDoAdvection(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-                     Array<OneD, Array<OneD, NekDouble>> &outarray,
-                     const NekDouble time,
-                     AdvectionSharedPtr advObject,
-                     Array<OneD, Array<OneD, NekDouble> > &velocity);
 
     inline const Array<OneD, const Array<OneD, NekDouble> >  &GetGridVelocity()
     {
