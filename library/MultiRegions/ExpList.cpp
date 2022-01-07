@@ -5029,13 +5029,30 @@ namespace Nektar
             Collections::CollectionOptimisation colOpt(m_session, ImpType);
             ImpType = colOpt.GetDefaultImplementationType();
 
-            bool autotuning = colOpt.IsUsingAutotuning() ||
-                (m_session->DefinesCmdLineArgument("writeoptfile"));
+            // turn on autotuning if explicitly specified in xml file
+            // or command line option is set but only do optimisation
+            // for volumetric elements (not boundary condition)
+            bool autotuning = colOpt.IsUsingAutotuning();
+            if(autotuning == false)
+            {
+                // turn on autotuning if writeoptfile specified 
+                if(m_session->GetUpdateOptFile())
+                {
+                    // only turn on autotuning for volumetric elements
+                    // where Mesh Dimension is equal to the Shape
+                    // Dimension of element.
+                    if(m_graph->GetMeshDimension() ==
+                       (*m_exp)[0]->GetShapeDimension())
+                    {
+                        autotuning = true;
+                    }
+                }
+            }
             bool verbose    = (m_session->DefinesCmdLineArgument("verbose")) &&
                 (m_session->GetComm()->GetRank() == 0);
-            int  collmax    = (colOpt.GetMaxCollectionSize() > 0
-                                        ? colOpt.GetMaxCollectionSize()
-                                        : 2*m_exp->size());
+            int  collmax    = (colOpt.GetMaxCollectionSize() > 0 ?
+                               colOpt.GetMaxCollectionSize() :
+                               2*m_exp->size());
 
             // clear vectors in case previously called
             m_collections.clear();
@@ -5048,12 +5065,14 @@ namespace Nektar
                 collections[(*m_exp)[i]->DetShapeType()].push_back(
                     std::pair<LocalRegions::ExpansionSharedPtr,int>((*m_exp)[i],i));
             }
-
+            
             for (auto &it : collections)
             {
                 LocalRegions::ExpansionSharedPtr exp = it.second[0].first;
 
-                Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(exp);
+                Collections::OperatorImpMap impTypes =
+                                 colOpt.GetOperatorImpMap(exp);
+                
                 vector<StdRegions::StdExpansionSharedPtr> collExp;
 
                 int prevCoeffOffset = m_coeff_offset[it.second[0].second];
@@ -5063,6 +5082,8 @@ namespace Nektar
                 m_coll_coeff_offset.push_back(prevCoeffOffset);
                 m_coll_phys_offset .push_back(prevPhysOffset);
 
+                int collsize = 0 ;
+                
                 if(it.second.size() == 1) // single element case
                 {
                     collExp.push_back(it.second[0].first);
@@ -5072,8 +5093,13 @@ namespace Nektar
                     // impTypes using timings
                     if(autotuning)
                     {
-                        impTypes = colOpt.SetWithTimings(collExp,impTypes,
-                                                         verbose);
+                        if(collExp.size() > collsize)
+                        {
+                            impTypes = colOpt.SetWithTimings(collExp,impTypes,
+                                                             verbose);
+                            collsize = collExp.size();
+                        }
+
                     }
 
                     Collections::Collection tmp(collExp, impTypes);
@@ -5115,9 +5141,13 @@ namespace Nektar
                             // impTypes using timings
                             if(autotuning)
                             {
-                                impTypes = colOpt.SetWithTimings(collExp,
-                                                                 impTypes,
-                                                                 verbose);
+                                if(collExp.size() > collsize)
+                                {
+                                    impTypes = colOpt.SetWithTimings(collExp,
+                                                                     impTypes,
+                                                                     verbose);
+                                    collsize = collExp.size();
+                                }
                             }
 
                             Collections::Collection tmp(collExp, impTypes);
@@ -5144,9 +5174,13 @@ namespace Nektar
                             // settign in xml file.
                             if(autotuning)
                             {
-                                impTypes = colOpt.
-                                    SetWithTimings(collExp,impTypes,
-                                                   verbose);
+                                if(collExp.size() > collsize)
+                                {
+                                    impTypes = colOpt.
+                                        SetWithTimings(collExp,impTypes,
+                                                       verbose);
+                                    collsize = collExp.size();
+                                }
                             }
 
                             Collections::Collection tmp(collExp, impTypes);
@@ -5166,9 +5200,12 @@ namespace Nektar
             }
 
             // update optimisation file
-            if(m_session->DefinesCmdLineArgument("writeoptfile"))
+            if(m_session->GetUpdateOptFile())
             {
                 colOpt.UpdateOptFile(m_session->GetSessionName(),m_comm);
+                // turn off writeoptfile option so only first
+                // instance is timed
+                m_session->SetUpdateOptFile(false);
             }
         }
 

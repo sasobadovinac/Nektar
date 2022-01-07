@@ -72,6 +72,11 @@ class OpImpTimingKey
             return m_exp->GetBasis(0)->GetNumModes(); 
         }
 
+        int GetNGeoms() const
+        {
+            return m_ngeoms; 
+        }
+
         bool operator<(const OpImpTimingKey &rhs) const
         {
 

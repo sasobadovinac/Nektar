@@ -289,6 +289,18 @@ namespace Nektar
                 m_filenames = filenames;
             }
 
+            // check for opt file
+            std::string optfile = m_sessionName + ".opt"; 
+            int exists = (bool)boost::filesystem::exists(optfile.c_str());
+            if(exists)
+            {
+                m_filenames.push_back(optfile); 
+            }
+            else
+            {
+                m_updateOptFile = true; 
+            }
+
             // Merge document if required.
             if (m_xmlDoc)
             {
@@ -502,6 +514,17 @@ namespace Nektar
                 m_verbose = false;
             }
 
+
+            // Enable update optimisation file
+            if (m_cmdLineOptions.count("writeoptfile"))
+            {
+                m_updateOptFile = true;
+            }
+            else
+            {
+                m_updateOptFile = false;
+            }
+            
             // Print a warning for unknown options
             for (auto &x : parsed.options)
             {
@@ -1526,8 +1549,9 @@ namespace Nektar
             // version already present in the loaded XML data.
             for (int i = 1; i < pFilenames.size(); ++i)
             {
-                if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)
-                   ||(pFilenames[i].compare(pFilenames[i].size()-6,6,"xml.gz") == 0))
+               if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)||
+                  (pFilenames[i].compare(pFilenames[i].size()-6,6,"xml.gz") == 0) ||
+                  (pFilenames[i].compare(pFilenames[i].size()-3,3,"opt") == 0))
                 {
                     TiXmlDocument* vTempDoc = new TiXmlDocument;
                     LoadDoc(pFilenames[i], vTempDoc);

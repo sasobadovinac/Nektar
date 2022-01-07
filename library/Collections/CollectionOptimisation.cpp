@@ -520,7 +520,7 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
 void CollectionOptimisation::UpdateOptFile(std::string sessName,
                                            LibUtilities::CommSharedPtr &comm)
 {
-    std::string outname = sessName + "_opt.xml"; 
+    std::string outname = sessName + ".opt"; 
     
     TiXmlDocument doc;
     TiXmlElement *root;
@@ -549,12 +549,33 @@ void CollectionOptimisation::UpdateOptFile(std::string sessName,
     }
         
     // update global with m_opImpMap info
+    map<LibUtilities::ShapeType, int> ShapeMaxSize; 
     for(auto &opimp : m_opImpMap)
     {
-        for(auto &op : opimp.second)
+        bool updateShape = true; 
+        LibUtilities::ShapeType shape = opimp.first.GetShapeType();
+        
+        // check to see if already added this shapes details but with
+        // a larger collection and if so do not update.
+        if(ShapeMaxSize.count(shape))
         {
-            global[op.first]
-                [ElmtOrder(opimp.first.GetShapeType(),-1)] = op.second;
+            int ngeoms = opimp.first.GetNGeoms();
+            if(ngeoms > ShapeMaxSize[shape])
+            {
+                ShapeMaxSize[shape] = ngeoms;
+            }
+            else
+            {
+                updateShape = false;
+            }
+        }
+
+        if(updateShape)
+        {
+            for(auto &op : opimp.second)
+            {
+                global[op.first][ElmtOrder(shape,-1)] = op.second;
+            }
         }
     }
     

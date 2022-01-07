@@ -431,6 +431,18 @@ namespace Nektar
 
             LIB_UTILITIES_EXPORT void SetUpXmlDoc();
 
+            /// Get bool to update optimisation file
+            LIB_UTILITIES_EXPORT bool GetUpdateOptFile() const
+            {
+                return m_updateOptFile; 
+            }
+
+            /// Set bool to update optimisation file
+            LIB_UTILITIES_EXPORT void SetUpdateOptFile(bool flag)
+            {
+                m_updateOptFile = flag; 
+            }
+
         private:
             boost::program_options::variables_map m_cmdLineOptions;
 
@@ -466,6 +478,8 @@ namespace Nektar
             bool                                      m_verbose;
             /// Running on a shared filesystem
             bool                                      m_sharedFilesystem;
+            /// Update optimisation file
+            bool                                      m_updateOptFile; 
             /// String to enumeration map for Solver Info parameters.
             LIB_UTILITIES_EXPORT static EnumMapList&  GetSolverInfoEnums();
             /// Default solver info options.
