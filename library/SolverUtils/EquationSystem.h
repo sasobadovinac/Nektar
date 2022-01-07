@@ -316,6 +316,11 @@ namespace Nektar
                 m_time = time;
             }
 
+            SOLVER_UTILS_EXPORT void SetTimeStep(const NekDouble timestep)
+            {
+                m_timestep = timestep;
+            }
+
             SOLVER_UTILS_EXPORT void SetInitialStep(
                                                     const int step)
             {
