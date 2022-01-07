@@ -294,7 +294,11 @@ namespace Nektar
             int exists = (bool)boost::filesystem::exists(optfile.c_str());
             if(exists)
             {
-                m_filenames.push_back(optfile); 
+                m_filenames.push_back(optfile);
+                // rotate order so opt file can be overwritten by
+                // direct choice in xml file
+                std::rotate(m_filenames.rbegin(), m_filenames.rbegin() + 1,
+                            m_filenames.rend());
             }
             else
             {
@@ -1568,7 +1572,9 @@ namespace Nektar
                             vMainNektar->FirstChildElement(p->Value());
 
                         // First check if the new item is in fact blank
-                        if (!p->FirstChild() && vMainEntry)
+                        // replace if it is a COLLECTIONS section however. 
+                        if (!p->FirstChild() && vMainEntry
+                            && !boost::iequals(p->Value(),"COLLECTIONS"))
                         {
                             std::string warningmsg =
                                 "File " + pFilenames[i] + " contains " +

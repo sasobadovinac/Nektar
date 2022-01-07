@@ -242,8 +242,8 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                  this->m_w[1], jac_ptr, wsp, tmpOut, m_lambda);
 
             // Step 3: take derivatives in quadrature space
-            PhysDerivTensor2DKernel<NQ0, NQ1>
-                (bwd, this->m_D[0], this->m_D[1], deriv0, deriv1);
+            PhysDerivTensor2DKernel(NQ0, NQ1, 
+                bwd, this->m_D[0], this->m_D[1], deriv0, deriv1);
             
             // Step 4: Apply Laplacian metrics & inner product
             if (!this->m_isVarDiff) 
@@ -727,7 +727,7 @@ struct HelmholtzTri : public Helmholtz, public Helper<2, DEFORMED>
                 this->m_w[1], jac_ptr, wsp, tmpOut, m_lambda);
 
             // Step 3: take derivatives in collapsed coordinate space
-            PhysDerivTensor2DKernel<NQ0, NQ1>(
+            PhysDerivTensor2DKernel(NQ0, NQ1, 
                 bwd, this->m_D[0], this->m_D[1], deriv0, deriv1);
 
             // Step 4a: Construct Laplacian metrics
@@ -1119,8 +1119,8 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
                  wsp1, wsp2, tmpOut, m_lambda);
 
             // Step 3: take derivatives in standard space
-            PhysDerivTensor3DKernel<NQ0, NQ1, NQ2>
-                (bwd, this->m_D[0], this->m_D[0], this->m_D[0],
+            PhysDerivTensor3DKernel(NQ0, NQ1, NQ2,
+                 bwd, this->m_D[0], this->m_D[0], this->m_D[0],
                  deriv0, deriv1, deriv2);
 
             // Step 4: Apply Laplacian metrics & inner product
@@ -1722,8 +1722,8 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
                  wsp1, wsp2, wsp3, tmpOut, m_lambda);
 
             // Step 3: take derivatives in standard space
-            PhysDerivTensor3DKernel<NQ0, NQ1, NQ2>
-                (bwd, this->m_D[0], this->m_D[1], this->m_D[2], deriv0, deriv1,
+            PhysDerivTensor3DKernel(NQ0, NQ1, NQ2, 
+                 bwd, this->m_D[0], this->m_D[1], this->m_D[2], deriv0, deriv1,
                  deriv2);
 
             // Step 4: Apply Laplacian metrics & inner product
@@ -2299,8 +2299,8 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
                  wsp1, wsp2, tmpOut, m_lambda);
 
             // Step 3: take derivatives in standard space
-            PhysDerivTensor3DKernel<NQ0, NQ1, NQ2>
-                (bwd, this->m_D[0], this->m_D[1], this->m_D[2], deriv0, deriv1,
+            PhysDerivTensor3DKernel(NQ0, NQ1, NQ2,
+                 bwd, this->m_D[0], this->m_D[1], this->m_D[2], deriv0, deriv1,
                  deriv2);
 
             // Step 4: Apply Laplacian metrics & inner product
@@ -2889,7 +2889,7 @@ struct HelmholtzTet : public Helmholtz, public Helper<3, DEFORMED>
                  wsp1, tmpOut, m_lambda);
 
             // Step 3: take derivatives in standard space
-            PhysDerivTensor3DKernel<NQ0, NQ1, NQ2>(
+            PhysDerivTensor3DKernel(NQ0, NQ1, NQ2,
                 bwd, this->m_D[0], this->m_D[1], this->m_D[2],
                 deriv0, deriv1, deriv2);
 
