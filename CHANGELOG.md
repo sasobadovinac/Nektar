@@ -7,6 +7,7 @@ v5.1.1
 - Fix a boost headers incompatibility with boost-1.77 (!1297) 
 - Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
 - Fix initialisation warning when using HDF5 (!1299)
+- Split Helmholtz MatrixFree operator to improve compile times (!1292)
 
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
