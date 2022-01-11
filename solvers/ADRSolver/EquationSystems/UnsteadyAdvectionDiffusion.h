@@ -62,7 +62,7 @@ namespace Nektar
         static std::string className;
 
         /// Destructor
-        virtual ~UnsteadyAdvectionDiffusion();
+        ~UnsteadyAdvectionDiffusion() final = default;
 
     protected:
         bool m_subSteppingScheme;

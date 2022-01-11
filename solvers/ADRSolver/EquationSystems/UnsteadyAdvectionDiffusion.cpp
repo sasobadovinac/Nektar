@@ -46,13 +46,13 @@ namespace Nektar
     std::string UnsteadyAdvectionDiffusion::className
         = SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
                 "UnsteadyAdvectionDiffusion",
-                UnsteadyAdvectionDiffusion::create);
+                UnsteadyAdvectionDiffusion::create,
+                "Unsteady Advection-Diffusion equation.");
 
     UnsteadyAdvectionDiffusion::UnsteadyAdvectionDiffusion(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : UnsteadySystem(pSession, pGraph),
-          AdvectionSystem(pSession, pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
+        : UnsteadySystem(pSession, pGraph), AdvectionSystem(pSession, pGraph)
     {
         m_planeNumber = 0;
     }
@@ -66,20 +66,23 @@ namespace Nektar
         AdvectionSystem::v_InitObject();
 
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
-        m_session->LoadParameter("epsilon",    m_epsilon,  0.0);
+        m_session->LoadParameter("epsilon",    m_epsilon,  0.0); // Diffusion
 
         // turn on substepping
         m_session->MatchSolverInfo("Extrapolation", "SubStepping",
                                    m_subSteppingScheme, false);
 
-        // Define Velocity fields
-        m_velocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
+        // Read the advection velocities from session file
         std::vector<std::string> vel;
-        vel.push_back("Vx");
-        vel.push_back("Vy");
-        vel.push_back("Vz");
+        vel.emplace_back("Vx");
+        vel.emplace_back("Vy");
+        vel.emplace_back("Vz");
+
+        // Resize the advection velocities vector to dimension of the problem
         vel.resize(m_spacedim);
 
+        // Store in the global variable m_velocity the advection velocities
+        m_velocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
         GetFunction("AdvectionVelocity")->Evaluate(vel,  m_velocity);
 
         m_session->MatchSolverInfo(
@@ -194,13 +197,6 @@ namespace Nektar
     }
 
     /**
-     * @brief Unsteady linear advection diffusion equation destructor.
-     */
-    UnsteadyAdvectionDiffusion::~UnsteadyAdvectionDiffusion()
-    {
-    }
-
-    /**
      * @brief Get the normal velocity for the unsteady linear advection
      * diffusion equation.
      */
@@ -258,15 +254,16 @@ namespace Nektar
         // Number of fields (variables of the problem)
         int nVariables = inarray.size();
 
+        Array<OneD, Array<OneD, NekDouble>> tmpIn(nVariables);
         if(m_ALESolver)
         {
-            Array<OneD, Array<OneD, NekDouble>> tmpIn(nVariables);
-            ALEHelper::ALEDoElmtInvMassBwdTrans(inarray, tmpIn); // @TODO: These can be grouped ALEDoElmtInvMassBwdTrans
+            ALEHelper::ALEDoElmtInvMassBwdTrans(inarray, tmpIn);
             m_advObject->AdvectCoeffs(nVariables, m_fields, m_velocity, tmpIn,
                                       outarray, time);
         }
         else
         {
+            tmpIn = inarray; // If not ALE then we pass through inarray
             // RHS computation using the new advection base class
             m_advObject->Advect(nVariables, m_fields, m_velocity,
                                 inarray, outarray, time);
@@ -288,9 +285,7 @@ namespace Nektar
 
             if(m_ALESolver)
             {
-                Array<OneD, Array<OneD, NekDouble>> tmpIn(nVariables);
-                ALEHelper::ALEDoElmtInvMassBwdTrans(inarray, tmpIn); // @TODO: These can be grouped ALEDoElmtInvMassBwdTrans
-                m_diffusion->DiffuseCoeffs(nVariables, m_fields, tmpIn, outarrayDiff);
+                m_diffusion->DiffuseCoeffs(nVariables, m_fields, tmpIn, outarrayDiff); // Using tmpIn from above
             }
             else
             {
@@ -335,11 +330,9 @@ namespace Nektar
             case MultiRegions::eDiscontinuous:
             {
                 // Just copy over array
-                int npoints = GetNpoints();
-
                 for(int i = 0; i < nvariables; ++i)
                 {
-                    Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                    Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
                 }
                 break;
             }
@@ -377,6 +370,7 @@ namespace Nektar
         const NekDouble time,
         const NekDouble lambda)
     {
+        exit(0); // @TODO: Remove
         int nvariables = inarray.size();
         int nq = m_fields[0]->GetNpoints();
 
@@ -443,8 +437,9 @@ namespace Nektar
             {
                 for (int k = 0; k < nq; ++k)
                 {
-                    flux[i][j][k] = physfield[i][k] * (
-                        m_velocity[j][k] - m_gridVelocity[j][k]);
+                    // If ALE we need to take off the grid velocity
+                    flux[i][j][k] =
+                        physfield[i][k] * (m_velocity[j][k] - m_gridVelocity[j][k]);
                 }
             }
         }
@@ -699,6 +694,7 @@ namespace Nektar
                                 const Array<OneD, const Array<OneD, NekDouble> > &physfield,
                                 Array<OneD, Array<OneD, NekDouble> > &Outarray)
     {
+        exit(0); // @TODO: Remove
         ASSERTL1(physfield.size() == Outarray.size(),
                  "Physfield and outarray are of different dimensions");
 
@@ -745,6 +741,7 @@ namespace Nektar
     Array<OneD, NekDouble> UnsteadyAdvectionDiffusion::GetMaxStdVelocity(
         const Array<OneD, Array<OneD,NekDouble> > inarray)
     {
+        exit(0); // @TODO: Remove
 
         int n_points_0      = m_fields[0]->GetExp(0)->GetTotPoints();
         int n_element       = m_fields[0]->GetExpSize();

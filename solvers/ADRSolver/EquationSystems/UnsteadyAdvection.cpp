@@ -180,8 +180,11 @@ Array<OneD, NekDouble> &UnsteadyAdvection::GetNormalVelocity()
 
         m_fields[0]->ExtractTracePhys(tmp, tmp2);
 
-        Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, tmp2, 1, m_traceVn, 1,
-                     m_traceVn, 1);
+        Vmath::Vvtvp(nTracePts,
+                     m_traceNormals[i], 1,
+                     tmp2,              1,
+                     m_traceVn,         1,
+                     m_traceVn,         1);
     }
 
     return m_traceVn;
@@ -308,7 +311,7 @@ void UnsteadyAdvection::GetFluxVector(
         {
             for (int k = 0; k < nq; ++k)
             {
-                // If ALE we need to take off the grid velocity off
+                // If ALE we need to take off the grid velocity
                 flux[i][j][k] =
                     physfield[i][k] * (m_velocity[j][k] - m_gridVelocity[j][k]);
             }
