@@ -1,6 +1,12 @@
 Changelog
 =========
 
+
+v5.2.0
+------
+**Library**
+- Add Arm SVE backend to SIMD library (!1282)
+
 v5.1.1
 ------
 **Library**

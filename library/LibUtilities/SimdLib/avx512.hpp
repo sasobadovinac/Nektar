@@ -35,7 +35,12 @@
 #ifndef NEKTAR_LIB_LIBUTILITES_SIMDLIB_AVX512_H
 #define NEKTAR_LIB_LIBUTILITES_SIMDLIB_AVX512_H
 
-#include <immintrin.h>
+#if defined(__x86_64__)
+    #include <immintrin.h>
+    #if defined(__INTEL_COMPILER) && !defined(TINYSIMD_HAS_SVML)
+        #define TINYSIMD_HAS_SVML
+    #endif
+#endif
 #include <vector>
 #include "allocator.hpp"
 #include "traits.hpp"
@@ -407,21 +412,25 @@ inline avx512Double8 abs(avx512Double8 in)
 
 inline avx512Double8 log(avx512Double8 in)
 {
-    // there is no avx512 log intrinsic
-    // this is a dreadful implementation and is simply a stop gap measure
-    alignas(avx512Double8::alignment) avx512Double8::scalarArray tmp;
-    in.store(tmp);
-    tmp[0] = std::log(tmp[0]);
-    tmp[1] = std::log(tmp[1]);
-    tmp[2] = std::log(tmp[2]);
-    tmp[3] = std::log(tmp[3]);
-    tmp[4] = std::log(tmp[4]);
-    tmp[5] = std::log(tmp[5]);
-    tmp[6] = std::log(tmp[6]);
-    tmp[7] = std::log(tmp[7]);
-    avx512Double8 ret;
-    ret.load(tmp);
-    return ret;
+    #if defined(TINYSIMD_HAS_SVML)
+        return _mm512_log_pd(in._data);
+    #else
+        // there is no avx512 log intrinsic
+        // this is a dreadful implementation and is simply a stop gap measure
+        alignas(avx512Double8::alignment) avx512Double8::scalarArray tmp;
+        in.store(tmp);
+        tmp[0] = std::log(tmp[0]);
+        tmp[1] = std::log(tmp[1]);
+        tmp[2] = std::log(tmp[2]);
+        tmp[3] = std::log(tmp[3]);
+        tmp[4] = std::log(tmp[4]);
+        tmp[5] = std::log(tmp[5]);
+        tmp[6] = std::log(tmp[6]);
+        tmp[7] = std::log(tmp[7]);
+        avx512Double8 ret;
+        ret.load(tmp);
+        return ret;
+    #endif
 }
 
 inline void load_interleave(
@@ -441,21 +450,22 @@ inline void load_interleave(
     index_t index3 = index0 + 3;
 
     // 4x unrolled loop
-    size_t nBlocks = dataLen / 4;
+    constexpr uint16_t unrl = 4;
+    size_t nBlocks = dataLen / unrl;
     for (size_t i = 0; i < nBlocks; ++i)
     {
-        out[4*i + 0].gather(in, index0);
-        out[4*i + 1].gather(in, index1);
-        out[4*i + 2].gather(in, index2);
-        out[4*i + 3].gather(in, index3);
-        index0 = index0 + 4;
-        index1 = index1 + 4;
-        index2 = index2 + 4;
-        index3 = index3 + 4;
+        out[unrl*i + 0].gather(in, index0);
+        out[unrl*i + 1].gather(in, index1);
+        out[unrl*i + 2].gather(in, index2);
+        out[unrl*i + 3].gather(in, index3);
+        index0 = index0 + unrl;
+        index1 = index1 + unrl;
+        index2 = index2 + unrl;
+        index3 = index3 + unrl;
     }
 
     // spillover loop
-    for (size_t i = 4 * nBlocks; i < dataLen; ++i)
+    for (size_t i = unrl * nBlocks; i < dataLen; ++i)
     {
         out[i].gather(in, index0);
         index0 = index0 + 1;
