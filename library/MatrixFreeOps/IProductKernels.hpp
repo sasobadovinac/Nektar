@@ -11,8 +11,7 @@ namespace MatrixFree
 using namespace tinysimd;
 using vec_t = simd<NekDouble>;
 
-template<bool SCALE, bool APPEND>
-inline static void ScaleAppend(
+inline static void ScaleAppend(const bool SCALE, const bool APPEND,
     vec_t &store,
     vec_t &pos,
     NekDouble scale)
@@ -36,9 +35,9 @@ inline static void ScaleAppend(
     }
 }
 
-template<int NUMMODE0, int NUMQUAD0,
-         bool SCALE, bool APPEND, bool DEFORMED>
 inline static void IProductSegKernel(
+    const int nm0, const int nq0,
+    const bool SCALE, const bool APPEND, const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &basis0,
     const std::vector<vec_t, allocator<vec_t>> &w0,
@@ -46,9 +45,6 @@ inline static void IProductSegKernel(
     std::vector<vec_t, allocator<vec_t>> &out,
     NekDouble scale = 1.0)
 {
-    constexpr auto nm0 = NUMMODE0;
-    constexpr auto nq0 = NUMQUAD0;
-
     for (int p = 0; p < nm0; ++p)
     {
         vec_t sum = 0.0;
@@ -69,14 +65,14 @@ inline static void IProductSegKernel(
         }
 
         //Modes are reversed from what they normally are for tris, tets etc.
-        ScaleAppend<SCALE, APPEND>(out[p], sum, scale); // Store x1
+        ScaleAppend(SCALE, APPEND, out[p], sum, scale); // Store x1
     }
 }
 
-template<int NUMMODE0, int NUMMODE1,
-         int NUMQUAD0, int NUMQUAD1,
-         bool SCALE, bool APPEND, bool DEFORMED>
 inline static void IProductQuadKernel(
+    const int nm0, const int nm1,
+    const int nq0, const int nq1,
+    const bool SCALE, const bool APPEND, const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &basis0,
     const std::vector<vec_t, allocator<vec_t>> &basis1,
@@ -87,9 +83,6 @@ inline static void IProductQuadKernel(
     std::vector<vec_t, allocator<vec_t>> &out,
     NekDouble scale = 1.0)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1;
-
     for (int p = 0; p < nm0; ++p)
     {
         int cnt_ji = 0;
@@ -126,17 +119,17 @@ inline static void IProductQuadKernel(
             }
 
             //Modes are reversed from what they normally are for tris, tets etc.
-            ScaleAppend<SCALE, APPEND>(out[q*nm1 + p], sum, scale); // Store x1
+            ScaleAppend(SCALE, APPEND, out[q*nm1 + p], sum, scale); // Store x1
         }
     }
 
 }
 
-template<int NUMMODE0, int NUMMODE1,
-         int NUMQUAD0, int NUMQUAD1,
-         bool CORRECT, bool SCALE, bool APPEND,
-         bool DEFORMED>
 inline static void IProductTriKernel(
+    const int nm0, const int nm1,
+    const int nq0, const int nq1,
+    const bool CORRECT, const bool SCALE, 
+    const bool APPEND,  const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &basis0,
     const std::vector<vec_t, allocator<vec_t>> &basis1,
@@ -147,13 +140,9 @@ inline static void IProductTriKernel(
     std::vector<vec_t, allocator<vec_t>> &out,
     NekDouble scale = 1.0)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1;
-
     int mode = 0;
     for (int p = 0; p < nm0; ++p)
     {
-
         int eta_idx = 0;
         //Our inner loop is phi_p not phi_pq since we want to put as much work
         //as we can in the p-only loop instead of the full pq loop.
@@ -192,7 +181,7 @@ inline static void IProductTriKernel(
                 sum_eta1.fma(prod, w1[eta1]); //Load 1x
             }
 
-            ScaleAppend<SCALE, APPEND>(out[mode], sum_eta1, scale); //Store x1
+            ScaleAppend(SCALE, APPEND, out[mode], sum_eta1, scale); //Store x1
         }
     }
 
@@ -229,14 +218,14 @@ inline static void IProductTriKernel(
             }
         }
 
-        ScaleAppend<SCALE, true>(out[1], iprod_01, scale);
+        ScaleAppend(SCALE, true, out[1], iprod_01, scale);
     }
 }
 
-template<int NUMMODE0, int NUMMODE1, int NUMMODE2,
-         int NUMQUAD0, int NUMQUAD1, int NUMQUAD2,
-         bool SCALE, bool APPEND, bool DEFORMED>
 inline static void IProductHexKernel(
+    const int nm0, const int nm1, const int nm2,
+    const int nq0, const int nq1, const int nq2, 
+    const bool SCALE, const bool APPEND, const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &bdata0,
     const std::vector<vec_t, allocator<vec_t>> &bdata1,
@@ -250,9 +239,6 @@ inline static void IProductHexKernel(
     std::vector<vec_t, allocator<vec_t>> &out,
     NekDouble scale = 1.0)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1, nm2 = NUMMODE2;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
-
     for (int p = 0; p < nm0; ++p)
     {
         int cnt_kji = 0, cnt_kj = 0;
@@ -307,16 +293,16 @@ inline static void IProductHexKernel(
                     sum.fma(prod,w2[k]); //Load 1x
                 }
 
-                ScaleAppend<SCALE, APPEND>(out[r*nm0*nm1 + q*nm0 + p], sum, scale); // Store x1
+                ScaleAppend(SCALE, APPEND, out[r*nm0*nm1 + q*nm0 + p], sum, scale); // Store x1
             }
         }
     }
 }
 
-template<int NUMMODE0, int NUMMODE1, int NUMMODE2,
-         int NUMQUAD0, int NUMQUAD1, int NUMQUAD2,
-         bool CORRECT, bool SCALE, bool APPEND, bool DEFORMED>
 inline static void IProductPrismKernel(
+    const int nm0, const int nm1, const int nm2,
+    const int nq0, const int nq1, const int nq2, const bool CORRECT,
+    const bool SCALE, const bool APPEND, const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>>& in,
     const std::vector<vec_t, allocator<vec_t>>& bdata0,
     const std::vector<vec_t, allocator<vec_t>>& bdata1,
@@ -331,9 +317,6 @@ inline static void IProductPrismKernel(
     std::vector<vec_t, allocator<vec_t>>& out,
     NekDouble scale = 1.0)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1, nm2 = NUMMODE2;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
-
     int mode_pr = 0, mode_pqr = 0;
     for (int p = 0; p < nm0; ++p)
     {
@@ -389,7 +372,7 @@ inline static void IProductPrismKernel(
                     k_sum.fma(bdata2[(mode_pr + r)*nq2 + k] * w2[k], sums_k[k]); //Load 3x
                 }
 
-                ScaleAppend<SCALE, APPEND>(out[mode_pqr], k_sum, scale); //Store 1x
+                ScaleAppend(SCALE, APPEND, out[mode_pqr], k_sum, scale); //Store 1x
             }
         }
 
@@ -444,15 +427,15 @@ inline static void IProductPrismKernel(
 
         for (int q = 0; q < nm1; ++q)
         {
-            ScaleAppend<SCALE, true>(out[nm2*q + 1], corr_q[q], scale);
+            ScaleAppend(SCALE, true, out[nm2*q + 1], corr_q[q], scale);
         }
     }
 }
 
-template<int NUMMODE0, int NUMMODE1, int NUMMODE2,
-         int NUMQUAD0, int NUMQUAD1, int NUMQUAD2,
-         bool CORRECT, bool SCALE, bool APPEND, bool DEFORMED>
 inline static void IProductPyrKernel(
+    const int nm0, const int nm1, const int nm2,
+    const int nq0, const int nq1, const int nq2, const bool CORRECT,
+    const bool SCALE, const bool APPEND, const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>>& in,
     const std::vector<vec_t, allocator<vec_t>>& bdata0,
     const std::vector<vec_t, allocator<vec_t>>& bdata1,
@@ -466,9 +449,6 @@ inline static void IProductPyrKernel(
     std::vector<vec_t, allocator<vec_t>>& out,
     NekDouble scale = 1.0)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1, nm2 = NUMMODE2;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
-
     int mode_pqr = 0;
     for (int p = 0; p < nm0; ++p)
     {
@@ -520,7 +500,7 @@ inline static void IProductPyrKernel(
                     k_sum.fma(bdata2[mode_pqr*nq2+k]*w2[k], sums_k[k]); //Load 3x
                 }
                 
-                ScaleAppend<SCALE, APPEND>(out[mode_pqr], k_sum, scale); //Store 1x
+                ScaleAppend(SCALE, APPEND, out[mode_pqr], k_sum, scale); //Store 1x
             }
         }
 
@@ -546,7 +526,7 @@ inline static void IProductPyrKernel(
                     k_sum.fma(bdata2[mode_pqr*nq2+k]*w2[k], sums_k[k]); //Load 3x
                 }
 
-                ScaleAppend<SCALE, APPEND>(out[mode_pqr], k_sum, scale); //Store 1x
+                ScaleAppend(SCALE, APPEND, out[mode_pqr], k_sum, scale); //Store 1x
             }
         }
     }
@@ -590,18 +570,18 @@ inline static void IProductPyrKernel(
 
                     // add to existing entry
                     vec_t tmpOut = tmp * tmpQ;
-                    ScaleAppend<SCALE, true>(out[1], tmpOut, scale); //Store 1x
+                    ScaleAppend(SCALE, true, out[1], tmpOut, scale); //Store 1x
                 }
             }
         }
     }
 }
 
-template<int NUMMODE0, int NUMMODE1, int NUMMODE2,
-         int NUMQUAD0, int NUMQUAD1, int NUMQUAD2,
-         bool CORRECT, bool SCALE, bool APPEND,
-         bool DEFORMED>
 inline static void IProductTetKernel(
+    const int nm0, const int nm1, const int nm2,
+    const int nq0, const int nq1, const int nq2, 
+    const bool CORRECT, const bool SCALE, const bool APPEND,
+    const bool DEFORMED, 
     const std::vector<vec_t, allocator<vec_t>>& in,
     const std::vector<vec_t, allocator<vec_t>>& bdata0,
     const std::vector<vec_t, allocator<vec_t>>& bdata1,
@@ -614,9 +594,6 @@ inline static void IProductTetKernel(
     std::vector<vec_t, allocator<vec_t>>& out,
     NekDouble scale = 1.0)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1, nm2 = NUMMODE2;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
-
     vec_t* f = wsp;
     vec_t* fb = wsp + nq1 * nq2;
 
@@ -688,7 +665,7 @@ inline static void IProductTetKernel(
                     tmp.fma(tmp2, w2[k]); //Load 1x
                 }
 
-                ScaleAppend<SCALE, APPEND>(out[cnt_pqr], tmp, scale); //Store 1x
+                ScaleAppend(SCALE, APPEND, out[cnt_pqr], tmp, scale); //Store 1x
 
             }
         }
@@ -720,12 +697,6 @@ inline static void IProductTetKernel(
                         tmpQ = tmpQ * jac[k*nq0*nq1 + j*nq0 + i];
                     }
 
-                    // top vertex
-                    //
-                    // outarray[1] += inarray[cnt] * bdata2[nq2 + k] * (
-                    //     bdata0[i]*bdata1[nq1+j] + bdata0[nq0+i]*bdata1[j] +
-                    //     bdata0[nq0+i]*bdata1[nq1+j]);
-
                     vec_t tmp = bdata0[i] * bdata1[nq1+j]; //Load 2x
                     tmp.fma(bdata0[nq0+i], bdata1[j]); //Load 2x
                     tmp.fma(bdata0[nq0+i], bdata1[nq1+j]); //Load 2x
@@ -734,25 +705,19 @@ inline static void IProductTetKernel(
 
                     // add to existing entry
                     vec_t tmpOut = tmp * tmpQ;
-                    ScaleAppend<SCALE, true>(out[1], tmpOut, scale); //Store 1x
+                    ScaleAppend(SCALE, true, out[1], tmpOut, scale); //Store 1x
 
-                    // bottom vertex
-                    //
-                    // outarray[nm2] += inarray[cnt] * bdata2[k] * (
-                    //    bdata0[nq0+i] * bdata1[nq1+j]);
 
                     tmp = bdata0[nq0+i] * bdata1[nq1+j] * bdata2[k] * tmpIn; //Load 3x
                     tmpOut = tmp * tmpQ;
-                    ScaleAppend<SCALE, true>(out[nm2], tmpOut, scale); //Store 1x
+                    ScaleAppend(SCALE, true, out[nm2], tmpOut, scale); //Store 1x
 
                     // singular edge
                     for (int r = 1; r < nm2-1; ++r)
                     {
-                        // outarray[nm2+r] += inarray[cnt] *
-                        //     bdata2[(r+1)*nq2+k] * bdata1[nq1+j] * bdata0[nq0+i];
                         tmp = bdata2[(r+1)*nq2+k] * bdata1[nq1+j] * bdata0[nq0+i] * tmpIn; //Load 3x
                         tmpOut = tmp * tmpQ;
-                        ScaleAppend<SCALE, true>(out[nm2+r], tmpOut, scale); //Store 1x
+                        ScaleAppend(SCALE, true, out[nm2+r], tmpOut, scale); //Store 1x
                     }
                 }
             }

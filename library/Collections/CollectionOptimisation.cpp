@@ -360,46 +360,6 @@ OperatorImpMap  CollectionOptimisation::GetOperatorImpMap(
     return ret;
 }
 
-
-// check to stop autotuning calling MatrixFree operators which are out
-// of templated range. Can be removed when MatrixFreeLib is updated to
-// have a default method
-bool IsValidMatFreeImp(int ImpType, OperatorType OpType, StdRegions::StdEpxansionSharedPtr &pExp)
-{
-    if((ImplementationType) ImpType != eMatrixFree)
-    {
-        return true; 
-    }
-
-    int numbase = pExp->GetNumBases();
-    Array<OneD, int> modes(numbase), quad(numbase);
-
-    for(int i = 0; i < numbase; ++i)
-    {
-        modes[i] = pExp->GetBasisNumModes(i);
-        quad[i]  = pExp->GetNumPoints(i);
-    }
-    
-    switch(OpType)
-    {
-    case eBwdTrans:
-        break;
-    case eHelmholtz:
-        break;
-    case eIProductWRTBase:
-        break;
-    case eIProductWRTDerivBase:
-        break;
-    case ePhysDeriv"
-        break;
-    default:
-        ASSERTL0(false,"Unknown operator type");
-        break;
-    }
-        
-
-}
-
 OperatorImpMap CollectionOptimisation::SetWithTimings(
         vector<StdRegions::StdExpansionSharedPtr> pCollExp,
         OperatorImpMap &impTypes,
@@ -503,8 +463,7 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
         // call collection implementation in thorugh ExpList.
         for (int imp = 0; imp < coll.size(); ++imp)
         {
-            if (coll[imp].HasOperator(OpType) &&
-                IsValidMatFreeImp(imp,OpType,pCollExp[0]))
+            if (coll[imp].HasOperator(OpType))
             {
                 t.Start();
                 for(int n = 0; n < Ntest[i]; ++n)

@@ -1650,9 +1650,6 @@ struct PhysDerivPyr : public PhysDeriv, public Helper<3, DEFORMED>
     {
         // Check preconditions
         // Check preconditions
-        ASSERTL0(m_basis[0]->GetNumPoints() == m_basis[1]->GetNumPoints() &&
-            m_basis[0]->GetNumPoints() == (m_basis[2]->GetNumPoints()+1),
-            "MatrixFree op requires homogenous points");
         ASSERTL0(out.size() == 3,"Cannot call 3D routine with 1 or 2 outputs");
 
         Array<OneD, NekDouble> out_d0 = out[0];

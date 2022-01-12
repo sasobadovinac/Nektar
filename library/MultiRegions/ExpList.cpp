@@ -5035,8 +5035,9 @@ namespace Nektar
             bool autotuning = colOpt.IsUsingAutotuning();
             if(autotuning == false)
             {
-                // turn on autotuning if writeoptfile specified 
-                if(m_session->GetUpdateOptFile())
+                // turn on autotuning if writeoptfile specified
+                // if m_graph available
+                if(m_session->GetUpdateOptFile()&&m_graph)
                 {
                     // only turn on autotuning for volumetric elements
                     // where Mesh Dimension is equal to the Shape
