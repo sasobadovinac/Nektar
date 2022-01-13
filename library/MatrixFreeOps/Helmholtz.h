@@ -439,9 +439,8 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
         const auto wspSize = wspInnerProd > wspBwdTrans ?
             wspInnerProd : wspBwdTrans;
 
-        vec_t wsp[wspSize]; // workspace for kernels
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> wsp(wspSize), tmpIn(m_nmTot),
+            tmpOut(m_nmTot);
         std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot),
             deriv1(nqTot);
 
@@ -521,12 +520,12 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
 
             // Step 1: BwdTrans
             BwdTransQuadKernel(nm0, nm1, nq0, nq1,
-                    tmpIn, this->m_bdata[0], this->m_bdata[1], wsp, bwd);
+                    tmpIn, this->m_bdata[0], this->m_bdata[1], &wsp[0], bwd);
 
             // Step 2: inner product for mass matrix operation
             IProductQuadKernel(nm0, nm1, nq0, nq1, true, false, DEFORMED,
                  bwd, this->m_bdata[0], this->m_bdata[1], this->m_w[0],
-                 this->m_w[1], jac_ptr, wsp, tmpOut, m_lambda);
+                 this->m_w[1], jac_ptr, &wsp[0], tmpOut, m_lambda);
 
             // Step 3: take derivatives in quadrature space
             PhysDerivTensor2DKernel(nq0, nq1, bwd, this->m_D[0],
@@ -693,11 +692,11 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
             
             IProductQuadKernel(nm0, nm1, nq0, nq1, false, true, DEFORMED,
                 bwd, this->m_dbdata[0], this->m_bdata[1], this->m_w[0],
-                 this->m_w[1], jac_ptr, wsp, tmpOut);
+                 this->m_w[1], jac_ptr, &wsp[0], tmpOut);
             
             IProductQuadKernel(nm0, nm1, nq0, nq1, false, true, DEFORMED,
                  deriv0, this->m_bdata[0], this->m_dbdata[1], this->m_w[0],
-                 this->m_w[1], jac_ptr, wsp, tmpOut);
+                 this->m_w[1], jac_ptr, &wsp[0], tmpOut);
            
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1124,10 +1123,10 @@ private:
             const auto wspBwdTrans = nm0;
             const auto wspSize = wspInnerProd > wspBwdTrans ? wspInnerProd : wspBwdTrans;
 
-            vec_t wsp[wspSize]; // workspace for kernels
-
-            std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
-            std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot), deriv1(nqTot);
+            std::vector<vec_t, allocator<vec_t>> wsp(wspSize), tmpIn(m_nmTot),
+                tmpOut(m_nmTot);
+            std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot),
+                deriv1(nqTot);
 
             const vec_t* jac_ptr;
             const vec_t* df_ptr;
@@ -1177,13 +1176,13 @@ private:
 
                 // Step 1: BwdTrans
                 BwdTransTriKernel(nm0,nm1,nq0,nq1, CORRECT,
-                  tmpIn, this->m_bdata[0], this->m_bdata[1], wsp, bwd);
+                  tmpIn, this->m_bdata[0], this->m_bdata[1], &wsp[0], bwd);
 
                 // Step 2: inner product for mass matrix operation
                 IProductTriKernel(nm0,nm1,nq0,nq1, CORRECT, true, false,
                                   DEFORMED,
                      bwd, this->m_bdata[0], this->m_bdata[1], this->m_w[0],
-                     this->m_w[1], jac_ptr, wsp, tmpOut, m_lambda);
+                     this->m_w[1], jac_ptr, &wsp[0], tmpOut, m_lambda);
                 
                 // Step 3: take derivatives in collapsed coordinate space
                 PhysDerivTensor2DKernel(nq0,nq1, bwd, this->m_D[0],
@@ -1263,12 +1262,12 @@ private:
                 IProductTriKernel(nm0,nm1,nq0,nq1, CORRECT,
                                   false, true, DEFORMED,
                 bwd, this->m_dbdata[0], this->m_bdata[1], this->m_w[0],
-                this->m_w[1], jac_ptr, wsp, tmpOut);
+                this->m_w[1], jac_ptr, &wsp[0], tmpOut);
                 
                 IProductTriKernel(nm0,nm1,nq0,nq1, CORRECT,
                                   false, true, DEFORMED,
                 deriv0, this->m_bdata[0], this->m_dbdata[1], this->m_w[0],
-                this->m_w[1], jac_ptr, wsp, tmpOut);
+                this->m_w[1], jac_ptr, &wsp[0], tmpOut);
 
                 // de-interleave and store data
                 deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1827,10 +1826,8 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
         const auto nmBlocks = m_nmTot * vec_t::width;
 
         // Workspace for kernels
-        vec_t wsp1[nq0 * nq1 * nq2], wsp2[nq0 * nq1 * nq2];
-        
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> wsp1(nqTot), wsp2(nqTot),
+            tmpIn(m_nmTot), tmpOut(m_nmTot);
         std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot),
             deriv1(nqTot), deriv2(nqTot);
 
@@ -1982,13 +1979,13 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
             BwdTransHexKernel(nm0,nm1,nm2,nq0,nq1,nq2,
                               tmpIn, this->m_bdata[0],
                               this->m_bdata[0], this->m_bdata[0],
-                              wsp1, wsp2, bwd);
+                              &wsp1[0], &wsp2[0], bwd);
 
             // Step 2: inner product for mass matrix operation
             IProductHexKernel(nm0,nm1,nm2,nq0,nq1,nq2, true, false, DEFORMED,
                  bwd, this->m_bdata[0], this->m_bdata[0], this->m_bdata[0],
                  this->m_w[0], this->m_w[0], this->m_w[0], jac_ptr,
-                 wsp1, wsp2, tmpOut, m_lambda);
+                              &wsp1[0], &wsp2[0], tmpOut, m_lambda);
 
             // Step 3: take derivatives in standard space
             PhysDerivTensor3DKernel(nq0,nq1,nq2,
@@ -2194,17 +2191,17 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
             IProductHexKernel(nm0,nm1,nm2,nq0,nq1,nq2, false, true, DEFORMED,
                  deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, wsp2, tmpOut);
+                 &wsp1[0], &wsp2[0], tmpOut);
             
             IProductHexKernel(nm0,nm1,nm2,nq0,nq1,nq2, false, true, DEFORMED,
                  deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, wsp2, tmpOut);
+                              &wsp1[0], &wsp2[0], tmpOut);
 
             IProductHexKernel(nm0,nm1,nm2,nq0,nq1,nq2, false, true, DEFORMED,
                  deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, wsp2, tmpOut);
+                              &wsp1[0], &wsp2[0], tmpOut);
             
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -2806,9 +2803,8 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
         const auto nmBlocks = m_nmTot * vec_t::width;
 
         // Workspace for kernels
-        vec_t wsp1[nq1 * nq2], wsp2[nq2], wsp3[nm1];
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> wsp1(nq1 * nq2), wsp2(nq2),
+            wsp3(nm1), tmpIn(m_nmTot), tmpOut(m_nmTot);
         std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot),
             deriv1(nqTot), deriv2(nqTot);
 
@@ -2868,14 +2864,14 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
             // Step 1: BwdTrans
             BwdTransPrismKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT,
                 tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                wsp1, wsp2, bwd);
+                &wsp1[0], &wsp2[0], bwd);
 
             // Step 2: inner product for mass matrix operation
             IProductPrismKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT,
                 true, false, DEFORMED,
                 bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                wsp1, wsp2, wsp3, tmpOut, m_lambda);
+                &wsp1[0], &wsp2[0], &wsp3[0], tmpOut, m_lambda);
         
             // Step 3: take derivatives in standard space
             PhysDerivTensor3DKernel(nq0,nq1,nq2,
@@ -3038,19 +3034,19 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
                                 CORRECT, false, true, DEFORMED,
                   deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                   this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                  wsp1, wsp2, wsp3, tmpOut);
+                  &wsp1[0], &wsp2[0], &wsp3[0], tmpOut);
 
             IProductPrismKernel(nm0,nm1,nm2,nq0,nq1,nq2,
                                 CORRECT, false, true, DEFORMED,
                  deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, wsp2, wsp3, tmpOut);
+                 &wsp1[0], &wsp2[0], &wsp3[0], tmpOut);
 
             IProductPrismKernel(nm0,nm1,nm2,nq0,nq1,nq2,
                                 CORRECT, false, true, DEFORMED,
                  deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, wsp2, wsp3, tmpOut);
+                 &wsp1[0], &wsp2[0], &wsp3[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -3682,10 +3678,8 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
         const auto nqTot = nq0 * nq1 * nq2;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        // Workspace for kernels
-        vec_t wsp1[nq1 * nq2], wsp2[nq2]; 
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>>  wsp1(nq1 * nq2), wsp2(nq2),
+            tmpIn(m_nmTot), tmpOut(m_nmTot);
         std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot),
             deriv1(nqTot), deriv2(nqTot);
 
@@ -3745,14 +3739,14 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
             // Step 1: BwdTrans
             BwdTransPyrKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT,
                 tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                wsp1, wsp2, bwd);
+                              &wsp1[0], &wsp2[0], bwd);
 
             // Step 2: inner product for mass matrix operation
             IProductPyrKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT,
                               true, false, DEFORMED,
                  bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, wsp2, tmpOut, m_lambda);
+                 &wsp1[0], &wsp2[0], tmpOut, m_lambda);
 
             // Step 3: take derivatives in standard space
             PhysDerivTensor3DKernel(nq0, nq1, nq2,
@@ -3927,19 +3921,19 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
                               CORRECT, false, true, DEFORMED,
                  deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                   this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                  wsp1, wsp2, tmpOut);
+                  &wsp1[0], &wsp2[0], tmpOut);
 
             IProductPyrKernel(nm0,nm1,nm2,nq0,nq1,nq2,
                               CORRECT, false, true, DEFORMED,
                  deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, wsp2, tmpOut);
+                 &wsp1[0], &wsp2[0], tmpOut);
 
             IProductPyrKernel(nm0,nm1,nm2,nq0,nq1,nq2,
                               CORRECT, false, true, DEFORMED,
                  deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, wsp2, tmpOut);
+                 &wsp1[0], &wsp2[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -4568,10 +4562,8 @@ struct HelmholtzTet : public Helmholtz, public Helper<3, DEFORMED>
         const auto nqTot = nq0 * nq1 * nq2;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        // Workspace for kernels
-        vec_t wsp1[nq1 * nq2 + nq2], wsp2[nm0];
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> wsp1(nqTot), wsp2(nm0),
+            tmpIn(m_nmTot), tmpOut(m_nmTot);
         std::vector<vec_t, allocator<vec_t>> bwd(nqTot),  deriv0(nqTot),
             deriv1(nqTot), deriv2(nqTot);
 
@@ -4631,14 +4623,14 @@ struct HelmholtzTet : public Helmholtz, public Helper<3, DEFORMED>
             // Step 1: BwdTrans
             BwdTransTetKernel(nm0, nm1, nm2, nq0, nq1, nq2, CORRECT,
                 tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                wsp1, wsp2, bwd);
+                &wsp1[0], &wsp2[0], bwd);
 
             // Step 2: inner product for mass matrix operation
             IProductTetKernel(nm0, nm1, nm2, nq0, nq1, nq2, CORRECT,
                               true, false, DEFORMED,
                  bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, tmpOut, m_lambda);
+                 &wsp1[0], tmpOut, m_lambda);
 
             // Step 3: take derivatives in standard space
             PhysDerivTensor3DKernel(nq0, nq1, nq2,
@@ -4814,19 +4806,19 @@ struct HelmholtzTet : public Helmholtz, public Helper<3, DEFORMED>
                               false, true, DEFORMED,
                 deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, tmpOut);
+                 &wsp1[0], tmpOut);
 
             IProductTetKernel(nm0, nm1, nm2, nq0, nq1, nq2, CORRECT,
                               false, true, DEFORMED,
                  deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, tmpOut);
+                 &wsp1[0], tmpOut);
 
             IProductTetKernel(nm0, nm1, nm2, nq0, nq1, nq2, CORRECT,
                               false, true, DEFORMED,
                  deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                 wsp1, tmpOut);
+                 &wsp1[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);

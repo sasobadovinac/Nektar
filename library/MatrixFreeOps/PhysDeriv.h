@@ -501,8 +501,9 @@ struct PhysDerivQuad : public PhysDeriv, public Helper<2, DEFORMED>
         {
         case 2:
             {
-             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut_d0(nqTot),
-                 tmpOut_d1(nqTot);
+             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot),
+                 tmpOut_d0(nqTot), tmpOut_d1(nqTot);
+             
              const vec_t* df_ptr;
              vec_t df0, df1, df2, df3;
              
@@ -566,8 +567,8 @@ struct PhysDerivQuad : public PhysDeriv, public Helper<2, DEFORMED>
         {
              auto* outptr_d2 = &out[2][0];
              
-             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut_d0(nqTot),
-                 tmpOut_d1(nqTot),tmpOut_d2(nqTot);
+             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot),
+                 tmpOut_d0(nqTot), tmpOut_d1(nqTot),tmpOut_d2(nqTot);
              const vec_t* df_ptr;
 
              for (int e = 0; e < this->m_nBlocks; ++e)
@@ -670,8 +671,8 @@ struct PhysDerivQuad : public PhysDeriv, public Helper<2, DEFORMED>
         {
         case 2:
             {
-             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut_d0(nqTot),
-                 tmpOut_d1(nqTot);
+             std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot),
+                 tmpOut_d0(nqTot), tmpOut_d1(nqTot);
              const vec_t* df_ptr;
              vec_t df0, df1, df2, df3;
              

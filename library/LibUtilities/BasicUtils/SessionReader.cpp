@@ -289,20 +289,41 @@ namespace Nektar
                 m_filenames = filenames;
             }
 
-            // check for opt file
-            std::string optfile = m_sessionName + ".opt"; 
-            int exists = (bool)boost::filesystem::exists(optfile.c_str());
-            if(exists)
+            // check specified  opt file
+            std::string optfile;
+            int exists;
+            
+            if(DefinesCmdLineArgument("useoptfile"))
             {
-                m_filenames.push_back(optfile);
-                // rotate order so opt file can be overwritten by
-                // direct choice in xml file
+                optfile = m_cmdLineOptions.find("useoptfile")->
+                    second.as<std::string>();
+                exists = (bool)boost::filesystem::exists(optfile.c_str());
+                ASSERTL0(exists,"A valid .opt file was not specified "
+                         "with the --useoptfile command line option");
+
+                m_filenames.push_back(optfile); 
+
+                // put opt file at beginning 
                 std::rotate(m_filenames.rbegin(), m_filenames.rbegin() + 1,
-                            m_filenames.rend());
+                                m_filenames.rend());
             }
-            else
+            else // check for writeoptfile 
             {
-                m_updateOptFile = true; 
+                // check for opt file
+                optfile = m_sessionName + ".opt"; 
+                exists = (bool)boost::filesystem::exists(optfile.c_str());
+                if(exists)
+                {
+                    m_filenames.push_back(optfile);
+                    // rotate order so opt file can be overwritten by
+                    // direct choice in xml file
+                    std::rotate(m_filenames.rbegin(), m_filenames.rbegin() + 1,
+                                m_filenames.rend());
+                }
+                else
+                {
+                    m_updateOptFile = true; 
+                }
             }
 
             // Merge document if required.
@@ -420,8 +441,10 @@ namespace Nektar
                 ("cwipi",        po::value<std::string>(),
                                  "set CWIPI name")
 #endif
-                ("writeoptfile",  "write an optimisation file")
-            ;
+                ("writeoptfile", "write an optimisation file")
+                ("useoptfile",   po::value<std::string>(),
+                                 "use an optimisation file")
+                ;
 
             for (auto &cmdIt : GetCmdLineArgMap())
             {

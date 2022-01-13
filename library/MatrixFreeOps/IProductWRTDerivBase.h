@@ -198,7 +198,7 @@ public:
             dfSize = ndf*nqTot;
         }
 
-        std::vector<vec_t, allocator<vec_t>> tmpIn0(nqTot),tmp0(nqTot),
+        std::vector<vec_t, allocator<vec_t>> tmpIn0(nqTot), tmp0(nqTot),
             tmpOut(m_nmTot);
         
         const vec_t* df_ptr;
@@ -207,7 +207,6 @@ public:
         {
         case 1:
         {
-
             for (int e = 0; e < this->m_nBlocks; ++e)
             {
                 // Jacobian
@@ -384,7 +383,7 @@ public:
             dfSize = ndf*nqTot;
         }
 
-        std::vector<vec_t, allocator<vec_t>> tmpIn0(nqTot),tmp0(nqTot),
+        std::vector<vec_t, allocator<vec_t>> tmpIn0(nqTot), tmp0(nqTot),
             tmpOut(m_nmTot);
         
         const vec_t* df_ptr;
@@ -875,9 +874,9 @@ public:
             dfSize = ndf*nqTot;
         }
 
-        vec_t sums_j[nq1]; //Sums over eta0 for each value of eta1;
-        std::vector<vec_t, allocator<vec_t>> tmpIn0(nqTot), tmpIn1(nqTot),
-            tmpIn2(nqTot), tmp0(nqTot), tmp1(nqTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> sums_j(nq1), tmpIn0(nqTot),
+            tmpIn1(nqTot), tmpIn2(nqTot), tmp0(nqTot), tmp1(nqTot),
+            tmpOut(m_nmTot);
 
         const vec_t* df_ptr;
         const vec_t* jac_ptr;
@@ -949,13 +948,13 @@ public:
             IProductQuadKernel(nm0,nm1,nq0,nq1, false, false, DEFORMED,
                 tmp0, this->m_dbdata[0], this->m_bdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
-                sums_j, tmpOut);
+                &sums_j[0], tmpOut);
 
             // IP DB1 B0
             IProductQuadKernel(nm0,nm1,nq0,nq1, false, true, DEFORMED,
                 tmp1, this->m_bdata[0], this->m_dbdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
-                sums_j, tmpOut);
+                &sums_j[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1462,9 +1461,9 @@ struct IProductWRTDerivBaseTri : public IProductWRTDerivBase, public Helper<2, D
             dfSize = ndf*nqTot;
         }
 
-        vec_t sums_j[nq1]; //Sums over eta0 for each value of eta1;
-        std::vector<vec_t, allocator<vec_t>> tmpIn0(nqTot), tmpIn1(nqTot),
-            tmpIn2(nqTot), tmp0(nqTot), tmp1(nqTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> sums_j(nq1), tmpIn0(nqTot),
+            tmpIn1(nqTot), tmpIn2(nqTot), tmp0(nqTot), tmp1(nqTot),
+            tmpOut(m_nmTot);
 
         const vec_t* df_ptr;
         const vec_t* jac_ptr;
@@ -1585,13 +1584,13 @@ struct IProductWRTDerivBaseTri : public IProductWRTDerivBase, public Helper<2, D
             IProductTriKernel(nm0,nm1,nq0,nq1, CORRECT, false, false, DEFORMED,
                 tmp0, this->m_dbdata[0], this->m_bdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
-                sums_j, tmpOut);
+                &sums_j[0], tmpOut);
 
             // IP DB1 B0
             IProductTriKernel(nm0,nm1,nq0,nq1, CORRECT, false, true, DEFORMED,
                 tmp1, this->m_bdata[0], this->m_dbdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
-                sums_j, tmpOut);
+                &sums_j[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1897,10 +1896,10 @@ public:
 
 
     void IProductWRTDerivBaseHexImpl(
-                                     const int nm0, const int nm1, const int nm2,
-                                     const int nq0, const int nq1, const int nq2,
-                                     const Array<OneD, Array<OneD, NekDouble>> &input,
-                                     Array<OneD, NekDouble> &output)
+        const int nm0, const int nm1, const int nm2,
+        const int nq0, const int nq1, const int nq2,
+        const Array<OneD, Array<OneD, NekDouble>> &input,
+        Array<OneD, NekDouble> &output)
     {
         using namespace tinysimd;
         using vec_t = simd<NekDouble>;
@@ -1924,10 +1923,8 @@ public:
             dfSize *= nqTot;
         }
 
-        vec_t sums_kj[nq1 * nq2];
-        vec_t sums_k[nq2];
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn0(nqTot), tmpIn1(nqTot),
+        std::vector<vec_t, allocator<vec_t>>
+            sums_kj(nq1 * nq2),  sums_k(nq2), tmpIn0(nqTot), tmpIn1(nqTot),
             tmpIn2(nqTot),  tmp0(nqTot), tmp1(nqTot), tmp2(nqTot),
             tmpOut(m_nmTot);
 
@@ -1987,24 +1984,21 @@ public:
                 (nm0,nm1,nm2,nq0,nq1,nq2, false, false, DEFORMED,
                 tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], tmpOut);
 
             // IP B0 DB1 B2
             IProductHexKernel
                 (nm0,nm1,nm2,nq0,nq1,nq2, false, true, DEFORMED,
                 tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], tmpOut);
 
             // IP B0 B1 DB2
             IProductHexKernel
                 (nm0,nm1,nm2,nq0,nq1,nq2, false, true, DEFORMED,
                 tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -2345,7 +2339,6 @@ struct IProductWRTDerivBasePrism : public IProductWRTDerivBase, public Helper<3,
         const vec_t* jac_ptr;
 
         std::vector<vec_t, allocator<vec_t>>& Z0 = this->m_Z[0];
-        // std::vector<vec_t, allocator<vec_t>>& Z1 = this->m_Z[1];
         std::vector<vec_t, allocator<vec_t>>& Z2 = this->m_Z[2];
 
         for (int e =0; e < this->m_nBlocks; ++e)
@@ -2485,11 +2478,8 @@ struct IProductWRTDerivBasePrism : public IProductWRTDerivBase, public Helper<3,
             dfSize = ndf*nqTot;
         }
 
-        vec_t sums_kj[nq1 * nq2];
-        vec_t sums_k[nq2];
-        vec_t corr_q[nm1];
-
         std::vector<vec_t, allocator<vec_t>>
+            sums_kj(nq1 * nq2), sums_k(nq2), corr_q(nm1), 
             tmpIn0(nqTot), tmpIn1(nqTot), tmpIn2(nqTot),
             tmp0(nqTot), tmp1(nqTot), tmp2(nqTot), tmpOut(m_nmTot);
 
@@ -2497,7 +2487,6 @@ struct IProductWRTDerivBasePrism : public IProductWRTDerivBase, public Helper<3,
         const vec_t* jac_ptr;
 
         std::vector<vec_t, allocator<vec_t>>& Z0 = this->m_Z[0];
-        // std::vector<vec_t, allocator<vec_t>>& Z1 = this->m_Z[1];
         std::vector<vec_t, allocator<vec_t>>& Z2 = this->m_Z[2];
 
         for (int e =0; e < this->m_nBlocks; ++e)
@@ -2579,27 +2568,21 @@ struct IProductWRTDerivBasePrism : public IProductWRTDerivBase, public Helper<3,
                                 false, DEFORMED,
                 tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                corr_q,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], &corr_q[0], tmpOut);
 
             // IP B0 DB1 B2
             IProductPrismKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT, false,
                                 true, DEFORMED,
                 tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                corr_q,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], &corr_q[0], tmpOut);
 
             // IP B0 B1 DB2
             IProductPrismKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT, false,
                                 true, DEFORMED,
                 tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                corr_q,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], &corr_q[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -3072,7 +3055,6 @@ struct IProductWRTDerivBasePyr : public IProductWRTDerivBase, public Helper<3, D
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-
         // Get size of jacobian factor block
         auto dJSize = 1u;
         auto dfSize = ndf;
@@ -3082,10 +3064,8 @@ struct IProductWRTDerivBasePyr : public IProductWRTDerivBase, public Helper<3, D
             dfSize = ndf*nqTot;
         }
 
-        vec_t sums_kj[nq1 * nq2];
-        vec_t sums_k[nq2];
-
         std::vector<vec_t, allocator<vec_t>>
+            sums_kj(nq1 * nq2), sums_k(nq2), 
             tmpIn0(nqTot), tmpIn1(nqTot), tmpIn2(nqTot),
             tmp0(nqTot), tmp1(nqTot), tmp2(nqTot), tmpOut(m_nmTot);
 
@@ -3180,24 +3160,21 @@ struct IProductWRTDerivBasePyr : public IProductWRTDerivBase, public Helper<3, D
                               false, DEFORMED,
                 tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], tmpOut);
 
             // IP B0 DB1 B2
             IProductPyrKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT, false,
                               true, DEFORMED,
                 tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], tmpOut);
 
             // IP B0 B1 DB2
             IProductPyrKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT, false,
                               true, DEFORMED,
                 tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                tmpOut);
+                &sums_kj[0], &sums_k[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -3681,10 +3658,8 @@ struct IProductWRTDerivBaseTet : public IProductWRTDerivBase, public Helper<3, D
             dfSize = ndf*nqTot;
         }
 
-        vec_t wsp[nq1 * nq2 + nq2];
-
         std::vector<vec_t, allocator<vec_t>>
-            tmpIn0(nqTot), tmpIn1(nqTot), tmpIn2(nqTot),
+            wsp(nq1 * nq2 + nq2), tmpIn0(nqTot), tmpIn1(nqTot), tmpIn2(nqTot),
             tmp0(nqTot), tmp1(nqTot), tmp2(nqTot), tmpOut(m_nmTot);
 
         const vec_t* df_ptr;
@@ -3780,21 +3755,21 @@ struct IProductWRTDerivBaseTet : public IProductWRTDerivBase, public Helper<3, D
                               false, DEFORMED,
                 tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                wsp, tmpOut);
+                &wsp[0], tmpOut);
 
             // IP B0 DB1 B2
             IProductTetKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT, false,
                               true, DEFORMED,
                 tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                wsp, tmpOut);
+                &wsp[0], tmpOut);
 
             // IP B0 B1 DB2
             IProductTetKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT, false,
                               true, DEFORMED,
                 tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                wsp, tmpOut);
+                &wsp[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);

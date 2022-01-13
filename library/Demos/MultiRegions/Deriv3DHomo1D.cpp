@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     StdRegions::ConstFactorMap factors;
     FlagList flags;
 
-    if( (argc != 2) && (argc != 3))
+    if( argc < 2 )
     {
         fprintf(stderr,"Usage: Deriv3DHomo2D meshfile [SysSolnType]   \n");
         exit(1);

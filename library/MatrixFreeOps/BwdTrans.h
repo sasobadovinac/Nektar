@@ -367,8 +367,8 @@ struct BwdTransQuad : public BwdTrans, public Helper<2>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t p_sums[nm0 * nq0]; //Sums over q for each quadpt p_i
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(nqTot);
+        std::vector<vec_t, allocator<vec_t>> p_sums(nm0 * nq0), tmpIn(m_nmTot),
+            tmpOut(nqTot);
 
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -377,7 +377,7 @@ struct BwdTransQuad : public BwdTrans, public Helper<2>
 
             BwdTransQuadKernel(nm0, nm1, nq0, nq1,
                 tmpIn, this->m_bdata[0], this->m_bdata[1],
-                p_sums, tmpOut);
+                &p_sums[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, nqTot, outptr);
@@ -643,8 +643,8 @@ struct BwdTransTri : public BwdTrans, public Helper<2>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t q_sums[nm0]; //Sums over q for each p
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(nqTot);
+        std::vector<vec_t, allocator<vec_t>> q_sums(nm0), tmpIn(m_nmTot),
+            tmpOut(nqTot);
 
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -652,10 +652,8 @@ struct BwdTransTri : public BwdTrans, public Helper<2>
             load_interleave(inptr, m_nmTot, tmpIn);
 
             BwdTransTriKernel(nm0, nm1, nq0, nq1, CORRECT,
-                tmpIn,
-                this->m_bdata[0], this->m_bdata[1],
-                q_sums,
-                tmpOut);
+                tmpIn, this->m_bdata[0], this->m_bdata[1],
+                              &q_sums[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, nqTot, outptr);
@@ -846,9 +844,8 @@ struct BwdTransHex : public BwdTrans, public Helper<3>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t sum_irq[nqTot], sum_jir[nqTot];
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(nqTot);
-
+        std::vector<vec_t, allocator<vec_t>> sum_irq(nqTot), sum_jir(nqTot),
+            tmpIn(m_nmTot), tmpOut(nqTot);
 
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -856,10 +853,8 @@ struct BwdTransHex : public BwdTrans, public Helper<3>
             load_interleave(inptr, m_nmTot, tmpIn);
 
             BwdTransHexKernel(nm0, nm1, nm2, nq0, nq1, nq2,
-                tmpIn,
-                this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                sum_irq, sum_jir,
-                tmpOut);
+                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+                &sum_irq[0], &sum_jir[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, nqTot, outptr);
@@ -1217,8 +1212,8 @@ struct BwdTransTet : public BwdTrans, public Helper<3>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t fpq[nm0 * nm1], fp[nm0];
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(nqTot);
+        std::vector<vec_t, allocator<vec_t>> fpq(nm0 * nm1), fp(nm0),
+            tmpIn(m_nmTot), tmpOut(nqTot);
 
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -1228,8 +1223,7 @@ struct BwdTransTet : public BwdTrans, public Helper<3>
             BwdTransTetKernel(nm0, nm1, nm2, nq0, nq1, nq2, CORRECT,
                 tmpIn,
                 this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                fpq, fp,
-                tmpOut);
+                &fpq[0], &fp[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, nqTot, outptr);
@@ -1586,8 +1580,8 @@ struct BwdTransPrism : public BwdTrans, public Helper<3>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t fpq[nm0 * nm1], fp[nm0];
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(nqTot);
+        std::vector<vec_t, allocator<vec_t>> fpq(nm0 * nm1), fp(nm0),
+            tmpIn(m_nmTot), tmpOut(nqTot);
 
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -1596,11 +1590,9 @@ struct BwdTransPrism : public BwdTrans, public Helper<3>
 
             BwdTransPrismKernel(
                 nm0, nm1, nm2, nq0, nq1, nq2,
-                CORRECT,
-                tmpIn,
+                CORRECT, tmpIn,
                 this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                fpq, fp,
-                tmpOut);
+                &fpq[0], &fp[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, nqTot, outptr);
@@ -1960,8 +1952,8 @@ struct BwdTransPyr : public BwdTrans, public Helper<3>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t fpq[nm0 * nm1], fp[nm0];
-        std::vector<vec_t, allocator<vec_t>> tmpIn(m_nmTot), tmpOut(nqTot);
+        std::vector<vec_t, allocator<vec_t>> fpq(nm0 * nm1), fp(nm0),
+            tmpIn(m_nmTot), tmpOut(nqTot);
 
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -1970,7 +1962,7 @@ struct BwdTransPyr : public BwdTrans, public Helper<3>
 
             BwdTransPyrKernel(nm0, nm1, nm2, nq0, nq1, nq2, CORRECT,
                 tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                fpq, fp, tmpOut);
+                &fpq[0], &fp[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, nqTot, outptr);

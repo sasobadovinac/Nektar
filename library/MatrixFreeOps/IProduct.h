@@ -135,6 +135,7 @@ struct IProductSeg : public IProduct, public Helper<1, DEFORMED>
 
         std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
         vec_t* jac_ptr;
+        
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
             if (DEFORMED)
@@ -377,9 +378,9 @@ struct IProductQuad : public IProduct, public Helper<2, DEFORMED>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t sums_j[nq1]; //Sums over eta0 for each value of eta1;
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> sums_j(nq1), tmpIn(nqTot),
+            tmpOut(m_nmTot);
+        
         vec_t* jac_ptr;
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -398,7 +399,7 @@ struct IProductQuad : public IProduct, public Helper<2, DEFORMED>
             IProductQuadKernel(nm0, nm1, nq0, nq1, false, false, DEFORMED,
                 tmpIn, this->m_bdata[0], this->m_bdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
-                sums_j, tmpOut);
+                               &sums_j[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -675,9 +676,8 @@ struct IProductTri : public IProduct, public Helper<2, DEFORMED>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t eta0_sums[nq1]; //Sums over eta0 for each value of eta1;
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> eta0_sums(nq1), tmpIn(nqTot),
+            tmpOut(m_nmTot);
         vec_t* jac_ptr;
         for (int e =0; e < this->m_nBlocks; ++e)
         {
@@ -695,10 +695,9 @@ struct IProductTri : public IProduct, public Helper<2, DEFORMED>
             load_interleave(inptr, nqTot, tmpIn);
 
             IProductTriKernel(nm0,nm1,nq0,nq1, CORRECT, false,
-                              false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1],
-                this->m_w[0], this->m_w[1], jac_ptr,
-                eta0_sums, tmpOut);
+                              false, DEFORMED, tmpIn, this->m_bdata[0],
+                              this->m_bdata[1], this->m_w[0], this->m_w[1],
+                              jac_ptr, &eta0_sums[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -904,10 +903,9 @@ struct IProductHex : public IProduct, public Helper<3, DEFORMED>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t sums_kj[nq1 * nq2];
-        vec_t sums_k[nq2];
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> sums_kj(nq1 * nq2), 
+            sums_k(nq2), tmpIn(nqTot), tmpOut(m_nmTot);
+        
         vec_t* jac_ptr;
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -926,8 +924,8 @@ struct IProductHex : public IProduct, public Helper<3, DEFORMED>
             IProductHexKernel(nm0,nm1,nm2,nq0,nq1,nq2, false, false, DEFORMED,
                 tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                tmpOut);
+                              &sums_kj[0], &sums_k[0],
+                              tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1282,7 +1280,6 @@ struct IProductPrism : public IProduct, public Helper<3, DEFORMED>
             inptr += nqBlocks;
             outptr += nmBlocks;
         }
-
     }
 
     void IProductPrismImpl(
@@ -1299,12 +1296,12 @@ struct IProductPrism : public IProduct, public Helper<3, DEFORMED>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t sums_kj[nq1 * nq2];
-        vec_t sums_k[nq2];
-        vec_t corr_q[nm1];
+        std::vector<vec_t, allocator<vec_t>>
+            sums_kj(nq1 * nq2), sums_k(nq2), corr_q(nm1), 
+            tmpIn(nqTot), tmpOut(m_nmTot);
 
-        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
         vec_t* jac_ptr;
+
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
             if (DEFORMED)
@@ -1320,12 +1317,11 @@ struct IProductPrism : public IProduct, public Helper<3, DEFORMED>
             load_interleave(inptr, nqTot, tmpIn);
 
             IProductPrismKernel(nm0,nm1,nm2,nq0,nq1,nq2, CORRECT, false,
-                                false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                corr_q,
-                tmpOut);
+                                false, DEFORMED, tmpIn, this->m_bdata[0],
+                                this->m_bdata[1], this->m_bdata[2],
+                                this->m_w[0], this->m_w[1], this->m_w[2],
+                                jac_ptr, &sums_kj[0], &sums_k[0], &corr_q[0],
+                                tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1675,7 +1671,6 @@ struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
             inptr += nqBlocks;
             outptr += nmBlocks;
         }
-
     }
 
     void IProductPyrImpl(
@@ -1692,10 +1687,9 @@ struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t sums_kj[nq1 * nq2];
-        vec_t sums_k[nq2];
-
-        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
+        std::vector<vec_t, allocator<vec_t>> sums_kj(nq1 * nq2), sums_k(nq2), 
+            tmpIn(nqTot), tmpOut(m_nmTot);
+        
         vec_t* jac_ptr;
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -1715,7 +1709,7 @@ struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
                               false, DEFORMED,
                 tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k, tmpOut);
+                &sums_kj[0], &sums_k[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -2081,9 +2075,9 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
         const auto nqBlocks = nqTot * vec_t::width;
         const auto nmBlocks = m_nmTot * vec_t::width;
 
-        vec_t wsp[nq1 * nq2 + nq2];
+        std::vector<vec_t, allocator<vec_t>> wsp(nq1 * nq2 + nq2), 
+            tmpIn(nqTot), tmpOut(m_nmTot);
 
-        std::vector<vec_t, allocator<vec_t>> tmpIn(nqTot), tmpOut(m_nmTot);
         vec_t* jac_ptr;
         for (int e = 0; e < this->m_nBlocks; ++e)
         {
@@ -2103,7 +2097,7 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
                               false, false, DEFORMED,
                 tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                wsp, tmpOut);
+                &wsp[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
