@@ -249,7 +249,7 @@ namespace Nektar
 
             for (int i = 0; i < nvariables; ++i)
             {
-                Vmath::Vadd(outarray.size(),
+                Vmath::Vadd(npoints,
                             outarrayDiff[i], 1,
                             outarray[i], 1,
                             outarray[i], 1);
