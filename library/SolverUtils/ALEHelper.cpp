@@ -140,6 +140,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
 
         // Recompute grid velocity.
         UpdateGridVelocity(time);
+        GetGridVelocityTrace(); // Updates trace grid velocity
 
         m_prevStageTime = time;
     }

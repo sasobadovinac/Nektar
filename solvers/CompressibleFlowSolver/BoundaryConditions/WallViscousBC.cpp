@@ -54,10 +54,11 @@ std::string WallViscousBC::classNameAdiabatic = GetCFSBndCondFactory().
 WallViscousBC::WallViscousBC(const LibUtilities::SessionReaderSharedPtr& pSession,
            const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
            const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
+           const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
            const int pSpaceDim,
            const int bcRegion,
            const int cnt)
-    : CFSBndCond(pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt)
+    : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt)
 {
     m_diffusionAveWeight = 0.5;
 }
@@ -68,10 +69,11 @@ void WallViscousBC::v_Apply(
         const NekDouble                                    &time)
 {
     boost::ignore_unused(time);
-
-    int i;
     int nVariables = physarray.size();
 
+    // @TODO: ALE we subtract the grid velocity ? "Set u = to ug for this one" - Dave
+
+    int i;
     const Array<OneD, const int> &traceBndMap
         = m_fields[0]->GetTraceBndMap();
 
@@ -96,9 +98,19 @@ void WallViscousBC::v_Apply(
             Vmath::Zero(nBCEdgePts, &Fwd[nVariables-1][id2], 1);
         }
 
-        // V = - Vin
+        // V = -Vin (What to do with Vg???)
         for (i = 0; i < m_spacedim; i++)
         {
+            //for (int j = 0; j < nBCEdgePts; ++j)
+            //{
+                //Fwd[i+1][id2+j] = -Fwd[i+1][id2+j];
+                //Fwd[i+1][id2+j] = m_gridVelocity[i][id2+j] * Fwd[0][id2+j];
+                //Fwd[i+1][id2+j] = -Fwd[i+1][id2+j] + m_gridVelocity[i][id2+j] * Fwd[0][id2+j];
+                //std::cout << "i = " << i << " | -V = " << -Fwd[i+1][id2+j] << " -> " << -Fwd[i+1][id2+j] + m_gridVelocity[i][id2+j] * Fwd[0][id2+j] << " = -V + Vg" << std::endl;
+            //}
+
+            // Do Vin - vg for the ALE
+            //Vmath::Vadd(nBCEdgePts, &Fwd[i+1][id2], 1, &m_gridVelocity[i][id2], 1, &Fwd[i+1][id2], 1);
             Vmath::Neg(nBCEdgePts, &Fwd[i+1][id2], 1);
         }
 

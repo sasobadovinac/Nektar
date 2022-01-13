@@ -11,18 +11,18 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         ArtificialDiffusion/ArtificialDiffusion.cpp
         ArtificialDiffusion/NonSmoothShockCapture.cpp
         BoundaryConditions/CFSBndCond.cpp
-        BoundaryConditions/ExtrapOrder0BC.cpp
-        BoundaryConditions/IsentropicVortexBC.cpp
-        BoundaryConditions/PressureInflowFileBC.cpp
-        BoundaryConditions/PressureMachTemperatureBC.cpp
-        BoundaryConditions/PressureOutflowBC.cpp
-        BoundaryConditions/PressureOutflowNonReflectiveBC.cpp
-        BoundaryConditions/RiemannInvariantBC.cpp
-        BoundaryConditions/RinglebFlowBC.cpp
-        BoundaryConditions/StagnationInflowBC.cpp
-        BoundaryConditions/SymmetryBC.cpp
-        BoundaryConditions/TimeDependentBC.cpp
-        BoundaryConditions/WallBC.cpp
+        #BoundaryConditions/ExtrapOrder0BC.cpp
+        #BoundaryConditions/IsentropicVortexBC.cpp
+        #BoundaryConditions/PressureInflowFileBC.cpp
+        #BoundaryConditions/PressureMachTemperatureBC.cpp
+        #BoundaryConditions/PressureOutflowBC.cpp
+        #BoundaryConditions/PressureOutflowNonReflectiveBC.cpp
+        #BoundaryConditions/RiemannInvariantBC.cpp
+        #BoundaryConditions/RinglebFlowBC.cpp
+        #BoundaryConditions/StagnationInflowBC.cpp
+        #BoundaryConditions/SymmetryBC.cpp
+        #BoundaryConditions/TimeDependentBC.cpp
+        #BoundaryConditions/WallBC.cpp
         BoundaryConditions/WallViscousBC.cpp
         CompressibleFlowSolver.cpp
         Diffusion/DiffusionLDGNS.cpp

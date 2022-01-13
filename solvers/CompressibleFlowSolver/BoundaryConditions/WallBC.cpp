@@ -90,8 +90,12 @@ void WallBC::v_Apply(
             Vmath::Zero(nBCEdgePts, &Fwd[nVariables-1][id2], 1);
         }
 
+        // @TODO: Look at paper on this
+        // https://www.researchgate.net/publication/264044118_A_Guide_to_the_Implementation_of_Boundary_Conditions_in_Compact_High-Order_Methods_for_Compressible_Aerodynamics
         // For 2D/3D, define: v* = v - 2(v.n)n
         Array<OneD, NekDouble> tmp(nBCEdgePts, 0.0);
+
+        //@TODO: v - vg here... check nguyen paper, only issue is getting the vg for the trace in here
 
         // Calculate (v.n)
         for (i = 0; i < m_spacedim; ++i)

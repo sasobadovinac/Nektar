@@ -114,6 +114,7 @@ namespace Nektar
                         m_session,
                         m_fields,
                         m_traceNormals,
+                        m_gridVelocityTrace,
                         m_spacedim,
                         n,
                         cnt));
@@ -266,14 +267,24 @@ namespace Nektar
         const NekDouble                                   time)
     {
         int nvariables = inarray.size();
-        int npoints    = GetNpoints();
         int nTracePts  = GetTraceTotPoints();
+
+        // This converts our Mu in coefficient space to u in physical space for ALE
+        Array<OneD, Array<OneD, NekDouble>> tmpIn(nvariables);
+        if (m_ALESolver)
+        {
+            ALEHelper::ALEDoElmtInvMassBwdTrans(inarray, tmpIn);
+        }
+        else
+        {
+            tmpIn = inarray;
+        }
 
         m_BndEvaluateTime   = time;
 
         // Store forwards/backwards space along trace space
-        Array<OneD, Array<OneD, NekDouble> > Fwd    (nvariables);
-        Array<OneD, Array<OneD, NekDouble> > Bwd    (nvariables);
+        Array<OneD, Array<OneD, NekDouble> > Fwd(nvariables);
+        Array<OneD, Array<OneD, NekDouble> > Bwd(nvariables);
 
         if (m_HomogeneousType == eHomogeneous1D)
         {
@@ -286,20 +297,14 @@ namespace Nektar
             {
                 Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
                 Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
-
-                // @TODO: Do we want to BwdTrans here? i.e. go from coeffs to phys...
-                // @TODO: Do we even need Fwd/Bwd except for artificial diffusion so flag if m_ALESolver and skip this chunk?
-                // @TODO: DoAdvection already flags and uses ALEHelper method without needing Fwd/Bwd
-                Array<OneD, NekDouble> tmp(npoints);
-                m_fields[i]->BwdTrans(inarray[i], tmp);
-                m_fields[i]->GetFwdBwdTracePhys(tmp, Fwd[i], Bwd[i]);
+                m_fields[i]->GetFwdBwdTracePhys(tmpIn[i], Fwd[i], Bwd[i]);
             }
         }
 
         // Calculate advection
 LibUtilities::Timer timer;
 timer.Start();
-        DoAdvection(inarray, outarray, time, Fwd, Bwd);
+        DoAdvection(tmpIn, outarray, time, Fwd, Bwd);
 timer.Stop();
 timer.AccumulateRegion("DoAdvection");
 
@@ -311,14 +316,14 @@ timer.AccumulateRegion("DoAdvection");
 
         // Add diffusion terms
 timer.Start();
-        DoDiffusion(inarray, outarray, Fwd, Bwd);
+        DoDiffusion(tmpIn, outarray, Fwd, Bwd);
 timer.Stop();
 timer.AccumulateRegion("DoDiffusion");
 
         // Add forcing terms
         for (auto &x : m_forcing)
         {
-            x->Apply(m_fields, inarray, outarray, time);
+            x->Apply(m_fields, tmpIn, outarray, time);
         }
 
         if (m_useLocalTimeStep)
@@ -329,7 +334,7 @@ timer.AccumulateRegion("DoDiffusion");
             Array<OneD, NekDouble> tmp;
 
             Array<OneD, NekDouble> tstep (nElements, 0.0);
-            GetElmtTimeStep(inarray, tstep);
+            GetElmtTimeStep(tmpIn, tstep);
 
             // Loop over elements
             for (int n = 0; n < nElements; ++n)
@@ -412,8 +417,8 @@ timer.AccumulateRegion("DoDiffusion");
 
         if(m_ALESolver)
         {
-            ALEHelper::ALEDoAdvection(inarray, outarray, time, m_advObject,
-                                      advVel);
+            m_advObject->AdvectCoeffs(nvariables, m_fields, advVel, inarray,
+                                      outarray, time, pFwd, pBwd);
         }
         else
         {
@@ -432,7 +437,6 @@ timer.AccumulateRegion("DoDiffusion");
             const Array<OneD, Array<OneD, NekDouble> >   &pBwd)
     {
         v_DoDiffusion(inarray, outarray, pFwd, pBwd);
-
     }
 
     void CompressibleFlowSystem::NonlinSysEvaluator1D(
@@ -764,24 +768,33 @@ timer.AccumulateRegion("DoDiffusion");
             Array<OneD, Array<OneD, NekDouble> >             &physarray,
             NekDouble                                         time)
     {
-
-        return; // @TODO: This is only for no boundary case - REMOVE IN FUTURE!!!
         int nTracePts  = GetTraceTotPoints();
         int nvariables = physarray.size();
 
-        Array<OneD, Array<OneD, NekDouble> > Fwd(nvariables);
+        // This converts our Mu in coefficient space to u in physical space for ALE
+        Array<OneD, Array<OneD, NekDouble>> tmpIn(nvariables);
+        if (m_ALESolver)
+        {
+            ALEHelper::ALEDoElmtInvMassBwdTrans(physarray, tmpIn);
+        }
+        else
+        {
+            tmpIn = physarray;
+        }
+
+        Array<OneD, Array<OneD, NekDouble>> Fwd(nvariables);
         for (int i = 0; i < nvariables; ++i)
         {
             Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
+            m_fields[i]->ExtractTracePhys(tmpIn[i], Fwd[i]);
         }
 
-        if (m_bndConds.size())
+        if (!m_bndConds.empty())
         {
             // Loop over user-defined boundary conditions
             for (auto &x : m_bndConds)
             {
-                x->Apply(Fwd, physarray, time);
+                x->Apply(Fwd, tmpIn, time);
             }
         }
     }

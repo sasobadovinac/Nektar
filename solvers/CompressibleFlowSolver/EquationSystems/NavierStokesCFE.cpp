@@ -236,12 +236,20 @@ namespace Nektar
             }
 
             // Diffusion term in physical rhs form
-            m_diffusion->Diffuse(nvariables, m_fields, inarrayDiff,
-                                outarrayDiff, inFwd, inBwd);
+            if(m_ALESolver)
+            {
+                m_diffusion->DiffuseCoeffs(nvariables, m_fields, inarrayDiff,
+                                     outarrayDiff, inFwd, inBwd);
+            }
+            else
+            {
+                m_diffusion->Diffuse(nvariables, m_fields, inarrayDiff,
+                                     outarrayDiff, inFwd, inBwd);
+            }
 
             for (int i = 0; i < nvariables; ++i)
             {
-                Vmath::Vadd(npoints,
+                Vmath::Vadd(outarray.size(),
                             outarrayDiff[i], 1,
                             outarray[i], 1,
                             outarray[i], 1);

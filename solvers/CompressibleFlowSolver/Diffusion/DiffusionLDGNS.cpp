@@ -223,9 +223,20 @@ void DiffusionLDGNS::v_InitObject(
         tmp2[i] = Array<OneD, NekDouble>{nCoeffs, 0.0};
     }
     v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp2, pFwd, pBwd);
+
+    // Multiply by inverse mass matrix     // @TODO: We don't want MultiplyByElmtInvMassfor ALE so we moved out of the diffusecoeffs method
+    LibUtilities::Timer timer;
+    for (int i = 0; i < nConvectiveFields; ++i)
+    {
+        timer.Start();
+        fields[i]->MultiplyByElmtInvMass(tmp2[i], tmp2[i]);
+        timer.Stop();
+        timer.AccumulateRegion("MultiplyByElmtInvMass");
+    }
+
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
-        fields[i]->BwdTrans             (tmp2[i], outarray[i]);
+        fields[i]->BwdTrans(tmp2[i], outarray[i]);
     }
 }
 
@@ -237,6 +248,12 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
     const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
 {
+
+    if(fields[0]->GetMovement()->GetMoveFlag()) // i.e. if m_ALESolver
+    {
+        fields[0]->GetTrace()->GetNormals(m_traceNormals);
+    }
+
     std::size_t nDim      = fields[0]->GetCoordim(0);
     std::size_t nPts      = fields[0]->GetTotPoints();
     std::size_t nCoeffs   = fields[0]->GetNcoeffs();
@@ -283,7 +300,6 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     DiffuseTraceFlux(fields, inarray, derivativesO1, m_viscTensor, viscousFlux,
                         pFwd, pBwd);
 
-    Array<OneD, NekDouble>               tmpOut{nCoeffs};
     Array<OneD, Array<OneD, NekDouble>>  tmpIn{nDim};
 
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
@@ -294,13 +310,12 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         {
             tmpIn[j] = m_viscTensor[j][i];
         }
-        fields[i]->IProductWRTDerivBase(tmpIn, tmpOut);
+        fields[i]->IProductWRTDerivBase(tmpIn, outarray[i]);
 
         // Evaulate  <\phi, \hat{F}\cdot n> - outarray[i]
-        Vmath::Neg                      (nCoeffs, tmpOut, 1);
-        fields[i]->AddTraceIntegral     (viscousFlux[i], tmpOut);
+        Vmath::Neg                      (nCoeffs, outarray[i], 1);
+        fields[i]->AddTraceIntegral     (viscousFlux[i], outarray[i]);
         fields[i]->SetPhysState         (false);
-        fields[i]->MultiplyByElmtInvMass(tmpOut, outarray[i]);
     }
 }
 

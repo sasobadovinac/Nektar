@@ -263,7 +263,7 @@ namespace Nektar
         }
         else
         {
-            tmpIn = inarray; // If not ALE then we pass through inarray
+            tmpIn = inarray; // If not ALE then we pass  through inarray
             // RHS computation using the new advection base class
             m_advObject->Advect(nVariables, m_fields, m_velocity,
                                 inarray, outarray, time);
