@@ -106,6 +106,13 @@ public:
         UpdateMapping();
     }
 
+    void SetScalingFromInput(NekDouble scale, NekDouble radius)
+    {
+        m_adapt_scale = scale;
+        m_adapt_radius = radius;
+        UpdateMapping();
+    }
+
     void UpdateMapping();
 
     void UpdateMappingByCurve(std::vector<CADCurveSharedPtr> curves);
@@ -131,7 +138,10 @@ private:
 
     // Initial maps
     std::vector<std::vector<NekDouble>> m_maps, m_mapsStd;
+    // r-adaption
     std::vector<CADCurveSharedPtr> m_adaptcurves;
+    NekDouble m_adapt_scale;
+    NekDouble m_adapt_radius;
 
 };
 typedef std::shared_ptr<ElUtil> ElUtilSharedPtr;

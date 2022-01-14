@@ -37,6 +37,8 @@
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
 
+#include <LibUtilities/BasicUtils/ParseUtils.h>
+
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
@@ -513,11 +515,14 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
 void ProcessVarOpti::GetElementMap(
     int o, map<LibUtilities::ShapeType, DerivUtilSharedPtr> derMap)
 {
-
-    for (int i = 1; i < 5; i++)
+    if (m_config["radaptcurves"].beenSet)
     {
-        m_adaptcurves.push_back(m_mesh->m_cad->GetCurve(i));
-        std::cout << "Adding curve: " << m_mesh->m_cad->GetCurve(i)->GetId() << " -- " << i << "\n";
+        std::vector<unsigned int> curveIds;
+        ParseUtils::GenerateSeqVector(m_config["radaptcurves"].as<std::string>().c_str(), curveIds);
+        for (auto Id : curveIds)
+        {
+            m_adaptcurves.push_back(m_mesh->m_cad->GetCurve(Id));
+        }
     }
 
     for (int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); i++)
@@ -539,6 +544,16 @@ void ProcessVarOpti::GetElementMap(
         for (int i = 0; i < m_dataSet.size(); ++i)
         {
             m_dataSet[i]->SetScaling(interp);
+        }
+    }
+
+    if (m_config["radaptscale"].beenSet)
+    {
+        // std::cout << "radapt data found: " <<m_config["radaptscale"].as<NekDouble>()  << " -- " <<  m_config["radaptrad"].as<NekDouble>() << "\n";
+        for (int i = 0; i < m_dataSet.size(); i++)
+        {
+            m_dataSet[i]->SetScalingFromInput(m_config["radaptscale"].as<NekDouble>(),
+                                              m_config["radaptrad"].as<NekDouble>());
         }
     }
 

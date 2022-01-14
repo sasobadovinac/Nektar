@@ -105,6 +105,12 @@ ProcessVarOpti::ProcessVarOpti(MeshSharedPtr m) : ProcessModule(m)
         ConfigOption(false, "", "basic analytics module");
     m_config["scalingfile"] =
         ConfigOption(false, "", "Read scaling field from file for r-adaptation");
+    m_config["radaptscale"] =
+        ConfigOption(false, "0", "Maps scaling for curve-based r-adaption");
+    m_config["radaptrad"] =
+        ConfigOption(false, "0", "Radius of influence for curve-based r-adaption");
+    m_config["radaptcurves"] =
+        ConfigOption(false, "", "Array of curves to use for adaption");
     // clang-format on
 }
 
@@ -196,6 +202,7 @@ void ProcessVarOpti::Process()
         Analytics();
         return;
     }
+
 
     map<LibUtilities::ShapeType, DerivUtilSharedPtr> derivUtils =
         BuildDerivUtil(intOrder);
@@ -359,22 +366,21 @@ void ProcessVarOpti::Process()
         m_res->startInv = 0;
         m_res->worstJac = numeric_limits<double>::max();
 
-        bool update = true; // will apply at every varopi iteration.
-        // bool update =
-        //     m_config["scalingfile"].beenSet && (ctr % subIter) == 0;
-        // vector<Thread::ThreadJob *> elJobs(m_dataSet.size());
+        // bool update = true; // will apply at every varopi iteration.
+        bool update =
+            ((m_config["scalingfile"].beenSet || m_config["radaptscale"].beenSet) && (ctr % subIter) == 0);
+        vector<Thread::ThreadJob *> elJobs(m_dataSet.size());
         for (int i = 0; i < m_dataSet.size(); i++)
         {
-            // elJobs[i] = m_dataSet[i]->GetJob(update);
-            m_dataSet[i]->Evaluate();
-            m_dataSet[i]->UpdateMapping();
-            // m_dataSet[i]->UpdateMappingByCurve(m_adaptcurves);
+            elJobs[i] = m_dataSet[i]->GetJob(update);
+            // m_dataSet[i]->Evaluate();
+            // m_dataSet[i]->UpdateMapping();
         }
 
-        // tm->SetNumWorkers(0);
-        // tm->QueueJobs(elJobs);
-        // tm->SetNumWorkers(nThreads);
-        // tm->Wait();
+        tm->SetNumWorkers(0);
+        tm->QueueJobs(elJobs);
+        tm->SetNumWorkers(nThreads);
+        tm->Wait();
 
         if (m_config["resfile"].beenSet)
         {
