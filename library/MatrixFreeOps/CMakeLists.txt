@@ -1,6 +1,11 @@
 SET(MATRIXFREEOPS_SOURCES
     BwdTrans.cpp
-    Helmholtz.cpp
+    HelmholtzQuad.cpp
+    HelmholtzTri.cpp
+    HelmholtzHex.cpp
+    HelmholtzPrism.cpp
+    HelmholtzPyr.cpp
+    HelmholtzTet.cpp
     IProductQuad.cpp
     IProductTri.cpp
     IProductTet.cpp
