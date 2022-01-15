@@ -56,7 +56,9 @@ map<OpImpTimingKey,OperatorImpMap> CollectionOptimisation::m_opImpMap;
 
 CollectionOptimisation::CollectionOptimisation(
         LibUtilities::SessionReaderSharedPtr pSession,
-        ImplementationType defaultType)
+        const int shapedim,
+        ImplementationType defaultType):
+    m_shapeDim(shapedim)
 {
     map<ElmtOrder, ImplementationType> defaults, defaultsPhysDeriv,
         defaultsHelmholtz;
@@ -64,7 +66,6 @@ CollectionOptimisation::CollectionOptimisation(
                     (pSession->DefinesCmdLineArgument("verbose")) &&
                     (pSession->GetComm()->GetRank() == 0);
 
-    m_setByXml    = false;
     m_autotune    = false;
     m_maxCollSize = 0;
     m_defaultType = defaultType == eNoImpType ? eIterPerExp : defaultType;
@@ -191,42 +192,16 @@ CollectionOptimisation::CollectionOptimisation(
             }
 
             // Now process operator-specific implementation selections
-            ReadCollOps(xmlCol,m_global,m_setByXml);
+            ReadCollOps(xmlCol,m_global,verbose);
 
-            
-            // Print out operator map
-            if (verbose)
-            {
-                if (!m_setByXml && !m_autotune)
-                {
-                    cout << "Setting Collection optimisation using: "
-                         << Collections::ImplementationTypeMap[m_defaultType]
-                         << endl;
-                }
-
-                if (m_setByXml)
-                {
-                    for (auto &mIt : m_global)
-                    {
-                        cout << "Operator " << OperatorTypeMap[mIt.first]
-                             << ":" << endl;
-
-                        for (auto &eIt : mIt.second)
-                        {
-                            cout << "- "
-                                 << LibUtilities::ShapeTypeMap[eIt.first.first]
-                                 << " order " << eIt.first.second << " -> "
-                                 << ImplementationTypeMap[eIt.second] << endl;
-                        }
-                    }
-                }
-            }
         }
     }
 }
 
-void  CollectionOptimisation::ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &global, bool &setByXml)
+void  CollectionOptimisation::ReadCollOps(TiXmlElement *xmlCol,
+                                          GlobalOpMap &global, bool verbose)
 {
+    bool verboseHeader = true;
     map<string, LibUtilities::ShapeType> elTypes;
     elTypes["S"] = LibUtilities::eSegment;
     elTypes["T"] = LibUtilities::eTriangle;
@@ -252,8 +227,6 @@ void  CollectionOptimisation::ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &glo
     TiXmlElement *elmt = xmlCol->FirstChildElement();
     while (elmt)
     {
-        setByXml = true;
-        
         string tagname = elmt->ValueStr();
         
         ASSERTL0(boost::iequals(tagname, "OPERATOR"),
@@ -272,6 +245,7 @@ void  CollectionOptimisation::ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &glo
         
         TiXmlElement *elmt2 = elmt->FirstChildElement();
 
+        map<int, pair<int,std::string>> verboseWrite; 
         while (elmt2)
         {
             string tagname = elmt2->ValueStr();
@@ -298,24 +272,62 @@ void  CollectionOptimisation::ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &glo
             ASSERTL0(attr3, "Missing ORDER in ELEMENT tag.");
             string order(attr3);
             
-            if (order == "*")
+            // load details relevant to this shape dimension. 
+            if(LibUtilities::ShapeTypeDimMap[it2->second] == m_shapeDim)
             {
-                global[ot][ElmtOrder(it2->second, -1)]
-                    = impTypes[impType];
-            }
-            else
-            {
-                vector<unsigned int> orders;
-                ParseUtils::GenerateSeqVector(order, orders);
-                
-                for (int i = 0; i < orders.size(); ++i)
+                if (order == "*")
                 {
-                    global[ot][ElmtOrder(it2->second, orders[i])]
+                    global[ot][ElmtOrder(it2->second, -1)]
                         = impTypes[impType];
+                    
+                    if(verbose)
+                    {
+                        verboseWrite[it2->second] =
+                            pair<int,std::string>(-1,impType);
+                    }
+                }
+                else
+                {
+                    vector<unsigned int> orders;
+                    ParseUtils::GenerateSeqVector(order, orders);
+                    
+                    for (int i = 0; i < orders.size(); ++i)
+                    {
+                        global[ot][ElmtOrder(it2->second, orders[i])]
+                            = impTypes[impType];
+                        
+                        if(verbose)
+                        {
+                            verboseWrite[it2->second] =
+                                pair<int,std::string>(orders[i],impType);
+
+                        }
+                    }
                 }
             }
             
             elmt2 = elmt2->NextSiblingElement();
+        }
+        
+        if(verboseWrite.size())
+        {
+            if(verboseHeader)
+            {
+                cout << "Collection settings from file:  " << endl;
+                verboseHeader = false;
+            }
+            
+            cout << "\t Operator " << OperatorTypeMap[ot]
+                 << ":" << endl;
+            
+            for(auto &it: verboseWrite)
+            {
+                cout << "\t - "
+                     << LibUtilities::ShapeTypeMap[it.first]
+                     << " order " << it.second.first << " -> "
+                     << it.second.second << endl;
+            }
+            
         }
         
         elmt = elmt->NextSiblingElement();
@@ -543,8 +555,8 @@ void CollectionOptimisation::UpdateOptFile(std::string sessName,
             root   = doc.FirstChildElement("NEKTAR");
             xmlCol = root->FirstChildElement("COLLECTIONS");
             
-            bool setbyxml; 
-            ReadCollOps(xmlCol,global,setbyxml);
+            bool verbose = false;
+            ReadCollOps(xmlCol,global,verbose);
         }
     }
         

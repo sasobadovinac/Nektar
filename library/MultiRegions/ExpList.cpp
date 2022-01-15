@@ -5026,7 +5026,8 @@ namespace Nektar
             
             // Figure out optimisation parameters if provided in
             // session file or default given
-            Collections::CollectionOptimisation colOpt(m_session, ImpType);
+            Collections::CollectionOptimisation
+                colOpt(m_session, (*m_exp)[0]->GetShapeDimension(),ImpType);
             ImpType = colOpt.GetDefaultImplementationType();
 
             // turn on autotuning if explicitly specified in xml file

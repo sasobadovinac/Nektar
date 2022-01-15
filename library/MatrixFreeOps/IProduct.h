@@ -122,9 +122,8 @@ struct IProductSeg : public IProduct, public Helper<1, DEFORMED>
     }
 
  template<int NM0, int NQ0>
-    void IProductSegImpl(
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+ void IProductSegImpl(const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output)
     {
         auto *inptr = &input[0];
         auto *outptr = &output[0];
@@ -150,8 +149,8 @@ struct IProductSeg : public IProduct, public Helper<1, DEFORMED>
             // Load and transpose data
             load_interleave(inptr, nqTot, tmpIn);
 
-            IProductSegKernel(NM0, NQ0, false, false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_w[0], jac_ptr, tmpOut);
+            IProductSegKernel<NM0, NQ0, false, false, DEFORMED>
+                (tmpIn, this->m_bdata[0], this->m_w[0], jac_ptr, tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -161,10 +160,9 @@ struct IProductSeg : public IProduct, public Helper<1, DEFORMED>
         }
     }
     
-    void IProductSegImpl(
-        const int nm0, const int nq0, 
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductSegImpl(const int nm0, const int nq0, 
+                         const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         auto *inptr = &input[0];
         auto *outptr = &output[0];
@@ -190,7 +188,7 @@ struct IProductSeg : public IProduct, public Helper<1, DEFORMED>
             load_interleave(inptr, nqTot, tmpIn);
 
             IProductSegKernel(nm0, nq0, false, false, DEFORMED, 
-                tmpIn, this->m_bdata[0], this->m_w[0], jac_ptr, tmpOut);
+                              tmpIn, this->m_bdata[0], this->m_w[0], jac_ptr, tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -214,23 +212,23 @@ template<bool DEFORMED = false>
 struct IProductQuad : public IProduct, public Helper<2, DEFORMED>
 {
     IProductQuad(std::vector<LibUtilities::BasisSharedPtr> basis,
-                   int nElmt)
+                 int nElmt)
         : IProduct(basis, nElmt),
           Helper<2, DEFORMED>(basis, nElmt),
           m_nmTot(LibUtilities::StdQuadData::getNumberOfCoefficients(
-                      this->m_nm[0], this->m_nm[1]))
+                                                                     this->m_nm[0], this->m_nm[1]))
     {
     }
 
-    static std::shared_ptr<Operator> Create(
-        std::vector<LibUtilities::BasisSharedPtr> basis,
-        int nElmt)
+        static std::shared_ptr<Operator> Create(
+                                                std::vector<LibUtilities::BasisSharedPtr> basis,
+                                                int nElmt)
     {
         return std::make_shared<IProductQuad<DEFORMED>>(basis, nElmt);
     }
 
     void operator()(const Array<OneD, const NekDouble> &in,
-                                  Array<OneD,       NekDouble> &out) final
+                    Array<OneD,       NekDouble> &out) final
     {
         const int nm0 = m_basis[0]->GetNumModes(); 
         const int nm1 = m_basis[1]->GetNumModes(); 
@@ -323,9 +321,8 @@ struct IProductQuad : public IProduct, public Helper<2, DEFORMED>
     }
 
     template<int NM0, int NM1, int NQ0, int NQ1>
-    void IProductQuadImpl(
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductQuadImpl(const Array<OneD, const NekDouble> &input,
+                          Array<OneD,       NekDouble> &output)
     {
         auto* inptr = input.data();
         auto* outptr = output.data();
@@ -352,10 +349,10 @@ struct IProductQuad : public IProduct, public Helper<2, DEFORMED>
             // Load and transpose data
             load_interleave(inptr, nqTot, tmpIn);
 
-            IProductQuadKernel(NM0, NM1, NQ0, NQ1, false, false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1],
-                this->m_w[0], this->m_w[1], jac_ptr,
-                sums_j, tmpOut);
+            IProductQuadKernel<NM0, NM1, NQ0, NQ1, false, false, DEFORMED>
+                (tmpIn, this->m_bdata[0], this->m_bdata[1],
+                 this->m_w[0], this->m_w[1], jac_ptr,
+                 sums_j, tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -365,11 +362,10 @@ struct IProductQuad : public IProduct, public Helper<2, DEFORMED>
         }
     }
 
-    void IProductQuadImpl(
-        const int nm0, const int nm1,
-        const int nq0, const int nq1, 
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductQuadImpl(const int nm0, const int nm1,
+                          const int nq0, const int nq1, 
+                          const Array<OneD, const NekDouble> &input,
+                          Array<OneD,       NekDouble> &output)
     {
         auto* inptr = input.data();
         auto* outptr = output.data();
@@ -397,8 +393,8 @@ struct IProductQuad : public IProduct, public Helper<2, DEFORMED>
             load_interleave(inptr, nqTot, tmpIn);
 
             IProductQuadKernel(nm0, nm1, nq0, nq1, false, false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1],
-                this->m_w[0], this->m_w[1], jac_ptr,
+                               tmpIn, this->m_bdata[0], this->m_bdata[1],
+                               this->m_w[0], this->m_w[1], jac_ptr,
                                &sums_j[0], tmpOut);
 
             // de-interleave and store data
@@ -422,23 +418,23 @@ template<bool DEFORMED = false>
 struct IProductTri : public IProduct, public Helper<2, DEFORMED>
 {
     IProductTri(std::vector<LibUtilities::BasisSharedPtr> basis,
-                   int nElmt)
+                int nElmt)
         : IProduct(basis, nElmt),
           Helper<2, DEFORMED>(basis, nElmt),
           m_nmTot(LibUtilities::StdTriData::getNumberOfCoefficients(
-                      this->m_nm[0], this->m_nm[1]))
+                                                                    this->m_nm[0], this->m_nm[1]))
     {
     }
 
-    static std::shared_ptr<Operator> Create(
-        std::vector<LibUtilities::BasisSharedPtr> basis,
-        int nElmt)
+        static std::shared_ptr<Operator> Create(
+                                                std::vector<LibUtilities::BasisSharedPtr> basis,
+                                                int nElmt)
     {
         return std::make_shared<IProductTri<DEFORMED>>(basis, nElmt);
     }
 
     void operator()(const Array<OneD, const NekDouble> &in,
-        Array<OneD, NekDouble> &out) final
+                    Array<OneD, NekDouble> &out) final
     {
         const int nm0 = m_basis[0]->GetNumModes(); 
         const int nm1 = m_basis[1]->GetNumModes(); 
@@ -618,9 +614,8 @@ struct IProductTri : public IProduct, public Helper<2, DEFORMED>
     }
 
     template<int NM0, int NM1, int NQ0, int NQ1, bool CORRECT>
-    void IProductTriImpl(
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductTriImpl(const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         auto *inptr = input.data();
         auto *outptr = output.data();
@@ -648,11 +643,11 @@ struct IProductTri : public IProduct, public Helper<2, DEFORMED>
             // Load and transpose data
             load_interleave(inptr, nqTot, tmpIn);
 
-            IProductTriKernel(NM0, NM1, NQ0, NQ1, CORRECT, false,
-                              false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1],
-                this->m_w[0], this->m_w[1], jac_ptr,
-                eta0_sums, tmpOut);
+            IProductTriKernel<NM0, NM1, NQ0, NQ1, CORRECT, false,
+                              false, DEFORMED>
+                (tmpIn, this->m_bdata[0], this->m_bdata[1],
+                 this->m_w[0], this->m_w[1], jac_ptr,
+                 eta0_sums, tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -662,12 +657,11 @@ struct IProductTri : public IProduct, public Helper<2, DEFORMED>
         }
     }
 
-    void IProductTriImpl(
-        const int nm0, const int nm1,
-        const int nq0, const int nq1,
-        const bool CORRECT,
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductTriImpl(const int nm0, const int nm1,
+                         const int nq0, const int nq1,
+                         const bool CORRECT,
+                         const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         auto *inptr = input.data();
         auto *outptr = output.data();
@@ -722,23 +716,23 @@ template<bool DEFORMED = false>
 struct IProductHex : public IProduct, public Helper<3, DEFORMED>
 {
     IProductHex(std::vector<LibUtilities::BasisSharedPtr> basis,
-                   int nElmt)
+                int nElmt)
         : IProduct(basis, nElmt),
           Helper<3, DEFORMED>(basis, nElmt),
           m_nmTot(LibUtilities::StdHexData::getNumberOfCoefficients(
-                      this->m_nm[0], this->m_nm[1], this->m_nm[2]))
+                                                                    this->m_nm[0], this->m_nm[1], this->m_nm[2]))
     {
     }
 
-    static std::shared_ptr<Operator> Create(
-        std::vector<LibUtilities::BasisSharedPtr> basis,
-        int nElmt)
+        static std::shared_ptr<Operator> Create(
+                                                std::vector<LibUtilities::BasisSharedPtr> basis,
+                                                int nElmt)
     {
         return std::make_shared<IProductHex<DEFORMED>>(basis, nElmt);
     }
 
     void operator()(const Array<OneD, const NekDouble> &in,
-                                  Array<OneD,       NekDouble> &out)
+                    Array<OneD,       NekDouble> &out)
     {
         auto nm0 = m_basis[0]->GetNumModes();
         auto nm1 = m_basis[1]->GetNumModes();
@@ -839,9 +833,8 @@ struct IProductHex : public IProduct, public Helper<3, DEFORMED>
     }
 
     template<int NM0, int NM1, int NM2, int NQ0, int NQ1, int NQ2>
-    void IProductHexImpl(
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductHexImpl(const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         using namespace tinysimd;
         using vec_t = simd<NekDouble>;
@@ -872,12 +865,12 @@ struct IProductHex : public IProduct, public Helper<3, DEFORMED>
             // Load and transpose data
             load_interleave(inptr, nqTot, tmpIn);
 
-            IProductHexKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, false, false,
-                              DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                tmpOut);
+            IProductHexKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, false, false,
+                              DEFORMED>
+                (tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
+                 sums_kj, sums_k,
+                 tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -887,11 +880,10 @@ struct IProductHex : public IProduct, public Helper<3, DEFORMED>
         }
     }
 
-    void IProductHexImpl(
-        const int nm0, const int nm1, const int nm2,
-        const int nq0, const int nq1, const int nq2,
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductHexImpl(const int nm0, const int nm1, const int nm2,
+                         const int nq0, const int nq1, const int nq2,
+                         const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         using namespace tinysimd;
         using vec_t = simd<NekDouble>;
@@ -922,8 +914,8 @@ struct IProductHex : public IProduct, public Helper<3, DEFORMED>
             load_interleave(inptr, nqTot, tmpIn);
 
             IProductHexKernel(nm0,nm1,nm2,nq0,nq1,nq2, false, false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
+                              tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+                              this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                               &sums_kj[0], &sums_k[0],
                               tmpOut);
 
@@ -952,23 +944,23 @@ template<bool DEFORMED = false>
 struct IProductPrism : public IProduct, public Helper<3, DEFORMED>
 {
     IProductPrism(std::vector<LibUtilities::BasisSharedPtr> basis,
-                     int nElmt)
+                  int nElmt)
         : IProduct(basis, nElmt),
           Helper<3, DEFORMED>(basis, nElmt),
           m_nmTot(LibUtilities::StdPrismData::getNumberOfCoefficients(
-                      this->m_nm[0], this->m_nm[1], this->m_nm[2]))
+                                                                      this->m_nm[0], this->m_nm[1], this->m_nm[2]))
     {
     }
 
-    static std::shared_ptr<Operator> Create(
-        std::vector<LibUtilities::BasisSharedPtr> basis,
-        int nElmt)
+        static std::shared_ptr<Operator> Create(
+                                                std::vector<LibUtilities::BasisSharedPtr> basis,
+                                                int nElmt)
     {
         return std::make_shared<IProductPrism<DEFORMED>>(basis, nElmt);
     }
 
     void operator()(const Array<OneD, const NekDouble> &in,
-        Array<OneD,       NekDouble> &out) final
+                    Array<OneD,       NekDouble> &out) final
     {
         const int nm0 = m_basis[0]->GetNumModes();
         const int nm1 = m_basis[1]->GetNumModes(); 
@@ -977,7 +969,7 @@ struct IProductPrism : public IProduct, public Helper<3, DEFORMED>
         const int nq1 = m_basis[1]->GetNumPoints();
         const int nq2 = m_basis[2]->GetNumPoints();
 
-        if((nm0 == nm1)&&(nm0 == nm2)&&(nq0 == nq1)&&(nq0 == nq2 + 1))
+        if((nm0 == nm1)&&(nm0 == nm2)&&(nq0 == nq1)&&(nq0 == nq2+1))
         {
             if (m_basis[0]->GetBasisType() == LibUtilities::eModified_A)
             {
@@ -1235,9 +1227,8 @@ struct IProductPrism : public IProduct, public Helper<3, DEFORMED>
     }
 
     template<int NM0, int NM1, int NM2, int NQ0, int NQ1, int NQ2, bool CORRECT>
-    void IProductPrismImpl(
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductPrismImpl(const Array<OneD, const NekDouble> &input,
+                           Array<OneD,       NekDouble> &output)
     {
         auto* inptr = input.data();
         auto* outptr = output.data();
@@ -1266,13 +1257,13 @@ struct IProductPrism : public IProduct, public Helper<3, DEFORMED>
             // Load and transpose data
             load_interleave(inptr, nqTot, tmpIn);
 
-            IProductPrismKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                                false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k,
-                corr_q,
-                tmpOut);
+            IProductPrismKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                                false, DEFORMED>
+                (tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
+                 sums_kj, sums_k,
+                 corr_q,
+                 tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1282,12 +1273,11 @@ struct IProductPrism : public IProduct, public Helper<3, DEFORMED>
         }
     }
 
-    void IProductPrismImpl(
-        const int nm0, const int nm1, const int nm2,
-        const int nq0, const int nq1, const int nq2,
-        const bool CORRECT,
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductPrismImpl(const int nm0, const int nm1, const int nm2,
+                           const int nq0, const int nq1, const int nq2,
+                           const bool CORRECT,
+                           const Array<OneD, const NekDouble> &input,
+                           Array<OneD,       NekDouble> &output)
     {
         auto* inptr = input.data();
         auto* outptr = output.data();
@@ -1347,23 +1337,23 @@ template<bool DEFORMED = false>
 struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
 {
     IProductPyr(std::vector<LibUtilities::BasisSharedPtr> basis,
-                     int nElmt)
+                int nElmt)
         : IProduct(basis, nElmt),
           Helper<3, DEFORMED>(basis, nElmt),
           m_nmTot(LibUtilities::StdPyrData::getNumberOfCoefficients(
-                      this->m_nm[0], this->m_nm[1], this->m_nm[2]))
+                                                                    this->m_nm[0], this->m_nm[1], this->m_nm[2]))
     {
     }
 
-    static std::shared_ptr<Operator> Create(
-        std::vector<LibUtilities::BasisSharedPtr> basis,
-        int nElmt)
+        static std::shared_ptr<Operator> Create(
+                                                std::vector<LibUtilities::BasisSharedPtr> basis,
+                                                int nElmt)
     {
         return std::make_shared<IProductPyr<DEFORMED>>(basis, nElmt);
     }
 
     void operator()(const Array<OneD, const NekDouble> &in,
-        Array<OneD,       NekDouble> &out) final
+                    Array<OneD,       NekDouble> &out) final
     {
         const int nm0 = m_basis[0]->GetNumModes();
         const int nm1 = m_basis[1]->GetNumModes(); 
@@ -1372,7 +1362,7 @@ struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
         const int nq1 = m_basis[1]->GetNumPoints();
         const int nq2 = m_basis[2]->GetNumPoints();
 
-        if((nm0 == nm1)&&(nm0 == nm2)&&(nq0 == nq1)&&(nq0 == nq2 + 1))
+        if((nm0 == nm1)&&(nm0 == nm2)&&(nq0 == nq1)&&(nq0 == nq2+1))
         {
             if (m_basis[0]->GetBasisType() == LibUtilities::eModified_A)
             {
@@ -1629,9 +1619,8 @@ struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
     }
 
     template<int NM0, int NM1, int NM2, int NQ0, int NQ1, int NQ2, bool CORRECT>
-    void IProductPyrImpl(
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductPyrImpl(const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         auto* inptr  = &input[0];
         auto* outptr = &output[0];
@@ -1659,11 +1648,11 @@ struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
             // Load and transpose data
             load_interleave(inptr, nqTot, tmpIn);
 
-            IProductPyrKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                              false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                sums_kj, sums_k, tmpOut);
+            IProductPyrKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                              false, DEFORMED>
+                (tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
+                 sums_kj, sums_k, tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1673,12 +1662,11 @@ struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
         }
     }
 
-    void IProductPyrImpl(
-        const int nm0, const int nm1, const int nm2,
-        const int nq0, const int nq1, const int nq2,
-        const bool CORRECT,
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductPyrImpl(const int nm0, const int nm1, const int nm2,
+                         const int nq0, const int nq1, const int nq2,
+                         const bool CORRECT,
+                         const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         auto* inptr  = &input[0];
         auto* outptr = &output[0];
@@ -1707,9 +1695,9 @@ struct IProductPyr : public IProduct, public Helper<3, DEFORMED>
 
             IProductPyrKernel(nm0, nm1, nm2, nq0, nq1, nq2, CORRECT, false,
                               false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                &sums_kj[0], &sums_k[0], tmpOut);
+                              tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+                              this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
+                              &sums_kj[0], &sums_k[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1737,23 +1725,23 @@ template<bool DEFORMED = false>
 struct IProductTet : public IProduct, public Helper<3, DEFORMED>
 {
     IProductTet(std::vector<LibUtilities::BasisSharedPtr> basis,
-                   int nElmt)
+                int nElmt)
         : IProduct(basis, nElmt),
           Helper<3, DEFORMED>(basis, nElmt),
           m_nmTot(LibUtilities::StdTetData::getNumberOfCoefficients(
-                      this->m_nm[0], this->m_nm[1], this->m_nm[2]))
+                                                                    this->m_nm[0], this->m_nm[1], this->m_nm[2]))
     {
     }
 
-    static std::shared_ptr<Operator> Create(
-        std::vector<LibUtilities::BasisSharedPtr> basis,
-        int nElmt)
+        static std::shared_ptr<Operator> Create(
+                                                std::vector<LibUtilities::BasisSharedPtr> basis,
+                                                int nElmt)
     {
         return std::make_shared<IProductTet<DEFORMED>>(basis, nElmt);
     }
 
     void operator()(const Array<OneD, const NekDouble> &in,
-        Array<OneD, NekDouble> &out) final
+                    Array<OneD, NekDouble> &out) final
     {
         const int nm0 = m_basis[0]->GetNumModes();
         const int nm1 = m_basis[1]->GetNumModes(); 
@@ -1762,7 +1750,7 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
         const int nq1 = m_basis[1]->GetNumPoints();
         const int nq2 = m_basis[2]->GetNumPoints();
 
-        if((nm0 == nm1)&&(nm0 == nm2)&&(nq0 == nq1+1)&&(nq0 == nq2 + 1))
+        if((nm0 == nm1)&&(nm0 == nm2)&&(nq0 == nq1+1)&&(nq0 == nq2+1))
         {
             if (m_basis[0]->GetBasisType() == LibUtilities::eModified_A)
             {
@@ -1823,7 +1811,7 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
                     switch(nq0)
                     {
                     case 7: IProductTetImpl<6, 6, 6, 7, 6, 6, true>
-                        (in, out); break;
+                            (in, out); break;
                     case 8: IProductTetImpl<6, 6, 6, 8, 7, 7, true>
                             (in, out); break;
                     case 9: IProductTetImpl<6, 6, 6, 9, 8, 8, true>
@@ -1849,7 +1837,7 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
                     case 11: IProductTetImpl<7, 7, 7, 11, 10, 10, true>
                             (in, out); break;
                     case 12: IProductTetImpl<7, 7, 7, 12, 11, 11, true>
-                        (in, out); break;
+                            (in, out); break;
                     case 13: IProductTetImpl<7, 7, 7, 13, 12, 12, true>
                             (in, out); break;
                     case 14: IProductTetImpl<7, 7, 7, 14, 13, 13, true>
@@ -1908,7 +1896,7 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
                             (in, out); break;
                     default: IProductTetImpl(nm0, nm1, nm2, nq0, nq1, nq2,false,
                                              in, out); break;
-                } break;
+                    } break;
                 case 4:
                     switch(nq0)
                     {
@@ -2018,9 +2006,8 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
     }
     
     template<int NM0, int NM1, int NM2, int NQ0, int NQ1, int NQ2, bool CORRECT>
-    void IProductTetImpl(
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductTetImpl(const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         auto* inptr = input.data();
         auto* outptr = output.data();
@@ -2047,11 +2034,11 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
             // Load and transpose data
             load_interleave(inptr, nqTot, tmpIn);
 
-            IProductTetKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
-                              false, false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                wsp, tmpOut);
+            IProductTetKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
+                              false, false, DEFORMED>
+                (tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
+                 wsp, tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -2061,12 +2048,11 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
         }
     }
         
-    void IProductTetImpl(
-        const int nm0, const int nm1, const int nm2,
-        const int nq0, const int nq1, const int nq2,
-        const bool CORRECT, 
-        const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output)
+    void IProductTetImpl(const int nm0, const int nm1, const int nm2,
+                         const int nq0, const int nq1, const int nq2,
+                         const bool CORRECT, 
+                         const Array<OneD, const NekDouble> &input,
+                         Array<OneD,       NekDouble> &output)
     {
         auto* inptr = input.data();
         auto* outptr = output.data();
@@ -2095,9 +2081,9 @@ struct IProductTet : public IProduct, public Helper<3, DEFORMED>
 
             IProductTetKernel(nm0, nm1, nm2, nq0, nq1, nq2, CORRECT,
                               false, false, DEFORMED,
-                tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
-                this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
-                &wsp[0], tmpOut);
+                              tmpIn, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+                              this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
+                              &wsp[0], tmpOut);
 
             // de-interleave and store data
             deinterleave_store(tmpOut, m_nmTot, outptr);

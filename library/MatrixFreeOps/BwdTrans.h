@@ -902,7 +902,7 @@ struct BwdTransTet : public BwdTrans, public Helper<3>
         const int nq1 = m_basis[1]->GetNumPoints();
         const int nq2 = m_basis[2]->GetNumPoints();
         
-        if((nq0 == nq1)&&(nq0 == nq2)&&(nm0 == nm1+1)&&(nm0 == nm2+1))
+        if((nm0 == nm1)&&(nm0 == nm2)&&(nq0 == nq1+1)&&(nq0 == nq2+1))
         {
             if (m_basis[0]->GetBasisType() == LibUtilities::eModified_A)
             {
@@ -1269,7 +1269,7 @@ struct BwdTransPrism : public BwdTrans, public Helper<3>
         const int nq1 = m_basis[1]->GetNumPoints();
         const int nq2 = m_basis[2]->GetNumPoints();
 
-        if((nq0 == nq1)&&(nq0 == nq2 + 1)&&(nm0 == nm1)&&(nm0 == nm2))
+        if((nq0 == nq1)&&(nq0 == nq2+1)&&(nm0 == nm1)&&(nm0 == nm2))
         {
             if (m_basis[0]->GetBasisType() == LibUtilities::eModified_A)
             {

@@ -236,8 +236,8 @@ public:
                 }
             
                 // IP DB0
-                IProductSegKernel(NM0, NQ0, false, false, DEFORMED,
-                   tmp0, this->m_dbdata[0],  this->m_w[0], jac_ptr, tmpOut);
+                IProductSegKernel<NM0, NQ0, false, false, DEFORMED>
+                    (tmp0, this->m_dbdata[0],  this->m_w[0], jac_ptr, tmpOut);
 
                 // de-interleave and store data
                 deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -284,8 +284,8 @@ public:
                 }
                 
                 // IP DB0
-                IProductSegKernel(NM0, NQ0, false, false, DEFORMED,
-                   tmp0, this->m_dbdata[0],  this->m_w[0], jac_ptr, tmpOut);
+                IProductSegKernel<NM0, NQ0, false, false, DEFORMED>
+                    (tmp0, this->m_dbdata[0],  this->m_w[0], jac_ptr, tmpOut);
 
                 // de-interleave and store data
                 deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -338,8 +338,8 @@ public:
                 }
                 
                 // IP DB0
-                IProductSegKernel(NM0, NQ0, false, false, DEFORMED,
-                   tmp0, this->m_dbdata[0],  this->m_w[0], jac_ptr, tmpOut);
+                IProductSegKernel<NM0, NQ0, false, false, DEFORMED>
+                    (tmp0, this->m_dbdata[0],  this->m_w[0], jac_ptr, tmpOut);
 
                 // de-interleave and store data
                 deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -820,14 +820,14 @@ public:
             }
 
             // IP DB0 B1
-            IProductQuadKernel(NM0, NM1, NQ0, NQ1, false, false, DEFORMED,
-                tmp0, this->m_dbdata[0], this->m_bdata[1],
+            IProductQuadKernel<NM0, NM1, NQ0, NQ1, false, false, DEFORMED>
+                (tmp0, this->m_dbdata[0], this->m_bdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
                 sums_j, tmpOut);
 
             // IP DB1 B0
-            IProductQuadKernel(NM0, NM1, NQ0, NQ1, false, true, DEFORMED,
-                tmp1, this->m_bdata[0], this->m_dbdata[1],
+            IProductQuadKernel<NM0, NM1, NQ0, NQ1, false, true, DEFORMED>
+                (tmp1, this->m_bdata[0], this->m_dbdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
                 sums_j, tmpOut);
 
@@ -1406,14 +1406,14 @@ struct IProductWRTDerivBaseTri : public IProductWRTDerivBase, public Helper<2, D
             }                
 
             // IP DB0 B1
-            IProductTriKernel(NM0, NM1, NQ0, NQ1, CORRECT, false, false, DEFORMED,
-                tmp0, this->m_dbdata[0], this->m_bdata[1],
+            IProductTriKernel<NM0, NM1, NQ0, NQ1, CORRECT, false, false, DEFORMED>
+                (tmp0, this->m_dbdata[0], this->m_bdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
                 sums_j, tmpOut);
 
             // IP DB1 B0
-            IProductTriKernel(NM0, NM1, NQ0, NQ1, CORRECT, false, true, DEFORMED,
-                tmp1, this->m_bdata[0], this->m_dbdata[1],
+            IProductTriKernel<NM0, NM1, NQ0, NQ1, CORRECT, false, true, DEFORMED>
+                (tmp1, this->m_bdata[0], this->m_dbdata[1],
                 this->m_w[0], this->m_w[1], jac_ptr,
                 sums_j, tmpOut);
 
@@ -1862,24 +1862,24 @@ public:
 
             // IP DB0 B1 B2
             IProductHexKernel
-                (NM0, NM1, NM2, NQ0, NQ1, NQ2, false, false, DEFORMED,
-                 tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
+                <NM0, NM1, NM2, NQ0, NQ1, NQ2, false, false, DEFORMED>
+                (tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  sums_kj, sums_k,
                  tmpOut);
 
             // IP B0 DB1 B2
             IProductHexKernel
-                (NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED,
-                 tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
+                <NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED>
+                (tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  sums_kj, sums_k,
                  tmpOut);
 
             // IP B0 B1 DB2
             IProductHexKernel
-                (NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED,
-                 tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
+                <NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED>
+                (tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  sums_kj, sums_k,
                  tmpOut);
@@ -2416,27 +2416,27 @@ struct IProductWRTDerivBasePrism : public IProductWRTDerivBase, public Helper<3,
 
 
             // IP DB0 B1 B2
-            IProductPrismKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                                false, DEFORMED,
-                tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductPrismKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                                false, DEFORMED>
+                (tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 sums_kj, sums_k,
                 corr_q,
                 tmpOut);
 
             // IP B0 DB1 B2
-            IProductPrismKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                                true, DEFORMED,
-                tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
+            IProductPrismKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                                true, DEFORMED>
+                (tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 sums_kj, sums_k,
                 corr_q,
                 tmpOut);
 
             // IP B0 B1 DB2
-            IProductPrismKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                                true, DEFORMED,
-                tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
+            IProductPrismKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                                true, DEFORMED>
+                (tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 sums_kj, sums_k,
                 corr_q,
@@ -3005,25 +3005,25 @@ struct IProductWRTDerivBasePyr : public IProductWRTDerivBase, public Helper<3, D
             }
 
             // IP DB0 B1 B2
-            IProductPyrKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                              false, DEFORMED,
-                tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductPyrKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                              false, DEFORMED>
+                (tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 sums_kj, sums_k,
                 tmpOut);
 
             // IP B0 DB1 B2
-            IProductPyrKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                              true, DEFORMED,
-                tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
+            IProductPyrKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                              true, DEFORMED>
+                (tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 sums_kj, sums_k,
                 tmpOut);
 
             // IP B0 B1 DB2
-            IProductPyrKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                              true, DEFORMED,
-                tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
+            IProductPyrKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                              true, DEFORMED>
+                (tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 sums_kj, sums_k,
                 tmpOut);
@@ -3599,23 +3599,23 @@ struct IProductWRTDerivBaseTet : public IProductWRTDerivBase, public Helper<3, D
             }
 
             // IP DB0 B1 B2
-            IProductTetKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                              false, DEFORMED,
-                tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductTetKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                              false, DEFORMED>
+                (tmp0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 wsp, tmpOut);
 
             // IP B0 DB1 B2
-            IProductTetKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                              true, DEFORMED,
-                tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
+            IProductTetKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                              true, DEFORMED>
+                (tmp1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 wsp, tmpOut);
 
             // IP B0 B1 DB2
-            IProductTetKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
-                              true, DEFORMED,
-                tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
+            IProductTetKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT, false,
+                              true, DEFORMED>
+                (tmp2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                 this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                 wsp, tmpOut);
 

@@ -237,8 +237,8 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                     tmpIn, this->m_bdata[0], this->m_bdata[1], wsp, bwd);
 
             // Step 2: inner product for mass matrix operation
-            IProductQuadKernel(NM0, NM1, NQ0, NQ1, true, false, DEFORMED,
-                 bwd, this->m_bdata[0], this->m_bdata[1], this->m_w[0],
+            IProductQuadKernel<NM0, NM1, NQ0, NQ1, true, false, DEFORMED>
+                (bwd, this->m_bdata[0], this->m_bdata[1], this->m_w[0],
                  this->m_w[1], jac_ptr, wsp, tmpOut, m_lambda);
 
             // Step 3: take derivatives in quadrature space
@@ -404,12 +404,12 @@ struct HelmholtzQuad : public Helmholtz, public Helper<2, DEFORMED>
                 }
             }
             
-            IProductQuadKernel(NM0, NM1, NQ0, NQ1, false, true, DEFORMED,
-                bwd, this->m_dbdata[0], this->m_bdata[1], this->m_w[0],
+            IProductQuadKernel<NM0, NM1, NQ0, NQ1, false, true, DEFORMED>
+                (bwd, this->m_dbdata[0], this->m_bdata[1], this->m_w[0],
                  this->m_w[1], jac_ptr, wsp, tmpOut);
             
-            IProductQuadKernel(NM0, NM1, NQ0, NQ1, false, true, DEFORMED,
-                 deriv0, this->m_bdata[0], this->m_dbdata[1], this->m_w[0],
+            IProductQuadKernel<NM0, NM1, NQ0, NQ1, false, true, DEFORMED>
+                (deriv0, this->m_bdata[0], this->m_dbdata[1], this->m_w[0],
                  this->m_w[1], jac_ptr, wsp, tmpOut);
            
             // de-interleave and store data
@@ -932,8 +932,8 @@ private:
         }
         
         template<int NM0, int NM1, int NQ0, int NQ1, bool CORRECT>
-        void HelmholtzTriImpl(
-                              const Array<OneD, const NekDouble> &input, Array<OneD,NekDouble> &out)
+        void HelmholtzTriImpl(const Array<OneD, const NekDouble> &input,
+                              Array<OneD,NekDouble> &out)
         {
             auto *inptr  = &input[0];
             auto *outptr = &out[0];
@@ -1005,9 +1005,9 @@ private:
                   tmpIn, this->m_bdata[0], this->m_bdata[1], wsp, bwd);
 
                 // Step 2: inner product for mass matrix operation
-                IProductTriKernel(NM0, NM1, NQ0, NQ1, CORRECT, true, false,
-                                  DEFORMED,
-                     bwd, this->m_bdata[0], this->m_bdata[1], this->m_w[0],
+                IProductTriKernel<NM0, NM1, NQ0, NQ1, CORRECT, true, false,
+                                  DEFORMED>
+                    (bwd, this->m_bdata[0], this->m_bdata[1], this->m_w[0],
                      this->m_w[1], jac_ptr, wsp, tmpOut, m_lambda);
                 
                 // Step 3: take derivatives in collapsed coordinate space
@@ -1085,15 +1085,15 @@ private:
                 }
                                   
                 // Step 4b: Take inner products
-                IProductTriKernel(NM0, NM1, NQ0, NQ1, CORRECT,
-                                  false, true, DEFORMED,
-                bwd, this->m_dbdata[0], this->m_bdata[1], this->m_w[0],
-                this->m_w[1], jac_ptr, wsp, tmpOut);
+                IProductTriKernel<NM0, NM1, NQ0, NQ1, CORRECT,
+                                  false, true, DEFORMED>
+                    (bwd, this->m_dbdata[0], this->m_bdata[1], this->m_w[0],
+                     this->m_w[1], jac_ptr, wsp, tmpOut);
                 
-                IProductTriKernel(NM0, NM1, NQ0, NQ1, CORRECT,
-                                  false, true, DEFORMED,
-                deriv0, this->m_bdata[0], this->m_dbdata[1], this->m_w[0],
-                this->m_w[1], jac_ptr, wsp, tmpOut);
+                IProductTriKernel<NM0, NM1, NQ0, NQ1, CORRECT,
+                                  false, true, DEFORMED>
+                    (deriv0, this->m_bdata[0], this->m_dbdata[1], this->m_w[0],
+                     this->m_w[1], jac_ptr, wsp, tmpOut);
 
                 // de-interleave and store data
                 deinterleave_store(tmpOut, m_nmTot, outptr);
@@ -1583,8 +1583,8 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
                               wsp1, wsp2, bwd);
 
             // Step 2: inner product for mass matrix operation
-            IProductHexKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, true, false, DEFORMED,
-                 bwd, this->m_bdata[0], this->m_bdata[0], this->m_bdata[0],
+            IProductHexKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, true, false, DEFORMED>
+                (bwd, this->m_bdata[0], this->m_bdata[0], this->m_bdata[0],
                  this->m_w[0], this->m_w[0], this->m_w[0], jac_ptr,
                  wsp1, wsp2, tmpOut, m_lambda);
 
@@ -1789,18 +1789,18 @@ struct HelmholtzHex : public Helmholtz, public Helper<3, DEFORMED>
                 }
             }
 
-            IProductHexKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED,
-                 deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductHexKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED>
+                (deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, tmpOut);
             
-            IProductHexKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED,
-                 deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
+            IProductHexKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED>
+                (deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, tmpOut);
 
-            IProductHexKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED,
-                 deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
+            IProductHexKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, false, true, DEFORMED>
+                (deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, tmpOut);
             
@@ -2522,8 +2522,7 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
     }
     
     template<int NM0, int NM1, int NM2, int NQ0, int NQ1, int NQ2, bool CORRECT>
-    void HelmholtzPrismImpl(
-                            const Array<OneD, const NekDouble> &input,
+    void HelmholtzPrismImpl(const Array<OneD, const NekDouble> &input,
                             Array<OneD,       NekDouble> &out)
     {
         auto *inptr  = &input[0];
@@ -2599,9 +2598,9 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
                 wsp1, wsp2, bwd);
 
             // Step 2: inner product for mass matrix operation
-            IProductPrismKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
-                                true, false, DEFORMED,
-                 bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductPrismKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
+                                true, false, DEFORMED>
+                (bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, wsp3, tmpOut, m_lambda);
 
@@ -2762,21 +2761,21 @@ struct HelmholtzPrism : public Helmholtz, public Helper<3, DEFORMED>
                 }
             }
 
-            IProductPrismKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2,
-                                CORRECT, false, true, DEFORMED,
-                  deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductPrismKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2,
+                                CORRECT, false, true, DEFORMED>
+                (deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                   this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                   wsp1, wsp2, wsp3, tmpOut);
 
-            IProductPrismKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2,
-                                CORRECT, false, true, DEFORMED,
-                 deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
+            IProductPrismKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2,
+                                CORRECT, false, true, DEFORMED>
+                (deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, wsp3, tmpOut);
 
-            IProductPrismKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2,
-                                CORRECT, false, true, DEFORMED,
-                 deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
+            IProductPrismKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2,
+                                CORRECT, false, true, DEFORMED>
+                (deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, wsp3, tmpOut);
 
@@ -3463,9 +3462,9 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
                 wsp1, wsp2, bwd);
 
             // Step 2: inner product for mass matrix operation
-            IProductPyrKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
-                              true, false, DEFORMED,
-                 bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductPyrKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
+                              true, false, DEFORMED>
+                (bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, tmpOut, m_lambda);
 
@@ -3638,21 +3637,21 @@ struct HelmholtzPyr : public Helmholtz, public Helper<3, DEFORMED>
                 }
             }
 
-            IProductPyrKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2,
-                              CORRECT, false, true, DEFORMED,
-                 deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductPyrKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2,
+                              CORRECT, false, true, DEFORMED>
+                (deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                   this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                   wsp1, wsp2, tmpOut);
 
-            IProductPyrKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2,
-                              CORRECT, false, true, DEFORMED,
-                 deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
+            IProductPyrKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2,
+                              CORRECT, false, true, DEFORMED>
+                (deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, tmpOut);
 
-            IProductPyrKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2,
-                              CORRECT, false, true, DEFORMED,
-                 deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
+            IProductPyrKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2,
+                              CORRECT, false, true, DEFORMED>
+                (deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, wsp2, tmpOut);
 
@@ -4346,9 +4345,9 @@ struct HelmholtzTet : public Helmholtz, public Helper<3, DEFORMED>
                 wsp1, wsp2, bwd);
 
             // Step 2: inner product for mass matrix operation
-            IProductTetKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
-                              true, false, DEFORMED,
-                 bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductTetKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
+                              true, false, DEFORMED>
+                (bwd, this->m_bdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, tmpOut, m_lambda);
 
@@ -4522,21 +4521,21 @@ struct HelmholtzTet : public Helmholtz, public Helper<3, DEFORMED>
                 }
             }
 
-            IProductTetKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
-                              false, true, DEFORMED,
-                deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
+            IProductTetKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
+                              false, true, DEFORMED>
+                (deriv0, this->m_dbdata[0], this->m_bdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, tmpOut);
 
-            IProductTetKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
-                              false, true, DEFORMED,
-                 deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
+            IProductTetKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
+                              false, true, DEFORMED>
+                (deriv1, this->m_bdata[0], this->m_dbdata[1], this->m_bdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, tmpOut);
 
-            IProductTetKernel(NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
-                              false, true, DEFORMED,
-                 deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
+            IProductTetKernel<NM0, NM1, NM2, NQ0, NQ1, NQ2, CORRECT,
+                              false, true, DEFORMED>
+                (deriv2, this->m_bdata[0], this->m_bdata[1], this->m_dbdata[2],
                  this->m_w[0], this->m_w[1], this->m_w[2], jac_ptr,
                  wsp1, tmpOut);
 

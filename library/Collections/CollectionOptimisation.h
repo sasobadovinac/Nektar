@@ -130,6 +130,7 @@ class CollectionOptimisation
         // Constuctor
         COLLECTIONS_EXPORT CollectionOptimisation(
                 LibUtilities::SessionReaderSharedPtr pSession,
+                const int shapedim, 
                 ImplementationType defaultType = eStdMat);
 
         ~CollectionOptimisation(){};
@@ -163,22 +164,18 @@ class CollectionOptimisation
         COLLECTIONS_EXPORT void UpdateOptFile(std::string sessName,
                                               LibUtilities::CommSharedPtr &comm);
     
-        bool SetByXml(void)
-        {
-            return m_setByXml;
-        }
 
     private:
         typedef std::pair<LibUtilities::ShapeType, int> ElmtOrder;
         typedef std::map<OperatorType, std::map<ElmtOrder, ImplementationType> > GlobalOpMap; 
         static std::map<OpImpTimingKey,OperatorImpMap> m_opImpMap;
         GlobalOpMap m_global;
-        bool m_setByXml;
         bool m_autotune;
         ImplementationType m_defaultType;
         unsigned int m_maxCollSize;
-
-        void  ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &global, bool &setByXml);
+        unsigned int m_shapeDim;
+    
+        void  ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &global, bool verbose);
 
 };
 

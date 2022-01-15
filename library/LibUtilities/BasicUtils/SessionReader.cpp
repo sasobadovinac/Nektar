@@ -1596,6 +1596,7 @@ namespace Nektar
 
                         // First check if the new item is in fact blank
                         // replace if it is a COLLECTIONS section however. 
+
                         if (!p->FirstChild() && vMainEntry
                             && !boost::iequals(p->Value(),"COLLECTIONS"))
                         {
