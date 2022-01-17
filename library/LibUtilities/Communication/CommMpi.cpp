@@ -458,7 +458,7 @@ CommRequestSharedPtr CommMpi::v_CreateRequest(int num)
  * grid. The row and column to which this process belongs is stored in
  * #m_commRow and #m_commColumn.
  */
-void CommMpi::v_SplitComm(int pRows, int pColumns)
+void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
 {
     ASSERTL0(pRows * pColumns == m_size,
              "Rows/Columns do not match comm size.");
@@ -482,20 +482,24 @@ void CommMpi::v_SplitComm(int pRows, int pColumns)
     MPI_Comm_split(m_comm, myCol, myRow, &newComm);
     m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
 */
-    constexpr int dims          = 2;
-    const     int sizes[dims]   = {pRows, pColumns};
-    const     int periods[dims] = {0, 0};
+    constexpr int dims          = 3;
+    const     int sizes[dims]   = {pRows, pColumns, pTime};
+    const     int periods[dims] = {0, 0, 0};
     constexpr int reorder       = 1;
 
     MPI_Cart_create(m_comm, dims, sizes, periods, reorder, &gridComm);
 
-    constexpr int keepRow[dims] = {0, 1};
+    constexpr int keepRow[dims] = {0, 1, 0};
     MPI_Cart_sub(gridComm, keepRow, &newComm);
     m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
 
-    constexpr int keepCol[dims] = {1, 0};
+    constexpr int keepCol[dims] = {1, 0, 0};
     MPI_Cart_sub(gridComm, keepCol, &newComm);
     m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
+
+    constexpr int keepTime[dims] = {0, 0, 1};
+    MPI_Cart_sub(gridComm, keepTime, &newComm);
+    m_commTime = std::shared_ptr<Comm>(new CommMpi(newComm));
 }
 
 /**

@@ -292,9 +292,9 @@ CommRequestSharedPtr CommSerial::v_CreateRequest(int num)
 /**
  *
  */
-void CommSerial::v_SplitComm(int pRows, int pColumns)
+void CommSerial::v_SplitComm(int pRows, int pColumns, int pTime)
 {
-    boost::ignore_unused(pRows, pColumns);
+    boost::ignore_unused(pRows, pColumns, pTime);
     ASSERTL0(false, "Cannot split a serial process.");
 }
 
