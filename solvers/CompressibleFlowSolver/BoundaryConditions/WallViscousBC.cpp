@@ -92,26 +92,19 @@ void WallViscousBC::v_Apply(
             GetPhys_Offset(e);
         id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
 
-        // Boundary condition for epsilon term.
+        // Boundary condition for epsilon term. @TODO: Is this correct, or should I do E = p/(gamma -1) + 1/2*rho(u^2 +v^2 + w^2)...
         if (nVariables == m_spacedim+3)
         {
             Vmath::Zero(nBCEdgePts, &Fwd[nVariables-1][id2], 1);
         }
 
-        // V = -Vin (What to do with Vg???)
         for (i = 0; i < m_spacedim; i++)
         {
-            //for (int j = 0; j < nBCEdgePts; ++j)
-            //{
-                //Fwd[i+1][id2+j] = -Fwd[i+1][id2+j];
-                //Fwd[i+1][id2+j] = m_gridVelocity[i][id2+j] * Fwd[0][id2+j];
-                //Fwd[i+1][id2+j] = -Fwd[i+1][id2+j] + m_gridVelocity[i][id2+j] * Fwd[0][id2+j];
-                //std::cout << "i = " << i << " | -V = " << -Fwd[i+1][id2+j] << " -> " << -Fwd[i+1][id2+j] + m_gridVelocity[i][id2+j] * Fwd[0][id2+j] << " = -V + Vg" << std::endl;
-            //}
-
-            // Do Vin - vg for the ALE
-            //Vmath::Vadd(nBCEdgePts, &Fwd[i+1][id2], 1, &m_gridVelocity[i][id2], 1, &Fwd[i+1][id2], 1);
+            // V = -Vin
             Vmath::Neg(nBCEdgePts, &Fwd[i+1][id2], 1);
+
+            // This now does Vg * rho + Vin
+            Vmath::Vvtvp(nBCEdgePts, &m_gridVelocity[i][id2], 1, &Fwd[0][id2], 1, &Fwd[i+1][id2], 1, &Fwd[i+1][id2], 1);
         }
 
         // Copy boundary adjusted values into the boundary expansion
