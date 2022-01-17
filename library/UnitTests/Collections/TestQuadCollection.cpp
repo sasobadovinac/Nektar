@@ -97,7 +97,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -145,7 +145,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -197,7 +197,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -247,7 +247,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eIterPerExp);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -294,7 +294,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -347,7 +347,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         impTypes[Collections::eBwdTrans] = Collections::eMatrixFree;
@@ -401,7 +401,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -455,7 +455,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -511,7 +511,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -566,7 +566,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eBwdTrans);
@@ -615,7 +615,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTBase);
@@ -675,7 +675,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTBase);
@@ -741,7 +741,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTBase);
@@ -805,7 +805,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTBase);
@@ -864,7 +864,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTBase);
@@ -923,7 +923,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTBase);
@@ -990,7 +990,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -1058,7 +1058,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -1126,7 +1126,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -1187,7 +1187,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::ePhysDeriv);
@@ -1247,7 +1247,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::ePhysDeriv);
@@ -1319,7 +1319,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -1386,7 +1386,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -1450,7 +1450,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(Exp);
         Collections::Collection     c(CollExp, impTypes);
@@ -1520,7 +1520,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -1581,7 +1581,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::ePhysDeriv);
@@ -1642,7 +1642,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::ePhysDeriv);
@@ -1706,7 +1706,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::ePhysDeriv);
@@ -1767,7 +1767,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::ePhysDeriv);
@@ -1831,7 +1831,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTDerivBase);
@@ -1904,7 +1904,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTDerivBase);
@@ -1988,7 +1988,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     cref(CollExp, impTypes);
@@ -2068,7 +2068,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     cref(CollExp, impTypes);
@@ -2152,7 +2152,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -2247,7 +2247,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
             Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     cref(CollExp, impTypes);
@@ -2318,7 +2318,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTDerivBase);
@@ -2392,7 +2392,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eStdMat);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTDerivBase);
@@ -2468,7 +2468,7 @@ namespace QuadCollectionTests
         CollExp.push_back(Exp);
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTDerivBase);
@@ -2540,7 +2540,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTDerivBase);
@@ -2619,7 +2619,7 @@ namespace QuadCollectionTests
         }
         
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+        Collections::CollectionOptimisation colOpt(dummySession, 2, Collections::eSumFac);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
         c.Initialise(Collections::eIProductWRTDerivBase);
@@ -2716,7 +2716,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
                                                    Collections::eIterPerExp);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -2806,7 +2806,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
                                                    Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -2889,7 +2889,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
                                                    Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);
@@ -2976,7 +2976,7 @@ namespace QuadCollectionTests
         }
 
         LibUtilities::SessionReaderSharedPtr dummySession;
-        Collections::CollectionOptimisation colOpt(dummySession,
+        Collections::CollectionOptimisation colOpt(dummySession, 2,
                                                    Collections::eMatrixFree);
         Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
         Collections::Collection     c(CollExp, impTypes);

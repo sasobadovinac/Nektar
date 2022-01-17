@@ -91,20 +91,8 @@ CollectionOptimisation::CollectionOptimisation(
     {
         for (auto &it2 : elTypes)
         {
-            // For 1<=N<=5 use StdMat otherwise IterPerExp or given default type
-            for (int i = 1; i < 5; ++i)
-            {
-                defaults[ElmtOrder(it2.second, i)] = eStdMat;
-            }
-
-            // For 1<=N<=3 use SumFac otherwise NoCollection. Note that
-            // default is not currently overwritten by given default
-            // type
+            // use Nocollection for Phys Deriv 
             defaultsPhysDeriv [ElmtOrder(it2.second, -1)] = eNoCollection;
-            for (int i = 1; i < 3; ++i)
-            {
-                defaultsPhysDeriv[ElmtOrder(it2.second, i)] = eSumFac;
-            }
 
             // Use IterPerExp 
             defaultsHelmholtz[ElmtOrder(it2.second, -1)] = eMatrixFree;
@@ -134,13 +122,16 @@ CollectionOptimisation::CollectionOptimisation(
         impTypes[ImplementationTypeMap[i]] = (ImplementationType)i;
     }
 
-    if(pSession.get()) // turn off file reader if dummy pointer is given
+    // turn off file reader if dummy pointer is given or if default
+    // option is passed and by default calling argument.
+    if ((defaultType == eNoImpType)&&(pSession.get()))
     {
         TiXmlDocument &doc = pSession->GetDocument();
         TiXmlHandle docHandle(&doc);
         TiXmlElement *master = docHandle.FirstChildElement("NEKTAR").Element();
         ASSERTL0(master, "Unable to find NEKTAR tag in file.");
-
+        bool WriteFullCollections = false;
+        
         TiXmlElement *xmlCol = master->FirstChildElement("COLLECTIONS");
 
         // Check if user has specified some options
@@ -153,9 +144,9 @@ CollectionOptimisation::CollectionOptimisation(
             const char *defaultImpl = xmlCol->Attribute("DEFAULT");
             m_defaultType = defaultType;
 
-            // If user has specified a default impl type, autotuning
+            // If user has specified a default impl type or  autotuning
             // and set this default across all operators.
-            if (defaultType == eNoImpType && defaultImpl)
+            if (defaultImpl)
             {
                 const std::string collinfo = string(defaultImpl);
                 m_autotune = boost::iequals(collinfo, "auto");
@@ -189,11 +180,38 @@ CollectionOptimisation::CollectionOptimisation(
                         m_global[(OperatorType)i] = defaults;
                     }
                 }
+            }            
+            const char *write = xmlCol->Attribute("WRITE");
+            if(write&&boost::iequals(write,"true"))
+            {
+                WriteFullCollections = true; 
             }
 
             // Now process operator-specific implementation selections
             ReadCollOps(xmlCol,m_global,verbose);
 
+            // Print out operator map
+            if (verbose)
+            {
+                if(WriteFullCollections)
+                {
+                    for (auto &mIt : m_global)
+                    {
+                        cout << "Operator " << OperatorTypeMap[mIt.first]
+                             << ":" << endl;
+
+                        for (auto &eIt : mIt.second)
+                        {
+                            cout << "- "
+                                 << LibUtilities::ShapeTypeMap[eIt.first.first]
+                                 << " order " << eIt.first.second << " -> "
+                                 << ImplementationTypeMap[eIt.second] << endl;
+                        }
+                    }
+
+                }
+
+            }
         }
     }
 }
@@ -618,7 +636,6 @@ void CollectionOptimisation::UpdateOptFile(std::string sessName,
                         global[op.first]
                             [ElmtOrder((LibUtilities::ShapeType) i,-1)]
                             = (ImplementationType) ElmtImp[i]; 
-                        cout << "Shared Elmt " << endl;
                     }
                 }
             }

@@ -5065,7 +5065,8 @@ namespace Nektar
             for (int i = 0; i < m_exp->size(); ++i)
             {
                 collections[(*m_exp)[i]->DetShapeType()].push_back(
-                    std::pair<LocalRegions::ExpansionSharedPtr,int>((*m_exp)[i],i));
+                    std::pair<LocalRegions::ExpansionSharedPtr,int>
+                    ((*m_exp)[i],i));
             }
             
             for (auto &it : collections)

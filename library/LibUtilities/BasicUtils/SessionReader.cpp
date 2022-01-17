@@ -1039,6 +1039,8 @@ namespace Nektar
         {
             TiXmlElement *xmlGeom = m_xmlDoc->FirstChildElement("NEKTAR")
                 ->FirstChildElement("GEOMETRY");
+            ASSERTL1(xmlGeom,"Failed to find a GEOMETRY section in m_xmlDoc");
+
             TiXmlAttribute *attr  = xmlGeom->FirstAttribute();
             while (attr)
             {
