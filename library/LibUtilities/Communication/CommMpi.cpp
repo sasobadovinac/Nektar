@@ -464,7 +464,8 @@ void CommMpi::v_SplitComm(int pRows, int pColumns)
              "Rows/Columns do not match comm size.");
 
     MPI_Comm newComm;
-
+    MPI_Comm gridComm;
+/*
     // Compute row and column in grid.
     int myCol = m_rank % pColumns;
     int myRow = (m_rank - myCol) / pColumns;
@@ -479,6 +480,21 @@ void CommMpi::v_SplitComm(int pRows, int pColumns)
     // in the same communicator. The rank within this communicator is
     // the row index.
     MPI_Comm_split(m_comm, myCol, myRow, &newComm);
+    m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
+*/
+    constexpr int dims          = 2;
+    const     int sizes[dims]   = {pRows, pColumns};
+    const     int periods[dims] = {0, 0};
+    constexpr int reorder       = 1;
+
+    MPI_Cart_create(m_comm, dims, sizes, periods, reorder, &gridComm);
+
+    constexpr int keepRow[dims] = {0, 1};
+    MPI_Cart_sub(gridComm, keepRow, &newComm);
+    m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
+
+    constexpr int keepCol[dims] = {1, 0};
+    MPI_Cart_sub(gridComm, keepCol, &newComm);
     m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
 }
 
