@@ -70,39 +70,47 @@ void DriverParareal::v_InitObject(ostream &out)
     Driver::v_InitObject(out);
 }
 
-void DriverParareal::RunCoarseSolve(const Array<OneD, const NekDouble> &input,
+void DriverParareal::RunCoarseSolve(const NekDouble                     time,
+                                    const Array<OneD, const NekDouble> &input,
                                           Array<OneD,       NekDouble> &output)
 {
     // Set to coarse timestep.
     NekDouble coarseDt = m_timestep * m_coarseSolveFactor;
-    int nCoarseSteps = std::max(coarseDt / m_numChunks, 1);
+    int nCoarseSteps = std::max((int)round(m_chunkTime / coarseDt), 1);
+
+    std::cout << "RUNNING COARSE SOLVE: dt = " << coarseDt << " nsteps = " << nCoarseSteps << std::endl;
 
     ASSERTL0(m_steps % nCoarseSteps == 0,
              "number of coarse steps should divide number of total steps");
 
+    m_equ[0]->SetTime(time);
     m_equ[0]->SetTimeStep(coarseDt);
-    m_equ[0]->SetNumSteps(nCoarseSteps);
+    m_equ[0]->SetSteps(nCoarseSteps);
 
     // Copy initial condition from input.
     m_equ[0]->CopyToPhysField(0, input);
 
-    m_equ[0]->DoInitialise();
+    //m_equ[0]->DoInitialise();
     m_equ[0]->DoSolve();
 
     m_equ[0]->CopyFromPhysField(0, output);
 }
 
-void DriverParareal::RunFineSolve(const Array<OneD, const NekDouble> &input,
+void DriverParareal::RunFineSolve(const NekDouble                     time,
+                                  const Array<OneD, const NekDouble> &input,
                                         Array<OneD,       NekDouble> &output)
 {
+    std::cout << "RUNNING FINE SOLVE: dt = " << m_timestep << " nsteps = " << m_steps / m_numChunks << std::endl;
+
     // Set to fine timestep.
+    m_equ[0]->SetTime(time);
     m_equ[0]->SetTimeStep(m_timestep);
-    m_equ[0]->SetNumSteps(m_steps / m_numChunks);
+    m_equ[0]->SetSteps(m_steps / m_numChunks);
 
     // Copy initial condition from input.
     m_equ[0]->CopyToPhysField(0, input);
 
-    m_equ[0]->DoInitialise();
+    //m_equ[0]->DoInitialise();
     m_equ[0]->DoSolve();
 
     m_equ[0]->CopyFromPhysField(0, output);
@@ -117,6 +125,7 @@ void DriverParareal::v_Execute(ostream &out)
     m_timestep  = m_equ[0]->GetTimeStep();
     m_steps     = m_equ[0]->GetSteps();
     m_totalTime = m_timestep * m_steps;
+    m_chunkTime = m_totalTime / m_numChunks;
 
     ASSERTL0(m_steps % m_numChunks == 0,
              "Total step size should be divisible by number of chunks.");
@@ -145,13 +154,25 @@ void DriverParareal::v_Execute(ostream &out)
     m_equ[0]->CopyFromPhysField(0, solution[0]);
 
     // Run coarse solution, G(y_j^k) to get initial conditions
+    std::cout << "** INITIAL CONDITION **" << std::endl;
     for (int i = 0; i < m_numChunks; ++i)
     {
-        RunCoarseSolve(solution[i], solution[i+1]);
+        RunCoarseSolve(i * m_chunkTime, solution[i], solution[i+1]);
     }
+
+    Array<OneD, NekDouble> exactsoln(m_equ[0]->GetTotPoints(), 0.0);
+
+    // Evaluate "ExactSolution" function, or zero array
+    m_equ[0]->EvaluateExactSolution(0, exactsoln,
+                                    m_equ[0]->GetFinalTime());
+
+    NekDouble vL2Error   = m_equ[0]->L2Error(0, exactsoln);
+
+    std::cout << "COARSE SOLVE L2 error = " << vL2Error << std::endl;
 
     for (int k = 0; k < m_numChunks; ++k)
     {
+        std::cout << "** ITERATION " << k << " **" << std::endl;
         if (k == 0)
         {
             for (int i = 0; i < m_numChunks + 1; ++i)
@@ -164,7 +185,7 @@ void DriverParareal::v_Execute(ostream &out)
             // Run coarse solution, G(y_j^k)
             for (int i = 0; i < m_numChunks; ++i)
             {
-                RunCoarseSolve(solution[i], solutionCoarse1[i+1]);
+                RunCoarseSolve(i * m_chunkTime, solution[i], solutionCoarse1[i+1]);
             }
         }
 
@@ -172,19 +193,23 @@ void DriverParareal::v_Execute(ostream &out)
         solutionFine[0] = solution[0];
         for (int i = 0; i < m_numChunks; ++i)
         {
-            RunFineSolve(solution[i], solutionFine[i+1]);
+            RunFineSolve(i * m_chunkTime, solution[i], solutionFine[i+1]);
         }
 
         solutionCoarse2[0] = solution[0];
         for (int i = 0; i < m_numChunks; ++i)
         {
-            RunCoarseSolve(solution[i], solutionCoarse2[i+1]);
+            RunCoarseSolve(i * m_chunkTime, solution[i], solutionCoarse2[i+1]);
             for (int q = 0; q < nPts; ++q)
             {
                 solution[i+1][q] = solutionCoarse2[i+1][q] + solutionFine[i+1][q]
                     - solutionCoarse1[i+1][q];
             }
         }
+
+        // Copy output
+        m_equ[0]->CopyToPhysField(0, solution[m_numChunks]);
+
     }
 
     time(&endtime);

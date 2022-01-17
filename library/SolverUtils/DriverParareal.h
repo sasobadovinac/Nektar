@@ -79,6 +79,9 @@ protected:
     /// Coarse solve factor
     NekDouble m_coarseSolveFactor = 10.0;
 
+    /// Time for chunks
+    NekDouble m_chunkTime;
+
     /// Constructor
     SOLVER_UTILS_EXPORT DriverParareal(
         const LibUtilities::SessionReaderSharedPtr pSession,
@@ -93,9 +96,11 @@ protected:
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
 
-    void RunCoarseSolve(const Array<OneD, const NekDouble> &input,
+    void RunCoarseSolve(const NekDouble                     time,
+                        const Array<OneD, const NekDouble> &input,
                               Array<OneD,       NekDouble> &output);
-    void RunFineSolve  (const Array<OneD, const NekDouble> &input,
+    void RunFineSolve  (const NekDouble                     time,
+                        const Array<OneD, const NekDouble> &input,
                               Array<OneD,       NekDouble> &output);
 
     static std::string driverLookupId;

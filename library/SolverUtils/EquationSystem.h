@@ -278,8 +278,9 @@ namespace Nektar
             SOLVER_UTILS_EXPORT inline void CopyFromPhysField(const int i,
                     Array<OneD, NekDouble> &output);
 
-            SOLVER_UTILS_EXPORT inline void CopyToPhysField(const int i,
-                    Array<OneD, NekDouble> &output);
+            SOLVER_UTILS_EXPORT inline void CopyToPhysField(
+                const int i,
+                const Array<OneD, const NekDouble> &input);
 
             SOLVER_UTILS_EXPORT inline void SetSteps(const int steps);
 
@@ -752,9 +753,9 @@ namespace Nektar
         }
 
         inline void EquationSystem::CopyToPhysField(const int i,
-                                                    Array<OneD, NekDouble> &output)
+                                                    const Array<OneD, const NekDouble> &input)
         {
-            Vmath::Vcopy(output.size(), output, 1, m_fields[i]->UpdatePhys(), 1 );
+            Vmath::Vcopy(input.size(), input, 1, m_fields[i]->UpdatePhys(), 1 );
         }
     }
 }
