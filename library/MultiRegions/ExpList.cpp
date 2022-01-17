@@ -4189,7 +4189,9 @@ namespace Nektar
                                 factor = 0.5;
                             }
                         }
-
+                    }
+                    for(int nlr=0;nlr<2;nlr++)
+                    {
                         for (int j = 0; j < e_npoints; ++j)
                         {
                             lengLR[nlr][offset + j] = factor*lengAdd[nlr][j];
