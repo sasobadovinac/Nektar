@@ -121,6 +121,9 @@ void DriverParareal::v_Execute(ostream &out)
     time_t starttime, endtime;
     NekDouble CPUtime;
 
+    m_numChunks = m_session->GetComm()->GetTimeComm()->GetSize();
+    m_chunkRank = m_session->GetComm()->GetTimeComm()->GetRank();
+
     // Set parameters from original session file.
     m_timestep  = m_equ[0]->GetTimeStep();
     m_steps     = m_equ[0]->GetSteps();
@@ -136,80 +139,98 @@ void DriverParareal::v_Execute(ostream &out)
 
     // Allocate storage for coarse solver..
     int nPts = m_equ[0]->GetNpoints();
-    Array<OneD, Array<OneD, NekDouble>> solution(m_numChunks + 1);
-    Array<OneD, Array<OneD, NekDouble>> solutionFine(m_numChunks + 1);
-    Array<OneD, Array<OneD, NekDouble>> solutionCoarse1(m_numChunks + 1);
-    Array<OneD, Array<OneD, NekDouble>> solutionCoarse2(m_numChunks + 1);
-
-    for (int i = 0; i < solution.size(); ++i)
-    {
-        solution[i] = Array<OneD, NekDouble>(nPts);
-        solutionFine[i] = Array<OneD, NekDouble>(nPts);
-        solutionCoarse1[i] = Array<OneD, NekDouble>(nPts);
-        solutionCoarse2[i] = Array<OneD, NekDouble>(nPts);
-    }
+    Array<OneD, NekDouble> solution;
+    Array<OneD, NekDouble> solutionFine;
+    Array<OneD, NekDouble> solutionCoarse1;
+    Array<OneD, NekDouble> solutionCoarse2;
 
     // Grab initial condition
     m_equ[0]->DoInitialise();
-    m_equ[0]->CopyFromPhysField(0, solution[0]);
 
-    // Run coarse solution, G(y_j^k) to get initial conditions
-    std::cout << "** INITIAL CONDITION **" << std::endl;
-    for (int i = 0; i < m_numChunks; ++i)
-    {
-        RunCoarseSolve(i * m_chunkTime, solution[i], solution[i+1]);
+    if (m_chunkRank == 0) {
+        m_equ[0]->CopyFromPhysField(0, solution);
     }
 
-    Array<OneD, NekDouble> exactsoln(m_equ[0]->GetTotPoints(), 0.0);
-
     // Evaluate "ExactSolution" function, or zero array
+    Array<OneD, NekDouble> exactsoln(m_equ[0]->GetTotPoints(), 0.0);
     m_equ[0]->EvaluateExactSolution(0, exactsoln,
                                     m_equ[0]->GetFinalTime());
 
-    NekDouble vL2Error   = m_equ[0]->L2Error(0, exactsoln);
+    // Run coarse solution, G(y_j^k) to get initial conditions
+    std::cout << "** INITIAL CONDITION **" << std::endl;
+    LibUtilities::CommSharedPtr tc = m_session->GetComm()->GetTimeComm();
+    int recvProc = m_chunkRank - 1;
+    int sendProc = m_chunkRank + 1;
 
-    std::cout << "COARSE SOLVE L2 error = " << vL2Error << std::endl;
+    // Calculate the initial coarse solve approximation
+    // This provides each time-slice with its initial condition.
+    if (m_chunkRank > 0) {
+        tc->Recv(recvProc, solution);
+    }
+    RunCoarseSolve(m_chunkRank, solution, solution);
+    if (m_chunkRank < m_numChunks - 1)
+    {
+        tc->Send(sendProc, solution);
+    }
 
+    // On the last time-slice, we calculate the L2 error of our coarse solution
+    if (m_chunkRank == m_numChunks - 1) {
+        // Copy the calculated coarse solution back
+        m_equ[0]->CopyToPhysField(0, solution);
+
+        NekDouble vL2Error   = m_equ[0]->L2Error(0, exactsoln);
+
+        std::cout << "COARSE SOLVE L2 error = " << vL2Error << std::endl;
+    }
+
+    // Iterate to improve on the approximation
+    // For the moment, we use the maximum number of iterations
+    // We can add a tolerance threshold later.
+    // We start the iteration with the current approximation stored in
+    // the 'solution' array.
     for (int k = 0; k < m_numChunks; ++k)
     {
         std::cout << "** ITERATION " << k << " **" << std::endl;
-        if (k == 0)
-        {
-            for (int i = 0; i < m_numChunks + 1; ++i)
-            {
-                solutionCoarse1[i] = solution[i];
-            }
-        }
-        else
-        {
-            // Run coarse solution, G(y_j^k)
-            for (int i = 0; i < m_numChunks; ++i)
-            {
-                RunCoarseSolve(i * m_chunkTime, solution[i], solutionCoarse1[i+1]);
-            }
-        }
 
-        // Run fine solution, F(y_j^k)
-        solutionFine[0] = solution[0];
-        for (int i = 0; i < m_numChunks; ++i)
-        {
-            RunFineSolve(i * m_chunkTime, solution[i], solutionFine[i+1]);
+        // Calculate the coarse approximation G(y_j^k)
+        // For the first iteration, this is already known, so could skip
+        // Since this is based on previous solution, no comm necessary
+        RunCoarseSolve(m_chunkRank * m_chunkTime, solution, solutionCoarse1);
+
+        // Calculate fine solution, F(y_j^k)
+        // Again no communication necessary
+        RunFineSolve(m_chunkRank * m_chunkTime, solution, solutionFine);
+
+        // Calculate coarse solve correction G(y_j^{k+1})
+        // These are dependent on the previous time slice, so need to compute serially.
+        if (m_chunkRank > 0) {
+            // All time slices, apart from the first, receive their initial state from
+            // the previous time slice.
+            tc->Recv(recvProc, solution);
         }
-
-        solutionCoarse2[0] = solution[0];
-        for (int i = 0; i < m_numChunks; ++i)
+        // Run the coarse solver
+        RunCoarseSolve(m_chunkRank * m_chunkTime, solution, solutionCoarse2);
+        // Calculate the new approximation y_{j+1}^{k+1}
+        // This is calculated point-wise.
+        for (int q = 0; q < nPts; ++q)
         {
-            RunCoarseSolve(i * m_chunkTime, solution[i], solutionCoarse2[i+1]);
-            for (int q = 0; q < nPts; ++q)
-            {
-                solution[i+1][q] = solutionCoarse2[i+1][q] + solutionFine[i+1][q]
-                    - solutionCoarse1[i+1][q];
-            }
+            solution[q] = solutionCoarse2[q] + solutionFine[q] - solutionCoarse1[q];
         }
+        // All but the last time slice should communicate the solution to the next time slice.
+        // This will become the initial condition for the next slice.
+        if (m_chunkRank < m_numChunks - 1) {
+            tc->Send(sendProc, solution);
+        }
+        
+        // On the last time-slice, we calculate the L2 error of our latest approximation
+        if (m_chunkRank == m_numChunks - 1) {
+            // Copy the calculated coarse solution back
+            m_equ[0]->CopyToPhysField(0, solution);
 
-        // Copy output
-        m_equ[0]->CopyToPhysField(0, solution[m_numChunks]);
+            NekDouble vL2Error   = m_equ[0]->L2Error(0, exactsoln);
 
+            std::cout << "COARSE SOLVE L2 error = " << vL2Error << std::endl;
+        }
     }
 
     time(&endtime);

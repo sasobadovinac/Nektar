@@ -74,7 +74,10 @@ protected:
     int m_steps;
 
     /// Number of time chunks
-    int m_numChunks = 4;
+    int m_numChunks = 1;
+
+    /// Rank in time
+    int m_chunkRank = 0;
 
     /// Coarse solve factor
     NekDouble m_coarseSolveFactor = 10.0;
