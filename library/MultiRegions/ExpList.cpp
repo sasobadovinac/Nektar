@@ -4183,8 +4183,11 @@ namespace Nektar
                         }
                         else
                         {
-                            lengAdd[nlr]     =   lengAdd[0];
-                            factor = 0.5;
+                            if (1==nlr)
+                            {
+                                lengAdd[nlr]     =   lengAdd[0];
+                                factor = 0.5;
+                            }
                         }
 
                         for (int j = 0; j < e_npoints; ++j)
