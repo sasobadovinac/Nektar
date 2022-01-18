@@ -5028,13 +5028,13 @@ namespace Nektar
             // session file or default given
             Collections::CollectionOptimisation
                 colOpt(m_session, (*m_exp)[0]->GetShapeDimension(),ImpType);
-            ImpType = colOpt.GetDefaultImplementationType();
+            //ImpType = colOpt.GetDefaultImplementationType();
 
             // turn on autotuning if explicitly specified in xml file
             // or command line option is set but only do optimisation
             // for volumetric elements (not boundary condition)
             bool autotuning = colOpt.IsUsingAutotuning();
-            if(autotuning == false)
+            if((autotuning == false)&&(ImpType == Collections::eNoImpType))
             {
                 // turn on autotuning if writeoptfile specified
                 // if m_graph available
@@ -5092,7 +5092,7 @@ namespace Nektar
                     collExp.push_back(it.second[0].first);
 
                     // if no Imp Type provided and No
-                    // settign in xml file. reset
+                    // setting in xml file. reset
                     // impTypes using timings
                     if(autotuning)
                     {
@@ -5203,7 +5203,8 @@ namespace Nektar
             }
 
             // update optimisation file
-            if(m_session->GetUpdateOptFile())
+            if((m_session->GetUpdateOptFile())&&
+               (ImpType == Collections::eNoImpType))
             {
                 colOpt.UpdateOptFile(m_session->GetSessionName(),m_comm);
                 // turn off writeoptfile option so only first

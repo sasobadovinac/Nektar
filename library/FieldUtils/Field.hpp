@@ -753,7 +753,9 @@ struct Field
                                 MultiRegions::ContField>(m_exp[0]);
 
                         tmp = MemoryManager<MultiRegions::ContField>::
-                            AllocateSharedPtr(m_session, m_graph, var);
+                            AllocateSharedPtr(m_session, m_graph, var,
+                                              true,false,
+                                              Collections::eNoCollection);
                     }
                     else if (m_declareExpansionAsDisContField)
                     {
@@ -762,7 +764,9 @@ struct Field
                                 MultiRegions::DisContField>(m_exp[0]);
 
                         tmp = MemoryManager<MultiRegions::DisContField>::
-                            AllocateSharedPtr(m_session, m_graph, var);
+                            AllocateSharedPtr(m_session, m_graph, var,
+                                              true,
+                                              Collections::eNoCollection);
                     }
                     else
                     {
@@ -793,7 +797,8 @@ struct Field
                                                    ->GetHomogeneousBasis()
                                                    ->GetBasisKey(),
                                     m_exp[0]->GetHomoLen(), m_useFFT,
-                                    dealiasing, m_graph, var);
+                                    dealiasing, m_graph, var,
+                                    Collections::eNoCollection);
                         }
                         else
                         {
@@ -817,18 +822,19 @@ struct Field
                             tmp = MemoryManager<
                                 MultiRegions::DisContField3DHomogeneous1D>::
                                 AllocateSharedPtr(
-                                    m_session, m_exp[0]
-                                                   ->GetHomogeneousBasis()
-                                                   ->GetBasisKey(),
-                                    m_exp[0]->GetHomoLen(), m_useFFT,
-                                    dealiasing, m_graph, var);
+                                                  m_session, m_exp[0]
+                                                  ->GetHomogeneousBasis()
+                                                  ->GetBasisKey(),
+                                                  m_exp[0]->GetHomoLen(), m_useFFT,
+                                                  dealiasing, m_graph, var,
+                                                  Collections::eNoCollection);
                         }
                         else
                         {
                             MultiRegions::DisContField3DHomogeneous1DSharedPtr
                                 tmp2 = std::dynamic_pointer_cast<
                                     MultiRegions::DisContField3DHomogeneous1D>(
-                                    m_exp[0]);
+                                                                               m_exp[0]);
                             ASSERTL0(tmp2, "Failed to type cast m_exp[0]");
 
                             tmp = MemoryManager<
@@ -845,18 +851,20 @@ struct Field
                             tmp = MemoryManager<
                                 MultiRegions::ExpList3DHomogeneous1D>::
                                 AllocateSharedPtr(
-                                    m_session, m_exp[0]
-                                                   ->GetHomogeneousBasis()
-                                                   ->GetBasisKey(),
-                                    m_exp[0]->GetHomoLen(), m_useFFT,
-                                    dealiasing, m_graph);
+                                                  m_session, m_exp[0]
+                                                  ->GetHomogeneousBasis()
+                                                  ->GetBasisKey(),
+                                                  m_exp[0]->GetHomoLen(), m_useFFT,
+                                                  dealiasing, m_graph,
+                                                  "DefaultVar",
+                                                  Collections::eNoCollection);
                         }
                         else
                         {
                             MultiRegions::ExpList3DHomogeneous1DSharedPtr tmp2 =
                                 std::dynamic_pointer_cast<
                                     MultiRegions::ExpList3DHomogeneous1D>(
-                                    m_exp[0]);
+                                                                          m_exp[0]);
                             ASSERTL0(tmp2, "Failed to type cast m_exp[0]");
 
                             tmp = MemoryManager<
@@ -872,7 +880,9 @@ struct Field
                         if (NewField)
                         {
                             tmp = MemoryManager<MultiRegions::ContField>::
-                                AllocateSharedPtr(m_session, m_graph, var);
+                                AllocateSharedPtr(m_session, m_graph, var,
+                                                  true,false,
+                                                  Collections::eNoCollection);
                         }
                         else // call copy constructor
                         {
@@ -890,7 +900,9 @@ struct Field
                         if (NewField)
                         {
                             tmp = MemoryManager<MultiRegions::DisContField>::
-                                AllocateSharedPtr(m_session, m_graph, var);
+                                AllocateSharedPtr(m_session, m_graph, var,
+                                                  true,true,
+                                                  Collections::eNoCollection);
                         }
                         else // call copy constructor
                         {
@@ -914,14 +926,16 @@ struct Field
                 }
             }
             break;
-            case 3:
+        case 3:
             {
                 if (m_declareExpansionAsContField)
                 {
                     if (NewField)
                     {
                         tmp = MemoryManager<MultiRegions::ContField>::
-                            AllocateSharedPtr(m_session, m_graph, var);
+                            AllocateSharedPtr(m_session, m_graph, var,
+                                              true,false,
+                                              Collections::eNoCollection);
                     }
                     else
                     {
@@ -938,7 +952,9 @@ struct Field
                     if (NewField)
                     {
                         tmp = MemoryManager<MultiRegions::DisContField>::
-                            AllocateSharedPtr(m_session, m_graph, var);
+                            AllocateSharedPtr(m_session, m_graph, var,
+                                              true,true,
+                                              Collections::eNoCollection);
                     }
                     else
                     {
@@ -954,16 +970,16 @@ struct Field
                 {
                     MultiRegions::ExpListSharedPtr tmp2 =
                         std::dynamic_pointer_cast<MultiRegions::ExpList>(
-                            m_exp[0]);
+                                                                         m_exp[0]);
 
                     tmp = MemoryManager<
                         MultiRegions::ExpList>::AllocateSharedPtr(*tmp2);
                 }
             }
             break;
-            default:
-                ASSERTL0(false, "Expansion dimension not recognised");
-                break;
+        default:
+            ASSERTL0(false, "Expansion dimension not recognised");
+            break;
         }
         
         return tmp;
