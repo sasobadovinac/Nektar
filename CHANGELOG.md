@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v5.2
+------
+**Library**
+- Added support for manifold  MatrixFree operators (2D in 3D space) (!1304)
+- Put in place automatic selection of explicit operations using an opt file (!1304)
+
 v5.1.1
 ------
 **Library**
