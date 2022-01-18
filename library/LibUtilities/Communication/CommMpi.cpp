@@ -460,7 +460,7 @@ CommRequestSharedPtr CommMpi::v_CreateRequest(int num)
  */
 void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
 {
-    ASSERTL0(pRows * pColumns == m_size,
+    ASSERTL0(pRows * pColumns * pTime == m_size,
              "Rows/Columns do not match comm size.");
 
     MPI_Comm newComm;

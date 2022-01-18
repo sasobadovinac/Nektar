@@ -351,10 +351,11 @@ namespace Nektar
                 cpuTime += elapsed;
 
                 // Write out status information
-                if (m_session->GetComm()->GetRank() == 0 &&
+                if (//m_session->GetComm()->GetRank() == 0 &&
                     !((step+1) % m_infosteps))
                 {
-                    cout << "Steps: " << setw(8)  << left << step+1 << " "
+                    cout << "RANK " << m_session->GetComm()->GetRank()
+                         << " Steps: " << setw(8)  << left << step+1 << " "
                          << "Time: "  << setw(12) << left << m_time;
 
                     if (m_cflSafetyFactor)
@@ -441,8 +442,8 @@ namespace Nektar
                         }
                     }
 
-                    m_session->GetComm()->AllReduce(abortFlags,
-                                LibUtilities::ReduceMax);
+                    //m_session->GetComm()->AllReduce(abortFlags,
+                    //            LibUtilities::ReduceMax);
 
                     ASSERTL0 (!abortFlags[0],
                                 "NaN found during time integration.");
