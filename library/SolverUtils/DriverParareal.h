@@ -80,7 +80,7 @@ protected:
     int m_chunkRank = 0;
 
     /// Coarse solve factor
-    NekDouble m_coarseSolveFactor = 10.0;
+    NekDouble m_coarseSolveFactor = 100.0;
 
     /// Time for chunks
     NekDouble m_chunkTime;
