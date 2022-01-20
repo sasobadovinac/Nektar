@@ -22,7 +22,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         #BoundaryConditions/StagnationInflowBC.cpp
         #BoundaryConditions/SymmetryBC.cpp
         #BoundaryConditions/TimeDependentBC.cpp
-        #BoundaryConditions/WallBC.cpp
+        BoundaryConditions/WallBC.cpp
         BoundaryConditions/WallViscousBC.cpp
         CompressibleFlowSolver.cpp
         Diffusion/DiffusionLDGNS.cpp

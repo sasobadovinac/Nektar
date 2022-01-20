@@ -49,10 +49,11 @@ std::string WallBC::className = GetCFSBndCondFactory().
 WallBC::WallBC(const LibUtilities::SessionReaderSharedPtr& pSession,
            const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
            const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
+           const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
            const int pSpaceDim,
            const int bcRegion,
            const int cnt)
-    : CFSBndCond(pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt)
+    : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt)
 {
     m_diffusionAveWeight = 0.5;
 }
@@ -76,6 +77,8 @@ void WallBC::v_Apply(
 
     eMax = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetExpSize();
 
+
+
     for (e = 0; e < eMax; ++e)
     {
         nBCEdgePts = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
@@ -96,6 +99,16 @@ void WallBC::v_Apply(
         Array<OneD, NekDouble> tmp(nBCEdgePts, 0.0);
 
         //@TODO: v - vg here... check nguyen paper, only issue is getting the vg for the trace in here
+        //@TODO: Update m_traceNormals, might be fine though.
+
+        for (i = 0; i < m_spacedim; ++i)
+        {
+            // This now does Vg * rho + Vin
+            for(int j =0; j < nBCEdgePts; ++j)
+            {
+                Fwd[i+1][id2+j] += m_gridVelocity[i][id2+j] * Fwd[0][id2+j];
+            }
+        }
 
         // Calculate (v.n)
         for (i = 0; i < m_spacedim; ++i)
