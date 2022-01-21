@@ -6,6 +6,10 @@ v5.2.0
 ------
 **Library**
 - Add Arm SVE backend to SIMD library (!1282)
+v5.2.0
+------
+**Library**:
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
 
 v5.1.1
 ------
@@ -72,6 +76,9 @@ v5.1.0
 - Fix to interppointsdatatofld to allow for mpi processing of large files (!1191)
 - Fix the logic of C0Projection:helmsmoothing (!1220)
 - Fix extract module for boundaries with periodic boundary conditions (!1277)
+
+**IncNavierStokesSolver**:
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
