@@ -885,12 +885,15 @@ void ElUtil::UpdateMapping()
 
 void ElUtil::UpdateMappingByCurve(std::vector<CADCurveSharedPtr> curves)
 {
+
+    NekDouble scaling = 0;
+
     std::cout << "updatemappingbycurve num curves: " << curves.size() << "\n";
     for (auto &curve : curves){
         std::cout << "updatemappingbycurve curve #: " << curve->GetId() << "\n";
     }
 
-    NekDouble scaling = 0;
+    // r-adaption scale manually set
     NekDouble radius = m_adapt_radius;
     vector<NodeSharedPtr> ns = m_el->GetVertexList();
     // Using elements with a node with a radius from the curve
@@ -909,7 +912,7 @@ void ElUtil::UpdateMappingByCurve(std::vector<CADCurveSharedPtr> curves)
                     if (curve->GetMinDistance(x) < radius)
                     {
                         scaling = m_adapt_scale;
-                        return;
+                        return;  // return lambda function to break loop
                     }
                 }
             }
@@ -928,37 +931,43 @@ void ElUtil::UpdateMappingByCurve(std::vector<CADCurveSharedPtr> curves)
                     if (it != m_adaptcurves.end())
                     {
                         scaling = m_adapt_scale;
-                        return;
+                        return;  // return lambda function to break loop
                     }
                 }
             }
         }();
     }
 
-    if (!scaling) return;
-    std::cout << "updatemappingbycurve scaling = " << scaling << "\n";
-    for (int i = 0; i < m_maps.size(); ++i)
+    if (scaling)
     {
-        for (int j = 0; j < 9; ++j)
+        for (int i = 0; i < m_maps.size(); ++i)
         {
-            maps[i][j]    = m_maps[i][j] / scaling;
-            mapsStd[i][j] = m_mapsStd[i][j] / scaling;
-        }
+            for (int j = 0; j < 9; ++j)
+            {
+                maps[i][j]    = m_maps[i][j] / scaling;
+                mapsStd[i][j] = m_mapsStd[i][j] / scaling;
+            }
 
-        if (m_dim == 2)
-        {
-            maps[i][9]    = m_maps[i][9] * scaling * scaling;
-            mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling;
+            if (m_dim == 2)
+            {
+                maps[i][9]    = m_maps[i][9] * scaling * scaling;
+                mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling;
+            }
+            else if (m_dim == 3)
+            {
+                maps[i][9]    = m_maps[i][9] * scaling * scaling * scaling;
+                mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling * scaling;
+            }
+            else
+            {
+                ASSERTL0(false, "not coded");
+            }
         }
-        else if (m_dim == 3)
-        {
-            maps[i][9]    = m_maps[i][9] * scaling * scaling * scaling;
-            mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling * scaling;
-        }
-        else
-        {
-            ASSERTL0(false, "not coded");
-        }
+    }
+    else
+    {
+        maps = m_maps;
+        mapsStd = m_mapsStd;
     }
 }
 

@@ -256,9 +256,28 @@ void ProcessVarOpti::Process()
             ASSERTL0(c == check.end(), "duplicate node");
             check.insert(freenodes[i][j]->m_id);
 
-            ns.push_back(GetNodeOptiFactory().CreateInstance(
-                optiKind, freenodes[i][j], it->second, m_res, derivUtils,
-                m_opti));
+            if (freenodes[i][j]->GetNumCadCurve())
+            {
+                std::vector<CADCurveSharedPtr>  test_curves = freenodes[i][j]->GetCADCurves();
+                for (auto &curve: test_curves)
+                {
+                    std::vector<CADVertSharedPtr> verts = curve->GetVertex();
+                    for (auto &vert : verts)
+                    {
+                       if (freenodes[i][j] == vert->GetNode())
+                        {
+                            optiKind = 0;
+                        }
+                    }
+                }
+            }
+
+            if (optiKind)
+            {
+                ns.push_back(GetNodeOptiFactory().CreateInstance(
+                  optiKind, freenodes[i][j], it->second, m_res, derivUtils,
+                  m_opti));
+            }
         }
         optiNodes.push_back(ns);
     }
