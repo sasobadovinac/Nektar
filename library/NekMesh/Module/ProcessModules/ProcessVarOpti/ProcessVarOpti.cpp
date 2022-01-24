@@ -239,11 +239,31 @@ void ProcessVarOpti::Process()
 
             int optiKind = m_mesh->m_spaceDim;
 
-            if (freenodes[i][j]->GetNumCadCurve() == 1)
+            if (freenodes[i][j]->GetNumCadCurve())
             {
-                optiKind += 10;
+                // uncomment this line and comment the lambda function if CAD vertices are to be
+                // allowed to slide on CAD curves.
+                // optiKind += 10;
+
+                // ensures CAD vertices are removed from optimisation and not allowed to move.
+                [&]{ // in a lambda function to avoid checking multiple curves if node is already identified as a vertex.
+                auto  test_curves = freenodes[i][j]->GetCADCurves();
+                for (auto &curve: test_curves)
+                {
+                    auto verts = curve->GetVertex();
+                    for (auto &vert : verts)
+                    {
+                        if (freenodes[i][j] == vert->GetNode())
+                        {
+                            optiKind = 0;  // node is a vertex of the CAD curve and should not be optimised.
+                            return;
+                        }
+                    }
+                }
+                optiKind += 10; // if the laambda function hasn't returned then node is not a vertex.
+                }();
             }
-            else if (freenodes[i][j]->GetNumCADSurf() == 1)
+            else if (freenodes[i][j]->GetNumCADSurf() == 1) // Why == 1 and not >= 1 or just != 0 ?
             {
                 optiKind += 20;
             }
@@ -256,28 +276,11 @@ void ProcessVarOpti::Process()
             ASSERTL0(c == check.end(), "duplicate node");
             check.insert(freenodes[i][j]->m_id);
 
-            if (freenodes[i][j]->GetNumCadCurve())
-            {
-                auto  test_curves = freenodes[i][j]->GetCADCurves();
-                for (auto &curve: test_curves)
-                {
-                    auto verts = curve->GetVertex();
-                    for (auto &vert : verts)
-                    {
-                       if (freenodes[i][j] == vert->GetNode())
-                        {
-                            optiKind = 0;
-                        }
-                    }
-                }
-            }
-
             if (optiKind)
             {
                 ns.push_back(GetNodeOptiFactory().CreateInstance(
                   optiKind, freenodes[i][j], it->second, m_res, derivUtils,
                   m_opti));
-                // std::cout << "optiKind = " << optiKind << " m_expDim = " << m_mesh->m_expDim << "\n";
             }
         }
         optiNodes.push_back(ns);
