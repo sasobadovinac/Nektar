@@ -238,16 +238,16 @@ public:
 
     // functions for cad information
 
-    // void SetCADVert(CADVertSharedPtr v, NekDouble t)
-    // {
-    //     auto it = CADVertList.find(v->GetId());
-    //     if (it != CADVertList.end())
-    //     {
-    //         // already in list so remove it
-    //         CADVertList.erase(it);
-    //     }
-    //     CADVertList.insert(make_pair(v->GetId(), make_pair(v, t)));
-    // }
+    void SetCADVert(CADVertSharedPtr v, NekDouble t)
+    {
+        auto it = CADVertList.find(v->GetId());
+        if (it != CADVertList.end())
+        {
+            // already in list so remove it
+            CADVertList.erase(it);
+        }
+        CADVertList.insert(make_pair(v->GetId(), make_pair(v, t)));
+    }
 
     void SetCADCurve(CADCurveSharedPtr c, NekDouble t)
     {
@@ -443,24 +443,24 @@ public:
         return ang;
     }
 
-    bool IsVert()
-    {
-        for (auto &curve: this->GetCADCurves())
-        {
-            auto verts = curve->GetVertex();
-            for (auto &vert : verts)
-            {
-                if (m_x == vert->GetNode()->m_x)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-        }
-    }
+    // bool IsVert()
+    // {
+    //     for (auto &curve: this->GetCADCurves())
+    //     {
+    //         auto verts = curve->GetVertex();
+    //         for (auto &vert : verts)
+    //         {
+    //             if (this == vert->GetNode())
+    //             {
+    //                 return true;
+    //             }
+    //             else
+    //             {
+    //                 return false;
+    //             }
+    //         }
+    //     }
+    // }
 
     /// ID of node.
     int m_id;
@@ -471,8 +471,8 @@ public:
     /// Z-coordinate.
     NekDouble m_z;
 
-    /// list of cadcurves the node lies on
-    std::map<int, std::pair<std::weak_ptr<CADVert>, NekDouble>> CADVertList;
+    // /// list of cadcurves the node lies on
+    // std::map<int, std::pair<std::weak_ptr<CADVert>, NekDouble>> CADVertList;
     /// list of cadcurves the node lies on
     std::map<int, std::pair<std::weak_ptr<CADCurve>, NekDouble>> CADCurveList;
     /// list of cadsurfs the node lies on
