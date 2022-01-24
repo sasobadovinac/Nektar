@@ -258,10 +258,10 @@ void ProcessVarOpti::Process()
 
             if (freenodes[i][j]->GetNumCadCurve())
             {
-                std::vector<CADCurveSharedPtr>  test_curves = freenodes[i][j]->GetCADCurves();
+                auto  test_curves = freenodes[i][j]->GetCADCurves();
                 for (auto &curve: test_curves)
                 {
-                    std::vector<CADVertSharedPtr> verts = curve->GetVertex();
+                    auto verts = curve->GetVertex();
                     for (auto &vert : verts)
                     {
                        if (freenodes[i][j] == vert->GetNode())
@@ -277,6 +277,7 @@ void ProcessVarOpti::Process()
                 ns.push_back(GetNodeOptiFactory().CreateInstance(
                   optiKind, freenodes[i][j], it->second, m_res, derivUtils,
                   m_opti));
+                // std::cout << "optiKind = " << optiKind << " m_expDim = " << m_mesh->m_expDim << "\n";
             }
         }
         optiNodes.push_back(ns);
