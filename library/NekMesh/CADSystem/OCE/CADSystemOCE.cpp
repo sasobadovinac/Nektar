@@ -466,8 +466,8 @@ void CADSystemOCE::AddSurf(int i, TopoDS_Shape in)
     {
         for (int j = 0; j < edgeloops[k]->edges.size(); j++)
         {
-            std::cout << "!!!! setting surface" << " from edgeloops " << k << " with curve ID: " << edgeloops[k]->edges[j]->GetId() << " on surface: " << newSurf->GetId() << " !!!! \n";
-
+            // useful CAD debugging output.
+            // std::cout << "!!!! setting curve with ID: " << edgeloops[k]->edges[j]->GetId() << " on surface with ID: " << newSurf->GetId() << " !!!! \n";
             edgeloops[k]->edges[j]->SetAdjSurf(
                 make_pair(newSurf, edgeloops[k]->edgeo[j]));
         }
