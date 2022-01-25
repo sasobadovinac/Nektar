@@ -547,9 +547,8 @@ void ProcessVarOpti::GetElementMap(
         }
     }
 
-    if (m_config["radaptscale"].beenSet)
+    if (m_config["radaptcurves"].beenSet)
     {
-        // std::cout << "radapt data found: " <<m_config["radaptscale"].as<NekDouble>()  << " -- " <<  m_config["radaptrad"].as<NekDouble>() << "\n";
         for (int i = 0; i < m_dataSet.size(); i++)
         {
             m_dataSet[i]->SetScalingFromInput(m_config["radaptscale"].as<NekDouble>(),
@@ -768,7 +767,7 @@ LibUtilities::Interpolator ProcessVarOpti::GetScalingFieldFromFile(string file)
         }
     }
 
-    return GetField(inPts);  // returns an interpolator class with m_ptsInField from inPts
+    return GetField(inPts);
 }
 
 LibUtilities::Interpolator ProcessVarOpti::GetField(

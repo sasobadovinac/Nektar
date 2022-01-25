@@ -40,7 +40,6 @@
 
 #include <iomanip>
 
-// #include <NekMesh/CADSystem/CADVert.h>
 #include <NekMesh/CADSystem/CADCurve.h>
 #include <NekMesh/CADSystem/CADSurf.h>
 #include <NekMesh/CADSystem/CADSystem.h>
@@ -50,9 +49,6 @@ namespace Nektar
 {
 namespace NekMesh
 {
-
-class CADVert;
-typedef std::shared_ptr<CADVert> CADVertSharedPtr;
 
 class Node;
 typedef std::shared_ptr<Node> NodeSharedPtr;
@@ -237,6 +233,7 @@ public:
     }
 
     // functions for cad information
+
     void SetCADCurve(CADCurveSharedPtr c, NekDouble t)
     {
         auto it = CADCurveList.find(c->GetId());
