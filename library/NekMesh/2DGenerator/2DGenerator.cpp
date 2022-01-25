@@ -166,7 +166,7 @@ void Generator2D::Process()
     {
         // we need to do the boundary layer generation in a face by face basis
         MakeBLPrep();
-        for (int i = 2; i <= m_mesh->m_cad->GetNumSurf(); i++)
+        for (int i = 1; i <= m_mesh->m_cad->GetNumSurf(); i++)
         {
             MakeBL(i);
         }
@@ -321,7 +321,6 @@ void Generator2D::MakeBL(int faceid)
     int eid = 0;
     for (auto &it : m_blCurves)
     {
-        std::cout << "checking what it is in m_blCurces: " << it << " and on what faceid: " << faceid << "\n";
         CADOrientation::Orientation edgeo =
             m_mesh->m_cad->GetCurve(it)->GetOrienationWRT(faceid);
         vector<EdgeSharedPtr> es = m_curvemeshes[it]->GetMeshEdges();

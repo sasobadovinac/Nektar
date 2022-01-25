@@ -237,17 +237,6 @@ public:
     }
 
     // functions for cad information
-    // void SetCADVert(CADVertSharedPtr v, NekDouble t)
-    // {
-    //     auto it = CADVertList.find(v->GetId());
-    //     if (it != CADVertList.end())
-    //     {
-    //         // already in list so remove it
-    //         CADVertList.erase(it);
-    //     }
-    //     CADVertList.insert(make_pair(v->GetId(), make_pair(v, t)));
-    // }
-
     void SetCADCurve(CADCurveSharedPtr c, NekDouble t)
     {
         auto it = CADCurveList.find(c->GetId());
@@ -270,14 +259,6 @@ public:
         CADSurfList.insert(make_pair(s->GetId(), make_pair(s, uv)));
     }
 
-    // NekDouble GetCADVertInfo(int i)
-    // {
-    //     auto search = CADVertList.find(i);
-    //     ASSERTL0(search != CADVertList.end(), "node is not a vertex");
-
-    //     return search->second.second;
-    // }
-
     NekDouble GetCADCurveInfo(int i)
     {
         auto search = CADCurveList.find(i);
@@ -293,16 +274,6 @@ public:
 
         return search->second.second;
     }
-
-    // std::vector<CADVertSharedPtr> GetCADVerts()
-    // {
-    //     std::vector<CADVertSharedPtr> lst;
-    //     for (auto &v : CADVertList)
-    //     {
-    //         lst.push_back(v.second.first.lock());
-    //     }
-    //     return lst;
-    // }
 
     std::vector<CADCurveSharedPtr> GetCADCurves()
     {
@@ -323,11 +294,6 @@ public:
         }
         return lst;
     }
-
-    // int GetNumCadVert()
-    // {
-    //     return CADVertList.size();
-    // }
 
     int GetNumCadCurve()
     {
@@ -442,25 +408,6 @@ public:
         return ang;
     }
 
-    // bool IsVert()
-    // {
-    //     for (auto &curve: this->GetCADCurves())
-    //     {
-    //         auto verts = curve->GetVertex();
-    //         for (auto &vert : verts)
-    //         {
-    //             if (this == vert->GetNode())
-    //             {
-    //                 return true;
-    //             }
-    //             else
-    //             {
-    //                 return false;
-    //             }
-    //         }
-    //     }
-    // }
-
     /// ID of node.
     int m_id;
     /// X-coordinate.
@@ -470,8 +417,6 @@ public:
     /// Z-coordinate.
     NekDouble m_z;
 
-    // /// list of cadcurves the node lies on
-    // std::map<int, std::pair<std::weak_ptr<CADVert>, NekDouble>> CADVertList;
     /// list of cadcurves the node lies on
     std::map<int, std::pair<std::weak_ptr<CADCurve>, NekDouble>> CADCurveList;
     /// list of cadsurfs the node lies on
