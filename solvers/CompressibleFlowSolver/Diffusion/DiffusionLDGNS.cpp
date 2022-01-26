@@ -356,7 +356,10 @@ void DiffusionLDGNS::v_DiffuseCalculateDerivative(
             Vmath::Neg                      (nCoeffs, tmp1, 1);
             fields[i]->AddTraceIntegral     (numericalFluxO1[j][i], tmp1);
             fields[i]->SetPhysState         (false);
-            fields[i]->MultiplyByElmtInvMass(tmp1, tmp1);
+            if(fields[0]->GetMovement()->GetMoveFlag()) // i.e. if m_ALESolver
+            {
+                fields[i]->MultiplyByElmtInvMass(tmp1, tmp1); // @TODO: We don't want MultiplyByElmtInvMassfor ALE
+            }
             fields[i]->BwdTrans             (tmp1, qfields[j][i]);
         }
     }

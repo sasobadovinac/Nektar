@@ -170,7 +170,7 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > outarrayDiff(nvariables);
         for (int i = 0; i < nvariables; ++i)
         {
-            outarrayDiff[i] = Array<OneD, NekDouble>(npoints, 0.0);
+            outarrayDiff[i] = Array<OneD, NekDouble>(GetNcoeffs(), 0.0);
         }
 
         string diffName;
@@ -249,7 +249,7 @@ namespace Nektar
 
             for (int i = 0; i < nvariables; ++i)
             {
-                Vmath::Vadd(npoints,
+                Vmath::Vadd(outarrayDiff[i].size(),
                             outarrayDiff[i], 1,
                             outarray[i], 1,
                             outarray[i], 1);
