@@ -1362,8 +1362,8 @@ namespace Nektar
                             compPairs[eId1] = eId2;
                         }
 
-                        // Construct set of all edges that we have locally on this
-                        // processor.
+                        // Construct set of all edges that we have
+                        // locally on this processor.
                         set<int> locEdges;
                         for (i = 0; i < 2; ++i)
                         {
