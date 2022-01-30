@@ -218,6 +218,105 @@ FilterFieldConvert::FilterFieldConvert(
     std::vector<std::string> tmp;
     boost::split(tmp, m_outputFile, boost::is_any_of(":"));
     m_outputFile = tmp[0];
+
+    // Prevent checking before overwriting
+    it = pParams.find("options");
+    if (it != pParams.end())
+    {
+        int argc = 0;
+        std::string strargv;
+        std::vector<char*> argv;
+
+        strargv = "dummy " + it->second;
+        strargv.push_back((char)0);
+        bool flag = true;
+        for (size_t i=0; strargv[i]; ++i)
+        {
+            if (strargv[i]!=' ' && flag)
+            {
+                argv.push_back(&strargv[i]);
+                ++argc;
+                flag = false;
+            }
+            if (strargv[i]==' ')
+            {
+                flag = true;
+                strargv[i] = 0;
+            }
+        }
+
+        po::options_description desc("Available options");
+        desc.add_options()
+            ("help,h",
+                "Produce this help message.")
+            ("modules-list,l",
+                "Print the list of available modules.")
+            ("output-points,n", po::value<int>(),
+                "Output at n equipspaced points along the "
+                "collapsed coordinates (for .dat, .vtu).")
+            ("output-points-hom-z", po::value<int>(),
+                "Number of planes in the z-direction for output of "
+                "Homogeneous 1D expansion(for .dat, .vtu).")
+            ("error,e",
+                "Write error of fields for regression checking")
+            ("forceoutput,f",
+                "Force the output to be written without any checks")
+            ("range,r", po::value<std::string>(),
+                "Define output range i.e. (-r xmin,xmax,ymin,ymax,zmin,zmax) "
+                "in which any vertex is contained.")
+            ("noequispaced",
+                "Do not use equispaced output.")
+            ("nparts", po::value<int>(),
+                "Define nparts if running serial problem to mimic "
+                "parallel run with many partitions.")
+            ("npz", po::value<int>(),
+                "Used to define number of partitions in z for Homogeneous1D "
+                "expansions for parallel runs.")
+            ("onlyshape", po::value<std::string>(),
+                "Only use element with defined shape type i.e. -onlyshape "
+                " Tetrahedron")
+            ("part-only", po::value<int>(),
+                "Partition into specified npart partitions and exit")
+            ("part-only-overlapping", po::value<int>(),
+                "Partition into specified npart overlapping partitions and     exit")
+            ("modules-opt,p", po::value<std::string>(),
+                "Print options for a module.")
+            ("module,m", po::value<std::vector<std::string> >(),
+                "Specify modules which are to be used.")
+            ("useSessionVariables",
+                "Use variables defined in session for output")
+            ("useSessionExpansion",
+                "Use expansion defined in session.")
+            ("verbose,v",
+                "Enable verbose mode.");
+
+        po::options_description hidden("Hidden options");
+        hidden.add_options()
+            ("input-file",   po::value<std::vector<std::string> >(),
+                             "Input  filename");
+
+        po::options_description cmdline_options;
+        cmdline_options.add(hidden).add(desc);
+
+        po::options_description visible("Allowed options");
+        visible.add(desc);
+
+        po::positional_options_description p;
+        p.add("input-file", -1);
+
+        try
+        {
+            po::store(po::command_line_parser(argc, &(argv[0])).
+                      options(cmdline_options).positional(p).run(), m_vm);
+            po::notify(m_vm);
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << e.what() << std::endl;
+            std::cerr << desc;
+        }
+    }
+    m_vm.insert(std::make_pair("forceoutput", po::variable_value()));
 }
 
 FilterFieldConvert::~FilterFieldConvert()
@@ -468,14 +567,6 @@ void FilterFieldConvert::OutputField(
     }
     m_modules[m_modules.size()-1]->RegisterConfig("outfile", outname.str());
 
-    // Prevent checking before overwriting
-    po::options_description desc("Available options");
-        desc.add_options()
-            ("forceoutput,f",
-                "Force the output to be written without any checks");
-    po::variables_map vm;
-    vm.insert(std::make_pair("forceoutput", po::variable_value()));
-
     // Run field process.
     for (int n = 0; n < SIZE_ModulePriority; ++n)
     {
@@ -484,7 +575,7 @@ void FilterFieldConvert::OutputField(
         {
             if(m_modules[i]->GetModulePriority() == priority)
             {
-                m_modules[i]->Process(vm);
+                m_modules[i]->Process(m_vm);
             }
         }
     }
