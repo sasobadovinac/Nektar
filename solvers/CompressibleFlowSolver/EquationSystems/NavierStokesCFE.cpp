@@ -164,13 +164,14 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >   &pBwd)
     {
         size_t nvariables = inarray.size();
-        size_t npoints    = GetNpoints();
+        size_t npointsIn  = GetNpoints();
+        size_t npointsOut = m_ALESolver ? GetNcoeffs() : npointsIn; // If ALE outarray is in coefficient space
         size_t nTracePts  = GetTraceTotPoints();
 
         Array<OneD, Array<OneD, NekDouble> > outarrayDiff(nvariables);
         for (int i = 0; i < nvariables; ++i)
         {
-            outarrayDiff[i] = Array<OneD, NekDouble>(GetNcoeffs(), 0.0);
+            outarrayDiff[i] = Array<OneD, NekDouble>(npointsOut, 0.0);
         }
 
         string diffName;
@@ -186,7 +187,7 @@ namespace Nektar
                                 pFwd, pBwd);
             for (int i = 0; i < nvariables; ++i)
             {
-                Vmath::Vadd(npoints,
+                Vmath::Vadd(npointsOut,
                             outarrayDiff[i], 1,
                             outarray[i], 1,
                             outarray[i], 1);
@@ -201,7 +202,7 @@ namespace Nektar
 
             for (int i = 0; i < nvariables - 1; ++i)
             {
-                inarrayDiff[i] = Array<OneD, NekDouble>{npoints};
+                inarrayDiff[i] = Array<OneD, NekDouble>{npointsIn};
                 inFwd[i]       = Array<OneD, NekDouble>{nTracePts};
                 inBwd[i]       = Array<OneD, NekDouble>{nTracePts};
             }
@@ -240,6 +241,13 @@ namespace Nektar
             {
                 m_diffusion->DiffuseCoeffs(nvariables, m_fields, inarrayDiff,
                                      outarrayDiff, inFwd, inBwd);
+
+                // @TODO: Multiply by Mass matrix for ALE?
+                MultiRegions::GlobalMatrixKey mkey(StdRegions::eMass);
+                for (int i = 0; i < nvariables; ++i)
+                {
+                    m_fields[i]->GeneralMatrixOp_IterPerExp(mkey, outarrayDiff[i], outarrayDiff[i]);
+                }
             }
             else
             {
@@ -249,7 +257,7 @@ namespace Nektar
 
             for (int i = 0; i < nvariables; ++i)
             {
-                Vmath::Vadd(outarrayDiff[i].size(),
+                Vmath::Vadd(npointsOut,
                             outarrayDiff[i], 1,
                             outarray[i], 1,
                             outarray[i], 1);

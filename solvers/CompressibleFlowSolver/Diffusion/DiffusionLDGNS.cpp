@@ -222,17 +222,8 @@ void DiffusionLDGNS::v_InitObject(
     {
         tmp2[i] = Array<OneD, NekDouble>{nCoeffs, 0.0};
     }
-    v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp2, pFwd, pBwd);
 
-    // Multiply by inverse mass matrix     // @TODO: We don't want MultiplyByElmtInvMassfor ALE so we moved out of the diffusecoeffs method
-    LibUtilities::Timer timer;
-    for (int i = 0; i < nConvectiveFields; ++i)
-    {
-        timer.Start();
-        fields[i]->MultiplyByElmtInvMass(tmp2[i], tmp2[i]);
-        timer.Stop();
-        timer.AccumulateRegion("MultiplyByElmtInvMass");
-    }
+    v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp2, pFwd, pBwd);
 
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
@@ -316,6 +307,7 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         Vmath::Neg                      (nCoeffs, outarray[i], 1);
         fields[i]->AddTraceIntegral     (viscousFlux[i], outarray[i]);
         fields[i]->SetPhysState         (false);
+        fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
     }
 }
 
@@ -356,10 +348,7 @@ void DiffusionLDGNS::v_DiffuseCalculateDerivative(
             Vmath::Neg                      (nCoeffs, tmp1, 1);
             fields[i]->AddTraceIntegral     (numericalFluxO1[j][i], tmp1);
             fields[i]->SetPhysState         (false);
-            if(fields[0]->GetMovement()->GetMoveFlag()) // i.e. if m_ALESolver
-            {
-                fields[i]->MultiplyByElmtInvMass(tmp1, tmp1); // @TODO: We don't want MultiplyByElmtInvMassfor ALE
-            }
+            fields[i]->MultiplyByElmtInvMass(tmp1, tmp1); //
             fields[i]->BwdTrans             (tmp1, qfields[j][i]);
         }
     }
