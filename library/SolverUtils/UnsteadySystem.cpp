@@ -44,11 +44,294 @@ using namespace std;
 #include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <SolverUtils/UnsteadySystem.h>
+#include <SolverUtils/Forcing/Forcing.h>
 
 namespace Nektar
 {
     namespace SolverUtils
     {
+        using namespace Vmath;
+        // Debuggin function; prints values at various positions
+        void print_some_array_values(NekInt N, NekInt inc, const Array<OneD, NekDouble> &arr, const string &str)
+        {
+            cout << endl << str << endl;
+            for( int i = 0; i<N; i+=inc)
+            {
+                cout << arr[i] << endl;
+            }
+        }
+
+        void print_array_values(NekInt N, const Array<OneD, NekDouble> &arr)
+        {
+            for( int i = 0; i<N; i++ )
+            {
+                // cout << arr[i] << "\t";
+                printf("%.1f \t", arr[i]);
+            }
+            cout << endl;
+        }
+
+        // Copied from Extrapolate::RollOver
+        void RollOver(Array<OneD, Array<OneD, NekDouble> > &input)
+        {
+            int  nlevels = input.size();
+
+            Array<OneD, NekDouble> tmp;
+
+            tmp = input[nlevels-1];
+
+            for(int n = nlevels-1; n > 0; --n)
+            {
+                input[n] = input[n-1];
+            }
+
+            input[0] = tmp;
+        }
+
+        // From (Standard-)Extrapolate
+        NekDouble StifflyStable_Betaq_Coeffs[3][3] = {
+            { 1.0,  0.0, 0.0},{ 2.0, -1.0, 0.0},{ 3.0, -3.0, 1.0}
+            };
+
+        // 1D rollover
+        void RollOverOneD(Array<OneD, NekDouble> &input)
+        {
+            int  nlevels = input.size();
+            NekDouble tmp;
+            tmp = input[nlevels-1];
+
+            for(int n = nlevels-1; n > 0; --n)
+            {
+                input[n] = input[n-1];
+            }
+
+            input[0] = tmp;
+        }
+
+        void ExtrapolateArray(Array<OneD, NekDouble> &array, int nint)
+        {
+            // int nint     = 2
+            int nlevels  = array.size();
+            // int nPts     = array[0].size();
+
+            // Update array
+            cout << "before rollover" << endl;
+            print_array_values(nlevels, array);
+            RollOverOneD(array); // Move oldest from array[nlevels-1] to array[0]
+            cout << "after rollover" << endl;
+            print_array_values(nlevels, array);
+            cout << endl;
+
+            // Extrapolate to outarray
+            // Smul(nPts, StifflyStable_Betaq_Coeffs[nint-1][nint-1], // beta_q
+            //                 array[nint-1],    1, 
+            //                 array[nlevels-1], 1);
+            cout << "betaq  * value = " << StifflyStable_Betaq_Coeffs[nint-1][nint-1] << " * " << array[nint-1] << endl;
+            array[nlevels-1] = StifflyStable_Betaq_Coeffs[nint-1][nint-1] * array[nint-1];
+
+            for(int n = 0; n < nint-1; ++n)
+            {
+                cout << "betaq  * value = " << StifflyStable_Betaq_Coeffs[nint-1][n] << " * " << array[n] << endl;
+                array[nlevels-1] = StifflyStable_Betaq_Coeffs[nint-1][n] * array[n] + array[nlevels-1];
+                // Svtvp(nPts, StifflyStable_Betaq_Coeffs[nint-1][n],
+                //             array[n],1, array[nlevels-1],1,
+                //             array[nlevels-1],1);
+            }
+        }
+
+        void test_ExtrapolateArray()
+        {
+            // Test extrapolate
+            int sz = 2; // Defines order of BDF scheme
+            Array<OneD, NekDouble> testarray(sz);
+            for( int i = 0; i < sz; i++)
+            {
+                testarray[i] = i+1;
+            }
+            cout << "Input testarray:" << endl;
+            print_array_values(sz, testarray);
+            cout << endl;
+            
+            ExtrapolateArray(testarray, 2);
+            cout << "After 1st ExtrapolateArray:" << endl;
+            print_array_values(sz, testarray);
+            cout << endl;
+            
+            testarray[sz-1] = 10;
+            cout << "New input testarray:" << endl;
+            print_array_values(sz, testarray);
+            cout << endl;
+
+            ExtrapolateArray(testarray, 2);
+            cout << "After 2nd ExtrapolateArray:" << endl;
+            print_array_values(sz, testarray);
+            cout << endl;
+            // exit(EXIT_SUCCESS); // Optionally
+        }
+
+        // Define mask, if none is defined in session file
+        void GetUnmaskFunction(std::vector<std::vector<LibUtilities::EquationSharedPtr> > & unmaskfun, 
+                               LibUtilities::SessionReaderSharedPtr m_session)
+        {
+            string Unmask0("Unmask0");
+            string C0("C0");
+            for(size_t i=0; 1; ++i)
+            {
+                Unmask0[Unmask0.size()-1] = '0' + i;
+                if(!m_session->DefinesFunction(Unmask0))
+                {
+                    break;
+                }
+                for(size_t j=0; 1; ++j)
+                {
+                    C0[C0.size()-1] = '0' + j;
+                    if(!m_session->DefinesFunction(Unmask0, C0))
+                    {
+                        break;
+                    }
+                    if(j==0)
+                    {
+                        unmaskfun.push_back(std::vector<LibUtilities::EquationSharedPtr>());
+                    }
+                    unmaskfun[unmaskfun.size()-1].push_back(m_session->GetFunction(Unmask0, C0));
+                }
+            }
+        }
+
+        void MaskInit(MultiRegions::ExpListSharedPtr &field, NekInt nfields, 
+                      Array<OneD, NekDouble> &limits, 
+                      Array<OneD, NekDouble> &maskCoeffs, 
+                      Array<OneD, NekDouble> &maskPhys)
+        {
+            // std::vector<std::vector<LibUtilities::EquationSharedPtr> > unmaskfun;
+            // GetUnmaskFunction(unmaskfun, session);
+            // if(unmaskfun.size()==0)
+            // {
+            //     return;
+            // }
+
+            // Init mask fields
+            int ncoef   = field->GetNcoeffs();
+            int nphys   = field->GetNpoints();
+            maskCoeffs = Array<OneD, NekDouble>(ncoef*nfields, 1.);
+            maskPhys = Array<OneD, NekDouble>(nphys*nfields, 1.); // Masking for all fields individually
+
+            // Get Boundary conditions and expansions
+            Array<OneD, const SpatialDomains::BoundaryConditionShPtr> bndConds;
+            Array<OneD, MultiRegions::ExpListSharedPtr> bndExp;
+            bndConds = field->GetBndConditions();
+            bndExp = field->GetBndCondExpansions();
+
+            // Get center coordinates of each expansion touching the boundary
+            // NekInt nbnds = bndExp.size();
+            // NekInt nbexps = 0;
+            // // NekDouble tol = 1e-8;
+            // for(int i = 0; i < nbnds; i++)
+            // {
+            //     nbexps += bndExp[i]->GetExpSize();
+            // }
+            // Array<OneD, Array<OneD, NekDouble> > bndCoords(3);
+            // for (int i = 0; i < 3; i++)
+            // {
+            //     bndCoords[i] = Array<OneD, NekDouble>(nbexps);
+            // }
+
+            // Loop each boundary
+            // int cnt = 0;
+            // for(int i = 0; i < nbnds; i++)
+            // {
+            //     int nbexp = bndExp[i]->GetExpSize();
+            //     // cout << "bndExp[" << i << "]->GetExpSize()\t" << n << endl;
+            //     // Loop expansions within boundary
+            //     for(int j = 0; j < nbexp; j++)
+            //     {
+            //         LocalRegions::ExpansionSharedPtr exp = bndExp[i]->GetExp(j);
+            //         // cout << "exp->GetElmtId()\t" << exp->GetElmtId() << endl; // ID on Bnd
+            //         SpatialDomains::GeometrySharedPtr geom = exp->GetGeom();
+            //         int nv = geom->GetNumVerts();
+            //         NekDouble gcb[3] = {0.,0.,0.};
+            //         NekDouble gct[3] = {0.,0.,0.};
+            //         // Compute element's center coordinates
+            //         for(size_t k=0; k<nv; ++k)
+            //         {
+            //             SpatialDomains::PointGeomSharedPtr vertex = geom->GetVertex(k);
+            //             vertex->GetCoords(gct[0],gct[1],gct[2]);
+            //             gcb[0] += gct[0]/NekDouble(nv);
+            //             gcb[1] += gct[1]/NekDouble(nv);
+            //             gcb[2] += gct[2]/NekDouble(nv);
+            //         }
+            //         bndCoords[0][cnt] = gcb[0];
+            //         bndCoords[1][cnt] = gcb[1];
+            //         bndCoords[2][cnt] = gcb[2];
+            //         // cout << "Element_Coords: " << bndCoords[0][cnt] << ", " << bndCoords[1][cnt] << ", " << bndCoords[2][cnt] << endl;
+            //         cnt += 1;
+            //     }
+            //     cout << endl << endl;
+            // }
+
+            // Loop over each element = Exp(i)
+            for(size_t i=0; i<field->GetExpSize(); ++i)
+            {
+                LocalRegions::ExpansionSharedPtr exp = field->GetExp(i);
+                SpatialDomains::GeometrySharedPtr geom = exp->GetGeom();
+                int nv = geom->GetNumVerts();
+                NekDouble gc[3] = {0.,0.,0.};
+                NekDouble gct[3] = {0.,0.,0.};
+
+                // Compute element's center coordinates
+                for(size_t j=0; j<nv; ++j)
+                {
+                    SpatialDomains::PointGeomSharedPtr vertex = geom->GetVertex(j);
+                    vertex->GetCoords(gct[0],gct[1],gct[2]);
+                    gc[0] += gct[0]/NekDouble(nv);
+                    gc[1] += gct[1]/NekDouble(nv);
+                    gc[2] += gct[2]/NekDouble(nv);
+                }
+                
+                // Masking logic
+                int unmask = 1;
+                
+                // Mask by comparison to each boundary expansion
+                // for (int k = 0; k < cnt; k++)
+                // {
+                //     cout << "gc[0] - bndCoords[0]: " << gc[0] << " - " << bndCoords[0][k] << " = " << gc[0] - bndCoords[0][k] << endl;
+                //     cout << "gc[1] - bndCoords[1]: " << gc[1] << " - " << bndCoords[1][k] << " = " << gc[1] - bndCoords[1][k] << endl;
+                //     cout << "gc[2] - bndCoords[2]: " << gc[2] << " - " << bndCoords[2][k] << " = " << gc[2] - bndCoords[2][k] << endl;
+                //     if( (bndCoords[0][k] + tol > gc[0] && gc[0] > bndCoords[0][k] - tol) && 
+                //         (bndCoords[1][k] + tol > gc[1] && gc[1] > bndCoords[1][k] - tol) && 
+                //         (bndCoords[2][k] + tol > gc[2] && gc[2] > bndCoords[2][k] - tol) )
+                //     {
+                //         unmask = 0;
+                //         cout << "unmask = 0" << endl;
+                //         break;
+                //     }
+                //     cout << endl << endl;
+                // }
+                // if(unmask == 0)
+                // {
+                //     exit(EXIT_SUCCESS);
+                // }
+                
+                // Mask by coordinate
+                if( gc[0] < limits[0] ) { unmask = 0;} // x-
+                if( gc[0] > limits[1] ) { unmask = 0;} // x+
+                if( gc[1] < limits[2] ) { unmask = 0;} // y-
+                if( gc[1] > limits[3] ) { unmask = 0;} // y+
+
+                // If set mask? array[i] = 0 : array[i] = 1 (So, multiply with other fields to apply masking?)
+                if(unmask==0)
+                {
+                    for(int j=0; j<nfields; ++j)
+                    {
+                        Vmath::Fill(exp->GetNcoeffs()  , 0., &maskCoeffs[field->GetCoeff_Offset(i) + j*ncoef], 1);
+                        Vmath::Fill(exp->GetTotPoints(), 0., &maskPhys[field->GetPhys_Offset(i)  + j*nphys], 1);
+                    }
+                }
+            }
+        }
+
+
+
         /**
          * @class UnsteadySystem
          *
@@ -275,6 +558,16 @@ namespace Nektar
 
             NekDouble tmp_cflSafetyFactor = m_cflSafetyFactor;
 
+            // Initiate arrays for operator residuals, used only with -v arg, TODO create member m_variables in UnsteadySystem.h
+            NekInt nout = 5*2 + 2 + 4; // No of output fields (momentum equation 2D + residuals + velocity gradients 2D)
+            Array<OneD, NekDouble> globalResc, globalResm, times;
+            Array<OneD, Array<OneD, NekDouble> > gradient, tmp, outfields;
+            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > tfields;
+            if(m_verbose)
+            {
+                initialise_operator(nfields, nvariables, nout, globalResc, globalResm, times, gradient, tmp, outfields, tfields);
+            }
+
             m_timestepMax = m_timestep;
             while ((step   < m_steps ||
                    m_time < m_fintime - NekConstants::kNekZeroTol) &&
@@ -343,7 +636,6 @@ namespace Nektar
                 fields =
                     m_intScheme->TimeIntegrate( stepCounter, m_timestep, m_ode);
                 timer.Stop();
-
                 m_time  += m_timestep;
                 elapsed  = timer.TimePerTest(1);
                 intTime += elapsed;
@@ -396,6 +688,12 @@ namespace Nektar
                     m_fields[m_intVariables[i]]->SetPhysState(false);
                 }
                 
+                // Evaluate operator
+                if(m_verbose)
+                {
+                    evaluate_operator(nfields, nvariables, stepCounter, nout, globalResc, globalResm, times, gradient, tmp, outfields, tfields);
+                }
+
                 // Perform any solver-specific post-integration steps
                 if (v_PostIntegrate(step))
                 {
@@ -523,12 +821,61 @@ namespace Nektar
                         m_nchk++;
                     }
                     doCheckTime = false;
+
+                    if(m_verbose)
+                    {
+                        // Write field of residual data to file
+                        int ncoe = GetNcoeffs();
+                        vector<Array<OneD, NekDouble> > coeffs(nout);
+                        vector<string> variables(coeffs.size());
+                        variables[0] = "resc";
+                        variables[1] = "resm";
+                        variables[2] = "advx";
+                        variables[3] = "px";
+                        variables[4] = "difx";
+                        variables[5] = "utx";
+                        variables[6] = "resmx";
+                        variables[7] = "advy";
+                        variables[8] = "py";
+                        variables[9] = "dify";
+                        variables[10] = "uty";
+                        variables[11] = "resmy";
+                        variables[12] = "dudx";
+                        variables[13] = "dudy";
+                        variables[14] = "dvdx";
+                        variables[15] = "dvdy";
+                        for (int l = 0; l < nout; l++)
+                        {
+                            coeffs[l] = Array<OneD, NekDouble>(ncoe);
+                            m_fields[0]->FwdTrans_IterPerExp(outfields[l], coeffs[l]); // Which FwdTrans to use?
+                        }
+                        string filename = "res_" + boost::lexical_cast<string>(m_nchk - 1) + ".fld";
+                        WriteFld(filename, m_fields[0], coeffs, variables);
+                    }
                 }
+
+                // // Exit for debugging
+                // if(step == 1)
+                // {
+                //     exit(EXIT_SUCCESS);
+                // }
 
                 // Step advance
                 ++step;
                 ++stepCounter;
+                if(m_verbose)
+                {
+                    cout << "Step " << step << endl;
+                }
             }
+
+
+            // Write operator residuals to file
+            if(m_verbose)
+            {
+                write_operator(stepCounter, globalResc, globalResm, times);
+            }
+            
 
             // Print out summary statistics
             if (m_session->GetComm()->GetRank() == 0)
@@ -832,6 +1179,13 @@ namespace Nektar
             }
         }
 
+        // // Virtual function to return forcing from IncNavierStokes.h
+        // std::vector<SolverUtils::ForcingSharedPtr>* v_GetForcing()
+        // {
+        //     std::vector<SolverUtils::ForcingSharedPtr>* forcing;
+        //     return forcing;
+        // }
+
         /**
         * @brief Calculate whether the system has reached a steady state by
         * observing residuals to a user-defined tolerance.
@@ -933,6 +1287,309 @@ namespace Nektar
                 reference[i] = (reference[i] == 0) ? 1 : reference[i];
                 L2[i] = sqrt(residual[i] / reference[i]);
             }
+        }
+
+        void UnsteadySystem::initialise_operator(int nfields, int nvariables, int nout,
+                                                 Array<OneD, NekDouble> &globalResc,
+                                                 Array<OneD, NekDouble> &globalResm,
+                                                 Array<OneD, NekDouble> &times,
+                                                 Array<OneD, Array<OneD, NekDouble> > &gradient,
+                                                 Array<OneD, Array<OneD, NekDouble> > &tmp,
+                                                 Array<OneD, Array<OneD, NekDouble> > &outfields,
+                                                 Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &tfields)
+        {
+            // Definition of array sizes (excludes nfields and navariables)
+            NekInt npoints = m_fields[0]->GetNpoints();
+            NekInt gradsize = nfields * nvariables;
+            NekInt nts = 2; // number of previous time fields to save
+
+            // Initialise required storage arrays
+            globalResc = Array<OneD, NekDouble>(m_steps);
+            globalResm = Array<OneD, NekDouble>(m_steps);
+            times = Array<OneD, NekDouble>(m_steps);
+
+            // Initialise gradient array_
+            gradient = Array<OneD, Array<OneD, NekDouble> >(gradsize);
+            for (int i = 0; i < gradsize; i++)
+            {
+                gradient[i] = Array<OneD, NekDouble>(npoints, 0.0);
+            }
+
+            // Initialise temporary storage arrays
+            tmp = Array<OneD, Array<OneD, NekDouble> >(nvariables);
+            for (int i = 0; i < nvariables; i++)
+            {
+                tmp[i] = Array<OneD, NekDouble>(npoints, 0.0);
+            }
+
+            // Storage array of velocity fields for time derivative approximation
+            tfields = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(nfields);
+            for (int i = 0; i < nfields; ++i)
+            {
+                tfields[i] = Array<OneD, Array<OneD, NekDouble> >(nts);
+                for(int n = 0; n < nts; ++n)
+                {
+                    tfields[i][n] = Array<OneD, NekDouble>(npoints, 0.0);
+
+                    // Store initial conditions (n=0)
+                    if(n == 0)
+                    {
+                        tfields[i][0] = m_fields[i]->GetPhys();
+                    }
+                }
+            }
+            
+            // // Masking setup
+            // Array<OneD, NekDouble> maskC; // Coefficient mask
+            // Array<OneD, NekDouble> maskP; // Physical mask
+            // bool MASKING = false;
+            // if(MASKING)
+            // {
+            //     // Define masking coordinate limits +-x, +-y, +-z (TODO: move to session file)
+            //     Array<OneD, NekDouble> clims(nvariables * 2);
+            //     clims[0] = -20.; // x-
+            //     clims[1] = 40; // x+
+            //     clims[2] = -20.; // y-
+            //     clims[3] = 20; // y+
+            //     if( nvariables == 3 )
+            //     {
+            //         clims[4] = 1e-8; // z+
+            //         clims[5] = -clims[4]; // z-
+            //     }
+            //     // Initialise masks
+            //     MaskInit(m_fields[0], nfields, clims, maskC, maskP);
+            // }
+
+            // IF output fields of operator terms
+            // Initialise output arrays
+            outfields = Array<OneD, Array<OneD, NekDouble> >(nout);
+            for(int i=0; i<nout; i++)
+            {
+                outfields[i] = Array<OneD, NekDouble>(npoints, 0.0);
+            }
+        }
+
+        void UnsteadySystem::evaluate_operator(int nfields, int nvariables, int stepCounter, int nout,
+                                               Array<OneD, NekDouble> &globalResc,
+                                               Array<OneD, NekDouble> &globalResm,
+                                               Array<OneD, NekDouble> &times,
+                                               Array<OneD, Array<OneD, NekDouble> > &gradient,
+                                               Array<OneD, Array<OneD, NekDouble> > &tmp,
+                                               Array<OneD, Array<OneD, NekDouble> > &outfields,
+                                               Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &tfields)
+        {
+            using namespace Vmath;
+
+            // Low-level array size
+            int npoints = m_fields[0]->GetNpoints();
+            NekDouble kinvis = 0.0;
+            
+            // Read kinvis from session file
+            if( m_session->DefinesParameter("Kinvis") )
+            {
+                kinvis = m_session->GetParameter("Kinvis");
+            }
+            else
+            {
+                ASSERTL0(0, "kinvis undefined; must be defined for operator");
+            }
+
+            // Temporary storage array
+            int tmp_dims = 2;
+            Array<OneD, Array<OneD, NekDouble> > temporary_array(tmp_dims);
+            for (int i = 0; i < tmp_dims; i++)
+            {
+                temporary_array[i] = Array<OneD, NekDouble>(npoints, 0.0);
+            }
+            
+            // Get new fields
+            for( int i = 0; i<nfields; i++)
+            {
+                RollOver(tfields[i]);
+                tfields[i][0] = m_fields[i]->GetPhys();
+            }
+
+            // Evaluate new derivatives
+            for( int i = 0; i<nfields; i++)
+            {
+                
+                if( nvariables == 2)
+                {
+                    m_fields[i]->PhysDeriv(m_fields[i]->GetPhys(),
+                                        gradient[i*nvariables],
+                                        gradient[i*nvariables+1]);
+                }
+                else if( nvariables == 3)
+                {
+                    m_fields[i]->PhysDeriv(m_fields[i]->GetPhys(),
+                                        gradient[i*nvariables],
+                                        gradient[i*nvariables+1],
+                                        gradient[i*nvariables+2]);
+                }
+                else
+                {
+                    cout << "Cannot handle nvariables = " << nvariables << endl;
+                    quick_exit(EXIT_SUCCESS);
+                }
+            }
+            // Write gradient field out
+            for(int i = 0; i < nvariables; i++)
+            {
+                Vcopy(npoints, gradient[i*nvariables], 1, outfields[nout-(2-i)*nvariables], 1);
+                Vcopy(npoints, gradient[i*nvariables+1], 1, outfields[nout-(2-i)*nvariables+1], 1);
+            }
+            cout << "du/dx sum = " << Vsum(npoints, gradient[0], 1) << endl;
+            cout << "du/dy sum = " << Vsum(npoints, gradient[1], 1) << endl;
+            cout << "dv/dx sum = " << Vsum(npoints, gradient[2], 1) << endl;
+            cout << "dv/dy sum = " << Vsum(npoints, gradient[3], 1) << endl;
+            
+            cout << "u sum = " << Vsum(npoints, m_fields[0]->GetPhys(), 1) << endl;
+            cout << "v sum = " << Vsum(npoints, m_fields[1]->GetPhys(), 1) << endl;
+            cout << "p sum = " << Vsum(npoints, m_fields[2]->GetPhys(), 1) << endl;
+
+            // Zero and compute continuity residual
+            Zero(npoints, temporary_array[0], 1);
+            for( int i = 0; i < nvariables; i++ )
+            {
+                Vadd(npoints, temporary_array[0], 1, gradient[i*(nvariables+1)], 1, temporary_array[0], 1); // /nabla /cdot u
+            }
+            Vabs(npoints, temporary_array[0], 1, temporary_array[0], 1);
+            
+            // if(MASKING)
+            // {
+            //     Vmul(npoints, resc, 1, maskP, 1, resc, 1); // Apply mask
+            // }  
+            
+            // If output residual field at each time step
+            Vcopy(npoints, temporary_array[0], 1, outfields[0], 1);
+            
+            globalResc[stepCounter] = Vsum(npoints, temporary_array[0], 1);
+
+            // Setup momentum residual
+            for(int i=0; i<nvariables; i++)
+            {
+                Zero(npoints, temporary_array[i], 1);
+                Zero(npoints, tmp[i], 1);
+            }
+
+            // Compute momentum residual
+            for( int i = 0; i < nvariables; i++)
+            {
+                // Advection
+                for( int k = 0; k < nvariables; k++ )
+                {
+                    Vvtvp(npoints, tfields[k][0], 1, gradient[i*nvariables+k], 1, tmp[i], 1, tmp[i], 1);
+                }
+                // Save x and y advection fields
+                if( i == 0 )
+                {                    
+                    Vcopy(npoints, tmp[i], 1, outfields[0+2], 1); // u dx + v dy + w dz
+                }
+                else if( i == 1 )
+                {
+                    Vcopy(npoints, tmp[i], 1, outfields[0+2+5], 1);
+                }
+                
+                // Pressure
+                Vadd(npoints, gradient[nvariables*nvariables+i], 1, tmp[i], 1, tmp[i], 1); // + dP
+                // Save x and y pressure gradient fields
+                if( i == 0 )
+                {
+                    Vcopy(npoints, gradient[nvariables*nvariables+i], 1, outfields[1+2], 1);
+                }
+                else if( i == 1 )
+                {
+                    Vcopy(npoints, gradient[nvariables*nvariables+i], 1, outfields[1+2+5], 1);
+                }
+
+                // Diffusion
+                for( int k = 0; k < nvariables; k++ )
+                {
+                    m_fields[i]->PhysDeriv(MultiRegions::DirCartesianMap[k], gradient[i*nvariables+k], temporary_array[1]); // 2nd derivatives
+                    Vadd(npoints, temporary_array[0], 1, temporary_array[1], 1, temporary_array[0], 1); // Sum to Laplacian
+                }
+                // Save x and y diffusion fields
+                if( i == 0 )
+                {
+                    Smul(npoints, -kinvis, temporary_array[0], 1, outfields[2+2], 1);
+                }
+                else if( i == 1 )
+                {
+                    Smul(npoints, -kinvis, temporary_array[0], 1, outfields[2+2+5], 1);
+                }
+                Svtvp(npoints, -kinvis, temporary_array[0], 1, tmp[i], 1, tmp[i], 1); // add to operator balance
+                
+
+                // Time derivative
+                Vsub(npoints, tfields[i][0], 1, tfields[i][1], 1, temporary_array[0], 1); // Vn - Vn-1
+                Svtvp(npoints, 1.0/m_timestep, temporary_array[0], 1, tmp[i], 1, tmp[i], 1);
+                // Save x and y time derivatives
+                if( i == 0 )
+                {
+                    Smul(npoints, 1.0/m_timestep, temporary_array[0], 1, outfields[3+2], 1);
+                }
+                else if( i == 1 )
+                {
+                    Smul(npoints, 1.0/m_timestep, temporary_array[0], 1, outfields[3+2+5], 1);
+                }
+
+                // Add forcing to operator
+                
+
+                // Zero temporary array
+                for(int i=0; i<tmp_dims; i++)
+                {
+                    Zero(npoints, temporary_array[i], 1);
+                }
+            }
+
+            // Add momentum terms for output residual
+            for(int i = 2; i < nout-5-4-1; i++)
+            {
+                Vadd(npoints, outfields[6], 1, outfields[i], 1, outfields[6], 1); // resm-X
+            }
+            for(int i = 2+5; i < nout-4-1; i++)
+            {
+                Vadd(npoints, outfields[11], 1, outfields[i], 1, outfields[11], 1); // resm-Y
+            }                
+
+            // L2 norm of momentum residuals
+            for( int i = 0; i<nvariables; i++ )
+            {
+                Vvtvp(npoints, tmp[i], 1, tmp[i], 1, temporary_array[0], 1, temporary_array[0], 1);
+            }
+            Vsqrt(npoints, temporary_array[0], 1, temporary_array[0], 1);
+            
+            // if(MASKING) 
+            // { 
+            //     Vmul(npoints, resm, 1, maskP, 1, resm, 1); // Apply mask
+            // }
+            
+            // Store for field output
+            Vcopy(npoints, temporary_array[0], 1, outfields[1], 1);
+            
+            globalResm[stepCounter] = Vsum(npoints, temporary_array[0], 1);
+
+            // Save time (for plotting residuals)
+            times[stepCounter] = m_time;
+
+            // Print operator residuals
+            cout << "resc: " << globalResc[stepCounter] << "\tresm: " << globalResm[stepCounter] << endl;
+        }
+
+        void UnsteadySystem::write_operator(int stepCounter,
+                            Array<OneD,NekDouble> &globalResc,
+                            Array<OneD,NekDouble> &globalResm,
+                            Array<OneD,NekDouble> &times)
+        {
+            ofstream opfile;
+            opfile.open("nsResiduals.dat");
+            opfile << "time,resc,resm" << endl;
+            for( int i = 0; i < stepCounter; i++ )
+            {
+                opfile << times[i] << "," << globalResc[i] << "," << globalResm[i] << endl;
+            }
+            opfile.close();
         }
     }
 }

@@ -108,11 +108,12 @@ TimeIntegrate(const NekDouble deltaT,
               TimeIntegrationSolutionGLMSharedPtr &solvector,
               const TimeIntegrationSchemeOperators &op)
 {
+    // std::cout << "Call TimeIntegrate(dt, solvector, op)" << std::endl;
     // ASSERTL1( !(m_parent->GetIntegrationSchemeType() == eImplicit), "Fully
-    // Implicit integration scheme cannot be handled by this routine." );
+    // Implicit integration scheme cannot be handled by this routine." ); Mark these words!
 
-    int nvar    = solvector->GetFirstDim();
-    int npoints = solvector->GetSecondDim();
+    int nvar    = solvector->GetFirstDim(); // solvector[0].size()
+    int npoints = solvector->GetSecondDim(); // solvector[0][0].size()
 
     if (solvector->GetIntegrationSchemeData() !=
         this) // FIMXE ... verify that this is correct...
@@ -376,11 +377,16 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
                                           SingleArray &t_new,
                                           const TimeIntegrationSchemeOperators &op )
 {
+    // std::cout << "\tCall TimeIntegrate(dt, y_old, t_old, y_new, t_new, op)" << std::endl;
     ASSERTL1(
         CheckTimeIntegrateArguments(/*deltaT,*/ y_old, t_old, y_new, t_new, op),
         "Arguments not well defined");
 
     TimeIntegrationSchemeType type = m_schemeType;
+
+    // std::cout <<    "\ty_old.size(): "   << y_old.size() << std::endl << 
+    //                 "\ty_old[0].size(): " << y_old[0].size() << std::endl <<
+    //                 "\ty_old[0][0].size(): " << y_old[0][0].size() << std::endl;
 
     // Check if storage has already been initialised.
     // If so, we just zero the temporary storage.
@@ -477,8 +483,10 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
     // The loop below calculates the stage values and derivatives
     for (int stage = 0; stage < m_numstages; stage++)
     {
+        // Y[stage=0] = y_old[0] > 1st stage is equal to old solution
         if ((stage == 0) && m_firstStageEqualsOldSolution)
         {
+            // std::cout << "\tIn if(stage == 0 && m_firstStageEqualsOldSolution); Copy old solution m_Y = y_old" << std::endl;
             for (int k = 0; k < m_nvars; k++)
             {
                 Vmath::Vcopy(m_npoints, y_old[0][k], 1, m_Y[k], 1);
@@ -499,8 +507,9 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
                         Vmath::Smul(m_npoints, deltaT * m_A_phi[k][stage][0],
                                     m_F[0][k], 1, m_tmp[k], 1);
                     }
-                    else
+                    else // (dt * a_q) * m_F
                     {
+                        std::cout << "\tIn if(stage != 0); a_i0 * dt * m_F with a_i0 = A(stage,0) = " << A(stage, 0) << std::endl;
                         Vmath::Smul(m_npoints, deltaT * A(stage, 0),
                                     m_F[0][k], 1, m_tmp[k], 1);
                     }
@@ -518,6 +527,7 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
 
             for (int j = 1; j < stage; j++)
             {
+                // std::cout << "In for(j=1; j < stage); Never executed with m_numstages = 1" << std::endl;
                 for (int k = 0; k < m_nvars; k++)
                 {
                     if (type == eExponential)
@@ -545,6 +555,7 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
             // 2: The imported multi-step solution of the previous time level:
             for (int j = 0; j < m_numsteps; j++)
             {
+                // std::cout << "\tIn for(j=0; j < m_numsteps); m_tmp = U(stage, j) * y_old + m_tmp; U(stage, " << j << ") = " << U(stage, j) << std::endl;
                 for (int k = 0; k < m_nvars; k++)
                 {
                     if (type == eExponential)
@@ -555,7 +566,7 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
                     else
                     {
                         Vmath::Svtvp(m_npoints, U(stage, j),
-                                     y_old[j][k], 1, m_tmp[k], 1, m_tmp[k], 1);
+                                     y_old[j][k], 1, m_tmp[k], 1, m_tmp[k], 1); // m_tmp += sum_q U_phi_q * u^n-q?
                     }
                 }
 
@@ -598,6 +609,7 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
         }
         else if (type == eIMEX)
         {
+            // Sum time contributions from each previous stage to get current time (Overwrites m_T from above)
             if (m_numstages == 1)
             {
                 m_T = t_old[0] + deltaT;
@@ -610,20 +622,25 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
                     m_T += A(stage, j) * deltaT;
                 }
             }
+            // std::cout << "\tm_T before OdeRhs and ImplicitSolve in TimeIntegrate; m_T = " << m_T << std::endl;
 
             if (fabs(A(stage, stage)) > NekConstants::kNekZeroTol)
             {
-                op.DoImplicitSolve(m_tmp, m_Y, m_T, A(stage, stage) * deltaT);
+                // std::cout   << "\tBefore DoImplicitSolve: A(stage, stage) = " << A(stage, stage) 
+                //             << ", deltaT = " << deltaT 
+                //             << " aii_dt = " << A(stage, stage) * deltaT << std::endl;
+                op.DoImplicitSolve(m_tmp, m_Y, m_T, A(stage, stage) * deltaT); // Check: m_tmp = inarray = /tilde{u}
+                // m_tmp or m_F somewhat defined from initilisation!
 
-                for (int k = 0; k < m_nvars; k++)
+                for (int k = 0; k < m_nvars; k++) // What does this loop do? Smth with General Linear method
                 {
                     Vmath::Vsub(m_npoints, m_Y[k], 1, m_tmp[k], 1,
-                                m_F[stage][k], 1);
+                                m_F[stage][k], 1); // m_Y - m_tmp = ?
                     Vmath::Smul(m_npoints, 1.0 / (A(stage, stage) * deltaT),
-                                m_F[stage][k], 1, m_F[stage][k], 1);
+                                m_F[stage][k], 1, m_F[stage][k], 1); // (m_Y - m_tmp) / aii_Dt
                 }
             }
-            op.DoOdeRhs(m_Y, m_F_IMEX[stage], m_T);
+            op.DoOdeRhs(m_Y, m_F_IMEX[stage], m_T); // Evaluate and set m_F_IMEX[stage] = -N(u)^n + f^n+1; Also, setup HOPBCs
         }
         else if (type == eExplicit || m_schemeType == eExponential)
         {
@@ -653,6 +670,7 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
     int i_start = 0;
     if (m_lastStageEqualsNewSolution)
     {
+        // std::cout << "\tIn if(m_lastStageEqualsNewSolution); Copy old solution y_new[0] = m_Y" << std::endl;
         for (int k = 0; k < m_nvars; k++)
         {
             Vmath::Vcopy(m_npoints, m_Y[k], 1, y_new[0][k], 1);
@@ -682,6 +700,9 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
 
     for (int i = i_start; i < m_numsteps; i++)
     {
+        // std::cout << "\tIn for(i = i_start(" << i_start << "); i < m_numsteps)" << std::endl 
+        //           << "\t y_new = deltaT(" << deltaT << ") * B(" << i << ",0) (" << B(i,0) << ") * m_F[0] (deltaT*B(" << i << ",0) = " << deltaT*B(i,0) << ") " << std::endl
+        //           << "\t y_new += deltaT * B_IMEX(" << i << ",0) (" << B_IMEX(i,0) << ") * m_F_IMEX[0] = (" << deltaT*B_IMEX(i,0) << ")" << std::endl;
         // The solution at the new time level is a linear
         // combination of:
         // 1: the stage derivatives
@@ -712,6 +733,7 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
 
         for (int j = 1; j < m_numstages; j++)
         {
+            // std::cout << "In for(j=1; j < m_numstages); Never executed with m_numstages = 1" << std::endl;
             for (int k = 0; k < m_nvars; k++)
             {
                 if (type == eExponential)
@@ -743,6 +765,7 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
         // time level
         for (int j = 0; j < m_numsteps; j++)
         {
+            // std::cout << "\tIn for(j = 0; j < m_numsteps);i from above; y_new += V(" << i << "," << j << ") (" << V(i,j) << ") * y_old[" << j << "]" << std::endl;
             for (int k = 0; k < m_nvars; k++)
             {
                 if (type == eExponential)

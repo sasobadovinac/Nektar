@@ -195,17 +195,46 @@ protected:
 
     SOLVER_UTILS_EXPORT virtual bool UpdateTimeStepCheck();
 
+    // SOLVER_UTILS_EXPORT virtual std::vector<SolverUtils::ForcingSharedPtr>* v_GetForcing();
+
 private:
     void InitializeSteadyState();
 
     bool CheckSteadyState(int step);
     bool CheckSteadyState(int step, NekDouble totCPUTime);
+
+    // Intialise arrays to compute Navier-Stokes operator balance for each time step
+    void initialise_operator(int nfields, int nvariables, int nout,
+                             Array<OneD, NekDouble> &globalResc,
+                             Array<OneD, NekDouble> &globalResm,
+                             Array<OneD, NekDouble> &times,
+                             Array<OneD, Array<OneD, NekDouble> > &gradient,
+                             Array<OneD, Array<OneD, NekDouble> > &tmp,
+                             Array<OneD, Array<OneD, NekDouble> > &outfields,
+                             Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &tfields);
+
+    // Compute continuity and momentum equation balances for each time step, TODO: include forcing terms
+    void evaluate_operator(int nfields, int nvariables, int stepCounter, int nout,
+                           Array<OneD, NekDouble> &globalResc,
+                           Array<OneD, NekDouble> &globalResm,
+                           Array<OneD, NekDouble> &times,
+                           Array<OneD, Array<OneD, NekDouble> > &gradient,
+                           Array<OneD, Array<OneD, NekDouble> > &tmp,
+                           Array<OneD, Array<OneD, NekDouble> > &outfields,
+                           Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &tfields);
+
+    // Write continuity and momentum residuals along with physical time to file
+    void write_operator(int stepCounter,
+                        Array<OneD,NekDouble> &globalResc,
+                        Array<OneD,NekDouble> &globalResm,
+                        Array<OneD,NekDouble> &times);
 };
 
     inline bool UnsteadySystem::UpdateTimeStepCheck()
     {
         return true;
     }
+
 
 } // namespace SolverUtils
 } // namespace Nektar
