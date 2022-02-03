@@ -7,11 +7,23 @@ v5.2
 - Added support for manifold  MatrixFree operators (2D in 3D space) (!1304)
 - Put in place automatic selection of explicit operations using an opt file (!1304)
 
+v5.2.0
+------
+**Library**
+- Add Arm SVE backend to SIMD library (!1282)
+v5.2.0
+------
+**Library**:
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+
 v5.1.1
 ------
 **Library**
 - Fix a boost headers incompatibility with boost-1.77 (!1297) 
 - Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
+- Fix initialisation warning when using HDF5 (!1299)
+- Split Helmholtz MatrixFree operator to improve compile times (!1292)
+- Fix Boost deprecated header warnings (!1302)
 
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
@@ -69,6 +81,9 @@ v5.1.0
 - Fix to interppointsdatatofld to allow for mpi processing of large files (!1191)
 - Fix the logic of C0Projection:helmsmoothing (!1220)
 - Fix extract module for boundaries with periodic boundary conditions (!1277)
+
+**IncNavierStokesSolver**:
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)

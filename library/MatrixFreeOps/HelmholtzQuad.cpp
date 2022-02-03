@@ -9,5 +9,6 @@ std::string __register_Helmholtz_Quad = GetOperatorFactory().RegisterCreatorFunc
 
 std::string __register_Helmholtz_Quad_Deformed = GetOperatorFactory().RegisterCreatorFunction(
     std::string("Helmholtz_Quad_Deformed"), &HelmholtzQuad<true>::Create);
+
 } // namespace MatrixFree
 } // namespace Nektar

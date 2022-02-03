@@ -9,5 +9,6 @@ std::string __register_Helmholtz_Hex = GetOperatorFactory().RegisterCreatorFunct
 
 std::string __register_Helmholtz_Hex_Deformed = GetOperatorFactory().RegisterCreatorFunction(
     std::string("Helmholtz_Hex_Deformed"), &HelmholtzHex<true>::Create);
+
 } // namespace MatrixFree
 } // namespace Nektar

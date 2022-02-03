@@ -9,5 +9,6 @@ std::string __register_Helmholtz_Pyr = GetOperatorFactory().RegisterCreatorFunct
 
 std::string __register_Helmholtz_Pyr_Deformed = GetOperatorFactory().RegisterCreatorFunction(
     std::string("Helmholtz_Pyr_Deformed"), &HelmholtzPyr<true>::Create);
+
 } // namespace MatrixFree
 } // namespace Nektar

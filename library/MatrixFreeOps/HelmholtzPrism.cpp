@@ -9,6 +9,6 @@ std::string __register_Helmholtz_Prism = GetOperatorFactory().RegisterCreatorFun
 
 std::string __register_Helmholtz_Prism_Deformed = GetOperatorFactory().RegisterCreatorFunction(
     std::string("Helmholtz_Prism_Deformed"), &HelmholtzPrism<true>::Create);
-
+    
 } // namespace MatrixFree
 } // namespace Nektar

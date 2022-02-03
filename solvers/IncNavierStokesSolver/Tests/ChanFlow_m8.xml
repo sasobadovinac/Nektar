@@ -116,5 +116,13 @@
 
     </GEOMETRY>
 
+    <FILTERS>
+        <FILTER TYPE="MaxMinFields">
+            <PARAM NAME="OutputFrequency">2000</PARAM>
+            <PARAM NAME="MaxOrMin">max</PARAM>
+            <PARAM NAME="options">  --error </PARAM>
+        </FILTER>
+    </FILTERS>
+
 </NEKTAR>
 
