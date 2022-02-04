@@ -808,7 +808,7 @@ void ElUtil::UpdateMapping()
         if(m_adapt_radius)
         {
             [&]{
-                for (auto &vert :m_el->GetVertexList())
+                for (auto &vert : m_el->GetVertexList())
                 {
                     Array<OneD, NekDouble> x(3);
                     x[0]   = vert->m_x;
@@ -830,7 +830,7 @@ void ElUtil::UpdateMapping()
         else
         {
             [&]{
-                for (auto &vert :m_el->GetVertexList())
+                for (auto &vert : m_el->GetVertexList())
                 {
                     for (auto &curve : vert->GetCADCurves())
                     {
