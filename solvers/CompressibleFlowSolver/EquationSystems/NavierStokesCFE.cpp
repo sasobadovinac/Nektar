@@ -144,10 +144,7 @@ namespace Nektar
                     &NavierStokesCFE::GetArtificialViscosity, this);
             }
 
-            if(m_ALESolver)
-            {
-                m_diffusion->SetGridVelocityTrace(m_gridVelocityTrace);
-            }
+            m_diffusion->SetGridVelocityTrace(m_gridVelocityTrace); // If not ALE and movement this is just 0s
         }
 
         // Set up penalty term for LDGNS
@@ -170,7 +167,7 @@ namespace Nektar
     {
         size_t nvariables = inarray.size();
         size_t npointsIn  = GetNpoints();
-        size_t npointsOut = m_ALESolver ? GetNcoeffs() : npointsIn; // If ALE outarray is in coefficient space
+        size_t npointsOut = m_ALESolver ? GetNcoeffs() : npointsIn; // If ALE then outarray is in coefficient space
         size_t nTracePts  = GetTraceTotPoints();
 
         Array<OneD, Array<OneD, NekDouble> > outarrayDiff(nvariables);
@@ -246,13 +243,6 @@ namespace Nektar
             {
                 m_diffusion->DiffuseCoeffs(nvariables, m_fields, inarrayDiff,
                                      outarrayDiff, inFwd, inBwd);
-
-                // @TODO: Multiply by Mass matrix for ALE?
-                MultiRegions::GlobalMatrixKey mkey(StdRegions::eMass);
-                for (int i = 0; i < nvariables; ++i)
-                {
-                    m_fields[i]->GeneralMatrixOp_IterPerExp(mkey, outarrayDiff[i], outarrayDiff[i]);
-                }
             }
             else
             {

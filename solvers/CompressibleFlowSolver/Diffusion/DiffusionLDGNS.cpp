@@ -69,7 +69,7 @@ void DiffusionLDGNS::v_InitObject(
 
     m_diffDim = m_spaceDim - nDim;
 
-    m_traceVel = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim};
+    m_traceVel = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim}; // @TODO: What is this trace vel used for???
     m_traceNormals = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim};
     for (std::size_t i = 0; i < m_spaceDim; ++i)
     {
@@ -225,6 +225,11 @@ void DiffusionLDGNS::v_InitObject(
 
     v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp2, pFwd, pBwd);
 
+    for (int i = 0; i < nConvectiveFields; ++i)
+    {
+        fields[i]->MultiplyByElmtInvMass(tmp2[i], tmp2[i]);
+    }
+
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
         fields[i]->BwdTrans(tmp2[i], outarray[i]);
@@ -307,7 +312,6 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         Vmath::Neg                      (nCoeffs, outarray[i], 1);
         fields[i]->AddTraceIntegral     (viscousFlux[i], outarray[i]);
         fields[i]->SetPhysState         (false);
-        fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
     }
 }
 
@@ -491,13 +495,11 @@ void DiffusionLDGNS::ApplyBCsO1(
                     GetUserDefined(),"WallAdiabatic"))
                 {
                     // Reinforcing bcs for velocity in case of Wall bcs
-                    //Vmath::Zero(nBndEdgePts, &scalarVariables[i][id2], 1);
-
                     for (int pt = 0; pt < nBndEdgePts; ++pt)
                     {
-                        scalarVariables[i][id2 + pt] = m_gridVelocityTrace[i][id2 + pt];  // @TODO: Just set to u_g
+                        scalarVariables[i][id2 + pt] =
+                            m_gridVelocityTrace[i][id2 + pt]; // If movement this equals trace grid velocity otherwise 0
                     }
-
                 }
                 else if (
                     boost::iequals(fields[i]->GetBndConditions()[j]->
