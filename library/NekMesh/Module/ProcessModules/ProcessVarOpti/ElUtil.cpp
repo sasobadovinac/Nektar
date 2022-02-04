@@ -799,28 +799,25 @@ void ElUtil::UpdateMapping()
         m_interp.CalcWeights(m_interp.GetInField(), m_interpField, true);
         m_interp.Interpolate(m_interp.GetInField(), m_interpField);
 
-        // NekDouble scaling = m_interpField->GetPointVal(m_dim + 0, 0);  // what's the point of having + 0 ?
         scaling = m_interpField->GetPointVal(m_dim, 0);
     }
 
     // r-adaption scale manually set
     else if (m_adapt_scale){
-        NekDouble radius = m_adapt_radius;
-        vector<NodeSharedPtr> ns = m_el->GetVertexList();
-        // Using elements with a node with a radius from the curve
-        if(radius)
+        // Using elements with a node within a radius from the curve
+        if(m_adapt_radius)
         {
             [&]{
-                for (int i = 0; i < ns.size(); i++)
+                for (auto &vert :m_el->GetVertexList())
                 {
                     Array<OneD, NekDouble> x(3);
-                    x[0]   = ns[i]->m_x;
-                    x[1]   = ns[i]->m_y;
-                    x[2]   = ns[i]->m_z;
+                    x[0]   = vert->m_x;
+                    x[1]   = vert->m_y;
+                    x[2]   = vert->m_z;
                     for (auto &curve : m_adaptcurves)
                     {
                         // TODO find a way to perform clever searching here instead of brute force
-                        if (curve->GetMinDistance(x) < radius)
+                        if (curve->GetMinDistance(x) < m_adapt_radius)
                         {
                             scaling = m_adapt_scale;
                             return;  // return lambda function to break loop
@@ -833,9 +830,9 @@ void ElUtil::UpdateMapping()
         else
         {
             [&]{
-                for (int i = 0; i < ns.size(); i++)
+                for (auto &vert :m_el->GetVertexList())
                 {
-                    for (auto &curve : ns[i]->GetCADCurves())
+                    for (auto &curve : vert->GetCADCurves())
                     {
                         std::vector<CADCurveSharedPtr>::iterator it =
                             std::find(m_adaptcurves.begin(), m_adaptcurves.end(), curve);
@@ -848,94 +845,6 @@ void ElUtil::UpdateMapping()
                 }
             }();
         }
-    }
-
-    if (scaling)
-    {
-        for (int i = 0; i < m_maps.size(); ++i)
-        {
-            for (int j = 0; j < 9; ++j)
-            {
-                maps[i][j]    = m_maps[i][j] / scaling;
-                mapsStd[i][j] = m_mapsStd[i][j] / scaling;
-            }
-
-            if (m_dim == 2)
-            {
-                maps[i][9]    = m_maps[i][9] * scaling * scaling;
-                mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling;
-            }
-            else if (m_dim == 3)
-            {
-                maps[i][9]    = m_maps[i][9] * scaling * scaling * scaling;
-                mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling * scaling;
-            }
-            else
-            {
-                ASSERTL0(false, "not coded");
-            }
-        }
-    }
-    else
-    {
-        maps = m_maps;
-        mapsStd = m_mapsStd;
-    }
-}
-
-void ElUtil::UpdateMappingByCurve(std::vector<CADCurveSharedPtr> curves)
-{
-
-    NekDouble scaling = 0;
-
-    std::cout << "updatemappingbycurve num curves: " << curves.size() << "\n";
-    for (auto &curve : curves){
-        std::cout << "updatemappingbycurve curve #: " << curve->GetId() << "\n";
-    }
-
-    // r-adaption scale manually set
-    NekDouble radius = m_adapt_radius;
-    vector<NodeSharedPtr> ns = m_el->GetVertexList();
-    // Using elements with a node with a radius from the curve
-    if(radius)
-    {
-        [&]{
-            for (int i = 0; i < ns.size(); i++)
-            {
-                Array<OneD, NekDouble> x(3);
-                x[0]   = ns[i]->m_x;
-                x[1]   = ns[i]->m_y;
-                x[2]   = ns[i]->m_z;
-                for (auto &curve : m_adaptcurves)
-                {
-                    // TODO find a way to perform clever searching here instead of brute force
-                    if (curve->GetMinDistance(x) < radius)
-                    {
-                        scaling = m_adapt_scale;
-                        return;  // return lambda function to break loop
-                    }
-                }
-            }
-        }();
-    }
-    // Using only elements with a node on the curve
-    else
-    {
-        [&]{
-            for (int i = 0; i < ns.size(); i++)
-            {
-                for (auto &curve : ns[i]->GetCADCurves())
-                {
-                    std::vector<CADCurveSharedPtr>::iterator it =
-                        std::find(m_adaptcurves.begin(), m_adaptcurves.end(), curve);
-                    if (it != m_adaptcurves.end())
-                    {
-                        scaling = m_adapt_scale;
-                        return;  // return lambda function to break loop
-                    }
-                }
-            }
-        }();
     }
 
     if (scaling)

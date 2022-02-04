@@ -115,8 +115,6 @@ public:
 
     void UpdateMapping();
 
-    void UpdateMappingByCurve(std::vector<CADCurveSharedPtr> curves);
-
 private:
 
     void MappingIdealToRef();

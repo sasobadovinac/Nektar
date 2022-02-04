@@ -241,10 +241,6 @@ void ProcessVarOpti::Process()
 
             if (freenodes[i][j]->GetNumCadCurve())
             {
-                // uncomment this line and comment the lambda function if CAD vertices are to be
-                // allowed to slide on CAD curves.
-                // optiKind += 10;
-
                 // ensures CAD vertices are removed from optimisation and not allowed to move.
                 [&]{ // in a lambda function to avoid checking multiple curves if node is already identified as a vertex.
                 auto  test_curves = freenodes[i][j]->GetCADCurves();
@@ -260,7 +256,7 @@ void ProcessVarOpti::Process()
                         }
                     }
                 }
-                optiKind += 10; // if the laambda function hasn't returned then node is not a vertex.
+                optiKind += 10; // if the lambda function hasn't returned then node is not a vertex.
                 }();
             }
             else if (freenodes[i][j]->GetNumCADSurf() == 1) // Why == 1 and not >= 1 or just != 0 ?
