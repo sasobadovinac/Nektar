@@ -827,10 +827,9 @@ timer.AccumulateRegion("Viscous Solve");
             cout << "Pressure n+1 sum = " << Vmath::Vsum(phystot, m_pressure->GetPhys(), 1) << endl;
         }
 
-
         // Compute gradient \nabla p^{n+1}
         int nvel = m_velocity.size();
-        Array<OneD, Array<OneD, NekDouble> >gradp(nvel), velocity(nvel), advection(nvel); // temporary storage
+        Array<OneD, Array<OneD, NekDouble> >gradp(nvel), velocity(nvel), advection(nvel); // temporary storage, for debugging
         for(int i = 0; i < nvel; i++)
         {
             gradp[i] = Array<OneD, NekDouble>(phystot, 0.0);
@@ -863,23 +862,9 @@ timer.AccumulateRegion("Viscous Solve");
         {
             velocity[i] = m_fields[i]->GetPhys();
         }
-        if(m_verbose)
-        {
-            for(int i = 0; i < nvel; i++)
-            {
-                cout << "Velocity[" << i << "] sum = " << Vmath::Vsum(phystot, velocity[i], 1) << endl;
-            }
-        }
 
         // Evaluate Advection -N(u)^n
         m_advObject->Advect(m_nConvectiveFields, m_fields, velocity, velocity, advection, time);
-        if(m_verbose)
-        {
-            for(int i = 0; i < nvel; i++)
-            {
-                cout << "Advection[" << i << "] sum = " << Vmath::Vsum(phystot, advection[i], 1) << endl;
-            }
-        }
 
         // Build Forcing term
         for(int i = 0; i < m_nConvectiveFields; ++i)
@@ -893,6 +878,10 @@ timer.AccumulateRegion("Viscous Solve");
         {
             for(int i = 0; i < nvel; i++)
             {
+                cout << "Velocity[" << i << "] sum = " << Vmath::Vsum(phystot, velocity[i], 1) << endl;
+                cout << "tilde{u}[" << i << "] sum = " << Vmath::Vsum(phystot, inarray[i], 1) << endl;
+                cout << "(-1)Advection[" << i << "] sum = " << Vmath::Vsum(phystot, advection[i], 1) << endl;
+                cout << "gradp[" << i << "] sum = " << Vmath::Vsum(phystot, gradp[i], 1) << endl;
                 cout << "Forcing[" << i << "] sum = " << Vmath::Vsum(phystot, Forcing[i], 1) << endl;
             }
         }
@@ -924,7 +913,7 @@ timer.AccumulateRegion("Viscous Solve");
             cout << "Pressure n+1 sum = " << Vmath::Vsum(phystot, m_pressure->GetPhys(), 1) << endl;
         }
 
-        // Setup storage arrays
+        // Setup storage arrays, for debugging
         int nvel = m_velocity.size();
         Array<OneD, Array<OneD, NekDouble> >gradp(nvel), velocity(nvel), curlcurl(nvel);
         for(int i = 0; i < nvel; i++)
@@ -932,7 +921,6 @@ timer.AccumulateRegion("Viscous Solve");
             gradp[i] = Array<OneD, NekDouble>(phystot, 0.0);
             velocity[i] = Array<OneD, NekDouble>(phystot, 0.0);
             curlcurl[i] = Array<OneD, NekDouble>(phystot, 0.0);
-            Vmath::Zero(phystot, AdvVel[i], 1);
         }
         
         // Compute gradient \nabla p^{n+1}
@@ -955,28 +943,10 @@ timer.AccumulateRegion("Viscous Solve");
         {
             velocity[i] = m_fields[i]->GetPhys();
         }
-        if(m_verbose)
-        {
-            for(int i = 0; i < nvel; i++)
-            {
-                cout << "Velocity[" << i << "] sum = " << Vmath::Vsum(phystot, velocity[i], 1) << endl;
-            }
-        }
 
         // Compute curl of vorticity
         m_fields[0]->CurlCurl(velocity, curlcurl); // in = u, out = curl(curl(u))
-        // for (int i = 0; i < nvel; i++) // *= \frac{\Delta t}{\gamma}
-        // {
-        //     Vmath::Smul(phystot, aii_Dt, AdvectionVelocity[i], 1, AdvectionVelocity[i], 1);
-        // }
-        // testCurlCurl(); // DEBUG verify curlcurl operator
-        if(m_verbose)
-        {
-            for(int i = 0; i < nvel; i++)
-            {
-                cout << "CurlCurl[" << i << "] sum = " << Vmath::Vsum(phystot, curlcurl[i], 1) << endl;
-            }
-        }
+        // testCurlCurl(); // Verify \nabla \cdot curlcurl = 0
 
         // Build Advection velocity
         for(int i = 0; i < nvel; i++)
@@ -986,10 +956,15 @@ timer.AccumulateRegion("Viscous Solve");
             Vmath::Svtvp(phystot, m_diffCoeff[i], curlcurl[i], 1, AdvVel[i], 1, AdvVel[i], 1); // += \nu curlcurl(u)
             Vmath::Smul(phystot, -aii_Dt/m_diffCoeff[i], AdvVel[i], 1, AdvVel[i], 1); // *= \frac{- Delta t}{\nu \gamma}
         }
+        // Print each term for debuging
         if(m_verbose)
         {
             for(int i = 0; i < nvel; i++)
             {
+                cout << "Velocity[" << i << "] sum = " << Vmath::Vsum(phystot, velocity[i], 1) << endl;
+                cout << "tilde{u}[" << i << "] sum = " << Vmath::Vsum(phystot, inarray[i], 1) << endl;
+                cout << "gradp[" << i << "] sum = " << Vmath::Vsum(phystot, gradp[i], 1) << endl;
+                cout << "CurlCurl[" << i << "] sum = " << Vmath::Vsum(phystot, curlcurl[i], 1) << endl;
                 cout << "AdvVel[" << i << "] sum = " << Vmath::Vsum(phystot, AdvVel[i], 1) << endl;
             }
         }
@@ -1012,6 +987,15 @@ timer.AccumulateRegion("Viscous Solve");
             cout << "\t\t\tPoisson solve" << endl;
         }
         m_pressure->HelmSolve(Forcing, m_pressure->UpdateCoeffs(), factors);
+
+        // Force p = 0
+        m_pressure->BwdTrans(m_pressure->GetCoeffs(),m_pressure->UpdatePhys());
+        Vmath::Zero(m_fields[0]->GetTotPoints(), m_pressure->UpdatePhys(), 1);
+        m_pressure->FwdTrans(m_pressure->GetPhys(), m_pressure->UpdateCoeffs());
+        if(m_verbose)
+        {
+            cout << "pressure = ?, check sum = " << Vmath::Vsum(m_pressure->GetTotPoints(), m_pressure->GetPhys(), 1) << endl;
+        }
 
         // Add presure to outflow bc if using convective like BCs
         m_extrapolation->AddPressureToOutflowBCs(m_kinvis); //  Add 1/kinvis * (pbc n ) to Velocity boundary condition
@@ -1051,6 +1035,13 @@ timer.AccumulateRegion("Viscous Solve");
                                                                m_fields[i]->UpdateCoeffs(), 
                                                                factors[StdRegions::eFactorLambda]);
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
+        }
+        
+        // Force v = 0
+        Vmath::Zero(m_fields[0]->GetTotPoints(), outarray[1], 1);
+        if(m_verbose)
+        {
+            cout << "Velocity[1] = 0, check sum = " << Vmath::Vsum(m_fields[0]->GetTotPoints(), outarray[1], 1) << endl;
         }
     }
 
