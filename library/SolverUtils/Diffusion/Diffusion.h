@@ -331,6 +331,12 @@ namespace Nektar
                                std::placeholders::_5, std::placeholders::_6);
             }
 
+            inline void SetGridVelocityTrace(
+                Array<OneD, Array<OneD, NekDouble>> &gridVelocityTrace)
+            {
+                m_gridVelocityTrace = gridVelocityTrace;
+            }
+
             inline void SetHomoDerivs(Array<OneD, Array<OneD, NekDouble> > &deriv)
             {
                 v_SetHomoDerivs(deriv);
@@ -375,7 +381,7 @@ namespace Nektar
             DiffusionFluxCons               m_FunctorDiffusionfluxCons;
             SpecialBndTreat                 m_SpecialBndTreat;
             DiffusionSymmFluxCons           m_FunctorSymmetricfluxCons;
-
+            Array<OneD, Array<OneD, NekDouble>> m_gridVelocityTrace;
             NekDouble                       m_time=0.0;
 
             SOLVER_UTILS_EXPORT virtual void v_InitObject(

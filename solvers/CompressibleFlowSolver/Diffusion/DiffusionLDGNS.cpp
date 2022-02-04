@@ -348,7 +348,7 @@ void DiffusionLDGNS::v_DiffuseCalculateDerivative(
             Vmath::Neg                      (nCoeffs, tmp1, 1);
             fields[i]->AddTraceIntegral     (numericalFluxO1[j][i], tmp1);
             fields[i]->SetPhysState         (false);
-            fields[i]->MultiplyByElmtInvMass(tmp1, tmp1); //
+            fields[i]->MultiplyByElmtInvMass(tmp1, tmp1);
             fields[i]->BwdTrans             (tmp1, qfields[j][i]);
         }
     }
@@ -491,7 +491,12 @@ void DiffusionLDGNS::ApplyBCsO1(
                     GetUserDefined(),"WallAdiabatic"))
                 {
                     // Reinforcing bcs for velocity in case of Wall bcs
-                    Vmath::Zero(nBndEdgePts, &scalarVariables[i][id2], 1);
+                    //Vmath::Zero(nBndEdgePts, &scalarVariables[i][id2], 1);
+
+                    for (int pt = 0; pt < nBndEdgePts; ++pt)
+                    {
+                        scalarVariables[i][id2 + pt] = m_gridVelocityTrace[i][id2 + pt];  // @TODO: Just set to u_g
+                    }
 
                 }
                 else if (

@@ -143,6 +143,11 @@ namespace Nektar
                 m_diffusion->SetArtificialDiffusionVector(
                     &NavierStokesCFE::GetArtificialViscosity, this);
             }
+
+            if(m_ALESolver)
+            {
+                m_diffusion->SetGridVelocityTrace(m_gridVelocityTrace);
+            }
         }
 
         // Set up penalty term for LDGNS
