@@ -259,7 +259,7 @@ void ProcessVarOpti::Process()
                 optiKind += 10; // if the lambda function hasn't returned then node is not a vertex.
                 }();
             }
-            else if (freenodes[i][j]->GetNumCADSurf() == 1) // Why == 1 and not >= 1 or just != 0 ?
+            else if (freenodes[i][j]->GetNumCADSurf()) // Why == 1 and not >= 1 or just != 0 ? Removed.
             {
                 optiKind += 20;
             }
@@ -385,15 +385,12 @@ void ProcessVarOpti::Process()
         m_res->startInv = 0;
         m_res->worstJac = numeric_limits<double>::max();
 
-        // bool update = true; // will apply at every varopi iteration.
         bool update =
             ((m_config["scalingfile"].beenSet || m_config["radaptscale"].beenSet) && (ctr % subIter) == 0);
         vector<Thread::ThreadJob *> elJobs(m_dataSet.size());
         for (int i = 0; i < m_dataSet.size(); i++)
         {
             elJobs[i] = m_dataSet[i]->GetJob(update);
-            // m_dataSet[i]->Evaluate();
-            // m_dataSet[i]->UpdateMapping();
         }
 
         tm->SetNumWorkers(0);
