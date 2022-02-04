@@ -105,7 +105,8 @@ InterfaceMapDG::InterfaceMapDG(
     }
 
     // DEBUG COMMENTS
-    if (true) // Set if verbose/debug mode? to output rank interface information
+    if (m_trace->GetSession()->DefinesCmdLineArgument("verbose")
+        && comm->GetSize() > 1)
     {
         if (comm->GetRank() == 0)
         {
