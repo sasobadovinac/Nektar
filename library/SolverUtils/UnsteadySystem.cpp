@@ -561,11 +561,11 @@ namespace Nektar
             // Initiate arrays for operator residuals, used only with -v arg, TODO create member m_variables in UnsteadySystem.h
             NekInt nout = 5*2 + 2 + 4; // No of output fields (momentum equation 2D + residuals + velocity gradients 2D)
             Array<OneD, NekDouble> globalResc, globalResm, times;
-            Array<OneD, Array<OneD, NekDouble> > gradient, tmp, outfields;
+            Array<OneD, Array<OneD, NekDouble> > L2s, gradient, tmp, outfields;
             Array<OneD, Array<OneD, Array<OneD, NekDouble> > > tfields;
             if(m_verbose)
             {
-                initialise_operator(nfields, nvariables, nout, globalResc, globalResm, times, gradient, tmp, outfields, tfields);
+                initialise_operator(nfields, nvariables, nout, globalResc, globalResm, times, L2s, gradient, tmp, outfields, tfields);
             }
 
             m_timestepMax = m_timestep;
@@ -691,7 +691,7 @@ namespace Nektar
                 // Evaluate operator
                 if(m_verbose)
                 {
-                    evaluate_operator(nfields, nvariables, stepCounter, nout, globalResc, globalResm, times, gradient, tmp, outfields, tfields);
+                    evaluate_operator(nfields, nvariables, stepCounter, nout, globalResc, globalResm, times, L2s, gradient, tmp, outfields, tfields);
                 }
 
                 // Perform any solver-specific post-integration steps
@@ -821,7 +821,6 @@ namespace Nektar
                         m_nchk++;
                     }
                     doCheckTime = false;
-
                     if(m_verbose)
                     {
                         // Write field of residual data to file
@@ -854,8 +853,8 @@ namespace Nektar
                     }
                 }
 
-                // // Exit for debugging
-                // if(step == 1)
+                // Exit for debugging
+                // if(step == 5)
                 // {
                 //     exit(EXIT_SUCCESS);
                 // }
@@ -873,7 +872,7 @@ namespace Nektar
             // Write operator residuals to file
             if(m_verbose)
             {
-                write_operator(stepCounter, globalResc, globalResm, times);
+                write_operator(stepCounter, globalResc, globalResm, times, L2s);
             }
             
 
@@ -1293,6 +1292,7 @@ namespace Nektar
                                                  Array<OneD, NekDouble> &globalResc,
                                                  Array<OneD, NekDouble> &globalResm,
                                                  Array<OneD, NekDouble> &times,
+                                                 Array<OneD, Array<OneD, NekDouble> > &L2s,
                                                  Array<OneD, Array<OneD, NekDouble> > &gradient,
                                                  Array<OneD, Array<OneD, NekDouble> > &tmp,
                                                  Array<OneD, Array<OneD, NekDouble> > &outfields,
@@ -1303,19 +1303,24 @@ namespace Nektar
             NekInt gradsize = nfields * nvariables;
             NekInt nts = 2; // number of previous time fields to save
 
-            // Initialise required storage arrays
+            // Storage for residuals over time
             globalResc = Array<OneD, NekDouble>(m_steps);
             globalResm = Array<OneD, NekDouble>(m_steps);
             times = Array<OneD, NekDouble>(m_steps);
+            L2s = Array<OneD, Array<OneD, NekDouble> >(nfields);
+            for(int i = 0; i < nfields; i++)
+            {
+                L2s[i] = Array<OneD, NekDouble>(m_steps, 0.0);
+            }
 
-            // Initialise gradient array_
+            // Gradient array
             gradient = Array<OneD, Array<OneD, NekDouble> >(gradsize);
             for (int i = 0; i < gradsize; i++)
             {
                 gradient[i] = Array<OneD, NekDouble>(npoints, 0.0);
             }
 
-            // Initialise temporary storage arrays
+            // Temporary storage arrays
             tmp = Array<OneD, Array<OneD, NekDouble> >(nvariables);
             for (int i = 0; i < nvariables; i++)
             {
@@ -1373,6 +1378,7 @@ namespace Nektar
                                                Array<OneD, NekDouble> &globalResc,
                                                Array<OneD, NekDouble> &globalResm,
                                                Array<OneD, NekDouble> &times,
+                                               Array<OneD, Array<OneD, NekDouble> > &L2s,
                                                Array<OneD, Array<OneD, NekDouble> > &gradient,
                                                Array<OneD, Array<OneD, NekDouble> > &tmp,
                                                Array<OneD, Array<OneD, NekDouble> > &outfields,
@@ -1573,6 +1579,14 @@ namespace Nektar
             // Save time (for plotting residuals)
             times[stepCounter] = m_time;
 
+            // Save L2 errors
+            Array<OneD, NekDouble> exactfield(npoints, 0.0);
+            for( int i = 0; i < nfields; i++)
+            {
+                EvaluateExactSolution(i, exactfield, m_time);
+                L2s[i][stepCounter] = m_fields[i]->L2(m_fields[i]->GetPhys(), exactfield);
+            }
+
             // Print operator residuals
             cout << "resc: " << globalResc[stepCounter] << "\tresm: " << globalResm[stepCounter] << endl;
         }
@@ -1580,14 +1594,15 @@ namespace Nektar
         void UnsteadySystem::write_operator(int stepCounter,
                             Array<OneD,NekDouble> &globalResc,
                             Array<OneD,NekDouble> &globalResm,
-                            Array<OneD,NekDouble> &times)
+                            Array<OneD,NekDouble> &times,
+                            Array<OneD, Array<OneD, NekDouble> > &L2s)
         {
             ofstream opfile;
             opfile.open("nsResiduals.dat");
-            opfile << "time,resc,resm" << endl;
+            opfile << "time,resc,resm,l2u,l2v,l2p" << endl;
             for( int i = 0; i < stepCounter; i++ )
             {
-                opfile << times[i] << "," << globalResc[i] << "," << globalResm[i] << endl;
+                opfile << times[i] << "," << globalResc[i] << "," << globalResm[i] << "," << L2s[0][i] << "," << L2s[1][i] << "," << L2s[2][i] << endl;
             }
             opfile.close();
         }

@@ -208,6 +208,7 @@ private:
                              Array<OneD, NekDouble> &globalResc,
                              Array<OneD, NekDouble> &globalResm,
                              Array<OneD, NekDouble> &times,
+                             Array<OneD, Array<OneD, NekDouble> > &L2s,
                              Array<OneD, Array<OneD, NekDouble> > &gradient,
                              Array<OneD, Array<OneD, NekDouble> > &tmp,
                              Array<OneD, Array<OneD, NekDouble> > &outfields,
@@ -218,6 +219,7 @@ private:
                            Array<OneD, NekDouble> &globalResc,
                            Array<OneD, NekDouble> &globalResm,
                            Array<OneD, NekDouble> &times,
+                           Array<OneD, Array<OneD, NekDouble> > &L2s,
                            Array<OneD, Array<OneD, NekDouble> > &gradient,
                            Array<OneD, Array<OneD, NekDouble> > &tmp,
                            Array<OneD, Array<OneD, NekDouble> > &outfields,
@@ -227,7 +229,8 @@ private:
     void write_operator(int stepCounter,
                         Array<OneD,NekDouble> &globalResc,
                         Array<OneD,NekDouble> &globalResm,
-                        Array<OneD,NekDouble> &times);
+                        Array<OneD,NekDouble> &times,
+                        Array<OneD, Array<OneD, NekDouble> > &L2s);
 };
 
     inline bool UnsteadySystem::UpdateTimeStepCheck()
