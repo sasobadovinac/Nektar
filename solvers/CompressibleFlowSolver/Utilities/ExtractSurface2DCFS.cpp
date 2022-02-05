@@ -213,7 +213,8 @@ int main(int argc, char *argv[])
     vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;
     vector<vector<NekDouble> >                      fieldData;
 
-    LibUtilities::Import(fieldFile, fieldDef, fieldData);
+    LibUtilities::FieldMetaDataMap fieldMetaDataMap;
+    LibUtilities::Import(fieldFile, fieldDef, fieldData, fieldMetaDataMap);
     //--------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------
@@ -244,6 +245,17 @@ int main(int argc, char *argv[])
         pFields[i] = MemoryManager<
             MultiRegions::DisContField>::AllocateSharedPtr(
                 vSession, graphShPt, vSession->GetVariable(i));
+    }
+
+    //@TODO: Might need this to rotate mesh based on time
+    for (auto &fld : pFields)
+    {
+        if (fld->GetMovement() != nullptr)
+        {
+            fld->GetMovement()->PerformMovement(
+                boost::lexical_cast<NekDouble>(fieldMetaDataMap["Time"]));
+            fld->Reset();
+        }
     }
 
     MultiRegions::ExpListSharedPtr Exp2D;
