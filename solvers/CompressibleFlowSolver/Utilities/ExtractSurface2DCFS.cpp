@@ -255,6 +255,7 @@ int main(int argc, char *argv[])
             fld->GetMovement()->PerformMovement(
                 boost::lexical_cast<NekDouble>(fieldMetaDataMap["Time"]));
             fld->Reset();
+            fld->SetUpPhysNormals();
         }
     }
 
