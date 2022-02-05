@@ -243,20 +243,18 @@ void ProcessVarOpti::Process()
             {
                 // ensures CAD vertices are removed from optimisation and not allowed to move.
                 [&]{ // in a lambda function to avoid checking multiple curves if node is already identified as a vertex.
-                auto  test_curves = freenodes[i][j]->GetCADCurves();
-                for (auto &curve: test_curves)
-                {
-                    auto verts = curve->GetVertex();
-                    for (auto &vert : verts)
+                    for (auto &curve : freenodes[i][j]->GetCADCurves())
                     {
-                        if (freenodes[i][j] == vert->GetNode())
+                        for (auto &vert : curve->GetVertex())
                         {
-                            optiKind = 0;  // node is a vertex of the CAD curve and should not be optimised.
-                            return;
+                            if (freenodes[i][j] == vert->GetNode())
+                            {
+                                optiKind = 0;  // node is a vertex of the CAD curve and should not be optimised.
+                                return;
+                            }
                         }
                     }
-                }
-                optiKind += 10; // if the lambda function hasn't returned then node is not a vertex.
+                    optiKind += 10; // if the lambda function hasn't returned then node is not a vertex.
                 }();
             }
             else if (freenodes[i][j]->GetNumCADSurf()) // Why == 1 and not >= 1 or just != 0 ? Removed.
