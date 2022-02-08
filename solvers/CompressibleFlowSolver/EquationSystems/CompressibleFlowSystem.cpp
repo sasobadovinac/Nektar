@@ -1110,6 +1110,12 @@ timer.AccumulateRegion("DoDiffusion");
         m_varConv->GetVelocityVector(physfields, velocity);
         m_varConv->GetSoundSpeed    (physfields, soundspeed);
 
+        // Subtract Ug from the velocity for the ALE formulation
+        for(int i = 0; i < m_spacedim; ++i)
+        {
+            Vmath::Vsub(nTotQuadPoints, velocity[i], 1, m_gridVelocity[i], 1, velocity[i], 1);
+        }
+
         for (int el = 0; el < n_element; ++el)
         {
             ptsKeys = m_fields[0]->GetExp(el)->GetPointsKeys();
