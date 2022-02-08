@@ -214,7 +214,7 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
 {
     boost::ignore_unused(time, fields, elmtToExpId, gridVelocity);
 
-    auto angVel = m_zone->GetAngularVel();
+    auto angVel = m_zone->GetAngularVel(time);
     auto axis = m_zone->GetAxis();
     auto origin = m_zone->GetOrigin();
 
@@ -247,7 +247,7 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
 
             // @TODO: Not sure here? multiply normal vector by distance from axis and angular velocity?
             //norm.Normalize();
-            norm = norm * angVel;
+            norm = norm * -angVel; // We negate here as by convention a positive angular velocity is counter-clockwise
 
             for (int j = 0; j < gridVelocity.size(); ++j)
             {

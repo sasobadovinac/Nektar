@@ -154,7 +154,7 @@ struct ZoneRotate final: public ZoneBase
                const int coordDim,
                const NekPoint<NekDouble> &origin,
                const DNekVec &axis,
-               const NekDouble &angularVel);
+               const LibUtilities::EquationSharedPtr &angularVelEqn);
 
     virtual ~ZoneRotate() = default;
 
@@ -168,9 +168,9 @@ struct ZoneRotate final: public ZoneBase
         return m_axis;
     }
 
-    inline NekDouble GetAngularVel() const
+    inline NekDouble GetAngularVel(NekDouble &time) const
     {
-        return m_angularVel;
+        return m_angularVelEqn->Evaluate(0,0,0,time);
     }
 
     virtual bool v_Move(NekDouble timeStep) final;
@@ -178,7 +178,7 @@ struct ZoneRotate final: public ZoneBase
 protected:
     NekPoint<NekDouble> m_origin;
     DNekVec m_axis;
-    NekDouble m_angularVel;
+    LibUtilities::EquationSharedPtr m_angularVelEqn;
     std::vector<PointGeomSharedPtr> m_rotateVerts;
     std::vector<CurveSharedPtr> m_rotateCurves;
     std::vector<PointGeom> m_origPosition;

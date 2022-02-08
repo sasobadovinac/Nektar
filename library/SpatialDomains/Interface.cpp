@@ -138,9 +138,9 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain,
 
 ZoneRotate::ZoneRotate(int id, const CompositeMap &domain, const int coordDim,
                        const NekPoint<NekDouble> &origin, const DNekVec &axis,
-                       const NekDouble &angularVel)
+                       const LibUtilities::EquationSharedPtr &angularVelEqn)
     : ZoneBase(MovementType::eRotate, id, domain, coordDim), m_origin(origin),
-      m_axis(axis), m_angularVel(angularVel)
+      m_axis(axis), m_angularVelEqn(angularVelEqn)
 {
     std::set<int> seenVerts, seenEdges, seenFaces;
     for (auto &comp : m_domain)
@@ -423,12 +423,13 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             err = zonesElement->QueryStringAttribute("ANGVEL", &angularVelStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read angular velocity.");
 
-            LibUtilities::Equation angularVelEqn(m_session->GetInterpreter(),
-                                                 angularVelStr);
-            NekDouble angularVel = angularVelEqn.Evaluate();
+            m_session->SubstituteExpressions(angularVelStr);
+            LibUtilities::EquationSharedPtr angularVelEqn =
+                MemoryManager<LibUtilities::Equation>::AllocateSharedPtr(
+                        m_session->GetInterpreter(), angularVelStr);
 
             zone = ZoneRotateShPtr(MemoryManager<ZoneRotate>::AllocateSharedPtr(
-                indx, domain, coordDim, origin, axis, angularVel));
+                indx, domain, coordDim, origin, axis, angularVelEqn));
 
             m_moveFlag = true;
         }
@@ -654,7 +655,13 @@ void Movement::GenGeomFactors()
 // Calculate new location of points using Rodrigues formula
 bool ZoneRotate::v_Move(NekDouble time)
 {
-    NekDouble angle = -m_angularVel * time;
+    // NekDouble angle = GetAngularVel(time) * time;
+    // TODO: For none constant angular velocity this doesn't work ^^
+    // @TODO: I need to take into account the total angle, summing timesteps works here
+    // @TODO: but then it doesn't work for FieldConvert where only the checkpoint time is known
+    // TODO: I want to integrate m_angularVelEqn up to current time
+    NekDouble period = 20.0;
+    NekDouble angle = ceil(1.0/period*time - 1.0) * time -  period / 2.0 * (ceil(1.0/period*time - 1.0) *  ceil(1.0/period*time));
 
     // Identity matrix
     DNekMat rot(3, 3, 0.0);
