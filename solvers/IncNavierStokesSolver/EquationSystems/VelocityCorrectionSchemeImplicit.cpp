@@ -988,14 +988,6 @@ timer.AccumulateRegion("Viscous Solve");
         }
         m_pressure->HelmSolve(Forcing, m_pressure->UpdateCoeffs(), factors);
 
-        // Force p = 0
-        m_pressure->BwdTrans(m_pressure->GetCoeffs(),m_pressure->UpdatePhys());
-        Vmath::Zero(m_fields[0]->GetTotPoints(), m_pressure->UpdatePhys(), 1);
-        m_pressure->FwdTrans(m_pressure->GetPhys(), m_pressure->UpdateCoeffs());
-        if(m_verbose)
-        {
-            cout << "pressure = ?, check sum = " << Vmath::Vsum(m_pressure->GetTotPoints(), m_pressure->GetPhys(), 1) << endl;
-        }
 
         // Add presure to outflow bc if using convective like BCs
         m_extrapolation->AddPressureToOutflowBCs(m_kinvis); //  Add 1/kinvis * (pbc n ) to Velocity boundary condition
@@ -1037,12 +1029,6 @@ timer.AccumulateRegion("Viscous Solve");
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(),outarray[i]);
         }
         
-        // Force v = 0
-        Vmath::Zero(m_fields[0]->GetTotPoints(), outarray[1], 1);
-        if(m_verbose)
-        {
-            cout << "Velocity[1] = 0, check sum = " << Vmath::Vsum(m_fields[0]->GetTotPoints(), outarray[1], 1) << endl;
-        }
     }
 
     void  VelocityCorrectionSchemeImplicit::SetUpSVV(void)

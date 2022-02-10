@@ -579,7 +579,8 @@ namespace Nektar
         GlobalLinSysSharedPtr ContField::GetGlobalLinSys(
                                 const GlobalLinSysKey &mkey)
         {
-            return m_globalLinSysManager[mkey];
+            // return m_globalLinSysManager[mkey];
+            return GenGlobalLinSys(mkey);
         }
 
         GlobalLinSysSharedPtr ContField::GenGlobalLinSys(

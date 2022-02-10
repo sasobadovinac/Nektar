@@ -108,6 +108,7 @@ namespace Nektar
          */
         bool operator<(const GlobalLinSysKey &lhs, const GlobalLinSysKey &rhs)
         {
+            std::cout << "Compare GlobalLinSysKeys" << std::endl;
             if(lhs.m_solnType < rhs.m_solnType)
             {
                 return true;
@@ -139,6 +140,8 @@ namespace Nektar
                     return false;
                 }
             }
+            std::cout << "return value: " << (*dynamic_cast<const GlobalMatrixKey*>(&lhs)
+                    < *dynamic_cast<const GlobalMatrixKey*>(&rhs)) << std::endl;
 
             return (*dynamic_cast<const GlobalMatrixKey*>(&lhs)
                     < *dynamic_cast<const GlobalMatrixKey*>(&rhs));
