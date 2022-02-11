@@ -75,6 +75,8 @@ ProcessInterpField::ProcessInterpField(FieldSharedPtr f) : ProcessModule(f)
         ConfigOption(false, "10000000", "Upper bound for interpolation value");
     m_config["defaultvalue"] =
         ConfigOption(false, "0", "Default value if point is outside domain");
+    m_config["realmodetoimag"] = ConfigOption(
+        false, "NotSet", "Take fields as sin mode");
 }
 
 ProcessInterpField::~ProcessInterpField()
@@ -83,7 +85,7 @@ ProcessInterpField::~ProcessInterpField()
 
 void ProcessInterpField::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     FieldSharedPtr fromField = std::shared_ptr<Field>(new Field());
 
@@ -98,10 +100,11 @@ void ProcessInterpField::Process(po::variables_map &vm)
             LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0));
 
     // Set up range based on min and max of local parallel partition
-    SpatialDomains::DomainRangeShPtr rng =
-        MemoryManager<SpatialDomains::DomainRange>::AllocateSharedPtr();
+    LibUtilities::DomainRangeShPtr rng =
+        MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
 
-    int coordim = m_f->m_exp[0]->GetCoordim(0);
+    int numHomoDir = m_f->m_numHomogeneousDir;
+    int coordim = m_f->m_exp[0]->GetCoordim(0) + numHomoDir;
     int npts    = m_f->m_exp[0]->GetTotPoints();
     Array<OneD, Array<OneD, NekDouble> > coords(3);
 
@@ -167,7 +170,22 @@ void ProcessInterpField::Process(po::variables_map &vm)
         fromfld, fromField->m_fielddef, fromField->m_data,
         LibUtilities::NullFieldMetaDataMap, ElementGIDs);
 
-    int NumHomogeneousDir = fromField->m_fielddef[0]->m_numHomogeneousDir;
+    int fromNumHomoDir = fromField->m_fielddef[0]->m_numHomogeneousDir;
+    for (i=0; i<fromField->m_fielddef.size(); ++i)
+    {
+        int d1 = fromField->m_fielddef[i]->m_basis.size();
+        d1 -= 1;
+        if (d1 >= 0 &&
+            (fromField->m_fielddef[i]->m_basis[d1] ==
+                LibUtilities::eFourierHalfModeRe ||
+             fromField->m_fielddef[i]->m_basis[d1] ==
+                LibUtilities::eFourierHalfModeIm) )
+        {
+            fromField->m_fielddef[i]->m_homogeneousZIDs[0] += 2;
+            fromField->m_fielddef[i]->m_numModes[d1] = 4;
+            fromField->m_fielddef[i]->m_basis[d1] = LibUtilities::eFourier;
+        }
+    }
 
     //----------------------------------------------
     // Set up Expansion information to use mode order from field
@@ -177,18 +195,30 @@ void ProcessInterpField::Process(po::variables_map &vm)
 
     fromField->m_exp.resize(nfields);
     fromField->m_exp[0] =
-        fromField->SetUpFirstExpList(NumHomogeneousDir, true);
+        fromField->SetUpFirstExpList(fromNumHomoDir, true);
 
     m_f->m_exp.resize(nfields);
 
     // declare auxiliary fields.
     for (i = 1; i < nfields; ++i)
     {
-        m_f->m_exp[i]       = m_f->AppendExpList(NumHomogeneousDir);
-        fromField->m_exp[i] = fromField->AppendExpList(NumHomogeneousDir);
+        m_f->m_exp[i]       = m_f->AppendExpList(numHomoDir);
+        fromField->m_exp[i] = fromField->AppendExpList(fromNumHomoDir);
     }
 
     // load field into expansion in fromfield.
+    set<int> sinmode;
+    if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
+    {
+        vector<int> value;
+        ASSERTL0(ParseUtils::GenerateVector(
+            m_config["realmodetoimag"].as<string>(), value),
+            "Failed to interpret realmodetoimag string");
+        for (int j: value)
+        {
+            sinmode.insert(j);
+        }
+    }
     for (int j = 0; j < nfields; ++j)
     {
         for (i = 0; i < fromField->m_fielddef.size(); i++)
@@ -197,6 +227,19 @@ void ProcessInterpField::Process(po::variables_map &vm)
                 fromField->m_fielddef[i], fromField->m_data[i],
                 fromField->m_fielddef[0]->m_fields[j],
                 fromField->m_exp[j]->UpdateCoeffs());
+        }
+        if (fromNumHomoDir == 1)
+        {
+            fromField->m_exp[j]->SetWaveSpace(true);
+            if (sinmode.count(j))
+            {
+                int Ncoeff = fromField->m_exp[j]->GetPlane(2)->GetNcoeffs();
+                Vmath::Smul(Ncoeff, -1.,
+                    fromField->m_exp[j]->GetPlane(2)->GetCoeffs()   , 1,
+                    fromField->m_exp[j]->GetPlane(3)->UpdateCoeffs(), 1);
+                Vmath::Zero(Ncoeff,
+                    fromField->m_exp[j]->GetPlane(2)->UpdateCoeffs(), 1);
+            }
         }
         fromField->m_exp[j]->BwdTrans(fromField->m_exp[j]->GetCoeffs(),
                                         fromField->m_exp[j]->UpdatePhys());

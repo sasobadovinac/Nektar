@@ -33,11 +33,16 @@ IF (THIRDPARTY_BUILD_CCMIO)
     ENDIF()
     MARK_AS_ADVANCED(PATCH)
 
+    SET(CCMIO_URL "https://downloads.sourceforge.net/project/foam-extend/ThirdParty/libccmio-2.6.1.tar.gz")
+    IF (DEFINED NEKTAR_CCMIO_URL)
+        SET(CCMIO_URL ${NEKTAR_CCMIO_URL})
+    ENDIF()
+
     INCLUDE(ExternalProject)
     EXTERNALPROJECT_ADD(
         libccmio-2.6.1
         PREFIX ${TPSRC}
-        URL http://visit.ilight.com/svn/visit/trunk/third_party/libccmio-2.6.1.tar.gz
+        URL ${CCMIO_URL}
         URL_MD5 f81fbdfb960b1a4f3bcc7feee491efe4
         STAMP_DIR ${TPBUILD}/stamp
         DOWNLOAD_DIR ${TPSRC}
@@ -51,6 +56,7 @@ IF (THIRDPARTY_BUILD_CCMIO)
             -G ${CMAKE_GENERATOR}
             -DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
             -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
             -DCMAKE_INSTALL_PREFIX:PATH=${TPDIST}
             ${TPSRC}/libccmio-2.6.1
         )
@@ -68,7 +74,6 @@ ELSE()
     MESSAGE(STATUS "Found CCMIO: ${CCMIO_LIBRARY}")
     SET(CCMIO_CONFIG_INCLUDE_DIR ${CCMIO_INCLUDE_DIR})
     INCLUDE_DIRECTORIES(SYSTEM NekMesh ${CCMIO_INCLUDE_DIR})
-    LINK_DIRECTORIES(${CCMIO_LIBRARY_DIR})
 ENDIF (THIRDPARTY_BUILD_CCMIO)
 
 SET(CCMIO_LIBRARIES ${CCMIO_LIBRARY} ${CCMIO_ADF_LIBRARY})

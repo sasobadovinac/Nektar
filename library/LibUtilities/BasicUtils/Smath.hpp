@@ -33,19 +33,34 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_SCALARMATH_H
+#define NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_SCALARMATH_H
+
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
+#include <algorithm>
+#include <cstdlib>
+#include <math.h>
+using namespace std;
+using namespace Nektar;
 
 namespace Smath
 {
-    /***************** Math routines  ***************/
 
-    /// \brief Return the soft max between two scalars
-    template<class T> inline T Smax(const T a, const T b, const T k)
-    {
-        T maxi = std::max(a, b)*k;
-        T mini = std::min(a, b)*k;
-        T xmax = ( maxi + log( 1.0 + exp( mini - maxi )))/k;
-        return xmax;
-    }
+/***************** Math routines  ***************/
+
+/// \brief Return the soft max of between two scalars
+template <class T> T Smax(const T a, const T b, const T k)
+{
+    T maxi = std::max(a, b) * k;
+    T mini = std::min(a, b) * k;
+    T xmax = (maxi + log(1.0 + exp(mini - maxi))) / k;
+    return xmax;
 }
+
+template NekDouble Smax(const NekDouble a, const NekDouble b,
+                        const NekDouble k);
+
+template int Smax(const int a, const int b, const int k);
+} // namespace Smath
+#endif // NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_SCALARMATH_H

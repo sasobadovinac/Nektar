@@ -40,6 +40,7 @@
 
 #include <ADRSolver/EquationSystems/MMFAdvection.h>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 
 namespace Nektar
 {
@@ -240,7 +241,7 @@ void MMFAdvection::v_DoSolve()
     }
 
     // Initialise time integration scheme
-    m_intSoln = m_intScheme->InitializeScheme( m_timestep, fields, m_time, m_ode );
+    m_intScheme->InitializeScheme(m_timestep, fields, m_time, m_ode);
 
     // Check uniqueness of checkpoint output
     ASSERTL0((m_checktime == 0.0 && m_checksteps == 0) ||
@@ -272,7 +273,7 @@ void MMFAdvection::v_DoSolve()
     while (step < m_steps || m_time < m_fintime - NekConstants::kNekZeroTol)
     {
         timer.Start();
-        fields = m_intScheme->TimeIntegrate(step, m_timestep, m_intSoln, m_ode);
+        fields = m_intScheme->TimeIntegrate(step, m_timestep, m_ode);
         timer.Stop();
 
         m_time += m_timestep;
@@ -294,7 +295,7 @@ void MMFAdvection::v_DoSolve()
             // Masss = h^*
             indx = (step + 1) / m_checksteps;
             dMass[indx] =
-                (m_fields[0]->PhysIntegral(fields[0]) - m_Mass0) / m_Mass0;
+                (m_fields[0]->Integral(fields[0]) - m_Mass0) / m_Mass0;
 
             std::cout << "dMass = " << std::setw(8) << std::left << dMass[indx]
                      << std::endl;
@@ -868,8 +869,8 @@ NekDouble MMFAdvection::ComputeCirculatingArclength(const NekDouble zlevel,
                                                     const NekDouble Rhs)
 {
 
-    NekDouble Tol = 0.0001, Maxiter = 1000, N = 100, F = 0.0, dF = 0.0;
-    NekDouble newy, y0, tmp;
+    NekDouble Tol = 0.0001, Maxiter = 1000, N = 100;
+    NekDouble newy, F = 0.0, dF = 1.0, y0, tmp;
 
     Array<OneD, NekDouble> xp(N + 1);
     Array<OneD, NekDouble> yp(N + 1);
@@ -1015,7 +1016,7 @@ void MMFAdvection::v_SetInitialConditions(const NekDouble initialtime,
             AdvectionBellSphere(u);
             m_fields[0]->SetPhys(u);
 
-            m_Mass0 = m_fields[0]->PhysIntegral(u);
+            m_Mass0 = m_fields[0]->Integral(u);
 
             // forward transform to fill the modal coeffs
             for (int i = 0; i < m_fields.size(); ++i)
@@ -1032,7 +1033,7 @@ void MMFAdvection::v_SetInitialConditions(const NekDouble initialtime,
             Test2Dproblem(initialtime, u);
             m_fields[0]->SetPhys(u);
 
-            m_Mass0 = m_fields[0]->PhysIntegral(u);
+            m_Mass0 = m_fields[0]->Integral(u);
 
             // forward transform to fill the modal coeffs
             for (int i = 0; i < m_fields.size(); ++i)
@@ -1049,7 +1050,7 @@ void MMFAdvection::v_SetInitialConditions(const NekDouble initialtime,
             AdvectionBellPlane(u);
             m_fields[0]->SetPhys(u);
 
-            m_Mass0 = m_fields[0]->PhysIntegral(u);
+            m_Mass0 = m_fields[0]->Integral(u);
             std::cout << "m_Mass0 = " << m_Mass0 << std::endl;
 
             // forward transform to fill the modal coeffs

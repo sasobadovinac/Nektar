@@ -59,7 +59,7 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT TriExp(
                             const LibUtilities::BasisKey &Ba,
                             const LibUtilities::BasisKey &Bb,
-                            const SpatialDomains::TriGeomSharedPtr &geom);
+                            const SpatialDomains::Geometry2DSharedPtr &geom);
 
             LOCAL_REGIONS_EXPORT TriExp(const TriExp &T);
 
@@ -121,6 +121,10 @@ namespace Nektar
                             const int dir,
                             const Array<OneD, const NekDouble>& inarray,
                                   Array<OneD, NekDouble> & outarray);
+            LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
+                const int dir, 
+                const Array<OneD, const NekDouble>      &inarray, 
+                Array<OneD, Array<OneD, NekDouble> >    &outarray);
 
             LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_MatOp(
                             const int dir,
@@ -216,12 +220,6 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual
                 DNekMatSharedPtr v_CreateStdMatrix(
                             const StdRegions::StdMatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT virtual
-                DNekScalMatSharedPtr CreateMatrix(
-                            const MatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT virtual
-                DNekScalBlkMatSharedPtr CreateStaticCondMatrix(
-                            const MatrixKey &mkey);
             LOCAL_REGIONS_EXPORT virtual
                 DNekScalMatSharedPtr v_GetLocMatrix(
                             const MatrixKey &mkey);

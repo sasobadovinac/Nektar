@@ -34,7 +34,10 @@
 
 #include <boost/core/ignore_unused.hpp>
 
+#include <MatrixFreeOps/Operator.hpp>
+
 #include <Collections/Operator.h>
+#include <Collections/MatrixFreeBase.h>
 #include <Collections/Collection.h>
 
 using namespace std;
@@ -58,17 +61,18 @@ class PhysDeriv_StdMat : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_StdMat)
 
-        virtual ~PhysDeriv_StdMat()
+        ~PhysDeriv_StdMat() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
+
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
             Array<OneD, NekDouble> tmp0,tmp1,tmp2;
@@ -92,24 +96,44 @@ class PhysDeriv_StdMat : public Operator
             }
 
             // calculate full derivative
-            for(int i = 0; i < m_coordim; ++i)
+            if(m_isDeformed)
             {
-                Vmath::Zero(ntot,out[i],1);
-                for(int j = 0; j < m_dim; ++j)
+                for(int i = 0; i < m_coordim; ++i)
                 {
-                    Vmath::Vvtvp (ntot, m_derivFac[i*m_dim+j], 1,
-                                        Diff[j],               1,
-                                        out[i],                1,
-                                        out[i],                1);
+                    Vmath::Zero(ntot,out[i],1);
+                    for(int j = 0; j < m_dim; ++j)
+                    {
+                        Vmath::Vvtvp (ntot, m_derivFac[i*m_dim+j], 1,
+                                      Diff[j],  1,
+                                      out[i],   1,
+                                      out[i],   1);
+                    }
+                }
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int i = 0; i < m_coordim; ++i)
+                {
+                    Vmath::Zero(ntot,out[i],1);
+                    for(int e = 0; e < m_numElmt; ++e)
+                    {
+                        for(int j = 0; j < m_dim; ++j)
+                        {
+                            Vmath::Svtvp (m_nqe, m_derivFac[i*m_dim+j][e],
+                                          Diff[j] + e*m_nqe,     1,
+                                          out[i]  + e*m_nqe,     1,
+                                          t = out[i]  + e*m_nqe, 1);
+                        }
+                    }
                 }
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -133,13 +157,37 @@ class PhysDeriv_StdMat : public Operator
 
             // calculate full derivative
             Vmath::Zero(ntot,output,1);
-            for(int j = 0; j < m_dim; ++j)
+            if(m_isDeformed)
             {
-                Vmath::Vvtvp (ntot, m_derivFac[dir*m_dim+j], 1,
-                                    Diff[j],               1,
-                                    output,                1,
-                                    output,                1);
+                for(int j = 0; j < m_dim; ++j)
+                {
+                    Vmath::Vvtvp (ntot, m_derivFac[dir*m_dim+j], 1,
+                                  Diff[j],  1,
+                                  output,   1,
+                                  output,   1);
+                }
             }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    for(int j = 0; j < m_dim; ++j)
+                    {
+                        Vmath::Svtvp (m_nqe, m_derivFac[dir*m_dim+j][e],
+                                      Diff[j] + e*m_nqe,     1,
+                                      output  + e*m_nqe,     1,
+                                      t = output  + e*m_nqe, 1);
+                    }
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -151,8 +199,9 @@ class PhysDeriv_StdMat : public Operator
     private:
         PhysDeriv_StdMat(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors)
         {
             int nqtot = 1;
             LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
@@ -222,26 +271,193 @@ OperatorKey PhysDeriv_StdMat::m_typeArr[] =
         PhysDeriv_StdMat::create, "PhysDeriv_SumFac_Pyr")
 };
 
+/**
+ * @brief Phys deriv operator using matrix free operators.
+ */
+class PhysDeriv_MatrixFree : public Operator, MatrixFreeOneInMultiOut
+{
+    public:
+    OPERATOR_CREATE(PhysDeriv_MatrixFree)
+
+    ~PhysDeriv_MatrixFree() final
+    {
+    }
+
+    void operator()(
+             const Array<OneD, const NekDouble> &input,
+                   Array<OneD,       NekDouble> &output0,
+                   Array<OneD,       NekDouble> &output1,
+                   Array<OneD,       NekDouble> &output2,
+                   Array<OneD,       NekDouble> &wsp) final
+    {
+        boost::ignore_unused(wsp);
+
+        if (m_isPadded)
+        {
+            // copy into padded vector
+            Vmath::Vcopy(m_nIn, input, 1, m_input, 1);
+            (*m_oper)(m_input, m_output);
+        }
+        else
+        {
+            (*m_oper)(input, m_output);
+        }
+
+        // currently using temporary local temporary space for output
+        // to allow for other operator call below which is
+        // directionally dependent
+        switch(m_coordim)
+        {
+        case 1:
+            Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
+            break;
+        case 2:
+            Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
+            Vmath::Vcopy(m_nOut, m_output[1], 1, output1, 1);
+            break;
+        case 3:
+            Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
+            Vmath::Vcopy(m_nOut, m_output[1], 1, output1, 1);
+            Vmath::Vcopy(m_nOut, m_output[2], 1, output2, 1);
+            break;
+        default:
+            NEKERROR(ErrorUtil::efatal,
+                     "Unknown coordinate dimension");
+            break;
+        }
+    }
+
+    void operator()(int dir,
+                    const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        boost::ignore_unused(wsp);
+        if (m_isPadded)
+        {
+            // copy into padded vector
+            Vmath::Vcopy(m_nIn, input, 1, m_input, 1);
+            (*m_oper)(m_input, m_output);
+        }
+        else
+        {
+            (*m_oper)(input, m_output);
+        }
+        Vmath::Vcopy(m_nOut, m_output[dir], 1, output, 1);
+    }
+    
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+private:
+    std::shared_ptr<MatrixFree::PhysDeriv> m_oper;
+    
+    PhysDeriv_MatrixFree(
+                    vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                    CoalescedGeomDataSharedPtr                pGeomData,
+                    StdRegions::FactorMap                     factors)
+        : Operator(pCollExp, pGeomData, factors),
+          MatrixFreeOneInMultiOut(pCollExp[0]->GetCoordim(),
+                                  pCollExp[0]->GetStdExp()->GetTotPoints(),
+                                  pCollExp[0]->GetStdExp()->GetTotPoints(),
+                                  pCollExp.size())
+    {
+        // Check if deformed
+        bool deformed{pGeomData->IsDeformed(pCollExp)};
+        const auto dim = pCollExp[0]->GetStdExp()->GetShapeDimension();
+        
+        if(m_isPadded == false) // declare local space non-padded case
+        {
+            int nOut = pCollExp[0]->GetStdExp()->GetTotPoints();
+            m_output = Array<OneD, Array<OneD, NekDouble>> (m_coordim);
+            m_output[0] = Array<OneD, NekDouble>{nOut * m_nElmtPad, 0.0};
+            if(m_coordim == 2)
+            {
+                m_output[1] = Array<OneD, NekDouble>{nOut * m_nElmtPad, 0.0};
+            }
+            else if (m_coordim == 3)
+            {
+                m_output[1] = Array<OneD, NekDouble>{nOut * m_nElmtPad, 0.0};
+                m_output[2] = Array<OneD, NekDouble>{nOut * m_nElmtPad, 0.0};
+            }
+        }
+
+        // Basis vector.
+        std::vector<LibUtilities::BasisSharedPtr> basis(dim);
+        for (unsigned int i = 0; i < dim; ++i)
+        {
+            basis[i] = pCollExp[0]->GetBasis(i);
+        }
+        
+        // Get shape type
+        auto shapeType = pCollExp[0]->GetStdExp()->DetShapeType();
+        
+        // Generate operator string and create operator.
+        std::string op_string = "PhysDeriv";
+        op_string += MatrixFree::GetOpstring(shapeType, deformed);
+        auto oper = MatrixFree::GetOperatorFactory().
+            CreateInstance(op_string, basis, m_nElmtPad);
+        
+        // Set derivative factors
+        oper->SetDF(pGeomData->GetDerivFactorsInterLeave
+                    (pCollExp,m_nElmtPad));
+        
+        m_oper = std::dynamic_pointer_cast<MatrixFree::PhysDeriv>(oper);
+        ASSERTL0(m_oper, "Failed to cast pointer.");
+        
+    }
+};
+
+/// Factory initialisation for the PhysDeriv_MatrixFree operators
+OperatorKey PhysDeriv_MatrixFree::m_typeArr[] =
+    {
+     GetOperatorFactory().RegisterCreatorFunction(
+                    OperatorKey(eSegment, ePhysDeriv, eMatrixFree, false),
+                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Seg"),
+     GetOperatorFactory().RegisterCreatorFunction(
+                    OperatorKey(eTriangle, ePhysDeriv, eMatrixFree, false),
+                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Tri"),
+     GetOperatorFactory().RegisterCreatorFunction(
+                    OperatorKey(eQuadrilateral, ePhysDeriv, eMatrixFree, false),
+                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Quad"),
+     GetOperatorFactory().RegisterCreatorFunction(
+                    OperatorKey(eHexahedron, ePhysDeriv, eMatrixFree, false),
+                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Hex"),
+     GetOperatorFactory().RegisterCreatorFunction(
+                    OperatorKey(ePrism, ePhysDeriv, eMatrixFree, false),
+                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Prism"),
+     GetOperatorFactory().RegisterCreatorFunction(
+                    OperatorKey(ePyramid, ePhysDeriv, eMatrixFree, false),
+                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Pyr"),
+     GetOperatorFactory().RegisterCreatorFunction(
+                     OperatorKey(eTetrahedron, ePhysDeriv, eMatrixFree, false),
+                     PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Tet")
+
+    };
 
 /**
  * @brief Phys deriv operator using element-wise operation
  */
 class PhysDeriv_IterPerExp : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_IterPerExp)
+public:
+    OPERATOR_CREATE(PhysDeriv_IterPerExp)
 
-        virtual ~PhysDeriv_IterPerExp()
-        {
-        }
+    ~PhysDeriv_IterPerExp() final
+    {
+    }
 
-        virtual void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
-        {
+    void operator()( const Array<OneD, const NekDouble> &input,
+                            Array<OneD,       NekDouble> &output0,
+                            Array<OneD,       NekDouble> &output1,
+                            Array<OneD,       NekDouble> &output2,
+                            Array<OneD,       NekDouble> &wsp) final
+        {      
+
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
             Array<OneD, NekDouble> tmp0,tmp1,tmp2;
@@ -264,24 +480,46 @@ class PhysDeriv_IterPerExp : public Operator
             }
 
             // calculate full derivative
-            for(int i = 0; i < m_coordim; ++i)
+            if(m_isDeformed)
             {
-                Vmath::Vmul(ntot,m_derivFac[i*m_dim],1,Diff[0],1,out[i],1);
-                for(int j = 1; j < m_dim; ++j)
+                for(int i = 0; i < m_coordim; ++i)
                 {
-                    Vmath::Vvtvp (ntot, m_derivFac[i*m_dim+j], 1,
-                                        Diff[j],               1,
-                                        out[i],                1,
-                                        out[i],                1);
+                    Vmath::Vmul(ntot,m_derivFac[i*m_dim],1,Diff[0],1,out[i],1);
+                    for(int j = 1; j < m_dim; ++j)
+                    {
+                        Vmath::Vvtvp (ntot, m_derivFac[i*m_dim+j], 1,
+                                      Diff[j],               1,
+                                      out[i],                1,
+                                      out[i],                1);
+                    }
+                }
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    for(int i = 0; i < m_coordim; ++i)
+                    {
+                        Vmath::Smul(m_nqe,m_derivFac[i*m_dim][e],
+                                    Diff[0] + e*m_nqe,1,
+                                    t = out[i] + e*m_nqe,1);
+                        for(int j = 1; j < m_dim; ++j)
+                        {
+                            Vmath::Svtvp (m_nqe, m_derivFac[i*m_dim+j][e],
+                                          Diff[j] + e*m_nqe,     1,
+                                          out[i]  + e*m_nqe,     1,
+                                          t = out[i]  + e*m_nqe, 1);
+                        }
+                    }
                 }
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD,NekDouble> &wsp) final
         {
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -302,15 +540,38 @@ class PhysDeriv_IterPerExp : public Operator
                                     tmp2 = Diff[2] + i*nPhys);
             }
 
-            // calculate full derivative
-            Vmath::Vmul(ntot,m_derivFac[dir*m_dim],1,Diff[0],1,output,1);
-            for(int j = 1; j < m_dim; ++j)
+            Vmath::Zero(ntot,output,1);
+            if(m_isDeformed)
             {
-                Vmath::Vvtvp (ntot, m_derivFac[dir*m_dim+j], 1,
-                                    Diff[j],               1,
-                                    output,                1,
-                                    output,                1);
+                for(int j = 0; j < m_dim; ++j)
+                {
+                    Vmath::Vvtvp (ntot, m_derivFac[dir*m_dim+j], 1,
+                                  Diff[j],               1,
+                                  output,                1,
+                                  output,                1);
+                }
             }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    for(int j = 0; j < m_dim; ++j)
+                    {
+                        Vmath::Svtvp (m_nqe, m_derivFac[dir*m_dim+j][e],
+                                      Diff[j] + e*m_nqe,     1,
+                                      output  + e*m_nqe,     1,
+                                      t = output  + e*m_nqe, 1);
+                    }
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -321,8 +582,9 @@ class PhysDeriv_IterPerExp : public Operator
     private:
         PhysDeriv_IterPerExp(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+        : Operator(pCollExp, pGeomData, factors)
         {
             int nqtot = 1;
             LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
@@ -382,16 +644,16 @@ class PhysDeriv_NoCollection : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_NoCollection)
 
-        virtual ~PhysDeriv_NoCollection()
+        ~PhysDeriv_NoCollection() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
             boost::ignore_unused(wsp);
 
@@ -436,11 +698,10 @@ class PhysDeriv_NoCollection : public Operator
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                       const Array<OneD, const NekDouble> &input,
+                       Array<OneD, NekDouble> &output,
+                       Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(wsp);
 
@@ -454,6 +715,13 @@ class PhysDeriv_NoCollection : public Operator
                                              tmp = output + i*nPhys);
             }
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
         vector<StdRegions::StdExpansionSharedPtr> m_expList;
@@ -461,8 +729,9 @@ class PhysDeriv_NoCollection : public Operator
     private:
         PhysDeriv_NoCollection(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp,pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors)
         {
             m_expList = pCollExp;
         }
@@ -512,17 +781,18 @@ class PhysDeriv_SumFac_Seg : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Seg)
 
-        virtual ~PhysDeriv_SumFac_Seg()
+        ~PhysDeriv_SumFac_Seg() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
+
             const int nqcol   = m_nquad0*m_numElmt;
 
             ASSERTL1(wsp.size() == m_wspSize,
@@ -537,24 +807,54 @@ class PhysDeriv_SumFac_Seg : public Operator
                         input.get(), m_nquad0, 0.0,
                         diff0.get(), m_nquad0);
 
-            Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
-
-            if (m_coordim == 2)
+            if(m_isDeformed)
             {
-                Vmath::Vmul  (nqcol, m_derivFac[1], 1, diff0, 1, output1, 1);
+                Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
+                
+                if (m_coordim == 2)
+                {
+                    Vmath::Vmul  (nqcol, m_derivFac[1], 1, diff0, 1, output1, 1);
+                }
+                else if (m_coordim == 3)
+                {
+                    Vmath::Vmul  (nqcol, m_derivFac[1], 1, diff0, 1, output1, 1);
+                    Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output2, 1);
+                }
             }
-            else if (m_coordim == 3)
+            else
             {
-                Vmath::Vmul  (nqcol, m_derivFac[1], 1, diff0, 1, output1, 1);
-                Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output2, 1);
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul  (m_nqe, m_derivFac[0][e], diff0 + e*m_nqe, 1,
+                                  t = output0 + e*m_nqe, 1);
+                }
+                
+                if (m_coordim == 2)
+                {
+                    for(int e = 0; e < m_numElmt; ++e)
+                    {
+                        Vmath::Smul  (m_nqe, m_derivFac[1][e], diff0 + e*m_nqe, 1,
+                                      t = output1 + e*m_nqe, 1);
+                    }
+                }
+                else if (m_coordim == 3)
+                {
+                    for(int e = 0; e < m_numElmt; ++e)
+                    {
+                        Vmath::Smul  (m_nqe, m_derivFac[1][e], diff0 + e*m_nqe, 1,
+                                      t = output1 + e*m_nqe, 1);
+                        Vmath::Smul  (m_nqe, m_derivFac[2][e], diff0 + e*m_nqe, 1,
+                                      t = output2 + e*m_nqe, 1);}
+                }
+
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             const int nqcol   = m_nquad0*m_numElmt;
 
@@ -570,7 +870,26 @@ class PhysDeriv_SumFac_Seg : public Operator
                         input.get(), m_nquad0, 0.0,
                         diff0.get(), m_nquad0);
 
-            Vmath::Vmul(nqcol, m_derivFac[dir], 1, diff0, 1, output, 1);
+            if(m_isDeformed)
+            {
+                Vmath::Vmul(nqcol, m_derivFac[dir], 1, diff0, 1, output, 1);
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul  (m_nqe, m_derivFac[0][e], diff0 + e*m_nqe, 1,
+                                  t = output + e*m_nqe, 1);
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -582,8 +901,9 @@ class PhysDeriv_SumFac_Seg : public Operator
     private:
         PhysDeriv_SumFac_Seg(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0 (m_stdExp->GetNumPoints(0))
         {
             LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
@@ -613,17 +933,18 @@ class PhysDeriv_SumFac_Quad : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Quad)
 
-        virtual ~PhysDeriv_SumFac_Quad()
+        ~PhysDeriv_SumFac_Quad() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
+
             const int nqtot   = m_nquad0 * m_nquad1;
             const int nqcol   = nqtot*m_numElmt;
 
@@ -649,26 +970,55 @@ class PhysDeriv_SumFac_Quad : public Operator
                             diff1.get() + cnt, m_nquad0);
             }
 
-            Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
-            Vmath::Vvtvp (nqcol, m_derivFac[1], 1, diff1, 1, output0, 1,
-                                                             output0, 1);
-            Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output1, 1);
-            Vmath::Vvtvp (nqcol, m_derivFac[3], 1, diff1, 1, output1, 1,
-                                                             output1, 1);
-
-            if (m_coordim == 3)
+            if(m_isDeformed)
             {
-                Vmath::Vmul  (nqcol, m_derivFac[4], 1, diff0, 1, output2, 1);
-                Vmath::Vvtvp (nqcol, m_derivFac[5], 1, diff1, 1, output2, 1,
-                                                                 output2, 1);
+                Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
+                Vmath::Vvtvp (nqcol, m_derivFac[1], 1, diff1, 1, output0, 1,
+                              output0, 1);
+                Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output1, 1);
+                Vmath::Vvtvp (nqcol, m_derivFac[3], 1, diff1, 1, output1, 1,
+                              output1, 1);
+                
+                if (m_coordim == 3)
+                {
+                    Vmath::Vmul  (nqcol, m_derivFac[4], 1, diff0, 1, output2, 1);
+                    Vmath::Vvtvp (nqcol, m_derivFac[5], 1, diff1, 1, output2, 1,
+                                  output2, 1);
+                }
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul  (m_nqe, m_derivFac[0][e], diff0 + e*m_nqe, 1,
+                                  t = output0 + e*m_nqe, 1);
+                    Vmath::Svtvp (m_nqe, m_derivFac[1][e], diff1 + e*m_nqe, 1,
+                                  output0 + e*m_nqe, 1, t = output0 + e*m_nqe, 1);
+
+                    Vmath::Smul  (m_nqe, m_derivFac[2][e], diff0 + e*m_nqe, 1,
+                                  t = output1 + e*m_nqe, 1);
+                    Vmath::Svtvp (m_nqe, m_derivFac[3][e], diff1 + e*m_nqe, 1,
+                                  output1 + e*m_nqe, 1, t = output1 + e*m_nqe, 1);
+                }
+
+                if (m_coordim == 3)
+                {
+                    for(int e = 0; e < m_numElmt; ++e)
+                    {
+                        Vmath::Smul  (m_nqe, m_derivFac[4][e], diff0 + e*m_nqe, 1,
+                                      t = output2 + e*m_nqe, 1);
+                        Vmath::Svtvp (m_nqe, m_derivFac[5][e], diff1 + e*m_nqe, 1,
+                                      output2 + e*m_nqe, 1, t = output2 + e*m_nqe, 1);
+                    }
+                }
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             const int nqtot   = m_nquad0 * m_nquad1;
             const int nqcol   = nqtot*m_numElmt;
@@ -695,9 +1045,30 @@ class PhysDeriv_SumFac_Quad : public Operator
                             diff1.get() + cnt, m_nquad0);
             }
 
-            Vmath::Vmul  (nqcol, m_derivFac[2*dir]  , 1, diff0, 1, output, 1);
-            Vmath::Vvtvp (nqcol, m_derivFac[2*dir+1], 1, diff1, 1, output, 1,
-                                                                   output, 1);
+            if(m_isDeformed)
+            {
+                Vmath::Vmul  (nqcol, m_derivFac[2*dir]  , 1, diff0, 1, output, 1);
+                Vmath::Vvtvp (nqcol, m_derivFac[2*dir+1], 1, diff1, 1, output, 1,
+                              output, 1);
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul  (m_nqe, m_derivFac[2*dir][e], diff0 + e*m_nqe, 1,
+                                  t = output + e*m_nqe, 1);
+                    Vmath::Svtvp (m_nqe, m_derivFac[2*dir+1][e], diff1 + e*m_nqe, 1,
+                                  output + e*m_nqe, 1, t = output + e*m_nqe, 1);
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -711,8 +1082,9 @@ class PhysDeriv_SumFac_Quad : public Operator
     private:
         PhysDeriv_SumFac_Quad(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0 (m_stdExp->GetNumPoints(0)),
               m_nquad1 (m_stdExp->GetNumPoints(1))
         {
@@ -725,12 +1097,13 @@ class PhysDeriv_SumFac_Quad : public Operator
             m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
             m_wspSize = 2 * m_nquad0*m_nquad1*m_numElmt;
         }
+        
 };
 
 /// Factory initialisation for the PhysDeriv_SumFac_Quad operators
 OperatorKey PhysDeriv_SumFac_Quad::m_type = GetOperatorFactory().
     RegisterCreatorFunction(
-        OperatorKey(eQuadrilateral, ePhysDeriv, eSumFac, false),
+                            OperatorKey(eQuadrilateral, ePhysDeriv, eSumFac, false),
         PhysDeriv_SumFac_Quad::create, "PhysDeriv_SumFac_Quad");
 
 
@@ -742,17 +1115,18 @@ class PhysDeriv_SumFac_Tri : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Tri)
 
-        virtual ~PhysDeriv_SumFac_Tri()
+        ~PhysDeriv_SumFac_Tri() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
+
             const int nqtot   = m_nquad0 * m_nquad1;
             const int nqcol   = nqtot*m_numElmt;
 
@@ -787,28 +1161,55 @@ class PhysDeriv_SumFac_Tri : public Operator
                              diff1.get()+cnt,1,diff1.get()+cnt,1);
             }
 
-
-            Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
-            Vmath::Vvtvp (nqcol, m_derivFac[1], 1, diff1, 1,
-                          output0, 1, output0, 1);
-            Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output1, 1);
-            Vmath::Vvtvp (nqcol, m_derivFac[3], 1, diff1, 1,
-                          output1, 1, output1, 1);
-
-            if (m_coordim == 3)
+            if(m_isDeformed)
             {
-                Vmath::Vmul  (nqcol, m_derivFac[4], 1, diff0, 1,
-                              output2, 1);
-                Vmath::Vvtvp (nqcol, m_derivFac[5], 1, diff1, 1,
-                              output2, 1, output2, 1);
+                Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
+                Vmath::Vvtvp (nqcol, m_derivFac[1], 1, diff1, 1, output0, 1,
+                              output0, 1);
+                Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output1, 1);
+                Vmath::Vvtvp (nqcol, m_derivFac[3], 1, diff1, 1, output1, 1,
+                              output1, 1);
+                
+                if (m_coordim == 3)
+                {
+                    Vmath::Vmul  (nqcol, m_derivFac[4], 1, diff0, 1, output2, 1);
+                    Vmath::Vvtvp (nqcol, m_derivFac[5], 1, diff1, 1, output2, 1,
+                                  output2, 1);
+                }
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul  (m_nqe, m_derivFac[0][e], diff0 + e*m_nqe, 1,
+                                  t = output0 + e*m_nqe, 1);
+                    Vmath::Svtvp (m_nqe, m_derivFac[1][e], diff1 + e*m_nqe, 1,
+                                  output0 + e*m_nqe, 1, t = output0 + e*m_nqe, 1);
+
+                    Vmath::Smul  (m_nqe, m_derivFac[2][e], diff0 + e*m_nqe, 1,
+                                  t = output1 + e*m_nqe, 1);
+                    Vmath::Svtvp (m_nqe, m_derivFac[3][e], diff1 + e*m_nqe, 1,
+                                  output1 + e*m_nqe, 1, t = output1 + e*m_nqe, 1);
+                }
+
+                if (m_coordim == 3)
+                {
+                    for(int e = 0; e < m_numElmt; ++e)
+                    {
+                        Vmath::Smul  (m_nqe, m_derivFac[4][e], diff0 + e*m_nqe, 1,
+                                      t = output2 + e*m_nqe, 1);
+                        Vmath::Svtvp (m_nqe, m_derivFac[5][e], diff1 + e*m_nqe, 1,
+                                      output2 + e*m_nqe, 1, t = output2 + e*m_nqe, 1);
+                    }
+                }
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             const int nqtot   = m_nquad0 * m_nquad1;
             const int nqcol   = nqtot*m_numElmt;
@@ -844,10 +1245,30 @@ class PhysDeriv_SumFac_Tri : public Operator
                              diff1.get()+cnt,1,diff1.get()+cnt,1);
             }
 
-
-            Vmath::Vmul  (nqcol, m_derivFac[2*dir]  , 1, diff0, 1, output, 1);
-            Vmath::Vvtvp (nqcol, m_derivFac[2*dir+1], 1, diff1, 1, output, 1,
-                                                                   output, 1);
+            if(m_isDeformed)
+            {
+                Vmath::Vmul  (nqcol, m_derivFac[2*dir]  , 1, diff0, 1, output, 1);
+                Vmath::Vvtvp (nqcol, m_derivFac[2*dir+1], 1, diff1, 1, output, 1,
+                              output, 1);
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul  (m_nqe, m_derivFac[2*dir][e], diff0 + e*m_nqe, 1,
+                                  t = output + e*m_nqe, 1);
+                    Vmath::Svtvp (m_nqe, m_derivFac[2*dir+1][e], diff1 + e*m_nqe, 1,
+                                  output + e*m_nqe, 1, t = output + e*m_nqe, 1);
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -863,8 +1284,9 @@ class PhysDeriv_SumFac_Tri : public Operator
     private:
         PhysDeriv_SumFac_Tri(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0 (m_stdExp->GetNumPoints(0)),
               m_nquad1 (m_stdExp->GetNumPoints(1))
         {
@@ -924,17 +1346,18 @@ class PhysDeriv_SumFac_Hex : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Hex)
 
-        virtual ~PhysDeriv_SumFac_Hex()
+        ~PhysDeriv_SumFac_Hex() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
+
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
             Array<OneD, NekDouble> tmp0,tmp1,tmp2;
@@ -969,24 +1392,48 @@ class PhysDeriv_SumFac_Hex : public Operator
             }
 
             // calculate full derivative
-            for(int i = 0; i < m_coordim; ++i)
+            if(m_isDeformed)
             {
-                Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
-                for(int j = 1; j < 3; ++j)
+                for(int i = 0; i < m_coordim; ++i)
                 {
-                    Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
-                                        Diff[j],               1,
-                                        out[i],                1,
-                                        out[i],                1);
+                    Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
+                    for(int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
+                                      Diff[j],               1,
+                                      out[i],                1,
+                                      out[i],                1);
+                    }
+                }
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    for(int i = 0; i < m_coordim; ++i)
+                    {
+
+                        Vmath::Smul(m_nqe,m_derivFac[i*3][e],
+                                    Diff[0] + e*m_nqe, 1,
+                                    t = out[i] + e*m_nqe,1);
+
+                        for(int j = 1; j < 3; ++j)
+                        {
+                            Vmath::Svtvp (m_nqe, m_derivFac[i*e+j][e],
+                                          Diff[j] + e*m_nqe,     1,
+                                          out[i]  + e*m_nqe,     1,
+                                          t = out[i]  + e*m_nqe, 1);
+                        }
+                    }
                 }
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -1020,14 +1467,43 @@ class PhysDeriv_SumFac_Hex : public Operator
             }
 
             // calculate full derivative
-            Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
-            for(int j = 1; j < 3; ++j)
+            if(m_isDeformed)
             {
-                Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
-                                    Diff[j],               1,
-                                    output,                1,
-                                    output,                1);
+                // calculate full derivative
+                Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
+                for(int j = 1; j < 3; ++j)
+                {
+                    Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
+                                  Diff[j],               1,
+                                  output,                1,
+                                  output,                1);
+                }
             }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul(m_nqe,m_derivFac[dir*3][e],
+                                    Diff[0] + e*m_nqe, 1,
+                                    t = output + e*m_nqe,1);
+
+                    for(int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Svtvp (m_nqe, m_derivFac[dir*3+j][e],
+                                      Diff[j] + e*m_nqe,     1,
+                                      output  + e*m_nqe,     1,
+                                      t = output  + e*m_nqe, 1);
+                    }
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -1043,8 +1519,9 @@ class PhysDeriv_SumFac_Hex : public Operator
     private:
         PhysDeriv_SumFac_Hex(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2))
@@ -1080,17 +1557,18 @@ class PhysDeriv_SumFac_Tet : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Tet)
 
-        virtual ~PhysDeriv_SumFac_Tet()
+        ~PhysDeriv_SumFac_Tet() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
+
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
             Array<OneD, NekDouble> tmp0,tmp1,tmp2;
@@ -1161,22 +1639,47 @@ class PhysDeriv_SumFac_Tet : public Operator
             }
 
             // calculate full derivative
-            for(int i = 0; i < m_coordim; ++i)
+            if(m_isDeformed)
             {
-                Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
-                for(int j = 1; j < 3; ++j)
+                for(int i = 0; i < m_coordim; ++i)
                 {
-                    Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
-                                        Diff[j], 1, out[i], 1, out[i], 1);
+                    Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
+                    for(int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
+                                      Diff[j],               1,
+                                      out[i],                1,
+                                      out[i],                1);
+                    }
+                }
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    for(int i = 0; i < m_coordim; ++i)
+                    {
+                        Vmath::Smul(m_nqe,m_derivFac[i*3][e],
+                                    Diff[0] + e*m_nqe, 1,
+                                    t = out[i] + e*m_nqe,1);
+
+                        for(int j = 1; j < 3; ++j)
+                        {
+                            Vmath::Svtvp (m_nqe, m_derivFac[i*3+j][e],
+                                          Diff[j] + e*m_nqe,     1,
+                                          out[i]  + e*m_nqe,     1,
+                                          t = out[i]  + e*m_nqe, 1);
+                        }
+                    }
                 }
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -1246,12 +1749,43 @@ class PhysDeriv_SumFac_Tet : public Operator
             }
 
             // calculate full derivative
-            Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
-            for(int j = 1; j < 3; ++j)
+            if(m_isDeformed)
             {
-                Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
-                                    Diff[j], 1, output, 1, output, 1);
+                // calculate full derivative
+                Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
+                for(int j = 1; j < 3; ++j)
+                {
+                    Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
+                                  Diff[j],               1,
+                                  output,                1,
+                                  output,                1);
+                }
             }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul(m_nqe,m_derivFac[dir*3][e],
+                                    Diff[0] + e*m_nqe, 1,
+                                    t = output + e*m_nqe,1);
+
+                    for(int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Svtvp (m_nqe, m_derivFac[dir*3+j][e],
+                                      Diff[j] + e*m_nqe,     1,
+                                      output  + e*m_nqe,     1,
+                                      t = output  + e*m_nqe, 1);
+                    }
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -1271,8 +1805,9 @@ class PhysDeriv_SumFac_Tet : public Operator
     private:
         PhysDeriv_SumFac_Tet(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2))
@@ -1340,17 +1875,18 @@ class PhysDeriv_SumFac_Prism : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Prism)
 
-        virtual ~PhysDeriv_SumFac_Prism()
+        ~PhysDeriv_SumFac_Prism() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
+
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
             Array<OneD, NekDouble> tmp0,tmp1,tmp2;
@@ -1399,22 +1935,47 @@ class PhysDeriv_SumFac_Prism : public Operator
             }
 
             // calculate full derivative
-            for(int i = 0; i < m_coordim; ++i)
+            if(m_isDeformed)
             {
-                Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
-                for(int j = 1; j < 3; ++j)
+                for(int i = 0; i < m_coordim; ++i)
                 {
-                    Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
-                                        Diff[j], 1, out[i], 1, out[i], 1);
+                    Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
+                    for(int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
+                                      Diff[j],               1,
+                                      out[i],                1,
+                                      out[i],                1);
+                    }
+                }
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    for(int i = 0; i < m_coordim; ++i)
+                    {
+                        Vmath::Smul(m_nqe,m_derivFac[i*3][e],
+                                    Diff[0] + e*m_nqe, 1,
+                                    t = out[i] + e*m_nqe,1);
+
+                        for(int j = 1; j < 3; ++j)
+                        {
+                            Vmath::Svtvp (m_nqe, m_derivFac[i*3+j][e],
+                                          Diff[j] + e*m_nqe,     1,
+                                          out[i]  + e*m_nqe,     1,
+                                          t = out[i]  + e*m_nqe, 1);
+                        }
+                    }
                 }
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -1462,12 +2023,43 @@ class PhysDeriv_SumFac_Prism : public Operator
             }
 
             // calculate full derivative
-            Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
-            for(int j = 1; j < 3; ++j)
+            if(m_isDeformed)
             {
-                Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
-                                    Diff[j], 1, output, 1, output, 1);
+                // calculate full derivative
+                Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
+                for(int j = 1; j < 3; ++j)
+                {
+                    Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
+                                  Diff[j],               1,
+                                  output,                1,
+                                  output,                1);
+                }
             }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul(m_nqe,m_derivFac[dir*3][e],
+                                    Diff[0] + e*m_nqe, 1,
+                                    t = output + e*m_nqe,1);
+
+                    for(int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Svtvp (m_nqe, m_derivFac[dir*3+j][e],
+                                      Diff[j] + e*m_nqe,     1,
+                                      output  + e*m_nqe,     1,
+                                      t = output  + e*m_nqe, 1);
+                    }
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -1485,8 +2077,9 @@ class PhysDeriv_SumFac_Prism : public Operator
     private:
         PhysDeriv_SumFac_Prism(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2))
@@ -1543,17 +2136,18 @@ class PhysDeriv_SumFac_Pyr : public Operator
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Pyr)
 
-        virtual ~PhysDeriv_SumFac_Pyr()
+        ~PhysDeriv_SumFac_Pyr() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
+
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
             Array<OneD, NekDouble> tmp0,tmp1,tmp2;
@@ -1602,6 +2196,7 @@ class PhysDeriv_SumFac_Pyr : public Operator
                 // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
                 Vmath::Vvtvp(nPhys,&m_fac1[0],1,Diff[0].get()+cnt,1,
                              Diff[2].get()+cnt,1,Diff[2].get()+cnt,1);
+
                 // dxi2 += (1+eta1)/(1-eta_2) d Eta_1
                 Vmath::Vvtvp(nPhys,&m_fac2[0],1,Diff[1].get()+cnt,1,
                              Diff[2].get()+cnt,1,Diff[2].get()+cnt,1);
@@ -1609,22 +2204,47 @@ class PhysDeriv_SumFac_Pyr : public Operator
             }
 
             // calculate full derivative
-            for(int i = 0; i < m_coordim; ++i)
+            if(m_isDeformed)
             {
-                Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
-                for(int j = 1; j < 3; ++j)
+                for(int i = 0; i < m_coordim; ++i)
                 {
-                    Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
-                                        Diff[j], 1, out[i], 1, out[i], 1);
+                    Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
+                    for(int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
+                                      Diff[j],               1,
+                                      out[i],                1,
+                                      out[i],                1);
+                    }
+                }
+            }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    for(int i = 0; i < m_coordim; ++i)
+                    {
+                        Vmath::Smul(m_nqe,m_derivFac[i*3][e],
+                                    Diff[0] + e*m_nqe, 1,
+                                    t = out[i] + e*m_nqe,1);
+
+                        for(int j = 1; j < 3; ++j)
+                        {
+                            Vmath::Svtvp (m_nqe, m_derivFac[i*3+j][e],
+                                          Diff[j] + e*m_nqe,     1,
+                                          out[i]  + e*m_nqe,     1,
+                                          t = out[i]  + e*m_nqe, 1);
+                        }
+                    }
                 }
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             int nPhys = m_stdExp->GetTotPoints();
             int ntot = m_numElmt*nPhys;
@@ -1678,12 +2298,43 @@ class PhysDeriv_SumFac_Pyr : public Operator
             }
 
             // calculate full derivative
-            Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
-            for(int j = 1; j < 3; ++j)
+            if(m_isDeformed)
             {
-                Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
-                                    Diff[j], 1, output, 1, output, 1);
+                // calculate full derivative
+                Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
+                for(int j = 1; j < 3; ++j)
+                {
+                    Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
+                                  Diff[j],               1,
+                                  output,                1,
+                                  output,                1);
+                }
             }
+            else
+            {
+                Array<OneD, NekDouble> t;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul(m_nqe,m_derivFac[dir*3][e],
+                                    Diff[0] + e*m_nqe, 1,
+                                    t = output + e*m_nqe,1);
+
+                    for(int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Svtvp (m_nqe, m_derivFac[dir*3+j][e],
+                                      Diff[j] + e*m_nqe,     1,
+                                      output  + e*m_nqe,     1,
+                                      t = output  + e*m_nqe, 1);
+                    }
+                }
+            }
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -1702,8 +2353,9 @@ class PhysDeriv_SumFac_Pyr : public Operator
     private:
         PhysDeriv_SumFac_Pyr(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2))

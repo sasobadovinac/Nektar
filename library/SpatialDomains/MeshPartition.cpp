@@ -74,11 +74,12 @@ SPATIAL_DOMAINS_EXPORT MeshPartitionFactory &GetMeshPartitionFactory()
 }
 
 MeshPartition::MeshPartition(const LibUtilities::SessionReaderSharedPtr session,
+                             LibUtilities::CommSharedPtr                comm,
                              int                                        meshDim,
                              std::map<int, MeshEntity>                  element,
                              CompositeDescriptor                        compMap)
-    : m_session(session), m_dim(meshDim), m_numFields(0), m_elements(element),
-      m_compMap(compMap), m_fieldNameToId(), m_comm(session->GetComm()),
+    : m_session(session), m_comm(comm), m_dim(meshDim), m_numFields(0),
+      m_elements(element), m_compMap(compMap), m_fieldNameToId(),
       m_weightingRequired(false), m_weightBnd(false), m_weightDofs(false),
       m_parallel(false)
 {
@@ -134,13 +135,10 @@ void MeshPartition::ReadExpansions()
     TiXmlElement *expansion = expansionTypes->FirstChildElement();
     std::string expType     = expansion->Value();
 
-    /// Expansiontypes will contain plenty of data,
-    /// where relevant at this stage are composite
-    /// ID(s) that this expansion type describes,
-    /// nummodes and a list of fields that this
-    /// expansion relates to. If this does not exist
-    /// the variable is only set to "DefaultVar".
-
+    // Expansiontypes will contain plenty of data, where relevant at this stage
+    // are composite ID(s) that this expansion type describes, nummodes and a
+    // list of fields that this expansion relates to. If this does not exist the
+    // variable is only set to "DefaultVar".
     if (expType == "E")
     {
         while (expansion)
@@ -599,6 +597,7 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
     {
         ncon = 2;
     }
+
     // Convert boost graph into CSR format
     BoostVertexIterator vertit, vertit_end;
     BoostAdjacencyIterator adjvertit, adjvertit_end;
@@ -693,18 +692,6 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
             {
                 m_comm->GetColumnComm()->Recv(0, part);
             }
-
-            if (!m_shared && !m_parallel)
-            {
-                m_comm->GetColumnComm()->Block();
-
-                //////////////////////////////////
-                // distribute among rows
-                for (i = 1; i < m_comm->GetRowComm()->GetSize(); ++i)
-                {
-                    m_comm->GetRowComm()->Send(i, part);
-                }
-            }
         }
         catch (...)
         {
@@ -712,19 +699,17 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
                      "Error in calling graph partitioner.");
         }
     }
-    else
+    else if (!m_parallel)
     {
         m_comm->GetRowComm()->Recv(0, part);
     }
 
     // Create storage for this (and possibly other) process's partitions.
-    m_localPartition.resize(nParts);
-
     i = 0;
 
-    // Populate subgraph(s)
     if (!m_parallel)
     {
+        // Populate subgraph(s) for each rank.
         for (boost::tie(vertit, vertit_end) = boost::vertices(m_graph);
              vertit != vertit_end; ++vertit, ++i)
         {
@@ -734,7 +719,7 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
     else
     {
         // Figure out how many vertices we're going to get from each processor.
-        int nproc = m_comm->GetSize();
+        int nproc = m_comm->GetSize(), rank = m_comm->GetRank();
         std::vector<int> numToSend(nproc, 0), numToRecv(nproc);
         std::map<int, std::vector<int>> procMap;
 
@@ -785,9 +770,9 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
         {
             uniqueIDs.insert(id);
         }
-        m_localPartition[m_comm->GetRank()].insert(
-            m_localPartition[m_comm->GetRank()].begin(),
-            uniqueIDs.begin(), uniqueIDs.end());
+
+        m_localPartition[rank].insert(m_localPartition[rank].begin(),
+                                      uniqueIDs.begin(), uniqueIDs.end());
     }
 
     // If the overlapping option is set (for post-processing purposes),
@@ -849,10 +834,9 @@ void MeshPartition::GetElementIDs(const int procid,
 {
     BoostVertexIterator vertit, vertit_end;
 
-    ASSERTL0(procid < m_localPartition.size(),
-             "procid is less than the number of partitions");
-    ASSERTL0((m_parallel && procid == m_comm->GetRank()) || !m_parallel,
-             "Can only get this rank's processor IDs in parallel");
+    auto it = m_localPartition.find(procid);
+
+    ASSERTL0(it != m_localPartition.end(), "Unable to find local partition");
 
     elmtid = m_localPartition[procid];
 }

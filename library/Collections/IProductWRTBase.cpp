@@ -34,9 +34,12 @@
 
 #include <boost/core/ignore_unused.hpp>
 
+#include <MatrixFreeOps/Operator.hpp>
+
 #include <Collections/Operator.h>
 #include <Collections/Collection.h>
 #include <Collections/IProduct.h>
+#include <Collections/MatrixFreeBase.h>
 
 using namespace std;
 
@@ -59,55 +62,75 @@ class IProductWRTBase_StdMat : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_StdMat)
 
-        virtual ~IProductWRTBase_StdMat()
+        ~IProductWRTBase_StdMat() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
             ASSERTL1(wsp.size() == m_wspSize,
-                     "Incorrect workspace size");
-
-            Vmath::Vmul(m_jac.size(),m_jac,1,input,1,wsp,1);
-
+                       "Incorrect workspace size");
+              
+            if(m_isDeformed)
+            {
+                Vmath::Vmul(m_jac.size(),m_jac,1,input,1,wsp,1);
+            }
+            else
+            {
+                Array<OneD,NekDouble> tmp;
+                for(int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul(m_nqe,m_jac[e],input+e*m_nqe,1,tmp = wsp+e*m_nqe,1);
+                }
+            }
+            
             Blas::Dgemm('N', 'N', m_mat->GetRows(), m_numElmt,
                         m_mat->GetColumns(), 1.0, m_mat->GetRawPtr(),
                         m_mat->GetRows(), wsp.get(), m_stdExp->GetTotPoints(),
                         0.0, output.get(), m_stdExp->GetNcoeffs());
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
-            NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+               NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
+
 
     protected:
         DNekMatSharedPtr                m_mat;
         Array<OneD, const NekDouble>    m_jac;
-
+    
     private:
         IProductWRTBase_StdMat(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors)
         {
             m_jac = pGeomData->GetJac(pCollExp);
             StdRegions::StdMatrixKey key(StdRegions::eIProductWRTBase,
                                          m_stdExp->DetShapeType(), *m_stdExp);
             m_mat = m_stdExp->GetStdMatrix(key);
-            m_wspSize = m_stdExp->GetTotPoints()*m_numElmt;
+            m_nqe = m_stdExp->GetTotPoints();
+            m_wspSize = m_nqe*m_numElmt;
         }
 };
 
@@ -148,6 +171,123 @@ OperatorKey IProductWRTBase_StdMat::m_typeArr[] = {
         IProductWRTBase_StdMat::create, "IProductWRTBase_SumFac_Pyr")
 };
 
+/**
+ * @brief Inner product operator using operator using matrix free operators.
+ */
+class IProductWRTBase_MatrixFree : public Operator, MatrixFreeOneInOneOut
+{
+    public:
+        OPERATOR_CREATE(IProductWRTBase_MatrixFree)
+
+        ~IProductWRTBase_MatrixFree() final
+        {
+        }
+
+        virtual void operator()(
+                const Array<OneD, const NekDouble> &input,
+                      Array<OneD,       NekDouble> &output,
+                      Array<OneD,       NekDouble> &output1,
+                      Array<OneD,       NekDouble> &output2,
+                      Array<OneD,       NekDouble> &wsp) final
+        {
+            boost::ignore_unused(output1, output2, wsp);
+
+            if (m_isPadded)
+            {
+                // copy into padded vector
+                Vmath::Vcopy(m_nIn, input, 1, m_input, 1);
+                // call op
+                (*m_oper)(m_input, m_output);
+                // copy out of padded vector
+                Vmath::Vcopy(m_nOut, m_output, 1, output, 1);
+            }
+            else
+            {
+                (*m_oper)(input, output);
+            }
+        }
+
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
+        {
+            boost::ignore_unused(dir, input, output, wsp);
+            NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
+
+    private:
+        std::shared_ptr<MatrixFree::IProduct> m_oper;
+
+        IProductWRTBase_MatrixFree(
+                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors),
+              MatrixFreeOneInOneOut(pCollExp[0]->GetStdExp()->GetTotPoints(),
+                                    pCollExp[0]->GetStdExp()->GetNcoeffs(),
+                                    pCollExp.size())
+        {
+
+            // Basis vector
+            const auto dim = pCollExp[0]->GetStdExp()->GetShapeDimension();
+            std::vector<LibUtilities::BasisSharedPtr> basis(dim);
+            for (unsigned int i = 0; i < dim; ++i)
+            {
+                basis[i] = pCollExp[0]->GetBasis(i);
+            }
+
+            // Get shape type
+            auto shapeType = pCollExp[0]->GetStdExp()->DetShapeType();
+
+            // Generate operator string and create operator.
+            std::string op_string = "IProduct";
+            op_string += MatrixFree::GetOpstring(shapeType, m_isDeformed);
+            auto oper = MatrixFree::GetOperatorFactory().
+                CreateInstance(op_string, basis, m_nElmtPad);
+
+            // Set Jacobian
+            oper->SetJac(pGeomData->GetJacInterLeave(pCollExp,m_nElmtPad));
+
+            m_oper = std::dynamic_pointer_cast<MatrixFree::IProduct>(oper);
+            ASSERTL0(m_oper, "Failed to cast pointer.");
+
+        }
+};
+
+/// Factory initialisation for the IProductWRTBase_MatrixFree operators
+OperatorKey IProductWRTBase_MatrixFree::m_typeArr[] = {
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eSegment, eIProductWRTBase, eMatrixFree, false),
+        IProductWRTBase_MatrixFree::create, "IProductWRTBase_MatrixFree_Seg"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eQuadrilateral, eIProductWRTBase, eMatrixFree, false),
+        IProductWRTBase_MatrixFree::create, "IProductWRTBase_MatrixFree_Quad"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eTriangle, eIProductWRTBase, eMatrixFree, false),
+        IProductWRTBase_MatrixFree::create, "IProductWRTBase_MatrixFree_Tri"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eHexahedron, eIProductWRTBase, eMatrixFree, false),
+        IProductWRTBase_MatrixFree::create, "IProductWRTBase_MatrixFree_Hex"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(ePrism, eIProductWRTBase, eMatrixFree, false),
+        IProductWRTBase_MatrixFree::create, "IProductWRTBase_MatrixFree_Prism"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(ePyramid, eIProductWRTBase, eMatrixFree, false),
+        IProductWRTBase_MatrixFree::create, "IProductWRTBase_MatrixFree_Pyr"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eTetrahedron, eIProductWRTBase, eMatrixFree, false),
+        IProductWRTBase_MatrixFree::create, "IProductWRTBase_MatrixFree_Tet")
+
+};
+
 
 /**
  * @brief Inner product operator using element-wise operation
@@ -157,16 +297,16 @@ class IProductWRTBase_IterPerExp : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_IterPerExp)
 
-        virtual ~IProductWRTBase_IterPerExp()
+        ~IProductWRTBase_IterPerExp() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
@@ -177,7 +317,7 @@ class IProductWRTBase_IterPerExp : public Operator
             const int nPhys   = m_stdExp->GetTotPoints();
             Array<OneD, NekDouble> tmp;
 
-            Vmath::Vmul(m_jac.size(),m_jac,1,input,1,wsp,1);
+            Vmath::Vmul(m_jacWStdW.size(),m_jacWStdW,1,input,1,wsp,1);
 
             for (int i = 0; i < m_numElmt; ++i)
             {
@@ -187,24 +327,31 @@ class IProductWRTBase_IterPerExp : public Operator
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+       void operator()(int dir,
+                       const Array<OneD, const NekDouble> &input,
+                       Array<OneD, NekDouble> &output,
+                       Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
         }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
+        }
 
     protected:
-        Array<OneD, NekDouble> m_jac;
+        Array<OneD, NekDouble> m_jacWStdW;
 
     private:
         IProductWRTBase_IterPerExp(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors)
         {
             int nqtot = 1;
             LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
@@ -213,7 +360,7 @@ class IProductWRTBase_IterPerExp : public Operator
                 nqtot *= PtsKey[i].GetNumPoints();
             }
 
-            m_jac = pGeomData->GetJacWithStdWeights(pCollExp);
+            m_jacWStdW = pGeomData->GetJacWithStdWeights(pCollExp);
 
             m_wspSize = nqtot*m_numElmt;
         }
@@ -273,16 +420,16 @@ class IProductWRTBase_NoCollection : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_NoCollection)
 
-        virtual ~IProductWRTBase_NoCollection()
+        ~IProductWRTBase_NoCollection() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2, wsp);
 
@@ -298,14 +445,20 @@ class IProductWRTBase_NoCollection : public Operator
 
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -314,8 +467,9 @@ class IProductWRTBase_NoCollection : public Operator
     private:
         IProductWRTBase_NoCollection(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator(pCollExp, pGeomData)
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator(pCollExp, pGeomData, factors)
         {
             m_expList = pCollExp;
         }
@@ -374,26 +528,26 @@ class IProductWRTBase_SumFac_Seg : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Seg)
 
-        virtual ~IProductWRTBase_SumFac_Seg()
+        ~IProductWRTBase_SumFac_Seg() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
             if(m_colldir0)
             {
-                Vmath::Vmul(m_numElmt*m_nquad0,m_jac,1,input,1,output,1);
+                Vmath::Vmul(m_numElmt*m_nquad0,m_jacWStdW,1,input,1,output,1);
             }
             else
             {
-                Vmath::Vmul(m_numElmt*m_nquad0,m_jac,1,input,1,wsp,1);
+                Vmath::Vmul(m_numElmt*m_nquad0,m_jacWStdW,1,input,1,wsp,1);
 
                 // out = B0*in;
                 Blas::Dgemm('T','N', m_nmodes0, m_numElmt, m_nquad0,
@@ -403,35 +557,42 @@ class IProductWRTBase_SumFac_Seg : public Operator
             }
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int  dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
         const int                       m_nquad0;
         const int                       m_nmodes0;
         const bool                      m_colldir0;
-        Array<OneD, const NekDouble>    m_jac;
+        Array<OneD, const NekDouble>    m_jacWStdW;
         Array<OneD, const NekDouble>    m_base0;
 
     private:
         IProductWRTBase_SumFac_Seg(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator  (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator  (pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nmodes0 (m_stdExp->GetBasisNumModes(0)),
               m_colldir0(m_stdExp->GetBasis(0)->Collocation()),
               m_base0   (m_stdExp->GetBasis(0)->GetBdata())
         {
             m_wspSize = m_numElmt*m_nquad0;
-            m_jac = pGeomData->GetJacWithStdWeights(pCollExp);
+            m_jacWStdW = pGeomData->GetJacWithStdWeights(pCollExp);
         }
 };
 
@@ -451,15 +612,15 @@ class IProductWRTBase_SumFac_Quad : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Quad)
 
-        virtual ~IProductWRTBase_SumFac_Quad()
+        ~IProductWRTBase_SumFac_Quad() final
         {
         }
 
-        virtual void operator()(const Array<OneD, const NekDouble> &input,
+        void operator()(const Array<OneD, const NekDouble> &input,
                                 Array<OneD,       NekDouble> &output,
                                 Array<OneD,       NekDouble> &output1,
                                 Array<OneD,       NekDouble> &output2,
-                                Array<OneD,       NekDouble> &wsp)
+                                Array<OneD,       NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
@@ -470,17 +631,23 @@ class IProductWRTBase_SumFac_Quad : public Operator
                          m_nquad0,  m_nquad1,
                          m_nmodes0, m_nmodes1,
                          m_base0,   m_base1,
-                         m_jac, input, output, wsp);
+                         m_jacWStdW, input, output, wsp);
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -490,15 +657,16 @@ class IProductWRTBase_SumFac_Quad : public Operator
         const int                       m_nmodes1;
         const bool                      m_colldir0;
         const bool                      m_colldir1;
-        Array<OneD, const NekDouble>    m_jac;
+        Array<OneD, const NekDouble>    m_jacWStdW;
         Array<OneD, const NekDouble>    m_base0;
         Array<OneD, const NekDouble>    m_base1;
 
     private:
         IProductWRTBase_SumFac_Quad(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator  (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator  (pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nmodes0 (m_stdExp->GetBasisNumModes(0)),
@@ -508,7 +676,7 @@ class IProductWRTBase_SumFac_Quad : public Operator
               m_base0   (m_stdExp->GetBasis(0)->GetBdata()),
               m_base1   (m_stdExp->GetBasis(1)->GetBdata())
         {
-            m_jac     = pGeomData->GetJacWithStdWeights(pCollExp);
+            m_jacWStdW     = pGeomData->GetJacWithStdWeights(pCollExp);
             m_wspSize = 2 * m_numElmt
                           * (max(m_nquad0*m_nquad1,m_nmodes0*m_nmodes1));
         }
@@ -529,16 +697,16 @@ class IProductWRTBase_SumFac_Tri : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Tri)
 
-        virtual ~IProductWRTBase_SumFac_Tri()
+        ~IProductWRTBase_SumFac_Tri() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
@@ -546,18 +714,24 @@ class IProductWRTBase_SumFac_Tri : public Operator
                      "Incorrect workspace size");
 
             TriIProduct(m_sortTopVertex, m_numElmt, m_nquad0, m_nquad1,
-                        m_nmodes0, m_nmodes1,m_base0,m_base1,m_jac, input,
+                        m_nmodes0, m_nmodes1,m_base0,m_base1,m_jacWStdW, input,
                         output,wsp);
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -565,7 +739,7 @@ class IProductWRTBase_SumFac_Tri : public Operator
         const int                       m_nquad1;
         const int                       m_nmodes0;
         const int                       m_nmodes1;
-        Array<OneD, const NekDouble>    m_jac;
+        Array<OneD, const NekDouble>    m_jacWStdW;
         Array<OneD, const NekDouble>    m_base0;
         Array<OneD, const NekDouble>    m_base1;
         bool                            m_sortTopVertex;
@@ -573,8 +747,9 @@ class IProductWRTBase_SumFac_Tri : public Operator
     private:
         IProductWRTBase_SumFac_Tri(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator  (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator  (pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nmodes0 (m_stdExp->GetBasisNumModes(0)),
@@ -582,7 +757,7 @@ class IProductWRTBase_SumFac_Tri : public Operator
               m_base0   (m_stdExp->GetBasis(0)->GetBdata()),
               m_base1   (m_stdExp->GetBasis(1)->GetBdata())
         {
-            m_jac     = pGeomData->GetJacWithStdWeights(pCollExp);
+            m_jacWStdW     = pGeomData->GetJacWithStdWeights(pCollExp);
             m_wspSize = 2 * m_numElmt
                           * (max(m_nquad0*m_nquad1,m_nmodes0*m_nmodes1));
             if(m_stdExp->GetBasis(0)->GetBasisType()
@@ -612,16 +787,16 @@ class IProductWRTBase_SumFac_Hex : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Hex)
 
-        virtual ~IProductWRTBase_SumFac_Hex()
+        ~IProductWRTBase_SumFac_Hex() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD, NekDouble> &output,
                       Array<OneD, NekDouble> &output1,
                       Array<OneD, NekDouble> &output2,
-                      Array<OneD, NekDouble> &wsp)
+                      Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
@@ -632,17 +807,23 @@ class IProductWRTBase_SumFac_Hex : public Operator
                         m_nquad0,  m_nquad1,  m_nquad2,
                         m_nmodes0, m_nmodes1, m_nmodes2,
                         m_base0,   m_base1,   m_base2,
-                        m_jac,input,output,wsp);
+                        m_jacWStdW,input,output,wsp);
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -655,7 +836,7 @@ class IProductWRTBase_SumFac_Hex : public Operator
         const bool                      m_colldir0;
         const bool                      m_colldir1;
         const bool                      m_colldir2;
-        Array<OneD, const NekDouble>    m_jac;
+        Array<OneD, const NekDouble>    m_jacWStdW;
         Array<OneD, const NekDouble>    m_base0;
         Array<OneD, const NekDouble>    m_base1;
         Array<OneD, const NekDouble>    m_base2;
@@ -663,8 +844,9 @@ class IProductWRTBase_SumFac_Hex : public Operator
     private:
         IProductWRTBase_SumFac_Hex(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator  (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator  (pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2)),
@@ -679,7 +861,7 @@ class IProductWRTBase_SumFac_Hex : public Operator
               m_base2    (m_stdExp->GetBasis(2)->GetBdata())
 
         {
-            m_jac = pGeomData->GetJacWithStdWeights(pCollExp);
+            m_jacWStdW = pGeomData->GetJacWithStdWeights(pCollExp);
             m_wspSize = 3 * m_numElmt * (max(m_nquad0*m_nquad1*m_nquad2,
                                              m_nmodes0*m_nmodes1*m_nmodes2));
         }
@@ -701,16 +883,16 @@ class IProductWRTBase_SumFac_Tet : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Tet)
 
-        virtual ~IProductWRTBase_SumFac_Tet()
+        ~IProductWRTBase_SumFac_Tet() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp)
+                      Array<OneD,       NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
@@ -721,18 +903,24 @@ class IProductWRTBase_SumFac_Tet : public Operator
                         m_nquad0,  m_nquad1,  m_nquad2,
                         m_nmodes0, m_nmodes1, m_nmodes2,
                         m_base0,   m_base1,   m_base2,
-                        m_jac,input,output,wsp);
+                        m_jacWStdW,input,output,wsp);
 
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -742,7 +930,7 @@ class IProductWRTBase_SumFac_Tet : public Operator
         const int                       m_nmodes0;
         const int                       m_nmodes1;
         const int                       m_nmodes2;
-        Array<OneD, const NekDouble>    m_jac;
+        Array<OneD, const NekDouble>    m_jacWStdW;
         Array<OneD, const NekDouble>    m_base0;
         Array<OneD, const NekDouble>    m_base1;
         Array<OneD, const NekDouble>    m_base2;
@@ -751,8 +939,9 @@ class IProductWRTBase_SumFac_Tet : public Operator
     private:
         IProductWRTBase_SumFac_Tet(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator  (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator  (pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2)),
@@ -763,7 +952,7 @@ class IProductWRTBase_SumFac_Tet : public Operator
               m_base1   (m_stdExp->GetBasis(1)->GetBdata()),
               m_base2   (m_stdExp->GetBasis(2)->GetBdata())
         {
-            m_jac     = pGeomData->GetJacWithStdWeights(pCollExp);
+            m_jacWStdW     = pGeomData->GetJacWithStdWeights(pCollExp);
             m_wspSize = m_numElmt*(max(m_nquad0*m_nquad1*m_nquad2,
                         m_nquad2*m_nmodes0*(2*m_nmodes1-m_nmodes0+1)/2)+
                                    m_nquad2*m_nquad1*m_nmodes0);
@@ -796,16 +985,16 @@ class IProductWRTBase_SumFac_Prism : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Prism)
 
-        virtual ~IProductWRTBase_SumFac_Prism()
+        ~IProductWRTBase_SumFac_Prism() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD, NekDouble> &output,
                       Array<OneD, NekDouble> &output1,
                       Array<OneD, NekDouble> &output2,
-                      Array<OneD, NekDouble> &wsp)
+                      Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
@@ -816,17 +1005,23 @@ class IProductWRTBase_SumFac_Prism : public Operator
                         m_nquad0,  m_nquad1,  m_nquad2,
                         m_nmodes0, m_nmodes1, m_nmodes2,
                         m_base0,   m_base1,   m_base2,
-                        m_jac,input,output,wsp);
+                        m_jacWStdW,input,output,wsp);
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -836,7 +1031,7 @@ class IProductWRTBase_SumFac_Prism : public Operator
         const int                       m_nmodes0;
         const int                       m_nmodes1;
         const int                       m_nmodes2;
-        Array<OneD, const NekDouble>    m_jac;
+        Array<OneD, const NekDouble>    m_jacWStdW;
         Array<OneD, const NekDouble>    m_base0;
         Array<OneD, const NekDouble>    m_base1;
         Array<OneD, const NekDouble>    m_base2;
@@ -845,8 +1040,9 @@ class IProductWRTBase_SumFac_Prism : public Operator
     private:
         IProductWRTBase_SumFac_Prism(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator  (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator  (pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2)),
@@ -858,7 +1054,7 @@ class IProductWRTBase_SumFac_Prism : public Operator
               m_base2    (m_stdExp->GetBasis(2)->GetBdata())
 
         {
-            m_jac = pGeomData->GetJacWithStdWeights(pCollExp);
+            m_jacWStdW = pGeomData->GetJacWithStdWeights(pCollExp);
 
             m_wspSize = m_numElmt * m_nquad2
                                   *(max(m_nquad0*m_nquad1,m_nmodes0*m_nmodes1))
@@ -891,16 +1087,16 @@ class IProductWRTBase_SumFac_Pyr : public Operator
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Pyr)
 
-        virtual ~IProductWRTBase_SumFac_Pyr()
+        ~IProductWRTBase_SumFac_Pyr() final
         {
         }
 
-        virtual void operator()(
+        void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD, NekDouble> &output,
                       Array<OneD, NekDouble> &output1,
                       Array<OneD, NekDouble> &output2,
-                      Array<OneD, NekDouble> &wsp)
+                      Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(output1, output2);
 
@@ -911,17 +1107,23 @@ class IProductWRTBase_SumFac_Pyr : public Operator
                         m_nquad0,  m_nquad1,  m_nquad2,
                         m_nmodes0, m_nmodes1, m_nmodes2,
                         m_base0,   m_base1,   m_base2,
-                        m_jac,input,output,wsp);
+                        m_jacWStdW,input,output,wsp);
         }
 
-        virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp)
+        void operator()(int dir,
+                        const Array<OneD, const NekDouble> &input,
+                        Array<OneD, NekDouble> &output,
+                        Array<OneD, NekDouble> &wsp) final
         {
             boost::ignore_unused(dir, input, output, wsp);
             NEKERROR(ErrorUtil::efatal, "Not valid for this operator.");
+        }
+    
+        virtual void CheckFactors(StdRegions::FactorMap factors,
+                                  int coll_phys_offset)
+        {
+            boost::ignore_unused(factors, coll_phys_offset);
+            ASSERTL0(false, "Not valid for this operator.");
         }
 
     protected:
@@ -931,7 +1133,7 @@ class IProductWRTBase_SumFac_Pyr : public Operator
         const int                       m_nmodes0;
         const int                       m_nmodes1;
         const int                       m_nmodes2;
-        Array<OneD, const NekDouble>    m_jac;
+        Array<OneD, const NekDouble>    m_jacWStdW;
         Array<OneD, const NekDouble>    m_base0;
         Array<OneD, const NekDouble>    m_base1;
         Array<OneD, const NekDouble>    m_base2;
@@ -940,8 +1142,9 @@ class IProductWRTBase_SumFac_Pyr : public Operator
     private:
         IProductWRTBase_SumFac_Pyr(
                 vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData)
-            : Operator  (pCollExp, pGeomData),
+                CoalescedGeomDataSharedPtr                pGeomData,
+                StdRegions::FactorMap                     factors)
+            : Operator  (pCollExp, pGeomData, factors),
               m_nquad0  (m_stdExp->GetNumPoints(0)),
               m_nquad1  (m_stdExp->GetNumPoints(1)),
               m_nquad2  (m_stdExp->GetNumPoints(2)),
@@ -953,7 +1156,7 @@ class IProductWRTBase_SumFac_Pyr : public Operator
               m_base2   (m_stdExp->GetBasis(2)->GetBdata())
 
         {
-            m_jac = pGeomData->GetJacWithStdWeights(pCollExp);
+            m_jacWStdW = pGeomData->GetJacWithStdWeights(pCollExp);
 
             m_wspSize = m_numElmt * m_nquad2
                                   *(max(m_nquad0*m_nquad1,m_nmodes0*m_nmodes1))

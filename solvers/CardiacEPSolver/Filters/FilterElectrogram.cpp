@@ -172,20 +172,20 @@ void FilterElectrogram::v_Initialise(
     m_grad_R_y = Array<OneD, Array<OneD, NekDouble> >(npts);
     m_grad_R_z = Array<OneD, Array<OneD, NekDouble> >(npts);
 
-    Array<OneD, NekDouble> x(nq);
-    Array<OneD, NekDouble> y(nq);
-    Array<OneD, NekDouble> z(nq);
+    Array<OneD, NekDouble> oneOverR(nq, 0.0);
 
-    Array<OneD, NekDouble> oneOverR(nq);
     for (unsigned int i = 0; i < npts; ++i)
     {
-        m_grad_R_x[i] = Array<OneD, NekDouble>(nq);
-        m_grad_R_y[i] = Array<OneD, NekDouble>(nq);
-        m_grad_R_z[i] = Array<OneD, NekDouble>(nq);
+        m_grad_R_x[i] = Array<OneD, NekDouble>(nq, 0.0);
+        m_grad_R_y[i] = Array<OneD, NekDouble>(nq, 0.0);
+        m_grad_R_z[i] = Array<OneD, NekDouble>(nq, 0.0);
+
+        Array<OneD, NekDouble> x(nq, 0.0);
+        Array<OneD, NekDouble> y(nq, 0.0);
+        Array<OneD, NekDouble> z(nq, 0.0);
 
         // Compute 1/R
         m_electrogramPoints[i]->GetCoords(px,py,pz);
-
         pFields[0]->GetCoords(x,y,z);
 
         Vmath::Sadd   (nq, -px, x, 1, x, 1);

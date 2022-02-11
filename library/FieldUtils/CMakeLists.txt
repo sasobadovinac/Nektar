@@ -55,6 +55,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessScalGrad.h
     ProcessModules/ProcessMultiShear.h
     ProcessModules/ProcessWSS.h
+    ProcessModules/ProcessWallNormalData.h
     ProcessModules/ProcessC0Projection.h
     ProcessModules/ProcessQCriterion.h
     ProcessModules/ProcessQualityMetric.h
@@ -116,6 +117,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessSurfDistance.cpp
     ProcessModules/ProcessMultiShear.cpp
     ProcessModules/ProcessWSS.cpp
+    ProcessModules/ProcessWallNormalData.cpp
     ProcessModules/ProcessC0Projection.cpp
     ProcessModules/ProcessQCriterion.cpp
     ProcessModules/ProcessQualityMetric.cpp
@@ -129,3 +131,9 @@ ADD_NEKTAR_LIBRARY(FieldUtils
     DEPENDS GlobalMapping)
 
 ADD_DEFINITIONS(-DFIELD_UTILS_EXPORTS)
+
+IF (NEKTAR_BUILD_PYTHON)
+    SUBDIRS(Python)
+ENDIF()
+
+INSTALL(DIRECTORY ./ DESTINATION ${NEKTAR_INCLUDE_DIR}/FieldUtils COMPONENT dev FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")

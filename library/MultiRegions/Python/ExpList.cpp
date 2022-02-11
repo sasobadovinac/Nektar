@@ -202,9 +202,9 @@ const Array<OneD, const NekDouble> ExpList_GetPhys(ExpListSharedPtr exp)
     return exp->GetPhys();
 }
 
-NekDouble ExpList_PhysIntegral(ExpListSharedPtr exp)
+NekDouble ExpList_Integral(ExpListSharedPtr exp)
 {
-    return exp->PhysIntegral();
+    return exp->Integral();
 }
 
 std::string ExpList_GetPhysAddress(ExpListSharedPtr exp)
@@ -223,6 +223,54 @@ void ExpList_ResetManagers(ExpListSharedPtr exp)
     LibUtilities::NekManager<
         LocalRegions::MatrixKey, DNekScalBlkMat,
         LocalRegions::MatrixKey::opLess>::ClearManager();
+}
+
+void ExpList_LoadField(ExpListSharedPtr exp, std::string filename, std::string varName)
+{
+    int nExp = exp->GetExpSize();
+    Array<OneD, int> elementGIDs(nExp);
+
+    // Construct a map from element locations to global IDs
+    for (int i = 0; i < nExp; ++i)
+    {
+        elementGIDs[i] = exp->GetExp(i)->GetGeom()->GetGlobalID();
+    }
+
+    std::vector<LibUtilities::FieldDefinitionsSharedPtr> def;
+    std::vector<std::vector<NekDouble> > data;
+    LibUtilities::FieldIOSharedPtr fldIO =
+        LibUtilities::FieldIO::CreateForFile(exp->GetSession(), filename);
+    fldIO->Import(filename, def, data, LibUtilities::NullFieldMetaDataMap,
+                  elementGIDs);
+
+    int idx = -1;
+
+    Vmath::Zero(exp->GetNcoeffs(), exp->UpdateCoeffs(), 1);
+
+    // Loop over all the expansions
+    for (int i = 0; i < def.size(); ++i)
+    {
+        // Find the index of the required field in the expansion segment
+        for (int j = 0; j < def[i]->m_fields.size(); ++j)
+        {
+            if (def[i]->m_fields[j] == varName)
+            {
+                idx = j;
+            }
+        }
+
+        if (idx >= 0)
+        {
+            exp->ExtractDataToCoeffs(
+                def[i], data[i], def[i]->m_fields[idx], exp->UpdateCoeffs());
+        }
+        else
+        {
+            std::cout << "Field " + varName + " not found." << std::endl;
+        }
+    }
+
+    exp->BwdTrans_IterPerExp(exp->GetCoeffs(), exp->UpdatePhys());
 }
 
 void export_ExpList()
@@ -247,6 +295,7 @@ void export_ExpList()
 
         // Evaluations
         .def("PhysEvaluate", &ExpList::PhysEvaluate)
+        .def("LoadField", &ExpList_LoadField)
 
         // Operators
         .def("FwdTrans", &ExpList_FwdTrans)
@@ -271,7 +320,7 @@ void export_ExpList()
         .def("GetPhys", &ExpList_GetPhys)
         .def("SetPhysState", &ExpList::SetPhysState)
         .def("GetPhysState", &ExpList::GetPhysState)
-        .def("PhysIntegral", &ExpList_PhysIntegral)
+        .def("Integral", &ExpList_Integral)
         .def("GetPhysAddress", &ExpList_GetPhysAddress)
 
         // Misc functions

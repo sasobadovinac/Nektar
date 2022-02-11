@@ -116,7 +116,7 @@ namespace SolverUtils
         }
 
         Array<OneD, Array<OneD, NekDouble> > tmp(pFields.size());
-        for (int i = 0; i < pFields.size(); ++i)
+        for (int i = 0; i < m_NumVariable; ++i)
         {
             tmp[i] = pFields[i]->GetPhys();
         }
@@ -130,36 +130,34 @@ namespace SolverUtils
             const Array<OneD, Array<OneD, NekDouble> > &inarray,
             const NekDouble &time)
     {
-        LibUtilities::EquationSharedPtr eqn = m_session->GetFunction(
-            m_funcName, m_session->GetVariable(0));
-
-        if (!boost::iequals(eqn->GetVlist(), "x y z t"))
-        {
-            // Coupled forcing
-            int nq = pFields[0]->GetNpoints();
-            Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq), t(nq, time);
-            std::string varstr = "x y z";
-            std::vector<Array<OneD, const NekDouble>> fielddata = {
-                xc, yc, zc, t};
-
-            for (int i = 0; i < pFields.size(); ++i)
-            {
-                varstr += " " + m_session->GetVariable(i);
-                fielddata.push_back(inarray[i]);
-            }
-
-            // Evaluate function
-            for (int i = 0; i < m_NumVariable; ++i)
-            {
-                m_session->GetFunction(m_funcName, m_session->GetVariable(i))->
-                    Evaluate(fielddata, m_Forcing[i]);
-            }
-
-            return;
-        }
-
         for (int i = 0; i < m_NumVariable; ++i)
         {
+            if (LibUtilities::eFunctionTypeExpression == m_session->
+                GetFunctionType(m_funcName, m_session->GetVariable(i)))
+            {
+                LibUtilities::EquationSharedPtr eqn = m_session->
+                    GetFunction(m_funcName, m_session->GetVariable(i));
+                if (!boost::iequals(eqn->GetVlist(), "x y z t"))
+                {
+                    // Coupled forcing
+                    int nq = pFields[0]->GetNpoints();
+                    Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq), t(nq, time);
+                    std::string varstr = "x y z";
+                    std::vector<Array<OneD, const NekDouble>> fielddata = {
+                        xc, yc, zc, t};
+
+                    for (int j = 0; j < m_NumVariable; ++j)
+                    {
+                        varstr += " " + m_session->GetVariable(j);
+                        fielddata.push_back(inarray[j]);
+                    }
+
+                    // Evaluate function
+                    m_session->GetFunction(m_funcName, m_session->GetVariable(i))->
+                        Evaluate(fielddata, m_Forcing[i]);
+                    continue;
+                }
+            }
             std::string  s_FieldStr   = m_session->GetVariable(i);
             ASSERTL0(m_session->DefinesFunction(m_funcName, s_FieldStr),
                      "Variable '" + s_FieldStr + "' not defined.");
@@ -208,6 +206,45 @@ namespace SolverUtils
             {
                 Vmath::Vadd(outarray[i].size(), outarray[i], 1,
                             m_Forcing[i], 1, outarray[i], 1);
+            }
+        }
+    }
+
+    void ForcingBody::v_ApplyCoeff(
+            const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+            const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+            Array<OneD, Array<OneD, NekDouble> >              &outarray,
+            const NekDouble                                   &time)
+    {
+        int ncoeff = outarray[m_NumVariable - 1].size();
+        Array<OneD, NekDouble> tmp(ncoeff, 0.0);
+
+        if (m_hasTimeFcnScaling)
+        {
+            Array<OneD, NekDouble>  TimeFcn(1);
+
+            for (int i = 0; i < m_NumVariable; ++i)
+            {
+                EvaluateTimeFunction(time, m_timeFcnEqn, TimeFcn);
+
+                fields[i]->FwdTrans(m_Forcing[i], tmp);
+
+                Vmath::Svtvp(ncoeff, TimeFcn[0],
+                             tmp, 1,
+                             outarray[i],  1,
+                             outarray[i],  1);
+            }
+        }
+        else
+        {
+            Update(fields, inarray, time);
+
+            for (int i = 0; i < m_NumVariable; ++i)
+            {
+                fields[i]->FwdTrans(m_Forcing[i], tmp);
+
+                Vmath::Vadd(ncoeff, outarray[i], 1,
+                            tmp, 1, outarray[i], 1);
             }
         }
     }

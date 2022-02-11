@@ -157,9 +157,6 @@ namespace Nektar
         protected:
             
             DNekMatSharedPtr CreateStdMatrix(const StdRegions::StdMatrixKey &mkey);
-            DNekScalMatSharedPtr    CreateMatrix(const MatrixKey &mkey);
-            DNekScalBlkMatSharedPtr  CreateStaticCondMatrix(const MatrixKey &mkey);
-
             void IProductWRTBase_SumFac(const Array<OneD, const NekDouble>& inarray, 
                                         Array<OneD, NekDouble> &outarray,
                                         bool multiplybyweights = true);
@@ -339,6 +336,11 @@ namespace Nektar
             {
                 IProductWRTDerivBase_SumFac(dir,inarray,outarray);
             }    
+
+            virtual void v_AlignVectorToCollapsedDir(
+                const int dir, 
+                const Array<OneD, const NekDouble>      &inarray, 
+                Array<OneD, Array<OneD, NekDouble> >    &outarray);
 
             virtual void v_MassMatrixOp(const Array<OneD, const NekDouble> &inarray, 
                                         Array<OneD,NekDouble> &outarray,

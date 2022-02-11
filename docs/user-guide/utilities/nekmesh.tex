@@ -148,6 +148,142 @@ the element. Whilst a resulting simulation may run, the results may not be valid
 because of this problem, or excessively large amounts of time may be needed to
 solve the resulting linear system.
 
+
+\section{NekMesh in NekPy}
+
+The Python interface allows the user to instantiate input,
+output, and process modules by calling the static \verb+Create+ method of the
+\verb+InputModule+, \verb+ProcessModule+, and \verb+OutputModule+,
+register configuration options, and process them.
+Consider the following example:
+
+\begin{lstlisting}[style=C++Style, language=Python]
+import sys
+from NekPy.NekMesh import Mesh, ProcessModule, OutputModule
+
+mesh          = Mesh()
+mesh.expDim   = 3
+mesh.spaceDim = 3
+mesh.nummode  = 5
+mesh.verbose  = True
+
+# Load the CAD file
+ProcessModule.Create("loadcad", mesh, \
+                     filename="input.stp", verbose=True).Process()
+# Load the octree
+ProcessModule.Create("loadoctree", mesh, mindel=0.04,\
+                      maxdel=0.2, eps=0.02).Process()
+# Create a surface mesh
+ProcessModule.Create("surfacemesh", mesh).Process()
+# Output a 2D manifold mesh
+mesh.expDim = 2
+# Create a high-order surface
+ProcessModule.Create("hosurface", mesh).Process()
+# Dump out elemental Jacobians
+ProcessModule.Create("jac", mesh, list=True).Process()
+# Dump out the surface mesh.
+OutputModule.Create("xml", mesh, test=True,\
+                     outfile="output.xml").Process()
+\end{lstlisting}
+
+After importing the \verb+Mesh+, \verb+ProcessModule+, and \verb+OutputModule+
+classes, first we create a \verb+Mesh+ object by calling the constructor.
+This object will be shared by the modules.
+Then we manipulate the \verb+Mesh+ object by creating different
+\verb+ProcessModule+s, at the end we write out the result into a xml file
+using an \verb+OutputModule+.
+The configuration options for a given module are passed to the static
+\verb+Create+ method of the \verb+InputModule+, \verb+ProcessModule+, and
+\verb+OutputModule+. This creates the corresponding module and the
+modules can be processed immediately after instantiation. Note that the first
+parameter of the \verb+Create+ method has to be the key for a given module,
+the second is the previously created \verb+Mesh+ object. The remaining keyword
+arguments can specify additional parameters for a module.
+
+The Python interface allows the user to create new modules by inheriting from
+one of the possible base classes
+(\verb+InputModule+, \verb+ProcessModule+, \verb+OutputModule+).
+
+The following is a simple example when we inherit from the \verb+InputModule+
+and override the \verb+Process+ method:
+\begin{lstlisting}[style=C++Style, language=Python]
+import sys
+from NekPy.LibUtilities import ShapeType
+import NekPy.NekMesh as NekMesh
+import numpy as np
+
+# StructuredGrid creates a 2D structured grid of triangles.
+class StructuredGrid(NekMesh.InputModule):
+    def __init__(self, mesh):
+        super(StructuredGrid, self).__init__(mesh)
+        self.mesh.spaceDim = 2
+        self.mesh.expDim = 2
+        # Define some configuration options for this module.
+        self.AddConfigOption("nx", "2", "Number of points in x direction")
+        self.AddConfigOption("ny", "2", "Number of points in y direction")
+        self.AddConfigOption("lx", "0", "Lower-left x-coordinate")
+        self.AddConfigOption("rx", "0", "Upper-right x-coordinate")
+        self.AddConfigOption("ly", "0", "Lower-left y-coordinate")
+        self.AddConfigOption("ry", "0", "Upper-right y-coordinate")
+        self.AddConfigOption("compid", "0", "Composite ID")
+
+    def Process(self):
+        # Get the input variables from our configuration options.
+        coord_1x   = self.GetFloatConfig("lx")
+        coord_1y   = self.GetFloatConfig("ly")
+        coord_2x   = self.GetFloatConfig("rx")
+        coord_2y   = self.GetFloatConfig("ry")
+        nx         = self.GetIntConfig("nx")
+        ny         = self.GetIntConfig("ny")
+        compID     = self.GetIntConfig("compid")
+        x_points   = np.linspace(coord_1x, coord_2x, nx)
+        y_points   = np.linspace(coord_1y, coord_2y, ny)
+
+        nodes = []
+        id_cnt = 0
+
+        for y in range(ny):
+            tmp = []
+            for x in range(nx):
+                tmp.append(NekMesh.Node(id_cnt, x_points[x], y_points[y], 0.0))
+                id_cnt += 1
+            nodes.append(tmp)
+        self._create_triangles(nodes, nx, ny, compID)
+        # Call the Module functions to create all of the edges, faces and
+        # composites.
+        self.ProcessVertices()
+        self.ProcessEdges()
+        self.ProcessFaces()
+        self.ProcessElements()
+        self.ProcessComposites()
+
+    def _create_triangles(self, nodes, nx, ny, compID):
+        ...
+
+# Register our TestInput module with the factory.
+NekMesh.Module.Register(
+    NekMesh.ModuleType.Input, "StructuredGrid", StructuredGrid)
+
+if __name__ == '__main__':
+    # Create a 'pipeline' of the input and output modules.
+    mesh = NekMesh.Mesh()
+
+    # First, call our input module's create function from the NekMesh factory.
+    NekMesh.InputModule.Create(
+        "StructuredGrid", mesh,
+        nx = sys.argv[1], ny = sys.argv[2], lx = sys.argv[3],
+        ly = sys.argv[4], rx = sys.argv[5], ry = sys.argv[6],
+        compid = sys.argv[7], shape = sys.argv[8]).Process()
+
+    # Then ensure there's no negative Jacobians.
+    NekMesh.ProcessModule.Create("jac", mesh, list=True).Process()
+
+    # Finally, output the resulting file
+    NekMesh.OutputModule.Create(
+        "xml", mesh, test=True, outfile=sys.argv[9]).Process()
+\end{lstlisting}
+
+
 \section{NekMesh modules}
 
 \nm is designed to provide a pipeline approach to mesh generation. To do this,
@@ -278,21 +414,34 @@ The following output formats are supported:
     triangles are supported up to arbitrary order. Prisms supported up to order
     4, pyramids up to order 1.\\
     Nektar++ & \texttt{xml} & \cmark & Most functionality supported. \\
-    VTK & \texttt{vtk} & \xmark & Experimental. Only ASCII triangular data is supported. \\
+    HDF5 & \texttt{nekg} & \cmark & Most functionality supported. \\
+    VTK & \texttt{vtk} & \xmark & Outputs mesh only, supports line segments in 1D, 
+    triangles and quadrilaterals in 2D and tetrahedra, hexahedra, prisms and 
+    pyramids in 3D. The VTK legacy format and XML format, both compressed and 
+    uncompressed, are supported. Requires NEKTAR\_USE\_VTK option to be activated 
+    in cmake. \\
     \bottomrule
   \end{tabularx}
 \end{center}
 
-Note that for both \gmsh and \texttt{VTK}, it is highly likely that you will
+Note that for \gmsh, it is highly likely that you will
 need to experiment with the source code in order to successfully generate
 meshes since robustness is not guaranteed.
 
-The default for \texttt{xml} is into binary data which has been
+The default for \texttt{xml} and \texttt{vtk} is into binary data which has been
 converted into base64. If you wish to see an ascii output you need to
-specify the output module option \inltt{uncompress} by executing:
+specify the output module option \inltt{uncompress}. For the uncompressed 
+\texttt{xml} the user can execute:
 %
 \begin{lstlisting}[style=BashInputStyle]
 NekMesh Mesh.msh output.xml:xml:uncompress
+\end{lstlisting}
+%
+If the user wishes to obtain the \texttt{vtk} output in the legacy format,
+the output module option \inltt{legacy} should be specified by executing:
+%
+\begin{lstlisting}[style=BashInputStyle]
+NekMesh Mesh.xml output.vtk:vtk:legacy
 \end{lstlisting}
 %
 Finally, both the Gmsh and Nektar++ output modules support an \inltt{order}
@@ -305,6 +454,23 @@ NekMesh Mesh.msh output.msh:msh:order=7
 %
 will generate an order 7 Gmsh mesh. In the rest of these subsections, we discuss
 the various processing modules available within \nm.
+
+\subsubsection{HDF5 format}
+
+NekMesh and all solvers within Nektar++ - along with subsequent FieldConvert modules - also support the HDF5 format. This allows for faster loading of geometries and meshes within each solver - and is a significant improvement over the XML format. HDF5 is recommended input format for any larger cases.
+
+Converting from XML to HDF5 is a simple task that only requires the one NekMesh command:
+\begin{lstlisting}[style=BashInputStyle]
+    NekMesh XMLMesh.xml HDF5Mesh.nekg
+\end{lstlisting}
+
+This will create two files \inltt{HDF5Mesh.xml} and \inltt{HDF5Mesh.nekg} which are both needed in the same directory to run the simulation. An additional flag in the session file is required, ensuring it is placed before the expansion list being:
+
+\begin{lstlisting}[style=XmlStyle]
+    <GEOMETRY DIM="3" SPACE="3" HDF5FILE="HDF5Mesh.nekg" />
+\end{lstlisting}
+
+HDF5 also has the additional advantage of ensuring the mesh and session file are split - which allows for easy ammending of the session file - whilst allowing for use of FieldCovnert modules that require only 1 XML input file - rather than having to concatenate the session and mesh XML files. Solvers and any FieldConvert modules can be run by referencing only the session file after the \inltt{GEOMETRY} tag is included. 
 
 \subsection{Extract surfaces from a mesh}
 \label{s:utilities:nekmesh:extract}
@@ -1059,7 +1225,32 @@ above). This should however allow for the creation of quite a wide range of 2D
 and 3D geometries by transformation of arbitrary curves into generic splines and
 arcs.
 
+\subsubsection{CCM format}
+For very complex 3D geometries with manifold bodies, \nekpp can take advantage of the meshing tool embedded in the Star-CCM package. \nm projects linear meshes generated in Star-CCM on the CAD definition to generate high-order meshes. \nekpp must be built \texttt{NEKTAR\_USE\_CCM} in conjunction with the \texttt{ccmio} package to use this functionality. Projection is performed by specifying the option \inltt{projectcad}.
 
+The supported element types for the linear mesh are :
+\begin{itemize}
+  \item \inltt{Tetrahedron}
+  \item \inltt{Prism}
+  \item \inltt{Pyramid}
+\end{itemize}
+
+Therefore it is recommended to use the \texttt{Surface Remesher}, the \texttt{Tetrahedral Mesher} and the \texttt{Prism Layer Mesher} in Star-CCM. The \texttt{CAD Projection} and \texttt{Generate Only Standard Prismatic Cells} options should be activated. 
+The prismatic layer for the linear mesh in Star-CCM should not be splitted e.g. there should be only one layer with the total thickness of the boundary layer (see figure \ref{fig:util:mc:Car_mesh}. Splitting will then be perfomed directly by \nm on surfaces specified by the argument \inltt{surf} and the number of layers (\inltt{layers} argument) and growth rate (\inltt{r} argument) are specified during the mesh conversion process with the \inltt{bl} option. Surfaces correspond to the regions created in Star-CCM and the reference index is displayed when running \nm with verbosity (\inltt{-v} option).
+
+\begin{lstlisting}[style=BashInputStyle]
+  NekMesh -m projectcad:file=cadFile.STEP:order=meshOrder -m bl:surf=surf1,surf2,surf3:r=growthRate:layers=nLayers linearMesh.ccm outputMesh.xml
+\end{lstlisting}
+
+The command \inltt{linearise} can be added to correct bad elements.
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{img/Car_mesh.png}
+  \end{center}
+  \caption{Linear mesh generated in Star-CCM (visualised with ParaView) showing the one-layer prismatic cells layer}
+  \label{fig:util:mc:Car_mesh}
+\end{figure}
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "../user-guide"

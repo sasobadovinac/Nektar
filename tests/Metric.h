@@ -36,6 +36,7 @@
 #define NEKTAR_TESTS_METRIC_H
 
 #include <tinyxml.h>
+#include <memory>
 #include <string>
 #include <map>
 #include <boost/filesystem.hpp>
@@ -64,7 +65,9 @@ namespace Nektar
     {
     public:
         Metric(TiXmlElement *metric, bool generate);
-        
+
+        virtual ~Metric() = default;
+
         /// Perform the test, given the standard output and error streams
         bool Test     (std::istream& pStdout, std::istream& pStderr);
         /// Perform the test, given the standard output and error streams
@@ -89,10 +92,10 @@ namespace Nektar
         bool m_generate;
         /// Pointer to XML structure containing metric definition.
         TiXmlElement *m_metric;
-        
-        virtual bool v_Test     (std::istream& pStdout, 
+
+        virtual bool v_Test     (std::istream& pStdout,
                                  std::istream& pStderr) = 0;
-        virtual void v_Generate (std::istream& pStdout, 
+        virtual void v_Generate (std::istream& pStdout,
                                  std::istream& pSrderr) = 0;
     };
 
