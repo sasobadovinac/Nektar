@@ -44,11 +44,11 @@ namespace Nektar
     namespace LocalRegions
     {
         const NormalVector &Expansion1D::v_GetTraceNormal(
-                    const int edge) const
+                    const int vert) const
         {
             std::map<int, NormalVector>::const_iterator x;
-            x = m_vertexNormals.find(edge);
-            ASSERTL1 (x != m_vertexNormals.end(),
+            x = m_traceNormals.find(vert);
+            ASSERTL1 (x != m_traceNormals.end(),
                         "Vertex normal not computed.");
             return x->second;
         }
@@ -437,13 +437,12 @@ namespace Nektar
         {
             boost::ignore_unused(orient, nq0, nq1);
 
-            if (idmap.size() != 2)
+            if (idmap.size() != 1)
             {
-                idmap = Array<OneD, int>(2);
+                idmap = Array<OneD, int>(1);
             }
 
             idmap[0] = 0;
-            idmap[1] = 1;
         }
         
     } //end of namespace
