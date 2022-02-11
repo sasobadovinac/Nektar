@@ -168,10 +168,7 @@ struct ZoneRotate final: public ZoneBase
         return m_axis;
     }
 
-    inline NekDouble GetAngularVel(NekDouble &time) const
-    {
-        return m_angularVelEqn->Evaluate(0,0,0,time);
-    }
+    NekDouble GetAngularVel(NekDouble &time) const;
 
     virtual bool v_Move(NekDouble timeStep) final;
 

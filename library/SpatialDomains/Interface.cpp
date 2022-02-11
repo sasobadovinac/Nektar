@@ -652,6 +652,19 @@ void Movement::GenGeomFactors()
     }*/
 }
 
+NekDouble ZoneRotate::GetAngularVel(NekDouble &time) const
+{
+    int spinUpTime = 10;
+    if(time < spinUpTime)
+    {
+        return m_angularVelEqn->Evaluate(0,0,0,time) * spinUpTime / 10;
+    }
+    else
+    {
+        return m_angularVelEqn->Evaluate(0,0,0,time);
+    }
+}
+
 // Calculate new location of points using Rodrigues formula
 bool ZoneRotate::v_Move(NekDouble time)
 {
