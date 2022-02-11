@@ -2899,7 +2899,7 @@ void MeshGraph::ReadExpansionInfo()
                         auto x =
                             expansionMap->find((*geomVecIter)->GetGlobalID());
                         ASSERTL0(x != expansionMap->end(),
-                                 "Expansion not found!!");
+                                 "Expansion " + std::to_string((*geomVecIter)->GetGlobalID()) + " not found!!");
                         if (useExpansionType)
                         {
                             (x->second)->m_basisKeyVector =
