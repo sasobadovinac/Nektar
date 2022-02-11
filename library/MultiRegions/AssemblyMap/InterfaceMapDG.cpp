@@ -376,6 +376,18 @@ void InterfaceTrace::CalcLocalMissing()
             }
         }
     }
+
+    // If running in serial there shouldn't be any missing coordinates.
+    if(m_trace->GetComm()->IsSerial())
+    {
+        ASSERTL0(m_missingCoords.empty(),
+                 "Missing " + std::to_string(m_missingCoords.size()) +
+                     " coordinates on interface ID " +
+                     std::to_string(m_interface->GetId()) +
+                     " linked to interface ID " +
+                     std::to_string(m_interface->GetOppInterface()->GetId()) +
+                     ". Check both sides of the interface line up.");
+    }
 }
 
 /**
