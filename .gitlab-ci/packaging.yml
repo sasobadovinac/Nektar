@@ -706,105 +706,36 @@ package-centos-8-deploy:
     - package-centos-8-build
 
 ##
-## Fedora 33
-##
-#package-fedora-33-env:
-#  <<: *package-env-build
-
-#package-fedora-33-build:
-#  <<: *package-rpm-build
-#  needs: ["package-fedora-33-env"]
-#  variables:
-#    image_name: pkg/fedora-33
-#    version_file: fedora-33.json
-
-#package-fedora-33-test:
-#  <<: *package-rpm-test
-#  needs: ["package-fedora-33-build"]
-#  dependencies:
-#    - package-fedora-33-build
-#  variables:
-#    image_name: fedora:33
-#    cmake_exe: cmake
-
-#package-fedora-33-deploy-dev:
-#  <<: *package-rpm-deploy-dev
-#  needs: ["package-fedora-33-build", "package-fedora-33-test"]
-#  dependencies:
-#    - package-fedora-33-build
-
-#package-fedora-33-deploy:
-#  <<: *package-rpm-deploy
-#  needs: ["package-fedora-33-build", "package-fedora-33-deploy-dev"]
-#  dependencies:
-#    - package-fedora-33-build
-
-##
-## Fedora 34
-##
-#package-fedora-34-env:
-#  <<: *package-env-build
-
-#package-fedora-34-build:
-#  <<: *package-rpm-build
-#  needs: ["package-fedora-34-env"]
-#  variables:
-#    image_name: pkg/fedora-34
-#    version_file: fedora-34.json
-
-#package-fedora-34-test:
-#  <<: *package-rpm-test
-#  needs: ["package-fedora-34-build"]
-#  dependencies:
-#    - package-fedora-34-build
-#  variables:
-#    image_name: fedora:34
-#    cmake_exe: cmake
-
-#package-fedora-34-deploy-dev:
-#  <<: *package-rpm-deploy-dev
-#  needs: ["package-fedora-34-build", "package-fedora-34-test"]
-#  dependencies:
-#    - package-fedora-34-build
-
-#package-fedora-34-deploy:
-#  <<: *package-rpm-deploy
-#  needs: ["package-fedora-34-build", "package-fedora-34-deploy-dev"]
-#  dependencies:
-#    - package-fedora-34-build
-
-  
-##
 ## Fedora 35
 ##
-#package-fedora-35-env:
-#  <<: *package-env-build
+package-fedora-35-env:
+  <<: *package-env-build
 
-#package-fedora-35-build:
-#  <<: *package-rpm-build
-#  needs: ["package-fedora-35-env"]
-#  variables:
-#    image_name: pkg/fedora-35
-#    version_file: fedora-35.json
+package-fedora-35-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-35-env"]
+  variables:
+    image_name: pkg/fedora-35
+    version_file: fedora-35.json
 
-#package-fedora-35-test:
-#  <<: *package-rpm-test
-#  needs: ["package-fedora-35-build"]
-#  dependencies:
-#    - package-fedora-35-build
-#  variables:
-#    image_name: fedora:35
-#    cmake_exe: cmake
+package-fedora-35-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-35-build"]
+  dependencies:
+    - package-fedora-35-build
+  variables:
+    image_name: fedora:35
+    cmake_exe: cmake
 
-#package-fedora-35-deploy-dev:
-#  <<: *package-rpm-deploy-dev
-#  needs: ["package-fedora-35-build", "package-fedora-35-test"]
-#  dependencies:
-#    - package-fedora-35-build
+package-fedora-35-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-35-build", "package-fedora-35-test"]
+  dependencies:
+    - package-fedora-35-build
 
-#package-fedora-35-deploy:
-#  <<: *package-rpm-deploy
-#  needs: ["package-fedora-35-build", "package-fedora-35-deploy-dev"]
-#  dependencies:
-#    - package-fedora-35-build
+package-fedora-35-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-35-build", "package-fedora-35-deploy-dev"]
+  dependencies:
+    - package-fedora-35-build
 
