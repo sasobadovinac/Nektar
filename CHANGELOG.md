@@ -142,6 +142,7 @@ v5.1.1
 
 **CompressibleFlowSolver**
 - Fix non-dimensional Sutherland law (!1253)
+- Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1313)
 
 v5.1.0
 ------
