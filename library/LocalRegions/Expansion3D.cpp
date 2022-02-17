@@ -1418,7 +1418,7 @@ namespace Nektar
                         
                         for(int t = 0; t < ntraces; ++t)
                         {
-                            const NormalVector norm     = GetTraceNormal(t);
+                            const NormalVector norm = GetTraceNormal(t);
 
 
                             LibUtilities::BasisKey fromkey0
@@ -1429,8 +1429,8 @@ namespace Nektar
                                 = traceExp[t]->GetBasis(0)->GetBasisKey();
                             LibUtilities::BasisKey tokey1
                                 = traceExp[t]->GetBasis(1)->GetBasisKey();
-                            bool DoInterp = (fromkey0 != tokey0) ||
-                                (fromkey1 != tokey1); 
+                            bool DoInterp =
+                                (fromkey0 != tokey0) || (fromkey1 != tokey1); 
 
                             // for variable p need add check and
                             // interpolation here.
@@ -1452,6 +1452,7 @@ namespace Nektar
 
                                 GetTracePhysVals(t,traceExp[t],Deriv[d],val,
                                                  v_GetTraceOrient(t));
+
                                 Vmath::Vvtvp(tracepts[t],n,1,val,1,
                                              tmp  = dphidn[t] + i*tracepts[t],1,
                                              tmp1 = dphidn[t] + i*tracepts[t],1);
@@ -2924,12 +2925,13 @@ namespace Nektar
         void Expansion3D::v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
         {
             SpatialDomains::GeometrySharedPtr geom = GetGeom(); 
-            
+
             int nverts = geom->GetFace(traceid)->GetNumVerts();
 
             SpatialDomains::PointGeom tn1,tn2, normal;
             tn1.Sub(*(geom->GetFace(traceid)->GetVertex(1)),
                     *(geom->GetFace(traceid)->GetVertex(0)));
+
             tn2.Sub(*(geom->GetFace(traceid)->GetVertex(nverts-1)),
                     *(geom->GetFace(traceid)->GetVertex(0)));
 
@@ -2938,7 +2940,8 @@ namespace Nektar
             //normalise normal
             NekDouble mag = normal.dot(normal);
             mag = 1.0/sqrt(mag); 
-            normal.UpdatePosition(normal.x()*mag,normal.y()*mag,
+            normal.UpdatePosition(normal.x()*mag,
+                                  normal.y()*mag,
                                   normal.z()*mag);
 
             SpatialDomains::PointGeom Dx;
@@ -2948,7 +2951,7 @@ namespace Nektar
             {
                 //vertices on edges
                 int edgid = geom->GetEdgeNormalToFaceVert(traceid,i); 
-                    
+
                 //vector along noramal edge to each vertex 
                 Dx.Sub(*(geom->GetEdge(edgid)->GetVertex(0)),
                        *(geom->GetEdge(edgid)->GetVertex(1)));
@@ -2957,8 +2960,8 @@ namespace Nektar
                 // from first vertex
                 h  += fabs(normal.dot(Dx));
             }
-            
-            h /= (NekDouble)(nverts);
+
+            h /= static_cast<NekDouble>(nverts);
 
             // find normal basis direction
             int dir0 = geom->GetDir(traceid,0);

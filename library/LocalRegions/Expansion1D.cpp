@@ -295,9 +295,11 @@ namespace Nektar
             }
         }
 
-
-        void Expansion1D::AddHDGHelmholtzTraceTerms(const NekDouble tau,
-                                                 const Array<OneD,const NekDouble> &inarray,  Array<OneD,NekDouble> &outarray)
+        void Expansion1D::AddHDGHelmholtzTraceTerms(
+            const NekDouble tau,
+            const Array<OneD,
+            const NekDouble> &inarray,
+            Array<OneD, NekDouble> &outarray)
         {
             int i,n;
             int nbndry  = NumBndryCoeffs();
@@ -483,10 +485,10 @@ namespace Nektar
             }
         }
 
-        void Expansion1D::v_ReOrientTracePhysMap
-             (const StdRegions::Orientation orient,
-              Array<OneD, int> &idmap,
-              const int nq0,  const int nq1)
+        void Expansion1D::v_ReOrientTracePhysMap(
+                const StdRegions::Orientation orient,
+                Array<OneD, int> &idmap,
+                const int nq0,  const int nq1)
         {
             boost::ignore_unused(orient, nq0, nq1);
 

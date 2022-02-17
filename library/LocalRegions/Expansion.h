@@ -275,8 +275,6 @@ namespace Nektar
             
             void StdDerivBaseOnTraceMat(Array<OneD,DNekMatSharedPtr> &DerivMat);
             
-
-
         protected:
 	    LibUtilities::NekManager<IndexMapKey,
                       IndexMapValues, IndexMapKey::opLess> m_indexMapManager;
@@ -407,7 +405,6 @@ namespace Nektar
                                  Array<OneD, int> &idmap,
                                  const int nq0,
                                  const int nq1 = -1);
-            
             
             virtual void v_ComputeTraceNormal(const int id);
             

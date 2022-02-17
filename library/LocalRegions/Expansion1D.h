@@ -110,6 +110,7 @@ namespace Nektar
                          const int nq0,  const int nq1);
 
             virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
+
         private:
         };
 

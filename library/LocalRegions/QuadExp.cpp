@@ -1408,7 +1408,7 @@ namespace Nektar
                                                 &jac[0], 1,
                                                 &(tmp_gmat[0]), 1);
                                     QuadExp::v_GetEdgeInterpVals(
-                                                                 edge, tmp_gmat, tmp_gmat_edge);
+                                            edge, tmp_gmat, tmp_gmat_edge);
                                     normals[i*nquad0+j] = -tmp_gmat_edge[j];
                                 }
                             }
@@ -1424,7 +1424,7 @@ namespace Nektar
                                             &jac[0], 1,
                                             &(tmp_gmat[0]), 1);
                                 QuadExp::v_GetEdgeInterpVals(
-                                                             edge, tmp_gmat, tmp_gmat_edge);
+                                        edge, tmp_gmat, tmp_gmat_edge);
                                 normals[i*nquad1+j]  = tmp_gmat_edge[j];
                             }
                         }
@@ -1440,7 +1440,7 @@ namespace Nektar
                                             &jac[0], 1,
                                             &(tmp_gmat[0]), 1);
                                 QuadExp::v_GetEdgeInterpVals(
-                                                             edge, tmp_gmat, tmp_gmat_edge);
+                                        edge, tmp_gmat, tmp_gmat_edge);
                                 normals[i*nquad0+j] = tmp_gmat_edge[j];
                             }
                         }
@@ -1456,7 +1456,7 @@ namespace Nektar
                                             &jac[0], 1,
                                             &(tmp_gmat[0]) ,1);
                                 QuadExp::v_GetEdgeInterpVals(
-                                                             edge, tmp_gmat, tmp_gmat_edge);
+                                        edge, tmp_gmat, tmp_gmat_edge);
                                 normals[i*nquad1+j] = -tmp_gmat_edge[j];
                             }
                         }
@@ -1472,7 +1472,7 @@ namespace Nektar
 
                 // interpolate Jacobian and invert
                 LibUtilities::Interp1D(
-                                       from_key,jac, m_base[0]->GetPointsKey(), work);
+                        from_key,jac, m_base[0]->GetPointsKey(), work);
                 Vmath::Sdiv(nqe,1.0,&work[0],1,&work[0],1);
 
                 // interpolate
@@ -1531,11 +1531,11 @@ namespace Nektar
 
 
         void QuadExp::v_ExtractDataToCoeffs(
-                                            const NekDouble *data,
-                                            const std::vector<unsigned int > &nummodes,
-                                            int mode_offset,
-                                            NekDouble *coeffs,
-                                            std::vector<LibUtilities::BasisType> &fromType)
+                const NekDouble *data,
+                const std::vector<unsigned int > &nummodes,
+                int mode_offset,
+                NekDouble *coeffs,
+                std::vector<LibUtilities::BasisType> &fromType)
         {
             int data_order0 = nummodes[mode_offset];
             int fillorder0  = std::min(m_base[0]->GetNumModes(),data_order0);
@@ -1552,10 +1552,10 @@ namespace Nektar
                 // quadrature points, and one more to do a forwards
                 // transform. We can then copy the output to coeffs.
                 StdRegions::StdQuadExp tmpQuad(
-                                               LibUtilities::BasisKey(
-                                                                      fromType[0], data_order0, m_base[0]->GetPointsKey()),
-                                               LibUtilities::BasisKey(
-                                                                      fromType[1], data_order1, m_base[1]->GetPointsKey()));
+                    LibUtilities::BasisKey(fromType[0], data_order0,
+                                           m_base[0]->GetPointsKey()),
+                    LibUtilities::BasisKey(fromType[1], data_order1,
+                                           m_base[1]->GetPointsKey()));
                 StdRegions::StdQuadExp tmpQuad2(m_base[0]->GetBasisKey(),
                                                 m_base[1]->GetBasisKey());
 
@@ -1598,11 +1598,11 @@ namespace Nektar
                     LibUtilities::PointsKey
                         p1(nummodes[1], LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::PointsKey t0(
-                                               m_base[0]->GetNumModes(),
-                                               LibUtilities::eGaussLobattoLegendre);
+                                            m_base[0]->GetNumModes(),
+                                            LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::PointsKey t1(
-                                               m_base[1]->GetNumModes(),
-                                               LibUtilities::eGaussLobattoLegendre);
+                                            m_base[1]->GetNumModes(),
+                                            LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::Interp2D(p0, p1, data, t0, t1, coeffs);
                 }
                 break;
