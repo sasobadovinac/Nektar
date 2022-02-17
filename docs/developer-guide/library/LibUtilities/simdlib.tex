@@ -2,7 +2,7 @@
 \section{SIMDLib}
 
 This directory contains the tinysimd library, a header only library.
-The library is a light, zero-overhead wrapper based on template meta-programming that automatically selects a SIMD intrinsics from the most specialized x86-64 instruction set extension available among SSE2 (limited support), AVX2 and AVX512 (not tested).
+The library is a light, zero-overhead wrapper based on template meta-programming that automatically selects a SIMD intrinsics from the most specialized x86-64 instruction set extension available among SSE2 (limited support), AVX2 and AVX512 (not tested) or SVE for the ARM AArch64 architecture.
 The library is designed to be easily extended to other architectures.
 
 To use the library one needs to import the tinysimd.hpp header.
@@ -13,6 +13,11 @@ To enable the vector types in {\nek} you need to set to \verb+ON+ the desired ex
 This will automatically set the appropriate compiler flags. However notice that currently these are set correctly only for gcc and that you might need to delete the cached variable \verb+CMAKE_CXX_FLAGS+ before configuring cmake.
 You can check that the desired vector extension was compiled properly by running the \verb+VecDataUnitTests+ which prints out the extension in use.
 
+SVE (for instance \verb+NEKTAR_ENABLE_SIMD_SVE+) is a vector length agnostic ISA extension.
+However, in order to wrap the SVE intrinsic types with c++ classes, we fix the size at compile time.
+Therefore you need to set appropriate vector size (\verb+NEKTAR_SVE_BITS+) according to your target machine.
+
+Note, the extensions are advanced options and only the options relevant to the compiling machine architecture are made available (see NektarSIMD.cmake for more details).
 
 Vector types are largely used with the same semantic as built-in c++ types.
 
