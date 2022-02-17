@@ -227,8 +227,8 @@ namespace Nektar
                 v_ReOrientTracePhysMap(orient,idmap,nq0,nq1);
             }
 
-            const NormalVector &GetTraceNormal(const int id);
-
+            LOCAL_REGIONS_EXPORT const NormalVector &GetTraceNormal(const int id);
+            
             inline void ComputeTraceNormal(const int id)
             {
                 v_ComputeTraceNormal(id);
@@ -281,7 +281,7 @@ namespace Nektar
 	    LibUtilities::NekManager<IndexMapKey,
                       IndexMapValues, IndexMapKey::opLess> m_indexMapManager;
 
-            std::map<int,ExpansionWeakPtr>       m_traceExp;
+            std::map<int,ExpansionWeakPtr>        m_traceExp;
             SpatialDomains::GeometrySharedPtr    m_geom;
             SpatialDomains::GeomFactorsSharedPtr m_metricinfo;
             MetricMap        m_metrics;
@@ -431,13 +431,13 @@ namespace Nektar
             virtual void v_TraceNormLen(const int traceid,
                                         NekDouble &h, NekDouble &p);
             
-            virtual void v_GenTraceExp(const int traceid,                                                                   ExpansionSharedPtr &exp);
+            virtual void v_GenTraceExp(const int traceid, ExpansionSharedPtr &exp);
 
         private:
 
         };
 
-        inline ExpansionSharedPtr Expansion::GetTraceExp(int  traceid)
+        inline ExpansionSharedPtr Expansion::GetTraceExp(const int  traceid)
         {
             ASSERTL1(traceid < GetNtraces(), "Trace is out of range.");
 

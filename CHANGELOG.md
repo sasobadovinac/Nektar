@@ -28,6 +28,7 @@ v5.2.0
 ------
 **Library**:
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Simplify the logic in the MPI pairwise trace exchange (!1307)
 
 v5.1.1
 ------
@@ -37,6 +38,7 @@ v5.1.1
 - Fix initialisation warning when using HDF5 (!1299)
 - Split Helmholtz MatrixFree operator to improve compile times (!1292)
 - Fix Boost deprecated header warnings (!1302)
+- Add command lines to set starting time and starting checkpoint number of a time-dependent simulation (!1309)
 
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)

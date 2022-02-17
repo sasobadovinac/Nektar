@@ -123,6 +123,7 @@ namespace Nektar
                 const MatrixKey &mkey);
 
         protected:
+            std::map<int, NormalVector> m_faceNormals;
             virtual void v_DGDeriv(
                 const int                            dir,
                 const Array<OneD, const NekDouble>  &incoeffs,

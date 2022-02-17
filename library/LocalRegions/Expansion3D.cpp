@@ -505,21 +505,9 @@ namespace Nektar
                         Array<TwoD, const NekDouble> df
                                     = m_metricinfo->GetDerivFactors(ptsKeys);
                         int dir = 0;
-
-                        switch(mkey.GetMatrixType())
-                        {
-                            case StdRegions::eWeakDeriv0:
-                                dir = 0;
-                                break;
-                            case StdRegions::eWeakDeriv1:
-                                dir = 1;
-                                break;
-                            case StdRegions::eWeakDeriv2:
-                                dir = 2;
-                                break;
-                            default:
-                                break;
-                        }
+                        if(mkey.GetMatrixType() == StdRegions::eWeakDeriv0) dir = 0;
+                        if(mkey.GetMatrixType() == StdRegions::eWeakDeriv1) dir = 1;
+                        if(mkey.GetMatrixType() == StdRegions::eWeakDeriv2) dir = 2;
 
                         MatrixKey deriv0key(StdRegions::eWeakDeriv0,
                                             mkey.GetShapeType(), *this);
@@ -730,7 +718,6 @@ namespace Nektar
                 break;
             default:
                 {
-                    //ASSERTL0(false, "Missing definition for " + (*StdRegions::MatrixTypeMap[mkey.GetMatrixType()]));
                     NekDouble        one = 1.0;
                     DNekMatSharedPtr mat = GenMatrix(mkey);
 
@@ -742,8 +729,6 @@ namespace Nektar
             return returnval;
         }
 
-
-        
         /**
          * Computes matrices needed for the HDG formulation. References to
          * equations relate to the following paper (with a suitable changes in

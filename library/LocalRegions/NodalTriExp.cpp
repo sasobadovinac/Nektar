@@ -454,6 +454,7 @@ namespace Nektar
             return StdNodalTriExp::v_PhysEvaluate(Lcoord, physvals);
         }
 
+
         StdRegions::StdExpansionSharedPtr NodalTriExp::v_GetStdExp(void) const
         {
 

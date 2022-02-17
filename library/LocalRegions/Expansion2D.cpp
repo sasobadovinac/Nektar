@@ -44,6 +44,7 @@
 #include <LocalRegions/MatrixKey.h>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/Interp.h>
+
 using namespace std;
 
 namespace Nektar
@@ -72,12 +73,14 @@ namespace Nektar
                     {
                         NekDouble one = 1.0;
                         DNekMatSharedPtr mat = GenMatrix(mkey);
+
                         returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
                     }
                     else
                     {
                         NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
                         DNekMatSharedPtr mat = GetStdMatrix(mkey);
+
                         returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(jac,mat);
                     }
                 }
@@ -118,8 +121,7 @@ namespace Nektar
                     if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
                     {
                         NekDouble one = 1.0;
-                        StdRegions::StdMatrixKey masskey(StdRegions::eMass,DetShapeType(),
-                                                         *this);
+                        StdRegions::StdMatrixKey masskey(StdRegions::eMass,DetShapeType(), *this);
                         DNekMatSharedPtr mat = GenMatrix(masskey);
                         mat->Invert();
 
@@ -129,6 +131,7 @@ namespace Nektar
                     {
                         NekDouble fac = 1.0/(m_metricinfo->GetJac(ptsKeys))[0];
                         DNekMatSharedPtr mat = GetStdMatrix(mkey);
+
                         returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(fac,mat);
 
                     }
@@ -150,20 +153,9 @@ namespace Nektar
                         NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
                         Array<TwoD, const NekDouble> df = m_metricinfo->GetDerivFactors(ptsKeys);
                         int dir = 0;
-                        switch(mkey.GetMatrixType())
-                        {
-                            case StdRegions::eWeakDeriv0:
-                                dir = 0;
-                                break;
-                            case StdRegions::eWeakDeriv1:
-                                dir = 1;
-                                break;
-                            case StdRegions::eWeakDeriv2:
-                                dir = 2;
-                                break;
-                            default:
-                                break;
-                        }
+                        if( mkey.GetMatrixType() == StdRegions::eWeakDeriv0) dir = 0;
+                        if( mkey.GetMatrixType() == StdRegions::eWeakDeriv1) dir = 1;
+                        if( mkey.GetMatrixType() == StdRegions::eWeakDeriv2) dir = 2;
 
                         MatrixKey deriv0key(StdRegions::eWeakDeriv0,
                                             mkey.GetShapeType(), *this);
@@ -314,6 +306,7 @@ namespace Nektar
             case StdRegions::eInvLaplacianWithUnityMean:
                 {
                     DNekMatSharedPtr mat = GenMatrix(mkey);
+
                     returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0,mat);
                 }
                 break;
@@ -375,12 +368,14 @@ namespace Nektar
                     {
                         NekDouble one = 1.0;
                         DNekMatSharedPtr mat = GenMatrix(mkey);
+
                         returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
                     }
                     else
                     {
                         NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
                         DNekMatSharedPtr mat = GetStdMatrix(mkey);
+
                         returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(jac,mat);
                     }
                 }
@@ -393,6 +388,7 @@ namespace Nektar
                     {
                         NekDouble one = 1.0;
                         DNekMatSharedPtr mat = GenMatrix(mkey);
+
                         returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
                     }
                     else
@@ -402,21 +398,9 @@ namespace Nektar
                         const Array<TwoD, const NekDouble>& df =
                             m_metricinfo->GetDerivFactors(ptsKeys);
                         int dir = 0;
-
-                        switch(mkey.GetMatrixType())
-                        {
-                            case StdRegions::eIProductWRTDerivBase0:
-                                dir = 0;
-                                break;
-                            case StdRegions::eIProductWRTDerivBase1:
-                                dir = 1;
-                                break;
-                            case StdRegions::eIProductWRTDerivBase2:
-                                dir = 2;
-                                break;
-                            default:
-                                break;
-                        }
+                        if(mkey.GetMatrixType() == StdRegions::eIProductWRTDerivBase0 ) dir = 0;
+                        if(mkey.GetMatrixType() == StdRegions::eIProductWRTDerivBase1 ) dir = 1;
+                        if(mkey.GetMatrixType() == StdRegions::eIProductWRTDerivBase2 ) dir = 2;
 
                         MatrixKey iProdDeriv0Key(StdRegions::eIProductWRTDerivBase0,
                                                  mkey.GetShapeType(), *this);
@@ -446,6 +430,7 @@ namespace Nektar
                     DNekMatSharedPtr mat = GenMatrix(hkey);
 
                     mat->Invert();
+
                     returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
                 }
                 break;
@@ -456,11 +441,12 @@ namespace Nektar
                     DNekMatSharedPtr m_Ix;
                     Array<OneD, NekDouble> coords(1, 0.0);
                     StdRegions::ConstFactorMap factors = mkey.GetConstFactors();
-                    int edge = (int)factors[StdRegions::eFactorGaussEdge];
+                    int edge = static_cast<int>(factors[StdRegions::eFactorGaussEdge]);
 
                     coords[0] = (edge == 0 || edge == 3) ? -1.0 : 1.0;
 
                     m_Ix = m_base[(edge + 1) % 2]->GetI(coords);
+
                     returnval =
                         MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0,m_Ix);
                 }

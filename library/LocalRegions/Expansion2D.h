@@ -120,8 +120,7 @@ namespace Nektar
                 const int                        nq0,
                 Array<OneD, int>                &idmap);
 
-            virtual DNekMatSharedPtr v_GenMatrix(
-                                                 const StdRegions::StdMatrixKey &mkey);
+            virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
             virtual void v_GenTraceExp(const int traceid,
                                        ExpansionSharedPtr &exp);
         protected:

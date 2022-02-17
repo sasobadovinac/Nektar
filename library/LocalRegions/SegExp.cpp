@@ -561,7 +561,6 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
         }
 
 
-
         void SegExp::v_IProductWRTDerivBase(
                 const int dir,
                 const Array<OneD, const NekDouble>& inarray,

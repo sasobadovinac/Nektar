@@ -489,7 +489,7 @@ namespace Nektar
               const int nq0,  const int nq1)
         {
             boost::ignore_unused(orient, nq0, nq1);
-            
+
             if (idmap.size() != 1)
             {
                 idmap = Array<OneD, int>(1);

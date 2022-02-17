@@ -1117,7 +1117,7 @@ namespace Nektar
             m_staticCondMatrixManager.DeleteObject(mkey);
         }
 
-        
+
         void PyrExp::v_ComputeLaplacianMetric()
         {
             if (m_metrics.count(eMetricQuadrature) == 0)
