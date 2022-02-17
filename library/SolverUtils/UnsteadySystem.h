@@ -69,6 +69,8 @@ public:
     NekDouble m_CFLGrowth;
     /// maximun cfl in cfl growth
     NekDouble m_CFLEnd;
+    static std::string cmdSetStartTime;
+    static std::string cmdSetStartChkNum;
 
 protected:
     /// Number of time steps between outputting status information.

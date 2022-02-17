@@ -713,6 +713,17 @@ namespace Nektar
                     }
                 }
             }
+            if (m_session->DefinesCmdLineArgument("set-start-time"))
+            {
+                time = boost::lexical_cast<NekDouble>(
+                    m_session->GetCmdLineArgument<std::string>("set-start-time").c_str());
+            }
+            if (m_session->DefinesCmdLineArgument("set-start-chknumber"))
+            {
+                nchk = boost::lexical_cast<int>(
+                    m_session->GetCmdLineArgument<std::string>("set-start-chknumber"));
+            }
+            ASSERTL0(time >= 0 && nchk >= 0, "Starting time and checkpoint number should be >= 0");
         }
 
         /**
@@ -934,5 +945,15 @@ namespace Nektar
                 L2[i] = sqrt(residual[i] / reference[i]);
             }
         }
+
+        std::string UnsteadySystem::cmdSetStartTime =
+            LibUtilities::SessionReader::RegisterCmdLineArgument(
+                "set-start-time", "",
+                "Set the starting time of the simulation.");
+
+        std::string UnsteadySystem::cmdSetStartChkNum =
+            LibUtilities::SessionReader::RegisterCmdLineArgument(
+                "set-start-chknumber", "",
+                "Set the starting number of the checkpoint file.");
     }
 }

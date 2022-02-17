@@ -41,6 +41,7 @@
 #include <StdRegions/StdExpansion2D.h>
 #include <LocalRegions/LocalRegionsDeclspec.h>
 #include <SpatialDomains/Geometry2D.h>
+#include <LocalRegions/MatrixKey.h>
 
 namespace Nektar
 {
@@ -64,6 +65,9 @@ namespace Nektar
             
             LOCAL_REGIONS_EXPORT virtual ~Expansion2D() {}
             
+            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
+                  CreateMatrix(const MatrixKey &mkey);
+
             LOCAL_REGIONS_EXPORT void SetTraceToGeomOrientation(
                 Array<OneD, ExpansionSharedPtr> &EdgeExp,
                 Array<OneD, NekDouble>          &inout);
@@ -115,14 +119,10 @@ namespace Nektar
                 const int                        nq0,
                 Array<OneD, int>                &idmap);
 
+            virtual void v_GenTraceExp(const int traceid,
+                                       ExpansionSharedPtr &exp);
         protected:
-            std::vector<Expansion1DWeakPtr>    m_edgeExp;
             std::vector<bool>                  m_requireNeg;
-            std::map<int, NormalVector>        m_edgeNormals;
-            Expansion3DWeakPtr                 m_elementLeft;
-            Expansion3DWeakPtr                 m_elementRight;
-            int                                m_elementFaceLeft;
-            int                                m_elementFaceRight;
 
             LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMF(
                                                                         const int dir,
@@ -133,9 +133,9 @@ namespace Nektar
                                                                            const int dir,
                                                                            const StdRegions::VarCoeffMap   &varcoeffs);
 
-            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMFMag(
-                                                                           const int dir,
-                                                                           const StdRegions::VarCoeffMap   &varcoeffs);
+            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble>
+                    v_GetMFMag(const int dir,
+                               const StdRegions::VarCoeffMap   &varcoeffs);
 
             virtual DNekMatSharedPtr v_GenMatrix(
                                                  const StdRegions::StdMatrixKey &mkey);
@@ -194,7 +194,6 @@ namespace Nektar
              const int nq0,  const int nq1);
 
             virtual void v_SetUpPhysNormals (const int edge);
-            virtual const NormalVector &v_GetTraceNormal(const int edge) const;
             virtual NekDouble v_VectorFlux(
                                            const Array<OneD, Array<OneD, NekDouble > > &vec);
         };

@@ -73,6 +73,8 @@ namespace Nektar
                     << "(first vertex ID = " << m_geom->GetVid(0) << ")";
                 NEKERROR(ErrorUtil::ewarning, err.str());
             }
+
+            m_traceExp.empty();
         }
 
         Expansion::Expansion(const Expansion &pSrc) :
@@ -248,17 +250,160 @@ namespace Nektar
             return returnval;
         }
 
-        const SpatialDomains::GeomFactorsSharedPtr& Expansion::GetMetricInfo() const
+        const SpatialDomains::GeomFactorsSharedPtr&
+                               Expansion::GetMetricInfo() const
         {
             return m_metricinfo;
         }
 
+        const NormalVector &Expansion::GetTraceNormal(const int id)
+        {
+            std::map<int, NormalVector>::const_iterator x;
+            x = m_traceNormals.find(id);
+            
+            // if edge normal not defined compute it
+            if(x == m_traceNormals.end())
+            {
+                v_ComputeTraceNormal(id);
+                x = m_traceNormals.find(id);
+            }
+            return x->second;
+        }
 
         DNekScalMatSharedPtr Expansion::v_GetLocMatrix(const LocalRegions::MatrixKey &mkey)
         {
             boost::ignore_unused(mkey);
             NEKERROR(ErrorUtil::efatal, "This function is only valid for LocalRegions");
             return NullDNekScalMatSharedPtr;
+        }
+
+        DNekScalBlkMatSharedPtr Expansion::CreateStaticCondMatrix(
+            const MatrixKey &mkey)
+        {
+            DNekScalBlkMatSharedPtr returnval;
+            
+            ASSERTL2(m_metricinfo->GetGtype()
+                     != SpatialDomains::eNoGeomType,
+                     "Geometric information is not set up");
+            
+            // set up block matrix system
+            unsigned int nbdry = NumBndryCoeffs();
+            unsigned int nint = (unsigned int)(m_ncoeffs - nbdry);
+            unsigned int exp_size[] = {nbdry,nint};
+            unsigned int nblks = 2;
+            returnval = MemoryManager<DNekScalBlkMat>::
+                AllocateSharedPtr(nblks,nblks,exp_size,exp_size);
+                //Really need a constructor which takes Arrays
+            NekDouble factor = 1.0;
+
+            switch (mkey.GetMatrixType())
+            {
+                // this can only use stdregions statically condensed system
+                // for mass matrix
+                case StdRegions::eMass:
+                    if ((m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+                        ||(mkey.GetNVarCoeff()))
+                    {
+                        factor = 1.0;
+                        goto UseLocRegionsMatrix;
+                    }
+                    else
+                    {
+                        factor = (m_metricinfo->GetJac(GetPointsKeys()))[0];
+                        goto UseStdRegionsMatrix;
+                    }
+                    break;
+                default: // use Deformed case for both
+                        // regular and deformed geometries
+                    factor = 1.0;
+                    goto UseLocRegionsMatrix;
+                    break;
+                UseStdRegionsMatrix:
+                {
+                    NekDouble            invfactor = 1.0/factor;
+                    NekDouble            one = 1.0;
+                    DNekBlkMatSharedPtr  mat = GetStdStaticCondMatrix(mkey);
+                    DNekScalMatSharedPtr Atmp;
+                    DNekMatSharedPtr     Asubmat;
+
+                    returnval->SetBlock(0,0,Atmp = MemoryManager<DNekScalMat>::
+                        AllocateSharedPtr(factor,Asubmat = mat->GetBlock(0,0)));
+                    returnval->SetBlock(0,1,Atmp = MemoryManager<DNekScalMat>::
+                        AllocateSharedPtr(one,Asubmat = mat->GetBlock(0,1)));
+                    returnval->SetBlock(1,0,Atmp = MemoryManager<DNekScalMat>::
+                        AllocateSharedPtr(factor,Asubmat = mat->GetBlock(1,0)));
+                    returnval->SetBlock(1,1,Atmp = MemoryManager<DNekScalMat>::
+                        AllocateSharedPtr(invfactor,Asubmat = mat->GetBlock(1,1)));
+                }
+                    break;
+                UseLocRegionsMatrix:
+                {
+                    int i,j;
+                    NekDouble            invfactor = 1.0/factor;
+                    NekDouble            one = 1.0;
+                    DNekScalMat &mat = *GetLocMatrix(mkey);
+                    DNekMatSharedPtr A = MemoryManager<DNekMat>::
+                        AllocateSharedPtr(nbdry,nbdry);
+                    DNekMatSharedPtr B = MemoryManager<DNekMat>::
+                        AllocateSharedPtr(nbdry,nint);
+                    DNekMatSharedPtr C = MemoryManager<DNekMat>::
+                        AllocateSharedPtr(nint,nbdry);
+                    DNekMatSharedPtr D = MemoryManager<DNekMat>::
+                        AllocateSharedPtr(nint,nint);
+
+                    Array<OneD,unsigned int> bmap(nbdry);
+                    Array<OneD,unsigned int> imap(nint);
+                    GetBoundaryMap(bmap);
+                    GetInteriorMap(imap);
+
+                    for (i = 0; i < nbdry; ++i)
+                    {
+                        for(j = 0; j < nbdry; ++j)
+                        {
+                            (*A)(i,j) = mat(bmap[i],bmap[j]);
+                        }
+
+                        for(j = 0; j < nint; ++j)
+                        {
+                            (*B)(i,j) = mat(bmap[i],imap[j]);
+                        }
+                    }
+
+                    for (i = 0; i < nint; ++i)
+                    {
+                        for(j = 0; j < nbdry; ++j)
+                        {
+                            (*C)(i,j) = mat(imap[i],bmap[j]);
+                        }
+
+                        for(j = 0; j < nint; ++j)
+                        {
+                            (*D)(i,j) = mat(imap[i],imap[j]);
+                        }
+                    }
+
+                    // Calculate static condensed system
+                    if(nint)
+                    {
+                        D->Invert();
+                        (*B) = (*B)*(*D);
+                        (*A) = (*A) - (*B)*(*C);
+                    }
+
+                    DNekScalMatSharedPtr     Atmp;
+
+                    returnval->SetBlock(0,0,Atmp = MemoryManager<DNekScalMat>::
+                                                AllocateSharedPtr(factor, A));
+                    returnval->SetBlock(0,1,Atmp = MemoryManager<DNekScalMat>::
+                                                AllocateSharedPtr(one, B));
+                    returnval->SetBlock(1,0,Atmp = MemoryManager<DNekScalMat>::
+                                                AllocateSharedPtr(factor, C));
+                    returnval->SetBlock(1,1,Atmp = MemoryManager<DNekScalMat>::
+                                                AllocateSharedPtr(invfactor, D));
+
+                }
+            }
+            return returnval;
         }
 
         void Expansion::v_MultiplyByQuadratureMetric(const Array<OneD, const NekDouble>& inarray,
@@ -697,6 +842,14 @@ namespace Nektar
             ASSERTL0(false, "Cannot get trace normals for this expansion.");
             static NormalVector result;
             return result;
+        }
+
+        void Expansion::v_GenTraceExp(const int traceid,
+                                      ExpansionSharedPtr &exp)
+        {
+            boost::ignore_unused(traceid,exp);
+            NEKERROR(ErrorUtil::efatal,
+                     "Method does not exist for this shape or library" );
         }
 
         void Expansion::v_ComputeTraceNormal(const int id)
