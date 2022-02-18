@@ -241,7 +241,7 @@ void DriverParareal::v_Execute(ostream &out)
 
             NekDouble vL2Error   = m_equ[0]->L2Error(0, exactsoln);
 
-            std::cout << "COARSE SOLVE L2 error = " << vL2Error << std::endl;
+            std::cout << "Iteration " << k << " L2 error = " << vL2Error << std::endl;
         }
     }
 
