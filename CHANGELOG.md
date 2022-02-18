@@ -11,6 +11,7 @@ v5.2.0
 **Library**:
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
 - Simplify the logic in the MPI pairwise trace exchange (!1307)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
 
 v5.1.1
 ------
@@ -81,6 +82,7 @@ v5.1.0
 
 **IncNavierStokesSolver**:
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
