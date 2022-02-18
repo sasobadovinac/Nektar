@@ -25,6 +25,9 @@ v5.1.1
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
 
+**BuildSystem**
+- Updated third party Lapack version 3.7.1 (!1312)
+
 v5.1.0
 ------
 **Library**
