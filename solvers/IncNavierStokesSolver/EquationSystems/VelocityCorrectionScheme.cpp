@@ -50,8 +50,8 @@ namespace Nektar
 
     string VelocityCorrectionScheme::className =
         SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-                                                                        "VelocityCorrectionScheme",
-                                                                        VelocityCorrectionScheme::create);
+                "VelocityCorrectionScheme",
+                VelocityCorrectionScheme::create);
 
     /**
      * Constructor. Creates ...
@@ -60,8 +60,8 @@ namespace Nektar
      * \param
      */
     VelocityCorrectionScheme::VelocityCorrectionScheme(
-                                                       const LibUtilities::SessionReaderSharedPtr& pSession,
-                                                       const SpatialDomains::MeshGraphSharedPtr &pGraph)
+            const LibUtilities::SessionReaderSharedPtr& pSession,
+            const SpatialDomains::MeshGraphSharedPtr &pGraph)
         : UnsteadySystem(pSession, pGraph),
           IncNavierStokes(pSession, pGraph),
           m_varCoeffLap(StdRegions::NullVarCoeffMap)
@@ -136,11 +136,11 @@ namespace Nektar
 
         // set explicit time-intregration class operators
         m_ode.DefineOdeRhs(
-                           &VelocityCorrectionScheme::EvaluateAdvection_SetPressureBCs, this);
+            &VelocityCorrectionScheme::EvaluateAdvection_SetPressureBCs, this);
 
         // set implicit time-intregration class operators
         m_ode.DefineImplicitSolve(
-                                  &VelocityCorrectionScheme::SolveUnsteadyStokesSystem, this);
+            &VelocityCorrectionScheme::SolveUnsteadyStokesSystem, this);
 
         // Set up bits for flowrate.
         m_session->LoadParameter("Flowrate", m_flowrate, 0.0);
@@ -157,15 +157,15 @@ namespace Nektar
             if (m_session->DefinesSolverInfo("Extrapolation"))
             {
                 vExtrapolation = v_GetSubSteppingExtrapolateStr(
-                                                                m_session->GetSolverInfo("Extrapolation"));
+                    m_session->GetSolverInfo("Extrapolation"));
             }
             m_extrapolation = GetExtrapolateFactory().CreateInstance(
-                                                                     vExtrapolation,
-                                                                     m_session,
-                                                                     m_fields,
-                                                                     m_pressure,
-                                                                     m_velocity,
-                                                                     m_advObject);
+                    vExtrapolation,
+                    m_session,
+                    m_fields,
+                    m_pressure,
+                    m_velocity,
+                    m_advObject);
 
             m_extrapolation->SetForcing(m_forcing);
             m_extrapolation->SubSteppingTimeIntegration(m_intScheme);
@@ -347,8 +347,8 @@ namespace Nektar
                 }
             }
 
-            ASSERTL1(m_planeID <= 0, "Should be either at location 0 or -1 if not "
-                     "found");
+            ASSERTL1(m_planeID <= 0, "Should be either at location 0 or -1 "
+                     "if not found");
 
             if (m_planeID != -1)
             {
@@ -367,8 +367,7 @@ namespace Nektar
 
         for (int i = 0; i < m_spacedim; ++i)
         {
-            inTmp[i] = Array<OneD, NekDouble>(
-                                              nqTot, flowrateForce[i] * aii_dt);
+            inTmp[i] = Array<OneD, NekDouble>(nqTot, flowrateForce[i] * aii_dt);
             m_flowrateStokes[i] = Array<OneD, NekDouble>(nqTot, 0.0);
 
             if (m_HomogeneousType == eHomogeneous1D)
@@ -379,8 +378,8 @@ namespace Nektar
                 inTmp[i] = inTmp2;
             }
 
-            Vmath::Zero(
-                        m_fields[i]->GetNcoeffs(), m_fields[i]->UpdateCoeffs(), 1);
+            Vmath::Zero(m_fields[i]->GetNcoeffs(),
+                    m_fields[i]->UpdateCoeffs(), 1);
         }
 
         // Create temporary extrapolation object to avoid issues with
@@ -446,7 +445,7 @@ namespace Nektar
      * through the boundary region \f$ R \f$.
      */
     NekDouble VelocityCorrectionScheme::MeasureFlowrate(
-                                                        const Array<OneD, Array<OneD, NekDouble> > &inarray)
+            const Array<OneD, Array<OneD, NekDouble> > &inarray)
     {
         NekDouble flowrate = 0.0;
 
@@ -474,7 +473,7 @@ namespace Nektar
                 for (int i = 0; i < m_spacedim; ++i)
                 {
                     m_fields[i]->GetPlane(m_planeID)->ExtractPhysToBnd(
-                                                                       m_flowrateBndID, inarray[i], boundary[i]);
+                            m_flowrateBndID, inarray[i], boundary[i]);
                 }
 
                 // the flowrate is calculated on the mean mode so it needs to be
@@ -530,8 +529,8 @@ namespace Nektar
     void VelocityCorrectionScheme::v_GenerateSummary(SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
-        SolverUtils::AddSummaryItem(s,
-                                    "Splitting Scheme", "Velocity correction (strong press. form)");
+        SolverUtils::AddSummaryItem(s, "Splitting Scheme",
+                                    "Velocity correction (strong press. form)");
 
         if( m_extrapolation->GetSubStepName().size() )
         {
@@ -556,29 +555,29 @@ namespace Nektar
             if(m_svvVarDiffCoeff == NullNekDouble1DArray)
             {
                 SolverUtils::AddSummaryItem(
-                                            s, "Smoothing-SpecHP", "SVV (" + smoothing +
-                                            " Exp Kernel(cut-off = "
-                                            + boost::lexical_cast<string>(m_sVVCutoffRatio)
-                                            + ", diff coeff = "
-                                            + boost::lexical_cast<string>(m_sVVDiffCoeff)+"))");
+                        s, "Smoothing-SpecHP", "SVV (" + smoothing +
+                        " Exp Kernel(cut-off = "
+                        + boost::lexical_cast<string>(m_sVVCutoffRatio)
+                        + ", diff coeff = "
+                        + boost::lexical_cast<string>(m_sVVDiffCoeff)+"))");
             }
             else
             {
                 if(m_IsSVVPowerKernel)
                 {
                     SolverUtils::AddSummaryItem(
-                                                s, "Smoothing-SpecHP", "SVV (" + smoothing +
-                                                " Power Kernel (Power ratio ="
-                                                + boost::lexical_cast<string>(m_sVVCutoffRatio)
-                                                + ", diff coeff = "
-                                                + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
+                       s, "Smoothing-SpecHP", "SVV (" + smoothing +
+                       " Power Kernel (Power ratio ="
+                       + boost::lexical_cast<string>(m_sVVCutoffRatio)
+                       + ", diff coeff = "
+                       + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
                 }
                 else
                 {
                     SolverUtils::AddSummaryItem(
-                                                s, "Smoothing-SpecHP", "SVV (" + smoothing +
-                                                " DG Kernel (diff coeff = "
-                                                + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
+                       s, "Smoothing-SpecHP", "SVV (" + smoothing +
+                       " DG Kernel (diff coeff = "
+                       + boost::lexical_cast<string>(m_sVVDiffCoeff)+"*Uh/p))");
 
                 }
             }
@@ -588,16 +587,16 @@ namespace Nektar
         if (m_useHomo1DSpecVanVisc && (m_HomogeneousType == eHomogeneous1D))
         {
             SolverUtils::AddSummaryItem(
-                                        s, "Smoothing-Homo1D", "SVV (Homogeneous1D - Exp Kernel(cut-off = "
-                                        + boost::lexical_cast<string>(m_sVVCutoffRatioHomo1D)
-                                        + ", diff coeff = "
-                                        + boost::lexical_cast<string>(m_sVVDiffCoeffHomo1D)+"))");
+                    s, "Smoothing-Homo1D", "SVV (Homogeneous1D - Exp Kernel(cut-off = "
+                    + boost::lexical_cast<string>(m_sVVCutoffRatioHomo1D)
+                    + ", diff coeff = "
+                    + boost::lexical_cast<string>(m_sVVDiffCoeffHomo1D)+"))");
         }
 
         if(m_useGJPStabilisation)
         {
             SolverUtils::AddSummaryItem(s,"GJP Stab. Impl.    ",
-                                        m_session->GetSolverInfo("GJPStabilisation"));
+                    m_session->GetSolverInfo("GJPStabilisation"));
             SolverUtils::AddSummaryItem(s,"GJP Stab. JumpScale",
                                         m_GJPJumpScale);
         }
@@ -694,9 +693,9 @@ namespace Nektar
      * Explicit part of the method - Advection, Forcing + HOPBCs
      */
     void VelocityCorrectionScheme::v_EvaluateAdvection_SetPressureBCs(
-                                                                      const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                                                                      Array<OneD, Array<OneD, NekDouble> > &outarray,
-                                                                      const NekDouble time)
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+            Array<OneD, Array<OneD, NekDouble> > &outarray,
+            const NekDouble time)
     {
         LibUtilities::Timer timer;
         timer.Start();
@@ -730,10 +729,10 @@ namespace Nektar
      * Implicit part of the method - Poisson + nConv*Helmholtz
      */
     void VelocityCorrectionScheme::SolveUnsteadyStokesSystem(
-                                                             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                                                             Array<OneD, Array<OneD, NekDouble> > &outarray,
-                                                             const NekDouble time,
-                                                             const NekDouble aii_Dt)
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+            Array<OneD, Array<OneD, NekDouble> > &outarray,
+            const NekDouble time,
+            const NekDouble aii_Dt)
     {
         // Set up flowrate if we're starting for the first time or the value of
         // aii_Dt has changed.
@@ -796,9 +795,9 @@ namespace Nektar
      * Forcing term for Poisson solver solver
      */
     void   VelocityCorrectionScheme::v_SetUpPressureForcing(
-                                                            const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                                                            Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                                                            const NekDouble aii_Dt)
+            const Array<OneD, const Array<OneD, NekDouble> > &fields,
+            Array<OneD, Array<OneD, NekDouble> > &Forcing,
+            const NekDouble aii_Dt)
     {
         int i;
         int physTot = m_fields[0]->GetTotPoints();
@@ -820,9 +819,9 @@ namespace Nektar
      * Forcing term for Helmholtz solver
      */
     void   VelocityCorrectionScheme::v_SetUpViscousForcing(
-                                                           const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                                                           Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                                                           const NekDouble aii_Dt)
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+            Array<OneD, Array<OneD, NekDouble> > &Forcing,
+            const NekDouble aii_Dt)
     {
         NekDouble aii_dtinv = 1.0/aii_Dt;
         int phystot = m_fields[0]->GetTotPoints();
@@ -865,7 +864,7 @@ namespace Nektar
      * Solve pressure system
      */
     void   VelocityCorrectionScheme::v_SolvePressure(
-                                                     const Array<OneD, NekDouble>  &Forcing)
+            const Array<OneD, NekDouble>  &Forcing)
     {
         StdRegions::ConstFactorMap factors;
         // Setup coefficient for equation
@@ -882,10 +881,10 @@ namespace Nektar
      * Solve velocity system
      */
     void   VelocityCorrectionScheme::v_SolveViscous(
-                                                    const Array<OneD, const Array<OneD, NekDouble> > &Forcing,
-                                                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                                                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                                                    const NekDouble aii_Dt)
+            const Array<OneD, const Array<OneD, NekDouble> > &Forcing,
+            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
+            Array<OneD, Array<OneD, NekDouble> > &outarray,
+            const NekDouble aii_Dt)
     {
         StdRegions::ConstFactorMap factors;
         StdRegions::VarCoeffMap varCoeffMap = StdRegions::NullVarCoeffMap;
