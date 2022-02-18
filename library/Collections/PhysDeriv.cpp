@@ -1420,7 +1420,7 @@ class PhysDeriv_SumFac_Hex : public Operator
 
                         for(int j = 1; j < 3; ++j)
                         {
-                            Vmath::Svtvp (m_nqe, m_derivFac[i*e+j][e],
+                            Vmath::Svtvp (m_nqe, m_derivFac[i*3+j][e],
                                           Diff[j] + e*m_nqe,     1,
                                           out[i]  + e*m_nqe,     1,
                                           t = out[i]  + e*m_nqe, 1);
