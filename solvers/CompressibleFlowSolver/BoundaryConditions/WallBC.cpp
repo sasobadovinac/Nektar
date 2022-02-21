@@ -106,7 +106,8 @@ void WallBC::v_Apply(
             // This now does Vg * rho + Vin
             for(int j =0; j < nBCEdgePts; ++j)
             {
-                Fwd[i+1][id2+j] += m_gridVelocity[i][id2+j] * Fwd[0][id2+j];
+                Fwd[i+1][id2+j] +=
+                    m_gridVelocityTrace[i][id2+j] * Fwd[0][id2+j];
             }
         }
 

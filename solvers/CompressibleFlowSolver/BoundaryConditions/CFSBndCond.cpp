@@ -54,7 +54,7 @@ CFSBndCond::CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
         : m_session(pSession),
         m_fields(pFields),
         m_traceNormals(pTraceNormals),
-        m_gridVelocity(pGridVelocity),
+      m_gridVelocityTrace(pGridVelocity),
           m_spacedim(pSpaceDim),
         m_bcRegion(bcRegion),
         m_offset(cnt)

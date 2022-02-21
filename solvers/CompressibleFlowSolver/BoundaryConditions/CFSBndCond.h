@@ -93,7 +93,7 @@ class CFSBndCond
         /// Trace normals
         Array<OneD, Array<OneD, NekDouble> > m_traceNormals;
         /// Grid Velocity
-        Array<OneD, Array<OneD, NekDouble> > m_gridVelocity;
+        Array<OneD, Array<OneD, NekDouble> > m_gridVelocityTrace;
         /// Space dimension
         int m_spacedim;
         /// Auxiliary object to convert variables

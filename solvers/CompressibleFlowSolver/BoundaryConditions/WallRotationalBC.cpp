@@ -75,7 +75,7 @@ WallRotationalBC::WallRotationalBC(const LibUtilities::SessionReaderSharedPtr& p
         {
             for (int j = 0; j < nBCEdgePts; ++j)
             {
-                m_gridVelocity[i][id2 + j] = (i == 0) ? m_angVel * y[j] : m_angVel * x[j];
+                m_gridVelocityTrace[i][id2 + j] = (i == 0) ? m_angVel * y[j] : m_angVel * x[j];
             }
         }
     }
@@ -122,11 +122,11 @@ void WallRotationalBC::v_Apply(
             //Vmath::Neg(nBCEdgePts, &Fwd[i+1][id2], 1);
 
             // This now does Vg * rho + Vin
-            //Vmath::Vvtvp(nBCEdgePts, &m_gridVelocity[i][id2], 1, &Fwd[0][id2], 1, &Fwd[i+1][id2], 1, &Fwd[i+1][id2], 1);
+            //Vmath::Vvtvp(nBCEdgePts, &m_gridVelocityTrace[i][id2], 1, &Fwd[0][id2], 1, &Fwd[i+1][id2], 1, &Fwd[i+1][id2], 1);
 
             for (int j = 0; j < nBCEdgePts; ++j)
             {
-                Fwd[i+1][id2 + j] = 2 * m_gridVelocity[i][id2 + j] * Fwd[0][id2 + j] - Fwd[i+1][id2 + j];
+                Fwd[i+1][id2 + j] = 2 * m_gridVelocityTrace[i][id2 + j] * Fwd[0][id2 + j] - Fwd[i+1][id2 + j];
             }
         }
 
