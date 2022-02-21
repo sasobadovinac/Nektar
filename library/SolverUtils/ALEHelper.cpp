@@ -140,7 +140,12 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
 
         // Recompute grid velocity.
         UpdateGridVelocity(time);
-        GetGridVelocityTrace(); // Updates trace grid velocity
+
+        // Updates trace grid velocity
+        for (int i = 0; i < m_gridVelocityTrace.size(); ++i)
+        {
+            m_fieldsALE[0]->ExtractTracePhys(m_gridVelocity[i], m_gridVelocityTrace[i]);
+        }
 
         m_prevStageTime = time;
     }
@@ -148,11 +153,6 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
 
 const Array<OneD, const Array<OneD, NekDouble> > &ALEHelper::GetGridVelocityTrace()
 {
-    for (int i = 0; i < m_gridVelocityTrace.size(); ++i)
-    {
-        m_fieldsALE[0]->ExtractTracePhys(m_gridVelocity[i], m_gridVelocityTrace[i]);
-    }
-
     return m_gridVelocityTrace;
 }
 
