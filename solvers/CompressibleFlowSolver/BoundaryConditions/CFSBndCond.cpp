@@ -78,6 +78,8 @@ CFSBndCond::CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
                 m_session, m_spacedim);
     
     m_diffusionAveWeight = 1.0;
+
+    m_session->LoadParameter("AngVel", m_angVel, 0);
 }
 
 /**

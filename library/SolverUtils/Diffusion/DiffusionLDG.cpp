@@ -331,7 +331,9 @@ void DiffusionLDG::ApplyScalarBCs(
                  boost::iequals(fields[var]->GetBndConditions()[i]->
                  GetUserDefined(),"WallViscous") ||
                  boost::iequals(fields[var]->GetBndConditions()[i]->
-                 GetUserDefined(),"WallAdiabatic"))
+                 GetUserDefined(),"WallAdiabatic") ||
+                 boost::iequals(fields[var]->GetBndConditions()[i]->
+                 GetUserDefined(),"WallRotational"))
             {
                 Vmath::Vcopy(nBndEdgePts, &Fwd[id2], 1, &penaltyflux[id2], 1);
             }
@@ -468,7 +470,9 @@ void DiffusionLDG::ApplyVectorBCs(
                  boost::iequals(fields[var]->GetBndConditions()[i]->
                  GetUserDefined(),"WallViscous") ||
                  boost::iequals(fields[var]->GetBndConditions()[i]->
-                 GetUserDefined(),"WallAdiabatic"))
+                 GetUserDefined(),"WallAdiabatic")||
+                 boost::iequals(fields[var]->GetBndConditions()[i]->
+                 GetUserDefined(),"WallRotational"))
             {
                 Vmath::Zero(nBndEdgePts, &penaltyflux[id2], 1);
             }

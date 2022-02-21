@@ -492,7 +492,9 @@ void DiffusionLDGNS::ApplyBCsO1(
                 if (boost::iequals(fields[i]->GetBndConditions()[j]->
                     GetUserDefined(),"WallViscous") ||
                     boost::iequals(fields[i]->GetBndConditions()[j]->
-                    GetUserDefined(),"WallAdiabatic"))
+                    GetUserDefined(),"WallAdiabatic") ||
+                    boost::iequals(fields[i]->GetBndConditions()[j]->
+                    GetUserDefined(),"WallRotational"))
                 {
                     // Reinforcing bcs for velocity in case of Wall bcs
                     for (int pt = 0; pt < nBndEdgePts; ++pt)
@@ -651,9 +653,11 @@ void DiffusionLDGNS::ApplyBCsO1(
 
             // For Dirichlet boundary condition: uflux = u_bcs
             if (fields[nScalars]->GetBndConditions()[j]->
-                GetBoundaryConditionType() == SpatialDomains::eDirichlet &&
+                GetBoundaryConditionType() == SpatialDomains::eDirichlet && (
                 !boost::iequals(fields[nScalars]->GetBndConditions()[j]
-                ->GetUserDefined(), "WallAdiabatic"))
+                ->GetUserDefined(), "WallAdiabatic") ||
+                boost::iequals(fields[nScalars]->GetBndConditions()[j]->
+               GetUserDefined(),"WallRotational")))
             {
                 Vmath::Vcopy(nBndEdgePts,
                              &scalarVariables[nScalars-1][id2], 1,
@@ -665,7 +669,9 @@ void DiffusionLDGNS::ApplyBCsO1(
             else if (((fields[nScalars]->GetBndConditions()[j])->
                       GetBoundaryConditionType() == SpatialDomains::eNeumann) ||
                       boost::iequals(fields[nScalars]->GetBndConditions()[j]->
-                                    GetUserDefined(), "WallAdiabatic"))
+                                    GetUserDefined(), "WallAdiabatic") ||
+                     boost::iequals(fields[nScalars]->GetBndConditions()[j]->
+                                    GetUserDefined(), "WallRotational"))
             {
                 Vmath::Vcopy(nBndEdgePts,
                              &pFwd[nScalars-1][id2], 1,
@@ -786,7 +792,9 @@ void DiffusionLDGNS::ApplyBCsO2(
             if (fields[var]->GetBndConditions()[i]->
                GetBoundaryConditionType() == SpatialDomains::eDirichlet
                && !boost::iequals(fields[var]->GetBndConditions()[i]->
-                                  GetUserDefined(), "WallAdiabatic"))
+                                  GetUserDefined(), "WallAdiabatic")
+               && !boost::iequals(fields[var]->GetBndConditions()[i]->
+                                GetUserDefined(), "WallRotational"))
             {
                 Vmath::Vmul(nBndEdgePts,
                             &m_traceNormals[dir][id2], 1,
@@ -811,7 +819,9 @@ void DiffusionLDGNS::ApplyBCsO2(
                  */
             }
             else if (boost::iequals(fields[var]->GetBndConditions()[i]->
-                                   GetUserDefined(), "WallAdiabatic"))
+                                   GetUserDefined(), "WallAdiabatic") ||
+                     boost::iequals(fields[var]->GetBndConditions()[i]->
+                                    GetUserDefined(), "WallRotational"))
             {
                 if ((var == m_spaceDim + 1))
                 {

@@ -107,6 +107,7 @@ class CFSBndCond
         NekDouble m_pInf;
         NekDouble m_pOut;
         Array<OneD, NekDouble> m_velInf;
+        NekDouble m_angVel;
 
         /// Id of the boundary region
         int       m_bcRegion;
