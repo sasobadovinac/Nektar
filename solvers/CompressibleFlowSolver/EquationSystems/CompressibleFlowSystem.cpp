@@ -243,6 +243,11 @@ namespace Nektar
         riemannSolver = SolverUtils::GetRiemannSolverFactory()
                                     .CreateInstance(riemName, m_session);
 
+        // Tell Riemann Solver if doing ALE and provide trace grid velocity
+        riemannSolver->SetALEFlag(m_ALESolver);
+        riemannSolver->SetVector(
+            "vgt",     &ALEHelper::GetGridVelocityTrace, this);
+
         // Setting up parameters for advection operator Riemann solver
         riemannSolver->SetParam (
             "gamma",   &CompressibleFlowSystem::GetGamma,   this);
@@ -250,8 +255,6 @@ namespace Nektar
             "vecLocs", &CompressibleFlowSystem::GetVecLocs, this);
         riemannSolver->SetVector(
             "N",       &CompressibleFlowSystem::GetNormals, this);
-        riemannSolver->SetVector(
-            "vgt",     &ALEHelper::GetGridVelocityTrace, this);
 
         // Concluding initialisation of advection / diffusion operators
         m_advObject->SetRiemannSolver   (riemannSolver);
