@@ -71,12 +71,10 @@ WallRotationalBC::WallRotationalBC(const LibUtilities::SessionReaderSharedPtr& p
         Array<OneD, NekDouble> x(nBCEdgePts, 0.0);
         Array<OneD, NekDouble> y(nBCEdgePts, 0.0);
         m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetExp(e)->GetCoords(x, y);
-        for (int i = 0; i < m_spacedim; i++)
+        for (int j = 0; j < nBCEdgePts; ++j)
         {
-            for (int j = 0; j < nBCEdgePts; ++j)
-            {
-                m_gridVelocityTrace[i][id2 + j] = (i == 0) ? m_angVel * y[j] : m_angVel * x[j];
-            }
+            m_gridVelocityTrace[0][id2 + j] = m_angVel * -y[j];
+            m_gridVelocityTrace[1][id2 + j] = m_angVel * x[j];
         }
     }
 }
@@ -126,7 +124,9 @@ void WallRotationalBC::v_Apply(
 
             for (int j = 0; j < nBCEdgePts; ++j)
             {
+                //Fwd[i+1][id2 + j] = 2 * m_gridVelocityTrace[i][id2 + j] * Fwd[0][id2 + j] - Fwd[i+1][id2 + j];
                 Fwd[i+1][id2 + j] = 2 * m_gridVelocityTrace[i][id2 + j] * Fwd[0][id2 + j] - Fwd[i+1][id2 + j];
+
             }
         }
 
