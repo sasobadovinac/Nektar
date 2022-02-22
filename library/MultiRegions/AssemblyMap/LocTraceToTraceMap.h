@@ -188,10 +188,11 @@ public:
         const Array<OneD, const NekDouble> &loctraces,
         Array<OneD, NekDouble> reshuffle);
 
-    MULTI_REGIONS_EXPORT void UnshuffleLocTraces(const int dir,
-                             const Array<OneD, const NekDouble> &loctraces,
-                             Array<OneD, NekDouble> unshuffle);
-    
+    MULTI_REGIONS_EXPORT void UnshuffleLocTraces(
+        const int dir,
+        const Array<OneD, const NekDouble> &loctraces,
+        Array<OneD, NekDouble> unshuffle);
+
     MULTI_REGIONS_EXPORT void InterpLocTracesToTrace(
         const int dir,
         const Array<OneD, const NekDouble> &loctraces,
@@ -408,8 +409,7 @@ private:
     /// getting GetFwdBwdTracePhys. If interpolation is needed, it should be
     /// determined as the InnerProduct of m_locTraceToFieldMap matrix and
     /// interpolation matrix.
-    Array<OneD, Array<OneD, Array<OneD, int> > >
-        m_tracePhysToLeftRightExpPhysMap;
+    Array<OneD, Array<OneD, Array<OneD, int>>> m_tracePhysToLeftRightExpPhysMap;
 
     // store the number of neighbor elements for each element
     Array<OneD, int >                               m_ElemNeighbsNumb;

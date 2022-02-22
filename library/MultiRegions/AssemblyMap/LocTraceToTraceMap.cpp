@@ -318,20 +318,20 @@ void LocTraceToTraceMap::Setup(
     {
         m_interpTrace[i]   = Array<OneD, InterpLocTraceToTrace>(nInterpType);
         m_interpTraceI0[i] = Array<OneD, DNekMatSharedPtr>(nInterpType);
-        m_interpEndPtI0[i] = Array<OneD, Array<OneD, NekDouble> >(nInterpType);
+        m_interpEndPtI0[i] = Array<OneD, Array<OneD, NekDouble>>(nInterpType);
         m_interpFromTraceI0[i] = Array<OneD, DNekMatSharedPtr>(nInterpType);
-        m_interpPoints[i]  = Array<OneD, TraceInterpPoints>(nInterpType);
-        m_interpNtraces[i]  = Array<OneD, int>(nInterpType, 0);
+        m_interpPoints[i]      = Array<OneD, TraceInterpPoints>(nInterpType);
+        m_interpNtraces[i]     = Array<OneD, int>(nInterpType, 0);
     }
 
     if(m_expdim > 2)
     {
         for (int i = 0; i < 2; ++i)
         {
-            m_interpTraceI1[i] = Array<OneD, DNekMatSharedPtr>(nInterpType);
+            m_interpTraceI1[i]     = Array<OneD, DNekMatSharedPtr>(nInterpType);
             m_interpFromTraceI1[i] = Array<OneD, DNekMatSharedPtr>(nInterpType);
-            m_interpEndPtI1[i] = Array<OneD, Array<OneD, NekDouble> >
-                (nInterpType);
+            m_interpEndPtI1[i] =
+                Array<OneD, Array<OneD, NekDouble>>(nInterpType);
         }
     }
 
