@@ -57,15 +57,15 @@ ELSE()
         INCLUDE(ExternalProject)
 
         EXTERNALPROJECT_ADD(
-            lapack-3.7.0
+            lapack-3.7.1
             PREFIX ${TPSRC}
-            URL http://www.netlib.org/lapack/lapack-3.7.0.tgz
-            URL_MD5 "697bb8d67c7d336a0f339cc9dd0fa72f"
+            URL http://www.netlib.org/lapack/lapack-3.7.1.tgz
+            URL_MD5 "dcdeeed73de152c4643ccc5b1aeb453c"
             STAMP_DIR ${TPBUILD}/stamp
             DOWNLOAD_DIR ${TPSRC}
-            SOURCE_DIR ${TPSRC}/lapack-3.7.0
-            BINARY_DIR ${TPBUILD}/lapack-3.7.0
-            TMP_DIR ${TPBUILD}/lapack-3.7.0-tmp
+            SOURCE_DIR ${TPSRC}/lapack-3.7.1
+            BINARY_DIR ${TPBUILD}/lapack-3.7.1
+            TMP_DIR ${TPBUILD}/lapack-3.7.1-tmp
             INSTALL_DIR ${TPDIST}
             CONFIGURE_COMMAND ${CMAKE_COMMAND}
             -G ${CMAKE_GENERATOR}
@@ -74,7 +74,7 @@ ELSE()
             -DCMAKE_INSTALL_LIBDIR:PATH=${TPDIST}/lib
             -DBUILD_SHARED_LIBS:STRING=ON
             -DBUILD_TESTING:STRING=OFF
-            ${TPSRC}/lapack-3.7.0
+            ${TPSRC}/lapack-3.7.1
             )
 
         THIRDPARTY_LIBRARY(BLAS_LAPACK SHARED blas lapack DESCRIPTION "BLAS and LAPACK libraries")

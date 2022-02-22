@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: avx2.cpp
+// File: avx2.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,7 +35,12 @@
 #ifndef NEKTAR_LIB_LIBUTILITES_SIMDLIB_AVX2_H
 #define NEKTAR_LIB_LIBUTILITES_SIMDLIB_AVX2_H
 
-#include <immintrin.h>
+#if defined(__x86_64__)
+    #include <immintrin.h>
+    #if defined(__INTEL_COMPILER) && !defined(TINYSIMD_HAS_SVML)
+        #define TINYSIMD_HAS_SVML
+    #endif
+#endif
 #include <vector>
 #include "allocator.hpp"
 #include "traits.hpp"
@@ -434,20 +439,6 @@ struct avx2Double4
         _data = _mm256_loadu_pd(p);
     }
 
-    // load random
-    inline void load(scalarType const* a, scalarType const* b,
-        scalarType const* c, scalarType const* d)
-    {
-        __m128d t1, t2, t3, t4;
-        __m256d t5;
-        t1 = _mm_load_sd(a);                      // SSE2
-        t2 = _mm_loadh_pd(t1, b);                 // SSE2
-        t3 = _mm_load_sd(c);                      // SSE2
-        t4 = _mm_loadh_pd(t3, d);                 // SSE2
-        t5 = _mm256_castpd128_pd256(t2);          // cast __m128d -> __m256d
-        _data = _mm256_insertf128_pd(t5, t4, 1);
-    }
-
     // broadcast
     inline void broadcast(const scalarType rhs)
     {
@@ -575,17 +566,21 @@ inline avx2Double4 abs(avx2Double4 in)
 
 inline avx2Double4 log(avx2Double4 in)
 {
-    // there is no avx2 log intrinsic
-    // this is a dreadful implementation and is simply a stop gap measure
-    alignas(avx2Double4::alignment) avx2Double4::scalarArray tmp;
-    in.store(tmp);
-    tmp[0] = std::log(tmp[0]);
-    tmp[1] = std::log(tmp[1]);
-    tmp[2] = std::log(tmp[2]);
-    tmp[3] = std::log(tmp[3]);
-    avx2Double4 ret;
-    ret.load(tmp);
-    return ret;
+    #if defined(TINYSIMD_HAS_SVML)
+        return _mm256_log_pd(in._data);
+    #else
+        // there is no avx2 log intrinsic
+        // this is a dreadful implementation and is simply a stop gap measure
+        alignas(avx2Double4::alignment) avx2Double4::scalarArray tmp;
+        in.store(tmp);
+        tmp[0] = std::log(tmp[0]);
+        tmp[1] = std::log(tmp[1]);
+        tmp[2] = std::log(tmp[2]);
+        tmp[3] = std::log(tmp[3]);
+        avx2Double4 ret;
+        ret.load(tmp);
+        return ret;
+    #endif
 }
 
 inline void load_interleave(
@@ -593,9 +588,8 @@ inline void load_interleave(
     size_t dataLen,
     std::vector<avx2Double4, allocator<avx2Double4>> &out)
 {
-    size_t nBlocks = dataLen / 4;
-
-    alignas(32) size_t tmp[4] = {0, dataLen, 2*dataLen, 3*dataLen};
+    alignas(avx2Double4::alignment) size_t tmp[avx2Double4::width] = 
+        {0, dataLen, 2*dataLen, 3*dataLen};
     using index_t = avx2Long4<size_t>;
     index_t index0(tmp);
     index_t index1 = index0 + 1;
@@ -603,20 +597,22 @@ inline void load_interleave(
     index_t index3 = index0 + 3;
 
     // 4x unrolled loop
+    constexpr uint16_t unrl = 4;
+    size_t nBlocks = dataLen / unrl;
     for (size_t i = 0; i < nBlocks; ++i)
     {
-        out[4*i + 0].gather(in, index0);
-        out[4*i + 1].gather(in, index1);
-        out[4*i + 2].gather(in, index2);
-        out[4*i + 3].gather(in, index3);
-        index0 = index0 + 4;
-        index1 = index1 + 4;
-        index2 = index2 + 4;
-        index3 = index3 + 4;
+        out[unrl*i + 0].gather(in, index0);
+        out[unrl*i + 1].gather(in, index1);
+        out[unrl*i + 2].gather(in, index2);
+        out[unrl*i + 3].gather(in, index3);
+        index0 = index0 + unrl;
+        index1 = index1 + unrl;
+        index2 = index2 + unrl;
+        index3 = index3 + unrl;
     }
 
     // spillover loop
-    for (size_t i = 4 * nBlocks; i < dataLen; ++i)
+    for (size_t i = unrl * nBlocks; i < dataLen; ++i)
     {
         out[i].gather(in, index0);
         index0 = index0 + 1;
@@ -629,9 +625,8 @@ inline void deinterleave_store(
     size_t dataLen,
     double *out)
 {
-    // size_t nBlocks = dataLen / 4;
-
-    alignas(32) size_t tmp[4] = {0, dataLen, 2*dataLen, 3*dataLen};
+    alignas(avx2Double4::alignment) size_t tmp[avx2Double4::width] = 
+        {0, dataLen, 2*dataLen, 3*dataLen};
     using index_t = avx2Long4<size_t>;
     index_t index0(tmp);
 

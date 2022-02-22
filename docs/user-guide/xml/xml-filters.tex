@@ -804,3 +804,48 @@ which produces a field file \inlsh{threshold\_max.fld}.
 
 Performs the same function as the \inltt{ThresholdMax} filter (see Section~\ref{filters:thresholdmax}) but records the
 time at which the threshold variable drops below a prescribed value.
+
+\subsection{Maximun/minimun fields}\label{filters:MaxMinFields}
+
+This filter computes the local (pointwise) maximum or minimum field for each
+variable, including the addition variables for compressible flow solver, over
+the simulation.
+
+The following parameters are supported:
+
+\begin{center}
+  \begin{tabularx}{0.99\textwidth}{lllX}
+    \toprule
+    \textbf{Option name} & \textbf{Required} & \textbf{Default} &
+    \textbf{Description} \\
+    \midrule
+    \inltt{MaxOrMin}        & \cmark   & max &
+    Type of fields to compute. It can be either \inltt{max} or \inltt{min}.\\
+    \inltt{RestartFile}     & \xmark   & $\mp 9999$ &
+    Restart file used for initial comparison. If it is not provided, $-9999$
+    will be used for the \inltt{max} filter while $9999$ will be used for the
+    \inltt{min} filter.
+    Output filename to which the threshold times are written.\\
+    \inltt{OutputFile}      & \xmark   & \emph{session}\_max.fld &
+    Output filename to which the threshold times are written.\\
+    \inltt{OutputFrequency} & \xmark   & 1 &
+    Number of timesteps after which output is written.\\
+    \inltt{SampleFrequency} & \xmark   & 1 &
+    Number of timesteps after which the fields are used to compute max/min.\\
+    \bottomrule
+  \end{tabularx}
+\end{center}
+
+An example is given below:
+
+\begin{lstlisting}[style=XMLStyle]
+  <FILTERS>
+    <FILTER TYPE="MaxMinFields">
+      <PARAM NAME="MaxOrMin">max</PARAM>
+      <PARAM NAME="RestartFile">Baseflow.fld</PARAM>
+      <PARAM NAME="OutputFile">DisturbedFields</PARAM>
+      <PARAM NAME="OutputFrequency">100</PARAM>
+      <PARAM NAME="SampleFrequency">1</PARAM>
+    </FILTER>                                                                                                                                                                                 
+  </FILTERS>
+\end{lstlisting}

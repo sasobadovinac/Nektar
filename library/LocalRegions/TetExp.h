@@ -182,12 +182,6 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_GenMatrix(
                 const StdRegions::StdMatrixKey &mkey);
 
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr  CreateMatrix(
-                const MatrixKey &mkey);
-
-            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr  CreateStaticCondMatrix(
-                const MatrixKey &mkey);
-
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
                 const StdRegions::StdMatrixKey &mkey);
 
