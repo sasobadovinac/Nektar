@@ -898,6 +898,7 @@ void FaceMesh::BuildLocalMesh()
                         m_mesh->m_spaceDim != 3);
 
         vector<int> tags;
+        // std::cout << "testing tags: " << m_compId << "\n";
         tags.push_back(m_compId);
         ElementSharedPtr E = GetElementFactory().CreateInstance(
             LibUtilities::eTriangle, conf, m_connec[i], tags);

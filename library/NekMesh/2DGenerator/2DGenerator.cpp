@@ -222,6 +222,7 @@ void Generator2D::Process()
         // tag for the elements shoudl be the CAD number of the curves
         ElmtConfig conf(LibUtilities::eSegment, 1, false, false);
         vector<int> tags;
+        // std::cout << "testing tags: " << it->m_parentCAD->GetId() << "\n";
         tags.push_back(it->m_parentCAD->GetId());
         ElementSharedPtr E2 = GetElementFactory().CreateInstance(
             LibUtilities::eSegment, conf, ns, tags);
@@ -317,6 +318,7 @@ void Generator2D::MakeBLPrep()
 
 void Generator2D::MakeBL(int faceid)
 {
+    std::cout << "testing MakeBL: faceid = " << faceid << "\n";
     map<int, Array<OneD, NekDouble>> edgeNormals;
     int eid = 0;
     for (auto &it : m_blCurves)
@@ -328,10 +330,12 @@ void Generator2D::MakeBL(int faceid)
         // always to the left unless edgeo is 1
         // normal must be done in the parametric space (and then projected back)
         // because of face orientation
+        std::cout << "testing MakeBL: it = " << it << " es size = " << es.size() << " \n";
+        if(es.size() == 0) return;
         for (auto &ie : es)
         {
             ie->m_id = eid++;
-            // std::cout << "checking what ie->m_id is in es with it: " << ie-> m_id << " -- " << it << "\n";
+            std::cout << "checking what ie->m_id is in es with it: " << ie-> m_id << " -- " << it << "\n";
             Array<OneD, NekDouble> p1, p2;
             p1 = ie->m_n1->GetCADSurfInfo(faceid);
             p2 = ie->m_n2->GetCADSurfInfo(faceid);
@@ -359,6 +363,7 @@ void Generator2D::MakeBL(int faceid)
             edgeNormals[ie->m_id] = n;
         }
     }
+    std::cout << "testing MakeBL: passed 1 \n";
 
     bool adjust           = m_config["bltadjust"].beenSet;
     NekDouble divider     = m_config["bltadjust"].as<NekDouble>();
@@ -384,6 +389,8 @@ void Generator2D::MakeBL(int faceid)
                          << "defined." << endl;
         }
 
+        std::cout << "testing MakeBL: passed 2.1.1 \n";
+
         // If node at the end of the BL open loop, the "normal node" isn't
         // constructed by computing a normal but found on the adjacent curve
         if (it.second.size() == 1)
@@ -405,16 +412,19 @@ void Generator2D::MakeBL(int faceid)
             continue;
         }
 
+        std::cout << "testing MakeBL: passed 2.1.2 \n";
         Array<OneD, NekDouble> n(3, 0.0);
         Array<OneD, NekDouble> n1 = edgeNormals[it.second[0]->m_id];
         Array<OneD, NekDouble> n2 = edgeNormals[it.second[1]->m_id];
         n[0]          = (n1[0] + n2[0]) / 2.0;
+        std::cout << "testing MakeBL: passed 2.1.3.4 \n";
         n[1]          = (n1[1] + n2[1]) / 2.0;
         NekDouble mag = sqrt(n[0] * n[0] + n[1] * n[1]);
         n[0] /= mag;
         n[1] /= mag;
         NekDouble t = m_thickness.Evaluate(m_thickness_ID, it.first->m_x,
                                            it.first->m_y, 0.0, 0.0);
+        std::cout << "testing MakeBL: passed 2.1.3 \n";
         // Adjust thickness according to angle between normals
         if (adjust)
         {
@@ -425,6 +435,7 @@ void Generator2D::MakeBL(int faceid)
                 t /= cos(angle / divider);
             }
         }
+        std::cout << "testing MakeBL: passed 2.1.4 \n";
 
         n[0]             = n[0] * t + it.first->m_x;
         n[1]             = n[1] * t + it.first->m_y;
@@ -434,7 +445,9 @@ void Generator2D::MakeBL(int faceid)
         Array<OneD, NekDouble> uv = s->locuv(n);
         nn->SetCADSurf(s, uv);
         nodeNormals[it.first] = nn;
+        std::cout << "testing MakeBL: passed 2.1.5 \n";
     }
+    std::cout << "testing MakeBL: passed 2.1 \n";
 
     // Check for any intersecting boundary layer normals and smooth them if
     // needed
@@ -528,6 +541,7 @@ void Generator2D::MakeBL(int faceid)
                            << endl;
         }
     }
+    std::cout << "testing MakeBL: passed 2.2 \n";
 
     // Space out the outter BL nodes to better fit the local required Delta
     if (spaceoutbl)
@@ -797,6 +811,7 @@ void Generator2D::MakeBL(int faceid)
         }
     }
 
+    std::cout << "testing MakeBL: passed 2.3 \n";
     for (auto &it : m_blCurves)
     {
         CADOrientation::Orientation edgeo =
@@ -808,8 +823,9 @@ void Generator2D::MakeBL(int faceid)
             newNs.push_back(nodeNormals[in]);
         }
 
-        m_curvemeshes[it] = MemoryManager<CurveMesh>::AllocateSharedPtr(
-            it, m_mesh, newNs, m_log);
+        // This line chanegs m_curvemeshes and prevents the ability to generate anotehr BL on another surface using the same curve
+        // m_curvemeshes[it] = MemoryManager<CurveMesh>::AllocateSharedPtr(
+        //     it, m_mesh, newNs, m_log);
 
         if (edgeo == CADOrientation::eBackwards)
         {
@@ -824,7 +840,8 @@ void Generator2D::MakeBL(int faceid)
             qns.push_back(nodeNormals[ns[i]]);
             ElmtConfig conf(LibUtilities::eQuadrilateral, 1, false, false);
             vector<int> tags;
-            tags.push_back(101);
+            // std::cout << "testing tags: " << faceid << " -- " << 99+m_mesh->m_cad->GetNumSurf()+faceid << "\n";
+            tags.push_back(99+m_mesh->m_cad->GetNumSurf()+faceid);
             ElementSharedPtr E = GetElementFactory().CreateInstance(
                 LibUtilities::eQuadrilateral, conf, qns, tags);
             E->m_parentCAD = m_mesh->m_cad->GetSurf(faceid);
