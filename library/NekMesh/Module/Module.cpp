@@ -309,7 +309,7 @@ void Module::ProcessFaces(bool ReprocessFaces)
         vector<ElementSharedPtr> &elmt = m_mesh->m_element[m_mesh->m_expDim];
 
         m_mesh->m_faceSet.clear();
-
+        // elmt : correct number of elements
         // Scan all elements and generate list of unique faces
         for (int i = 0, fid = 0; i < elmt.size(); ++i)
         {
@@ -321,6 +321,7 @@ void Module::ProcessFaces(bool ReprocessFaces)
                 if (testIns.second)
                 {
                     (*(testIns.first))->m_id = fid++;
+                    // Update face to element map.
                     (*(testIns.first))->m_elLink.push_back(
                         pair<ElementSharedPtr,int>(elmt[i],j));
                 }
@@ -335,6 +336,8 @@ void Module::ProcessFaces(bool ReprocessFaces)
         }
     }
 
+    // m_mesh->m_faceSet : list of faces 
+    // m_mesh->m_element[2] : boundary elements
     // Create links for 2D elements
     for (int i = 0; i < m_mesh->m_element[2].size(); ++i)
     {
@@ -347,10 +350,13 @@ void Module::ProcessFaces(bool ReprocessFaces)
                      elmt->GetConf().m_faceCurveType));
 
         FaceSet::iterator it = m_mesh->m_faceSet.find(F);
+        //No face on elements found
         if (it == m_mesh->m_faceSet.end())
         {
-            m_log(FATAL) << "Cannot find corresponding element face for 2D "
-                         << "element " << i << endl;
+            m_log(VERBOSE) << "Cannot find corresponding element face for 2D element " << i << endl; 
+            m_log(VERBOSE) << "This element has " << elmt -> GetVertexList().size() << " vertex" << endl;
+            m_log(VERBOSE) << "This element has " << elmt -> GetEdgeList().size() << " edges" << endl;
+            break;
         }
 
         elmt->SetFaceLink(*it);

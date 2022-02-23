@@ -88,7 +88,7 @@ namespace Nektar
             IProductNormVelocityBCOnHBC(m_iprodnormvel[m_intSteps]);
 
             //Calculate acceleration term at level n based on previous steps
-            AccelerationBDF(m_iprodnormvel);
+            v_AccelerationBDF(m_iprodnormvel);
 
             // Subtract acceleration term off m_pressureHBCs[nlevels-1]
             Vmath::Svtvp(m_numHBCDof, -1.0/m_timestep,
@@ -1037,7 +1037,7 @@ namespace Nektar
      *    At the end, the acceleration from BDF is stored in array[nlevels-1]
      *        and the storage has been updated to included the new value
      */
-    void Extrapolate::AccelerationBDF(
+    void Extrapolate::v_AccelerationBDF(
             Array<OneD, Array<OneD, NekDouble> > &array)
     {
         int nlevels  = array.size();

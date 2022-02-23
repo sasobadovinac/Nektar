@@ -33,11 +33,16 @@ IF (THIRDPARTY_BUILD_CCMIO)
     ENDIF()
     MARK_AS_ADVANCED(PATCH)
 
+    SET(CCMIO_URL "https://downloads.sourceforge.net/project/foam-extend/ThirdParty/libccmio-2.6.1.tar.gz")
+    IF (DEFINED NEKTAR_CCMIO_URL)
+        SET(CCMIO_URL ${NEKTAR_CCMIO_URL})
+    ENDIF()
+
     INCLUDE(ExternalProject)
     EXTERNALPROJECT_ADD(
         libccmio-2.6.1
         PREFIX ${TPSRC}
-        URL http://visit.ilight.com/svn/visit/trunk/third_party/libccmio-2.6.1.tar.gz
+        URL ${CCMIO_URL}
         URL_MD5 f81fbdfb960b1a4f3bcc7feee491efe4
         STAMP_DIR ${TPBUILD}/stamp
         DOWNLOAD_DIR ${TPSRC}

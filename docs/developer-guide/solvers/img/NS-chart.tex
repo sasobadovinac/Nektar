@@ -1,0 +1,116 @@
+%% LyX 2.3.4.2 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[12pt,twoside,english,refpage,intoc,bibliography=totoc,index=totoc,BCOR7.5mm,captions=tableheading]{paper}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\setcounter{tocdepth}{2}
+\usepackage{xcolor}
+\usepackage{babel}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage[unicode=true,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=false,
+ breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=true]
+ {hyperref}
+\hypersetup{pdftitle={The LyX User's Guide},
+ pdfauthor={LyX Team},
+ pdfsubject={LyX},
+ pdfkeywords={LyX},
+ linkcolor=black, citecolor=black, urlcolor=blue, filecolor=blue, pdfpagelayout=OneColumn, pdfnewwindow=true, pdfstartview=XYZ, plainpages=false}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+\newlength{\lyxlabelwidth}      % auxiliary length 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+% DO NOT ALTER THIS PREAMBLE!!!
+%
+% This preamble is designed to ensure that the User's Guide prints
+% out as advertised. If you mess with this preamble,
+% parts of the User's Guide may not print out as expected.  If you
+% have problems LaTeXing this file, please contact 
+% the documentation team
+% email: lyx-docs@lists.lyx.org
+
+\usepackage{ifpdf} % part of the hyperref bundle
+\ifpdf % if pdflatex is used
+
+ % set fonts for nicer pdf view
+ \IfFileExists{lmodern.sty}{\usepackage{lmodern}}{}
+
+\fi % end if pdflatex is used
+
+% for correct jump positions whe clicking on a link to a float
+\usepackage[figure]{hypcap}
+
+% the pages of the TOC is numbered roman
+% and a pdf-bookmark for the TOC is added
+\let\myTOC\tableofcontents
+\renewcommand\tableofcontents{%
+  \frontmatter
+  \pdfbookmark[1]{\contentsname}{}
+  \myTOC
+  \mainmatter }
+
+% macro for italic page numbers in the index
+\newcommand{\IndexDef}[1]{\textit{#1}}
+
+% for customized page headers/footers
+% only needed because they are only used in one section of the document
+\usepackage{fancyhdr}
+% change header rule width
+\renewcommand{\headrulewidth}{2pt}
+
+% used to have extra space in table cells
+\@ifundefined{extrarowheight}
+ {\usepackage{array}}{}
+\setlength{\extrarowheight}{2pt}
+
+% workaround for a makeindex bug,
+% see sec. "Index Entry Order"
+% only uncomment this when you are using makindex
+%\let\OrgIndex\index 
+%\renewcommand*{\index}[1]{\OrgIndex{#1}}
+
+\makeatother
+
+\begin{document}
+\begin{tabular}{|l|l|l|l|l|l||ll||l||l||l||l||l|}
+\hline 
+\multicolumn{7}{|l}{Initialization} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{cyan}{\footnotesize{}${\tt CompressibleFlowSolver}$}}\tabularnewline
+\hline 
+\multicolumn{7}{|l}{Time step loop $n$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt UnsteadySystem}$}}\tabularnewline
+\cline{2-13} \cline{3-13} \cline{4-13} \cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+\multirow{12}{*}{} & \multicolumn{6}{l}{Runge-Kutta loop $m=1,\cdots,M$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt TimeIntegrationScheme}$}}\tabularnewline
+\cline{3-13} \cline{4-13} \cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ & \multirow{10}{*}{} & \multicolumn{5}{l}{Calculate source term $\mathbf{S}_{m}$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt TimeIntegrationScheme}$}}\tabularnewline
+\cline{3-13} \cline{4-13} \cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  & \multicolumn{5}{l}{Netwon iteration $l$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt NewtonSolver}$}}\tabularnewline
+\cline{4-13} \cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  & \multirow{8}{*}{} & \multicolumn{4}{l}{Calculate residual $\mathbf{N}\left(\bar{\mathbf{u}}^{l}\right)$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{cyan}{\footnotesize{}${\tt CFSImplicit}$}}\tabularnewline
+\cline{4-13} \cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  &  & \multicolumn{4}{l}{GMRES iteration $k$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt NekLinSysIterGMRES}$}}\tabularnewline
+\cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  &  & \multirow{5}{*}{} & \multicolumn{3}{l}{Calculate search vector $\mathbf{q}_{k}$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt NekLinSysIterGMRES}$}}\tabularnewline
+\cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  &  &  & \multicolumn{3}{l}{BRJ iteration $j=1,\cdots,J$ } & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt PrecondBRJ}$}}\tabularnewline
+\cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  &  &  &  & \multicolumn{2}{l}{Calculate {\small{}$\hat{\mathbf{q}}^{j}=\hat{\mathbf{D}}^{-1}\left(\mathbf{q}_{k}-\left(\mathbf{\hat{L}}+\hat{\mathbf{U}}\right)\hat{\mathbf{q}}^{j-1}\right)$}} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{cyan}{\footnotesize{}${\tt CFSImplicit}$}}\tabularnewline
+\cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  &  &  & \multicolumn{3}{l}{Calculate $\partial\mathbf{N}/\partial\mathbf{u}\cdot\hat{\mathbf{q}}^{J}$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{cyan}{\footnotesize{}${\tt CFSImplicit}$}}\tabularnewline
+\cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  &  &  & \multicolumn{3}{l}{Calculate linear system residual} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt NekLinSysIterGMRES}$}}\tabularnewline
+\cline{4-13} \cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ &  &  & \multicolumn{4}{l}{Calculate $\bar{\mathbf{u}}^{l+1}$ by linear combination of $\mathbf{q}_{k}$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt NekLinSysIterGMRES}$}}\tabularnewline
+\cline{2-13} \cline{3-13} \cline{4-13} \cline{5-13} \cline{6-13} \cline{7-13} \cline{8-13} \cline{9-13} \cline{10-13} \cline{11-13} \cline{12-13} \cline{13-13} 
+ & \multicolumn{6}{l}{Calculate $\mathbf{u}^{n+1}$} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{brown}{\footnotesize{}${\tt TimeIntegrationScheme}$}}\tabularnewline
+\hline 
+\multicolumn{7}{|l}{Output and finalization} & \multicolumn{6}{l|}{{\footnotesize{}in }\textcolor{cyan}{\footnotesize{}${\tt CompressibleFlowSolver}$}}\tabularnewline
+\hline 
+\end{tabular}
+\end{document}

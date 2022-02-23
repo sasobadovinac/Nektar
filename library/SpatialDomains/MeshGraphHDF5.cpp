@@ -74,7 +74,6 @@ void MeshGraphHDF5::ReadGeometry(
 
     ReadComposites();
     ReadDomain();
-    ReadExpansionInfo();
 
     // Close up shop.
     m_mesh->Close();
@@ -158,6 +157,11 @@ inline void UniqueValues(std::unordered_set<int> &unique,
 
     UniqueValues(unique, args...);
 }
+
+std::string MeshGraphHDF5::cmdSwitch =
+    LibUtilities::SessionReader::RegisterCmdLineFlag(
+        "use-hdf5-node-comm", "",
+        "Use a per-node communicator for HDF5 partitioning.");
 
 /**
  * @brief Partition the mesh
@@ -286,169 +290,320 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
                     make_tuple("PRISM", 5, LibUtilities::ePrism),
                     make_tuple("HEX", 6, LibUtilities::eHexahedron) };
 
-    // Read IDs for partitioning purposes
-    std::vector<MeshEntity> elmts;
-    std::vector<int> ids;
-
-    // Map from element ID to 'row' which is a contiguous ordering required for
-    // parallel partitioning.
-    std::unordered_map<int, int> row2id, id2row;
-
-    LibUtilities::Timer t;
-    t.Start();
-    int rowCount = 0;
-    for (auto &it : dataSets[m_meshDimension])
-    {
-        std::string ds = std::get<0>(it);
-
-        if (!m_mesh->ContainsDataSet(ds))
-        {
-            continue;
-        }
-
-        // Open metadata dataset
-        H5::DataSetSharedPtr data = m_mesh->OpenDataSet(ds);
-        H5::DataSpaceSharedPtr space = data->GetSpace();
-        vector<hsize_t> dims = space->GetDims();
-
-        H5::DataSetSharedPtr mdata = m_maps->OpenDataSet(ds);
-        H5::DataSpaceSharedPtr mspace = mdata->GetSpace();
-        vector<hsize_t> mdims = mspace->GetDims();
-
-        // TODO: This could be done more intelligently; reads all IDs so that we
-        // can construct the dual graph of the mesh.
-        vector<int> tmpElmts, tmpIds;
-        mdata->Read(tmpIds, mspace, m_readPL);
-        data->Read(tmpElmts, space, m_readPL);
-
-        const int nGeomData = std::get<1>(it);
-
-        for (int i = 0, cnt = 0; i < tmpIds.size(); ++i, ++rowCount)
-        {
-            MeshEntity e;
-            row2id[rowCount] = tmpIds[i];
-            id2row[tmpIds[i]] = row2id[rowCount];
-            e.id = rowCount;
-            e.origId = tmpIds[i];
-            e.list = std::vector<unsigned int>(
-                &tmpElmts[cnt], &tmpElmts[cnt+nGeomData]);
-            elmts.push_back(e);
-            cnt += nGeomData;
-        }
-    }
-
-    comm->Block();
-    t.Stop();
-
-    bool verbRoot = rank == 0 &&
-        m_session->DefinesCmdLineArgument("verbose");
+    bool verbRoot = rank == 0 && m_session->DefinesCmdLineArgument("verbose");
 
     if (verbRoot)
     {
         std::cout << "Reading HDF5 geometry..." << std::endl;
     }
 
-    TIME_RESULT(verbRoot, "initial read", t);
+    // If we want to use an multi-level communicator, then split the
+    // communicator at this point. We set by default the inter-node communicator
+    // to be the normal communicator: this way if the multi-level partitioning
+    // is disabled we proceed as 'normal'.
+    LibUtilities::CommSharedPtr innerComm, interComm = comm;
+    int innerRank = 0, innerSize = 1, interRank = rank, interSize = nproc;
 
-    // Check to see we have at least as many processors as elements.
-    size_t numElmt = elmts.size();
-    ASSERTL0(nproc <= numElmt,
-             "This mesh has more processors than elements!");
-
-    // Calculate reasonably even distribution of processors for calling ptScotch
-    auto elRange = SplitWork(numElmt, rank, nproc);
-
-    t.Start();
-
-    // Construct map of element entities for partitioner.
-    std::map<int, MeshEntity> partElmts;
-    std::unordered_set<int> facetIDs;
-
-    int vcnt = 0;
-
-    for (int el = elRange.first; el < elRange.first + elRange.second;
-         ++el, ++vcnt)
+    if (session->DefinesCmdLineArgument("use-hdf5-node-comm"))
     {
-        MeshEntity elmt = elmts[el];
-        elmt.ghost = false;
-        partElmts[el] = elmt;
+        auto splitComm = comm->SplitCommNode();
+        innerComm = splitComm.first;
+        interComm = splitComm.second;
+        innerRank = innerComm->GetRank();
+        innerSize = innerComm->GetSize();
 
-        for (auto &facet : elmt.list)
+        if (innerRank == 0)
         {
-            facetIDs.insert(facet);
+            interRank = interComm->GetRank();
+            interSize = interComm->GetSize();
         }
     }
 
-    // Now identify ghost vertices for the graph. This could probably be
-    // improved.
-    int nLocal = vcnt;
-    for (int i = 0; i < numElmt; ++i)
+    // Unordered set of rows of the dataset this process needs to read for the
+    // elements of dimension m_meshDimension.
+    std::unordered_set<int> toRead;
+
+    // Calculate reasonably even distribution of processors for calling
+    // ptScotch. We'll do this work on only one process per node.
+    LibUtilities::Timer t;
+    t.Start();
+
+    if (verbRoot)
     {
-        // Ignore anything we already read.
-        if (i >= elRange.first && i < elRange.first + elRange.second)
+        std::cout << "  - beginning partitioning" << std::endl;
+    }
+
+    // Perform initial read if either (a) we are on all ranks and multi-level
+    // partitioning is not enabled; or (b) rank 0 of all nodes if it is.
+    if (innerRank == 0)
+    {
+        LibUtilities::Timer t2;
+        t2.Start();
+
+        bool verbRoot2 =
+            session->DefinesCmdLineArgument("verbose") && interRank == 0;
+
+        // Read IDs for partitioning purposes
+        std::vector<int> ids;
+
+        // Map from element ID to 'row' which is a contiguous ordering required
+        // for parallel partitioning.
+        std::vector<MeshEntity> elmts;
+        std::unordered_map<int, int> row2id, id2row;
+
+        LibUtilities::H5::FileSharedPtr file = m_file;
+        LibUtilities::H5::PListSharedPtr readPL = m_readPL;
+        LibUtilities::H5::GroupSharedPtr mesh = m_mesh, maps = m_maps;
+
+        if (innerComm)
         {
-            //i += elRange.second - elRange.first - 1;
-            continue;
+            // For per-node partitioning, create a temporary reader (otherwise
+            // communicators are inconsistent).
+            auto parallelProps = H5::PList::FileAccess();
+            parallelProps->SetMpio(interComm);
+
+            // Use collective IO
+            readPL = H5::PList::DatasetXfer();
+            readPL->SetDxMpioCollective();
+            file = H5::File::Open(m_hdf5Name, H5F_ACC_RDONLY, parallelProps);
+
+            auto root = file->OpenGroup("NEKTAR");
+            auto root2 = root->OpenGroup("GEOMETRY");
+            mesh = root2->OpenGroup("MESH");
+            maps = root2->OpenGroup("MAPS");
         }
 
-        MeshEntity elmt = elmts[i];
-        bool insert = false;
-
-        // Check for connections to local elements.
-        for (auto &eId : elmt.list)
+        int rowCount = 0;
+        for (auto &it : dataSets[m_meshDimension])
         {
-            if (facetIDs.find(eId) != facetIDs.end())
+            std::string ds = std::get<0>(it);
+
+            if (!mesh->ContainsDataSet(ds))
             {
-                insert = true;
-                break;
+                continue;
+            }
+
+            // Open metadata dataset
+            H5::DataSetSharedPtr data = mesh->OpenDataSet(ds);
+            H5::DataSpaceSharedPtr space = data->GetSpace();
+            vector<hsize_t> dims = space->GetDims();
+
+            H5::DataSetSharedPtr mdata = maps->OpenDataSet(ds);
+            H5::DataSpaceSharedPtr mspace = mdata->GetSpace();
+            vector<hsize_t> mdims = mspace->GetDims();
+
+            // TODO: This could perhaps be done more intelligently; reads all
+            // IDs for the top-level elements so that we can construct the dual
+            // graph of the mesh.
+            vector<int> tmpElmts, tmpIds;
+            mdata->Read(tmpIds, mspace, readPL);
+            data->Read(tmpElmts, space, readPL);
+
+            const int nGeomData = std::get<1>(it);
+
+            for (int i = 0, cnt = 0; i < tmpIds.size(); ++i, ++rowCount)
+            {
+                MeshEntity e;
+                row2id[rowCount] = tmpIds[i];
+                id2row[tmpIds[i]] = row2id[rowCount];
+                e.id = rowCount;
+                e.origId = tmpIds[i];
+                e.ghost = false;
+                e.list = std::vector<unsigned int>(
+                    &tmpElmts[cnt], &tmpElmts[cnt+nGeomData]);
+                elmts.push_back(e);
+                cnt += nGeomData;
             }
         }
 
-        if (insert)
+        interComm->Block();
+
+        t2.Stop();
+        TIME_RESULT(verbRoot2, "  - initial read", t2);
+        t2.Start();
+
+        // Check to see we have at least as many processors as elements.
+        size_t numElmt = elmts.size();
+        ASSERTL0(nproc <= numElmt,
+                 "This mesh has more processors than elements!");
+
+        auto elRange = SplitWork(numElmt, interRank, interSize);
+
+        // Construct map of element entities for partitioner.
+        std::map<int, MeshEntity> partElmts;
+        std::unordered_set<int> facetIDs;
+
+        int vcnt = 0;
+
+        for (int el = elRange.first; el < elRange.first + elRange.second;
+             ++el, ++vcnt)
         {
-            elmt.ghost = true;
-            partElmts[elmt.id] = elmt;
+            MeshEntity elmt = elmts[el];
+            elmt.ghost = false;
+            partElmts[el] = elmt;
+
+            for (auto &facet : elmt.list)
+            {
+                facetIDs.insert(facet);
+            }
+        }
+
+        // Now identify ghost vertices for the graph. This could also probably
+        // be improved.
+        int nLocal = vcnt;
+        for (int i = 0; i < numElmt; ++i)
+        {
+            // Ignore anything we already read.
+            if (i >= elRange.first && i < elRange.first + elRange.second)
+            {
+                continue;
+            }
+
+            MeshEntity elmt = elmts[i];
+            bool insert = false;
+
+            // Check for connections to local elements.
+            for (auto &eId : elmt.list)
+            {
+                if (facetIDs.find(eId) != facetIDs.end())
+                {
+                    insert = true;
+                    break;
+                }
+            }
+
+            if (insert)
+            {
+                elmt.ghost = true;
+                partElmts[elmt.id] = elmt;
+            }
+        }
+
+        // Create partitioner. Default partitioner to use is PtScotch. Use
+        // ParMetis as default if it is installed. Override default with
+        // command-line flags if they are set.
+        string partitionerName = nproc > 1 ? "PtScotch" : "Scotch";
+        if (GetMeshPartitionFactory().ModuleExists("ParMetis"))
+        {
+            partitionerName = "ParMetis";
+        }
+        if (session->DefinesCmdLineArgument("use-parmetis"))
+        {
+            partitionerName = "ParMetis";
+        }
+        if (session->DefinesCmdLineArgument("use-ptscotch"))
+        {
+            partitionerName = "PtScotch";
+        }
+
+        MeshPartitionSharedPtr partitioner =
+            GetMeshPartitionFactory().CreateInstance(
+                partitionerName, session, interComm, m_meshDimension,
+                partElmts, CreateCompositeDescriptor(id2row));
+
+        t2.Stop();
+        TIME_RESULT(verbRoot2, "  - partitioner setup", t2);
+        t2.Start();
+
+        partitioner->PartitionMesh(interSize, true, false, nLocal);
+        t2.Stop();
+        TIME_RESULT(verbRoot2, "  - partitioning", t2);
+        t2.Start();
+
+        // Now construct a second graph that is partitioned in serial by this
+        // rank.
+        std::vector<unsigned int> nodeElmts;
+        partitioner->GetElementIDs(interRank, nodeElmts);
+
+        if (innerSize > 1)
+        {
+            // Construct map of element entities for partitioner.
+            std::map<int, MeshEntity> partElmts;
+            std::unordered_map<int, int> row2elmtid, elmtid2row;
+
+            int vcnt = 0;
+
+            // We need to keep track of which elements in the new partition
+            // correspond to elemental IDs for later (in a similar manner to
+            // row2id).
+            for (auto &elmtRow : nodeElmts)
+            {
+                row2elmtid[vcnt] = elmts[elmtRow].origId;
+                elmtid2row[elmts[elmtRow].origId] = vcnt;
+                MeshEntity elmt = elmts[elmtRow];
+                elmt.ghost = false;
+                partElmts[vcnt++] = elmt;
+            }
+
+            // Create temporary serial communicator for serial partitioning.
+            auto tmpComm = LibUtilities::GetCommFactory().CreateInstance(
+                "Serial", 0, 0);
+
+            MeshPartitionSharedPtr partitioner =
+                GetMeshPartitionFactory().CreateInstance(
+                    "Scotch", session, tmpComm, m_meshDimension,
+                    partElmts, CreateCompositeDescriptor(elmtid2row));
+
+            t2.Stop();
+            TIME_RESULT(verbRoot2, "  - inner partition setup", t2);
+            t2.Start();
+
+            partitioner->PartitionMesh(innerSize, true, false, 0);
+
+            t2.Stop();
+            TIME_RESULT(verbRoot2, "  - inner partitioning", t2);
+            t2.Start();
+
+            // Send contributions to remaining processors.
+            for (int i = 1; i < innerSize; ++i)
+            {
+                std::vector<unsigned int> tmp;
+                partitioner->GetElementIDs(i, tmp);
+                size_t tmpsize = tmp.size();
+                for (int j = 0; j < tmpsize; ++j)
+                {
+                    tmp[j] = row2elmtid[tmp[j]];
+                }
+                innerComm->Send(i, tmpsize);
+                innerComm->Send(i, tmp);
+            }
+
+            t2.Stop();
+            TIME_RESULT(verbRoot2, "  - inner partition scatter", t2);
+
+            std::vector<unsigned int> tmp;
+            partitioner->GetElementIDs(0, tmp);
+
+            for (auto &tmpId : tmp)
+            {
+                toRead.insert(row2elmtid[tmpId]);
+            }
+        }
+        else
+        {
+            for (auto &tmpId : nodeElmts)
+            {
+                toRead.insert(row2id[tmpId]);
+            }
+        }
+    }
+    else
+    {
+        // For multi-level partitioning, the innermost rank receives its
+        // partitions from rank 0 on each node.
+        size_t tmpSize;
+        innerComm->Recv(0, tmpSize);
+        std::vector<unsigned int> tmp(tmpSize);
+        innerComm->Recv(0, tmp);
+
+        for (auto &tmpId : tmp)
+        {
+            toRead.insert(tmpId);
         }
     }
 
-    // Create partitioner. Default partitioner to use is PtScotch. Use ParMetis
-    // as default if it is installed. Override default with command-line flags
-    // if they are set.
-    string partitionerName = nproc > 1 ? "PtScotch" : "Scotch";
-    if (GetMeshPartitionFactory().ModuleExists("ParMetis"))
-    {
-        partitionerName = "ParMetis";
-    }
-    if (session->DefinesCmdLineArgument("use-parmetis"))
-    {
-        partitionerName = "ParMetis";
-    }
-    if (session->DefinesCmdLineArgument("use-ptscotch"))
-    {
-        partitionerName = "PtScotch";
-    }
-
-    MeshPartitionSharedPtr partitioner =
-        GetMeshPartitionFactory().CreateInstance(
-            partitionerName, session, m_meshDimension,
-            partElmts, CreateCompositeDescriptor(id2row));
-
-    partitioner->PartitionMesh(nproc, true, false, nLocal);
-
-    // Now we need to distribute vertex IDs to all the different processors.
     t.Stop();
-    TIME_RESULT(verbRoot, "partitioning", t);
-
-    // Each process now knows which rows of the dataset it needs to read for the
-    // elements of dimension m_meshDimension.
-    std::vector<unsigned int> tmp;
-    std::unordered_set<int> toRead;
-    partitioner->GetElementIDs(comm->GetRank(), tmp);
-
-    for (auto &tmpId : tmp)
-    {
-        toRead.insert(row2id[tmpId]);
-    }
+    TIME_RESULT(verbRoot, "partitioning total", t);
 
     // Since objects are going to be constructed starting from vertices, we now
     // need to recurse down the geometry facet dimensions to figure out which

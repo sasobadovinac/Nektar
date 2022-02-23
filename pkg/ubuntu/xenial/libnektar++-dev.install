@@ -1,0 +1,4 @@
+usr/include/nektar++
+usr/lib/*/lib*.so
+usr/lib/*/nektar++/lib*.so
+usr/lib/*/nektar++/cmake

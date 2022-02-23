@@ -137,6 +137,7 @@ REGISTER(RungeKutta2_ImprovedEuler);
 REGISTER(RungeKutta2_SSP);
 REGISTER(RungeKutta3_SSP);
 REGISTER(ClassicalRungeKutta4);
+REGISTER(RungeKutta4);
 REGISTER(RungeKutta5);
 
 } // end namespace LibUtilities

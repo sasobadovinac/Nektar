@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: sse2.cpp
+// File: sse2.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,7 +35,12 @@
 #ifndef NEKTAR_LIB_LIBUTILITES_SIMDLIB_SSE2_H
 #define NEKTAR_LIB_LIBUTILITES_SIMDLIB_SSE2_H
 
-#include <immintrin.h>
+#if defined(__x86_64__)
+    #include <immintrin.h>
+    #if defined(__INTEL_COMPILER) && !defined(TINYSIMD_HAS_SVML)
+        #define TINYSIMD_HAS_SVML
+    #endif
+#endif
 #include <cstdint>
 #include "traits.hpp"
 
@@ -156,6 +161,22 @@ struct sse2Int4
         _data = _mm_loadu_si128(reinterpret_cast<const vectorType*>(p));
     }
 
+
+    // gather/scatter with sse2
+    inline void gather(scalarType const* p, const sse2Int4<T>& indices)
+    {
+        _data = _mm_i32gather_pd(p, indices._data, 8);
+    }
+
+    inline void scatter(scalarType* out, const sse2Int4<T>& indices) const
+    {
+        // no scatter intrinsics for AVX2
+        alignas(alignment) scalarArray tmp;
+        _mm_store_pd(tmp, _data);
+
+        out[_mm_extract_epi32(indices._data, 0)] = tmp[0]; // SSE4.1
+        out[_mm_extract_epi32(indices._data, 1)] = tmp[1];
+    }
 
     inline void broadcast(const scalarType rhs)
     {

@@ -94,6 +94,9 @@ namespace Nektar
             
             LOCAL_REGIONS_EXPORT IndexMapValuesSharedPtr CreateIndexMap(const IndexMapKey &ikey);
 
+            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr
+                  CreateStaticCondMatrix(const MatrixKey &mkey);
+
             LOCAL_REGIONS_EXPORT const SpatialDomains::GeomFactorsSharedPtr& GetMetricInfo() const;
 
             LOCAL_REGIONS_EXPORT DNekMatSharedPtr BuildTransformationMatrix(
@@ -138,6 +141,15 @@ namespace Nektar
             inline IndexMapValuesSharedPtr GetIndexMap(const IndexMapKey &ikey)
             {
                 return m_indexMapManager[ikey];
+            }
+
+
+            LOCAL_REGIONS_EXPORT void AlignVectorToCollapsedDir(
+                    const int dir, 
+                    const Array<OneD, const NekDouble>      &inarray, 
+                    Array<OneD, Array<OneD, NekDouble> >    &outarray)
+            {
+                v_AlignVectorToCollapsedDir(dir,inarray,outarray);
             }
 
             inline ExpansionSharedPtr GetLeftAdjacentElementExp() const;
@@ -209,11 +221,8 @@ namespace Nektar
             {
                 v_ReOrientTracePhysMap(orient,idmap,nq0,nq1);
             }
-            
-            inline const NormalVector &GetTraceNormal(const int id) const
-            {
-                return v_GetTraceNormal(id);
-            }
+
+            LOCAL_REGIONS_EXPORT const NormalVector &GetTraceNormal(const int id);
             
             inline void ComputeTraceNormal(const int id)
             {
@@ -259,10 +268,11 @@ namespace Nektar
 	    LibUtilities::NekManager<IndexMapKey,
                       IndexMapValues, IndexMapKey::opLess> m_indexMapManager;
 
-            std::vector<ExpansionWeakPtr>        m_traceExp;
+            std::map<int,ExpansionWeakPtr>        m_traceExp;
             SpatialDomains::GeometrySharedPtr    m_geom;
             SpatialDomains::GeomFactorsSharedPtr m_metricinfo;
             MetricMap        m_metrics;
+            std::map<int, NormalVector>        m_traceNormals;
             ExpansionWeakPtr m_elementLeft;
             ExpansionWeakPtr m_elementRight;
             int              m_elementTraceLeft  = -1;
@@ -351,7 +361,11 @@ namespace Nektar
             virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
-
+            virtual void v_AlignVectorToCollapsedDir
+                   (const int dir, 
+                    const Array<OneD, const NekDouble>      &inarray, 
+                    Array<OneD, Array<OneD, NekDouble> >    &outarray);
+            
             virtual StdRegions::Orientation v_GetTraceOrient(int trace);
 
             virtual void v_SetCoeffsToOrientation(StdRegions::Orientation dir,
@@ -379,7 +393,7 @@ namespace Nektar
             virtual const NormalVector & v_GetTraceNormal(const int id) const;
 
             virtual void v_ComputeTraceNormal(const int id);
-
+            
             virtual const Array<OneD, const NekDouble>& v_GetPhysNormals(void);
 
             virtual void v_SetPhysNormals(Array<OneD, const NekDouble> &normal);
@@ -397,26 +411,37 @@ namespace Nektar
                 const Array<OneD, NekDouble> &incoeffs,
                 Array<OneD, NekDouble> &coeffs);
 
+            virtual void v_GenTraceExp(const int traceid,                                                                   ExpansionSharedPtr &exp);
+
         private:
 
         };
 
-        inline ExpansionSharedPtr Expansion::GetTraceExp(int  traceid)
+        inline ExpansionSharedPtr Expansion::GetTraceExp(const int  traceid)
         {
             ASSERTL1(traceid < GetNtraces(), "Trace is out of range.");
-            return m_traceExp[traceid].lock();
+
+            ExpansionSharedPtr returnval; 
+
+            if(m_traceExp.count(traceid))
+            {
+                // Use stored value
+                returnval = m_traceExp[traceid].lock();
+            }
+            else
+            {
+                // Generate trace exp
+                v_GenTraceExp(traceid,returnval); 
+            }
+            
+            return returnval; 
         }
 
         inline void Expansion::SetTraceExp(
             const int           traceid,
             ExpansionSharedPtr &exp)
         {
-            int nTraces = GetNtraces();
-            ASSERTL1(traceid < nTraces, "Edge out of range.");
-            if (m_traceExp.size() < nTraces)
-            {
-                m_traceExp.resize(nTraces);
-            }
+            ASSERTL1(traceid < GetNtraces(), "Edge out of range.");
 
             m_traceExp[traceid] = exp;
         }

@@ -8,7 +8,7 @@ ENDIF()
 
 IF( NEKTAR_SOLVER_DIFFUSION )
     ADD_SOLVER_EXECUTABLE(DiffusionSolver SOURCES DiffusionSolver.cpp)
-    ADD_SOLVER_EXECUTABLE(DiffusionSolverTimeInt SOURCES DiffusionSolverTimeInt COMPONENT diffusionsolver)
+    ADD_SOLVER_EXECUTABLE(DiffusionSolverTimeInt SOURCES DiffusionSolverTimeInt.cpp COMPONENT diffusionsolver)
     ADD_SOLVER_EXECUTABLE(MMFDiffusion SOURCES MMFDiffusion.cpp)
 
     ADD_NEKTAR_TEST(ImDiffusion_m6)

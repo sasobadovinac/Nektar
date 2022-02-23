@@ -137,6 +137,7 @@ protected:
     std::vector<Array<OneD, NekDouble> > m_outFields;
     std::vector<std::string> m_variables;
     FieldSharedPtr m_f;
+    po::variables_map m_vm;
 };
 }
 }
