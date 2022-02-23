@@ -40,7 +40,6 @@ using namespace std;
 #include "ProcessCrossField.h"
 
 #include <LibUtilities/BasicUtils/ParseUtils.h>
-#include <library/SpatialDomains/Geometry.h>
 
 namespace Nektar
 {
