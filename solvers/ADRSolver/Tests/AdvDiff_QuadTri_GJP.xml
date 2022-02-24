@@ -50,7 +50,7 @@
           <I PROPERTY="DiffusionAdvancement"     VALUE="Implicit"  />
           <I PROPERTY="AdvectionAdvancement"     VALUE="Explicit"  />
           <I PROPERTY="TimeIntegrationMethod"    VALUE="IMEXOrder1"/>
-          <I PROPERTY="GlobalSysSoln" VALUE="XxtMultiLevelStaticCond"/>
+          <I PROPERTY="GlobalSysSoln" VALUE="IterativeMultiLevelStaticCond"/>
         </SOLVERINFO>
 
         <VARIABLES>
