@@ -132,7 +132,18 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
         for (auto & i : m_fieldsALE)
         {
             i->GetMovement()->PerformMovement(time);
-            i->Reset();
+            //i->Reset();
+            // Loop over all elements and reset geometry information.
+            for (int j = 0; j < i->GetExp()->size(); ++j)
+            {
+                std::cout << i->GetExp(1856)->GetGeom()->GetGlobalID() << std::endl;
+                std::cout << j << " " << i->GetExp()->size() << std::endl;
+                i->GetExp(j)->GetGeom()->Reset(i->GetGraph()->GetCurvedEdges(), i->GetGraph()->GetCurvedFaces());
+                i->GetExp(j)->Reset();
+            }
+
+            // Loop over all elements and rebuild geometric factors.
+            i->CreateCollections(Collections::eNoImpType);
         }
 
         m_fieldsALE[0]->SetUpPhysNormals();
