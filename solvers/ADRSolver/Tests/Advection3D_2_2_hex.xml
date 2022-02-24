@@ -27,7 +27,8 @@
       <I PROPERTY="Projection"            VALUE="Continuous"          />
       <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
       <I PROPERTY="Projection"            VALUE="Galerkin"            />
-      <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"/>
+      <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"        />
+      <I PROPERTY="GJPStabilisation"      VALUE="SemiImplicit"        />
     </SOLVERINFO>
     
     <VARIABLES>
@@ -80,11 +81,6 @@
     
   </CONDITIONS>
 
-  <FORCING>
-    <FORCE TYPE="GJPStabilisation">
-      </FORCE>
-  </FORCING>
-  
     <GEOMETRY DIM="3" SPACE="3" >
         <VERTEX XSCALE="1/(2*PI)" YSCALE="1/(2*PI)" ZSCALE="1/(2*PI)">
             <V ID="0">3.14159265e+00 3.14159265e+00 0.00000000e+00</V>
