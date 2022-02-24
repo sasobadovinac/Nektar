@@ -780,10 +780,10 @@ namespace Nektar
             }
             else
             {
-                const MatrixType mtype[3][3]
-            = {{eLaplacian00,eLaplacian01,eLaplacian02},
-               {eLaplacian01,eLaplacian11,eLaplacian12},
-               {eLaplacian02,eLaplacian12,eLaplacian22}};
+                const MatrixType mtype[3][3] = {
+                    {eLaplacian00, eLaplacian01, eLaplacian02},
+                    {eLaplacian01, eLaplacian11, eLaplacian12},
+                    {eLaplacian02, eLaplacian12, eLaplacian22}};
                 StdMatrixKeySharedPtr mkeyij;
 
                 for(i = 0; i < dim; i++)
@@ -821,9 +821,8 @@ namespace Nektar
         }
 
         void StdExpansion::WeakDirectionalDerivMatrixOp_MatFree(
-                                                                const Array<OneD, const NekDouble> &inarray,
-                                                                Array<OneD,NekDouble> &outarray,
-                                                                const StdMatrixKey &mkey)
+            const Array<OneD, const NekDouble> &inarray,
+            Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey)
         {
             int nq = GetTotPoints();
 
@@ -837,13 +836,13 @@ namespace Nektar
 
             // Compte M_{div tv}
             Vmath::Vmul(nq, &(mkey.GetVarCoeff(eVarCoeffMFDiv))[0], 1,
-                        &tmp[0],                                1,
-                        &Mtmp[0],                               1);
+                    &tmp[0], 1,
+                    &Mtmp[0], 1);
 
             v_IProductWRTBase(Mtmp, Mout);
 
             // Add D_tv + M_{div tv}
-            Vmath::Vadd(m_ncoeffs, &Mout[0],     1,
+            Vmath::Vadd(m_ncoeffs, &Mout[0], 1,
                         &outarray[0], 1,
                         &outarray[0], 1);
         }
@@ -1010,8 +1009,7 @@ namespace Nektar
         }
 
         void StdExpansion::v_SetCoeffsToOrientation(
-                                                    Array<OneD, NekDouble> &coeffs,
-                                                    StdRegions::Orientation dir)
+            Array<OneD, NekDouble> &coeffs, StdRegions::Orientation dir)
         {
             boost::ignore_unused(coeffs, dir);
             NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");

@@ -553,8 +553,8 @@ namespace Nektar
                             //   numpoints+1,
                             //   LibUtilities::eGaussLobattoLegendre);
                             const LibUtilities::PointsKey pkey(
-                                       numpoints,
-                                        LibUtilities::eGaussRadauMAlpha1Beta0);
+                                numpoints,
+                                LibUtilities::eGaussRadauMAlpha1Beta0);
                             return LibUtilities::BasisKey(
                                 LibUtilities::eModified_B, nummodes, pkey);
                         }

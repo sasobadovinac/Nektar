@@ -625,60 +625,59 @@ namespace Nektar
                 return m_stdStaticCondMatrixManager[mkey];
             }
 
-            void NormVectorIProductWRTBase
-            (const Array<OneD, const NekDouble> &Fx,
-             Array< OneD, NekDouble> &outarray)
+            void NormVectorIProductWRTBase(
+                const Array<OneD, const NekDouble> &Fx,
+                Array<OneD, NekDouble> &outarray)
             {
                 v_NormVectorIProductWRTBase(Fx,outarray);
             }
 
-            void NormVectorIProductWRTBase
-            (const Array<OneD, const NekDouble> &Fx,
-             const Array<OneD, NekDouble> &Fy,
-             Array< OneD, NekDouble> &outarray)
+            void NormVectorIProductWRTBase(
+                const Array<OneD, const NekDouble> &Fx,
+                const Array<OneD, NekDouble> &Fy,
+                Array<OneD, NekDouble> &outarray)
             {
                 v_NormVectorIProductWRTBase(Fx,Fy,outarray);
             }
 
-            void NormVectorIProductWRTBase
-            (const Array<OneD, const NekDouble> &Fx,
-             const Array<OneD, const NekDouble> &Fy,
-             const Array<OneD, const NekDouble> &Fz,
-             Array< OneD, NekDouble> &outarray)
+            void NormVectorIProductWRTBase(
+                const Array<OneD, const NekDouble> &Fx,
+                const Array<OneD, const NekDouble> &Fy,
+                const Array<OneD, const NekDouble> &Fz,
+                Array<OneD, NekDouble> &outarray)
             {
                 v_NormVectorIProductWRTBase(Fx,Fy,Fz,outarray);
             }
 
-            void NormVectorIProductWRTBase
-            (const Array<OneD,
-             const Array<OneD, NekDouble> > &Fvec,
-             Array< OneD, NekDouble> &outarray)
+            void NormVectorIProductWRTBase(
+                const Array<OneD, const Array<OneD, NekDouble>> &Fvec,
+                Array<OneD, NekDouble> &outarray)
             {
                 v_NormVectorIProductWRTBase(Fvec, outarray);
             }
 
-            DNekScalBlkMatSharedPtr GetLocStaticCondMatrix
-            (const LocalRegions::MatrixKey &mkey)
+            DNekScalBlkMatSharedPtr GetLocStaticCondMatrix(
+                const LocalRegions::MatrixKey &mkey)
             {
                 return v_GetLocStaticCondMatrix(mkey);
             }
 
-            STD_REGIONS_EXPORT void DropLocStaticCondMatrix
-            (const LocalRegions::MatrixKey &mkey)
+            STD_REGIONS_EXPORT void DropLocStaticCondMatrix(
+                const LocalRegions::MatrixKey &mkey)
             {
                 return v_DropLocStaticCondMatrix(mkey);
             }
 
-            int CalcNumberOfCoefficients(const std::vector<unsigned int>  &nummodes,
-                                         int &modes_offset)
+            int CalcNumberOfCoefficients(
+                const std::vector<unsigned int> &nummodes, int &modes_offset)
             {
                 return v_CalcNumberOfCoefficients(nummodes,modes_offset);
             }
 
             // virtual functions related to LocalRegions
             STD_REGIONS_EXPORT NekDouble StdPhysEvaluate(
-                                                         const Array<OneD, const NekDouble> &Lcoord,
-                                                         const Array<OneD, const NekDouble> &physvals);
+                    const Array<OneD, const NekDouble> &Lcoord,
+                    const Array<OneD, const NekDouble> &physvals);
 
             int GetCoordim()
             {
@@ -702,12 +701,12 @@ namespace Nektar
             }
 
             void GetTraceToElementMap(
-                                      const int                  tid,
-                                      Array<OneD, unsigned int> &maparray,
-                                      Array<OneD,          int> &signarray,
-                                      Orientation                traceOrient = eForwards,
-                                      int                        P = -1,
-                                      int                        Q = -1)
+                    const int                  tid,
+                    Array<OneD, unsigned int> &maparray,
+                    Array<OneD,          int> &signarray,
+                    Orientation                traceOrient = eForwards,
+                    int                        P = -1,
+                    int                        Q = -1)
             {
                 v_GetTraceToElementMap(tid,maparray,signarray,traceOrient,P,Q);
             }
@@ -730,10 +729,10 @@ namespace Nektar
             }
 
             void GetTraceInteriorToElementMap(
-                                              const int                  tid,
-                                              Array<OneD, unsigned int> &maparray,
-                                              Array<OneD,          int> &signarray,
-                                              const Orientation          traceOrient = eForwards)
+                    const int                  tid,
+                    Array<OneD, unsigned int> &maparray,
+                    Array<OneD,          int> &signarray,
+                    const Orientation          traceOrient = eForwards)
             {
                 v_GetTraceInteriorToElementMap(tid,maparray,signarray,traceOrient);
             }
@@ -749,15 +748,15 @@ namespace Nektar
             }
 
             void MultiplyByQuadratureMetric(
-                                            const Array<OneD, const NekDouble> &inarray,
-                                            Array<OneD, NekDouble> &outarray)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray)
             {
                 v_MultiplyByQuadratureMetric(inarray, outarray);
             }
 
             void MultiplyByStdQuadratureMetric(
-                                               const Array<OneD, const NekDouble> &inarray,
-                                               Array<OneD, NekDouble> & outarray)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray)
             {
                 v_MultiplyByStdQuadratureMetric(inarray, outarray);
             }
@@ -843,10 +842,10 @@ namespace Nektar
             }
 
             void LinearAdvectionDiffusionReactionMatrixOp(
-                                                          const Array<OneD, const NekDouble> &inarray,
-                                                          Array<OneD,NekDouble> &outarray,
-                                                          const StdMatrixKey &mkey,
-                                                          bool addDiffusionTerm = true)
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD,NekDouble> &outarray,
+                    const StdMatrixKey &mkey,
+                    bool addDiffusionTerm = true)
             {
                 v_LinearAdvectionDiffusionReactionMatrixOp
                     (inarray,outarray,mkey,addDiffusionTerm);
@@ -1020,19 +1019,19 @@ namespace Nektar
             (const Array<OneD, const NekDouble> &Fx, Array< OneD, NekDouble> &outarray);
 
             STD_REGIONS_EXPORT virtual void v_NormVectorIProductWRTBase(
-                                                                        const Array<OneD, const NekDouble> &Fx,
-                                                                        const Array<OneD, const NekDouble> &Fy,
-                                                                        Array< OneD, NekDouble> &outarray);
+                const Array<OneD, const NekDouble> &Fx,
+                const Array<OneD, const NekDouble> &Fy,
+                Array<OneD, NekDouble> &outarray);
 
             STD_REGIONS_EXPORT virtual void v_NormVectorIProductWRTBase(
-                                                                        const Array<OneD, const NekDouble> &Fx,
-                                                                        const Array<OneD, const NekDouble> &Fy,
-                                                                        const Array<OneD, const NekDouble> &Fz,
-                                                                        Array< OneD, NekDouble> &outarray);
-            
+                const Array<OneD, const NekDouble> &Fx,
+                const Array<OneD, const NekDouble> &Fy,
+                const Array<OneD, const NekDouble> &Fz,
+                Array<OneD, NekDouble> &outarray);
+
             STD_REGIONS_EXPORT virtual void v_NormVectorIProductWRTBase(
-                                                                        const Array<OneD, const Array<OneD, NekDouble> > &Fvec,
-                                                                        Array< OneD, NekDouble> &outarray);
+                const Array<OneD, const Array<OneD, NekDouble>> &Fvec,
+                Array<OneD, NekDouble> &outarray);
 
             STD_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr
             v_GetLocStaticCondMatrix(const LocalRegions::MatrixKey &mkey);
@@ -1052,11 +1051,9 @@ namespace Nektar
              *  \return returns the \f$ L_\infty \f$ error as a NekDouble.
              */
             STD_REGIONS_EXPORT NekDouble Linf(
-                                              const Array<OneD,
-                                              const NekDouble>& phys,
-                                              const Array<OneD,
-                                              const NekDouble>& sol = NullNekDouble1DArray);
-            
+                const Array<OneD, const NekDouble> &phys,
+                const Array<OneD, const NekDouble> &sol = NullNekDouble1DArray);
+
             /** \brief Function to evaluate the discrete \f$ L_2\f$ error,
              *  \f$ | \epsilon |_{2} = \left [ \int^1_{-1} [u - u_{exact}]^2
              *  dx \right]^{1/2} d\xi_1 \f$ where \f$ u_{exact}\f$ is given by
@@ -1492,16 +1489,15 @@ namespace Nektar
                          "(and should have no) implementation");
             }
 
-            STD_REGIONS_EXPORT virtual void  v_IProductWRTDerivBase
-            (const int dir,
-             const Array<OneD, const NekDouble>& inarray,
-             Array<OneD, NekDouble> &outarray);
-    
-            STD_REGIONS_EXPORT virtual void  v_IProductWRTDirectionalDerivBase(
-             const Array<OneD, const NekDouble>& direction,
-             const Array<OneD, const NekDouble>& inarray,
-             Array<OneD, NekDouble> &outarray);
-            
+            STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase(
+                const int dir, const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray);
+
+            STD_REGIONS_EXPORT virtual void v_IProductWRTDirectionalDerivBase(
+                const Array<OneD, const NekDouble> &direction,
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray);
+
             STD_REGIONS_EXPORT virtual void v_FwdTrans_BndConstrained(
              const Array<OneD, const NekDouble>& inarray,
              Array<OneD, NekDouble> &outarray);
