@@ -323,6 +323,24 @@ void Generator2D::MakeBL(int faceid)
     int eid = 0;
     for (auto &it : m_blCurves)
     {
+        std::vector<int> edgeIds;
+        for (auto &edges_in_edgeloop : m_mesh->m_cad->GetSurf(faceid)->GetEdges())
+        {
+            for (auto &edge : edges_in_edgeloop->edges)
+            {
+                edgeIds.push_back(edge->GetId());
+            }
+        }
+        if (std::find(edgeIds.begin(), edgeIds.end(), it) == edgeIds.end()) return;
+
+        // auto surfs = m_mesh->m_cad->GetCurve(it)->GetAdjSurf();
+        // std::cout << "testing --- surfs size: " << surfs.size() << "\n";
+        // for (auto &surf : surfs)
+        // {
+        //     std::cout << "testing --- surf ids: " << surf->m_id << "\n";
+        // }
+        // std::vector<EdgeLoopSharedPtr> edgeloop = m_mesh->m_cad->GetSurf(faceid)->GetEdges();
+
         CADOrientation::Orientation edgeo =
             m_mesh->m_cad->GetCurve(it)->GetOrienationWRT(faceid);
         vector<EdgeSharedPtr> es = m_curvemeshes[it]->GetMeshEdges();
@@ -824,8 +842,8 @@ void Generator2D::MakeBL(int faceid)
         }
 
         // This line chanegs m_curvemeshes and prevents the ability to generate anotehr BL on another surface using the same curve
-        // m_curvemeshes[it] = MemoryManager<CurveMesh>::AllocateSharedPtr(
-        //     it, m_mesh, newNs, m_log);
+        m_curvemeshes[it] = MemoryManager<CurveMesh>::AllocateSharedPtr(
+            it, m_mesh, newNs, m_log);
 
         if (edgeo == CADOrientation::eBackwards)
         {
