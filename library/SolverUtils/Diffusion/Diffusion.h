@@ -94,7 +94,6 @@ namespace Nektar
          *  4th: Devrivatives of field conservative varialbes
          *  5th: nonzero flux index array,          optional
          *  6th: normal vectors                     optional
-         *  7th: aritificial diffusion facotres     optional
          *
          * a null pointer need to be passed for optional parameters
          */
@@ -104,8 +103,7 @@ namespace Nektar
             const TensorOfArray3D<NekDouble>                                &,
                   TensorOfArray3D<NekDouble>                                &,
                   Array< OneD, int >                                        &,
-            const Array<OneD, Array<OneD, NekDouble> >                      &,
-            const Array<OneD, NekDouble>                                    &)>
+            const Array<OneD, Array<OneD, NekDouble> >                      &)>
         DiffusionFluxCons;
 
         /**
