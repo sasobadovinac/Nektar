@@ -238,6 +238,7 @@ void DiffusionIP::v_DiffuseCoeffs(
     DiffuseVolumeFlux(fields, inarray, qfield, elmtFlux, nonZeroIndex);
     timer.Stop();
     timer.AccumulateRegion("Diffusion:Volumeflux");
+    timer.Start();
 
     // pre-allocate this?
     Array<OneD, Array<OneD, NekDouble>> tmpFluxIprdct{nDim};

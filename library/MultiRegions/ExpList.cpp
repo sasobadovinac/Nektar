@@ -2385,7 +2385,7 @@ namespace Nektar
                 }
                 
                 LIKWID_MARKER_START("v_BwdTrans_IterPerExp");
-                // timer.Start();
+                timer.Start();
                 
                 Array<OneD, NekDouble> tmp;
                 for (int i = 0; i < m_collections.size(); ++i)
@@ -2394,10 +2394,11 @@ namespace Nektar
                                                    inarray + m_coll_coeff_offset[i],
                                                    tmp = outarray + m_coll_phys_offset[i]);
                 }
-            }
 
-            timer.Stop();
-            LIKWID_MARKER_STOP("v_BwdTrans_IterPerExp");
+                timer.Stop();
+                LIKWID_MARKER_STOP("v_BwdTrans_IterPerExp");
+
+            }
 
             // Elapsed time
             timer.AccumulateRegion("Collections:BwdTrans");
