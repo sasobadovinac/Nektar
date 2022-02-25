@@ -21,6 +21,7 @@ v5.1.1
 - Split Helmholtz MatrixFree operator to improve compile times (!1292)
 - Fix Boost deprecated header warnings (!1302)
 - Add command lines to set starting time and starting checkpoint number of a time-dependent simulation (!1309)
+- Fix an index referencing error in the Collections PhysDeriv method for Hex (!1314)
 
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
