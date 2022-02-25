@@ -107,48 +107,60 @@ void Generator2D::Process()
     {
         m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumCurve(),
                                 "Curve progress");
-
-        vector<unsigned int>::iterator f =
-            find(m_blCurves.begin(), m_blCurves.end(), i);
-        if (f == m_blCurves.end())
+        for (int faceid = 1; faceid <= m_mesh->m_cad->GetNumSurf(); faceid++)
         {
-            m_curvemeshes[i] =
-                MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log);
-
-            // Fheck if this curve is at an end of the BL
-            // If so, define an offset for the second node, corresponding to the
-            // BL thickness
-            if (m_blends.count(i))
+            std::vector<int> edgeIds;
+            for (auto &edges_in_edgeloop : m_mesh->m_cad->GetSurf(faceid)->GetEdges())
             {
-                vector<CADVertSharedPtr> vertices =
-                    m_mesh->m_cad->GetCurve(i)->GetVertex();
-                Array<OneD, NekDouble> loc;
-                NekDouble t;
-
-                // offset needed at first node (or both)
-                if (m_blends[i] == 0 || m_blends[i] == 2)
+                for (auto &edge : edges_in_edgeloop->edges)
                 {
-                    loc = vertices[0]->GetLoc();
-                    t   = m_thickness.Evaluate(m_thickness_ID, loc[0], loc[1],
-                                             loc[2], 0.0);
-                    m_curvemeshes[i]->SetOffset(0, t);
-                }
-                // offset needed at second node (or both)
-                if (m_blends[i] == 1 || m_blends[i] == 2)
-                {
-                    loc = vertices[1]->GetLoc();
-                    t   = m_thickness.Evaluate(m_thickness_ID, loc[0], loc[1],
-                                             loc[2], 0.0);
-                    m_curvemeshes[i]->SetOffset(1, t);
+                    edgeIds.push_back(edge->GetId());
                 }
             }
+            if (std::find(edgeIds.begin(), edgeIds.end(), i) == edgeIds.end()) break;
+
+            vector<unsigned int>::iterator f =
+                find(m_blCurves.begin(), m_blCurves.end(), i);
+            if (f == m_blCurves.end())
+            {
+                m_curvemeshes[faceid][i] =
+                    MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log);
+
+                // Fheck if this curve is at an end of the BL
+                // If so, define an offset for the second node, corresponding to the
+                // BL thickness
+                if (m_blends.count(i))
+                {
+                    vector<CADVertSharedPtr> vertices =
+                        m_mesh->m_cad->GetCurve(i)->GetVertex();
+                    Array<OneD, NekDouble> loc;
+                    NekDouble t;
+
+                    // offset needed at first node (or both)
+                    if (m_blends[i] == 0 || m_blends[i] == 2)
+                    {
+                        loc = vertices[0]->GetLoc();
+                        t   = m_thickness.Evaluate(m_thickness_ID, loc[0], loc[1],
+                                                   loc[2], 0.0);
+                        m_curvemeshes[faceid][i]->SetOffset(0, t);
+                    }
+                    // offset needed at second node (or both)
+                    if (m_blends[i] == 1 || m_blends[i] == 2)
+                    {
+                        loc = vertices[1]->GetLoc();
+                        t   = m_thickness.Evaluate(m_thickness_ID, loc[0], loc[1],
+                                                   loc[2], 0.0);
+                        m_curvemeshes[faceid][i]->SetOffset(1, t);
+                    }
+                }
+            }
+            else
+            {
+                m_curvemeshes[faceid][i] = MemoryManager<CurveMesh>::AllocateSharedPtr(
+                    i, m_mesh, m_log, m_config["blthick"].as<string>());
+            }
+            m_curvemeshes[faceid][i]->Mesh();
         }
-        else
-        {
-            m_curvemeshes[i] = MemoryManager<CurveMesh>::AllocateSharedPtr(
-                i, m_mesh, m_log, m_config["blthick"].as<string>());
-        }
-        m_curvemeshes[i]->Mesh();
     }
 
     ////////
@@ -171,29 +183,41 @@ void Generator2D::Process()
             MakeBL(i);
         }
 
-        // If the BL doesn't form closed loops, we need to remove the outside
-        // nodes from the curve meshes
-        for (auto &ic : m_blends)
+        for (int faceid = 1; faceid <= m_mesh->m_cad->GetNumSurf(); faceid++)
         {
-            vector<NodeSharedPtr> nodes =
-                m_curvemeshes[ic.first]->GetMeshPoints();
-
-            if (ic.second == 0 || ic.second == 2)
+            // If the BL doesn't form closed loops, we need to remove the outside
+            // nodes from the curve meshes
+            for (auto &ic : m_blends)
             {
-                nodes.erase(nodes.begin());
-            }
-            if (ic.second == 1 || ic.second == 2)
-            {
-                nodes.erase(nodes.end() - 1);
-            }
+                std::vector<int> edgeIds;
+                for (auto &edges_in_edgeloop : m_mesh->m_cad->GetSurf(faceid)->GetEdges())
+                {
+                    for (auto &edge : edges_in_edgeloop->edges)
+                    {
+                        edgeIds.push_back(edge->GetId());
+                    }
+                }
+                if (std::find(edgeIds.begin(), edgeIds.end(), ic.first) == edgeIds.end()) break;
 
-            // Rebuild the curvemesh without the first node, the last node or
-            // both
-            m_curvemeshes[ic.first] =
-                MemoryManager<CurveMesh>::AllocateSharedPtr(ic.first, m_mesh,
-                                                            nodes, m_log);
+                vector<NodeSharedPtr> nodes =
+                    m_curvemeshes[faceid][ic.first]->GetMeshPoints();
+
+                if (ic.second == 0 || ic.second == 2)
+                {
+                    nodes.erase(nodes.begin());
+                }
+                if (ic.second == 1 || ic.second == 2)
+                {
+                    nodes.erase(nodes.end() - 1);
+                }
+
+                // Rebuild the curvemesh without the first node, the last node or
+                // both
+                m_curvemeshes[faceid][ic.first] =
+                    MemoryManager<CurveMesh>::AllocateSharedPtr(ic.first, m_mesh,
+                                                                nodes, m_log);
+            }
         }
-
         m_log(VERBOSE) << "    Boundary layer meshing complete." << endl;
     }
 
@@ -205,7 +229,7 @@ void Generator2D::Process()
         m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumSurf(),
                                 "Face progress");
         m_facemeshes[i] = MemoryManager<FaceMesh>::AllocateSharedPtr(
-            i, m_mesh, m_curvemeshes, 99 + i, m_log);
+            i, m_mesh, m_curvemeshes[i], 99 + i, m_log);
         m_facemeshes[i]->Mesh();
     }
 
@@ -349,11 +373,9 @@ void Generator2D::MakeBL(int faceid)
         // normal must be done in the parametric space (and then projected back)
         // because of face orientation
         std::cout << "testing MakeBL: it = " << it << " es size = " << es.size() << " \n";
-        if(es.size() == 0) return;
         for (auto &ie : es)
         {
             ie->m_id = eid++;
-            std::cout << "checking what ie->m_id is in es with it: " << ie-> m_id << " -- " << it << "\n";
             Array<OneD, NekDouble> p1, p2;
             p1 = ie->m_n1->GetCADSurfInfo(faceid);
             p2 = ie->m_n2->GetCADSurfInfo(faceid);
