@@ -52,7 +52,7 @@ namespace Nektar
 
             MULTI_REGIONS_EXPORT ~GJPForcing() {};
 
-            void Apply(const Array<OneD, NekDouble>  &inarray,
+            MULTI_REGIONS_EXPORT void Apply(const Array<OneD, NekDouble>  &inarray,
                        Array<OneD, NekDouble> &outarray,
                        const Array<OneD, NekDouble> &pUnorm = NullNekDouble1DArray,
                        const NekDouble scale = 1.0) const;
