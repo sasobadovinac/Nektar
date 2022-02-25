@@ -84,8 +84,10 @@ class Timer
         LIB_UTILITIES_EXPORT NekDouble TimePerTest(unsigned int n);
 
     private:
-        CounterType m_start;
-        CounterType m_end;
+        // Initialize start and end to 0
+        CounterType m_start = CounterType();
+        CounterType m_end   = CounterType();
+        bool        m_isactive = false;
     static std::map<std::string, std::tuple<Seconds, size_t, int> >
                  m_elapsedRegion;
         static unsigned short m_maxStringWidth;

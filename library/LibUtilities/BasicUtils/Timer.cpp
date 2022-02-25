@@ -46,16 +46,22 @@ namespace LibUtilities
 
 void Timer::Start()
 {
+    ASSERTL0(!m_isactive, "Call to Timer::Start() done when timer is active.");
+    m_isactive = true;
     m_start = Clock::now();
 }
 
 void Timer::Stop()
 {
     m_end = Clock::now();
+    ASSERTL0(m_isactive, "Call to Timer::Stop() done when timer is inactive.");
+    m_isactive = false;
 }
 
 Timer::Seconds Timer::Elapsed()
 {
+    ASSERTL0(!m_isactive, 
+        "Call to Timer::Elapsed() done before Timer::Stop().");
     return std::chrono::duration_cast<Seconds>(m_end - m_start);
 }
 
