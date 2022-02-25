@@ -619,7 +619,6 @@ namespace Nektar
         }
     }
 
-<<<<<<< HEAD
       /**
      * @brief Return the flux vector for the IP diffusion problem, based on
      * conservative variables
