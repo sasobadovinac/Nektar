@@ -390,14 +390,6 @@ namespace Nektar
             }
 
             template<typename FuncPointerT, typename ObjectPointerT>
-            void SetArtificialDiffusionVector(
-                FuncPointerT func, ObjectPointerT obj)
-            {
-                m_ArtificialDiffusionVector = std::bind(
-                    func, obj, std::placeholders::_1, std::placeholders::_2);
-            }
-
-            template<typename FuncPointerT, typename ObjectPointerT>
             void SetSpecialBndTreat(FuncPointerT func, ObjectPointerT obj)
             {
                 m_SpecialBndTreat = std::bind(

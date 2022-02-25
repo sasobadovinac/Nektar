@@ -104,7 +104,6 @@ protected:
     NekDouble m_IP2ndDervCoeff;
     NekDouble m_IPPenaltyCoeff;
 
-    Array<OneD, NekDouble> m_MuVarTrace;
     Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
     Array<OneD, Array<OneD, NekDouble>> m_traceAver;
     Array<OneD, Array<OneD, NekDouble>> m_traceJump;

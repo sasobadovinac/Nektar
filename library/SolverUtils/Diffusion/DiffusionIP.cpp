@@ -118,12 +118,6 @@ void DiffusionIP::v_InitObject(
                  "different BWD for different variable not coded yet");
     }
 
-    m_MuVarTrace = NullNekDouble1DArray;
-    if (m_ArtificialDiffusionVector)
-    {
-        m_MuVarTrace = Array<OneD, NekDouble>{nTracePts, 0.0};
-    }
-
     // workspace for v_diffuse
     size_t nCoeffs = pFields[0]->GetNcoeffs();
     m_wspDiff = Array<OneD, Array<OneD, NekDouble>>{nVariable};
