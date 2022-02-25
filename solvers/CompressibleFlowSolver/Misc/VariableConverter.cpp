@@ -459,13 +459,13 @@ void VariableConverter::SetAv(
 
 Array<OneD, NekDouble>& VariableConverter::GetAv()
 {
-    ASSERTL1(m_muAv /= NullNekDouble1DArray, "m_muAv not set");
+    ASSERTL1(m_muAv != NullNekDouble1DArray, "m_muAv not set");
     return m_muAv;
 }
 
 Array<OneD, NekDouble>& VariableConverter::GetAvTrace()
 {
-    ASSERTL1(m_muAvTrace /= NullNekDouble1DArray, "m_muAvTrace not set");
+    ASSERTL1(m_muAvTrace != NullNekDouble1DArray, "m_muAvTrace not set");
     return m_muAvTrace;
 }
 
@@ -536,7 +536,7 @@ void VariableConverter::SetElmtMinHP(
 
 Array<OneD, NekDouble>& VariableConverter::GetElmtMinHP()
 {
-    ASSERTL1(m_hOverP /= NullNekDouble1DArray, "m_hOverP not set");
+    ASSERTL1(m_hOverP != NullNekDouble1DArray, "m_hOverP not set");
     return m_hOverP;
 }
 
