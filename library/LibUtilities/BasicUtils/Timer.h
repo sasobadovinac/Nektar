@@ -88,9 +88,8 @@ class Timer
         CounterType m_start = CounterType();
         CounterType m_end   = CounterType();
         bool        m_isactive = false;
-    static std::map<std::string, std::tuple<Seconds, size_t, int> >
-                 m_elapsedRegion;
-        static unsigned short m_maxStringWidth;
+        static std::map<std::string, std::tuple<Seconds, size_t, int>>
+            m_elapsedRegion;
 
 };
 
