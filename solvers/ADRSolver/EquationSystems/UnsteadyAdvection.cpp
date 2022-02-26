@@ -325,7 +325,7 @@ namespace Nektar
                     
                     if(m_useGJPStabilisation)
                     {
-                        const MultiRegions::GJPForcingSharedPtr GJPData =
+                        const MultiRegions::GJPStabilisationSharedPtr GJPData =
                             cfield->GetGJPForcing(); 
                         
                         factors[StdRegions::eFactorGJP] =

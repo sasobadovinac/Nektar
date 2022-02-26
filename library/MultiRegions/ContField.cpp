@@ -937,7 +937,7 @@ namespace Nektar
                 // initialize if required
                 if(!m_GJPData)
                 {
-                    m_GJPData = MemoryManager<GJPForcing>::
+                    m_GJPData = MemoryManager<GJPStabilisation>::
                         AllocateSharedPtr(GetSharedThisPtr());
                 }
 

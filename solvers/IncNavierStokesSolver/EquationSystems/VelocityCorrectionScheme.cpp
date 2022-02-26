@@ -35,7 +35,7 @@
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 #include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion3D.h>
-#include <MultiRegions/GJPForcing.h>
+#include <MultiRegions/GJPStabilisation.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/Core/Misc.h>
 #include <MultiRegions/ContField.h>
@@ -899,7 +899,7 @@ namespace Nektar
             MultiRegions::ContFieldSharedPtr cfield =
                 std::dynamic_pointer_cast<MultiRegions::ContField>(m_fields[0]);
 
-            MultiRegions::GJPForcingSharedPtr GJPData = cfield->GetGJPForcing();
+            MultiRegions::GJPStabilisationSharedPtr GJPData = cfield->GetGJPForcing();
 
             int nTracePts = GJPData->GetNumTracePts(); 
             Array<OneD, NekDouble> unorm(nTracePts,1.0);

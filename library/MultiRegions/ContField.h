@@ -39,7 +39,7 @@
 #include <SpatialDomains/Conditions.h>
 #include <MultiRegions/MultiRegions.hpp>
 #include <MultiRegions/DisContField.h>
-#include <MultiRegions/GJPForcing.h>
+#include <MultiRegions/GJPStabilisation.h>
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalLinSys.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
@@ -167,12 +167,12 @@ namespace Nektar
                              const Array<OneD, const NekDouble> &dirForcing
                                                         = NullNekDouble1DArray);
 
-            MULTI_REGIONS_EXPORT const GJPForcingSharedPtr GetGJPForcing()
+            MULTI_REGIONS_EXPORT const GJPStabilisationSharedPtr GetGJPForcing()
             {
                 // initialize if required
                 if(!m_GJPData)
                 {
-                    m_GJPData = MemoryManager<GJPForcing>::
+                    m_GJPData = MemoryManager<GJPStabilisation>::
                         AllocateSharedPtr(GetSharedThisPtr());
                 }
 
@@ -180,7 +180,7 @@ namespace Nektar
             }
 
             MULTI_REGIONS_EXPORT void SetGJPForcing(
-                const GJPForcingSharedPtr &GJPData)
+                const GJPStabilisationSharedPtr &GJPData)
             {
                 m_GJPData = GJPData; 
             }
@@ -204,7 +204,7 @@ namespace Nektar
             LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys> m_globalLinSysManager;
 
             /// Data for Gradient Jump Penalisation (GJP) stabilisaiton
-            GJPForcingSharedPtr m_GJPData; 
+            GJPStabilisationSharedPtr m_GJPData; 
             
             /// Returns the global matrix specified by \a mkey.
             MULTI_REGIONS_EXPORT GlobalMatrixSharedPtr
