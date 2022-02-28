@@ -923,14 +923,22 @@ namespace Nektar
               TensorOfArray5D<DataType>                 &TraceIPSymJacArray)
     {
         int nvariables = inarray.size();
+        
+        LibUtilities::Timer timer; 
+        timer.Start();
         GetTraceJac(inarray,qfield,TraceJac,TraceJacDeriv,TraceJacDerivSign,
             TraceIPSymJacArray);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd - GetTraceJac");
         
         Array<OneD, TypeNekBlkMatSharedPtr > tmpJac;
         Array<OneD, Array<OneD, DataType>>  tmpSign;
 
+        timer.Start();
         m_advObject->AddTraceJacToMat(nvariables,m_spacedim,m_fields, 
             TraceJac,gmtxarray,tmpJac,tmpSign);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd - GetTraceJac");
     }
 
 
@@ -1362,15 +1370,25 @@ namespace Nektar
         NekSingle zero =0.0;
         Fill2DArrayOfBlkDiagonalMat(gmtxarray,zero);
 
+        LibUtilities::Timer timer;
+        timer.Start();
         AddMatNSBlkDiagVol(inarray,qfield,gmtxarray,m_stdSMatDataDBB,
             m_stdSMatDataDBDB);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagVol");
 
+        timer.Start();
         AddMatNSBlkDiagBnd(inarray,qfield,gmtxarray,TraceJac,
             TraceJacDeriv,TraceJacDerivSign,TraceIPSymJacArray);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd");
 
         MultiplyElmtInvMassPlusSource(gmtxarray,m_TimeIntegLambda,zero);
 
+        timer.Start();        
         ElmtVarInvMtrx(gmtxarray,gmtVar,zero);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::ElmtVarInvMtrx");
 
         TransTraceJacMatToArray(TraceJac,TraceJacDeriv,TraceJacArray, 
             TraceJacDerivArray);

@@ -390,8 +390,12 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
         starttem = id_start[idtem];
         endtem   = id_end[idtem];
 
+        LibUtilities::Timer timer;
+        timer.Start();
         DoArnoldi(starttem, endtem, nGlobal, nDir, V_total, Vsingle1, Vsingle2,
                   hsingle1);
+        timer.Stop();
+        timer.AccumulateRegion("NekLinSysIterGMRES::DoArnoldi");
 
         if (starttem > 0)
         {
@@ -474,14 +478,21 @@ void NekLinSysIterGMRES::DoArnoldi(const int starttem, const int endtem,
     NekDouble vExchange = 0.0;
     // w=AV(:,nd)
     Array<OneD, NekDouble> w(nGlobal, 0.0);
-
+    
+    LibUtilities::Timer timer;
+    timer.Start();
     m_operator.DoNekSysLhsEval(Vsingle1, w, m_DifferenceFlag1);
+    timer.Stop();
+    timer.AccumulateRegion("NekLinSysIterGMRES::DoArnoldi - DoNekSysLhsEval");
 
     tmp1 = w + nDir;
     tmp2 = w + nDir;
     if (m_NekLinSysLeftPrecon)
     {
+        timer.Start();
         m_operator.DoNekSysPrecon(tmp1, tmp2);
+        timer.Stop();
+        timer.AccumulateRegion("NekLinSysIterGMRES::DoArnoldi - DoNekSysPrecon");
     }
 
     Vmath::Smul(nNonDir, sqrt(m_prec_factor), tmp2, 1, tmp2, 1);
