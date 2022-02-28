@@ -33,6 +33,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <LibUtilities/BasicUtils/Timer.h>
 #include <CompressibleFlowSolver/Preconditioner/PreconCfsBRJ.h>
 
 using namespace std;
