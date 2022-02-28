@@ -266,7 +266,11 @@ void PreconCfsBRJ::PreconBlkDiag(
         }
     }
 
-    outVect = (*PreconMatVars) * tmpVect;
+    LibUtilities::Timer timer;
+    timer.Start(); 
+    outVect = (*PreconMatVars) * tmpVect;    
+    timer.Stop();
+    timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag - commandline");
 
     for (int m = 0; m < nvariables; m++)
     {
