@@ -1110,8 +1110,8 @@ void Octree::CompileSourcePointList()
             }
         }
 
-        // OLD code left for posterity -- using the new approach oh having an
-        // octant delta and a refinement delta there should be no need to change
+        // OLD code left for posterity -- using the new approach of having an
+        // octant delta and a refinement delta, there should be no need to change
         // the existing sourcpoints anymore, nor add any more source points.
 
         // this takes any existing sourcepoints within the influence range
