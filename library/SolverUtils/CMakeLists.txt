@@ -25,6 +25,7 @@ SET(SOLVER_UTILS_SOURCES
   Filters/Filter.cpp
   Filters/FilterAeroForces.cpp
   Filters/FilterAverageFields.cpp
+  Filters/FilterMaxMinFields.cpp
   Filters/FilterCheckpoint.cpp
   Filters/FilterEnergy1D.cpp
   Filters/FilterEnergy.cpp
@@ -76,6 +77,7 @@ SET(SOLVER_UTILS_HEADERS
   Filters/Filter.h
   Filters/FilterAeroForces.h
   Filters/FilterAverageFields.h
+  Filters/FilterMaxMinFields.h
   Filters/FilterCheckpoint.h
   Filters/FilterEnergy1D.h
   Filters/FilterEnergy.h

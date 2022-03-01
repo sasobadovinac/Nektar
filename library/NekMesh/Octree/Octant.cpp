@@ -135,7 +135,6 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
                 {
                     maxDif = SourcePointList[i]->GetDelta();
                 }
-
                 if (SourcePointList[i]->GetDelta() < minDif)
                 {
                     minDif = SourcePointList[i]->GetDelta();
@@ -145,11 +144,6 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
 
             if (SourcePointList[i]->HasRDelta())
             {
-                if(SourcePointList[i]->GetRDelta() > maxDif)
-                {
-                    maxDif = SourcePointList[i]->GetRDelta();
-                }
-
                 if(SourcePointList[i]->GetRDelta() < minDif)
                 {
                     minDif = SourcePointList[i]->GetRDelta();
