@@ -94,7 +94,20 @@ struct linesource
             Re[i] = p[i] - x2[i];
             s[i]  = x2[i] - x1[i];
         }
+
+        // check distances to endpoints
+        if (Le[0]*Le[0] + Le[1]*Le[1] + Le[2]*Le[2] < R * R)
+        {
+            return true;
+        }
+        if (Re[0]*Re[0] + Re[1]*Re[1] + Re[2]*Re[2] < R * R)
+        {
+            return true;
+        }
+
+        // Do an orthogonal projection of p onto the line segment
         Array<OneD, NekDouble> dev(3);
+        // (p-x1) \times (p-x2)
         dev[0] = Le[1] * Re[2] - Re[1] * Le[2];
         dev[1] = Le[2] * Re[0] - Re[2] * Le[0];
         dev[2] = Le[0] * Re[1] - Re[0] * Le[1];
