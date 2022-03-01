@@ -599,6 +599,13 @@ namespace Nektar
                     m_session->GetSolverInfo("GJPStabilisation"));
             SolverUtils::AddSummaryItem(s,"GJP Stab. JumpScale",
                                         m_GJPJumpScale);
+            
+            if(boost::iequals(m_session->GetSolverInfo
+                              ("GJPStabilisation"),"Explicit"))
+            {
+                SolverUtils::AddSummaryItem(s,"GJP Normal Velocity",
+                           m_session->GetSolverInfo("GJPNormalVelocity"));
+            }
         }
     }
 
