@@ -537,8 +537,10 @@ to visualise the result either in Tecplot, Paraview or VisIt.
 
 To obtain full Fourier expansion form a \inltt{HalfMode} result, use the comand:
 \begin{lstlisting}[style=BashInputStyle]
-  FieldConvert -m halfmodetofourier file.xml half_mode_file.fld single_mode_file.fld
+  FieldConvert -m halfmodetofourier:realmodetoimag=value1,value2 file.xml half_mode_file.fld single_mode_file.fld
 \end{lstlisting}
+
+In linear stability analysis with halfmode expansion, the variable w, whose variable number is 2, is a imaginary mode but it is output as a real mode in the eigenvector field file. By setting option \inltt{realmodetoimag=2}, w can be transformed to a imaginary mode correctly.
 
 \subsection{Extract a plane from 3DH1D expansion: \textit{homplane} module}
 

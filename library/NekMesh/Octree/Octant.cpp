@@ -72,6 +72,8 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
     m_delta             = pair<bool, NekDouble>(false, 0.0);
     NekDouble maxDif    = 0;
     NekDouble minDif    = numeric_limits<double>::max();
+    // NekDouble maxDif    = m_parent->HasDelta()? m_parent->GetDelta() : 0;
+    // NekDouble minDif    = m_parent->HasDelta()? m_parent->GetDelta() : numeric_limits<double>::max();
     m_location          = eUnknown;
 
     // build empty neigbour map
@@ -133,13 +135,13 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
                 {
                     maxDif = SourcePointList[i]->GetDelta();
                 }
-
                 if (SourcePointList[i]->GetDelta() < minDif)
                 {
                     minDif = SourcePointList[i]->GetDelta();
                 }
                 m_numValidPoints++;
             }
+
             if (SourcePointList[i]->HasRDelta())
             {
                 if(SourcePointList[i]->GetRDelta() < minDif)
@@ -147,6 +149,7 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
                     minDif = SourcePointList[i]->GetRDelta();
                 }
             }
+
             if (SourcePointList[i]->Isboundary())
             {
                 m_numBoundaryPoints++;
