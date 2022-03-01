@@ -44,6 +44,7 @@ public:
 protected:
     Array<OneD, MultiRegions::ExpListSharedPtr> m_fieldsALE;
     std::map<int, int> m_elmtToExpId;
+    std::map<int, int> m_elmtToExpIdTrace;
     Array<OneD, Array<OneD, NekDouble>> m_gridVelocity;
     Array<OneD, Array<OneD, NekDouble>> m_gridVelocityTrace;
     std::vector<ALEBaseShPtr> m_ALEs;

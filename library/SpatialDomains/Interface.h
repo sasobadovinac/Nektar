@@ -133,6 +133,11 @@ struct ZoneBase
         return m_moved;
     }
 
+    inline Array<OneD,std::set<GeometrySharedPtr>> &GetConstituentElements()
+    {
+        return m_constituentElements;
+    }
+
 protected:
     //ZoneBaseShPtr m_oppInterface;
     MovementType m_type = MovementType::eNone;
@@ -143,6 +148,7 @@ protected:
     //std::vector<int> m_edgeIds;
     std::vector<int> m_elementIds;
     std::vector<GeometrySharedPtr> m_elements;
+    Array<OneD,std::set<GeometrySharedPtr>> m_constituentElements;
     bool m_moved = true;
     int m_coordDim;
 };

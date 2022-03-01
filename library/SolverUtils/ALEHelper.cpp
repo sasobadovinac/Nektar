@@ -28,6 +28,13 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
         m_elmtToExpId[(*exp)[i]->GetGeom()->GetGlobalID()] = i;
     }
 
+    // Create map from element ID to expansion ID for the trace
+    auto expTrace = fields[0]->GetTrace()->GetExp();
+    for (int i = (*expTrace).size() - 1; i >= 0; --i)
+    {
+        m_elmtToExpIdTrace[(*expTrace)[i]->GetGeom()->GetGlobalID()] = i;
+    }
+
     // Create ALE objects for each interface zone
     for (auto &zone : fields[0]->GetMovement()->GetZones())
     {
@@ -86,10 +93,7 @@ void ALEHelper::ALEPreMultiplyMass(Array<OneD, Array<OneD, NekDouble> > &fields)
 
 void ALEHelper::ALEDoElmtInvMass(Array<OneD, Array<OneD, NekDouble> > &traceNormals, Array<OneD, Array<OneD, NekDouble> > &fields, NekDouble time)
 {
-    m_fieldsALE[0]->Reset();
-    m_fieldsALE[0]->GetTrace()->GetNormals(traceNormals);
-    UpdateGridVelocity(time);
-
+    boost::ignore_unused(time, traceNormals);
     // Update m_fields with u^n by multiplying by inverse mass
     // matrix. That's then used in e.g. checkpoint output and L^2 error
     // calculation.
@@ -127,26 +131,50 @@ void ALEHelper::ALEDoElmtInvMassBwdTrans(
 
 void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDouble> > &traceNormals)
 {
+
+    auto curvedEdges = m_fieldsALE[0]->GetGraph()->GetCurvedEdges();
+    auto curvedFaces = m_fieldsALE[0]->GetGraph()->GetCurvedFaces();
+
     if (time != m_prevStageTime)
     {
-        for (auto & i : m_fieldsALE)
-        {
-            i->GetMovement()->PerformMovement(time);
-            //i->Reset();
-            // Loop over all elements and reset geometry information.
-            for (int j = 0; j < i->GetExp()->size(); ++j)
-            {
-                std::cout << i->GetExp(1856)->GetGeom()->GetGlobalID() << std::endl;
-                std::cout << j << " " << i->GetExp()->size() << std::endl;
-                i->GetExp(j)->GetGeom()->Reset(i->GetGraph()->GetCurvedEdges(), i->GetGraph()->GetCurvedFaces());
-                i->GetExp(j)->Reset();
-            }
+        m_fieldsALE[0]->GetMovement()->PerformMovement(time);
 
-            // Loop over all elements and rebuild geometric factors.
-            i->CreateCollections(Collections::eNoImpType);
+        //Loop over all elements and faces and edges and reset geometry information.
+        for (auto &zone : m_fieldsALE[0]->GetMovement()->GetZones())
+        {
+            if(zone.second->GetMoved())
+            {
+                auto conEl = zone.second->GetConstituentElements();
+                for(const auto &i : conEl)
+                {
+                    for (const auto &j : i)
+                    {
+                        j->ResetNonRecursive(curvedEdges, curvedFaces);
+                    }
+                }
+
+                // We need to rebuild geometric factors on the trace elements
+                for (const auto &i : conEl[zone.second->GetConstituentElements().size() - 1]) // This only takes the trace elements
+                {
+                    m_fieldsALE[0]->GetTrace()->GetExp(m_elmtToExpIdTrace[i->GetGlobalID()])->Reset();
+                }
+
+                // Loop over zone elements expansions and rebuild geometric factors and recalc trace normals
+                for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
+                {
+                    m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->Reset();
+                    for (int j = 0; j < m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->GetNtraces(); ++j)
+                    {
+                        m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->ComputeTraceNormal(j);
+                    }
+                }
+            }
         }
 
-        m_fieldsALE[0]->SetUpPhysNormals();
+        // Reset collections
+        m_fieldsALE[0]->CreateCollections(Collections::eNoImpType);
+
+        // Reload new trace normals in to the solver cache
         m_fieldsALE[0]->GetTrace()->GetNormals(traceNormals);
 
         // Recompute grid velocity.

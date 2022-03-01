@@ -125,13 +125,35 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain,
                    int coordDim)
     : m_type(type), m_id(indx), m_domain(domain), m_coordDim(coordDim)
 {
-    // Fill element Ids
+    // Fill elements and element IDs from domain
+    int shapeDim = coordDim; // @TODO: We are using coordim when this should be shapedim, find easy way in MPI to determine shapedim
+    m_constituentElements = Array<OneD,std::set<GeometrySharedPtr>>(shapeDim);
+
     for (auto &comp : domain)
     {
         for (auto &geom : comp.second->m_geomVec)
         {
             m_elementIds.emplace_back(geom->GetGlobalID());
             m_elements.emplace_back(geom);
+
+            // Fill consituent elements (i.e. faces and edges)
+            switch (shapeDim)
+            {
+                case 3:
+                    for(int i = 0; i < geom->GetNumFaces(); ++i)
+                    {
+                        m_constituentElements[2].insert(geom->GetFace(i));
+                    }
+                case 2:
+                    for(int i = 0; i < geom->GetNumEdges(); ++i)
+                    {
+                        m_constituentElements[1].insert(geom->GetEdge(i));
+                    }
+                case 1:
+                    m_constituentElements[0].insert(geom);
+                default:
+                    break;
+            }
         }
     }
 }

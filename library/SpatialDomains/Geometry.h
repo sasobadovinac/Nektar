@@ -179,6 +179,8 @@ public:
     
     SPATIAL_DOMAINS_EXPORT inline void Reset(CurveMap &curvedEdges,
                                              CurveMap &curvedFaces);
+    SPATIAL_DOMAINS_EXPORT inline void ResetNonRecursive(CurveMap &curvedEdges, CurveMap &curvedFaces);
+
     SPATIAL_DOMAINS_EXPORT inline void Setup();
 
     /// Handles generation of geometry factors.
@@ -650,6 +652,16 @@ inline void Geometry::Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 {
     v_Reset(curvedEdges, curvedFaces);
 }
+
+/**
+ * @brief Reset this geometry object non-recursively: unset the current state, zero
+ * Geometry::m_coeffs and remove allocated GeomFactors.
+ */
+inline void Geometry::ResetNonRecursive(CurveMap &curvedEdges, CurveMap &curvedFaces)
+{
+    Geometry::v_Reset(curvedEdges, curvedFaces);
+}
+
 inline void Geometry::Setup()
 {
     v_Setup();
