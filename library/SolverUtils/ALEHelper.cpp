@@ -137,15 +137,21 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
 
     if (time != m_prevStageTime)
     {
-        m_fieldsALE[0]->GetMovement()->PerformMovement(time);
+        // The order of the resets below is v important to avoid errors
+        for (auto &field : m_fieldsALE)
+        {
+            field->GetMovement()->PerformMovement(time);
+            field->ResetMatrices();
+        }
 
-        //Loop over all elements and faces and edges and reset geometry information.
+        // Loop over all elements and faces and edges and reset geometry information.
+        // Only need to do this on the first field as the geometry information is shared.
         for (auto &zone : m_fieldsALE[0]->GetMovement()->GetZones())
         {
-            if(zone.second->GetMoved())
+            if (zone.second->GetMoved())
             {
                 auto conEl = zone.second->GetConstituentElements();
-                for(const auto &i : conEl)
+                for (const auto &i : conEl)
                 {
                     for (const auto &j : i)
                     {
@@ -154,16 +160,40 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
                 }
 
                 // We need to rebuild geometric factors on the trace elements
-                for (const auto &i : conEl[zone.second->GetConstituentElements().size() - 1]) // This only takes the trace elements
+                for (const auto &i : conEl[zone.second->GetConstituentElements().size() -1]) // This only takes the trace elements
                 {
                     m_fieldsALE[0]->GetTrace()->GetExp(m_elmtToExpIdTrace[i->GetGlobalID()])->Reset();
                 }
+            }
+        }
 
+        // @TODO: I don't know why I need to reset the elements expansions for every field but the trace expansions on just one.
+        // @TODO: I guess we need the metric info on element expansions, but only the geomfactors for the trace geometry.
+        for (auto &field : m_fieldsALE)
+        {
+            for (auto &zone : field->GetMovement()->GetZones())
+            {
+                if (zone.second->GetMoved())
+                {
+                    auto conEl = zone.second->GetConstituentElements();
+                    // Loop over zone elements expansions and rebuild geometric factors
+                    for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
+                    {
+                        field->GetExp(m_elmtToExpId[i->GetGlobalID()])->Reset();
+                    }
+                }
+            }
+        }
+
+        for (auto &zone : m_fieldsALE[0]->GetMovement()->GetZones())
+        {
+            if (zone.second->GetMoved())
+            {
+                auto conEl = zone.second->GetConstituentElements();
                 // Loop over zone elements expansions and rebuild geometric factors and recalc trace normals
                 for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
                 {
-                    m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->Reset();
-                    for (int j = 0; j < m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->GetNtraces(); ++j)
+                    for (int j = 0; j < m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->GetNtraces();++j)
                     {
                         m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->ComputeTraceNormal(j);
                     }
@@ -171,8 +201,11 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
             }
         }
 
-        // Reset collections
-        m_fieldsALE[0]->CreateCollections(Collections::eNoImpType);
+        for (auto &field : m_fieldsALE)
+        {
+            // Reset collections
+            field->CreateCollections(Collections::eNoImpType);
+        }
 
         // Reload new trace normals in to the solver cache
         m_fieldsALE[0]->GetTrace()->GetNormals(traceNormals);

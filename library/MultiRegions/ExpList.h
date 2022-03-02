@@ -445,6 +445,9 @@ namespace Nektar
                 v_Reset();
             }
 
+            /// Reset matrices
+            MULTI_REGIONS_EXPORT void ResetMatrices();
+
             void WriteTecplotHeader(std::ostream &outfile,
                                     std::string var = "")
             {

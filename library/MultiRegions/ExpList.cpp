@@ -2569,6 +2569,18 @@ namespace Nektar
             CreateCollections(Collections::eNoImpType); // @TODO: Might need to pass in correct type here
         }
 
+        void ExpList::ResetMatrices()
+        {
+            // Reset matrix managers.
+            LibUtilities::NekManager<LocalRegions::MatrixKey,
+                                     DNekScalMat, LocalRegions::MatrixKey::opLess>::ClearManager();
+            LibUtilities::NekManager<LocalRegions::MatrixKey,
+                                     DNekScalBlkMat, LocalRegions::MatrixKey::opLess>::ClearManager();
+
+            // Reset block matrix map
+            m_blockMat->clear();
+        }
+
         /**
          * Write Tecplot Files Header
          * @param   outfile Output file name.
