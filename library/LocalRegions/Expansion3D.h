@@ -119,6 +119,9 @@ namespace Nektar
                     Array<OneD, Array<OneD, unsigned int> > &emap,
                     Array<OneD, Array<OneD, unsigned int> > &fmap );
             
+            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr  CreateMatrix(
+                const MatrixKey &mkey);
+
         protected:
             std::map<int, NormalVector> m_faceNormals;
 
@@ -150,6 +153,9 @@ namespace Nektar
                       Array<OneD,       NekDouble>      &outarray,
                 StdRegions::Orientation                  orient);
 
+
+            virtual void v_GenTraceExp(const int traceid,
+                                       ExpansionSharedPtr &exp);
 
             void GetPhysFaceVarCoeffsFromElement(
                 const int face,
