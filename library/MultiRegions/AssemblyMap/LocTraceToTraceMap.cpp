@@ -1613,10 +1613,9 @@ void LocTraceToTraceMap::InterpTraceToLocFaces(
 
                         for(int k = 0; k< fnp1; k++)
                         {
-                            Vmath::Svtvp(fnp0,I1[k],
-                                &tmp[cnt1 + (j + 1) * tnp0 * tnp1 - tnp0],1,
-                                &loctraces[cnt+k*fnp0],1,
-                                &loctraces[cnt+k*fnp0],1);
+                            Vmath::Svtvp(fnp0,I1[k] ,&tmp[cnt1 + (j + 1) * tnp0 * tnp1 - tnp0],1
+                                        ,&loctraces[cnt + j * fnp0 * fnp1 +k*fnp0],1
+                                        ,&loctraces[cnt + j * fnp0 * fnp1 +k*fnp0],1);
                         }
                     }
 
