@@ -18,6 +18,13 @@ CMAKE_POLICY(SET CMP0022 NEW)
 # variable names - this resolves an issue with checking for MSVC on Windows
 CMAKE_POLICY(SET CMP0054 NEW)
 
+# The OLD behavior for this policy is to implicitly append known extensions to
+# source files if they can't be found.
+# Introduced in version 3.20
+IF (POLICY CMP0115)
+    CMAKE_POLICY(SET CMP0115 OLD)
+ENDIF()
+
 # Defer to use _ROOT variables to avoid Zlib warning
 IF (POLICY CMP0074)
     CMAKE_POLICY(SET CMP0074 OLD)
