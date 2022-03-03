@@ -38,6 +38,7 @@
 
 #include <map>
 #include <string>
+#include <deque>
 
 #include <LibUtilities/BasicUtils/Equation.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>

@@ -214,6 +214,8 @@ namespace Nektar
         {
 
             // Initialise interfaces
+            // @TODO: Currently this gives a movement object on each field, move
+            // @TODO: this into meshgraph, not sure how complicated that will be
             m_movement =
                 MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(
                     m_session, m_graph);

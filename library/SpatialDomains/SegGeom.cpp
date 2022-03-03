@@ -457,7 +457,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             fxp2 *= 2;
 
             // Check for convergence
-            if (abs(fx - fx_prev) < 1e-12)
+            if (std::abs(fx - fx_prev) < 1e-12)
             {
                 opt_succeed = true;
                 fx_prev     = fx;
