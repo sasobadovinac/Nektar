@@ -29,6 +29,7 @@ v5.2.0
 **Library**:
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
 - Simplify the logic in the MPI pairwise trace exchange (!1307)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
 
 v5.1.1
 ------
@@ -39,9 +40,13 @@ v5.1.1
 - Split Helmholtz MatrixFree operator to improve compile times (!1292)
 - Fix Boost deprecated header warnings (!1302)
 - Add command lines to set starting time and starting checkpoint number of a time-dependent simulation (!1309)
+- Fix an index referencing error in the Collections PhysDeriv method for Hex (!1314)
 
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
+
+**BuildSystem**
+- Updated third party Lapack version 3.7.1 (!1312)
 
 v5.1.0
 ------
@@ -106,6 +111,7 @@ v5.1.0
 
 **IncNavierStokesSolver**:
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)
