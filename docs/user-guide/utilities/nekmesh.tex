@@ -35,6 +35,7 @@ mesh-generator \gmsh to the XML file format.
     \nm file.msh newfile.xml:xml:uncompress}
 \end{notebox}
 
+
 \section{Exporting a mesh from \gmsh}
 
 To demonstrate how \nm works, we will define a simple channel-like 3D geometry.
@@ -454,6 +455,25 @@ NekMesh Mesh.msh output.msh:msh:order=7
 %
 will generate an order 7 Gmsh mesh. In the rest of these subsections, we discuss
 the various processing modules available within \nm.
+
+
+It is possible to use FieldConvert to extract a smaller region of a mesh
+from a larger mesh using the ``-r xmin,xmax,ymin,ymax,zmin'' range
+option, e.g.
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -r xmin,xmax,ymin,ymax,zmin,zmax bigMesh.xml smallMesh.xml
+\end{lstlisting}
+However this will not provide a composite of he faces on the
+boundary if they were not part of the original boundary composites of
+the original \inltt{bigMesh.xml}. These can however be recovered by an
+output module option \inltt{chkbndcomp} in \nm. To do this one should
+specify
+\begin{lstlisting}[style=BashInputStyle]
+NekMesh smallMesh.xml newSmallMesh.xml:xml:chkbndcomp 
+\end{lstlisting}
+this will then add a composite for any face that is on the boundary
+and not part of an existing boundary condition and put it into a
+composite with \inltt{id=9999}. This capability is currently only set up for 3D meshes
 
 \subsubsection{HDF5 format}
 
