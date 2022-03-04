@@ -75,10 +75,10 @@
             <regex>.*L 2 error\s*\(variable\s*\w1\w\)\s*:\s*([+-]?\d.+\d|-?\d|[+-]?nan|[+-]?inf).*</regex>
             <matches>
                 <match>
-                    <field variable="u1S" tolerance="5E-7">1.1547e-05</field>
+                    <field variable="u1S" tolerance="5E-7">1.2247e-05</field>
                 </match>
                 <match>
-                    <field variable="v1S" tolerance="5E-7">1.1547e-05</field>
+                    <field variable="v1S" tolerance="5E-7">1.2247e-05</field>
                 </match>
                 <match>
                     <field variable="u1R" tolerance="5E-8">5.15227e-05</field>
