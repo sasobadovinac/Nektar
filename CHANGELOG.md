@@ -12,6 +12,7 @@ v5.2.0
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
 - Simplify the logic in the MPI pairwise trace exchange (!1307)
 - Fix imaginary mode in HalfModeToFourier module (!1247)
+- Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 
 v5.1.1
 ------

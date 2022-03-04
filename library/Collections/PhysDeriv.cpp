@@ -56,7 +56,7 @@ using LibUtilities::ePyramid;
 /**
  * @brief Phys deriv operator using standard matrix approach
  */
-class PhysDeriv_StdMat : public Operator
+class PhysDeriv_StdMat final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_StdMat)
@@ -274,7 +274,7 @@ OperatorKey PhysDeriv_StdMat::m_typeArr[] =
 /**
  * @brief Phys deriv operator using matrix free operators.
  */
-class PhysDeriv_MatrixFree : public Operator, MatrixFreeOneInMultiOut
+class PhysDeriv_MatrixFree final : public Operator, MatrixFreeOneInMultiOut
 {
     public:
     OPERATOR_CREATE(PhysDeriv_MatrixFree)
@@ -442,7 +442,7 @@ OperatorKey PhysDeriv_MatrixFree::m_typeArr[] =
 /**
  * @brief Phys deriv operator using element-wise operation
  */
-class PhysDeriv_IterPerExp : public Operator
+class PhysDeriv_IterPerExp final : public Operator
 {
 public:
     OPERATOR_CREATE(PhysDeriv_IterPerExp)
@@ -639,7 +639,7 @@ OperatorKey PhysDeriv_IterPerExp::m_typeArr[] =
 /**
  * @brief Phys deriv operator using original LocalRegions implementation.
  */
-class PhysDeriv_NoCollection : public Operator
+class PhysDeriv_NoCollection final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_NoCollection)
@@ -776,7 +776,7 @@ OperatorKey PhysDeriv_NoCollection::m_typeArr[] =
 /**
  * @brief Phys deriv operator using sum-factorisation (Segment)
  */
-class PhysDeriv_SumFac_Seg : public Operator
+class PhysDeriv_SumFac_Seg final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Seg)
@@ -928,7 +928,7 @@ OperatorKey PhysDeriv_SumFac_Seg::m_type = GetOperatorFactory().
 /**
  * @brief Phys deriv operator using sum-factorisation (Quad)
  */
-class PhysDeriv_SumFac_Quad : public Operator
+class PhysDeriv_SumFac_Quad final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Quad)
@@ -1110,7 +1110,7 @@ OperatorKey PhysDeriv_SumFac_Quad::m_type = GetOperatorFactory().
 /**
  * @brief Phys deriv operator using sum-factorisation (Tri)
  */
-class PhysDeriv_SumFac_Tri : public Operator
+class PhysDeriv_SumFac_Tri final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Tri)
@@ -1341,7 +1341,7 @@ OperatorKey PhysDeriv_SumFac_Tri::m_typeArr[] =
 /**
  * @brief Phys deriv operator using sum-factorisation (Hex)
  */
-class PhysDeriv_SumFac_Hex : public Operator
+class PhysDeriv_SumFac_Hex final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Hex)
@@ -1552,7 +1552,7 @@ OperatorKey PhysDeriv_SumFac_Hex::m_typeArr[] =
 /**
  * @brief Phys deriv operator using sum-factorisation (Tet)
  */
-class PhysDeriv_SumFac_Tet : public Operator
+class PhysDeriv_SumFac_Tet final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Tet)
@@ -1870,7 +1870,7 @@ OperatorKey PhysDeriv_SumFac_Tet::m_typeArr[] =
 /**
  * @brief Phys deriv operator using sum-factorisation (Prism)
  */
-class PhysDeriv_SumFac_Prism : public Operator
+class PhysDeriv_SumFac_Prism final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Prism)
@@ -2131,7 +2131,7 @@ OperatorKey PhysDeriv_SumFac_Prism::m_typeArr[] = {
 /**
  * @brief Phys deriv operator using sum-factorisation (Pyramid)
  */
-class PhysDeriv_SumFac_Pyr : public Operator
+class PhysDeriv_SumFac_Pyr final : public Operator
 {
     public:
         OPERATOR_CREATE(PhysDeriv_SumFac_Pyr)

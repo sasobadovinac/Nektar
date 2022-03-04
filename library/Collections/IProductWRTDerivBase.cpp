@@ -57,7 +57,7 @@ using LibUtilities::ePyramid;
 /**
  * @brief Inner product WRT deriv base operator using standard matrix approach
  */
-class IProductWRTDerivBase_StdMat : public Operator
+class IProductWRTDerivBase_StdMat final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTDerivBase_StdMat)
@@ -278,7 +278,7 @@ OperatorKey IProductWRTDerivBase_StdMat::m_typeArr[] = {
 /**
  * @brief Inner product operator using operator using matrix free operators.
  */
-class IProductWRTDerivBase_MatrixFree : public Operator, MatrixFreeMultiInOneOut
+class IProductWRTDerivBase_MatrixFree final : public Operator, MatrixFreeMultiInOneOut
 {
     public:
         OPERATOR_CREATE(IProductWRTDerivBase_MatrixFree)
@@ -449,7 +449,7 @@ OperatorKey IProductWRTDerivBase_MatrixFree::m_typeArr[] = {
 /**
  * @brief Inner product WRT deriv base operator using element-wise operation
  */
-class IProductWRTDerivBase_IterPerExp : public Operator
+class IProductWRTDerivBase_IterPerExp final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTDerivBase_IterPerExp)
@@ -650,7 +650,7 @@ OperatorKey IProductWRTDerivBase_IterPerExp::m_typeArr[] = {
  * @brief Inner product WRT deriv base operator using LocalRegions
  * implementation.
  */
-class IProductWRTDerivBase_NoCollection : public Operator
+class IProductWRTDerivBase_NoCollection final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTDerivBase_NoCollection)
@@ -781,7 +781,7 @@ OperatorKey IProductWRTDerivBase_NoCollection::m_typeArr[] = {
  * @brief Inner product WRT deriv base operator using sum-factorisation
  * (Segment)
  */
-class IProductWRTDerivBase_SumFac_Seg : public Operator
+class IProductWRTDerivBase_SumFac_Seg final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTDerivBase_SumFac_Seg)
@@ -898,7 +898,7 @@ OperatorKey IProductWRTDerivBase_SumFac_Seg::m_type = GetOperatorFactory().
 /**
  * @brief Inner product WRT deriv base operator using sum-factorisation (Quad)
  */
-class IProductWRTDerivBase_SumFac_Quad : public Operator
+class IProductWRTDerivBase_SumFac_Quad final : public Operator
 {
 public:
     OPERATOR_CREATE(IProductWRTDerivBase_SumFac_Quad)
@@ -1050,7 +1050,7 @@ OperatorKey IProductWRTDerivBase_SumFac_Quad::m_type =
 /**
  * @brief Inner product WRT deriv base operator using sum-factorisation (Tri)
  */
-class IProductWRTDerivBase_SumFac_Tri : public Operator
+class IProductWRTDerivBase_SumFac_Tri final : public Operator
 {
 public:
         OPERATOR_CREATE(IProductWRTDerivBase_SumFac_Tri)
@@ -1279,7 +1279,7 @@ OperatorKey IProductWRTDerivBase_SumFac_Tri::m_type =
 /**
  * @brief Inner product WRT deriv base operator using sum-factorisation (Hex)
  */
-class IProductWRTDerivBase_SumFac_Hex : public Operator
+class IProductWRTDerivBase_SumFac_Hex final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTDerivBase_SumFac_Hex)
@@ -1739,7 +1739,7 @@ OperatorKey IProductWRTDerivBase_SumFac_Tet::m_type = GetOperatorFactory().
 /**
  * @brief Inner product WRT deriv base operator using sum-factorisation (Prism)
  */
-class IProductWRTDerivBase_SumFac_Prism : public Operator
+class IProductWRTDerivBase_SumFac_Prism final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTDerivBase_SumFac_Prism)
@@ -2002,7 +2002,7 @@ OperatorKey IProductWRTDerivBase_SumFac_Prism::m_type = GetOperatorFactory().
 /**
  * @brief Inner product WRT deriv base operator using sum-factorisation (Pyr)
  */
-class IProductWRTDerivBase_SumFac_Pyr : public Operator
+class IProductWRTDerivBase_SumFac_Pyr final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTDerivBase_SumFac_Pyr)
