@@ -288,6 +288,11 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,       NekDouble> &outarray,
                       Array<OneD,       NekDouble> &wsp);
+
+            virtual void v_NormalTraceDerivFactors(
+                Array<OneD, Array<OneD, NekDouble>> &factors,
+                Array<OneD, Array<OneD, NekDouble>> &d0factors,
+                Array<OneD, Array<OneD, NekDouble>> &d1factors);
         };
 
     } //end of namespace

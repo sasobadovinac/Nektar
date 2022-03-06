@@ -1116,7 +1116,36 @@ higher expansion modes as the polynomial order increases. The cut-off ratio
 parameter for the Power kernel corresponds to the power ratio, see Moura et al.
 \cite{rospjo16}. The DG-Kernel is an attempt to match the dissipation of CG-SVV
 to DG schemes of lower expansion orders. This kernel does not require any parameters
-although the diffusion coefficient can still be modified.   
+although the diffusion coefficient can still be modified.
+
+\item \inltt{GJPStabilisation}: activates the gradient jump penalty\cite{moura2022gradient} 
+stabilization technique. The GJP is less dissipative than the spectral 
+vanishing viscousity (SVV) stabilisation and gives a better turbulent structures
+specially when the simulaiton is under-resolved or in other words when the 
+polynomial order is low. It is expected that with increasing the polynomial 
+order and approaching towards a resolved solution both SVV and GJP stabilisation
+solutions approaches each other. Since the GJP is less dissipative than the SVV,
+it means that it probably requires a smaller $\Delta t$ for the stable solution.
+Further, GJP only affects the spectral/hp discretisations and doesn't have any
+stabilisation effect on the Fourier discritisation. This means that in the 
+Quasi-3D simulations, if GJP is activated we still needs to use the 
+SpectralVanishingViscousityHomo1D to stablise the solution in the spanwise 
+direction which is discretised using the Fourier method. For the 2D and full 3D
+problems, GJP stabilisation should suffices though. 
+\begin{lstlisting}[style=XMLStyle]
+<I PROPERTY="GJPStabilisation" VALUE="SemiImplicit"/>
+\end{lstlisting}
+
+Another option for the GJP stabilisation is to use \inltt{Explicit} for its value
+instead of \inltt{SemiImplicit}. If the \inltt{Explicit} value is set, there is 
+an additional option that can be set for the explicit GJP stabilisation in the 
+solver info as follwos.
+
+\begin{lstlisting}[style=XMLStyle]
+<I PROPERTY="GJPNormalVelocity" VALUE="True"/>
+\end{lstlisting}
+Using the \inltt{GJPNormalVelocity}, the GJP formulation  will uses the average
+velocity normal to the edge/face as the velocity scaling of jump term. 
 
 \item \inltt{DEALIASING}: activates the 3/2 padding rule on the advection term
 of a Quasi-3D simulation.
@@ -1148,6 +1177,7 @@ the session file:
 \item \inltt{MaxSubSteps}: perform a maxmimum  number of substeps in sub-stepping algorithm otherwise exit (default is 100).
 \item \inltt{SVVCutoffRatio}: sets the ratio of Fourier frequency not affected by the SVV technique (default value = 0.75, i.e. the first 75\% of frequency are not damped).
 \item \inltt{SVVDiffCoeff}: sets the SVV diffusion coefficient (default value = 0.1 (Exponential and Power kernel), 1 (DG-Kernel)).
+\item \inltt{GJPJumpScale}: This is a parameter that scales all of the jump terms in the GJP stabilisation formualtion. The default value \inltt{GJPJumpScale=1}.
 \item \inltt{IO\_CFLWriteFld}: sets a treshold value for the CFL number. If CFL exceeds this value, the flow field is written to file (only once). This is useful for debugging purposes, allowing to visually inspect a flow field that is becoming unstable.
 \item \inltt{IO\_CFLWriteFldNumSteps}: sets the number of timesteps after which \inltt{IO\_CFLWriteFld} becomes operational. This avoids writing the flow field at the beginning of a simulation when initialising a new geometry.
 \end{itemize}

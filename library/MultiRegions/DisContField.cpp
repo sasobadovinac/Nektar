@@ -89,22 +89,33 @@ namespace Nektar
             const std::string                          &variable,
             const bool                                  SetUpJustDG,
             const bool                                  DeclareCoeffPhysArrays,
-            const Collections::ImplementationType       ImpType)
+            const Collections::ImplementationType       ImpType,
+            const std::string                           bcvariable)
             : ExpList(pSession,graph,DeclareCoeffPhysArrays, variable, ImpType),
               m_trace(NullExpListSharedPtr)
         {
-            if (variable.compare("DefaultVar") != 0)
+            std::string bcvar; 
+            if(bcvariable == "NotSet")
+            {
+                bcvar = variable;
+            }
+            else
+            {
+                bcvar = bcvariable;
+            }
+            
+            if (bcvar.compare("DefaultVar") != 0)
             {
                 SpatialDomains::BoundaryConditions bcs(m_session, graph);
 
-                GenerateBoundaryConditionExpansion(graph,bcs,variable,
+                GenerateBoundaryConditionExpansion(graph,bcs,bcvar,
                                                    DeclareCoeffPhysArrays);
                 if(DeclareCoeffPhysArrays)
                 {
-                    EvaluateBoundaryConditions(0.0, variable);
+                    EvaluateBoundaryConditions(0.0, bcvar);
                 }
                 ApplyGeomInfo();
-                FindPeriodicTraces(bcs,variable);
+                FindPeriodicTraces(bcs,bcvar);
             }
 
             if(SetUpJustDG)
@@ -194,7 +205,6 @@ namespace Nektar
             // then retains a pointer to the elemental trace, to
             // ensure uniqueness of normals when retrieving from two
             // adjoining elements which do not lie in a plane.
-
             for (int i = 0; i < m_exp->size(); ++i)
             {
                 for (int j = 0; j < (*m_exp)[i]->GetNtraces(); ++j)
@@ -425,6 +435,43 @@ namespace Nektar
         }
 
 
+
+        
+        /**
+         * @brief This routine determines if an element is to the "left"
+         * of the adjacent trace, which arises from the idea there is a local
+         * normal direction between two elements (i.e. on the trace)
+         * and one elements would then be the left.
+         * 
+         * This is typically required since we only define one normal
+         * direction along the trace which goes from the left adjacent
+         * element to the right adjacent element.  It is also useful
+         * in DG discretisations to set up a local Riemann problem
+         * where we need to have the concept of a local normal
+         * direction which is unique between two elements.
+         * 
+         * There are two cases to be checked:
+         *
+         * 1) First is the trace on a boundary condition (perioidic or
+         * otherwise) or on a partition boundary. If a partition
+         * boundary then trace is always considered to be the left
+         * adjacent trace and the normal is pointing outward of the
+         * soltuion domain. We have to perform an additional case for
+         * a periodic boundary where wer chose the element with the
+         * lowest global id. If the trace is on a parallel partition
+         * we use a member of the traceMap where one side is chosen to
+         * contribute to a unique map and have a value which is not
+         * -1 so this is the identifier for the left adjacent side
+         *
+         * 2) If the element is a elemental boundary on one element
+         * the left adjacent element is defined by a link to the left
+         * element from the trace expansion and this is consistent
+         * with the defitiion of the normal which is determined by the
+         * largest id (in contrast to the periodic boundary definition
+         * !). This reversal of convention does not really matter
+         * providing the normals are defined consistently.
+         */
+        
         bool DisContField::IsLeftAdjacentTrace(const int n, const int e)
         {
             LocalRegions::ExpansionSharedPtr traceEl =
@@ -1071,7 +1118,7 @@ namespace Nektar
                             compOrder[it.second->begin()->first] = tmpOrder;
                         }
 
-
+                    
                         // See if we already have either region1 or
                         // region2 stored in perComps map.
                         if (perComps.count(cId1) == 0)
@@ -1264,7 +1311,7 @@ namespace Nektar
                     // vertices are copied into m_periodicVerts at the end of the
                     // function.
                     PeriodicMap periodicVerts;
-
+                
                     for (auto &cIt : perComps)
                     {
                         SpatialDomains::CompositeSharedPtr c[2];
@@ -1315,8 +1362,8 @@ namespace Nektar
                             compPairs[eId1] = eId2;
                         }
 
-                        // Construct set of all edges that we have locally on this
-                        // processor.
+                        // Construct set of all edges that we have
+                        // locally on this processor.
                         set<int> locEdges;
                         for (i = 0; i < 2; ++i)
                         {
@@ -2138,7 +2185,7 @@ namespace Nektar
                             // Loop up coordinates of the faces, check they have the
                             // same number of vertices.
                             SpatialDomains::PointGeomVector tmpVec[2]
-                        = { coordMap[ids[0]], coordMap[ids[1]] };
+                                = { coordMap[ids[0]], coordMap[ids[1]] };
 
                             ASSERTL0(tmpVec[0].size() == tmpVec[1].size(),
                                      "Two periodic faces have different number "
@@ -2379,7 +2426,8 @@ namespace Nektar
                         int faceId    = faceIds[i];
 
                         ASSERTL0(allCompPairs.count(faceId) > 0,
-                                 "Unable to find matching periodic face.");
+                                 "Unable to find matching periodic face. faceId = "
+                                 + boost::lexical_cast<string>(faceId));
 
                         int perFaceId = allCompPairs[faceId];
 
@@ -2751,7 +2799,6 @@ namespace Nektar
             return (vSame == 1);
         }
 
-
         vector<bool> &DisContField::GetNegatedFluxNormal(void)
         {
             if(m_negatedFluxNormal.size() == 0)
@@ -2786,7 +2833,6 @@ namespace Nektar
 
             return m_negatedFluxNormal;
         }
-
 
 
         /**
@@ -3263,6 +3309,7 @@ namespace Nektar
                                      e_outarray = outarray+offset);
                             }
                         }
+                        
                     }
                     else if (m_expType == e3D)
                     {

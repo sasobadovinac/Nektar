@@ -449,7 +449,7 @@ namespace Nektar
         // Velocity divergence scaled by lambda * mu
         Vmath::Smul(nPts, lambda, divVel, 1, divVel, 1);
         Vmath::Vmul(nPts, m_mu,  1, divVel, 1, divVel, 1);
-
+        
         // Viscous flux vector for the rho equation = 0
         for (int i = 0; i < m_spacedim; ++i)
         {

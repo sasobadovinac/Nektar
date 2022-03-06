@@ -184,6 +184,7 @@ NekDouble PointGeom::dist(PointGeom &a)
                 (z() - a.z()) * (z() - a.z()));
 }
 
+
 /// \brief retun the dot product between this and input a 
 NekDouble PointGeom::dot(PointGeom &a)
 {
