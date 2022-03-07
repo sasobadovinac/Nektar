@@ -328,6 +328,12 @@ struct Interface
         m_side = side;
     }
 
+    // Using these as various caches for the InterfaceMapDG class
+    // This allows caching of calculated values across different fields when searching
+    // for missing coordinates locally on own rank
+    std::vector<Array<OneD, NekDouble>> m_missingCoords;
+    std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
+    std::vector<int> m_mapMissingCoordToTrace;
 protected:
     InterfaceShPtr m_oppInterface;
     int m_id;
@@ -395,6 +401,19 @@ public:
         return m_moveFlag;
     }
 
+    inline bool &GetCoordExchangeFlag()
+    {
+        return m_coordExchangeFlag;
+    }
+
+    // Using these as maps of rank to various caches for the InterfaceMapDG class
+    // This allows caching of calculated values across different fields when searching
+    // for missing coordinates across ranks
+    std::map<int, std::map<int, std::pair<int, Array<OneD, NekDouble>>>> m_foundRankCoords;
+    std::map<int, int> m_totSendSize;
+    std::map<int, int> m_totRecvSize;
+    std::map<int, Array<OneD, int>> m_sendSize;
+    std::map<int, Array<OneD, int>> m_recvSize;
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
@@ -402,6 +421,8 @@ protected:
     InterfaceCollection m_interfaces;
     std::map<int, ZoneBaseShPtr> m_zones;
     bool m_moveFlag = false;
+    bool m_coordExchangeFlag = true;
+
 
 
 private:

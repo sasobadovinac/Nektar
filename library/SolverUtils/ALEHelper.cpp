@@ -131,7 +131,6 @@ void ALEHelper::ALEDoElmtInvMassBwdTrans(
 
 void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDouble> > &traceNormals)
 {
-
     auto curvedEdges = m_fieldsALE[0]->GetGraph()->GetCurvedEdges();
     auto curvedFaces = m_fieldsALE[0]->GetGraph()->GetCurvedFaces();
 
@@ -218,6 +217,9 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
         {
             m_fieldsALE[0]->ExtractTracePhys(m_gridVelocity[i], m_gridVelocityTrace[i]);
         }
+
+        // Set the flag to exchange coords in InterfaceMapDG to true
+        m_fieldsALE[0]->GetGraph()->GetMovement()->GetCoordExchangeFlag() = true;
 
         m_prevStageTime = time;
     }

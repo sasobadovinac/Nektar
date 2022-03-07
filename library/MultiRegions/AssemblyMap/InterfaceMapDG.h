@@ -62,7 +62,7 @@ public:
 
     inline std::vector<Array<OneD, NekDouble>> GetMissingCoords()
     {
-        return m_missingCoords;
+        return m_interface->m_missingCoords;
     }
 
     SpatialDomains::InterfaceShPtr GetInterface()
@@ -85,9 +85,6 @@ private:
     std::map<int, int> m_geomIdToTraceId;
     int m_totQuadPnts = 0;
     bool m_checkLocal = false;
-    std::vector<Array<OneD, NekDouble>> m_missingCoords;
-    std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
-    std::vector<int> m_mapMissingCoordToTrace;
 };
 
 typedef std::shared_ptr<InterfaceTrace> InterfaceTraceSharedPtr;
@@ -100,12 +97,12 @@ public:
 
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceExchange(
-        const std::map<int, SpatialDomains::ZoneBaseShPtr> &zones,
+        SpatialDomains::MovementSharedPtr movement,
         const ExpListSharedPtr &trace,
         const LibUtilities::CommSharedPtr &comm,
         std::pair<int, std::vector<InterfaceTraceSharedPtr>> rankPair,
         const std::map<int, int> &geomIdToTraceId)
-        : m_zones(zones), m_trace(trace), m_comm(comm), m_rank(rankPair.first),
+        : m_movement(movement), m_zones(movement->GetZones()), m_trace(trace), m_comm(comm), m_rank(rankPair.first),
           m_interfaces(rankPair.second), m_geomIdToTraceId(geomIdToTraceId)
     {
     }
@@ -128,18 +125,14 @@ public:
         Array<OneD, NekDouble> &Bwd);
 
 private:
+    SpatialDomains::MovementSharedPtr m_movement;
     std::map<int, SpatialDomains::ZoneBaseShPtr> m_zones;
     const ExpListSharedPtr m_trace;
     const LibUtilities::CommSharedPtr m_comm;
     int m_rank;
     const std::vector<InterfaceTraceSharedPtr> m_interfaces;
-    Array<OneD, int> m_sendSize;
-    Array<OneD, int> m_recvSize;
-    int m_totSendSize = 0;
-    int m_totRecvSize = 0;
     Array<OneD, NekDouble> m_send;
     Array<OneD, NekDouble> m_recv;
-    std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundRankCoords;
     Array<OneD, NekDouble> m_recvTrace;
     Array<OneD, NekDouble> m_sendTrace;
     std::map<int, int> m_geomIdToTraceId;
@@ -167,7 +160,7 @@ public:
 private:
     /// Mesh associated with this expansion list.
     SpatialDomains::MeshGraphSharedPtr m_graph;
-    SpatialDomains::MovementSharedPtr m_interfaces;
+    SpatialDomains::MovementSharedPtr m_movement;
     std::vector<InterfaceTraceSharedPtr> m_localInterfaces;
     const ExpListSharedPtr m_trace;
     std::vector<InterfaceExchangeSharedPtr> m_exchange;
