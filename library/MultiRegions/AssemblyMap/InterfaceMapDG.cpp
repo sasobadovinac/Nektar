@@ -281,8 +281,6 @@ void InterfaceMapDG::ExchangeCoords()
  */
 void InterfaceTrace::CalcLocalMissing()
 {
-    std::cout << "Calc local distances" << std::endl;
-
     // We store the found and missing coords in the InterfaceShPtr
     // so it can be reused across multiple fields
     // Nuke old missing/found
@@ -659,9 +657,8 @@ void InterfaceExchange::SendFwdTrace(
 // GetFound() to communicate ?
 void InterfaceExchange::CalcRankDistances()
 {
-    std::cout << "Calc rank distances" << std::endl;
     // Clear old found coordinates. This took ages to find >:(
-    m_movement->m_foundRankCoords.clear();
+    m_movement->m_foundRankCoords[m_rank].clear();
 
     Array<OneD, NekDouble> disp(m_movement->m_recvSize[m_rank].size() + 1, 0.0);
     std::partial_sum(m_movement->m_recvSize[m_rank].begin(), m_movement->m_recvSize[m_rank].end(), &disp[1]); // @TODO: Use partial sum for other displacement calculations
