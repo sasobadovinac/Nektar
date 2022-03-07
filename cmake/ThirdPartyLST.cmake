@@ -20,10 +20,8 @@ IF(NEKTAR_USE_LST)
     
     EXTERNALPROJECT_ADD(
         lst-0.1
-#       URL                ../utilities/FieldConvert/LST_package_tmp/LST_V1.zip
-        URL                ../utilities/FieldConvert/LST_package_tmp/lst_v1.6.zip
-#       URL                /disk_two/Nek_Test/package_LST/LST_V1.zip 
-#       URL_MD5            f81fbdfb960b1a4f3bcc7feee491efe4
+        URL                ${TPURL}/lst_v1.6.zip
+        URL_MD5            5820c5c37016f036b0ecffe289b2f761
         PREFIX             ${TPSRC}
         STAMP_DIR          ${TPBUILD}/stamp
         DOWNLOAD_DIR       ${TPSRC}
