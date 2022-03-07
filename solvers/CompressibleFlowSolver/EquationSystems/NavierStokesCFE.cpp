@@ -299,10 +299,10 @@ namespace Nektar
     }
 
     void NavierStokesCFE::v_DoDiffusion(
-        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-              Array<OneD,       Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+              Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
     {
         size_t nvariables = inarray.size();
         size_t npoints    = GetNpoints();
@@ -800,7 +800,8 @@ namespace Nektar
                     }
                     
                     // get temp
-                    NekDouble temperature = m_varConv->GetTemperature(inTmp.data());
+                    NekDouble temperature = m_varConv->GetTemperature
+                                                         (inAvgTmp.data());
                     // get viscosity
                     NekDouble mu;
                     GetViscosityFromTempKernel(temperature, mu);
@@ -810,7 +811,7 @@ namespace Nektar
 
                     for (int f = 0; f < nConvectiveFields; ++f)
                     {
-                        outarray[d][f][p] += normal[d][p] * outTmp[f];
+                        outarray[d][f][p] += normal[nderiv][p] * outTmp[f];
                     }
                 }
             }

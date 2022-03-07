@@ -46,8 +46,8 @@ namespace Nektar
         LibUtilities::SessionReader::RegisterEnumValue("SPECTRALHPDEALIASING",
             "False", 1)};
 
-    string NavierStokesAdvection::className  = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction("Convective", NavierStokesAdvection::create);
-    string NavierStokesAdvection::className2 = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction("NonConservative", NavierStokesAdvection::create);
+    string NavierStokesAdvection::className  = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction("Convective", NavierStokesAdvection::create,"Convective");
+    string NavierStokesAdvection::className2 = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction("NonConservative", NavierStokesAdvection::create,"NonConserviative");
 
     /**
      * Constructor. Creates ...

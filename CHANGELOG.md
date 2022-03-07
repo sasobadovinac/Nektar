@@ -20,6 +20,7 @@ v5.1.1
 - Fix a boost headers incompatibility with boost-1.77 (!1297) 
 - Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
 - Fix initialisation warning when using HDF5 (!1299)
+- Fix issue with implementation of Diffusion IP (!1303)
 - Split Helmholtz MatrixFree operator to improve compile times (!1292)
 - Fix Boost deprecated header warnings (!1302)
 - Add command lines to set starting time and starting checkpoint number of a time-dependent simulation (!1309)

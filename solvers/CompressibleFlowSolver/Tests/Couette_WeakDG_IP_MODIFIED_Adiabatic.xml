@@ -34,7 +34,7 @@
       <P> TimeStep              = 0.00001                          </P>
       <P> FinTime               = 0.01                           </P>
       <P> IO_CheckSteps         = 500000                        </P>
-      <P> IO_InfoSteps          = 1                             </P>
+      <P> IO_InfoSteps          = 100                             </P>
       <P> GasConstant           = 287.058                       </P>
       <P> Gamma                 = 1.4                           </P>
       <P> pInf                  = 101325                        </P>
@@ -111,10 +111,10 @@
     </BOUNDARYCONDITIONS>
 
     <FUNCTION NAME="InitialConditions">
-        <E VAR="rho"    VALUE="rhoInf"/>
-        <E VAR="rhou"   VALUE="rhoInf * uInf"   />
-        <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>      
+        <E VAR="rho"  VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))" />
+        <E VAR="rhou" VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))*y/L*uInf" />
+        <E VAR="rhov" VALUE="0.0" />
+        <E VAR="E"    VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))*(Cv*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp))+0.5*y/L*uInf*y/L*uInf)" />
     </FUNCTION>
     
     <FUNCTION NAME="ExactSolution">

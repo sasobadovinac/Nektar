@@ -44,7 +44,7 @@
 namespace Nektar
 {
 std::string DiffusionLDGNS::type = GetDiffusionFactory().
-RegisterCreatorFunction("LDGNS", DiffusionLDGNS::create);
+    RegisterCreatorFunction("LDGNS", DiffusionLDGNS::create, "LDG for Navier-Stokes");
 
 DiffusionLDGNS::DiffusionLDGNS()
 {

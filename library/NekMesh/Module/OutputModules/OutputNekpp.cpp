@@ -73,6 +73,8 @@ ModuleKey OutputNekpp::className2 =
 
 OutputNekpp::OutputNekpp(MeshSharedPtr m) : OutputModule(m)
 {
+    m_config["chkbndcomp"] = ConfigOption(
+        true, "0", "Put all undefined in a compoaite with id=9999");
     m_config["test"] = ConfigOption(
         true, "0", "Attempt to load resulting mesh and create meshgraph.");
     m_config["stats"] = ConfigOption(
@@ -710,6 +712,66 @@ void OutputNekpp::TransferComposites(MeshGraphSharedPtr graph)
             comps[indx] = curVector;
         }
         j++;
+    }
+
+
+    if (m_config["chkbndcomp"].beenSet)
+    {
+        if(m_mesh->m_expDim == 3)
+        {
+            // check to see if any boundary surfaces are not set and if so put
+            // them into a set with tag 9999
+            map<int, FaceSharedPtr> NotSet; 
+        
+            // loop over faceset and make a map of all faces only linked
+            // to one element
+            for(auto &it: m_mesh->m_faceSet)
+            {
+                // for some reason links are defined twice so should have
+                // been 1 but needs to be 2
+                if(it->m_elLink.size() == 2)
+                {
+                    NotSet[it->m_id] = it; 
+                }
+            }
+            
+            // reove composites and remove
+            for(auto &it: m_mesh->m_element[2])
+            {
+                int id = it->GetId(); 
+                if(NotSet.count(id))
+                {
+                    NotSet.erase(id); 
+            }
+            }
+            
+            // Make composite of all missing faces
+            if(NotSet.size())
+            {
+                int indx = 9999;
+                SpatialDomains::CompositeSharedPtr curVector =
+                    MemoryManager<SpatialDomains::Composite>::
+                    AllocateSharedPtr();
+                
+                QuadGeomMap &quadMap = graph->GetAllQuadGeoms();
+                TriGeomMap &triMap = graph->GetAllTriGeoms();
+                
+                for(auto &sit : NotSet)
+                {
+                    auto f = quadMap.find(sit.first);
+                    if(f != quadMap.end())
+                    {
+                        curVector->m_geomVec.push_back(f->second);
+                    }
+                    else
+                    {
+                        auto f2 = triMap.find(sit.first);
+                        curVector->m_geomVec.push_back(f2->second);
+                    }
+                }
+                comps[indx] = curVector;
+            }
+        }    
     }
 }
 
