@@ -263,6 +263,8 @@ INCLUDE (ThirdPartyCwipi)
 INCLUDE (FindCFI)
 INCLUDE (FindLikwid)
 
+INCLUDE (ThirdPartyLST)
+
 INCLUDE (Doxygen)
 
 IF( NEKTAR_USE_TINYXML_STL )
