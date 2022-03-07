@@ -57,6 +57,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessWSS.h
     ProcessModules/ProcessLocalStabilityAnalysis.h
     ProcessModules/ProcessWallNormalData.h
+    ProcessModules/ProcessBodyFittedVelocity.h
     ProcessModules/ProcessC0Projection.h
     ProcessModules/ProcessQCriterion.h
     ProcessModules/ProcessQualityMetric.h
@@ -120,6 +121,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessWSS.cpp
     ProcessModules/ProcessLocalStabilityAnalysis.cpp
     ProcessModules/ProcessWallNormalData.cpp
+    ProcessModules/ProcessBodyFittedVelocity.cpp
     ProcessModules/ProcessC0Projection.cpp
     ProcessModules/ProcessQCriterion.cpp
     ProcessModules/ProcessQualityMetric.cpp
