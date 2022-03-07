@@ -223,7 +223,7 @@ void InterfaceMapDG::ExchangeCoords()
 {
     auto comm = m_trace->GetComm();
     auto zones = m_movement->GetZones();
-    bool coordExchangeFlag = &m_movement->GetCoordExchangeFlag();
+    bool &coordExchangeFlag = m_movement->GetCoordExchangeFlag();
 
     if(coordExchangeFlag)
     {
