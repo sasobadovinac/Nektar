@@ -67,7 +67,7 @@ public:
         return MemoryManager<MeshGraphHDF5>::AllocateSharedPtr();
     }
 
-    static std::string className;
+    static std::string className, cmdSwitch;
 
 protected:
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(

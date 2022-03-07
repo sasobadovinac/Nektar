@@ -553,6 +553,16 @@ void TetGeom::SetUpFaceOrientation()
 
         orientation = orientation + 5;
 
+        ASSERTL0(orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+                 "Orientation of triangular face (id = " +
+                 boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
+                 ") is inconsistent with face "+
+                 boost::lexical_cast<string>(f) +
+                 " of tet element (id = "+
+                 boost::lexical_cast<string>(m_globalID) +
+                 ") since Dir2 is aligned with Dir1. Mesh setup "
+                 "needs investigation");
+
         // Fill the m_forient array
         m_forient[f] = (StdRegions::Orientation)orientation;
     }

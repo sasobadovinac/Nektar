@@ -179,6 +179,9 @@ protected:
 
     virtual void v_SplitComm(int pRows, int pColumns) override;
     virtual CommSharedPtr v_CommCreateIf(int flag) final;
+
+    virtual std::pair<CommSharedPtr, CommSharedPtr> v_SplitCommNode() final;
+
 };
 } // namespace LibUtilities
 } // namespace Nektar

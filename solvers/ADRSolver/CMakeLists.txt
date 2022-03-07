@@ -108,6 +108,7 @@ IF( NEKTAR_SOLVER_ADR )
     # face rotation test
     ADD_NEKTAR_TEST(Advection3D_DG_hex_faceRotation1122)
     ADD_NEKTAR_TEST(Advection3D_DG_hex_faceRotation1221)
+    ADD_NEKTAR_TEST(Advection3D_DG_prism)
 
     # 1D inviscid Burger (DG/FR)
     ADD_NEKTAR_TEST(InviscidBurger1D_FRDG_GLL_LAGRANGE_SEM LENGTHY)
@@ -163,6 +164,7 @@ IF( NEKTAR_SOLVER_ADR )
 
     ADD_NEKTAR_TEST(Helmholtz1D_8modes_DG)
     ADD_NEKTAR_TEST(Helmholtz1D_8modes)
+    ADD_NEKTAR_TEST(Helmholtz1D_800modes LENGTHY)
     ADD_NEKTAR_TEST(Helmholtz1D_8nodes)
 
     ADD_NEKTAR_TEST(SteadyAdvDiffReact2D_modal)

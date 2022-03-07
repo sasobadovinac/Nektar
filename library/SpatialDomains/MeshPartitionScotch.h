@@ -54,12 +54,13 @@ namespace SpatialDomains
             /// Creates an instance of this class
             static MeshPartitionSharedPtr create(
                 const LibUtilities::SessionReaderSharedPtr session,
+                LibUtilities::CommSharedPtr                comm,
                 int                                        meshDim,
                 std::map<int, MeshEntity>                  element,
                 CompositeDescriptor                        compMap)
             {
-                return MemoryManager<MeshPartitionScotch>
-                    ::AllocateSharedPtr(session, meshDim, element, compMap);
+                return MemoryManager<MeshPartitionScotch>::AllocateSharedPtr(
+                    session, comm, meshDim, element, compMap);
             }
 
             /// Name of class
@@ -68,6 +69,7 @@ namespace SpatialDomains
 
             MeshPartitionScotch(
                 const LibUtilities::SessionReaderSharedPtr session,
+                LibUtilities::CommSharedPtr                comm,
                 int                                        meshDim,
                 std::map<int, MeshEntity>                  element,
                 CompositeDescriptor                        compMap);

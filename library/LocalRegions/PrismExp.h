@@ -105,7 +105,10 @@ namespace Nektar
                 const int                           dir,
                 const Array<OneD, const NekDouble>& inarray,
                       Array<OneD,       NekDouble>& outarray);
-
+            LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
+                const int dir, 
+                const Array<OneD, const NekDouble>      &inarray, 
+                Array<OneD, Array<OneD, NekDouble> >    &outarray);
 
             //---------------------------------------
             // Evaluation functions
@@ -193,10 +196,6 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
                 const MatrixKey &mkey);
             LOCAL_REGIONS_EXPORT void v_DropLocStaticCondMatrix(
-                const MatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr CreateMatrix(
-                const MatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr CreateStaticCondMatrix(
                 const MatrixKey &mkey);
 
             LOCAL_REGIONS_EXPORT

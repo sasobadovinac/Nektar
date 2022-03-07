@@ -138,8 +138,11 @@ template<> void WriteStream(std::ostream &outfile, std::string data)
 template<typename T> void WriteStream(std::ostream &outfile,
                                       Array<OneD, T> data)
 {
-    outfile.write(reinterpret_cast<char *>(&data[0]),
+    if (data.size())
+    {
+        outfile.write(reinterpret_cast<char *>(&data[0]),
                   data.size() * sizeof(T));
+    }
 }
 
 /**
@@ -148,8 +151,11 @@ template<typename T> void WriteStream(std::ostream &outfile,
 template<typename T> void WriteStream(std::ostream  &outfile,
                                       std::vector<T> data)
 {
-    outfile.write(reinterpret_cast<char *>(&data[0]),
+    if (data.size())
+    {
+        outfile.write(reinterpret_cast<char *>(&data[0]),
                   data.size() * sizeof(T));
+    }
 }
 
 void OutputTecplot::OutputFromPts(po::variables_map &vm)

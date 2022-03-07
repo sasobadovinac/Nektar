@@ -1,0 +1,19 @@
+# vim: syntax=dockerfile
+
+FROM debian:stable-slim
+
+LABEL maintainer="Nektar++ Development Team <nektar-users@imperial.ac.uk>"
+
+WORKDIR /root
+
+RUN apt-get update && \
+    apt-get install -y git tar gzip bzip2 xz-utils
+
+RUN groupadd nektar && useradd -m -g nektar nektar
+
+# Force update to always run when building image
+ARG INVALIDATE_CACHE
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+
+USER nektar:nektar
+WORKDIR /home/nektar

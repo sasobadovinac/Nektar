@@ -1,0 +1,24 @@
+FROM centos:8
+
+# Set up to use EPEL release files and PowerTools
+RUN yum install -y epel-release dnf-plugins-core && \
+    yum config-manager --set-enabled powertools
+
+# Grab docker
+COPY docker/packaging/texlive.profile pkg/redhat/nektar-centos-8.spec /root/
+WORKDIR /root
+
+# Install build dependencies from specfile.
+RUN yum install -y ghostscript rpm-build wget perl-Digest-MD5 git && \
+    dnf builddep -y nektar-centos-8.spec && \
+    rm -f nektar-centos-8.spec
+
+# Install a reduced version of TeXLive for user/developer guide.
+RUN wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl.zip && \
+    unzip install-tl.zip && cd install-tl-* && \
+    ./install-tl -profile ../texlive.profile && \
+    PATH=/usr/local/texlive/2019/bin/x86_64-linux:$PATH \
+    tlmgr install lm babel microtype amsmath amsfonts mathtools psnfss graphics \
+        import tools xcolor listings lstaddons pgf environ bclogo hyperref memoir ec \
+        xkeyval trimspaces mdframed l3packages etoolbox footmisc caption standalone \
+        currfile filehook filemod epstopdf zref multirow jknapltx rsfs

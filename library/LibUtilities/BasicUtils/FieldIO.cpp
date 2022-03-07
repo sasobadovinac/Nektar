@@ -411,6 +411,19 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank, bool b
 {
     ASSERTL0(!outname.empty(), "Empty path given to SetUpOutput()");
 
+    // Create a hash from the filename
+    std::size_t file_id = std::hash<std::string>{}(outname);
+
+    // Find the minimum and maximum hash for each process
+    std::size_t file_id_max {file_id};
+    std::size_t file_id_min {file_id};
+    m_comm->AllReduce(file_id_max, ReduceMax);
+    m_comm->AllReduce(file_id_min, ReduceMin);
+
+    // Check that each process has the same filename (hash)
+    ASSERTL0(file_id_min == file_id_max, 
+        "All processes do not have the same filename.");
+
     int nprocs = m_comm->GetSize();
     bool root  = m_comm->TreatAsRankZero();
 

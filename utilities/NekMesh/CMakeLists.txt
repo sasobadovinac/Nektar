@@ -31,6 +31,8 @@ IF(NEKTAR_USE_MESHGEN)
 
     IF(NEKTAR_USE_CCM)
         ADD_NEKTAR_TEST(MeshGen/StarCCM/projectcad_ahmed)
+        ADD_NEKTAR_TEST(MeshGen/StarCCM/projectcad_pyramids)
+
     ENDIF()
 ENDIF()
 

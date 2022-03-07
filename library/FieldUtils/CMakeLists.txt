@@ -56,6 +56,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessMultiShear.h
     ProcessModules/ProcessWSS.h
     ProcessModules/ProcessLocalStabilityAnalysis.h
+    ProcessModules/ProcessWallNormalData.h
     ProcessModules/ProcessC0Projection.h
     ProcessModules/ProcessQCriterion.h
     ProcessModules/ProcessQualityMetric.h
@@ -118,6 +119,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessMultiShear.cpp
     ProcessModules/ProcessWSS.cpp
     ProcessModules/ProcessLocalStabilityAnalysis.cpp
+    ProcessModules/ProcessWallNormalData.cpp
     ProcessModules/ProcessC0Projection.cpp
     ProcessModules/ProcessQCriterion.cpp
     ProcessModules/ProcessQualityMetric.cpp
