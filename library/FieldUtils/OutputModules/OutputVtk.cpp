@@ -236,13 +236,14 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
 
     // Move geometry based on zones data in .xml and time in .fld metadatamap
     // Perform movement of zones based on time in field files metadata map
-    for (int i = 0; i < m_f->m_exp.size(); ++i)
+
+    if(m_f->m_graph->GetMovement() != nullptr) // @TODO: Think this should be something else to stop the movement if no zones
     {
-        if(m_f->m_exp[i]->GetMovement() != nullptr) // @TODO: Think this should be something else to stop the movement if no zones
+        m_f->m_graph->GetMovement()->PerformMovement(
+            boost::lexical_cast<NekDouble>(m_f->m_fieldMetaDataMap["Time"]));
+        for (auto & i : m_f->m_exp)
         {
-            m_f->m_exp[i]->GetMovement()->PerformMovement(
-                boost::lexical_cast<NekDouble>(m_f->m_fieldMetaDataMap["Time"]));
-            m_f->m_exp[i]->Reset();
+            i->Reset();
         }
     }
 

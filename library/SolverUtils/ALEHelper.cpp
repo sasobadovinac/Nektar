@@ -36,7 +36,7 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
     }
 
     // Create ALE objects for each interface zone
-    for (auto &zone : fields[0]->GetMovement()->GetZones())
+    for (auto &zone : fields[0]->GetGraph()->GetMovement()->GetZones())
     {
         switch(zone.second->GetMovementType())
         {
@@ -140,13 +140,13 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
         // The order of the resets below is v important to avoid errors
         for (auto &field : m_fieldsALE)
         {
-            field->GetMovement()->PerformMovement(time);
+            field->GetGraph()->GetMovement()->PerformMovement(time); // @TODO: Move this out of loop?
             field->ResetMatrices();
         }
 
         // Loop over all elements and faces and edges and reset geometry information.
         // Only need to do this on the first field as the geometry information is shared.
-        for (auto &zone : m_fieldsALE[0]->GetMovement()->GetZones())
+        for (auto &zone : m_fieldsALE[0]->GetGraph()->GetMovement()->GetZones())
         {
             if (zone.second->GetMoved())
             {
@@ -171,7 +171,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
         // @TODO: I guess we need the metric info on element expansions, but only the geomfactors for the trace geometry.
         for (auto &field : m_fieldsALE)
         {
-            for (auto &zone : field->GetMovement()->GetZones())
+            for (auto &zone : field->GetGraph()->GetMovement()->GetZones())
             {
                 if (zone.second->GetMoved())
                 {
@@ -185,7 +185,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
             }
         }
 
-        for (auto &zone : m_fieldsALE[0]->GetMovement()->GetZones())
+        for (auto &zone : m_fieldsALE[0]->GetGraph()->GetMovement()->GetZones())
         {
             if (zone.second->GetMoved())
             {

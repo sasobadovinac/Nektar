@@ -221,8 +221,7 @@ namespace Nektar
 
             // Create interface exchange object
             m_interfaceMap = MemoryManager<InterfaceMapDG>::
-            AllocateSharedPtr(
-                m_movement, m_trace, geomIdToTraceId);
+            AllocateSharedPtr(m_graph, m_trace, geomIdToTraceId);
 
             int cnt, n;
 

@@ -174,6 +174,9 @@ typedef std::map<std::string, std::string> MeshMetaDataMap;
 class MeshGraph;
 typedef std::shared_ptr<MeshGraph> MeshGraphSharedPtr;
 
+class Movement;
+typedef std::shared_ptr<Movement> MovementSharedPtr;
+
 /// Base class for a spectral/hp element mesh.
 class MeshGraph
 {
@@ -441,6 +444,21 @@ public:
         CreateMeshEntities();
     SPATIAL_DOMAINS_EXPORT CompositeDescriptor CreateCompositeDescriptor();
 
+    SPATIAL_DOMAINS_EXPORT inline std::map<int, std::pair<int, Array<OneD, NekDouble>>> &GetFoundLocalCoords()
+    {
+        return m_foundLocalCoords;
+    }
+
+    SPATIAL_DOMAINS_EXPORT inline std::map<int, std::pair<int, Array<OneD, NekDouble>>> &GetFoundRankCoords()
+    {
+        return m_foundRankCoords;
+    }
+
+    SPATIAL_DOMAINS_EXPORT inline MovementSharedPtr &GetMovement()
+    {
+        return m_movement;
+    }
+
 protected:
 
     void PopulateFaceToElMap(Geometry3DSharedPtr element, int kNfaces);
@@ -485,7 +503,13 @@ protected:
 
     struct GeomRTree;
     std::unique_ptr<GeomRTree> m_boundingBoxTree;
+
+    std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundRankCoords;
+    std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
+
+    MovementSharedPtr m_movement = nullptr;
 };
+
 typedef std::shared_ptr<MeshGraph> MeshGraphSharedPtr;
 typedef LibUtilities::NekFactory<std::string, MeshGraph> MeshGraphFactory;
 

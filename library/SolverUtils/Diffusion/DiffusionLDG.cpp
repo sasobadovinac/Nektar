@@ -116,7 +116,7 @@ void DiffusionLDG::v_DiffuseCoeffs(
     const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
     const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
 {
-    if(fields[0]->GetMovement()->GetMoveFlag()) // i.e. if m_ALESolver
+    if(fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) // i.e. if m_ALESolver
     {
         fields[0]->GetTrace()->GetNormals(m_traceNormals);
     }

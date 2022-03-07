@@ -250,9 +250,9 @@ int main(int argc, char *argv[])
     //@TODO: Might need this to rotate mesh based on time
     for (auto &fld : pFields)
     {
-        if (fld->GetMovement() != nullptr)
+        if (fld->GetGraph()->GetMovement() != nullptr)
         {
-            fld->GetMovement()->PerformMovement(
+            fld->GetGraph()->GetMovement()->PerformMovement(
                 boost::lexical_cast<NekDouble>(fieldMetaDataMap["Time"]));
             fld->Reset();
             fld->SetUpPhysNormals();

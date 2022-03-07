@@ -155,15 +155,18 @@ public:
 
     // Constructor for interface communication
     MULTI_REGIONS_EXPORT InterfaceMapDG(
-        const SpatialDomains::MovementSharedPtr &interfaces,
+        const SpatialDomains::MeshGraphSharedPtr &graph,
         const ExpListSharedPtr &trace,
         const std::map<int, int> geomIdToTraceId);
 
     MULTI_REGIONS_EXPORT void ExchangeTrace(Array<OneD, NekDouble> &Fwd,
                                             Array<OneD, NekDouble> &Bwd);
+
     MULTI_REGIONS_EXPORT void ExchangeCoords();
 
 private:
+    /// Mesh associated with this expansion list.
+    SpatialDomains::MeshGraphSharedPtr m_graph;
     SpatialDomains::MovementSharedPtr m_interfaces;
     std::vector<InterfaceTraceSharedPtr> m_localInterfaces;
     const ExpListSharedPtr m_trace;

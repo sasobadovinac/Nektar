@@ -55,13 +55,14 @@ InterfaceTrace::InterfaceTrace(
 }
 
 InterfaceMapDG::InterfaceMapDG(
-    const SpatialDomains::MovementSharedPtr &interfaces,
+    const SpatialDomains::MeshGraphSharedPtr &meshGraph,
     const ExpListSharedPtr &trace,
     const std::map<int, int> geomIdToTraceId)
-    : m_interfaces(interfaces),
+    : m_graph(meshGraph),
       m_trace(trace),
       m_geomIdToTraceId(geomIdToTraceId)
 {
+    m_interfaces = meshGraph->GetMovement();
     auto comm                = m_trace->GetComm();
     auto interfaceCollection = m_interfaces->GetInterfaces();
 
