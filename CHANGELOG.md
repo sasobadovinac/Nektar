@@ -105,6 +105,7 @@ v5.1.0
 **CompressibleFlowSolver**
 - Added the selective frequency damping support for the implicit solver (!!1267)
 - Added vectorisation of the Interior Penalty method (!!223)
+- Fix non-dimensional Sutherland law
 - Added a simplified implicit solver with naive preconditioner (!!1196)
 - Add BRJ preconditioner to the implicit solver (!!1212)
 - Fix implicit solver for Euler system (!!1252)
