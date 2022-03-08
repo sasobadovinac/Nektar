@@ -6,6 +6,7 @@ SET(MATRIXFREEOPS_SOURCES
     HelmholtzPrism.cpp
     HelmholtzPyr.cpp
     HelmholtzHex.cpp
+    InvMassQuad.cpp
     IProductQuad.cpp
     IProductTri.cpp
     IProductTet.cpp

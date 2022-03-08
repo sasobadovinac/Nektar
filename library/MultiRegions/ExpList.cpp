@@ -1708,6 +1708,26 @@ namespace Nektar
                                             const Array<OneD, const NekDouble> &inarray,
                                             Array<OneD, NekDouble> &outarray)
         {
+#if 1
+            // initialise if required
+            if(m_collectionsDoInit[Collections::eInvMass])
+            {
+                for (int i = 0; i < m_collections.size(); ++i)
+                {
+                    m_collections[i].Initialise(Collections::eInvMass);
+                }
+                m_collectionsDoInit[Collections::eInvMass] = false;
+            }
+
+            Array<OneD, NekDouble> tmp;
+            for (int i = 0; i < m_collections.size(); ++i)
+            {
+                m_collections[i].ApplyOperator(
+                    Collections::eInvMass,
+                    inarray + m_coll_coeff_offset[i],
+                    tmp = outarray + m_coll_coeff_offset[i]);
+            }
+#else
             GlobalMatrixKey mkey(StdRegions::eInvMass);
             const DNekScalBlkMatSharedPtr& InvMass = GetBlockMatrix(mkey);
 
@@ -1723,6 +1743,7 @@ namespace Nektar
                 NekVector<NekDouble> in(m_ncoeffs,inarray,eWrapper);
                 out = (*InvMass)*in;
             }
+#endif
         }
 
         /**
