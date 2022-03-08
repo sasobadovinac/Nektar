@@ -67,7 +67,7 @@ IF (NEKTAR_USE_PETSC)
                     SET(PETSC_MUMPS ${PETSC_MUMPS} --with-blas-lib=${BLAS}
                         --with-lapack-lib=${LAPACK})
                     IF(THIRDPARTY_BUILD_BLAS_LAPACK)
-                        SET(PETSC_DEPS ${PETSC_DEPS} lapack-3.7.0)
+                        SET(PETSC_DEPS ${PETSC_DEPS} lapack-3.7.1)
                     ENDIF()
                 ELSE()
                     MESSAGE(STATUS "No suitable blas/lapack found, downloading")

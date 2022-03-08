@@ -28,10 +28,13 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         CompressibleFlowSolver.cpp
         Diffusion/DiffusionLDGNS.cpp
         EquationSystems/CompressibleFlowSystem.cpp
+        EquationSystems/CompressibleFlowSystemImplicit.cpp
         EquationSystems/EulerCFE.cpp
+        EquationSystems/EulerImplicitCFE.cpp
         EquationSystems/IsentropicVortex.cpp
         EquationSystems/NavierStokesCFE.cpp
         EquationSystems/NavierStokesCFEAxisym.cpp
+        EquationSystems/NavierStokesImplicitCFE.cpp
         EquationSystems/RinglebFlow.cpp
         Forcing/ForcingAxiSymmetric.cpp
         Forcing/ForcingQuasi1D.cpp
@@ -59,6 +62,9 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         RiemannSolvers/LaxFriedrichsSolverALE.cpp
         RiemannSolvers/RoeSolver.cpp
         RiemannSolvers/RoeSolverSIMD.cpp
+        Preconditioner/PreconCfs.cpp
+        Preconditioner/PreconCfsOp.cpp
+        Preconditioner/PreconCfsBRJ.cpp
         )
     IF(NEKTAR_BUILD_UNIT_TESTS)
       ADD_SUBDIRECTORY(RiemannSolvers/UnitTests)
@@ -86,6 +92,8 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(RinglebFlow_P8 LENGTHY)
     #ADD_NEKTAR_TEST(Couette_WeakDG_LDG_MODIFIED)
     ADD_NEKTAR_TEST(Couette_WeakDG_IP_MODIFIED_IM)
+    ADD_NEKTAR_TEST(Couette_WeakDG_IP_MODIFIED_IM_PRECON)
+    ADD_NEKTAR_TEST(Couette_WeakDG_IP_MODIFIED_Adiabatic)
     ADD_NEKTAR_TEST(Couette_WeakDG_LDG_SEM)
     ADD_NEKTAR_TEST(Couette_WeakDG_LDG_SEM_VariableMu)
     #ADD_NEKTAR_TEST(Couette_WeakDG_LDG_GAUSS)
@@ -111,6 +119,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(CylinderSubsonic_NS_FRHU_LFRHU_SEM_3DHOMO1D_MVM)
     ADD_NEKTAR_TEST(Couette_FRSD_LFRSD_MODIFIED_3DHOMO1D_MVM)
     ADD_NEKTAR_TEST(CylinderSubsonic_NS_FRSD_LFRSD_MODIFIED_3DHOMO1D_MVM)
+    ADD_NEKTAR_TEST(CylinderSubsonic_WeakDG_Implicit)
     ADD_NEKTAR_TEST(Nozzle_AxiSym_NoSwirl)
     ADD_NEKTAR_TEST(Nozzle_AxiSym_Swirl)
     ADD_NEKTAR_TEST(Nozzle_Quasi1D_P6)
@@ -121,6 +130,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(Rarefaction_vanderWaals LENGTHY)
     ADD_NEKTAR_TEST(MMS_Compressible_Poiseuille_testIP)
     ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_Lap)
+    ADD_NEKTAR_TEST(TimeDependentAbsorption)
 
     IF (NEKTAR_USE_MPI)
         #ADD_NEKTAR_TEST(Perturbation_M05_square_CBC_par LENGTHY)
@@ -132,6 +142,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         #ADD_NEKTAR_TEST(Perturbation_NS_M05_square_CBC_par LENGTHY)
         #ADD_NEKTAR_TEST(Perturbation_NS_M15_square_CBC_par LENGTHY)
         ADD_NEKTAR_TEST(RAE5240_BSF_LE_bcsfromfile_par)
+        ADD_NEKTAR_TEST(Couette_WeakDG_IP_MODIFIED_IM_PRECON_par)
         # disabled as intermittently fails
         #ADD_NEKTAR_TEST(Couette_WeakDG_LDG_Exact_par)
         ADD_NEKTAR_TEST(Couette_WeakDG_IP_MODIFIED_IM_par)
@@ -141,7 +152,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
 	ADD_NEKTAR_TEST(Couette_WeakDG_LDG_SEM_3DHOMO1D_FFT)
 	ADD_NEKTAR_TEST(CylinderSubsonic_NS_WeakDG_LDG_SEM_3DHomo1D_FFT)
 	ADD_NEKTAR_TEST(IsentropicVortex16_WeakDG_SEM_3DHomo1D_FFT)
-  ADD_NEKTAR_TEST(Couette_FRDG_LFRDG_GLL_LAGRANGE_3DHOMO1D_FFT)
+    ADD_NEKTAR_TEST(Couette_FRDG_LFRDG_GLL_LAGRANGE_3DHOMO1D_FFT)
 	ADD_NEKTAR_TEST(CylinderSubsonic_NS_FRDG_LFRDG_GLL_LAGRANGE_3DHOMO1D_FFT)
 	ADD_NEKTAR_TEST(IsentropicVortex16_FRDG_GLL_LAGRANGE_3DHOMO1D_FFT)
 	ADD_NEKTAR_TEST(Couette_FRHU_LFRHU_SEM_3DHOMO1D_FFT)
@@ -150,5 +161,6 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
 	ADD_NEKTAR_TEST(Couette_FRSD_LFRSD_MODIFIED_3DHOMO1D_FFT)
 	ADD_NEKTAR_TEST(CylinderSubsonic_NS_FRSD_LFRSD_MODIFIED_3DHOMO1D_FFT)
 	ADD_NEKTAR_TEST(IsentropicVortex16_FRSD_MODIFIED_3DHOMO1D_FFT)
+        ADD_NEKTAR_TEST(implicitSolverCallsSFD)
     ENDIF (NEKTAR_USE_FFTW)
 ENDIF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )

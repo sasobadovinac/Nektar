@@ -1,7 +1,25 @@
 SET(MATRIXFREEOPS_SOURCES
     BwdTrans.cpp
-    IProduct.cpp
-    IProductWRTDerivBase.cpp
+    HelmholtzQuad.cpp
+    HelmholtzTri.cpp
+    HelmholtzTet.cpp
+    HelmholtzPrism.cpp
+    HelmholtzPyr.cpp
+    HelmholtzHex.cpp
+    IProductQuad.cpp
+    IProductTri.cpp
+    IProductTet.cpp
+    IProductSeg.cpp
+    IProductPrism.cpp
+    IProductPyr.cpp
+    IProductHex.cpp
+    IProductWRTDerivBaseQuad.cpp
+    IProductWRTDerivBaseTri.cpp
+    IProductWRTDerivBaseTet.cpp
+    IProductWRTDerivBaseSeg.cpp
+    IProductWRTDerivBasePrism.cpp
+    IProductWRTDerivBasePyr.cpp
+    IProductWRTDerivBaseHex.cpp
     PhysDeriv.cpp
     Operator.cpp
   )
@@ -9,9 +27,11 @@ SET(MATRIXFREEOPS_SOURCES
 SET(MATRIXFREEOPS_HEADERS
     BwdTrans.h
     BwdTransKernels.hpp
+    Helmholtz.h
     IProduct.h
     IProductKernels.hpp
     IProductWRTDerivBase.h
+    PhysDerivKernels.hpp
     Operator.hpp
 )
 
@@ -28,3 +48,4 @@ ADD_NEKTAR_LIBRARY(MatrixFreeOps
 INSTALL(DIRECTORY ./
     DESTINATION ${NEKTAR_INCLUDE_DIR}/MatrixFreeOps
     COMPONENT dev FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+    

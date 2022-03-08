@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: avx2.cpp
+// File: avx2.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,7 +35,12 @@
 #ifndef NEKTAR_LIB_LIBUTILITES_SIMDLIB_AVX2_H
 #define NEKTAR_LIB_LIBUTILITES_SIMDLIB_AVX2_H
 
-#include <immintrin.h>
+#if defined(__x86_64__)
+    #include <immintrin.h>
+    #if defined(__INTEL_COMPILER) && !defined(TINYSIMD_HAS_SVML)
+        #define TINYSIMD_HAS_SVML
+    #endif
+#endif
 #include <vector>
 #include "allocator.hpp"
 #include "traits.hpp"
@@ -62,20 +67,28 @@ struct avx2
 template<typename T> struct avx2Int8;
 template<typename T> struct avx2Long4;
 struct avx2Double4;
+struct avx2Mask;
 
 namespace abi
 {
 
 // mapping between abstract types and concrete types
-template <> struct avx2<std::int32_t> { using type = avx2Int8<std::int32_t>; };
-template <> struct avx2<std::uint32_t> { using type = avx2Int8<std::uint32_t>; };
+template <> struct avx2<double> { using type = avx2Double4; };
 template <> struct avx2<std::int64_t> { using type = avx2Long4<std::int64_t>; };
 template <> struct avx2<std::uint64_t> { using type = avx2Long4<std::uint64_t>; };
-template <> struct avx2<double> { using type = avx2Double4; };
+template <> struct avx2<bool> { using type = avx2Mask; };
+#if defined(__AVX512F__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
+// these types are used for indexes only
+// should be enabled only with avx512 otherwise they get selected by the wrapper
+// instead of sse2int4. The concrete type avx2Int8 is available in case someone
+// wants to explicity use it
+template <> struct avx2<std::int32_t> { using type = avx2Int8<std::int32_t>; };
+template <> struct avx2<std::uint32_t> { using type = avx2Int8<std::uint32_t>; };
+#endif
 
 } // namespace abi
 
-// concrete types, could add enable if to allow only unsigned int and int...
+// concrete types
 template<typename T>
 struct avx2Int8
 {
@@ -426,20 +439,6 @@ struct avx2Double4
         _data = _mm256_loadu_pd(p);
     }
 
-    // load random
-    inline void load(scalarType const* a, scalarType const* b,
-        scalarType const* c, scalarType const* d)
-    {
-        __m128d t1, t2, t3, t4;
-        __m256d t5;
-        t1 = _mm_load_sd(a);                      // SSE2
-        t2 = _mm_loadh_pd(t1, b);                 // SSE2
-        t3 = _mm_load_sd(c);                      // SSE2
-        t4 = _mm_loadh_pd(t3, d);                 // SSE2
-        t5 = _mm256_castpd128_pd256(t2);          // cast __m128d -> __m256d
-        _data = _mm256_insertf128_pd(t5, t4, 1);
-    }
-
     // broadcast
     inline void broadcast(const scalarType rhs)
     {
@@ -565,14 +564,32 @@ inline avx2Double4 abs(avx2Double4 in)
     return _mm256_andnot_pd(sign_mask, in._data);        // !sign_mask & x
 }
 
+inline avx2Double4 log(avx2Double4 in)
+{
+    #if defined(TINYSIMD_HAS_SVML)
+        return _mm256_log_pd(in._data);
+    #else
+        // there is no avx2 log intrinsic
+        // this is a dreadful implementation and is simply a stop gap measure
+        alignas(avx2Double4::alignment) avx2Double4::scalarArray tmp;
+        in.store(tmp);
+        tmp[0] = std::log(tmp[0]);
+        tmp[1] = std::log(tmp[1]);
+        tmp[2] = std::log(tmp[2]);
+        tmp[3] = std::log(tmp[3]);
+        avx2Double4 ret;
+        ret.load(tmp);
+        return ret;
+    #endif
+}
+
 inline void load_interleave(
     const double* in,
     size_t dataLen,
     std::vector<avx2Double4, allocator<avx2Double4>> &out)
 {
-    size_t nBlocks = dataLen / 4;
-
-    alignas(32) size_t tmp[4] = {0, dataLen, 2*dataLen, 3*dataLen};
+    alignas(avx2Double4::alignment) size_t tmp[avx2Double4::width] = 
+        {0, dataLen, 2*dataLen, 3*dataLen};
     using index_t = avx2Long4<size_t>;
     index_t index0(tmp);
     index_t index1 = index0 + 1;
@@ -580,20 +597,22 @@ inline void load_interleave(
     index_t index3 = index0 + 3;
 
     // 4x unrolled loop
+    constexpr uint16_t unrl = 4;
+    size_t nBlocks = dataLen / unrl;
     for (size_t i = 0; i < nBlocks; ++i)
     {
-        out[4*i + 0].gather(in, index0);
-        out[4*i + 1].gather(in, index1);
-        out[4*i + 2].gather(in, index2);
-        out[4*i + 3].gather(in, index3);
-        index0 = index0 + 4;
-        index1 = index1 + 4;
-        index2 = index2 + 4;
-        index3 = index3 + 4;
+        out[unrl*i + 0].gather(in, index0);
+        out[unrl*i + 1].gather(in, index1);
+        out[unrl*i + 2].gather(in, index2);
+        out[unrl*i + 3].gather(in, index3);
+        index0 = index0 + unrl;
+        index1 = index1 + unrl;
+        index2 = index2 + unrl;
+        index3 = index3 + unrl;
     }
 
     // spillover loop
-    for (size_t i = 4 * nBlocks; i < dataLen; ++i)
+    for (size_t i = unrl * nBlocks; i < dataLen; ++i)
     {
         out[i].gather(in, index0);
         index0 = index0 + 1;
@@ -606,9 +625,8 @@ inline void deinterleave_store(
     size_t dataLen,
     double *out)
 {
-    // size_t nBlocks = dataLen / 4;
-
-    alignas(32) size_t tmp[4] = {0, dataLen, 2*dataLen, 3*dataLen};
+    alignas(avx2Double4::alignment) size_t tmp[avx2Double4::width] = 
+        {0, dataLen, 2*dataLen, 3*dataLen};
     using index_t = avx2Long4<size_t>;
     index_t index0(tmp);
 
@@ -618,6 +636,40 @@ inline void deinterleave_store(
         index0 = index0 + 1;
     }
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+// mask type
+// mask is a int type with special properties (broad boolean vector)
+// broad boolean vectors defined and allowed values are:
+// false=0x0 and true=0xFFFFFFFF
+//
+// VERY LIMITED SUPPORT...just enough to make cubic eos work...
+//
+struct avx2Mask : avx2Long4<std::uint64_t>
+{
+    // bring in ctors
+    using avx2Long4::avx2Long4;
+
+    static constexpr scalarType true_v = -1;
+    static constexpr scalarType false_v = 0;
+};
+
+inline avx2Mask operator>(avx2Double4 lhs, avx2Double4 rhs)
+{
+
+    return reinterpret_cast<__m256i>(_mm256_cmp_pd(rhs._data, lhs._data, 1));
+}
+
+inline bool operator&&(avx2Mask lhs, bool rhs)
+{
+    bool tmp = _mm256_testc_si256(lhs._data, _mm256_set1_epi64x(avx2Mask::true_v));
+
+    return tmp && rhs;
+}
+
+
 
 #endif // defined(__AVX2__)
 

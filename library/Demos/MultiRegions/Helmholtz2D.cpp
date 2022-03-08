@@ -109,6 +109,15 @@ int main(int argc, char *argv[])
             d00func->Evaluate(xc0, xc1, xc2, d00);
             varcoeffs[StdRegions::eVarCoeffD00] = d00;
         }
+        
+        if (vSession->DefinesFunction("d01"))
+        {
+            Array<OneD, NekDouble> d01(nq,0.0);
+            LibUtilities::EquationSharedPtr d01func = vSession->GetFunction("d01",0);
+            d01func->Evaluate(xc0, xc1, xc2, d01);
+            varcoeffs[StdRegions::eVarCoeffD01] = d01;
+        }
+        
         if (vSession->DefinesFunction("d11"))
         {
             Array<OneD, NekDouble> d11(nq,0.0);
@@ -118,6 +127,30 @@ int main(int argc, char *argv[])
         }
         //----------------------------------------------
 
+        //----------------------------------------------
+        // Set up const diffusion coefficients if defined
+        if (vSession->DefinesParameter("d00"))
+        {
+            NekDouble d00;
+            vSession->LoadParameter("d00",d00,1.0);            
+            factors[StdRegions::eFactorCoeffD00] = d00;
+        }
+        
+        if (vSession->DefinesParameter("d01"))
+        {
+            NekDouble d01;
+            vSession->LoadParameter("d01",d01,1.0);            
+            factors[StdRegions::eFactorCoeffD01] = d01;
+        }
+
+        if (vSession->DefinesParameter("d11"))
+        {
+            NekDouble d11;
+            vSession->LoadParameter("d11",d11,1.0);
+            factors[StdRegions::eFactorCoeffD11] = d11;
+        }
+        //----------------------------------------------
+        
         //----------------------------------------------
         // Define forcing function for first variable defined in file
         fce = Array<OneD,NekDouble>(nq);

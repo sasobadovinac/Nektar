@@ -61,6 +61,8 @@ WallViscousBC::WallViscousBC(const LibUtilities::SessionReaderSharedPtr& pSessio
     : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt)
 {
     m_diffusionAveWeight = 0.5;
+
+    m_bndPhys = Array<OneD, Array<OneD, NekDouble> > (m_fields.size());
 }
 
 void WallViscousBC::v_Apply(
@@ -69,11 +71,31 @@ void WallViscousBC::v_Apply(
         const NekDouble                                    &time)
 {
     boost::ignore_unused(time);
-    int nVariables = physarray.size();
-
-    // @TODO: ALE we subtract the grid velocity ? "Set u = to ug for this one" - Dave
 
     int i;
+    int nVariables = physarray.size();
+
+    // Find the fields whose WallViscous/Adiabatic-BC is time-dependent
+    // Update variables on the boundaries of these fields
+    // Get the updated variables on the WallViscous/Adiabatic boundary
+    //
+    // Maybe the EvaluateBoundaryConditions() should be put upstream to
+    // CompressibleFlowSystem::NumCalRiemFluxJac(), So that the BCs will not
+    // be repeatedly updated when there are more than one time-dependent BC.
+    std::string varName;
+    for (i = 0; i < nVariables; ++i)
+    {
+        if (m_fields[i]->GetBndConditions()[m_bcRegion]->IsTimeDependent())
+        {
+            varName = m_session->GetVariable(i);
+            m_fields[i]->EvaluateBoundaryConditions(time, varName);
+
+            m_bndPhys[i] = m_fields[i]->GetBndCondExpansions()[m_bcRegion]
+                           ->UpdatePhys();
+        }
+    }
+
+
     const Array<OneD, const int> &traceBndMap
         = m_fields[0]->GetTraceBndMap();
 
@@ -92,12 +114,13 @@ void WallViscousBC::v_Apply(
             GetPhys_Offset(e);
         id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
 
-        // Boundary condition for epsilon term. @TODO: Is this correct, or should I do E = p/(gamma -1) + 1/2*rho(u^2 +v^2 + w^2)... or
+        // Boundary condition for epsilon term.
         if (nVariables == m_spacedim+3)
         {
             Vmath::Zero(nBCEdgePts, &Fwd[nVariables-1][id2], 1);
         }
 
+        // V = - Vin
         for (i = 0; i < m_spacedim; i++)
         {
             // V = -Vin
@@ -109,6 +132,16 @@ void WallViscousBC::v_Apply(
             for (int j = 0; j < nBCEdgePts; ++j)
             {
                 Fwd[i+1][id2 + j] = 2 * m_gridVelocityTrace[i][id2 + j] * Fwd[0][id2 + j] - Fwd[i+1][id2 + j];
+            }
+        }
+
+        // Superimpose the perturbation
+        for (i = 0; i < nVariables; ++i)
+        {
+            if (m_fields[i]->GetBndConditions()[m_bcRegion]->IsTimeDependent())
+            {
+                Vmath::Vadd(nBCEdgePts, &m_bndPhys[i][id1], 1,
+                            &Fwd[i][id2], 1,  &Fwd[i][id2], 1);
             }
         }
 

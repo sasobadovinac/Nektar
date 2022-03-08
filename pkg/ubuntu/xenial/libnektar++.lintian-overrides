@@ -1,0 +1,3 @@
+# Libraries are distributed together as a set.
+libnektar++ binary: package-name-doesnt-match-sonames *
+libnektar++: binary-or-shlib-defines-rpath

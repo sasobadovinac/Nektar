@@ -48,10 +48,11 @@
     friend class MemoryManager<cname>;                          \
     static OperatorSharedPtr create(                            \
         std::vector<StdRegions::StdExpansionSharedPtr> pCollExp,\
-        std::shared_ptr<CoalescedGeomData> GeomData)            \
+        std::shared_ptr<CoalescedGeomData> GeomData,            \
+        StdRegions::FactorMap factors)                          \
     {                                                           \
         return MemoryManager<cname>                             \
-            ::AllocateSharedPtr(pCollExp, GeomData);            \
+            ::AllocateSharedPtr(pCollExp, GeomData, factors);   \
     }
 
 namespace Nektar
@@ -65,6 +66,7 @@ typedef std::shared_ptr<CoalescedGeomData>   CoalescedGeomDataSharedPtr;
 enum OperatorType
 {
     eBwdTrans,
+    eHelmholtz,
     eIProductWRTBase,
     eIProductWRTDerivBase,
     ePhysDeriv,
@@ -74,6 +76,7 @@ enum OperatorType
 const char* const OperatorTypeMap[] =
 {
     "BwdTrans",
+    "Helmholtz",
     "IProductWRTBase",
     "IProductWRTDerivBase",
     "PhysDeriv"
@@ -114,16 +117,18 @@ class Operator
         /// Constructor
         Operator(
                 std::vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                std::shared_ptr<CoalescedGeomData> GeomData);
+                std::shared_ptr<CoalescedGeomData> GeomData,
+                StdRegions::FactorMap factors);
 
         /// Perform operation
+                
         COLLECTIONS_EXPORT virtual void operator()(
                 const Array<OneD, const NekDouble> &input,
                       Array<OneD,       NekDouble> &output0,
                       Array<OneD,       NekDouble> &output1,
                       Array<OneD,       NekDouble> &output2,
                       Array<OneD,       NekDouble> &wsp
-                                                    = NullNekDouble1DArray) = 0;
+                = NullNekDouble1DArray) = 0;
 
         COLLECTIONS_EXPORT virtual void operator()(
                       int                           dir,
@@ -133,6 +138,11 @@ class Operator
                                                     = NullNekDouble1DArray) = 0;
 
         COLLECTIONS_EXPORT virtual ~Operator();
+
+        /// Check the validity of the supplied factor map
+        COLLECTIONS_EXPORT virtual void CheckFactors(
+                StdRegions::FactorMap factors,
+                int coll_phys_offset) = 0;
 
         /// Get the size of the required workspace
         unsigned int GetWspSize()
@@ -181,7 +191,8 @@ typedef Nektar::LibUtilities::NekFactory<
     OperatorKey,
     Operator,
     std::vector<StdRegions::StdExpansionSharedPtr>,
-    CoalescedGeomDataSharedPtr> OperatorFactory;
+    CoalescedGeomDataSharedPtr,
+    StdRegions::FactorMap> OperatorFactory;
 
 /// Returns the singleton Operator factory object
 OperatorFactory& GetOperatorFactory();

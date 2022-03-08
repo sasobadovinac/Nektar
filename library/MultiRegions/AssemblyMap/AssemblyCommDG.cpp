@@ -183,6 +183,8 @@ Pairwise::Pairwise(const LibUtilities::CommSharedPtr &comm,
     int nNeighbours = rankSharedEdges.size();
     Array<OneD, int> sendCount(nNeighbours, -1);
 
+    // List of partition to trace map indices of the quad points to exchange
+    std::vector<std::pair<int, std::vector<int>>> vecPairPartitionTrace;
     for (const auto &rankEdgeSet : rankSharedEdges)
     {
         std::vector<int> edgeTraceIndex;
@@ -193,39 +195,49 @@ Pairwise::Pairwise(const LibUtilities::CommSharedPtr &comm,
                                   edgeIndex.end());
         }
 
-        m_vecPairPartitionTrace.emplace_back(
+        vecPairPartitionTrace.emplace_back(
             std::make_pair(rankEdgeSet.first, edgeTraceIndex));
 
         sendCount[cnt++] = edgeTraceIndex.size();
     }
 
-    m_sendDisp = Array<OneD, int>(nNeighbours, 0);
-
+    Array<OneD, int> sendDisp(nNeighbours, 0);
     for (size_t i = 1; i < nNeighbours; ++i)
     {
-        m_sendDisp[i] = m_sendDisp[i - 1] + sendCount[i - 1];
+        sendDisp[i] = sendDisp[i - 1] + sendCount[i - 1];
     }
 
     size_t totSends = std::accumulate(sendCount.begin(), sendCount.end(), 0);
 
-    m_recvBuff = Array<OneD, NekDouble>(totSends, -1);
-    m_sendBuff = Array<OneD, NekDouble>(totSends, -1);
+    m_recvBuff   = Array<OneD, NekDouble>(totSends, -1);
+    m_sendBuff   = Array<OneD, NekDouble>(totSends, -1);
+    m_edgeTraceIndex = Array<OneD, int>  (totSends, -1);
 
-    m_recvRequest = m_comm->CreateRequest(m_vecPairPartitionTrace.size());
-    m_sendRequest = m_comm->CreateRequest(m_vecPairPartitionTrace.size());
+    // Set up m_edgeTraceIndex to reduce complexity when performing exchange
+    cnt = 0;
+    for (auto &i : vecPairPartitionTrace)
+    {
+        for (auto j : i.second)
+        {
+            m_edgeTraceIndex[cnt++] = j;
+        }
+    }
+
+    m_recvRequest = m_comm->CreateRequest(vecPairPartitionTrace.size());
+    m_sendRequest = m_comm->CreateRequest(vecPairPartitionTrace.size());
 
     // Construct persistent requests
-    for (size_t i = 0; i < m_vecPairPartitionTrace.size(); ++i)
+    for (size_t i = 0; i < vecPairPartitionTrace.size(); ++i)
     {
-        size_t len = m_vecPairPartitionTrace[i].second.size();
+        size_t len = vecPairPartitionTrace[i].second.size();
 
         // Initialise receive requests
-        m_comm->RecvInit(m_vecPairPartitionTrace[i].first,
-                         m_recvBuff[m_sendDisp[i]], len, m_recvRequest, i);
+        m_comm->RecvInit(vecPairPartitionTrace[i].first,
+                         m_recvBuff[sendDisp[i]], len, m_recvRequest, i);
 
         // Initialise send requests
-        m_comm->SendInit(m_vecPairPartitionTrace[i].first,
-                         m_sendBuff[m_sendDisp[i]], len, m_sendRequest, i);
+        m_comm->SendInit(vecPairPartitionTrace[i].first,
+                         m_sendBuff[sendDisp[i]], len, m_sendRequest, i);
     }
 }
 
@@ -305,14 +317,9 @@ void Pairwise::PerformExchange(const Array<OneD, NekDouble> &testFwd,
     m_comm->StartAll(m_recvRequest);
 
     // Fill send buffer from Fwd trace
-    for (size_t i = 0; i < m_vecPairPartitionTrace.size(); ++i)
+    for (size_t i = 0; i < m_edgeTraceIndex.size(); ++i)
     {
-        size_t len = m_vecPairPartitionTrace[i].second.size();
-        for (size_t j = 0; j < len; ++j)
-        {
-            m_sendBuff[m_sendDisp[i] + j] =
-                testFwd[m_vecPairPartitionTrace[i].second[j]];
-        }
+        m_sendBuff[i] = testFwd[m_edgeTraceIndex[i]];
     }
 
     // Perform send posts
@@ -323,14 +330,9 @@ void Pairwise::PerformExchange(const Array<OneD, NekDouble> &testFwd,
     m_comm->WaitAll(m_recvRequest);
 
     // Fill Bwd trace from recv buffer
-    for (size_t i = 0; i < m_vecPairPartitionTrace.size(); ++i)
+    for (size_t i = 0; i < m_edgeTraceIndex.size(); ++i)
     {
-        size_t len = m_vecPairPartitionTrace[i].second.size();
-        for (size_t j = 0; j < len; ++j)
-        {
-            testBwd[m_vecPairPartitionTrace[i].second[j]] =
-                m_recvBuff[m_sendDisp[i] + j];
-        }
+        testBwd[m_edgeTraceIndex[i]] = m_recvBuff[i];
     }
 }
 
@@ -361,15 +363,22 @@ AssemblyCommDG::AssemblyCommDG(
         std::vector<ExchangeMethodSharedPtr> MPIFuncs;
         std::vector<std::string> MPIFuncsNames;
 
-        MPIFuncs.emplace_back(
-            ExchangeMethodSharedPtr(MemoryManager<AllToAll>::AllocateSharedPtr(
-                comm, m_maxQuad, m_nRanks, m_rankSharedEdges, m_edgeToTrace)));
-        MPIFuncsNames.emplace_back("AllToAll");
+        // Toggle off AllToAll/AllToAllV methods if cores greater than 16 for
+        // performance reasons unless override solver info parameter is present
+        if (locExp.GetSession()->MatchSolverInfo("OverrideMPI", "ON") ||
+            m_nRanks <= 16)
+        {
+            MPIFuncs.emplace_back(ExchangeMethodSharedPtr(
+                MemoryManager<AllToAll>::AllocateSharedPtr(
+                    comm, m_maxQuad, m_nRanks, m_rankSharedEdges,
+                    m_edgeToTrace)));
+            MPIFuncsNames.emplace_back("AllToAll");
 
-        MPIFuncs.emplace_back(
-            ExchangeMethodSharedPtr(MemoryManager<AllToAllV>::AllocateSharedPtr(
-                comm, m_rankSharedEdges, m_edgeToTrace, m_nRanks)));
-        MPIFuncsNames.emplace_back("AllToAllV");
+            MPIFuncs.emplace_back(ExchangeMethodSharedPtr(
+                MemoryManager<AllToAllV>::AllocateSharedPtr(
+                    comm, m_rankSharedEdges, m_edgeToTrace, m_nRanks)));
+            MPIFuncsNames.emplace_back("AllToAllV");
+        }
 
         MPIFuncs.emplace_back(
             ExchangeMethodSharedPtr(MemoryManager<Pairwise>::AllocateSharedPtr(

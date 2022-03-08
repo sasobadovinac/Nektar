@@ -171,6 +171,9 @@ public:
     LIB_UTILITIES_EXPORT inline std::tuple<int, int, int> GetVersion();
     LIB_UTILITIES_EXPORT inline bool RemoveExistingFiles();
 
+    LIB_UTILITIES_EXPORT inline std::pair<CommSharedPtr, CommSharedPtr>
+        SplitCommNode();
+
 protected:
     int m_size;                 ///< Number of processes
     std::string m_type;         ///< Type of communication
@@ -253,6 +256,8 @@ protected:
     virtual std::tuple<int, int, int> v_GetVersion()  = 0;
 
     LIB_UTILITIES_EXPORT virtual bool v_RemoveExistingFiles();
+    LIB_UTILITIES_EXPORT virtual std::pair<CommSharedPtr, CommSharedPtr>
+        v_SplitCommNode();
 };
 
 /**
@@ -770,6 +775,11 @@ inline std::tuple<int, int, int> Comm::GetVersion()
 inline bool Comm::RemoveExistingFiles()
 {
     return v_RemoveExistingFiles();
+}
+
+std::pair<CommSharedPtr, CommSharedPtr> Comm::SplitCommNode()
+{
+    return v_SplitCommNode();
 }
 
 } // namespace LibUtilities

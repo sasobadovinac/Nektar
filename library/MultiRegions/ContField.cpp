@@ -416,6 +416,7 @@ namespace Nektar
 
             StdRegions::VarCoeffMap varcoeffs;
             varcoeffs[StdRegions::eVarCoeffD00] = variablecoeffs[0];
+            varcoeffs[StdRegions::eVarCoeffD01] = variablecoeffs[1];
             varcoeffs[StdRegions::eVarCoeffD11] = variablecoeffs[3];
             varcoeffs[StdRegions::eVarCoeffD22] = variablecoeffs[5];
             StdRegions::ConstFactorMap factors;
@@ -685,12 +686,6 @@ namespace Nektar
 
             for(int i = 0; i < m_bndCondExpansions.size(); ++i)
             {
-                if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                       SpatialDomains::ePeriodic)
-                {
-                    continue;
-                }
-
                 Array<OneD, NekDouble>& coeffs = m_bndCondExpansions[i]->UpdateCoeffs();
 
                 if(m_locToGloMap->GetSignChange())
@@ -731,12 +726,6 @@ namespace Nektar
 
             for(int j = 0; j < nreg; ++j)
             {
-                if (m_bndConditions[j]->GetBoundaryConditionType() ==
-                    SpatialDomains::ePeriodic)
-                {
-                    continue;
-                }
-
                 bndcnt += m_bndCondExpansions[j]->GetNcoeffs();
             }
 

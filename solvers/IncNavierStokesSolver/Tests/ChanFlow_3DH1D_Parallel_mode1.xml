@@ -77,6 +77,16 @@
     
   </CONDITIONS>
 
+  <FILTERS>
+      <FILTER TYPE="HistoryPoints">
+        <PARAM NAME="OutputFile">points.his</PARAM>
+        <PARAM NAME="OutputFrequency">100</PARAM>
+        <PARAM NAME="box">
+          2,3,4,0,1,0,1,-1,1
+        </PARAM>
+      </FILTER>
+  </FILTERS>
+
   <GEOMETRY DIM="2" SPACE="2">
     
     <VERTEX>

@@ -143,6 +143,7 @@ namespace Nektar
                 m_velocity,
                 m_advObject);
 
+            m_extrapolation->SetForcing(m_forcing);
             m_extrapolation->SubSteppingTimeIntegration(m_intScheme);
             m_extrapolation->GenerateHOPBCMap(m_session);
         }
@@ -290,11 +291,12 @@ namespace Nektar
             }
         }
 
-        // At this point, some processors may not have m_flowrateBnd set if they
-        // don't contain the appropriate boundary. To calculate the area, we
-        // integrate 1.0 over the boundary (which has been set up with the
-        // appropriate subcommunicator to avoid deadlock), and then communicate
-        // this to the other processors with an AllReduce.
+        // At this point, some processors may not have m_flowrateBnd
+        // set if they don't contain the appropriate boundary. To
+        // calculate the area, we integrate 1.0 over the boundary
+        // (which has been set up with the appropriate subcommunicator
+        // to avoid deadlock), and then communicate this to the other
+        // processors with an AllReduce.
         if (m_flowrateBnd)
         {
             Array<OneD, NekDouble> inArea(m_flowrateBnd->GetNpoints(), 1.0);
@@ -359,10 +361,21 @@ namespace Nektar
 
         // Create temporary extrapolation object to avoid issues with
         // m_extrapolation for HOPBCs using higher order timestepping schemes.
-        ExtrapolateSharedPtr tmpExtrap = m_extrapolation;
-        m_extrapolation = GetExtrapolateFactory().CreateInstance(
-            "Standard", m_session, m_fields, m_pressure, m_velocity,
-            m_advObject);
+        // Zero pressure BCs in Neumann boundaries that may have been
+        // set in the advection step.
+        Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+            PBndConds = m_pressure->GetBndConditions();
+        Array<OneD, MultiRegions::ExpListSharedPtr>
+           PBndExp = m_pressure->GetBndCondExpansions();
+        for(int n = 0; n < PBndConds.size(); ++n)
+        {
+           if(PBndConds[n]->GetBoundaryConditionType() ==
+             SpatialDomains::eNeumann)
+            {
+                Vmath::Zero(PBndExp[n]->GetNcoeffs(),
+                            PBndExp[n]->UpdateCoeffs(),1);
+            }
+        }
 
         // Finally, calculate the solution and the flux of the Stokes
         // solution. We set m_greenFlux to maximum numeric limit, which signals
@@ -370,7 +383,13 @@ namespace Nektar
         // force.
         m_greenFlux = numeric_limits<NekDouble>::max();
         m_flowrateAiidt = aii_dt;
+
+        //  Save the number of convective field in case it is not set
+        //  to spacedim. Only need velocity components for stokes forcing
+        int SaveNConvectiveFields = m_nConvectiveFields;
+        m_nConvectiveFields = m_spacedim;
         SolveUnsteadyStokesSystem(inTmp, m_flowrateStokes, 0.0, aii_dt);
+        m_nConvectiveFields = SaveNConvectiveFields;
         m_greenFlux = MeasureFlowrate(m_flowrateStokes);
 
         // If the user specified IO_FlowSteps, open a handle to store output.
@@ -386,7 +405,8 @@ namespace Nektar
                              << endl;
         }
 
-        m_extrapolation = tmpExtrap;
+        // Replace pressure BCs with those evaluated from advection step
+        m_extrapolation->CopyPressureHBCsToPbndExp();
     }
 
     /**
@@ -647,7 +667,11 @@ namespace Nektar
         Array<OneD, Array<OneD, NekDouble> > &outarray,
         const NekDouble time)
     {
-        EvaluateAdvectionTerms(inarray, outarray);
+LibUtilities::Timer timer;
+timer.Start();
+        EvaluateAdvectionTerms(inarray, outarray, time);
+timer.Stop();
+timer.AccumulateRegion("Advection Terms");
 
         // Smooth advection
         if(m_SmoothAdvection)
@@ -665,7 +689,10 @@ namespace Nektar
         }
 
         // Calculate High-Order pressure boundary conditions
+timer.Start();
         m_extrapolation->EvaluatePressureBCs(inarray,outarray,m_kinvis);
+timer.Stop();
+timer.AccumulateRegion("Pressure BCs");
     }
 
     /**
@@ -690,16 +717,29 @@ namespace Nektar
         m_extrapolation->SubStepSetPressureBCs(inarray,aii_Dt,m_kinvis);
 
         // Set up forcing term for pressure Poisson equation
+LibUtilities::Timer timer;
+timer.Start();
         SetUpPressureForcing(inarray, m_F, aii_Dt);
+timer.Stop();
+timer.AccumulateRegion("Pressure Forcing");
 
         // Solve Pressure System
+timer.Start();
         SolvePressure (m_F[0]);
+timer.Stop();
+timer.AccumulateRegion("Pressure Solve");
 
         // Set up forcing term for Helmholtz problems
+timer.Start();
         SetUpViscousForcing(inarray, m_F, aii_Dt);
+timer.Stop();
+timer.AccumulateRegion("Viscous Forcing");
 
         // Solve velocity system
+timer.Start();
         SolveViscous( m_F, outarray, aii_Dt);
+timer.Stop();
+timer.AccumulateRegion("Viscous Solve");
 
         // Apply flowrate correction
         if (m_flowrate > 0.0 && m_greenFlux != numeric_limits<NekDouble>::max())
@@ -877,7 +917,7 @@ namespace Nektar
         //set up varcoeff kernel if PowerKernel or DG is specified
         if(m_useSpecVanVisc)
         {
-            Array<OneD, Array<OneD, NekDouble> > SVVVelFields = NullNekDoubleArrayofArray;
+            Array<OneD, Array<OneD, NekDouble> > SVVVelFields = NullNekDoubleArrayOfArray;
             if(m_session->DefinesFunction("SVVVelocityMagnitude"))
             {
                 if (m_comm->GetRank() == 0)
@@ -1001,7 +1041,7 @@ namespace Nektar
 
         Vmath::Fill(nel,velmag,diffcoeff,1);
 
-        if(vel != NullNekDoubleArrayofArray)
+        if(vel != NullNekDoubleArrayOfArray)
         {
             Array<OneD, NekDouble> Velmag(phystot);
             nvel = vel.size();

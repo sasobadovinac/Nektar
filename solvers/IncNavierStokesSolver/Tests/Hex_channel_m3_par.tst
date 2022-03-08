@@ -3,7 +3,7 @@
     <description>3D channel flow, Hex elements, par(2), P=3</description>
     <executable>IncNavierStokesSolver</executable>
     <parameters>--use-scotch Hex_channel_m3_par.xml</parameters>
-    <processes>2</processes>
+    <processes>4</processes>
     <files>
         <file description="Session File">Hex_channel_m3_par.xml</file>
     </files>

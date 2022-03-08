@@ -74,6 +74,9 @@ void AdjointAdvection::v_Advect(
     int nDerivs     = (m_halfMode) ? 2 : m_spacedim;
 
     Array<OneD, Array<OneD, NekDouble> > velocity(ndim);
+    int nScalar =nConvectiveFields - ndim;
+    Array<OneD, Array<OneD,NekDouble> > scalar(nScalar);
+
     for(int i = 0; i < ndim; ++i)
     {
         if(fields[i]->GetWaveSpace() && !m_singleMode && !m_halfMode)
@@ -84,6 +87,13 @@ void AdjointAdvection::v_Advect(
         else
         {
             velocity[i] = advVel[i];
+        }
+    }
+    if (nScalar > 0) //add for temperature field
+    {
+        for (int jj = ndim; jj < nConvectiveFields; ++jj)
+        {
+            scalar[jj-ndim] = inarray[jj];
         }
     }
 
@@ -157,6 +167,17 @@ void AdjointAdvection::v_Advect(
                                     velocity[j], 1,
                                     outarray[i], 1,
                                     outarray[i], 1);
+        }
+        //Add Tprime*Grad_Tbase in u, v equations
+        if (nScalar > 0 && i < ndim)
+        {
+            for (int s = 0; s < nScalar; ++s)
+            {
+                Vmath::Vvtvp(nPointsTot, m_gradBase[(ndim + s)*nBaseDerivs + i], 1,
+                             scalar[s], 1,
+                             outarray[i],1,
+                             outarray[i],1);
+            }
         }
 
         if(m_multipleModes)

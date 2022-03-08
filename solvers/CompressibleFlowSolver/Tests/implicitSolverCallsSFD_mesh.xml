@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxjYICAapF17g+rWuwZ0AAjmvzGuZtmlF09YweTZ0JTjy7PjG4gGmCB0lVQ8/sX5ctnsT6C62dFU48uzwala6D6J/Ouyton9xEuz46mH12eA02/cIZo8RmPv3B5TjT96PJcaO5/b357/4fD7PBw5EbTjy7PA6Vh4fv430qXBTuF4PK8aPrR5fnQ3O86+Yi0zF8ZuDw/mn50eQE0/W8tzN5rGarB5QXR9KPLC6G5/w3/LIXuewZweWE0/ejyImj6ZWol5lW3W8LlRdH0o8uLQWlY+BcJaOsWOTnD5cXR9KPLS6DZ7+UduauBwRcuL4mmH11eCk3/sUB+99PnQuHy0mj60eVl0PT/Wfnxkm9SAlxeFk0/urwcmn4IXQKXl0fTjy4PAOd2p24A</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1kMcSwjAQxUJN6CRA6D308v+fx0kHNLO+eOR51pYk+T+14K4HdyO4OU154FbAbTF1UuXJZWJyHTG+bvC/J+Z/P/ANlMc7FOMdifGNladeLqZeIcY3UZ4+pmL6mInxlcrT31xMfwsxvqXy9L0S0/dajG+jPPNsxcyzE+PbK8+cBzFzHsX4Tsoz/1nM/JUY30V59nIVs5ebGN9defb1ELOvpxjfS+/s8S0P7x8x+/2K8f0A6XoKBQAA</EDGE>
+        <ELEMENT>
+            <T COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJzjY4AAbSitCaV1oDQ/mrwulNaD0gAl4AEk</T>
+            <Q COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx10MkOgkAURFFQcQLEGRRwZFD+/wPZ3FpYiWxOQnK7X78g+P1CnODU/s8wwvmfboFLXFmnc9cYY2Kd7ktxg5l1OneLO9xbp3kPeMSTdZr/jDkW1mnOC16xtE7vr7DGm3Xaxx0f+LRO737hGxvrtM8WO+yt034/+MXBuhGW5QTm</Q>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="1"> E[46,2,6,9,12,15,18,21,24,27,30,33,36,39,42] </C>
+            <C ID="2"> E[3] </C>
+            <C ID="3"> E[44,0,4,7,10,13,16,19,22,25,28,31,34,37,40] </C>
+            <C ID="4"> E[45] </C>
+            <C ID="100"> T[14-15] </C>
+            <C ID="101"> Q[0-13] </C>
+        </COMPOSITE>
+        <DOMAIN> C[100-101] </DOMAIN>
+    </GEOMETRY>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/master</GitBranch>
+            <GitSHA1>96e8d53cc1eb47afab008cfdc48bd14c744b9dc0</GitSHA1>
+            <Hostname>LAPTOP-FIIC1OQ2</Hostname>
+            <NektarVersion>5.0.0</NektarVersion>
+            <Timestamp>19-Jul-2020 19:50:32</Timestamp>
+        </Provenance>
+        <NekMeshCommandLine>debug_DucrosSensor.mcf 3.xml </NekMeshCommandLine>
+        <NekMeshMCF>
+            <MESHING>
+                <INFORMATION>
+                    <I PROPERTY="CADFile" VALUE="DucrosSensor_3.geo" />
+                    <I PROPERTY="MeshType" VALUE="2DBndLayer" />
+                    <!--2DBndLayer-->
+                </INFORMATION>
+                <PARAMETERS>
+                    <P PARAM="MinDelta" VALUE="0.02" />
+                    <!--0.0005-->
+                    <P PARAM="MaxDelta" VALUE="0.02" />
+                    <P PARAM="EPS" VALUE="0.01" />
+                    <P PARAM="Order" VALUE="1" />
+                    <!--边界层网格设置-->
+                    <!-- 1为左边，2为下边，3为右边，4为上边 -->
+                    <P PARAM="BndLayerSurfaces" VALUE="2" />
+                    <P PARAM="BndLayerThickness" VALUE="0.002" />
+                    <P PARAM="BndLayerLayers" VALUE="14" />
+                    <P PARAM="BndLayerProgression" VALUE="1.5" />
+                </PARAMETERS>
+                <!--
+        <REFINEMENT>      
+          <LINE>
+            <X1> 0     </X1>
+            <Y1> 0.02    </Y1>
+            <Z1> 0      </Z1>
+            <X2> 0.2   </X2>
+            <Y2> 0.07  </Y2>
+            <Z2> 0      </Z2>
+            <R>  0.015  </R>
+            <D>  0.005  </D>
+          </LINE>
+          <LINE>
+            <X1> 0.2     </X1>
+            <Y1> 0.07    </Y1>
+            <Z1> 0      </Z1>
+            <X2> 0.6   </X2>
+            <Y2> 0.09  </Y2>
+            <Z2> 0      </Z2>
+            <R>  0.015  </R>
+            <D>  0.005  </D>
+          </LINE>
+          <LINE>
+            <X1> 0.6     </X1>
+            <Y1> 0.09    </Y1>
+            <Z1> 0      </Z1>
+            <X2> 1.01   </X2>
+            <Y2> 0.075  </Y2>
+            <Z2> 0      </Z2>
+            <R>  0.015  </R>
+            <D>  0.005  </D>
+          </LINE>
+          
+          <LINE>
+            <X1> 0     </X1>
+            <Y1> -0.03    </Y1>
+            <Z1> 0      </Z1>
+            <X2> 0.22   </X2>
+            <Y2> -0.085  </Y2>
+            <Z2> 0      </Z2>
+            <R>  0.015  </R>
+            <D>  0.005  </D>
+          </LINE>
+          <LINE>
+            <X1> 0.22     </X1>
+            <Y1> -0.085    </Y1>
+            <Z1> 0      </Z1>
+            <X2> 0.46   </X2>
+            <Y2> -0.135  </Y2>
+            <Z2> 0      </Z2>
+            <R>  0.015  </R>
+            <D>  0.005  </D>
+          </LINE>
+          <LINE>
+            <X1> 0.46     </X1>
+            <Y1> -0.135    </Y1>
+            <Z1> 0      </Z1>
+            <X2> 0.75   </X2>
+            <Y2> -0.165 </Y2>
+            <Z2> 0      </Z2>
+            <R>  0.015  </R>
+            <D>  0.005  </D>
+          </LINE>
+        </REFINEMENT>
+        -->
+            </MESHING>
+        </NekMeshMCF>
+    </Metadata>
+    <EXPANSIONS>
+        <E COMPOSITE="C[100]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[101]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />
+    </EXPANSIONS>
+</NEKTAR>
