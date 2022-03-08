@@ -254,6 +254,9 @@ void Module::ProcessEdges(bool ReprocessEdges)
         EdgeSet::iterator it = m_mesh->m_edgeSet.find(E);
         if (it == m_mesh->m_edgeSet.end())
         {
+            std::cout << "Cannot find the 2D element that is connected to "
+                         << "the 1D element " << i << ": check boundary is "
+                         << "consistent with the domain.\n";
             m_log(FATAL) << "Cannot find the 2D element that is connected to "
                          << "the 1D element " << i << ": check boundary is "
                          << "consistent with the domain.";
