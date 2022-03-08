@@ -5,7 +5,6 @@ SET(COLLECTIONS_SOURCES
   Operator.cpp
   BwdTrans.cpp
   Helmholtz.cpp
-  InvMass.cpp
   IProductWRTBase.cpp
   IProductWRTDerivBase.cpp
   IProduct.cpp

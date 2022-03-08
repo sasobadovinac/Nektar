@@ -70,7 +70,6 @@ enum OperatorType
     eIProductWRTBase,
     eIProductWRTDerivBase,
     ePhysDeriv,
-    eInvMass,
     SIZE_OperatorType
 };
 
@@ -80,8 +79,7 @@ const char* const OperatorTypeMap[] =
     "Helmholtz",
     "IProductWRTBase",
     "IProductWRTDerivBase",
-    "PhysDeriv",
-    "InvMass"
+    "PhysDeriv"
 };
 
 enum ImplementationType

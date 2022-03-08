@@ -56,8 +56,6 @@ struct PushBackFunctor
 {
     PushBackFunctor(std::vector<T> &in) : m_vec(in) {}
 
-    PushBackFunctor(const PushBackFunctor &in) : m_vec(in.m_vec) {}
-
     /**
      * @brief Pushes back values onto #m_vec as given by @p num.
      */

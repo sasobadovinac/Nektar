@@ -289,34 +289,6 @@ protected:
     Array<OneD, NekDouble> m_varD22;
 };
 
-/// Base class for backwards transform operator.
-class InvMass : virtual public Operator
-{
-public:
-    InvMass(std::vector<LibUtilities::BasisSharedPtr> basis,
-             int nElmt) :
-        m_basis(basis), m_nElmt(nElmt)
-    {
-    }
-
-    virtual ~InvMass()
-    {
-    }
-
-    bool NeedsJac() final
-    {
-        return true;
-    }
-
-
-    MATRIXFREE_EXPORT virtual void operator()(
-        const Array<OneD, const NekDouble> &input,
-        Array<OneD, NekDouble> &output) = 0; //Abstract Method
-
-protected:
-    std::vector<LibUtilities::BasisSharedPtr> m_basis;
-    int m_nElmt;
-};
 
 template <int DIM, bool DEFORMED = false>
 class Helper : virtual public Operator
