@@ -55,6 +55,8 @@ protected:
 
 struct ALEBase
 {
+    virtual ~ALEBase() = default;
+
     inline void UpdateGridVel(const NekDouble time,
                               Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                               std::map<int, int> &elmtToExpId,
@@ -64,7 +66,7 @@ struct ALEBase
     }
 
 private:
-    inline virtual void v_UpdateGridVel(const NekDouble time,
+    virtual void v_UpdateGridVel(const NekDouble time,
                                         Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                                         std::map<int, int> &elmtToExpId,
                                         Array<OneD, Array<OneD, NekDouble>> &gridVelocity) = 0;

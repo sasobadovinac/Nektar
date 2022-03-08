@@ -536,8 +536,7 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
                      "Only two sides may be present in each interface block.")
             std::string sideStr = sideElement->Value();
 
-            InterfaceSide
-                side; // @TODO: Currently don't use these sides. Change to make sure we define a left and right.
+            InterfaceSide side = InterfaceSide::eNone; // @TODO: Currently don't use these sides. Change to make sure we define a left and right.
             if (sideStr == "L" || sideStr == "LEFT")
             {
                 side = InterfaceSide::eLeft;
