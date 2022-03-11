@@ -2396,8 +2396,7 @@ namespace Nektar
                 }
                 
                 LIKWID_MARKER_START("v_BwdTrans_IterPerExp");
-                // timer.Start();
-                
+                timer.Start();
                 Array<OneD, NekDouble> tmp;
                 for (int i = 0; i < m_collections.size(); ++i)
                 {

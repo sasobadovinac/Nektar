@@ -1,5 +1,5 @@
 #include "ALEHelper.h"
-
+#include <StdRegions/StdQuadExp.h>
 namespace Nektar
 {
 
@@ -342,6 +342,42 @@ void ALEPrescribe::v_UpdateGridVel(NekDouble time,
                                 Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
     boost::ignore_unused(time, fields, elmtToExpId, gridVelocity);
+
+    auto exp = fields[0]->GetExp();
+    auto ids = m_zone->GetElementIds();
+    for (auto id : ids)
+    {
+        int indx       = elmtToExpId[id];
+        int offset     = fields[0]->GetPhys_Offset(indx);
+        auto expansion = (*exp)[indx];
+
+        LibUtilities::BasisKey bkeyx(expansion->GetBasis(0)->GetBasisType(),
+                                    2, expansion->GetBasis(0)->GetPointsKey());
+        LibUtilities::BasisKey bkeyy(expansion->GetBasis(1)->GetBasisType(),
+                                    2, expansion->GetBasis(1)->GetPointsKey());
+        StdRegions::StdQuadExp stdexp(bkeyx, bkeyy);
+
+        // Grid velocity of each quadrilateral vertex.
+        Array<OneD, NekDouble> tmpx(4), tmpy(4);
+        for (int j = 0; j < 4; ++j)
+        {
+            auto vert = expansion->GetGeom()->GetVertex(j);
+            // x/y velocity for each vertex
+            tmpx[j] = 0.1 * 2 * M_PI / 4 * cos(2 * M_PI * time / 4) * sin(2 * M_PI * vert->x() / 4) * sin(2 * M_PI * vert->y() / 4);
+            tmpy[j] = 0.1 * 2 * M_PI / 4 * cos(2 * M_PI * time / 4) * sin(2 * M_PI * vert->x() / 4) * sin(2 * M_PI * vert->y() / 4);
+        }
+
+        // swap to match tensor product order of coefficients
+        // vs. anti-clockwise order of vertices.
+        std::swap(tmpx[2], tmpx[3]);
+        std::swap(tmpy[2], tmpy[3]);
+
+        // Evaluate at all points in the deformed (time t) high-order
+        // element.
+        Array<OneD, NekDouble> tmp;
+        stdexp.BwdTrans(tmpx, tmp = gridVelocity[0] + offset);
+        stdexp.BwdTrans(tmpy, tmp = gridVelocity[1] + offset);
+    }
 }
 
 }

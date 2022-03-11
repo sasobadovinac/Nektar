@@ -109,6 +109,10 @@ protected:
 
     bool v_PreIntegrate(int step) final;
 
+    virtual void v_ExtraFldOutput(
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
+        std::vector<std::string>            &variables);
+
 private:
     NekDouble m_waveFreq;
 };

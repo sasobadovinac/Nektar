@@ -220,7 +220,8 @@ struct ZonePrescribe final: public ZoneBase
                   const CompositeMap &domain,
                   const int coordDim,
                   LibUtilities::EquationSharedPtr xDeform,
-                  LibUtilities::EquationSharedPtr yDeform);
+                  LibUtilities::EquationSharedPtr yDeform,
+                  LibUtilities::EquationSharedPtr zDeform);
 
     virtual ~ZonePrescribe() = default;
 
@@ -234,11 +235,17 @@ struct ZonePrescribe final: public ZoneBase
         return m_yDeform->Evaluate(x, y, z, t);
     }
 
+    inline NekDouble GetZDeform(NekDouble x, NekDouble y,  NekDouble z, NekDouble t) const
+    {
+        return m_zDeform->Evaluate(x, y, z, t);
+    }
+
     virtual bool v_Move(NekDouble timeStep) final;
 
 protected:
     LibUtilities::EquationSharedPtr m_xDeform;
     LibUtilities::EquationSharedPtr m_yDeform;
+    LibUtilities::EquationSharedPtr m_zDeform;
     std::vector<PointGeomSharedPtr> m_interiorVerts;
     std::vector<PointGeom> m_origPosition;
 };

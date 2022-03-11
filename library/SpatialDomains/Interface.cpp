@@ -323,9 +323,10 @@ ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
 ZonePrescribe::ZonePrescribe(int id, const CompositeMap &domain,
                              const int coordDim,
                              LibUtilities::EquationSharedPtr xDeform,
-                             LibUtilities::EquationSharedPtr yDeform)
+                             LibUtilities::EquationSharedPtr yDeform,
+                             LibUtilities::EquationSharedPtr zDeform)
     : ZoneBase(MovementType::ePrescribe, id, domain, coordDim),
-      m_xDeform(xDeform), m_yDeform(yDeform)
+      m_xDeform(xDeform), m_yDeform(yDeform), m_zDeform(zDeform)
 {
     std::set<int> seenVerts, seenEdges;
     for (auto &comp : m_domain)
@@ -491,9 +492,16 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
                 std::make_shared<LibUtilities::Equation>(
                     m_session->GetInterpreter(), yDeformStr);
 
+            std::string zDeformStr;
+            err = zonesElement->QueryStringAttribute("ZDEFORM", &zDeformStr);
+            ASSERTL0(err == TIXML_SUCCESS, "Unable to read z deform equation.");
+            LibUtilities::EquationSharedPtr zDeformEqn =
+                std::make_shared<LibUtilities::Equation>(
+                    m_session->GetInterpreter(), zDeformStr);
+
             zone = ZonePrescribeShPtr(
                 MemoryManager<ZonePrescribe>::AllocateSharedPtr(
-                    indx, domain, coordDim, xDeformEqn, yDeformEqn));
+                    indx, domain, coordDim, xDeformEqn, yDeformEqn, zDeformEqn));
 
             m_moveFlag = true;
         }
@@ -826,73 +834,39 @@ bool ZoneFixed::v_Move(NekDouble time)
 
 bool ZonePrescribe::v_Move(NekDouble time)
 {
-    boost::ignore_unused(time);
-    /*
-    // This is hacky - as interface is set up for 2 sides usually, we only use
-    the left side in this case if (m_side == eLeft)
+    int cnt = 0;
+    for (auto &vert : m_interiorVerts)
     {
-        int dim = 3;
-        int cnt = 0;
+        auto pnt = m_origPosition[cnt++];
 
-        for (auto &vert : m_interiorVerts)
-        {
-            Array<OneD, NekDouble> coords(dim, 0.0);
-            vert->GetCoords(coords);
+        Array<OneD, NekDouble> coords(3, 0.0);
+        vert->GetCoords(coords);
 
-            Array<OneD, NekDouble> newLoc(3, 0.0);
+        Array<OneD, NekDouble> newLoc(3, 0.0);
+        newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(0);
+        newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(1);
+        newLoc[2] = m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(2);
 
-            // newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2],
-    time);
-            // newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2],
-    time); newLoc[2] = coords[2];
-
-            NekDouble Lx = 20, Ly = 20;         // Size of mesh
-            NekDouble nx = 1, ny = 1, nt = 1;   // Space and time period
-            NekDouble X0 = 0.5, Y0 = 0.5;       // Amplitude
-            NekDouble t0 = sqrt(5*5 + 5*5);     // Time domain
-
-            //newLoc[0] = coords[0] + X0 * sin((nt * 2 * M_PI * time) / t0)
-                                       // * sin((nx * 2 * M_PI * coords[0]) /
-    Lx)
-                                       // * sin((ny * 2 * M_PI * coords[1]) /
-    Ly);
-
-            //newLoc[1] = coords[1] + Y0 * sin((nt * 2 * M_PI * time) / t0)
-                                       // * sin((nx * 2 * M_PI * coords[0]) /
-    Lx)
-                                       // * sin((ny * 2 * M_PI * coords[1]) /
-    Ly);
-
-            if (coords[0] < 1e-8 || fabs(coords[0] - 1) < 1e-8)
-            {
-                newLoc[0] = coords[0]; // + 0.001 * sin(2 * M_PI * time) *
-    coords[0] * (1 - coords[0]); newLoc[1] = coords[1]; newLoc[2] = coords[2];
-            }
-            else
-            {
-                newLoc[0] = coords[0] + 0.001 * 0.5; // + 0.001 * sin(2 * M_PI *
-    time) * coords[0] * (1 - coords[0]); newLoc[1] = coords[1]; newLoc[2] =
-    coords[2];
-            }
-
-
-            auto pnt = m_origPosition[cnt];
-            newLoc[0] = pnt(0) + 0.05 * sin(2*M_PI*time) * sin(2*M_PI*coords[0])
-    * sin(2*M_PI*coords[1]); newLoc[1] = pnt(1) + 0.05 * sin(2*M_PI*time) *
-    sin(2*M_PI*coords[0]) * sin(2*M_PI*coords[1]); cnt++;
-
-            vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
-        }
+        vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
     }
 
+    // Clear bounding boxes (these will be regenerated next time GetBoundingBox is called)
     for (auto &el : m_elements)
     {
-        SpatialDomains::CurveMap edges;
-        el->Reset(edges, edges);
-        el->Setup();
-        el->GenGeomFactors();
-        el->FillGeom();
-    } */
+        el->DeleteBoundingBox();
+
+        int nfaces = el->GetNumFaces();
+        for (int i = 0; i < nfaces; ++i)
+        {
+            el->GetFace(i)->DeleteBoundingBox();
+        }
+
+        int nedges = el->GetNumEdges();
+        for (int i = 0; i < nedges; ++i)
+        {
+            el->GetEdge(i)->DeleteBoundingBox();
+        }
+    }
 
     return true;
 }
