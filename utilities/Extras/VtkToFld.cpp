@@ -1,5 +1,11 @@
 #include <LibUtilities/BasicUtils/VtkUtil.hpp>
 #include <vtkPolyDataReader.h>
+
+#if VTK_MAJOR_VERSION >= 9
+#include <stdexcept>
+#include <limits>
+#endif
+
 #include <vtkPolyData.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>

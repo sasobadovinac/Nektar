@@ -33,15 +33,17 @@ IF( NEKTAR_USE_VTK )
         SET(VTK_USE_FILE ${VTK_DIR}/UseVTK.cmake)
         INCLUDE (${VTK_DIR}/VTKConfig.cmake)
     ELSE()
-        option( NEKTAR_USE_VTK9
-        "Compile vmtk against VTK 9. OFF is VTK < 9" OFF)
-        if (NEKTAR_USE_VTK9)
-            FIND_PACKAGE(VTK COMPONENTS
-                FiltersCore IOLegacy IOXML IOImage RenderingCore)
-        else()
+	# VTK9 uses modified component names - VTK9 can still be discovered with
+	# the old names but these are deprecated and produce a number of warnings.
+	MESSAGE(STATUS "Looking for VTK >= 9...")
+	FIND_PACKAGE(VTK 9 QUIET COMPONENTS
+            FiltersCore IOLegacy IOXML IOImage RenderingCore)
+        IF(NOT VTK_FOUND)
+            MESSAGE(STATUS "VTK 9+ not found, looking for earlier VTK versions...")
+            # If we didn't find VTK9+, search VTK<9 using the older component names
             FIND_PACKAGE(VTK COMPONENTS
                 vtkFiltersGeometry vtkIOLegacy vtkIOXML vtkIOImage vtkRenderingCore)
-        endif()
+        ENDIF()
         IF (VTK_FOUND)
             MESSAGE(STATUS "Found VTK: ${VTK_USE_FILE}")
             IF (VTK_MAJOR_VERSION EQUAL 6 AND VTK_MINOR_VERSION EQUAL 0 AND VTK_BUILD_VERSION EQUAL 0)
@@ -49,6 +51,8 @@ IF( NEKTAR_USE_VTK )
             ENDIF()
 
             IF (VTK_MAJOR_VERSION LESS 9)
+		# Not required for VTK9+, see https://vtk.org/doc/nightly/html/
+		# md__builds_gitlab-kitware-sciviz-ci_Documentation_Doxygen_ModuleMigration.html
                 INCLUDE(${VTK_USE_FILE})
             ENDIF()
         ELSE (VTK_FOUND)
