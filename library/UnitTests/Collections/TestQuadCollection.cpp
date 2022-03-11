@@ -2522,10 +2522,10 @@ namespace QuadCollectionTests
 
     BOOST_AUTO_TEST_CASE(TestQuadIProductWRTDerivBase_SumFac_VariableP_MultiElmt_threedim)
     {
-        SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(3u, 0u, -1.0, -1.0, 0.0));
-        SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(3u, 1u,  1.0, -1.0, 0.0));
-        SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(3u, 2u,  1.0,  1.0, 1.0));
-        SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(3u, 3u, -1.0,  1.0, 1.0));
+        SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(3, 0, -1.0, -1.5, 0.0));
+        SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(3, 1,  1.0, -1.0, 0.0));
+        SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(3, 2,  1.0,  1.0, 1.0));
+        SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(3, 3, -1.0,  1.0, 1.0));
         
         SpatialDomains::QuadGeomSharedPtr quadGeom = CreateQuad(v0, v1, v2, v3);
         

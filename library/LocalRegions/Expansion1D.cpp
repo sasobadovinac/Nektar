@@ -295,8 +295,11 @@ namespace Nektar
             }
         }
 
-        void Expansion1D::AddHDGHelmholtzTraceTerms(const NekDouble tau,
-                                                 const Array<OneD,const NekDouble> &inarray,  Array<OneD,NekDouble> &outarray)
+        void Expansion1D::AddHDGHelmholtzTraceTerms(
+            const NekDouble tau,
+            const Array<OneD,
+            const NekDouble> &inarray,
+            Array<OneD, NekDouble> &outarray)
         {
             int i,n;
             int nbndry  = NumBndryCoeffs();
@@ -429,11 +432,63 @@ namespace Nektar
 
             return Integral(Fn);
         }
+        
+        /** @brief: This method gets all of the factors which are
+            required as part of the Gradient Jump Penalty
+            stabilisation and involves the product of the normal and
+            geometric factors along the element trace.
+        */
+        void Expansion1D::v_NormalTraceDerivFactors
+        (Array<OneD, Array<OneD, NekDouble> > &factors,
+         Array<OneD, Array<OneD, NekDouble> > &d0factors,
+         Array<OneD, Array<OneD, NekDouble> > &d1factors) 
+        {
+            boost::ignore_unused(d0factors,d1factors); // for 2D&3D shapes
+            int nquad  = GetNumPoints(0);
+            Array<TwoD, const NekDouble> gmat =
+                                m_metricinfo->GetDerivFactors(GetPointsKeys());
 
-        void Expansion1D::v_ReOrientTracePhysMap
-                  (const StdRegions::Orientation orient,
-                   Array<OneD, int> &idmap,
-                   const int nq0,  const int nq1)
+            if(factors.size() <=2)
+            {
+                factors = Array<OneD, Array<OneD, NekDouble> > (2); 
+                factors[0] = Array<OneD, NekDouble> (1);
+                factors[1] = Array<OneD, NekDouble> (1);
+            }
+
+            // Outwards normal
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_0= GetTraceNormal(0);
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_1= GetTraceNormal(1);
+
+            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            {
+                factors[0][0] = gmat[0][nquad-1]*normal_0[0][0]; 
+                factors[1][0] = gmat[0][0]*normal_1[0][0];
+
+                for(int n = 1; n < normal_0.size(); ++n)
+                {
+                    factors[0][0] += gmat[n][0]*normal_0[n][0]; 
+                    factors[1][0] += gmat[n][nquad-1]*normal_1[n][0];
+                }
+            }
+            else
+            {
+                factors[0][0] = gmat[0][0]*normal_0[0][0]; 
+                factors[1][0] = gmat[0][0]*normal_1[0][0];
+
+                for(int n = 1; n < normal_0.size(); ++n)
+                {
+                    factors[0][0] += gmat[n][0]*normal_0[n][0]; 
+                    factors[1][0] += gmat[n][0]*normal_1[n][0];
+                }
+            }
+        }
+
+        void Expansion1D::v_ReOrientTracePhysMap(
+                const StdRegions::Orientation orient,
+                Array<OneD, int> &idmap,
+                const int nq0,  const int nq1)
         {
             boost::ignore_unused(orient, nq0, nq1);
 
@@ -443,6 +498,13 @@ namespace Nektar
             }
 
             idmap[0] = 0;
+        }
+
+        void Expansion1D::v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
+        {
+            boost::ignore_unused(traceid); 
+            h = GetGeom()->GetVertex(1)->dist(*GetGeom()->GetVertex(0));
+            p = m_ncoeffs-1;
         }
         
     } //end of namespace

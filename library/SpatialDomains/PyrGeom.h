@@ -59,6 +59,7 @@ public:
 
 protected:
     virtual void v_GenGeomFactors();
+    virtual int v_GetEdgeNormalToFaceVert(const int i, const int j) const;
     virtual int v_GetDir(const int faceidx, const int facedir) const;
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
     virtual void v_Setup();
@@ -69,6 +70,8 @@ private:
     void SetUpEdgeOrientation();
     void SetUpFaceOrientation();
     void SetUpXmap();
+
+    static const unsigned int EdgeNormalToFaceVert[5][4];
 };
 
 typedef std::shared_ptr<PyrGeom> PyrGeomSharedPtr;

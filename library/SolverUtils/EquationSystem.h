@@ -310,6 +310,11 @@ namespace Nektar
                 m_checksteps = num;
             }
 
+            SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble> > GetTraceNormals()
+            {
+                return m_traceNormals;
+            }
+
             SOLVER_UTILS_EXPORT void SetTime(
                                              const NekDouble time)
             {

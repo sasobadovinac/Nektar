@@ -39,6 +39,7 @@
 #include <SpatialDomains/Conditions.h>
 #include <MultiRegions/MultiRegions.hpp>
 #include <MultiRegions/DisContField.h>
+#include <MultiRegions/GJPStabilisation.h>
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalLinSys.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
@@ -49,6 +50,7 @@ namespace Nektar
 {
     namespace MultiRegions
     {
+
         /// This class is the abstraction of a global continuous two-
         /// dimensional spectral/hp element expansion which approximates the
         /// solution of a set of partial differential equations.
@@ -158,6 +160,31 @@ namespace Nektar
 
             inline int GetGlobalMatrixNnz(const GlobalMatrixKey &gkey);
 
+            /// Solves the linear system specified by the key \a key.
+            MULTI_REGIONS_EXPORT void GlobalSolve(const GlobalLinSysKey &key,
+                             const Array<OneD, const  NekDouble> &rhs,
+                                   Array<OneD,        NekDouble> &inout,
+                             const Array<OneD, const NekDouble> &dirForcing
+                                                        = NullNekDouble1DArray);
+
+            MULTI_REGIONS_EXPORT const GJPStabilisationSharedPtr GetGJPForcing()
+            {
+                // initialize if required
+                if(!m_GJPData)
+                {
+                    m_GJPData = MemoryManager<GJPStabilisation>::
+                        AllocateSharedPtr(GetSharedThisPtr());
+                }
+
+                return m_GJPData;
+            }
+
+            MULTI_REGIONS_EXPORT void SetGJPForcing(
+                const GJPStabilisationSharedPtr &GJPData)
+            {
+                m_GJPData = GJPData; 
+            }
+
         protected:
 
             //private:
@@ -176,13 +203,9 @@ namespace Nektar
             /// constructed only once.
             LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys> m_globalLinSysManager;
 
-            /// Solves the linear system specified by the key \a key.
-            MULTI_REGIONS_EXPORT void GlobalSolve(const GlobalLinSysKey &key,
-                             const Array<OneD, const  NekDouble> &rhs,
-                                   Array<OneD,        NekDouble> &inout,
-                             const Array<OneD, const NekDouble> &dirForcing
-                                                        = NullNekDouble1DArray);
-
+            /// Data for Gradient Jump Penalisation (GJP) stabilisaiton
+            GJPStabilisationSharedPtr m_GJPData; 
+            
             /// Returns the global matrix specified by \a mkey.
             MULTI_REGIONS_EXPORT GlobalMatrixSharedPtr
                 GetGlobalMatrix(const GlobalMatrixKey &mkey);

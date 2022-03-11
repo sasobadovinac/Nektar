@@ -101,7 +101,7 @@ namespace Nektar
 
         Array<OneD, Array<OneD, NekDouble> > velocity(ndim);
 
-LibUtilities::Timer timer;
+        LibUtilities::Timer timer;
 
         for(int i = 0; i < ndim; ++i)
         {

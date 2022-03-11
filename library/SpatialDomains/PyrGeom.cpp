@@ -46,6 +46,9 @@ namespace Nektar
 {
 namespace SpatialDomains
 {
+const unsigned int PyrGeom::EdgeNormalToFaceVert[5][4] = {
+    {4, 5, 6, 7},  {1, 3, 6, 7}, {0, 2, 4, 7},
+    {1, 3, 4, 5}, {0, 2, 5, 6}};
 
 PyrGeom::PyrGeom()
 {
@@ -136,6 +139,11 @@ int PyrGeom::v_GetDir(const int faceidx, const int facedir) const
     {
         return 1 + facedir;
     }
+}
+
+int PyrGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
 }
 
 void PyrGeom::SetUpLocalEdges()

@@ -12,6 +12,12 @@ v5.2.0
 - Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
 
+**IncNavierStokesSolver**
+- Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
+
+**ADRSolver:**
+- Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
+
 v5.1.1
 ------
 **Library**
