@@ -61,7 +61,17 @@ VariableConverter::VariableConverter(
     m_session->LoadParameter("Skappa", m_Skappa, -1.0);
     m_session->LoadParameter("Kappa", m_Kappa, 0.25);
 
-
+    std::string viscosityType;
+    m_session->LoadSolverInfo("ViscosityType", viscosityType, "Constant");
+    if ("Variable" == viscosityType)
+    {
+        WARNINGL0(m_session->DefinesParameter("Tref"), 
+            "The Tref should be given in Kelvin for using the Sutherland's law "
+            "of dynamic viscosity. The default is 288.15. Note the mu or "
+            "Reynolds number should coorespond to this temperature.");
+        m_session->LoadParameter ("Tref", m_Tref, 288.15);
+        m_TRatioSutherland = 110.0 / m_Tref;
+    }
 }
 
 /**
@@ -179,19 +189,21 @@ void VariableConverter::GetMach(Array<OneD, Array<OneD, NekDouble>> &physfield,
     Vmath::Vdiv(nPts, mach, 1, soundspeed, 1, mach, 1);
 }
 
-/**
- * @brief Compute the dynamic viscosity using the Sutherland's law
- * \f$ \mu = \mu_star * (T / T_star)^3/2 * (1 + C) / (T / T_star + C) \f$,
- * where:   \mu_star = 1.7894 * 10^-5 Kg / (m * s)
- *          T_star   = 288.15 K
- *          C        = 110. / 288.15
- *
- * WARNING, if this routine is modified the same must be done in the
- * FieldConvert utility ProcessWSS.cpp (this class should be restructured).
- *
- * @param temperature  Input temperature field.
- * @param mu           The resulting dynamic viscosity.
- */
+    /**
+     * @brief Compute the dynamic viscosity using the Sutherland's law
+     * \f$ \mu = \mu_star * (T / T_star)^3/2 * (1 + C) / (T/T_star + C) \f$,
+     *  C      : 110. /Tref
+     *  Tref   : the reference temperature, Tref, should always given in Kelvin, 
+     *           if non-dimensional should be the reference for non-dimensionalizing 
+     *  muref  : the dynamic viscosity or the 1/Re corresponding to Tref
+     *  T_star : m_pInf / (m_rhoInf * m_gasConstant),non-dimensional or dimensional 
+     *
+     * WARNING, if this routine is modified the same must be done in the
+     * FieldConvert utility ProcessWSS.cpp (this class should be restructured).
+     *
+     * @param temperature  Input temperature.
+    * @param mu           The resulting dynamic viscosity.
+     */
 void VariableConverter::GetDynamicViscosity(
     const Array<OneD, const NekDouble> &temperature, Array<OneD, NekDouble> &mu)
 {
@@ -206,11 +218,6 @@ void VariableConverter::GetDynamicViscosity(
 /**
  * @brief Compute the dynamic viscosity using the Sutherland's law
  * \f$ \mu = \mu_star * (T / T_star)^3/2 * (T_star + 110) / (T + 110) \f$,
- * where:   \mu_star = 1.7894 * 10^-5 Kg / (m * s)
- *          T_star   = 288.15 K
- *
- * @param physfield    Input physical field.
- * @param mu           The resulting dynamic viscosity.
  */
 void VariableConverter::GetDmuDT(
     const Array<OneD, const NekDouble>  &temperature,
@@ -219,12 +226,14 @@ void VariableConverter::GetDmuDT(
 {
     const int nPts      = temperature.size();
     NekDouble tmp       = 0.0;
+    NekDouble ratio;
 
     for (int i = 0; i < nPts; ++i)
     {
-        tmp = 0.5* (temperature[i]+3.0*110.0)/
-                        (temperature[i]*(temperature[i]+110.0));
-        DmuDT[i] = mu[i]*tmp;
+        ratio = temperature[i]  * m_oneOverT_star;
+        tmp = 0.5 * (ratio + 3.0 * m_TRatioSutherland) / 
+                (ratio * (ratio + m_TRatioSutherland));
+        DmuDT[i]    = mu[i] * tmp * m_oneOverT_star;
     }
 }
 
