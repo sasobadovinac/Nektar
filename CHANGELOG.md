@@ -35,6 +35,9 @@ v5.1.1
 **BuildSystem**
 - Updated third party Lapack version 3.7.1 (!1312)
 
+**CompressibleFlowSolver**
+- Fix non-dimensional Sutherland law (!1253)
+
 v5.1.0
 ------
 **Library**
