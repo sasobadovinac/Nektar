@@ -34,14 +34,17 @@
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <istream>
 
 #include "InputStarTec.h"
 
 using namespace std;
 using namespace Nektar::NekMesh;
+namespace io = boost::iostreams;
 
 namespace Nektar
 {
@@ -114,6 +117,8 @@ void InputTec::Process()
     ProcessElements();
     ProcessComposites();
 }
+
+static void ReadNextNonEmptyLine(io::filtering_istream &mshFile, string &line);
 
 void InputTec::ReadZone(int &nComposite)
 {
@@ -415,6 +420,12 @@ void InputTec::ReadZone(int &nComposite)
 
         nComposite++;
     }
+}
+
+static void ReadNextNonEmptyLine(io::filtering_istream &mshFile, string &line) {
+    do {
+	getline(mshFile, line);
+    } while(line.empty());
 }
 
 static void PrismLineFaces(int prismid,
