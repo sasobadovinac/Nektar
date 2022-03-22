@@ -320,9 +320,6 @@ void InputTec::ReadZone(int &nComposite)
                 ElementFaces[elmtID - 1].push_back(i);
             }
         }
-
-        // read to end of line
-        getline(m_mshFile, line);
     }
     else
     {
