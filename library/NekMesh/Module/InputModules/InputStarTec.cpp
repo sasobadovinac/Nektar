@@ -230,16 +230,7 @@ void InputTec::ReadZone(int &nComposite)
                          nodeLocs[i+2*nnodes])));
     }
 
-    // Read Node count per face
-    getline(m_mshFile, line);
-    if (line.find("node count per face") == string::npos)
-    {
-        if (line.find("face nodes") == string::npos)
-        {
-            getline(m_mshFile, line);
-        }
-    }
-
+    ReadNextNonEmptyLine(m_mshFile, line);
     s.clear();
     s.str(line);
 
@@ -258,15 +249,9 @@ void InputTec::ReadZone(int &nComposite)
             Nodes_per_face.push_back(nodes);
         }
 	ReadNextNonEmptyLine(m_mshFile, line);
+	s.clear();
+	s.str(line);
     }
-
-    // Read face nodes;
-    if (line.find("face nodes") == string::npos)
-    {
-        getline(m_mshFile, line);
-    }
-    s.clear();
-    s.str(line);
 
     vector<vector<int> > FaceNodes;
 
