@@ -231,8 +231,6 @@ void InputTec::ReadZone(int &nComposite)
     }
 
     ReadNextNonEmptyLine(m_mshFile, line);
-    s.clear();
-    s.str(line);
 
     vector<int> Nodes_per_face;
     if (line.find("node count per face") != string::npos)
@@ -249,8 +247,6 @@ void InputTec::ReadZone(int &nComposite)
             Nodes_per_face.push_back(nodes);
         }
 	ReadNextNonEmptyLine(m_mshFile, line);
-	s.clear();
-	s.str(line);
     }
 
     vector<vector<int> > FaceNodes;
