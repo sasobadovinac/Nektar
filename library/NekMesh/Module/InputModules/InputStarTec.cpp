@@ -275,6 +275,7 @@ void InputTec::ReadZone(int &nComposite)
 
             FaceNodes.push_back(Fnodes);
         }
+	ReadNextNonEmptyLine(m_mshFile, line);
     }
     else
     {
@@ -284,13 +285,6 @@ void InputTec::ReadZone(int &nComposite)
 
     // Read left elements
     Array<OneD, vector<int> > ElementFaces(nelements);
-
-    // check to see if next line contains left elements
-    getline(m_mshFile, line);
-    if (line.find("left elements") == string::npos)
-    {
-        getline(m_mshFile, line);
-    }
 
     if (line.find("left elements") != string::npos)
     {
@@ -305,18 +299,12 @@ void InputTec::ReadZone(int &nComposite)
                 ElementFaces[elmtID - 1].push_back(i);
             }
         }
+	ReadNextNonEmptyLine(m_mshFile, line);
     }
     else
     {
         m_log(FATAL) << "Failed to find 'left elements' section, check your "
                      << "file format is correct." << endl;
-    }
-
-    // check to see if next line contains right elements
-    getline(m_mshFile, line);
-    if (line.find("right elements") == string::npos)
-    {
-        getline(m_mshFile, line);
     }
 
     if (line.find("right elements") != string::npos)
