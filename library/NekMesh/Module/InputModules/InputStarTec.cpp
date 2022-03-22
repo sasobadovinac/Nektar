@@ -257,8 +257,7 @@ void InputTec::ReadZone(int &nComposite)
             }
             Nodes_per_face.push_back(nodes);
         }
-        // Read next line
-        getline(m_mshFile, line);
+	ReadNextNonEmptyLine(m_mshFile, line);
     }
 
     // Read face nodes;
