@@ -965,6 +965,55 @@ namespace Nektar
                 StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
         }
 
+        NekDouble StdTetExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+        {
+            // Collapse coordinates
+            Array<OneD, NekDouble> coll(3, 0.0);
+            LocCoordToLocCollapsed(coord, coll);
+
+            NekDouble out_dEta0;
+            NekDouble out_dEta1;
+            NekDouble out_dEta2;
+
+            NekDouble val = BaryTensorDeriv(coll, inarray, out_dEta0, out_dEta1, out_dEta2);
+
+            // calculate 2.0/((1-eta_1)(1-eta_2)) * Out_dEta0
+            NekDouble temp = 2.0 / ((1 - coll[1]) * (1 - coll[2]));
+            out_dEta0 *= temp;
+
+            // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) * Out_dEta0
+            out_d0 = 2 * out_dEta0;
+
+            // fac0 = 1 + eta_0
+            NekDouble fac0;
+            fac0 = 1 + coll[0];
+
+            // calculate 2.0*(1+eta_0)/((1-eta_1)(1-eta_2)) * Out_dEta0
+            out_dEta0 *= fac0;
+
+            // calculate 2/(1.0-eta_2) * out_dEta1
+            fac0 = 2 / (1 - coll[2]);
+            out_dEta1 *= fac0;
+
+            // calculate out_dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2))
+            //  * Out_dEta0 + 2/(1.0-eta_2) out_dEta1
+            out_d1 = out_dEta0 + out_dEta1;
+
+            // calculate (1 + eta_1)/(1 -eta_2)*out_dEta1
+            fac0 = (1 + coll[1]) / 2;
+            out_dEta1 *= fac0;
+
+            // calculate out_dxi2 =
+            // 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0 +
+            // (1 + eta_1)/(1 -eta_2)*out_dEta1 + out_dEta2
+            out_d2 = out_dEta0 + out_dEta1 + out_dEta2;
+
+            return val;
+        }
+
         void StdTetExp::v_GetTraceNumModes(
                     const int          fid,
 

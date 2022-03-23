@@ -760,6 +760,17 @@ namespace Nektar
             }
         }
 
+        NekDouble StdQuadExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0,
+            NekDouble &out_d1,
+            NekDouble &out_d2)
+        {
+            boost::ignore_unused(out_d2);
+            return BaryTensorDeriv(coord, inarray, out_d0, out_d1);
+        }
+
         /**
          * @brief This function evaluates the basis function mode @p mode at a
          * point @p coords of the domain.

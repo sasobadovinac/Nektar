@@ -1294,6 +1294,26 @@ namespace Nektar
             return 0;
         }
 
+        NekDouble StdExpansion::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+        {
+            boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
+        NekDouble StdExpansion::v_PhysEvaluate2ndDeriv(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_2d0)
+        {
+            boost::ignore_unused(coord, inarray, out_d0, out_2d0);
+            NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+            return 0;
+        }
+
         void StdExpansion::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
         {
             boost::ignore_unused(mode, outarray);

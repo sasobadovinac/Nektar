@@ -69,12 +69,35 @@ namespace Nektar
             STD_REGIONS_EXPORT void PhysTensorDeriv(
                     const Array<OneD, const NekDouble>& inarray,
                           Array<OneD,       NekDouble>& outarray);
+            // find derivative of u (inarray) at all coords points
+            // @TODO: Make this into a template also!
+            STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+                const Array<OneD, NekDouble> &coord,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &out_d0)
+            {
+                return StdExpansion::BaryEvaluate<0, true>(coord[0], &inarray[0], out_d0);
+            }
+
+            // find derivative/2nd Derivative of u (inarray) at all coords points
+            STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+                const Array<OneD, NekDouble> &coord,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &out_d0,
+                NekDouble &out_2d0)
+            {
+                return StdExpansion::BaryEvaluate<0, true, true>(coord[0], &inarray[0], out_d0, out_2d0);
+            }
 
         protected:
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, const NekDouble>& coords,
                     const Array<OneD, const NekDouble>& physvals) override;
 
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                const Array<OneD, NekDouble> coord,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2) override;
         private:
 
             // Virtual Functions ----------------------------------------

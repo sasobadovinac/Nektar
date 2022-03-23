@@ -1242,6 +1242,16 @@ namespace Nektar
             sort(outarray.get(), outarray.get() + nBndCoeffs);
         }
 
+        NekDouble StdHexExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0,
+            NekDouble &out_d1,
+            NekDouble &out_d2)
+        {
+            return BaryTensorDeriv(coord, inarray, out_d0, out_d1, out_d2);
+        }
+
         /**
          * Only for basis type Modified_A or GLL_LAGRANGE in all directions.
          */

@@ -778,6 +778,31 @@ namespace Nektar
             }
         }
 
+        NekDouble StdPyrExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+        {
+            // Collapse coordinates
+            Array<OneD, NekDouble> coll(3, 0.0);
+            LocCoordToLocCollapsed(coord, coll);
+
+            NekDouble dEta_bar1;
+            NekDouble dXi2;
+            NekDouble dEta3;
+            NekDouble val =
+                StdExpansion3D::BaryTensorDeriv(coll, inarray, dEta_bar1, dXi2, dEta3);
+
+            NekDouble fac = 2.0 / (1.0 - coll[2]);
+
+            out_d0     = fac * dEta_bar1;
+            out_d1     = fac * dXi2;
+            out_d2 = ((1.0 + coll[0]) / (1.0 - coll[2])) * dEta_bar1 +
+                     ((1.0 + coll[1]) / (1.0 - coll[2])) * dXi2 + dEta3;
+
+            return val;
+        }
+
         void StdPyrExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
         {
             Array<OneD, NekDouble> tmp(m_ncoeffs, 0.0);

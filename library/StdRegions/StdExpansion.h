@@ -946,6 +946,52 @@ namespace Nektar
                 return v_PhysEvaluate(coords,physvals);
             }
 
+            /** \brief This function evaluates the derivative of the expansion
+             * at a single (arbitrary) point of the domain
+             *
+             *  This function is a wrapper around the virtual function
+             *  \a v_PhysEvaluate()
+
+             *  Based on the value of the expansion at the quadrature
+             *  points provided in \a physvals, this function
+             *  calculates the value of the expansion at a set of points
+             * given in \a coords
+             */
+             // @TODO: Change output to an array and template on size of array
+            // @TODO: If put in two arrays get 2nd derivs
+            inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                          const Array<OneD, const NekDouble> &inarray,
+                                          NekDouble &out_d0, NekDouble &out_d1,
+                                          NekDouble &out_d2)
+
+            {
+                return v_PhysEvaluate(coord, inarray, out_d0, out_d1, out_d2);
+            }
+
+            inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                          const Array<OneD, const NekDouble> &inarray,
+                                          NekDouble &out_d0, NekDouble &out_d1)
+
+            {
+                NekDouble unusedValue = 0.0;
+                return v_PhysEvaluate(coord, inarray, out_d0, out_d1, unusedValue);
+            }
+
+            inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                          const Array<OneD, const NekDouble> &inarray,
+                                          NekDouble &out_d0)
+
+            {
+                NekDouble unusedValue = 0.0;
+                return v_PhysEvaluate(coord, inarray, out_d0, unusedValue, unusedValue);
+            }
+
+            inline NekDouble PhysEvaluate2ndDeriv(const Array<OneD, NekDouble> &coord,
+                                                  const Array<OneD, const NekDouble> &inarray,
+                                                  NekDouble &out_d0, NekDouble &out_2d0)
+            {
+                return v_PhysEvaluate2ndDeriv(coord, inarray, out_d0, out_2d0);
+            }
 
             /** \brief This function evaluates the expansion at a single
              *  (arbitrary) point of the domain
@@ -1341,6 +1387,9 @@ namespace Nektar
              * @brief This function performs the barycentric interpolation of
              * the polynomial stored in @p coord at a point @p physvals using
              * barycentric interpolation weights in direction @tparam DIR.
+             * It can also perform the barycentric interpolation of the
+             * derivative of the polynomial if @tparam DERIV is set to true,
+             * which outputs in to @param deriv.
              *
              * This method is intended to be used a helper function for
              * StdExpansion::PhysEvaluate and its elemental instances, so that
@@ -1350,16 +1399,20 @@ namespace Nektar
              *
              * @param  coord    The coordinate of the single point.
              * @param  physvals The polynomial stored at each quadrature point.
+             * @param  deriv    The value of the derivative.
              * @tparam DIR      The direction of evaluation.
+             * @tparam DERIV    Bool to find derivative.
              *
              * @return The value of @p physvals at @p coord in direction @p dir.
              */
-            template<int DIR>
-            inline NekDouble BaryEvaluate(
-                const NekDouble &coord,
-                const NekDouble *physvals)
+            template <int DIR, bool DERIV = false, bool DERIV2 = false>
+            inline NekDouble BaryEvaluate(const NekDouble &coord,
+                                          const NekDouble *physvals,
+                                          NekDouble &deriv,
+                                          NekDouble &deriv2)
             {
-                NekDouble numer = 0.0, denom = 0.0;
+                NekDouble numer1 = 0.0, numer2 = 0.0, numer3 = 0.0,
+                          numer4 = 0.0, numer5 = 0.0, denom = 0.0;
 
                 ASSERTL2(DIR < m_base.size(),
                          "Direction should be less than shape dimension.");
@@ -1369,30 +1422,87 @@ namespace Nektar
                     m_base[DIR]->GetBaryWeights();
 
                 const auto nquad = z.size();
-
                 for (int i = 0; i < nquad; ++i)
                 {
                     NekDouble xdiff = z[i] - coord;
-                    NekDouble pval = physvals[i];
+                    NekDouble pval  = physvals[i];
 
                     /*
-                     * (in this specific case) you actually 
-                     * want to do the comparison exactly 
-                     * (believe it or not!) See chapter 7 of 
+                     * (in this specific case) you actually
+                     * want to do the comparison exactly
+                     * (believe it or not!) See chapter 7 of
                      * the paper here:
                      *https://people.maths.ox.ac.uk/trefethen/barycentric.pdf
                      */
-                    if (xdiff == 0.0)
+                    if ((!DERIV && xdiff == 0.0) ||
+                        ((DERIV || DERIV2) && std::abs(xdiff) < 1e-15))
                     {
+
+                        if (DERIV2)
+                        {
+                            DNekMatSharedPtr D0 = m_base[DIR]->GetD();
+
+                            // take ith row of z and multiply with physvals
+                            Array<OneD, NekDouble> tmp(nquad);
+                            for (int kk = 0; kk < nquad; kk++)
+                            {
+                                tmp[kk] = Vmath::Dot(nquad, &(D0->GetPtr())[kk],
+                                                     nquad, &physvals[0], 1);
+                            }
+
+                            deriv2 = Vmath::Dot(nquad, &(D0->GetPtr())[i],
+                                                nquad, &tmp[0], 1);
+                            deriv  = tmp[i];
+                        }
+                        else if (DERIV)
+                        {
+                            DNekMatSharedPtr D0 = m_base[DIR]->GetD();
+
+                            // take ith row of z and multiply with physvals
+                            deriv = Vmath::Dot(z.size(), &(D0->GetPtr())[i],
+                                               z.size(), &physvals[0], 1);
+                        }
+
                         return pval;
                     }
 
                     NekDouble tmp = bw[i] / xdiff;
-                    numer += tmp * pval;
+                    numer1 += tmp * pval;
                     denom += tmp;
+
+                    if (DERIV || DERIV2)
+                    {
+                        NekDouble tmp2 = tmp / xdiff;
+                        numer2 += tmp2 * pval;
+                        numer3 += tmp2;
+
+                        if (DERIV2)
+                        {
+                            NekDouble tmp3 = tmp2 / xdiff;
+                            numer4 += tmp3 * pval;
+                            numer5 += tmp3;
+                        }
+                    }
                 }
 
-                return numer / denom;
+                if (DERIV || DERIV2)
+                {
+                    NekDouble denomdenom   = denom * denom;
+                    NekDouble numer1numer3 = numer1 * numer3;
+
+                    deriv = (numer2 * denom - numer1numer3) / (denomdenom);
+
+                    if (DERIV2)
+                    {
+                        deriv2 = (2.0 * numer4 / denom) -
+                                 (2.0 * numer5 * numer1) / (denomdenom) -
+                                 (2.0 * numer2 * numer3) / (denomdenom) +
+                                 (2.0 * numer3 * numer1numer3) /
+                                     (denomdenom * denom);
+                    }
+                }
+
+                return numer1 / denom;
             }
 
             /**
@@ -1413,6 +1523,34 @@ namespace Nektar
                 const int nquad = m_base[DIR]->GetNumPoints();
                 return BaryEvaluate<DIR>(
                     coord, &(m_base[DIR]->GetBdata())[0] + nquad * mode);
+            }
+
+            /**
+             * @brief Helper function to pass an unused value by reference into
+             * BaryEvaluate.
+             *
+             * @param  coord    The coordinate of the single point.
+             * @param  physvals The polynomial stored at each quadrature point.
+             * @tparam DIR      The direction of evaluation.
+             * @tparam DERIV    Bool to find derivative.
+             *
+             * @return The value of @p physvals at @p coord in direction @p dir.
+             */
+            template <int DIR, bool DERIV = false, bool DERIV2 = false>
+            inline NekDouble BaryEvaluate(const NekDouble &coord,
+                                          const NekDouble *physvals)
+            {
+                NekDouble unusedValue = 0.0;
+                return BaryEvaluate<DIR, DERIV, DERIV2>(coord, physvals, unusedValue, unusedValue);
+            }
+
+            template <int DIR, bool DERIV = false, bool DERIV2 = false>
+            inline NekDouble BaryEvaluate(const NekDouble &coord,
+                                          const NekDouble *physvals,
+                                          NekDouble &deriv)
+            {
+                NekDouble unusedValue = 0.0;
+                return BaryEvaluate<DIR, DERIV, DERIV2>(coord, physvals, deriv, unusedValue);
             }
 
         private:
@@ -1549,7 +1687,16 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate
             (const Array<OneD, DNekMatSharedPtr >& I,
              const Array<OneD, const NekDouble> & physvals);
-            
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                const Array<OneD, NekDouble> coord,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2);
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate2ndDeriv(
+                const Array<OneD, NekDouble> coord,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &out_d0, NekDouble &out_2d0);
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasis
             (const Array<OneD, const NekDouble>& coords, int mode);

@@ -60,25 +60,28 @@ namespace Nektar
                                                     Array<OneD,       NekDouble>& outarray);
 			
             
+            // Virtual Functions ----------------------------------------
         protected:
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                                          const Array<OneD, const NekDouble>& coords,
-                                         const Array<OneD, const NekDouble>& physvals);
+                                         const Array<OneD, const NekDouble>& physvals) final;
+
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                const Array<OneD, DNekMatSharedPtr> &I,
+                const Array<OneD, const NekDouble> &physvals) override;
+
         private:
-
-            // Virtual Functions ----------------------------------------
-
-            virtual int v_GetCoordim(void)
+            virtual int v_GetCoordim(void) final
             {
                 return 1;
             }
 
-            virtual int v_GetShapeDimension() const
+            virtual int v_GetShapeDimension() const final
             {
                 return 1;
             }
 
-            virtual int v_GetNtraces() const
+            virtual int v_GetNtraces() const final
             {
                 return 0;
             }

@@ -98,6 +98,29 @@ namespace StdRegions
                     const Array<OneD, const NekDouble>& w0,
                     const Array<OneD, const NekDouble>& w1);
 
+            // find derivative of u (inarray) at all coords points
+            STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+                const Array<OneD, NekDouble> &coord,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &out_d0, NekDouble &out_d1)
+            {
+                // int sz = GetTotPoints();
+                const int nq0 = m_base[0]->GetNumPoints();
+                const int nq1 = m_base[1]->GetNumPoints();
+
+                const NekDouble *ptr = &inarray[0];
+                Array<OneD, NekDouble> deriv0(nq1, 0.0);
+                Array<OneD, NekDouble> phys0(nq1, 0.0);
+
+                for (int j = 0; j < nq1; ++j, ptr += nq0)
+                {
+                    phys0[j] = StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
+                }
+                out_d0 = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
+
+                return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], out_d1);
+            }
+
             STD_REGIONS_EXPORT void BwdTrans_SumFacKernel(
                     const Array<OneD, const NekDouble>& base0,
                     const Array<OneD, const NekDouble>& base1,
@@ -142,12 +165,17 @@ namespace StdRegions
              */
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals);
+                    const Array<OneD, const NekDouble>& physvals) override;
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                     const Array<OneD, DNekMatSharedPtr>& I,
-                    const Array<OneD, const NekDouble> & physvals);
+                    const Array<OneD, const NekDouble> & physvals) override;
             
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                const Array<OneD, NekDouble> coord,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2) override;
+
             STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
                     const Array<OneD, const NekDouble>& base0,
                     const Array<OneD, const NekDouble>& base1,
@@ -169,22 +197,22 @@ namespace StdRegions
             STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree(
                     const Array<OneD, const NekDouble> &inarray,
                           Array<OneD,       NekDouble> &outarray,
-                    const StdRegions::StdMatrixKey &mkey);
+                    const StdRegions::StdMatrixKey &mkey) override;
             STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(
                     const Array<OneD, const NekDouble> &inarray,
                           Array<OneD,       NekDouble> &outarray,
-                    const StdRegions::StdMatrixKey &mkey);
+                    const StdRegions::StdMatrixKey &mkey) override;
 
             STD_REGIONS_EXPORT virtual void v_GetTraceCoeffMap
                                      (const unsigned int         traceid,
-                                      Array<OneD, unsigned int>& maparray);
+                                      Array<OneD, unsigned int>& maparray) override;
 
         STD_REGIONS_EXPORT virtual void v_GetElmtTraceToTraceMap
         (const unsigned int          eid,
          Array<OneD, unsigned int>& maparray,
          Array<OneD, int>&          signarray,
          Orientation                edgeOrient,
-         int P, int Q);
+         int P, int Q) override;
         
         STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap
         (const int  eid,
@@ -192,19 +220,19 @@ namespace StdRegions
          Array<OneD, int>&          signarray,
          Orientation                edgeOrient = eForwards,
          int                        P = -1,
-         int                        Q = -1);
+         int                        Q = -1) override;
         
         STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
                   const int dir,
-                  DNekMatSharedPtr &mat);
+                  DNekMatSharedPtr &mat) override;
     private:
         // Virtual Functions ----------------------------------------
-        virtual int v_GetShapeDimension() const
+        virtual int v_GetShapeDimension() const final
         {
             return 2;
         }
         
-        virtual int v_GetCoordim(void)
+        virtual int v_GetCoordim(void) final
         {
             return 2;
         }

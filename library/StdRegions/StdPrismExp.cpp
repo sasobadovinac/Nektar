@@ -734,6 +734,32 @@ namespace Nektar
             }
         }
 
+        NekDouble StdPrismExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+        {
+            // Collapse coordinates
+            Array<OneD, NekDouble> coll(3, 0.0);
+            LocCoordToLocCollapsed(coord, coll);
+
+            NekDouble dEta_bar1;
+            NekDouble val = BaryTensorDeriv(coll, inarray, dEta_bar1, out_d1, out_d2);
+
+            NekDouble fac = 2.0 / (1.0 - coll[2]);
+            out_d0     = fac * dEta_bar1;
+
+            // divide dEta_Bar1 by (1-eta_z)
+            fac = 1.0 / (1.0 - coll[2]);
+            dEta_bar1  = fac * dEta_bar1;
+
+            // Multiply dEta_Bar1 by (1+eta_x) and add ot out_dxi3
+            fac = 1.0 + coll[0];
+            out_d2 += fac * dEta_bar1;
+
+            return val;
+        }
+
         void StdPrismExp::v_FillMode(const int mode, Array<OneD, NekDouble> &outarray)
         {
             Array<OneD, NekDouble> tmp(m_ncoeffs,0.0);

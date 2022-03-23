@@ -297,6 +297,15 @@ namespace Nektar
         }
 
         
+        NekDouble StdExpansion3D::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+            NekDouble &out_d1, NekDouble &out_d2)
+        {
+            boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+            return 0;
+        }
+
         /**
          * @param   inarray     Input coefficients.
          * @param   output      Output coefficients.

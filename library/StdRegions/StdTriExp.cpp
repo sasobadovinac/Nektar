@@ -775,6 +775,38 @@ namespace Nektar
             }
         }
 
+        NekDouble StdTriExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+        {
+            boost::ignore_unused(out_d2);
+
+            // Collapse coordinates
+            Array<OneD, NekDouble> coll(2, 0.0);
+            LocCoordToLocCollapsed(coord, coll);
+
+            // set up geometric factor: 2.0/(1.0-z1)
+            NekDouble fac0 = 2 / (1 - coll[1]);
+
+            NekDouble val = BaryTensorDeriv(coll, inarray, out_d0, out_d1);
+
+            // Copy d0 into temp for d1
+            NekDouble temp;
+            temp = out_d0;
+
+            // Multiply by geometric factor
+            out_d0 = out_d0 * fac0;
+
+            // set up geometric factor: (1+z0)/(1-z1)
+            NekDouble fac1 = fac0 * (coll[0] + 1) / 2;
+
+            // Multiply out_d0 by geometric factor and add to out_d1
+            out_d1 += fac1 * temp;
+
+            return val;
+        }
+
         int StdTriExp::v_GetNverts() const
         {
             return 3;
