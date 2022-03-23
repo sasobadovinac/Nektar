@@ -4067,7 +4067,7 @@
     <!-- M = 0.2, Re = 200, Pr = 0.72 -->
     <PARAMETERS>
       <P> TimeStep              = 0.00001       </P>
-      <P> NumSteps              = 3          </P>
+      <P> NumSteps              = 3             </P>
       <P> FinTime               = 0             </P>
       <P> IO_CheckSteps         = 500000        </P>
       <P> IO_InfoSteps          = 500000        </P>
@@ -4080,6 +4080,7 @@
       <P> Twall                 = 300.15        </P>
       <P> mu                    = 0.4169        </P>
       <P> thermalConductivity   = 581.6936      </P>
+      <P> IPSymmFluxCoeff       = 0.0           </P>
     </PARAMETERS>
 
     <SOLVERINFO>
