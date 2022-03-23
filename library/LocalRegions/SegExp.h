@@ -138,6 +138,11 @@ namespace Nektar
                     const Array<OneD, const NekDouble>& coord,
                     const Array<OneD, const NekDouble> & physvals) override;
 
+            LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                    const Array<OneD, NekDouble> coord,
+                    const Array<OneD, const NekDouble> &inarray,
+                    NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2) override;
+
             LOCAL_REGIONS_EXPORT virtual void v_GetCoord(
                     const Array<OneD, const NekDouble>& Lcoords,
                           Array<OneD,NekDouble> &coords) override;

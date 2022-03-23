@@ -643,6 +643,16 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             return StdSegExp::v_PhysEvaluate(Lcoord, physvals);
         }
 
+        NekDouble SegExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+        {
+            Array<OneD, NekDouble> Lcoord(1);
+            ASSERTL0(m_geom, "m_geom not defined");
+            m_geom->GetLocCoords(coord, Lcoord);
+            return StdSegExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+        }
 
         void SegExp::v_GetCoord(
                 const Array<OneD, const NekDouble>& Lcoords,

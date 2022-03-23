@@ -174,6 +174,10 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                             const Array<OneD, const NekDouble> &coord,
                             const Array<OneD, const NekDouble> & physvals);
+            LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                            const Array<OneD, NekDouble> coord,
+                            const Array<OneD, const NekDouble> &inarray,
+                            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2);
             LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysVals(
                             const int edge,
                             const StdRegions::StdExpansionSharedPtr &EdgeExp,
