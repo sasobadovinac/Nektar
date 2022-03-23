@@ -42,6 +42,7 @@
 #include <SpatialDomains/Conditions.h>
 #include <MultiRegions/GlobalLinSys.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
+#include <MultiRegions/AssemblyMap/InterfaceMapDG.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
 #include <boost/algorithm/string.hpp>
 
@@ -152,6 +153,9 @@ namespace Nektar
             /// An array which contains the information about the boundary
             /// condition on the different boundary regions.
             Array<OneD,SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
+
+            /// Interfaces mapping for trace space.
+            InterfaceMapDGSharedPtr m_interfaceMap;
 
             /// Global boundary matrix.
             GlobalLinSysMapShPtr                               m_globalBndMat;

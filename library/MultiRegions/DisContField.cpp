@@ -219,6 +219,18 @@ namespace Nektar
             // Set up physical normals
             SetUpPhysNormals();
 
+            // ------ Setting up interfaces ------
+            // Map taking a global geometry ID to the matching trace expansion ID
+            std::map<int, int> geomIdToTraceId;
+            for (int i = 0; i < m_trace->GetExpSize(); ++i)
+            {
+                geomIdToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
+            }
+
+            // Create interface exchange object
+            m_interfaceMap = MemoryManager<InterfaceMapDG>::
+            AllocateSharedPtr(m_graph, m_trace, geomIdToTraceId);
+
             int cnt, n;
 
             // Identify boundary trace
@@ -2928,6 +2940,11 @@ namespace Nektar
             {
                 // Do parallel exchange for forwards/backwards spaces.
                 m_traceMap->GetAssemblyCommDG()->PerformExchange(Fwd, Bwd);
+
+                // Do exchange of interface traces (local and parallel)
+                // We may have to split this out into separate local and
+                // parallel for IP method???
+                m_interfaceMap->ExchangeTrace(Fwd, Bwd);
             }
         }
 
@@ -3105,8 +3122,6 @@ namespace Nektar
                                     m_locTraceToTraceMap->GetNFwdLocTracePts());
                 m_locTraceToTraceMap->FwdLocTracesFromField(inarray,tracevals);
                 m_locTraceToTraceMap->InterpLocTracesToTrace(0,tracevals,outarray);
-                m_traceMap->GetAssemblyCommDG()->
-                    PerformExchange(outarray, outarray);
             }
             else
             {
@@ -3136,6 +3151,9 @@ namespace Nektar
                     }
                 }
             }
+
+            m_traceMap->GetAssemblyCommDG()->
+                PerformExchange(outarray, outarray);
 	}
 
         /**
