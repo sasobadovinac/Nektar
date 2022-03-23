@@ -10,12 +10,18 @@ v5.2
 v5.2.0
 ------
 **Library**
-- Add Arm SVE backend to SIMD library (!1282)
-v5.2.0
-------
-**Library**:
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Add Arm SVE backend to SIMD library (!1282)
 - Simplify the logic in the MPI pairwise trace exchange (!1307)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
+- Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
+- Fix cmake SIMD enable/disable options based on architecture (!1320)
+
+**IncNavierStokesSolver**
+- Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
+
+**ADRSolver:**
+- Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
 
 v5.1.1
 ------
@@ -23,12 +29,20 @@ v5.1.1
 - Fix a boost headers incompatibility with boost-1.77 (!1297) 
 - Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
 - Fix initialisation warning when using HDF5 (!1299)
+- Fix issue with implementation of Diffusion IP (!1303)
 - Split Helmholtz MatrixFree operator to improve compile times (!1292)
 - Fix Boost deprecated header warnings (!1302)
 - Add command lines to set starting time and starting checkpoint number of a time-dependent simulation (!1309)
+- Fix an index referencing error in the Collections PhysDeriv method for Hex (!1314)
 
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
+
+**BuildSystem**
+- Updated third party Lapack version 3.7.1 (!1312)
+
+**CompressibleFlowSolver**
+- Fix non-dimensional Sutherland law (!1253)
 
 v5.1.0
 ------
@@ -86,6 +100,7 @@ v5.1.0
 
 **IncNavierStokesSolver**:
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)

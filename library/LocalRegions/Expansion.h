@@ -138,6 +138,11 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT NekDouble VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
+            LOCAL_REGIONS_EXPORT  void NormalTraceDerivFactors
+                 (Array<OneD, Array<OneD, NekDouble> > &factors,
+                  Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                  Array<OneD, Array<OneD, NekDouble> > &d1factors);
+
             inline IndexMapValuesSharedPtr GetIndexMap(const IndexMapKey &ikey)
             {
                 return m_indexMapManager[ikey];
@@ -251,6 +256,10 @@ namespace Nektar
                 v_AddRobinMassMatrix(traceid,primCoeffs,inoutmat);
             }
             
+            inline void TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
+            {
+                v_TraceNormLen(traceid,h,p);
+            }
 
             virtual void AddRobinTraceContribution(
                 const int traceid,
@@ -263,7 +272,10 @@ namespace Nektar
 
             LOCAL_REGIONS_EXPORT const Array<OneD, const NekDouble > 
                         &GetElmtBndNormDirElmtLen(const int nbnd) const;
-            
+
+            LOCAL_REGIONS_EXPORT void StdDerivBaseOnTraceMat(
+                Array<OneD, DNekMatSharedPtr> &DerivMat);
+
         protected:
 	    LibUtilities::NekManager<IndexMapKey,
                       IndexMapValues, IndexMapKey::opLess> m_indexMapManager;
@@ -361,6 +373,11 @@ namespace Nektar
             virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble > > &vec);
 
+            virtual void v_NormalTraceDerivFactors
+                 (Array<OneD, Array<OneD, NekDouble> > &factors,
+                  Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                  Array<OneD, Array<OneD, NekDouble> > &d1factors); 
+
             virtual void v_AlignVectorToCollapsedDir
                    (const int dir, 
                     const Array<OneD, const NekDouble>      &inarray, 
@@ -390,8 +407,6 @@ namespace Nektar
                                  const int nq0,
                                  const int nq1 = -1);
             
-            virtual const NormalVector & v_GetTraceNormal(const int id) const;
-
             virtual void v_ComputeTraceNormal(const int id);
             
             virtual const Array<OneD, const NekDouble>& v_GetPhysNormals(void);
@@ -411,7 +426,10 @@ namespace Nektar
                 const Array<OneD, NekDouble> &incoeffs,
                 Array<OneD, NekDouble> &coeffs);
 
-            virtual void v_GenTraceExp(const int traceid,                                                                   ExpansionSharedPtr &exp);
+            virtual void v_TraceNormLen(const int traceid,
+                                        NekDouble &h, NekDouble &p);
+            
+            virtual void v_GenTraceExp(const int traceid, ExpansionSharedPtr &exp);
 
         private:
 
@@ -441,7 +459,7 @@ namespace Nektar
             const int           traceid,
             ExpansionSharedPtr &exp)
         {
-            ASSERTL1(traceid < GetNtraces(), "Edge out of range.");
+            ASSERTL1(traceid < GetNtraces(), "Trace out of range.");
 
             m_traceExp[traceid] = exp;
         }

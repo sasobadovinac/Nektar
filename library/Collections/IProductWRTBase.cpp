@@ -57,7 +57,7 @@ using LibUtilities::ePyramid;
 /**
  * @brief Inner product operator using standard matrix approach
  */
-class IProductWRTBase_StdMat : public Operator
+class IProductWRTBase_StdMat final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_StdMat)
@@ -174,7 +174,7 @@ OperatorKey IProductWRTBase_StdMat::m_typeArr[] = {
 /**
  * @brief Inner product operator using operator using matrix free operators.
  */
-class IProductWRTBase_MatrixFree : public Operator, MatrixFreeOneInOneOut
+class IProductWRTBase_MatrixFree final : public Operator, MatrixFreeOneInOneOut
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_MatrixFree)
@@ -292,7 +292,7 @@ OperatorKey IProductWRTBase_MatrixFree::m_typeArr[] = {
 /**
  * @brief Inner product operator using element-wise operation
  */
-class IProductWRTBase_IterPerExp : public Operator
+class IProductWRTBase_IterPerExp final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_IterPerExp)
@@ -415,7 +415,7 @@ OperatorKey IProductWRTBase_IterPerExp::m_typeArr[] = {
 /**
  * @brief Inner product operator using original MultiRegions implementation.
  */
-class IProductWRTBase_NoCollection : public Operator
+class IProductWRTBase_NoCollection final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_NoCollection)
@@ -523,7 +523,7 @@ OperatorKey IProductWRTBase_NoCollection::m_typeArr[] = {
 /**
  * @brief Inner product operator using sum-factorisation (Segment)
  */
-class IProductWRTBase_SumFac_Seg : public Operator
+class IProductWRTBase_SumFac_Seg final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Seg)
@@ -607,7 +607,7 @@ OperatorKey IProductWRTBase_SumFac_Seg::m_type = GetOperatorFactory().
 /**
  * @brief Inner product operator using sum-factorisation (Quad)
  */
-class IProductWRTBase_SumFac_Quad : public Operator
+class IProductWRTBase_SumFac_Quad final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Quad)
@@ -692,7 +692,7 @@ OperatorKey IProductWRTBase_SumFac_Quad::m_type = GetOperatorFactory().
 /**
  * @brief Inner product operator using sum-factorisation (Tri)
  */
-class IProductWRTBase_SumFac_Tri : public Operator
+class IProductWRTBase_SumFac_Tri final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Tri)
@@ -782,7 +782,7 @@ OperatorKey IProductWRTBase_SumFac_Tri::m_type = GetOperatorFactory().
 /**
  * @brief Inner Product operator using sum-factorisation (Hex)
  */
-class IProductWRTBase_SumFac_Hex : public Operator
+class IProductWRTBase_SumFac_Hex final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Hex)
@@ -878,7 +878,7 @@ OperatorKey IProductWRTBase_SumFac_Hex::m_type = GetOperatorFactory().
 /**
  * @brief Inner product operator using sum-factorisation (Tet)
  */
-class IProductWRTBase_SumFac_Tet : public Operator
+class IProductWRTBase_SumFac_Tet final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Tet)
@@ -980,7 +980,7 @@ OperatorKey IProductWRTBase_SumFac_Tet::m_type = GetOperatorFactory().
 /**
  * @brief Inner Product operator using sum-factorisation (Prism)
  */
-class IProductWRTBase_SumFac_Prism : public Operator
+class IProductWRTBase_SumFac_Prism final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Prism)
@@ -1082,7 +1082,7 @@ OperatorKey IProductWRTBase_SumFac_Prism::m_type = GetOperatorFactory().
 /**
  * @brief Inner Product operator using sum-factorisation (Pyr)
  */
-class IProductWRTBase_SumFac_Pyr : public Operator
+class IProductWRTBase_SumFac_Pyr final : public Operator
 {
     public:
         OPERATOR_CREATE(IProductWRTBase_SumFac_Pyr)

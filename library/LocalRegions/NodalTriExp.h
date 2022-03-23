@@ -157,6 +157,7 @@ namespace Nektar
         protected:
             
             DNekMatSharedPtr CreateStdMatrix(const StdRegions::StdMatrixKey &mkey);
+
             void IProductWRTBase_SumFac(const Array<OneD, const NekDouble>& inarray, 
                                         Array<OneD, NekDouble> &outarray,
                                         bool multiplybyweights = true);

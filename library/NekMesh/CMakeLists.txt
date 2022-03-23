@@ -237,6 +237,11 @@ ENDIF (NEKTAR_USE_CCM)
 IF (NEKTAR_USE_VTK)
     IF (VTK_MAJOR_VERSION LESS 6)
         TARGET_LINK_LIBRARIES(libNekMesh LINK_PUBLIC vtkCommon vtkIO vtkGraphics)
+    ELSEIF (VTK_MAJOR_VERSION  GREATER_EQUAL 9)
+        TARGET_LINK_LIBRARIES(libNekMesh LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML)
+        vtk_module_autoinit(
+            TARGETS libNekMesh
+            MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML)
     ELSE ()
 	    TARGET_LINK_LIBRARIES(libNekMesh LINK_PUBLIC vtkCommonCore vtkIOLegacy vtkIOXML)
     ENDIF ()

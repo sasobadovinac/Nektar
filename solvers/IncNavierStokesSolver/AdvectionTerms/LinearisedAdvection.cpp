@@ -42,7 +42,7 @@ namespace Nektar
 string LinearisedAdvection::className
         = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction(
                 "Linearised",
-                LinearisedAdvection::create);
+                LinearisedAdvection::create,"Linearised Non-Conservative");
 
 /**
  * Constructor. Creates ...
