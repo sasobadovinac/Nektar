@@ -409,6 +409,14 @@ void CommMpi::v_Irsend(void *buf, int count, CommDataType dt, int dest,
     MPI_Irsend(buf, count, dt, dest, 0, m_comm, req->GetRequest(loc));
 }
 
+void CommMpi::v_Isend(void *buf, int count, CommDataType dt, int dest,
+                       CommRequestSharedPtr request, int loc)
+{
+    CommRequestMpiSharedPtr req =
+        std::static_pointer_cast<CommRequestMpi>(request);
+    MPI_Isend(buf, count, dt, dest, 0, m_comm, req->GetRequest(loc));
+}
+
 void CommMpi::v_SendInit(void *buf, int count, CommDataType dt, int dest,
                          CommRequestSharedPtr request, int loc)
 {
