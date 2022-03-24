@@ -85,7 +85,7 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                       << "# elmts \n";
             std::cout << "-----------------------------" << std::endl;
 
-            std::array<std::string, 4> edgeName = {"n", "l", "r", "b"};
+            std::array<std::string, 4> edgeName = {{"n", "l", "r", "b"}};
 
             for (auto &zone : m_zones)
             {

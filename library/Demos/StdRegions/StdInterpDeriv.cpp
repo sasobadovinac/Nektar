@@ -130,10 +130,13 @@ int main(int argc, char *argv[])
     {
         case 3:
             sol2 = EvalPolyDerivz(coordsF);
+            __attribute__ ((fallthrough));
         case 2:
             sol1 = EvalPolyDerivy(coordsF);
+            __attribute__ ((fallthrough));
         case 1:
             sol0 = EvalPolyDerivx(coordsF);
+            __attribute__ ((fallthrough));
         default:
             sol = EvalPoly(coordsF);
             break;
