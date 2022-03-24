@@ -87,6 +87,12 @@ namespace Nektar
                   Array<OneD, Array<OneD, NekDouble> >      &u,
                   NekDouble                                  time,
             const int                                        o = 0);
+
+        NekDouble m_beta;
+        NekDouble m_u0;
+        NekDouble m_v0;
+        NekDouble m_x0;
+        NekDouble m_y0;
     };
 }
 #endif

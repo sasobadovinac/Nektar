@@ -50,6 +50,7 @@
 #include <LocalRegions/Expansion2D.h>
 #include <LocalRegions/Expansion.h>
 
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/FieldIO.h>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
@@ -62,27 +63,84 @@
 
 #include <SolverUtils/SolverUtilsDeclspec.h>
 
+#include <boost/program_options.hpp>
+
 using namespace std;
 using namespace Nektar;
 
+namespace po = boost::program_options;
+
 int main(int argc, char *argv[])
 {
-    string fname = std::string(argv[2]);
-    int fdot = fname.find_last_of('.');
-    if (fdot != std::string::npos)
-    {
-        string ending = fname.substr(fdot);
+    string fname;
+    po::options_description desc("Available options");
+    desc.add_options()
+        ("help,h",
+            "Produce this help message.");
 
-        // If .chk or .fld we exchange the extension in the output file.
-        // For all other files (e.g. .bse) we append the extension to avoid
-        // conflicts.
-        if (ending == ".chk" || ending == ".fld")
-        {
-            fname = fname.substr(0,fdot);
-        }
+    po::options_description hidden("Hidden options");
+    hidden.add_options()
+        ("input-file", po::value< vector<string> >(), "input filename");
+
+    po::options_description cmdline_options;
+    cmdline_options.add(desc).add(hidden);
+
+    po::options_description visible("Allowed options");
+    visible.add(desc);
+
+    po::positional_options_description p;
+    p.add("input-file", -1);
+
+    po::variables_map vm;
+
+    try
+    {
+        po::store(po::command_line_parser(argc, argv).
+            options(cmdline_options).positional(p).run(), vm);
+        po::notify(vm);
+    }
+    catch (const std::exception& e)
+    {
+        cerr << e.what() << endl;
+        cerr << desc;
+        return 1;
     }
 
-    fname = fname + ".txt";
+    std::vector<std::string> filenames;
+    if (vm.count("input-file"))
+    {
+        filenames = vm["input-file"].as<std::vector<std::string>>();
+    }
+
+    if (vm.count("help") || vm.count("input-file") != 1) {
+        cerr << "Description: Extracts a surface from a 2D .fld file created "
+                "by the CompressibleFlowSolver and places it into a .cfs file"
+             << endl;
+        cerr << "Usage: ExtractSurface2DCFS [options] meshFile fieldFile"
+             << endl;
+        cout << desc;
+        return 1;
+    }
+
+    LibUtilities::SessionReaderSharedPtr vSession
+        = LibUtilities::SessionReader::CreateInstance(argc, argv);
+    SpatialDomains::MeshGraphSharedPtr graphShPt =
+        SpatialDomains::MeshGraph::Read(vSession);
+
+    fname = vSession->GetSessionName() + ".cfs";
+
+    // Find .fld or .chk file name
+    std::string fieldFile;
+    for(auto &file : filenames)
+    {
+        if(file.size() > 4 &&
+            (file.substr(file.size() - 4, 4) == ".fld"
+            || file.substr(file.size() - 4, 4) == ".chk"))
+        {
+            fieldFile = file;
+            break;
+        }
+    }
 
     int cnt;
     int id1 = 0;
@@ -92,23 +150,7 @@ int main(int argc, char *argv[])
 
     int nBndEdgePts, nBndEdges, nBndRegions;
 
-    if (argc < 3)
-    {
-        fprintf(stderr,
-                "Usage: ExtractSurface2DCFS meshfile fieldFile\n");
-        fprintf(stderr,
-                "Extracts a surface from a 2D fld file"
-                "(only for CompressibleFlowSolver and purely 2D .fld files)\n");
-        exit(1);
-    }
-
-    LibUtilities::SessionReaderSharedPtr vSession
-        = LibUtilities::SessionReader::CreateInstance(3, argv);
-    SpatialDomains::MeshGraphSharedPtr graphShPt =
-        SpatialDomains::MeshGraph::Read(vSession);
-
     std::string                         m_ViscosityType;
-
     NekDouble                           m_gamma;
     NekDouble                           m_pInf;
     NekDouble                           m_rhoInf;
@@ -168,11 +210,11 @@ int main(int argc, char *argv[])
 
     //--------------------------------------------------------------------------
     // Import field file
-    string                                          fieldFile(argv[2]);
     vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;
     vector<vector<NekDouble> >                      fieldData;
 
-    LibUtilities::Import(fieldFile, fieldDef, fieldData);
+    LibUtilities::FieldMetaDataMap fieldMetaDataMap;
+    LibUtilities::Import(fieldFile, fieldDef, fieldData, fieldMetaDataMap);
     //--------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------
@@ -194,7 +236,7 @@ int main(int argc, char *argv[])
 
     //--------------------------------------------------------------------------
     // Define Expansion
-    int nfields = fieldDef[0]->m_fields.size();
+    int nfields = vSession->GetVariables().size();
     Array<OneD, MultiRegions::ExpListSharedPtr> Exp(nfields);
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields(nfields);
 

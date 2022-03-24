@@ -127,7 +127,12 @@ void PulseWaveSystem::v_InitObject()
     m_W1   = Array<OneD, Array<OneD, NekDouble> >(m_nDomains);
     m_W2   = Array<OneD, Array<OneD, NekDouble> >(m_nDomains);
 
-    const std::vector<SpatialDomains::CompositeMap> domain = m_graph->GetDomain();
+    const std::map<int, SpatialDomains::CompositeMap> domainMap = m_graph->GetDomain();
+    std::vector<SpatialDomains::CompositeMap> domain;
+    for (auto i : domainMap)
+    {
+        domain.emplace_back(i.second);
+    }
 
     SpatialDomains::BoundaryConditions Allbcs(m_session, m_graph);
 
