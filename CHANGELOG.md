@@ -18,6 +18,9 @@ v5.2.0
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
 
+**NekMesh**
+- Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
+
 v5.1.1
 ------
 **Library**
