@@ -353,5 +353,152 @@ int SegGeom::v_GetNumVerts() const
     return kNverts;
 }
 
+int SegGeom::v_GetNumEdges() const
+{
+    return kNedges;
 }
+
+NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                  Array<OneD, NekDouble> &xiOut)
+{
+    if (m_geomFactors->GetGtype() == eRegular)
+    {
+        xiOut = Array<OneD, NekDouble>(1,0.0);
+
+        GetLocCoords(xs, xiOut);
+        ClampLocCoords(xiOut);
+
+        Array<OneD, NekDouble> gloCoord(m_coordim);
+        NekDouble tmp = 0;
+        for (int i = 0; i < m_coordim; ++i)
+        {
+            gloCoord[i] = GetCoord(i, xiOut);
+            tmp += (xs[i] - gloCoord[i]) * (xs[i] - gloCoord[i]);
+        }
+
+        return sqrt(tmp);
+    }
+    else if (m_geomFactors->GetGtype() == eDeformed)
+    {
+        Array<OneD, NekDouble> xi(1, 0.0);
+        const NekDouble c1 = 1e-4, c2 = 0.9;
+
+        int dim = GetCoordim();
+        int nq = m_xmap->GetTotPoints();
+
+        Array<OneD, Array<OneD, NekDouble>> x(dim), xder(dim), xder2(dim);
+        for (int i = 0; i < dim; ++i)
+        {
+            x[i] = Array<OneD, NekDouble>(nq);
+            xder[i] = Array<OneD, NekDouble>(nq);
+            xder2[i] = Array<OneD, NekDouble>(nq);
+
+            m_xmap->BwdTrans(m_coeffs[i], x[i]);
+        }
+
+        bool opt_succeed = false;
+
+        NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
+
+        for (int i = 0; i < 100; ++i)
+        {
+            // Compute f(x_k) and its derivatives
+            Array<OneD, NekDouble> xc(dim), xc_der(dim), xc_der2(dim);
+            NekDouble fx = 0, fxp = 0, fxp2 = 0, xcDiff = 0;
+            for (int j = 0; j < dim; ++j)
+            {
+                xc[j] = m_xmap->PhysEvaluate2ndDeriv(xi, x[j], xc_der[j], xc_der2[j]);
+
+                xcDiff = xc[j] - xs[j];
+                fx += xcDiff * xcDiff;
+                fxp += xc_der[j] * xcDiff;
+                fxp2 += xc_der2[j] * xcDiff + xc_der[j] * xc_der[j];
+            }
+
+            fxp *= 2;
+            fxp2 *= 2;
+
+            // Check for convergence
+            if (std::abs(fx - fx_prev) < 1e-12)
+            {
+                opt_succeed = true;
+                fx_prev     = fx;
+                break;
+            }
+            else
+            {
+                fx_prev = fx;
+            }
+
+            NekDouble gamma = 1.0;
+            bool conv       = false;
+
+            // Search direction: Newton's method
+            NekDouble pk = -fxp / fxp2;
+
+            // Backtracking line search
+            while (gamma > 1e-10)
+            {
+                Array<OneD, NekDouble> xi_pk(1);
+                xi_pk[0] = xi[0] + pk * gamma;
+
+                if (xi_pk[0] < -1.0 || xi_pk[0] > 1.0)
+                {
+                    gamma /= 2.0;
+                    continue;
+                }
+
+                Array<OneD, NekDouble> xc_pk(dim), xc_der_pk(dim);
+                NekDouble fx_pk = 0, fxp_pk = 0, xc_pkDiff = 0;
+                for (int j = 0; j < dim; ++j)
+                {
+                    xc_pk[j] = m_xmap->PhysEvaluate(xi_pk, x[j], xc_der_pk[j]);
+
+                    xc_pkDiff = xc_pk[j] - xs[j];
+                    fx_pk += xc_pkDiff * xc_pkDiff;
+                    fxp_pk += xc_der_pk[j] * xc_pkDiff;
+                }
+
+                fxp_pk *= 2;
+
+                // Check Wolfe conditions
+                if ((fx_pk  - (fx + c1 * gamma * pk * fxp)) < std::numeric_limits<NekDouble>::epsilon() &&
+                    (-pk * fxp_pk + c2 * pk * fxp) < std::numeric_limits<NekDouble>::epsilon())
+                {
+                    conv = true;
+                    break;
+                }
+
+                gamma /= 2.0;
+            }
+
+            if (!conv)
+            {
+                opt_succeed = false;
+                break;
+            }
+
+            xi[0] += gamma * pk;
+        }
+
+        if (opt_succeed)
+        {
+            xiOut = xi;
+            return sqrt(fx_prev);
+        }
+        else
+        {
+            xiOut = Array<OneD, NekDouble>(2, std::numeric_limits<NekDouble>::max());
+            return std::numeric_limits<NekDouble>::max();
+        }
+    }
+    else
+    {
+        ASSERTL0(false, "Geometry type unknown")
+    }
+
+    return -1.0;
 }
+
+} // namespace SpatialDomains
+} // namespace Nektar

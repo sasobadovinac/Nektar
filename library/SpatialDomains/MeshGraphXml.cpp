@@ -954,7 +954,6 @@ void MeshGraphXml::ReadDomain()
 
     if (multidomains)
     {
-        int nextDomainNumber = 0;
         while (multidomains)
         {
             int indx;
@@ -987,9 +986,9 @@ void MeshGraphXml::ReadDomain()
             // Parse the composites into a list.
             map<int, CompositeSharedPtr> unrollDomain;
             GetCompositeList(indxStr, unrollDomain);
-            m_domain.push_back(unrollDomain);
+            m_domain[indx] = unrollDomain;
 
-            ASSERTL0(!m_domain[nextDomainNumber++].empty(),
+            ASSERTL0(!m_domain[indx].empty(),
                      (std::string(
                           "Unable to obtain domain's referenced composite: ") +
                       indxStr)
@@ -1025,7 +1024,7 @@ void MeshGraphXml::ReadDomain()
         // Parse the composites into a list.
         map<int, CompositeSharedPtr> fullDomain;
         GetCompositeList(indxStr, fullDomain);
-        m_domain.push_back(fullDomain);
+        m_domain[0] = fullDomain;
 
         ASSERTL0(
             !m_domain[0].empty(),
@@ -2718,20 +2717,30 @@ void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps)
 }
 
 void MeshGraphXml::WriteDomain(TiXmlElement *geomTag,
-                               vector<CompositeMap> &domain)
+                               std::map<int, CompositeMap> &domainMap)
 {
     TiXmlElement *domTag = new TiXmlElement("DOMAIN");
     stringstream domString;
 
-    // @todo Fix this to accomodate multi domain output
     vector<unsigned int> idxList;
-    for (auto cIt = domain[0].begin(); cIt != domain[0].end(); ++cIt)
+    for (auto &domain : domainMap)
     {
-        idxList.push_back(cIt->first);
+        TiXmlElement *c = new TiXmlElement("D");
+        idxList.clear();
+        stringstream s;
+        s << " " << "C" << "[";
+
+        for(const auto &elem : domain.second)
+        {
+            idxList.push_back(elem.first);
+        }
+
+        s << ParseUtils::GenerateSeqString(idxList) << "] ";
+        c->SetAttribute("ID", domain.first);
+        c->LinkEndChild(new TiXmlText(s.str()));
+        domTag->LinkEndChild(c);
     }
 
-    domString << " C[" << ParseUtils::GenerateSeqString(idxList) << "] ";
-    domTag->LinkEndChild(new TiXmlText(domString.str()));
     geomTag->LinkEndChild(domTag);
 }
 
@@ -2785,6 +2794,11 @@ void MeshGraphXml::WriteGeometry(
     // Update attributes with dimensions.
     geomTag->SetAttribute("DIM", m_meshDimension);
     geomTag->SetAttribute("SPACE", m_spaceDimension);
+
+    if(!m_session->GetComm()->IsSerial())
+    {
+        geomTag->SetAttribute("PARTITION", m_session->GetComm()->GetRank());
+    }
 
     // Clear existing elements.
     geomTag->Clear();
@@ -3116,16 +3130,21 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
 
         WriteComposites(geomTag, localComp);
 
-        vector<CompositeMap> domain;
-        CompositeMap domMap;
+        map<int, CompositeMap> domain;
         for (auto &j : localComp)
         {
-            if (j.second->m_geomVec[0]->GetShapeDim() == m_meshDimension)
+            for (auto &dom : m_domain)
             {
-                domMap[j.first] = j.second;
+                for (auto &dIt : dom.second)
+                {
+                    if (j.first == dIt.first)
+                    {
+                        domain[dom.first][j.first] = j.second;
+                        break;
+                    }
+                }
             }
         }
-        domain.push_back(domMap);
 
         WriteDomain(geomTag, domain);
 
