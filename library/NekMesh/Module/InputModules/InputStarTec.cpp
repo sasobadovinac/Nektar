@@ -390,7 +390,7 @@ void InputTec::ReadZone(int &nComposite)
 static void ReadNextNonEmptyLine(io::filtering_istream &mshFile, string &line) {
     do {
 	getline(mshFile, line);
-    } while(line.empty());
+    } while(line.empty() && !mshFile.eof());
 }
 
 static void PrismLineFaces(int prismid,
