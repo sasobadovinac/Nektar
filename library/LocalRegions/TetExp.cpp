@@ -498,7 +498,7 @@ namespace Nektar
                                             const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local (eta) coordinates.
-            return StdTetExp::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion3D::v_PhysEvaluate(Lcoord,physvals);
         }
 
         /**
@@ -517,7 +517,7 @@ namespace Nektar
             m_geom->GetLocCoords(coord,Lcoord);
 
             // Evaluate point in local (eta) coordinates.
-            return StdTetExp::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion3D::v_PhysEvaluate(Lcoord,physvals);
         }
 
         NekDouble TetExp::v_PhysEvaluate(

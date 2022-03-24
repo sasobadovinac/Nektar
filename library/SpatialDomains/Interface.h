@@ -401,8 +401,6 @@ public:
 
     void PerformMovement(NekDouble timeStep);
 
-    void GenGeomFactors();
-
     inline const bool &GetMoveFlag() const
     {
         return m_moveFlag;

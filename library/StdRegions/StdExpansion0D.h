@@ -81,7 +81,7 @@ namespace Nektar
                 return 1;
             }
 
-            virtual int v_GetNtraces() const final
+            virtual int v_GetNtraces() const override
             {
                 return 0;
             }

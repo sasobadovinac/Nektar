@@ -139,6 +139,7 @@ public:
     // Point lookups
     //---------------------------------------
     SPATIAL_DOMAINS_EXPORT std::array<NekDouble, 6> GetBoundingBox();
+    SPATIAL_DOMAINS_EXPORT void ClearBoundingBox();
 
     SPATIAL_DOMAINS_EXPORT inline bool ContainsPoint(
         const Array<OneD, const NekDouble> &gloCoord,

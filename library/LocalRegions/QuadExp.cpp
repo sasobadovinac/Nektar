@@ -699,7 +699,7 @@ namespace Nektar
             const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local (eta) coordinates.
-            return StdQuadExp::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion2D::v_PhysEvaluate(Lcoord,physvals);
         }
 
         NekDouble QuadExp::v_PhysEvaluate(
@@ -711,7 +711,7 @@ namespace Nektar
             ASSERTL0(m_geom,"m_geom not defined");
             m_geom->GetLocCoords(coord,Lcoord);
 
-            return StdQuadExp::v_PhysEvaluate(Lcoord, physvals);
+            return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
         }
 
         NekDouble QuadExp::v_PhysEvaluate(

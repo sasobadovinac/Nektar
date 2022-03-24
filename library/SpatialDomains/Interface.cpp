@@ -603,29 +603,6 @@ Interface::Interface(int indx, InterfaceSide side, CompositeMap edge)
     }
 }
 
-/*void ZoneBase::SetEdge(const CompositeMap &edge)
-{
-    for (auto &compIt : edge)
-    {
-        for (auto &elmtIt : compIt.second->m_geomVec)
-        {
-            auto shapeType = elmtIt->GetShapeType();
-            auto dim = elmtIt->GetCoordim();
-
-            ASSERTL0((shapeType == LibUtilities::eSegment && dim == 2) ||
-                     (shapeType == LibUtilities::eQuadrilateral && dim == 3) ||
-                     (shapeType == LibUtilities::eTriangle && dim == 3),
-                "Interface edge must be a segment for 2D or quad/tri for 3D.")
-
-            size_t id = elmtIt->GetGlobalID();
-            m_edge[id] = elmtIt;
-            m_edgeIds.emplace_back(id);
-        }
-    }
-
-    std::sort(m_edgeIds.begin(), m_edgeIds.end());
-}*/
-
 void Movement::PerformMovement(NekDouble timeStep)
 {
     std::set<int> movedZoneIds;
@@ -651,34 +628,6 @@ void Movement::PerformMovement(NekDouble timeStep)
             m_zones[rightId]->GetMoved() = true;
         }
     }
-}
-
-void Movement::GenGeomFactors()
-{
-    for (auto &interface : m_zones)
-    {
-        auto elements = interface.second->GetElements();
-        for (auto &el : elements)
-        {
-            el->GenGeomFactors();
-        }
-    }
-
-    // @TODO: Don't know if below is needed?
-    /*for (auto &interface : m_zones)
-    {
-        auto elements = interface->GetElements();
-        for (auto &el : elements)
-        {
-            int ne = el->GetNumEdges();
-            for (int i = 0; i < ne; ++i)
-            {
-                el->GetEdge(i)->GenGeomFactors();
-            }
-
-            el->GenGeomFactors();
-        }
-    }*/
 }
 
 NekDouble ZoneRotate::GetAngularVel(NekDouble &time) const
@@ -747,18 +696,18 @@ bool ZoneRotate::v_Move(NekDouble time)
     // Clear bounding boxes (these will be regenerated next time GetBoundingBox is called)
     for (auto &el : m_elements)
     {
-        el->DeleteBoundingBox();
+        el->ClearBoundingBox();
 
         int nfaces = el->GetNumFaces();
         for (int i = 0; i < nfaces; ++i)
         {
-            el->GetFace(i)->DeleteBoundingBox();
+            el->GetFace(i)->ClearBoundingBox();
         }
 
         int nedges = el->GetNumEdges();
         for (int i = 0; i < nedges; ++i)
         {
-            el->GetEdge(i)->DeleteBoundingBox();
+            el->GetEdge(i)->ClearBoundingBox();
         }
     }
 
@@ -808,18 +757,18 @@ bool ZoneTranslate::v_Move(NekDouble timeStep)
     // Clear bounding boxes (these will be regenerated next time GetBoundingBox is called)
     for (auto &el : m_elements)
     {
-        el->DeleteBoundingBox();
+        el->ClearBoundingBox();
 
         int nfaces = el->GetNumFaces();
         for (int i = 0; i < nfaces; ++i)
         {
-            el->GetFace(i)->DeleteBoundingBox();
+            el->GetFace(i)->ClearBoundingBox();
         }
 
         int nedges = el->GetNumEdges();
         for (int i = 0; i < nedges; ++i)
         {
-            el->GetEdge(i)->DeleteBoundingBox();
+            el->GetEdge(i)->ClearBoundingBox();
         }
     }
 
@@ -853,18 +802,18 @@ bool ZonePrescribe::v_Move(NekDouble time)
     // Clear bounding boxes (these will be regenerated next time GetBoundingBox is called)
     for (auto &el : m_elements)
     {
-        el->DeleteBoundingBox();
+        el->ClearBoundingBox();
 
         int nfaces = el->GetNumFaces();
         for (int i = 0; i < nfaces; ++i)
         {
-            el->GetFace(i)->DeleteBoundingBox();
+            el->GetFace(i)->ClearBoundingBox();
         }
 
         int nedges = el->GetNumEdges();
         for (int i = 0; i < nedges; ++i)
         {
-            el->GetEdge(i)->DeleteBoundingBox();
+            el->GetEdge(i)->ClearBoundingBox();
         }
     }
 

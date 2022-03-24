@@ -290,7 +290,7 @@ namespace Nektar
                 return 3;
             }
 
-            virtual int v_GetCoordim(void) final
+            virtual int v_GetCoordim(void) override
             {
                 return 3;
             }

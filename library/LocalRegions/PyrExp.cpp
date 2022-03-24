@@ -621,7 +621,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local coordinates.
-            return StdPyrExp::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion3D::v_PhysEvaluate(Lcoord,physvals);
         }
 
         NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, const NekDouble>& coord,
@@ -634,7 +634,7 @@ namespace Nektar
             //TODO: check GetLocCoords()
             m_geom->GetLocCoords(coord, Lcoord);
 
-            return StdPyrExp::v_PhysEvaluate(Lcoord, physvals);
+            return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
         }
 
         NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,

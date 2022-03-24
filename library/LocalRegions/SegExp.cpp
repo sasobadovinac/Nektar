@@ -628,7 +628,7 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local (eta) coordinates.
-            return StdSegExp::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion1D::v_PhysEvaluate(Lcoord,physvals);
         }
 
         NekDouble SegExp::v_PhysEvaluate(
@@ -640,7 +640,7 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             ASSERTL0(m_geom,"m_geom not defined");
             m_geom->GetLocCoords(coord,Lcoord);
 
-            return StdSegExp::v_PhysEvaluate(Lcoord, physvals);
+            return StdExpansion1D::v_PhysEvaluate(Lcoord, physvals);
         }
 
         NekDouble SegExp::v_PhysEvaluate(

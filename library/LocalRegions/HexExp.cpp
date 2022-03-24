@@ -672,7 +672,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local coordinates.
-            return StdHexExp::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion3D::v_PhysEvaluate(Lcoord,physvals);
         }
 
         NekDouble HexExp::v_PhysEvaluate(
@@ -683,7 +683,7 @@ namespace Nektar
 
             ASSERTL0(m_geom,"m_geom not defined");
             m_geom->GetLocCoords(coord,Lcoord);
-            return StdHexExp::v_PhysEvaluate(Lcoord, physvals);
+            return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
         }
 
         NekDouble HexExp::v_PhysEvaluate(

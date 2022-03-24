@@ -539,7 +539,7 @@ namespace Nektar
             const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local (eta) coordinates.
-            return StdPrismExp::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion3D::v_PhysEvaluate(Lcoord,physvals);
         }
 
         NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, const NekDouble>& coord,
@@ -551,7 +551,7 @@ namespace Nektar
 
             m_geom->GetLocCoords(coord, Lcoord);
 
-            return StdPrismExp::v_PhysEvaluate(Lcoord, physvals);
+            return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
         }
 
         NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
