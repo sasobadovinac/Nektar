@@ -144,13 +144,16 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain,
                     {
                         m_constituentElements[2].insert(geom->GetFace(i));
                     }
+                    /* fall through */
                 case 2:
                     for(int i = 0; i < geom->GetNumEdges(); ++i)
                     {
                         m_constituentElements[1].insert(geom->GetEdge(i));
                     }
+                    /* fall through */
                 case 1:
                     m_constituentElements[0].insert(geom);
+                    /* fall through */
                 default:
                     break;
             }
