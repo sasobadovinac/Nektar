@@ -118,7 +118,7 @@ InterfaceMapDG::InterfaceMapDG(
 
         comm->Block();
 
-        std::array<std::string, 4> edgeName = {"n", "l", "r", "b"};
+        std::array<std::string, 4> edgeName = {{"n", "l", "r", "b"}};
         for (int rank = 0; rank < comm->GetSize(); ++rank)
         {
             if (comm->GetRank() == rank)
