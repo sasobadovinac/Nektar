@@ -637,6 +637,22 @@ namespace Nektar
     }
 
     /**
+     * @brief Apply artificial diffusion (Laplacian operator)
+     */
+    void CompressibleFlowSystem::v_DoDiffusion(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+              Array<OneD,       Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
+    {
+        boost::ignore_unused(pFwd, pBwd);
+        if (m_artificialDiffusion)
+        {
+            m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
+        }
+    }
+
+    /**
      * @brief Set up logic for residual calculation.
      */
     void CompressibleFlowSystem::v_SetInitialConditions(

@@ -176,6 +176,7 @@ namespace Nektar
 
         virtual NekDouble v_GetTimeStep(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray);
+
         virtual void v_SetInitialConditions(
             NekDouble initialtime           = 0.0,
             bool      dumpInitialConditions = true,
@@ -204,11 +205,7 @@ namespace Nektar
             const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                   Array<OneD,       Array<OneD, NekDouble>> &outarray,
             const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
-            const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
-        {
-            boost::ignore_unused(inarray, outarray, pFwd, pBwd);
-            // Do nothing by default
-        }
+            const Array<OneD, const Array<OneD, NekDouble>> &pBwd);
 
         virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
             const NekDouble SpeedSoundFactor);
