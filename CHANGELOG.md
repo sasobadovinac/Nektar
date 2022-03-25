@@ -5,6 +5,8 @@ Changelog
 v5.2.0
 ------
 **Library**
+- Fixed the moving reference frame rotation (Solver Utils) (!1305)
+- Revised FilterAeroForces to accout for the moving reference frame (!1305)
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
 - Add Arm SVE backend to SIMD library (!1282)
 - Simplify the logic in the MPI pairwise trace exchange (!1307)
@@ -13,6 +15,8 @@ v5.2.0
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
 
 **IncNavierStokesSolver**
+- Added Boundary conditions for moving reference frame (!1305)
+- Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
 - Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
 
 **ADRSolver:**
