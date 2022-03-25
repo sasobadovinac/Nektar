@@ -779,6 +779,7 @@ namespace Nektar
                     m_globalBndMat        = In.m_globalBndMat;
                     m_trace               = In.m_trace;
                     m_traceMap            = In.m_traceMap;
+                    m_interfaceMap        = In.m_interfaceMap;
                     m_locTraceToTraceMap  = In.m_locTraceToTraceMap;
                     m_periodicVerts       = In.m_periodicVerts;
                     m_periodicEdges       = In.m_periodicEdges;
