@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <EXPANSIONS>
+        <E COMPOSITE="C[5]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u,v,p" />
+    </EXPANSIONS>
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes" />
+            <I PROPERTY="SolverType" VALUE="VelocityCorrectionScheme" />
+            <I PROPERTY="EvolutionOperator" VALUE="Nonlinear"/>
+            <I PROPERTY="AdvectionForm" VALUE="Convective"/>
+            <I PROPERTY="Projection" VALUE="Galerkin" />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2" />
+            <I PROPERTY="DEALIASING" VALUE="True" />
+            <I PROPERTY="SPECTRALDEALIASING" VALUE="True" />
+            <I PROPERTY="SPECTRALHPDEALIASING" VALUE="True" />
+            <I PROPERTY="SpectralVanishingViscosity" VALUE="DGKernel" />
+        </SOLVERINFO>
+        <PARAMETERS>
+            <P> TimeStep      = 1.0e-3                      </P>
+            <P> NumSteps      = 10               	   </P>
+            <P> IO_CheckSteps = 10               	   </P>
+            <P> IO_InfoSteps  = 1               	   </P>
+            <P> IO_CFLSteps  =  1                         </P>
+            <P> C             = 1.0               	   </P>
+            <P> D0            = 1.0               	   </P>
+            <P> Uinf          = 1.              	   </P>
+            <P> Vinf          = 0.0              	   </P>
+            <P> AoA           = 0*PI/180              	   </P>
+            <P> Uinfx         = Uinf*cos(AoA)         	   </P>
+            <P> Uinfy         = Uinf*sin(AoA)          	   </P>
+            <P> Re            = 200.                        </P>
+	    <P> Kinvis        = Uinf*C/Re          	   </P>
+            <P> t0            = 0.0                        </P>
+            <P> freq          = 2.                         </P>
+	    <P> amp           = 10.*PI/180.              </P>
+	    <P> omega         = 2.*PI*freq                 </P>
+        </PARAMETERS> 
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+            <V ID="1"> v </V>
+            <V ID="2"> p </V>
+        </VARIABLES>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B>      <!-- inflow -->
+            <B ID="1"> C[2] </B>      <!-- outflow -->
+            <B ID="2"> C[3] </B>      <!-- Far Field -->
+            <B ID="3"> C[4] </B>      <!-- Far Field -->
+        </BOUNDARYREGIONS>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0"> 
+       		<D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
+                <D VAR="v" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfy" />
+	        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  
+            </REGION>
+            <REGION REF="1"> 
+                <N VAR="u" USERDEFINEDTYPE="HOutflow" VALUE="0" />
+	        <N VAR="v" USERDEFINEDTYPE="HOutflow" VALUE="0" />
+	        <D VAR="p" USERDEFINEDTYPE="HOutflow" VALUE="0" />
+            </REGION>
+           <REGION REF="2"> 
+       		<D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
+                <D VAR="v" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfy" />
+	        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  
+            </REGION>
+            <REGION REF="3">
+       		<D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
+                <D VAR="v" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfy" />
+	        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  
+            </REGION>
+
+       </BOUNDARYCONDITIONS>
+        <FUNCTION NAME="InitialConditions">
+        <F VAR="u,v,p" FILE="MovingRefFrame_Rot_SimpleDomain.rst" />
+        </FUNCTION>
+       
+        <FUNCTION NAME="VelMRF">
+		<E VAR="u" VALUE="0.0" />
+		<E VAR="v" VALUE="0" />
+        </FUNCTION>
+
+        <FUNCTION NAME="OmegaMRF">
+		<E VAR="Omega_z" VALUE="amp*omega*cos(omega*(t-t0))"/>
+        </FUNCTION>
+	
+    </CONDITIONS>
+     <FORCING>
+        <FORCE TYPE="MovingReferenceFrame">
+            <LinearVelocity> VelMRF </LinearVelocity>
+            <AngularVelocity> OmegaMRF </AngularVelocity>
+            <!--
+            <PivotPoint> 0.0 0.0 0.0 </PivotPoint>
+            -->
+        </FORCE>
+    </FORCING>
+ 
+   <FILTERS> 
+      <FILTER TYPE="AeroForces">
+           <PARAM NAME="OutputFile">dragLift</PARAM>
+           <PARAM NAME="OutputFrequency">10</PARAM>
+           <PARAM NAME="Boundary"> B[0] </PARAM>
+           <PARAM NAME="MomentPoint">0.25 0.0 0. </PARAM>
+      </FILTER>
+   </FILTERS>
+
+
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxll1dPFFEYhldd1+7qOmJBxdUBsXfFvnax994rKmvvvRdEEdT/QIwXaMgKV4yJRkO8NgZMjCHhJ3BhvFCH9/vC956NyRPy+J45Z945Z2cjkbYfL7CMRNqB3zPpxkw67vj24E/4z6cH/fsXV9+BxmcfBav/xxtjzvgdyddTPgYmCyv8woo/dZzvBPaH5+t3BqvC8ZudfBdz/eY6vn5X8EPov83jfDfwLfxXyncHa0Pf4uR7kOf594y0/URTnI+T53wvMC+8P92dfG/yvP4EmBv6hJPvY/KJFK/fA9+H68ty8n3J8/WzwHB4P9vJ9yPP+f7gj/D5zXHyA8AGeM4PNPNLOvlssAae84MibT++kx9MnvsbYuYfD8qbCp41FcTU55i8F5SRHwq+w/4qIZ+UJPYP54eBsj/YDwfl+S8l75t8i+NzzfyjKfZ5YD6eT/Yj5P/h+WOfD8rzxX4kuAzPD/tRYCOeD17/aDCD/vn+jjHr853xx4IN6PfN6/+f33Xix5m85/jxoJyf7CeAcn6ynwh+Qb/sJ4E16Jf9ZLAK/bKfYuYfTbGfCsr5w36a8YlUJfnpoPTLvgCU84HHnwHK/uf8TFD65fwssz7fyc8248eDcHt//qV+jsl7wSnyc8Fa9MseXyj6/XeCfAqUfk+Snw/K/uX8AlD2L/uFZv7RFM9vESj9cn6x3Dn0W0x+CSj9cn4pKPuX/TJQzn8ev9CMn3Tmv9ysz3f8CjN+PEi3eqklstLktV/1q8Bq26/61eBg9Huc/BqwBv0Wk18LVqLfIvLrzPW1X/Xrzfy1X/UbQOmX/Ua5c+iXr78JlH55/ptB2b/st4ANtl/1W8GM7Vf9NrM+3/HbzfjxAPtb/Q6T9xy/E5T9y36XuX96PqvfDX5Ev5zfA8r5zH4vSOez+n1m/no+q98vd8aez+oPgPJ+yP4gKP2yPwTS+az+MPgd/bI/AtL5rL7IrM93/FEzfjzA93NK/DGT9xx/HJR+y8gXg9Iv59NggH7ZnwDl9wf7k6DsX77+KTN/fb9Sf1ruDPrl/BnjE44/C9L7lfpz4FL7fqX+PCj7l8e/AEq/nL9o1uc7+UugnM94v1Z/2eQ9x18BpV/2V0F5v/pE/hoo/daTvw7K/uX8DVD2L+dvmvnr7z/1t0A5n9nfBmX/sr8DSr88v7vgEvTL+XugvD9z/j4o/XL+gVmf7/iHoPTb+pen/pHJe45/bNYXc3wJKPuX/RNQvn/Zl4LyfsX+KSj7l/0zM3/9/a++DJT9y/658QnHl4P0+1x9BSjvV+xfgLJ/2b8EpV/2r8z6fMf/BYPVJ78A</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1mHec13Mcx++69i7teVQonK3I5ayEM6KEM47MQ8vqCGeUiGwhW7aQlb1X9qaQaNmrgcw/vJ5/9Hw8fvfP83Hf5+vzvbt+r8/n835UVPT/V3HR6l98X6/A9yUFvi/S9/VF3tNAxDfUe/GN5Mk3LuCbFFjfVOvIN9M6fHOtx7co8L6Weh++ldbjW+vnkG+jn4Nvq/X4NfTzybfTz8e313p8B/1e5Dvq98J30np8Z/2+5Lvo98V31Xp8N/0d5Lvr78D30Hp8z7CD8qVhR/k1tR6/VthJ+V5hZ/neWo/vE3ZRfu2wq/w6Wo9fN+ymfN+wu3w/rcevF/Lvx/5bP+wpv0FYIl8Wlobsvw21Hr9RyL83+2xj5fCbhHwO7KdNlcNvFvL5sG82Vw6/Rcjnxv7orxx+QMjnyT7YUjn8ViGfM30fqBx+65DPn16XK4cfFNIL+ruNcviKkL7Q022Vw28X0iP6uL1y+B1C+kXvdlQOPzikd/RzJ+XwQ0L6SL92Dsvkdwnd111DeloaVmo9frfQ/d1dOfweIb2md3sqhx8a0nd6t5dy+L1D9gG9G6YcfnjI/qB3+yiHHxGyb+jdvsrh9wvZT/Ruf+XwVSH7jN4doBz+wJD9R+8OUg5/cMi+pHfVyuEPCdmv9O5Q5fAjQ/Yx/TxMOfzhIfubfh0RlssfGZbJHxWy7+nd0VqPrwk5D+jdMcrhjw0rQnp3nHL4USHnB70brRx+TMi5Qu/GKocfF3Le0LvjlcOfEHIO0bsTlcOfFHI+0buTlcOPDzm36F2tcvhTQs4zeneqcvgJIeccvTtNOfzpIecfvTtDOXxdyLlIP89UDn9WyHlJv84OK+XPCcvlJ4aco/Ruktbjzw05X+ndZOXw54WcuxXh+crhp4Scx/TuAuXwF4ac0/RuqnL4i0LOb3p3sXL4S0LOdXp3qXL4y0LOe3p3uXL4K0LuAXp3pXL4aSH3A727Sjn81SH3Br27Rjn89JD7hN5dqxz+upB7hn5erxz+hpD7h37dGFbJ3xRWyt8cci/Ru1u0Hj8j5L6id7cqh78t5B6jd7crh78j5H6jd3cqh78rrA7p3d3K4e8JuQ/p3Uzl8PeG3JP07j7l8PeH3J/0bpZy+AdC7lV696By+IdC7lt697By+EdC7mF6N1s5/KMh9zO9e0w5/OMh9zb9fEI5/JMh9zn9eiqskX86rJJ/JuSep3fPaj3+uZD7n949rxz+hZC5gN69qBz+pZB5gd69rBz+lZA5ojp8VTn8nJD5gt69phz+9ZC5g969oRz+zZB5hN69pRz+7ZA5hd69oxz+3ZD5hd69pxz+/ZC5ht59oBz+w5B5h959pBz+45A5iH5+ohx+bsh8RL/mhbXyn4Y18p+FzE307nOtx88Pmafo3RfK4ReEzFn07kvl8F+FzF/0bqFy+EUhcxm9W6wcfknIvEbvliqH/zqsC+ndN8rhvw2Z7+jdd8rhvw+Z++jdD8rhfwyZB+ndT8rhfw6ZE+ndL8rhfw2ZH+ndMuXwy0PmSvq5Qjn8ypB5k379Fk6W/z2slf8jZA6ld6u0Hv9nyHxK7/5SDv93yNxK7/5RDv9vyDxL7/gP+SnyxXnOnEvv6hWvnsOX5DnzL72rr/fgG+Q5c3Fd2FDvwTfKc+ZletdY78E3yXPmaHrXVO/BN8tz5mt611zvwbfIc+ZuetdS78G3ynPmcXrXWu/Bt8lz5nT62Vbvwf8H9n0f6wAA</EDGE>
+        <ELEMENT>
+            <Q COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1mGWUF2UYR3eoJXZhYS2wALsTbFkUsDsQA9fAAgO7EAwMQMFOcO0AA8VWBExQBBPsAgywEwHxy70f5neOfLnnzHJ3/ztz53mfsxUV5X8FbAQbx/UmsCls9j9eJWwOW4Tn920JW8Gq8Px51bA1bBOe37cGtoXtwvPz1sJl4LLh+fmXg8vDFcLzc7aHHeCK4fn7rwRXhquE5/1YFXaEncLz9+4MV4Orh+f9XAOuCdcKz/u7NlwHrhue99HnvB5cH24AfT7e7w3hRuH5vLw/G8NNwvO5+PtsCjcLz+ftz98cdgmvNv5/V7hFeNnHlnCr8Py6fWwNtwnPnuxjW7hdeHZjH9vDbuH58+yjDnYPzz7tYwe4Y3h2aB89YM/w/Pz20QvuFJ6928fOcBe4K7Rr+9gN7h6e98M+9oB7huf7Yx97wb3D6wjtYx+4b3jeX/vYD+4fnu+jfRwADwzP984+esODwvN52UcfeHB4vt/2cQg8NDzfY/s4DPYNz+dvH4fD+vCcF/ZxBDwyPOeJfRwFjw7PnuyjHzwGHgudH/ZxHDw+PLuzjxNg//CcW/YxAJ4YnvPIPk6CJ4dnx/ZxChwYnnPLPk6Fp4Vn7/ZxOjwjPOebfZwJzwrP98I+zobnhOcctI9z4Xnh+f7Uw/PhoPCcl/ZxARwcnu+ZfQyBF4bnXLWPi+DF8BLo+2gfQ+Gl4Tl/7eMyeHl4vrf2cQUcFp5z2j6GwxHh+X7bx5XwqvCc5/YxEo4KzzlgH1fDa8Krg/ZxLbwuPOeFfVwPbwjP88E+boQ3hedcsY+b4S3heY7Yx63wtvCcP/YxGo4Jz3PKPm6HDfAO6JyyjzvhXeF5LtnH3fCe8Jxn9nEvvC88z0P7uB8+EJ7nnH08CMeG53y0j3HwofA8D+3jYfhIeM5R+3gUjg/Pc9M+HoOPh+e8tY8J8InwPF/t40n4VHjOZft4Gj4TnuewfTwLnwvP+d0An4cvwInQ89o+XoSTwnPO28dkOCU8z3X7eAm+HJ7ngX28Al8Nz/PfPl6Dr4fnuWEfU+G08NwT7OMN+GZ4ni/2MR2+FZ77hH3MgDPD8xyyj7fhO+G5d9jHu/C98OqhfbwPPwjP/cQ+ZsHZ4Xmu2ceH8CP4MXT/mQQ/gZ+G5/lnH5/Bz8Nz37GPL+CX4XlO2sdX8Ovw3LPsYw6cG577k33Mg9+E57lrH9/C78Jzz7KP7+H88Dyf7WMB/CE89zH7+BH+FJ7nuH38DH8Jz73NPn6Fv4XneW8fv8M/wnO/s48/4V/wb+heYB8L4T/huQfaxyK4ODz3B/tYAv8Nz33RPpZC/+Cj555hHwVfb1SUPfdK+2jM15sUZc99xD6acr1ZUfbcP+2jkuvNi7Ln3mIfLbjesih77qn20YrrVUXZc7+xj2quty7KnvusfbThek1R9tyD7KMt19sVZe8/h+QQxQAA</Q>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="1"> E[3,45,74,103,132,161,190,219,248] </C>
+            <C ID="2"> E[273,244,215,186,157,128,99,70,41] </C>
+            <C ID="3"> E[247,250,252,254,256,258,260,262,264,266,268,270,272,274] </C>
+            <C ID="4"> E[40,37,34,31,28,25,22,19,16,13,10,7,4,0] </C>
+            <C ID="5"> Q[0-125] </C>
+        </COMPOSITE>
+        <DOMAIN> C[5] </DOMAIN>
+    </GEOMETRY>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/master</GitBranch>
+            <GitSHA1>6f9b049f6b456fa5f65660514250181904db733b</GitSHA1>
+            <Hostname>ZBOOK</Hostname>
+            <NektarVersion>5.0.0</NektarVersion>
+            <Timestamp>25-Nov-2021 12:01:14</Timestamp>
+        </Provenance>
+        <NekMeshCommandLine>simpleD.msh simpleD.xml </NekMeshCommandLine>
+    </Metadata>
+</NEKTAR>
