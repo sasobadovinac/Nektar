@@ -34,14 +34,17 @@
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
 
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <istream>
 
 #include "InputStarTec.h"
 
 using namespace std;
 using namespace Nektar::NekMesh;
+namespace io = boost::iostreams;
 
 namespace Nektar
 {
@@ -114,6 +117,8 @@ void InputTec::Process()
     ProcessElements();
     ProcessComposites();
 }
+
+static void ReadNextNonEmptyLine(io::filtering_istream &mshFile, string &line);
 
 void InputTec::ReadZone(int &nComposite)
 {
@@ -225,18 +230,7 @@ void InputTec::ReadZone(int &nComposite)
                          nodeLocs[i+2*nnodes])));
     }
 
-    // Read Node count per face
-    getline(m_mshFile, line);
-    if (line.find("node count per face") == string::npos)
-    {
-        if (line.find("face nodes") == string::npos)
-        {
-            getline(m_mshFile, line);
-        }
-    }
-
-    s.clear();
-    s.str(line);
+    ReadNextNonEmptyLine(m_mshFile, line);
 
     vector<int> Nodes_per_face;
     if (line.find("node count per face") != string::npos)
@@ -252,17 +246,8 @@ void InputTec::ReadZone(int &nComposite)
             }
             Nodes_per_face.push_back(nodes);
         }
-        // Read next line
-        getline(m_mshFile, line);
+	ReadNextNonEmptyLine(m_mshFile, line);
     }
-
-    // Read face nodes;
-    if (line.find("face nodes") == string::npos)
-    {
-        getline(m_mshFile, line);
-    }
-    s.clear();
-    s.str(line);
 
     vector<vector<int> > FaceNodes;
 
@@ -286,6 +271,7 @@ void InputTec::ReadZone(int &nComposite)
 
             FaceNodes.push_back(Fnodes);
         }
+	ReadNextNonEmptyLine(m_mshFile, line);
     }
     else
     {
@@ -295,13 +281,6 @@ void InputTec::ReadZone(int &nComposite)
 
     // Read left elements
     Array<OneD, vector<int> > ElementFaces(nelements);
-
-    // check to see if next line contains left elements
-    getline(m_mshFile, line);
-    if (line.find("left elements") == string::npos)
-    {
-        getline(m_mshFile, line);
-    }
 
     if (line.find("left elements") != string::npos)
     {
@@ -316,18 +295,12 @@ void InputTec::ReadZone(int &nComposite)
                 ElementFaces[elmtID - 1].push_back(i);
             }
         }
+	ReadNextNonEmptyLine(m_mshFile, line);
     }
     else
     {
         m_log(FATAL) << "Failed to find 'left elements' section, check your "
                      << "file format is correct." << endl;
-    }
-
-    // check to see if next line contains right elements
-    getline(m_mshFile, line);
-    if (line.find("right elements") == string::npos)
-    {
-        getline(m_mshFile, line);
     }
 
     if (line.find("right elements") != string::npos)
@@ -343,9 +316,6 @@ void InputTec::ReadZone(int &nComposite)
                 ElementFaces[elmtID - 1].push_back(i);
             }
         }
-
-        // read to end of line
-        getline(m_mshFile, line);
     }
     else
     {
@@ -415,6 +385,12 @@ void InputTec::ReadZone(int &nComposite)
 
         nComposite++;
     }
+}
+
+static void ReadNextNonEmptyLine(io::filtering_istream &mshFile, string &line) {
+    do {
+	getline(mshFile, line);
+    } while(line.empty() && !mshFile.eof());
 }
 
 static void PrismLineFaces(int prismid,
