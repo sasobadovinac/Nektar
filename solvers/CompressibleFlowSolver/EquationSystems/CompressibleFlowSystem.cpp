@@ -87,8 +87,8 @@ namespace Nektar
         // Setting up advection and diffusion operators
         InitAdvection();
 
-        // Create artificial diffusion
-        if (m_shockCaptureType != "Off")
+        // Create artificial diffusion with laplacian operator
+        if (m_shockCaptureType == "NonSmooth")
         {
             m_artificialDiffusion = GetArtificialDiffusionFactory()
                                     .CreateInstance(m_shockCaptureType,

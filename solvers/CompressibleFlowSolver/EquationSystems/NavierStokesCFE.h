@@ -377,8 +377,7 @@ namespace Nektar
         const TensorOfArray3D<NekDouble>                       &qfields,
         TensorOfArray3D<NekDouble>                             &outarray,
         Array< OneD, int >                                     &nonZeroIndex,
-        const Array<OneD, Array<OneD, NekDouble> >             &normal,
-        const Array<OneD, NekDouble>                           &ArtifDiffFactor)
+        const Array<OneD, Array<OneD, NekDouble> >             &normal)
     {
         size_t nConvectiveFields = inarray.size();
         size_t nPts = inarray[0].size();
@@ -571,37 +570,6 @@ namespace Nektar
                     for (int f = 0; f < nConvectiveFields; ++f)
                     {
                         outarray[d][f][p] = outArrTmp[f + nConvectiveFields * d];
-                    }
-                }
-            }
-        }
-
-
-        // this loop would need to be brought up into the main loop so that it
-        // can be vectorized as well
-        if (ArtifDiffFactor.size())
-        {
-            n_nonZero = nConvectiveFields;
-
-            for (size_t p = 0; p < nPts; ++p)
-            {
-                for (int d = 0; d < nDim; ++d)
-                {
-                    if (IS_TRACE)
-                    {
-                        NekDouble tmp = ArtifDiffFactor[p] * normal[d][p];
-
-                        for (int j = 0; j < nConvectiveFields; ++j)
-                        {
-                            outarray[0][j][p] += tmp * qfields[d][j][p];
-                        }
-                    }
-                    else
-                    {
-                        for (int j = 0; j < nConvectiveFields; ++j)
-                        {
-                            outarray[d][j][p] += ArtifDiffFactor[p] * qfields[d][j][p];
-                        }
                     }
                 }
             }

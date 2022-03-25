@@ -378,8 +378,7 @@ namespace Nektar
                 m_FunctorDiffusionfluxConsTrace = std::bind(
                     func, obj, std::placeholders::_1, std::placeholders::_2,
                                std::placeholders::_3, std::placeholders::_4,
-                               std::placeholders::_5, std::placeholders::_6,
-                               std::placeholders::_7);
+                               std::placeholders::_5, std::placeholders::_6);
             }
 
             void SetDiffusionFluxConsTrace(DiffusionFluxCons flux)

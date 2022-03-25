@@ -799,7 +799,7 @@ namespace Nektar
         }
 
         // Get derivative tensor
-        m_diffusion->DiffuseCalculateDerivative(fields, primVar, primVarDer,
+        m_diffusion->DiffuseCalcDerivative(fields, primVar, primVarDer,
             primVarFwd, primVarBwd);
 
         // Get div curl squared

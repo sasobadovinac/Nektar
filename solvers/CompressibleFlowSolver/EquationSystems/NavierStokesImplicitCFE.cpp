@@ -128,12 +128,6 @@ namespace Nektar
             outarrayDiff[i] = Array<OneD, NekDouble>{ncoeffs, 0.0};
         }
 
-        // get artificial viscosity
-        if (m_shockCaptureType == "Physical" && m_CalcPhysicalAV)
-        {
-            GetPhysicalAV(inarray);
-        }
-
         if (m_is_diffIP)
         {
             if (m_bndEvaluateTime < 0.0)
@@ -205,7 +199,8 @@ namespace Nektar
                             outarray[i], 1);
             }
 
-            if (m_shockCaptureType != "Off")
+            // Laplacian operator based artificial viscosity
+            if (m_artificialDiffusion)
             {
                 m_artificialDiffusion->DoArtificialDiffusionCoeff(
                     inarray, outarray);
