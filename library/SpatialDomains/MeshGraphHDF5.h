@@ -115,13 +115,14 @@ private:
     void WriteCurvePoints(MeshCurvedPts &curvedPts);
 
     void WriteComposites(CompositeMap &comps);
-    void WriteDomain(std::vector<CompositeMap> &domain);
+    void WriteDomain(std::map<int, CompositeMap> &domain);
 
     std::string m_hdf5Name;
     LibUtilities::H5::FileSharedPtr m_file;
     LibUtilities::H5::PListSharedPtr m_readPL;
     LibUtilities::H5::GroupSharedPtr m_mesh;
     LibUtilities::H5::GroupSharedPtr m_maps;
+    unsigned int m_inFormatVersion;
 
     static const unsigned int FORMAT_VERSION;
 };

@@ -60,7 +60,7 @@ namespace SpatialDomains
 
 /// Version of the Nektar++ HDF5 geometry format, which is embedded into the
 /// main NEKTAR/GEOMETRY group as an attribute.
-const unsigned int MeshGraphHDF5::FORMAT_VERSION = 1;
+const unsigned int MeshGraphHDF5::FORMAT_VERSION = 2;
 
 std::string MeshGraphHDF5::className =
     GetMeshGraphFactory().RegisterCreatorFunction(
@@ -255,7 +255,6 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
     ASSERTL0(root2, "Cannot find NEKTAR/GEOMETRY group in HDF5 file.");
 
     // Check format version
-    unsigned int formatVersion;
     H5::Group::AttrIterator attrIt  = root2->attr_begin();
     H5::Group::AttrIterator attrEnd = root2->attr_end();
     for (; attrIt != attrEnd; ++attrIt)
@@ -267,9 +266,9 @@ void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
     }
     ASSERTL0(attrIt != attrEnd,
              "Unable to determine Nektar++ geometry HDF5 file version.");
-    root2->GetAttribute("FORMAT_VERSION", formatVersion);
+    root2->GetAttribute("FORMAT_VERSION", m_inFormatVersion);
 
-    ASSERTL0(formatVersion <= FORMAT_VERSION,
+    ASSERTL0(m_inFormatVersion <= FORMAT_VERSION,
              "File format in " + m_hdf5Name + " is higher than supported in "
              "this version of Nektar++");
 
@@ -1071,14 +1070,42 @@ void MeshGraphHDF5::ReadCurveMap(
 
 void MeshGraphHDF5::ReadDomain()
 {
-    map<int, CompositeSharedPtr> fullDomain;
+    if(m_inFormatVersion == 1) // @TODO: Read in
+    {
+        map<int, CompositeSharedPtr> fullDomain;
+        H5::DataSetSharedPtr dst = m_mesh->OpenDataSet("DOMAIN");
+        H5::DataSpaceSharedPtr space = dst->GetSpace();
+
+        vector<string> data;
+        dst->ReadVectorString(data, space, m_readPL);
+        GetCompositeList(data[0], fullDomain);
+        m_domain[0] = fullDomain;
+
+        return;
+    }
+
+    std::vector<CompositeMap> fullDomain;
     H5::DataSetSharedPtr dst = m_mesh->OpenDataSet("DOMAIN");
     H5::DataSpaceSharedPtr space = dst->GetSpace();
 
     vector<string> data;
     dst->ReadVectorString(data, space, m_readPL);
-    GetCompositeList(data[0], fullDomain);
-    m_domain.push_back(fullDomain);
+    for (auto &dIt : data)
+    {
+        fullDomain.push_back(CompositeMap());
+        GetCompositeList(dIt, fullDomain.back());
+    }
+
+    H5::DataSetSharedPtr mdata = m_maps->OpenDataSet("DOMAIN");
+    H5::DataSpaceSharedPtr mspace = mdata->GetSpace();
+
+    vector<int> ids;
+    mdata->Read(ids, mspace);
+
+    for(int i = 0; i < ids.size(); ++i)
+    {
+        m_domain[ids[i]] = fullDomain[i];
+    }
 }
 
 void MeshGraphHDF5::ReadComposites()
@@ -1488,21 +1515,43 @@ void MeshGraphHDF5::WriteComposites(CompositeMap &composites)
     dst->Write(c_map, ds);
 }
 
-void MeshGraphHDF5::WriteDomain(vector<CompositeMap> &domain)
+void MeshGraphHDF5::WriteDomain(std::map<int, CompositeMap> &domain)
 {
-    vector<unsigned int> idxList;
-    for (auto cIt = domain[0].begin(); cIt != domain[0].end(); ++cIt)
+    //dont need location map only a id map
+    //will filter the composites per parition on read, its easier
+    //composites do not need to be written in paralell.
+    vector<int> d_map;
+    std::vector<vector<unsigned int>> idxList;
+
+    int cnt = 0;
+    for (auto &dIt : domain)
     {
-        idxList.push_back(cIt->first);
+        idxList.push_back(std::vector<unsigned int>());
+        for (auto cIt = dIt.second.begin(); cIt != dIt.second.end(); ++cIt)
+        {
+            idxList[cnt].push_back(cIt->first);
+        }
+
+        ++cnt;
+        d_map.push_back(dIt.first);
     }
+
     stringstream domString;
     vector<string> doms;
-    doms.push_back(ParseUtils::GenerateSeqString(idxList));
+    for (auto &cIt : idxList)
+    {
+        doms.push_back(ParseUtils::GenerateSeqString(cIt));
+    }
 
     H5::DataTypeSharedPtr tp  = H5::DataType::String();
     H5::DataSpaceSharedPtr ds = H5::DataSpace::OneD(doms.size());
     H5::DataSetSharedPtr dst  = m_mesh->CreateDataSet("DOMAIN", tp, ds);
     dst->WriteVectorString(doms, ds, tp);
+
+    tp  = H5::DataType::OfObject(d_map[0]);
+    ds  = H5::DataSpace::OneD(d_map.size());
+    dst = m_maps->CreateDataSet("DOMAIN", tp, ds);
+    dst->Write(d_map, ds);
 }
 
 void MeshGraphHDF5::WriteGeometry(
