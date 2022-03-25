@@ -1236,6 +1236,19 @@ namespace Nektar
             LibUtilities::FieldMetaDataMap fieldMetaDataMap(m_fieldMetaDataMap);
             mapping->Output( fieldMetaDataMap, outname);
 
+            // If necessary, add informaton for moving frame reference to metadata
+            if(m_fieldMetaDataMap.find("Theta_x") != m_fieldMetaDataMap.end())
+            {
+                // if one theta exists, add all three thetas
+                std::vector<std::string> vSuffix={"_x", "_y", "_z"};
+                for(int i=0; i < 3; ++i)
+                {
+                    std::string sTheta= "Theta"+vSuffix[i];
+                    m_fieldMetaDataMap[sTheta]=
+                        boost::lexical_cast<std::string>(m_movingFrameTheta[i]);
+                }
+            }
+
 #ifdef NEKTAR_DISABLE_BACKUPS
             bool backup = false;
 #else

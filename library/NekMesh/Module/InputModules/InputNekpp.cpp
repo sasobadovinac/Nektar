@@ -56,6 +56,8 @@ ModuleKey InputNekpp::className =
  */
 InputNekpp::InputNekpp(MeshSharedPtr m) : InputModule(m)
 {
+    m_config["processall"] = ConfigOption(
+                                          true, "0", "Process edges, faces as well as composites");
 }
 
 InputNekpp::~InputNekpp()
@@ -115,14 +117,19 @@ void InputNekpp::Process()
             vector<NodeSharedPtr> curve; // curved nodes if deformed
             int id0 = it.second->GetVid(0);
             int id1 = it.second->GetVid(1);
-            LibUtilities::PointsType ptype =
-                it.second->GetXmap()->GetPointsKeys()[0].GetPointsType();
-            EdgeSharedPtr ed = std::make_shared<Edge>(
-                vIdMap[id0], vIdMap[id1], curve, ptype);
-
-            auto testIns = m_mesh->m_edgeSet.insert(ed);
-            (*(testIns.first))->m_id = it.second->GetGlobalID();
-            eIdMap[it.second->GetGlobalID()] = ed;
+            // If we have edges defined that are not used in element
+            // then possible Xmap is not defined so check here
+            if(it.second->GetXmap())
+            {
+                LibUtilities::PointsType ptype =
+                    it.second->GetXmap()->GetPointsKeys()[0].GetPointsType();
+                EdgeSharedPtr ed = std::make_shared<Edge>(
+                                                          vIdMap[id0], vIdMap[id1], curve, ptype);
+                
+                auto testIns = m_mesh->m_edgeSet.insert(ed);
+                (*(testIns.first))->m_id = it.second->GetGlobalID();
+                eIdMap[it.second->GetGlobalID()] = ed;
+            }
         }
     }
 
@@ -315,8 +322,16 @@ void InputNekpp::Process()
     // set up composite labels if they exist
     m_mesh->m_faceLabels = graph->GetCompositesLabels();
 
-    ProcessEdges(false);
-    ProcessFaces(false);
+    if (m_config["processall"].beenSet)
+    {
+        ProcessEdges();
+        ProcessFaces();
+    }
+    else
+    {
+        ProcessEdges(false);
+        ProcessFaces(false);
+    }
     ProcessComposites();
 }
 }

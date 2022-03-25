@@ -4326,8 +4326,8 @@ namespace Nektar
             int e_npoints;
 
             Array<OneD, NekDouble> locLeng;
-            Array<OneD, NekDouble> lengintp;
-            Array<OneD, NekDouble> lengAdd;
+            Array<OneD,Array<OneD,NekDouble>> lengintp(2);
+            Array<OneD,Array<OneD,NekDouble>> lengAdd(2);
             Array<OneD, int      > LRbndnumbs(2);
             Array<OneD, Array<OneD,NekDouble> > lengLR(2);
             lengLR[0]   =   lengthsFwd;
@@ -4343,11 +4343,16 @@ namespace Nektar
                     loc_exp = (*m_exp)[i];
                     int offset = m_phys_offset[i];
 
+                    NekDouble factor =1.0;
+
                     int e_nmodes   = loc_exp->GetBasis(0)->GetNumModes();
                     e_npoints  = (*m_exp)[i]->GetNumPoints(0);
                     if ( e_npoints0 < e_npoints)
                     {
-                        lengintp = Array<OneD, NekDouble>{size_t(e_npoints),0.0};
+                        for(int nlr=0;nlr<2;nlr++)
+                        {
+                            lengintp[nlr] = Array<OneD, NekDouble>(e_npoints,0.0);
+                        }
                         e_npoints0 = e_npoints;
                     }
 
@@ -4356,17 +4361,17 @@ namespace Nektar
 
                     LRbndnumbs[0] = loc_exp->GetLeftAdjacentElementTrace();
                     LRbndnumbs[1] = loc_exp->GetRightAdjacentElementTrace();
-                    for (int nlr = 0; nlr < 2; ++nlr)
+                    for (int nlr = 0; nlr < 2; ++nlr)  
                     {
-                        Vmath::Zero(e_npoints0, lengintp, 1);
-                        lengAdd     =   lengintp;
+                        Vmath::Zero(e_npoints0, lengintp[nlr], 1);
+                        lengAdd[nlr]     =   lengintp[nlr];
                         int bndNumber = LRbndnumbs[nlr];
                         loc_elmt = LRelmts[nlr];
                         if (bndNumber >= 0)
                         {
                             locLeng  = loc_elmt->GetElmtBndNormDirElmtLen(
                                                                bndNumber);
-                            lengAdd  =   locLeng;
+                            lengAdd[nlr]  =   locLeng;
 
                             int loc_nmodes  = loc_elmt->GetBasis(0)->
                                 GetNumModes();
@@ -4378,13 +4383,24 @@ namespace Nektar
                                 LibUtilities::PointsKey from_key =
                                     loc_elmt->GetBasis(0)->GetPointsKey();
                                 LibUtilities::Interp1D(from_key, locLeng,
-                                                       to_key, lengintp);
-                                lengAdd     =   lengintp;
+                                                       to_key, lengintp[nlr]);
+                                lengAdd[nlr]     =   lengintp[nlr];
                             }
                         }
+                        else
+                        {
+                            if (1==nlr)
+                            {
+                                lengAdd[nlr]     =   lengAdd[0];
+                                factor = 0.5;
+                            }
+                        }
+                    }
+                    for(int nlr=0;nlr<2;nlr++)
+                    {
                         for (int j = 0; j < e_npoints; ++j)
                         {
-                            lengLR[nlr][offset + j] = lengAdd[j];
+                            lengLR[nlr][offset + j] = factor*lengAdd[nlr][j];
                         }
                     }
                 }
@@ -4395,7 +4411,9 @@ namespace Nektar
                 {
                     loc_exp = (*m_exp)[i];
                     int offset = m_phys_offset[i];
-
+                    
+                    NekDouble factor = 1.0;
+                    
                     LibUtilities::BasisKey traceBasis0
                         = loc_exp->GetBasis(0)->GetBasisKey();
                     LibUtilities::BasisKey traceBasis1
@@ -4405,8 +4423,10 @@ namespace Nektar
                     e_npoints  =   TraceNq0*TraceNq1;
                     if (e_npoints0 < e_npoints)
                     {
-                        lengintp = Array<OneD,NekDouble>{size_t(e_npoints),
-                                                         0.0};
+                        for(int nlr=0;nlr<2;nlr++)
+                        {
+                        lengintp[nlr] = Array<OneD, NekDouble>(e_npoints,0.0);
+                        }
                         e_npoints0 = e_npoints;
                     }
 
@@ -4417,7 +4437,7 @@ namespace Nektar
                     LRbndnumbs[1] = loc_exp->GetRightAdjacentElementTrace();
                     for (int nlr = 0; nlr < 2; ++nlr)
                     {
-                        Vmath::Zero(e_npoints0, lengintp, 1);
+                        Vmath::Zero(e_npoints0, lengintp[nlr], 1);
                         int bndNumber = LRbndnumbs[nlr];
                         loc_elmt = LRelmts[nlr];
                         if (bndNumber >= 0)
@@ -4456,11 +4476,20 @@ namespace Nektar
                                                    alignedLeng,
                                                    traceBasis0.GetPointsKey(),
                                                    traceBasis1.GetPointsKey(),
-                                                   lengintp);
+                                                   lengintp[nlr]);
+                        }
+                        else
+                        {
+                            if(1==nlr)
+                            {   
+                                Vmath::Vcopy(e_npoints,lengintp[0],1,lengintp[1],1);
+                                factor = 0.5;
                             }
+                        }
+
                         for (int j = 0; j < e_npoints; ++j)
                         {
-                            lengLR[nlr][offset + j] = lengintp[j];
+                            lengLR[nlr][offset + j] = factor*lengintp[nlr][j];
                         }
                     }
                 }
