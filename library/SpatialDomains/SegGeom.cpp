@@ -353,11 +353,6 @@ int SegGeom::v_GetNumVerts() const
     return kNverts;
 }
 
-int SegGeom::v_GetNumEdges() const
-{
-    return kNedges;
-}
-
 NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                   Array<OneD, NekDouble> &xiOut)
 {
