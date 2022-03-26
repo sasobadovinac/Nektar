@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     StdRegions::ConstFactorMap factors;
     NekDouble lz;
 
-    if(argc != 2)
+    if(argc <  2)
     {
         fprintf(stderr,"Usage: Helmholtz2D  meshfile\n");
         exit(1);
