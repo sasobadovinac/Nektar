@@ -174,13 +174,6 @@ struct sveLong
         return tmp[i];
     }
 
-    inline scalarType& operator[](size_t i)
-    {
-        scalarType* tmp = reinterpret_cast<scalarType*>(&_data);
-        return tmp[i];
-    }
-
-
     // unary ops
     inline void operator+=(sveLong rhs)
     {
@@ -336,12 +329,6 @@ struct sveDouble
     {
         alignas(alignment) scalarArray tmp;
         store(tmp, is_aligned);
-        return tmp[i];
-    }
-
-    inline scalarType& operator[](size_t i)
-    {
-        scalarType* tmp = reinterpret_cast<scalarType*>(&_data);
         return tmp[i];
     }
 

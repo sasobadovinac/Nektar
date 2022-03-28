@@ -184,12 +184,6 @@ struct avx512Long8
         return tmp[i];
     }
 
-    inline scalarType& operator[](size_t i)
-    {
-        scalarType* tmp = reinterpret_cast<scalarType*>(&_data);
-        return tmp[i];
-    }
-
 };
 
 template<typename T>
@@ -351,13 +345,7 @@ struct avx512Double8
         return tmp[i];
     }
 
-    inline scalarType& operator[](size_t i)
-    {
-        scalarType* tmp = reinterpret_cast<scalarType*>(&_data);
-        return tmp[i];
-    }
-
-        // unary ops
+    // unary ops
     inline void operator+=(avx512Double8 rhs)
     {
         _data = _mm512_add_pd(_data, rhs._data);
