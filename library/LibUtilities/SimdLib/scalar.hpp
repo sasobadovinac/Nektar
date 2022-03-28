@@ -96,7 +96,7 @@ struct scalarT
     using scalarArray = scalarType[width];
 
     // storage
-    vectorType _data;
+    vectorType _data{0};
 
     // ctors
     inline scalarT() = default;
@@ -239,7 +239,7 @@ inline scalarT<T> operator*(U lhs, scalarT<T> rhs)
 template<typename T, typename U, typename = typename std::enable_if<
     std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator*(scalarT<T> lhs, U rhs)
-{
+{ 
     return lhs._data * rhs;
 }
 

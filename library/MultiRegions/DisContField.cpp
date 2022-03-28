@@ -4007,7 +4007,8 @@ namespace Nektar
             // Create expansion list
             result =
                 MemoryManager<ExpList>::AllocateSharedPtr
-                    (*this, eIDs, DeclareCoeffPhysArrays);
+                (*this, eIDs, DeclareCoeffPhysArrays,
+                 Collections::eNoCollection);
 
             // Copy phys and coeffs to new explist
             if( DeclareCoeffPhysArrays)
