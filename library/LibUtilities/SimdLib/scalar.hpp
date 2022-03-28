@@ -100,7 +100,6 @@ struct scalarT
 
     // ctors
     inline scalarT() = default;
-    inline scalarT(const scalarT& rhs) = default;
     inline scalarT(const vectorType& rhs) : _data(rhs){}
 
     // store
