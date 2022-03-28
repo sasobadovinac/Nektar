@@ -7,7 +7,7 @@ Geometry2D.cpp
 Geometry3D.cpp
 Geometry.cpp
 HexGeom.cpp
-Interface.cpp
+Movement/Interface.cpp
 MeshGraph.cpp
 MeshGraphXml.cpp
 MeshGraphXmlCompressed.cpp
@@ -31,7 +31,7 @@ Geometry2D.h
 Geometry3D.h
 Geometry.h
 HexGeom.h
-Interface.h
+Movement/Interface.h
 MeshEntities.hpp
 MeshGraph.h
 MeshGraphXml.h

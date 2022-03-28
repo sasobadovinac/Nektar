@@ -36,10 +36,8 @@
 
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <SpatialDomains/MeshGraph.h>
-#include <SpatialDomains/Interface.h>
+#include <SpatialDomains/Movement/Interface.h>
 #include <tinyxml.h>
-
-using namespace std;
 
 namespace Nektar
 {
