@@ -217,58 +217,45 @@ InterfaceMapDG::InterfaceMapDG(
             MemoryManager<InterfaceExchange>::AllocateSharedPtr(
                 m_movement, m_trace, comm, rank, geomIdToTraceId));
     }
+
+    // Find missing coordinates on interface from other side
+    ExchangeCoords();
 }
 
 void InterfaceMapDG::ExchangeCoords()
 {
     auto comm = m_trace->GetComm();
     auto zones = m_movement->GetZones();
-    bool &coordExchangeFlag = m_movement->GetCoordExchangeFlag();
 
-    if(coordExchangeFlag)
+    for (auto &interfaceTrace : m_localInterfaces)
     {
-        int skipExchange = 0;
-        for (auto &interfaceTrace : m_localInterfaces)
+        interfaceTrace->CalcLocalMissing();
+    }
+
+    // If parallel communication is needed
+    if (!m_exchange.empty())
+    {
+        auto requestSend = comm->CreateRequest(m_exchange.size());
+        auto requestRecv = comm->CreateRequest(m_exchange.size());
+
+        for (int i = 0; i < m_exchange.size(); ++i)
         {
-            if (zones[interfaceTrace->GetInterface()->GetId()]->GetMoved())
-            {
-                interfaceTrace->CalcLocalMissing();
-                skipExchange += 1;
-            }
+            m_exchange[i]->RankFillSizes(requestSend, requestRecv, i);
         }
+        comm->WaitAll(requestSend);
+        comm->WaitAll(requestRecv);
 
-        // If parallel communication is needed
-        if (!m_exchange.empty() && skipExchange > 0)
+        for (int i = 0; i < m_exchange.size(); ++i)
         {
-            auto requestSend = comm->CreateRequest(m_exchange.size());
-            auto requestRecv = comm->CreateRequest(m_exchange.size());
-
-            for (int i = 0; i < m_exchange.size(); ++i)
-            {
-                m_exchange[i]->RankFillSizes(requestSend, requestRecv, i);
-            }
-            comm->WaitAll(requestSend);
-            comm->WaitAll(requestRecv);
-
-            for (int i = 0; i < m_exchange.size(); ++i)
-            {
-                m_exchange[i]->SendMissing(requestSend, requestRecv, i);
-            }
-            comm->WaitAll(requestSend);
-            comm->WaitAll(requestRecv);
-
-            for (auto &i : m_exchange)
-            {
-                i->CalcRankDistances();
-            }
+            m_exchange[i]->SendMissing(requestSend, requestRecv, i);
         }
+        comm->WaitAll(requestSend);
+        comm->WaitAll(requestRecv);
 
-        for (auto &interfaceTrace : m_localInterfaces)
+        for (auto &i : m_exchange)
         {
-            zones[interfaceTrace->GetInterface()->GetId()]->GetMoved() = false;
+            i->CalcRankDistances();
         }
-
-        coordExchangeFlag = false;
     }
 }
 
@@ -281,18 +268,7 @@ void InterfaceMapDG::ExchangeCoords()
  */
 void InterfaceTrace::CalcLocalMissing()
 {
-    // We store the found and missing coords in the InterfaceShPtr
-    // so it can be reused across multiple fields
-    // Nuke old missing/found
-    m_interface->m_missingCoords.clear();
-    m_interface->m_mapMissingCoordToTrace.clear();
-
-    // Store copy of found coords to optimise search
-    auto foundLocalCoordsCopy = m_interface->m_foundLocalCoords;
-    m_interface->m_foundLocalCoords.clear();
-
     auto childEdgeIds = m_interface->GetEdgeIds();
-
     // If not flagged 'check local' then all points are missing
     if (!m_checkLocal)
     {
@@ -321,10 +297,8 @@ void InterfaceTrace::CalcLocalMissing()
     // interface on this rank contains
     else
     {
-        //int cnt = 1;
         for (auto childId : childEdgeIds)
         {
-            //std::cout << "\rSearching in interface " << m_interface->GetId() << " edge # " << cnt++ << "/" << childEdgeIds.size() << "." << std::flush;
             auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId));
             size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
@@ -339,46 +313,29 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[0] = xc[i];
                 xs[1] = yc[i];
                 xs[2] = zc[i];
-
-                //std::cout << std::endl << "Point: " << xs[0] << " " << xs[1] << " " << xs[2];
-
-                // Search the edge the point was found in last time first
-                auto parentEdgeDeque = m_interface->GetOppInterface()->GetEdgeDeque();
-                if (foundLocalCoordsCopy.find(offset + i) !=
-                    foundLocalCoordsCopy.end())
+                std::cout << "Point = " << xs[0] << " " << xs[1] << " " << xs[2] << std::endl;
+                auto parentEdge = m_interface->GetOppInterface()->GetEdge();
+                for (auto &edge : parentEdge)
                 {
-                    auto oldEdge = m_interface->GetOppInterface()->GetEdge(
-                        foundLocalCoordsCopy[offset + i].first);
-                    parentEdgeDeque.emplace_front(oldEdge);
-                }
-
-                for (auto &edge : parentEdgeDeque)
-                {
-
                     // First check if inside the edge bounding box
                     // @TODO: Might better to query a rtree? as in meshgraph.
-                    if (!edge->MinMaxCheck(xs))
+                    if (!edge.second->MinMaxCheck(xs))
                     {
                         continue;
                     }
 
-                    NekDouble dist = edge->FindDistance(xs, foundLocCoord);
-                    //std::cout << std::endl << "Looked in: " << edge->GetGlobalID() << " | dist = " << dist;
-
+                    NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
                     if (dist < 5e-5) // @TODO: Check relative residuals?
                     {
+                        std::cout << "\tFound: " << dist << std::endl;
                         found = true;
-                        //std::cout << std::endl << "Found at: " << foundLocCoord[0] << " " << foundLocCoord[1] << " in " << edge->GetGlobalID() << " with dist = " << dist;
-
-                        m_interface->m_foundLocalCoords[offset + i] = std::make_pair(edge->GetGlobalID(), foundLocCoord);
+                        m_interface->m_foundLocalCoords[offset + i] = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
                         break;
                     }
                 }
 
                 if (!found)
                 {
-                    //std::cout << std::endl << std::endl << "NOT FOUND!!! " << "Point " << i << ": " << xs[0] << " " << xs[1] << " " << xs[2];
-
                     m_interface->m_missingCoords.emplace_back(xs);
                     m_interface->m_mapMissingCoordToTrace.emplace_back(offset + i);
                 }
@@ -390,7 +347,8 @@ void InterfaceTrace::CalcLocalMissing()
     if(m_trace->GetComm()->IsSerial())
     {
         ASSERTL0(m_interface->m_missingCoords.empty(),
-                 "Missing " + std::to_string(m_interface->m_missingCoords.size()) +
+                 "Missing " +
+                     std::to_string(m_interface->m_missingCoords.size()) +
                      " coordinates on interface ID " +
                      std::to_string(m_interface->GetId()) +
                      " linked to interface ID " +
@@ -475,7 +433,6 @@ void InterfaceExchange::SendMissing(
 void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
                                    Array<OneD, NekDouble> &Bwd)
 {
-    ExchangeCoords();
     auto comm = m_trace->GetComm();
 
     // If no parallel exchange needed we only fill the local traces
@@ -564,23 +521,6 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
 
             Bwd[foundLocCoord.first] =
                 m_trace->GetExp(traceId)->StdPhysEvaluate(locCoord, edgePhys);
-
-
-
-            /*if((Bwd[foundLocCoord.first] < -1) || (Bwd[foundLocCoord.first] > 1))
-            {
-                std::cout << "Geom ID->Trace ID: " << foundLocCoord.second.first <<"->" << traceId << "\t@ local coord = " << locCoord[0] << " " << locCoord[1] << "\tgives Bwd value for Phys ID: " << foundLocCoord.first << " = " << Bwd[foundLocCoord.first] << std::endl;
-                Array<OneD, NekDouble> gloCoord(3);
-                m_trace->GetExp(traceId)->GetCoord(locCoord, gloCoord);
-                std::cout << "Getting from global coord: " << gloCoord[0] << " " << gloCoord[1] << " " << gloCoord[2] << std::endl;
-
-                std::cout << "\tedgePhys = ";
-                for (int i = 0; i < m_trace->GetExp(traceId)->GetTotPoints(); ++i)
-                {
-                    std::cout << edgePhys[i] << ", ";
-                }
-                std::cout << std::endl << std::endl;
-            }*/
         }
     }
 }
@@ -657,46 +597,38 @@ void InterfaceExchange::SendFwdTrace(
 // GetFound() to communicate ?
 void InterfaceExchange::CalcRankDistances()
 {
-    // Clear old found coordinates. This took ages to find >:(
-    m_movement->m_foundRankCoords[m_rank].clear();
-
     Array<OneD, NekDouble> disp(m_movement->m_recvSize[m_rank].size() + 1, 0.0);
     std::partial_sum(m_movement->m_recvSize[m_rank].begin(), m_movement->m_recvSize[m_rank].end(), &disp[1]); // @TODO: Use partial sum for other displacement calculations
 
     Array<OneD, int> foundNum(m_interfaces.size(), 0);
     for (int i = 0; i < m_interfaces.size(); ++i)
     {
-        if (m_zones[m_interfaces[i]->GetInterface()->GetId()]->GetMoved())
+        auto parentEdge = m_interfaces[i]->GetInterface()->GetEdge();
+
+        for (int j = disp[i]; j < disp[i + 1]; j += 3)
         {
-            auto parentEdge = m_interfaces[i]->GetInterface()->GetEdge();
+            Array<OneD, NekDouble> foundLocCoord;
+            Array<OneD, NekDouble> xs(3);
+            xs[0] = m_recv[j];
+            xs[1] = m_recv[j + 1];
+            xs[2] = m_recv[j + 2];
 
-            for (int j = disp[i]; j < disp[i + 1]; j += 3)
+            for (auto &edge : parentEdge)
             {
-                Array<OneD, NekDouble> foundLocCoord;
-                Array<OneD, NekDouble> xs(3);
-                xs[0] = m_recv[j];
-                xs[1] = m_recv[j + 1];
-                xs[2] = m_recv[j + 2];
-
-                for (auto &edge : parentEdge)
+                // First check if inside the edge bounding box
+                // @TODO: Might better to query a rtree? as in meshgraph.
+                if (!edge.second->MinMaxCheck(xs))
                 {
-                    // First check if inside the edge bounding box
-                    // @TODO: Might better to query a rtree? as in meshgraph.
-                    if (!edge.second->MinMaxCheck(xs))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    NekDouble dist =
-                        edge.second->FindDistance(xs, foundLocCoord);
+                NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
 
-                    if (dist < 5e-5)
-                    {
-                        m_movement->m_foundRankCoords[m_rank][j / 3] = std::make_pair(
-                            edge.second->GetGlobalID(), foundLocCoord);
-                        foundNum[i] += 1;
-                        break;
-                    }
+                if (dist < 5e-5)
+                {
+                    m_movement->m_foundRankCoords[m_rank][j / 3] = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
+                    foundNum[i] += 1;
+                    break;
                 }
             }
         }
