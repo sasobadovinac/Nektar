@@ -3124,6 +3124,9 @@ namespace Nektar
                                     m_locTraceToTraceMap->GetNFwdLocTracePts());
                 m_locTraceToTraceMap->FwdLocTracesFromField(inarray,tracevals);
                 m_locTraceToTraceMap->InterpLocTracesToTrace(0,tracevals,outarray);
+
+                m_traceMap->GetAssemblyCommDG()->
+                    PerformExchange(outarray, outarray);
             }
             else
             {
