@@ -221,6 +221,9 @@ IF( NEKTAR_SOLVER_ADR )
     ADD_NEKTAR_TEST(SVV_Prism)
     ADD_NEKTAR_TEST(SVV_Tet)
 
+    # Movement tests
+    ADD_NEKTAR_TEST(Movement_fixed_interfaces232_dirichlet)
+
     IF (NEKTAR_USE_FFTW)
         ADD_NEKTAR_TEST(Helmholtz_3DHomo1D_FFT)
         ADD_NEKTAR_TEST(Helmholtz_3DHomo2D_FFT)

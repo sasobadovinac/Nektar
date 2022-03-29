@@ -453,7 +453,7 @@ struct NodeHash : std::unary_function<NodeSharedPtr, std::size_t>
 {
     std::size_t operator()(NodeSharedPtr const &p) const
     {
-        return hash_combine(p->m_x, p->m_y, p->m_z);
+        return hash_combine(p->m_x, p->m_y, p->m_z, p->m_id);
     }
 };
 typedef std::unordered_set<NodeSharedPtr, NodeHash> NodeSet;
