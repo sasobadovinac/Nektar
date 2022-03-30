@@ -328,11 +328,7 @@ namespace SimdLibTests
             ascalararr[i] = i;
         }
 
-
-        for (size_t i = 0; i < vec_t::width; ++i)
-        {
-            avec[i] = ascalararr[i];
-        }
+        avec.load(ascalararr.data());
 
         for (size_t i = 0; i < vec_t::width; ++i)
         {
@@ -414,20 +410,22 @@ namespace SimdLibTests
         std::array<double, scalarArraySize> ascalararr;
 
         // fill vector
-        avec[0] = 10;
+        alignas(vec_t::alignment) std::array<double, vec_t::width> avecarr{{}};
+        avecarr[0] = 10;
         if (vec_t::width > 2)
         {
-            avec[1] =  9;
-            avec[2] =  8;
-            avec[3] =  7;
+            avecarr[1] =  9;
+            avecarr[2] =  8;
+            avecarr[3] =  7;
         }
         if (vec_t::width > 4)
         {
-            avec[4] =  4;
-            avec[5] =  3;
-            avec[6] =  2;
-            avec[7] =  1;
+            avecarr[4] =  4;
+            avecarr[5] =  3;
+            avecarr[6] =  2;
+            avecarr[7] =  1;
         }
+        avec.load(avecarr.data());
 
         avec.scatter(ascalararr.data(), aindexvec);
 
@@ -716,7 +714,7 @@ namespace SimdLibTests
             // check
             for (size_t i = 0; i < vec_t::width; ++i)
             {
-                BOOST_CHECK_EQUAL(static_cast<bool>(amask[i]), dvec[i] > evec[i]);
+                BOOST_CHECK_EQUAL(static_cast<bool>(amask[i]), dval > ascalararr2[i]);
             }
 
         }
