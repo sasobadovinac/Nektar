@@ -3156,9 +3156,6 @@ namespace Nektar
                     }
                 }
             }
-
-            m_traceMap->GetAssemblyCommDG()->
-                PerformExchange(outarray, outarray);
 	}
 
         /**

@@ -223,6 +223,7 @@ IF( NEKTAR_SOLVER_ADR )
 
     # Movement tests
     ADD_NEKTAR_TEST(Movement_fixed_interfaces232_dirichlet)
+    ADD_NEKTAR_TEST(Movement_fixed_interfaces232_periodic_par)
 
     IF (NEKTAR_USE_FFTW)
         ADD_NEKTAR_TEST(Helmholtz_3DHomo1D_FFT)

@@ -451,9 +451,11 @@ NEKMESH_EXPORT bool IsNodeClose(const Node &n1, const Node &n2,
  */
 struct NodeHash : std::unary_function<NodeSharedPtr, std::size_t>
 {
+
+    // @TODO: Way of fixing this so it doesn't delete coincident nodes for non-conformal grids
     std::size_t operator()(NodeSharedPtr const &p) const
     {
-        return hash_combine(p->m_x, p->m_y, p->m_z, p->m_id);
+        return hash_combine(p->m_x, p->m_y, p->m_z);
     }
 };
 typedef std::unordered_set<NodeSharedPtr, NodeHash> NodeSet;

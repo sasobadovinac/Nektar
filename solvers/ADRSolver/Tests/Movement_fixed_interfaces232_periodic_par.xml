@@ -18,7 +18,7 @@
             <C ID="406"> E[10,13,16] </C>  <!-- left right -->
             <C ID="407"> E[8,11,14] </C>   <!-- right left -->
             <C ID="408"> E[20,23] </C>     <!-- right right -->
-
+            
             <!-- domains -->
             <C ID="409"> Q[0,1] </C>    <!-- left -->
             <C ID="410"> Q[2,3,4] </C>  <!-- middle -->
@@ -43,8 +43,10 @@
     <EXPANSIONS>
         <E COMPOSITE="C[409]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
         <E COMPOSITE="C[410]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u" />
-        <E COMPOSITE="C[411]" NUMMODES="13" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[411]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
+
+    <COLLECTIONS DEFAULT="NoCollection"/>
 
     <CONDITIONS>
         <PARAMETERS>
@@ -95,21 +97,17 @@
         </BOUNDARYREGIONS>
 
         <BOUNDARYCONDITIONS>
-            <!-- left -->
             <REGION REF="0">
-                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+                <P VAR="u" VALUE="[1]" />
             </REGION>
-            <!-- right -->
             <REGION REF="1">
-                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+                <P VAR="u" VALUE="[0]" />
             </REGION>
-            <!-- top -->
             <REGION REF="2">
-                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+                <P VAR="u" VALUE="[3]" />
             </REGION>
-            <!-- bottom -->
             <REGION REF="3">
-                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+                <P VAR="u" VALUE="[2]" />
             </REGION>
         </BOUNDARYCONDITIONS>
 
