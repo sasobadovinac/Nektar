@@ -78,9 +78,9 @@ VariableConverter::VariableConverter(
         m_muAv = NullNekDouble1DArray;
         m_muAvTrace = NullNekDouble1DArray;
 
-        // Check for Modal/Dilation sensor
+        // Check for Modal/Dilatation sensor
         m_session->LoadSolverInfo("ShockSensorType",
-            m_shockSensorType, "Dilation");
+            m_shockSensorType, "Dilatation");
 
         // Check for Ducros sensor
         m_session->LoadSolverInfo("DucrosSensor",

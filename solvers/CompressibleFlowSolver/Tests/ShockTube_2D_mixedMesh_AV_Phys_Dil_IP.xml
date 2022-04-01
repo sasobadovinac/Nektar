@@ -52,7 +52,6 @@
         <P> L                    = 1.0                            </P>
         <P> Re                   = 1.0e12                         </P>
         <P> mu                   = (rhol+rhor)/2 * L * (ul+ur)/2 / Re </P>
-        <!-- <P> mu0 = 0.33 </P> -->
     </PARAMETERS>
 
     <SOLVERINFO>
