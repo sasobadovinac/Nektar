@@ -611,15 +611,8 @@ namespace Nektar
                         inTmp[f] = inarray[f][p];
                     }
 
-                    // get temp
-                    NekDouble temperature = m_varConv->GetTemperature
-                                                         (inAvgTmp.data());
-                    // get viscosity
-                    NekDouble mu;
-                    GetViscosityFromTempKernel(temperature, mu);
-
                     GetViscousFluxBilinearFormKernel(nDim, d, nderiv,
-                        inAvgTmp.data(), inTmp.data(), mu, outTmp.data());
+                        inAvgTmp.data(), inTmp.data(), m_mu[p], outTmp.data());
 
                     for (int f = 0; f < nConvectiveFields; ++f)
                     {

@@ -389,7 +389,7 @@ namespace Nektar
         constexpr unsigned short nDimMax = 3;
 
         // Update viscosity and thermal conductivity
-        // unfortunately this is very difficult to vectorize
+        // unfortunately the artificial viscosity is difficult to vectorize
         // with the current implementation
         Array<OneD, NekDouble> temperature (nPts, 0.0);
         m_varConv->GetTemperature(inarray, temperature);
@@ -436,11 +436,8 @@ namespace Nektar
                 }
             }
 
-            // get temp
-            // vec_t temperature = m_varConv->GetTemperature(inTmp.data());
             // get viscosity
-            vec_t mu;
-            // GetViscosityFromTempKernel(temperature, mu);
+            vec_t mu{};
             mu.load(&(m_mu[p]), is_not_aligned);
 
             for (size_t nderiv = 0; nderiv < nDim; ++nderiv)
@@ -527,12 +524,8 @@ namespace Nektar
                 }
             }
 
-            // get temp
-            // NekDouble temperature = m_varConv->GetTemperature(inTmp.data());
             // get viscosity
-            NekDouble mu;
-            // GetViscosityFromTempKernel(temperature, mu);
-            mu = m_mu[p];
+            NekDouble mu = m_mu[p];
 
             for (int nderiv = 0; nderiv < nDim; ++nderiv)
             {
