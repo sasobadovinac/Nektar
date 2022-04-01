@@ -205,12 +205,8 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble>> &inarray,
                   Array<OneD, Array<OneD, NekDouble>> &outarray,
             const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-            const Array<OneD, Array<OneD, NekDouble>> &pBwd)
-        {
-            boost::ignore_unused(inarray, outarray, pFwd, pBwd);
-            // Do nothing by default
-        }
-        
+            const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+
         virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
             const NekDouble SpeedSoundFactor);
 

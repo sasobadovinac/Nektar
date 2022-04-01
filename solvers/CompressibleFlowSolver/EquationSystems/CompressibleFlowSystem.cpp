@@ -640,10 +640,10 @@ namespace Nektar
      * @brief Apply artificial diffusion (Laplacian operator)
      */
     void CompressibleFlowSystem::v_DoDiffusion(
-        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-              Array<OneD,       Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+              Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
     {
         boost::ignore_unused(pFwd, pBwd);
         if (m_artificialDiffusion)
