@@ -1624,7 +1624,6 @@ namespace Nektar
                     GetPhys_Offset(fields[0]->GetTraceMap()->
                                    GetBndCondIDToGlobalTraceID(cnt++));
 
-
                     // In case of Dirichlet bcs:
                     // uflux = gD
                     if(fields[var]->GetBndConditions()[i]->

@@ -6,9 +6,9 @@
 
 # CMAKE_SYSTEM_PROCESSOR is not available at this point because we want to
 # initialize the flags before PROJECT()
-EXECUTE_PROCESS(COMMAND uname -p OUTPUT_VARIABLE _SYSTEM_PROCESSOR)
+EXECUTE_PROCESS(COMMAND uname -m OUTPUT_VARIABLE _SYSTEM_PROCESSOR)
 # guard in case uname doesn't work, for instance on win..
-IF(${_SYSTEM_PROCESSOR})
+IF(_SYSTEM_PROCESSOR)
     STRING(STRIP ${_SYSTEM_PROCESSOR} _SYSTEM_PROCESSOR)
 ENDIF()
 

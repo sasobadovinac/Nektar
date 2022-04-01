@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     Array<OneD,NekDouble>  xc0,xc1,xc2;
     StdRegions::ConstFactorMap factors;
 
-    if( (argc != 2) && (argc != 3) && (argc != 4))
+    if( argc < 2 )
     {
         fprintf(stderr,"Usage: Helmholtz1D  meshfile \n");
         exit(1);

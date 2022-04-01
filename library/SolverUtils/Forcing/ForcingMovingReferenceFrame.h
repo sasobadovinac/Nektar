@@ -43,11 +43,18 @@
 #include <MultiRegions/ExpList.h>
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/EquationSystem.h>
 #include <LibUtilities/BasicUtils/Equation.h>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/io.hpp>
+#include <cmath>
 
 
 namespace Nektar {
 namespace SolverUtils {
+
+namespace bn=boost::numeric;
 
 class ForcingMovingReferenceFrame : public Forcing
 {
@@ -91,10 +98,49 @@ protected:
             const NekDouble &time);
 
 private:
+    // name of the function for linear and angular velocities in the session file
     std::string m_funcName;
+    std::string m_velFuncName;
+    std::string m_omegaFuncName;
+    
+    // prescribed functions in the session file
     std::map<int, LibUtilities::EquationSharedPtr> m_frameFunction;
-    std::map<int, NekDouble> m_frameVelocity;
+    std::map<int, LibUtilities::EquationSharedPtr> m_velFunction;
+    std::map<int, LibUtilities::EquationSharedPtr> m_omegaFunction;
+
+    // a boolean switch indicating for which direction the velocities are
+    // available. The available velocites could be different from the 
+    // precscribed one because of the rotation which result in change of basis
+    // vector of local frame to the inertial frame.
+    std::map<int, bool> m_hasVel;
+    std::map<int, bool> m_hasOmega;
+
+    // frame linear velocities in inertial frame
+    std::map<int, NekDouble> m_velXYZ;
+
+    // frame linear velocities in local translating-rotating frame
+    std::map<int, NekDouble> m_velxyz;
+
+    // frame angular velocities in inertial frame
+    std::map<int, NekDouble> m_omegaXYZ;
+
+    // frame angular velocities in local translating-rotating frame
+    std::map<int, NekDouble> m_omegaxyz;
+    // coordinate vector
     Array<OneD, Array<OneD, NekDouble>> m_coords;
+
+    // pivot point
+    Array<OneD, NekDouble> m_pivotPoint;
+
+    // rotation angel
+    Array<OneD,NekDouble> m_theta; 
+
+    // Projection matrix for transformation of vectors between inertial and
+    // moving reference frames
+    bn::ublas::matrix<NekDouble> m_ProjMatX; 
+    bn::ublas::matrix<NekDouble> m_ProjMatY; 
+    bn::ublas::matrix<NekDouble> m_ProjMatZ; 
+
     bool m_hasRotation;
     bool m_isH1d;
     bool m_hasPlane0;
@@ -109,6 +155,10 @@ private:
     virtual ~ForcingMovingReferenceFrame(void) {};
 
     void Update(const NekDouble &time);
+    void UpdateTheta(const NekDouble &time);
+    void CheckForRestartTheta(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        Array<OneD, NekDouble> &theta);
 
     void addRotation(
             int npoints,

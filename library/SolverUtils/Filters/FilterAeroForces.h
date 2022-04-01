@@ -38,9 +38,14 @@
 #include <SolverUtils/Filters/Filter.h>
 #include <LocalRegions/Expansion3D.h>
 #include <GlobalMapping/Mapping.h>
+#include <LibUtilities/BasicUtils/VmathArray.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
 
 namespace Nektar
 {
+    namespace bnu = boost::numeric::ublas;
+
 namespace SolverUtils
 {
 class FilterAeroForces : public Filter
@@ -73,6 +78,11 @@ public:
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
               Array<OneD, NekDouble> &Aeroforces,
         const NekDouble &time);
+
+    SOLVER_UTILS_EXPORT void GetMoments(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        Array<OneD, NekDouble> &moments, const NekDouble &time);
+
 
 protected:
     virtual void v_Initialise(
@@ -110,11 +120,26 @@ private:
     // Time when we start calculating the forces
     NekDouble                       m_startTime;
     // Directions on which the forces will be projected
+    Array<OneD, Array<OneD, NekDouble> >    m_directions0;
     Array<OneD, Array<OneD, NekDouble> >    m_directions;
+    // Point around which we compute the moments
+    Array<OneD, NekDouble> m_pivotPoint;
+
     // Arrays storing the last forces that were calculated
     Array<OneD, Array<OneD, NekDouble> >    m_Fpplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Fvplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Ftplane;
+    Array<OneD, NekDouble>                  m_Fp;
+    Array<OneD, NekDouble>                  m_Fv;
+    Array<OneD, NekDouble>                  m_Ft;
+    // Arrays storing the last moments that were calculated
+    Array<OneD, NekDouble>                  m_Mp;
+    Array<OneD, NekDouble>                  m_Mv;
+    Array<OneD, NekDouble>                  m_Mt;
+    Array<OneD, Array<OneD, NekDouble> >    m_Mpplane;
+    Array<OneD, Array<OneD, NekDouble> >    m_Mvplane;
+    Array<OneD, Array<OneD, NekDouble> >    m_Mtplane;
+
 
     NekDouble                       m_lastTime;
     GlobalMapping::MappingSharedPtr m_mapping;

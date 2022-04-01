@@ -70,7 +70,8 @@ namespace Nektar
                 const bool SetUpJustDG  = true,
                 const bool DeclareCoeffPhysArrays = true, 
                 const Collections::ImplementationType ImpType
-                = Collections::eNoImpType);
+                = Collections::eNoImpType,
+                const std::string bcvariable = "NotSet");
             
             /// Constructor for a DisContField from a List of subdomains
             /// New Constructor for arterial network 
@@ -110,7 +111,7 @@ namespace Nektar
 
             /// Check to see if expansion has the same BCs as In
             bool SameTypeOfBoundaryConditions(const DisContField &In);
-
+            
             // Return the internal vector which directs whether the normal flux
             // at the trace defined by Left and Right Adjacent elements
             // is negated with respect to the segment normal
@@ -122,6 +123,11 @@ namespace Nektar
 
             MULTI_REGIONS_EXPORT void EvaluateHDGPostProcessing(
                 Array<OneD, NekDouble> &outarray);
+
+            MULTI_REGIONS_EXPORT void GetLocTraceToTraceMap(LocTraceToTraceMapSharedPtr &LocTraceToTraceMap) 
+            {
+                LocTraceToTraceMap = m_locTraceToTraceMap;
+            }
 
         protected:
             /// The number of boundary segments on which Dirichlet boundary
@@ -229,14 +235,22 @@ namespace Nektar
             {
                 return m_locTraceToTraceMap;
             }
+
             
+            // Return the internal vector which identifieds if trace
+            // is left adjacent definiing which trace the normal
+            // points otwards from
+            virtual std::vector<bool> &v_GetLeftAdjacentTraces(void);
+
             virtual void v_AddTraceIntegral(
                 const Array<OneD, const NekDouble> &Fn,
                       Array<OneD,       NekDouble> &outarray);
+
             virtual void v_AddFwdBwdTraceIntegral(
                 const Array<OneD, const NekDouble> &Fwd, 
                 const Array<OneD, const NekDouble> &Bwd, 
                       Array<OneD,       NekDouble> &outarray);
+
             virtual void v_AddTraceQuadPhysToField(
                 const Array<OneD, const NekDouble> &Fwd,
                 const Array<OneD, const NekDouble> &Bwd,
@@ -382,6 +396,11 @@ namespace Nektar
                       Array<OneD,       NekDouble> &outarray);
         };
 
+        inline  std::vector<bool> &DisContField::v_GetLeftAdjacentTraces(void)
+        {
+            return m_leftAdjacentTraces; 
+        }
+        
         typedef std::shared_ptr<DisContField>   DisContFieldSharedPtr;
 
         /**

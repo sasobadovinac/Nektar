@@ -50,6 +50,8 @@ const unsigned int TetGeom::VertexFaceConnectivity[4][3] = {
     {0, 1, 3}, {0, 1, 2}, {0, 2, 3}, {1, 2, 3}};
 const unsigned int TetGeom::EdgeFaceConnectivity[6][2] = {
     {0, 1}, {0, 2}, {0, 3}, {1, 3}, {1, 2}, {2, 3}};
+const unsigned int TetGeom::EdgeNormalToFaceVert[4][3] = {
+    {3, 4, 5}, {1, 2, 5}, {0, 2, 3},  {0, 1, 4}};
 
 TetGeom::TetGeom()
 {
@@ -108,6 +110,11 @@ int TetGeom::v_GetVertexFaceMap(const int i, const int j) const
 int TetGeom::v_GetEdgeFaceMap(const int i, const int j) const
 {
     return EdgeFaceConnectivity[i][j];
+}
+
+int TetGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
 }
 
 void TetGeom::SetUpLocalEdges()

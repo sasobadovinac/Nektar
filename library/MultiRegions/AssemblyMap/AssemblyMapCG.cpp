@@ -2102,7 +2102,8 @@ namespace Nektar
             // SetupUuniversialC0ContMap
             Gs::Gather(gloParaDirBnd,Gs::gs_max,m_bndGsh);
  
-            // copy global ids back to local values in partition to initialise gs communicator. 
+            // copy global ids back to local values in partition to
+            //initialise gs communicator.
             Array<OneD, long> paraDirBnd(m_numLocalCoeffs);
             for(i = 0; i < numLocalCoeffs; ++i)
             {

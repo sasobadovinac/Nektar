@@ -548,7 +548,6 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
             Array<OneD,NekDouble> tmp(nquad0);
 
-
             // multiply inarray with Jacobian
             if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
@@ -561,62 +560,30 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             StdSegExp::v_IProductWRTBase(base,tmp,outarray,coll_check);
         }
 
+
         void SegExp::v_IProductWRTDerivBase(
                 const int dir,
                 const Array<OneD, const NekDouble>& inarray,
                       Array<OneD, NekDouble> & outarray)
         {
+            ASSERTL1(dir < 3,"input dir is out of range");
+            ASSERTL1((dir == 2)? m_geom->GetCoordim() == 3:true,"input dir is out of range");
+
             int    nquad = m_base[0]->GetNumPoints();
             const Array<TwoD, const NekDouble>& gmat =
                                 m_metricinfo->GetDerivFactors(GetPointsKeys());
 
             Array<OneD, NekDouble> tmp1(nquad);
 
-            switch(dir)
+            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
-            case 0:
-                {
-                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
-                    {
-                        Vmath::Vmul(nquad,gmat[0],1,inarray,1,tmp1,1);
-                    }
-                    else
-                    {
-                        Vmath::Smul(nquad, gmat[0][0], inarray, 1, tmp1, 1);
-                    }
-                }
-                break;
-            case 1:
-                {
-                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
-                    {
-                        Vmath::Vmul(nquad,gmat[1],1,inarray,1,tmp1,1);
-                    }
-                    else
-                    {
-                        Vmath::Smul(nquad, gmat[1][0], inarray, 1, tmp1, 1);
-                    }
-                }
-                break;
-            case 2:
-                {
-                    ASSERTL1(m_geom->GetCoordim() == 3,"input dir is out of range");
-                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
-                    {
-                        Vmath::Vmul(nquad,gmat[2],1,inarray,1,tmp1,1);
-                    }
-                    else
-                    {
-                        Vmath::Smul(nquad, gmat[2][0], inarray, 1, tmp1, 1);
-                    }
-                }
-                break;
-            default:
-                {
-                    ASSERTL1(false,"input dir is out of range");
-                }
-                break;
+                Vmath::Vmul(nquad,gmat[dir],1,inarray,1,tmp1,1);
             }
+            else
+            {
+                Vmath::Smul(nquad, gmat[dir][0], inarray, 1, tmp1, 1);
+            }
+
             v_IProductWRTBase(m_base[0]->GetDbdata(),tmp1,outarray,1);
         }
 

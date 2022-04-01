@@ -354,11 +354,11 @@ namespace Nektar
      * @brief Compute the advection terms for the right-hand side
      */
     void CompressibleFlowSystem::DoAdvection(
-        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-              Array<OneD,       Array<OneD, NekDouble>> &outarray,
-        const NekDouble                                 time,
-        const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+              Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble   time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
     {
         int nvariables = inarray.size();
         Array<OneD, Array<OneD, NekDouble>> advVel(m_spacedim);
@@ -371,10 +371,10 @@ namespace Nektar
      * @brief Add the diffusions terms to the right-hand side
      */
     void CompressibleFlowSystem::DoDiffusion(
-        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-              Array<OneD,       Array<OneD, NekDouble>> &outarray,
-        const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+              Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd)
     {
         v_DoDiffusion(inarray, outarray, pFwd, pBwd);
     }

@@ -104,13 +104,13 @@ public:
     >
     inline T GetDynamicViscosity(T &temperature)
     {
-        constexpr NekDouble C = .38175;
-        constexpr NekDouble onePlusC = 1.0 + C;
+        const NekDouble onePlusC = 1.0 + m_TRatioSutherland;
 
         NekDouble mu_star = m_mu;
 
         T ratio = temperature * m_oneOverT_star;
-        return mu_star * ratio * sqrt(ratio) * onePlusC / (ratio + C);
+        return mu_star * ratio * sqrt(ratio) * onePlusC /
+                (ratio + m_TRatioSutherland);
     }
 
     void GetAbsoluteVelocity(
@@ -218,6 +218,8 @@ protected:
     NekDouble m_Skappa;
     NekDouble m_Kappa;
     NekDouble m_oneOverT_star;
+    NekDouble m_Tref;
+    NekDouble m_TRatioSutherland;
 
     /// Shock sensor
     NekDouble                           m_mu0;

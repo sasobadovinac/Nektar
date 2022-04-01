@@ -90,10 +90,11 @@ namespace Nektar
         
         void SolveViscous(
                     const Array<OneD, const Array<OneD, NekDouble> > &Forcing,
+                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble aii_Dt)
         {
-            v_SolveViscous( Forcing, outarray, aii_Dt);
+            v_SolveViscous( Forcing, inarray, outarray, aii_Dt);
         }
 
         void SolveUnsteadyStokesSystem(
@@ -115,6 +116,13 @@ namespace Nektar
         bool m_useHomo1DSpecVanVisc;
         /// bool to identify if spectral vanishing viscosity is active.
         bool m_useSpecVanVisc;
+        /// bool to identify if GJP semi-implicit is active.
+        bool m_useGJPStabilisation;
+        /// bool to identify if GJP normal Velocity should be applied
+        /// in explicit approach
+        bool m_useGJPNormalVel;
+        // scaling factor for GJP penalisation, default = 1.0
+        NekDouble m_GJPJumpScale; 
         /// cutt off ratio from which to start decayhing modes
         NekDouble m_sVVCutoffRatio;
         /// Diffusion coefficient of SVV modes
@@ -190,6 +198,7 @@ namespace Nektar
         
         virtual void v_SolveViscous(
                     const Array<OneD, const Array<OneD, NekDouble> > &Forcing,
+                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble aii_Dt);
         

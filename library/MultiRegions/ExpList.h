@@ -50,6 +50,7 @@
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/GlobalLinSysKey.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
+#include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
 #include <LibUtilities/Kernel/kernel.h>
 #include <tinyxml.h>
 
@@ -61,7 +62,6 @@ namespace Nektar
         class ExpList;
         class GlobalLinSys;
         class AssemblyMapDG;
-        
         class AssemblyMapCG;
         class GlobalLinSysKey;
         class GlobalMatrix;
@@ -162,6 +162,16 @@ namespace Nektar
                     const Collections::ImplementationType     ImpType
                                              = Collections::eNoImpType);
 
+            /// Generate an trace ExpList from a meshgraph \a graph and session file            
+            MULTI_REGIONS_EXPORT ExpList(
+                  const LibUtilities::SessionReaderSharedPtr &pSession,
+                  const LocalRegions::ExpansionVector        &locexp,
+                  const SpatialDomains::MeshGraphSharedPtr   &graph,
+                  const bool                                  DeclareCoeffPhysArrays,
+                  const std::string                           variable,
+                  const Collections::ImplementationType       ImpType
+                                         = Collections::eNoImpType);
+            
             /// Constructor based on domain information only for 1D &
             /// 2D boundary conditions
             MULTI_REGIONS_EXPORT ExpList(
@@ -1207,6 +1217,11 @@ namespace Nektar
             MULTI_REGIONS_EXPORT inline const LocTraceToTraceMapSharedPtr
                 &GetLocTraceToTraceMap() const;
 
+            // Return the internal vector which identifieds if trace
+            // is left adjacent definiing which trace the normal
+            // points otwards from
+            MULTI_REGIONS_EXPORT std::vector<bool> &GetLeftAdjacentTraces(void);
+
         protected:
             /// Exapnsion type
             ExpansionType m_expType;
@@ -1343,8 +1358,7 @@ namespace Nektar
                 const std::shared_ptr<DNekMat> &Gmat,
                 Array<OneD, NekDouble> &EigValsReal,
                 Array<OneD, NekDouble> &EigValsImag,
-                Array<OneD, NekDouble> &EigVecs
-                = NullNekDouble1DArray);
+                Array<OneD, NekDouble> &EigVecs = NullNekDouble1DArray);
 
 
             /// This operation constructs the global linear system of type \a
@@ -1397,7 +1411,9 @@ namespace Nektar
             virtual const Array<OneD, const int> &v_GetTraceBndMap();
 
             virtual const std::shared_ptr<LocTraceToTraceMap>
-                 &v_GetLocTraceToTraceMap(void) const;
+            &v_GetLocTraceToTraceMap(void) const;
+
+            virtual std::vector<bool> &v_GetLeftAdjacentTraces(void);
 
             /// Populate \a normals with the normals of all expansions.
             virtual void v_GetNormals(
@@ -2745,9 +2761,13 @@ namespace Nektar
         {
             v_GetBoundaryNormals(i, normals);
         }
-    
-      const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
-      
+
+        inline  std::vector<bool> &ExpList::GetLeftAdjacentTraces(void)
+        {
+            return v_GetLeftAdjacentTraces(); 
+        }
+        
+        const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
     } //end of namespace
 } //end of namespace
 

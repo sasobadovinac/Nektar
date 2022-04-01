@@ -229,6 +229,13 @@ namespace Nektar
                Array<OneD,          int> &signarray,
                Orientation                traceOrient = eForwards);
 
+            STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
+                const int                  tid,
+                Array<OneD, unsigned int>& maparray,
+                Array<OneD, int>&          signarray,
+                Orientation                traceOrient,
+                int P,  int Q);
+            
             STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
                   const int dir,
                   DNekMatSharedPtr &mat);
@@ -244,7 +251,8 @@ namespace Nektar
             {
                 return 3;
             }
-        };
+            
+    };
 
         STD_REGIONS_EXPORT LibUtilities::BasisKey EvaluateTriFaceBasisKey(
             const int                     facedir,

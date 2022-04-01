@@ -36,6 +36,12 @@
 #include <vtkActor.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
+
+#if VTK_MAJOR_VERSION >= 9
+#include <stdexcept>
+#include <limits>
+#endif
+
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 #include <vtkSphereSource.h>

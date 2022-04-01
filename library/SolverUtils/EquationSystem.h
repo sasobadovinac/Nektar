@@ -49,6 +49,7 @@
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Core/Misc.h>
 #include <SolverUtils/Filters/Filter.h>
+#include <boost/numeric/ublas/matrix.hpp>
 
 namespace Nektar
 {
@@ -310,6 +311,11 @@ namespace Nektar
                 m_checksteps = num;
             }
 
+            SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble> > GetTraceNormals()
+            {
+                return m_traceNormals;
+            }
+
             SOLVER_UTILS_EXPORT void SetTime(
                                              const NekDouble time)
             {
@@ -402,6 +408,17 @@ namespace Nektar
             Array<OneD, bool>                           m_checkIfSystemSingular;
             /// Map to identify relevant solver info to dump in output fields
             LibUtilities::FieldMetaDataMap              m_fieldMetaDataMap;
+
+            /// Moving frame of reference velocities
+            Array<OneD, NekDouble>                      m_movingFrameVelsxyz;
+
+            /// Moving frame of reference angles with respect to the 
+            // stationary inertial frame
+            Array<OneD, NekDouble>                      m_movingFrameTheta;
+
+            /// Projection matrix for transformation between inertial and moving
+            // frame of reference 
+            boost::numeric::ublas::matrix<NekDouble>    m_movingFrameProjMat;
 
             /// Number of Quadrature points used to work out the error
             int  m_NumQuadPointsError;

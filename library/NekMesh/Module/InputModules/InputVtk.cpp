@@ -98,7 +98,13 @@ void InputVtk::Process()
     vtkNumPoints[2] = 2;
 
     vtkIdType npts;
+
+#if VTK_MAJOR_VERSION >= 9 || (VTK_MAJOR_VERSION >= 8 && VTK_MINOR_VERSION >= 90)
+    const vtkIdType *pts = 0;
+#else
     vtkIdType *pts = 0;
+#endif
+
     double p[3];
 
     for (int i = 0; i < vtkPoints->GetNumberOfPoints(); ++i)
