@@ -206,6 +206,11 @@ void ProcessBL::BoundaryLayer2D()
         vector<unsigned int> surfs;
         ParseUtils::GenerateSeqVector(surf, surfs);
         sort(surfs.begin(), surfs.end());
+        // std::cout << "number of surfs = " << surfs.size() << "\n";
+        // for(auto &surf : surfs)
+        // {
+        //     std::cout << "surf in surfs: " << surf << "\n";
+        // }
 
         // If surface is defined, process list of elements to find those
         // that are connected to it.
@@ -221,6 +226,7 @@ void ProcessBL::BoundaryLayer2D()
                 {
                     continue;
                 }
+                std::cout << "j = " << j << " out of nSurf: " << nSurf << " and bl = " << bl << "\n";
 
                 ElementSharedPtr bEl  = m_mesh->m_element[m_mesh->m_expDim-1][bl];
                 vector<int>      tags = bEl->GetTagList();
@@ -247,10 +253,12 @@ void ProcessBL::BoundaryLayer2D()
                     {
                         m_log(WARNING) << "quad already found; ignoring"
                                        << endl;
+                        std::cout << "quad already found; ignoring" << el->GetId() << " -- " << j << "\n";
                         continue;
                     }
 
                     splitEls[el->GetId()] = j;
+                    std::cout << "splitEls with id = " << el->GetId() << " is = " << j << "\n";
                 }
             }
         }
@@ -271,11 +279,10 @@ void ProcessBL::BoundaryLayer2D()
     vector<ElementSharedPtr> el = m_mesh->m_element[m_mesh->m_expDim];
     m_mesh->m_element[m_mesh->m_expDim].clear();
 
+    std::cout << "number of surfs = " << el.size() << "\n";
     // Iterate over list of elements of expansion dimension.
     for (int i = 0; i < el.size(); ++i)
     {
-
-
         if (splitEls.count(el[i]->GetId()) == 0)
         {
             m_mesh->m_element[m_mesh->m_expDim].push_back(el[i]);
@@ -303,6 +310,9 @@ void ProcessBL::BoundaryLayer2D()
         LibUtilities::PointsType t = ( (splitEls[el[i]->GetId()]+1) %4) < 2 ?
             LibUtilities::eBoundaryLayerPoints :
             LibUtilities::eBoundaryLayerPointsRev;
+        // LibUtilities::PointsType t = ( (splitEls[el[i]->GetId()]+1) %4) < 2 ?
+        //     LibUtilities::eBoundaryLayerPointsRev :
+        //     LibUtilities::eBoundaryLayerPoints;
 
 
         if(ratioIsString) // determine value of r base on geom

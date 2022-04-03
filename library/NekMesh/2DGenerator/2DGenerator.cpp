@@ -108,66 +108,79 @@ void Generator2D::Process()
         m_curvemeshes.resize(m_curvemeshes.size()+1);
         for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
         {
-            std::vector<int> edgeIds;
-            for (auto &edges_in_edgeloop : m_mesh->m_cad->GetSurf(faceid)->GetEdges())
+            if(faceid ==2 && i < 5)
             {
-                for (auto &edge : edges_in_edgeloop->edges)
-                {
-                    edgeIds.push_back(edge->GetId());
-                }
-            }
-            if (std::find(edgeIds.begin(), edgeIds.end(), i) == edgeIds.end()) continue;
-
-            m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumCurve(),
-                                "Curve progress");
-            vector<unsigned int>::iterator f =
-                find(m_blCurves.begin(), m_blCurves.end(), i);
-            if (f == m_blCurves.end())
-            {
-                // m_curvemeshes.push_back({std::make_pair(i,
-                // MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log))});
-
-                m_curvemeshes[faceid-1][i] =
-                    MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log);
-
-                // Check if this curve is at an end of the BL
-                // If so, define an offset for the second node, corresponding to the
-                // BL thickness
-                if (m_blends.count(i))
-                {
-                    vector<CADVertSharedPtr> vertices =
-                        m_mesh->m_cad->GetCurve(i)->GetVertex();
-                    Array<OneD, NekDouble> loc;
-                    NekDouble t;
-
-                    // offset needed at first node (or both)
-                    if (m_blends[i] == 0 || m_blends[i] == 2)
-                    {
-                        loc = vertices[0]->GetLoc();
-                        t   = m_thickness.Evaluate(m_thickness_ID, loc[0], loc[1],
-                                                   loc[2], 0.0);
-                        m_curvemeshes[faceid-1][i]->SetOffset(0, t);
-                    }
-                    // offset needed at second node (or both)
-                    if (m_blends[i] == 1 || m_blends[i] == 2)
-                    {
-                        loc = vertices[1]->GetLoc();
-                        t   = m_thickness.Evaluate(m_thickness_ID, loc[0], loc[1],
-                                                   loc[2], 0.0);
-                        m_curvemeshes[faceid-1][i]->SetOffset(1, t);
-                    }
-                }
+                m_curvemeshes[faceid-1][i] = m_curvemeshes[faceid-2][i];
             }
             else
             {
-                // m_curvemeshes.push_back({std::make_pair(i,
-                //     MemoryManager<CurveMesh>::AllocateSharedPtr(i,
-                //         m_mesh, m_log, m_config["blthick"].as<string>()))});
-                m_curvemeshes[faceid-1][i] =
-                    MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log), m_config["blthick"].as<string>();
+                std::vector<int> edgeIds;
+                for (auto &edges_in_edgeloop : m_mesh->m_cad->GetSurf(faceid)->GetEdges())
+                {
+                    for (auto &edge : edges_in_edgeloop->edges)
+                    {
+                        edgeIds.push_back(edge->GetId());
+                    }
+                }
+                if (std::find(edgeIds.begin(), edgeIds.end(), i) == edgeIds.end()) continue;
+
+                m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumCurve(),
+                                        "Curve progress");
+                vector<unsigned int>::iterator f =
+                    find(m_blCurves.begin(), m_blCurves.end(), i);
+                if (f == m_blCurves.end())
+                {
+                    // m_curvemeshes.push_back({std::make_pair(i,
+                    // MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log))});
+                    m_curvemeshes[faceid-1][i] =
+                        MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log);
+
+                    // Check if this curve is at an end of the BL
+                    // If so, define an offset for the second node, corresponding to the
+                    // BL thickness
+                    if (m_blends.count(i))
+                    {
+                        vector<CADVertSharedPtr> vertices =
+                            m_mesh->m_cad->GetCurve(i)->GetVertex();
+                        Array<OneD, NekDouble> loc;
+                        NekDouble t;
+
+                        // offset needed at first node (or both)
+                        if (m_blends[i] == 0 || m_blends[i] == 2)
+                        {
+                            loc = vertices[0]->GetLoc();
+                            t   = m_thickness.Evaluate(m_thickness_ID, loc[0], loc[1],
+                                                       loc[2], 0.0);
+                            m_curvemeshes[faceid-1][i]->SetOffset(0, t);
+                        }
+                        // offset needed at second node (or both)
+                        if (m_blends[i] == 1 || m_blends[i] == 2)
+                        {
+                            loc = vertices[1]->GetLoc();
+                            t   = m_thickness.Evaluate(m_thickness_ID, loc[0], loc[1],
+                                                       loc[2], 0.0);
+                            m_curvemeshes[faceid-1][i]->SetOffset(1, t);
+                        }
+                    }
+                }
+                else
+                {
+                    // m_curvemeshes.push_back({std::make_pair(i,
+                    //     MemoryManager<CurveMesh>::AllocateSharedPtr(i,
+                    //         m_mesh, m_log, m_config["blthick"].as<string>()))});
+                    m_curvemeshes[faceid-1][i] =
+                        MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log), m_config["blthick"].as<string>();
+                }
             }
-            std::cout << "Meshing curve " << i << " on face = " << faceid << "\n";
-            m_curvemeshes[faceid-1][i]->Mesh();
+            if(faceid ==2 && i < 5)
+            {
+                continue;
+            }
+            else
+            {
+                // std::cout << "Meshing curve " << i << " on face = " << faceid << "\n";
+                m_curvemeshes[faceid-1][i]->Mesh();
+            }
         }
     }
 
@@ -288,11 +301,11 @@ void Generator2D::FindBLEnds()
 
             if (is != cadverts.end())
             {
-                cadverts.erase(is);
+                cadverts.erase(is); // if vertex is already in cadverts, erase it as it is not an end vertes.
             }
             else
             {
-                cadverts.insert(iv);
+                cadverts.insert(iv); // if vertex is not in cadverts add it.  If it does not get erased it is an end vertex?
             }
         }
     }
@@ -339,16 +352,22 @@ void Generator2D::MakeBLPrep()
     {
         for (auto &it : m_blCurves)
         {
-                std::vector<int> edgeIds;
-                for (auto &edges_in_edgeloop : m_mesh->m_cad->GetSurf(faceid)->GetEdges())
+            std::vector<int> edgeIds;
+            for (auto &edges_in_edgeloop : m_mesh->m_cad->GetSurf(faceid)->GetEdges())
+            {
+                for (auto &edge : edges_in_edgeloop->edges)
                 {
-                    for (auto &edge : edges_in_edgeloop->edges)
-                    {
-                        edgeIds.push_back(edge->GetId());
-                    }
+                    edgeIds.push_back(edge->GetId());
                 }
-                if (std::find(edgeIds.begin(), edgeIds.end(), it) == edgeIds.end()) continue;
+            }
+            if (std::find(edgeIds.begin(), edgeIds.end(), it) == edgeIds.end()) continue;
 
+            if(faceid == 1 && it < 5)
+            {
+                continue;
+            }
+            else
+            {
                 vector<EdgeSharedPtr> localedges = m_curvemeshes[faceid-1][it]->GetMeshEdges();
                 for (auto &ie : localedges)
                 {
@@ -356,6 +375,7 @@ void Generator2D::MakeBLPrep()
                     m_nodesToEdge[ie->m_n1].push_back(ie);
                     m_nodesToEdge[ie->m_n2].push_back(ie);
                 }
+            }
         }
     }
 }
@@ -384,7 +404,7 @@ void Generator2D::MakeBL(int faceid)
         // always to the left unless edgeo is 1
         // normal must be done in the parametric space (and then projected back)
         // because of face orientation
-        std::cout << "testing MakeBL: it = " << it << " es size = " << es.size() << " \n";
+        // std::cout << "testing MakeBL: it = " << it << " es size = " << es.size() << " \n";
         for (auto &ie : es)
         {
             ie->m_id = eid++;
@@ -415,7 +435,7 @@ void Generator2D::MakeBL(int faceid)
             edgeNormals[ie->m_id] = n;
         }
     }
-    std::cout << "testing MakeBL: passed 1 \n";
+    std::cout << "testing MakeBL faceid " << faceid << " : passed 1 \n";
 
     bool adjust           = m_config["bltadjust"].beenSet;
     NekDouble divider     = m_config["bltadjust"].as<NekDouble>();
@@ -434,6 +454,7 @@ void Generator2D::MakeBL(int faceid)
     map<NodeSharedPtr, NodeSharedPtr> nodeNormals;
     for (auto &it : m_nodesToEdge)
     {
+        // std::cout << "nodeNormals: it.second.size() " << it.second.size() << "\n";
         if (it.second.size() != 1 && it.second.size() != 2)
         {
             m_log(FATAL) << "    Error with identifying nodes with edges: check"
@@ -441,7 +462,7 @@ void Generator2D::MakeBL(int faceid)
                          << "defined." << endl;
         }
 
-        std::cout << "testing MakeBL: passed 2.1.1 \n";
+        // std::cout << "testing MakeBL faceid " << faceid << " : passed 2.1.1 \n";
 
         // If node at the end of the BL open loop, the "normal node" isn't
         // constructed by computing a normal but found on the adjacent curve
@@ -474,19 +495,19 @@ void Generator2D::MakeBL(int faceid)
             continue;
         }
 
-        std::cout << "testing MakeBL: passed 2.1.2 \n";
+        // std::cout << "testing MakeBL faceid " << faceid << " : passed 2.1.2 \n";
         Array<OneD, NekDouble> n(3, 0.0);
         Array<OneD, NekDouble> n1 = edgeNormals[it.second[0]->m_id];
         Array<OneD, NekDouble> n2 = edgeNormals[it.second[1]->m_id];
         n[0]          = (n1[0] + n2[0]) / 2.0;
-        std::cout << "testing MakeBL: passed 2.1.2.1 \n";
+        // std::cout << "testing MakeBL faceid " << faceid << " : passed 2.1.2.1 \n";
         n[1]          = (n1[1] + n2[1]) / 2.0;
         NekDouble mag = sqrt(n[0] * n[0] + n[1] * n[1]);
         n[0] /= mag;
         n[1] /= mag;
         NekDouble t = m_thickness.Evaluate(m_thickness_ID, it.first->m_x,
                                            it.first->m_y, 0.0, 0.0);
-        std::cout << "testing MakeBL: passed 2.1.3 \n";
+        // std::cout << "testing MakeBL faceid " << faceid << " : passed 2.1.3 \n";
         // Adjust thickness according to angle between normals
         if (adjust)
         {
@@ -497,7 +518,7 @@ void Generator2D::MakeBL(int faceid)
                 t /= cos(angle / divider);
             }
         }
-        std::cout << "testing MakeBL: passed 2.1.4 \n";
+        // std::cout << "testing MakeBL faceid " << faceid << " : passed 2.1.4 \n";
 
         n[0]             = n[0] * t + it.first->m_x;
         n[1]             = n[1] * t + it.first->m_y;
@@ -507,9 +528,9 @@ void Generator2D::MakeBL(int faceid)
         Array<OneD, NekDouble> uv = s->locuv(n);
         nn->SetCADSurf(s, uv);
         nodeNormals[it.first] = nn;
-        std::cout << "testing MakeBL: passed 2.1.5 \n";
+        // std::cout << "testing MakeBL faceid " << faceid << " : passed 2.1.5 \n";
     }
-    std::cout << "testing MakeBL: passed 2.1 \n";
+    // std::cout << "testing MakeBL faceid " << faceid << " : passed 2.1 \n";
 
     // Check for any intersecting boundary layer normals and smooth them if
     // needed
@@ -603,7 +624,7 @@ void Generator2D::MakeBL(int faceid)
                            << endl;
         }
     }
-    std::cout << "testing MakeBL: passed 2.2 \n";
+    std::cout << "testing MakeBL faceid " << faceid << " : passed 2.2 \n";
 
     // Space out the outter BL nodes to better fit the local required Delta
     if (spaceoutbl)
@@ -873,7 +894,7 @@ void Generator2D::MakeBL(int faceid)
         }
     }
 
-    std::cout << "testing MakeBL: passed 2.3 \n";
+    std::cout << "testing MakeBL faceid " << faceid << " : passed 2.3 \n";
     for (auto &it : m_blCurves)
     {
         std::vector<int> edgeIds;
@@ -895,7 +916,6 @@ void Generator2D::MakeBL(int faceid)
             newNs.push_back(nodeNormals[in]);
         }
 
-        // This line chanegs m_curvemeshes and prevents the ability to generate anotehr BL on another surface using the same curve
         m_curvemeshes[faceid-1][it] = MemoryManager<CurveMesh>::AllocateSharedPtr(
             it, m_mesh, newNs, m_log);
 
@@ -905,6 +925,9 @@ void Generator2D::MakeBL(int faceid)
         }
         for (int i = 0; i < ns.size() - 1; ++i)
         {
+            // std::cout << "testing nodes in faceid " << faceid << ": ns.size() = " <<  ns.size() - 1 << "\n";
+            // std::cout << "testing normals: ns[" << i << "] = " << nodeNormals[ns[i]]->m_x << " -- " << nodeNormals[ns[i]]->m_y << " -- " << nodeNormals[ns[i]]->m_z << "\n";
+            // std::cout << "testing normals: ns[" << i+1 << "] = " << nodeNormals[ns[i+1]]->m_x << " -- " << nodeNormals[ns[i+1]]->m_y << " -- " << nodeNormals[ns[i]]->m_z << "\n";
             vector<NodeSharedPtr> qns;
             qns.push_back(ns[i]);
             qns.push_back(ns[i + 1]);
