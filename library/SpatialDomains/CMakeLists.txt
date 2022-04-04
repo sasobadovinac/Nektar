@@ -7,7 +7,6 @@ Geometry2D.cpp
 Geometry3D.cpp
 Geometry.cpp
 HexGeom.cpp
-Movement/Interface.cpp
 MeshGraph.cpp
 MeshGraphXml.cpp
 MeshGraphXmlCompressed.cpp
@@ -19,7 +18,10 @@ SegGeom.cpp
 PointGeom.cpp
 TetGeom.cpp
 TriGeom.cpp
-)
+Movement/Zones.cpp
+Movement/InterfaceInterpolation.cpp
+Movement/Movement.cpp
+        )
 
 SET(SPATIAL_DOMAINS_HEADERS
 Conditions.h
@@ -31,7 +33,6 @@ Geometry2D.h
 Geometry3D.h
 Geometry.h
 HexGeom.h
-Movement/Interface.h
 MeshEntities.hpp
 MeshGraph.h
 MeshGraphXml.h
@@ -46,6 +47,10 @@ SpatialDomainsDeclspec.h
 TetGeom.h
 TriGeom.h
 SpatialDomains.hpp
+Movement/Zones.h
+Movement/InterfaceInterpolation.h
+Movement/Movement.h
+
 )
 
 IF(NEKTAR_USE_HDF5)

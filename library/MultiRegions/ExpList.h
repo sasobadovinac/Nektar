@@ -41,7 +41,7 @@
 #include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <SpatialDomains/MeshGraph.h>
-#include <SpatialDomains/Movement/Interface.h>
+#include <SpatialDomains/Movement/Movement.h>
 #include <LocalRegions/Expansion.h>
 #include <Collections/Collection.h>
 #include <MultiRegions/MultiRegionsDeclspec.h>

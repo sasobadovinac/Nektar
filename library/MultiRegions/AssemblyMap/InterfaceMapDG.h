@@ -36,7 +36,7 @@
 #define NEKTAR_INTERFACEMAPDG_H
 
 #include <MultiRegions/ExpList.h>
-#include <SpatialDomains/Movement/Interface.h>
+#include <SpatialDomains/Movement/Movement.h>
 
 namespace Nektar
 {
