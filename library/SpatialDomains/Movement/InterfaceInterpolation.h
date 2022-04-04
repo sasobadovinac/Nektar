@@ -49,21 +49,13 @@ namespace Nektar
 namespace SpatialDomains
 {
 
-enum class InterfaceSide
-{
-    eNone,
-    eLeft,
-    eRight
-};
-
-const std::string InterfaceSideStr[] = {"NONE", "LEFT", "RIGHT"};
 
 struct Interface;
 typedef std::shared_ptr<Interface> InterfaceShPtr;
 
 struct Interface
 {
-    Interface(int indx, InterfaceSide side, CompositeMap edge);
+    Interface(int indx, CompositeMap edge);
 
     virtual ~Interface() = default;
 
@@ -77,11 +69,6 @@ struct Interface
         return m_edge[id];
     }
 
-    inline std::deque<GeometrySharedPtr> const &GetEdgeDeque() const
-    {
-        return m_edgeDeque;
-    }
-
     inline std::vector<int> const &GetEdgeIds() const
     {
         return m_edgeIds;
@@ -91,13 +78,6 @@ struct Interface
     {
         return m_edge.empty();
     }
-
-    inline void SetEdge(const GeometrySharedPtr &edge)
-    {
-        m_edge[edge->GetGlobalID()] = edge;
-    }
-
-    void SetEdge(const CompositeMap &edge);
 
     inline void SetOppInterface(const InterfaceShPtr &oppInterface)
     {
@@ -114,16 +94,6 @@ struct Interface
         return m_id;
     }
 
-    inline InterfaceSide GetSide() const
-    {
-        return m_side;
-    }
-
-    inline void SetSide(const InterfaceSide &side)
-    {
-        m_side = side;
-    }
-
     // Using these as various caches for the InterfaceMapDG class
     // This allows caching of calculated values across different fields when searching
     // for missing coordinates locally on own rank
@@ -133,9 +103,7 @@ struct Interface
 protected:
     InterfaceShPtr m_oppInterface;
     int m_id;
-    InterfaceSide m_side = InterfaceSide::eNone;
     std::map<int, GeometrySharedPtr> m_edge;
-    std::deque<GeometrySharedPtr> m_edgeDeque;
     std::vector<int> m_edgeIds;
 };
 

@@ -282,21 +282,6 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
                      "Only two sides may be present in each interface block.")
             std::string sideStr = sideElement->Value();
 
-            InterfaceSide side = InterfaceSide::eNone; // @TODO: Currently don't use these sides. Change to make sure we define a left and right.
-            if (sideStr == "L" || sideStr == "LEFT")
-            {
-                side = InterfaceSide::eLeft;
-            }
-            else if (sideStr == "R" || sideStr == "RIGHT")
-            {
-                side = InterfaceSide::eRight;
-            }
-            else
-            {
-                NEKERROR(ErrorUtil::efatal,
-                         "Only LEFT or RIGHT tags may be present inside the INTERFACE block.")
-            }
-
             int indx; // @TODO: Do I need ID?
             err = sideElement->QueryIntAttribute("ID", &indx);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
@@ -314,7 +299,7 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
 
             interfaces[cnt++] =
                 InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(
-                    indx, side, boundaryEdge));
+                    indx, boundaryEdge));
 
             sideElement = sideElement->NextSiblingElement();
         }

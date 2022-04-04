@@ -59,10 +59,10 @@ InterfaceMapDG::InterfaceMapDG(
     const ExpListSharedPtr &trace,
     const std::map<int, int> geomIdToTraceId)
     : m_graph(meshGraph),
+      m_movement(meshGraph->GetMovement()),
       m_trace(trace),
       m_geomIdToTraceId(geomIdToTraceId)
 {
-    m_movement               = meshGraph->GetMovement();
     auto comm                = m_trace->GetComm();
     auto interfaceCollection = m_movement->GetInterfaces();
 
@@ -71,9 +71,7 @@ InterfaceMapDG::InterfaceMapDG(
     // [i] = indx
     // [i + 1] = 0 (non), = 1 (left only), = 2 (right only), = 3 (both)
     std::map<int, int> myIndxLRMap;
-    std::map<int,
-             std::map<SpatialDomains::InterfaceSide, InterfaceTraceSharedPtr>>
-        localInterfaces;
+    std::map<int, std::pair<InterfaceTraceSharedPtr, InterfaceTraceSharedPtr>> localInterfaces;
     Array<OneD, int> indxToInterfaceID(interfaceCollection.size());
     size_t cnt = 0;
     for (const auto &interface : interfaceCollection)
@@ -84,22 +82,22 @@ InterfaceMapDG::InterfaceMapDG(
         if (!interface.second->GetLeftInterface()->IsEmpty())
         {
             myIndxLRMap[interface.first.first] += 1;
-            localInterfaces[interface.first.first][SpatialDomains::InterfaceSide::eLeft] =
+            localInterfaces[interface.first.first].first =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
                     trace, interface.second->GetLeftInterface(),
                     geomIdToTraceId);
             m_localInterfaces.emplace_back(
-                localInterfaces[interface.first.first][SpatialDomains::InterfaceSide::eLeft]);
+                localInterfaces[interface.first.first].first);
         }
         if (!interface.second->GetRightInterface()->IsEmpty())
         {
             myIndxLRMap[interface.first.first] += 2;
-            localInterfaces[interface.first.first][SpatialDomains::InterfaceSide::eRight] =
+            localInterfaces[interface.first.first].second =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
                     trace, interface.second->GetRightInterface(),
                     geomIdToTraceId);
             m_localInterfaces.emplace_back(
-                localInterfaces[interface.first.first][SpatialDomains::InterfaceSide::eRight]);
+                localInterfaces[interface.first.first].second);
         }
 
         cnt++;
@@ -174,10 +172,8 @@ InterfaceMapDG::InterfaceMapDG(
                 // If contains opposite edge locally then set true
                 if (otherCode == 3)
                 {
-                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eLeft]
-                        ->SetCheckLocal(true);
-                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eRight]
-                        ->SetCheckLocal(true);
+                    localInterfaces[otherId].first->SetCheckLocal(true);
+                    localInterfaces[otherId].second->SetCheckLocal(true);
                 }
 
                 continue;
@@ -190,21 +186,21 @@ InterfaceMapDG::InterfaceMapDG(
                 (myCode == 3 && otherCode == 2))
             {
                 oppRankSharedInterface[i].emplace_back(
-                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eLeft]);
+                    localInterfaces[otherId].first);
             }
             else if ((myCode == 2 && otherCode == 1) ||
                      (myCode == 2 && otherCode == 3) ||
                      (myCode == 3 && otherCode == 1))
             {
                 oppRankSharedInterface[i].emplace_back(
-                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eRight]);
+                    localInterfaces[otherId].second);
             }
             else if (myCode == 3 && otherCode == 3)
             {
                 oppRankSharedInterface[i].emplace_back(
-                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eLeft]);
+                    localInterfaces[otherId].first);
                 oppRankSharedInterface[i].emplace_back(
-                    localInterfaces[otherId][SpatialDomains::InterfaceSide::eRight]);
+                    localInterfaces[otherId].second);
             }
         }
     }
@@ -313,7 +309,7 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[0] = xc[i];
                 xs[1] = yc[i];
                 xs[2] = zc[i];
-                std::cout << "Point = " << xs[0] << " " << xs[1] << " " << xs[2] << std::endl;
+
                 auto parentEdge = m_interface->GetOppInterface()->GetEdge();
                 for (auto &edge : parentEdge)
                 {
@@ -327,9 +323,9 @@ void InterfaceTrace::CalcLocalMissing()
                     NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
                     if (dist < 5e-5) // @TODO: Check relative residuals?
                     {
-                        std::cout << "\tFound: " << dist << std::endl;
                         found = true;
-                        m_interface->m_foundLocalCoords[offset + i] = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
+                        m_interface->m_foundLocalCoords[offset + i]
+                            = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
                         break;
                     }
                 }
@@ -398,10 +394,15 @@ void InterfaceExchange::SendMissing(
     LibUtilities::CommRequestSharedPtr &requestSend,
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum)
 {
-    m_movement->m_totSendSize[m_rank] = std::accumulate(m_movement->m_sendSize[m_rank].begin(), m_movement->m_sendSize[m_rank].end(), 0);
-    m_movement->m_totRecvSize[m_rank] = std::accumulate(m_movement->m_recvSize[m_rank].begin(), m_movement->m_recvSize[m_rank].end(), 0);
-    m_send        = Array<OneD, NekDouble>(m_movement->m_totSendSize[m_rank]);
-    m_recv        = Array<OneD, NekDouble>(m_movement->m_totRecvSize[m_rank]);
+    m_movement->m_totSendSize[m_rank] =
+        std::accumulate(m_movement->m_sendSize[m_rank].begin(),
+                        m_movement->m_sendSize[m_rank].end(), 0);
+    m_movement->m_totRecvSize[m_rank] =
+        std::accumulate(m_movement->m_recvSize[m_rank].begin(),
+                       m_movement->m_recvSize[m_rank].end(), 0);
+
+    m_send = Array<OneD, NekDouble>(m_movement->m_totSendSize[m_rank]);
+    m_recv = Array<OneD, NekDouble>(m_movement->m_totRecvSize[m_rank]);
 
     int cnt = 0;
     for (auto &interface : m_interfaces)
@@ -466,38 +467,6 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
         for (auto &i : m_exchange)
         {
             i->FillRankBwdTraceExchange(Bwd);
-        }
-    }
-
-    // LDG needs a consistent flux definition so swap Fwd/Bwd for right-hand side
-    // of the interface.
-    // @TODO: Disabled for now.
-    for (auto &localInterface : m_localInterfaces)
-    {
-        if (localInterface->GetInterface()->GetSide() == SpatialDomains::InterfaceSide::eRight && false)
-        {
-            localInterface->SwapFwdBwdTrace(Fwd, Bwd);
-        }
-    }
-}
-
-/**
- * Swap the Fwd trace with the Bwd trace
- */
-void InterfaceTrace::SwapFwdBwdTrace(Array<OneD, NekDouble> &Fwd,
-                                     Array<OneD, NekDouble> &Bwd)
-{
-    // Flips interface edges
-    for (auto &id : m_interface->GetEdgeIds())
-    {
-        int traceId = m_geomIdToTraceId.at(id);
-        int offset = m_trace->GetPhys_Offset(traceId);
-
-        int nq = m_trace->GetExp(traceId)->GetTotPoints();
-        Array<OneD, NekDouble> tmp(nq);
-        for (int i = 0; i < nq; ++i)
-        {
-            std::swap(Fwd[offset + i], Bwd[offset + i]);
         }
     }
 }

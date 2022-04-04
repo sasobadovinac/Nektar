@@ -36,10 +36,6 @@
 #ifndef NEKTAR_SPATIALDOMAINS_MOVEMENT_H
 #define NEKTAR_SPATIALDOMAINS_MOVEMENT_H
 
-#include <map>
-#include <string>
-#include <deque>
-
 #include <SpatialDomains/Movement/Zones.h>
 #include <SpatialDomains/Movement/InterfaceInterpolation.h>
 

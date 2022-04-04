@@ -76,8 +76,6 @@ public:
                            Array<OneD, NekDouble> &Bwd);
     void FillRankBwdTrace(Array<OneD, NekDouble> &trace,
                           Array<OneD, NekDouble> &Bwd);
-    void SwapFwdBwdTrace(Array<OneD, NekDouble> &Fwd,
-                         Array<OneD, NekDouble> &Bwd);
 
 private:
     ExpListSharedPtr m_trace;
