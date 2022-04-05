@@ -18,6 +18,11 @@ SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add various definitions from Nektar++ CMake file.
 ADD_DEFINITIONS(${NEKTAR++_DEFINITIONS})
+# ADD_COMPILE_DEFINITIONS must be used to handle definitions that include
+# generator expressions but it is only available in CMake 3.12+
+IF(COMMAND ADD_COMPILE_DEFINITIONS)
+    ADD_COMPILE_DEFINITIONS(${NEKTAR++_GENERATED_DEFINITIONS})
+ENDIF()
 INCLUDE_DIRECTORIES(${NEKTAR++_INCLUDE_DIRS} ${NEKTAR++_TP_INCLUDE_DIRS})
 
 # If your libraries are in a non-standard link location, you might need to add

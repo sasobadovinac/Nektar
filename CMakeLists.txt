@@ -328,12 +328,28 @@ ENDIF (NEKTAR_BUILD_TESTS)
 
 # Compile list of definitions for Nektar++Config.cmake input file. We exclude
 # vtk definitions which should not be required for external builds.
+# Since later versions of CMake (>=3.12) support generator expressions in COMPILE_DEFINITIONS
+# and there some examples of compile defintions including generator expressions being added
+# by dependencies (e.g. OpenCASCADE on Fedora35), we store compile definitions with generator
+# expressions for processing separately on platforms where this is supported.
 SET(NEKTAR_DEFINITIONS "")
+SET(NEKTAR_GENERATED_DEFINITIONS "")
 GET_DIRECTORY_PROPERTY(
     NEKTAR_DEFINITIONS_LIST DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
 FOREACH(def ${NEKTAR_DEFINITIONS_LIST})
+    MESSAGE(STATUS "Processing NEKTAR_DEFINITIONS_LIST ITEM: ${def}")
     IF (NOT def MATCHES "^vtk")
-        SET(NEKTAR_DEFINITIONS "${NEKTAR_DEFINITIONS} -D${def}")
+        MESSAGE(STATUS "Testing for match: \"${def}\"")
+        IF(def MATCHES "^\\$<.*>$")
+            MESSAGE(STATUS "Adding generated definition: ${def}")
+            IF(NEKTAR_GENERATED_DEFINITIONS STREQUAL "")
+                SET(NEKTAR_GENERATED_DEFINITIONS "${def}")
+            ELSE()
+                SET(NEKTAR_GENERATED_DEFINITIONS "${NEKTAR_GENERATED_DEFINITIONS};${def}")
+            ENDIF()
+        ELSE()
+            SET(NEKTAR_DEFINITIONS "${NEKTAR_DEFINITIONS} -D${def}")
+        ENDIF()
     ENDIF()
 ENDFOREACH()
 
