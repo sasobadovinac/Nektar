@@ -41,7 +41,8 @@ ARG INVALIDATE_CACHE
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
 
 # Make sure python3-dev version matches latest installed interpreter
-RUN  PYTHON_MINOR=$(ls -1 /usr/bin/python3.* | sed -r 's/.*python3\.([0-9]*)/\1/ g' | sort -n | tail -n 1) && \
+# Addition of grep below ignores additional supporting executables, e.g. python3.x-config
+RUN  PYTHON_MINOR=$(ls -1 /usr/bin/python3.* | grep -o 'python3\.[0-9]*' | sed -r 's/.*python3\.([0-9]*)/\1/ g' | sort -n | tail -n 1) && \
     apt-get install -y libpython3.$PYTHON_MINOR-dev
 
 USER nektar:nektar
