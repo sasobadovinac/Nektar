@@ -79,14 +79,6 @@ public:
         return m_coordExchangeFlag;
     }
 
-    // Using these as maps of rank to various caches for the InterfaceMapDG class
-    // This allows caching of calculated values across different fields when searching
-    // for missing coordinates across ranks
-    std::map<int, std::map<int, std::pair<int, Array<OneD, NekDouble>>>> m_foundRankCoords;
-    std::map<int, int> m_totSendSize;
-    std::map<int, int> m_totRecvSize;
-    std::map<int, Array<OneD, int>> m_sendSize;
-    std::map<int, Array<OneD, int>> m_recvSize;
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;

@@ -62,7 +62,7 @@ public:
 
     inline std::vector<Array<OneD, NekDouble>> GetMissingCoords()
     {
-        return m_interface->m_missingCoords;
+        return m_missingCoords;
     }
 
     SpatialDomains::InterfaceShPtr GetInterface()
@@ -83,6 +83,13 @@ private:
     std::map<int, int> m_geomIdToTraceId;
     int m_totQuadPnts = 0;
     bool m_checkLocal = false;
+
+    // Using these as various caches for the InterfaceMapDG class
+    // This allows caching of calculated values across different fields when searching
+    // for missing coordinates locally on own rank
+    std::vector<Array<OneD, NekDouble>> m_missingCoords;
+    std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
+    std::vector<int> m_mapMissingCoordToTrace;
 };
 
 typedef std::shared_ptr<InterfaceTrace> InterfaceTraceSharedPtr;
@@ -134,6 +141,15 @@ private:
     Array<OneD, NekDouble> m_recvTrace;
     Array<OneD, NekDouble> m_sendTrace;
     std::map<int, int> m_geomIdToTraceId;
+
+    // Using these as maps of rank to various caches for the InterfaceMapDG class
+    // This allows caching of calculated values across different fields when searching
+    // for missing coordinates across ranks
+    std::map<int, std::map<int, std::pair<int, Array<OneD, NekDouble>>>> m_foundRankCoords;
+    std::map<int, int> m_totSendSize;
+    std::map<int, int> m_totRecvSize;
+    std::map<int, Array<OneD, int>> m_sendSize;
+    std::map<int, Array<OneD, int>> m_recvSize;
 };
 
 typedef std::shared_ptr<InterfaceExchange> InterfaceExchangeSharedPtr;

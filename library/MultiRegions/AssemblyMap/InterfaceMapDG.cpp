@@ -284,8 +284,8 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
-                m_interface->m_missingCoords.emplace_back(xs);
-                m_interface->m_mapMissingCoordToTrace.emplace_back(offset + i);
+                m_missingCoords.emplace_back(xs);
+                m_mapMissingCoordToTrace.emplace_back(offset + i);
             }
         }
     }
@@ -324,7 +324,7 @@ void InterfaceTrace::CalcLocalMissing()
                     if (dist < 5e-5) // @TODO: Check relative residuals?
                     {
                         found = true;
-                        m_interface->m_foundLocalCoords[offset + i]
+                        m_foundLocalCoords[offset + i]
                             = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
                         break;
                     }
@@ -332,8 +332,8 @@ void InterfaceTrace::CalcLocalMissing()
 
                 if (!found)
                 {
-                    m_interface->m_missingCoords.emplace_back(xs);
-                    m_interface->m_mapMissingCoordToTrace.emplace_back(offset + i);
+                    m_missingCoords.emplace_back(xs);
+                    m_mapMissingCoordToTrace.emplace_back(offset + i);
                 }
             }
         }
@@ -342,9 +342,9 @@ void InterfaceTrace::CalcLocalMissing()
     // If running in serial there shouldn't be any missing coordinates.
     if(m_trace->GetComm()->IsSerial())
     {
-        ASSERTL0(m_interface->m_missingCoords.empty(),
+        ASSERTL0(m_missingCoords.empty(),
                  "Missing " +
-                     std::to_string(m_interface->m_missingCoords.size()) +
+                     std::to_string(m_missingCoords.size()) +
                      " coordinates on interface ID " +
                      std::to_string(m_interface->GetId()) +
                      " linked to interface ID " +
@@ -369,21 +369,21 @@ void InterfaceExchange::RankFillSizes(
         recalcSize += m_zones[localInterface->GetInterface()->GetId()]->GetMoved();
     }
 
-    m_movement->m_sendSize[m_rank] = Array<OneD, int>(recalcSize);
-    m_movement->m_recvSize[m_rank] = Array<OneD, int>(recalcSize);
+    m_sendSize[m_rank] = Array<OneD, int>(recalcSize);
+    m_recvSize[m_rank] = Array<OneD, int>(recalcSize);
 
     int cnt = 0;
     for (auto &interface : m_interfaces)
     {
         if (m_zones[interface->GetInterface()->GetId()]->GetMoved())
         {
-            m_movement->m_sendSize[m_rank][cnt++] = interface->GetMissingCoords().size() * 3;
+            m_sendSize[m_rank][cnt++] = interface->GetMissingCoords().size() * 3;
         }
     }
 
-    m_comm->Isend(m_rank, m_movement->m_sendSize[m_rank], m_interfaces.size(), requestSend,
+    m_comm->Isend(m_rank, m_sendSize[m_rank], m_interfaces.size(), requestSend,
                   requestNum);
-    m_comm->Irecv(m_rank, m_movement->m_recvSize[m_rank], m_interfaces.size(), requestRecv,
+    m_comm->Irecv(m_rank, m_recvSize[m_rank], m_interfaces.size(), requestRecv,
                   requestNum);
 }
 
@@ -394,15 +394,14 @@ void InterfaceExchange::SendMissing(
     LibUtilities::CommRequestSharedPtr &requestSend,
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum)
 {
-    m_movement->m_totSendSize[m_rank] =
-        std::accumulate(m_movement->m_sendSize[m_rank].begin(),
-                        m_movement->m_sendSize[m_rank].end(), 0);
-    m_movement->m_totRecvSize[m_rank] =
-        std::accumulate(m_movement->m_recvSize[m_rank].begin(),
-                       m_movement->m_recvSize[m_rank].end(), 0);
+    m_totSendSize[m_rank] = std::accumulate(m_sendSize[m_rank].begin(),
+                        m_sendSize[m_rank].end(), 0);
+    m_totRecvSize[m_rank] =
+        std::accumulate(m_recvSize[m_rank].begin(),
+                        m_recvSize[m_rank].end(), 0);
 
-    m_send = Array<OneD, NekDouble>(m_movement->m_totSendSize[m_rank]);
-    m_recv = Array<OneD, NekDouble>(m_movement->m_totRecvSize[m_rank]);
+    m_send = Array<OneD, NekDouble>(m_totSendSize[m_rank]);
+    m_recv = Array<OneD, NekDouble>(m_totRecvSize[m_rank]);
 
     int cnt = 0;
     for (auto &interface : m_interfaces)
@@ -420,8 +419,8 @@ void InterfaceExchange::SendMissing(
         }
     }
 
-    m_comm->Isend(m_rank, m_send, m_movement->m_totSendSize[m_rank], requestSend, requestNum);
-    m_comm->Irecv(m_rank, m_recv, m_movement->m_totRecvSize[m_rank], requestRecv, requestNum);
+    m_comm->Isend(m_rank, m_send, m_totSendSize[m_rank], requestSend, requestNum);
+    m_comm->Irecv(m_rank, m_recv, m_totRecvSize[m_rank], requestRecv, requestNum);
 }
 
 /**
@@ -480,7 +479,7 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
     // If flagged then fill trace from local coords
     if (m_checkLocal)
     {
-        for (auto &foundLocCoord : m_interface->m_foundLocalCoords)
+        for (auto &foundLocCoord : m_foundLocalCoords)
         {
             int traceId = m_geomIdToTraceId[foundLocCoord.second.first];
             Array<OneD, NekDouble> locCoord = foundLocCoord.second.second;
@@ -503,8 +502,8 @@ void InterfaceExchange::FillRankBwdTraceExchange(Array<OneD, NekDouble> &Bwd)
     int cnt = 0;
     for (int i = 0; i < m_interfaces.size(); ++i)
     {
-        Array<OneD, NekDouble> traceTmp(m_movement->m_sendSize[m_rank][i] / 3, 0.0);
-        for (int j = 0; j < m_movement->m_sendSize[m_rank][i] / 3; ++j, ++cnt)
+        Array<OneD, NekDouble> traceTmp(m_sendSize[m_rank][i] / 3, 0.0);
+        for (int j = 0; j < m_sendSize[m_rank][i] / 3; ++j, ++cnt)
         {
             traceTmp[j] = m_recvTrace[cnt];
         }
@@ -519,11 +518,11 @@ void InterfaceExchange::FillRankBwdTraceExchange(Array<OneD, NekDouble> &Bwd)
 void InterfaceTrace::FillRankBwdTrace(Array<OneD, NekDouble> &trace,
                                       Array<OneD, NekDouble> &Bwd)
 {
-    for (int i = 0; i < m_interface->m_mapMissingCoordToTrace.size(); ++i)
+    for (int i = 0; i < m_mapMissingCoordToTrace.size(); ++i)
     {
         if (!std::isnan(trace[i]))
         {
-            Bwd[m_interface->m_mapMissingCoordToTrace[i]] = trace[i];
+            Bwd[m_mapMissingCoordToTrace[i]] = trace[i];
         }
     }
 }
@@ -536,10 +535,10 @@ void InterfaceExchange::SendFwdTrace(
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum,
     Array<OneD, NekDouble> &Fwd)
 {
-    m_recvTrace = Array<OneD, NekDouble>(m_movement->m_totSendSize[m_rank] / 3, std::nan(""));
-    m_sendTrace = Array<OneD, NekDouble>(m_movement->m_totRecvSize[m_rank] / 3, std::nan(""));
+    m_recvTrace = Array<OneD, NekDouble>(m_totSendSize[m_rank] / 3, std::nan(""));
+    m_sendTrace = Array<OneD, NekDouble>(m_totRecvSize[m_rank] / 3, std::nan(""));
 
-    for (auto &i : m_movement->m_foundRankCoords[m_rank])
+    for (auto &i : m_foundRankCoords[m_rank])
     {
         int traceId = m_geomIdToTraceId[i.second.first];
         Array<OneD, NekDouble> locCoord = i.second.second;
@@ -566,8 +565,8 @@ void InterfaceExchange::SendFwdTrace(
 // GetFound() to communicate ?
 void InterfaceExchange::CalcRankDistances()
 {
-    Array<OneD, NekDouble> disp(m_movement->m_recvSize[m_rank].size() + 1, 0.0);
-    std::partial_sum(m_movement->m_recvSize[m_rank].begin(), m_movement->m_recvSize[m_rank].end(), &disp[1]); // @TODO: Use partial sum for other displacement calculations
+    Array<OneD, NekDouble> disp(m_recvSize[m_rank].size() + 1, 0.0);
+    std::partial_sum(m_recvSize[m_rank].begin(), m_recvSize[m_rank].end(), &disp[1]); // @TODO: Use partial sum for other displacement calculations
 
     Array<OneD, int> foundNum(m_interfaces.size(), 0);
     for (int i = 0; i < m_interfaces.size(); ++i)
@@ -595,7 +594,7 @@ void InterfaceExchange::CalcRankDistances()
 
                 if (dist < 5e-5)
                 {
-                    m_movement->m_foundRankCoords[m_rank][j / 3] = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
+                    m_foundRankCoords[m_rank][j / 3] = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
                     foundNum[i] += 1;
                     break;
                 }

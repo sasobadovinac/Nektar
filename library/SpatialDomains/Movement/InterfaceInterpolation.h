@@ -79,12 +79,6 @@ struct Interface
         return m_id;
     }
 
-    // Using these as various caches for the InterfaceMapDG class
-    // This allows caching of calculated values across different fields when searching
-    // for missing coordinates locally on own rank
-    std::vector<Array<OneD, NekDouble>> m_missingCoords;
-    std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
-    std::vector<int> m_mapMissingCoordToTrace;
 protected:
     InterfaceShPtr m_oppInterface;
     int m_id;
