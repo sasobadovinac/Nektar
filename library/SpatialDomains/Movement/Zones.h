@@ -36,12 +36,7 @@
 #ifndef NEKTAR_SPATIALDOMAINS_ZONES_H
 #define NEKTAR_SPATIALDOMAINS_ZONES_H
 
-#include <map>
-#include <string>
-#include <deque>
-
 #include <LibUtilities/BasicUtils/Equation.h>
-#include <LibUtilities/BasicUtils/SessionReader.h>
 
 namespace Nektar
 {

@@ -68,6 +68,7 @@ namespace Nektar
             m_bndConditions(),
             m_trace(NullExpListSharedPtr)
         {
+            std::cout << "Create DisContField empty" << std::endl;
         }
 
 
@@ -94,6 +95,7 @@ namespace Nektar
             : ExpList(pSession,graph,DeclareCoeffPhysArrays, variable, ImpType),
               m_trace(NullExpListSharedPtr)
         {
+            std::cout << "Create DisContField from session & graph" << std::endl;
             std::string bcvar; 
             if(bcvariable == "NotSet")
             {
@@ -683,6 +685,8 @@ namespace Nektar
             m_leftAdjacentTraces(In.m_leftAdjacentTraces),
             m_locTraceToTraceMap (In.m_locTraceToTraceMap)
         {
+            std::cout << "Create DisContField copy constructor 1" << std::endl;
+
             if (In.m_trace)
             {
                 m_trace = MemoryManager<ExpList>::AllocateSharedPtr
@@ -703,6 +707,7 @@ namespace Nektar
             const bool                                DeclareCoeffPhysArrays):
             ExpList(In,DeclareCoeffPhysArrays)
         {
+            std::cout << "Create DisContField copy constructor 2" << std::endl;
 
             m_trace = NullExpListSharedPtr;
 
@@ -826,6 +831,7 @@ namespace Nektar
         DisContField::DisContField(const ExpList &In):
             ExpList(In)
 	{
+            std::cout << "Create DisContField copy constructor 3" << std::endl;
 	}
 
         /**

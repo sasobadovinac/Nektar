@@ -42,7 +42,7 @@ namespace Nektar
 namespace SpatialDomains
 {
 
-Interface::Interface(int indx, CompositeMap edge)
+Interface::Interface(int indx, const CompositeMap &edge)
     : m_id(indx)
 {
     // Fill element Ids
@@ -50,7 +50,6 @@ Interface::Interface(int indx, CompositeMap edge)
     {
         for (auto &geom : comp.second->m_geomVec)
         {
-            m_edgeIds.emplace_back(geom->GetGlobalID());
             m_edge[geom->GetGlobalID()] = geom;
         }
     }

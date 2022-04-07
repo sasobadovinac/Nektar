@@ -223,7 +223,7 @@ IF( NEKTAR_SOLVER_ADR )
 
     # Movement tests
     ADD_NEKTAR_TEST(Movement_fixed_interfaces232_dirichlet)
-    ADD_NEKTAR_TEST(Movement_fixed_interfaces232_periodic_par)
+    ADD_NEKTAR_TEST(Movement_fixed_interfaces232_periodic)
 
     IF (NEKTAR_USE_FFTW)
         ADD_NEKTAR_TEST(Helmholtz_3DHomo1D_FFT)
@@ -262,6 +262,7 @@ IF( NEKTAR_SOLVER_ADR )
         ADD_NEKTAR_TEST(Advection2D_m12_DG_quad_VarP_par)
         ADD_NEKTAR_TEST(Advection2D_m12_DG_tri_VarP_par)
         ADD_NEKTAR_TEST(Advection2D_dirichlet_regular_GAUSS_LAGRANGE_10x10_MF_par)
+        ADD_NEKTAR_TEST(Movement_fixed_interfaces232_periodic_par)
         IF (NEKTAR_USE_HDF5)
             ADD_NEKTAR_TEST(Advection3D_m10_DG_prism_VarP_hdf)
         ENDIF()

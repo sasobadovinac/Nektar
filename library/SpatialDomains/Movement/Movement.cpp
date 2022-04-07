@@ -123,10 +123,10 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             {
                 std::cout
                     << interface.first.second << "\t"
-                    << interface.second->GetLeftInterface()->GetEdgeIds().size()
+                    << interface.second->GetLeftInterface()->GetEdge().size()
                     << "\t"
                     << interface.second->GetRightInterface()
-                           ->GetEdgeIds()
+                           ->GetEdge()
                            .size()
                     << std::endl;
             }

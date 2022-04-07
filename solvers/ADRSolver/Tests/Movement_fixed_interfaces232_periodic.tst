@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-    <description>2D advection with 3 zones and 2 non-conformal interfaces with periodic BCs on 4 processes</description>
+    <description>2D advection with 3 zones and 2 non-conformal interfaces with periodic BCs</description>
     <executable>ADRSolver</executable>
     <parameters>Movement_fixed_interfaces232_periodic.xml</parameters>
     <processes>4</processes>

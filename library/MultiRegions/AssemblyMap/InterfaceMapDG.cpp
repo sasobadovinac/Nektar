@@ -47,10 +47,10 @@ InterfaceTrace::InterfaceTrace(
       m_geomIdToTraceId(geomIdToTraceId)
 {
     // Calc total quad points
-    for (auto id : m_interface->GetEdgeIds())
+    for (auto edgePair : m_interface->GetEdge())
     {
         m_totQuadPnts +=
-            m_trace->GetExp(m_geomIdToTraceId.at(id))->GetTotPoints();
+            m_trace->GetExp(m_geomIdToTraceId.at(edgePair.first))->GetTotPoints();
     }
 }
 
@@ -264,18 +264,18 @@ void InterfaceMapDG::ExchangeCoords()
  */
 void InterfaceTrace::CalcLocalMissing()
 {
-    auto childEdgeIds = m_interface->GetEdgeIds();
+    auto childEdge = m_interface->GetEdge();
     // If not flagged 'check local' then all points are missing
     if (!m_checkLocal)
     {
         int cnt = 0;
-        for (auto childId : childEdgeIds)
+        for (auto childId : childEdge)
         {
-            auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId));
+            auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId.first));
             size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
-            int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId));
+            int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId.first));
 
             for (int i = 0; i < nq; ++i, ++cnt)
             {
@@ -293,13 +293,13 @@ void InterfaceTrace::CalcLocalMissing()
     // interface on this rank contains
     else
     {
-        for (auto childId : childEdgeIds)
+        for (auto childId : childEdge)
         {
-            auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId));
+            auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId.first));
             size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
-            int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId));
+            int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId.first));
 
             for (int i = 0; i < nq; ++i)
             {

@@ -111,6 +111,7 @@ namespace Nektar
             m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
             m_WaveSpace(false)
         {
+            std::cout << "Create ExpList empty" << std::endl;
         }
 
 
@@ -141,6 +142,7 @@ namespace Nektar
             m_blockMat(in.m_blockMat),
             m_WaveSpace(false)
         {
+            std::cout << "Create ExpList copy constructor 1" << std::endl;
 
             // Set up m_coeffs, m_phys and offset arrays.
             // use this to keep memory declaration in one place
@@ -166,6 +168,8 @@ namespace Nektar
             m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
             m_WaveSpace(false)
         {
+            std::cout << "Create ExpList copy constructor 2" << std::endl;
+
             for (int i=0; i < eIDs.size(); ++i)
             {
                 (*m_exp).push_back( (*(in.m_exp))[eIDs[i]]);
@@ -213,6 +217,7 @@ namespace Nektar
             m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
             m_WaveSpace(false)
         {
+            std::cout << "Create ExpList from session & graph" << std::endl;
 
             // Initialise interfaces
             // @TODO: Currently this gives a movement object on each field, move
@@ -269,6 +274,7 @@ namespace Nektar
             m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
             m_WaveSpace(false)
         {
+            std::cout << "Create ExpList from session & expansions" << std::endl;
 
             // Initialise expansion vector
             InitialiseExpVector(expansions);

@@ -36,12 +36,7 @@
 #ifndef NEKTAR_SPATIALDOMAINS_INTERFACEINTERPOLATION_H
 #define NEKTAR_SPATIALDOMAINS_INTERFACEINTERPOLATION_H
 
-#include <map>
-#include <string>
-#include <deque>
-
 #include <SpatialDomains/MeshGraph.h>
-#include <LibUtilities/BasicUtils/SessionReader.h>
 
 namespace Nektar
 {
@@ -55,7 +50,7 @@ typedef std::shared_ptr<Interface> InterfaceShPtr;
 
 struct Interface
 {
-    Interface(int indx, CompositeMap edge);
+    Interface(int indx, const CompositeMap &edge);
 
     virtual ~Interface() = default;
 
@@ -69,22 +64,12 @@ struct Interface
         return m_edge[id];
     }
 
-    inline std::vector<int> const &GetEdgeIds() const
-    {
-        return m_edgeIds;
-    }
-
     inline bool IsEmpty() const
     {
         return m_edge.empty();
     }
 
-    inline void SetOppInterface(const InterfaceShPtr &oppInterface)
-    {
-        m_oppInterface = oppInterface;
-    }
-
-    inline InterfaceShPtr GetOppInterface()
+    inline InterfaceShPtr &GetOppInterface()
     {
         return m_oppInterface;
     }
@@ -104,7 +89,6 @@ protected:
     InterfaceShPtr m_oppInterface;
     int m_id;
     std::map<int, GeometrySharedPtr> m_edge;
-    std::vector<int> m_edgeIds;
 };
 
 struct InterfacePair
@@ -114,8 +98,9 @@ struct InterfacePair
         : m_leftInterface(leftInterface),
           m_rightInterface(rightInterface)
     {
-        leftInterface->SetOppInterface(rightInterface);
-        rightInterface->SetOppInterface(leftInterface);
+        // Sets the opposite interfaces
+        leftInterface->GetOppInterface() = rightInterface;
+        rightInterface->GetOppInterface() = leftInterface;
     }
 
     InterfaceShPtr m_leftInterface;
