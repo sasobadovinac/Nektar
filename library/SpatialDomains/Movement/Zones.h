@@ -113,7 +113,6 @@ protected:
     std::vector<PointGeomSharedPtr> m_verts;
     std::vector<CurveSharedPtr> m_curves;
     std::vector<PointGeom> m_origVerts;
-
 };
 
 typedef std::shared_ptr<ZoneBase> ZoneBaseShPtr;
@@ -128,16 +127,6 @@ struct ZoneRotate final: public ZoneBase
                const LibUtilities::EquationSharedPtr &angularVelEqn);
 
     virtual ~ZoneRotate() = default;
-
-    inline NekPoint<NekDouble> GetOrigin() const
-    {
-        return m_origin;
-    }
-
-    inline NekVector<NekDouble> GetAxis() const
-    {
-        return m_axis;
-    }
 
     NekDouble GetAngularVel(NekDouble &time) const;
 
@@ -156,7 +145,11 @@ struct ZoneTranslate final: public ZoneBase
     ZoneTranslate(int id,
                   const CompositeMap &domain,
                   const int coordDim,
-                  const std::vector<NekDouble> &velocity);
+                  const std::vector<NekDouble> &velocity)
+        : ZoneBase(MovementType::eTranslate, id, domain, coordDim),
+          m_velocity(velocity)
+    {
+    }
 
     virtual ~ZoneTranslate() = default;
 
@@ -178,7 +171,11 @@ struct ZonePrescribe final: public ZoneBase
                   const int coordDim,
                   LibUtilities::EquationSharedPtr xDeform,
                   LibUtilities::EquationSharedPtr yDeform,
-                  LibUtilities::EquationSharedPtr zDeform);
+                  LibUtilities::EquationSharedPtr zDeform)
+        : ZoneBase(MovementType::ePrescribe, id, domain, coordDim),
+          m_xDeform(xDeform), m_yDeform(yDeform), m_zDeform(zDeform)
+    {
+    }
 
     virtual ~ZonePrescribe() = default;
 

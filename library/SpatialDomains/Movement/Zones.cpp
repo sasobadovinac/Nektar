@@ -152,24 +152,6 @@ ZoneRotate::ZoneRotate(int id, const CompositeMap &domain, const int coordDim,
     m_W2 = m_W * m_W;
 }
 
-ZoneTranslate::ZoneTranslate(int id, const CompositeMap &domain,
-                             const int coordDim,
-                             const std::vector<NekDouble> &velocity)
-    : ZoneBase(MovementType::eTranslate, id, domain, coordDim),
-      m_velocity(velocity)
-{
-}
-
-ZonePrescribe::ZonePrescribe(int id, const CompositeMap &domain,
-                             const int coordDim,
-                             LibUtilities::EquationSharedPtr xDeform,
-                             LibUtilities::EquationSharedPtr yDeform,
-                             LibUtilities::EquationSharedPtr zDeform)
-    : ZoneBase(MovementType::ePrescribe, id, domain, coordDim),
-      m_xDeform(xDeform), m_yDeform(yDeform), m_zDeform(zDeform)
-{
-}
-
 void ZoneBase::ClearBoundingBoxes()
 {
     // Clear bboxes (these will be regenerated next time GetBoundingBox is called)
@@ -211,6 +193,7 @@ bool ZoneRotate::v_Move(NekDouble time)
     rot(1, 1) = 1.0;
     rot(2, 2) = 1.0;
 
+    // Rodrigues' rotation formula in matrix form
     rot = rot + sin(angle) * m_W + (1 - cos(angle)) * m_W2;
 
     int cnt = 0;

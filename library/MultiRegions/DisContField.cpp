@@ -789,7 +789,7 @@ namespace Nektar
                     m_boundaryTraces      = In.m_boundaryTraces;
                     m_leftAdjacentTraces  = In.m_leftAdjacentTraces;
 
-                    if (SetUpJustDG == false)
+                    if (!SetUpJustDG)
                     {
                         // set elmt edges to point to robin bc edges if required
                         int i, cnt = 0;

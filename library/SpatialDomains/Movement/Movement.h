@@ -54,7 +54,7 @@ public:
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const MeshGraphSharedPtr &meshGraph);
 
-    Movement() = default;
+    ~Movement() = default;
 
     inline const InterfaceCollection &GetInterfaces() const
     {
@@ -75,9 +75,6 @@ protected:
     InterfaceCollection m_interfaces;
     std::map<int, ZoneBaseShPtr> m_zones;
     bool m_moveFlag = false; // Flags presence of moving zones
-    bool m_coordExchangeFlag = true;
-
-
 
 private:
     /// Read interfaces (and general MeshGraph) given TiXmlDocument.
