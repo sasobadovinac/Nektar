@@ -717,6 +717,25 @@ namespace SimdLibTests
             }
 
         }
+
+        if (vec_t::width == 8)
+        {
+            alignas(vec_t::alignment) std::array<double, 8>
+                ascalararr2{{1.0,2.0,3.0,4.0,3.0,2.0,1.0}}; // double brace to deal with gcc 4.8.5 ...
+            double dval = 2.0;
+            vec_t dvec(dval);
+            vec_t evec;
+            evec.load(ascalararr2.data());
+
+            simd<bool> amask;
+            amask = dvec > evec;
+            // check
+            for (size_t i = 0; i < vec_t::width; ++i)
+            {
+                BOOST_CHECK_EQUAL(static_cast<bool>(amask[i]), dval > ascalararr2[i]);
+            }
+
+        }
     }
 
     BOOST_AUTO_TEST_CASE(SimdLib_logic_and)
