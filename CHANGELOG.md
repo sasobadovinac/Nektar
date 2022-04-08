@@ -6,10 +6,6 @@ v5.2
 **Library**
 - Added support for manifold  MatrixFree operators (2D in 3D space) (!1304)
 - Put in place automatic selection of explicit operations using an opt file (!1304)
-
-v5.2.0
-------
-**Library**
 - Fixed the moving reference frame rotation (Solver Utils) (!1305)
 - Revised FilterAeroForces to accout for the moving reference frame (!1305)
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
@@ -18,6 +14,8 @@ v5.2.0
 - Fix imaginary mode in HalfModeToFourier module (!1247)
 - Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
+- Fixed SIMD mask test (!1324)
+- Fix cmake CWIPI option to remove Fortran check (!1331)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
