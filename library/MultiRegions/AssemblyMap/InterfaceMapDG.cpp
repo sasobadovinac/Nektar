@@ -49,18 +49,15 @@ InterfaceTrace::InterfaceTrace(
     // Calc total quad points
     for (auto edgePair : m_interface->GetEdge())
     {
-        m_totQuadPnts +=
-            m_trace->GetExp(m_geomIdToTraceId.at(edgePair.first))->GetTotPoints();
+        m_totQuadPnts += m_trace->GetExp(m_geomIdToTraceId.at(edgePair.first))
+                             ->GetTotPoints();
     }
 }
 
 InterfaceMapDG::InterfaceMapDG(
     const SpatialDomains::MeshGraphSharedPtr &meshGraph,
-    const ExpListSharedPtr &trace,
-    const std::map<int, int> geomIdToTraceId)
-    : m_graph(meshGraph),
-      m_movement(meshGraph->GetMovement()),
-      m_trace(trace),
+    const ExpListSharedPtr &trace, const std::map<int, int> geomIdToTraceId)
+    : m_graph(meshGraph), m_movement(meshGraph->GetMovement()), m_trace(trace),
       m_geomIdToTraceId(geomIdToTraceId)
 {
     auto comm                = m_trace->GetComm();
@@ -71,12 +68,13 @@ InterfaceMapDG::InterfaceMapDG(
     // [i] = indx
     // [i + 1] = 0 (non), = 1 (left only), = 2 (right only), = 3 (both)
     std::map<int, int> myIndxLRMap;
-    std::map<int, std::pair<InterfaceTraceSharedPtr, InterfaceTraceSharedPtr>> localInterfaces;
+    std::map<int, std::pair<InterfaceTraceSharedPtr, InterfaceTraceSharedPtr>>
+        localInterfaces;
     Array<OneD, int> indxToInterfaceID(interfaceCollection.size());
     size_t cnt = 0;
     for (const auto &interface : interfaceCollection)
     {
-        indxToInterfaceID[cnt]       = interface.first.first;
+        indxToInterfaceID[cnt]             = interface.first.first;
         myIndxLRMap[interface.first.first] = 0;
 
         if (!interface.second->GetLeftInterface()->IsEmpty())
@@ -184,7 +182,7 @@ InterfaceMapDG::InterfaceMapDG(
 
 void InterfaceMapDG::ExchangeCoords()
 {
-    auto comm = m_trace->GetComm();
+    auto comm  = m_trace->GetComm();
     auto zones = m_movement->GetZones();
 
     for (auto &interfaceTrace : m_localInterfaces)
@@ -235,11 +233,13 @@ void InterfaceTrace::CalcLocalMissing()
         int cnt = 0;
         for (auto childId : childEdge)
         {
-            auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId.first));
-            size_t nq      = childElmt->GetTotPoints();
+            auto childElmt =
+                m_trace->GetExp(m_geomIdToTraceId.at(childId.first));
+            size_t nq = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
-            int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId.first));
+            int offset =
+                m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId.first));
 
             for (int i = 0; i < nq; ++i, ++cnt)
             {
@@ -259,11 +259,13 @@ void InterfaceTrace::CalcLocalMissing()
     {
         for (auto childId : childEdge)
         {
-            auto childElmt = m_trace->GetExp(m_geomIdToTraceId.at(childId.first));
-            size_t nq      = childElmt->GetTotPoints();
+            auto childElmt =
+                m_trace->GetExp(m_geomIdToTraceId.at(childId.first));
+            size_t nq = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
-            int offset = m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId.first));
+            int offset =
+                m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId.first));
 
             for (int i = 0; i < nq; ++i)
             {
@@ -284,12 +286,13 @@ void InterfaceTrace::CalcLocalMissing()
                         continue;
                     }
 
-                    NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
+                    NekDouble dist =
+                        edge.second->FindDistance(xs, foundLocCoord);
                     if (dist < 5e-5) // @TODO: Check relative residuals?
                     {
-                        found = true;
-                        m_foundLocalCoords[offset + i]
-                            = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
+                        found                          = true;
+                        m_foundLocalCoords[offset + i] = std::make_pair(
+                            edge.second->GetGlobalID(), foundLocCoord);
                         break;
                     }
                 }
@@ -304,11 +307,10 @@ void InterfaceTrace::CalcLocalMissing()
     }
 
     // If running in serial there shouldn't be any missing coordinates.
-    if(m_trace->GetComm()->IsSerial())
+    if (m_trace->GetComm()->IsSerial())
     {
         ASSERTL0(m_missingCoords.empty(),
-                 "Missing " +
-                     std::to_string(m_missingCoords.size()) +
+                 "Missing " + std::to_string(m_missingCoords.size()) +
                      " coordinates on interface ID " +
                      std::to_string(m_interface->GetId()) +
                      " linked to interface ID " +
@@ -330,7 +332,8 @@ void InterfaceExchange::RankFillSizes(
     int recalcSize = 0;
     for (auto &localInterface : m_interfaces)
     {
-        recalcSize += m_zones[localInterface->GetInterface()->GetId()]->GetMoved();
+        recalcSize +=
+            m_zones[localInterface->GetInterface()->GetId()]->GetMoved();
     }
 
     m_sendSize[m_rank] = Array<OneD, int>(recalcSize);
@@ -341,7 +344,8 @@ void InterfaceExchange::RankFillSizes(
     {
         if (m_zones[interface->GetInterface()->GetId()]->GetMoved())
         {
-            m_sendSize[m_rank][cnt++] = interface->GetMissingCoords().size() * 3;
+            m_sendSize[m_rank][cnt++] =
+                interface->GetMissingCoords().size() * 3;
         }
     }
 
@@ -359,10 +363,9 @@ void InterfaceExchange::SendMissing(
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum)
 {
     m_totSendSize[m_rank] = std::accumulate(m_sendSize[m_rank].begin(),
-                        m_sendSize[m_rank].end(), 0);
-    m_totRecvSize[m_rank] =
-        std::accumulate(m_recvSize[m_rank].begin(),
-                        m_recvSize[m_rank].end(), 0);
+                                            m_sendSize[m_rank].end(), 0);
+    m_totRecvSize[m_rank] = std::accumulate(m_recvSize[m_rank].begin(),
+                                            m_recvSize[m_rank].end(), 0);
 
     m_send = Array<OneD, NekDouble>(m_totSendSize[m_rank]);
     m_recv = Array<OneD, NekDouble>(m_totRecvSize[m_rank]);
@@ -383,8 +386,10 @@ void InterfaceExchange::SendMissing(
         }
     }
 
-    m_comm->Isend(m_rank, m_send, m_totSendSize[m_rank], requestSend, requestNum);
-    m_comm->Irecv(m_rank, m_recv, m_totRecvSize[m_rank], requestRecv, requestNum);
+    m_comm->Isend(m_rank, m_send, m_totSendSize[m_rank], requestSend,
+                  requestNum);
+    m_comm->Irecv(m_rank, m_recv, m_totRecvSize[m_rank], requestRecv,
+                  requestNum);
 }
 
 /**
@@ -499,20 +504,21 @@ void InterfaceExchange::SendFwdTrace(
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum,
     Array<OneD, NekDouble> &Fwd)
 {
-    m_recvTrace = Array<OneD, NekDouble>(m_totSendSize[m_rank] / 3, std::nan(""));
-    m_sendTrace = Array<OneD, NekDouble>(m_totRecvSize[m_rank] / 3, std::nan(""));
+    m_recvTrace =
+        Array<OneD, NekDouble>(m_totSendSize[m_rank] / 3, std::nan(""));
+    m_sendTrace =
+        Array<OneD, NekDouble>(m_totRecvSize[m_rank] / 3, std::nan(""));
 
     for (auto &i : m_foundRankCoords[m_rank])
     {
-        int traceId = m_geomIdToTraceId[i.second.first];
+        int traceId                     = m_geomIdToTraceId[i.second.first];
         Array<OneD, NekDouble> locCoord = i.second.second;
-
 
         Array<OneD, NekDouble> edgePhys =
             Fwd + m_trace->GetPhys_Offset(traceId);
 
-        m_sendTrace[i.first] = m_trace->GetExp(traceId)
-            ->StdPhysEvaluate(locCoord, edgePhys);
+        m_sendTrace[i.first] =
+            m_trace->GetExp(traceId)->StdPhysEvaluate(locCoord, edgePhys);
     }
 
     m_comm->Isend(m_rank, m_sendTrace, m_sendTrace.size(), requestSend,
@@ -530,7 +536,8 @@ void InterfaceExchange::SendFwdTrace(
 void InterfaceExchange::CalcRankDistances()
 {
     Array<OneD, NekDouble> disp(m_recvSize[m_rank].size() + 1, 0.0);
-    std::partial_sum(m_recvSize[m_rank].begin(), m_recvSize[m_rank].end(), &disp[1]); // @TODO: Use partial sum for other displacement calculations
+    std::partial_sum(m_recvSize[m_rank].begin(), m_recvSize[m_rank].end(),
+        &disp[1]); // @TODO: Use partial sum for other displacement calculations
 
     Array<OneD, int> foundNum(m_interfaces.size(), 0);
     for (int i = 0; i < m_interfaces.size(); ++i)
@@ -558,7 +565,8 @@ void InterfaceExchange::CalcRankDistances()
 
                 if (dist < 5e-5)
                 {
-                    m_foundRankCoords[m_rank][j / 3] = std::make_pair(edge.second->GetGlobalID(), foundLocCoord);
+                    m_foundRankCoords[m_rank][j / 3] = std::make_pair(
+                        edge.second->GetGlobalID(), foundLocCoord);
                     foundNum[i] += 1;
                     break;
                 }
@@ -566,9 +574,11 @@ void InterfaceExchange::CalcRankDistances()
         }
     }
 
-    //@TODO: Could communicate how many found here to avoid sending "nan" placeholder values, probably improvement for heavily partitioned meshes?
-    //@TODO: Currently a semi all-to-all approach with pairwise send/recv communicating for all points whether found or not? Worth the extra communication?
-
+    //@TODO: Could communicate how many found here to avoid sending "nan"
+    //placeholder values, probably improvement for heavily partitioned meshes?
+    //@TODO: Currently a semi all-to-all approach with pairwise send/recv
+    //communicating for all points whether found or not? Worth the extra
+    //communication?
 }
 
 } // namespace MultiRegions

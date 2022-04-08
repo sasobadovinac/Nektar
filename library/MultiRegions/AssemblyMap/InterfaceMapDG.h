@@ -85,8 +85,8 @@ private:
     bool m_checkLocal = false;
 
     // Using these as various caches for the InterfaceMapDG class
-    // This allows caching of calculated values across different fields when searching
-    // for missing coordinates locally on own rank
+    // This allows caching of calculated values across different fields when
+    // searching for missing coordinates locally on own rank
     std::vector<Array<OneD, NekDouble>> m_missingCoords;
     std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;
     std::vector<int> m_mapMissingCoordToTrace;
@@ -103,28 +103,25 @@ public:
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceExchange(
         SpatialDomains::MovementSharedPtr movement,
-        const ExpListSharedPtr &trace,
-        const LibUtilities::CommSharedPtr &comm,
+        const ExpListSharedPtr &trace, const LibUtilities::CommSharedPtr &comm,
         std::pair<int, std::vector<InterfaceTraceSharedPtr>> rankPair,
         const std::map<int, int> &geomIdToTraceId)
-        : m_movement(movement), m_zones(movement->GetZones()), m_trace(trace), m_comm(comm), m_rank(rankPair.first),
-          m_interfaces(rankPair.second), m_geomIdToTraceId(geomIdToTraceId)
+        : m_movement(movement), m_zones(movement->GetZones()), m_trace(trace),
+          m_comm(comm), m_rank(rankPair.first), m_interfaces(rankPair.second),
+          m_geomIdToTraceId(geomIdToTraceId)
     {
     }
 
     MULTI_REGIONS_EXPORT void RankFillSizes(
         LibUtilities::CommRequestSharedPtr &requestSend,
-        LibUtilities::CommRequestSharedPtr &requestRecv,
-        int requestNum);
+        LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum);
     MULTI_REGIONS_EXPORT void SendMissing(
         LibUtilities::CommRequestSharedPtr &requestSend,
-        LibUtilities::CommRequestSharedPtr &requestRecv,
-        int requestNum);
+        LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum);
     MULTI_REGIONS_EXPORT void CalcRankDistances();
     MULTI_REGIONS_EXPORT void SendFwdTrace(
         LibUtilities::CommRequestSharedPtr &requestSend,
-        LibUtilities::CommRequestSharedPtr &requestRecv,
-        int requestNum,
+        LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum,
         Array<OneD, NekDouble> &Fwd);
     MULTI_REGIONS_EXPORT void FillRankBwdTraceExchange(
         Array<OneD, NekDouble> &Bwd);
@@ -142,10 +139,11 @@ private:
     Array<OneD, NekDouble> m_sendTrace;
     std::map<int, int> m_geomIdToTraceId;
 
-    // Using these as maps of rank to various caches for the InterfaceMapDG class
-    // This allows caching of calculated values across different fields when searching
-    // for missing coordinates across ranks
-    std::map<int, std::map<int, std::pair<int, Array<OneD, NekDouble>>>> m_foundRankCoords;
+    // Using these as maps of rank to various caches for the InterfaceMapDG
+    // class This allows caching of calculated values across different fields
+    // when searching for missing coordinates across ranks
+    std::map<int, std::map<int, std::pair<int, Array<OneD, NekDouble>>>>
+        m_foundRankCoords;
     std::map<int, int> m_totSendSize;
     std::map<int, int> m_totRecvSize;
     std::map<int, Array<OneD, int>> m_sendSize;
