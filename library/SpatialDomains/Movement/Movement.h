@@ -46,7 +46,6 @@ namespace SpatialDomains
 {
 
 typedef std::map<std::pair<int, std::string>, InterfacePairShPtr> InterfaceCollection;
-typedef std::shared_ptr<InterfaceCollection> InterfaceCollectionShPtr;
 
 class Movement
 {
@@ -69,30 +68,19 @@ public:
 
     void PerformMovement(NekDouble timeStep);
 
-    inline const bool &GetMoveFlag() const
-    {
-        return m_moveFlag;
-    }
-
-    inline bool &GetCoordExchangeFlag()
-    {
-        return m_coordExchangeFlag;
-    }
-
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
     std::map<int, ZoneBaseShPtr> m_zones;
-    bool m_moveFlag = false;
+    bool m_moveFlag = false; // Flags presence of moving zones
     bool m_coordExchangeFlag = true;
 
 
 
 private:
     /// Read interfaces (and general MeshGraph) given TiXmlDocument.
-    void Read(TiXmlElement *movementTag);
     void ReadZones(TiXmlElement *zonesTag);
     void ReadInterfaces(TiXmlElement *interfacesTag);
 };

@@ -63,74 +63,99 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                    const MeshGraphSharedPtr &meshGraph)
     : m_meshGraph(meshGraph), m_session(pSession)
 {
-    TiXmlElement *xmlDoc     = m_session->GetElement("NEKTAR");
-    TiXmlNode *conditionsXml = xmlDoc->FirstChild("CONDITIONS");
-    if (conditionsXml != nullptr) // @TODO: Can I remove this line?
+
+    TiXmlNode *movement = m_session->GetElement("NEKTAR")
+                              ->FirstChild("CONDITIONS")
+                              ->FirstChild("MOVEMENT");
+    if (movement != nullptr)
     {
-        TiXmlNode *movement = conditionsXml->FirstChild("MOVEMENT");
-        if (movement != nullptr)
+        bool zones = movement->FirstChild("ZONES") != nullptr;
+        if (zones)
         {
-            if (movement->FirstChild("ZONES") != nullptr)
-            {
-                ReadZones(
-                    m_session->GetElement("NEKTAR/CONDITIONS/MOVEMENT/ZONES"));
-            }
-
-            if (movement->FirstChild("INTERFACES") != nullptr)
-            {
-                ReadInterfaces(m_session->GetElement(
-                    "NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"));
-            }
-
-            // @TODO: Put in a check that both zones and interfaces are defined
+            ReadZones(m_session->GetElement(
+                "NEKTAR/CONDITIONS/MOVEMENT/ZONES"));
         }
+
+        bool interfaces = movement->FirstChild("INTERFACES") != nullptr;
+        if (interfaces)
+        {
+            ReadInterfaces(m_session->GetElement(
+                "NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"));
+        }
+
+        ASSERTL0(zones == interfaces,
+                 "Only one of ZONES or INTERFACES present in the MOVEMENT "
+                 "block.")
     }
 
     // DEBUG COMMENTS
-    if (conditionsXml != nullptr) // Set if verbose/debug mode? to output rank interface information
+    if (movement != nullptr && m_session->DefinesCmdLineArgument("verbose"))
     {
-        if (m_session->GetComm()->GetRank() == 0 &&
-            m_session->DefinesCmdLineArgument("verbose"))
+        auto comm = m_session->GetComm();
+        if (comm->TreatAsRankZero())
         {
-            std::cout << "Num zones: " << m_zones.size();
-            std::cout << "\n-----------------------------\n";
-            std::cout << "Zone ID "
-                      << "Type \t"
-                      << "# elmts \n";
-            std::cout << "-----------------------------" << std::endl;
+            std::cout << "Movement Info:\n";
+            std::cout << "\tNum zones: " << m_zones.size() << "\n";
+        }
 
-            std::array<std::string, 4> edgeName = {{"n", "l", "r", "b"}};
+        for (auto &zone : m_zones)
+        {
+            auto numEl = zone.second->GetElements().size();
+            comm->AllReduce(numEl, LibUtilities::ReduceSum);
 
-            for (auto &zone : m_zones)
-            {
-                std::cout << zone.first << "\t"
-                          << MovementTypeStr[static_cast<int>(
-                                 zone.second->GetMovementType())]
-                          << "\t" << zone.second->GetElements().size()
-                          << std::endl;
-            }
-            std::cout << "-----------------------------" << std::endl
-                      << std::endl;
-
-            std::cout << "Num interfaces: " << m_interfaces.size();
-            std::cout << "\n-----------------------------\n";
-            std::cout << "Name \t"
-                      << "L # elmts \t"
-                      << "R # elmts \n";
-            std::cout << "-----------------------------" << std::endl;
-
-            for (auto &interface : m_interfaces)
+            if (comm->TreatAsRankZero())
             {
                 std::cout
-                    << interface.first.second << "\t"
-                    << interface.second->GetLeftInterface()->GetEdge().size()
-                    << "\t"
-                    << interface.second->GetRightInterface()
-                           ->GetEdge()
-                           .size()
-                    << std::endl;
+                    << "\t  ID " << zone.first << " "
+                    << MovementTypeStr[static_cast<int>(
+                           zone.second->GetMovementType())]
+                    << ": " << numEl << " "
+                    << LibUtilities::ShapeTypeMap
+                           [zone.second->GetElements().front()->GetShapeType()]
+                    << "s\n";
             }
-            std::cout << "-----------------------------" << std::endl;
+        }
+
+        if (comm->TreatAsRankZero())
+        {
+            std::cout << "\tNum interfaces: " << m_interfaces.size() << "\n";
+        }
+
+        for (auto &interface : m_interfaces)
+        {
+            auto numLeft =
+                interface.second->GetLeftInterface()->GetEdge().size();
+            auto numRight =
+                interface.second->GetLeftInterface()->GetEdge().size();
+            comm->AllReduce(numLeft, LibUtilities::ReduceSum);
+            comm->AllReduce(numRight, LibUtilities::ReduceSum);
+            if (comm->TreatAsRankZero())
+            {
+                std::cout
+                    << "\t  NAME \"" << interface.first.second << "\": ID "
+                    << interface.second->GetLeftInterface()->GetId() << " ("
+                    << numLeft << " "
+                    << LibUtilities::ShapeTypeMap[interface.second
+                                                      ->GetLeftInterface()
+                                                      ->GetEdge()
+                                                      .begin()
+                                                      ->second->GetShapeType()]
+                    << "s) <-> ID "
+                    << interface.second->GetRightInterface()->GetId() << " ("
+                    << numRight << " "
+                    << LibUtilities::ShapeTypeMap[interface.second
+                                                      ->GetRightInterface()
+                                                      ->GetEdge()
+                                                      .begin()
+                                                      ->second->GetShapeType()]
+                    << "s)\n";
+            }
+        }
+
+        comm->Block();
+        if (comm->TreatAsRankZero())
+        {
+            std::cout << std::endl;
         }
     }
 }
@@ -164,7 +189,15 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
         }
 
         ZoneBaseShPtr zone;
-        if (zoneType == "R" || zoneType == "ROTATE" || zoneType == "ROTATING")
+        if (zoneType == "F" ||
+            zoneType == "FIXED")
+        {
+            zone = ZoneFixedShPtr(MemoryManager<ZoneFixed>::AllocateSharedPtr(
+                indx, domain, coordDim));
+        }
+        else if (zoneType == "R" ||
+                 zoneType == "ROTATE" ||
+                 zoneType == "ROTATING")
         {
             std::string originStr;
             err = zonesElement->QueryStringAttribute("ORIGIN", &originStr);
@@ -194,7 +227,8 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
 
             m_moveFlag = true;
         }
-        else if (zoneType == "T" || zoneType == "TRANSLATE" ||
+        else if (zoneType == "T" ||
+                 zoneType == "TRANSLATE" ||
                  zoneType == "TRANSLATING")
         {
             std::string velocityStr;
@@ -209,12 +243,8 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
 
             m_moveFlag = true;
         }
-        else if (zoneType == "F" || zoneType == "FIXED")
-        {
-            zone = ZoneFixedShPtr(MemoryManager<ZoneFixed>::AllocateSharedPtr(
-                indx, domain, coordDim));
-        }
-        else if (zoneType == "P" || zoneType == "PRESCRIBED")
+        else if (zoneType == "P" ||
+                 zoneType == "PRESCRIBED")
         {
             std::string xDeformStr;
             err = zonesElement->QueryStringAttribute("XDEFORM", &xDeformStr);
@@ -246,11 +276,11 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
         else
         {
             WARNINGL0(false, "Zone type '" + zoneType +
-                                 "' is unsupported. Valid types are: 'Fixed', 'Rotate', 'Translate', or 'Prescribe'.")
+                                 "' is unsupported. Valid types are: 'Fixed', "
+                                 "'Rotate', 'Translate', or 'Prescribe'.")
         }
 
         m_zones[indx] = zone;
-
         zonesElement = zonesElement->NextSiblingElement();
     }
 }
@@ -258,7 +288,6 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
 void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
 {
     ASSERTL0(interfacesTag, "Unable to find INTERFACES tag in file.");
-
     TiXmlElement *interfaceElement = interfacesTag->FirstChildElement();
 
     while (interfaceElement)
@@ -274,15 +303,18 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
         ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface name.");
         TiXmlElement *sideElement = interfaceElement->FirstChildElement();
 
-        int cnt = 0;
+        // @TODO: For different interface types have a string attribute type in
+        // @TODO: the INTERFACE element like for NAME above
+
         Array<OneD, InterfaceShPtr> interfaces(2);
+        std::vector<int> cnt;
         while (sideElement)
         {
-            ASSERTL0(cnt < 2,
-                     "Only two sides may be present in each interface block.")
-            std::string sideStr = sideElement->Value();
+            ASSERTL0(cnt.size() < 2,
+                "In INTERFACE NAME " + name +
+                    ", only two sides may be present in each INTERFACE block.")
 
-            int indx; // @TODO: Do I need ID?
+            int indx;
             err = sideElement->QueryIntAttribute("ID", &indx);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
 
@@ -297,12 +329,33 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
                 m_meshGraph->GetCompositeList(indxStr, boundaryEdge);
             }
 
-            interfaces[cnt++] =
+            // Sets location in interface pair to 0 for left, and 1 for right
+            auto sideElVal = sideElement->ValueStr();
+            if (sideElVal == "LEFT" || sideElVal == "L")
+            {
+                cnt.emplace_back(0);
+            }
+            else if (sideElVal == "RIGHT" || sideElVal == "R")
+            {
+                cnt.emplace_back(1);
+            }
+            else
+            {
+                NEKERROR(ErrorUtil::efatal, sideElement->ValueStr() +
+                             " is not a valid interface side for interface "
+                             "NAME " + name + ". Please only use LEFT or RIGHT.")
+            }
+
+            interfaces[cnt[cnt.size()-1]] =
                 InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(
                     indx, boundaryEdge));
 
             sideElement = sideElement->NextSiblingElement();
         }
+
+        ASSERTL0(std::accumulate(cnt.begin(), cnt.end(), 0) == 1,
+                 "You must have only one LEFT and one RIGHT side"
+                 " present in interface NAME " + name)
 
         m_interfaces[std::make_pair(m_interfaces.size(), name)] =
             InterfacePairShPtr(MemoryManager<InterfacePair>::AllocateSharedPtr(

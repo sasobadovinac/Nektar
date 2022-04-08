@@ -91,11 +91,6 @@ struct ZoneBase
         return v_Move(time);
     }
 
-    inline std::vector<int> const &GetElementIds() const
-    {
-        return m_elementIds;
-    }
-
     inline std::vector<GeometrySharedPtr> const &GetElements() const
     {
         return m_elements;
@@ -106,24 +101,19 @@ struct ZoneBase
         return m_moved;
     }
 
-    inline Array<OneD,std::set<GeometrySharedPtr>> &GetConstituentElements()
-    {
-        return m_constituentElements;
-    }
+    void ClearBoundingBoxes();
 
 protected:
-    //ZoneBaseShPtr m_oppInterface;
     MovementType m_type = MovementType::eNone;
     int m_id;
-    //InterfaceSide m_side = eNone;
     CompositeMap m_domain;
-    //std::map<int, GeometrySharedPtr> m_edge;
-    //std::vector<int> m_edgeIds;
-    std::vector<int> m_elementIds;
     std::vector<GeometrySharedPtr> m_elements;
-    Array<OneD,std::set<GeometrySharedPtr>> m_constituentElements;
     bool m_moved = true;
     int m_coordDim;
+    std::vector<PointGeomSharedPtr> m_verts;
+    std::vector<CurveSharedPtr> m_curves;
+    std::vector<PointGeom> m_origVerts;
+
 };
 
 typedef std::shared_ptr<ZoneBase> ZoneBaseShPtr;
@@ -157,12 +147,8 @@ protected:
     NekPoint<NekDouble> m_origin;
     DNekVec m_axis;
     LibUtilities::EquationSharedPtr m_angularVelEqn;
-    std::vector<PointGeomSharedPtr> m_rotateVerts;
-    std::vector<CurveSharedPtr> m_rotateCurves;
-    std::vector<PointGeom> m_origPosition;
     DNekMat m_W  = DNekMat(3, 3, 0.0);
     DNekMat m_W2 = DNekMat(3, 3, 0.0);
-
 };
 
 struct ZoneTranslate final: public ZoneBase
@@ -183,9 +169,6 @@ struct ZoneTranslate final: public ZoneBase
 
 protected:
     std::vector<NekDouble> m_velocity;
-    std::vector<PointGeomSharedPtr> m_slideVerts;
-    std::vector<CurveSharedPtr> m_slideCurves;
-    std::vector<PointGeom> m_origPosition;
 };
 
 struct ZonePrescribe final: public ZoneBase
@@ -220,8 +203,6 @@ protected:
     LibUtilities::EquationSharedPtr m_xDeform;
     LibUtilities::EquationSharedPtr m_yDeform;
     LibUtilities::EquationSharedPtr m_zDeform;
-    std::vector<PointGeomSharedPtr> m_interiorVerts;
-    std::vector<PointGeom> m_origPosition;
 };
 
 struct ZoneFixed final: public ZoneBase
