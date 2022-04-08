@@ -1,6 +1,11 @@
 Changelog
 =========
 
+v5.3
+------
+**Library**
+- Fixed avx512 back-end for SimdLib (!1333)
+
 v5.2
 ------
 **Library**
