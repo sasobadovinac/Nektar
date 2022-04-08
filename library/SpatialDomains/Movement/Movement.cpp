@@ -63,10 +63,13 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                    const MeshGraphSharedPtr &meshGraph)
     : m_meshGraph(meshGraph), m_session(pSession)
 {
+    TiXmlNode *conditions = m_session->GetElement("NEKTAR")->FirstChild("CONDITIONS");
+    if(conditions == nullptr)
+    {
+        return;
+    }
 
-    TiXmlNode *movement = m_session->GetElement("NEKTAR")
-                              ->FirstChild("CONDITIONS")
-                              ->FirstChild("MOVEMENT");
+    TiXmlNode *movement = conditions->FirstChild("MOVEMENT");
     if (movement != nullptr)
     {
         bool zones = movement->FirstChild("ZONES") != nullptr;
