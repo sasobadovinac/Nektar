@@ -103,42 +103,6 @@ InterfaceMapDG::InterfaceMapDG(
         cnt++;
     }
 
-    // DEBUG COMMENTS
-    if (m_trace->GetSession()->DefinesCmdLineArgument("verbose")
-        && comm->GetSize() > 1)
-    {
-        if (comm->GetRank() == 0)
-        {
-            std::cout << "\n-----------------------------\n";
-            std::cout << "Rank \t" << "Interfaces\n";
-            std::cout << "-----------------------------" << std::endl;
-        }
-
-        comm->Block();
-
-        std::array<std::string, 4> edgeName = {{"n", "l", "r", "b"}};
-        for (int rank = 0; rank < comm->GetSize(); ++rank)
-        {
-            if (comm->GetRank() == rank)
-            {
-                std::cout << rank << "\t";
-                for (auto set : myIndxLRMap)
-                {
-                    std::cout << set.first << "[" << edgeName[set.second]
-                              << "],\t";
-                }
-                std::cout << "\b\b  " << std::endl;
-            }
-
-            comm->Block();
-        }
-
-        if (comm->GetRank() == 0)
-        {
-            std::cout << "-----------------------------" << std::endl;
-        }
-    }
-
     // Send num of interfaces size so all partitions can prepare buffers
     int nRanks = comm->GetSize();
 
