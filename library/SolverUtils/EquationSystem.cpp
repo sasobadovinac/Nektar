@@ -611,7 +611,10 @@ namespace Nektar
                         {
                             i = 0;
                             MultiRegions::DisContFieldSharedPtr firstfield;
-                            firstfield = MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr(m_session, m_graph, m_session->GetVariable(0));
+                            firstfield = MemoryManager<MultiRegions::
+                               DisContField>::AllocateSharedPtr(
+                                        m_session, m_graph,
+                                        m_session->GetVariable(i));
                             m_fields[0] = firstfield;
                             for (i = 1; i < m_fields.size(); i++)
                             {
@@ -619,11 +622,17 @@ namespace Nektar
                                         m_session->GetVariable(0),
                                         m_session->GetVariable(i)))
                                 {
-                                    m_fields[i] = MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr(*firstfield, m_graph, m_session->GetVariable(i));
+                                    m_fields[i] = MemoryManager<MultiRegions::
+                                        DisContField>::AllocateSharedPtr(
+                                            *firstfield, m_graph,
+                                            m_session->GetVariable(i));
                                 }
                                 else
                                 {
-                                    m_fields[i] = MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr(m_session, m_graph, m_session->GetVariable(i));
+                                    m_fields[i] = MemoryManager<MultiRegions::
+                                        DisContField>::AllocateSharedPtr(
+                                            m_session, m_graph,
+                                            m_session->GetVariable(i));
                                 }
                             }
                         }
@@ -639,12 +648,30 @@ namespace Nektar
                         }
                         else
                         {
-                            for (i = 0; i < m_fields.size(); i++)
+                            i = 0;
+                            MultiRegions::DisContFieldSharedPtr firstfield =
+                                MemoryManager<MultiRegions::DisContField>
+                                ::AllocateSharedPtr(m_session, m_graph,
+                                                    m_session->GetVariable(i));
+                            m_fields[0] = firstfield;
+                            for (i = 1; i < m_fields.size(); i++)
                             {
-                                m_fields[i] = MemoryManager<MultiRegions::
-                                    DisContField>::AllocateSharedPtr(
-                                        m_session, m_graph,
-                                        m_session->GetVariable(i));
+                                if (m_graph->SameExpansionInfo(
+                                        m_session->GetVariable(0),
+                                        m_session->GetVariable(i)))
+                                {
+                                    m_fields[i] = MemoryManager<MultiRegions::
+                                        DisContField>::AllocateSharedPtr(
+                                            *firstfield, m_graph,
+                                            m_session->GetVariable(i));
+                                }
+                                else
+                                {
+                                    m_fields[i] = MemoryManager<MultiRegions::
+                                        DisContField>::AllocateSharedPtr(
+                                            m_session, m_graph,
+                                            m_session->GetVariable(i));
+                                }
                             }
                         }
                         break;
