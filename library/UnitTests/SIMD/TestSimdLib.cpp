@@ -45,22 +45,20 @@
 #define NUM_LANES_64BITS 1
 #define USING_SCALAR
 #if defined(__x86_64__)
-    #if defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
-        #define USING_SSE2
+    #if defined(__AVX512F__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
+        #define USING_AVX512
         #undef NUM_LANES_64BITS
-        #define NUM_LANES_64BITS 2
+        #define NUM_LANES_64BITS 8
         #undef USING_SCALAR
-    #endif
-    #if defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
+    #elif defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
         #define USING_AVX2
         #undef NUM_LANES_64BITS
         #define NUM_LANES_64BITS 4
         #undef USING_SCALAR
-    #endif
-    #if defined(__AVX512__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
-        #define USING_AVX512
+    #elif defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
+        #define USING_SSE2
         #undef NUM_LANES_64BITS
-        #define NUM_LANES_64BITS 8
+        #define NUM_LANES_64BITS 2
         #undef USING_SCALAR
     #endif
 #endif
@@ -355,7 +353,8 @@ namespace SimdLibTests
         {
             aindex[4] = 8;
             aindex[5] = 15;
-            aindex[6] = 20;
+            aindex[6] = 16;
+            aindex[7] = 20;
         }
 
         // load index
