@@ -15,6 +15,7 @@ v5.2
 - Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
 - Fixed SIMD mask test (!1324)
+- Fix cmake CWIPI option to remove Fortran check (!1331)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
