@@ -773,11 +773,6 @@ namespace Nektar
                             SetUpPhysNormals();
                         }
                     }
-
-                    if (m_session->DefinesCmdLineArgument("verbose"))
-                    {
-                        m_traceMap->PrintStats(std::cout, variable);
-                    }
                 }
                 else
                 {
