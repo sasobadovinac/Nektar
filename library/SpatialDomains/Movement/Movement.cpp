@@ -109,7 +109,7 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             if (comm->TreatAsRankZero())
             {
                 std::cout
-                    << "\t  ID " << zone.first << " "
+                    << "\t- " << zone.first << " "
                     << MovementTypeStr[static_cast<int>(
                            zone.second->GetMovementType())]
                     << ": " << numEl << " "
@@ -135,7 +135,7 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             if (comm->TreatAsRankZero())
             {
                 std::cout
-                    << "\t  NAME \"" << interface.first.second << "\": ID "
+                    << "\t- \"" << interface.first.second << "\": "
                     << interface.second->GetLeftInterface()->GetId() << " ("
                     << numLeft << " "
                     << LibUtilities::ShapeTypeMap[interface.second
@@ -143,7 +143,7 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                                                       ->GetEdge()
                                                       .begin()
                                                       ->second->GetShapeType()]
-                    << "s) <-> ID "
+                    << "s) <-> "
                     << interface.second->GetRightInterface()->GetId() << " ("
                     << numRight << " "
                     << LibUtilities::ShapeTypeMap[interface.second
