@@ -6,6 +6,11 @@ v5.2
 **Library**
 - Added support for manifold  MatrixFree operators (2D in 3D space) (!1304)
 - Put in place automatic selection of explicit operations using an opt file (!1304)
+- Fix memory leak in Timer.cpp (!1330)
+
+v5.2.0
+------
+**Library**
 - Fixed the moving reference frame rotation (Solver Utils) (!1305)
 - Revised FilterAeroForces to accout for the moving reference frame (!1305)
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
