@@ -50,11 +50,11 @@ typedef std::map<std::pair<int, std::string>, InterfacePairShPtr> InterfaceColle
 class Movement
 {
 public:
-    Movement(
+    SPATIAL_DOMAINS_EXPORT Movement(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const MeshGraphSharedPtr &meshGraph);
 
-    ~Movement() = default;
+    SPATIAL_DOMAINS_EXPORT ~Movement() = default;
 
     inline const InterfaceCollection &GetInterfaces() const
     {

@@ -127,12 +127,13 @@ InterfaceMapDG::InterfaceMapDG(
         {
             int otherId   = indxToInterfaceID[j];
             int otherCode = rankLocalInterfaceIds[i * numInterfaces + j];
+            int myCode = myIndxLRMap[otherId];
 
             InterfaceExchangeSharedPtr exchange;
             if (i == myRank)
             {
                 // If contains opposite edge locally then set true
-                if (otherCode == 3)
+                if (myCode == 3)
                 {
                     localInterfaces[otherId].first->SetCheckLocal(true);
                     localInterfaces[otherId].second->SetCheckLocal(true);
@@ -142,7 +143,6 @@ InterfaceMapDG::InterfaceMapDG(
             }
 
             // Interface opposite ranks
-            int myCode = myIndxLRMap[otherId];
             if ((myCode == 1 && otherCode == 2) ||
                 (myCode == 1 && otherCode == 3) ||
                 (myCode == 3 && otherCode == 2))
