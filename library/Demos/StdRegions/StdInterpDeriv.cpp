@@ -44,9 +44,9 @@ Array<OneD, NekDouble> EvalPoly(const Array<OneD, const Array<OneD, NekDouble>> 
     unsigned dim = pts.size();
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] = pow(pts[0][i], 2)
-            + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
-            - (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
+        ret[i] = pts[0][i] * pts[0][i]
+            + (dim >= 2 ? (pts[1][i] * pts[1][i]) : 0.0)
+            - (dim >= 3 ? (pts[2][i] * pts[2][i]) : 0.0);
     }
 
     return ret;
