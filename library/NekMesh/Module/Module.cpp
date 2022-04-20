@@ -264,8 +264,11 @@ void Module::ProcessEdges(bool ReprocessEdges)
         elmt->SetEdgeLink(*it);
 
         // Update 2D element boundary map.
-        pair<weak_ptr<Element>, int> eMap = (*it)->m_elLink.at(0);
-        eMap.first.lock()->SetBoundaryLink(eMap.second, i);
+        for(unsigned links = 0; links < (*it)->m_elLink.size(); links++)
+        {
+            pair<weak_ptr<Element>, int> eMap = (*it)->m_elLink.at(links);
+            eMap.first.lock()->SetBoundaryLink(eMap.second, i);
+        }
 
         // Update vertices
         elmt->SetVertex(0, (*it)->m_n1, false);
