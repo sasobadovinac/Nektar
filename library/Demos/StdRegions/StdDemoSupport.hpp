@@ -266,13 +266,19 @@ public:
              eLegendre, eChebyshev, eMonomial, eFourierSingleMode,
              eFourierHalfModeRe, eFourierHalfModeIm}
         };
-        allowableBasis[eSegment] = { allowableBasis[ePoint][0] };
+        allowableBasis[eSegment] = {
+            {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
+             eLegendre, eChebyshev, eMonomial}
+        };
         allowableBasis[eTriangle] = {
             {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
             {eOrtho_B, eModified_B, eGLL_Lagrange, eGauss_Lagrange}
         };
         allowableBasis[eQuadrilateral] = {
-            allowableBasis[eSegment][0], allowableBasis[eSegment][0]
+            {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
+             eLegendre, eChebyshev, eMonomial},
+            {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
+             eLegendre, eChebyshev, eMonomial}
         };
         allowableBasis[eTetrahedron] = {
             {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
