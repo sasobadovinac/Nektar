@@ -2,13 +2,13 @@
 <test>
     <description>StdInterpDeriv Hex Ortho basis P=7 Q=8</description>
     <executable>StdInterpDeriv</executable>
-    <parameters> -s hexahedron -b Ortho_A Ortho_A Ortho_A -o 7 7 7 -p 8 8 8 </parameters>
+    <parameters> -s hexahedron -b Ortho_A Ortho_A Ortho_A -o 7 7 7 -p 8 8 8 -P GaussLobattoLegendre GaussLobattoLegendre GaussLobattoLegendre</parameters>
     <metrics>
         <metric type="L2" id="1">
-            <value tolerance="1e-12">0</value>
+            <value tolerance="1e-7">0</value>
         </metric>
         <metric type="Linf" id="2">
-            <value tolerance="1e-12">0</value>
+            <value tolerance="1e-7">0</value>
         </metric>
     </metrics>
 </test>

@@ -131,8 +131,7 @@ public:
     StdExpansion *CreateStdExpansion()
     {
         vector<PointsType> ptype;
-        m_pointstype.resize(m_order.size());
-        if (m_vm.count("pointstype") || m_pointstype[0] != "NoPointsType")
+        if (m_vm.count("pointstype"))
         {
             for (auto &p : m_pointstype)
             {
@@ -267,19 +266,13 @@ public:
              eLegendre, eChebyshev, eMonomial, eFourierSingleMode,
              eFourierHalfModeRe, eFourierHalfModeIm}
         };
-        allowableBasis[eSegment] = {
-            {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
-             eLegendre, eChebyshev, eMonomial}
-        };
+        allowableBasis[eSegment] = { allowableBasis[ePoint][0] };
         allowableBasis[eTriangle] = {
             {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
             {eOrtho_B, eModified_B, eGLL_Lagrange, eGauss_Lagrange}
         };
         allowableBasis[eQuadrilateral] = {
-            {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
-             eLegendre, eChebyshev, eMonomial},
-            {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
-             eLegendre, eChebyshev, eMonomial}
+            allowableBasis[eSegment][0], allowableBasis[eSegment][0]
         };
         allowableBasis[eTetrahedron] = {
             {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
@@ -362,12 +355,6 @@ public:
                         ptype[i] = eGaussLobattoLegendre;
                     }
                 }
-            }
-
-            // Put ptype back into m_pointstype
-            for (int i = 0; i < dimension; ++i)
-            {
-                m_pointstype[i] = kPointsTypeStr[ptype[i]];
             }
         }
 

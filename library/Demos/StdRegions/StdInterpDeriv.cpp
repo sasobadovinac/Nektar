@@ -37,52 +37,52 @@
 
 #include "StdDemoSupport.hpp"
 
-// polynomial = 2*x^4 + 3*y^2 - z^3
+// polynomial = x^2 + y^2 + z^2
 Array<OneD, NekDouble> EvalPoly(const Array<OneD, const Array<OneD, NekDouble>> &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     unsigned dim = pts.size();
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] = 2 * (pts[0][i] * pts[0][i] * pts[0][i] * pts[0][i])
-            + (dim >= 2 ? 3 * (pts[1][i] * pts[1][i]) : 0.0)
-            - (dim >= 3 ? (pts[2][i] * pts[2][i] * pts[2][i]) : 0.0);
+        ret[i] =          (pts[0][i] * pts[0][i])
+            + (dim >= 2 ? (pts[1][i] * pts[1][i]) : 0.0)
+            + (dim >= 3 ? (pts[2][i] * pts[2][i]) : 0.0);
     }
 
     return ret;
 }
 
-// derivative in x = 8x^3
+// derivative in x = 2x
 Array<OneD, NekDouble> EvalPolyDerivx(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  8*(pts[0][i] * pts[0][i] * pts[0][i]);
+        ret[i] =  2*pts[0][i];
     }
 
     return ret;
 }
 
-// derivative in y = 6y
+// derivative in y = 2y
 Array<OneD, NekDouble> EvalPolyDerivy(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  6*pts[1][i];
+        ret[i] =  2*pts[1][i];
     }
 
     return ret;
 }
 
-// derivative in z = -3*z^2
+// derivative in z = 2z
 Array<OneD, NekDouble> EvalPolyDerivz(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  -3*(pts[2][i] * pts[2][i]);
+        ret[i] =  2*pts[2][i];
     }
 
     return ret;
@@ -105,13 +105,14 @@ int main(int argc, char *argv[])
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
     physIn = EvalPoly(coordsE);
 
-    // Create a new element but with PolyEvenlySpaced points in first direction,
-    // so that we perform a PhysEvaluateDeriv at a different set of nodal points
+    // Create a new element but with GaussGaussChebyshev points so that we
+    // perform a PhysEvaluateDeriv at a different set of nodal points
     // (i.e. non-collocated interpolation), all tests use default types initially
-    // Only do first direction as for collapsed shapes can't have a point at the
-    // singularity
     vector<string> &ptypes = demo.GetPointsType();
-    ptypes[0] = "PolyEvenlySpaced";
+    for (int i = 0; i < dimension; ++i)
+    {
+        ptypes[i] = "GaussGaussChebyshev";
+    }
 
     StdExpansion *F = demo.CreateStdExpansion();
 
@@ -145,56 +146,6 @@ int main(int argc, char *argv[])
             sol = EvalPoly(coordsF);
             break;
     }
-
-    std::cout << "coordE - coordF" << std::endl;
-    for(int i = 0; i < totPoints; ++i)
-    {
-        std::cout << i << " " << coordsE[0][i] << " " <<  (coordsE.size() >= 2 ? coordsE[1][i] : 0.0) << " " << (coordsE.size() >= 3 ? coordsE[2][i] : 0.0) << std::endl;
-        std::cout << i << " " << coordsF[0][i] << " " <<  (coordsF.size() >= 2 ? coordsF[1][i] : 0.0) << " " << (coordsF.size() >= 3 ? coordsF[2][i] : 0.0) << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << "physIn" << std::endl;
-    for(int i = 0; i < totPoints; ++i)
-    {
-        std::cout << i << " " << physIn[i] << std::endl;
-    }
-    std::cout << std::endl;
-    std::cout << "physOut - sol" << std::endl;
-    for(int i = 0; i < totPoints; ++i)
-    {
-        if (physOut[i] - sol[i] > 1e-8)
-        {
-            std::cout << i << " " << physOut[i] << " " << sol[i] << std::endl;
-        }
-    }
-    std::cout << std::endl;
-    std::cout << "physOut0 - sol0" << std::endl;
-    for(int i = 0; i < totPoints; ++i)
-    {
-        if (physOut0[i] - sol0[i] > 1e-8)
-        {
-            std::cout << i << " " << physOut0[i] << " " << sol0[i] << std::endl;
-        }
-    }
-    std::cout << std::endl;
-    std::cout << "physOut1 - sol1" << std::endl;
-    for(int i = 0; i < totPoints; ++i)
-    {
-        if (physOut1[i] - sol1[i] > 1e-8)
-        {
-            std::cout << i << " " << physOut1[i] << " " << sol1[i] << std::endl;
-        }
-    }
-    std::cout << std::endl;
-    std::cout << "physOut2 - sol2" << std::endl;
-    for(int i = 0; i < totPoints; ++i)
-    {
-        if (physOut2[i] - sol2[i] > 1e-8)
-        {
-            std::cout << i << " " << physOut2[i] << " " << sol2[i] << std::endl;
-        }
-    }
-    std::cout << std::endl;
 
     cout << "\nL infinity error: " << scientific << F->Linf(physOut, sol) +
                                                     F->Linf(physOut0, sol0) +
