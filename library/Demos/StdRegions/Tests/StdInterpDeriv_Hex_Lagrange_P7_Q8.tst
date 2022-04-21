@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-    <description>StdInterpDeriv Hex Mod basis P=7 Q=8</description>
+    <description>StdInterpDeriv Hex Lagrange basis P=7 Q=8</description>
     <executable>StdInterpDeriv</executable>
-    <parameters> -s hexahedron -b Modified_A Modified_A Modified_A -o 7 7 7 -p 8 8 8</parameters>
+    <parameters> -s hexahedron -b GLL_Lagrange GLL_Lagrange GLL_Lagrange -o 7 7 7 -p 8 8 8 </parameters>
     <metrics>
         <metric type="L2" id="1">
             <value tolerance="1e-12">0</value>

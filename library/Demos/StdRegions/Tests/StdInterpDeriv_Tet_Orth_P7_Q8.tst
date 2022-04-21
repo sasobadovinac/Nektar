@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <test>
-    <description>StdInterpDeriv Hex Mod basis P=7 Q=8</description>
+    <description>StdInterpDeriv Tet Orth basis P=7 Q=8</description>
     <executable>StdInterpDeriv</executable>
-    <parameters> -s hexahedron -b Modified_A Modified_A Modified_A -o 7 7 7 -p 8 8 8</parameters>
+    <parameters> -s tetrahedron -b Ortho_A Ortho_B Ortho_C -o 7 7 7 -p 8 8 8</parameters>
     <metrics>
         <metric type="L2" id="1">
             <value tolerance="1e-12">0</value>

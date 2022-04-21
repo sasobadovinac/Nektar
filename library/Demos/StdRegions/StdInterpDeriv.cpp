@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
     const auto dimension = (unsigned) E->GetShapeDimension();
 
-    const auto totPoints = (unsigned)E->GetTotPoints();
+    const auto totPoints = (unsigned) E->GetTotPoints();
     Array<OneD, NekDouble> physIn(totPoints, 0.0), physOut(totPoints, 0.0),
         physOut0(totPoints, 0.0), physOut1(totPoints, 0.0),
         physOut2(totPoints, 0.0), sol(totPoints, 0.0), sol0(totPoints, 0.0),
@@ -105,15 +105,16 @@ int main(int argc, char *argv[])
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
     physIn = EvalPoly(coordsE);
 
-    // Create a new element but with PolyEvenlySpaced points, so that we
-    // perform a PhysEvaluateDeriv at a different set of nodal points
-    // (i.e. non-collocated interpolation), all tests use default types
+    // Create a new element but with PolyEvenlySpaced points in first direction,
+    // so that we perform a PhysEvaluateDeriv at a different set of nodal points
+    // (i.e. non-collocated interpolation), all tests use default types initially
+    // Only do first direction as for collapsed shapes can't have a point at the
+    // singularity
     vector<string> &ptypes = demo.GetPointsType();
-    for (int i = 0; i < dimension; ++i)
-    {
-        ptypes[i] = "PolyEvenlySpaced";
-    }
+    ptypes[0] = "PolyEvenlySpaced";
+
     StdExpansion *F = demo.CreateStdExpansion();
+
     const Array<OneD, const Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);
 
     for (int i = 0; i < totPoints; ++i)
@@ -144,6 +145,56 @@ int main(int argc, char *argv[])
             sol = EvalPoly(coordsF);
             break;
     }
+
+    std::cout << "coordE - coordF" << std::endl;
+    for(int i = 0; i < totPoints; ++i)
+    {
+        std::cout << i << " " << coordsE[0][i] << " " <<  (coordsE.size() >= 2 ? coordsE[1][i] : 0.0) << " " << (coordsE.size() >= 3 ? coordsE[2][i] : 0.0) << std::endl;
+        std::cout << i << " " << coordsF[0][i] << " " <<  (coordsF.size() >= 2 ? coordsF[1][i] : 0.0) << " " << (coordsF.size() >= 3 ? coordsF[2][i] : 0.0) << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << "physIn" << std::endl;
+    for(int i = 0; i < totPoints; ++i)
+    {
+        std::cout << i << " " << physIn[i] << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << "physOut - sol" << std::endl;
+    for(int i = 0; i < totPoints; ++i)
+    {
+        if (physOut[i] - sol[i] > 1e-8)
+        {
+            std::cout << i << " " << physOut[i] << " " << sol[i] << std::endl;
+        }
+    }
+    std::cout << std::endl;
+    std::cout << "physOut0 - sol0" << std::endl;
+    for(int i = 0; i < totPoints; ++i)
+    {
+        if (physOut0[i] - sol0[i] > 1e-8)
+        {
+            std::cout << i << " " << physOut0[i] << " " << sol0[i] << std::endl;
+        }
+    }
+    std::cout << std::endl;
+    std::cout << "physOut1 - sol1" << std::endl;
+    for(int i = 0; i < totPoints; ++i)
+    {
+        if (physOut1[i] - sol1[i] > 1e-8)
+        {
+            std::cout << i << " " << physOut1[i] << " " << sol1[i] << std::endl;
+        }
+    }
+    std::cout << std::endl;
+    std::cout << "physOut2 - sol2" << std::endl;
+    for(int i = 0; i < totPoints; ++i)
+    {
+        if (physOut2[i] - sol2[i] > 1e-8)
+        {
+            std::cout << i << " " << physOut2[i] << " " << sol2[i] << std::endl;
+        }
+    }
+    std::cout << std::endl;
 
     cout << "\nL infinity error: " << scientific << F->Linf(physOut, sol) +
                                                     F->Linf(physOut0, sol0) +

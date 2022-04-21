@@ -131,7 +131,8 @@ public:
     StdExpansion *CreateStdExpansion()
     {
         vector<PointsType> ptype;
-        if (m_vm.count("pointstype"))
+        m_pointstype.resize(m_order.size());
+        if (m_vm.count("pointstype") || m_pointstype[0] != "NoPointsType")
         {
             for (auto &p : m_pointstype)
             {
@@ -361,6 +362,12 @@ public:
                         ptype[i] = eGaussLobattoLegendre;
                     }
                 }
+            }
+
+            // Put ptype back into m_pointstype
+            for (int i = 0; i < dimension; ++i)
+            {
+                m_pointstype[i] = kPointsTypeStr[ptype[i]];
             }
         }
 
