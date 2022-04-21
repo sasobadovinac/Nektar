@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AssemblyCommDG.cpp
+// File InterfaceMapDG.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Communication for interfaces
+// Description: MPI communication for interfaces
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -46,12 +46,6 @@ InterfaceTrace::InterfaceTrace(
     : m_trace(trace), m_interface(interfaceShPtr),
       m_geomIdToTraceId(geomIdToTraceId)
 {
-    // Calc total quad points
-    for (auto edgePair : m_interface->GetEdge())
-    {
-        m_totQuadPnts += m_trace->GetExp(m_geomIdToTraceId.at(edgePair.first))
-                             ->GetTotPoints();
-    }
 }
 
 InterfaceMapDG::InterfaceMapDG(
@@ -64,7 +58,7 @@ InterfaceMapDG::InterfaceMapDG(
     auto interfaceCollection = m_movement->GetInterfaces();
 
     // myIndxLR contains the info about what interface edges are present on
-    // current rank with each interface no,  i,  consisting of:
+    // current rank with each interface no, i,  consisting of:
     // [i] = indx
     // [i + 1] = 0 (non), = 1 (left only), = 2 (right only), = 3 (both)
     std::map<int, int> myIndxLRMap;
@@ -127,9 +121,8 @@ InterfaceMapDG::InterfaceMapDG(
         {
             int otherId   = indxToInterfaceID[j];
             int otherCode = rankLocalInterfaceIds[i * numInterfaces + j];
-            int myCode = myIndxLRMap[otherId];
+            int myCode    = myIndxLRMap[otherId];
 
-            InterfaceExchangeSharedPtr exchange;
             if (i == myRank)
             {
                 // If contains opposite edge locally then set true
@@ -222,7 +215,10 @@ void InterfaceMapDG::ExchangeCoords()
  * in an edge from the other side of the interface on this partition. These are
  * stored in the vector m_missingCoords, and another vector of the same index
  * layout contains the location of that coordinate in the trace i.e. the
- * 'offset + i' value.
+ * 'offset + i' value. It checks first if the interface is flagged local, which
+ * denotes whether the opposite side is also present on this rank, if not then
+ * all coordinates are missing. If local then the same structure as
+ * CalcRankDistances is used to minimise computational cost.
  */
 void InterfaceTrace::CalcLocalMissing()
 {
@@ -280,7 +276,6 @@ void InterfaceTrace::CalcLocalMissing()
                 for (auto &edge : parentEdge)
                 {
                     // First check if inside the edge bounding box
-                    // @TODO: Might better to query a rtree? as in meshgraph.
                     if (!edge.second->MinMaxCheck(xs))
                     {
                         continue;
@@ -288,7 +283,7 @@ void InterfaceTrace::CalcLocalMissing()
 
                     NekDouble dist =
                         edge.second->FindDistance(xs, foundLocCoord);
-                    if (dist < 5e-5) // @TODO: Check relative residuals?
+                    if (dist < 5e-5)
                     {
                         found                          = true;
                         m_foundLocalCoords[offset + i] = std::make_pair(
@@ -319,10 +314,6 @@ void InterfaceTrace::CalcLocalMissing()
     }
 }
 
-/**
- * Communicates with other ranks how many missing coordinates for each interface
- * to expect
- */
 void InterfaceExchange::RankFillSizes(
     LibUtilities::CommRequestSharedPtr &requestSend,
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum)
@@ -330,7 +321,7 @@ void InterfaceExchange::RankFillSizes(
 
     // Get size of all interfaces missing and moved to communicate
     int recalcSize = 0;
-    for (auto &localInterface : m_interfaces)
+    for (auto &localInterface : m_interfaceTraces)
     {
         recalcSize +=
             m_zones[localInterface->GetInterface()->GetId()]->GetMoved();
@@ -340,7 +331,7 @@ void InterfaceExchange::RankFillSizes(
     m_recvSize[m_rank] = Array<OneD, int>(recalcSize);
 
     int cnt = 0;
-    for (auto &interface : m_interfaces)
+    for (auto &interface : m_interfaceTraces)
     {
         if (m_zones[interface->GetInterface()->GetId()]->GetMoved())
         {
@@ -349,15 +340,12 @@ void InterfaceExchange::RankFillSizes(
         }
     }
 
-    m_comm->Isend(m_rank, m_sendSize[m_rank], m_interfaces.size(), requestSend,
-                  requestNum);
-    m_comm->Irecv(m_rank, m_recvSize[m_rank], m_interfaces.size(), requestRecv,
-                  requestNum);
+    m_comm->Isend(m_rank, m_sendSize[m_rank], m_interfaceTraces.size(),
+                  requestSend, requestNum);
+    m_comm->Irecv(m_rank, m_recvSize[m_rank], m_interfaceTraces.size(),
+                  requestRecv, requestNum);
 }
 
-/**
- * Sends/receives the missing coordinates to/from other ranks
- */
 void InterfaceExchange::SendMissing(
     LibUtilities::CommRequestSharedPtr &requestSend,
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum)
@@ -371,7 +359,7 @@ void InterfaceExchange::SendMissing(
     m_recv = Array<OneD, NekDouble>(m_totRecvSize[m_rank]);
 
     int cnt = 0;
-    for (auto &interface : m_interfaces)
+    for (auto &interface : m_interfaceTraces)
     {
         if (m_zones[interface->GetInterface()->GetId()]->GetMoved())
         {
@@ -439,9 +427,6 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
     }
 }
 
-/**
- * Fills the Bwd trace by interpolating from the Fwd for local interfaces
- */
 void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
                                        Array<OneD, NekDouble> &Bwd)
 {
@@ -462,14 +447,10 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
     }
 }
 
-/**
- * Loops over interfaces and partitions out the received trace from the other
- * ranks for insertion into Bwd
- */
 void InterfaceExchange::FillRankBwdTraceExchange(Array<OneD, NekDouble> &Bwd)
 {
     int cnt = 0;
-    for (int i = 0; i < m_interfaces.size(); ++i)
+    for (int i = 0; i < m_interfaceTraces.size(); ++i)
     {
         Array<OneD, NekDouble> traceTmp(m_sendSize[m_rank][i] / 3, 0.0);
         for (int j = 0; j < m_sendSize[m_rank][i] / 3; ++j, ++cnt)
@@ -477,13 +458,10 @@ void InterfaceExchange::FillRankBwdTraceExchange(Array<OneD, NekDouble> &Bwd)
             traceTmp[j] = m_recvTrace[cnt];
         }
 
-        m_interfaces[i]->FillRankBwdTrace(traceTmp, Bwd);
+        m_interfaceTraces[i]->FillRankBwdTrace(traceTmp, Bwd);
     }
 }
 
-/**
- * Fills the Bwd trace from partitioned trace
- */
 void InterfaceTrace::FillRankBwdTrace(Array<OneD, NekDouble> &trace,
                                       Array<OneD, NekDouble> &Bwd)
 {
@@ -496,9 +474,6 @@ void InterfaceTrace::FillRankBwdTrace(Array<OneD, NekDouble> &trace,
     }
 }
 
-/**
- * Calculates and sends the trace to other rank from m_foundRankCoords
- */
 void InterfaceExchange::SendFwdTrace(
     LibUtilities::CommRequestSharedPtr &requestSend,
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum,
@@ -529,20 +504,28 @@ void InterfaceExchange::SendFwdTrace(
 
 /**
  * Check coords in m_recv from other rank to see if present on this rank, and
- * populates m_foundRankCoords
+ * then populates m_foundRankCoords if found.
+ * - Loops over all interface traces present in the exchange, i.e. every
+ *   interface needed on this rank-to-rank communication object
+ * - Then loops over all the quadrature points missing from the other side in
+ *   that interface using global coordinates
+ * - Loop over each local edge and use MinMaxCheck on the point as a fast
+ *   comparison on whether the point lies on the edge
+ * - If true then use the more expensive FindDistance function to find the
+ *   closest local coordinate of the global 'missing' point on the local edge
+ *   and the distance from the edge that corresponds to
+ * - If distance is less than 5e-5 save found coordinate in m_foundRankCoords
  */
-// @TODO: Probably want to take this down into InterfaceTrace and use a
-// GetFound() to communicate ?
+
 void InterfaceExchange::CalcRankDistances()
 {
-    Array<OneD, NekDouble> disp(m_recvSize[m_rank].size() + 1, 0.0);
+    Array<OneD, int> disp(m_recvSize[m_rank].size() + 1, 0.0);
     std::partial_sum(m_recvSize[m_rank].begin(), m_recvSize[m_rank].end(),
-        &disp[1]); // @TODO: Use partial sum for other displacement calculations
+                     &disp[1]);
 
-    Array<OneD, int> foundNum(m_interfaces.size(), 0);
-    for (int i = 0; i < m_interfaces.size(); ++i)
+    for (int i = 0; i < m_interfaceTraces.size(); ++i)
     {
-        auto parentEdge = m_interfaces[i]->GetInterface()->GetEdge();
+        auto localEdge = m_interfaceTraces[i]->GetInterface()->GetEdge();
 
         for (int j = disp[i]; j < disp[i + 1]; j += 3)
         {
@@ -552,10 +535,9 @@ void InterfaceExchange::CalcRankDistances()
             xs[1] = m_recv[j + 1];
             xs[2] = m_recv[j + 2];
 
-            for (auto &edge : parentEdge)
+            for (auto &edge : localEdge)
             {
                 // First check if inside the edge bounding box
-                // @TODO: Might better to query a rtree? as in meshgraph.
                 if (!edge.second->MinMaxCheck(xs))
                 {
                     continue;
@@ -567,18 +549,11 @@ void InterfaceExchange::CalcRankDistances()
                 {
                     m_foundRankCoords[m_rank][j / 3] = std::make_pair(
                         edge.second->GetGlobalID(), foundLocCoord);
-                    foundNum[i] += 1;
                     break;
                 }
             }
         }
     }
-
-    //@TODO: Could communicate how many found here to avoid sending "nan"
-    //placeholder values, probably improvement for heavily partitioned meshes?
-    //@TODO: Currently a semi all-to-all approach with pairwise send/recv
-    //communicating for all points whether found or not? Worth the extra
-    //communication?
 }
 
 } // namespace MultiRegions

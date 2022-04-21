@@ -578,7 +578,7 @@ void AssemblyCommDG::InitialiseStructure(
     }
 
     // This creates a list of all geometry of problem dimension - 1
-    // and populates the maxQuad member variable
+    // and populates the maxQuad member variable for AllToAll
     std::vector<int> localEdgeIds;
     for (eid = 0; eid < locExpVector.size(); ++eid)
     {
@@ -597,7 +597,7 @@ void AssemblyCommDG::InitialiseStructure(
         }
     }
 
-    // Find max quadrature points across all processes
+    // Find max quadrature points across all processes for AllToAll method
     comm->AllReduce(m_maxQuad, LibUtilities::ReduceMax);
 
     // Create list of boundary edge IDs

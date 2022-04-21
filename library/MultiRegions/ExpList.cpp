@@ -215,8 +215,6 @@ namespace Nektar
         {
 
             // Initialise interfaces
-            // @TODO: Currently this gives a movement object on each field, move
-            // @TODO: this into meshgraph, not sure how complicated that will be
             // @TODO: Moved into meshgraph like this, very messy, improve.
             if(m_graph->GetMovement() == nullptr)
             {

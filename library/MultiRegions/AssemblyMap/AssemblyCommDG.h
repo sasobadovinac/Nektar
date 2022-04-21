@@ -262,7 +262,7 @@ public:
      * and backwards spaces.
      *
      * @param testFwd  Local forwards space of the trace (which will be sent)
-     * @param testBwd  Local bacwards space of the trace (which will receive
+     * @param testBwd  Local backwards space of the trace (which will receive
      *                 contributions)
      */
     MULTI_REGIONS_EXPORT inline void PerformExchange(
