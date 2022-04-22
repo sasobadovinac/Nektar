@@ -358,7 +358,7 @@ void DiffusionIP::v_DiffuseCoeffs(
         fields[j]->SetPhysState         (false);
     }
 
-    AddDiffusionSymmFluxToCoeff(nConvectiveFields, fields, inarray,qfield,
+    AddDiffusionSymmFluxToCoeff(nConvectiveFields, fields, inarray, qfield,
                                 elmtFlux, outarray, vFwd, vBwd);
 }
 
@@ -378,7 +378,7 @@ void DiffusionIP::v_DiffuseCalcDerivative(
         qtmp[nd] = NullNekDouble1DArray;
     }
 
-    size_t nConvectiveFields = inarray.size();
+    size_t nConvectiveFields = fields.size();
     for (int i = 0; i < nConvectiveFields; ++i)
     {
         for (int nd = 0; nd < nDim; ++nd)
