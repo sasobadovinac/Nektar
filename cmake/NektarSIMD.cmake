@@ -20,7 +20,7 @@ IF(_SYSTEM_PROCESSOR STREQUAL "x86_64")
     IF (NEKTAR_ENABLE_SIMD_AVX512)
         MESSAGE(STATUS "Enabling avx512, you might need to clear CMAKE_CXX_FLAGS or add the appriopriate flags")
         ADD_DEFINITIONS(-DNEKTAR_ENABLE_SIMD_AVX512)
-        SET(CMAKE_CXX_FLAGS "-mavx512 -mfma" CACHE STRING
+        SET(CMAKE_CXX_FLAGS "-mavx512f -mfma" CACHE STRING
             "Flags used by the CXX compiler during all build types.")
         SET(NEKTAR_ENABLE_SIMD_AVX2 "ON" FORCE)
         SET(NEKTAR_ENABLE_SIMD_SSE2 "ON" FORCE)
