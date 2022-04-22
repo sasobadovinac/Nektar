@@ -33,6 +33,7 @@ override_dh_auto_configure:
 	-DNEKTAR_USE_MESHGEN=ON \
 	-DNEKTAR_USE_MPI=ON \
 	-DNEKTAR_TEST_USE_HOSTFILE=ON \
+	-DTHIRDPARTY_BUILD_SCOTCH=ON \
 	-DNEKTAR_ERROR_ON_WARNINGS=OFF
 	
 override_dh_auto_build:
