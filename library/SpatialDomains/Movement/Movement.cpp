@@ -129,7 +129,7 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             auto numLeft =
                 interface.second->GetLeftInterface()->GetEdge().size();
             auto numRight =
-                interface.second->GetLeftInterface()->GetEdge().size();
+                interface.second->GetRightInterface()->GetEdge().size();
             comm->AllReduce(numLeft, LibUtilities::ReduceSum);
             comm->AllReduce(numRight, LibUtilities::ReduceSum);
             if (comm->TreatAsRankZero())
