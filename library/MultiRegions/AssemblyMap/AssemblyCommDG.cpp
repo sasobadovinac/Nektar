@@ -400,7 +400,7 @@ AssemblyCommDG::AssemblyCommDG(
         std::vector<NekDouble> avg(MPIFuncs.size(), -1);
         bool verbose = locExp.GetSession()->DefinesCmdLineArgument("verbose");
 
-        if (verbose && comm->GetRank() == 0)
+        if (verbose && comm->TreatAsRankZero())
         {
             std::cout << "MPI setup for trace exchange: " << std::endl;
         }
@@ -417,7 +417,7 @@ AssemblyCommDG::AssemblyCommDG(
             Timing(comm, warmup, numPoints, MPIFuncs[i]);
             std::tie(avg[i], min, max) =
                 Timing(comm, iter, numPoints, MPIFuncs[i]);
-            if (verbose && comm->GetRank() == 0)
+            if (verbose && comm->TreatAsRankZero())
             {
                 std::cout << "  " << MPIFuncsNames[i]
                           << " times (avg, min, max)"
@@ -431,7 +431,7 @@ AssemblyCommDG::AssemblyCommDG(
         int fastestMPI = std::distance(
             avg.begin(), std::min_element(avg.begin(), avg.end()));
 
-        if (verbose && comm->GetRank() == 0)
+        if (verbose && comm->TreatAsRankZero())
         {
             std::cout << "  Chosen fastest method: "
                       << MPIFuncsNames[fastestMPI] << std::endl;
