@@ -106,6 +106,11 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             auto numEl = zone.second->GetElements().size();
             comm->AllReduce(numEl, LibUtilities::ReduceSum);
 
+            // Find shape type if not on this proc
+            int shapeType = !zone.second->GetElements().empty()
+                    ? zone.second->GetElements().front()->GetShapeType() : -1;
+            comm->AllReduce(shapeType, LibUtilities::ReduceMax);
+
             if (comm->TreatAsRankZero())
             {
                 std::cout
@@ -114,7 +119,7 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                            zone.second->GetMovementType())]
                     << ": " << numEl << " "
                     << LibUtilities::ShapeTypeMap
-                           [zone.second->GetElements().front()->GetShapeType()]
+                           [shapeType]
                     << "s\n";
             }
         }
@@ -132,25 +137,32 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                 interface.second->GetRightInterface()->GetEdge().size();
             comm->AllReduce(numLeft, LibUtilities::ReduceSum);
             comm->AllReduce(numRight, LibUtilities::ReduceSum);
+
+            // Find shape type if not on this proc
+            int shapeTypeLeft = ! interface.second->GetLeftInterface()
+                                        ->GetEdge().empty()
+                                ? interface.second->GetLeftInterface()
+                                          ->GetEdge().begin()
+                                          ->second->GetShapeType() : -1;
+            comm->AllReduce(shapeTypeLeft, LibUtilities::ReduceMax);
+            int shapeTypeRight = ! interface.second->GetRightInterface()
+                                        ->GetEdge().empty()
+                                    ? interface.second->GetRightInterface()
+                                          ->GetEdge().begin()
+                                          ->second->GetShapeType() : -1;
+            comm->AllReduce(shapeTypeRight, LibUtilities::ReduceMax);
+
             if (comm->TreatAsRankZero())
             {
                 std::cout
                     << "\t- \"" << interface.first.second << "\": "
                     << interface.second->GetLeftInterface()->GetId() << " ("
                     << numLeft << " "
-                    << LibUtilities::ShapeTypeMap[interface.second
-                                                      ->GetLeftInterface()
-                                                      ->GetEdge()
-                                                      .begin()
-                                                      ->second->GetShapeType()]
+                    << LibUtilities::ShapeTypeMap[shapeTypeLeft]
                     << "s) <-> "
                     << interface.second->GetRightInterface()->GetId() << " ("
                     << numRight << " "
-                    << LibUtilities::ShapeTypeMap[interface.second
-                                                      ->GetRightInterface()
-                                                      ->GetEdge()
-                                                      .begin()
-                                                      ->second->GetShapeType()]
+                    << LibUtilities::ShapeTypeMap[shapeTypeRight]
                     << "s)\n";
             }
         }
