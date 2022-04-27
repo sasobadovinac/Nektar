@@ -25,7 +25,7 @@ IF (NEKTAR_USE_SAENA)
             PREFIX ${TPSRC}
             STAMP_DIR ${TPBUILD}/stamp
             GIT_REPOSITORY https://github.com/mdave/Saena_Public.git
-            GIT_TAG 298fc0249aa05fd03c27108615c8f2afe8c111bf
+            GIT_TAG a73e811b5debd10388aa7c7ec8bc198e6a3504ca
             DOWNLOAD_DIR ${TPSRC}
             SOURCE_DIR ${TPBUILD}/saena
             TMP_DIR ${TPBUILD}/saena-tmp
