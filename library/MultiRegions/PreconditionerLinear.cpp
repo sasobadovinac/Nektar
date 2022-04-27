@@ -176,6 +176,7 @@ namespace Nektar
                     ASSERTL0(false, "Nektar++ has not been compiled with "
                                     "PETSc support.");
 #endif
+                    break;
                 }
                 case eLinearPreconSaena:
                 {
@@ -186,6 +187,7 @@ namespace Nektar
                     ASSERTL0(false, "Nektar++ has not been compiled with "
                                     "Saena support.");
 #endif
+                    break;
                 }
             }
 	}

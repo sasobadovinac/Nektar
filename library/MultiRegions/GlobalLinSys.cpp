@@ -47,7 +47,7 @@ namespace Nektar
 {
     namespace MultiRegions
     {
-        std::string GlobalLinSys::lookupIds[12] = {
+        std::string GlobalLinSys::lookupIds[15] = {
             LibUtilities::SessionReader::RegisterEnumValue(
                 "GlobalSysSoln", "DirectFull",
                 MultiRegions::eDirectFullMatrix),

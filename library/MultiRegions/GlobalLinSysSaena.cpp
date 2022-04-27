@@ -85,7 +85,7 @@ namespace Nektar
             const AssemblyMapSharedPtr        &locToGloMap,
             const int                          pNumDir)
         {
-            BOOST_IGNORE_UNUSED(locToGLoMap);
+            boost::ignore_unused(locToGloMap);
 
             // @TODO: shouldn't need to but we require a new RHS vector every
             // time this is called.
@@ -250,7 +250,6 @@ namespace Nektar
          */
         void GlobalLinSysSaena::SetUpSolver(NekDouble tolerance)
         {
-            m_step = 0;
             m_scale = false;
             m_opts.set_relative_tolerance(tolerance);
             // m_opts.set_dynamic_levels(false);

@@ -31,8 +31,12 @@ IF (NEKTAR_USE_SAENA)
             TMP_DIR ${TPBUILD}/saena-tmp
             INSTALL_DIR ${TPDIST}
             BINARY_DIR ${TPBUILD}/saena
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND ./install.sh
+            CONFIGURE_COMMAND ${CMAKE_COMMAND}
+                -G ${CMAKE_GENERATOR}
+                -DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+                -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+                -DCMAKE_INSTALL_PREFIX:PATH=${TPDIST}
+                ${TPBUILD}/saena
             )
 
         THIRDPARTY_LIBRARY(SAENA_LIBRARY SHARED saena
