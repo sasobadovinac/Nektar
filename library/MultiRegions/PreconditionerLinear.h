@@ -48,7 +48,8 @@ namespace Nektar
         enum LinearPreconSolver
         {
             eLinearPreconXxt,
-            eLinearPreconPETSc
+            eLinearPreconPETSc,
+            eLinearPreconSaena
         };
 
         class PreconditionerLinear;

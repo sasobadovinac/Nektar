@@ -43,6 +43,10 @@
 #include <MultiRegions/GlobalLinSysPETScFull.h>
 #endif
 
+#ifdef NEKTAR_USING_SAENA
+#include <MultiRegions/GlobalLinSysSaenaFull.h>
+#endif
+
 #include <LocalRegions/MatrixKey.h>
 #include <cmath>
 
@@ -71,6 +75,10 @@ namespace Nektar
                 "LinearPreconSolver",
                 "PETSc",
                 MultiRegions::eLinearPreconPETSc),
+            LibUtilities::SessionReader::RegisterEnumValue(
+                "LinearPreconSolver",
+                "Saena",
+                MultiRegions::eLinearPreconSaena),
             LibUtilities::SessionReader::RegisterEnumValue(
                 "LinearPreconSolver",
                 "Xxt",
@@ -123,6 +131,16 @@ namespace Nektar
 #endif
                     break;
                 }
+                case eLinearPreconSaena:
+                {
+                    linSolveType = eSaenaFullMatrix;
+#ifndef NEKTAR_USING_SAENA
+                    NEKERROR(ErrorUtil::efatal,
+                             "Nektar++ has not been compiled with "
+                             "Saena support.");
+#endif
+                    break;
+                }
                 case eLinearPreconXxt:
                 default:
                 {
@@ -157,6 +175,16 @@ namespace Nektar
 #else
                     ASSERTL0(false, "Nektar++ has not been compiled with "
                                     "PETSc support.");
+#endif
+                }
+                case eLinearPreconSaena:
+                {
+#ifdef NEKTAR_USING_SAENA
+                    m_vertLinsys = MemoryManager<GlobalLinSysSaenaFull>::
+                        AllocateSharedPtr(preconKey,expList,m_vertLocToGloMap);
+#else
+                    ASSERTL0(false, "Nektar++ has not been compiled with "
+                                    "Saena support.");
 #endif
                 }
             }

@@ -260,6 +260,7 @@ INCLUDE (ThirdPartyTetGen)
 INCLUDE (ThirdPartyCCM)
 INCLUDE (ThirdPartyBlasLapack)
 INCLUDE (ThirdPartyCwipi)
+INCLUDE (ThirdPartySaena)
 INCLUDE (FindCFI)
 INCLUDE (FindLikwid)
 

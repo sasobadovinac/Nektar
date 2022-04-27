@@ -83,7 +83,16 @@ namespace Nektar
                 MultiRegions::ePETScStaticCond),
             LibUtilities::SessionReader::RegisterEnumValue(
                 "GlobalSysSoln", "PETScMultiLevelStaticCond",
-                MultiRegions::ePETScMultiLevelStaticCond)
+                MultiRegions::ePETScMultiLevelStaticCond),
+            LibUtilities::SessionReader::RegisterEnumValue(
+                "GlobalSysSoln", "SaenaFull",
+                MultiRegions::eSaenaFullMatrix),
+            LibUtilities::SessionReader::RegisterEnumValue(
+                "GlobalSysSoln", "SaenaStaticCond",
+                MultiRegions::eSaenaStaticCond),
+            LibUtilities::SessionReader::RegisterEnumValue(
+                "GlobalSysSoln", "SaenaMultiLevelStaticCond",
+                MultiRegions::eSaenaMultiLevelStaticCond)
         };
 
 #ifdef NEKTAR_USE_SCOTCH

@@ -1258,6 +1258,8 @@ namespace Nektar
                     case eIterativeStaticCond:
                     case ePETScStaticCond:
                     case ePETScFullMatrix:
+                    case eSaenaStaticCond:
+                    case eSaenaFullMatrix:
                     case eXxtFullMatrix:
                     case eXxtStaticCond:
                     {
@@ -1275,6 +1277,7 @@ namespace Nektar
                     case eDirectMultiLevelStaticCond:
                     case eIterativeMultiLevelStaticCond:
                     case eXxtMultiLevelStaticCond:
+                    case eSaenaMultiLevelStaticCond:
                     {
                         MultiLevelBisectionReordering(
                             boostGraphObj, perm, iperm, bottomUpGraph,

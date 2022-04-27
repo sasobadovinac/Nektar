@@ -80,6 +80,9 @@ namespace Nektar
             ePETScFullMatrix,
             ePETScStaticCond,
             ePETScMultiLevelStaticCond,
+            eSaenaFullMatrix,
+            eSaenaStaticCond,
+            eSaenaMultiLevelStaticCond,
             eSIZE_GlobalSysSolnType
         };
 
@@ -98,7 +101,10 @@ namespace Nektar
             "XxtMultiLevelStaticCond",
             "PETScFull",
             "PETScStaticCond",
-            "PETScMultiLevelStaticCond"
+            "PETScMultiLevelStaticCond",
+            "SaenaFull",
+            "SaenaStaticCond",
+            "SaenaMultiLevelStaticCond"
         };
 
         /// Type of Galerkin projection.

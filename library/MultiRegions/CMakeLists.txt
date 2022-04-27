@@ -113,6 +113,18 @@ IF(NEKTAR_USE_PETSC)
     )
 ENDIF(NEKTAR_USE_PETSC)
 
+IF(NEKTAR_USE_SAENA)
+    SET(MULTI_REGIONS_HEADERS ${MULTI_REGIONS_HEADERS}
+        GlobalLinSysSaena.h
+        GlobalLinSysSaenaFull.h
+        GlobalLinSysSaenaStaticCond.h
+    )
+    SET(MULTI_REGIONS_SOURCES ${MULTI_REGIONS_SOURCES}
+        GlobalLinSysSaena.cpp
+        GlobalLinSysSaenaFull.cpp
+        GlobalLinSysSaenaStaticCond.cpp
+    )
+ENDIF(NEKTAR_USE_SAENA)
 
 ADD_DEFINITIONS(-DMULTI_REGIONS_EXPORTS)
 
@@ -132,6 +144,11 @@ IF( NEKTAR_USE_PETSC )
     TARGET_LINK_LIBRARIES(MultiRegions LINK_PRIVATE ${PETSC_LIBRARIES})
     ADD_DEPENDENCIES(MultiRegions petsc-3.11.4)
 ENDIF( NEKTAR_USE_PETSC )
+
+IF (NEKTAR_USE_SAENA)
+    TARGET_LINK_LIBRARIES(MultiRegions LINK_PRIVATE ${SAENA_LIBRARY})
+    ADD_DEPENDENCIES(MultiRegions saena)
+ENDIF()
 
 IF (NEKTAR_BUILD_PYTHON)
     SUBDIRS(Python)
