@@ -215,29 +215,6 @@ namespace Nektar
             m_matrix.set_comm(m_comm);
             m_matrix.add_duplicates(true);
             m_rhs.set_comm(m_comm);
-
-            int nummodes = m_expList.lock()->GetFieldDefinitions()[0]->m_numModes[0];
-            int p_order  = nummodes - 1;
-            int prodim   = m_expList.lock()->GetCoordim(0);
-
-            m_matrix.set_p_order(p_order);
-            m_matrix.set_prodim(prodim);
-
-            // set p_coarsen levels computation. subtract by a constant.
-            vector<int> order_dif;
-            for(int i = 0; i < p_order - 1; ++i)
-            {
-                order_dif.emplace_back(1);
-            }
-
-            // set number of multigrid levels
-            int max_h_level = 1; // h-multigrid levels
-            m_amg.set_multigrid_max_level(
-                static_cast<int>(order_dif.size()) + max_h_level);
-
-            m_amg.set_scale(m_scale);
-            m_amg.set_matrix(
-                &m_matrix, &m_opts, m_l2g, m_reorderedMap, m_bdydof, order_dif);
         }
 
         /**
@@ -259,5 +236,31 @@ namespace Nektar
             // m_opts.set_preSmooth(3);
             // m_opts.set_postSmooth(3);
         }
+
+    void GlobalLinSysSaena::SetUpMultigrid()
+    {
+        int nummodes = m_expList.lock()->GetFieldDefinitions()[0]->m_numModes[0];
+        int p_order  = nummodes - 1;
+        int prodim   = m_expList.lock()->GetCoordim(0);
+
+        m_matrix.set_p_order(p_order);
+        m_matrix.set_prodim(prodim);
+
+        // set p_coarsen levels computation. subtract by a constant.
+        vector<int> order_dif;
+        for(int i = 0; i < p_order - 1; ++i)
+        {
+            order_dif.emplace_back(1);
+        }
+
+        // set number of multigrid levels
+        int max_h_level = 1; // h-multigrid levels
+        m_amg.set_multigrid_max_level(
+            static_cast<int>(order_dif.size()) + max_h_level);
+
+        m_amg.set_scale(m_scale);
+        m_amg.set_matrix(
+            &m_matrix, &m_opts, m_l2g, m_reorderedMap, m_bdydof, order_dif);
+    }
     }
 }

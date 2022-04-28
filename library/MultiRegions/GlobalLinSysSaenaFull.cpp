@@ -164,6 +164,8 @@ namespace Nektar
             t = double(tend - tbegin) / CLOCKS_PER_SEC;
             MPI_Reduce(&t, &t_ave, 1, MPI_DOUBLE, MPI_SUM, 0, m_comm);
             if(!rank) printf("Saena matrix assembly time: %f\n", t_ave / nprocs);
+
+            SetUpMultigrid();
         }
 
 

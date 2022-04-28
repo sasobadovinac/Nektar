@@ -94,6 +94,7 @@ protected:
 
     void SetUpMatVec();
     void SetUpSolver(NekDouble tolerance);
+    void SetUpMultigrid();
     void CalculateReordering(
         const Array<OneD, const int> &glo2uniMap,
         const Array<OneD, const int> &glo2unique,
