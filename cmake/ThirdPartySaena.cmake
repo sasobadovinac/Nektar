@@ -25,7 +25,7 @@ IF (NEKTAR_USE_SAENA)
             PREFIX ${TPSRC}
             STAMP_DIR ${TPBUILD}/stamp
             GIT_REPOSITORY https://github.com/mdave/Saena_Public.git
-            GIT_TAG a73e811b5debd10388aa7c7ec8bc198e6a3504ca
+            GIT_TAG fccf708a5cc5343260f0b1efddc88f653ca5dd01
             DOWNLOAD_DIR ${TPSRC}
             SOURCE_DIR ${TPBUILD}/saena
             TMP_DIR ${TPBUILD}/saena-tmp
@@ -33,6 +33,7 @@ IF (NEKTAR_USE_SAENA)
             BINARY_DIR ${TPBUILD}/saena
             CONFIGURE_COMMAND ${CMAKE_COMMAND}
                 -G ${CMAKE_GENERATOR}
+                -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                 -DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
                 -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
                 -DCMAKE_INSTALL_PREFIX:PATH=${TPDIST}
