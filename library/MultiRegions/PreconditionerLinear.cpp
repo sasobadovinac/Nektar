@@ -181,9 +181,10 @@ namespace Nektar
                 case eLinearPreconSaena:
                 {
 #ifdef NEKTAR_USING_SAENA
-                    m_vertLinsys = MemoryManager<GlobalLinSysSaenaFull>::
+                    auto vertLinsys = MemoryManager<GlobalLinSysSaenaFull>::
                         AllocateSharedPtr(preconKey,expList,m_vertLocToGloMap);
-                    m_vertLinsys->SetPolyOrder(1);
+                    vertLinsys->SetPolyOrder(1);
+                    m_vertLinSys = vertLinSys;
 #else
                     ASSERTL0(false, "Nektar++ has not been compiled with "
                                     "Saena support.");
