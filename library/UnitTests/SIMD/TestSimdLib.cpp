@@ -45,22 +45,20 @@
 #define NUM_LANES_64BITS 1
 #define USING_SCALAR
 #if defined(__x86_64__)
-    #if defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
-        #define USING_SSE2
+    #if defined(__AVX512F__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
+        #define USING_AVX512
         #undef NUM_LANES_64BITS
-        #define NUM_LANES_64BITS 2
+        #define NUM_LANES_64BITS 8
         #undef USING_SCALAR
-    #endif
-    #if defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
+    #elif defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
         #define USING_AVX2
         #undef NUM_LANES_64BITS
         #define NUM_LANES_64BITS 4
         #undef USING_SCALAR
-    #endif
-    #if defined(__AVX512__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
-        #define USING_AVX512
+    #elif defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
+        #define USING_SSE2
         #undef NUM_LANES_64BITS
-        #define NUM_LANES_64BITS 8
+        #define NUM_LANES_64BITS 2
         #undef USING_SCALAR
     #endif
 #endif
@@ -355,7 +353,8 @@ namespace SimdLibTests
         {
             aindex[4] = 8;
             aindex[5] = 15;
-            aindex[6] = 20;
+            aindex[6] = 16;
+            aindex[7] = 20;
         }
 
         // load index
@@ -704,6 +703,25 @@ namespace SimdLibTests
         {
             alignas(vec_t::alignment) std::array<double, 4>
                 ascalararr2{{1.0,2.0,3.0,4.0}}; // double brace to deal with gcc 4.8.5 ...
+            double dval = 2.0;
+            vec_t dvec(dval);
+            vec_t evec;
+            evec.load(ascalararr2.data());
+
+            simd<bool> amask;
+            amask = dvec > evec;
+            // check
+            for (size_t i = 0; i < vec_t::width; ++i)
+            {
+                BOOST_CHECK_EQUAL(static_cast<bool>(amask[i]), dval > ascalararr2[i]);
+            }
+
+        }
+
+        if (vec_t::width == 8)
+        {
+            alignas(vec_t::alignment) std::array<double, 8>
+                ascalararr2{{1.0,2.0,3.0,4.0,3.0,2.0,1.0}}; // double brace to deal with gcc 4.8.5 ...
             double dval = 2.0;
             vec_t dvec(dval);
             vec_t evec;
