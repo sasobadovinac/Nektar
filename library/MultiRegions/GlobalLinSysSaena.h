@@ -67,6 +67,11 @@ public:
         const AssemblyMapSharedPtr        &locToGloMap,
         const int                          pNumDir);
 
+    void SetPolyOrder(int p)
+    {
+        m_polyOrder = p;
+    }
+
 protected:
     /// Saena matrix object.
     saena::matrix     m_matrix;
@@ -89,6 +94,7 @@ protected:
     std::vector<std::vector<int>> m_l2g;
     /// flag to set the linear system to be scaled
     bool m_scale;
+    int               m_polyOrder = 0;
 
     PreconditionerSharedPtr m_precon;
 

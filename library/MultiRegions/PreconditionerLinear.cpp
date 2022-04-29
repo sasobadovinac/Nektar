@@ -183,6 +183,7 @@ namespace Nektar
 #ifdef NEKTAR_USING_SAENA
                     m_vertLinsys = MemoryManager<GlobalLinSysSaenaFull>::
                         AllocateSharedPtr(preconKey,expList,m_vertLocToGloMap);
+                    m_vertLinsys->SetPolyOrder(1);
 #else
                     ASSERTL0(false, "Nektar++ has not been compiled with "
                                     "Saena support.");

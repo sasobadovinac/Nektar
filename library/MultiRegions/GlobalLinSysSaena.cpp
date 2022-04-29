@@ -240,7 +240,7 @@ namespace Nektar
     void GlobalLinSysSaena::SetUpMultigrid()
     {
         int nummodes = m_expList.lock()->GetFieldDefinitions()[0]->m_numModes[0];
-        int p_order  = nummodes - 1;
+        int p_order  = m_polyOrder == 0 ? nummodes - 1 : m_polyOrder;
         int prodim   = m_expList.lock()->GetCoordim(0);
 
         m_matrix.set_p_order(p_order);
