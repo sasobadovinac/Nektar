@@ -29,7 +29,8 @@ RUN DEBIAN_RELEASE=sid && \
             libtet1.5-dev libtriangle-dev \
         texlive-base texlive-latex-extra texlive-science \
             texlive-fonts-recommended texlive-pstricks \
-        doxygen graphviz imagemagick dvipng
+        doxygen graphviz imagemagick dvipng \
+        flex bison
 
 RUN rm -f /usr/lib/x86_64-linux-gnu/openmpi/lib/*ucx* && \
     rm /usr/lib/x86_64-linux-gnu/openmpi/lib/openmpi3/*ucx*

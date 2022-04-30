@@ -4,10 +4,8 @@ Priority: optional
 Maintainer: Chris Cantwell <c.cantwell@imperial.ac.uk>
 Homepage: https://www.nektar.info
 Standards-Version: 4.4.0
-Build-Depends: bison,
-    cmake (>= 2.8.11),
+Build-Depends: cmake (>= 2.8.11),
     debhelper (>= 9),
-    flex,
     quilt,
     libarpack2-dev,
     libblas-dev,
