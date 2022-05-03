@@ -41,18 +41,15 @@ namespace MultiRegions
 
 InterfaceTrace::InterfaceTrace(
     const ExpListSharedPtr &trace,
-    const SpatialDomains::InterfaceShPtr &interfaceShPtr,
-    const std::map<int, int> &geomIdToTraceId)
-    : m_trace(trace), m_interface(interfaceShPtr),
-      m_geomIdToTraceId(geomIdToTraceId)
+    const SpatialDomains::InterfaceShPtr &interfaceShPtr)
+    : m_trace(trace), m_interface(interfaceShPtr)
 {
 }
 
 InterfaceMapDG::InterfaceMapDG(
     const SpatialDomains::MeshGraphSharedPtr &meshGraph,
-    const ExpListSharedPtr &trace, const std::map<int, int> geomIdToTraceId)
-    : m_graph(meshGraph), m_movement(meshGraph->GetMovement()), m_trace(trace),
-      m_geomIdToTraceId(geomIdToTraceId)
+    const ExpListSharedPtr &trace)
+    : m_graph(meshGraph), m_movement(meshGraph->GetMovement()), m_trace(trace)
 {
     auto comm                = m_trace->GetComm();
     auto interfaceCollection = m_movement->GetInterfaces();
@@ -76,8 +73,7 @@ InterfaceMapDG::InterfaceMapDG(
             myIndxLRMap[interface.first.first] += 1;
             localInterfaces[interface.first.first].first =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
-                    trace, interface.second->GetLeftInterface(),
-                    geomIdToTraceId);
+                    trace, interface.second->GetLeftInterface());
             m_localInterfaces.emplace_back(
                 localInterfaces[interface.first.first].first);
         }
@@ -86,8 +82,7 @@ InterfaceMapDG::InterfaceMapDG(
             myIndxLRMap[interface.first.first] += 2;
             localInterfaces[interface.first.first].second =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
-                    trace, interface.second->GetRightInterface(),
-                    geomIdToTraceId);
+                    trace, interface.second->GetRightInterface());
             m_localInterfaces.emplace_back(
                 localInterfaces[interface.first.first].second);
         }
@@ -166,7 +161,7 @@ InterfaceMapDG::InterfaceMapDG(
     {
         m_exchange.emplace_back(
             MemoryManager<InterfaceExchange>::AllocateSharedPtr(
-                m_movement, m_trace, comm, rank, geomIdToTraceId));
+                m_movement, m_trace, comm, rank));
     }
 
     // Find missing coordinates on interface from other side
@@ -230,12 +225,12 @@ void InterfaceTrace::CalcLocalMissing()
         for (auto childId : childEdge)
         {
             auto childElmt =
-                m_trace->GetExp(m_geomIdToTraceId.at(childId.first));
+                m_trace->GetExpFromGeomId(childId.first);
             size_t nq = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset =
-                m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId.first));
+                m_trace->GetPhys_Offset(m_trace->GetElmtToExpId(childId.first));
 
             for (int i = 0; i < nq; ++i, ++cnt)
             {
@@ -256,12 +251,12 @@ void InterfaceTrace::CalcLocalMissing()
         for (auto childId : childEdge)
         {
             auto childElmt =
-                m_trace->GetExp(m_geomIdToTraceId.at(childId.first));
+                m_trace->GetExpFromGeomId(childId.first);
             size_t nq = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset =
-                m_trace->GetPhys_Offset(m_geomIdToTraceId.at(childId.first));
+                m_trace->GetPhys_Offset(m_trace->GetElmtToExpId(childId.first));
 
             for (int i = 0; i < nq; ++i)
             {
@@ -435,7 +430,7 @@ void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
     {
         for (auto &foundLocCoord : m_foundLocalCoords)
         {
-            int traceId = m_geomIdToTraceId[foundLocCoord.second.first];
+            int traceId = m_trace->GetElmtToExpId(foundLocCoord.second.first);
             Array<OneD, NekDouble> locCoord = foundLocCoord.second.second;
 
             Array<OneD, NekDouble> edgePhys =
@@ -486,7 +481,7 @@ void InterfaceExchange::SendFwdTrace(
 
     for (auto &i : m_foundRankCoords[m_rank])
     {
-        int traceId                     = m_geomIdToTraceId[i.second.first];
+        int traceId                     = m_trace->GetElmtToExpId(i.second.first);
         Array<OneD, NekDouble> locCoord = i.second.second;
 
         Array<OneD, NekDouble> edgePhys =

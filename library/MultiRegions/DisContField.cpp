@@ -219,17 +219,9 @@ namespace Nektar
             // Set up physical normals
             SetUpPhysNormals();
 
-            // ------ Setting up interfaces ------
-            // Map taking a global geometry ID to the matching trace expansion ID
-            std::map<int, int> geomIdToTraceId;
-            for (int i = 0; i < m_trace->GetExpSize(); ++i)
-            {
-                geomIdToTraceId[m_trace->GetExp(i)->GetGeom()->GetGlobalID()] = i;
-            }
-
             // Create interface exchange object
-            m_interfaceMap = MemoryManager<InterfaceMapDG>::
-            AllocateSharedPtr(m_graph, m_trace, geomIdToTraceId);
+            m_interfaceMap = MemoryManager<InterfaceMapDG>::AllocateSharedPtr(
+                m_graph, m_trace);
 
             int cnt, n;
 

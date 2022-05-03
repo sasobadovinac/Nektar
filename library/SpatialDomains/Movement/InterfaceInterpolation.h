@@ -48,45 +48,59 @@ namespace SpatialDomains
 struct Interface;
 typedef std::shared_ptr<Interface> InterfaceShPtr;
 
+/// A interface which is a single edge on a zone for handling non-conformality
 struct Interface
 {
+    /// Constructor
     Interface(int indx, const CompositeMap &edge);
 
+    /// Default destructor
     virtual ~Interface() = default;
 
+    /// Returns map of global ID to geometry of the interface edge
     inline std::map<int, GeometrySharedPtr> const &GetEdge() const
     {
         return m_edge;
     }
 
+    /// Returns geometry of the interface edge with global ID @param id
     inline GeometrySharedPtr const &GetEdge(int id)
     {
         return m_edge[id];
     }
 
+
+    /// Checks if the interface edge is empty (used for parallelisation)
     inline bool IsEmpty() const
     {
         return m_edge.empty();
     }
 
+    /// Returns the matching opposite interface from the interface pair
     inline InterfaceShPtr &GetOppInterface()
     {
         return m_oppInterface;
     }
 
+    /// Returns the interface ID
     inline int &GetId()
     {
         return m_id;
     }
 
 protected:
+    /// Matching opposite interface of the interface pair
     InterfaceShPtr m_oppInterface;
+    /// Interface ID
     int m_id;
+    /// Map of global ID to geometry of the interface edge
     std::map<int, GeometrySharedPtr> m_edge;
 };
 
+/// Interface pair consisting of a 'left' and 'right' interface
 struct InterfacePair
 {
+    /// Constructor
     InterfacePair(const InterfaceShPtr &leftInterface,
                   const InterfaceShPtr &rightInterface)
         : m_leftInterface(leftInterface),
@@ -97,15 +111,19 @@ struct InterfacePair
         rightInterface->GetOppInterface() = leftInterface;
     }
 
+    /// 'Left' interface of the interface pair
     InterfaceShPtr m_leftInterface;
+    /// 'Right' interface of the interface pair
     InterfaceShPtr m_rightInterface;
 
 public:
+    /// Return the 'left' interface from the interface pair
     inline const InterfaceShPtr &GetLeftInterface() const
     {
         return m_leftInterface;
     }
 
+    /// Return the 'right' interface from the interface pair
     inline const InterfaceShPtr &GetRightInterface() const
     {
         return m_rightInterface;

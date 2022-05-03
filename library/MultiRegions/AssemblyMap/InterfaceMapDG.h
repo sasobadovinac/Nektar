@@ -54,8 +54,7 @@ public:
     /// Default constructor
     MULTI_REGIONS_EXPORT InterfaceTrace(
         const ExpListSharedPtr &trace,
-        const SpatialDomains::InterfaceShPtr &interfaceShPtr,
-        const std::map<int, int> &geomIdToTraceId);
+        const SpatialDomains::InterfaceShPtr &interfaceShPtr);
 
     /// Default destructor
     MULTI_REGIONS_EXPORT virtual ~InterfaceTrace() = default;
@@ -91,8 +90,6 @@ private:
     ExpListSharedPtr m_trace;
     /// Local interface object
     SpatialDomains::InterfaceShPtr m_interface;
-    /// Map taking geometry global ID to trace ID
-    std::map<int, int> m_geomIdToTraceId;
     /// Flag whether the opposite side of the interface is present locally
     bool m_checkLocal = false;
     /// Vector of coordinates on interface not present on opposite side local
@@ -121,11 +118,10 @@ public:
     MULTI_REGIONS_EXPORT InterfaceExchange(
         SpatialDomains::MovementSharedPtr movement,
         const ExpListSharedPtr &trace, const LibUtilities::CommSharedPtr &comm,
-        std::pair<int, std::vector<InterfaceTraceSharedPtr>> rankPair,
-        const std::map<int, int> &geomIdToTraceId)
+        std::pair<int, std::vector<InterfaceTraceSharedPtr>> rankPair)
         : m_movement(movement), m_zones(movement->GetZones()), m_trace(trace),
           m_comm(comm), m_rank(rankPair.first),
-          m_interfaceTraces(rankPair.second), m_geomIdToTraceId(geomIdToTraceId)
+          m_interfaceTraces(rankPair.second)
     {
     }
 
@@ -199,8 +195,6 @@ private:
     Array<OneD, NekDouble> m_recvTrace;
     /// Send buffer for trace exchange
     Array<OneD, NekDouble> m_sendTrace;
-    /// Map taking geometry global ID to trace ID
-    std::map<int, int> m_geomIdToTraceId;
     /// Map of rank to total size of send buffer for all interfaces
     std::map<int, int> m_totSendSize;
     /// Map of rank to total size of receive buffer for all interfaces
@@ -239,8 +233,7 @@ public:
      */
     MULTI_REGIONS_EXPORT InterfaceMapDG(
         const SpatialDomains::MeshGraphSharedPtr &graph,
-        const ExpListSharedPtr &trace,
-        const std::map<int, int> geomIdToTraceId);
+        const ExpListSharedPtr &trace);
 
     /**
      * @brief Perform the trace exchange between processors, given the forwards
@@ -271,8 +264,6 @@ private:
     const ExpListSharedPtr m_trace;
     /// Vector of interface exchanges, i.e. every rank-to-rank comm needed
     std::vector<InterfaceExchangeSharedPtr> m_exchange;
-    /// Map taking geometry global ID to trace ID
-    std::map<int, int> m_geomIdToTraceId;
 };
 
 typedef std::shared_ptr<InterfaceMapDG> InterfaceMapDGSharedPtr;

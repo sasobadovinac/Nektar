@@ -216,8 +216,11 @@ namespace Nektar
 
             // Initialise interfaces
             // @TODO: Moved into meshgraph like this, very messy, improve.
+            // Move back to explist...
+            std::cout << "Check get movement" << std::endl;
             if(m_graph->GetMovement() == nullptr)
             {
+                std::cout << "Make movement" << std::endl;
                 m_graph->GetMovement() =
                     MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(m_session, m_graph);
             }
@@ -807,6 +810,15 @@ namespace Nektar
             if(m_expType != e0D)
             {
                 CreateCollections(ImpType);
+            }
+
+            // Setup element to expansion ID maps for the trace elements
+            // Loop in reverse order so that in case where using a
+            // Homogeneous expansion it sets geometry ids to first part of
+            // m_exp list. Otherwise will set to second (complex) expansion
+            for(int i = (*m_exp).size()-1; i >= 0; --i)
+            {
+                m_elmtToExpId[(*m_exp)[i]->GetGeom()->GetGlobalID()] = i;
             }
         }
 

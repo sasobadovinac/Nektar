@@ -765,6 +765,11 @@ namespace Nektar
             inline LocalRegions::ExpansionSharedPtr& GetExp(int n) const;
 
             /// This function returns (a shared pointer to) the local elemental
+            /// expansion of the \f$n^{\mathrm{th}}\f$ element given a global
+            /// geometry ID.
+            inline LocalRegions::ExpansionSharedPtr& GetExpFromGeomId(int n);
+
+            /// This function returns (a shared pointer to) the local elemental
             /// expansion containing the arbitrary point given by \a gloCoord.
             MULTI_REGIONS_EXPORT LocalRegions::ExpansionSharedPtr& GetExp(
                 const Array<OneD, const NekDouble> &gloCoord);
@@ -1222,6 +1227,22 @@ namespace Nektar
             // is left adjacent definiing which trace the normal
             // points otwards from
             MULTI_REGIONS_EXPORT std::vector<bool> &GetLeftAdjacentTraces(void);
+
+            /// This function returns the map of index inside m_exp to geom id
+            MULTI_REGIONS_EXPORT inline std::unordered_map<int,int> GetElmtToExpId(void)
+            {
+                return m_elmtToExpId;
+            }
+
+            /// This function returns the index inside m_exp for a given geom id
+            MULTI_REGIONS_EXPORT inline int GetElmtToExpId(int elmtId)
+            {
+                auto it = m_elmtToExpId.find(elmtId);
+                ASSERTL0(it != m_elmtToExpId.end(), "Global geometry ID " +
+                        std::to_string(elmtId) + " not found in element ID to "
+                        "expansion ID map.")
+                return it->second;
+            }
 
         protected:
             /// Exapnsion type
@@ -2433,6 +2454,17 @@ namespace Nektar
         }
 
         /**
+         * @param   n               The global id of the element concerned.
+         *
+         * @return  (A shared pointer to) the local expansion of the
+         *          \f$n^{\mathrm{th}}\f$ element.
+         */
+        inline LocalRegions::ExpansionSharedPtr& ExpList::GetExpFromGeomId(int n)
+        {
+            return (*m_exp)[m_elmtToExpId[n]];
+        }
+
+        /**
          * @return  (A const shared pointer to) the local expansion vector #m_exp
          */
         inline const std::shared_ptr<LocalRegions::ExpansionVector>
@@ -2440,7 +2472,6 @@ namespace Nektar
         {
             return m_exp;
         }
-
 
         /**
          *

@@ -50,10 +50,12 @@ typedef std::map<std::pair<int, std::string>, InterfacePairShPtr> InterfaceColle
 class Movement
 {
 public:
+    /// Constructor
     SPATIAL_DOMAINS_EXPORT Movement(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const MeshGraphSharedPtr &meshGraph);
 
+    /// Default destructor
     SPATIAL_DOMAINS_EXPORT ~Movement() = default;
 
     inline const InterfaceCollection &GetInterfaces() const
@@ -66,10 +68,10 @@ public:
         return m_zones;
     }
 
+    // Unused - placeholder for ALE merge request
     void PerformMovement(NekDouble timeStep);
 
 protected:
-    /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
@@ -77,8 +79,9 @@ protected:
     bool m_moveFlag = false; // Flags presence of moving zones
 
 private:
-    /// Read interfaces (and general MeshGraph) given TiXmlDocument.
+    /// Read zones given TiXmlDocument
     void ReadZones(TiXmlElement *zonesTag);
+    /// Read interfaces given TiXmlDocument
     void ReadInterfaces(TiXmlElement *interfacesTag);
 };
 
