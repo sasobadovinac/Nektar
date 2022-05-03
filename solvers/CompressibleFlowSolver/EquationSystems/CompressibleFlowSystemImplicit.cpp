@@ -938,7 +938,7 @@ namespace Nektar
         m_advObject->AddTraceJacToMat(nvariables,m_spacedim,m_fields, 
             TraceJac,gmtxarray,tmpJac,tmpSign);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd - GetTraceJac");
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd - AddTraceJac");
     }
 
 
