@@ -36,7 +36,7 @@
 #ifndef NEKTAR_SPATIALDOMAINS_INTERFACEINTERPOLATION_H
 #define NEKTAR_SPATIALDOMAINS_INTERFACEINTERPOLATION_H
 
-#include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/GeomFactors.h>
 
 namespace Nektar
 {
@@ -44,9 +44,10 @@ namespace Nektar
 namespace SpatialDomains
 {
 
-
-struct Interface;
-typedef std::shared_ptr<Interface> InterfaceShPtr;
+// Fwd def to allow for inclusion in meshgraph
+struct Composite;
+typedef std::shared_ptr<Composite> CompositeSharedPtr;
+typedef std::map<int, CompositeSharedPtr> CompositeMap;
 
 /// A interface which is a single edge on a zone for handling non-conformality
 struct Interface
@@ -77,7 +78,7 @@ struct Interface
     }
 
     /// Returns the matching opposite interface from the interface pair
-    inline InterfaceShPtr &GetOppInterface()
+    inline std::shared_ptr<Interface> &GetOppInterface()
     {
         return m_oppInterface;
     }
@@ -90,12 +91,14 @@ struct Interface
 
 protected:
     /// Matching opposite interface of the interface pair
-    InterfaceShPtr m_oppInterface;
+    std::shared_ptr<Interface> m_oppInterface;
     /// Interface ID
     int m_id;
     /// Map of global ID to geometry of the interface edge
     std::map<int, GeometrySharedPtr> m_edge;
 };
+
+typedef std::shared_ptr<Interface> InterfaceShPtr;
 
 /// Interface pair consisting of a 'left' and 'right' interface
 struct InterfacePair

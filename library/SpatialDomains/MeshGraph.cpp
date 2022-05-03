@@ -50,6 +50,7 @@
 #include <sstream>
 
 #include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/Movement/Movement.h>
 
 // These are required for the Write(...) and Import(...) functions.
 #include <boost/archive/iterators/base64_from_binary.hpp>
@@ -203,13 +204,16 @@ void MeshGraph::FillGraph()
         break;
         case 1:
         {
-            for (auto x : m_segGeoms)
+            for (auto &x : m_segGeoms)
             {
                 x.second->Setup();
             }
         }
         break;
     }
+
+    // Populate the movement object
+    m_movement = MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(m_session, this);
 }
 
 void MeshGraph::FillBoundingBoxTree()

@@ -53,7 +53,7 @@ public:
     /// Constructor
     SPATIAL_DOMAINS_EXPORT Movement(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const MeshGraphSharedPtr &meshGraph);
+        MeshGraph* meshGraph);
 
     /// Default destructor
     SPATIAL_DOMAINS_EXPORT ~Movement() = default;
@@ -72,17 +72,18 @@ public:
     void PerformMovement(NekDouble timeStep);
 
 protected:
-    MeshGraphSharedPtr m_meshGraph;
-    LibUtilities::SessionReaderSharedPtr m_session;
     InterfaceCollection m_interfaces;
     std::map<int, ZoneBaseShPtr> m_zones;
     bool m_moveFlag = false; // Flags presence of moving zones
 
 private:
     /// Read zones given TiXmlDocument
-    void ReadZones(TiXmlElement *zonesTag);
+    void ReadZones(TiXmlElement *zonesTag,
+                   MeshGraph* meshGraph,
+                   const LibUtilities::SessionReaderSharedPtr &pSession);
     /// Read interfaces given TiXmlDocument
-    void ReadInterfaces(TiXmlElement *interfacesTag);
+    void ReadInterfaces(TiXmlElement *interfacesTag,
+                        MeshGraph* meshGraph);
 };
 
 typedef std::shared_ptr<Movement> MovementSharedPtr;

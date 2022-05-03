@@ -60,10 +60,9 @@ namespace SpatialDomains
 {
 
 Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
-                   const MeshGraphSharedPtr &meshGraph)
-    : m_meshGraph(meshGraph), m_session(pSession)
+                   MeshGraph* meshGraph)
 {
-    TiXmlNode *conditions = m_session->GetElement("NEKTAR")->FirstChild("CONDITIONS");
+    TiXmlNode *conditions = pSession->GetElement("NEKTAR")->FirstChild("CONDITIONS");
     if(conditions == nullptr)
     {
         return;
@@ -75,15 +74,15 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
         bool zones = movement->FirstChild("ZONES") != nullptr;
         if (zones)
         {
-            ReadZones(m_session->GetElement(
-                "NEKTAR/CONDITIONS/MOVEMENT/ZONES"));
+            ReadZones(pSession->GetElement(
+                "NEKTAR/CONDITIONS/MOVEMENT/ZONES"), meshGraph, pSession);
         }
 
         bool interfaces = movement->FirstChild("INTERFACES") != nullptr;
         if (interfaces)
         {
-            ReadInterfaces(m_session->GetElement(
-                "NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"));
+            ReadInterfaces(pSession->GetElement(
+                "NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"), meshGraph);
         }
 
         ASSERTL0(zones == interfaces,
@@ -92,9 +91,9 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
     }
 
     // DEBUG COMMENTS
-    if (movement != nullptr && m_session->DefinesCmdLineArgument("verbose"))
+    if (movement != nullptr && pSession->DefinesCmdLineArgument("verbose"))
     {
-        auto comm = m_session->GetComm();
+        auto comm = pSession->GetComm();
         if (comm->TreatAsRankZero())
         {
             std::cout << "Movement Info:\n";
@@ -175,9 +174,11 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
     }
 }
 
-void Movement::ReadZones(TiXmlElement *zonesTag)
+void Movement::ReadZones(TiXmlElement *zonesTag,
+                         MeshGraph* meshGraph,
+                         const LibUtilities::SessionReaderSharedPtr &pSession)
 {
-    int coordDim = m_meshGraph->GetSpaceDimension();
+    int coordDim = meshGraph->GetSpaceDimension();
 
     ASSERTL0(zonesTag, "Unable to find ZONES tag in file.");
     TiXmlElement *zonesElement = zonesTag->FirstChildElement();
@@ -195,7 +196,7 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
         err = zonesElement->QueryStringAttribute("DOMAIN", &interfaceDomainStr);
         ASSERTL0(err == TIXML_SUCCESS, "Unable to read zone domain.");
 
-        auto &domains = m_meshGraph->GetDomain();
+        auto &domains = meshGraph->GetDomain();
         auto domFind  = stoi(ReadTag(interfaceDomainStr));
         std::map<int, CompositeSharedPtr> domain;
         if (domains.find(domFind) != domains.end())
@@ -232,10 +233,10 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             err = zonesElement->QueryStringAttribute("ANGVEL", &angularVelStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read angular velocity.");
 
-            m_session->SubstituteExpressions(angularVelStr);
+            pSession->SubstituteExpressions(angularVelStr);
             LibUtilities::EquationSharedPtr angularVelEqn =
                 MemoryManager<LibUtilities::Equation>::AllocateSharedPtr(
-                    m_session->GetInterpreter(), angularVelStr);
+                    pSession->GetInterpreter(), angularVelStr);
 
             zone = ZoneRotateShPtr(MemoryManager<ZoneRotate>::AllocateSharedPtr(
                 indx, domain, coordDim, origin, axis, angularVelEqn));
@@ -266,21 +267,21 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read x deform equation.");
             LibUtilities::EquationSharedPtr xDeformEqn =
                 std::make_shared<LibUtilities::Equation>(
-                    m_session->GetInterpreter(), xDeformStr);
+                    pSession->GetInterpreter(), xDeformStr);
 
             std::string yDeformStr;
             err = zonesElement->QueryStringAttribute("YDEFORM", &yDeformStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read y deform equation.");
             LibUtilities::EquationSharedPtr yDeformEqn =
                 std::make_shared<LibUtilities::Equation>(
-                    m_session->GetInterpreter(), yDeformStr);
+                    pSession->GetInterpreter(), yDeformStr);
 
             std::string zDeformStr;
             err = zonesElement->QueryStringAttribute("ZDEFORM", &zDeformStr);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read z deform equation.");
             LibUtilities::EquationSharedPtr zDeformEqn =
                 std::make_shared<LibUtilities::Equation>(
-                    m_session->GetInterpreter(), zDeformStr);
+                    pSession->GetInterpreter(), zDeformStr);
 
             zone = ZonePrescribeShPtr(
                 MemoryManager<ZonePrescribe>::AllocateSharedPtr(
@@ -300,7 +301,8 @@ void Movement::ReadZones(TiXmlElement *zonesTag)
     }
 }
 
-void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
+void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
+                              MeshGraph* meshGraph)
 {
     ASSERTL0(interfacesTag, "Unable to find INTERFACES tag in file.");
     TiXmlElement *interfaceElement = interfacesTag->FirstChildElement();
@@ -341,7 +343,7 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag)
             if (boundaryErr == TIXML_SUCCESS)
             {
                 std::string indxStr = ReadTag(boundaryStr);
-                m_meshGraph->GetCompositeList(indxStr, boundaryEdge);
+                meshGraph->GetCompositeList(indxStr, boundaryEdge);
             }
 
             // Sets location in interface pair to 0 for left, and 1 for right

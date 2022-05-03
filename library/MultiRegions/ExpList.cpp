@@ -213,18 +213,6 @@ namespace Nektar
             m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
             m_WaveSpace(false)
         {
-
-            // Initialise interfaces
-            // @TODO: Moved into meshgraph like this, very messy, improve.
-            // Move back to explist...
-            std::cout << "Check get movement" << std::endl;
-            if(m_graph->GetMovement() == nullptr)
-            {
-                std::cout << "Make movement" << std::endl;
-                m_graph->GetMovement() =
-                    MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(m_session, m_graph);
-            }
-
             // Retrieve the list of expansions
             const SpatialDomains::ExpansionInfoMap &expansions
                 = graph->GetExpansionInfo(var);

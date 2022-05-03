@@ -34,8 +34,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 #include <SpatialDomains/Movement/InterfaceInterpolation.h>
+#include <SpatialDomains/MeshGraph.h>
 
 namespace Nektar
 {
