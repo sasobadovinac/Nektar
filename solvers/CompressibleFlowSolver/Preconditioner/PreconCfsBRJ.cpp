@@ -168,7 +168,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
         timer.Start();
         PreconBlkDiag(pFields, rhs, outarray, m_PreconMatSingle, tmpSingle);
         timer.Stop();
-        timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag");
+        timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
 
         for (int nrelax = 0; nrelax < nBRJIterTot - 1; nrelax++)
         {
@@ -181,13 +181,13 @@ void PreconCfsBRJ::v_DoPreconCfs(
                 m_TraceJacArraySingle, m_TraceJacDerivArraySingle,
                 m_TraceJacDerivSignSingle, m_TraceIPSymJacArraySingle);
             timer.Stop();
-            timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs");
+            timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs", 2);
             
             timer.Start();
             PreconBlkDiag(pFields, outarray, outTmp, m_PreconMatSingle,
                           tmpSingle);
             timer.Stop();
-            timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag");
+            timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
 
             Vmath::Svtvp(ntotpnt, BRJParam, outTmp, 1, outN, 1, outarray, 1);
         }
