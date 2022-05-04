@@ -489,10 +489,7 @@ void NekLinSysIterGMRES::DoArnoldi(const int starttem, const int endtem,
     tmp2 = w + nDir;
     if (m_NekLinSysLeftPrecon)
     {
-        timer.Start();
         m_operator.DoNekSysPrecon(tmp1, tmp2);
-        timer.Stop();
-        timer.AccumulateRegion("NekLinSysIterGMRES::DoArnoldi - DoNekSysPrecon");
     }
 
     Vmath::Smul(nNonDir, sqrt(m_prec_factor), tmp2, 1, tmp2, 1);

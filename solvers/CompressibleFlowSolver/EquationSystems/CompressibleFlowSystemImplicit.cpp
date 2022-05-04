@@ -159,6 +159,7 @@ namespace Nektar
         const bool                          &flag,
         const Array<OneD, const NekDouble>  &source)
     {
+        LibUtilities::Timer timer;
         boost::ignore_unused(flag);
         unsigned int nvariables     = m_fields.size();
         unsigned int npoints        = m_fields[0]->GetNcoeffs();
@@ -172,7 +173,11 @@ namespace Nektar
             out2D[i]   = out + offset;
             source2D[i]   = source + offset;
         }
+
+        timer.Start();
         NonlinSysEvaluatorCoeff(in2D, out2D, source2D);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::NonlinSysEvaluatorCoeff", 0);
     }
 
     void CFSImplicit::NonlinSysEvaluatorCoeff(
@@ -438,8 +443,9 @@ namespace Nektar
                   Array<OneD, NekDouble> &outarray,
             const bool                   &flag)
     {
-        LibUtilities::Timer timer; 
+        LibUtilities::Timer timer, GTimer; 
         
+        Gtimer.Start();
         if (m_preconCfs->UpdatePreconMatCheck(NullNekDouble1DArray, 
             m_TimeIntegLambda) && m_flagUpdatePreconMat)
         {
@@ -470,6 +476,9 @@ namespace Nektar
         m_preconCfs->DoPreconCfs(m_fields, inarray, outarray, flag);
         timer.Stop();
         timer.AccumulateRegion("PreconCfsOp::DoPreconCfs", 1);
+
+        Gtimer.Stop();
+        Gtimer.AccumulateRegion("CFSImplicit::PreconCoeff", 1);
     }
 
     template<typename DataType, typename TypeNekBlkMatSharedPtr>
