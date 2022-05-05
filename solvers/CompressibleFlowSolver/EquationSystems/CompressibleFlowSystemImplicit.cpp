@@ -443,7 +443,7 @@ namespace Nektar
                   Array<OneD, NekDouble> &outarray,
             const bool                   &flag)
     {
-        LibUtilities::Timer timer, GTimer; 
+        LibUtilities::Timer timer, Gtimer; 
         
         Gtimer.Start();
         if (m_preconCfs->UpdatePreconMatCheck(NullNekDouble1DArray, 
