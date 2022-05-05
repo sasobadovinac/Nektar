@@ -93,6 +93,8 @@ void Timer::PrintElapsedRegions()
         MemoryManager<LibUtilities::CommSerial>:: AllocateSharedPtr(1,&argv);
 
     PrintElapsedRegions(comm);
+
+    delete [] argv;
 }
     
 void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,

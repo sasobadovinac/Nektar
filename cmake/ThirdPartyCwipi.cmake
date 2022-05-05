@@ -33,10 +33,6 @@ IF ( NEKTAR_USE_CWIPI )
     IF (THIRDPARTY_BUILD_CWIPI)
         INCLUDE(ExternalProject)
 
-        IF(NOT CMAKE_Fortran_COMPILER)
-            MESSAGE(ERROR "MPI_Fortran_COMPILER not set")
-        ENDIF()
-
         IF(NOT NEKTAR_USE_MPI)
             MESSAGE(ERROR "NEKTAR_USE_MPI not set")
         ENDIF()

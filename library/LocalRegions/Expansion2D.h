@@ -73,7 +73,8 @@ namespace Nektar
                 Array<OneD, NekDouble>          &inout);
 
             LOCAL_REGIONS_EXPORT Array<OneD, unsigned int>
-                              GetTraceInverseBoundaryMap(int eid);
+
+            GetTraceInverseBoundaryMap(int eid);
 
             inline void AddNormTraceInt(
                 const int                             dir,
@@ -119,6 +120,7 @@ namespace Nektar
                 const int                        nq0,
                 Array<OneD, int>                &idmap);
 
+            virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
             virtual void v_GenTraceExp(const int traceid,
                                        ExpansionSharedPtr &exp);
         protected:
@@ -137,8 +139,6 @@ namespace Nektar
                     v_GetMFMag(const int dir,
                                const StdRegions::VarCoeffMap   &varcoeffs);
 
-            virtual DNekMatSharedPtr v_GenMatrix(
-                                                 const StdRegions::StdMatrixKey &mkey);
 
             // Hybridized DG routines
             virtual void v_DGDeriv(
@@ -196,6 +196,8 @@ namespace Nektar
             virtual void v_SetUpPhysNormals (const int edge);
             virtual NekDouble v_VectorFlux(
                                            const Array<OneD, Array<OneD, NekDouble > > &vec);
+            virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
+
         };
 
 

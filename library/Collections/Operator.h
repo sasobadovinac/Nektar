@@ -82,6 +82,15 @@ const char* const OperatorTypeMap[] =
     "PhysDeriv"
 };
 
+const char* const OperatorTypeMap1[] =
+{
+    "BwdTrans",
+    "Helmholtz",
+    "IPWrtBase",
+    "IPWrtDBase",
+    "PhysDeriv "
+};
+    
 enum ImplementationType
 {
     eNoImpType,
@@ -101,6 +110,16 @@ const char* const ImplementationTypeMap[] =
     "StdMat",
     "SumFac",
     "MatrixFree"
+};
+
+const char* const ImplementationTypeMap1[] =
+{
+    "NoImplementationType",
+    "IterLocExp", // formerly "NoCollection"
+    "IterStdExp", // formerly "IterPerExp"
+    "StdMat    ",
+    "SumFac    ",
+    "MatFree   "  // formerly "MatrixFree"
 };
 
 typedef bool ExpansionIsNodal;

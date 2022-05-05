@@ -320,6 +320,8 @@ public:
     inline bool SameExpansionInfo(const std::string var1,
                                   const std::string var2);
 
+    inline bool ExpansionInfoDefined(const std::string var);
+    
     inline bool CheckForGeomInfo(std::string parameter);
 
     inline const std::string GetGeomInfo(std::string parameter);
@@ -525,6 +527,14 @@ inline bool MeshGraph::SameExpansionInfo(const std::string var1,
     }
 
     return false;
+}
+
+/**
+ *
+ */
+inline bool MeshGraph::ExpansionInfoDefined(const std::string var)
+{
+    return m_expansionMapShPtrMap.count(var); 
 }
 
 /**

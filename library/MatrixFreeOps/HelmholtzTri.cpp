@@ -9,6 +9,6 @@ std::string __register_Helmholtz_Tri = GetOperatorFactory().RegisterCreatorFunct
 
 std::string __register_Helmholtz_Tri_Deformed = GetOperatorFactory().RegisterCreatorFunction(
     std::string("Helmholtz_Tri_Deformed"), &HelmholtzTri<true>::Create);
-
+    
 } // namespace MatrixFree
 } // namespace Nektar

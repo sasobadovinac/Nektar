@@ -83,6 +83,7 @@ SET(SOLVER_UTILS_HEADERS
   Filters/FilterEnergy.h
   Filters/FilterError.h
   Filters/FilterHistoryPoints.h
+  Filters/FilterInterfaces.hpp
   Filters/FilterMean.h
   Filters/FilterModalEnergy.h
   Filters/FilterMovingAverage.h

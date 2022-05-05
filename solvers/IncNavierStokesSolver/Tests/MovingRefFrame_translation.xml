@@ -68,13 +68,13 @@
         </FUNCTION>
         
         <FUNCTION NAME="InitialConditions">
-	  <F VAR="u,v,p" FILE="Moving_reference_frame.rst" />
+	  <F VAR="u,v,p" FILE="MovingRefFrame_translation.rst" />
         </FUNCTION>
     </CONDITIONS>
     
     <FORCING>
         <FORCE TYPE="MovingReferenceFrame">
-            <FRAMEVELOCITY> MovingReferenceFrame </FRAMEVELOCITY>
+            <LinearVelocity> MovingReferenceFrame </LinearVelocity>
         </FORCE>
         <FORCE TYPE="Body">
             <BODYFORCE> BodyForce </BODYFORCE>

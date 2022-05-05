@@ -811,7 +811,7 @@ namespace Nektar
                 break;
             }
 
-            if ( faceOrient >= 9 )
+            if (faceOrient >= eDir1FwdDir2_Dir2FwdDir1)
             {
                 std::swap(numModes0, numModes1);
             }
@@ -1221,12 +1221,114 @@ namespace Nektar
                 }
             }
         }
+        
+        void StdPrismExp::v_GetTraceCoeffMap(
+            const unsigned int        fid,
+            Array<OneD, unsigned int> &maparray)
+        {
+            ASSERTL1(GetBasisType(0) == GetBasisType(1),
+                     "Method only implemented if BasisType is identical"
+                     "in x and y directions");
+            ASSERTL1(GetBasisType(0) == LibUtilities::eModified_A &&
+                     GetBasisType(2) == LibUtilities::eModified_B,
+                     "Method only implemented for Modified_A BasisType"
+                     "(x and y direction) and Modified_B BasisType (z "
+                     "direction)");
+            int p,q,r, idx=0; 
+            int P=0, Q=0;
 
-        void StdPrismExp::v_GetTraceToElementMap(
-            const int                  fid,
-            Array<OneD, unsigned int> &maparray,
+            switch (fid)
+            {
+            case 0:
+                P = m_base[0]->GetNumModes();
+                Q = m_base[1]->GetNumModes();
+                break;
+            case 1:
+            case 3:
+                P = m_base[0]->GetNumModes();
+                Q = m_base[2]->GetNumModes();
+                break;
+            case 2:
+            case 4:
+                P = m_base[1]->GetNumModes();
+                Q = m_base[2]->GetNumModes();
+                break;
+            default:
+                ASSERTL0(false,"fid must be between 0 and 4");
+            }
+
+            if(maparray.size() != P*Q)
+            {
+                maparray = Array<OneD, unsigned int>(P*Q);
+            }
+
+            // Set up ordering inside each 2D face. Also for triangular faces,
+            // populate signarray.
+            switch (fid)
+            {
+            case 0: // Bottom quad
+                for (q = 0; q < Q; ++q)
+                {
+                    for (p = 0; p < P; ++p)
+                    {
+                        maparray[q*P+p] = GetMode(p,q,0);
+                    }
+                }
+                break;
+            case 1: // Left triangle
+                for (p = 0; p < P; ++p)
+                {
+                    for (r = 0; r < Q-p; ++r)
+                    {
+                        maparray[idx++] = GetMode(p,0,r);
+                    }
+                }
+                break;
+            case 2: // Slanted quad
+                for (q = 0; q < P; ++q)
+                {
+                    maparray[q] = GetMode(1,q,0);
+                }
+                for (q = 0; q < P; ++q)
+                {
+                    maparray[P+q] = GetMode(0,q,1);
+                }
+                for (r = 1; r < Q-1; ++r)
+                {
+                    for (q = 0; q < P; ++q)
+                    {
+                        maparray[(r+1)*P+q] = GetMode(1,q,r);
+                    }
+                }
+                break;
+            case 3: // Right triangle
+                for (p = 0; p < P; ++p)
+                {
+                    for (r = 0; r < Q-p; ++r)
+                    {
+                        maparray[idx++] = GetMode(p, 1, r);
+                    }
+                }
+                break;
+            case 4: // Rear quad
+                for (r = 0; r < Q; ++r)
+                {
+                    for (q = 0; q < P; ++q)
+                    {
+                        maparray[r*P+q] = GetMode(0, q, r);
+                    }
+                }
+                break;
+            default:
+                ASSERTL0(false, "Face to element map unavailable.");
+            }
+        }
+        
+        void StdPrismExp::v_GetElmtTraceToTraceMap(
+            const unsigned int         fid,
+            Array<OneD, unsigned int>  &maparray,
             Array<OneD,          int> &signarray,
-            const Orientation         faceOrient,
+            Orientation                faceOrient,
             int                        P,
             int                        Q)
         {
@@ -1239,7 +1341,7 @@ namespace Nektar
                      "(x and y direction) and Modified_B BasisType (z "
                      "direction)");
 
-            int i, j, k, p, q, r, nFaceCoeffs, idx = 0;
+            int i, j, k, p, r, nFaceCoeffs, idx = 0;
             int nummodesA=0, nummodesB=0;
 
             switch (fid)
@@ -1262,7 +1364,6 @@ namespace Nektar
                 ASSERTL0(false,"fid must be between 0 and 4");
             }
 
-            bool CheckForZeroedModes = false;
 
             if (P == -1)
             {
@@ -1273,12 +1374,10 @@ namespace Nektar
             else if (fid == 1 || fid == 3)
             {
                 nFaceCoeffs = P*(2*Q-P+1)/2;
-                CheckForZeroedModes = true;
             }
             else
             {
                 nFaceCoeffs = P*Q;
-                CheckForZeroedModes = true;
             }
 
             // Allocate the map array and sign array; set sign array to ones (+)
@@ -1296,134 +1395,77 @@ namespace Nektar
                 fill(signarray.get(), signarray.get() + nFaceCoeffs, 1);
             }
 
-            // Set up an array indexing for quads, since the ordering may need
-            // to be transposed.
-            Array<OneD, int> arrayindx(nFaceCoeffs,-1);
-
-            if (fid != 1 && fid != 3)
-            {
-                for (i = 0; i < Q; i++)
-                {
-                    for (j = 0; j < P; j++)
-                    {
-                        if (faceOrient < 9)
-                        {
-                            arrayindx[i*P+j] = i*P+j;
-                        }
-                        else
-                        {
-                            arrayindx[i*P+j] = j*Q+i;
-                        }
-                   }
-                }
-            }
-
-            // Set up ordering inside each 2D face. Also for triangular faces,
-            // populate signarray.
-            switch (fid)
-            {
-                case 0: // Bottom quad
-                    for (q = 0; q < Q; ++q)
-                    {
-                        for (p = 0; p < P; ++p)
-                        {
-                            maparray[arrayindx[q*P+p]] = GetMode(p,q,0);
-                        }
-                    }
-                    break;
-
-                case 1: // Left triangle
-                    for (p = 0; p < P; ++p)
-                    {
-                        for (r = 0; r < Q-p; ++r)
-                        {
-                            if ((int)faceOrient == 7 && p > 1)
-                            {
-                                signarray[idx] = p % 2 ? -1 : 1;
-                            }
-                            maparray[idx++] = GetMode(p,0,r);
-                        }
-                    }
-                    break;
-
-                case 2: // Slanted quad
-                    for (q = 0; q < P; ++q)
-                    {
-                        maparray[arrayindx[q]] = GetMode(1,q,0);
-                    }
-                    for (q = 0; q < P; ++q)
-                    {
-                        maparray[arrayindx[P+q]] = GetMode(0,q,1);
-                    }
-                    for (r = 1; r < Q-1; ++r)
-                    {
-                        for (q = 0; q < P; ++q)
-                        {
-                            maparray[arrayindx[(r+1)*P+q]] = GetMode(1,q,r);
-                        }
-                    }
-                    break;
-
-                case 3: // Right triangle
-                    for (p = 0; p < P; ++p)
-                    {
-                        for (r = 0; r < Q-p; ++r)
-                        {
-                            if ((int)faceOrient == 7 && p > 1)
-                            {
-                                signarray[idx] = p % 2 ? -1 : 1;
-                            }
-                            maparray[idx++] = GetMode(p, 1, r);
-                        }
-                    }
-                    break;
-
-                case 4: // Rear quad
-                    for (r = 0; r < Q; ++r)
-                    {
-                        for (q = 0; q < P; ++q)
-                        {
-                            maparray[arrayindx[r*P+q]] = GetMode(0, q, r);
-                        }
-                    }
-                    break;
-
-                default:
-                    ASSERTL0(false, "Face to element map unavailable.");
-            }
-
+            int minPA = min(nummodesA,P);
+            int minQB = min(nummodesB,Q);
+            // triangular faces 
             if (fid == 1 || fid == 3)
             {
-                if(CheckForZeroedModes)
+                // zero signmap and set maparray to zero if elemental
+                // modes are not as large as face modesl
+                idx = 0;
+                int cnt = 0; 
+                
+                for (j = 0; j < minPA; ++j)
                 {
-                    // zero signmap and set maparray to zero if elemental
-                    // modes are not as large as face modesl
-                    idx = 0;
-                    for (j = 0; j < nummodesA; ++j)
+                    // set maparray
+                    for (k = 0; k < minQB-j; ++k, ++cnt)
                     {
-                        idx += nummodesB-j;
-                        for (k = nummodesB-j; k < Q-j; ++k)
-                        {
-                            signarray[idx]  = 0.0;
-                            maparray[idx++] = maparray[0];
-                        }
+                        maparray[idx++] = cnt;
                     }
 
-                    for (j = nummodesA; j < P; ++j)
+                    cnt += nummodesB-minQB;
+                    
+                    //idx += nummodesB-j;
+                    for (k = nummodesB-j; k < Q-j; ++k)
                     {
-                        for (k = 0; k < Q-j; ++k)
-                        {
-                            signarray[idx]  = 0.0;
-                            maparray[idx++] = maparray[0];
-                        }
+                        signarray[idx]  = 0.0;
+                        maparray[idx++] = maparray[0];
                     }
                 }
+#if 0 // no required? 
+                for (j = minPA; j < nummodesA; ++j)
+                {
+                    // set maparray
+                    for (k = 0; k < minQB-j; ++k, ++cnt)
+                    {
+                        maparray[idx++] = cnt;
+                    }
 
-
+                    cnt += nummodesB-minQB;
+                    
+                    //idx += nummodesB-j;
+                    for (k = nummodesB-j; k < Q-j; ++k)
+                    {
+                        signarray[idx]  = 0.0;
+                        maparray[idx++] = maparray[0];
+                    }
+                }
+#endif
+                for (j = nummodesA; j < P; ++j)
+                {
+                    for (k = 0; k < Q-j; ++k)
+                    {
+                        signarray[idx]  = 0.0;
+                        maparray[idx++] = maparray[0];
+                    }
+                }
+                
                 // Triangles only have one possible orientation (base
                 // direction reversed); swap edge modes.
-                if ((int)faceOrient == 7)
+                if (faceOrient ==  eDir1BwdDir1_Dir2FwdDir2)
                 {
+                    idx = 0; 
+                    for (p = 0; p < P; ++p)
+                    {
+                        for (r = 0; r < Q-p; ++r, idx++)
+                        {
+                            if (p > 1)
+                            {
+                                signarray[idx] = p % 2 ? -1 : 1;
+                            }
+                        }
+                    }
+                
                     swap(maparray[0], maparray[Q]);
                     for (i = 1; i < Q-1; ++i)
                     {
@@ -1433,38 +1475,61 @@ namespace Nektar
             }
             else
             {
-
-                if(CheckForZeroedModes)
+                // Set up an array indexing for quads, since the
+                // ordering may need to be transposed.
+                Array<OneD, int> arrayindx(nFaceCoeffs,-1);
+                
+                for (i = 0; i < Q; i++)
                 {
-                    // zero signmap and set maparray to zero if elemental
-                    // modes are not as large as face modesl
-                    for (j = 0; j < nummodesA; ++j)
+                    for (j = 0; j < P; j++)
                     {
-                        for (k = nummodesB; k < Q; ++k)
+                        if (faceOrient < eDir1FwdDir2_Dir2FwdDir1)
                         {
-                            signarray[arrayindx[j+k*P]] = 0.0;
-                            maparray[arrayindx[j+k*P]]  = maparray[0];
+                            arrayindx[i*P+j] = i*P+j;
                         }
-                    }
-
-                    for (j = nummodesA; j < P; ++j)
-                    {
-                        for (k = 0; k < Q; ++k)
+                        else
                         {
-                            signarray[arrayindx[j+k*P]] = 0.0;
-                            maparray[arrayindx[j+k*P]]  = maparray[0];
+                            arrayindx[i*P+j] = j*Q+i;
                         }
                     }
                 }
 
+                // zero signmap and set maparray to zero if elemental
+                // modes are not as large as face modesl
+                for (j = 0; j < P; ++j)
+                {
+                    // set up default maparray
+                    for(k = 0; k < Q; k++)
+                    {
+                        maparray[ arrayindx[j+k*P]] = j+k*nummodesA; 
+                    }
+                
+                    for (k = nummodesB; k < Q; ++k)
+                    {
+                        signarray[arrayindx[j+k*P]] = 0.0;
+                        maparray[arrayindx[j+k*P]]  = maparray[0];
+                    }
+                }
+                
+                for (j = nummodesA; j < P; ++j)
+                {
+                    for (k = 0; k < Q; ++k)
+                    {
+                        signarray[arrayindx[j+k*P]] = 0.0;
+                        maparray[arrayindx[j+k*P]]  = maparray[0];
+                    }
+                }
+                
                 // The code below is exactly the same as that taken from
                 // StdHexExp and reverses the 'b' and 'a' directions as
                 // appropriate (1st and 2nd if statements respectively) in
                 // quadrilateral faces.
-                if (faceOrient == 6 || faceOrient == 8 ||
-                    faceOrient == 11 || faceOrient == 12)
+                if (faceOrient == eDir1FwdDir1_Dir2BwdDir2 ||
+                    faceOrient == eDir1BwdDir1_Dir2BwdDir2 ||
+                    faceOrient == eDir1BwdDir2_Dir2FwdDir1 || 
+                    faceOrient == eDir1BwdDir2_Dir2BwdDir1)
                 {
-                    if (faceOrient < 9)
+                    if (faceOrient < eDir1FwdDir2_Dir2FwdDir1)
                     {
                         for (i = 3; i < Q; i += 2)
                         {
@@ -1498,10 +1563,12 @@ namespace Nektar
                     }
                 }
 
-                if (faceOrient == 7 || faceOrient == 8 ||
-                    faceOrient == 10 || faceOrient == 12)
+                if (faceOrient ==  eDir1BwdDir1_Dir2FwdDir2 || 
+                    faceOrient ==  eDir1BwdDir1_Dir2BwdDir2 ||
+                    faceOrient ==  eDir1FwdDir2_Dir2BwdDir1 ||
+                    faceOrient ==  eDir1BwdDir2_Dir2BwdDir1 )
                 {
-                    if (faceOrient < 9)
+                    if (faceOrient < eDir1FwdDir2_Dir2FwdDir1)
                     {
                         for (i = 0; i < Q; i++)
                         {
@@ -1536,8 +1603,7 @@ namespace Nektar
                 }
             }
         }
-
-
+        
         void StdPrismExp::v_GetEdgeInteriorToElementMap(
             const int                  eid,
             Array<OneD, unsigned int> &maparray,
@@ -1702,7 +1768,7 @@ namespace Nektar
                 {
                     for (j = 0; j < nummodesA; j++)
                     {
-                        if (faceOrient < 9)
+                        if (faceOrient < eDir1FwdDir2_Dir2FwdDir1)
                         {
                             arrayindx[i*nummodesA+j] = i*nummodesA+j;
                         }
@@ -1721,7 +1787,8 @@ namespace Nektar
                     {
                         for (p = 2; p <= P; ++p)
                         {
-                            maparray[arrayindx[(q-2)*nummodesA+(p-2)]] = GetMode(p,q,0);
+                            maparray[arrayindx[(q-2)*nummodesA+(p-2)]] =
+                                GetMode(p,q,0);
                         }
                     }
                     break;
@@ -1731,7 +1798,7 @@ namespace Nektar
                     {
                         for (r = 1; r <= R-p; ++r)
                         {
-                            if ((int)faceOrient == 7)
+                            if(faceOrient == eDir1BwdDir1_Dir2FwdDir2)
                             {
                                 signarray[idx] = p % 2 ? -1 : 1;
                             }
@@ -1745,7 +1812,8 @@ namespace Nektar
                     {
                         for (q = 2; q <= Q; ++q)
                         {
-                            maparray[arrayindx[(r-1)*nummodesA+(q-2)]] = GetMode(1, q, r);
+                            maparray[arrayindx[(r-1)*nummodesA+(q-2)]] =
+                                GetMode(1, q, r);
                         }
                     }
                     break;
@@ -1755,7 +1823,7 @@ namespace Nektar
                     {
                         for (r = 1; r <= R-p; ++r)
                         {
-                            if ((int)faceOrient == 7)
+                            if(faceOrient == eDir1BwdDir1_Dir2FwdDir2)
                             {
                                 signarray[idx] = p % 2 ? -1 : 1;
                             }
@@ -1769,7 +1837,8 @@ namespace Nektar
                     {
                         for (q = 2; q <= Q; ++q)
                         {
-                            maparray[arrayindx[(r-2)*nummodesA+(q-2)]] = GetMode(0, q, r);
+                            maparray[arrayindx[(r-2)*nummodesA+(q-2)]] =
+                                GetMode(0, q, r);
                         }
                     }
                     break;
@@ -1782,11 +1851,13 @@ namespace Nektar
             // remaining quad faces, set up orientation if necessary.
             if (fid == 1 || fid == 3)
                 return;
-
-            if (faceOrient == 6 || faceOrient == 8 ||
-                faceOrient == 11 || faceOrient == 12)
+            
+            if (faceOrient == eDir1FwdDir1_Dir2BwdDir2 ||
+                faceOrient == eDir1BwdDir1_Dir2BwdDir2 ||
+                faceOrient == eDir1BwdDir2_Dir2FwdDir1 || 
+                faceOrient == eDir1BwdDir2_Dir2BwdDir1)
             {
-                if (faceOrient < 9)
+                if (faceOrient < eDir1FwdDir2_Dir2FwdDir1)
                 {
                     for (i = 1; i < nummodesB; i += 2)
                     {
@@ -1808,10 +1879,12 @@ namespace Nektar
                 }
             }
 
-            if (faceOrient == 7 || faceOrient == 8 ||
-                faceOrient == 10 || faceOrient == 12)
+            if (faceOrient ==  eDir1BwdDir1_Dir2FwdDir2 || 
+                faceOrient ==  eDir1BwdDir1_Dir2BwdDir2 ||
+                faceOrient ==  eDir1FwdDir2_Dir2BwdDir1 ||
+                faceOrient ==  eDir1BwdDir2_Dir2BwdDir1 )
             {
-                if (faceOrient < 9)
+                if (faceOrient < eDir1FwdDir2_Dir2FwdDir1)
                 {
                     for (i = 0; i < nummodesB; i++)
                     {

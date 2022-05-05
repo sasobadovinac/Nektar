@@ -44,7 +44,8 @@ namespace Nektar
 namespace SolverUtils
 {
 std::string DiffusionLDG::type =
-    GetDiffusionFactory().RegisterCreatorFunction("LDG", DiffusionLDG::create);
+    GetDiffusionFactory().RegisterCreatorFunction("LDG", DiffusionLDG::create,
+                                                  "Local Discontinuous Galkerin");
 
 DiffusionLDG::DiffusionLDG()
 {

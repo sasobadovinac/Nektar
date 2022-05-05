@@ -36,6 +36,8 @@
 #define NEKTAR_SOLVERUTILS_FILTERS_FILTERINTERFACES_HPP
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
 
 namespace Nektar
 {
@@ -63,6 +65,48 @@ public:
     SOLVER_UTILS_EXPORT virtual void GetPressure(
         const Array<OneD, const Array<OneD, NekDouble> > &physfield,
               Array<OneD, NekDouble>                     &pressure) = 0;
+
+    // gave access and set to the moving frame velocity
+    // for Moving reference frame formulation
+    SOLVER_UTILS_EXPORT virtual void SetMovingFrameVelocities(
+        const Array<OneD, NekDouble> &vFrameVels)
+    {
+        boost::ignore_unused(vFrameVels);
+    }
+
+    SOLVER_UTILS_EXPORT virtual void GetMovingFrameVelocities(
+        Array<OneD, NekDouble> &vFrameVels)
+    {
+        boost::ignore_unused(vFrameVels);
+    }
+
+    // gave access and set to the projection matrix that transfers
+    // between stationary inertial frame and moving reference frame
+    SOLVER_UTILS_EXPORT virtual void SetMovingFrameProjectionMat(
+        const boost::numeric::ublas::matrix<NekDouble> &vProjMat)
+    {
+        boost::ignore_unused(vProjMat);
+    }
+
+    SOLVER_UTILS_EXPORT virtual void GetMovingFrameProjectionMat(
+        boost::numeric::ublas::matrix<NekDouble> &vProjMat)
+    {
+        boost::ignore_unused(vProjMat);
+    }
+
+    // gave access and set the angle between moving frame and stationary
+    // inertial frame
+    SOLVER_UTILS_EXPORT virtual void SetMovingFrameAngles(
+        const Array < OneD, NekDouble> &vFrameTheta)
+    {
+        boost::ignore_unused(vFrameTheta);
+    }
+
+    SOLVER_UTILS_EXPORT virtual void GetMovingFrameAngles(
+        Array<OneD, NekDouble> &vFrameTheta)
+    {
+        boost::ignore_unused(vFrameTheta);
+    }
 };
 
 }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <COLLECTIONS>
+        <OPERATOR TYPE="BwdTrans">
+            <ELEMENT TYPE="S" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="A" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="P" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="R" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="H" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+        <OPERATOR TYPE="Helmholtz">
+            <ELEMENT TYPE="S" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="A" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="P" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="R" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="H" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+        <OPERATOR TYPE="IProductWRTBase">
+            <ELEMENT TYPE="S" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="A" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="P" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="R" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="H" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+        <OPERATOR TYPE="IProductWRTDerivBase">
+            <ELEMENT TYPE="S" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="A" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="P" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="R" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="H" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+        <OPERATOR TYPE="PhysDeriv">
+            <ELEMENT TYPE="S" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="A" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="P" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="R" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="H" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+    </COLLECTIONS>
+</NEKTAR>

@@ -66,6 +66,7 @@ struct avx512
 // forward declaration of concrete types
 template<typename T> struct avx512Long8;
 struct avx512Double8;
+struct avx512Mask;
 
 namespace abi
 {
@@ -166,7 +167,12 @@ struct avx512Long8
     >
     inline void load(const scalarType* p, flag)
     {
-        _data = _mm512_loadu_epi64(p);
+        // even though the intel intrisic manual lists
+        // __m512i _mm512_loadu_epi64 (void const* mem_addr)
+        // it is not implemented in some compilers (gcc)
+        // since this is a bitwise load with no extension
+        // the following instruction is equivalent
+        _data = _mm512_loadu_si512(p);
     }
 
     inline void broadcast(const scalarType rhs)
@@ -181,12 +187,6 @@ struct avx512Long8
     {
         alignas(alignment) scalarArray tmp;
         store(tmp, is_aligned);
-        return tmp[i];
-    }
-
-    inline scalarType& operator[](size_t i)
-    {
-        scalarType* tmp = reinterpret_cast<scalarType*>(&_data);
         return tmp[i];
     }
 
@@ -324,13 +324,13 @@ struct avx512Double8
     template <typename T>
     inline void gather(scalarType const* p, const avx512Long8<T>& indices)
     {
-        _data = _mm512_i64gather_pd(p, indices._data, 8);
+        _data = _mm512_i64gather_pd(indices._data, p, 8);
     }
 
     template <typename T>
     inline void scatter(scalarType* out, const avx512Long8<T>& indices) const
     {
-        _mm512_i64scatter_pd(out, indices._data, 8);
+        _mm512_i64scatter_pd(out, indices._data, _data, 8);
     }
 
     // fma
@@ -351,13 +351,7 @@ struct avx512Double8
         return tmp[i];
     }
 
-    inline scalarType& operator[](size_t i)
-    {
-        scalarType* tmp = reinterpret_cast<scalarType*>(&_data);
-        return tmp[i];
-    }
-
-        // unary ops
+    // unary ops
     inline void operator+=(avx512Double8 rhs)
     {
         _data = _mm512_add_pd(_data, rhs._data);
@@ -545,60 +539,36 @@ inline void deinterleave_store(
 ////////////////////////////////////////////////////////////////////////////////
 
 // mask type
-// avx512 support a narrow bolean type, i.e. a bitwise mask: __mask8
+// mask is a int type with special properties (broad boolean vector)
+// broad boolean vectors defined and allowed values are:
+// false=0x0 and true=0xFFFFFFFF
 //
 // VERY LIMITED SUPPORT...just enough to make cubic eos work...
-// NOT TESTED
 //
-struct avx512Mask
+struct avx512Mask : avx512Long8<std::uint64_t>
 {
-    static constexpr unsigned int width = 1;
-    static constexpr unsigned int alignment = 8;
+    // bring in ctors
+    using avx512Long8::avx512Long8;
 
-    using scalarType = bool;
-    using vectorType = __mmask8;
-    using scalarArray = std::uint8_t;
-
-    // storage
-    vectorType _data;
-
-    // true false type
-    static constexpr scalarType true_v = true;
-    static constexpr scalarType false_v = false;
-
-    // ctors
-    inline avx512Mask() = default;
-    inline avx512Mask(const avx512Mask& rhs) = default;
-    inline avx512Mask(const vectorType& rhs) : _data(rhs){}
-    inline avx512Mask(const scalarType rhs)
-    {
-        _data = _mm512_set1_epi64(rhs);
-    }
-    explicit inline avx512Mask(scalarArray& rhs)
-    {
-        _data = _mm512_load_epi64(rhs);
-    }
-
-    // load
-    inline void load(scalarArray* p) const
-    {
-        _load_mask8(reinterpret_cast<vectorType*>(p), _data);
-    }
-
+    static constexpr scalarType true_v = -1;
+    static constexpr scalarType false_v = 0;
 };
 
 inline avx512Mask operator>(avx512Double8 lhs, avx512Double8 rhs)
 {
-
-    return _mm512_cmp_pd_mask(rhs._data, lhs._data, 1);
+    __mmask8 mask = _mm512_cmp_pd_mask(lhs._data, rhs._data, _CMP_GT_OQ);
+    return _mm512_maskz_set1_epi64(mask, avx512Mask::true_v);
 }
 
 inline bool operator&&(avx512Mask lhs, bool rhs)
 {
-    static constexpr std::uint8_t mask_true = 0xFF;
-    bool tmp = _ktestc_mask8_u8(lhs._data, _load_mask8(&mask_true));
+    __m512i val_true = _mm512_set1_epi64(avx512Mask::true_v);
+    __mmask8 mask = _mm512_test_epi64_mask(lhs._data, val_true);
+    unsigned int tmp = _cvtmask16_u32 (mask);
     return tmp && rhs;
 }
+
+
 
 #endif // defined(__avx512__)
 
