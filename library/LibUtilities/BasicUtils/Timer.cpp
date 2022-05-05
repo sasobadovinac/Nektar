@@ -46,16 +46,22 @@ namespace LibUtilities
 
 void Timer::Start()
 {
+    ASSERTL0(!m_isactive, "Call to Timer::Start() done when timer is active.");
+    m_isactive = true;
     m_start = Clock::now();
 }
 
 void Timer::Stop()
 {
     m_end = Clock::now();
+    ASSERTL0(m_isactive, "Call to Timer::Stop() done when timer is inactive.");
+    m_isactive = false;
 }
 
 Timer::Seconds Timer::Elapsed()
 {
+    ASSERTL0(!m_isactive, 
+        "Call to Timer::Elapsed() done before Timer::Stop().");
     return std::chrono::duration_cast<Seconds>(m_end - m_start);
 }
 
@@ -72,10 +78,6 @@ void Timer::AccumulateRegion(std::string region, int iolevel)
     {
         m_elapsedRegion.insert({region,
          std::make_tuple<Timer::Seconds, size_t>(this->Elapsed(),1, iolevel)});
-        // update field width
-        m_maxStringWidth = std::max(
-            static_cast<decltype(m_maxStringWidth)>(region.size()),
-            m_maxStringWidth);
     }
     else
     {
@@ -108,17 +110,27 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
         "Max (s)",
         "Count"};
 
+    // Set width of each column (minimum 10 characters)
+    std::vector<size_t> widths;
+    for(const auto& label : labels){
+        widths.push_back(std::max<size_t>(label.size()+2, 10));
+    }
+    // Make sure that names for each "Region" fits
+    for(const auto& entry : m_elapsedRegion){
+        widths[0] = std::max<size_t>(entry.first.size()+2, widths[0]);
+    }
 
+    // Print header with labels
     if (comm->GetRank() == 0 &&
         m_elapsedRegion.begin() != m_elapsedRegion.end())
     {
         o << "-------------------------------------------\n";
-        o << std::setw(m_maxStringWidth+2) << labels[0] << '\t'
-          << std::setw(10) << labels[1] << '\t'
-          << std::setw(10) << labels[2] << '\t'
-          << std::setw(10) << labels[3] << '\t'
-          << std::setw(10) << labels[4] << '\n';
+        for(int i=0; i<labels.size(); ++i){
+            o << std::setw(widths[i]) << labels[i];
+        }
+        o << '\n';
     }
+    
     // first write out execute time
     auto item = m_elapsedRegion.find("Execute");
     if(item != m_elapsedRegion.end())
@@ -133,11 +145,11 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
         
         if (comm->GetRank() == 0)
         {
-            o << std::setw(m_maxStringWidth+2) << item->first << '\t'
-              << std::setw(10) << elapsedAve << '\t'
-              << std::setw(10) << elapsedMin << '\t'
-              << std::setw(10) << elapsedMax << '\t'
-              << std::setw(10) << std::get<1>(item->second) << '\n';
+            o << std::setw(widths[0]) << item->first
+              << std::setw(widths[1]) << elapsedAve
+              << std::setw(widths[2]) << elapsedMin
+              << std::setw(widths[3]) << elapsedMax
+              << std::setw(widths[4]) << std::get<1>(item->second) << '\n';
         }
     }            
 
@@ -162,11 +174,11 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
 
             if (comm->GetRank() == 0)
             {
-                o << std::setw(m_maxStringWidth+2) << item->first << '\t'
-                  << std::setw(10) << elapsedAve << '\t'
-                  << std::setw(10) << elapsedMin << '\t'
-                  << std::setw(10) << elapsedMax << '\t'
-                  << std::setw(10) << std::get<1>(item->second) << '\n';
+                o << std::setw(widths[0]) << item->first
+                  << std::setw(widths[1]) << elapsedAve
+                  << std::setw(widths[2]) << elapsedMin
+                  << std::setw(widths[3]) << elapsedMax
+                  << std::setw(widths[4]) << std::get<1>(item->second) << '\n';
             }
         }
     }
@@ -174,8 +186,6 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
 // static members init
 std::map<std::string, std::tuple<Timer::Seconds, size_t, int>>
     Timer::m_elapsedRegion{};
-
-unsigned short Timer::m_maxStringWidth = 10;
 
 }
 } // end Nektar namespace
