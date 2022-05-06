@@ -73,7 +73,11 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
     // set a default method
     if (m_method == eNoMethod)
     {
-        if (m_ptsInField->GetDim() == 1 || m_coordId >= 0)
+        if (m_ptsInField->GetDim() == 3)
+        {
+            m_method = eNearestNeighbour;
+        }
+        else if (m_ptsInField->GetDim() == 1 || m_coordId >= 0)
         {
             m_method = eQuadratic;
         }
