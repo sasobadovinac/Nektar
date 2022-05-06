@@ -166,9 +166,9 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pBwd,
         Array<OneD, int> &nonZeroIndex);
 
-    virtual void v_InitObject(
+    void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
 
     virtual void v_Diffuse(
         const std::size_t nConvectiveFields,
@@ -262,7 +262,7 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &aver,
         Array<OneD, Array<OneD, NekDouble>> &jump);
 
-    virtual const Array<OneD, const Array<OneD, NekDouble>> &v_GetTraceNormal()
+    const Array<OneD, const Array<OneD, NekDouble>> &v_GetTraceNormal() override
     {
         return m_traceNormals;
     }

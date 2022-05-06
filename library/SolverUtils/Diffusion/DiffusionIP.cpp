@@ -378,7 +378,7 @@ void DiffusionIP::v_DiffuseCalcDerivative(
         qtmp[nd] = NullNekDouble1DArray;
     }
 
-    size_t nConvectiveFields = fields.size();
+    size_t nConvectiveFields = inarray.size();
     for (int i = 0; i < nConvectiveFields; ++i)
     {
         for (int nd = 0; nd < nDim; ++nd)

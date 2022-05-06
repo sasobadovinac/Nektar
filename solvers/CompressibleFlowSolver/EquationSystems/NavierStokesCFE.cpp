@@ -79,10 +79,8 @@ namespace Nektar
         m_session->LoadParameter ("Twall", m_Twall, 300.15);
 
         // Viscosity
-        int nPts = m_fields[0]->GetNpoints();
         m_session->LoadSolverInfo("ViscosityType", m_ViscosityType, "Constant");
         m_session->LoadParameter ("mu",            m_muRef,           1.78e-05);
-        m_mu = Array<OneD, NekDouble>(nPts, m_muRef);
         if (m_ViscosityType == "Variable")
         {
             m_is_mu_variable = true;
@@ -103,8 +101,11 @@ namespace Nektar
             m_session->LoadParameter ("Pr", m_Prandtl, 0.72);
             m_thermalConductivityRef = m_Cp * m_muRef / m_Prandtl;
         }
-        m_thermalConductivity =
-                Array<OneD, NekDouble>(nPts, m_thermalConductivityRef);
+
+        if (m_shockCaptureType == "Physical")
+        {
+            m_is_shockCaptPhys = true;
+        }
 
         string diffName;
         m_session->LoadSolverInfo("DiffusionType", diffName, "LDGNS");
@@ -148,9 +149,6 @@ namespace Nektar
         m_diffusion->SetDiffusionSymmFluxCons(
             &NavierStokesCFE::GetViscousSymmtrFluxConservVar, this);
 
-        m_diffusion->SetCalcViscosity(
-                &NavierStokesCFE::CalcViscosity, this);
-
         // Concluding initialisation of diffusion operator
         m_diffusion->InitObject         (m_session, m_fields);
 
@@ -174,7 +172,7 @@ namespace Nektar
         }
 
         // Set artificial viscosity based on NS viscous tensor
-        if (m_shockCaptureType == "Physical")
+        if (m_is_shockCaptPhys)
         {
             Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
             GetDivCurlSquared(m_fields, inarray, div, curlSquare,
@@ -190,6 +188,7 @@ namespace Nektar
             {
                 NEKERROR(ErrorUtil::efatal, "m_bndEvaluateTime not setup");
             }
+            auto checkTraceNormal = m_diffusion->GetTraceNormal();
             m_diffusion->Diffuse(nvariables, m_fields, inarray, outarrayDiff,
                                 m_bndEvaluateTime,
                                 pFwd, pBwd);
@@ -278,8 +277,10 @@ namespace Nektar
         const NekDouble lambda = -2.0/3.0;
 
         // Update viscosity and thermal conductivity
-        GetViscosityAndThermalCondFromTemp(physfield[nScalar-1], m_mu,
-            m_thermalConductivity);
+        Array<OneD, NekDouble> mu                 (nPts, 0.0);
+        Array<OneD, NekDouble> thermalConductivity(nPts, 0.0);
+        GetViscosityAndThermalCondFromTemp(physfield[nScalar-1], mu,
+            thermalConductivity);
 
         // Velocity divergence
         for (int j = 0; j < m_spacedim; ++j)
@@ -290,7 +291,7 @@ namespace Nektar
 
         // Velocity divergence scaled by lambda * mu
         Vmath::Smul(nPts, lambda, divVel, 1, divVel, 1);
-        Vmath::Vmul(nPts, m_mu,  1, divVel, 1, divVel, 1);
+        Vmath::Vmul(nPts, mu,  1, divVel, 1, divVel, 1);
         
         // Viscous flux vector for the rho equation = 0
         for (int i = 0; i < m_spacedim; ++i)
@@ -307,7 +308,7 @@ namespace Nektar
                                   derivativesO1[j][i], 1,
                                   viscousTensor[i][j+1], 1);
 
-                Vmath::Vmul(nPts, m_mu, 1,
+                Vmath::Vmul(nPts, mu, 1,
                                   viscousTensor[i][j+1], 1,
                                   viscousTensor[i][j+1], 1);
 
@@ -340,7 +341,7 @@ namespace Nektar
                                viscousTensor[i][m_spacedim+1], 1);
             }
             // Add k*T_i
-            Vmath::Vvtvp(nPts, m_thermalConductivity, 1,
+            Vmath::Vvtvp(nPts, thermalConductivity, 1,
                                derivativesO1[i][m_spacedim], 1,
                                viscousTensor[i][m_spacedim+1], 1,
                                viscousTensor[i][m_spacedim+1], 1);
@@ -370,8 +371,10 @@ namespace Nektar
         const NekDouble lambda = -2.0/3.0;
 
         // Update viscosity and thermal conductivity
-        GetViscosityAndThermalCondFromTemp(physfield[nScalar-1], m_mu,
-            m_thermalConductivity);
+        Array<OneD, NekDouble > mu                 (nPts, 0.0);
+        Array<OneD, NekDouble > thermalConductivity(nPts, 0.0);
+        GetViscosityAndThermalCondFromTemp(physfield[nScalar-1], mu,
+            thermalConductivity);
 
         // Interpolate inputs and initialise interpolated output
         Array<OneD, Array<OneD, NekDouble> > vel_interp(m_spacedim);
@@ -411,7 +414,7 @@ namespace Nektar
 
         // Velocity divergence scaled by lambda * mu
         Vmath::Smul(nPts, lambda, divVel, 1, divVel, 1);
-        Vmath::Vmul(nPts, m_mu,  1, divVel, 1, divVel, 1);
+        Vmath::Vmul(nPts, mu,  1, divVel, 1, divVel, 1);
 
         // Viscous flux vector for the rho equation = 0 (no need to dealias)
         for (int i = 0; i < m_spacedim; ++i)
@@ -428,7 +431,7 @@ namespace Nektar
                                   deriv_interp[j][i], 1,
                                   out_interp[i][j+1], 1);
 
-                Vmath::Vmul(nPts, m_mu, 1,
+                Vmath::Vmul(nPts, mu, 1,
                                   out_interp[i][j+1], 1,
                                   out_interp[i][j+1], 1);
 
@@ -460,7 +463,7 @@ namespace Nektar
                                out_interp[i][m_spacedim+1], 1);
             }
             // Add k*T_i
-            Vmath::Vvtvp(nPts, m_thermalConductivity, 1,
+            Vmath::Vvtvp(nPts, thermalConductivity, 1,
                                deriv_interp[i][m_spacedim], 1,
                                out_interp[i][m_spacedim+1], 1,
                                out_interp[i][m_spacedim+1], 1);
@@ -595,6 +598,13 @@ namespace Nektar
             nonZeroIndex[i] =   i + 1;
         }
 
+        Array<OneD, NekDouble > mu                 (nPts, 0.0);
+        Array<OneD, NekDouble > thermalConductivity(nPts, 0.0);
+        Array<OneD, NekDouble > temperature        (nPts, 0.0);
+        m_varConv->GetTemperature(inaverg, temperature);
+        GetViscosityAndThermalCondFromTemp(temperature, mu,
+            thermalConductivity);
+
         std::vector<NekDouble> inAvgTmp(nConvectiveFields);
         std::vector<NekDouble> inTmp(nConvectiveFields);
         std::vector<NekDouble> outTmp(nConvectiveFields);
@@ -612,7 +622,7 @@ namespace Nektar
                     }
 
                     GetViscousFluxBilinearFormKernel(nDim, d, nderiv,
-                        inAvgTmp.data(), inTmp.data(), m_mu[p], outTmp.data());
+                        inAvgTmp.data(), inTmp.data(), mu[p], outTmp.data());
 
                     for (int f = 0; f < nConvectiveFields; ++f)
                     {
@@ -623,26 +633,6 @@ namespace Nektar
         }
     }
 
-
-    void NavierStokesCFE::CalcViscosity(
-        const Array<OneD, const Array<OneD, NekDouble>> &inaverg,
-              Array<OneD, NekDouble>                    &mu)
-    {
-        int nConvectiveFields = inaverg.size();
-        int nPts = inaverg[nConvectiveFields-1].size();
-
-        if (m_ViscosityType == "Variable")
-        {
-            Array<OneD, NekDouble> tmp(nPts,0.0);
-            m_varConv->GetTemperature(inaverg,tmp);
-            m_varConv->GetDynamicViscosity(tmp, mu);
-        }
-        else
-        {
-            //mu may be on volume or trace
-            Vmath::Fill(nPts, m_mu[0], mu, 1);
-        }
-    }
 
     /**
      * @brief Return the penalty vector for the LDGNS diffusion problem.
@@ -704,7 +694,8 @@ namespace Nektar
         }
 
         // Add artificial viscosity if wanted
-        if (m_shockCaptureType == "Physical")
+        // move this above and add in kernel
+        if (m_is_shockCaptPhys)
         {
             auto nTracePts = m_fields[0]->GetTrace()->GetTotPoints();
             if (nPts != nTracePts)
@@ -715,11 +706,12 @@ namespace Nektar
             {
                 Vmath::Vadd(nPts, mu, 1, m_varConv->GetAvTrace(), 1, mu, 1);
             }
+
+            // Update thermal conductivity
+            NekDouble tRa = m_Cp / m_Prandtl;
+            Vmath::Smul(nPts, tRa, mu, 1, thermalCond, 1);
         }
 
-        // Thermal conductivity
-        NekDouble tRa = m_Cp / m_Prandtl;
-        Vmath::Smul(nPts, tRa, mu, 1, thermalCond, 1);
     }
 
     /**
@@ -964,7 +956,7 @@ namespace Nektar
                 fieldcoeffs.push_back(sensorFwd);
             }
 
-            if (m_shockCaptureType == "Physical")
+            if (m_is_shockCaptPhys)
             {
 
                 Array<OneD, Array<OneD, NekDouble>> cnsVarFwd(m_fields.size()),

@@ -74,12 +74,14 @@ namespace Nektar
     /// flag to switch between IP and LDG
     /// an enum could be added for more options
     bool                                m_is_diffIP{false};
+    /// flag for shock capturing switch on/off
+    /// an enum could be added for more options
+    bool                                m_is_shockCaptPhys{false};
 
     NekDouble                           m_Cp;
     NekDouble                           m_Cv;
     NekDouble                           m_Prandtl;
 
-    NekDouble                           m_mu0;
     std::string                         m_physicalSensorType;
     std::string                         m_smoothing;
     MultiRegions::ContFieldSharedPtr    m_C0ProjectExp;
@@ -90,8 +92,8 @@ namespace Nektar
     NekDouble                           m_Twall;
     NekDouble                           m_muRef;
     NekDouble                           m_thermalConductivityRef;
-    Array<OneD, NekDouble>              m_mu;
-    Array<OneD, NekDouble>              m_thermalConductivity;
+    // Array<OneD, NekDouble>              m_mu;
+    // Array<OneD, NekDouble>              m_thermalConductivity;
 
     NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
                     const SpatialDomains::MeshGraphSharedPtr& pGraph);
@@ -392,9 +394,11 @@ namespace Nektar
         // unfortunately the artificial viscosity is difficult to vectorize
         // with the current implementation
         Array<OneD, NekDouble> temperature (nPts, 0.0);
+        Array<OneD, NekDouble> mu                 (nPts, 0.0);
+        Array<OneD, NekDouble> thermalConductivity(nPts, 0.0);
         m_varConv->GetTemperature(inarray, temperature);
-        GetViscosityAndThermalCondFromTemp(temperature, m_mu,
-            m_thermalConductivity);
+        GetViscosityAndThermalCondFromTemp(temperature, mu,
+            thermalConductivity);
 
         // vector loop
         using namespace tinysimd;
@@ -437,8 +441,8 @@ namespace Nektar
             }
 
             // get viscosity
-            vec_t mu{};
-            mu.load(&(m_mu[p]), is_not_aligned);
+            vec_t muV{};
+            muV.load(&(mu[p]), is_not_aligned);
 
             for (size_t nderiv = 0; nderiv < nDim; ++nderiv)
             {
@@ -451,7 +455,7 @@ namespace Nektar
                 for (size_t d = 0; d < nDim; ++d)
                 {
                     GetViscousFluxBilinearFormKernel(nDim, d, nderiv,
-                        inTmp.data(), qfieldsTmp.data(), mu, outTmp.data());
+                        inTmp.data(), qfieldsTmp.data(), muV, outTmp.data());
 
                     if (IS_TRACE)
                     {
@@ -525,7 +529,7 @@ namespace Nektar
             }
 
             // get viscosity
-            NekDouble mu = m_mu[p];
+            NekDouble muS = mu[p];
 
             for (int nderiv = 0; nderiv < nDim; ++nderiv)
             {
@@ -538,7 +542,7 @@ namespace Nektar
                 for (int d = 0; d < nDim; ++d)
                 {
                     GetViscousFluxBilinearFormKernel(nDim, d, nderiv,
-                        inTmp.data(), qfieldsTmp.data(), mu, outTmp.data());
+                        inTmp.data(), qfieldsTmp.data(), muS, outTmp.data());
 
                     if (IS_TRACE)
                     {
