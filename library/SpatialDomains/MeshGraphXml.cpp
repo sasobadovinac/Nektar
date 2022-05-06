@@ -2720,7 +2720,6 @@ void MeshGraphXml::WriteDomain(TiXmlElement *geomTag,
                                std::map<int, CompositeMap> &domainMap)
 {
     TiXmlElement *domTag = new TiXmlElement("DOMAIN");
-    stringstream domString;
 
     vector<unsigned int> idxList;
     for (auto &domain : domainMap)

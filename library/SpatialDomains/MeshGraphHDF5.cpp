@@ -47,7 +47,7 @@
     if (verb)                                                    \
     {                                                            \
         std::cout << "  - " << msg << ": "                       \
-                  << timer.TimePerTest(1) << std::endl;          \
+                  << timer.TimePerTest(1) << "\n" << std::endl;  \
     }
 
 using namespace std;
