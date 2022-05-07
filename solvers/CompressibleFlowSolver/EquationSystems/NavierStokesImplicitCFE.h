@@ -81,7 +81,7 @@ namespace Nektar
                     const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual void v_DoDiffusionCoeff(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
