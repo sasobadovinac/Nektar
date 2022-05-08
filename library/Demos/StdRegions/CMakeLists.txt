@@ -45,8 +45,8 @@ ADD_NEKTAR_TEST(StdInterpDeriv_Prism_Orth_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Mod_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Orth_P7_Q8)
 ADD_NEKTAR_TEST(StdInterpDeriv_Hex_Lagrange_P7_Q8)
-ADD_NEKTAR_TEST(StdInterpDeriv_Tet_Mod_P7_Q8)
-ADD_NEKTAR_TEST(StdInterpDeriv_Tet_Orth_P7_Q8)
+ADD_NEKTAR_TEST(StdInterpDeriv_Tet_Mod_P8_Q9)
+ADD_NEKTAR_TEST(StdInterpDeriv_Tet_Orth_P8_Q9)
 
 
 # Projection tests.

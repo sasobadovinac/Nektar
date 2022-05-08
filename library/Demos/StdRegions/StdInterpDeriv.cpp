@@ -37,52 +37,53 @@
 
 #include "StdDemoSupport.hpp"
 
-// polynomial = x^2 + y^2 + z^2
+// polynomial = 4x^4 + 3y^3 + 2z^2 + 1
 Array<OneD, NekDouble> EvalPoly(const Array<OneD, const Array<OneD, NekDouble>> &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     unsigned dim = pts.size();
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =          (pts[0][i] * pts[0][i])
-            + (dim >= 2 ? (pts[1][i] * pts[1][i]) : 0.0)
-            + (dim >= 3 ? (pts[2][i] * pts[2][i]) : 0.0);
+        ret[i] =          (4 * pts[0][i] * pts[0][i] * pts[0][i] * pts[0][i])
+            + (dim >= 2 ? (3 * pts[1][i] * pts[1][i] * pts[1][i]) : 0.0)
+            + (dim >= 3 ? (2 * pts[2][i] * pts[2][i]) : 0.0)
+            + 1;
     }
 
     return ret;
 }
 
-// derivative in x = 2x
+// derivative in x = 16x^3
 Array<OneD, NekDouble> EvalPolyDerivx(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  2*pts[0][i];
+        ret[i] =  16 * pts[0][i] * pts[0][i] * pts[0][i];
     }
 
     return ret;
 }
 
-// derivative in y = 2y
+// derivative in y = 9y^2
 Array<OneD, NekDouble> EvalPolyDerivy(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  2*pts[1][i];
+        ret[i] =  9 * pts[1][i] * pts[1][i];
     }
 
     return ret;
 }
 
-// derivative in z = 2z
+// derivative in z = 4z
 Array<OneD, NekDouble> EvalPolyDerivz(const Array<OneD, const Array<OneD, NekDouble> > &pts)
 {
     Array<OneD, NekDouble> ret(pts[0].size());
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] =  2*pts[2][i];
+        ret[i] =  4 * pts[2][i];
     }
 
     return ret;
@@ -111,11 +112,10 @@ int main(int argc, char *argv[])
     vector<string> &ptypes = demo.GetPointsType();
     for (int i = 0; i < dimension; ++i)
     {
-        ptypes[i] = "GaussGaussChebyshev";
+        ptypes[i] = "PolyEvenlySpaced";
     }
 
     StdExpansion *F = demo.CreateStdExpansion();
-
     const Array<OneD, const Array<OneD, NekDouble> > coordsF = demo.GetCoords(F);
 
     for (int i = 0; i < totPoints; ++i)
@@ -147,15 +147,15 @@ int main(int argc, char *argv[])
             break;
     }
 
-    cout << "\nL infinity error: " << scientific << F->Linf(physOut, sol) +
-                                                    F->Linf(physOut0, sol0) +
-                                                    F->Linf(physOut1, sol1) +
-                                                    F->Linf(physOut2, sol2)
+    cout << "\nL infinity error: " << scientific << E->Linf(physOut, sol) +
+                                                    E->Linf(physOut0, sol0) +
+                                                    E->Linf(physOut1, sol1) +
+                                                    E->Linf(physOut2, sol2)
                                                   << endl;
-    cout << "L 2 error         : " << scientific << F->L2(physOut, sol) +
-                                                    F->L2(physOut0, sol0) +
-                                                    F->L2(physOut1, sol1) +
-                                                    F->L2(physOut2, sol2)
+    cout << "L 2 error         : " << scientific << E->L2(physOut, sol) +
+                                                    E->L2(physOut0, sol0) +
+                                                    E->L2(physOut1, sol1) +
+                                                    E->L2(physOut2, sol2)
                                                  << endl;
 
     return 0;

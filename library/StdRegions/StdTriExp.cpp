@@ -786,6 +786,25 @@ namespace Nektar
             Array<OneD, NekDouble> coll(2, 0.0);
             LocCoordToLocCollapsed(coord, coll);
 
+            // If near singularity do the old interpolation matrix method
+            // @TODO: Dave thinks there might be a way in the Barycentric to
+            //        mathematically remove this singularity?
+            if((1 - coll[1]) < 1e-5)
+            {
+                int totPoints = GetTotPoints();
+                Array<OneD, NekDouble> EphysDeriv0(totPoints),
+                                       EphysDeriv1(totPoints);
+                PhysDeriv(inarray, EphysDeriv0, EphysDeriv1);
+
+                Array<OneD, DNekMatSharedPtr> I(2);
+                I[0] = GetBase()[0]->GetI(coll);
+                I[1] = GetBase()[1]->GetI(coll + 1);
+
+                out_d0 = PhysEvaluate(I, EphysDeriv0);
+                out_d1 = PhysEvaluate(I, EphysDeriv1);
+                return PhysEvaluate(I, inarray);
+            }
+
             // set up geometric factor: 2.0/(1.0-z1)
             NekDouble fac0 = 2 / (1 - coll[1]);
 
