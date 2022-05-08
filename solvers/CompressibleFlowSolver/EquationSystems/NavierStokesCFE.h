@@ -128,7 +128,7 @@ namespace Nektar
 
     void InitObject_Explicit();
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual void v_DoDiffusion(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
