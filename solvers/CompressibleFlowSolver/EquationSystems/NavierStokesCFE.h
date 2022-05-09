@@ -92,8 +92,6 @@ namespace Nektar
     NekDouble                           m_Twall;
     NekDouble                           m_muRef;
     NekDouble                           m_thermalConductivityRef;
-    // Array<OneD, NekDouble>              m_mu;
-    // Array<OneD, NekDouble>              m_thermalConductivity;
 
     NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
                     const SpatialDomains::MeshGraphSharedPtr& pGraph);

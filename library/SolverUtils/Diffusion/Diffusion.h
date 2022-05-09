@@ -114,7 +114,6 @@ namespace Nektar
          *  4th: trace conservative variables( usually the jump of trace value)
          *  5th: trace symmetric flux
          *  6th: nonzero flux index array,          optional
-         *  7th: normal vectors                     optional
          *
          * a null pointer need to be passed for optional parameters
          */
@@ -122,8 +121,8 @@ namespace Nektar
             const int                                                       ,
             const Array<OneD, Array<OneD, NekDouble> >                      &,
             const Array<OneD, Array<OneD, NekDouble > >                     &,
-                  TensorOfArray3D<NekDouble>                                &,
-                  Array< OneD, int >                                        &,
+            TensorOfArray3D<NekDouble>                                      &,
+            Array< OneD, int >                                              &,
             const Array<OneD, Array<OneD, NekDouble> >                      &)>
                 DiffusionSymmFluxCons;
 
