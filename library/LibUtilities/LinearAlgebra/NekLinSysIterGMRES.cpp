@@ -483,7 +483,7 @@ void NekLinSysIterGMRES::DoArnoldi(const int starttem, const int endtem,
     timer.Start();
     m_operator.DoNekSysLhsEval(Vsingle1, w, m_DifferenceFlag1);
     timer.Stop();
-    timer.AccumulateRegion("NekLinSysIterGMRES::DoArnoldi - DoNekSysLhsEval");
+    timer.AccumulateRegion("NekSysOperators::DoNekSysLhsEval", 1);
 
     tmp1 = w + nDir;
     tmp2 = w + nDir;

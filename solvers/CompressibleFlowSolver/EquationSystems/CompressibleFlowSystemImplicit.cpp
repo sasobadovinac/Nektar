@@ -177,7 +177,7 @@ namespace Nektar
         timer.Start();
         NonlinSysEvaluatorCoeff(in2D, out2D, source2D);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::NonlinSysEvaluatorCoeff", 0);
+        timer.AccumulateRegion("CFSImplicit::NonlinSysEvaluatorCoeff");
     }
 
     void CFSImplicit::NonlinSysEvaluatorCoeff(
@@ -261,7 +261,7 @@ namespace Nektar
         timer.Start();
         DoAdvectionCoeff(inarray, outarray, time, Fwd, Bwd);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoAdvectionCoeff", 2);
+        timer.AccumulateRegion("CFSImplicit::DoAdvectionCoeff");
         
         // Negate results
         for (int i = 0; i < nvariables; ++i)
@@ -272,7 +272,7 @@ namespace Nektar
         timer.Start();
         DoDiffusionCoeff(inarray, outarray, Fwd, Bwd);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoDiffusionCoeff", 2);
+        timer.AccumulateRegion("CFSImplicit::DoDiffusionCoeff");
         
         // Add forcing terms
         for (auto &x : m_forcing)
@@ -443,7 +443,7 @@ namespace Nektar
                   Array<OneD, NekDouble> &outarray,
             const bool                   &flag)
     {
-        LibUtilities::Timer timer, GTimer; 
+        LibUtilities::Timer timer, Gtimer; 
         
         Gtimer.Start();
         if (m_preconCfs->UpdatePreconMatCheck(NullNekDouble1DArray, 
@@ -478,7 +478,7 @@ namespace Nektar
         timer.AccumulateRegion("PreconCfsOp::DoPreconCfs", 1);
 
         Gtimer.Stop();
-        Gtimer.AccumulateRegion("CFSImplicit::PreconCoeff", 1);
+        Gtimer.AccumulateRegion("CFSImplicit::PreconCoeff");
     }
 
     template<typename DataType, typename TypeNekBlkMatSharedPtr>
@@ -965,7 +965,7 @@ namespace Nektar
         GetTraceJac(inarray,qfield,TraceJac,TraceJacDeriv,TraceJacDerivSign,
             TraceIPSymJacArray);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd - GetTraceJac");
+        timer.AccumulateRegion("CFSImplicit::GetTraceJac", 1);
         
         Array<OneD, TypeNekBlkMatSharedPtr > tmpJac;
         Array<OneD, Array<OneD, DataType>>  tmpSign;
@@ -974,7 +974,7 @@ namespace Nektar
         m_advObject->AddTraceJacToMat(nvariables,m_spacedim,m_fields, 
             TraceJac,gmtxarray,tmpJac,tmpSign);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd - AddTraceJac");
+        timer.AccumulateRegion("Advection::AddTraceJacToMap", 1);
     }
 
 
