@@ -5,9 +5,20 @@ v5.3
 ------
 **Library**
 - Fixed avx512 back-end for SimdLib (!1333)
+- Add an integral filter for the time-evolution of integrals on composites,
+  supports dimension equal to or one lower than the mesh dimension (!1323)
+- Overload PhysEvaluate to give first derivatives using barycentric
+  interpolation (!1323)
+- Non-conformal interface support (!1323)
 
-**FieldConver**
+**FieldConvert**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+
+**CompressibleFlowSolver**
+- Add additional parameters for the Isentropic Vortex equation system (!1323)
+
+**NekMesh**
+- Multi domain input/output for Nekpp and HDF5 file formats (!1323)
 
 v5.2
 ------
@@ -71,8 +82,6 @@ v5.1.0
   was not using GetRowComm() (!1144)
 - Add interior penalty method to DG framework (!1101)
 - Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
-- Add an integral filter for the time-evolution of integrals on composites,
-  supports dimension equal to or one lower than the mesh dimension. (!1156)
 - Fix successiveRHS method (!1176)
 - Add cachedId in GetExpIndex and use in Fieldconvert (!1167)
 - Fix bug in PreconditionerLowEnergy (!1161)
@@ -126,8 +135,6 @@ v5.1.0
 - Added additional parameter sets to Fenton-Karma model (!1119)
 - Fix electrogram calculation in 1D/2D domains (!1285)
 
-**CompressibleFlowSolver**
-- Add additional parameters for the Isentropic Vortex equation system. (!1156)
 **IncNavierStokesSolver**
 - Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries
   (!1065)
