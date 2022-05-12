@@ -191,16 +191,23 @@ namespace Nektar
         // Number of trace (interface) points
         int i;
         int nTracePts = GetTraceNpoints();
+        int nPts      = m_velocity[0].size();
 
         // Auxiliary variable to compute the normal velocity
-        Array<OneD, NekDouble> tmp(nTracePts);
+        Array<OneD, NekDouble> tmp(nPts), tmp2(nTracePts);
 
         // Reset the normal velocity
         Vmath::Zero(nTracePts, m_traceVn, 1);
 
         for (i = 0; i < m_velocity.size(); ++i)
         {
-            m_fields[0]->ExtractTracePhys(m_velocity[i], tmp);
+            for (i = 0; i < m_velocity.size(); ++i)
+            {
+                // velocity - grid velocity for ALE before getting trace velocity
+                Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
+            }
+
+            m_fields[0]->ExtractTracePhys(tmp, tmp2);
 
             Vmath::Vvtvp(nTracePts,
                          m_traceNormals[i], 1,
@@ -234,10 +241,22 @@ namespace Nektar
         int nSolutionPts = GetNpoints();
 
         LibUtilities::Timer timer;
-        timer.Start();
-        // RHS computation using the new advection base class
-        m_advObject->Advect(nVariables, m_fields, m_velocity, inarray,
-                            outarray, time);
+        if (m_ALESolver)
+        {
+            timer.Start();
+            Array<OneD, Array<OneD, NekDouble>> tmpIn(nVariables);
+            // If ALE we must take Mu coefficient space to u physical space
+            ALEHelper::ALEDoElmtInvMassBwdTrans(inarray, tmpIn);
+            m_advObject->AdvectCoeffs(nVariables, m_fields, m_velocity, tmpIn,
+                                      outarray, time);
+            timer.Stop();
+        }
+        else
+        {
+            m_advObject->Advect(nVariables, m_fields, m_velocity, inarray, outarray,
+                                time);
+            timer.Stop();
+        }
         timer.Stop();
         // Elapsed time
         timer.AccumulateRegion("Advect");
@@ -273,6 +292,12 @@ namespace Nektar
         // Number of fields (variables of the problem)
         int nVariables = inarray.size();
 
+        // Perform ALE movement
+        if (m_ALESolver)
+        {
+            MoveMesh(time, m_traceNormals);
+        }
+
         // Set the boundary conditions
         SetBoundaryConditions(time);
 
@@ -282,13 +307,10 @@ namespace Nektar
             // Discontinuous projection
             case MultiRegions::eDiscontinuous:
             {
-                // Number of quadrature points
-                int nQuadraturePts = GetNpoints();
-
                 // Just copy over array
                 for(i = 0; i < nVariables; ++i)
                 {
-                    Vmath::Vcopy(nQuadraturePts, inarray[i], 1, outarray[i], 1);
+                    Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
                 }
                 break;
             }
@@ -383,8 +405,12 @@ namespace Nektar
         {
             for (j = 0; j < flux[0].size(); ++j)
             {
-                Vmath::Vmul(nq, physfield[i], 1, m_velocity[j], 1,
-                            flux[i][j], 1);
+                for (int k = 0; k < nq; ++k)
+                {
+                    // If ALE we need to take off the grid velocity
+                    flux[i][j][k] =
+                        physfield[i][k] * (m_velocity[j][k] - m_gridVelocity[j][k]);
+                }
             }
         }
     }
@@ -476,5 +502,28 @@ namespace Nektar
             SolverUtils::AddSummaryItem(s,"GJP Stab. JumpScale",
                                         m_GJPJumpScale);
         }
+    }
+
+    bool UnsteadyAdvection::v_PreIntegrate(int step)
+    {
+        boost::ignore_unused(step);
+        return false;
+    }
+
+    void UnsteadyAdvection::v_ExtraFldOutput(
+        std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+        std::vector<std::string>             &variables)
+    {
+        int nCoeffs = m_fields[0]->GetNcoeffs();
+        Array<OneD, NekDouble> gridVelFwdX(nCoeffs, 0.0);
+        Array<OneD, NekDouble> gridVelFwdY(nCoeffs, 0.0), tmp;
+
+        m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[0], gridVelFwdX);
+        m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[1], gridVelFwdY);
+
+        fieldcoeffs.push_back(gridVelFwdX);
+        fieldcoeffs.push_back(gridVelFwdY);
+        variables.push_back("gridVx");
+        variables.push_back("gridVy");
     }
 }

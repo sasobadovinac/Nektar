@@ -61,7 +61,7 @@ namespace Nektar
         static std::string className;
 
         /// Destructor
-        virtual ~UnsteadyAdvection();
+        ~UnsteadyAdvection() final = default;
 
     protected:
         bool m_useGJPStabilisation;
@@ -114,6 +114,12 @@ namespace Nektar
 
         /// Print Summary
         virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+
+        bool v_PreIntegrate(int step) final;
+
+        virtual void v_ExtraFldOutput(
+            std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
+            std::vector<std::string>            &variables);
 
     private:
         NekDouble m_waveFreq;

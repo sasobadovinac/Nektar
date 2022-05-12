@@ -63,7 +63,7 @@ namespace Nektar
         static std::string className;
 
         /// Destructor
-        virtual ~UnsteadyAdvectionDiffusion();
+        ~UnsteadyAdvectionDiffusion() final = default;
 
     protected:
         bool m_subSteppingScheme;
@@ -135,6 +135,10 @@ namespace Nektar
 
         /// PreIntegration step for substepping.
         virtual bool v_PreIntegrate(int step);
+
+        virtual void v_ExtraFldOutput(
+            std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
+            std::vector<std::string>            &variables);
 
         // SubsStepping methods -> Probably could be set up in separate class
         void SubStepAdvance( int nstep,  NekDouble time );
