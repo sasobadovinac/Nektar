@@ -79,6 +79,8 @@ CFSBndCond::CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
     
     m_diffusionAveWeight = 1.0;
 
+    // Load parameter for the wall rotational BC
+    // @TODO: Move LoadParameter in to WallRotationalBC.cpp
     m_session->LoadParameter("AngVel", m_angVel, 0);
 }
 

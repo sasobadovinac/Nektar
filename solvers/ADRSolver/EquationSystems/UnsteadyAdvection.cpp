@@ -194,17 +194,14 @@ namespace Nektar
 
         for (i = 0; i < m_velocity.size(); ++i)
         {
-            for (i = 0; i < m_velocity.size(); ++i)
-            {
-                // velocity - grid velocity for ALE before getting trace velocity
-                Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
-            }
+            // velocity - grid velocity for ALE before getting trace velocity
+            Vmath::Vsub(nPts, m_velocity[i], 1, m_gridVelocity[i], 1, tmp, 1);
 
             m_fields[0]->ExtractTracePhys(tmp, tmp2);
 
             Vmath::Vvtvp(nTracePts,
                          m_traceNormals[i], 1,
-                         tmp,               1,
+                         tmp2,              1,
                          m_traceVn,         1,
                          m_traceVn,         1);
         }
