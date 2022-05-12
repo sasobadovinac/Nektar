@@ -48,16 +48,42 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain,
                    int coordDim)
     : m_type(type), m_id(indx), m_domain(domain), m_coordDim(coordDim)
 {
-    // Fill elements from domain
+    // Get shapeDim from first element in first composite from domain
+    int shapeDim = domain.begin()->second->m_geomVec.front()->GetShapeDim();
+    m_constituentElements = Array<OneD,std::set<GeometrySharedPtr>>(shapeDim);
+
     for (auto &comp : domain)
     {
         for (auto &geom : comp.second->m_geomVec)
         {
             m_elements.emplace_back(geom);
+
+            // Fill consituent elements (i.e. faces and edges)
+            switch (shapeDim)
+            {
+                case 3:
+                    for(int i = 0; i < geom->GetNumFaces(); ++i)
+                    {
+                        m_constituentElements[2].insert(geom->GetFace(i));
+                    }
+                    /* fall through */
+                case 2:
+                    for(int i = 0; i < geom->GetNumEdges(); ++i)
+                    {
+                        m_constituentElements[1].insert(geom->GetEdge(i));
+                    }
+                    /* fall through */
+                case 1:
+                    m_constituentElements[0].insert(geom);
+                    /* fall through */
+                default:
+                    break;
+            }
         }
     }
 
     // Fill verts/edges/faces that are to be moved
+    // @TODO: Any reason I can't have m_verts etc as sets??
     std::set<int> seenVerts, seenEdges, seenFaces;
     for (auto &comp : m_domain)
     {

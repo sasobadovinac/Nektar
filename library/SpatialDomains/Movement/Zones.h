@@ -116,6 +116,12 @@ struct ZoneBase
     /// Clears all bounding boxes associated with the zones elements
     void ClearBoundingBoxes();
 
+    /// Returns constituent elements, i.e. faces + edges
+    inline Array<OneD,std::set<GeometrySharedPtr>> &GetConstituentElements()
+    {
+        return m_constituentElements;
+    }
+
 protected:
     /// Type of zone movement
     MovementType m_type = MovementType::eNone;
@@ -125,6 +131,8 @@ protected:
     CompositeMap m_domain;
     /// Vector of highest dimension zone elements
     std::vector<GeometrySharedPtr> m_elements;
+    /// Array of all dimension elements i.e. faces + edges
+    Array<OneD,std::set<GeometrySharedPtr>> m_constituentElements;
     /// Moved flag
     bool m_moved = true;
     /// Coordinate dimension
@@ -158,6 +166,16 @@ struct ZoneRotate final: public ZoneBase
 
     /// Virtual function for movement of the zone at @param time
     virtual bool v_Move(NekDouble time) final;
+
+    inline NekPoint<NekDouble> GetOrigin() const
+    {
+        return m_origin;
+    }
+
+    inline DNekVec GetAxis() const
+    {
+        return m_axis;
+    }
 
 protected:
     ///  Origin point rotation is performed around

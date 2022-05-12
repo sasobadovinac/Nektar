@@ -56,11 +56,13 @@ class StagnationInflowBC : public CFSBndCond
                 const LibUtilities::SessionReaderSharedPtr& pSession,
                 const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
                 const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
+                const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
                 const int pSpaceDim, const int bcRegion, const int cnt)
         {
             CFSBndCondSharedPtr p = MemoryManager<StagnationInflowBC>::
                                     AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pSpaceDim, bcRegion, cnt);
+                                    pTraceNormals, pGridVelocity, pSpaceDim,
+                                    bcRegion, cnt);
             return p;
         }
 
@@ -78,6 +80,7 @@ class StagnationInflowBC : public CFSBndCond
         StagnationInflowBC(const LibUtilities::SessionReaderSharedPtr& pSession,
                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
+               const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
                const int pSpaceDim,
                const int bcRegion,
                const int cnt);

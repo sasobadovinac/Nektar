@@ -510,7 +510,7 @@ namespace Nektar
         }
     }
 
-    void UnsteadyAdvection::v_ExtraFldOutput(
+    void UnsteadyAdvectionDiffusion::v_ExtraFldOutput(
         std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
         std::vector<std::string>             &variables)
     {

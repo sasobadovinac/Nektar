@@ -177,13 +177,6 @@ namespace Nektar
     }
 
     /**
-     * @brief Unsteady linear advection equation destructor.
-     */
-    UnsteadyAdvection::~UnsteadyAdvection()
-    {
-    }
-
-    /**
      * @brief Get the normal velocity for the linear advection equation.
      */
     Array<OneD, NekDouble> &UnsteadyAdvection::GetNormalVelocity()

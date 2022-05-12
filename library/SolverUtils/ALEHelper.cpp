@@ -21,20 +21,6 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
         m_gridVelocityTrace[i] = Array<OneD, NekDouble>(fields[0]->GetTrace()->GetTotPoints(), 0.0);
     }
 
-    // Create map from element ID to expansion ID
-    auto exp = fields[0]->GetExp();
-    for (int i = (*exp).size() - 1; i >= 0; --i)
-    {
-        m_elmtToExpId[(*exp)[i]->GetGeom()->GetGlobalID()] = i;
-    }
-
-    // Create map from element ID to expansion ID for the trace
-    auto expTrace = fields[0]->GetTrace()->GetExp();
-    for (int i = (*expTrace).size() - 1; i >= 0; --i)
-    {
-        m_elmtToExpIdTrace[(*expTrace)[i]->GetGeom()->GetGlobalID()] = i;
-    }
-
     // Create ALE objects for each interface zone
     for (auto &zone : fields[0]->GetGraph()->GetMovement()->GetZones())
     {
@@ -73,7 +59,7 @@ void ALEHelper::UpdateGridVelocity(const NekDouble &time)
     // Now update for each movement zone, adding the grid velocities
     for (auto &ALE : m_ALEs)
     {
-        ALE->UpdateGridVel(time, m_fieldsALE, m_elmtToExpId, m_gridVelocity);
+        ALE->UpdateGridVel(time, m_fieldsALE, m_gridVelocity);
     }
 }
 
@@ -161,7 +147,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
                 // We need to rebuild geometric factors on the trace elements
                 for (const auto &i : conEl[zone.second->GetConstituentElements().size() -1]) // This only takes the trace elements
                 {
-                    m_fieldsALE[0]->GetTrace()->GetExp(m_elmtToExpIdTrace[i->GetGlobalID()])->Reset();
+                    m_fieldsALE[0]->GetTrace()->GetExpFromGeomId(i->GetGlobalID())->Reset();
                 }
             }
         }
@@ -178,7 +164,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
                     // Loop over zone elements expansions and rebuild geometric factors
                     for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
                     {
-                        field->GetExp(m_elmtToExpId[i->GetGlobalID()])->Reset();
+                        field->GetExpFromGeomId(i->GetGlobalID())->Reset();
                     }
                 }
             }
@@ -192,9 +178,9 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
                 // Loop over zone elements expansions and rebuild geometric factors and recalc trace normals
                 for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
                 {
-                    for (int j = 0; j < m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->GetNtraces();++j)
+                    for (int j = 0; j < m_fieldsALE[0]->GetExpFromGeomId(i->GetGlobalID())->GetNtraces();++j)
                     {
-                        m_fieldsALE[0]->GetExp(m_elmtToExpId[i->GetGlobalID()])->ComputeTraceNormal(j);
+                        m_fieldsALE[0]->GetExpFromGeomId(i->GetGlobalID())->ComputeTraceNormal(j);
                     }
                 }
             }
@@ -219,7 +205,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
         }
 
         // Set the flag to exchange coords in InterfaceMapDG to true
-        m_fieldsALE[0]->GetGraph()->GetMovement()->GetCoordExchangeFlag() = true;
+        //m_fieldsALE[0]->GetGraph()->GetMovement()->GetCoordExchangeFlag() = true;
 
         m_prevStageTime = time;
     }
@@ -237,10 +223,9 @@ ALEFixed::ALEFixed(SpatialDomains::ZoneBaseShPtr zone) :
 
 void ALEFixed::v_UpdateGridVel(NekDouble time,
                                    Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                   std::map<int, int> &elmtToExpId,
                                    Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
-    boost::ignore_unused(time, fields, elmtToExpId, gridVelocity);
+    boost::ignore_unused(time, fields, gridVelocity);
 }
 
 ALETranslate::ALETranslate(SpatialDomains::ZoneBaseShPtr zone) :
@@ -250,7 +235,6 @@ ALETranslate::ALETranslate(SpatialDomains::ZoneBaseShPtr zone) :
 
 void ALETranslate::v_UpdateGridVel(NekDouble time,
                                    Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                   std::map<int, int> &elmtToExpId,
                                    Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
     boost::ignore_unused(time);
@@ -258,10 +242,10 @@ void ALETranslate::v_UpdateGridVel(NekDouble time,
     auto vel = m_zone->GetVel();
     auto exp = fields[0]->GetExp();
 
-    auto ids = m_zone->GetElementIds();
-    for (auto id : ids)
+    auto elements = m_zone->GetElements();
+    for (auto &el : elements)
     {
-        int indx       = elmtToExpId[id];
+        int indx       = fields[0]->GetElmtToExpId(el->GetGlobalID());
         int offset     = fields[0]->GetPhys_Offset(indx);
         auto expansion = (*exp)[indx];
 
@@ -283,10 +267,9 @@ ALERotate::ALERotate(SpatialDomains::ZoneBaseShPtr zone) :
 
 void ALERotate::v_UpdateGridVel(NekDouble time,
                                Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                               std::map<int, int> &elmtToExpId,
                                Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
-    boost::ignore_unused(time, fields, elmtToExpId, gridVelocity);
+    boost::ignore_unused(time, fields, gridVelocity);
 
     auto angVel = m_zone->GetAngularVel(time);
     auto axis = m_zone->GetAxis();
@@ -294,10 +277,10 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
 
     auto exp = fields[0]->GetExp();
 
-    auto ids = m_zone->GetElementIds();
-    for (auto id : ids)
+    auto elements = m_zone->GetElements();
+    for (auto &el : elements)
     {
-        int indx       = elmtToExpId[id];
+        int indx       = fields[0]->GetElmtToExpId(el->GetGlobalID());
         int offset     = fields[0]->GetPhys_Offset(indx);
         auto expansion = (*exp)[indx];
 
@@ -314,14 +297,8 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
 
             // Vector orthogonal to plane formed by axis and point
             DNekVec norm = pointMinOrigin.Cross(axis);
-            //std::cout << xc[i] << " " << yc[i] << " " << zc[i] << " " << norm[0] << " " << norm[1] << " " << norm[2] << std::endl;
-
-            // Distance between point and axis
-            //DNekVec dist = pointMinOrigin - (pointMinOrigin.Dot(axis) * axis);
-
-            // @TODO: Not sure here? multiply normal vector by distance from axis and angular velocity?
-            //norm.Normalize();
-            norm = norm * -angVel; // We negate here as by convention a positive angular velocity is counter-clockwise
+            // We negate here as by convention a positive angular velocity is counter-clockwise
+            norm = norm * -angVel;
 
             for (int j = 0; j < gridVelocity.size(); ++j)
             {
@@ -338,16 +315,15 @@ ALEPrescribe::ALEPrescribe(SpatialDomains::ZoneBaseShPtr zone) :
 
 void ALEPrescribe::v_UpdateGridVel(NekDouble time,
                                 Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                std::map<int, int> &elmtToExpId,
                                 Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
-    boost::ignore_unused(time, fields, elmtToExpId, gridVelocity);
+    boost::ignore_unused(time, fields, gridVelocity);
 
     auto exp = fields[0]->GetExp();
-    auto ids = m_zone->GetElementIds();
-    for (auto id : ids)
+    auto elements = m_zone->GetElements();
+    for (auto &el : elements)
     {
-        int indx       = elmtToExpId[id];
+        int indx       = fields[0]->GetElmtToExpId(el->GetGlobalID());
         int offset     = fields[0]->GetPhys_Offset(indx);
         auto expansion = (*exp)[indx];
 

@@ -68,8 +68,12 @@ public:
         return m_zones;
     }
 
-    // Unused - placeholder for ALE merge request
     void PerformMovement(NekDouble timeStep);
+
+    inline const bool &GetMoveFlag() const
+    {
+        return m_moveFlag;
+    }
 
 protected:
     InterfaceCollection m_interfaces;

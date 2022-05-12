@@ -55,11 +55,13 @@ class IsentropicVortexBC : public CFSBndCond
                 const LibUtilities::SessionReaderSharedPtr& pSession,
                 const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
                 const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
+                const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
                 const int pSpaceDim, const int bcRegion, const int cnt)
         {
             CFSBndCondSharedPtr p = MemoryManager<IsentropicVortexBC>::
                                     AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pSpaceDim, bcRegion, cnt);
+                                    pTraceNormals, pGridVelocity, pSpaceDim,
+                                    bcRegion, cnt);
             return p;
         }
 
@@ -77,6 +79,7 @@ class IsentropicVortexBC : public CFSBndCond
         IsentropicVortexBC(const LibUtilities::SessionReaderSharedPtr& pSession,
                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
+               const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
                const int pSpaceDim,
                const int bcRegion,
                const int cnt);

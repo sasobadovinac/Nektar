@@ -43,8 +43,6 @@ public:
 
 protected:
     Array<OneD, MultiRegions::ExpListSharedPtr> m_fieldsALE;
-    std::map<int, int> m_elmtToExpId;
-    std::map<int, int> m_elmtToExpIdTrace;
     Array<OneD, Array<OneD, NekDouble>> m_gridVelocity;
     Array<OneD, Array<OneD, NekDouble>> m_gridVelocityTrace;
     std::vector<ALEBaseShPtr> m_ALEs;
@@ -59,16 +57,14 @@ struct ALEBase
 
     inline void UpdateGridVel(const NekDouble time,
                               Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                              std::map<int, int> &elmtToExpId,
                               Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
     {
-        v_UpdateGridVel(time, fields, elmtToExpId, gridVelocity);
+        v_UpdateGridVel(time, fields, gridVelocity);
     }
 
 private:
     virtual void v_UpdateGridVel(const NekDouble time,
                                         Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                        std::map<int, int> &elmtToExpId,
                                         Array<OneD, Array<OneD, NekDouble>> &gridVelocity) = 0;
 };
 
@@ -78,7 +74,6 @@ struct ALEFixed final : public ALEBase
 
     virtual void v_UpdateGridVel(const NekDouble time,
                                  Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                 std::map<int, int> &elmtToExpId,
                                  Array<OneD, Array<OneD, NekDouble>> &gridVelocity) final;
 
 private:
@@ -91,7 +86,6 @@ struct ALETranslate final : public ALEBase
 
     virtual void v_UpdateGridVel(const NekDouble time,
                                  Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                 std::map<int, int> &elmtToExpId,
                                  Array<OneD, Array<OneD, NekDouble>> &gridVelocity) final;
 
 private:
@@ -104,7 +98,6 @@ struct ALERotate final : public ALEBase
 
     virtual void v_UpdateGridVel(const NekDouble time,
                                  Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                 std::map<int, int> &elmtToExpId,
                                  Array<OneD, Array<OneD, NekDouble>> &gridVelocity) final;
 
 private:
@@ -117,7 +110,6 @@ struct ALEPrescribe final : public ALEBase
 
     virtual void v_UpdateGridVel(const NekDouble time,
                                  Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                 std::map<int, int> &elmtToExpId,
                                  Array<OneD, Array<OneD, NekDouble>> &gridVelocity) final;
 
 private:
