@@ -76,23 +76,23 @@ namespace Nektar
         void DriverStandard::v_Execute(ostream &out)
         
         {
-            time_t starttime, endtime;
+            clock_t starttime, endtime;
             NekDouble CPUtime;
 
             m_equ[0]->PrintSummary(out);
 
-            time(&starttime);
+            starttime = clock();
 
             m_equ[0]->DoInitialise();
             m_equ[0]->DoSolve();
 
-            time(&endtime);
+            endtime = clock();
 
             m_equ[0]->Output();
         
             if (m_comm->GetRank() == 0)
             {
-                CPUtime = difftime(endtime, starttime);
+                CPUtime = (endtime - starttime) / NekDouble(CLOCKS_PER_SEC);
                 cout << "-------------------------------------------" << endl;
                 cout << "Total Computation Time = " << CPUtime << "s" << endl;
                 cout << "-------------------------------------------" << endl;

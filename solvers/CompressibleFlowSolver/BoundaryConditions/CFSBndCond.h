@@ -55,6 +55,7 @@ typedef LibUtilities::NekFactory<std::string, CFSBndCond,
         const LibUtilities::SessionReaderSharedPtr&,
         const Array<OneD, MultiRegions::ExpListSharedPtr>&,
         const Array<OneD, Array<OneD, NekDouble> >&,
+        const Array<OneD, Array<OneD, NekDouble> >&,
         const int,
         const int,
         const int> CFSBndCondFactory;
@@ -91,6 +92,8 @@ class CFSBndCond
         Array<OneD, MultiRegions::ExpListSharedPtr> m_fields;
         /// Trace normals
         Array<OneD, Array<OneD, NekDouble> > m_traceNormals;
+        /// Grid Velocity
+        Array<OneD, Array<OneD, NekDouble> > m_gridVelocityTrace;
         /// Space dimension
         int m_spacedim;
         /// Auxiliary object to convert variables
@@ -104,6 +107,7 @@ class CFSBndCond
         NekDouble m_pInf;
         NekDouble m_pOut;
         Array<OneD, NekDouble> m_velInf;
+        NekDouble m_angVel;
 
         /// Id of the boundary region
         int       m_bcRegion;
@@ -114,7 +118,8 @@ class CFSBndCond
         CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
                 const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
                 const Array<OneD, Array<OneD, NekDouble> >&       pTraceNormals,
-                const int pSpaceDim,
+                const Array<OneD, Array<OneD, NekDouble> >&       pGridVelocity,
+                   const int pSpaceDim,
                 const int bcRegion,
                 const int cnt);
 

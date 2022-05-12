@@ -47,13 +47,15 @@ CFSBndCondFactory& GetCFSBndCondFactory()
 CFSBndCond::CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
                 const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
                 const Array<OneD, Array<OneD, NekDouble> >&       pTraceNormals,
+                const Array<OneD, Array<OneD, NekDouble> >&       pGridVelocity,
                 const int pSpaceDim,
                 const int bcRegion,
                 const int cnt)
         : m_session(pSession),
         m_fields(pFields),
         m_traceNormals(pTraceNormals),
-        m_spacedim(pSpaceDim),
+      m_gridVelocityTrace(pGridVelocity),
+          m_spacedim(pSpaceDim),
         m_bcRegion(bcRegion),
         m_offset(cnt)
 {
@@ -76,6 +78,8 @@ CFSBndCond::CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
                 m_session, m_spacedim);
     
     m_diffusionAveWeight = 1.0;
+
+    m_session->LoadParameter("AngVel", m_angVel, 0);
 }
 
 /**

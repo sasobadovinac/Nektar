@@ -24,6 +24,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         BoundaryConditions/TimeDependentBC.cpp
         BoundaryConditions/WallBC.cpp
         BoundaryConditions/WallViscousBC.cpp
+        BoundaryConditions/WallRotationalBC.cpp
         CompressibleFlowSolver.cpp
         Diffusion/DiffusionLDGNS.cpp
         EquationSystems/CompressibleFlowSystem.cpp

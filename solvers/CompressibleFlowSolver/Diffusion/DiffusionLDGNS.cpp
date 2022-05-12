@@ -69,7 +69,7 @@ void DiffusionLDGNS::v_InitObject(
 
     m_diffDim = m_spaceDim - nDim;
 
-    m_traceVel = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim};
+    m_traceVel = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim}; // @TODO: What is this trace vel used for???
     m_traceNormals = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim};
     for (std::size_t i = 0; i < m_spaceDim; ++i)
     {
@@ -222,6 +222,12 @@ void DiffusionLDGNS::v_InitObject(
         tmp2[i] = Array<OneD, NekDouble>{nCoeffs, 0.0};
     }
     v_DiffuseCoeffs(nConvectiveFields, fields, inarray, tmp2, pFwd, pBwd);
+
+    for (int i = 0; i < nConvectiveFields; ++i)
+    {
+        fields[i]->MultiplyByElmtInvMass(tmp2[i], tmp2[i]);
+    }
+
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
         fields[i]->BwdTrans             (tmp2[i], outarray[i]);
@@ -236,6 +242,12 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
     const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
 {
+
+    if(fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) // i.e. if m_ALESolver
+    {
+        fields[0]->GetTrace()->GetNormals(m_traceNormals);
+    }
+
     std::size_t nDim      = fields[0]->GetCoordim(0);
     std::size_t nPts      = fields[0]->GetTotPoints();
     std::size_t nCoeffs   = fields[0]->GetNcoeffs();
@@ -282,7 +294,6 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     DiffuseTraceFlux(fields, inarray, derivativesO1, m_viscTensor, viscousFlux,
                         pFwd, pBwd);
 
-    Array<OneD, NekDouble>               tmpOut{nCoeffs};
     Array<OneD, Array<OneD, NekDouble>>  tmpIn{nDim};
 
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
@@ -293,13 +304,12 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         {
             tmpIn[j] = m_viscTensor[j][i];
         }
-        fields[i]->IProductWRTDerivBase(tmpIn, tmpOut);
+        fields[i]->IProductWRTDerivBase(tmpIn, outarray[i]);
 
         // Evaulate  <\phi, \hat{F}\cdot n> - outarray[i]
-        Vmath::Neg                      (nCoeffs, tmpOut, 1);
-        fields[i]->AddTraceIntegral     (viscousFlux[i], tmpOut);
+        Vmath::Neg                      (nCoeffs, outarray[i], 1);
+        fields[i]->AddTraceIntegral     (viscousFlux[i], outarray[i]);
         fields[i]->SetPhysState         (false);
-        fields[i]->MultiplyByElmtInvMass(tmpOut, outarray[i]);
     }
 }
 
@@ -480,11 +490,16 @@ void DiffusionLDGNS::ApplyBCsO1(
                 if (boost::iequals(fields[i]->GetBndConditions()[j]->
                     GetUserDefined(),"WallViscous") ||
                     boost::iequals(fields[i]->GetBndConditions()[j]->
-                    GetUserDefined(),"WallAdiabatic"))
+                    GetUserDefined(),"WallAdiabatic") ||
+                    boost::iequals(fields[i]->GetBndConditions()[j]->
+                    GetUserDefined(),"WallRotational"))
                 {
                     // Reinforcing bcs for velocity in case of Wall bcs
-                    Vmath::Zero(nBndEdgePts, &scalarVariables[i][id2], 1);
-
+                    for (int pt = 0; pt < nBndEdgePts; ++pt)
+                    {
+                        scalarVariables[i][id2 + pt] =
+                            m_gridVelocityTrace[i][id2 + pt]; // If movement this equals trace grid velocity otherwise 0
+                    }
                 }
                 else if (
                     boost::iequals(fields[i]->GetBndConditions()[j]->
@@ -636,9 +651,11 @@ void DiffusionLDGNS::ApplyBCsO1(
 
             // For Dirichlet boundary condition: uflux = u_bcs
             if (fields[nScalars]->GetBndConditions()[j]->
-                GetBoundaryConditionType() == SpatialDomains::eDirichlet &&
+                GetBoundaryConditionType() == SpatialDomains::eDirichlet && (
                 !boost::iequals(fields[nScalars]->GetBndConditions()[j]
-                ->GetUserDefined(), "WallAdiabatic"))
+                ->GetUserDefined(), "WallAdiabatic") ||
+                boost::iequals(fields[nScalars]->GetBndConditions()[j]->
+               GetUserDefined(),"WallRotational")))
             {
                 Vmath::Vcopy(nBndEdgePts,
                              &scalarVariables[nScalars-1][id2], 1,
@@ -650,7 +667,9 @@ void DiffusionLDGNS::ApplyBCsO1(
             else if (((fields[nScalars]->GetBndConditions()[j])->
                       GetBoundaryConditionType() == SpatialDomains::eNeumann) ||
                       boost::iequals(fields[nScalars]->GetBndConditions()[j]->
-                                    GetUserDefined(), "WallAdiabatic"))
+                                    GetUserDefined(), "WallAdiabatic") ||
+                     boost::iequals(fields[nScalars]->GetBndConditions()[j]->
+                                    GetUserDefined(), "WallRotational"))
             {
                 Vmath::Vcopy(nBndEdgePts,
                              &pFwd[nScalars-1][id2], 1,
@@ -771,7 +790,9 @@ void DiffusionLDGNS::ApplyBCsO2(
             if (fields[var]->GetBndConditions()[i]->
                GetBoundaryConditionType() == SpatialDomains::eDirichlet
                && !boost::iequals(fields[var]->GetBndConditions()[i]->
-                                  GetUserDefined(), "WallAdiabatic"))
+                                  GetUserDefined(), "WallAdiabatic")
+               && !boost::iequals(fields[var]->GetBndConditions()[i]->
+                                GetUserDefined(), "WallRotational"))
             {
                 Vmath::Vmul(nBndEdgePts,
                             &m_traceNormals[dir][id2], 1,
@@ -796,7 +817,9 @@ void DiffusionLDGNS::ApplyBCsO2(
                  */
             }
             else if (boost::iequals(fields[var]->GetBndConditions()[i]->
-                                   GetUserDefined(), "WallAdiabatic"))
+                                   GetUserDefined(), "WallAdiabatic") ||
+                     boost::iequals(fields[var]->GetBndConditions()[i]->
+                                    GetUserDefined(), "WallRotational"))
             {
                 if ((var == m_spaceDim + 1))
                 {

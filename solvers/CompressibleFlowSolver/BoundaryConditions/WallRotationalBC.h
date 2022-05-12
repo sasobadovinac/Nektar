@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: WallViscousBC.h
+// File: WallRotationalBC.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_BNDCOND_WALLVISCOUSBC
-#define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_BNDCOND_WALLVISCOUSBC
+#ifndef NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_BNDCOND_WALLROTATIONALBC
+#define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_BNDCOND_WALLROTATIONALBC
 
 #include "CFSBndCond.h"
 
@@ -42,13 +42,13 @@ namespace Nektar
 {
 
 /**
-* @brief Wall boundary conditions for viscous compressible flow problems.
+* @brief Wall boundary conditions for Rotational compressible flow problems.
 */
-class WallViscousBC : public CFSBndCond
+class WallRotationalBC : public CFSBndCond
 {
     public:
 
-        friend class MemoryManager<WallViscousBC>;
+        friend class MemoryManager<WallRotationalBC>;
 
         /// Creates an instance of this class
         static CFSBndCondSharedPtr create(
@@ -58,21 +58,16 @@ class WallViscousBC : public CFSBndCond
                 const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
                 const int pSpaceDim, const int bcRegion, const int cnt)
         {
-            CFSBndCondSharedPtr p = MemoryManager<WallViscousBC>::
+            CFSBndCondSharedPtr p = MemoryManager<WallRotationalBC>::
                                     AllocateSharedPtr(pSession, pFields,
                                     pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt);
             return p;
         }
 
         ///Name of the class
-        static std::string classNameViscous;
-        static std::string classNameAdiabatic;
+        static std::string classNameRotational;
 
     protected:
-
-        // Arrays of arrays pointing to the boundary condition physical
-        // space for the specified region.
-        Array<OneD, Array<OneD, NekDouble> > m_bndPhys;
 
         virtual void v_Apply(
             Array<OneD, Array<OneD, NekDouble> >               &Fwd,
@@ -80,7 +75,7 @@ class WallViscousBC : public CFSBndCond
             const NekDouble                                    &time);
 
     private:
-        WallViscousBC(const LibUtilities::SessionReaderSharedPtr& pSession,
+        WallRotationalBC(const LibUtilities::SessionReaderSharedPtr& pSession,
                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
                const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
@@ -88,7 +83,7 @@ class WallViscousBC : public CFSBndCond
                const int bcRegion,
                const int cnt);
         
-        virtual ~WallViscousBC(void){};
+        virtual ~WallRotationalBC(void){};
 };
 
 }

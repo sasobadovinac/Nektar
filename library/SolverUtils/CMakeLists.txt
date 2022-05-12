@@ -4,6 +4,7 @@ SET(SOLVER_UTILS_SOURCES
   Core/Misc.cpp
   Core/SessionFunction.cpp
   AdvectionSystem.cpp
+  ALEHelper.cpp
   Advection/Advection.cpp
   Advection/Advection3DHomogeneous1D.cpp
   Advection/AdvectionFR.cpp
@@ -57,6 +58,7 @@ SET(SOLVER_UTILS_HEADERS
   Core/Misc.h
   Core/SessionFunction.h
   AdvectionSystem.h
+  ALEHelper.h
   Advection/Advection.h
   Advection/AdvectionFR.h
   Advection/Advection3DHomogeneous1D.h

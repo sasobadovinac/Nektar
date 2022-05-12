@@ -88,7 +88,7 @@ namespace Nektar
         {
             LibUtilities::Timer timer1;
             timer1.Start();
-            
+
             boost::ignore_unused(advVel, time);
             size_t nCoeffs         = fields[0]->GetNcoeffs();
 
@@ -102,16 +102,26 @@ namespace Nektar
                 nConvectiveFields, fields, advVel, inarray, tmp, time,
                 pFwd, pBwd);
 
+            // Multiply by inverse mass matrix
+            LibUtilities::Timer timer;
+            for (int i = 0; i < nConvectiveFields; ++i)
+            {
+                timer.Start();
+                fields[i]->MultiplyByElmtInvMass(tmp[i], tmp[i]);
+                timer.Stop();
+                timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass",1);
+            }
+
             // why was this broken in many loops over convective fields?
             // this is terrible for locality
-            LibUtilities::Timer timer;
-            timer.Start();
+            LibUtilities::Timer timer2;
+            timer2.Start();
             for (int i = 0; i < nConvectiveFields; ++i)
             {
                 fields[i]->BwdTrans(tmp[i], outarray[i]);
             }
-            timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_BwdTrans",1);
+            timer2.Stop();
+            timer2.AccumulateRegion("AdvWeakDG:_BwdTrans",1);
             timer1.Stop();
             timer1.AccumulateRegion("AdvWeakDG:All");
         }
@@ -183,17 +193,12 @@ namespace Nektar
                 fields[i]->AddTraceIntegral     (numflux[i], outarray[i]);
                 timer.Stop();
                 timer.AccumulateRegion("AdvWeakDG:_AddTraceIntegral",1);
-
-                timer.Start();
-                fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
-                timer.Stop();
-                timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass",1);
             }
 
             timer1.Stop();
             timer1.AccumulateRegion("AdvWeakDG: Coeff All");
         }
-        
+
         void AdvectionWeakDG::v_AdvectTraceFlux(
             const int                                         nConvectiveFields,
             const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
@@ -241,7 +246,7 @@ namespace Nektar
 
         }
 
-        void AdvectionWeakDG::v_AddVolumJacToMat( 
+        void AdvectionWeakDG::v_AddVolumJacToMat(
             const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
             const int &nConvectiveFields,
             const TensorOfArray5D<NekDouble> &ElmtJacArray,
@@ -290,7 +295,7 @@ namespace Nektar
                         (*mtxPerVar[nelmt])        =    0.0;
                     }
 
-                    explist->GetMatIpwrtDeriveBase(ElmtJacArray[m][n], 
+                    explist->GetMatIpwrtDeriveBase(ElmtJacArray[m][n],
                         mtxPerVar);
                     // Memory can be saved by reusing mtxPerVar
                     explist->AddRightIPTBaseMatrix(mtxPerVar,mtxPerVarCoeff);

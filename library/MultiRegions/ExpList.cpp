@@ -216,8 +216,8 @@ namespace Nektar
             // Retrieve the list of expansions
             const SpatialDomains::ExpansionInfoMap &expansions
                 = graph->GetExpansionInfo(var);
-
-            // Initialise Expansionn Vector
+            
+            // Initialise Expansion Vector
             InitialiseExpVector(expansions);
 
             // Setup phys coeff space
@@ -2581,8 +2581,7 @@ namespace Nektar
                 }
                 
                 LIKWID_MARKER_START("v_BwdTrans_IterPerExp");
-                // timer.Start();
-                
+                timer.Start();
                 Array<OneD, NekDouble> tmp;
                 for (int i = 0; i < m_collections.size(); ++i)
                 {
@@ -2781,6 +2780,9 @@ namespace Nektar
             LibUtilities::NekManager<LocalRegions::MatrixKey,
                                      DNekScalBlkMat, LocalRegions::MatrixKey::opLess>::ClearManager();
 
+            // Reset block matrix map
+            m_blockMat->clear();
+
             // Loop over all elements and reset geometry information.
             for (int i = 0; i < m_exp->size(); ++i)
             {
@@ -2793,6 +2795,20 @@ namespace Nektar
             {
                 (*m_exp)[i]->Reset();
             }
+
+            CreateCollections(Collections::eNoImpType); // @TODO: Might need to pass in correct type here
+        }
+
+        void ExpList::ResetMatrices()
+        {
+            // Reset matrix managers.
+            LibUtilities::NekManager<LocalRegions::MatrixKey,
+                                     DNekScalMat, LocalRegions::MatrixKey::opLess>::ClearManager();
+            LibUtilities::NekManager<LocalRegions::MatrixKey,
+                                     DNekScalBlkMat, LocalRegions::MatrixKey::opLess>::ClearManager();
+
+            // Reset block matrix map
+            m_blockMat->clear();
         }
 
         /**

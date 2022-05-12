@@ -168,6 +168,8 @@ namespace Nektar
                 &NavierStokesCFE::GetArtificialViscosity, this);
         }
 
+        m_diffusion->SetGridVelocityTrace(m_gridVelocityTrace); // If not ALE and movement this is just 0s
+
         m_diffusion->SetCalcViscosity(
                 &NavierStokesCFE::CalcViscosity, this);
         
@@ -305,14 +307,15 @@ namespace Nektar
         const Array<OneD, Array<OneD, NekDouble>> &pBwd)
     {
         size_t nvariables = inarray.size();
-        size_t npoints    = GetNpoints();
+        size_t npointsIn  = GetNpoints();
+        size_t npointsOut = m_ALESolver ? GetNcoeffs() : npointsIn; // If ALE then outarray is in coefficient space
         size_t nTracePts  = GetTraceTotPoints();
 
         // this should be preallocated
         Array<OneD, Array<OneD, NekDouble> > outarrayDiff(nvariables);
         for (int i = 0; i < nvariables; ++i)
         {
-            outarrayDiff[i] = Array<OneD, NekDouble>(npoints, 0.0);
+            outarrayDiff[i] = Array<OneD, NekDouble>(npointsOut, 0.0);
         }
 
         // get artificial viscosity
@@ -332,7 +335,7 @@ namespace Nektar
                                 pFwd, pBwd);
             for (int i = 0; i < nvariables; ++i)
             {
-                Vmath::Vadd(npoints,
+                Vmath::Vadd(npointsOut,
                             outarrayDiff[i], 1,
                             outarray[i], 1,
                             outarray[i], 1);
@@ -347,7 +350,7 @@ namespace Nektar
 
             for (int i = 0; i < nvariables - 1; ++i)
             {
-                inarrayDiff[i] = Array<OneD, NekDouble>{npoints};
+                inarrayDiff[i] = Array<OneD, NekDouble>{npointsIn};
                 inFwd[i]       = Array<OneD, NekDouble>{nTracePts};
                 inBwd[i]       = Array<OneD, NekDouble>{nTracePts};
             }
@@ -382,12 +385,20 @@ namespace Nektar
             }
 
             // Diffusion term in physical rhs form
-            m_diffusion->Diffuse(nvariables, m_fields, inarrayDiff,
-                                outarrayDiff, inFwd, inBwd);
+            if(m_ALESolver)
+            {
+                m_diffusion->DiffuseCoeffs(nvariables, m_fields, inarrayDiff,
+                                     outarrayDiff, inFwd, inBwd);
+            }
+            else
+            {
+                m_diffusion->Diffuse(nvariables, m_fields, inarrayDiff,
+                                     outarrayDiff, inFwd, inBwd);
+            }
 
             for (int i = 0; i < nvariables; ++i)
             {
-                Vmath::Vadd(npoints,
+                Vmath::Vadd(npointsOut,
                             outarrayDiff[i], 1,
                             outarray[i], 1,
                             outarray[i], 1);

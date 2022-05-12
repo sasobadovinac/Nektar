@@ -132,6 +132,7 @@ namespace Nektar
                         m_session,
                         m_fields,
                         m_traceNormals,
+                        m_gridVelocityTrace,
                         m_spacedim,
                         n,
                         cnt));
@@ -221,6 +222,11 @@ namespace Nektar
         riemannSolver = SolverUtils::GetRiemannSolverFactory()
                                     .CreateInstance(riemName, m_session);
 
+        // Tell Riemann Solver if doing ALE and provide trace grid velocity
+        riemannSolver->SetALEFlag(m_ALESolver);
+        riemannSolver->SetVector(
+            "vgt",     &ALEHelper::GetGridVelocityTrace, this);
+
         // Setting up parameters for advection operator Riemann solver
         riemannSolver->SetParam (
             "gamma",   &CompressibleFlowSystem::GetGamma,   this);
@@ -243,8 +249,18 @@ namespace Nektar
         const NekDouble                                 time)
     {
         int nvariables = inarray.size();
-        int npoints    = GetNpoints();
         int nTracePts  = GetTraceTotPoints();
+
+        // This converts our Mu in coefficient space to u in physical space for ALE
+        Array<OneD, Array<OneD, NekDouble>> tmpIn(nvariables);
+        if (m_ALESolver)
+        {
+            ALEHelper::ALEDoElmtInvMassBwdTrans(inarray, tmpIn);
+        }
+        else
+        {
+            tmpIn = inarray;
+        }
 
         m_bndEvaluateTime = time;
 
@@ -261,35 +277,35 @@ namespace Nektar
         {
             for (int i = 0; i < nvariables; ++i)
             {
-                Fwd[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
-                Bwd[i] = Array<OneD, NekDouble>(nTracePts, 0.0);
-                m_fields[i]->GetFwdBwdTracePhys(inarray[i], Fwd[i], Bwd[i]);
+                Fwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                Bwd[i]     = Array<OneD, NekDouble>(nTracePts, 0.0);
+                m_fields[i]->GetFwdBwdTracePhys(tmpIn[i], Fwd[i], Bwd[i]);
             }
         }
 
         // Calculate advection
         LibUtilities::Timer timer;
         timer.Start();
-        DoAdvection(inarray, outarray, time, Fwd, Bwd);
+        DoAdvection(tmpIn, outarray, time, Fwd, Bwd);
         timer.Stop();
         timer.AccumulateRegion("DoAdvection");
 
         // Negate results
         for (int i = 0; i < nvariables; ++i)
         {
-            Vmath::Neg(npoints, outarray[i], 1);
+            Vmath::Neg(outarray[i].size(), outarray[i], 1);
         }
 
         // Add diffusion terms
         timer.Start();
-        DoDiffusion(inarray, outarray, Fwd, Bwd);
+        DoDiffusion(tmpIn, outarray, Fwd, Bwd);
         timer.Stop();
         timer.AccumulateRegion("DoDiffusion");
 
         // Add forcing terms
         for (auto &x : m_forcing)
         {
-            x->Apply(m_fields, inarray, outarray, time);
+            x->Apply(m_fields, tmpIn, outarray, time);
         }
 
         if (m_useLocalTimeStep)
@@ -300,7 +316,7 @@ namespace Nektar
             Array<OneD, NekDouble> tmp;
 
             Array<OneD, NekDouble> tstep (nElements, 0.0);
-            GetElmtTimeStep(inarray, tstep);
+            GetElmtTimeStep(tmpIn, tstep);
 
             // Loop over elements
             for (int n = 0; n < nElements; ++n)
@@ -328,16 +344,24 @@ namespace Nektar
     {
         int nvariables = inarray.size();
 
+        // Perform ALE movement
+        if (m_ALESolver)
+        {
+            MoveMesh(time, m_traceNormals);
+        }
+
         switch(m_projectionType)
         {
             case MultiRegions::eDiscontinuous:
             {
                 // Just copy over array
-                int npoints = GetNpoints();
+                //int npoints = GetNpoints();
 
                 for (int i = 0; i < nvariables; ++i)
                 {
-                    Vmath::Vcopy(npoints, inarray[i], 1, outarray[i], 1);
+                    //std::cout << "POINTS??? : " << GetNpoints() << " " << inarray[i].size() << " " << outarray[i].size() << std::endl;
+                    Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1); // @TODO: This used to be npoints not inarray[i].size(), not sure why, something to do with ALEHelper::ALEPreMultiplyMass(fields) changing field size
+
                     if (m_useFiltering)
                     {
                         m_fields[i]->ExponentialFilter(outarray[i],
@@ -374,8 +398,16 @@ namespace Nektar
         int nvariables = inarray.size();
         Array<OneD, Array<OneD, NekDouble>> advVel(m_spacedim);
 
-        m_advObject->Advect(nvariables, m_fields, advVel, inarray,
-                            outarray, time, pFwd, pBwd);
+        if(m_ALESolver)
+        {
+            m_advObject->AdvectCoeffs(nvariables, m_fields, advVel, inarray,
+                                      outarray, time, pFwd, pBwd);
+        }
+        else
+        {
+            m_advObject->Advect(nvariables, m_fields, advVel, inarray, outarray,
+                                time, pFwd, pBwd);
+        }
     }
 
     /**
@@ -403,19 +435,30 @@ namespace Nektar
         int nTracePts  = GetTraceTotPoints();
         int nvariables = physarray.size();
 
+        // This converts our Mu in coefficient space to u in physical space for ALE
+        Array<OneD, Array<OneD, NekDouble>> tmpIn(nvariables);
+        if (m_ALESolver)
+        {
+            ALEHelper::ALEDoElmtInvMassBwdTrans(physarray, tmpIn);
+        }
+        else
+        {
+            tmpIn = physarray;
+        }
+
         Array<OneD, Array<OneD, NekDouble>> Fwd(nvariables);
         for (int i = 0; i < nvariables; ++i)
         {
             Fwd[i] = Array<OneD, NekDouble>(nTracePts);
-            m_fields[i]->ExtractTracePhys(physarray[i], Fwd[i]);
+            m_fields[i]->ExtractTracePhys(tmpIn[i], Fwd[i]);
         }
 
-        if (m_bndConds.size())
+        if (!m_bndConds.empty())
         {
             // Loop over user-defined boundary conditions
             for (auto &x : m_bndConds)
             {
-                x->Apply(Fwd, physarray, time);
+                x->Apply(Fwd, tmpIn, time);
             }
         }
     }
@@ -446,7 +489,7 @@ namespace Nektar
               TensorOfArray3D<NekDouble>                &flux)
     {
         auto nVariables = physfield.size();
-        auto nPts = physfield[0].size();
+        auto nPts       = physfield[0].size();
 
         constexpr unsigned short maxVel = 3;
         constexpr unsigned short maxFld = 5;
@@ -472,28 +515,40 @@ namespace Nektar
             for (size_t d = 0; d < m_spacedim; ++d)
             {
                 // Flux vector for the rho equation
-                flux[0][d][p] = fieldTmp[d+1]; // store
+                flux[0][d][p] = fieldTmp[d + 1]; // store
                 // compute velocity
-                velocity[d] = fieldTmp[d+1] * oneOrho;
+                velocity[d] = fieldTmp[d + 1] * oneOrho;
             }
 
             NekDouble pressure = m_varConv->GetPressure(fieldTmp.data());
-            NekDouble ePlusP = fieldTmp[m_spacedim+1] + pressure;
+            NekDouble ePlusP   = fieldTmp[m_spacedim + 1] + pressure;
             for (size_t f = 0; f < m_spacedim; ++f)
             {
                 // Flux vector for the velocity fields
                 for (size_t d = 0; d < m_spacedim; ++d)
                 {
-                    flux[f+1][d][p] = velocity[d] * fieldTmp[f+1]; // store
+                    flux[f + 1][d][p] = velocity[d] * fieldTmp[f + 1]; // store
                 }
 
                 // Add pressure to appropriate field
-                flux[f+1][f][p] += pressure;
+                flux[f + 1][f][p] += pressure;
 
                 // Flux vector for energy
-                flux[m_spacedim+1][f][p] = ePlusP * velocity[f]; // store
+                flux[m_spacedim + 1][f][p] = ePlusP * velocity[f]; // store
             }
+        }
 
+        // @TODO : for each row (3 columns) negative grid velocity component (d * d + 2 (4 rows)) rho, rhou, rhov, rhow, E,
+        // @TODO : top row is flux for rho etc... each row subtract v_g * conserved variable for that row... For grid velocity subtract v_g * conserved variable
+        for (int i = 0; i < m_spacedim + 2; ++i)
+        {
+            for (int j = 0; j < m_spacedim; ++j)
+            {
+                for (int k = 0; k < nPts; ++k)
+                {
+                    flux[i][j][k] -= physfield[i][k] * m_gridVelocity[j][k];
+                }
+            }
         }
     }
 
@@ -732,6 +787,12 @@ namespace Nektar
 
         m_varConv->GetVelocityVector(physfields, velocity);
         m_varConv->GetSoundSpeed    (physfields, soundspeed);
+
+        // Subtract Ug from the velocity for the ALE formulation
+        for(int i = 0; i < m_spacedim; ++i)
+        {
+            Vmath::Vsub(nTotQuadPoints, velocity[i], 1, m_gridVelocity[i], 1, velocity[i], 1);
+        }
 
         for (int el = 0; el < n_element; ++el)
         {

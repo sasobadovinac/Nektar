@@ -219,17 +219,17 @@ int main(int argc, char *argv[])
 
     //--------------------------------------------------------------------------
     // Set up Expansion information
-    vector< vector<LibUtilities::PointsType> > pointsType;
-    for (i = 0; i < fieldDef.size(); ++i)
-    {
-        vector<LibUtilities::PointsType> ptype;
-        for (j = 0; j < 2; ++j)
-        {
-            ptype.push_back(LibUtilities::ePolyEvenlySpaced);
-        }
-        pointsType.push_back(ptype);
-    }
-    graphShPt->SetExpansionInfo(fieldDef, pointsType);
+    //vector< vector<LibUtilities::PointsType> > pointsType;
+    //for (i = 0; i < fieldDef.size(); ++i)
+    //{
+    //    vector<LibUtilities::PointsType> ptype;
+    //    for (j = 0; j < 2; ++j)
+    //    {
+    //        ptype.push_back(LibUtilities::ePolyEvenlySpaced);
+    //    }
+    //    pointsType.push_back(ptype);
+    //}
+    //graphShPt->SetExpansionInfo(fieldDef, pointsType);
 
     //--------------------------------------------------------------------------
 
@@ -245,6 +245,18 @@ int main(int argc, char *argv[])
         pFields[i] = MemoryManager<
             MultiRegions::DisContField>::AllocateSharedPtr(
                 vSession, graphShPt, vSession->GetVariable(i));
+    }
+
+    //@TODO: Might need this to rotate mesh based on time
+    for (auto &fld : pFields)
+    {
+        if (fld->GetGraph()->GetMovement() != nullptr)
+        {
+            fld->GetGraph()->GetMovement()->PerformMovement(
+                boost::lexical_cast<NekDouble>(fieldMetaDataMap["Time"]));
+            fld->Reset();
+            fld->SetUpPhysNormals();
+        }
     }
 
     MultiRegions::ExpListSharedPtr Exp2D;

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: WallBC.cpp
+// File: WallRotationalBC.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,25 +28,25 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Slip wall boundary condition
+// Description: No-slip wall boundary condition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <boost/core/ignore_unused.hpp>
 
-#include "WallBC.h"
+#include "WallRotationalBC.h"
 
 using namespace std;
 
 namespace Nektar
 {
 
-std::string WallBC::className = GetCFSBndCondFactory().
-    RegisterCreatorFunction("Wall",
-                            WallBC::create,
-                            "Slip wall boundary condition.");
+std::string WallRotationalBC::classNameRotational = GetCFSBndCondFactory().
+    RegisterCreatorFunction("WallRotational",
+                            WallRotationalBC::create,
+                            "Adiabatic rotational wall boundary condition.");
 
-WallBC::WallBC(const LibUtilities::SessionReaderSharedPtr& pSession,
+WallRotationalBC::WallRotationalBC(const LibUtilities::SessionReaderSharedPtr& pSession,
            const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
            const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
            const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
@@ -56,23 +56,46 @@ WallBC::WallBC(const LibUtilities::SessionReaderSharedPtr& pSession,
     : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt)
 {
     m_diffusionAveWeight = 0.5;
+
+    // Set up rotational boundary edge velocities
+    const Array<OneD, const int> &traceBndMap
+        = m_fields[0]->GetTraceBndMap();
+
+    int eMax = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetExpSize();
+    for (int e = 0; e < eMax; ++e)
+    {
+        int nBCEdgePts = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
+                     GetExp(e)->GetTotPoints();
+        int id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
+
+        Array<OneD, NekDouble> x(nBCEdgePts, 0.0);
+        Array<OneD, NekDouble> y(nBCEdgePts, 0.0);
+        m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetExp(e)->GetCoords(x, y);
+        for (int j = 0; j < nBCEdgePts; ++j)
+        {
+            m_gridVelocityTrace[0][id2 + j] = m_angVel * -y[j];
+            m_gridVelocityTrace[1][id2 + j] = m_angVel * x[j];
+        }
+    }
 }
 
-void WallBC::v_Apply(
+void WallRotationalBC::v_Apply(
         Array<OneD, Array<OneD, NekDouble> >               &Fwd,
         Array<OneD, Array<OneD, NekDouble> >               &physarray,
         const NekDouble                                    &time)
 {
     boost::ignore_unused(time);
-
-    int i;
     int nVariables = physarray.size();
 
+    // @TODO: ALE we subtract the grid velocity ? "Set u = to ug for this one" - Dave
+
+    int i;
     const Array<OneD, const int> &traceBndMap
         = m_fields[0]->GetTraceBndMap();
 
-    // Adjust the physical values of the trace to take
-    // user defined boundaries into account
+    // Take into account that for PDE based shock capturing, eps = 0 at the
+    // wall. Adjust the physical values of the trace to take user defined
+    // boundaries into account
     int e, id1, id2, nBCEdgePts, eMax;
 
     eMax = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetExpSize();
@@ -85,51 +108,26 @@ void WallBC::v_Apply(
             GetPhys_Offset(e);
         id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
 
-        // Boundary condition for epsilon term.
+        // Boundary condition for epsilon term. @TODO: Is this correct, or should I do E = p/(gamma -1) + 1/2*rho(u^2 +v^2 + w^2)... or
         if (nVariables == m_spacedim+3)
         {
             Vmath::Zero(nBCEdgePts, &Fwd[nVariables-1][id2], 1);
         }
 
-        // @TODO: Look at paper on this
-        // https://www.researchgate.net/publication/264044118_A_Guide_to_the_Implementation_of_Boundary_Conditions_in_Compact_High-Order_Methods_for_Compressible_Aerodynamics
-        // For 2D/3D, define: v* = v - 2(v.n)n
-        Array<OneD, NekDouble> tmp(nBCEdgePts, 0.0);
-
-        //@TODO: v - vg here... check nguyen paper, only issue is getting the vg for the trace in here
-        //@TODO: Update m_traceNormals, might be fine though.
-
-        for (i = 0; i < m_spacedim; ++i)
+        for (i = 0; i < m_spacedim; i++)
         {
+            // V = -Vin
+            //Vmath::Neg(nBCEdgePts, &Fwd[i+1][id2], 1);
+
             // This now does Vg * rho + Vin
-            for(int j =0; j < nBCEdgePts; ++j)
+            //Vmath::Vvtvp(nBCEdgePts, &m_gridVelocityTrace[i][id2], 1, &Fwd[0][id2], 1, &Fwd[i+1][id2], 1, &Fwd[i+1][id2], 1);
+
+            for (int j = 0; j < nBCEdgePts; ++j)
             {
-                Fwd[i+1][id2+j] +=
-                    m_gridVelocityTrace[i][id2+j] * Fwd[0][id2+j];
+                //Fwd[i+1][id2 + j] = 2 * m_gridVelocityTrace[i][id2 + j] * Fwd[0][id2 + j] - Fwd[i+1][id2 + j];
+                Fwd[i+1][id2 + j] = 2 * m_gridVelocityTrace[i][id2 + j] * Fwd[0][id2 + j] - Fwd[i+1][id2 + j];
+
             }
-        }
-
-        // Calculate (v.n)
-        for (i = 0; i < m_spacedim; ++i)
-        {
-            Vmath::Vvtvp(nBCEdgePts,
-                         &Fwd[1+i][id2], 1,
-                         &m_traceNormals[i][id2], 1,
-                         &tmp[0], 1,
-                         &tmp[0], 1);
-        }
-
-        // Calculate 2.0(v.n)
-        Vmath::Smul(nBCEdgePts, -2.0, &tmp[0], 1, &tmp[0], 1);
-
-        // Calculate v* = v - 2.0(v.n)n
-        for (i = 0; i < m_spacedim; ++i)
-        {
-            Vmath::Vvtvp(nBCEdgePts,
-                         &tmp[0], 1,
-                         &m_traceNormals[i][id2], 1,
-                         &Fwd[1+i][id2], 1,
-                         &Fwd[1+i][id2], 1);
         }
 
         // Copy boundary adjusted values into the boundary expansion
@@ -137,7 +135,7 @@ void WallBC::v_Apply(
         {
             Vmath::Vcopy(nBCEdgePts, &Fwd[i][id2], 1,
                          &(m_fields[i]->GetBndCondExpansions()[m_bcRegion]->
-                         UpdatePhys())[id1], 1);
+                           UpdatePhys())[id1], 1);
         }
     }
 }

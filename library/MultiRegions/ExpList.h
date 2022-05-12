@@ -453,6 +453,9 @@ namespace Nektar
                 v_Reset();
             }
 
+            /// Reset matrices
+            MULTI_REGIONS_EXPORT void ResetMatrices();
+
             void WriteTecplotHeader(std::ostream &outfile,
                                     std::string var = "")
             {
@@ -1245,9 +1248,8 @@ namespace Nektar
             }
 
         protected:
-            /// Exapnsion type
+            /// Expansion type
             ExpansionType m_expType;
-
 
             std::shared_ptr<DNekMat> GenGlobalMatrixFull(
                 const GlobalLinSysKey &mkey,
