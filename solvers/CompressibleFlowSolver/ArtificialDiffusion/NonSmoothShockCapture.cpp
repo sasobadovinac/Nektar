@@ -51,6 +51,8 @@ NonSmoothShockCapture::NonSmoothShockCapture(
     : ArtificialDiffusion(pSession, pFields, spacedim)
 {
     m_session->LoadParameter ("SensorOffset",  m_offset, 1);
+    // init h/p
+    m_varConv->SetElmtMinHP(m_fields);
 }
 
 void NonSmoothShockCapture::v_GetArtificialViscosity(
@@ -84,7 +86,7 @@ void NonSmoothShockCapture::v_GetArtificialViscosity(
         LambdaElmt = Vmath::Vmax(nElmtPoints, tmp = Lambda + physOffset, 1);
 
         // Scale viscosity by the maximum wave speed and h/p
-        LambdaElmt *= m_mu0 * m_hOverP[e];
+        LambdaElmt *= m_mu0 * m_varConv->GetElmtMinHP()[e];
         Vmath::Smul(nElmtPoints, LambdaElmt, tmp = mu + physOffset, 1,
             tmp = mu + physOffset, 1);
     }
