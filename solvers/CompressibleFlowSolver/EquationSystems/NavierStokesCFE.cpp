@@ -188,7 +188,6 @@ namespace Nektar
             {
                 NEKERROR(ErrorUtil::efatal, "m_bndEvaluateTime not setup");
             }
-            auto checkTraceNormal = m_diffusion->GetTraceNormal();
             m_diffusion->Diffuse(nvariables, m_fields, inarray, outarrayDiff,
                                 m_bndEvaluateTime,
                                 pFwd, pBwd);
