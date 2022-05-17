@@ -145,7 +145,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
                 }
 
                 // We need to rebuild geometric factors on the trace elements
-                for (const auto &i : conEl[zone.second->GetConstituentElements().size() -1]) // This only takes the trace elements
+                for (const auto &i : conEl[m_fieldsALE[0]->GetShapeDimension() - 1]) // This only takes the trace elements
                 {
                     m_fieldsALE[0]->GetTrace()->GetExpFromGeomId(i->GetGlobalID())->Reset();
                 }

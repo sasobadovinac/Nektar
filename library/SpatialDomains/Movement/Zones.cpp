@@ -48,18 +48,14 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain,
                    int coordDim)
     : m_type(type), m_id(indx), m_domain(domain), m_coordDim(coordDim)
 {
-    // Get shapeDim from first element in first composite from domain
-    int shapeDim = domain.begin()->second->m_geomVec.front()->GetShapeDim();
-    m_constituentElements = Array<OneD,std::set<GeometrySharedPtr>>(shapeDim);
-
     for (auto &comp : domain)
     {
         for (auto &geom : comp.second->m_geomVec)
         {
             m_elements.emplace_back(geom);
 
-            // Fill consituent elements (i.e. faces and edges)
-            switch (shapeDim)
+            // Fill constituent elements (i.e. faces and edges)
+            switch (geom->GetShapeDim())
             {
                 case 3:
                     for(int i = 0; i < geom->GetNumFaces(); ++i)

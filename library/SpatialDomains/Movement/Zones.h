@@ -117,7 +117,7 @@ struct ZoneBase
     void ClearBoundingBoxes();
 
     /// Returns constituent elements, i.e. faces + edges
-    inline Array<OneD,std::set<GeometrySharedPtr>> &GetConstituentElements()
+    inline std::array<std::set<GeometrySharedPtr>, 3> &GetConstituentElements()
     {
         return m_constituentElements;
     }
@@ -132,7 +132,7 @@ protected:
     /// Vector of highest dimension zone elements
     std::vector<GeometrySharedPtr> m_elements;
     /// Array of all dimension elements i.e. faces + edges
-    Array<OneD,std::set<GeometrySharedPtr>> m_constituentElements;
+    std::array<std::set<GeometrySharedPtr>, 3> m_constituentElements;
     /// Moved flag
     bool m_moved = true;
     /// Coordinate dimension
