@@ -394,6 +394,8 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             xderxi2xi1(nq, 0.0),    yderxi2xi1(nq, 0.0),    zderxi2xi1(nq, 0.0),
             xderxi2xi2(nq, 0.0),    yderxi2xi2(nq, 0.0),    zderxi2xi2(nq, 0.0);
 
+        NekDouble xc_derxi1, yc_derxi1, zc_derxi1, xc_derxi2, yc_derxi2, zc_derxi2;
+
         m_xmap->PhysDeriv(x, xderxi1, xderxi2);
         m_xmap->PhysDeriv(y, yderxi1, yderxi2);
         m_xmap->PhysDeriv(z, zderxi1, zderxi2);
@@ -407,20 +409,12 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         m_xmap->PhysDeriv(zderxi2, zderxi2xi1, zderxi2xi2);
 
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
-        for (int i = 0; i < 100; ++i)
+        for (int i = 0; i < 10; ++i)
         {
             // Compute f(x_k) and its derivatives
-            NekDouble xc = m_xmap->PhysEvaluate(xi, x);
-            NekDouble yc = m_xmap->PhysEvaluate(xi, y);
-            NekDouble zc = m_xmap->PhysEvaluate(xi, z);
-
-            NekDouble xc_derxi1 = m_xmap->PhysEvaluate(xi, xderxi1);
-            NekDouble yc_derxi1 = m_xmap->PhysEvaluate(xi, yderxi1);
-            NekDouble zc_derxi1 = m_xmap->PhysEvaluate(xi, zderxi1);
-
-            NekDouble xc_derxi2 = m_xmap->PhysEvaluate(xi, xderxi2);
-            NekDouble yc_derxi2 = m_xmap->PhysEvaluate(xi, yderxi2);
-            NekDouble zc_derxi2 = m_xmap->PhysEvaluate(xi, zderxi2);
+            NekDouble xc = m_xmap->PhysEvaluate(xi, x, xc_derxi1, xc_derxi2);
+            NekDouble yc = m_xmap->PhysEvaluate(xi, y, yc_derxi1, yc_derxi2);
+            NekDouble zc = m_xmap->PhysEvaluate(xi, z, zc_derxi1, zc_derxi2);
 
             NekDouble xc_derxi1xi1 = m_xmap->PhysEvaluate(xi, xderxi1xi1);
             NekDouble yc_derxi1xi1 = m_xmap->PhysEvaluate(xi, yderxi1xi1);
@@ -569,22 +563,10 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
             xi[0] += gamma * pk[0];
             xi[1] += gamma * pk[1];
-
-            Array<OneD, NekDouble> eta(2, 0.0);
-            m_xmap->LocCoordToLocCollapsed(xi, eta);
-            if (eta[0] < (-1 - std::numeric_limits<NekDouble>::epsilon()) ||
-                eta[0] > ( 1 + std::numeric_limits<NekDouble>::epsilon()) ||
-                eta[1] < (-1 - std::numeric_limits<NekDouble>::epsilon()) ||
-                eta[1] > ( 1 + std::numeric_limits<NekDouble>::epsilon()))
-            {
-                std::cout << "BORKEN" << std::endl;
-                exit(0);
-            }
         }
 
         xiOut = xi;
         return  sqrt(fx_prev);
-
     }
     else
     {
