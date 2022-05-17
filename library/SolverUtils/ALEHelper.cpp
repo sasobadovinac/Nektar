@@ -117,96 +117,100 @@ void ALEHelper::ALEDoElmtInvMassBwdTrans(
 
 void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDouble> > &traceNormals)
 {
+    // Only move if timestepped
+    if (time == m_prevStageTime)
+    {
+        return;
+    }
+
     auto curvedEdges = m_fieldsALE[0]->GetGraph()->GetCurvedEdges();
     auto curvedFaces = m_fieldsALE[0]->GetGraph()->GetCurvedFaces();
 
-    if (time != m_prevStageTime)
+    m_fieldsALE[0]->GetGraph()->GetMovement()->PerformMovement(time); // @TODO: Moved out of loop!
+
+    // The order of the resets below is v important to avoid errors
+    for (auto &field : m_fieldsALE)
     {
-        // The order of the resets below is v important to avoid errors
-        for (auto &field : m_fieldsALE)
-        {
-            field->GetGraph()->GetMovement()->PerformMovement(time); // @TODO: Move this out of loop?
-            field->ResetMatrices();
-        }
+        field->ResetMatrices();
+    }
 
-        // Loop over all elements and faces and edges and reset geometry information.
-        // Only need to do this on the first field as the geometry information is shared.
-        for (auto &zone : m_fieldsALE[0]->GetGraph()->GetMovement()->GetZones())
+    // Loop over all elements and faces and edges and reset geometry information.
+    // Only need to do this on the first field as the geometry information is shared.
+    for (auto &zone : m_fieldsALE[0]->GetGraph()->GetMovement()->GetZones())
+    {
+        if (zone.second->GetMoved())
+        {
+            auto conEl = zone.second->GetConstituentElements();
+            for (const auto &i : conEl)
+            {
+                for (const auto &j : i)
+                {
+                    j->ResetNonRecursive(curvedEdges, curvedFaces);
+                }
+            }
+
+            // We need to rebuild geometric factors on the trace elements
+            for (const auto &i : conEl[m_fieldsALE[0]->GetShapeDimension() - 1]) // This only takes the trace elements
+            {
+                m_fieldsALE[0]->GetTrace()->GetExpFromGeomId(i->GetGlobalID())->Reset();
+            }
+        }
+    }
+
+    for (auto &field : m_fieldsALE)
+    {
+        for (auto &zone : field->GetGraph()->GetMovement()->GetZones())
         {
             if (zone.second->GetMoved())
             {
                 auto conEl = zone.second->GetConstituentElements();
-                for (const auto &i : conEl)
-                {
-                    for (const auto &j : i)
-                    {
-                        j->ResetNonRecursive(curvedEdges, curvedFaces);
-                    }
-                }
-
-                // We need to rebuild geometric factors on the trace elements
-                for (const auto &i : conEl[m_fieldsALE[0]->GetShapeDimension() - 1]) // This only takes the trace elements
-                {
-                    m_fieldsALE[0]->GetTrace()->GetExpFromGeomId(i->GetGlobalID())->Reset();
-                }
-            }
-        }
-
-        for (auto &field : m_fieldsALE)
-        {
-            for (auto &zone : field->GetGraph()->GetMovement()->GetZones())
-            {
-                if (zone.second->GetMoved())
-                {
-                    auto conEl = zone.second->GetConstituentElements();
-                    // Loop over zone elements expansions and rebuild geometric factors
-                    for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
-                    {
-                        field->GetExpFromGeomId(i->GetGlobalID())->Reset();
-                    }
-                }
-            }
-        }
-
-        for (auto &zone : m_fieldsALE[0]->GetGraph()->GetMovement()->GetZones())
-        {
-            if (zone.second->GetMoved())
-            {
-                auto conEl = zone.second->GetConstituentElements();
-                // Loop over zone elements expansions and rebuild geometric factors and recalc trace normals
+                // Loop over zone elements expansions and rebuild geometric factors
                 for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
                 {
-                    for (int j = 0; j < m_fieldsALE[0]->GetExpFromGeomId(i->GetGlobalID())->GetNtraces();++j)
-                    {
-                        m_fieldsALE[0]->GetExpFromGeomId(i->GetGlobalID())->ComputeTraceNormal(j);
-                    }
+                    field->GetExpFromGeomId(i->GetGlobalID())->Reset();
                 }
             }
         }
-
-        for (auto &field : m_fieldsALE)
-        {
-            // Reset collections
-            field->CreateCollections(Collections::eNoImpType);
-        }
-
-        // Reload new trace normals in to the solver cache
-        m_fieldsALE[0]->GetTrace()->GetNormals(traceNormals);
-
-        // Recompute grid velocity.
-        UpdateGridVelocity(time);
-
-        // Updates trace grid velocity
-        for (int i = 0; i < m_gridVelocityTrace.size(); ++i)
-        {
-            m_fieldsALE[0]->ExtractTracePhys(m_gridVelocity[i], m_gridVelocityTrace[i]);
-        }
-
-        // Set the flag to exchange coords in InterfaceMapDG to true
-        m_fieldsALE[0]->GetGraph()->GetMovement()->GetCoordExchangeFlag() = true;
-
-        m_prevStageTime = time;
     }
+
+    for (auto &zone : m_fieldsALE[0]->GetGraph()->GetMovement()->GetZones())
+    {
+        if (zone.second->GetMoved())
+        {
+            auto conEl = zone.second->GetConstituentElements();
+            // Loop over zone elements expansions and rebuild geometric factors and recalc trace normals
+            for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
+            {
+                for (int j = 0; j < m_fieldsALE[0]->GetExpFromGeomId(i->GetGlobalID())->GetNtraces();++j)
+                {
+                    m_fieldsALE[0]->GetExpFromGeomId(i->GetGlobalID())->ComputeTraceNormal(j);
+                }
+            }
+        }
+    }
+
+    for (auto &field : m_fieldsALE)
+    {
+        // Reset collections
+        field->CreateCollections(Collections::eNoImpType);
+    }
+
+    // Reload new trace normals in to the solver cache
+    m_fieldsALE[0]->GetTrace()->GetNormals(traceNormals);
+
+    // Recompute grid velocity.
+    UpdateGridVelocity(time);
+
+    // Updates trace grid velocity
+    for (int i = 0; i < m_gridVelocityTrace.size(); ++i)
+    {
+        m_fieldsALE[0]->ExtractTracePhys(m_gridVelocity[i], m_gridVelocityTrace[i]);
+    }
+
+    // Set the flag to exchange coords in InterfaceMapDG to true
+    m_fieldsALE[0]->GetGraph()->GetMovement()->GetCoordExchangeFlag() = true;
+
+    m_prevStageTime = time;
 }
 
 const Array<OneD, const Array<OneD, NekDouble> > &ALEHelper::GetGridVelocityTrace()

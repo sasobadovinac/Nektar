@@ -131,7 +131,7 @@ protected:
     CompositeMap m_domain;
     /// Vector of highest dimension zone elements
     std::vector<GeometrySharedPtr> m_elements;
-    /// Array of all dimension elements i.e. faces + edges
+    /// Array of all dimension elements i.e. faces = [2], edges = [1], geom = [0]
     std::array<std::set<GeometrySharedPtr>, 3> m_constituentElements;
     /// Moved flag
     bool m_moved = true;

@@ -219,6 +219,10 @@ void InterfaceMapDG::ExchangeCoords()
  */
 void InterfaceTrace::CalcLocalMissing()
 {
+    // Nuke old missing/found
+    m_missingCoords.clear();
+    m_mapMissingCoordToTrace.clear();
+
     auto childEdge = m_interface->GetEdge();
     // If not flagged 'check local' then all points are missing
     if (!m_checkLocal)
@@ -531,7 +535,7 @@ void InterfaceExchange::CalcRankDistances()
     {
         if (!m_zones[m_interfaceTraces[i]->GetInterface()->GetId()]->GetMoved())
         {
-            // If zone is fixed then skip
+            // If zone is not moved then skip
             continue;
         }
 
