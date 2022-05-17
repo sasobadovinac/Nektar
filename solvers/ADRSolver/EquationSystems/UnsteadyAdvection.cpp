@@ -50,9 +50,8 @@ namespace Nektar
         const LibUtilities::SessionReaderSharedPtr& pSession,
         const SpatialDomains::MeshGraphSharedPtr& pGraph)
         : UnsteadySystem(pSession, pGraph),
-          AdvectionSystem(pSession, pGraph)
+          AdvectionSystem(pSession, pGraph), m_planeNumber(0)
     {
-        m_planeNumber = 0;
     }
 
     /**
@@ -77,9 +76,9 @@ namespace Nektar
         m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
 
         std::vector<std::string> vel;
-        vel.push_back("Vx");
-        vel.push_back("Vy");
-        vel.push_back("Vz");
+        vel.emplace_back("Vx");
+        vel.emplace_back("Vy");
+        vel.emplace_back("Vz");
 
         // Resize the advection velocities vector to dimension of the problem
         vel.resize(m_spacedim);
@@ -126,8 +125,7 @@ namespace Nektar
 
                 string advName;
                 string riemName;
-                m_session->LoadSolverInfo(
-                    "AdvectionType", advName, "WeakDG");
+                m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
                 m_advObject = SolverUtils::
                     GetAdvectionFactory().CreateInstance(advName, advName);
                 if (m_specHP_dealiasing)
@@ -140,14 +138,12 @@ namespace Nektar
                     m_advObject->SetFluxVector(
                         &UnsteadyAdvection::GetFluxVector, this);
                 }
-                m_session->LoadSolverInfo(
-                    "UpwindType", riemName, "Upwind");
+                m_session->LoadSolverInfo("UpwindType", riemName, "Upwind");
                 m_riemannSolver = SolverUtils::
                     GetRiemannSolverFactory().CreateInstance(
                         riemName, m_session);
                 m_riemannSolver->SetScalar(
                     "Vn", &UnsteadyAdvection::GetNormalVelocity, this);
-
                 m_advObject->SetRiemannSolver(m_riemannSolver);
                 m_advObject->InitObject(m_session, m_fields);
                 break;
@@ -221,14 +217,8 @@ namespace Nektar
               Array<OneD,        Array<OneD, NekDouble> >&outarray,
         const NekDouble time)
     {
-        // Counter variable
-        int i;
-
         // Number of fields (variables of the problem)
         int nVariables = inarray.size();
-
-        // Number of solution points
-        int nSolutionPts = GetNpoints();
 
         LibUtilities::Timer timer;
         if (m_ALESolver)
@@ -243,18 +233,19 @@ namespace Nektar
         }
         else
         {
+            timer.Start();
             m_advObject->Advect(nVariables, m_fields, m_velocity, inarray, outarray,
                                 time);
             timer.Stop();
         }
-        timer.Stop();
+
         // Elapsed time
         timer.AccumulateRegion("Advect");
         
         // Negate the RHS
-        for (i = 0; i < nVariables; ++i)
+        for (int i = 0; i < nVariables; ++i)
         {
-            Vmath::Neg(nSolutionPts, outarray[i], 1);
+            Vmath::Neg(outarray[i].size(), outarray[i], 1);
         }
 
         for (auto &x : m_forcing)

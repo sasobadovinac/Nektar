@@ -203,6 +203,8 @@ void InterfaceMapDG::ExchangeCoords()
             i->CalcRankDistances();
         }
     }
+
+    m_movement->GetCoordExchangeFlag() = false;
 }
 
 /**
@@ -385,8 +387,12 @@ void InterfaceExchange::SendMissing(
 void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
                                    Array<OneD, NekDouble> &Bwd)
 {
-    auto comm = m_trace->GetComm();
+    if (m_movement->GetCoordExchangeFlag())
+    {
+        ExchangeCoords();
+    }
 
+    auto comm = m_trace->GetComm();
     // If no parallel exchange needed we only fill the local traces
     if (m_exchange.empty())
     {
@@ -514,12 +520,21 @@ void InterfaceExchange::SendFwdTrace(
 
 void InterfaceExchange::CalcRankDistances()
 {
+    // Clear old found coordinates
+    m_foundRankCoords[m_rank].clear(); // @TODO: This may cause problems with 2 interfaces and one is fixed? With the skip below.
+
     Array<OneD, int> disp(m_recvSize[m_rank].size() + 1, 0.0);
     std::partial_sum(m_recvSize[m_rank].begin(), m_recvSize[m_rank].end(),
                      &disp[1]);
 
     for (int i = 0; i < m_interfaceTraces.size(); ++i)
     {
+        if (!m_zones[m_interfaceTraces[i]->GetInterface()->GetId()]->GetMoved())
+        {
+            // If zone is fixed then skip
+            continue;
+        }
+
         auto localEdge = m_interfaceTraces[i]->GetInterface()->GetEdge();
 
         for (int j = disp[i]; j < disp[i + 1]; j += 3)

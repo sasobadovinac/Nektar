@@ -75,10 +75,15 @@ public:
         return m_moveFlag;
     }
 
+    inline bool &GetCoordExchangeFlag()
+    {
+        return m_coordExchangeFlag;
+    }
 protected:
     InterfaceCollection m_interfaces;
     std::map<int, ZoneBaseShPtr> m_zones;
     bool m_moveFlag = false; // Flags presence of moving zones
+    bool m_coordExchangeFlag = true; // Flags if missing coordinates need to be calculated
 
 private:
     /// Read zones given TiXmlDocument

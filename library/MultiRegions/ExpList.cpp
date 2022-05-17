@@ -1335,7 +1335,8 @@ namespace Nektar
                         "Dimension of basis key is greater than 3");
                 }
 
-                // Assign next id
+                // Assign next id and fill the global id -> exp id map
+                m_elmtToExpId[exp->GetGeom()->GetGlobalID()] = id;
                 exp->SetElmtId(id++);
 
                 // Add the expansion

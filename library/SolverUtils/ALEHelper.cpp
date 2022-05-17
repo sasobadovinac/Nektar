@@ -152,8 +152,6 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
             }
         }
 
-        // @TODO: I don't know why I need to reset the elements expansions for every field but the trace expansions on just one.
-        // @TODO: I guess we need the metric info on element expansions, but only the geomfactors for the trace geometry.
         for (auto &field : m_fieldsALE)
         {
             for (auto &zone : field->GetGraph()->GetMovement()->GetZones())
@@ -205,7 +203,7 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
         }
 
         // Set the flag to exchange coords in InterfaceMapDG to true
-        //m_fieldsALE[0]->GetGraph()->GetMovement()->GetCoordExchangeFlag() = true;
+        m_fieldsALE[0]->GetGraph()->GetMovement()->GetCoordExchangeFlag() = true;
 
         m_prevStageTime = time;
     }
