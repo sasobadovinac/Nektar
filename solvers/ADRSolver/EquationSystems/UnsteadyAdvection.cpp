@@ -504,16 +504,23 @@ namespace Nektar
         std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
         std::vector<std::string>             &variables)
     {
-        int nCoeffs = m_fields[0]->GetNcoeffs();
-        Array<OneD, NekDouble> gridVelFwdX(nCoeffs, 0.0);
-        Array<OneD, NekDouble> gridVelFwdY(nCoeffs, 0.0), tmp;
+        bool extraFields;
+        m_session->MatchSolverInfo("OutputExtraFields","True",
+                                   extraFields, true);
 
-        m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[0], gridVelFwdX);
-        m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[1], gridVelFwdY);
+        if (extraFields && m_ALESolver)
+        {
+            int nCoeffs = m_fields[0]->GetNcoeffs();
 
-        fieldcoeffs.push_back(gridVelFwdX);
-        fieldcoeffs.push_back(gridVelFwdY);
-        variables.push_back("gridVx");
-        variables.push_back("gridVy");
+            // Adds extra output variables for grid velocity
+            std::string gridVarName[3] = {"gridVx", "gridVy", "gridVz"};
+            for (int i = 0; i < m_spacedim; ++i)
+            {
+                Array<OneD, NekDouble> gridVel(nCoeffs, 0.0);
+                m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[i], gridVel);
+                fieldcoeffs.emplace_back(gridVel);
+                variables.emplace_back(gridVarName[i]);
+            }
+        }
     }
 }

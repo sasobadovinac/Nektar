@@ -1020,6 +1020,19 @@ namespace Nektar
                 variables.push_back  ("ArtificialVisc");
                 fieldcoeffs.push_back(sensorFwd);
             }
+
+            if (m_ALESolver)
+            {
+                // Adds extra output variables for grid velocity
+                std::string gridVarName[3] = {"gridVx", "gridVy", "gridVz"};
+                for (int i = 0; i < m_spacedim; ++i)
+                {
+                    Array<OneD, NekDouble> gridVel(nCoeffs, 0.0);
+                    m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[i], gridVel);
+                    fieldcoeffs.emplace_back(gridVel);
+                    variables.emplace_back(gridVarName[i]);
+                }
+            }
         }
     }
 
