@@ -1,5 +1,7 @@
 #include "ALEHelper.h"
 #include <StdRegions/StdQuadExp.h>
+#include <LibUtilities/BasicUtils/Timer.h>
+
 namespace Nektar
 {
 
@@ -126,7 +128,11 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
     auto curvedEdges = m_fieldsALE[0]->GetGraph()->GetCurvedEdges();
     auto curvedFaces = m_fieldsALE[0]->GetGraph()->GetCurvedFaces();
 
+    LibUtilities::Timer timer;
+    timer.Start();
     m_fieldsALE[0]->GetGraph()->GetMovement()->PerformMovement(time); // @TODO: Moved out of loop!
+    timer.Stop();
+    timer.AccumulateRegion("Movement::PerformMovement");
 
     // The order of the resets below is v important to avoid errors
     for (auto &field : m_fieldsALE)

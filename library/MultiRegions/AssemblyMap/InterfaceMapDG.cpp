@@ -33,6 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "InterfaceMapDG.h"
+#include <LibUtilities/BasicUtils/Timer.h>
 
 namespace Nektar
 {
@@ -170,17 +171,27 @@ InterfaceMapDG::InterfaceMapDG(
 
 void InterfaceMapDG::ExchangeCoords()
 {
+    LibUtilities::Timer timer;
+    timer.Start();
+
     auto comm  = m_trace->GetComm();
     auto zones = m_movement->GetZones();
 
+    LibUtilities::Timer timer2;
+    timer2.Start();
     for (auto &interfaceTrace : m_localInterfaces)
     {
         interfaceTrace->CalcLocalMissing();
     }
+    timer2.Stop();
+    timer2.AccumulateRegion("InterfaceMapDG::ExchangeCoords local", 1);
 
     // If parallel communication is needed
     if (!m_exchange.empty())
     {
+        LibUtilities::Timer timer3;
+        timer3.Start();
+
         auto requestSend = comm->CreateRequest(m_exchange.size());
         auto requestRecv = comm->CreateRequest(m_exchange.size());
 
@@ -202,9 +213,15 @@ void InterfaceMapDG::ExchangeCoords()
         {
             i->CalcRankDistances();
         }
+
+        timer3.Stop();
+        timer3.AccumulateRegion("InterfaceMapDG::ExchangeCoords parallel", 1);
     }
 
     m_movement->GetCoordExchangeFlag() = false;
+
+    timer.Stop();
+    timer.AccumulateRegion("InterfaceMapDG::ExchangeCoords");
 }
 
 /**
@@ -254,7 +271,7 @@ void InterfaceTrace::CalcLocalMissing()
     // interface on this rank contains
     else
     {
-        for (auto childId : childEdge)
+        for (auto &childId : childEdge)
         {
             auto childElmt =
                 m_trace->GetExpFromGeomId(childId.first);
@@ -396,18 +413,33 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
         ExchangeCoords();
     }
 
+    LibUtilities::Timer timer;
+    timer.Start();
+
     auto comm = m_trace->GetComm();
     // If no parallel exchange needed we only fill the local traces
     if (m_exchange.empty())
     {
+        LibUtilities::Timer timer2;
+        timer2.Start();
+
         // Fill local interface traces
         for (auto &m_localInterface : m_localInterfaces)
         {
             m_localInterface->FillLocalBwdTrace(Fwd, Bwd);
         }
+
+        timer2.Stop();
+        timer2.AccumulateRegion("InterfaceMapDG::ExchangeTrace local", 1);
     }
     else
     {
+        LibUtilities::Timer timer2;
+        timer2.Start();
+
+        LibUtilities::Timer timer3;
+        timer3.Start();
+
         auto requestSend = comm->CreateRequest(m_exchange.size());
         auto requestRecv = comm->CreateRequest(m_exchange.size());
         for (int i = 0; i < m_exchange.size(); ++i)
@@ -415,11 +447,16 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
             m_exchange[i]->SendFwdTrace(requestSend, requestRecv, i, Fwd);
         }
 
+        timer3.Start();
+
         // Fill local interface traces
         for (auto &m_localInterface : m_localInterfaces)
         {
             m_localInterface->FillLocalBwdTrace(Fwd, Bwd);
         }
+
+        timer3.Stop();
+        timer3.AccumulateRegion("InterfaceMapDG::ExchangeTrace local", 1);
 
         comm->WaitAll(requestSend);
         comm->WaitAll(requestRecv);
@@ -429,7 +466,13 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
         {
             i->FillRankBwdTraceExchange(Bwd);
         }
+
+        timer2.Stop();
+        timer2.AccumulateRegion("InterfaceMapDG::ExchangeTrace parallel", 1);
     }
+
+    timer.Stop();
+    timer.AccumulateRegion("InterfaceMapDG::ExchangeTrace");
 }
 
 void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
