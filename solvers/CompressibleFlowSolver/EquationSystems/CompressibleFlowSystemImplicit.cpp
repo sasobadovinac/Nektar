@@ -174,10 +174,10 @@ namespace Nektar
             source2D[i]   = source + offset;
         }
 
-        timer.Start();
+        //timer.Start();
         NonlinSysEvaluatorCoeff(in2D, out2D, source2D);
-        timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::NonlinSysEvaluatorCoeff");
+        //timer.Stop();
+        //timer.AccumulateRegion("CFSImplicit::NonlinSysEvaluatorCoeff");
     }
 
     void CFSImplicit::NonlinSysEvaluatorCoeff(
@@ -198,11 +198,8 @@ namespace Nektar
             m_fields[i]->BwdTrans(inarray[i], inpnts[i]);
         }
         
-        timer.Start();
         DoOdeProjection(inpnts, inpnts, m_bndEvaluateTime);
-        timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoOdeProjection", 1);
-
+        
         timer.Start();
         DoOdeRhsCoeff(inpnts, out, m_bndEvaluateTime);
         timer.Stop();
@@ -261,7 +258,7 @@ namespace Nektar
         timer.Start();
         DoAdvectionCoeff(inarray, outarray, time, Fwd, Bwd);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoAdvectionCoeff");
+        timer.AccumulateRegion("CFSImplicit::DoAdvectionCoeff", 1);
         
         // Negate results
         for (int i = 0; i < nvariables; ++i)
@@ -272,7 +269,7 @@ namespace Nektar
         timer.Start();
         DoDiffusionCoeff(inarray, outarray, Fwd, Bwd);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoDiffusionCoeff");
+        timer.AccumulateRegion("CFSImplicit::DoDiffusionCoeff", 1);
         
         // Add forcing terms
         for (auto &x : m_forcing)
@@ -458,11 +455,8 @@ namespace Nektar
                 intmp[i]    =   Array<OneD, NekDouble>(nphspnt,0.0);
             }
 
-            timer.Start();
             DoOdeProjection(m_solutionPhys,intmp,m_bndEvaluateTime);
-            timer.Stop();
-            timer.AccumulateRegion("CFSImplicit::DoOdeProjection", 1);
-
+            
             timer.Start();
             m_preconCfs->BuildPreconCfs(m_fields, intmp, m_bndEvaluateTime,
                 m_TimeIntegLambda);
@@ -965,7 +959,7 @@ namespace Nektar
         GetTraceJac(inarray,qfield,TraceJac,TraceJacDeriv,TraceJacDerivSign,
             TraceIPSymJacArray);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::GetTraceJac", 1);
+        timer.AccumulateRegion("CFSImplicit::GetTraceJac", 2);
         
         Array<OneD, TypeNekBlkMatSharedPtr > tmpJac;
         Array<OneD, Array<OneD, DataType>>  tmpSign;
@@ -974,7 +968,7 @@ namespace Nektar
         m_advObject->AddTraceJacToMat(nvariables,m_spacedim,m_fields, 
             TraceJac,gmtxarray,tmpJac,tmpSign);
         timer.Stop();
-        timer.AccumulateRegion("Advection::AddTraceJacToMap", 1);
+        timer.AccumulateRegion("Advection::AddTraceJacToMap", 2);
     }
 
 
@@ -1411,20 +1405,20 @@ namespace Nektar
         AddMatNSBlkDiagVol(inarray,qfield,gmtxarray,m_stdSMatDataDBB,
             m_stdSMatDataDBDB);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagVol");
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagVol", 2);
 
         timer.Start();
         AddMatNSBlkDiagBnd(inarray,qfield,gmtxarray,TraceJac,
             TraceJacDeriv,TraceJacDerivSign,TraceIPSymJacArray);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd");
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd", 2);
 
         MultiplyElmtInvMassPlusSource(gmtxarray,m_TimeIntegLambda,zero);
 
         timer.Start();        
         ElmtVarInvMtrx(gmtxarray,gmtVar,zero);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::ElmtVarInvMtrx");
+        timer.AccumulateRegion("CFSImplicit::ElmtVarInvMtrx", 2);
 
         TransTraceJacMatToArray(TraceJac,TraceJacDeriv,TraceJacArray, 
             TraceJacDerivArray);

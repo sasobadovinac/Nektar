@@ -168,7 +168,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
         timer.Start();
         PreconBlkDiag(pFields, rhs, outarray, m_PreconMatSingle, tmpSingle);
         timer.Stop();
-        timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag");
+        timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 1);
 
         for (int nrelax = 0; nrelax < nBRJIterTot - 1; nrelax++)
         {
@@ -181,13 +181,13 @@ void PreconCfsBRJ::v_DoPreconCfs(
                 m_TraceJacArraySingle, m_TraceJacDerivArraySingle,
                 m_TraceJacDerivSignSingle, m_TraceIPSymJacArraySingle);
             timer.Stop();
-            timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs");
+            timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs", 1);
             
             timer.Start();
             PreconBlkDiag(pFields, outarray, outTmp, m_PreconMatSingle,
                           tmpSingle);
             timer.Stop();
-            timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag");
+            timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 1);
 
             Vmath::Svtvp(ntotpnt, BRJParam, outTmp, 1, outN, 1, outarray, 1);
         }
@@ -344,13 +344,13 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
     BwdFlux           = wspTrace[indexwspTrace], indexwspTrace++;
 
     LibUtilities::Timer timer;
-    timer.Start(); 
     for (int i = 0; i < nvariables; ++i)
     {
+        timer.Start(); 
         pFields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
+        timer.Stop();
+        timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 2);
     }
-    timer.Stop();
-    timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 1);
 
     int indexwspTraceDataType = 0;
     Array<OneD, Array<OneD, DataType>> Fwdarray(nvariables);
@@ -405,15 +405,17 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         }
     }
 
-    timer.Start(); 
+     
     for (int i = 0; i < nvariables; ++i)
     {
         Vmath::Fill(nCoeffs, 0.0, outarray[i], 1);
+        timer.Start();
         pFields[i]->AddTraceIntegralToOffDiag(FwdFlux[i], BwdFlux[i],
                                               outarray[i]);
+        timer.Stop();
+        timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 2);
     }
-    timer.Stop();
-    timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 1);
+    
 
     for (int i = 0; i < nvariables; ++i)
     {
