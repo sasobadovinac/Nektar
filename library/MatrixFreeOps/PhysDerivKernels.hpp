@@ -10,14 +10,12 @@ namespace MatrixFree
 using namespace tinysimd;
 using vec_t = simd<NekDouble>;
 
-template<int NUMQUAD0>
 inline static void PhysDerivTensor1DKernel(
+    const int nq0,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &D0,
     std::vector<vec_t, allocator<vec_t>> &outptr_d0)
 {
-    constexpr auto nq0 = NUMQUAD0;
-
     //All matricies are column major ordered since operators used to
     //be computed via BLAS.
 
@@ -35,17 +33,15 @@ inline static void PhysDerivTensor1DKernel(
         outptr_d0[i] = prod_sum; //Store 1x
     }
 }
-
-template<int NUMQUAD0, int NUMQUAD1>
+    
 inline static void PhysDerivTensor2DKernel(
+    const int nq0, const int nq1, 
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &D0,
     const std::vector<vec_t, allocator<vec_t>> &D1,
           std::vector<vec_t, allocator<vec_t>> &outptr_d0,
           std::vector<vec_t, allocator<vec_t>> &outptr_d1)
 {
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1;
-
     //All matricies are column major ordered since operators used to be computed via BLAS.
 
     //D0 * in
@@ -90,8 +86,8 @@ inline static void PhysDerivTensor2DKernel(
 }
 
 // Overloaded with diffusion
-template<int NUMQUAD0, int NUMQUAD1>
 inline static void PhysDerivTensor2DKernel(
+    const int nq0, const int nq1, 
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &D0,
     const std::vector<vec_t, allocator<vec_t>> &D1,
@@ -99,12 +95,11 @@ inline static void PhysDerivTensor2DKernel(
           std::vector<vec_t, allocator<vec_t>> &outptr_d1,
     const Array<OneD, Array<OneD, NekDouble> > &diff)
 {
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nqTot = NUMQUAD0 * NUMQUAD1;
+    const auto nqTot = nq0*nq1; 
     vec_t d00 = diff[0][0], d01 = diff[0][1], d11 = diff[1][1];
     
     std::vector<vec_t, allocator<vec_t>> temp_d0 (nqTot), temp_d1 (nqTot);
     
-
     //All matricies are column major ordered since operators used to be computed via BLAS.
 
     //D0 * in
@@ -166,135 +161,8 @@ inline static void PhysDerivTensor2DKernel(
 
 }
 
-
-template<int NUMQUAD0, int NUMQUAD1, bool DEFORMED>
-static void PhysDerivQuadKernel(
-    const std::vector<vec_t, allocator<vec_t>> &in,
-    const std::vector<vec_t, allocator<vec_t>> &Z0,
-    const std::vector<vec_t, allocator<vec_t>> &Z1,
-    const std::vector<vec_t, allocator<vec_t>> &D0,
-    const std::vector<vec_t, allocator<vec_t>> &D1,
-    const vec_t* df_ptr,
-          std::vector<vec_t, allocator<vec_t>> &out_d0,
-          std::vector<vec_t, allocator<vec_t>> &out_d1)
-{
-    boost::ignore_unused(Z0, Z1);
-
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1;
-    constexpr auto ndf = 4;
-
-    PhysDerivTensor2DKernel<NUMQUAD0, NUMQUAD1>(
-        in,
-        D0, D1,
-        out_d0, out_d1); //Results written to out_d0, out_d1
-
-    vec_t df0, df1, df2, df3;
-    if (!DEFORMED)
-    {
-        df0 = df_ptr[0];
-        df1 = df_ptr[1];
-        df2 = df_ptr[2];
-        df3 = df_ptr[3];
-    }
-
-    int cnt_ji = 0;
-    for (int j = 0; j < nq0; ++j)
-    {
-        for (int i = 0; i < nq1; ++i, ++cnt_ji)
-        {
-
-            vec_t d0 = out_d0[cnt_ji];// Load 1x
-            vec_t d1 = out_d1[cnt_ji]; //Load 1x
-
-            if (DEFORMED)
-            {
-                df0 = df_ptr[cnt_ji * ndf];
-                df1 = df_ptr[cnt_ji * ndf + 1];
-                df2 = df_ptr[cnt_ji * ndf + 2];
-                df3 = df_ptr[cnt_ji * ndf + 3];
-            }
-
-            //Multiply by derivative factors
-            vec_t out0 = d0 * df0; //d0 * df0 + d1 * df1
-            out0.fma(d1, df1);
-            out_d0[cnt_ji] = out0; //Store 1x
-
-            vec_t out1 = d0 * df2; //d0 * df2 + d1 * df3
-            out1.fma(d1, df3);
-            out_d1[cnt_ji] = out1; //Store 1x
-        }
-    }
-
-}
-
-template<int NUMQUAD0, int NUMQUAD1, bool DEFORMED>
-static void PhysDerivTriKernel(
-    const std::vector<vec_t, allocator<vec_t>> &in,
-    const std::vector<vec_t, allocator<vec_t>> &Z0,
-    const std::vector<vec_t, allocator<vec_t>> &Z1,
-    const std::vector<vec_t, allocator<vec_t>> &D0,
-    const std::vector<vec_t, allocator<vec_t>> &D1,
-    const vec_t* df_ptr,
-    std::vector<vec_t, allocator<vec_t>> &out_d0,
-    std::vector<vec_t, allocator<vec_t>> &out_d1)
-{
-
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1;
-    constexpr auto ndf = 4;
-
-    PhysDerivTensor2DKernel<NUMQUAD0, NUMQUAD1>(
-        in,
-        D0, D1,
-        out_d0, out_d1); //Results written to out_d0, out_d1
-
-    vec_t df0, df1, df2, df3;
-    if (!DEFORMED) //Optimized out by compiler
-    {
-        df0 = df_ptr[0];
-        df1 = df_ptr[1];
-        df2 = df_ptr[2];
-        df3 = df_ptr[3];
-    }
-
-    int cnt_ji = 0;
-    for (int j = 0; j < nq1; ++j)
-    {
-
-        vec_t xfrm0 = 2.0 / (1.0 - Z1[j]); //Load 1x
-
-        for (int i = 0; i < nq0; ++i, ++cnt_ji)
-        {
-
-            if (DEFORMED)
-            {
-                df0 = df_ptr[cnt_ji * ndf];
-                df1 = df_ptr[cnt_ji * ndf + 1];
-                df2 = df_ptr[cnt_ji * ndf + 2];
-                df3 = df_ptr[cnt_ji * ndf + 3];
-            }
-
-            //moving from standard to collapsed coordinates
-            vec_t d0 = xfrm0 * out_d0[cnt_ji]; //Load 1x
-            vec_t d1 = out_d1[cnt_ji]; //Load 1x
-            vec_t xfrm1 = 0.5 * (1.0 + Z0[i]); //Load 1x
-            d1.fma(d0, xfrm1);
-
-            //Multiply by derivative factors
-            vec_t out0 = d0 * df0; //d0 * df0 + d1 * df10
-            out0.fma(d1, df1);
-            out_d0[cnt_ji] = out0; // store 1x
-
-            vec_t out1 = d0 * df2; //d0 * df2 + d1 * df3
-            out1.fma(d1, df3);
-            out_d1[cnt_ji] = out1; //Store 1x
-
-        }
-    }
-
-}
-
-template<int NUMQUAD0, int NUMQUAD1, int NUMQUAD2>
-inline static void PhysDerivTensor3DKernel(
+inline void PhysDerivTensor3DKernel(
+    const int nq0, const int nq1, const int nq2, 
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &D0,
     const std::vector<vec_t, allocator<vec_t>> &D1,
@@ -303,8 +171,6 @@ inline static void PhysDerivTensor3DKernel(
           std::vector<vec_t, allocator<vec_t>> &out_d1,
           std::vector<vec_t, allocator<vec_t>> &out_d2)
 {
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
-
     //Direction 1
     for (int i = 0; i < nq0; ++i)
     {
@@ -367,11 +233,10 @@ inline static void PhysDerivTensor3DKernel(
             out_d2[j*nq0*nq1 + i] = prod_sum;
         }
     }
-
 }
 
-template<int NUMQUAD0, int NUMQUAD1, int NUMQUAD2, bool DEFORMED>
-static void PhysDerivHexKernel(
+inline static void PhysDerivHexKernel(
+    const int nq0, const int nq1, const int nq2, const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>> &inptr,
     const std::vector<vec_t, allocator<vec_t>> &Z0,
     const std::vector<vec_t, allocator<vec_t>> &Z1,
@@ -385,10 +250,9 @@ static void PhysDerivHexKernel(
     std::vector<vec_t, allocator<vec_t>> &outptr_d2)
 {
     boost::ignore_unused(Z0, Z1, Z2);
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
     constexpr auto ndf = 9;
 
-    PhysDerivTensor3DKernel<NUMQUAD0, NUMQUAD1, NUMQUAD2>(
+    PhysDerivTensor3DKernel(nq0,nq1,nq2,
         inptr,
         D0, D1, D2,
         outptr_d0, outptr_d1, outptr_d2);
@@ -450,8 +314,8 @@ static void PhysDerivHexKernel(
 
 }
 
-template<int NUMQUAD0, int NUMQUAD1, int NUMQUAD2, bool DEFORMED>
-static void PhysDerivPrismKernel(
+inline static void PhysDerivPrismKernel(
+    const int nq0, const int nq1, const int nq2, const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>>& in,
     const std::vector<vec_t, allocator<vec_t>>& Z0,
     const std::vector<vec_t, allocator<vec_t>>& Z1,
@@ -466,10 +330,9 @@ static void PhysDerivPrismKernel(
 {
     boost::ignore_unused(Z1);
 
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
     constexpr auto ndf = 9;
 
-    PhysDerivTensor3DKernel<NUMQUAD0, NUMQUAD1, NUMQUAD2>(
+    PhysDerivTensor3DKernel(nq0,nq1,nq2,
         in,
         D0, D1, D2,
         out_d0, out_d1, out_d2);
@@ -537,8 +400,9 @@ static void PhysDerivPrismKernel(
     }
 }
 
-template<int NUMQUAD0, int NUMQUAD1, int NUMQUAD2, bool DEFORMED>
-static void PhysDerivPyrKernel(
+
+inline static void PhysDerivPyrKernel(
+    const int nq0, const int nq1, const int nq2, const bool DEFORMED,
     const std::vector<vec_t, allocator<vec_t>>& in,
     const std::vector<vec_t, allocator<vec_t>>& Z0,
     const std::vector<vec_t, allocator<vec_t>>& Z1,
@@ -553,10 +417,9 @@ static void PhysDerivPyrKernel(
 {
     boost::ignore_unused(Z1);
 
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
     constexpr auto ndf = 9;
 
-    PhysDerivTensor3DKernel<NUMQUAD0, NUMQUAD1, NUMQUAD2>(
+    PhysDerivTensor3DKernel(nq0, nq1, nq2,
         in,
         D0, D1, D2,
         out_d0, out_d1, out_d2);
@@ -629,9 +492,9 @@ static void PhysDerivPyrKernel(
     }
 }
 
-template<int NUMQUAD0, int NUMQUAD1, int NUMQUAD2, bool DEFORMED>
-static void PhysDerivTetKernel(
-    const std::vector<vec_t, allocator<vec_t>>& in,
+inline static void PhysDerivTetKernel(
+    const int nq0, const int nq1, const int nq2,
+    const bool Deformed, const std::vector<vec_t, allocator<vec_t>>& in,
     const std::vector<vec_t, allocator<vec_t>>& Z0,
     const std::vector<vec_t, allocator<vec_t>>& Z1,
     const std::vector<vec_t, allocator<vec_t>>& Z2,
@@ -647,16 +510,14 @@ static void PhysDerivTetKernel(
     std::vector<vec_t, allocator<vec_t>>& out_d2)
 {
 
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
     constexpr auto ndf = 9;
 
-    PhysDerivTensor3DKernel<NUMQUAD0, NUMQUAD1, NUMQUAD2>(
-        in,
-        D0, D1, D2,
-        diff0, diff1, diff2);
+    PhysDerivTensor3DKernel(nq0, nq1, nq2,
+                            in, D0, D1, D2,
+                            diff0, diff1, diff2);
 
     vec_t df0, df1, df2, df3, df4, df5, df6, df7, df8;
-    if (!DEFORMED)
+    if (!Deformed)
     {
         df0 = df_ptr[0];
         df1 = df_ptr[1];
@@ -739,7 +600,7 @@ static void PhysDerivTetKernel(
                 vec_t d1 = out_d1[cnt_kji]; //Load 1x
                 vec_t d2 = out_d2[cnt_kji]; //Load 1x
 
-                if (DEFORMED)
+                if (Deformed)
                 {
                     df0 = df_ptr[cnt_kji*ndf + 0];
                     df1 = df_ptr[cnt_kji*ndf + 1];
@@ -769,7 +630,7 @@ static void PhysDerivTetKernel(
             }
         }
     }
-
+   
 }
 
 } // namespace MatrixFree

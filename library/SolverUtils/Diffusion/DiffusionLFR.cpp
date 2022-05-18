@@ -50,15 +50,15 @@ namespace Nektar
     {
         std::string DiffusionLFR::type[] = {
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRDG", DiffusionLFR::create),
+                              "LFRDG", DiffusionLFR::create,"LFRDG"),
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRSD", DiffusionLFR::create),
+                              "LFRSD", DiffusionLFR::create,"LRFSD"),
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRHU", DiffusionLFR::create),
+                              "LFRHU", DiffusionLFR::create,"LFRHU"),
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRcmin", DiffusionLFR::create),
+                               "LFRcmin", DiffusionLFR::create,"LFRcmin"),
             GetDiffusionFactory().RegisterCreatorFunction(
-                                        "LFRcinf", DiffusionLFR::create)};
+                               "LFRcinf", DiffusionLFR::create,"LFRcinf")};
 
         /**
          * @brief DiffusionLFR uses the Flux Reconstruction (FR) approach to
@@ -1494,9 +1494,9 @@ namespace Nektar
             int nElements    = fields[0]->GetExpSize();
             int nSolutionPts = fields[0]->GetTotPoints();
 
-            vector<bool> negatedFluxNormal =
+            vector<bool> leftAdjacentTraces =
                 std::static_pointer_cast<MultiRegions::DisContField>(
-                    fields[0])->GetNegatedFluxNormal();
+                    fields[0])->GetLeftAdjacentTraces();
 
             // Arrays to store the derivatives of the correction flux
             Array<OneD, NekDouble> DCL(nSolutionPts/nElements, 0.0);
@@ -1527,13 +1527,13 @@ namespace Nektar
                 t_offset = fields[0]->GetTrace()
                     ->GetPhys_Offset(elmtToTrace[n][0]->GetElmtId());
 
-                if(negatedFluxNormal[2*n])
+                if(leftAdjacentTraces[2*n])
                 {
-                    JumpL[n] =  iFlux[t_offset] - tmpFluxVertex[0];
+                    JumpL[n] =  -iFlux[t_offset] - tmpFluxVertex[0];
                 }
                 else
                 {
-                    JumpL[n] =  -iFlux[t_offset] - tmpFluxVertex[0];
+                    JumpL[n] =  iFlux[t_offset] - tmpFluxVertex[0];
                 }
 
                 t_offset = fields[0]->GetTrace()
@@ -1542,13 +1542,13 @@ namespace Nektar
                 fields[0]->GetExp(n)->GetTracePhysVals(1, elmtToTrace[n][1],
                                                         tmparrayX1,
                                                         tmpFluxVertex);
-                if(negatedFluxNormal[2*n+1])
+                if(leftAdjacentTraces[2*n+1])
                 {
-                    JumpR[n] =  -iFlux[t_offset] - tmpFluxVertex[0];
+                    JumpR[n] =  iFlux[t_offset] - tmpFluxVertex[0];
                 }
                 else
                 {
-                    JumpR[n] =  iFlux[t_offset] - tmpFluxVertex[0];
+                    JumpR[n] =  -iFlux[t_offset] - tmpFluxVertex[0];
                 }
             }
 

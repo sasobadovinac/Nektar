@@ -3626,6 +3626,7 @@ LibUtilities::BasisKey MeshGraph::GetEdgeBasisKey(SegGeomSharedPtr edge,
             {
                 switch (expansion->m_basisKeyVector[edge_id].GetPointsType())
                 {
+                    case LibUtilities::eGaussRadauMLegendre:
                     case LibUtilities::eGaussRadauMAlpha1Beta0:
                     {
                         const LibUtilities::PointsKey pkey(

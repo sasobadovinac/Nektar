@@ -166,6 +166,17 @@ namespace Nektar
                         vConvectiveType, vConvectiveType);
         m_advObject->InitObject( m_session, m_fields);
 
+        // Set up arrays for moving reference frame
+        // Note: this must be done before the forcing
+        m_movingFrameProjMat = bnu::identity_matrix<NekDouble>(3, 3);
+        if (DefinedForcing("MovingReferenceFrame"))
+        {
+            m_movingFrameVelsxyz = Array<OneD, NekDouble>(6, 0.0);
+            m_movingFrameTheta   = Array<OneD, NekDouble>(3, 0.0);
+            m_pivotPoint         = Array<OneD, NekDouble>(3, 0.0);
+            GetPivotPoint(m_pivotPoint);
+        }
+
         // Forcing terms
         m_forcing = SolverUtils::Forcing::Load(m_session, shared_from_this(),
                                             m_fields, v_GetForceDimension());
@@ -270,9 +281,109 @@ namespace Nektar
             }
         }
 
+        // Check if we have moving reference frame boundary conditions,if so, all velocity vectors at those 
+        // boundaries should be Drichlet and have a same tag
+        // loop over the boundaries
+        for (int n = 0; n < m_fields[0]->GetBndConditions().size(); ++n)
+        {
+            // loop over the velocities
+            for (int i = 0; i < m_velocity.size(); ++i)
+            {
+                if (boost::iequals(
+                        m_fields[i]->GetBndConditions()[n]->GetUserDefined(),
+                        "MovingFrameWall"))
+                {
+                    // all velocities must have the same userdefined tag and all
+                    // must be Dirichlet
+                    for (int j = 0; j < m_velocity.size(); ++j)
+                    {
+                        ASSERTL0(m_fields[j]
+                                         ->GetBndConditions()[n]
+                                         ->GetBoundaryConditionType() ==
+                                     SpatialDomains::eDirichlet,
+                                 "All velocities with userdefined tag: "
+                                 "\"MovingFrameWall\" must be Dirichlet boundary "
+                                 "condition");
+                        ASSERTL0(boost::iequals(m_fields[j]
+                                                    ->GetBndConditions()[n]
+                                                    ->GetUserDefined(),
+                                                "MovingFrameWall"),
+                                 "If any of the velocity components at a "
+                                 "boundary is defined as \"MovingFrameWall\", "
+                                 "the rest of velocity components are also "
+                                 "must be defined as \"MovingFrameWall\" ");
+                    }
+                }
+                
+                if (boost::iequals(
+                        m_fields[i]->GetBndConditions()[n]->GetUserDefined(),
+                        "MovingFrameDomainVel"))
+                {
+                    // all velocities must have the same userdefined tag and all
+                    // must be Dirichlet
+                    for (int j = 0; j < m_velocity.size(); ++j)
+                    {
+                        ASSERTL0(m_fields[j]
+                                         ->GetBndConditions()[n]
+                                         ->GetBoundaryConditionType() ==
+                                     SpatialDomains::eDirichlet,
+                                 "All velocities with userdefined tag: "
+                                 "\"MovingFrameDomainVel\" must be Dirichlet boundary "
+                                 "condition");
+                        ASSERTL0(boost::iequals(m_fields[j]
+                                                    ->GetBndConditions()[n]
+                                                    ->GetUserDefined(),
+                                                "MovingFrameDomainVel"),
+                                 "If any of the velocity components at a "
+                                 "boundary is defined as \"MovingFrameDomainVel\", "
+                                 "the rest of velocity components are also "
+                                 "must be defined as \"MovingFrameDomainVel\" ");
+                    }
+                }
+
+            }
+        }
+
+
         // Set up Field Meta Data for output files
         m_fieldMetaDataMap["Kinvis"]   = boost::lexical_cast<std::string>(m_kinvis);
         m_fieldMetaDataMap["TimeStep"] = boost::lexical_cast<std::string>(m_timestep);
+
+        // Check to see if the metadata for moving reference frame is defined
+        if (DefinedForcing("MovingReferenceFrame"))
+        {
+            if (m_fieldMetaDataMap != LibUtilities::NullFieldMetaDataMap)
+            {
+                std::vector<std::string> vSuffix = {"_x", "_y", "_z"};
+                for (int i = 0; i < 3; ++i)
+                {
+                    NekDouble dTheta{0};
+                    std::string sTheta = "Theta" + vSuffix[i];
+                    auto it            = m_fieldMetaDataMap.find(sTheta);
+                    if (it != m_fieldMetaDataMap.end())
+                    {
+                        dTheta = boost::lexical_cast<NekDouble>(it->second);
+                        m_movingFrameTheta[i] = dTheta;
+                    }
+                    else
+                    {
+                        m_fieldMetaDataMap[sTheta] =
+                            boost::lexical_cast<std::string>(
+                                m_movingFrameTheta[i]);
+                    }
+                }
+            }
+            else
+            {
+                std::vector<std::string> vSuffix = {"_x", "_y", "_z"};
+                for (int i = 0; i < 3; ++i)
+                {
+                    std::string sTheta = "Theta" + vSuffix[i];
+                    m_fieldMetaDataMap[sTheta] =
+                        boost::lexical_cast<std::string>(m_movingFrameTheta[i]);
+                }
+            }
+        }
     }
 
     /**
@@ -339,6 +450,9 @@ namespace Nektar
             SetRadiationBoundaryForcing(i);
         }
 
+        // Enforcing the boundary conditions (Inlet and wall) for the 
+        // Moving reference frame
+        SetMovingReferenceFrameBCs(time);
         SetZeroNormalVelocity();
     }
 
@@ -781,6 +895,239 @@ namespace Nektar
     }
 
     /**
+     * Set boundary conditions for moving frame of reference
+     */
+    void IncNavierStokes::SetMovingReferenceFrameBCs(const NekDouble& time)
+    {
+        SetMRFWallBCs(time);
+        SetMRFDomainVelBCs(time);
+    }
+
+     /**
+     * Set Wall boundary conditions for moving frame of reference
+     */
+    void IncNavierStokes::SetMRFWallBCs(const NekDouble& time)
+    {
+        // for the wall we need to calculate:
+        // [V_wall]_xyz = [V_frame]_xyz + [Omega X r]_xyz
+        // Note all vectors must be in moving frame coordinates xyz
+        // not in inertial frame XYZ
+        
+
+        Array<OneD, Array<OneD, const SpatialDomains::BoundaryConditionShPtr > >
+            BndConds(m_spacedim);
+        Array<OneD, Array<OneD, MultiRegions::ExpListSharedPtr> >
+            BndExp(m_spacedim);
+
+
+        for(int i = 0; i < m_spacedim; ++i)
+        {
+            BndConds[i] = m_fields[m_velocity[i]]->GetBndConditions();
+            BndExp[i]   = m_fields[m_velocity[i]]->GetBndCondExpansions();
+        }
+
+        int npoints;
+        int fldid = m_velocity[0];
+
+        Array<OneD, NekDouble> Bphys,Bcoeffs;
+
+        // loop over the boundary regions
+        for (int n = 0; n < BndExp[0].size(); ++n)
+        {
+            if (BndConds[0][n]->GetBoundaryConditionType() ==
+                    SpatialDomains::eDirichlet &&
+                (boost::iequals(BndConds[0][n]->GetUserDefined(),
+                                "MovingFrameWall")))
+            {
+                npoints = BndExp[0][n]->GetNpoints();
+                // 
+                // define arrays to calculate the prescribed velocities and modifed ones
+                Array<OneD, Array<OneD, NekDouble>> velocities(m_velocity.size());
+                Array<OneD, Array<OneD, NekDouble>> unitArray(m_velocity.size());
+                Array<OneD, Array<OneD, NekDouble>> coords(3);
+                for (int k = 0; k < m_velocity.size(); ++k)
+                {
+                    velocities[k]  = Array<OneD, NekDouble>(npoints, 0.0);
+                    unitArray[k]  = Array<OneD, NekDouble>(npoints, 1.0);
+                }
+                Array<OneD, NekDouble> tmp(npoints, 0.0);
+                for (int k = 0; k < 3; ++k)
+                {
+                    coords[k] = Array<OneD, NekDouble>(npoints, 0.0);
+                }
+                BndExp[0][n]->GetCoords(coords[0], coords[1], coords[2]);
+
+                // move the centre to the location of pivot
+                for (int i = 0; i < m_spacedim; ++i)
+                {
+                    Vmath::Sadd(npoints, -m_pivotPoint[i], coords[i], 1,
+                                coords[i], 1);
+                }
+                /////////////////////////////////////
+                // Note that both Omega and the absolute velocities have been
+                // expressed in the moving reference frame unit vectors
+                // therefore the result is in moving ref frame and no furhter
+                // transformaton is required
+                // 
+                // compute Omega X r = vx ex + vy ey + vz ez
+                // Note OmegaX : movingFrameVelsxyz[3]
+                // Note OmegaY : movingFrameVelsxyz[4]
+                // Note OmegaZ : movingFrameVelsxyz[5]
+                //
+                // vx = OmegaY*z-OmegaZ*y
+                Vmath::Smul(npoints, -1 * m_movingFrameVelsxyz[5], coords[1], 1,
+                            velocities[0], 1);
+                // vy = OmegaZ*x-OmegaX*z
+                Vmath::Smul(npoints, m_movingFrameVelsxyz[5], coords[0], 1,
+                            velocities[1], 1);
+                if (m_spacedim == 3)
+                {
+                    // add the OmegaY*z to vx
+                    Vmath::Svtvp(npoints, m_movingFrameVelsxyz[4], coords[2], 1,
+                                 velocities[0], 1, velocities[0], 1);
+                    // add the -OmegaX*z to vy
+                    Vmath::Svtvp(npoints, -1 * m_movingFrameVelsxyz[3],
+                                 coords[2], 1, velocities[1], 1, velocities[1],
+                                 1);
+
+                    // vz = OmegaX*y-OmegaY*x
+                    Vmath::Svtsvtp(npoints, m_movingFrameVelsxyz[3], coords[1],
+                                   1, -1.0 * m_movingFrameVelsxyz[4], coords[0],
+                                   1, velocities[2], 1);
+                }
+
+                // add the translation velocity
+                for (int k = 0; k < m_spacedim; ++k)
+                {
+                    Vmath::Sadd(npoints, m_movingFrameVelsxyz[k], velocities[k],
+                                1, velocities[k], 1);
+                }
+
+                // update the boundary values
+                for (int k = 0; k < m_spacedim; ++k)
+                {
+                    Vmath::Vmul(npoints, unitArray[k], 1, velocities[k], 1,
+                                BndExp[k][n]->UpdatePhys(), 1);
+                }
+                // update the coefficients
+                for (int k = 0; k < m_spacedim; ++k)
+                {
+                    if (m_fields[k]->GetExpType() == MultiRegions::e3DH1D)
+                    {
+                        BndExp[k][n]->SetWaveSpace(false);
+                    }
+                    BndExp[k][n]->FwdTrans_BndConstrained(
+                        BndExp[k][n]->GetPhys(), BndExp[k][n]->UpdateCoeffs());
+                }
+            }
+        }
+    }
+
+    /**
+     * Set inlet boundary conditions for moving frame of reference
+     */
+    void IncNavierStokes::SetMRFDomainVelBCs(const NekDouble& time)
+    {
+        // The inlet conditions for the velocities given in the session xml file
+        // however, those are in the inertial reference coordinate XYZ and
+        // needed to be converted to the moving reference coordinate xyz
+
+        // define arrays to calculate the prescribed velocities and modifed ones
+        Array<OneD, Array<OneD, NekDouble>> definedVels(m_velocity.size());
+        Array<OneD, Array<OneD, NekDouble>> velocities(m_velocity.size());
+        Array<OneD, Array<OneD, NekDouble>> unitArray(m_velocity.size());
+        Array<OneD, Array<OneD, NekDouble>> coords(3);
+
+        Array<OneD, Array<OneD, const SpatialDomains::BoundaryConditionShPtr > >
+            BndConds(m_spacedim);
+        Array<OneD, Array<OneD, MultiRegions::ExpListSharedPtr> >
+            BndExp(m_spacedim);
+
+
+        for(int i = 0; i < m_spacedim; ++i)
+        {
+            BndConds[i] = m_fields[m_velocity[i]]->GetBndConditions();
+            BndExp[i]   = m_fields[m_velocity[i]]->GetBndCondExpansions();
+        }
+
+        int npoints;
+        int fldid = m_velocity[0];
+
+        Array<OneD, NekDouble> Bphys,Bcoeffs;
+
+        // loop over the boundary regions
+        for (int n = 0; n < BndExp[0].size(); ++n)
+        {
+            if (BndConds[0][n]->GetBoundaryConditionType() ==
+                    SpatialDomains::eDirichlet &&
+                (boost::iequals(BndConds[0][n]->GetUserDefined(),
+                                "MovingFrameDomainVel")))
+            {
+                npoints = BndExp[0][n]->GetNpoints();
+                for (int k = 0; k < m_velocity.size(); ++k)
+                {
+                    definedVels[k] = Array<OneD, NekDouble>(npoints, 0.0);
+                    velocities[k]  = Array<OneD, NekDouble>(npoints, 0.0);
+                    unitArray[k]  = Array<OneD, NekDouble>(npoints, 1.0);
+                }
+                Array<OneD, NekDouble> tmp(npoints, 0.0);
+                for (int k = 0; k < 3; ++k)
+                {
+                    coords[k] = Array<OneD, NekDouble>(npoints, 0.0);
+                }
+                BndExp[0][n]->GetCoords(coords[0], coords[1], coords[2]);
+
+                // loop over the velocity fields and compute the boundary
+                // condition
+                for (int k = 0; k < m_velocity.size(); ++k)
+                {
+                    LibUtilities::Equation condition =
+                        std::static_pointer_cast<
+                            SpatialDomains::DirichletBoundaryCondition>(
+                            BndConds[k][n])
+                            ->m_dirichletCondition;
+                    // Evaluate
+                    condition.Evaluate(coords[0], coords[1], coords[2], time,
+                                       definedVels[k]);
+                }
+
+                // We have all velocity components
+                // transform them to the moving refernce frame
+                for (int l = 0; l < m_spacedim; ++l)
+                {
+                    Array<OneD, NekDouble> tmp0(npoints, 0.0);
+                    Array<OneD, NekDouble> tmp1(npoints, 0.0);
+                    Array<OneD, NekDouble> tmp2(npoints, 0.0);
+                    for (int m = 0; m < m_spacedim; ++m)
+                    {
+                        Vmath::Svtvp(npoints, m_movingFrameProjMat(l, m),
+                                     tmp0 = definedVels[m], 1,
+                                     tmp1 = velocities[l], 1,
+                                     tmp2 = velocities[l], 1);
+                    }
+
+                }
+
+                // update the boundary values
+                for (int k = 0; k < m_spacedim; ++k)
+                {
+                    Vmath::Vmul(npoints, unitArray[k],1 ,velocities[k],1, BndExp[k][n]->UpdatePhys(),1);
+                }
+                                // update the coefficients
+                for (int k = 0; k < m_spacedim; ++k)
+                {
+                    if (m_fields[k]->GetExpType() == MultiRegions::e3DH1D)
+                    {
+                        BndExp[k][n]->SetWaveSpace(false);
+                    }
+                    BndExp[k][n]->FwdTrans_BndConstrained(
+                        BndExp[k][n]->GetPhys(), BndExp[k][n]->UpdateCoeffs());
+                }
+            }
+        }
+    }
+
+    /**
     * Add an additional forcing term programmatically.
     */
     void IncNavierStokes::AddForcing(
@@ -859,6 +1206,196 @@ namespace Nektar
             velocity[i] = physfield[i];
         }
     }
+
+    /**
+     * Function to set the moving frame velocities calucated in the forcing
+     * this gives access to the moving reference forcing to set the velocities
+     * to be later used in enforcing the boundary condition in IncNavierStokes
+     * class
+     */
+    void IncNavierStokes::SetMovingFrameVelocities(
+        const Array<OneD, NekDouble> &vFrameVels)
+    {
+        ASSERTL0(vFrameVels.size() == m_movingFrameVelsxyz.size(),
+                 "Arrays have different dimensions, cannot set moving frame "
+                 "velocities");
+        Vmath::Vcopy(vFrameVels.size(), vFrameVels, 1, m_movingFrameVelsxyz, 1);
+    }
+
+    void IncNavierStokes::GetMovingFrameVelocities(
+        Array<OneD, NekDouble> &vFrameVels)
+    {
+        ASSERTL0(vFrameVels.size() == m_movingFrameVelsxyz.size(),
+                 "Arrays have different dimensions, cannot get moving frame "
+                 "velocities");
+        unsigned int size = m_movingFrameVelsxyz.size();
+        Vmath::Vcopy(size, m_movingFrameVelsxyz, 1, vFrameVels, 1);
+    }
+
+    /**
+     * Function to set the rotation matrix computed in the forcing
+     * this gives access to the moving reference forcing to set the Projection
+     * matrix to be used later in IncNavierStokes calss for enforcing the
+     * boundary conditions
+     */
+    void IncNavierStokes::SetMovingFrameProjectionMat(
+        const bnu::matrix<NekDouble> &vProjMat)
+    {
+        ASSERTL0(vProjMat.size1() == m_movingFrameProjMat.size1(),
+                 "Matrices have different numbers of rows, cannot Set the "
+                 "moving frame projection matrix");
+        ASSERTL0(vProjMat.size2() == m_movingFrameProjMat.size2(),
+                 "Matrices have different numbers of columns, cannot Set the "
+                 "moving frame projection matrix");
+        for (int i = 0; i < vProjMat.size1(); ++i)
+        {
+            for (int j = 0; j < vProjMat.size2(); ++j)
+            {
+                m_movingFrameProjMat(i, j) = vProjMat(i, j);
+            }
+        }
+    }
+
+    void IncNavierStokes::GetMovingFrameProjectionMat(
+        bnu::matrix<NekDouble> &vProjMat)
+    {
+        ASSERTL0(vProjMat.size1() == m_movingFrameProjMat.size1(),
+                 "Matrices have different numbers of rows, cannot Get the "
+                 "moving frame projection matrix");
+        ASSERTL0(vProjMat.size2() == m_movingFrameProjMat.size2(),
+                 "Matrices have different numbers of columns, cannot Get the "
+                 "moving frame projection matrix");
+
+        for (int i = 0; i < vProjMat.size1(); ++i)
+        {
+            for (int j = 0; j < vProjMat.size2(); ++j)
+            {
+                vProjMat(i, j) = m_movingFrameProjMat(i, j);
+            }
+        }
+    }
+
+    /**
+     * Function to set the angles between the moving frame of reference and
+     * stationary inertial reference frame
+     **/
+    void IncNavierStokes::SetMovingFrameAngles(
+        const Array<OneD, NekDouble> &vFrameTheta)
+    {
+        ASSERTL0( vFrameTheta.size() == m_movingFrameTheta.size(),
+                "Arrays have different size, cannot set moving frame angles");
+        for (int i = 0; i < vFrameTheta.size(); ++i)
+        {
+            m_movingFrameTheta[i] = vFrameTheta[i];
+        }
+    }
+
+    /**
+     * Function to get the angles between the moving frame of reference and
+     * stationary inertial reference frame
+     **/
+    void IncNavierStokes::GetMovingFrameAngles(
+        Array<OneD, NekDouble> &vFrameTheta)
+    {
+        ASSERTL0( vFrameTheta.size() == m_movingFrameTheta.size(),
+                "Arrays have different size, cannot get moving frame angles");
+        for (int i = 0; i < m_movingFrameTheta.size(); ++i)
+        {
+            vFrameTheta[i] = m_movingFrameTheta[i];
+        }
+    }
+
+    /**
+     * Function to check the type of forcing
+     **/
+    bool IncNavierStokes::DefinedForcing(const std::string &sForce)
+    {
+        vector<std::string> vForceList;
+        bool hasForce{false};
+
+        if (!m_session->DefinesElement("Nektar/Forcing"))
+        {
+            return hasForce;
+        }
+
+        TiXmlElement *vForcing = m_session->GetElement("Nektar/Forcing");
+        if (vForcing)
+        {
+            TiXmlElement *vForce = vForcing->FirstChildElement("FORCE");
+            while (vForce)
+            {
+                string vType = vForce->Attribute("TYPE");
+
+                vForceList.push_back(vType);
+                vForce = vForce->NextSiblingElement("FORCE");
+            }
+        }
+
+        for(auto & f: vForceList)
+        {
+            if( boost::iequals( f, sForce) )
+            {
+                hasForce = true;
+            }
+        }
+
+        return hasForce;
+    }
+    
+    /**
+     * Get the pivot point for moving reference 
+     **/
+    void IncNavierStokes::GetPivotPoint(Array<OneD, NekDouble>& vPivotPoint)
+    {
+        std::string sMRFForcingType = "MovingReferenceFrame";
+
+        // only if we use moving reference frame formulation
+        if( !DefinedForcing(sMRFForcingType) )
+        {
+            return;
+        }
+
+        TiXmlElement *vMRFForcing;
+
+        TiXmlElement *vForcing = m_session->GetElement("Nektar/Forcing");
+        if (vForcing)
+        {
+            TiXmlElement *vForce = vForcing->FirstChildElement("FORCE");
+            while (vForce)
+            {
+                string vType = vForce->Attribute("TYPE");
+
+                // if it is moving reference frame
+                if(boost::iequals( vType, sMRFForcingType ))
+                {
+                    TiXmlElement *pivotElmt = vForce->FirstChildElement("PivotPoint");
+
+                    // if not defined, zero would be the default
+                    if (pivotElmt)
+                    {
+                        std::stringstream pivotPointStream;
+                        std::string pivotPointStr = pivotElmt->GetText();
+                        pivotPointStream.str(pivotPointStr);
+
+                        for (int j = 0; j < m_spacedim; ++j)
+                        {
+                            pivotPointStream >> pivotPointStr;
+                            if (!pivotPointStr.empty())
+                            {
+                                LibUtilities::Equation equ(
+                                    m_session->GetInterpreter(), pivotPointStr);
+                                  vPivotPoint[j] = equ.Evaluate();
+                            }
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+
 
     /**
      * Perform the extrapolation.

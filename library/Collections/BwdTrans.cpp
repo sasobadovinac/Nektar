@@ -56,7 +56,7 @@ using LibUtilities::eTriangle;
 /**
  * @brief Backward transform operator using standard matrix approach.
  */
-class BwdTrans_StdMat : public Operator
+class BwdTrans_StdMat final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_StdMat)
@@ -64,7 +64,7 @@ public:
     {
     }
     
-    void operator()(const Array<OneD, const NekDouble> &input,
+    void operator()(const   Array<OneD, const NekDouble> &input,
                             Array<OneD,       NekDouble> &output,
                             Array<OneD,       NekDouble> &output1,
                             Array<OneD,       NekDouble> &output2,
@@ -257,7 +257,7 @@ OperatorKey BwdTrans_MatrixFree::m_typeArr[] = {
 /**
  * @brief Backward transform operator using default StdRegions operator
  */
-class BwdTrans_IterPerExp : public Operator
+class BwdTrans_IterPerExp final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_IterPerExp)
@@ -347,7 +347,7 @@ OperatorKey BwdTrans_IterPerExp::m_typeArr[] = {
 /**
  * @brief Backward transform operator using LocalRegions implementation.
  */
-class BwdTrans_NoCollection : public Operator
+class BwdTrans_NoCollection final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_NoCollection)
@@ -441,7 +441,7 @@ OperatorKey BwdTrans_NoCollection::m_typeArr[] = {
 /**
  * @brief Backward transform operator using sum-factorisation (Segment)
  */
-class BwdTrans_SumFac_Seg : public Operator
+class BwdTrans_SumFac_Seg final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_SumFac_Seg)
@@ -516,7 +516,7 @@ OperatorKey BwdTrans_SumFac_Seg::m_type =
 /**
  * @brief Backward transform operator using sum-factorisation (Quad)
  */
-class BwdTrans_SumFac_Quad : public Operator
+class BwdTrans_SumFac_Quad final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_SumFac_Quad)
@@ -630,7 +630,7 @@ OperatorKey BwdTrans_SumFac_Quad::m_type =
 /**
  * @brief Backward transform operator using sum-factorisation (Tri)
  */
-class BwdTrans_SumFac_Tri : public Operator
+class BwdTrans_SumFac_Tri final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_SumFac_Tri)
@@ -733,7 +733,7 @@ OperatorKey BwdTrans_SumFac_Tri::m_type =
         BwdTrans_SumFac_Tri::create, "BwdTrans_SumFac_Tri");
 
 /// Backward transform operator using sum-factorisation (Hex)
-class BwdTrans_SumFac_Hex : public Operator
+class BwdTrans_SumFac_Hex final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_SumFac_Hex)
@@ -849,7 +849,7 @@ OperatorKey BwdTrans_SumFac_Hex::m_type =
 /**
  * @brief Backward transform operator using sum-factorisation (Tet)
  */
-class BwdTrans_SumFac_Tet : public Operator
+class BwdTrans_SumFac_Tet final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_SumFac_Tet)
@@ -1026,7 +1026,7 @@ OperatorKey BwdTrans_SumFac_Tet::m_type =
 /**
  * @brief Backward transform operator using sum-factorisation (Prism)
  */
-class BwdTrans_SumFac_Prism : public Operator
+class BwdTrans_SumFac_Prism final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_SumFac_Prism)
@@ -1172,7 +1172,7 @@ OperatorKey BwdTrans_SumFac_Prism::m_type =
 /**
  * @brief Backward transform operator using sum-factorisation (Pyr)
  */
-class BwdTrans_SumFac_Pyr : public Operator
+class BwdTrans_SumFac_Pyr final : public Operator
 {
 public:
     OPERATOR_CREATE(BwdTrans_SumFac_Pyr)

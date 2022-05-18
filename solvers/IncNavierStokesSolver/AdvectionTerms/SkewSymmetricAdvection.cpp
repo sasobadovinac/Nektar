@@ -41,7 +41,7 @@ namespace Nektar
 string SkewSymmetricAdvection::className
     = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction(
             "SkewSymmetric",
-            SkewSymmetricAdvection::create);
+            SkewSymmetricAdvection::create, "Skew Symmetric");
 
 /**
  *

@@ -182,7 +182,8 @@ namespace Nektar
             m_globalMat   (MemoryManager<GlobalMatrixMap>::AllocateSharedPtr()),
             m_globalLinSysManager(
                 std::bind(&ContField::GenGlobalLinSys, this, std::placeholders::_1),
-                std::string("GlobalLinSys"))
+                std::string("GlobalLinSys")),
+            m_GJPData(In.m_GJPData)
         {
             if(!SameTypeOfBoundaryConditions(In) || CheckIfSingularSystem)
             {
@@ -218,7 +219,8 @@ namespace Nektar
             DisContField(In,DeclareCoeffPhysArrays),
             m_locToGloMap(In.m_locToGloMap),
             m_globalMat(In.m_globalMat),
-            m_globalLinSysManager(In.m_globalLinSysManager)
+            m_globalLinSysManager(In.m_globalLinSysManager),
+            m_GJPData(In.m_GJPData)
         {
         }
 
@@ -268,7 +270,7 @@ namespace Nektar
          *                      points in its array #m_phys.
          */
         void ContField::FwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD,       NekDouble> &outarray)
+                                       Array<OneD,       NekDouble> &outarray)
 
         {
             // Inner product of forcing
@@ -868,7 +870,7 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,       NekDouble> &outarray,
                 const StdRegions::ConstFactorMap &factors,
-                const StdRegions::VarCoeffMap &varcoeff,
+                const StdRegions::VarCoeffMap &pvarcoeff,
                 const MultiRegions::VarFactorsMap &varfactors,
                 const Array<OneD, const NekDouble> &dirForcing,
                 const bool PhysSpaceForcing)
@@ -927,7 +929,39 @@ namespace Nektar
                 bndcnt += m_bndCondExpansions[i]->GetNcoeffs();
             }
 
-            GlobalLinSysKey key(StdRegions::eHelmholtz,m_locToGloMap,factors,
+            StdRegions::MatrixType mtype = StdRegions::eHelmholtz;
+
+            StdRegions::VarCoeffMap varcoeff(pvarcoeff);
+            if(factors.count(StdRegions::eFactorGJP))
+            {
+                // initialize if required
+                if(!m_GJPData)
+                {
+                    m_GJPData = MemoryManager<GJPStabilisation>::
+                        AllocateSharedPtr(GetSharedThisPtr());
+                }
+
+                if(m_GJPData->IsSemiImplicit())
+                {
+                    mtype = StdRegions::eHelmholtzGJP;
+                }
+
+                // to set up forcing need initial guess in physical space
+                Array<OneD, NekDouble> phys(m_npoints), tmp;
+                BwdTrans(outarray,phys);
+                NekDouble scale = -1.0*factors.
+                    find(StdRegions::eFactorGJP)->second; 
+
+                m_GJPData->Apply(phys, wsp,
+                                 pvarcoeff.count(StdRegions::eVarCoeffGJPNormVel)?
+                                 pvarcoeff.find(StdRegions::eVarCoeffGJPNormVel)->second :
+                                 NullNekDouble1DArray,
+                                 scale);
+
+                varcoeff.erase(StdRegions::eVarCoeffGJPNormVel); 
+            }
+            
+            GlobalLinSysKey key(mtype,m_locToGloMap,factors,
                                 varcoeff,varfactors);
 
             GlobalSolve(key,wsp,outarray,dirForcing);

@@ -102,6 +102,7 @@ namespace Nektar
             {
                 return true;
             }
+            
             if(lhs.m_shapeType > rhs.m_shapeType)
             {
                 return false;
@@ -111,6 +112,7 @@ namespace Nektar
             {
                 return true;
             }
+            
             if(lhs.m_p > rhs.m_p)
             {
                 return false;
@@ -120,6 +122,7 @@ namespace Nektar
             {
                 return true;
             }
+            
             if(lhs.m_q > rhs.m_q)
             {
                 return false;
@@ -129,6 +132,7 @@ namespace Nektar
             {
                 return true;
             }
+            
             if(lhs.m_r > rhs.m_r)
             {
                 return false;

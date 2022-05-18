@@ -35,6 +35,7 @@
 #include <iostream>
 #include <ADRSolver/EquationSystems/UnsteadyAdvection.h>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <MultiRegions/ContField.h>
 
 using namespace std;
 
@@ -65,6 +66,16 @@ namespace Nektar
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
         // Read the advection velocities from session file
 
+        // check to see if it is explicity turned off
+        m_session->MatchSolverInfo("GJPStabilisation", "False",
+                                   m_useGJPStabilisation, true);
+        
+        // if GJPStabilisation set to False bool will be true and
+        // if not false so negate/revese bool 
+        m_useGJPStabilisation = !m_useGJPStabilisation; 
+
+        m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
+
         std::vector<std::string> vel;
         vel.push_back("Vx");
         vel.push_back("Vy");
@@ -82,6 +93,7 @@ namespace Nektar
         {
             // Continuous field
             case MultiRegions::eGalerkin:
+            case MultiRegions::eMixed_CG_Discontinuous:
             {
                 string advName;
                 m_session->LoadSolverInfo(
@@ -146,6 +158,10 @@ namespace Nektar
                 break;
             }
         }
+
+        // Forcing terms
+        m_forcing = SolverUtils::Forcing::Load(m_session, shared_from_this(),
+                                    m_fields, m_fields.size());
 
         // If explicit it computes RHS and PROJECTION for the time integration
         if (m_explicitAdvection)
@@ -217,19 +233,25 @@ namespace Nektar
         // Number of solution points
         int nSolutionPts = GetNpoints();
 
-LibUtilities::Timer timer;
-timer.Start();
+        LibUtilities::Timer timer;
+        timer.Start();
         // RHS computation using the new advection base class
         m_advObject->Advect(nVariables, m_fields, m_velocity, inarray,
                             outarray, time);
-timer.Stop();
-// Elapsed time
-timer.AccumulateRegion("Advect");
-
+        timer.Stop();
+        // Elapsed time
+        timer.AccumulateRegion("Advect");
+        
         // Negate the RHS
         for (i = 0; i < nVariables; ++i)
         {
             Vmath::Neg(nSolutionPts, outarray[i], 1);
+        }
+
+        for (auto &x : m_forcing)
+        {
+            // set up non-linear terms
+            x->Apply(m_fields, inarray, outarray, time);
         }
     }
 
@@ -275,16 +297,66 @@ timer.AccumulateRegion("Advect");
             case MultiRegions::eGalerkin:
             case MultiRegions::eMixed_CG_Discontinuous:
             {
-                Array<OneD, NekDouble> coeffs(m_fields[0]->GetNcoeffs(),0.0);
+                int ncoeffs = m_fields[0]->GetNcoeffs();
+                Array<OneD, NekDouble> coeffs(ncoeffs,0.0);
+                
+#if 0
                 for(i = 0; i < nVariables; ++i)
                 {
                     m_fields[i]->FwdTrans(inarray[i], coeffs);
                     m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
                 }
+#else
+                StdRegions::ConstFactorMap factors;
+                StdRegions::MatrixType mtype = StdRegions::eMass;
+
+                Array<OneD,NekDouble> wsp(ncoeffs);
+                
+                for(i = 0; i < nVariables; ++i)
+                {
+                    MultiRegions::ContFieldSharedPtr cfield =
+                        std::dynamic_pointer_cast<
+                            MultiRegions::ContField>(m_fields[i]);
+                
+                    // copy inarray 
+                    Array<OneD, NekDouble> in = inarray[i]; 
+                    
+                    m_fields[i]->IProductWRTBase(in, wsp);
+                    
+                    if(m_useGJPStabilisation)
+                    {
+                        const MultiRegions::GJPStabilisationSharedPtr GJPData =
+                            cfield->GetGJPForcing(); 
+                        
+                        factors[StdRegions::eFactorGJP] =
+                            m_GJPJumpScale*m_timestep;
+                        
+                        if(GJPData->IsSemiImplicit())
+                        {
+                            mtype = StdRegions::eMassGJP;
+                        }
+                        
+                        // to set up forcing need initial guess in
+                        // physical space
+                        NekDouble scale = -1.0*factors[StdRegions::eFactorGJP];
+                        
+                        GJPData->Apply(inarray[i],wsp,
+                                       NullNekDouble1DArray, scale);
+                    }
+                
+                    // Solve the system
+                    MultiRegions::GlobalLinSysKey
+                        key(mtype, cfield->GetLocalToGlobalMap(),factors);
+                
+                    cfield->GlobalSolve(key,wsp,coeffs,
+                             NullNekDouble1DArray);
+                    
+                    m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
+                }
+#endif
                 break;
             }
-
-            default:
+        default:
                 ASSERTL0(false,"Unknown projection scheme");
                 break;
         }
@@ -397,5 +469,12 @@ timer.AccumulateRegion("Advect");
     void UnsteadyAdvection::v_GenerateSummary(SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
+        if(m_useGJPStabilisation)
+        {
+            SolverUtils::AddSummaryItem(s,"GJP Stab. Impl.    ",
+                            m_session->GetSolverInfo("GJPStabilisation"));
+            SolverUtils::AddSummaryItem(s,"GJP Stab. JumpScale",
+                                        m_GJPJumpScale);
+        }
     }
 }

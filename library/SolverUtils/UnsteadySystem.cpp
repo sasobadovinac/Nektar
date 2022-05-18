@@ -609,22 +609,16 @@ namespace Nektar
         void UnsteadySystem::v_GenerateSummary(SummaryList& s)
         {
             EquationSystem::v_GenerateSummary(s);
-            AddSummaryItem(s, "Advection",
+            AddSummaryItem(s, "Advect. advancement",
                            m_explicitAdvection ? "explicit" : "implicit");
 
-            if(m_session->DefinesSolverInfo("AdvectionType"))
-            {
-                AddSummaryItem(s, "AdvectionType",
-                               m_session->GetSolverInfo("AdvectionType"));
-            }
-
-            AddSummaryItem(s, "Diffusion",
+            AddSummaryItem(s, "Advect. advancement",
                            m_explicitDiffusion ? "explicit" : "implicit");
 
             if (m_session->GetSolverInfo("EQTYPE")
                     == "SteadyAdvectionDiffusionReaction")
             {
-                AddSummaryItem(s, "Reaction",
+                 AddSummaryItem(s, "Advect. advancement",
                                m_explicitReaction  ? "explicit" : "implicit");
             }
 

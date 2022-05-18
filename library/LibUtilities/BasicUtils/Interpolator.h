@@ -81,7 +81,7 @@ public:
     * @param filtWidth filter width, required by some algorithms such as eGauss
     * @param maxPts    limit number of considered points
     *
-    * if method is not specified, the best algorithm is chosen autpomatically.
+    * if method is not specified, the best algorithm is chosen automatically.
     *
     * If coordId is not specified, a full 1D/2D/3D interpolation is performed
     * without
