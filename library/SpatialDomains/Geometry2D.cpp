@@ -429,29 +429,33 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             NekDouble zc_derxi2xi2 = m_xmap->PhysEvaluate(xi, zderxi2xi2);
 
             // Objective function
-            NekDouble fx = (xc - xs[0]) * (xc - xs[0]) +
-                           (yc - xs[1]) * (yc - xs[1]) +
-                           (zc - xs[2]) * (zc - xs[2]);
+            NekDouble xdiff = xc - xs[0];
+            NekDouble ydiff = yc - xs[1];
+            NekDouble zdiff = zc - xs[2];
 
-            NekDouble fx_derxi1 = 2.0 * (xc - xs[0]) * xc_derxi1 +
-                                  2.0 * (yc - xs[1]) * yc_derxi1 +
-                                  2.0 * (zc - xs[2]) * zc_derxi1;
+            NekDouble fx = xdiff * xdiff +
+                           ydiff * ydiff +
+                           zdiff * zdiff;
 
-            NekDouble fx_derxi2 = 2.0 * (xc - xs[0]) * xc_derxi2 +
-                                  2.0 * (yc - xs[1]) * yc_derxi2 +
-                                  2.0 * (zc - xs[2]) * zc_derxi2;
+            NekDouble fx_derxi1 = 2.0 * xdiff * xc_derxi1 +
+                                  2.0 * ydiff * yc_derxi1 +
+                                  2.0 * zdiff * zc_derxi1;
 
-            NekDouble fx_derxi1xi1 = 2.0 * (xc - xs[0]) * xc_derxi1xi1 + 2.0 * xc_derxi1 * xc_derxi1 +
-                                     2.0 * (yc - xs[1]) * yc_derxi1xi1 + 2.0 * yc_derxi1 * yc_derxi1 +
-                                     2.0 * (zc - xs[2]) * zc_derxi1xi1 + 2.0 * zc_derxi1 * zc_derxi1;
+            NekDouble fx_derxi2 = 2.0 * xdiff * xc_derxi2 +
+                                  2.0 * ydiff * yc_derxi2 +
+                                  2.0 * zdiff * zc_derxi2;
 
-            NekDouble fx_derxi1xi2 =  2.0 * (xc - xs[0]) * xc_derxi1xi2 + 2.0 * xc_derxi2 * xc_derxi1 +
-                                      2.0 * (yc - xs[1]) * yc_derxi1xi2 + 2.0 * yc_derxi2 * yc_derxi1 +
-                                      2.0 * (zc - xs[2]) * zc_derxi1xi2 + 2.0 * zc_derxi2 * zc_derxi1;
+            NekDouble fx_derxi1xi1 = 2.0 * xdiff * xc_derxi1xi1 + 2.0 * xc_derxi1 * xc_derxi1 +
+                                     2.0 * ydiff * yc_derxi1xi1 + 2.0 * yc_derxi1 * yc_derxi1 +
+                                     2.0 * zdiff * zc_derxi1xi1 + 2.0 * zc_derxi1 * zc_derxi1;
 
-            NekDouble fx_derxi2xi2 = 2.0 * (xc - xs[0]) * xc_derxi2xi2 + 2.0 * xc_derxi2 * xc_derxi2 +
-                                     2.0 * (yc - xs[1]) * yc_derxi2xi2 + 2.0 * yc_derxi2 * yc_derxi2 +
-                                     2.0 * (zc - xs[2]) * zc_derxi2xi2 + 2.0 * zc_derxi2 * zc_derxi2;
+            NekDouble fx_derxi1xi2 =  2.0 * xdiff * xc_derxi1xi2 + 2.0 * xc_derxi2 * xc_derxi1 +
+                                      2.0 * ydiff * yc_derxi1xi2 + 2.0 * yc_derxi2 * yc_derxi1 +
+                                      2.0 * zdiff * zc_derxi1xi2 + 2.0 * zc_derxi2 * zc_derxi1;
+
+            NekDouble fx_derxi2xi2 = 2.0 * xdiff * xc_derxi2xi2 + 2.0 * xc_derxi2 * xc_derxi2 +
+                                     2.0 * ydiff * yc_derxi2xi2 + 2.0 * yc_derxi2 * yc_derxi2 +
+                                     2.0 * zdiff * zc_derxi2xi2 + 2.0 * zc_derxi2 * zc_derxi2;
 
             // Jacobian
             NekDouble jac[2];
@@ -471,7 +475,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             // Check for convergence
             if (abs(fx - fx_prev) < 1e-12)
             {
-                fx_prev     = fx;
+                fx_prev = fx;
                 break;
             }
             else
@@ -506,31 +510,31 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                     continue;
                 }
 
-                NekDouble xc_pk = m_xmap->PhysEvaluate(xi_pk, x);
-                NekDouble yc_pk = m_xmap->PhysEvaluate(xi_pk, y);
-                NekDouble zc_pk = m_xmap->PhysEvaluate(xi_pk, z);
+                NekDouble xc_pk_derxi1, xc_pk_derxi2,
+                          yc_pk_derxi1, yc_pk_derxi2,
+                          zc_pk_derxi1, zc_pk_derxi2;
 
-                NekDouble xc_pk_derxi1 = m_xmap->PhysEvaluate(xi_pk, xderxi1);
-                NekDouble yc_pk_derxi1 = m_xmap->PhysEvaluate(xi_pk, yderxi1);
-                NekDouble zc_pk_derxi1 = m_xmap->PhysEvaluate(xi_pk, zderxi1);
+                NekDouble xc_pk = m_xmap->PhysEvaluate(xi_pk, x, xc_pk_derxi1, xc_pk_derxi2);
+                NekDouble yc_pk = m_xmap->PhysEvaluate(xi_pk, y, yc_pk_derxi1, yc_pk_derxi2);
+                NekDouble zc_pk = m_xmap->PhysEvaluate(xi_pk, z, zc_pk_derxi1, zc_pk_derxi2);
 
-                NekDouble xc_pk_derxi2 = m_xmap->PhysEvaluate(xi_pk, xderxi2);
-                NekDouble yc_pk_derxi2 = m_xmap->PhysEvaluate(xi_pk, yderxi2);
-                NekDouble zc_pk_derxi2 = m_xmap->PhysEvaluate(xi_pk, zderxi2);
+                NekDouble xc_pk_diff = xc_pk - xs[0];
+                NekDouble yc_pk_diff = yc_pk - xs[1];
+                NekDouble zc_pk_diff = zc_pk - xs[2];
 
-                NekDouble fx_pk = (xc_pk - xs[0]) * (xc_pk - xs[0]) +
-                                  (yc_pk - xs[1]) * (yc_pk - xs[1]) +
-                                  (zc_pk - xs[2]) * (zc_pk - xs[2]) ;
+                NekDouble fx_pk = xc_pk_diff * xc_pk_diff +
+                                  yc_pk_diff * yc_pk_diff +
+                                  zc_pk_diff * zc_pk_diff;
 
                 //std::cout << "xi_pk[0] = " << xi_pk[0] << ", xi_pk[1] = " << xi_pk[1] <<" xc_pk = " << xc_pk << ", yc_pk = " << yc_pk << ", zc_pk = " << zc_pk << ", fx_pk = " << fx_pk << std::endl;
 
-                NekDouble fx_pk_derxi1 = 2.0 * (xc_pk - xs[0]) * xc_pk_derxi1 +
-                                         2.0 * (yc_pk - xs[1]) * yc_pk_derxi1 +
-                                         2.0 * (zc_pk - xs[2]) * zc_pk_derxi1 ;
+                NekDouble fx_pk_derxi1 = 2.0 * xc_pk_diff * xc_pk_derxi1 +
+                                         2.0 * yc_pk_diff * yc_pk_derxi1 +
+                                         2.0 * zc_pk_diff * zc_pk_derxi1;
 
-                NekDouble fx_pk_derxi2 = 2.0 * (xc_pk - xs[0]) * xc_pk_derxi2 +
-                                         2.0 * (yc_pk - xs[1]) * yc_pk_derxi2 +
-                                         2.0 * (zc_pk - xs[2]) * zc_pk_derxi2;
+                NekDouble fx_pk_derxi2 = 2.0 * xc_pk_diff * xc_pk_derxi2 +
+                                         2.0 * yc_pk_diff * yc_pk_derxi2 +
+                                         2.0 * zc_pk_diff * zc_pk_derxi2;
 
                 // Check Wolfe conditions
                 // Armijo: fx_pk =< fx + c1 * gamma * pk * fx_der;
