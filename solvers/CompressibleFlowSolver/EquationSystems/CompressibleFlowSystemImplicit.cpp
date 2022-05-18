@@ -203,7 +203,7 @@ namespace Nektar
         timer.Start();
         DoOdeRhsCoeff(inpnts, out, m_bndEvaluateTime);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoOdeRhsCoeff", 1);
+        timer.AccumulateRegion("CFSImplicit::DoOdeRhsCoeff");
 
         for (int i = 0; i < nvariable; ++i)
         {

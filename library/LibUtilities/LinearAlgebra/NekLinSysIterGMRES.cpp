@@ -395,7 +395,7 @@ NekDouble NekLinSysIterGMRES::DoGmresRestart(
         DoArnoldi(starttem, endtem, nGlobal, nDir, V_total, Vsingle1, Vsingle2,
                   hsingle1);
         timer.Stop();
-        timer.AccumulateRegion("NekLinSysIterGMRES::DoArnoldi");
+        timer.AccumulateRegion("NekLinSysIterGMRES::DoArnoldi", 1);
 
         if (starttem > 0)
         {
@@ -483,7 +483,7 @@ void NekLinSysIterGMRES::DoArnoldi(const int starttem, const int endtem,
     timer.Start();
     m_operator.DoNekSysLhsEval(Vsingle1, w, m_DifferenceFlag1);
     timer.Stop();
-    timer.AccumulateRegion("NekSysOperators::DoNekSysLhsEval", 1);
+    timer.AccumulateRegion("NekSysOperators::DoNekSysLhsEval", 2);
 
     tmp1 = w + nDir;
     tmp2 = w + nDir;
