@@ -174,10 +174,10 @@ namespace Nektar
             source2D[i]   = source + offset;
         }
 
-        //timer.Start();
+        timer.Start();
         NonlinSysEvaluatorCoeff(in2D, out2D, source2D);
-        //timer.Stop();
-        //timer.AccumulateRegion("CFSImplicit::NonlinSysEvaluatorCoeff");
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::NonlinSysEvaluatorCoeff");
     }
 
     void CFSImplicit::NonlinSysEvaluatorCoeff(
