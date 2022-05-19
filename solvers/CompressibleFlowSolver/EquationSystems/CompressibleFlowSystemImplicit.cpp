@@ -198,8 +198,11 @@ namespace Nektar
             m_fields[i]->BwdTrans(inarray[i], inpnts[i]);
         }
         
+        timer.Start();
         DoOdeProjection(inpnts, inpnts, m_bndEvaluateTime);
-        
+        timer.Stop();
+        timer.AccumulateRegion("CompressibleFlowSystem::DoOdeProjection", 1);
+
         timer.Start();
         DoOdeRhsCoeff(inpnts, out, m_bndEvaluateTime);
         timer.Stop();
@@ -455,7 +458,11 @@ namespace Nektar
                 intmp[i]    =   Array<OneD, NekDouble>(nphspnt,0.0);
             }
 
+            timer.Start();
             DoOdeProjection(m_solutionPhys,intmp,m_bndEvaluateTime);
+            timer.Stop();
+            timer.AccumulateRegion("CompressibleFlowSystem::DoOdeProjection", 1);
+
             
             timer.Start();
             m_preconCfs->BuildPreconCfs(m_fields, intmp, m_bndEvaluateTime,
