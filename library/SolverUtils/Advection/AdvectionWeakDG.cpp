@@ -111,9 +111,9 @@ namespace Nektar
                 fields[i]->BwdTrans(tmp[i], outarray[i]);
             }
             timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_BwdTrans",1);
+            timer.AccumulateRegion("AdvWeakDG:_BwdTrans",10);
             timer1.Stop();
-            timer1.AccumulateRegion("AdvWeakDG:All");
+            timer1.AccumulateRegion("AdvWeakDG:All",10);
         }
 
         void AdvectionWeakDG::v_AdvectCoeffs(
@@ -150,7 +150,7 @@ namespace Nektar
             v_AdvectVolumeFlux(nConvectiveFields, fields, advVel, inarray,
                                 fluxvector, time);
             timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_fluxVector",1);
+            timer.AccumulateRegion("AdvWeakDG:_fluxVector",10);
 
 
             timer.Start();
@@ -161,7 +161,7 @@ namespace Nektar
                 fields[i]->IProductWRTDerivBase(fluxvector[i], outarray[i]);
             }
             timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_IProductWRTDerivBase",1);
+            timer.AccumulateRegion("AdvWeakDG:_IProductWRTDerivBase",10);
 
             Array<OneD, Array<OneD, NekDouble> >
                 numflux{size_t(nConvectiveFields)};
@@ -182,16 +182,16 @@ namespace Nektar
                 timer.Start();
                 fields[i]->AddTraceIntegral     (numflux[i], outarray[i]);
                 timer.Stop();
-                timer.AccumulateRegion("AdvWeakDG:_AddTraceIntegral",1);
+                timer.AccumulateRegion("AdvWeakDG:_AddTraceIntegral",10);
 
                 timer.Start();
                 fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
                 timer.Stop();
-                timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass",1);
+                timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass",10);
             }
 
             timer1.Stop();
-            timer1.AccumulateRegion("AdvWeakDG: Coeff All");
+            timer1.AccumulateRegion("AdvWeakDG: Coeff All",10);
         }
         
         void AdvectionWeakDG::v_AdvectTraceFlux(
@@ -237,7 +237,7 @@ namespace Nektar
             timer.Start();
             m_riemann->Solve(m_spaceDim, Fwd, Bwd, TraceFlux);
             timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_Riemann",1);
+            timer.AccumulateRegion("AdvWeakDG:_Riemann",10);
 
         }
 
