@@ -110,10 +110,10 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
         "Max (s)",
         "Count"};
 
-    // Set width of each column (minimum 10 characters)
+    // Set width of each column (minimum 14 characters)
     std::vector<size_t> widths;
     for(const auto& label : labels){
-        widths.push_back(std::max<size_t>(label.size()+2, 10));
+        widths.push_back(std::max<size_t>(label.size()+2, 14));
     }
     // Make sure that names for each "Region" fits
     for(const auto& entry : m_elapsedRegion){
@@ -123,7 +123,7 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
     // Print header with labels
     if (comm->GetRank() == 0 &&
         m_elapsedRegion.begin() != m_elapsedRegion.end())
-    {
+        {
         o << "-------------------------------------------\n";
         for(int i=0; i<labels.size(); ++i){
             o << std::setw(widths[i]) << labels[i];
