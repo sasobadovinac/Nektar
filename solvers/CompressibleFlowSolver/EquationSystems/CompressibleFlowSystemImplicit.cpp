@@ -203,7 +203,7 @@ namespace Nektar
         timer.Start();
         DoOdeRhsCoeff(inpnts, out, m_bndEvaluateTime);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoOdeRhsCoeff");
+        timer.AccumulateRegion("CFSImplicit::DoOdeRhsCoeff", 1);
 
         for (int i = 0; i < nvariable; ++i)
         {
@@ -258,7 +258,7 @@ namespace Nektar
         timer.Start();
         DoAdvectionCoeff(inarray, outarray, time, Fwd, Bwd);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoAdvectionCoeff", 1);
+        timer.AccumulateRegion("CFSImplicit::DoAdvectionCoeff", 2);
         
         // Negate results
         for (int i = 0; i < nvariables; ++i)
@@ -269,7 +269,7 @@ namespace Nektar
         timer.Start();
         DoDiffusionCoeff(inarray, outarray, Fwd, Bwd);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::DoDiffusionCoeff", 1);
+        timer.AccumulateRegion("CFSImplicit::DoDiffusionCoeff", 2);
         
         // Add forcing terms
         for (auto &x : m_forcing)
