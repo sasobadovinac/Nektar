@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
         {
             int iolevel;
 
-            session->LoadParameter("IO_Timer_Level",iolevel,1);
+            session->LoadParameter("IO_Timer_Level",iolevel,0);
             
             LibUtilities::Timer::PrintElapsedRegions(session->GetComm(),
                                                      std::cout, iolevel);

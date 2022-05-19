@@ -77,7 +77,7 @@ class Timer
         LIB_UTILITIES_EXPORT static void PrintElapsedRegions
         (LibUtilities::CommSharedPtr comm,
          std::ostream &o = std::cout,
-         int iolevel = 1);
+         int iolevel = 0);
 
         /// \brief Returns amount of seconds per iteration in
         ///        a test with n iterations.

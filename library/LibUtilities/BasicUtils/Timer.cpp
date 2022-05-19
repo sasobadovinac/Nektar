@@ -154,34 +154,40 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
     }            
 
     // write out all other timings order alphabetically on string
-    for (auto item = m_elapsedRegion.begin();
-            item != m_elapsedRegion.end(); ++item)
+    for (int i=0; i<=iolevel; i++)
     {
-        if(std::get<2>(item->second) < iolevel)
+        for (auto item = m_elapsedRegion.begin();
+                item != m_elapsedRegion.end(); ++item)
         {
-            if(boost::iequals(item->first,"Execute"))
+            if(std::get<2>(item->second) == i)
             {
-                continue;
-            }
+                if(boost::iequals(item->first,"Execute"))
+                {
+                    continue;
+                }
 
-            auto elapsedAve = std::get<0>(item->second).count();
-            comm->AllReduce(elapsedAve, LibUtilities::ReduceSum);
-            elapsedAve /= comm->GetSize();
-            auto elapsedMin = std::get<0>(item->second).count();
-            comm->AllReduce(elapsedMin, LibUtilities::ReduceMin);
-            auto elapsedMax = std::get<0>(item->second).count();
-            comm->AllReduce(elapsedMax, LibUtilities::ReduceMax);
+                auto elapsedAve = std::get<0>(item->second).count();
+                comm->AllReduce(elapsedAve, LibUtilities::ReduceSum);
+                elapsedAve /= comm->GetSize();
+                auto elapsedMin = std::get<0>(item->second).count();
+                comm->AllReduce(elapsedMin, LibUtilities::ReduceMin);
+                auto elapsedMax = std::get<0>(item->second).count();
+                comm->AllReduce(elapsedMax, LibUtilities::ReduceMax);
 
-            if (comm->GetRank() == 0)
-            {
-                o << std::setw(widths[0]) << item->first
-                  << std::setw(widths[1]) << elapsedAve
-                  << std::setw(widths[2]) << elapsedMin
-                  << std::setw(widths[3]) << elapsedMax
-                  << std::setw(widths[4]) << std::get<1>(item->second) << '\n';
+                if (comm->GetRank() == 0)
+                {
+                    o << std::setw(widths[0]) << item->first
+                    << std::setw(widths[1]) << elapsedAve
+                    << std::setw(widths[2]) << elapsedMin
+                    << std::setw(widths[3]) << elapsedMax
+                    << std::setw(widths[4]) << std::get<1>(item->second) << '\n';
+                }
             }
         }
-    }
+        if (iolevel > 0 && comm->GetRank() == 0){
+            o << "-----| end of IO_Timer_Level=" << i << " |-----\n";
+        }
+    }    
 }
 // static members init
 std::map<std::string, std::tuple<Timer::Seconds, size_t, int>>
