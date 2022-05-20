@@ -240,6 +240,10 @@ void InterfaceTrace::CalcLocalMissing()
     m_missingCoords.clear();
     m_mapMissingCoordToTrace.clear();
 
+    // Store copy of found coords to optimise search before clearing
+    auto foundLocalCoordsCopy = m_foundLocalCoords;
+    m_foundLocalCoords.clear();
+
     auto childEdge = m_interface->GetEdge();
     // If not flagged 'check local' then all points are missing
     if (!m_checkLocal)
@@ -290,6 +294,23 @@ void InterfaceTrace::CalcLocalMissing()
                 xs[1] = yc[i];
                 xs[2] = zc[i];
 
+                // First search the edge the point was found in last timestep
+                if (foundLocalCoordsCopy.find(offset + i) !=
+                    foundLocalCoordsCopy.end())
+                {
+                    auto edge = m_interface->GetOppInterface()
+                            ->GetEdge(foundLocalCoordsCopy[offset + i].first);
+                    NekDouble dist = edge->FindDistance(xs, foundLocCoord);
+
+                    if (dist < 5e-5)
+                    {
+                        m_foundLocalCoords[offset + i] = std::make_pair(
+                            edge->GetGlobalID(), foundLocCoord);
+                        continue;
+                    }
+                }
+
+                // If not in last timestep edge then loop over all interface edges
                 auto parentEdge = m_interface->GetOppInterface()->GetEdge();
                 for (auto &edge : parentEdge)
                 {
@@ -303,7 +324,7 @@ void InterfaceTrace::CalcLocalMissing()
                         edge.second->FindDistance(xs, foundLocCoord);
                     if (dist < 5e-5)
                     {
-                        found                          = true;
+                        found  = true;
                         m_foundLocalCoords[offset + i] = std::make_pair(
                             edge.second->GetGlobalID(), foundLocCoord);
                         break;
@@ -568,6 +589,7 @@ void InterfaceExchange::SendFwdTrace(
 void InterfaceExchange::CalcRankDistances()
 {
     // Clear old found coordinates
+    auto foundRankCoordsCopy = m_foundRankCoords;
     m_foundRankCoords[m_rank].clear(); // @TODO: This may cause problems with 2 interfaces and one is fixed? With the skip below.
 
     Array<OneD, int> disp(m_recvSize[m_rank].size() + 1, 0.0);
@@ -591,6 +613,21 @@ void InterfaceExchange::CalcRankDistances()
             xs[0] = m_recv[j];
             xs[1] = m_recv[j + 1];
             xs[2] = m_recv[j + 2];
+
+            // First search the edge the point was found in last timestep
+            if (foundRankCoordsCopy[m_rank].find(j / 3) != foundRankCoordsCopy[m_rank].end())
+            {
+                auto edge =m_interfaceTraces[i]->GetInterface()
+                                ->GetEdge(foundRankCoordsCopy[m_rank][j / 3].first);
+                NekDouble dist = edge->FindDistance(xs, foundLocCoord);
+
+                if (dist < 5e-5)
+                {
+                    m_foundRankCoords[m_rank][j / 3]  = std::make_pair(
+                        edge->GetGlobalID(), foundLocCoord);
+                    continue;
+                }
+            }
 
             for (auto &edge : localEdge)
             {
