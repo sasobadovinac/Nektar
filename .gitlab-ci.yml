@@ -1,9 +1,9 @@
 workflow:
   rules:
     # Run pipeline on tags for the main project
-    - if: $CI_COMMIT_TAG && $CI_PROJECT_PATH == "ccantwel/nektar-ci-test"   
+    - if: $CI_COMMIT_TAG && $CI_PROJECT_PATH == "nektar/nektar"
     # Run pipeline on the default branch for the main project
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "ccantwel/nektar-ci-test"                                                       
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "nektar/nektar"
     # Run pipeline on merge requests only
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"   
     # DO NOT run pipeline if WIP
