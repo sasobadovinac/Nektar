@@ -168,7 +168,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
         timer.Start();
         PreconBlkDiag(pFields, rhs, outarray, m_PreconMatSingle, tmpSingle);
         timer.Stop();
-        timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 1);
+        timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
 
         for (int nrelax = 0; nrelax < nBRJIterTot - 1; nrelax++)
         {
@@ -181,13 +181,13 @@ void PreconCfsBRJ::v_DoPreconCfs(
                 m_TraceJacArraySingle, m_TraceJacDerivArraySingle,
                 m_TraceJacDerivSignSingle, m_TraceIPSymJacArraySingle);
             timer.Stop();
-            timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs", 1);
+            timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs", 2);
             
             timer.Start();
             PreconBlkDiag(pFields, outarray, outTmp, m_PreconMatSingle,
                           tmpSingle);
             timer.Stop();
-            timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 1);
+            timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
 
             Vmath::Svtvp(ntotpnt, BRJParam, outTmp, 1, outN, 1, outarray, 1);
         }
@@ -281,7 +281,7 @@ void PreconCfsBRJ::PreconBlkDiag(
     timer.Start(); 
     outVect = (*PreconMatVars) * tmpVect;    
     timer.Stop();
-    timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag - commandline", 1);
+    timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag - commandline", 3);
 
     for (int m = 0; m < nvariables; m++)
     {
@@ -349,7 +349,7 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         timer.Start(); 
         pFields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
         timer.Stop();
-        timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 2);
+        timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 3;
     }
 
     int indexwspTraceDataType = 0;
@@ -413,7 +413,7 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         pFields[i]->AddTraceIntegralToOffDiag(FwdFlux[i], BwdFlux[i],
                                               outarray[i]);
         timer.Stop();
-        timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 2);
+        timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 3);
     }
     
 
