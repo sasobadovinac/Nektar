@@ -489,9 +489,13 @@ namespace Nektar
             }
 
             // Create expansion list
+            // Note: third arguemnt declares phys coeffs that are not
+            // required but currently it is needed to declare the
+            // planes because bool is liked
             result =
                 MemoryManager<ExpList3DHomogeneous1D>::AllocateSharedPtr
-                    (*this, eIDs);
+                (*this, eIDs, true,
+                 Collections::eNoCollection);
 
             // Copy phys and coeffs to new explist
             if ( DeclareCoeffPhysArrays)

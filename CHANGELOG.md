@@ -28,6 +28,7 @@ v5.2.0
 - Fixed SIMD mask test (!1324)
 - Fix memory leak in Timer.cpp (!1330)
 - Fix cmake CWIPI option to remove Fortran check (!1331)
+- Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
