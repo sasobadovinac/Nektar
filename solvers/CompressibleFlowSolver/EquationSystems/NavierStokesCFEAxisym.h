@@ -73,22 +73,22 @@ namespace Nektar
         const LibUtilities::SessionReaderSharedPtr& pSession,
         const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual void v_DoDiffusion(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
               Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_GetViscousFluxVector(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
               TensorOfArray3D<NekDouble>                &derivatives,
-              TensorOfArray3D<NekDouble>                &viscousTensor);
+              TensorOfArray3D<NekDouble>                &viscousTensor) override;
     virtual void v_GetViscousFluxVectorDeAlias(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
               TensorOfArray3D<NekDouble>                &derivatives,
-              TensorOfArray3D<NekDouble>                &viscousTensor)
+              TensorOfArray3D<NekDouble>                &viscousTensor) override
     {
         boost::ignore_unused(physfield, derivatives, viscousTensor);
         NEKERROR(ErrorUtil::efatal,

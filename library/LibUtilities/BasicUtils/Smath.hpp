@@ -60,7 +60,7 @@ template <class T> T Smax(const T a, const T b, const T k)
 
 template NekDouble Smax(const NekDouble a, const NekDouble b,
                         const NekDouble k);
-    
+
 template int Smax(const int a, const int b, const int k);
 } // namespace Smath
 #endif // NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_SCALARMATH_H

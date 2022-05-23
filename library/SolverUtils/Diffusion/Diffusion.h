@@ -69,11 +69,6 @@ namespace Nektar
                   Array<OneD, Array<OneD, NekDouble> >&)>
                                             DiffusionFluxPenaltyNS;
 
-        typedef std::function<void (
-            const Array<OneD, Array<OneD, NekDouble> >&,
-                  Array<OneD,             NekDouble  >&)>
-                                            DiffusionArtificialDiffusion;
-
         /**
          * Parameter list meaning:
          *  1st: field conservative variables
@@ -99,7 +94,6 @@ namespace Nektar
          *  4th: Devrivatives of field conservative varialbes
          *  5th: nonzero flux index array,          optional
          *  6th: normal vectors                     optional
-         *  7th: aritificial diffusion facotres     optional
          *
          * a null pointer need to be passed for optional parameters
          */
@@ -109,8 +103,7 @@ namespace Nektar
             const TensorOfArray3D<NekDouble>                                &,
                   TensorOfArray3D<NekDouble>                                &,
                   Array< OneD, int >                                        &,
-            const Array<OneD, Array<OneD, NekDouble> >                      &,
-            const Array<OneD, NekDouble>                                    &)>
+            const Array<OneD, Array<OneD, NekDouble> >                      &)>
         DiffusionFluxCons;
 
         /**
@@ -121,7 +114,6 @@ namespace Nektar
          *  4th: trace conservative variables( usually the jump of trace value)
          *  5th: trace symmetric flux
          *  6th: nonzero flux index array,          optional
-         *  7th: normal vectors                     optional
          *
          * a null pointer need to be passed for optional parameters
          */
@@ -129,8 +121,8 @@ namespace Nektar
             const int                                                       ,
             const Array<OneD, Array<OneD, NekDouble> >                      &,
             const Array<OneD, Array<OneD, NekDouble > >                     &,
-                  TensorOfArray3D<NekDouble>                                &,
-                  Array< OneD, int >                                        &,
+            TensorOfArray3D<NekDouble>                                      &,
+            Array< OneD, int >                                              &,
             const Array<OneD, Array<OneD, NekDouble> >                      &)>
                 DiffusionSymmFluxCons;
 
@@ -141,16 +133,6 @@ namespace Nektar
         typedef std::function<void (
                   Array<OneD,       Array<OneD, NekDouble> >                &)>
                   SpecialBndTreat;
-
-        /**
-         * Parameter list meaning:
-         *  1st: trace conservative variables
-         *  2rd: dynamic viscosity
-         */
-        typedef std::function<void (
-            const Array<OneD, const Array<OneD, NekDouble> >                &,
-            Array<OneD, NekDouble>                                          &)>
-        CalcViscosity;
 
         class Diffusion
         {
@@ -195,7 +177,7 @@ namespace Nektar
                     &pFwd = NullNekDoubleArrayOfArray,
                 const Array<OneD, Array<OneD, NekDouble> >
                     &pBwd = NullNekDoubleArrayOfArray);
-            
+
             SOLVER_UTILS_EXPORT void DiffuseCoeffs(
                 const std::size_t                             nConvectiveFields,
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
@@ -220,12 +202,12 @@ namespace Nektar
                     &pFwd = NullNekDoubleArrayOfArray,
                 const Array<OneD, Array<OneD, NekDouble> >
                     &pBwd = NullNekDoubleArrayOfArray);
-            
+
             // Diffusion Calculate the physical derivatives
             SOLVER_UTILS_EXPORT void DiffuseCalcDerivative(
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                 const Array<OneD, Array<OneD, NekDouble>>         &inarray,
-                TensorOfArray3D<NekDouble>                        &qfields, 
+                TensorOfArray3D<NekDouble>                        &qfields,
                 const Array<OneD, Array<OneD, NekDouble>>         &pFwd
                       =NullNekDoubleArrayOfArray,
                 const Array<OneD, Array<OneD, NekDouble>>         &pBwd
@@ -371,8 +353,7 @@ namespace Nektar
                 m_FunctorDiffusionfluxCons = std::bind(
                     func, obj, std::placeholders::_1, std::placeholders::_2,
                                std::placeholders::_3, std::placeholders::_4,
-                               std::placeholders::_5, std::placeholders::_6,
-                               std::placeholders::_7);
+                               std::placeholders::_5, std::placeholders::_6);
             }
 
             void SetDiffusionFluxCons(DiffusionFluxCons flux)
@@ -386,8 +367,7 @@ namespace Nektar
                 m_FunctorDiffusionfluxConsTrace = std::bind(
                     func, obj, std::placeholders::_1, std::placeholders::_2,
                                std::placeholders::_3, std::placeholders::_4,
-                               std::placeholders::_5, std::placeholders::_6,
-                               std::placeholders::_7);
+                               std::placeholders::_5, std::placeholders::_6);
             }
 
             void SetDiffusionFluxConsTrace(DiffusionFluxCons flux)
@@ -396,25 +376,10 @@ namespace Nektar
             }
 
             template<typename FuncPointerT, typename ObjectPointerT>
-            void SetArtificialDiffusionVector(
-                FuncPointerT func, ObjectPointerT obj)
-            {
-                m_ArtificialDiffusionVector = std::bind(
-                    func, obj, std::placeholders::_1, std::placeholders::_2);
-            }
-
-            template<typename FuncPointerT, typename ObjectPointerT>
             void SetSpecialBndTreat(FuncPointerT func, ObjectPointerT obj)
             {
                 m_SpecialBndTreat = std::bind(
                     func, obj, std::placeholders::_1);
-            }
-
-            template<typename FuncPointerT, typename ObjectPointerT>
-            void SetCalcViscosity(FuncPointerT func, ObjectPointerT obj)
-            {
-                m_CalcViscosity = std::bind(
-                    func, obj, std::placeholders::_1, std::placeholders::_2);
             }
 
             template<typename FuncPointerT, typename ObjectPointerT>
@@ -441,12 +406,6 @@ namespace Nektar
             {
                 return v_GetFluxTensor();
             }
-            /// Get the mu of artifical viscosity(AV)
-            SOLVER_UTILS_EXPORT void GetAVmu(
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                Array<OneD, NekDouble >                           &muvar,
-                Array<OneD, NekDouble >                           &MuVarTrace);
 
             /// Get the average and jump value of conservative variables on trace
             SOLVER_UTILS_EXPORT void ConsVarAveJump(
@@ -472,11 +431,9 @@ namespace Nektar
             DiffusionFluxVecCB              m_fluxVector;
             DiffusionFluxVecCBNS            m_fluxVectorNS;
             DiffusionFluxPenaltyNS          m_fluxPenaltyNS;
-            DiffusionArtificialDiffusion    m_ArtificialDiffusionVector;
             DiffusionFluxCons               m_FunctorDiffusionfluxCons;
             DiffusionFluxCons               m_FunctorDiffusionfluxConsTrace;
             SpecialBndTreat                 m_SpecialBndTreat;
-            CalcViscosity                   m_CalcViscosity;
             DiffusionSymmFluxCons           m_FunctorSymmetricfluxCons;
             Array<OneD, Array<OneD, NekDouble>> m_gridVelocityTrace;
             NekDouble                       m_time=0.0;
@@ -513,7 +470,7 @@ namespace Nektar
                 const Array<OneD, Array<OneD, NekDouble> >        &vBwd,
                 TensorOfArray3D<NekDouble>                        &qfield,
                 Array< OneD, int >                               &nonZeroIndex);
-        
+
 
             SOLVER_UTILS_EXPORT virtual void v_ConsVarAveJump(
                 const std::size_t                             nConvectiveFields,
@@ -626,12 +583,12 @@ namespace Nektar
             SOLVER_UTILS_EXPORT void GetDivCurl(
                 const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
                 const TensorOfArray3D<NekDouble> &pVarDer);
-            
+
         };
 
     /// A shared pointer to an EquationSystem object
     typedef std::shared_ptr<SolverUtils::Diffusion> DiffusionSharedPtr;
-    
+
     /// Datatype of the NekFactory used to instantiate classes derived
     /// from the Diffusion class.
     typedef LibUtilities::NekFactory<std::string, Diffusion, std::string>
