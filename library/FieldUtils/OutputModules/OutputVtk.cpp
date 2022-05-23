@@ -229,17 +229,16 @@ void OutputVtk::OutputFromPts(po::variables_map &vm)
 
 void OutputVtk::OutputFromExp(po::variables_map &vm)
 {
-    int i,j;
     // Extract the output filename and extension
     string filename = PrepareOutput(vm);
 
     // Move geometry based on zones data in .xml and time in .fld metadatamap
     // Perform movement of zones based on time in field files metadata map
-    if(m_f->m_graph->GetMovement() != nullptr) // @TODO: Think this should be something else to stop the movement if no zones
+    if(m_f->m_graph->GetMovement()->GetMoveFlag())
     {
         m_f->m_graph->GetMovement()->PerformMovement(
             boost::lexical_cast<NekDouble>(m_f->m_fieldMetaDataMap["Time"]));
-        for (auto & i : m_f->m_exp)
+        for (auto &i : m_f->m_exp)
         {
             i->Reset();
         }
@@ -257,12 +256,12 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
     for (int s = 0; s < nstrips; ++s)
     {
         // For each field write out field data for each expansion.
-        for (i = 0; i < m_f->m_exp[0]->GetNumElmts(); ++i)
+        for (int i = 0; i < m_f->m_exp[0]->GetNumElmts(); ++i)
         {
             m_f->m_exp[0]->WriteVtkPieceHeader(outfile, i, s);
 
             // For this expansion write out each field.
-            for (j = 0; j < nfields; ++j)
+            for (int j = 0; j < nfields; ++j)
             {
                 m_f->m_exp[s * nfields + j]->WriteVtkPieceData(
                     outfile, i, m_f->m_variables[j]);
