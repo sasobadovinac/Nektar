@@ -83,9 +83,8 @@ namespace Nektar
         {
             EquationSystem::v_InitObject();
 
-            // Initialise ALE if we have zones/interfaces in Movement object
-            if(!m_graph->GetMovement()->GetZones().empty()
-                && !m_graph->GetMovement()->GetInterfaces().empty())
+            // Initialise ALE if not homogeneous
+            if(m_HomogeneousType == eNotHomogeneous)
             {
                 ALEHelper::InitObject(m_graph, m_fields);
             }
