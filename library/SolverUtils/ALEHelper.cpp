@@ -197,8 +197,9 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
 
     for (auto &field : m_fieldsALE)
     {
-        // Reset collections
-        field->CreateCollections(Collections::eNoImpType);
+        // Reset collections (despite the default being eNoCollection it does
+        // remember the last auto-tuned values), eNoImpType gives lots of output
+        field->CreateCollections(Collections::eNoCollection);
     }
 
     // Reload new trace normals in to the solver cache
