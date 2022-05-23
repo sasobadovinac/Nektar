@@ -100,12 +100,10 @@ public:
 protected:
     DiffusionIP();
 
-    std::string m_shockCaptureType;
     NekDouble m_IPSymmFluxCoeff;
     NekDouble m_IP2ndDervCoeff;
     NekDouble m_IPPenaltyCoeff;
 
-    Array<OneD, NekDouble> m_MuVarTrace;
     Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
     Array<OneD, Array<OneD, NekDouble>> m_traceAver;
     Array<OneD, Array<OneD, NekDouble>> m_traceJump;
@@ -168,9 +166,9 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pBwd,
         Array<OneD, int> &nonZeroIndex);
 
-    virtual void v_InitObject(
+    void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
 
     virtual void v_Diffuse(
         const std::size_t nConvectiveFields,
@@ -178,7 +176,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_DiffuseCoeffs(
         const std::size_t nConvectiveFields,
@@ -186,7 +184,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd)  override;
 
     virtual void v_DiffuseCoeffs(
         const std::size_t nConvectiveFields,
@@ -196,14 +194,14 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd,
         TensorOfArray3D<NekDouble>                &qfield,
-        Array< OneD, int >                        &nonZeroIndex);
+        Array< OneD, int >                        &nonZeroIndex) override;
 
     virtual void v_DiffuseVolumeFlux(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>>     &inarray,
         TensorOfArray3D<NekDouble>                    &qfields,
         TensorOfArray3D<NekDouble>                    &VolumeFlux,
-        Array<OneD, int>                              &nonZeroIndex);
+        Array<OneD, int>                              &nonZeroIndex) override;
 
     virtual void v_DiffuseTraceFlux(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
@@ -213,7 +211,7 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &TraceFlux,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd,
-        Array<OneD, int> &nonZeroIndex);
+        Array<OneD, int> &nonZeroIndex) override;
     
     void v_DiffuseTraceFlux(
          const int                                  nConvectiveFields,
@@ -238,7 +236,7 @@ protected:
         TensorOfArray3D<NekDouble> &VolumeFlux,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_AddDiffusionSymmFluxToPhys(
         const std::size_t nConvectiveFields,
@@ -248,23 +246,23 @@ protected:
         TensorOfArray3D<NekDouble> &VolumeFlux,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_DiffuseCalcDerivative(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         TensorOfArray3D<NekDouble>                &qfield,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_ConsVarAveJump(
         const std::size_t nConvectiveFields, const size_t npnts,
         const Array<OneD, const Array<OneD, NekDouble>> &vFwd,
         const Array<OneD, const Array<OneD, NekDouble>> &vBwd,
         Array<OneD, Array<OneD, NekDouble>> &aver,
-        Array<OneD, Array<OneD, NekDouble>> &jump);
+        Array<OneD, Array<OneD, NekDouble>> &jump) override;
 
-    virtual const Array<OneD, const Array<OneD, NekDouble>> &v_GetTraceNormal()
+    const Array<OneD, const Array<OneD, NekDouble>> &v_GetTraceNormal() override
     {
         return m_traceNormals;
     }
@@ -295,7 +293,6 @@ protected:
         const TensorOfArray3D<NekDouble> &qfield,
         const Array<OneD, Array<OneD, NekDouble>> &vFwd,
         const Array<OneD, Array<OneD, NekDouble>> &vBwd,
-        const Array<OneD, NekDouble> &MuVarTrace,
         Array<OneD, int> &nonZeroIndexflux,
         TensorOfArray3D<NekDouble> &traceflux,
         Array<OneD, Array<OneD, NekDouble>> &solution_Aver,

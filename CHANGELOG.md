@@ -1,6 +1,8 @@
 Changelog
 =========
 
+v6.0.0
+
 v5.3
 ------
 **Library**
@@ -21,25 +23,23 @@ v5.3
 - Multi domain input/output for Nekpp and HDF5 file formats (!1323)
 
 v5.2
-------
-**Library**
-- Added support for manifold  MatrixFree operators (2D in 3D space) (!1304)
-- Put in place automatic selection of explicit operations using an opt file (!1304)
-- Fix memory leak in Timer.cpp (!1330)
-
 v5.2.0
 ------
 **Library**
+- Add Arm SVE backend to SIMD library (!1282)
+- Added support for manifold  MatrixFree operators (2D in 3D space) (!1304)
+- Put in place automatic selection of explicit operations using an opt file (!1304)
 - Fixed the moving reference frame rotation (Solver Utils) (!1305)
 - Revised FilterAeroForces to accout for the moving reference frame (!1305)
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
-- Add Arm SVE backend to SIMD library (!1282)
 - Simplify the logic in the MPI pairwise trace exchange (!1307)
 - Fix imaginary mode in HalfModeToFourier module (!1247)
 - Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
 - Fixed SIMD mask test (!1324)
+- Fix memory leak in Timer.cpp (!1330)
 - Fix cmake CWIPI option to remove Fortran check (!1331)
+- Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
@@ -51,6 +51,9 @@ v5.2.0
 
 **NekMesh**
 - Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
+
+**CompressibleFlowSolver**
+- Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
 
 v5.1.1
 ------

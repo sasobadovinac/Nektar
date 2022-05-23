@@ -74,12 +74,14 @@ namespace Nektar
     /// flag to switch between IP and LDG
     /// an enum could be added for more options
     bool                                m_is_diffIP{false};
+    /// flag for shock capturing switch on/off
+    /// an enum could be added for more options
+    bool                                m_is_shockCaptPhys{false};
 
     NekDouble                           m_Cp;
     NekDouble                           m_Cv;
     NekDouble                           m_Prandtl;
-    
-    NekDouble                           m_mu0;
+
     std::string                         m_physicalSensorType;
     std::string                         m_smoothing;
     MultiRegions::ContFieldSharedPtr    m_C0ProjectExp;
@@ -88,11 +90,8 @@ namespace Nektar
     EquationOfStateSharedPtr            m_eos;
 
     NekDouble                           m_Twall;
-
     NekDouble                           m_muRef;
     NekDouble                           m_thermalConductivityRef;
-    Array<OneD, NekDouble>              m_mu;
-    Array<OneD, NekDouble>              m_thermalConductivity;
 
     NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
                     const SpatialDomains::MeshGraphSharedPtr& pGraph);
@@ -104,8 +103,8 @@ namespace Nektar
         TensorOfArray3D<NekDouble>                               &outarray,
         Array< OneD, int > &nonZeroIndex = NullInt1DArray,
         const Array<OneD, Array<OneD, NekDouble>>
-            &normal             =   NullNekDoubleArrayOfArray,
-        const Array<OneD, NekDouble> &ArtifDiffFactor = NullNekDouble1DArray);
+            &normal             =   NullNekDoubleArrayOfArray);
+
     void GetViscousSymmtrFluxConservVar(
             const int                                           nSpaceDim,
             const Array<OneD, Array<OneD, NekDouble> >          &inaverg,
@@ -126,18 +125,14 @@ namespace Nektar
               Array<OneD, NekDouble>                    &mu);
 
     void InitObject_Explicit();
-      
-    virtual void v_InitObject();
 
-    virtual void v_ExtraFldOutput(
-        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
-        std::vector<std::string>            &variables);
+    virtual void v_InitObject() override;
 
     virtual void v_DoDiffusion(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
               Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_GetViscousFluxVector(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
@@ -151,10 +146,10 @@ namespace Nektar
 
     void GetPhysicalAV(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield);
-      
+
     void Ducros( Array<OneD, NekDouble> &field );
     void C0Smooth(Array<OneD, NekDouble> &field);
-  
+
 
     virtual void v_GetFluxPenalty(
         const Array<OneD, const Array<OneD, NekDouble>> &uFwd,
@@ -165,6 +160,23 @@ namespace Nektar
         const Array<OneD, NekDouble> &temperature,
               Array<OneD, NekDouble> &mu,
               Array<OneD, NekDouble> &thermalCond);
+
+    void GetDivCurlSquared(
+        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
+        const Array<OneD, Array<OneD, NekDouble>>&         cnsVar,
+              Array<OneD, NekDouble>&                      div,
+              Array<OneD, NekDouble>&                      curlSquare,
+        const Array<OneD, Array<OneD, NekDouble>>&         cnsVarFwd,
+        const Array<OneD, Array<OneD, NekDouble>>&         cnsVarBwd);
+
+    void GetDivCurlFromDvelT(
+        const TensorOfArray3D<NekDouble>& pVarDer,
+              Array<OneD, NekDouble>&     div,
+              Array<OneD, NekDouble>&     curlSquare);
+
+    virtual void v_ExtraFldOutput(
+            std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+            std::vector<std::string>             &variables) override;
 
     template <class T, typename = typename std::enable_if
         <
@@ -365,8 +377,7 @@ namespace Nektar
         const TensorOfArray3D<NekDouble>                       &qfields,
         TensorOfArray3D<NekDouble>                             &outarray,
         Array< OneD, int >                                     &nonZeroIndex,
-        const Array<OneD, Array<OneD, NekDouble> >             &normal,
-        const Array<OneD, NekDouble>                           &ArtifDiffFactor)
+        const Array<OneD, Array<OneD, NekDouble> >             &normal)
     {
         size_t nConvectiveFields = inarray.size();
         size_t nPts = inarray[0].size();
@@ -376,6 +387,16 @@ namespace Nektar
         constexpr unsigned short nOutMax = 3 - 2 * IS_TRACE;
         constexpr unsigned short nVarMax = 5;
         constexpr unsigned short nDimMax = 3;
+
+        // Update viscosity and thermal conductivity
+        // unfortunately the artificial viscosity is difficult to vectorize
+        // with the current implementation
+        Array<OneD, NekDouble> temperature (nPts, 0.0);
+        Array<OneD, NekDouble> mu                 (nPts, 0.0);
+        Array<OneD, NekDouble> thermalConductivity(nPts, 0.0);
+        m_varConv->GetTemperature(inarray, temperature);
+        GetViscosityAndThermalCondFromTemp(temperature, mu,
+            thermalConductivity);
 
         // vector loop
         using namespace tinysimd;
@@ -417,11 +438,9 @@ namespace Nektar
                 }
             }
 
-            // get temp
-            vec_t temperature = m_varConv->GetTemperature(inTmp.data());
             // get viscosity
-            vec_t mu;
-            GetViscosityFromTempKernel(temperature, mu);
+            vec_t muV{};
+            muV.load(&(mu[p]), is_not_aligned);
 
             for (size_t nderiv = 0; nderiv < nDim; ++nderiv)
             {
@@ -434,7 +453,7 @@ namespace Nektar
                 for (size_t d = 0; d < nDim; ++d)
                 {
                     GetViscousFluxBilinearFormKernel(nDim, d, nderiv,
-                        inTmp.data(), qfieldsTmp.data(), mu, outTmp.data());
+                        inTmp.data(), qfieldsTmp.data(), muV, outTmp.data());
 
                     if (IS_TRACE)
                     {
@@ -497,7 +516,7 @@ namespace Nektar
                     }
                 }
             }
-            
+
 
             if (IS_TRACE)
             {
@@ -507,11 +526,8 @@ namespace Nektar
                 }
             }
 
-            // get temp
-            NekDouble temperature = m_varConv->GetTemperature(inTmp.data());
             // get viscosity
-            NekDouble mu;
-            GetViscosityFromTempKernel(temperature, mu);
+            NekDouble muS = mu[p];
 
             for (int nderiv = 0; nderiv < nDim; ++nderiv)
             {
@@ -524,7 +540,7 @@ namespace Nektar
                 for (int d = 0; d < nDim; ++d)
                 {
                     GetViscousFluxBilinearFormKernel(nDim, d, nderiv,
-                        inTmp.data(), qfieldsTmp.data(), mu, outTmp.data());
+                        inTmp.data(), qfieldsTmp.data(), muS, outTmp.data());
 
                     if (IS_TRACE)
                     {
@@ -564,37 +580,6 @@ namespace Nektar
             }
         }
 
-
-        // this loop would need to be brought up into the main loop so that it
-        // can be vectorized as well
-        if (ArtifDiffFactor.size())
-        {
-            n_nonZero = nConvectiveFields;
-
-            for (size_t p = 0; p < nPts; ++p)
-            {
-                for (int d = 0; d < nDim; ++d)
-                {
-                    if (IS_TRACE)
-                    {
-                        NekDouble tmp = ArtifDiffFactor[p] * normal[d][p];
-
-                        for (int j = 0; j < nConvectiveFields; ++j)
-                        {
-                            outarray[0][j][p] += tmp * qfields[d][j][p];
-                        }
-                    }
-                    else
-                    {
-                        for (int j = 0; j < nConvectiveFields; ++j)
-                        {
-                            outarray[d][j][p] += ArtifDiffFactor[p] * qfields[d][j][p];
-                        }
-                    }
-                }
-            }
-        }
-
         // this is always the same, it should be initialized with the IP class
         nonZeroIndex = Array< OneD, int > {n_nonZero, 0};
         for (int i = 1; i < n_nonZero + 1; ++i)
@@ -604,5 +589,6 @@ namespace Nektar
     }
 
   };
+
 }
 #endif

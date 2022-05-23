@@ -128,12 +128,6 @@ namespace Nektar
             outarrayDiff[i] = Array<OneD, NekDouble>{ncoeffs, 0.0};
         }
 
-        // get artificial viscosity
-        if (m_shockCaptureType == "Physical" && m_CalcPhysicalAV)
-        {
-            GetPhysicalAV(inarray);
-        }
-
         if (m_is_diffIP)
         {
             if (m_bndEvaluateTime < 0.0)
@@ -205,7 +199,8 @@ namespace Nektar
                             outarray[i], 1);
             }
 
-            if (m_shockCaptureType != "Off")
+            // Laplacian operator based artificial viscosity
+            if (m_artificialDiffusion)
             {
                 m_artificialDiffusion->DoArtificialDiffusionCoeff(
                     inarray, outarray);
@@ -1073,18 +1068,11 @@ namespace Nektar
 
         // Auxiliary variables
         Array<OneD, NekDouble > mu                 (nPts, 0.0);
-
-        // Variable viscosity through the Sutherland's law
-        if (m_ViscosityType == "Variable")
-        {
-            Array<OneD, NekDouble > temperature        (nPts, 0.0);
-            m_varConv->GetTemperature(inarray,temperature);
-            m_varConv->GetDynamicViscosity(temperature, mu);
-        }
-        else
-        {
-            Vmath::Fill(nPts, m_mu[0], mu, 1);
-        }
+        Array<OneD, NekDouble > thermalConductivity(nPts, 0.0);
+        Array<OneD, NekDouble > temperature        (nPts, 0.0);
+        m_varConv->GetTemperature(inarray, temperature);
+        GetViscosityAndThermalCondFromTemp(temperature, mu,
+            thermalConductivity);
 
         NekDouble pointmu       = 0.0;
         Array<OneD, NekDouble> locmu;
@@ -1222,31 +1210,14 @@ namespace Nektar
                 }
             }
         }
+
         // Auxiliary variables
-        Array<OneD, NekDouble > mu                 (nPts, m_mu[0]);
-
-        // Variable viscosity through the Sutherland's law
-        if (m_ViscosityType == "Variable")
-        {
-            Array<OneD, NekDouble > temperature        (nPts, 0.0);
-            m_varConv->GetTemperature(inarray,temperature);
-            m_varConv->GetDynamicViscosity(temperature, mu);
-        }
-
-        // Add artificial viscosity if wanted
-        if (m_shockCaptureType == "Physical")
-        {
-            Array<OneD, NekDouble> muav;
-            if (m_fields[0]->GetTrace()->GetTotPoints()==nPts)
-            {
-                muav = m_muavTrace;
-            }
-            else
-            {
-                muav = m_muav;
-            }
-            Vmath::Vadd(nPts, mu, 1, muav, 1, mu, 1);
-        }
+        Array<OneD, NekDouble > mu                 (nPts, 0.0);
+        Array<OneD, NekDouble > thermalConductivity(nPts, 0.0);
+        Array<OneD, NekDouble > temperature        (nPts, 0.0);
+        m_varConv->GetTemperature(inarray, temperature);
+        GetViscosityAndThermalCondFromTemp(temperature, mu,
+            thermalConductivity);
 
         // What about thermal conductivity?
 
@@ -1337,23 +1308,26 @@ namespace Nektar
               Array<OneD, NekDouble>                    &mu,
               Array<OneD, NekDouble>                    &DmuDT)
     {
-        int npoints = mu.size();
+        int nPts = mu.size();
+
+        Array<OneD, NekDouble > thermalConductivity(nPts, 0.0);
+        Array<OneD, NekDouble > temperature        (nPts, 0.0);
+        m_varConv->GetTemperature(inarray, temperature);
+        GetViscosityAndThermalCondFromTemp(temperature, mu,
+            thermalConductivity);
+
         if (m_ViscosityType == "Variable")
         {
-            Array<OneD, NekDouble > temperature (npoints, 0.0);
-            m_varConv->GetTemperature(inarray,temperature);
-            m_varConv->GetDynamicViscosity(temperature, mu);
             if(DmuDT.size()>0)
             {
-                m_varConv->GetDmuDT(temperature,mu,DmuDT);
+                m_varConv->GetDmuDT(temperature, mu, DmuDT);
             }
         }
         else
         {
-            Vmath::Vcopy(npoints, m_mu, 1, mu, 1);
             if(DmuDT.size()>0)
             {
-                Vmath::Zero(npoints, DmuDT, 1);
+                Vmath::Zero(nPts, DmuDT, 1);
             }
         }
     }    
