@@ -353,6 +353,8 @@ The following parameters are supported:
     Prefix of the output filename to which the errors are written.\\
     \inltt{OutputFrequency} & \xmark   & 1 &
     Number of timesteps after which output is written.\\
+    \inltt{ConsoleOutput} & \xmark   & 0 &
+    Also output error in the console when writing to file.\\
     \bottomrule
   \end{tabularx}
 \end{center}
@@ -363,6 +365,7 @@ An example syntax is given below:
   <FILTER TYPE="Error">
       <PARAM NAME="OutputFile">ErrorFile</PARAM>
       <PARAM NAME="OutputFrequency">10</PARAM>
+      <PARAM NAME="ConsoleOutput">1</PARAM>
   </FILTER>
 \end{lstlisting}
 

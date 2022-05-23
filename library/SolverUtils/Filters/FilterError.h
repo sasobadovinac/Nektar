@@ -81,6 +81,7 @@ protected:
 private:
     size_t m_index = 0;
     size_t m_outputFrequency;
+    bool m_consoleOutput;
     size_t m_numVariables;
     std::ofstream m_outFile;
     LibUtilities::CommSharedPtr m_comm;

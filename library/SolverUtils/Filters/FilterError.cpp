@@ -99,6 +99,20 @@ FilterError::FilterError(const LibUtilities::SessionReaderSharedPtr &pSession,
         LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_outputFrequency = round(equ.Evaluate());
     }
+
+    // ConsoleOutput
+    it = pParams.find("ConsoleOutput");
+    if (it == pParams.end())
+    {
+        m_consoleOutput = false;
+    }
+    else
+    {
+        ASSERTL0(it->second.length() > 0, "Empty parameter 'ConsoleOutput'.");
+        ASSERTL0(it->second == "0" || it->second == "1",
+                 "Parameter 'ConsoleOutput' can only be '0' or '1'.");
+        m_consoleOutput =  boost::lexical_cast<bool>(it->second);
+    }
 }
 
 void FilterError::v_Initialise(
@@ -142,6 +156,16 @@ void FilterError::v_Update(
         if (m_comm->GetRank() == 0)
         {
             m_outFile << " " << vL2Error << " " << vLinfError;
+
+            if (m_consoleOutput)
+            {
+                std::cout << "L 2 error (variable "
+                          << equationSys->GetVariable(i) << ") : " << vL2Error
+                          << std::endl;
+                std::cout << "L inf error (variable "
+                          << equationSys->GetVariable(i) << ") : " << vLinfError
+                          << std::endl;
+            }
         }
     }
 
