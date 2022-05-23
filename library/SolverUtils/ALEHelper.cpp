@@ -8,13 +8,12 @@ namespace Nektar
 namespace SolverUtils
 {
 
-void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
+void ALEHelper::InitObject(int spaceDim,
                      Array<OneD, MultiRegions::ExpListSharedPtr> &fields)
 {
     m_fieldsALE = fields;
 
     // Initialise grid velocities as 0s
-    int spaceDim = pGraph->GetSpaceDimension();
     m_gridVelocity = Array<OneD, Array<OneD, NekDouble>>(spaceDim);
     m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble>>(spaceDim);
     for (int i = 0; i < spaceDim; ++i)
@@ -24,27 +23,30 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
     }
 
     // Create ALE objects for each interface zone
-    for (auto &zone : fields[0]->GetGraph()->GetMovement()->GetZones())
+    if(fields[0]->GetGraph() != nullptr) // homogeneous graphs are missing the graph data
     {
-        switch(zone.second->GetMovementType())
+        for (auto &zone : fields[0]->GetGraph()->GetMovement()->GetZones())
         {
-            case SpatialDomains::MovementType::eFixed :
-                m_ALEs.emplace_back(ALEFixedShPtr(MemoryManager<ALEFixed>::AllocateSharedPtr(zone.second)));
-                break;
-            case SpatialDomains::MovementType::eTranslate :
-                m_ALEs.emplace_back(ALETranslateShPtr(MemoryManager<ALETranslate>::AllocateSharedPtr(zone.second)));
-                m_ALESolver = true;
-                break;
-            case SpatialDomains::MovementType::eRotate :
-                m_ALEs.emplace_back(ALERotateShPtr(MemoryManager<ALERotate>::AllocateSharedPtr(zone.second)));
-                m_ALESolver = true;
-                break;
-            case SpatialDomains::MovementType::ePrescribe :
-                m_ALEs.emplace_back(ALEPrescribeShPtr(MemoryManager<ALEPrescribe>::AllocateSharedPtr(zone.second)));
-                m_ALESolver = true;
-                break;
-            case SpatialDomains::MovementType::eNone :
-                WARNINGL0(false, "Zone cannot have movement type of 'None'.")
+            switch(zone.second->GetMovementType())
+            {
+                case SpatialDomains::MovementType::eFixed :
+                    m_ALEs.emplace_back(ALEFixedShPtr(MemoryManager<ALEFixed>::AllocateSharedPtr(zone.second)));
+                    break;
+                case SpatialDomains::MovementType::eTranslate :
+                    m_ALEs.emplace_back(ALETranslateShPtr(MemoryManager<ALETranslate>::AllocateSharedPtr(zone.second)));
+                    m_ALESolver = true;
+                    break;
+                case SpatialDomains::MovementType::eRotate :
+                    m_ALEs.emplace_back(ALERotateShPtr(MemoryManager<ALERotate>::AllocateSharedPtr(zone.second)));
+                    m_ALESolver = true;
+                    break;
+                case SpatialDomains::MovementType::ePrescribe :
+                    m_ALEs.emplace_back(ALEPrescribeShPtr(MemoryManager<ALEPrescribe>::AllocateSharedPtr(zone.second)));
+                    m_ALESolver = true;
+                    break;
+                case SpatialDomains::MovementType::eNone :
+                    WARNINGL0(false, "Zone cannot have movement type of 'None'.")
+            }
         }
     }
 }
@@ -52,7 +54,7 @@ void ALEHelper::InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
 void ALEHelper::UpdateGridVelocity(const NekDouble &time)
 {
     // Reset grid velocity to 0
-    int spaceDim = m_fieldsALE[0]->GetGraph()->GetSpaceDimension();
+    int spaceDim = m_fieldsALE[0]->GetPhys().size();
     for (int i = 0; i < spaceDim; ++i)
     {
         std::fill(m_gridVelocity[i].begin(), m_gridVelocity[i].end(), 0.0);

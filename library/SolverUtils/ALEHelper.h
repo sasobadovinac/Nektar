@@ -16,7 +16,7 @@ class ALEHelper
 {
 public:
 
-    void InitObject(const SpatialDomains::MeshGraphSharedPtr &pGraph,
+    void InitObject(int spaceDim,
                     Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
 
     void UpdateGridVelocity(const NekDouble &time);

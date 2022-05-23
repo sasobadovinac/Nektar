@@ -82,12 +82,7 @@ namespace Nektar
         void UnsteadySystem::v_InitObject()
         {
             EquationSystem::v_InitObject();
-
-            // Initialise ALE if not homogeneous
-            if(m_HomogeneousType == eNotHomogeneous)
-            {
-                ALEHelper::InitObject(m_graph, m_fields);
-            }
+            ALEHelper::InitObject(m_spacedim, m_fields);
 
             m_initialStep = 0;
 
