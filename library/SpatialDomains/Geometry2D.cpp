@@ -409,7 +409,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         m_xmap->PhysDeriv(zderxi2, zderxi2xi1, zderxi2xi2);
 
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 100; ++i)
         {
             // Compute f(x_k) and its derivatives
             NekDouble xc = m_xmap->PhysEvaluate(xi, x, xc_derxi1, xc_derxi2);
