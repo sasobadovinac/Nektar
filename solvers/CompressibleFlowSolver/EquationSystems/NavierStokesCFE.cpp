@@ -177,7 +177,7 @@ namespace Nektar
         // Set artificial viscosity based on NS viscous tensor
         if (m_is_shockCaptPhys)
         {
-            Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
+            Array<OneD, NekDouble> div(npointsIn), curlSquare(npointsIn);
             GetDivCurlSquared(m_fields, inarray, div, curlSquare,
                 pFwd, pBwd);
 
