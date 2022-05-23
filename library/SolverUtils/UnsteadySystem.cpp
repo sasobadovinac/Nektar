@@ -82,7 +82,13 @@ namespace Nektar
         void UnsteadySystem::v_InitObject()
         {
             EquationSystem::v_InitObject();
-            ALEHelper::InitObject(m_graph, m_fields);
+
+            // Initialise ALE if we have zones/interfaces in Movement object
+            if(!m_graph->GetMovement()->GetZones().empty()
+                && !m_graph->GetMovement()->GetInterfaces().empty())
+            {
+                ALEHelper::InitObject(m_graph, m_fields);
+            }
 
             m_initialStep = 0;
 
@@ -619,7 +625,12 @@ namespace Nektar
             CheckForRestartTime(m_time, m_nchk);
             SetBoundaryConditions(m_time);
             SetInitialConditions(m_time);
-            UpdateGridVelocity(m_time);
+
+            if (m_ALESolver)
+            {
+                UpdateGridVelocity(m_time);
+            }
+
             InitializeSteadyState();
         }
 
