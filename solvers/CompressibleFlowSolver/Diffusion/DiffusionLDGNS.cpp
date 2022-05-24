@@ -71,10 +71,12 @@ void DiffusionLDGNS::v_InitObject(
 
     m_traceVel = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim}; // @TODO: What is this trace vel used for???
     m_traceNormals = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim};
+    m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim};
     for (std::size_t i = 0; i < m_spaceDim; ++i)
     {
         m_traceVel[i] = Array<OneD, NekDouble> {nTracePts, 0.0};
         m_traceNormals[i] = Array<OneD, NekDouble> {nTracePts};
+        m_gridVelocityTrace[i] = Array<OneD, NekDouble> {nTracePts};
     }
     pFields[0]->GetTrace()->GetNormals(m_traceNormals);
 

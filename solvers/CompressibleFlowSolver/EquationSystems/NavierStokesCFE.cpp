@@ -149,10 +149,9 @@ namespace Nektar
         m_diffusion->SetDiffusionSymmFluxCons(
             &NavierStokesCFE::GetViscousSymmtrFluxConservVar, this);
 
-        m_diffusion->SetGridVelocityTrace(m_gridVelocityTrace); // If not ALE and movement this is just 0s
-        
         // Concluding initialisation of diffusion operator
         m_diffusion->InitObject         (m_session, m_fields);
+        m_diffusion->SetGridVelocityTrace(m_gridVelocityTrace); // If not ALE and movement this is just 0s
 
     }
 
