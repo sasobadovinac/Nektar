@@ -61,10 +61,20 @@ namespace Nektar
             ePyramid,
             ePrism,
             eHexahedron,
-            SIZE_ShapeType
+            SIZE_ShapeType,
+
+            // These are the short names used for MatrixFree operators
+            Point = ePoint,
+            Seg   = eSegment,
+            Tri   = eTriangle,
+            Quad  = eQuadrilateral,
+            Tet   = eTetrahedron,
+            Pyr   = ePyramid,
+            Prism = ePrism,
+            Hex   = eHexahedron,
         };
 
-        const char* const ShapeTypeMap[] =
+        const char* const ShapeTypeMap[SIZE_ShapeType] =
         {
             "NoGeomShapeType",
             "Point",
@@ -74,12 +84,12 @@ namespace Nektar
             "Tetrahedron",
             "Pyramid",
             "Prism",
-            "Hexahedron"
+            "Hexahedron",
         };
 
 
         // Hold the dimension of each of the types of shapes.
-        const unsigned int ShapeTypeDimMap[SIZE_ShapeType] =
+        constexpr unsigned int ShapeTypeDimMap[SIZE_ShapeType] =
         {
             0,  // Unknown
             0,  // ePoint
@@ -156,7 +166,7 @@ namespace Nektar
 
         namespace StdHexData
         {
-            inline int getNumberOfCoefficients( int Na, int Nb, int Nc ) 
+            inline int getNumberOfCoefficients( int Na, int Nb, int Nc )
             {
                 ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
                 ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
@@ -188,7 +198,7 @@ namespace Nektar
              * |3  2  0      |
              * |0  0         |
              * |0            |
-             * 
+             *
              * Sum = 28 = number of tet coefficients.
              */
             inline int getNumberOfCoefficients(int Na, int Nb, int Nc)
@@ -284,7 +294,7 @@ namespace Nektar
 
         namespace StdPrismData
         {
-            inline int getNumberOfCoefficients( int Na, int Nb, int Nc ) 
+            inline int getNumberOfCoefficients( int Na, int Nb, int Nc )
             {
                 ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
                 ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
@@ -310,9 +320,9 @@ namespace Nektar
             }
         }
 
-        inline int GetNumberOfCoefficients(ShapeType shape, std::vector<unsigned int> &modes, int offset)
+        inline int GetNumberOfCoefficients(ShapeType shape, std::vector<unsigned int> &modes, int offset=0)
         {
-            int returnval = 0; 
+            int returnval = 0;
             switch(shape)
             {
             case eSegment:
@@ -345,9 +355,9 @@ namespace Nektar
         }
 
 
-        inline int GetNumberOfCoefficients(ShapeType shape, int na, int nb, int nc)
+        inline int GetNumberOfCoefficients(ShapeType shape, int na, int nb = 0, int nc = 0)
         {
-            int returnval = 0; 
+            int returnval = 0;
             switch(shape)
             {
             case eSegment:
@@ -382,4 +392,3 @@ namespace Nektar
 }
 
 #endif
-
