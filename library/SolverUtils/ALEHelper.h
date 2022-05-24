@@ -48,6 +48,7 @@ protected:
     std::vector<ALEBaseShPtr> m_ALEs;
     bool m_ALESolver = false;
     NekDouble m_prevStageTime = 0.0;
+    int m_spaceDim;
 
 };
 

@@ -9,13 +9,14 @@ namespace SolverUtils
 {
 
 void ALEHelper::InitObject(int spaceDim,
-                     Array<OneD, MultiRegions::ExpListSharedPtr> &fields)
+                           Array<OneD, MultiRegions::ExpListSharedPtr> &fields)
 {
+    m_spaceDim = spaceDim;
     m_fieldsALE = fields;
 
     // Initialise grid velocities as 0s
-    m_gridVelocity = Array<OneD, Array<OneD, NekDouble>>(spaceDim);
-    m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble>>(spaceDim);
+    m_gridVelocity = Array<OneD, Array<OneD, NekDouble>>(m_spaceDim);
+    m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble>>(m_spaceDim);
     for (int i = 0; i < spaceDim; ++i)
     {
         m_gridVelocity[i] = Array<OneD, NekDouble>(fields[0]->GetTotPoints(), 0.0);
@@ -54,8 +55,7 @@ void ALEHelper::InitObject(int spaceDim,
 void ALEHelper::UpdateGridVelocity(const NekDouble &time)
 {
     // Reset grid velocity to 0
-    int spaceDim = m_fieldsALE[0]->GetPhys().size();
-    for (int i = 0; i < spaceDim; ++i)
+    for (int i = 0; i < m_spaceDim; ++i)
     {
         std::fill(m_gridVelocity[i].begin(), m_gridVelocity[i].end(), 0.0);
     }
