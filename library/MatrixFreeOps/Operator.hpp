@@ -5,9 +5,10 @@
 
 #include <iostream>
 
-#include <LibUtilities/Foundations/Basis.h>
-#include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <Collections/Operator.h>
+#include <LibUtilities/BasicUtils/NekInline.hpp>
+#include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/Foundations/Basis.h>
 #include <LibUtilities/SimdLib/tinysimd.hpp>
 
 namespace Nektar
@@ -44,15 +45,15 @@ public:
     }
 
     MATRIXFREE_EXPORT virtual void SetJac(
-     const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>  &jac) = 0;
-    
+        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>& jac) = 0;
+
     MATRIXFREE_EXPORT virtual void SetDF(
-     const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>  &df) = 0;
+        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>& df) = 0;
 };
 
 typedef std::shared_ptr<Operator> OperatorSharedPtr;
 
-/// Base class for backwards transform operator.
+// Base class for backwards transform operator.
 class BwdTrans : virtual public Operator
 {
 public:
@@ -67,14 +68,15 @@ public:
     }
 
     MATRIXFREE_EXPORT virtual void operator()(
-        const Array<OneD, const NekDouble> &input,
-        Array<OneD, NekDouble> &output) = 0; //Abstract Method
+        const Array<OneD, const NekDouble>& input,
+              Array<OneD,       NekDouble>& output) = 0; //Abstract Method
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
     int m_nElmt;
 };
 
+// Base class for product operator.
 class IProduct : virtual public Operator
 {
 public:
@@ -94,8 +96,8 @@ public:
     }
 
     MATRIXFREE_EXPORT virtual void operator()(
-        const Array<OneD, const NekDouble> &input,
-        Array<OneD, NekDouble> &output) = 0;
+        const Array<OneD, const NekDouble>& input,
+              Array<OneD,       NekDouble>& output) = 0;
 
 protected:
     /// Vector of tensor product basis directions
@@ -103,6 +105,7 @@ protected:
     int m_nElmt;
 };
 
+// Base class for physical derivatives operator.
 class PhysDeriv : virtual public Operator
 {
 public:
@@ -121,15 +124,16 @@ public:
         return true;
     }
 
-
-    MATRIXFREE_EXPORT virtual void operator()(const Array<OneD, const NekDouble> &in,
-                            Array<OneD, Array<OneD,   NekDouble> > &out) = 0;
+    MATRIXFREE_EXPORT virtual void operator()(
+        const Array<OneD,       const NekDouble> & input,
+              Array<OneD, Array<OneD, NekDouble>>& output) = 0;
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
     int m_nElmt;
 };
 
+// Base class for product WRT derivative base operator.
 class IProductWRTDerivBase : virtual public Operator
 {
 public:
@@ -154,14 +158,15 @@ public:
     }
 
     MATRIXFREE_EXPORT virtual void operator()(
-        const Array<OneD, Array<OneD, NekDouble>> &in,
-        Array<OneD, NekDouble> &out) = 0;
+        const Array<OneD, Array<OneD, NekDouble>> &input,
+              Array<OneD,             NekDouble> &output) = 0;
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
     int m_nElmt;
 };
 
+// Base class for the Helmholtz base operator.
 class Helmholtz : virtual public Operator
 {
 public:
@@ -214,40 +219,39 @@ public:
 
     MATRIXFREE_EXPORT virtual void operator()(
         const Array<OneD, const NekDouble> &input,
-        Array<OneD, NekDouble> &output) = 0;
+              Array<OneD,       NekDouble> &output) = 0;
 
-    inline void SetLambda(NekDouble lambda)
+    NEK_FORCE_INLINE void SetLambda(NekDouble lambda)
     {
         m_lambda = lambda;
     }
-    
 
-    inline void SetConstVarDiffusion(Array<OneD, NekDouble> diff)
+    NEK_FORCE_INLINE void SetConstVarDiffusion(Array<OneD, NekDouble> diff)
     {
         m_isConstVarDiff = true;
-        
+
         int n = m_basis.size();
-        
+
         for(int i = 0; i < n*(n+1)/2; ++i)
         {
             m_constVarDiff[i] = diff[i];
         }
     }
-    
-    inline void SetVarDiffusion(Array<OneD, NekDouble> diff)
+
+    NEK_FORCE_INLINE void SetVarDiffusion(Array<OneD, NekDouble> diff)
     {
         boost::ignore_unused(diff);
         m_isVarDiff = true;
         m_isConstVarDiff = false;
-        
+
         int n = m_basis.size();
         int tp = 1;
-        
+
         for (int bn = 0; bn < n; ++bn)
         {
             tp *= m_basis[bn]->GetNumPoints();
         }
-        
+
         // fixed values for testing!
         for(int i = 0; i < tp; ++i)
         {
@@ -267,12 +271,10 @@ public:
                     m_varD22[i] = diff[5];
                     break;
                 default:
-                    break;       
+                    break;
             }
         }
     }
-    
-    
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
@@ -295,7 +297,7 @@ class Helper : virtual public Operator
 {
 protected:
     Helper(std::vector<LibUtilities::BasisSharedPtr> basis,
-              int nElmt)
+           int nElmt)
         : Operator()
     {
         // Sanity check: no padding yet!
@@ -363,19 +365,19 @@ protected:
     }
 
     void SetJac(
-     const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>  &jac)
+     const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>& jac)
         final
     {
-        m_jac = jac; 
+        m_jac = jac;
     }
-    
+
     void SetDF(
-     const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>  &df)
+     const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>& df)
         final
     {
-        m_df = df; 
+        m_df = df;
     }
-    
+
     int m_nBlocks;
     std::array<int, DIM> m_nm, m_nq;
     std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM> m_bdata;
@@ -385,7 +387,7 @@ protected:
     std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM> m_w; //Weights
     std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>  m_df;//Chain rule function deriviatives for each element (00, 10, 20, 30...)
     std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>  m_jac;
-    
+
 };
 
 using OperatorFactory = LibUtilities::NekFactory<
