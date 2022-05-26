@@ -341,7 +341,8 @@ void InterfaceTrace::CalcLocalMissing()
     }
 
     // If running in serial there shouldn't be any missing coordinates.
-    if (m_trace->GetComm()->IsSerial())
+    // Unless we flag to ignore this check for this specific interface.
+    if (m_trace->GetComm()->IsSerial() && !m_interface->GetSkipCoordCheck())
     {
         ASSERTL0(m_missingCoords.empty(),
                  "Missing " + std::to_string(m_missingCoords.size()) +

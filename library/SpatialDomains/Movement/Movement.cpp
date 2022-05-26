@@ -362,9 +362,6 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
         ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface name.");
         TiXmlElement *sideElement = interfaceElement->FirstChildElement();
 
-        // @TODO: For different interface types have a string attribute type in
-        // @TODO: the INTERFACE element like for NAME above
-
         Array<OneD, InterfaceShPtr> interfaces(2);
         std::vector<int> cnt;
         while (sideElement)
@@ -373,20 +370,24 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
                 "In INTERFACE NAME " + name +
                     ", only two sides may be present in each INTERFACE block.")
 
+            // Read ID
             int indx;
             err = sideElement->QueryIntAttribute("ID", &indx);
             ASSERTL0(err == TIXML_SUCCESS, "Unable to read interface ID.");
 
+            // Read boundary
             std::string boundaryStr;
-            int boundaryErr =
-                sideElement->QueryStringAttribute("BOUNDARY", &boundaryStr);
+            err = sideElement->QueryStringAttribute("BOUNDARY", &boundaryStr);
+            ASSERTL0(err == TIXML_SUCCESS,
+                     "Unable to read BOUNDARY in interface " + std::to_string(indx));
 
             CompositeMap boundaryEdge;
-            if (boundaryErr == TIXML_SUCCESS)
-            {
-                std::string indxStr = ReadTag(boundaryStr);
-                meshGraph->GetCompositeList(indxStr, boundaryEdge);
-            }
+            std::string indxStr = ReadTag(boundaryStr);
+            meshGraph->GetCompositeList(indxStr, boundaryEdge);
+
+            // Read SKIPCHECK flag
+            bool skipCheck = false;
+            err = sideElement->QueryBoolAttribute("SKIPCHECK", &skipCheck);
 
             // Sets location in interface pair to 0 for left, and 1 for right
             auto sideElVal = sideElement->ValueStr();
@@ -405,9 +406,9 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
                              "NAME " + name + ". Please only use LEFT or RIGHT.")
             }
 
-            interfaces[cnt[cnt.size()-1]] =
+            interfaces[cnt[cnt.size() - 1]] =
                 InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(
-                    indx, boundaryEdge));
+                    indx, boundaryEdge, skipCheck));
 
             sideElement = sideElement->NextSiblingElement();
         }

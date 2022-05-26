@@ -42,8 +42,8 @@ namespace Nektar
 namespace SpatialDomains
 {
 
-Interface::Interface(int indx, const CompositeMap &edge)
-    : m_id(indx)
+Interface::Interface(int indx, const CompositeMap &edge, bool skipCoordCheck)
+    : m_id(indx), m_skipCoordCheck(skipCoordCheck)
 {
     // Fill element Ids
     for (auto &comp : edge)

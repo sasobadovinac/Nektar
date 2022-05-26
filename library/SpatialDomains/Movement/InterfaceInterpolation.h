@@ -53,7 +53,7 @@ typedef std::map<int, CompositeSharedPtr> CompositeMap;
 struct Interface
 {
     /// Constructor
-    Interface(int indx, const CompositeMap &edge);
+    Interface(int indx, const CompositeMap &edge, bool skipCoordCheck);
 
     /// Default destructor
     virtual ~Interface() = default;
@@ -69,7 +69,6 @@ struct Interface
     {
         return m_edge[id];
     }
-
 
     /// Checks if the interface edge is empty (used for parallelisation)
     inline bool IsEmpty() const
@@ -89,6 +88,12 @@ struct Interface
         return m_id;
     }
 
+    /// Return the skip check flag for coordinate exchange in InterfaceMapDG
+    inline bool GetSkipCoordCheck() const
+    {
+        return m_skipCoordCheck;
+    }
+
 protected:
     /// Matching opposite interface of the interface pair
     std::shared_ptr<Interface> m_oppInterface;
@@ -96,6 +101,8 @@ protected:
     int m_id;
     /// Map of global ID to geometry of the interface edge
     std::map<int, GeometrySharedPtr> m_edge;
+    /// Skip the coord found check in InterfaceMapDG
+    bool m_skipCoordCheck;
 };
 
 typedef std::shared_ptr<Interface> InterfaceShPtr;
