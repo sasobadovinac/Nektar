@@ -236,11 +236,15 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
     // Perform movement of zones based on time in field files metadata map
     if(m_f->m_graph->GetMovement()->GetMoveFlag())
     {
-        m_f->m_graph->GetMovement()->PerformMovement(
-            boost::lexical_cast<NekDouble>(m_f->m_fieldMetaDataMap["Time"]));
-        for (auto &i : m_f->m_exp)
+        if(!m_f->m_fieldMetaDataMap["Time"].empty())
         {
-            i->Reset();
+            m_f->m_graph->GetMovement()->PerformMovement(
+                    boost::lexical_cast<NekDouble>(
+                            m_f->m_fieldMetaDataMap["Time"]));
+            for (auto &i: m_f->m_exp)
+            {
+                i->Reset();
+            }
         }
     }
 
