@@ -228,6 +228,8 @@ IF( NEKTAR_SOLVER_ADR )
     ADD_NEKTAR_TEST(Movement_fixed_2D_curved_quads)
     ADD_NEKTAR_TEST(Movement_fixed_2D_varied)
     ADD_NEKTAR_TEST(Movement_fixed_3D_stacked_cylinders_curved)
+    ADD_NEKTAR_TEST(Movement_rotate_3D_stacked_cylinders_curved_par)
+    ADD_NEKTAR_TEST(Movement_translate_interfaces232_dirichlet_par)
 
     IF (NEKTAR_USE_FFTW)
         ADD_NEKTAR_TEST(Helmholtz_3DHomo1D_FFT)
