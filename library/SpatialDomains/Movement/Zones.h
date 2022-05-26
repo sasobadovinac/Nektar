@@ -197,9 +197,10 @@ struct ZoneTranslate final: public ZoneBase
     ZoneTranslate(int id,
                   const CompositeMap &domain,
                   const int coordDim,
-                  const std::vector<NekDouble> &velocity)
+                  const Array<OneD, LibUtilities::EquationSharedPtr> &velocityEqns,
+                  const Array<OneD, LibUtilities::EquationSharedPtr> &displacementEqns)
         : ZoneBase(MovementType::eTranslate, id, domain, coordDim),
-          m_velocity(velocity)
+          m_velocityEqns(velocityEqns), m_displacementEqns(displacementEqns)
     {
     }
 
@@ -207,16 +208,17 @@ struct ZoneTranslate final: public ZoneBase
     virtual ~ZoneTranslate() = default;
 
     /// Returns the velocity of the zone
-    inline std::vector<NekDouble> GetVel() const
-    {
-        return m_velocity;
-    }
+    std::vector<NekDouble> GetVel(NekDouble &time) const;
+
+    /// Returns the displacement of the zone
+    std::vector<NekDouble> GetDisp(NekDouble &time) const;
 
     /// Virtual function for movement of the zone at @param time
     virtual bool v_Move(NekDouble time) final;
 
 protected:
-    std::vector<NekDouble> m_velocity;
+    Array<OneD, LibUtilities::EquationSharedPtr> m_velocityEqns;
+    Array<OneD, LibUtilities::EquationSharedPtr> m_displacementEqns;
 };
 
 /// Prescribed zone: applies equation to every point

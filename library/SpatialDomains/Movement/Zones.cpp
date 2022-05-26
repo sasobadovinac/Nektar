@@ -253,13 +253,31 @@ bool ZoneRotate::v_Move(NekDouble time)
     return true;
 }
 
-bool ZoneTranslate::v_Move(NekDouble timeStep)
+std::vector<NekDouble> ZoneTranslate::GetVel(NekDouble &time) const
 {
-    Array<OneD, NekDouble> dist(3, 0.0);
+    std::vector<NekDouble> vel(m_coordDim);
     for (int i = 0; i < m_coordDim; ++i)
     {
-        dist[i] = m_velocity[i] * timeStep;
+        vel[i] = m_velocityEqns[i]->Evaluate(0,0,0,time);
     }
+
+    return vel;
+}
+
+std::vector<NekDouble> ZoneTranslate::GetDisp(NekDouble &time) const
+{
+    std::vector<NekDouble> disp(m_coordDim);
+    for (int i = 0; i < m_coordDim; ++i)
+    {
+        disp[i] = m_displacementEqns[i]->Evaluate(0,0,0,time);
+    }
+
+    return disp;
+}
+
+bool ZoneTranslate::v_Move(NekDouble time)
+{
+    auto disp = GetDisp(time);
 
     int cnt = 0;
     for (auto &vert : m_verts)
@@ -269,7 +287,7 @@ bool ZoneTranslate::v_Move(NekDouble timeStep)
 
         for (int i = 0; i < m_coordDim; ++i)
         {
-            newLoc[i] = pnt(i) + dist[i];
+            newLoc[i] = pnt(i) + disp[i];
         }
 
         vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
@@ -285,7 +303,7 @@ bool ZoneTranslate::v_Move(NekDouble timeStep)
 
             for (int i = 0; i < m_coordDim; ++i)
             {
-                newLoc[i] = pnt(i) + dist[i];
+                newLoc[i] = pnt(i) + disp[i];
             }
 
             vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);

@@ -247,15 +247,57 @@ void Movement::ReadZones(TiXmlElement *zonesTag,
                  zoneType == "TRANSLATE" ||
                  zoneType == "TRANSLATING")
         {
+            // Read velocity information
             std::string velocityStr;
             err = zonesElement->QueryStringAttribute("VELOCITY", &velocityStr);
-            ASSERTL0(err == TIXML_SUCCESS, "Unable to read direction.");
-            std::vector<NekDouble> velocity;
-            ParseUtils::GenerateVector(velocityStr, velocity);
+            ASSERTL0(err == TIXML_SUCCESS,
+                     "Unable to read VELOCITY for translating zone " +
+                     std::to_string(indx));
+
+            std::vector<std::string> velocityStrSplit;
+            ParseUtils::GenerateVector(velocityStr, velocityStrSplit);
+
+            ASSERTL0(velocityStrSplit.size() >= coordDim,
+                     "VELOCITY dimensions must be greater than or equal to the "
+                     "coordinate dimension for translating zone "
+                     + std::to_string(indx));
+
+            Array<OneD, LibUtilities::EquationSharedPtr> velocityEqns(coordDim);
+            for (int i = 0; i < coordDim; ++i)
+            {
+                pSession->SubstituteExpressions(velocityStrSplit[i]);
+
+                velocityEqns[i] = MemoryManager<LibUtilities::Equation>::AllocateSharedPtr(
+                        pSession->GetInterpreter(), velocityStrSplit[i]);
+            }
+
+            // Read displacement information
+            std::string displacementStr;
+            err = zonesElement->QueryStringAttribute("DISPLACEMENT", &displacementStr);
+            ASSERTL0(err == TIXML_SUCCESS,
+                     "Unable to read DISPLACEMENT for translating zone " +
+                     std::to_string(indx));
+
+            std::vector<std::string> displacementStrSplit;
+            ParseUtils::GenerateVector(displacementStr, displacementStrSplit);
+
+            ASSERTL0(displacementStrSplit.size() >= coordDim,
+                     "DISPLACEMENT dimensions must be greater than or equal to the "
+                     "coordinate dimension for translating zone "
+                     + std::to_string(indx));
+
+            Array<OneD, LibUtilities::EquationSharedPtr> displacementEqns(coordDim);
+            for (int i = 0; i < coordDim; ++i)
+            {
+                pSession->SubstituteExpressions(displacementStrSplit[i]);
+
+                displacementEqns[i] = MemoryManager<LibUtilities::Equation>::AllocateSharedPtr(
+                        pSession->GetInterpreter(), displacementStrSplit[i]);
+            }
 
             zone = ZoneTranslateShPtr(
                 MemoryManager<ZoneTranslate>::AllocateSharedPtr(
-                    indx, domain, coordDim, velocity));
+                    indx, domain, coordDim, velocityEqns, displacementEqns));
 
             m_moveFlag = true;
         }

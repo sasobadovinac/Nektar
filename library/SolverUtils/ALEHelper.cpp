@@ -250,7 +250,7 @@ void ALETranslate::v_UpdateGridVel(NekDouble time,
 {
     boost::ignore_unused(time);
 
-    auto vel = m_zone->GetVel();
+    auto vel = m_zone->GetVel(time);
     auto exp = fields[0]->GetExp();
 
     auto elements = m_zone->GetElements();
