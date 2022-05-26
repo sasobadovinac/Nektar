@@ -1034,11 +1034,16 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
         running.homs  += decomps[cnt + HOMS_DCMP_IDX];
     }
 
+
     for (auto &gIt : groupsToDecomps)
     {
         // Select region from dataset for this decomposition.
         for (auto &sIt : gIt.second)
         {
+            // Offsets of elemental data within dataset
+            std::map<unsigned int, hsize_t> elementOffsets;
+            std::vector<hsize_t> dataIdxToRead;
+
             std::stringstream fieldNameStream;
             fieldNameStream << gIt.first;
 
@@ -1050,19 +1055,84 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
             fielddef->m_elementIDs = groupsToElmts[sIt];
             fielddefs.push_back(fielddef);
 
-            if (fielddata != NullVectorNekDoubleVector)
+            // Determine number of modes per element
+            std::vector<std::pair<unsigned int, unsigned int>> offsets;
+            CheckFieldDefinition(fielddef, offsets);
+
+            for (int i = 0; i < fielddef->m_elementIDs.size(); ++i)
             {
+                elementOffsets[fielddef->m_elementIDs[i]] =
+                    decompsToOffsets[sIt].data + offsets[i].second;
+            }
+
+            if (selective)
+            {
+                std::vector<unsigned int> newElementIds;
+                for (int i = 0; i < fielddef->m_elementIDs.size(); ++i)
+                {
+                    if (toread.find(fielddef->m_elementIDs[i]) != toread.end())
+                    {
+                        newElementIds.push_back(fielddef->m_elementIDs[i]);
+                    }
+                }
+
+                for (int i = 0; i < newElementIds; ++i)
+                {
+                    unsigned int nElementModes = offsets[i].first;
+                    unsigned int dataOffset = elementOffsets[newElementIds[i]];
+
+                    for (int j = 0; j < nElementModes; ++j)
+                    {
+                        dataIdxToRead.push_back(dataOffset + j);
+                    }
+                }
+
+                fielddef->m_elementIDs = newElementIds;
+
                 std::vector<NekDouble> decompFieldData;
+
+                data_fspace->ClearRange();
+                data_fspace->SetSelection(dataIdxToRead);
+
                 ImportFieldData(
                     readPLInd, data_dset, data_fspace,
                     decompsToOffsets[sIt].data, decomps, sIt, fielddef,
                     decompFieldData);
                 fielddata.push_back(decompFieldData);
             }
+            else
+            {
+                if (fielddata != NullVectorNekDoubleVector)
+                {
+                    std::vector<NekDouble> decompFieldData;
+
+                    uint64_t nElemVals  = decomps[sIt * MAX_DCMPS + VAL_DCMP_IDX];
+                    uint64_t nFieldVals = nElemVals;
+
+                    data_fspace->ClearRange();
+                    data_fspace->SelectRange(data_i, nFieldVals);
+
+                    ImportFieldData(
+                        readPLInd, data_dset, data_fspace,
+                        decompsToOffsets[sIt].data, decomps, sIt, fielddef,
+                        decompFieldData);
+                    fielddata.push_back(decompFieldData);
+                }
+            }
         }
     }
 
+    // // Hack: would need to construct one field definition per element type,
+    // // assume they are just all the same for now
+    // fielddefs.resize(1);
+    
+    // for (int i = 0; i < ElementIDs.size(); ++i)
+    // {
+    //     fielddefs[0]->m_elementIDs = ElementIDs[i];
+    // }
+
     ImportHDF5FieldMetaData(dataSource, fieldinfomap);
+
     m_comm->Block();
 }
 
@@ -1293,10 +1363,9 @@ void FieldIOHdf5::ImportFieldData(
     std::stringstream prfx;
     prfx << m_comm->GetRank() << ": FieldIOHdf5::ImportFieldData(): ";
 
-    uint64_t nElemVals  = decomps[decomp * MAX_DCMPS + VAL_DCMP_IDX];
+    uint64_t nElemVals  = decomps[sIt * MAX_DCMPS + VAL_DCMP_IDX];
     uint64_t nFieldVals = nElemVals;
 
-    data_fspace->SelectRange(data_i, nFieldVals);
     data_dset->Read(fielddata, data_fspace, readPL);
     int datasize = CheckFieldDefinition(fielddef);
     ASSERTL0(

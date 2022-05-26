@@ -582,7 +582,9 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank, bool b
  *
  * @param fielddefs  Field definitions to check.
  */
-int FieldIO::CheckFieldDefinition(const FieldDefinitionsSharedPtr &fielddefs)
+int FieldIO::CheckFieldDefinition(
+    const FieldDefinitionsSharedPtr &fielddefs,
+    std::vector<std::pair<unsigned int, unsigned int>> &offsets)
 {
     int i;
 
@@ -721,6 +723,12 @@ int FieldIO::CheckFieldDefinition(const FieldDefinitionsSharedPtr &fielddefs)
             default:
                 NEKERROR(ErrorUtil::efatal, "Unsupported shape type.");
                 break;
+        }
+
+        offsets.resize(fielddefs->m_elementIDs.size());
+        for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
+        {
+            offsets[i] = std::make_pair(datasize, i * datasize);
         }
 
         datasize *= fielddefs->m_elementIDs.size();
