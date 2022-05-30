@@ -458,7 +458,9 @@ struct NodeHash : std::unary_function<NodeSharedPtr, std::size_t>
         return hash_combine(p->m_x, p->m_y, p->m_z);
     }
 };
-typedef std::unordered_set<NodeSharedPtr, NodeHash> NodeSet;
+
+// @TODO: Fixed by just hashing based on memory address, I feel like we shouldn't just delete vertices anyway...
+typedef std::unordered_set<NodeSharedPtr> NodeSet;
 }
 }
 

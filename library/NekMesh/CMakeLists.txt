@@ -12,6 +12,7 @@ SET(NEKMESH_SOURCES
     Module/OutputModules/OutputNekpp.cpp
     Module/OutputModules/OutputSTL.cpp
     Module/ProcessModules/ProcessBL.cpp
+    Module/ProcessModules/ProcessCombine.cpp
     Module/ProcessModules/ProcessCurve.cpp
     Module/ProcessModules/ProcessCurvedEdges.cpp
     Module/ProcessModules/ProcessCyl.cpp
@@ -69,6 +70,7 @@ SET(NEKMESH_HEADERS
     Module/OutputModules/OutputNekpp.h
     Module/OutputModules/OutputSTL.h
     Module/ProcessModules/ProcessBL.h
+    Module/ProcessModules/ProcessCombine.h
     Module/ProcessModules/ProcessCurve.h
     Module/ProcessModules/ProcessCurvedEdges.h
     Module/ProcessModules/ProcessCyl.h

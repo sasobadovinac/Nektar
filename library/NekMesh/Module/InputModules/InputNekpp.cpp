@@ -75,9 +75,12 @@ void InputNekpp::Process()
     m_log(VERBOSE) << "Reading Nektar++ XML file '" << filename[0] << "'"
                    << endl;
 
+    LibUtilities::CommSharedPtr pComm = m_mesh->m_comm ? m_mesh->m_comm
+                                                       : LibUtilities::CommSharedPtr();
+
     char *prgname = const_cast<char *>("NekMesh");
     LibUtilities::SessionReaderSharedPtr pSession =
-        LibUtilities::SessionReader::CreateInstance(1, &prgname, filename);
+        LibUtilities::SessionReader::CreateInstance(1, &prgname, filename, pComm);
     SpatialDomains::MeshGraphSharedPtr graph =
         SpatialDomains::MeshGraph::Read(pSession);
 
