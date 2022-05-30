@@ -352,6 +352,14 @@ int main(int argc, char* argv[])
                         ext = tmp1[0].substr(dot,tmp1[0].length()-dot);
                     }
 
+#if NEKTAR_USING_VTK
+                    // If VTU output and VTU installed use new VTU format
+                    if(ext == "vtu")
+                    {
+                        ext = "vtuNew";
+                    }
+#endif
+
                     module.second = ext;
                     tmp1.push_back(string(module.first == eInputModule ? "infile=" :
                                           "outfile=")  +tmp1[0]);

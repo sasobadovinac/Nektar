@@ -123,6 +123,13 @@ SET(FieldUtilsSources
     ProcessModules/ProcessQualityMetric.cpp
 )
 
+IF (NEKTAR_USE_VTK)
+    SET(FieldUtilsSources ${FieldUtilsSources}
+            OutputModules/OutputVtkNew.cpp)
+    SET(FieldUtilsHeaders ${FieldUtilsHeaders}
+            OutputModules/OutputVtkNew.h)
+ENDIF()
+
 ADD_NEKTAR_LIBRARY(FieldUtils
     SUMMARY "Nektar++ FieldUtils library"
     DESCRIPTION "Collection of post-processing modules for the FieldConvert utility and filter"
@@ -131,6 +138,19 @@ ADD_NEKTAR_LIBRARY(FieldUtils
     DEPENDS GlobalMapping)
 
 ADD_DEFINITIONS(-DFIELD_UTILS_EXPORTS)
+
+IF (NEKTAR_USE_VTK)
+    IF (VTK_MAJOR_VERSION LESS 6)
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC vtkCommon vtkIO vtkGraphics)
+    ELSEIF (VTK_MAJOR_VERSION  GREATER_EQUAL 9)
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML)
+        vtk_module_autoinit(
+                TARGETS FieldUtils
+                MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML)
+    ELSE ()
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC vtkCommonCore vtkIOLegacy vtkIOXML)
+    ENDIF ()
+ENDIF (NEKTAR_USE_VTK)
 
 IF (NEKTAR_BUILD_PYTHON)
     SUBDIRS(Python)
