@@ -368,6 +368,15 @@ int main(int argc, char* argv[])
             else
             {
                 module.second = tmp1[1];
+
+#if NEKTAR_USING_VTK
+                // If VTU output and VTU installed use new VTU format
+                if(module.second == "vtu")
+                {
+                    module.second = "vtuNew";
+                }
+#endif
+
                 tmp1.push_back(string(module.first == eInputModule ? "infile=" : "outfile=")
                                + tmp1[0]);
                 offset++;
