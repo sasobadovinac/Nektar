@@ -78,6 +78,8 @@ protected:
     virtual fs::path GetFullOutName(std::string &filename,
                                     po::variables_map &vm);
 
+    std::string PrepareOutput(po::variables_map &vm);
+
 private:
     void WriteVtkHeader(std::ostream &outfile);
 
@@ -86,8 +88,6 @@ private:
     void WriteEmptyVtkPiece(std::ofstream &outfile);
 
     void WritePVtu(po::variables_map &vm);
-
-    std::string PrepareOutput(po::variables_map &vm);
 };
 }
 }

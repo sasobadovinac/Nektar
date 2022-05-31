@@ -46,7 +46,6 @@ namespace FieldUtils
 /// Converter from fld to vtk.
 class OutputVtkNew : public OutputVtk
 {
-    int GetVtkCellType(std::string pType);
 public:
     /// Creates an instance of this class
     static std::shared_ptr<Module> create(FieldSharedPtr f)
@@ -56,7 +55,7 @@ public:
     static ModuleKey m_className;
 
     OutputVtkNew(FieldSharedPtr f);
-    virtual ~OutputVtkNew();
+    virtual ~OutputVtkNew() = default;
 
     virtual std::string GetModuleName()
     {
@@ -73,22 +72,9 @@ protected:
     /// Write from data to output file.
     virtual void OutputFromData(po::variables_map &vm);
 
-    virtual fs::path GetPath(std::string &filename,
-                                    po::variables_map &vm);
-
-    virtual fs::path GetFullOutName(std::string &filename,
-                                    po::variables_map &vm);
-
 private:
-    void WriteVtkHeader(std::ostream &outfile);
-
-    void WriteVtkFooter(std::ostream &outfile);
-
-    void WriteEmptyVtkPiece(std::ofstream &outfile);
-
-    void WritePVtu(po::variables_map &vm);
-
-    std::string PrepareOutput(po::variables_map &vm);
+    int GetVtkCellType(LibUtilities::ShapeType sType,
+                       SpatialDomains::GeomType gType);
 };
 }
 }
