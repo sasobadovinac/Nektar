@@ -75,6 +75,8 @@ protected:
 private:
     int GetVtkCellType(LibUtilities::ShapeType sType,
                        SpatialDomains::GeomType gType);
+    std::vector<long long> QuadrilateralNodes(Array<OneD, int> &nquad);
+    std::vector<long long> TriangleNodes(Array<OneD, int> &nquad);
 };
 }
 }

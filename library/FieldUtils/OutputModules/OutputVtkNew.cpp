@@ -121,8 +121,8 @@ void OutputVtkNew::OutputFromExp(po::variables_map &vm)
     vtkUnstructuredGrid *vtkMesh   = vtkUnstructuredGrid::New();
     vtkPoints           *vtkPoints = vtkPoints::New();
 
-
     // Save geometry information to VTU (assuming same expansion for each field!)
+    int meshDim = m_f->m_graph->GetMeshDimension();
     for (int i = 0; i < m_f->m_exp[0]->GetNumElmts(); ++i)
     {
         auto exp = m_f->m_exp[0]->GetExp(i);
@@ -140,59 +140,29 @@ void OutputVtkNew::OutputFromExp(po::variables_map &vm)
             vtkPoints->InsertPoint(offset + j,coords[0][j],coords[1][j],coords[2][j]);
         }
 
-        int nquad[3];
-        nquad[0] = exp->GetNumPoints(0);
-        nquad[1] = exp->GetNumPoints(1);
-
-        std::vector<vtkIdType> p(4);
-        // Write vertices // @TODO: Generalise
-        p[0] = offset;
-        p[1] = offset + nquad[0] - 1;
-        p[2] = offset + nquad[0] * nquad[1] - 1;
-        p[3] = offset + nquad[0] * (nquad[1] - 1);
-
-        // Write edge interior // @TODO: Horrific hard coded
-        for (int j = 0; j < exp->GetGeom()->GetNumEdges(); ++j)
+        Array<OneD, int> nquad(meshDim);
+        for (int j = 0; j < meshDim; ++j)
         {
-            if (j == 0)
-            {
-                for (int k = 1; k < nquad[0] - 1; ++k)
-                {
-                    p.emplace_back(offset + k);
-                }
-            }
-            else if (j == 1)
-            {
-                for (int k = 2 * nquad[0] - 1; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
-                {
-                    p.emplace_back(offset + k);
-                }
-            }
-            else if (j == 2)
-            {
-                for (int k = nquad[0] * (nquad[1] - 1) + 1; k < nquad[0] * nquad[1] - 1; ++k)
-                {
-                    p.emplace_back(offset + k);
-                }
-            }
-            else if (j == 3)
-            {
-                for (int k = nquad[0]; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
-                {
-                    p.emplace_back(offset + k);
-                }
-            }
+            nquad[j] = exp->GetNumPoints(j);
         }
 
-        // Write surface interior
-        for (int j = 1; j < nquad[0] - 1; ++j)
+        std::vector<long long> p;
+        switch (exp->GetGeom()->GetShapeType())
         {
-            for (int k = 1; k < nquad[1] - 1; ++k)
-            {
-                // Fetch interior nodes from quad->curve
-                p.emplace_back(offset + j * nquad[0] + k);
-            }
+            case LibUtilities::eQuadrilateral:
+                p = QuadrilateralNodes(nquad);
+                break;
+            case LibUtilities::eTriangle:
+                p = TriangleNodes(nquad);
+                break;
+            default:
+                NEKERROR(ErrorUtil::efatal,
+                         "VTU output not set up for this shape type.");
+                break;
         }
+
+        // Add offset to every value in node list
+        std::for_each(p.begin(), p.end(), [&offset](long long& d) { d+=offset;});
 
         vtkMesh->InsertNextCell(
                 GetVtkCellType(exp->GetGeom()->GetShapeType(),
@@ -220,7 +190,7 @@ void OutputVtkNew::OutputFromExp(po::variables_map &vm)
         fieldData->SetName(&m_f->m_variables[i][0]);
         vtkMesh->GetPointData()->AddArray(fieldData);
     }
-    
+
     // Write out the new mesh in XML format (don't support legacy
     // format here as we still have standard OutputVtk.cpp)
     vtkXMLUnstructuredGridWriter *vtkMeshWriter = vtkXMLUnstructuredGridWriter::New();
@@ -241,6 +211,67 @@ void OutputVtkNew::OutputFromExp(po::variables_map &vm)
 
     cout << "Written file: " << filename << endl;
 }
+
+std::vector<long long> OutputVtkNew::QuadrilateralNodes(Array<OneD, int> &nquad)
+{
+    std::vector<long long> p(4);
+    // Write vertices
+    p[0] = 0;
+    p[1] = nquad[0] - 1;
+    p[2] = nquad[0] * nquad[1] - 1;
+    p[3] = nquad[0] * (nquad[1] - 1);
+
+    // Write edge interior
+    for (int j = 0; j < 4; ++j)
+    {
+        if (j == 0)
+        {
+            for (int k = 1; k < nquad[0] - 1; ++k)
+            {
+                p.emplace_back(k);
+            }
+        }
+        else if (j == 1)
+        {
+            for (int k = 2 * nquad[0] - 1; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
+            {
+                p.emplace_back(k);
+            }
+        }
+        else if (j == 2)
+        {
+            for (int k = nquad[0] * (nquad[1] - 1) + 1; k < nquad[0] * nquad[1] - 1; ++k)
+            {
+                p.emplace_back(k);
+            }
+        }
+        else if (j == 3)
+        {
+            for (int k = nquad[0]; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
+            {
+                p.emplace_back(k);
+            }
+        }
+    }
+
+    // Write surface interior
+    for (int j = 1; j < nquad[0] - 1; ++j)
+    {
+        for (int k = 1; k < nquad[1] - 1; ++k)
+        {
+            // Fetch interior nodes from quad->curve
+            p.emplace_back(j * nquad[0] + k);
+        }
+    }
+
+    return p;
+};
+
+std::vector<long long> OutputVtkNew::TriangleNodes(Array<OneD, int> &nquad)
+{
+    std::vector<long long> p(3);
+    return p;
+};
 
 void OutputVtkNew::OutputFromPts(po::variables_map &vm)
 {
