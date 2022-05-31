@@ -48,7 +48,10 @@ using namespace std;
 #include <vtkUnstructuredGridWriter.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkPoints.h>
+#include <vtkPointData.h>
 #include <vtkCellType.h>
+#include <vtkNew.h>
+#include <vtkDoubleArray.h>
 
 namespace Nektar
 {
@@ -118,88 +121,106 @@ void OutputVtkNew::OutputFromExp(po::variables_map &vm)
     vtkUnstructuredGrid *vtkMesh   = vtkUnstructuredGrid::New();
     vtkPoints           *vtkPoints = vtkPoints::New();
 
-    for (auto &expList : m_f->m_exp)
+
+    // Save geometry information to VTU (assuming same expansion for each field!)
+    for (int i = 0; i < m_f->m_exp[0]->GetNumElmts(); ++i)
     {
-        for (int i = 0; i < expList->GetNumElmts(); ++i)
+        auto exp = m_f->m_exp[0]->GetExp(i);
+        int offset = m_f->m_exp[0]->GetPhys_Offset(i);
+
+        int ntot = exp->GetTotPoints();
+        Array<OneD, NekDouble> coords[3];
+        coords[0] = Array<OneD, NekDouble>(ntot, 0.0);
+        coords[1] = Array<OneD, NekDouble>(ntot, 0.0);
+        coords[2] = Array<OneD, NekDouble>(ntot, 0.0);
+        exp->GetCoords(coords[0], coords[1], coords[2]);
+
+        for (int j = 0; j < ntot; ++j)
         {
-            auto exp = expList->GetExp(i);
-            int offset = expList->GetPhys_Offset(i);
+            vtkPoints->InsertPoint(offset + j,coords[0][j],coords[1][j],coords[2][j]);
+        }
 
-            int ntot = exp->GetTotPoints();
-            Array<OneD, NekDouble> coords[3];
-            coords[0] = Array<OneD, NekDouble>(ntot, 0.0);
-            coords[1] = Array<OneD, NekDouble>(ntot, 0.0);
-            coords[2] = Array<OneD, NekDouble>(ntot, 0.0);
-            exp->GetCoords(coords[0], coords[1], coords[2]);
+        int nquad[3];
+        nquad[0] = exp->GetNumPoints(0);
+        nquad[1] = exp->GetNumPoints(1);
 
-            for (int j = 0; j < ntot; ++j)
+        std::vector<vtkIdType> p(4);
+        // Write vertices // @TODO: Generalise
+        p[0] = offset;
+        p[1] = offset + nquad[0] - 1;
+        p[2] = offset + nquad[0] * nquad[1] - 1;
+        p[3] = offset + nquad[0] * (nquad[1] - 1);
+
+        // Write edge interior // @TODO: Horrific hard coded
+        for (int j = 0; j < exp->GetGeom()->GetNumEdges(); ++j)
+        {
+            if (j == 0)
             {
-                vtkPoints->InsertPoint(offset + j,coords[0][j],coords[1][j],coords[2][j]);
-            }
-
-            int nquad[3];
-            nquad[0] = exp->GetNumPoints(0);
-            nquad[1] = exp->GetNumPoints(1);
-
-            std::vector<vtkIdType> p(4);
-            // Write vertices // @TODO: Generalise
-            p[0] = offset;
-            p[1] = offset + nquad[0] - 1;
-            p[2] = offset + nquad[0] * nquad[1] - 1;
-            p[3] = offset + nquad[0] * (nquad[1] - 1);
-
-            // Write edge interior // @TODO: Horrific hard coded
-            for (int j = 0; j < exp->GetGeom()->GetNumEdges(); ++j)
-            {
-               if (j == 0)
-               {
-                   for (int k = 1; k < nquad[0] - 1; ++k)
-                   {
-                       p.emplace_back(offset + k);
-                   }
-               }
-               else if (j == 1)
-               {
-                   for (int k = 2 * nquad[0] - 1; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
-                   {
-                       p.emplace_back(offset + k);
-                   }
-               }
-               else if (j == 2)
-               {
-                   for (int k = nquad[0] * (nquad[1] - 1) + 1; k < nquad[0] * nquad[1] - 1; ++k)
-                   {
-                       p.emplace_back(offset + k);
-                   }
-               }
-               else if (j == 3)
-               {
-                   for (int k = nquad[0]; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
-                   {
-                       p.emplace_back(offset + k);
-                   }
-               }
-            }
-
-            // Write surface interior
-            for (int j = 1; j < nquad[0] - 1; ++j)
-            {
-                for (int k = 1; k < nquad[1] - 1; ++k)
+                for (int k = 1; k < nquad[0] - 1; ++k)
                 {
-                    // Fetch interior nodes from quad->curve
-                    p.emplace_back(offset + j * nquad[0] + k);
+                    p.emplace_back(offset + k);
                 }
             }
-
-            vtkMesh->InsertNextCell(
-                    GetVtkCellType(exp->GetGeom()->GetShapeType(),
-                                   exp->GetGeom()->GetGeomFactors()->GetGtype()),
-                    p.size(), &p[0]);
+            else if (j == 1)
+            {
+                for (int k = 2 * nquad[0] - 1; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
+                {
+                    p.emplace_back(offset + k);
+                }
+            }
+            else if (j == 2)
+            {
+                for (int k = nquad[0] * (nquad[1] - 1) + 1; k < nquad[0] * nquad[1] - 1; ++k)
+                {
+                    p.emplace_back(offset + k);
+                }
+            }
+            else if (j == 3)
+            {
+                for (int k = nquad[0]; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
+                {
+                    p.emplace_back(offset + k);
+                }
+            }
         }
+
+        // Write surface interior
+        for (int j = 1; j < nquad[0] - 1; ++j)
+        {
+            for (int k = 1; k < nquad[1] - 1; ++k)
+            {
+                // Fetch interior nodes from quad->curve
+                p.emplace_back(offset + j * nquad[0] + k);
+            }
+        }
+
+        vtkMesh->InsertNextCell(
+                GetVtkCellType(exp->GetGeom()->GetShapeType(),
+                               exp->GetGeom()->GetGeomFactors()->GetGtype()),
+                p.size(), &p[0]);
     }
 
     vtkMesh->SetPoints(vtkPoints);
 
+    // Save field information to VTU
+    for (int i = 0; i < m_f->m_variables.size(); ++i)
+    {
+        auto &expList = m_f->m_exp[i];
+
+        int nPts = vtkPoints->GetNumberOfPoints();
+
+        vtkNew<vtkDoubleArray> fieldData;
+        fieldData->SetNumberOfComponents(1);
+
+        for(int j = 0; j < nPts; ++j)
+        {
+            fieldData->InsertNextValue(expList->GetPhys()[j]);
+        }
+
+        fieldData->SetName(&m_f->m_variables[i][0]);
+        vtkMesh->GetPointData()->AddArray(fieldData);
+    }
+    
     // Write out the new mesh in XML format (don't support legacy
     // format here as we still have standard OutputVtk.cpp)
     vtkXMLUnstructuredGridWriter *vtkMeshWriter = vtkXMLUnstructuredGridWriter::New();
