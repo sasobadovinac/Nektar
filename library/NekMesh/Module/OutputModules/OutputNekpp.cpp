@@ -557,7 +557,7 @@ void OutputNekpp::TransferCurves(MeshGraphSharedPtr graph)
         }
     }
 
-    if(m_mesh->m_expDim == 2 && m_mesh->m_spaceDim >= 2) // @TODO: Check
+    if(m_mesh->m_expDim == 2 && m_mesh->m_spaceDim == 3)
     {
         //manifold case
         for(int e = 0; e < m_mesh->m_element[2].size(); e++)
