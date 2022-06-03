@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: OutputVtk.h
+//  File: OutputStdOut.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,63 +28,35 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Vtk output module
+//  Description: Dummy output module
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FIELDUTILS_OUTPUTVTKNEW
-#define FIELDUTILS_OUTPUTVTKNEW
+#include <NekMesh/MeshElements/Element.h>
+#include "OutputStdOut.h"
 
-#include "OutputVtk.h"
-#include <tinyxml.h>
+using namespace std;
+using namespace Nektar::NekMesh;
 
 namespace Nektar
 {
-namespace FieldUtils
+namespace NekMesh
 {
 
-/// Converter from fld to vtk.
-class OutputVtkNew : public OutputVtk
+ModuleKey OutputStdOut::className = GetModuleFactory().RegisterCreatorFunction(
+    ModuleKey(eOutputModule, "stdout" ), OutputStdOut::create, "No output file");
+
+OutputStdOut::OutputStdOut(MeshSharedPtr m) : OutputModule(m)
 {
-public:
-    /// Creates an instance of this class
-    static std::shared_ptr<Module> create(FieldSharedPtr f)
-    {
-        return MemoryManager<OutputVtkNew>::AllocateSharedPtr(f);
-    }
-    static ModuleKey m_className;
-
-    OutputVtkNew(FieldSharedPtr f);
-    virtual ~OutputVtkNew() = default;
-
-    virtual std::string GetModuleName()
-    {
-        return "OutputVtkNew";
-    }
-
-    // This ensures that ProcessEquiSpacedOutput is called first in the FieldConvert logic!
-    virtual ModulePriority GetModulePriority()
-    {
-        return eModifyPts;
-    }
-
-protected:
-    /// Write from pts to output file.
-    virtual void OutputFromPts(po::variables_map &vm);
-
-    /// Write from m_exp to output file.
-    virtual void OutputFromExp(po::variables_map &vm);
-
-    /// Write from data to output file.
-    virtual void OutputFromData(po::variables_map &vm);
-
-private:
-    int GetVtkCellType(int sType,
-                       SpatialDomains::GeomType gType);
-    std::vector<long long> QuadrilateralNodes(int &ppe);
-    std::vector<long long> TriangleNodes(int &ppe);
-};
-}
 }
 
-#endif
+OutputStdOut::~OutputStdOut()
+{
+}
+
+void OutputStdOut::Process()
+{
+}
+
+}
+}

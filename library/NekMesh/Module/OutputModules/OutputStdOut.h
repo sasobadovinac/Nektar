@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: OutputVtk.h
+//  File: OutputStdOut.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,61 +28,42 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Vtk output module
+//  Description: Dummy output module
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FIELDUTILS_OUTPUTVTKNEW
-#define FIELDUTILS_OUTPUTVTKNEW
+#ifndef UTILITIES_NEKMESH_OUTPUTSTDOUT
+#define UTILITIES_NEKMESH_OUTPUTSTDOUT
 
-#include "OutputVtk.h"
-#include <tinyxml.h>
+#include <NekMesh/Module/Module.h>
 
 namespace Nektar
 {
-namespace FieldUtils
+namespace NekMesh
 {
 
-/// Converter from fld to vtk.
-class OutputVtkNew : public OutputVtk
+/// Dummy Output Module for no output file
+class OutputStdOut : public NekMesh::OutputModule
 {
+	
 public:
     /// Creates an instance of this class
-    static std::shared_ptr<Module> create(FieldSharedPtr f)
+    static std::shared_ptr<Module> create(NekMesh::MeshSharedPtr m)
     {
-        return MemoryManager<OutputVtkNew>::AllocateSharedPtr(f);
+        return MemoryManager<OutputStdOut>::AllocateSharedPtr(m);
     }
-    static ModuleKey m_className;
+    static NekMesh::ModuleKey className;
 
-    OutputVtkNew(FieldSharedPtr f);
-    virtual ~OutputVtkNew() = default;
+    OutputStdOut(NekMesh::MeshSharedPtr m);
+    virtual ~OutputStdOut();
+
+    /// Process is essentially an empty function
+    virtual void Process();
 
     virtual std::string GetModuleName()
     {
-        return "OutputVtkNew";
+        return "OutputStdOut";
     }
-
-    // This ensures that ProcessEquiSpacedOutput is called first in the FieldConvert logic!
-    virtual ModulePriority GetModulePriority()
-    {
-        return eModifyPts;
-    }
-
-protected:
-    /// Write from pts to output file.
-    virtual void OutputFromPts(po::variables_map &vm);
-
-    /// Write from m_exp to output file.
-    virtual void OutputFromExp(po::variables_map &vm);
-
-    /// Write from data to output file.
-    virtual void OutputFromData(po::variables_map &vm);
-
-private:
-    int GetVtkCellType(int sType,
-                       SpatialDomains::GeomType gType);
-    std::vector<long long> QuadrilateralNodes(int &ppe);
-    std::vector<long long> TriangleNodes(int &ppe);
 };
 }
 }
