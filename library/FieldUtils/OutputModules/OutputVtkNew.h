@@ -81,8 +81,8 @@ protected:
 private:
     int GetVtkCellType(int sType,
                        SpatialDomains::GeomType gType);
-    std::vector<long long> QuadrilateralNodes(int &ppe, int &offset);
-    std::vector<long long> TriangleNodes(int &ppe, int &offset);
+    std::vector<long long> QuadrilateralNodes(int &ppe);
+    std::vector<long long> TriangleNodes(int &ppe);
 };
 }
 }

@@ -52,6 +52,9 @@
 #include <vtkNew.h>
 #include <vtkDoubleArray.h>
 
+// Hashing function for the ordering map
+inline size_t key(int i,int j) {return (size_t) i << 32 | (unsigned int) j;}
+
 namespace Nektar
 {
 namespace FieldUtils
@@ -146,11 +149,11 @@ int OutputVtkNew::GetVtkCellType(int sType, SpatialDomains::GeomType gType)
    return vtkCellType[gType][sType];
 }
 
-std::vector<long long> OutputVtkNew::QuadrilateralNodes(int &ppe, int &offset)
+std::vector<long long> OutputVtkNew::QuadrilateralNodes(int &ppe)
 {
     int n = (int)sqrt(ppe);
 
-    std::vector<long long> p(ppe, offset);
+    std::vector<long long> p(ppe, 0);
     // Write vertices
     p[1] += (n - 1);
     p[2] += (n * n - 1);
@@ -203,7 +206,7 @@ std::vector<long long> OutputVtkNew::QuadrilateralNodes(int &ppe, int &offset)
     return p;
 }
 
-std::vector<long long> OutputVtkNew::TriangleNodes(int &ppe, int &offset)
+std::vector<long long> OutputVtkNew::TriangleNodes(int &ppe)
 {
     // Calculate order from triangle number
     //sqrt(2 * ppe + 0.25) - 0.5 -> (int)sqrt(2 * ppe)
@@ -218,7 +221,7 @@ std::vector<long long> OutputVtkNew::TriangleNodes(int &ppe, int &offset)
     std::vector<long long> inv(ppe);
     for (int j = 0; j < ppe; ++j)
     {
-        inv[p[j]] = j + offset;
+        inv[p[j]] = j;
     }
 
     return inv;
@@ -251,35 +254,49 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     vtkNew<vtkUnstructuredGrid> vtkMesh;
     vtkMesh->SetPoints(vtkPoints);
 
-    // Insert elements
+    // Cache ordering for shape type & npts so we aren't recreating mappings
+    std::unordered_map<size_t, std::vector<long long>> mappingCache;
+
+    // Get points per element and offset per element in a vector
     std::vector<int> ppe = m_f->m_fieldPts->GetPointsPerElement();
     Array<OneD, int> ppeOffset(ppe.size() + 1, 0.0);
     std::partial_sum(ppe.begin(), ppe.end(), &ppeOffset[1]);
+
+    // Insert elements
     for (int i = 0; i < ppe.size(); ++i)
     {
         auto geom = m_f->m_exp[0]->GetExp(i)->GetGeom();
-
-        std::vector<long long> p;
         auto sType = geom->GetShapeType();
-        switch (geom->GetShapeType())
+
+        // Construct inverse of input reordering.
+        // First try to find it in our mapping cache.
+        auto oIt = mappingCache.find(key(sType, ppe[i]));
+        if (oIt == mappingCache.end())
         {
-            case LibUtilities::eQuadrilateral:
-                p = QuadrilateralNodes(ppe[i], ppeOffset[i]);
-                break;
-            case LibUtilities::eTriangle:
-                p = TriangleNodes(ppe[i], ppeOffset[i]);
-                break;
-            default:
-                NEKERROR(ErrorUtil::efatal,
-                         "VTU output not set up for this shape type.");
-                break;
+            std::vector<long long> p;
+            switch (sType)
+            {
+                case LibUtilities::eQuadrilateral:
+                    p = QuadrilateralNodes(ppe[i]);
+                    break;
+                case LibUtilities::eTriangle:
+                    p = TriangleNodes(ppe[i]);
+                    break;
+                default:
+                    NEKERROR(ErrorUtil::efatal,
+                             "VTU output not set up for this shape type.");
+                    break;
+            }
+
+            oIt = mappingCache.insert(std::make_pair(key(sType, ppe[i]), p)).first;
         }
 
-        //std::for_each(p.begin(), p.end(),[j = ppeOffset[i]](long long &d) { d += j; });
+        // Add offset to reordering
+        std::vector<long long> p = oIt->second;
+        std::for_each(p.begin(), p.end(),[j = ppeOffset[i]](long long &d) { d += j; });
 
         vtkMesh->InsertNextCell(
-                GetVtkCellType(sType,
-                               geom->GetGeomFactors()->GetGtype()),
+                GetVtkCellType(sType, geom->GetGeomFactors()->GetGtype()),
                 ppe[i], &p[0]);
     }
 
@@ -288,7 +305,6 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     for (int i = 0; i < fPts->GetNFields(); ++i)
     {
         vtkNew<vtkDoubleArray> fieldData;
-        //fieldData->SetNumberOfComponents(1);
         for(int j = 0; j < nPts; ++j)
         {
             fieldData->InsertNextValue(pts[dim + i][j]);
