@@ -247,6 +247,16 @@ void PtsField::SetPointsPerEdge(const vector< size_t > nPtsPerEdge)
     m_nPtsPerEdge = nPtsPerEdge;
 }
 
+vector<int> PtsField::GetPointsPerElement() const
+{
+    return m_nPtsPerElement;
+}
+
+void PtsField::SetPointsPerElement(const vector<int> nPtsPerElement)
+{
+    m_nPtsPerElement = nPtsPerElement;
+}
+
 PtsType PtsField::GetPtsType() const
 {
     return m_ptsType;

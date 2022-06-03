@@ -412,6 +412,9 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
         SetHomogeneousConnectivity();
     }
 
+    // Save points per element in the point field
+    m_f->m_fieldPts->SetPointsPerElement(ppe);
+
     // Clear m_exp
     m_f->m_exp = vector<MultiRegions::ExpListSharedPtr>();
 }

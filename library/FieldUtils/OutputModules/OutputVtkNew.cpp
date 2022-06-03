@@ -35,7 +35,6 @@
 #include <set>
 #include <string>
 #include <iomanip>
-using namespace std;
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/format.hpp>
@@ -65,9 +64,59 @@ OutputVtkNew::OutputVtkNew(FieldSharedPtr f) : OutputVtk(f)
 {
     m_requireEquiSpaced = true;
     m_config["uncompress"] = ConfigOption(true, "0", "Uncompress xml sections");
+    m_config["compressionlevel"] = ConfigOption(false, "5", "Compression level for the VTU output: 1-9");
 }
 
-int OutputVtkNew::GetVtkCellType(LibUtilities::ShapeType sType, SpatialDomains::GeomType gType)
+std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes, int n)
+{
+    std::vector<long long> nodeList(nodes.size());
+    int cnt2;
+
+    // Vertices
+    nodeList[0] = nodes[0];
+    if (n > 1)
+    {
+        nodeList[n - 1] = nodes[1];
+        nodeList[n * (n + 1) / 2 - 1] = nodes[2];
+    }
+
+    // Edges
+    int cnt = n;
+    for (int i = 1; i < n - 1; ++i)
+    {
+        nodeList[i]               = nodes[3 + i - 1];
+        nodeList[cnt]             = nodes[3 + 3 * (n - 2) - i];
+        nodeList[cnt + n - i - 1] = nodes[3 + (n - 2) + i - 1];
+        cnt += n - i;
+    }
+
+    // Interior (recursion)
+    if (n > 3)
+    {
+        // Reorder interior nodes
+        std::vector<long long> interior((n - 3) * (n - 2) / 2);
+        std::copy(
+                nodes.begin() + 3 + 3 * (n - 2), nodes.end(), interior.begin());
+        interior = triTensorNodeOrdering(interior, n - 3);
+
+        // Copy into full node list
+        cnt  = n;
+        cnt2 = 0;
+        for (int j = 1; j < n - 2; ++j)
+        {
+            for (int i = 0; i < n - j - 2; ++i)
+            {
+                nodeList[cnt + i + 1] = interior[cnt2 + i];
+            }
+            cnt += n - j;
+            cnt2 += n - 2 - j;
+        }
+    }
+
+    return nodeList;
+}
+
+int OutputVtkNew::GetVtkCellType(int sType, SpatialDomains::GeomType gType)
 {
     static std::map<int, std::map<int, int>> vtkCellType = {
         {SpatialDomains::eRegular,
@@ -97,47 +146,128 @@ int OutputVtkNew::GetVtkCellType(LibUtilities::ShapeType sType, SpatialDomains::
    return vtkCellType[gType][sType];
 }
 
+std::vector<long long> OutputVtkNew::QuadrilateralNodes(int &ppe, int &offset)
+{
+    int n = (int)sqrt(ppe);
+
+    std::vector<long long> p(ppe, offset);
+    // Write vertices
+    p[1] += (n - 1);
+    p[2] += (n * n - 1);
+    p[3] += (n * (n - 1));
+
+    // Write edge interior
+    int cnt = 4;
+    for (int j = 0; j < 4; ++j)
+    {
+        if (j == 0)
+        {
+            for (int k = 1; k < n - 1; ++k)
+            {
+                p[cnt++] += k;
+            }
+        }
+        else if (j == 1)
+        {
+            for (int k = 2 * n - 1; k < n * (n - 1); k+=n)
+            {
+                p[cnt++] += k;
+            }
+        }
+        else if (j == 2)
+        {
+            for (int k = n * (n - 1) + 1; k < n * n - 1; ++k)
+            {
+                p[cnt++] += k;
+            }
+        }
+        else if (j == 3)
+        {
+            for (int k = n; k < n * (n - 1); k+=n)
+            {
+                p[cnt++] += k;
+            }
+        }
+    }
+
+    // Write surface interior
+    for (int j = 1; j < n - 1; ++j)
+    {
+        for (int k = 1; k < n - 1; ++k)
+        {
+            // Fetch interior nodes from quad->curve
+            p[cnt++] += (j * n + k);
+        }
+    }
+
+    return p;
+}
+
+std::vector<long long> OutputVtkNew::TriangleNodes(int &ppe, int &offset)
+{
+    // Calculate order from triangle number
+    //sqrt(2 * ppe + 0.25) - 0.5 -> (int)sqrt(2 * ppe)
+    int n = (int)sqrt(2 * ppe);
+
+    std::vector<long long> p(ppe);
+    std::iota(p.begin(), p.end(), 0);
+
+    p = triTensorNodeOrdering(p, n);
+
+    // Invert the ordering as this is for spectral -> recursive (VTU) and add offset
+    std::vector<long long> inv(ppe);
+    for (int j = 0; j < ppe; ++j)
+    {
+        inv[p[j]] = j + offset;
+    }
+
+    return inv;
+}
+
 void OutputVtkNew::OutputFromExp(po::variables_map &vm)
 {
+    boost::ignore_unused(vm);
+    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only ExpData.");
+}
+
+void OutputVtkNew::OutputFromPts(po::variables_map &vm)
+{
     // Extract the output filename and extension
-    string filename = OutputVtk::PrepareOutput(vm);
-    
-    vtkUnstructuredGrid *vtkMesh   = vtkUnstructuredGrid::New();
-    vtkPoints           *vtkPoints = vtkPoints::New();
+    std::string filename = OutputVtk::PrepareOutput(vm);
 
-    // Save geometry information to VTU (assuming same expansion for each field!)
-    int meshDim = m_f->m_graph->GetMeshDimension();
-    for (int i = 0; i < m_f->m_exp[0]->GetNumElmts(); ++i)
+    // Insert points
+    vtkNew<vtkPoints> vtkPoints;
+    LibUtilities::PtsFieldSharedPtr fPts = m_f->m_fieldPts;
+
+    Array<OneD, Array<OneD, NekDouble>> pts;
+    fPts->GetPts(pts);
+
+    int nPts = fPts->GetNpoints();
+    for (int i = 0; i < nPts; ++i) // @TODO: Change to allow 3D
     {
-        auto exp = m_f->m_exp[0]->GetExp(i);
-        int offset = m_f->m_exp[0]->GetPhys_Offset(i);
+        vtkPoints->InsertNextPoint(pts[0][i],pts[1][i],0.0);
+    }
 
-        int ntot = exp->GetTotPoints();
-        Array<OneD, NekDouble> coords[3];
-        coords[0] = Array<OneD, NekDouble>(ntot, 0.0);
-        coords[1] = Array<OneD, NekDouble>(ntot, 0.0);
-        coords[2] = Array<OneD, NekDouble>(ntot, 0.0);
-        exp->GetCoords(coords[0], coords[1], coords[2]);
+    vtkNew<vtkUnstructuredGrid> vtkMesh;
+    vtkMesh->SetPoints(vtkPoints);
 
-        for (int j = 0; j < ntot; ++j)
-        {
-            vtkPoints->InsertPoint(offset + j,coords[0][j],coords[1][j],coords[2][j]);
-        }
-
-        Array<OneD, int> nquad(meshDim);
-        for (int j = 0; j < meshDim; ++j)
-        {
-            nquad[j] = exp->GetNumPoints(j);
-        }
+    // Insert elements
+    std::vector<int> ppe = m_f->m_fieldPts->GetPointsPerElement();
+    Array<OneD, int> ppeOffset(ppe.size() + 1, 0.0);
+    std::partial_sum(ppe.begin(), ppe.end(), &ppeOffset[1]);
+    for (int i = 0; i < ppe.size(); ++i)
+    {
+        auto geom = m_f->m_exp[0]->GetExp(i)->GetGeom();
 
         std::vector<long long> p;
-        switch (exp->GetGeom()->GetShapeType())
+        auto sType = geom->GetShapeType();
+        switch (geom->GetShapeType())
         {
             case LibUtilities::eQuadrilateral:
-                p = QuadrilateralNodes(nquad);
+                p = QuadrilateralNodes(ppe[i], ppeOffset[i]);
                 break;
             case LibUtilities::eTriangle:
-                p = TriangleNodes(nquad);
+                p = TriangleNodes(ppe[i], ppeOffset[i]);
                 break;
             default:
                 NEKERROR(ErrorUtil::efatal,
@@ -145,45 +275,38 @@ void OutputVtkNew::OutputFromExp(po::variables_map &vm)
                 break;
         }
 
-        // Add offset to every value in node list
-        std::for_each(p.begin(), p.end(), [&offset](long long& d) { d+=offset;});
+        //std::for_each(p.begin(), p.end(),[j = ppeOffset[i]](long long &d) { d += j; });
 
         vtkMesh->InsertNextCell(
-                GetVtkCellType(exp->GetGeom()->GetShapeType(),
-                               exp->GetGeom()->GetGeomFactors()->GetGtype()),
-                p.size(), &p[0]);
+                GetVtkCellType(sType,
+                               geom->GetGeomFactors()->GetGtype()),
+                ppe[i], &p[0]);
     }
 
-    vtkMesh->SetPoints(vtkPoints);
-
-    // Save field information to VTU
-    for (int i = 0; i < m_f->m_variables.size(); ++i)
+    // Insert field information
+    int dim = fPts->GetDim();
+    for (int i = 0; i < fPts->GetNFields(); ++i)
     {
-        auto &expList = m_f->m_exp[i];
-
-        int nPts = vtkPoints->GetNumberOfPoints();
-
         vtkNew<vtkDoubleArray> fieldData;
-        fieldData->SetNumberOfComponents(1);
-
+        //fieldData->SetNumberOfComponents(1);
         for(int j = 0; j < nPts; ++j)
         {
-            fieldData->InsertNextValue(expList->GetPhys()[j]);
+            fieldData->InsertNextValue(pts[dim + i][j]);
         }
 
-        fieldData->SetName(&m_f->m_variables[i][0]);
+        fieldData->SetName(&fPts->GetFieldName(i)[0]);
         vtkMesh->GetPointData()->AddArray(fieldData);
     }
 
     // Write out the new mesh in XML format (don't support legacy
     // format here as we still have standard OutputVtk.cpp)
-    vtkXMLUnstructuredGridWriter *vtkMeshWriter = vtkXMLUnstructuredGridWriter::New();
+    vtkNew<vtkXMLUnstructuredGridWriter> vtkMeshWriter;
     vtkMeshWriter->SetFileName(filename.c_str());
 
 #if VTK_MAJOR_VERSION <= 5
-        vtkMeshWriter->SetInput(vtkMesh);
+    vtkMeshWriter->SetInput(vtkMesh);
 #else
-        vtkMeshWriter->SetInputData(vtkMesh);
+    vtkMeshWriter->SetInputData(vtkMesh);
 #endif
 
     if (m_config["uncompress"].m_beenSet)
@@ -191,76 +314,15 @@ void OutputVtkNew::OutputFromExp(po::variables_map &vm)
         vtkMeshWriter->SetDataModeToAscii();
     }
 
+    if (m_config["compressionlevel"].m_beenSet)
+    {
+        vtkMeshWriter->SetCompressionLevel(
+                std::stoi(m_config["compressionlevel"].m_value));
+    }
+
     vtkMeshWriter->Update();
 
     cout << "Written file: " << filename << endl;
-}
-
-std::vector<long long> OutputVtkNew::QuadrilateralNodes(Array<OneD, int> &nquad)
-{
-    std::vector<long long> p(4);
-    // Write vertices
-    p[0] = 0;
-    p[1] = nquad[0] - 1;
-    p[2] = nquad[0] * nquad[1] - 1;
-    p[3] = nquad[0] * (nquad[1] - 1);
-
-    // Write edge interior
-    for (int j = 0; j < 4; ++j)
-    {
-        if (j == 0)
-        {
-            for (int k = 1; k < nquad[0] - 1; ++k)
-            {
-                p.emplace_back(k);
-            }
-        }
-        else if (j == 1)
-        {
-            for (int k = 2 * nquad[0] - 1; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
-            {
-                p.emplace_back(k);
-            }
-        }
-        else if (j == 2)
-        {
-            for (int k = nquad[0] * (nquad[1] - 1) + 1; k < nquad[0] * nquad[1] - 1; ++k)
-            {
-                p.emplace_back(k);
-            }
-        }
-        else if (j == 3)
-        {
-            for (int k = nquad[0]; k < nquad[0] * (nquad[1] - 1); k+=nquad[0])
-            {
-                p.emplace_back(k);
-            }
-        }
-    }
-
-    // Write surface interior
-    for (int j = 1; j < nquad[0] - 1; ++j)
-    {
-        for (int k = 1; k < nquad[1] - 1; ++k)
-        {
-            // Fetch interior nodes from quad->curve
-            p.emplace_back(j * nquad[0] + k);
-        }
-    }
-
-    return p;
-};
-
-std::vector<long long> OutputVtkNew::TriangleNodes(Array<OneD, int> &nquad)
-{
-    std::vector<long long> p(3);
-    return p;
-};
-
-void OutputVtkNew::OutputFromPts(po::variables_map &vm)
-{
-    boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only PointData.");
 }
 
 void OutputVtkNew::OutputFromData(po::variables_map &vm)

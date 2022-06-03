@@ -62,6 +62,12 @@ public:
         return "OutputVtkNew";
     }
 
+    // This ensures that ProcessEquiSpacedOutput is called first in the FieldConvert logic!
+    virtual ModulePriority GetModulePriority()
+    {
+        return eModifyPts;
+    }
+
 protected:
     /// Write from pts to output file.
     virtual void OutputFromPts(po::variables_map &vm);
@@ -73,10 +79,10 @@ protected:
     virtual void OutputFromData(po::variables_map &vm);
 
 private:
-    int GetVtkCellType(LibUtilities::ShapeType sType,
+    int GetVtkCellType(int sType,
                        SpatialDomains::GeomType gType);
-    std::vector<long long> QuadrilateralNodes(Array<OneD, int> &nquad);
-    std::vector<long long> TriangleNodes(Array<OneD, int> &nquad);
+    std::vector<long long> QuadrilateralNodes(int &ppe, int &offset);
+    std::vector<long long> TriangleNodes(int &ppe, int &offset);
 };
 }
 }
