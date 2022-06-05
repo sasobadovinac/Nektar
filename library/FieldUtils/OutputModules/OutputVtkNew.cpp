@@ -305,11 +305,7 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     for (int i = 0; i < fPts->GetNFields(); ++i)
     {
         vtkNew<vtkDoubleArray> fieldData;
-        for(int j = 0; j < nPts; ++j)
-        {
-            fieldData->InsertNextValue(pts[dim + i][j]);
-        }
-
+        fieldData->SetArray(&pts[dim + i][0], nPts, 1);
         fieldData->SetName(&fPts->GetFieldName(i)[0]);
         vtkMesh->GetPointData()->AddArray(fieldData);
     }
