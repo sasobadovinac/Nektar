@@ -55,6 +55,37 @@
 // Hashing function for the ordering map
 inline size_t key(int i,int j) {return (size_t) i << 32 | (unsigned int) j;}
 
+// Map that takes (a,b,c) -> m
+typedef std::tuple<int, int, int> Mode;
+struct cmpop
+{
+    bool operator()(Mode const &a, Mode const &b) const
+    {
+        if (std::get<0>(a) < std::get<0>(b))
+        {
+            return true;
+        }
+        if (std::get<0>(a) > std::get<0>(b))
+        {
+            return false;
+        }
+        if (std::get<1>(a) < std::get<1>(b))
+        {
+            return true;
+        }
+        if (std::get<1>(a) > std::get<1>(b))
+        {
+            return false;
+        }
+        if (std::get<2>(a) < std::get<2>(b))
+        {
+            return true;
+        }
+
+        return false;
+    }
+};
+
 namespace Nektar
 {
 namespace FieldUtils
@@ -68,6 +99,98 @@ OutputVtkNew::OutputVtkNew(FieldSharedPtr f) : OutputVtk(f)
     m_requireEquiSpaced = true;
     m_config["uncompress"] = ConfigOption(true, "0", "Uncompress xml sections");
     m_config["compressionlevel"] = ConfigOption(false, "5", "Compression level for the VTU output: 1-9");
+}
+
+void Rotate(int nrot, std::vector<long long> &surfVerts)
+{
+    int n, i, j, cnt;
+    int np = ((int)sqrt(8.0 * surfVerts.size() + 1.0) - 1) / 2;
+    std::vector<long long> tmp(np * np);
+
+    for (n = 0; n < nrot; ++n)
+    {
+        for (cnt = i = 0; i < np; ++i)
+        {
+            for (j = 0; j < np - i; ++j, cnt++)
+            {
+                tmp[i * np + j] = surfVerts[cnt];
+            }
+        }
+        for (cnt = i = 0; i < np; ++i)
+        {
+            for (j = 0; j < np - i; ++j, cnt++)
+            {
+                surfVerts[cnt] = tmp[(np - 1 - i - j) * np + i];
+            }
+        }
+    }
+}
+
+void Reflect(std::vector<long long> &surfVerts)
+{
+    int i, j, cnt;
+    int np = ((int)sqrt(8.0 * surfVerts.size() + 1.0) - 1) / 2;
+    std::vector<long long> tmp(np * np);
+
+    for (cnt = i = 0; i < np; ++i)
+    {
+        for (j = 0; j < np - i; ++j, cnt++)
+        {
+            tmp[i * np + np - i - 1 - j] = surfVerts[cnt];
+        }
+    }
+
+    for (cnt = i = 0; i < np; ++i)
+    {
+        for (j = 0; j < np - i; ++j, cnt++)
+        {
+            surfVerts[cnt] = tmp[i * np + j];
+        }
+    }
+}
+
+void Align(std::vector<long long> thisVertId, std::vector<long long> vertId, std::vector<long long> &surfVerts)
+{
+    if (vertId[0] == thisVertId[0])
+    {
+        if (vertId[1] == thisVertId[1] || vertId[1] == thisVertId[2])
+        {
+            if (vertId[1] == thisVertId[2])
+            {
+                Rotate(1, surfVerts);
+                Reflect(surfVerts);
+            }
+        }
+    }
+    else if (vertId[0] == thisVertId[1])
+    {
+        if (vertId[1] == thisVertId[0] || vertId[1] == thisVertId[2])
+        {
+            if (vertId[1] == thisVertId[0])
+            {
+                Reflect(surfVerts);
+            }
+            else
+            {
+                Rotate(2, surfVerts);
+            }
+        }
+    }
+    else if (vertId[0] == thisVertId[2])
+    {
+        if (vertId[1] == thisVertId[0] || vertId[1] == thisVertId[1])
+        {
+            if (vertId[1] == thisVertId[1])
+            {
+                Rotate(2, surfVerts);
+                Reflect(surfVerts);
+            }
+            else
+            {
+                Rotate(1, surfVerts);
+            }
+        }
+    }
 }
 
 std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes, int n)
@@ -113,6 +236,142 @@ std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes
             }
             cnt += n - j;
             cnt2 += n - 2 - j;
+        }
+    }
+
+    return nodeList;
+}
+
+std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes, int n)
+{
+    std::vector<long long> nodeList(nodes.size());
+    int nTri = n*(n+1)/2;
+    int nTet = n*(n+1)*(n+2)/6;
+
+    // Vertices
+    nodeList[0] = nodes[0];
+    if (n == 1)
+    {
+        return nodeList;
+    }
+
+    nodeList[n - 1]    = nodes[1];
+    nodeList[nTri - 1] = nodes[2];
+    nodeList[nTet - 1] = nodes[3];
+
+    if (n == 2)
+    {
+        return nodeList;
+    }
+
+    // Set up a map that takes (a,b,c) -> m to help us figure out where things
+    // are inside the tetrahedron.
+    std::map<Mode, int, cmpop> tmp;
+    for (int k = 0, cnt = 0; k < n; ++k)
+    {
+        for (int j = 0; j < n - k; ++j)
+        {
+            for (int i = 0; i < n - k - j; ++i)
+            {
+                tmp[Mode(i,j,k)] = cnt++;
+            }
+        }
+    }
+
+    // Edges first 3
+    for (int i = 1; i < n-1; ++i)
+    {
+        int eI = i-1;
+        nodeList[tmp[Mode(i,0,0)]]     = nodes[4 + eI];
+        nodeList[tmp[Mode(n-1-i,i,0)]] = nodes[4 + (n-2) + eI];
+        nodeList[tmp[Mode(0,n-1-i,0)]] = nodes[4 + 2*(n-2) + eI];
+    }
+
+    // Edges last 3 reversed (compared with NekMesh)
+    for (int i = 1; i < n-1; ++i)
+    {
+        int eI = (n - 1 - i) - 1;
+        nodeList[tmp[Mode(0,0,n-1-i)]] = nodes[4 + 3*(n-2) + eI];
+        nodeList[tmp[Mode(i,0,n-1-i)]] = nodes[4 + 4*(n-2) + eI];
+        nodeList[tmp[Mode(0,i,n-1-i)]] = nodes[4 + 5*(n-2) + eI];
+    }
+
+    if (n == 3)
+    {
+        return nodeList;
+    }
+
+    // For faces, we use the triTensorNodeOrdering routine to make our lives
+    // slightly easier.
+    int nFacePts = (n-3)*(n-2)/2;
+
+    // Grab face points and reorder into a tensor-product type format
+    std::vector<std::vector<long long>> tmpNodes(4);
+    int offset = 4 + 6*(n-2);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        tmpNodes[i].resize(nFacePts);
+        for (int j = 0; j < nFacePts; ++j)
+        {
+            tmpNodes[i][j] = nodes[offset++];
+        }
+        tmpNodes[i] = triTensorNodeOrdering(tmpNodes[i], n-3);
+    }
+
+    if (n > 4)
+    {
+        // Now align faces (different to NekMesh)
+        std::vector<long long> triVertId(3), toAlign(3);
+        triVertId[0] = 0;
+        triVertId[1] = 1;
+        triVertId[2] = 2;
+
+        toAlign[0] = 0;
+        toAlign[1] = 2;
+        toAlign[2] = 1;
+        Align(triVertId, toAlign, tmpNodes[2]);
+        Align(triVertId, toAlign, tmpNodes[3]);
+
+        toAlign[0] = 2;
+        toAlign[1] = 0;
+        toAlign[2] = 1;
+        Align(triVertId, toAlign, tmpNodes[1]);
+    }
+
+    // Reordered from NekMesh to put base last
+    for (int j = 1, cnt = 0; j < n-2; ++j)
+    {
+        for (int i = 1; i < n-j-1; ++i, ++cnt)
+        {
+            nodeList[tmp[Mode(i,j,0)]]       = tmpNodes[3][cnt];
+            nodeList[tmp[Mode(i,0,j)]]       = tmpNodes[0][cnt];
+            nodeList[tmp[Mode(n-1-i-j,i,j)]] = tmpNodes[1][cnt];
+            nodeList[tmp[Mode(0,i,j)]]       = tmpNodes[2][cnt];
+        }
+    }
+
+    if (n == 4)
+    {
+        return nodeList;
+    }
+
+    // Finally, recurse on interior volume
+    std::vector<long long> intNodes, tmpInt;
+    for (int i = offset; i < nTet; ++i)
+    {
+        intNodes.push_back(nodes[i]);
+    }
+    tmpInt = tetTensorNodeOrdering(intNodes, n-4);
+
+    for (int k = 1, cnt = 0; k < n - 2; ++k)
+    {
+        for (int j = 1; j < n - k - 1; ++j)
+        {
+            for (int i = 1; i < n - k - j - 1; ++i)
+            {
+                nodeList[tmp[Mode(i,j,k)]] = tmpInt[cnt++];
+            }
         }
     }
 
@@ -210,14 +469,14 @@ std::vector<long long> OutputVtkNew::TriangleNodes(int &ppe)
 {
     // Calculate order from triangle number
     //sqrt(2 * ppe + 0.25) - 0.5 -> (int)sqrt(2 * ppe)
-    int n = (int)sqrt(2 * ppe);
+    int n = (int) std::sqrt(2 * ppe);
 
     std::vector<long long> p(ppe);
     std::iota(p.begin(), p.end(), 0);
 
     p = triTensorNodeOrdering(p, n);
 
-    // Invert the ordering as this is for spectral -> recursive (VTU) and add offset
+    // Invert the ordering as this is for spectral -> recursive (VTU)
     std::vector<long long> inv(ppe);
     for (int j = 0; j < ppe; ++j)
     {
@@ -227,10 +486,25 @@ std::vector<long long> OutputVtkNew::TriangleNodes(int &ppe)
     return inv;
 }
 
-void OutputVtkNew::OutputFromExp(po::variables_map &vm)
+std::vector<long long> OutputVtkNew::TetrahedronNodes(int &ppe)
 {
-    boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only ExpData.");
+    // Calculate order from tetrahedral number, solve n(n+1)(n+2)/6
+    int n = (int) (std::cbrt(3 * ppe + std::sqrt(9 * ppe * ppe - 1 / 27)) +
+            std::cbrt(3 * ppe - std::sqrt(9 * ppe * ppe - 1 / 27)) - 0.5);
+
+    std::vector<long long> p(ppe);
+    std::iota(p.begin(), p.end(), 0);
+
+    p = tetTensorNodeOrdering(p, n);
+
+    // Invert the ordering as this is for spectral -> recursive (VTU)
+    std::vector<long long> inv(ppe);
+    for (int j = 0; j < ppe; ++j)
+    {
+        inv[p[j]] = j;
+    }
+
+    return inv;
 }
 
 void OutputVtkNew::OutputFromPts(po::variables_map &vm)
@@ -245,10 +519,30 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     Array<OneD, Array<OneD, NekDouble>> pts;
     fPts->GetPts(pts);
 
+    int dim = fPts->GetDim();
     int nPts = fPts->GetNpoints();
-    for (int i = 0; i < nPts; ++i) // @TODO: Change to allow 3D
+    switch (dim)
     {
-        vtkPoints->InsertNextPoint(pts[0][i],pts[1][i],0.0);
+        case 3:
+            for (int i = 0; i < nPts; ++i)
+            {
+                vtkPoints->InsertNextPoint(pts[0][i],pts[1][i],pts[2][i]);
+            }
+            break;
+        case 2:
+            for (int i = 0; i < nPts; ++i)
+            {
+                vtkPoints->InsertNextPoint(pts[0][i],pts[1][i], 0.0);
+            }
+            break;
+        case 1:
+            for (int i = 0; i < nPts; ++i)
+            {
+                vtkPoints->InsertNextPoint(pts[0][i],0.0,0.0);
+            }
+            break;
+        default:
+            break;
     }
 
     vtkNew<vtkUnstructuredGrid> vtkMesh;
@@ -282,6 +576,9 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
                 case LibUtilities::eTriangle:
                     p = TriangleNodes(ppe[i]);
                     break;
+                case LibUtilities::eTetrahedron:
+                    p = TetrahedronNodes(ppe[i]);
+                    break;
                 default:
                     NEKERROR(ErrorUtil::efatal,
                              "VTU output not set up for this shape type.");
@@ -301,7 +598,6 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     }
 
     // Insert field information
-    int dim = fPts->GetDim();
     for (int i = 0; i < fPts->GetNFields(); ++i)
     {
         vtkNew<vtkDoubleArray> fieldData;
@@ -335,6 +631,12 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     vtkMeshWriter->Update();
 
     cout << "Written file: " << filename << endl;
+}
+
+void OutputVtkNew::OutputFromExp(po::variables_map &vm)
+{
+    boost::ignore_unused(vm);
+    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only ExpData.");
 }
 
 void OutputVtkNew::OutputFromData(po::variables_map &vm)

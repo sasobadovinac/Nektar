@@ -83,6 +83,7 @@ private:
                        SpatialDomains::GeomType gType);
     std::vector<long long> QuadrilateralNodes(int &ppe);
     std::vector<long long> TriangleNodes(int &ppe);
+    std::vector<long long> TetrahedronNodes(int &ppe);
 };
 }
 }
