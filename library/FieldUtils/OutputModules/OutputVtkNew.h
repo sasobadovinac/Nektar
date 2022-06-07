@@ -44,46 +44,44 @@ namespace FieldUtils
 {
 
 /// Converter from fld to vtk.
-class OutputVtkNew : public OutputVtk
+class OutputVtkNew final : public OutputVtk
 {
 public:
     /// Creates an instance of this class
-    static std::shared_ptr<Module> create(FieldSharedPtr f)
+    static std::shared_ptr<Module> create(const FieldSharedPtr &f)
     {
         return MemoryManager<OutputVtkNew>::AllocateSharedPtr(f);
     }
+
     static ModuleKey m_className;
 
-    OutputVtkNew(FieldSharedPtr f);
-    virtual ~OutputVtkNew() = default;
+    explicit OutputVtkNew(FieldSharedPtr f);
 
-    virtual std::string GetModuleName()
+    ~OutputVtkNew() final = default;
+
+    std::string GetModuleName() final
     {
         return "OutputVtkNew";
     }
 
     // This ensures that ProcessEquiSpacedOutput is called first in the FieldConvert logic!
-    virtual ModulePriority GetModulePriority()
+    ModulePriority GetModulePriority() final
     {
         return eModifyPts;
     }
 
 protected:
     /// Write from pts to output file.
-    virtual void OutputFromPts(po::variables_map &vm);
+    void OutputFromPts(po::variables_map &vm) final;
 
     /// Write from m_exp to output file.
-    virtual void OutputFromExp(po::variables_map &vm);
+    void OutputFromExp(po::variables_map &vm) final;
 
     /// Write from data to output file.
-    virtual void OutputFromData(po::variables_map &vm);
+    void OutputFromData(po::variables_map &vm) final;
 
 private:
-    int GetVtkCellType(int sType,
-                       SpatialDomains::GeomType gType);
-    std::vector<long long> QuadrilateralNodes(int &ppe);
-    std::vector<long long> TriangleNodes(int &ppe);
-    std::vector<long long> TetrahedronNodes(int &ppe);
+    static int GetVtkCellType(int sType, SpatialDomains::GeomType gType);
 };
 }
 }

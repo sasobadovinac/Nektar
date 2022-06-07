@@ -32,19 +32,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <set>
-#include <string>
-#include <iomanip>
-
 #include <boost/core/ignore_unused.hpp>
-#include <boost/format.hpp>
-
-#include <LibUtilities/BasicUtils/FileSystem.h>
 
 #include "OutputVtkNew.h"
 
 #include <vtkXMLUnstructuredGridWriter.h>
-#include <vtkUnstructuredGridWriter.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkPoints.h>
 #include <vtkPointData.h>
@@ -52,6 +44,24 @@
 #include <vtkNew.h>
 #include <vtkDoubleArray.h>
 
+namespace Nektar
+{
+namespace FieldUtils
+{
+
+ModuleKey OutputVtkNew::m_className = GetModuleFactory().RegisterCreatorFunction(
+        ModuleKey(eOutputModule, "vtuNew"), OutputVtkNew::create, "Writes a VTU file.");
+
+OutputVtkNew::OutputVtkNew(FieldSharedPtr f) : OutputVtk(std::move(f))
+{
+    m_requireEquiSpaced = true;
+    m_config["uncompress"] = ConfigOption(true, "0", "Uncompress xml sections");
+    m_config["compressionlevel"] = ConfigOption(false, "5", "Compression level for the VTU output: 1-9");
+}
+
+// Anonymous namespace for spectral order -> VTK order mapping functions
+namespace
+{
 // Hashing function for the ordering map
 inline size_t key(int i,int j) {return (size_t) i << 32 | (unsigned int) j;}
 
@@ -86,25 +96,11 @@ struct cmpop
     }
 };
 
-namespace Nektar
-{
-namespace FieldUtils
-{
-
-ModuleKey OutputVtkNew::m_className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eOutputModule, "vtuNew"), OutputVtkNew::create, "Writes a VTU file.");
-
-OutputVtkNew::OutputVtkNew(FieldSharedPtr f) : OutputVtk(f)
-{
-    m_requireEquiSpaced = true;
-    m_config["uncompress"] = ConfigOption(true, "0", "Uncompress xml sections");
-    m_config["compressionlevel"] = ConfigOption(false, "5", "Compression level for the VTU output: 1-9");
-}
-
 void Rotate(int nrot, std::vector<long long> &surfVerts)
 {
     int n, i, j, cnt;
-    int np = ((int)sqrt(8.0 * surfVerts.size() + 1.0) - 1) / 2;
+    int np = static_cast<int>(
+            (sqrt(8.0 * static_cast<int>(surfVerts.size()) + 1.0) - 1) / 2);
     std::vector<long long> tmp(np * np);
 
     for (n = 0; n < nrot; ++n)
@@ -129,7 +125,8 @@ void Rotate(int nrot, std::vector<long long> &surfVerts)
 void Reflect(std::vector<long long> &surfVerts)
 {
     int i, j, cnt;
-    int np = ((int)sqrt(8.0 * surfVerts.size() + 1.0) - 1) / 2;
+    int np = static_cast<int>(
+            (sqrt(8.0 * static_cast<double>(surfVerts.size()) + 1.0) - 1) / 2);
     std::vector<long long> tmp(np * np);
 
     for (cnt = i = 0; i < np; ++i)
@@ -149,7 +146,9 @@ void Reflect(std::vector<long long> &surfVerts)
     }
 }
 
-void Align(std::vector<long long> thisVertId, std::vector<long long> vertId, std::vector<long long> &surfVerts)
+void Align(std::vector<long long> thisVertId,
+                 std::vector<long long> vertId,
+                 std::vector<long long> &surfVerts)
 {
     if (vertId[0] == thisVertId[0])
     {
@@ -193,9 +192,61 @@ void Align(std::vector<long long> thisVertId, std::vector<long long> vertId, std
     }
 }
 
-std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes, int n)
+std::vector<long long> quadTensorNodeOrdering(const std::vector<long long> &nodes)
 {
-    std::vector<long long> nodeList(nodes.size());
+    int nN = static_cast<int>(nodes.size());
+    int n = static_cast<int>(sqrt(nN));
+
+    std::vector<long long> nodeList(nN);
+
+    // Vertices
+    nodeList[0] = nodes[0];
+    if (n > 1)
+    {
+        nodeList[n - 1]     = nodes[1];
+        nodeList[n * n - 1] = nodes[2];
+        nodeList[n * (n - 1)] = nodes[3];
+    }
+
+    if (n > 2)
+    {
+        // Edge 0 -> 1
+        for (int i = 1; i < n - 1; ++i)
+        {
+            nodeList[i] = nodes[4 + i - 1];
+        }
+
+        // Edge 3 -> 2
+        for (int i = 1; i < n - 1; ++i)
+        {
+            nodeList[n * (n - 1) + i] = nodes[4 + 2 * (n - 2) + i - 1];
+        }
+
+        for (int j = 1; j < n - 1; ++j)
+        {
+            // Edge 0 -> 3
+            nodeList[n * (n - j - 1)] = nodes[4 + 3 * (n - 2) + n - 2 - j];
+
+            // Interior
+            for (int i = 1; i < n - 1; ++i)
+            {
+                nodeList[j * n + i] = nodes[(i - 3) - 2 * j + (3 + j) * n];
+            }
+
+            //Edge 1 -> 2
+            nodeList[(j + 1) * n - 1] = nodes[4 + (n - 2) + j - 1];
+        }
+    }
+
+    return nodeList;
+}
+
+std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes)
+{
+    int nN = static_cast<int>(nodes.size());
+    int n = static_cast<int>(std::sqrt(2 * nN));
+
+    std::vector<long long> nodeList(nN);
     int cnt2;
 
     // Vertices
@@ -223,7 +274,7 @@ std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes
         std::vector<long long> interior((n - 3) * (n - 2) / 2);
         std::copy(
                 nodes.begin() + 3 + 3 * (n - 2), nodes.end(), interior.begin());
-        interior = triTensorNodeOrdering(interior, n - 3);
+        interior = triTensorNodeOrdering(interior);
 
         // Copy into full node list
         cnt  = n;
@@ -242,9 +293,13 @@ std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes
     return nodeList;
 }
 
-std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes, int n)
+std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes)
 {
-    std::vector<long long> nodeList(nodes.size());
+    int nN = static_cast<int>(nodes.size());
+    int n = static_cast<int>(std::cbrt(3 * nN + std::sqrt(9 * nN * nN - 1 / 27)) +
+                             std::cbrt(3 * nN - std::sqrt(9 * nN * nN - 1 / 27)) - 0.5);
+
+    std::vector<long long> nodeList(nN);
     int nTri = n*(n+1)/2;
     int nTet = n*(n+1)*(n+2)/6;
 
@@ -316,7 +371,7 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
         {
             tmpNodes[i][j] = nodes[offset++];
         }
-        tmpNodes[i] = triTensorNodeOrdering(tmpNodes[i], n-3);
+        tmpNodes[i] = triTensorNodeOrdering(tmpNodes[i]);
     }
 
     if (n > 4)
@@ -360,9 +415,10 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
     std::vector<long long> intNodes, tmpInt;
     for (int i = offset; i < nTet; ++i)
     {
-        intNodes.push_back(nodes[i]);
+        intNodes.emplace_back(nodes[i]);
     }
-    tmpInt = tetTensorNodeOrdering(intNodes, n-4);
+
+    tmpInt = tetTensorNodeOrdering(intNodes);
 
     for (int k = 1, cnt = 0; k < n - 2; ++k)
     {
@@ -378,9 +434,11 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
     return nodeList;
 }
 
+}
+
 int OutputVtkNew::GetVtkCellType(int sType, SpatialDomains::GeomType gType)
 {
-    static std::map<int, std::map<int, int>> vtkCellType = {
+    static const std::map<int, std::map<int, int>> vtkCellType = {
         {SpatialDomains::eRegular,
             {
                 {LibUtilities::eSegment, VTK_LINE},
@@ -405,106 +463,7 @@ int OutputVtkNew::GetVtkCellType(int sType, SpatialDomains::GeomType gType)
         }
     };
 
-   return vtkCellType[gType][sType];
-}
-
-std::vector<long long> OutputVtkNew::QuadrilateralNodes(int &ppe)
-{
-    int n = (int)sqrt(ppe);
-
-    std::vector<long long> p(ppe, 0);
-    // Write vertices
-    p[1] += (n - 1);
-    p[2] += (n * n - 1);
-    p[3] += (n * (n - 1));
-
-    // Write edge interior
-    int cnt = 4;
-    for (int j = 0; j < 4; ++j)
-    {
-        if (j == 0)
-        {
-            for (int k = 1; k < n - 1; ++k)
-            {
-                p[cnt++] += k;
-            }
-        }
-        else if (j == 1)
-        {
-            for (int k = 2 * n - 1; k < n * (n - 1); k+=n)
-            {
-                p[cnt++] += k;
-            }
-        }
-        else if (j == 2)
-        {
-            for (int k = n * (n - 1) + 1; k < n * n - 1; ++k)
-            {
-                p[cnt++] += k;
-            }
-        }
-        else if (j == 3)
-        {
-            for (int k = n; k < n * (n - 1); k+=n)
-            {
-                p[cnt++] += k;
-            }
-        }
-    }
-
-    // Write surface interior
-    for (int j = 1; j < n - 1; ++j)
-    {
-        for (int k = 1; k < n - 1; ++k)
-        {
-            // Fetch interior nodes from quad->curve
-            p[cnt++] += (j * n + k);
-        }
-    }
-
-    return p;
-}
-
-std::vector<long long> OutputVtkNew::TriangleNodes(int &ppe)
-{
-    // Calculate order from triangle number
-    //sqrt(2 * ppe + 0.25) - 0.5 -> (int)sqrt(2 * ppe)
-    int n = (int) std::sqrt(2 * ppe);
-
-    std::vector<long long> p(ppe);
-    std::iota(p.begin(), p.end(), 0);
-
-    p = triTensorNodeOrdering(p, n);
-
-    // Invert the ordering as this is for spectral -> recursive (VTU)
-    std::vector<long long> inv(ppe);
-    for (int j = 0; j < ppe; ++j)
-    {
-        inv[p[j]] = j;
-    }
-
-    return inv;
-}
-
-std::vector<long long> OutputVtkNew::TetrahedronNodes(int &ppe)
-{
-    // Calculate order from tetrahedral number, solve n(n+1)(n+2)/6
-    int n = (int) (std::cbrt(3 * ppe + std::sqrt(9 * ppe * ppe - 1 / 27)) +
-            std::cbrt(3 * ppe - std::sqrt(9 * ppe * ppe - 1 / 27)) - 0.5);
-
-    std::vector<long long> p(ppe);
-    std::iota(p.begin(), p.end(), 0);
-
-    p = tetTensorNodeOrdering(p, n);
-
-    // Invert the ordering as this is for spectral -> recursive (VTU)
-    std::vector<long long> inv(ppe);
-    for (int j = 0; j < ppe; ++j)
-    {
-        inv[p[j]] = j;
-    }
-
-    return inv;
+   return vtkCellType.at(gType).at(sType);
 }
 
 void OutputVtkNew::OutputFromPts(po::variables_map &vm)
@@ -519,8 +478,8 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     Array<OneD, Array<OneD, NekDouble>> pts;
     fPts->GetPts(pts);
 
-    int dim = fPts->GetDim();
-    int nPts = fPts->GetNpoints();
+    int dim = static_cast<int>(fPts->GetDim());
+    int nPts = static_cast<int>(fPts->GetNpoints());
     switch (dim)
     {
         case 3:
@@ -567,17 +526,18 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
         auto oIt = mappingCache.find(key(sType, ppe[i]));
         if (oIt == mappingCache.end())
         {
-            std::vector<long long> p;
+            std::vector<long long> p(ppe[i]);
+            std::iota(p.begin(), p.end(), 0);
             switch (sType)
             {
                 case LibUtilities::eQuadrilateral:
-                    p = QuadrilateralNodes(ppe[i]);
+                    p = quadTensorNodeOrdering(p);
                     break;
                 case LibUtilities::eTriangle:
-                    p = TriangleNodes(ppe[i]);
+                    p = triTensorNodeOrdering(p);
                     break;
                 case LibUtilities::eTetrahedron:
-                    p = TetrahedronNodes(ppe[i]);
+                    p = tetTensorNodeOrdering(p);
                     break;
                 default:
                     NEKERROR(ErrorUtil::efatal,
@@ -585,7 +545,14 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
                     break;
             }
 
-            oIt = mappingCache.insert(std::make_pair(key(sType, ppe[i]), p)).first;
+            // Invert the ordering as this is for spectral -> recursive (VTU)
+            std::vector<long long> inv(ppe[i]);
+            for (int j = 0; j < ppe[i]; ++j)
+            {
+                inv[p[j]] = j;
+            }
+
+            oIt = mappingCache.insert(std::make_pair(key(sType, ppe[i]), inv)).first;
         }
 
         // Add offset to reordering
