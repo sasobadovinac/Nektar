@@ -155,7 +155,7 @@ namespace Nektar
             Array<OneD,SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
             /// Interfaces mapping for trace space.
-            InterfaceMapDGSharedPtr m_interfaceMap;
+            InterfaceMapDGSharedPtr                            m_interfaceMap;
 
             /// Global boundary matrix.
             GlobalLinSysMapShPtr                               m_globalBndMat;

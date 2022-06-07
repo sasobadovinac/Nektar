@@ -104,7 +104,6 @@ namespace StdRegions
                 const Array<OneD, const NekDouble> &inarray,
                 NekDouble &out_d0, NekDouble &out_d1)
             {
-                // int sz = GetTotPoints();
                 const int nq0 = m_base[0]->GetNumPoints();
                 const int nq1 = m_base[1]->GetNumPoints();
 

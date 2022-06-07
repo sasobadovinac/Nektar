@@ -494,8 +494,8 @@ namespace Nektar
          * StdExpansion method
          */
         NekDouble TetExp::v_StdPhysEvaluate(
-                                            const Array<OneD, const NekDouble> &Lcoord,
-                                            const Array<OneD, const NekDouble> &physvals)
+            const Array<OneD, const NekDouble> &Lcoord,
+            const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local (eta) coordinates.
             return StdExpansion3D::v_PhysEvaluate(Lcoord,physvals);
@@ -506,8 +506,8 @@ namespace Nektar
          * @returns Evaluation of expansion at given coordinate.
          */
         NekDouble TetExp::v_PhysEvaluate(
-                                         const Array<OneD, const NekDouble> &coord,
-                                         const Array<OneD, const NekDouble> & physvals)
+            const Array<OneD, const NekDouble> &coord,
+            const Array<OneD, const NekDouble> & physvals)
         {
             ASSERTL0(m_geom,"m_geom not defined");
 
@@ -521,14 +521,15 @@ namespace Nektar
         }
 
         NekDouble TetExp::v_PhysEvaluate(
-                                         const Array<OneD, NekDouble> coord,
-                                         const Array<OneD, const NekDouble> &inarray,
-                                         NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
         {
             Array<OneD, NekDouble> Lcoord(3);
             ASSERTL0(m_geom, "m_geom not defined");
             m_geom->GetLocCoords(coord, Lcoord);
-            return StdTetExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+            return StdTetExp::v_PhysEvaluate(
+                    Lcoord, inarray, out_d0, out_d1, out_d2);
         }
 
         /**

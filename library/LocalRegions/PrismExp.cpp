@@ -542,8 +542,9 @@ namespace Nektar
             return StdExpansion3D::v_PhysEvaluate(Lcoord,physvals);
         }
 
-        NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, const NekDouble>& coord,
-                                           const Array<OneD, const NekDouble>& physvals)
+        NekDouble PrismExp::v_PhysEvaluate(
+            const Array<OneD, const NekDouble>& coord,
+            const Array<OneD, const NekDouble>& physvals)
         {
             Array<OneD, NekDouble> Lcoord(3);
 
@@ -554,14 +555,16 @@ namespace Nektar
             return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
         }
 
-        NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
-                                           const Array<OneD, const NekDouble> &inarray,
-                                           NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+        NekDouble PrismExp::v_PhysEvaluate(
+            const Array<OneD, NekDouble> coord,
+            const Array<OneD, const NekDouble> &inarray,
+            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
         {
             Array<OneD, NekDouble> Lcoord(3);
             ASSERTL0(m_geom, "m_geom not defined");
             m_geom->GetLocCoords(coord, Lcoord);
-            return StdPrismExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+            return StdPrismExp::v_PhysEvaluate(
+                    Lcoord, inarray, out_d0, out_d1, out_d2);
         }
 
         //---------------------------------------

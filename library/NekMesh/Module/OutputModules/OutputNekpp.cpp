@@ -775,9 +775,6 @@ void OutputNekpp::TransferComposites(MeshGraphSharedPtr graph)
     }
 }
 
-// @TODO: We currently lose domain information from input file here. This assumes
-//        every composite that is of expansion dimension is a separate domain and
-//        sequentially numbered. So junks multi-composite domains & IDs.
 void OutputNekpp::TransferDomain(MeshGraphSharedPtr graph)
 {
     std::map<int, SpatialDomains::CompositeMap> &domain = graph->GetDomain();

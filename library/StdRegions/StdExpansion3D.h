@@ -229,7 +229,19 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
 
 
-            // find derivative of u (inarray) at all coords points
+            /**
+             * Performs tensor product evaluation in 3D to evaluate the physical
+             * and derivative values in each direction at input coordinate
+             * @param coord using input physical values at quadrature points
+             * @param inarray. Returns via reference the derivatives.
+
+             * @param coord Global coordinate
+             * @param inarray Phys values
+             * @param out_d0 Return by reference parameter for 0th derivative
+             * @param out_d1 Return by reference parameter for 1st derivative
+             * @param out_d2 Return by reference parameter for 2nd derivative
+             * @return Physical value at @param coord
+             */
             STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
                 const Array<OneD, NekDouble> &coord,
                 const Array<OneD, const NekDouble> &inarray,

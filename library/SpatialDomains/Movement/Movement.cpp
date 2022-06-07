@@ -29,8 +29,8 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:
-//
+//  Description: This file contains the base class for implementing
+//               non-conformal geometry using the Movement object
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,25 +39,25 @@
 #include <SpatialDomains/Movement/Movement.h>
 #include <tinyxml.h>
 
-std::string ReadTag(std::string &tagStr)
+namespace Nektar
+{
+namespace SpatialDomains
+{
+
+std::string static inline ReadTag(std::string &tagStr)
 {
     std::string::size_type indxBeg = tagStr.find_first_of('[') + 1;
     std::string::size_type indxEnd = tagStr.find_last_of(']') - 1;
 
     ASSERTL0(
-        indxBeg <= indxEnd,
-        (std::string("Error reading interface region definition:") + tagStr)
-            .c_str());
+            indxBeg <= indxEnd,
+            (std::string("Error reading interface region definition:") + tagStr)
+                    .c_str());
 
     std::string indxStr = tagStr.substr(indxBeg, indxEnd - indxBeg + 1);
 
     return indxStr;
 }
-
-namespace Nektar
-{
-namespace SpatialDomains
-{
 
 Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                    MeshGraph* meshGraph)
@@ -381,6 +381,8 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
     }
 }
 
+// Acts as a placeholder for when ALE function and moving geometry capability
+// is added. Currently unused.
 void Movement::PerformMovement(NekDouble timeStep)
 {
     std::set<int> movedZoneIds;
@@ -393,7 +395,6 @@ void Movement::PerformMovement(NekDouble timeStep)
     }
 
     // If zone has moved, set all interfaces on that zone to moved.
-    // @TODO: Probably better to save the moved flag on the interface pair obj?
     for (auto &interPair : m_interfaces)
     {
         int leftId  = interPair.second->GetLeftInterface()->GetId();

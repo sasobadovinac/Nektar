@@ -1070,7 +1070,7 @@ void MeshGraphHDF5::ReadCurveMap(
 
 void MeshGraphHDF5::ReadDomain()
 {
-    if(m_inFormatVersion == 1) // @TODO: Read in
+    if(m_inFormatVersion == 1)
     {
         map<int, CompositeSharedPtr> fullDomain;
         H5::DataSetSharedPtr dst = m_mesh->OpenDataSet("DOMAIN");

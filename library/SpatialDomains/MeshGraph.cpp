@@ -213,7 +213,8 @@ void MeshGraph::FillGraph()
     }
 
     // Populate the movement object
-    m_movement = MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(m_session, this);
+    m_movement = MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(
+            m_session, this);
 }
 
 void MeshGraph::FillBoundingBoxTree()
@@ -2982,7 +2983,9 @@ void MeshGraph::ReadExpansionInfo()
                         auto x =
                             expansionMap->find((*geomVecIter)->GetGlobalID());
                         ASSERTL0(x != expansionMap->end(),
-                                 "Expansion " + std::to_string((*geomVecIter)->GetGlobalID()) + " not found!!");
+                                 "Expansion " +
+                                 std::to_string((*geomVecIter)->GetGlobalID()) +
+                                 " not found!!");
                         if (useExpansionType)
                         {
                             (x->second)->m_basisKeyVector =

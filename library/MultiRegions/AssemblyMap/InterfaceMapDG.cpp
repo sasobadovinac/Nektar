@@ -46,6 +46,11 @@ InterfaceTrace::InterfaceTrace(
 {
 }
 
+// Creates the objects that communicates trace values across the interface in
+// serial and parallel. Does this by checking all interfaces to see if they
+// are contained locally (on the current rank), and checks all other ranks for
+// the same interface ID and if contains the opposite interface side i.e.
+// 'left' or 'right'
 InterfaceMapDG::InterfaceMapDG(
     const SpatialDomains::MeshGraphSharedPtr &meshGraph,
     const ExpListSharedPtr &trace)
@@ -59,9 +64,19 @@ InterfaceMapDG::InterfaceMapDG(
     // [i] = indx
     // [i + 1] = 0 (non), = 1 (left only), = 2 (right only), = 3 (both)
     std::map<int, int> myIndxLRMap;
+
+    // localInterfaces contains a map of interface ID to a pair of interface
+    // traces, this pair is 'left' and 'right' interface and is used to
+    // construct and store the traces for interfaces present on the current rank
     std::map<int, std::pair<InterfaceTraceSharedPtr, InterfaceTraceSharedPtr>>
         localInterfaces;
+
+    // Map of m_localInterfaces vector to interface ID
     Array<OneD, int> indxToInterfaceID(interfaceCollection.size());
+
+    // Loops over all interfaces and check if either side, 'left' or 'right'
+    // are empty on the current rank, if not empty then populate the local
+    // interface data structures and keep track using myIndxLRMap
     size_t cnt = 0;
     for (const auto &interface : interfaceCollection)
     {
@@ -71,15 +86,18 @@ InterfaceMapDG::InterfaceMapDG(
         if (!interface.second->GetLeftInterface()->IsEmpty())
         {
             myIndxLRMap[interface.first.first] += 1;
+
             localInterfaces[interface.first.first].first =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
                     trace, interface.second->GetLeftInterface());
             m_localInterfaces.emplace_back(
                 localInterfaces[interface.first.first].first);
         }
+
         if (!interface.second->GetRightInterface()->IsEmpty())
         {
             myIndxLRMap[interface.first.first] += 2;
+
             localInterfaces[interface.first.first].second =
                 MemoryManager<InterfaceTrace>::AllocateSharedPtr(
                     trace, interface.second->GetRightInterface());
@@ -103,24 +121,31 @@ InterfaceMapDG::InterfaceMapDG(
     Array<OneD, int> rankLocalInterfaceIds(myIndxLRMap.size() * nRanks, 0);
     comm->AllGather(interfaceEdges, rankLocalInterfaceIds);
 
+    // Map of rank to vector of interface traces
+    std::map<int, std::vector<InterfaceTraceSharedPtr>> oppRankSharedInterface;
+
     // Find what interface Ids match with other ranks, then check if opposite
     // edge
-    std::map<int, std::vector<InterfaceTraceSharedPtr>>
-        oppRankSharedInterface; // Map of rank to vector of interface traces
-
     size_t myRank     = comm->GetRank();
-    int numInterfaces = interfaceCollection.size();
-    for (size_t i = 0; i < nRanks; ++i)
+    size_t numInterfaces = interfaceCollection.size();
+    for (int i = 0; i < nRanks; ++i)
     {
         for (size_t j = 0; j < numInterfaces; ++j)
         {
             int otherId   = indxToInterfaceID[j];
+
+            // otherCode represents for a specific interface ID what sides are
+            // present on rank i, 0=non, 1=left, 2=right, 3=both
             int otherCode = rankLocalInterfaceIds[i * numInterfaces + j];
+
+            // myCode represents for a specific interface ID what sides are
+            // present on this rank/process 0=non, 1=left, 2=right, 3=both
             int myCode    = myIndxLRMap[otherId];
 
+            // Special case if checking current rank (this process)
             if (i == myRank)
             {
-                // If contains opposite edge locally then set true
+                // If contains both edges locally then set check local to true
                 if (myCode == 3)
                 {
                     localInterfaces[otherId].first->SetCheckLocal(true);
@@ -130,7 +155,7 @@ InterfaceMapDG::InterfaceMapDG(
                 continue;
             }
 
-            // Interface opposite ranks
+            // Checks if this ranks 'left' matches any 'right' on other rank
             if ((myCode == 1 && otherCode == 2) ||
                 (myCode == 1 && otherCode == 3) ||
                 (myCode == 3 && otherCode == 2))
@@ -138,6 +163,7 @@ InterfaceMapDG::InterfaceMapDG(
                 oppRankSharedInterface[i].emplace_back(
                     localInterfaces[otherId].first);
             }
+            // Checks if this ranks 'right' matches any 'left' on other rank
             else if ((myCode == 2 && otherCode == 1) ||
                      (myCode == 2 && otherCode == 3) ||
                      (myCode == 3 && otherCode == 1))
@@ -145,6 +171,7 @@ InterfaceMapDG::InterfaceMapDG(
                 oppRankSharedInterface[i].emplace_back(
                     localInterfaces[otherId].second);
             }
+            // Checks if this ranks 'both' matches any 'both' on other rank
             else if (myCode == 3 && otherCode == 3)
             {
                 oppRankSharedInterface[i].emplace_back(
@@ -208,7 +235,7 @@ void InterfaceMapDG::ExchangeCoords()
 /**
  * Calculates what coordinates on the interface are missing; i.e. aren't located
  * in an edge from the other side of the interface on this partition. These are
- * stored in the vector m_missingCoords, and another vector of the same index
+ * stored in the vector #m_missingCoords, and another vector of the same index
  * layout contains the location of that coordinate in the trace i.e. the
  * 'offset + i' value. It checks first if the interface is flagged local, which
  * denotes whether the opposite side is also present on this rank, if not then
@@ -222,7 +249,7 @@ void InterfaceTrace::CalcLocalMissing()
     if (!m_checkLocal)
     {
         int cnt = 0;
-        for (auto childId : childEdge)
+        for (auto &childId : childEdge)
         {
             auto childElmt =
                 m_trace->GetExpFromGeomId(childId.first);
@@ -245,10 +272,18 @@ void InterfaceTrace::CalcLocalMissing()
         }
     }
     // Otherwise we need to check to see what points the other side of the
-    // interface on this rank contains
+    // interface on this rank contains. This is done by looping over each
+    // quadrature point in all the edges on this side of the interface, then
+    // check if this quadrature point is also in any edges on the other side
+    // of the interface. First use MinMaxCheck as a cheap method to eliminate
+    // far away edges. If it passes MinMaxCheck perform the FindDistance search
+    // which numerically searches for the closest local coordinate on the other
+    // interface side edge and returns the cartesian distance from the search
+    // coordinate to the found local coordinate. If determined to be close
+    // enough then add to found local coordinates.
     else
     {
-        for (auto childId : childEdge)
+        for (auto &childId : childEdge)
         {
             auto childElmt =
                 m_trace->GetExpFromGeomId(childId.first);
@@ -309,12 +344,17 @@ void InterfaceTrace::CalcLocalMissing()
     }
 }
 
+// This fills m_sendSize and m_recvSize with the correct sizes for the
+// communication lengths for each rank when communicating the traces. I.e.
+// however many quadrature points on the opposite side of the interface to
+// send, and however many on this side to receive.
 void InterfaceExchange::RankFillSizes(
     LibUtilities::CommRequestSharedPtr &requestSend,
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum)
 {
 
-    // Get size of all interfaces missing and moved to communicate
+    // Recalc size is the number of interfaces missing points that need to be
+    // communicated.
     int recalcSize = 0;
     for (auto &localInterface : m_interfaceTraces)
     {
@@ -330,17 +370,23 @@ void InterfaceExchange::RankFillSizes(
     {
         if (m_zones[interface->GetInterface()->GetId()]->GetMoved())
         {
+            // Calculates the number of missing coordinates to be communicated
+            // This size is 3 times the number of missing coordinates to allow
+            // for 3D points
             m_sendSize[m_rank][cnt++] =
                 interface->GetMissingCoords().size() * 3;
         }
     }
 
+    // Uses non-blocking send/recvs to send communication sizes to other ranks
     m_comm->Isend(m_rank, m_sendSize[m_rank], m_interfaceTraces.size(),
                   requestSend, requestNum);
     m_comm->Irecv(m_rank, m_recvSize[m_rank], m_interfaceTraces.size(),
                   requestRecv, requestNum);
 }
 
+// Uses the calculated send/recv sizes to send all missing coordinates to
+// other ranks.
 void InterfaceExchange::SendMissing(
     LibUtilities::CommRequestSharedPtr &requestSend,
     LibUtilities::CommRequestSharedPtr &requestRecv, int requestNum)
@@ -361,6 +407,8 @@ void InterfaceExchange::SendMissing(
             auto missing = interface->GetMissingCoords();
             for (auto coord : missing)
             {
+                // Points are organised in blocks of three
+                // x coord, then y coord, then z coord.
                 for (int k = 0; k < 3; ++k, ++cnt)
                 {
                     m_send[cnt] = coord[k];
@@ -369,6 +417,7 @@ void InterfaceExchange::SendMissing(
         }
     }
 
+    // Uses non-blocking send/recvs to send missing points to other ranks
     m_comm->Isend(m_rank, m_send, m_totSendSize[m_rank], requestSend,
                   requestNum);
     m_comm->Irecv(m_rank, m_recv, m_totRecvSize[m_rank], requestRecv,

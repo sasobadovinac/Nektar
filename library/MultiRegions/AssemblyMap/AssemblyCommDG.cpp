@@ -409,7 +409,8 @@ AssemblyCommDG::AssemblyCommDG(
         int maxStrLen = 0;
         for (size_t i = 0; i < MPIFuncs.size(); ++i)
         {
-            maxStrLen = MPIFuncsNames[i].size() > maxStrLen ? MPIFuncsNames[i].size() : maxStrLen;
+            maxStrLen = MPIFuncsNames[i].size() > maxStrLen
+                        ? MPIFuncsNames[i].size() : maxStrLen;
         }
 
         for (size_t i = 0; i < MPIFuncs.size(); ++i)

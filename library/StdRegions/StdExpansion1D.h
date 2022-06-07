@@ -69,8 +69,8 @@ namespace Nektar
             STD_REGIONS_EXPORT void PhysTensorDeriv(
                     const Array<OneD, const NekDouble>& inarray,
                           Array<OneD,       NekDouble>& outarray);
+
             // find derivative of u (inarray) at all coords points
-            // @TODO: Make this into a template also!
             STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
                 const Array<OneD, NekDouble> &coord,
                 const Array<OneD, const NekDouble> &inarray,

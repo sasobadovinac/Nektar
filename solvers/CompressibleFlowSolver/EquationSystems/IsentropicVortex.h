@@ -88,10 +88,15 @@ namespace Nektar
                   NekDouble                                  time,
             const int                                        o = 0);
 
+        /// Maximum strength of the perturbation
         NekDouble m_beta;
+        /// Velocity in x-direction
         NekDouble m_u0;
+        /// Velocity in y-direction
         NekDouble m_v0;
+        /// Origin in x-direction
         NekDouble m_x0;
+        /// Origin in y-direction
         NekDouble m_y0;
     };
 }

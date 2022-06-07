@@ -787,8 +787,6 @@ namespace Nektar
             LocCoordToLocCollapsed(coord, coll);
 
             // If near singularity do the old interpolation matrix method
-            // @TODO: Dave thinks there might be a way in the Barycentric to
-            //        mathematically remove this singularity?
             if((1 - coll[1]) < 1e-5)
             {
                 int totPoints = GetTotPoints();

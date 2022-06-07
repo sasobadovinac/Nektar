@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: InterfaceInterpolation.h
+//  File: InterfaceInterpolation.hpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -29,7 +29,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:
+//  Description: Interface handling for zones using the interpolation method
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,17 @@ typedef std::map<int, CompositeSharedPtr> CompositeMap;
 struct Interface
 {
     /// Constructor
-    Interface(int indx, const CompositeMap &edge);
+    Interface(int indx, const CompositeMap &edge) : m_id(indx)
+    {
+        // Fill element Ids
+        for (auto &comp : edge)
+        {
+            for (auto &geom : comp.second->m_geomVec)
+            {
+                m_edge[geom->GetGlobalID()] = geom;
+            }
+        }
+    }
 
     /// Default destructor
     virtual ~Interface() = default;
@@ -100,7 +110,12 @@ protected:
 
 typedef std::shared_ptr<Interface> InterfaceShPtr;
 
-/// Interface pair consisting of a 'left' and 'right' interface
+/**
+ * Interface pair consisting of a 'left' and 'right' interface. The allocation
+ * of 'left' and 'right' is arbitrary for any interface as long as it stays
+ * consistent. Every full interface will consist of exactly one 'left' and one
+ * 'right' interface, the nomenclature helps keep code understandable.
+ */
 struct InterfacePair
 {
     /// Constructor
@@ -138,4 +153,4 @@ typedef std::shared_ptr<InterfacePair> InterfacePairShPtr;
 } // namespace SpatialDomains
 } // namespace Nektar
 
-#endif // NEKTAR_INTERFACEINTERPOLATION_MOVEMENT_H
+#endif // NEKTAR_SPATIALDOMAINS_INTERFACEINTERPOLATION_H
