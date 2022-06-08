@@ -62,8 +62,11 @@ OutputVtkNew::OutputVtkNew(FieldSharedPtr f) : OutputVtk(std::move(f))
 // Anonymous namespace for spectral order -> VTK order mapping functions
 namespace
 {
-// Hashing function for the ordering map
-inline size_t key(int i,int j) {return (size_t) i << 32 | (unsigned int) j;}
+// Hashing function for the ordering map taking two integers
+inline size_t key2(int i,int j) {return (size_t) i << 32 | (unsigned int) j;}
+
+// Hashing function for the ordering map taking three integers
+inline size_t key3(int i, int j, int k) {return (size_t) i << 10 ^ j << 5 ^ k;}
 
 // Map that takes (a,b,c) -> m
 typedef std::tuple<int, int, int> Mode;
@@ -434,36 +437,80 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
     return nodeList;
 }
 
+std::vector<long long> lowOrderMapping(int nDim, Array<OneD, int> nquad)
+{
+    std::vector<long long> p;
+    switch (nDim)
+    {
+        case 3:
+            for (int j = 0; j < nquad[0] - 1; ++j)
+            {
+                for (int k = 0; k < nquad[1] - 1; ++k)
+                {
+                    for (int l = 0; l < nquad[2] - 1; ++l)
+                    {
+                        p.insert(p.end(),
+                                 {l * nquad[0] * nquad[1] + k * nquad[0] + j,
+                                  l * nquad[0] * nquad[1] + k * nquad[0] + j + 1,
+                                  l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + 1,
+                                  l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j,
+                                  (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j,
+                                  (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j + 1,
+                                  (l + 1) * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + 1,
+                                  (l + 1) * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j}
+                                  );
+                    }
+                }
+            }
+            break;
+        case 2:
+            for (int j = 0; j < nquad[0] - 1; ++j)
+            {
+                for (int k = 0; k < nquad[1] - 1; ++k)
+                {
+                    p.insert(p.end(),
+                             {k * nquad[0] + j,
+                              k * nquad[0] + j + 1,
+                              (k + 1) * nquad[0] + j + 1,
+                              (k + 1) * nquad[0] + j}
+                              );
+                }
+            }
+            break;
+        case 1:
+            for (int j = 0; j < nquad[0] - 1; ++j)
+            {
+                p.insert(p.end(),
+                         {j,
+                          j + 1}
+                          );
+            }
+            break;
+        default:
+            break;
+    }
+
+    return p;
 }
 
-int OutputVtkNew::GetVtkCellType(int sType, SpatialDomains::GeomType gType)
+}
+
+int OutputVtkNew::GetHighOrderVtkCellType(int sType)
 {
-    static const std::map<int, std::map<int, int>> vtkCellType = {
-        {SpatialDomains::eRegular,
+    // For deformed elements this is a map of shape type to VTK type
+    static const std::map<int, int> vtkCellType = {
             {
-                {LibUtilities::eSegment, VTK_LINE},
-                {LibUtilities::eTriangle, VTK_TRIANGLE},
-                {LibUtilities::eQuadrilateral, VTK_QUAD},
-                {LibUtilities::eTetrahedron, VTK_TETRA},
-                {LibUtilities::ePyramid, VTK_PYRAMID},
-                {LibUtilities::ePrism, VTK_WEDGE},
-                {LibUtilities::eHexahedron, VTK_HEXAHEDRON}
+                {LibUtilities::eSegment, VTK_LAGRANGE_CURVE},
+                {LibUtilities::eTriangle, VTK_LAGRANGE_TRIANGLE},
+                {LibUtilities::eQuadrilateral, VTK_LAGRANGE_QUADRILATERAL},
+                {LibUtilities::eTetrahedron, VTK_LAGRANGE_TETRAHEDRON},
+                {LibUtilities::ePyramid, VTK_LAGRANGE_PYRAMID},
+                {LibUtilities::ePrism, VTK_LAGRANGE_WEDGE},
+                {LibUtilities::eHexahedron, VTK_LAGRANGE_HEXAHEDRON}
             }
-        },
-        {SpatialDomains::eDeformed,
-            {
-                 {LibUtilities::eSegment, VTK_LAGRANGE_CURVE},
-                 {LibUtilities::eTriangle, VTK_LAGRANGE_TRIANGLE},
-                 {LibUtilities::eQuadrilateral, VTK_LAGRANGE_QUADRILATERAL},
-                 {LibUtilities::eTetrahedron, VTK_LAGRANGE_TETRAHEDRON},
-                 {LibUtilities::ePyramid, VTK_LAGRANGE_PYRAMID},
-                 {LibUtilities::ePrism, VTK_LAGRANGE_WEDGE},
-                 {LibUtilities::eHexahedron, VTK_LAGRANGE_HEXAHEDRON}
-            }
-        }
     };
 
-   return vtkCellType.at(gType).at(sType);
+    return vtkCellType.at(sType);
 }
 
 void OutputVtkNew::OutputFromData(po::variables_map &vm)
@@ -501,12 +548,20 @@ void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &fil
     vtkNew<vtkPoints> vtkPoints;
     vtkNew<vtkUnstructuredGrid> vtkMesh;
 
+    // Cache ordering so we aren't recreating mappings
+    std::unordered_map<size_t, std::vector<long long>> mappingCache;
+
+    // Choose cell types and num quad points based on dimension
+    int nDim = m_f->m_exp[0]->GetShapeDimension();
+    auto type = (nDim == 3) ? VTK_HEXAHEDRON : (nDim == 2) ? VTK_QUAD : VTK_LINE;
+    int nQpts = (nDim == 3) ? 8              : (nDim == 2) ? 4        : 2;
+
     int nElmts = static_cast<int>(m_f->m_exp[0]->GetNumElmts());
     for (int i = 0; i < nElmts; ++i)
     {
         int nPts = static_cast<int>(m_f->m_exp[0]->GetExp(i)->GetTotPoints());
 
-        Array<OneD, NekDouble> x(nPts), y(nPts), z(nPts);
+        Array<OneD, NekDouble> x(nPts,0.0), y(nPts,0.0), z(nPts,0.0);
         m_f->m_exp[0]->GetExp(i)->GetCoords(x, y, z);
 
         for (int j = 0; j < nPts; ++j)
@@ -514,73 +569,28 @@ void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &fil
           vtkPoints->InsertNextPoint(x[j], y[j], z[j]);
         }
 
-        int nDim = m_f->m_exp[0]->GetShapeDimension();
-
-        Array<OneD, NekDouble> nquad(nDim);
+        Array<OneD, int> nquad(3, 0);
         for (int j = 0; j < nDim; ++j)
         {
-            nquad[j] = m_f->m_exp[0]->GetExp(i)->GetBasisNumModes(0);
+            nquad[j] = m_f->m_exp[0]->GetExp(i)->GetBasisNumModes(j);
         }
 
         // Insert elements
         int offset = m_f->m_exp[0]->GetPhys_Offset(i);
-        switch(nDim)
+
+        auto oIt = mappingCache.find(key3(nquad[0], nquad[1], nquad[2]));
+        if (oIt == mappingCache.end())
         {
-            case 3:
-                for (int j = 0; j < nquad[0] - 1; ++j)
-                {
-                    for (int k = 0; k < nquad[1] - 1; ++k)
-                    {
-                        for (int l = 0; l < nquad[2] - 1; ++l)
-                        {
-                            long long p[8] = {
-                                    l * nquad[0] * nquad[1] + k * nquad[0] + j + offset,
-                                    l * nquad[0] * nquad[1] + k * nquad[0] + j + 1 + offset,
-                                    l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + 1 + offset,
-                                    l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + offset,
-                                    (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j + offset,
-                                    (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j + 1 + offset,
-                                    (l + 1) * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + 1 + offset,
-                                    (l + 1) * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + offset
-                            };
+            auto p = lowOrderMapping(nDim, nquad);
+            oIt = mappingCache.insert(std::make_pair(key3(nquad[0], nquad[1], nquad[2]), p)).first;
+        }
 
-                            vtkMesh->InsertNextCell(GetVtkCellType(LibUtilities::eHexahedron,
-                                                                   SpatialDomains::eRegular), 8, p);
-                        }
-                    }
-                }
-                break;
-            case 2:
-                for (int j = 0; j < nquad[0] - 1; ++j)
-                {
-                    for (int k = 0; k < nquad[1] - 1; ++k)
-                    {
-                        long long p[4] = {
-                                k * nquad[0] + j + offset,
-                                k * nquad[0] + j + 1 + offset,
-                                (k + 1) * nquad[0] + j + 1 + offset,
-                                (k + 1) * nquad[0] + j + offset
-                        };
+        auto p = oIt->second;
+        std::for_each(p.begin(), p.end(),[offset](long long &d) { d += offset; });
 
-                        vtkMesh->InsertNextCell(GetVtkCellType(LibUtilities::eQuadrilateral,
-                                                               SpatialDomains::eRegular), 4, p);
-                    }
-                }
-                break;
-            case 1:
-                for (int j = 0; j < nquad[0] - 1; ++j)
-                {
-                    long long p[2] = {
-                            j + offset,
-                            j + 1 + offset
-                    };
-
-                    vtkMesh->InsertNextCell(GetVtkCellType(LibUtilities::eSegment,
-                                                           SpatialDomains::eRegular), 2, p);
-                }
-                break;
-            default:
-                break;
+        for (int j = 0; j < p.size(); j+=nQpts)
+        {
+            vtkMesh->InsertNextCell(type, nQpts, &p[j]);
         }
     }
 
@@ -655,7 +665,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
     // Cache ordering for shape type & npts so we aren't recreating mappings
     std::unordered_map<size_t, std::vector<long long>> mappingCache;
 
-    // Get points per element and offset per element in a vector
+    // Get offset per element in a vector from ppe
     std::vector<int> ppe = m_f->m_fieldPts->GetPointsPerElement();
     Array<OneD, int> ppeOffset(ppe.size() + 1, 0.0);
     std::partial_sum(ppe.begin(), ppe.end(), &ppeOffset[1]);
@@ -665,7 +675,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
     {
         // Construct inverse of input reordering.
         // First try to find it in our mapping cache.
-        auto oIt = mappingCache.find(key(sType[i], ppe[i]));
+        auto oIt = mappingCache.find(key2(sType[i], ppe[i]));
         if (oIt == mappingCache.end())
         {
             std::vector<long long> p(ppe[i]);
@@ -694,16 +704,14 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
                 inv[p[j]] = j;
             }
 
-            oIt = mappingCache.insert(std::make_pair(key(sType[i], ppe[i]), inv)).first;
+            oIt = mappingCache.insert(std::make_pair(key2(sType[i], ppe[i]), inv)).first;
         }
 
         // Add offset to reordering
         std::vector<long long> p = oIt->second;
         std::for_each(p.begin(), p.end(),[j = ppeOffset[i]](long long &d) { d += j; });
 
-        vtkMesh->InsertNextCell(
-                GetVtkCellType(sType[i], SpatialDomains::eDeformed),
-                ppe[i], &p[0]);
+        vtkMesh->InsertNextCell(GetHighOrderVtkCellType(sType[i]), ppe[i], &p[0]);
     }
 
     // Insert field information

@@ -78,8 +78,8 @@ protected:
     void OutputFromData(po::variables_map &vm) final;
 
 private:
-    /// Get VTK cell type
-    static int GetVtkCellType(int sType, SpatialDomains::GeomType gType);
+    /// Get VTK cell type for high order elements
+    static int GetHighOrderVtkCellType(int sType);
 
     /// Prepare high order Lagrange VTK output
     void OutputFromExpHighOrder(po::variables_map &vm, std::string &filename);
