@@ -38,6 +38,9 @@
 #include "OutputVtk.h"
 #include <tinyxml.h>
 
+#include <vtkNew.h>
+#include <vtkUnstructuredGrid.h>
+
 namespace Nektar
 {
 namespace FieldUtils
@@ -64,12 +67,6 @@ public:
         return "OutputVtkNew";
     }
 
-    // This ensures that ProcessEquiSpacedOutput is called first in the FieldConvert logic!
-    ModulePriority GetModulePriority() final
-    {
-        return eModifyPts;
-    }
-
 protected:
     /// Write from pts to output file.
     void OutputFromPts(po::variables_map &vm) final;
@@ -81,7 +78,17 @@ protected:
     void OutputFromData(po::variables_map &vm) final;
 
 private:
+    /// Get VTK cell type
     static int GetVtkCellType(int sType, SpatialDomains::GeomType gType);
+
+    /// Prepare high order Lagrange VTK output
+    void OutputFromExpHighOrder(po::variables_map &vm, std::string &filename);
+
+    /// Prepare low order VTK output
+    void OutputFromExpLowOrder(po::variables_map &vm, std::string &filename);
+
+    /// Write VTK file using @param vtkMesh
+    void WriteVTK(vtkUnstructuredGrid* vtkMesh, std::string &filename);
 };
 }
 }

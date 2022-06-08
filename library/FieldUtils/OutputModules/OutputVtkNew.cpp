@@ -35,13 +35,12 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include "OutputVtkNew.h"
+#include <FieldUtils/ProcessModules/ProcessEquiSpacedOutput.h>
 
 #include <vtkXMLUnstructuredGridWriter.h>
-#include <vtkUnstructuredGrid.h>
 #include <vtkPoints.h>
 #include <vtkPointData.h>
 #include <vtkCellType.h>
-#include <vtkNew.h>
 #include <vtkDoubleArray.h>
 
 namespace Nektar
@@ -55,6 +54,7 @@ ModuleKey OutputVtkNew::m_className = GetModuleFactory().RegisterCreatorFunction
 OutputVtkNew::OutputVtkNew(FieldSharedPtr f) : OutputVtk(std::move(f))
 {
     m_requireEquiSpaced = true;
+    m_config["highorder"] = ConfigOption(true, "0", "Output using new high-order Lagrange elements");
     m_config["uncompress"] = ConfigOption(true, "0", "Uncompress xml sections");
     m_config["compressionlevel"] = ConfigOption(false, "5", "Compression level for the VTU output: 1-9");
 }
@@ -466,10 +466,155 @@ int OutputVtkNew::GetVtkCellType(int sType, SpatialDomains::GeomType gType)
    return vtkCellType.at(gType).at(sType);
 }
 
+void OutputVtkNew::OutputFromData(po::variables_map &vm)
+{
+    boost::ignore_unused(vm);
+    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only FieldData.");
+}
+
 void OutputVtkNew::OutputFromPts(po::variables_map &vm)
+{
+    boost::ignore_unused(vm);
+    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only PtsData.");
+}
+
+void OutputVtkNew::OutputFromExp(po::variables_map &vm)
 {
     // Extract the output filename and extension
     std::string filename = OutputVtk::PrepareOutput(vm);
+
+    if (m_config["highorder"].m_beenSet)
+    {
+        OutputFromExpHighOrder(vm, filename);
+    }
+    else
+    {
+        OutputFromExpLowOrder(vm, filename);
+    }
+}
+
+void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &filename)
+{
+    boost::ignore_unused(vm);
+
+    // Insert points
+    vtkNew<vtkPoints> vtkPoints;
+    vtkNew<vtkUnstructuredGrid> vtkMesh;
+
+    int nElmts = static_cast<int>(m_f->m_exp[0]->GetNumElmts());
+    for (int i = 0; i < nElmts; ++i)
+    {
+        int nPts = static_cast<int>(m_f->m_exp[0]->GetExp(i)->GetTotPoints());
+
+        Array<OneD, NekDouble> x(nPts), y(nPts), z(nPts);
+        m_f->m_exp[0]->GetExp(i)->GetCoords(x, y, z);
+
+        for (int j = 0; j < nPts; ++j)
+        {
+          vtkPoints->InsertNextPoint(x[j], y[j], z[j]);
+        }
+
+        int nDim = m_f->m_exp[0]->GetShapeDimension();
+
+        Array<OneD, NekDouble> nquad(nDim);
+        for (int j = 0; j < nDim; ++j)
+        {
+            nquad[j] = m_f->m_exp[0]->GetExp(i)->GetBasisNumModes(0);
+        }
+
+        // Insert elements
+        int offset = m_f->m_exp[0]->GetPhys_Offset(i);
+        switch(nDim)
+        {
+            case 3:
+                for (int j = 0; j < nquad[0] - 1; ++j)
+                {
+                    for (int k = 0; k < nquad[1] - 1; ++k)
+                    {
+                        for (int l = 0; l < nquad[2] - 1; ++l)
+                        {
+                            long long p[8] = {
+                                    l * nquad[0] * nquad[1] + k * nquad[0] + j + offset,
+                                    l * nquad[0] * nquad[1] + k * nquad[0] + j + 1 + offset,
+                                    l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + 1 + offset,
+                                    l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + offset,
+                                    (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j + offset,
+                                    (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j + 1 + offset,
+                                    (l + 1) * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + 1 + offset,
+                                    (l + 1) * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + offset
+                            };
+
+                            vtkMesh->InsertNextCell(GetVtkCellType(LibUtilities::eHexahedron,
+                                                                   SpatialDomains::eRegular), 8, p);
+                        }
+                    }
+                }
+                break;
+            case 2:
+                for (int j = 0; j < nquad[0] - 1; ++j)
+                {
+                    for (int k = 0; k < nquad[1] - 1; ++k)
+                    {
+                        long long p[4] = {
+                                k * nquad[0] + j + offset,
+                                k * nquad[0] + j + 1 + offset,
+                                (k + 1) * nquad[0] + j + 1 + offset,
+                                (k + 1) * nquad[0] + j + offset
+                        };
+
+                        vtkMesh->InsertNextCell(GetVtkCellType(LibUtilities::eQuadrilateral,
+                                                               SpatialDomains::eRegular), 4, p);
+                    }
+                }
+                break;
+            case 1:
+                for (int j = 0; j < nquad[0] - 1; ++j)
+                {
+                    long long p[2] = {
+                            j + offset,
+                            j + 1 + offset
+                    };
+
+                    vtkMesh->InsertNextCell(GetVtkCellType(LibUtilities::eSegment,
+                                                           SpatialDomains::eRegular), 2, p);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    vtkMesh->SetPoints(vtkPoints);
+
+    // Insert field information
+    int totPts = m_f->m_exp[0]->GetTotPoints();
+    for (int i = 0; i < m_f->m_variables.size(); ++i)
+    {
+        vtkNew<vtkDoubleArray> fieldData;
+        for (int j = 0; j < totPts; ++j)
+        {
+            fieldData->InsertNextValue(m_f->m_exp[i]->GetPhys()[j]);
+        }
+
+        fieldData->SetName(&m_f->m_variables[i][0]);
+        vtkMesh->GetPointData()->AddArray(fieldData);
+    }
+
+    WriteVTK(vtkMesh, filename);
+}
+
+void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &filename)
+{
+    // Save shapetypes before convert to equispaced because that nukes the explist
+    std::vector<LibUtilities::ShapeType> sType;
+    for (auto &i : *m_f->m_exp[0]->GetExp())
+    {
+        sType.emplace_back(i->GetGeom()->GetShapeType());
+    }
+
+    // Convert expansion to an equispaced points field
+    auto equispaced = MemoryManager<ProcessEquiSpacedOutput>::AllocateSharedPtr(m_f);
+    equispaced->Process(vm);
 
     // Insert points
     vtkNew<vtkPoints> vtkPoints;
@@ -518,17 +663,14 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     // Insert elements
     for (int i = 0; i < ppe.size(); ++i)
     {
-        auto geom = m_f->m_exp[0]->GetExp(i)->GetGeom();
-        auto sType = geom->GetShapeType();
-
         // Construct inverse of input reordering.
         // First try to find it in our mapping cache.
-        auto oIt = mappingCache.find(key(sType, ppe[i]));
+        auto oIt = mappingCache.find(key(sType[i], ppe[i]));
         if (oIt == mappingCache.end())
         {
             std::vector<long long> p(ppe[i]);
             std::iota(p.begin(), p.end(), 0);
-            switch (sType)
+            switch (sType[i])
             {
                 case LibUtilities::eQuadrilateral:
                     p = quadTensorNodeOrdering(p);
@@ -552,7 +694,7 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
                 inv[p[j]] = j;
             }
 
-            oIt = mappingCache.insert(std::make_pair(key(sType, ppe[i]), inv)).first;
+            oIt = mappingCache.insert(std::make_pair(key(sType[i], ppe[i]), inv)).first;
         }
 
         // Add offset to reordering
@@ -560,7 +702,7 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
         std::for_each(p.begin(), p.end(),[j = ppeOffset[i]](long long &d) { d += j; });
 
         vtkMesh->InsertNextCell(
-                GetVtkCellType(sType, geom->GetGeomFactors()->GetGtype()),
+                GetVtkCellType(sType[i], SpatialDomains::eDeformed),
                 ppe[i], &p[0]);
     }
 
@@ -573,8 +715,14 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
         vtkMesh->GetPointData()->AddArray(fieldData);
     }
 
+    WriteVTK(vtkMesh, filename);
+}
+
+void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh, std::string &filename)
+{
     // Write out the new mesh in XML format (don't support legacy
     // format here as we still have standard OutputVtk.cpp)
+
     vtkNew<vtkXMLUnstructuredGridWriter> vtkMeshWriter;
     vtkMeshWriter->SetFileName(filename.c_str());
 
@@ -598,18 +746,6 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
     vtkMeshWriter->Update();
 
     cout << "Written file: " << filename << endl;
-}
-
-void OutputVtkNew::OutputFromExp(po::variables_map &vm)
-{
-    boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only ExpData.");
-}
-
-void OutputVtkNew::OutputFromData(po::variables_map &vm)
-{
-    boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only FieldData.");
 }
 
 }
