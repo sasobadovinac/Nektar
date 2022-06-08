@@ -438,6 +438,28 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
     return nodeList;
 }
 
+std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nodes)
+{
+    int nN = static_cast<int>(nodes.size());
+    int n = static_cast<int>(std::cbrt(2*nN));
+
+    std::vector<long long> nodeList(nN);
+    int nTri = n*(n+1)/2;
+    int nQuad = n*n;
+    int nPrism = n*n*(n+1)/2;
+
+    // Vertices
+    nodeList[0] = nodes[0];
+    if (n > 1)
+    {
+        nodeList[n - 1] = nodes[1];
+        nodeList[n * (n + 1) / 2 - 1] = nodes[2];
+        nodeList[(n - 1) * (n * (n + 1) / 2) - 1] = nodes[3];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + (n - 1)] = nodes[4];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + n * (n + 1) / 2 - 1] = nodes[5];
+    }
+}
+
 std::vector<long long> lowOrderMapping(int nDim, Array<OneD, int> nquad)
 {
     std::vector<long long> p;
@@ -698,6 +720,8 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
                 case LibUtilities::eTetrahedron:
                     p = tetTensorNodeOrdering(p);
                     break;
+                case LibUtilities::ePrism:
+                    p = prismTensorNodeOrdering(p);
                 default:
                     NEKERROR(ErrorUtil::efatal,
                              "VTU output not set up for this shape type.");
