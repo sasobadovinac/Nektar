@@ -54,6 +54,7 @@ ModuleKey OutputVtkNew::m_className = GetModuleFactory().RegisterCreatorFunction
 OutputVtkNew::OutputVtkNew(FieldSharedPtr f) : OutputVtk(std::move(f))
 {
     m_requireEquiSpaced = true;
+    m_config["legacy"] = ConfigOption(true, "0", "Output using legacy manual VTK file writers");
     m_config["highorder"] = ConfigOption(true, "0", "Output using new high-order Lagrange elements");
     m_config["uncompress"] = ConfigOption(true, "0", "Uncompress xml sections");
     m_config["compressionlevel"] = ConfigOption(false, "5", "Compression level for the VTU output: 1-9");
@@ -527,6 +528,12 @@ void OutputVtkNew::OutputFromPts(po::variables_map &vm)
 
 void OutputVtkNew::OutputFromExp(po::variables_map &vm)
 {
+    if (m_config["legacy"].m_beenSet)
+    {
+        OutputVtk::OutputFromExp(vm);
+        return;
+    }
+
     // Extract the output filename and extension
     std::string filename = OutputVtk::PrepareOutput(vm);
 
