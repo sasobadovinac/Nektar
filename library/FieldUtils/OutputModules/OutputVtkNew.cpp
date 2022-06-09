@@ -489,6 +489,7 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
         nodeList[nTri * i + n * (n + 1) / 2 - 1] = nodes[6 + 6 * (n - 2) + i - 1 + 2 * (n - 2)];
     }
 
+    int np = 6 + 9 * (n - 2);
     // Tri 1 surface
     int cnt3 = n;
     int cnt4 = -1;
@@ -496,23 +497,57 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
     {
         for (int j = 1; j < n - i - 1; ++j)
         {
-            nodeList[cnt3 + j] = nodes[6 + 9 * (n - 2) + j + cnt4];
+            nodeList[cnt3 + j] = nodes[np + j + cnt4];
         }
         cnt3 += n - i;
         cnt4 += n - i - 2;
     }
 
     // Tri 2 surface
+    np += (n - 3) * (n - 2) / 2;
     int cnt5 = (n - 1) * (n * (n + 1) / 2) + n;
     int cnt6 = -1;
     for (int i = 1; i < n - 2; ++i)
     {
         for (int j = 1; j < n - i - 1; ++j)
         {
-            nodeList[cnt5 + j] = nodes[6 + 9 * (n - 2) + j + cnt6 + (n - 3) * (n - 2) / 2];
+            nodeList[cnt5 + j] = nodes[np + j + cnt6];
         }
         cnt5 += n - i;
         cnt6 += n - i - 2;
+    }
+
+
+    np += (n - 3) * (n - 2) / 2;
+    // Quad 1 surface
+    for (int i = 1; i < n - 1; ++i)
+    {
+        for (int j = 1; j < n - 1; ++j)
+        {
+            nodeList[i * nTri + j] = nodes[np++];
+        }
+    }
+
+    // Quad 2 surface
+    for (int i = 1; i < n - 1; ++i)
+    {
+        int cnt7 = n + n - 2;
+        for (int j = 1; j < n - 1; ++j)
+        {
+            nodeList[i * nTri + cnt7] = nodes[np++];
+            cnt7 += (n - j - 1);
+        }
+    }
+
+    // Quad 3 surface
+    for (int i = 1; i < n - 1; ++i)
+    {
+        int cnt8 = n;
+        for (int j = 1; j < n - 1; ++j)
+        {
+            nodeList[i * nTri + cnt8] = nodes[np++];
+            cnt8 += (n - j);
+        }
     }
 
     return nodeList;
@@ -728,6 +763,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
         case 3:
             for (int i = 0; i < nPts; ++i)
             {
+                std::cout << pts[0][i] << " " << pts[1][i] << " " << pts[2][i] << std::endl;
                 vtkPoints->InsertNextPoint(pts[0][i],pts[1][i],pts[2][i]);
             }
             break;
@@ -781,10 +817,16 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
                     break;
                 case LibUtilities::ePrism:
                     p = prismTensorNodeOrdering(p);
+                    break;
                 default:
                     NEKERROR(ErrorUtil::efatal,
                              "VTU output not set up for this shape type.");
                     break;
+            }
+
+            for (int q = 0; q < p.size(); ++q)
+            {
+                std::cout << q << "\t" << p[q] << std::endl;
             }
 
             // Invert the ordering as this is for spectral -> recursive (VTU)
