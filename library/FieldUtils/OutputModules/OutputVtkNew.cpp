@@ -454,10 +454,69 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
     {
         nodeList[n - 1] = nodes[1];
         nodeList[n * (n + 1) / 2 - 1] = nodes[2];
-        nodeList[(n - 1) * (n * (n + 1) / 2) - 1] = nodes[3];
+        nodeList[(n - 1) * (n * (n + 1) / 2)] = nodes[3];
         nodeList[(n - 1) * (n * (n + 1) / 2) + (n - 1)] = nodes[4];
         nodeList[(n - 1) * (n * (n + 1) / 2) + n * (n + 1) / 2 - 1] = nodes[5];
     }
+
+    int cnt = n;
+    for (int i = 1; i < n - 1; ++i)
+    {
+        // Triangle 1 edges
+        nodeList[i]               = nodes[6 + i - 1];
+        nodeList[cnt]             = nodes[6 + 3 * (n - 2) - i];
+        nodeList[cnt + n - i - 1] = nodes[6 + (n - 2) + i - 1];
+
+        cnt += n - i;
+    }
+
+    int cnt2 = n;
+    for (int i = 1; i < n - 1; ++i)
+    {
+        // Triangle 2 edges
+        nodeList[(n - 1) * (n * (n + 1) / 2) + i]                = nodes[6 + 3 * (n - 2) + i - 1];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + cnt2]             = nodes[6 + 3 * (n - 2) + 3 * (n - 2) - i];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + cnt2 + n - i - 1] = nodes[6 + 3 * (n - 2) + (n - 2) + i - 1];
+
+        cnt2 += n - i;
+    }
+
+    // Quad edges
+    for (int i = 1; i < n - 1; ++i)
+    {
+        nodeList[nTri * i]                       = nodes[6 + 6 * (n - 2) + i - 1];
+        nodeList[nTri * i + (n - 1)]             = nodes[6 + 6 * (n - 2) + i - 1 + n - 2];
+        nodeList[nTri * i + n * (n + 1) / 2 - 1] = nodes[6 + 6 * (n - 2) + i - 1 + 2 * (n - 2)];
+    }
+
+    // Tri 1 surface
+    int cnt3 = n;
+    int cnt4 = -1;
+    for (int i = 1; i < n - 2; ++i)
+    {
+        for (int j = 1; j < n - i - 1; ++j)
+        {
+            nodeList[cnt3 + j] = nodes[6 + 9 * (n - 2) + j + cnt4];
+        }
+        cnt3 += n - i;
+        cnt4 += n - i - 2;
+    }
+
+    // Tri 2 surface
+    int cnt5 = (n - 1) * (n * (n + 1) / 2) + n;
+    int cnt6 = -1;
+    for (int i = 1; i < n - 2; ++i)
+    {
+        for (int j = 1; j < n - i - 1; ++j)
+        {
+            nodeList[cnt5 + j] = nodes[6 + 9 * (n - 2) + j + cnt6 + (n - 3) * (n - 2) / 2];
+        }
+        cnt5 += n - i;
+        cnt6 += n - i - 2;
+    }
+
+    return nodeList;
+
 }
 
 std::vector<long long> lowOrderMapping(int nDim, Array<OneD, int> nquad)
