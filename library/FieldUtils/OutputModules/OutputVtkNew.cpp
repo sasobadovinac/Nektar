@@ -924,6 +924,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
         case 3:
             for (int i = 0; i < nPts; ++i)
             {
+                // @TODO: Remove debug (keep for now to do prism!)
                 std::cout << pts[0][i] << " " << pts[1][i] << " " << pts[2][i] << std::endl;
                 vtkPoints->InsertNextPoint(pts[0][i],pts[1][i],pts[2][i]);
             }
@@ -988,6 +989,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
                     break;
             }
 
+            // @TODO: Remove debug (keep for now to do prism!)
             for (int q = 0; q < p.size(); ++q)
             {
                 std::cout << q << "\t" << p[q] << std::endl;
@@ -1000,6 +1002,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
                 inv[p[j]] = j;
             }
 
+            // @TODO: Remove debug (keep for now to do prism!)
             std::cout << "----------------------------" << std::endl;
             for (int q = 0; q < p.size(); ++q)
             {
