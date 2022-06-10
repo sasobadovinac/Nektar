@@ -1033,9 +1033,18 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
 
 void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh, std::string &filename)
 {
+    // Set time information if exists
+    if(!m_f->m_fieldMetaDataMap["Time"].empty())
+    {
+        vtkNew<vtkDoubleArray> t;
+        t->SetName("TimeValue");
+        t->SetNumberOfTuples(1);
+        t->SetTuple1(0, std::stod(m_f->m_fieldMetaDataMap["Time"]));
+        vtkMesh->GetFieldData()->AddArray(t);
+    }
+    
     // Write out the new mesh in XML format (don't support legacy
     // format here as we still have standard OutputVtk.cpp)
-
     vtkNew<vtkXMLUnstructuredGridWriter> vtkMeshWriter;
     vtkMeshWriter->SetFileName(filename.c_str());
 
