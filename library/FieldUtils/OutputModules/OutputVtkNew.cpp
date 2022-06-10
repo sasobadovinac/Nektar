@@ -449,6 +449,11 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
     int nPrism = n*n*(n+1)/2;
 
     // Vertices
+
+
+    return nodeList;
+
+
     nodeList[0] = nodes[0];
     if (n > 1)
     {
@@ -552,6 +557,162 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
 
     return nodeList;
 
+}
+
+std::vector<long long> hexTensorNodeOrdering(const std::vector<long long> &nodes)
+{
+    int nN = static_cast<int>(nodes.size());
+    int n = static_cast<int>(std::cbrt(nN));
+
+    std::vector<long long> nodeList(nN);
+
+    // Vertices
+    nodeList[0] = nodes[0];
+    if (n == 1)
+    {
+        return nodeList;
+    }
+
+    // Vertices: same order as Nektar++
+    nodeList[n - 1]               = nodes[1];
+    nodeList[n*n -1]              = nodes[2];
+    nodeList[n*(n-1)]             = nodes[3];
+    nodeList[n*n*(n-1)]           = nodes[4];
+    nodeList[n - 1 + n*n*(n-1)]   = nodes[5];
+    nodeList[n*n -1 + n*n*(n-1)]  = nodes[6];
+    nodeList[n*(n-1) + n*n*(n-1)] = nodes[7];
+
+    if (n == 2)
+    {
+        return nodeList;
+    }
+
+    int hexEdges[12][2] = {
+            { 0, 1 }, { n-1, n }, { n*n-1, -1 }, { n*(n-1), -n },
+            { 0, n*n }, { n-1, n*n }, { n*n - 1, n*n }, { n*(n-1), n*n },
+            { n*n*(n-1), 1 }, { n*n*(n-1) + n-1, n }, { n*n*n-1, -1 },
+            { n*n*(n-1) + n*(n-1), -n }
+    };
+    int hexFaces[6][3] = {
+            { 0, 1, n }, { 0, 1, n*n }, { n-1, n, n*n },
+            { n*(n-1), 1, n*n }, { 0, n, n*n }, { n*n*(n-1), 1, n }
+    };
+    int gmshToNekEdge[12] = {0, 1, -2, -3, 8, 9, -10, -11, 4, 5, 6, 7};
+
+    // Edges
+    int offset = 8;
+    for (int i = 0; i < 12; ++i)
+    {
+        int e = abs(gmshToNekEdge[i]);
+
+        if (gmshToNekEdge[i] >= 0)
+        {
+            for (int j = 1; j < n-1; ++j)
+            {
+                nodeList[hexEdges[e][0] + j*hexEdges[e][1]] = nodes[offset++];
+            }
+        }
+        else
+        {
+            for (int j = 1; j < n-1; ++j)
+            {
+                nodeList[hexEdges[e][0] + (n-j-1)*hexEdges[e][1]] = nodes[offset++];
+            }
+        }
+    }
+
+    // Faces
+    int gmsh2NekFace[6] = {4, 2, 1, 3, 0, 5};
+
+    // Map which defines orientation between Gmsh and Nektar++ faces.
+    StdRegions::Orientation faceOrient[6] = {
+            StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+            StdRegions::eDir1FwdDir1_Dir2FwdDir2,
+            StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+            StdRegions::eDir1FwdDir1_Dir2FwdDir2,
+            StdRegions::eDir1BwdDir1_Dir2FwdDir2,
+            StdRegions::eDir1FwdDir1_Dir2FwdDir2};
+
+    for (int i = 0; i < 6; ++i)
+    {
+        int n2 = (n-2)*(n-2);
+        int face = gmsh2NekFace[i];
+        offset   = 8 + 12 * (n-2) + i * n2;
+
+        // Create a list of interior face nodes for this face only.
+        std::vector<long long> faceNodes(n2);
+        for (int j = 0; j < n2; ++j)
+        {
+            faceNodes[j] = nodes[offset + j];
+        }
+
+        // Now get the reordering of this face, which puts Gmsh
+        // recursive ordering into Nektar++ row-by-row order.
+        std::vector<long long> tmp(n2);
+
+        // Finally reorient the face according to the geometry
+        // differences.
+        if (faceOrient[i] == StdRegions::eDir1FwdDir1_Dir2FwdDir2)
+        {
+            // Orientation is the same, just copy.
+            tmp = faceNodes;
+        }
+        else if (faceOrient[i] == StdRegions::eDir1FwdDir2_Dir2FwdDir1)
+        {
+            // Tranposed faces
+            for (int j = 0; j < n-2; ++j)
+            {
+                for (int k = 0; k < n-2; ++k)
+                {
+                    tmp[j * (n-2) + k] = faceNodes[k * (n-2) + j];
+                }
+            }
+        }
+        else if (faceOrient[i] == StdRegions::eDir1BwdDir1_Dir2FwdDir2)
+        {
+            for (int j = 0; j < n-2; ++j)
+            {
+                for (int k = 0; k < n-2; ++k)
+                {
+                    tmp[j * (n-2) + k] = faceNodes[j * (n-2) + (n - k - 3)];
+                }
+            }
+        }
+
+        // Now put this into the right place in the output array
+        for (int k = 1; k < n-1; ++k)
+        {
+            for (int j = 1; j < n-1; ++j)
+            {
+                nodeList[hexFaces[face][0] + j*hexFaces[face][1] + k*hexFaces[face][2]]
+                        = faceNodes[(k-1)*(n-2) + j-1];
+            }
+        }
+    }
+
+    // Finally, recurse on interior volume
+    std::vector<long long> intNodes, tmpInt;
+    for (int i = 8 + 12 * (n-2) + 6 * (n-2) * (n-2); i < n*n*n; ++i)
+    {
+        intNodes.push_back(nodes[i]);
+    }
+
+    if (intNodes.size())
+    {
+        tmpInt = hexTensorNodeOrdering(intNodes);
+        for (int k = 1, cnt = 0; k < n - 1; ++k)
+        {
+            for (int j = 1; j < n - 1; ++j)
+            {
+                for (int i = 1; i < n - 1; ++i)
+                {
+                    nodeList[i + j * n + k * n * n] = tmpInt[cnt++];
+                }
+            }
+        }
+    }
+
+    return nodeList;
 }
 
 std::vector<long long> lowOrderMapping(int nDim, Array<OneD, int> nquad)
@@ -815,6 +976,9 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
                 case LibUtilities::eTetrahedron:
                     p = tetTensorNodeOrdering(p);
                     break;
+                case LibUtilities::eHexahedron:
+                    p = hexTensorNodeOrdering(p);
+                    break;
                 case LibUtilities::ePrism:
                     p = prismTensorNodeOrdering(p);
                     break;
@@ -834,6 +998,12 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
             for (int j = 0; j < ppe[i]; ++j)
             {
                 inv[p[j]] = j;
+            }
+
+            std::cout << "----------------------------" << std::endl;
+            for (int q = 0; q < p.size(); ++q)
+            {
+                std::cout << q << "\t" << inv[q] << std::endl;
             }
 
             oIt = mappingCache.insert(std::make_pair(key2(sType[i], ppe[i]), inv)).first;

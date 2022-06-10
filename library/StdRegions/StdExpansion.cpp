@@ -504,7 +504,10 @@ namespace Nektar
                 break;
             default:
                 {
-                    NEKERROR(ErrorUtil::efatal, "This type of matrix can not be created using a general approach");
+                    NEKERROR(ErrorUtil::efatal,
+                             "This type of matrix, " +
+                             static_cast<std::string>(MatrixTypeMap[mkey.GetMatrixType()]) +
+                             ", can not be created using a general approach");
                 }
                 break;
             }
