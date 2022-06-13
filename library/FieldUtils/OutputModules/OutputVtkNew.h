@@ -88,7 +88,11 @@ private:
     void OutputFromExpLowOrder(po::variables_map &vm, std::string &filename);
 
     /// Write VTK file using @param vtkMesh
-    void WriteVTK(vtkUnstructuredGrid* vtkMesh, std::string &filename);
+    void WriteVTK(vtkUnstructuredGrid* vtkMesh,
+                  std::string &filename,
+                  po::variables_map &vm);
+
+    void WritePVtu(po::variables_map &vm);
 };
 }
 }

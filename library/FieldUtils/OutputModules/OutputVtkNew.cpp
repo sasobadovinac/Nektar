@@ -33,6 +33,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <boost/core/ignore_unused.hpp>
+#include <boost/format.hpp>
 
 #include "OutputVtkNew.h"
 #include <FieldUtils/ProcessModules/ProcessEquiSpacedOutput.h>
@@ -449,7 +450,17 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
     int nPrism = n*n*(n+1)/2;
 
     // Vertices
+    nodeList[0] = nodes[0];
+    if (n > 1)
+    {
+        nodeList[n - 1] = nodes[1];
+        
 
+        nodeList[n * (n + 1) / 2 - 1] = nodes[2];
+        nodeList[(n - 1) * (n * (n + 1) / 2)] = nodes[3];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + (n - 1)] = nodes[4];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + n * (n + 1) / 2 - 1] = nodes[5];
+    }
 
     return nodeList;
 
@@ -601,11 +612,11 @@ std::vector<long long> hexTensorNodeOrdering(const std::vector<long long> &nodes
 
     // Edges
     int offset = 8;
-    for (int i = 0; i < 12; ++i)
+    for (int i : gmshToNekEdge)
     {
-        int e = abs(gmshToNekEdge[i]);
+        int e = abs(i);
 
-        if (gmshToNekEdge[i] >= 0)
+        if (i >= 0)
         {
             for (int j = 1; j < n-1; ++j)
             {
@@ -830,6 +841,8 @@ void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &fil
 
     // Insert points
     vtkNew<vtkPoints> vtkPoints;
+    vtkPoints->SetDataType(VTK_DOUBLE);
+
     vtkNew<vtkUnstructuredGrid> vtkMesh;
 
     // Cache ordering so we aren't recreating mappings
@@ -894,7 +907,7 @@ void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &fil
         vtkMesh->GetPointData()->AddArray(fieldData);
     }
 
-    WriteVTK(vtkMesh, filename);
+    WriteVTK(vtkMesh, filename, vm);
 }
 
 void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &filename)
@@ -913,6 +926,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
     // Insert points
     vtkNew<vtkPoints> vtkPoints;
     LibUtilities::PtsFieldSharedPtr fPts = m_f->m_fieldPts;
+    vtkPoints->SetDataType(VTK_DOUBLE);
 
     Array<OneD, Array<OneD, NekDouble>> pts;
     fPts->GetPts(pts);
@@ -925,7 +939,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
             for (int i = 0; i < nPts; ++i)
             {
                 // @TODO: Remove debug (keep for now to do prism!)
-                std::cout << pts[0][i] << " " << pts[1][i] << " " << pts[2][i] << std::endl;
+                //std::cout << pts[0][i] << " " << pts[1][i] << " " << pts[2][i] << std::endl;
                 vtkPoints->InsertNextPoint(pts[0][i],pts[1][i],pts[2][i]);
             }
             break;
@@ -992,7 +1006,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
             // @TODO: Remove debug (keep for now to do prism!)
             for (int q = 0; q < p.size(); ++q)
             {
-                std::cout << q << "\t" << p[q] << std::endl;
+                //std::cout << q << "\t" << p[q] << std::endl;
             }
 
             // Invert the ordering as this is for spectral -> recursive (VTU)
@@ -1003,10 +1017,10 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
             }
 
             // @TODO: Remove debug (keep for now to do prism!)
-            std::cout << "----------------------------" << std::endl;
+            //std::cout << "----------------------------" << std::endl;
             for (int q = 0; q < p.size(); ++q)
             {
-                std::cout << q << "\t" << inv[q] << std::endl;
+                //std::cout << q << "\t" << inv[q] << std::endl;
             }
 
             oIt = mappingCache.insert(std::make_pair(key2(sType[i], ppe[i]), inv)).first;
@@ -1028,10 +1042,12 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
         vtkMesh->GetPointData()->AddArray(fieldData);
     }
 
-    WriteVTK(vtkMesh, filename);
+    WriteVTK(vtkMesh, filename, vm);
 }
 
-void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh, std::string &filename)
+void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh,
+                            std::string &filename,
+                            po::variables_map &vm)
 {
     // Set time information if exists
     if(!m_f->m_fieldMetaDataMap["Time"].empty())
@@ -1066,6 +1082,85 @@ void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh, std::string &filename)
     }
 
     vtkMeshWriter->Update();
+
+    std::cout << "Written file: " << filename << std::endl;
+
+    // Output parallel file information if needed - using a manual write.
+    // We could use the VTK lib to do this, but that requires VTK with MPI
+    // enabled & messing about with the parallel controller & changing
+    // our file naming scheme as VTK forces _${proc-number} as a suffix...
+    if(m_f->m_comm->TreatAsRankZero() && !m_f->m_comm->IsSerial())
+    {
+        WritePVtu(vm);
+    }
+}
+
+void OutputVtkNew::WritePVtu(po::variables_map &vm)
+{
+    std::string filename  = m_config["outfile"].as<std::string>();
+    int dot          = filename.find_last_of('.');
+    std::string body      = filename.substr(0, dot);
+    filename         = body + ".pvtu";
+
+    std::ofstream outfile(filename.c_str());
+
+    int nprocs  = m_f->m_comm->GetSize();
+    std::string path = LibUtilities::PortablePath(OutputVtk::GetPath(filename,vm));
+
+    outfile << "<?xml version=\"1.0\"?>" << endl;
+    outfile << "<VTKFile type=\"PUnstructuredGrid\" version=\"0.1\" "
+            << "byte_order=\"LittleEndian\">" << endl;
+    outfile << "  <PUnstructuredGrid GhostLevel=\"0\">" << endl;
+
+    // Add time if exists
+    if(!m_f->m_fieldMetaDataMap["Time"].empty())
+    {
+        outfile << "    <FieldData> " << endl;
+        outfile << "      <DataArray type=\"Float64\" Name=\"TimeValue\" "
+                   "NumberOfTuples=\"1\" format=\"ascii\">" << endl;
+        outfile << m_f->m_fieldMetaDataMap["Time"] << std::endl;
+        outfile << "      </DataArray>" << std::endl;
+        outfile << "    </FieldData> " << endl;
+    }
+
+    // Add point coordinates
+    outfile << "    <PPoints> " << endl;
+    outfile << "      <PDataArray type=\"Float64\" NumberOfComponents=\"" << 3
+            << "\"/> " << endl;
+    outfile << "    </PPoints>" << endl;
+
+    // Add cell information
+    outfile << "    <PCells>" << endl;
+    outfile << "      <PDataArray type=\"Int64\" Name=\"connectivity\" "
+               "NumberOfComponents=\"1\"/>"
+            << endl;
+    outfile << "      <PDataArray type=\"Int64\" Name=\"offsets\"      "
+               "NumberOfComponents=\"1\"/>"
+            << endl;
+    outfile << "      <PDataArray type=\"UInt8\" Name=\"types\"        "
+               "NumberOfComponents=\"1\"/>"
+            << endl;
+    outfile << "    </PCells>" << endl;
+
+    // Add fields (point data)
+    outfile << "    <PPointData>" << endl;
+    for (auto &var : m_f->m_variables)
+    {
+        outfile << "      <PDataArray type=\"Float64\" Name=\""
+                << var << "\"/>" << endl;
+    }
+    outfile << "    </PPointData>" << endl;
+
+    // Add parallel files
+    for (int i = 0; i < nprocs; ++i)
+    {
+        boost::format pad("P%1$07d.vtu");
+        pad % i;
+        outfile << "    <Piece Source=\"" << path << "/" << pad.str()
+                << "\"/>" << endl;
+    }
+    outfile << "  </PUnstructuredGrid>" << endl;
+    outfile << "</VTKFile>" << endl;
 
     cout << "Written file: " << filename << endl;
 }
