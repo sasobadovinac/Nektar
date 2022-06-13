@@ -1672,7 +1672,10 @@ namespace Nektar
             bool              standard)
         {
             boost::ignore_unused(conn, standard);
-            ASSERTL0(false, "Not implemented.");
+            NEKERROR(ErrorUtil::efatal, "GetSimplexEquiSpacedConnectivity not"
+                                        " implemented for " + static_cast<
+                                        std::string>(LibUtilities::ShapeTypeMap[
+                                                        DetShapeType()]));
         }
 
         void StdExpansion::EquiSpacedToCoeffs(
