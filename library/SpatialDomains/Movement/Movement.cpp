@@ -88,6 +88,14 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
         ASSERTL0(zones == interfaces,
                  "Only one of ZONES or INTERFACES present in the MOVEMENT "
                  "block.")
+
+        // Don't support interior penalty yet
+        if(pSession->DefinesSolverInfo("DiffusionType"))
+        {
+            ASSERTL0(pSession->GetSolverInfo("DiffusionType") == "LDGNS",
+                     "Only LDGNS is supported as the DiffusionType in "
+                     "SOLVERINFO when a MOVEMENT block is defined.")
+        }
     }
 
     // DEBUG COMMENTS
