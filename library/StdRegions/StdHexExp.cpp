@@ -2328,13 +2328,96 @@ namespace Nektar
 
         DNekMatSharedPtr StdHexExp::v_GenMatrix(const StdMatrixKey &mkey)
         {
-            return StdExpansion::CreateGeneralMatrix(mkey);
+
+            MatrixType mtype   = mkey.GetMatrixType();
+
+            DNekMatSharedPtr Mat;
+
+            switch(mtype)
+            {
+                case ePhysInterpToEquiSpaced:
+                {
+                    int nq0 = m_base[0]->GetNumPoints();
+                    int nq1 = m_base[1]->GetNumPoints();
+                    int nq2 = m_base[2]->GetNumPoints();
+                    int nq;
+
+                    // take definition from key
+                    if(mkey.ConstFactorExists(eFactorConst))
+                    {
+                        nq = (int) mkey.GetConstFactor(eFactorConst);
+                    }
+                    else
+                    {
+                        nq = max(nq0,max(nq1,nq2));
+                    }
+
+                    int neq = LibUtilities::StdHexData::
+                    getNumberOfCoefficients(nq,nq,nq);
+                    Array<OneD, Array<OneD, NekDouble> > coords(neq);
+                    Array<OneD, NekDouble>    coll(3);
+                    Array<OneD, DNekMatSharedPtr> I(3);
+                    Array<OneD, NekDouble> tmp(nq0);
+
+                    Mat = MemoryManager<DNekMat>::
+                    AllocateSharedPtr(neq, nq0 * nq1 * nq2);
+                    int cnt = 0;
+
+                    for(int i = 0; i < nq; ++i)
+                    {
+                        for(int j = 0; j < nq; ++j)
+                        {
+                            for(int k = 0; k < nq; ++k,++cnt)
+                            {
+                                coords[cnt] = Array<OneD, NekDouble>(3);
+                                coords[cnt][0] = -1.0 + 2*k/(NekDouble)(nq-1);
+                                coords[cnt][1] = -1.0 + 2*j/(NekDouble)(nq-1);
+                                coords[cnt][2] = -1.0 + 2*i/(NekDouble)(nq-1);
+                            }
+                        }
+                    }
+
+                    for(int i = 0; i < neq; ++i)
+                    {
+                        LocCoordToLocCollapsed(coords[i],coll);
+
+                        I[0] = m_base[0]->GetI(coll);
+                        I[1] = m_base[1]->GetI(coll+1);
+                        I[2] = m_base[2]->GetI(coll+2);
+
+                        // interpolate first coordinate direction
+                        NekDouble fac;
+                        for( int k = 0; k < nq2; ++k)
+                        {
+                            for (int j  = 0; j < nq1; ++j)
+                            {
+
+                                fac = (I[1]->GetPtr())[j]*(I[2]->GetPtr())[k];
+                                Vmath::Smul(nq0,fac,I[0]->GetPtr(),1,tmp,1);
+
+                                Vmath::Vcopy(nq0, &tmp[0], 1,
+                                             Mat->GetRawPtr()+
+                                             k*nq0*nq1*neq+
+                                             j*nq0*neq+i,neq);
+                            }
+                        }
+                    }
+                }
+                break;
+            default:
+                {
+                    Mat = StdExpansion::CreateGeneralMatrix(mkey);
+                }
+                break;
+            }
+
+            return Mat;
         }
 
 
         DNekMatSharedPtr StdHexExp::v_CreateStdMatrix(const StdMatrixKey &mkey)
         {
-            return StdExpansion::CreateGeneralMatrix(mkey);
+            return v_GenMatrix(mkey);
         }
 
 
@@ -2626,6 +2709,44 @@ namespace Nektar
 
             // backward transform to physical space
             OrthoExp.BwdTrans(orthocoeffs,array);
+        }
+
+        void StdHexExp::v_GetSimplexEquiSpacedConnectivity(
+                Array<OneD, int> &conn,
+                bool              standard)
+        {
+            boost::ignore_unused(standard);
+
+            int np0 = m_base[0]->GetNumPoints();
+            int np1 = m_base[1]->GetNumPoints();
+            int np2 = m_base[2]->GetNumPoints();
+            int np = max(np0,max(np1,np2));
+
+            conn = Array<OneD, int>(6*(np-1)*(np-1)*(np-1));
+
+            int row   = 0;
+            int rowp1 = 0;
+            int cnt = 0;
+            int plane = 0;
+            for(int i = 0; i < np-1; ++i)
+            {
+                for(int j = 0; j < np-1; ++j)
+                {
+                    rowp1 += np;
+                    for (int k = 0; k < np-1; ++k)
+                    {
+                        conn[cnt++] = plane + row   + k;
+                        conn[cnt++] = plane + row   + k + 1;
+                        conn[cnt++] = plane + rowp1 + k;
+
+                        conn[cnt++] = plane + rowp1 + k + 1;
+                        conn[cnt++] = plane + rowp1 + k;
+                        conn[cnt++] = plane + row   + k + 1;
+                    }
+                    row += np;
+                }
+                plane += np*np;
+            }
         }
     }
 }
