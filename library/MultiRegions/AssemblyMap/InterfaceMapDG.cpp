@@ -313,7 +313,7 @@ void InterfaceTrace::CalcLocalMissing()
 
                     NekDouble dist =
                         edge.second->FindDistance(xs, foundLocCoord);
-                    if (dist < 5e-5)
+                    if (dist < NekConstants::kFindDistanceMin)
                     {
                         found                          = true;
                         m_foundLocalCoords[offset + i] = std::make_pair(
@@ -589,7 +589,7 @@ void InterfaceExchange::CalcRankDistances()
 
                 NekDouble dist = edge.second->FindDistance(xs, foundLocCoord);
 
-                if (dist < 5e-5)
+                if (dist < NekConstants::kFindDistanceMin)
                 {
                     m_foundRankCoords[m_rank][j / 3] = std::make_pair(
                         edge.second->GetGlobalID(), foundLocCoord);

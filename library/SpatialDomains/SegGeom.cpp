@@ -399,7 +399,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
 
         // Minimisation loop (Quasi-newton method)
-        for (int i = 0; i < 51; ++i)
+        for (int i = 0; i < NekConstants::kNewtonIterations; ++i)
         {
             // Compute the objective function, f(x_k) and its derivatives
             Array<OneD, NekDouble> xc(dim), xc_der(dim), xc_der2(dim);

@@ -61,6 +61,9 @@ namespace Nektar
 
         // Factor for tolerance for floating point comparison
         static const unsigned int kNekFloatCompFact = 4;
+
+        static const NekDouble kFindDistanceMin = 5e-05;
+        static const unsigned int kNewtonIterations = 51;
     }
 } //end of namespace
 

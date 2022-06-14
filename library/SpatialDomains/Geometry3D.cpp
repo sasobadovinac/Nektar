@@ -78,7 +78,7 @@ void Geometry3D::NewtonIterationForLocCoord(
     NekDouble &dist)
 {
     // maximum iterations for convergence
-    const int MaxIterations = 51;
+    const int MaxIterations = NekConstants::kNewtonIterations;
     // |x-xp|^2 < EPSILON  error tolerance
     const NekDouble Tol = 1.e-8;
     // |r,s|    > LcoordDIV stop the search

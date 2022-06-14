@@ -70,7 +70,7 @@ void Geometry2D::NewtonIterationForLocCoord(
     NekDouble &dist)
 {
     // Maximum iterations for convergence
-    const int MaxIterations = 51;
+    const int MaxIterations = NekConstants::kNewtonIterations;
     // |x-xp|^2 < EPSILON  error    tolerance
     const NekDouble Tol = 1.e-8;
     // |r,s|    > LcoordDIV stop   the search
@@ -412,7 +412,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         // Minimisation loop (Quasi-newton method)
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
-        for (int i = 0; i < 51; ++i)
+        for (int i = 0; i < NekConstants::kNewtonIterations; ++i)
         {
             // Compute the objective function, f(x_k) and its derivatives
             NekDouble xc = m_xmap->PhysEvaluate(xi, x);
