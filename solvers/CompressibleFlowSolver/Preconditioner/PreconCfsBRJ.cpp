@@ -240,7 +240,7 @@ void PreconCfsBRJ::PreconBlkDiag(
                                                           
     unsigned int ncoeffs    = pFields[0]->GetNcoeffs();
 
-#if 1
+#if 0
     LibUtilities::Timer timer;
     timer.Start();
 
@@ -354,7 +354,7 @@ void PreconCfsBRJ::PreconBlkDiag(
     }
 #else  //vectorised version
     using namespace tinysimd;
-    using vec_t = simd<NekDouble>;
+    using vec_t = simd<NekSingle>;
 
     static unsigned int m_max_ncoeffs = 0;
     static unsigned int m_max_nblocks = 0;
@@ -368,14 +368,14 @@ void PreconCfsBRJ::PreconBlkDiag(
     if(m_max_ncoeffs == 0)
     {
         // will need to be a float in the end. 
-        Array<OneD, NekDouble> tmp(vecwidth);
+        Array<OneD, NekSingle> tmp(vecwidth);
 
         for (int ne = 0; ne < nTotElmt; ne++)
         {
             const auto nElmtCoef   = pFields[0]->GetNcoeffs(ne);
             const auto nElmtDof    = nElmtCoef*nvariables;
             const auto nblocks     = nElmtDof/vecwidth;
-            const auto totblocks = (nElmtDof%vecwidth)? nblocks+1: nblocks; 
+            const auto totblocks   = (nElmtDof%vecwidth)? nblocks+1: nblocks; 
 
             m_max_nblocks  = max(m_max_nblocks,totblocks);
             m_max_nElmtDof = max(m_max_nElmtDof,nElmtDof);
@@ -428,7 +428,7 @@ void PreconCfsBRJ::PreconBlkDiag(
     std::vector<vec_t, tinysimd::allocator<vec_t>> Sinarray (m_max_nblocks); 
     std::vector<vec_t, tinysimd::allocator<vec_t>> Soutarray(m_max_nElmtDof);
 
-    Array<OneD, NekDouble> tmp(vecwidth); 
+    Array<OneD, NekSingle> tmp(vecwidth); 
 
     for (int ne = 0; ne < nTotElmt; ne++)
     {
@@ -460,7 +460,7 @@ void PreconCfsBRJ::PreconBlkDiag(
             // vector in 2nd iteration that needs combining
             for(i = 0; i0 < vecwidth; ++i, ++i0)
             {
-                tmp[i0] = inarray[inOffset + i];
+                tmp[i0] = NekSingle(inarray[inOffset + i]);
             }
 
             Sinarray[cnt++].load(&tmp[0]);
@@ -469,13 +469,17 @@ void PreconCfsBRJ::PreconBlkDiag(
             // width
             for (j = 0; j < (nElmtCoef-i)/vecwidth; j += vecwidth)
             {
-                Sinarray[cnt++].load(&inarray[inOffset + i + j]);
+                for(i0 = 0; i0 < vecwidth; ++i0)
+                {
+                    tmp[i0] = NekSingle(inarray[inOffset + i + j + i0]);
+                }
+                Sinarray[cnt++].load(&tmp[0]);
             }
 
             // load up any residaul data. 
             for(i0 = 0 ; j < nElmtCoef-i; ++j, ++i0)
             {
-                tmp[i0] = inarray[inOffset + j]; 
+                tmp[i0] = NekSingle(inarray[inOffset + j]); 
             }
         }
 
@@ -490,7 +494,7 @@ void PreconCfsBRJ::PreconBlkDiag(
         timer1.Start();
         // Do matrix multiply
         // first block
-        for (int i = 0; i < nElmtDof; ++i)
+        for (i = 0; i < nElmtDof; ++i)
         {
             Soutarray[i] = m_sBlkDiagMat[ne][i] * Sinarray[0];
         }
@@ -499,7 +503,7 @@ void PreconCfsBRJ::PreconBlkDiag(
         cnt = nElmtDof; 
         for(int n = 1; n < nblocks; ++n)
         {
-            for (int i = 0; i < nElmtDof; ++i)
+            for (i = 0; i < nElmtDof; ++i)
             {
                 Soutarray[i].fma(m_sBlkDiagMat[ne][cnt++],Sinarray[n]);
             }
@@ -508,7 +512,7 @@ void PreconCfsBRJ::PreconBlkDiag(
         // Do remainder if required
         if(endwidth) 
         {
-            for (int i = 0; i < nElmtDof; ++i)
+            for (i = 0; i < nElmtDof; ++i)
             {
                 Soutarray[i].fma(m_sBlkDiagMat[ne][cnt++],Sinarray[nblocks]);
             }
@@ -522,16 +526,16 @@ void PreconCfsBRJ::PreconBlkDiag(
         cnt = 0;
         for (int m = 0; m < nvariables; m++)
         {
-            int inOffset    = m*ncoeffs + nCoefOffset;
+            int inOffset = m*ncoeffs + nCoefOffset;
 
-            for (int i = 0; i < nElmtCoef; ++i)
+            for (i = 0; i < nElmtCoef; ++i)
             {
                 Soutarray[cnt++].store(&tmp[0]);
                 
-                val = tmp[0];
-                for(int j = 1; j < vecwidth; ++j)
+                val = NekDouble(tmp[0]);
+                for(j = 1; j < vecwidth; ++j)
                 {
-                    val += tmp[i]; 
+                    val += NekDouble(tmp[i]); 
                 }
                 outarray[inOffset + i] = val; 
             }
