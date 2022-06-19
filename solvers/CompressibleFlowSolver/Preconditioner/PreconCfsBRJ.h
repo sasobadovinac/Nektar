@@ -98,12 +98,10 @@ private:
         const Array<OneD, const Array<OneD, NekDouble>> &intmp,
         const NekDouble time, const NekDouble lambda);
 
-    template <typename DataType, typename TypeNekBlkMatSharedPtr>
     void PreconBlkDiag(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &outarray,
-        const TypeNekBlkMatSharedPtr &PreconMatVars,
-        const DataType &tmpDataType);
+        const SNekBlkMatSharedPtr &PreconMatVars);
 
     template <typename DataType>
     void MinusOffDiag2Rhs(
