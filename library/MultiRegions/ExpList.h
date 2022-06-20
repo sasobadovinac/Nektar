@@ -46,6 +46,7 @@
 #include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/MultiRegions.hpp>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
+#include <MultiRegions/FieldStorage/FieldStorage.hpp>
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalMatrixKey.h>
 #include <MultiRegions/GlobalLinSysKey.h>
@@ -397,6 +398,11 @@ namespace Nektar
             inline void BwdTrans (
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,NekDouble> &outarray);
+
+            inline void BwdTrans (
+                    const FieldStorage<const NekDouble, MultiRegions::eCoeff> in,
+                          FieldStorage<      NekDouble, MultiRegions::ePhys> out
+            );
 
             /// This function calculates the coordinates of all the elemental
             /// quadrature points \f$\boldsymbol{x}_i\f$.
@@ -2029,10 +2035,18 @@ namespace Nektar
          *
          */
         inline void ExpList::BwdTrans (
-            const Array<OneD, const NekDouble> &inarray,
-            Array<OneD,       NekDouble> &outarray)
+            const FieldStorage<const NekDouble, MultiRegions::StorageType::eCoeff> in,
+                    FieldStorage<      NekDouble, MultiRegions::ePhys> out
+        )
         {
-            v_BwdTrans(inarray,outarray);
+            v_BwdTrans(in.getData(), out.getData());
+        }
+
+        inline void ExpList::BwdTrans (
+             const Array<OneD, const NekDouble> &inarray,
+             Array<OneD,       NekDouble> &outarray)
+        {
+            v_BwdTrans(inarray, outarray);
         }
 
         /**
