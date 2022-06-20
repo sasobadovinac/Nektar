@@ -2,6 +2,7 @@
 #include <vector>
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <MultiRegions/ExpList.h>
 
 namespace Nektar
 {
@@ -55,7 +56,12 @@ class FieldStorage{
         // nothing to do... yet...
     }
 
-    Array<OneD, TData> getData()
+    Array<OneD, TData>& UpdateData()
+    {
+        return m_storage;
+    }
+
+    const Array<OneD, const TData> GetData() const
     {
         return m_storage;
     }
@@ -63,7 +69,7 @@ class FieldStorage{
 private:
     ExpListSharedPtr m_exp;
     enum StorageType               m_sType;
-    LibUtilities::Array<OneD, TData>  m_storage;
+    Array<OneD, TData>  m_storage;
 //    std::vector<size_t>            m_offsets;      // Offset of element i in the array
     int m_numVariables;
 //    int num_elements;

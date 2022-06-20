@@ -321,6 +321,10 @@ namespace Nektar
                 const NekDouble> &inarray,
                 Array<OneD,       NekDouble> &outarray);
 
+            inline void FwdTrans(
+                const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
+                      FieldStorage<NekDouble, MultiRegions::eCoeff> &out);
+
             MULTI_REGIONS_EXPORT void   ExponentialFilter(
                 Array<OneD, NekDouble> &array,
                 const NekDouble        alpha,
@@ -400,8 +404,8 @@ namespace Nektar
                       Array<OneD,NekDouble> &outarray);
 
             inline void BwdTrans (
-                    const FieldStorage<const NekDouble, MultiRegions::eCoeff> in,
-                          FieldStorage<      NekDouble, MultiRegions::ePhys> out
+                    const FieldStorage<NekDouble, MultiRegions::eCoeff> in,
+                          FieldStorage<NekDouble, MultiRegions::ePhys> out
             );
 
             /// This function calculates the coordinates of all the elemental
@@ -2002,6 +2006,13 @@ namespace Nektar
             v_FwdTrans(inarray,outarray);
         }
 
+        inline void ExpList::FwdTrans(
+            const FieldStorage<const NekDouble, MultiRegions::ePhys> &in,
+                  FieldStorage<      NekDouble, MultiRegions::eCoeff> &out)
+        {
+            v_FwdTrans(in.GetData(), out.UpdateData());
+        }
+
         /**
          *
          */
@@ -2035,11 +2046,11 @@ namespace Nektar
          *
          */
         inline void ExpList::BwdTrans (
-            const FieldStorage<const NekDouble, MultiRegions::StorageType::eCoeff> in,
-                    FieldStorage<      NekDouble, MultiRegions::ePhys> out
+            const FieldStorage<NekDouble, MultiRegions::StorageType::eCoeff> in,
+                    FieldStorage<NekDouble, MultiRegions::ePhys> out
         )
         {
-            v_BwdTrans(in.getData(), out.getData());
+            v_BwdTrans(in.GetData(), out.UpdateData());
         }
 
         inline void ExpList::BwdTrans (
