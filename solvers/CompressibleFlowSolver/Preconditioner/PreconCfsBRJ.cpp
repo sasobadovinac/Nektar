@@ -349,7 +349,7 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         timer.Start(); 
         pFields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
         timer.Stop();
-        timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 3;
+        timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 3);
     }
 
     int indexwspTraceDataType = 0;

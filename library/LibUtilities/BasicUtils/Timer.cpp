@@ -103,26 +103,33 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
                                 std::ostream &o,
                                 int iolevel)
 {
+    // Return if there is nothing to write, or the user has disabled printing
+    if(m_elapsedRegion.begin() == m_elapsedRegion.end() || iolevel < 0){
+        return;
+    }
+
+    // Define content of each column that will be written
     std::vector<std::string> labels{
         "Region",
         "Elapsed time Avg (s)",
         "Min (s)",
         "Max (s)",
-        "Count"};
+        "Count",
+        "IO Level"};
 
     // Set width of each column (minimum 14 characters)
     std::vector<size_t> widths;
     for(const auto& label : labels){
         widths.push_back(std::max<size_t>(label.size()+2, 14));
     }
+
     // Make sure that names for each "Region" fits
     for(const auto& entry : m_elapsedRegion){
         widths[0] = std::max<size_t>(entry.first.size()+2, widths[0]);
     }
 
-    // Print header with labels
-    if (comm->GetRank() == 0 &&
-        m_elapsedRegion.begin() != m_elapsedRegion.end())
+    // Print header
+    if (comm->GetRank() == 0)
         {
         o << "-------------------------------------------\n";
         for(int i=0; i<labels.size(); ++i){
@@ -149,22 +156,29 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
               << std::setw(widths[1]) << elapsedAve
               << std::setw(widths[2]) << elapsedMin
               << std::setw(widths[3]) << elapsedMax
-              << std::setw(widths[4]) << std::get<1>(item->second) << '\n';
+              << std::setw(widths[4]) << std::get<1>(item->second) 
+              << std::setw(widths[5]) << std::get<2>(item->second) << '\n';
         }
-    }            
+    }
 
-    // write out all other timings order alphabetically on string
+    // Write all remaining timers, grouped by their IO Level
     for (int i=0; i<=iolevel; i++)
     {
+        // Add a newline between each IO Level group
+        if (comm->GetRank() == 0) o << "\n";
+
         for (auto item = m_elapsedRegion.begin();
                 item != m_elapsedRegion.end(); ++item)
         {
+            // Avoid writing the "Execute" timer twice
+            if(boost::iequals(item->first,"Execute"))
+            {
+                continue;
+            }
+            
+            // Check if this timer has the correct IO Level
             if(std::get<2>(item->second) == i)
             {
-                if(boost::iequals(item->first,"Execute"))
-                {
-                    continue;
-                }
 
                 auto elapsedAve = std::get<0>(item->second).count();
                 comm->AllReduce(elapsedAve, LibUtilities::ReduceSum);
@@ -180,12 +194,10 @@ void Timer::PrintElapsedRegions(LibUtilities::CommSharedPtr comm,
                     << std::setw(widths[1]) << elapsedAve
                     << std::setw(widths[2]) << elapsedMin
                     << std::setw(widths[3]) << elapsedMax
-                    << std::setw(widths[4]) << std::get<1>(item->second) << '\n';
+                    << std::setw(widths[4]) << std::get<1>(item->second) 
+                    << std::setw(widths[5]) << std::get<2>(item->second) << '\n';
                 }
             }
-        }
-        if (iolevel > 0 && comm->GetRank() == 0){
-            o << "-----| end of IO_Timer_Level=" << i << " |-----\n";
         }
     }    
 }
