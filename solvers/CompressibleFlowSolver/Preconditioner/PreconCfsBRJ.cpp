@@ -277,7 +277,7 @@ void PreconCfsBRJ::PreconBlkDiag(
         }
     }
 
-    outVect = (*PreconMatVars) * tmpVect;    
+    outVect = (*PreconMatVars) * tmpVect;
 
     for (int m = 0; m < nvariables; m++)
     {
@@ -409,7 +409,7 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         pFields[i]->AddTraceIntegralToOffDiag(FwdFlux[i], BwdFlux[i],
                                               outarray[i]);
         timer.Stop();
-        timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 3);
+        timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 10);
     }
     
 

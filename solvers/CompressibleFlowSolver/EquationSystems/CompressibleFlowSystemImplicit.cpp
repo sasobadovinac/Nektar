@@ -966,7 +966,7 @@ namespace Nektar
         GetTraceJac(inarray,qfield,TraceJac,TraceJacDeriv,TraceJacDerivSign,
             TraceIPSymJacArray);
         timer.Stop();
-        timer.AccumulateRegion("CFSImplicit::GetTraceJac", 3);
+        timer.AccumulateRegion("CFSImplicit::GetTraceJac", 10);
         
         Array<OneD, TypeNekBlkMatSharedPtr > tmpJac;
         Array<OneD, Array<OneD, DataType>>  tmpSign;
@@ -975,7 +975,7 @@ namespace Nektar
         m_advObject->AddTraceJacToMat(nvariables,m_spacedim,m_fields, 
             TraceJac,gmtxarray,tmpJac,tmpSign);
         timer.Stop();
-        timer.AccumulateRegion("Advection::AddTraceJacToMap", 3);
+        timer.AccumulateRegion("Advection::AddTraceJacToMap", 10);
     }
 
 
