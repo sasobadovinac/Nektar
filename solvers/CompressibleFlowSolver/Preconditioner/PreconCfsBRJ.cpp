@@ -277,11 +277,7 @@ void PreconCfsBRJ::PreconBlkDiag(
         }
     }
 
-    LibUtilities::Timer timer;
-    timer.Start(); 
     outVect = (*PreconMatVars) * tmpVect;    
-    timer.Stop();
-    timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag - commandline", 3);
 
     for (int m = 0; m < nvariables; m++)
     {
@@ -349,7 +345,7 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         timer.Start(); 
         pFields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
         timer.Stop();
-        timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 3);
+        timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 10);
     }
 
     int indexwspTraceDataType = 0;
