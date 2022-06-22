@@ -978,7 +978,6 @@ namespace Nektar {
                     const Array<OneD, const NekDouble> &inarray,
                     std::array<NekDouble, 3> &firstOrderDerivs)
             {
-                firstOrderDerivs = std::array<NekDouble, 3>{0.0};
                 return v_PhysEvaluate(coord, inarray, firstOrderDerivs);
             }
 
