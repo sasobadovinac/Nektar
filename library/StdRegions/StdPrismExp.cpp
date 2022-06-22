@@ -767,19 +767,20 @@ namespace Nektar {
                 return PhysEvaluate(I, inarray);
             }
 
-            std::array<NekDouble, 3> interDerivs;
-            NekDouble val = BaryTensorDeriv(coll, inarray, interDerivs);
+            NekDouble val = BaryTensorDeriv(coll, inarray, firstOrderDerivs);
+
+            NekDouble dEta_bar1 = firstOrderDerivs[0];
 
             NekDouble fac = 2.0 / (1.0 - coll[2]);
-            firstOrderDerivs[0] = fac * interDerivs[0];
+            firstOrderDerivs[0] = fac * dEta_bar1;
 
             // divide dEta_Bar1 by (1-eta_z)
             fac = 1.0 / (1.0 - coll[2]);
-            interDerivs[0] = fac * interDerivs[0];
+            dEta_bar1 = fac * dEta_bar1;
 
             // Multiply dEta_Bar1 by (1+eta_x) and add ot out_dxi3
             fac = 1.0 + coll[0];
-            firstOrderDerivs[2] += fac * interDerivs[0];
+            firstOrderDerivs[2] += fac * dEta_bar1;
 
             return val;
         }
