@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: Smath.hpp
+// File: NekInline.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -10,7 +10,6 @@
 // Department of Aeronautics, Imperial College London (UK), and Scientific
 // Computing and Imaging Institute, University of Utah (USA).
 //
-// License for the specific language governing rights and limitations under
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation
@@ -29,38 +28,24 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Collection of templated functions for scalar mathematics
+// Description: Macro to force inlining of funcitons. 
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_SCALARMATH_H
-#define NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_SCALARMATH_H
+#ifndef NEKTAR_LIBUTILITIES_BASICUTILS_NEKINLINE
+#define NEKTAR_LIBUTILITIES_BASICUTILS_NEKINLINE
 
-#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
-#include <algorithm>
-#include <cstdlib>
-#include <math.h>
-using namespace std;
-using namespace Nektar;
-
-namespace Smath
+namespace Nektar
 {
 
-/***************** Math routines  ***************/
+#if defined(__GNUC__) || defined(__clang__)
+#define NEK_FORCE_INLINE inline __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define NEK_FORCE_INLINE __forceinline
+#else
+#define NEK_FORCE_INLINE inline
+#endif
 
-/// \brief Return the soft max of between two scalars
-template <class T> T Smax(const T a, const T b, const T k)
-{
-    T maxi = std::max(a, b) * k;
-    T mini = std::min(a, b) * k;
-    T xmax = (maxi + log(1.0 + exp(mini - maxi))) / k;
-    return xmax;
 }
 
-template NekDouble Smax(const NekDouble a, const NekDouble b,
-                        const NekDouble k);
-
-template int Smax(const int a, const int b, const int k);
-} // namespace Smath
-#endif // NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_SCALARMATH_H
+#endif

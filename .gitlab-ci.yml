@@ -1,3 +1,18 @@
+workflow:
+  rules:
+    # Run pipeline on tags for the main project
+    - if: $CI_COMMIT_TAG && $CI_PROJECT_PATH == "nektar/nektar"
+    # Run pipeline on the default branch for the main project
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "nektar/nektar"
+    # DO NOT run pipeline if WIP
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^WIP:.*/
+      when: never
+    # DO NOT run pipeline if Draft
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^Draft:.*/ 
+      when: never
+    # Other merge requests trigger pipelines
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
 stages:
   - build-env-default
   - build-env-full
@@ -33,8 +48,6 @@ include:
       - .gitmodules
       - .gitlab-ci.yml
       - CMakeLists.txt
-    variables:
-      - $CI_MERGE_REQUEST_TITLE !~ /^WIP:.*/
 
 .build-env-template: &build-env-template
   <<: *execution-conditions
@@ -52,7 +65,7 @@ include:
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 1)
     - BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - export CCACHE_DIR=/cache/nektar/$OS_VERSION/
-    - export NUM_CPUS=4
+    - export NUM_CPUS=8
     - export CONTAINER_NAME=test-$CI_JOB_ID
     - export ENV_NAME=env-${OS_VERSION}-${BUILD_TYPE}
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -418,7 +431,7 @@ win10-default-build-and-test:
     - cmake.exe -G "Visual Studio 14 2015 Win64" --config Debug ..
     - cmake.exe --build . --target ALL_BUILD --config Debug
     - cmake.exe --build . --target INSTALL --config Debug
-    - ctest --output-on-failure -C Debug -j3
+    - ctest --output-on-failure -C Debug -j8
   after_script:
     - Remove-Item -Recurse -Force build
   needs: []
@@ -436,7 +449,7 @@ win10-mpi-default-build-and-test:
     - cmake.exe -G "Visual Studio 14 2015 Win64" -DNEKTAR_USE_MPI=ON --config Debug ..
     - cmake.exe --build . --target ALL_BUILD --config Debug
     - cmake.exe --build . --target INSTALL --config Debug
-    - ctest --output-on-failure -C Debug -j3
+    - ctest --output-on-failure -C Debug -j8
   after_script:
     - Remove-Item -Recurse -Force build
   needs: []

@@ -75,9 +75,6 @@ namespace Nektar
         Array<OneD, NekDouble> GetStabilityLimitVector(
             const Array<OneD,int> &ExpOrder);
 
-        /// Function to get estimate of min h/p factor per element
-        Array<OneD, NekDouble>  GetElmtMinHP(void);
-
         virtual void GetPressure(
             const Array<OneD, const Array<OneD, NekDouble>> &physfield,
                   Array<OneD, NekDouble>                    &pressure);
@@ -179,6 +176,7 @@ namespace Nektar
 
         virtual NekDouble v_GetTimeStep(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray);
+
         virtual void v_SetInitialConditions(
             NekDouble initialtime           = 0.0,
             bool      dumpInitialConditions = true,
@@ -207,17 +205,13 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble>> &inarray,
                   Array<OneD, Array<OneD, NekDouble>> &outarray,
             const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-            const Array<OneD, Array<OneD, NekDouble>> &pBwd)
-        {
-            boost::ignore_unused(inarray, outarray, pFwd, pBwd);
-            // Do nothing by default
-        }
-        
+            const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+
         virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
             const NekDouble SpeedSoundFactor);
 
         virtual void v_SteadyStateResidual(
-            int                     step, 
+            int                     step,
             Array<OneD, NekDouble>  &L2);
     };
 }

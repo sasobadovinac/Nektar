@@ -1169,13 +1169,6 @@ namespace Nektar
         // TODO: to consider the Jacobian of AV seperately
         Array<OneD, NekDouble> muvar        =   NullNekDouble1DArray;
         Array<OneD, NekDouble> MuVarTrace   =   NullNekDouble1DArray;
-        if (m_shockCaptureType != "Off" && m_shockCaptureType != "Physical")
-        {
-            MuVarTrace  =   Array<OneD, NekDouble>(nTracePts, 0.0);
-            muvar       =   Array<OneD, NekDouble>(npoints, 0.0);
-            m_diffusion->GetAVmu(fields,inarray,muvar,MuVarTrace);
-            muvar       =   NullNekDouble1DArray;
-        }
 
         Array<OneD, Array<OneD, NekDouble>> numflux(nvariables);
         for(int i = 0; i < nvariables; ++i)
