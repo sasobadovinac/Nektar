@@ -70,6 +70,8 @@ IF (NEKTAR_USE_HDF5)
         SET(HDF5_CONFIG_INCLUDE_DIR ${HDF5_INCLUDE_DIRS})
         ADD_CUSTOM_TARGET(hdf5-1.8.16 ALL)
 
+        # Newer HDF5 versions have changed the API
+        # We compile deprecated symbols using the old API if newer than 1.10.0
         IF(HDF5_VERSION VERSION_GREATER_EQUAL 1.10.0)
             ADD_DEFINITIONS(-DH5_USE_110_API)
         ENDIF()
