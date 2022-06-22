@@ -44,11 +44,6 @@ namespace Nektar
 {
     namespace StdRegions
     {
-
-        StdExpansion2D::StdExpansion2D()
-        {
-        }
-
         StdExpansion2D::StdExpansion2D(int numcoeffs,
                        const LibUtilities::BasisKey &Ba,
                                        const LibUtilities::BasisKey &Bb):
@@ -58,10 +53,6 @@ namespace Nektar
 
         StdExpansion2D::StdExpansion2D(const StdExpansion2D &T):
                 StdExpansion(T)
-        {
-        }
-
-        StdExpansion2D::~StdExpansion2D()
         {
         }
 
@@ -165,11 +156,11 @@ namespace Nektar
         }
 
         NekDouble StdExpansion2D::v_PhysEvaluate(
-            const Array<OneD, NekDouble> coord,
-            const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-            NekDouble &out_d1, NekDouble &out_d2)
+            const Array<OneD, NekDouble> &coord,
+            const Array<OneD, const NekDouble> &inarray,
+            std::array<NekDouble, 3> &firstOrderDerivs)
         {
-            boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+            boost::ignore_unused(coord, inarray, firstOrderDerivs);
             return 0;
         }
 

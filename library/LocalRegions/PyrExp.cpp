@@ -79,11 +79,6 @@ namespace Nektar
         {
         }
 
-        PyrExp::~PyrExp()
-        {
-        }
-
-
         //----------------------------
         // Integration Methods
         //----------------------------
@@ -637,14 +632,14 @@ namespace Nektar
             return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
         }
 
-        NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
+        NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                          const Array<OneD, const NekDouble> &inarray,
-                                         NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+                                         std::array<NekDouble, 3> &firstOrderDerivs)
         {
             Array<OneD, NekDouble> Lcoord(3);
             ASSERTL0(m_geom, "m_geom not defined");
             m_geom->GetLocCoords(coord, Lcoord);
-            return StdPyrExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+            return StdPyrExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
         }
 
         //---------------------------------------

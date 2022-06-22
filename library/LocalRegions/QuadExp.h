@@ -48,8 +48,7 @@ namespace Nektar
     namespace LocalRegions
     {
 
-        class QuadExp:  virtual public StdRegions::StdQuadExp,
-                        virtual public Expansion2D
+        class QuadExp final:  virtual public StdRegions::StdQuadExp, virtual public Expansion2D
         {
         public:
             /**
@@ -63,7 +62,7 @@ namespace Nektar
 
             LOCAL_REGIONS_EXPORT QuadExp(const QuadExp &T);
 
-            LOCAL_REGIONS_EXPORT virtual ~QuadExp();
+            LOCAL_REGIONS_EXPORT virtual ~QuadExp() final = default;
 
         protected:
             //-------------------------------
@@ -162,10 +161,10 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
                         const Array<OneD, const NekDouble> &coord,
                         const Array<OneD, const NekDouble> &physvals);
-            LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, NekDouble> coord,
-                const Array<OneD, const NekDouble> &inarray, 
-                NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2);
+            LOCAL_REGIONS_EXPORT NekDouble v_PhysEvaluate(
+                const Array<OneD, NekDouble> &coord,
+                const Array<OneD, const NekDouble> &inarray,
+                std::array<NekDouble, 3> &firstOrderDerivs) final;
             LOCAL_REGIONS_EXPORT virtual void v_GetEdgePhysVals(
                         const int edge,
                         const Array<OneD, const NekDouble> &inarray,
@@ -264,10 +263,10 @@ namespace Nektar
                         const Array<OneD, const NekDouble> &inarray,
                               Array<OneD,       NekDouble> &outarray,
                         const StdRegions::StdMatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT virtual void v_GeneralMatrixOp_MatOp(
+            LOCAL_REGIONS_EXPORT void v_GeneralMatrixOp_MatOp(
                         const Array<OneD, const NekDouble> &inarray,
                               Array<OneD,       NekDouble> &outarray,
-                        const StdRegions::StdMatrixKey &mkey);
+                        const StdRegions::StdMatrixKey &mkey) final;
             LOCAL_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree_Kernel(
                         const Array<OneD, const NekDouble> &inarray,
                               Array<OneD,       NekDouble> &outarray,
@@ -292,9 +291,6 @@ namespace Nektar
                   DNekScalMat, MatrixKey::opLess> m_matrixManager;
             LibUtilities::NekManager<MatrixKey,
                   DNekScalBlkMat, MatrixKey::opLess> m_staticCondMatrixManager;
-
-            QuadExp();
-
         };
 
         typedef std::shared_ptr<QuadExp> QuadExpSharedPtr;

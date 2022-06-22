@@ -45,7 +45,7 @@ namespace Nektar
   namespace LocalRegions 
   {
   
-    class NodalTetExp: public TetExp
+    class NodalTetExp final: virtual public TetExp
     {
 //     public:
 //       NodalTetExp(const StdRegions::Basis &Ba, const StdRegions::Basis &Bb, 
@@ -68,7 +68,7 @@ namespace Nektar
           LOCAL_REGIONS_EXPORT NodalTetExp(const NodalTetExp &T);
 
       /// Destructor
-          LOCAL_REGIONS_EXPORT ~NodalTetExp();
+          LOCAL_REGIONS_EXPORT ~NodalTetExp() final = default;
     
     protected:
 

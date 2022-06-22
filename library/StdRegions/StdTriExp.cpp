@@ -45,12 +45,6 @@ namespace Nektar
 {
     namespace StdRegions
     {
-
-        StdTriExp::StdTriExp()
-        {
-        }
-
-
         StdTriExp::StdTriExp(
             const LibUtilities::BasisKey &Ba,
             const LibUtilities::BasisKey &Bb) :
@@ -71,10 +65,6 @@ namespace Nektar
         StdTriExp::StdTriExp(const StdTriExp &T):
             StdExpansion(T),
             StdExpansion2D(T)
-        {
-        }
-
-        StdTriExp::~StdTriExp()
         {
         }
 
@@ -776,12 +766,10 @@ namespace Nektar
         }
 
         NekDouble StdTriExp::v_PhysEvaluate(
-            const Array<OneD, NekDouble> coord,
+            const Array<OneD, NekDouble> &coord,
             const Array<OneD, const NekDouble> &inarray,
-            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+            std::array<NekDouble, 3> &firstOrderDerivs)
         {
-            boost::ignore_unused(out_d2);
-
             // Collapse coordinates
             Array<OneD, NekDouble> coll(2, 0.0);
             LocCoordToLocCollapsed(coord, coll);
@@ -798,28 +786,28 @@ namespace Nektar
                 I[0] = GetBase()[0]->GetI(coll);
                 I[1] = GetBase()[1]->GetI(coll + 1);
 
-                out_d0 = PhysEvaluate(I, EphysDeriv0);
-                out_d1 = PhysEvaluate(I, EphysDeriv1);
+                firstOrderDerivs[0] = PhysEvaluate(I, EphysDeriv0);
+                firstOrderDerivs[1] = PhysEvaluate(I, EphysDeriv1);
                 return PhysEvaluate(I, inarray);
             }
 
             // set up geometric factor: 2.0/(1.0-z1)
             NekDouble fac0 = 2 / (1 - coll[1]);
 
-            NekDouble val = BaryTensorDeriv(coll, inarray, out_d0, out_d1);
+            NekDouble val = BaryTensorDeriv(coll, inarray, firstOrderDerivs);
 
             // Copy d0 into temp for d1
             NekDouble temp;
-            temp = out_d0;
+            temp = firstOrderDerivs[0];
 
             // Multiply by geometric factor
-            out_d0 = out_d0 * fac0;
+            firstOrderDerivs[0] = firstOrderDerivs[0] * fac0;
 
             // set up geometric factor: (1+z0)/(1-z1)
             NekDouble fac1 = fac0 * (coll[0] + 1) / 2;
 
             // Multiply out_d0 by geometric factor and add to out_d1
-            out_d1 += fac1 * temp;
+            firstOrderDerivs[1] += fac1 * temp;
 
             return val;
         }

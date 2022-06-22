@@ -402,17 +402,19 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         for (int i = 0; i < NekConstants::kNewtonIterations; ++i)
         {
             // Compute the objective function, f(x_k) and its derivatives
-            Array<OneD, NekDouble> xc(dim), xc_der(dim), xc_der2(dim);
+            Array<OneD, NekDouble> xc(dim);
+            Array<OneD, std::array<NekDouble, 3>> xc_der(dim);
+            Array<OneD, std::array<NekDouble, 6>> xc_der2(dim);
             NekDouble fx = 0, fxp = 0, fxp2 = 0, xcDiff = 0;
             for (int j = 0; j < dim; ++j)
             {
-                xc[j] = m_xmap->PhysEvaluate2ndDeriv(xi, x[j], xc_der[j], xc_der2[j]);
+                xc[j] = m_xmap->PhysEvaluate(xi, x[j], xc_der[j], xc_der2[j]);
 
                 xcDiff = xc[j] - xs[j];
                 // Objective function is the distance to the search point
                 fx += xcDiff * xcDiff;
-                fxp += xc_der[j] * xcDiff;
-                fxp2 += xc_der2[j] * xcDiff + xc_der[j] * xc_der[j];
+                fxp += xc_der[j][0] * xcDiff;
+                fxp2 += xc_der2[j][0] * xcDiff + xc_der[j][0] * xc_der[j][0];
             }
 
             fxp *= 2;
@@ -447,7 +449,8 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                     continue;
                 }
 
-                Array<OneD, NekDouble> xc_pk(dim), xc_der_pk(dim);
+                Array<OneD, NekDouble> xc_pk(dim);
+                Array<OneD, std::array<NekDouble, 3>> xc_der_pk(dim);
                 NekDouble fx_pk = 0, fxp_pk = 0, xc_pkDiff = 0;
                 for (int j = 0; j < dim; ++j)
                 {
@@ -455,7 +458,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
                     xc_pkDiff = xc_pk[j] - xs[j];
                     fx_pk += xc_pkDiff * xc_pkDiff;
-                    fxp_pk += xc_der_pk[j] * xc_pkDiff;
+                    fxp_pk += xc_der_pk[j][0] * xc_pkDiff;
                 }
 
                 fxp_pk *= 2;

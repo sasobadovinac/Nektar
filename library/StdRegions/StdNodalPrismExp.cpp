@@ -72,12 +72,6 @@ namespace Nektar
         {
         }
 
-        StdNodalPrismExp::~StdNodalPrismExp()
-        {
-        }
-
-
-
         bool StdNodalPrismExp::v_IsNodalNonTensorialExp()
         {
             return true;

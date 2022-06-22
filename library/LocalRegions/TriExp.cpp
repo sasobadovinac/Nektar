@@ -75,13 +75,6 @@ namespace Nektar
         {
         }
 
-
-        TriExp::~TriExp()
-        {
-        }
-
-
-
         NekDouble TriExp::v_Integral(const Array<OneD, const NekDouble> &inarray)
         {
             int    nquad0 = m_base[0]->GetNumPoints();
@@ -786,14 +779,14 @@ namespace Nektar
         }
 
         NekDouble TriExp::v_PhysEvaluate(
-            const Array<OneD, NekDouble> coord,
+            const Array<OneD, NekDouble> &coord,
             const Array<OneD, const NekDouble> &inarray,
-            NekDouble &out_d0, NekDouble &out_d1,NekDouble &out_d2)
+            std::array<NekDouble, 3> &firstOrderDerivs)
         {
             Array<OneD, NekDouble> Lcoord(2);
             ASSERTL0(m_geom, "m_geom not defined");
             m_geom->GetLocCoords(coord, Lcoord);
-            return StdTriExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+            return StdTriExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
         }
 
 

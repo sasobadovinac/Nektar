@@ -44,21 +44,12 @@ namespace Nektar
 {
     namespace StdRegions
     {
-
-        /** \brief Default constructor */
-
-        StdSegExp::StdSegExp()
-        {
-        }
-
-
         /** \brief Constructor using BasisKey class for quadrature points and
          *  order definition
          *
          *  \param Ba BasisKey class definition containing order and quadrature
          *  points.
          */
-
         StdSegExp::StdSegExp(const LibUtilities::BasisKey &Ba):
         StdExpansion(Ba.GetNumModes(), 1, Ba),
         StdExpansion1D(Ba.GetNumModes(),Ba)
@@ -67,15 +58,9 @@ namespace Nektar
 
 
         /** \brief Copy Constructor */
-
         StdSegExp::StdSegExp(const StdSegExp &T):
                 StdExpansion(T),
                 StdExpansion1D(T)
-        {
-        }
-
-
-        StdSegExp::~StdSegExp()
         {
         }
 

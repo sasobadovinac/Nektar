@@ -52,11 +52,11 @@ namespace Nektar
         {
 
         public:
-            STD_REGIONS_EXPORT StdExpansion3D();
+            STD_REGIONS_EXPORT StdExpansion3D() = default;
             STD_REGIONS_EXPORT StdExpansion3D(int numcoeffs, const LibUtilities::BasisKey &Ba,
                            const LibUtilities::BasisKey &Bb, const LibUtilities::BasisKey &Bc);
             STD_REGIONS_EXPORT StdExpansion3D(const StdExpansion3D &T);
-            STD_REGIONS_EXPORT virtual ~StdExpansion3D();
+            STD_REGIONS_EXPORT virtual ~StdExpansion3D() override = default;
 
             // Differentiation
 
@@ -186,9 +186,9 @@ namespace Nektar
                     const Array<OneD, const NekDouble >& physvals) override;
 
             STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, NekDouble> coord,
+                const Array<OneD, NekDouble> &coord,
                 const Array<OneD, const NekDouble> &inarray,
-                NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2) override;
+                std::array<NekDouble, 3> &firstOrderDerivs) override;
 
             STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
                 const Array<OneD, const NekDouble>& base0,
@@ -245,7 +245,7 @@ namespace Nektar
             STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
                 const Array<OneD, NekDouble> &coord,
                 const Array<OneD, const NekDouble> &inarray,
-                NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+                std::array<NekDouble, 3> &firstOrderDerivs)
             {
                 const int nq0 = m_base[0]->GetNumPoints();
                 const int nq1 = m_base[1]->GetNumPoints();
@@ -267,15 +267,15 @@ namespace Nektar
                 {
                     deriv0phys1[j] = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[j * nq1]);
                 }
-                out_d0 = StdExpansion::BaryEvaluate<2, false>(coord[2], &deriv0phys1[0]);
+                firstOrderDerivs[0] = StdExpansion::BaryEvaluate<2, false>(coord[2], &deriv0phys1[0]);
 
                 for (int j = 0; j < nq2; ++j)
                 {
                     phys0phys1[j] = StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[j * nq1], phys0deriv1[j]);
                 }
-                out_d1 = StdExpansion::BaryEvaluate<2, false>(coord[2], &phys0deriv1[0]);
+                firstOrderDerivs[1] = StdExpansion::BaryEvaluate<2, false>(coord[2], &phys0deriv1[0]);
 
-                return StdExpansion::BaryEvaluate<2, true>(coord[2], &phys0phys1[0], out_d2);
+                return StdExpansion::BaryEvaluate<2, true>(coord[2], &phys0phys1[0], firstOrderDerivs[2]);
             }
 
             STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(

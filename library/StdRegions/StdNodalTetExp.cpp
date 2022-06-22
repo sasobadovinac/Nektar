@@ -78,10 +78,6 @@ namespace Nektar
         {
         }
 
-        StdNodalTetExp::~StdNodalTetExp()
-        {
-        }
-
         bool StdNodalTetExp::v_IsNodalNonTensorialExp()
         {
             return true;

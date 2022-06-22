@@ -44,10 +44,6 @@ namespace Nektar
 {
     namespace StdRegions
     {
-        StdPyrExp::StdPyrExp() // Deafult construct of standard expansion directly called.
-        {
-        }
-
         StdPyrExp::StdPyrExp(const LibUtilities::BasisKey &Ba,
                              const LibUtilities::BasisKey &Bb,
                              const LibUtilities::BasisKey &Bc)
@@ -78,13 +74,6 @@ namespace Nektar
               StdExpansion3D(T)
         {
         }
-
-
-        // Destructor
-        StdPyrExp::~StdPyrExp()
-        {
-        }
-
 
         //---------------------------------------
         // Differentiation/integration Methods
@@ -779,9 +768,9 @@ namespace Nektar
         }
 
         NekDouble StdPyrExp::v_PhysEvaluate(
-            const Array<OneD, NekDouble> coord,
+            const Array<OneD, NekDouble> &coord,
             const Array<OneD, const NekDouble> &inarray,
-            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+            std::array<NekDouble, 3> &firstOrderDerivs)
         {
             // Collapse coordinates
             Array<OneD, NekDouble> coll(3, 0.0);
@@ -801,24 +790,22 @@ namespace Nektar
                 I[1] = GetBase()[1]->GetI(coll + 1);
                 I[2] = GetBase()[2]->GetI(coll + 2);
 
-                out_d0 = PhysEvaluate(I, EphysDeriv0);
-                out_d1 = PhysEvaluate(I, EphysDeriv1);
-                out_d2 = PhysEvaluate(I, EphysDeriv2);
+                firstOrderDerivs[0] = PhysEvaluate(I, EphysDeriv0);
+                firstOrderDerivs[1] = PhysEvaluate(I, EphysDeriv1);
+                firstOrderDerivs[2] = PhysEvaluate(I, EphysDeriv2);
                 return PhysEvaluate(I, inarray);
             }
 
-            NekDouble dEta_bar1;
-            NekDouble dXi2;
-            NekDouble dEta3;
+            std::array<NekDouble, 3> interDeriv;
             NekDouble val =
-                StdExpansion3D::BaryTensorDeriv(coll, inarray, dEta_bar1, dXi2, dEta3);
+                StdExpansion3D::BaryTensorDeriv(coll, inarray, interDeriv);
 
             NekDouble fac = 2.0 / (1.0 - coll[2]);
 
-            out_d0     = fac * dEta_bar1;
-            out_d1     = fac * dXi2;
-            out_d2 = ((1.0 + coll[0]) / (1.0 - coll[2])) * dEta_bar1 +
-                     ((1.0 + coll[1]) / (1.0 - coll[2])) * dXi2 + dEta3;
+            firstOrderDerivs[0]     = fac * interDeriv[0];
+            firstOrderDerivs[1]     = fac * interDeriv[1];
+            firstOrderDerivs[2] = ((1.0 + coll[0]) / (1.0 - coll[2])) * interDeriv[0] +
+                     ((1.0 + coll[1]) / (1.0 - coll[2])) * interDeriv[1] + interDeriv[2];
 
             return val;
         }

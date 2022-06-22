@@ -40,11 +40,6 @@ namespace Nektar
 {
     namespace StdRegions
     {
-
-    StdExpansion1D::StdExpansion1D()
-    {
-    }
-
     StdExpansion1D::StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba):
         StdExpansion(numcoeffs,1,Ba)
     {
@@ -53,11 +48,6 @@ namespace Nektar
     StdExpansion1D::StdExpansion1D(const StdExpansion1D &T):StdExpansion(T)
     {
     }
-
-    StdExpansion1D::~StdExpansion1D()
-    {
-    }
-
 
     //----------------------------
     // Differentiation Methods
@@ -94,11 +84,21 @@ namespace Nektar
     }
     
     NekDouble StdExpansion1D::v_PhysEvaluate(
-        const Array<OneD, NekDouble> coord,
+        const Array<OneD, NekDouble> &coord,
         const Array<OneD, const NekDouble> &inarray,
-        NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+        std::array<NekDouble, 3> &firstOrderDerivs)
     {
-        boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+        boost::ignore_unused(coord, inarray, firstOrderDerivs);
+        return 0;
+    }
+
+    NekDouble StdExpansion1D::v_PhysEvaluate(
+            const Array<OneD, NekDouble> &coord,
+            const Array<OneD, const NekDouble> &inarray,
+            std::array<NekDouble, 3> &firstOrderDerivs,
+            std::array<NekDouble, 6> &secondOrderDerivs)
+    {
+        boost::ignore_unused(coord, inarray, firstOrderDerivs, secondOrderDerivs);
         return 0;
     }
 

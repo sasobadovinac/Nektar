@@ -98,10 +98,14 @@ int main(int argc, char *argv[])
     const auto dimension = (unsigned) E->GetShapeDimension();
 
     const auto totPoints = (unsigned) E->GetTotPoints();
-    Array<OneD, NekDouble> physIn(totPoints, 0.0), physOut(totPoints, 0.0),
-        physOut0(totPoints, 0.0), physOut1(totPoints, 0.0),
-        physOut2(totPoints, 0.0), sol(totPoints, 0.0), sol0(totPoints, 0.0),
-        sol1(totPoints, 0.0), sol2(totPoints, 0.0);
+    Array<OneD, NekDouble> physIn(totPoints, 0.0),
+                           physOut(totPoints, 0.0),
+                           sol(totPoints, 0.0),
+                           sol0(totPoints, 0.0),
+                           sol1(totPoints, 0.0),
+                           sol2(totPoints, 0.0);
+
+    Array<OneD, std::array<NekDouble, 3>> physOutDeriv(totPoints);
 
     Array<OneD, Array<OneD, NekDouble> > coordsE = demo.GetCoords(E);
     physIn = EvalPoly(coordsE);
@@ -128,18 +132,34 @@ int main(int argc, char *argv[])
         }
 
         // Operating on expansion E so using physIn from E, and coordIn from F
-        physOut[i] = E->PhysEvaluate(coordIn, physIn, physOut0[i], physOut1[i], physOut2[i]);
+        physOut[i] = E->PhysEvaluate(coordIn, physIn, physOutDeriv[i]);
     }
 
+    // Extract derivatives in to array for error calculation
+    Array<OneD, NekDouble> physOut0(totPoints, 0.0),
+                           physOut1(totPoints, 0.0),
+                           physOut2(totPoints, 0.0);
     switch(dimension)
     {
         case 3:
+            for (int j = 0; j < totPoints; ++j)
+            {
+                physOut2[j] = physOutDeriv[j][2];
+            }
             sol2 = EvalPolyDerivz(coordsF);
             /* fall through */
         case 2:
+            for (int j = 0; j < totPoints; ++j)
+            {
+                physOut1[j] = physOutDeriv[j][1];
+            }
             sol1 = EvalPolyDerivy(coordsF);
             /* fall through */
         case 1:
+            for (int j = 0; j < totPoints; ++j)
+            {
+                physOut0[j] = physOutDeriv[j][0];
+            }
             sol0 = EvalPolyDerivx(coordsF);
             /* fall through */
         default:

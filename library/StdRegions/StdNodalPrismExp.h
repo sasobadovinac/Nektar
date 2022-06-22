@@ -42,17 +42,17 @@ namespace Nektar
 {
     namespace StdRegions
     {
-        class StdNodalPrismExp: public StdPrismExp
+        class StdNodalPrismExp final: public StdPrismExp
         {
         public:
-            STD_REGIONS_EXPORT StdNodalPrismExp();
+            STD_REGIONS_EXPORT StdNodalPrismExp() = default;
             STD_REGIONS_EXPORT StdNodalPrismExp(
                 const LibUtilities::BasisKey &Ba, 
                 const LibUtilities::BasisKey &Bb,
                 const LibUtilities::BasisKey &Bc,
                 const LibUtilities::PointsType Ntype);
             STD_REGIONS_EXPORT StdNodalPrismExp(const StdNodalPrismExp &T);
-            STD_REGIONS_EXPORT ~StdNodalPrismExp();
+            STD_REGIONS_EXPORT ~StdNodalPrismExp() override = default;
 
             //-------------------------------
             // Nodal basis specific routines

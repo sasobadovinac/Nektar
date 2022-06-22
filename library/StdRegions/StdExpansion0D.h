@@ -51,10 +51,10 @@ namespace Nektar
 
         public:
 
-            STD_REGIONS_EXPORT StdExpansion0D();
+            STD_REGIONS_EXPORT StdExpansion0D() = default;
             STD_REGIONS_EXPORT StdExpansion0D(int numcoeffs, const LibUtilities::BasisKey &Ba);
             STD_REGIONS_EXPORT StdExpansion0D(const StdExpansion0D &T);
-            STD_REGIONS_EXPORT virtual ~StdExpansion0D();
+            STD_REGIONS_EXPORT ~StdExpansion0D() override = default;
 			
             STD_REGIONS_EXPORT void PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
                                                     Array<OneD,       NekDouble>& outarray);

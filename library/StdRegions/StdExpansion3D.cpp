@@ -46,10 +46,6 @@ namespace Nektar
 {
     namespace StdRegions
     {
-        StdExpansion3D::StdExpansion3D()
-        {
-        }
-
         StdExpansion3D::StdExpansion3D(int                           numcoeffs,
                                        const LibUtilities::BasisKey &Ba,
                                        const LibUtilities::BasisKey &Bb,
@@ -63,9 +59,6 @@ namespace Nektar
         {
         }
 
-        StdExpansion3D::~StdExpansion3D()
-        {
-        }
         void StdExpansion3D::PhysTensorDeriv(
             const Array<OneD, const NekDouble> &inarray,
                   Array<OneD,       NekDouble> &out_dx,
@@ -298,11 +291,11 @@ namespace Nektar
 
         
         NekDouble StdExpansion3D::v_PhysEvaluate(
-            const Array<OneD, NekDouble> coord,
-            const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-            NekDouble &out_d1, NekDouble &out_d2)
+            const Array<OneD, NekDouble> &coord,
+            const Array<OneD, const NekDouble> &inarray,
+            std::array<NekDouble, 3> &firstOrderDerivs)
         {
-            boost::ignore_unused(coord, inarray, out_d0, out_d1, out_d2);
+            boost::ignore_unused(coord, inarray, firstOrderDerivs);
             return 0;
         }
 

@@ -45,12 +45,6 @@ namespace Nektar
 {
     namespace StdRegions
     {
-
-
-        StdQuadExp::StdQuadExp()
-        {
-        }
-
         /** \brief Constructor using BasisKey class for quadrature
          *  points and order definition
          */
@@ -65,11 +59,6 @@ namespace Nektar
         StdQuadExp::StdQuadExp(const StdQuadExp &T):
             StdExpansion(T),
             StdExpansion2D(T)
-        {
-        }
-
-        /** \brief Destructor */
-        StdQuadExp::~StdQuadExp()
         {
         }
 
@@ -758,17 +747,6 @@ namespace Nektar
                 Blas::Dcopy(nq0,z0.get(), 1,&coords_0[0] + i*nq0,1);
                 Vmath::Fill(nq0,z1[i],&coords_1[0] + i*nq0,1);
             }
-        }
-
-        NekDouble StdQuadExp::v_PhysEvaluate(
-            const Array<OneD, NekDouble> coord,
-            const Array<OneD, const NekDouble> &inarray,
-            NekDouble &out_d0,
-            NekDouble &out_d1,
-            NekDouble &out_d2)
-        {
-            boost::ignore_unused(out_d2);
-            return BaryTensorDeriv(coord, inarray, out_d0, out_d1);
         }
 
         /**

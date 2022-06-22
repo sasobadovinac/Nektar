@@ -43,12 +43,6 @@ namespace Nektar
 {
     namespace StdRegions
     {
-        StdNodalTriExp::StdNodalTriExp():
-            StdTriExp(),
-            m_nodalPointsKey()
-        {
-        }
-
         StdNodalTriExp::StdNodalTriExp(
             const LibUtilities::BasisKey &Ba,
             const LibUtilities::BasisKey &Bb,
@@ -74,10 +68,6 @@ namespace Nektar
             StdExpansion2D(T),
             StdTriExp(T),
             m_nodalPointsKey(T.m_nodalPointsKey)
-        {
-        }
-
-        StdNodalTriExp::~StdNodalTriExp()
         {
         }
 

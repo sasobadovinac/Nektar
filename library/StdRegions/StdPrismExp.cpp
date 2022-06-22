@@ -735,9 +735,9 @@ namespace Nektar
         }
 
         NekDouble StdPrismExp::v_PhysEvaluate(
-            const Array<OneD, NekDouble> coord,
+            const Array<OneD, NekDouble> &coord,
             const Array<OneD, const NekDouble> &inarray,
-            NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2)
+            std::array<NekDouble, 3> &firstOrderDerivs)
         {
             // Collapse coordinates
             Array<OneD, NekDouble> coll(3, 0.0);
@@ -757,25 +757,25 @@ namespace Nektar
                 I[1] = GetBase()[1]->GetI(coll + 1);
                 I[2] = GetBase()[2]->GetI(coll + 2);
 
-                out_d0 = PhysEvaluate(I, EphysDeriv0);
-                out_d1 = PhysEvaluate(I, EphysDeriv1);
-                out_d2 = PhysEvaluate(I, EphysDeriv2);
+                firstOrderDerivs[0] = PhysEvaluate(I, EphysDeriv0);
+                firstOrderDerivs[1] = PhysEvaluate(I, EphysDeriv1);
+                firstOrderDerivs[2] = PhysEvaluate(I, EphysDeriv2);
                 return PhysEvaluate(I, inarray);
             }
 
-            NekDouble dEta_bar1;
-            NekDouble val = BaryTensorDeriv(coll, inarray, dEta_bar1, out_d1, out_d2);
+            std::array<NekDouble, 3> interDerivs;
+            NekDouble val = BaryTensorDeriv(coll, inarray, interDerivs);
 
             NekDouble fac = 2.0 / (1.0 - coll[2]);
-            out_d0     = fac * dEta_bar1;
+            firstOrderDerivs[0] = fac * interDerivs[0];
 
             // divide dEta_Bar1 by (1-eta_z)
             fac = 1.0 / (1.0 - coll[2]);
-            dEta_bar1  = fac * dEta_bar1;
+            interDerivs[0]  = fac * interDerivs[0];
 
             // Multiply dEta_Bar1 by (1+eta_x) and add ot out_dxi3
             fac = 1.0 + coll[0];
-            out_d2 += fac * dEta_bar1;
+            firstOrderDerivs[2] += fac * interDerivs[0];
 
             return val;
         }
