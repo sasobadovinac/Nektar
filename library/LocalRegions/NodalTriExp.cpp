@@ -65,6 +65,7 @@ namespace Nektar {
         NodalTriExp::NodalTriExp(const NodalTriExp &T) :
                 StdExpansion(T),
                 StdExpansion2D(T),
+                StdRegions::StdTriExp(T),
                 StdRegions::StdNodalTriExp(T),
                 Expansion(T),
                 Expansion2D(T),
