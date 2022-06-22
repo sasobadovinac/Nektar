@@ -402,7 +402,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                                                      0.0);
 
         // Get first & second derivatives & partial derivatives of x,y,z values
-        std::array<NekDouble, 3> xc_derxi{}, yc_derxi{}, zc_derxi{};
+        std::array<NekDouble, 3> xc_derxi, yc_derxi, zc_derxi;
 
         m_xmap->PhysDeriv(x, xderxi1, xderxi2);
         m_xmap->PhysDeriv(y, yderxi1, yderxi2);
@@ -533,7 +533,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                     continue;
                 }
 
-                std::array<NekDouble, 3> xc_pk_derxi{}, yc_pk_derxi{}, zc_pk_derxi{};
+                std::array<NekDouble, 3> xc_pk_derxi, yc_pk_derxi, zc_pk_derxi;
 
                 NekDouble xc_pk = m_xmap->PhysEvaluate(xi_pk, x,
                                                        xc_pk_derxi);

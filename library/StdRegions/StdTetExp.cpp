@@ -1009,7 +1009,7 @@ namespace Nektar {
                 return PhysEvaluate(I, inarray);
             }
 
-            std::array<NekDouble, 3> interDeriv{0};
+            std::array<NekDouble, 3> interDeriv;
             NekDouble val = BaryTensorDeriv(coll, inarray, interDeriv);
 
             // calculate 2.0/((1-eta_1)(1-eta_2)) * Out_dEta0
