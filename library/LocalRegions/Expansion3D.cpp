@@ -314,21 +314,17 @@ namespace Nektar
             Array<OneD, Array<OneD, NekDouble> > &faceCoeffs,
             Array<OneD, NekDouble>               &outarray)
         {
-            int f, cnt;
-            int order_f, nquad_f;
+            int f;
+            int nquad_f;
             int nfaces = GetNtraces();
 
-            cnt = 0;
             for(f = 0; f < nfaces; ++f)
             {
-                order_f = FaceExp[f]->GetNcoeffs();
                 nquad_f = FaceExp[f]->GetNumPoints(0)*FaceExp[f]->GetNumPoints(1);
 
                 const Array<OneD, const Array<OneD, NekDouble> > &normals =
                     GetTraceNormal(f);
                 Array<OneD, NekDouble> facePhys(nquad_f);
-
-                cnt += order_f;
 
                 FaceExp[f]->BwdTrans(faceCoeffs[f], facePhys);
 
