@@ -130,8 +130,7 @@ namespace Nektar
 
                     int nptrace = elmt->GetTraceNumPoints(n);
                     elmt->GetTraceCoeffMap(n,map);               
-                    int traceNcoeffs = elmt->GetTraceNcoeffs(n);
-                    
+
                     for(int i = 0; i < m_traceDim+1; ++i)
                     {
                         Vmath::Smul(nptrace, jumpScal, dfactors[i][n], 1,

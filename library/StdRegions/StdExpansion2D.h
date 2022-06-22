@@ -40,19 +40,20 @@
 #include <StdRegions/StdExpansion.h>
 #include <StdRegions/StdRegionsDeclspec.h>
 
-namespace Nektar
-{
-namespace StdRegions
-{
+namespace Nektar {
+    namespace StdRegions {
 
-    class StdExpansion2D: virtual public StdExpansion
-    {
+        class StdExpansion2D : virtual public StdExpansion {
         public:
             STD_REGIONS_EXPORT StdExpansion2D() = default;
-            STD_REGIONS_EXPORT StdExpansion2D(int numcoeffs, const LibUtilities::BasisKey &Ba,
-                           const LibUtilities::BasisKey &Bb);
+
+            STD_REGIONS_EXPORT StdExpansion2D(int numcoeffs,
+                                              const LibUtilities::BasisKey &Ba,
+                                              const LibUtilities::BasisKey &Bb);
+
             STD_REGIONS_EXPORT StdExpansion2D(const StdExpansion2D &T);
-            STD_REGIONS_EXPORT virtual ~StdExpansion2D() override = default;
+
+            STD_REGIONS_EXPORT ~StdExpansion2D() override = default;
 
             // Generic operations in different element
 
@@ -89,20 +90,20 @@ namespace StdRegions
              *  \end{array} \f$
              */
             STD_REGIONS_EXPORT void PhysTensorDeriv(
-                    const Array<OneD, const NekDouble>& inarray,
-                          Array<OneD, NekDouble> &outarray_d0,
-                          Array<OneD, NekDouble> &outarray_d1);
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray_d0,
+                    Array<OneD, NekDouble> &outarray_d1);
 
             STD_REGIONS_EXPORT NekDouble Integral(
-                    const Array<OneD, const NekDouble>& inarray,
-                    const Array<OneD, const NekDouble>& w0,
-                    const Array<OneD, const NekDouble>& w1);
+                    const Array<OneD, const NekDouble> &inarray,
+                    const Array<OneD, const NekDouble> &w0,
+                    const Array<OneD, const NekDouble> &w1);
 
             // find derivative of u (inarray) at all coords points
             STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                std::array<NekDouble, 3> &firstOrderDerivs)
+                    const Array<OneD, NekDouble> &coord,
+                    const Array<OneD, const NekDouble> &inarray,
+                    std::array<NekDouble, 3> &firstOrderDerivs)
             {
                 const int nq0 = m_base[0]->GetNumPoints();
                 const int nq1 = m_base[1]->GetNumPoints();
@@ -113,26 +114,30 @@ namespace StdRegions
 
                 for (int j = 0; j < nq1; ++j, ptr += nq0)
                 {
-                    phys0[j] = StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
+                    phys0[j] = StdExpansion::BaryEvaluate<0, true>(coord[0],
+                                                                   ptr,
+                                                                   deriv0[j]);
                 }
-                firstOrderDerivs[0] = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
+                firstOrderDerivs[0] = StdExpansion::BaryEvaluate<1, false>(
+                        coord[1], &deriv0[0]);
 
-                return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], firstOrderDerivs[1]);
+                return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0],
+                                                           firstOrderDerivs[1]);
             }
 
             STD_REGIONS_EXPORT void BwdTrans_SumFacKernel(
-                    const Array<OneD, const NekDouble>& base0,
-                    const Array<OneD, const NekDouble>& base1,
-                    const Array<OneD, const NekDouble>& inarray,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray,
                     Array<OneD, NekDouble> &wsp,
                     bool doCheckCollDir0 = true,
                     bool doCheckCollDir1 = true);
 
             STD_REGIONS_EXPORT void IProductWRTBase_SumFacKernel(
-                    const Array<OneD, const NekDouble>& base0,
-                    const Array<OneD, const NekDouble>& base1,
-                    const Array<OneD, const NekDouble>& inarray,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray,
                     Array<OneD, NekDouble> &wsp,
                     bool doCheckCollDir0 = true,
@@ -162,84 +167,86 @@ namespace StdRegions
              *  \param coords the coordinates of the single point
              *  \return returns the value of the expansion at the single point
              */
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals) override;
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluate(
+                    const Array<OneD, const NekDouble> &coords,
+                    const Array<OneD, const NekDouble> &physvals) override;
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                    const Array<OneD, DNekMatSharedPtr>& I,
-                    const Array<OneD, const NekDouble> & physvals) override;
-            
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                std::array<NekDouble, 3> &firstOrderDerivs) override;
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluate(
+                    const Array<OneD, DNekMatSharedPtr> &I,
+                    const Array<OneD, const NekDouble> &physvals) override;
+
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluate(
+                    const Array<OneD, NekDouble> &coord,
+                    const Array<OneD, const NekDouble> &inarray,
+                    std::array<NekDouble, 3> &firstOrderDerivs) override;
 
             STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
-                    const Array<OneD, const NekDouble>& base0,
-                    const Array<OneD, const NekDouble>& base1,
-                    const Array<OneD, const NekDouble>& inarray,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray,
                     Array<OneD, NekDouble> &wsp,
                     bool doCheckCollDir0,
                     bool doCheckCollDir1) = 0;
 
             STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFacKernel(
-                    const Array<OneD, const NekDouble>& base0,
-                    const Array<OneD, const NekDouble>& base1,
-                    const Array<OneD, const NekDouble>& inarray,
+                    const Array<OneD, const NekDouble> &base0,
+                    const Array<OneD, const NekDouble> &base1,
+                    const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray,
                     Array<OneD, NekDouble> &wsp,
                     bool doCheckCollDir0,
                     bool doCheckCollDir1) = 0;
 
-            STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree(
+            STD_REGIONS_EXPORT void v_LaplacianMatrixOp_MatFree(
                     const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD,       NekDouble> &outarray,
-                    const StdRegions::StdMatrixKey &mkey) override;
-            STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(
-                    const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD,       NekDouble> &outarray,
+                    Array<OneD, NekDouble> &outarray,
                     const StdRegions::StdMatrixKey &mkey) override;
 
-            STD_REGIONS_EXPORT virtual void v_GetTraceCoeffMap
-                                     (const unsigned int         traceid,
-                                      Array<OneD, unsigned int>& maparray) override;
+            STD_REGIONS_EXPORT void v_HelmholtzMatrixOp_MatFree(
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray,
+                    const StdRegions::StdMatrixKey &mkey) override;
 
-        STD_REGIONS_EXPORT virtual void v_GetElmtTraceToTraceMap
-        (const unsigned int          eid,
-         Array<OneD, unsigned int>& maparray,
-         Array<OneD, int>&          signarray,
-         Orientation                edgeOrient,
-         int P, int Q) override;
-        
-        STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap
-        (const int  eid,
-         Array<OneD, unsigned int>& maparray,
-         Array<OneD, int>&          signarray,
-         Orientation                edgeOrient = eForwards,
-         int                        P = -1,
-         int                        Q = -1) override;
-        
-        STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
-                  const int dir,
-                  DNekMatSharedPtr &mat) override;
-    private:
-        // Virtual Functions ----------------------------------------
-        virtual int v_GetShapeDimension() const final
-        {
-            return 2;
-        }
-        
-        virtual int v_GetCoordim(void) override
-        {
-            return 2;
-        }
-    };
+            STD_REGIONS_EXPORT void v_GetTraceCoeffMap
+                    (const unsigned int traceid,
+                     Array<OneD, unsigned int> &maparray) override;
 
-    typedef std::shared_ptr<StdExpansion2D> StdExpansion2DSharedPtr;
+            STD_REGIONS_EXPORT void v_GetElmtTraceToTraceMap
+                    (unsigned int eid,
+                     Array<OneD, unsigned int> &maparray,
+                     Array<OneD, int> &signarray,
+                     Orientation edgeOrient,
+                     int P, int Q) override;
 
-} //end of namespace
+            STD_REGIONS_EXPORT void v_GetTraceToElementMap
+                    (int eid,
+                     Array<OneD, unsigned int> &maparray,
+                     Array<OneD, int> &signarray,
+                     Orientation edgeOrient = eForwards,
+                     int P = -1,
+                     int Q = -1) override;
+
+            STD_REGIONS_EXPORT void v_GenStdMatBwdDeriv(
+                    int dir,
+                    DNekMatSharedPtr &mat) override;
+
+        private:
+            // Virtual Functions ----------------------------------------
+            int v_GetShapeDimension() const final
+            {
+                return 2;
+            }
+
+            int v_GetCoordim() override
+            {
+                return 2;
+            }
+        };
+
+        typedef std::shared_ptr<StdExpansion2D> StdExpansion2DSharedPtr;
+
+    } //end of namespace
 } //end of namespace
 
 #endif //STDEXP2D_H

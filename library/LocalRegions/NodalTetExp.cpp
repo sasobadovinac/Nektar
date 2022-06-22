@@ -34,11 +34,9 @@
 
 #include <LocalRegions/NodalTetExp.h>
 
-namespace Nektar
-{
-  namespace LocalRegions 
-  {
+namespace Nektar {
+    namespace LocalRegions {
 
 
-  }//end of namespace
+    }//end of namespace
 }//end of namespace

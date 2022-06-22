@@ -40,43 +40,40 @@
 #include <LocalRegions/LocalRegionsDeclspec.h>
 
 
-namespace Nektar
-{
-  namespace LocalRegions 
-  {
-  
-    class NodalTetExp final: virtual public TetExp
-    {
+namespace Nektar {
+    namespace LocalRegions {
+
+        class NodalTetExp final : virtual public TetExp {
 //     public:
 //       NodalTetExp(const StdRegions::Basis &Ba, const StdRegions::Basis &Bb, 
 //           const StdRegions::Basis &Bc):
 //     TetExp(Ba,Bb,Bc)
 //       {
 //       }
-     	/** \brief Constructor using BasisKey class for quadrature
-        points and order definition */
-        LOCAL_REGIONS_EXPORT NodalTetExp(const LibUtilities::BasisKey &Ba,
-                    const LibUtilities::BasisKey &Bb,
-	            const LibUtilities::BasisKey &Bc,
-                    const SpatialDomains::TetGeomSharedPtr &geom);
+            /** \brief Constructor using BasisKey class for quadrature
+           points and order definition */
+            LOCAL_REGIONS_EXPORT NodalTetExp(const LibUtilities::BasisKey &Ba,
+                                             const LibUtilities::BasisKey &Bb,
+                                             const LibUtilities::BasisKey &Bc,
+                                             const SpatialDomains::TetGeomSharedPtr &geom);
 
-        LOCAL_REGIONS_EXPORT NodalTetExp(const LibUtilities::BasisKey &Ba,
-	            const LibUtilities::BasisKey &Bb,
-	            const LibUtilities::BasisKey &Bc);
-	    
-      /// Copy Constructor
-          LOCAL_REGIONS_EXPORT NodalTetExp(const NodalTetExp &T);
+            LOCAL_REGIONS_EXPORT NodalTetExp(const LibUtilities::BasisKey &Ba,
+                                             const LibUtilities::BasisKey &Bb,
+                                             const LibUtilities::BasisKey &Bc);
 
-      /// Destructor
-          LOCAL_REGIONS_EXPORT ~NodalTetExp() final = default;
-    
-    protected:
+            /// Copy Constructor
+            LOCAL_REGIONS_EXPORT NodalTetExp(const NodalTetExp &T);
 
-    private:
-            
-    };
+            /// Destructor
+            LOCAL_REGIONS_EXPORT ~NodalTetExp() final = default;
 
-  } //end of namespace
+        protected:
+
+        private:
+
+        };
+
+    } //end of namespace
 } //end of namespace
 
 #endif // NODALTETEXP_H

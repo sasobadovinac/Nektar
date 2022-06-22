@@ -41,19 +41,20 @@
 #include <StdRegions/StdExpansion.h>
 #include <StdRegions/StdRegionsDeclspec.h>
 
-namespace Nektar
-{
-    namespace StdRegions
-    {
+namespace Nektar {
+    namespace StdRegions {
 
-        class StdExpansion1D: virtual public StdExpansion
-        {
+        class StdExpansion1D : virtual public StdExpansion {
 
         public:
 
             STD_REGIONS_EXPORT StdExpansion1D() = default;
-            STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba);
+
+            STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs,
+                                              const LibUtilities::BasisKey &Ba);
+
             STD_REGIONS_EXPORT StdExpansion1D(const StdExpansion1D &T);
+
             STD_REGIONS_EXPORT ~StdExpansion1D() override = default;
 
             /** \brief Evaluate the derivative \f$ d/d{\xi_1} \f$ at the
@@ -67,48 +68,54 @@ namespace Nektar
             *  \a outarray as output of the function
             */
             STD_REGIONS_EXPORT void PhysTensorDeriv(
-                    const Array<OneD, const NekDouble>& inarray,
-                          Array<OneD,       NekDouble>& outarray);
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray);
 
             // find derivative of u (inarray) at all coords points
             STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                std::array<NekDouble, 3> &firstOrderDerivs)
+                    const Array<OneD, NekDouble> &coord,
+                    const Array<OneD, const NekDouble> &inarray,
+                    std::array<NekDouble, 3> &firstOrderDerivs)
             {
-                return StdExpansion::BaryEvaluate<0, true>(coord[0], &inarray[0], firstOrderDerivs[0]);
+                return StdExpansion::BaryEvaluate<0, true>(coord[0],
+                                                           &inarray[0],
+                                                           firstOrderDerivs[0]);
             }
 
             // find derivative/2nd Derivative of u (inarray) at all coords points
             STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                std::array<NekDouble, 3> &firstOrderDerivs,
-                std::array<NekDouble, 6> &secondOrderDerivs)
+                    const Array<OneD, NekDouble> &coord,
+                    const Array<OneD, const NekDouble> &inarray,
+                    std::array<NekDouble, 3> &firstOrderDerivs,
+                    std::array<NekDouble, 6> &secondOrderDerivs)
             {
-                return StdExpansion::BaryEvaluate<0, true, true>(coord[0], &inarray[0], firstOrderDerivs[0], secondOrderDerivs[0]);
+                return StdExpansion::BaryEvaluate<0, true, true>(coord[0],
+                                                                 &inarray[0],
+                                                                 firstOrderDerivs[0],
+                                                                 secondOrderDerivs[0]);
             }
 
         protected:
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals) override;
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluate(
+                    const Array<OneD, const NekDouble> &coords,
+                    const Array<OneD, const NekDouble> &physvals) override;
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                std::array<NekDouble, 3> &firstOrderDerivs) override;
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluate(
+                    const Array<OneD, NekDouble> &coord,
+                    const Array<OneD, const NekDouble> &inarray,
+                    std::array<NekDouble, 3> &firstOrderDerivs) override;
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+            STD_REGIONS_EXPORT NekDouble v_PhysEvaluate(
                     const Array<OneD, NekDouble> &coord,
                     const Array<OneD, const NekDouble> &inarray,
                     std::array<NekDouble, 3> &firstOrderDerivs,
                     std::array<NekDouble, 6> &secondOrderDerivs) override;
+
         private:
 
             // Virtual Functions ----------------------------------------
 
-            int v_GetCoordim(void) override
+            int v_GetCoordim() override
             {
                 return 1;
             }

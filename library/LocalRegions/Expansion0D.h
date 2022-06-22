@@ -41,39 +41,37 @@
 #include <LocalRegions/Expansion1D.h>
 #include <SpatialDomains/Geometry0D.h>
 
-namespace Nektar
-{
-    namespace LocalRegions 
-    {
+namespace Nektar {
+    namespace LocalRegions {
         class Expansion0D;
-        typedef std::shared_ptr<Expansion0D>      Expansion0DSharedPtr;
-        typedef std::vector< Expansion0DSharedPtr > Expansion0DVector;
 
-        class Expansion0D: virtual public Expansion,
-            virtual public StdRegions::StdExpansion0D
-        {
+        typedef std::shared_ptr<Expansion0D> Expansion0DSharedPtr;
+        typedef std::vector<Expansion0DSharedPtr> Expansion0DVector;
+
+        class Expansion0D : virtual public Expansion,
+                            virtual public StdRegions::StdExpansion0D {
         public:
             LOCAL_REGIONS_EXPORT Expansion0D(
-                SpatialDomains::Geometry0DSharedPtr pGeom);
-            
-            LOCAL_REGIONS_EXPORT virtual ~Expansion0D() {}
-                        
+                    SpatialDomains::Geometry0DSharedPtr pGeom);
+
+            LOCAL_REGIONS_EXPORT ~Expansion0D() override = default;
+
             inline SpatialDomains::Geometry0DSharedPtr GetGeom0D() const;
 
         protected:
-			
+
         private:
         };
-        
+
 
         inline SpatialDomains::Geometry0DSharedPtr
-            Expansion0D::GetGeom0D() const
+        Expansion0D::GetGeom0D() const
         {
             return std::dynamic_pointer_cast<SpatialDomains::
-                Geometry0D>(m_geom);
-			
+            Geometry0D>(m_geom);
+
         }
     } //end of namespace
 } //end of namespace
 
-#endif
+#endif //EXPANSION0D_H

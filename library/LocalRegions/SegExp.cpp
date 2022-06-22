@@ -40,10 +40,8 @@
 
 using namespace std;
 
-namespace Nektar
-{
-    namespace LocalRegions
-    {
+namespace Nektar {
+    namespace LocalRegions {
 
         /**
          * @class SegExp
@@ -56,19 +54,21 @@ namespace Nektar
          * @param   Ba          Basis key of segment expansion.
          * @param   geom        Description of geometry.
          */
-        SegExp::SegExp( const LibUtilities::BasisKey &Ba,
-                        const SpatialDomains::Geometry1DSharedPtr &geom):
-            StdExpansion(Ba.GetNumModes(), 1, Ba),
-            StdExpansion1D(Ba.GetNumModes(), Ba),
-            StdRegions::StdSegExp(Ba),
-            Expansion(geom),
-            Expansion1D(geom),
-            m_matrixManager(
-                std::bind(&SegExp::CreateMatrix, this, std::placeholders::_1),
-                std::string("SegExpMatrix")),
-            m_staticCondMatrixManager(
-                std::bind(&Expansion::CreateStaticCondMatrix, this, std::placeholders::_1),
-                std::string("SegExpStaticCondMatrix"))
+        SegExp::SegExp(const LibUtilities::BasisKey &Ba,
+                       const SpatialDomains::Geometry1DSharedPtr &geom) :
+                StdExpansion(Ba.GetNumModes(), 1, Ba),
+                StdExpansion1D(Ba.GetNumModes(), Ba),
+                StdRegions::StdSegExp(Ba),
+                Expansion(geom),
+                Expansion1D(geom),
+                m_matrixManager(
+                        std::bind(&SegExp::CreateMatrix, this,
+                                  std::placeholders::_1),
+                        std::string("SegExpMatrix")),
+                m_staticCondMatrixManager(
+                        std::bind(&Expansion::CreateStaticCondMatrix, this,
+                                  std::placeholders::_1),
+                        std::string("SegExpStaticCondMatrix"))
         {
         }
 
@@ -77,14 +77,14 @@ namespace Nektar
         /**
          * @param   S           Existing segment to duplicate.
          */
-        SegExp::SegExp(const SegExp &S):
-            StdExpansion(S),
-            StdExpansion1D(S),
-            StdRegions::StdSegExp(S),
-            Expansion(S),
-            Expansion1D(S),
-            m_matrixManager(S.m_matrixManager),
-            m_staticCondMatrixManager(S.m_staticCondMatrixManager)
+        SegExp::SegExp(const SegExp &S) :
+                StdExpansion(S),
+                StdExpansion1D(S),
+                StdRegions::StdSegExp(S),
+                Expansion(S),
+                Expansion1D(S),
+                m_matrixManager(S.m_matrixManager),
+                m_staticCondMatrixManager(S.m_staticCondMatrixManager)
         {
         }
 
@@ -107,17 +107,18 @@ namespace Nektar
         */
 
         NekDouble SegExp::v_Integral(
-                const Array<OneD, const NekDouble>&  inarray)
+                const Array<OneD, const NekDouble> &inarray)
         {
-            int    nquad0 = m_base[0]->GetNumPoints();
-            Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
-            NekDouble  ival;
-            Array<OneD,NekDouble> tmp(nquad0);
+            int nquad0 = m_base[0]->GetNumPoints();
+            Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(
+                    GetPointsKeys());
+            NekDouble ival;
+            Array<OneD, NekDouble> tmp(nquad0);
 
             // multiply inarray with Jacobian
-            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
-                Vmath::Vmul(nquad0, jac, 1, inarray, 1, tmp,1);
+                Vmath::Vmul(nquad0, jac, 1, inarray, 1, tmp, 1);
             }
             else
             {
@@ -155,53 +156,53 @@ namespace Nektar
             \f$ depending on value of \a dim
         */
         void SegExp::v_PhysDeriv(
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD,NekDouble> &out_d0,
-                      Array<OneD,NekDouble> &out_d1,
-                      Array<OneD,NekDouble> &out_d2)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &out_d0,
+                Array<OneD, NekDouble> &out_d1,
+                Array<OneD, NekDouble> &out_d2)
         {
-            int    nquad0 = m_base[0]->GetNumPoints();
+            int nquad0 = m_base[0]->GetNumPoints();
             Array<TwoD, const NekDouble> gmat =
-                                m_metricinfo->GetDerivFactors(GetPointsKeys());
-            Array<OneD,NekDouble> diff(nquad0);
+                    m_metricinfo->GetDerivFactors(GetPointsKeys());
+            Array<OneD, NekDouble> diff(nquad0);
 
             //StdExpansion1D::PhysTensorDeriv(inarray,diff);
-            PhysTensorDeriv(inarray,diff);
-            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            PhysTensorDeriv(inarray, diff);
+            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
-                if(out_d0.size())
+                if (out_d0.size())
                 {
-                    Vmath::Vmul(nquad0,&gmat[0][0],1,&diff[0],1,
-                                &out_d0[0],1);
+                    Vmath::Vmul(nquad0, &gmat[0][0], 1, &diff[0], 1,
+                                &out_d0[0], 1);
                 }
 
-                if(out_d1.size())
+                if (out_d1.size())
                 {
-                    Vmath::Vmul(nquad0,&gmat[1][0],1,&diff[0],1,
-                                &out_d1[0],1);
+                    Vmath::Vmul(nquad0, &gmat[1][0], 1, &diff[0], 1,
+                                &out_d1[0], 1);
                 }
 
-                if(out_d2.size())
+                if (out_d2.size())
                 {
-                    Vmath::Vmul(nquad0,&gmat[2][0],1,&diff[0],1,
-                                &out_d2[0],1);
+                    Vmath::Vmul(nquad0, &gmat[2][0], 1, &diff[0], 1,
+                                &out_d2[0], 1);
                 }
             }
             else
             {
-                if(out_d0.size())
+                if (out_d0.size())
                 {
                     Vmath::Smul(nquad0, gmat[0][0], diff, 1,
                                 out_d0, 1);
                 }
 
-                if(out_d1.size())
+                if (out_d1.size())
                 {
                     Vmath::Smul(nquad0, gmat[1][0], diff, 1,
                                 out_d1, 1);
                 }
 
-                if(out_d2.size())
+                if (out_d2.size())
                 {
                     Vmath::Smul(nquad0, gmat[2][0], diff, 1,
                                 out_d2, 1);
@@ -218,33 +219,34 @@ namespace Nektar
         *\param out_ds result of the derivative operation
         **/
         void SegExp::v_PhysDeriv_s(
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD,NekDouble> &out_ds)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &out_ds)
         {
-            int    nquad0 = m_base[0]->GetNumPoints();
-            int     coordim  = m_geom->GetCoordim();
-            Array<OneD, NekDouble> diff (nquad0);
+            int nquad0 = m_base[0]->GetNumPoints();
+            int coordim = m_geom->GetCoordim();
+            Array<OneD, NekDouble> diff(nquad0);
             //this operation is needed if you put out_ds==inarray
-            Vmath::Zero(nquad0,out_ds,1);
-            switch(coordim)
+            Vmath::Zero(nquad0, out_ds, 1);
+            switch (coordim)
             {
                 case 2:
                     //diff= dU/de
-                    Array<OneD,NekDouble> diff(nquad0);
+                    Array<OneD, NekDouble> diff(nquad0);
 
-                    PhysTensorDeriv(inarray,diff);
+                    PhysTensorDeriv(inarray, diff);
 
                     //get dS/de= (Jac)^-1
-                    Array<OneD, NekDouble> Jac = m_metricinfo->GetJac(GetPointsKeys());
-                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+                    Array<OneD, NekDouble> Jac = m_metricinfo->GetJac(
+                            GetPointsKeys());
+                    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
                     {
-                         //calculate the derivative as (dU/de)*(Jac)^-1
-                         Vmath::Vdiv(nquad0,diff,1,Jac ,1,out_ds,1);
+                        //calculate the derivative as (dU/de)*(Jac)^-1
+                        Vmath::Vdiv(nquad0, diff, 1, Jac, 1, out_ds, 1);
                     }
                     else
                     {
-                          NekDouble invJac = 1/Jac[0];
-                          Vmath::Smul(nquad0, invJac,diff,1,out_ds,1);
+                        NekDouble invJac = 1 / Jac[0];
+                        Vmath::Smul(nquad0, invJac, diff, 1, out_ds, 1);
                     }
             }
         }
@@ -258,83 +260,88 @@ namespace Nektar
            *\param out_dn result of the derivative operation
         **/
         void SegExp::v_PhysDeriv_n(
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD, NekDouble>& out_dn)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &out_dn)
         {
-            int    nquad0 = m_base[0]->GetNumPoints();
+            int nquad0 = m_base[0]->GetNumPoints();
             Array<TwoD, const NekDouble> gmat =
-                            m_metricinfo->GetDerivFactors(GetPointsKeys());
-            int     coordim  = m_geom->GetCoordim();
-            Array<OneD, NekDouble> out_dn_tmp(nquad0,0.0);
-            switch(coordim)
+                    m_metricinfo->GetDerivFactors(GetPointsKeys());
+            int coordim = m_geom->GetCoordim();
+            Array<OneD, NekDouble> out_dn_tmp(nquad0, 0.0);
+            switch (coordim)
             {
-            case 2:
+                case 2:
 
                     Array<OneD, NekDouble> inarray_d0(nquad0);
                     Array<OneD, NekDouble> inarray_d1(nquad0);
 
-                    v_PhysDeriv(inarray,inarray_d0,inarray_d1);
+                    v_PhysDeriv(inarray, inarray_d0, inarray_d1);
                     Array<OneD, Array<OneD, NekDouble> > normals;
                     normals = Array<OneD, Array<OneD, NekDouble> >(coordim);
-                    cout<<"der_n"<<endl;
-                    for(int k=0; k<coordim; ++k)
+                    cout << "der_n" << endl;
+                    for (int k = 0; k < coordim; ++k)
                     {
-                        normals[k]= Array<OneD, NekDouble>(nquad0);
+                        normals[k] = Array<OneD, NekDouble>(nquad0);
                     }
 // @TODO: this routine no longer makes sense, since normals are not unique on
 //        an edge
 //        normals = GetMetricInfo()->GetNormal();
-                    for(int i=0; i<nquad0; i++)
+                    for (int i = 0; i < nquad0; i++)
                     {
-cout<<"nx= "<<normals[0][i]<<"  ny="<<normals[1][i]<<endl;
+                        cout << "nx= " << normals[0][i] << "  ny="
+                             << normals[1][i] << endl;
                     }
-                    ASSERTL0(normals!=NullNekDoubleArrayOfArray,
-                        "normal vectors do not exist: check if a"
-                        "boundary region is defined as I ");
+                    ASSERTL0(normals != NullNekDoubleArrayOfArray,
+                             "normal vectors do not exist: check if a"
+                             "boundary region is defined as I ");
                     // \nabla u \cdot normal
-                    Vmath::Vmul(nquad0,normals[0],1,inarray_d0,1,out_dn_tmp,1);
-                    Vmath::Vadd(nquad0,out_dn_tmp,1,out_dn,1,out_dn,1);
-                    Vmath::Zero(nquad0,out_dn_tmp,1);
-                    Vmath::Vmul(nquad0,normals[1],1,inarray_d1,1,out_dn_tmp,1);
-                    Vmath::Vadd(nquad0,out_dn_tmp,1,out_dn,1,out_dn,1);
+                    Vmath::Vmul(nquad0, normals[0], 1, inarray_d0, 1,
+                                out_dn_tmp, 1);
+                    Vmath::Vadd(nquad0, out_dn_tmp, 1, out_dn, 1, out_dn, 1);
+                    Vmath::Zero(nquad0, out_dn_tmp, 1);
+                    Vmath::Vmul(nquad0, normals[1], 1, inarray_d1, 1,
+                                out_dn_tmp, 1);
+                    Vmath::Vadd(nquad0, out_dn_tmp, 1, out_dn, 1, out_dn, 1);
 
-                    for(int i=0; i<nquad0; i++)
+                    for (int i = 0; i < nquad0; i++)
                     {
-cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
+                        cout << "deps/dx =" << inarray_d0[i] << "  deps/dy="
+                             << inarray_d1[i] << endl;
                     }
 
 
             }
 
         }
+
         void SegExp::v_PhysDeriv(const int dir,
-                               const Array<OneD, const NekDouble>& inarray,
-                               Array<OneD, NekDouble> &outarray)
+                                 const Array<OneD, const NekDouble> &inarray,
+                                 Array<OneD, NekDouble> &outarray)
         {
-            switch(dir)
+            switch (dir)
             {
                 case 0:
-                    {
-                        PhysDeriv(inarray, outarray, NullNekDouble1DArray,
-                                  NullNekDouble1DArray);
-                    }
+                {
+                    PhysDeriv(inarray, outarray, NullNekDouble1DArray,
+                              NullNekDouble1DArray);
+                }
                     break;
                 case 1:
-                    {
-                        PhysDeriv(inarray, NullNekDouble1DArray, outarray,
-                                  NullNekDouble1DArray);
-                    }
+                {
+                    PhysDeriv(inarray, NullNekDouble1DArray, outarray,
+                              NullNekDouble1DArray);
+                }
                     break;
                 case 2:
-                    {
-                        PhysDeriv(inarray, NullNekDouble1DArray,
-                                  NullNekDouble1DArray, outarray);
-                    }
+                {
+                    PhysDeriv(inarray, NullNekDouble1DArray,
+                              NullNekDouble1DArray, outarray);
+                }
                     break;
                 default:
-                    {
-                        ASSERTL1(false,"input dir is out of range");
-                    }
+                {
+                    ASSERTL1(false, "input dir is out of range");
+                }
                     break;
             }
         }
@@ -366,8 +373,8 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
         */
         // need to sort out family of matrices
         void SegExp::v_FwdTrans(
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD,NekDouble> &outarray)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray)
         {
             if (m_base[0]->Collocation())
             {
@@ -375,39 +382,39 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             }
             else
             {
-                v_IProductWRTBase(inarray,outarray);
+                v_IProductWRTBase(inarray, outarray);
 
                 // get Mass matrix inverse
-                MatrixKey  masskey(StdRegions::eInvMass, DetShapeType(), *this);
-                DNekScalMatSharedPtr  matsys = m_matrixManager[masskey];
+                MatrixKey masskey(StdRegions::eInvMass, DetShapeType(), *this);
+                DNekScalMatSharedPtr matsys = m_matrixManager[masskey];
 
                 // copy inarray in case inarray == outarray
-                NekVector<NekDouble> in(m_ncoeffs,outarray,eCopy);
-                NekVector<NekDouble> out(m_ncoeffs,outarray,eWrapper);
+                NekVector<NekDouble> in(m_ncoeffs, outarray, eCopy);
+                NekVector<NekDouble> out(m_ncoeffs, outarray, eWrapper);
 
-                out = (*matsys)*in;
+                out = (*matsys) * in;
             }
         }
 
         void SegExp::v_FwdTrans_BndConstrained(
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD, NekDouble> &outarray)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray)
         {
-            if(m_base[0]->Collocation())
+            if (m_base[0]->Collocation())
             {
                 Vmath::Vcopy(m_ncoeffs, inarray, 1, outarray, 1);
             }
             else
             {
-                int nInteriorDofs = m_ncoeffs-2;
-                int offset        = 0;
+                int nInteriorDofs = m_ncoeffs - 2;
+                int offset = 0;
 
                 switch (m_base[0]->GetBasisType())
                 {
                     case LibUtilities::eGLL_Lagrange:
-                        {
-                            offset = 1;
-                        }
+                    {
+                        offset = 1;
+                    }
                         break;
                     case LibUtilities::eGauss_Lagrange:
                     {
@@ -417,28 +424,30 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                         break;
                     case LibUtilities::eModified_A:
                     case LibUtilities::eModified_B:
-                        {
-                            ASSERTL1(m_base[0]->GetPointsType() == LibUtilities::eGaussLobattoLegendre ||
-                                     m_base[0]->GetPointsType() == LibUtilities::ePolyEvenlySpaced,
-                                     "Cannot use FwdTrans_BndConstrained with these points.");
-                            offset = 2;
-                        }
+                    {
+                        ASSERTL1(m_base[0]->GetPointsType() ==
+                                 LibUtilities::eGaussLobattoLegendre ||
+                                 m_base[0]->GetPointsType() ==
+                                 LibUtilities::ePolyEvenlySpaced,
+                                 "Cannot use FwdTrans_BndConstrained with these points.");
+                        offset = 2;
+                    }
                         break;
                     default:
-                        ASSERTL0(false,"This type of FwdTrans is not defined"
+                        ASSERTL0(false, "This type of FwdTrans is not defined"
                                         "for this expansion type");
                 }
 
-                fill(outarray.get(), outarray.get()+m_ncoeffs, 0.0 );
+                fill(outarray.get(), outarray.get() + m_ncoeffs, 0.0);
 
                 if (m_base[0]->GetBasisType() != LibUtilities::eGauss_Lagrange)
                 {
 
                     outarray[GetVertexMap(0)] = inarray[0];
                     outarray[GetVertexMap(1)] =
-                        inarray[m_base[0]->GetNumPoints()-1];
+                            inarray[m_base[0]->GetNumPoints() - 1];
 
-                    if (m_ncoeffs>2)
+                    if (m_ncoeffs > 2)
                     {
                         // ideally, we would like to have tmp0 to be replaced
                         // by outarray (currently MassMatrixOp does not allow
@@ -446,24 +455,25 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                         Array<OneD, NekDouble> tmp0(m_ncoeffs);
                         Array<OneD, NekDouble> tmp1(m_ncoeffs);
 
-                        StdRegions::StdMatrixKey  stdmasskey(
-                            StdRegions::eMass,DetShapeType(),*this);
-                        MassMatrixOp(outarray,tmp0,stdmasskey);
-                        v_IProductWRTBase(inarray,tmp1);
+                        StdRegions::StdMatrixKey stdmasskey(
+                                StdRegions::eMass, DetShapeType(), *this);
+                        MassMatrixOp(outarray, tmp0, stdmasskey);
+                        v_IProductWRTBase(inarray, tmp1);
 
                         Vmath::Vsub(m_ncoeffs, tmp1, 1, tmp0, 1, tmp1, 1);
 
                         // get Mass matrix inverse (only of interior DOF)
-                        MatrixKey             masskey(
-                            StdRegions::eMass, DetShapeType(),*this);
-                        DNekScalMatSharedPtr  matsys =
-                            (m_staticCondMatrixManager[masskey])->GetBlock(1,1);
+                        MatrixKey masskey(
+                                StdRegions::eMass, DetShapeType(), *this);
+                        DNekScalMatSharedPtr matsys =
+                                (m_staticCondMatrixManager[masskey])->GetBlock(
+                                        1, 1);
 
-                        Blas::Dgemv('N',nInteriorDofs,nInteriorDofs,
+                        Blas::Dgemv('N', nInteriorDofs, nInteriorDofs,
                                     matsys->Scale(),
                                     &((matsys->GetOwnedMatrix())->GetPtr())[0],
-                                    nInteriorDofs,tmp1.get()+offset,1,0.0,
-                                    outarray.get()+offset,1);
+                                    nInteriorDofs, tmp1.get() + offset, 1, 0.0,
+                                    outarray.get() + offset, 1);
                     }
                 }
                 else
@@ -495,10 +505,10 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             basis over region
         */
         void SegExp::v_IProductWRTBase(
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD, NekDouble> &outarray)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray)
         {
-            v_IProductWRTBase(m_base[0]->GetBdata(),inarray,outarray,1);
+            v_IProductWRTBase(m_base[0]->GetBdata(), inarray, outarray, 1);
         }
 
 
@@ -530,17 +540,18 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
         **/
         void SegExp::v_IProductWRTBase(
-                const Array<OneD, const NekDouble>& base,
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD, NekDouble> &outarray,
-                      int coll_check)
+                const Array<OneD, const NekDouble> &base,
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray,
+                int coll_check)
         {
-            int   nquad0 = m_base[0]->GetNumPoints();
-            Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
-            Array<OneD,NekDouble> tmp(nquad0);
+            int nquad0 = m_base[0]->GetNumPoints();
+            Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(
+                    GetPointsKeys());
+            Array<OneD, NekDouble> tmp(nquad0);
 
             // multiply inarray with Jacobian
-            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
                 Vmath::Vmul(nquad0, jac, 1, inarray, 1, tmp, 1);
             }
@@ -548,58 +559,60 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             {
                 Vmath::Smul(nquad0, jac[0], inarray, 1, tmp, 1);
             }
-            StdSegExp::v_IProductWRTBase(base,tmp,outarray,coll_check);
+            StdSegExp::v_IProductWRTBase(base, tmp, outarray, coll_check);
         }
 
 
         void SegExp::v_IProductWRTDerivBase(
                 const int dir,
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD, NekDouble> & outarray)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray)
         {
-            ASSERTL1(dir < 3,"input dir is out of range");
-            ASSERTL1((dir == 2)? m_geom->GetCoordim() == 3:true,"input dir is out of range");
+            ASSERTL1(dir < 3, "input dir is out of range");
+            ASSERTL1((dir == 2) ? m_geom->GetCoordim() == 3 : true,
+                     "input dir is out of range");
 
-            int    nquad = m_base[0]->GetNumPoints();
-            const Array<TwoD, const NekDouble>& gmat =
-                                m_metricinfo->GetDerivFactors(GetPointsKeys());
+            int nquad = m_base[0]->GetNumPoints();
+            const Array<TwoD, const NekDouble> &gmat =
+                    m_metricinfo->GetDerivFactors(GetPointsKeys());
 
             Array<OneD, NekDouble> tmp1(nquad);
 
-            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
             {
-                Vmath::Vmul(nquad,gmat[dir],1,inarray,1,tmp1,1);
+                Vmath::Vmul(nquad, gmat[dir], 1, inarray, 1, tmp1, 1);
             }
             else
             {
                 Vmath::Smul(nquad, gmat[dir][0], inarray, 1, tmp1, 1);
             }
 
-            v_IProductWRTBase(m_base[0]->GetDbdata(),tmp1,outarray,1);
+            v_IProductWRTBase(m_base[0]->GetDbdata(), tmp1, outarray, 1);
         }
 
         void SegExp::v_NormVectorIProductWRTBase(
-            const Array<OneD, const NekDouble> &Fx,
-            const Array<OneD, const NekDouble> &Fy,
-                  Array<OneD,       NekDouble> &outarray)
+                const Array<OneD, const NekDouble> &Fx,
+                const Array<OneD, const NekDouble> &Fy,
+                Array<OneD, NekDouble> &outarray)
         {
             int nq = m_base[0]->GetNumPoints();
-            Array<OneD, NekDouble > Fn(nq);
+            Array<OneD, NekDouble> Fn(nq);
 
             // @TODO: This routine no longer makes sense as a normal is not unique to an edge
             const Array<OneD, const Array<OneD, NekDouble> >
-                 &normals =
+                    &normals =
                     GetLeftAdjacentElementExp()->
-                        GetTraceNormal(GetLeftAdjacentElementTrace());
-            Vmath::Vmul (nq, &Fx[0], 1, &normals[0][0], 1, &Fn[0], 1);
-            Vmath::Vvtvp(nq, &Fy[0], 1, &normals[1][0], 1, &Fn[0], 1, &Fn[0], 1);
+                            GetTraceNormal(GetLeftAdjacentElementTrace());
+            Vmath::Vmul(nq, &Fx[0], 1, &normals[0][0], 1, &Fn[0], 1);
+            Vmath::Vvtvp(nq, &Fy[0], 1, &normals[1][0], 1, &Fn[0], 1, &Fn[0],
+                         1);
 
-            v_IProductWRTBase(Fn,outarray);
+            v_IProductWRTBase(Fn, outarray);
         }
 
         void SegExp::v_NormVectorIProductWRTBase(
-            const Array<OneD, const Array<OneD, NekDouble> > &Fvec,
-                  Array<OneD,       NekDouble>               &outarray)
+                const Array<OneD, const Array<OneD, NekDouble> > &Fvec,
+                Array<OneD, NekDouble> &outarray)
         {
             NormVectorIProductWRTBase(Fvec[0], Fvec[1], outarray);
         }
@@ -615,29 +628,29 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
          * StdExpansion method
          */
         NekDouble SegExp::v_StdPhysEvaluate(
-            const Array<OneD, const NekDouble> &Lcoord,
-            const Array<OneD, const NekDouble> &physvals)
+                const Array<OneD, const NekDouble> &Lcoord,
+                const Array<OneD, const NekDouble> &physvals)
         {
             // Evaluate point in local (eta) coordinates.
-            return StdExpansion1D::v_PhysEvaluate(Lcoord,physvals);
+            return StdExpansion1D::v_PhysEvaluate(Lcoord, physvals);
         }
 
         NekDouble SegExp::v_PhysEvaluate(
-                const Array<OneD, const NekDouble>& coord,
+                const Array<OneD, const NekDouble> &coord,
                 const Array<OneD, const NekDouble> &physvals)
         {
-            Array<OneD,NekDouble> Lcoord = Array<OneD,NekDouble>(1);
+            Array<OneD, NekDouble> Lcoord = Array<OneD, NekDouble>(1);
 
-            ASSERTL0(m_geom,"m_geom not defined");
-            m_geom->GetLocCoords(coord,Lcoord);
+            ASSERTL0(m_geom, "m_geom not defined");
+            m_geom->GetLocCoords(coord, Lcoord);
 
             return StdExpansion1D::v_PhysEvaluate(Lcoord, physvals);
         }
 
         NekDouble SegExp::v_PhysEvaluate(
-            const Array<OneD, NekDouble> &coord,
-            const Array<OneD, const NekDouble> &inarray,
-            std::array<NekDouble, 3> &firstOrderDerivs)
+                const Array<OneD, NekDouble> &coord,
+                const Array<OneD, const NekDouble> &inarray,
+                std::array<NekDouble, 3> &firstOrderDerivs)
         {
             Array<OneD, NekDouble> Lcoord(1);
             ASSERTL0(m_geom, "m_geom not defined");
@@ -654,40 +667,41 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             Array<OneD, NekDouble> Lcoord(1);
             ASSERTL0(m_geom, "m_geom not defined");
             m_geom->GetLocCoords(coord, Lcoord);
-            return StdSegExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs, secondOrderDerivs);
+            return StdSegExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs,
+                                             secondOrderDerivs);
         }
 
         void SegExp::v_GetCoord(
-                const Array<OneD, const NekDouble>& Lcoords,
-                      Array<OneD,NekDouble> &coords)
+                const Array<OneD, const NekDouble> &Lcoords,
+                Array<OneD, NekDouble> &coords)
         {
-            int  i;
+            int i;
 
-            ASSERTL1(Lcoords[0] >= -1.0&& Lcoords[0] <= 1.0,
+            ASSERTL1(Lcoords[0] >= -1.0 && Lcoords[0] <= 1.0,
                      "Local coordinates are not in region [-1,1]");
 
             m_geom->FillGeom();
-            for(i = 0; i < m_geom->GetCoordim(); ++i)
+            for (i = 0; i < m_geom->GetCoordim(); ++i)
             {
-                coords[i] = m_geom->GetCoord(i,Lcoords);
+                coords[i] = m_geom->GetCoord(i, Lcoords);
             }
         }
 
         void SegExp::v_GetCoords(
-            Array<OneD, NekDouble> &coords_0,
-            Array<OneD, NekDouble> &coords_1,
-            Array<OneD, NekDouble> &coords_2)
+                Array<OneD, NekDouble> &coords_0,
+                Array<OneD, NekDouble> &coords_1,
+                Array<OneD, NekDouble> &coords_2)
         {
             Expansion::v_GetCoords(coords_0, coords_1, coords_2);
         }
 
         // Get vertex value from the 1D Phys space.
         void SegExp::v_GetVertexPhysVals(
-            const int vertex,
-            const Array<OneD, const NekDouble> &inarray,
-                  NekDouble &outarray)
+                const int vertex,
+                const Array<OneD, const NekDouble> &inarray,
+                NekDouble &outarray)
         {
-            int     nquad = m_base[0]->GetNumPoints();
+            int nquad = m_base[0]->GetNumPoints();
 
             if (m_base[0]->GetPointsType() != LibUtilities::eGaussGaussLegendre)
             {
@@ -707,21 +721,21 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                 factors[StdRegions::eFactorGaussVertex] = vertex;
 
                 StdRegions::StdMatrixKey key(
-                    StdRegions::eInterpGauss,
-                    DetShapeType(),*this,factors);
+                        StdRegions::eInterpGauss,
+                        DetShapeType(), *this, factors);
 
                 DNekScalMatSharedPtr mat_gauss = m_matrixManager[key];
 
                 outarray = Blas::Ddot(nquad, mat_gauss->GetOwnedMatrix()
-                                      ->GetPtr().get(), 1, &inarray[0], 1);
+                        ->GetPtr().get(), 1, &inarray[0], 1);
             }
         }
 
         // Add vertex value of the 1D Phys space to outarray.
         void SegExp::v_AddVertexPhysVals(
-            const int                 vertex,
-            const NekDouble           &inarray,
-             Array<OneD, NekDouble>   &outarray)
+                const int vertex,
+                const NekDouble &inarray,
+                Array<OneD, NekDouble> &outarray)
         {
             size_t nquad = m_base[0]->GetNumPoints();
 
@@ -743,23 +757,24 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                 factors[StdRegions::eFactorGaussVertex] = vertex;
 
                 StdRegions::StdMatrixKey key(
-                    StdRegions::eInterpGauss,
-                    DetShapeType(),*this,factors);
+                        StdRegions::eInterpGauss,
+                        DetShapeType(), *this, factors);
 
                 DNekScalMatSharedPtr mat_gauss = m_matrixManager[key];
 
-                Vmath::Svtvp(nquad,inarray,
-                            mat_gauss->GetOwnedMatrix()->GetPtr().get(), 1,
-                            &outarray[0], 1, &outarray[0], 1);
+                Vmath::Svtvp(nquad, inarray,
+                             mat_gauss->GetOwnedMatrix()->GetPtr().get(), 1,
+                             &outarray[0], 1, &outarray[0], 1);
             }
         }
+
         // Get vertex value from the 1D Phys space.
         void SegExp::v_GetTracePhysVals(
-                        const int edge,
-                        const StdRegions::StdExpansionSharedPtr &EdgeExp,
-                        const Array<OneD, const NekDouble> &inarray,
-                        Array<OneD,       NekDouble> &outarray,
-                        StdRegions::Orientation  orient)
+                const int edge,
+                const StdRegions::StdExpansionSharedPtr &EdgeExp,
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray,
+                StdRegions::Orientation orient)
         {
             boost::ignore_unused(EdgeExp, orient);
 
@@ -770,17 +785,17 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
         // Get vertex map from the 1D Phys space.
         void SegExp::v_GetTracePhysMap(
-            const int vertex,
-            Array<OneD, int> &map)
+                const int vertex,
+                Array<OneD, int> &map)
         {
-            int     nquad = m_base[0]->GetNumPoints();
+            int nquad = m_base[0]->GetNumPoints();
 
             ASSERTL1(vertex == 0 || vertex == 1,
                      "Vertex value should be 0 or 1");
 
             map = Array<OneD, int>(1);
-            
-            map[0] = vertex == 0 ? 0: nquad - 1;
+
+            map[0] = vertex == 0 ? 0 : nquad - 1;
         }
 
         //-----------------------------
@@ -797,12 +812,12 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             {
                 if (&inarray[0] != &outarray[0])
                 {
-                    Array<OneD,NekDouble> intmp (inarray);
-                    ReverseCoeffsAndSign(intmp,outarray);
+                    Array<OneD, NekDouble> intmp(inarray);
+                    ReverseCoeffsAndSign(intmp, outarray);
                 }
                 else
                 {
-                    ReverseCoeffsAndSign(inarray,outarray);
+                    ReverseCoeffsAndSign(inarray, outarray);
                 }
             }
         }
@@ -810,16 +825,16 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
         StdRegions::StdExpansionSharedPtr SegExp::v_GetStdExp() const
         {
             return MemoryManager<StdRegions::StdSegExp>
-                ::AllocateSharedPtr(m_base[0]->GetBasisKey());
+            ::AllocateSharedPtr(m_base[0]->GetBasisKey());
         }
 
         StdRegions::StdExpansionSharedPtr SegExp::v_GetLinStdExp(void) const
         {
             LibUtilities::BasisKey bkey0(m_base[0]->GetBasisType(),
-                           2, m_base[0]->GetPointsKey());
+                                         2, m_base[0]->GetPointsKey());
 
             return MemoryManager<StdRegions::StdSegExp>
-                ::AllocateSharedPtr( bkey0);
+            ::AllocateSharedPtr(bkey0);
         }
 
         int SegExp::v_GetCoordim()
@@ -827,32 +842,11 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
             return m_geom->GetCoordim();
         }
 
-        const Array<OneD, const NekDouble>& SegExp::v_GetPhysNormals(void)
+        const Array<OneD, const NekDouble> &SegExp::v_GetPhysNormals(void)
         {
             NEKERROR(ErrorUtil::efatal, "Got to SegExp");
             return NullNekDouble1DArray;
         }
-
-        SpatialDomains::GeomType SegExp::v_MetricInfoType()
-        {
-            return m_metricinfo->GetGtype();
-        }
-
-        int SegExp::v_GetNumPoints(const int dir) const
-        {
-            return GetNumPoints(dir);
-        }
-
-        int SegExp::v_GetNcoeffs(void) const
-        {
-            return m_ncoeffs;
-        }
-
-        const LibUtilities::BasisSharedPtr& SegExp::v_GetBasis(int dir) const
-        {
-            return GetBasis(dir);
-        }
-
 
         int SegExp::v_NumBndryCoeffs() const
         {
@@ -870,21 +864,21 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
         // the same expansion type
         void SegExp::v_ExtractDataToCoeffs(
                 const NekDouble *data,
-                const std::vector<unsigned int > &nummodes,
+                const std::vector<unsigned int> &nummodes,
                 const int mode_offset,
                 NekDouble *coeffs,
                 std::vector<LibUtilities::BasisType> &fromType)
         {
             boost::ignore_unused(fromType);
 
-            switch(m_base[0]->GetBasisType())
+            switch (m_base[0]->GetBasisType())
             {
                 case LibUtilities::eModified_A:
                 {
-                    int fillorder = min((int) nummodes[mode_offset],m_ncoeffs);
+                    int fillorder = min((int) nummodes[mode_offset], m_ncoeffs);
 
-                    Vmath::Zero(m_ncoeffs,coeffs,1);
-                    Vmath::Vcopy(fillorder,&data[0],1,&coeffs[0],1);
+                    Vmath::Zero(m_ncoeffs, coeffs, 1);
+                    Vmath::Vcopy(fillorder, &data[0], 1, &coeffs[0], 1);
                 }
                     break;
                 case LibUtilities::eGLL_Lagrange:
@@ -892,13 +886,13 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     // Assume that input is also Gll_Lagrange
                     // but no way to check;
                     LibUtilities::PointsKey f0(
-                        nummodes[mode_offset],
-                        LibUtilities::eGaussLobattoLegendre);
+                            nummodes[mode_offset],
+                            LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::PointsKey t0(
-                        m_base[0]->GetNumModes(),
-                        LibUtilities::eGaussLobattoLegendre);
+                            m_base[0]->GetNumModes(),
+                            LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::Interp1D(
-                        f0,data, t0, coeffs);
+                            f0, data, t0, coeffs);
                 }
                     break;
                 case LibUtilities::eGauss_Lagrange:
@@ -906,18 +900,18 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     // Assume that input is also Gauss_Lagrange
                     // but no way to check;
                     LibUtilities::PointsKey f0(
-                        nummodes[mode_offset],
-                        LibUtilities::eGaussGaussLegendre);
+                            nummodes[mode_offset],
+                            LibUtilities::eGaussGaussLegendre);
                     LibUtilities::PointsKey t0(
-                        m_base[0]->GetNumModes(),
-                        LibUtilities::eGaussGaussLegendre);
+                            m_base[0]->GetNumModes(),
+                            LibUtilities::eGaussGaussLegendre);
                     LibUtilities::Interp1D(
-                        f0,data, t0, coeffs);
+                            f0, data, t0, coeffs);
                 }
                     break;
                 default:
                     ASSERTL0(false,
-                        "basis is either not set up or not hierarchicial");
+                             "basis is either not set up or not hierarchicial");
             }
         }
 
@@ -925,17 +919,17 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
         {
             int i;
             const SpatialDomains::GeomFactorsSharedPtr &geomFactors =
-                GetGeom()->GetMetricInfo();
+                    GetGeom()->GetMetricInfo();
             SpatialDomains::GeomType type = geomFactors->GetGtype();
             const Array<TwoD, const NekDouble> &gmat =
-                                geomFactors->GetDerivFactors(GetPointsKeys());
+                    geomFactors->GetDerivFactors(GetPointsKeys());
             int nqe = 1;
             int vCoordDim = GetCoordim();
 
             m_traceNormals[vertex] =
-                Array<OneD, Array<OneD, NekDouble> >(vCoordDim);
+                    Array<OneD, Array<OneD, NekDouble> >(vCoordDim);
             Array<OneD, Array<OneD, NekDouble> > &normal =
-                m_traceNormals[vertex];
+                    m_traceNormals[vertex];
             for (i = 0; i < vCoordDim; ++i)
             {
                 normal[i] = Array<OneD, NekDouble>(nqe);
@@ -943,8 +937,8 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
 
             size_t nqb = nqe;
-            size_t nbnd= vertex;
-            m_elmtBndNormDirElmtLen[nbnd] = Array<OneD, NekDouble> {nqb, 0.0};
+            size_t nbnd = vertex;
+            m_elmtBndNormDirElmtLen[nbnd] = Array<OneD, NekDouble>{nqb, 0.0};
             Array<OneD, NekDouble> &length = m_elmtBndNormDirElmtLen[nbnd];
 
             // Regular geometry case
@@ -956,29 +950,29 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                 switch (vertex)
                 {
                     case 0:
-                        for(i = 0; i < vCoordDim; ++i)
+                        for (i = 0; i < vCoordDim; ++i)
                         {
                             Vmath::Fill(nqe, -gmat[i][0], normal[i], 1);
                         }
                         break;
                     case 1:
-                        for(i = 0; i < vCoordDim; ++i)
+                        for (i = 0; i < vCoordDim; ++i)
                         {
                             Vmath::Fill(nqe, gmat[i][0], normal[i], 1);
                         }
                         break;
                     default:
                         ASSERTL0(false,
-                            "point is out of range (point < 2)");
+                                 "point is out of range (point < 2)");
                 }
 
                 // normalise
                 vert = 0.0;
-                for (i =0 ; i < vCoordDim; ++i)
+                for (i = 0; i < vCoordDim; ++i)
                 {
-                    vert += normal[i][0]*normal[i][0];
+                    vert += normal[i][0] * normal[i][0];
                 }
-                vert = 1.0/sqrt(vert);
+                vert = 1.0 / sqrt(vert);
 
                 Vmath::Fill(nqb, vert, length, 1);
 
@@ -995,34 +989,34 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
 
         void SegExp::v_LaplacianMatrixOp(
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,       NekDouble> &outarray,
-            const StdRegions::StdMatrixKey     &mkey)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray,
+                const StdRegions::StdMatrixKey &mkey)
         {
             boost::ignore_unused(mkey);
 
-            int    nquad = m_base[0]->GetNumPoints();
-            const Array<TwoD, const NekDouble>& gmat =
-                                m_metricinfo->GetDerivFactors(GetPointsKeys());
+            int nquad = m_base[0]->GetNumPoints();
+            const Array<TwoD, const NekDouble> &gmat =
+                    m_metricinfo->GetDerivFactors(GetPointsKeys());
 
-            Array<OneD,NekDouble> physValues(nquad);
-            Array<OneD,NekDouble> dPhysValuesdx(nquad);
+            Array<OneD, NekDouble> physValues(nquad);
+            Array<OneD, NekDouble> dPhysValuesdx(nquad);
 
-            BwdTrans(inarray,physValues);
+            BwdTrans(inarray, physValues);
 
             // Laplacian matrix operation
             switch (m_geom->GetCoordim())
             {
                 case 1:
                 {
-                    PhysDeriv(physValues,dPhysValuesdx);
+                    PhysDeriv(physValues, dPhysValuesdx);
 
                     // multiply with the proper geometric factors
-                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+                    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
                     {
                         Vmath::Vmul(nquad,
-                                    &gmat[0][0],1,dPhysValuesdx.get(),1,
-                                    dPhysValuesdx.get(),1);
+                                    &gmat[0][0], 1, dPhysValuesdx.get(), 1,
+                                    dPhysValuesdx.get(), 1);
                     }
                     else
                     {
@@ -1033,20 +1027,20 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     break;
                 case 2:
                 {
-                    Array<OneD,NekDouble> dPhysValuesdy(nquad);
+                    Array<OneD, NekDouble> dPhysValuesdy(nquad);
 
-                    PhysDeriv(physValues,dPhysValuesdx,dPhysValuesdy);
+                    PhysDeriv(physValues, dPhysValuesdx, dPhysValuesdy);
 
                     // multiply with the proper geometric factors
                     if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
                     {
-                        Vmath::Vmul (nquad,
-                                     &gmat[0][0],1,dPhysValuesdx.get(),1,
-                                     dPhysValuesdx.get(),1);
+                        Vmath::Vmul(nquad,
+                                    &gmat[0][0], 1, dPhysValuesdx.get(), 1,
+                                    dPhysValuesdx.get(), 1);
                         Vmath::Vvtvp(nquad,
-                                     &gmat[1][0],1,dPhysValuesdy.get(),1,
-                                     dPhysValuesdx.get(),1,
-                                     dPhysValuesdx.get(),1);
+                                     &gmat[1][0], 1, dPhysValuesdy.get(), 1,
+                                     dPhysValuesdx.get(), 1,
+                                     dPhysValuesdx.get(), 1);
                     }
                     else
                     {
@@ -1058,28 +1052,28 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     }
                 }
                     break;
-            case 3:
+                case 3:
                 {
-                    Array<OneD,NekDouble> dPhysValuesdy(nquad);
-                    Array<OneD,NekDouble> dPhysValuesdz(nquad);
+                    Array<OneD, NekDouble> dPhysValuesdy(nquad);
+                    Array<OneD, NekDouble> dPhysValuesdz(nquad);
 
-                    PhysDeriv(physValues,dPhysValuesdx,
-                              dPhysValuesdy,dPhysValuesdz);
+                    PhysDeriv(physValues, dPhysValuesdx,
+                              dPhysValuesdy, dPhysValuesdz);
 
                     // multiply with the proper geometric factors
-                    if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+                    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
                     {
-                        Vmath::Vmul (nquad,
-                                     &gmat[0][0], 1, dPhysValuesdx.get(), 1,
-                                     dPhysValuesdx.get(),1);
+                        Vmath::Vmul(nquad,
+                                    &gmat[0][0], 1, dPhysValuesdx.get(), 1,
+                                    dPhysValuesdx.get(), 1);
                         Vmath::Vvtvp(nquad,
                                      &gmat[1][0], 1, dPhysValuesdy.get(), 1,
-                                     dPhysValuesdx.get(),1,
-                                     dPhysValuesdx.get(),1);
+                                     dPhysValuesdx.get(), 1,
+                                     dPhysValuesdx.get(), 1);
                         Vmath::Vvtvp(nquad,
                                      &gmat[2][0], 1, dPhysValuesdz.get(), 1,
-                                     dPhysValuesdx.get(),1,
-                                     dPhysValuesdx.get(),1);
+                                     dPhysValuesdx.get(), 1,
+                                     dPhysValuesdx.get(), 1);
                     }
                     else
                     {
@@ -1092,49 +1086,50 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                                     dPhysValuesdx.get(), 1);
                     }
                 }
-                break;
-            default:
-                ASSERTL0(false,"Wrong number of dimensions");
-                break;
+                    break;
+                default:
+                    ASSERTL0(false, "Wrong number of dimensions");
+                    break;
             }
 
-            v_IProductWRTBase(m_base[0]->GetDbdata(),dPhysValuesdx,outarray,1);
+            v_IProductWRTBase(m_base[0]->GetDbdata(), dPhysValuesdx, outarray,
+                              1);
         }
 
 
         void SegExp::v_HelmholtzMatrixOp(
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,       NekDouble> &outarray,
-            const StdRegions::StdMatrixKey     &mkey)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray,
+                const StdRegions::StdMatrixKey &mkey)
         {
-            int    nquad = m_base[0]->GetNumPoints();
-            const Array<TwoD, const NekDouble>& gmat =
-                                m_metricinfo->GetDerivFactors(GetPointsKeys());
+            int nquad = m_base[0]->GetNumPoints();
+            const Array<TwoD, const NekDouble> &gmat =
+                    m_metricinfo->GetDerivFactors(GetPointsKeys());
             const NekDouble lambda =
-                mkey.GetConstFactor(StdRegions::eFactorLambda);
+                    mkey.GetConstFactor(StdRegions::eFactorLambda);
 
-            Array<OneD,NekDouble> physValues(nquad);
-            Array<OneD,NekDouble> dPhysValuesdx(nquad);
-            Array<OneD,NekDouble> wsp(m_ncoeffs);
+            Array<OneD, NekDouble> physValues(nquad);
+            Array<OneD, NekDouble> dPhysValuesdx(nquad);
+            Array<OneD, NekDouble> wsp(m_ncoeffs);
 
             BwdTrans(inarray, physValues);
 
             // mass matrix operation
-            v_IProductWRTBase((m_base[0]->GetBdata()),physValues,wsp,1);
+            v_IProductWRTBase((m_base[0]->GetBdata()), physValues, wsp, 1);
 
             // Laplacian matrix operation
             switch (m_geom->GetCoordim())
             {
                 case 1:
                 {
-                    PhysDeriv(physValues,dPhysValuesdx);
+                    PhysDeriv(physValues, dPhysValuesdx);
 
                     // multiply with the proper geometric factors
                     if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
                     {
                         Vmath::Vmul(nquad,
-                                    &gmat[0][0],1,dPhysValuesdx.get(),1,
-                                    dPhysValuesdx.get(),1);
+                                    &gmat[0][0], 1, dPhysValuesdx.get(), 1,
+                                    dPhysValuesdx.get(), 1);
                     }
                     else
                     {
@@ -1144,16 +1139,16 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     break;
                 case 2:
                 {
-                    Array<OneD,NekDouble> dPhysValuesdy(nquad);
+                    Array<OneD, NekDouble> dPhysValuesdy(nquad);
 
                     PhysDeriv(physValues, dPhysValuesdx, dPhysValuesdy);
 
                     // multiply with the proper geometric factors
                     if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
                     {
-                        Vmath::Vmul (nquad,
-                                     &gmat[0][0], 1, dPhysValuesdx.get(), 1,
-                                     dPhysValuesdx.get(), 1);
+                        Vmath::Vmul(nquad,
+                                    &gmat[0][0], 1, dPhysValuesdx.get(), 1,
+                                    dPhysValuesdx.get(), 1);
                         Vmath::Vvtvp(nquad,
                                      &gmat[1][0], 1, dPhysValuesdy.get(), 1,
                                      dPhysValuesdx.get(), 1,
@@ -1170,8 +1165,8 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     break;
                 case 3:
                 {
-                    Array<OneD,NekDouble> dPhysValuesdy(nquad);
-                    Array<OneD,NekDouble> dPhysValuesdz(nquad);
+                    Array<OneD, NekDouble> dPhysValuesdy(nquad);
+                    Array<OneD, NekDouble> dPhysValuesdz(nquad);
 
                     PhysDeriv(physValues, dPhysValuesdx,
                               dPhysValuesdy, dPhysValuesdz);
@@ -1179,9 +1174,9 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     // multiply with the proper geometric factors
                     if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
                     {
-                        Vmath::Vmul (nquad,
-                                     &gmat[0][0], 1, dPhysValuesdx.get(), 1,
-                                     dPhysValuesdx.get(), 1);
+                        Vmath::Vmul(nquad,
+                                    &gmat[0][0], 1, dPhysValuesdx.get(), 1,
+                                    dPhysValuesdx.get(), 1);
                         Vmath::Vvtvp(nquad,
                                      &gmat[1][0], 1, dPhysValuesdy.get(), 1,
                                      dPhysValuesdx.get(), 1,
@@ -1204,11 +1199,12 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                 }
                     break;
                 default:
-                    ASSERTL0(false,"Wrong number of dimensions");
+                    ASSERTL0(false, "Wrong number of dimensions");
                     break;
             }
 
-            v_IProductWRTBase(m_base[0]->GetDbdata(),dPhysValuesdx,outarray,1);
+            v_IProductWRTBase(m_base[0]->GetDbdata(), dPhysValuesdx, outarray,
+                              1);
             Blas::Daxpy(m_ncoeffs, lambda, wsp.get(), 1, outarray.get(), 1);
         }
 
@@ -1235,11 +1231,11 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
 
         DNekMatSharedPtr SegExp::v_CreateStdMatrix(
-            const StdRegions::StdMatrixKey &mkey)
+                const StdRegions::StdMatrixKey &mkey)
         {
             LibUtilities::BasisKey bkey = m_base[0]->GetBasisKey();
             StdRegions::StdSegExpSharedPtr tmp =
-                        MemoryManager<StdSegExp>::AllocateSharedPtr(bkey);
+                    MemoryManager<StdSegExp>::AllocateSharedPtr(bkey);
 
             return tmp->GetStdMatrix(mkey);
         }
@@ -1253,7 +1249,7 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
             ASSERTL2(m_metricinfo->GetGtype() !=
                      SpatialDomains::eNoGeomType,
-                    "Geometric information is not set up");
+                     "Geometric information is not set up");
 
             switch (mkey.GetMatrixType())
             {
@@ -1279,16 +1275,16 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     {
                         NekDouble one = 1.0;
                         StdRegions::StdMatrixKey masskey(
-                            StdRegions::eMass,DetShapeType(), *this);
+                                StdRegions::eMass, DetShapeType(), *this);
                         DNekMatSharedPtr mat = GenMatrix(masskey);
                         mat->Invert();
 
                         returnval = MemoryManager<DNekScalMat>::
-                                        AllocateSharedPtr(one,mat);
+                        AllocateSharedPtr(one, mat);
                     }
                     else
                     {
-                        fac = 1.0/(m_metricinfo->GetJac(ptsKeys))[0];
+                        fac = 1.0 / (m_metricinfo->GetJac(ptsKeys))[0];
                         goto UseStdRegionsMatrix;
                     }
                 }
@@ -1298,7 +1294,7 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                 case StdRegions::eWeakDeriv2:
                 {
                     if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
-                       mkey.GetNVarCoeff())
+                        mkey.GetNVarCoeff())
                     {
                         fac = 1.0;
                         goto UseLocRegionsMatrix;
@@ -1306,7 +1302,7 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     else
                     {
                         int dir = 0;
-                        switch(mkey.GetMatrixType())
+                        switch (mkey.GetMatrixType())
                         {
                             case StdRegions::eWeakDeriv0:
                                 dir = 0;
@@ -1333,11 +1329,11 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                                             mkey.GetShapeType(), *this);
 
                         DNekMatSharedPtr WeakDerivStd = GetStdMatrix(deriv0key);
-                        fac = m_metricinfo->GetDerivFactors(ptsKeys)[dir][0]*
-                            m_metricinfo->GetJac(ptsKeys)[0];
+                        fac = m_metricinfo->GetDerivFactors(ptsKeys)[dir][0] *
+                              m_metricinfo->GetJac(ptsKeys)[0];
 
                         returnval = MemoryManager<DNekScalMat>::
-                                            AllocateSharedPtr(fac,WeakDerivStd);
+                        AllocateSharedPtr(fac, WeakDerivStd);
                     }
                 }
                     break;
@@ -1354,7 +1350,8 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                         fac = 0.0;
                         for (int i = 0; i < coordim; ++i)
                         {
-                            fac += m_metricinfo->GetDerivFactors(ptsKeys)[i][0]*
+                            fac += m_metricinfo->GetDerivFactors(
+                                    ptsKeys)[i][0] *
                                    m_metricinfo->GetDerivFactors(ptsKeys)[i][0];
                         }
                         fac *= m_metricinfo->GetJac(ptsKeys)[0];
@@ -1365,11 +1362,12 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                 case StdRegions::eHelmholtz:
                 {
                     NekDouble factor =
-                        mkey.GetConstFactor(StdRegions::eFactorLambda);
+                            mkey.GetConstFactor(StdRegions::eFactorLambda);
                     MatrixKey masskey(StdRegions::eMass,
                                       mkey.GetShapeType(), *this);
                     DNekScalMat &MassMat = *(this->m_matrixManager[masskey]);
-                    MatrixKey lapkey(StdRegions::eLaplacian, mkey.GetShapeType(),
+                    MatrixKey lapkey(StdRegions::eLaplacian,
+                                     mkey.GetShapeType(),
                                      *this, mkey.GetConstFactors(),
                                      mkey.GetVarCoeffs());
                     DNekScalMat &LapMat = *(this->m_matrixManager[lapkey]);
@@ -1378,13 +1376,15 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     int cols = LapMat.GetColumns();
 
                     DNekMatSharedPtr helm =
-                        MemoryManager<DNekMat>::AllocateSharedPtr(rows,cols);
+                            MemoryManager<DNekMat>::AllocateSharedPtr(rows,
+                                                                      cols);
 
                     NekDouble one = 1.0;
-                    (*helm) = LapMat + factor*MassMat;
+                    (*helm) = LapMat + factor * MassMat;
 
                     returnval =
-                        MemoryManager<DNekScalMat>::AllocateSharedPtr(one,helm);
+                            MemoryManager<DNekScalMat>::AllocateSharedPtr(one,
+                                                                          helm);
                 }
                     break;
                 case StdRegions::eHybridDGHelmholtz:
@@ -1392,11 +1392,12 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                 case StdRegions::eHybridDGLamToQ0:
                 case StdRegions::eHybridDGHelmBndLam:
                 {
-                    NekDouble one    = 1.0;
+                    NekDouble one = 1.0;
 
                     DNekMatSharedPtr mat = GenMatrix(mkey);
                     returnval =
-                        MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
+                            MemoryManager<DNekScalMat>::AllocateSharedPtr(one,
+                                                                          mat);
                 }
                     break;
                 case StdRegions::eInvHybridDGHelmholtz:
@@ -1415,7 +1416,8 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
                     mat->Invert();
                     returnval =
-                        MemoryManager<DNekScalMat>::AllocateSharedPtr(one,mat);
+                            MemoryManager<DNekScalMat>::AllocateSharedPtr(one,
+                                                                          mat);
                 }
                     break;
                 case StdRegions::eInterpGauss:
@@ -1423,56 +1425,59 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
                     DNekMatSharedPtr m_Ix;
                     Array<OneD, NekDouble> coords(1, 0.0);
                     StdRegions::ConstFactorMap factors = mkey.GetConstFactors();
-                    int vertex = (int)factors[StdRegions::eFactorGaussVertex];
+                    int vertex = (int) factors[StdRegions::eFactorGaussVertex];
 
                     coords[0] = (vertex == 0) ? -1.0 : 1.0;
 
                     m_Ix = m_base[0]->GetI(coords);
                     returnval =
-                        MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0,m_Ix);
+                            MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0,
+                                                                          m_Ix);
                 }
-                break;
+                    break;
 
                 UseLocRegionsMatrix:
                 {
                     DNekMatSharedPtr mat = GenMatrix(mkey);
                     returnval =
-                        MemoryManager<DNekScalMat>::AllocateSharedPtr(fac,mat);
+                            MemoryManager<DNekScalMat>::AllocateSharedPtr(fac,
+                                                                          mat);
                 }
                     break;
                 UseStdRegionsMatrix:
                 {
                     DNekMatSharedPtr mat = GetStdMatrix(mkey);
                     returnval =
-                        MemoryManager<DNekScalMat>::AllocateSharedPtr(fac,mat);
+                            MemoryManager<DNekScalMat>::AllocateSharedPtr(fac,
+                                                                          mat);
                 }
                     break;
-            default:
-                NEKERROR(ErrorUtil::efatal, "Matrix creation not defined");
-                break;
+                default:
+                    NEKERROR(ErrorUtil::efatal, "Matrix creation not defined");
+                    break;
             }
 
             return returnval;
         }
 
         DNekMatSharedPtr SegExp::v_GenMatrix(
-            const StdRegions::StdMatrixKey &mkey)
+                const StdRegions::StdMatrixKey &mkey)
         {
             DNekMatSharedPtr returnval;
 
             switch (mkey.GetMatrixType())
             {
-            case StdRegions::eHybridDGHelmholtz:
-            case StdRegions::eHybridDGLamToU:
-            case StdRegions::eHybridDGLamToQ0:
-            case StdRegions::eHybridDGLamToQ1:
-            case StdRegions::eHybridDGLamToQ2:
-            case StdRegions::eHybridDGHelmBndLam:
-                returnval = Expansion1D::v_GenMatrix(mkey);
-                break;
-            default:
-                returnval = StdSegExp::v_GenMatrix(mkey);
-                break;
+                case StdRegions::eHybridDGHelmholtz:
+                case StdRegions::eHybridDGLamToU:
+                case StdRegions::eHybridDGLamToQ0:
+                case StdRegions::eHybridDGLamToQ1:
+                case StdRegions::eHybridDGLamToQ2:
+                case StdRegions::eHybridDGHelmBndLam:
+                    returnval = Expansion1D::v_GenMatrix(mkey);
+                    break;
+                default:
+                    returnval = StdSegExp::v_GenMatrix(mkey);
+                    break;
             }
 
             return returnval;
@@ -1488,8 +1493,8 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
         ///  coefficients corresponding to a expansion in the reverse
         ///  coordinate direction
         void SegExp::ReverseCoeffsAndSign(
-            const Array<OneD,NekDouble> &inarray,
-                  Array<OneD,NekDouble> &outarray)
+                const Array<OneD, NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray)
         {
 
             int m;
@@ -1497,28 +1502,28 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
 
             ASSERTL1(&inarray[0] != &outarray[0],
                      "inarray and outarray can not be the same");
-            switch(GetBasisType(0))
+            switch (GetBasisType(0))
             {
                 case LibUtilities::eModified_A:
                     //Swap vertices
                     outarray[0] = inarray[1];
                     outarray[1] = inarray[0];
                     // negate odd modes
-                    for(m = 2; m < m_ncoeffs; ++m)
+                    for (m = 2; m < m_ncoeffs; ++m)
                     {
-                        outarray[m] = sgn*inarray[m];
+                        outarray[m] = sgn * inarray[m];
                         sgn = -sgn;
                     }
                     break;
                 case LibUtilities::eGLL_Lagrange:
                 case LibUtilities::eGauss_Lagrange:
-                    for(m = 0; m < m_ncoeffs; ++m)
+                    for (m = 0; m < m_ncoeffs; ++m)
                     {
-                        outarray[m_ncoeffs-1-m] = inarray[m];
+                        outarray[m_ncoeffs - 1 - m] = inarray[m];
                     }
                     break;
                 default:
-                    ASSERTL0(false,"This basis is not allowed in this method");
+                    ASSERTL0(false, "This basis is not allowed in this method");
                     break;
             }
         }
@@ -1530,18 +1535,18 @@ cout<<"deps/dx ="<<inarray_d0[i]<<"  deps/dy="<<inarray_d1[i]<<endl;
          *
         **/
         void SegExp::MultiplyByElmtInvMass(
-            const Array<OneD, const NekDouble>& inarray,
-                  Array<OneD,NekDouble> &outarray)
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, NekDouble> &outarray)
         {
             // get Mass matrix inverse
-            MatrixKey             masskey(StdRegions::eInvMass,
-                                          DetShapeType(),*this);
-            DNekScalMatSharedPtr  matsys = m_matrixManager[masskey];
+            MatrixKey masskey(StdRegions::eInvMass,
+                              DetShapeType(), *this);
+            DNekScalMatSharedPtr matsys = m_matrixManager[masskey];
 
-            NekVector<NekDouble> in(m_ncoeffs,inarray,eCopy);
-            NekVector<NekDouble> out(m_ncoeffs,outarray,eWrapper);
+            NekVector<NekDouble> in(m_ncoeffs, inarray, eCopy);
+            NekVector<NekDouble> out(m_ncoeffs, outarray, eWrapper);
 
-            out = (*matsys)*in;
+            out = (*matsys) * in;
         }
 
 

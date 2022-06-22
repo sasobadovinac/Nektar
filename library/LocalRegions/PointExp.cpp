@@ -34,24 +34,22 @@
 
 #include <LocalRegions/PointExp.h>
 
-namespace Nektar
-{
-    namespace LocalRegions
-    {
+namespace Nektar {
+    namespace LocalRegions {
 
-        PointExp::PointExp(const SpatialDomains::PointGeomSharedPtr &geom):
-            StdExpansion  (1,0),
-            StdExpansion0D(),
-            StdRegions::StdPointExp(),
-            Expansion     (geom),
-            Expansion0D   (geom)
+        PointExp::PointExp(const SpatialDomains::PointGeomSharedPtr &geom) :
+                StdExpansion(1, 0),
+                StdExpansion0D(),
+                StdRegions::StdPointExp(),
+                Expansion(geom),
+                Expansion0D(geom)
         {
             m_ncoeffs = 1;
         }
 
-        void PointExp::v_GetCoords(Array<OneD,NekDouble> &coords_0,
-                Array<OneD, NekDouble> &coords_1,
-                Array<OneD, NekDouble> &coords_2)
+        void PointExp::v_GetCoords(Array<OneD, NekDouble> &coords_0,
+                                   Array<OneD, NekDouble> &coords_1,
+                                   Array<OneD, NekDouble> &coords_2)
         {
             ASSERTL1(coords_0.size() > 0,
                      "Coords_0 is of insufficient size.");
@@ -60,9 +58,10 @@ namespace Nektar
             ASSERTL1(GetCoordim() < 3 || coords_2.size() > 0,
                      "Coords_2 is of insufficient size.");
 
-            SpatialDomains::PointGeomSharedPtr v = std::dynamic_pointer_cast<SpatialDomains::PointGeom>(m_geom);
+            SpatialDomains::PointGeomSharedPtr v = std::dynamic_pointer_cast<SpatialDomains::PointGeom>(
+                    m_geom);
             NekDouble tmp;
-            switch(GetCoordim())
+            switch (GetCoordim())
             {
                 case 1:
                     v->GetCoords(coords_0[0], tmp, tmp);
@@ -77,14 +76,14 @@ namespace Nektar
         }
 
         void PointExp::v_NormVectorIProductWRTBase(
-            const Array<OneD, const NekDouble> &Fx,
-                  Array<OneD,       NekDouble> &outarray)
+                const Array<OneD, const NekDouble> &Fx,
+                Array<OneD, NekDouble> &outarray)
         {
             const Array<OneD, const Array<OneD, NekDouble> >
-                 &normals =
+                    &normals =
                     GetLeftAdjacentElementExp()->
-                        GetTraceNormal(GetLeftAdjacentElementTrace());
-            outarray[0] = Fx[0]*normals[0][0];
+                            GetTraceNormal(GetLeftAdjacentElementTrace());
+            outarray[0] = Fx[0] * normals[0][0];
         }
 
     }
