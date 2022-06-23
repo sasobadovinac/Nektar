@@ -268,7 +268,15 @@ protected:
     bool                        m_sharedFilesystem;
 
     LIB_UTILITIES_EXPORT int CheckFieldDefinition(
-        const FieldDefinitionsSharedPtr &fielddefs);
+        const FieldDefinitionsSharedPtr &fielddefs)
+    {
+        std::vector<unsigned int> coeffsPerElmt;
+        return CheckFieldDefinition(fielddefs, coeffsPerElmt);
+    }
+
+    LIB_UTILITIES_EXPORT int CheckFieldDefinition(
+        const FieldDefinitionsSharedPtr &fielddefs, 
+              std::vector<unsigned int> &coeffsPerElmt);
 
     /**
      * @brief Helper function that determines default file extension.
