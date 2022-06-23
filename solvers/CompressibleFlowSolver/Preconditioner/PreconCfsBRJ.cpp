@@ -356,16 +356,15 @@ void PreconCfsBRJ::PreconBlkDiag(
     using namespace tinysimd;
     using vec_t = simd<NekSingle>;
 
-    static unsigned int m_max_ncoeffs = 0;
     static unsigned int m_max_nblocks = 0;
     static unsigned int m_max_nElmtDof = 0;
     
     // remapped Precon Matrix
-    Array<OneD, std::vector<vec_t, tinysimd::allocator<vec_t>>>
+    static Array<OneD, std::vector<vec_t, tinysimd::allocator<vec_t>>>
         m_sBlkDiagMat(nTotElmt);
     const auto vecwidth = vec_t::width;
 
-    if(m_max_ncoeffs == 0)
+    if(m_max_nblocks == 0)
     {
         // will need to be a float in the end. 
         Array<OneD, NekSingle> tmp(vecwidth);
@@ -425,10 +424,13 @@ void PreconCfsBRJ::PreconBlkDiag(
     LibUtilities::Timer timer, timer1;
     timer.Start();
 
+    timer1.Start(); 
     std::vector<vec_t, tinysimd::allocator<vec_t>> Sinarray (m_max_nblocks); 
     std::vector<vec_t, tinysimd::allocator<vec_t>> Soutarray(m_max_nElmtDof);
 
     Array<OneD, NekSingle> tmp(vecwidth); 
+    timer1.Stop();
+        timer1.AccumulateRegion("PreconCfsBRJ: BlockDiag - initialise");
 
     for (int ne = 0; ne < nTotElmt; ne++)
     {
