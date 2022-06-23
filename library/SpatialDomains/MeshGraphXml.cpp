@@ -2018,7 +2018,7 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
                     if (m_vertSet.find(*iter) == m_vertSet.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *iter);
+                        ::snprintf(errStr, 16, "%d", *iter);
                         NEKERROR(
                             ErrorUtil::ewarning,
                             (std::string("Unknown vertex index: ") + errStr)
@@ -2038,7 +2038,7 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
                     if (m_segGeoms.find(*iter) == m_segGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *iter);
+                        ::snprintf(errStr, 16, "%d", *iter);
                         NEKERROR(
                             ErrorUtil::ewarning,
                             (std::string("Unknown segment index: ") + errStr)
@@ -2122,7 +2122,7 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                     if (m_segGeoms.find(*seqIter) == m_segGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
                                  (std::string("Unknown edge index: ") + errStr)
                                      .c_str());
@@ -2142,7 +2142,7 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                     if (m_triGeoms.count(*seqIter) == 0)
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(
                             ErrorUtil::ewarning,
                             (std::string("Unknown triangle index: ") + errStr)
@@ -2168,7 +2168,7 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                     if (m_quadGeoms.count(*seqIter) == 0)
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
                                  (std::string("Unknown quad index: ") + errStr +
                                   std::string(" in Composite section"))
@@ -2193,7 +2193,7 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                     if (*seqIter >= m_vertSet.size())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(
                             ErrorUtil::ewarning,
                             (std::string("Unknown vertex index: ") + errStr)
@@ -2286,7 +2286,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (m_vertSet.find(*seqIter) == m_vertSet.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(
                             ErrorUtil::ewarning,
                             (std::string("Unknown vertex index: ") + errStr)
@@ -2306,7 +2306,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (m_segGeoms.find(*seqIter) == m_segGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
                                  (std::string("Unknown edge index: ") + errStr)
                                      .c_str());
@@ -2326,7 +2326,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (face == Geometry2DSharedPtr())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
                                  (std::string("Unknown face index: ") + errStr)
                                      .c_str());
@@ -2348,7 +2348,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (m_triGeoms.find(*seqIter) == m_triGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(
                             ErrorUtil::ewarning,
                             (std::string("Unknown triangle index: ") + errStr)
@@ -2372,7 +2372,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (m_quadGeoms.find(*seqIter) == m_quadGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
                                  (std::string("Unknown quad index: ") + errStr)
                                      .c_str());
@@ -2396,7 +2396,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (m_tetGeoms.find(*seqIter) == m_tetGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
                                  (std::string("Unknown tet index: ") + errStr)
                                      .c_str());
@@ -2420,7 +2420,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (m_pyrGeoms.find(*seqIter) == m_pyrGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(
                             ErrorUtil::ewarning,
                             (std::string("Unknown pyramid index: ") + errStr)
@@ -2445,7 +2445,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (m_prismGeoms.find(*seqIter) == m_prismGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
                                  (std::string("Unknown prism index: ") + errStr)
                                      .c_str());
@@ -2469,7 +2469,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     if (m_hexGeoms.find(*seqIter) == m_hexGeoms.end())
                     {
                         char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
+                        ::snprintf(errStr, 16, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
                                  (std::string("Unknown hex index: ") + errStr)
                                      .c_str());

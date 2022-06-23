@@ -203,14 +203,6 @@ namespace Nektar {
             LOCAL_REGIONS_EXPORT void v_DropLocStaticCondMatrix(
                     const MatrixKey &mkey) override;
 
-            LOCAL_REGIONS_EXPORT void SetUpInverseTransformationMatrix(
-                    const DNekMatSharedPtr &m_transformationmatrix,
-                    DNekMatSharedPtr m_inversetransformationmatrix,
-                    DNekMatSharedPtr m_inversetransposedtransformationmatrix);
-
-            LOCAL_REGIONS_EXPORT void v_ComputeConditionNumberOfMatrix(
-                    const DNekScalMatSharedPtr &mat);
-
             LOCAL_REGIONS_EXPORT void v_ComputeLaplacianMetric() override;
 
             LOCAL_REGIONS_EXPORT void v_NormalTraceDerivFactors

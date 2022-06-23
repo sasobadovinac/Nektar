@@ -552,14 +552,14 @@ Results TestWrite(Experiment &exp)
 void PrintResults(Experiment &exp, Results &results)
 {
     NekDouble sum   = 0.0;
-    NekDouble sumSq = 0.0;
+    //NekDouble sumSq = 0.0;
 
     for (Results::const_iterator it = results.begin(); it != results.end();
          ++it)
     {
         NekDouble x = *it;
         sum += x;
-        sumSq += x * x;
+        //sumSq += x * x;
     }
 
     NekDouble mean = sum / exp.n;
