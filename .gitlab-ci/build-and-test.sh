@@ -28,6 +28,9 @@ elif [[ $BUILD_TYPE == "full" ]] || [[ $BUILD_TYPE == "full_py3" ]]; then
     if [[ $BUILD_TYPE == "full_py3" ]]; then
         BUILD_OPTS="$BUILD_OPTS -DNEKTAR_USE_PYTHON3:BOOL=ON"
     fi
+    if [[ $BUILD_SIMD == "avx2" ]]; then
+        BUILD_OPTS="$BUILD_OPTS -DNEKTAR_ENABLE_SIMD_AVX2"
+    fi
 fi
 
 rm -rf build && mkdir -p build && (cd build && cmake -G 'Unix Makefiles' $BUILD_OPTS ..) && \

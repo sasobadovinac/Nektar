@@ -74,7 +74,6 @@ namespace Nektar
 namespace SimdLibTests
 {
     using namespace tinysimd;
-
     BOOST_AUTO_TEST_CASE(SimdLib_width_alignment)
     {
         std::size_t width, alignment;
@@ -171,9 +170,11 @@ namespace SimdLibTests
 
     }
 
+
+    
     using vec_t = simd<double>;
 
-    BOOST_AUTO_TEST_CASE(SimdLib_type_traits)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_type_traits)
     {
         {
             using namespace details;
@@ -196,12 +197,12 @@ namespace SimdLibTests
         BOOST_CHECK_EQUAL(is_vector_floating_point<vec_t>::value, true);
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_mem_size)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_mem_size)
     {
         BOOST_CHECK_EQUAL(sizeof(vec_t), sizeof(double)*vec_t::width);
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_ctors)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_ctors)
     {
         vec_t avec1;
 
@@ -226,7 +227,7 @@ namespace SimdLibTests
     }
 
 
-    BOOST_AUTO_TEST_CASE(SimdLib_load)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_load)
     {
         alignas(vec_t::alignment) std::array<double, vec_t::width>
             ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
@@ -234,7 +235,7 @@ namespace SimdLibTests
         avec.load(ascalararr.data());
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_load_implicit)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_load_implicit)
     {
         alignas(vec_t::alignment) std::array<double, vec_t::width>
             ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
@@ -242,7 +243,7 @@ namespace SimdLibTests
         avec = *(reinterpret_cast<vec_t*>(ascalararr.data()));
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_load_aligned)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_load_aligned)
     {
         alignas(vec_t::alignment) std::array<double, vec_t::width>
             ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
@@ -250,14 +251,14 @@ namespace SimdLibTests
         avec.load(ascalararr.data(), is_aligned);
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_load_unaligned)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_load_unaligned)
     {
         std::array<double, vec_t::width> ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
         vec_t avec;
         avec.load(ascalararr.data(), is_not_aligned);
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_store)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_store)
     {
         double val = 4.0;
         vec_t avec(val);
@@ -270,7 +271,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_store_aligned)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_store_aligned)
     {
         double val = 4.0;
         vec_t avec(val);
@@ -283,7 +284,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_store_unaligned)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_store_unaligned)
     {
         double val = 4.0;
         vec_t avec(val);
@@ -296,7 +297,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_store_non_temporal)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_store_non_temporal)
     {
         double val = 4.0;
         vec_t avec(val);
@@ -334,7 +335,29 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_gather64)
+    #if defined(__AVX2__) && defined(NEKTAR_ENABLE_AVX2)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_load_any)
+    {
+        vec_t avec;
+        double* p0, * p1, * p2, * p3;
+        std::array<double, 16> ascalararr{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+
+        p0 =  ascalararr.data();
+        p1 =  ascalararr.data() + 3;
+        p2 =  ascalararr.data() + 5;
+        p3 =  ascalararr.data() + 6;
+
+        avec.load(p0, p1, p2, p3);
+
+        BOOST_CHECK_EQUAL(ascalararr[0], avec[0]);
+        BOOST_CHECK_EQUAL(ascalararr[3], avec[1]);
+        BOOST_CHECK_EQUAL(ascalararr[5], avec[2]);
+        BOOST_CHECK_EQUAL(ascalararr[6], avec[3]);
+
+    }
+    #endif
+
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_gather64)
     {
         vec_t avec;
         using index_t = simd<size_t>;
@@ -378,7 +401,7 @@ namespace SimdLibTests
 
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_scatter64)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_scatter64)
     {
         vec_t avec;
         using index_t = simd<size_t>;
@@ -436,7 +459,7 @@ namespace SimdLibTests
 
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_add_unary)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_add_unary)
     {
         double val1 = -4.0;
         double val2 =  2.0;
@@ -453,7 +476,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_sub_unary)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_sub_unary)
     {
         double val1 = -4.0;
         double val2 =  2.0;
@@ -470,7 +493,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_mul_unary)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_mul_unary)
     {
         double val1 = -4.0;
         double val2 =  2.0;
@@ -487,7 +510,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_div_unary)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_div_unary)
     {
         double val1 = -4.0;
         double val2 =  2.0;
@@ -504,7 +527,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_add_binary)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_add_binary)
     {
         double val1 = -4.0;
         double val2 =  2.5;
@@ -572,7 +595,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_add_mul)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_add_mul)
     {
         double val1 = -4.0;
         double val2 =  1.5;
@@ -610,7 +633,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_sqrt)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_sqrt)
     {
         double val = 4.0;
         vec_t avec(val);
@@ -626,7 +649,7 @@ namespace SimdLibTests
     }
 
 
-    BOOST_AUTO_TEST_CASE(SimdLib_abs)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_abs)
     {
         double val = -4.0;
         vec_t avec(val);
@@ -641,7 +664,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_log)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_log)
     {
         double val = 4.0;
         vec_t avec(val);
@@ -656,11 +679,11 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_greater)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_greater)
     {
         double aval = 4.0;
         vec_t avec(aval);
-        using mask_t = simd<bool>;
+        using mask_t = simd<bool, vec_t::width>;
         mask_t amask;
 
         amask = avec > avec;
@@ -708,7 +731,6 @@ namespace SimdLibTests
             vec_t evec;
             evec.load(ascalararr2.data());
 
-            simd<bool> amask;
             amask = dvec > evec;
             // check
             for (size_t i = 0; i < vec_t::width; ++i)
@@ -738,11 +760,11 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_logic_and)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_logic_and)
     {
         double aval = 4.0;
         vec_t avec(aval);
-        using mask_t = simd<bool>;
+        using mask_t = simd<bool, vec_t::width>;
         mask_t amask;
 
         alignas(vec_t::alignment) std::array<std::uint64_t, vec_t::width>
@@ -776,7 +798,7 @@ namespace SimdLibTests
         }
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_load_interleave_unload)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_load_interleave_unload)
     {
         constexpr size_t nDof{5};
         // no padding in load_interleave deinterleave_store
@@ -825,7 +847,7 @@ namespace SimdLibTests
 
     }
 
-    BOOST_AUTO_TEST_CASE(SimdLib_io)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_io)
     {
         vec_t avec(3.14);
         std::cout << avec << std::endl;

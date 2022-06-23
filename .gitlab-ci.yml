@@ -175,6 +175,14 @@ bullseye-full_py3-build-and-test:
   <<: *build-and-test-template
   needs: ["bullseye-full_py3-build-env"]
 
+bullseye-full_py3-avx2-build-and-test:
+  <<: *build-and-test-template
+  needs: ["bullseye-full_py3-build-env"]
+  variables:
+    BUILD_SIMD: avx2
+  tags:
+    - avx2
+
 buster-default-build-and-test:
   <<: *build-and-test-template
   needs: ["buster-default-build-env"]
