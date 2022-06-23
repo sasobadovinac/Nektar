@@ -59,6 +59,7 @@ namespace SimdLibTests
     using namespace tinysimd;
 
     BOOST_AUTO_TEST_CASE(SimdLib_width_alignment)
+
     {
         std::size_t width, alignment;
 

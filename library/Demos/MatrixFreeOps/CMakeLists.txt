@@ -1,0 +1,13 @@
+ADD_NEKTAR_EXECUTABLE(MFO_Timing
+    COMPONENT demos DEPENDS MultiRegions SOURCES MFO_Timing.cpp)
+
+ADD_NEKTAR_EXECUTABLE(MFO_Timing_3D
+    COMPONENT demos DEPENDS MultiRegions SOURCES MFO_Timing_3D.cpp)
+    
+ADD_NEKTAR_EXECUTABLE(Helmholtz2D_MFO
+    COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz2D_MFO.cpp)
+    
+ADD_NEKTAR_EXECUTABLE(Helmholtz3D_MFO
+    COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz3D_MFO.cpp)
+    
+

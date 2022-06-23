@@ -52,6 +52,9 @@ const unsigned int PrismGeom::VertexFaceConnectivity[6][3] = {
     {0, 1, 4}, {0, 1, 2}, {0, 2, 3}, {0, 3, 4}, {1, 2, 4}, {2, 3, 4}};
 const unsigned int PrismGeom::EdgeFaceConnectivity[9][2] = {
     {0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 4}, {1, 2}, {2, 3}, {3, 4}, {2, 4}};
+const unsigned int PrismGeom::EdgeNormalToFaceVert[5][4] = {
+    {4, 5, 6, 7},  {1, 3, 8, -1}, {0, 2, 4, 7},
+    {1, 3, 8, -1}, {0, 2, 5, 6}};
 
 PrismGeom::PrismGeom()
 {
@@ -172,6 +175,11 @@ int PrismGeom::v_GetVertexFaceMap(const int i, const int j) const
 int PrismGeom::v_GetEdgeFaceMap(const int i, const int j) const
 {
     return EdgeFaceConnectivity[i][j];
+}
+
+int PrismGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
 }
 
 void PrismGeom::SetUpLocalEdges()
@@ -681,6 +689,20 @@ void PrismGeom::SetUpFaceOrientation()
         }
 
         orientation = orientation + 5;
+
+        if((f == 1)||(f == 3)) // check triange orientation
+        {
+            ASSERTL0(orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+                     "Orientation of triangular face (id = " +
+                     boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
+                     ") is inconsistent with face "+
+                     boost::lexical_cast<string>(f) +
+                     " of prism element (id = "+
+                     boost::lexical_cast<string>(m_globalID) +
+                     ") since Dir2 is aligned with Dir1. Mesh setup "
+                     "needs investigation");
+        }
+
         // Fill the m_forient array
         m_forient[f] = (StdRegions::Orientation)orientation;
     }

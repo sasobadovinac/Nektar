@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: tinysimd.cpp
+// File: tinysimd.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -38,6 +38,7 @@
 #include "scalar.hpp"
 #include "avx2.hpp"
 #include "avx512.hpp"
+#include "sve.hpp"
 
 namespace tinysimd
 {
@@ -65,6 +66,7 @@ template <typename T, int width> struct default_abi
 {
     using type = typename first_not_void_of
     <
+        typename sve<T>::type,
         typename avx512<T>::type,
         typename avx2<T, width>::type,
         typename sse2<T>::type,

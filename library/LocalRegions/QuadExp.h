@@ -59,7 +59,7 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT QuadExp(
                     const LibUtilities::BasisKey &Ba,
                     const LibUtilities::BasisKey &Bb,
-                    const SpatialDomains::QuadGeomSharedPtr &geom);
+                    const SpatialDomains::Geometry2DSharedPtr &geom);
 
             LOCAL_REGIONS_EXPORT QuadExp(const QuadExp &T);
 
@@ -215,10 +215,6 @@ namespace Nektar
 
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
                         const StdRegions::StdMatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr  CreateMatrix(
-                        const MatrixKey &mkey);
-            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr CreateStaticCondMatrix(
-                        const MatrixKey &mkey);
 
             LOCAL_REGIONS_EXPORT virtual DNekScalMatSharedPtr v_GetLocMatrix(
                         const MatrixKey &mkey);
@@ -282,9 +278,16 @@ namespace Nektar
                     Array<OneD, NekDouble> &array,
                     const StdRegions::StdMatrixKey &mkey);
 
+            LOCAL_REGIONS_EXPORT virtual void v_NormalTraceDerivFactors
+                    (Array<OneD, Array<OneD, NekDouble> > &factors,
+                     Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                     Array<OneD, Array<OneD, NekDouble> > &d1factors);
+
         private:
-            LibUtilities::NekManager<MatrixKey, DNekScalMat, MatrixKey::opLess> m_matrixManager;
-            LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess> m_staticCondMatrixManager;
+            LibUtilities::NekManager<MatrixKey,
+                  DNekScalMat, MatrixKey::opLess> m_matrixManager;
+            LibUtilities::NekManager<MatrixKey,
+                  DNekScalBlkMat, MatrixKey::opLess> m_staticCondMatrixManager;
 
             QuadExp();
 

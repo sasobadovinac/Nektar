@@ -78,6 +78,9 @@ class FilterHistoryPoints : public Filter
             const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
             const NekDouble &time);
         SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
+        bool GetPoint(Array<OneD, NekDouble> gloCoord, int I);
+        void WriteData(const int &rank, const Array<OneD, NekDouble> &data,
+            const int &numFields, const NekDouble &time);
 
         SpatialDomains::PointGeomVector         m_historyPoints;
         unsigned int                            m_index;
@@ -93,6 +96,11 @@ class FilterHistoryPoints : public Filter
         std::list<std::pair<SpatialDomains::PointGeomSharedPtr,
                             Array<OneD, NekDouble> > > m_historyList;
         std::map<int, int >                     m_historyLocalPointMap;
+        std::map<LibUtilities::PtsType, Array<OneD, NekDouble>> m_pointDatMap;
+        std::map<LibUtilities::PtsType, Array<OneD, int>> m_pointNumMap;
+        unsigned int m_outputIndex;
+        bool m_outputOneFile;
+        bool m_adaptive;
 };
 
 }

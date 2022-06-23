@@ -11,6 +11,7 @@ SET(NEKMESH_SOURCES
     Module/OutputModules/OutputGmsh.cpp
     Module/OutputModules/OutputNekpp.cpp
     Module/OutputModules/OutputSTL.cpp
+    Module/OutputModules/OutputStdOut.cpp
     Module/ProcessModules/ProcessBL.cpp
     Module/ProcessModules/ProcessCurve.cpp
     Module/ProcessModules/ProcessCurvedEdges.cpp
@@ -68,6 +69,7 @@ SET(NEKMESH_HEADERS
     Module/OutputModules/OutputGmsh.h
     Module/OutputModules/OutputNekpp.h
     Module/OutputModules/OutputSTL.h
+    Module/OutputModules/OutputStdOut.h
     Module/ProcessModules/ProcessBL.h
     Module/ProcessModules/ProcessCurve.h
     Module/ProcessModules/ProcessCurvedEdges.h
@@ -237,8 +239,13 @@ ENDIF (NEKTAR_USE_CCM)
 IF (NEKTAR_USE_VTK)
     IF (VTK_MAJOR_VERSION LESS 6)
         TARGET_LINK_LIBRARIES(libNekMesh LINK_PUBLIC vtkCommon vtkIO vtkGraphics)
+    ELSEIF (VTK_MAJOR_VERSION  GREATER_EQUAL 9)
+        TARGET_LINK_LIBRARIES(libNekMesh LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML)
+        vtk_module_autoinit(
+            TARGETS libNekMesh
+            MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML)
     ELSE ()
-        TARGET_LINK_LIBRARIES(libNekMesh LINK_PUBLIC vtkCommonCore vtkIOLegacy)
+	    TARGET_LINK_LIBRARIES(libNekMesh LINK_PUBLIC vtkCommonCore vtkIOLegacy vtkIOXML)
     ENDIF ()
 ENDIF (NEKTAR_USE_VTK)
 

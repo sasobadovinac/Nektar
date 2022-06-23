@@ -100,6 +100,7 @@ namespace Nektar
         enum MatrixType
         {
             eMass,
+            eMassGJP,
             eInvMass,
             eLaplacian,
             eLaplacian00,
@@ -131,6 +132,7 @@ namespace Nektar
             eDerivBase1,
             eDerivBase2,
             eHelmholtz,
+            eHelmholtzGJP,
             eHybridDGHelmholtz,
             eInvHybridDGHelmholtz,
             eHybridDGHelmBndLam,
@@ -147,12 +149,14 @@ namespace Nektar
             eGaussDG,
             ePhysInterpToEquiSpaced,
             eEquiSpacedToCoeffs,
+            eNormDerivOnTrace,
             SIZE_MatrixType
         };
 
         const char* const MatrixTypeMap[] =
         {
             "Mass",
+            "Mass wiht Diagonal GJP",
             "InvMass",
             "Laplacian",
             "Laplacian00",
@@ -184,6 +188,7 @@ namespace Nektar
             "DerivBase1",
             "DerivBase2",
             "Helmholtz",
+            "Helmholtz with Diagonal GJP",
             "HybridDGHelmholz",
             "InvHybridDGHelmholtz",
             "HybridDGHelmBndLam",
@@ -199,7 +204,8 @@ namespace Nektar
             "InterpGauss",
             "GaussDG",
             "PhysInterpToEquiSpaced",
-            "EquiSpacedToCoeffs"
+            "EquiSpacedToCoeffs",
+            "NormDerivOnTrace"
         };
 
         enum VarCoeffType
@@ -234,6 +240,7 @@ namespace Nektar
             eVarCoeffMF,
             eVarCoeffMFDiv,
             eVarCoeffGmat,
+            eVarCoeffGJPNormVel,
             SIZE_VarCoeffType
         };
 
@@ -267,7 +274,8 @@ namespace Nektar
             "VarCoeffMF3Mag",
             "VarCoeffMF",
             "VarCoeffMFDiv",
-            "VarCoeffGmat"
+            "VarCoeffGmat",
+            "VarCoeffGJPNormVel"
         };
         typedef std::map<StdRegions::VarCoeffType, Array<OneD, NekDouble> > VarCoeffMap;
         static VarCoeffMap NullVarCoeffMap;
@@ -275,6 +283,12 @@ namespace Nektar
         enum ConstFactorType
             {
                 eFactorLambda,
+                eFactorCoeffD00,
+                eFactorCoeffD11,
+                eFactorCoeffD22,
+                eFactorCoeffD01,
+                eFactorCoeffD02,
+                eFactorCoeffD12,
                 eFactorTau,
                 eFactorTime,
                 eFactorSVVCutoffRatio,
@@ -283,12 +297,19 @@ namespace Nektar
                 eFactorSVVDGKerDiffCoeff,
                 eFactorGaussVertex,
                 eFactorGaussEdge,
+                eFactorGJP,
                 eFactorConst,
                 SIZE_ConstFactorType
             };
 
         const char* const ConstFactorTypeMap[] = {
             "FactorLambda",
+            "FactorCoeffD00",
+            "FactorCoeffD11",
+            "FactorCoeffD22",
+            "FactorCoeffD01",
+            "FactorCoeffD02",
+            "FactorCoeffD12",
             "FactorTau",
             "FactorTime",
             "FactorSVVCutoffRatio",
@@ -297,12 +318,16 @@ namespace Nektar
             "FactorSVVDGKerDiffCoeff",
             "FactorGaussVertex",
             "FactorGaussEdge",
+            "FactorGJP",
             "FactorConstant"
         };
         typedef std::map<ConstFactorType, NekDouble> ConstFactorMap;
         static ConstFactorMap NullConstFactorMap;
+        
+        // FactorMap
+        typedef ConstFactorMap FactorMap;
+        static FactorMap NullFactorMap;
 
-	
         enum Orientation
         {
             eNoOrientation,

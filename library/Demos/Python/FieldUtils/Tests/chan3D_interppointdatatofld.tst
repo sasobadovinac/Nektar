@@ -12,7 +12,7 @@
             <value variable="x" tolerance="1e-6">1.63299</value>
             <value variable="y" tolerance="1e-6">1.63299</value>
             <value variable="z" tolerance="1e-6">1.63299</value>
-            <value variable="p" tolerance="10">385062</value>
+            <value variable="p" tolerance="10">384501</value>
         </metric>
         <metric type="Linf" id="2">
             <value variable="x" tolerance="1e-6">1</value>

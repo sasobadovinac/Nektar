@@ -45,7 +45,7 @@ namespace Nektar
     namespace SolverUtils
     {
         std::string AdvectionWeakDG::type = GetAdvectionFactory().
-            RegisterCreatorFunction("WeakDG", AdvectionWeakDG::create);
+            RegisterCreatorFunction("WeakDG", AdvectionWeakDG::create,"Weak DG");
 
         AdvectionWeakDG::AdvectionWeakDG()
         {
@@ -189,6 +189,7 @@ namespace Nektar
                 timer.Stop();
                 timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass",1);
             }
+
             timer1.Stop();
             timer1.AccumulateRegion("AdvWeakDG: Coeff All");
         }

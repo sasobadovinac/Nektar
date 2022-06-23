@@ -33,9 +33,7 @@
 #include <SpatialDomains/MeshGraph.h>
 #include <Collections/Collection.h>
 #include <Collections/CollectionOptimisation.h>
-#include <boost/test/auto_unit_test.hpp>
-#include <boost/test/test_case_template.hpp>
-#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 
 namespace Nektar
@@ -138,10 +136,11 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(Exp);
             Collections::Collection     c(CollExp, impTypes);
-
+            c.Initialise(Collections::eBwdTrans);
+            
             Array<OneD, NekDouble> coeffs(Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(Exp->GetTotPoints());
             Array<OneD, NekDouble> phys2(Exp->GetTotPoints());
@@ -191,9 +190,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eBwdTrans);
 
             Array<OneD, NekDouble> coeffs(Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(Exp->GetTotPoints());
@@ -241,9 +241,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eIterPerExp);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eBwdTrans);
 
             Array<OneD, NekDouble> coeffs(Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(Exp->GetTotPoints());
@@ -294,9 +295,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eIterPerExp);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eBwdTrans);
 
             Array<OneD, NekDouble> coeffs(Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(Exp->GetTotPoints());
@@ -305,6 +307,7 @@ namespace Nektar
 
             Exp->BwdTrans(coeffs, phys1);
             c.ApplyOperator(Collections::eBwdTrans, coeffs, phys2);
+            c.Initialise(Collections::eBwdTrans);
 
             double epsilon = 1.0e-8;
             for(int i = 0; i < phys1.size(); ++i)
@@ -350,10 +353,10 @@ namespace Nektar
                 CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eIterPerExp);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
-
+            c.Initialise(Collections::eBwdTrans);
 
             Array<OneD, NekDouble> coeffs(nelmts*Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(nelmts*Exp->GetTotPoints());
@@ -406,10 +409,11 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                                                        Collections::eNoCollection);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eBwdTrans);
 
 
             Array<OneD, NekDouble> coeffs(Exp->GetNcoeffs(), 1.0), tmp;
@@ -462,10 +466,11 @@ namespace Nektar
                 CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
-
+            c.Initialise(Collections::eBwdTrans);
+                
             Array<OneD, NekDouble> coeffs(nelmts*Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(nelmts*Exp->GetTotPoints());
             Array<OneD, NekDouble> phys2(nelmts*Exp->GetTotPoints());
@@ -517,9 +522,10 @@ namespace Nektar
                 CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eBwdTrans);
 
             Array<OneD, NekDouble> coeffs(nelmts*Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(nelmts*Exp->GetTotPoints());
@@ -573,12 +579,15 @@ namespace Nektar
 
             std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
             for(int i = 0; i < nelmts; ++i)
+            {
                 CollExp.push_back(Exp);
+            }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eBwdTrans);
 
             Array<OneD, NekDouble> coeffs(nelmts*Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(nelmts*Exp->GetTotPoints());
@@ -631,12 +640,15 @@ namespace Nektar
 
             std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
             for(int i = 0; i < nelmts; ++i)
+            {
                 CollExp.push_back(Exp);
+            }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eBwdTrans);
 
             Array<OneD, NekDouble> coeffs(nelmts*Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> phys1(nelmts*Exp->GetTotPoints());
@@ -701,11 +713,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eBwdTrans);
 
             Array<OneD, NekDouble> coeffs(Exp->GetNcoeffs(), 1.0), tmp;
             Array<OneD, NekDouble> physRef(Exp->GetTotPoints());
@@ -754,9 +767,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -828,11 +842,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -906,11 +921,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -984,11 +1000,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -1052,9 +1069,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -1072,6 +1090,7 @@ namespace Nektar
 
             Exp->IProductWRTBase(phys, coeffs1);
             c.ApplyOperator(Collections::eIProductWRTBase, phys, coeffs2);
+            c.Initialise(Collections::eIProductWRTBase);
 
             double epsilon = 1.0e-8;
             for(int i = 0; i < coeffs1.size(); ++i)
@@ -1116,9 +1135,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eNoCollection);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eNoCollection);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -1136,6 +1156,7 @@ namespace Nektar
 
             Exp->IProductWRTBase(phys, coeffs1);
             c.ApplyOperator(Collections::eIProductWRTBase, phys, coeffs2);
+            c.Initialise(Collections::eIProductWRTBase);
 
             double epsilon = 1.0e-8;
             for(int i = 0; i < coeffs1.size(); ++i)
@@ -1178,9 +1199,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -1241,9 +1263,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -1304,9 +1327,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -1373,9 +1397,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nelmts*nq), tmp;
@@ -1449,9 +1474,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eIterPerExp);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nelmts*nq), tmp;
@@ -1517,9 +1543,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -1583,9 +1610,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nq);
@@ -1649,9 +1677,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nelmts*nq), tmp;
@@ -1722,9 +1751,10 @@ namespace Nektar
                 CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nelmts*nq), tmp;
@@ -1796,9 +1826,10 @@ namespace Nektar
                 CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nelmts*nq), tmp;
@@ -1870,9 +1901,10 @@ namespace Nektar
                 CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTBase);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> phys(nelmts*nq), tmp;
@@ -1937,10 +1969,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eIterPerExp);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
-
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2010,12 +2042,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
-
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2089,12 +2121,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
-
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2162,9 +2194,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eIterPerExp);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2239,9 +2272,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eNoCollection);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eNoCollection);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2308,9 +2342,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2374,9 +2409,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2442,9 +2478,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2508,9 +2545,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::ePhysDeriv);
 
             const int nq = Exp->GetTotPoints();
             Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq);
@@ -2545,7 +2583,7 @@ namespace Nektar
             }
         }
 
-        BOOST_AUTO_TEST_CASE(TestHexIProductWRTDerivBase_IterPerExp_UniformP)
+        BOOST_AUTO_TEST_CASE(TestHexIProductWRTDerivBase_Iterperexp_UniformP)
         {
             SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(3u, 0u, -1.5, -1.5, -1.5));
             SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(3u, 1u, 1.0, -1.0, -1.0));
@@ -2576,9 +2614,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eIterPerExp);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -2663,11 +2702,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -2752,11 +2792,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -2841,11 +2882,12 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession,
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
                 Collections::eMatrixFree);
             Collections::OperatorImpMap impTypes =
                 colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -2924,9 +2966,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eIterPerExp);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eIterPerExp);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -3009,9 +3052,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -3091,10 +3135,11 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eStdMat);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eStdMat);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
-
+            c.Initialise(Collections::eIProductWRTDerivBase);
+            
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
             Array<OneD, NekDouble> phys1(nelmts*nq,   0.0);
@@ -3184,9 +3229,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eNoCollection);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eNoCollection);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -3268,9 +3314,10 @@ namespace Nektar
             CollExp.push_back(Exp);
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -3349,9 +3396,10 @@ namespace Nektar
             }
 
             LibUtilities::SessionReaderSharedPtr dummySession;
-            Collections::CollectionOptimisation colOpt(dummySession, Collections::eSumFac);
+            Collections::CollectionOptimisation colOpt(dummySession, 3, Collections::eSumFac);
             Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
             Collections::Collection     c(CollExp, impTypes);
+            c.Initialise(Collections::eIProductWRTDerivBase);
 
             const int nq = Exp->GetTotPoints();
             const int nm = Exp->GetNcoeffs();
@@ -3399,6 +3447,601 @@ namespace Nektar
                 coeffs1[i] = (std::abs(coeffs1[i]) < 1e-14)? 0.0: coeffs1[i];
                 coeffs2[i] = (std::abs(coeffs2[i]) < 1e-14)? 0.0: coeffs2[i];
                 BOOST_CHECK_CLOSE(coeffs1[i],coeffs2[i], epsilon);
+            }
+        }
+    
+        BOOST_AUTO_TEST_CASE(TestHexHelmholtz_NoCollection_UniformP)
+        {
+            SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(
+                3u, 0u, -1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(
+                3u, 1u, 1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(
+                3u, 2u, 1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(
+                3u, 3u, -1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v4(new SpatialDomains::PointGeom(
+                3u, 4u, -1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v5(new SpatialDomains::PointGeom(
+                3u, 5u, 1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v6(new SpatialDomains::PointGeom(
+                3u, 6u, 2.0, 3.0, 4.0));
+            SpatialDomains::PointGeomSharedPtr v7(new SpatialDomains::PointGeom(
+                3u, 7u, -1.0, 1.0, 1.0));
+
+            SpatialDomains::HexGeomSharedPtr hexGeom =
+                CreateHex(v0, v1, v2, v3, v4, v5, v6, v7);
+
+            Nektar::LibUtilities::PointsType quadPointsTypeDir1 =
+                Nektar::LibUtilities::eGaussLobattoLegendre;
+            Nektar::LibUtilities::BasisType basisTypeDir1 =
+                Nektar::LibUtilities::eModified_A;
+            unsigned int numQuadPoints = 5;
+            unsigned int numModes = 4;
+            
+            const Nektar::LibUtilities::PointsKey
+                quadPointsKeyDir1(numQuadPoints, quadPointsTypeDir1);
+            const Nektar::LibUtilities::BasisKey
+                basisKeyDir1(basisTypeDir1, numModes, quadPointsKeyDir1);
+            
+            Nektar::LocalRegions::HexExpSharedPtr Exp =
+                MemoryManager<Nektar::LocalRegions::HexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1, hexGeom);
+            
+            Nektar::StdRegions::StdHexExpSharedPtr stdExp =
+                MemoryManager<Nektar::StdRegions::StdHexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1);
+            
+            int nelmts = 10;
+            
+            std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+            for(int i = 0; i < nelmts; ++i)
+            {
+                CollExp.push_back(Exp);
+            }
+            
+            LibUtilities::SessionReaderSharedPtr dummySession;
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
+                                                       Collections::eNoCollection);
+            Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
+            Collections::Collection     c(CollExp, impTypes);
+            StdRegions::ConstFactorMap factors;
+            factors[StdRegions::eFactorLambda] = 1.5; 
+            
+            c.Initialise (Collections::eHelmholtz, factors);
+            
+            const int nm = Exp->GetNcoeffs();
+            Array<OneD, NekDouble> coeffsIn(nelmts*nm);
+            Array<OneD, NekDouble> coeffsRef(nelmts*nm);
+            Array<OneD, NekDouble> coeffs(nelmts*nm), tmp;
+            
+            for (int i = 0; i < nm; ++i)
+            {
+                coeffsIn[i] = 1.0; 
+            }
+            
+            for(int i = 1; i < nelmts; ++i)
+            {
+                Vmath::Vcopy(nm,coeffsIn,1,tmp = coeffsIn + i*nm,1);
+            }
+            
+            StdRegions::StdMatrixKey mkey(StdRegions::eHelmholtz,
+                                          Exp->DetShapeType(),
+                                          *Exp, factors);
+            
+            for(int i = 0; i < nelmts; ++i)
+            {            
+                // Standard routines
+                Exp->GeneralMatrixOp(coeffsIn + i*nm,
+                                     tmp = coeffsRef + i*nm, mkey);
+            }
+            
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
+            
+            double epsilon = 1.0e-8;
+            for(int i = 0; i < coeffsRef.size(); ++i)
+            {
+                coeffsRef[i] = (std::abs(coeffsRef[i]) < 1e-14)? 0.0: coeffsRef[i];
+                coeffs[i] = (std::abs(coeffs[i]) < 1e-14)? 0.0: coeffs[i];
+                BOOST_CHECK_CLOSE(coeffsRef[i], coeffs[i], epsilon);
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(TestHexHelmholtz_IterPerExp_UniformP)
+        {
+            SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(
+                3u, 0u, -1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(
+                3u, 1u, 1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(
+                3u, 2u, 1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(
+                3u, 3u, -1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v4(new SpatialDomains::PointGeom(
+                3u, 4u, -1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v5(new SpatialDomains::PointGeom(
+                3u, 5u, 1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v6(new SpatialDomains::PointGeom(
+                3u, 6u, 2.0, 3.0, 4.0));
+            SpatialDomains::PointGeomSharedPtr v7(new SpatialDomains::PointGeom(
+                3u, 7u, -1.0, 1.0, 1.0));
+
+            SpatialDomains::HexGeomSharedPtr hexGeom =
+                CreateHex(v0, v1, v2, v3, v4, v5, v6, v7);
+
+            Nektar::LibUtilities::PointsType quadPointsTypeDir1 =
+                Nektar::LibUtilities::eGaussLobattoLegendre;
+            Nektar::LibUtilities::BasisType basisTypeDir1 =
+                Nektar::LibUtilities::eModified_A;
+            unsigned int numQuadPoints = 5;
+            unsigned int numModes = 4;
+            
+            const Nektar::LibUtilities::PointsKey
+                quadPointsKeyDir1(numQuadPoints, quadPointsTypeDir1);
+            const Nektar::LibUtilities::BasisKey
+                basisKeyDir1(basisTypeDir1, numModes, quadPointsKeyDir1);
+            
+            Nektar::LocalRegions::HexExpSharedPtr Exp =
+                MemoryManager<Nektar::LocalRegions::HexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1, hexGeom);
+            
+            Nektar::StdRegions::StdHexExpSharedPtr stdExp =
+                MemoryManager<Nektar::StdRegions::StdHexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1);
+            
+            int nelmts = 10;
+            
+            std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+            for(int i = 0; i < nelmts; ++i)
+            {
+                CollExp.push_back(Exp);
+            }
+            
+            LibUtilities::SessionReaderSharedPtr dummySession;
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
+                                                       Collections::eIterPerExp);
+            Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
+            Collections::Collection     c(CollExp, impTypes);
+            StdRegions::ConstFactorMap factors;
+            factors[StdRegions::eFactorLambda] = 1.5;
+            
+            c.Initialise (Collections::eHelmholtz, factors);
+            
+            const int nm = Exp->GetNcoeffs();
+            Array<OneD, NekDouble> coeffsIn(nelmts*nm);
+            Array<OneD, NekDouble> coeffsRef(nelmts*nm);
+            Array<OneD, NekDouble> coeffs(nelmts*nm), tmp;
+            
+            for (int i = 0; i < nm; ++i)
+            {
+                coeffsIn[i] = 1.0; 
+            }
+            
+            for(int i = 1; i < nelmts; ++i)
+            {
+                Vmath::Vcopy(nm,coeffsIn,1,tmp = coeffsIn + i*nm,1);
+            }
+            
+            StdRegions::StdMatrixKey mkey(StdRegions::eHelmholtz,
+                                          Exp->DetShapeType(),
+                                          *Exp, factors);
+            
+            for(int i = 0; i < nelmts; ++i)
+            {            
+                // Standard routines
+                Exp->GeneralMatrixOp(coeffsIn + i*nm,
+                                     tmp = coeffsRef + i*nm, mkey);
+            }
+            
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
+            
+            double epsilon = 1.0e-8;
+            for(int i = 0; i < coeffsRef.size(); ++i)
+            {
+                coeffsRef[i] = (std::abs(coeffsRef[i]) < 1e-14)? 0.0: coeffsRef[i];
+                coeffs[i] = (std::abs(coeffs[i]) < 1e-14)? 0.0: coeffs[i];
+                BOOST_CHECK_CLOSE(coeffsRef[i], coeffs[i], epsilon);
+            }
+        }
+        
+        BOOST_AUTO_TEST_CASE(TestHexHelmholtz_IterPerExp_UniformP_ConstVarDiff)
+        {
+            SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(
+                3u, 0u, -1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(
+                3u, 1u, 1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(
+                3u, 2u, 1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(
+                3u, 3u, -1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v4(new SpatialDomains::PointGeom(
+                3u, 4u, -1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v5(new SpatialDomains::PointGeom(
+                3u, 5u, 1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v6(new SpatialDomains::PointGeom(
+                3u, 6u, 2.0, 3.0, 4.0));
+            SpatialDomains::PointGeomSharedPtr v7(new SpatialDomains::PointGeom(
+                3u, 7u, -1.0, 1.0, 1.0));
+
+            SpatialDomains::HexGeomSharedPtr hexGeom =
+                CreateHex(v0, v1, v2, v3, v4, v5, v6, v7);
+
+            Nektar::LibUtilities::PointsType quadPointsTypeDir1 =
+                Nektar::LibUtilities::eGaussLobattoLegendre;
+            Nektar::LibUtilities::BasisType basisTypeDir1 =
+                Nektar::LibUtilities::eModified_A;
+            unsigned int numQuadPoints = 5;
+            unsigned int numModes = 4;
+            
+            const Nektar::LibUtilities::PointsKey
+                quadPointsKeyDir1(numQuadPoints, quadPointsTypeDir1);
+            const Nektar::LibUtilities::BasisKey
+                basisKeyDir1(basisTypeDir1, numModes, quadPointsKeyDir1);
+            
+            Nektar::LocalRegions::HexExpSharedPtr Exp =
+                MemoryManager<Nektar::LocalRegions::HexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1, hexGeom);
+            
+            Nektar::StdRegions::StdHexExpSharedPtr stdExp =
+                MemoryManager<Nektar::StdRegions::StdHexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1);
+            
+            int nelmts = 10;
+            
+            std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+            for(int i = 0; i < nelmts; ++i)
+            {
+                CollExp.push_back(Exp);
+            }
+            
+            LibUtilities::SessionReaderSharedPtr dummySession;
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
+                                                       Collections::eIterPerExp);
+            Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
+            Collections::Collection     c(CollExp, impTypes);
+            StdRegions::ConstFactorMap factors;
+            factors[StdRegions::eFactorLambda] = 1.5;
+            factors[StdRegions::eFactorCoeffD00] = 1.25;
+            factors[StdRegions::eFactorCoeffD01] = 0.25;
+            factors[StdRegions::eFactorCoeffD11] = 1.25;
+            factors[StdRegions::eFactorCoeffD02] = 0.25;
+            factors[StdRegions::eFactorCoeffD12] = 0.25;
+            factors[StdRegions::eFactorCoeffD22] = 1.25;
+            
+            c.Initialise (Collections::eHelmholtz, factors);
+            
+            const int nm = Exp->GetNcoeffs();
+            Array<OneD, NekDouble> coeffsIn(nelmts*nm);
+            Array<OneD, NekDouble> coeffsRef(nelmts*nm);
+            Array<OneD, NekDouble> coeffs(nelmts*nm), tmp;
+            
+            for (int i = 0; i < nm; ++i)
+            {
+                coeffsIn[i] = 1.0; 
+            }
+            
+            for(int i = 1; i < nelmts; ++i)
+            {
+                Vmath::Vcopy(nm,coeffsIn,1,tmp = coeffsIn + i*nm,1);
+            }
+            
+            StdRegions::StdMatrixKey mkey(StdRegions::eHelmholtz,
+                                          Exp->DetShapeType(),
+                                          *Exp, factors);
+            
+            for(int i = 0; i < nelmts; ++i)
+            {            
+                // Standard routines
+                Exp->GeneralMatrixOp(coeffsIn + i*nm,
+                                     tmp = coeffsRef + i*nm, mkey);
+            }
+            
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
+            
+            double epsilon = 1.0e-8;
+            for(int i = 0; i < coeffsRef.size(); ++i)
+            {
+                coeffsRef[i] = (std::abs(coeffsRef[i]) < 1e-14)? 0.0: coeffsRef[i];
+                coeffs[i] = (std::abs(coeffs[i]) < 1e-14)? 0.0: coeffs[i];
+                BOOST_CHECK_CLOSE(coeffsRef[i], coeffs[i], epsilon);
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(TestHexHelmholtz_MatrixFree_UniformP)
+        {
+            SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(
+                3u, 0u, -1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(
+                3u, 1u, 1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(
+                3u, 2u, 1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(
+                3u, 3u, -1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v4(new SpatialDomains::PointGeom(
+                3u, 4u, -1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v5(new SpatialDomains::PointGeom(
+                3u, 5u, 1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v6(new SpatialDomains::PointGeom(
+                3u, 6u, 2.0, 3.0, 4.0));
+            SpatialDomains::PointGeomSharedPtr v7(new SpatialDomains::PointGeom(
+                3u, 7u, -1.0, 1.0, 1.0));
+
+            SpatialDomains::HexGeomSharedPtr hexGeom =
+                CreateHex(v0, v1, v2, v3, v4, v5, v6, v7);
+
+            Nektar::LibUtilities::PointsType quadPointsTypeDir1 =
+                Nektar::LibUtilities::eGaussLobattoLegendre;
+            Nektar::LibUtilities::BasisType basisTypeDir1 =
+                Nektar::LibUtilities::eModified_A;
+            unsigned int numQuadPoints = 5;
+            unsigned int numModes = 4;
+            
+            const Nektar::LibUtilities::PointsKey
+                quadPointsKeyDir1(numQuadPoints, quadPointsTypeDir1);
+            const Nektar::LibUtilities::BasisKey
+                basisKeyDir1(basisTypeDir1, numModes, quadPointsKeyDir1);
+            
+            Nektar::LocalRegions::HexExpSharedPtr Exp =
+                MemoryManager<Nektar::LocalRegions::HexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1, hexGeom);
+            
+            Nektar::StdRegions::StdHexExpSharedPtr stdExp =
+                MemoryManager<Nektar::StdRegions::StdHexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1);
+            
+            int nelmts = 10;
+            
+            std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+            for(int i = 0; i < nelmts; ++i)
+            {
+                CollExp.push_back(Exp);
+            }
+            
+            LibUtilities::SessionReaderSharedPtr dummySession;
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
+                                                       Collections::eMatrixFree);
+            Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
+            Collections::Collection     c(CollExp, impTypes);
+            StdRegions::ConstFactorMap factors;
+            factors[StdRegions::eFactorLambda] = 0.0;
+            
+            c.Initialise (Collections::eHelmholtz, factors);
+            
+            const int nm = Exp->GetNcoeffs();
+            Array<OneD, NekDouble> coeffsIn(nelmts*nm);
+            Array<OneD, NekDouble> coeffsRef(nelmts*nm);
+            Array<OneD, NekDouble> coeffs(nelmts*nm), tmp;
+            
+            for (int i = 0; i < nm; ++i)
+            {
+                coeffsIn[i] = 1.0; 
+            }
+            
+            for(int i = 1; i < nelmts; ++i)
+            {
+                Vmath::Vcopy(nm,coeffsIn,1,tmp = coeffsIn + i*nm,1);
+            }
+            
+            StdRegions::StdMatrixKey mkey(StdRegions::eHelmholtz,
+                                          Exp->DetShapeType(),
+                                          *Exp, factors);
+            
+            for(int i = 0; i < nelmts; ++i)
+            {            
+                // Standard routines
+                Exp->GeneralMatrixOp(coeffsIn + i*nm,
+                                     tmp = coeffsRef + i*nm, mkey);
+            }
+            
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
+            
+            double epsilon = 1.0e-8;
+            for(int i = 0; i < coeffsRef.size(); ++i)
+            {
+                coeffsRef[i] = (std::abs(coeffsRef[i]) < 1e-14)? 0.0: coeffsRef[i];
+                coeffs[i] = (std::abs(coeffs[i]) < 1e-14)? 0.0: coeffs[i];
+                BOOST_CHECK_CLOSE(coeffsRef[i], coeffs[i], epsilon);
+            }
+        }
+
+
+        BOOST_AUTO_TEST_CASE(TestHexHelmholtz_MatrixFree_UniformP_Deformed_OverInt)
+        {
+            SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(
+                3u, 0u, -1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(
+                3u, 1u, 1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(
+                3u, 2u, 1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(
+                3u, 3u, -1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v4(new SpatialDomains::PointGeom(
+                3u, 4u, -1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v5(new SpatialDomains::PointGeom(
+                3u, 5u, 1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v6(new SpatialDomains::PointGeom(
+                3u, 6u, 2.0, 3.0, 4.0));
+            SpatialDomains::PointGeomSharedPtr v7(new SpatialDomains::PointGeom(
+                3u, 7u, -1.0, 1.0, 1.0));
+
+            SpatialDomains::HexGeomSharedPtr hexGeom =
+                CreateHex(v0, v1, v2, v3, v4, v5, v6, v7);
+
+            Nektar::LibUtilities::PointsType quadPointsTypeDir1 =
+                Nektar::LibUtilities::eGaussLobattoLegendre;
+            Nektar::LibUtilities::BasisType basisTypeDir1 =
+                Nektar::LibUtilities::eModified_A;
+            unsigned int numQuadPoints = 8;
+            unsigned int numModes = 4;
+            
+            const Nektar::LibUtilities::PointsKey
+                quadPointsKeyDir1(numQuadPoints, quadPointsTypeDir1);
+            const Nektar::LibUtilities::BasisKey
+                basisKeyDir1(basisTypeDir1, numModes, quadPointsKeyDir1);
+            
+            Nektar::LocalRegions::HexExpSharedPtr Exp =
+                MemoryManager<Nektar::LocalRegions::HexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1, hexGeom);
+            
+            Nektar::StdRegions::StdHexExpSharedPtr stdExp =
+                MemoryManager<Nektar::StdRegions::StdHexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1);
+            
+            int nelmts = 10;
+            
+            std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+            for(int i = 0; i < nelmts; ++i)
+            {
+                CollExp.push_back(Exp);
+            }
+            
+            LibUtilities::SessionReaderSharedPtr dummySession;
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
+                                                       Collections::eMatrixFree);
+            Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
+            Collections::Collection     c(CollExp, impTypes);
+            StdRegions::ConstFactorMap factors;
+            factors[StdRegions::eFactorLambda] = 0.0; 
+            
+            c.Initialise (Collections::eHelmholtz, factors);
+            
+            const int nm = Exp->GetNcoeffs();
+            Array<OneD, NekDouble> coeffsIn(nelmts*nm);
+            Array<OneD, NekDouble> coeffsRef(nelmts*nm);
+            Array<OneD, NekDouble> coeffs(nelmts*nm), tmp;
+            
+            for (int i = 0; i < nm; ++i)
+            {
+                coeffsIn[i] = 1.0; 
+            }
+            
+            for(int i = 1; i < nelmts; ++i)
+            {
+                Vmath::Vcopy(nm,coeffsIn,1,tmp = coeffsIn + i*nm,1);
+            }
+            
+            StdRegions::StdMatrixKey mkey(StdRegions::eHelmholtz,
+                                          Exp->DetShapeType(),
+                                          *Exp, factors);
+            
+            for(int i = 0; i < nelmts; ++i)
+            {            
+                // Standard routines
+                Exp->GeneralMatrixOp(coeffsIn + i*nm,
+                                     tmp = coeffsRef + i*nm, mkey);
+            }
+            
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
+            
+            double epsilon = 1.0e-8;
+            for(int i = 0; i < coeffsRef.size(); ++i)
+            {
+                coeffsRef[i] = (std::abs(coeffsRef[i]) < 1e-14)? 0.0: coeffsRef[i];
+                coeffs[i] = (std::abs(coeffs[i]) < 1e-14)? 0.0: coeffs[i];
+                BOOST_CHECK_CLOSE(coeffsRef[i], coeffs[i], epsilon);
+            }
+        }
+        
+        BOOST_AUTO_TEST_CASE(TestHexHelmholtz_MatrixFree_UniformP_ConstVarDiff)
+        {
+            SpatialDomains::PointGeomSharedPtr v0(new SpatialDomains::PointGeom(
+                3u, 0u, -1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v1(new SpatialDomains::PointGeom(
+                3u, 1u, 1.0, -1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v2(new SpatialDomains::PointGeom(
+                3u, 2u, 1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v3(new SpatialDomains::PointGeom(
+                3u, 3u, -1.0, 1.0, -1.0));
+            SpatialDomains::PointGeomSharedPtr v4(new SpatialDomains::PointGeom(
+                3u, 4u, -1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v5(new SpatialDomains::PointGeom(
+                3u, 5u, 1.0, -1.0, 1.0));
+            SpatialDomains::PointGeomSharedPtr v6(new SpatialDomains::PointGeom(
+                3u, 6u, 2.0, 3.0, 4.0));
+            SpatialDomains::PointGeomSharedPtr v7(new SpatialDomains::PointGeom(
+                3u, 7u, -1.0, 1.0, 1.0));
+
+            SpatialDomains::HexGeomSharedPtr hexGeom =
+                CreateHex(v0, v1, v2, v3, v4, v5, v6, v7);
+
+            Nektar::LibUtilities::PointsType quadPointsTypeDir1 =
+                Nektar::LibUtilities::eGaussLobattoLegendre;
+            Nektar::LibUtilities::BasisType basisTypeDir1 =
+                Nektar::LibUtilities::eModified_A;
+            unsigned int numQuadPoints = 5;
+            unsigned int numModes = 4;
+            
+            const Nektar::LibUtilities::PointsKey
+                quadPointsKeyDir1(numQuadPoints, quadPointsTypeDir1);
+            const Nektar::LibUtilities::BasisKey
+                basisKeyDir1(basisTypeDir1, numModes, quadPointsKeyDir1);
+            
+            Nektar::LocalRegions::HexExpSharedPtr Exp =
+                MemoryManager<Nektar::LocalRegions::HexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1, hexGeom);
+            
+            Nektar::StdRegions::StdHexExpSharedPtr stdExp =
+                MemoryManager<Nektar::StdRegions::StdHexExp>::AllocateSharedPtr
+                (basisKeyDir1, basisKeyDir1, basisKeyDir1);
+            
+            int nelmts = 10;
+            
+            std::vector<StdRegions::StdExpansionSharedPtr> CollExp;
+            for(int i = 0; i < nelmts; ++i)
+            {
+                CollExp.push_back(Exp);
+            }
+            
+            LibUtilities::SessionReaderSharedPtr dummySession;
+            Collections::CollectionOptimisation colOpt(dummySession, 2,
+                                                       Collections::eMatrixFree);
+            Collections::OperatorImpMap impTypes = colOpt.GetOperatorImpMap(stdExp);
+            Collections::Collection     c(CollExp, impTypes);
+            StdRegions::ConstFactorMap factors;
+            factors[StdRegions::eFactorLambda] = 1.0;
+            factors[StdRegions::eFactorCoeffD00] = 1.25;
+            factors[StdRegions::eFactorCoeffD01] = 0.25;
+            factors[StdRegions::eFactorCoeffD11] = 1.25;
+            factors[StdRegions::eFactorCoeffD02] = 0.25;
+            factors[StdRegions::eFactorCoeffD12] = 0.25;
+            factors[StdRegions::eFactorCoeffD22] = 1.25;
+            
+            c.Initialise (Collections::eHelmholtz, factors);
+            
+            const int nm = Exp->GetNcoeffs();
+            Array<OneD, NekDouble> coeffsIn(nelmts*nm);
+            Array<OneD, NekDouble> coeffsRef(nelmts*nm);
+            Array<OneD, NekDouble> coeffs(nelmts*nm), tmp;
+            
+            for (int i = 0; i < nm; ++i)
+            {
+                coeffsIn[i] = 1.0; 
+            }
+            
+            for(int i = 1; i < nelmts; ++i)
+            {
+                Vmath::Vcopy(nm,coeffsIn,1,tmp = coeffsIn + i*nm,1);
+            }
+            
+            StdRegions::StdMatrixKey mkey(StdRegions::eHelmholtz,
+                                          Exp->DetShapeType(),
+                                          *Exp, factors);
+            
+            for(int i = 0; i < nelmts; ++i)
+            {            
+                // Standard routines
+                Exp->GeneralMatrixOp(coeffsIn + i*nm,
+                                     tmp = coeffsRef + i*nm, mkey);
+            }
+            
+            c.ApplyOperator(Collections::eHelmholtz,coeffsIn,coeffs);
+            
+            double epsilon = 1.0e-8;
+            for(int i = 0; i < coeffsRef.size(); ++i)
+            {
+                coeffsRef[i] = (std::abs(coeffsRef[i]) < 1e-14)? 0.0: coeffsRef[i];
+                coeffs[i] = (std::abs(coeffs[i]) < 1e-14)? 0.0: coeffs[i];
+                BOOST_CHECK_CLOSE(coeffsRef[i], coeffs[i], epsilon);
             }
         }
     }

@@ -62,6 +62,20 @@ class OpImpTimingKey
         {
         }
 
+        LibUtilities::ShapeType GetShapeType(void) const
+        {
+            return m_exp->DetShapeType();
+        }
+    
+        int GetExpOrder() const
+        {
+            return m_exp->GetBasis(0)->GetNumModes(); 
+        }
+
+        int GetNGeoms() const
+        {
+            return m_ngeoms; 
+        }
 
         bool operator<(const OpImpTimingKey &rhs) const
         {
@@ -116,6 +130,7 @@ class CollectionOptimisation
         // Constuctor
         COLLECTIONS_EXPORT CollectionOptimisation(
                 LibUtilities::SessionReaderSharedPtr pSession,
+                const int shapedim, 
                 ImplementationType defaultType = eStdMat);
 
         ~CollectionOptimisation(){};
@@ -145,20 +160,23 @@ class CollectionOptimisation
                 OperatorImpMap &impTypes,
                 bool verbose = true);
 
-        bool SetByXml(void)
-        {
-            return m_setByXml;
-        }
+        // Wite out autotuning testing to file
+        COLLECTIONS_EXPORT void UpdateOptFile(std::string sessName,
+                                              LibUtilities::CommSharedPtr &comm);
+    
 
     private:
         typedef std::pair<LibUtilities::ShapeType, int> ElmtOrder;
-
+        typedef std::map<OperatorType, std::map<ElmtOrder, ImplementationType> > GlobalOpMap; 
         static std::map<OpImpTimingKey,OperatorImpMap> m_opImpMap;
-        std::map<OperatorType, std::map<ElmtOrder, ImplementationType> > m_global;
-        bool m_setByXml;
+        GlobalOpMap m_global;
         bool m_autotune;
         ImplementationType m_defaultType;
         unsigned int m_maxCollSize;
+        unsigned int m_shapeDim;
+    
+        void  ReadCollOps(TiXmlElement *xmlCol, GlobalOpMap &global, bool verbose);
+
 };
 
 }

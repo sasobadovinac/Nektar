@@ -2848,7 +2848,6 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="DIRKOrder2"          />
             <I PROPERTY="AdvectioType"          VALUE="WeakDG"              />
             <I PROPERTY="DiffusionType"         VALUE="InteriorPenalty"     />
-            <I PROPERTY="AdvectionAdvancement"  VALUE="Implicit"            />
             <I PROPERTY="UpwindType"            VALUE="Roe"                 />
          </SOLVERINFO>
         

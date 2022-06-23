@@ -41,9 +41,10 @@
 #include <functional>
 #include <memory>
 
+#include <boost/geometry/strategies/strategies.hpp> // required with boost 1.77
+#include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/geometries/box.hpp>
 #include <boost/geometry/geometries/point.hpp>
-#include <boost/geometry/index/rtree.hpp>
 
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/PtsField.h>
@@ -80,7 +81,7 @@ public:
     * @param filtWidth filter width, required by some algorithms such as eGauss
     * @param maxPts    limit number of considered points
     *
-    * if method is not specified, the best algorithm is chosen autpomatically.
+    * if method is not specified, the best algorithm is chosen automatically.
     *
     * If coordId is not specified, a full 1D/2D/3D interpolation is performed
     * without

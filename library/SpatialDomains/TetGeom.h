@@ -62,6 +62,7 @@ protected:
     virtual int v_GetVertexEdgeMap(const int i, const int j) const;
     virtual int v_GetVertexFaceMap(const int i, const int j) const;
     virtual int v_GetEdgeFaceMap(const int i, const int j) const;
+    virtual int v_GetEdgeNormalToFaceVert(const int i, const int j) const;
     virtual int v_GetDir(const int faceidx, const int facedir) const;
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
     virtual void v_Setup();
@@ -77,6 +78,7 @@ private:
     static const unsigned int VertexEdgeConnectivity[4][3];
     static const unsigned int VertexFaceConnectivity[4][3];
     static const unsigned int EdgeFaceConnectivity[6][2];
+    static const unsigned int EdgeNormalToFaceVert[4][3];
 };
 
 typedef std::shared_ptr<TetGeom> TetGeomSharedPtr;

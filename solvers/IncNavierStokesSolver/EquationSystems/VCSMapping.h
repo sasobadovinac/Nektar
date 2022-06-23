@@ -111,6 +111,7 @@ namespace Nektar
         
         virtual void v_SolveViscous( 
                     const Array<OneD, const Array<OneD, NekDouble> > &Forcing,
+                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
                     Array<OneD, Array<OneD, NekDouble> > &outarray,
                     const NekDouble aii_Dt);
         

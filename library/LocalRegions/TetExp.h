@@ -182,12 +182,6 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_GenMatrix(
                 const StdRegions::StdMatrixKey &mkey);
 
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr  CreateMatrix(
-                const MatrixKey &mkey);
-
-            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr  CreateStaticCondMatrix(
-                const MatrixKey &mkey);
-
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
                 const StdRegions::StdMatrixKey &mkey);
 
@@ -211,7 +205,12 @@ namespace Nektar
 
             LOCAL_REGIONS_EXPORT virtual void v_ComputeLaplacianMetric();
 
-        private:
+            LOCAL_REGIONS_EXPORT virtual void v_NormalTraceDerivFactors
+                    (Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                     Array<OneD, Array<OneD, NekDouble> > &d1factors,
+                     Array<OneD, Array<OneD, NekDouble> > &d2factors);
+
+            private:
             LibUtilities::NekManager<MatrixKey, DNekScalMat, MatrixKey::opLess> m_matrixManager;
             LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess> m_staticCondMatrixManager;
 

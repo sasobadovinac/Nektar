@@ -34,4 +34,4 @@
 
 #define BOOST_TEST_MODULE UnitTests test
 #include <boost/test/unit_test.hpp>
-#include <boost/test/included/unit_test_framework.hpp>
+#include <boost/test/included/unit_test.hpp>

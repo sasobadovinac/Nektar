@@ -80,33 +80,38 @@ namespace Nektar
                 inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
 
             protected:
-                std::map<int, NormalVector>             m_vertexNormals;
-
                 virtual DNekMatSharedPtr v_GenMatrix(
                     const StdRegions::StdMatrixKey      &mkey);
 
-                virtual void v_AddRobinMassMatrix(
+            virtual void v_AddRobinMassMatrix(
                     const int                            vert,
                     const Array<OneD, const NekDouble > &primCoeffs,
                     DNekMatSharedPtr                    &inoutmat);
 
-                virtual void v_AddRobinEdgeContribution(
+            virtual void v_AddRobinEdgeContribution(
                     const int                            vert,
                     const Array<OneD, const NekDouble > &primCoeffs,
                     const Array<OneD, NekDouble>        &incoeffs,
                     Array<OneD, NekDouble>        &coeffs);
 
-                virtual NekDouble v_VectorFlux(
+            virtual NekDouble v_VectorFlux(
                     const Array<OneD, Array<OneD, NekDouble> > &vec);
 
-                virtual const NormalVector &v_GetTraceNormal(const int edge) const final;
-                virtual void v_ReOrientTracePhysMap(
+            virtual void v_NormalTraceDerivFactors(
+                            Array<OneD, Array<OneD, NekDouble> > &factors,
+                            Array<OneD, Array<OneD, NekDouble> > &d0factors,
+                            Array<OneD, Array<OneD, NekDouble> > &d1factors);
+
+            virtual const NormalVector &v_GetTraceNormal(const int edge) const final;
+
+            virtual void v_ReOrientTracePhysMap(
                          const StdRegions::Orientation orient,
                          Array<OneD, int> &idmap,
                          const int nq0,  const int nq1);
 
-            private:
+            virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
 
+        private:
         };
 
         inline SpatialDomains::Geometry1DSharedPtr Expansion1D

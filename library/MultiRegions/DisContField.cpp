@@ -89,22 +89,33 @@ namespace Nektar
             const std::string                          &variable,
             const bool                                  SetUpJustDG,
             const bool                                  DeclareCoeffPhysArrays,
-            const Collections::ImplementationType       ImpType)
+            const Collections::ImplementationType       ImpType,
+            const std::string                           bcvariable)
             : ExpList(pSession,graph,DeclareCoeffPhysArrays, variable, ImpType),
               m_trace(NullExpListSharedPtr)
         {
-            if (variable.compare("DefaultVar") != 0)
+            std::string bcvar; 
+            if(bcvariable == "NotSet")
+            {
+                bcvar = variable;
+            }
+            else
+            {
+                bcvar = bcvariable;
+            }
+            
+            if (bcvar.compare("DefaultVar") != 0)
             {
                 SpatialDomains::BoundaryConditions bcs(m_session, graph);
 
-                GenerateBoundaryConditionExpansion(graph,bcs,variable,
+                GenerateBoundaryConditionExpansion(graph,bcs,bcvar,
                                                    DeclareCoeffPhysArrays);
                 if(DeclareCoeffPhysArrays)
                 {
-                    EvaluateBoundaryConditions(0.0, variable);
+                    EvaluateBoundaryConditions(0.0, bcvar);
                 }
                 ApplyGeomInfo();
-                FindPeriodicTraces(bcs,variable);
+                FindPeriodicTraces(bcs,bcvar);
             }
 
             if(SetUpJustDG)
@@ -194,7 +205,6 @@ namespace Nektar
             // then retains a pointer to the elemental trace, to
             // ensure uniqueness of normals when retrieving from two
             // adjoining elements which do not lie in a plane.
-
             for (int i = 0; i < m_exp->size(); ++i)
             {
                 for (int j = 0; j < (*m_exp)[i]->GetNtraces(); ++j)
@@ -425,6 +435,43 @@ namespace Nektar
         }
 
 
+
+        
+        /**
+         * @brief This routine determines if an element is to the "left"
+         * of the adjacent trace, which arises from the idea there is a local
+         * normal direction between two elements (i.e. on the trace)
+         * and one elements would then be the left.
+         * 
+         * This is typically required since we only define one normal
+         * direction along the trace which goes from the left adjacent
+         * element to the right adjacent element.  It is also useful
+         * in DG discretisations to set up a local Riemann problem
+         * where we need to have the concept of a local normal
+         * direction which is unique between two elements.
+         * 
+         * There are two cases to be checked:
+         *
+         * 1) First is the trace on a boundary condition (perioidic or
+         * otherwise) or on a partition boundary. If a partition
+         * boundary then trace is always considered to be the left
+         * adjacent trace and the normal is pointing outward of the
+         * soltuion domain. We have to perform an additional case for
+         * a periodic boundary where wer chose the element with the
+         * lowest global id. If the trace is on a parallel partition
+         * we use a member of the traceMap where one side is chosen to
+         * contribute to a unique map and have a value which is not
+         * -1 so this is the identifier for the left adjacent side
+         *
+         * 2) If the element is a elemental boundary on one element
+         * the left adjacent element is defined by a link to the left
+         * element from the trace expansion and this is consistent
+         * with the defitiion of the normal which is determined by the
+         * largest id (in contrast to the periodic boundary definition
+         * !). This reversal of convention does not really matter
+         * providing the normals are defined consistently.
+         */
+        
         bool DisContField::IsLeftAdjacentTrace(const int n, const int e)
         {
             LocalRegions::ExpansionSharedPtr traceEl =
@@ -1071,7 +1118,7 @@ namespace Nektar
                             compOrder[it.second->begin()->first] = tmpOrder;
                         }
 
-
+                    
                         // See if we already have either region1 or
                         // region2 stored in perComps map.
                         if (perComps.count(cId1) == 0)
@@ -1099,8 +1146,39 @@ namespace Nektar
                         }
                     }
 
+                    // In case of periodic partition being split over many composites
+                    // may not have all periodic matches so check this
+                    int idmax  = -1; 
+                    for (auto &cIt : perComps)
+                    {
+                        idmax = max(idmax,cIt.first);
+                        idmax = max(idmax,cIt.second);
+                    }
+                    vComm->AllReduce(idmax,LibUtilities::ReduceMax);
+                    idmax++; 
+                    Array<OneD, int> perid(idmax,-1);
+                    for (auto &cIt : perComps)
+                    {
+                        perid[cIt.first] = cIt.second; 
+                    }
+                    vComm->AllReduce(perid,LibUtilities::ReduceMax);
+                    // update all partitions 
+                    for (int i = 0; i < idmax; ++i)
+                    {
+                        if(perid[i] > -1)
+                        {
+                            // skip if complemetary relationship has
+                            // already been speficied in list
+                            if(perComps.count(perid[i]))
+                            {
+                                continue;
+                            }
+                            perComps[i] = perid[i]; 
+                        }
+                    }
 
-                    // Process local edge list to obtain relative edge orientations.
+                    // Process local edge list to obtain relative edge
+                    // orientations.
                     int              n = vComm->GetSize();
                     int              p = vComm->GetRank();
                     int              totEdges;
@@ -1233,7 +1311,7 @@ namespace Nektar
                     // vertices are copied into m_periodicVerts at the end of the
                     // function.
                     PeriodicMap periodicVerts;
-
+                
                     for (auto &cIt : perComps)
                     {
                         SpatialDomains::CompositeSharedPtr c[2];
@@ -1251,9 +1329,6 @@ namespace Nektar
                         {
                             c[1] = compMap[id2];
                         }
-
-                        ASSERTL0(c[0] || c[1],
-                                 "Both composites not found on this process!");
 
                         // Loop over composite ordering to construct list of all
                         // periodic edges regardless of whether they are on this
@@ -1287,8 +1362,8 @@ namespace Nektar
                             compPairs[eId1] = eId2;
                         }
 
-                        // Construct set of all edges that we have locally on this
-                        // processor.
+                        // Construct set of all edges that we have
+                        // locally on this processor.
                         set<int> locEdges;
                         for (i = 0; i < 2; ++i)
                         {
@@ -1402,47 +1477,6 @@ namespace Nektar
                                 }
                             }
                         }
-                    }
-
-                    // Distribute the size of the periodic boundary to all 
-                    // processes. We assume that all processes who own periodic
-                    // faces have the same local copy of allCompPairs
-                    int NPairs  = allCompPairs.size();
-                    vComm->AllReduce(NPairs, LibUtilities::ReduceMax);
-
-                    // Check that the previous assertion regarding allCompPairs
-                    // is correct
-                    ASSERTL0(
-                        allCompPairs.size() == NPairs || allCompPairs.size() == 0,
-                        "Local copy of allCompPairs not the same for all ranks"
-                    );
-
-                    // Allocate local vectors that will contain the content of
-                    // allCompPairs if process owns faces on periodic boundary
-                    Array<OneD, int> first(NPairs, -1);
-                    Array<OneD, int> second(NPairs, -1);
-                    cnt = 0;
-                    for(const auto &it : allCompPairs)
-                    {
-                        first[cnt]    = it.first;
-                        second[cnt++] = it.second;
-                    }
-                    
-                    // Distribute the content in first and second to all processes
-                    vComm->AllReduce(first,  LibUtilities::ReduceMax);
-                    vComm->AllReduce(second, LibUtilities::ReduceMax);
-
-                    // Check that the MPI Allreduce routine worked
-                    ASSERTL0(std::count(first.begin(), first.end(), -1) == 0, 
-                        "Distribution of allCompPairs failed");
-                    ASSERTL0(std::count(second.begin(), second.end(), -1) == 0, 
-                        "Distribution of allCompParis failed")
-
-                    // Put content back in allCompPairs
-                    allCompPairs.clear();
-                    for(cnt = 0; cnt < NPairs; ++cnt)
-                    {
-                        allCompPairs[first[cnt]] = second[cnt];
                     }
 
                     // Search for periodic vertices and edges which are not in
@@ -1757,7 +1791,39 @@ namespace Nektar
                         }
                     }
 
-                    // The next routines process local face lists to exchange vertices,
+                    // In case of periodic partition being split over many composites
+                    // may not have all periodic matches so check this
+                    int idmax  = -1; 
+                    for (auto &cIt : perComps)
+                    {
+                        idmax = max(idmax,cIt.first);
+                        idmax = max(idmax,cIt.second);
+                    }
+                    vComm->AllReduce(idmax,LibUtilities::ReduceMax);
+                    idmax++; 
+                    Array<OneD, int> perid(idmax,-1);
+                    for (auto &cIt : perComps)
+                    {
+                        perid[cIt.first] = cIt.second; 
+                    }
+                    vComm->AllReduce(perid,LibUtilities::ReduceMax);
+                    // update all partitions 
+                    for (int i = 0; i < idmax; ++i)
+                    {
+                        if(perid[i] > -1)
+                        {
+                            // skip if equivlaent relationship has
+                            // already been speficied in list
+                            if(perComps.count(perid[i]))
+                            {
+                                continue;
+                            }
+                            perComps[i] = perid[i]; 
+                        }
+                    }
+
+                    // The next routines process local face lists to
+                    // exchange vertices,
                     // edges and faces.
                     int              n = vComm->GetSize();
                     int              p = vComm->GetRank();
@@ -2062,9 +2128,6 @@ namespace Nektar
                             c[1] = compMap[id2];
                         }
 
-                        ASSERTL0(c[0] || c[1],
-                                 "Neither composite not found on this process!");
-
                         // Loop over composite ordering to construct list of all
                         // periodic faces, regardless of whether they are on this
                         // process.
@@ -2122,7 +2185,7 @@ namespace Nektar
                             // Loop up coordinates of the faces, check they have the
                             // same number of vertices.
                             SpatialDomains::PointGeomVector tmpVec[2]
-                        = { coordMap[ids[0]], coordMap[ids[1]] };
+                                = { coordMap[ids[0]], coordMap[ids[1]] };
 
                             ASSERTL0(tmpVec[0].size() == tmpVec[1].size(),
                                      "Two periodic faces have different number "
@@ -2345,78 +2408,8 @@ namespace Nektar
                             "At this point the size of allCompPairs "
                             "should have been the same as fIdToCompId");
 
-                    // Distribute the size of the periodic boundary to all 
-                    // processes. We assume that all processes who own periodic
-                    // faces have the same local copy of allCompPairs
-                    int NPairs  = allCompPairs.size();
-                    vComm->AllReduce(NPairs, LibUtilities::ReduceMax);
-
-                    // Check that the previous assertion regarding allCompPairs
-                    // is correct
-                    ASSERTL0(
-                        allCompPairs.size() == NPairs || allCompPairs.size() == 0,
-                        "Local copy of allCompPairs not the same for all ranks"
-                    );
-
-                    // Allocate local vectors that will contain the content of
-                    // allCompPairs if process owns faces on periodic boundary
-                    Array<OneD, int> first(NPairs, -1);
-                    Array<OneD, int> second(NPairs, -1);
-                    cnt = 0;
-                    for(const auto &it : allCompPairs)
-                    {
-                        first[cnt]    = it.first;
-                        second[cnt++] = it.second;
-                    }
-                    
-                    // Distribute the content in first and second to all processes
-                    vComm->AllReduce(first,  LibUtilities::ReduceMax);
-                    vComm->AllReduce(second, LibUtilities::ReduceMax);
-
-                    // Check that the MPI Allreduce routine worked
-                    ASSERTL0(std::count(first.begin(), first.end(), -1) == 0, 
-                        "Distribution of allCompPairs failed");
-                    ASSERTL0(std::count(second.begin(), second.end(), -1) == 0, 
-                        "Distribution of allCompPairs failed")
-
-                    // Put content back in allCompPairs
-                    allCompPairs.clear();
-                    for(cnt = 0; cnt < NPairs; ++cnt)
-                    {
-                        allCompPairs[first[cnt]] = second[cnt];
-                    }
-
-                    // Store face ID to composite ID map for rotational boundaries
-                    if(rotComp.size())
-                    {   
-                        // Set values to -1
-                        std::fill(first.begin(), first.end(), -1);
-                        std::fill(second.begin(), second.end(), -1);
-
-                        cnt = 0;
-                        for (const auto &pIt : fIdToCompId)
-                        {
-                            first [cnt  ] = pIt.first;
-                            second[cnt++] = pIt.second;
-                        }
-
-                        vComm->AllReduce(first,  LibUtilities::ReduceMax);
-                        vComm->AllReduce(second, LibUtilities::ReduceMax);
-
-                        // Check that the MPI Allreduce routine worked
-                        ASSERTL0(std::count(first.begin(), first.end(), -1) == 0,
-                            "Distribution of fIdToCompId failed");
-                        ASSERTL0(std::count(second.begin(), second.end(), -1) == 0,
-                            "Distribution of fIdToCompId failed")
-
-                        fIdToCompId.clear();
-                        for(cnt = 0; cnt < NPairs; ++cnt)
-                        {
-                            fIdToCompId[first[cnt]] = second[cnt];
-                        }
-                    }
-
-                    // also will need an edge id to composite id at end of routine
+                    // also will need an edge id to composite id at
+                    // end of routine
                     map<int,int> eIdToCompId;
 
                     // Search for periodic vertices and edges which are not
@@ -2433,7 +2426,8 @@ namespace Nektar
                         int faceId    = faceIds[i];
 
                         ASSERTL0(allCompPairs.count(faceId) > 0,
-                                 "Unable to find matching periodic face.");
+                                 "Unable to find matching periodic face. faceId = "
+                                 + boost::lexical_cast<string>(faceId));
 
                         int perFaceId = allCompPairs[faceId];
 
@@ -2805,7 +2799,6 @@ namespace Nektar
             return (vSame == 1);
         }
 
-
         vector<bool> &DisContField::GetNegatedFluxNormal(void)
         {
             if(m_negatedFluxNormal.size() == 0)
@@ -2840,7 +2833,6 @@ namespace Nektar
 
             return m_negatedFluxNormal;
         }
-
 
 
         /**
@@ -2929,7 +2921,7 @@ namespace Nektar
 
             if (FillBnd)
             {
-                    v_FillBwdWithBoundCond(Fwd, Bwd, PutFwdInBwdOnBCs);
+                v_FillBwdWithBoundCond(Fwd, Bwd, PutFwdInBwdOnBCs);
             }
 
             if(DoExchange)
@@ -3060,18 +3052,19 @@ namespace Nektar
             LibUtilities::BasisSharedPtr basis = (*m_exp)[0]->GetBasis(0);
             if (basis->GetBasisType() != LibUtilities::eGauss_Lagrange)
             {
-                Array<OneD, NekDouble> edgevals(m_locTraceToTraceMap->
-                                               GetNLocTracePts(), 0.0);
+                Array<OneD, NekDouble> tracevals(m_locTraceToTraceMap->
+                                                GetNLocTracePts(), 0.0);
 
-                Array<OneD, NekDouble> invals = edgevals +
+                Array<OneD, NekDouble> invals = tracevals +
                     m_locTraceToTraceMap->GetNFwdLocTracePts();
-                m_locTraceToTraceMap->RightIPTWLocEdgesToTraceInterpMat(
+
+                m_locTraceToTraceMap->InterpTraceToLocTrace(
                                         1, Bwd, invals);
 
-                m_locTraceToTraceMap->RightIPTWLocEdgesToTraceInterpMat(
-                                        0, Fwd, edgevals);
+                m_locTraceToTraceMap->InterpTraceToLocTrace(
+                                        0, Fwd, tracevals);
 
-                m_locTraceToTraceMap->AddLocTracesToField(edgevals, field);
+                m_locTraceToTraceMap->AddLocTracesToField(tracevals,field);
             }
             else
             {
@@ -3302,18 +3295,39 @@ namespace Nektar
                     Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
                         &elmtToTrace = m_traceMap->GetElmtToTrace();
 
-                    for(n = 0; n < GetExpSize(); ++n)
+                    if(m_expType == e2D)
                     {
-                        offset = GetCoeff_Offset(n);
-                        for(e = 0; e < (*m_exp)[n]->GetNtraces(); ++e)
+                        for(n = 0; n < GetExpSize(); ++n)
                         {
-                            t_offset = GetTrace()->GetPhys_Offset
-                                (elmtToTrace[n][e]->GetElmtId());
-                            (*m_exp)[n]->AddEdgeNormBoundaryInt
-                                (e, elmtToTrace[n][e],
-                                 Fn+t_offset,
-                                 e_outarray = outarray+offset);
+                            offset = GetCoeff_Offset(n);
+                            for(e = 0; e < (*m_exp)[n]->GetNtraces(); ++e)
+                            {
+                                t_offset = GetTrace()->GetPhys_Offset
+                                    (elmtToTrace[n][e]->GetElmtId());
+                                (*m_exp)[n]->AddEdgeNormBoundaryInt
+                                    (e, elmtToTrace[n][e],
+                                     Fn+t_offset,
+                                     e_outarray = outarray+offset);
+                            }
                         }
+                        
+                    }
+                    else if (m_expType == e3D)
+                    {
+                        for(n = 0; n < GetExpSize(); ++n)
+                        {
+                            offset = GetCoeff_Offset(n);
+                            for(e = 0; e < (*m_exp)[n]->GetNtraces(); ++e)
+                            {
+                                t_offset = GetTrace()->GetPhys_Offset
+                                     (elmtToTrace[n][e]->GetElmtId());
+                                (*m_exp)[n]->AddFaceNormBoundaryInt
+                                    (e, elmtToTrace[n][e],
+                                     Fn+t_offset,
+                                     e_outarray = outarray+offset);
+                            }
+                        }
+                        
                     }
                 }
             }
@@ -3654,7 +3668,7 @@ namespace Nektar
 
                                 condition.Evaluate(x0, x1, x2, time, valuesExp);
                             }
-
+                                   
                             Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
                                         locExpList->UpdatePhys(), 1);
 
@@ -3974,7 +3988,8 @@ namespace Nektar
             // Create expansion list
             result =
                 MemoryManager<ExpList>::AllocateSharedPtr
-                    (*this, eIDs, DeclareCoeffPhysArrays);
+                (*this, eIDs, DeclareCoeffPhysArrays,
+                 Collections::eNoCollection);
 
             // Copy phys and coeffs to new explist
             if( DeclareCoeffPhysArrays)
@@ -4368,41 +4383,18 @@ namespace Nektar
                 Array<OneD,       NekDouble>        &locTraceFwd,
                 Array<OneD,       NekDouble>        &locTraceBwd)
         {
-            if (NullNekDouble1DArray != locTraceBwd)
+            if (locTraceFwd != NullNekDouble1DArray)
             {
-                switch(m_expType)
-                {
-                case e2D:
-                    m_locTraceToTraceMap->RightIPTWLocEdgesToTraceInterpMat(
-                        1, Bwd, locTraceBwd);
-                    break;
-                case e3D:
-                    m_locTraceToTraceMap->RightIPTWLocFacesToTraceInterpMat(
-                        1, Bwd, locTraceBwd);
-                    break;
-                default:
-                    NEKERROR(ErrorUtil::efatal, 
-                        "GetLocTraceFromTracePts not defined");
-                }
+                m_locTraceToTraceMap->InterpLocTracesToTraceTranspose(
+                        0, Fwd, locTraceFwd);
             }
 
-            if (NullNekDouble1DArray != locTraceFwd)
+            if (locTraceBwd != NullNekDouble1DArray)
             {
-                switch(m_expType)
-                {
-                case e2D:
-                    m_locTraceToTraceMap->RightIPTWLocEdgesToTraceInterpMat(
-                        0, Fwd, locTraceFwd);
-                    break;
-                case e3D:
-                    m_locTraceToTraceMap->RightIPTWLocFacesToTraceInterpMat(
-                        0, Fwd, locTraceFwd);
-                    break;
-                default:
-                    NEKERROR(ErrorUtil::efatal, 
-                        "GetLocTraceFromTracePts not defined");
-                }
+                m_locTraceToTraceMap->InterpLocTracesToTraceTranspose(
+                        1, Bwd, locTraceBwd);
             }
+
         }
 
         void DisContField::v_AddTraceIntegralToOffDiag(

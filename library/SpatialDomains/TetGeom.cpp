@@ -50,6 +50,8 @@ const unsigned int TetGeom::VertexFaceConnectivity[4][3] = {
     {0, 1, 3}, {0, 1, 2}, {0, 2, 3}, {1, 2, 3}};
 const unsigned int TetGeom::EdgeFaceConnectivity[6][2] = {
     {0, 1}, {0, 2}, {0, 3}, {1, 3}, {1, 2}, {2, 3}};
+const unsigned int TetGeom::EdgeNormalToFaceVert[4][3] = {
+    {3, 4, 5}, {1, 2, 5}, {0, 2, 3},  {0, 1, 4}};
 
 TetGeom::TetGeom()
 {
@@ -108,6 +110,11 @@ int TetGeom::v_GetVertexFaceMap(const int i, const int j) const
 int TetGeom::v_GetEdgeFaceMap(const int i, const int j) const
 {
     return EdgeFaceConnectivity[i][j];
+}
+
+int TetGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
 }
 
 void TetGeom::SetUpLocalEdges()
@@ -552,6 +559,16 @@ void TetGeom::SetUpFaceOrientation()
         }
 
         orientation = orientation + 5;
+
+        ASSERTL0(orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+                 "Orientation of triangular face (id = " +
+                 boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
+                 ") is inconsistent with face "+
+                 boost::lexical_cast<string>(f) +
+                 " of tet element (id = "+
+                 boost::lexical_cast<string>(m_globalID) +
+                 ") since Dir2 is aligned with Dir1. Mesh setup "
+                 "needs investigation");
 
         // Fill the m_forient array
         m_forient[f] = (StdRegions::Orientation)orientation;

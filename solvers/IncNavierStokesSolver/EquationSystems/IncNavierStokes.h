@@ -38,13 +38,18 @@
 #include <SolverUtils/UnsteadySystem.h>
 #include <SolverUtils/AdvectionSystem.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <LibUtilities/BasicUtils/VmathArray.hpp>
 #include <IncNavierStokesSolver/EquationSystems/Extrapolate.h>
 #include <SolverUtils/Forcing/Forcing.h>
 #include <SolverUtils/Filters/FilterInterfaces.hpp>
 #include <complex>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/vector.hpp>
 
 namespace Nektar
 {
+    namespace bnu= boost::numeric::ublas;
+
     enum EquationType
     {
         eNoEquationType,
@@ -139,7 +144,7 @@ namespace Nektar
         // Destructor
         virtual ~IncNavierStokes();
 
-        virtual void v_InitObject();
+        virtual void v_InitObject() override;
 
         int GetNConvectiveFields(void)
         {
@@ -155,20 +160,30 @@ namespace Nektar
 
         virtual void GetPressure(
             const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble>                     &pressure);
+                  Array<OneD, NekDouble>                     &pressure) override;
 
         virtual void GetDensity(
             const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble>                     &density);
+                  Array<OneD, NekDouble>                     &density) override;
 
-        virtual bool HasConstantDensity()
+        virtual bool HasConstantDensity() override
         {
             return true;
         }
 
         virtual void GetVelocity(
             const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, Array<OneD, NekDouble> >       &velocity);
+                  Array<OneD, Array<OneD, NekDouble> >       &velocity) override;
+
+        virtual void SetMovingFrameVelocities(const Array<OneD, NekDouble>& vFrameVels) override;
+        virtual void GetMovingFrameVelocities(Array<OneD, NekDouble>& vFrameVels) override;
+        virtual void SetMovingFrameAngles(const Array<OneD, NekDouble>& vFrameTheta) override;
+        virtual void GetMovingFrameAngles(Array<OneD, NekDouble>& vFrameTheta) override;
+        virtual void SetMovingFrameProjectionMat(const bnu::matrix<NekDouble>& vProjMat) override;
+        virtual void GetMovingFrameProjectionMat(bnu::matrix<NekDouble>& vProjMat) override;
+
+        virtual bool DefinedForcing(const std::string& sForce);
+        virtual void GetPivotPoint(Array<OneD, NekDouble>& vPivotPoint);
 
     protected:
 
@@ -213,6 +228,10 @@ namespace Nektar
         /// pressure boundary conditions.
         int m_intSteps;
 
+        // pivot point for moving reference frame
+        // TODO: relocate this variable
+        Array<OneD, NekDouble> m_pivotPoint;
+
         /// Constructor.
         IncNavierStokes(const LibUtilities::SessionReaderSharedPtr& pSession,
                         const SpatialDomains::MeshGraphSharedPtr &pGraph);
@@ -223,7 +242,8 @@ namespace Nektar
         }
 
         void EvaluateAdvectionTerms(const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-									Array<OneD, Array<OneD, NekDouble> > &outarray);
+                                    Array<OneD, Array<OneD, NekDouble> > &outarray,
+                                    const NekDouble time);
 
         void WriteModalEnergy(void);
 
@@ -242,20 +262,25 @@ namespace Nektar
         /// Set Up Womersley details
         void SetUpWomersley(const int fldid, const int bndid, std::string womstr);
 
+        /// Set the moving reference frame boundary conditions
+        void SetMovingReferenceFrameBCs(const NekDouble& time);
+        void SetMRFWallBCs(const NekDouble& time);
+        void SetMRFDomainVelBCs(const NekDouble& time);
+
         /// Womersley parameters if required
         std::map<int, std::map<int,WomersleyParamsSharedPtr> > m_womersleyParams;
 
-        virtual MultiRegions::ExpListSharedPtr v_GetPressure()
+        virtual MultiRegions::ExpListSharedPtr v_GetPressure() override
         {
             return m_pressure;
         }
 
-        virtual void v_TransCoeffToPhys(void)
+        virtual void v_TransCoeffToPhys(void) override
         {
             ASSERTL0(false,"This method is not defined in this class");
         }
 
-        virtual void v_TransPhysToCoeff(void)
+        virtual void v_TransPhysToCoeff(void) override
         {
             ASSERTL0(false,"This method is not defined in this class");
         }
@@ -263,9 +288,9 @@ namespace Nektar
         virtual int v_GetForceDimension()=0;
 
         virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
-            const NekDouble SpeedSoundFactor);
+            const NekDouble SpeedSoundFactor) override;
 
-        virtual bool v_PreIntegrate(int step);
+        virtual bool v_PreIntegrate(int step) override;
 
     private:
 

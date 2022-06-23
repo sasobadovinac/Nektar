@@ -265,12 +265,6 @@ namespace Nektar
             LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
                 const StdRegions::StdMatrixKey &mkey);
 
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr  CreateMatrix(
-                const MatrixKey &mkey);
-
-            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr  CreateStaticCondMatrix(
-                const MatrixKey &mkey);
-
             LOCAL_REGIONS_EXPORT virtual DNekScalMatSharedPtr v_GetLocMatrix(
                 const MatrixKey &mkey);
 
@@ -294,6 +288,11 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,       NekDouble> &outarray,
                       Array<OneD,       NekDouble> &wsp);
+
+            virtual void v_NormalTraceDerivFactors(
+                Array<OneD, Array<OneD, NekDouble>> &factors,
+                Array<OneD, Array<OneD, NekDouble>> &d0factors,
+                Array<OneD, Array<OneD, NekDouble>> &d1factors);
         };
 
     } //end of namespace

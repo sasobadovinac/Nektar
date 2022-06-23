@@ -37,6 +37,11 @@
 
 using namespace Nektar::LibUtilities;
 
+#ifdef NEKTAR_USE_MPI
+#include <LibUtilities/Communication/CommMpi.h>
+CommSharedPtr MPICOMM = CommSharedPtr();
+#endif
+
 /**
  * @brief Thin wrapper around SessionReader to provide a nicer Pythonic
  * interface.
@@ -75,8 +80,30 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
     // segfault.
     argv[argc] = NULL;
 
+#ifdef NEKTAR_USE_MPI
+    // In the case we're using MPI, it may already have been initialised. So to
+    // handle this, we'll construct our own CommMpi object and pass through to
+    // the SessionReader. This will persist indefinitely, or at least until the
+    // library is unloaded by Python.
+
+    if (!MPICOMM)
+    {
+        MPICOMM = GetCommFactory().CreateInstance("ParallelMPI", argc, argv);
+    }
+
+    std::vector<std::string> filenames(argc-1);
+    for (i = 1; i < argc; ++i)
+    {
+        filenames[i-1] = std::string(argv[i]);
+    }
+
+    // Create session reader.
+    SessionReaderSharedPtr sr = SessionReader::CreateInstance(
+        argc, argv, filenames, MPICOMM);
+#else
     // Create session reader.
     SessionReaderSharedPtr sr = SessionReader::CreateInstance(argc, argv);
+#endif
 
     // Clean up.
     delete [] argv;

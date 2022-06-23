@@ -537,8 +537,10 @@ to visualise the result either in Tecplot, Paraview or VisIt.
 
 To obtain full Fourier expansion form a \inltt{HalfMode} result, use the comand:
 \begin{lstlisting}[style=BashInputStyle]
-  FieldConvert -m halfmodetofourier file.xml half_mode_file.fld single_mode_file.fld
+  FieldConvert -m halfmodetofourier:realmodetoimag=value1,value2 file.xml half_mode_file.fld single_mode_file.fld
 \end{lstlisting}
+
+In linear stability analysis with halfmode expansion, the variable w, whose variable number is 2, is a imaginary mode but it is output as a real mode in the eigenvector field file. By setting option \inltt{realmodetoimag=2}, w can be transformed to a imaginary mode correctly.
 
 \subsection{Extract a plane from 3DH1D expansion: \textit{homplane} module}
 
@@ -639,6 +641,8 @@ The \inltt{fromxml} and \inltt{fromfld} must be specified in this module.
 In addition there are two optional arguments \inltt{clamptolowervalue}
 and \inltt{clamptouppervalue} which clamp the interpolation between
 these two values. Their default values are -10,000,000 and 10,000,000.
+
+If the fromfld is a 3DH1D field and uses HalfMode expansion, you can use \inltt{realmodetoimag=$n_1,n_2,...,n_m$} to transform the $n_1,n_2,...,n_m$th variables from real modes to imaginary modes. Variable index starts from 0.
 %
 \begin{tipbox}
 This module can run in parallel where the speed is increased not
@@ -786,9 +790,7 @@ where $p0$ is a reference pressure and $q$ is the free stream dynamics pressure.
 If the input does not contain a field ``p'' or a velocity field ``u,v,w'' then $cp$
 and $cp0$ are not evaluated accordingly.
 
-Interpolation of 3DH1D fields is performed only in the x-y
-spectral/\emph{hp} planes. At every x-y location, if the point lies outside a
-Fourier plane its z-coordinate is reset to the closest plane.
+If the fromfld is a 3DH1D field and uses HalfMode expansion, you can use \inltt{realmodetoimag=$n_1,n_2,...,n_m$} to transform the $n_1,n_2,...,n_m$th variables from real modes to imaginary modes. Variable index starts from 0.
 %
 \begin{notebox}
 This module  runs in parallel for the line, plane and box extraction of points.

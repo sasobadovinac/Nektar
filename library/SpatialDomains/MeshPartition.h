@@ -57,6 +57,7 @@ CompositeDescriptor;
 /// the EquationSystem class.
 typedef LibUtilities::NekFactory<std::string, MeshPartition,
                                  const LibUtilities::SessionReaderSharedPtr,
+                                 LibUtilities::CommSharedPtr,
                                  int, std::map<int, MeshEntity>,
                                  CompositeDescriptor>
     MeshPartitionFactory;
@@ -68,6 +69,7 @@ class MeshPartition
 
 public:
     MeshPartition(const LibUtilities::SessionReaderSharedPtr session,
+                  LibUtilities::CommSharedPtr                comm,
                   int                                        meshDim,
                   std::map<int, MeshEntity>                  element,
                   CompositeDescriptor                        compMap);
@@ -124,6 +126,7 @@ protected:
     typedef std::map<std::string, NumModes> NummodesPerField;
 
     LibUtilities::SessionReaderSharedPtr m_session;
+    LibUtilities::CommSharedPtr m_comm;
 
     int m_dim;
     int m_numFields;
@@ -145,9 +148,7 @@ protected:
     std::map<int, MultiWeight> m_edgeWeights;
 
     BoostGraph m_graph;
-    std::vector<std::vector<unsigned int>> m_localPartition;
-
-    LibUtilities::CommSharedPtr m_comm;
+    std::map<int, std::vector<unsigned int>> m_localPartition;
 
     bool m_weightingRequired;
     bool m_weightBnd;

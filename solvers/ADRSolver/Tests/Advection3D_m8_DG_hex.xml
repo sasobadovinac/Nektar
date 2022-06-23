@@ -144,7 +144,7 @@
       <I PROPERTY="Projection"              VALUE="DisContinuous"       />
         <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
         <I PROPERTY="UpwindType"            VALUE="Upwind"              />
-        <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
+        <I PROPERTY="TimeIntegrationMethod" VALUE="RungeKutta4"/>
     </SOLVERINFO>
 
     <VARIABLES>

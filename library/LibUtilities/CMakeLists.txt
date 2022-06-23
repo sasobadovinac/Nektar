@@ -30,6 +30,7 @@ SET(BasicUtilsHeaders
     ./BasicUtils/SessionReader.h
     ./BasicUtils/ShapeType.hpp
     ./BasicUtils/SharedArray.hpp
+    ./BasicUtils/Smath.hpp
     ./BasicUtils/Thread.h
     ./BasicUtils/ThreadBoost.h
     ./BasicUtils/Vmath.hpp
@@ -454,7 +455,7 @@ IF(NOT BLAS_LAPACK_BUILTIN)
 ENDIF()
 
 IF(THIRDPARTY_BUILD_BLAS_LAPACK)
-    ADD_DEPENDENCIES(LibUtilities lapack-3.7.0)
+    ADD_DEPENDENCIES(LibUtilities lapack-3.7.1)
 ENDIF()
 
 IF( NEKTAR_USE_PETSC )
