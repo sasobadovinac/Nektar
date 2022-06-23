@@ -584,7 +584,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank, bool b
  */
 int FieldIO::CheckFieldDefinition(
     const FieldDefinitionsSharedPtr &fielddefs,
-    std::vector<std::pair<unsigned int, unsigned int>> &offsets)
+          std::vector<unsigned int> &coeffsPerElmt)
 {
     int i;
 
@@ -628,10 +628,12 @@ int FieldIO::CheckFieldDefinition(
             break;
     }
 
-    size_t datasize = 0;
+    int NCoeffs = 0;
 
     ASSERTL0(fielddefs->m_basis.size() == numbasis,
              "Length of basis vector is incorrect");
+
+    coeffsPerElmt.resize(fielddefs->m_elementIDs.size());
 
     if (fielddefs->m_uniOrder == true)
     {
@@ -644,17 +646,17 @@ int FieldIO::CheckFieldDefinition(
                 int l = fielddefs->m_numModes[cnt++];
                 if (fielddefs->m_numHomogeneousDir == 1)
                 {
-                    datasize += l * fielddefs->m_homogeneousZIDs.size();
+                    NCoeffs = l * fielddefs->m_homogeneousZIDs.size();
                     cnt++;
                 }
                 else if (fielddefs->m_numHomogeneousDir == 2)
                 {
-                    datasize += l * fielddefs->m_homogeneousYIDs.size();
+                    NCoeffs = l * fielddefs->m_homogeneousYIDs.size();
                     cnt += 2;
                 }
                 else
                 {
-                    datasize += l;
+                    NCoeffs = l;
                 }
             }
             break;
@@ -665,12 +667,12 @@ int FieldIO::CheckFieldDefinition(
 
                 if (fielddefs->m_numHomogeneousDir == 1)
                 {
-                    datasize += StdTriData::getNumberOfCoefficients(l, m) *
-                                fielddefs->m_homogeneousZIDs.size();
+                    NCoeffs = StdTriData::getNumberOfCoefficients(l, m) *
+                              fielddefs->m_homogeneousZIDs.size();
                 }
                 else
                 {
-                    datasize += StdTriData::getNumberOfCoefficients(l, m);
+                    NCoeffs = StdTriData::getNumberOfCoefficients(l, m);
                 }
             }
             break;
@@ -680,11 +682,12 @@ int FieldIO::CheckFieldDefinition(
                 int m = fielddefs->m_numModes[cnt++];
                 if (fielddefs->m_numHomogeneousDir == 1)
                 {
-                    datasize += l * m * fielddefs->m_homogeneousZIDs.size();
+                    NCoeffs = StdQuadData::getNumberOfCoefficients(l, m) * 
+                              fielddefs->m_homogeneousZIDs.size();
                 }
                 else
                 {
-                    datasize += l * m;
+                    NCoeffs = StdQuadData::getNumberOfCoefficients(l, m);
                 }
             }
             break;
@@ -693,7 +696,7 @@ int FieldIO::CheckFieldDefinition(
                 int l = fielddefs->m_numModes[cnt++];
                 int m = fielddefs->m_numModes[cnt++];
                 int n = fielddefs->m_numModes[cnt++];
-                datasize += StdTetData::getNumberOfCoefficients(l, m, n);
+                NCoeffs = StdTetData::getNumberOfCoefficients(l, m, n);
             }
             break;
             case ePyramid:
@@ -701,7 +704,7 @@ int FieldIO::CheckFieldDefinition(
                 int l = fielddefs->m_numModes[cnt++];
                 int m = fielddefs->m_numModes[cnt++];
                 int n = fielddefs->m_numModes[cnt++];
-                datasize += StdPyrData::getNumberOfCoefficients(l, m, n);
+                NCoeffs = StdPyrData::getNumberOfCoefficients(l, m, n);
             }
             break;
             case ePrism:
@@ -709,7 +712,7 @@ int FieldIO::CheckFieldDefinition(
                 int l = fielddefs->m_numModes[cnt++];
                 int m = fielddefs->m_numModes[cnt++];
                 int n = fielddefs->m_numModes[cnt++];
-                datasize += StdPrismData::getNumberOfCoefficients(l, m, n);
+                NCoeffs = StdPrismData::getNumberOfCoefficients(l, m, n);
             }
             break;
             case eHexahedron:
@@ -717,7 +720,7 @@ int FieldIO::CheckFieldDefinition(
                 int l = fielddefs->m_numModes[cnt++];
                 int m = fielddefs->m_numModes[cnt++];
                 int n = fielddefs->m_numModes[cnt++];
-                datasize += l * m * n;
+                NCoeffs = StdHexData::getNumberOfCoefficients(l, m, n);
             }
             break;
             default:
@@ -725,13 +728,12 @@ int FieldIO::CheckFieldDefinition(
                 break;
         }
 
-        offsets.resize(fielddefs->m_elementIDs.size());
+        // Store the number of coefficients/modes per element
         for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
         {
-            offsets[i] = std::make_pair(datasize, i * datasize);
+            coeffsPerElmt[i] = NCoeffs;
         }
 
-        datasize *= fielddefs->m_elementIDs.size();
     }
     else
     {
@@ -746,17 +748,17 @@ int FieldIO::CheckFieldDefinition(
                     int l = fielddefs->m_numModes[cnt++];
                     if (fielddefs->m_numHomogeneousDir == 1)
                     {
-                        datasize += l * fielddefs->m_homogeneousZIDs.size();
+                        NCoeffs = l * fielddefs->m_homogeneousZIDs.size();
                         cnt++;
                     }
                     else if (fielddefs->m_numHomogeneousDir == 2)
                     {
-                        datasize += l * fielddefs->m_homogeneousYIDs.size();
+                        NCoeffs = l * fielddefs->m_homogeneousYIDs.size();
                         cnt += 2;
                     }
                     else
                     {
-                        datasize += l;
+                        NCoeffs = l;
                     }
                 }
                 break;
@@ -766,13 +768,13 @@ int FieldIO::CheckFieldDefinition(
                     int m = fielddefs->m_numModes[cnt++];
                     if (fielddefs->m_numHomogeneousDir == 1)
                     {
-                        datasize += StdTriData::getNumberOfCoefficients(l, m) *
-                                    fielddefs->m_homogeneousZIDs.size();
+                        NCoeffs = StdTriData::getNumberOfCoefficients(l, m) *
+                                  fielddefs->m_homogeneousZIDs.size();
                         cnt++;
                     }
                     else
                     {
-                        datasize += StdTriData::getNumberOfCoefficients(l, m);
+                        NCoeffs = StdTriData::getNumberOfCoefficients(l, m);
                     }
                 }
                 break;
@@ -782,12 +784,13 @@ int FieldIO::CheckFieldDefinition(
                     int m = fielddefs->m_numModes[cnt++];
                     if (fielddefs->m_numHomogeneousDir == 1)
                     {
-                        datasize += l * m * fielddefs->m_homogeneousZIDs.size();
+                        NCoeffs = StdQuadData::getNumberOfCoefficients(l, m) * 
+                                  fielddefs->m_homogeneousZIDs.size();
                         cnt++;
                     }
                     else
                     {
-                        datasize += l * m;
+                        NCoeffs = StdQuadData::getNumberOfCoefficients(l, m);
                     }
                 }
                 break;
@@ -796,7 +799,7 @@ int FieldIO::CheckFieldDefinition(
                     int l = fielddefs->m_numModes[cnt++];
                     int m = fielddefs->m_numModes[cnt++];
                     int n = fielddefs->m_numModes[cnt++];
-                    datasize += StdTetData::getNumberOfCoefficients(l, m, n);
+                    NCoeffs = StdTetData::getNumberOfCoefficients(l, m, n);
                 }
                 break;
                 case ePyramid:
@@ -804,7 +807,7 @@ int FieldIO::CheckFieldDefinition(
                     int l = fielddefs->m_numModes[cnt++];
                     int m = fielddefs->m_numModes[cnt++];
                     int n = fielddefs->m_numModes[cnt++];
-                    datasize += StdPyrData::getNumberOfCoefficients(l, m, n);
+                    NCoeffs = StdPyrData::getNumberOfCoefficients(l, m, n);
                 }
                 break;
                 case ePrism:
@@ -812,7 +815,7 @@ int FieldIO::CheckFieldDefinition(
                     int l = fielddefs->m_numModes[cnt++];
                     int m = fielddefs->m_numModes[cnt++];
                     int n = fielddefs->m_numModes[cnt++];
-                    datasize += StdPrismData::getNumberOfCoefficients(l, m, n);
+                    NCoeffs = StdPrismData::getNumberOfCoefficients(l, m, n);
                 }
                 break;
                 case eHexahedron:
@@ -820,17 +823,22 @@ int FieldIO::CheckFieldDefinition(
                     int l = fielddefs->m_numModes[cnt++];
                     int m = fielddefs->m_numModes[cnt++];
                     int n = fielddefs->m_numModes[cnt++];
-                    datasize += l * m * n;
+                    NCoeffs = StdHexData::getNumberOfCoefficients(l, m, n);
                 }
                 break;
                 default:
                     NEKERROR(ErrorUtil::efatal, "Unsupported shape type.");
                     break;
             }
+
+            // Store number of coefficients/modes in this element
+            coeffsPerElmt[i] = NCoeffs;
+
         }
     }
 
-    return (int)datasize;
+    return std::accumulate(coeffsPerElmt.begin(), coeffsPerElmt.end(), int{0});
+
 }
 }
 }

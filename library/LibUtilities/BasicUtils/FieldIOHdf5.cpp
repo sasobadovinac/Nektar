@@ -969,7 +969,6 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
     decomps_dset->Read(decomps, decomps_fspace, readPL);
 
     size_t nDecomps = decomps.size() / MAX_DCMPS;
-    size_t cnt = 0, cnt2 = 0;
 
     // Mapping from each decomposition to offsets in the data array.
     std::vector<OffsetHelper> decompsToOffsets (nDecomps);
@@ -987,11 +986,14 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
     // Counters for data offsets
     OffsetHelper running;
 
-    for (size_t i = 0; i < nDecomps; ++i, cnt += MAX_DCMPS)
+    for (size_t i = 0, cnt=0, cnt2=0; i < nDecomps; ++i, cnt += MAX_DCMPS)
     {
         uint64_t nElmt     = decomps[cnt + ELEM_DCMP_IDX];
         uint64_t groupHash = decomps[cnt + HASH_DCMP_IDX];
 
+        // Element IDs in this decomposition that this process needs (in case
+        // the "ElementIDs" variable was specified), or all element IDs in this
+        // decomposition (if the "ElementIDs" variables was not specified)
         std::vector<uint64_t> tmp;
 
         if (selective)
@@ -1011,6 +1013,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                 tmp.begin(), ids.begin() + cnt2, ids.begin() + cnt2 + nElmt);
         }
 
+        // All element IDs in this decomposition
         std::vector<unsigned int> tmp2(nElmt);
         for (size_t j = 0; j < nElmt; ++j)
         {
@@ -1040,54 +1043,44 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
         // Select region from dataset for this decomposition.
         for (auto &sIt : gIt.second)
         {
-            // Offsets of elemental data within dataset
-            std::map<unsigned int, hsize_t> elementOffsets;
-            std::vector<hsize_t> dataIdxToRead;
-
-            std::stringstream fieldNameStream;
-            fieldNameStream << gIt.first;
+            auto fieldName = std::to_string(gIt.first);
 
             FieldDefinitionsSharedPtr fielddef =
                 MemoryManager<FieldDefinitions>::AllocateSharedPtr();
-            ImportFieldDef(readPLInd, root, decomps, sIt, decompsToOffsets[sIt],
-                           fieldNameStream.str(), fielddef);
+            ImportFieldDef(readPLInd, root, decomps, sIt, 
+                           decompsToOffsets[sIt], fieldName, fielddef);
 
             fielddef->m_elementIDs = groupsToElmts[sIt];
             fielddefs.push_back(fielddef);
 
-            // Determine number of modes per element
-            std::vector<std::pair<unsigned int, unsigned int>> offsets;
-            CheckFieldDefinition(fielddef, offsets);
-
-            for (int i = 0; i < fielddef->m_elementIDs.size(); ++i)
-            {
-                elementOffsets[fielddef->m_elementIDs[i]] =
-                    decompsToOffsets[sIt].data + offsets[i].second;
-            }
+            // Determine number of modes (coefficients) per element
+            // TODO: Move inside if statement and add separate code below that does not pass coeffsPerElmt?
+            std::vector<unsigned int> coeffsPerElmt;
+            CheckFieldDefinition(fielddef, coeffsPerElmt);
 
             if (selective)
             {
-                std::vector<unsigned int> newElementIds;
-                for (int i = 0; i < fielddef->m_elementIDs.size(); ++i)
+
+                // Selected element IDs
+                std::vector<unsigned int> newElementIDs;
+                std::vector<unsigned int> dataIdxToRead;
+
+                for (int i = 0 int offset = 0; 
+                     i < fielddef->m_elementIDs.size();
+                     offset += coeffsPerElmt[i++])
                 {
                     if (toread.find(fielddef->m_elementIDs[i]) != toread.end())
                     {
-                        newElementIds.push_back(fielddef->m_elementIDs[i]);
+                        newElementIDs.push_back(fielddef->m_elementIDs[i]);
+                        for (int j = 0; j < coeffsPerElmt[i]; ++j)
+                        {
+                            dataIdxToRead.push_back(
+                                decompsToOffsets[sIt].data + offset + j);
+                        }
                     }
                 }
 
-                for (int i = 0; i < newElementIds; ++i)
-                {
-                    unsigned int nElementModes = offsets[i].first;
-                    unsigned int dataOffset = elementOffsets[newElementIds[i]];
-
-                    for (int j = 0; j < nElementModes; ++j)
-                    {
-                        dataIdxToRead.push_back(dataOffset + j);
-                    }
-                }
-
-                fielddef->m_elementIDs = newElementIds;
+                fielddef->m_elementIDs = newElementIDs;
 
                 std::vector<NekDouble> decompFieldData;
 
