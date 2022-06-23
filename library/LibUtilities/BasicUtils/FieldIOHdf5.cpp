@@ -1037,7 +1037,6 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
         running.homs  += decomps[cnt + HOMS_DCMP_IDX];
     }
 
-
     for (auto &gIt : groupsToDecomps)
     {
         // Select region from dataset for this decomposition.
@@ -1053,13 +1052,11 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
             fielddef->m_elementIDs = groupsToElmts[sIt];
             fielddefs.push_back(fielddef);
 
-            // Determine number of modes (coefficients) per element
-            // TODO: Move inside if statement and add separate code below that does not pass coeffsPerElmt?
-            std::vector<unsigned int> coeffsPerElmt;
-            CheckFieldDefinition(fielddef, coeffsPerElmt);
-
             if (selective)
             {
+                // Determine number of modes (coefficients) per element
+                std::vector<unsigned int> coeffsPerElmt;
+                CheckFieldDefinition(fielddef, coeffsPerElmt);
 
                 // Selected element IDs
                 std::vector<unsigned int> newElementIDs;
@@ -1114,15 +1111,6 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
             }
         }
     }
-
-    // // Hack: would need to construct one field definition per element type,
-    // // assume they are just all the same for now
-    // fielddefs.resize(1);
-    
-    // for (int i = 0; i < ElementIDs.size(); ++i)
-    // {
-    //     fielddefs[0]->m_elementIDs = ElementIDs[i];
-    // }
 
     ImportHDF5FieldMetaData(dataSource, fieldinfomap);
 
