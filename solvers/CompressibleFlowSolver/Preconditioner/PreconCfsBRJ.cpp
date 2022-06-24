@@ -360,31 +360,39 @@ void PreconCfsBRJ::PreconBlkDiag(
     static unsigned int m_max_nElmtDof = 0;
     
     // remapped Precon Matrix
-    static Array<OneD, std::vector<vec_t, tinysimd::allocator<vec_t>>>
-        m_sBlkDiagMat(nTotElmt);
+    static std::vector<vec_t, tinysimd::allocator<vec_t>> m_sBlkDiagMat;
     const auto vecwidth = vec_t::width;
 
     if(m_max_nblocks == 0)
     {
         // will need to be a float in the end. 
-        Array<OneD, NekSingle> tmp(vecwidth);
-
+        std::array<NekSingle, vec_t::width> tmp;
+        int TotMatLen = 0;
+        
         for (int ne = 0; ne < nTotElmt; ne++)
         {
-            const auto nElmtCoef   = pFields[0]->GetNcoeffs(ne);
-            const auto nElmtDof    = nElmtCoef*nvariables;
+            const auto nElmtDof    = pFields[0]->GetNcoeffs(ne)*nvariables;
             const auto nblocks     = nElmtDof/vecwidth;
             const auto totblocks   = (nElmtDof%vecwidth)? nblocks+1: nblocks; 
 
             m_max_nblocks  = max(m_max_nblocks,totblocks);
             m_max_nElmtDof = max(m_max_nElmtDof,nElmtDof);
 
-            m_sBlkDiagMat[ne].resize(nElmtDof*totblocks);
+            TotMatLen += nElmtDof*nElmtDof;
+        }
+
+        m_sBlkDiagMat.resize(TotMatLen);
+
+        // load matrix 
+        int cnt = 0;
+        for (int ne = 0; ne < nTotElmt; ne++)
+        {
+            const auto nElmtDof    = pFields[0]->GetNcoeffs(ne)*nvariables;
+            const auto nblocks     = nElmtDof/vecwidth;
 
             const NekSingle *mmat = PreconMatVars->
                 GetBlockPtr(ne,ne)->GetRawPtr();
             /// Copy array into column major blocks of vector width
-            int cnt = 0;
             for(int i1 = 0; i1 < nblocks; ++i1)
             {
                 for(int j = 0; j < nElmtDof; ++j)
@@ -393,9 +401,8 @@ void PreconCfsBRJ::PreconBlkDiag(
                     {
                         tmp[i] = mmat[j + (i1*vecwidth + i)*nElmtDof];
                     }
-
-                    // store contiguous data in tmp into vec_t array. 
-                    m_sBlkDiagMat[ne][cnt++].load(&tmp[0]); 
+                    // store contiguous vec_t array. 
+                    m_sBlkDiagMat[cnt++].load(tmp.data()); 
                 }
             }
 
@@ -415,7 +422,7 @@ void PreconCfsBRJ::PreconBlkDiag(
                     {
                         tmp[i] = 0.0;
                     }
-                    m_sBlkDiagMat[ne][cnt++].load(&tmp[0]); 
+                    m_sBlkDiagMat[cnt++].load(tmp.data()); 
                 }
             }
         }
@@ -428,11 +435,11 @@ void PreconCfsBRJ::PreconBlkDiag(
     std::vector<vec_t, tinysimd::allocator<vec_t>> Sinarray (m_max_nblocks); 
     std::vector<vec_t, tinysimd::allocator<vec_t>> Soutarray(m_max_nElmtDof);
 
-    Array<OneD, NekSingle> tmp(vecwidth); 
+    std::array<NekSingle, vec_t::width> tmp;
     timer1.Stop();
-        timer1.AccumulateRegion("PreconCfsBRJ: BlockDiag - initialise");
+    timer1.AccumulateRegion("PreconCfsBRJ: BlockDiag - initialise");
 
-    for (int ne = 0; ne < nTotElmt; ne++)
+    for (int ne = 0, cnt = 0; ne < nTotElmt; ne++)
     {
         timer1.Start(); 
         const auto nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
@@ -443,16 +450,15 @@ void PreconCfsBRJ::PreconBlkDiag(
         const auto nblocks     = nElmtDof/vecwidth;
 
         // store data
-        int cnt  = 0; 
-        int cnt1 = 0;
         timer1.Stop();
         timer1.AccumulateRegion("PreconCfsBRJ: BlockDiag - initialise");
 
         timer1.Start(); 
         // gather data into blocks - could probably be done with a gather call? 
-        cnt = 0;
+        int cnt1 = 0;
         int i0 = 0; 
         int i,j;
+
         for (int m = 0; m < nvariables; m++)
         {
             int inOffset  = m*ncoeffs + nCoefOffset;
@@ -462,10 +468,11 @@ void PreconCfsBRJ::PreconBlkDiag(
             // vector in 2nd iteration that needs combining
             for(i = 0; i0 < vecwidth; ++i, ++i0)
             {
-                tmp[i0] = NekSingle(inarray[inOffset + i]);
+                tmp[i0] = inarray[inOffset + i];
             }
 
-            Sinarray[cnt++].load(&tmp[0]);
+            // load index
+            Sinarray[cnt1++].load(tmp.data());
 
             // load up other vectors in varaible that fit into vector
             // width
@@ -473,22 +480,22 @@ void PreconCfsBRJ::PreconBlkDiag(
             {
                 for(i0 = 0; i0 < vecwidth; ++i0)
                 {
-                    tmp[i0] = NekSingle(inarray[inOffset + i + j + i0]);
+                    tmp[i0] = inarray[inOffset + i + j + i0];
                 }
-                Sinarray[cnt++].load(&tmp[0]);
+                Sinarray[cnt1++].load(tmp.data());
             }
 
             // load up any residaul data. 
             for(i0 = 0 ; j < nElmtCoef-i; ++j, ++i0)
             {
-                tmp[i0] = NekSingle(inarray[inOffset + j]); 
+                tmp[i0] = inarray[inOffset + j]; 
             }
         }
 
         // add last residual vector if non-zero
         if(i0)
         {
-            Sinarray[cnt++].load(&tmp[0]);
+            Sinarray[cnt1++].load(tmp.data());
         }
         timer1.Stop();
         timer1.AccumulateRegion("PreconCfsBRJ: BlockDiag - load & store");
@@ -496,27 +503,31 @@ void PreconCfsBRJ::PreconBlkDiag(
         timer1.Start();
         // Do matrix multiply
         // first block
+        vec_t in = Sinarray[0];
+
         for (i = 0; i < nElmtDof; ++i)
         {
-            Soutarray[i] = m_sBlkDiagMat[ne][i] * Sinarray[0];
+            Soutarray[i] = m_sBlkDiagMat[cnt++] * in;
         }
 
         // main block multiply 
-        cnt = nElmtDof; 
         for(int n = 1; n < nblocks; ++n)
         {
+            in = Sinarray[n];
             for (i = 0; i < nElmtDof; ++i)
             {
-                Soutarray[i].fma(m_sBlkDiagMat[ne][cnt++],Sinarray[n]);
+                Soutarray[i].fma(m_sBlkDiagMat[cnt++],in);
             }
+            
         }
 
         // Do remainder if required
         if(endwidth) 
         {
+            in = Sinarray[nblocks];
             for (i = 0; i < nElmtDof; ++i)
             {
-                Soutarray[i].fma(m_sBlkDiagMat[ne][cnt++],Sinarray[nblocks]);
+                Soutarray[i].fma(m_sBlkDiagMat[cnt++],in);
             }
         }
         timer1.Stop();
@@ -525,14 +536,14 @@ void PreconCfsBRJ::PreconBlkDiag(
         timer1.Start(); 
         // sum vector and unpack data
         NekDouble val; 
-        cnt = 0;
+        cnt1 = 0;
         for (int m = 0; m < nvariables; m++)
         {
             int inOffset = m*ncoeffs + nCoefOffset;
 
             for (i = 0; i < nElmtCoef; ++i)
             {
-                Soutarray[cnt++].store(&tmp[0]);
+                Soutarray[cnt1++].store(tmp.data());
                 
                 val = NekDouble(tmp[0]);
                 for(j = 1; j < vecwidth; ++j)
