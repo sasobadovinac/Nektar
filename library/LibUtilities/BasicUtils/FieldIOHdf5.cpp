@@ -973,9 +973,9 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
     // Mapping from each decomposition to offsets in the data array.
     std::vector<OffsetHelper> decompsToOffsets (nDecomps);
 
-    // Mapping from each group's hash to a vector of element IDs. Note this has
+    // Mapping from each decomposition to a vector of element IDs. Note this has
     // to be unsigned int, since that's what we use in FieldDefinitions.
-    std::map<uint64_t, std::vector<unsigned int> > groupsToElmts;
+    std::map<uint64_t, std::vector<unsigned int> > decompsToElmts;
 
     // Mapping from each group's hash to each of the decompositions.
     std::map<uint64_t, std::set<uint64_t> > groupsToDecomps;
@@ -1014,7 +1014,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
         }
 
         // All element IDs in this decomposition
-        std::vector<unsigned int> tmp2(nElmt);
+        std::vector<uint64_t> tmp2(nElmt);
         for (size_t j = 0; j < nElmt; ++j)
         {
             tmp2[j] = ids[cnt2+j];
@@ -1027,7 +1027,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
             groupsToDecomps[groupHash].insert(i);
         }
 
-        groupsToElmts[i] = tmp2;
+        decompsToElmts[i] = tmp2;
         decompsToOffsets[i] = running;
 
         running.data  += decomps[cnt + VAL_DCMP_IDX];
@@ -1042,14 +1042,15 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
         // Select region from dataset for this decomposition.
         for (auto &sIt : gIt.second)
         {
-            auto fieldName = std::to_string(gIt.first);
+            // Convert group name to string
+            auto groupName = std::to_string(gIt.first);
 
             FieldDefinitionsSharedPtr fielddef =
                 MemoryManager<FieldDefinitions>::AllocateSharedPtr();
             ImportFieldDef(readPLInd, root, decomps, sIt, 
-                           decompsToOffsets[sIt], fieldName, fielddef);
+                           decompsToOffsets[sIt], groupName, fielddef);
 
-            fielddef->m_elementIDs = groupsToElmts[sIt];
+            fielddef->m_elementIDs = decompsToElmts[sIt];
             fielddefs.push_back(fielddef);
 
             if (selective)
@@ -1059,8 +1060,8 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                 CheckFieldDefinition(fielddef, coeffsPerElmt);
 
                 // Selected element IDs
-                std::vector<unsigned int> newElementIDs;
-                std::vector<unsigned int> dataIdxToRead;
+                std::vector<uint64_t> newElementIDs;
+                std::vector<uint64_t> dataIdxToRead;
 
                 for (int i = 0 int offset = 0; 
                      i < fielddef->m_elementIDs.size();
@@ -1082,6 +1083,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                 std::vector<NekDouble> decompFieldData;
 
                 data_fspace->ClearRange();
+                // TODO: This function does not exist with one parameter, are we using it correctly?
                 data_fspace->SetSelection(dataIdxToRead);
 
                 ImportFieldData(
@@ -1344,6 +1346,7 @@ void FieldIOHdf5::ImportFieldData(
     std::stringstream prfx;
     prfx << m_comm->GetRank() << ": FieldIOHdf5::ImportFieldData(): ";
 
+    // TODO: Remove this?
     uint64_t nElemVals  = decomps[sIt * MAX_DCMPS + VAL_DCMP_IDX];
     uint64_t nFieldVals = nElemVals;
 
