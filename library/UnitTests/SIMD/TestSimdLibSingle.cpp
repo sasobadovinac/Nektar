@@ -218,7 +218,7 @@ namespace SimdLibTests
     BOOST_AUTO_TEST_CASE(SimdLibFloat_gather32)
     {
         vec_t avec;
-        using index_t = simd<size_t>;
+        using index_t = simd<uint8_t>;
         index_t aindexvec;
 
         // create and fill index
