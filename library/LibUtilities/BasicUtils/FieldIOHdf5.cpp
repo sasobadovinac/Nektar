@@ -994,7 +994,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
         // Element IDs in this decomposition that this process needs (in case
         // the "ElementIDs" variable was specified), or all element IDs in this
         // decomposition (if the "ElementIDs" variables was not specified)
-        std::vector<uint64_t> tmp;
+        std::vector<unsigned int> tmp;
 
         if (selective)
         {
@@ -1014,7 +1014,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
         }
 
         // All element IDs in this decomposition
-        std::vector<uint64_t> tmp2(nElmt);
+        std::vector<unsigned int> tmp2(nElmt);
         for (size_t j = 0; j < nElmt; ++j)
         {
             tmp2[j] = ids[cnt2+j];
@@ -1060,10 +1060,10 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                 CheckFieldDefinition(fielddef, coeffsPerElmt);
 
                 // Selected element IDs
-                std::vector<uint64_t> newElementIDs;
-                std::vector<uint64_t> dataIdxToRead;
+                std::vector<unsigned int> newElementIDs;
+                std::vector<unsigned int> dataIdxToRead;
 
-                for (int i = 0 int offset = 0; 
+                for (int i = 0, offset = 0; 
                      i < fielddef->m_elementIDs.size();
                      offset += coeffsPerElmt[i++])
                 {
