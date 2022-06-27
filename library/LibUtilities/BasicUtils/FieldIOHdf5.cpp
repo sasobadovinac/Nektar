@@ -1051,6 +1051,9 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                            decompsToOffsets[sIt], groupName, fielddef);
 
             fielddef->m_elementIDs = decompsToElmts[sIt];
+            //
+            // TODO: Fix the case with 0 elements!
+            //
             fielddefs.push_back(fielddef);
 
             if (selective)
@@ -1061,7 +1064,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
 
                 // Selected element IDs
                 std::vector<unsigned int> newElementIDs;
-                std::vector<unsigned int> dataIdxToRead;
+                std::vector<hsize_t     > dataIdxToRead;
 
                 for (int i = 0, offset = 0; 
                      i < fielddef->m_elementIDs.size();
@@ -1083,8 +1086,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                 std::vector<NekDouble> decompFieldData;
 
                 data_fspace->ClearRange();
-                // TODO: This function does not exist with one parameter, are we using it correctly?
-                data_fspace->SetSelection(dataIdxToRead);
+                data_fspace->SetSelection(dataIdxToRead.size(), dataIdxToRead);
 
                 ImportFieldData(
                     readPLInd, data_dset, data_fspace,
@@ -1102,7 +1104,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                     uint64_t nFieldVals = nElemVals;
 
                     data_fspace->ClearRange();
-                    data_fspace->SelectRange(data_i, nFieldVals);
+                    data_fspace->SelectRange(decompsToOffsets[sIt].data, nFieldVals);
 
                     ImportFieldData(
                         readPLInd, data_dset, data_fspace,
@@ -1345,10 +1347,6 @@ void FieldIOHdf5::ImportFieldData(
 {
     std::stringstream prfx;
     prfx << m_comm->GetRank() << ": FieldIOHdf5::ImportFieldData(): ";
-
-    // TODO: Remove this?
-    uint64_t nElemVals  = decomps[sIt * MAX_DCMPS + VAL_DCMP_IDX];
-    uint64_t nFieldVals = nElemVals;
 
     data_dset->Read(fielddata, data_fspace, readPL);
     int datasize = CheckFieldDefinition(fielddef);
