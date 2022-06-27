@@ -240,7 +240,8 @@ void PreconCfsBRJ::PreconBlkDiag(
                                                           
     unsigned int ncoeffs    = pFields[0]->GetNcoeffs();
 
-#define NTIME 1
+#define NTIME  1
+#define NTIME1 1
 #if 0
     LibUtilities::Timer timer;
     timer.Start();
@@ -489,14 +490,14 @@ void PreconCfsBRJ::PreconBlkDiag(
     LibUtilities::Timer timer, timer1;
     timer.Start();
 
-    //for(int t = 0; t < NTIME; ++t) // timing loop
+    for(int t = 0; t < NTIME; ++t) // timing loop
     {
     std::vector<vec_t, tinysimd::allocator<vec_t>> Sinarray (m_max_nblocks); 
     std::vector<vec_t, tinysimd::allocator<vec_t>> Soutarray(m_max_nElmtDof);
 
     std::array<NekSingle, vec_t::width> tmp;
 
-    for (int ne = 0, cnt = 0, icnt = 0; ne < nTotElmt; ne++)
+    for (int ne = 0, cnt = 0, icnt = 0, icnt1 = 0; ne < nTotElmt; ne++)
     {
         const auto nElmtCoef   = pFields[0]->GetNcoeffs(ne);
         const auto nElmtDof    = nElmtCoef*nvariables;
@@ -505,7 +506,7 @@ void PreconCfsBRJ::PreconBlkDiag(
 
         timer1.Start(); 
         int icnt_sav = icnt; 
-        for(int t = 0; t < NTIME; ++t) // timing loop
+        for(int t = 0; t < NTIME1; ++t) // timing loop
         {
             icnt  = icnt_sav; 
             
@@ -529,7 +530,7 @@ void PreconCfsBRJ::PreconBlkDiag(
 
         timer1.Start(); 
         int cnt_sav = cnt; 
-        for(int t = 0; t < NTIME; ++t) // timing loop
+        for(int t = 0; t < NTIME1; ++t) // timing loop
         {
             cnt  = cnt_sav; 
 
@@ -552,14 +553,42 @@ void PreconCfsBRJ::PreconBlkDiag(
         }
         }
         timer1.Stop();
-        timer1.AccumulateRegion("PreconCfsBRJ: Mult");
+        timer1.AccumulateRegion("PreconCfsBRJ: Mult");       
 
-        
+#if 1
         timer1.Start(); 
-        for(int t = 0; t < NTIME; ++t) // timing loop
+         // get block aligned index for this expansion
+
+        int icnt1_sav = icnt1; 
+        for(int t = 0; t < NTIME1; ++t) // timing loop
         {
-        // sum vector and unpack data
-        NekDouble val; 
+        icnt1 = icnt1_sav; 
+        NekSingle val; 
+        for (int i = 0; i < nElmtDof; ++i)
+        {
+             // Get hold of datak
+            Soutarray[i].store(tmp.data());
+            
+            // Sum vector width
+            val = tmp[0];
+            for(int j = 1; j < vecwidth; ++j)
+            {
+                val += tmp[j]; 
+            }
+            // put data into outarray 
+            outarray[m_inputIdx[icnt1+i]] = NekDouble(val); 
+        }
+        }
+        icnt1 += nblocks*vecwidth;
+
+        timer1.Stop();
+        timer1.AccumulateRegion("PreconCfsBRJ: Unpack");
+#else
+        timer1.Start(); 
+        for(int t = 0; t < NTIME1; ++t) // timing loop
+        {
+            // sum vector and unpack data
+        NekSingle val; 
         const auto nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
         for (int m = 0, cnt1 = 0; m < nvariables; m++)
         {
@@ -569,22 +598,21 @@ void PreconCfsBRJ::PreconBlkDiag(
             {
                 Soutarray[cnt1++].store(tmp.data());
                 
-                val = NekDouble(tmp[0]);
+                val = tmp[0];
                 for(int j = 1; j < vecwidth; ++j)
                 {
-                    val += NekDouble(tmp[j]); 
+                    val += tmp[j]; 
                 }
-                outarray[inOffset + i] = val; 
+                outarray[inOffset + i] = NekDouble(val); 
             }
         }
         }
         timer1.Stop();
         timer1.AccumulateRegion("PreconCfsBRJ: Unpack");
-
+#endif
     }
     }
 #endif
-
 
 #endif
     timer.Stop();
