@@ -42,6 +42,7 @@
 
 namespace Nektar
 {
+
 enum PrecType
 {
     eNull, ///< No Solution type specified
@@ -75,11 +76,10 @@ public:
                                       const NekDouble dtLambda);
 
 protected:
-    // PreconCfsType                       m_preconType;
     LibUtilities::CommSharedPtr m_Comm;
     bool m_root;
     bool m_verbose;
-    int m_spacedim;
+    int  m_spacedim;
 
     int m_PreconMatFreezNumb;
     int m_PreconTimesCounter;
