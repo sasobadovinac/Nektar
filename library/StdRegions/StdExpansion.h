@@ -70,8 +70,8 @@ namespace Nektar {
             STD_REGIONS_EXPORT StdExpansion() = default;
 
             /** \brief Constructor */
-            STD_REGIONS_EXPORT StdExpansion(int numcoeffs,
-                                            int numbases,
+            STD_REGIONS_EXPORT StdExpansion(const int numcoeffs,
+                                            const int numbases,
                                             const LibUtilities::BasisKey &Ba = LibUtilities::NullBasisKey,
                                             const LibUtilities::BasisKey &Bb = LibUtilities::NullBasisKey,
                                             const LibUtilities::BasisKey &Bc = LibUtilities::NullBasisKey);
@@ -94,7 +94,7 @@ namespace Nektar {
              */
             inline int GetNumBases() const
             {
-                return static_cast<int>(m_base.size());
+                return m_base.size();
             }
 
             /** \brief This function gets the shared point to basis
@@ -307,8 +307,8 @@ namespace Nektar {
              *  trace in the k th direction (when trace is a 2D
              *  object)
              */
-            LibUtilities::BasisKey GetTraceBasisKey(const int i,
-                                                    int k = -1) const
+            const LibUtilities::BasisKey GetTraceBasisKey(const int i,
+                                                          int k = -1) const
             {
                 return v_GetTraceBasisKey(i, k);
             }
@@ -338,7 +338,7 @@ namespace Nektar {
                 return v_NumBndryCoeffs();
             }
 
-            int NumDGBndryCoeffs() const
+            int NumDGBndryCoeffs(void) const
             {
                 return v_NumDGBndryCoeffs();
             }
@@ -351,7 +351,7 @@ namespace Nektar {
              *  \a v_GetNodalPointsKey()
              *
              */
-            LibUtilities::PointsKey GetNodalPointsKey() const
+            const LibUtilities::PointsKey GetNodalPointsKey() const
             {
                 return v_GetNodalPointsKey();
             };
@@ -575,7 +575,7 @@ namespace Nektar {
 
             /// \brief Get the element id of this expansion when used
             /// in a list by returning value of #m_elmt_id
-            inline int GetElmtId() const
+            inline int GetElmtId()
             {
                 return m_elmt_id;
             }
@@ -1223,8 +1223,8 @@ namespace Nektar {
 
         protected:
             Array<OneD, LibUtilities::BasisSharedPtr> m_base; /**< Bases needed for the expansion */
-            int m_elmt_id = 0;
-            int m_ncoeffs = 0;                                   /**< Total number of coefficients used in the expansion */
+            int m_elmt_id;
+            int m_ncoeffs;                                   /**< Total number of coefficients used in the expansion */
 
             LibUtilities::NekManager<StdMatrixKey, DNekMat, StdMatrixKey::opLess>
                     m_stdMatrixManager;
@@ -1756,7 +1756,7 @@ namespace Nektar {
                                                           bool useCoeffPacking = false);
 
             STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
-                    int tid,
+                    const int tid,
                     Array<OneD, unsigned int> &maparray,
                     Array<OneD, int> &signarray,
                     Orientation traceOrient = eForwards,
@@ -1944,4 +1944,4 @@ namespace Nektar {
     } //end of namespace
 } //end of namespace
 
-#endif //NEKTAR_LIB_STDREGIONS_STANDARDEXPANSION_H
+#endif //STANDARDDEXPANSION_H
