@@ -218,11 +218,11 @@ namespace SimdLibTests
     BOOST_AUTO_TEST_CASE(SimdLibFloat_gather32)
     {
         vec_t avec;
-        using index_t = simd<uint8_t>;
+        using index_t = simd<vec_t::scalarIndexType>;
         index_t aindexvec;
 
         // create and fill index
-        std::array<size_t, vec_t::width> aindex;
+        std::array<vec_t::scalarIndexType, vec_t::width> aindex;
         aindex[0] = 0;
         if (vec_t::width > 2)
         {
@@ -262,11 +262,11 @@ namespace SimdLibTests
     BOOST_AUTO_TEST_CASE(SimdLibFloat_scatter32)
     {
         vec_t avec;
-        using index_t = simd<size_t>;
+        using index_t = simd<vec_t::scalarIndexType>;
         index_t aindexvec;
 
-        // create and fill index
-        std::array<size_t, vec_t::width> aindex;
+        // create and fill index	
+        std::array<vec_t::scalarIndexType, vec_t::width> aindex;
         aindex[0] = 1;
         if (vec_t::width > 1)
         {
