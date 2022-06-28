@@ -30,6 +30,7 @@ v5.2.0
 - Fix memory leak in Timer.cpp (!1330)
 - Fix cmake CWIPI option to remove Fortran check (!1331)
 - Fix excessive verbose output in GetBndElmtExpansions method (!1341)
+- Timer class was updated with safety checks to avoid wrong measurements (!1347)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
@@ -44,6 +45,7 @@ v5.2.0
 
 **CompressibleFlowSolver**
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
+- Added timers around important functions using the Timer class. Timers are available by specifying IO_Timer_Level > -1 (!1347)
 
 v5.1.1
 ------
