@@ -322,6 +322,19 @@
     	  <E COMPOSITE="C[410]" BASISTYPE="Modified_A,Modified_B" NUMMODES="5,5" POINTSTYPE="GaussLobattoLegendre,GaussRadauMAlpha1Beta0"  NUMPOINTS="12,11" FIELDS="rho,rhou,rhov,E"  />
     </EXPANSIONS>
 
+    <MOVEMENT>
+        <ZONES>
+            <FIXED ID="0" DOMAIN="D[0]" />
+            <FIXED ID="1" DOMAIN="D[1]"/>
+        </ZONES>
+        <INTERFACES>
+            <INTERFACE NAME="Circle">
+                <LEFT  ID="0" BOUNDARY="C[405]" />
+                <RIGHT ID="1" BOUNDARY="C[406]"  />
+            </INTERFACE>
+        </INTERFACES>
+    </MOVEMENT>
+
     <CONDITIONS>
         <PARAMETERS>
             <P> TimeStep              = 0.00001          </P>
@@ -356,19 +369,6 @@
             <V ID="2"> rhov </V>
             <V ID="3"> E    </V>
         </VARIABLES>
-
-        <MOVEMENT>
-            <ZONES>
-                <FIXED ID="0" DOMAIN="D[0]" />
-                <FIXED ID="1" DOMAIN="D[1]"/>
-            </ZONES>
-            <INTERFACES>
-                <INTERFACE NAME="Circle">
-                    <LEFT  ID="0" BOUNDARY="C[405]" />
-                    <RIGHT ID="1" BOUNDARY="C[406]"  />
-                </INTERFACE>
-            </INTERFACES>
-        </MOVEMENT>
 
         <BOUNDARYREGIONS>
             <B ID="0"> C[404] </B>

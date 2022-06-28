@@ -62,27 +62,27 @@ std::string static inline ReadTag(std::string &tagStr)
 Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                    MeshGraph* meshGraph)
 {
-    TiXmlNode *conditions = pSession->GetElement("NEKTAR")->FirstChild("CONDITIONS");
-    if(conditions == nullptr)
+    TiXmlNode *nektar = pSession->GetElement("NEKTAR");
+    if(nektar == nullptr)
     {
         return;
     }
 
-    TiXmlNode *movement = conditions->FirstChild("MOVEMENT");
+    TiXmlNode *movement = nektar->FirstChild("MOVEMENT");
     if (movement != nullptr)
     {
         bool zones = movement->FirstChild("ZONES") != nullptr;
         if (zones)
         {
             ReadZones(pSession->GetElement(
-                "NEKTAR/CONDITIONS/MOVEMENT/ZONES"), meshGraph, pSession);
+                "NEKTAR/MOVEMENT/ZONES"), meshGraph, pSession);
         }
 
         bool interfaces = movement->FirstChild("INTERFACES") != nullptr;
         if (interfaces)
         {
             ReadInterfaces(pSession->GetElement(
-                "NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"), meshGraph);
+                "NEKTAR/MOVEMENT/INTERFACES"), meshGraph);
         }
 
         ASSERTL0(zones == interfaces,

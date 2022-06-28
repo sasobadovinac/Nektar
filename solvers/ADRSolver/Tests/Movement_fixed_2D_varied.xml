@@ -320,11 +320,31 @@
         </Provenance>
         <NekMeshCommandLine>basic.msh basic.xml:xml:uncompress </NekMeshCommandLine>
     </Metadata>
-<EXPANSIONS>
+
+    <EXPANSIONS>
         <E COMPOSITE="C[409]" NUMMODES="9" TYPE="MODIFIED" FIELDS="u,v" />
         <E COMPOSITE="C[410]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u,v" />
         <E COMPOSITE="C[411]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u,v" />
-   </EXPANSIONS>
+    </EXPANSIONS>
+
+    <MOVEMENT>
+        <ZONES>
+            <FIXED ID="0" DOMAIN="D[0]" />
+            <FIXED ID="1" DOMAIN="D[1]" />
+            <FIXED ID="2" DOMAIN="D[2]" />
+        </ZONES>
+        <INTERFACES>
+            <INTERFACE NAME="Left">
+                <LEFT  ID="0" BOUNDARY="C[405]" />
+                <RIGHT ID="1" BOUNDARY="C[406]"  />
+            </INTERFACE>
+            <INTERFACE NAME="Right">
+                <LEFT  ID="1" BOUNDARY="C[407]" />
+                <RIGHT ID="2" BOUNDARY="C[408]"  />
+            </INTERFACE>
+        </INTERFACES>
+    </MOVEMENT>
+
     <CONDITIONS>
         <PARAMETERS>
             <P> FinTime =  1 </P>
@@ -345,24 +365,6 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
             <I PROPERTY="WEIGHTPARTITIONS" VALUE="DOF" />
         </SOLVERINFO>
-
-        <MOVEMENT>
-            <ZONES>
-                <FIXED ID="0" DOMAIN="D[0]" />
-                <FIXED ID="1" DOMAIN="D[1]" />
-                <FIXED ID="2" DOMAIN="D[2]" />
-            </ZONES>
-            <INTERFACES>
-                <INTERFACE NAME="Left">
-                    <LEFT  ID="0" BOUNDARY="C[405]" />
-                    <RIGHT ID="1" BOUNDARY="C[406]"  />
-                </INTERFACE>
-                <INTERFACE NAME="Right">
-                    <LEFT  ID="1" BOUNDARY="C[407]" />
-                    <RIGHT ID="2" BOUNDARY="C[408]"  />
-                </INTERFACE>
-            </INTERFACES>
-        </MOVEMENT>
 
         <VARIABLES>
             <V ID="0"> u </V>

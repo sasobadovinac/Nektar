@@ -804,67 +804,6 @@ available. In case of a 1D homogeneous extension, the homogeneous direction will
 be the z-axis. In case of a 2D homogeneous extension, the homogeneous directions
 will be the y-axis and the z-axis.
 
-\subsection{Non-conformal meshes}\label{subsec:non-conformal-meshes}
-Non-conformal meshes are defined using \inltt{ZONES} and \inltt{INTERFACES}.
-Each zone is a domain as defined in the \inltt{GEOMETRY} section. For a mesh to
-be non-conformal it must consist of at least two zones with different domain
-tags. These two zones can then be split by an interface where every interface is
-defined by two composite entities, we use \inltt{LEFT} and \inltt{RIGHT}
-notation to distinguish between these. Each zone must contain either the left or
-the right interface edge. Zones can contain multiple edges across different
-interfaces but must not contain both edges for the same interface. These left
-and right interface edges have to be geometrically identical but topologically
-disconnected i.e.\ occupy the same space physically but consist of independent
-geometry objects.
-
-Non-conformal interfaces are defined enclosed in the \inltt{CONDITIONS} tag. An
-example showing two non-conformal interfaces on a single mesh is below:
-
-\begin{lstlisting}[style=XMLStyle]
-<MOVEMENT>
-    <ZONES>
-        <FIXED ID="0" DOMAIN="D[0]" />
-        <FIXED ID="1" DOMAIN="D[1]" />
-        <FIXED ID="2" DOMAIN="D[2]" />
-    </ZONES>
-    <INTERFACES>
-        <INTERFACE NAME="First">
-            <LEFT  ID="0" BOUNDARY="C[0]" />
-            <RIGHT ID="1" BOUNDARY="C[1]"  />
-        </INTERFACE>
-        <INTERFACE NAME="Second">
-            <LEFT  ID="1" BOUNDARY="C[2]" />
-            <RIGHT ID="2" BOUNDARY="C[3]"  />
-        </INTERFACE>
-    </INTERFACES>
-</MOVEMENT>
-\end{lstlisting}
-
-Zones must have a type specified, at the moment only `FIXED' interfaces are
-supported however in the future there are plans to implement rotating, sliding,
-and prescribed motion using the ALE method. It is important for the zone IDs to
-correspond with the relevant interface IDs present on the zone, that is if there
-is an interface with ID 0 there must also be a zone with ID 0 too. Zone IDs must
-be unique but interfaces can have the same ID, e.g. in the example above zone ID
-1 has two interfaces attached to it. The inclusion of an
-\inltt{"INTERFACE NAME="..."} allows for specifying a name, which is used for
-the debug output when the verbose flag `-v' is specified. This is for user
-reference to ensure the non-conformal interfaces are set up correctly, and shows
-zone/interface IDs, number of elements in each zone and interface, and
-connections between each zone/interface. An example debug output for the above
-XML is shown below:
-
-\begin{lstlisting}
-Movement Info:
-	Num zones: 3
-	- 0 Fixed: 8  Quadrilaterals
-	- 1 Fixed: 24 Quadrilaterals
-	- 2 Fixed: 4  Quadrilaterals
-	Num interfaces: 2
-	- "First":  0 (4 Segments) <-> 1 (6 Segments)
-	- "Second": 1 (6 Segments) <-> 2 (2 Segments)
-\end{lstlisting}
-
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "../user-guide"
