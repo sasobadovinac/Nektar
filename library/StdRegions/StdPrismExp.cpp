@@ -43,11 +43,6 @@ namespace Nektar
 {
     namespace StdRegions
     {
-
-        StdPrismExp::StdPrismExp() // Deafult construct of standard expansion directly called.
-        {
-        }
-
         StdPrismExp::StdPrismExp(const LibUtilities::BasisKey &Ba,
                                  const LibUtilities::BasisKey &Bb,
                                  const LibUtilities::BasisKey &Bc)
@@ -69,12 +64,6 @@ namespace Nektar
         StdPrismExp::StdPrismExp(const StdPrismExp &T)
             : StdExpansion(T),
               StdExpansion3D(T)
-        {
-        }
-
-
-        // Destructor
-        StdPrismExp::~StdPrismExp()
         {
         }
 

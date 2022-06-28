@@ -76,7 +76,9 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                 std::array<NekDouble, 3> &firstOrderDerivs)
             {
-                return StdExpansion::BaryEvaluate<0, true>(coord[0], &inarray[0], firstOrderDerivs[0]);
+                return StdExpansion::BaryEvaluate<0, true>(coord[0],
+                                                           &inarray[0],
+                                                           firstOrderDerivs[0]);
             }
 
             // find derivative/2nd Derivative of u (inarray) at all coords points
@@ -86,7 +88,10 @@ namespace Nektar
                 std::array<NekDouble, 3> &firstOrderDerivs,
                 std::array<NekDouble, 6> &secondOrderDerivs)
             {
-                return StdExpansion::BaryEvaluate<0, true, true>(coord[0], &inarray[0], firstOrderDerivs[0], secondOrderDerivs[0]);
+                return StdExpansion::BaryEvaluate<0, true, true>(coord[0],
+                                                                 &inarray[0],
+                                                                 firstOrderDerivs[0],
+                                                                 secondOrderDerivs[0]);
             }
 
         protected:
