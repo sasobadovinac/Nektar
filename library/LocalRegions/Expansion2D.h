@@ -43,170 +43,171 @@
 #include <SpatialDomains/Geometry2D.h>
 #include <LocalRegions/MatrixKey.h>
 
-namespace Nektar {
-    namespace LocalRegions {
+namespace Nektar
+{
+    namespace LocalRegions
+    {
         class Expansion3D;
-
         typedef std::shared_ptr<Expansion3D> Expansion3DSharedPtr;
-        typedef std::weak_ptr<Expansion3D> Expansion3DWeakPtr;
+        typedef std::weak_ptr<Expansion3D>   Expansion3DWeakPtr;
 
         class Expansion2D;
-
         typedef std::shared_ptr<Expansion2D> Expansion2DSharedPtr;
-        typedef std::weak_ptr<Expansion2D> Expansion2DWeakPtr;
-        typedef std::vector<Expansion2DSharedPtr> Expansion2DVector;
+        typedef std::weak_ptr<Expansion2D>   Expansion2DWeakPtr;
+        typedef std::vector< Expansion2DSharedPtr > Expansion2DVector;
 
-        class Expansion2D : virtual public Expansion,
-                            virtual public StdRegions::StdExpansion2D {
+        class Expansion2D: virtual public Expansion,
+            virtual public StdRegions::StdExpansion2D
+        {
         public:
             LOCAL_REGIONS_EXPORT Expansion2D(SpatialDomains::
                                              Geometry2DSharedPtr pGeom);
-
-            LOCAL_REGIONS_EXPORT ~Expansion2D() override = default;
-
+            
+            LOCAL_REGIONS_EXPORT virtual ~Expansion2D() {}
+            
             LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
-            CreateMatrix(const MatrixKey &mkey);
+                  CreateMatrix(const MatrixKey &mkey);
 
             LOCAL_REGIONS_EXPORT void SetTraceToGeomOrientation(
-                    Array<OneD, ExpansionSharedPtr> &EdgeExp,
-                    Array<OneD, NekDouble> &inout);
+                Array<OneD, ExpansionSharedPtr> &EdgeExp,
+                Array<OneD, NekDouble>          &inout);
 
             LOCAL_REGIONS_EXPORT Array<OneD, unsigned int>
 
             GetTraceInverseBoundaryMap(int eid);
 
             inline void AddNormTraceInt(
-                    int dir,
-                    Array<OneD, ExpansionSharedPtr> &EdgeExp,
-                    Array<OneD, Array<OneD, NekDouble> > &edgeCoeffs,
-                    Array<OneD, NekDouble> &outarray);
+                const int                             dir,
+                Array<OneD, ExpansionSharedPtr>      &EdgeExp,
+                Array<OneD, Array<OneD, NekDouble> > &edgeCoeffs,
+                Array<OneD,             NekDouble>   &outarray);
 
             inline void AddNormTraceInt(
-                    int dir,
-                    Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, ExpansionSharedPtr> &EdgeExp,
-                    Array<OneD, NekDouble> &outarray,
-                    const StdRegions::VarCoeffMap &varcoeffs);
+                const int                        dir,
+                Array<OneD, const NekDouble>    &inarray,
+                Array<OneD, ExpansionSharedPtr> &EdgeExp,
+                Array<OneD, NekDouble>          &outarray,
+                const StdRegions::VarCoeffMap   &varcoeffs);
 
             inline void AddEdgeBoundaryInt(
-                    int edge,
-                    ExpansionSharedPtr &EdgeExp,
-                    Array<OneD, NekDouble> &edgePhys,
-                    Array<OneD, NekDouble> &outarray,
-                    const StdRegions::VarCoeffMap &varcoeffs = StdRegions::
-                    NullVarCoeffMap);
+                const int                        edge,
+                ExpansionSharedPtr              &EdgeExp,
+                Array<OneD, NekDouble>          &edgePhys,
+                Array<OneD, NekDouble>          &outarray,
+                const StdRegions::VarCoeffMap   &varcoeffs = StdRegions::
+                                                    NullVarCoeffMap);
 
             inline void AddHDGHelmholtzEdgeTerms(
-                    NekDouble tau,
-                    int edge,
-                    Array<OneD, ExpansionSharedPtr> &EdgeExp,
-                    Array<OneD, NekDouble> &edgePhys,
-                    const StdRegions::VarCoeffMap &dirForcing,
-                    Array<OneD, NekDouble> &outarray);
+                const NekDouble                  tau,
+                const int                        edge,
+                Array<OneD, ExpansionSharedPtr> &EdgeExp,
+                Array<OneD, NekDouble>          &edgePhys,
+                const StdRegions::VarCoeffMap   &dirForcing,
+                Array<OneD, NekDouble>          &outarray);
 
             inline void AddHDGHelmholtzTraceTerms(
-                    NekDouble tau,
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, ExpansionSharedPtr> &EdgeExp,
-                    const StdRegions::VarCoeffMap &dirForcing,
-                    Array<OneD, NekDouble> &outarray);
+                const NekDouble                     tau,
+                const Array<OneD, const NekDouble> &inarray,
+                Array<OneD, ExpansionSharedPtr>    &EdgeExp,
+                const StdRegions::VarCoeffMap      &dirForcing,
+                Array<OneD, NekDouble>             &outarray);
 
             inline SpatialDomains::Geometry2DSharedPtr GetGeom2D() const;
 
-            DNekMatSharedPtr
-            v_GenMatrix(const StdRegions::StdMatrixKey &mkey) override;
+            LOCAL_REGIONS_EXPORT void ReOrientEdgePhysMap(
+                const int                        nvert,
+                const StdRegions::Orientation    orient,
+                const int                        nq0,
+                Array<OneD, int>                &idmap);
 
-            void v_GenTraceExp(int traceid,
-                               ExpansionSharedPtr &exp) override;
-
+            virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
+            virtual void v_GenTraceExp(const int traceid,
+                                       ExpansionSharedPtr &exp);
         protected:
-            std::vector<bool> m_requireNeg;
+            std::vector<bool>                  m_requireNeg;
 
-            LOCAL_REGIONS_EXPORT Array<OneD, NekDouble> v_GetMF(
-                    int dir,
-                    int shapedim,
-                    const StdRegions::VarCoeffMap &varcoeffs) override;
+            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMF(
+                                                                        const int dir,
+                                                                        const int shapedim,
+                                                                        const StdRegions::VarCoeffMap   &varcoeffs);
 
-            LOCAL_REGIONS_EXPORT Array<OneD, NekDouble> v_GetMFDiv(
-                    int dir,
-                    const StdRegions::VarCoeffMap &varcoeffs) override;
+            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_GetMFDiv(
+                                                                           const int dir,
+                                                                           const StdRegions::VarCoeffMap   &varcoeffs);
 
-            LOCAL_REGIONS_EXPORT Array<OneD, NekDouble>
-            v_GetMFMag(int dir,
-                       const StdRegions::VarCoeffMap &varcoeffs) override;
+            LOCAL_REGIONS_EXPORT virtual Array<OneD, NekDouble>
+                    v_GetMFMag(const int dir,
+                               const StdRegions::VarCoeffMap   &varcoeffs);
 
 
             // Hybridized DG routines
-            void v_DGDeriv(
-                    int dir,
-                    const Array<OneD, const NekDouble> &incoeffs,
-                    Array<OneD, ExpansionSharedPtr> &EdgeExp,
-                    Array<OneD, Array<OneD, NekDouble> > &edgeCoeffs,
-                    Array<OneD, NekDouble> &out_d) override;
+            virtual void v_DGDeriv(
+                                   const int                             dir,
+                                   const Array<OneD, const NekDouble>   &incoeffs,
+                                   Array<OneD, ExpansionSharedPtr>      &EdgeExp,
+                                   Array<OneD, Array<OneD, NekDouble> > &edgeCoeffs,
+                                   Array<OneD, NekDouble>               &out_d);
 
-            void v_AddEdgeNormBoundaryInt(
-                    int edge,
-                    const ExpansionSharedPtr &EdgeExp,
-                    const Array<OneD, const NekDouble> &Fx,
-                    const Array<OneD, const NekDouble> &Fy,
-                    Array<OneD, NekDouble> &outarray) override;
+            virtual void v_AddEdgeNormBoundaryInt(
+                                                  const int                            edge,
+                                                  const ExpansionSharedPtr            &EdgeExp,
+                                                  const Array<OneD, const NekDouble>  &Fx,
+                                                  const Array<OneD, const NekDouble>  &Fy,
+                                                  Array<OneD,       NekDouble>  &outarray);
 
-            void v_AddEdgeNormBoundaryInt(
-                    int edge,
-                    const ExpansionSharedPtr &EdgeExp,
-                    const Array<OneD, const NekDouble> &Fn,
-                    Array<OneD, NekDouble> &outarray) override;
+            virtual void v_AddEdgeNormBoundaryInt(
+                                                  const int                            edge,
+                                                  const ExpansionSharedPtr            &EdgeExp,
+                                                  const Array<OneD, const NekDouble>  &Fn,
+                                                  Array<OneD,       NekDouble>  &outarray);
 
-            void v_AddRobinMassMatrix(
-                    int edgeid,
-                    const Array<OneD, const NekDouble> &primCoeffs,
-                    DNekMatSharedPtr &inoutmat) override;
+            virtual void v_AddRobinMassMatrix(
+                                              const int                            edgeid,
+                                              const Array<OneD, const NekDouble > &primCoeffs,
+                                              DNekMatSharedPtr                    &inoutmat);
 
-            void v_AddRobinTraceContribution(
-                    int traceid,
-                    const Array<OneD, const NekDouble> &primCoeffs,
-                    const Array<OneD, NekDouble> &incoeffs,
-                    Array<OneD, NekDouble> &coeffs) override;
+            virtual void v_AddRobinTraceContribution(
+                                                     const int traceid,
+                                                     const Array<OneD, const NekDouble> &primCoeffs,
+                                                     const Array<OneD, NekDouble> &incoeffs,
+                                                     Array<OneD, NekDouble> &coeffs);
 
-            DNekMatSharedPtr v_BuildVertexMatrix(
-                    const DNekScalMatSharedPtr &r_bnd) override;
+            virtual DNekMatSharedPtr v_BuildVertexMatrix(
+                                                         const DNekScalMatSharedPtr &r_bnd); 
 
             void GetPhysEdgeVarCoeffsFromElement(
-                    int edge,
-                    ExpansionSharedPtr &EdgeExp,
-                    const Array<OneD, const NekDouble> &varcoeff,
-                    Array<OneD, NekDouble> &outarray);
+                                                 const int edge,
+                                                 ExpansionSharedPtr &EdgeExp,
+                                                 const Array<OneD, const NekDouble>  &varcoeff,
+                                                 Array<OneD,NekDouble> &outarray);
 
             Array<OneD, NekDouble> v_GetnEdgecdotMF(
-                    int dir,
-                    int edge,
-                    ExpansionSharedPtr &EdgeExp_e,
-                    const Array<OneD, const Array<OneD, NekDouble> > &normals,
-                    const StdRegions::VarCoeffMap &varcoeffs);
+                                                    const int dir,
+                                                    const int edge,
+                                                    ExpansionSharedPtr &EdgeExp_e, 
+                                                    const Array<OneD, const Array<OneD, NekDouble> > &normals,
+                                                    const StdRegions::VarCoeffMap   &varcoeffs);
 
-            void v_ReOrientTracePhysMap
-                    (StdRegions::Orientation orient,
-                     Array<OneD, int> &idmap,
-                     int nq0, int nq1) override;
+            void  v_ReOrientTracePhysMap
+            (const StdRegions::Orientation orient,
+             Array<OneD, int> &idmap,
+             const int nq0,  const int nq1);
 
-            void v_SetUpPhysNormals(int edge) override;
-
-            NekDouble v_VectorFlux(
-                    const Array<OneD, Array<OneD, NekDouble> > &vec) override;
-
-            void
-            v_TraceNormLen(int traceid, NekDouble &h, NekDouble &p) override;
+            virtual void v_SetUpPhysNormals (const int edge);
+            virtual NekDouble v_VectorFlux(
+                                           const Array<OneD, Array<OneD, NekDouble > > &vec);
+            virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
 
         };
 
 
         inline SpatialDomains::Geometry2DSharedPtr
-        Expansion2D::GetGeom2D() const
+            Expansion2D::GetGeom2D() const
         {
             return std::dynamic_pointer_cast<SpatialDomains::
-            Geometry2D>(m_geom);
+                Geometry2D>(m_geom);
         }
     } //end of namespace
 } //end of namespace
 
-#endif //EXPANSION2D_H
+#endif

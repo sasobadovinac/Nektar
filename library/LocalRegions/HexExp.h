@@ -108,24 +108,29 @@ namespace Nektar {
                     bool multiplybyweights = true) final;
 
             LOCAL_REGIONS_EXPORT void v_IProductWRTDerivBase(
-                    int dir,
+                    const int dir,
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray) final;
 
             LOCAL_REGIONS_EXPORT void v_IProductWRTDerivBase_SumFac(
-                    int dir,
+                    const int                           dir,
                     const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) final;
+                    Array<OneD,       NekDouble> &outarray) final;
 
             LOCAL_REGIONS_EXPORT void v_AlignVectorToCollapsedDir(
-                    int dir,
+                    const int dir,
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, Array<OneD, NekDouble> > &outarray) final;
+
+            LOCAL_REGIONS_EXPORT void IProductWRTDerivBase_MatOp(
+                    const int dir,
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray);
 
             LOCAL_REGIONS_EXPORT void v_IProductWRTDirectionalDerivBase(
                     const Array<OneD, const NekDouble> &direction,
                     const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) final
+                    Array<OneD, NekDouble> &outarray)
             {
                 IProductWRTDirectionalDerivBase_SumFac(direction, inarray,
                                                        outarray);
@@ -170,26 +175,26 @@ namespace Nektar {
             LibUtilities::ShapeType v_DetShapeType() const final;
 
             LOCAL_REGIONS_EXPORT
-            StdRegions::StdExpansionSharedPtr v_GetStdExp() const final;
+            StdRegions::StdExpansionSharedPtr v_GetStdExp(void) const final;
 
             LOCAL_REGIONS_EXPORT
-            StdRegions::StdExpansionSharedPtr v_GetLinStdExp() const final;
+            StdRegions::StdExpansionSharedPtr v_GetLinStdExp(void) const final;
 
             LOCAL_REGIONS_EXPORT void v_ExtractDataToCoeffs(
                     const NekDouble *data,
                     const std::vector<unsigned int> &nummodes,
-                    int mode_offset,
+                    const int mode_offset,
                     NekDouble *coeffs,
                     std::vector<LibUtilities::BasisType> &fromType) final;
 
-            LOCAL_REGIONS_EXPORT bool v_GetFaceDGForwards(int i) const;
+            LOCAL_REGIONS_EXPORT bool v_GetFaceDGForwards(const int i) const;
 
             LOCAL_REGIONS_EXPORT void v_GetTracePhysMap(
-                    int face,
+                    const int face,
                     Array<OneD, int> &outarray) final;
 
             LOCAL_REGIONS_EXPORT void
-            v_ComputeTraceNormal(int face) final;
+            v_ComputeTraceNormal(const int face) final;
 
             //---------------------------------------
             // Operator creation functions
@@ -205,13 +210,13 @@ namespace Nektar {
                     const StdRegions::StdMatrixKey &mkey) final;
 
             LOCAL_REGIONS_EXPORT void v_LaplacianMatrixOp(
-                    int k1,
-                    int k2,
+                    const int k1,
+                    const int k2,
                     const Array<OneD, const NekDouble> &inarray,
                     Array<OneD, NekDouble> &outarray,
                     const StdRegions::StdMatrixKey &mkey) final;
 
-            LOCAL_REGIONS_EXPORT void v_WeakDerivMatrixOp(int i,
+            LOCAL_REGIONS_EXPORT void v_WeakDerivMatrixOp(const int i,
                                                           const Array<OneD, const NekDouble> &inarray,
                                                           Array<OneD, NekDouble> &outarray,
                                                           const StdRegions::StdMatrixKey &mkey) final;
@@ -287,4 +292,4 @@ namespace Nektar {
     } //end of namespace
 } //end of namespace
 
-#endif //HEXEXP_H
+#endif //HEX_EXP_H

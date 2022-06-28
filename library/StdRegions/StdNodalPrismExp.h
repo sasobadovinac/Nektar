@@ -38,127 +38,114 @@
 
 #include <StdRegions/StdPrismExp.h>
 
-namespace Nektar {
-    namespace StdRegions {
-        class StdNodalPrismExp : virtual public StdPrismExp {
+namespace Nektar
+{
+    namespace StdRegions
+    {
+        class StdNodalPrismExp final: public StdPrismExp
+        {
         public:
             STD_REGIONS_EXPORT StdNodalPrismExp() = default;
-
             STD_REGIONS_EXPORT StdNodalPrismExp(
-                    const LibUtilities::BasisKey &Ba,
-                    const LibUtilities::BasisKey &Bb,
-                    const LibUtilities::BasisKey &Bc,
-                    const LibUtilities::PointsType Ntype);
-
+                const LibUtilities::BasisKey &Ba, 
+                const LibUtilities::BasisKey &Bb,
+                const LibUtilities::BasisKey &Bc,
+                const LibUtilities::PointsType Ntype);
             STD_REGIONS_EXPORT StdNodalPrismExp(const StdNodalPrismExp &T);
-
             STD_REGIONS_EXPORT ~StdNodalPrismExp() override = default;
 
             //-------------------------------
             // Nodal basis specific routines
             //-------------------------------
             STD_REGIONS_EXPORT void NodalToModal(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray);
-
+                const Array<OneD, const NekDouble>& inarray, 
+                      Array<OneD,       NekDouble>& outarray);
             STD_REGIONS_EXPORT void NodalToModalTranspose(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray);
-
+                const Array<OneD, const NekDouble>& inarray, 
+                      Array<OneD,       NekDouble>& outarray);
             STD_REGIONS_EXPORT void ModalToNodal(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray);
-
+                const Array<OneD, const NekDouble>& inarray, 
+                      Array<OneD,       NekDouble>& outarray);
             STD_REGIONS_EXPORT void GetNodalPoints(
-                    Array<OneD, const NekDouble> &x,
-                    Array<OneD, const NekDouble> &y,
-                    Array<OneD, const NekDouble> &z);
-
+                Array<OneD, const NekDouble> &x,
+                Array<OneD, const NekDouble> &y,
+                Array<OneD, const NekDouble> &z);
             STD_REGIONS_EXPORT DNekMatSharedPtr GenNBasisTransMatrix();
 
         protected:
             LibUtilities::PointsKey m_nodalPointsKey;
 
-            STD_REGIONS_EXPORT const LibUtilities::PointsKey
-            v_GetNodalPointsKey() const override
+            STD_REGIONS_EXPORT virtual const LibUtilities::PointsKey v_GetNodalPointsKey() const
             {
                 return m_nodalPointsKey;
             };
 
 
-            STD_REGIONS_EXPORT bool v_IsNodalNonTensorialExp() override;
-
+            STD_REGIONS_EXPORT virtual bool  v_IsNodalNonTensorialExp();
+            
             //---------------------------------------
             // Transforms
             //---------------------------------------
-            STD_REGIONS_EXPORT void v_BwdTrans(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) override;
+            STD_REGIONS_EXPORT virtual void v_BwdTrans(
+                const Array<OneD, const NekDouble>& inarray,
+                      Array<OneD,       NekDouble>& outarray);
+            STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFac(
+                const Array<OneD, const NekDouble>& inarray,
+                      Array<OneD,       NekDouble>& outarray);
+            STD_REGIONS_EXPORT virtual void v_FwdTrans(
+                const Array<OneD, const NekDouble>& inarray,
+                      Array<OneD,       NekDouble>& outarray);
 
-            STD_REGIONS_EXPORT void v_BwdTrans_SumFac(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) override;
-
-            STD_REGIONS_EXPORT void v_FwdTrans(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) override;
-
-
+            
             //---------------------------------------
             // Inner product functions
             //---------------------------------------
-            STD_REGIONS_EXPORT void v_IProductWRTBase(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) override;
-
-            STD_REGIONS_EXPORT void v_IProductWRTBase_SumFac(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray,
-                    bool mult = true) override;
-
-            STD_REGIONS_EXPORT void v_IProductWRTDerivBase(
-                    int dir,
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) override;
-
-            STD_REGIONS_EXPORT void v_IProductWRTDerivBase_SumFac(
-                    int dir,
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray) override;
-
-
+            STD_REGIONS_EXPORT virtual void v_IProductWRTBase(
+                const Array<OneD, const NekDouble>& inarray,
+                      Array<OneD,       NekDouble>& outarray);
+            STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFac(
+                const Array<OneD, const NekDouble>& inarray,
+                      Array<OneD,       NekDouble>& outarray,
+                bool                                mult = true);
+            STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase(
+                const int                           dir,
+                const Array<OneD, const NekDouble>& inarray,
+                      Array<OneD,       NekDouble>& outarray);
+            STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_SumFac(
+                const int                           dir,
+                const Array<OneD, const NekDouble>& inarray,
+                      Array<OneD,       NekDouble>& outarray);
+            
+            
             //---------------------------------------
             // Evaluation functions
             //---------------------------------------
-            STD_REGIONS_EXPORT void v_FillMode(
-                    int mode,
-                    Array<OneD, NekDouble> &outarray) override;
+            STD_REGIONS_EXPORT virtual void v_FillMode(
+                const int               mode,
+                Array<OneD, NekDouble> &outarray);
 
-
+            
             //---------------------------------------
             // Mapping functions
             //---------------------------------------
-            STD_REGIONS_EXPORT int v_GetVertexMap(int localVertexId,
-                                                  bool useCoeffPacking = false) override;
-
-            STD_REGIONS_EXPORT void v_GetBoundaryMap(
-                    Array<OneD, unsigned int> &outarray) override;
-
-            STD_REGIONS_EXPORT void v_GetInteriorMap(
-                    Array<OneD, unsigned int> &outarray) override;
+            STD_REGIONS_EXPORT virtual int  v_GetVertexMap(const int localVertexId,
+                                                           bool useCoeffPacking = false);
+            STD_REGIONS_EXPORT virtual void v_GetBoundaryMap(
+                Array<OneD, unsigned int>& outarray);
+            STD_REGIONS_EXPORT virtual void v_GetInteriorMap(
+                Array<OneD, unsigned int>& outarray);
 
 
             //---------------------------------------
             // Wrapper functions
             //---------------------------------------
-            STD_REGIONS_EXPORT DNekMatSharedPtr v_GenMatrix(
-                    const StdMatrixKey &mkey) override;
-
-            STD_REGIONS_EXPORT DNekMatSharedPtr v_CreateStdMatrix(
-                    const StdMatrixKey &mkey) override;
+            STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_GenMatrix(
+                const StdMatrixKey &mkey);
+            STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
+                const StdMatrixKey &mkey);
         };
-
+        
         typedef std::shared_ptr<StdNodalPrismExp> StdNodalPrismExpSharedPtr;
     } //end of namespace
 } //end of namespace
-#endif //STDNODALPRISMEXP_H
+#endif //STDNODALTETEXP_H

@@ -41,49 +41,47 @@
 #include <StdRegions/StdExpansion.h>
 #include <StdRegions/StdRegionsDeclspec.h>
 
-namespace Nektar {
-    namespace StdRegions {
+namespace Nektar
+{
+    namespace StdRegions
+    {
 
-        class StdExpansion0D : virtual public StdExpansion {
+        class StdExpansion0D: virtual public StdExpansion
+        {
 
         public:
 
             STD_REGIONS_EXPORT StdExpansion0D() = default;
-
-            STD_REGIONS_EXPORT StdExpansion0D(int numcoeffs,
-                                              const LibUtilities::BasisKey &Ba);
-
+            STD_REGIONS_EXPORT StdExpansion0D(int numcoeffs, const LibUtilities::BasisKey &Ba);
             STD_REGIONS_EXPORT StdExpansion0D(const StdExpansion0D &T);
-
             STD_REGIONS_EXPORT ~StdExpansion0D() override = default;
-
-            STD_REGIONS_EXPORT void
-            PhysTensorDeriv(const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD, NekDouble> &outarray);
-
-
+			
+            STD_REGIONS_EXPORT void PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
+                                                    Array<OneD,       NekDouble>& outarray);
+			
+            
             // Virtual Functions ----------------------------------------
         protected:
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluate(
-                    const Array<OneD, const NekDouble> &coords,
-                    const Array<OneD, const NekDouble> &physvals) final;
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                                         const Array<OneD, const NekDouble>& coords,
+                                         const Array<OneD, const NekDouble>& physvals) final;
 
-            STD_REGIONS_EXPORT NekDouble v_PhysEvaluate(
-                    const Array<OneD, DNekMatSharedPtr> &I,
-                    const Array<OneD, const NekDouble> &physvals) override;
+            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+                const Array<OneD, DNekMatSharedPtr> &I,
+                const Array<OneD, const NekDouble> &physvals) override;
 
         private:
-            int v_GetCoordim() final
+            virtual int v_GetCoordim(void) final
             {
                 return 1;
             }
 
-            int v_GetShapeDimension() const final
+            virtual int v_GetShapeDimension() const final
             {
                 return 1;
             }
 
-            int v_GetNtraces() const override
+            virtual int v_GetNtraces() const override
             {
                 return 0;
             }

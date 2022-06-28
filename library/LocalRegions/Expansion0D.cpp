@@ -34,10 +34,12 @@
 
 #include <LocalRegions/Expansion0D.h>
 
-namespace Nektar {
-    namespace LocalRegions {
+namespace Nektar
+{
+    namespace LocalRegions 
+    {
         Expansion0D::Expansion0D(SpatialDomains::Geometry0DSharedPtr pGeom) :
-                StdExpansion(), Expansion(pGeom), StdExpansion0D()
+            StdExpansion(), Expansion(pGeom), StdExpansion0D()
         {
         }
     } //end of namespace
