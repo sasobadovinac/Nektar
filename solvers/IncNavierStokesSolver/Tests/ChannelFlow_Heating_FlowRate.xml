@@ -145,7 +145,4 @@
         </Provenance>
         <NekMeshCommandLine>ChannelSt_L2_P1.msh channelst_L2_P1.xml </NekMeshCommandLine>
     </Metadata>
-    <EXPANSIONS>
-        <E COMPOSITE="C[11]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />
-    </EXPANSIONS>
 </NEKTAR>

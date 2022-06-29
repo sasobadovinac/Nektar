@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     NekDouble  lambda;
     NekDouble  ax,ay;
 
-    if((argc != 2)&&(argc != 3))
+    if(argc < 2)
     {
         fprintf(stderr,"Usage: SteadyAdvectionDiffusionReaction2D  meshfile [SysSolnType]\n");
         exit(1);

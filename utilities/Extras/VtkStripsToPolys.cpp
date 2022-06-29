@@ -11,8 +11,18 @@
 
 int main(int argc, char* argv[])
 {
+    if (argc < 2 )
+    {
+        cout << "Usage: VtkStripsToPolys vtk-file" << endl;
+        exit(-1);
+    }
+
     vtkIdType npts;
-    vtkIdType* pts;
+#if VTK_MAJOR_VERSION >= 9 || (VTK_MAJOR_VERSION >= 8 && VTK_MINOR_VERSION >= 90)
+    const vtkIdType *pts = 0;
+#else
+    vtkIdType *pts = 0;
+#endif
 
     // Read mesh
     vtkPolyDataReader *vtkMeshReader = vtkPolyDataReader::New();

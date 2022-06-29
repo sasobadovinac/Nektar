@@ -155,13 +155,21 @@ void Driver::v_InitObject(ostream &out)
                 // Coupling SFD method and Arnoldi algorithm
                 // For having 2 equation systems defined into 2 different
                 // session files (with the mesh into a file named 'session'.gz)
-                string          meshfile;
                 string          LinNSCondFile;
                 vector<string>  LinNSFilename;
-                meshfile = m_session->GetFilenames()[0];
+
+
+                // assume that the conditions file is the last
+                // filename on intiialisation and so copy all other
+                // files to new session. This will include the mesh
+                // file and possibly the optimsaiton file
+                for(int i = 0; i < m_session->GetFilenames().size()-1;  ++i)
+                {
+                    LinNSFilename.push_back(m_session->GetFilenames()[i]);
+                }
+
                 LinNSCondFile = m_session->GetSessionName();
                 LinNSCondFile += "_LinNS.xml";
-                LinNSFilename.push_back(meshfile);
                 LinNSFilename.push_back(LinNSCondFile);
 
                 char *argv[] = {

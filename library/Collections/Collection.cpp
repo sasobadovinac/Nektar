@@ -84,8 +84,7 @@ void Collection::Initialise(const OperatorType opType,
         }
         else
         {
-            NEKERROR(ErrorUtil::ewarning,
-                     "Failed to determine implmentation to initialise "
+            WARNINGL2(false,"Failed to determine implmentation to initialise "
                      "collection operator: " +
                      std::string(Collections::OperatorTypeMap[opType]));
         }

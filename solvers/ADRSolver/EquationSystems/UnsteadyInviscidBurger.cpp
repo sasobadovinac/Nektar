@@ -103,6 +103,10 @@ namespace Nektar
             }
         }
 
+        // Forcing terms
+        m_forcing = SolverUtils::Forcing::Load(m_session, shared_from_this(),
+                                    m_fields, m_fields.size());
+
         // If explicit it computes RHS and PROJECTION for the time integration
         if (m_explicitAdvection)
         {
@@ -142,6 +146,7 @@ namespace Nektar
 
         // Auxiliary variables to compute the normal velocity
         Array<OneD, NekDouble>               Fwd        (nTracePts);
+        Array<OneD, NekDouble>               Bwd        (nTracePts);
         Array<OneD, Array<OneD, NekDouble> > physfield  (nVariables);
 
         // Reset the normal velocity
@@ -159,8 +164,10 @@ namespace Nektar
         }
 
         /// Extract the physical values at the trace space
-        m_fields[0]->ExtractTracePhys(physfield[0], Fwd);
-
+        m_fields[0]->GetFwdBwdTracePhys(physfield[0], Fwd, Bwd, true);
+        Vmath::Vadd(nTracePts,Fwd,1,Bwd,1,Fwd,1);
+        Vmath::Smul(nTracePts,0.5,Fwd,1,Fwd,1);
+        
         /// Compute the normal velocity
         for (i = 0; i < m_spacedim; ++i)
         {
@@ -196,8 +203,12 @@ namespace Nektar
         // Number of solution points
         int nSolutionPts    = GetNpoints();
 
-        // !Useless variable for WeakDG and FR!
-        Array<OneD, Array<OneD, NekDouble> >    advVel;
+        // Unused variable for WeakDG and FR
+        Array<OneD, Array<OneD, NekDouble> >    advVel(nVariables);
+        for(int i = 0; i < nVariables; ++i)
+        {
+            advVel[i] = inarray[i];
+        }
 
         // RHS computation using the new advection base class
         m_advObject->Advect(nVariables, m_fields, advVel, inarray,
@@ -208,6 +219,14 @@ namespace Nektar
         {
             Vmath::Neg(nSolutionPts, outarray[i], 1);
         }
+
+        // Add forcing terms
+        for (auto &x : m_forcing)
+        {
+            // set up non-linear terms
+            x->Apply(m_fields, inarray, outarray, time);
+        }
+
     }
 
     /**
@@ -249,7 +268,7 @@ namespace Nektar
             }
 
             // Continuous projection
-            case MultiRegions::eGalerkin:
+        case MultiRegions::eGalerkin:
         case MultiRegions::eMixed_CG_Discontinuous:
             {
                 Array<OneD, NekDouble> coeffs(m_fields[0]->GetNcoeffs());

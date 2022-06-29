@@ -169,6 +169,7 @@ public:
     SPATIAL_DOMAINS_EXPORT inline int GetVertexEdgeMap(int i, int j) const;
     SPATIAL_DOMAINS_EXPORT inline int GetVertexFaceMap(int i, int j) const;
     SPATIAL_DOMAINS_EXPORT inline int GetEdgeFaceMap(int i, int j) const;
+    SPATIAL_DOMAINS_EXPORT inline int GetEdgeNormalToFaceVert(int i, int j) const;
     SPATIAL_DOMAINS_EXPORT inline int GetDir(const int i, const int j = 0) const;
 
     
@@ -236,6 +237,7 @@ protected:
     virtual int v_GetVertexEdgeMap(int i, int j) const;
     virtual int v_GetVertexFaceMap(int i, int j) const;
     virtual int v_GetEdgeFaceMap(int i, int j) const;
+    virtual int v_GetEdgeNormalToFaceVert(const int i, const int j) const;
     virtual int v_GetDir(const int faceidx, const int facedir) const;
 
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
@@ -597,6 +599,7 @@ inline int Geometry::GetVertexFaceMap(int i, int j) const
     return v_GetVertexFaceMap(i, j);
 }
 
+
 /**
  * @brief Returns the standard element edge IDs that are connected to a given
  * face.
@@ -618,6 +621,28 @@ inline int Geometry::GetEdgeFaceMap(int i, int j) const
     return v_GetEdgeFaceMap(i, j);
 }
 
+
+/**
+ * @brief Returns the standard lement edge IDs that are normal to a given face 
+ * vertex.
+ *
+ * For example, on a hexahedron, on face 0 at vertices 0,1,2,3 the
+ * edges normal to that face are 4,5,6,7, ; so
+ * `GetEdgeNormalToFaceVert(0,j)` would therefore return the values 4,
+ * 5, 6 and 7 respectively. We assume that @p j runs between 0 and 3
+ * inclusive on a quadrilateral face and between 0 and 2 inclusive on
+ * a triangular face.
+ *
+ * This is used to help set up a length scale normal to an face 
+ *
+ * @param i  The face to query for the normal edge
+ * @param j  The local vertex index between 0 and nverts on this face
+ *
+ */
+inline int Geometry::GetEdgeNormalToFaceVert(int i, int j) const
+{
+    return v_GetEdgeNormalToFaceVert(i, j);
+}
 
 /**
  * @brief Returns the element coordinate direction corresponding to a given face

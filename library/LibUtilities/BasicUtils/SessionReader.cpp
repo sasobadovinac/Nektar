@@ -289,6 +289,43 @@ namespace Nektar
                 m_filenames = filenames;
             }
 
+            // check specified  opt file
+            std::string optfile;
+            int exists;
+            
+            if(DefinesCmdLineArgument("useoptfile"))
+            {
+                optfile = m_cmdLineOptions.find("useoptfile")->
+                    second.as<std::string>();
+                exists = (bool)boost::filesystem::exists(optfile.c_str());
+                ASSERTL0(exists,"A valid .opt file was not specified "
+                         "with the --useoptfile command line option");
+
+                m_filenames.push_back(optfile); 
+
+                // put opt file at beginning 
+                std::rotate(m_filenames.rbegin(), m_filenames.rbegin() + 1,
+                                m_filenames.rend());
+            }
+            else // check for writeoptfile 
+            {
+                // check for opt file
+                optfile = m_sessionName + ".opt"; 
+                exists = (bool)boost::filesystem::exists(optfile.c_str());
+                if(exists)
+                {
+                    m_filenames.push_back(optfile);
+                    // rotate order so opt file can be overwritten by
+                    // direct choice in xml file
+                    std::rotate(m_filenames.rbegin(), m_filenames.rbegin() + 1,
+                                m_filenames.rend());
+                }
+                else
+                {
+                    m_updateOptFile = true; 
+                }
+            }
+
             // Merge document if required.
             if (m_xmlDoc)
             {
@@ -404,7 +441,10 @@ namespace Nektar
                 ("cwipi",        po::value<std::string>(),
                                  "set CWIPI name")
 #endif
-            ;
+                ("writeoptfile", "write an optimisation file")
+                ("useoptfile",   po::value<std::string>(),
+                                 "use an optimisation file")
+                ;
 
             for (auto &cmdIt : GetCmdLineArgMap())
             {
@@ -501,6 +541,17 @@ namespace Nektar
                 m_verbose = false;
             }
 
+
+            // Enable update optimisation file
+            if (m_cmdLineOptions.count("writeoptfile"))
+            {
+                m_updateOptFile = true;
+            }
+            else
+            {
+                m_updateOptFile = false;
+            }
+            
             // Print a warning for unknown options
             for (auto &x : parsed.options)
             {
@@ -988,6 +1039,8 @@ namespace Nektar
         {
             TiXmlElement *xmlGeom = m_xmlDoc->FirstChildElement("NEKTAR")
                 ->FirstChildElement("GEOMETRY");
+            ASSERTL1(xmlGeom,"Failed to find a GEOMETRY section in m_xmlDoc");
+
             TiXmlAttribute *attr  = xmlGeom->FirstAttribute();
             while (attr)
             {
@@ -1525,8 +1578,9 @@ namespace Nektar
             // version already present in the loaded XML data.
             for (int i = 1; i < pFilenames.size(); ++i)
             {
-                if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)
-                   ||(pFilenames[i].compare(pFilenames[i].size()-6,6,"xml.gz") == 0))
+               if((pFilenames[i].compare(pFilenames[i].size()-3,3,"xml") == 0)||
+                  (pFilenames[i].compare(pFilenames[i].size()-6,6,"xml.gz") == 0) ||
+                  (pFilenames[i].compare(pFilenames[i].size()-3,3,"opt") == 0))
                 {
                     TiXmlDocument* vTempDoc = new TiXmlDocument;
                     LoadDoc(pFilenames[i], vTempDoc);
@@ -1543,7 +1597,10 @@ namespace Nektar
                             vMainNektar->FirstChildElement(p->Value());
 
                         // First check if the new item is in fact blank
-                        if (!p->FirstChild() && vMainEntry)
+                        // replace if it is a COLLECTIONS section however. 
+
+                        if (!p->FirstChild() && vMainEntry
+                            && !boost::iequals(p->Value(),"COLLECTIONS"))
                         {
                             std::string warningmsg =
                                 "File " + pFilenames[i] + " contains " +

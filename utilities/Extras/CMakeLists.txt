@@ -7,6 +7,16 @@ IF (NEKTAR_USE_VTK)
     IF (VTK_MAJOR_VERSION LESS 6)
         TARGET_LINK_LIBRARIES(VtkToFld LINK_PUBLIC vtkCommon vtkIO vtkGraphics)
         TARGET_LINK_LIBRARIES(VtkStripsToPolys LINK_PUBLIC vtkCommon vtkIO vtkGraphics)
+    ELSEIF (VTK_MAJOR_VERSION  GREATER_EQUAL 9)
+        TARGET_LINK_LIBRARIES(VtkToFld LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML
+                              VTK::FiltersCore )
+        vtk_module_autoinit(
+            TARGETS VtkToFld
+            MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML VTK::FiltersCore)
+        TARGET_LINK_LIBRARIES(VtkStripsToPolys LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML)
+        vtk_module_autoinit(
+            TARGETS VtkStripsToPolys
+            MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML)
     ELSE ()
         TARGET_LINK_LIBRARIES(VtkToFld LINK_PUBLIC vtkCommonCore vtkIOLegacy
                                               vtkFiltersGeometry vtkFiltersCore)
@@ -17,7 +27,13 @@ IF (NEKTAR_USE_VTK)
     IF (VTK_MAJOR_VERSION LESS 6)
         TARGET_LINK_LIBRARIES(VtkToPng LINK_PUBLIC vtkCommon vtksys vtkViews vtkWidgets
                                                    vtkRendering vtkIO)
-    ELSE ()
+    ELSEIF (VTK_MAJOR_VERSION  GREATER_EQUAL 9)
+        TARGET_LINK_LIBRARIES(VtkToPng LINK_PUBLIC VTK::CommonCore VTK::RenderingCore
+                              VTK::IOXML VTK::IOImage)
+        vtk_module_autoinit(
+            TARGETS VtkToPng
+            MODULES VTK::CommonCore VTK::RenderingCore VTK::IOXML  VTK::IOImage) 
+        ELSE ()
         TARGET_LINK_LIBRARIES(VtkToPng LINK_PUBLIC ${VTK_LIBRARIES})
     ENDIF ()
 ENDIF (NEKTAR_USE_VTK)

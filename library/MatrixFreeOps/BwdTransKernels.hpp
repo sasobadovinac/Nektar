@@ -11,16 +11,12 @@ namespace MatrixFree
 using namespace tinysimd;
 using vec_t = simd<NekDouble>;
 
-template<unsigned short NUMMODE0,  unsigned short NUMQUAD0>
 inline static void BwdTransSegKernel(
+    const short nm0,  const unsigned short nq0,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &bdata0,
     std::vector<vec_t, allocator<vec_t>> &out)
 {
-
-    constexpr auto nm0 = NUMMODE0; 
-    constexpr auto nq0 = NUMQUAD0; 
-
     for (int i = 0; i < nq0; ++i)
     {
         vec_t tmp =  in[0] * bdata0[i]; //Load 2x
@@ -32,18 +28,15 @@ inline static void BwdTransSegKernel(
     }
 }
 
-template<unsigned short NUMMODE0, unsigned short NUMMODE1,
-         unsigned short NUMQUAD0, unsigned short NUMQUAD1>
 inline static void BwdTransQuadKernel(
+    const int nm0, const int nm1,
+    const int nq0, const int nq1,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &bdata0,
     const std::vector<vec_t, allocator<vec_t>> &bdata1,
     vec_t *wsp,
     std::vector<vec_t, allocator<vec_t>> &out)
 {
-
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1;
 
     for (int i = 0, cnt_iq = 0; i < nq0; ++i)
     {
@@ -75,24 +68,20 @@ inline static void BwdTransQuadKernel(
 
 }
 
-template<int NUMMODE0, int NUMMODE1,
-         int NUMQUAD0, int NUMQUAD1,
-         bool CORRECT>
 inline static void BwdTransTriKernel(
+    const int nm0, const int nm1, 
+    const int nq0, const int nq1,
+    const bool CORRECT,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &bdata0,
     const std::vector<vec_t, allocator<vec_t>> &bdata1,
     vec_t* p_sums,
     std::vector<vec_t, allocator<vec_t>> &out)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1;
-
     for (int eta1 = 0, eta_idx = 0; eta1 < nq1; ++eta1)
     {
         for (int p = 0, mode = 0; p < nm0; ++p)
         {
-
             vec_t p_sum = 0.0;
 
             for (int q = 0; q < (nm1-p); ++q, ++mode)
@@ -104,8 +93,9 @@ inline static void BwdTransTriKernel(
 
         }
 
-        //We already have q_sum at each quadrature point in eta 1 for each mode, p.
-        //From this assemble the tensor produce of each quadrature point, eta1
+        // We already have q_sum at each quadrature point in eta 1 for
+        // each mode, p.  From this assemble the tensor produce of each
+        // quadrature point, eta1
         for (int eta0 = 0; eta0 < nq0; ++eta0, ++eta_idx)
         {
             vec_t p_sum = 0.0;
@@ -125,10 +115,10 @@ inline static void BwdTransTriKernel(
     }
 }
 
-template<int NUMMODE0, int NUMMODE1, int NUMMODE2,
-         int NUMQUAD0, int NUMQUAD1, int NUMQUAD2,
-         bool CORRECT>
 inline static void BwdTransPyrKernel(
+    const int nm0, const int nm1, const int nm2,
+    const int nq0, const int nq1, const int nq2, 
+    const bool CORRECT,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &bdata0,
     const std::vector<vec_t, allocator<vec_t>> &bdata1,
@@ -137,9 +127,6 @@ inline static void BwdTransPyrKernel(
     vec_t* fp,
     std::vector<vec_t, allocator<vec_t>> &out)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1, nm2 = NUMMODE2;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
-
     for (int k = 0, cnt_kji = 0; k < nq2; ++k)
     {
 
@@ -221,10 +208,10 @@ inline static void BwdTransPyrKernel(
     }
 }
 
-template<int NUMMODE0, int NUMMODE1, int NUMMODE2,
-         int NUMQUAD0, int NUMQUAD1, int NUMQUAD2,
-         bool CORRECT>
 inline static void BwdTransPrismKernel(
+    const int nm0, const int nm1, const int nm2,
+    const int nq0, const int nq1, const int nq2,
+    const bool CORRECT,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &bdata0,
     const std::vector<vec_t, allocator<vec_t>> &bdata1,
@@ -233,9 +220,6 @@ inline static void BwdTransPrismKernel(
     vec_t* fp,
     std::vector<vec_t, allocator<vec_t>> &out)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1, nm2 = NUMMODE2;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD2;
-
     for (int k = 0, cnt_kji = 0; k < nq2; ++k)
     {
 
@@ -298,10 +282,9 @@ inline static void BwdTransPrismKernel(
     }
 }
 
-
-template<int NUMMODE0, int NUMMODE1, int NUMMODE2,
-         int NUMQUAD0, int NUMQUAD1, int NUMQUAD2>
 inline static void BwdTransHexKernel(
+    const int nm0, const int nm1, const int nm2,
+    const int nq0, const int nq1, const int nq2, 
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &bdata0,
     const std::vector<vec_t, allocator<vec_t>> &bdata1,
@@ -310,9 +293,6 @@ inline static void BwdTransHexKernel(
     vec_t* sum_jir,
     std::vector<vec_t, allocator<vec_t>> &out)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1, nm2 = NUMMODE2;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD1;
-
     for (int i = 0, cnt_irq = 0; i < nq0; ++i)
     {
         for (int r = 0, cnt_rqp = 0; r < nm2; ++r)
@@ -371,10 +351,10 @@ inline static void BwdTransHexKernel(
     }
 }
 
-template<int NUMMODE0, int NUMMODE1, int NUMMODE2,
-         int NUMQUAD0, int NUMQUAD1, int NUMQUAD2,
-         bool CORRECT>
 inline static void BwdTransTetKernel(
+    const int nm0, const int nm1, const int nm2,
+    const int nq0, const int nq1, const int nq2,
+    const bool CORRECT,
     const std::vector<vec_t, allocator<vec_t>> &in,
     const std::vector<vec_t, allocator<vec_t>> &bdata0,
     const std::vector<vec_t, allocator<vec_t>> &bdata1,
@@ -383,9 +363,6 @@ inline static void BwdTransTetKernel(
     vec_t* fp,
     std::vector<vec_t, allocator<vec_t>> &out)
 {
-    constexpr auto nm0 = NUMMODE0, nm1 = NUMMODE1, nm2 = NUMMODE2;
-    constexpr auto nq0 = NUMQUAD0, nq1 = NUMQUAD1, nq2 = NUMQUAD1;
-
     for (int k = 0, cnt_kji = 0; k < nq2; ++k)
     {
         int cnt_pq = 0, mode = 0;

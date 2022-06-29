@@ -1408,62 +1408,62 @@ namespace Nektar
                                                 &jac[0], 1,
                                                 &(tmp_gmat[0]), 1);
                                     QuadExp::v_GetEdgeInterpVals(
-                                        edge, tmp_gmat, tmp_gmat_edge);
+                                            edge, tmp_gmat, tmp_gmat_edge);
                                     normals[i*nquad0+j] = -tmp_gmat_edge[j];
                                 }
                             }
                             from_key = ptsKeys[0];
                             break;
-                        case 1:
-                            for (j = 0; j < nquad1; ++j)
+                    case 1:
+                        for (j = 0; j < nquad1; ++j)
+                        {
+                            for (i = 0; i < vCoordDim; ++i)
                             {
-                                for (i = 0; i < vCoordDim; ++i)
-                                {
-                                    Vmath::Vmul(nqtot,
-                                                &(df[2*i][0]), 1,
-                                                &jac[0], 1,
-                                                &(tmp_gmat[0]), 1);
-                                    QuadExp::v_GetEdgeInterpVals(
+                                Vmath::Vmul(nqtot,
+                                            &(df[2*i][0]), 1,
+                                            &jac[0], 1,
+                                            &(tmp_gmat[0]), 1);
+                                QuadExp::v_GetEdgeInterpVals(
                                         edge, tmp_gmat, tmp_gmat_edge);
-                                    normals[i*nquad1+j]  = tmp_gmat_edge[j];
-                                }
+                                normals[i*nquad1+j]  = tmp_gmat_edge[j];
                             }
-                            from_key = ptsKeys[1];
-                            break;
-                        case 2:
-                            for (j = 0; j < nquad0; ++j)
+                        }
+                        from_key = ptsKeys[1];
+                        break;
+                    case 2:
+                        for (j = 0; j < nquad0; ++j)
+                        {
+                            for (i = 0; i < vCoordDim; ++i)
                             {
-                                for (i = 0; i < vCoordDim; ++i)
-                                {
-                                    Vmath::Vmul(nqtot,
-                                                &(df[2*i+1][0]), 1,
-                                                &jac[0], 1,
-                                                &(tmp_gmat[0]), 1);
-                                    QuadExp::v_GetEdgeInterpVals(
+                                Vmath::Vmul(nqtot,
+                                            &(df[2*i+1][0]), 1,
+                                            &jac[0], 1,
+                                            &(tmp_gmat[0]), 1);
+                                QuadExp::v_GetEdgeInterpVals(
                                         edge, tmp_gmat, tmp_gmat_edge);
-                                    normals[i*nquad0+j] = tmp_gmat_edge[j];
-                                }
+                                normals[i*nquad0+j] = tmp_gmat_edge[j];
                             }
-                            from_key = ptsKeys[0];
-                            break;
-                        case 3:
-                            for (j = 0; j < nquad1; ++j)
+                        }
+                        from_key = ptsKeys[0];
+                        break;
+                    case 3:
+                        for (j = 0; j < nquad1; ++j)
+                        {
+                            for (i = 0; i < vCoordDim; ++i)
                             {
-                                for (i = 0; i < vCoordDim; ++i)
-                                {
-                                    Vmath::Vmul(nqtot,
-                                                &(df[2*i][0]), 1,
-                                                &jac[0], 1,
-                                                &(tmp_gmat[0]) ,1);
-                                    QuadExp::v_GetEdgeInterpVals(
+                                Vmath::Vmul(nqtot,
+                                            &(df[2*i][0]), 1,
+                                            &jac[0], 1,
+                                            &(tmp_gmat[0]) ,1);
+                                QuadExp::v_GetEdgeInterpVals(
                                         edge, tmp_gmat, tmp_gmat_edge);
-                                    normals[i*nquad1+j] = -tmp_gmat_edge[j];
-                                }
+                                normals[i*nquad1+j] = -tmp_gmat_edge[j];
                             }
-                            from_key = ptsKeys[1];
-                            break;
-                        default:
-                            ASSERTL0(false,"edge is out of range (edge < 3)");
+                        }
+                        from_key = ptsKeys[1];
+                        break;
+                    default:
+                        ASSERTL0(false,"edge is out of range (edge < 3)");
                     }
                 }
 
@@ -1472,16 +1472,16 @@ namespace Nektar
 
                 // interpolate Jacobian and invert
                 LibUtilities::Interp1D(
-                    from_key,jac, m_base[0]->GetPointsKey(), work);
+                        from_key,jac, m_base[0]->GetPointsKey(), work);
                 Vmath::Sdiv(nqe,1.0,&work[0],1,&work[0],1);
 
                 // interpolate
                 for (i = 0; i < GetCoordim(); ++i)
                 {
                     LibUtilities::Interp1D(
-                        from_key,&normals[i*nq],
-                        m_base[0]->GetPointsKey(),
-                        &normal[i][0]);
+                                           from_key,&normals[i*nq],
+                                           m_base[0]->GetPointsKey(),
+                                           &normal[i][0]);
                     Vmath::Vmul(nqe, work, 1, normal[i], 1, normal[i], 1);
                 }
 
@@ -1531,11 +1531,11 @@ namespace Nektar
 
 
         void QuadExp::v_ExtractDataToCoeffs(
-            const NekDouble *data,
-            const std::vector<unsigned int > &nummodes,
-            int mode_offset,
-            NekDouble *coeffs,
-            std::vector<LibUtilities::BasisType> &fromType)
+                const NekDouble *data,
+                const std::vector<unsigned int > &nummodes,
+                int mode_offset,
+                NekDouble *coeffs,
+                std::vector<LibUtilities::BasisType> &fromType)
         {
             int data_order0 = nummodes[mode_offset];
             int fillorder0  = std::min(m_base[0]->GetNumModes(),data_order0);
@@ -1552,10 +1552,10 @@ namespace Nektar
                 // quadrature points, and one more to do a forwards
                 // transform. We can then copy the output to coeffs.
                 StdRegions::StdQuadExp tmpQuad(
-                    LibUtilities::BasisKey(
-                        fromType[0], data_order0, m_base[0]->GetPointsKey()),
-                    LibUtilities::BasisKey(
-                        fromType[1], data_order1, m_base[1]->GetPointsKey()));
+                    LibUtilities::BasisKey(fromType[0], data_order0,
+                                           m_base[0]->GetPointsKey()),
+                    LibUtilities::BasisKey(fromType[1], data_order1,
+                                           m_base[1]->GetPointsKey()));
                 StdRegions::StdQuadExp tmpQuad2(m_base[0]->GetBasisKey(),
                                                 m_base[1]->GetBasisKey());
 
@@ -1572,15 +1572,15 @@ namespace Nektar
 
             switch (m_base[0]->GetBasisType())
             {
-                case LibUtilities::eModified_A:
+            case LibUtilities::eModified_A:
                 {
                     int i;
                     int cnt = 0;
                     int cnt1 = 0;
 
                     ASSERTL1(m_base[1]->GetBasisType() ==
-                            LibUtilities::eModified_A,
-                            "Extraction routine not set up for this basis");
+                             LibUtilities::eModified_A,
+                             "Extraction routine not set up for this basis");
 
                     Vmath::Zero(m_ncoeffs,coeffs,1);
                     for (i = 0; i < fillorder0; ++i)
@@ -1590,44 +1590,41 @@ namespace Nektar
                         cnt1 += order1;
                     }
                 }
-                    break;
-                case LibUtilities::eGLL_Lagrange:
+                break;
+            case LibUtilities::eGLL_Lagrange:
                 {
                     LibUtilities::PointsKey
                         p0(nummodes[0], LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::PointsKey
                         p1(nummodes[1], LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::PointsKey t0(
-                        m_base[0]->GetNumModes(),
-                        LibUtilities::eGaussLobattoLegendre);
+                                            m_base[0]->GetNumModes(),
+                                            LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::PointsKey t1(
-                        m_base[1]->GetNumModes(),
-                        LibUtilities::eGaussLobattoLegendre);
+                                            m_base[1]->GetNumModes(),
+                                            LibUtilities::eGaussLobattoLegendre);
                     LibUtilities::Interp2D(p0, p1, data, t0, t1, coeffs);
                 }
-                    break;
-                case LibUtilities::eGauss_Lagrange:
+                break;
+            case LibUtilities::eGauss_Lagrange:
                 {
                     // Assume that input is also Gll_Lagrange but no way to check;
                     LibUtilities::PointsKey
                         p0(nummodes[0],LibUtilities::eGaussGaussLegendre);
                     LibUtilities::PointsKey
                         p1(nummodes[1],LibUtilities::eGaussGaussLegendre);
-                    LibUtilities::PointsKey t0(
-                        m_base[0]->GetNumModes(),
-                        LibUtilities::eGaussGaussLegendre);
-                    LibUtilities::PointsKey t1(
-                        m_base[1]->GetNumModes(),
-                        LibUtilities::eGaussGaussLegendre);
+                    LibUtilities::PointsKey t0(m_base[0]->GetNumModes(),
+                                          LibUtilities::eGaussGaussLegendre);
+                    LibUtilities::PointsKey t1(m_base[1]->GetNumModes(),
+                                          LibUtilities::eGaussGaussLegendre);
                     LibUtilities::Interp2D(p0, p1, data, t0, t1, coeffs);
                 }
-                    break;
-                default:
-                    ASSERTL0(false,
-                    "basis is either not set up or not hierarchicial");
+                break;
+            default:
+                ASSERTL0(false,
+                         "basis is either not set up or not hierarchicial");
             }
         }
-
 
         StdRegions::Orientation QuadExp::v_GetTraceOrient(int edge)
         {
@@ -1648,28 +1645,28 @@ namespace Nektar
         }
 
         DNekMatSharedPtr QuadExp::v_GenMatrix(
-            const StdRegions::StdMatrixKey &mkey)
+                                              const StdRegions::StdMatrixKey &mkey)
         {
             DNekMatSharedPtr returnval;
             switch (mkey.GetMatrixType())
             {
-                case StdRegions::eHybridDGHelmholtz:
-                case StdRegions::eHybridDGLamToU:
-                case StdRegions::eHybridDGLamToQ0:
-                case StdRegions::eHybridDGLamToQ1:
-                case StdRegions::eHybridDGLamToQ2:
-                case StdRegions::eHybridDGHelmBndLam:
-				case StdRegions::eInvLaplacianWithUnityMean:
-                    returnval = Expansion2D::v_GenMatrix(mkey);
-                    break;
-                default:
-                    returnval = StdQuadExp::v_GenMatrix(mkey);
+            case StdRegions::eHybridDGHelmholtz:
+            case StdRegions::eHybridDGLamToU:
+            case StdRegions::eHybridDGLamToQ0:
+            case StdRegions::eHybridDGLamToQ1:
+            case StdRegions::eHybridDGLamToQ2:
+            case StdRegions::eHybridDGHelmBndLam:
+            case StdRegions::eInvLaplacianWithUnityMean:
+                returnval = Expansion2D::v_GenMatrix(mkey);
+                break;
+            default:
+                returnval = StdQuadExp::v_GenMatrix(mkey);
             }
             return returnval;
         }
 
         DNekMatSharedPtr QuadExp::v_CreateStdMatrix(
-            const StdRegions::StdMatrixKey &mkey)
+                                                    const StdRegions::StdMatrixKey &mkey)
         {
             LibUtilities::BasisKey bkey0 = m_base[0]->GetBasisKey();
             LibUtilities::BasisKey bkey1 = m_base[1]->GetBasisKey();
@@ -1678,6 +1675,7 @@ namespace Nektar
             return tmp->GetStdMatrix(mkey);
         }
 
+        
         DNekScalMatSharedPtr QuadExp::v_GetLocMatrix(const MatrixKey &mkey)
         {
             return m_matrixManager[mkey];
@@ -1960,5 +1958,182 @@ namespace Nektar
             Vmath::Vdiv(nq,array,1,sqrt_jac,1,array,1);
         }
 
+        /** @brief: This method gets all of the factors which are
+            required as part of the Gradient Jump Penalty (GJP) 
+            stabilisation and involves the product of the normal and
+            geometric factors along the element trace.
+        */
+        void QuadExp::v_NormalTraceDerivFactors
+        (Array<OneD, Array<OneD, NekDouble> > &d0factors,
+         Array<OneD, Array<OneD, NekDouble> > &d1factors,
+         Array<OneD, Array<OneD, NekDouble> > &d2factors) 
+        {
+            boost::ignore_unused(d2factors); // for 3D shapes
+            int nquad0 = GetNumPoints(0);
+            int nquad1 = GetNumPoints(1);
+
+            const Array<TwoD, const NekDouble>&
+                       df = m_metricinfo->GetDerivFactors(GetPointsKeys());
+
+            if(d0factors.size() !=4)
+            {
+                d0factors = Array<OneD, Array<OneD, NekDouble> > (4); 
+                d1factors = Array<OneD, Array<OneD, NekDouble> > (4); 
+            }
+
+            if(d0factors[0].size() != nquad0)
+            {
+                d0factors[0] = Array<OneD, NekDouble> (nquad0);
+                d0factors[2] = Array<OneD, NekDouble> (nquad0);
+                d1factors[0] = Array<OneD, NekDouble> (nquad0);
+                d1factors[2] = Array<OneD, NekDouble> (nquad0);
+            }
+
+            if(d0factors[1].size() != nquad1)
+            {
+                d0factors[1] = Array<OneD, NekDouble> (nquad1);
+                d0factors[3] = Array<OneD, NekDouble> (nquad1);
+                d1factors[1] = Array<OneD, NekDouble> (nquad1);
+                d1factors[3] = Array<OneD, NekDouble> (nquad1);
+            }
+
+            // Outwards normals
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_0= GetTraceNormal(0);
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_1= GetTraceNormal(1);
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_2= GetTraceNormal(2);
+            const Array<OneD, const Array<OneD, NekDouble> >
+                &normal_3= GetTraceNormal(3);
+
+            int ncoords = normal_0.size();
+            
+            if(m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            {
+                // needs checking for 3D coords
+                
+                // factors 0 and 2 
+                for(int i = 0; i < nquad0; ++i)
+                {
+                    d0factors[0][i] = df[0][i]*normal_0[0][i]; 
+                    d0factors[2][i] = df[0][nquad0*(nquad1-1)+i]*
+                        normal_2[0][i];
+
+                    d1factors[0][i] = df[1][i]*normal_0[0][i]; 
+                    d1factors[2][i] = df[1][nquad0*(nquad1-1)+i]*
+                        normal_2[0][i];
+                }
+
+                for(int n = 1; n < ncoords; ++n)
+                {
+                    // d xi_1/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad0; ++i)
+                    {
+                        d0factors[0][i] += df[2*n][i]*normal_0[n][i]; 
+                        d0factors[2][i] += df[2*n][nquad0*(nquad1-1)+i]
+                            *normal_2[n][i];
+
+                        d1factors[0][i] += df[2*n+1][i]*normal_0[n][i]; 
+                        d1factors[2][i] += df[2*n+1][nquad0*(nquad1-1)+i]
+                            *normal_2[n][i];
+                    }
+                }
+
+                // faces 1 and 3 
+                for(int i = 0; i < nquad1; ++i)
+                {
+                    d0factors[1][i] = df[0][(i+1)*nquad0-1]*normal_1[0][i];
+                    d0factors[3][i] = df[0][i*nquad0]*normal_3[0][i];
+
+                    d1factors[1][i] = df[1][(i+1)*nquad0-1]*normal_1[0][i];
+                    d1factors[3][i] = df[1][i*nquad0]*normal_3[0][i];
+                }
+                
+                for(int n = 1; n < ncoords; ++n)
+                {
+                    for(int i = 0; i < nquad1; ++i)
+                    {
+                        d0factors[1][i] += df[2*n][(i+1)*nquad0-1]*normal_1[n][i];
+                        d0factors[3][i] += df[2*n][i*nquad0]*normal_3[n][i];
+
+                        d1factors[1][i] += df[2*n+1][(i+1)*nquad0-1]*normal_1[n][i];
+                        d1factors[3][i] += df[2*n+1][i*nquad0]*normal_3[n][i];
+                    }
+                }
+
+
+            }
+            else
+            {
+                // d xi_2/dx n_x 
+                for(int i = 0; i < nquad0; ++i)
+                {
+                    d1factors[0][i] = df[1][0]*normal_0[0][i]; 
+                    d1factors[2][i] = df[1][0]*normal_2[0][i];
+                }
+
+                // d xi_1/dx n_x
+                for(int i = 0; i < nquad1; ++i)
+                {
+                    d0factors[1][i] = df[0][0]*normal_1[0][i];
+                    d0factors[3][i] = df[0][0]*normal_3[0][i];
+                }
+
+                for(int n = 1; n < ncoords; ++n)
+                {
+                    // d xi_2/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad0; ++i)
+                    {
+                        d1factors[0][i] += df[2*n+1][0]*normal_0[n][i]; 
+                        d1factors[2][i] += df[2*n+1][0]*normal_2[n][i];
+                    }
+                    
+                    // d xi_1/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad1; ++i)
+                    {
+                        d0factors[1][i] += df[2*n][0]*normal_1[n][i];
+                        d0factors[3][i] += df[2*n][0]*normal_3[n][i];
+                    }
+                }
+
+                //d1factors
+                // d xi_1/dx n_x 
+                for(int i = 0; i < nquad0; ++i)
+                {
+                    d0factors[0][i] = df[0][0]*normal_0[0][i]; 
+                    d0factors[2][i] = df[0][0]*normal_2[0][i];
+                }
+
+                // d xi_2/dx n_x
+                for(int i = 0; i < nquad1; ++i)
+                {
+                    d1factors[1][i] = df[1][0]*normal_1[0][i];
+                    d1factors[3][i] = df[1][0]*normal_3[0][i];
+                }
+
+                for(int n = 1; n < ncoords; ++n)
+                {
+                    // d xi_1/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad0; ++i)
+                    {
+                        d0factors[0][i] += df[2*n][0]*normal_0[n][i]; 
+                        d0factors[2][i] += df[2*n][0]*normal_2[n][i];
+                    }
+                    
+                    // d xi_2/dy n_y
+                    // needs checking for 3D coords
+                    for(int i = 0; i < nquad1; ++i)
+                    {
+                        d1factors[1][i] += df[2*n+1][0]*normal_1[n][i];
+                        d1factors[3][i] += df[2*n+1][0]*normal_3[n][i];
+                    }
+                }
+            }
+        }
     }//end of namespace
 }//end of namespace

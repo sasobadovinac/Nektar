@@ -1245,13 +1245,9 @@ namespace Nektar
         /**
          * Only for basis type Modified_A or GLL_LAGRANGE in all directions.
          */
-        void StdHexExp::v_GetTraceToElementMap(
-            const int                  fid,
-            Array<OneD, unsigned int> &maparray,
-            Array<OneD,          int> &signarray,
-            Orientation                faceOrient,
-            int                        P,
-            int                        Q)
+        void StdHexExp::v_GetTraceCoeffMap(
+            const unsigned int        fid,
+            Array<OneD, unsigned int> &maparray)
         {
             int i,j;
             int nummodesA=0, nummodesB=0;
@@ -1290,52 +1286,14 @@ namespace Nektar
                 ASSERTL0(false,"fid must be between 0 and 5");
             }
 
-            bool CheckForZeroedModes = false;
-
-            if (P == -1)
-            {
-                P = nummodesA;
-                Q = nummodesB;
-            }
-
-            if((P != nummodesA)||(Q != nummodesB))
-            {
-                CheckForZeroedModes = true;
-            }
-
-            bool modified = (GetBasisType(0) == LibUtilities::eModified_A);
-            int nFaceCoeffs = P*Q;
+            int nFaceCoeffs = nummodesA*nummodesB;
 
             if(maparray.size() != nFaceCoeffs)
             {
                 maparray = Array<OneD, unsigned int>(nFaceCoeffs);
             }
 
-            if(signarray.size() != nFaceCoeffs)
-            {
-                signarray = Array<OneD, int>(nFaceCoeffs,1);
-            }
-            else
-            {
-                fill( signarray.get() , signarray.get()+nFaceCoeffs, 1 );
-            }
-
-            Array<OneD, int> arrayindx(nFaceCoeffs);
-
-            for(i = 0; i < Q; i++)
-            {
-                for(j = 0; j < P; j++)
-                {
-                    if( faceOrient < eDir1FwdDir2_Dir2FwdDir1 )
-                    {
-                        arrayindx[i*P+j] = i*P+j;
-                    }
-                    else
-                    {
-                        arrayindx[i*P+j] = j*Q+i;
-                    }
-                }
-            }
+            bool modified = (GetBasisType(0) == LibUtilities::eModified_A);
 
             int offset = 0;
             int jump1 = 1;
@@ -1404,46 +1362,167 @@ namespace Nektar
                     ASSERTL0(false,"fid must be between 0 and 5");
             }
 
+            for(i = 0; i < nummodesB; i++)
+            {
+                for(j = 0; j < nummodesA; j++)
+                {
+                    maparray[ i*nummodesA+j] = i*jump1 + j*jump2 + offset;
+                }
+            }
+        }
+
+        void StdHexExp::v_GetElmtTraceToTraceMap(
+            const unsigned int         fid,
+            Array<OneD, unsigned int>  &maparray,
+            Array<OneD,          int> &signarray,
+            Orientation                faceOrient,
+            int                        P,
+            int                        Q)
+        {
+            int i,j;
+            int nummodesA=0, nummodesB=0;
+            
+            ASSERTL1(GetBasisType(0) == GetBasisType(1) &&
+                     GetBasisType(0) == GetBasisType(2),
+                     "Method only implemented if BasisType is indentical in "
+                     "all directions");
+            ASSERTL1(GetBasisType(0) == LibUtilities::eModified_A ||
+                     GetBasisType(0) == LibUtilities::eGLL_Lagrange,
+                     "Method only implemented for Modified_A or "
+                     "GLL_Lagrange BasisType");
+            
+            const int nummodes0 = m_base[0]->GetNumModes();
+            const int nummodes1 = m_base[1]->GetNumModes();
+            const int nummodes2 = m_base[2]->GetNumModes();
+            
+            switch(fid)
+            {
+            case 0:
+            case 5:
+                nummodesA = nummodes0;
+                nummodesB = nummodes1;
+                break;
+            case 1:
+            case 3:
+                nummodesA = nummodes0;
+                nummodesB = nummodes2;
+                break;
+            case 2:
+            case 4:
+                nummodesA = nummodes1;
+                nummodesB = nummodes2;
+                break;
+            default:
+                ASSERTL0(false,"fid must be between 0 and 5");
+            }
+            
+            
+            if (P == -1)
+            {
+                P = nummodesA;
+                Q = nummodesB;
+            }
+            
+            bool modified = (GetBasisType(0) == LibUtilities::eModified_A);
+            
+            // check that 
+            if(modified == false)
+            {
+                ASSERTL1((P==nummodesA)||(Q==nummodesB),
+                         "Different trace space face dimention "
+                         "and element face dimention not possible for "
+                         "GLL-Lagrange bases");
+            }
+            
+            int nFaceCoeffs = P*Q;
+            
+            if(maparray.size() != nFaceCoeffs)
+            {
+                maparray = Array<OneD, unsigned int>(nFaceCoeffs);
+            }
+
+            // fill default mapping as increasing index
+            for(i = 0; i < nFaceCoeffs; ++i)
+            {
+                maparray[i] = i;
+            }
+
+            if(signarray.size() != nFaceCoeffs)
+            {
+                signarray = Array<OneD, int>(nFaceCoeffs,1);
+            }
+            else
+            {
+                fill( signarray.get() , signarray.get()+nFaceCoeffs, 1 );
+            }
+
+            // setup indexing to manage transpose directions
+            Array<OneD, int> arrayindx(nFaceCoeffs);
             for(i = 0; i < Q; i++)
             {
                 for(j = 0; j < P; j++)
                 {
-                    maparray[ arrayindx[i*P+j] ]
-                    = i*jump1 + j*jump2 + offset;
+                    if( faceOrient < eDir1FwdDir2_Dir2FwdDir1 )
+                    {
+                        arrayindx[i*P+j] = i*P+j;
+                    }
+                    else
+                    {
+                        arrayindx[i*P+j] = j*Q+i;
+                    }
                 }
             }
 
-
-            if(CheckForZeroedModes)
+            // zero signmap and set maparray to zero if elemental
+            // modes are not as large as face models
+            for(i = 0; i < nummodesB; i++)
             {
-                if(modified)
+                for(j = nummodesA; j < P; j++)
                 {
-                    // zero signmap and set maparray to zero if elemental
-                    // modes are not as large as face modesl
-                    for(int i = 0; i < nummodesB; i++)
-                    {
-                        for(int j = nummodesA; j < P; j++)
-                        {
-                            signarray[arrayindx[i*P+j]] = 0.0;
-                            maparray[arrayindx[i*P+j]]  = maparray[0];
-                        }
-                    }
-
-                    for(int i = nummodesB; i < Q; i++)
-                    {
-                        for(int j = 0; j < P; j++)
-                        {
-                            signarray[arrayindx[i*P+j]] = 0.0;
-                            maparray[arrayindx[i*P+j]]  = maparray[0];
-                        }
-                    }
+                    signarray[arrayindx[i*P+j]] = 0.0;
+                    maparray[arrayindx[i*P+j]]  = maparray[0];
                 }
-                else
+            }
+            
+            for(i = nummodesB; i < Q; i++)
+            {
+                for(j = 0; j < P; j++)
                 {
-                    ASSERTL0(false,"Different trace space face dimention and element face dimention not possible for GLL-Lagrange bases");
+                    signarray[arrayindx[i*P+j]] = 0.0;
+                    maparray[arrayindx[i*P+j]]  = maparray[0];
                 }
             }
 
+            // zero signmap and set maparray to zero entry if
+            // elemental modes are not as large as face modesl
+            for(i = 0; i < Q; i++)
+            {
+                // fill values into map array of trace size
+                // for element face index 
+                for(j = 0; j < P; j++)
+                {
+                    maparray[ arrayindx[i*P+j]] = i*nummodesA+j; 
+                }
+                
+                // zero values if P > numModesA
+                for(j = nummodesA; j < P; j++)
+                {
+                    signarray[arrayindx[i*P+j]] = 0.0;
+                    maparray[arrayindx[i*P+j]]  = maparray[0];
+                }
+            }
+        
+            // zero values if Q > numModesB
+            for(i = nummodesB; i < Q; i++)
+            {
+                for(j = 0; j < P; j++)
+                {
+                    signarray[arrayindx[i*P+j]] = 0.0;
+                    maparray[arrayindx[i*P+j]]  = maparray[0];
+                }
+            }
+
+            // Now reorientate indices accordign to orientation 
             if( (faceOrient==eDir1FwdDir1_Dir2BwdDir2) ||
                 (faceOrient==eDir1BwdDir1_Dir2BwdDir2) ||
                 (faceOrient==eDir1BwdDir2_Dir2FwdDir1) ||
@@ -1463,8 +1542,8 @@ namespace Nektar
 
                         for(int i = 0; i < P; i++)
                         {
-                            swap( maparray[i] , maparray[i+P] );
-                            swap( signarray[i] , signarray[i+P] );
+                            swap(maparray[i], maparray[i+P]);
+                            swap(signarray[i], signarray[i+P]);
                         }
 
                     }
@@ -1474,12 +1553,8 @@ namespace Nektar
                         {
                             for(int j = 0; j < Q/2; j++)
                             {
-                                swap( maparray[i + j*P],
-                                     maparray[i+P*Q
-                                              -P -j*P] );
-                                swap( signarray[i + j*P],
-                                     signarray[i+P*Q
-                                              -P -j*P]);
+                                swap(maparray[i+j*P], maparray[i+P*Q-P-j*P]);
+                                swap(signarray[i+j*P], signarray[i+P*Q-P-j*P]);
                             }
                         }
                     }
@@ -1509,10 +1584,8 @@ namespace Nektar
                         {
                             for(int j = 0; j < Q/2; j++)
                             {
-                                swap( maparray[i*Q + j],
-                                     maparray[i*Q + Q -1 -j]);
-                                swap( signarray[i*Q + j],
-                                     signarray[i*Q + Q -1 -j]);
+                                swap(maparray[i*Q+j], maparray[i*Q+Q-1-j]);
+                                swap(signarray[i*Q+j], signarray[i*Q+Q-1-j]);
                             }
                         }
                     }
@@ -1538,10 +1611,8 @@ namespace Nektar
 
                         for(i = 0; i < Q; i++)
                         {
-                            swap( maparray[i*P],
-                                 maparray[i*P+1]);
-                            swap( signarray[i*P],
-                                 signarray[i*P+1]);
+                            swap( maparray[i*P],  maparray[i*P+1]);
+                            swap( signarray[i*P], signarray[i*P+1]);
                         }
                     }
                     else
@@ -1550,16 +1621,11 @@ namespace Nektar
                         {
                             for(j = 0; j < P/2; j++)
                             {
-                                swap( maparray[i*P + j],
-                                     maparray[i*P + P -1 -j]);
-                                swap( signarray[i*P + j],
-                                     signarray[i*P + P -1 -j]);
+                                swap(maparray[i*P+j], maparray[i*P+P-1-j]);
+                                swap(signarray[i*P+j], signarray[i*P+P-1-j]);
                             }
                         }
                     }
-
-
-
                 }
                 else
                 {
@@ -1575,10 +1641,8 @@ namespace Nektar
 
                         for(i = 0; i < P; i++)
                         {
-                            swap( maparray[i*Q],
-                                 maparray[i*Q+1]);
-                            swap( signarray[i*Q],
-                                 signarray[i*Q+1]);
+                            swap(maparray[i*Q], maparray[i*Q+1]);
+                            swap( signarray[i*Q], signarray[i*Q+1]);
                         }
                     }
                     else
@@ -1587,17 +1651,15 @@ namespace Nektar
                         {
                             for(j = 0; j < P/2; j++)
                             {
-                                swap( maparray[i + j*Q] ,
-                                     maparray[i+P*Q - Q -j*Q] );
-                                swap( signarray[i + j*Q] ,
-                                     signarray[i+P*Q - Q -j*Q] );
+                                swap(maparray[i+j*Q], maparray[i+P*Q-Q-j*Q]);
+                                swap(signarray[i+j*Q], signarray[i+P*Q-Q-j*Q]);
                             }
                         }
                     }
                 }
             }
         }
-
+        
         /**
          * @param   eid         The edge to compute the numbering for.
          * @param   edgeOrient  Orientation of the edge.
@@ -2555,6 +2617,5 @@ namespace Nektar
             // backward transform to physical space
             OrthoExp.BwdTrans(orthocoeffs,array);
         }
-
     }
 }

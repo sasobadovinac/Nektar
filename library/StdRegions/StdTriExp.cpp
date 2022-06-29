@@ -161,7 +161,7 @@ namespace Nektar
                 // if no d1 required do not need to calculate both deriv
                 if (out_d1.size() > 0)
                 {
-                    // set up geometric factor: (1_z0)/(1-z1)
+                    // set up geometric factor: (1+z0)/2
                     Vmath::Sadd(nquad0, 1.0, z0, 1, wsp, 1);
                     Vmath::Smul(nquad0, 0.5, wsp, 1, wsp, 1);
 
@@ -908,7 +908,31 @@ namespace Nektar
                         break;
                     }
 
-                    default:
+                    break; 
+                    // Currently this does not increase the points by
+                    // 1 since when using this quadrature we are
+                    // presuming it is already been increased by one
+                    // when comopared to
+                    // GaussRadauMAlpha1Beta0. Currently used in the
+                    // GJP option
+                    //
+                    // Note have put down it back to numpoints +1 to
+                    // test for use on tri faces and GJP. 
+                    
+                    case LibUtilities::eGaussRadauMLegendre: 
+                    {
+                        LibUtilities::PointsKey pkey(
+                                m_base[1]->GetBasisKey().GetPointsKey().
+                                GetNumPoints()+1,
+                                LibUtilities::eGaussLobattoLegendre);
+                        return LibUtilities::BasisKey(
+                                LibUtilities::eModified_A,
+                                m_base[1]->GetNumModes(),pkey);
+                        break;
+                    }
+
+                    break;
+                   default:
                         NEKERROR(ErrorUtil::efatal,
                                  "unexpected points distribution");
                         break;
@@ -1057,60 +1081,25 @@ namespace Nektar
             }
         }
 
-        void StdTriExp::v_GetTraceToElementMap(
-            const int                  eid,
-            Array<OneD, unsigned int>& maparray,
-            Array<OneD,          int>& signarray,
-            Orientation           edgeOrient,
-            int P, int Q)
+        void StdTriExp::v_GetTraceCoeffMap(
+            const unsigned int          eid,
+            Array<OneD, unsigned int>& maparray)
         {
-            boost::ignore_unused(Q);
             
             ASSERTL1(GetBasisType(0) == LibUtilities::eModified_A ||
                      GetBasisType(1) == LibUtilities::eModified_B,
                      "Mapping not defined for this type of basis");
 
+            ASSERTL1(eid < 3,"eid must be between 0 and 2");
+
             int i;
-            int numModes=0;
             int order0 = m_base[0]->GetNumModes();
             int order1 = m_base[1]->GetNumModes();
+            int numModes = (eid == 0)? order0: order1;
 
-            switch (eid)
+            if(maparray.size() != numModes)
             {
-            case 0:
-                numModes = order0;
-                break;
-            case 1:
-            case 2:
-                numModes = order1;
-                break;
-            default:
-                ASSERTL0(false,"eid must be between 0 and 2");
-            }
-
-            bool checkForZeroedModes = false;
-            if (P == -1)
-            {
-                P = numModes;
-            }
-            else if(P != numModes)
-            {
-                checkForZeroedModes = true;
-            }
-
-
-            if(maparray.size() != P)
-            {
-                maparray = Array<OneD, unsigned int>(P);
-            }
-
-            if(signarray.size() != P)
-            {
-                signarray = Array<OneD, int>(P,1);
-            }
-            else
-            {
-                fill(signarray.get() , signarray.get()+P, 1);
+                maparray = Array<OneD, unsigned int>(numModes);
             }
 
             switch(eid)
@@ -1118,7 +1107,7 @@ namespace Nektar
                 case 0:
                 {
                     int cnt = 0;
-                    for(i = 0; i < P; cnt+=order1-i, ++i)
+                    for(i = 0; i < numModes; cnt+=order1-i, ++i)
                     {
                         maparray[i] = cnt;
                     }
@@ -1128,7 +1117,7 @@ namespace Nektar
                 {
                     maparray[0] = order1;
                     maparray[1] = 1;
-                    for(i = 2; i < P; i++)
+                    for(i = 2; i < numModes; i++)
                     {
                         maparray[i] = order1-1+i;
                     }
@@ -1136,7 +1125,7 @@ namespace Nektar
                 }
                 case 2:
                 {
-                    for(i = 0; i < P; i++)
+                    for(i = 0; i < numModes; i++)
                     {
                         maparray[i] = i;
                     }
@@ -1146,29 +1135,8 @@ namespace Nektar
                 ASSERTL0(false,"eid must be between 0 and 2");
                 break;
             }
-            
-            if(edgeOrient==eBackwards)
-            {
-                swap( maparray[0] , maparray[1] );
-                
-                for(i = 3; i < P; i+=2)
-                {
-                    signarray[i] = -1;
-                }
-            }
-
-            if (checkForZeroedModes)
-            {
-                // Zero signmap and set maparray to zero if
-                // elemental modes are not as large as face modes
-                for (int j = numModes; j < P; j++)
-                {
-                    signarray[j] = 0.0;
-                    maparray[j]  = maparray[0];
-                }
-            }
         }
-
+        
         void StdTriExp::v_GetTraceInteriorToElementMap(
             const int                  eid,
             Array<OneD, unsigned int>& maparray,
@@ -1582,27 +1550,22 @@ namespace Nektar
 
             switch(m_base[1]->GetPointsType())
             {
-                // Legendre inner product
-                case LibUtilities::ePolyEvenlySpaced:
-                case LibUtilities::eGaussLobattoLegendre:
-                    for(i = 0; i < nquad1; ++i)
-                    {
-                        Blas::Dscal(nquad0,0.5*(1-z1[i])*w1[i],
-                                    outarray.get()+i*nquad0,1);
-                    }
-                    break;
-
                 // (1,0) Jacobi Inner product
-                case LibUtilities::eGaussRadauMAlpha1Beta0:
-                    for(i = 0; i < nquad1; ++i)
-                    {
-                        Blas::Dscal(nquad0,0.5*w1[i],outarray.get()+i*nquad0,1);
-                    }
-                    break;
-
-                default:
-                    ASSERTL0(false, "Unsupported quadrature points type.");
-                    break;
+            case LibUtilities::eGaussRadauMAlpha1Beta0:
+                for(i = 0; i < nquad1; ++i)
+                {
+                    Blas::Dscal(nquad0,0.5*w1[i],outarray.get()+i*nquad0,1);
+                }
+                break;
+                // Legendre inner product
+            default:
+                for(i = 0; i < nquad1; ++i)
+                {
+                    Blas::Dscal(nquad0,0.5*(1-z1[i])*w1[i],
+                                outarray.get()+i*nquad0,1);
+                }
+                break;
+                
             }
         }
 
@@ -1642,7 +1605,5 @@ namespace Nektar
                 row += np-i;
             }
         }
-
-
     }//end namespace
 }//end namespace

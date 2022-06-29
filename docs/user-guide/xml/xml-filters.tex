@@ -115,6 +115,10 @@ The following parameters are supported:
     Number of timesteps after which output is written.\\
     \inltt{Boundary}        & \cmark   & - &
     Boundary surfaces on which the forces are to be evaluated.\\
+      \inltt{PivotPoint}   & \xmark  & $(0.\; 0.\; 0.)$ & 
+      Pivot Point around which the Moments are calculated. If Doesn't explicitly
+      defined by user, the moments will be calculated around the point 
+      $\mathbf{X}=(0.\; 0.\; 0.)$\\
     \bottomrule
   \end{tabularx}
 \end{center}
@@ -126,6 +130,7 @@ An example is given below:
       <PARAM NAME="OutputFile">DragLift</PARAM>
       <PARAM NAME="OutputFrequency">10</PARAM>
       <PARAM NAME="Boundary"> B[1,2] </PARAM>		
+      <PARAM NAME="PivotPoint"> 1. 0.1 0. </PARAM>		
   </FILTER>
 \end{lstlisting}
 

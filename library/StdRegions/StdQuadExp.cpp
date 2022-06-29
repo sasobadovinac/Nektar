@@ -441,8 +441,9 @@ namespace Nektar
                             const Array<OneD, const NekDouble>& inarray,
                             Array<OneD, NekDouble> & outarray)
         {
-            StdQuadExp::IProductWRTDerivBase_SumFac(dir,inarray,outarray);
+            v_IProductWRTDerivBase_SumFac(dir,inarray,outarray);
         }
+
 
         void StdQuadExp::v_IProductWRTDerivBase_SumFac(const int dir,
                              const Array<OneD, const NekDouble>& inarray,
@@ -1023,67 +1024,35 @@ namespace Nektar
             return localDOF;
         }
 
-        void StdQuadExp::v_GetTraceToElementMap(
-             const int                  eid,
-             Array<OneD, unsigned int>& maparray,
-             Array<OneD, int>&          signarray,
-             Orientation                edgeOrient,
-             int P,  int Q)
+        /**  \brief Get the map of the coefficient location to teh
+         *    local trace coefficients 
+         */
+        
+        void StdQuadExp::v_GetTraceCoeffMap(
+             const unsigned  int       traceid,
+             Array<OneD, unsigned int>& maparray)
         {
-            boost::ignore_unused(Q);
-            int i;
-            int numModes=0;
-            int order0 = m_base[0]->GetNumModes();
-            int order1 = m_base[1]->GetNumModes();
+            ASSERTL1(traceid < 4,"traceid must be between 0 and 3");
 
-            switch (eid)
+            unsigned int i;
+            unsigned int order0 = m_base[0]->GetNumModes();
+            unsigned int order1 = m_base[1]->GetNumModes();
+            unsigned int numModes = (traceid%2)? order1: order0;
+
+            if (maparray.size() != numModes)
             {
-            case 0:
-            case 2:
-                numModes = order0;
-                break;
-            case 1:
-            case 3:
-                numModes = order1;
-                break;
-            default:
-                ASSERTL0(false,"eid must be between 0 and 3");
+                maparray = Array<OneD, unsigned int>(numModes);
             }
 
-            bool checkForZeroedModes = false;
-            if (P == -1)
-            {
-                P = numModes;
-            }
-            else if(P != numModes)
-            {
-                checkForZeroedModes = true;
-            }
-            
-
-            if (maparray.size() != P)
-            {
-                maparray = Array<OneD, unsigned int>(P);
-            }
-
-            if(signarray.size() != P)
-            {
-                signarray = Array<OneD, int>(P, 1);
-            }
-            else
-            {
-                fill(signarray.get(), signarray.get()+P, 1);
-            }
-
-            const LibUtilities::BasisType bType = GetBasisType(eid%2);
+            const LibUtilities::BasisType bType = GetBasisType(traceid%2);
 
             if (bType == LibUtilities::eModified_A)
             {
-                switch (eid)
+                switch (traceid)
                 {
                 case 0:
                     {
-                        for (i = 0; i < P; i++)
+                        for (i = 0; i < numModes; i++)
                         {
                             maparray[i] = i;
                         }
@@ -1091,7 +1060,7 @@ namespace Nektar
                     break;
                 case 1:
                     {
-                        for (i = 0; i < P; i++)
+                        for (i = 0; i < numModes; i++)
                         {
                             maparray[i] = i*order0 + 1;
                         }
@@ -1099,7 +1068,7 @@ namespace Nektar
                     break;
                 case 2:
                     {
-                        for (i = 0; i < P; i++)
+                        for (i = 0; i < numModes; i++)
                         {
                             maparray[i] = order0+i;
                         }
@@ -1107,35 +1076,24 @@ namespace Nektar
                     break;
                 case 3:
                     {
-                        for (i = 0; i < P; i++)
+                        for (i = 0; i < numModes; i++)
                         {
                             maparray[i] = i*order0;
                         }
                     }
                     break;
                 default:
-                    ASSERTL0(false, "eid must be between 0 and 3");
                     break;
                 }
-
-                if (edgeOrient == eBackwards)
-                {
-                    swap(maparray[0], maparray[1]);
-                    
-                    for(i = 3; i < P; i+=2)
-                    {
-                        signarray[i] = -1;
-                    }
-                }
             }
-            else if(bType == LibUtilities::eGLL_Lagrange ||
-                    bType == LibUtilities::eGauss_Lagrange)
+            else if(bType == LibUtilities::eGLL_Lagrange
+                    ||bType == LibUtilities::eGauss_Lagrange)
             {
-                switch (eid)
+                switch (traceid)
                 {
                 case 0:
                     {
-                        for (i = 0; i < P; i++)
+                        for (i = 0; i < numModes; i++)
                         {
                             maparray[i] = i;
                         }
@@ -1143,7 +1101,7 @@ namespace Nektar
                     break;
                 case 1:
                     {
-                        for (i = 0; i < P; i++)
+                        for (i = 0; i < numModes; i++)
                         {
                             maparray[i] = (i+1)*order0 - 1;
                         }
@@ -1151,7 +1109,7 @@ namespace Nektar
                     break;
                 case 2:
                     {
-                        for (i = 0; i < P; i++)
+                        for (i = 0; i < numModes; i++)
                         {
                             maparray[i] = order0*(order1-1) + i;
                         }
@@ -1159,48 +1117,23 @@ namespace Nektar
                     break;
                 case 3:
                     {
-                        for (i = 0; i < P; i++)
+                        for (i = 0; i < numModes; i++)
                         {
                             maparray[i] = order0*i;
                         }
                     }
                     break;
                 default:
-                    ASSERTL0(false, "eid must be between 0 and 3");
                     break;
-                }
-
-                if (edgeOrient == eBackwards)
-                {
-                    reverse(maparray.get(), maparray.get()+P);
                 }
             }
             else
             {
                 ASSERTL0(false, "Mapping not defined for this type of basis");
             }
-
-            if (checkForZeroedModes)
-            {
-                if (bType == LibUtilities::eModified_A)
-                {
-                    // Zero signmap and set maparray to zero if
-                    // elemental modes are not as large as face modes
-                    for (int j = numModes; j < P; j++)
-                    {
-                        signarray[j] = 0.0;
-                        maparray[j]  = maparray[0];
-                    }
-                }
-                else
-                {
-                    ASSERTL0(false, "Different trace space edge dimension "
-                                    "and element edge dimension not possible "
-                                    "for GLL-Lagrange bases");
-                }
-            }
         }
 
+        
         void StdQuadExp::v_GetTraceInteriorToElementMap
                              (const int eid,
                               Array<OneD, unsigned int> &maparray,

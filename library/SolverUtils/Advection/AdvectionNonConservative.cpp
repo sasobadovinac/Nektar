@@ -42,7 +42,8 @@ namespace Nektar
     {
         std::string AdvectionNonConservative::type = GetAdvectionFactory().
             RegisterCreatorFunction("NonConservative",
-                                    AdvectionNonConservative::create);
+                                    AdvectionNonConservative::create,
+                                    "Non Conservative");
 
         AdvectionNonConservative::AdvectionNonConservative()
         {
