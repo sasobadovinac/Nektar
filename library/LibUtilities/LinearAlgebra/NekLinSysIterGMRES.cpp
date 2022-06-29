@@ -474,8 +474,12 @@ void NekLinSysIterGMRES::DoArnoldi(const int starttem, const int endtem,
     NekDouble vExchange = 0.0;
     // w=AV(:,nd)
     Array<OneD, NekDouble> w(nGlobal, 0.0);
-
+    
+    LibUtilities::Timer timer;
+    timer.Start();
     m_operator.DoNekSysLhsEval(Vsingle1, w, m_DifferenceFlag1);
+    timer.Stop();
+    timer.AccumulateRegion("NekSysOperators::DoNekSysLhsEval", 10);
 
     tmp1 = w + nDir;
     tmp2 = w + nDir;

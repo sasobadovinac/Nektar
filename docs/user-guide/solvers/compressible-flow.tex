@@ -207,6 +207,7 @@ Under this section it is possible to set the parameters of the simulation.
   <P> mu                  = 1e-5                       </P>
   <P> Pr                  = 0.72                       </P>
   <P> thermalConductivity = 0.02                       </P>
+  <P> IO_Timer_Level      = 3                          </P>
 </PARAMETERS>
 \end{lstlisting}
 \begin{itemize}
@@ -236,6 +237,9 @@ conditions are employed (i.e. $T_{w}$). Default value = 300.15$K$.
 \item \inltt{CFL} is the CFL number (explicit and implicit solvers).
 \item \inltt{CFLGrowth} is the growing CFL (explicit and implicit solvers).
 \item \inltt{CFLEnd} is the maximum value of the CFL number (explicit and implicit solvers).
+\item \inltt{Timer\_IO\_Level} defines the amount of timer information that is printed after the solver is finished.
+      The default value is -1, which disables output. By selecting a value between 0 and 2, more detailed timer
+      information is printed.
 \end{itemize}
 
 \subsection*{Time Integration Scheme}

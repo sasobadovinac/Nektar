@@ -159,6 +159,7 @@ namespace Nektar
         const bool                          &flag,
         const Array<OneD, const NekDouble>  &source)
     {
+        LibUtilities::Timer timer;
         boost::ignore_unused(flag);
         unsigned int nvariables     = m_fields.size();
         unsigned int npoints        = m_fields[0]->GetNcoeffs();
@@ -172,7 +173,11 @@ namespace Nektar
             out2D[i]   = out + offset;
             source2D[i]   = source + offset;
         }
+
+        timer.Start();
         NonlinSysEvaluatorCoeff(in2D, out2D, source2D);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::NonlinSysEvaluatorCoeff");
     }
 
     void CFSImplicit::NonlinSysEvaluatorCoeff(
@@ -180,6 +185,7 @@ namespace Nektar
               Array<OneD,       Array<OneD, NekDouble>> &out,
         const Array<OneD, const Array<OneD, NekDouble>> &source)
     {
+        LibUtilities::Timer timer;
         unsigned int nvariable  = inarray.size();
         unsigned int ncoeffs    = inarray[nvariable - 1].size();
         unsigned int npoints    = m_fields[0]->GetNpoints();
@@ -192,8 +198,15 @@ namespace Nektar
             m_fields[i]->BwdTrans(inarray[i], inpnts[i]);
         }
         
+        timer.Start();
         DoOdeProjection(inpnts, inpnts, m_bndEvaluateTime);
+        timer.Stop();
+        timer.AccumulateRegion("CompressibleFlowSystem::DoOdeProjection", 1);
+
+        timer.Start();
         DoOdeRhsCoeff(inpnts, out, m_bndEvaluateTime);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::DoOdeRhsCoeff", 1);
 
         for (int i = 0; i < nvariable; ++i)
         {
@@ -220,6 +233,8 @@ namespace Nektar
               Array<OneD,       Array<OneD, NekDouble>> &outarray,
         const NekDouble                                 time)
     {
+        LibUtilities::Timer timer; 
+
         int nvariables = inarray.size();
         int nTracePts  = GetTraceTotPoints();
         int ncoeffs    = GetNcoeffs();
@@ -243,16 +258,22 @@ namespace Nektar
         }
  
          // Calculate advection
+        timer.Start();
         DoAdvectionCoeff(inarray, outarray, time, Fwd, Bwd);
-
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::DoAdvectionCoeff", 2);
+        
         // Negate results
         for (int i = 0; i < nvariables; ++i)
         {
             Vmath::Neg(ncoeffs, outarray[i], 1);
         }
 
+        timer.Start();
         DoDiffusionCoeff(inarray, outarray, Fwd, Bwd);
-
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::DoDiffusionCoeff", 2);
+        
         // Add forcing terms
         for (auto &x : m_forcing)
         {
@@ -422,6 +443,9 @@ namespace Nektar
                   Array<OneD, NekDouble> &outarray,
             const bool                   &flag)
     {
+        LibUtilities::Timer timer, Gtimer; 
+        
+        Gtimer.Start();
         if (m_preconCfs->UpdatePreconMatCheck(NullNekDouble1DArray, 
             m_TimeIntegLambda) && m_flagUpdatePreconMat)
         {
@@ -434,15 +458,28 @@ namespace Nektar
                 intmp[i]    =   Array<OneD, NekDouble>(nphspnt,0.0);
             }
 
+            timer.Start();
             DoOdeProjection(m_solutionPhys,intmp,m_bndEvaluateTime);
+            timer.Stop();
+            timer.AccumulateRegion("CompressibleFlowSystem::DoOdeProjection", 1);
 
+            
+            timer.Start();
             m_preconCfs->BuildPreconCfs(m_fields, intmp, m_bndEvaluateTime,
                 m_TimeIntegLambda);
+            timer.Stop();
+            timer.AccumulateRegion("PreconCfsOp::BuildPreconCfs", 1);
         }
 
         m_flagUpdatePreconMat = false;
 
+        timer.Start();
         m_preconCfs->DoPreconCfs(m_fields, inarray, outarray, flag);
+        timer.Stop();
+        timer.AccumulateRegion("PreconCfsOp::DoPreconCfs", 1);
+
+        Gtimer.Stop();
+        Gtimer.AccumulateRegion("CFSImplicit::PreconCoeff");
     }
 
     template<typename DataType, typename TypeNekBlkMatSharedPtr>
@@ -923,14 +960,22 @@ namespace Nektar
               TensorOfArray5D<DataType>                 &TraceIPSymJacArray)
     {
         int nvariables = inarray.size();
+        
+        LibUtilities::Timer timer; 
+        timer.Start();
         GetTraceJac(inarray,qfield,TraceJac,TraceJacDeriv,TraceJacDerivSign,
             TraceIPSymJacArray);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::GetTraceJac", 10);
         
         Array<OneD, TypeNekBlkMatSharedPtr > tmpJac;
         Array<OneD, Array<OneD, DataType>>  tmpSign;
 
+        timer.Start();
         m_advObject->AddTraceJacToMat(nvariables,m_spacedim,m_fields, 
             TraceJac,gmtxarray,tmpJac,tmpSign);
+        timer.Stop();
+        timer.AccumulateRegion("Advection::AddTraceJacToMap", 10);
     }
 
 
@@ -1355,15 +1400,25 @@ namespace Nektar
         NekSingle zero =0.0;
         Fill2DArrayOfBlkDiagonalMat(gmtxarray,zero);
 
+        LibUtilities::Timer timer;
+        timer.Start();
         AddMatNSBlkDiagVol(inarray,qfield,gmtxarray,m_stdSMatDataDBB,
             m_stdSMatDataDBDB);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagVol", 2);
 
+        timer.Start();
         AddMatNSBlkDiagBnd(inarray,qfield,gmtxarray,TraceJac,
             TraceJacDeriv,TraceJacDerivSign,TraceIPSymJacArray);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::AddMatNSBlkDiagBnd", 2);
 
         MultiplyElmtInvMassPlusSource(gmtxarray,m_TimeIntegLambda,zero);
 
+        timer.Start();        
         ElmtVarInvMtrx(gmtxarray,gmtVar,zero);
+        timer.Stop();
+        timer.AccumulateRegion("CFSImplicit::ElmtVarInvMtrx", 2);
 
         TransTraceJacMatToArray(TraceJac,TraceJacDeriv,TraceJacArray, 
             TraceJacDerivArray);

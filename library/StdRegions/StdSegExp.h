@@ -163,7 +163,9 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                 std::array<NekDouble, 3> &firstOrderDerivs) override
             {
-                return BaryTensorDeriv(coord, inarray, firstOrderDerivs);
+                return StdExpansion1D::BaryTensorDeriv(coord,
+                                                       inarray,
+                                                       firstOrderDerivs);
             }
 
             STD_REGIONS_EXPORT inline NekDouble v_PhysEvaluate(
@@ -172,7 +174,10 @@ namespace Nektar
                 std::array<NekDouble, 3> &firstOrderDerivs,
                 std::array<NekDouble, 6> &secondOrderDerivs) override
             {
-                return BaryTensorDeriv(coord, inarray, firstOrderDerivs, secondOrderDerivs);
+                return StdExpansion1D::BaryTensorDeriv(coord,
+                                                       inarray,
+                                                       firstOrderDerivs,
+                                                       secondOrderDerivs);
             }
 
             STD_REGIONS_EXPORT void v_LaplacianMatrixOp(
