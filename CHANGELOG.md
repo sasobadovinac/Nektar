@@ -23,11 +23,13 @@ v5.2.0
 - Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
 - Simplify the logic in the MPI pairwise trace exchange (!1307)
 - Fix imaginary mode in HalfModeToFourier module (!1247)
+- Added a dummy output module OutputStdOut for NekMesh utilities that don't require an output file (!1318)
 - Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
 - Fixed SIMD mask test (!1324)
 - Fix memory leak in Timer.cpp (!1330)
 - Fix cmake CWIPI option to remove Fortran check (!1331)
+- Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)

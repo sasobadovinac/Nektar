@@ -157,7 +157,7 @@ namespace Nektar
                         const std::vector<unsigned int> &eIDs,
                         bool DeclarePlanesSetCoeffPhys,
                         const Collections::ImplementationType ImpType):
-            ExpListHomogeneous1D(In, eIDs)
+            ExpListHomogeneous1D(In, eIDs, ImpType)
         {
             if(DeclarePlanesSetCoeffPhys)
             {
@@ -175,7 +175,8 @@ namespace Nektar
                 
                 ExpListSharedPtr zero_plane = 
                     MemoryManager<ExpList>::AllocateSharedPtr
-                    (*(zero_plane_old), eIDsPlane, ImpType);
+                    (*(zero_plane_old), eIDsPlane, DeclarePlanesSetCoeffPhys,
+                     ImpType);
 
                 for(int n = 0; n < m_planes.size(); ++n)
                 {

@@ -147,9 +147,11 @@ namespace Nektar
             m_planes = Array<OneD, ExpListSharedPtr>(In.m_planes.size());
         }
 
-        ExpListHomogeneous1D::ExpListHomogeneous1D(const ExpListHomogeneous1D &In,
-                                            const std::vector<unsigned int> &eIDs):
-            ExpList(In,eIDs,false),
+        ExpListHomogeneous1D::ExpListHomogeneous1D
+                           (const ExpListHomogeneous1D &In,
+                            const std::vector<unsigned int> &eIDs,
+                            const Collections::ImplementationType ImpType):
+            ExpList(In,eIDs,false, ImpType),
             m_transposition(In.m_transposition),
             m_useFFT(In.m_useFFT),
             m_FFT(In.m_FFT),

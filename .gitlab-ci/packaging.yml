@@ -283,7 +283,7 @@ package-source-archive-deploy-dev: &package-source-archive-deploy-dev
   dependencies:
     - package-source-archive-build
   script:
-    - cp src/nektar++*.* /web/src
+    - cp src/nektar++*.* $DPATH
 
 package-source-archive-deploy:
   <<: *package-source-archive-deploy-dev
