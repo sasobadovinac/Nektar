@@ -1057,49 +1057,52 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
             //
             fielddefs.push_back(fielddef);
 
-            if (selective)
+            if (fielddata != NullVectorNekDoubleVector)
             {
-                // Determine number of modes (coefficients) per element
-                std::vector<unsigned int> coeffsPerElmt;
-                CheckFieldDefinition(fielddef, coeffsPerElmt);
-
-                // Selected element IDs
-                std::vector<unsigned int> newElementIDs;
-                std::vector<hsize_t     > dataIdxToRead;
-
-                // Loop through all element IDs in this decomposition and
-                // select those that we want to read.
-                for (size_t i = 0, offset = 0; 
-                     i < fielddef->m_elementIDs.size();
-                     offset += coeffsPerElmt[i++])
+                if (selective)
                 {
-                    if (toread.find(fielddef->m_elementIDs[i]) != toread.end())
+                    // Determine number of modes (coefficients) per element
+                    std::vector<unsigned int> coeffsPerElmt;
+                    CheckFieldDefinition(fielddef, coeffsPerElmt);
+
+                    // Selected element IDs
+                    std::vector<unsigned int> newElementIDs;
+                    std::vector<hsize_t     > dataIdxToRead;
+
+                    // Loop through all element IDs in this decomposition and
+                    // select those that we want to read.
+                    for (size_t i = 0, offset = 0; 
+                         i < fielddef->m_elementIDs.size();
+                         offset += coeffsPerElmt[i++])
                     {
-                        newElementIDs.push_back(fielddef->m_elementIDs[i]);
-                        for (size_t j = 0; j < coeffsPerElmt[i]; ++j)
+                        if (toread.find(fielddef->m_elementIDs[i]) != toread.end())
                         {
-                            dataIdxToRead.push_back(
-                                decompsToOffsets[sIt].data + offset + j);
+                            newElementIDs.push_back(fielddef->m_elementIDs[i]);
+                            for (size_t j = 0; j < coeffsPerElmt[i]; ++j)
+                            {
+                                dataIdxToRead.push_back(
+                                    decompsToOffsets[sIt].data + offset + j);
+                            }
                         }
                     }
+
+                    fielddef->m_elementIDs = newElementIDs;
+
+                    std::vector<NekDouble> decompFieldData;
+
+                    data_fspace->ClearRange();
+                    data_fspace->SetSelection(dataIdxToRead.size(), dataIdxToRead);
+
+                    //
+                    // TODO: Remove redundant parameters
+                    //
+                    ImportFieldData(
+                        readPLInd, data_dset, data_fspace,
+                        decompsToOffsets[sIt].data, decomps, sIt, fielddef,
+                        decompFieldData);
+                    fielddata.push_back(decompFieldData);
                 }
-
-                fielddef->m_elementIDs = newElementIDs;
-
-                std::vector<NekDouble> decompFieldData;
-
-                data_fspace->ClearRange();
-                data_fspace->SetSelection(dataIdxToRead.size(), dataIdxToRead);
-
-                ImportFieldData(
-                    readPLInd, data_dset, data_fspace,
-                    decompsToOffsets[sIt].data, decomps, sIt, fielddef,
-                    decompFieldData);
-                fielddata.push_back(decompFieldData);
-            }
-            else
-            {
-                if (fielddata != NullVectorNekDoubleVector)
+                else
                 {
                     std::vector<NekDouble> decompFieldData;
 
@@ -1109,6 +1112,9 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                     data_fspace->ClearRange();
                     data_fspace->SelectRange(decompsToOffsets[sIt].data, nFieldVals);
 
+                    //
+                    // TODO: Remove redundant parameters
+                    //
                     ImportFieldData(
                         readPLInd, data_dset, data_fspace,
                         decompsToOffsets[sIt].data, decomps, sIt, fielddef,
