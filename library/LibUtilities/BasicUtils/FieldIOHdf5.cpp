@@ -991,11 +991,10 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
         uint64_t nElmt     = decomps[cnt + ELEM_DCMP_IDX];
         uint64_t groupHash = decomps[cnt + HASH_DCMP_IDX];
 
-        // Element IDs in this decomposition that this process needs (in case
-        // the "ElementIDs" variable was specified), or all element IDs in this
-        // decomposition (if the "ElementIDs" variables was not specified)
-        std::vector<unsigned int> tmp;
+        // Number of elements in this decomposition that this process needs
+        uint64_t nElmtSelective = 0;
 
+        // Check if we should keep any elements in this decomposition
         if (selective)
         {
             for (size_t j = 0; j < nElmt; ++j)
@@ -1003,14 +1002,18 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                 uint64_t elmtId = ids[cnt2 + j];
                 if (toread.find(elmtId) != toread.end())
                 {
-                    tmp.push_back(elmtId);
+                    nElmtSelective += 1;
                 }
             }
         }
         else
         {
-            tmp.insert(
-                tmp.begin(), ids.begin() + cnt2, ids.begin() + cnt2 + nElmt);
+            nElmtSelective = nElmt;
+        }
+
+        if (nElmtSelective > 0)
+        {
+            groupsToDecomps[groupHash].insert(i);
         }
 
         // All element IDs in this decomposition
@@ -1022,14 +1025,12 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
 
         cnt2 += nElmt;
 
-        if (tmp.size() > 0)
-        {
-            groupsToDecomps[groupHash].insert(i);
-        }
-
         decompsToElmts[i] = tmp2;
         decompsToOffsets[i] = running;
 
+        //
+        // TODO: Will this update the OffsetHelper in decompsToOffsets? (copy constructor?)
+        //
         running.data  += decomps[cnt + VAL_DCMP_IDX];
         running.order += decomps[cnt + ORDER_DCMP_IDX];
         running.homy  += decomps[cnt + HOMY_DCMP_IDX];
@@ -1066,14 +1067,16 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                 std::vector<unsigned int> newElementIDs;
                 std::vector<hsize_t     > dataIdxToRead;
 
-                for (int i = 0, offset = 0; 
+                // Loop through all element IDs in this decomposition and
+                // select those that we want to read.
+                for (size_t i = 0, offset = 0; 
                      i < fielddef->m_elementIDs.size();
                      offset += coeffsPerElmt[i++])
                 {
                     if (toread.find(fielddef->m_elementIDs[i]) != toread.end())
                     {
                         newElementIDs.push_back(fielddef->m_elementIDs[i]);
-                        for (int j = 0; j < coeffsPerElmt[i]; ++j)
+                        for (size_t j = 0; j < coeffsPerElmt[i]; ++j)
                         {
                             dataIdxToRead.push_back(
                                 decompsToOffsets[sIt].data + offset + j);
