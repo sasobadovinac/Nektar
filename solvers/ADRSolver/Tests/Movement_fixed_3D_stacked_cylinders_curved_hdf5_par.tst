@@ -3,7 +3,7 @@
     <description>2D advection with 1 zones and 1 non-conformal interfaces consisting of two cylinders stacked vertically with dirichlet BCs using hdf5</description>
     <executable>ADRSolver</executable>
     <parameters>Movement_fixed_3D_stacked_cylinders_curved_hdf5.xml</parameters>
-    <processes>4</processes>
+    <processes>3</processes>
     <files>
         <file description="Session File">Movement_fixed_3D_stacked_cylinders_curved_hdf5.xml</file>
         <file description="Geometry File">Movement_fixed_3D_stacked_cylinders_curved_hdf5.nekg</file>
