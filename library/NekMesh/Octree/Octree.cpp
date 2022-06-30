@@ -848,7 +848,7 @@ void Octree::CompileSourcePointList()
     int totalEnt = 0;
     if(m_mesh->m_cad->Is2D())
     {
-        totalEnt = m_mesh->m_cad->GetNumCurve();  // Why was there a += here?
+        totalEnt = m_mesh->m_cad->GetNumCurve();
         for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
         {
             m_log(VERBOSE).Progress(i, totalEnt, "  - Compiling source points");
@@ -1109,33 +1109,6 @@ void Octree::CompileSourcePointList()
                 m_SPList.push_back(newSPoint);
             }
         }
-
-        // OLD code left for posterity -- using the new approach of having an
-        // octant delta and a refinement delta, there should be no need to change
-        // the existing sourcpoints anymore, nor add any more source points.
-
-        // this takes any existing sourcepoints within the influence range
-        // and modifies them
-        /*for (int i = 0; i < m_SPList.size(); i++)
-        {
-            for (int j = 0; j < m_lsources.size(); j++)
-            {
-                if (m_lsources[j].withinRange(m_SPList[i]->GetLoc()))
-                {
-                    if(m_SPList[i]->GetType() == ePBoundary)
-                    {
-                        BPointSharedPtr bp =
-                            std::dynamic_pointer_cast<BPoint>
-                                                            (m_SPList[i]);
-
-                        m_SPList[i] = bp->ChangeType();
-
-                    }
-                    m_SPList[i]->SetDelta(m_lsources[j].delta);
-                }
-            }
-        }*/
-        /// TODO add extra source points from the line source to the octree
     }
 }
 

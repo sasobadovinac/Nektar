@@ -91,10 +91,8 @@ Array<OneD, NekDouble> CADCurve::NormalWRT(NekDouble t, int surf)
 
 CADOrientation::Orientation CADCurve::GetOrienationWRT(int surf)
 {
-    std::cout << "Checking adjSurfs. Size = " << m_adjSurfs.size() << "\n";
     for (int i = 0; i < m_adjSurfs.size(); i++)
     {
-        std::cout << "surf = " << surf << " and first.lock()->GetID = " << m_adjSurfs[i].first.lock()->GetId() << "\n";
         if (m_adjSurfs[i].first.lock()->GetId() == surf)
         {
             return m_adjSurfs[i].second;

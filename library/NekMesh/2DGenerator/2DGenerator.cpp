@@ -321,7 +321,6 @@ void Generator2D::MakeBL(int faceid)
     int eid = 0;
     for (auto &it : m_blCurves)
     {
-        std::cout << "checking what it is in m_blCurces: " << it << " and on what faceid: " << faceid << "\n";
         CADOrientation::Orientation edgeo =
             m_mesh->m_cad->GetCurve(it)->GetOrienationWRT(faceid);
         vector<EdgeSharedPtr> es = m_curvemeshes[it]->GetMeshEdges();
@@ -332,8 +331,6 @@ void Generator2D::MakeBL(int faceid)
         for (auto &ie : es)
         {
             ie->m_id = eid++;
-            // std::cout << "checking what ie->m_id is in es with it: " << ie-> m_id << " -- " << it << "\n";
-            Array<OneD, NekDouble> p1, p2;
             p1 = ie->m_n1->GetCADSurfInfo(faceid);
             p2 = ie->m_n2->GetCADSurfInfo(faceid);
             Array<OneD, NekDouble> n(2);
@@ -381,8 +378,8 @@ void Generator2D::MakeBL(int faceid)
         if (it.second.size() != 1 && it.second.size() != 2)
         {
             m_log(FATAL) << "    Error with identifying nodes with edges: check"
-                         << " that your boundary layer surfaces are correctly "
-                         << "defined." << endl;
+                         << " that your boundary layer surfaces are correctly"
+                         << " defined." << endl;
         }
 
         // If node at the end of the BL open loop, the "normal node" isn't

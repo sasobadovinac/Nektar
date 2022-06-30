@@ -47,7 +47,17 @@ namespace Nektar
 namespace NekMesh
 {
 
-// struct to assist in the creation of curvesources in the code
+/**
+ * @brief this struct defines a CAD curve object to be used for defining spatial
+ * refinment where a fixed element edge length is set to any element on or
+ * within a specified distance from it.
+ *
+ * @param curve the CAD curve object - currently only supported using the OCE /
+ * OpenCASCADE backend engine.
+ * @param R the distance from the CAD curve where a fixed element edge length is
+ * to be applied.
+ * @param delta the fixed elementedge length.
+ */
 struct curvesource
 {
     CADCurveSharedPtr curve;
@@ -59,10 +69,15 @@ struct curvesource
     {
     }
 
-    // tests if a point is within a specified range, R, from the curve
+    /**
+     * @brief tests if a point is within a specified range, R, from the CAD
+     * curve.
+     *
+     * @param p array with the x,y,z position of the point to be tested.
+     * @return true is within the specified distance and false if not.
+     */
     bool withinRange(Array<OneD, NekDouble> p)
     {
-        // if(curve->loct(p,t) <= R)
         if(curve->GetMinDistance(p) <= R)
         {
             return true;
@@ -72,7 +87,17 @@ struct curvesource
     }
 };
 
-//struct to assist in the creation of linesources in the code
+/**
+ * @brief this struct defines two points that create a line to be used for defining
+ * spatial refinment where a fixed element edge length is set to any element on
+ * or within a specified distance from it.
+ *
+ * @param x1, x2 arrays containing the x,y,z positions of the two points used to
+ * define the line.
+ * @param R the distance from the line where a fixed element edge length is to
+ * be applied.
+ * @param delta the fixed elementedge length.
+ */
 struct linesource
 {
     Array<OneD, NekDouble> x1, x2;
@@ -85,6 +110,12 @@ struct linesource
     {
     }
 
+    /**
+     * @brief tests if a point is within a specified range, R, from the line
+     *
+     * @param p array with the x,y,z position of the point to be tested.
+     * @return true is within the specified distance and false if not.
+     */
     bool withinRange(Array<OneD, NekDouble> p)
     {
         Array<OneD, NekDouble> Le(3), Re(3), s(3);
@@ -128,6 +159,9 @@ struct linesource
         }
     }
 
+    /**
+     * @brief returns the length of the line defining the linesource
+     */
     NekDouble Length()
     {
         return sqrt((x1[0] - x2[0]) * (x1[0] - x2[0]) +
