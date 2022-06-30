@@ -331,6 +331,7 @@ void Generator2D::MakeBL(int faceid)
         for (auto &ie : es)
         {
             ie->m_id = eid++;
+            Array<OneD, NekDouble> p1, p2;
             p1 = ie->m_n1->GetCADSurfInfo(faceid);
             p2 = ie->m_n2->GetCADSurfInfo(faceid);
             Array<OneD, NekDouble> n(2);

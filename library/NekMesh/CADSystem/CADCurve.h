@@ -197,7 +197,7 @@ public:
      * distance to the point and passes t by reference and updates it
      */
     NEKMESH_EXPORT virtual NekDouble GetMinDistance(
-        Array<OneD, NekDouble> xyz) = 0;
+        Array<OneD, NekDouble> &xyz) = 0;
 
     /**
      * @brief Returns the orientation of the curve with respect to a given
