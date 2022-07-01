@@ -1095,7 +1095,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                         // Add indices for all remaining fields (variables)
                         // We assume that all fields are stored with the same
                         // polynomial order
-                        const nDataPoints = dataIdxToRead.size();
+                        const size_t nDataPoints = dataIdxToRead.size();
 
                         for (size_t i = 1;
                              i < fielddef->m_fields().size();
