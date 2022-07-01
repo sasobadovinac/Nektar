@@ -1098,7 +1098,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                         const size_t nDataPoints = dataIdxToRead.size();
 
                         for (size_t i = 1;
-                             i < fielddef->m_fields().size();
+                             i < fielddef->m_fields.size();
                              ++i)
                         {
                             for (size_t j = 0; j < nDataPoints; ++j)
