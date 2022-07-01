@@ -166,6 +166,17 @@ class TestModule(unittest.TestCase):
             print(msg)
             raise
 
+    def testCreateModuleUnknownParameter(self):
+        msg = self.getCN() + "::testCreateModuleUnknownParameter: "
+        try:
+            mod1 = ProcessModule.Create("jac", self.mesh, unknown_parameter=False).Process()
+            msg += "PASS"
+            print(msg)
+        except:
+            msg += "FAIL"
+            print(msg)
+            raise
+
     def testCreateExceptionUnknownModule(self):
         msg = self.getCN() + "::testCreateExceptionUnknownModule: "
         try:

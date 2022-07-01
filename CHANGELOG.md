@@ -11,7 +11,6 @@ v5.3
 **FieldConver**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
 
-v5.2
 v5.2.0
 ------
 **Library**
@@ -42,6 +41,7 @@ v5.2.0
 
 **NekMesh**
 - Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
+- Small bug-fix for Python API for unused configuration options (!1348)
 
 **CompressibleFlowSolver**
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
