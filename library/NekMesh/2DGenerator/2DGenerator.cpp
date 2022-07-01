@@ -451,6 +451,8 @@ void Generator2D::MakeBL(int faceid)
         }
 
 
+        // --- Location to debug BL generation ---
+
         // If node at the end of the BL open loop, the "normal node" isn't
         // constructed by computing a normal but found on the adjacent curve
         if (it.second.size() == 1)
