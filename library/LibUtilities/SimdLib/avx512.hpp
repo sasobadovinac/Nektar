@@ -308,18 +308,17 @@ struct avx512Double8
     }
 
     // gather/scatter
+    // template <typename T>
+    // inline void gather(scalarType const* p, const avx2Int8<T>& indices)
+    // {
+    //     _data = _mm512_i32gather_pd(indices._data, p, 8);
+    // }
 
-    template <typename T>
-    inline void gather(scalarType const* p, const avx2Int8<T>& indices)
-    {
-        _data = _mm512_i32gather_pd(p, indices._data, 8);
-    }
-
-    template <typename T>
-    inline void scatter(scalarType* out, const avx2Int8<T>& indices) const
-    {
-        _mm512_i32scatter_pd(out, indices._data, _data, 8);
-    }
+    // template <typename T>
+    // inline void scatter(scalarType* out, const avx2Int8<T>& indices) const
+    // {
+    //     _mm512_i32scatter_pd(out, indices._data, _data, 8);
+    // }
 
     template <typename T>
     inline void gather(scalarType const* p, const avx512Long8<T>& indices)
