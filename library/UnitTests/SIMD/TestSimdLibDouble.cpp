@@ -74,17 +74,12 @@ namespace Nektar
 namespace SimdLibTests
 {
     using namespace tinysimd;
-    BOOST_AUTO_TEST_CASE(SimdLib_width_alignment)
+    BOOST_AUTO_TEST_CASE(SimdLibDouble_width_alignment)
     {
         std::size_t width, alignment;
 
         #if defined(USING_SCALAR)
         std::cout << "scalar" << std::endl;
-        // std::int32_t aka (usually) int
-        width = simd<std::int32_t>::width;
-        alignment = simd<std::int32_t>::alignment;
-        BOOST_CHECK_EQUAL(width, 1);
-        BOOST_CHECK_EQUAL(alignment, 4);
         // std::int64_t aka (usually) long
         width = simd<std::int64_t>::width;
         alignment = simd<std::int64_t>::alignment;
@@ -99,20 +94,15 @@ namespace SimdLibTests
 
         #if defined(USING_SSE2) && !defined(USING_AVX2) && !defined(USING_AVX512)
         std::cout << "sse2" << std::endl;
-        // std::int32_t
-        width = simd<std::int32_t>::width;
-        alignment = simd<std::int32_t>::alignment;
-        BOOST_CHECK_EQUAL(width, 4);
+        // std::int64_t
+        width = simd<std::int64_t>::width;
+        alignment = simd<std::int64_t>::alignment;
+        BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
         BOOST_CHECK_EQUAL(alignment, 16);
         #endif
 
         #if defined(USING_AVX2) && !defined(USING_AVX512)
         std::cout << "avx2" << std::endl;
-        // std::int32_t aka (usually) int (sse2int4)
-        width = simd<std::int32_t>::width;
-        alignment = simd<std::int32_t>::alignment;
-        BOOST_CHECK_EQUAL(width, 4);
-        BOOST_CHECK_EQUAL(alignment, 16);
         // std::int64_t aka (usually) long
         width = simd<std::int64_t>::width;
         alignment = simd<std::int64_t>::alignment;
@@ -171,7 +161,7 @@ namespace SimdLibTests
     }
 
 
-    
+
     using vec_t = simd<double>;
 
     BOOST_AUTO_TEST_CASE(SimdLibDouble_type_traits)
@@ -320,7 +310,7 @@ namespace SimdLibTests
     BOOST_AUTO_TEST_CASE(SimdLib_subscript_assign_read)
     {
         vec_t avec;
-        std::array<double, vec_t::width> ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+        alignas(vec_t::alignment) std::array<double, vec_t::width> ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
 
         for (size_t i = 0; i < vec_t::width; ++i)
         {
@@ -335,29 +325,7 @@ namespace SimdLibTests
         }
     }
 
-    #if defined(__AVX2__) && defined(NEKTAR_ENABLE_AVX2)
-    BOOST_AUTO_TEST_CASE(SimdLibDouble_load_any)
-    {
-        vec_t avec;
-        double* p0, * p1, * p2, * p3;
-        std::array<double, 16> ascalararr{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-
-        p0 =  ascalararr.data();
-        p1 =  ascalararr.data() + 3;
-        p2 =  ascalararr.data() + 5;
-        p3 =  ascalararr.data() + 6;
-
-        avec.load(p0, p1, p2, p3);
-
-        BOOST_CHECK_EQUAL(ascalararr[0], avec[0]);
-        BOOST_CHECK_EQUAL(ascalararr[3], avec[1]);
-        BOOST_CHECK_EQUAL(ascalararr[5], avec[2]);
-        BOOST_CHECK_EQUAL(ascalararr[6], avec[3]);
-
-    }
-    #endif
-
-    BOOST_AUTO_TEST_CASE(SimdLibDouble_gather64)
+    BOOST_AUTO_TEST_CASE(SimdLib_gather64)
     {
         vec_t avec;
         using index_t = simd<size_t>;
@@ -749,7 +717,6 @@ namespace SimdLibTests
             vec_t evec;
             evec.load(ascalararr2.data());
 
-            simd<bool> amask;
             amask = dvec > evec;
             // check
             for (size_t i = 0; i < vec_t::width; ++i)
