@@ -318,7 +318,7 @@ struct avx512Double8
     template <typename T>
     inline void scatter(scalarType* out, const avx2Int8<T>& indices) const
     {
-        _mm512_i32scatter_pd(out, indices._data, 8);
+        _mm512_i32scatter_pd(out, indices._data, _data, 8);
     }
 
     template <typename T>
