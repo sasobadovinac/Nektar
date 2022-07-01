@@ -1069,21 +1069,44 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                     std::vector<unsigned int> newElementIDs;
                     std::vector<hsize_t     > dataIdxToRead;
 
-                    // Loop through all element IDs in this decomposition and
-                    // select those that we want to read.
-                    for (size_t i = 0, offset = 0; 
-                         i < fielddef->m_elementIDs.size();
-                         offset += coeffsPerElmt[i++])
                     {
-                        if (toread.find(fielddef->m_elementIDs[i]) != toread.end())
+                        size_t offset = 0;
+
+                        // Loop through all elements in this decomposition
+                        for (size_t i = 0;
+                             i < fielddef->m_elementIDs.size();
+                             ++i)
                         {
-                            newElementIDs.push_back(fielddef->m_elementIDs[i]);
-                            for (size_t j = 0; j < coeffsPerElmt[i]; ++j)
+                            // Check if we need data for this element
+                            if (toread.find(fielddef->m_elementIDs[i]) != toread.end())
                             {
-                                dataIdxToRead.push_back(
-                                    decompsToOffsets[sIt].data + offset + j);
+                                newElementIDs.push_back(fielddef->m_elementIDs[i]);
+    
+                                for (size_t j = 0; j < coeffsPerElmt[i]; ++j)
+                                {
+                                    dataIdxToRead.push_back(
+                                        decompsToOffsets[sIt].data + offset + j);
+                                }
+                            }
+
+                            offset += coeffsPerElmt[i];
+                        }
+
+                        // Add indices for all remaining fields (variables)
+                        // We assume that all fields are stored with the same
+                        // polynomial order
+                        const nDataPoints = dataIdxToRead.size();
+
+                        for (size_t i = 1;
+                             i < fielddef->m_fields().size();
+                             ++i)
+                        {
+                            for (size_t j = 0; j < nDataPoints; ++j)
+                            {
+                                dataIdxToRead.push_back(dataIdxToRead[j] + offset);
                             }
                         }
+
                     }
 
                     fielddef->m_elementIDs = newElementIDs;
@@ -1358,6 +1381,11 @@ void FieldIOHdf5::ImportFieldData(
     prfx << m_comm->GetRank() << ": FieldIOHdf5::ImportFieldData(): ";
 
     data_dset->Read(fielddata, data_fspace, readPL);
+    //
+    // TODO: Will this work when we don't have uniform order?
+    //       Note that all the metadata in fielddef have not been updated
+    //       after we added new element IDs.
+    //
     int datasize = CheckFieldDefinition(fielddef);
     ASSERTL0(
         fielddata.size() == datasize * fielddef->m_fields.size(),
