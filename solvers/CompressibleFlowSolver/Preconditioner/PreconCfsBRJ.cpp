@@ -435,6 +435,9 @@ void PreconCfsBRJ::PreconBlkDiag(
                     m_inputIdx[cnt1++] = inOffset + i + j; 
                 }
             }
+            
+            const auto endwidth = nElmtDof - nblocks*vecwidth; 
+
             // fill out rest of index to match vector width with last entry
             if(endwidth)
             {
