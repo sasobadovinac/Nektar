@@ -1103,7 +1103,7 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                         {
                             for (size_t j = 0; j < nDataPoints; ++j)
                             {
-                                dataIdxToRead.push_back(dataIdxToRead[j] + offset);
+                                dataIdxToRead.push_back(dataIdxToRead[j] + i*offset);
                             }
                         }
 
