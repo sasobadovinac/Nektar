@@ -31,6 +31,9 @@ v5.2.0
 - Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 - Timer class was updated with safety checks to avoid wrong measurements (!1347)
 
+**FieldConvert**
+- Add calculation of CFL number for the incompressilbe flow (!1332)
+
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
 - Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
