@@ -1381,6 +1381,14 @@ void FieldIOHdf5::ImportFieldData(
     prfx << m_comm->GetRank() << ": FieldIOHdf5::ImportFieldData(): ";
 
     data_dset->Read(fielddata, data_fspace, readPL);
+
+    //
+    // TODO: Remove these once we have cleaned up the parameter list
+    //
+    boost::ignore_unused(data_i);
+    boost::ignore_unused(decomps);
+    boost::ignore_unused(decomp);
+
     //
     // TODO: Will this work when we don't have uniform order?
     //       Note that all the metadata in fielddef have not been updated
