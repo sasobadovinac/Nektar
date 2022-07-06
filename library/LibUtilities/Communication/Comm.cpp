@@ -69,5 +69,5 @@ CommFactory &GetCommFactory()
     static CommFactory instance;
     return instance;
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

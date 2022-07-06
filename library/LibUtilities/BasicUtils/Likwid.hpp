@@ -50,4 +50,3 @@
 #endif
 
 #endif // NEKTAR_LIB_UTILITIES_BASIC_UTILS_LIKWID
-

@@ -519,9 +519,9 @@ std::pair<CommSharedPtr, CommSharedPtr> CommMpi::v_SplitCommNode()
 
     // For rank 0 of the intra-node communicator, split the main
     // communicator. Everyone else will get a null communicator.
-    ret.first = std::shared_ptr<Comm>(new CommMpi(nodeComm));
+    ret.first  = std::shared_ptr<Comm>(new CommMpi(nodeComm));
     ret.second = CommMpi::v_CommCreateIf(ret.first->GetRank() == 0);
-    if(ret.first->GetRank() == 0)
+    if (ret.first->GetRank() == 0)
     {
         ret.second->SplitComm(1, ret.second->GetSize());
     }

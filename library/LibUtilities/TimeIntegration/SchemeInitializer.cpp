@@ -141,4 +141,4 @@ REGISTER(RungeKutta4);
 REGISTER(RungeKutta5);
 
 } // end namespace LibUtilities
-} // end namespace NekTar
+} // namespace Nektar

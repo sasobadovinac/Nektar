@@ -38,47 +38,90 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <memory>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <memory>
 
 namespace Nektar
-{    
-    template<typename DataType>
-    struct ConsistentObjectAccess
-    {     
-        static DataType& reference(DataType& o) { return o; }
-        static const DataType& const_reference(const DataType& o) { return o; }
-        static DataType* pointer(DataType& o) { return &o; }
-        static const DataType* const_pointer(const DataType& o) { return &o; }
-        
-        static bool ReferencesObject(const DataType& o) {
-            boost::ignore_unused(o);
-            return true;
-        }
-    };
-    
-    template<typename DataType>
-    struct ConsistentObjectAccess<DataType*> 
+{
+template <typename DataType> struct ConsistentObjectAccess
+{
+    static DataType &reference(DataType &o)
     {
-        static const DataType& const_reference(DataType* o) { ASSERTL1(o != 0, "Can't dereference null pointer."); return *o; }
-        static const DataType* const_pointer(DataType* o) { return o; }
-        static bool ReferencesObject(DataType* o) { return o != 0; }
-
-        static DataType& reference(DataType* o) { ASSERTL1(o != 0, "Can't dereference null pointer."); return *o; }
-        static DataType* pointer(DataType* o) { return o; }
-    };    
-    
-
-    template<typename DataType>
-    struct ConsistentObjectAccess<std::shared_ptr<DataType> >
+        return o;
+    }
+    static const DataType &const_reference(const DataType &o)
     {
-        static const DataType& const_reference(const std::shared_ptr<DataType>& o) { ASSERTL1(o, "Can't dereference null pointer."); return *o; }
-        static const DataType* const_pointer(const std::shared_ptr<DataType>& o) { return o.get(); }
-        static DataType& reference(const std::shared_ptr<DataType>& o) { ASSERTL1(o, "Can't dereference null pointer."); return *o; }
-        static DataType* pointer(const std::shared_ptr<DataType>& o) { return o.get(); }
-        static bool ReferencesObject(const std::shared_ptr<DataType>& o) { return o.get(); }
-    };
-}
-    
-#endif //NEKTAR_LIB_UTILITIES_BASIC_UTILS_CONSISTENT_ACCESS_OBJECT_HPP
+        return o;
+    }
+    static DataType *pointer(DataType &o)
+    {
+        return &o;
+    }
+    static const DataType *const_pointer(const DataType &o)
+    {
+        return &o;
+    }
 
+    static bool ReferencesObject(const DataType &o)
+    {
+        boost::ignore_unused(o);
+        return true;
+    }
+};
+
+template <typename DataType> struct ConsistentObjectAccess<DataType *>
+{
+    static const DataType &const_reference(DataType *o)
+    {
+        ASSERTL1(o != 0, "Can't dereference null pointer.");
+        return *o;
+    }
+    static const DataType *const_pointer(DataType *o)
+    {
+        return o;
+    }
+    static bool ReferencesObject(DataType *o)
+    {
+        return o != 0;
+    }
+
+    static DataType &reference(DataType *o)
+    {
+        ASSERTL1(o != 0, "Can't dereference null pointer.");
+        return *o;
+    }
+    static DataType *pointer(DataType *o)
+    {
+        return o;
+    }
+};
+
+template <typename DataType>
+struct ConsistentObjectAccess<std::shared_ptr<DataType>>
+{
+    static const DataType &const_reference(const std::shared_ptr<DataType> &o)
+    {
+        ASSERTL1(o, "Can't dereference null pointer.");
+        return *o;
+    }
+    static const DataType *const_pointer(const std::shared_ptr<DataType> &o)
+    {
+        return o.get();
+    }
+    static DataType &reference(const std::shared_ptr<DataType> &o)
+    {
+        ASSERTL1(o, "Can't dereference null pointer.");
+        return *o;
+    }
+    static DataType *pointer(const std::shared_ptr<DataType> &o)
+    {
+        return o.get();
+    }
+    static bool ReferencesObject(const std::shared_ptr<DataType> &o)
+    {
+        return o.get();
+    }
+};
+} // namespace Nektar
+
+#endif // NEKTAR_LIB_UTILITIES_BASIC_UTILS_CONSISTENT_ACCESS_OBJECT_HPP
