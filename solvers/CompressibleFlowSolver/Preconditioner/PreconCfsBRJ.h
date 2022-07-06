@@ -199,7 +199,7 @@ private:
             
                 // load up other vectors in varaible that fit into vector
                 // width
-                for (j = 0; j*vecwidth < nElmtCoeff-i; ++j)
+                for (j = 0; (j+1)*vecwidth < nElmtCoeff-i; ++j)
                 {
                     for(i0 = 0; i0 < vecwidth; ++i0)
                     {
@@ -208,7 +208,7 @@ private:
                 }
                 
                 // load up any residaul data for this varaible
-                for(i0 = 0, j = (j-1)*vecwidth +1; j < nElmtCoeff-i; ++j, ++i0)
+                for(i0 = 0, j = j*vecwidth; j < nElmtCoeff-i; ++j, ++i0)
                 {
                     m_inputIdx[cnt1++] = inOffset + i + j; 
                 }

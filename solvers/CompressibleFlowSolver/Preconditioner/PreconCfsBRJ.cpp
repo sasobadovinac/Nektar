@@ -347,7 +347,7 @@ void PreconCfsBRJ::PreconBlkDiag(
             m_max_nElmtDof = max(m_max_nElmtDof,nElmtDof);
 
             TotLen    += totblocks*vecwidth; 
-            TotMatLen += nElmtDof*totblocks;
+            TotMatLen += Nelmtdof*totblocks;
         }
 
         m_sBlkDiagMat.resize(TotMatLen);
@@ -363,7 +363,8 @@ void PreconCfsBRJ::PreconBlkDiag(
             const auto nblocks     = nElmtDof/vecwidth;
 
             const NekSingle *mmat = m_PreconMatSingle->
-                GetBlockPtr(ne,ne)->GetRawPtr();
+                                GetBlockPtr(ne,ne)->GetRawPtr();
+
             /// Copy array into column major blocks of vector width
             for(int i1 = 0; i1 < nblocks; ++i1)
             {
