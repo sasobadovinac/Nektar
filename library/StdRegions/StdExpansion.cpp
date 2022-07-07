@@ -264,7 +264,10 @@ namespace Nektar
             {
             case eInvMass:
                 {
-                    StdMatrixKey masskey(eMass,mkey.GetShapeType(),*this,NullConstFactorMap,NullVarCoeffMap,mkey.GetNodalPointsType());
+                    StdMatrixKey masskey(eMass,mkey.GetShapeType(),
+                                         *this,NullConstFactorMap,
+                                         NullVarCoeffMap,
+                                         mkey.GetNodalPointsType());
                     DNekMatSharedPtr mmat = GetStdMatrix(masskey);
 
                     returnval = MemoryManager<DNekMat>::AllocateSharedPtr(*mmat); //Populate standard mass matrix.
@@ -273,7 +276,10 @@ namespace Nektar
                 break;
             case eInvNBasisTrans:
                 {
-                    StdMatrixKey tmpkey(eNBasisTrans,mkey.GetShapeType(),*this,NullConstFactorMap,NullVarCoeffMap,mkey.GetNodalPointsType());
+                    StdMatrixKey tmpkey(eNBasisTrans,mkey.GetShapeType(),
+                                        *this,NullConstFactorMap,
+                                        NullVarCoeffMap,
+                                        mkey.GetNodalPointsType());
                     DNekMatSharedPtr tmpmat = GetStdMatrix(tmpkey);
                     returnval = MemoryManager<DNekMat>::AllocateSharedPtr(*tmpmat); //Populate  matrix.
                     returnval->Invert();
@@ -696,7 +702,7 @@ namespace Nektar
                     {
                         Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k1]), 1, dtmp, 1, dtmp, 1);
                     }
-                    v_IProductWRTDerivBase(k1, dtmp, outarray);
+                    v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
                 }
                 else
                 {
@@ -704,7 +710,7 @@ namespace Nektar
                     if(mkey.HasVarCoeff(varcoefftypes[k1][k2]))
                     {
                         Vmath::Vmul(nq, mkey.GetVarCoeff(varcoefftypes[k1][k2]), 1, dtmp, 1, dtmp, 1);
-                        v_IProductWRTDerivBase(k1, dtmp, outarray);
+                        v_IProductWRTDerivBase_SumFac(k1, dtmp, outarray);
                     }
                     else
                     {
@@ -774,10 +780,10 @@ namespace Nektar
             }
             else
             {
-                const MatrixType mtype[3][3]
-                    = {{eLaplacian00,eLaplacian01,eLaplacian02},
-                       {eLaplacian01,eLaplacian11,eLaplacian12},
-                       {eLaplacian02,eLaplacian12,eLaplacian22}};
+                const MatrixType mtype[3][3] = {
+                    {eLaplacian00, eLaplacian01, eLaplacian02},
+                    {eLaplacian01, eLaplacian11, eLaplacian12},
+                    {eLaplacian02, eLaplacian12, eLaplacian22}};
                 StdMatrixKeySharedPtr mkeyij;
 
                 for(i = 0; i < dim; i++)
@@ -816,8 +822,7 @@ namespace Nektar
 
         void StdExpansion::WeakDirectionalDerivMatrixOp_MatFree(
             const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,NekDouble> &outarray,
-            const StdMatrixKey &mkey)
+            Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey)
         {
             int nq = GetTotPoints();
 
@@ -831,15 +836,15 @@ namespace Nektar
 
             // Compte M_{div tv}
             Vmath::Vmul(nq, &(mkey.GetVarCoeff(eVarCoeffMFDiv))[0], 1,
-                            &tmp[0],                                1,
-                            &Mtmp[0],                               1);
+                    &tmp[0], 1,
+                    &Mtmp[0], 1);
 
             v_IProductWRTBase(Mtmp, Mout);
 
             // Add D_tv + M_{div tv}
-            Vmath::Vadd(m_ncoeffs, &Mout[0],     1,
-                                   &outarray[0], 1,
-                                   &outarray[0], 1);
+            Vmath::Vadd(m_ncoeffs, &Mout[0], 1,
+                        &outarray[0], 1,
+                        &outarray[0], 1);
         }
 
         void StdExpansion::MassLevelCurvatureMatrixOp_MatFree
@@ -1004,8 +1009,7 @@ namespace Nektar
         }
 
         void StdExpansion::v_SetCoeffsToOrientation(
-            Array<OneD, NekDouble> &coeffs,
-            StdRegions::Orientation dir)
+            Array<OneD, NekDouble> &coeffs, StdRegions::Orientation dir)
         {
             boost::ignore_unused(coeffs, dir);
             NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
@@ -1148,7 +1152,6 @@ namespace Nektar
             boost::ignore_unused(dir, inarray, outarray);
             NEKERROR(ErrorUtil::efatal, "This method has not been defined");
         }
-
 
         /**
          *
@@ -1368,6 +1371,25 @@ namespace Nektar
             NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
         }
         
+        void StdExpansion::v_GetTraceCoeffMap
+                  (const unsigned  int       traceid,
+                   Array<OneD, unsigned int>& maparray)
+        {
+            boost::ignore_unused(traceid,maparray);
+            NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
+        }
+
+        void StdExpansion::v_GetElmtTraceToTraceMap
+                  (const unsigned int         tid,
+                   Array<OneD, unsigned int> &maparray,
+                   Array<OneD,          int> &signarray,
+                   Orientation                traceOrient, 
+                   int P ,int Q)
+        {
+            boost::ignore_unused(tid,maparray,signarray,traceOrient,P,Q);
+            NEKERROR(ErrorUtil::efatal,"Method does not exist for this shape" );
+        }
+
         void StdExpansion::v_GetTraceInteriorToElementMap(
                const int                  tid,
                Array<OneD, unsigned int> &maparray,

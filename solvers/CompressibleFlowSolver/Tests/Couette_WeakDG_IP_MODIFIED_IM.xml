@@ -31,37 +31,32 @@
     </EXPANSIONS>
 <CONDITIONS>
     <PARAMETERS> 
-      <P> TimeStep              = 0.05                          </P>
-      <P> FinTime               = 20                           </P>
-      <P> IO_CheckSteps         = 500000                        </P>
+      <P> TimeStep              = 0.05                          </P> 
+      <P> NumSteps              = 30                           </P>
+      <P> IO_CheckSteps         = 0                             </P>
       <P> IO_InfoSteps          = 1                             </P>
-      <P> GasConstant           = 287.058                       </P>
       <P> Gamma                 = 1.4                           </P>
-      <P> pInf                  = 101325                        </P>
-      <P> rhoInf                = 1.225                         </P>
-       <P> Mach                 = 0.1                           </P>
-     <P> cInf                   = sqrt(Gamma * pInf / rhoInf)   </P>  
+      <P> GasConstant           = 1/1.4                         </P>
+      <P> cInf                  = 1                             </P>  
+      <P> rhoInf                = 1                             </P>
+      <P> Mach                  = 0.5                           </P>
+      <P> Re                    = 100                           </P>
+      <P> Pr                    = 0.72                          </P>     
+      <P> L                     = 1                             </P>
+      <P> NonlinIterTolRelativeL2   = 1.0E-10                   </P>
+      <P> NewtonAbsoluteIteTol      = 1.0E-10                   </P>
+      <P> LinSysRelativeTolInNonlin = 1.0E-10                   </P>
+      <P> NekNonlinSysMaxIterations = 10                        </P>
+      <P> NekLinSysMaxIterations    = 50                        </P>
+      <P> PreconMatFreezNumb        = 100                       </P>
+      <P> PreconItsStep             = 7                         </P>
+      <P> TInf                  = cInf ^ 2 / Gamma / GasConstant</P>
+      <P> T0                    = 0.9*TInf                      </P>
+      <P> pInf                  = rhoInf * GasConstant * TInf   </P>
       <P> uInf                  = Mach*cInf                     </P>
       <P> vInf                  = 0.0                           </P>
-      <P> Twall                 = 300.15                        </P>
-      <P> T0                    = 0.8*Twall                     </P>
-      <P> T1                    = 0.85*Twall                    </P>
-      <P> Re                    = 100                           </P>
-      <P> L                     = 1                             </P>
-      <P> mu                    = rhoInf * L * uInf / Re        </P>     
-      <P> Pr                    = 0.72                          </P>     
-      <P> Cv                    = GasConstant/(Gamma-1)         </P> 
-      <P> Cp                    = (Gamma*GasConstant)/(Gamma-1) </P>
-
-      <P> NonlinIterTolRelativeL2   = 1.0E-3                     </P>
-      <P> NewtonAbsoluteIteTol      = 1.0E-13                     </P>
-      <P> LinSysRelativeTolInNonlin = 1.0E-2                     </P>
-      <P> NekNonlinSysMaxIterations = 10                     </P>
-      <P> NekLinSysMaxIterations    = 30                     </P>
-      
-      <P> PreconItsStep       = 7                          </P>
-
-      <P> SteadyStateTol    = 3.0E-7                     </P> 
+      <P> mu                    = Mach / Re                     </P>
+      <P> IPSymmFluxCoeff       = 0.0                           </P>   
     </PARAMETERS>
 
         <SOLVERINFO>
@@ -95,13 +90,13 @@
         <D VAR="rho"  VALUE="pInf/(GasConstant*T0)" />
         <D VAR="rhou" VALUE="0" />
         <D VAR="rhov" VALUE="0"/>
-        <D VAR="E"    VALUE="pInf/(GasConstant*T0)*(Cv*T0)" />
+        <D VAR="E"    VALUE="pInf / (Gamma - 1)" />
       </REGION>
       <REGION REF="2">
-        <D VAR="rho"  VALUE="pInf/(GasConstant*T1)" />
-        <D VAR="rhou" VALUE="pInf/(GasConstant*T1)*uInf" />
+        <D VAR="rho"  VALUE="pInf / (GasConstant * TInf)" />
+        <D VAR="rhou" VALUE="pInf / (GasConstant * TInf) * uInf" />
         <D VAR="rhov" VALUE="0"/>
-        <D VAR="E"    VALUE="pInf/(GasConstant*T1)*(Cv*T1+0.5 * uInf * uInf)" />
+        <D VAR="E"    VALUE="pInf / (Gamma - 1) + pInf / (GasConstant * TInf) * 0.5 * uInf * uInf" />
       </REGION>
 <!--       Period -->
       <REGION REF="1">
@@ -119,17 +114,17 @@
     </BOUNDARYCONDITIONS>
 
     <FUNCTION NAME="InitialConditions">
-        <E VAR="rho"    VALUE="rhoInf"/>
-        <E VAR="rhou"   VALUE="rhoInf * uInf"   />
-        <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>      
+        <E VAR="rho"  VALUE="pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant)))" />
+        <E VAR="rhou" VALUE="pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant))) * y/L * uInf" />
+        <E VAR="rhov" VALUE="0.0" />
+        <E VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant))) * (y/L * uInf)^2 " />  
     </FUNCTION>
     
     <FUNCTION NAME="ExactSolution">
-        <E VAR="rho"  VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))" />
-        <E VAR="rhou" VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))*y/L*uInf" />
+        <E VAR="rho"  VALUE="pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant)))" />
+        <E VAR="rhou" VALUE="pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant))) * y/L * uInf" />
         <E VAR="rhov" VALUE="0.0" />
-        <E VAR="E"    VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))*(Cv*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp))+0.5*y/L*uInf*y/L*uInf)" />
+        <E VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant))) * (y/L * uInf)^2 " />
     </FUNCTION>
   </CONDITIONS>
 </NEKTAR>

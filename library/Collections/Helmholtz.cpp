@@ -57,7 +57,7 @@ using LibUtilities::ePyramid;
 /**
  * @brief Helmholtz operator using LocalRegions implementation.
  */
-class Helmholtz_NoCollection : public Operator
+class Helmholtz_NoCollection final : public Operator
 {
     public:
         OPERATOR_CREATE(Helmholtz_NoCollection)
@@ -175,7 +175,7 @@ OperatorKey Helmholtz_NoCollection::m_typeArr[] = {
 /**
  * @brief Helmholtz operator using LocalRegions implementation.
  */
-class Helmholtz_IterPerExp : public Operator
+class Helmholtz_IterPerExp final : public Operator
 {
     public:
         OPERATOR_CREATE(Helmholtz_IterPerExp)
@@ -579,7 +579,7 @@ OperatorKey Helmholtz_IterPerExp::m_typeArr[] = {
 /**
  * @brief Helmholtz operator using matrix free operators.
  */
-class Helmholtz_MatrixFree : public Operator, MatrixFreeOneInOneOut
+class Helmholtz_MatrixFree final : public Operator, MatrixFreeOneInOneOut
 {
 public:
     OPERATOR_CREATE(Helmholtz_MatrixFree)

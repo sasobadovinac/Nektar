@@ -509,21 +509,6 @@ namespace Nektar
                         if(mkey.GetMatrixType() == StdRegions::eWeakDeriv1) dir = 1;
                         if(mkey.GetMatrixType() == StdRegions::eWeakDeriv2) dir = 2;
 
-                        //switch(mkey.GetMatrixType())
-                        //{
-                        //    case StdRegions::eWeakDeriv0:
-                        //        dir = 0;
-                        //        break;
-                        //    case StdRegions::eWeakDeriv1:
-                        //        dir = 1;
-                        //        break;
-                        //    case StdRegions::eWeakDeriv2:
-                        //        dir = 2;
-                        //        break;
-                        //    default:
-                        //        break;
-                        //}
-
                         MatrixKey deriv0key(StdRegions::eWeakDeriv0,
                                             mkey.GetShapeType(), *this);
                         MatrixKey deriv1key(StdRegions::eWeakDeriv1,
@@ -623,6 +608,37 @@ namespace Nektar
                     (*helm) = LapMat + factor*MassMat;
 
                     returnval = MemoryManager<DNekScalMat>::AllocateSharedPtr(one, helm);
+                }
+                break;
+            case StdRegions::eHelmholtzGJP:
+                {
+                    MatrixKey helmkey(mkey, StdRegions::eHelmholtz);
+                    DNekScalMat &HelmMat = *GetLocMatrix(helmkey);
+
+                    // Generate a local copy of traceMat
+                    MatrixKey key(mkey, StdRegions::eNormDerivOnTrace);
+                    DNekMatSharedPtr NDTraceMat =
+                        Expansion3D::v_GenMatrix(key); 
+                
+                    ASSERTL1(mkey.ConstFactorExists(StdRegions::eFactorGJP),
+                             "Need to specify eFactorGJP to construct "
+                             "a HelmholtzGJP matrix");
+                    
+                    NekDouble factor =
+                        mkey.GetConstFactor(StdRegions::eFactorGJP); 
+                    
+                    factor /= HelmMat.Scale(); 
+
+                    int ntot = HelmMat.GetRows()*HelmMat.GetColumns(); 
+                    
+                    Vmath::Svtvp(ntot, factor,
+                                 &NDTraceMat->GetPtr()[0],1,
+                                 HelmMat.GetRawPtr(),1,
+                                 &NDTraceMat->GetPtr()[0],1);
+
+                    returnval = MemoryManager<DNekScalMat>::
+                        AllocateSharedPtr(HelmMat.Scale(),
+                                          NDTraceMat);
                 }
                 break;
             case StdRegions::eIProductWRTBase:
@@ -1353,6 +1369,126 @@ namespace Nektar
                                  &(lmat->GetPtr())[0],1);
 
                     lmat->Invert();
+                }
+                break;
+            case StdRegions::eNormDerivOnTrace:
+                {
+                    int ntraces = GetNtraces();
+                    int ncoords = GetCoordim();
+                    int nphys   = GetTotPoints(); 
+                    Array<OneD,const Array<OneD, NekDouble> > normals;
+                    Array<OneD, NekDouble> phys(nphys);
+                    returnval = MemoryManager<DNekMat>::AllocateSharedPtr
+                        (m_ncoeffs, m_ncoeffs);
+                    DNekMat &Mat = *returnval;
+                    Vmath::Zero(m_ncoeffs*m_ncoeffs,Mat.GetPtr(),1);
+                
+                
+                    Array<OneD, Array<OneD, NekDouble> >
+                        Deriv(3,NullNekDouble1DArray);
+
+                    for(int d = 0; d < ncoords; ++d)
+                    {
+                        Deriv[d] = Array<OneD, NekDouble>(nphys);
+                    }
+                    
+                    Array<OneD, int> tracepts(ntraces);
+                    Array<OneD, ExpansionSharedPtr> traceExp(ntraces); 
+                    int maxtpts = 0; 
+                    for(int t = 0; t < ntraces; ++t)
+                    {
+                        traceExp[t] = GetTraceExp(t);
+                        tracepts[t] = traceExp[t]->GetTotPoints();
+                        maxtpts = (maxtpts > tracepts[t])? maxtpts: tracepts[t];
+                    }
+
+                    Array<OneD,NekDouble> val(maxtpts), tmp,tmp1; 
+                    
+                    Array<OneD, Array<OneD, NekDouble>> dphidn(ntraces);
+                    for(int t = 0; t < ntraces; ++t)
+                    {
+                        dphidn[t] = Array<OneD, NekDouble>
+                            (m_ncoeffs*tracepts[t],0.0);
+                    }
+                    
+                    for(int i = 0; i < m_ncoeffs; ++i)
+                    {
+                        FillMode(i,phys);
+                        PhysDeriv(phys,Deriv[0],Deriv[1],Deriv[2]);
+                        
+                        for(int t = 0; t < ntraces; ++t)
+                        {
+                            const NormalVector norm = GetTraceNormal(t);
+
+
+                            LibUtilities::BasisKey fromkey0
+                                = GetTraceBasisKey(t,0);
+                            LibUtilities::BasisKey fromkey1
+                                = GetTraceBasisKey(t,1);
+                            LibUtilities::BasisKey tokey0
+                                = traceExp[t]->GetBasis(0)->GetBasisKey();
+                            LibUtilities::BasisKey tokey1
+                                = traceExp[t]->GetBasis(1)->GetBasisKey();
+                            bool DoInterp =
+                                (fromkey0 != tokey0) || (fromkey1 != tokey1); 
+
+                            // for variable p need add check and
+                            // interpolation here.
+                            
+                            Array<OneD, NekDouble> n(tracepts[t]);;
+                            for(int d = 0; d < ncoords; ++d)
+                            {
+                                // if variable p may need to interpolate
+                                if(DoInterp)
+                                {
+                                    LibUtilities::Interp2D(fromkey0,fromkey1,
+                                                           norm[d],
+                                                           tokey0,tokey1,n);
+                                }
+                                else
+                                {
+                                    n = norm[d]; 
+                                }
+
+                                GetTracePhysVals(t,traceExp[t],Deriv[d],val,
+                                                 v_GetTraceOrient(t));
+
+                                Vmath::Vvtvp(tracepts[t],n,1,val,1,
+                                             tmp  = dphidn[t] + i*tracepts[t],1,
+                                             tmp1 = dphidn[t] + i*tracepts[t],1);
+                            }
+                        }       
+                    }   
+                    
+                    for(int t = 0; t < ntraces; ++t)
+                    {
+                        int nt = tracepts[t];
+                        NekDouble h,p;
+                        TraceNormLen(t,h,p);
+                        
+                        // scaling from GJP paper
+                        NekDouble scale = (p==1)? 0.02*h*h: 0.8*pow(p+1,-4.0)*h*h;
+                        
+                        for(int i = 0; i < m_ncoeffs; ++i)
+                        {
+                            for(int j = i; j < m_ncoeffs; ++j)
+                            {
+                                Vmath::Vmul(nt,dphidn[t] + i*nt,1,
+                                            dphidn[t] + j*nt,1,val,1);
+                                Mat(i,j) = Mat(i,j) +
+                                    scale*traceExp[t]->Integral(val);
+                            }
+                        }
+                    }
+                    
+                    // fill in symmetric components. 
+                    for(int i = 0; i < m_ncoeffs; ++i)
+                    {
+                        for(int j = 0; j < i; ++j)
+                        {
+                            Mat(i,j) = Mat(j,i); 
+                        }
+                    }
                 }
                 break;
             default:
@@ -2303,6 +2439,7 @@ namespace Nektar
             return edgemaparray;
         }
 
+
         Array<OneD, unsigned int>  Expansion3D::GetTraceInverseBoundaryMap(
             int fid,
             StdRegions::Orientation faceOrient,
@@ -2585,6 +2722,7 @@ namespace Nektar
             }
         }
 
+
         void Expansion3D::v_ReOrientTracePhysMap
                        (const StdRegions::Orientation orient,
                         Array<OneD, int> &idmap,
@@ -2784,13 +2922,59 @@ namespace Nektar
             return nFacecdotMF;
         }
 
-        const NormalVector &Expansion3D::v_GetTraceNormal(const int face) const
+        void Expansion3D::v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
         {
-            auto x = m_faceNormals.find(face);
-            ASSERTL0 (x != m_faceNormals.end(),
-                      "face normal not computed.");
-            return x->second;
-        }
+            SpatialDomains::GeometrySharedPtr geom = GetGeom(); 
 
+            int nverts = geom->GetFace(traceid)->GetNumVerts();
+
+            SpatialDomains::PointGeom tn1,tn2, normal;
+            tn1.Sub(*(geom->GetFace(traceid)->GetVertex(1)),
+                    *(geom->GetFace(traceid)->GetVertex(0)));
+
+            tn2.Sub(*(geom->GetFace(traceid)->GetVertex(nverts-1)),
+                    *(geom->GetFace(traceid)->GetVertex(0)));
+
+            normal.Mult(tn1,tn2);
+
+            //normalise normal
+            NekDouble mag = normal.dot(normal);
+            mag = 1.0/sqrt(mag); 
+            normal.UpdatePosition(normal.x()*mag,
+                                  normal.y()*mag,
+                                  normal.z()*mag);
+
+            SpatialDomains::PointGeom Dx;
+            h = 0.0;
+            p = 0.0; 
+            for(int i = 0; i < nverts; ++i)
+            {
+                //vertices on edges
+                int edgid = geom->GetEdgeNormalToFaceVert(traceid,i); 
+
+                //vector along noramal edge to each vertex 
+                Dx.Sub(*(geom->GetEdge(edgid)->GetVertex(0)),
+                       *(geom->GetEdge(edgid)->GetVertex(1)));
+
+                // calculate perpendicular distance of normal length
+                // from first vertex
+                h  += fabs(normal.dot(Dx));
+            }
+
+            h /= static_cast<NekDouble>(nverts);
+
+            // find normal basis direction
+            int dir0 = geom->GetDir(traceid,0);
+            int dir1 = geom->GetDir(traceid,1);
+            int dirn;
+            for(dirn = 0; dirn < 3; ++dirn)
+            {
+                if((dirn != dir0)&&(dirn != dir1))
+                {
+                    break;
+                }
+            }
+            p = (NekDouble) (GetBasisNumModes(dirn)-1);
+        }
     } //end of namespace
 } //end of namespace

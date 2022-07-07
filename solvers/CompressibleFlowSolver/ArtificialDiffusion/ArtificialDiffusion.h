@@ -74,7 +74,7 @@ class ArtificialDiffusion
         void DoArtificialDiffusion(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
             Array<OneD,       Array<OneD, NekDouble> > &outarray);
-        
+
         /// Apply the artificial diffusion the outarray is in coeff space
         void DoArtificialDiffusionCoeff(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
@@ -84,9 +84,6 @@ class ArtificialDiffusion
         void GetArtificialViscosity(
             const Array<OneD, Array<OneD, NekDouble> > &physfield,
                   Array<OneD, NekDouble  >             &mu);
-
-        /// Set h/p scaling
-        void SetElmtHP(const Array<OneD, NekDouble> &hOverP);
 
     protected:
         /// Session reader
@@ -99,8 +96,6 @@ class ArtificialDiffusion
         SolverUtils::DiffusionSharedPtr             m_diffusion;
         /// Constant scaling
         NekDouble                                   m_mu0;
-        /// h/p scaling
-        Array<OneD, NekDouble>                      m_hOverP;
 
         /// Constructor
         ArtificialDiffusion(
@@ -111,7 +106,7 @@ class ArtificialDiffusion
         virtual void v_DoArtificialDiffusion(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
             Array<OneD,       Array<OneD, NekDouble> > &outarray);
-        
+
         virtual void v_DoArtificialDiffusionCoeff(
             const Array<OneD, const Array<OneD, NekDouble> > &inarray,
             Array<OneD, Array<OneD, NekDouble> >             &outarray);

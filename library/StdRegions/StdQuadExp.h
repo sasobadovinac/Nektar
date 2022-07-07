@@ -196,13 +196,9 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual int v_GetVertexMap(int localVertexId,
                                                           bool useCoeffPacking = false);
 
-            STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap
-                                     (const int  eid,
-                                      Array<OneD, unsigned int>& maparray,
-                                      Array<OneD, int>&          signarray,
-                                      Orientation                edgeOrient = eForwards,
-                                      int                        P = -1,
-                                      int                        Q = -1);
+            STD_REGIONS_EXPORT virtual void v_GetTraceCoeffMap
+                                     (const unsigned int         traceid,
+                                      Array<OneD, unsigned int>& maparray);
             
             STD_REGIONS_EXPORT  virtual void v_GetTraceInteriorToElementMap(
                 const int                  eid,
@@ -269,6 +265,7 @@ namespace Nektar
             STD_REGIONS_EXPORT virtual void v_GetSimplexEquiSpacedConnectivity(
                     Array<OneD, int> &conn,
                     bool standard = true);
+
         };
         typedef std::shared_ptr<StdQuadExp> StdQuadExpSharedPtr;
 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <COLLECTIONS>
+        <OPERATOR TYPE="BwdTrans">
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+        <OPERATOR TYPE="Helmholtz">
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+        <OPERATOR TYPE="IProductWRTBase">
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+        <OPERATOR TYPE="IProductWRTDerivBase">
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+        <OPERATOR TYPE="PhysDeriv">
+            <ELEMENT TYPE="T" ORDER="*" IMPTYPE="NoCollection" />
+            <ELEMENT TYPE="Q" ORDER="*" IMPTYPE="NoCollection" />
+        </OPERATOR>
+    </COLLECTIONS>
+</NEKTAR>

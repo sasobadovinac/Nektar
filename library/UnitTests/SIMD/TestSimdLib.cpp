@@ -45,22 +45,20 @@
 #define NUM_LANES_64BITS 1
 #define USING_SCALAR
 #if defined(__x86_64__)
-    #if defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
-        #define USING_SSE2
+    #if defined(__AVX512F__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
+        #define USING_AVX512
         #undef NUM_LANES_64BITS
-        #define NUM_LANES_64BITS 2
+        #define NUM_LANES_64BITS 8
         #undef USING_SCALAR
-    #endif
-    #if defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
+    #elif defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
         #define USING_AVX2
         #undef NUM_LANES_64BITS
         #define NUM_LANES_64BITS 4
         #undef USING_SCALAR
-    #endif
-    #if defined(__AVX512__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
-        #define USING_AVX512
+    #elif defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
+        #define USING_SSE2
         #undef NUM_LANES_64BITS
-        #define NUM_LANES_64BITS 8
+        #define NUM_LANES_64BITS 2
         #undef USING_SCALAR
     #endif
 #endif
@@ -328,11 +326,7 @@ namespace SimdLibTests
             ascalararr[i] = i;
         }
 
-
-        for (size_t i = 0; i < vec_t::width; ++i)
-        {
-            avec[i] = ascalararr[i];
-        }
+        avec.load(ascalararr.data());
 
         for (size_t i = 0; i < vec_t::width; ++i)
         {
@@ -359,7 +353,8 @@ namespace SimdLibTests
         {
             aindex[4] = 8;
             aindex[5] = 15;
-            aindex[6] = 20;
+            aindex[6] = 16;
+            aindex[7] = 20;
         }
 
         // load index
@@ -414,20 +409,22 @@ namespace SimdLibTests
         std::array<double, scalarArraySize> ascalararr;
 
         // fill vector
-        avec[0] = 10;
+        alignas(vec_t::alignment) std::array<double, vec_t::width> avecarr{{}};
+        avecarr[0] = 10;
         if (vec_t::width > 2)
         {
-            avec[1] =  9;
-            avec[2] =  8;
-            avec[3] =  7;
+            avecarr[1] =  9;
+            avecarr[2] =  8;
+            avecarr[3] =  7;
         }
         if (vec_t::width > 4)
         {
-            avec[4] =  4;
-            avec[5] =  3;
-            avec[6] =  2;
-            avec[7] =  1;
+            avecarr[4] =  4;
+            avecarr[5] =  3;
+            avecarr[6] =  2;
+            avecarr[7] =  1;
         }
+        avec.load(avecarr.data());
 
         avec.scatter(ascalararr.data(), aindexvec);
 
@@ -716,7 +713,26 @@ namespace SimdLibTests
             // check
             for (size_t i = 0; i < vec_t::width; ++i)
             {
-                BOOST_CHECK_EQUAL(static_cast<bool>(amask[i]), dvec[i] > evec[i]);
+                BOOST_CHECK_EQUAL(static_cast<bool>(amask[i]), dval > ascalararr2[i]);
+            }
+
+        }
+
+        if (vec_t::width == 8)
+        {
+            alignas(vec_t::alignment) std::array<double, 8>
+                ascalararr2{{1.0,2.0,3.0,4.0,3.0,2.0,1.0}}; // double brace to deal with gcc 4.8.5 ...
+            double dval = 2.0;
+            vec_t dvec(dval);
+            vec_t evec;
+            evec.load(ascalararr2.data());
+
+            simd<bool> amask;
+            amask = dvec > evec;
+            // check
+            for (size_t i = 0; i < vec_t::width; ++i)
+            {
+                BOOST_CHECK_EQUAL(static_cast<bool>(amask[i]), dval > ascalararr2[i]);
             }
 
         }

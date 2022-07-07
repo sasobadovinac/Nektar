@@ -66,7 +66,7 @@ namespace Nektar
         AdvectionSystem::v_InitObject();
 
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
-        m_session->LoadParameter("epsilon",    m_epsilon,  0.0);
+        m_session->LoadParameter("epsilon",    m_epsilon,  1.0);
 
         // turn on substepping
         m_session->MatchSolverInfo("Extrapolation", "SubStepping",
@@ -84,6 +84,16 @@ namespace Nektar
 
         m_session->MatchSolverInfo(
             "SpectralVanishingViscosity", "True", m_useSpecVanVisc, false);
+
+        // check to see if it is explicity turned off
+        m_session->MatchSolverInfo("GJPStabilisation", "False",
+                                   m_useGJPStabilisation, true);
+
+        // if GJPStabilisation set to False bool will be true and
+        // if not false so negate/revese bool 
+        m_useGJPStabilisation = !m_useGJPStabilisation; 
+
+        m_session->LoadParameter("GJPJumpScale", m_GJPJumpScale, 1.0);
 
         if(m_useSpecVanVisc)
         {
@@ -171,6 +181,10 @@ namespace Nektar
                 break;
             }
         }
+
+        // Forcing terms
+        m_forcing = SolverUtils::Forcing::Load(m_session, shared_from_this(),
+                                    m_fields, m_fields.size());
 
         m_ode.DefineImplicitSolve (
             &UnsteadyAdvectionDiffusion::DoImplicitSolve, this);
@@ -278,6 +292,12 @@ namespace Nektar
             }
         }
 
+        // Add forcing terms
+        for (auto &x : m_forcing)
+        {
+            // set up non-linear terms
+            x->Apply(m_fields, inarray, outarray, time);
+        }
     }
 
     /**
@@ -349,6 +369,12 @@ namespace Nektar
         StdRegions::ConstFactorMap factors;
         factors[StdRegions::eFactorLambda] = 1.0/lambda/m_epsilon;
 
+        // Add factor is GJP turned on
+        if(m_useGJPStabilisation)
+        {
+            factors[StdRegions::eFactorGJP] = m_GJPJumpScale/m_epsilon;
+        }
+        
         if(m_useSpecVanVisc)
         {
             factors[StdRegions::eFactorSVVCutoffRatio] = m_sVVCutoffRatio;
@@ -446,6 +472,13 @@ namespace Nektar
             SolverUtils::SummaryList& s)
     {
         AdvectionSystem::v_GenerateSummary(s);
+        if(m_useGJPStabilisation)
+        {
+            SolverUtils::AddSummaryItem(s,"GJP Stab. Impl.    ",
+                            m_session->GetSolverInfo("GJPStabilisation"));
+            SolverUtils::AddSummaryItem(s,"GJP Stab. JumpScale",
+                                        m_GJPJumpScale);
+        }
     }
 
 
