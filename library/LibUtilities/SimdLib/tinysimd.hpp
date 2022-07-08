@@ -80,7 +80,7 @@ template <typename T, int width> struct default_abi
 
 
 // light wrapper for default types
-template <typename ScalarType, int width = 1,
+template <typename ScalarType, int width = 0,
     template <typename, int> class abi = abi::default_abi>
 using simd = typename abi<ScalarType, width>::type;
 
