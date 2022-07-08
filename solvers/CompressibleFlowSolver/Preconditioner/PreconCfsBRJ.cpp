@@ -214,7 +214,12 @@ void PreconCfsBRJ::v_BuildPreconCfs(
         {
             matdim[i] = pFields[0]->GetExp(i)->GetNcoeffs() * nvariables;
         }
+#ifdef OLDINIT
+        AllocateNekBlkMatDig(m_PreconMatSingle, matdim, matdim);
+        PreconMatSingle = m_PreconMatSingle;
+#else
         AllocateNekBlkMatDig(PreconMatSingle, matdim, matdim);
+#endif
 #else
         PreconMatSingle = m_PreconMatSingle;
 #endif
@@ -230,13 +235,13 @@ void PreconCfsBRJ::v_BuildPreconCfs(
         }
 
 #ifdef SIMD // copy matrix to simd layout
-
+#ifndef OLDINIT
         // load matrix 
         int cnt  = 0;
         int cnt1 = 0;
         const auto vecwidth = vec_t::width;
 
-        std::array<NekSingle, vec_t::width> tmp;
+        alignas(vec_t::alignment) std::array<NekSingle, vec_t::width> tmp;
 
         for (int ne = 0; ne < nelmts; ne++)
         {
@@ -280,6 +285,7 @@ void PreconCfsBRJ::v_BuildPreconCfs(
             }
         }
 #endif
+#endif
     }
 
     m_BndEvaluateTime   = time;
@@ -312,9 +318,9 @@ bool PreconCfsBRJ::UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
 }
 
 void PreconCfsBRJ::PreconBlkDiag(
-    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-    const Array<OneD, NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
+                                 const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+                                 const Array<OneD, NekDouble> &inarray,
+                                 Array<OneD, NekDouble> &outarray)
 {
     unsigned int nvariables = pFields.size();
 
@@ -331,19 +337,19 @@ void PreconCfsBRJ::PreconBlkDiag(
     using vec_t = simd<NekSingle>;
     const auto vecwidth = vec_t::width;
 
-#if 0 // older intialisation 
+#ifdef OLDINIT // older intialisation 
     static unsigned int m_max_nblocks = 0;
     static unsigned int m_max_nElmtDof = 0;
     
     // remapped Precon Matrix
-    static std::vector<vec_t, tinysimd::allocator<vec_t>> m_sBlkDiagMat;
-    static std::vector<int> m_inputIdx; 
+    //static std::vector<vec_t, tinysimd::allocator<vec_t>> m_sBlkDiagMat;
+    //static std::vector<int> m_inputIdx; 
 
 
     if(m_max_nblocks == 0)
     {
         // will need to be a float in the end. 
-        std::array<NekSingle, vec_t::width> tmp;
+        alignas(vec_t::alignment) std::array<NekSingle, vec_t::width> tmp;
         int TotMatLen = 0;
         int TotLen = 0;
         
@@ -357,12 +363,13 @@ void PreconCfsBRJ::PreconBlkDiag(
             m_max_nElmtDof = max(m_max_nElmtDof,nElmtDof);
 
             TotLen    += totblocks*vecwidth; 
-            TotMatLen += Nelmtdof*totblocks;
+            TotMatLen += nElmtDof*totblocks;
         }
 
         m_sBlkDiagMat.resize(TotMatLen);
         m_inputIdx.resize(TotLen);
-        
+       
+        m_sBlkDiagMat[0].load(tmp.data()); 	
         // load matrix 
         int cnt  = 0;
         int cnt1 = 0;
@@ -389,7 +396,7 @@ void PreconCfsBRJ::PreconBlkDiag(
                 }
             }
 
-            const auto endwidth = nElmtDof - nblocks*vecwidth; 
+            unsigned int endwidth = nElmtDof - nblocks*vecwidth; 
 
             // end rows that do not fit into vector widths
             if(endwidth)
@@ -447,7 +454,7 @@ void PreconCfsBRJ::PreconBlkDiag(
                 }
             }
             
-            const auto endwidth = nElmtDof - nblocks*vecwidth; 
+            endwidth = nElmtDof - nblocks*vecwidth; 
 
             // fill out rest of index to match vector width with last entry
             if(endwidth)
@@ -466,8 +473,9 @@ void PreconCfsBRJ::PreconBlkDiag(
     {
     std::vector<vec_t, tinysimd::allocator<vec_t>> Sinarray (m_max_nblocks); 
     std::vector<vec_t, tinysimd::allocator<vec_t>> Soutarray(m_max_nElmtDof);
+    //std::vector<vec_t, tinysimd::allocator<vec_t>> tmp;
 
-    std::array<NekSingle, vec_t::width> tmp;
+    alignas(vec_t::alignment)  std::array<NekSingle, vec_t::width> tmp;
 
     for (int ne = 0, cnt = 0, icnt = 0, icnt1 = 0; ne < nTotElmt; ne++)
     {

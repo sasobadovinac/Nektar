@@ -40,6 +40,7 @@
 namespace Nektar
 {
 #define SIMD 
+//#define OLDINIT
     using namespace tinysimd;
 /**
  * Block Relaxed(weighted) Jacobi iterative (BRJ) Preconditioner for CFS
@@ -80,8 +81,12 @@ protected:
 #ifdef SIMD
     unsigned int m_max_nblocks;
     unsigned int m_max_nElmtDof;
+#ifdef OLDINIT
+    SNekBlkMatSharedPtr m_PreconMatSingle;
+#endif
     std::vector<simd<NekSingle>, tinysimd::allocator<simd<NekSingle>>> m_sBlkDiagMat;
-    std::vector<int> m_inputIdx; 
+    std::vector<int> m_inputIdx;
+
 #else
     SNekBlkMatSharedPtr m_PreconMatSingle;
 #endif
@@ -185,7 +190,7 @@ private:
             {
                 inOffset  = m*ncoeffs + nCoefOffset;
                 
-                if(m)
+                if(m && (vecwidth-i0 < nElmtCoeff))
                 {
                     // May need to add entries from later variables to
                     // remainder of last variable if the vector width
@@ -224,6 +229,7 @@ private:
                     m_inputIdx[cnt1++] = inOffset + i + j - 1;
                 }
             }
+            ASSERTL1(cnt1 <= TotLen, "m_inputIdx over extended");
         }
     }
 #endif

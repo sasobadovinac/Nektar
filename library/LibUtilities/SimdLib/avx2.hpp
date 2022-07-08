@@ -846,7 +846,7 @@ inline avx2Float8 log(avx2Float8 in)
 
 inline void load_interleave(
     const float* in,
-    size_t dataLen,
+    uint32_t dataLen,
     std::vector<avx2Float8, allocator<avx2Float8>> &out)
 {
 
@@ -885,7 +885,7 @@ inline void load_interleave(
 
 inline void deinterleave_store(
     const std::vector<avx2Float8, allocator<avx2Float8>> &in,
-    size_t dataLen,
+    uint32_t dataLen,
     float *out)
 {
     alignas(avx2Float8::alignment) avx2Float8::scalarIndexType tmp[8] =
@@ -894,7 +894,7 @@ inline void deinterleave_store(
     using index_t = avx2Int8<avx2Float8::scalarIndexType>;
     index_t index0(tmp);
 
-    for (size_t i = 0; i < dataLen; ++i)
+    for (uint32_t i = 0; i < dataLen; ++i)
     {
         in[i].scatter(out, index0);
         index0 = index0 + 1;
