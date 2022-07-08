@@ -10,6 +10,7 @@ v5.3
 
 **FieldConver**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+- Fixed the output field names of WSS module of FieldConvert
 
 v5.2.0
 ------
