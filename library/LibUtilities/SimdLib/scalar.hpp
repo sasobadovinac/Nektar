@@ -311,13 +311,37 @@ inline void deinterleave_store(
 //
 // VERY LIMITED SUPPORT...just enough to make cubic eos work...
 //
-struct scalarMask : scalarT<std::uint64_t>
+struct scalarMask : public scalarT<std::uint64_t>
 {
     // bring in ctors
     using scalarT::scalarT;
 
     static constexpr scalarType true_v = true;
     static constexpr scalarType false_v = false;
+
+    // needs to be able to work with std::uint32_t
+    // for single precision overload
+    // usually using 32 or 64 bits would result in a different number if lanes
+    // this is not the case for a scalar
+
+    // store
+    inline void store(std::uint32_t* p) const
+    {
+        *p = static_cast<std::uint32_t>(_data);
+    }
+
+    // load
+    inline void load(const std::uint32_t* p)
+    {
+        _data = static_cast<std::uint32_t>(*p);
+    }
+
+    // make base implementations visible
+    using scalarT<std::uint64_t>::store;
+    using scalarT<std::uint64_t>::load;
+
+
+
 };
 
 inline scalarMask operator>(scalarT<double> lhs, scalarT<double> rhs)

@@ -432,6 +432,7 @@ struct avx2Double4
         _data = _mm256_set1_pd(rhs);
     }
 
+    #if defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
     // gather/scatter with sse2
     template <typename T>
     inline void gather(scalarType const* p, const sse2Int4<T>& indices)
@@ -451,6 +452,7 @@ struct avx2Double4
         out[_mm_extract_epi32(indices._data, 2)] = tmp[2];
         out[_mm_extract_epi32(indices._data, 3)] = tmp[3];
     }
+    #endif
 
     // gather scatter with avx2
     template <typename T>

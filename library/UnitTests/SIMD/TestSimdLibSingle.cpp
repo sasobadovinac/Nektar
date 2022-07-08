@@ -88,7 +88,7 @@ namespace SimdLibTests
         width = simd<float>::width;
         alignment = simd<float>::alignment;
         BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-        BOOST_CHECK_EQUAL(alignment, 8);
+        BOOST_CHECK_EQUAL(alignment, 4);
         #endif
 
         #if defined(USING_SSE2) && !defined(USING_AVX2) && !defined(USING_AVX512)
