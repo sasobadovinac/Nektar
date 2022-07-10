@@ -77,18 +77,19 @@ class Timer
         LIB_UTILITIES_EXPORT static void PrintElapsedRegions
         (LibUtilities::CommSharedPtr comm,
          std::ostream &o = std::cout,
-         int iolevel = 1);
+         int iolevel = 0);
 
         /// \brief Returns amount of seconds per iteration in
         ///        a test with n iterations.
         LIB_UTILITIES_EXPORT NekDouble TimePerTest(unsigned int n);
 
     private:
-        CounterType m_start;
-        CounterType m_end;
-    static std::map<std::string, std::tuple<Seconds, size_t, int> >
-                 m_elapsedRegion;
-        static unsigned short m_maxStringWidth;
+        // Initialize start and end to 0
+        CounterType m_start = CounterType();
+        CounterType m_end   = CounterType();
+        bool        m_isactive = false;
+        static std::map<std::string, std::tuple<Seconds, size_t, int>>
+            m_elapsedRegion;
 
 };
 

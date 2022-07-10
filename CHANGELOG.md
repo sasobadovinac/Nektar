@@ -10,8 +10,8 @@ v5.3
 
 **FieldConver**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+- Fixed the output field names of WSS module of FieldConvert
 
-v5.2
 v5.2.0
 ------
 **Library**
@@ -30,6 +30,10 @@ v5.2.0
 - Fix memory leak in Timer.cpp (!1330)
 - Fix cmake CWIPI option to remove Fortran check (!1331)
 - Fix excessive verbose output in GetBndElmtExpansions method (!1341)
+- Timer class was updated with safety checks to avoid wrong measurements (!1347)
+
+**FieldConvert**
+- Add calculation of CFL number for the incompressilbe flow (!1332)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
@@ -41,9 +45,11 @@ v5.2.0
 
 **NekMesh**
 - Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
+- Small bug-fix for Python API for unused configuration options (!1348)
 
 **CompressibleFlowSolver**
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
+- Added timers around important functions using the Timer class. Timers are available by specifying IO_Timer_Level > -1 (!1347)
 
 v5.1.1
 ------

@@ -243,6 +243,7 @@ Specifically, FieldConvert has these additional functionalities
 %
 \begin{enumerate}
 \item \inltt{C0Projection}: Computes the C0 projection of a given output file;
+\item \inltt{CFL}: Computes the CFL number over the solution domain for Incompressible flow
 \item \inltt{QCriterion}: Computes the Q-Criterion for a given output file;
 \item \inltt{L2Criterion}: Computes the Lambda 2 Criterion for a given output file;
 \item \inltt{addcompositeid}: Adds the composite ID of an element as an additional field;
@@ -332,7 +333,26 @@ and so $L$ is the length scale below which the coefficients values are
 halved or more. Since this form of the Helmholtz operator is not
 possitive definite, currently a direct solver is necessary and so this
 smoother is mainly of use in two-dimensions.
+%
+%
+%
+\subsection{Calculate CFL number: \textit{CFL} module}
+This module calculates the CFL number over the domain. It currently only
+supports the solution results from the Incompressible flow simulaitons, i.e.
+the outputs of \inltt{IncNavierStokesSolver}. To Estimate the \textit{CFL} 
+number, the user can run
+%
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -m CFL test.xml test.fld test-cfl.fld
+\end{lstlisting}
 
+
+where the file \inltt{test-cfl.fld} can be processed in a similar
+way as described in section \ref{s:utilities:fieldconvert:sub:convert}
+to visualise the result either in Tecplot, Paraview or VisIt.
+%
+%
+%
 \subsection{Calculate Q-Criterion: \textit{QCriterion} module}
 To perform the Q-criterion calculation and obtain an output
 data containing the Q-criterion solution, the user can run
@@ -347,7 +367,6 @@ to visualise the result either in Tecplot, Paraview or VisIt.
 %
 %
 %
-
 \subsection{Calculate $\lambda_2$: \textit{L2Criterion} module}
 To perform the $\lambda_2$ vortex detection calculation and obtain an output
 data containing the values of the $\lambda_2$ eigenvalue, the user can run
@@ -1166,7 +1185,13 @@ to composites rather boundaries. If \inltt{bnd} is not provided, all boundaries
 are extracted to different fields. The \inltt{addnormals} is an optional command
 argument which, when turned on, outputs the normal vector of the extracted boundary
 region as well as the shear stress vector and magnitude. This option is off by default.
-To process the output file(s) you will need an xml file of the same region.
+To process the output file(s) you will need an xml file of the same region.\\
+The output fields are wall shear stress in streamwise direction (\inltt{Shear\_s}),
+normal direction (\inltt{Shear\_n}) and magnitude of the wall shear stress vector 
+(\inltt{Shear\_mag}) for 2D simulations. For 3D simulations, wall shear stress in
+the spanwise direction (\inltt{Shear\_z}) is also included in the output fileds.
+Note that the streamwise and normal directions are local at each point on the 
+corresponding boundary.
 %
 %
 %
