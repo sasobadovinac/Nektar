@@ -104,12 +104,15 @@ private:
     std::vector<bool>               m_boundaryRegionIsInList;
     unsigned int                    m_index;
     unsigned int                    m_outputFrequency;
+    unsigned int                    m_nZdivisions;
     /// if using a homogeneous1D expansion, determine if should output
     ///     all planes or just the average
     bool                            m_outputAllPlanes;
     bool                            m_isHomogeneous1D;
     std::string                     m_outputFile;
     std::ofstream                   m_outputStream;
+    std::string                     m_outputFile_zDist;
+    std::ofstream                   m_outputStream_zDist;
     LibUtilities::BasisSharedPtr    m_homogeneousBasis;
     std::string                     m_BoundaryString;
     Array<OneD, int>                m_BCtoElmtID;
@@ -125,6 +128,11 @@ private:
     // Point around which we compute the moments
     Array<OneD, NekDouble> m_pivotPoint;
 
+    // z coordinates that defines the z divisions. The z distribution of average
+    // forces and moments are computed over these divisions
+    Array<OneD, NekDouble> m_zmarkers;
+    Array<OneD, NekDouble> m_outputZcoords;
+
     // Arrays storing the last forces that were calculated
     Array<OneD, Array<OneD, NekDouble> >    m_Fpplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Fvplane;
@@ -139,7 +147,17 @@ private:
     Array<OneD, Array<OneD, NekDouble> >    m_Mpplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Mvplane;
     Array<OneD, Array<OneD, NekDouble> >    m_Mtplane;
+    // Arrays storing the distribution of forces and moments
+    Array<OneD, Array<OneD, NekDouble> >    m_FpZ;
+    Array<OneD, Array<OneD, NekDouble> >    m_FvZ;
+    Array<OneD, Array<OneD, NekDouble> >    m_FtZ;
+    Array<OneD, Array<OneD, NekDouble> >    m_MpZ;
+    Array<OneD, Array<OneD, NekDouble> >    m_MvZ;
+    Array<OneD, Array<OneD, NekDouble> >    m_MtZ;
+    Array<OneD, NekDouble>                  m_Area;
 
+
+    std::map<unsigned int, unsigned int>    m_eleZdivMap;
 
     NekDouble                       m_lastTime;
     GlobalMapping::MappingSharedPtr m_mapping;
@@ -151,6 +169,11 @@ private:
     void CalculateForcesMapping(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time);
+    
+    void AssembleZMarkers(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
+
+
 };
 
 typedef std::shared_ptr<FilterAeroForces>  FilterAeroForcesSharedPtr;

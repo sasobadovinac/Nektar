@@ -76,10 +76,19 @@ FilterAeroForces::FilterAeroForces(
         m_outputFile = it->second;
     }
 
+    // use the same name with an extension for the z distribution of forces
+    m_outputFile_zDist= m_outputFile;
+
     if (!(m_outputFile.length() >= 4
           && m_outputFile.substr(m_outputFile.length() - 4) == ".fce"))
     {
         m_outputFile += ".fce";
+    }
+
+    if (!(m_outputFile_zDist.length() >= 4 &&
+          m_outputFile_zDist.substr(m_outputFile_zDist.length() - 4) == ".fce"))
+    {
+        m_outputFile_zDist += ".fce";
     }
 
     // OutputFrequency
@@ -106,6 +115,19 @@ FilterAeroForces::FilterAeroForces(
         LibUtilities::Equation equ(
             m_session->GetInterpreter(), it->second);
         m_startTime = equ.Evaluate();
+    }
+
+    // z divisions
+    it = pParams.find("nZDivisions");
+    if( it== pParams.end())
+    {
+        m_nZdivisions = 1;
+    }
+    else
+    {
+        LibUtilities::Equation equ(
+            m_session->GetInterpreter(), it->second);
+        m_nZdivisions = round(equ.Evaluate());
     }
 
     // For 3DH1D, OutputAllPlanes or just average forces?
@@ -350,6 +372,8 @@ void FilterAeroForces::v_Initialise(
         m_planesID[0] = 0;
     }
 
+    AssembleZMarkers(pFields);
+
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
     // Write header
@@ -364,10 +388,12 @@ void FilterAeroForces::v_Initialise(
         if (adaptive)
         {
             m_outputStream.open(m_outputFile.c_str(), ofstream::app);
+            m_outputStream_zDist.open(m_outputFile_zDist.c_str(), ofstream::app);
         }
         else
         {
             m_outputStream.open(m_outputFile.c_str());
+            m_outputStream_zDist.open(m_outputFile_zDist.c_str());
         }
         m_outputStream << "# Forces and moments acting on bodies" << endl;
         for( int i = 0; i < expdim; i++ )
@@ -440,6 +466,70 @@ void FilterAeroForces::v_Initialise(
         }
 
         m_outputStream << endl;
+
+        // output for z distributions
+        m_outputStream_zDist << "# Z distribution of Forces and moments acting on bodies" << endl;
+        for( int i = 0; i < expdim; i++ )
+        {
+            m_outputStream_zDist << "#" << " Direction" << i+1 << " = (";
+            m_outputStream_zDist.width(8);
+            m_outputStream_zDist << setprecision(4) << m_directions[i][0];
+            m_outputStream_zDist.width(8);
+            m_outputStream_zDist << setprecision(4) << m_directions[i][1];
+            m_outputStream_zDist.width(8);
+            m_outputStream_zDist << setprecision(4) << m_directions[i][2];
+            m_outputStream_zDist << ")" << endl;
+        }
+        
+        m_outputStream_zDist << "#" << " Moments around" << " (";
+        m_outputStream_zDist.width(8);
+        m_outputStream_zDist << setprecision(4) << m_pivotPoint[0];
+        m_outputStream_zDist.width(8);
+        m_outputStream_zDist << setprecision(4) << m_pivotPoint[1];
+        m_outputStream_zDist.width(8);
+        m_outputStream_zDist << setprecision(4) << m_pivotPoint[2];
+        m_outputStream_zDist << ")" << endl;
+        
+        m_outputStream_zDist << "# Boundary regions: " << IndString.c_str() << endl;
+        m_outputStream_zDist << "#";
+        m_outputStream_zDist.width(7);
+        m_outputStream_zDist << "Time";
+        m_outputStream_zDist.width(8);
+        m_outputStream_zDist << "z";
+        for( int i = 1; i <= expdim; i++ )
+        {
+            m_outputStream_zDist.width(8);
+            m_outputStream_zDist <<  "F" << i << "-press";
+            m_outputStream_zDist.width(9);
+            m_outputStream_zDist <<  "F" << i << "-visc";
+            m_outputStream_zDist.width(8);
+            m_outputStream_zDist <<  "F" << i << "-total";
+        }
+        if (momdim == 1)
+        {
+            // 2D case: we only have M3 (z-moment)
+            m_outputStream_zDist.width(8);
+            m_outputStream_zDist <<  "M" << 3 << "-press";
+            m_outputStream_zDist.width(9);
+            m_outputStream_zDist <<  "M" << 3 << "-visc";
+            m_outputStream_zDist.width(8);
+            m_outputStream_zDist <<  "M" << 3 << "-total";
+        }
+        else
+        {
+            for( int i = 1; i <= momdim; i++ )
+            {
+                m_outputStream_zDist.width(8);
+                m_outputStream_zDist <<  "M" << i << "-press";
+                m_outputStream_zDist.width(9);
+                m_outputStream_zDist <<  "M" << i << "-visc";
+                m_outputStream_zDist.width(8);
+                m_outputStream_zDist <<  "M" << i << "-total";
+            }
+        }
+        m_outputStream_zDist.width(8);
+        m_outputStream_zDist << "Area";
+
     }
 
     m_lastTime = -1;
@@ -575,6 +665,39 @@ void FilterAeroForces::v_Update(
         {
             m_outputStream.width(10);
             m_outputStream << "average";
+        }
+
+        // write z distributions
+        for (int k = 0; k < m_nZdivisions; ++k)
+        {
+            // Write time
+            m_outputStream_zDist.width(8);
+            m_outputStream_zDist << setprecision(6) << time;
+            m_outputStream_zDist.width(15);
+            m_outputStream_zDist << setprecision(8) << m_outputZcoords[k];
+            // Write forces
+            for (int i = 0; i < expdim; i++)
+            {
+                m_outputStream_zDist.width(15);
+                m_outputStream_zDist << setprecision(8) << m_FpZ[i][k];
+                m_outputStream_zDist.width(15);
+                m_outputStream_zDist << setprecision(8) << m_FvZ[i][k];
+                m_outputStream_zDist.width(15);
+                m_outputStream_zDist << setprecision(8) << m_FtZ[i][k];
+            }
+            // Write moments
+            for (int i = 0; i < momdim; i++)
+            {
+                m_outputStream_zDist.width(15);
+                m_outputStream_zDist << setprecision(8) << m_MpZ[i][k];
+                m_outputStream_zDist.width(15);
+                m_outputStream_zDist << setprecision(8) << m_MvZ[i][k];
+                m_outputStream_zDist.width(15);
+                m_outputStream_zDist << setprecision(8) << m_MtZ[i][k];
+            }
+            m_outputStream_zDist.width(15);
+            m_outputStream_zDist << setprecision(8) << m_Area[k];
+            m_outputStream_zDist << endl;
         }
 
         if( m_session->DefinesSolverInfo("HomoStrip"))
@@ -896,6 +1019,28 @@ void FilterAeroForces::CalculateForces(
         m_Mtplane[i] = Array<OneD, NekDouble>(m_nPlanes,0.0);
     }
 
+    m_FpZ = Array<OneD, Array<OneD, NekDouble>>(expdim);
+    m_FvZ = Array<OneD, Array<OneD, NekDouble>>(expdim);
+    m_FtZ = Array<OneD, Array<OneD, NekDouble>>(expdim);
+    for (int i = 0; i < expdim; ++i)
+    {
+        m_FpZ[i] = Array<OneD, NekDouble>(m_nZdivisions, 0.0);
+        m_FvZ[i] = Array<OneD, NekDouble>(m_nZdivisions, 0.0);
+        m_FtZ[i] = Array<OneD, NekDouble>(m_nZdivisions, 0.0);
+    }
+
+    m_MpZ = Array<OneD, Array<OneD, NekDouble>>(momdim);
+    m_MvZ = Array<OneD, Array<OneD, NekDouble>>(momdim);
+    m_MtZ = Array<OneD, Array<OneD, NekDouble>>(momdim);
+    for (int i = 0; i < momdim; ++i)
+    {
+        m_MpZ[i] = Array<OneD, NekDouble>(m_nZdivisions, 0.0);
+        m_MvZ[i] = Array<OneD, NekDouble>(m_nZdivisions, 0.0);
+        m_MtZ[i] = Array<OneD, NekDouble>(m_nZdivisions, 0.0);
+    }
+
+    m_Area = Array<OneD, NekDouble>(m_nZdivisions, 0.0);
+
     // Forces per element length in a boundary
     Array<OneD, Array<OneD, NekDouble> >       fp( expdim );
     Array<OneD, Array<OneD, NekDouble> >       fv( expdim );
@@ -1169,22 +1314,42 @@ void FilterAeroForces::CalculateForces(
 
 
 
+                        // z index related to this element
+                        int kidx = m_eleZdivMap[i];
                         // Integrate to obtain force
                         for (int j = 0; j < expdim; j++)
                         {
-                            m_Fpplane[j][plane] += BndExp[n]->GetExp(i)->
+
+                            NekDouble fptmp = BndExp[n]->GetExp(i)->
                                                     Integral(fp[j]);
-                            m_Fvplane[j][plane] += BndExp[n]->GetExp(i)->
+                            NekDouble fvtmp = BndExp[n]->GetExp(i)->
                                                     Integral(fv[j]);
+                            m_Fpplane[j][plane] += fptmp;
+                            m_Fvplane[j][plane] += fvtmp;
+
+                            m_FpZ[j][kidx] = fptmp;
+                            m_FvZ[j][kidx] = fvtmp;
+                            //m_ftZ[j][kidx] = (fptmp + fvtmp);
                         }
                         for ( int j = 0; j < momdim; ++j)
                         {
-                            m_Mpplane[j][plane] += BndExp[n]->GetExp(i)->
+
+                            NekDouble Mptmp = BndExp[n]->GetExp(i)->
                                 Integral(mp[j]);
-                            m_Mvplane[j][plane] += BndExp[n]->GetExp(i)->
+                            NekDouble Mvtmp = BndExp[n]->GetExp(i)->
                                 Integral(mv[j]);
+
+                            m_Mpplane[j][plane] += Mptmp;
+                            m_Mvplane[j][plane] += Mvtmp;
+
+                            m_MpZ[j][kidx] = Mptmp;
+                            m_MvZ[j][kidx] = Mvtmp;
+                            //m_MtZ[j][kidx] = (Mptmp + Mvtmp);
                         }
 
+                        Array<OneD, NekDouble> fa(nbc,1.0);
+                        NekDouble farea = BndExp[n]->GetExp(i)->Integral(fa);
+                        m_Area[kidx] += farea;
                     }
                 }
                 else
@@ -1205,6 +1370,12 @@ void FilterAeroForces::CalculateForces(
 
         rowComm->AllReduce(m_Fvplane[i], LibUtilities::ReduceSum);
         colComm->AllReduce(m_Fvplane[i], LibUtilities::ReduceSum);
+
+        rowComm->AllReduce(m_FvZ[i], LibUtilities::ReduceSum);
+        colComm->AllReduce(m_FvZ[i], LibUtilities::ReduceSum);
+
+        rowComm->AllReduce(m_FpZ[i], LibUtilities::ReduceSum);
+        colComm->AllReduce(m_FpZ[i], LibUtilities::ReduceSum);
     }
     for( int i = 0; i < momdim; ++i)
     {
@@ -1213,7 +1384,16 @@ void FilterAeroForces::CalculateForces(
 
         rowComm->AllReduce(m_Mvplane[i], LibUtilities::ReduceSum);
         colComm->AllReduce(m_Mvplane[i], LibUtilities::ReduceSum);
+
+        rowComm->AllReduce(m_MvZ[i], LibUtilities::ReduceSum);
+        colComm->AllReduce(m_MvZ[i], LibUtilities::ReduceSum);
+
+        rowComm->AllReduce(m_MpZ[i], LibUtilities::ReduceSum);
+        colComm->AllReduce(m_MpZ[i], LibUtilities::ReduceSum);
     }
+
+    rowComm->AllReduce(m_Area, LibUtilities::ReduceSum);
+    colComm->AllReduce(m_Area, LibUtilities::ReduceSum);
     
 
     // Project results to new directions
@@ -1258,6 +1438,50 @@ void FilterAeroForces::CalculateForces(
         }
 
     }
+    
+    // Project results to new directions
+    for(int k = 0; k < m_nZdivisions; ++k)
+    {
+        Array< OneD, NekDouble> tmpPz(expdim, 0.0);
+        Array< OneD, NekDouble> tmpVz(expdim, 0.0);
+        for(int i = 0; i < expdim; i++)
+        {
+            for(int j = 0; j < expdim; j++ )
+            {
+                tmpPz[i] += m_FpZ[j][k]*m_directions[i][j];
+                tmpVz[i] += m_FvZ[j][k]*m_directions[i][j];
+            }
+        }
+        // Copy result
+        for(int i = 0; i < expdim; i++)
+        {
+            m_FpZ[i][k] = tmpPz[i];
+            m_FvZ[i][k] = tmpVz[i];
+        }
+        
+        // Project moments only in 3D, since 2D moment is always in z direction
+        if (momdim == 3)
+        {
+            for( int i = 0; i < 3; ++i)
+            {
+                tmpPz[i] = 0.0;
+                tmpVz[i] = 0.0;
+                for( int j = 0; j < 3; ++j )
+                {
+                    tmpPz[i] += m_MpZ[j][k]*m_directions[i][j];
+                    tmpVz[i] += m_MvZ[j][k]*m_directions[i][j];
+                }
+            }
+            // Copy result
+            for( int i = 0; i < 3; ++i)
+            {
+                m_MpZ[i][k] = tmpPz[i];
+                m_MvZ[i][k] = tmpVz[i];
+            }
+        }
+
+    }
+
 
     // Sum viscous and pressure components
     for(int plane = 0; plane < m_nPlanes; plane++)
@@ -1281,7 +1505,29 @@ void FilterAeroForces::CalculateForces(
         }
 
     }
+    
+    // Sum viscous and pressure components
+    for(int k = 0; k < m_nZdivisions; ++k)
+    {
+        for(int i = 0; i < expdim; i++)
+        {
+            m_FtZ[i][k] = m_FpZ[i][k] + m_FvZ[i][k];
+        }
 
+        if( momdim == 3 )
+        {           
+            for(int i = 0; i < 3; ++i)
+            {
+                m_MtZ[i][k] = m_MpZ[i][k] + m_MvZ[i][k];
+            }
+        }
+        else
+        {
+            m_MtZ[0][k] = m_MpZ[0][k] + m_MvZ[0][k];
+
+        }
+
+    }
     // combine planes
      for( int i = 0; i < expdim; i++)
     {
@@ -2022,6 +2268,275 @@ void FilterAeroForces::CalculateForcesMapping(
         }
     }
 }
+
+
+
+void FilterAeroForces::AssembleZMarkers(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
+{
+
+   // if (m_mapping->IsDefined())
+   // {
+   //     AssembleZMarkersMapping( pFields);
+   //     return;
+   // }
+
+    int cnt, elmtid, nq, offset;
+    int expdim = pFields[0]->GetGraph()->GetMeshDimension();
+    int nVel = expdim;
+    if( m_isHomogeneous1D )
+    {
+        nVel = nVel + 1;
+    }
+
+    boost::ignore_unused(nq, offset);
+
+    LocalRegions::ExpansionSharedPtr elmt;
+    Array<OneD, MultiRegions::ExpListSharedPtr> fields(pFields.size());
+
+    // Communicators to exchange results
+    LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
+    LibUtilities::CommSharedPtr rowComm = vComm->GetRowComm();
+    LibUtilities::CommSharedPtr colComm =
+                            m_session->DefinesSolverInfo("HomoStrip") ?
+                                vComm->GetColumnComm()->GetColumnComm():
+                                vComm->GetColumnComm();
+
+
+   for(int i = 0; i < pFields.size(); ++i)
+    {
+        if (m_isHomogeneous1D && m_outputAllPlanes)
+        {
+            pFields[i]->SetWaveSpace(false);
+        }
+        pFields[i]->BwdTrans(pFields[i]->GetCoeffs(),
+                             pFields[i]->UpdatePhys());
+        pFields[i]->SetPhysState(true);
+    }
+
+    // Define boundary expansions
+    Array<OneD, const SpatialDomains::BoundaryConditionShPtr > BndConds;
+    Array<OneD, MultiRegions::ExpListSharedPtr>  BndExp;
+    if(m_isHomogeneous1D)
+    {
+        BndConds = pFields[0]->GetPlane(0)->GetBndConditions();
+        BndExp   = pFields[0]->GetPlane(0)->GetBndCondExpansions();
+    }
+    else
+    {
+        BndConds = pFields[0]->GetBndConditions();
+        BndExp   = pFields[0]->GetBndCondExpansions();
+    }
+
+    // min and max of zcoordinates of this boundary
+    NekDouble zminB = std::numeric_limits<NekDouble>::max();
+    NekDouble zmaxB = std::numeric_limits<NekDouble>::lowest();
+    NekDouble dzmin = std::numeric_limits<NekDouble>::max();
+    NekDouble dzmax = std::numeric_limits<NekDouble>::lowest();
+
+    // For Homogeneous, calculate force on each 2D plane
+    // Otherwise, m_nPlanes = 1, and loop only runs once
+    for(int plane = 0; plane < m_nPlanes; plane++ )
+    {
+        // Check if plane is in this proc
+        if( m_planesID[plane] != -1 )
+        {
+
+            if(m_isHomogeneous1D)
+            {
+                for(int n = 0; n < pFields.size(); n++)
+                {
+                    fields[n] = pFields[n]->GetPlane(m_planesID[plane]);
+                }
+            }
+            else
+            {
+                for(int n = 0; n < pFields.size(); n++)
+                {
+                    fields[n] = pFields[n];
+                }
+            }
+            //Loop all the Boundary Regions, find the min and max of z for the boundary
+            for(int n = cnt = 0; n < BndConds.size(); n++)
+            {
+
+                if(m_boundaryRegionIsInList[n] == 1)
+                {
+                    for (int i=0; i < BndExp[n]->GetExpSize(); ++i,cnt++)
+                    {
+                        elmtid = m_BCtoElmtID[cnt];
+                        elmt   = fields[0]->GetExp(elmtid);
+                        nq     = elmt->GetTotPoints();
+                        offset = fields[0]->GetPhys_Offset(elmtid);
+
+                        // Get expansion on boundary
+                        LocalRegions::ExpansionSharedPtr bc = BndExp[n]->GetExp(i); 
+
+                        SpatialDomains::GeometrySharedPtr geom = bc->GetGeom();
+                        int nv = geom->GetNumVerts();
+                        NekDouble zminEl = std::numeric_limits<NekDouble>::max();
+                        NekDouble zmaxEl = std::numeric_limits<NekDouble>::lowest();
+                        NekDouble gct[3] = {0.,0.,0.};
+                        for(size_t j=0; j<nv; ++j)
+                        {
+                            SpatialDomains::PointGeomSharedPtr vertex = geom->GetVertex(j);
+                            vertex->GetCoords(gct[0],gct[1],gct[2]);
+                            zminEl = std::min(gct[2], zminEl);
+                            zmaxEl = std::max(gct[2], zmaxEl);
+                        }
+                        NekDouble dz = zmaxEl-zminEl;
+
+                        zminB = std::min(zminB, zminEl);
+                        zmaxB = std::max(zmaxB, zmaxEl);
+                        dzmin = std::min(dzmin, dz);
+                        dzmax = std::max(dzmax, dz);
+
+                    }
+                }
+                else
+                {
+                    cnt += BndExp[n]->GetExpSize();
+                }
+            }
+        }
+    }
+
+    rowComm->AllReduce(zminB,LibUtilities::ReduceMin);
+    colComm->AllReduce(zminB,LibUtilities::ReduceMin);
+    rowComm->AllReduce(zmaxB,LibUtilities::ReduceMax);
+    colComm->AllReduce(zmaxB,LibUtilities::ReduceMax);
+
+    rowComm->AllReduce(dzmin,LibUtilities::ReduceMin);
+    colComm->AllReduce(dzmin,LibUtilities::ReduceMin);
+    rowComm->AllReduce(dzmax,LibUtilities::ReduceMax);
+    colComm->AllReduce(dzmax,LibUtilities::ReduceMax);
+
+
+    // now we have the min and max z coordinates of this boundary, we can
+    // assemble the z markers
+
+    int nmax = (zmaxB-zminB)/dzmin;
+    int nmin = (zmaxB-zminB)/dzmax;
+
+    // check if the divisions given by user is not too small or too large
+    if( m_nZdivisions > nmax || m_nZdivisions < nmin )
+    {
+        NekDouble dzmean = 0.5*(dzmin+dzmax);
+        m_nZdivisions = (zmaxB-zminB)/dzmean;
+    }
+
+    m_zmarkers = Array<OneD, NekDouble>(m_nZdivisions+1);
+    NekDouble dz = (zmaxB-zminB)/m_nZdivisions;
+
+
+    for(int i=0; i<m_zmarkers.size(); ++i)
+    {
+        m_zmarkers[i] = i * dz;
+    }
+    // set up the zcoordinates for output file
+    for (int i = 0; i < m_nZdivisions; ++i)
+    {
+        m_outputZcoords[i] = 0.5 * (m_zmarkers[i] + m_zmarkers[i + 1]);
+    }
+
+    // now find each element belongs to which z partition
+    for(int plane = 0; plane < m_nPlanes; plane++ )
+    {
+        // Check if plane is in this proc
+        if( m_planesID[plane] != -1 )
+        {
+
+            if(m_isHomogeneous1D)
+            {
+                for(int n = 0; n < pFields.size(); n++)
+                {
+                    fields[n] = pFields[n]->GetPlane(m_planesID[plane]);
+                }
+            }
+            else
+            {
+                for(int n = 0; n < pFields.size(); n++)
+                {
+                    fields[n] = pFields[n];
+                }
+            }
+            //Loop all the Boundary Regions, find the min and max of z for the boundary
+            for(int n = cnt = 0; n < BndConds.size(); n++)
+            {
+
+                if(m_boundaryRegionIsInList[n] == 1)
+                {
+                    for (int i=0; i < BndExp[n]->GetExpSize(); ++i,cnt++)
+                    {
+                        elmtid = m_BCtoElmtID[cnt];
+                        elmt   = fields[0]->GetExp(elmtid);
+                        nq     = elmt->GetTotPoints();
+                        offset = fields[0]->GetPhys_Offset(elmtid);
+
+                        // Get expansion on boundary
+                        LocalRegions::ExpansionSharedPtr bc = BndExp[n]->GetExp(i); 
+
+                        SpatialDomains::GeometrySharedPtr geom = bc->GetGeom();
+                        int nv = geom->GetNumVerts();
+                        NekDouble zminEl = std::numeric_limits<NekDouble>::max();
+                        NekDouble zmaxEl = std::numeric_limits<NekDouble>::lowest();
+                        NekDouble gct[3] = {0.,0.,0.};
+                        for(size_t j=0; j<nv; ++j)
+                        {
+                            SpatialDomains::PointGeomSharedPtr vertex = geom->GetVertex(j);
+                            vertex->GetCoords(gct[0],gct[1],gct[2]);
+                            zminEl = std::min(gct[2], zminEl);
+                            zmaxEl = std::max(gct[2], zmaxEl);
+                        }
+
+                        // select the z division based on the minz of element
+                        for(int j=0; j<m_zmarkers.size()-1; ++j)
+                        {
+                            NekDouble zj = m_zmarkers[j];
+                            NekDouble zjp = m_zmarkers[j+1];
+                            if( zj < zminEl && zminEl <= zjp)
+                            {
+                                // element i is belong to division j
+                                m_eleZdivMap[i]=j;
+                            }
+                            break;
+                        }
+
+                    }
+                }
+                else
+                {
+                    cnt += BndExp[n]->GetExpSize();
+                }
+            }
+        }
+    }
+
+
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 }
