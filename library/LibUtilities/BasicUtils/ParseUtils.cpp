@@ -77,8 +77,6 @@ struct PushBackFunctor
         }
     }
 private:
-    // Do not allow assignment
-    PushBackFunctor& operator=(const PushBackFunctor& src) = delete;
 
     /// Storage vector that will hold parsed variables from boost::spirit.
     std::vector<T> &m_vec;
