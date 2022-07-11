@@ -833,7 +833,7 @@ void Octree::CompileSourcePointList()
     map<int,pair<NekDouble,NekDouble>> curve_refinement;
     if (m_curverefinement.size() > 0)
     {
-        m_log(VERBOSE) << "        Modifying based on refinement curves" << endl;
+        m_log(VERBOSE) << "  - Modifying based on refinement curves" << endl;
         vector<string> curves;
         boost::split(curves, m_curverefinement, boost::is_any_of(":"));
         for (int i = 0; i < curves.size(); i++)
