@@ -36,6 +36,8 @@
 #ifndef NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_DOMAINRANGE_HPP
 #define NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_DOMAINRANGE_HPP
 
+#include <LibUtilities/BasicUtils/ShapeType.hpp>
+
 namespace Nektar
 {
 namespace LibUtilities
