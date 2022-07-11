@@ -32,23 +32,27 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+/*
 namespace Nektar
 {
 namespace MultiRegions
 {
+*/
 
-  template<typename TData, StorageType stype,  DataLayout order>
-  void FieldStorage<TData,stype,order>::InitFieldStorage(std::shared_ptr<ExpList>  &exp)
-  {
+template<typename TData, StorageType stype,  DataLayout order>
+void FieldStorage<TData, stype, order>::InitFieldStorage(std::shared_ptr<ExpList>  &exp)
+{
+    boost::ignore_unused(exp);
     if (stype == ePhys)
-      {
-	m_storage = Array<OneD, TData>(m_exp->GetNpoints());
-      }
+    {
+        m_storage = Array<OneD, TData>(m_exp->GetNpoints());
+    }
     else if (stype == eCoeff)
-      {
-            m_storage = Array<OneD, TData>(m_exp->GetNcoeffs());
-      }
-  }
+    {
+        m_storage = Array<OneD, TData>(m_exp->GetNcoeffs());
+    }
 }
-}
+
+//}
+//}
 

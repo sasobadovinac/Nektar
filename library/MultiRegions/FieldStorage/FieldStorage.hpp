@@ -61,7 +61,7 @@ enum StorageType
 };
 
 class ExpList;
-  
+
 template<typename TData, StorageType stype,  DataLayout order = eField>
 class FieldStorage
 {
