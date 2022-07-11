@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FielStorage.hpp
+// File FielStorage.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,82 +32,23 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_LIBS_MULTIREGIONS_FIELDSTORAGE_H
-#define NEKTAR_LIBS_MULTIREGIONS_FIELDSTORAGE_H
-
-#include <iostream>
-#include <vector>
-
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-
-using namespace std;
-
 namespace Nektar
 {
 namespace MultiRegions
 {
 
-enum DataLayout
-{
-    eField, // data for variable 1 followed by variable 2 etc
-    eElement,
-    eVariable
-};
-
-enum StorageType
-{
-    ePhys,
-    eCoeff
-};
-
-class ExpList;
-  
-template<typename TData, StorageType stype,  DataLayout order = eField>
-class FieldStorage
-{
-public:
-  FieldStorage(shared_ptr<ExpList> exp):
-    m_exp(exp), m_numVariables(1)
+  template<typename TData, StorageType stype,  DataLayout order>
+  void FieldStorage<TData,stype,order>::InitFieldStorage(std::shared_ptr<ExpList>  &exp)
   {
-    InitFieldStorage(exp);
+    if (stype == ePhys)
+      {
+	m_storage = Array<OneD, TData>(m_exp->GetNpoints());
+      }
+    else if (stype == eCoeff)
+      {
+            m_storage = Array<OneD, TData>(m_exp->GetNcoeffs());
+      }
   }
-  
-
-    FieldStorage(const FieldStorage& F)
-        : m_exp(F.m_exp), m_sType(F.m_sType), 
-          m_storage(Array<OneD, TData>(F.m_storage->size(), F.m_storage)), 
-          m_numVariables(F.m_numVariables)
-    {
-    }
-
-    ~FieldStorage()
-    {
-        // nothing to do... yet...
-    }
-
-    Array<OneD, TData>& UpdateData()
-    {
-        return m_storage;
-    }
-
-    const Array<OneD, const TData> GetData() const
-    {
-        return m_storage;
-    }
-    
-private:
-    shared_ptr<ExpList> m_exp;
-    enum StorageType         m_sType;
-    Array<OneD, TData>       m_storage;
-//    std::vector<size_t>            m_offsets;      // Offset of element i in the array
-    int m_numVariables;
-//    int num_elements;
-//    int std::array<int, num_variables> dofs;
-
-
-  void InitFieldStorage(shared_ptr<ExpList> &exp); 
-};
-
 }
 }
-#endif
+

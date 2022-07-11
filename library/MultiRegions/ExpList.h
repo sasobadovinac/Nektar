@@ -322,8 +322,8 @@ namespace Nektar
                 Array<OneD,       NekDouble> &outarray);
 
             inline void FwdTrans(
-                const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
-                      FieldStorage<NekDouble, MultiRegions::eCoeff> &out);
+                const FieldStorage<const NekDouble, MultiRegions::ePhys> &in,
+		FieldStorage<NekDouble, MultiRegions::eCoeff> &out);
 
             MULTI_REGIONS_EXPORT void   ExponentialFilter(
                 Array<OneD, NekDouble> &array,
@@ -2793,6 +2793,9 @@ namespace Nektar
         }
         
         const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
+
+#include <MultiRegions/FieldStorage/FieldStorageKernel.hpp>  // FieldStorage methods
+
     } //end of namespace
 } //end of namespace
 
