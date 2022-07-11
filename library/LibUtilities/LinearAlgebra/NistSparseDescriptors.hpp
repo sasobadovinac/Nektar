@@ -76,9 +76,9 @@ static const int NistSpBlasDescra[5][9] = {
     },
     // MatrixStorage::eSYMMETRIC
     {
-        1, // symmetric
-        2, // upper-triangular part to be stored
-           // 1,  // lower-triangular part to be stored
+        1,            // symmetric
+        2,            // upper-triangular part to be stored
+                      // 1,  // lower-triangular part to be stored
         0,            // non-unit diagonal
         0,            // array base is C++-compatible
         0, 0, 0, 0, 0 // not in use

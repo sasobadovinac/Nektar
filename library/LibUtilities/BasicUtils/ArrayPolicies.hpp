@@ -106,20 +106,18 @@ public:
     static void Initialize(ObjectType *data, size_t itemsToCreate,
                            const ObjectType &initValue)
     {
-        DoInitialization(data, itemsToCreate,
-                         [&](ObjectType *element)
-                         { new (element) ObjectType(initValue); });
+        DoInitialization(data, itemsToCreate, [&](ObjectType *element) {
+            new (element) ObjectType(initValue);
+        });
     }
 
     static void Initialize(ObjectType *data, size_t itemsToCreate,
                            const ObjectType *initValue)
     {
-        DoInitialization(data, itemsToCreate,
-                         [&](ObjectType *element)
-                         {
-                             new (element) ObjectType(*initValue);
-                             initValue++;
-                         });
+        DoInitialization(data, itemsToCreate, [&](ObjectType *element) {
+            new (element) ObjectType(*initValue);
+            initValue++;
+        });
     }
 
 private:
@@ -186,11 +184,10 @@ std::shared_ptr<boost::multi_array_ref<DataType, Dim::Value>> CreateStorage(
 {
     typedef boost::multi_array_ref<DataType, Dim::Value> ArrayType;
     size_t size       = std::accumulate(extent.begin(), extent.end(), 1,
-                                        std::multiplies<size_t>());
+                                  std::multiplies<size_t>());
     DataType *storage = MemoryManager<DataType>::RawAllocate(size);
     return MemoryManager<ArrayType>::AllocateSharedPtrD(
-        [=](boost::multi_array_ref<DataType, Dim::Value> *ptr)
-        {
+        [=](boost::multi_array_ref<DataType, Dim::Value> *ptr) {
             boost::ignore_unused(ptr);
             ArrayDestructionPolicy<DataType>::Destroy(storage, size);
             MemoryManager<DataType>::RawDeallocate(storage, size);

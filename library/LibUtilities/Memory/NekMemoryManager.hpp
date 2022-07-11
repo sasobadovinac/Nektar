@@ -175,13 +175,10 @@ public:
         const DeallocatorType &d, const Args &...args)
     {
         DataType *data = Allocate(args...);
-        return std::shared_ptr<DataType>(
-            data,
-            [=](DataType *ptr)
-            {
-                d(ptr);
-                MemoryManager<DataType>::Deallocate(ptr);
-            });
+        return std::shared_ptr<DataType>(data, [=](DataType *ptr) {
+            d(ptr);
+            MemoryManager<DataType>::Deallocate(ptr);
+        });
     }
 
     /// \brief Allocates a chunk of raw, uninitialized memory, capable of

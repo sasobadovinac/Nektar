@@ -42,8 +42,8 @@
 #if defined(__GNUC__) || defined(__clang__)
 #if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR >= 5)) || defined(__clang__)
 #define DEPRECATED(since, alt)                                                 \
-    __attribute__((                                                            \
-        deprecated("since version " #since "; use '" #alt "' instead")))
+    __attribute__(                                                             \
+        (deprecated("since version " #since "; use '" #alt "' instead")))
 #else
 #define DEPRECATED(since, alt) __attribute__((deprecated))
 #endif

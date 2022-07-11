@@ -312,7 +312,7 @@ public:
     template <typename InnerMatrixType>
     ThisType &operator=(const NekMatrix<InnerMatrixType, ScaledMatrixTag> &rhs)
     {
-        BaseType::operator=(rhs);
+        BaseType::operator       =(rhs);
         m_numberOfSubDiagonals   = rhs.GetNumberOfSubDiagonals();
         m_numberOfSuperDiagonals = rhs.GetNumberOfSuperDiagonals();
 

@@ -36,11 +36,11 @@
 #ifndef NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_DOMAINRANGE_HPP
 #define NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_DOMAINRANGE_HPP
 
-namespace Nektar 
+namespace Nektar
 {
 namespace LibUtilities
 {
-    
+
 // set restriction on domain range for post-processing.
 struct DomainRange
 {
@@ -61,8 +61,7 @@ struct DomainRange
 typedef std::shared_ptr<DomainRange> DomainRangeShPtr;
 static DomainRangeShPtr NullDomainRangeShPtr;
 
+} // namespace LibUtilities
 
-}
-
-}
+} // namespace Nektar
 #endif

@@ -1176,7 +1176,7 @@ void FieldIOHdf5::ImportFieldDef(H5::PListSharedPtr readPL,
             {
                 def->m_uniOrder = true;
                 bool valid      = ParseUtils::GenerateVector(
-                         numModesPerDir.substr(9), def->m_numModes);
+                    numModesPerDir.substr(9), def->m_numModes);
                 ASSERTL0(valid,
                          prfx.str() +
                              "unable to correctly parse the number of modes.");

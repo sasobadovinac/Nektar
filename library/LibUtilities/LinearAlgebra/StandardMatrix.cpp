@@ -156,8 +156,8 @@ NekMatrix<DataType, StandardMatrixTag>
     }
 
     Matrix<DataType>::operator=(rhs);
-    m_numberOfSubDiagonals   = rhs.m_numberOfSubDiagonals;
-    m_numberOfSuperDiagonals = rhs.m_numberOfSuperDiagonals;
+    m_numberOfSubDiagonals    = rhs.m_numberOfSubDiagonals;
+    m_numberOfSuperDiagonals  = rhs.m_numberOfSuperDiagonals;
 
     ResizeDataArrayIfNeeded();
 

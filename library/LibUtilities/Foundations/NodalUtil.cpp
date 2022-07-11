@@ -169,7 +169,7 @@ SharedMatrix NodalUtil::GetDerivMatrix(int dir)
     SharedMatrix V  = GetVandermonde();
     SharedMatrix Vd = GetVandermondeForDeriv(dir);
     SharedMatrix D  = MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(
-         V->GetRows(), V->GetColumns(), 0.0);
+        V->GetRows(), V->GetColumns(), 0.0);
 
     V->Invert();
 

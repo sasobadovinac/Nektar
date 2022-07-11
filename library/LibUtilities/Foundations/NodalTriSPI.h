@@ -74,7 +74,7 @@ private:
     void CalculateDerivMatrix();
 };
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // NODALTRIELEC_H

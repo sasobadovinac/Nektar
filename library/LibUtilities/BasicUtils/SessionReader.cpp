@@ -401,30 +401,32 @@ void SessionReader::TestSharedFilesystem()
 std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
                                                                   char *argv[])
 {
+    // clang-format off
     // List the publically visible options (listed using --help)
     po::options_description desc("Allowed options");
-    desc.add_options()("verbose,v", "be verbose")("version,V",
-                                                  "print version information")(
-        "help,h", "print this help message")("solverinfo,I",
-                                             po::value<vector<std::string>>(),
-                                             "override a SOLVERINFO property")(
-        "parameter,P", po::value<vector<std::string>>(),
-        "override a parameter")("npx", po::value<int>(),
-                                "number of procs in X-dir")(
-        "npy", po::value<int>(), "number of procs in Y-dir")(
-        "npz", po::value<int>(), "number of procs in Z-dir")(
-        "nsz", po::value<int>(),
-        "number of slices in Z-dir")("part-only", po::value<int>(),
-                                     "only partition mesh into N partitions.")(
-        "part-only-overlapping", po::value<int>(),
-        "only partition mesh into N overlapping partitions.")(
-        "part-info", "Output partition information")
+    desc.add_options()("verbose,v", "be verbose")
+        ("version,V",       "print version information")
+        ("help,h",          "print this help message")
+        ("solverinfo,I",    po::value<vector<std::string>>(),
+                            "override a SOLVERINFO property")
+        ("parameter,P",     po::value<vector<std::string>>(),
+                            "override a parameter")
+        ("npx",             po::value<int>(), "number of procs in X-dir")
+        ("npy",             po::value<int>(), "number of procs in Y-dir")
+        ("npz",             po::value<int>(), "number of procs in Z-dir")
+        ("nsz",             po::value<int>(), "number of slices in Z-dir")
+        ("part-only",       po::value<int>(),
+                            "only partition mesh into N partitions.")
+        ("part-only-overlapping", po::value<int>(),
+                        "only partition mesh into N overlapping partitions.")
+        ("part-info",       "Output partition information")
 #ifdef NEKTAR_USE_CWIPI
-        ("cwipi", po::value<std::string>(), "set CWIPI name")
+        ("cwipi",           po::value<std::string>(), "set CWIPI name")
 #endif
-            ("writeoptfile", "write an optimisation file")(
-                "useoptfile", po::value<std::string>(),
-                "use an optimisation file");
+        ("writeoptfile",    "write an optimisation file")
+        ("useoptfile",      po::value<std::string>(),
+                            "use an optimisation file");
+    // clang-format on
 
     for (auto &cmdIt : GetCmdLineArgMap())
     {

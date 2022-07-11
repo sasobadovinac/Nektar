@@ -365,7 +365,7 @@ void Kernel::EvaluateBspline(Array<OneD, NekDouble> inarray, NekDouble h,
         inarray_cp[i] = inarray[i] - offset;
         inarray_cp[i] = inarray_cp[i] / h;
         int interval  = (int)floor(inarray_cp[i] -
-                                   min_value); // determines to which interval of
+                                  min_value); // determines to which interval of
                                                // the bspline the value belongs
 
         if (inarray_cp[i] >= min_value && inarray_cp[i] <= max_value)

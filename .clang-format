@@ -11,6 +11,7 @@ AllowShortCaseLabelsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 IndentCaseLabels: true
-Standard: Cpp11
+Standard: c++14
 AccessModifierOffset: -4
 BinPackParameters: true
+NamespaceIndentation: None
