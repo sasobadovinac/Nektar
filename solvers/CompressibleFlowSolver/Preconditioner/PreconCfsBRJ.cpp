@@ -214,12 +214,7 @@ void PreconCfsBRJ::v_BuildPreconCfs(
         {
             matdim[i] = pFields[0]->GetExp(i)->GetNcoeffs() * nvariables;
         }
-#ifdef OLDINIT
-        AllocateNekBlkMatDig(m_PreconMatSingle, matdim, matdim);
-        PreconMatSingle = m_PreconMatSingle;
-#else
         AllocateNekBlkMatDig(PreconMatSingle, matdim, matdim);
-#endif
 #else
         PreconMatSingle = m_PreconMatSingle;
 #endif
@@ -235,7 +230,6 @@ void PreconCfsBRJ::v_BuildPreconCfs(
         }
 
 #ifdef SIMD // copy matrix to simd layout
-#ifndef OLDINIT
         // load matrix 
         int cnt  = 0;
         int cnt1 = 0;
@@ -284,7 +278,6 @@ void PreconCfsBRJ::v_BuildPreconCfs(
                 }
             }
         }
-#endif
 #endif
     }
 
@@ -336,137 +329,6 @@ void PreconCfsBRJ::PreconBlkDiag(
 #ifdef SIMD
     using vec_t = simd<NekSingle>;
     const auto vecwidth = vec_t::width;
-
-#ifdef OLDINIT // older intialisation 
-    static unsigned int m_max_nblocks = 0;
-    static unsigned int m_max_nElmtDof = 0;
-    
-    // remapped Precon Matrix
-    //static std::vector<vec_t, tinysimd::allocator<vec_t>> m_sBlkDiagMat;
-    //static std::vector<int> m_inputIdx; 
-
-
-    if(m_max_nblocks == 0)
-    {
-        // will need to be a float in the end. 
-        alignas(vec_t::alignment) std::array<NekSingle, vec_t::width> tmp;
-        int TotMatLen = 0;
-        int TotLen = 0;
-        
-        for (int ne = 0; ne < nTotElmt; ne++)
-        {
-            const auto nElmtDof    = pFields[0]->GetNcoeffs(ne)*nvariables;
-            const auto nblocks     = nElmtDof/vecwidth;
-            const auto totblocks   = (nElmtDof%vecwidth)? nblocks+1: nblocks; 
-
-            m_max_nblocks  = max(m_max_nblocks,totblocks);
-            m_max_nElmtDof = max(m_max_nElmtDof,nElmtDof);
-
-            TotLen    += totblocks*vecwidth; 
-            TotMatLen += nElmtDof*totblocks;
-        }
-
-        m_sBlkDiagMat.resize(TotMatLen);
-        m_inputIdx.resize(TotLen);
-       
-        m_sBlkDiagMat[0].load(tmp.data()); 	
-        // load matrix 
-        int cnt  = 0;
-        int cnt1 = 0;
-        for (int ne = 0; ne < nTotElmt; ne++)
-        {
-            const auto nElmtCoeff  = pFields[0]->GetNcoeffs(ne); 
-            const auto nElmtDof    = nElmtCoeff*nvariables;
-            const auto nblocks     = nElmtDof/vecwidth;
-
-            const NekSingle *mmat = m_PreconMatSingle->
-                                GetBlockPtr(ne,ne)->GetRawPtr();
-
-            /// Copy array into column major blocks of vector width
-            for(int i1 = 0; i1 < nblocks; ++i1)
-            {
-                for(int j = 0; j < nElmtDof; ++j)
-                {
-                    for(int i = 0; i < vecwidth; ++i)
-                    {
-                        tmp[i] = mmat[j + (i1*vecwidth + i)*nElmtDof];
-                    }
-                    // store contiguous vec_t array. 
-                    m_sBlkDiagMat[cnt++].load(tmp.data()); 
-                }
-            }
-
-            unsigned int endwidth = nElmtDof - nblocks*vecwidth; 
-
-            // end rows that do not fit into vector widths
-            if(endwidth)
-            {
-                for(int j = 0; j < nElmtDof; ++j)
-                {
-                    for(int i = 0; i < endwidth; ++i)
-                    {
-                        tmp[i] = mmat[j + (nblocks*vecwidth + i)*nElmtDof];
-                    }
-
-                    for(int i = endwidth; i < vecwidth; ++i)
-                    {
-                        tmp[i] = 0.0;
-                    }
-                    m_sBlkDiagMat[cnt++].load(tmp.data()); 
-                }
-            }
-
-            const auto nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
-            int i  = 0;
-            int i0 = 0;
-            int inOffset,j; 
-
-            for (int m = 0; m < nvariables; m++)
-            {
-                inOffset  = m*ncoeffs + nCoefOffset;
-
-                if(m)
-                {
-                    // May need to add entries from later variables to
-                    // remainder of last variable if the vector width
-                    // was not exact multiple of number of elemental
-                    // coeffs
-                    for(i = 0; i0 < vecwidth; ++i, ++i0)
-                    {
-                        m_inputIdx[cnt1++]= inOffset + i;
-                    }
-                }
-                    
-                // load up other vectors in varaible that fit into vector
-                // width
-                for (j = 0; j < (nElmtCoeff-i)/vecwidth; j += vecwidth)
-                {
-                    for(i0 = 0; i0 < vecwidth; ++i0)
-                    {
-                        m_inputIdx[cnt1++] = inOffset + i + j + i0;
-                    }
-                }
-                
-                // load up any residaul data for this varaible
-                for(i0 = 0 ; j < nElmtCoeff-i; ++j, ++i0)
-                {
-                    m_inputIdx[cnt1++] = inOffset + i + j; 
-                }
-            }
-            
-            endwidth = nElmtDof - nblocks*vecwidth; 
-
-            // fill out rest of index to match vector width with last entry
-            if(endwidth)
-            {
-                for( ; i0 < vecwidth; ++i0)
-                {
-                    m_inputIdx[cnt1++] = inOffset + i + j - 1;
-                }
-            }
-        }
-    }
-#endif
 
     // vectorized matrix multiply 
     for(int t = 0; t < NTIME; ++t) // timing loop
