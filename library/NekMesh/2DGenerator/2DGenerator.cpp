@@ -387,7 +387,6 @@ void Generator2D::MakeBL(int faceid)
             }
         }
         if (std::find(edgeIds.begin(), edgeIds.end(), it) == edgeIds.end()) continue;
-
         CADOrientation::Orientation edgeo =
             m_mesh->m_cad->GetCurve(it)->GetOrienationWRT(faceid);
         vector<EdgeSharedPtr> es = m_curvemeshes[faceid-1][it]->GetMeshEdges();
@@ -446,8 +445,8 @@ void Generator2D::MakeBL(int faceid)
         if (it.second.size() != 1 && it.second.size() != 2)
         {
             m_log(FATAL) << "    Error with identifying nodes with edges: check"
-                         << " that your boundary layer surfaces are correctly "
-                         << "defined." << endl;
+                         << " that your boundary layer surfaces are correctly"
+                         << " defined." << endl;
         }
 
 
