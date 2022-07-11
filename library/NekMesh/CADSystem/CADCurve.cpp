@@ -99,9 +99,9 @@ CADOrientation::Orientation CADCurve::GetOrienationWRT(int surf)
         }
     }
 
-    std::cout << "Unable to find surface in adjacency list. \n";
-    // m_log(FATAL) << "Unable to find surface in adjacency list." << endl;
+    m_log(FATAL) << "Unable to find surface in adjacency list." << endl;
     return CADOrientation::eUnknown;
 }
+
 }
 }
