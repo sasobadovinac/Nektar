@@ -255,17 +255,29 @@ ModuleSharedPtr Module_Create(py::tuple args, py::dict kwargs)
         if (arg == "verbose")
         {
             verbose = py::extract<bool>(items[i][1]);
-            continue;
         }
 
-        val = py::extract<std::string>(items[i][1].attr("__str__")());
-        mod->RegisterConfig(arg, val);
+        continue;
     }
 
     // Set a logger for this module.
     auto pythonLog = std::make_shared<PythonStream>();
     Logger log = Logger(pythonLog, verbose ? VERBOSE : INFO);
     mod->SetLogger(log);
+
+    for (int i = 0; i < py::len(items); ++i)
+    {
+        std::string arg = py::extract<std::string>(items[i][0]), val;
+
+        // Enable or disable verbose for this module accordingly.
+        if (arg == "verbose")
+        {
+            continue;
+        }
+
+        val = py::extract<std::string>(items[i][1].attr("__str__")());
+        mod->RegisterConfig(arg, val);
+    }
 
     // Set other default arguments.
     mod->SetDefaults();

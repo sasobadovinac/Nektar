@@ -95,9 +95,7 @@ namespace Nektar
             }
                 
             int cnt              = 0;
-            int offset           = 0;
             int offset_phys      = 0;
-            int coeff_offset     = 0; 
             Array<OneD, Array<OneD, Array<OneD, NekDouble> > >dbasis;
             Array<OneD, Array<OneD, Array<OneD, unsigned int> > >traceToCoeffMap;
             
@@ -132,7 +130,6 @@ namespace Nektar
 
                     int nptrace = elmt->GetTraceNumPoints(n);
                     elmt->GetTraceCoeffMap(n,map);               
-                    int traceNcoeffs = elmt->GetTraceNcoeffs(n);
                     
                     for(int i = 0; i < m_traceDim+1; ++i)
                     {
@@ -141,9 +138,7 @@ namespace Nektar
                     }
                     
                     offset_phys += nptrace;
-                    offset      += traceNcoeffs; 
                 }
-                coeff_offset += elmt->GetNcoeffs();
             }
             
             
