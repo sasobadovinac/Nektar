@@ -31,6 +31,7 @@ v5.2.0
 - Fix cmake CWIPI option to remove Fortran check (!1331)
 - Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 - Timer class was updated with safety checks to avoid wrong measurements (!1347)
+- Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
 
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)
