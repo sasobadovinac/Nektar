@@ -31,6 +31,7 @@ v5.2.0
 - Fix cmake CWIPI option to remove Fortran check (!1331)
 - Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 - Timer class was updated with safety checks to avoid wrong measurements (!1347)
+- Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
 
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)
