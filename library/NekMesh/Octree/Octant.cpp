@@ -72,8 +72,6 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
     m_delta             = pair<bool, NekDouble>(false, 0.0);
     NekDouble maxDif    = 0;
     NekDouble minDif    = numeric_limits<double>::max();
-    // NekDouble maxDif    = m_parent->HasDelta()? m_parent->GetDelta() : 0;
-    // NekDouble minDif    = m_parent->HasDelta()? m_parent->GetDelta() : numeric_limits<double>::max();
     m_location          = eUnknown;
 
     // build empty neigbour map

@@ -359,6 +359,11 @@ public:
     void Progress(const int position, const int goal, const std::string message,
                   int lastprogress = -1)
     {
+        if (m_curLevel > m_level)
+        {
+            return;
+        }
+
         std::stringstream ss;
         if (m_logOutput->IsTty())
         {
@@ -404,6 +409,11 @@ public:
      */
     void Newline()
     {
+        if (m_curLevel > m_level)
+        {
+            return;
+        }
+
         m_logOutput->Log("\n");
     }
 
@@ -412,6 +422,11 @@ public:
      */
     void Overwrite()
     {
+        if (m_curLevel > m_level)
+        {
+            return;
+        }
+
         if (m_logOutput->IsTty())
         {
             m_logOutput->Log("\r\033[0K");
