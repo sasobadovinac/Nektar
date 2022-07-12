@@ -6,8 +6,8 @@
 #include <iostream>
 
 #include <Collections/Operator.h>
-#include <LibUtilities/BasicUtils/NekInline.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/NekInline.hpp>
 #include <LibUtilities/Foundations/Basis.h>
 #include <LibUtilities/SimdLib/tinysimd.hpp>
 
@@ -45,10 +45,12 @@ public:
     }
 
     MATRIXFREE_EXPORT virtual void SetJac(
-        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>& jac) = 0;
+        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
+            &jac) = 0;
 
     MATRIXFREE_EXPORT virtual void SetDF(
-        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>& df) = 0;
+        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
+            &df) = 0;
 };
 
 typedef std::shared_ptr<Operator> OperatorSharedPtr;
@@ -57,9 +59,8 @@ typedef std::shared_ptr<Operator> OperatorSharedPtr;
 class BwdTrans : virtual public Operator
 {
 public:
-    BwdTrans(std::vector<LibUtilities::BasisSharedPtr> basis,
-             int nElmt) :
-        m_basis(basis), m_nElmt(nElmt)
+    BwdTrans(std::vector<LibUtilities::BasisSharedPtr> basis, int nElmt)
+        : m_basis(basis), m_nElmt(nElmt)
     {
     }
 
@@ -68,8 +69,8 @@ public:
     }
 
     MATRIXFREE_EXPORT virtual void operator()(
-        const Array<OneD, const NekDouble>& input,
-              Array<OneD,       NekDouble>& output) = 0; //Abstract Method
+        const Array<OneD, const NekDouble> &input,
+        Array<OneD, NekDouble> &output) = 0; // Abstract Method
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
@@ -80,9 +81,8 @@ protected:
 class IProduct : virtual public Operator
 {
 public:
-    IProduct(std::vector<LibUtilities::BasisSharedPtr> basis,
-             int nElmt) :
-        m_basis(basis), m_nElmt(nElmt)
+    IProduct(std::vector<LibUtilities::BasisSharedPtr> basis, int nElmt)
+        : m_basis(basis), m_nElmt(nElmt)
     {
     }
 
@@ -96,8 +96,8 @@ public:
     }
 
     MATRIXFREE_EXPORT virtual void operator()(
-        const Array<OneD, const NekDouble>& input,
-              Array<OneD,       NekDouble>& output) = 0;
+        const Array<OneD, const NekDouble> &input,
+        Array<OneD, NekDouble> &output) = 0;
 
 protected:
     /// Vector of tensor product basis directions
@@ -109,9 +109,8 @@ protected:
 class PhysDeriv : virtual public Operator
 {
 public:
-    PhysDeriv(std::vector<LibUtilities::BasisSharedPtr> basis,
-             int nElmt) :
-        m_basis(basis), m_nElmt(nElmt)
+    PhysDeriv(std::vector<LibUtilities::BasisSharedPtr> basis, int nElmt)
+        : m_basis(basis), m_nElmt(nElmt)
     {
     }
 
@@ -125,8 +124,8 @@ public:
     }
 
     MATRIXFREE_EXPORT virtual void operator()(
-        const Array<OneD,       const NekDouble> & input,
-              Array<OneD, Array<OneD, NekDouble>>& output) = 0;
+        const Array<OneD, const NekDouble> &input,
+        Array<OneD, Array<OneD, NekDouble>> &output) = 0;
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
@@ -138,8 +137,8 @@ class IProductWRTDerivBase : virtual public Operator
 {
 public:
     IProductWRTDerivBase(std::vector<LibUtilities::BasisSharedPtr> basis,
-              int nElmt) :
-        m_basis(basis), m_nElmt(nElmt)
+                         int nElmt)
+        : m_basis(basis), m_nElmt(nElmt)
     {
     }
 
@@ -159,7 +158,7 @@ public:
 
     MATRIXFREE_EXPORT virtual void operator()(
         const Array<OneD, Array<OneD, NekDouble>> &input,
-              Array<OneD,             NekDouble> &output) = 0;
+        Array<OneD, NekDouble> &output) = 0;
 
 protected:
     std::vector<LibUtilities::BasisSharedPtr> m_basis;
@@ -170,15 +169,13 @@ protected:
 class Helmholtz : virtual public Operator
 {
 public:
-    Helmholtz(std::vector<LibUtilities::BasisSharedPtr> basis,
-              int nElmt) :
-        m_basis(basis), m_nElmt(nElmt),
-        m_lambda(1.0), m_isConstVarDiff(false),
-        m_isVarDiff(false)
+    Helmholtz(std::vector<LibUtilities::BasisSharedPtr> basis, int nElmt)
+        : m_basis(basis), m_nElmt(nElmt), m_lambda(1.0),
+          m_isConstVarDiff(false), m_isVarDiff(false)
     {
-        int n = m_basis.size();
-        m_constVarDiff = Array<OneD, NekDouble>(n*(n+1)/2);
-        int tp = 1;
+        int n          = m_basis.size();
+        m_constVarDiff = Array<OneD, NekDouble>(n * (n + 1) / 2);
+        int tp         = 1;
         for (int bn = 0; bn < n; ++bn)
         {
             tp *= m_basis[bn]->GetNumPoints();
@@ -219,7 +216,7 @@ public:
 
     MATRIXFREE_EXPORT virtual void operator()(
         const Array<OneD, const NekDouble> &input,
-              Array<OneD,       NekDouble> &output) = 0;
+        Array<OneD, NekDouble> &output) = 0;
 
     NEK_FORCE_INLINE void SetLambda(NekDouble lambda)
     {
@@ -232,7 +229,7 @@ public:
 
         int n = m_basis.size();
 
-        for(int i = 0; i < n*(n+1)/2; ++i)
+        for (int i = 0; i < n * (n + 1) / 2; ++i)
         {
             m_constVarDiff[i] = diff[i];
         }
@@ -241,10 +238,10 @@ public:
     NEK_FORCE_INLINE void SetVarDiffusion(Array<OneD, NekDouble> diff)
     {
         boost::ignore_unused(diff);
-        m_isVarDiff = true;
+        m_isVarDiff      = true;
         m_isConstVarDiff = false;
 
-        int n = m_basis.size();
+        int n  = m_basis.size();
         int tp = 1;
 
         for (int bn = 0; bn < n; ++bn)
@@ -253,7 +250,7 @@ public:
         }
 
         // fixed values for testing!
-        for(int i = 0; i < tp; ++i)
+        for (int i = 0; i < tp; ++i)
         {
             switch (n)
             {
@@ -291,13 +288,10 @@ protected:
     Array<OneD, NekDouble> m_varD22;
 };
 
-
-template <int DIM, bool DEFORMED = false>
-class Helper : virtual public Operator
+template <int DIM, bool DEFORMED = false> class Helper : virtual public Operator
 {
 protected:
-    Helper(std::vector<LibUtilities::BasisSharedPtr> basis,
-           int nElmt)
+    Helper(std::vector<LibUtilities::BasisSharedPtr> basis, int nElmt)
         : Operator()
     {
         // Sanity check: no padding yet!
@@ -312,9 +306,9 @@ protected:
         // etc, inside vectorised environment.
         for (int i = 0; i < DIM; ++i)
         {
-            const Array<OneD, const NekDouble> bdata = basis[i]->GetBdata();
+            const Array<OneD, const NekDouble> bdata  = basis[i]->GetBdata();
             const Array<OneD, const NekDouble> dbdata = basis[i]->GetDbdata();
-            const Array<OneD, const NekDouble> w = basis[i]->GetW();
+            const Array<OneD, const NekDouble> w      = basis[i]->GetW();
 
             m_nm[i] = basis[i]->GetNumModes();
             m_nq[i] = basis[i]->GetNumPoints();
@@ -332,11 +326,13 @@ protected:
             }
 
             NekDouble fac = 1.0;
-            if (basis[i]->GetPointsType() == LibUtilities::eGaussRadauMAlpha1Beta0)
+            if (basis[i]->GetPointsType() ==
+                LibUtilities::eGaussRadauMAlpha1Beta0)
             {
                 fac = 0.5;
             }
-            else if (basis[i]->GetPointsType() == LibUtilities::eGaussRadauMAlpha2Beta0)
+            else if (basis[i]->GetPointsType() ==
+                     LibUtilities::eGaussRadauMAlpha2Beta0)
             {
                 fac = 0.25;
             }
@@ -360,20 +356,19 @@ protected:
             {
                 m_Z[i][j] = Z[j];
             }
-
         }
     }
 
     void SetJac(
-     const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>& jac)
-        final
+        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
+            &jac) final
     {
         m_jac = jac;
     }
 
     void SetDF(
-     const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>& df)
-        final
+        const std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
+            &df) final
     {
         m_df = df;
     }
@@ -382,25 +377,27 @@ protected:
     std::array<int, DIM> m_nm, m_nq;
     std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM> m_bdata;
     std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM> m_dbdata;
-    std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM> m_D; //Derivatives
-    std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM> m_Z; //Zeroes
-    std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM> m_w; //Weights
-    std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>  m_df;//Chain rule function deriviatives for each element (00, 10, 20, 30...)
-    std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>  m_jac;
-
+    std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM>
+        m_D; // Derivatives
+    std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM>
+        m_Z; // Zeroes
+    std::array<std::vector<vec_t, tinysimd::allocator<vec_t>>, DIM>
+        m_w; // Weights
+    std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>>
+        m_df; // Chain rule function deriviatives for each element (00, 10,
+              // 20, 30...)
+    std::shared_ptr<std::vector<vec_t, tinysimd::allocator<vec_t>>> m_jac;
 };
 
-using OperatorFactory = LibUtilities::NekFactory<
-    std::string,
-    Operator,
-    std::vector<LibUtilities::BasisSharedPtr>,
-    int
-    >;
+using OperatorFactory =
+    LibUtilities::NekFactory<std::string, Operator,
+                             std::vector<LibUtilities::BasisSharedPtr>, int>;
 
 MATRIXFREE_EXPORT OperatorFactory &GetOperatorFactory();
 
 /// Helper function, get operator string
-MATRIXFREE_EXPORT std::string GetOpstring(LibUtilities::ShapeType shape, bool deformed=false);
+MATRIXFREE_EXPORT std::string GetOpstring(LibUtilities::ShapeType shape,
+                                          bool deformed = false);
 
 } // namespace MatrixFree
 } // namespace Nektar
