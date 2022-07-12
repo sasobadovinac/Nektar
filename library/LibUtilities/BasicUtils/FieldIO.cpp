@@ -586,8 +586,7 @@ int FieldIO::CheckFieldDefinition(
     const FieldDefinitionsSharedPtr &fielddefs,
           std::vector<unsigned int> &coeffsPerElmt)
 {
-    int i;
-
+    
     if (fielddefs->m_elementIDs.size() == 0) // empty partition
     {
         return 0;
@@ -739,7 +738,7 @@ int FieldIO::CheckFieldDefinition(
     {
         unsigned int cnt = 0;
         // calculate data length
-        for (i = 0; i < fielddefs->m_elementIDs.size(); ++i)
+        for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
         {
             switch (fielddefs->m_shapeType)
             {
