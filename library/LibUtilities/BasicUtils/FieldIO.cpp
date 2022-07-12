@@ -949,5 +949,52 @@ int FieldIO::CheckFieldDefinition(
     return std::accumulate(coeffsPerElmt.begin(), coeffsPerElmt.end(), int{0});
 
 }
+/**
+ * @brief Compute number of data points needed to store expansion inside
+ *        each element.
+ *
+ * @param fielddefs  Field definitions.
+ */
+std::vector<unsigned int> FieldIO::GetNumberOfCoeffsPerElement(
+    const FieldDefinitionsSharedPtr &fielddefs)
+{
+    // Allocate vector with results
+    std::vector<unsigned int> coeffsPerElmt;
+
+    // Return empty vector if partition is empty
+    if (fielddefs->m_elementIDs.size() == 0)
+    {
+        return coeffsPerElmt;
+    }
+
+    // Add elements to vector
+    coeffsPerElmt.resize(fielddefs->m_elementIDs.size());
+
+    if (fielddefs->m_uniOrder == true)
+    {
+        // Counter is updated by "GetNumberOfDataPoints"
+        unsigned int cnt = 0;
+
+        const int datasize = GetNumberOfDataPoints(fielddefs, cnt);
+
+        for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
+        {
+            coeffsPerElmt[i] = datasize;
+        }
+    }
+    else
+    {
+        // Counter is updated by "GetNumberOfDataPoints"
+        unsigned int cnt = 0;
+
+        for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
+        {
+            coeffsPerElmt[i] = GetNumberOfDataPoints(fielddefs, cnt);
+        }
+    }
+
+    return coeffsPerElmt;
+
+}
 }
 }

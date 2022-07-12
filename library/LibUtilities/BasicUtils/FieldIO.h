@@ -278,6 +278,9 @@ protected:
         const FieldDefinitionsSharedPtr &fielddefs, 
               std::vector<unsigned int> &coeffsPerElmt);
 
+    LIB_UTILITIES_EXPORT std::vector<unsigned int> GetNumberOfCoeffsPerElement(
+        const FieldDefinitionsSharedPtr &fielddefs);
+
     /**
      * @brief Helper function that determines default file extension.
      */
