@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FielStorage.hpp
+// File FieldStorage.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: FieldStorage top class definition
+// Description: Container for solution fields.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -39,8 +39,7 @@
 #include <vector>
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
-
-using namespace std;
+#include <MultiRegions/FieldStorage/ExpListFieldStorageInterface.h>
 
 namespace Nektar
 {
@@ -62,20 +61,26 @@ enum StorageType
 
 class ExpList;
 
-template<typename TData, StorageType stype,  DataLayout order = eField>
+template <typename TData, StorageType stype, DataLayout order = eField>
 class FieldStorage
 {
 public:
-  FieldStorage(shared_ptr<ExpList> exp):
-    m_exp(exp), m_numVariables(1)
-  {
-    InitFieldStorage(exp);
-  }
-  
+    FieldStorage(std::shared_ptr<ExpList> exp) : m_expIF(exp), m_numVariables(1)
+    {
+        boost::ignore_unused(exp);
+        if (stype == ePhys)
+        {
+            m_storage = Array<OneD, TData>(m_expIF->GetNpoints());
+        }
+        else if (stype == eCoeff)
+        {
+            m_storage = Array<OneD, TData>(m_expIF->GetNcoeffs());
+        }
+    }
 
-    FieldStorage(const FieldStorage& F)
-        : m_exp(F.m_exp), m_sType(F.m_sType), 
-          m_storage(Array<OneD, TData>(F.m_storage->size(), F.m_storage)), 
+    FieldStorage(const FieldStorage &F)
+        : m_expIF(F.m_expIF), m_sType(F.m_sType),
+          m_storage(Array<OneD, TData>(F.m_storage->size(), F.m_storage)),
           m_numVariables(F.m_numVariables)
     {
     }
@@ -85,7 +90,7 @@ public:
         // nothing to do... yet...
     }
 
-    Array<OneD, TData>& UpdateData()
+    Array<OneD, TData> &UpdateData()
     {
         return m_storage;
     }
@@ -94,20 +99,18 @@ public:
     {
         return m_storage;
     }
-    
+
 private:
-    shared_ptr<ExpList> m_exp;
-    enum StorageType         m_sType;
-    Array<OneD, TData>       m_storage;
-//    std::vector<size_t>            m_offsets;      // Offset of element i in the array
+    std::shared_ptr<ExpListFieldStorageInterface> m_expIF;
+    enum StorageType m_sType;
+    Array<OneD, TData> m_storage;
+    //    std::vector<size_t>            m_offsets;      // Offset of element i
+    //    in the array
     int m_numVariables;
-//    int num_elements;
-//    int std::array<int, num_variables> dofs;
-
-
-  void InitFieldStorage(shared_ptr<ExpList> &exp); 
+    //    int num_elements;
+    //    int std::array<int, num_variables> dofs;
 };
 
-}
-}
+} // namespace MultiRegions
+} // namespace Nektar
 #endif

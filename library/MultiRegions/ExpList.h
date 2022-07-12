@@ -2794,8 +2794,6 @@ namespace Nektar
         
         const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
 
-#include <MultiRegions/FieldStorage/FieldStorageKernel.hpp>  // FieldStorage methods
-
     } //end of namespace
 } //end of namespace
 

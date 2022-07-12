@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FielStorage.cpp
+// File ExpListFieldStorageInterface.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,31 +28,39 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: FieldStorage top class definition
+// Description: Provide an decoupling interface to ExpList from FieldStorage.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-/*
+#include <MultiRegions/ExpList.h>
+#include <MultiRegions/FieldStorage/ExpListFieldStorageInterface.h>
+
 namespace Nektar
 {
 namespace MultiRegions
 {
-*/
 
-template<typename TData, StorageType stype,  DataLayout order>
-void FieldStorage<TData, stype, order>::InitFieldStorage(std::shared_ptr<ExpList>  &exp)
+ExpListFieldStorageInterface::ExpListFieldStorageInterface(
+    std::shared_ptr<ExpList> e)
 {
-    boost::ignore_unused(exp);
-    if (stype == ePhys)
-    {
-        m_storage = Array<OneD, TData>(m_exp->GetNpoints());
-    }
-    else if (stype == eCoeff)
-    {
-        m_storage = Array<OneD, TData>(m_exp->GetNcoeffs());
-    }
+    m_e = e;
 }
 
-//}
-//}
+ExpListFieldStorageInterface::ExpListFieldStorageInterface(
+    const ExpListFieldStorageInterface &src)
+    : m_e(src.m_e)
+{
+}
 
+int ExpListFieldStorageInterface::GetNpoints()
+{
+    return m_e->GetNpoints();
+}
+
+int ExpListFieldStorageInterface::GetNcoeffs()
+{
+    return m_e->GetNcoeffs();
+}
+
+} // namespace MultiRegions
+} // namespace Nektar
