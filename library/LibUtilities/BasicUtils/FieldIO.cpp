@@ -578,6 +578,110 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank, bool b
 }
 
 /**
+ * @brief Compute the number of values needed to store elemental expansion
+ * 
+ * @param fielddefs Field definitions
+ * @param cnt Counter into the fielddefs->m_numModes array. This variable is
+ *            updated by the function
+ */
+
+int GetNumberOfDataPoints(const FieldDefinitionsSharedPtr &fielddefs, int &cnt)
+{
+    int NCoeffs = 0;
+
+    switch (fielddefs->m_shapeType)
+    {
+        case eSegment:
+        {
+            int l = fielddefs->m_numModes[cnt++];
+            if (fielddefs->m_numHomogeneousDir == 1)
+            {
+                NCoeffs = l * fielddefs->m_homogeneousZIDs.size();
+                cnt++;
+            }
+            else if (fielddefs->m_numHomogeneousDir == 2)
+            {
+                NCoeffs = l * fielddefs->m_homogeneousYIDs.size();
+                cnt += 2;
+            }
+            else
+            {
+                NCoeffs = l;
+            }
+        }
+        break;
+        case eTriangle:
+        {
+            int l = fielddefs->m_numModes[cnt++];
+            int m = fielddefs->m_numModes[cnt++];
+
+            if (fielddefs->m_numHomogeneousDir == 1)
+            {
+                NCoeffs = StdTriData::getNumberOfCoefficients(l, m) *
+                            fielddefs->m_homogeneousZIDs.size();
+            }
+            else
+            {
+                NCoeffs = StdTriData::getNumberOfCoefficients(l, m);
+            }
+        }
+        break;
+        case eQuadrilateral:
+        {
+            int l = fielddefs->m_numModes[cnt++];
+            int m = fielddefs->m_numModes[cnt++];
+            if (fielddefs->m_numHomogeneousDir == 1)
+            {
+                NCoeffs = StdQuadData::getNumberOfCoefficients(l, m) * 
+                            fielddefs->m_homogeneousZIDs.size();
+            }
+            else
+            {
+                NCoeffs = StdQuadData::getNumberOfCoefficients(l, m);
+            }
+        }
+        break;
+        case eTetrahedron:
+        {
+            int l = fielddefs->m_numModes[cnt++];
+            int m = fielddefs->m_numModes[cnt++];
+            int n = fielddefs->m_numModes[cnt++];
+            NCoeffs = StdTetData::getNumberOfCoefficients(l, m, n);
+        }
+        break;
+        case ePyramid:
+        {
+            int l = fielddefs->m_numModes[cnt++];
+            int m = fielddefs->m_numModes[cnt++];
+            int n = fielddefs->m_numModes[cnt++];
+            NCoeffs = StdPyrData::getNumberOfCoefficients(l, m, n);
+        }
+        break;
+        case ePrism:
+        {
+            int l = fielddefs->m_numModes[cnt++];
+            int m = fielddefs->m_numModes[cnt++];
+            int n = fielddefs->m_numModes[cnt++];
+            NCoeffs = StdPrismData::getNumberOfCoefficients(l, m, n);
+        }
+        break;
+        case eHexahedron:
+        {
+            int l = fielddefs->m_numModes[cnt++];
+            int m = fielddefs->m_numModes[cnt++];
+            int n = fielddefs->m_numModes[cnt++];
+            NCoeffs = StdHexData::getNumberOfCoefficients(l, m, n);
+        }
+        break;
+        default:
+            NEKERROR(ErrorUtil::efatal, "Unsupported shape type.");
+            break;
+    }
+
+    return NCoeffs;
+}
+
+/**
  * @brief Check field definitions for correctness and return storage size.
  *
  * @param fielddefs  Field definitions to check.
@@ -627,8 +731,6 @@ int FieldIO::CheckFieldDefinition(
             break;
     }
 
-    int NCoeffs = 0;
-
     ASSERTL0(fielddefs->m_basis.size() == numbasis,
              "Length of basis vector is incorrect");
 
@@ -638,6 +740,9 @@ int FieldIO::CheckFieldDefinition(
     {
         unsigned int cnt = 0;
         // calculate datasize
+        int datasize = GetNumberOfDataPoints(fielddefs, cnt);
+
+        /*
         switch (fielddefs->m_shapeType)
         {
             case eSegment:
@@ -726,20 +831,24 @@ int FieldIO::CheckFieldDefinition(
                 NEKERROR(ErrorUtil::efatal, "Unsupported shape type.");
                 break;
         }
+        */
 
         // Store the number of coefficients/modes per element
         for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
         {
-            coeffsPerElmt[i] = NCoeffs;
+            coeffsPerElmt[i] = datasize;
         }
 
     }
     else
     {
         unsigned int cnt = 0;
-        // calculate data length
         for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
         {
+            // calculate datasize
+            int datasize = GetNumberOfDataPoints(fielddefs, cnt);
+
+            /*
             switch (fielddefs->m_shapeType)
             {
                 case eSegment:
@@ -829,9 +938,10 @@ int FieldIO::CheckFieldDefinition(
                     NEKERROR(ErrorUtil::efatal, "Unsupported shape type.");
                     break;
             }
+            */
 
             // Store number of coefficients/modes in this element
-            coeffsPerElmt[i] = NCoeffs;
+            coeffsPerElmt[i] = datasize;
 
         }
     }
