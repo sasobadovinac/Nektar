@@ -36,6 +36,7 @@
 #ifndef NEKTAR_SPATIALDOMAINS_MGXML_H
 #define NEKTAR_SPATIALDOMAINS_MGXML_H
 
+#include <LibUtilities/BasicUtils/DomainRange.h>
 #include <SpatialDomains/MeshGraph.h>
 #include <SpatialDomains/MeshPartition.h>
 
@@ -56,14 +57,12 @@ public:
     }
 
     SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
-        std::string &outfilename,
-        bool defaultExp = false,
-        const LibUtilities::FieldMetaDataMap &metadata
-                                         = LibUtilities::NullFieldMetaDataMap);
+        std::string &outfilename, bool defaultExp = false,
+        const LibUtilities::FieldMetaDataMap &metadata =
+            LibUtilities::NullFieldMetaDataMap);
 
     SPATIAL_DOMAINS_EXPORT void WriteXMLGeometry(
-        std::string outname,
-        std::vector<std::set<unsigned int>> elements,
+        std::string outname, std::vector<std::set<unsigned int>> elements,
         std::vector<unsigned int> partitions);
 
     static MeshGraphSharedPtr create()
@@ -74,8 +73,7 @@ public:
     static std::string className;
 
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        LibUtilities::DomainRangeShPtr rng,
-        bool             fillGraph);
+        LibUtilities::DomainRangeShPtr rng, bool fillGraph);
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session);
 
@@ -117,7 +115,8 @@ protected:
     virtual void WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris);
     virtual void WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs);
     virtual void WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets);
-    virtual void WriteCurves(TiXmlElement *geomTag, CurveMap &edges, CurveMap &faces);
+    virtual void WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
+                             CurveMap &faces);
     void WriteComposites(TiXmlElement *geomTag, CompositeMap &comps);
     void WriteDomain(TiXmlElement *geomTag, std::vector<CompositeMap> &domain);
     void WriteDefaultExpansion(TiXmlElement *root);
@@ -125,7 +124,7 @@ protected:
     CompositeOrdering CreateCompositeOrdering();
 };
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

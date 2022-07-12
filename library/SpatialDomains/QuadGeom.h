@@ -39,8 +39,8 @@
 
 #include <SpatialDomains/Geometry2D.h>
 #include <SpatialDomains/PointGeom.h>
-#include <SpatialDomains/SpatialDomainsDeclspec.h>
 #include <SpatialDomains/SegGeom.h>
+#include <SpatialDomains/SpatialDomainsDeclspec.h>
 
 namespace Nektar
 {
@@ -59,20 +59,18 @@ public:
     SPATIAL_DOMAINS_EXPORT QuadGeom();
     SPATIAL_DOMAINS_EXPORT QuadGeom(const QuadGeom &in);
     SPATIAL_DOMAINS_EXPORT QuadGeom(
-        const int id,
-        const SegGeomSharedPtr edges[],
+        const int id, const SegGeomSharedPtr edges[],
         const CurveSharedPtr curve = CurveSharedPtr());
     SPATIAL_DOMAINS_EXPORT ~QuadGeom();
 
     /// Get the orientation of face1.
     SPATIAL_DOMAINS_EXPORT static StdRegions::Orientation GetFaceOrientation(
-                    const QuadGeom &face1, const QuadGeom &face2,
-                    bool doRot = false, int dir = 0, NekDouble angle = 0.0,
-                    NekDouble tol = 1e-8);
+        const QuadGeom &face1, const QuadGeom &face2, bool doRot = false,
+        int dir = 0, NekDouble angle = 0.0, NekDouble tol = 1e-8);
     SPATIAL_DOMAINS_EXPORT static StdRegions::Orientation GetFaceOrientation(
-                    const PointGeomVector &face1, const PointGeomVector &face2,
-                    bool doRot = false, int dir = 0, NekDouble angle = 0.0,
-                    NekDouble tol = 1e-8);
+        const PointGeomVector &face1, const PointGeomVector &face2,
+        bool doRot = false, int dir = 0, NekDouble angle = 0.0,
+        NekDouble tol = 1e-8);
 
     SPATIAL_DOMAINS_EXPORT static const int kNverts = 4;
     SPATIAL_DOMAINS_EXPORT static const int kNedges = 4;
@@ -83,7 +81,8 @@ protected:
         const int i, const Array<OneD, const NekDouble> &Lcoord);
     SPATIAL_DOMAINS_EXPORT void v_GenGeomFactors();
     SPATIAL_DOMAINS_EXPORT virtual void v_FillGeom();
-    SPATIAL_DOMAINS_EXPORT virtual int v_GetDir(const int faceidx, const int facedir) const;
+    SPATIAL_DOMAINS_EXPORT virtual int v_GetDir(const int faceidx,
+                                                const int facedir) const;
 
     SPATIAL_DOMAINS_EXPORT virtual void v_Reset(CurveMap &curvedEdges,
                                                 CurveMap &curvedFaces);
@@ -93,7 +92,7 @@ private:
     void SetUpXmap();
 };
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_QUADGEOM_H

@@ -37,91 +37,80 @@
 
 #include <LocalRegions/Expansion.h>
 #include <LocalRegions/LocalRegionsDeclspec.h>
-#include <StdRegions/StdExpansion1D.h>
 #include <SpatialDomains/Geometry1D.h>
+#include <StdRegions/StdExpansion1D.h>
 
 namespace Nektar
 {
-    namespace LocalRegions 
+namespace LocalRegions
+{
+class Expansion2D;
+typedef std::shared_ptr<Expansion2D> Expansion2DSharedPtr;
+typedef std::weak_ptr<Expansion2D> Expansion2DWeakPtr;
+
+class Expansion1D;
+typedef std::shared_ptr<Expansion1D> Expansion1DSharedPtr;
+typedef std::weak_ptr<Expansion1D> Expansion1DWeakPtr;
+typedef std::vector<Expansion1DSharedPtr> Expansion1DVector;
+
+class Expansion1D : virtual public Expansion,
+                    virtual public StdRegions::StdExpansion1D
+{
+public:
+    LOCAL_REGIONS_EXPORT Expansion1D(SpatialDomains::Geometry1DSharedPtr pGeom)
+        : Expansion(pGeom), StdExpansion1D()
     {
-        class Expansion2D;
-        typedef std::shared_ptr<Expansion2D>  Expansion2DSharedPtr;
-        typedef std::weak_ptr<Expansion2D>    Expansion2DWeakPtr;
-        
-        class Expansion1D;
-        typedef std::shared_ptr<Expansion1D>  Expansion1DSharedPtr;
-        typedef std::weak_ptr<Expansion1D>    Expansion1DWeakPtr;
-        typedef std::vector< Expansion1DSharedPtr > Expansion1DVector;
+    }
 
-        class Expansion1D: virtual public Expansion,
-            virtual public StdRegions::StdExpansion1D
-        {
-            public:
-                LOCAL_REGIONS_EXPORT Expansion1D(SpatialDomains::
-                                                 Geometry1DSharedPtr pGeom)
-                                                 : Expansion(pGeom),
-                                                   StdExpansion1D()
-                {
-                }
+    LOCAL_REGIONS_EXPORT virtual ~Expansion1D()
+    {
+    }
 
-                LOCAL_REGIONS_EXPORT virtual ~Expansion1D() {}
+    LOCAL_REGIONS_EXPORT void AddNormTraceInt(
+        const int dir, Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
 
-                LOCAL_REGIONS_EXPORT void AddNormTraceInt(
-                        const int dir,
-                        Array<OneD, const NekDouble> &inarray,
-                        Array<OneD,NekDouble> &outarray);
+    void AddHDGHelmholtzTraceTerms(const NekDouble tau,
+                                   const Array<OneD, const NekDouble> &inarray,
+                                   Array<OneD, NekDouble> &outarray);
 
+    inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
 
-                void AddHDGHelmholtzTraceTerms(
-                    const NekDouble                      tau,
-                    const Array<OneD, const NekDouble>  &inarray,
-                          Array<OneD, NekDouble>        &outarray);
+protected:
+    virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
 
-                inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
+    virtual void v_AddRobinMassMatrix(
+        const int vert, const Array<OneD, const NekDouble> &primCoeffs,
+        DNekMatSharedPtr &inoutmat);
 
-            protected:
-                virtual DNekMatSharedPtr v_GenMatrix(
-                    const StdRegions::StdMatrixKey      &mkey);
+    virtual void v_AddRobinEdgeContribution(
+        const int vert, const Array<OneD, const NekDouble> &primCoeffs,
+        const Array<OneD, NekDouble> &incoeffs, Array<OneD, NekDouble> &coeffs);
 
-            virtual void v_AddRobinMassMatrix(
-                    const int                            vert,
-                    const Array<OneD, const NekDouble > &primCoeffs,
-                    DNekMatSharedPtr                    &inoutmat);
+    virtual NekDouble v_VectorFlux(
+        const Array<OneD, Array<OneD, NekDouble>> &vec);
 
-            virtual void v_AddRobinEdgeContribution(
-                    const int                            vert,
-                    const Array<OneD, const NekDouble > &primCoeffs,
-                    const Array<OneD, NekDouble>        &incoeffs,
-                    Array<OneD, NekDouble>        &coeffs);
+    virtual void v_NormalTraceDerivFactors(
+        Array<OneD, Array<OneD, NekDouble>> &factors,
+        Array<OneD, Array<OneD, NekDouble>> &d0factors,
+        Array<OneD, Array<OneD, NekDouble>> &d1factors);
 
-            virtual NekDouble v_VectorFlux(
-                    const Array<OneD, Array<OneD, NekDouble> > &vec);
+    virtual const NormalVector &v_GetTraceNormal(const int edge) const final;
 
-            virtual void v_NormalTraceDerivFactors(
-                            Array<OneD, Array<OneD, NekDouble> > &factors,
-                            Array<OneD, Array<OneD, NekDouble> > &d0factors,
-                            Array<OneD, Array<OneD, NekDouble> > &d1factors);
+    virtual void v_ReOrientTracePhysMap(const StdRegions::Orientation orient,
+                                        Array<OneD, int> &idmap, const int nq0,
+                                        const int nq1);
 
-            virtual const NormalVector &v_GetTraceNormal(const int edge) const final;
+    virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
 
-            virtual void v_ReOrientTracePhysMap(
-                         const StdRegions::Orientation orient,
-                         Array<OneD, int> &idmap,
-                         const int nq0,  const int nq1);
+private:
+};
 
-            virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
-
-        private:
-        };
-
-        inline SpatialDomains::Geometry1DSharedPtr Expansion1D
-            ::GetGeom1D() const
-        {
-            return std::dynamic_pointer_cast<SpatialDomains
-                ::Geometry1D>(m_geom);
-        }
-    } //end of namespace
-} //end of namespace
+inline SpatialDomains::Geometry1DSharedPtr Expansion1D ::GetGeom1D() const
+{
+    return std::dynamic_pointer_cast<SpatialDomains ::Geometry1D>(m_geom);
+}
+} // namespace LocalRegions
+} // namespace Nektar
 
 #endif
-
