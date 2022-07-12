@@ -43,8 +43,9 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-std::string FilterEnergy1D::className = GetFilterFactory().
-    RegisterCreatorFunction("Energy1D", FilterEnergy1D::create);
+std::string FilterEnergy1D::className =
+    GetFilterFactory().RegisterCreatorFunction("Energy1D",
+                                               FilterEnergy1D::create);
 
 /**
  * @brief Set up filter with output file and frequency parameters.
@@ -54,10 +55,8 @@ std::string FilterEnergy1D::className = GetFilterFactory().
  */
 FilterEnergy1D::FilterEnergy1D(
     const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>      &pEquation,
-    const ParamMap &pParams) :
-    Filter(pSession, pEquation),
-    m_index(0)
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
+    : Filter(pSession, pEquation), m_index(0)
 {
     ASSERTL0(pSession->GetComm()->GetSize() == 1,
              "The 1D energy filter currently only works in serial.");
@@ -86,8 +85,7 @@ FilterEnergy1D::FilterEnergy1D(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_outputFrequency = round(equ.Evaluate());
     }
 }
@@ -97,7 +95,6 @@ FilterEnergy1D::FilterEnergy1D(
  */
 FilterEnergy1D::~FilterEnergy1D()
 {
-
 }
 
 /**
@@ -137,18 +134,17 @@ void FilterEnergy1D::v_Update(
     {
         // Figure out number of modes in this expansion.
         LocalRegions::ExpansionSharedPtr exp = pFields[0]->GetExp(i);
-        int nModes = exp->GetBasis(0)->GetNumModes();
+        int nModes                           = exp->GetBasis(0)->GetNumModes();
 
         // Set uo basis key for orthogonal basis
         LibUtilities::BasisType btype = LibUtilities::eOrtho_A;
-        LibUtilities::BasisKey bkeyOrth(
-            btype, nModes, exp->GetBasis(0)->GetPointsKey());
+        LibUtilities::BasisKey bkeyOrth(btype, nModes,
+                                        exp->GetBasis(0)->GetPointsKey());
 
         // Get basis key for existing expansion
-        LibUtilities::BasisKey bkey(
-            exp->GetBasis(0)->GetBasisType(),
-            exp->GetBasis(0)->GetNumModes(),
-            exp->GetBasis(0)->GetPointsKey());
+        LibUtilities::BasisKey bkey(exp->GetBasis(0)->GetBasisType(),
+                                    exp->GetBasis(0)->GetNumModes(),
+                                    exp->GetBasis(0)->GetPointsKey());
 
         // Find coeffs for this element in the list of all coefficients
         Array<OneD, NekDouble> coeffs =
@@ -161,8 +157,8 @@ void FilterEnergy1D::v_Update(
         LibUtilities::InterpCoeff1D(bkey, coeffs, bkeyOrth, coeffsOrth);
 
         // Write coeffs to file
-        m_out << "# Element " << i << " (ID "
-              << exp->GetGeom()->GetGlobalID() << ")" << endl;
+        m_out << "# Element " << i << " (ID " << exp->GetGeom()->GetGlobalID()
+              << ")" << endl;
         for (int j = 0; j < nModes; ++j)
         {
             m_out << coeffsOrth[j] << endl;
@@ -183,5 +179,5 @@ bool FilterEnergy1D::v_IsTimeDependent()
 {
     return true;
 }
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
