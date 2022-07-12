@@ -33,144 +33,137 @@
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLOWENERGY_H
 #define NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLOWENERGY_H
-#include <MultiRegions/GlobalLinSys.h>
-#include <MultiRegions/Preconditioner.h>
-#include <MultiRegions/MultiRegionsDeclspec.h>
-#include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
-#include <LocalRegions/TetExp.h>
-#include <LocalRegions/PyrExp.h>
-#include <LocalRegions/PrismExp.h>
 #include <LocalRegions/HexExp.h>
-
+#include <LocalRegions/PrismExp.h>
+#include <LocalRegions/PyrExp.h>
+#include <LocalRegions/TetExp.h>
+#include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
+#include <MultiRegions/GlobalLinSys.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
+#include <MultiRegions/Preconditioner.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+class PreconditionerLowEnergy;
+typedef std::shared_ptr<PreconditionerLowEnergy>
+    PreconditionerLowEnergySharedPtr;
+
+class PreconditionerLowEnergy : public Preconditioner
+{
+public:
+    /// Creates an instance of this class
+    static PreconditionerSharedPtr create(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        class PreconditionerLowEnergy;
-        typedef std::shared_ptr<PreconditionerLowEnergy>  PreconditionerLowEnergySharedPtr;
-
-        class PreconditionerLowEnergy: public Preconditioner
-	{
-        public:
-            /// Creates an instance of this class
-            static PreconditionerSharedPtr create(
-                const std::shared_ptr<GlobalLinSys> &plinsys,
-                const std::shared_ptr<AssemblyMap> &pLocToGloMap)
-            {
-	        PreconditionerSharedPtr p = MemoryManager<PreconditionerLowEnergy>::AllocateSharedPtr(plinsys,pLocToGloMap);
-	        p->InitObject();
-	        return p;
-            }
-
-            /// Name of class
-            static std::string className;
-
-            MULTI_REGIONS_EXPORT PreconditionerLowEnergy(
-                const std::shared_ptr<GlobalLinSys> &plinsys,
-                const AssemblyMapSharedPtr &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT
-                virtual ~PreconditionerLowEnergy() {}
-
-	protected:
-
-	    DNekBlkMatSharedPtr m_BlkMat;
-            DNekBlkMatSharedPtr m_RBlk;
-            DNekBlkMatSharedPtr m_InvRBlk;
-
-            
-            Array<OneD, NekDouble>  m_variablePmask;
-
-            bool m_signChange;
-            
-            // store how many consecutive similar blocks there
-            // are in R and Rinv
-            std::vector<std::pair<int,int> >  m_sameBlock;  
-            
-            virtual void v_DoTransformBasisToLowEnergy(
-                Array<OneD, NekDouble>& pInOut);
-
-            virtual void v_DoTransformCoeffsFromLowEnergy(
-                Array<OneD, NekDouble>& pInOut);
-
-            virtual void v_DoTransformBasisFromLowEnergy(
-                const Array<OneD, NekDouble>& pInput,
-                Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_DoTransformCoeffsToLowEnergy(
-                const Array<OneD, NekDouble>& pInput,
-                Array<OneD, NekDouble>& pOutput);
-            
-	private:
-
-            void SetupBlockTransformationMatrix(void);
-
-            typedef std::map<LibUtilities::ShapeType, DNekScalMatSharedPtr>
-                ShapeToDNekMap;
-            typedef std::map<LibUtilities::ShapeType,
-                LocalRegions::Expansion3DSharedPtr > ShapeToExpMap;
-            typedef std::map<LibUtilities::ShapeType,
-                Array<OneD, unsigned int> > ShapeToIntArrayMap;
-            typedef std::map<LibUtilities::ShapeType,
-                Array<OneD, Array<OneD, unsigned int> > >
-                ShapeToIntArrayArrayMap;
-            
-            void SetUpReferenceElements(ShapeToDNekMap &maxRmat,
-                                        ShapeToExpMap &maxElmt,
-                                        ShapeToIntArrayMap      &vertMapMaxR,
-                                        ShapeToIntArrayArrayMap &edgeMapMaxR);
-            
-            void SetUpPyrMaxRMat(int nummodesmax,
-                                 LocalRegions::PyrExpSharedPtr &PyrExp,
-                                 ShapeToDNekMap          &maxRmat,
-                                 ShapeToIntArrayMap      &vertMapMaxR,
-                                 ShapeToIntArrayArrayMap &edgeMapMaxR,
-                                 ShapeToIntArrayArrayMap &faceMapMaxR);
-
-            void ReSetTetMaxRMat(int nummodesmax,
-                                 LocalRegions::TetExpSharedPtr &TetExp,
-                                 ShapeToDNekMap          &maxRmat,
-                                 ShapeToIntArrayMap      &vertMapMaxR,
-                                 ShapeToIntArrayArrayMap &edgeMapMaxR,
-                                 ShapeToIntArrayArrayMap &faceMapMaxR);
-
-
-            void ReSetPrismMaxRMat(int nummodesmax,
-                                   LocalRegions::PrismExpSharedPtr &PirsmExp,
-                                   ShapeToDNekMap          &maxRmat,
-                                   ShapeToIntArrayMap      &vertMapMaxR,
-                                   ShapeToIntArrayArrayMap &edgeMapMaxR,
-                                   ShapeToIntArrayArrayMap &faceMapMaxR,
-                                   bool UseTetOnly);
-            
-            DNekMatSharedPtr ExtractLocMat(
-                          LocalRegions::Expansion3DSharedPtr &locExp,
-                          DNekScalMatSharedPtr              &maxRmat,
-                          LocalRegions::Expansion3DSharedPtr  &expMax,
-                          Array<OneD, unsigned int>         &vertMapMaxR,
-                          Array<OneD, Array<OneD, unsigned int> > &edgeMapMaxR);
-            
-            void CreateVariablePMask(void);
-            
-            SpatialDomains::TetGeomSharedPtr   CreateRefTetGeom(void);
-            SpatialDomains::PyrGeomSharedPtr   CreateRefPyrGeom(void);
-            SpatialDomains::PrismGeomSharedPtr CreateRefPrismGeom(void);
-            SpatialDomains::HexGeomSharedPtr   CreateRefHexGeom(void);
-
-            virtual void v_InitObject();
-
-            virtual void v_DoPreconditioner(                
-                const Array<OneD, NekDouble>& pInput,
-                Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_BuildPreconditioner();
-            
-            virtual DNekScalMatSharedPtr
-                v_TransformedSchurCompl(int n, int offset, 
-                             const std::shared_ptr<DNekScalMat > &loc_mat);
-        };
+        PreconditionerSharedPtr p =
+            MemoryManager<PreconditionerLowEnergy>::AllocateSharedPtr(
+                plinsys, pLocToGloMap);
+        p->InitObject();
+        return p;
     }
-}
+
+    /// Name of class
+    static std::string className;
+
+    MULTI_REGIONS_EXPORT PreconditionerLowEnergy(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const AssemblyMapSharedPtr &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT
+    virtual ~PreconditionerLowEnergy()
+    {
+    }
+
+protected:
+    DNekBlkMatSharedPtr m_BlkMat;
+    DNekBlkMatSharedPtr m_RBlk;
+    DNekBlkMatSharedPtr m_InvRBlk;
+
+    Array<OneD, NekDouble> m_variablePmask;
+
+    bool m_signChange;
+
+    // store how many consecutive similar blocks there
+    // are in R and Rinv
+    std::vector<std::pair<int, int>> m_sameBlock;
+
+    virtual void v_DoTransformBasisToLowEnergy(Array<OneD, NekDouble> &pInOut);
+
+    virtual void v_DoTransformCoeffsFromLowEnergy(
+        Array<OneD, NekDouble> &pInOut);
+
+    virtual void v_DoTransformBasisFromLowEnergy(
+        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_DoTransformCoeffsToLowEnergy(
+        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
+
+private:
+    void SetupBlockTransformationMatrix(void);
+
+    typedef std::map<LibUtilities::ShapeType, DNekScalMatSharedPtr>
+        ShapeToDNekMap;
+    typedef std::map<LibUtilities::ShapeType,
+                     LocalRegions::Expansion3DSharedPtr>
+        ShapeToExpMap;
+    typedef std::map<LibUtilities::ShapeType, Array<OneD, unsigned int>>
+        ShapeToIntArrayMap;
+    typedef std::map<LibUtilities::ShapeType,
+                     Array<OneD, Array<OneD, unsigned int>>>
+        ShapeToIntArrayArrayMap;
+
+    void SetUpReferenceElements(ShapeToDNekMap &maxRmat, ShapeToExpMap &maxElmt,
+                                ShapeToIntArrayMap &vertMapMaxR,
+                                ShapeToIntArrayArrayMap &edgeMapMaxR);
+
+    void SetUpPyrMaxRMat(int nummodesmax, LocalRegions::PyrExpSharedPtr &PyrExp,
+                         ShapeToDNekMap &maxRmat,
+                         ShapeToIntArrayMap &vertMapMaxR,
+                         ShapeToIntArrayArrayMap &edgeMapMaxR,
+                         ShapeToIntArrayArrayMap &faceMapMaxR);
+
+    void ReSetTetMaxRMat(int nummodesmax, LocalRegions::TetExpSharedPtr &TetExp,
+                         ShapeToDNekMap &maxRmat,
+                         ShapeToIntArrayMap &vertMapMaxR,
+                         ShapeToIntArrayArrayMap &edgeMapMaxR,
+                         ShapeToIntArrayArrayMap &faceMapMaxR);
+
+    void ReSetPrismMaxRMat(int nummodesmax,
+                           LocalRegions::PrismExpSharedPtr &PirsmExp,
+                           ShapeToDNekMap &maxRmat,
+                           ShapeToIntArrayMap &vertMapMaxR,
+                           ShapeToIntArrayArrayMap &edgeMapMaxR,
+                           ShapeToIntArrayArrayMap &faceMapMaxR,
+                           bool UseTetOnly);
+
+    DNekMatSharedPtr ExtractLocMat(
+        LocalRegions::Expansion3DSharedPtr &locExp,
+        DNekScalMatSharedPtr &maxRmat,
+        LocalRegions::Expansion3DSharedPtr &expMax,
+        Array<OneD, unsigned int> &vertMapMaxR,
+        Array<OneD, Array<OneD, unsigned int>> &edgeMapMaxR);
+
+    void CreateVariablePMask(void);
+
+    SpatialDomains::TetGeomSharedPtr CreateRefTetGeom(void);
+    SpatialDomains::PyrGeomSharedPtr CreateRefPyrGeom(void);
+    SpatialDomains::PrismGeomSharedPtr CreateRefPrismGeom(void);
+    SpatialDomains::HexGeomSharedPtr CreateRefHexGeom(void);
+
+    virtual void v_InitObject();
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_BuildPreconditioner();
+
+    virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
+        int n, int offset, const std::shared_ptr<DNekScalMat> &loc_mat);
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif
