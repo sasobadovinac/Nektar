@@ -585,7 +585,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank, bool b
  *            updated by the function
  */
 
-int GetNumberOfDataPoints(const FieldDefinitionsSharedPtr &fielddefs, int &cnt)
+int GetNumberOfDataPoints(const FieldDefinitionsSharedPtr &fielddefs, unsigned int &cnt)
 {
     int NCoeffs = 0;
 
