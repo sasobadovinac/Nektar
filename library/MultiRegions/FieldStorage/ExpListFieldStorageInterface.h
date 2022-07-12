@@ -43,6 +43,8 @@ namespace Nektar
 {
 namespace MultiRegions
 {
+namespace details
+{
 
 class ExpListFieldStorageInterface
 {
@@ -53,10 +55,13 @@ public:
     int GetNpoints();
     int GetNcoeffs();
 
+    std::shared_ptr<ExpList> GetExpList() { return m_e; }
+
 private:
     std::shared_ptr<ExpList> m_e;
 };
 
+}
 } // namespace MultiRegions
 } // namespace Nektar
 

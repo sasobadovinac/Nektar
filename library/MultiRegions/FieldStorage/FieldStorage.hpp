@@ -100,8 +100,13 @@ public:
         return m_storage;
     }
 
+    std::shared_ptr<ExpList> GetExpList()
+    {
+        return m_expIF->GetExpList();
+    }
+
 private:
-    std::shared_ptr<ExpListFieldStorageInterface> m_expIF;
+    std::shared_ptr<details::ExpListFieldStorageInterface> m_expIF;
     enum StorageType m_sType;
     Array<OneD, TData> m_storage;
     //    std::vector<size_t>            m_offsets;      // Offset of element i
