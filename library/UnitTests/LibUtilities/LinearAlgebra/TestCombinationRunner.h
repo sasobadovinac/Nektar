@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -38,95 +38,111 @@
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 
-
 #include <memory>
 
 namespace Nektar
 {
-    template<typename LhsScaledInnerMatrixType,
-             typename LhsBlockInnerMatrixType,
-             typename RhsScaledInnerMatrixType,
-             typename RhsBlockInnerMatrixType>
-    void RunAllAddCombinations(const NekMatrix<NekDouble, StandardMatrixTag>& l1,
-                               const NekMatrix<NekMatrix<NekDouble, LhsScaledInnerMatrixType>, ScaledMatrixTag>& l2,
-                               const NekMatrix<NekMatrix<NekDouble, LhsBlockInnerMatrixType>, BlockMatrixTag>& l3,
-                               const NekMatrix<NekDouble, StandardMatrixTag>& r1,
-                               const NekMatrix<NekMatrix<NekDouble, RhsScaledInnerMatrixType>, ScaledMatrixTag>& r2,
-                               const NekMatrix<NekMatrix<NekDouble, RhsBlockInnerMatrixType>, BlockMatrixTag>& r3,
-                               const NekMatrix<NekDouble, StandardMatrixTag>& result)
-    {
-        BOOST_CHECK_EQUAL(l1 + r1, result);
-        BOOST_CHECK_EQUAL(l1 + r2, result);
-        BOOST_CHECK_EQUAL(l1 + r3, result);
-        BOOST_CHECK_EQUAL(l2 + r1, result);
-        BOOST_CHECK_EQUAL(l2 + r2, result);
-        BOOST_CHECK_EQUAL(l2 + r3, result);
-        BOOST_CHECK_EQUAL(l3 + r1, result);
-        BOOST_CHECK_EQUAL(l3 + r2, result);
-        BOOST_CHECK_EQUAL(l3 + r3, result);
-    }
-
-    template<typename LhsScaledInnerMatrixType,
-             typename LhsBlockInnerMatrixType,
-             typename RhsScaledInnerMatrixType,
-             typename RhsBlockInnerMatrixType>
-    void RunAllSubCombinations(const NekMatrix<NekDouble, StandardMatrixTag>& l1,
-                               const NekMatrix<NekMatrix<NekDouble, LhsScaledInnerMatrixType>, ScaledMatrixTag>& l2,
-                               const NekMatrix<NekMatrix<NekDouble, LhsBlockInnerMatrixType>, BlockMatrixTag>& l3,
-                               const NekMatrix<NekDouble, StandardMatrixTag>& r1,
-                               const NekMatrix<NekMatrix<NekDouble, RhsScaledInnerMatrixType>, ScaledMatrixTag>& r2,
-                               const NekMatrix<NekMatrix<NekDouble, RhsBlockInnerMatrixType>, BlockMatrixTag>& r3,
-                               const NekMatrix<NekDouble, StandardMatrixTag>& result)
-    {
-        BOOST_CHECK_EQUAL(l1 - r1, result);
-        BOOST_CHECK_EQUAL(l1 - r2, result);
-        BOOST_CHECK_EQUAL(l1 - r3, result);
-        BOOST_CHECK_EQUAL(l2 - r1, result);
-        BOOST_CHECK_EQUAL(l2 - r2, result);
-        BOOST_CHECK_EQUAL(l2 - r3, result);
-        BOOST_CHECK_EQUAL(l3 - r1, result);
-        BOOST_CHECK_EQUAL(l3 - r2, result);
-        BOOST_CHECK_EQUAL(l3 - r3, result);
-    }
-
-    template<typename NumberType>
-    void GenerateMatrices(const NekMatrix<NumberType, StandardMatrixTag>& m1,
-        NumberType scale, unsigned int blockRows, unsigned int blockColumns,
-        std::shared_ptr<NekMatrix<NekMatrix<NumberType, StandardMatrixTag>, ScaledMatrixTag> >& m2,
-        std::shared_ptr<NekMatrix<NekMatrix<NumberType>, BlockMatrixTag> >& m3)
-    {
-        NumberType* inner_values = new NumberType[m1.GetStorageSize()];
-        std::transform(m1.begin(), m1.end(), inner_values, std::bind(std::divides<NumberType>(), std::placeholders::_1, scale));
-        MatrixStorage s = m1.GetType();
-        
-        std::shared_ptr<NekMatrix<NumberType, StandardMatrixTag> > inner(
-            new NekMatrix<NumberType, StandardMatrixTag>(m1.GetRows(), m1.GetColumns(), inner_values, s, m1.GetNumberOfSubDiagonals(), 
-            m1.GetNumberOfSuperDiagonals())); 
-        m2 = std::make_shared<NekMatrix<NekMatrix<NumberType, StandardMatrixTag>, ScaledMatrixTag>>(scale, inner);
-
-        unsigned int numberOfRows = m1.GetRows()/blockRows;
-        unsigned int numberOfColumns = m1.GetColumns()/blockColumns;
-        m3 = std::make_shared<NekMatrix<NekMatrix<NumberType>, BlockMatrixTag>>(blockRows, blockColumns, numberOfRows, numberOfColumns);
-
-        for(unsigned int blockRow = 0; blockRow < blockRows; ++blockRow)
-        {
-            for(unsigned int blockColumn = 0; blockColumn < blockColumns; ++blockColumn)
-            {
-                std::shared_ptr<NekMatrix<NumberType> > block(new NekMatrix<NumberType>(numberOfRows, numberOfColumns));
-                for(unsigned int i = 0; i < numberOfRows; ++i)
-                {
-                    for(unsigned int j = 0; j < numberOfRows; ++j)
-                    {
-                        (*block)(i,j) = m1(numberOfRows*blockRow + i, numberOfColumns*blockColumn + j);
-                    }
-                }
-                
-                m3->SetBlock(blockRow, blockColumn, block);
-            }
-        }
-
-        delete [] inner_values;
-    }
+template <typename LhsScaledInnerMatrixType, typename LhsBlockInnerMatrixType,
+          typename RhsScaledInnerMatrixType, typename RhsBlockInnerMatrixType>
+void RunAllAddCombinations(
+    const NekMatrix<NekDouble, StandardMatrixTag> &l1,
+    const NekMatrix<NekMatrix<NekDouble, LhsScaledInnerMatrixType>,
+                    ScaledMatrixTag> &l2,
+    const NekMatrix<NekMatrix<NekDouble, LhsBlockInnerMatrixType>,
+                    BlockMatrixTag> &l3,
+    const NekMatrix<NekDouble, StandardMatrixTag> &r1,
+    const NekMatrix<NekMatrix<NekDouble, RhsScaledInnerMatrixType>,
+                    ScaledMatrixTag> &r2,
+    const NekMatrix<NekMatrix<NekDouble, RhsBlockInnerMatrixType>,
+                    BlockMatrixTag> &r3,
+    const NekMatrix<NekDouble, StandardMatrixTag> &result)
+{
+    BOOST_CHECK_EQUAL(l1 + r1, result);
+    BOOST_CHECK_EQUAL(l1 + r2, result);
+    BOOST_CHECK_EQUAL(l1 + r3, result);
+    BOOST_CHECK_EQUAL(l2 + r1, result);
+    BOOST_CHECK_EQUAL(l2 + r2, result);
+    BOOST_CHECK_EQUAL(l2 + r3, result);
+    BOOST_CHECK_EQUAL(l3 + r1, result);
+    BOOST_CHECK_EQUAL(l3 + r2, result);
+    BOOST_CHECK_EQUAL(l3 + r3, result);
 }
 
-#endif //NEKTAR_UNIT_TESTS_LIB_UTILITIES_LINEAR_ALGEBRA_TEST_COMBINATION_RUNNER_H
+template <typename LhsScaledInnerMatrixType, typename LhsBlockInnerMatrixType,
+          typename RhsScaledInnerMatrixType, typename RhsBlockInnerMatrixType>
+void RunAllSubCombinations(
+    const NekMatrix<NekDouble, StandardMatrixTag> &l1,
+    const NekMatrix<NekMatrix<NekDouble, LhsScaledInnerMatrixType>,
+                    ScaledMatrixTag> &l2,
+    const NekMatrix<NekMatrix<NekDouble, LhsBlockInnerMatrixType>,
+                    BlockMatrixTag> &l3,
+    const NekMatrix<NekDouble, StandardMatrixTag> &r1,
+    const NekMatrix<NekMatrix<NekDouble, RhsScaledInnerMatrixType>,
+                    ScaledMatrixTag> &r2,
+    const NekMatrix<NekMatrix<NekDouble, RhsBlockInnerMatrixType>,
+                    BlockMatrixTag> &r3,
+    const NekMatrix<NekDouble, StandardMatrixTag> &result)
+{
+    BOOST_CHECK_EQUAL(l1 - r1, result);
+    BOOST_CHECK_EQUAL(l1 - r2, result);
+    BOOST_CHECK_EQUAL(l1 - r3, result);
+    BOOST_CHECK_EQUAL(l2 - r1, result);
+    BOOST_CHECK_EQUAL(l2 - r2, result);
+    BOOST_CHECK_EQUAL(l2 - r3, result);
+    BOOST_CHECK_EQUAL(l3 - r1, result);
+    BOOST_CHECK_EQUAL(l3 - r2, result);
+    BOOST_CHECK_EQUAL(l3 - r3, result);
+}
+
+template <typename NumberType>
+void GenerateMatrices(
+    const NekMatrix<NumberType, StandardMatrixTag> &m1, NumberType scale,
+    unsigned int blockRows, unsigned int blockColumns,
+    std::shared_ptr<NekMatrix<NekMatrix<NumberType, StandardMatrixTag>,
+                              ScaledMatrixTag>> &m2,
+    std::shared_ptr<NekMatrix<NekMatrix<NumberType>, BlockMatrixTag>> &m3)
+{
+    NumberType *inner_values = new NumberType[m1.GetStorageSize()];
+    std::transform(
+        m1.begin(), m1.end(), inner_values,
+        std::bind(std::divides<NumberType>(), std::placeholders::_1, scale));
+    MatrixStorage s = m1.GetType();
+
+    std::shared_ptr<NekMatrix<NumberType, StandardMatrixTag>> inner(
+        new NekMatrix<NumberType, StandardMatrixTag>(
+            m1.GetRows(), m1.GetColumns(), inner_values, s,
+            m1.GetNumberOfSubDiagonals(), m1.GetNumberOfSuperDiagonals()));
+    m2 = std::make_shared<
+        NekMatrix<NekMatrix<NumberType, StandardMatrixTag>, ScaledMatrixTag>>(
+        scale, inner);
+
+    unsigned int numberOfRows    = m1.GetRows() / blockRows;
+    unsigned int numberOfColumns = m1.GetColumns() / blockColumns;
+    m3 = std::make_shared<NekMatrix<NekMatrix<NumberType>, BlockMatrixTag>>(
+        blockRows, blockColumns, numberOfRows, numberOfColumns);
+
+    for (unsigned int blockRow = 0; blockRow < blockRows; ++blockRow)
+    {
+        for (unsigned int blockColumn = 0; blockColumn < blockColumns;
+             ++blockColumn)
+        {
+            std::shared_ptr<NekMatrix<NumberType>> block(
+                new NekMatrix<NumberType>(numberOfRows, numberOfColumns));
+            for (unsigned int i = 0; i < numberOfRows; ++i)
+            {
+                for (unsigned int j = 0; j < numberOfRows; ++j)
+                {
+                    (*block)(i, j) = m1(numberOfRows * blockRow + i,
+                                        numberOfColumns * blockColumn + j);
+                }
+            }
+
+            m3->SetBlock(blockRow, blockColumn, block);
+        }
+    }
+
+    delete[] inner_values;
+}
+} // namespace Nektar
+
+#endif // NEKTAR_UNIT_TESTS_LIB_UTILITIES_LINEAR_ALGEBRA_TEST_COMBINATION_RUNNER_H
