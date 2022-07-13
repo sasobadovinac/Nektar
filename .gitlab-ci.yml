@@ -124,7 +124,7 @@ include:
   image: debian:11-slim
   stage: quality-checks
   variables:
-	CL_F_VER: 11
+    CL_F_VER: 11
     TARGETS: library
   before_script:
     - apt-get update && apt-get install -y clang-format-$CL_F_VER git-core
