@@ -614,11 +614,11 @@ int GetNumberOfDataPoints(const FieldDefinitionsSharedPtr &fielddefs, unsigned i
         {
             int l = fielddefs->m_numModes[cnt++];
             int m = fielddefs->m_numModes[cnt++];
-
             if (fielddefs->m_numHomogeneousDir == 1)
             {
                 NCoeffs = StdTriData::getNumberOfCoefficients(l, m) *
                             fielddefs->m_homogeneousZIDs.size();
+                cnt++;
             }
             else
             {
@@ -634,6 +634,7 @@ int GetNumberOfDataPoints(const FieldDefinitionsSharedPtr &fielddefs, unsigned i
             {
                 NCoeffs = StdQuadData::getNumberOfCoefficients(l, m) * 
                             fielddefs->m_homogeneousZIDs.size();
+                cnt++;
             }
             else
             {
