@@ -43,7 +43,7 @@ namespace details
 {
 
 ExpListFieldStorageInterface::ExpListFieldStorageInterface(
-    std::shared_ptr<ExpList> e)
+                         std::shared_ptr<ExpList> e)
 {
     m_e = e;
 }

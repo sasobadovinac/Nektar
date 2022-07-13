@@ -65,8 +65,9 @@ template <typename TData, StorageType stype, DataLayout order = eField>
 class FieldStorage
 {
 public:
-    FieldStorage(std::shared_ptr<ExpList> exp) : m_expIF(exp), m_numVariables(1)
+  FieldStorage(std::shared_ptr<ExpList> exp) :  m_numVariables(1)
     {
+        m_expIF = std::make_shared<details::ExpListFieldStorageInterface>(exp);
         boost::ignore_unused(exp);
         if (stype == ePhys)
         {
@@ -106,13 +107,22 @@ public:
     }
 
 private:
+    /// interface to allow access to ExpList 
     std::shared_ptr<details::ExpListFieldStorageInterface> m_expIF;
-    enum StorageType m_sType;
-    Array<OneD, TData> m_storage;
-    //    std::vector<size_t>            m_offsets;      // Offset of element i
-    //    in the array
+
+    /// Storage type 
+    enum StorageType            m_sType;
+
+    /// native storage in field
+    Array<OneD, TData>          m_storage;
+
+    /// Offset of element i in the array
+    //    std::vector<size_t>   m_offsets; 
+
+    /// number of variables in storage 
     int m_numVariables;
-    //    int num_elements;
+
+  //    int num_elements;
     //    int std::array<int, num_variables> dofs;
 };
 

@@ -2797,10 +2797,5 @@ namespace Nektar
     } //end of namespace
 } //end of namespace
 
-// To stop circular decalaration the initialisation operations related
-// to using ExpList in FieldStorage have to be declared after the
-// ExpList class is declared above.
-#include <MultiRegions/FieldStorage/FieldStorageKernel.hpp>  
-
 #endif // EXPLIST_H
 

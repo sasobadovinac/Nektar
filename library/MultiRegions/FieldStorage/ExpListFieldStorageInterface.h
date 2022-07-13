@@ -37,12 +37,13 @@
 
 #include <memory>
 
-class ExpList;
 
 namespace Nektar
 {
 namespace MultiRegions
 {
+class ExpList;
+
 namespace details
 {
 
