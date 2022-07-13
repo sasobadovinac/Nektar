@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <iostream>
 
 #include "StdDemoSupport.hpp"
 

@@ -38,8 +38,8 @@
 #include <LibUtilities/Communication/CommMpi.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
-#include <unordered_set>
 #include <string>
+#include <unordered_set>
 
 typedef std::unordered_set<int> IntSet;
 
@@ -50,7 +50,7 @@ namespace po    = boost::program_options;
 namespace berrc = boost::system::errc;
 
 typedef std::vector<FieldDefinitionsSharedPtr> DefVec;
-typedef std::vector<std::vector<NekDouble> > DatVec;
+typedef std::vector<std::vector<NekDouble>> DatVec;
 
 /// Struct that contains experimental setup.
 struct Experiment
@@ -87,12 +87,16 @@ int main(int argc, char *argv[])
     exp.comm    = GetCommFactory().CreateInstance("ParallelMPI", argc, argv);
 
     po::options_description desc("Available options");
-    desc.add_options()("help,h", "Produce this help message.")(
-        "mode,m", po::value<char>(),
-        "Choose r[ead] (default), x[ml write] or h[df5 write]")(
-        "number,n", po::value<unsigned>(),
-        "Number of iterations to perform, default 3")("verbose,v",
-                                                      "Enable verbose mode.");
+
+    // clang-format off
+    desc.add_options()
+        ("help,h",      "Produce this help message.")
+        ("mode,m",      po::value<char>(),
+                        "Choose r[ead] (default), x[ml write] or h[df5 write]")
+        ("number,n",    po::value<unsigned>(),
+                        "Number of iterations to perform, default 3")
+        ("verbose,v",   "Enable verbose mode.");
+    // clang-format on
 
     po::options_description hidden("Hidden options");
     hidden.add_options()("input-file", po::value<std::string>(),
@@ -211,7 +215,7 @@ int main(int argc, char *argv[])
 Array<OneD, int> ReadIDsForThisRank(Experiment &exp, FieldIOSharedPtr fio)
 {
     std::vector<std::string> fileNames;
-    std::vector<std::vector<unsigned int> > elementList;
+    std::vector<std::vector<unsigned int>> elementList;
     FieldMetaDataMap fieldmetadatamap;
 
     std::string infoFile = exp.dataSource + "/Info.xml";
@@ -284,10 +288,8 @@ Array<OneD, int> ReadIDsForThisRank(Experiment &exp, FieldIOSharedPtr fio)
  * @param outFieldDefs   Output field definitions containing this rank's data
  * @param outFieldData   Output field data corresponding to the definitions
  */
-void FilterDataForThisRank(const DefVec &inFieldDefs,
-                           const DatVec &inFieldData,
-                           Array<OneD, int> ElementIDs,
-                           DefVec &outFieldDefs,
+void FilterDataForThisRank(const DefVec &inFieldDefs, const DatVec &inFieldData,
+                           Array<OneD, int> ElementIDs, DefVec &outFieldDefs,
                            DatVec &outFieldData)
 {
     // Create a set with all the IDs
@@ -354,8 +356,7 @@ void FilterDataForThisRank(const DefVec &inFieldDefs,
  * @param outFieldDefs   Output field definitions
  * @param outFieldData   Output data corresponding to the definitions
  */
-void ReadWholeFilesForThisRank(Experiment &exp,
-                               DefVec &outFieldDefs,
+void ReadWholeFilesForThisRank(Experiment &exp, DefVec &outFieldDefs,
                                DatVec &outFieldData)
 {
     std::string ft = FieldIO::GetFileType(exp.dataSource, exp.comm);
@@ -437,7 +438,7 @@ Results TestRead(Experiment &exp)
         }
 
         std::vector<FieldDefinitionsSharedPtr> fielddefs;
-        std::vector<std::vector<NekDouble> > fielddata;
+        std::vector<std::vector<NekDouble>> fielddata;
         // Synchronise
         exp.comm->Block();
 
@@ -474,7 +475,7 @@ Results TestWrite(Experiment &exp)
         std::cout << "Reading in input: " << exp.dataSource << std::endl;
 
     std::vector<FieldDefinitionsSharedPtr> fielddefs;
-    std::vector<std::vector<NekDouble> > fielddata;
+    std::vector<std::vector<NekDouble>> fielddata;
     ReadDecomposed(exp, fielddefs, fielddata);
 
     std::string outtype;
