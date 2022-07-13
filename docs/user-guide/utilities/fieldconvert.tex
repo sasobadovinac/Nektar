@@ -1185,7 +1185,13 @@ to composites rather boundaries. If \inltt{bnd} is not provided, all boundaries
 are extracted to different fields. The \inltt{addnormals} is an optional command
 argument which, when turned on, outputs the normal vector of the extracted boundary
 region as well as the shear stress vector and magnitude. This option is off by default.
-To process the output file(s) you will need an xml file of the same region.
+To process the output file(s) you will need an xml file of the same region.\\
+The output fields are wall shear stress in streamwise direction (\inltt{Shear\_s}),
+normal direction (\inltt{Shear\_n}) and magnitude of the wall shear stress vector 
+(\inltt{Shear\_mag}) for 2D simulations. For 3D simulations, wall shear stress in
+the spanwise direction (\inltt{Shear\_z}) is also included in the output fileds.
+Note that the streamwise and normal directions are local at each point on the 
+corresponding boundary.
 %
 %
 %

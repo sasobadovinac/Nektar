@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
             fields[i]->FwdTrans_IterPerExp(NonLinear[i],fields[i]->UpdateCoeffs());
 
             // subtract off all modes but top from orthogonal projection
-            int cnt = 0;
             for(int n = 0; n < fields[i]->GetExpSize(); ++n)
             {
                 int offset = fields[i]->GetCoeff_Offset(n);
@@ -88,7 +87,6 @@ int main(int argc, char *argv[])
                 Vmath::Vsub(ncoeffs,fields[i]->GetCoeffs()+offset,1,
                             coeffsred,1,tmp = fields[i]->UpdateCoeffs()+
                             offset,1);
-                cnt += ncoeffs;
             }
             
             // Need to reset varibale name for output

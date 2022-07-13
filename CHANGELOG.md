@@ -10,6 +10,7 @@ v5.3
 
 **FieldConver**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+- Fixed the output field names of WSS module of FieldConvert
 
 v5.2.0
 ------
@@ -31,6 +32,8 @@ v5.2.0
 - Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 - Timer class was updated with safety checks to avoid wrong measurements (!1347)
 - Reformatted library code with clang-format (!1353)
+- Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
+- Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
 
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)

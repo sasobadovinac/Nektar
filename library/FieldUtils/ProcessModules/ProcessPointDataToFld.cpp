@@ -174,7 +174,6 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
             totpoints = min(totpoints, (int)pts[0].size());
         }
 
-        int mismatch = 0;
         for (i = 0; i < totpoints; ++i)
         {
             for (j = 0; j < dim; ++j)
@@ -189,7 +188,6 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
                             fabs(coords[j][i] - pts[j][i]));
                     ;
                     WARNINGL0(false, outstring);
-                    mismatch += 1;
                 }
             }
 

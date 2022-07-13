@@ -392,7 +392,7 @@ NEK_FORCE_INLINE static void BwdTransPyrKernel(
 {
     for (int k = 0, cnt_kji = 0; k < nq2; ++k)
     {
-        int mode_pqr = 0, mode_pq = 0, mode_pr = 0;
+        int mode_pqr = 0, mode_pq = 0;
         for (int p = 0; p < nm0; ++p)
         {
             for (int q = 0; q < p; ++q, ++mode_pq)
@@ -423,8 +423,6 @@ NEK_FORCE_INLINE static void BwdTransPyrKernel(
             {
                 mode_pqr += nm2 - q;
             }
-
-            mode_pr += nm2 - p;
         }
 
         for (int j = 0; j < nq1; ++j)
