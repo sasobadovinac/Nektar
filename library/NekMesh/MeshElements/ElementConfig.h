@@ -35,6 +35,8 @@
 #ifndef NEKMESH_MESHELEMENTS_ELEMENTCONFIG
 #define NEKMESH_MESHELEMENTS_ELEMENTCONFIG
 
+#include <NekMesh/NekMeshDeclspec.h>
+
 namespace Nektar
 {
 namespace NekMesh

@@ -35,6 +35,8 @@
 #ifndef UTILITIES_NEKMESH_NODEOPTI_EVALUATOR
 #define UTILITIES_NEKMESH_NODEOPTI_EVALUATOR
 
+#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
+
 namespace Nektar
 {
 namespace NekMesh

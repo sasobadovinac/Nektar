@@ -290,9 +290,9 @@ NEK_FORCE_INLINE static void BwdTransTetKernel(
                     {
                         // sum += inarray[order2+r] * base2[(r+1)*nquad2+k] *
                         //     base1[nquad1+j] * base0[nquad0+i];
-                        tmp1 = basis1[nq1 + j] * basis0[nq0 + i]; // Load 2x
-                        tmp1 = tmp1 * basis2[(r + 1) * nq2 + k];  // Load 1x
-                        inarray1 = in[nm2 + r];                   // Load 1x
+                        tmp1     = basis1[nq1 + j] * basis0[nq0 + i]; // Load 2x
+                        tmp1     = tmp1 * basis2[(r + 1) * nq2 + k];  // Load 1x
+                        inarray1 = in[nm2 + r];                       // Load 1x
                         tmp.fma(inarray1, tmp1);
                         // multiply by (1-a)/2
                     }

@@ -35,6 +35,7 @@
 #ifndef UTILITIES_NEKMESH_NODEOPTI_HESSIAN
 #define UTILITIES_NEKMESH_NODEOPTI_HESSIAN
 
+#include <NekMesh/Module/ProcessModules/ProcessVarOpti/NodeOpti.h>
 
 namespace Nektar
 {

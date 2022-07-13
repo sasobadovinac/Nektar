@@ -1,10 +1,10 @@
 #ifndef NEKTAR_LIBRARY_MF_BWDTRANS_H
 #define NEKTAR_LIBRARY_MF_BWDTRANS_H
 
+#include <LibUtilities/BasicUtils/NekInline.hpp>
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/Basis.h>
-#include <LibUtilities/BasicUtils/NekInline.hpp>
 
 #include "BwdTransKernels.hpp"
 #include "Operator.hpp"

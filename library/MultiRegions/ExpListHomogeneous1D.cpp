@@ -1246,8 +1246,9 @@ void ExpListHomogeneous1D::v_PhysDeriv(
 {
     int nT_pts = inarray.size(); // number of total points = n. of Fourier
                                  // points * n. of points per plane (nT_pts)
-    int nP_pts = nT_pts / m_planes.size(); // number of points per plane = n of
-                                           // Fourier transform required (nP_pts)
+    int nP_pts =
+        nT_pts / m_planes.size(); // number of points per plane = n of
+                                  // Fourier transform required (nP_pts)
 
     Array<OneD, NekDouble> temparray(nT_pts);
     Array<OneD, NekDouble> outarray(nT_pts);
@@ -1373,8 +1374,9 @@ void ExpListHomogeneous1D::v_PhysDeriv(
 {
     int nT_pts = inarray.size(); // number of total points = n. of Fourier
                                  // points * n. of points per plane (nT_pts)
-    int nP_pts = nT_pts / m_planes.size(); // number of points per plane = n of
-                                           // Fourier transform required (nP_pts)
+    int nP_pts =
+        nT_pts / m_planes.size(); // number of points per plane = n of
+                                  // Fourier transform required (nP_pts)
 
     int dir = (int)edir;
 

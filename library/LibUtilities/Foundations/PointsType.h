@@ -65,13 +65,13 @@ enum PointsType
                              //!<  \beta =    0 \f$
     eGaussRadauMAlpha2Beta0, //!<  Gauss Radau pinned at x=-1, \f$ \alpha = 2,
                              //!<  \beta =    0 \f$
-    eGaussKronrodLegendre, //!<  1D Gauss-Kronrod-Legendre quadrature points
+    eGaussKronrodLegendre,   //!<  1D Gauss-Kronrod-Legendre quadrature points
     eGaussRadauKronrodMLegendre,    //!<  1D Gauss-Radau-Kronrod-Legendre
                                     //!<  quadrature points, pinned at x=-1
     eGaussRadauKronrodMAlpha1Beta0, //!<  1D Gauss-Radau-Kronrod-Legendre pinned
                                     //!<  at x=-1, \f$ \alpha =    1, \beta = 0
                                     //!<  \f$
-    eGaussLobattoKronrodLegendre, //!<  1D Lobatto Kronrod quadrature points
+    eGaussLobattoKronrodLegendre,   //!<  1D Lobatto Kronrod quadrature points
     ePolyEvenlySpaced, //!<  1D Evenly-spaced points using Lagrange polynomial
     eFourierEvenlySpaced,     //!<  1D Evenly-spaced points using Fourier Fit
     eFourierSingleModeSpaced, //!<  1D Non Evenly-spaced points for Single Mode

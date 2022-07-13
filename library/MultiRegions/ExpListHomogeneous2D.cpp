@@ -845,8 +845,8 @@ void ExpListHomogeneous2D::v_PhysDeriv(
 {
     int nyzlines = m_lines.size(); // number of Fourier points in the Fourier
                                    // directions (nF_pts)
-    int npoints = inarray.size(); // number of total points = n. of Fourier
-                                  // points * n. of points per line (nT_pts)
+    int npoints = inarray.size();  // number of total points = n. of Fourier
+                                   // points * n. of points per line (nT_pts)
     int n_points_line = npoints / nyzlines; // number of points per line
 
     Array<OneD, NekDouble> temparray(npoints);
@@ -955,8 +955,8 @@ void ExpListHomogeneous2D::v_PhysDeriv(
 {
     int nyzlines = m_lines.size(); // number of Fourier points in the Fourier
                                    // directions (nF_pts)
-    int npoints = inarray.size(); // number of total points = n. of Fourier
-                                  // points * n. of points per line (nT_pts)
+    int npoints = inarray.size();  // number of total points = n. of Fourier
+                                   // points * n. of points per line (nT_pts)
     int n_points_line = npoints / nyzlines; // number of points per line
     // convert enum into int
     int dir = (int)edir;

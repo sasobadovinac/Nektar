@@ -35,6 +35,8 @@
 #ifndef NEKMESH_MESHELEMENTS_ALIGNMENT
 #define NEKMESH_MESHELEMENTS_ALIGNMENT
 
+#include <NekMesh/MeshElements/Node.h>
+
 namespace Nektar
 {
 namespace NekMesh
