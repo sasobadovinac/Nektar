@@ -37,16 +37,16 @@
 
 #include <memory>
 
-#include <NekMesh/MeshElements/Node.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
+#include <NekMesh/MeshElements/Node.h>
 
 #define ANSI_DECLARATORS
 #define REAL double
 #define VOID void
 extern "C"
 {
-    #include <triangle.h>
+#include <triangle.h>
 }
 
 namespace Nektar
@@ -70,10 +70,9 @@ public:
     /**
      * @brief assign meshing paramters
      */
-    void Assign(std::vector<std::vector<NodeSharedPtr> > &boundingloops,
-                std::vector<Array<OneD, NekDouble> >     &centers,
-                int                                       i,
-                NekDouble                                 str = 1.0)
+    void Assign(std::vector<std::vector<NodeSharedPtr>> &boundingloops,
+                std::vector<Array<OneD, NekDouble>> &centers, int i,
+                NekDouble str = 1.0)
     {
         m_boundingloops = boundingloops;
         m_centers       = centers;
@@ -94,7 +93,7 @@ public:
     /**
      * @brief Extract mesh
      */
-    void Extract(std::vector<std::vector<NodeSharedPtr> > &Connec);
+    void Extract(std::vector<std::vector<NodeSharedPtr>> &Connec);
 
 private:
     /**
@@ -105,7 +104,7 @@ private:
     struct DelaunayTriangle
     {
     public:
-        void Run(char* cmd)
+        void Run(char *cmd)
         {
             triangulate(cmd, &in, &out, NULL);
         }
@@ -113,23 +112,23 @@ private:
     };
 
     /// List of bounding nodes to the surface
-    std::vector<std::vector<NodeSharedPtr> > m_boundingloops;
+    std::vector<std::vector<NodeSharedPtr>> m_boundingloops;
     /// List of additional nodes
-    std::vector<NodeSharedPtr>               m_stienerpoints;
+    std::vector<NodeSharedPtr> m_stienerpoints;
     /// Coordinates of the centers of the loops
-    std::vector<Array<OneD, NekDouble> >     m_centers;
+    std::vector<Array<OneD, NekDouble>> m_centers;
     /// Map from NekMesh id to triangle id
-    std::map<int, NodeSharedPtr>             nodemap;
+    std::map<int, NodeSharedPtr> nodemap;
     /// ID of the surface
-    int                                      sid;
+    int sid;
     /// Stretching factor of parameter plane
-    NekDouble                                m_str;
+    NekDouble m_str;
     /// Triangle data strucutres
     DelaunayTriangle dt;
 };
 
 typedef std::shared_ptr<TriangleInterface> TriangleInterfaceSharedPtr;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

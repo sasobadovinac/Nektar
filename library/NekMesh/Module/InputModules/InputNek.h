@@ -36,8 +36,8 @@
 #define UTILITIES_NEKMESH_INPUTNEK
 
 #include <algorithm>
-#include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
 
 #include <NekMesh/MeshElements/Triangle.h>
 #include <NekMesh/Module/Module.h>
@@ -83,7 +83,7 @@ private:
     /**
      * Maps a curve tag to a filename containing surface information.
      */
-    std::map<std::string, std::pair<NekCurve, std::string> > curveTags;
+    std::map<std::string, std::pair<NekCurve, std::string>> curveTags;
 
     /**
      * Maps a curve tag to the high-order surface data for that tag.
@@ -95,7 +95,7 @@ private:
      */
     std::map<int, int> hoMap;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -44,14 +44,13 @@ namespace NekMesh
 {
 
 LibUtilities::ShapeType Point::m_type =
-    GetElementFactory().RegisterCreatorFunction(
-        LibUtilities::ePoint, Point::create, "Point");
+    GetElementFactory().RegisterCreatorFunction(LibUtilities::ePoint,
+                                                Point::create, "Point");
 
 /**
  * @brief Create a point element.
  */
-Point::Point(ElmtConfig pConf,
-             vector<NodeSharedPtr> pNodeList,
+Point::Point(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
              vector<int> pTagList)
     : Element(pConf, GetNumNodes(pConf), pNodeList.size())
 {
@@ -69,5 +68,5 @@ unsigned int Point::GetNumNodes(ElmtConfig pConf)
     boost::ignore_unused(pConf);
     return 1;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

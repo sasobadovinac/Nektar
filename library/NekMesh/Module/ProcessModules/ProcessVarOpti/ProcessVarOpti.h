@@ -50,7 +50,7 @@ struct DerivUtil
     NekMatrix<NekDouble> VdmDStd[3]; // deriv matrix without interp
     NekVector<NekDouble> quadW;
 
-    std::vector<std::vector<NekDouble> > basisDeriv;
+    std::vector<std::vector<NekDouble>> basisDeriv;
 
     int pts;
     int ptsStd;
@@ -98,25 +98,26 @@ public:
     {
         return "ProcessVarOpti";
     }
+
 private:
     void Analytics();
 
-    typedef std::map<int, std::vector<ElUtilSharedPtr> > NodeElMap;
+    typedef std::map<int, std::vector<ElUtilSharedPtr>> NodeElMap;
 
     std::map<LibUtilities::ShapeType, DerivUtilSharedPtr> BuildDerivUtil(int o);
     void GetElementMap(
         int o, std::map<LibUtilities::ShapeType, DerivUtilSharedPtr> derMap);
     std::vector<ElUtilSharedPtr> GetLockedElements(NekDouble thres);
-    std::vector<std::vector<NodeSharedPtr> > CreateColoursets(
+    std::vector<std::vector<NodeSharedPtr>> CreateColoursets(
         std::vector<NodeSharedPtr> remain);
-    std::vector<std::vector<NodeSharedPtr> > GetColouredNodes(
+    std::vector<std::vector<NodeSharedPtr>> GetColouredNodes(
         std::vector<ElUtilSharedPtr> elLock);
 
     void RemoveLinearCurvature();
 
     LibUtilities::Interpolator GetScalingFieldFromFile(std::string file);
     LibUtilities::Interpolator GetField(
-        Array<OneD, Array<OneD, NekDouble> > inPts);
+        Array<OneD, Array<OneD, NekDouble>> inPts);
 
     NodeElMap m_nodeElMap;
     std::vector<ElUtilSharedPtr> m_dataSet;
@@ -124,7 +125,7 @@ private:
     ResidualSharedPtr m_res;
     optiType m_opti;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

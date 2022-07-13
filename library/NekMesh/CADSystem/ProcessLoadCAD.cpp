@@ -35,8 +35,8 @@
 #include "ProcessLoadCAD.h"
 #include <NekMesh/CADSystem/CADSystem.h>
 
-#include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 namespace Nektar
@@ -44,24 +44,22 @@ namespace Nektar
 namespace NekMesh
 {
 
-ModuleKey ProcessLoadCAD::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "loadcad"),
-    ProcessLoadCAD::create,
-    "Loads cad into m_mesh");
+ModuleKey ProcessLoadCAD::className =
+    GetModuleFactory().RegisterCreatorFunction(
+        ModuleKey(eProcessModule, "loadcad"), ProcessLoadCAD::create,
+        "Loads cad into m_mesh");
 
 ProcessLoadCAD::ProcessLoadCAD(MeshSharedPtr m) : ProcessModule(m)
 {
     m_config["filename"] =
         ConfigOption(false, "", "Generate prisms on these surfs");
-    m_config["2D"] =
-        ConfigOption(true, "", "allow 2d loading");
-    m_config["NACA"] =
-        ConfigOption(false, "", "naca domain");
-    m_config["usecfimesh"] =
-        ConfigOption(true, "", "Use mesh from CFI file");
+    m_config["2D"]         = ConfigOption(true, "", "allow 2d loading");
+    m_config["NACA"]       = ConfigOption(false, "", "naca domain");
+    m_config["usecfimesh"] = ConfigOption(true, "", "Use mesh from CFI file");
     m_config["voidpoints"] =
-        ConfigOption(false, "", "A list of points, separated by semicolons,"
-                                "that defines holes within the volume.");
+        ConfigOption(false, "",
+                     "A list of points, separated by semicolons,"
+                     "that defines holes within the volume.");
 }
 
 ProcessLoadCAD::~ProcessLoadCAD()
@@ -92,12 +90,12 @@ void ProcessLoadCAD::Process()
 
     m_mesh->m_cad->SetLogger(m_log);
 
-    if(m_config["2D"].beenSet)
+    if (m_config["2D"].beenSet)
     {
         m_mesh->m_cad->Set2D();
     }
 
-    if(m_config["NACA"].beenSet)
+    if (m_config["NACA"].beenSet)
     {
         m_mesh->m_cad->SetConfig("UseNACA", m_config["NACA"].as<std::string>());
     }
@@ -134,5 +132,5 @@ void ProcessLoadCAD::Process()
 
     ASSERTL0(m_mesh->m_cad->LoadCAD(), "Failed to load CAD");
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

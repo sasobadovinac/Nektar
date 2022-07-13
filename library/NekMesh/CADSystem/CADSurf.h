@@ -118,8 +118,8 @@ public:
     /**
      * @brief Get the limits of the parametric space for the surface.
      */
-    NEKMESH_EXPORT virtual void GetBounds(
-        NekDouble &umin, NekDouble &umax, NekDouble &vmin, NekDouble &vmax) = 0;
+    NEKMESH_EXPORT virtual void GetBounds(NekDouble &umin, NekDouble &umax,
+                                          NekDouble &vmin, NekDouble &vmax) = 0;
 
     /**
      * @brief Get the normal vector at parametric point u,v.
@@ -162,9 +162,8 @@ public:
      *
      * @param uv Array of u and v parametric coords.
      */
-    NEKMESH_EXPORT virtual void P(
-        Array<OneD, NekDouble> uv, NekDouble &x, NekDouble &y,
-        NekDouble &z) = 0;
+    NEKMESH_EXPORT virtual void P(Array<OneD, NekDouble> uv, NekDouble &x,
+                                  NekDouble &y, NekDouble &z) = 0;
 
     /**
      * @brief Performs a reverse look up to find u,v and x,y,z.
@@ -198,8 +197,7 @@ public:
     /**
      * @brief returns curvature at point uv
      */
-    NEKMESH_EXPORT virtual NekDouble Curvature(
-        Array<OneD, NekDouble> uv) = 0;
+    NEKMESH_EXPORT virtual NekDouble Curvature(Array<OneD, NekDouble> uv) = 0;
 
     /**
      * @brief Is the surface defined by a planar surface (i.e not nurbs and is

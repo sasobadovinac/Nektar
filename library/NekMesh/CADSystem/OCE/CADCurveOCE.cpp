@@ -187,5 +187,5 @@ Array<OneD, NekDouble> CADCurveOCE::GetMinMax()
 
     return locs;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

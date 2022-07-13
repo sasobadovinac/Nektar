@@ -63,7 +63,7 @@ public:
         return "ProcessOptiExtract";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

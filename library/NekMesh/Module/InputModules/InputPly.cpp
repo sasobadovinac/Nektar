@@ -45,8 +45,7 @@ namespace NekMesh
 {
 
 ModuleKey InputPly::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eInputModule, "ply"),
-    InputPly::create,
+    ModuleKey(eInputModule, "ply"), InputPly::create,
     "Reads ply triangulation format.");
 
 InputPly::InputPly(MeshSharedPtr m) : InputModule(m)
@@ -87,8 +86,8 @@ void InputPly::ReadPly(io::filtering_istream &mshFile, NekDouble scale)
     LibUtilities::ShapeType elType = LibUtilities::eTriangle;
     map<string, int> propMap;
 
-    m_log(VERBOSE) << "Reading .ply file '"
-                   << m_config["infile"].as<string>() << "'" << endl;
+    m_log(VERBOSE) << "Reading .ply file '" << m_config["infile"].as<string>()
+                   << "'" << endl;
 
     while (!mshFile.eof())
     {
@@ -203,5 +202,5 @@ void InputPly::ReadPly(io::filtering_istream &mshFile, NekDouble scale)
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

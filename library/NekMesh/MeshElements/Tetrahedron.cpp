@@ -32,9 +32,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <StdRegions/StdNodalTetExp.h>
 #include <LocalRegions/TetExp.h>
 #include <SpatialDomains/TetGeom.h>
+#include <StdRegions/StdNodalTetExp.h>
 
 #include <NekMesh/MeshElements/Tetrahedron.h>
 #include <NekMesh/MeshElements/Triangle.h>
@@ -54,25 +54,21 @@ LibUtilities::ShapeType Tetrahedron::m_type =
         LibUtilities::eTetrahedron, Tetrahedron::create, "Tetrahedron");
 
 /// Local vertices that make up each tetrahedral edge.
-int Tetrahedron::m_edgeVertMap[6][2] = {
-    {0, 1}, {1, 2}, {0, 2}, {0, 3}, {1, 3}, {2, 3}
-};
+int Tetrahedron::m_edgeVertMap[6][2] = {{0, 1}, {1, 2}, {0, 2},
+                                        {0, 3}, {1, 3}, {2, 3}};
 
 /// Local vertices that make up each tetrahedral face.
 int Tetrahedron::m_faceVertMap[4][3] = {
-    {0, 1, 2}, {0, 1, 3}, {1, 2, 3}, {0, 2, 3}
-};
+    {0, 1, 2}, {0, 1, 3}, {1, 2, 3}, {0, 2, 3}};
 
 /// Local edges that make up each tetrahedral face.
 int Tetrahedron::m_faceEdgeMap[4][3] = {
-    {0, 1, 2}, {0, 4, 3}, {1, 5, 4}, {2, 5, 3}
-};
+    {0, 1, 2}, {0, 4, 3}, {1, 5, 4}, {2, 5, 3}};
 
 /**
  * @brief Create a tetrahedron element.
  */
-Tetrahedron::Tetrahedron(ElmtConfig pConf,
-                         vector<NodeSharedPtr> pNodeList,
+Tetrahedron::Tetrahedron(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
                          vector<int> pTagList)
     : Element(pConf, GetNumNodes(pConf), pNodeList.size())
 {
@@ -112,7 +108,7 @@ Tetrahedron::Tetrahedron(ElmtConfig pConf,
         std::vector<NodeSharedPtr> edgeNodes(n);
 
         int origEdge = -1;
-        bool rev = false;
+        bool rev     = false;
         for (int j = 0; j < 6; ++j)
         {
             if (m_edgeVertMap[i][0] == m_origVertMap[m_edgeVertMap[j][0]] &&
@@ -121,11 +117,12 @@ Tetrahedron::Tetrahedron(ElmtConfig pConf,
                 origEdge = j;
                 break;
             }
-            else if (m_edgeVertMap[i][0] == m_origVertMap[m_edgeVertMap[j][1]] &&
+            else if (m_edgeVertMap[i][0] ==
+                         m_origVertMap[m_edgeVertMap[j][1]] &&
                      m_edgeVertMap[i][1] == m_origVertMap[m_edgeVertMap[j][0]])
             {
                 origEdge = j;
-                rev = true;
+                rev      = true;
                 break;
             }
         }
@@ -137,18 +134,14 @@ Tetrahedron::Tetrahedron(ElmtConfig pConf,
         if (rev)
         {
             m_edge[i] = std::make_shared<Edge>(
-                m_vertex[m_edgeVertMap[i][1]],
-                m_vertex[m_edgeVertMap[i][0]],
-                edgeNodes,
-                m_conf.m_edgeCurveType);
+                m_vertex[m_edgeVertMap[i][1]], m_vertex[m_edgeVertMap[i][0]],
+                edgeNodes, m_conf.m_edgeCurveType);
         }
         else
         {
             m_edge[i] = std::make_shared<Edge>(
-                m_vertex[m_edgeVertMap[i][0]],
-                m_vertex[m_edgeVertMap[i][1]],
-                edgeNodes,
-                m_conf.m_edgeCurveType);
+                m_vertex[m_edgeVertMap[i][0]], m_vertex[m_edgeVertMap[i][1]],
+                edgeNodes, m_conf.m_edgeCurveType);
         }
     }
 
@@ -164,7 +157,7 @@ Tetrahedron::Tetrahedron(ElmtConfig pConf,
         for (int k = 0; k < 3; ++k)
         {
             faceVertices[k] = m_vertex[m_faceVertMap[j][k]];
-            faceEdges[k] = m_edge[m_faceEdgeMap[j][k]];
+            faceEdges[k]    = m_edge[m_faceEdgeMap[j][k]];
         }
 
         // When face curvature is supplied, it may have been the case
@@ -217,8 +210,8 @@ Tetrahedron::Tetrahedron(ElmtConfig pConf,
             faceNodes = hoTri.surfVerts;
         }
 
-        m_face[j] = std::make_shared<Face>(
-            faceVertices, faceNodes, faceEdges, m_conf.m_faceCurveType);
+        m_face[j] = std::make_shared<Face>(faceVertices, faceNodes, faceEdges,
+                                           m_conf.m_faceCurveType);
     }
 
     if (m_conf.m_volumeNodes)
@@ -242,15 +235,15 @@ SpatialDomains::GeometrySharedPtr Tetrahedron::GetGeom(int coordDim)
             m_face[i]->GetGeom(coordDim));
     }
 
-    ret = MemoryManager<SpatialDomains::TetGeom>::AllocateSharedPtr(
-        m_id, tfaces);
+    ret =
+        MemoryManager<SpatialDomains::TetGeom>::AllocateSharedPtr(m_id, tfaces);
     ret->Setup();
 
     return ret;
 }
 
-StdRegions::Orientation Tetrahedron::GetEdgeOrient(
-    int edgeId, EdgeSharedPtr edge)
+StdRegions::Orientation Tetrahedron::GetEdgeOrient(int edgeId,
+                                                   EdgeSharedPtr edge)
 {
     if (edge->m_n1 == m_vertex[m_edgeVertMap[edgeId][0]])
     {
@@ -268,12 +261,9 @@ StdRegions::Orientation Tetrahedron::GetEdgeOrient(
     return StdRegions::eNoOrientation;
 }
 
-void Tetrahedron::MakeOrder(int                                order,
-                            SpatialDomains::GeometrySharedPtr  geom,
-                            LibUtilities::PointsType           pType,
-                            int                                coordDim,
-                            int                               &id,
-                            bool                               justConfig)
+void Tetrahedron::MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                            LibUtilities::PointsType pType, int coordDim,
+                            int &id, bool justConfig)
 {
     m_conf.m_order = order;
     m_curveType    = pType;
@@ -304,7 +294,7 @@ void Tetrahedron::MakeOrder(int                                order,
         return;
     }
 
-    int nPoints = order + 1;
+    int nPoints                            = order + 1;
     StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
 
     Array<OneD, NekDouble> px, py, pz;
@@ -312,7 +302,7 @@ void Tetrahedron::MakeOrder(int                                order,
     ASSERTL1(pKey.GetPointsDim() == 3, "Points distribution must be 3D");
     LibUtilities::PointsManager()[pKey]->GetPoints(px, py, pz);
 
-    Array<OneD, Array<OneD, NekDouble> > phys(coordDim);
+    Array<OneD, Array<OneD, NekDouble>> phys(coordDim);
 
     for (int i = 0; i < coordDim; ++i)
     {
@@ -337,8 +327,8 @@ void Tetrahedron::MakeOrder(int                                order,
             x[j] = xmap->PhysEvaluate(xp, phys[j]);
         }
 
-        m_volumeNodes[cnt] = MemoryManager<Node>::AllocateSharedPtr(
-            id++, x[0], x[1], x[2]);
+        m_volumeNodes[cnt] =
+            MemoryManager<Node>::AllocateSharedPtr(id++, x[0], x[1], x[2]);
     }
 }
 
@@ -359,43 +349,43 @@ unsigned int Tetrahedron::GetNumNodes(ElmtConfig pConf)
 void Tetrahedron::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
 {
     int n = m_edge[0]->GetNodeCount();
-    nodeList.resize(n*(n+1)*(n+2)/6);
+    nodeList.resize(n * (n + 1) * (n + 2) / 6);
 
     nodeList[0] = m_vertex[0];
     nodeList[1] = m_vertex[1];
     nodeList[2] = m_vertex[2];
     nodeList[3] = m_vertex[3];
-    int k = 4;
+    int k       = 4;
 
-    for(int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)
     {
         bool reverseEdge = false;
-        if(i < 3)
+        if (i < 3)
         {
             reverseEdge = m_edge[i]->m_n1 == m_vertex[i];
         }
         else
         {
-            reverseEdge = m_edge[i]->m_n1 == m_vertex[i-3];
+            reverseEdge = m_edge[i]->m_n1 == m_vertex[i - 3];
         }
 
         if (reverseEdge)
         {
-            for(int j = 0; j < n-2; j++)
+            for (int j = 0; j < n - 2; j++)
             {
                 nodeList[k++] = m_edge[i]->m_edgeNodes[j];
             }
         }
         else
         {
-            for(int j = n-3; j >= 0; j--)
+            for (int j = n - 3; j >= 0; j--)
             {
                 nodeList[k++] = m_edge[i]->m_edgeNodes[j];
             }
         }
     }
 
-    vector<vector<int> > ts;
+    vector<vector<int>> ts;
     vector<int> t(3);
     t[0] = m_vertex[0]->m_id;
     t[1] = m_vertex[1]->m_id;
@@ -414,7 +404,7 @@ void Tetrahedron::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     t[2] = m_vertex[3]->m_id;
     ts.push_back(t);
 
-    for(int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
         vector<int> fcid;
         fcid.push_back(m_face[i]->m_vertexList[0]->m_id);
@@ -425,24 +415,22 @@ void Tetrahedron::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
 
         hot.Align(ts[i]);
 
-        std::copy(hot.surfVerts.begin(),
-                  hot.surfVerts.end(),
+        std::copy(hot.surfVerts.begin(), hot.surfVerts.end(),
                   nodeList.begin() + k);
-        k+= hot.surfVerts.size();
+        k += hot.surfVerts.size();
     }
 
-    std::copy(m_volumeNodes.begin(),
-              m_volumeNodes.end(),
-              nodeList.begin() + k);
+    std::copy(m_volumeNodes.begin(), m_volumeNodes.end(), nodeList.begin() + k);
 }
 
 /**
  * @brief Helper function to sort 3 numbers using sorting network.
  */
-template<typename K>
-void sort3(K& x, K& y, K& z)
+template <typename K> void sort3(K &x, K &y, K &z)
 {
-#define SWAP(a,b) if (a > b) std::swap(a,b);
+#define SWAP(a, b)                                                             \
+    if (a > b)                                                                 \
+        std::swap(a, b);
     SWAP(y, z);
     SWAP(x, z);
     SWAP(x, y);
@@ -514,7 +502,7 @@ void Tetrahedron::OrientTet()
     // distance of top vertex from base
     NekDouble dist = cx * nx + cy * ny + cz * nz;
 
-    if (fabs(dist) / area <= 1e-4 )
+    if (fabs(dist) / area <= 1e-4)
     {
         cerr << "Warning: degenerate tetrahedron, 3rd vertex is = " << dist
              << " from face" << endl;
@@ -592,5 +580,5 @@ void Tetrahedron::OrientTet()
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

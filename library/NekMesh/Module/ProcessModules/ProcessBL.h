@@ -73,7 +73,7 @@ public:
     /// Write mesh to output file.
     virtual void Process();
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -129,7 +129,7 @@ private:
     std::vector<unsigned int> m_symSurfs;
     /// data structure used to store and develop bl information
     std::map<NodeSharedPtr, blInfoSharedPtr> m_blData;
-    std::map<NodeSharedPtr, std::vector<blInfoSharedPtr> >
+    std::map<NodeSharedPtr, std::vector<blInfoSharedPtr>>
         m_nToNInfo; // node to neighbouring information
     std::map<ElementSharedPtr, ElementSharedPtr> m_priToTri;
     std::vector<ElementSharedPtr> m_psuedoSurface;
@@ -139,7 +139,7 @@ private:
 };
 
 typedef std::shared_ptr<BLMesh> BLMeshSharedPtr;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif
