@@ -71,5 +71,5 @@ void OutputXml::Process(po::variables_map &vm)
     m_f->m_graph->WriteGeometry(filename);
     cout << "Written file: " << filename << endl;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

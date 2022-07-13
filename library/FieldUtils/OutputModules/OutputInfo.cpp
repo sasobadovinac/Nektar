@@ -49,16 +49,15 @@ namespace Nektar
 namespace FieldUtils
 {
 
-ModuleKey OutputInfo::m_className =
-    GetModuleFactory().RegisterCreatorFunction(ModuleKey(eOutputModule, "info"),
-                                               OutputInfo::create,
-                                               "Writes an Info file.");
+ModuleKey OutputInfo::m_className = GetModuleFactory().RegisterCreatorFunction(
+    ModuleKey(eOutputModule, "info"), OutputInfo::create,
+    "Writes an Info file.");
 
 OutputInfo::OutputInfo(FieldSharedPtr f) : OutputModule(f)
 {
-    m_config["nparts"] = ConfigOption(
-        false, "NotSet",
-        "Number of partitions over which to create the info file");
+    m_config["nparts"] =
+        ConfigOption(false, "NotSet",
+                     "Number of partitions over which to create the info file");
 }
 
 OutputInfo::~OutputInfo()
@@ -86,7 +85,7 @@ void OutputInfo::Process(po::variables_map &vm)
     // open file and setup meta data.
     fs::path pinfilename(filename);
     std::vector<std::string> filenames;
-    std::vector<std::vector<unsigned int> > ElementIDs;
+    std::vector<std::vector<unsigned int>> ElementIDs;
 
     for (int p = 0; p < nparts; ++p)
     {
@@ -94,9 +93,9 @@ void OutputInfo::Process(po::variables_map &vm)
         pad % p % "fld";
         std::string s = pad.str();
 
-        fs::path fullpath              = pinfilename / s;
-        string fname                   = LibUtilities::PortablePath(fullpath);
-        if(!fs::exists(fname))
+        fs::path fullpath = pinfilename / s;
+        string fname      = LibUtilities::PortablePath(fullpath);
+        if (!fs::exists(fname))
         {
             continue;
         }
@@ -104,15 +103,15 @@ void OutputInfo::Process(po::variables_map &vm)
             LibUtilities::XmlDataSource::create(fname);
 
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> fielddefs;
-        std::vector<unsigned int>              PartElmtIDs;
+        std::vector<unsigned int> PartElmtIDs;
 
         // read in header of partition if it exists
-        fldXml->ImportFieldDefs(dataSource,fielddefs,false);
+        fldXml->ImportFieldDefs(dataSource, fielddefs, false);
 
         // create ElmenetIDs list then use
-        for(int i = 0; i < fielddefs.size(); ++i)
+        for (int i = 0; i < fielddefs.size(); ++i)
         {
-            for(int j = 0; j < fielddefs[i]->m_elementIDs.size(); ++j)
+            for (int j = 0; j < fielddefs[i]->m_elementIDs.size(); ++j)
             {
                 PartElmtIDs.push_back(fielddefs[i]->m_elementIDs[j]);
             }
@@ -126,8 +125,8 @@ void OutputInfo::Process(po::variables_map &vm)
     string infofile =
         LibUtilities::PortablePath(pinfilename / fs::path("Info.xml"));
 
-    fldXml->WriteMultiFldFileIDs(infofile,filenames, ElementIDs);
+    fldXml->WriteMultiFldFileIDs(infofile, filenames, ElementIDs);
 }
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

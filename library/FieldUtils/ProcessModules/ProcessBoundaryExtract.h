@@ -74,9 +74,8 @@ public:
     {
         return eBndExtraction;
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

@@ -48,8 +48,7 @@ namespace FieldUtils
 {
 ModuleKey ProcessMapping::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "mapping"),
-        ProcessMapping::create,
+        ModuleKey(eProcessModule, "mapping"), ProcessMapping::create,
         "Add mapping coordinates to output file.");
 
 ProcessMapping::ProcessMapping(FieldSharedPtr f) : ProcessModule(f)
@@ -99,7 +98,7 @@ void ProcessMapping::Process(po::variables_map &vm)
         {
             m_f->m_fieldMetaDataMap["MappingCartesianVel"] = "True";
 
-            Array<OneD, Array<OneD, NekDouble> > vel(spacedim);
+            Array<OneD, Array<OneD, NekDouble>> vel(spacedim);
             // Initialize arrays and copy velocity
             for (int i = 0; i < spacedim; ++i)
             {
@@ -137,14 +136,13 @@ void ProcessMapping::Process(po::variables_map &vm)
     }
 
     // Get coordinates from mapping
-    Array<OneD, Array<OneD, NekDouble> > coords(3);
+    Array<OneD, Array<OneD, NekDouble>> coords(3);
     mapping->GetCartesianCoordinates(coords[0], coords[1], coords[2]);
 
     // Add new information to m_f
     for (int i = 0; i < addfields; ++i)
     {
-        m_f->m_exp[nfields + i] =
-            m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(npoints, coords[i], 1,
                      m_f->m_exp[nfields + i]->UpdatePhys(), 1);
         m_f->m_exp[nfields + i]->FwdTrans_IterPerExp(
@@ -178,8 +176,8 @@ GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)
     int spacedim = expdim + f->m_numHomogeneousDir;
 
     // Declare coordinates storage
-    Array<OneD, Array<OneD, NekDouble> > coords_new(3);
-    Array<OneD, Array<OneD, NekDouble> > coords_vel(3);
+    Array<OneD, Array<OneD, NekDouble>> coords_new(3);
+    Array<OneD, Array<OneD, NekDouble>> coords_vel(3);
     for (int i = 0; i < 3; i++)
     {
         coords_new[i] = Array<OneD, NekDouble>(npoints);
@@ -215,7 +213,7 @@ GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)
             }
 
             // Get original coordinates (in case some of them are not changed)
-            Array<OneD, Array<OneD, NekDouble> > coords(3);
+            Array<OneD, Array<OneD, NekDouble>> coords(3);
             for (int i = 0; i < 3; i++)
             {
                 coords[i] = Array<OneD, NekDouble>(npoints);
@@ -266,7 +264,7 @@ GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)
                      "FileName parameter for Mapping missing in field file.");
             string fileName = f->m_fieldMetaDataMap["FileName"];
             std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef;
-            std::vector<std::vector<NekDouble> > FieldData;
+            std::vector<std::vector<NekDouble>> FieldData;
 
             f->FieldIOForFile(fileName)->Import(fileName, FieldDef, FieldData);
 
@@ -307,8 +305,8 @@ GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)
     else
     {
         // Use trivial mapping
-        Array<OneD, Array<OneD, NekDouble> > coords(3);
-        Array<OneD, Array<OneD, NekDouble> > coords_vel(3);
+        Array<OneD, Array<OneD, NekDouble>> coords(3);
+        Array<OneD, Array<OneD, NekDouble>> coords_vel(3);
         for (int i = 0; i < 3; i++)
         {
             coords[i]     = Array<OneD, NekDouble>(npoints);
@@ -321,5 +319,5 @@ GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)
 
     return mapping;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

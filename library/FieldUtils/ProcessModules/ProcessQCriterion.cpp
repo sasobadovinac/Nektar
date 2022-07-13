@@ -49,8 +49,7 @@ namespace FieldUtils
 
 ModuleKey ProcessQCriterion::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "QCriterion"),
-        ProcessQCriterion::create,
+        ModuleKey(eProcessModule, "QCriterion"), ProcessQCriterion::create,
         "Computes Q-Criterion.");
 
 ProcessQCriterion::ProcessQCriterion(FieldSharedPtr f) : ProcessModule(f)
@@ -77,18 +76,19 @@ void ProcessQCriterion::Process(po::variables_map &vm)
     int expdim   = m_f->m_graph->GetMeshDimension();
     int spacedim = expdim + (m_f->m_numHomogeneousDir);
 
-    ASSERTL0(spacedim == 3 || spacedim == 2,
+    ASSERTL0(
+        spacedim == 3 || spacedim == 2,
         "ProcessQCriterion must be computed for a 2D, quasi-3D, or 3D case.");
 
     int npoints = m_f->m_exp[0]->GetNpoints();
 
-    Array<OneD, Array<OneD, NekDouble> > grad(spacedim * spacedim);
+    Array<OneD, Array<OneD, NekDouble>> grad(spacedim * spacedim);
 
     Array<OneD, NekDouble> omega(npoints, 0.);
     Array<OneD, NekDouble> S(npoints, 0.);
 
     // Will store the Q-Criterion
-    Array<OneD, NekDouble> outfield (npoints);
+    Array<OneD, NekDouble> outfield(npoints);
 
     int nstrips;
 
@@ -115,24 +115,20 @@ void ProcessQCriterion::Process(po::variables_map &vm)
 
             // W_z = Vx - Uy
             Vmath::Vsub(npoints, grad[1 * spacedim + 0], 1,
-                                grad[0 * spacedim + 1], 1,
-                                outfield, 1);
+                        grad[0 * spacedim + 1], 1, outfield, 1);
             // W_z^2
             Vmath::Vmul(npoints, outfield, 1, outfield, 1, omega, 1);
 
             // Ux^2
             Vmath::Vmul(npoints, grad[0 * spacedim + 0], 1,
-                                grad[0 * spacedim + 0], 1,
-                                S, 1);
+                        grad[0 * spacedim + 0], 1, S, 1);
             // Vy^2
-            Vmath::Vvtvp(npoints,grad[1 * spacedim + 1], 1,
-                                grad[1 * spacedim + 1], 1,
-                                S, 1, S, 1);
+            Vmath::Vvtvp(npoints, grad[1 * spacedim + 1], 1,
+                         grad[1 * spacedim + 1], 1, S, 1, S, 1);
 
             // Vx + Uy
             Vmath::Vadd(npoints, grad[1 * spacedim + 0], 1,
-                                grad[0 * spacedim + 1], 1,
-                                outfield, 1);
+                        grad[0 * spacedim + 1], 1, outfield, 1);
             Vmath::Vmul(npoints, outfield, 1, outfield, 1, outfield, 1);
             Vmath::Svtvp(npoints, fac, outfield, 1, S, 1, S, 1);
 
@@ -163,63 +159,54 @@ void ProcessQCriterion::Process(po::variables_map &vm)
 
             // W_x = Wy - Vz
             Vmath::Vsub(npoints, grad[2 * spacedim + 1], 1,
-                                grad[1 * spacedim + 2], 1,
-                                outfield1, 1);
+                        grad[1 * spacedim + 2], 1, outfield1, 1);
             // W_x^2
             Vmath::Vmul(npoints, outfield1, 1, outfield1, 1, outfield1, 1);
 
             // W_y = Uz - Wx
             Vmath::Vsub(npoints, grad[0 * spacedim + 2], 1,
-                                grad[2 * spacedim + 0], 1,
-                                outfield2, 1);
+                        grad[2 * spacedim + 0], 1, outfield2, 1);
             // W_y^2
             Vmath::Vmul(npoints, outfield2, 1, outfield2, 1, outfield2, 1);
 
             // W_z = Vx - Uy
             Vmath::Vsub(npoints, grad[1 * spacedim + 0], 1,
-                                grad[0 * spacedim + 1], 1,
-                                outfield3, 1);
+                        grad[0 * spacedim + 1], 1, outfield3, 1);
             // W_z^2
             Vmath::Vmul(npoints, outfield3, 1, outfield3, 1, outfield3, 1);
 
             // Omega = 0.5*(W_x^2 + W_y^2 + W_z^2)
             Vmath::Vadd(npoints, outfield1, 1, outfield2, 1, omega, 1);
-            Vmath::Vadd(npoints, omega,     1, outfield3, 1, omega, 1);
+            Vmath::Vadd(npoints, omega, 1, outfield3, 1, omega, 1);
             Vmath::Smul(npoints, fac, omega, 1, omega, 1);
 
             // Ux^2
             Vmath::Vmul(npoints, grad[0 * spacedim + 0], 1,
-                                grad[0 * spacedim + 0], 1,
-                                outfield1, 1);
+                        grad[0 * spacedim + 0], 1, outfield1, 1);
             // Vy^2
             Vmath::Vmul(npoints, grad[1 * spacedim + 1], 1,
-                                grad[1 * spacedim + 1], 1,
-                                outfield2, 1);
+                        grad[1 * spacedim + 1], 1, outfield2, 1);
             // Wz^2
             Vmath::Vmul(npoints, grad[2 * spacedim + 2], 1,
-                                grad[2 * spacedim + 2], 1,
-                                outfield3, 1);
+                        grad[2 * spacedim + 2], 1, outfield3, 1);
 
             //
             Vmath::Vadd(npoints, outfield1, 1, outfield2, 1, S, 1);
-            Vmath::Vadd(npoints, S,         1, outfield3, 1, S, 1);
+            Vmath::Vadd(npoints, S, 1, outfield3, 1, S, 1);
 
             // Wy + Vz
             Vmath::Vadd(npoints, grad[2 * spacedim + 1], 1,
-                                grad[1 * spacedim + 2], 1,
-                                outfield1, 1);
+                        grad[1 * spacedim + 2], 1, outfield1, 1);
             Vmath::Vmul(npoints, outfield1, 1, outfield1, 1, outfield1, 1);
 
             // Uz + Wx
             Vmath::Vadd(npoints, grad[0 * spacedim + 2], 1,
-                                grad[2 * spacedim + 0], 1,
-                                outfield2, 1);
+                        grad[2 * spacedim + 0], 1, outfield2, 1);
             Vmath::Vmul(npoints, outfield2, 1, outfield2, 1, outfield2, 1);
 
             // Vx + Uy
             Vmath::Vadd(npoints, grad[1 * spacedim + 0], 1,
-                                grad[0 * spacedim + 1], 1,
-                                outfield3, 1);
+                        grad[0 * spacedim + 1], 1, outfield3, 1);
             Vmath::Vmul(npoints, outfield3, 1, outfield3, 1, outfield3, 1);
 
             Vmath::Vadd(npoints, outfield1, 1, outfield2, 1, outfield2, 1);
@@ -242,5 +229,5 @@ void ProcessQCriterion::Process(po::variables_map &vm)
     }
 }
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
