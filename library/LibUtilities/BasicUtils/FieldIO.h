@@ -268,15 +268,7 @@ protected:
     bool                        m_sharedFilesystem;
 
     LIB_UTILITIES_EXPORT int CheckFieldDefinition(
-        const FieldDefinitionsSharedPtr &fielddefs)
-    {
-        std::vector<unsigned int> coeffsPerElmt;
-        return CheckFieldDefinition(fielddefs, coeffsPerElmt);
-    }
-
-    LIB_UTILITIES_EXPORT int CheckFieldDefinition(
-        const FieldDefinitionsSharedPtr &fielddefs, 
-              std::vector<unsigned int> &coeffsPerElmt);
+        const FieldDefinitionsSharedPtr &fielddefs);
 
     LIB_UTILITIES_EXPORT std::vector<unsigned int> GetNumberOfCoeffsPerElement(
         const FieldDefinitionsSharedPtr &fielddefs);

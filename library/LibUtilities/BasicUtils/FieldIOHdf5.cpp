@@ -1062,8 +1062,8 @@ void FieldIOHdf5::v_Import(const std::string &infilename,
                 if (selective)
                 {
                     // Determine number of modes (coefficients) per element
-                    std::vector<unsigned int> coeffsPerElmt;
-                    CheckFieldDefinition(fielddef, coeffsPerElmt);
+                    std::vector<unsigned int> coeffsPerElmt{
+                        GetNumberOfCoeffsPerElement(fielddef)};
 
                     // Selected element IDs
                     std::vector<unsigned int> newElementIDs;

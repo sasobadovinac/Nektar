@@ -687,12 +687,10 @@ int GetNumberOfDataPoints(const FieldDefinitionsSharedPtr &fielddefs, unsigned i
  *
  * @param fielddefs  Field definitions to check.
  */
-int FieldIO::CheckFieldDefinition(
-    const FieldDefinitionsSharedPtr &fielddefs,
-          std::vector<unsigned int> &coeffsPerElmt)
+int FieldIO::CheckFieldDefinition(const FieldDefinitionsSharedPtr &fielddefs)
 {
-    
-    if (fielddefs->m_elementIDs.size() == 0) // empty partition
+    // Return 0 if this is an empty parition
+    if (fielddefs->m_elementIDs.size() == 0)
     {
         return 0;
     }
@@ -735,221 +733,31 @@ int FieldIO::CheckFieldDefinition(
     ASSERTL0(fielddefs->m_basis.size() == numbasis,
              "Length of basis vector is incorrect");
 
-    coeffsPerElmt.resize(fielddefs->m_elementIDs.size());
-
     if (fielddefs->m_uniOrder == true)
     {
+        // Counter is updated by "GetNumberOfDataPoints()"
         unsigned int cnt = 0;
-        // calculate datasize
-        int datasize = GetNumberOfDataPoints(fielddefs, cnt);
 
-        /*
-        switch (fielddefs->m_shapeType)
-        {
-            case eSegment:
-            {
-                int l = fielddefs->m_numModes[cnt++];
-                if (fielddefs->m_numHomogeneousDir == 1)
-                {
-                    NCoeffs = l * fielddefs->m_homogeneousZIDs.size();
-                    cnt++;
-                }
-                else if (fielddefs->m_numHomogeneousDir == 2)
-                {
-                    NCoeffs = l * fielddefs->m_homogeneousYIDs.size();
-                    cnt += 2;
-                }
-                else
-                {
-                    NCoeffs = l;
-                }
-            }
-            break;
-            case eTriangle:
-            {
-                int l = fielddefs->m_numModes[cnt++];
-                int m = fielddefs->m_numModes[cnt++];
+        const int datasize = GetNumberOfDataPoints(fielddefs, cnt);
 
-                if (fielddefs->m_numHomogeneousDir == 1)
-                {
-                    NCoeffs = StdTriData::getNumberOfCoefficients(l, m) *
-                              fielddefs->m_homogeneousZIDs.size();
-                }
-                else
-                {
-                    NCoeffs = StdTriData::getNumberOfCoefficients(l, m);
-                }
-            }
-            break;
-            case eQuadrilateral:
-            {
-                int l = fielddefs->m_numModes[cnt++];
-                int m = fielddefs->m_numModes[cnt++];
-                if (fielddefs->m_numHomogeneousDir == 1)
-                {
-                    NCoeffs = StdQuadData::getNumberOfCoefficients(l, m) * 
-                              fielddefs->m_homogeneousZIDs.size();
-                }
-                else
-                {
-                    NCoeffs = StdQuadData::getNumberOfCoefficients(l, m);
-                }
-            }
-            break;
-            case eTetrahedron:
-            {
-                int l = fielddefs->m_numModes[cnt++];
-                int m = fielddefs->m_numModes[cnt++];
-                int n = fielddefs->m_numModes[cnt++];
-                NCoeffs = StdTetData::getNumberOfCoefficients(l, m, n);
-            }
-            break;
-            case ePyramid:
-            {
-                int l = fielddefs->m_numModes[cnt++];
-                int m = fielddefs->m_numModes[cnt++];
-                int n = fielddefs->m_numModes[cnt++];
-                NCoeffs = StdPyrData::getNumberOfCoefficients(l, m, n);
-            }
-            break;
-            case ePrism:
-            {
-                int l = fielddefs->m_numModes[cnt++];
-                int m = fielddefs->m_numModes[cnt++];
-                int n = fielddefs->m_numModes[cnt++];
-                NCoeffs = StdPrismData::getNumberOfCoefficients(l, m, n);
-            }
-            break;
-            case eHexahedron:
-            {
-                int l = fielddefs->m_numModes[cnt++];
-                int m = fielddefs->m_numModes[cnt++];
-                int n = fielddefs->m_numModes[cnt++];
-                NCoeffs = StdHexData::getNumberOfCoefficients(l, m, n);
-            }
-            break;
-            default:
-                NEKERROR(ErrorUtil::efatal, "Unsupported shape type.");
-                break;
-        }
-        */
-
-        // Store the number of coefficients/modes per element
-        for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
-        {
-            coeffsPerElmt[i] = datasize;
-        }
-
+        return datasize * fielddefs->m_elementIDs.size();
     }
     else
     {
+        // Counter is updated by "GetNumberOfDataPoints()"
         unsigned int cnt = 0;
+
+        int datasize = 0;
+
         for (int i = 0; i < fielddefs->m_elementIDs.size(); ++i)
         {
-            // calculate datasize
-            int datasize = GetNumberOfDataPoints(fielddefs, cnt);
-
-            /*
-            switch (fielddefs->m_shapeType)
-            {
-                case eSegment:
-                {
-                    int l = fielddefs->m_numModes[cnt++];
-                    if (fielddefs->m_numHomogeneousDir == 1)
-                    {
-                        NCoeffs = l * fielddefs->m_homogeneousZIDs.size();
-                        cnt++;
-                    }
-                    else if (fielddefs->m_numHomogeneousDir == 2)
-                    {
-                        NCoeffs = l * fielddefs->m_homogeneousYIDs.size();
-                        cnt += 2;
-                    }
-                    else
-                    {
-                        NCoeffs = l;
-                    }
-                }
-                break;
-                case eTriangle:
-                {
-                    int l = fielddefs->m_numModes[cnt++];
-                    int m = fielddefs->m_numModes[cnt++];
-                    if (fielddefs->m_numHomogeneousDir == 1)
-                    {
-                        NCoeffs = StdTriData::getNumberOfCoefficients(l, m) *
-                                  fielddefs->m_homogeneousZIDs.size();
-                        cnt++;
-                    }
-                    else
-                    {
-                        NCoeffs = StdTriData::getNumberOfCoefficients(l, m);
-                    }
-                }
-                break;
-                case eQuadrilateral:
-                {
-                    int l = fielddefs->m_numModes[cnt++];
-                    int m = fielddefs->m_numModes[cnt++];
-                    if (fielddefs->m_numHomogeneousDir == 1)
-                    {
-                        NCoeffs = StdQuadData::getNumberOfCoefficients(l, m) * 
-                                  fielddefs->m_homogeneousZIDs.size();
-                        cnt++;
-                    }
-                    else
-                    {
-                        NCoeffs = StdQuadData::getNumberOfCoefficients(l, m);
-                    }
-                }
-                break;
-                case eTetrahedron:
-                {
-                    int l = fielddefs->m_numModes[cnt++];
-                    int m = fielddefs->m_numModes[cnt++];
-                    int n = fielddefs->m_numModes[cnt++];
-                    NCoeffs = StdTetData::getNumberOfCoefficients(l, m, n);
-                }
-                break;
-                case ePyramid:
-                {
-                    int l = fielddefs->m_numModes[cnt++];
-                    int m = fielddefs->m_numModes[cnt++];
-                    int n = fielddefs->m_numModes[cnt++];
-                    NCoeffs = StdPyrData::getNumberOfCoefficients(l, m, n);
-                }
-                break;
-                case ePrism:
-                {
-                    int l = fielddefs->m_numModes[cnt++];
-                    int m = fielddefs->m_numModes[cnt++];
-                    int n = fielddefs->m_numModes[cnt++];
-                    NCoeffs = StdPrismData::getNumberOfCoefficients(l, m, n);
-                }
-                break;
-                case eHexahedron:
-                {
-                    int l = fielddefs->m_numModes[cnt++];
-                    int m = fielddefs->m_numModes[cnt++];
-                    int n = fielddefs->m_numModes[cnt++];
-                    NCoeffs = StdHexData::getNumberOfCoefficients(l, m, n);
-                }
-                break;
-                default:
-                    NEKERROR(ErrorUtil::efatal, "Unsupported shape type.");
-                    break;
-            }
-            */
-
-            // Store number of coefficients/modes in this element
-            coeffsPerElmt[i] = datasize;
-
+            datasize += GetNumberOfDataPoints(fielddefs, cnt);
         }
+
+        return datasize;
     }
-
-    return std::accumulate(coeffsPerElmt.begin(), coeffsPerElmt.end(), int{0});
-
 }
+
 /**
  * @brief Compute number of data points needed to store expansion inside
  *        each element.
