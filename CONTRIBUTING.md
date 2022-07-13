@@ -235,9 +235,13 @@ which accepts the name of the source branch as the sole argument.
 ## Formatting guidelines
 Nektar++ uses C++, a language notorious for being easy to make obtuse and
 difficult to follow code. To hopefully alleviate this problem, there are a
-number of fairly simple formatting guidelines you should follow. We are
-reasonably relaxed about code formatting, but if you can follow the guidelines
-below this would be fantastic.
+number of fairly simple formatting guidelines you should follow.
+
+To help with this, we now require the use of clang-format to ensure all code in
+the library is formatted consistently (see below). When adding new
+contributions, or making changes to existing code, please ensure you run
+clang-format on these files to ensure the formatting complies with our
+guidelines. There is a CI job which will verify that no further formatting changes are required before merging.
 
 ### Basic rules
 - All code should be wrapped to 80 characters.
@@ -280,12 +284,10 @@ below this would be fantastic.
 
 ### Using `clang-format`
 Code formatting is reasonably boring, so Nektar++ comes with a `.clang-format`
-file to allow for automatic code formatting. As noted above, you can use this
-for new files, or cosmetic `tidy/*` branches, but try to stick to existing
-formatting elsewhere.
+file to allow for automatic code formatting.
 
 Installing it is straightforward on most package managers. Nektar++ relies on
-options that are used in version 3.7 or later.
+options that are used in version 11 or later.
 
 There are a number of instructions on how to use `clang-format` inside a number
 of text editors on the
