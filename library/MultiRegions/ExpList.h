@@ -354,10 +354,23 @@ namespace Nektar
             /// Smooth a field across elements
             inline void SmoothField(Array<OneD,NekDouble> &field);
 
-            /// Solve helmholtz problem
+            /// Solve helmholtz problem - Array input
             inline void HelmSolve(
                 const Array<OneD, const NekDouble> &inarray,
                       Array<OneD,       NekDouble> &outarray,
+                const StdRegions::ConstFactorMap &factors,
+                const StdRegions::VarCoeffMap &varcoeff =
+                                StdRegions::NullVarCoeffMap,
+                const MultiRegions::VarFactorsMap &varfactors =
+                                 MultiRegions::NullVarFactorsMap,
+                const Array<OneD, const NekDouble> &dirForcing =
+                NullNekDouble1DArray,
+                const bool PhysSpaceForcing = true);
+
+	    /// Solve helmholtz problem - FieldStorage input 
+            inline void HelmSolve(
+                const FieldStorage<const NekDouble, MultiRegions::ePhys> &in,
+		FieldStorage<      NekDouble, MultiRegions::eCoeff> &out,
                 const StdRegions::ConstFactorMap &factors,
                 const StdRegions::VarCoeffMap &varcoeff =
                                 StdRegions::NullVarCoeffMap,
@@ -2098,7 +2111,23 @@ namespace Nektar
                         varfactors, dirForcing, PhysSpaceForcing);
         }
 
+        /**
+         * Helmholtz operator using Field Storage i/o
+         */
+        inline void ExpList::HelmSolve(
+            const FieldStorage<const NekDouble, MultiRegions::ePhys>  &in,
+ 		  FieldStorage<      NekDouble, MultiRegions::eCoeff> &out,
+            const StdRegions::ConstFactorMap &factors,
+            const StdRegions::VarCoeffMap &varcoeff,
+            const MultiRegions::VarFactorsMap &varfactors,
+            const Array<OneD, const NekDouble> &dirForcing,
+            const bool PhysSpaceForcing)
 
+        {
+	     v_HelmSolve(in.GetData(), out.UpdateData(), factors, varcoeff,
+                        varfactors, dirForcing, PhysSpaceForcing);
+        }
+		
         /**
          *
          */
