@@ -52,10 +52,12 @@
 // From <boost/python/detail/is_shared_ptr.hpp>
 //
 
+// clang-format off
 #define IS_SHARED_PTR_DWA2003224_HPP
 
 #include <boost/python/detail/is_xxx.hpp>
 #include <boost/shared_ptr.hpp>
+// clang-format on
 
 namespace boost
 {
@@ -77,15 +79,17 @@ template <typename T> struct is_shared_ptr<std::shared_ptr<T>> : std::true_type
 // From <boost/python/converter/registered.hpp>
 //
 
-#include <boost/detail/workaround.hpp>
-#include <boost/python/converter/registrations.hpp>
-#include <boost/python/converter/registry.hpp>
+// clang-format off
 #include <boost/python/type_id.hpp>
-#include <boost/type.hpp>
+#include <boost/python/converter/registry.hpp>
+#include <boost/python/converter/registrations.hpp>
+#include <boost/type_traits/transform_traits.hpp>
 #include <boost/type_traits/cv_traits.hpp>
 #include <boost/type_traits/is_void.hpp>
-#include <boost/type_traits/transform_traits.hpp>
+#include <boost/detail/workaround.hpp>
+#include <boost/type.hpp>
 #include <memory>
+// clang-format on
 
 namespace boost
 {
@@ -108,9 +112,11 @@ template <class T> inline void register_shared_ptr0(std::shared_ptr<T> *)
 
 // From <boost/python/detail/value_is_shared_ptr.hpp>
 
+// clang-format off
 #define VALUE_IS_SHARED_PTR_DWA2003224_HPP
-#include <boost/python/detail/is_shared_ptr.hpp>
 #include <boost/python/detail/value_is_xxx.hpp>
+#include <boost/python/detail/is_shared_ptr.hpp>
+// clang-format on
 
 namespace boost
 {
@@ -134,17 +140,19 @@ template <class X_> struct value_is_shared_ptr
 // From <boost/python/converter/shared_ptr_from_python.hpp>
 //
 
+// clang-format off
 #define SHARED_PTR_FROM_PYTHON_DWA20021130_HPP
 
-#include <boost/python/converter/from_python.hpp>
-#include <boost/python/converter/registered.hpp>
-#include <boost/python/converter/rvalue_from_python_data.hpp>
-#include <boost/python/converter/shared_ptr_deleter.hpp>
 #include <boost/python/handle.hpp>
+#include <boost/python/converter/shared_ptr_deleter.hpp>
+#include <boost/python/converter/from_python.hpp>
+#include <boost/python/converter/rvalue_from_python_data.hpp>
+#include <boost/python/converter/registered.hpp>
 #ifndef BOOST_PYTHON_NO_PY_SIGNATURES
-#include <boost/python/converter/pytype_function.hpp>
+# include <boost/python/converter/pytype_function.hpp>
 #endif
 #include <boost/shared_ptr.hpp>
+// clang-format on
 
 namespace boost
 {
@@ -217,10 +225,12 @@ template <class T> struct shared_ptr_from_python
 // From <boost/python/converter/shared_ptr_to_python.hpp>
 //
 
-#include <boost/get_pointer.hpp>
+// clang-format off
+#include <boost/python/refcount.hpp>
 #include <boost/python/converter/shared_ptr_deleter.hpp>
 #include <boost/python/detail/none.hpp>
-#include <boost/python/refcount.hpp>
+#include <boost/get_pointer.hpp>
+// clang-format on
 
 namespace boost
 {
@@ -250,27 +260,29 @@ template <class T> PyObject *shared_ptr_to_python(std::shared_ptr<T> const &x)
 // variables.
 //
 
+// clang-format off
 #define TO_PYTHON_VALUE_DWA200221_HPP
 #include <boost/python/detail/prefix.hpp>
 
-#include <boost/python/handle.hpp>
 #include <boost/python/refcount.hpp>
 #include <boost/python/tag.hpp>
+#include <boost/python/handle.hpp>
 
+#include <boost/python/converter/registry.hpp>
+#include <boost/python/converter/registered.hpp>
 #include <boost/python/converter/builtin_converters.hpp>
 #include <boost/python/converter/object_manager.hpp>
-#include <boost/python/converter/registered.hpp>
-#include <boost/python/converter/registry.hpp>
 #include <boost/python/converter/shared_ptr_to_python.hpp>
 
-#include <boost/python/detail/value_arg.hpp>
 #include <boost/python/detail/value_is_shared_ptr.hpp>
+#include <boost/python/detail/value_arg.hpp>
 
 #include <boost/type_traits/transform_traits.hpp>
 
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/or.hpp>
 #include <boost/type_traits/is_const.hpp>
+// clang-format on
 
 namespace boost
 {
