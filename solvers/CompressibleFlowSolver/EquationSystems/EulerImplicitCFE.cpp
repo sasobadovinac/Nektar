@@ -53,9 +53,9 @@ namespace Nektar
     {
     }
 
-    void EulerImplicitCFE::v_InitObject()
+    void EulerImplicitCFE::v_InitObject(bool DeclareFields)
     {
-        CFSImplicit::v_InitObject();
+        CFSImplicit::v_InitObject(DeclareFields);
         m_viscousJacFlag = false;
     }
 

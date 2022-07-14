@@ -69,7 +69,7 @@ CoupledAssemblyMap::CoupledAssemblyMap(
     const MultiRegions::AssemblyMapCGSharedPtr        &cgMap,
     const Array<OneD, const BoundaryCondShPtr>        &boundaryConditions,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields) :
-    AssemblyMapCG(pSession)
+    AssemblyMapCG(pSession,fields[0]->GetComm())
 {
     boost::ignore_unused(graph, boundaryConditions);
 

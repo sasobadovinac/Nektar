@@ -71,7 +71,7 @@ namespace Nektar
     NonlinearSWE(const LibUtilities::SessionReaderSharedPtr& pSession,
                  const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields=true);
     
     void DoOdeRhs(const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
 		  Array<OneD,  Array<OneD, NekDouble> > &outarray,

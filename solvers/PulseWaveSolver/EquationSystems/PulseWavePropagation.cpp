@@ -36,6 +36,7 @@
 #include <iostream>
 
 #include <PulseWaveSolver/EquationSystems/PulseWavePropagation.h>
+#include <LibUtilities/BasicUtils/Timer.h>
 
 using namespace std;
 
@@ -64,9 +65,14 @@ PulseWavePropagation::PulseWavePropagation(
 {
 }
 
-void PulseWavePropagation::v_InitObject()
+void PulseWavePropagation::v_InitObject(bool DeclareField)
 {
-    PulseWaveSystem::v_InitObject();
+    // Will set up an array of vessels/fields in PulseWaveSystem::v_InitObject
+    // so set DeclareField to false so that the fields are not set up in
+    // EquationSystem unnecessarily. Note the number of fields in Equation
+    // system is related to the number of variables. The number of vessels is
+    // therefore held in PulwWaveSystem.
+    PulseWaveSystem::v_InitObject(false);
 
     if (m_session->DefinesSolverInfo("PressureArea"))
     {
@@ -167,9 +173,11 @@ void PulseWavePropagation::DoOdeRhs(const Array<OneD,
     // do advection evaluation in all domains
     for (int omega = 0; omega < m_nDomains; ++omega)
     {
+        LibUtilities::Timer timer;
         m_currentDomain = omega;
         int nq = m_vessels[omega * m_nVariables]->GetTotPoints();
-
+        
+        timer.Start();
         for (i = 0; i < m_nVariables; ++i)
         {
             physarray[i] = inarray[i] + cnt;
@@ -187,7 +195,8 @@ void PulseWavePropagation::DoOdeRhs(const Array<OneD,
         {
             Vmath::Neg(nq, out[i], 1);
         }
-
+        timer.Stop();
+        timer.AccumulateRegion("PulseWavePropagation:_DoOdeRHS",1);
         cnt += nq;
     }
 }
@@ -234,15 +243,22 @@ void PulseWavePropagation::SetPulseWaveBoundaryConditions(
 
             for (int j = 0; j < 2; ++j)
             {
-                std::string BCType = vessel[0]->GetBndConditions()[j]->GetUserDefined();
-                if (BCType.empty()) // if not condition given define it to be NoUserDefined
+                std::string BCType;
+
+                if(j < vessel[0]->GetBndConditions().size())
+                {
+                    BCType = vessel[0]->GetBndConditions()[j]->
+                        GetUserDefined();
+                }
+                
+                // if no condition given define it to be NoUserDefined
+                if (BCType.empty() || BCType == "Interface")
                 {
                     BCType = "NoUserDefined";
                 }
 
-                m_Boundary[2 * omega + j] =
-                        GetBoundaryFactory().CreateInstance(BCType, m_vessels,
-                                                    m_session, m_pressureArea);
+                m_Boundary[2 * omega + j] = GetBoundaryFactory().CreateInstance(
+                    BCType, m_vessels, m_session, m_pressureArea);
 
                 // turn on time dependent BCs
                 if (BCType == "Q-inflow")
@@ -269,15 +285,19 @@ void PulseWavePropagation::SetPulseWaveBoundaryConditions(
     SetBoundaryConditions(time);
 
     // Loop over all vessels and set boundary conditions
+    LibUtilities::Timer timer;
     for (omega = 0; omega < m_nDomains; ++omega)
     {
+        timer.Start();
         for (int n = 0; n < 2; ++n)
         {
-            m_Boundary[2 * omega + n]->DoBoundary(inarray, m_A_0, m_beta, m_alpha,
-                                                       time, omega, offset, n);
+            m_Boundary[2 * omega + n]->DoBoundary(
+                inarray, m_A_0, m_beta, m_alpha, time, omega, offset, n);
         }
 
         offset += m_vessels[2 * omega]->GetTotPoints();
+        timer.Stop();
+        timer.AccumulateRegion("PulseWavePropagation:_SetBCs",1);
     }
 }
 
@@ -299,10 +319,15 @@ void PulseWavePropagation::GetFluxVector(
     m_pressure[domain] = Array<OneD, NekDouble>(nq);
     Array<OneD, NekDouble> dAUdx(nq);
     NekDouble viscoelasticGradient = 0.0;
+    
+    LibUtilities::Timer timer;
 
     for (int j = 0; j < nq; ++j)
     {
+        timer.Start();
         flux[0][0][j] = physfield[0][j] * physfield[1][j];
+        timer.Stop();
+        timer.AccumulateRegion("PulseWavePropagation:GetFluxVector-flux",3);
     }
 
     // d/dx of AU, for the viscoelastic tube law and extra fields

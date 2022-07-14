@@ -49,9 +49,9 @@ namespace Nektar
     {
     }
 
-    void EigenValuesAdvection::v_InitObject()
+    void EigenValuesAdvection::v_InitObject(bool DeclareFields)
     {
-        EquationSystem::v_InitObject();
+        EquationSystem::v_InitObject(DeclareFields);
 
         // Define Velocity fields
         m_velocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);

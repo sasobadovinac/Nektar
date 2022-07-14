@@ -491,7 +491,7 @@ CommSharedPtr CommMpi::v_CommCreateIf(int flag)
     // color == MPI_UNDEF => not in the new communicator
     // key == 0 on all => use rank to order them. OpenMPI, at least,
     // implies this is faster than ordering them ourselves.
-    MPI_Comm_split(m_comm, flag ? 0 : MPI_UNDEFINED, 0, &newComm);
+    MPI_Comm_split(m_comm, flag ? flag : MPI_UNDEFINED, 0, &newComm);
 
     if (flag == 0)
     {

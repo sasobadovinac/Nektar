@@ -116,7 +116,7 @@ namespace Nektar
         /// Get the normal velocity
         Array<OneD, NekDouble> &GetNormalVelocity();
 
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareFields=true);
 
         void GetFluxVector(
             const Array<OneD, Array<OneD, NekDouble> >               &physfield,

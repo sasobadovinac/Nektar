@@ -262,14 +262,14 @@ public:
         return m_compositesLabels;
     }
 
-    std::vector<std::map<int, CompositeSharedPtr>> &GetDomain()
+    std::map<int, std::map<int, CompositeSharedPtr>> &GetDomain()
     {
         return m_domain;
     }
 
     std::map<int, CompositeSharedPtr> &GetDomain(int domain)
     {
-        ASSERTL1(domain < m_domain.size(),
+        ASSERTL1(m_domain.count(domain),
                  "Request for domain which does not exist");
         return m_domain[domain];
     }
@@ -471,7 +471,7 @@ protected:
 
     CompositeMap m_meshComposites;
     std::map<int, std::string> m_compositesLabels;
-    std::vector<CompositeMap> m_domain;
+    std::map<int, CompositeMap> m_domain;
     LibUtilities::DomainRangeShPtr m_domainRange;
 
     ExpansionInfoMapShPtrMap m_expansionMapShPtrMap;

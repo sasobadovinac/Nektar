@@ -65,7 +65,7 @@ namespace Nektar
         EulerCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
                  const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareFields=true); 
     };
 }
 #endif

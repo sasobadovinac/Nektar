@@ -26,6 +26,7 @@ v5.2.0
 - Added a dummy output module OutputStdOut for NekMesh utilities that don't require an output file (!1318)
 - Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
+- Restrucutred the communicators to reduce direct dependence on session file communicator (!1337)
 - Fixed SIMD mask test (!1324)
 - Fix memory leak in Timer.cpp (!1330)
 - Fix cmake CWIPI option to remove Fortran check (!1331)
@@ -45,6 +46,9 @@ v5.2.0
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
 
+**PulseWaveSolver**
+- Parallelised solver (!1337)
+	
 **NekMesh**
 - Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
 - Small bug-fix for Python API for unused configuration options (!1348)

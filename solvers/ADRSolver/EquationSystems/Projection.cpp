@@ -48,9 +48,9 @@ Projection::Projection(const LibUtilities::SessionReaderSharedPtr &pSession,
 {
 }
 
-void Projection::v_InitObject()
+void Projection::v_InitObject(bool DeclareFields)
 {
-    EquationSystem::v_InitObject();
+    EquationSystem::v_InitObject(DeclareFields);
 
     GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
 }

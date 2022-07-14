@@ -57,9 +57,9 @@ namespace Nektar
 
     }
 
-    void NavierStokesCFEAxisym::v_InitObject()
+    void NavierStokesCFEAxisym::v_InitObject(bool DeclareFields)
     {
-        NavierStokesCFE::v_InitObject();
+        NavierStokesCFE::v_InitObject(DeclareFields);
 
         int nVariables = m_fields.size();
         int npoints    = GetNpoints();

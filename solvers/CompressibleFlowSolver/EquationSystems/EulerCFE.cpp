@@ -58,9 +58,9 @@ namespace Nektar
     {
     }
 
-    void EulerCFE::v_InitObject()
+    void EulerCFE::v_InitObject(bool DeclareFields)
     {
-        CompressibleFlowSystem::v_InitObject();
+        CompressibleFlowSystem::v_InitObject(DeclareFields);
     }
 
     /**

@@ -777,7 +777,7 @@ void OutputNekpp::TransferComposites(MeshGraphSharedPtr graph)
 
 void OutputNekpp::TransferDomain(MeshGraphSharedPtr graph)
 {
-    vector<SpatialDomains::CompositeMap> &domain = graph->GetDomain();
+    map<int,SpatialDomains::CompositeMap> &domain = graph->GetDomain();
 
     string list;
 
@@ -795,7 +795,7 @@ void OutputNekpp::TransferDomain(MeshGraphSharedPtr graph)
 
     SpatialDomains::CompositeMap fullDomain;
     graph->GetCompositeList(list, fullDomain);
-    domain.push_back(fullDomain);
+    domain[0] = fullDomain;
 }
 
 }
