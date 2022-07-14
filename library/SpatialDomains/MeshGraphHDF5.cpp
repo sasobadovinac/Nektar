@@ -1078,7 +1078,7 @@ void MeshGraphHDF5::ReadDomain()
     vector<string> data;
     dst->ReadVectorString(data, space, m_readPL);
     GetCompositeList(data[0], fullDomain);
-    m_domain.push_back(fullDomain);
+    m_domain[0] = fullDomain;
 }
 
 void MeshGraphHDF5::ReadComposites()
@@ -1488,7 +1488,7 @@ void MeshGraphHDF5::WriteComposites(CompositeMap &composites)
     dst->Write(c_map, ds);
 }
 
-void MeshGraphHDF5::WriteDomain(vector<CompositeMap> &domain)
+void MeshGraphHDF5::WriteDomain(map<int, CompositeMap> &domain)
 {
     vector<unsigned int> idxList;
     for (auto cIt = domain[0].begin(); cIt != domain[0].end(); ++cIt)

@@ -109,7 +109,7 @@ protected:
     /// Storage for the thermal stress terms.
     Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_stress;
 
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields=true);
     virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
     virtual void v_DoSolve();
     virtual void v_ExtraFldOutput(

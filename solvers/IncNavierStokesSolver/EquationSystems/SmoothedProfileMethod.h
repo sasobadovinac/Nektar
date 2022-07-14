@@ -67,7 +67,7 @@ namespace Nektar
         // Destructor
         virtual ~SmoothedProfileMethod();
 
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareField = true);
 
         virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
 

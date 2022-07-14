@@ -28,13 +28,28 @@ where $P_{0}$ is the external pressure, $A_{0}$ is the initial cross-sectional a
     P = P_{0} - \frac{\beta \sqrt{A_{0}}}{2\alpha}\ln{\left[1 - \alpha\ln{\left(\frac{A}{A_{0}}\right)}\right]} + \frac{\Gamma}{\sqrt{A}}\frac{\partial A}{\partial t}.
 \end{equation}
 
-Application of Riemann's method of characteristics to Eqs. \eqref{eqn:1DContMom} and \eqref{eqn:PA} indicates that velocity and area are propagated through the system by forward and backward travelling waves. These waves are reflected and within the network by appropriate treatment of interfaces and boundaries. In the following, we will explain the usage of the blood flow solver on the basis of a single-artery problem and
-also on an arterial network consisting of $55$ arteries.
+Application of Riemann's method of characteristics to
+Eqs. \eqref{eqn:1DContMom} and \eqref{eqn:PA} indicates that velocity
+and area are propagated through the system by forward and backward
+travelling waves. These waves are reflected and within the network by
+appropriate treatment of interfaces and boundaries. In the following,
+we will explain the usage of the blood flow solver on the basis of a
+single-artery problem and also on an arterial network consisting of
+$55$ arteries.
 
 \section{Usage}
+To execute in serial one should type
 \begin{lstlisting}[style=BashInputStyle]
 PulseWaveSolver session.xml
 \end{lstlisting}
+
+the solver can also be run in parallel if compiled with MPI sing the command
+
+\begin{lstlisting}[style=BashInputStyle]
+mpirn -n 2 PulseWaveSolver session.xml
+\end{lstlisting}
+
+where in this example 2 processors would be used. 
 
 \section{Session file configuration}
 

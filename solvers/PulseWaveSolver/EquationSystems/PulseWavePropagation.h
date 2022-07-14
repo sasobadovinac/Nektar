@@ -92,7 +92,7 @@ class PulseWavePropagation : public PulseWaveSystem
             const Array<OneD, const Array<OneD, NekDouble>> &inarray,
            Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareField = false);
 
         /// DG Pulse Wave Propagation routines:
         void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,

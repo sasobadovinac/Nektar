@@ -58,9 +58,9 @@ Dummy::Dummy(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * @brief Initialization object for the Dummy class.
  */
-void Dummy::v_InitObject()
+void Dummy::v_InitObject(bool DeclareFields)
 {
-    UnsteadySystem::v_InitObject();
+    UnsteadySystem::v_InitObject(DeclareFields);
 
     m_nanSteps = 0;
 

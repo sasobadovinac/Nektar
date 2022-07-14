@@ -61,9 +61,9 @@ IterativeElasticSystem::IterativeElasticSystem(
 {
 }
 
-void IterativeElasticSystem::v_InitObject()
+void IterativeElasticSystem::v_InitObject(bool DeclareFields)
 {
-    LinearElasticSystem::v_InitObject();
+    LinearElasticSystem::v_InitObject(DeclareFields);
 
     const int nVel = m_fields[0]->GetCoordim(0);
 

@@ -163,7 +163,7 @@ namespace Nektar
         CoupledLinearNS(const LibUtilities::SessionReaderSharedPtr &pSesssion,
                         const SpatialDomains::MeshGraphSharedPtr &pGraph);
         
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareField = true);
         
     private:
         /// Id to identify when single mode is mean mode (i.e. beta=0);
