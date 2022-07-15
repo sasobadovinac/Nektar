@@ -240,6 +240,7 @@ stretch-full-warnings:
 # CODE FORMATTING
 bullseye-clang-format:
   <<: *clang-format-template
+  needs: []
 
 # DOCUMENTATION
 buster-documentation-build-env:
