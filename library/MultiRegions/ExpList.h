@@ -322,7 +322,7 @@ namespace Nektar
                 Array<OneD,       NekDouble> &outarray);
 
             inline void FwdTrans(
-                const FieldStorage<const NekDouble, MultiRegions::ePhys> &in,
+                const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
 		FieldStorage<NekDouble, MultiRegions::eCoeff> &out);
 
             MULTI_REGIONS_EXPORT void   ExponentialFilter(
@@ -369,8 +369,8 @@ namespace Nektar
 
 	    /// Solve helmholtz problem - FieldStorage input 
             inline void HelmSolve(
-                const FieldStorage<const NekDouble, MultiRegions::ePhys> &in,
-		FieldStorage<      NekDouble, MultiRegions::eCoeff> &out,
+                const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
+		      FieldStorage<NekDouble, MultiRegions::eCoeff> &out,
                 const StdRegions::ConstFactorMap &factors,
                 const StdRegions::VarCoeffMap &varcoeff =
                                 StdRegions::NullVarCoeffMap,
@@ -405,21 +405,16 @@ namespace Nektar
                       Array<OneD,       NekDouble> &outarray);
 
 
-            /// This function elementally evaluates the backward transformation
-            /// of the global spectral/hp element expansion.
-            inline void BwdTrans_IterPerExp (
-                const Array<OneD, const NekDouble> &inarray,
-                      Array<OneD,NekDouble> &outarray);
-
             ///
-            inline void BwdTrans (
-                const Array<OneD, const NekDouble> &inarray,
-                      Array<OneD,NekDouble> &outarray);
+            inline void BwdTrans(
+		    const FieldStorage<NekDouble, MultiRegions::eCoeff> &in,
+		          FieldStorage<NekDouble, MultiRegions::ePhys> &out); 
 
+            /// Performs the backward transformation of the spectral/hp
+            /// element expansion.
             inline void BwdTrans (
-                    const FieldStorage<NekDouble, MultiRegions::eCoeff> in,
-                          FieldStorage<NekDouble, MultiRegions::ePhys> out
-            );
+                    const Array<OneD, const NekDouble> &inarray,
+		    Array<OneD,NekDouble> &outarray);
 
             /// This function calculates the coordinates of all the elemental
             /// quadrature points \f$\boldsymbol{x}_i\f$.
@@ -1561,10 +1556,6 @@ namespace Nektar
                 const Array<OneD,const NekDouble> &inarray,
                 Array<OneD,      NekDouble> &outarray);
 
-            virtual void v_BwdTrans_IterPerExp(
-                const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,NekDouble> &outarray);
-
             virtual void v_FwdTrans(
                 const Array<OneD,const NekDouble> &inarray,
                 Array<OneD,      NekDouble> &outarray);
@@ -2020,8 +2011,8 @@ namespace Nektar
         }
 
         inline void ExpList::FwdTrans(
-            const FieldStorage<const NekDouble, MultiRegions::ePhys> &in,
-                  FieldStorage<      NekDouble, MultiRegions::eCoeff> &out)
+            const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
+                  FieldStorage<NekDouble, MultiRegions::eCoeff> &out)
         {
             v_FwdTrans(in.GetData(), out.UpdateData());
         }
@@ -2059,28 +2050,31 @@ namespace Nektar
          *
          */
         inline void ExpList::BwdTrans (
-            const FieldStorage<NekDouble, MultiRegions::StorageType::eCoeff> in,
-                    FieldStorage<NekDouble, MultiRegions::ePhys> out
-        )
+            const FieldStorage<NekDouble, MultiRegions::eCoeff> &in,
+                  FieldStorage<NekDouble, MultiRegions::ePhys> &out)
         {
             v_BwdTrans(in.GetData(), out.UpdateData());
         }
 
+        /**
+         * Given the coefficients of an expansion, this function evaluates the
+         * spectral/hp expansion \f$u^{\delta}(\boldsymbol{x})\f$ at the
+         * quadrature points \f$\boldsymbol{x}_i\f$. This operation is
+         * evaluated locally by the function ExpList#BwdTrans.
+         *
+         * The coefficients of the expansion should be contained in the variable
+         * #m_coeffs of the ExpList object \a In. The resulting physical values
+         * at the quadrature points \f$u^{\delta}(\boldsymbol{x}_i)\f$ are
+         * stored in the array #m_phys.
+         *
+         * @param   In          An ExpList, containing the local coefficients
+         *                      \f$\hat{u}_n^e\f$ in its array #m_coeffs.
+         */
         inline void ExpList::BwdTrans (
              const Array<OneD, const NekDouble> &inarray,
              Array<OneD,       NekDouble> &outarray)
         {
             v_BwdTrans(inarray, outarray);
-        }
-
-        /**
-         *
-         */
-        inline void ExpList::BwdTrans_IterPerExp (
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,       NekDouble> &outarray)
-        {
-            v_BwdTrans_IterPerExp(inarray,outarray);
         }
 
 
@@ -2115,8 +2109,8 @@ namespace Nektar
          * Helmholtz operator using Field Storage i/o
          */
         inline void ExpList::HelmSolve(
-            const FieldStorage<const NekDouble, MultiRegions::ePhys>  &in,
- 		  FieldStorage<      NekDouble, MultiRegions::eCoeff> &out,
+            const FieldStorage<NekDouble, MultiRegions::ePhys>  &in,
+ 		  FieldStorage<NekDouble, MultiRegions::eCoeff> &out,
             const StdRegions::ConstFactorMap &factors,
             const StdRegions::VarCoeffMap &varcoeff,
             const MultiRegions::VarFactorsMap &varfactors,

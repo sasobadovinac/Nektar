@@ -473,7 +473,7 @@ void Mapping::EvaluateFunction(
                 cout << "Field " + pFieldName + " not found." << endl;
             }
         }
-        pFields[0]->BwdTrans_IterPerExp(vCoeffs, pArray);
+        pFields[0]->BwdTrans(vCoeffs, pArray);
     }
 }
 

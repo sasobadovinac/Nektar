@@ -236,10 +236,10 @@ int main(int argc, char *argv[])
 		PostProc->GetTrace()->ExtractDataToCoeffs(TraceDef[i],TraceData[i],fieldstr,PostProc->GetTrace()->UpdateCoeffs());
 	}
         
-	PostProc->BwdTrans_IterPerExp(PostProc->GetCoeffs(),PostProc->UpdatePhys());
+	PostProc->BwdTrans(PostProc->GetCoeffs(),PostProc->UpdatePhys());
 
 	PostProc->EvaluateHDGPostProcessing(PostProc->UpdateCoeffs());
-	PostProc->BwdTrans_IterPerExp(PostProc->GetCoeffs(),PostProc->UpdatePhys());
+	PostProc->BwdTrans(PostProc->GetCoeffs(),PostProc->UpdatePhys());
 	
 	NekDouble vLinfError = Exp->Linf(Exp->GetPhys(), fce);
 	NekDouble vL2Error   = Exp->L2  (Exp->GetPhys(), fce);

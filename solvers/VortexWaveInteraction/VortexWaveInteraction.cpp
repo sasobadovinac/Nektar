@@ -826,7 +826,7 @@ namespace Nektar
                 }
 
                 // Interpolate field 0
-                m_waveVelocities[0]->GetPlane(0)->BwdTrans_IterPerExp(m_vwiForcing[0],der1);
+                m_waveVelocities[0]->GetPlane(0)->BwdTrans(m_vwiForcing[0],der1);
                 for(i = 0; i < npts; ++i)
                 {
                     physoffset = m_waveVelocities[0]->GetPlane(0)->GetPhys_Offset(Eid[i]);
@@ -844,7 +844,7 @@ namespace Nektar
 #endif
 
                 //-> Interpoloate field 1
-                m_waveVelocities[0]->GetPlane(0)->BwdTrans_IterPerExp(m_vwiForcing[1],der1);
+                m_waveVelocities[0]->GetPlane(0)->BwdTrans(m_vwiForcing[1],der1);
                 for(i = 0; i < npts; ++i)
                 {
                     physoffset = m_waveVelocities[0]->GetPlane(0)->GetPhys_Offset(Eid[i]);
@@ -869,7 +869,7 @@ namespace Nektar
                 cout<<"symmetrization is active"<<endl;
                 static Array<OneD, int> index = GetReflectionIndex();
 
-                m_waveVelocities[0]->GetPlane(0)->BwdTrans_IterPerExp(m_vwiForcing[0],der1);
+                m_waveVelocities[0]->GetPlane(0)->BwdTrans(m_vwiForcing[0],der1);
                 for(i = 0; i < npts; ++i)
                 {
                     if(index[i] != -1)
@@ -883,7 +883,7 @@ namespace Nektar
                 m_waveVelocities[0]->GetPlane(0)->FwdTrans_BndConstrained(val, m_vwiForcing[0]);
 #endif
 
-                m_waveVelocities[0]->GetPlane(0)->BwdTrans_IterPerExp(m_vwiForcing[1],der2);
+                m_waveVelocities[0]->GetPlane(0)->BwdTrans(m_vwiForcing[1],der2);
                 for(i = 0; i < npts; ++i)
                 {
                     if(index[i] != -1)
@@ -2033,7 +2033,7 @@ cout<<"cr="<<cr_str<<endl;
           LibUtilities::FieldIOSharedPtr fld = LibUtilities::FieldIO::CreateDefault(m_sessionVWI);
           fld->Import(file,FieldDef_u, FieldData_u);
           Ilayer->ExtractDataToCoeffs(FieldDef_u[0], FieldData_u[0], FieldDef_u[0]->m_fields[0],Ilayer->UpdateCoeffs());
-          Ilayer->BwdTrans_IterPerExp(Ilayer->GetCoeffs(), Ilayer->UpdatePhys());
+          Ilayer->BwdTrans(Ilayer->GetCoeffs(), Ilayer->UpdatePhys());
 
           if(cnt==0)
           {
@@ -2085,7 +2085,7 @@ cout<<"cr="<<cr_str<<endl;
           std::vector<std::vector<NekDouble> > FieldData_v;
           fld->Import(file,FieldDef_v, FieldData_v);
           Ilayer->ExtractDataToCoeffs(FieldDef_v[0], FieldData_v[0], FieldDef_v[0]->m_fields[0],Ilayer->UpdateCoeffs());
-          Ilayer->BwdTrans_IterPerExp(Ilayer->GetCoeffs(), Ilayer->UpdatePhys());
+          Ilayer->BwdTrans(Ilayer->GetCoeffs(), Ilayer->UpdatePhys());
           if(cnt==0)
           {
                Vmath::Vcopy(nq,Ilayer->UpdatePhys(),1,m_bcsForcing[3],1);

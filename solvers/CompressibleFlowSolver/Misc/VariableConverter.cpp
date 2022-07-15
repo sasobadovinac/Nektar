@@ -797,8 +797,7 @@ void VariableConverter::ApplyC0Smooth(Array<OneD, NekDouble>& field)
     // Get local coefficients
     m_C0ProjectExp->GlobalToLocal();
     // Get C0 field
-    m_C0ProjectExp->BwdTrans_IterPerExp(
-    m_C0ProjectExp->GetCoeffs(), field);
+    m_C0ProjectExp->BwdTrans(m_C0ProjectExp->GetCoeffs(), field);
 }
 
 } //namespace

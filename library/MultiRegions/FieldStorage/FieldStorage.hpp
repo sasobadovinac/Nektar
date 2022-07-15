@@ -65,7 +65,7 @@ template <typename TData, StorageType stype, DataLayout order = eField>
 class FieldStorage
 {
 public:
-  FieldStorage(std::shared_ptr<ExpList> exp) :  m_numVariables(1)
+    FieldStorage(std::shared_ptr<ExpList> exp) :  m_numVariables(1)
     {
         m_expIF = std::make_shared<details::ExpListFieldStorageInterface>(exp);
         boost::ignore_unused(exp);
@@ -91,22 +91,22 @@ public:
         // nothing to do... yet...
     }
 
-    Array<OneD, TData> &UpdateData()
-    {
-        return m_storage;
-    }
-
     const Array<OneD, const TData> GetData() const
     {
         return m_storage;
     }
 
-    std::shared_ptr<ExpList> GetExpList()
+    Array<OneD, TData> &UpdateData()
+    {
+      return m_storage;
+    }
+  
+    std::shared_ptr<ExpList> GetExpList() const
     {
         return m_expIF->GetExpList();
     }
 
-private:
+protected: 
     /// interface to allow access to ExpList 
     std::shared_ptr<details::ExpListFieldStorageInterface> m_expIF;
 
@@ -122,10 +122,11 @@ private:
     /// number of variables in storage 
     int m_numVariables;
 
-  //    int num_elements;
+    //    int num_elements;
     //    int std::array<int, num_variables> dofs;
 };
 
+  
 } // namespace MultiRegions
 } // namespace Nektar
 #endif

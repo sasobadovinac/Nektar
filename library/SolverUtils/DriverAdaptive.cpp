@@ -391,7 +391,7 @@ void DriverAdaptive::v_Execute(ostream &out)
             m_equ[0]->UpdateFields()[n]->ExtractCoeffsToCoeffs(
                 fields[n], fields[n]->GetCoeffs(),
                 m_equ[0]->UpdateFields()[n]->UpdateCoeffs());
-            m_equ[0]->UpdateFields()[n]->BwdTrans_IterPerExp(
+            m_equ[0]->UpdateFields()[n]->BwdTrans(
                 m_equ[0]->UpdateFields()[n]->GetCoeffs(),
                 m_equ[0]->UpdateFields()[n]->UpdatePhys());
         }

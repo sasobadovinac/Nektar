@@ -593,17 +593,6 @@ namespace Nektar
             return ExpList::GenGlobalLinSys(mkey, m_locToGloMap);
         }
 
-        // /**
-        //  *
-        //  */
-        // void ContField::v_BwdTrans(
-        //                              const Array<OneD, const NekDouble>
-        //                              &inarray,
-        //                              Array<OneD,       NekDouble> &outarray)
-        // {
-        //     BwdTrans(inarray,outarray);
-        // }
-
 
         /**
          *

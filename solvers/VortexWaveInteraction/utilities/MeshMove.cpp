@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
     {
         streak->ExtractDataToCoeffs(fielddef[i], fielddata[i], fielddef[i]->m_fields[0], streak->UpdateCoeffs());
     }
-    streak->BwdTrans_IterPerExp(streak->GetCoeffs(), streak->UpdatePhys());
+    streak->BwdTrans(streak->GetCoeffs(), streak->UpdatePhys());
 
     //------------------------------------------------
     // determine the I regions (3 region expected)
@@ -893,7 +893,7 @@ cout<<"nquad per edge="<<nqedge<<endl;
        Array<OneD, NekDouble> coeffsy(Cont_y->GetNcoeffs(),0.0);
 
        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
-       Cont_y->BwdTrans_IterPerExp( coeffsy, Cont_y->UpdatePhys());
+       Cont_y->BwdTrans( coeffsy, Cont_y->UpdatePhys());
        Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(),1, ycQ,1);
 
 cout<<"xcQ, ycQ"<<endl;
@@ -988,12 +988,12 @@ cout<<"wrong="<<wrong<<endl;
        //tx
        Vmath::Vcopy(nquad_lay, txQ,1, Cont_y->UpdatePhys(),1);
        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
-       Cont_y->BwdTrans_IterPerExp( coeffsy, Cont_y->UpdatePhys());
+       Cont_y->BwdTrans( coeffsy, Cont_y->UpdatePhys());
        Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(),1, txQ,1);
        //ty
        Vmath::Vcopy(nquad_lay, tyQ,1, Cont_y->UpdatePhys(),1);
        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
-       Cont_y->BwdTrans_IterPerExp( coeffsy, Cont_y->UpdatePhys());
+       Cont_y->BwdTrans( coeffsy, Cont_y->UpdatePhys());
        Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(),1, tyQ,1);
 
         //check if the tan points have the same curvature otherwise interp
@@ -1078,12 +1078,12 @@ cout<<"wrong="<<wrong<<endl;
         //tyQ
         Vmath::Vcopy(nquad_lay, tyQ,1,  Cont_y->UpdatePhys(),1);
         Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
-        Cont_y->BwdTrans_IterPerExp( coeffstmp, Cont_y->UpdatePhys());
+        Cont_y->BwdTrans( coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(),1, tyQ,1);
         //txQ
         Vmath::Vcopy(nquad_lay, txQ,1,  Cont_y->UpdatePhys(),1);
         Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
-        Cont_y->BwdTrans_IterPerExp( coeffstmp, Cont_y->UpdatePhys());
+        Cont_y->BwdTrans( coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(),1, txQ,1);
 
         for(int k=0; k<nedges; k++)
@@ -1129,14 +1129,14 @@ cout<<"wrong="<<wrong<<endl;
         Vmath::Vcopy(nquad_lay, nyQ,1,  Cont_y->UpdatePhys(),1);
 
        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
-       Cont_y->BwdTrans_IterPerExp( coeffstmp, Cont_y->UpdatePhys());
+       Cont_y->BwdTrans( coeffstmp, Cont_y->UpdatePhys());
        Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(),1, nyQ,1);
 
        Vmath::Zero(nquad_lay,Cont_y->UpdatePhys(),1);
        Vmath::Zero(Cont_y->GetNcoeffs(),Cont_y->UpdateCoeffs(),1);
        Vmath::Vcopy(nquad_lay, nxQ,1,  Cont_y->UpdatePhys(),1);
        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
-       Cont_y->BwdTrans_IterPerExp( coeffstmp, Cont_y->UpdatePhys());
+       Cont_y->BwdTrans( coeffstmp, Cont_y->UpdatePhys());
        Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(),1, nxQ,1);
 
        //force the normal at interface point to be equal

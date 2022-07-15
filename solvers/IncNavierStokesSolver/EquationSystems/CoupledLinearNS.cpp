@@ -1394,8 +1394,8 @@ namespace Nektar
         for (int k=0 ; k < nfields; ++k)
         {
             //Backward Transformation in physical space for time evolution
-            m_fields[k]->BwdTrans_IterPerExp(m_fields[k]->GetCoeffs(),
-                                             m_fields[k]->UpdatePhys());
+            m_fields[k]->BwdTrans(m_fields[k]->GetCoeffs(),
+				  m_fields[k]->UpdatePhys());
         }
 
     }
@@ -1583,7 +1583,7 @@ namespace Nektar
 
                 for(int i = 0; i < m_velocity.size(); ++i)
                 {
-                    m_fields[m_velocity[i]]->BwdTrans_IterPerExp(m_fields[m_velocity[i]]->GetCoeffs(), Velocity_Phys[i]);
+                    m_fields[m_velocity[i]]->BwdTrans(m_fields[m_velocity[i]]->GetCoeffs(), Velocity_Phys[i]);
                 }
 
                 m_initialStep = true;
@@ -1605,8 +1605,8 @@ namespace Nektar
 
             for(int i = 0; i < m_velocity.size(); ++i)
             {
-                m_fields[m_velocity[i]]->BwdTrans_IterPerExp(RHS_Coeffs[i], RHS_Phys[i]);
-                m_fields[m_velocity[i]]->BwdTrans_IterPerExp(m_fields[m_velocity[i]]->GetCoeffs(), delta_velocity_Phys[i]);
+                m_fields[m_velocity[i]]->BwdTrans(RHS_Coeffs[i], RHS_Phys[i]);
+                m_fields[m_velocity[i]]->BwdTrans(m_fields[m_velocity[i]]->GetCoeffs(), delta_velocity_Phys[i]);
             }
 
             for(int i = 0; i < m_velocity.size(); ++i)
@@ -1654,7 +1654,7 @@ namespace Nektar
         for(int i = 0; i < m_velocity.size(); ++i)
         {
             u_N[i] = Array<OneD, NekDouble> (m_fields[m_velocity[i]]->GetTotPoints(),0.0);
-            m_fields[m_velocity[i]]->BwdTrans_IterPerExp(m_fields[m_velocity[i]]->GetCoeffs(), u_N[i]);
+            m_fields[m_velocity[i]]->BwdTrans(m_fields[m_velocity[i]]->GetCoeffs(), u_N[i]);
 
             RHS[i] = Array<OneD, NekDouble> (m_fields[m_velocity[i]]->GetTotPoints(),0.0);
             tmp_RHS[i] = Array<OneD, NekDouble> (m_fields[m_velocity[i]]->GetTotPoints(),0.0);
@@ -1674,7 +1674,7 @@ namespace Nektar
         for(int i = 0; i < m_velocity.size(); ++i)
         {
             u_star[i] = Array<OneD, NekDouble> (m_fields[m_velocity[i]]->GetTotPoints(),0.0);
-            m_fields[m_velocity[i]]->BwdTrans_IterPerExp(m_fields[m_velocity[i]]->GetCoeffs(), u_star[i]);
+            m_fields[m_velocity[i]]->BwdTrans(m_fields[m_velocity[i]]->GetCoeffs(), u_star[i]);
 
             //u_star(k+1) = u_N(k) + DeltaKinvis *  u_star(k)
             Vmath::Smul(u_star[i].size(), m_kinvis, u_star[i], 1, u_star[i], 1);
@@ -2207,8 +2207,8 @@ namespace Nektar
         if(m_singleMode==true)
         {
             Array<OneD, NekDouble > tmpfieldcoeffs (m_fields[0]->GetNcoeffs()/2);
-            m_pressure->GetPlane(0)->BwdTrans_IterPerExp(m_pressure->GetPlane(0)->GetCoeffs(), m_pressure->GetPlane(0)->UpdatePhys());
-            m_pressure->GetPlane(1)->BwdTrans_IterPerExp(m_pressure->GetPlane(1)->GetCoeffs(), m_pressure->GetPlane(1)->UpdatePhys());
+            m_pressure->GetPlane(0)->BwdTrans(m_pressure->GetPlane(0)->GetCoeffs(), m_pressure->GetPlane(0)->UpdatePhys());
+            m_pressure->GetPlane(1)->BwdTrans(m_pressure->GetPlane(1)->GetCoeffs(), m_pressure->GetPlane(1)->UpdatePhys());
             m_fields[0]->GetPlane(0)->FwdTrans_IterPerExp(m_pressure->GetPlane(0)->GetPhys(),fieldcoeffs[i]);
             m_fields[0]->GetPlane(1)->FwdTrans_IterPerExp(m_pressure->GetPlane(1)->GetPhys(),tmpfieldcoeffs);
             for(int e=0; e<m_fields[0]->GetNcoeffs()/2; e++)
@@ -2218,7 +2218,7 @@ namespace Nektar
         }
         else
         {
-            m_pressure->BwdTrans_IterPerExp(m_pressure->GetCoeffs(),m_pressure->UpdatePhys());
+            m_pressure->BwdTrans(m_pressure->GetCoeffs(),m_pressure->UpdatePhys());
             m_fields[0]->FwdTrans_IterPerExp(m_pressure->GetPhys(),fieldcoeffs[i]);
         }
         variables[i] = "p";

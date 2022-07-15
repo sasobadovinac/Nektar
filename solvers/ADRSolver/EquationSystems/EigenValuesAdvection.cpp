@@ -224,7 +224,7 @@ namespace Nektar
                     //Projection
                     m_fields[i]->FwdTrans(outarray[i],WeakAdv[i]);
 
-                    m_fields[i]->BwdTrans_IterPerExp(WeakAdv[i],outarray[i]);
+                    m_fields[i]->BwdTrans(WeakAdv[i],outarray[i]);
                 }
                 break;
             }

@@ -354,26 +354,6 @@ namespace Nektar
             }
         }
 
-        void ExpListHomogeneous2D::v_BwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &outarray)
-        {
-            int cnt = 0, cnt1 = 0;
-            Array<OneD, NekDouble> tmparray;
-            int nlines = m_lines.size();
-
-            for(int n = 0; n < nlines; ++n)
-            {
-                m_lines[n]->BwdTrans_IterPerExp(inarray+cnt, tmparray = outarray + cnt1);
-
-                cnt    += m_lines[n]->GetNcoeffs();
-                cnt1   += m_lines[n]->GetTotPoints();
-            }
-            if(!m_WaveSpace)
-            {
-                HomogeneousBwdTrans(outarray,outarray);
-            }
-        }
-
-
         void ExpListHomogeneous2D::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &outarray)
         {
             int cnt = 0, cnt1 = 0;

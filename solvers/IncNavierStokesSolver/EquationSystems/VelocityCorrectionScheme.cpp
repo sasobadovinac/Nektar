@@ -657,8 +657,8 @@ namespace Nektar
         for (int k=0 ; k < nfields; ++k)
         {
             //Backward Transformation in physical space for time evolution
-            m_fields[k]->BwdTrans_IterPerExp(m_fields[k]->GetCoeffs(),
-                                             m_fields[k]->UpdatePhys());
+            m_fields[k]->BwdTrans(m_fields[k]->GetCoeffs(),
+				  m_fields[k]->UpdatePhys());
         }
     }
 

@@ -931,8 +931,8 @@ namespace Nektar
 
             // Calcualte spectral/hp approximation on the quadrature points
             // of this new expansion basis
-            ErrorExp->BwdTrans_IterPerExp(m_fields[field]->GetCoeffs(),
-                                          ErrorExp->UpdatePhys());
+            ErrorExp->BwdTrans(m_fields[field]->GetCoeffs(),
+			       ErrorExp->UpdatePhys());
 
             L2INF[0] = ErrorExp->L2  (ErrorExp->GetPhys(), ErrorSol);
             L2INF[1] = ErrorExp->Linf(ErrorExp->GetPhys(), ErrorSol);

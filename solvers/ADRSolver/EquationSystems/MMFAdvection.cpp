@@ -500,7 +500,7 @@ void MMFAdvection::DoOdeProjection(
             for (i = 0; i < nVariables; ++i)
             {
                 m_fields[i]->FwdTrans(inarray[i], coeffs);
-                m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
+                m_fields[i]->BwdTrans(coeffs, outarray[i]);
             }
             break;
         }

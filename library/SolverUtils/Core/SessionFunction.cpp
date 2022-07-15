@@ -366,7 +366,7 @@ void SessionFunction::EvaluateFld(string pFieldName,
         }
     }
 
-    m_field->BwdTrans_IterPerExp(vCoeffs, pArray);
+    m_field->BwdTrans(vCoeffs, pArray);
 }
 
 /**

@@ -2550,8 +2550,8 @@ namespace Nektar
          *                          will be stored in this array of size
          *                          \f$Q_{\mathrm{tot}}\f$.
          */
-        void ExpList::v_BwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
-                                            Array<OneD, NekDouble> &outarray)
+        void ExpList::v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
+                                             Array<OneD, NekDouble> &outarray)
         {
             LibUtilities::Timer timer;
 
@@ -2571,7 +2571,7 @@ namespace Nektar
                     m_collectionsDoInit[Collections::eBwdTrans] = false; 
                 }
                 
-                LIKWID_MARKER_START("v_BwdTrans_IterPerExp");
+                LIKWID_MARKER_START("v_BwdTrans");
                 timer.Start();
                 
                 Array<OneD, NekDouble> tmp;
@@ -2583,7 +2583,7 @@ namespace Nektar
                 }
 
                 timer.Stop();
-                LIKWID_MARKER_STOP("v_BwdTrans_IterPerExp");
+                LIKWID_MARKER_STOP("v_BwdTrans");
 
             }
 
@@ -3430,9 +3430,8 @@ namespace Nektar
 
             ASSERTL0(found, "Could not find variable '"+varName+
                             "' in file boundary condition "+fileName);
-            locExpList->BwdTrans_IterPerExp(
-                locExpList->GetCoeffs(),
-                locExpList->UpdatePhys());
+            locExpList->BwdTrans(locExpList->GetCoeffs(),
+				 locExpList->UpdatePhys());
         }
 
         /**
@@ -4829,12 +4828,6 @@ namespace Nektar
                      "This method is not defined or valid for this class type");
         }
 
-
-        void ExpList::v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                 Array<OneD,       NekDouble> &outarray)
-        {
-            v_BwdTrans_IterPerExp(inarray,outarray);
-        }
 
         void ExpList::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
                                  Array<OneD,       NekDouble> &outarray)
