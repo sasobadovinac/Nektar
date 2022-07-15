@@ -35,29 +35,29 @@
 #ifndef NEKTAR_TESTS_METRICPRECON_H
 #define NEKTAR_TESTS_METRICPRECON_H
 
-#include <map>
 #include <MetricRegex.h>
+#include <map>
 
 namespace Nektar
 {
-    class MetricPrecon : public MetricRegex
+class MetricPrecon : public MetricRegex
+{
+public:
+    static MetricSharedPtr create(TiXmlElement *metric, bool generate)
     {
-    public:
-        static MetricSharedPtr create(TiXmlElement *metric, bool generate)
-        {
-            return MetricSharedPtr(new MetricPrecon(metric, generate));
-        }
+        return MetricSharedPtr(new MetricPrecon(metric, generate));
+    }
 
-        static std::string type;
-        static std::string defaultTolerance;
+    static std::string type;
+    static std::string defaultTolerance;
 
-    protected:
-        MetricPrecon(TiXmlElement *metric, bool generate);
+protected:
+    MetricPrecon(TiXmlElement *metric, bool generate);
 
-        std::string m_varTolerance;
+    std::string m_varTolerance;
 
-        virtual void v_Generate(std::istream& pStdout, std::istream& pStderr);
-    };
-}
+    virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
+};
+} // namespace Nektar
 
 #endif
