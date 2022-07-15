@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/Driver.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <SolverUtils/Driver.h>
 #include <SpatialDomains/MeshGraph.h>
 
 using namespace Nektar;
@@ -56,8 +56,8 @@ int main(int argc, char *argv[])
 
         // Create driver
         session->LoadSolverInfo("Driver", vDriverModule, "Standard");
-        drv = SolverUtils::GetDriverFactory().CreateInstance(
-            vDriverModule, session, graph);
+        drv = SolverUtils::GetDriverFactory().CreateInstance(vDriverModule,
+                                                             session, graph);
 
         // Execute driver
         drv->Execute();
@@ -65,11 +65,11 @@ int main(int argc, char *argv[])
         // Finalise communications
         session->Finalise();
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         return 1;
     }
-    catch (const std::string& eStr)
+    catch (const std::string &eStr)
     {
         std::cout << "Error: " << eStr << std::endl;
     }
