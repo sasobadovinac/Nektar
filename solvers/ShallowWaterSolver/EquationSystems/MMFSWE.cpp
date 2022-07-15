@@ -35,8 +35,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
@@ -50,7 +50,7 @@ std::string MMFSWE::className =
         "MMFSWE", MMFSWE::create, "MMFSWE equation.");
 
 MMFSWE::MMFSWE(const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+               const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph), MMFSystem(pSession, pGraph)
 {
     m_planeNumber = 0;
@@ -190,9 +190,9 @@ void MMFSWE::v_InitObject()
             m_en   = exp(-4.0 / (m_theta1 - m_theta0) / (m_theta1 - m_theta0));
             m_hbar = 120.0 / rad_earth;
 
-            std::cout << "m_theta0 = " << m_theta0 << ", m_theta1 = " << m_theta1
-                      << ", m_en = " << m_en << ", m_hbar = " << m_hbar
-                      << std::endl;
+            std::cout << "m_theta0 = " << m_theta0
+                      << ", m_theta1 = " << m_theta1 << ", m_en = " << m_en
+                      << ", m_hbar = " << m_hbar << std::endl;
         }
         break;
 
@@ -318,7 +318,8 @@ void MMFSWE::v_DoSolve()
         // Write out status information
         if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
         {
-            std::cout << "Steps: " << std::setw(8) << std::left << step + 1 << " "
+            std::cout << "Steps: " << std::setw(8) << std::left << step + 1
+                      << " "
                       << "Time: " << std::setw(12) << std::left << m_time;
 
             std::stringstream ss;
@@ -331,8 +332,7 @@ void MMFSWE::v_DoSolve()
 
             // Vorticity zeta
             ComputeVorticity(fieldsprimitive[1], fieldsprimitive[2], zeta);
-            Vorticity =
-                std::abs(m_fields[0]->Integral(zeta) - m_Vorticity0);
+            Vorticity = std::abs(m_fields[0]->Integral(zeta) - m_Vorticity0);
 
             // Masss = h^*
             Mass = (ComputeMass(fieldsprimitive[0]) - m_Mass0) / m_Mass0;
@@ -395,7 +395,8 @@ void MMFSWE::v_DoSolve()
     {
         if (m_cflSafetyFactor > 0.0)
         {
-            std::cout << "CFL safety factor : " << m_cflSafetyFactor << std::endl
+            std::cout << "CFL safety factor : " << m_cflSafetyFactor
+                      << std::endl
                       << "CFL time-step     : " << m_timestep << std::endl;
         }
 
@@ -1544,12 +1545,12 @@ void MMFSWE::v_DoInitialise()
     PrimitiveToConservative();
 
     // transfer the initial conditions to modal values
-    for(int i = 0; i < m_fields.size(); ++i)
+    for (int i = 0; i < m_fields.size(); ++i)
     {
         m_fields[i]->SetPhysState(true);
-        m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),m_fields[i]->UpdateCoeffs());
+        m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
+                              m_fields[i]->UpdateCoeffs());
     }
-
 }
 
 void MMFSWE::EvaluateWaterDepth(void)
@@ -2536,10 +2537,9 @@ void MMFSWE::UnstableJetFlow(unsigned int field, const NekDouble time,
         // Add perturbation
         if (m_PurturbedJet)
         {
-            eta[j] =
-                eta[j] +
-                m_hbar * cos_theta * exp(-9.0 * Tphi * Tphi) *
-                    exp(-225.0 * (m_pi / 4.0 - Ttheta) * (m_pi / 4.0 - Ttheta));
+            eta[j] = eta[j] + m_hbar * cos_theta * exp(-9.0 * Tphi * Tphi) *
+                                  exp(-225.0 * (m_pi / 4.0 - Ttheta) *
+                                      (m_pi / 4.0 - Ttheta));
         }
 
         uvec[0][j] = -1.0 * uhat * sin_varphi - vhat * sin_theta * cos_varphi;
@@ -2618,7 +2618,7 @@ void MMFSWE::RossbyWave(unsigned int field, Array<OneD, NekDouble> &outfield)
 
     // disturbancees of Rossby-Haurwitz Wave
     NekDouble x0d, y0d, z0d, phi0, theta0;
-    //NekDouble rad_earth = 6.37122 * 1000000;
+    // NekDouble rad_earth = 6.37122 * 1000000;
 
     phi0   = 40.0 * m_pi / 180.0;
     theta0 = 50.0 * m_pi / 180.0;

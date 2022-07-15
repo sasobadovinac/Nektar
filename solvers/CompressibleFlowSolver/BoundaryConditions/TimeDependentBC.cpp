@@ -41,25 +41,23 @@ using namespace std;
 namespace Nektar
 {
 
-std::string TimeDependentBC::className = GetCFSBndCondFactory().
-    RegisterCreatorFunction("TimeDependent",
-                            TimeDependentBC::create,
-                            "Time dependent boundary condition.");
+std::string TimeDependentBC::className =
+    GetCFSBndCondFactory().RegisterCreatorFunction(
+        "TimeDependent", TimeDependentBC::create,
+        "Time dependent boundary condition.");
 
-TimeDependentBC::TimeDependentBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-           const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-           const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-           const int pSpaceDim,
-           const int bcRegion,
-           const int cnt)
+TimeDependentBC::TimeDependentBC(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+    const int pSpaceDim, const int bcRegion, const int cnt)
     : CFSBndCond(pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt)
 {
 }
 
-void TimeDependentBC::v_Apply(
-        Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-        Array<OneD, Array<OneD, NekDouble> >               &physarray,
-        const NekDouble                                    &time)
+void TimeDependentBC::v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                              Array<OneD, Array<OneD, NekDouble>> &physarray,
+                              const NekDouble &time)
 {
     boost::ignore_unused(Fwd);
 
@@ -72,4 +70,4 @@ void TimeDependentBC::v_Apply(
     }
 }
 
-}
+} // namespace Nektar

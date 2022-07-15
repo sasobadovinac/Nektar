@@ -1,4 +1,4 @@
- ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //
 // File BetaPressureArea.cpp
 //
@@ -57,21 +57,25 @@ BetaPressureArea::~BetaPressureArea()
 }
 
 void BetaPressureArea::v_GetPressure(NekDouble &P, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &dAUdx,
-                                 const NekDouble &gamma, const NekDouble &alpha)
+                                     const NekDouble &A, const NekDouble &A0,
+                                     const NekDouble &dAUdx,
+                                     const NekDouble &gamma,
+                                     const NekDouble &alpha)
 {
-    P = m_PExt + beta * (sqrt(A) - sqrt(A0)) - gamma * dAUdx / sqrt(A); // Viscoelasticity
+    P = m_PExt + beta * (sqrt(A) - sqrt(A0)) -
+        gamma * dAUdx / sqrt(A); // Viscoelasticity
 }
 
 void BetaPressureArea::v_GetC(NekDouble &c, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &alpha)
+                              const NekDouble &A, const NekDouble &A0,
+                              const NekDouble &alpha)
 {
     c = sqrt(beta / (2 * m_rho)) * sqrt(sqrt(A)); // Elastic
 }
 
 void BetaPressureArea::v_GetW1(NekDouble &W1, const NekDouble &u,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                               const NekDouble &beta, const NekDouble &A,
+                               const NekDouble &A0, const NekDouble &alpha)
 {
     NekDouble I = 0.0;
     GetCharIntegral(I, beta, A, A0);
@@ -80,8 +84,8 @@ void BetaPressureArea::v_GetW1(NekDouble &W1, const NekDouble &u,
 }
 
 void BetaPressureArea::v_GetW2(NekDouble &W2, const NekDouble &u,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                               const NekDouble &beta, const NekDouble &A,
+                               const NekDouble &A0, const NekDouble &alpha)
 {
     NekDouble I = 0.0;
     GetCharIntegral(I, beta, A, A0);
@@ -90,34 +94,41 @@ void BetaPressureArea::v_GetW2(NekDouble &W2, const NekDouble &u,
 }
 
 void BetaPressureArea::v_GetAFromChars(NekDouble &A, const NekDouble &W1,
-                const NekDouble &W2, const NekDouble &beta, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                                       const NekDouble &W2,
+                                       const NekDouble &beta,
+                                       const NekDouble &A0,
+                                       const NekDouble &alpha)
 {
     A = pow((W1 - W2) * sqrt(2 * m_rho / beta) / 8 + sqrt(sqrt(A0)), 4);
 }
 
 void BetaPressureArea::v_GetUFromChars(NekDouble &u, const NekDouble &W1,
-                                                            const NekDouble &W2)
+                                       const NekDouble &W2)
 {
     u = (W1 + W2) / 2; // Necessarily the case for all tube laws
 }
 
 void BetaPressureArea::v_GetCharIntegral(NekDouble &I, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &alpha)
+                                         const NekDouble &A,
+                                         const NekDouble &A0,
+                                         const NekDouble &alpha)
 {
     NekDouble c  = 0.0;
     NekDouble c0 = 0.0;
 
-    GetC(c,  beta, A,  A0);
+    GetC(c, beta, A, A0);
     GetC(c0, beta, A0, A0);
 
     I = 4 * (c - c0);
 }
 
 void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
-             const Array<OneD, NekDouble> &Au, const Array<OneD, NekDouble> &uu,
-           const Array<OneD, NekDouble> &beta, const Array<OneD, NekDouble> &A0,
-                   const Array<OneD, NekDouble> &alpha, const std::string &type)
+                                            const Array<OneD, NekDouble> &Au,
+                                            const Array<OneD, NekDouble> &uu,
+                                            const Array<OneD, NekDouble> &beta,
+                                            const Array<OneD, NekDouble> &A0,
+                                            const Array<OneD, NekDouble> &alpha,
+                                            const std::string &type)
 {
     /*
     In the interest of speed, the inverse of the Jacobians for bifurcations,
@@ -139,13 +150,16 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
             GetC(c[i], beta[i], Au[i], A0[i], alpha[i]);
         }
 
-        k = c[0] * Au[1] * c[2] + Au[0] * c[2] * c[1] + Au[2] * c[0] * c[1];
+        k    = c[0] * Au[1] * c[2] + Au[0] * c[2] * c[1] + Au[2] * c[0] * c[1];
         K[0] = (c[0] - uu[0]) * k;
         K[1] = (c[1] + uu[1]) * k;
         K[2] = (c[2] + uu[2]) * k;
 
-        invJ.SetValue(0, 0, (-c[1] * uu[0] * c[2] * Au[0] + Au[2] * c[1] * c[0]
-                                   * c[0] + Au[1] * c[0] * c[0] * c[2]) / K[0]);
+        invJ.SetValue(0, 0,
+                      (-c[1] * uu[0] * c[2] * Au[0] +
+                       Au[2] * c[1] * c[0] * c[0] +
+                       Au[1] * c[0] * c[0] * c[2]) /
+                          K[0]);
         invJ.SetValue(0, 1, Au[1] * (c[1] - uu[1]) * c[0] * c[2] / K[0]);
         invJ.SetValue(0, 2, Au[2] * (c[2] - uu[2]) * c[0] * c[1] / K[0]);
         invJ.SetValue(0, 3, c[0] * c[1] * c[2] / K[0]);
@@ -153,8 +167,11 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         invJ.SetValue(0, 5, -0.5 * Au[2] * c[0] * c[1] / K[0]);
 
         invJ.SetValue(1, 0, Au[0] * (c[0] + uu[0]) * c[1] * c[2] / K[1]);
-        invJ.SetValue(1, 1, (c[0] * uu[1] * c[2] * Au[1] + Au[2] * c[0] * c[1]
-                                   * c[1] + c[2] * c[1] * c[1] * Au[0]) / K[1]);
+        invJ.SetValue(1, 1,
+                      (c[0] * uu[1] * c[2] * Au[1] +
+                       Au[2] * c[0] * c[1] * c[1] +
+                       c[2] * c[1] * c[1] * Au[0]) /
+                          K[1]);
         invJ.SetValue(1, 2, -Au[2] * (c[2] - uu[2]) * c[0] * c[1] / K[1]);
         invJ.SetValue(1, 3, -c[0] * c[1] * c[2] / K[1]);
         invJ.SetValue(1, 4, -0.5 * (c[0] * Au[2] + Au[0] * c[2]) * c[1] / K[1]);
@@ -162,14 +179,20 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
 
         invJ.SetValue(2, 0, Au[0] * (c[0] + uu[0]) * c[1] * c[2] / K[2]);
         invJ.SetValue(2, 1, -Au[1] * (c[1] - uu[1]) * c[0] * c[2] / K[2]);
-        invJ.SetValue(2, 2, (c[0] * c[1] * uu[2] * Au[2] + c[0] * Au[1] * c[2]
-                                   * c[2] + c[1] * c[2] * c[2] * Au[0]) / K[2]);
+        invJ.SetValue(2, 2,
+                      (c[0] * c[1] * uu[2] * Au[2] +
+                       c[0] * Au[1] * c[2] * c[2] +
+                       c[1] * c[2] * c[2] * Au[0]) /
+                          K[2]);
         invJ.SetValue(2, 3, -c[0] * c[1] * c[2] / K[2]);
         invJ.SetValue(2, 4, 0.5 * c[0] * Au[1] * c[2] / K[2]);
         invJ.SetValue(2, 5, -0.5 * (Au[1] * c[0] + c[1] * Au[0]) * c[2] / K[2]);
 
-        invJ.SetValue(3, 0, Au[0] * (Au[0] * c[2] * c[1] - uu[0] * c[2] * Au[1]
-                                                - uu[0] * c[1] * Au[2]) / K[0]);
+        invJ.SetValue(3, 0,
+                      Au[0] *
+                          (Au[0] * c[2] * c[1] - uu[0] * c[2] * Au[1] -
+                           uu[0] * c[1] * Au[2]) /
+                          K[0]);
         invJ.SetValue(3, 1, -Au[0] * Au[1] * (c[1] - uu[1]) * c[2] / K[0]);
         invJ.SetValue(3, 2, -Au[0] * Au[2] * (c[2] - uu[2]) * c[1] / K[0]);
         invJ.SetValue(3, 3, -Au[0] * c[2] * c[1] / K[0]);
@@ -177,20 +200,28 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         invJ.SetValue(3, 5, 0.5 * Au[0] * c[1] * Au[2] / K[0]);
 
         invJ.SetValue(4, 0, Au[0] * Au[1] * (c[0] + uu[0]) * c[2] / K[1]);
-        invJ.SetValue(4, 1, -Au[1] * (c[0] * Au[1] * c[2] + c[0] * uu[1] * Au[2]
-                                                + c[2] * uu[1] * Au[0]) / K[1]);
+        invJ.SetValue(4, 1,
+                      -Au[1] *
+                          (c[0] * Au[1] * c[2] + c[0] * uu[1] * Au[2] +
+                           c[2] * uu[1] * Au[0]) /
+                          K[1]);
         invJ.SetValue(4, 2, -Au[2] * Au[1] * (c[2] - uu[2]) * c[0] / K[1]);
         invJ.SetValue(4, 3, -c[0] * Au[1] * c[2] / K[1]);
-        invJ.SetValue(4, 4, -0.5 * Au[1] * (c[0] * Au[2] + Au[0] * c[2]) / K[1]);
+        invJ.SetValue(4, 4,
+                      -0.5 * Au[1] * (c[0] * Au[2] + Au[0] * c[2]) / K[1]);
         invJ.SetValue(4, 5, 0.5 * Au[2] * Au[1] * c[0] / K[1]);
 
         invJ.SetValue(5, 0, Au[0] * Au[2] * (c[0] + uu[0]) * c[1] / K[2]);
         invJ.SetValue(5, 1, -Au[2] * Au[1] * (c[1] - uu[1]) * c[0] / K[2]);
-        invJ.SetValue(5, 2, -Au[2] * (Au[2] * c[0] * c[1] + c[0] * uu[2] * Au[1]
-                                                + c[1] * uu[2] * Au[0]) / K[2]);
+        invJ.SetValue(5, 2,
+                      -Au[2] *
+                          (Au[2] * c[0] * c[1] + c[0] * uu[2] * Au[1] +
+                           c[1] * uu[2] * Au[0]) /
+                          K[2]);
         invJ.SetValue(5, 3, -Au[2] * c[0] * c[1] / K[2]);
         invJ.SetValue(5, 4, 0.5 * Au[2] * Au[1] * c[0] / K[2]);
-        invJ.SetValue(5, 5, -0.5 * Au[2] * (Au[1] * c[0] + c[1] * Au[0]) / K[2]);
+        invJ.SetValue(5, 5,
+                      -0.5 * Au[2] * (Au[1] * c[0] + c[1] * Au[0]) / K[2]);
     }
     else if (type == "Merge")
     {
@@ -203,13 +234,16 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
             GetC(c[i], beta[i], Au[i], A0[i], alpha[i]);
         }
 
-        k = c[0] * Au[1] * c[2] + Au[0] * c[2] * c[1] + Au[2] * c[0] * c[1];
+        k    = c[0] * Au[1] * c[2] + Au[0] * c[2] * c[1] + Au[2] * c[0] * c[1];
         K[0] = (c[0] - uu[0]) * k;
         K[1] = (c[1] + uu[1]) * k;
         K[2] = (c[2] + uu[2]) * k;
 
-        invJ.SetValue(0, 0, (-c[1] * uu[0] * c[2] * Au[0] + Au[2] * c[1] * c[0]
-                                   * c[0] + Au[1] * c[0] * c[0] * c[2]) / K[0]);
+        invJ.SetValue(0, 0,
+                      (-c[1] * uu[0] * c[2] * Au[0] +
+                       Au[2] * c[1] * c[0] * c[0] +
+                       Au[1] * c[0] * c[0] * c[2]) /
+                          K[0]);
         invJ.SetValue(0, 1, Au[1] * (c[1] - uu[1]) * c[0] * c[2] / K[0]);
         invJ.SetValue(0, 2, Au[2] * (c[2] - uu[2]) * c[0] * c[1] / K[0]);
         invJ.SetValue(0, 3, c[0] * c[1] * c[2] / K[0]);
@@ -217,8 +251,11 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         invJ.SetValue(0, 5, -0.5 * Au[2] * c[0] * c[1] / K[0]);
 
         invJ.SetValue(1, 0, Au[0] * (c[0] + uu[0]) * c[1] * c[2] / K[1]);
-        invJ.SetValue(1, 1, (c[0] * uu[1] * c[2] * Au[1] + Au[2] * c[0] * c[1]
-                                   * c[1] + c[2] * c[1] * c[1] * Au[0]) / K[1]);
+        invJ.SetValue(1, 1,
+                      (c[0] * uu[1] * c[2] * Au[1] +
+                       Au[2] * c[0] * c[1] * c[1] +
+                       c[2] * c[1] * c[1] * Au[0]) /
+                          K[1]);
         invJ.SetValue(1, 2, -Au[2] * (c[2] - uu[2]) * c[0] * c[1] / K[1]);
         invJ.SetValue(1, 3, -c[0] * c[1] * c[2] / K[1]);
         invJ.SetValue(1, 4, -0.5 * (c[0] * Au[2] + Au[0] * c[2]) * c[1] / K[1]);
@@ -226,14 +263,20 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
 
         invJ.SetValue(2, 0, Au[0] * (c[0] - uu[0]) * c[1] * c[2] / K[2]);
         invJ.SetValue(2, 1, -Au[1] * (c[1] + uu[1]) * c[0] * c[2] / K[2]);
-        invJ.SetValue(2, 2, -(c[0] * uu[2] * c[1] * Au[2] - Au[1] * c[0] *
-                              c[2] * c[2] - c[1] * c[2] * c[2] * Au[0]) / K[2]);
+        invJ.SetValue(2, 2,
+                      -(c[0] * uu[2] * c[1] * Au[2] -
+                        Au[1] * c[0] * c[2] * c[2] -
+                        c[1] * c[2] * c[2] * Au[0]) /
+                          K[2]);
         invJ.SetValue(2, 3, -c[0] * c[1] * c[2] / K[2]);
         invJ.SetValue(2, 4, -0.5 * Au[1] * c[0] * c[2] / K[2]);
         invJ.SetValue(2, 5, 0.5 * (Au[1] * c[0] + Au[0] * c[1]) * c[2] / K[2]);
 
-        invJ.SetValue(3, 0, -Au[0] * (Au[0] * c[2] * c[1] + uu[0] * c[2] *
-                                         Au[1] + uu[0] * c[1] * Au[2]) / K[0]);
+        invJ.SetValue(3, 0,
+                      -Au[0] *
+                          (Au[0] * c[2] * c[1] + uu[0] * c[2] * Au[1] +
+                           uu[0] * c[1] * Au[2]) /
+                          K[0]);
         invJ.SetValue(3, 1, Au[0] * Au[1] * (c[1] + uu[1]) * c[2] / K[0]);
 
         invJ.SetValue(3, 2, -Au[0] * Au[2] * (c[2] - uu[2]) * c[1] / K[0]);
@@ -242,20 +285,28 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         invJ.SetValue(3, 5, 0.5 * Au[0] * c[1] * Au[2] / K[0]);
 
         invJ.SetValue(4, 0, Au[0] * Au[1] * (c[0] + uu[0]) * c[2] / K[1]);
-        invJ.SetValue(4, 1, -Au[1] * (c[0] * Au[1] * c[2] + c[0] * uu[1] * Au[2]
-                                                + c[2] * uu[1] * Au[0]) / K[1]);
+        invJ.SetValue(4, 1,
+                      -Au[1] *
+                          (c[0] * Au[1] * c[2] + c[0] * uu[1] * Au[2] +
+                           c[2] * uu[1] * Au[0]) /
+                          K[1]);
         invJ.SetValue(4, 2, -Au[2] * Au[1] * (c[2] - uu[2]) * c[0] / K[1]);
         invJ.SetValue(4, 3, -c[0] * Au[1] * c[2] / K[1]);
-        invJ.SetValue(4, 4, -0.5 * Au[1] * (c[0] * Au[2] + Au[0] * c[2]) / K[1]);
+        invJ.SetValue(4, 4,
+                      -0.5 * Au[1] * (c[0] * Au[2] + Au[0] * c[2]) / K[1]);
         invJ.SetValue(4, 5, 0.5 * Au[2] * Au[1] * c[0] / K[1]);
 
         invJ.SetValue(5, 0, Au[0] * Au[2] * (c[0] + uu[0]) * c[1] / K[2]);
         invJ.SetValue(5, 1, -Au[2] * Au[1] * (c[1] - uu[1]) * c[0] / K[2]);
-        invJ.SetValue(5, 2, -Au[2] * (Au[2] * c[0] * c[1] + c[0] * uu[2] * Au[1]
-                                                + c[1] * uu[2] * Au[0]) / K[2]);
+        invJ.SetValue(5, 2,
+                      -Au[2] *
+                          (Au[2] * c[0] * c[1] + c[0] * uu[2] * Au[1] +
+                           c[1] * uu[2] * Au[0]) /
+                          K[2]);
         invJ.SetValue(5, 3, -Au[2] * c[0] * c[1] / K[2]);
         invJ.SetValue(5, 4, 0.5 * Au[2] * Au[1] * c[0] / K[2]);
-        invJ.SetValue(5, 5, -0.5 * Au[2] * (Au[1] * c[0] + c[1] * Au[0]) / K[2]);
+        invJ.SetValue(5, 5,
+                      -0.5 * Au[2] * (Au[1] * c[0] + c[1] * Au[0]) / K[2]);
     }
     else if (type == "Junction")
     {
@@ -268,17 +319,19 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
             GetC(c[i], beta[i], Au[i], A0[i], alpha[i]);
         }
 
-        k = (c[0] * Au[1] + Au[0] * c[1]);
+        k    = (c[0] * Au[1] + Au[0] * c[1]);
         K[0] = (c[0] + uu[0]) * k;
         K[1] = (c[1] + uu[1]) * k;
 
-        invJ.SetValue(0, 0, (Au[1] * c[0] * c[0] - c[1] * uu[0] * Au[0]) / K[0]);
+        invJ.SetValue(0, 0,
+                      (Au[1] * c[0] * c[0] - c[1] * uu[0] * Au[0]) / K[0]);
         invJ.SetValue(0, 1, Au[1] * (c[1] - uu[1]) * c[0] / K[0]);
         invJ.SetValue(0, 2, c[0] * c[1] / K[0]);
         invJ.SetValue(0, 3, -0.5 * c[0] * Au[1] / K[0]);
 
         invJ.SetValue(1, 0, Au[0] * (c[0] + uu[0]) * c[1] / K[1]);
-        invJ.SetValue(1, 1, (c[0] * uu[1] * Au[1] + c[1] * c[1] * Au[0]) / K[1]);
+        invJ.SetValue(1, 1,
+                      (c[0] * uu[1] * Au[1] + c[1] * c[1] * Au[0]) / K[1]);
         invJ.SetValue(1, 2, -c[0] * c[1] / K[1]);
         invJ.SetValue(1, 3, -0.5 * Au[0] * c[1] / K[1]);
 

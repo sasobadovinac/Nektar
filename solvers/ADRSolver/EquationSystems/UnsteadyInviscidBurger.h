@@ -35,72 +35,68 @@
 #ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYINVISCIDBURGER_H
 #define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYINVISCIDBURGER_H
 
-#include <SolverUtils/UnsteadySystem.h>
-#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 namespace Nektar
 {
-    class UnsteadyInviscidBurger : public SolverUtils::AdvectionSystem
+class UnsteadyInviscidBurger : public SolverUtils::AdvectionSystem
+{
+public:
+    friend class MemoryManager<UnsteadyInviscidBurger>;
+
+    /// Creates an instance of this class
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<UnsteadyInviscidBurger>;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<UnsteadyInviscidBurger>::AllocateSharedPtr(pSession,
+                                                                     pGraph);
+        p->InitObject();
+        return p;
+    }
+    /// Name of class
+    static std::string className;
 
-        /// Creates an instance of this class
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            SolverUtils::EquationSystemSharedPtr p
-                = MemoryManager<UnsteadyInviscidBurger>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        /// Name of class
-        static std::string className;
+    /// Destructor
+    virtual ~UnsteadyInviscidBurger();
 
-        /// Destructor
-        virtual ~UnsteadyInviscidBurger();
+protected:
+    SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
+    Array<OneD, NekDouble> m_traceVn;
 
-    protected:
-        SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
-        Array<OneD, NekDouble>                  m_traceVn;
-        
-        /// Forcing terms
-        std::vector<SolverUtils::ForcingSharedPtr>  m_forcing;
+    /// Forcing terms
+    std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
 
-        /// Session reader
-        UnsteadyInviscidBurger(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    /// Session reader
+    UnsteadyInviscidBurger(const LibUtilities::SessionReaderSharedPtr &pSession,
+                           const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        /// Evaluate the flux at each solution point
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
-        
-        /// Compute the RHS
-        void DoOdeRhs(
-            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
-            const NekDouble time);
+    /// Evaluate the flux at each solution point
+    void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
+                       Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-        /// Compute the projection
-        void DoOdeProjection(
-            const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,         Array<OneD, NekDouble> > &outarray,
-            const NekDouble time);
-            
-        /// Get the normal velocity
-        Array<OneD, NekDouble> &GetNormalVelocity();
+    /// Compute the RHS
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
-        /// Initialise the object
-        virtual void v_InitObject();
+    /// Compute the projection
+    void DoOdeProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    private:
-    };
-}
+    /// Get the normal velocity
+    Array<OneD, NekDouble> &GetNormalVelocity();
+
+    /// Initialise the object
+    virtual void v_InitObject();
+
+private:
+};
+} // namespace Nektar
 
 #endif

@@ -43,82 +43,83 @@ namespace Nektar
 {
 class FilterMovingBody;
 
-typedef std::shared_ptr<FilterMovingBody>    FilterMovingBodySharedPtr;
-typedef std::map<std::string, std::string>   FilterParams;
+typedef std::shared_ptr<FilterMovingBody> FilterMovingBodySharedPtr;
+typedef std::map<std::string, std::string> FilterParams;
 typedef std::pair<std::string, FilterParams> FilterMap;
 
 class FilterMovingBody : public SolverUtils::Filter
 {
-    public:
-        friend class MemoryManager<FilterMovingBody>;
+public:
+    friend class MemoryManager<FilterMovingBody>;
 
-        /// Creates an instance of this class
-        static SolverUtils::FilterSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr         &pSession,
-            const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-            const ParamMap &pParams)
-        {
-            SolverUtils::FilterSharedPtr p = MemoryManager<FilterMovingBody>
-                    ::AllocateSharedPtr(pSession, pEquation, pParams);
-            return p;
-        }
+    /// Creates an instance of this class
+    static SolverUtils::FilterSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+        const ParamMap &pParams)
+    {
+        SolverUtils::FilterSharedPtr p =
+            MemoryManager<FilterMovingBody>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
+        return p;
+    }
 
-        static std::string className;
+    static std::string className;
 
-        FilterMovingBody(
-            const LibUtilities::SessionReaderSharedPtr         &pSession,
-            const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-            const ParamMap &pParams);
-        ~FilterMovingBody();
+    FilterMovingBody(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+        const ParamMap &pParams);
+    ~FilterMovingBody();
 
-        virtual void v_Initialise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+    virtual void v_Initialise(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
 
-        virtual void v_Update(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time) {}
+    virtual void v_Update(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time)
+    {
+    }
 
-        void UpdateForce(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-                  Array<OneD, NekDouble> &Aeroforces,
-            const NekDouble &time);
+    void UpdateForce(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        Array<OneD, NekDouble> &Aeroforces, const NekDouble &time);
 
-        void UpdateMotion(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-                  Array<OneD, NekDouble> &MotionVars,
-            const NekDouble &time);
+    void UpdateMotion(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        Array<OneD, NekDouble> &MotionVars, const NekDouble &time);
 
-        virtual void v_Finalise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+    virtual void v_Finalise(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
 
-        virtual bool v_IsTimeDependent();
+    virtual bool v_IsTimeDependent();
 
-    private:
-        /// ID's of boundary regions where we want the forces
-        std::vector<unsigned int>       m_boundaryRegionsIdList;
-        /// Determines if a given Boundary Region is in
-        /// m_boundaryRegionsIdList
-        std::vector<bool>               m_boundaryRegionIsInList;
-        unsigned int                    m_index_f;
-        unsigned int                    m_index_m;
-        unsigned int                    m_outputFrequency;
-        /// plane to take history point from if using a homogeneous1D
-        /// expansion
-        unsigned int                    m_outputPlane;
-        bool                            m_isHomogeneous1D;
-        LibUtilities::BasisSharedPtr    m_homogeneousBasis;
-        std::string                     m_BoundaryString;
-        /// number of planes for homogeneous1D expansion
-        int                             m_planes;
-        Array<OneD, std::ofstream>      m_outputStream;
-        std::string                     m_outputFile_fce;
-        std::string                     m_outputFile_mot;
+private:
+    /// ID's of boundary regions where we want the forces
+    std::vector<unsigned int> m_boundaryRegionsIdList;
+    /// Determines if a given Boundary Region is in
+    /// m_boundaryRegionsIdList
+    std::vector<bool> m_boundaryRegionIsInList;
+    unsigned int m_index_f;
+    unsigned int m_index_m;
+    unsigned int m_outputFrequency;
+    /// plane to take history point from if using a homogeneous1D
+    /// expansion
+    unsigned int m_outputPlane;
+    bool m_isHomogeneous1D;
+    LibUtilities::BasisSharedPtr m_homogeneousBasis;
+    std::string m_BoundaryString;
+    /// number of planes for homogeneous1D expansion
+    int m_planes;
+    Array<OneD, std::ofstream> m_outputStream;
+    std::string m_outputFile_fce;
+    std::string m_outputFile_mot;
 };
 
-}
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERCHECKPOINT_H */

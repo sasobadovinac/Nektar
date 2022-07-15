@@ -55,11 +55,11 @@ QInflow::~QInflow()
 }
 
 void QInflow::v_DoBoundary(
-    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-    Array<OneD, Array<OneD, NekDouble> > &A_0,
-    Array<OneD, Array<OneD, NekDouble> > &beta,
-    Array<OneD, Array<OneD, NekDouble> > &alpha,
-    const NekDouble time, int omega, int offset, int n)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &A_0,
+    Array<OneD, Array<OneD, NekDouble>> &beta,
+    Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
+    int offset, int n)
 {
     NekDouble Q;
     NekDouble A_u;
@@ -86,7 +86,8 @@ void QInflow::v_DoBoundary(
     u_r = inarray[1][offset];
 
     // Call the Q-inflow Riemann solver
-    Q_RiemannSolver(Q, A_r, u_r, A_0[omega][0], beta[omega][0], alpha[omega][0], A_u, u_u);
+    Q_RiemannSolver(Q, A_r, u_r, A_0[omega][0], beta[omega][0], alpha[omega][0],
+                    A_u, u_u);
 
     /* Fix the boundary conditions in the virtual region to ensure
        upwind state matches the boundary condition at the next time step */
@@ -140,7 +141,7 @@ void QInflow::Q_RiemannSolver(NekDouble Q, NekDouble A_r, NekDouble u_r,
         FA           = Q - A_calc * (W2 + I);
         dFdA         = -W2 - I - c;
         delta_A_calc = FA / dFdA;
-        A_calc      -= delta_A_calc;
+        A_calc -= delta_A_calc;
 
         if (sqrt(delta_A_calc * delta_A_calc) < Tol)
         {

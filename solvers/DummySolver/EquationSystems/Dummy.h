@@ -76,14 +76,13 @@ protected:
 
     virtual void v_InitObject();
 
-    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                  Array<OneD, Array<OneD, NekDouble> > &outarray,
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
                   const NekDouble time);
 
     void DoOdeProjection(
-        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-        Array<OneD, Array<OneD, NekDouble> > &outarray,
-        const NekDouble time);
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
     virtual bool v_PreIntegrate(int step);
 

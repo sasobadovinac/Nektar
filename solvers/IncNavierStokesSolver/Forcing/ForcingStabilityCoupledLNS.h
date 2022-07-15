@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Forcing to copy velocity field in steady coupled LNS stability 
+// Description: Forcing to copy velocity field in steady coupled LNS stability
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,54 +37,50 @@
 
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/SolverUtilsDeclspec.h>
 
 namespace Nektar
 {
 
 class ForcingStabilityCoupledLNS : public SolverUtils::Forcing
 {
-    public:
+public:
+    friend class MemoryManager<ForcingStabilityCoupledLNS>;
 
-        friend class MemoryManager<ForcingStabilityCoupledLNS>;
+    /// Creates an instance of this class
+    static SolverUtils::ForcingSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
+    {
+        SolverUtils::ForcingSharedPtr p =
+            MemoryManager<ForcingStabilityCoupledLNS>::AllocateSharedPtr(
+                pSession, pEquation);
+        p->InitObject(pFields, pNumForcingFields, pForce);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static SolverUtils::ForcingSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr         &pSession,
-                const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const unsigned int& pNumForcingFields,
-                const TiXmlElement* pForce)
-        {
-            SolverUtils::ForcingSharedPtr p =
-                MemoryManager<ForcingStabilityCoupledLNS>::
-                AllocateSharedPtr(pSession, pEquation);
-            p->InitObject(pFields, pNumForcingFields, pForce);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_InitObject(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
 
-    protected:
-        virtual void v_InitObject(
-            const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-            const unsigned int&                         pNumForcingFields,
-            const TiXmlElement*                         pForce);
+    virtual void v_Apply(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
 
-        virtual void v_Apply(
-            const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-            const Array<OneD, Array<OneD, NekDouble> >& inarray,
-                  Array<OneD, Array<OneD, NekDouble> >& outarray,
-            const NekDouble&                            time);
-
-    private:
-        ForcingStabilityCoupledLNS(
-                const LibUtilities::SessionReaderSharedPtr         &pSession,
-                const std::weak_ptr<SolverUtils::EquationSystem> &pEquation);
+private:
+    ForcingStabilityCoupledLNS(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation);
 };
 
-}
+} // namespace Nektar
 
 #endif

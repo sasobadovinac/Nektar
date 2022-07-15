@@ -37,53 +37,50 @@
 
 #include "ArtificialDiffusion.h"
 
-
 namespace Nektar
 {
 
 /**
  * @brief Non Smooth artificial diffusion for shock capture for compressible
  * flow problems.
-*/
+ */
 class NonSmoothShockCapture : public ArtificialDiffusion
 {
-    public:
+public:
+    friend class MemoryManager<NonSmoothShockCapture>;
 
-        friend class MemoryManager<NonSmoothShockCapture>;
+    /// Creates an instance of this class
+    static ArtificialDiffusionSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const int spacedim)
+    {
+        ArtificialDiffusionSharedPtr p =
+            MemoryManager<NonSmoothShockCapture>::AllocateSharedPtr(
+                pSession, pFields, spacedim);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static ArtificialDiffusionSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const int spacedim)
-        {
-            ArtificialDiffusionSharedPtr p =
-                                MemoryManager<NonSmoothShockCapture>::
-                                AllocateSharedPtr(pSession, pFields, spacedim);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_GetArtificialViscosity(
+        const Array<OneD, Array<OneD, NekDouble>> &physfield,
+        Array<OneD, NekDouble> &mu);
 
-    protected:
+private:
+    NonSmoothShockCapture(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const int spacedim);
 
-        virtual void v_GetArtificialViscosity(
-            const Array<OneD, Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble  >             &mu);
+    virtual ~NonSmoothShockCapture(void){};
 
-    private:
-        NonSmoothShockCapture(
-               const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const int spacedim);
-
-        virtual ~NonSmoothShockCapture(void){};
-
-        /// Parameters
-        int             m_offset;
+    /// Parameters
+    int m_offset;
 };
 
-}
+} // namespace Nektar
 
 #endif

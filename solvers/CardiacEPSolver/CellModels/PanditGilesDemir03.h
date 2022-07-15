@@ -38,38 +38,40 @@
 #include <CardiacEPSolver/CellModels/CellModel.h>
 namespace Nektar
 {
-    class PanditGilesDemir03 : public CellModel
+class PanditGilesDemir03 : public CellModel
+{
+
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession, const int nq)
     {
+        return MemoryManager<PanditGilesDemir03>::AllocateSharedPtr(pSession,
+                                                                    nq);
+    }
 
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(const LibUtilities::SessionReaderSharedPtr& pSession, const int nq)
-        {
-            return MemoryManager<PanditGilesDemir03>::AllocateSharedPtr(pSession, nq);
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Constructor
+    PanditGilesDemir03(const LibUtilities::SessionReaderSharedPtr &pSession,
+                       const int nq);
 
-        /// Constructor
-        PanditGilesDemir03(const LibUtilities::SessionReaderSharedPtr& pSession, const int nq);
+    /// Desctructor
+    virtual ~PanditGilesDemir03()
+    {
+    }
 
-        /// Desctructor
-        virtual ~PanditGilesDemir03() {}
+protected:
+    /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    protected:
-        /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
-        virtual void v_Update(
-               const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                     Array<OneD,        Array<OneD, NekDouble> >&outarray,
-               const NekDouble time);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
+};
 
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
-
-    };
-
-
-}
+} // namespace Nektar
 
 #endif

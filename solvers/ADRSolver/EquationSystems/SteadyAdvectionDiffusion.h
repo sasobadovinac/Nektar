@@ -40,40 +40,41 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-    class SteadyAdvectionDiffusion : public EquationSystem
+class SteadyAdvectionDiffusion : public EquationSystem
+{
+public:
+    friend class MemoryManager<SteadyAdvectionDiffusion>;
+
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<SteadyAdvectionDiffusion>;
+        EquationSystemSharedPtr p =
+            MemoryManager<SteadyAdvectionDiffusion>::AllocateSharedPtr(pSession,
+                                                                       pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            EquationSystemSharedPtr p = MemoryManager<SteadyAdvectionDiffusion>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        virtual ~SteadyAdvectionDiffusion();
+    virtual ~SteadyAdvectionDiffusion();
 
-    protected:
-        NekDouble m_lambda;
-        Array<OneD, Array<OneD, NekDouble> >  m_velocity;
+protected:
+    NekDouble m_lambda;
+    Array<OneD, Array<OneD, NekDouble>> m_velocity;
 
-        SteadyAdvectionDiffusion(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    SteadyAdvectionDiffusion(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        virtual void v_InitObject();
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
-        virtual void v_DoInitialise();
-        virtual void v_DoSolve();
-    };
-}
+    virtual void v_InitObject();
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_DoInitialise();
+    virtual void v_DoSolve();
+};
+} // namespace Nektar
 
 #endif

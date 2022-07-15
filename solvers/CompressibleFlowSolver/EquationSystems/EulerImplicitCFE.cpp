@@ -28,8 +28,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Euler Implicit equations in consƒervative variables without artificial
-// diffusion
+// Description: Euler Implicit equations in consƒervative variables without
+// artificial diffusion
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -39,30 +39,29 @@ using namespace std;
 
 namespace Nektar
 {
-    string EulerImplicitCFE::className = 
+string EulerImplicitCFE::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-        "EulerImplicitCFE", EulerImplicitCFE::create, 
+        "EulerImplicitCFE", EulerImplicitCFE::create,
         "Euler Implicit equations in conservative variables.");
 
-    EulerImplicitCFE::EulerImplicitCFE(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : UnsteadySystem(pSession, pGraph),
-          CompressibleFlowSystem(pSession, pGraph),
-          CFSImplicit(pSession, pGraph)
-    {
-    }
-
-    void EulerImplicitCFE::v_InitObject()
-    {
-        CFSImplicit::v_InitObject();
-        m_viscousJacFlag = false;
-    }
-
-    /**
-     * @brief Destructor for Euler Implicit CFE class.
-     */
-    EulerImplicitCFE::~EulerImplicitCFE()
-    {
-    }
+EulerImplicitCFE::EulerImplicitCFE(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : UnsteadySystem(pSession, pGraph),
+      CompressibleFlowSystem(pSession, pGraph), CFSImplicit(pSession, pGraph)
+{
 }
+
+void EulerImplicitCFE::v_InitObject()
+{
+    CFSImplicit::v_InitObject();
+    m_viscousJacFlag = false;
+}
+
+/**
+ * @brief Destructor for Euler Implicit CFE class.
+ */
+EulerImplicitCFE::~EulerImplicitCFE()
+{
+}
+} // namespace Nektar

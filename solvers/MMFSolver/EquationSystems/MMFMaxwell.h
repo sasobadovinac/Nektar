@@ -63,7 +63,9 @@ enum SourceType
 };
 
 const char *const SourceTypeMap[] = {
-    "NoSource", "PointSource", "PlanarSource",
+    "NoSource",
+    "PointSource",
+    "PlanarSource",
 };
 
 namespace Nektar
@@ -80,7 +82,7 @@ public:
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
         SolverUtils::EquationSystemSharedPtr p =
             MemoryManager<MMFMaxwell>::AllocateSharedPtr(pSession, pGraph);
@@ -124,7 +126,7 @@ protected:
 
     /// Session reader
     MMFMaxwell(const LibUtilities::SessionReaderSharedPtr &pSession,
-               const SpatialDomains::MeshGraphSharedPtr& pGraph);
+               const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     NekDouble m_freq;
 
@@ -250,6 +252,6 @@ protected:
 
 private:
 };
-}
+} // namespace Nektar
 
 #endif

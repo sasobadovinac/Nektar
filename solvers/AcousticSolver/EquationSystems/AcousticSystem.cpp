@@ -630,8 +630,8 @@ void AcousticSystem::CopyBoundaryTrace(const Array<OneD, NekDouble> &Fwd,
 {
     int cnt = 0;
     // loop over Boundary Regions
-    for (int bcRegion = 0;
-         bcRegion < m_fields[0]->GetBndConditions().size(); ++bcRegion)
+    for (int bcRegion = 0; bcRegion < m_fields[0]->GetBndConditions().size();
+         ++bcRegion)
     {
 
         // Copy the forward trace of the field to the backward trace
@@ -646,8 +646,8 @@ void AcousticSystem::CopyBoundaryTrace(const Array<OneD, NekDouble> &Fwd,
                        ->GetExp(e)
                        ->GetTotPoints();
             id2 = m_fields[0]->GetTrace()->GetPhys_Offset(
-                 m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(
-                    cnt + e));
+                m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt +
+                                                                        e));
 
             Vmath::Vcopy(npts, &Fwd[id2], 1, &Bwd[id2], 1);
         }

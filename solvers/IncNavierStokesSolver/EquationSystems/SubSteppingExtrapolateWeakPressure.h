@@ -39,52 +39,52 @@
 
 namespace Nektar
 {
-    //-------------
-    // Substepping
-    //-------------
-    
-    class SubSteppingExtrapolateWeakPressure;
-    
-    typedef std::shared_ptr<SubSteppingExtrapolateWeakPressure> SubSteppingExtrapolateWeakPressureSharedPtr;
-    
-    class SubSteppingExtrapolateWeakPressure : public SubSteppingExtrapolate
+//-------------
+// Substepping
+//-------------
+
+class SubSteppingExtrapolateWeakPressure;
+
+typedef std::shared_ptr<SubSteppingExtrapolateWeakPressure>
+    SubSteppingExtrapolateWeakPressureSharedPtr;
+
+class SubSteppingExtrapolateWeakPressure : public SubSteppingExtrapolate
+{
+public:
+    /// Creates an instance of this class
+    static ExtrapolateSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        MultiRegions::ExpListSharedPtr &pPressure, const Array<OneD, int> &pVel,
+        const SolverUtils::AdvectionSharedPtr &advObject)
     {
-    public:
-        /// Creates an instance of this class
-        static ExtrapolateSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
-            Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-            MultiRegions::ExpListSharedPtr              &pPressure,
-            const Array<OneD, int>                      &pVel,
-            const SolverUtils::AdvectionSharedPtr       &advObject)
-        {
-            ExtrapolateSharedPtr
-                p = MemoryManager<SubSteppingExtrapolateWeakPressure>
-                ::AllocateSharedPtr(pSession,pFields,pPressure,pVel,advObject);
-            return p;
-        }
+        ExtrapolateSharedPtr p = MemoryManager<
+            SubSteppingExtrapolateWeakPressure>::AllocateSharedPtr(pSession,
+                                                                   pFields,
+                                                                   pPressure,
+                                                                   pVel,
+                                                                   advObject);
+        return p;
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        SubSteppingExtrapolateWeakPressure(
-            const LibUtilities::SessionReaderSharedPtr pSession,
-            Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
-            MultiRegions::ExpListSharedPtr              pPressure,
-            const Array<OneD, int> pVel,
-            const SolverUtils::AdvectionSharedPtr advObject);
+    SubSteppingExtrapolateWeakPressure(
+        const LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
+        MultiRegions::ExpListSharedPtr pPressure, const Array<OneD, int> pVel,
+        const SolverUtils::AdvectionSharedPtr advObject);
 
-        virtual ~SubSteppingExtrapolateWeakPressure();
-        
-    protected:
-        virtual void v_SubStepSetPressureBCs(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray, 
-            NekDouble Aii_Dt,
-            NekDouble kinvis);
+    virtual ~SubSteppingExtrapolateWeakPressure();
 
-        virtual void v_AddNormVelOnOBC(const int nbcoeffs, const int nreg,
-                                       Array<OneD, Array<OneD, NekDouble> > &u);
-    };
-}
+protected:
+    virtual void v_SubStepSetPressureBCs(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        NekDouble Aii_Dt, NekDouble kinvis);
+
+    virtual void v_AddNormVelOnOBC(const int nbcoeffs, const int nreg,
+                                   Array<OneD, Array<OneD, NekDouble>> &u);
+};
+} // namespace Nektar
 #endif
-

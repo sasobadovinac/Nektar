@@ -35,8 +35,8 @@
 #include <iomanip>
 #include <iostream>
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <ADRSolver/EquationSystems/MMFAdvection.h>
 #include <LibUtilities/BasicUtils/Timer.h>
@@ -49,7 +49,7 @@ std::string MMFAdvection::className =
         "MMFAdvection", MMFAdvection::create, "MMFAdvection equation.");
 
 MMFAdvection::MMFAdvection(const LibUtilities::SessionReaderSharedPtr &pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
+                           const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph), MMFSystem(pSession, pGraph),
       AdvectionSystem(pSession, pGraph)
 {
@@ -136,8 +136,8 @@ void MMFAdvection::v_InitObject()
     }
 
     std::cout << "|Velocity vector| = ( " << RootMeanSquare(m_velocity[0])
-             << " , " << RootMeanSquare(m_velocity[1]) << " , "
-             << RootMeanSquare(m_velocity[2]) << " ) " << std::endl;
+              << " , " << RootMeanSquare(m_velocity[1]) << " , "
+              << RootMeanSquare(m_velocity[2]) << " ) " << std::endl;
 
     // Define the normal velocity fields
     if (m_fields[0]->GetTrace())
@@ -147,18 +147,14 @@ void MMFAdvection::v_InitObject()
 
     std::string advName;
     std::string riemName;
-    m_session->LoadSolverInfo(
-        "AdvectionType", advName, "WeakDG");
-    m_advObject = SolverUtils::
-        GetAdvectionFactory().CreateInstance(advName, advName);
-    m_advObject->SetFluxVector(
-        &MMFAdvection::GetFluxVector, this);
-    m_session->LoadSolverInfo(
-        "UpwindType", riemName, "Upwind");
-    m_riemannSolver = SolverUtils::
-        GetRiemannSolverFactory().CreateInstance(riemName, m_session);
-    m_riemannSolver->SetScalar(
-        "Vn", &MMFAdvection::GetNormalVelocity, this);
+    m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
+    m_advObject =
+        SolverUtils::GetAdvectionFactory().CreateInstance(advName, advName);
+    m_advObject->SetFluxVector(&MMFAdvection::GetFluxVector, this);
+    m_session->LoadSolverInfo("UpwindType", riemName, "Upwind");
+    m_riemannSolver = SolverUtils::GetRiemannSolverFactory().CreateInstance(
+        riemName, m_session);
+    m_riemannSolver->SetScalar("Vn", &MMFAdvection::GetNormalVelocity, this);
 
     m_advObject->SetRiemannSolver(m_riemannSolver);
     m_advObject->InitObject(m_session, m_fields);
@@ -169,7 +165,7 @@ void MMFAdvection::v_InitObject()
     // Compute m_vellc = nabal a^j \cdot m_vel
     ComputeNablaCdotVelocity(m_vellc);
     std::cout << "m_vellc is generated with mag = " << AvgInt(m_vellc)
-             << std::endl;
+              << std::endl;
 
     // Compute vel \cdot MF
     ComputeveldotMF(m_veldotMF);
@@ -284,13 +280,14 @@ void MMFAdvection::v_DoSolve()
         // Write out status information
         if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
         {
-            std::cout << "Steps: " << std::setw(8) << std::left << step + 1 << " "
-                     << "Time: " << std::setw(12) << std::left << m_time;
+            std::cout << "Steps: " << std::setw(8) << std::left << step + 1
+                      << " "
+                      << "Time: " << std::setw(12) << std::left << m_time;
 
             std::stringstream ss;
             ss << cpuTime << "s";
             std::cout << " CPU Time: " << std::setw(8) << std::left << ss.str()
-                     << std::endl;
+                      << std::endl;
 
             // Masss = h^*
             indx = (step + 1) / m_checksteps;
@@ -298,7 +295,7 @@ void MMFAdvection::v_DoSolve()
                 (m_fields[0]->Integral(fields[0]) - m_Mass0) / m_Mass0;
 
             std::cout << "dMass = " << std::setw(8) << std::left << dMass[indx]
-                     << std::endl;
+                      << std::endl;
 
             cpuTime = 0.0;
         }
@@ -336,8 +333,9 @@ void MMFAdvection::v_DoSolve()
     {
         if (m_cflSafetyFactor > 0.0)
         {
-            std::cout << "CFL safety factor : " << m_cflSafetyFactor << std::endl
-                     << "CFL time-step     : " << m_timestep << std::endl;
+            std::cout << "CFL safety factor : " << m_cflSafetyFactor
+                      << std::endl
+                      << "CFL time-step     : " << m_timestep << std::endl;
         }
 
         if (m_session->GetSolverInfo("Driver") != "SteadyState")
@@ -435,16 +433,14 @@ void MMFAdvection::DoOdeRhs(
             }
             else
             {
-                m_advObject->Advect(2, m_fields, m_velocity, inarray,
-                                    outarray, 0.0);
+                m_advObject->Advect(2, m_fields, m_velocity, inarray, outarray,
+                                    0.0);
 
                 for (i = 0; i < nvariables; ++i)
                 {
                     Vmath::Neg(npoints, outarray[i], 1);
                 }
             }
-
-
         }
         break;
 
@@ -632,7 +628,7 @@ void MMFAdvection::EvaluateAdvectionVelocity(
         CartesianToSpherical(x0j, x1j, x2j, sin_varphi, cos_varphi, sin_theta,
                              cos_theta);
 
-        vel_phi = m_waveFreq * (cos_theta * cos(m_RotAngle) +
+        vel_phi   = m_waveFreq * (cos_theta * cos(m_RotAngle) +
                                 sin_theta * cos_varphi * sin(m_RotAngle));
         vel_theta = -1.0 * m_waveFreq * sin_theta * sin(m_RotAngle);
 
@@ -990,10 +986,10 @@ NekDouble MMFAdvection::ComputeCirculatingArclength(const NekDouble zlevel,
     NekDouble arclength = 0.0;
     for (int j = 0; j < N; ++j)
     {
-        arclength = arclength +
-                    sqrt((yp[j + 1] - yp[j]) * (yp[j + 1] - yp[j]) +
-                         (xp[j + 1] - xp[j]) * (xp[j + 1] - xp[j])) /
-                        pi;
+        arclength =
+            arclength + sqrt((yp[j + 1] - yp[j]) * (yp[j + 1] - yp[j]) +
+                             (xp[j + 1] - xp[j]) * (xp[j + 1] - xp[j])) /
+                            pi;
     }
 
     return arclength;
@@ -1345,4 +1341,4 @@ void MMFAdvection::v_GenerateSummary(SolverUtils::SummaryList &s)
     SolverUtils::AddSummaryItem(s, "TestType", TestTypeMap[m_TestType]);
     SolverUtils::AddSummaryItem(s, "Rotation Angle", m_RotAngle);
 }
-}
+} // namespace Nektar

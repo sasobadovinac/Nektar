@@ -32,10 +32,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/FieldIO.h>
-#include <SpatialDomains/MeshGraph.h>
+#include <LibUtilities/BasicUtils/SessionReader.h>
 #include <MultiRegions/ContField.h>
+#include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
 using namespace Nektar;
@@ -43,11 +43,11 @@ using namespace Nektar;
 int main(int argc, char *argv[])
 {
     LibUtilities::SessionReaderSharedPtr session;
-    LibUtilities::FieldIOSharedPtr       fld;
-    SpatialDomains::MeshGraphSharedPtr   graph;
-    MultiRegions::ContFieldSharedPtr   field;
-    LibUtilities::EquationSharedPtr      icond, ex_sol;
-    StdRegions::ConstFactorMap           factors;
+    LibUtilities::FieldIOSharedPtr fld;
+    SpatialDomains::MeshGraphSharedPtr graph;
+    MultiRegions::ContFieldSharedPtr field;
+    LibUtilities::EquationSharedPtr icond, ex_sol;
+    StdRegions::ConstFactorMap factors;
 
     try
     {
@@ -58,30 +58,30 @@ int main(int argc, char *argv[])
         graph = SpatialDomains::MeshGraph::Read(session);
 
         // Create Field I/O object.
-        fld     = LibUtilities::FieldIO::CreateDefault(session);
+        fld = LibUtilities::FieldIO::CreateDefault(session);
 
         // Get some information about the session
-        string       sessionName = session->GetSessionName();
-        string       outFile     = sessionName + ".fld";
-        unsigned int nSteps      = session->GetParameter("NumSteps");
-        NekDouble    delta_t     = session->GetParameter("TimeStep");
-        NekDouble    epsilon     = session->GetParameter("epsilon" );
+        string sessionName  = session->GetSessionName();
+        string outFile      = sessionName + ".fld";
+        unsigned int nSteps = session->GetParameter("NumSteps");
+        NekDouble delta_t   = session->GetParameter("TimeStep");
+        NekDouble epsilon   = session->GetParameter("epsilon");
 
         // Create field
-        field = MemoryManager<MultiRegions::ContField>
-            ::AllocateSharedPtr(session, graph, session->GetVariable(0));
+        field = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
+            session, graph, session->GetVariable(0));
 
         // Get coordinates of physical points
         unsigned int nq = field->GetNpoints();
-        Array<OneD,NekDouble> x0(nq), x1(nq), x2(nq);
-        field->GetCoords(x0,x1,x2);
+        Array<OneD, NekDouble> x0(nq), x1(nq), x2(nq);
+        field->GetCoords(x0, x1, x2);
 
         // Evaluate initial condition at these points
         icond = session->GetFunction("InitialConditions", "u");
         icond->Evaluate(x0, x1, x2, 0.0, field->UpdatePhys());
 
         // Compute lambda in the Helmholtz problem
-        factors[StdRegions::eFactorLambda] = 1.0/delta_t/epsilon;
+        factors[StdRegions::eFactorLambda] = 1.0 / delta_t / epsilon;
 
         // Zero field coefficients for initial guess for linear solver.
         Vmath::Zero(field->GetNcoeffs(), field->UpdateCoeffs(), 1);
@@ -89,8 +89,8 @@ int main(int argc, char *argv[])
         // Time integrate using backward Euler
         for (unsigned int n = 0; n < nSteps; ++n)
         {
-            Vmath::Smul(nq, -1.0/delta_t/epsilon, field->GetPhys(),    1,
-                                                  field->UpdatePhys(), 1);
+            Vmath::Smul(nq, -1.0 / delta_t / epsilon, field->GetPhys(), 1,
+                        field->UpdatePhys(), 1);
 
             field->HelmSolve(field->GetPhys(), field->UpdateCoeffs(), factors);
 
@@ -98,10 +98,10 @@ int main(int argc, char *argv[])
         }
 
         // Write solution to file
-        std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef
-                        = field->GetFieldDefinitions();
-        std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
-        for(int i = 0; i < FieldDef.size(); ++i)
+        std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
+            field->GetFieldDefinitions();
+        std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
+        for (int i = 0; i < FieldDef.size(); ++i)
         {
             FieldDef[i]->m_fields.push_back("u");
             field->AppendFieldData(FieldDef[i], FieldData[i]);
@@ -109,8 +109,8 @@ int main(int argc, char *argv[])
         fld->Write(outFile, FieldDef, FieldData);
 
         // Check for exact solution
-        ex_sol = session->GetFunction("ExactSolution",0);
-        if(ex_sol)
+        ex_sol = session->GetFunction("ExactSolution", 0);
+        if (ex_sol)
         {
             // Allocate storage
             Array<OneD, NekDouble> exact(nq);
@@ -121,23 +121,23 @@ int main(int argc, char *argv[])
 
             //--------------------------------------------
             // Calculate errors
-            cout << "L inf error:      "
-                 << field->Linf(field->GetPhys(), exact) << endl;
-            cout << "L 2 error:        "
-                 << field->L2(field->GetPhys(), exact) << endl;
-            cout << "H 1 error:        "
-                 << field->H1(field->GetPhys(), exact) << endl;
+            cout << "L inf error:      " << field->Linf(field->GetPhys(), exact)
+                 << endl;
+            cout << "L 2 error:        " << field->L2(field->GetPhys(), exact)
+                 << endl;
+            cout << "H 1 error:        " << field->H1(field->GetPhys(), exact)
+                 << endl;
             //--------------------------------------------
         }
 
         // Finalise session
         session->Finalise();
     }
-    catch (const std::runtime_error& e)
+    catch (const std::runtime_error &e)
     {
         return 1;
     }
-    catch (const std::string& eStr)
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }

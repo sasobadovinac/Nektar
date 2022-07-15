@@ -57,18 +57,22 @@ EmpiricalPressureArea::~EmpiricalPressureArea()
 }
 
 void EmpiricalPressureArea::v_GetPressure(NekDouble &P, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &dAUdx,
-                                 const NekDouble &gamma, const NekDouble &alpha)
+                                          const NekDouble &A,
+                                          const NekDouble &A0,
+                                          const NekDouble &dAUdx,
+                                          const NekDouble &gamma,
+                                          const NekDouble &alpha)
 {
     NekDouble kappa = 0.0;
     GetKappa(kappa, A, A0, alpha);
 
-    P = m_PExt - beta * sqrt(A0) * log(kappa) / (2 * alpha)
-                                                      - gamma * dAUdx / sqrt(A); //Viscoelasticity
+    P = m_PExt - beta * sqrt(A0) * log(kappa) / (2 * alpha) -
+        gamma * dAUdx / sqrt(A); // Viscoelasticity
 }
 
 void EmpiricalPressureArea::v_GetC(NekDouble &c, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &alpha)
+                                   const NekDouble &A, const NekDouble &A0,
+                                   const NekDouble &alpha)
 {
     NekDouble kappa = 0.0;
     GetKappa(kappa, A, A0, alpha);
@@ -77,8 +81,8 @@ void EmpiricalPressureArea::v_GetC(NekDouble &c, const NekDouble &beta,
 }
 
 void EmpiricalPressureArea::v_GetW1(NekDouble &W1, const NekDouble &u,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                                    const NekDouble &beta, const NekDouble &A,
+                                    const NekDouble &A0, const NekDouble &alpha)
 {
     NekDouble I = 0.0;
     GetCharIntegral(I, beta, A, A0, alpha);
@@ -87,8 +91,8 @@ void EmpiricalPressureArea::v_GetW1(NekDouble &W1, const NekDouble &u,
 }
 
 void EmpiricalPressureArea::v_GetW2(NekDouble &W2, const NekDouble &u,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                                    const NekDouble &beta, const NekDouble &A,
+                                    const NekDouble &A0, const NekDouble &alpha)
 {
     NekDouble I = 0.0;
     GetCharIntegral(I, beta, A, A0, alpha);
@@ -97,8 +101,10 @@ void EmpiricalPressureArea::v_GetW2(NekDouble &W2, const NekDouble &u,
 }
 
 void EmpiricalPressureArea::v_GetAFromChars(NekDouble &A, const NekDouble &W1,
-                const NekDouble &W2, const NekDouble &beta, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                                            const NekDouble &W2,
+                                            const NekDouble &beta,
+                                            const NekDouble &A0,
+                                            const NekDouble &alpha)
 {
     NekDouble xi = (W1 - W2) * sqrt(m_rho / (8 * beta * sqrt(A0)));
 
@@ -106,14 +112,16 @@ void EmpiricalPressureArea::v_GetAFromChars(NekDouble &A, const NekDouble &W1,
 }
 
 void EmpiricalPressureArea::v_GetUFromChars(NekDouble &u, const NekDouble &W1,
-                                                            const NekDouble &W2)
+                                            const NekDouble &W2)
 {
     u = (W1 + W2) / 2;
 }
 
 void EmpiricalPressureArea::v_GetCharIntegral(NekDouble &I,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                                              const NekDouble &beta,
+                                              const NekDouble &A,
+                                              const NekDouble &A0,
+                                              const NekDouble &alpha)
 {
     NekDouble kappa = 0.0;
     GetKappa(kappa, A, A0, alpha);
@@ -121,10 +129,11 @@ void EmpiricalPressureArea::v_GetCharIntegral(NekDouble &I,
     I = sqrt(2 * beta * sqrt(A0) / m_rho) * (1 - sqrt(kappa)) / alpha;
 }
 
-void EmpiricalPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
-             const Array<OneD, NekDouble> &Au, const Array<OneD, NekDouble> &uu,
-           const Array<OneD, NekDouble> &beta, const Array<OneD, NekDouble> &A0,
-                   const Array<OneD, NekDouble> &alpha, const std::string &type)
+void EmpiricalPressureArea::v_GetJacobianInverse(
+    NekMatrix<NekDouble> &invJ, const Array<OneD, NekDouble> &Au,
+    const Array<OneD, NekDouble> &uu, const Array<OneD, NekDouble> &beta,
+    const Array<OneD, NekDouble> &A0, const Array<OneD, NekDouble> &alpha,
+    const std::string &type)
 {
     // General formulation
     if (type == "Bifurcation")
@@ -158,24 +167,24 @@ void EmpiricalPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(2, 4, 0);
         J.SetValue(2, 5, -c[2] / Au[2]);
 
-        J.SetValue(3, 0,  Au[0]);
+        J.SetValue(3, 0, Au[0]);
         J.SetValue(3, 1, -Au[1]);
         J.SetValue(3, 2, -Au[2]);
-        J.SetValue(3, 3,  uu[0]);
+        J.SetValue(3, 3, uu[0]);
         J.SetValue(3, 4, -uu[1]);
         J.SetValue(3, 5, -uu[2]);
 
-        J.SetValue(4, 0,  2 * uu[0]);
+        J.SetValue(4, 0, 2 * uu[0]);
         J.SetValue(4, 1, -2 * uu[1]);
         J.SetValue(4, 2, 0);
-        J.SetValue(4, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(4, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(4, 4, -2 * c[1] * c[1] / Au[1]);
         J.SetValue(4, 5, 0);
 
-        J.SetValue(5, 0,  2 * uu[0]);
+        J.SetValue(5, 0, 2 * uu[0]);
         J.SetValue(5, 1, 0);
         J.SetValue(5, 2, -2 * uu[2]);
-        J.SetValue(5, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(5, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(5, 4, 0);
         J.SetValue(5, 5, -2 * c[2] * c[2] / Au[2]);
 
@@ -213,24 +222,24 @@ void EmpiricalPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(2, 4, 0);
         J.SetValue(2, 5, c[2] / Au[2]);
 
-        J.SetValue(3, 0,  Au[0]);
+        J.SetValue(3, 0, Au[0]);
         J.SetValue(3, 1, -Au[1]);
         J.SetValue(3, 2, -Au[2]);
-        J.SetValue(3, 3,  uu[0]);
+        J.SetValue(3, 3, uu[0]);
         J.SetValue(3, 4, -uu[1]);
         J.SetValue(3, 5, -uu[2]);
 
-        J.SetValue(4, 0,  2 * uu[0]);
+        J.SetValue(4, 0, 2 * uu[0]);
         J.SetValue(4, 1, -2 * uu[1]);
         J.SetValue(4, 2, 0);
-        J.SetValue(4, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(4, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(4, 4, -2 * c[1] * c[1] / Au[1]);
         J.SetValue(4, 5, 0);
 
-        J.SetValue(5, 0,  2 * uu[0]);
+        J.SetValue(5, 0, 2 * uu[0]);
         J.SetValue(5, 1, 0);
         J.SetValue(5, 2, -2 * uu[2]);
-        J.SetValue(5, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(5, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(5, 4, 0);
         J.SetValue(5, 5, -2 * c[2] * c[2] / Au[2]);
 
@@ -257,14 +266,14 @@ void EmpiricalPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(1, 2, 0);
         J.SetValue(1, 3, -c[1] / Au[1]);
 
-        J.SetValue(2, 0,  Au[0]);
+        J.SetValue(2, 0, Au[0]);
         J.SetValue(2, 1, -Au[1]);
-        J.SetValue(2, 2,  uu[0]);
+        J.SetValue(2, 2, uu[0]);
         J.SetValue(2, 3, -uu[1]);
 
-        J.SetValue(3, 0,  2 * uu[0]);
+        J.SetValue(3, 0, 2 * uu[0]);
         J.SetValue(3, 1, -2 * uu[1]);
-        J.SetValue(3, 2,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(3, 2, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(3, 3, -2 * c[1] * c[1] / Au[1]);
 
         invJ = J;
@@ -273,7 +282,8 @@ void EmpiricalPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
 }
 
 void EmpiricalPressureArea::GetKappa(NekDouble &kappa, const NekDouble &A,
-                                    const NekDouble &A0, const NekDouble &alpha)
+                                     const NekDouble &A0,
+                                     const NekDouble &alpha)
 {
     kappa = 1 - alpha * log(A / A0);
 }

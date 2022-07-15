@@ -36,16 +36,14 @@
 
 namespace Nektar
 {
-    std::string NoSolver::solverName =
-        SolverUtils::GetRiemannSolverFactory().RegisterCreatorFunction(
-            "NoSolver",
-            NoSolver::create,
-            "No valid Riemann solver choosen");
+std::string NoSolver::solverName =
+    SolverUtils::GetRiemannSolverFactory().RegisterCreatorFunction(
+        "NoSolver", NoSolver::create, "No valid Riemann solver choosen");
 
-    NoSolver::NoSolver(const LibUtilities::SessionReaderSharedPtr& pSession)
-        : LinearSWESolver(pSession)
-    {
-        NEKERROR(ErrorUtil::efatal, "No valid Riemann solver choosen");
-    }
-
+NoSolver::NoSolver(const LibUtilities::SessionReaderSharedPtr &pSession)
+    : LinearSWESolver(pSession)
+{
+    NEKERROR(ErrorUtil::efatal, "No valid Riemann solver choosen");
 }
+
+} // namespace Nektar

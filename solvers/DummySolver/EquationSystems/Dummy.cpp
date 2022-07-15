@@ -37,16 +37,15 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/BasicUtils/Timer.h>
 #include <DummySolver/EquationSystems/Dummy.h>
+#include <LibUtilities/BasicUtils/Timer.h>
 
 using namespace std;
 
 namespace Nektar
 {
 string Dummy::className = GetEquationSystemFactory().RegisterCreatorFunction(
-    "Dummy",
-    Dummy::create,
+    "Dummy", Dummy::create,
     "Dummy Equation System that only sends/receives fields");
 
 Dummy::Dummy(const LibUtilities::SessionReaderSharedPtr &pSession,
@@ -67,8 +66,8 @@ void Dummy::v_InitObject()
     m_ode.DefineOdeRhs(&Dummy::DoOdeRhs, this);
     m_ode.DefineProjection(&Dummy::DoOdeProjection, this);
 
-    m_forcing = SolverUtils::Forcing::Load(
-        m_session, shared_from_this(), m_fields, m_fields.size());
+    m_forcing = SolverUtils::Forcing::Load(m_session, shared_from_this(),
+                                           m_fields, m_fields.size());
 
     if (m_session->DefinesElement("Nektar/Coupling"))
     {
@@ -115,8 +114,8 @@ bool Dummy::v_PreIntegrate(int step)
             numForceFields += x->GetForces().size();
         }
         vector<string> varNames;
-        Array<OneD, Array<OneD, NekDouble> > phys(m_fields.size() +
-                                                  numForceFields);
+        Array<OneD, Array<OneD, NekDouble>> phys(m_fields.size() +
+                                                 numForceFields);
         for (int i = 0; i < m_fields.size(); ++i)
         {
             varNames.push_back(m_session->GetVariable(i));
@@ -233,8 +232,8 @@ void Dummy::v_Output()
 /**
  * @brief Compute the right-hand side.
  */
-void Dummy::DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                     Array<OneD, Array<OneD, NekDouble> > &outarray,
+void Dummy::DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                     Array<OneD, Array<OneD, NekDouble>> &outarray,
                      const NekDouble time)
 {
     boost::ignore_unused(time);
@@ -253,9 +252,8 @@ void Dummy::DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble> > &inarray,
  * boundary conditions in case of discontinuous projection.
  */
 void Dummy::DoOdeProjection(
-    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-    Array<OneD, Array<OneD, NekDouble> > &outarray,
-    const NekDouble time)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     boost::ignore_unused(time);
 

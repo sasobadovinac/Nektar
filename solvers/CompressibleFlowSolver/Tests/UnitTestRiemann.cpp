@@ -6,11 +6,11 @@ namespace Nektar
 namespace RiemannTests
 {
 
-    BOOST_AUTO_TEST_CASE(RRR)
-    {
+BOOST_AUTO_TEST_CASE(RRR)
+{
 
-        BOOST_CHECK_CLOSE(1., 1., 1e-10);
-    }
+    BOOST_CHECK_CLOSE(1., 1., 1e-10);
+}
 
-}
-}
+} // namespace RiemannTests
+} // namespace Nektar
