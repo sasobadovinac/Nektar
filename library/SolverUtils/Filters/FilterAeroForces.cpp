@@ -64,6 +64,7 @@ FilterAeroForces::FilterAeroForces(
     const ParamMap &pParams) :
     Filter(pSession, pEquation)
 {
+    //std::cout<<"setting up the filter\n";
     // OutputFile
     auto it = pParams.find("OutputFile");
     if (it == pParams.end())
@@ -77,7 +78,7 @@ FilterAeroForces::FilterAeroForces(
     }
 
     // use the same name with an extension for the z distribution of forces
-    m_outputFile_zDist= m_outputFile;
+    m_outputFile_zDist= m_outputFile+"_zDist";
 
     if (!(m_outputFile.length() >= 4
           && m_outputFile.substr(m_outputFile.length() - 4) == ".fce"))
@@ -129,6 +130,7 @@ FilterAeroForces::FilterAeroForces(
             m_session->GetInterpreter(), it->second);
         m_nZdivisions = round(equ.Evaluate());
     }
+    //std::cout<<"m_nZdiv: "<<m_nZdivisions<<"\n\n";
 
     // For 3DH1D, OutputAllPlanes or just average forces?
     m_session->MatchSolverInfo("Homogeneous", "1D",
@@ -253,6 +255,8 @@ FilterAeroForces::FilterAeroForces(
         }
     }
 
+    //std::cout<<"filter is set up\n\n";
+
 }
 
 
@@ -271,6 +275,7 @@ void FilterAeroForces::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
+    //std::cout<<"initilizing the filter\n\n";
     // Load mapping
     m_mapping = GlobalMapping::Mapping::Load(m_session, pFields);
 
@@ -341,6 +346,8 @@ void FilterAeroForces::v_Initialise(
         m_nPlanes = 1;
     }
 
+    //std::cout<<m_nPlanes<<"\n";
+
     // Create map for Planes ID for Homogeneous direction
     //    If flow has no Homogeneous direction, create trivial map
     int j;
@@ -371,6 +378,7 @@ void FilterAeroForces::v_Initialise(
     {
         m_planesID[0] = 0;
     }
+
 
     AssembleZMarkers(pFields);
 
@@ -528,9 +536,11 @@ void FilterAeroForces::v_Initialise(
             }
         }
         m_outputStream_zDist.width(8);
-        m_outputStream_zDist << "Area";
+        m_outputStream_zDist << "Area"<<endl;
 
     }
+
+    //std::cout<<"going to call update\n\n";
 
     m_lastTime = -1;
     m_index = 0;
@@ -789,6 +799,7 @@ void FilterAeroForces::v_Finalise(
     if (pFields[0]->GetComm()->GetRank() == 0)
     {
         m_outputStream.close();
+        m_outputStream_zDist.close();
     }
 }
 
@@ -2280,6 +2291,8 @@ void FilterAeroForces::AssembleZMarkers(
    //     AssembleZMarkersMapping( pFields);
    //     return;
    // }
+   //
+    //std::cout<<"entered assemble zmarkers\n";
 
     int cnt, elmtid, nq, offset;
     int expdim = pFields[0]->GetGraph()->GetMeshDimension();
@@ -2334,6 +2347,7 @@ void FilterAeroForces::AssembleZMarkers(
     NekDouble dzmin = std::numeric_limits<NekDouble>::max();
     NekDouble dzmax = std::numeric_limits<NekDouble>::lowest();
 
+    
     // For Homogeneous, calculate force on each 2D plane
     // Otherwise, m_nPlanes = 1, and loop only runs once
     for(int plane = 0; plane < m_nPlanes; plane++ )
@@ -2341,6 +2355,7 @@ void FilterAeroForces::AssembleZMarkers(
         // Check if plane is in this proc
         if( m_planesID[plane] != -1 )
         {
+            //std::cout<<"inside the ifffff\n\n";
 
             if(m_isHomogeneous1D)
             {
@@ -2362,6 +2377,7 @@ void FilterAeroForces::AssembleZMarkers(
 
                 if(m_boundaryRegionIsInList[n] == 1)
                 {
+                    //std::cout<<"boundary region in list: "<<n<<"\n\n";
                     for (int i=0; i < BndExp[n]->GetExpSize(); ++i,cnt++)
                     {
                         elmtid = m_BCtoElmtID[cnt];
@@ -2401,6 +2417,7 @@ void FilterAeroForces::AssembleZMarkers(
         }
     }
 
+    //std::cout<<"going to all reduce\n\n";
     rowComm->AllReduce(zminB,LibUtilities::ReduceMin);
     colComm->AllReduce(zminB,LibUtilities::ReduceMin);
     rowComm->AllReduce(zmaxB,LibUtilities::ReduceMax);
@@ -2417,28 +2434,43 @@ void FilterAeroForces::AssembleZMarkers(
 
     int nmax = (zmaxB-zminB)/dzmin;
     int nmin = (zmaxB-zminB)/dzmax;
+    boost::ignore_unused(nmin,nmax);
 
-    // check if the divisions given by user is not too small or too large
-    if( m_nZdivisions > nmax || m_nZdivisions < nmin )
-    {
-        NekDouble dzmean = 0.5*(dzmin+dzmax);
-        m_nZdivisions = (zmaxB-zminB)/dzmean;
-    }
+    //// check if the divisions given by user is not too small or too large
+    //if( m_nZdivisions > nmax || m_nZdivisions < nmin )
+    //{
+    //    NekDouble dzmean = 0.5*(dzmin+dzmax);
+    //    m_nZdivisions = (zmaxB-zminB)/dzmean;
+    //}
+    //std::cout<<"after modify m_nzdiv: "<<m_nZdivisions<<"\n\n";
 
+    //std::cout<<"zmin: "<<zminB<<"\tzmax: "<<zmaxB<<"\n\n";
     m_zmarkers = Array<OneD, NekDouble>(m_nZdivisions+1);
+    m_outputZcoords = Array<OneD, NekDouble>( m_nZdivisions);
     NekDouble dz = (zmaxB-zminB)/m_nZdivisions;
 
 
     for(int i=0; i<m_zmarkers.size(); ++i)
     {
-        m_zmarkers[i] = i * dz;
+        m_zmarkers[i] = zminB + i * dz;
     }
+    //for(auto& z:m_zmarkers)
+    //{
+    //    std::cout<<"z: "<<z<<"\n";
+    //}
+
+
     // set up the zcoordinates for output file
     for (int i = 0; i < m_nZdivisions; ++i)
     {
         m_outputZcoords[i] = 0.5 * (m_zmarkers[i] + m_zmarkers[i + 1]);
     }
 
+    //int myrank=vComm->GetRank();
+    //std::string dbgname="dbg_"+std::to_str(myrank);
+    //std::ofstream dbg;
+    //dbg.open(dbgname);
+    //
     // now find each element belongs to which z partition
     for(int plane = 0; plane < m_nPlanes; plane++ )
     {
@@ -2466,6 +2498,7 @@ void FilterAeroForces::AssembleZMarkers(
 
                 if(m_boundaryRegionIsInList[n] == 1)
                 {
+                    //std::cout<<"boundary expansion n: "<<n<<"\t number of elements: "<<BndExp[n]->GetExpSize()<<"\n\n";
                     for (int i=0; i < BndExp[n]->GetExpSize(); ++i,cnt++)
                     {
                         elmtid = m_BCtoElmtID[cnt];
@@ -2489,17 +2522,23 @@ void FilterAeroForces::AssembleZMarkers(
                             zmaxEl = std::max(gct[2], zmaxEl);
                         }
 
+                        //dbg<<"zmin: "<<zminEl<<"\tzmax: "<<zmaxEl<<"\n";
+
                         // select the z division based on the minz of element
                         for(int j=0; j<m_zmarkers.size()-1; ++j)
                         {
                             NekDouble zj = m_zmarkers[j];
                             NekDouble zjp = m_zmarkers[j+1];
+
+                            //dbg<<"j: "<<j<<"\tzj: "<<zj<<"\tzjp: "<<zjp<<"\n";
+                            //if( zj < zminEl && zminEl <= zjp)
                             if( zj < zminEl && zminEl <= zjp)
                             {
+                                //std::cout<<"entered the if zj zjp\n";
                                 // element i is belong to division j
                                 m_eleZdivMap[i]=j;
+                                break;
                             }
-                            break;
                         }
 
                     }
@@ -2511,6 +2550,13 @@ void FilterAeroForces::AssembleZMarkers(
             }
         }
     }
+
+    //std::cout<<"printing the element z map: \n";
+    //for(auto& e:m_eleZdivMap)
+    //{
+    //    std::cout<<"element: "<<e.first<<"\t jz: "<<e.second<<"\n";
+    //}
+    //std::cout<<"\n\n";
 
 
     
