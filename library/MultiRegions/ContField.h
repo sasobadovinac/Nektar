@@ -106,13 +106,6 @@ namespace Nektar
             inline const AssemblyMapCGSharedPtr& GetLocalToGlobalMap()
                 const;
 
-            /// Calculates the inner product of a function
-            /// \f$f(\boldsymbol{x})\f$ with respect to all <em>global</em>
-            /// expansion modes \f$\phi_n^e(\boldsymbol{x})\f$.
-            inline void IProductWRTBase(
-                            const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD, NekDouble> &outarray);
-
             /// Performs the global forward transformation of a function
             /// \f$f(\boldsymbol{x})\f$, subject to the boundary conditions
             /// specified.
@@ -378,31 +371,6 @@ namespace Nektar
         {
             return  m_locToGloMap;
         }
-
-
-        /**
-         * The operation is evaluated locally (i.e. with respect to all local
-         * expansion modes) by the function ExpList#IProductWRTBase. The inner
-         * product with respect to the global expansion modes is than obtained
-         * by a global assembly operation.
-         *
-         * The values of the function \f$f(\boldsymbol{x})\f$ evaluated at the
-         * quadrature points \f$\boldsymbol{x}_i\f$ should be contained in the
-         * variable #m_phys of the ExpList object \a in. The result is stored
-         * in the array #m_coeffs.
-         *
-         * @param   In          An ExpList, containing the discrete evaluation
-         *                      of \f$f(\boldsymbol{x})\f$ at the quadrature
-         *                      points in its array #m_phys.
-         */
-        inline void ContField::IProductWRTBase(
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray)
-
-        {
-            IProductWRTBase_IterPerExp(inarray,outarray);
-        }
-
 
         inline const Array<OneD,const MultiRegions::ExpListSharedPtr>&
                                             ContField::GetBndCondExpansions()

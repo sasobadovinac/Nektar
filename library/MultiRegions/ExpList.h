@@ -276,11 +276,6 @@ namespace Nektar
             /// This function calculates the inner product of a function
             /// \f$f(\boldsymbol{x})\f$ with respect to all \em local
             /// expansion modes \f$\phi_n^e(\boldsymbol{x})\f$.
-            inline void   IProductWRTBase_IterPerExp(
-                const Array<OneD, const NekDouble> &inarray,
-                      Array<OneD,       NekDouble> &outarray);
-
-            ///
             inline void IProductWRTBase(
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,       NekDouble> &outarray);
@@ -1574,10 +1569,6 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,       NekDouble> &outarray);
 
-            virtual void v_IProductWRTBase_IterPerExp(
-                const Array<OneD,const NekDouble> &inarray,
-                      Array<OneD,      NekDouble> &outarray);
-
             virtual void v_GeneralMatrixOp(
                 const GlobalMatrixKey             &gkey,
                 const Array<OneD,const NekDouble> &inarray,
@@ -1988,16 +1979,6 @@ namespace Nektar
             Array<OneD, NekDouble> &outarray)
         {
             v_IProductWRTBase(inarray,outarray);
-        }
-
-        /**
-         *
-         */
-        inline void ExpList::IProductWRTBase_IterPerExp(
-            const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,       NekDouble> &outarray)
-        {
-            v_IProductWRTBase_IterPerExp(inarray,outarray);
         }
 
         /**

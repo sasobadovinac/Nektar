@@ -1408,41 +1408,6 @@ namespace Nektar
 
         /**
          * The operation is evaluated locally for every element by the function
-         * StdRegions#StdExpansion#IProductWRTBase.
-         *
-         * @param   inarray         An array of size \f$Q_{\mathrm{tot}}\f$
-         *                          containing the values of the function
-         *                          \f$f(\boldsymbol{x})\f$ at the quadrature
-         *                          points \f$\boldsymbol{x}_i\f$.
-         * @param   outarray        An array of size \f$N_{\mathrm{eof}}\f$
-         *                          used to store the result.
-         */
-        void ExpList::v_IProductWRTBase_IterPerExp(
-                                const Array<OneD, const NekDouble> &inarray,
-                                      Array<OneD,       NekDouble> &outarray)
-        {
-            // initialise if required
-            if(m_collectionsDoInit[Collections::eIProductWRTBase])
-            {
-                for (int i = 0; i < m_collections.size(); ++i)
-                {
-                    m_collections[i].Initialise(Collections::eIProductWRTBase);
-                }
-                m_collectionsDoInit[Collections::eIProductWRTBase] = false; 
-            }
-
-            Array<OneD,NekDouble>  tmp;
-            for (int i = 0; i < m_collections.size(); ++i)
-            {
-
-                m_collections[i].ApplyOperator(Collections::eIProductWRTBase,
-                                               inarray + m_coll_phys_offset[i],
-                                               tmp = outarray + m_coll_coeff_offset[i]);
-            }
-        }
-
-        /**
-         * The operation is evaluated locally for every element by the function
          * StdRegions#Expansion#IProductWRTDerivBase.
          *
          * @param   dir             {0,1} is the direction in which the
@@ -1897,7 +1862,7 @@ namespace Nektar
         {
             Array<OneD,NekDouble> f(m_ncoeffs);
 
-            IProductWRTBase_IterPerExp(inarray,f);
+            IProductWRTBase(inarray,f);
             MultiplyByElmtInvMass(f,outarray);
 
         }
@@ -4835,6 +4800,17 @@ namespace Nektar
             v_FwdTrans_IterPerExp(inarray,outarray);
         }
 
+        /**
+         * The operation is evaluated locally for every element by the function
+         * StdRegions#StdExpansion#IProductWRTBase.
+         *
+         * @param   inarray         An array of size \f$Q_{\mathrm{tot}}\f$
+         *                          containing the values of the function
+         *                          \f$f(\boldsymbol{x})\f$ at the quadrature
+         *                          points \f$\boldsymbol{x}_i\f$.
+         * @param   outarray        An array of size \f$N_{\mathrm{eof}}\f$
+         *                          used to store the result.
+         */
         void ExpList::v_IProductWRTBase(
                                 const Array<OneD, const NekDouble> &inarray,
                                 Array<OneD,       NekDouble> &outarray)

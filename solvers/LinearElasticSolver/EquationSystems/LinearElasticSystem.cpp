@@ -624,7 +624,7 @@ void LinearElasticSystem::v_DoSolve()
     for (nv = 0; nv < nVel; ++nv)
     {
         // Take the inner product of the forcing function.
-        m_fields[nv]->IProductWRTBase_IterPerExp(forcing[nv], tmp);
+        m_fields[nv]->IProductWRTBase(forcing[nv], tmp);
 
         // Impose Dirichlet condition on field which should be initialised 
         Array<OneD, NekDouble> loc_inout = m_fields[nv]->UpdateCoeffs(); 
