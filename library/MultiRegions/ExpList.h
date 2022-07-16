@@ -1018,12 +1018,7 @@ namespace Nektar
             /// This function calculates the result of the multiplication of a
             /// matrix of type specified by \a mkey with a vector given by \a
             /// inarray.
-            inline void GeneralMatrixOp(
-                const GlobalMatrixKey             &gkey,
-                const Array<OneD,const NekDouble> &inarray,
-                Array<OneD,      NekDouble> &outarray);
-
-            MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
+            MULTI_REGIONS_EXPORT void GeneralMatrixOp(
                 const GlobalMatrixKey      &gkey,
                 const Array<OneD,const NekDouble> &inarray,
                       Array<OneD,      NekDouble> &outarray);
@@ -1568,11 +1563,6 @@ namespace Nektar
             virtual void v_IProductWRTBase(
                 const Array<OneD, const NekDouble> &inarray,
                 Array<OneD,       NekDouble> &outarray);
-
-            virtual void v_GeneralMatrixOp(
-                const GlobalMatrixKey             &gkey,
-                const Array<OneD,const NekDouble> &inarray,
-                Array<OneD,      NekDouble> &outarray);
 
             virtual void v_GetCoords(
                 Array<OneD, NekDouble> &coord_0,
@@ -2706,43 +2696,6 @@ namespace Nektar
             const NekDouble   x3_in)
         {
             v_EvaluateBoundaryConditions(time, varName, x2_in, x3_in);
-        }
-        
-        // Routines for continous matrix solution
-        /**
-         * This operation is equivalent to the evaluation of
-         * \f$\underline{\boldsymbol{M}}^e\boldsymbol{\hat{u}}_l\f$, that is,
-         * \f[ \left[
-         * \begin{array}{cccc}
-         * \boldsymbol{M}^1 & 0 & \hspace{3mm}0 \hspace{3mm}& 0 \\
-         * 0 & \boldsymbol{M}^2 & 0 & 0 \\
-         * 0 &  0 & \ddots &  0 \\
-         * 0 &  0 & 0 & \boldsymbol{M}^{N_{\mathrm{el}}} \end{array} \right]
-         *\left [ \begin{array}{c}
-         * \boldsymbol{\hat{u}}^{1} \\
-         * \boldsymbol{\hat{u}}^{2} \\
-         * \vdots \\
-         * \boldsymbol{\hat{u}}^{{{N_{\mathrm{el}}}}} \end{array} \right ]\f]
-         * where \f$\boldsymbol{M}^e\f$ are the local matrices of type
-         * specified by the key \a mkey. The decoupling of the local matrices
-         * allows for a local evaluation of the operation. However, rather than
-         * a local matrix-vector multiplication, the local operations are
-         * evaluated as implemented in the function
-         * StdRegions#StdExpansion#GeneralMatrixOp.
-         *
-         * @param   mkey            This key uniquely defines the type matrix
-         *                          required for the operation.
-         * @param   inarray         The vector \f$\boldsymbol{\hat{u}}_l\f$ of
-         *                          size \f$N_{\mathrm{eof}}\f$.
-         * @param   outarray        The resulting vector of size
-         *                          \f$N_{\mathrm{eof}}\f$.
-         */
-        inline void ExpList::GeneralMatrixOp(
-                                const GlobalMatrixKey             &gkey,
-                                const Array<OneD,const NekDouble> &inarray,
-                                Array<OneD, NekDouble>            &outarray)
-        {
-            v_GeneralMatrixOp(gkey,inarray,outarray);
         }
     
     

@@ -958,30 +958,6 @@ namespace Nektar
 
 
         /**
-         * This is equivalent to the operation:
-         * \f[\boldsymbol{M\hat{u}}_g\f]
-         * where \f$\boldsymbol{M}\f$ is the global matrix of type specified by
-         * \a mkey. After scattering the global array \a inarray to local
-         * level, this operation is evaluated locally by the function
-         * ExpList#GeneralMatrixOp. The global result is then obtained by a
-         * global assembly procedure.
-         *
-         * @param   mkey        This key uniquely defines the type matrix
-         *                      required for the operation.
-         * @param   inarray     The vector \f$\boldsymbol{\hat{u}}_g\f$ of size
-         *                      \f$N_{\mathrm{dof}}\f$.
-         * @param   outarray    The resulting vector of size
-         *                      \f$N_{\mathrm{dof}}\f$.
-         */
-        void ContField::v_GeneralMatrixOp(
-                const GlobalMatrixKey              &gkey,
-                const Array<OneD,const NekDouble>  &inarray,
-                Array<OneD,      NekDouble>  &outarray)
-        {
-            GeneralMatrixOp_IterPerExp(gkey,inarray,outarray);
-        }
-
-        /**
          * First compute the inner product of forcing function with respect to
          * base, and then solve the system with the linear advection operator.
          * @param   velocity    Array of advection velocities in physical space

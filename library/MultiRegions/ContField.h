@@ -263,14 +263,6 @@ namespace Nektar
                     const Array<OneD, const NekDouble> &dirForcing,
                     const bool PhysSpaceForcing);
 
-            /// Calculates the result of the multiplication of a global
-            /// matrix of type specified by \a mkey with a vector given by \a
-            /// inarray.
-            virtual void v_GeneralMatrixOp(
-                   const GlobalMatrixKey             &gkey,
-                   const Array<OneD,const NekDouble> &inarray,
-                   Array<OneD,      NekDouble> &outarray);
-
             // Solve the linear advection problem assuming that m_coeffs
             // vector contains an intial estimate for solution
             MULTI_REGIONS_EXPORT virtual void
