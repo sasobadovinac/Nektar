@@ -87,7 +87,7 @@ public:
 
     FieldStorage(const FieldStorage &F)
         : m_expIF(F.m_expIF),
-          m_storage(Array<OneD, T_Data>(F.m_storage->size(), F.m_storage)),
+          m_storage(Array<OneD, T_Data>(F.m_storage.size(), F.m_storage)),
           m_numVariables(F.m_numVariables)
     {
     }
