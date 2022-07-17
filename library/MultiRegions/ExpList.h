@@ -423,6 +423,12 @@ namespace Nektar
                 Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
                 Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
+            inline void GetCoords(FieldStorage<NekDouble, ePhys> &coord_0,
+                                  FieldStorage<NekDouble, ePhys> &coord_1
+                                                       = ZeroFieldStoragePhys,
+                                  FieldStorage<NekDouble, ePhys> &coord_2
+                                                        = ZeroFieldStoragePhys);
+
             // Homogeneous transforms
             inline void HomogeneousFwdTrans(
                 const Array<OneD, const NekDouble> &inarray,
@@ -618,6 +624,12 @@ namespace Nektar
                 const Array<OneD, const NekDouble> &inarray,
                 const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
 
+            /// This function calculates the \f$L_\infty\f$ error of the global
+            /// spectral/hp element approximation.
+            MULTI_REGIONS_EXPORT inline NekDouble Linf (
+               const FieldStorage<NekDouble, ePhys> &in,
+               const FieldStorage<NekDouble, ePhys> &sol = ZeroFieldStoragePhys);
+            
             /// This function calculates the \f$L_2\f$ error with
             /// respect to soln of the global
             /// spectral/hp element approximation.
@@ -628,12 +640,45 @@ namespace Nektar
                 return v_L2(inarray, soln);
             }
 
+            /// This function calculates the \f$L_2\f$ error with
+            /// respect to soln of the global
+            /// spectral/hp element approximation.
+            NekDouble L2(
+                const FieldStorage<NekDouble, ePhys> &in,
+                const FieldStorage<NekDouble, ePhys> &sol = ZeroFieldStoragePhys)
+            {
+                if(sol.GetData().size())
+                {
+                    return v_L2(in.GetData(), sol.GetData());
+                }
+                else
+                {
+                    return v_L2(in.GetData(), NullNekDouble1DArray);
+                }
+            }
+
             /// Calculates the \f$H^1\f$ error of the global spectral/hp
             /// element approximation.
             MULTI_REGIONS_EXPORT NekDouble H1 (
                 const Array<OneD, const NekDouble> &inarray,
                 const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
 
+            /// Calculates the \f$H^1\f$ error of the global spectral/hp
+            /// element approximation.
+            MULTI_REGIONS_EXPORT NekDouble H1 (
+                const FieldStorage<NekDouble, ePhys> &in,
+                const FieldStorage<NekDouble, ePhys> &sol = ZeroFieldStoragePhys)
+            {
+                if(sol.GetData().size())
+                {
+                    return H1(in.GetData(), sol.GetData());
+                }
+                else
+                {
+                    return H1(in.GetData(), NullNekDouble1DArray);
+                }
+            }
+            
             /**
 	     * The integration is evaluated locally, that is
 	     * \f[\int
@@ -2158,6 +2203,17 @@ namespace Nektar
             v_GetCoords(coord_0,coord_1,coord_2);
         }
 
+        /**
+         *
+         */
+        inline void ExpList::GetCoords(FieldStorage<NekDouble, ePhys> &coord_0,
+                                       FieldStorage<NekDouble, ePhys> &coord_1,
+                                       FieldStorage<NekDouble, ePhys> &coord_2)
+        {
+            v_GetCoords(coord_0.UpdateData(),coord_1.UpdateData(),
+                            coord_2.UpdateData());
+        }
+        
 
         /**
          *
@@ -2815,8 +2871,21 @@ namespace Nektar
             return v_GetLeftAdjacentTraces(); 
         }
         
+        inline NekDouble ExpList::Linf (
+               const FieldStorage<NekDouble, ePhys> &in,
+               const FieldStorage<NekDouble, ePhys> &sol)
+        {
+            if(sol.GetData().size())
+            {
+                return Linf(in.GetData(), sol.GetData());
+            }
+            else
+            {
+                return Linf(in.GetData(),NullNekDouble1DArray);
+            }
+        }
         const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
-
+        
     } //end of namespace
 } //end of namespace
 

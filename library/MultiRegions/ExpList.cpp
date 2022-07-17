@@ -4903,7 +4903,8 @@ namespace Nektar
                 break;
             case 2:
                 ASSERTL0(coord_1.size() != 0,
-                         "output coord_1 is not defined");
+                         "Second inputs must be used since the "
+                         "expansion has two coordinates"); 
 
                 for(i= 0; i < (*m_exp).size(); ++i)
                 {
@@ -4913,10 +4914,9 @@ namespace Nektar
                 }
                 break;
             case 3:
-                ASSERTL0(coord_1.size() != 0,
-                         "output coord_1 is not defined");
-                ASSERTL0(coord_2.size() != 0,
-                         "output coord_2 is not defined");
+                ASSERTL0(coord_1.size() != 0 ||coord_2.size() != 0,
+                         "Three inputs must be used since the "
+                         "expansion has three coordinates"); 
 
                 for(i= 0; i < (*m_exp).size(); ++i)
                 {

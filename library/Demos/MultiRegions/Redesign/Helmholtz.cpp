@@ -69,20 +69,8 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Set up coordinates of mesh for Forcing function evaluation
-        
 	FieldStorage<NekDouble,ePhys> xc0(Exp,0.0), xc1(Exp,0.0), xc2(Exp,0.0); 
-        switch(Exp->GetCoordim(0))
-        {
-        case 1:
-            Exp->GetCoords(xc0.UpdateData());
-            break;
-        case 2:
-            Exp->GetCoords(xc0.UpdateData(),xc1.UpdateData());
-            break;
-        case 3:
-            Exp->GetCoords(xc0.UpdateData(),xc1.UpdateData(),xc2.UpdateData());
-            break;
-        }
+        Exp->GetCoords(xc0,xc1,xc2);
         //----------------------------------------------
 
         //----------------------------------------------
@@ -122,7 +110,6 @@ int main(int argc, char *argv[])
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef
                                                     = Exp->GetFieldDefinitions();
         std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
-
         for(int i = 0; i < FieldDef.size(); ++i)
         {
             FieldDef[i]->m_fields.push_back("u");
@@ -147,9 +134,9 @@ int main(int argc, char *argv[])
 
             //--------------------------------------------
             // Calculate errors
-            NekDouble vLinfError = Exp->Linf(Phys.GetData(), Fce.GetData());
-            NekDouble vL2Error   = Exp->L2(Phys.GetData(), Fce.GetData());
-            NekDouble vH1Error   = Exp->H1(Phys.GetData(), Fce.GetData());
+            NekDouble vLinfError = Exp->Linf(Phys, Fce);
+            NekDouble vL2Error   = Exp->L2  (Phys, Fce);
+            NekDouble vH1Error   = Exp->H1  (Phys, Fce);
             if (vComm->GetRank() == 0)
             {
                 cout << "L infinity error: " << vLinfError << endl;

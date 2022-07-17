@@ -63,6 +63,12 @@ template <typename T_Data, StorageType T_Stype, DataLayout T_Order = eField>
 class FieldStorage
 {
 public:
+
+    // default contructor
+    FieldStorage(): m_numVariables(1)
+    {
+    };
+
     FieldStorage(std::shared_ptr<MultiRegions::ExpList> exp, T_Data defval = 0) :
         m_numVariables(1)
     {
@@ -126,5 +132,8 @@ protected:
     //    int std::array<int, num_variables> dofs;
 };
 
+static FieldStorage<NekDouble,ePhys> ZeroFieldStoragePhys; 
+static FieldStorage<NekDouble,eCoeff> ZerolFieldStorageCoef; 
+    
 } // namespace Nektar
 #endif
