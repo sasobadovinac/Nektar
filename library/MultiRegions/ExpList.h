@@ -322,8 +322,8 @@ namespace Nektar
                 Array<OneD,       NekDouble> &outarray);
 
             inline void FwdTrans(
-                const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
-		FieldStorage<NekDouble, MultiRegions::eCoeff> &out);
+                const FieldStorage<NekDouble, ePhys> &in,
+		FieldStorage<NekDouble, eCoeff> &out);
 
             MULTI_REGIONS_EXPORT void   ExponentialFilter(
                 Array<OneD, NekDouble> &array,
@@ -369,8 +369,8 @@ namespace Nektar
 
 	    /// Solve helmholtz problem - FieldStorage input 
             inline void HelmSolve(
-                const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
-		      FieldStorage<NekDouble, MultiRegions::eCoeff> &out,
+                const FieldStorage<NekDouble, ePhys> &in,
+		      FieldStorage<NekDouble, eCoeff> &out,
                 const StdRegions::ConstFactorMap &factors,
                 const StdRegions::VarCoeffMap &varcoeff =
                                 StdRegions::NullVarCoeffMap,
@@ -407,8 +407,8 @@ namespace Nektar
 
             ///
             inline void BwdTrans(
-		    const FieldStorage<NekDouble, MultiRegions::eCoeff> &in,
-		          FieldStorage<NekDouble, MultiRegions::ePhys> &out); 
+		    const FieldStorage<NekDouble, eCoeff> &in,
+		          FieldStorage<NekDouble, ePhys> &out); 
 
             /// Performs the backward transformation of the spectral/hp
             /// element expansion.
@@ -2011,8 +2011,8 @@ namespace Nektar
         }
 
         inline void ExpList::FwdTrans(
-            const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
-                  FieldStorage<NekDouble, MultiRegions::eCoeff> &out)
+            const FieldStorage<NekDouble, ePhys> &in,
+                  FieldStorage<NekDouble, eCoeff> &out)
         {
             v_FwdTrans(in.GetData(), out.UpdateData());
         }
@@ -2050,8 +2050,8 @@ namespace Nektar
          *
          */
         inline void ExpList::BwdTrans (
-            const FieldStorage<NekDouble, MultiRegions::eCoeff> &in,
-                  FieldStorage<NekDouble, MultiRegions::ePhys> &out)
+            const FieldStorage<NekDouble, eCoeff> &in,
+                  FieldStorage<NekDouble, ePhys> &out)
         {
             v_BwdTrans(in.GetData(), out.UpdateData());
         }
@@ -2109,8 +2109,8 @@ namespace Nektar
          * Helmholtz operator using Field Storage i/o
          */
         inline void ExpList::HelmSolve(
-            const FieldStorage<NekDouble, MultiRegions::ePhys>  &in,
- 		  FieldStorage<NekDouble, MultiRegions::eCoeff> &out,
+            const FieldStorage<NekDouble, ePhys>  &in,
+ 		  FieldStorage<NekDouble, eCoeff> &out,
             const StdRegions::ConstFactorMap &factors,
             const StdRegions::VarCoeffMap &varcoeff,
             const MultiRegions::VarFactorsMap &varfactors,

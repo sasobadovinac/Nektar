@@ -43,8 +43,6 @@
 
 namespace Nektar
 {
-namespace MultiRegions
-{
 
 enum DataLayout
 {
@@ -52,7 +50,7 @@ enum DataLayout
     eElement,
     eVariable
 };
-
+    
 enum StorageType
 {
     ePhys,
@@ -61,64 +59,66 @@ enum StorageType
 
 class ExpList;
 
-template <typename TData, StorageType stype, DataLayout order = eField>
+template <typename T_Data, StorageType T_Stype, DataLayout T_Order = eField>
 class FieldStorage
 {
 public:
-    FieldStorage(std::shared_ptr<ExpList> exp) :  m_numVariables(1)
+    FieldStorage(std::shared_ptr<MultiRegions::ExpList> exp, T_Data defval = 0) :
+        m_numVariables(1)
     {
-        m_expIF = std::make_shared<details::ExpListFieldStorageInterface>(exp);
-        boost::ignore_unused(exp);
-        if (stype == ePhys)
+        m_expIF = std::make_shared<MultiRegions::details::
+                                   ExpListFieldStorageInterface>(exp);
+
+        if (T_Stype == ePhys)
         {
-            m_storage = Array<OneD, TData>(m_expIF->GetNpoints());
+            m_storage = Array<OneD, T_Data>(m_expIF->GetNpoints(),defval);
         }
-        else if (stype == eCoeff)
+        else if (T_Stype == eCoeff)
         {
-            m_storage = Array<OneD, TData>(m_expIF->GetNcoeffs());
+            m_storage = Array<OneD, T_Data>(m_expIF->GetNcoeffs(),defval);
         }
     }
 
     FieldStorage(const FieldStorage &F)
-        : m_expIF(F.m_expIF), m_sType(F.m_sType),
-          m_storage(Array<OneD, TData>(F.m_storage->size(), F.m_storage)),
+        : m_expIF(F.m_expIF),
+          m_storage(Array<OneD, T_Data>(F.m_storage->size(), F.m_storage)),
           m_numVariables(F.m_numVariables)
     {
     }
-
+    
     ~FieldStorage()
     {
         // nothing to do... yet...
     }
 
-    const Array<OneD, const TData> GetData() const
+    const Array<OneD, const T_Data> GetData() const
     {
         return m_storage;
     }
-
-    Array<OneD, TData> &UpdateData()
+    
+    Array<OneD, T_Data> &UpdateData()
     {
-      return m_storage;
+        return m_storage;
     }
   
-    std::shared_ptr<ExpList> GetExpList() const
+    std::shared_ptr<MultiRegions::ExpList> GetExpList() const
     {
         return m_expIF->GetExpList();
     }
 
 protected: 
     /// interface to allow access to ExpList 
-    std::shared_ptr<details::ExpListFieldStorageInterface> m_expIF;
-
+    std::shared_ptr<MultiRegions::details::ExpListFieldStorageInterface> m_expIF;
+    
     /// Storage type 
-    enum StorageType            m_sType;
-
+        //enum StorageType            m_sType;
+    
     /// native storage in field
-    Array<OneD, TData>          m_storage;
-
+    Array<OneD, T_Data>          m_storage;
+    
     /// Offset of element i in the array
     //    std::vector<size_t>   m_offsets; 
-
+    
     /// number of variables in storage 
     int m_numVariables;
 
@@ -126,7 +126,5 @@ protected:
     //    int std::array<int, num_variables> dofs;
 };
 
-  
-} // namespace MultiRegions
 } // namespace Nektar
 #endif
