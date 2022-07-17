@@ -43,6 +43,7 @@
 
 #include <LibUtilities/Interpreter/Interpreter.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <MultiRegions/FieldStorage/FieldStorage.hpp>
 
 namespace Nektar
 {
@@ -89,6 +90,15 @@ public:
         const Array<OneD, const NekDouble>& y,
         const Array<OneD, const NekDouble>& z,
         Array<OneD, NekDouble>& result) const;
+
+    LIB_UTILITIES_EXPORT void Evaluate(
+        const FieldStorage<NekDouble, ePhys>& x,
+        const FieldStorage<NekDouble, ePhys>& y,
+        const FieldStorage<NekDouble, ePhys>& z,
+        FieldStorage<NekDouble, ePhys>& result) const
+    {
+        Evaluate(x.GetData(),y.GetData(),z.GetData(),result.UpdateData());
+    }
 
     LIB_UTILITIES_EXPORT void Evaluate(
         const Array<OneD, const NekDouble>& x,

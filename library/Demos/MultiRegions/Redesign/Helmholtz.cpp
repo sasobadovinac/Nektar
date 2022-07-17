@@ -84,8 +84,7 @@ int main(int argc, char *argv[])
         LibUtilities::EquationSharedPtr ffunc
                                         = vSession->GetFunction("Forcing", 0);
 	FieldStorage<NekDouble,ePhys> Fce(Exp); 
-        ffunc->Evaluate(xc0.UpdateData(), xc1.UpdateData(),
-                        xc2.UpdateData(), Fce.UpdateData());
+        ffunc->Evaluate(xc0, xc1, xc2, Fce); 
         //----------------------------------------------
 
         //----------------------------------------------
@@ -128,8 +127,7 @@ int main(int argc, char *argv[])
         {
             //----------------------------------------------
             // evaluate exact solution
-            ex_sol->Evaluate(xc0.UpdateData(), xc1.UpdateData(),
-                             xc2.UpdateData(), Fce.UpdateData());
+            ex_sol->Evaluate(xc0, xc1, xc2, Fce);
             //----------------------------------------------
 
             //--------------------------------------------
