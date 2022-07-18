@@ -552,19 +552,15 @@ Results TestWrite(Experiment &exp)
 void PrintResults(Experiment &exp, Results &results)
 {
     NekDouble sum   = 0.0;
-    //NekDouble sumSq = 0.0;
 
     for (Results::const_iterator it = results.begin(); it != results.end();
          ++it)
     {
         NekDouble x = *it;
         sum += x;
-        //sumSq += x * x;
     }
 
     NekDouble mean = sum / exp.n;
-    // NekDouble var = sumSq / exp.n - mean*mean;
-    // NekDouble std = std::sqrt(var);
 
     if (exp.comm->GetSize() > 1)
     {
@@ -576,6 +572,5 @@ void PrintResults(Experiment &exp, Results &results)
     if (exp.comm->GetRank() == 0)
     {
         std::cout << "Mean: " << mean << std::endl;
-        // std::cout << "Std: " << std << std::endl;
     }
 }

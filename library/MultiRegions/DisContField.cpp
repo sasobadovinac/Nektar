@@ -182,7 +182,7 @@ namespace Nektar
             // Set up trace space
             m_trace = MemoryManager<ExpList>::AllocateSharedPtr
                 (m_session, m_bndCondExpansions, m_bndConditions,
-                 *m_exp,m_graph);
+                 *m_exp,m_graph,m_comm);
 
             PeriodicMap  periodicTraces = (m_expType == e1D)? m_periodicVerts:
                 (m_expType == e2D)? m_periodicEdges: m_periodicFaces;
@@ -516,13 +516,14 @@ namespace Nektar
 
 
         // Given all boundary regions for the whole solution determine
-        // which ones (if any) are part of domain and ensure all other
+        // which ones (if any) are part of domain and proivde all other
         // conditions are given as UserDefined Dirichlet.
         SpatialDomains::BoundaryConditionsSharedPtr DisContField::GetDomainBCs
              (const SpatialDomains::CompositeMap &domain,
               const SpatialDomains::BoundaryConditions &Allbcs,
               const std::string &variable)
         {
+            boost::ignore_unused(variable);
             SpatialDomains::BoundaryConditionsSharedPtr returnval;
 
             returnval = MemoryManager<SpatialDomains::BoundaryConditions>::AllocateSharedPtr();
@@ -569,8 +570,7 @@ namespace Nektar
                 }
             }
             ASSERTL1(EndOfDomain.size() == 2,"Did not find two ends of domain");
-
-            int numNewBc = 1;
+            
             for(auto &regIt : EndOfDomain)
             {
                 if(GeometryToRegionsMap.count(regIt.first) != 0)
@@ -597,29 +597,6 @@ namespace Nektar
                         bconditionsIter->second;
                     returnval->AddBoundaryConditions(regionId,bcond);
                 }
-                else // Set up an undefined region.
-                {
-                    SpatialDomains::BoundaryRegionShPtr breg(MemoryManager<SpatialDomains::BoundaryRegion>::AllocateSharedPtr());
-
-                    // Set up Composite (GemetryVector) to contain vertex and put into bRegion
-                    SpatialDomains::CompositeSharedPtr gvec =
-                        MemoryManager<SpatialDomains::Composite>
-                        ::AllocateSharedPtr();
-                    gvec->m_geomVec.push_back(regIt.second);
-                    (*breg)[regIt.first] = gvec;
-
-                    returnval->AddBoundaryRegions(bregions.size()+numNewBc,breg);
-
-                    SpatialDomains::BoundaryConditionMapShPtr bCondition = MemoryManager<SpatialDomains::BoundaryConditionMap>::AllocateSharedPtr();
-
-                    // Set up just boundary condition for this variable.
-                    SpatialDomains::BoundaryConditionShPtr notDefinedCondition(MemoryManager<SpatialDomains::NotDefinedBoundaryCondition>::AllocateSharedPtr(m_session, "0"));
-                    (*bCondition)[variable] = notDefinedCondition;
-
-                    returnval->AddBoundaryConditions(bregions.size()+numNewBc,bCondition);
-		    ++numNewBc;
-
-                }
             }
 
             return returnval;
@@ -632,16 +609,17 @@ namespace Nektar
          * @param	domain	Subdomain specified in the inputfile from
          *       	      	which the DisContField is set up
          */
-        DisContField::DisContField
-              (const LibUtilities::SessionReaderSharedPtr &pSession,
-               const SpatialDomains::MeshGraphSharedPtr   &graph1D,
-               const SpatialDomains::CompositeMap         &domain,
-               const SpatialDomains::BoundaryConditions   &Allbcs,
-               const std::string                          &variable,
-               bool SetToOneSpaceDimension,
-               const Collections::ImplementationType ImpType):
-                  ExpList(pSession,domain,graph1D,true,variable,
-                          SetToOneSpaceDimension, pSession->GetComm(),ImpType)
+        DisContField::DisContField(
+            const LibUtilities::SessionReaderSharedPtr &pSession,
+            const SpatialDomains::MeshGraphSharedPtr &graph1D,
+            const SpatialDomains::CompositeMap &domain,
+            const SpatialDomains::BoundaryConditions &Allbcs,
+            const std::string &variable,
+            const LibUtilities::CommSharedPtr &comm,
+            bool SetToOneSpaceDimension,
+            const Collections::ImplementationType ImpType)
+            : ExpList(pSession, domain, graph1D, true, variable,
+                      SetToOneSpaceDimension, comm, ImpType)
         {
             if (variable.compare("DefaultVar") != 0)
             {
@@ -910,9 +888,7 @@ namespace Nektar
             const SpatialDomains::BoundaryConditionCollection &bconditions
                 = bcs.GetBoundaryConditions();
 
-            LibUtilities::CommSharedPtr vComm =
-                m_session->GetComm()->GetRowComm();
-
+            LibUtilities::CommSharedPtr vComm = m_comm->GetRowComm();
 
             switch(m_expType)
             {
@@ -1293,7 +1269,7 @@ namespace Nektar
                                 StdRegions::eBackwards : StdRegions::eForwards;
                         }
 
-                            orientMap[edgeIds[i]] = o;
+                        orientMap[edgeIds[i]] = o;
 
                         vector<int> verts(edgeVerts[i]);
 

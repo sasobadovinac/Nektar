@@ -84,7 +84,7 @@ protected:
     NonlinearPeregrine(const LibUtilities::SessionReaderSharedPtr& pSession,
                        const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields=true);
 
     /// Still water depth traces
     Array<OneD, NekDouble> m_dFwd;

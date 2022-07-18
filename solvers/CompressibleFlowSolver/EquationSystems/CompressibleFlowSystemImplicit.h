@@ -54,7 +54,7 @@ namespace Nektar
 
         virtual ~CFSImplicit();
         
-        virtual void v_InitObject(); 
+        virtual void v_InitObject(bool DeclareFields=true); 
 
         void InitialiseNonlinSysSolver();
 

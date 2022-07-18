@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     SpatialDomains::MeshGraphSharedPtr graph;
     string vDriverModule;
     DriverSharedPtr drv;
-  
+
     try
     {
         // Create session reader.
@@ -60,19 +60,19 @@ int main(int argc, char *argv[])
         session->LoadSolverInfo("Driver", vDriverModule, "Standard");
         drv = GetDriverFactory().CreateInstance(vDriverModule, session, graph);
 
-LibUtilities::Timer timer;
-timer.Start();
+        LibUtilities::Timer timer;
+        timer.Start();
         // Execute driver
         drv->Execute();
-timer.Stop();
-timer.AccumulateRegion("Execute");
+        timer.Stop();
+        timer.AccumulateRegion("Execute");
 
-// Print out timings
-LibUtilities::Timer::PrintElapsedRegions(session->GetComm());
+        // Print out timings
+        LibUtilities::Timer::PrintElapsedRegions(session->GetComm());
         // Finalise communications
         session->Finalise();
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         return 1;
     }

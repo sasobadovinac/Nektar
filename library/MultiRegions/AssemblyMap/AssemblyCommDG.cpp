@@ -1,36 +1,36 @@
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //
-// File AssemblyCommDG.cpp
+//  File: SurfaceMeshing.h
 //
-// For more information, please see: http://www.nektar.info
+//  For more information, please see: http://www.nektar.info/
 //
-// The MIT License
+//  The MIT License
 //
-// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
-// Department of Aeronautics, Imperial College London (UK), and Scientific
-// Computing and Imaging Institute, University of Utah (USA).
+//  Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+//  Department of Aeronautics, Imperial College London (UK), and Scientific
+//  Computing and Imaging Institute, University of Utah (USA).
 //
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following conditions:
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE.
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//  DEALINGS IN THE SOFTWARE.
 //
-// Description: Parallel communication methods for DG with MPI
+//  Description: class containing all surfacemeshing routines and classes.
 //
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 #include <LocalRegions/Expansion2D.h>
 #include <MultiRegions/AssemblyMap/AssemblyCommDG.h>
@@ -344,7 +344,7 @@ AssemblyCommDG::AssemblyCommDG(
     const Array<OneD, const SpatialDomains::BoundaryConditionShPtr> &bndCond,
     const PeriodicMap &perMap)
 {
-    auto comm = locExp.GetSession()->GetComm()->GetRowComm();
+    auto comm = locExp.GetComm()->GetRowComm();
 
     // If serial then skip initialising graph structure and the MPI timing
     if (comm->IsSerial())
@@ -449,23 +449,21 @@ AssemblyCommDG::AssemblyCommDG(
  * that rank. This is filled by:
  *
  * - Create an edge to trace mapping, and realign periodic edges within this
- *   mapping so that they have the same data layout for ranks sharing periodic
- *   boundaries.
- * - Create a list of all local edge IDs and calculate the maximum number of
- *   quadrature points used locally, then perform an AllReduce to find the
- *   maximum number of quadrature points across all ranks (for the AllToAll
- *   method).
- * - Create a list of all boundary edge IDs except for those which are periodic
- * - Using the boundary ID list, and all local ID list we can construct a unique
- *   list of IDs which are on a partition boundary (e.g. if doesn't occur in the
- *   local list twice, and doesn't occur in the boundary list it is on a
- *   partition boundary). We also check, if it is a periodic edge, whether the
- *   other side is local, if not we add the minimum of the two periodic IDs to
- *   the unique list as we must have a consistent numbering scheme across ranks.
- * - We send the unique list to all other ranks/partitions. Each ranks unique
- *   list is then compared with the local unique edge ID list, if a match is
- *   found then the member variable #m_rankSharedEdges is filled with the
- *   matching rank and unique edge ID.
+ * mapping so that they have the same data layout for ranks sharing periodic
+ * boundaries.  - Create a list of all local edge IDs and calculate the maximum
+ * number of quadrature points used locally, then perform an AllReduce to find
+ * the maximum number of quadrature points across all ranks (for the AllToAll
+ * method).  - Create a list of all boundary edge IDs except for those which are
+ * periodic - Using the boundary ID list, and all local ID list we can construct
+ * a unique list of IDs which are on a partition boundary (e.g. if doesn't occur
+ * in the local list twice, and doesn't occur in the boundary list it is on a
+ * partition boundary). We also check, if it is a periodic edge, whether the
+ * other side is local, if not we add the minimum of thetwo periodic IDs to the
+ * unique list as we must have a consistent numbering scheme across ranks.  - We
+ * send the unique list to all other ranks/partitions. Each ranks unique list is
+ * then compared with the local unique edge ID list, if a match is found then
+ * the member variable #m_rankSharedEdges is filled with the matching rank and
+ * unique edge ID.
  */
 void AssemblyCommDG::InitialiseStructure(
     const ExpList &locExp, const ExpListSharedPtr &trace,
@@ -605,12 +603,17 @@ void AssemblyCommDG::InitialiseStructure(
     std::set<int> bndIdList;
     for (size_t i = 0; i < bndCond.size(); ++i)
     {
-        for (size_t j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
+        // Don't add if periodic boundary type
+        if ((bndCond[i]->GetBoundaryConditionType() ==
+             SpatialDomains::ePeriodic))
         {
-            eid = bndCondExp[i]->GetExp(j)->GetGeom()->GetGlobalID();
-            if (perMap.find(eid) ==
-                perMap.end()) // Don't add if periodic boundary
+            continue;
+        }
+        else
+        {
+            for (size_t j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
             {
+                eid = bndCondExp[i]->GetExp(j)->GetGeom()->GetGlobalID();
                 bndIdList.insert(eid);
             }
         }

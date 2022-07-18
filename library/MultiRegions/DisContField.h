@@ -82,6 +82,7 @@ namespace Nektar
                 const SpatialDomains::CompositeMap& domain,
                 const SpatialDomains::BoundaryConditions &Allbcs, 
                 const std::string &variable,
+                const LibUtilities::CommSharedPtr     &comm,
                 bool SetToOneSpaceDimensions = false,
                 const Collections::ImplementationType ImpType
                 = Collections::eNoImpType);

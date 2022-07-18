@@ -158,6 +158,7 @@ namespace Nektar
                               ::BoundaryConditionShPtr>        &bndCond,
                     const LocalRegions::ExpansionVector        &locexp,
                     const SpatialDomains::MeshGraphSharedPtr   &graph,
+                    const LibUtilities::CommSharedPtr          &comm,
                     const bool                DeclareCoeffPhysArrays = true,
                     const std::string         variable = "DefaultVar",
                     const Collections::ImplementationType     ImpType
@@ -1154,7 +1155,7 @@ namespace Nektar
             }
 
             /// Returns the comm object
-            std::shared_ptr<LibUtilities::Comm> GetComm()
+            std::shared_ptr<LibUtilities::Comm> GetComm() const
             {
                 return m_comm;
             }

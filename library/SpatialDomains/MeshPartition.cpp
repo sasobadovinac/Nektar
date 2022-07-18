@@ -509,8 +509,9 @@ void MeshPartition::CreateGraph()
 {
     // Maps edge/face to first mesh element id.
     // On locating second mesh element id, graph edge is created instead.
-    std::unordered_map<int, int> vGraphEdges;
+    std::unordered_map<int, std::vector<int> > vGraphEdges;
     int vcnt = 0;
+
 
     for (auto &elmt : m_elements)
     {
@@ -533,13 +534,19 @@ void MeshPartition::CreateGraph()
             auto edgeIt = vGraphEdges.find(eId);
             if (edgeIt != vGraphEdges.end())
             {
-                BoostEdge e =
-                    boost::add_edge(vcnt, edgeIt->second, m_graph).first;
-                m_graph[e].id = vcnt;
+                for( auto &iId : edgeIt->second)
+                {
+                    BoostEdge e =
+                        boost::add_edge(vcnt, iId, m_graph).first;
+                    m_graph[e].id = vcnt;
+                }
+                vGraphEdges[eId].push_back(vcnt); 
             }
             else
             {
-                vGraphEdges[eId] = vcnt;
+                std::vector<int> Id;
+                Id.push_back(vcnt); 
+                vGraphEdges[eId] = Id; 
             }
         }
 
@@ -559,9 +566,13 @@ void MeshPartition::CreateGraph()
             auto edgeIt = vGraphEdges.find(facet);
             if (edgeIt != vGraphEdges.end())
             {
-                BoostEdge e =
-                    boost::add_edge(vcnt, edgeIt->second, m_graph).first;
-                m_graph[e].id = vcnt;
+                for( auto &iId : edgeIt->second)
+                {
+                    BoostEdge e =
+                        boost::add_edge(vcnt, iId, m_graph).first;
+                    m_graph[e].id = vcnt;
+                }
+                vGraphEdges[facet].push_back(vcnt); 
             }
         }
 

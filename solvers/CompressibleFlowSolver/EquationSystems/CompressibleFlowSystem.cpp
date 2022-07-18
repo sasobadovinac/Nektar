@@ -53,9 +53,9 @@ namespace Nektar
     /**
      * @brief Initialization object for CompressibleFlowSystem class.
      */
-    void CompressibleFlowSystem::v_InitObject()
+    void CompressibleFlowSystem::v_InitObject(bool DeclareFields)
     {
-        AdvectionSystem::v_InitObject();
+        AdvectionSystem::v_InitObject(DeclareFields);
 
         for (int i = 0; i < m_fields.size(); i++)
         {

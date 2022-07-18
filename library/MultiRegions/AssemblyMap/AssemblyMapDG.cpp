@@ -69,7 +69,7 @@ namespace Nektar
             const Array<OneD, const SpatialDomains::BoundaryConditionShPtr> &bndCond,
             const PeriodicMap                                         &periodicTrace,
             const std::string variable):
-            AssemblyMap(pSession,variable)
+            AssemblyMap(pSession,locExp.GetComm(),variable)
         {
             boost::ignore_unused(graph);
 

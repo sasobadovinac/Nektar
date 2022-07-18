@@ -15,6 +15,7 @@ v5.3
 
 **FieldConvert**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+- Fixed the output field names of WSS module of FieldConvert
 
 **CompressibleFlowSolver**
 - Add additional parameters for the Isentropic Vortex equation system (!1323)
@@ -37,11 +38,17 @@ v5.2.0
 - Added a dummy output module OutputStdOut for NekMesh utilities that don't require an output file (!1318)
 - Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
+- Restrucutred the communicators to reduce direct dependence on session file communicator (!1337)
 - Fixed SIMD mask test (!1324)
 - Fix memory leak in Timer.cpp (!1330)
 - Fix cmake CWIPI option to remove Fortran check (!1331)
 - Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 - Timer class was updated with safety checks to avoid wrong measurements (!1347)
+- Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
+- Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
+
+**FieldConvert**
+- Add calculation of CFL number for the incompressilbe flow (!1332)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
@@ -51,8 +58,12 @@ v5.2.0
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
 
+**PulseWaveSolver**
+- Parallelised solver (!1337)
+	
 **NekMesh**
 - Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
+- Small bug-fix for Python API for unused configuration options (!1348)
 
 **CompressibleFlowSolver**
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)

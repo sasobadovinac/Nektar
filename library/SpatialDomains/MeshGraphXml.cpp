@@ -987,12 +987,11 @@ void MeshGraphXml::ReadDomain()
             map<int, CompositeSharedPtr> unrollDomain;
             GetCompositeList(indxStr, unrollDomain);
             m_domain[indx] = unrollDomain;
-
+            
             ASSERTL0(!m_domain[indx].empty(),
                      (std::string(
                           "Unable to obtain domain's referenced composite: ") +
-                      indxStr)
-                         .c_str());
+                      indxStr).c_str());
 
             /// Keep looking
             multidomains = multidomains->NextSiblingElement("D");
@@ -3129,20 +3128,18 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
 
         WriteComposites(geomTag, localComp);
 
-        map<int, CompositeMap> domain;
-        for (auto &j : localComp)
+        map<int,CompositeMap> domain;
+        for( auto &d: m_domain)
         {
-            for (auto &dom : m_domain)
+            CompositeMap domMap;
+            for (auto &j : localComp)
             {
-                for (auto &dIt : dom.second)
+                if(d.second.count(j.first))
                 {
-                    if (j.first == dIt.first)
-                    {
-                        domain[dom.first][j.first] = j.second;
-                        break;
-                    }
+                    domMap[j.first] = j.second;
                 }
             }
+            domain[d.first] = domMap;
         }
 
         WriteDomain(geomTag, domain);
