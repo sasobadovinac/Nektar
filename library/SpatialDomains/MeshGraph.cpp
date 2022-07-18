@@ -2555,9 +2555,9 @@ ExpansionInfoMapShPtr MeshGraph::SetUpExpansionInfoMap(void)
     ExpansionInfoMapShPtr returnval;
     returnval = MemoryManager<ExpansionInfoMap>::AllocateSharedPtr();
 
-    for (auto &d : m_domain)
+    for (int d = 0; d < m_domain.size(); ++d)
     {
-        for (auto compIter = d.second.begin(); compIter != d.second.end();
+        for (auto compIter = m_domain[d].begin(); compIter != m_domain[d].end();
              ++compIter)
         {
             // regular elements first
@@ -2669,11 +2669,11 @@ void MeshGraph::ReadExpansionInfo()
             // Collect all composites of the domain to control which
             // composites are defined for each variable.
             map<int, bool> domainCompList;
-            for (auto &d:  m_domain)
+            for (int d = 0; d < m_domain.size(); ++d)
             {
-                for (auto &c: d.second)
+                for (auto c = m_domain[d].begin(); c != m_domain[d].end(); ++c)
                 {
-                    domainCompList[c.first] = false;
+                    domainCompList[c->first] = false;
                 }
             }
             map<std::string, map<int, bool>> fieldDomainCompList;
@@ -3097,11 +3097,11 @@ void MeshGraph::ReadExpansionInfo()
             // Collect all composites of the domain to control which
             // composites are defined for each variable.
             map<int, bool> domainCompList;
-            for (auto &d:  m_domain)
+                for (int d = 0; d < m_domain.size(); ++d)
             {
-                for (auto &c: d.second)
+                for (auto c = m_domain[d].begin(); c != m_domain[d].end(); ++c)
                 {
-                    domainCompList[c.first] = false;
+                    domainCompList[c->first] = false;
                 }
             }
             map<std::string, map<int, bool>> fieldDomainCompList;
@@ -3500,9 +3500,9 @@ GeometryLinkSharedPtr MeshGraph::GetElementsFromEdge(Geometry1DSharedPtr edge)
     TriGeomSharedPtr triGeomShPtr;
     QuadGeomSharedPtr quadGeomShPtr;
 
-    for (auto &d : m_domain)
+    for (int d = 0; d < m_domain.size(); ++d)
     {
-        for (auto compIter = d.second.begin(); compIter != d.second.end();
+        for (auto compIter = m_domain[d].begin(); compIter != m_domain[d].end();
              ++compIter)
         {
             for (auto &geomIter : compIter->second->m_geomVec)

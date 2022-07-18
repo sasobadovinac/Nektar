@@ -3128,18 +3128,20 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
 
         WriteComposites(geomTag, localComp);
 
-        map<int,CompositeMap> domain;
-        for( auto &d: m_domain)
+        map<int, CompositeMap> domain;
+        for (auto &j : localComp)
         {
-            CompositeMap domMap;
-            for (auto &j : localComp)
+            for (auto &dom : m_domain)
             {
-                if(d.second.count(j.first))
+                for (auto &dIt : dom.second)
                 {
-                    domMap[j.first] = j.second;
+                    if (j.first == dIt.first)
+                    {
+                        domain[dom.first][j.first] = j.second;
+                        break;
+                    }
                 }
             }
-            domain[d.first] = domMap;
         }
 
         WriteDomain(geomTag, domain);
