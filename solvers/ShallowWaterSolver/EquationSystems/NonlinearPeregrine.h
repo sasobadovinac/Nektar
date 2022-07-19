@@ -43,30 +43,31 @@ namespace Nektar
 
 enum ProblemType
 {
-    eGeneral,          ///< No problem defined - Default Inital data
-    eSolitaryWave,     ///< First order Laitone solitary wave
-    SIZE_ProblemType   ///< Length of enum list
+    eGeneral,        ///< No problem defined - Default Inital data
+    eSolitaryWave,   ///< First order Laitone solitary wave
+    SIZE_ProblemType ///< Length of enum list
 };
 
-const char* const ProblemTypeMap[] = { "General", "SolitaryWave" };
+const char *const ProblemTypeMap[] = {"General", "SolitaryWave"};
 
 /**
  *
  *
  **/
 
-class NonlinearPeregrine: public ShallowWaterSystem
+class NonlinearPeregrine : public ShallowWaterSystem
 {
 public:
-    friend class MemoryManager<NonlinearPeregrine> ;
+    friend class MemoryManager<NonlinearPeregrine>;
 
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-        SolverUtils::EquationSystemSharedPtr p = MemoryManager<
-            NonlinearPeregrine>::AllocateSharedPtr(pSession, pGraph);
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<NonlinearPeregrine>::AllocateSharedPtr(pSession,
+                                                                 pGraph);
         p->InitObject();
         return p;
     }
@@ -81,39 +82,36 @@ public:
 protected:
     StdRegions::ConstFactorMap m_factors;
 
-    NonlinearPeregrine(const LibUtilities::SessionReaderSharedPtr& pSession,
-                       const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    NonlinearPeregrine(const LibUtilities::SessionReaderSharedPtr &pSession,
+                       const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject(bool DeclareFields=true);
+    virtual void v_InitObject(bool DeclareFields = true);
 
     /// Still water depth traces
     Array<OneD, NekDouble> m_dFwd;
     Array<OneD, NekDouble> m_dBwd;
 
-    void DoOdeRhs(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD, Array<OneD, NekDouble> > &outarray,
-            const NekDouble time);
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
     void DoOdeProjection(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD, Array<OneD, NekDouble> > &outarray,
-            const NekDouble time);
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
     void GetFluxVector(
-            const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
 
     virtual void v_PrimitiveToConservative();
 
     virtual void v_ConservativeToPrimitive();
 
-    virtual void v_SetInitialConditions(
-            NekDouble initialtime = 0.0,
-            bool dumpInitialConditions = true,
-            const int domain = 0);
+    virtual void v_SetInitialConditions(NekDouble initialtime      = 0.0,
+                                        bool dumpInitialConditions = true,
+                                        const int domain           = 0);
 
     const Array<OneD, NekDouble> &GetDepthFwd()
     {
@@ -127,90 +125,69 @@ protected:
 private:
     NekDouble m_const_depth;
 
-    void NumericalFlux1D(
-            Array<OneD, Array<OneD, NekDouble> > &physfield,
-            Array<OneD, Array<OneD, NekDouble> > &numfluxX);
+    void NumericalFlux1D(Array<OneD, Array<OneD, NekDouble>> &physfield,
+                         Array<OneD, Array<OneD, NekDouble>> &numfluxX);
 
-    void NumericalFlux2D(
-            Array<OneD, Array<OneD, NekDouble> > &physfield,
-            Array<OneD, Array<OneD, NekDouble> > &numfluxX,
-            Array<OneD, Array<OneD, NekDouble> > &numfluxY);
+    void NumericalFlux2D(Array<OneD, Array<OneD, NekDouble>> &physfield,
+                         Array<OneD, Array<OneD, NekDouble>> &numfluxX,
+                         Array<OneD, Array<OneD, NekDouble>> &numfluxY);
 
-    void LaitoneSolitaryWave(
-            NekDouble amp,
-            NekDouble d,
-            NekDouble time,
-            NekDouble x_offset);
+    void LaitoneSolitaryWave(NekDouble amp, NekDouble d, NekDouble time,
+                             NekDouble x_offset);
 
-    void SetBoundaryConditions(
-            Array<OneD, Array<OneD, NekDouble> > &physarray,
-            NekDouble time);
+    void SetBoundaryConditions(Array<OneD, Array<OneD, NekDouble>> &physarray,
+                               NekDouble time);
 
-    void WallBoundary2D(
-            int bcRegion,
-            int cnt,
-            Array<OneD, Array<OneD, NekDouble> > &Fwd,
-            Array<OneD, Array<OneD, NekDouble> > &physarray);
+    void WallBoundary2D(int bcRegion, int cnt,
+                        Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                        Array<OneD, Array<OneD, NekDouble>> &physarray);
 
-    void WallBoundary(
-            int bcRegion,
-            int cnt,
-            Array<OneD, Array<OneD, NekDouble> > &Fwd,
-            Array<OneD, Array<OneD, NekDouble> > &physarray);
+    void WallBoundary(int bcRegion, int cnt,
+                      Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                      Array<OneD, Array<OneD, NekDouble>> &physarray);
 
-    void AddCoriolis(
-            const Array<OneD, const Array<OneD, NekDouble> > &physarray,
-            Array<OneD, Array<OneD, NekDouble> > &outarray);
+    void AddCoriolis(const Array<OneD, const Array<OneD, NekDouble>> &physarray,
+                     Array<OneD, Array<OneD, NekDouble>> &outarray);
 
     void AddVariableDepth(
-            const Array<OneD, const Array<OneD, NekDouble> > &physarray,
-            Array<OneD, Array<OneD, NekDouble> > &outarray);
+        const Array<OneD, const Array<OneD, NekDouble>> &physarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
     void ConservativeToPrimitive(
-            const Array<OneD, const Array<OneD, NekDouble> >&physin,
-            Array<OneD, Array<OneD, NekDouble> >&physout);
+        const Array<OneD, const Array<OneD, NekDouble>> &physin,
+        Array<OneD, Array<OneD, NekDouble>> &physout);
 
     void PrimitiveToConservative(
-            const Array<OneD, const Array<OneD, NekDouble> >&physin,
-            Array<OneD, Array<OneD, NekDouble> >&physout);
+        const Array<OneD, const Array<OneD, NekDouble>> &physin,
+        Array<OneD, Array<OneD, NekDouble>> &physout);
 
-    void GetVelocityVector(
-            const Array<OneD, Array<OneD, NekDouble> > &physfield,
-            Array<OneD, Array<OneD, NekDouble> > &velocity);
+    void GetVelocityVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
+                           Array<OneD, Array<OneD, NekDouble>> &velocity);
 
     // Dispersive parts
     void WCESolve(Array<OneD, NekDouble> &fce, NekDouble lambda);
 
     void NumericalFluxForcing(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD, NekDouble> &numfluxX,
-            Array<OneD, NekDouble> &numfluxY);
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, NekDouble> &numfluxX, Array<OneD, NekDouble> &numfluxY);
 
     void SetBoundaryConditionsForcing(
-            Array<OneD, Array<OneD, NekDouble> > &inarray, NekDouble time);
+        Array<OneD, Array<OneD, NekDouble>> &inarray, NekDouble time);
 
-    void WallBoundaryForcing(
-            int bcRegion,
-            int cnt,
-            Array<OneD, Array<OneD, NekDouble> >&inarray);
+    void WallBoundaryForcing(int bcRegion, int cnt,
+                             Array<OneD, Array<OneD, NekDouble>> &inarray);
 
-    void SetBoundaryConditionsContVariables(
-            Array<OneD, NekDouble> &inarray,
-            NekDouble time);
+    void SetBoundaryConditionsContVariables(Array<OneD, NekDouble> &inarray,
+                                            NekDouble time);
 
-    void WallBoundaryContVariables(
-            int bcRegion,
-            int cnt,
-            Array<OneD, NekDouble>&inarray);
+    void WallBoundaryContVariables(int bcRegion, int cnt,
+                                   Array<OneD, NekDouble> &inarray);
 
-    void NumericalFluxConsVariables(
-            Array<OneD, NekDouble> &physfield,
-            Array<OneD, NekDouble> &outX,
-            Array<OneD, NekDouble> &outY);
-
+    void NumericalFluxConsVariables(Array<OneD, NekDouble> &physfield,
+                                    Array<OneD, NekDouble> &outX,
+                                    Array<OneD, NekDouble> &outY);
 };
 
-}
+} // namespace Nektar
 
 #endif
-

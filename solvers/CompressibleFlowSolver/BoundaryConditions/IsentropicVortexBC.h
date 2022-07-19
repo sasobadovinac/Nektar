@@ -37,61 +37,54 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
 /**
-* @brief Wall boundary conditions for compressible flow problems.
-*/
+ * @brief Wall boundary conditions for compressible flow problems.
+ */
 class IsentropicVortexBC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<IsentropicVortexBC>;
 
-        friend class MemoryManager<IsentropicVortexBC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p =
+            MemoryManager<IsentropicVortexBC>::AllocateSharedPtr(
+                pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<IsentropicVortexBC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pSpaceDim, bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-    protected:
+private:
+    IsentropicVortexBC(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
+    void EvaluateIsentropicVortex(const Array<OneD, NekDouble> &x,
+                                  const Array<OneD, NekDouble> &y,
+                                  const Array<OneD, NekDouble> &z,
+                                  Array<OneD, Array<OneD, NekDouble>> &u,
+                                  NekDouble time, const int o = 0);
 
-    private:
-        IsentropicVortexBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-
-        void EvaluateIsentropicVortex(
-            const Array<OneD, NekDouble>                    &x,
-            const Array<OneD, NekDouble>                    &y,
-            const Array<OneD, NekDouble>                    &z,
-                  Array<OneD, Array<OneD, NekDouble> >      &u,
-                  NekDouble                                  time,
-            const int                                        o = 0);
-
-        virtual ~IsentropicVortexBC(void){};
+    virtual ~IsentropicVortexBC(void){};
 };
 
-}
+} // namespace Nektar
 
 #endif

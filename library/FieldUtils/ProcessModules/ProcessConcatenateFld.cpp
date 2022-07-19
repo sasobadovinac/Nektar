@@ -49,8 +49,7 @@ namespace FieldUtils
 
 ModuleKey ProcessConcatenateFld::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "concatenate"),
-        ProcessConcatenateFld::create,
+        ModuleKey(eProcessModule, "concatenate"), ProcessConcatenateFld::create,
         "Concatenate field file into single file (deprecated)");
 
 ProcessConcatenateFld::ProcessConcatenateFld(FieldSharedPtr f)
@@ -66,11 +65,11 @@ void ProcessConcatenateFld::Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
-    if(m_f->m_comm->TreatAsRankZero())
+    if (m_f->m_comm->TreatAsRankZero())
     {
         cout << "Concatenate module is not needed. Instead, use " << endl
-             << "\tFieldConvert file1.fld file2.fld file-conc.fld"     << endl;
+             << "\tFieldConvert file1.fld file2.fld file-conc.fld" << endl;
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

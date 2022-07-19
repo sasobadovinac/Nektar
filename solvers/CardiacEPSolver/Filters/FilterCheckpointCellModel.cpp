@@ -37,14 +37,14 @@
 namespace Nektar
 {
 std::string FilterCheckpointCellModel::className =
-        SolverUtils::GetFilterFactory().RegisterCreatorFunction(
-                "CheckpointCellModel", FilterCheckpointCellModel::create);
+    SolverUtils::GetFilterFactory().RegisterCreatorFunction(
+        "CheckpointCellModel", FilterCheckpointCellModel::create);
 
 FilterCheckpointCellModel::FilterCheckpointCellModel(
-    const LibUtilities::SessionReaderSharedPtr         &pSession,
+    const LibUtilities::SessionReaderSharedPtr &pSession,
     const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-    const ParamMap &pParams) :
-    Filter(pSession, pEquation)
+    const ParamMap &pParams)
+    : Filter(pSession, pEquation)
 {
     // OutputFile
     auto it = pParams.find("OutputFile");
@@ -65,31 +65,31 @@ FilterCheckpointCellModel::FilterCheckpointCellModel(
     m_outputFrequency = floor(equ.Evaluate());
 
     m_outputIndex = 0;
-    m_index = 0;
-    m_fld = LibUtilities::FieldIO::CreateDefault(m_session);
+    m_index       = 0;
+    m_fld         = LibUtilities::FieldIO::CreateDefault(m_session);
 }
 
 FilterCheckpointCellModel::~FilterCheckpointCellModel()
 {
-
 }
 
 void FilterCheckpointCellModel::v_Initialise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
-    ASSERTL0(m_cell.get(), "Cell model has not been set by EquationSystem "
-            "class. Use SetCellModel on this filter to achieve this.");
+    ASSERTL0(m_cell.get(),
+             "Cell model has not been set by EquationSystem "
+             "class. Use SetCellModel on this filter to achieve this.");
 
-    m_index = 0;
+    m_index       = 0;
     m_outputIndex = 0;
 
     v_Update(pFields, 0.0);
 }
 
 void FilterCheckpointCellModel::v_Update(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     if (m_index++ % m_outputFrequency > 0)
     {
@@ -101,17 +101,17 @@ void FilterCheckpointCellModel::v_Update(
 
     SpatialDomains::MeshGraphSharedPtr vGraph = pFields[0]->GetGraph();
 
-    std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef
-        = pFields[0]->GetFieldDefinitions();
-    std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
+    std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
+        pFields[0]->GetFieldDefinitions();
+    std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
 
     // copy Data into FieldData and set variable
     std::string varName;
-    for(int j = 1; j < m_cell->GetNumCellVariables(); ++j)
+    for (int j = 1; j < m_cell->GetNumCellVariables(); ++j)
     {
         varName = m_cell->GetCellVarName(j);
 
-        for(int i = 0; i < FieldDef.size(); ++i)
+        for (int i = 0; i < FieldDef.size(); ++i)
         {
             // Retrieve data from cell model
             Array<OneD, NekDouble> data = m_cell->GetCellSolutionCoeffs(j);
@@ -124,21 +124,20 @@ void FilterCheckpointCellModel::v_Update(
 
     // Update time in field info if required
     LibUtilities::FieldMetaDataMap fieldMetaDataMap;
-    fieldMetaDataMap["Time"] =  boost::lexical_cast<std::string>(time);
+    fieldMetaDataMap["Time"] = boost::lexical_cast<std::string>(time);
 
-    m_fld->Write(vOutputFilename.str(),FieldDef,FieldData,fieldMetaDataMap);
+    m_fld->Write(vOutputFilename.str(), FieldDef, FieldData, fieldMetaDataMap);
     m_outputIndex++;
 }
 
 void FilterCheckpointCellModel::v_Finalise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
-
 }
 
 bool FilterCheckpointCellModel::v_IsTimeDependent()
 {
     return true;
 }
-}
+} // namespace Nektar

@@ -69,7 +69,7 @@ public:
         return "ProcessExtractTetPrismInterface";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

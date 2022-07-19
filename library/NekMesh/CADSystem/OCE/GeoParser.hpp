@@ -33,8 +33,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix.hpp>
+#include <boost/spirit/include/qi.hpp>
 
 #include <LibUtilities/Interpreter/Interpreter.h>
 #include <NekMesh/Module/Log.hpp>
@@ -44,7 +44,7 @@ namespace Nektar
 namespace NekMesh
 {
 
-namespace qi = boost::spirit::qi;
+namespace qi  = boost::spirit::qi;
 namespace phx = boost::phoenix;
 
 /**
@@ -63,8 +63,7 @@ namespace GeoAst
  *
  * @return The double-precision evaluation of the expression.
  */
-double Eval(LibUtilities::Interpreter &interp,
-            std::vector<char> &expr)
+double Eval(LibUtilities::Interpreter &interp, std::vector<char> &expr)
 {
     std::string exprStr(expr.begin(), expr.end());
     int interpId = interp.DefineFunction("", exprStr);
@@ -80,8 +79,7 @@ double Eval(LibUtilities::Interpreter &interp,
  *                of characters.
  * @param val     Value of the parameter.
  */
-void SetParam(LibUtilities::Interpreter &interp,
-              std::vector<char> &varname,
+void SetParam(LibUtilities::Interpreter &interp, std::vector<char> &varname,
               double &val)
 {
     std::string varStr(varname.begin(), varname.end());
@@ -96,8 +94,8 @@ void SetParam(LibUtilities::Interpreter &interp,
 void PrintWarning(Logger &log, std::vector<char> &geomname)
 {
     std::string geom(geomname.begin(), geomname.end());
-    log(WARNING) << "Ignoring unknown geometry entity '"
-                 << geom << "'" << std::endl;
+    log(WARNING) << "Ignoring unknown geometry entity '" << geom << "'"
+                 << std::endl;
 }
 
 /**
@@ -158,7 +156,7 @@ struct GeoFile
     std::vector<Geom> volumes;
 };
 
-}
+} // namespace GeoAst
 
 /**
  * @brief A skipper that boost::qi can use to ignore all comments in the .geo
@@ -166,7 +164,7 @@ struct GeoFile
  *
  * @tparam Iterator   Iterator type, e.g. std::string::const_iterator.
  */
-template<typename Iterator>
+template <typename Iterator>
 struct CommentSkipper : public qi::grammar<Iterator>
 {
     /**
@@ -206,9 +204,8 @@ struct GeoParser : qi::grammar<Iterator, GeoAst::GeoFile(), Skipper>
 {
     using Interp = LibUtilities::Interpreter;
 
-    GeoParser(Interp &interp, Logger &log) : GeoParser::base_type(geoFile),
-                                             m_interp(interp),
-                                             m_log(log)
+    GeoParser(Interp &interp, Logger &log)
+        : GeoParser::base_type(geoFile), m_interp(interp), m_log(log)
     {
         using GeoAst::GeoFile;
         using GeoAst::Geom;
@@ -224,7 +221,8 @@ struct GeoParser : qi::grammar<Iterator, GeoAst::GeoFile(), Skipper>
         expr = (*(
             qi::alnum | qi::char_('+') | qi::char_('-') | qi::char_('_') |
             qi::char_('*') | qi::char_('/') | qi::char_('.') | qi::char_('(') |
-            qi::char_(')')))[_val = phx::bind(GeoAst::Eval, phx::ref(interp), _1)];
+            qi::char_(
+                ')')))[_val = phx::bind(GeoAst::Eval, phx::ref(interp), _1)];
 
         // Defines the rule for a point.
         point = '(' >> qi::uint_[bind(&Point::id, _val) = _1] >> ')' >> '=' >>
@@ -263,8 +261,8 @@ struct GeoParser : qi::grammar<Iterator, GeoAst::GeoFile(), Skipper>
              ("Volume" >> geom[push_back(bind(&GeoFile::volumes, _val), _1)]) |
 
              // Unknown geometry type
-             ((*qi::alpha >> geom)[
-                 phx::bind(&GeoAst::PrintWarning, phx::ref(log), _1)]) |
+             ((*qi::alpha >>
+               geom)[phx::bind(&GeoAst::PrintWarning, phx::ref(log), _1)]) |
 
              // Variables
              (*(qi::alnum | qi::char_('_') | qi::char_('.')) >> '=' >>
@@ -288,5 +286,5 @@ struct GeoParser : qi::grammar<Iterator, GeoAst::GeoFile(), Skipper>
     /// Logger for warnings.
     Logger &m_log;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

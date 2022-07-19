@@ -55,11 +55,11 @@ ROutflow::~ROutflow()
 }
 
 void ROutflow::v_DoBoundary(
-    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-    Array<OneD, Array<OneD, NekDouble> > &A_0,
-    Array<OneD, Array<OneD, NekDouble> > &beta,
-    Array<OneD, Array<OneD, NekDouble> > &alpha,
-    const NekDouble time, int omega, int offset, int n)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &A_0,
+    Array<OneD, Array<OneD, NekDouble>> &beta,
+    Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
+    int offset, int n)
 {
     NekDouble A_r  = 0.0;
     NekDouble u_r  = 0.0;
@@ -82,7 +82,7 @@ void ROutflow::v_DoBoundary(
     /* Load terminal resistance
        and number of points from the input file */
     NekDouble RT = ((vessel[0]->GetBndCondExpansions())[n])->GetCoeffs()[0];
-    int nq = vessel[0]->GetTotPoints();
+    int nq       = vessel[0]->GetTotPoints();
 
     // Get the values of all variables needed for the Riemann problem
     A_l = inarray[0][offset + nq - 1];
@@ -90,7 +90,7 @@ void ROutflow::v_DoBoundary(
 
     // Call the R RiemannSolver
     R_RiemannSolver(RT, A_l, u_l, A_0[omega][nq - 1], beta[omega][nq - 1],
-                                           alpha[omega][nq - 1], POut, A_u, u_u);
+                    alpha[omega][nq - 1], POut, A_u, u_u);
 
     /* Fix the boundary conditions in the virtual region to ensure
        upwind state matches the boundary condition at the next time step */
@@ -103,8 +103,8 @@ void ROutflow::v_DoBoundary(
 }
 
 void ROutflow::R_RiemannSolver(NekDouble R, NekDouble A_l, NekDouble u_l,
-                                 NekDouble A_0, NekDouble beta, NekDouble alpha,
-                                 NekDouble POut, NekDouble &A_u, NekDouble &u_u)
+                               NekDouble A_0, NekDouble beta, NekDouble alpha,
+                               NekDouble POut, NekDouble &A_u, NekDouble &u_u)
 {
     NekDouble W1           = 0.0;
     NekDouble c            = 0.0;
@@ -140,8 +140,8 @@ void ROutflow::R_RiemannSolver(NekDouble R, NekDouble A_l, NekDouble u_l,
         m_pressureArea->GetC(c, beta, A_calc, A_0, alpha);
         m_pressureArea->GetCharIntegral(I, beta, A_calc, A_0, alpha);
 
-        FA = R * A_calc * (W1 - I) - P + POut;
-        dFdA = R * (W1 - I - c) - c * c * rho / A_calc;
+        FA           = R * A_calc * (W1 - I) - P + POut;
+        dFdA         = R * (W1 - I - c) - c * c * rho / A_calc;
         delta_A_calc = FA / dFdA;
         A_calc -= delta_A_calc;
 

@@ -44,13 +44,13 @@ PyObject *NekMeshErrorType = nullptr;
 
 using NekMeshError = Nektar::NekMesh::NekMeshError;
 
-PyObject* CreateExceptionClass(const char* name,
-                               PyObject* baseTypeObj = PyExc_Exception)
+PyObject *CreateExceptionClass(const char *name,
+                               PyObject *baseTypeObj = PyExc_Exception)
 {
     std::string qualifiedName0 = std::string("NekPy.NekMesh.") + name;
 
-    PyObject* typeObj = PyErr_NewException(
-        const_cast<char*>(qualifiedName0.c_str()), baseTypeObj, 0);
+    PyObject *typeObj = PyErr_NewException(
+        const_cast<char *>(qualifiedName0.c_str()), baseTypeObj, 0);
 
     if (!typeObj)
     {

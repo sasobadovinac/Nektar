@@ -47,20 +47,18 @@ std::string FilterMovingAverage::className =
 
 FilterMovingAverage::FilterMovingAverage(
     const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>      &pEquation,
-    const ParamMap &pParams)
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
     : FilterFieldConvert(pSession, pEquation, pParams)
 {
     // Load sampling frequency
-    auto  it = pParams.find("SampleFrequency");
+    auto it = pParams.find("SampleFrequency");
     if (it == pParams.end())
     {
         m_sampleFrequency = 1;
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_sampleFrequency = round(equ.Evaluate());
     }
 
@@ -76,8 +74,7 @@ FilterMovingAverage::FilterMovingAverage(
         else
         {
             // Load time constant
-            LibUtilities::Equation equ(
-                m_session->GetInterpreter(), it->second);
+            LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
             NekDouble tau = equ.Evaluate();
             // Load delta T between samples
             NekDouble dT;
@@ -89,8 +86,7 @@ FilterMovingAverage::FilterMovingAverage(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_alpha = equ.Evaluate();
         // Check if tau was also defined
         it = pParams.find("tau");
@@ -110,8 +106,7 @@ FilterMovingAverage::~FilterMovingAverage()
 
 void FilterMovingAverage::v_ProcessSample(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-          std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
-    const NekDouble &time)
+    std::vector<Array<OneD, NekDouble>> &fieldcoeffs, const NekDouble &time)
 {
     boost::ignore_unused(pFields, time);
 
@@ -125,17 +120,10 @@ void FilterMovingAverage::v_ProcessSample(
     // \bar{u}_n = alpha * u_n + (1-alpha) * \bar{u}_{n-1}
     for (int n = 0; n < m_outFields.size(); ++n)
     {
-        Vmath::Svtsvtp(m_outFields[n].size(),
-                       alpha,
-                       fieldcoeffs[n],
-                       1,
-                       (1.0 - alpha),
-                       m_outFields[n],
-                       1,
-                       m_outFields[n],
-                       1);
+        Vmath::Svtsvtp(m_outFields[n].size(), alpha, fieldcoeffs[n], 1,
+                       (1.0 - alpha), m_outFields[n], 1, m_outFields[n], 1);
     }
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

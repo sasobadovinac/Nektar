@@ -1,13 +1,15 @@
 // //////////////////////////////////////////////////////////////////////////////
 //
-//  File:  $Source: /usr/sci/projects/Nektar/cvs/Nektar++/library/SpatialDomains/InterfaceComponent.cpp,v $
+//  File:  $Source:
+//  /usr/sci/projects/Nektar/cvs/Nektar++/library/SpatialDomains/InterfaceComponent.cpp,v
+//  $
 //
 //  For more information, please see: http://www.nektar.info/
 //
 //  The MIT License
 //
 //  Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
-//  Department of Aeronautics, Imperial College London (UK), and Scientific 
+//  Department of Aeronautics, Imperial College London (UK), and Scientific
 //  Computing and Imaging Institute, University of Utah (USA).
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,7 +30,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:  
+//  Description:
 //
 //
 // //////////////////////////////////////////////////////////////////////////////
@@ -37,9 +39,8 @@
 
 namespace Nektar
 {
-    namespace SpatialDomains
-    {
+namespace SpatialDomains
+{
 
-    }; //end of namespace
-}; //end of namespace
-
+}; // namespace SpatialDomains
+}; // namespace Nektar

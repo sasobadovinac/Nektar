@@ -43,7 +43,7 @@ string Projection::className =
                                                        Projection::create);
 
 Projection::Projection(const LibUtilities::SessionReaderSharedPtr &pSession,
-                       const SpatialDomains::MeshGraphSharedPtr& pGraph)
+                       const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : EquationSystem(pSession, pGraph)
 {
 }
@@ -83,4 +83,4 @@ void Projection::v_GenerateSummary(SolverUtils::SummaryList &s)
             m_session->GetFunction("Forcing", i)->GetExpression());
     }
 }
-}
+} // namespace Nektar

@@ -76,7 +76,7 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
 
     int i, j;
     bool setnantovalue = false;
-    NekDouble defvalue=0.0;
+    NekDouble defvalue = 0.0;
 
     if (!boost::iequals(m_config["setnantovalue"].as<string>(), "NotSet"))
     {
@@ -87,13 +87,13 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     // Check for command line point specification if no .pts file specified
     // Load pts file
     LibUtilities::PtsFieldSharedPtr fieldPts;
-    ASSERTL0( m_config["frompts"].as<string>().compare("NotSet") != 0,
-            "ProcessInterpPointDataToFld requires frompts parameter");
+    ASSERTL0(m_config["frompts"].as<string>().compare("NotSet") != 0,
+             "ProcessInterpPointDataToFld requires frompts parameter");
     string inFile = m_config["frompts"].as<string>().c_str();
-    LibUtilities::CommSharedPtr  c     =
-            LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
+    LibUtilities::CommSharedPtr c =
+        LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
     LibUtilities::PtsIOSharedPtr ptsIO =
-            MemoryManager<LibUtilities::PtsIO>::AllocateSharedPtr(c);
+        MemoryManager<LibUtilities::PtsIO>::AllocateSharedPtr(c);
     ptsIO->Import(inFile, fieldPts);
 
     int nFields = fieldPts->GetNFields();
@@ -102,7 +102,8 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     int dim = fieldPts->GetDim();
 
     // assume one field is already defined from input file.
-    ASSERTL0(m_f->m_numHomogeneousDir == 0,
+    ASSERTL0(
+        m_f->m_numHomogeneousDir == 0,
         "ProcessInterpPointDataToFld does not support homogeneous expansion");
 
     m_f->m_exp.resize(nFields);
@@ -110,7 +111,7 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     {
         m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     }
-    Array<OneD, Array<OneD, NekDouble> > pts;
+    Array<OneD, Array<OneD, NekDouble>> pts;
     fieldPts->GetPts(pts);
 
     // set any nan values to default value if requested
@@ -139,7 +140,7 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
         for (int i = 0; i < nFields; ++i)
         {
             Array<OneD, NekDouble> coeffs = m_f->m_exp[i]->UpdateCoeffs(), tmp;
-            int cnt = 0;
+            int cnt                       = 0;
             for (int e = 0; e < m_f->m_exp[0]->GetNumElmts(); ++e)
             {
                 int ncoeffs = m_f->m_exp[i]->GetExp(e)->GetNcoeffs();
@@ -158,7 +159,7 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     else
     {
         int totpoints = m_f->m_exp[0]->GetTotPoints();
-        Array<OneD, Array<OneD, NekDouble> > coords(3);
+        Array<OneD, Array<OneD, NekDouble>> coords(3);
 
         coords[0] = Array<OneD, NekDouble>(totpoints);
         coords[1] = Array<OneD, NekDouble>(totpoints);
@@ -210,5 +211,5 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
         m_f->m_variables.push_back(fieldPts->GetFieldName(j));
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

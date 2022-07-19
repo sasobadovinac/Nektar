@@ -57,7 +57,7 @@ int Geometry1D::v_GetShapeDim() const
 }
 
 NekDouble Geometry1D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                  Array<OneD, NekDouble> &Lcoords)
+                                     Array<OneD, NekDouble> &Lcoords)
 {
     NekDouble dist = 0.;
     v_FillGeom();
@@ -66,7 +66,7 @@ NekDouble Geometry1D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
     if (GetMetricInfo()->GetGtype() == eRegular)
     {
         NekDouble len = 0.0;
-        NekDouble xi = 0.0;
+        NekDouble xi  = 0.0;
 
         const int npts = m_xmap->GetTotPoints();
         Array<OneD, NekDouble> pts(npts);
@@ -75,14 +75,14 @@ NekDouble Geometry1D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
         {
             m_xmap->BwdTrans(m_coeffs[i], pts);
             len += (pts[npts - 1] - pts[0]) * (pts[npts - 1] - pts[0]);
-            xi += (coords[i] - pts[0]) * (pts[npts-1] - pts[0]);
+            xi += (coords[i] - pts[0]) * (pts[npts - 1] - pts[0]);
         }
         xi = xi / len;
-        if(xi<0.)
+        if (xi < 0.)
         {
-            dist = - xi * sqrt(len);
+            dist = -xi * sqrt(len);
         }
-        else if(xi>1.)
+        else if (xi > 1.)
         {
             dist = (xi - 1.) * sqrt(len);
         }
@@ -96,5 +96,5 @@ NekDouble Geometry1D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
     }
     return dist;
 }
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

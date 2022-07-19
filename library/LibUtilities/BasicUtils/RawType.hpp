@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Template metafunction which removes pointers, const, and 
+// Description: Template metafunction which removes pointers, const, and
 // volatile modifiers to a type.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -36,44 +36,38 @@
 #ifndef NEKTAR_LIB_UTILITIES_BASICUTILS_RAW_TYPE_HPP
 #define NEKTAR_LIB_UTILITIES_BASICUTILS_RAW_TYPE_HPP
 
-#include <type_traits>
 #include <memory>
+#include <type_traits>
 
 namespace Nektar
 {
-    template<typename T>
-    struct RawType
-    {
-        typedef typename
-                  std::decay<typename std::remove_pointer<T>::type >::type type;
-    };
+template <typename T> struct RawType
+{
+    typedef
+        typename std::decay<typename std::remove_pointer<T>::type>::type type;
+};
 
-    template<typename T>
-    struct RawType<std::shared_ptr<T>>
-    {
-        typedef typename RawType<T>::type type;
-    };
+template <typename T> struct RawType<std::shared_ptr<T>>
+{
+    typedef typename RawType<T>::type type;
+};
 
-    template<typename T>
-    struct RawType<const std::shared_ptr<T>>
-    {
-        typedef typename RawType<T>::type type;
-    };
+template <typename T> struct RawType<const std::shared_ptr<T>>
+{
+    typedef typename RawType<T>::type type;
+};
 
-    template<typename T>
-    struct RawType<volatile std::shared_ptr<T>>
-    {
-        typedef typename RawType<T>::type type;
-    };
+template <typename T> struct RawType<volatile std::shared_ptr<T>>
+{
+    typedef typename RawType<T>::type type;
+};
 
-    template<typename T>
-    struct RawType<const volatile std::shared_ptr<T>>
-    {
-        typedef typename RawType<T>::type type;
-    };
+template <typename T> struct RawType<const volatile std::shared_ptr<T>>
+{
+    typedef typename RawType<T>::type type;
+};
 
-    template<typename T>
-    using RawType_t = typename RawType<T>::type;
-}
+template <typename T> using RawType_t = typename RawType<T>::type;
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_BASICUTILS_RAW_TYPE_HPP
+#endif // NEKTAR_LIB_UTILITIES_BASICUTILS_RAW_TYPE_HPP

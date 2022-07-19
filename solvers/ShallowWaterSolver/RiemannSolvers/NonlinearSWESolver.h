@@ -43,40 +43,37 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-    class NonlinearSWESolver : public RiemannSolver
-    {
-    protected:
-        bool m_pointSolve;
-        
-        NonlinearSWESolver(
-                const LibUtilities::SessionReaderSharedPtr& pSession);
-        
-        virtual void v_Solve(
-            const int                                         nDim,
-            const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
-            const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-                  Array<OneD,       Array<OneD, NekDouble> > &flux);
-        
-        virtual void v_ArraySolve(
-            const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
-            const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-                  Array<OneD,       Array<OneD, NekDouble> > &flux)
-        {
-            boost::ignore_unused(Fwd, Bwd, flux);
-            NEKERROR(ErrorUtil::efatal,
-                     "This function should be defined by subclasses.");
-        }
+class NonlinearSWESolver : public RiemannSolver
+{
+protected:
+    bool m_pointSolve;
 
-        virtual void v_PointSolve(
-            NekDouble  hL, NekDouble  huL, NekDouble  hvL,
-            NekDouble  hR, NekDouble  huR, NekDouble  hvR,
-            NekDouble &hf, NekDouble &huf, NekDouble &hvf)
-        {
-            boost::ignore_unused(hL, huL, hvL, hR, huR, hvR, hf, huf, hvf);
-            NEKERROR(ErrorUtil::efatal,
-                     "This function should be defined by subclasses.");
-        }
-    };
-}
+    NonlinearSWESolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    virtual void v_Solve(const int nDim,
+                         const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
+                         const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
+                         Array<OneD, Array<OneD, NekDouble>> &flux);
+
+    virtual void v_ArraySolve(
+        const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
+        const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
+        Array<OneD, Array<OneD, NekDouble>> &flux)
+    {
+        boost::ignore_unused(Fwd, Bwd, flux);
+        NEKERROR(ErrorUtil::efatal,
+                 "This function should be defined by subclasses.");
+    }
+
+    virtual void v_PointSolve(NekDouble hL, NekDouble huL, NekDouble hvL,
+                              NekDouble hR, NekDouble huR, NekDouble hvR,
+                              NekDouble &hf, NekDouble &huf, NekDouble &hvf)
+    {
+        boost::ignore_unused(hL, huL, hvL, hR, huR, hvR, hf, huf, hvf);
+        NEKERROR(ErrorUtil::efatal,
+                 "This function should be defined by subclasses.");
+    }
+};
+} // namespace Nektar
 
 #endif

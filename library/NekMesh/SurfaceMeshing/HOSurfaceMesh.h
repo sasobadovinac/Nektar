@@ -62,7 +62,7 @@ public:
         return "HOSurfMesh";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

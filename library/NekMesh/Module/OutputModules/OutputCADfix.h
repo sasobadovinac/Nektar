@@ -66,11 +66,12 @@ public:
     {
         return "OutputCADfix";
     }
+
 private:
     NekMesh::CADSystemCFISharedPtr m_cad;
     cfi::Model *m_model;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

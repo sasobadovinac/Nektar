@@ -154,7 +154,7 @@ public:
 
     double EvaluateL2Error(const Array<OneD, const Array<OneD, double>> &exact,
                            const Array<OneD, const Array<OneD, double>> &approx,
-                            bool print);
+                           bool print);
 
     void AppendOutput(std::ofstream &outfile, std::ofstream &errorfile,
                       std::ofstream &L2normfile, const int timeStepNumber,
@@ -394,8 +394,8 @@ class OneDFDESolver : public DemoSolver
 {
 public:
     // constructor based upon the discretisation details
-  OneDFDESolver(int nVars, int nPoints, int nTimeSteps, bool test,
-                NekDouble alpha)
+    OneDFDESolver(int nVars, int nPoints, int nTimeSteps, bool test,
+                  NekDouble alpha)
         : DemoSolver(nVars, nPoints, nTimeSteps, test)
     {
         m_fileName = std::string("OneDFDESolver");
@@ -451,6 +451,7 @@ int main(int argc, char *argv[])
 
     po::options_description desc("Usage:");
 
+    // clang-format off
     desc.add_options()("help,h", "Produce this help message.")(
         "test", "Run in regession test mode.")(
         "butcher,b", "Print the Butcher Tableau for each phase.")(
@@ -502,6 +503,7 @@ int main(int argc, char *argv[])
         "  \n"
         "- FractionalInTime: 1st-4th order multi-step Fractional In Time "
         "scheme\n");
+    // clang-format on
 
     po::variables_map vm;
     try
@@ -566,9 +568,9 @@ int main(int argc, char *argv[])
     // Bullet proofing.
 
     // These methods need the order only
-    if (((sMethod == "RungeKutta"     || sMethod == "DIRK" ||
+    if (((sMethod == "RungeKutta" || sMethod == "DIRK" ||
           sMethod == "AdamsBashforth" || sMethod == "AdamsMoulton" ||
-          sMethod == "BDFImplicit"    || sMethod == "EulerExponential") &&
+          sMethod == "BDFImplicit" || sMethod == "EulerExponential") &&
          nOrder == 0) ||
 
         // No variant but the order
@@ -580,11 +582,8 @@ int main(int argc, char *argv[])
 
         // Needs an order and possibly parameters
         (sMethod == "FractionalInTime" &&
-         (nOrder == 0 ||
-          (freeParams.size() != 0 &&
-           freeParams.size() != 1 &&
-           freeParams.size() != 2 &&
-           freeParams.size() != 6))) ||
+         (nOrder == 0 || (freeParams.size() != 0 && freeParams.size() != 1 &&
+                          freeParams.size() != 2 && freeParams.size() != 6))) ||
 
         // Needs a variant
         (sMethod == "Euler" && sVariant == "") ||
@@ -606,18 +605,17 @@ int main(int argc, char *argv[])
                  (nOrder == 0 || freeParams.size() == 0))
         {
             std::cout << "method, order, and free parameters "
-		      << "<implicit stages, explicit stages>.";
+                      << "<implicit stages, explicit stages>.";
         }
 
-        else if(sMethod == "FractionalInTime" &&
-                (nOrder == 0 ||
-                 (freeParams.size() != 0 &&
-                  freeParams.size() != 1 &&
-                  freeParams.size() != 2 &&
-                  freeParams.size() != 6)))
+        else if (sMethod == "FractionalInTime" &&
+                 (nOrder == 0 ||
+                  (freeParams.size() != 0 && freeParams.size() != 1 &&
+                   freeParams.size() != 2 && freeParams.size() != 6)))
         {
             std::cout << "method, order, and optionally the free parameters "
-                      << "[alpha] | [alpha, base] | [alpha, base, nQuadPts,sigma,mu0,nu].";
+                      << "[alpha] | [alpha, base] | [alpha, base, "
+                         "nQuadPts,sigma,mu0,nu].";
         }
         else if (sMethod == "Euler")
         {
@@ -667,13 +665,13 @@ int main(int argc, char *argv[])
 
         NekDouble alpha = 0.3; // Fractional order default
 
-        if( freeParams.size() > 0 )
+        if (freeParams.size() > 0)
         {
-          alpha = freeParams[0];
+            alpha = freeParams[0];
         }
 
         OneDFDESolver *tmpSolver =
-          new OneDFDESolver(nVariables, nPoints, nTimeSteps, test, alpha);
+            new OneDFDESolver(nVariables, nPoints, nTimeSteps, test, alpha);
 
         ode.DefineOdeRhs(&OneDFDESolver::EvaluateFDETerm, tmpSolver);
 

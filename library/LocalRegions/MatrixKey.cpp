@@ -37,54 +37,56 @@
 
 namespace Nektar
 {
-    namespace LocalRegions
+namespace LocalRegions
+{
+MatrixKey::MatrixKey(const StdRegions::MatrixType matrixType,
+                     const LibUtilities::ShapeType shapeType,
+                     const StdRegions::StdExpansion &stdExpansion,
+                     const StdRegions::ConstFactorMap &factorMap,
+                     const StdRegions::VarCoeffMap &varCoeffMap,
+                     LibUtilities::PointsType nodalType)
+    : StdMatrixKey(matrixType, shapeType, stdExpansion, factorMap, varCoeffMap,
+                   nodalType),
+      m_metricinfo(
+          (dynamic_cast<const Expansion &>(stdExpansion)).GetMetricInfo())
+{
+}
+
+MatrixKey::MatrixKey(const MatrixKey &mkey,
+                     const StdRegions::MatrixType matrixType)
+    : StdRegions::StdMatrixKey(mkey, matrixType),
+      m_metricinfo(mkey.m_metricinfo)
+{
+}
+
+MatrixKey::MatrixKey(const StdRegions::StdMatrixKey &mkey)
+    : StdRegions::StdMatrixKey(mkey)
+{
+}
+
+bool MatrixKey::opLess::operator()(const MatrixKey &lhs,
+                                   const MatrixKey &rhs) const
+{
     {
-        MatrixKey::MatrixKey(const StdRegions::MatrixType matrixType,
-                  const LibUtilities::ShapeType shapeType,
-                  const StdRegions::StdExpansion &stdExpansion,
-                  const StdRegions::ConstFactorMap &factorMap,
-                  const StdRegions::VarCoeffMap &varCoeffMap,
-                  LibUtilities::PointsType nodalType) :
-            StdMatrixKey(matrixType, shapeType, stdExpansion, factorMap, varCoeffMap, nodalType),
-            m_metricinfo( ( dynamic_cast<const Expansion&>( stdExpansion ) ).GetMetricInfo() )
-        {
-        }
-
-        MatrixKey::MatrixKey(const MatrixKey& mkey,
-                      const StdRegions::MatrixType matrixType) :
-            StdRegions::StdMatrixKey(mkey, matrixType),
-            m_metricinfo(mkey.m_metricinfo)
-        {
-        }
-
-        MatrixKey::MatrixKey(const StdRegions::StdMatrixKey &mkey) :
-            StdRegions::StdMatrixKey(mkey)
-        {
-        }
-
-        bool MatrixKey::opLess::operator()(const MatrixKey &lhs, const MatrixKey &rhs) const
-        {        
-            {
-                return (lhs.GetMatrixType() < rhs.GetMatrixType());
-            }
-        }
-
-        bool operator<(const MatrixKey &lhs, const MatrixKey &rhs)
-        {
-            if(lhs.m_metricinfo.get() < rhs.m_metricinfo.get())
-            {
-                return true;
-            }
-
-
-            if(lhs.m_metricinfo.get() > rhs.m_metricinfo.get())
-            {
-                return false;
-            }    
-            
-            return (*dynamic_cast<const StdRegions::StdMatrixKey*>(&lhs)
-                    < *dynamic_cast<const StdRegions::StdMatrixKey*>(&rhs));
-        }
-
+        return (lhs.GetMatrixType() < rhs.GetMatrixType());
     }
 }
+
+bool operator<(const MatrixKey &lhs, const MatrixKey &rhs)
+{
+    if (lhs.m_metricinfo.get() < rhs.m_metricinfo.get())
+    {
+        return true;
+    }
+
+    if (lhs.m_metricinfo.get() > rhs.m_metricinfo.get())
+    {
+        return false;
+    }
+
+    return (*dynamic_cast<const StdRegions::StdMatrixKey *>(&lhs) <
+            *dynamic_cast<const StdRegions::StdMatrixKey *>(&rhs));
+}
+
+} // namespace LocalRegions
+} // namespace Nektar

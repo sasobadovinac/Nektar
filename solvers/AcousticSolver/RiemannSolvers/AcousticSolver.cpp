@@ -77,36 +77,34 @@ void AcousticSolver::v_Solve(
     {
         for (int i = 0; i < nTracePts; ++i)
         {
-            v_PointSolve(
-                  Fwd[0][i],         0.0,   Fwd[1][i], 0.0,  0.0,
-                  Bwd[0][i],         0.0,   Bwd[1][i], 0.0,  0.0,
-                bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], 0.0,  0.0,
-                bfBwd[0][i], bfBwd[1][i], bfBwd[2][i], 0.0,  0.0,
-                 flux[0][i],        rhoF,  flux[1][i],  vF,   wF);
+            v_PointSolve(Fwd[0][i], 0.0, Fwd[1][i], 0.0, 0.0, Bwd[0][i], 0.0,
+                         Bwd[1][i], 0.0, 0.0, bfFwd[0][i], bfFwd[1][i],
+                         bfFwd[2][i], 0.0, 0.0, bfBwd[0][i], bfBwd[1][i],
+                         bfBwd[2][i], 0.0, 0.0, flux[0][i], rhoF, flux[1][i],
+                         vF, wF);
         }
     }
     else if (expDim == 2)
     {
         for (int i = 0; i < nTracePts; ++i)
         {
-            v_PointSolve(
-                  Fwd[0][i],         0.0,   Fwd[1][i],   Fwd[2][i],  0.0,
-                  Bwd[0][i],         0.0,   Bwd[1][i],   Bwd[2][i],  0.0,
-                bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], bfFwd[3][i],  0.0,
-                bfBwd[0][i], bfBwd[1][i], bfBwd[2][i], bfBwd[3][i],  0.0,
-                 flux[0][i],        rhoF,  flux[1][i],  flux[2][i],   wF);
+            v_PointSolve(Fwd[0][i], 0.0, Fwd[1][i], Fwd[2][i], 0.0, Bwd[0][i],
+                         0.0, Bwd[1][i], Bwd[2][i], 0.0, bfFwd[0][i],
+                         bfFwd[1][i], bfFwd[2][i], bfFwd[3][i], 0.0,
+                         bfBwd[0][i], bfBwd[1][i], bfBwd[2][i], bfBwd[3][i],
+                         0.0, flux[0][i], rhoF, flux[1][i], flux[2][i], wF);
         }
     }
     else if (expDim == 3)
     {
         for (int i = 0; i < nTracePts; ++i)
         {
-            v_PointSolve(
-                  Fwd[0][i],         0.0,   Fwd[1][i],   Fwd[2][i],   Fwd[3][i],
-                  Bwd[0][i],         0.0,   Bwd[1][i],   Bwd[2][i],   Bwd[3][i],
-                bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], bfFwd[3][i], bfFwd[4][i],
-                bfBwd[0][i], bfBwd[1][i], bfBwd[2][i], bfBwd[3][i], bfBwd[4][i],
-                 flux[0][i],        rhoF,  flux[1][i],  flux[2][i],  flux[3][i]);
+            v_PointSolve(Fwd[0][i], 0.0, Fwd[1][i], Fwd[2][i], Fwd[3][i],
+                         Bwd[0][i], 0.0, Bwd[1][i], Bwd[2][i], Bwd[3][i],
+                         bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], bfFwd[3][i],
+                         bfFwd[4][i], bfBwd[0][i], bfBwd[1][i], bfBwd[2][i],
+                         bfBwd[3][i], bfBwd[4][i], flux[0][i], rhoF, flux[1][i],
+                         flux[2][i], flux[3][i]);
         }
     }
 }

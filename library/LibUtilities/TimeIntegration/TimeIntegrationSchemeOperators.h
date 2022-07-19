@@ -39,9 +39,9 @@
 
 #include <boost/core/ignore_unused.hpp>
 
+#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
-#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 
@@ -59,7 +59,6 @@ class TimeIntegrationSchemeOperators;
 typedef std::shared_ptr<TimeIntegrationSchemeOperators>
     TimeIntegrationSchemeOperatorsSharedPtr;
 
-  
 /**
  * @brief Binds a set of functions for use by time integration schemes.
  */
@@ -171,10 +170,9 @@ protected:
     FunctorType2Array m_functors2;
 
 private:
-
 };
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

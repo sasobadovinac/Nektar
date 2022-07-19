@@ -40,14 +40,11 @@ using namespace Nektar::NekMesh;
 
 void export_Mesh()
 {
-    py::class_<Mesh,
-               std::shared_ptr<Mesh>,
-               boost::noncopyable>(
-                   "Mesh", py::init<>())
+    py::class_<Mesh, std::shared_ptr<Mesh>, boost::noncopyable>("Mesh",
+                                                                py::init<>())
         .def_readwrite("node", &Mesh::m_vertexSet)
         .def_readwrite("expDim", &Mesh::m_expDim)
         .def_readwrite("spaceDim", &Mesh::m_spaceDim)
         .def_readwrite("nummode", &Mesh::m_nummode)
-        .def_readonly("element", &Mesh::m_element)
-        ;
+        .def_readonly("element", &Mesh::m_element);
 }

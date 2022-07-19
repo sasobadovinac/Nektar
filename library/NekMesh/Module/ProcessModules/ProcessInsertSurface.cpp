@@ -33,12 +33,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/index/rtree.hpp>
 
-#include <NekMesh/MeshElements/Element.h>
 #include "ProcessInsertSurface.h"
+#include <NekMesh/MeshElements/Element.h>
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -51,17 +51,17 @@ namespace Nektar
 namespace NekMesh
 {
 
-ModuleKey ProcessInsertSurface::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "insertsurface"),
-    ProcessInsertSurface::create,
-    "Insert high-order surface mesh into current working mesh.");
+ModuleKey ProcessInsertSurface::className =
+    GetModuleFactory().RegisterCreatorFunction(
+        ModuleKey(eProcessModule, "insertsurface"),
+        ProcessInsertSurface::create,
+        "Insert high-order surface mesh into current working mesh.");
 
 ProcessInsertSurface::ProcessInsertSurface(MeshSharedPtr m) : ProcessModule(m)
 {
-    m_config["mesh"] =
-        ConfigOption(false, "", "Mesh to be inserted.");
+    m_config["mesh"] = ConfigOption(false, "", "Mesh to be inserted.");
     m_config["nonconforming"] =
-        ConfigOption(false,"", "Relax tests for nonconforming boundries");
+        ConfigOption(false, "", "Relax tests for nonconforming boundries");
 }
 
 ProcessInsertSurface::~ProcessInsertSurface()
@@ -73,7 +73,7 @@ void ProcessInsertSurface::Process()
     typedef bg::model::point<NekDouble, 3, bg::cs::cartesian> Point;
     typedef pair<Point, unsigned int> PointI;
 
-    string file = m_config["mesh"].as<string>();
+    string file     = m_config["mesh"].as<string>();
     bool nonconform = m_config["nonconforming"].beenSet;
 
     m_log(VERBOSE) << "Inserting surface from file '" << file << "'." << endl;
@@ -84,41 +84,43 @@ void ProcessInsertSurface::Process()
     mod->RegisterConfig("infile", file);
     mod->Process();
 
-    //build ann tree of surface verticies from inMsh
-    //match surface vertices in ccm mesh to inMsh and copy information
+    // build ann tree of surface verticies from inMsh
+    // match surface vertices in ccm mesh to inMsh and copy information
 
-    //tolerance of matching vertices
+    // tolerance of matching vertices
     NekDouble tol = 1e-5;
 
     NodeSet surfaceNodes;
-    for(int i = 0; i < inMsh->m_element[2].size(); i++)
+    for (int i = 0; i < inMsh->m_element[2].size(); i++)
     {
         vector<NodeSharedPtr> ns = inMsh->m_element[2][i]->GetVertexList();
-        for(int j = 0; j < ns.size(); j++)
+        for (int j = 0; j < ns.size(); j++)
         {
             surfaceNodes.insert(ns[j]);
         }
     }
 
-    vector<NodeSharedPtr> inMshnodeList(surfaceNodes.begin(), surfaceNodes.end());
+    vector<NodeSharedPtr> inMshnodeList(surfaceNodes.begin(),
+                                        surfaceNodes.end());
 
     vector<PointI> dataPts;
-    for(int i = 0; i < inMshnodeList.size(); i++)
+    for (int i = 0; i < inMshnodeList.size(); i++)
     {
-         dataPts.push_back(make_pair(Point( inMshnodeList[i]->m_x,
-                                            inMshnodeList[i]->m_y,
-                                            inMshnodeList[i]->m_z), i));
+        dataPts.push_back(
+            make_pair(Point(inMshnodeList[i]->m_x, inMshnodeList[i]->m_y,
+                            inMshnodeList[i]->m_z),
+                      i));
     }
 
-    //Build tree
-    bgi::rtree<PointI, bgi::rstar<16> > rtree;
+    // Build tree
+    bgi::rtree<PointI, bgi::rstar<16>> rtree;
     rtree.insert(dataPts.begin(), dataPts.end());
 
     surfaceNodes.clear();
-    for(int i = 0; i < m_mesh->m_element[2].size(); i++)
+    for (int i = 0; i < m_mesh->m_element[2].size(); i++)
     {
         vector<NodeSharedPtr> ns = m_mesh->m_element[2][i]->GetVertexList();
-        for(int j = 0; j < ns.size(); j++)
+        for (int j = 0; j < ns.size(); j++)
         {
             surfaceNodes.insert(ns[j]);
         }
@@ -131,24 +133,24 @@ void ProcessInsertSurface::Process()
     }
 
     EdgeSet surfEdges;
-    for(int i = 0; i < m_mesh->m_element[2].size(); i++)
+    for (int i = 0; i < m_mesh->m_element[2].size(); i++)
     {
-        FaceSharedPtr f = m_mesh->m_element[2][i]->GetFaceLink();
+        FaceSharedPtr f          = m_mesh->m_element[2][i]->GetFaceLink();
         vector<EdgeSharedPtr> es = f->m_edgeList;
-        for(int j = 0; j < es.size(); j++)
+        for (int j = 0; j < es.size(); j++)
         {
             surfEdges.insert(es[j]);
         }
     }
 
-    for(auto &it : surfEdges)
+    for (auto &it : surfEdges)
     {
         Point queryPt1(it->m_n1->m_x, it->m_n1->m_y, it->m_n1->m_z);
         vector<PointI> result;
         rtree.query(bgi::nearest(queryPt1, 1), std::back_inserter(result));
 
         NekDouble dist1 = bg::distance(result[0].first, queryPt1);
-        if(nonconform)
+        if (nonconform)
         {
             if (dist1 > tol)
             {
@@ -159,8 +161,8 @@ void ProcessInsertSurface::Process()
         {
             if (dist1 > tol)
             {
-                m_log(FATAL) << "Cannot locate point accurately enough."
-                             << endl;
+                m_log(FATAL)
+                    << "Cannot locate point accurately enough." << endl;
             }
         }
 
@@ -171,9 +173,9 @@ void ProcessInsertSurface::Process()
         rtree.query(bgi::nearest(queryPt2, 1), std::back_inserter(result));
 
         NekDouble dist2 = bg::distance(result[0].first, queryPt2);
-        if(nonconform)
+        if (nonconform)
         {
-            if(dist2 > tol)
+            if (dist2 > tol)
             {
                 continue;
             }
@@ -182,13 +184,13 @@ void ProcessInsertSurface::Process()
         {
             if (dist2 > tol)
             {
-                m_log(FATAL) << "Cannot locate point accurately enough."
-                             << endl;
+                m_log(FATAL)
+                    << "Cannot locate point accurately enough." << endl;
             }
         }
         NodeSharedPtr inN2 = inMshnodeList[result[0].second];
 
-        EdgeSharedPtr tst = std::shared_ptr<Edge>(new Edge(inN1,inN2));
+        EdgeSharedPtr tst = std::shared_ptr<Edge>(new Edge(inN1, inN2));
 
         auto f = inMsh->m_edgeSet.find(tst);
 
@@ -200,11 +202,11 @@ void ProcessInsertSurface::Process()
         it->m_edgeNodes = (*f)->m_edgeNodes;
         it->m_curveType = (*f)->m_curveType;
 
-        if((*f)->m_n1->Distance(it->m_n1) > tol)
+        if ((*f)->m_n1->Distance(it->m_n1) > tol)
         {
             reverse(it->m_edgeNodes.begin(), it->m_edgeNodes.end());
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -38,34 +38,35 @@ using namespace std;
 
 namespace Nektar
 {
-    string SteadyAdvectionDiffusionReaction::className = GetEquationSystemFactory().RegisterCreatorFunction("SteadyAdvectionDiffusionReaction", SteadyAdvectionDiffusionReaction::create);
+string SteadyAdvectionDiffusionReaction::className =
+    GetEquationSystemFactory().RegisterCreatorFunction(
+        "SteadyAdvectionDiffusionReaction",
+        SteadyAdvectionDiffusionReaction::create);
 
+SteadyAdvectionDiffusionReaction::SteadyAdvectionDiffusionReaction(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : SteadyAdvectionDiffusion(pSession, pGraph)
+{
+}
 
-    SteadyAdvectionDiffusionReaction::SteadyAdvectionDiffusionReaction(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : SteadyAdvectionDiffusion(pSession, pGraph)
+void SteadyAdvectionDiffusionReaction::v_InitObject(bool DeclareFields)
+{
+    SteadyAdvectionDiffusion::v_InitObject(DeclareFields);
+
+    if (m_session->DefinesParameter("Lambda"))
     {
-    }
-
-    void SteadyAdvectionDiffusionReaction::v_InitObject(bool DeclareFields)
-    {
-        SteadyAdvectionDiffusion::v_InitObject(DeclareFields);
-
-        if (m_session->DefinesParameter("Lambda"))
-        {
-            m_lambda = m_session->GetParameter("Lambda");
-        }
-
-    }
-
-    SteadyAdvectionDiffusionReaction::~SteadyAdvectionDiffusionReaction()
-    {
-    }
-
-
-    void SteadyAdvectionDiffusionReaction::v_GenerateSummary(SolverUtils::SummaryList& s)
-    {
-        SteadyAdvectionDiffusion::v_GenerateSummary(s);
+        m_lambda = m_session->GetParameter("Lambda");
     }
 }
+
+SteadyAdvectionDiffusionReaction::~SteadyAdvectionDiffusionReaction()
+{
+}
+
+void SteadyAdvectionDiffusionReaction::v_GenerateSummary(
+    SolverUtils::SummaryList &s)
+{
+    SteadyAdvectionDiffusion::v_GenerateSummary(s);
+}
+} // namespace Nektar

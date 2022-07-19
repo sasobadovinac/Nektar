@@ -102,5 +102,5 @@ CADOrientation::Orientation CADCurve::GetOrienationWRT(int surf)
     m_log(FATAL) << "Unable to find surface in adjacency list." << endl;
     return CADOrientation::eUnknown;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

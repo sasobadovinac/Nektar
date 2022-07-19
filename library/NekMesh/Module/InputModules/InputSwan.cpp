@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Element.h>
 #include "InputSwan.h"
+#include <NekMesh/MeshElements/Element.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -44,8 +44,7 @@ namespace NekMesh
 {
 
 ModuleKey InputSwan::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eInputModule, "plt"),
-    InputSwan::create,
+    ModuleKey(eInputModule, "plt"), InputSwan::create,
     "Reads Swansea plt format for third-order tetrahedra.");
 
 InputSwan::InputSwan(MeshSharedPtr m) : InputModule(m)
@@ -61,7 +60,7 @@ void InputSwan::Process()
     // Open the file stream.
     OpenStream();
 
-    vector<vector<NodeSharedPtr> > elementList;
+    vector<vector<NodeSharedPtr>> elementList;
     vector<int> tmp, tets;
     vector<double> pts;
 
@@ -129,8 +128,7 @@ void InputSwan::Process()
         double x = pts[i];
         double y = pts[1 * NB_Points + i];
         double z = pts[2 * NB_Points + i];
-        m_mesh->m_node.push_back(
-            std::shared_ptr<Node>(new Node(vid, x, y, z)));
+        m_mesh->m_node.push_back(std::shared_ptr<Node>(new Node(vid, x, y, z)));
         vid++;
     }
 
@@ -205,5 +203,5 @@ void InputSwan::Process()
 
     PrintSummary();
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Macro to force inlining of funcitons. 
+// Description: Macro to force inlining of funcitons.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -46,6 +46,6 @@ namespace Nektar
 #define NEK_FORCE_INLINE inline
 #endif
 
-}
+} // namespace Nektar
 
 #endif

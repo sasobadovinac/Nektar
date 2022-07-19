@@ -34,59 +34,60 @@
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEARWITHDIAG_H
 #define NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEARWITHDIAG_H
 
+#include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
 #include <MultiRegions/GlobalLinSys.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/Preconditioner.h>
 #include <MultiRegions/PreconditionerLinear.h>
-#include <MultiRegions/MultiRegionsDeclspec.h>
-#include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+class PreconditionerLinearWithDiag;
+typedef std::shared_ptr<PreconditionerLinearWithDiag>
+    PreconditionerLinearWithDiagSharedPtr;
+
+class PreconditionerLinearWithDiag : public Preconditioner
+{
+public:
+    /// Creates an instance of this class
+    static PreconditionerSharedPtr create(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        class PreconditionerLinearWithDiag;
-        typedef std::shared_ptr<PreconditionerLinearWithDiag>  PreconditionerLinearWithDiagSharedPtr;
-
-        class PreconditionerLinearWithDiag: public Preconditioner
-	{
-        public:
-            /// Creates an instance of this class
-            static PreconditionerSharedPtr create(
-                        const std::shared_ptr<GlobalLinSys> &plinsys,
-                        const std::shared_ptr<AssemblyMap>
-                        &pLocToGloMap)
-            {
-	        PreconditionerSharedPtr p = MemoryManager<PreconditionerLinearWithDiag>::AllocateSharedPtr(plinsys,pLocToGloMap);
-	        p->InitObject();
-	        return p;
-            }
-
-            /// Name of class
-            static std::string className;
-
-            MULTI_REGIONS_EXPORT PreconditionerLinearWithDiag(
-                         const std::shared_ptr<GlobalLinSys> &plinsys,
-	                 const AssemblyMapSharedPtr &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT
-            virtual ~PreconditionerLinearWithDiag() {}
-
-	protected:
-            PreconditionerSharedPtr m_linSpacePrecon;
-            PreconditionerSharedPtr m_diagonalPrecon;
-
-	private:
-
-            virtual void v_InitObject();
-
-            virtual void v_DoPreconditioner(                
-                      const Array<OneD, NekDouble>& pInput,
-		      Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_BuildPreconditioner();
-
-        };
+        PreconditionerSharedPtr p =
+            MemoryManager<PreconditionerLinearWithDiag>::AllocateSharedPtr(
+                plinsys, pLocToGloMap);
+        p->InitObject();
+        return p;
     }
-}
+
+    /// Name of class
+    static std::string className;
+
+    MULTI_REGIONS_EXPORT PreconditionerLinearWithDiag(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const AssemblyMapSharedPtr &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT
+    virtual ~PreconditionerLinearWithDiag()
+    {
+    }
+
+protected:
+    PreconditionerSharedPtr m_linSpacePrecon;
+    PreconditionerSharedPtr m_diagonalPrecon;
+
+private:
+    virtual void v_InitObject();
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_BuildPreconditioner();
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

@@ -94,6 +94,6 @@ protected:
 private:
     int m_rank;
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 #endif

@@ -35,9 +35,9 @@
 #ifndef NEKTAR_SPATIALDOMAINS_POINTGEOM_H
 #define NEKTAR_SPATIALDOMAINS_POINTGEOM_H
 
-#include <StdRegions/StdRegions.hpp>
 #include <SpatialDomains/Geometry0D.h>
 #include <SpatialDomains/SpatialDomainsDeclspec.h>
+#include <StdRegions/StdRegions.hpp>
 #include <memory>
 
 namespace Nektar
@@ -59,11 +59,8 @@ class PointGeom : public Geometry0D,
 {
 public:
     SPATIAL_DOMAINS_EXPORT PointGeom();
-    SPATIAL_DOMAINS_EXPORT PointGeom(const int coordim,
-                                     const int vid,
-                                     NekDouble x,
-                                     NekDouble y,
-                                     NekDouble z);
+    SPATIAL_DOMAINS_EXPORT PointGeom(const int coordim, const int vid,
+                                     NekDouble x, NekDouble y, NekDouble z);
     SPATIAL_DOMAINS_EXPORT PointGeom(const PointGeom &T);
 
     SPATIAL_DOMAINS_EXPORT ~PointGeom();
@@ -73,18 +70,16 @@ public:
         return m_globalID;
     }
 
-    SPATIAL_DOMAINS_EXPORT void GetCoords(NekDouble &x,
-                                          NekDouble &y,
+    SPATIAL_DOMAINS_EXPORT void GetCoords(NekDouble &x, NekDouble &y,
                                           NekDouble &z);
     SPATIAL_DOMAINS_EXPORT void GetCoords(Array<OneD, NekDouble> &coords);
-    SPATIAL_DOMAINS_EXPORT void UpdatePosition(NekDouble x,
-                                               NekDouble y,
+    SPATIAL_DOMAINS_EXPORT void UpdatePosition(NekDouble x, NekDouble y,
                                                NekDouble z);
 
     SPATIAL_DOMAINS_EXPORT void Mult(PointGeom &a, PointGeom &b);
     SPATIAL_DOMAINS_EXPORT void Add(PointGeom &a, PointGeom &b);
     SPATIAL_DOMAINS_EXPORT void Sub(PointGeom &a, PointGeom &b);
-    SPATIAL_DOMAINS_EXPORT void Rotate (PointGeom& a, int dir, NekDouble angle);
+    SPATIAL_DOMAINS_EXPORT void Rotate(PointGeom &a, int dir, NekDouble angle);
     SPATIAL_DOMAINS_EXPORT NekDouble dist(PointGeom &a);
     SPATIAL_DOMAINS_EXPORT NekDouble dot(PointGeom &a);
 
@@ -106,7 +101,7 @@ protected:
     virtual PointGeomSharedPtr v_GetVertex(int i) const;
 };
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_POINTGEOM_H

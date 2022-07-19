@@ -27,8 +27,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-// 
-// Description: 1D Points definitions 
+//
+// Description: 1D Points definitions
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,76 +37,76 @@
 
 namespace Nektar
 {
-    namespace LibUtilities 
-    {
-        /**
-        * @class PointsKey
-        * Specification for a set of points. This includes the total number of
-        * points, as well as their distribution.
-        */
+namespace LibUtilities
+{
+/**
+ * @class PointsKey
+ * Specification for a set of points. This includes the total number of
+ * points, as well as their distribution.
+ */
 
-        bool operator==(const PointsKey &lhs, const PointsKey &rhs)
-        {
-            return (lhs.m_numpoints == rhs.m_numpoints &&
-                    lhs.m_pointstype == rhs.m_pointstype);
-        }
-
-        bool operator<(const PointsKey &lhs, const PointsKey &rhs)
-        {
-            if (lhs.m_pointstype < rhs.m_pointstype)
-            {
-                return true;
-            }
-
-            if (lhs.m_pointstype > rhs.m_pointstype)
-            {
-                return false;
-            }
-
-            if (lhs.m_numpoints < rhs.m_numpoints)
-            {
-                return true;
-            }
-            
-            if (lhs.m_numpoints > rhs.m_numpoints)
-            {
-                return false;
-            }
-            
-            if(lhs.m_factor < rhs.m_factor)
-            {
-                return true;
-            }
-            
-            if(lhs.m_factor > rhs.m_factor)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        bool PointsKey::opLess::operator()(const PointsKey &lhs, const PointsKey &rhs) const
-        {
-            return (lhs.m_pointstype < rhs.m_pointstype);
-        }
-
-        std::ostream& operator<<(std::ostream& os, const PointsKey& rhs)
-        {
-            os << "NumPoints: " << rhs.GetNumPoints() << " PointsType: " << kPointsTypeStr[rhs.GetPointsType()] << std::endl;
-
-            return os;
-        }
-        
-        
-        /**
-         * @class Nektar::LibUtilities::Points
-         * This encapsulates a set of points, specified by a PointKey. The 
-         * class stores not only the point coordinates, but also the 
-         * integration weights and derivative matrix coefficients. Memory is 
-         * allocated from the memory pool if in use.
-         */
-
-    }
+bool operator==(const PointsKey &lhs, const PointsKey &rhs)
+{
+    return (lhs.m_numpoints == rhs.m_numpoints &&
+            lhs.m_pointstype == rhs.m_pointstype);
 }
 
+bool operator<(const PointsKey &lhs, const PointsKey &rhs)
+{
+    if (lhs.m_pointstype < rhs.m_pointstype)
+    {
+        return true;
+    }
+
+    if (lhs.m_pointstype > rhs.m_pointstype)
+    {
+        return false;
+    }
+
+    if (lhs.m_numpoints < rhs.m_numpoints)
+    {
+        return true;
+    }
+
+    if (lhs.m_numpoints > rhs.m_numpoints)
+    {
+        return false;
+    }
+
+    if (lhs.m_factor < rhs.m_factor)
+    {
+        return true;
+    }
+
+    if (lhs.m_factor > rhs.m_factor)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool PointsKey::opLess::operator()(const PointsKey &lhs,
+                                   const PointsKey &rhs) const
+{
+    return (lhs.m_pointstype < rhs.m_pointstype);
+}
+
+std::ostream &operator<<(std::ostream &os, const PointsKey &rhs)
+{
+    os << "NumPoints: " << rhs.GetNumPoints()
+       << " PointsType: " << kPointsTypeStr[rhs.GetPointsType()] << std::endl;
+
+    return os;
+}
+
+/**
+ * @class Nektar::LibUtilities::Points
+ * This encapsulates a set of points, specified by a PointKey. The
+ * class stores not only the point coordinates, but also the
+ * integration weights and derivative matrix coefficients. Memory is
+ * allocated from the memory pool if in use.
+ */
+
+} // namespace LibUtilities
+} // namespace Nektar

@@ -60,7 +60,7 @@ public:
 private:
     NodeOpti *node;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

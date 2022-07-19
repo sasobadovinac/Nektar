@@ -32,13 +32,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <string>
-#include <boost/algorithm/string.hpp>
 #include <LibUtilities/BasicConst/GitRevision.h>
 #include <LibUtilities/BasicUtils/Timer.h>
-#include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/asio/ip/host_name.hpp>
 #include <boost/format.hpp>
+#include <boost/program_options.hpp>
+#include <string>
 
 #include <NekMesh/Module/Module.h>
 
@@ -48,9 +48,11 @@ using namespace Nektar::NekMesh;
 namespace po = boost::program_options;
 namespace ip = boost::asio::ip;
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     po::options_description desc("Available options");
+
+    // clang-format off
     desc.add_options()
         ("help,h",         "Produce this help message.")
         ("modules-list,l", "Print the list of available modules.")
@@ -59,10 +61,14 @@ int main(int argc, char* argv[])
         ("module,m",       po::value<vector<string> >(),
              "Specify modules which are to be used.")
         ("verbose,v",      "Enable verbose output.");
+    // clang-format on
 
     po::options_description hidden("Hidden options");
+
+    // clang-format off
     hidden.add_options()
         ("input-file",   po::value<vector<string> >(), "Input filename");
+    // clang-format on
 
     po::options_description cmdline_options;
     cmdline_options.add(hidden).add(desc);
@@ -77,11 +83,14 @@ int main(int argc, char* argv[])
 
     try
     {
-        po::store(po::command_line_parser(argc, argv).
-                  options(cmdline_options).positional(p).run(), vm);
+        po::store(po::command_line_parser(argc, argv)
+                      .options(cmdline_options)
+                      .positional(p)
+                      .run(),
+                  vm);
         po::notify(vm);
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         cerr << e.what() << endl;
         cerr << desc;
@@ -102,7 +111,8 @@ int main(int argc, char* argv[])
     if (vm.count("modules-opt"))
     {
         vector<string> tmp1;
-        boost::split(tmp1, vm["modules-opt"].as<string>(), boost::is_any_of(":"));
+        boost::split(tmp1, vm["modules-opt"].as<string>(),
+                     boost::is_any_of(":"));
 
         if (tmp1.size() != 2)
         {
@@ -133,22 +143,23 @@ int main(int argc, char* argv[])
         }
 
         MeshSharedPtr m = std::shared_ptr<Mesh>(new Mesh());
-        ModuleSharedPtr mod = GetModuleFactory().CreateInstance(
-            ModuleKey(t, tmp1[1]), m);
+        ModuleSharedPtr mod =
+            GetModuleFactory().CreateInstance(ModuleKey(t, tmp1[1]), m);
         cerr << "Options for module " << tmp1[1] << ":" << endl;
         mod->SetLogger(log);
         mod->PrintConfig();
         return 1;
     }
 
-    if (vm.count("help") || vm.count("input-file") != 1) {
+    if (vm.count("help") || vm.count("input-file") != 1)
+    {
         cerr << "Usage: NekMesh [options] inputfile.ext1 outputfile.ext2"
              << endl;
         cout << desc;
         return 1;
     }
 
-    vector<string> inout = vm["input-file"].as<vector<string> >();
+    vector<string> inout = vm["input-file"].as<vector<string>>();
 
     if (inout.size() < 2)
     {
@@ -170,22 +181,22 @@ int main(int argc, char* argv[])
 
     // Add provenance information to mesh.
     stringstream ss;
-    for(int i = 1; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
         ss << argv[i] << " ";
     }
     mesh->m_metadata["NekMeshCommandLine"] = ss.str();
 
     vector<ModuleSharedPtr> modules;
-    vector<string>          modcmds;
+    vector<string> modcmds;
 
     if (vm.count("module"))
     {
-        modcmds = vm["module"].as<vector<string> >();
+        modcmds = vm["module"].as<vector<string>>();
     }
 
     // Add input and output modules to beginning and end of this vector.
-    modcmds.insert   (modcmds.begin(), inout[0]);
+    modcmds.insert(modcmds.begin(), inout[0]);
     modcmds.push_back(inout[1]);
 
     // Keep track of maximum string length for nicer verbose output.
@@ -213,23 +224,25 @@ int main(int argc, char* argv[])
             // filename.xml:vtk:opt1=arg1:opt2=arg2
             if (tmp1.size() == 1)
             {
-                int    dot    = tmp1[0].find_last_of('.') + 1;
-                string ext    = tmp1[0].substr(dot, tmp1[0].length() - dot);
+                int dot    = tmp1[0].find_last_of('.') + 1;
+                string ext = tmp1[0].substr(dot, tmp1[0].length() - dot);
 
                 if (ext == "gz")
                 {
                     string tmp = tmp1[0].substr(0, tmp1[0].length() - 3);
-                    dot = tmp.find_last_of('.') + 1;
-                    ext = tmp.substr(dot, tmp.length() - dot);
+                    dot        = tmp.find_last_of('.') + 1;
+                    ext        = tmp.substr(dot, tmp.length() - dot);
                 }
 
                 module.second = ext;
-                tmp1.push_back(string(i == 0 ? "infile=" : "outfile=")+tmp1[0]);
+                tmp1.push_back(string(i == 0 ? "infile=" : "outfile=") +
+                               tmp1[0]);
             }
             else
             {
                 module.second = tmp1[1];
-                tmp1.push_back(string(i == 0 ? "infile=" : "outfile=")+tmp1[0]);
+                tmp1.push_back(string(i == 0 ? "infile=" : "outfile=") +
+                               tmp1[0]);
                 offset++;
             }
         }
@@ -240,7 +253,7 @@ int main(int argc, char* argv[])
         }
 
         // Create module.
-        ModuleSharedPtr mod = GetModuleFactory().CreateInstance(module,mesh);
+        ModuleSharedPtr mod = GetModuleFactory().CreateInstance(module, mesh);
         mod->SetLogger(log);
         modules.push_back(mod);
 
@@ -271,7 +284,7 @@ int main(int argc, char* argv[])
 
         // Track maximum module name length.
         std::string modName = mod->GetModuleName();
-        maxModName = std::max(maxModName, modName.length());
+        maxModName          = std::max(maxModName, modName.length());
     }
 
     log.SetPrefixLen(maxModName);
@@ -293,8 +306,8 @@ int main(int argc, char* argv[])
         t.Stop();
 
         log.SetPrefix(modules[i]->GetModuleName());
-        log(VERBOSE) << "  - Elapsed time: "
-                     << t.TimePerTest(1) << "s." << std::endl;
+        log(VERBOSE) << "  - Elapsed time: " << t.TimePerTest(1) << "s."
+                     << std::endl;
     }
 
     return 0;

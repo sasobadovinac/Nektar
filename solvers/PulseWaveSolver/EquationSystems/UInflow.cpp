@@ -54,10 +54,10 @@ UInflow::~UInflow()
 
 void UInflow::v_DoBoundary(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-    Array<OneD, Array<OneD, NekDouble> > &A_0,
-    Array<OneD, Array<OneD, NekDouble> > &beta,
-    Array<OneD, Array<OneD, NekDouble> > &alpha,
-    const NekDouble time, int omega, int offset, int n)
+    Array<OneD, Array<OneD, NekDouble>> &A_0,
+    Array<OneD, Array<OneD, NekDouble>> &beta,
+    Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
+    int offset, int n)
 {
     NekDouble u;
     NekDouble A_r;
@@ -73,7 +73,7 @@ void UInflow::v_DoBoundary(
     vessel[1]->EvaluateBoundaryConditions(time);
 
     // Read the BC values from the input file
-    u  = (vessel[1]->UpdateBndCondExpansion(n))->GetCoeffs()[0];
+    u = (vessel[1]->UpdateBndCondExpansion(n))->GetCoeffs()[0];
 
     // Initial conditions in inlet vessel
     A_r = inarray[0][offset];

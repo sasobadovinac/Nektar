@@ -35,11 +35,11 @@
 
 #include <iostream>
 
-#include <MultiRegions/ContField.h>
-#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
-#include <PulseWaveSolver/EquationSystems/PulseWaveSystem.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/Communication/CommSerial.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
+#include <MultiRegions/ContField.h>
+#include <PulseWaveSolver/EquationSystems/PulseWaveSystem.h>
 using namespace std;
 
 namespace Nektar

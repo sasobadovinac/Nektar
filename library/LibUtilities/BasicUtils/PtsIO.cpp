@@ -33,8 +33,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/algorithm/string.hpp>
 #include <LibUtilities/BasicUtils/PtsIO.h>
+#include <boost/algorithm/string.hpp>
 
 #include <fstream>
 
@@ -44,10 +44,8 @@
 #include <mpi.h>
 #endif
 
-#include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/FileSystem.h>
-
-
+#include <LibUtilities/BasicUtils/ParseUtils.h>
 
 using namespace std;
 
@@ -55,7 +53,6 @@ namespace Nektar
 {
 namespace LibUtilities
 {
-
 
 PtsIO::PtsIO(CommSharedPtr pComm, bool sharedFilesystem)
     : FieldIOXml(pComm, sharedFilesystem)
@@ -68,10 +65,8 @@ PtsIO::PtsIO(CommSharedPtr pComm, bool sharedFilesystem)
  * @param inFile    filename of the file to read
  * @param ptsField  the resulting pts field.
  */
-void PtsIO::Import(const string &inFile,
-                   PtsFieldSharedPtr &ptsField,
-                   FieldMetaDataMap &fieldmetadatamap,
-                   DomainRangeShPtr &Range)
+void PtsIO::Import(const string &inFile, PtsFieldSharedPtr &ptsField,
+                   FieldMetaDataMap &fieldmetadatamap, DomainRangeShPtr &Range)
 {
     std::string infile = inFile;
 
@@ -82,20 +77,20 @@ void PtsIO::Import(const string &inFile,
     {
         fs::path infofile("Info.xml");
         fs::path fullpath = pinfilename / infofile;
-        infile = PortablePath(fullpath);
+        infile            = PortablePath(fullpath);
 
         std::vector<std::string> filenames;
-        std::vector<std::vector<unsigned int> > elementIDs_OnPartitions;
+        std::vector<std::vector<unsigned int>> elementIDs_OnPartitions;
 
-        ImportMultiFldFileIDs(
-            infile, filenames, elementIDs_OnPartitions, fieldmetadatamap);
+        ImportMultiFldFileIDs(infile, filenames, elementIDs_OnPartitions,
+                              fieldmetadatamap);
 
         // Load metadata
         ImportFieldMetaData(infile, fieldmetadatamap);
 
         if (filenames.size() == m_comm->GetSize())
         {
-        // only load the file that matches this rank
+            // only load the file that matches this rank
             filenames.clear();
             boost::format pad("P%1$07d.%2$s");
             pad % m_comm->GetRank() % GetFileEnding();
@@ -105,7 +100,7 @@ void PtsIO::Import(const string &inFile,
         for (int i = 0; i < filenames.size(); ++i)
         {
             fs::path pfilename(filenames[i]);
-            fullpath = pinfilename / pfilename;
+            fullpath     = pinfilename / pfilename;
             string fname = PortablePath(fullpath);
 
             if (i == 0)
@@ -116,11 +111,10 @@ void PtsIO::Import(const string &inFile,
             {
                 LibUtilities::PtsFieldSharedPtr newPtsField;
                 ImportFieldData(fname, newPtsField, Range);
-                Array<OneD, Array<OneD, NekDouble> > pts;
+                Array<OneD, Array<OneD, NekDouble>> pts;
                 newPtsField->GetPts(pts);
                 ptsField->AddPoints(pts);
             }
-
         }
     }
     else
@@ -157,7 +151,7 @@ void PtsIO::Write(const string &outFile,
     ptsFile << "FIELDS=\"" << fn << "\" ";
     ptsFile << ">" << endl;
 
-    Array<OneD, Array<OneD, NekDouble> > pts;
+    Array<OneD, Array<OneD, NekDouble>> pts;
     ptsField->GetPts(pts);
     for (size_t i = 0; i < np; ++i)
     {
@@ -211,13 +205,14 @@ void PtsIO::Write(const string &outFile,
     doc.SaveFile(filename);
     */
 }
-void PtsIO::ImportFieldData(const string inFile, PtsFieldSharedPtr &ptsField, DomainRangeShPtr &Range)
+void PtsIO::ImportFieldData(const string inFile, PtsFieldSharedPtr &ptsField,
+                            DomainRangeShPtr &Range)
 {
     v_ImportFieldData(inFile, ptsField, Range);
 }
 
-
-void PtsIO::v_ImportFieldData(const string inFile, PtsFieldSharedPtr &ptsField, DomainRangeShPtr &Range)
+void PtsIO::v_ImportFieldData(const string inFile, PtsFieldSharedPtr &ptsField,
+                              DomainRangeShPtr &Range)
 {
     boost::ignore_unused(Range);
     TiXmlDocument docInput(inFile);
@@ -227,7 +222,7 @@ void PtsIO::v_ImportFieldData(const string inFile, PtsFieldSharedPtr &ptsField, 
     errstr << "Unable to load file: " << inFile << std::endl;
     errstr << "Reason: " << docInput.ErrorDesc() << std::endl;
     errstr << "Position: Line " << docInput.ErrorRow() << ", Column "
-        << docInput.ErrorCol() << std::endl;
+           << docInput.ErrorCol() << std::endl;
     ASSERTL0(loadOkay1, errstr.str());
 
     TiXmlElement *nektar = docInput.FirstChildElement("NEKTAR");
@@ -242,27 +237,26 @@ void PtsIO::v_ImportFieldData(const string inFile, PtsFieldSharedPtr &ptsField, 
     vector<string> fieldNames;
     if (!fields.empty())
     {
-        bool valid =
-            ParseUtils::GenerateVector(fields, fieldNames);
+        bool valid = ParseUtils::GenerateVector(fields, fieldNames);
         ASSERTL0(
             valid,
             "Unable to process list of field variable in  FIELDS attribute:  " +
                 fields);
     }
 
-    map<PtsInfo,int>  ptsInfo = NullPtsInfoMap;
+    map<PtsInfo, int> ptsInfo = NullPtsInfoMap;
 
     const char *ptinfo = points->Attribute("PTSINFO");
-    if(ptinfo&&boost::iequals(ptinfo,"EquiSpaced"))
+    if (ptinfo && boost::iequals(ptinfo, "EquiSpaced"))
     {
         ptsInfo[eIsEquiSpacedData] = 1;
     }
 
     int np;
-    err = points->QueryIntAttribute("PTSPERELMTEDGE",&np);
-    if(err == TIXML_SUCCESS)
+    err = points->QueryIntAttribute("PTSPERELMTEDGE", &np);
+    if (err == TIXML_SUCCESS)
     {
-        ptsInfo[ePtsPerElmtEdge] = np; 
+        ptsInfo[ePtsPerElmtEdge] = np;
     }
 
     size_t nfields = fieldNames.size();
@@ -273,7 +267,7 @@ void PtsIO::v_ImportFieldData(const string inFile, PtsFieldSharedPtr &ptsField, 
     std::istringstream pointsDataStrm(pointsBody->ToText()->Value());
 
     vector<NekDouble> ptsSerial;
-    Array<OneD, Array<OneD, NekDouble> > pts(totvars);
+    Array<OneD, Array<OneD, NekDouble>> pts(totvars);
 
     try
     {
@@ -305,7 +299,8 @@ void PtsIO::v_ImportFieldData(const string inFile, PtsFieldSharedPtr &ptsField, 
         }
     }
 
-    ptsField = MemoryManager<PtsField>::AllocateSharedPtr(dim, fieldNames, pts, ptsInfo);
+    ptsField = MemoryManager<PtsField>::AllocateSharedPtr(dim, fieldNames, pts,
+                                                          ptsInfo);
 }
 
 void PtsIO::SetUpFieldMetaData(const string outname)
@@ -313,7 +308,7 @@ void PtsIO::SetUpFieldMetaData(const string outname)
     ASSERTL0(!outname.empty(), "Empty path given to SetUpFieldMetaData()");
 
     int nprocs = m_comm->GetSize();
-    int rank = m_comm->GetRank();
+    int rank   = m_comm->GetRank();
 
     fs::path specPath(outname);
 
@@ -323,7 +318,7 @@ void PtsIO::SetUpFieldMetaData(const string outname)
     {
         // Set up output names
         std::vector<std::string> filenames;
-        std::vector<std::vector<unsigned int> > ElementIDs;
+        std::vector<std::vector<unsigned int>> ElementIDs;
         for (int i = 0; i < nprocs; ++i)
         {
             boost::format pad("P%1$07d.%2$s");
@@ -345,5 +340,5 @@ void PtsIO::SetUpFieldMetaData(const string outname)
         WriteMultiFldFileIDs(infofile, filenames, ElementIDs, fieldmetadatamap);
     }
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

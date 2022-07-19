@@ -39,8 +39,8 @@
 
 #include <NekMesh/Module/Module.h>
 
-#include <LibUtilities/BasicUtils/PtsField.h>
 #include <LibUtilities/BasicUtils/Interpolator.h>
+#include <LibUtilities/BasicUtils/PtsField.h>
 
 typedef Nektar::LibUtilities::PtsFieldSharedPtr PtsFieldSharedPtr;
 
@@ -62,8 +62,8 @@ class ElUtilJob;
 class ElUtil : public std::enable_shared_from_this<ElUtil>
 {
 public:
-    ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d,
-           ResidualSharedPtr, int n, int o);
+    ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d, ResidualSharedPtr, int n,
+           int o);
 
     ElUtilJob *GetJob(bool update = false);
 
@@ -73,8 +73,8 @@ public:
     }
 
     // Leaving these varibles as public for sake of efficiency
-    std::vector<std::vector<NekDouble *> > nodes;
-    std::vector<std::vector<NekDouble> > maps, mapsStd;
+    std::vector<std::vector<NekDouble *>> nodes;
+    std::vector<std::vector<NekDouble>> maps, mapsStd;
 
     void Evaluate();
     void InitialMinJac();
@@ -108,14 +108,13 @@ public:
     void UpdateMapping();
 
 private:
-
     void MappingIdealToRef();
 
     ElementSharedPtr m_el;
     int m_dim;
     int m_mode;
     int m_order;
-    std::map<int,int> m_idmap;
+    std::map<int, int> m_idmap;
 
     NekDouble m_scaledJac;
     NekDouble m_minJac;
@@ -134,7 +133,9 @@ typedef std::shared_ptr<ElUtil> ElUtilSharedPtr;
 class ElUtilJob : public Thread::ThreadJob
 {
 public:
-    ElUtilJob(ElUtil* e, bool update) : el(e), m_update(update) {}
+    ElUtilJob(ElUtil *e, bool update) : el(e), m_update(update)
+    {
+    }
 
     void Run()
     {
@@ -145,12 +146,13 @@ public:
             el->UpdateMapping();
         }
     }
+
 private:
-    ElUtil* el;
+    ElUtil *el;
     bool m_update;
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

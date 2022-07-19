@@ -35,12 +35,12 @@
 #ifndef NEKTAR_SPATIALDOMAINS_SEGGEOM_H
 #define NEKTAR_SPATIALDOMAINS_SEGGEOM_H
 
-#include <StdRegions/StdRegions.hpp>
 #include <LibUtilities/Foundations/Basis.h>
+#include <SpatialDomains/Curve.hpp>
 #include <SpatialDomains/Geometry1D.h>
 #include <SpatialDomains/PointGeom.h>
-#include <SpatialDomains/Curve.hpp>
 #include <SpatialDomains/SpatialDomainsDeclspec.h>
+#include <StdRegions/StdRegions.hpp>
 
 namespace Nektar
 {
@@ -56,9 +56,7 @@ class SegGeom : public Geometry1D
 public:
     SPATIAL_DOMAINS_EXPORT SegGeom();
     SPATIAL_DOMAINS_EXPORT SegGeom(
-        int id,
-        const int coordim,
-        const PointGeomSharedPtr vertex[],
+        int id, const int coordim, const PointGeomSharedPtr vertex[],
         const CurveSharedPtr curve = CurveSharedPtr());
 
     SPATIAL_DOMAINS_EXPORT SegGeom(const SegGeom &in);
@@ -88,8 +86,8 @@ protected:
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
     virtual void v_Setup();
 
-    virtual NekDouble v_GetCoord(
-        const int i, const Array<OneD, const NekDouble> &Lcoord);
+    virtual NekDouble v_GetCoord(const int i,
+                                 const Array<OneD, const NekDouble> &Lcoord);
     virtual int v_GetNumVerts() const;
 
 private:
@@ -98,7 +96,7 @@ private:
 
     void SetUpXmap();
 };
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_SEGGEOM_H

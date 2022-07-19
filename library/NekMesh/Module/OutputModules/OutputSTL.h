@@ -65,7 +65,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -55,26 +55,27 @@ namespace SolverUtils
  * @param   functionName  The name of the function.
  * @param   toCache       Store the evaluated function for later use.
  */
-SessionFunction::SessionFunction(const LibUtilities::SessionReaderSharedPtr &session,
-                                 const MultiRegions::ExpListSharedPtr &field,
-                                 std::string functionName,
-                                 bool toCache)
-    : m_session(session), m_field(field), m_name(functionName), m_toCache(toCache)
+SessionFunction::SessionFunction(
+    const LibUtilities::SessionReaderSharedPtr &session,
+    const MultiRegions::ExpListSharedPtr &field, std::string functionName,
+    bool toCache)
+    : m_session(session), m_field(field), m_name(functionName),
+      m_toCache(toCache)
 {
     ASSERTL0(m_session->DefinesFunction(m_name),
              "Function '" + m_name + "' does not exist.");
 }
 
 /**
- * Evaluates a function defined in the xml session file at each quadrature point.
+ * Evaluates a function defined in the xml session file at each quadrature
+ * point.
  *
  * @param   pArray       The array into which to write the values.
  * @param   pTime        The time at which to evaluate the function.
  * @param   domain       The domain to evaluate the function in.
  */
-void SessionFunction::Evaluate(Array<OneD, Array<OneD, NekDouble> > &pArray,
-                               const NekDouble pTime,
-                               const int domain)
+void SessionFunction::Evaluate(Array<OneD, Array<OneD, NekDouble>> &pArray,
+                               const NekDouble pTime, const int domain)
 {
     std::vector<std::string> vFieldNames = m_session->GetVariables();
 
@@ -85,7 +86,8 @@ void SessionFunction::Evaluate(Array<OneD, Array<OneD, NekDouble> > &pArray,
 }
 
 /**
- * Evaluates a function defined in the xml session file at each quadrature point.
+ * Evaluates a function defined in the xml session file at each quadrature
+ * point.
  *
  * @param   pFieldNames  The names of the fields to evaluate the function for.
  * @param   pArray       The array into which to write the values.
@@ -93,13 +95,12 @@ void SessionFunction::Evaluate(Array<OneD, Array<OneD, NekDouble> > &pArray,
  * @param   domain       The domain to evaluate the function in.
  */
 void SessionFunction::Evaluate(std::vector<std::string> pFieldNames,
-                               Array<OneD, Array<OneD, NekDouble> > &pArray,
-                               const NekDouble &pTime,
-                               const int domain)
+                               Array<OneD, Array<OneD, NekDouble>> &pArray,
+                               const NekDouble &pTime, const int domain)
 {
     ASSERTL1(pFieldNames.size() == pArray.size(),
              "Function '" + m_name +
-             "' variable list size mismatch with array storage.");
+                 "' variable list size mismatch with array storage.");
 
     for (int i = 0; i < pFieldNames.size(); i++)
     {
@@ -108,7 +109,8 @@ void SessionFunction::Evaluate(std::vector<std::string> pFieldNames,
 }
 
 /**
- * Evaluates a function defined in the xml session file at each quadrature point.
+ * Evaluates a function defined in the xml session file at each quadrature
+ * point.
  *
  * @param   pFieldNames  The names of the fields to evaluate the function for.
  * @param   pFields      The fields into which to write the values.
@@ -118,8 +120,7 @@ void SessionFunction::Evaluate(std::vector<std::string> pFieldNames,
 void SessionFunction::Evaluate(
     std::vector<std::string> pFieldNames,
     Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-    const NekDouble &pTime,
-    const int domain)
+    const NekDouble &pTime, const int domain)
 {
     ASSERTL0(pFieldNames.size() == pFields.size(),
              "Field list / name list size mismatch.");
@@ -133,7 +134,8 @@ void SessionFunction::Evaluate(
 }
 
 /**
- * Evaluates a function defined in the xml session file at each quadrature point.
+ * Evaluates a function defined in the xml session file at each quadrature
+ * point.
  *
  * @param   pFieldName   The name of the field to evaluate the function for.
  * @param   pArray       The array into which to write the values.
@@ -142,8 +144,7 @@ void SessionFunction::Evaluate(
  */
 void SessionFunction::Evaluate(std::string pFieldName,
                                Array<OneD, NekDouble> &pArray,
-                               const NekDouble &pTime,
-                               const int domain)
+                               const NekDouble &pTime, const int domain)
 {
     LibUtilities::FunctionType vType =
         m_session->GetFunctionType(m_name, pFieldName, domain);
@@ -153,9 +154,9 @@ void SessionFunction::Evaluate(std::string pFieldName,
     std::pair<std::string, int> key(pFieldName, domain);
     // sorry
     if ((m_arrays.find(key) != m_arrays.end()) &&
-            (vType == LibUtilities::eFunctionTypeFile ||
-             ((m_lastCached.find(key) != m_lastCached.end()) &&
-              (pTime - m_lastCached[key] < NekConstants::kNekZeroTol))))
+        (vType == LibUtilities::eFunctionTypeFile ||
+         ((m_lastCached.find(key) != m_lastCached.end()) &&
+          (pTime - m_lastCached[key] < NekConstants::kNekZeroTol))))
     {
         // found cached field
         if (pArray.size() < nq)
@@ -244,8 +245,7 @@ std::string SessionFunction::Describe(std::string pFieldName, const int domain)
  */
 void SessionFunction::EvaluateExp(string pFieldName,
                                   Array<OneD, NekDouble> &pArray,
-                                  const NekDouble &pTime,
-                                  const int domain)
+                                  const NekDouble &pTime, const int domain)
 {
     unsigned int nq = m_field->GetNpoints();
     if (pArray.size() < nq)
@@ -276,8 +276,7 @@ void SessionFunction::EvaluateExp(string pFieldName,
  */
 void SessionFunction::EvaluateFld(string pFieldName,
                                   Array<OneD, NekDouble> &pArray,
-                                  const NekDouble &pTime,
-                                  const int domain)
+                                  const NekDouble &pTime, const int domain)
 {
     unsigned int nq = m_field->GetNpoints();
     if (pArray.size() < nq)
@@ -316,9 +315,8 @@ void SessionFunction::EvaluateFld(string pFieldName,
         }
         catch (...)
         {
-            ASSERTL0(false,
-                     "Invalid Filename in function \"" + m_name +
-                     "\", variable \"" + fileVar + "\"")
+            ASSERTL0(false, "Invalid Filename in function \"" + m_name +
+                                "\", variable \"" + fileVar + "\"")
         }
     }
 
@@ -331,14 +329,11 @@ void SessionFunction::EvaluateFld(string pFieldName,
     }
 
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef;
-    std::vector<std::vector<NekDouble> > FieldData;
+    std::vector<std::vector<NekDouble>> FieldData;
     LibUtilities::FieldIOSharedPtr fldIO =
         LibUtilities::FieldIO::CreateForFile(m_session, filename);
-    fldIO->Import(filename,
-                  FieldDef,
-                  FieldData,
-                  LibUtilities::NullFieldMetaDataMap,
-                  ElementGIDs);
+    fldIO->Import(filename, FieldDef, FieldData,
+                  LibUtilities::NullFieldMetaDataMap, ElementGIDs);
 
     int idx = -1;
     Array<OneD, NekDouble> vCoeffs(m_field->GetNcoeffs(), 0.0);
@@ -357,8 +352,8 @@ void SessionFunction::EvaluateFld(string pFieldName,
 
         if (idx >= 0)
         {
-            m_field->ExtractDataToCoeffs(
-                FieldDef[i], FieldData[i], FieldDef[i]->m_fields[idx], vCoeffs);
+            m_field->ExtractDataToCoeffs(FieldDef[i], FieldData[i],
+                                         FieldDef[i]->m_fields[idx], vCoeffs);
         }
         else
         {
@@ -379,8 +374,7 @@ void SessionFunction::EvaluateFld(string pFieldName,
  */
 void SessionFunction::EvaluatePts(string pFieldName,
                                   Array<OneD, NekDouble> &pArray,
-                                  const NekDouble &pTime,
-                                  const int domain)
+                                  const NekDouble &pTime, const int domain)
 {
     unsigned int nq = m_field->GetNpoints();
     if (pArray.size() < nq)
@@ -419,9 +413,8 @@ void SessionFunction::EvaluatePts(string pFieldName,
         }
         catch (...)
         {
-            ASSERTL0(false,
-                     "Invalid Filename in function \"" + m_name +
-                     "\", variable \"" + fileVar + "\"")
+            ASSERTL0(false, "Invalid Filename in function \"" + m_name +
+                                "\", variable \"" + fileVar + "\"")
         }
     }
 
@@ -448,9 +441,8 @@ void SessionFunction::EvaluatePts(string pFieldName,
         ASSERTL1(false, "Unsupported file type");
     }
 
-
-    Array<OneD, Array<OneD, NekDouble> > pts(inPts->GetDim() +
-            inPts->GetNFields());
+    Array<OneD, Array<OneD, NekDouble>> pts(inPts->GetDim() +
+                                            inPts->GetNFields());
     for (int i = 0; i < inPts->GetDim() + inPts->GetNFields(); ++i)
     {
         pts[i] = Array<OneD, NekDouble>(nq);
@@ -468,7 +460,7 @@ void SessionFunction::EvaluatePts(string pFieldName,
         m_field->GetCoords(pts[0], pts[1], pts[2]);
     }
     outPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
-                 inPts->GetDim(), inPts->GetFieldNames(), pts);
+        inPts->GetDim(), inPts->GetFieldNames(), pts);
 
     FieldUtils::Interpolator interp;
     if (m_interpolators.find(funcFilename) != m_interpolators.end())
@@ -517,5 +509,5 @@ void SessionFunction::EvaluatePts(string pFieldName,
 }
 
 // end of namespaces
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

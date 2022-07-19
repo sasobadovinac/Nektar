@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/Driver.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <SolverUtils/Driver.h>
 
 #include <LibUtilities/BasicUtils/Timer.h>
 
@@ -76,10 +76,10 @@ int main(int argc, char *argv[])
     {
         return 1;
     }
-    catch (const std::string& eStr)
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }
-    
+
     return 0;
 }

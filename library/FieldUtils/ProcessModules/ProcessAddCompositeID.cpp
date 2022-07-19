@@ -67,7 +67,7 @@ void ProcessAddCompositeID::Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
-    int nfields           = m_f->m_variables.size();
+    int nfields = m_f->m_variables.size();
     m_f->m_variables.push_back("compositeID");
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -104,18 +104,16 @@ void ProcessAddCompositeID::Process(po::variables_map &vm)
         // loop over composite list and search for geometry pointer in list
         for (auto &it : CompositeMap)
         {
-            if (find(it.second->m_geomVec.begin(),
-                     it.second->m_geomVec.end(), elmt->GetGeom()) !=
-                it.second->m_geomVec.end())
+            if (find(it.second->m_geomVec.begin(), it.second->m_geomVec.end(),
+                     elmt->GetGeom()) != it.second->m_geomVec.end())
             {
                 compid = it.first;
                 break;
             }
         }
 
-        WARNINGL0(compid != -1,
-                  "Failed to find composite ID for element: " +
-                      boost::lexical_cast<string>(n));
+        WARNINGL0(compid != -1, "Failed to find composite ID for element: " +
+                                    boost::lexical_cast<string>(n));
 
         // Fill element with the value of the index
         int npts = elmt->GetTotPoints();
@@ -127,5 +125,5 @@ void ProcessAddCompositeID::Process(po::variables_map &vm)
     // forward transform
     exp->FwdTrans_IterPerExp(exp->GetPhys(), exp->UpdateCoeffs());
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

@@ -39,27 +39,24 @@
 
 namespace Nektar
 {
-    class LaxFriedrichsSolver : public NonlinearSWESolver
+class LaxFriedrichsSolver : public NonlinearSWESolver
+{
+public:
+    static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        static RiemannSolverSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            return RiemannSolverSharedPtr(
-                new LaxFriedrichsSolver(pSession));
-        }
-        
-        static std::string solverName;
-        
-    protected:
-        LaxFriedrichsSolver(
-                const LibUtilities::SessionReaderSharedPtr& pSession);
-        
-        virtual void v_PointSolve(
-            NekDouble  hL, NekDouble  huL, NekDouble  hvL,
-            NekDouble  hR, NekDouble  huR, NekDouble  hvR,
-            NekDouble &hf, NekDouble &huf, NekDouble &hvf);
-    };
-}
+        return RiemannSolverSharedPtr(new LaxFriedrichsSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    LaxFriedrichsSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    virtual void v_PointSolve(NekDouble hL, NekDouble huL, NekDouble hvL,
+                              NekDouble hR, NekDouble huR, NekDouble hvR,
+                              NekDouble &hf, NekDouble &huf, NekDouble &hvf);
+};
+} // namespace Nektar
 
 #endif

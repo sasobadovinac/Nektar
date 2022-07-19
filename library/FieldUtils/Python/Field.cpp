@@ -196,7 +196,6 @@ FieldSharedPtr Field_Init(py::list &py_argv, int nparts = 0,
     return f;
 }
 
-
 // Get the i-th Pts field
 const Array<OneD, const NekDouble> Field_GetPts(FieldSharedPtr f, const int i)
 {
@@ -208,13 +207,11 @@ const Array<OneD, const NekDouble> Field_GetPts(FieldSharedPtr f, const int i)
 // [work] Array<OneD, NekDouble> inarray
 // [fail] Array<OneD, NekDouble> &inarray
 // [work] const Array<OneD, const NekDouble> &inarray
-void Field_SetPts(FieldSharedPtr f, 
-                  const int i,
+void Field_SetPts(FieldSharedPtr f, const int i,
                   const Array<OneD, const NekDouble> &inarray)
 {
-    f->m_fieldPts->SetPts(i,inarray);
+    f->m_fieldPts->SetPts(i, inarray);
 }
-
 
 void export_Field()
 {
