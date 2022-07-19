@@ -5,13 +5,11 @@
 if [[ $BUILD_TYPE == "default" ]]; then
     BUILD_OPTS="-DCMAKE_BUILD_TYPE=Release \
         -DNEKTAR_TEST_ALL=ON \
-        -DNEKTAR_BUILD_TIMINGS=ON \
         -DNEKTAR_ERROR_ON_WARNINGS=OFF"
 elif [[ $BUILD_TYPE == "full" ]] || [[ $BUILD_TYPE == "full_py3" ]]; then
     BUILD_OPTS="-DCMAKE_BUILD_TYPE:STRING=Debug \
         -DNEKTAR_FULL_DEBUG:BOOL=ON \
         -DNEKTAR_TEST_ALL:BOOL=ON \
-        -DNEKTAR_BUILD_TIMINGS:BOOL=ON \
         -DNEKTAR_USE_ARPACK:BOOL=ON \
         -DNEKTAR_USE_FFTW:BOOL=ON \
         -DNEKTAR_USE_MPI:BOOL=ON \
@@ -25,9 +23,6 @@ elif [[ $BUILD_TYPE == "full" ]] || [[ $BUILD_TYPE == "full_py3" ]]; then
         -DNEKTAR_BUILD_PYTHON:BOOL=ON \
         -DNEKTAR_TEST_USE_HOSTFILE=ON \
         -DNEKTAR_ERROR_ON_WARNINGS=OFF"
-    if [[ $BUILD_TYPE == "full_py3" ]]; then
-        BUILD_OPTS="$BUILD_OPTS -DNEKTAR_USE_PYTHON3:BOOL=ON"
-    fi
 fi
 
 rm -rf build && mkdir -p build && (cd build && cmake -G 'Unix Makefiles' $BUILD_OPTS ..) && \
