@@ -39,34 +39,32 @@ using namespace std;
 
 namespace Nektar
 {
-    string EulerCFE::className = 
+string EulerCFE::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-        "EulerCFE", EulerCFE::create, 
+        "EulerCFE", EulerCFE::create,
         "Euler equations in conservative variables.");
 
-    string EulerCFE::className2 =
+string EulerCFE::className2 =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "EulerADCFE", EulerCFE::create,
         "Euler equations in conservative variables with "
         "artificial diffusion (deprecated).");
 
-    EulerCFE::EulerCFE(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : UnsteadySystem(pSession, pGraph),
-          CompressibleFlowSystem(pSession, pGraph)
-    {
-    }
-
-    void EulerCFE::v_InitObject(bool DeclareFields)
-    {
-        CompressibleFlowSystem::v_InitObject(DeclareFields);
-    }
-
-    /**
-     * @brief Destructor for EulerCFE class.
-     */
-    EulerCFE::~EulerCFE()
-    {
-    }
+EulerCFE::EulerCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
+                   const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : UnsteadySystem(pSession, pGraph), CompressibleFlowSystem(pSession, pGraph)
+{
 }
+
+void EulerCFE::v_InitObject(bool DeclareFields)
+{
+    CompressibleFlowSystem::v_InitObject(DeclareFields);
+}
+
+/**
+ * @brief Destructor for EulerCFE class.
+ */
+EulerCFE::~EulerCFE()
+{
+}
+} // namespace Nektar

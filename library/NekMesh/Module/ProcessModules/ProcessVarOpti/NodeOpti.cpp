@@ -36,9 +36,9 @@
 
 #include <limits>
 
-#include "NodeOpti.h"
 #include "Evaluator.hxx"
 #include "Hessian.hxx"
+#include "NodeOpti.h"
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -275,5 +275,5 @@ NodeOptiJob *NodeOpti::GetJob()
 {
     return new NodeOptiJob(this);
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

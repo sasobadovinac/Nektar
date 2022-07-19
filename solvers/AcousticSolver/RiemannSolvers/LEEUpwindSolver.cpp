@@ -85,11 +85,12 @@ LEEUpwindSolver::LEEUpwindSolver(
  * @param rhowF  Computed Riemann flux for z perturbation velocity component
  */
 void LEEUpwindSolver::v_PointSolve(
-    NekDouble  pL,    NekDouble  rhoL,  NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL,
-    NekDouble  pR,    NekDouble  rhoR,  NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR,
-    NekDouble  c0sqL, NekDouble  rho0L, NekDouble  u0L,   NekDouble  v0L,   NekDouble  w0L,
-    NekDouble  c0sqR, NekDouble  rho0R, NekDouble  u0R,   NekDouble  v0R,   NekDouble  w0R,
-    NekDouble &pF,    NekDouble &rhoF,  NekDouble &rhouF, NekDouble &rhovF, NekDouble &rhowF)
+    NekDouble pL, NekDouble rhoL, NekDouble rhouL, NekDouble rhovL,
+    NekDouble rhowL, NekDouble pR, NekDouble rhoR, NekDouble rhouR,
+    NekDouble rhovR, NekDouble rhowR, NekDouble c0sqL, NekDouble rho0L,
+    NekDouble u0L, NekDouble v0L, NekDouble w0L, NekDouble c0sqR,
+    NekDouble rho0R, NekDouble u0R, NekDouble v0R, NekDouble w0R, NekDouble &pF,
+    NekDouble &rhoF, NekDouble &rhouF, NekDouble &rhovF, NekDouble &rhowF)
 {
     boost::ignore_unused(rho0L, v0L, w0L, rho0R, v0R, w0R);
 

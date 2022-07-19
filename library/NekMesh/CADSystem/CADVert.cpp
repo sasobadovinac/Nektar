@@ -61,10 +61,10 @@ Array<OneD, NekDouble> CADVert::GetLoc()
 
 NekDouble CADVert::DistanceTo(Array<OneD, NekDouble> xyz)
 {
-    return sqrt((m_node->m_x - xyz[0])*(m_node->m_x - xyz[0]) +
-                (m_node->m_y - xyz[1])*(m_node->m_y - xyz[1]) +
-                (m_node->m_z - xyz[2])*(m_node->m_z - xyz[2]));
+    return sqrt((m_node->m_x - xyz[0]) * (m_node->m_x - xyz[0]) +
+                (m_node->m_y - xyz[1]) * (m_node->m_y - xyz[1]) +
+                (m_node->m_z - xyz[2]) * (m_node->m_z - xyz[2]));
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -41,12 +41,12 @@
 #include <map>
 #include <set>
 #include <string>
-#include <vector>
 #include <typeinfo>
+#include <vector>
 
+#include <FieldUtils/FieldConvertComm.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/Communication/CommSerial.h>
-#include <FieldUtils/FieldConvertComm.hpp>
 #include <StdRegions/StdNodalTriExp.h>
 
 #include "Field.hpp"
@@ -90,16 +90,14 @@ enum ModulePriority
 };
 
 const char *const ModulePriorityMap[] = {
-    "CreateGraph", "CreateFieldData", "ModifyFieldData", "CreateExp",
-    "FillExp", "ModifyExp", "BndExtraction", "CreatePts",
-    "ConvertExpToPts", "ModifyPts", "Output"
-};
+    "CreateGraph",     "CreateFieldData", "ModifyFieldData", "CreateExp",
+    "FillExp",         "ModifyExp",       "BndExtraction",   "CreatePts",
+    "ConvertExpToPts", "ModifyPts",       "Output"};
 
 /**
  * @brief Swap endian ordering of the input variable.
  */
-template <typename T>
-void swap_endian(T &u)
+template <typename T> void swap_endian(T &u)
 {
     union
     {
@@ -117,8 +115,7 @@ void swap_endian(T &u)
     u = dest.u;
 }
 
-template <typename T>
-void swap_endian(std::vector<T> &u)
+template <typename T> void swap_endian(std::vector<T> &u)
 {
     size_t vecSize = u.size();
     for (int i = 0; i < vecSize; ++i)
@@ -153,8 +150,7 @@ struct ConfigOption
      * @brief Re-interpret the value stored in #value as some type using
      * boost::lexical_cast.
      */
-    template <typename T>
-    T as() const
+    template <typename T> T as() const
     {
         try
         {
@@ -162,8 +158,8 @@ struct ConfigOption
         }
         catch (const std::exception &e)
         {
-            std::cerr << "We are not able to cast m_value " << m_value
-                      << " to " << typeid(T).name() << std::endl
+            std::cerr << "We are not able to cast m_value " << m_value << " to "
+                      << typeid(T).name() << std::endl
                       << e.what() << std::endl;
             abort();
         }
@@ -191,8 +187,7 @@ struct ConfigOption
 class Module
 {
 public:
-    FIELD_UTILS_EXPORT Module(FieldSharedPtr p_f)
-        : m_f(p_f)
+    FIELD_UTILS_EXPORT Module(FieldSharedPtr p_f) : m_f(p_f)
     {
     }
     virtual void Process(po::variables_map &vm) = 0;
@@ -206,7 +201,7 @@ public:
         return " ";
     }
 
-    const ConfigOption& GetConfigOption(const std::string& key) const
+    const ConfigOption &GetConfigOption(const std::string &key) const
     {
         auto it = m_config.find(key);
         ASSERTL0(it != m_config.end(), "Configuration key not found!");
@@ -288,8 +283,8 @@ protected:
 };
 
 typedef std::pair<ModuleType, std::string> ModuleKey;
-FIELD_UTILS_EXPORT std::ostream &operator<<(
-    std::ostream &os, const ModuleKey &rhs);
+FIELD_UTILS_EXPORT std::ostream &operator<<(std::ostream &os,
+                                            const ModuleKey &rhs);
 
 typedef std::shared_ptr<Module> ModuleSharedPtr;
 typedef LibUtilities::NekFactory<ModuleKey, Module, FieldSharedPtr>
@@ -297,7 +292,7 @@ typedef LibUtilities::NekFactory<ModuleKey, Module, FieldSharedPtr>
 
 FIELD_UTILS_EXPORT ModuleFactory &GetModuleFactory();
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

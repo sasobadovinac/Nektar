@@ -85,7 +85,7 @@ protected:
 private:
     int m_spacedim;
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

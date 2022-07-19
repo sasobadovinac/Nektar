@@ -209,9 +209,9 @@ Pairwise::Pairwise(const LibUtilities::CommSharedPtr &comm,
 
     size_t totSends = std::accumulate(sendCount.begin(), sendCount.end(), 0);
 
-    m_recvBuff   = Array<OneD, NekDouble>(totSends, -1);
-    m_sendBuff   = Array<OneD, NekDouble>(totSends, -1);
-    m_edgeTraceIndex = Array<OneD, int>  (totSends, -1);
+    m_recvBuff       = Array<OneD, NekDouble>(totSends, -1);
+    m_sendBuff       = Array<OneD, NekDouble>(totSends, -1);
+    m_edgeTraceIndex = Array<OneD, int>(totSends, -1);
 
     // Set up m_edgeTraceIndex to reduce complexity when performing exchange
     cnt = 0;
@@ -578,7 +578,7 @@ void AssemblyCommDG::InitialiseStructure(
             int id = elmtToTrace[eid][j]->GetGeom()->GetGlobalID();
             localEdgeIds.emplace_back(id);
         }
-        
+
         quad = locExpansion->GetTotPoints();
         if (quad > m_maxQuad)
         {
@@ -708,7 +708,7 @@ void AssemblyCommDG::InitialiseStructure(
  */
 std::tuple<NekDouble, NekDouble, NekDouble> AssemblyCommDG::Timing(
     const LibUtilities::CommSharedPtr &comm, const int &count, const int &num,
-    const ExchangeMethodSharedPtr& f)
+    const ExchangeMethodSharedPtr &f)
 {
     Array<OneD, NekDouble> testFwd(num, 1);
     Array<OneD, NekDouble> testBwd(num, -2);

@@ -43,27 +43,25 @@ namespace Nektar
 namespace NekMesh
 {
 
-void Face::GetCurvedNodes(
-    std::vector<NodeSharedPtr> &nodeList)
+void Face::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList)
 {
     // Treat 2D point distributions differently to 3D.
     if (m_curveType == LibUtilities::eNodalTriFekete ||
         m_curveType == LibUtilities::eNodalTriEvenlySpaced ||
         m_curveType == LibUtilities::eNodalTriElec)
     {
-        int n = m_edgeList[0]->GetNodeCount();
+        int n  = m_edgeList[0]->GetNodeCount();
         int n2 = m_edgeList[1]->GetNodeCount();
         int n3 = m_edgeList[2]->GetNodeCount();
 
         bool same = (n == n2 ? (n2 == n3) : false);
         ASSERTL0(same, "Edges are not consistent");
 
-        nodeList.insert(
-            nodeList.end(), m_vertexList.begin(), m_vertexList.end());
+        nodeList.insert(nodeList.end(), m_vertexList.begin(),
+                        m_vertexList.end());
         for (int k = 0; k < m_edgeList.size(); ++k)
         {
-            nodeList.insert(nodeList.end(),
-                            m_edgeList[k]->m_edgeNodes.begin(),
+            nodeList.insert(nodeList.end(), m_edgeList[k]->m_edgeNodes.begin(),
                             m_edgeList[k]->m_edgeNodes.end());
             if (m_edgeList[k]->m_n1 != m_vertexList[k])
             {
@@ -73,8 +71,7 @@ void Face::GetCurvedNodes(
                              nodeList.begin() + 3 + (k + 1) * (n - 2));
             }
         }
-        nodeList.insert(
-            nodeList.end(), m_faceNodes.begin(), m_faceNodes.end());
+        nodeList.insert(nodeList.end(), m_faceNodes.begin(), m_faceNodes.end());
     }
     else
     {
@@ -89,9 +86,9 @@ void Face::GetCurvedNodes(
         ASSERTL0(n * n == GetNodeCount(), "Wrong number of modes?");
 
         // Write vertices
-        nodeList[0]         = m_vertexList[0];
-        nodeList[n - 1]     = m_vertexList[1];
-        nodeList[n * n - 1] = m_vertexList[2];
+        nodeList[0]           = m_vertexList[0];
+        nodeList[n - 1]       = m_vertexList[1];
+        nodeList[n * n - 1]   = m_vertexList[2];
         nodeList[n * (n - 1)] = m_vertexList[3];
 
         // Write edge-interior
@@ -124,13 +121,11 @@ void Face::GetCurvedNodes(
         {
             for (int j = 1; j < n - 1; ++j)
             {
-                nodeList[i * n + j] =
-                    m_faceNodes[(i - 1) * (n - 2) + (j - 1)];
+                nodeList[i * n + j] = m_faceNodes[(i - 1) * (n - 2) + (j - 1)];
             }
         }
     }
 }
-
 
 std::string Face::GetXmlCurveString()
 {
@@ -152,11 +147,8 @@ std::string Face::GetXmlCurveString()
     return s.str();
 }
 
-void Face::MakeOrder(int                                order,
-                     SpatialDomains::GeometrySharedPtr  geom,
-                     LibUtilities::PointsType           pType,
-                     int                                coordDim,
-                     int                               &id)
+void Face::MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                     LibUtilities::PointsType pType, int coordDim, int &id)
 {
     if (m_vertexList.size() == 3)
     {
@@ -167,7 +159,7 @@ void Face::MakeOrder(int                                order,
             return;
         }
 
-        int nPoints = order + 1;
+        int nPoints                            = order + 1;
         StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
 
         Array<OneD, NekDouble> px, py;
@@ -175,7 +167,7 @@ void Face::MakeOrder(int                                order,
         ASSERTL1(pKey.GetPointsDim() == 2, "Points distribution must be 2D");
         LibUtilities::PointsManager()[pKey]->GetPoints(px, py);
 
-        Array<OneD, Array<OneD, NekDouble> > phys(coordDim);
+        Array<OneD, Array<OneD, NekDouble>> phys(coordDim);
 
         for (int i = 0; i < coordDim; ++i)
         {
@@ -183,11 +175,11 @@ void Face::MakeOrder(int                                order,
             xmap->BwdTrans(geom->GetCoeffs(i), phys[i]);
         }
 
-        const int nTriPts = nPoints * (nPoints + 1) / 2;
+        const int nTriPts    = nPoints * (nPoints + 1) / 2;
         const int nTriIntPts = (nPoints - 3) * (nPoints - 2) / 2;
         m_faceNodes.resize(nTriIntPts);
 
-        for (int i = 3 + 3*(nPoints-2), cnt = 0; i < nTriPts; ++i, ++cnt)
+        for (int i = 3 + 3 * (nPoints - 2), cnt = 0; i < nTriPts; ++i, ++cnt)
         {
             Array<OneD, NekDouble> xp(2);
             xp[0] = px[i];
@@ -199,8 +191,8 @@ void Face::MakeOrder(int                                order,
                 x[j] = xmap->PhysEvaluate(xp, phys[j]);
             }
 
-            m_faceNodes[cnt] = std::shared_ptr<Node>(
-                new Node(id++, x[0], x[1], x[2]));
+            m_faceNodes[cnt] =
+                std::shared_ptr<Node>(new Node(id++, x[0], x[1], x[2]));
         }
         m_curveType = pType;
     }
@@ -213,7 +205,7 @@ void Face::MakeOrder(int                                order,
             return;
         }
 
-        int nPoints = order + 1;
+        int nPoints                            = order + 1;
         StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
 
         Array<OneD, NekDouble> px;
@@ -221,7 +213,7 @@ void Face::MakeOrder(int                                order,
         ASSERTL1(pKey.GetPointsDim() == 1, "Points distribution must be 1D");
         LibUtilities::PointsManager()[pKey]->GetPoints(px);
 
-        Array<OneD, Array<OneD, NekDouble> > phys(coordDim);
+        Array<OneD, Array<OneD, NekDouble>> phys(coordDim);
 
         for (int i = 0; i < coordDim; ++i)
         {
@@ -232,9 +224,9 @@ void Face::MakeOrder(int                                order,
         int nQuadIntPts = (nPoints - 2) * (nPoints - 2);
         m_faceNodes.resize(nQuadIntPts);
 
-        for (int i = 1, cnt = 0; i < nPoints-1; ++i)
+        for (int i = 1, cnt = 0; i < nPoints - 1; ++i)
         {
-            for (int j = 1; j < nPoints-1; ++j, ++cnt)
+            for (int j = 1; j < nPoints - 1; ++j, ++cnt)
             {
                 Array<OneD, NekDouble> xp(2);
                 xp[0] = px[j];
@@ -246,8 +238,8 @@ void Face::MakeOrder(int                                order,
                     x[k] = xmap->PhysEvaluate(xp, phys[k]);
                 }
 
-                m_faceNodes[cnt] = std::shared_ptr<Node>(
-                    new Node(id++, x[0], x[1], x[2]));
+                m_faceNodes[cnt] =
+                    std::shared_ptr<Node>(new Node(id++, x[0], x[1], x[2]));
             }
         }
 
@@ -258,21 +250,21 @@ void Face::MakeOrder(int                                order,
         ASSERTL0(false, "Unknown number of vertices");
     }
 
-    if(m_parentCAD)
+    if (m_parentCAD)
     {
         CADSurfSharedPtr s = std::dynamic_pointer_cast<CADSurf>(m_parentCAD);
-        for(int i = 0; i < m_faceNodes.size(); i++)
+        for (int i = 0; i < m_faceNodes.size(); i++)
         {
             Array<OneD, NekDouble> loc(3);
-            loc[0] = m_faceNodes[i]->m_x;
-            loc[1] = m_faceNodes[i]->m_y;
-            loc[2] = m_faceNodes[i]->m_z;
+            loc[0]                    = m_faceNodes[i]->m_x;
+            loc[1]                    = m_faceNodes[i]->m_y;
+            loc[2]                    = m_faceNodes[i]->m_z;
             Array<OneD, NekDouble> uv = s->locuv(loc);
-            loc = s->P(uv);
-            m_faceNodes[i]->m_x = loc[0];
-            m_faceNodes[i]->m_y = loc[1];
-            m_faceNodes[i]->m_z = loc[2];
-            m_faceNodes[i]->SetCADSurf(s,uv);
+            loc                       = s->P(uv);
+            m_faceNodes[i]->m_x       = loc[0];
+            m_faceNodes[i]->m_y       = loc[1];
+            m_faceNodes[i]->m_z       = loc[2];
+            m_faceNodes[i]->SetCADSurf(s, uv);
         }
     }
 }
@@ -351,9 +343,9 @@ SpatialDomains::Geometry2DSharedPtr Face::GetGeom(int coordDim)
             ASSERTL0(n * n == GetNodeCount(), "Wrong number of modes?");
 
             // Write vertices
-            tmp[0]         = m_vertexList[0];
-            tmp[n - 1]     = m_vertexList[1];
-            tmp[n * n - 1] = m_vertexList[2];
+            tmp[0]           = m_vertexList[0];
+            tmp[n - 1]       = m_vertexList[1];
+            tmp[n * n - 1]   = m_vertexList[2];
             tmp[n * (n - 1)] = m_vertexList[3];
 
             // Write edge-interior
@@ -386,8 +378,7 @@ SpatialDomains::Geometry2DSharedPtr Face::GetGeom(int coordDim)
             {
                 for (int j = 1; j < n - 1; ++j)
                 {
-                    tmp[i * n + j] =
-                        m_faceNodes[(i - 1) * (n - 2) + (j - 1)];
+                    tmp[i * n + j] = m_faceNodes[(i - 1) * (n - 2) + (j - 1)];
                 }
             }
 
@@ -396,9 +387,8 @@ SpatialDomains::Geometry2DSharedPtr Face::GetGeom(int coordDim)
                 c->m_points.push_back(tmp[k]->GetGeom(coordDim));
             }
 
-            ret =
-                MemoryManager<SpatialDomains::QuadGeom>::AllocateSharedPtr(
-                    m_id, edges, c);
+            ret = MemoryManager<SpatialDomains::QuadGeom>::AllocateSharedPtr(
+                m_id, edges, c);
         }
     }
     else
@@ -410,9 +400,8 @@ SpatialDomains::Geometry2DSharedPtr Face::GetGeom(int coordDim)
         }
         else
         {
-            ret =
-                MemoryManager<SpatialDomains::QuadGeom>::AllocateSharedPtr(
-                    m_id, edges);
+            ret = MemoryManager<SpatialDomains::QuadGeom>::AllocateSharedPtr(
+                m_id, edges);
         }
     }
 
@@ -420,5 +409,5 @@ SpatialDomains::Geometry2DSharedPtr Face::GetGeom(int coordDim)
     return ret;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

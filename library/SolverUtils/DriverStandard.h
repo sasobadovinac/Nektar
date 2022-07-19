@@ -39,47 +39,47 @@
 
 namespace Nektar
 {
-    namespace SolverUtils
+namespace SolverUtils
+{
+/// Base class for the development of solvers.
+class DriverStandard : public Driver
+{
+public:
+    friend class MemoryManager<DriverStandard>;
+
+    /// Creates an instance of this class
+    static DriverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-        /// Base class for the development of solvers.
-        class DriverStandard: public Driver
-        {
-        public:
-            friend class MemoryManager<DriverStandard>;
+        DriverSharedPtr p =
+            MemoryManager<DriverStandard>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
 
-            /// Creates an instance of this class
-            static DriverSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const SpatialDomains::MeshGraphSharedPtr& pGraph)
-            {
-                DriverSharedPtr p = MemoryManager<DriverStandard>
-                    ::AllocateSharedPtr(pSession, pGraph);
-                p->InitObject();
-                return p;
-            }
-	
-            ///Name of the class
-            static std::string className;
-	
-        protected:
-            /// Constructor
-            SOLVER_UTILS_EXPORT DriverStandard(
-                const LibUtilities::SessionReaderSharedPtr pSession,
-                const SpatialDomains::MeshGraphSharedPtr pGraph);
+    /// Name of the class
+    static std::string className;
 
-            /// Destructor
-            SOLVER_UTILS_EXPORT virtual ~DriverStandard();
-        
-            /// Second-stage initialisation
-            SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
+protected:
+    /// Constructor
+    SOLVER_UTILS_EXPORT DriverStandard(
+        const LibUtilities::SessionReaderSharedPtr pSession,
+        const SpatialDomains::MeshGraphSharedPtr pGraph);
 
-            /// Virtual function for solve implementation.
-            SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
-		
-            static std::string driverLookupId;
-	};
-    }	
-} //end of namespace
+    /// Destructor
+    SOLVER_UTILS_EXPORT virtual ~DriverStandard();
 
-#endif //NEKTAR_SOLVERUTILS_DRIVERSTANDARD_H
+    /// Second-stage initialisation
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        std::ostream &out = std::cout);
 
+    /// Virtual function for solve implementation.
+    SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
+
+    static std::string driverLookupId;
+};
+} // namespace SolverUtils
+} // namespace Nektar
+
+#endif // NEKTAR_SOLVERUTILS_DRIVERSTANDARD_H

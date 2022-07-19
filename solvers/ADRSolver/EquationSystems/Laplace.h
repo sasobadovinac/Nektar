@@ -41,42 +41,41 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-    class Laplace : public EquationSystem
+class Laplace : public EquationSystem
+{
+public:
+    /// Class may only be instantiated through the MemoryManager.
+    friend class MemoryManager<Laplace>;
+
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        /// Class may only be instantiated through the MemoryManager.
-        friend class MemoryManager<Laplace>;
+        EquationSystemSharedPtr p =
+            MemoryManager<Laplace>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            EquationSystemSharedPtr p = MemoryManager<Laplace>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+protected:
+    StdRegions::ConstFactorMap m_factors;
 
-    protected:
-        StdRegions::ConstFactorMap m_factors;
+    Laplace(const LibUtilities::SessionReaderSharedPtr &pSession,
+            const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        Laplace(const LibUtilities::SessionReaderSharedPtr& pSession,
-                const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    virtual ~Laplace();
 
-        virtual ~Laplace();
+    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_DoSolve();
 
-        virtual void v_InitObject(bool DeclareFields=true);
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
-        virtual void v_DoSolve();
-
-    private:
-        virtual Array<OneD, bool> v_GetSystemSingularChecks();
-
-    };
-}
+private:
+    virtual Array<OneD, bool> v_GetSystemSingularChecks();
+};
+} // namespace Nektar
 
 #endif

@@ -35,58 +35,53 @@
 #ifndef NEKTAR_SOLVERUTILS_FORCINGAXISYM
 #define NEKTAR_SOLVERUTILS_FORCINGAXISYM
 
-#include <SolverUtils/Forcing/Forcing.h>
 #include <CompressibleFlowSolver/Misc/VariableConverter.h>
+#include <SolverUtils/Forcing/Forcing.h>
 
 namespace Nektar
 {
 
 class ForcingAxiSymmetric : public SolverUtils::Forcing
 {
-    public:
+public:
+    friend class MemoryManager<ForcingAxiSymmetric>;
 
-        friend class MemoryManager<ForcingAxiSymmetric>;
+    /// Creates an instance of this class
+    static SolverUtils::ForcingSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
+    {
+        SolverUtils::ForcingSharedPtr p =
+            MemoryManager<ForcingAxiSymmetric>::AllocateSharedPtr(pSession,
+                                                                  pEquation);
+        p->InitObject(pFields, pNumForcingFields, pForce);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static SolverUtils::ForcingSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr         &pSession,
-                const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const unsigned int& pNumForcingFields,
-                const TiXmlElement* pForce)
-        {
-            SolverUtils::ForcingSharedPtr p =
-                                    MemoryManager<ForcingAxiSymmetric>::
-                                        AllocateSharedPtr(pSession, pEquation);
-            p->InitObject(pFields, pNumForcingFields, pForce);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_InitObject(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
 
-    protected:
-        virtual void v_InitObject(
-            const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-            const unsigned int&                         pNumForcingFields,
-            const TiXmlElement*                         pForce);
+    virtual void v_Apply(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
 
-        virtual void v_Apply(
-            const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-            const Array<OneD, Array<OneD, NekDouble> >& inarray,
-                  Array<OneD, Array<OneD, NekDouble> >& outarray,
-            const NekDouble&                            time);
+private:
+    ForcingAxiSymmetric(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation);
 
-    private:
-
-        ForcingAxiSymmetric(
-                const LibUtilities::SessionReaderSharedPtr         &pSession,
-                const std::weak_ptr<SolverUtils::EquationSystem> &pEquation);
-
-        Array<OneD, NekDouble>               m_geomFactor;
-        VariableConverterSharedPtr           m_varConv;
+    Array<OneD, NekDouble> m_geomFactor;
+    VariableConverterSharedPtr m_varConv;
 };
 
-}
+} // namespace Nektar
 
 #endif

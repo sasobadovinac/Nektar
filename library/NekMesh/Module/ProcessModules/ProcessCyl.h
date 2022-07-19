@@ -59,10 +59,11 @@ public:
     {
         return "ProcessCyl";
     }
+
 protected:
     void v_GenerateEdgeNodes(NekMesh::EdgeSharedPtr edge);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

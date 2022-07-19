@@ -41,13 +41,13 @@ namespace Nektar
 {
 
 /**
-* @brief Peng-Robinson equation of state:
+ * @brief Peng-Robinson equation of state:
  *       p = RT/(1/rho - b) - a*Alpha(T/Tc) / (1/rho^2 + 2*b/rho - b^2)
  *       with a = 0.45724 * (R*Tc)^2 / Pc
  *            b = 0.0778 * (R*Tc) / Pc
  *            Alpha(T/Tc) = [1 + fw * (1 - sqrt(T/ Tc))]^2
  *            fw = 0.37464 + 1.54226*omega - 0.2699*omega*omega
-*/
+ */
 class PengRobinsonEoS : public EquationOfState
 {
 public:
@@ -73,13 +73,13 @@ protected:
     NekDouble m_omega;
     NekDouble m_fw;
 
-    NekDouble GetTemperature(const NekDouble& rho, const NekDouble& e) final;
+    NekDouble GetTemperature(const NekDouble &rho, const NekDouble &e) final;
 
-    vec_t GetTemperature(const vec_t& rho, const vec_t& e) final;
+    vec_t GetTemperature(const vec_t &rho, const vec_t &e) final;
 
-    NekDouble GetPressure(const NekDouble& rho, const NekDouble& e) final;
+    NekDouble GetPressure(const NekDouble &rho, const NekDouble &e) final;
 
-    vec_t GetPressure(const vec_t& rho, const vec_t& e) final;
+    vec_t GetPressure(const vec_t &rho, const vec_t &e) final;
 
     NekDouble v_GetEntropy(const NekDouble &rho, const NekDouble &e) final;
 
@@ -97,52 +97,43 @@ private:
     ~PengRobinsonEoS(void){};
 
     // Alpha term of Peng-Robinson EoS
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T Alpha(const T& temp)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T Alpha(const T &temp)
     {
         T sqrtAlpha = 1.0 + m_fw * (1.0 - sqrt(temp / m_Tc));
         return sqrtAlpha * sqrtAlpha;
     }
 
     // Log term term of Peng-Robinson EoS
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T LogTerm(const T& rho)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T LogTerm(const T &rho)
     {
         return log((1.0 / rho + m_b - m_b * sqrt(2)) /
                    (1.0 / rho + m_b + m_b * sqrt(2)));
     }
 
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T GetTemperatureKernel(const T& rho, const T& e)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T GetTemperatureKernel(const T &rho, const T &e)
     {
         // First we need to evaluate the log term
         //    ln[(1/rho + b - b*sqrt(2)) / (1/rho + b + b*sqrt(2))]
-        NekDouble sqrt2   = sqrt(2.0);
-        T logTerm = LogTerm(rho);
+        NekDouble sqrt2 = sqrt(2.0);
+        T logTerm       = LogTerm(rho);
 
         // The temperature can be expressed as an equation in the form
         //      A * (T^1/2)^2 + B * T^1/2 + C = 0
 
-        NekDouble A = m_gasConstant / (m_gamma - 1.0);
+        NekDouble A  = m_gasConstant / (m_gamma - 1.0);
         NekDouble f1 = m_a / (m_b * 2.0 * sqrt2);
         NekDouble f2 = (1.0 + m_fw);
-        T B = -f1 * logTerm / sqrt(m_Tc) * m_fw * f2;
-        T C = f1 * logTerm * f2 * f2 - e;
+        T B          = -f1 * logTerm / sqrt(m_Tc) * m_fw * f2;
+        T C          = f1 * logTerm * f2 * f2 - e;
 
         // Solve for T^1/2 (positive root)
         T sqrtT = (sqrt(B * B - 4 * A * C) - B) / (2 * A);
@@ -150,23 +141,20 @@ private:
         return sqrtT * sqrtT;
     }
 
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T GetPressureKernel(const T& rho, const T& e)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T GetPressureKernel(const T &rho, const T &e)
     {
-        T temp = GetTemperatureKernel(rho, e);
+        T temp    = GetTemperatureKernel(rho, e);
         T oneOrho = 1.0 / rho;
-        T p = m_gasConstant * temp / (oneOrho - m_b) - m_a * Alpha(temp) /
-            (oneOrho * oneOrho + 2.0 * m_b * oneOrho - m_b * m_b);
+        T p       = m_gasConstant * temp / (oneOrho - m_b) -
+              m_a * Alpha(temp) /
+                  (oneOrho * oneOrho + 2.0 * m_b * oneOrho - m_b * m_b);
 
         return p;
     }
-
 };
-} // namespace
+} // namespace Nektar
 
 #endif

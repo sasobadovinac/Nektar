@@ -50,8 +50,7 @@ class OptiEdge : public OptiObj
 public:
     friend class MemoryManager<OptiEdge>;
 
-    OptiEdge(Array<OneD, NekDouble> a,
-             Array<OneD, NekDouble> dis,
+    OptiEdge(Array<OneD, NekDouble> a, Array<OneD, NekDouble> dis,
              CADObjectSharedPtr ob)
     {
         all = a;
@@ -80,6 +79,6 @@ private:
 };
 typedef std::shared_ptr<OptiEdge> OptiEdgeSharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 #endif

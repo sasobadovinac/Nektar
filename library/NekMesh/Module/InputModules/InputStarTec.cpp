@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
 #include <LibUtilities/Foundations/ManagerAccess.h>
@@ -52,8 +52,7 @@ namespace NekMesh
 {
 
 ModuleKey InputTec::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eInputModule, "dat"),
-    InputTec::create,
+    ModuleKey(eInputModule, "dat"), InputTec::create,
     "Reads Tecplot polyhedron ascii format converted from Star CCM (.dat).");
 
 InputTec::InputTec(MeshSharedPtr m) : InputModule(m)
@@ -215,7 +214,7 @@ void InputTec::ReadZone(int &nComposite)
         }
     }
 
-    if (nodeLocs.size() != 3*nnodes)
+    if (nodeLocs.size() != 3 * nnodes)
     {
         m_log(FATAL) << "Unable to read correct number of nodes from Tecplot "
                      << "file" << endl;
@@ -224,10 +223,8 @@ void InputTec::ReadZone(int &nComposite)
     std::vector<NodeSharedPtr> Nodes;
     for (i = 0; i < nnodes; ++i)
     {
-        Nodes.push_back(
-            std::shared_ptr<Node>(
-                new Node(i, nodeLocs[i], nodeLocs[i+nnodes],
-                         nodeLocs[i+2*nnodes])));
+        Nodes.push_back(std::shared_ptr<Node>(new Node(
+            i, nodeLocs[i], nodeLocs[i + nnodes], nodeLocs[i + 2 * nnodes])));
     }
 
     ReadNextNonEmptyLine(m_mshFile, line);
@@ -246,10 +243,10 @@ void InputTec::ReadZone(int &nComposite)
             }
             Nodes_per_face.push_back(nodes);
         }
-	ReadNextNonEmptyLine(m_mshFile, line);
+        ReadNextNonEmptyLine(m_mshFile, line);
     }
 
-    vector<vector<int> > FaceNodes;
+    vector<vector<int>> FaceNodes;
 
     if (line.find("face nodes") != string::npos)
     {
@@ -271,7 +268,7 @@ void InputTec::ReadZone(int &nComposite)
 
             FaceNodes.push_back(Fnodes);
         }
-	ReadNextNonEmptyLine(m_mshFile, line);
+        ReadNextNonEmptyLine(m_mshFile, line);
     }
     else
     {
@@ -280,7 +277,7 @@ void InputTec::ReadZone(int &nComposite)
     }
 
     // Read left elements
-    Array<OneD, vector<int> > ElementFaces(nelements);
+    Array<OneD, vector<int>> ElementFaces(nelements);
 
     if (line.find("left elements") != string::npos)
     {
@@ -295,7 +292,7 @@ void InputTec::ReadZone(int &nComposite)
                 ElementFaces[elmtID - 1].push_back(i);
             }
         }
-	ReadNextNonEmptyLine(m_mshFile, line);
+        ReadNextNonEmptyLine(m_mshFile, line);
     }
     else
     {
@@ -338,8 +335,8 @@ void InputTec::ReadZone(int &nComposite)
         {
             if (ElementFaces[i].size() > 4)
             {
-                GenElement3D(
-                    Nodes, i, ElementFaces[i], FaceNodes, nComposite, true);
+                GenElement3D(Nodes, i, ElementFaces[i], FaceNodes, nComposite,
+                             true);
             }
         }
 
@@ -350,8 +347,8 @@ void InputTec::ReadZone(int &nComposite)
         {
             if (ElementFaces[i].size() == 4)
             {
-                GenElement3D(
-                    Nodes, i, ElementFaces[i], FaceNodes, nComposite, true);
+                GenElement3D(Nodes, i, ElementFaces[i], FaceNodes, nComposite,
+                             true);
             }
         }
         nComposite++;
@@ -387,21 +384,22 @@ void InputTec::ReadZone(int &nComposite)
     }
 }
 
-static void ReadNextNonEmptyLine(io::filtering_istream &mshFile, string &line) {
-    do {
-	getline(mshFile, line);
-    } while(line.empty() && !mshFile.eof());
+static void ReadNextNonEmptyLine(io::filtering_istream &mshFile, string &line)
+{
+    do
+    {
+        getline(mshFile, line);
+    } while (line.empty() && !mshFile.eof());
 }
 
-static void PrismLineFaces(int prismid,
-                           map<int, int> &facelist,
-                           vector<vector<int> > &FacesToPrisms,
-                           vector<vector<int> > &PrismsToFaces,
+static void PrismLineFaces(int prismid, map<int, int> &facelist,
+                           vector<vector<int>> &FacesToPrisms,
+                           vector<vector<int>> &PrismsToFaces,
                            vector<bool> &PrismDone);
 
 void InputTec::ResetNodes(vector<NodeSharedPtr> &Vnodes,
-                          Array<OneD, vector<int> > &ElementFaces,
-                          vector<vector<int> > &FaceNodes)
+                          Array<OneD, vector<int>> &ElementFaces,
+                          vector<vector<int>> &FaceNodes)
 {
     int i, j;
     Array<OneD, int> NodeReordering(Vnodes.size(), -1);
@@ -411,8 +409,8 @@ void InputTec::ResetNodes(vector<NodeSharedPtr> &Vnodes,
     map<int, bool> FacesRenumbered;
 
     // Determine Prism triangular face connectivity.
-    vector<vector<int> > FaceToPrisms(FaceNodes.size());
-    vector<vector<int> > PrismToFaces(ElementFaces.size());
+    vector<vector<int>> FaceToPrisms(FaceNodes.size());
+    vector<vector<int>> PrismToFaces(ElementFaces.size());
     map<int, int> Prisms;
 
     // generate map of prism-faces to prisms and prism to
@@ -463,8 +461,8 @@ void InputTec::ResetNodes(vector<NodeSharedPtr> &Vnodes,
         else
         {
             // Generate list of faces in list
-            PrismLineFaces(
-                elmtid, facelist, FaceToPrisms, PrismToFaces, PrismDone);
+            PrismLineFaces(elmtid, facelist, FaceToPrisms, PrismToFaces,
+                           PrismDone);
 
             // loop over faces and number vertices of associated prisms.
             for (auto &faceIt : facelist)
@@ -589,8 +587,7 @@ void InputTec::ResetNodes(vector<NodeSharedPtr> &Vnodes,
         }
     }
 
-    ASSERTL1(nodeid == NodeReordering.size(),
-             "Have not renumbered all nodes");
+    ASSERTL1(nodeid == NodeReordering.size(), "Have not renumbered all nodes");
 
     // Renumbering successfull so resort nodes and faceNodes;
     for (i = 0; i < FaceNodes.size(); ++i)
@@ -609,10 +606,9 @@ void InputTec::ResetNodes(vector<NodeSharedPtr> &Vnodes,
     }
 }
 
-static void PrismLineFaces(int prismid,
-                           map<int, int> &facelist,
-                           vector<vector<int> > &FaceToPrisms,
-                           vector<vector<int> > &PrismToFaces,
+static void PrismLineFaces(int prismid, map<int, int> &facelist,
+                           vector<vector<int>> &FaceToPrisms,
+                           vector<vector<int>> &PrismToFaces,
                            vector<bool> &PrismDone)
 {
     if (PrismDone[prismid] == false)
@@ -624,11 +620,8 @@ static void PrismLineFaces(int prismid,
         facelist[face] = face;
         for (int i = 0; i < FaceToPrisms[face].size(); ++i)
         {
-            PrismLineFaces(FaceToPrisms[face][i],
-                           facelist,
-                           FaceToPrisms,
-                           PrismToFaces,
-                           PrismDone);
+            PrismLineFaces(FaceToPrisms[face][i], facelist, FaceToPrisms,
+                           PrismToFaces, PrismDone);
         }
 
         // Add faces1
@@ -636,20 +629,15 @@ static void PrismLineFaces(int prismid,
         facelist[face] = face;
         for (int i = 0; i < FaceToPrisms[face].size(); ++i)
         {
-            PrismLineFaces(FaceToPrisms[face][i],
-                           facelist,
-                           FaceToPrisms,
-                           PrismToFaces,
-                           PrismDone);
+            PrismLineFaces(FaceToPrisms[face][i], facelist, FaceToPrisms,
+                           PrismToFaces, PrismDone);
         }
     }
 }
 
-void InputTec::GenElement2D(vector<NodeSharedPtr> &VertNodes,
-                            int i,
+void InputTec::GenElement2D(vector<NodeSharedPtr> &VertNodes, int i,
                             vector<int> &ElementFaces,
-                            vector<vector<int> > &FaceNodes,
-                            int nComposite)
+                            vector<vector<int>> &FaceNodes, int nComposite)
 {
     boost::ignore_unused(i);
 
@@ -690,11 +678,9 @@ void InputTec::GenElement2D(vector<NodeSharedPtr> &VertNodes,
     m_mesh->m_element[E->GetDim()].push_back(E);
 }
 
-void InputTec::GenElement3D(vector<NodeSharedPtr> &VertNodes,
-                            int i,
+void InputTec::GenElement3D(vector<NodeSharedPtr> &VertNodes, int i,
                             vector<int> &ElementFaces,
-                            vector<vector<int> > &FaceNodes,
-                            int nComposite,
+                            vector<vector<int>> &FaceNodes, int nComposite,
                             bool DoOrient)
 {
     boost::ignore_unused(i);
@@ -757,7 +743,7 @@ void InputTec::GenElement3D(vector<NodeSharedPtr> &VertNodes,
 
 Array<OneD, int> InputTec::SortEdgeNodes(vector<NodeSharedPtr> &Vnodes,
                                          vector<int> &ElementFaces,
-                                         vector<vector<int> > &FaceNodes)
+                                         vector<vector<int>> &FaceNodes)
 {
     int i, j;
     Array<OneD, int> returnval;
@@ -849,7 +835,7 @@ Array<OneD, int> InputTec::SortEdgeNodes(vector<NodeSharedPtr> &Vnodes,
 
 Array<OneD, int> InputTec::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
                                          vector<int> &ElementFaces,
-                                         vector<vector<int> > &FaceNodes)
+                                         vector<vector<int>> &FaceNodes)
 {
 
     int i, j;
@@ -1109,5 +1095,5 @@ Array<OneD, int> InputTec::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
 
     return returnval;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -33,8 +33,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "Octree.h"
-#include <stdexcept>
 #include <cmath>
+#include <stdexcept>
 
 namespace Nektar
 {
@@ -45,8 +45,9 @@ namespace FieldUtils
  * @brief Construct a new octree object
  *
  */
-Octree::Octree() : m_maxPts(0), m_nMshPts(0), m_nNodes(0), m_nLeaves(0),
-                   m_maxDepth(0), m_root(nullptr)
+Octree::Octree()
+    : m_maxPts(0), m_nMshPts(0), m_nNodes(0), m_nLeaves(0), m_maxDepth(0),
+      m_root(nullptr)
 {
 }
 
@@ -57,7 +58,7 @@ Octree::Octree() : m_maxPts(0), m_nMshPts(0), m_nNodes(0), m_nLeaves(0),
  * @param maxPts
  * @param bounds
  */
-Octree::Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
+Octree::Octree(const Array<OneD, Array<OneD, NekDouble>> &pts, int maxPts,
                const Array<OneD, NekDouble> &bounds)
 {
     // Set some values
@@ -92,7 +93,7 @@ Octree::Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
  * @param pts
  * @param maxPts
  */
-Octree::Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
+Octree::Octree(const Array<OneD, Array<OneD, NekDouble>> &pts, int maxPts)
 {
     // Small margin to avoid rounding errors
     NekDouble margin = 1e-10;
@@ -118,7 +119,7 @@ Octree::Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts)
     // Add the margin
     for (int i = 0; i < 6; ++i)
     {
-        bounds[i] -= pow(-1,i) * margin;
+        bounds[i] -= pow(-1, i) * margin;
     }
 
     // Call the octree constructor
@@ -154,7 +155,7 @@ int Octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
             while (!node->IsLeaf() && node->GetDepth() < depth)
             {
                 int loc = node->GetLocInNode(coords);
-                node = node->GetChildren()[loc-1];
+                node    = node->GetChildren()[loc - 1];
             }
 
             nodeID = node->GetID();
@@ -174,7 +175,7 @@ int Octree::QueryNode(const Array<OneD, NekDouble> &coords, int depth)
  * @param pointInd
  * @return int
  */
-int Octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
+int Octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble>> &pts,
                          const Array<OneD, NekDouble> &coords,
                          NekDouble &distance, int pointInd)
 {
@@ -207,11 +208,11 @@ int Octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
         // Check the distances with all the nodes
         for (int i : indices)
         {
-            NekDouble sub = pts[i][0]-coords[0];
+            NekDouble sub         = pts[i][0] - coords[0];
             NekDouble tmpDistance = sub * sub;
             for (int j = 1; j < 3; ++j)
             {
-                sub = pts[i][j]-coords[j];
+                sub = pts[i][j] - coords[j];
                 tmpDistance += sub * sub;
             }
             tmpDistance = std::sqrt(tmpDistance);
@@ -219,7 +220,7 @@ int Octree::QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
             if (distance > tmpDistance)
             {
                 distance = tmpDistance;
-                index = i;
+                index    = i;
             }
         }
     }
@@ -267,8 +268,8 @@ std::vector<int> Octree::QueryNeighbours(int nodeID)
  * @param nLeaves
  * @param depth
  */
-void Octree::GetStats(int &maxPts, int &nPts, int &nNodes,
-                      int &nLeaves, int &depth)
+void Octree::GetStats(int &maxPts, int &nPts, int &nNodes, int &nLeaves,
+                      int &depth)
 {
     maxPts  = m_maxPts;
     nPts    = m_nMshPts;
@@ -289,8 +290,9 @@ void Octree::AdvanceToStats(int nodeID)
     if (m_nodes[nodeID]->IsLeaf())
     {
         m_nLeaves++;
-        m_maxDepth = (m_maxDepth > m_nodes[nodeID]->GetDepth()) ? m_maxDepth :
-                                                m_nodes[nodeID]->GetDepth();
+        m_maxDepth = (m_maxDepth > m_nodes[nodeID]->GetDepth())
+                         ? m_maxDepth
+                         : m_nodes[nodeID]->GetDepth();
     }
     // In any other case, dig into the tree
     else
@@ -312,12 +314,13 @@ void Octree::AdvanceToStats(int nodeID)
 void Octree::SetNeighbours(int nodeID)
 {
     // Array with the different steps
-    static int steps[26][3] = {{-1,-1,-1}, {1,0,0}, {1,0,0}, {0,1,0}, {0,1,0},
-                               {-1,0,0}, {-1,0,0}, {0,-1,0}, {1,0,0},
-                               {-1,-1,1}, {1,0,0}, {1,0,0}, {0,1,0}, {0,1,0},
-                               {-1,0,0}, {-1,0,0}, {0,-1,0}, {0,-1,1}, {1,0,0},
-                               {1,0,0}, {0,1,0}, {0,1,0}, {-1,0,0}, {-1,0,0},
-                               {0,-1,0}, {1,0,0}};
+    static int steps[26][3] = {
+        {-1, -1, -1}, {1, 0, 0},  {1, 0, 0},  {0, 1, 0},  {0, 1, 0},
+        {-1, 0, 0},   {-1, 0, 0}, {0, -1, 0}, {1, 0, 0},  {-1, -1, 1},
+        {1, 0, 0},    {1, 0, 0},  {0, 1, 0},  {0, 1, 0},  {-1, 0, 0},
+        {-1, 0, 0},   {0, -1, 0}, {0, -1, 1}, {1, 0, 0},  {1, 0, 0},
+        {0, 1, 0},    {0, 1, 0},  {-1, 0, 0}, {-1, 0, 0}, {0, -1, 0},
+        {1, 0, 0}};
 
     // Advance to the leaves of the octree
     if (!m_nodes[nodeID]->IsLeaf())
@@ -335,7 +338,7 @@ void Octree::SetNeighbours(int nodeID)
         {
             for (int i = 0; i < 3; ++i)
             {
-                probeCoords[i] += m_nodes[nodeID]->GetDelta()*steps[step][i];
+                probeCoords[i] += m_nodes[nodeID]->GetDelta() * steps[step][i];
             }
 
             // For each neighbour, find the leaves and add them
@@ -354,8 +357,9 @@ void Octree::SetNeighbours(int nodeID)
  * @brief Construct a new Octree::Octant object
  *
  */
-Octree::Octant::Octant() : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1),
-                        m_delta(-1), m_centre(3), m_bounds(6), m_isLeaf(true)
+Octree::Octant::Octant()
+    : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1), m_delta(-1), m_centre(3),
+      m_bounds(6), m_isLeaf(true)
 {
 }
 
@@ -368,9 +372,8 @@ Octree::Octant::Octant() : m_nPts(-1), m_loc(-1), m_depth(-1), m_id(-1),
  * @param bounds
  */
 Octree::Octant::Octant(int loc, int depth, int id,
-                       const Array<OneD, NekDouble> &bounds) :
-                            m_nPts(0), m_loc(loc), m_depth(depth),
-                            m_id(id), m_isLeaf(true)
+                       const Array<OneD, NekDouble> &bounds)
+    : m_nPts(0), m_loc(loc), m_depth(depth), m_id(id), m_isLeaf(true)
 {
     // Check the size of 'bounds'
     if (bounds.size() != 6)
@@ -397,9 +400,9 @@ Octree::Octant::Octant(int loc, int depth, int id,
     m_bounds = Array<OneD, NekDouble>(6);
     for (int i = 0; i < 3; ++i)
     {
-        m_centre[i]     = (bounds[2*i+1] + bounds[2*i])/2.0;
-        m_bounds[2*i]   = m_centre[i] - m_delta/2.0;
-        m_bounds[2*i+1] = m_centre[i] + m_delta/2.0;
+        m_centre[i]         = (bounds[2 * i + 1] + bounds[2 * i]) / 2.0;
+        m_bounds[2 * i]     = m_centre[i] - m_delta / 2.0;
+        m_bounds[2 * i + 1] = m_centre[i] + m_delta / 2.0;
     }
 }
 
@@ -409,14 +412,14 @@ Octree::Octant::Octant(int loc, int depth, int id,
  * @param loc
  * @param parent
  */
-Octree::Octant::Octant(int loc, Octant &parent) : m_nPts(0), m_loc(loc),
-                                                  m_id(-1), m_isLeaf(true)
+Octree::Octant::Octant(int loc, Octant &parent)
+    : m_nPts(0), m_loc(loc), m_id(-1), m_isLeaf(true)
 {
     // Set depth
     m_depth = parent.GetDepth() + 1;
 
     // Set delta
-    m_delta = parent.GetDelta()/2.0;
+    m_delta = parent.GetDelta() / 2.0;
 
     // Set centre
     NekDouble centreDX;
@@ -424,61 +427,61 @@ Octree::Octant::Octant(int loc, Octant &parent) : m_nPts(0), m_loc(loc),
     NekDouble centreDZ;
     switch (loc)
     {
-        case 1:  // x-, y-, z-
-            centreDX = -m_delta/2.0;
-            centreDY = -m_delta/2.0;
-            centreDZ = -m_delta/2.0;
+        case 1: // x-, y-, z-
+            centreDX = -m_delta / 2.0;
+            centreDY = -m_delta / 2.0;
+            centreDZ = -m_delta / 2.0;
             break;
-        case 2:  // x+, y-, z-
-            centreDX =  m_delta/2.0;
-            centreDY = -m_delta/2.0;
-            centreDZ = -m_delta/2.0;
+        case 2: // x+, y-, z-
+            centreDX = m_delta / 2.0;
+            centreDY = -m_delta / 2.0;
+            centreDZ = -m_delta / 2.0;
             break;
-        case 3:  // x+, y+, z-
-            centreDX =  m_delta/2.0;
-            centreDY =  m_delta/2.0;
-            centreDZ = -m_delta/2.0;
+        case 3: // x+, y+, z-
+            centreDX = m_delta / 2.0;
+            centreDY = m_delta / 2.0;
+            centreDZ = -m_delta / 2.0;
             break;
-        case 4:  // x-, y+, z-
-            centreDX = -m_delta/2.0;
-            centreDY =  m_delta/2.0;
-            centreDZ = -m_delta/2.0;
+        case 4: // x-, y+, z-
+            centreDX = -m_delta / 2.0;
+            centreDY = m_delta / 2.0;
+            centreDZ = -m_delta / 2.0;
             break;
-        case 5:  // x-, y-, z+
-            centreDX = -m_delta/2.0;
-            centreDY = -m_delta/2.0;
-            centreDZ =  m_delta/2.0;
+        case 5: // x-, y-, z+
+            centreDX = -m_delta / 2.0;
+            centreDY = -m_delta / 2.0;
+            centreDZ = m_delta / 2.0;
             break;
-        case 6:  // x+, y-, z+
-            centreDX =  m_delta/2.0;
-            centreDY = -m_delta/2.0;
-            centreDZ =  m_delta/2.0;
+        case 6: // x+, y-, z+
+            centreDX = m_delta / 2.0;
+            centreDY = -m_delta / 2.0;
+            centreDZ = m_delta / 2.0;
             break;
-        case 7:  // x+, y+, z+
-            centreDX =  m_delta/2.0;
-            centreDY =  m_delta/2.0;
-            centreDZ =  m_delta/2.0;
+        case 7: // x+, y+, z+
+            centreDX = m_delta / 2.0;
+            centreDY = m_delta / 2.0;
+            centreDZ = m_delta / 2.0;
             break;
-        case 8:  // x-, y+, z+
-            centreDX = -m_delta/2.0;
-            centreDY =  m_delta/2.0;
-            centreDZ =  m_delta/2.0;
+        case 8: // x-, y+, z+
+            centreDX = -m_delta / 2.0;
+            centreDY = m_delta / 2.0;
+            centreDZ = m_delta / 2.0;
             break;
         default:
             throw std::out_of_range("Loc must be in the range (1,8).");
     }
     Array<OneD, NekDouble> pCentre = parent.GetCentre();
-    m_centre = Array<OneD, NekDouble>(3);
-    m_centre[0] = pCentre[0] + centreDX;
-    m_centre[1] = pCentre[1] + centreDY;
-    m_centre[2] = pCentre[2] + centreDZ;
+    m_centre                       = Array<OneD, NekDouble>(3);
+    m_centre[0]                    = pCentre[0] + centreDX;
+    m_centre[1]                    = pCentre[1] + centreDY;
+    m_centre[2]                    = pCentre[2] + centreDZ;
 
     // Set bounds
     m_bounds = Array<OneD, NekDouble>(6);
     for (int i = 0; i < 3; ++i)
     {
-        m_bounds[2*i]   = m_centre[i] - m_delta/2.0;
-        m_bounds[2*i+1] = m_centre[i] + m_delta/2.0;
+        m_bounds[2 * i]     = m_centre[i] - m_delta / 2.0;
+        m_bounds[2 * i + 1] = m_centre[i] + m_delta / 2.0;
     }
 }
 
@@ -488,7 +491,7 @@ Octree::Octant::Octant(int loc, Octant &parent) : m_nPts(0), m_loc(loc),
  *
  * @param leaves
  */
-void Octree::Octant::GetLeaves(std::vector<OctantSharedPtr>& leaves)
+void Octree::Octant::GetLeaves(std::vector<OctantSharedPtr> &leaves)
 {
     if (m_isLeaf)
     {
@@ -523,12 +526,12 @@ void Octree::Octant::SetIndices(const std::vector<int> &indices)
  * @param neighbours
  */
 void Octree::Octant::AddNeighbours(
-        const std::vector<OctantSharedPtr> &neighbours)
+    const std::vector<OctantSharedPtr> &neighbours)
 {
     for (const OctantSharedPtr &neighbour : neighbours)
     {
         bool equal = false;
-        for (const OctantWeakPtr &neigh: m_neighbours)
+        for (const OctantWeakPtr &neigh : m_neighbours)
         {
             if (neigh.lock()->GetID() == neighbour->GetID())
             {
@@ -550,7 +553,7 @@ void Octree::Octant::AddNeighbours(
  * @param pts
  * @param indices
  */
-void Octree::Octant::AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
+void Octree::Octant::AddPoints(const Array<OneD, Array<OneD, NekDouble>> &pts,
                                const std::vector<int> &indices)
 {
     for (int i : indices)
@@ -588,7 +591,7 @@ void Octree::Octant::AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
  * @param nodes
  */
 void Octree::Octant::Subdivide(int maxPts,
-                               const Array<OneD, Array<OneD, NekDouble> > &pts,
+                               const Array<OneD, Array<OneD, NekDouble>> &pts,
                                std::vector<OctantSharedPtr> &nodes)
 {
     // For a non-leaf node
@@ -599,16 +602,16 @@ void Octree::Octant::Subdivide(int maxPts,
         for (int i = 0; i < 8; ++i)
         {
             OctantSharedPtr newChild =
-                std::make_shared<Octant>(i+1, *shared_from_this());
+                std::make_shared<Octant>(i + 1, *shared_from_this());
             newChild->AddPoints(pts, m_pointInd);
-            newChild->SetID(nodes.size());  // ID's start from 0
+            newChild->SetID(nodes.size()); // ID's start from 0
 
             // Add it to the list
             m_children[i] = newChild;
             nodes.push_back(newChild);
 
             // Keep dividing
-            newChild->Subdivide(maxPts, pts, nodes);  // Recursion
+            newChild->Subdivide(maxPts, pts, nodes); // Recursion
         }
 
         // Not a leaf node anymore
@@ -636,29 +639,29 @@ int Octree::Octant::GetLocInNode(const Array<OneD, NekDouble> &coords)
     // MSB <==> LSB
     unsigned char posByte;
 
-    if (coords[0] <= m_centre[0])  // x-
+    if (coords[0] <= m_centre[0]) // x-
     {
-        posByte = 153;   //0b10011001;
+        posByte = 153; // 0b10011001;
     }
-    else                           // x+
+    else // x+
     {
-        posByte = 102;   //0b01100110;
+        posByte = 102; // 0b01100110;
     }
-    if (coords[1] <= m_centre[1])  // y-
+    if (coords[1] <= m_centre[1]) // y-
     {
-        posByte &= 51;   //0b00110011;
+        posByte &= 51; // 0b00110011;
     }
-    else                           // y+
+    else // y+
     {
-        posByte &= 204;  //0b11001100;
+        posByte &= 204; // 0b11001100;
     }
-    if (coords[2] <= m_centre[2])  // z-
+    if (coords[2] <= m_centre[2]) // z-
     {
-        posByte &= 15;   //0b00001111;
+        posByte &= 15; // 0b00001111;
     }
-    else                           // z+
+    else // z+
     {
-        posByte &= 240;  //0b11110000;
+        posByte &= 240; // 0b11110000;
     }
 
     // Transform into a position in the range (1,8)
@@ -671,5 +674,5 @@ int Octree::Octant::GetLocInNode(const Array<OneD, NekDouble> &coords)
 
     return position;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

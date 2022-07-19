@@ -40,10 +40,10 @@ using namespace std;
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/Interp.h>
+#include <StdRegions/StdHexExp.h>
 #include <StdRegions/StdPrismExp.h>
 #include <StdRegions/StdQuadExp.h>
 #include <StdRegions/StdTetExp.h>
-#include <StdRegions/StdHexExp.h>
 #include <StdRegions/StdTriExp.h>
 
 #include "ProcessQualityMetric.h"
@@ -56,13 +56,11 @@ namespace FieldUtils
 ModuleKey ProcessQualityMetric::className =
     GetModuleFactory().RegisterCreatorFunction(
         ModuleKey(eProcessModule, "qualitymetric"),
-        ProcessQualityMetric::create,
-        "add quality metric to field.");
+        ProcessQualityMetric::create, "add quality metric to field.");
 
 ProcessQualityMetric::ProcessQualityMetric(FieldSharedPtr f) : ProcessModule(f)
 {
-    m_config["scaled"] =
-        ConfigOption(true, "0", "use scaled jacobian instead");
+    m_config["scaled"] = ConfigOption(true, "0", "use scaled jacobian instead");
 }
 
 ProcessQualityMetric::~ProcessQualityMetric()
@@ -72,8 +70,8 @@ ProcessQualityMetric::~ProcessQualityMetric()
 void ProcessQualityMetric::Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
-	
-    int nfields           = m_f->m_variables.size();
+
+    int nfields = m_f->m_variables.size();
     m_f->m_variables.push_back("qualitymetric");
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -103,12 +101,11 @@ void ProcessQualityMetric::Process(po::variables_map &vm)
     {
         // copy Jacobian into field
         LocalRegions::ExpansionSharedPtr Elmt = exp->GetExp(i);
-        int offset = exp->GetPhys_Offset(i);
-        Array<OneD, NekDouble> q = GetQ(Elmt,m_config["scaled"].as<bool>());
+        int offset                            = exp->GetPhys_Offset(i);
+        Array<OneD, NekDouble> q   = GetQ(Elmt, m_config["scaled"].as<bool>());
         Array<OneD, NekDouble> out = phys + offset;
 
-        ASSERTL0(q.size() == Elmt->GetTotPoints(),
-                 "number of points mismatch");
+        ASSERTL0(q.size() == Elmt->GetTotPoints(), "number of points mismatch");
         Vmath::Vcopy(q.size(), q, 1, out, 1);
     }
 
@@ -122,7 +119,7 @@ inline vector<DNekMat> MappingIdealToRef(SpatialDomains::GeometrySharedPtr geom,
 
     if (geom->GetShapeType() == LibUtilities::eQuadrilateral)
     {
-        vector<Array<OneD, NekDouble> > xy;
+        vector<Array<OneD, NekDouble>> xy;
         for (int i = 0; i < geom->GetNumVerts(); i++)
         {
             Array<OneD, NekDouble> loc(2);
@@ -160,7 +157,7 @@ inline vector<DNekMat> MappingIdealToRef(SpatialDomains::GeometrySharedPtr geom,
     }
     else if (geom->GetShapeType() == LibUtilities::eTriangle)
     {
-        vector<Array<OneD, NekDouble> > xy;
+        vector<Array<OneD, NekDouble>> xy;
         for (int i = 0; i < geom->GetNumVerts(); i++)
         {
             Array<OneD, NekDouble> loc(2);
@@ -193,7 +190,7 @@ inline vector<DNekMat> MappingIdealToRef(SpatialDomains::GeometrySharedPtr geom,
     }
     else if (geom->GetShapeType() == LibUtilities::eTetrahedron)
     {
-        vector<Array<OneD, NekDouble> > xyz;
+        vector<Array<OneD, NekDouble>> xyz;
         for (int i = 0; i < geom->GetNumVerts(); i++)
         {
             Array<OneD, NekDouble> loc(3);
@@ -240,7 +237,7 @@ inline vector<DNekMat> MappingIdealToRef(SpatialDomains::GeometrySharedPtr geom,
     }
     else if (geom->GetShapeType() == LibUtilities::ePrism)
     {
-        vector<Array<OneD, NekDouble> > xyz;
+        vector<Array<OneD, NekDouble>> xyz;
         for (int i = 0; i < geom->GetNumVerts(); i++)
         {
             Array<OneD, NekDouble> loc(3);
@@ -301,7 +298,7 @@ inline vector<DNekMat> MappingIdealToRef(SpatialDomains::GeometrySharedPtr geom,
     }
     else if (geom->GetShapeType() == LibUtilities::eHexahedron)
     {
-        vector<Array<OneD, NekDouble> > xyz;
+        vector<Array<OneD, NekDouble>> xyz;
         for (int i = 0; i < geom->GetNumVerts(); i++)
         {
             Array<OneD, NekDouble> loc(3);
@@ -393,8 +390,7 @@ inline vector<DNekMat> MappingIdealToRef(SpatialDomains::GeometrySharedPtr geom,
 }
 
 Array<OneD, NekDouble> ProcessQualityMetric::GetQ(
-    LocalRegions::ExpansionSharedPtr e,
-    bool                             s)
+    LocalRegions::ExpansionSharedPtr e, bool s)
 {
     SpatialDomains::GeometrySharedPtr geom    = e->GetGeom();
     StdRegions::StdExpansionSharedPtr chi     = e->GetGeom()->GetXmap();
@@ -481,7 +477,7 @@ Array<OneD, NekDouble> ProcessQualityMetric::GetQ(
             }
         }
 
-        jacIdeal = jac * i2rm[k];
+        jacIdeal         = jac * i2rm[k];
         NekDouble jacDet = 1.0;
 
         if (expDim == 2)
@@ -503,7 +499,7 @@ Array<OneD, NekDouble> ProcessQualityMetric::GetQ(
             NEKERROR(ErrorUtil::efatal, "invalid expansion dimension.");
         }
 
-        if(s)
+        if (s)
         {
             eta[k] = jacDet;
         }
@@ -515,27 +511,27 @@ Array<OneD, NekDouble> ProcessQualityMetric::GetQ(
             {
                 for (int j = 0; j < expDim; ++j)
                 {
-                    frob += jacIdeal(i,j) * jacIdeal(i,j);
+                    frob += jacIdeal(i, j) * jacIdeal(i, j);
                 }
             }
 
-            NekDouble sigma = 0.5*(jacDet + sqrt(jacDet*jacDet));
-            eta[k] = expDim * pow(sigma, 2.0/expDim) / frob;
+            NekDouble sigma = 0.5 * (jacDet + sqrt(jacDet * jacDet));
+            eta[k]          = expDim * pow(sigma, 2.0 / expDim) / frob;
         }
     }
 
-    if(s)
+    if (s)
     {
         NekDouble mx = -1.0 * numeric_limits<double>::max();
         NekDouble mn = numeric_limits<double>::max();
-        for(int k = 0; k < pts; k++)
+        for (int k = 0; k < pts; k++)
         {
-            mx = max(mx,eta[k]);
-            mn = min(mn,eta[k]);
+            mx = max(mx, eta[k]);
+            mn = min(mn, eta[k]);
         }
-        for(int k = 0; k < pts; k++)
+        for (int k = 0; k < pts; k++)
         {
-            eta[k] = mn/mx;
+            eta[k] = mn / mx;
         }
     }
 
@@ -568,5 +564,5 @@ Array<OneD, NekDouble> ProcessQualityMetric::GetQ(
 
     return eta;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

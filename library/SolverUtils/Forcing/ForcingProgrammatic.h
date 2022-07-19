@@ -40,66 +40,61 @@
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
-#include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/SolverUtilsDeclspec.h>
 
 namespace Nektar
 {
 namespace SolverUtils
 {
-    //  Forward declaration
-    class ForcingProgrammatic;
+//  Forward declaration
+class ForcingProgrammatic;
 
-    /// A shared pointer to an EquationSystem object
-    SOLVER_UTILS_EXPORT typedef std::shared_ptr<ForcingProgrammatic> ForcingProgrammaticSharedPtr;
+/// A shared pointer to an EquationSystem object
+SOLVER_UTILS_EXPORT typedef std::shared_ptr<ForcingProgrammatic>
+    ForcingProgrammaticSharedPtr;
 
-    class ForcingProgrammatic : public Forcing
+class ForcingProgrammatic : public Forcing
+{
+public:
+    friend class MemoryManager<ForcingProgrammatic>;
+
+    /// Creates an instance of this class
+    SOLVER_UTILS_EXPORT static ForcingSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
     {
-        public:
+        ForcingSharedPtr p =
+            MemoryManager<ForcingProgrammatic>::AllocateSharedPtr(pSession,
+                                                                  pEquation);
+        p->InitObject(pFields, pNumForcingFields, pForce);
+        return p;
+    }
 
-            friend class MemoryManager<ForcingProgrammatic>;
+    /// Name of the class
+    static std::string className;
 
-            /// Creates an instance of this class
-            SOLVER_UTILS_EXPORT static ForcingSharedPtr create(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const std::weak_ptr<EquationSystem>      &pEquation,
-                    const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                    const unsigned int& pNumForcingFields,
-                    const TiXmlElement* pForce)
-            {
-                ForcingSharedPtr p = MemoryManager<ForcingProgrammatic>::
-                                        AllocateSharedPtr(pSession, pEquation);
-                p->InitObject(pFields, pNumForcingFields, pForce);
-                return p;
-            }
+    SOLVER_UTILS_EXPORT Array<OneD, Array<OneD, NekDouble>> &UpdateForces();
 
-            ///Name of the class
-            static std::string className;
+protected:
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
 
-            SOLVER_UTILS_EXPORT Array<OneD, Array<OneD, NekDouble> >&
-                        UpdateForces();
+    SOLVER_UTILS_EXPORT virtual void v_Apply(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
 
-        protected:
-            SOLVER_UTILS_EXPORT virtual void v_InitObject(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                    const unsigned int& pNumForcingFields,
-                    const TiXmlElement* pForce);
+private:
+    ForcingProgrammatic(const LibUtilities::SessionReaderSharedPtr &pSession,
+                        const std::weak_ptr<EquationSystem> &pEquation);
+    virtual ~ForcingProgrammatic(void){};
+};
 
-            SOLVER_UTILS_EXPORT virtual void v_Apply(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                    const Array<OneD, Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    const NekDouble &time);
-
-        private:
-            ForcingProgrammatic(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const std::weak_ptr<EquationSystem>      &pEquation);
-            virtual ~ForcingProgrammatic(void){};
-
-    };
-
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

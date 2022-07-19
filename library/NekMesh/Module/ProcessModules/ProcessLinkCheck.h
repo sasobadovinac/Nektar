@@ -69,7 +69,7 @@ public:
         return "ProcessLinkCheck";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

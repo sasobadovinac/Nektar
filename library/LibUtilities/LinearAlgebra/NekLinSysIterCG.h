@@ -59,7 +59,7 @@ public:
     {
         NekLinSysIterCGSharedPtr p =
             MemoryManager<NekLinSysIterCG>::AllocateSharedPtr(pSession, vComm,
-                nDimen, pKey);
+                                                              nDimen, pKey);
         p->InitObject();
         return p;
     }

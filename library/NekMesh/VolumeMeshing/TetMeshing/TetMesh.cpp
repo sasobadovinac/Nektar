@@ -52,30 +52,30 @@ void TetMesh::Mesh()
     // build sequentially ordered maps of nodes that exist and there delta value
     // in the octree
     map<int, NekDouble> IdToDelta;
-    vector<Array<OneD, int> > surfacetris;
+    vector<Array<OneD, int>> surfacetris;
     NodeSet alreadyInSurface;
 
-    if(m_surface.size() == 0)
+    if (m_surface.size() == 0)
     {
         m_surface = m_mesh->m_element[2];
     }
 
     int cnt = 0;
-    for(int i = 0; i < m_surface.size(); i++)
+    for (int i = 0; i < m_surface.size(); i++)
     {
         vector<NodeSharedPtr> n = m_surface[i]->GetVertexList();
         Array<OneD, int> tri(3);
-        for(int j = 0; j < n.size(); j++)
+        for (int j = 0; j < n.size(); j++)
         {
-            pair<NodeSet::iterator,bool> testIns =
+            pair<NodeSet::iterator, bool> testIns =
                 alreadyInSurface.insert(n[j]);
 
             if (testIns.second)
             {
-                tri[j] = cnt;
-                IdToNode[cnt] = n[j];
+                tri[j]            = cnt;
+                IdToNode[cnt]     = n[j];
                 IdToNodeRev[n[j]] = cnt;
-                IdToDelta[cnt] = m_mesh->m_octree->Query(n[j]->GetLoc());
+                IdToDelta[cnt]    = m_mesh->m_octree->Query(n[j]->GetLoc());
                 cnt++;
             }
             else
@@ -90,7 +90,7 @@ void TetMesh::Mesh()
 
     tetgen->InitialMesh(IdToNode, surfacetris);
 
-    vector<Array<OneD, NekDouble> > newp;
+    vector<Array<OneD, NekDouble>> newp;
     int ctbefore = IdToNode.size();
     int newpb;
     do
@@ -100,7 +100,7 @@ void TetMesh::Mesh()
         tetgen->GetNewPoints(ctbefore, newp);
         for (int i = 0; i < newp.size(); i++)
         {
-            NekDouble d = m_mesh->m_octree->Query(newp[i]);
+            NekDouble d             = m_mesh->m_octree->Query(newp[i]);
             IdToDelta[ctbefore + i] = d;
         }
         tetgen->RefineMesh(IdToDelta);
@@ -138,5 +138,5 @@ void TetMesh::Mesh()
     m_log(VERBOSE) << "  Volume meshing complete: " << m_tetconnect.size()
                    << " tetrahedra generated." << endl;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

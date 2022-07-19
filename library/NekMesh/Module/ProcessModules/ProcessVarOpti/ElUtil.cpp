@@ -35,8 +35,8 @@
 #include "ElUtil.h"
 #include "ProcessVarOpti.h"
 
-#include <mutex>
 #include <LibUtilities/Foundations/ManagerAccess.h>
+#include <mutex>
 
 using namespace std;
 
@@ -93,7 +93,7 @@ void ElUtil::MappingIdealToRef()
         LibUtilities::PointsManager()[pkey1]->GetPoints(u1, v1);
         LibUtilities::PointsManager()[pkey2]->GetPoints(u2, v2);
 
-        vector<vector<NekDouble> > xyz(4);
+        vector<vector<NekDouble>> xyz(4);
         vector<NodeSharedPtr> ns = m_el->GetVertexList();
         for (int i = 0; i < 4; i++)
         {
@@ -264,7 +264,7 @@ void ElUtil::MappingIdealToRef()
         LibUtilities::PointsManager()[pkey1]->GetPoints(u1, v1, w1);
         LibUtilities::PointsManager()[pkey2]->GetPoints(u2, v2, w2);
 
-        vector<vector<NekDouble> > xyz(6);
+        vector<vector<NekDouble>> xyz(6);
         vector<NodeSharedPtr> ns = m_el->GetVertexList();
         for (int i = 0; i < 6; i++)
         {
@@ -394,7 +394,7 @@ void ElUtil::MappingIdealToRef()
         LibUtilities::PointsManager()[pkey1]->GetPoints(u1, v1, w1);
         LibUtilities::PointsManager()[pkey2]->GetPoints(u2, v2, w2);
 
-        vector<vector<NekDouble> > xyz(8);
+        vector<vector<NekDouble>> xyz(8);
         vector<NodeSharedPtr> ns = m_el->GetVertexList();
         for (int i = 0; i < 8; i++)
         {
@@ -579,18 +579,18 @@ void ElUtil::Evaluate()
         std::vector<NekDouble> x1i(nNodes), y1i(nNodes);
         std::vector<NekDouble> x2i(nNodes), y2i(nNodes);
 
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[0].GetRawPtr(),
-            nNodes, &X[0], 1, 0.0, &x1i[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[0].GetRawPtr(),
-            nNodes, &Y[0], 1, 0.0, &y1i[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[1].GetRawPtr(),
-            nNodes, &X[0], 1, 0.0, &x2i[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[1].GetRawPtr(),
-            nNodes, &Y[0], 1, 0.0, &y2i[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[0].GetRawPtr(), nNodes, &X[0], 1, 0.0,
+                    &x1i[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[0].GetRawPtr(), nNodes, &Y[0], 1, 0.0,
+                    &y1i[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[1].GetRawPtr(), nNodes, &X[0], 1, 0.0,
+                    &x2i[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[1].GetRawPtr(), nNodes, &Y[0], 1, 0.0,
+                    &y2i[0], 1.0);
 
         for (int j = 0; j < nNodes; j++)
         {
@@ -612,33 +612,33 @@ void ElUtil::Evaluate()
         std::vector<NekDouble> x2i2(nNodes), y2i2(nNodes), z2i2(nNodes);
         std::vector<NekDouble> x3i2(nNodes), y3i2(nNodes), z3i2(nNodes);
 
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[0].GetRawPtr(),
-            nNodes, &X[0], 1, 0.0, &x1i2[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[0].GetRawPtr(),
-            nNodes, &Y[0], 1, 0.0, &y1i2[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[0].GetRawPtr(),
-            nNodes, &Z[0], 1, 0.0, &z1i2[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[1].GetRawPtr(),
-            nNodes, &X[0], 1, 0.0, &x2i2[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[1].GetRawPtr(),
-            nNodes, &Y[0], 1, 0.0, &y2i2[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[1].GetRawPtr(),
-            nNodes, &Z[0], 1, 0.0, &z2i2[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[2].GetRawPtr(),
-            nNodes, &X[0], 1, 0.0, &x3i2[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[2].GetRawPtr(),
-            nNodes, &Y[0], 1, 0.0, &y3i2[0], 1.0);
-        Blas::Dgemv(
-            'N', nNodes, nNodes, 1.0, m_derivUtil->VdmDStd[2].GetRawPtr(),
-            nNodes, &Z[0], 1, 0.0, &z3i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[0].GetRawPtr(), nNodes, &X[0], 1, 0.0,
+                    &x1i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[0].GetRawPtr(), nNodes, &Y[0], 1, 0.0,
+                    &y1i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[0].GetRawPtr(), nNodes, &Z[0], 1, 0.0,
+                    &z1i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[1].GetRawPtr(), nNodes, &X[0], 1, 0.0,
+                    &x2i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[1].GetRawPtr(), nNodes, &Y[0], 1, 0.0,
+                    &y2i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[1].GetRawPtr(), nNodes, &Z[0], 1, 0.0,
+                    &z2i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[2].GetRawPtr(), nNodes, &X[0], 1, 0.0,
+                    &x3i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[2].GetRawPtr(), nNodes, &Y[0], 1, 0.0,
+                    &y3i2[0], 1.0);
+        Blas::Dgemv('N', nNodes, nNodes, 1.0,
+                    m_derivUtil->VdmDStd[2].GetRawPtr(), nNodes, &Z[0], 1, 0.0,
+                    &z3i2[0], 1.0);
 
         for (int j = 0; j < nNodes; j++)
         {
@@ -755,7 +755,7 @@ void ElUtil::UpdateMapping()
     {
         if (!m_interpField)
         {
-            Array<OneD, Array<OneD, NekDouble> > centre(m_dim + 1);
+            Array<OneD, Array<OneD, NekDouble>> centre(m_dim + 1);
             for (int i = 0; i < m_dim + 1; ++i)
             {
                 centre[i] = Array<OneD, NekDouble>(1, 0.0);
@@ -767,8 +767,9 @@ void ElUtil::UpdateMapping()
             map<LibUtilities::PtsInfo, int> ptsInfo =
                 LibUtilities::NullPtsInfoMap;
 
-            m_interpField = MemoryManager<LibUtilities::PtsField>
-                ::AllocateSharedPtr(m_dim, fieldNames, centre, ptsInfo);
+            m_interpField =
+                MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
+                    m_dim, fieldNames, centre, ptsInfo);
         }
 
         vector<NodeSharedPtr> nodes = m_el->GetVertexList();
@@ -831,5 +832,5 @@ ElUtilJob *ElUtil::GetJob(bool update)
 {
     return new ElUtilJob(this, update);
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

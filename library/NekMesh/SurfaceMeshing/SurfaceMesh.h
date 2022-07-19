@@ -36,8 +36,8 @@
 #define NEKMESH_SURFACEMESHING_SURFACEMESH
 
 #include <NekMesh/Module/Module.h>
-#include <NekMesh/SurfaceMeshing/FaceMesh.h>
 #include <NekMesh/SurfaceMeshing/CurveMesh.h>
+#include <NekMesh/SurfaceMeshing/FaceMesh.h>
 
 namespace Nektar
 {
@@ -50,7 +50,6 @@ namespace NekMesh
 class SurfaceMesh : public ProcessModule
 {
 public:
-
     /// Creates an instance of this class
     static std::shared_ptr<Module> create(MeshSharedPtr m)
     {
@@ -76,7 +75,7 @@ private:
     std::map<int, CurveMeshSharedPtr> m_curvemeshes;
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

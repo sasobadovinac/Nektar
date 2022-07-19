@@ -48,12 +48,13 @@ public:
 
     /// Creates an instance of this class
     static SolverUtils::FilterSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-        const ParamMap                             &pParams)
+        const ParamMap &pParams)
     {
-        SolverUtils::FilterSharedPtr p = MemoryManager<FilterElectrogram>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        SolverUtils::FilterSharedPtr p =
+            MemoryManager<FilterElectrogram>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
@@ -62,9 +63,9 @@ public:
 
     /// Electrogram filter constructor
     FilterElectrogram(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-        const ParamMap                             &pParams);
+        const ParamMap &pParams);
 
     /// Electrogram filter destructor
     virtual ~FilterElectrogram();
@@ -87,24 +88,24 @@ protected:
 
 private:
     /// Gradient of the radius from each electrogram point in x-direction
-    Array<OneD, Array<OneD, NekDouble> >    m_grad_R_x;
+    Array<OneD, Array<OneD, NekDouble>> m_grad_R_x;
     /// Gradient of the radius from each electrogram point in y-direction
-    Array<OneD, Array<OneD, NekDouble> >    m_grad_R_y;
+    Array<OneD, Array<OneD, NekDouble>> m_grad_R_y;
     /// Gradient of the radius from each electrogram point in z-direction
-    Array<OneD, Array<OneD, NekDouble> >    m_grad_R_z;
+    Array<OneD, Array<OneD, NekDouble>> m_grad_R_z;
     /// List of electrogram points
-    SpatialDomains::PointGeomVector         m_electrogramPoints;
+    SpatialDomains::PointGeomVector m_electrogramPoints;
     /// Counts number of calls to update (number of timesteps)
-    unsigned int                            m_index;
+    unsigned int m_index;
     /// Number of timesteps between outputs
-    unsigned int                            m_outputFrequency;
+    unsigned int m_outputFrequency;
     /// Filename to output electrogram data to
-    std::string                             m_outputFile;
+    std::string m_outputFile;
     /// Output file stream for electrogram data
-    std::ofstream                           m_outputStream;
+    std::ofstream m_outputStream;
     /// Point coordinate input string
-    std::stringstream                       m_electrogramStream;
+    std::stringstream m_electrogramStream;
 };
-}
+} // namespace Nektar
 
 #endif

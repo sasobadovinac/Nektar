@@ -33,11 +33,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <ShallowWaterSolver/EquationSystems/NonlinearPeregrine.h>
@@ -48,17 +48,17 @@ namespace Nektar
 {
 
 string NonlinearPeregrine::className =
-        SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-                "NonlinearPeregrine", NonlinearPeregrine::create,
-                "Nonlinear Peregrine equations in conservative variables.");
+    SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
+        "NonlinearPeregrine", NonlinearPeregrine::create,
+        "Nonlinear Peregrine equations in conservative variables.");
 
 NonlinearPeregrine::NonlinearPeregrine(
-    const LibUtilities::SessionReaderSharedPtr& pSession,
-    const SpatialDomains::MeshGraphSharedPtr& pGraph)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : ShallowWaterSystem(pSession, pGraph), m_factors()
 {
     m_factors[StdRegions::eFactorLambda] = 0.0;
-    m_factors[StdRegions::eFactorTau] = 1000000.0;
+    m_factors[StdRegions::eFactorTau]    = 1000000.0;
     // note: eFactorTau = 1.0 becomes unstable...
     // we need to investigate the behaviuor w.r.t. tau
 }
@@ -71,18 +71,18 @@ void NonlinearPeregrine::v_InitObject(bool DeclareFields)
     {
         int i;
         std::string ProblemTypeStr = m_session->GetSolverInfo("PROBLEMTYPE");
-        for (i = 0; i < (int) SIZE_ProblemType; ++i)
+        for (i = 0; i < (int)SIZE_ProblemType; ++i)
         {
             if (boost::iequals(ProblemTypeMap[i], ProblemTypeStr))
             {
-                m_problemType = (ProblemType) i;
+                m_problemType = (ProblemType)i;
                 break;
             }
         }
     }
     else
     {
-        m_problemType = (ProblemType) 0;
+        m_problemType = (ProblemType)0;
     }
 
     if (m_explicitAdvection)
@@ -113,7 +113,7 @@ void NonlinearPeregrine::v_InitObject(bool DeclareFields)
         case MultiRegions::eGalerkin:
         {
             ASSERTL0(false,
-                    "Continuous projection type not supported for Peregrine.");
+                     "Continuous projection type not supported for Peregrine.");
             break;
         }
         // Discontinuous field
@@ -130,27 +130,27 @@ void NonlinearPeregrine::v_InitObject(bool DeclareFields)
             m_session->LoadSolverInfo("AdvectionType", advName, "WeakDG");
             // m_session->LoadSolverInfo("DiffusionType", diffName, "LDG");
             m_advection = SolverUtils::GetAdvectionFactory().CreateInstance(
-                    advName, advName);
+                advName, advName);
 
             m_advection->SetFluxVector(&NonlinearPeregrine::GetFluxVector,
-                    this);
+                                       this);
 
             // Setting up Riemann solver for advection operator
             m_session->LoadSolverInfo("UpwindType", riemName, "NoSolver");
 
             m_riemannSolver =
-                    SolverUtils::GetRiemannSolverFactory().CreateInstance(
-                            riemName, m_session);
+                SolverUtils::GetRiemannSolverFactory().CreateInstance(
+                    riemName, m_session);
 
             // Setting up parameters for advection operator Riemann solver
             m_riemannSolver->SetParam("gravity",
-                    &NonlinearPeregrine::GetGravity, this);
+                                      &NonlinearPeregrine::GetGravity, this);
             m_riemannSolver->SetAuxVec("vecLocs",
-                    &NonlinearPeregrine::GetVecLocs, this);
+                                       &NonlinearPeregrine::GetVecLocs, this);
             m_riemannSolver->SetVector("N", &NonlinearPeregrine::GetNormals,
-                    this);
+                                       this);
             m_riemannSolver->SetScalar("depth", &NonlinearPeregrine::GetDepth,
-                    this);
+                                       this);
 
             // Concluding initialisation of advection / diffusion operators
             m_advection->SetRiemannSolver(m_riemannSolver);
@@ -163,22 +163,20 @@ void NonlinearPeregrine::v_InitObject(bool DeclareFields)
             break;
         }
     }
-
 }
 
 NonlinearPeregrine::~NonlinearPeregrine()
 {
-
 }
 
 // physarray contains the conservative variables
 void NonlinearPeregrine::AddCoriolis(
-        const Array<OneD, const Array<OneD, NekDouble> > &physarray,
-        Array<OneD, Array<OneD, NekDouble> > &outarray)
+    const Array<OneD, const Array<OneD, NekDouble>> &physarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
 
     int ncoeffs = GetNcoeffs();
-    int nq = GetTotPoints();
+    int nq      = GetTotPoints();
 
     Array<OneD, NekDouble> tmp(nq);
     Array<OneD, NekDouble> mod(ncoeffs);
@@ -220,17 +218,16 @@ void NonlinearPeregrine::AddCoriolis(
             ASSERTL0(false, "Unknown projection scheme for the NonlinearSWE");
             break;
     }
-
 }
 
 // physarray contains the conservative variables
 void NonlinearPeregrine::AddVariableDepth(
-        const Array<OneD, const Array<OneD, NekDouble> > &physarray,
-        Array<OneD, Array<OneD, NekDouble> > &outarray)
+    const Array<OneD, const Array<OneD, NekDouble>> &physarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
 
     int ncoeffs = GetNcoeffs();
-    int nq = GetTotPoints();
+    int nq      = GetTotPoints();
 
     Array<OneD, NekDouble> tmp(nq);
     Array<OneD, NekDouble> mod(ncoeffs);
@@ -265,17 +262,16 @@ void NonlinearPeregrine::AddVariableDepth(
             ASSERTL0(false, "Unknown projection scheme for the NonlinearSWE");
             break;
     }
-
 }
 
 void NonlinearPeregrine::DoOdeRhs(
-        const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-        Array<OneD, Array<OneD, NekDouble> >&outarray, const NekDouble time)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     int i;
     int nvariables = inarray.size();
-    int ncoeffs = GetNcoeffs();
-    int nq = GetTotPoints();
+    int ncoeffs    = GetNcoeffs();
+    int nq         = GetTotPoints();
 
     switch (m_projectionType)
     {
@@ -283,9 +279,9 @@ void NonlinearPeregrine::DoOdeRhs(
         {
 
             //-------------------------------------------------------
-            //inarray in physical space
+            // inarray in physical space
 
-            Array<OneD, Array<OneD, NekDouble> > modarray(nvariables);
+            Array<OneD, Array<OneD, NekDouble>> modarray(nvariables);
             for (i = 0; i < nvariables; ++i)
             {
                 modarray[i] = Array<OneD, NekDouble>(ncoeffs, 0.0);
@@ -296,10 +292,10 @@ void NonlinearPeregrine::DoOdeRhs(
             // Compute the DG advection including the numerical flux
             // by using SolverUtils/Advection
             // Input and output in physical space
-            Array<OneD, Array<OneD, NekDouble> > advVel;
+            Array<OneD, Array<OneD, NekDouble>> advVel;
 
             m_advection->Advect(nvariables - 1, m_fields, advVel, inarray,
-                    outarray, time);
+                                outarray, time);
             //-------------------------------------------------------
 
             //-------------------------------------------------------
@@ -324,8 +320,8 @@ void NonlinearPeregrine::DoOdeRhs(
             if (m_constantDepth != true)
             {
                 ASSERTL0(false,
-                        "Variable depth not supported for the Peregrine "
-                        "equations");
+                         "Variable depth not supported for the Peregrine "
+                         "equations");
             }
 
             //-------------------------------------------------
@@ -359,13 +355,13 @@ void NonlinearPeregrine::DoOdeRhs(
             // create tmp fields to be used during
             // the dispersive section
 
-            Array<OneD, Array<OneD, NekDouble> > coeffsfield(2);
-            Array<OneD, Array<OneD, NekDouble> > physfield(2);
+            Array<OneD, Array<OneD, NekDouble>> coeffsfield(2);
+            Array<OneD, Array<OneD, NekDouble>> physfield(2);
 
             for (i = 0; i < 2; ++i)
             {
                 coeffsfield[i] = Array<OneD, NekDouble>(ncoeffs);
-                physfield[i] = Array<OneD, NekDouble>(nq);
+                physfield[i]   = Array<OneD, NekDouble>(nq);
             }
             //---------------------------------------------
 
@@ -384,12 +380,12 @@ void NonlinearPeregrine::DoOdeRhs(
             // \nabla \cdot (\nabla z) - invgamma z
             //    = - invgamma (\nabla \cdot {\bf f}_(2,3)
 
-            NekDouble gamma = (m_const_depth * m_const_depth) * (1.0 / 3.0);
+            NekDouble gamma    = (m_const_depth * m_const_depth) * (1.0 / 3.0);
             NekDouble invgamma = 1.0 / gamma;
 
             int nTraceNumPoints = GetTraceTotPoints();
-            Array<OneD, Array<OneD, NekDouble> > upwindX(1);
-            Array<OneD, Array<OneD, NekDouble> > upwindY(1);
+            Array<OneD, Array<OneD, NekDouble>> upwindX(1);
+            Array<OneD, Array<OneD, NekDouble>> upwindY(1);
             upwindX[0] = Array<OneD, NekDouble>(nTraceNumPoints);
             upwindY[0] = Array<OneD, NekDouble>(nTraceNumPoints);
             //--------------------------------------------
@@ -405,7 +401,7 @@ void NonlinearPeregrine::DoOdeRhs(
             m_fields[0]->IProductWRTDerivBase(0, physfield[0], coeffsfield[0]);
             m_fields[0]->IProductWRTDerivBase(1, physfield[1], coeffsfield[1]);
             Vmath::Vadd(ncoeffs, coeffsfield[0], 1, coeffsfield[1], 1,
-                                 coeffsfield[0], 1);
+                        coeffsfield[0], 1);
             Vmath::Neg(ncoeffs, coeffsfield[0], 1);
 
             // Evaluate  upwind numerical flux (physical space)
@@ -492,9 +488,8 @@ void NonlinearPeregrine::DoOdeRhs(
 }
 
 void NonlinearPeregrine::DoOdeProjection(
-        const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-        Array<OneD, Array<OneD, NekDouble> >&outarray,
-        const NekDouble time)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     int i;
     int nvariables = inarray.size();
@@ -520,7 +515,7 @@ void NonlinearPeregrine::DoOdeProjection(
         {
 
             EquationSystem::SetBoundaryConditions(time);
-            Array<OneD, NekDouble> coeffs(m_fields[0]->GetNcoeffs(),0.0);
+            Array<OneD, NekDouble> coeffs(m_fields[0]->GetNcoeffs(), 0.0);
 
             for (i = 0; i < nvariables; ++i)
             {
@@ -537,17 +532,16 @@ void NonlinearPeregrine::DoOdeProjection(
 
 //----------------------------------------------------
 void NonlinearPeregrine::SetBoundaryConditions(
-        Array<OneD, Array<OneD, NekDouble> > &inarray,
-        NekDouble time)
+    Array<OneD, Array<OneD, NekDouble>> &inarray, NekDouble time)
 {
 
     int nvariables = m_fields.size();
-    int cnt = 0;
+    int cnt        = 0;
     int nTracePts  = GetTraceTotPoints();
 
     // Extract trace for boundaries. Needs to be done on all processors to avoid
     // deadlock.
-    Array<OneD, Array<OneD, NekDouble> > Fwd(nvariables);
+    Array<OneD, Array<OneD, NekDouble>> Fwd(nvariables);
     for (int i = 0; i < nvariables; ++i)
     {
         Fwd[i] = Array<OneD, NekDouble>(nTracePts);
@@ -559,7 +553,8 @@ void NonlinearPeregrine::SetBoundaryConditions(
     {
 
         // Wall Boundary Condition
-        if (boost::iequals(m_fields[0]->GetBndConditions()[n]->GetUserDefined(),"Wall"))
+        if (boost::iequals(m_fields[0]->GetBndConditions()[n]->GetUserDefined(),
+                           "Wall"))
         {
             WallBoundary2D(n, cnt, Fwd, inarray);
         }
@@ -580,9 +575,9 @@ void NonlinearPeregrine::SetBoundaryConditions(
 /**
  * @brief Wall boundary condition.
  */
-void NonlinearPeregrine::WallBoundary(int bcRegion, int cnt,
-        Array<OneD, Array<OneD, NekDouble> > &Fwd,
-        Array<OneD, Array<OneD, NekDouble> > &physarray)
+void NonlinearPeregrine::WallBoundary(
+    int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
+    Array<OneD, Array<OneD, NekDouble>> &physarray)
 {
     int i;
     int nvariables = physarray.size();
@@ -591,13 +586,13 @@ void NonlinearPeregrine::WallBoundary(int bcRegion, int cnt,
     // user defined boundaries into account
     int e, id1, id2, npts;
     MultiRegions::ExpListSharedPtr bcexp =
-                                m_fields[0]->GetBndCondExpansions()[bcRegion];
+        m_fields[0]->GetBndCondExpansions()[bcRegion];
     for (e = 0; e < bcexp->GetExpSize(); ++e)
     {
         npts = bcexp->GetExp(e)->GetTotPoints();
         id1  = bcexp->GetPhys_Offset(e);
         id2  = m_fields[0]->GetTrace()->GetPhys_Offset(
-               m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
+            m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
 
         // For 2D/3D, define: v* = v - 2(v.n)n
         Array<OneD, NekDouble> tmp(npts, 0.0);
@@ -606,7 +601,7 @@ void NonlinearPeregrine::WallBoundary(int bcRegion, int cnt,
         for (i = 0; i < m_spacedim; ++i)
         {
             Vmath::Vvtvp(npts, &Fwd[1 + i][id2], 1, &m_traceNormals[i][id2], 1,
-                               &tmp[0],          1, &tmp[0],                 1);
+                         &tmp[0], 1, &tmp[0], 1);
         }
 
         // Calculate 2.0(v.n)
@@ -615,8 +610,8 @@ void NonlinearPeregrine::WallBoundary(int bcRegion, int cnt,
         // Calculate v* = v - 2.0(v.n)n
         for (i = 0; i < m_spacedim; ++i)
         {
-            Vmath::Vvtvp(npts, &tmp[0],          1, &m_traceNormals[i][id2], 1,
-                               &Fwd[1 + i][id2], 1, &Fwd[1 + i][id2],        1);
+            Vmath::Vvtvp(npts, &tmp[0], 1, &m_traceNormals[i][id2], 1,
+                         &Fwd[1 + i][id2], 1, &Fwd[1 + i][id2], 1);
         }
 
         // copy boundary adjusted values into the boundary expansion
@@ -629,10 +624,8 @@ void NonlinearPeregrine::WallBoundary(int bcRegion, int cnt,
 }
 
 void NonlinearPeregrine::WallBoundary2D(
-        int bcRegion,
-        int cnt,
-        Array<OneD, Array<OneD, NekDouble> > &Fwd,
-        Array<OneD, Array<OneD, NekDouble> > &physarray)
+    int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
+    Array<OneD, Array<OneD, NekDouble>> &physarray)
 {
     boost::ignore_unused(physarray);
 
@@ -643,15 +636,14 @@ void NonlinearPeregrine::WallBoundary2D(
     // user defined boundaries into account
     int e, id1, id2, npts;
     MultiRegions::ExpListSharedPtr bcexp =
-                                m_fields[0]->GetBndCondExpansions()[bcRegion];
+        m_fields[0]->GetBndCondExpansions()[bcRegion];
 
-    for (e = 0; e < bcexp->GetExpSize();
-            ++e)
+    for (e = 0; e < bcexp->GetExpSize(); ++e)
     {
         npts = bcexp->GetExp(e)->GetNumPoints(0);
         id1  = bcexp->GetPhys_Offset(e);
         id2  = m_fields[0]->GetTrace()->GetPhys_Offset(
-               m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
+            m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
 
         switch (m_expdim)
         {
@@ -666,34 +658,34 @@ void NonlinearPeregrine::WallBoundary2D(
                 Array<OneD, NekDouble> tmp_n(npts);
                 Array<OneD, NekDouble> tmp_t(npts);
 
-                Vmath::Vmul (npts, &Fwd[1][id2], 1, &m_traceNormals[0][id2], 1,
-                                   &tmp_n[0],    1);
+                Vmath::Vmul(npts, &Fwd[1][id2], 1, &m_traceNormals[0][id2], 1,
+                            &tmp_n[0], 1);
                 Vmath::Vvtvp(npts, &Fwd[2][id2], 1, &m_traceNormals[1][id2], 1,
-                                   &tmp_n[0],    1, &tmp_n[0],               1);
+                             &tmp_n[0], 1, &tmp_n[0], 1);
 
-                Vmath::Vmul (npts, &Fwd[1][id2], 1, &m_traceNormals[1][id2], 1,
-                                   &tmp_t[0],    1);
+                Vmath::Vmul(npts, &Fwd[1][id2], 1, &m_traceNormals[1][id2], 1,
+                            &tmp_t[0], 1);
                 Vmath::Vvtvm(npts, &Fwd[2][id2], 1, &m_traceNormals[0][id2], 1,
-                                   &tmp_t[0],    1, &tmp_t[0],               1);
+                             &tmp_t[0], 1, &tmp_t[0], 1);
 
                 // negate the normal flux
                 Vmath::Neg(npts, tmp_n, 1);
 
                 // rotate back to Cartesian
-                Vmath::Vmul (npts, &tmp_t[0],    1, &m_traceNormals[1][id2], 1,
-                                   &Fwd[1][id2], 1);
-                Vmath::Vvtvm(npts, &tmp_n[0],    1, &m_traceNormals[0][id2], 1,
-                                   &Fwd[1][id2], 1, &Fwd[1][id2],            1);
+                Vmath::Vmul(npts, &tmp_t[0], 1, &m_traceNormals[1][id2], 1,
+                            &Fwd[1][id2], 1);
+                Vmath::Vvtvm(npts, &tmp_n[0], 1, &m_traceNormals[0][id2], 1,
+                             &Fwd[1][id2], 1, &Fwd[1][id2], 1);
 
-                Vmath::Vmul(npts,  &tmp_t[0],    1, &m_traceNormals[0][id2], 1,
-                                   &Fwd[2][id2], 1);
-                Vmath::Vvtvp(npts, &tmp_n[0],    1, &m_traceNormals[1][id2], 1,
-                                   &Fwd[2][id2], 1, &Fwd[2][id2],            1);
+                Vmath::Vmul(npts, &tmp_t[0], 1, &m_traceNormals[0][id2], 1,
+                            &Fwd[2][id2], 1);
+                Vmath::Vvtvp(npts, &tmp_n[0], 1, &m_traceNormals[1][id2], 1,
+                             &Fwd[2][id2], 1, &Fwd[2][id2], 1);
                 break;
             }
             case 3:
                 ASSERTL0(false,
-                        "3D not implemented for Shallow Water Equations");
+                         "3D not implemented for Shallow Water Equations");
                 break;
             default:
                 ASSERTL0(false, "Illegal expansion dimension");
@@ -710,14 +702,14 @@ void NonlinearPeregrine::WallBoundary2D(
 
 // Physfield in conservative Form
 void NonlinearPeregrine::GetFluxVector(
-        const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-        Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux)
+    const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux)
 {
     int i, j;
     int nq = m_fields[0]->GetTotPoints();
 
     NekDouble g = m_g;
-    Array<OneD, Array<OneD, NekDouble> > velocity(m_spacedim);
+    Array<OneD, Array<OneD, NekDouble>> velocity(m_spacedim);
 
     // Flux vector for the mass equation
     for (i = 0; i < m_spacedim; ++i)
@@ -738,26 +730,25 @@ void NonlinearPeregrine::GetFluxVector(
     {
         for (j = 0; j < m_spacedim; ++j)
         {
-            Vmath::Vmul(nq, velocity[j],    1, physfield[i + 1], 1,
-                            flux[i + 1][j], 1);
+            Vmath::Vmul(nq, velocity[j], 1, physfield[i + 1], 1, flux[i + 1][j],
+                        1);
         }
 
         // Add (0.5 g h h) to appropriate field
         Vmath::Vadd(nq, flux[i + 1][i], 1, tmp, 1, flux[i + 1][i], 1);
     }
-
 }
 
 void NonlinearPeregrine::ConservativeToPrimitive(
-        const Array<OneD, const Array<OneD, NekDouble> >&physin,
-        Array<OneD, Array<OneD, NekDouble> >&physout)
+    const Array<OneD, const Array<OneD, NekDouble>> &physin,
+    Array<OneD, Array<OneD, NekDouble>> &physout)
 {
     int nq = GetTotPoints();
 
     if (physin.get() == physout.get())
     {
         // copy indata and work with tmp array
-        Array<OneD, Array<OneD, NekDouble> > tmp(3);
+        Array<OneD, Array<OneD, NekDouble>> tmp(3);
         for (int i = 0; i < 3; ++i)
         {
             // deep copy
@@ -792,21 +783,21 @@ void NonlinearPeregrine::v_ConservativeToPrimitive()
     int nq = GetTotPoints();
 
     // u = hu/h
-    Vmath::Vdiv(nq, m_fields[1]->GetPhys(),    1, m_fields[0]->GetPhys(), 1,
-                    m_fields[1]->UpdatePhys(), 1);
+    Vmath::Vdiv(nq, m_fields[1]->GetPhys(), 1, m_fields[0]->GetPhys(), 1,
+                m_fields[1]->UpdatePhys(), 1);
 
     // v = hv/ v
-    Vmath::Vdiv(nq, m_fields[2]->GetPhys(),    1, m_fields[0]->GetPhys(), 1,
-                    m_fields[2]->UpdatePhys(), 1);
+    Vmath::Vdiv(nq, m_fields[2]->GetPhys(), 1, m_fields[0]->GetPhys(), 1,
+                m_fields[2]->UpdatePhys(), 1);
 
     // \eta = h - d
-    Vmath::Vsub(nq, m_fields[0]->GetPhys(),    1, m_depth, 1,
-                    m_fields[0]->UpdatePhys(), 1);
+    Vmath::Vsub(nq, m_fields[0]->GetPhys(), 1, m_depth, 1,
+                m_fields[0]->UpdatePhys(), 1);
 }
 
 void NonlinearPeregrine::PrimitiveToConservative(
-        const Array<OneD, const Array<OneD, NekDouble> >&physin,
-        Array<OneD, Array<OneD, NekDouble> >&physout)
+    const Array<OneD, const Array<OneD, NekDouble>> &physin,
+    Array<OneD, Array<OneD, NekDouble>> &physout)
 {
 
     int nq = GetTotPoints();
@@ -814,7 +805,7 @@ void NonlinearPeregrine::PrimitiveToConservative(
     if (physin.get() == physout.get())
     {
         // copy indata and work with tmp array
-        Array<OneD, Array<OneD, NekDouble> > tmp(3);
+        Array<OneD, Array<OneD, NekDouble>> tmp(3);
         for (int i = 0; i < 3; ++i)
         {
             // deep copy
@@ -823,28 +814,25 @@ void NonlinearPeregrine::PrimitiveToConservative(
         }
 
         // h = \eta + d
-        Vmath::Vadd(nq, tmp[0],     1, m_depth, 1, physout[0], 1);
+        Vmath::Vadd(nq, tmp[0], 1, m_depth, 1, physout[0], 1);
 
         // hu = h * u
-        Vmath::Vmul(nq, physout[0], 1, tmp[1],  1, physout[1], 1);
+        Vmath::Vmul(nq, physout[0], 1, tmp[1], 1, physout[1], 1);
 
         // hv = h * v
-        Vmath::Vmul(nq, physout[0], 1, tmp[2],  1, physout[2], 1);
-
+        Vmath::Vmul(nq, physout[0], 1, tmp[2], 1, physout[2], 1);
     }
     else
     {
         // h = \eta + d
-        Vmath::Vadd(nq, physin[0],  1, m_depth,   1, physout[0], 1);
+        Vmath::Vadd(nq, physin[0], 1, m_depth, 1, physout[0], 1);
 
         // hu = h * u
         Vmath::Vmul(nq, physout[0], 1, physin[1], 1, physout[1], 1);
 
         // hv = h * v
         Vmath::Vmul(nq, physout[0], 1, physin[2], 1, physout[2], 1);
-
     }
-
 }
 
 void NonlinearPeregrine::v_PrimitiveToConservative()
@@ -852,16 +840,16 @@ void NonlinearPeregrine::v_PrimitiveToConservative()
     int nq = GetTotPoints();
 
     // h = \eta + d
-    Vmath::Vadd(nq, m_fields[0]->GetPhys(),    1, m_depth, 1,
-                    m_fields[0]->UpdatePhys(), 1);
+    Vmath::Vadd(nq, m_fields[0]->GetPhys(), 1, m_depth, 1,
+                m_fields[0]->UpdatePhys(), 1);
 
     // hu = h * u
-    Vmath::Vmul(nq, m_fields[0]->GetPhys(),    1, m_fields[1]->GetPhys(), 1,
-                    m_fields[1]->UpdatePhys(), 1);
+    Vmath::Vmul(nq, m_fields[0]->GetPhys(), 1, m_fields[1]->GetPhys(), 1,
+                m_fields[1]->UpdatePhys(), 1);
 
     // hv = h * v
-    Vmath::Vmul(nq, m_fields[0]->GetPhys(),    1, m_fields[2]->GetPhys(), 1,
-                    m_fields[2]->UpdatePhys(), 1);
+    Vmath::Vmul(nq, m_fields[0]->GetPhys(), 1, m_fields[2]->GetPhys(), 1,
+                m_fields[2]->UpdatePhys(), 1);
 }
 
 /**
@@ -872,8 +860,8 @@ void NonlinearPeregrine::v_PrimitiveToConservative()
  * @param velocity   Velocity field.
  */
 void NonlinearPeregrine::GetVelocityVector(
-        const Array<OneD, Array<OneD, NekDouble> > &physfield,
-        Array<OneD, Array<OneD, NekDouble> > &velocity)
+    const Array<OneD, Array<OneD, NekDouble>> &physfield,
+    Array<OneD, Array<OneD, NekDouble>> &velocity)
 {
     const int npts = physfield[0].size();
 
@@ -883,7 +871,7 @@ void NonlinearPeregrine::GetVelocityVector(
     }
 }
 
-void NonlinearPeregrine::v_GenerateSummary(SolverUtils::SummaryList& s)
+void NonlinearPeregrine::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
     ShallowWaterSystem::v_GenerateSummary(s);
     SolverUtils::AddSummaryItem(s, "Variables", "h  should be in field[0]");
@@ -892,9 +880,7 @@ void NonlinearPeregrine::v_GenerateSummary(SolverUtils::SummaryList& s)
     SolverUtils::AddSummaryItem(s, "", "z  should be in field[3]");
 }
 
-void NonlinearPeregrine::WCESolve(
-        Array<OneD, NekDouble> &fce,
-        NekDouble lambda)
+void NonlinearPeregrine::WCESolve(Array<OneD, NekDouble> &fce, NekDouble lambda)
 {
     int nq = GetTotPoints();
 
@@ -907,8 +893,7 @@ void NonlinearPeregrine::WCESolve(
 
     m_fields[3]->SetPhysState(true);
 
-    m_fields[3]->HelmSolve(m_fields[3]->GetPhys(),
-                           m_fields[3]->UpdateCoeffs(),
+    m_fields[3]->HelmSolve(m_fields[3]->GetPhys(), m_fields[3]->UpdateCoeffs(),
                            m_factors);
 
     m_fields[3]->BwdTrans(m_fields[3]->GetCoeffs(), m_fields[3]->UpdatePhys());
@@ -919,17 +904,16 @@ void NonlinearPeregrine::WCESolve(
 }
 
 void NonlinearPeregrine::NumericalFluxForcing(
-        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-        Array<OneD, NekDouble> &numfluxX,
-        Array<OneD, NekDouble> &numfluxY)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, NekDouble> &numfluxX, Array<OneD, NekDouble> &numfluxY)
 {
     int i;
     int nTraceNumPoints = GetTraceTotPoints();
 
     //-----------------------------------------------------
     // get temporary arrays
-    Array<OneD, Array<OneD, NekDouble> > Fwd(2);
-    Array<OneD, Array<OneD, NekDouble> > Bwd(2);
+    Array<OneD, Array<OneD, NekDouble>> Fwd(2);
+    Array<OneD, Array<OneD, NekDouble>> Bwd(2);
 
     for (i = 0; i < 2; ++i)
     {
@@ -957,8 +941,7 @@ void NonlinearPeregrine::NumericalFluxForcing(
 }
 
 void NonlinearPeregrine::SetBoundaryConditionsForcing(
-        Array<OneD, Array<OneD, NekDouble> > &inarray,
-        NekDouble time)
+    Array<OneD, Array<OneD, NekDouble>> &inarray, NekDouble time)
 {
     boost::ignore_unused(time);
 
@@ -969,12 +952,13 @@ void NonlinearPeregrine::SetBoundaryConditionsForcing(
     {
         // Use wall for all BC...
         // Wall Boundary Condition
-        if (boost::iequals(m_fields[0]->GetBndConditions()[n]->GetUserDefined(),"Wall"))
+        if (boost::iequals(m_fields[0]->GetBndConditions()[n]->GetUserDefined(),
+                           "Wall"))
         {
             WallBoundaryForcing(n, cnt, inarray);
         }
 
-        //Timedependent Boundary Condition
+        // Timedependent Boundary Condition
         if (m_fields[0]->GetBndConditions()[n]->IsTimeDependent())
         {
             ASSERTL0(false, "time-dependent BC not implemented for Boussinesq");
@@ -985,18 +969,16 @@ void NonlinearPeregrine::SetBoundaryConditionsForcing(
 
 // fills up boundary expansion for field[1] and [2]
 void NonlinearPeregrine::WallBoundaryForcing(
-        int bcRegion,
-        int cnt,
-        Array<OneD, Array<OneD, NekDouble> >&inarray)
+    int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &inarray)
 {
 
-    //std::cout << " WallBoundaryForcing" << std::endl;
+    // std::cout << " WallBoundaryForcing" << std::endl;
 
     int nTraceNumPoints = GetTraceTotPoints();
-    int nvariables = 2;
+    int nvariables      = 2;
 
     // get physical values of f1 and f2 for the forward trace
-    Array<OneD, Array<OneD, NekDouble> > Fwd(nvariables);
+    Array<OneD, Array<OneD, NekDouble>> Fwd(nvariables);
     for (int i = 0; i < nvariables; ++i)
     {
         Fwd[i] = Array<OneD, NekDouble>(nTraceNumPoints);
@@ -1007,13 +989,13 @@ void NonlinearPeregrine::WallBoundaryForcing(
     // user defined boundaries into account
     int e, id1, id2, npts;
     MultiRegions::ExpListSharedPtr bcexp =
-                                m_fields[0]->GetBndCondExpansions()[bcRegion];
+        m_fields[0]->GetBndCondExpansions()[bcRegion];
     for (e = 0; e < bcexp->GetExpSize(); ++e)
     {
         npts = bcexp->GetExp(e)->GetTotPoints();
         id1  = bcexp->GetPhys_Offset(e);
         id2  = m_fields[0]->GetTrace()->GetPhys_Offset(
-               m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
+            m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
 
         switch (m_expdim)
         {
@@ -1027,29 +1009,29 @@ void NonlinearPeregrine::WallBoundaryForcing(
                 Array<OneD, NekDouble> tmp_n(npts);
                 Array<OneD, NekDouble> tmp_t(npts);
 
-                Vmath::Vmul (npts, &Fwd[0][id2], 1, &m_traceNormals[0][id2], 1,
-                                   &tmp_n[0],    1);
+                Vmath::Vmul(npts, &Fwd[0][id2], 1, &m_traceNormals[0][id2], 1,
+                            &tmp_n[0], 1);
                 Vmath::Vvtvp(npts, &Fwd[1][id2], 1, &m_traceNormals[1][id2], 1,
-                                   &tmp_n[0],    1, &tmp_n[0],               1);
+                             &tmp_n[0], 1, &tmp_n[0], 1);
 
-                Vmath::Vmul (npts, &Fwd[0][id2], 1, &m_traceNormals[1][id2], 1,
-                                   &tmp_t[0],    1);
+                Vmath::Vmul(npts, &Fwd[0][id2], 1, &m_traceNormals[1][id2], 1,
+                            &tmp_t[0], 1);
                 Vmath::Vvtvm(npts, &Fwd[1][id2], 1, &m_traceNormals[0][id2], 1,
-                                   &tmp_t[0],    1, &tmp_t[0],               1);
+                             &tmp_t[0], 1, &tmp_t[0], 1);
 
                 // negate the normal flux
                 Vmath::Neg(npts, tmp_n, 1);
 
                 // rotate back to Cartesian
-                Vmath::Vmul (npts, &tmp_t[0],    1, &m_traceNormals[1][id2], 1,
-                                   &Fwd[0][id2], 1);
-                Vmath::Vvtvm(npts, &tmp_n[0],    1, &m_traceNormals[0][id2], 1,
-                                   &Fwd[0][id2], 1, &Fwd[0][id2],            1);
+                Vmath::Vmul(npts, &tmp_t[0], 1, &m_traceNormals[1][id2], 1,
+                            &Fwd[0][id2], 1);
+                Vmath::Vvtvm(npts, &tmp_n[0], 1, &m_traceNormals[0][id2], 1,
+                             &Fwd[0][id2], 1, &Fwd[0][id2], 1);
 
-                Vmath::Vmul (npts, &tmp_t[0],    1, &m_traceNormals[0][id2], 1,
-                                   &Fwd[1][id2], 1);
-                Vmath::Vvtvp(npts, &tmp_n[0],    1, &m_traceNormals[1][id2], 1,
-                                   &Fwd[1][id2], 1, &Fwd[1][id2],            1);
+                Vmath::Vmul(npts, &tmp_t[0], 1, &m_traceNormals[0][id2], 1,
+                            &Fwd[1][id2], 1);
+                Vmath::Vvtvp(npts, &tmp_n[0], 1, &m_traceNormals[1][id2], 1,
+                             &Fwd[1][id2], 1, &Fwd[1][id2], 1);
                 break;
             }
             case 3:
@@ -1069,8 +1051,7 @@ void NonlinearPeregrine::WallBoundaryForcing(
 }
 
 void NonlinearPeregrine::SetBoundaryConditionsContVariables(
-        Array<OneD, NekDouble> &inarray,
-        NekDouble time)
+    Array<OneD, NekDouble> &inarray, NekDouble time)
 {
     boost::ignore_unused(time);
 
@@ -1081,7 +1062,8 @@ void NonlinearPeregrine::SetBoundaryConditionsContVariables(
     {
         // Use wall for all
         // Wall Boundary Condition
-        if(boost::iequals(m_fields[0]->GetBndConditions()[n]->GetUserDefined(),"Wall"))
+        if (boost::iequals(m_fields[0]->GetBndConditions()[n]->GetUserDefined(),
+                           "Wall"))
         {
             WallBoundaryContVariables(n, cnt, inarray);
         }
@@ -1096,9 +1078,7 @@ void NonlinearPeregrine::SetBoundaryConditionsContVariables(
 }
 
 void NonlinearPeregrine::WallBoundaryContVariables(
-        int bcRegion,
-        int cnt,
-        Array<OneD, NekDouble>&inarray)
+    int bcRegion, int cnt, Array<OneD, NekDouble> &inarray)
 {
     int nTraceNumPoints = GetTraceTotPoints();
 
@@ -1110,34 +1090,33 @@ void NonlinearPeregrine::WallBoundaryContVariables(
     // user defined boundaries into account
     int e, id1, id2, npts;
     MultiRegions::ExpListSharedPtr bcexp =
-                                m_fields[0]->GetBndCondExpansions()[bcRegion];
+        m_fields[0]->GetBndCondExpansions()[bcRegion];
 
     for (e = 0; e < bcexp->GetExpSize(); ++e)
     {
         npts = bcexp->GetExp(e)->GetTotPoints();
         id1  = bcexp->GetPhys_Offset(e);
         id2  = m_fields[0]->GetTrace()->GetPhys_Offset(
-               m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
+            m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
 
         // copy boundary adjusted values into the boundary expansion
         // field[1] and field[2]
         bcexp = m_fields[1]->GetBndCondExpansions()[bcRegion];
         Vmath::Vcopy(npts, &z[id2], 1, &(bcexp->UpdatePhys())[id1], 1);
-
     }
 }
 
 void NonlinearPeregrine::NumericalFluxConsVariables(
-        Array<OneD, NekDouble> &physfield, Array<OneD, NekDouble> &outX,
-        Array<OneD, NekDouble> &outY)
+    Array<OneD, NekDouble> &physfield, Array<OneD, NekDouble> &outX,
+    Array<OneD, NekDouble> &outY)
 {
     int i;
     int nTraceNumPoints = GetTraceTotPoints();
 
     //-----------------------------------------------------
     // get temporary arrays
-    Array<OneD, Array<OneD, NekDouble> > Fwd(1);
-    Array<OneD, Array<OneD, NekDouble> > Bwd(1);
+    Array<OneD, Array<OneD, NekDouble>> Fwd(1);
+    Array<OneD, Array<OneD, NekDouble>> Bwd(1);
 
     Fwd[0] = Array<OneD, NekDouble>(nTraceNumPoints);
     Bwd[0] = Array<OneD, NekDouble>(nTraceNumPoints);
@@ -1161,11 +1140,8 @@ void NonlinearPeregrine::NumericalFluxConsVariables(
 }
 
 // initial condition Laitone's first order solitary wave
-void NonlinearPeregrine::LaitoneSolitaryWave(
-        NekDouble amp,
-        NekDouble d,
-        NekDouble time,
-        NekDouble x_offset)
+void NonlinearPeregrine::LaitoneSolitaryWave(NekDouble amp, NekDouble d,
+                                             NekDouble time, NekDouble x_offset)
 {
     int nq = GetTotPoints();
 
@@ -1182,18 +1158,21 @@ void NonlinearPeregrine::LaitoneSolitaryWave(
 
     for (int i = 0; i < nq; i++)
     {
-        (m_fields[0]->UpdatePhys())[i] = amp * pow((1.0 / cosh(
-                                sqrt(0.75 * (amp / (d * d * d))) *
-                                (A * (x0[i] + x_offset) - C * time))), 2.0);
-        (m_fields[1]->UpdatePhys())[i] = (amp / d) * pow((1.0 / cosh(
-                                    sqrt(0.75 * (amp / (d * d * d))) *
-                                    (A * (x0[i] + x_offset) - C * time)
-                                )), 2.0) * sqrt(m_g * d);
+        (m_fields[0]->UpdatePhys())[i] =
+            amp * pow((1.0 / cosh(sqrt(0.75 * (amp / (d * d * d))) *
+                                  (A * (x0[i] + x_offset) - C * time))),
+                      2.0);
+        (m_fields[1]->UpdatePhys())[i] =
+            (amp / d) *
+            pow((1.0 / cosh(sqrt(0.75 * (amp / (d * d * d))) *
+                            (A * (x0[i] + x_offset) - C * time))),
+                2.0) *
+            sqrt(m_g * d);
     }
 
     Vmath::Sadd(nq, d, m_fields[0]->GetPhys(), 1, m_fields[0]->UpdatePhys(), 1);
-    Vmath::Vmul(nq,    m_fields[0]->GetPhys(), 1, m_fields[1]->GetPhys(),    1,
-                                                  m_fields[1]->UpdatePhys(), 1);
+    Vmath::Vmul(nq, m_fields[0]->GetPhys(), 1, m_fields[1]->GetPhys(), 1,
+                m_fields[1]->UpdatePhys(), 1);
     Vmath::Vcopy(nq, zeros, 1, m_fields[2]->UpdatePhys(), 1);
     Vmath::Vcopy(nq, zeros, 1, m_fields[3]->UpdatePhys(), 1);
 
@@ -1204,16 +1183,14 @@ void NonlinearPeregrine::LaitoneSolitaryWave(
         m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
                               m_fields[i]->UpdateCoeffs());
     }
-
 }
 
 /**
  * @brief Set the initial conditions.
  */
-void NonlinearPeregrine::v_SetInitialConditions(
-        NekDouble initialtime,
-        bool dumpInitialConditions,
-        const int domain)
+void NonlinearPeregrine::v_SetInitialConditions(NekDouble initialtime,
+                                                bool dumpInitialConditions,
+                                                const int domain)
 {
     boost::ignore_unused(domain);
 
@@ -1238,5 +1215,4 @@ void NonlinearPeregrine::v_SetInitialConditions(
     }
 }
 
-} //end of namespace
-
+} // namespace Nektar

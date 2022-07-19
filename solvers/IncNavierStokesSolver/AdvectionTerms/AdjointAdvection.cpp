@@ -39,15 +39,14 @@ using namespace std;
 namespace Nektar
 {
 
-string AdjointAdvection::className = SolverUtils
-        ::GetAdvectionFactory().RegisterCreatorFunction("Adjoint",
-                                                    AdjointAdvection::create);
+string AdjointAdvection::className =
+    SolverUtils ::GetAdvectionFactory().RegisterCreatorFunction(
+        "Adjoint", AdjointAdvection::create);
 
 /**
  *
  */
-AdjointAdvection::AdjointAdvection():
-    LinearisedAdvection()
+AdjointAdvection::AdjointAdvection() : LinearisedAdvection()
 {
 }
 
@@ -58,12 +57,11 @@ AdjointAdvection::~AdjointAdvection()
 void AdjointAdvection::v_Advect(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-    Array<OneD, Array<OneD, NekDouble> >              &outarray,
-    const NekDouble                                   &time,
-    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-    const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+    const Array<OneD, Array<OneD, NekDouble>> &advVel,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
     ASSERTL1(nConvectiveFields == inarray.size(),
              "Number of convective fields and Inarray are not compatible");
@@ -73,34 +71,34 @@ void AdjointAdvection::v_Advect(
     int nBaseDerivs = (m_halfMode || m_singleMode) ? 2 : m_spacedim;
     int nDerivs     = (m_halfMode) ? 2 : m_spacedim;
 
-    Array<OneD, Array<OneD, NekDouble> > velocity(ndim);
-    int nScalar =nConvectiveFields - ndim;
-    Array<OneD, Array<OneD,NekDouble> > scalar(nScalar);
+    Array<OneD, Array<OneD, NekDouble>> velocity(ndim);
+    int nScalar = nConvectiveFields - ndim;
+    Array<OneD, Array<OneD, NekDouble>> scalar(nScalar);
 
-    for(int i = 0; i < ndim; ++i)
+    for (int i = 0; i < ndim; ++i)
     {
-        if(fields[i]->GetWaveSpace() && !m_singleMode && !m_halfMode)
+        if (fields[i]->GetWaveSpace() && !m_singleMode && !m_halfMode)
         {
-            velocity[i] = Array<OneD, NekDouble>(nPointsTot,0.0);
-            fields[i]->HomogeneousBwdTrans(advVel[i],velocity[i]);
+            velocity[i] = Array<OneD, NekDouble>(nPointsTot, 0.0);
+            fields[i]->HomogeneousBwdTrans(advVel[i], velocity[i]);
         }
         else
         {
             velocity[i] = advVel[i];
         }
     }
-    if (nScalar > 0) //add for temperature field
+    if (nScalar > 0) // add for temperature field
     {
         for (int jj = ndim; jj < nConvectiveFields; ++jj)
         {
-            scalar[jj-ndim] = inarray[jj];
+            scalar[jj - ndim] = inarray[jj];
         }
     }
 
-    Array<OneD, Array<OneD, NekDouble> > grad (nDerivs);
-    for( int i = 0; i < nDerivs; ++i)
+    Array<OneD, Array<OneD, NekDouble>> grad(nDerivs);
+    for (int i = 0; i < nDerivs; ++i)
     {
-        grad[i] = Array<OneD, NekDouble> (nPointsTot);
+        grad[i] = Array<OneD, NekDouble>(nPointsTot);
     }
 
     // Evaluation of the base flow for periodic cases
@@ -108,17 +106,17 @@ void AdjointAdvection::v_Advect(
     {
         for (int i = 0; i < ndim; ++i)
         {
-            UpdateBase(m_slices, m_interp[i], m_baseflow[i],
-                       m_period-time, m_period);
+            UpdateBase(m_slices, m_interp[i], m_baseflow[i], m_period - time,
+                       m_period);
             UpdateGradBase(i, fields[i]);
         }
     }
 
-    //Evaluate the linearised advection term
-    for( int i = 0; i < ndim; ++i)
+    // Evaluate the linearised advection term
+    for (int i = 0; i < ndim; ++i)
     {
         // Calculate gradient
-        switch(nDerivs)
+        switch (nDerivs)
         {
             case 1:
             {
@@ -133,7 +131,7 @@ void AdjointAdvection::v_Advect(
             case 3:
             {
                 fields[i]->PhysDeriv(inarray[i], grad[0], grad[1], grad[2]);
-                if(m_multipleModes)
+                if (m_multipleModes)
                 {
                     // transform gradients into physical Fourier space
                     fields[i]->HomogeneousBwdTrans(grad[0], grad[0]);
@@ -145,48 +143,42 @@ void AdjointAdvection::v_Advect(
         }
 
         // Calculate -U_j du'_i/dx_j
-        Vmath::Vmul(nPointsTot,grad[0], 1, m_baseflow[0], 1, outarray[i], 1);
-        for( int j = 1; j < nDerivs; ++j)
+        Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i], 1);
+        for (int j = 1; j < nDerivs; ++j)
         {
-            Vmath::Vvtvp(nPointsTot,grad[j], 1,
-                                    m_baseflow[j], 1,
-                                    outarray[i], 1,
-                                    outarray[i], 1);
+            Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1, outarray[i],
+                         1, outarray[i], 1);
         }
-        Vmath::Neg(nPointsTot,outarray[i],1);
+        Vmath::Neg(nPointsTot, outarray[i], 1);
 
         // Add u'_j U_j/ dx_i
         int lim = (m_halfMode) ? 2 : ndim;
-        if ( (m_halfMode || m_singleMode) && i==2)
+        if ((m_halfMode || m_singleMode) && i == 2)
         {
             lim = 0;
         }
-        for( int j = 0; j < lim; ++j)
+        for (int j = 0; j < lim; ++j)
         {
-            Vmath::Vvtvp(nPointsTot,m_gradBase[j*nBaseDerivs + i], 1,
-                                    velocity[j], 1,
-                                    outarray[i], 1,
-                                    outarray[i], 1);
+            Vmath::Vvtvp(nPointsTot, m_gradBase[j * nBaseDerivs + i], 1,
+                         velocity[j], 1, outarray[i], 1, outarray[i], 1);
         }
-        //Add Tprime*Grad_Tbase in u, v equations
+        // Add Tprime*Grad_Tbase in u, v equations
         if (nScalar > 0 && i < ndim)
         {
             for (int s = 0; s < nScalar; ++s)
             {
-                Vmath::Vvtvp(nPointsTot, m_gradBase[(ndim + s)*nBaseDerivs + i], 1,
-                             scalar[s], 1,
-                             outarray[i],1,
-                             outarray[i],1);
+                Vmath::Vvtvp(nPointsTot,
+                             m_gradBase[(ndim + s) * nBaseDerivs + i], 1,
+                             scalar[s], 1, outarray[i], 1, outarray[i], 1);
             }
         }
 
-        if(m_multipleModes)
+        if (m_multipleModes)
         {
-            fields[i]->HomogeneousFwdTrans(outarray[i],outarray[i]);
+            fields[i]->HomogeneousFwdTrans(outarray[i], outarray[i]);
         }
-        Vmath::Neg(nPointsTot,outarray[i],1);
+        Vmath::Neg(nPointsTot, outarray[i], 1);
     }
 }
 
-} //end of namespace
-
+} // namespace Nektar

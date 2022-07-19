@@ -67,7 +67,7 @@ public:
                  "IMEX DIRK Time integration scheme invalid number "
                  "of free parameters, expected two "
                  "<implicit stages, explicit stages>, received " +
-                 std::to_string(freeParams.size()));
+                     std::to_string(freeParams.size()));
 
         int s     = freeParams[0];
         int sigma = freeParams[1];
@@ -129,7 +129,7 @@ public:
                  "IMEX DIRK Time integration scheme invalid number "
                  "of free parameters, expected two "
                  "<implicit stages, explicit stages>, received " +
-                 std::to_string(freeParams.size()) + ".");
+                     std::to_string(freeParams.size()) + ".");
 
         int s     = freeParams[0];
         int sigma = freeParams[1];

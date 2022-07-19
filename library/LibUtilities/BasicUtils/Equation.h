@@ -36,13 +36,13 @@
 #ifndef NEKTAR_LIBUTILITIES_BASICUTILS_EQUATION_H
 #define NEKTAR_LIBUTILITIES_BASICUTILS_EQUATION_H
 
-#include <string>
 #include <map>
+#include <string>
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/Interpreter/Interpreter.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/Interpreter/Interpreter.h>
 
 namespace Nektar
 {
@@ -74,44 +74,43 @@ class Equation
 public:
     LIB_UTILITIES_EXPORT Equation(const Equation &) = default;
     LIB_UTILITIES_EXPORT Equation(InterpreterSharedPtr evaluator,
-                                  const std::string& expr = "",
-                                  const std::string& vlist = "");
+                                  const std::string &expr  = "",
+                                  const std::string &vlist = "");
 
-    LIB_UTILITIES_EXPORT Equation& operator=(const Equation &src);
+    LIB_UTILITIES_EXPORT Equation &operator=(const Equation &src);
 
     LIB_UTILITIES_EXPORT NekDouble Evaluate() const;
 
-    LIB_UTILITIES_EXPORT NekDouble Evaluate(
-        NekDouble x, NekDouble y = 0, NekDouble z = 0, NekDouble t = 0) const;
+    LIB_UTILITIES_EXPORT NekDouble Evaluate(NekDouble x, NekDouble y = 0,
+                                            NekDouble z = 0,
+                                            NekDouble t = 0) const;
+
+    LIB_UTILITIES_EXPORT void Evaluate(const Array<OneD, const NekDouble> &x,
+                                       const Array<OneD, const NekDouble> &y,
+                                       const Array<OneD, const NekDouble> &z,
+                                       Array<OneD, NekDouble> &result) const;
+
+    LIB_UTILITIES_EXPORT void Evaluate(const Array<OneD, const NekDouble> &x,
+                                       const Array<OneD, const NekDouble> &y,
+                                       const Array<OneD, const NekDouble> &z,
+                                       const NekDouble t,
+                                       Array<OneD, NekDouble> &result) const;
+
+    LIB_UTILITIES_EXPORT void Evaluate(const Array<OneD, const NekDouble> &x,
+                                       const Array<OneD, const NekDouble> &y,
+                                       const Array<OneD, const NekDouble> &z,
+                                       const Array<OneD, const NekDouble> &t,
+                                       Array<OneD, NekDouble> &result) const;
 
     LIB_UTILITIES_EXPORT void Evaluate(
-        const Array<OneD, const NekDouble>& x,
-        const Array<OneD, const NekDouble>& y,
-        const Array<OneD, const NekDouble>& z,
-        Array<OneD, NekDouble>& result) const;
+        const std::vector<Array<OneD, const NekDouble>> points,
+        Array<OneD, NekDouble> &result) const;
 
-    LIB_UTILITIES_EXPORT void Evaluate(
-        const Array<OneD, const NekDouble>& x,
-        const Array<OneD, const NekDouble>& y,
-        const Array<OneD, const NekDouble>& z,
-        const NekDouble t,
-        Array<OneD, NekDouble>& result) const;
+    LIB_UTILITIES_EXPORT void SetParameter(const std::string &name,
+                                           NekDouble value);
 
-
-    LIB_UTILITIES_EXPORT void Evaluate(
-        const Array<OneD, const NekDouble>& x,
-        const Array<OneD, const NekDouble>& y,
-        const Array<OneD, const NekDouble>& z,
-        const Array<OneD, const NekDouble>& t,
-        Array<OneD, NekDouble>& result) const;
-
-    LIB_UTILITIES_EXPORT void Evaluate(
-        const std::vector<Array<OneD, const NekDouble> > points,
-        Array<OneD, NekDouble>& result) const;
-
-    LIB_UTILITIES_EXPORT void SetParameter(const std::string& name, NekDouble value);
-
-    LIB_UTILITIES_EXPORT void SetConstants(const std::map<std::string, NekDouble> &constants);
+    LIB_UTILITIES_EXPORT void SetConstants(
+        const std::map<std::string, NekDouble> &constants);
 
     LIB_UTILITIES_EXPORT std::string GetExpression(void) const;
 
@@ -122,15 +121,15 @@ public:
     LIB_UTILITIES_EXPORT NekDouble GetTime() const;
 
 private:
-    std::string          m_vlist;
-    std::string          m_expr;
-    int                  m_expr_id;
+    std::string m_vlist;
+    std::string m_expr;
+    int m_expr_id;
     InterpreterSharedPtr m_evaluator;
 };
 
 typedef std::shared_ptr<Equation> EquationSharedPtr;
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
-#endif //NEKTAR_LIBUTILITIES_EQUATION_HPP
+#endif // NEKTAR_LIBUTILITIES_EQUATION_HPP

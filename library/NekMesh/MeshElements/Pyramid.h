@@ -35,8 +35,8 @@
 #ifndef NEKMESH_MESHELEMENTS_PYM
 #define NEKMESH_MESHELEMENTS_PYM
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -59,8 +59,8 @@ public:
     static LibUtilities::ShapeType type;
 
     NEKMESH_EXPORT Pyramid(ElmtConfig pConf,
-                                std::vector<NodeSharedPtr> pNodeList,
-                                std::vector<int> pTagList);
+                           std::vector<NodeSharedPtr> pNodeList,
+                           std::vector<int> pTagList);
     NEKMESH_EXPORT Pyramid(const Pyramid &pSrc);
     NEKMESH_EXPORT virtual ~Pyramid()
     {
@@ -82,7 +82,7 @@ public:
 private:
     static int m_faceIds[5][4];
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

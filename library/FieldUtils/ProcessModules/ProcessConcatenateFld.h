@@ -74,9 +74,8 @@ public:
     {
         return eModifyFieldData;
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

@@ -78,10 +78,9 @@ public:
     }
 
 private:
-    ModulePriority  m_priority;
-
+    ModulePriority m_priority;
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

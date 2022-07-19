@@ -48,21 +48,21 @@ public:
 
     /// Creates an instance of this class
     static SolverUtils::FilterSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
         const ParamMap &pParams)
     {
-        SolverUtils::FilterSharedPtr p
-                        = MemoryManager<FilterCheckpointCellModel>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        SolverUtils::FilterSharedPtr p =
+            MemoryManager<FilterCheckpointCellModel>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
     FilterCheckpointCellModel(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
         const ParamMap &pParams);
     ~FilterCheckpointCellModel();
@@ -74,14 +74,14 @@ public:
 
 protected:
     virtual void v_Initialise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     virtual void v_Update(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     virtual void v_Finalise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     virtual bool v_IsTimeDependent();
 
 private:
@@ -93,6 +93,6 @@ private:
     LibUtilities::FieldIOSharedPtr m_fld;
 };
 
-}
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERCHECKPOINT_H */
