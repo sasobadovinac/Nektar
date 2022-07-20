@@ -60,6 +60,7 @@ v5.2.0
 
 **CI**
 - Remove unused build options (!1360)
+- Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
 
 v5.1.1
 ------
