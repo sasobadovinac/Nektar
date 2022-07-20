@@ -39,7 +39,8 @@
 #include <PulseWaveSolver/EquationSystems/PulseWaveBoundary.h>
 #include <string>
 
-namespace Nektar {
+namespace Nektar
+{
 
 // Forward declarations
 class QInflow;
@@ -50,37 +51,38 @@ typedef std::shared_ptr<QInflow> QInflowSharedPtr;
 // A global linear system.
 class QInflow : public PulseWaveBoundary
 {
-  public:
-      // Creates an instance of this class
-      static PulseWaveBoundarySharedPtr
-      create(Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
-             const LibUtilities::SessionReaderSharedPtr &pSession,
-             PulseWavePressureAreaSharedPtr &pressureArea)
-      {
-         return MemoryManager<QInflow>::AllocateSharedPtr(pVessel, pSession,
+public:
+    // Creates an instance of this class
+    static PulseWaveBoundarySharedPtr create(
+        Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        PulseWavePressureAreaSharedPtr &pressureArea)
+    {
+        return MemoryManager<QInflow>::AllocateSharedPtr(pVessel, pSession,
                                                          pressureArea);
-      }
+    }
 
-      /// Name of class
-      static std::string className;
+    /// Name of class
+    static std::string className;
 
-      QInflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
-              const LibUtilities::SessionReaderSharedPtr pSession,
-              PulseWavePressureAreaSharedPtr pressureArea);
+    QInflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
+            const LibUtilities::SessionReaderSharedPtr pSession,
+            PulseWavePressureAreaSharedPtr pressureArea);
 
-      virtual ~QInflow();
+    virtual ~QInflow();
 
-  protected:
-       virtual void
-       v_DoBoundary(const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                                      Array<OneD, Array<OneD, NekDouble> > &A_0,
-                                     Array<OneD, Array<OneD, NekDouble> > &beta,
-                                    Array<OneD, Array<OneD, NekDouble> > &alpha,
-                            const NekDouble time, int omega, int offset, int n);
+protected:
+    virtual void v_DoBoundary(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &A_0,
+        Array<OneD, Array<OneD, NekDouble>> &beta,
+        Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time,
+        int omega, int offset, int n);
 
-  private:
-      void Q_RiemannSolver(NekDouble Q, NekDouble A_r, NekDouble u_r, NekDouble A_0,
-                           NekDouble beta, NekDouble alpha, NekDouble &Au, NekDouble &uu);
+private:
+    void Q_RiemannSolver(NekDouble Q, NekDouble A_r, NekDouble u_r,
+                         NekDouble A_0, NekDouble beta, NekDouble alpha,
+                         NekDouble &Au, NekDouble &uu);
 };
 
 } // namespace Nektar

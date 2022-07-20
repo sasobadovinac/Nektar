@@ -57,7 +57,7 @@ public:
     }
     /// ModuleKey for class.
     static ModuleKey m_className;
-    
+
     ProcessPhiFromFile(FieldSharedPtr f);
     virtual ~ProcessPhiFromFile();
     virtual void Process(po::variables_map &vm);
@@ -87,7 +87,9 @@ protected:
         Array<OneD, NekDouble> v2;
         Array<OneD, NekDouble> centroid;
 
-        triangle() : normal(3, 0.0), v0(3, 0.0), v1(3, 0.0), v2(3, 0.0) {}
+        triangle() : normal(3, 0.0), v0(3, 0.0), v1(3, 0.0), v2(3, 0.0)
+        {
+        }
     };
     /// STL file object
     struct STLobject
@@ -111,14 +113,12 @@ protected:
     // Calculates Phi from an external STL binary file
     void GetPhifromSTL(const STLobject &file);
     // Checks if a ray hits a specific 3D triangle
-    bool CheckHit(const triangle &tri,
-                  const Array<OneD, NekDouble> &Origin,
-                  const Array<OneD, NekDouble> &Dvec,
-                  double &distance, double &u, double &v);
+    bool CheckHit(const triangle &tri, const Array<OneD, NekDouble> &Origin,
+                  const Array<OneD, NekDouble> &Dvec, double &distance,
+                  double &u, double &v);
     // Shortest distance from a point to a 3D geometry
     void FindShortestDist(const STLobject &file,
-                          const Array<OneD, NekDouble> &x,
-                          double &dist);
+                          const Array<OneD, NekDouble> &x, double &dist);
     // Utility to find if two doubles are equal
     bool IsEqual(double x, double y, double relTol);
     // Utility to find if a double is negative with a certain tolerance
@@ -133,7 +133,7 @@ protected:
 
 private:
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
-#endif   // FIELDUTILS_PROCESSPHIFROMFILE
+#endif // FIELDUTILS_PROCESSPHIFROMFILE

@@ -40,55 +40,56 @@
 
 namespace Nektar
 {
-    // Forward declaration
-    class Protocol;
+// Forward declaration
+class Protocol;
 
-    /// A shared pointer to an EquationSystem object
-    typedef std::shared_ptr<Protocol> ProtocolSharedPtr;
+/// A shared pointer to an EquationSystem object
+typedef std::shared_ptr<Protocol> ProtocolSharedPtr;
 
-    /// Datatype of the NekFactory used to instantiate classes derived from
-    /// the EquationSystem class.
-    typedef LibUtilities::NekFactory< std::string, Protocol,
-                const LibUtilities::SessionReaderSharedPtr&,
-                const TiXmlElement*> ProtocolFactory;
+/// Datatype of the NekFactory used to instantiate classes derived from
+/// the EquationSystem class.
+typedef LibUtilities::NekFactory<std::string, Protocol,
+                                 const LibUtilities::SessionReaderSharedPtr &,
+                                 const TiXmlElement *>
+    ProtocolFactory;
 
-    ProtocolFactory& GetProtocolFactory();
+ProtocolFactory &GetProtocolFactory();
 
-
-    /// Protocol base class.
-    class Protocol
+/// Protocol base class.
+class Protocol
+{
+public:
+    virtual ~Protocol()
     {
-    public:
-        virtual ~Protocol() {}
+    }
 
-        /// Initialise the protocol storage and set initial conditions
-        void Initialise();
+    /// Initialise the protocol storage and set initial conditions
+    void Initialise();
 
-        /// Returns amplitude of stimulus (1 or 0) at given time
-        NekDouble GetAmplitude(const NekDouble time)
-        {
-            return v_GetAmplitude(time);
-        }
+    /// Returns amplitude of stimulus (1 or 0) at given time
+    NekDouble GetAmplitude(const NekDouble time)
+    {
+        return v_GetAmplitude(time);
+    }
 
-        /// Print a summary of the cell model
-        void GenerateSummary(SolverUtils::SummaryList& s)
-        {
-            v_GenerateSummary(s);
-        }
+    /// Print a summary of the cell model
+    void GenerateSummary(SolverUtils::SummaryList &s)
+    {
+        v_GenerateSummary(s);
+    }
 
-    protected:
-        /// Session
-        LibUtilities::SessionReaderSharedPtr m_session;
+protected:
+    /// Session
+    LibUtilities::SessionReaderSharedPtr m_session;
 
-        Protocol(const LibUtilities::SessionReaderSharedPtr& pSession,
-                 const TiXmlElement* pXml);
+    Protocol(const LibUtilities::SessionReaderSharedPtr &pSession,
+             const TiXmlElement *pXml);
 
-        virtual NekDouble v_GetAmplitude(const NekDouble time) = 0;
+    virtual NekDouble v_GetAmplitude(const NekDouble time) = 0;
 
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s) = 0;
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) = 0;
+};
 
-    };
-
-}
+} // namespace Nektar
 
 #endif /*PROTOCOL_H_ */

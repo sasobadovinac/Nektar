@@ -39,9 +39,9 @@ using namespace std;
 
 #include <boost/core/ignore_unused.hpp>
 
+#include <LibUtilities/BasicUtils/CsvIO.h>
 #include <LibUtilities/BasicUtils/FileSystem.h>
 #include <LibUtilities/BasicUtils/PtsIO.h>
-#include <LibUtilities/BasicUtils/CsvIO.h>
 
 #include "OutputPts.h"
 
@@ -51,12 +51,13 @@ namespace FieldUtils
 {
 
 ModuleKey OutputPts::m_className[5] = {
-    GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eOutputModule, "pts"), OutputPts::create, "Writes a pts file."),
-    GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eOutputModule, "csv"), OutputPts::create, "Writes a csv file."),
+    GetModuleFactory().RegisterCreatorFunction(ModuleKey(eOutputModule, "pts"),
+                                               OutputPts::create,
+                                               "Writes a pts file."),
+    GetModuleFactory().RegisterCreatorFunction(ModuleKey(eOutputModule, "csv"),
+                                               OutputPts::create,
+                                               "Writes a csv file."),
 };
-
 
 OutputPts::OutputPts(FieldSharedPtr f) : OutputFileBase(f)
 {
@@ -87,9 +88,8 @@ void OutputPts::OutputFromPts(po::variables_map &vm)
 
 void OutputPts::OutputFromExp(po::variables_map &vm)
 {
-    Array<OneD, Array<OneD, NekDouble> > tmp(
-        m_f->m_exp[0]->GetCoordim(0) +
-        m_f->m_variables.size());
+    Array<OneD, Array<OneD, NekDouble>> tmp(m_f->m_exp[0]->GetCoordim(0) +
+                                            m_f->m_variables.size());
 
     switch (m_f->m_exp[0]->GetCoordim(0))
     {
@@ -114,14 +114,10 @@ void OutputPts::OutputFromExp(po::variables_map &vm)
 
     for (int i = 0; i < m_f->m_variables.size(); ++i)
     {
-        tmp[i + m_f->m_exp[0]->GetCoordim(0)] =
-            m_f->m_exp[i]->GetPhys();
+        tmp[i + m_f->m_exp[0]->GetCoordim(0)] = m_f->m_exp[i]->GetPhys();
     }
-    m_f->m_fieldPts =
-        MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
-            m_f->m_exp[0]->GetCoordim(0),
-            m_f->m_variables,
-            tmp);
+    m_f->m_fieldPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
+        m_f->m_exp[0]->GetCoordim(0), m_f->m_variables, tmp);
 
     OutputFromPts(vm);
 }
@@ -129,24 +125,20 @@ void OutputPts::OutputFromExp(po::variables_map &vm)
 void OutputPts::OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal,
-             "OutputPts can't write using only FieldData.");
+    NEKERROR(ErrorUtil::efatal, "OutputPts can't write using only FieldData.");
 }
 
-fs::path OutputPts::GetPath(std::string &filename,
-                            po::variables_map &vm)
+fs::path OutputPts::GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    return   fs::path(filename);
+    return fs::path(filename);
 }
 
-fs::path OutputPts::GetFullOutName(std::string &filename,
-                                po::variables_map &vm)
+fs::path OutputPts::GetFullOutName(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    return   fs::path(filename);
+    return fs::path(filename);
 }
 
-}
-}
-
+} // namespace FieldUtils
+} // namespace Nektar

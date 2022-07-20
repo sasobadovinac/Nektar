@@ -65,7 +65,7 @@ public:
         return "InputNekpp";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -36,61 +36,61 @@
 #ifndef NEKTAR_SOLVERS_CARDIACEPSOLVER_STIMULI_STIMULUSRECT
 #define NEKTAR_SOLVERS_CARDIACEPSOLVER_STIMULI_STIMULUSRECT
 
+#include <CardiacEPSolver/Stimuli/Stimulus.h>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
-#include <CardiacEPSolver/Stimuli/Stimulus.h>
 
 namespace Nektar
 {
 
-    /// Protocol base class.
-    class StimulusRect: public Stimulus
+/// Protocol base class.
+class StimulusRect : public Stimulus
+{
+public:
+    /// Creates an instance of this class
+    static StimulusSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField, const TiXmlElement *pXml)
     {
-    public:
-        /// Creates an instance of this class
-        static StimulusSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField,
-                const TiXmlElement* pXml)
-        {
-            return MemoryManager<StimulusRect>
-                    ::AllocateSharedPtr(pSession, pField, pXml);
-        }
+        return MemoryManager<StimulusRect>::AllocateSharedPtr(pSession, pField,
+                                                              pXml);
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        friend class MemoryManager<StimulusRect>;
+    friend class MemoryManager<StimulusRect>;
 
-        virtual ~StimulusRect() {}
+    virtual ~StimulusRect()
+    {
+    }
 
-        /// Initialise the stimulus storage and set initial conditions
-        void Initialise();
+    /// Initialise the stimulus storage and set initial conditions
+    void Initialise();
 
-    protected:
-        NekDouble m_px1;
-        NekDouble m_py1;
-        NekDouble m_pz1;
-        NekDouble m_px2;
-        NekDouble m_py2;
-        NekDouble m_pz2;
-        NekDouble m_pis;
-        NekDouble m_strength;
-        NekDouble m_chiCapMembrane;
+protected:
+    NekDouble m_px1;
+    NekDouble m_py1;
+    NekDouble m_pz1;
+    NekDouble m_px2;
+    NekDouble m_py2;
+    NekDouble m_pz2;
+    NekDouble m_pis;
+    NekDouble m_strength;
+    NekDouble m_chiCapMembrane;
 
-        virtual void v_Update(
-                Array<OneD, Array<OneD, NekDouble> >&outarray,
-                const NekDouble time);
+    virtual void v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
+                          const NekDouble time);
 
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
 
-    private:
-        StimulusRect(const LibUtilities::SessionReaderSharedPtr& pSession,
-                     const MultiRegions::ExpListSharedPtr& pField,
-                     const TiXmlElement* pXml);
-    };
-}
+private:
+    StimulusRect(const LibUtilities::SessionReaderSharedPtr &pSession,
+                 const MultiRegions::ExpListSharedPtr &pField,
+                 const TiXmlElement *pXml);
+};
+} // namespace Nektar
 
 #endif

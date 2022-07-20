@@ -63,7 +63,7 @@ void ProcessStreamFunction::Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
-    int nfields  = m_f->m_variables.size();
+    int nfields = m_f->m_variables.size();
     // Append field name
     m_f->m_variables.push_back("StreamFunc");
 
@@ -90,9 +90,9 @@ void ProcessStreamFunction::Process(po::variables_map &vm)
 
     // Calculate vorticity: -W_z = Uy - Vx
     m_f->m_exp[0]->PhysDeriv(MultiRegions::DirCartesianMap[1],
-                             m_f->m_exp[0]->GetPhys(),uy);
+                             m_f->m_exp[0]->GetPhys(), uy);
     m_f->m_exp[1]->PhysDeriv(MultiRegions::DirCartesianMap[0],
-                             m_f->m_exp[1]->GetPhys(),vx);
+                             m_f->m_exp[1]->GetPhys(), vx);
 
     Vmath::Vsub(npoints, uy, 1, vx, 1, vortNeg, 1);
 
@@ -102,11 +102,11 @@ void ProcessStreamFunction::Process(po::variables_map &vm)
     StdRegions::ConstFactorMap factor;
     factor[StdRegions::eFactorLambda] = 0.0;
 
-    m_f->m_exp[1]->HelmSolve(vortNeg,
-                            m_f->m_exp[nfields]->UpdateCoeffs(), factor);
+    m_f->m_exp[1]->HelmSolve(vortNeg, m_f->m_exp[nfields]->UpdateCoeffs(),
+                             factor);
     m_f->m_exp[1]->BwdTrans(m_f->m_exp[nfields]->GetCoeffs(),
                             m_f->m_exp[nfields]->UpdatePhys());
 }
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

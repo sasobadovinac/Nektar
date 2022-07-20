@@ -201,10 +201,6 @@ protected:
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray);
 
-    virtual void v_IProductWRTBase_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
     virtual std::vector<LibUtilities::FieldDefinitionsSharedPtr>
     v_GetFieldDefinitions(void);
 

@@ -40,28 +40,24 @@
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <SolverUtils/SolverUtilsDeclspec.h>
 
-namespace Nektar {
-namespace SolverUtils {
+namespace Nektar
+{
+namespace SolverUtils
+{
 
-    typedef std::vector<std::pair<std::string, std::string> > SummaryList;
+typedef std::vector<std::pair<std::string, std::string>> SummaryList;
 
-    /// Adds a summary item to the summary info list
-    SOLVER_UTILS_EXPORT void AddSummaryItem(
-            SummaryList& l,
-            const std::string& name,
-            const std::string& value);
+/// Adds a summary item to the summary info list
+SOLVER_UTILS_EXPORT void AddSummaryItem(SummaryList &l, const std::string &name,
+                                        const std::string &value);
 
-    /// Adds a summary item to the summary info list
-    SOLVER_UTILS_EXPORT void AddSummaryItem(
-            SummaryList& l,
-            const std::string& name,
-            const int& value);
+/// Adds a summary item to the summary info list
+SOLVER_UTILS_EXPORT void AddSummaryItem(SummaryList &l, const std::string &name,
+                                        const int &value);
 
-    /// Adds a summary item to the summary info list
-    SOLVER_UTILS_EXPORT void AddSummaryItem(
-            SummaryList& l,
-            const std::string& name,
-            const NekDouble& value);
+/// Adds a summary item to the summary info list
+SOLVER_UTILS_EXPORT void AddSummaryItem(SummaryList &l, const std::string &name,
+                                        const NekDouble &value);
 
 } // end namespace SolverUtils
 } // end namespace Nektar

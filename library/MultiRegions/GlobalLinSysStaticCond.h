@@ -37,116 +37,104 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <MultiRegions/GlobalMatrix.h>
-#include <MultiRegions/GlobalLinSysIterative.h>
 #include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
+#include <MultiRegions/GlobalLinSysIterative.h>
+#include <MultiRegions/GlobalMatrix.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+// Forward declarations
+class ExpList;
+class GlobalLinSysStaticCond;
+
+typedef std::shared_ptr<GlobalLinSysStaticCond> GlobalLinSysStaticCondSharedPtr;
+
+/// A global linear system.
+class GlobalLinSysStaticCond : virtual public GlobalLinSys
+{
+public:
+    /// Constructor for full direct matrix solve.
+    GlobalLinSysStaticCond(const GlobalLinSysKey &mkey,
+                           const std::weak_ptr<ExpList> &pExpList,
+                           const std::shared_ptr<AssemblyMap> &locToGloMap);
+
+    virtual ~GlobalLinSysStaticCond();
+
+protected:
+    virtual void v_PreSolve(int scLevel, Array<OneD, NekDouble> &F_bnd)
     {
-        // Forward declarations
-        class ExpList;
-        class GlobalLinSysStaticCond;
-
-        typedef std::shared_ptr<GlobalLinSysStaticCond>
-            GlobalLinSysStaticCondSharedPtr;
-
-        /// A global linear system.
-        class GlobalLinSysStaticCond : virtual public GlobalLinSys
-        {
-        public:
-            /// Constructor for full direct matrix solve.
-            GlobalLinSysStaticCond(
-                const GlobalLinSysKey                &mkey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const std::shared_ptr<AssemblyMap>   &locToGloMap);
-
-            virtual ~GlobalLinSysStaticCond();
-
-        protected:
-            virtual void v_PreSolve(int                   scLevel,
-                                    Array<OneD,NekDouble> &F_bnd)
-            {
-                boost::ignore_unused(scLevel, F_bnd);
-            }
-
-            virtual void v_BasisFwdTransform(
-                Array<OneD, NekDouble>& pInOut)
-            {
-                boost::ignore_unused(pInOut);
-            }
-
-            virtual void v_CoeffsBwdTransform(
-                Array<OneD, NekDouble>& pInOut)
-            {
-                boost::ignore_unused(pInOut);
-            }
-
-            virtual void v_CoeffsFwdTransform(
-                const Array<OneD, NekDouble>& pInput,
-                Array<OneD, NekDouble>& pOutput)
-            {
-                boost::ignore_unused(pInput,pOutput);
-            }
-
-            virtual void v_AssembleSchurComplement(
-                std::shared_ptr<AssemblyMap> pLoctoGloMap)
-            {
-                boost::ignore_unused(pLoctoGloMap);
-            }
-
-            virtual int v_GetNumBlocks();
-
-            virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
-                const GlobalLinSysKey                &mkey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const DNekScalBlkMatSharedPtr         pSchurCompl,
-                const DNekScalBlkMatSharedPtr         pBinvD,
-                const DNekScalBlkMatSharedPtr         pC,
-                const DNekScalBlkMatSharedPtr         pInvD,
-                const std::shared_ptr<AssemblyMap>   &locToGloMap) = 0;
-            
-            /// Schur complement for Direct Static Condensation.
-            GlobalLinSysStaticCondSharedPtr          m_recursiveSchurCompl;
-            /// Block Schur complement matrix.
-            DNekScalBlkMatSharedPtr                  m_schurCompl;
-            /// Block \f$ BD^{-1} \f$ matrix.
-            DNekScalBlkMatSharedPtr                  m_BinvD;
-            /// Block \f$ C \f$ matrix.
-            DNekScalBlkMatSharedPtr                  m_C;
-            /// Block \f$ D^{-1} \f$ matrix.
-            DNekScalBlkMatSharedPtr                  m_invD;
-            /// Local to global map.
-            std::weak_ptr<AssemblyMap>               m_locToGloMap;
-            /// Workspace array for matrix multiplication
-            Array<OneD, NekDouble>                   m_wsp;
-
-            /// Solve the linear system for given input and output vectors
-            /// using a specified local to global map.
-            virtual void v_Solve(
-                const Array<OneD, const NekDouble> &in,
-                      Array<OneD,       NekDouble> &out,
-                const AssemblyMapSharedPtr         &locToGloMap,
-                const Array<OneD, const NekDouble> &dirForcing
-                    = NullNekDouble1DArray);
-
-            virtual void v_InitObject();
-
-            /// Initialise this object
-            virtual void v_Initialise(
-                    const std::shared_ptr<AssemblyMap>& locToGloMap);
-
-            /// Set up the storage for the Schur complement or the top level
-            /// of the multi-level Schur complement.
-            void SetupTopLevel(
-                    const std::shared_ptr<AssemblyMap>& locToGloMap);
-
-            ///
-            void ConstructNextLevelCondensedSystem(
-                    const std::shared_ptr<AssemblyMap>& locToGloMap);
-        };
+        boost::ignore_unused(scLevel, F_bnd);
     }
-}
+
+    virtual void v_BasisFwdTransform(Array<OneD, NekDouble> &pInOut)
+    {
+        boost::ignore_unused(pInOut);
+    }
+
+    virtual void v_CoeffsBwdTransform(Array<OneD, NekDouble> &pInOut)
+    {
+        boost::ignore_unused(pInOut);
+    }
+
+    virtual void v_CoeffsFwdTransform(const Array<OneD, NekDouble> &pInput,
+                                      Array<OneD, NekDouble> &pOutput)
+    {
+        boost::ignore_unused(pInput, pOutput);
+    }
+
+    virtual void v_AssembleSchurComplement(
+        std::shared_ptr<AssemblyMap> pLoctoGloMap)
+    {
+        boost::ignore_unused(pLoctoGloMap);
+    }
+
+    virtual int v_GetNumBlocks();
+
+    virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
+        const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
+        const DNekScalBlkMatSharedPtr pSchurCompl,
+        const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
+        const DNekScalBlkMatSharedPtr pInvD,
+        const std::shared_ptr<AssemblyMap> &locToGloMap) = 0;
+
+    /// Schur complement for Direct Static Condensation.
+    GlobalLinSysStaticCondSharedPtr m_recursiveSchurCompl;
+    /// Block Schur complement matrix.
+    DNekScalBlkMatSharedPtr m_schurCompl;
+    /// Block \f$ BD^{-1} \f$ matrix.
+    DNekScalBlkMatSharedPtr m_BinvD;
+    /// Block \f$ C \f$ matrix.
+    DNekScalBlkMatSharedPtr m_C;
+    /// Block \f$ D^{-1} \f$ matrix.
+    DNekScalBlkMatSharedPtr m_invD;
+    /// Local to global map.
+    std::weak_ptr<AssemblyMap> m_locToGloMap;
+    /// Workspace array for matrix multiplication
+    Array<OneD, NekDouble> m_wsp;
+
+    /// Solve the linear system for given input and output vectors
+    /// using a specified local to global map.
+    virtual void v_Solve(
+        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
+        const AssemblyMapSharedPtr &locToGloMap,
+        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+
+    virtual void v_InitObject();
+
+    /// Initialise this object
+    virtual void v_Initialise(const std::shared_ptr<AssemblyMap> &locToGloMap);
+
+    /// Set up the storage for the Schur complement or the top level
+    /// of the multi-level Schur complement.
+    void SetupTopLevel(const std::shared_ptr<AssemblyMap> &locToGloMap);
+
+    ///
+    void ConstructNextLevelCondensedSystem(
+        const std::shared_ptr<AssemblyMap> &locToGloMap);
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

@@ -102,7 +102,7 @@ private:
     /// map of BL curve nodes to adjacent edges
     std::map<NodeSharedPtr, std::vector<EdgeSharedPtr>> m_nodesToEdge;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

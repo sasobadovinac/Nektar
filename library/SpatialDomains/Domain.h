@@ -41,72 +41,76 @@ class TiXmlDocument;
 
 namespace Nektar
 {
-    namespace SpatialDomains
+namespace SpatialDomains
+{
+enum BoundaryType
+{
+    eUnknown = 0,
+    eDirichlet,
+    eNeumann,
+    eRobin,
+    eCauchy,
+
+    eDummy,
+    eBoundaryTypeLastElement = eDummy - 1
+};
+
+// Corresponds to the entries above.  These are the tags within the domain
+// definition corresponding to type of BC above.
+const char BoundaryTypeNameMap[] = {
+    'U', // Just a placeholder to get the correct index for the rest.
+    'D', 'N', 'R', 'C'};
+
+struct BoundaryEntry
+{
+    BoundaryType m_BoundaryType;
+    std::vector<Composite> m_BoundaryComposites;
+};
+
+typedef std::shared_ptr<BoundaryEntry> BoundarySharedPtr;
+typedef std::vector<BoundarySharedPtr> BoundaryVector;
+typedef std::vector<Composite> CompositeVector;
+
+class Domain
+{
+public:
+    // Must have a MeshGraph from which the composites
+    // and associated items can be obtained.
+    Domain(MeshGraph *meshGraph);
+    virtual ~Domain();
+
+    void Read(std::string &infilename);
+    void Read(TiXmlDocument &doc);
+    void Write(std::string &outfilename);
+
+    CompositeVector GetDomain(void) const
     {
-        enum BoundaryType
-        {
-            eUnknown=0,
-            eDirichlet,
-            eNeumann,
-            eRobin,
-            eCauchy,
-
-            eDummy,
-            eBoundaryTypeLastElement = eDummy-1
-        };
-
-        // Corresponds to the entries above.  These are the tags within the domain definition
-        // corresponding to type of BC above.
-        const char BoundaryTypeNameMap[] =
-        {
-            'U',// Just a placeholder to get the correct index for the rest.
-            'D',
-            'N',
-            'R',
-            'C'
-        };
-
-        struct BoundaryEntry
-        {
-            BoundaryType m_BoundaryType;
-            std::vector< Composite > m_BoundaryComposites;
-        };
-
-        typedef std::shared_ptr< BoundaryEntry > BoundarySharedPtr;
-        typedef std::vector< BoundarySharedPtr > BoundaryVector;
-        typedef std::vector< Composite > CompositeVector;
-
-        class Domain
-        {
-        public:
-            // Must have a MeshGraph from which the composites
-            // and associated items can be obtained.
-            Domain(MeshGraph *meshGraph);
-            virtual ~Domain();
-
-            void Read(std::string &infilename);
-            void Read(TiXmlDocument &doc);
-            void Write(std::string &outfilename);
-
-            CompositeVector GetDomain(void) const { return m_Domain; };
-            BoundaryVector  GetBoundaries(void) const { return m_Boundaries; };
-
-            inline void SetFileName(const std::string &inString)
-            {
-                m_FileName = inString;
-            };
-
-
-        protected:
-            //std::string     m_filename;
-            MeshGraph      *m_meshGraph;
-            CompositeVector m_domain;
-            BoundaryVector  m_boundaries;
-
-        private:
-            Domain(){ NEKERROR(ErrorUtil::efatal, "Must provide a meshgraph to create a Domain."); };   // Don't call this.
-        };
+        return m_Domain;
     };
-}
+    BoundaryVector GetBoundaries(void) const
+    {
+        return m_Boundaries;
+    };
 
-#endif //NEKTAR_SPATIALDOMAINS_DOMAIN_H
+    inline void SetFileName(const std::string &inString)
+    {
+        m_FileName = inString;
+    };
+
+protected:
+    // std::string     m_filename;
+    MeshGraph *m_meshGraph;
+    CompositeVector m_domain;
+    BoundaryVector m_boundaries;
+
+private:
+    Domain()
+    {
+        NEKERROR(ErrorUtil::efatal,
+                 "Must provide a meshgraph to create a Domain.");
+    }; // Don't call this.
+};
+}; // namespace SpatialDomains
+} // namespace Nektar
+
+#endif // NEKTAR_SPATIALDOMAINS_DOMAIN_H

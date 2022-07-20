@@ -78,7 +78,7 @@ private:
     void CalculateWeights();
     void CalculateDerivMatrix();
 };
-} // end of namespace
-} // end of namespace
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // NODALHEXELEC_H

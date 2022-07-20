@@ -50,8 +50,7 @@ namespace FieldUtils
 
 ModuleKey ProcessBoundaryExtract::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "extract"),
-        ProcessBoundaryExtract::create,
+        ModuleKey(eProcessModule, "extract"), ProcessBoundaryExtract::create,
         "Extract Boundary field");
 
 ProcessBoundaryExtract::ProcessBoundaryExtract(FieldSharedPtr f)
@@ -59,8 +58,7 @@ ProcessBoundaryExtract::ProcessBoundaryExtract(FieldSharedPtr f)
 {
     // set up dafault values.
     m_config["bnd"] = ConfigOption(false, "All", "Boundary to be processed");
-    m_config["addnormals"] =
-        ConfigOption(true, "0", "Add normals to output");
+    m_config["addnormals"] = ConfigOption(true, "0", "Add normals to output");
 
     f->m_writeBndFld                 = true;
     f->m_declareExpansionAsContField = true;
@@ -114,11 +112,11 @@ void ProcessBoundaryExtract::Process(po::variables_map &vm)
                  "Failed to interpret bnd values string");
     }
 
-    if(m_f->m_bndRegionsToWrite.size())
+    if (m_f->m_bndRegionsToWrite.size())
     {
         // This was already called. Just check if the bnd option is the same
         ASSERTL0(m_f->m_bndRegionsToWrite == bndRegions,
-                "Incompatible bnd parameters.");
+                 "Incompatible bnd parameters.");
     }
     else
     {
@@ -133,5 +131,5 @@ void ProcessBoundaryExtract::Process(po::variables_map &vm)
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

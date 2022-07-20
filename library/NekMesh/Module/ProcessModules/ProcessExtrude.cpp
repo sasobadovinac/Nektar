@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Element.h>
 #include "ProcessExtrude.h"
+#include <NekMesh/MeshElements/Element.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -91,13 +91,12 @@ void ProcessExtrude::Process()
         m_log(VERBOSE) << it.first << "\t" << it.second->m_tag;
         for (int i = 0; i < it.second->m_items.size(); ++i)
         {
-            m_log(VERBOSE) << "\t" << it.second->m_items[i]->GetId()
-                           << " (" << it.second->m_items[i]->GetVertex(0)
-                           << ", " << it.second->m_items[i]->GetVertex(1)
-                           << ")";
+            m_log(VERBOSE) << "\t" << it.second->m_items[i]->GetId() << " ("
+                           << it.second->m_items[i]->GetVertex(0) << ", "
+                           << it.second->m_items[i]->GetVertex(1) << ")";
             vector<NodeSharedPtr> vv = it.second->m_items[i]->GetVertexList();
-            m_log(VERBOSE) << "\t(" << vv[0]->GetID()<< ", " << vv[1]->GetID()
-                           <<")";
+            m_log(VERBOSE) << "\t(" << vv[0]->GetID() << ", " << vv[1]->GetID()
+                           << ")";
         }
         m_log(VERBOSE) << endl;
     }
@@ -125,9 +124,8 @@ void ProcessExtrude::Process()
         for (auto &n : nodes)
         {
             z0 = n->m_z;
-            NodeSharedPtr newNode(
-                new Node(i * nodes.size() + n->m_id, n->m_x, n->m_y,
-                    n->m_z + i * dz));
+            NodeSharedPtr newNode(new Node(i * nodes.size() + n->m_id, n->m_x,
+                                           n->m_y, n->m_z + i * dz));
             m_mesh->m_vertexSet.insert(newNode);
             id2node[i * nodes.size() + n->m_id] = newNode;
         }
@@ -152,12 +150,11 @@ void ProcessExtrude::Process()
                 nodeList[6] = id2node[verts[2]->m_id + (j + 1) * nodes.size()];
                 nodeList[7] = id2node[verts[3]->m_id + (j + 1) * nodes.size()];
 
-
                 vector<int> tags(1);
                 tags[0] = 0;
 
                 ElmtConfig conf(LibUtilities::eHexahedron, 1, false, false,
-                    false);
+                                false);
                 ElementSharedPtr E = GetElementFactory().CreateInstance(
                     LibUtilities::eHexahedron, conf, nodeList, tags);
 
@@ -232,7 +229,7 @@ void ProcessExtrude::Process()
     unsigned int maxCompId = 0;
     for (auto &it : oldComp)
     {
-        if(it.second->m_id >= maxCompId)
+        if (it.second->m_id >= maxCompId)
         {
             maxCompId = it.second->m_id;
         }
@@ -251,8 +248,7 @@ void ProcessExtrude::Process()
         if (it2.second->m_tag == "H" || it2.second->m_tag == "R")
         {
             it2.second->m_id = outCompId;
-            m_mesh->m_composite.insert(std::make_pair(outCompId,
-                it2.second));
+            m_mesh->m_composite.insert(std::make_pair(outCompId, it2.second));
             toErase.push_back(it2.first);
             outCompId += 1;
         }
@@ -275,8 +271,8 @@ void ProcessExtrude::Process()
                 if (it2.second->m_tag == "H" && it1.second->m_tag == "Q")
                 {
                     it2.second->m_id = it1.second->m_id;
-                    m_mesh->m_composite.insert(std::make_pair(it1.second->m_id,
-                        it2.second));
+                    m_mesh->m_composite.insert(
+                        std::make_pair(it1.second->m_id, it2.second));
                     toErase.push_back(it2.first);
                     oldComp.erase(it1.first);
                     break;
@@ -284,8 +280,8 @@ void ProcessExtrude::Process()
                 else if (it2.second->m_tag == "R" && it1.second->m_tag == "T")
                 {
                     it2.second->m_id = it1.second->m_id;
-                    m_mesh->m_composite.insert(std::make_pair(it1.second->m_id,
-                        it2.second));
+                    m_mesh->m_composite.insert(
+                        std::make_pair(it1.second->m_id, it2.second));
                     toErase.push_back(it2.first);
                     oldComp.erase(it1.first);
                     break;
@@ -301,39 +297,40 @@ void ProcessExtrude::Process()
 
     // Add new composite to be filled with all boundary faces
     CompositeSharedPtr comp(new Composite());
-    comp->m_id  = ++maxCompId;
-    unsigned int compAllFaceId = maxCompId; // save it so we can remove it later on
+    comp->m_id = ++maxCompId;
+    unsigned int compAllFaceId =
+        maxCompId; // save it so we can remove it later on
     comp->m_tag = "F";
     m_mesh->m_composite.insert(std::make_pair(maxCompId, comp));
 
     // Add all boundary faces to the composite
-    auto allFaceC =  m_mesh->m_composite.find(maxCompId);
+    auto allFaceC = m_mesh->m_composite.find(maxCompId);
     m_log(VERBOSE) << "Faces boundary list" << endl;
 
     for (auto &it : m_mesh->m_faceSet)
     {
         // Add to composite if boundary face
-        if ( it->m_elLink.size() < 2 )
+        if (it->m_elLink.size() < 2)
         {
-            if(it->m_vertexList.size() == 3)
+            if (it->m_vertexList.size() == 3)
             {
                 // Triangle
                 ElmtConfig conf(LibUtilities::eTriangle, 1, false, false);
                 vector<int> tags(1);
-                tags[0] = 1;
+                tags[0]            = 1;
                 ElementSharedPtr E = GetElementFactory().CreateInstance(
-                LibUtilities::eTriangle, conf, it->m_vertexList, tags);
+                    LibUtilities::eTriangle, conf, it->m_vertexList, tags);
                 E->SetId(it->m_id);
                 allFaceC->second->m_items.push_back(E);
             }
-            else if(it->m_vertexList.size() == 4)
+            else if (it->m_vertexList.size() == 4)
             {
                 // Quad
                 ElmtConfig conf(LibUtilities::eQuadrilateral, 1, false, false);
                 vector<int> tags(1);
-                tags[0] = 0;
+                tags[0]            = 0;
                 ElementSharedPtr E = GetElementFactory().CreateInstance(
-                LibUtilities::eQuadrilateral, conf, it->m_vertexList, tags);
+                    LibUtilities::eQuadrilateral, conf, it->m_vertexList, tags);
                 E->SetId(it->m_id);
                 allFaceC->second->m_items.push_back(E);
             }
@@ -365,14 +362,16 @@ void ProcessExtrude::Process()
         {
             for (int iEd = 0; iEd < itOc.second->m_items.size(); ++iEd)
             {
-                int inCommon = 0 ;
+                int inCommon = 0;
                 for (int iV = 0; iV < itQ->GetVertexList().size(); iV++)
                 {
-                    for( int j = 0; j < 2; j++)
+                    for (int j = 0; j < 2; j++)
                     {
-                        if (LibUtilities::IsRealEqual(itQ->GetVertex(iV)->m_x,
+                        if (LibUtilities::IsRealEqual(
+                                itQ->GetVertex(iV)->m_x,
                                 itOc.second->m_items[iEd]->GetVertex(j)->m_x) &&
-                            LibUtilities::IsRealEqual(itQ->GetVertex(iV)->m_y,
+                            LibUtilities::IsRealEqual(
+                                itQ->GetVertex(iV)->m_y,
                                 itOc.second->m_items[iEd]->GetVertex(j)->m_y))
                         {
                             ++inCommon;
@@ -382,26 +381,24 @@ void ProcessExtrude::Process()
                 // If the face contains 4 xy pairs in common with 1 edge it
                 // must be an extruded edge and it should be added to the
                 // corresponding composite
-                if(inCommon == 4)
+                if (inCommon == 4)
                 {
-                    m_log(VERBOSE) << "Face " << itQ->GetId() << "\t"
-                                   << "Composite " << itOc.second->m_id
-                                   << "\t" << endl;
-                    auto newC =  m_mesh->m_composite.find(itOc.second->m_id);
+                    m_log(VERBOSE)
+                        << "Face " << itQ->GetId() << "\t"
+                        << "Composite " << itOc.second->m_id << "\t" << endl;
+                    auto newC = m_mesh->m_composite.find(itOc.second->m_id);
                     // Quad
                     ElmtConfig conf(LibUtilities::eQuadrilateral, 1, false,
-                        false);
+                                    false);
                     vector<int> tags(1);
-                    tags[0] = 0;
+                    tags[0]            = 0;
                     ElementSharedPtr E = GetElementFactory().CreateInstance(
-                    LibUtilities::eQuadrilateral, conf, itQ->GetVertexList(),
-                        tags);
+                        LibUtilities::eQuadrilateral, conf,
+                        itQ->GetVertexList(), tags);
                     E->SetId(itQ->GetId());
                     newC->second->m_items.push_back(E);
                 }
             }
-
-
         }
 
         // Populates periodic composites
@@ -410,46 +407,43 @@ void ProcessExtrude::Process()
         {
             zdist += itQ->GetVertex(iV)->m_z;
         }
-        zdist = zdist / itQ->GetVertexList().size();
+        zdist                  = zdist / itQ->GetVertexList().size();
         unsigned int compPerId = 0;
-        if(LibUtilities::IsRealEqual(zdist, z0))
+        if (LibUtilities::IsRealEqual(zdist, z0))
         {
-            compPerId = maxCompId-1;
+            compPerId = maxCompId - 1;
         }
-        else if(LibUtilities::IsRealEqual(zdist - z0, length))
+        else if (LibUtilities::IsRealEqual(zdist - z0, length))
         {
-           compPerId = maxCompId;
+            compPerId = maxCompId;
         }
-        if(compPerId > 0 && itQ->GetVertexList().size() == 3)
+        if (compPerId > 0 && itQ->GetVertexList().size() == 3)
         {
             // Triangle
-            auto perC =  m_mesh->m_composite.find(compPerId);
+            auto perC = m_mesh->m_composite.find(compPerId);
             ElmtConfig conf(LibUtilities::eTriangle, 1, false, false);
             vector<int> tags(1);
-            tags[0] = 1;
+            tags[0]            = 1;
             ElementSharedPtr E = GetElementFactory().CreateInstance(
-            LibUtilities::eTriangle, conf, itQ->GetVertexList(), tags);
+                LibUtilities::eTriangle, conf, itQ->GetVertexList(), tags);
             E->SetId(itQ->GetId());
             perC->second->m_items.push_back(E);
         }
-        else if(compPerId > 0 && itQ->GetVertexList().size() == 4)
+        else if (compPerId > 0 && itQ->GetVertexList().size() == 4)
         {
             // Quad
-            auto perC =  m_mesh->m_composite.find(compPerId);
+            auto perC = m_mesh->m_composite.find(compPerId);
             ElmtConfig conf(LibUtilities::eQuadrilateral, 1, false, false);
             vector<int> tags(1);
-            tags[0] = 0;
+            tags[0]            = 0;
             ElementSharedPtr E = GetElementFactory().CreateInstance(
-            LibUtilities::eQuadrilateral, conf, itQ->GetVertexList(), tags);
+                LibUtilities::eQuadrilateral, conf, itQ->GetVertexList(), tags);
             E->SetId(itQ->GetId());
             perC->second->m_items.push_back(E);
         }
     }
     // Remove all faces composite
     m_mesh->m_composite.erase(compAllFaceId);
-
-
-
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

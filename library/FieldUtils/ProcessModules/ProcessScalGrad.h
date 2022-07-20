@@ -71,9 +71,8 @@ public:
     {
         return "Calculating scalar gradient";
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

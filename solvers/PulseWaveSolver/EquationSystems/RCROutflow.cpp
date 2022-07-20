@@ -58,10 +58,10 @@ RCROutflow::~RCROutflow()
 }
 
 void RCROutflow::v_DoBoundary(
-    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-    Array<OneD, Array<OneD, NekDouble> > &A_0,
-    Array<OneD, Array<OneD, NekDouble> > &beta,
-    Array<OneD, Array<OneD, NekDouble> > &alpha, const NekDouble time, int omega,
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &A_0,
+    Array<OneD, Array<OneD, NekDouble>> &beta,
+    Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
     int offset, int n)
 {
     NekDouble A_r  = 0.0;
@@ -97,7 +97,8 @@ void RCROutflow::v_DoBoundary(
     u_l = inarray[1][offset + nq - 1];
 
     // Goes through the first resistance; calculates c_0
-    m_pressureArea->GetC(c_0, beta[omega][nq - 1], A_0[omega][nq - 1], A_0[omega][nq - 1], alpha[omega][nq - 1]);
+    m_pressureArea->GetC(c_0, beta[omega][nq - 1], A_0[omega][nq - 1],
+                         A_0[omega][nq - 1], alpha[omega][nq - 1]);
 
     /* Calculate R1 and R2, R1 being calculated so as
        to eliminate reflections in the vessel */
@@ -113,7 +114,7 @@ void RCROutflow::v_DoBoundary(
 
     // Call the R RiemannSolver
     R_RiemannSolver(R1, A_l, u_l, A_0[omega][nq - 1], beta[omega][nq - 1],
-                                          alpha[omega][nq - 1], m_pc, A_u, u_u);
+                    alpha[omega][nq - 1], m_pc, A_u, u_u);
 
     /* Fix the boundary conditions in the virtual region to ensure
        upwind state matches the boundary condition at the next time step */
@@ -167,8 +168,8 @@ void RCROutflow::R_RiemannSolver(NekDouble R, NekDouble A_l, NekDouble u_l,
         m_pressureArea->GetC(c, beta, A_calc, A_0, alpha);
         m_pressureArea->GetCharIntegral(I, beta, A_calc, A_0, alpha);
 
-        FA = R * A_calc * (W1 - I) - P + POut;
-        dFdA = R * (W1 - I - c) - c * c * rho / A_calc;
+        FA           = R * A_calc * (W1 - I) - P + POut;
+        dFdA         = R * (W1 - I - c) - c * c * rho / A_calc;
         delta_A_calc = FA / dFdA;
         A_calc -= delta_A_calc;
 

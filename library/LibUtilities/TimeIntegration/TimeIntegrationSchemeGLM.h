@@ -52,16 +52,16 @@ class TimeIntegrationSchemeGLM : public TimeIntegrationScheme
 {
 public:
     // Access methods
-    LUE virtual std::string              GetName      () const = 0;
+    LUE virtual std::string GetName() const = 0;
     // Values stored by each integration phase.
-    LUE virtual std::string              GetVariant   () const;
-    LUE virtual unsigned int             GetOrder     () const;
-    LUE virtual std::vector< NekDouble > GetFreeParams() const;
+    LUE virtual std::string GetVariant() const;
+    LUE virtual unsigned int GetOrder() const;
+    LUE virtual std::vector<NekDouble> GetFreeParams() const;
 
     LUE virtual NekDouble GetTimeStability() const = 0;
 
     LUE virtual TimeIntegrationSchemeType GetIntegrationSchemeType() const;
-  
+
     LUE unsigned int GetNumIntegrationPhases() const;
 
     // Gets the solution Vector
@@ -77,31 +77,32 @@ public:
     }
 
     // The worker methods
-    LUE virtual void InitializeScheme(
-        const NekDouble deltaT, ConstDoubleArray &y_0,
-        const NekDouble time, const TimeIntegrationSchemeOperators &op);
+    LUE virtual void InitializeScheme(const NekDouble deltaT,
+                                      ConstDoubleArray &y_0,
+                                      const NekDouble time,
+                                      const TimeIntegrationSchemeOperators &op);
 
     LUE virtual ConstDoubleArray &TimeIntegrate(
         const int timestep, const NekDouble delta_t,
         const TimeIntegrationSchemeOperators &op);
-  
+
     LUE virtual void InitializeSecondaryData(TimeIntegrationAlgorithmGLM *phase,
                                              NekDouble deltaT) const;
-  
+
     LUE virtual void print(std::ostream &os) const;
     LUE virtual void printFull(std::ostream &os) const;
 
     // Friend classes
     LUE friend std::ostream &operator<<(std::ostream &os,
-        const TimeIntegrationSchemeGLM &rhs);
-    LUE friend std::ostream &operator<<(std::ostream &os,
-        const TimeIntegrationSchemeGLMSharedPtr &rhs);
+                                        const TimeIntegrationSchemeGLM &rhs);
+    LUE friend std::ostream &operator<<(
+        std::ostream &os, const TimeIntegrationSchemeGLMSharedPtr &rhs);
 
 protected:
     // These methods should never be used directly, only used by child classes.
     LUE TimeIntegrationSchemeGLM(std::string variant, unsigned int order,
-                                 std::vector<NekDouble> freeParams) :
-        TimeIntegrationScheme(variant, order, freeParams)
+                                 std::vector<NekDouble> freeParams)
+        : TimeIntegrationScheme(variant, order, freeParams)
     {
         boost::ignore_unused(variant, order, freeParams);
     }

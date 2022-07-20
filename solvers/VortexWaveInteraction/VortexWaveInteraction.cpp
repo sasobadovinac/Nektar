@@ -954,6 +954,7 @@ void VortexWaveInteraction::CalcNonLinearWaveForce(void)
             static Array<OneD, int> index = GetReflectionIndex();
 
             m_waveVelocities[0]->GetPlane(0)->BwdTrans(m_vwiForcing[0], der1);
+
             for (i = 0; i < npts; ++i)
             {
                 if (index[i] != -1)

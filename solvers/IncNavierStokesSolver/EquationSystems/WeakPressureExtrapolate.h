@@ -35,68 +35,65 @@
 #ifndef NEKTAR_SOLVERS_WEAKPRESSUREEXTRAPOLATE_H
 #define NEKTAR_SOLVERS_WEAKPRESSUREEXTRAPOLATE_H
 
-#include <LibUtilities/BasicUtils/NekFactory.hpp>
-#include <LibUtilities/Memory/NekMemoryManager.hpp>
-#include <LibUtilities/BasicUtils/SessionReader.h>
-#include <MultiRegions/ExpList.h>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <SolverUtils/AdvectionSystem.h>
 #include <IncNavierStokesSolver/EquationSystems/StandardExtrapolate.h>
+#include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/SessionReader.h>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/Memory/NekMemoryManager.hpp>
+#include <MultiRegions/ExpList.h>
+#include <SolverUtils/AdvectionSystem.h>
 
 namespace Nektar
 {
-    //--------
-    // Weak Pressure Extrapolate
-    // --------
-    
-    class WeakPressureExtrapolate;
-    
-    typedef std::shared_ptr<WeakPressureExtrapolate> WeakPressureExtrapolateSharedPtr;
-    
-    class WeakPressureExtrapolate : public StandardExtrapolate
+//--------
+// Weak Pressure Extrapolate
+// --------
+
+class WeakPressureExtrapolate;
+
+typedef std::shared_ptr<WeakPressureExtrapolate>
+    WeakPressureExtrapolateSharedPtr;
+
+class WeakPressureExtrapolate : public StandardExtrapolate
+{
+public:
+    /// Creates an instance of this class
+    static ExtrapolateSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        MultiRegions::ExpListSharedPtr &pPressure, const Array<OneD, int> &pVel,
+        const SolverUtils::AdvectionSharedPtr &advObject)
     {
-    public:
+        ExtrapolateSharedPtr p =
+            MemoryManager<WeakPressureExtrapolate>::AllocateSharedPtr(
+                pSession, pFields, pPressure, pVel, advObject);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static ExtrapolateSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr  &pSession,
-            Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-            MultiRegions::ExpListSharedPtr              &pPressure,
-            const Array<OneD, int>                      &pVel,
-            const SolverUtils::AdvectionSharedPtr       &advObject)
-        {
-            ExtrapolateSharedPtr p = MemoryManager<WeakPressureExtrapolate>
-                ::AllocateSharedPtr(pSession,pFields,pPressure,pVel,advObject);
-            return p;
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    WeakPressureExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
+                            Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
+                            MultiRegions::ExpListSharedPtr pPressure,
+                            const Array<OneD, int> pVel,
+                            const SolverUtils::AdvectionSharedPtr advObject);
 
-        WeakPressureExtrapolate(
-            const LibUtilities::SessionReaderSharedPtr pSession,
-            Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
-            MultiRegions::ExpListSharedPtr              pPressure,
-            const Array<OneD, int>                      pVel,
-            const SolverUtils::AdvectionSharedPtr       advObject);
+    virtual ~WeakPressureExtrapolate();
 
-        virtual ~WeakPressureExtrapolate();
-        
-    protected:
-        virtual void v_EvaluatePressureBCs(const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                                           const Array<OneD, const Array<OneD, NekDouble> >  &N,
-                                           NekDouble kinvis);
+protected:
+    virtual void v_EvaluatePressureBCs(
+        const Array<OneD, const Array<OneD, NekDouble>> &fields,
+        const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis);
 
-        virtual void v_MountHOPBCs(int HBCdata, 
-                                   NekDouble kinvis, 
-                                   Array<OneD, NekDouble> &Q, 
-                                   Array<OneD, const NekDouble> &Advection);
-        
-        virtual void v_AddNormVelOnOBC(const int nbcoeffs, const int nreg,
-                                       Array<OneD, Array<OneD, NekDouble> > &u);
-    };
-    
-}
+    virtual void v_MountHOPBCs(int HBCdata, NekDouble kinvis,
+                               Array<OneD, NekDouble> &Q,
+                               Array<OneD, const NekDouble> &Advection);
+
+    virtual void v_AddNormVelOnOBC(const int nbcoeffs, const int nreg,
+                                   Array<OneD, Array<OneD, NekDouble>> &u);
+};
+
+} // namespace Nektar
 
 #endif
-

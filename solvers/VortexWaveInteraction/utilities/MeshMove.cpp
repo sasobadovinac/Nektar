@@ -789,8 +789,8 @@ int main(int argc, char *argv[])
                 // Sign[qp_closer]*Delta_c[qp_closer]*ratio;
 
                 // ratio = (1-y)*(1+y)/(
-                // (1-yold_up[qp_closer])*(1+yold_up[qp_closer]) ); distance prop
-                // to layerup
+                // (1-yold_up[qp_closer])*(1+yold_up[qp_closer]) ); distance
+                // prop to layerup
                 ynew[i] = y_c[qp_closer] + (y - yold_c[qp_closer]) *
                                                (1 - y_c[qp_closer]) /
                                                (1 - yold_c[qp_closer]);
@@ -1333,7 +1333,8 @@ int main(int argc, char *argv[])
                 // for each layer
 
                 // cout<<m<<"Vid:"<<lay_Vids[m][h]<<"  mod from
-                // y="<<ynew[lay_Vids[m][h] ]<<"  to y="<<y_c[h] +delta[m]<<endl;
+                // y="<<ynew[lay_Vids[m][h] ]<<"  to y="<<y_c[h]
+                // +delta[m]<<endl;
                 if (move_norm == false)
                 {
                     ynew[lay_Vids[m][h]] = y_c[h] + delta[m];
@@ -1714,7 +1715,8 @@ int main(int argc, char *argv[])
             // cout<<nedges<<"nedges"<<npedge<<" np_lay="<<np_lay<<endl;
             // calc lay coords
             // MoveLayerNfixedxpos(nvertl, npedge, xcPhysMOD, tmpx_lay,
-            // tmpy_lay, 	 lay_Vids[m], layers_x[m], layers_y[m],xnew,ynew);
+            // tmpy_lay, 	 lay_Vids[m], layers_x[m],
+            // layers_y[m],xnew,ynew);
             MoveLayerNnormpos(nvertl, npedge, xcPhysMOD, tmpx_lay, tmpy_lay,
                               lay_Vids[m], layers_x[m], layers_y[m], xnew,
                               ynew);
@@ -1889,8 +1891,9 @@ int main(int argc, char *argv[])
         } // close layers!!! m index
 
         // MoveOutsidePointsfixedxpos(npedge, graphShPt,xold_c, yold_c,
-        // xold_low, yold_low, 	         xold_up, yold_up, layers_y[0], layers_y[nlays-1],
-        //xnew, ynew);
+        // xold_low, yold_low, 	         xold_up, yold_up, layers_y[0],
+        // layers_y[nlays-1],
+        // xnew, ynew);
 
         // lastIregion -1 = laydown
         // lastIregion -2 = layup
@@ -3212,7 +3215,7 @@ void MoveLayersvertically(int nlays, int nvertl, int cntlow, int cntup,
                 xnew[lay_Vids[h][s]] = xc[s];
                 // cout<<"ynew="<<ynew[ lay_Vids[h][s] ]<<"
                 // ydown="<<ynew[Down[s]]<< " delta="<<abs(ynew[Down[s]] -
-                //y_c[s])/(cntlow+1)<<endl; until now layers_y=yold
+                // y_c[s])/(cntlow+1)<<endl; until now layers_y=yold
                 layers_y[h][s] = ynew[lay_Vids[h][s]];
                 layers_x[h][s] = xnew[lay_Vids[h][s]];
             }

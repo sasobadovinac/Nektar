@@ -37,80 +37,75 @@
 
 namespace Nektar
 {
-    /**
-     * Registers the class with the Factory.
-     */
-    std::string WeakPressureExtrapolate::className = GetExtrapolateFactory().RegisterCreatorFunction(
-        "WeakPressure",
-        WeakPressureExtrapolate::create,
-        "WeakPressure");
+/**
+ * Registers the class with the Factory.
+ */
+std::string WeakPressureExtrapolate::className =
+    GetExtrapolateFactory().RegisterCreatorFunction(
+        "WeakPressure", WeakPressureExtrapolate::create, "WeakPressure");
 
-    WeakPressureExtrapolate::WeakPressureExtrapolate(
-        const LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
-        MultiRegions::ExpListSharedPtr pPressure,
-        const Array<OneD, int> pVel,
-        const SolverUtils::AdvectionSharedPtr advObject):
-        StandardExtrapolate(pSession,pFields,pPressure,pVel,advObject)
+WeakPressureExtrapolate::WeakPressureExtrapolate(
+    const LibUtilities::SessionReaderSharedPtr pSession,
+    Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
+    MultiRegions::ExpListSharedPtr pPressure, const Array<OneD, int> pVel,
+    const SolverUtils::AdvectionSharedPtr advObject)
+    : StandardExtrapolate(pSession, pFields, pPressure, pVel, advObject)
+{
+}
+
+WeakPressureExtrapolate::~WeakPressureExtrapolate()
+{
+}
+
+/**
+ * Function to extrapolate the new pressure boundary condition.
+ * Based on the velocity field and on the advection term.
+ * Acceleration term is also computed.  This routine is a general
+ * one for 2d and 3D application and it can be called directly
+ * from velocity correction scheme. Specialisation on
+ * dimensionality is redirected to the CalcNeumannPressureBCs
+ * method.
+ */
+void WeakPressureExtrapolate::v_EvaluatePressureBCs(
+    const Array<OneD, const Array<OneD, NekDouble>> &fields,
+    const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis)
+{
+    m_pressureCalls++;
+    if (m_HBCnumber > 0)
     {
+        // Calculate just viscous BCs at current level and put in
+        // m_pressureHBCs[nlevels-1]
+        CalcNeumannPressureBCs(fields, N, kinvis);
+
+        // Extrapolate to m_pressureHBCs to n+1
+        ExtrapolateArray(m_pressureHBCs);
+
+        // \int_bnd q  n.u^{n} ds update current normal of field
+        // add m_pressureHBCs to gamma_0/Dt * m_acceleration[0]
+        AddVelBC();
+
+        // Copy m_pressureHBCs to m_PbndExp
+        CopyPressureHBCsToPbndExp();
     }
 
-    WeakPressureExtrapolate::~WeakPressureExtrapolate()
+    // Evaluate High order outflow conditions if required.
+    CalcOutflowBCs(fields, kinvis);
+}
+
+// In weak pressure formulation we also require \int q u.n ds on
+// outflow boundary
+void WeakPressureExtrapolate::v_AddNormVelOnOBC(
+    const int noutflow, const int nreg, Array<OneD, Array<OneD, NekDouble>> &u)
+{
+    if (!m_houtflow.get()) // no outflow on partition so just return
     {
+        return;
     }
 
-    /**
-     * Function to extrapolate the new pressure boundary condition.
-     * Based on the velocity field and on the advection term.
-     * Acceleration term is also computed.  This routine is a general
-     * one for 2d and 3D application and it can be called directly
-     * from velocity correction scheme. Specialisation on
-     * dimensionality is redirected to the CalcNeumannPressureBCs
-     * method.
-     */
-    void WeakPressureExtrapolate::v_EvaluatePressureBCs(
-        const Array<OneD, const Array<OneD, NekDouble> > &fields,
-        const Array<OneD, const Array<OneD, NekDouble> >  &N,
-        NekDouble kinvis)
-    {
-        m_pressureCalls++;
-        if(m_HBCnumber > 0)
-        {
-            // Calculate just viscous BCs at current level and put in
-            // m_pressureHBCs[nlevels-1]
-            CalcNeumannPressureBCs(fields,N,kinvis);
+    int nbcoeffs = m_PBndExp[nreg]->GetNcoeffs();
+    // int nqb      = m_PBndExp[nreg]->GetTotPoints();
 
-            // Extrapolate to m_pressureHBCs to n+1
-            ExtrapolateArray(m_pressureHBCs);
-
-            // \int_bnd q  n.u^{n} ds update current normal of field
-            // add m_pressureHBCs to gamma_0/Dt * m_acceleration[0]
-            AddVelBC();
-
-            // Copy m_pressureHBCs to m_PbndExp
-            CopyPressureHBCsToPbndExp();
-        }
-
-        // Evaluate High order outflow conditions if required.
-        CalcOutflowBCs(fields, kinvis);
-    }
-
-    // In weak pressure formulation we also require \int q u.n ds on
-    // outflow boundary
-    void WeakPressureExtrapolate::v_AddNormVelOnOBC(const int noutflow,
-                                               const int nreg,
-                                               Array<OneD,
-                                               Array<OneD, NekDouble> > &u)
-    {
-        if(!m_houtflow.get()) // no outflow on partition so just return
-        {
-           return;
-        }
-
-        int nbcoeffs = m_PBndExp[nreg]->GetNcoeffs();
-        //int nqb      = m_PBndExp[nreg]->GetTotPoints();
-
-        Array<OneD, NekDouble> IProdVnTmp(nbcoeffs);
+    Array<OneD, NekDouble> IProdVnTmp(nbcoeffs);
 
 #if 0
         Array<OneD, Array<OneD, NekDouble> > ubnd(m_curl_dim);
@@ -128,24 +123,21 @@ namespace Nektar
 
         m_PBndExp[nreg]->NormVectorIProductWRTBase(ubnd,IProdVnTmp);
 #endif
-        m_PBndExp[nreg]->NormVectorIProductWRTBase(u,IProdVnTmp);
+    m_PBndExp[nreg]->NormVectorIProductWRTBase(u, IProdVnTmp);
 
-        Vmath::Svtvp(nbcoeffs,-1.0/m_timestep,IProdVnTmp,1,
-                     m_PBndExp[nreg]->UpdateCoeffs(),1,
-                     m_PBndExp[nreg]->UpdateCoeffs(),1);
-    }
-
-
-    /**
-     *  vritual function which only puts in the curl operator into the bcs
-     */
-    void WeakPressureExtrapolate::v_MountHOPBCs(int HBCdata,
-                                                NekDouble kinvis,
-                                                Array<OneD, NekDouble> &Q,
-                                                Array<OneD, const NekDouble> &Advection)
-    {
-        Vmath::Smul(HBCdata,-kinvis,Q,1,Q,1);
-    }
-
-
+    Vmath::Svtvp(nbcoeffs, -1.0 / m_timestep, IProdVnTmp, 1,
+                 m_PBndExp[nreg]->UpdateCoeffs(), 1,
+                 m_PBndExp[nreg]->UpdateCoeffs(), 1);
 }
+
+/**
+ *  vritual function which only puts in the curl operator into the bcs
+ */
+void WeakPressureExtrapolate::v_MountHOPBCs(
+    int HBCdata, NekDouble kinvis, Array<OneD, NekDouble> &Q,
+    Array<OneD, const NekDouble> &Advection)
+{
+    Vmath::Smul(HBCdata, -kinvis, Q, 1, Q, 1);
+}
+
+} // namespace Nektar

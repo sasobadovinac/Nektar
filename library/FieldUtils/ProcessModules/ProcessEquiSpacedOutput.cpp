@@ -82,12 +82,12 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
         int nfields = m_f->m_variables.size();
         int coordim = 3;
 
-        Array<OneD, Array<OneD, NekDouble> > pts(nfields + coordim);
+        Array<OneD, Array<OneD, NekDouble>> pts(nfields + coordim);
         for (int i = 0; i < nfields + coordim; ++i)
         {
             pts[i] = Array<OneD, NekDouble>(0);
         }
-        vector<Array<OneD, int> > ptsConn;
+        vector<Array<OneD, int>> ptsConn;
 
         m_f->m_fieldPts =
             MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
@@ -100,7 +100,7 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
     int coordim  = m_f->m_exp[0]->GetCoordim(0);
     int shapedim = m_f->m_exp[0]->GetExp(0)->GetShapeDimension();
     int npts     = m_f->m_exp[0]->GetTotPoints();
-    Array<OneD, Array<OneD, NekDouble> > coords(3);
+    Array<OneD, Array<OneD, NekDouble>> coords(3);
 
     // Check if we have a homogeneous expansion
     bool homogeneous1D = false;
@@ -131,7 +131,7 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
 
     // prepare PtsField
     vector<int> ppe;
-    vector<Array<OneD, int> > ptsConn;
+    vector<Array<OneD, int>> ptsConn;
     int nfields;
 
     for (int i = 0; i < nel; ++i)
@@ -328,7 +328,7 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
 
     nfields = m_f->m_variables.size();
 
-    Array<OneD, Array<OneD, NekDouble> > pts(nfields + coordim);
+    Array<OneD, Array<OneD, NekDouble>> pts(nfields + coordim);
 
     for (int i = 0; i < nfields + coordim; ++i)
     {
@@ -431,9 +431,9 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
             LibUtilities::eFourierEvenlySpaced)
     {
         // Write points with extra plane
-        Array<OneD, Array<OneD, NekDouble> > pts;
+        Array<OneD, Array<OneD, NekDouble>> pts;
         m_f->m_fieldPts->GetPts(pts);
-        Array<OneD, Array<OneD, NekDouble> > newPts(pts.size());
+        Array<OneD, Array<OneD, NekDouble>> newPts(pts.size());
         for (int i = 0; i < pts.size(); i++)
         {
             newPts[i] = Array<OneD, NekDouble>(npts + nptsPerPlane);
@@ -443,7 +443,7 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
             Array<OneD, NekDouble> extraPlane(nptsPerPlane, newPts[i] + npts);
             if (m_f->m_comm->GetColumnComm()->GetSize() == 1)
             {
-                if ( i == (coordim-1))
+                if (i == (coordim - 1))
                 {
                     // z-coordinate
                     Vmath::Sadd(nptsPerPlane, m_f->m_exp[0]->GetHomoLen(),
@@ -466,7 +466,7 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
                 m_f->m_comm->GetColumnComm()->SendRecv(toRank, send, fromRank,
                                                        extraPlane);
                 // Adjust z-coordinate of last process
-                if (i == (coordim-1) && (rank == size - 1) )
+                if (i == (coordim - 1) && (rank == size - 1))
                 {
                     Vmath::Sadd(nptsPerPlane, m_f->m_exp[0]->GetHomoLen(),
                                 extraPlane, 1, extraPlane, 1);
@@ -475,11 +475,11 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
         }
         m_f->m_fieldPts->SetPts(newPts);
         // Now extend plane connectivity
-        vector<Array<OneD, int> > oldConn;
+        vector<Array<OneD, int>> oldConn;
         Array<OneD, int> conn;
         m_f->m_fieldPts->GetConnectivity(oldConn);
-        vector<Array<OneD, int> > newConn = oldConn;
-        int connPerPlane = oldConn.size() / nPlanes;
+        vector<Array<OneD, int>> newConn = oldConn;
+        int connPerPlane                 = oldConn.size() / nPlanes;
         for (int i = 0; i < connPerPlane; i++)
         {
             conn = Array<OneD, int>(oldConn[i].size());
@@ -495,245 +495,249 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
         npts += nptsPerPlane;
     }
 
-    vector<Array<OneD, int> > oldConn;
-    vector<Array<OneD, int> > newConn;
-    Array<OneD, int>          conn;
+    vector<Array<OneD, int>> oldConn;
+    vector<Array<OneD, int>> newConn;
+    Array<OneD, int> conn;
     m_f->m_fieldPts->GetConnectivity(oldConn);
 
     // 2DH1D case
     if (m_f->m_fieldPts->GetPtsType() == LibUtilities::ePtsTriBlock)
     {
-        for(int i = 0; i < nel; ++i)
+        for (int i = 0; i < nel; ++i)
         {
-            int nLines = oldConn[i].size()/2;
+            int nLines = oldConn[i].size() / 2;
             // Create array for new connectivity
             // (2 triangles between each plane for each line)
-            conn = Array<OneD, int> (2*3*nLines*(nPlanes-1));
+            conn    = Array<OneD, int>(2 * 3 * nLines * (nPlanes - 1));
             int cnt = 0;
-            for(int n = 0; n<nLines; n++)
+            for (int n = 0; n < nLines; n++)
             {
                 // Define new connectivity with triangles
-                for ( int p = 0; p<nPlanes-1; p++)
+                for (int p = 0; p < nPlanes - 1; p++)
                 {
-                    conn[cnt++] = oldConn[i+  p  *nel][2*n+0];
-                    conn[cnt++] = oldConn[i+  p  *nel][2*n+1];
-                    conn[cnt++] = oldConn[i+(p+1)*nel][2*n+0];
+                    conn[cnt++] = oldConn[i + p * nel][2 * n + 0];
+                    conn[cnt++] = oldConn[i + p * nel][2 * n + 1];
+                    conn[cnt++] = oldConn[i + (p + 1) * nel][2 * n + 0];
 
-                    conn[cnt++] = oldConn[i+  p  *nel][2*n+1];
-                    conn[cnt++] = oldConn[i+(p+1)*nel][2*n+0];
-                    conn[cnt++] = oldConn[i+(p+1)*nel][2*n+1];
+                    conn[cnt++] = oldConn[i + p * nel][2 * n + 1];
+                    conn[cnt++] = oldConn[i + (p + 1) * nel][2 * n + 0];
+                    conn[cnt++] = oldConn[i + (p + 1) * nel][2 * n + 1];
                 }
             }
             newConn.push_back(conn);
         }
     }
-    else if(m_f->m_fieldPts->GetPtsType() == LibUtilities::ePtsTetBlock)
+    else if (m_f->m_fieldPts->GetPtsType() == LibUtilities::ePtsTetBlock)
     {
         // Get maximum number of points per direction in the mesh
         int maxN = 0;
-        for(int i = 0; i < nel; ++i)
+        for (int i = 0; i < nel; ++i)
         {
             e = m_f->m_exp[0]->GetPlane(0)->GetExp(i);
 
             int np0 = e->GetBasis(0)->GetNumPoints();
             int np1 = e->GetBasis(1)->GetNumPoints();
-            int np = max(np0,np1);
-            maxN = max(np, maxN);
+            int np  = max(np0, np1);
+            maxN    = max(np, maxN);
         }
 
         // Create a global numbering for points in plane 0
         Array<OneD, int> vId(nptsPerPlane);
-        int cnt1=0;
-        int cnt2=0;
-        for(int i = 0; i < nel; ++i)
+        int cnt1 = 0;
+        int cnt2 = 0;
+        for (int i = 0; i < nel; ++i)
         {
-            e = m_f->m_exp[0]->GetPlane(0)->GetExp(i);
+            e       = m_f->m_exp[0]->GetPlane(0)->GetExp(i);
             int np0 = e->GetBasis(0)->GetNumPoints();
             int np1 = e->GetBasis(1)->GetNumPoints();
-            int np = max(np0,np1);
-            switch(e->DetShapeType())
+            int np  = max(np0, np1);
+            switch (e->DetShapeType())
             {
-            case LibUtilities::eTriangle:
+                case LibUtilities::eTriangle:
                 {
-                    int newpoints = LibUtilities::StdTriData::
-                                        getNumberOfCoefficients(np,np);
+                    int newpoints =
+                        LibUtilities::StdTriData::getNumberOfCoefficients(np,
+                                                                          np);
 
                     // Vertex numbering
                     vId[cnt1]                 = e->GetGeom()->GetVid(0);
-                    vId[cnt1+np-1]            = e->GetGeom()->GetVid(1);
-                    vId[cnt1+newpoints-1]     = e->GetGeom()->GetVid(2);
+                    vId[cnt1 + np - 1]        = e->GetGeom()->GetVid(1);
+                    vId[cnt1 + newpoints - 1] = e->GetGeom()->GetVid(2);
 
                     // Edge numbering
-                    StdRegions::Orientation             edgeOrient;
+                    StdRegions::Orientation edgeOrient;
                     int edge1 = 0;
                     int edge2 = 0;
-                    for (int n = 1; n < np-1; n++)
+                    for (int n = 1; n < np - 1; n++)
                     {
                         // Edge 0
-                        edgeOrient          = e->GetGeom()->GetEorient(0);
-                        if (edgeOrient==StdRegions::eForwards)
+                        edgeOrient = e->GetGeom()->GetEorient(0);
+                        if (edgeOrient == StdRegions::eForwards)
                         {
-                            vId[cnt1+n] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(0) + n;
+                            vId[cnt1 + n] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(0) + n;
                         }
                         else
                         {
-                            vId[cnt1+np-1-n] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(0) + n;
+                            vId[cnt1 + np - 1 - n] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(0) + n;
                         }
 
                         // Edge 1
-                        edgeOrient          = e->GetGeom()->GetEorient(1);
-                        if (edgeOrient==StdRegions::eForwards)
+                        edgeOrient = e->GetGeom()->GetEorient(1);
+                        if (edgeOrient == StdRegions::eForwards)
                         {
-                            edge1 += np-n;
-                            vId[cnt1+np-1+edge1] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(1) + n;
+                            edge1 += np - n;
+                            vId[cnt1 + np - 1 + edge1] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(1) + n;
                         }
                         else
                         {
                             edge1 += n;
-                            vId[cnt1+newpoints-1-edge1] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(1) + n;
+                            vId[cnt1 + newpoints - 1 - edge1] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(1) + n;
                         }
 
                         // Edge 2
-                        edgeOrient          = e->GetGeom()->GetEorient(2);
-                        if (edgeOrient==StdRegions::eForwards)
+                        edgeOrient = e->GetGeom()->GetEorient(2);
+                        if (edgeOrient == StdRegions::eForwards)
                         {
-                            edge2 += n+1;
-                            vId[cnt1+newpoints-1-edge2] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(2) + n;
+                            edge2 += n + 1;
+                            vId[cnt1 + newpoints - 1 - edge2] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(2) + n;
                         }
                         else
                         {
-                            edge2 += np+1-n;
-                            vId[cnt1+edge2] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(2) + n;
+                            edge2 += np + 1 - n;
+                            vId[cnt1 + edge2] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(2) + n;
                         }
                     }
 
                     // Interior numbering
                     edge2 = 0;
-                    for (int n = 1; n < np-1; n++)
+                    for (int n = 1; n < np - 1; n++)
                     {
-                        edge2 += np+1-n;
-                        for (int m = 1; m < np-n-1; m++)
+                        edge2 += np + 1 - n;
+                        for (int m = 1; m < np - n - 1; m++)
                         {
-                            vId[cnt1+edge2+m] = 4*nel + maxN*4*nel + cnt2;
+                            vId[cnt1 + edge2 + m] =
+                                4 * nel + maxN * 4 * nel + cnt2;
                             cnt2++;
                         }
                     }
-                    cnt1+= newpoints;
+                    cnt1 += newpoints;
                 }
                 break;
-            case LibUtilities::eQuadrilateral:
+                case LibUtilities::eQuadrilateral:
                 {
-                    int newpoints = LibUtilities::StdQuadData::
-                                        getNumberOfCoefficients(np,np);
+                    int newpoints =
+                        LibUtilities::StdQuadData::getNumberOfCoefficients(np,
+                                                                           np);
                     // Vertex numbering
-                    vId[cnt1]           = e->GetGeom()->GetVid(0);
-                    vId[cnt1+np-1]      = e->GetGeom()->GetVid(1);
-                    vId[cnt1+np*np-1]   = e->GetGeom()->GetVid(2);
-                    vId[cnt1+np*(np-1)] = e->GetGeom()->GetVid(3);
+                    vId[cnt1]                 = e->GetGeom()->GetVid(0);
+                    vId[cnt1 + np - 1]        = e->GetGeom()->GetVid(1);
+                    vId[cnt1 + np * np - 1]   = e->GetGeom()->GetVid(2);
+                    vId[cnt1 + np * (np - 1)] = e->GetGeom()->GetVid(3);
 
                     // Edge numbering
-                    StdRegions::Orientation             edgeOrient;
-                    for (int n = 1; n < np-1; n++)
+                    StdRegions::Orientation edgeOrient;
+                    for (int n = 1; n < np - 1; n++)
                     {
                         // Edge 0
-                        edgeOrient          = e->GetGeom()->GetEorient(0);
-                        if (edgeOrient==StdRegions::eForwards)
+                        edgeOrient = e->GetGeom()->GetEorient(0);
+                        if (edgeOrient == StdRegions::eForwards)
                         {
-                            vId[cnt1+n] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(0) + n;
+                            vId[cnt1 + n] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(0) + n;
                         }
                         else
                         {
-                            vId[cnt1+np-1-n] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(0) + n;
+                            vId[cnt1 + np - 1 - n] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(0) + n;
                         }
 
                         // Edge 1
-                        edgeOrient          = e->GetGeom()->GetEorient(1);
-                        if (edgeOrient==StdRegions::eForwards)
+                        edgeOrient = e->GetGeom()->GetEorient(1);
+                        if (edgeOrient == StdRegions::eForwards)
                         {
-                            vId[cnt1+np-1+n*np] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(1) + n;
+                            vId[cnt1 + np - 1 + n * np] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(1) + n;
                         }
                         else
                         {
-                            vId[cnt1+np*np-1-n*np] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(1) + n;
+                            vId[cnt1 + np * np - 1 - n * np] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(1) + n;
                         }
 
                         // Edge 2
-                        edgeOrient          = e->GetGeom()->GetEorient(2);
-                        if (edgeOrient==StdRegions::eForwards)
+                        edgeOrient = e->GetGeom()->GetEorient(2);
+                        if (edgeOrient == StdRegions::eForwards)
                         {
-                            vId[cnt1+np*np-1-n] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(2) + n;
+                            vId[cnt1 + np * np - 1 - n] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(2) + n;
                         }
                         else
                         {
-                            vId[cnt1+np*(np-1)+n] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(2) + n;
+                            vId[cnt1 + np * (np - 1) + n] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(2) + n;
                         }
 
                         // Edge 3
-                        edgeOrient          = e->GetGeom()->GetEorient(3);
-                        if (edgeOrient==StdRegions::eForwards)
+                        edgeOrient = e->GetGeom()->GetEorient(3);
+                        if (edgeOrient == StdRegions::eForwards)
                         {
-                            vId[cnt1+np*(np-1)-n*np] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(3) + n;
+                            vId[cnt1 + np * (np - 1) - n * np] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(3) + n;
                         }
                         else
                         {
-                            vId[cnt1+n*np] = 4*nel +
-                                            maxN*e->GetGeom()->GetEid(3) + n;
+                            vId[cnt1 + n * np] =
+                                4 * nel + maxN * e->GetGeom()->GetEid(3) + n;
                         }
                     }
 
                     // Interior numbering
-                    for (int n = 1; n < np-1; n++)
+                    for (int n = 1; n < np - 1; n++)
                     {
-                        for (int m = 1; m < np-1; m++)
+                        for (int m = 1; m < np - 1; m++)
                         {
-                            vId[cnt1+m*np+n] = 4*nel + maxN*4*nel + cnt2;
+                            vId[cnt1 + m * np + n] =
+                                4 * nel + maxN * 4 * nel + cnt2;
                             cnt2++;
                         }
                     }
-                    cnt1+= newpoints;
+                    cnt1 += newpoints;
                 }
                 break;
-            default:
+                default:
                 {
-                    ASSERTL0(false,"Points not known");
+                    ASSERTL0(false, "Points not known");
                 }
             }
         }
 
         // Crete new connectivity using homogeneous information
-        for(int i = 0; i < nel; ++i)
+        for (int i = 0; i < nel; ++i)
         {
-            int nTris = oldConn[i].size()/3;
+            int nTris = oldConn[i].size() / 3;
             // Create array for new connectivity
             // (3 tetrahedra between each plane for each triangle)
-            conn = Array<OneD, int> (4*3*nTris*(nPlanes-1));
-            cnt2=0;
-            for(int n = 0; n<nTris; n++)
+            conn = Array<OneD, int>(4 * 3 * nTris * (nPlanes - 1));
+            cnt2 = 0;
+            for (int n = 0; n < nTris; n++)
             {
                 // Get id of vertices in this triangle (on plane 0)
-                int vId0 = vId[oldConn[i][3*n+0]];
-                int vId1 = vId[oldConn[i][3*n+1]];
-                int vId2 = vId[oldConn[i][3*n+2]];
+                int vId0 = vId[oldConn[i][3 * n + 0]];
+                int vId1 = vId[oldConn[i][3 * n + 1]];
+                int vId2 = vId[oldConn[i][3 * n + 2]];
 
                 // Determine ordering based on global Id of pts
                 Array<OneD, int> rot(3);
-                if ( (vId0<vId1) && (vId0<vId2))
+                if ((vId0 < vId1) && (vId0 < vId2))
                 {
                     rot[0] = 0;
-                    if (vId1<vId2)
+                    if (vId1 < vId2)
                     {
                         rot[1] = 1;
                         rot[2] = 2;
@@ -744,10 +748,10 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
                         rot[2] = 1;
                     }
                 }
-                else if ( (vId1<vId0) && (vId1<vId2))
+                else if ((vId1 < vId0) && (vId1 < vId2))
                 {
                     rot[0] = 1;
-                    if (vId0<vId2)
+                    if (vId0 < vId2)
                     {
                         rot[1] = 0;
                         rot[2] = 2;
@@ -761,7 +765,7 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
                 else
                 {
                     rot[0] = 2;
-                    if (vId0<vId1)
+                    if (vId0 < vId1)
                     {
                         rot[1] = 0;
                         rot[2] = 1;
@@ -774,22 +778,22 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
                 }
 
                 // Define new connectivity with tetrahedra
-                for ( int p = 0; p<nPlanes-1; p++)
+                for (int p = 0; p < nPlanes - 1; p++)
                 {
-                    conn[cnt2++] = oldConn[i+  p  *nel][3*n+rot[0]];
-                    conn[cnt2++] = oldConn[i+  p  *nel][3*n+rot[1]];
-                    conn[cnt2++] = oldConn[i+  p  *nel][3*n+rot[2]];
-                    conn[cnt2++] = oldConn[i+(p+1)*nel][3*n+rot[2]];
+                    conn[cnt2++] = oldConn[i + p * nel][3 * n + rot[0]];
+                    conn[cnt2++] = oldConn[i + p * nel][3 * n + rot[1]];
+                    conn[cnt2++] = oldConn[i + p * nel][3 * n + rot[2]];
+                    conn[cnt2++] = oldConn[i + (p + 1) * nel][3 * n + rot[2]];
 
-                    conn[cnt2++] = oldConn[i+  p  *nel][3*n+rot[0]];
-                    conn[cnt2++] = oldConn[i+  p  *nel][3*n+rot[1]];
-                    conn[cnt2++] = oldConn[i+(p+1)*nel][3*n+rot[2]];
-                    conn[cnt2++] = oldConn[i+(p+1)*nel][3*n+rot[1]];
+                    conn[cnt2++] = oldConn[i + p * nel][3 * n + rot[0]];
+                    conn[cnt2++] = oldConn[i + p * nel][3 * n + rot[1]];
+                    conn[cnt2++] = oldConn[i + (p + 1) * nel][3 * n + rot[2]];
+                    conn[cnt2++] = oldConn[i + (p + 1) * nel][3 * n + rot[1]];
 
-                    conn[cnt2++] = oldConn[i+  p  *nel][3*n+rot[0]];
-                    conn[cnt2++] = oldConn[i+(p+1)*nel][3*n+rot[1]];
-                    conn[cnt2++] = oldConn[i+(p+1)*nel][3*n+rot[2]];
-                    conn[cnt2++] = oldConn[i+(p+1)*nel][3*n+rot[0]];
+                    conn[cnt2++] = oldConn[i + p * nel][3 * n + rot[0]];
+                    conn[cnt2++] = oldConn[i + (p + 1) * nel][3 * n + rot[1]];
+                    conn[cnt2++] = oldConn[i + (p + 1) * nel][3 * n + rot[2]];
+                    conn[cnt2++] = oldConn[i + (p + 1) * nel][3 * n + rot[0]];
                 }
             }
             newConn.push_back(conn);
@@ -797,15 +801,14 @@ void ProcessEquiSpacedOutput::SetHomogeneousConnectivity(void)
     }
     else
     {
-        ASSERTL0( false, "Points type not supported.");
+        ASSERTL0(false, "Points type not supported.");
     }
 
     m_f->m_fieldPts->SetConnectivity(newConn);
 }
 
 void ProcessEquiSpacedOutput::GenOrthoModes(
-    int n,
-    const Array<OneD, const NekDouble> &phys,
+    int n, const Array<OneD, const NekDouble> &phys,
     Array<OneD, NekDouble> &coeffs)
 {
     LocalRegions::ExpansionSharedPtr e;
@@ -864,5 +867,5 @@ void ProcessEquiSpacedOutput::GenOrthoModes(
             break;
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

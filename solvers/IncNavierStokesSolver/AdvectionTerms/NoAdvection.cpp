@@ -39,20 +39,17 @@ using namespace std;
 namespace Nektar
 {
 
-string NoAdvection::className
-    = SolverUtils::GetAdvectionFactory().RegisterCreatorFunction(
-            "NoAdvection",
-            NoAdvection::create);
+string NoAdvection::className =
+    SolverUtils::GetAdvectionFactory().RegisterCreatorFunction(
+        "NoAdvection", NoAdvection::create);
 
 /**
  *
  */
-NoAdvection::NoAdvection():
-        Advection()
+NoAdvection::NoAdvection() : Advection()
 
 {
 }
-
 
 /**
  *
@@ -61,16 +58,14 @@ NoAdvection::~NoAdvection()
 {
 }
 
-
 /**
  *
  */
 void NoAdvection::v_InitObject(
-    LibUtilities::SessionReaderSharedPtr        pSession,
+    LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
 {
 }
-
 
 /**
  *
@@ -78,19 +73,17 @@ void NoAdvection::v_InitObject(
 void NoAdvection::v_Advect(
     const int nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-          Array<OneD, Array<OneD, NekDouble> >        &outarray,
-    const NekDouble                                   &time,
-    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-    const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+    const Array<OneD, Array<OneD, NekDouble>> &advVel,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
     int nPointsTot = fields[0]->GetNpoints();
     for (int i = 0; i < inarray.size(); ++i)
     {
-        Vmath::Zero(nPointsTot,outarray[i],1);
+        Vmath::Zero(nPointsTot, outarray[i], 1);
     }
 }
 
-} //end of namespace
-
+} // namespace Nektar

@@ -32,21 +32,21 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <string>
 #include <iostream>
+#include <string>
 using namespace std;
 
 #include <tuple>
 
 #include <NekMesh/MeshElements/Element.h>
-#include <NekMesh/MeshElements/Point.h>
+#include <NekMesh/MeshElements/Hexahedron.h>
 #include <NekMesh/MeshElements/Line.h>
-#include <NekMesh/MeshElements/Triangle.h>
+#include <NekMesh/MeshElements/Point.h>
+#include <NekMesh/MeshElements/Prism.h>
+#include <NekMesh/MeshElements/Pyramid.h>
 #include <NekMesh/MeshElements/Quadrilateral.h>
 #include <NekMesh/MeshElements/Tetrahedron.h>
-#include <NekMesh/MeshElements/Pyramid.h>
-#include <NekMesh/MeshElements/Prism.h>
-#include <NekMesh/MeshElements/Hexahedron.h>
+#include <NekMesh/MeshElements/Triangle.h>
 
 #include "InputGmsh.h"
 
@@ -100,8 +100,8 @@ std::vector<int> quadTensorNodeOrdering(const std::vector<int> &nodes, int n)
     nodeList[0] = nodes[0];
     if (n > 1)
     {
-        nodeList[n - 1]     = nodes[1];
-        nodeList[n * n - 1] = nodes[2];
+        nodeList[n - 1]       = nodes[1];
+        nodeList[n * n - 1]   = nodes[2];
         nodeList[n * (n - 1)] = nodes[3];
     }
     for (int i = 1; i < n - 1; ++i)
@@ -118,8 +118,8 @@ std::vector<int> quadTensorNodeOrdering(const std::vector<int> &nodes, int n)
     {
         // Reorder interior nodes
         std::vector<int> interior((n - 2) * (n - 2));
-        std::copy(
-            nodes.begin() + 4 + 4 * (n - 2), nodes.end(), interior.begin());
+        std::copy(nodes.begin() + 4 + 4 * (n - 2), nodes.end(),
+                  interior.begin());
         interior = quadTensorNodeOrdering(interior, n - 2);
 
         // Copy into full node list
@@ -177,7 +177,7 @@ std::vector<int> triTensorNodeOrdering(const std::vector<int> &nodes, int n)
     nodeList[0] = nodes[0];
     if (n > 1)
     {
-        nodeList[n - 1] = nodes[1];
+        nodeList[n - 1]               = nodes[1];
         nodeList[n * (n + 1) / 2 - 1] = nodes[2];
     }
 
@@ -196,8 +196,8 @@ std::vector<int> triTensorNodeOrdering(const std::vector<int> &nodes, int n)
     {
         // Reorder interior nodes
         std::vector<int> interior((n - 3) * (n - 2) / 2);
-        std::copy(
-            nodes.begin() + 3 + 3 * (n - 2), nodes.end(), interior.begin());
+        std::copy(nodes.begin() + 3 + 3 * (n - 2), nodes.end(),
+                  interior.begin());
         interior = triTensorNodeOrdering(interior, n - 3);
 
         // Copy into full node list
@@ -284,8 +284,8 @@ struct cmpop
 std::vector<int> tetTensorNodeOrdering(const std::vector<int> &nodes, int n)
 {
     std::vector<int> nodeList;
-    int nTri = n*(n+1)/2;
-    int nTet = n*(n+1)*(n+2)/6;
+    int nTri = n * (n + 1) / 2;
+    int nTet = n * (n + 1) * (n + 2) / 6;
 
     nodeList.resize(nodes.size());
     nodeList[0] = nodes[0];
@@ -315,21 +315,21 @@ std::vector<int> tetTensorNodeOrdering(const std::vector<int> &nodes, int n)
         {
             for (int i = 0; i < n - k - j; ++i)
             {
-                tmp[Mode(i,j,k)] = cnt++;
+                tmp[Mode(i, j, k)] = cnt++;
             }
         }
     }
 
     // Edges
-    for (int i = 1; i < n-1; ++i)
+    for (int i = 1; i < n - 1; ++i)
     {
-        int eI = i-1;
-        nodeList[tmp[Mode(i,0,0)]]     = nodes[4 + eI];
-        nodeList[tmp[Mode(n-1-i,i,0)]] = nodes[4 + (n-2) + eI];
-        nodeList[tmp[Mode(0,n-1-i,0)]] = nodes[4 + 2*(n-2) + eI];
-        nodeList[tmp[Mode(0,0,n-1-i)]] = nodes[4 + 3*(n-2) + eI];
-        nodeList[tmp[Mode(0,i,n-1-i)]] = nodes[4 + 4*(n-2) + eI];
-        nodeList[tmp[Mode(i,0,n-1-i)]] = nodes[4 + 5*(n-2) + eI];
+        int eI                               = i - 1;
+        nodeList[tmp[Mode(i, 0, 0)]]         = nodes[4 + eI];
+        nodeList[tmp[Mode(n - 1 - i, i, 0)]] = nodes[4 + (n - 2) + eI];
+        nodeList[tmp[Mode(0, n - 1 - i, 0)]] = nodes[4 + 2 * (n - 2) + eI];
+        nodeList[tmp[Mode(0, 0, n - 1 - i)]] = nodes[4 + 3 * (n - 2) + eI];
+        nodeList[tmp[Mode(0, i, n - 1 - i)]] = nodes[4 + 4 * (n - 2) + eI];
+        nodeList[tmp[Mode(i, 0, n - 1 - i)]] = nodes[4 + 5 * (n - 2) + eI];
     }
 
     if (n == 3)
@@ -339,11 +339,11 @@ std::vector<int> tetTensorNodeOrdering(const std::vector<int> &nodes, int n)
 
     // For faces, we use the triTensorNodeOrdering routine to make our lives
     // slightly easier.
-    int nFacePts = (n-3)*(n-2)/2;
+    int nFacePts = (n - 3) * (n - 2) / 2;
 
     // Grab face points and reorder into a tensor-product type format
-    vector<vector<int> > tmpNodes(4);
-    int offset = 4 + 6*(n-2);
+    vector<vector<int>> tmpNodes(4);
+    int offset = 4 + 6 * (n - 2);
 
     for (int i = 0; i < 4; ++i)
     {
@@ -352,7 +352,7 @@ std::vector<int> tetTensorNodeOrdering(const std::vector<int> &nodes, int n)
         {
             tmpNodes[i][j] = nodes[offset++];
         }
-        tmpNodes[i] = triTensorNodeOrdering(tmpNodes[i], n-3);
+        tmpNodes[i] = triTensorNodeOrdering(tmpNodes[i], n - 3);
     }
 
     if (n > 4)
@@ -388,14 +388,14 @@ std::vector<int> tetTensorNodeOrdering(const std::vector<int> &nodes, int n)
 
     // Now apply faces. Note that faces 3 and 2 are swapped between Gmsh and
     // Nektar++ order.
-    for (int j = 1, cnt = 0; j < n-2; ++j)
+    for (int j = 1, cnt = 0; j < n - 2; ++j)
     {
-        for (int i = 1; i < n-j-1; ++i, ++cnt)
+        for (int i = 1; i < n - j - 1; ++i, ++cnt)
         {
-            nodeList[tmp[Mode(i,j,0)]]       = tmpNodes[0][cnt];
-            nodeList[tmp[Mode(i,0,j)]]       = tmpNodes[1][cnt];
-            nodeList[tmp[Mode(n-1-i-j,i,j)]] = tmpNodes[3][cnt];
-            nodeList[tmp[Mode(0,i,j)]]       = tmpNodes[2][cnt];
+            nodeList[tmp[Mode(i, j, 0)]]             = tmpNodes[0][cnt];
+            nodeList[tmp[Mode(i, 0, j)]]             = tmpNodes[1][cnt];
+            nodeList[tmp[Mode(n - 1 - i - j, i, j)]] = tmpNodes[3][cnt];
+            nodeList[tmp[Mode(0, i, j)]]             = tmpNodes[2][cnt];
         }
     }
 
@@ -410,7 +410,7 @@ std::vector<int> tetTensorNodeOrdering(const std::vector<int> &nodes, int n)
     {
         intNodes.push_back(nodes[i]);
     }
-    tmpInt = tetTensorNodeOrdering(intNodes, n-4);
+    tmpInt = tetTensorNodeOrdering(intNodes, n - 4);
 
     for (int k = 1, cnt = 0; k < n - 2; ++k)
     {
@@ -418,7 +418,7 @@ std::vector<int> tetTensorNodeOrdering(const std::vector<int> &nodes, int n)
         {
             for (int i = 1; i < n - k - j - 1; ++i)
             {
-                nodeList[tmp[Mode(i,j,k)]] = tmpInt[cnt++];
+                nodeList[tmp[Mode(i, j, k)]] = tmpInt[cnt++];
             }
         }
     }
@@ -554,29 +554,34 @@ std::vector<int> hexTensorNodeOrdering(const std::vector<int> &nodes, int n)
     }
 
     // Vertices: same order as Nektar++
-    nodeList[n - 1]               = nodes[1];
-    nodeList[n*n -1]              = nodes[2];
-    nodeList[n*(n-1)]             = nodes[3];
-    nodeList[n*n*(n-1)]           = nodes[4];
-    nodeList[n - 1 + n*n*(n-1)]   = nodes[5];
-    nodeList[n*n -1 + n*n*(n-1)]  = nodes[6];
-    nodeList[n*(n-1) + n*n*(n-1)] = nodes[7];
+    nodeList[n - 1]                         = nodes[1];
+    nodeList[n * n - 1]                     = nodes[2];
+    nodeList[n * (n - 1)]                   = nodes[3];
+    nodeList[n * n * (n - 1)]               = nodes[4];
+    nodeList[n - 1 + n * n * (n - 1)]       = nodes[5];
+    nodeList[n * n - 1 + n * n * (n - 1)]   = nodes[6];
+    nodeList[n * (n - 1) + n * n * (n - 1)] = nodes[7];
 
     if (n == 2)
     {
         return nodeList;
     }
 
-    int hexEdges[12][2] = {
-        { 0, 1 }, { n-1, n }, { n*n-1, -1 }, { n*(n-1), -n },
-        { 0, n*n }, { n-1, n*n }, { n*n - 1, n*n }, { n*(n-1), n*n },
-        { n*n*(n-1), 1 }, { n*n*(n-1) + n-1, n }, { n*n*n-1, -1 },
-        { n*n*(n-1) + n*(n-1), -n }
-    };
-    int hexFaces[6][3] = {
-        { 0, 1, n }, { 0, 1, n*n }, { n-1, n, n*n },
-        { n*(n-1), 1, n*n }, { 0, n, n*n }, { n*n*(n-1), 1, n }
-    };
+    int hexEdges[12][2]   = {{0, 1},
+                           {n - 1, n},
+                           {n * n - 1, -1},
+                           {n * (n - 1), -n},
+                           {0, n * n},
+                           {n - 1, n * n},
+                           {n * n - 1, n * n},
+                           {n * (n - 1), n * n},
+                           {n * n * (n - 1), 1},
+                           {n * n * (n - 1) + n - 1, n},
+                           {n * n * n - 1, -1},
+                           {n * n * (n - 1) + n * (n - 1), -n}};
+    int hexFaces[6][3]    = {{0, 1, n},         {0, 1, n * n},
+                          {n - 1, n, n * n}, {n * (n - 1), 1, n * n},
+                          {0, n, n * n},     {n * n * (n - 1), 1, n}};
     int gmshToNekEdge[12] = {0, -3, 4, 1, 5, 2, 6, 7, 8, -11, 9, 10};
 
     // Edges
@@ -587,16 +592,17 @@ std::vector<int> hexTensorNodeOrdering(const std::vector<int> &nodes, int n)
 
         if (gmshToNekEdge[i] >= 0)
         {
-            for (int j = 1; j < n-1; ++j)
+            for (int j = 1; j < n - 1; ++j)
             {
-                nodeList[hexEdges[e][0] + j*hexEdges[e][1]] = nodes[offset++];
+                nodeList[hexEdges[e][0] + j * hexEdges[e][1]] = nodes[offset++];
             }
         }
         else
         {
-            for (int j = 1; j < n-1; ++j)
+            for (int j = 1; j < n - 1; ++j)
             {
-                nodeList[hexEdges[e][0] + (n-j-1)*hexEdges[e][1]] = nodes[offset++];
+                nodeList[hexEdges[e][0] + (n - j - 1) * hexEdges[e][1]] =
+                    nodes[offset++];
             }
         }
     }
@@ -615,9 +621,9 @@ std::vector<int> hexTensorNodeOrdering(const std::vector<int> &nodes, int n)
 
     for (i = 0; i < 6; ++i)
     {
-        int n2 = (n-2)*(n-2);
+        int n2   = (n - 2) * (n - 2);
         int face = gmsh2NekFace[i];
-        offset   = 8 + 12 * (n-2) + i * n2;
+        offset   = 8 + 12 * (n - 2) + i * n2;
 
         // Create a list of interior face nodes for this face only.
         vector<int> faceNodes(n2);
@@ -628,7 +634,7 @@ std::vector<int> hexTensorNodeOrdering(const std::vector<int> &nodes, int n)
 
         // Now get the reordering of this face, which puts Gmsh
         // recursive ordering into Nektar++ row-by-row order.
-        faceNodes = quadTensorNodeOrdering(faceNodes, n-2);
+        faceNodes = quadTensorNodeOrdering(faceNodes, n - 2);
         vector<int> tmp(n2);
 
         // Finally reorient the face according to the geometry
@@ -641,46 +647,47 @@ std::vector<int> hexTensorNodeOrdering(const std::vector<int> &nodes, int n)
         else if (faceOrient[i] == StdRegions::eDir1FwdDir2_Dir2FwdDir1)
         {
             // Tranposed faces
-            for (j = 0; j < n-2; ++j)
+            for (j = 0; j < n - 2; ++j)
             {
-                for (k = 0; k < n-2; ++k)
+                for (k = 0; k < n - 2; ++k)
                 {
-                    tmp[j * (n-2) + k] = faceNodes[k * (n-2) + j];
+                    tmp[j * (n - 2) + k] = faceNodes[k * (n - 2) + j];
                 }
             }
         }
         else if (faceOrient[i] == StdRegions::eDir1BwdDir1_Dir2FwdDir2)
         {
-            for (j = 0; j < n-2; ++j)
+            for (j = 0; j < n - 2; ++j)
             {
-                for (k = 0; k < n-2; ++k)
+                for (k = 0; k < n - 2; ++k)
                 {
-                    tmp[j * (n-2) + k] = faceNodes[j * (n-2) + (n - k - 3)];
+                    tmp[j * (n - 2) + k] = faceNodes[j * (n - 2) + (n - k - 3)];
                 }
             }
         }
 
         // Now put this into the right place in the output array
-        for (k = 1; k < n-1; ++k)
+        for (k = 1; k < n - 1; ++k)
         {
-            for (j = 1; j < n-1; ++j)
+            for (j = 1; j < n - 1; ++j)
             {
-                nodeList[hexFaces[face][0] + j*hexFaces[face][1] + k*hexFaces[face][2]]
-                    = faceNodes[(k-1)*(n-2) + j-1];
+                nodeList[hexFaces[face][0] + j * hexFaces[face][1] +
+                         k * hexFaces[face][2]] =
+                    faceNodes[(k - 1) * (n - 2) + j - 1];
             }
         }
     }
 
     // Finally, recurse on interior volume
     vector<int> intNodes, tmpInt;
-    for (int i = 8 + 12 * (n-2) + 6 * (n-2) * (n-2); i < n*n*n; ++i)
+    for (int i = 8 + 12 * (n - 2) + 6 * (n - 2) * (n - 2); i < n * n * n; ++i)
     {
         intNodes.push_back(nodes[i]);
     }
 
     if (intNodes.size())
     {
-        tmpInt = hexTensorNodeOrdering(intNodes, n-2);
+        tmpInt = hexTensorNodeOrdering(intNodes, n - 2);
         for (int k = 1, cnt = 0; k < n - 1; ++k)
         {
             for (int j = 1; j < n - 1; ++j)
@@ -695,7 +702,6 @@ std::vector<int> hexTensorNodeOrdering(const std::vector<int> &nodes, int n)
 
     return nodeList;
 }
-
 
 /**
  * @brief Set up InputGmsh object.
@@ -737,14 +743,14 @@ void InputGmsh::Process()
     m_mesh->m_expDim   = 0;
     m_mesh->m_spaceDim = 0;
     string line;
-    int fileType      = 0;
-    int nVBlocks      = 0;
-    int nVertices     = 0;
-    int nEBlocks      = 0;
-    int nElements     = 0;
-    int tag           = 0;
-    int elm_type      = 0;
-    int tmp           = 0;
+    int fileType  = 0;
+    int nVBlocks  = 0;
+    int nVertices = 0;
+    int nEBlocks  = 0;
+    int nElements = 0;
+    int tag       = 0;
+    int elm_type  = 0;
+    int tmp       = 0;
 
     m_log(VERBOSE) << "Reading Gmsh file: '" << m_config["infile"].as<string>()
                    << "'" << std::endl;
@@ -880,7 +886,8 @@ void InputGmsh::Process()
                     }
                     // Query tag in map & don't bother constructing non-physical
                     // surfaces.
-                    std::vector<int> physIds = entityMap[tagDim][tag].physicalTags;
+                    std::vector<int> physIds =
+                        entityMap[tagDim][tag].physicalTags;
 
                     if (physIds.size() == 0)
                     {
@@ -897,7 +904,6 @@ void InputGmsh::Process()
                             ReadNextElement(tag, elm_type);
                         }
                     }
-
                 }
             }
             else
@@ -913,7 +919,7 @@ void InputGmsh::Process()
     m_mshFile.reset();
 
     // Go through element and remap tags if necessary.
-    map<int, map<LibUtilities::ShapeType, int> > compMap;
+    map<int, map<LibUtilities::ShapeType, int>> compMap;
 
     for (int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); ++i)
     {
@@ -937,7 +943,7 @@ void InputGmsh::Process()
         {
             m_maxTagId++;
             cIt->second[type] = m_maxTagId;
-            tags[0] = m_maxTagId;
+            tags[0]           = m_maxTagId;
             el->SetTagList(tags);
         }
         else if (sIt->second != tag)
@@ -1143,8 +1149,10 @@ void InputGmsh::ReadNextElement(int tag, int elm_type)
     // If it's not created, then create it.
     if (oIt == m_orderingMap.end())
     {
-        oIt = m_orderingMap.insert(
-            make_pair(elm_type, CreateReordering(elm_type, m_log))).first;
+        oIt =
+            m_orderingMap
+                .insert(make_pair(elm_type, CreateReordering(elm_type, m_log)))
+                .first;
     }
 
     // Apply reordering map where necessary.
@@ -1200,7 +1208,7 @@ int InputGmsh::GetNnodes(unsigned int InputGmshEntity)
             nNodes = Quadrilateral::GetNumNodes(it->second);
             break;
         case LibUtilities::eTetrahedron:
-            nNodes = Tetrahedron::GetNumNodes(it->second);
+            nNodes                     = Tetrahedron::GetNumNodes(it->second);
             it->second.m_faceCurveType = LibUtilities::eNodalTriEvenlySpaced;
             break;
         case LibUtilities::ePyramid:
@@ -1274,8 +1282,8 @@ vector<int> InputGmsh::LineReordering(ElmtConfig conf)
 {
     const int order = conf.m_order;
 
-    vector<int> mapping(order+1);
-    for(int i = 0; i < order+1; i++)
+    vector<int> mapping(order + 1);
+    for (int i = 0; i < order + 1; i++)
     {
         mapping[i] = i;
     }
@@ -1509,7 +1517,7 @@ vector<int> InputGmsh::TetReordering(ElmtConfig conf)
         return mapping;
     }
 
-    int ntot = (order+1)*(order+2)*(order+3)/6;
+    int ntot = (order + 1) * (order + 2) * (order + 3) / 6;
     vector<int> interior;
 
     for (int i = 4 + 6 * n + 4 * n2; i < ntot; ++i)
@@ -1519,7 +1527,7 @@ vector<int> InputGmsh::TetReordering(ElmtConfig conf)
 
     if (interior.size() > 0)
     {
-        interior = tetTensorNodeOrdering(interior, order-3);
+        interior = tetTensorNodeOrdering(interior, order - 3);
     }
 
     mapping.insert(mapping.end(), interior.begin(), interior.end());
@@ -1653,7 +1661,7 @@ vector<int> InputGmsh::PrismReordering(ElmtConfig conf, Logger &log)
         int offset2 = offsets[i];
         offset      = offsets2[face];
 
-        bool tri = i < 2;
+        bool tri     = i < 2;
         int nFacePts = tri ? nTriInt : nQuadInt;
 
         if (nFacePts == 0)
@@ -1739,7 +1747,7 @@ vector<int> InputGmsh::PrismReordering(ElmtConfig conf, Logger &log)
     offset = offsets[4] + nQuadInt;
     vector<int> intPoints, tmp;
 
-    for (int i = offset; i < (order+1) * (order+1) * (order+2) / 2; ++i)
+    for (int i = offset; i < (order + 1) * (order + 1) * (order + 2) / 2; ++i)
     {
         intPoints.push_back(i);
     }
@@ -1908,125 +1916,125 @@ std::map<unsigned int, ElmtConfig> InputGmsh::GenElmMap()
     std::map<unsigned int, ElmtConfig> tmp;
 
     //                    Elmt type,   order,  face, volume
-    tmp[  1] = ElmtConfig(eSegment,        1, false, false);
-    tmp[  2] = ElmtConfig(eTriangle,       1, false, false);
-    tmp[  3] = ElmtConfig(eQuadrilateral,  1, false, false);
-    tmp[  4] = ElmtConfig(eTetrahedron,    1, false, false);
-    tmp[  5] = ElmtConfig(eHexahedron,     1, false, false);
-    tmp[  6] = ElmtConfig(ePrism,          1, false, false);
-    tmp[  7] = ElmtConfig(ePyramid,        1, false, false);
-    tmp[  8] = ElmtConfig(eSegment,        2,  true, false);
-    tmp[  9] = ElmtConfig(eTriangle,       2, false, false);
-    tmp[ 10] = ElmtConfig(eQuadrilateral,  2,  true, false);
-    tmp[ 11] = ElmtConfig(eTetrahedron,    2, false, false);
-    tmp[ 12] = ElmtConfig(eHexahedron,     2,  true,  true);
-    tmp[ 13] = ElmtConfig(ePrism,          2,  true, false);
-    tmp[ 14] = ElmtConfig(ePyramid,        2,  true, false);
-    tmp[ 15] = ElmtConfig(ePoint,          1, false, false);
-    tmp[ 16] = ElmtConfig(eQuadrilateral,  2, false, false);
-    tmp[ 17] = ElmtConfig(eHexahedron,     2, false, false);
-    tmp[ 18] = ElmtConfig(ePrism,          2, false, false);
-    tmp[ 19] = ElmtConfig(ePyramid,        2, false, false);
-    tmp[ 20] = ElmtConfig(eTriangle,       3, false, false);
-    tmp[ 21] = ElmtConfig(eTriangle,       3,  true, false);
-    tmp[ 22] = ElmtConfig(eTriangle,       4, false, false);
-    tmp[ 23] = ElmtConfig(eTriangle,       4,  true, false);
-    tmp[ 24] = ElmtConfig(eTriangle,       5, false, false);
-    tmp[ 25] = ElmtConfig(eTriangle,       5,  true, false);
-    tmp[ 26] = ElmtConfig(eSegment,        3,  true, false);
-    tmp[ 27] = ElmtConfig(eSegment,        4,  true, false);
-    tmp[ 28] = ElmtConfig(eSegment,        5,  true, false);
-    tmp[ 29] = ElmtConfig(eTetrahedron,    3,  true, false);
-    tmp[ 30] = ElmtConfig(eTetrahedron,    4,  true,  true);
-    tmp[ 31] = ElmtConfig(eTetrahedron,    5,  true,  true);
-    tmp[ 32] = ElmtConfig(eTetrahedron,    4,  true, false);
-    tmp[ 33] = ElmtConfig(eTetrahedron,    5,  true, false);
-    tmp[ 36] = ElmtConfig(eQuadrilateral,  3,  true, false);
-    tmp[ 37] = ElmtConfig(eQuadrilateral,  4,  true, false);
-    tmp[ 38] = ElmtConfig(eQuadrilateral,  5,  true, false);
-    tmp[ 39] = ElmtConfig(eQuadrilateral,  3, false, false);
-    tmp[ 40] = ElmtConfig(eQuadrilateral,  4, false, false);
-    tmp[ 41] = ElmtConfig(eQuadrilateral,  5, false, false);
-    tmp[ 42] = ElmtConfig(eTriangle,       6,  true, false);
-    tmp[ 43] = ElmtConfig(eTriangle,       7,  true, false);
-    tmp[ 44] = ElmtConfig(eTriangle,       8,  true, false);
-    tmp[ 45] = ElmtConfig(eTriangle,       9,  true, false);
-    tmp[ 46] = ElmtConfig(eTriangle,      10,  true, false);
-    tmp[ 47] = ElmtConfig(eQuadrilateral,  6,  true, false);
-    tmp[ 48] = ElmtConfig(eQuadrilateral,  7,  true, false);
-    tmp[ 49] = ElmtConfig(eQuadrilateral,  8,  true, false);
-    tmp[ 50] = ElmtConfig(eQuadrilateral,  9,  true, false);
-    tmp[ 51] = ElmtConfig(eQuadrilateral, 10,  true, false);
-    tmp[ 52] = ElmtConfig(eTriangle,       6, false, false);
-    tmp[ 53] = ElmtConfig(eTriangle,       7, false, false);
-    tmp[ 54] = ElmtConfig(eTriangle,       8, false, false);
-    tmp[ 55] = ElmtConfig(eTriangle,       9, false, false);
-    tmp[ 56] = ElmtConfig(eTriangle,      10, false, false);
-    tmp[ 57] = ElmtConfig(eQuadrilateral,  6, false, false);
-    tmp[ 58] = ElmtConfig(eQuadrilateral,  7, false, false);
-    tmp[ 59] = ElmtConfig(eQuadrilateral,  8, false, false);
-    tmp[ 60] = ElmtConfig(eQuadrilateral,  9, false, false);
-    tmp[ 61] = ElmtConfig(eQuadrilateral, 10, false, false);
-    tmp[ 62] = ElmtConfig(eSegment,        6,  true, false);
-    tmp[ 63] = ElmtConfig(eSegment,        7,  true, false);
-    tmp[ 64] = ElmtConfig(eSegment,        8,  true, false);
-    tmp[ 65] = ElmtConfig(eSegment,        9,  true, false);
-    tmp[ 66] = ElmtConfig(eSegment,       10,  true, false);
-    tmp[ 71] = ElmtConfig(eTetrahedron,    6,  true,  true);
-    tmp[ 72] = ElmtConfig(eTetrahedron,    7,  true,  true);
-    tmp[ 73] = ElmtConfig(eTetrahedron,    8,  true,  true);
-    tmp[ 74] = ElmtConfig(eTetrahedron,    9,  true,  true);
-    tmp[ 75] = ElmtConfig(eTetrahedron,   10,  true,  true);
-    tmp[ 79] = ElmtConfig(eTetrahedron,    6,  true, false);
-    tmp[ 80] = ElmtConfig(eTetrahedron,    7,  true, false);
-    tmp[ 81] = ElmtConfig(eTetrahedron,    8,  true, false);
-    tmp[ 82] = ElmtConfig(eTetrahedron,    9,  true, false);
-    tmp[ 83] = ElmtConfig(eTetrahedron,   10,  true, false);
-    tmp[ 90] = ElmtConfig(ePrism,          3,  true,  true);
-    tmp[ 91] = ElmtConfig(ePrism,          4,  true,  true);
-    tmp[ 92] = ElmtConfig(eHexahedron,     3,  true,  true);
-    tmp[ 93] = ElmtConfig(eHexahedron,     4,  true,  true);
-    tmp[ 94] = ElmtConfig(eHexahedron,     5,  true,  true);
-    tmp[ 95] = ElmtConfig(eHexahedron,     6,  true,  true);
-    tmp[ 96] = ElmtConfig(eHexahedron,     7,  true,  true);
-    tmp[ 97] = ElmtConfig(eHexahedron,     8,  true,  true);
-    tmp[ 98] = ElmtConfig(eHexahedron,     9,  true,  true);
-    tmp[ 99] = ElmtConfig(eHexahedron,     3,  true, false);
-    tmp[100] = ElmtConfig(eHexahedron,     4,  true, false);
-    tmp[101] = ElmtConfig(eHexahedron,     5,  true, false);
-    tmp[102] = ElmtConfig(eHexahedron,     6,  true, false);
-    tmp[103] = ElmtConfig(eHexahedron,     7,  true, false);
-    tmp[104] = ElmtConfig(eHexahedron,     8,  true, false);
-    tmp[105] = ElmtConfig(eHexahedron,     9,  true, false);
-    tmp[106] = ElmtConfig(ePrism,          5,  true,  true);
-    tmp[107] = ElmtConfig(ePrism,          6,  true,  true);
-    tmp[108] = ElmtConfig(ePrism,          7,  true,  true);
-    tmp[109] = ElmtConfig(ePrism,          8,  true,  true);
-    tmp[110] = ElmtConfig(ePrism,          9,  true,  true);
-    tmp[111] = ElmtConfig(ePrism,          3,  true, false);
-    tmp[112] = ElmtConfig(ePrism,          4,  true, false);
-    tmp[113] = ElmtConfig(ePrism,          5,  true, false);
-    tmp[114] = ElmtConfig(ePrism,          6,  true, false);
-    tmp[115] = ElmtConfig(ePrism,          7,  true, false);
-    tmp[116] = ElmtConfig(ePrism,          8,  true, false);
-    tmp[117] = ElmtConfig(ePrism,          9,  true, false);
-    tmp[118] = ElmtConfig(ePyramid,        3,  true,  true);
-    tmp[119] = ElmtConfig(ePyramid,        4,  true,  true);
-    tmp[120] = ElmtConfig(ePyramid,        5,  true,  true);
-    tmp[121] = ElmtConfig(ePyramid,        6,  true,  true);
-    tmp[122] = ElmtConfig(ePyramid,        7,  true,  true);
-    tmp[123] = ElmtConfig(ePyramid,        8,  true,  true);
-    tmp[124] = ElmtConfig(ePyramid,        9,  true,  true);
-    tmp[125] = ElmtConfig(ePyramid,        3,  true, false);
-    tmp[126] = ElmtConfig(ePyramid,        4,  true, false);
-    tmp[127] = ElmtConfig(ePyramid,        5,  true, false);
-    tmp[128] = ElmtConfig(ePyramid,        6,  true, false);
-    tmp[129] = ElmtConfig(ePyramid,        7,  true, false);
-    tmp[130] = ElmtConfig(ePyramid,        7,  true, false);
-    tmp[131] = ElmtConfig(ePyramid,        8,  true, false);
+    tmp[1]   = ElmtConfig(eSegment, 1, false, false);
+    tmp[2]   = ElmtConfig(eTriangle, 1, false, false);
+    tmp[3]   = ElmtConfig(eQuadrilateral, 1, false, false);
+    tmp[4]   = ElmtConfig(eTetrahedron, 1, false, false);
+    tmp[5]   = ElmtConfig(eHexahedron, 1, false, false);
+    tmp[6]   = ElmtConfig(ePrism, 1, false, false);
+    tmp[7]   = ElmtConfig(ePyramid, 1, false, false);
+    tmp[8]   = ElmtConfig(eSegment, 2, true, false);
+    tmp[9]   = ElmtConfig(eTriangle, 2, false, false);
+    tmp[10]  = ElmtConfig(eQuadrilateral, 2, true, false);
+    tmp[11]  = ElmtConfig(eTetrahedron, 2, false, false);
+    tmp[12]  = ElmtConfig(eHexahedron, 2, true, true);
+    tmp[13]  = ElmtConfig(ePrism, 2, true, false);
+    tmp[14]  = ElmtConfig(ePyramid, 2, true, false);
+    tmp[15]  = ElmtConfig(ePoint, 1, false, false);
+    tmp[16]  = ElmtConfig(eQuadrilateral, 2, false, false);
+    tmp[17]  = ElmtConfig(eHexahedron, 2, false, false);
+    tmp[18]  = ElmtConfig(ePrism, 2, false, false);
+    tmp[19]  = ElmtConfig(ePyramid, 2, false, false);
+    tmp[20]  = ElmtConfig(eTriangle, 3, false, false);
+    tmp[21]  = ElmtConfig(eTriangle, 3, true, false);
+    tmp[22]  = ElmtConfig(eTriangle, 4, false, false);
+    tmp[23]  = ElmtConfig(eTriangle, 4, true, false);
+    tmp[24]  = ElmtConfig(eTriangle, 5, false, false);
+    tmp[25]  = ElmtConfig(eTriangle, 5, true, false);
+    tmp[26]  = ElmtConfig(eSegment, 3, true, false);
+    tmp[27]  = ElmtConfig(eSegment, 4, true, false);
+    tmp[28]  = ElmtConfig(eSegment, 5, true, false);
+    tmp[29]  = ElmtConfig(eTetrahedron, 3, true, false);
+    tmp[30]  = ElmtConfig(eTetrahedron, 4, true, true);
+    tmp[31]  = ElmtConfig(eTetrahedron, 5, true, true);
+    tmp[32]  = ElmtConfig(eTetrahedron, 4, true, false);
+    tmp[33]  = ElmtConfig(eTetrahedron, 5, true, false);
+    tmp[36]  = ElmtConfig(eQuadrilateral, 3, true, false);
+    tmp[37]  = ElmtConfig(eQuadrilateral, 4, true, false);
+    tmp[38]  = ElmtConfig(eQuadrilateral, 5, true, false);
+    tmp[39]  = ElmtConfig(eQuadrilateral, 3, false, false);
+    tmp[40]  = ElmtConfig(eQuadrilateral, 4, false, false);
+    tmp[41]  = ElmtConfig(eQuadrilateral, 5, false, false);
+    tmp[42]  = ElmtConfig(eTriangle, 6, true, false);
+    tmp[43]  = ElmtConfig(eTriangle, 7, true, false);
+    tmp[44]  = ElmtConfig(eTriangle, 8, true, false);
+    tmp[45]  = ElmtConfig(eTriangle, 9, true, false);
+    tmp[46]  = ElmtConfig(eTriangle, 10, true, false);
+    tmp[47]  = ElmtConfig(eQuadrilateral, 6, true, false);
+    tmp[48]  = ElmtConfig(eQuadrilateral, 7, true, false);
+    tmp[49]  = ElmtConfig(eQuadrilateral, 8, true, false);
+    tmp[50]  = ElmtConfig(eQuadrilateral, 9, true, false);
+    tmp[51]  = ElmtConfig(eQuadrilateral, 10, true, false);
+    tmp[52]  = ElmtConfig(eTriangle, 6, false, false);
+    tmp[53]  = ElmtConfig(eTriangle, 7, false, false);
+    tmp[54]  = ElmtConfig(eTriangle, 8, false, false);
+    tmp[55]  = ElmtConfig(eTriangle, 9, false, false);
+    tmp[56]  = ElmtConfig(eTriangle, 10, false, false);
+    tmp[57]  = ElmtConfig(eQuadrilateral, 6, false, false);
+    tmp[58]  = ElmtConfig(eQuadrilateral, 7, false, false);
+    tmp[59]  = ElmtConfig(eQuadrilateral, 8, false, false);
+    tmp[60]  = ElmtConfig(eQuadrilateral, 9, false, false);
+    tmp[61]  = ElmtConfig(eQuadrilateral, 10, false, false);
+    tmp[62]  = ElmtConfig(eSegment, 6, true, false);
+    tmp[63]  = ElmtConfig(eSegment, 7, true, false);
+    tmp[64]  = ElmtConfig(eSegment, 8, true, false);
+    tmp[65]  = ElmtConfig(eSegment, 9, true, false);
+    tmp[66]  = ElmtConfig(eSegment, 10, true, false);
+    tmp[71]  = ElmtConfig(eTetrahedron, 6, true, true);
+    tmp[72]  = ElmtConfig(eTetrahedron, 7, true, true);
+    tmp[73]  = ElmtConfig(eTetrahedron, 8, true, true);
+    tmp[74]  = ElmtConfig(eTetrahedron, 9, true, true);
+    tmp[75]  = ElmtConfig(eTetrahedron, 10, true, true);
+    tmp[79]  = ElmtConfig(eTetrahedron, 6, true, false);
+    tmp[80]  = ElmtConfig(eTetrahedron, 7, true, false);
+    tmp[81]  = ElmtConfig(eTetrahedron, 8, true, false);
+    tmp[82]  = ElmtConfig(eTetrahedron, 9, true, false);
+    tmp[83]  = ElmtConfig(eTetrahedron, 10, true, false);
+    tmp[90]  = ElmtConfig(ePrism, 3, true, true);
+    tmp[91]  = ElmtConfig(ePrism, 4, true, true);
+    tmp[92]  = ElmtConfig(eHexahedron, 3, true, true);
+    tmp[93]  = ElmtConfig(eHexahedron, 4, true, true);
+    tmp[94]  = ElmtConfig(eHexahedron, 5, true, true);
+    tmp[95]  = ElmtConfig(eHexahedron, 6, true, true);
+    tmp[96]  = ElmtConfig(eHexahedron, 7, true, true);
+    tmp[97]  = ElmtConfig(eHexahedron, 8, true, true);
+    tmp[98]  = ElmtConfig(eHexahedron, 9, true, true);
+    tmp[99]  = ElmtConfig(eHexahedron, 3, true, false);
+    tmp[100] = ElmtConfig(eHexahedron, 4, true, false);
+    tmp[101] = ElmtConfig(eHexahedron, 5, true, false);
+    tmp[102] = ElmtConfig(eHexahedron, 6, true, false);
+    tmp[103] = ElmtConfig(eHexahedron, 7, true, false);
+    tmp[104] = ElmtConfig(eHexahedron, 8, true, false);
+    tmp[105] = ElmtConfig(eHexahedron, 9, true, false);
+    tmp[106] = ElmtConfig(ePrism, 5, true, true);
+    tmp[107] = ElmtConfig(ePrism, 6, true, true);
+    tmp[108] = ElmtConfig(ePrism, 7, true, true);
+    tmp[109] = ElmtConfig(ePrism, 8, true, true);
+    tmp[110] = ElmtConfig(ePrism, 9, true, true);
+    tmp[111] = ElmtConfig(ePrism, 3, true, false);
+    tmp[112] = ElmtConfig(ePrism, 4, true, false);
+    tmp[113] = ElmtConfig(ePrism, 5, true, false);
+    tmp[114] = ElmtConfig(ePrism, 6, true, false);
+    tmp[115] = ElmtConfig(ePrism, 7, true, false);
+    tmp[116] = ElmtConfig(ePrism, 8, true, false);
+    tmp[117] = ElmtConfig(ePrism, 9, true, false);
+    tmp[118] = ElmtConfig(ePyramid, 3, true, true);
+    tmp[119] = ElmtConfig(ePyramid, 4, true, true);
+    tmp[120] = ElmtConfig(ePyramid, 5, true, true);
+    tmp[121] = ElmtConfig(ePyramid, 6, true, true);
+    tmp[122] = ElmtConfig(ePyramid, 7, true, true);
+    tmp[123] = ElmtConfig(ePyramid, 8, true, true);
+    tmp[124] = ElmtConfig(ePyramid, 9, true, true);
+    tmp[125] = ElmtConfig(ePyramid, 3, true, false);
+    tmp[126] = ElmtConfig(ePyramid, 4, true, false);
+    tmp[127] = ElmtConfig(ePyramid, 5, true, false);
+    tmp[128] = ElmtConfig(ePyramid, 6, true, false);
+    tmp[129] = ElmtConfig(ePyramid, 7, true, false);
+    tmp[130] = ElmtConfig(ePyramid, 7, true, false);
+    tmp[131] = ElmtConfig(ePyramid, 8, true, false);
 
     return tmp;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

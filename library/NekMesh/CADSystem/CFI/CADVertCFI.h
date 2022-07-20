@@ -50,7 +50,6 @@ namespace NekMesh
 class CADVertCFI : public CADVert
 {
 public:
-
     static CADVertSharedPtr create()
     {
         return MemoryManager<CADVertCFI>::AllocateSharedPtr();
@@ -63,12 +62,11 @@ public:
      */
     CADVertCFI()
     {
-
     }
 
     ~CADVertCFI(){};
 
-    void Initialise(int i, cfi::Point* in, NekDouble s);
+    void Initialise(int i, cfi::Point *in, NekDouble s);
 
     NekDouble DistanceTo(Array<OneD, NekDouble> l)
     {
@@ -79,11 +77,11 @@ public:
 
 private:
     /// cfi object
-    cfi::Point* m_cfipoint;
+    cfi::Point *m_cfipoint;
     NekDouble m_scal;
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

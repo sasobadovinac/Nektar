@@ -41,37 +41,38 @@
 
 namespace Nektar
 {
-    namespace SolverUtils
+namespace SolverUtils
+{
+class AdvectionNonConservative : public Advection
+{
+public:
+    static AdvectionSharedPtr create(std::string advType)
     {
-        class AdvectionNonConservative : public Advection
-        {
-        public:
-            static AdvectionSharedPtr create(std::string advType)
-            {
-                boost::ignore_unused(advType);
-                return AdvectionSharedPtr(new AdvectionNonConservative());
-            }
-            
-            static std::string type;
-            
-        protected:
-            AdvectionNonConservative();
-
-            virtual void v_InitObject(
-                LibUtilities::SessionReaderSharedPtr               pSession,
-                Array<OneD, MultiRegions::ExpListSharedPtr>        pFields);
-
-            virtual void v_Advect(
-                const int                                          nConvective,
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                      Array<OneD, Array<OneD, NekDouble> >        &outarray,
-                const NekDouble                                   &time,
-                const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayOfArray,
-                const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayOfArray);
-        }; 
+        boost::ignore_unused(advType);
+        return AdvectionSharedPtr(new AdvectionNonConservative());
     }
-}
-    
+
+    static std::string type;
+
+protected:
+    AdvectionNonConservative();
+
+    virtual void v_InitObject(
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+
+    virtual void v_Advect(
+        const int nConvective,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
+};
+} // namespace SolverUtils
+} // namespace Nektar
+
 #endif

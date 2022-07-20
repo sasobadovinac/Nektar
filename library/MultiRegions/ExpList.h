@@ -45,7 +45,6 @@
 #include <LocalRegions/Expansion.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
-#include <MultiRegions/FieldStorage/FieldStorage.hpp>
 #include <MultiRegions/GlobalLinSysKey.h>
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalMatrixKey.h>
@@ -263,11 +262,6 @@ public:
     /// This function calculates the inner product of a function
     /// \f$f(\boldsymbol{x})\f$ with respect to all \em local
     /// expansion modes \f$\phi_n^e(\boldsymbol{x})\f$.
-    inline void IProductWRTBase_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
-    ///
     inline void IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                 Array<OneD, NekDouble> &outarray);
 
@@ -302,9 +296,6 @@ public:
     inline void FwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
 
-    inline void FwdTrans(const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
-                         FieldStorage<NekDouble, MultiRegions::eCoeff> &out);
-
     MULTI_REGIONS_EXPORT void ExponentialFilter(Array<OneD, NekDouble> &array,
                                                 const NekDouble alpha,
                                                 const NekDouble exponent,
@@ -332,21 +323,10 @@ public:
     /// Smooth a field across elements
     inline void SmoothField(Array<OneD, NekDouble> &field);
 
-    /// Solve helmholtz problem - Array input
+    /// Solve helmholtz problem
     inline void HelmSolve(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
-        const StdRegions::ConstFactorMap &factors,
-        const StdRegions::VarCoeffMap &varcoeff = StdRegions::NullVarCoeffMap,
-        const MultiRegions::VarFactorsMap &varfactors =
-            MultiRegions::NullVarFactorsMap,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray,
-        const bool PhysSpaceForcing                    = true);
-
-    /// Solve helmholtz problem - FieldStorage input
-    inline void HelmSolve(
-        const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
-        FieldStorage<NekDouble, MultiRegions::eCoeff> &out,
         const StdRegions::ConstFactorMap &factors,
         const StdRegions::VarCoeffMap &varcoeff = StdRegions::NullVarCoeffMap,
         const MultiRegions::VarFactorsMap &varfactors =
@@ -373,13 +353,8 @@ public:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    ///
-    inline void BwdTrans(
-        const FieldStorage<NekDouble, MultiRegions::eCoeff> &in,
-        FieldStorage<NekDouble, MultiRegions::ePhys> &out);
-
-    /// Performs the backward transformation of the spectral/hp
-    /// element expansion.
+    /// This function elementally evaluates the backward transformation
+    /// of the global spectral/hp element expansion.
     inline void BwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
 
@@ -939,11 +914,7 @@ public:
     /// This function calculates the result of the multiplication of a
     /// matrix of type specified by \a mkey with a vector given by \a
     /// inarray.
-    inline void GeneralMatrixOp(const GlobalMatrixKey &gkey,
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray);
-
-    MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
+    MULTI_REGIONS_EXPORT void GeneralMatrixOp(
         const GlobalMatrixKey &gkey,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
@@ -1438,14 +1409,6 @@ protected:
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray);
 
-    virtual void v_IProductWRTBase_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
-    virtual void v_GeneralMatrixOp(const GlobalMatrixKey &gkey,
-                                   const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD, NekDouble> &outarray);
-
     virtual void v_GetCoords(
         Array<OneD, NekDouble> &coord_0, Array<OneD, NekDouble> &coord_1,
         Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
@@ -1822,27 +1785,10 @@ inline void ExpList::IProductWRTBase(
 /**
  *
  */
-inline void ExpList::IProductWRTBase_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    v_IProductWRTBase_IterPerExp(inarray, outarray);
-}
-
-/**
- *
- */
 inline void ExpList::FwdTrans(const Array<OneD, const NekDouble> &inarray,
                               Array<OneD, NekDouble> &outarray)
 {
     v_FwdTrans(inarray, outarray);
-}
-
-inline void ExpList::FwdTrans(
-    const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
-    FieldStorage<NekDouble, MultiRegions::eCoeff> &out)
-{
-    v_FwdTrans(in.GetData(), out.UpdateData());
 }
 
 /**
@@ -1876,12 +1822,7 @@ inline void ExpList::SmoothField(Array<OneD, NekDouble> &field)
 /**
  *
  */
-inline void ExpList::BwdTrans(
-    const FieldStorage<NekDouble, MultiRegions::eCoeff> &in,
-    FieldStorage<NekDouble, MultiRegions::ePhys> &out)
-{
-    v_BwdTrans(in.GetData(), out.UpdateData());
-}
+
 
 /**
  * Given the coefficients of an expansion, this function evaluates the
@@ -1927,22 +1868,6 @@ inline void ExpList::HelmSolve(const Array<OneD, const NekDouble> &inarray,
 {
     v_HelmSolve(inarray, outarray, factors, varcoeff, varfactors, dirForcing,
                 PhysSpaceForcing);
-}
-
-/**
- * Helmholtz operator using Field Storage i/o
- */
-inline void ExpList::HelmSolve(
-    const FieldStorage<NekDouble, MultiRegions::ePhys> &in,
-    FieldStorage<NekDouble, MultiRegions::eCoeff> &out,
-    const StdRegions::ConstFactorMap &factors,
-    const StdRegions::VarCoeffMap &varcoeff,
-    const MultiRegions::VarFactorsMap &varfactors,
-    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
-
-{
-    v_HelmSolve(in.GetData(), out.UpdateData(), factors, varcoeff, varfactors,
-                dirForcing, PhysSpaceForcing);
 }
 
 /**
@@ -2502,42 +2427,6 @@ inline void ExpList::EvaluateBoundaryConditions(const NekDouble time,
     v_EvaluateBoundaryConditions(time, varName, x2_in, x3_in);
 }
 
-// Routines for continous matrix solution
-/**
- * This operation is equivalent to the evaluation of
- * \f$\underline{\boldsymbol{M}}^e\boldsymbol{\hat{u}}_l\f$, that is,
- * \f[ \left[
- * \begin{array}{cccc}
- * \boldsymbol{M}^1 & 0 & \hspace{3mm}0 \hspace{3mm}& 0 \\
- * 0 & \boldsymbol{M}^2 & 0 & 0 \\
- * 0 &  0 & \ddots &  0 \\
- * 0 &  0 & 0 & \boldsymbol{M}^{N_{\mathrm{el}}} \end{array} \right]
- *\left [ \begin{array}{c}
- * \boldsymbol{\hat{u}}^{1} \\
- * \boldsymbol{\hat{u}}^{2} \\
- * \vdots \\
- * \boldsymbol{\hat{u}}^{{{N_{\mathrm{el}}}}} \end{array} \right ]\f]
- * where \f$\boldsymbol{M}^e\f$ are the local matrices of type
- * specified by the key \a mkey. The decoupling of the local matrices
- * allows for a local evaluation of the operation. However, rather than
- * a local matrix-vector multiplication, the local operations are
- * evaluated as implemented in the function
- * StdRegions#StdExpansion#GeneralMatrixOp.
- *
- * @param   mkey            This key uniquely defines the type matrix
- *                          required for the operation.
- * @param   inarray         The vector \f$\boldsymbol{\hat{u}}_l\f$ of
- *                          size \f$N_{\mathrm{eof}}\f$.
- * @param   outarray        The resulting vector of size
- *                          \f$N_{\mathrm{eof}}\f$.
- */
-inline void ExpList::GeneralMatrixOp(
-    const GlobalMatrixKey &gkey, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    v_GeneralMatrixOp(gkey, inarray, outarray);
-}
-
 inline void ExpList::SetUpPhysNormals()
 {
     v_SetUpPhysNormals();
@@ -2589,7 +2478,6 @@ inline std::vector<bool> &ExpList::GetLeftAdjacentTraces(void)
 }
 
 const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
-
 } // namespace MultiRegions
 } // namespace Nektar
 

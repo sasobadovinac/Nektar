@@ -552,36 +552,6 @@ void ExpListHomogeneous1D::v_IProductWRTBase(
 }
 
 /**
- * Inner product element by element
- */
-void ExpListHomogeneous1D::v_IProductWRTBase_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int cnt = 0, cnt1 = 0;
-    Array<OneD, NekDouble> tmparray, tmpIn;
-
-    if (m_WaveSpace)
-    {
-        tmpIn = inarray;
-    }
-    else
-    {
-        tmpIn = Array<OneD, NekDouble>(inarray.size(), 0.0);
-        HomogeneousFwdTrans(inarray, tmpIn);
-    }
-
-    for (int n = 0; n < m_planes.size(); ++n)
-    {
-        m_planes[n]->IProductWRTBase_IterPerExp(tmpIn + cnt,
-                                                tmparray = outarray + cnt1);
-
-        cnt1 += m_planes[n]->GetNcoeffs();
-        cnt += m_planes[n]->GetTotPoints();
-    }
-}
-
-/**
  * Homogeneous transform Bwd/Fwd (MVM and FFT)
  */
 void ExpListHomogeneous1D::Homogeneous1DTrans(
@@ -1206,7 +1176,6 @@ void ExpListHomogeneous1D::v_PhysGalerkinProjection1DScaled(
     Array<OneD, NekDouble> tmparray;
     cnt  = m_planes[0]->Get1DScaledTotPoints(scale);
     cnt1 = m_planes[0]->GetTotPoints();
-
     ASSERTL1(m_planes.size() * cnt <= inarray.size(),
              "size of outarray does not match internal estimage");
 
@@ -1222,8 +1191,9 @@ void ExpListHomogeneous1D::v_PhysDeriv(
 {
     int nT_pts = inarray.size(); // number of total points = n. of Fourier
                                  // points * n. of points per plane (nT_pts)
-    int nP_pts = nT_pts / m_planes.size(); // number of points per plane = n of
-                                           // Fourier transform required (nP_pts)
+    int nP_pts =
+        nT_pts / m_planes.size(); // number of points per plane = n of
+                                  // Fourier transform required (nP_pts)
 
     Array<OneD, NekDouble> temparray(nT_pts);
     Array<OneD, NekDouble> outarray(nT_pts);
@@ -1349,8 +1319,9 @@ void ExpListHomogeneous1D::v_PhysDeriv(
 {
     int nT_pts = inarray.size(); // number of total points = n. of Fourier
                                  // points * n. of points per plane (nT_pts)
-    int nP_pts = nT_pts / m_planes.size(); // number of points per plane = n of
-                                           // Fourier transform required (nP_pts)
+    int nP_pts =
+        nT_pts / m_planes.size(); // number of points per plane = n of
+                                  // Fourier transform required (nP_pts)
 
     int dir = (int)edir;
 

@@ -33,13 +33,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <LibUtilities/Foundations/Interp.h>
+#include <LibUtilities/Foundations/ManagerAccess.h>
 #include <SpatialDomains/TriGeom.h>
 #include <StdRegions/StdNodalTriExp.h>
-#include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/Foundations/Interp.h>
 
-#include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/SegGeom.h>
 
 using namespace std;
 
@@ -53,15 +53,14 @@ TriGeom::TriGeom()
     m_shapeType = LibUtilities::eTriangle;
 }
 
-TriGeom::TriGeom(const int id,
-                 const SegGeomSharedPtr edges[],
+TriGeom::TriGeom(const int id, const SegGeomSharedPtr edges[],
                  const CurveSharedPtr curve)
     : Geometry2D(edges[0]->GetVertex(0)->GetCoordim(), curve)
 {
     int j;
 
     m_shapeType = LibUtilities::eTriangle;
-    m_globalID = id;
+    m_globalID  = id;
 
     // Copy the edge shared pointers.
     m_edges.insert(m_edges.begin(), edges, edges + TriGeom::kNedges);
@@ -75,15 +74,15 @@ TriGeom::TriGeom(const int id,
             edges[j]->GetVertex(m_eorient[j] == StdRegions::eForwards ? 0 : 1));
     }
 
-    m_eorient[2] = m_eorient[2] == StdRegions::eBackwards ?
-        StdRegions::eForwards : StdRegions::eBackwards;
+    m_eorient[2] = m_eorient[2] == StdRegions::eBackwards
+                       ? StdRegions::eForwards
+                       : StdRegions::eBackwards;
 
     m_coordim = edges[0]->GetVertex(0)->GetCoordim();
     ASSERTL0(m_coordim > 1, "Cannot call function with dim == 1");
 }
 
-TriGeom::TriGeom(const TriGeom &in)
-    : Geometry2D(in)
+TriGeom::TriGeom(const TriGeom &in) : Geometry2D(in)
 {
     // From Geometry
     m_shapeType = in.m_shapeType;
@@ -116,20 +115,22 @@ NekDouble TriGeom::v_GetCoord(const int i,
 }
 
 StdRegions::Orientation TriGeom::GetFaceOrientation(const TriGeom &face1,
-                              const TriGeom &face2, bool doRot, int dir,
-                              NekDouble angle, NekDouble tol)
+                                                    const TriGeom &face2,
+                                                    bool doRot, int dir,
+                                                    NekDouble angle,
+                                                    NekDouble tol)
 {
-    return GetFaceOrientation(face1.m_verts, face2.m_verts,
-                              doRot, dir, angle, tol);
+    return GetFaceOrientation(face1.m_verts, face2.m_verts, doRot, dir, angle,
+                              tol);
 }
 
 StdRegions::Orientation TriGeom::GetFaceOrientation(
-              const PointGeomVector &face1, const PointGeomVector &face2,
-              bool doRot, int dir, NekDouble angle, NekDouble tol)
+    const PointGeomVector &face1, const PointGeomVector &face2, bool doRot,
+    int dir, NekDouble angle, NekDouble tol)
 {
     int i, j, vmap[3] = {-1, -1, -1};
 
-    if(doRot)
+    if (doRot)
     {
         PointGeom rotPt;
 
@@ -182,7 +183,7 @@ StdRegions::Orientation TriGeom::GetFaceOrientation(
                          (z1 - z) * (z1 - z)) < 1e-8)
                 {
                     vmap[j] = i;
-                break;
+                    break;
                 }
             }
         }
@@ -192,30 +193,30 @@ StdRegions::Orientation TriGeom::GetFaceOrientation(
     {
         switch (vmap[0])
         {
-        case 0:
-            return StdRegions::eDir1FwdDir1_Dir2FwdDir2;
-            break;
-        case 1:
-            return StdRegions::eDir1FwdDir2_Dir2BwdDir1;
-            break;
-        case 2:
-            return StdRegions::eDir1BwdDir1_Dir2BwdDir2;
-            break;
+            case 0:
+                return StdRegions::eDir1FwdDir1_Dir2FwdDir2;
+                break;
+            case 1:
+                return StdRegions::eDir1FwdDir2_Dir2BwdDir1;
+                break;
+            case 2:
+                return StdRegions::eDir1BwdDir1_Dir2BwdDir2;
+                break;
         }
     }
     else
     {
         switch (vmap[0])
         {
-        case 0:
-            return StdRegions::eDir1FwdDir2_Dir2FwdDir1;
-            break;
-        case 1:
-            return StdRegions::eDir1BwdDir1_Dir2FwdDir2;
-            break;
-        case 2:
-            return StdRegions::eDir1BwdDir2_Dir2BwdDir1;
-            break;
+            case 0:
+                return StdRegions::eDir1FwdDir2_Dir2FwdDir1;
+                break;
+            case 1:
+                return StdRegions::eDir1BwdDir1_Dir2FwdDir2;
+                break;
+            case 2:
+                return StdRegions::eDir1BwdDir2_Dir2BwdDir1;
+                break;
         }
     }
 
@@ -225,7 +226,7 @@ StdRegions::Orientation TriGeom::GetFaceOrientation(
 
 void TriGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         TriGeom::v_Setup();
     }
@@ -316,7 +317,7 @@ void TriGeom::v_FillGeom()
                          "to number of face points in triangle " +
                              boost::lexical_cast<string>(m_globalID));
 
-                const int offset = 3 + i * (nEdgePts - 2);
+                const int offset  = 3 + i * (nEdgePts - 2);
                 NekDouble maxDist = 0.0;
 
                 // Account for different ordering of nodal coordinates
@@ -325,8 +326,9 @@ void TriGeom::v_FillGeom()
 
                 if (i == 2)
                 {
-                    orient = orient == StdRegions::eForwards ?
-                        StdRegions::eBackwards : StdRegions::eForwards;
+                    orient = orient == StdRegions::eForwards
+                                 ? StdRegions::eBackwards
+                                 : StdRegions::eForwards;
                 }
 
                 if (orient == StdRegions::eForwards)
@@ -364,10 +366,10 @@ void TriGeom::v_FillGeom()
                 nEdgePts, LibUtilities::eGaussLobattoLegendre);
             const LibUtilities::PointsKey P1(
                 nEdgePts, LibUtilities::eGaussRadauMAlpha1Beta0);
-            const LibUtilities::BasisKey T0(
-                LibUtilities::eOrtho_A, nEdgePts, P0);
-            const LibUtilities::BasisKey T1(
-                LibUtilities::eOrtho_B, nEdgePts, P1);
+            const LibUtilities::BasisKey T0(LibUtilities::eOrtho_A, nEdgePts,
+                                            P0);
+            const LibUtilities::BasisKey T1(LibUtilities::eOrtho_B, nEdgePts,
+                                            P1);
             Array<OneD, NekDouble> phys(
                 max(nEdgePts * nEdgePts, m_xmap->GetTotPoints()));
             Array<OneD, NekDouble> tmp(nEdgePts * nEdgePts);
@@ -387,12 +389,9 @@ void TriGeom::v_FillGeom()
                 t->BwdTrans(phys, tmp);
 
                 // Interpolate points to standard region.
-                LibUtilities::Interp2D(P0,
-                                       P1,
-                                       tmp,
-                                       m_xmap->GetBasis(0)->GetPointsKey(),
-                                       m_xmap->GetBasis(1)->GetPointsKey(),
-                                       phys);
+                LibUtilities::Interp2D(
+                    P0, P1, tmp, m_xmap->GetBasis(0)->GetPointsKey(),
+                    m_xmap->GetBasis(1)->GetPointsKey(), phys);
 
                 // Forwards transform to get coefficient space.
                 m_xmap->FwdTrans(phys, m_coeffs[i]);
@@ -400,7 +399,7 @@ void TriGeom::v_FillGeom()
         }
         else if (pdim == 1)
         {
-            int npts = m_curve->m_points.size();
+            int npts     = m_curve->m_points.size();
             int nEdgePts = (int)sqrt(static_cast<NekDouble>(npts));
             Array<OneD, NekDouble> tmp(npts);
             Array<OneD, NekDouble> phys(m_xmap->GetTotPoints());
@@ -431,9 +430,7 @@ void TriGeom::v_FillGeom()
 
                 // Interpolate curve points to standard triangle
                 // points.
-                LibUtilities::Interp2D(curveKey,
-                                       curveKey,
-                                       tmp,
+                LibUtilities::Interp2D(curveKey, curveKey, tmp,
                                        m_xmap->GetBasis(0)->GetPointsKey(),
                                        m_xmap->GetBasis(1)->GetPointsKey(),
                                        phys);
@@ -444,9 +441,8 @@ void TriGeom::v_FillGeom()
         }
         else
         {
-            ASSERTL0(false,
-                     "Only 1D/2D points distributions "
-                     "supported.");
+            ASSERTL0(false, "Only 1D/2D points distributions "
+                            "supported.");
         }
     }
 
@@ -456,7 +452,7 @@ void TriGeom::v_FillGeom()
     for (i = 0; i < kNedges; i++)
     {
         m_edges[i]->FillGeom();
-        m_xmap->GetTraceToElementMap(i,  mapArray, signArray, m_eorient[i]);
+        m_xmap->GetTraceToElementMap(i, mapArray, signArray, m_eorient[i]);
 
         nEdgeCoeffs = m_edges[i]->GetXmap()->GetNcoeffs();
 
@@ -477,7 +473,7 @@ int TriGeom::v_GetDir(const int i, const int j) const
 {
     boost::ignore_unused(j); // required in 3D shapes
 
-    return i == 0 ? 0:1;
+    return i == 0 ? 0 : 1;
 }
 
 void TriGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
@@ -501,7 +497,7 @@ void TriGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void TriGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 3; ++i)
         {
@@ -516,22 +512,20 @@ void TriGeom::v_Setup()
 void TriGeom::SetUpXmap()
 {
     int order0 = m_edges[0]->GetXmap()->GetBasis(0)->GetNumModes();
-    int order1 = max(order0,
-                     max(m_edges[1]->GetXmap()->GetBasis(0)->GetNumModes(),
-                         m_edges[2]->GetXmap()->GetBasis(0)->GetNumModes()));
+    int order1 =
+        max(order0, max(m_edges[1]->GetXmap()->GetBasis(0)->GetNumModes(),
+                        m_edges[2]->GetXmap()->GetBasis(0)->GetNumModes()));
 
     const LibUtilities::BasisKey B0(
-        LibUtilities::eModified_A,
-        order0,
-        LibUtilities::PointsKey(order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order0,
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey B1(
-        LibUtilities::eModified_B,
-        order1,
-        LibUtilities::PointsKey(order1,
-                                LibUtilities::eGaussRadauMAlpha1Beta0));
+        LibUtilities::eModified_B, order1,
+        LibUtilities::PointsKey(order1, LibUtilities::eGaussRadauMAlpha1Beta0));
 
     m_xmap = MemoryManager<StdRegions::StdTriExp>::AllocateSharedPtr(B0, B1);
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

@@ -33,11 +33,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <NekMesh/MeshElements/Element.h>
-#include <NekMesh/MeshElements/Triangle.h>
 #include <NekMesh/MeshElements/Quadrilateral.h>
+#include <NekMesh/MeshElements/Triangle.h>
 
-#include "OutputGmsh.h"
 #include "../InputModules/InputGmsh.h"
+#include "OutputGmsh.h"
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -47,10 +47,9 @@ namespace Nektar
 namespace NekMesh
 {
 
-ModuleKey OutputGmsh::className =
-    GetModuleFactory().RegisterCreatorFunction(ModuleKey(eOutputModule, "msh"),
-                                               OutputGmsh::create,
-                                               "Writes Gmsh msh file.");
+ModuleKey OutputGmsh::className = GetModuleFactory().RegisterCreatorFunction(
+    ModuleKey(eOutputModule, "msh"), OutputGmsh::create,
+    "Writes Gmsh msh file.");
 
 OutputGmsh::OutputGmsh(MeshSharedPtr m) : OutputModule(m)
 {
@@ -80,10 +79,10 @@ OutputGmsh::~OutputGmsh()
  */
 void OutputGmsh::Process()
 {
-    m_log(VERBOSE) << "Writing Gmsh file '"
-                   << m_config["outfile"].as<string>() << "'." << endl;
+    m_log(VERBOSE) << "Writing Gmsh file '" << m_config["outfile"].as<string>()
+                   << "'." << endl;
 
-    std::unordered_map<int, vector<int> > orderingMap;
+    std::unordered_map<int, vector<int>> orderingMap;
 
     // Open the file stream.
     OpenStream();
@@ -139,7 +138,7 @@ void OutputGmsh::Process()
     {
         for (int i = 0; i < m_mesh->m_element[d].size(); ++i)
         {
-            ElementSharedPtr e = m_mesh->m_element[d][i];
+            ElementSharedPtr e            = m_mesh->m_element[d][i];
             vector<NodeSharedPtr> volList = e->GetVolumeNodes();
             m_mesh->m_vertexSet.insert(volList.begin(), volList.end());
         }
@@ -236,13 +235,13 @@ void OutputGmsh::Process()
             // Process face-interior points
             for (int j = 0; j < faceList.size(); ++j)
             {
-                nodeList = faceList[j]->m_faceNodes;
+                nodeList       = faceList[j]->m_faceNodes;
                 int nFaceVerts = faceList[j]->m_vertexList.size();
                 vector<int> faceIds(nFaceVerts), volFaceIds(nFaceVerts);
 
                 for (int k = 0; k < nFaceVerts; ++k)
                 {
-                    faceIds   [k] = faceList[j]->m_vertexList[k]->m_id;
+                    faceIds[k] = faceList[j]->m_vertexList[k]->m_id;
                     volFaceIds[k] =
                         e->GetVertexList()[e->GetFaceVertex(j, k)]->m_id;
                 }
@@ -281,8 +280,8 @@ void OutputGmsh::Process()
             // If it's not created, then create it.
             if (oIt == orderingMap.end())
             {
-                vector<int> reordering = InputGmsh::CreateReordering(
-                    elmtType, m_log);
+                vector<int> reordering =
+                    InputGmsh::CreateReordering(elmtType, m_log);
                 vector<int> inv(tags.size());
 
                 ASSERTL1(tags.size() == reordering.size(),
@@ -310,5 +309,5 @@ void OutputGmsh::Process()
     }
     m_mshFile << "$EndElements" << endl;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -1370,41 +1370,6 @@ void ExpList::DivideByQuadratureMetric(
 
 /**
  * The operation is evaluated locally for every element by the function
- * StdRegions#StdExpansion#IProductWRTBase.
- *
- * @param   inarray         An array of size \f$Q_{\mathrm{tot}}\f$
- *                          containing the values of the function
- *                          \f$f(\boldsymbol{x})\f$ at the quadrature
- *                          points \f$\boldsymbol{x}_i\f$.
- * @param   outarray        An array of size \f$N_{\mathrm{eof}}\f$
- *                          used to store the result.
- */
-void ExpList::v_IProductWRTBase_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    // initialise if required
-    if (m_collectionsDoInit[Collections::eIProductWRTBase])
-    {
-        for (int i = 0; i < m_collections.size(); ++i)
-        {
-            m_collections[i].Initialise(Collections::eIProductWRTBase);
-        }
-        m_collectionsDoInit[Collections::eIProductWRTBase] = false;
-    }
-
-    Array<OneD, NekDouble> tmp;
-    for (int i = 0; i < m_collections.size(); ++i)
-    {
-
-        m_collections[i].ApplyOperator(Collections::eIProductWRTBase,
-                                       inarray + m_coll_phys_offset[i],
-                                       tmp = outarray + m_coll_coeff_offset[i]);
-    }
-}
-
-/**
- * The operation is evaluated locally for every element by the function
  * StdRegions#Expansion#IProductWRTDerivBase.
  *
  * @param   dir             {0,1} is the direction in which the
@@ -1839,7 +1804,7 @@ void ExpList::v_FwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
 {
     Array<OneD, NekDouble> f(m_ncoeffs);
 
-    IProductWRTBase_IterPerExp(inarray, f);
+    IProductWRTBase(inarray, f);
     MultiplyByElmtInvMass(f, outarray);
 }
 
@@ -2057,7 +2022,36 @@ const DNekScalBlkMatSharedPtr &ExpList::GetBlockMatrix(
     }
 }
 
-void ExpList::GeneralMatrixOp_IterPerExp(
+// Routines for continous matrix solution
+/**
+ * This operation is equivalent to the evaluation of
+ * \f$\underline{\boldsymbol{M}}^e\boldsymbol{\hat{u}}_l\f$, that is,
+ * \f[ \left[
+ * \begin{array}{cccc}
+ * \boldsymbol{M}^1 & 0 & \hspace{3mm}0 \hspace{3mm}& 0 \\
+ * 0 & \boldsymbol{M}^2 & 0 & 0 \\
+ * 0 &  0 & \ddots &  0 \\
+ * 0 &  0 & 0 & \boldsymbol{M}^{N_{\mathrm{el}}} \end{array} \right]
+ *\left [ \begin{array}{c}
+ * \boldsymbol{\hat{u}}^{1} \\
+ * \boldsymbol{\hat{u}}^{2} \\
+ * \vdots \\
+ * \boldsymbol{\hat{u}}^{{{N_{\mathrm{el}}}}} \end{array} \right ]\f]
+ * where \f$\boldsymbol{M}^e\f$ are the local matrices of type
+ * specified by the key \a mkey. The decoupling of the local matrices
+ * allows for a local evaluation of the operation. However, rather than
+ * a local matrix-vector multiplication, the local operations are
+ * evaluated as implemented in the function
+ * StdRegions#StdExpansion#GeneralMatrixOp.
+ *
+ * @param   mkey            This key uniquely defines the type matrix
+ *                          required for the operation.
+ * @param   inarray         The vector \f$\boldsymbol{\hat{u}}_l\f$ of
+ *                          size \f$N_{\mathrm{eof}}\f$.
+ * @param   outarray        The resulting vector of size
+ *                          \f$N_{\mathrm{eof}}\f$.
+ */
+void ExpList::GeneralMatrixOp(
     const GlobalMatrixKey &gkey, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -2469,6 +2463,7 @@ GlobalLinSysSharedPtr ExpList::GenGlobalBndLinSys(
  *                          will be stored in this array of size
  *                          \f$Q_{\mathrm{tot}}\f$.
  */
+
 void ExpList::v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray)
 {
@@ -4699,6 +4694,17 @@ void ExpList::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
     v_FwdTrans_IterPerExp(inarray, outarray);
 }
 
+/**
+ * The operation is evaluated locally for every element by the function
+ * StdRegions#StdExpansion#IProductWRTBase.
+ *
+ * @param   inarray         An array of size \f$Q_{\mathrm{tot}}\f$
+ *                          containing the values of the function
+ *                          \f$f(\boldsymbol{x})\f$ at the quadrature
+ *                          points \f$\boldsymbol{x}_i\f$.
+ * @param   outarray        An array of size \f$N_{\mathrm{eof}}\f$
+ *                          used to store the result.
+ */
 void ExpList::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                 Array<OneD, NekDouble> &outarray)
 {
@@ -4720,13 +4726,6 @@ void ExpList::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                        inarray + m_coll_phys_offset[i],
                                        tmp = outarray + m_coll_coeff_offset[i]);
     }
-}
-
-void ExpList::v_GeneralMatrixOp(const GlobalMatrixKey &gkey,
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray)
-{
-    GeneralMatrixOp_IterPerExp(gkey, inarray, outarray);
 }
 
 /**

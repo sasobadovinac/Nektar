@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -40,73 +40,80 @@
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 
-
 namespace Nektar
 {
-    namespace LowerTriangularStoragePolicyUnitTests
+namespace LowerTriangularStoragePolicyUnitTests
+{
+typedef LowerTriangularMatrixFuncs Policy;
+
+BOOST_AUTO_TEST_CASE(TestAdvanceLowerTriangular)
+{
+    UnitTests::RedirectCerrIfNeeded();
+
     {
-        typedef LowerTriangularMatrixFuncs Policy;
-                    
-        BOOST_AUTO_TEST_CASE(TestAdvanceLowerTriangular)
-        {
-            UnitTests::RedirectCerrIfNeeded();
 
-            {    
+        unsigned int curRow    = 0;
+        unsigned int curColumn = 0;
+        std::tie(curRow, curColumn) =
+            Policy::Advance(3, 3, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(1, curRow);
+        BOOST_CHECK_EQUAL(0, curColumn);
 
-                unsigned int curRow = 0; 
-                unsigned int curColumn = 0;
-                std::tie(curRow, curColumn) = Policy::Advance(3, 3, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(1, curRow);
-                BOOST_CHECK_EQUAL(0, curColumn);
+        std::tie(curRow, curColumn) =
+            Policy::Advance(3, 3, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(2, curRow);
+        BOOST_CHECK_EQUAL(0, curColumn);
 
-                std::tie(curRow, curColumn) = Policy::Advance(3, 3, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(2, curRow);
-                BOOST_CHECK_EQUAL(0, curColumn);
+        std::tie(curRow, curColumn) =
+            Policy::Advance(3, 3, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(1, curRow);
+        BOOST_CHECK_EQUAL(1, curColumn);
 
-                std::tie(curRow, curColumn) = Policy::Advance(3, 3, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(1, curRow);
-                BOOST_CHECK_EQUAL(1, curColumn);
+        std::tie(curRow, curColumn) =
+            Policy::Advance(3, 3, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(2, curRow);
+        BOOST_CHECK_EQUAL(1, curColumn);
 
-                std::tie(curRow, curColumn) = Policy::Advance(3, 3, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(2, curRow);
-                BOOST_CHECK_EQUAL(1, curColumn);
+        std::tie(curRow, curColumn) =
+            Policy::Advance(3, 3, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(2, curRow);
+        BOOST_CHECK_EQUAL(2, curColumn);
 
-                std::tie(curRow, curColumn) = Policy::Advance(3, 3, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(2, curRow);
-                BOOST_CHECK_EQUAL(2, curColumn);
+        std::tie(curRow, curColumn) =
+            Policy::Advance(3, 3, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
+    }
 
-                std::tie(curRow, curColumn) = Policy::Advance(3, 3, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
-            }
+    {
 
-            {
+        unsigned int curRow    = 0;
+        unsigned int curColumn = 0;
+        std::tie(curRow, curColumn) =
+            Policy::Advance(1, 1, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
+    }
 
-                unsigned int curRow = 0; 
-                unsigned int curColumn = 0;
-                std::tie(curRow, curColumn) = Policy::Advance(1, 1, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
-            }
+    {
 
-            {
-             
-                unsigned int curRow = 0; 
-                unsigned int curColumn = 0;
-                std::tie(curRow, curColumn) = Policy::Advance(2, 2, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(1, curRow);
-                BOOST_CHECK_EQUAL(0, curColumn);
+        unsigned int curRow    = 0;
+        unsigned int curColumn = 0;
+        std::tie(curRow, curColumn) =
+            Policy::Advance(2, 2, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(1, curRow);
+        BOOST_CHECK_EQUAL(0, curColumn);
 
-                std::tie(curRow, curColumn) = Policy::Advance(2, 2, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(1, curRow);
-                BOOST_CHECK_EQUAL(1, curColumn);
+        std::tie(curRow, curColumn) =
+            Policy::Advance(2, 2, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(1, curRow);
+        BOOST_CHECK_EQUAL(1, curColumn);
 
-                std::tie(curRow, curColumn) = Policy::Advance(2, 2, curRow, curColumn, 'N');
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
-            }
-        }
+        std::tie(curRow, curColumn) =
+            Policy::Advance(2, 2, curRow, curColumn, 'N');
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
     }
 }
-
-
+} // namespace LowerTriangularStoragePolicyUnitTests
+} // namespace Nektar

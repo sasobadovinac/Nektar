@@ -71,9 +71,8 @@ public:
     {
         return "Calculating distance to surface";
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

@@ -9,18 +9,32 @@
 
 /*
 #define NEKTAR_EXPL_DEC_INC1(C, R) \
-std::string __register_##C##_##R            = GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Regular"  ), &C##R::Create);
+std::string __register_##C##_##R            =
+GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Regular"
+), &C##R::Create);
 
 #define NEKTAR_EXPL_DEC_INC2(C, R) \
-std::string __register_##C##_##R            = GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Regular"  ), &C##R<>::Create); \
-std::string __register_##C##_##R##_Deformed = GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Deformed" ), &C##R<true>::Create);
+std::string __register_##C##_##R            =
+GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Regular"
+), &C##R<>::Create); \ std::string __register_##C##_##R##_Deformed =
+GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Deformed"
+), &C##R<true>::Create);
 */
 
-#define NEKTAR_EXPL_DEC_INC_GEN1(C, R) \
-std::string __register_##C##_##R            = GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Regular"  ), &C##Template<LibUtilities::ShapeType::R>::Create); \
+#define NEKTAR_EXPL_DEC_INC_GEN1(C, R)                                         \
+    std::string __register_##C##_##R =                                         \
+        GetOperatorFactory().RegisterCreatorFunction(                          \
+            std::string(#C "_" #R "_Regular"),                                 \
+            &C##Template<LibUtilities::ShapeType::R>::Create);
 
-#define NEKTAR_EXPL_DEC_INC_GEN2(C, R)					\
-std::string __register_##C##_##R            = GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Regular"  ), &C##Template<LibUtilities::ShapeType::R>::Create); \
-std::string __register_##C##_##R##_Deformed = GetOperatorFactory().RegisterCreatorFunction( std::string( #C "_" #R "_Deformed" ), &C##Template<LibUtilities::ShapeType::R, true>::Create);
+#define NEKTAR_EXPL_DEC_INC_GEN2(C, R)                                         \
+    std::string __register_##C##_##R =                                         \
+        GetOperatorFactory().RegisterCreatorFunction(                          \
+            std::string(#C "_" #R "_Regular"),                                 \
+            &C##Template<LibUtilities::ShapeType::R>::Create);                 \
+    std::string __register_##C##_##R##_Deformed =                              \
+        GetOperatorFactory().RegisterCreatorFunction(                          \
+            std::string(#C "_" #R "_Deformed"),                                \
+            &C##Template<LibUtilities::ShapeType::R, true>::Create);
 
 #endif

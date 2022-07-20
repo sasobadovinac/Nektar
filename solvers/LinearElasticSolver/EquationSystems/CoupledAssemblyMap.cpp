@@ -36,13 +36,13 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LinearElasticSolver/EquationSystems/CoupledAssemblyMap.h>
 #include <LibUtilities/BasicUtils/HashUtils.hpp>
-#include <SpatialDomains/MeshGraph.h>
-#include <LocalRegions/SegExp.h>
+#include <LinearElasticSolver/EquationSystems/CoupledAssemblyMap.h>
 #include <LocalRegions/Expansion1D.h>
 #include <LocalRegions/Expansion2D.h>
+#include <LocalRegions/SegExp.h>
 #include <MultiRegions/GlobalLinSysDirectStaticCond.h>
+#include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
 
@@ -64,33 +64,33 @@ using SpatialDomains::BoundaryConditionShPtr;
  */
 
 CoupledAssemblyMap::CoupledAssemblyMap(
-    const LibUtilities::SessionReaderSharedPtr        &pSession,
-    const SpatialDomains::MeshGraphSharedPtr          &graph,
-    const MultiRegions::AssemblyMapCGSharedPtr        &cgMap,
-    const Array<OneD, const BoundaryCondShPtr>        &boundaryConditions,
-    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields) :
-    AssemblyMapCG(pSession,fields[0]->GetComm())
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &graph,
+    const MultiRegions::AssemblyMapCGSharedPtr &cgMap,
+    const Array<OneD, const BoundaryCondShPtr> &boundaryConditions,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields)
+    : AssemblyMapCG(pSession, fields[0]->GetComm())
 {
     boost::ignore_unused(graph, boundaryConditions);
 
     int nVel = fields[0]->GetCoordim(0);
 
     // Multi-level static condensation doesn't work yet.
-    ASSERTL0(m_solnType != MultiRegions::eDirectMultiLevelStaticCond    &&
-             m_solnType != MultiRegions::eIterativeMultiLevelStaticCond &&
-             m_solnType != MultiRegions::eXxtMultiLevelStaticCond,
+    ASSERTL0(m_solnType != MultiRegions::eDirectMultiLevelStaticCond &&
+                 m_solnType != MultiRegions::eIterativeMultiLevelStaticCond &&
+                 m_solnType != MultiRegions::eXxtMultiLevelStaticCond,
              "Multi-level static condensation not supported.");
 
     // Copy various coefficient counts, and multiply by the dimension of the
     // problem to obtain our new values.
-    m_numLocalDirBndCoeffs      = cgMap->GetNumLocalDirBndCoeffs()  * nVel;
-    m_numLocalBndCoeffs         = cgMap->GetNumLocalBndCoeffs()     * nVel;
-    m_numLocalCoeffs            = cgMap->GetNumLocalCoeffs()        * nVel;
-    m_numGlobalBndCoeffs        = cgMap->GetNumGlobalBndCoeffs()    * nVel;
-    m_numGlobalDirBndCoeffs     = cgMap->GetNumGlobalDirBndCoeffs() * nVel;
-    m_numGlobalCoeffs           = cgMap->GetNumGlobalCoeffs()       * nVel;
-    m_signChange                = cgMap->GetSignChange();
-    m_systemSingular            = cgMap->GetSingularSystem();
+    m_numLocalDirBndCoeffs  = cgMap->GetNumLocalDirBndCoeffs() * nVel;
+    m_numLocalBndCoeffs     = cgMap->GetNumLocalBndCoeffs() * nVel;
+    m_numLocalCoeffs        = cgMap->GetNumLocalCoeffs() * nVel;
+    m_numGlobalBndCoeffs    = cgMap->GetNumGlobalBndCoeffs() * nVel;
+    m_numGlobalDirBndCoeffs = cgMap->GetNumGlobalDirBndCoeffs() * nVel;
+    m_numGlobalCoeffs       = cgMap->GetNumGlobalCoeffs() * nVel;
+    m_signChange            = cgMap->GetSignChange();
+    m_systemSingular        = cgMap->GetSingularSystem();
 
     // Copy static condensation information. TODO: boundary and interior patches
     // need to be re-ordered in order to allow for multi-level static
@@ -102,29 +102,27 @@ CoupledAssemblyMap::CoupledAssemblyMap(
     m_numLocalIntCoeffsPerPatch = cgMap->GetNumLocalIntCoeffsPerPatch();
 
     // Allocate storage for local to global maps.
-    m_localToGlobalMap      = Array<OneD, int>(m_numLocalCoeffs,-1);
-    m_localToGlobalBndMap   = Array<OneD, int>(m_numLocalBndCoeffs,-1);
-    m_localToLocalBndMap    = Array<OneD, int>(m_numLocalBndCoeffs,-1);
-    m_localToLocalIntMap    = Array<OneD, int>(m_numLocalCoeffs-
-                                                       m_numLocalBndCoeffs,-1);
+    m_localToGlobalMap    = Array<OneD, int>(m_numLocalCoeffs, -1);
+    m_localToGlobalBndMap = Array<OneD, int>(m_numLocalBndCoeffs, -1);
+    m_localToLocalBndMap  = Array<OneD, int>(m_numLocalBndCoeffs, -1);
+    m_localToLocalIntMap =
+        Array<OneD, int>(m_numLocalCoeffs - m_numLocalBndCoeffs, -1);
 
     // Only require a sign map if we are using modal polynomials in the
     // expansion and the order is >= 3.
     if (m_signChange)
     {
-        m_localToGlobalSign               =
-            Array<OneD, NekDouble>(m_numLocalCoeffs,1.0);
-        m_localToGlobalBndSign            =
-            Array<OneD, NekDouble>(m_numLocalBndCoeffs,1.0);
+        m_localToGlobalSign = Array<OneD, NekDouble>(m_numLocalCoeffs, 1.0);
+        m_localToGlobalBndSign =
+            Array<OneD, NekDouble>(m_numLocalBndCoeffs, 1.0);
     }
     else
     {
-        m_localToGlobalSign               = NullNekDouble1DArray;
-        m_localToGlobalBndSign            = NullNekDouble1DArray;
+        m_localToGlobalSign    = NullNekDouble1DArray;
+        m_localToGlobalBndSign = NullNekDouble1DArray;
     }
 
-    const LocalRegions::ExpansionVector &locExpVector
-        = *(fields[0]->GetExp());
+    const LocalRegions::ExpansionVector &locExpVector = *(fields[0]->GetExp());
 
     map<int, int> newGlobalIds;
     int i, j, n, cnt1, cnt2;
@@ -141,16 +139,16 @@ CoupledAssemblyMap::CoupledAssemblyMap(
 
         for (n = 0; n < nVel; ++n)
         {
-            
+
             for (j = 0; j < nBndCoeffs; ++j, ++cnt1)
             {
-                const int l2g = cgMap->GetLocalToGlobalBndMap()[cnt2+j];
+                const int l2g = cgMap->GetLocalToGlobalBndMap()[cnt2 + j];
                 m_localToGlobalBndMap[cnt1] = nVel * l2g + n;
 
                 if (m_signChange)
                 {
                     m_localToGlobalBndSign[cnt1] =
-                        cgMap->GetLocalToGlobalBndSign()[cnt2+j];
+                        cgMap->GetLocalToGlobalBndSign()[cnt2 + j];
                 }
 
                 if (n == 0)
@@ -191,10 +189,9 @@ CoupledAssemblyMap::CoupledAssemblyMap(
         {
             for (j = 0; j < nBndCoeffs; ++j, ++cnt1, ++cnt2)
             {
-                m_localToLocalBndMap[bnd_cnt++] = cnt1; 
+                m_localToLocalBndMap[bnd_cnt++] = cnt1;
 
-
-                const int l2g = m_localToGlobalBndMap[cnt2];
+                const int l2g            = m_localToGlobalBndMap[cnt2];
                 m_localToGlobalMap[cnt1] = l2g;
 
                 if (m_signChange)
@@ -208,7 +205,7 @@ CoupledAssemblyMap::CoupledAssemblyMap(
         {
             for (j = 0; j < nCoeffs - nBndCoeffs; ++j, ++cnt1)
             {
-                m_localToLocalIntMap[int_cnt++] = cnt1; 
+                m_localToLocalIntMap[int_cnt++] = cnt1;
 
                 m_localToGlobalMap[cnt1] = globalId++;
             }
@@ -222,7 +219,6 @@ CoupledAssemblyMap::CoupledAssemblyMap(
 
     ASSERTL1(globalId == m_numGlobalCoeffs, "Consistency error");
 
-
     // Finally, set up global to universal maps.
     m_globalToUniversalMap          = Array<OneD, int>(m_numGlobalCoeffs);
     m_globalToUniversalMapUnique    = Array<OneD, int>(m_numGlobalCoeffs);
@@ -233,10 +229,10 @@ CoupledAssemblyMap::CoupledAssemblyMap(
     {
         for (n = 0; n < nVel; ++n)
         {
-            m_globalToUniversalBndMap[i*nVel + n] =
-                cgMap->GetGlobalToUniversalBndMap()[i]*nVel + n;
-            m_globalToUniversalMap[i*nVel + n] =
-                cgMap->GetGlobalToUniversalBndMap()[i]*nVel + n;
+            m_globalToUniversalBndMap[i * nVel + n] =
+                cgMap->GetGlobalToUniversalBndMap()[i] * nVel + n;
+            m_globalToUniversalMap[i * nVel + n] =
+                cgMap->GetGlobalToUniversalBndMap()[i] * nVel + n;
         }
     }
 
@@ -249,8 +245,8 @@ CoupledAssemblyMap::CoupledAssemblyMap(
     }
 
     LibUtilities::CommSharedPtr vCommRow = m_comm->GetRowComm();
-    m_gsh    = Gs::Init(tmp,  vCommRow);
-    m_bndGsh = Gs::Init(tmp2, vCommRow);
+    m_gsh                                = Gs::Init(tmp, vCommRow);
+    m_bndGsh                             = Gs::Init(tmp2, vCommRow);
     Gs::Unique(tmp, vCommRow);
     for (unsigned int i = 0; i < m_numGlobalCoeffs; ++i)
     {
@@ -261,8 +257,7 @@ CoupledAssemblyMap::CoupledAssemblyMap(
         m_globalToUniversalBndMapUnique[i] = (tmp2[i] >= 0 ? 1 : 0);
     }
 
-    m_hash = hash_range(
-        m_localToGlobalMap.begin(), m_localToGlobalMap.end());
+    m_hash = hash_range(m_localToGlobalMap.begin(), m_localToGlobalMap.end());
 }
 
-}
+} // namespace Nektar

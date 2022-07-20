@@ -353,6 +353,7 @@ void ExpListHomogeneous2D::v_BwdTrans(
     }
 }
 
+
 void ExpListHomogeneous2D::v_IProductWRTBase(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
@@ -364,24 +365,6 @@ void ExpListHomogeneous2D::v_IProductWRTBase(
     for (int n = 0; n < nlines; ++n)
     {
         m_lines[n]->IProductWRTBase(inarray + cnt, tmparray = outarray + cnt1);
-
-        cnt += m_lines[n]->GetNcoeffs();
-        cnt1 += m_lines[n]->GetTotPoints();
-    }
-}
-
-void ExpListHomogeneous2D::v_IProductWRTBase_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int cnt = 0, cnt1 = 0;
-    Array<OneD, NekDouble> tmparray;
-    int nlines = m_lines.size();
-
-    for (int n = 0; n < nlines; ++n)
-    {
-        m_lines[n]->IProductWRTBase_IterPerExp(inarray + cnt,
-                                               tmparray = outarray + cnt1);
 
         cnt += m_lines[n]->GetNcoeffs();
         cnt1 += m_lines[n]->GetTotPoints();
@@ -823,8 +806,8 @@ void ExpListHomogeneous2D::v_PhysDeriv(
 {
     int nyzlines = m_lines.size(); // number of Fourier points in the Fourier
                                    // directions (nF_pts)
-    int npoints = inarray.size(); // number of total points = n. of Fourier
-                                  // points * n. of points per line (nT_pts)
+    int npoints = inarray.size();  // number of total points = n. of Fourier
+                                   // points * n. of points per line (nT_pts)
     int n_points_line = npoints / nyzlines; // number of points per line
 
     Array<OneD, NekDouble> temparray(npoints);
@@ -933,8 +916,8 @@ void ExpListHomogeneous2D::v_PhysDeriv(
 {
     int nyzlines = m_lines.size(); // number of Fourier points in the Fourier
                                    // directions (nF_pts)
-    int npoints = inarray.size(); // number of total points = n. of Fourier
-                                  // points * n. of points per line (nT_pts)
+    int npoints = inarray.size();  // number of total points = n. of Fourier
+                                   // points * n. of points per line (nT_pts)
     int n_points_line = npoints / nyzlines; // number of points per line
     // convert enum into int
     int dir = (int)edir;

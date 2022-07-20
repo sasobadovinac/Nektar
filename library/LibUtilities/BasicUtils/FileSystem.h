@@ -32,16 +32,17 @@
 #define NEKTAR_LIB_UTILITIES_FILESYSTEM_HPP
 
 #include <LibUtilities/LibUtilitiesDeclspec.h>
-#include <string>
 #include <boost/filesystem.hpp>
+#include <string>
 
 namespace fs = boost::filesystem;
 
 namespace Nektar
 {
-    namespace LibUtilities
-    {
-        LIB_UTILITIES_EXPORT std::string PortablePath(const boost::filesystem::path& path);
-    }
+namespace LibUtilities
+{
+LIB_UTILITIES_EXPORT std::string PortablePath(
+    const boost::filesystem::path &path);
 }
+} // namespace Nektar
 #endif
