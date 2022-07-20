@@ -121,7 +121,7 @@ namespace Nektar
         /**
          * @brief Initialisation object for EquationSystem.
          */
-        void EquationSystem::v_InitObject()
+        void EquationSystem::v_InitObject(bool DeclareFields)
         {
             // Save the basename of input file name for output details
             m_sessionName = m_session->GetSessionName();
@@ -287,6 +287,8 @@ namespace Nektar
             m_spacedim = m_graph->GetSpaceDimension()+m_HomoDirec;
             m_expdim   = m_graph->GetMeshDimension();
 
+            if(DeclareFields) // declare field if required
+            {
             /// Continuous field
             if (m_projectionType == MultiRegions::eGalerkin ||
                m_projectionType == MultiRegions::eMixed_CG_Discontinuous)
@@ -656,6 +658,9 @@ namespace Nektar
 
                 m_fields[0]->GetTrace()->GetNormals(m_traceNormals);
             }
+            // Zero all physical fields initially
+            ZeroPhysFields();
+            }
 
             // Set Default Parameter
             m_session->LoadParameter("Time",          m_time,       0.0);
@@ -678,8 +683,6 @@ namespace Nektar
             
             m_nchk = 0;
 
-            // Zero all physical fields initially
-            ZeroPhysFields();
         }
 
         /**

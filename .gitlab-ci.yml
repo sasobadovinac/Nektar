@@ -552,7 +552,7 @@ dockerhub-build-dev:
     args: --build-arg ENV_IMAGE=$CI_REGISTRY_IMAGE/nektar-env:$CI_COMMIT_SHORT_SHA --build-arg NEKTAR_IMAGE=$CI_REGISTRY_IMAGE/nektar:$CI_COMMIT_SHORT_SHA
     dockerfile: docker/nektar-dev/Dockerfile
 
-# Test the dockerhub images
+# Test the dockerhub images: runs a quick solve and Python code.
 dockerhub-test-nektar:
   <<: *dockerhub_test_template
   needs: [ "dockerhub-build-nektar" ]
@@ -560,6 +560,8 @@ dockerhub-test-nektar:
     image_name: nektar
   script:
     - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
+    - cd $CI_PROJECT_DIR/library/Demos/Python/MultiRegions
+    - mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml
 
 dockerhub-test-nektar-dev:
   <<: *dockerhub_test_template

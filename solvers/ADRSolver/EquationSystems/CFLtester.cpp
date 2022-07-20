@@ -52,9 +52,9 @@ namespace Nektar
     {
     }
 
-    void CFLtester::v_InitObject()
+    void CFLtester::v_InitObject(bool DeclareFields)
     {
-        AdvectionSystem::v_InitObject();
+        AdvectionSystem::v_InitObject(DeclareFields);
 
         m_velocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
         std::vector<std::string> vel;

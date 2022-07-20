@@ -55,10 +55,10 @@ namespace Nektar
     /**
      * @brief Initialisation object for the inviscid Burger equation.
      */
-    void UnsteadyInviscidBurger::v_InitObject()
+    void UnsteadyInviscidBurger::v_InitObject(bool DeclareFields)
     {
         // Call to the initialisation object of UnsteadySystem
-        AdvectionSystem::v_InitObject();
+        AdvectionSystem::v_InitObject(DeclareFields);
 
         // Define the normal velocity fields
         if (m_fields[0]->GetTrace())

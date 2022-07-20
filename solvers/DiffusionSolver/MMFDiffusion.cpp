@@ -63,9 +63,9 @@ namespace Nektar
     {
     }
 
-    void MMFDiffusion::v_InitObject()
+    void MMFDiffusion::v_InitObject(bool DeclareFields)
     {
-      UnsteadySystem::v_InitObject();
+      UnsteadySystem::v_InitObject(DeclareFields);
 
       int nq = m_fields[0]->GetNpoints();
       int nvar  =  m_fields.size();

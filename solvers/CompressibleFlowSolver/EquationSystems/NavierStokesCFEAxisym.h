@@ -73,7 +73,7 @@ namespace Nektar
         const LibUtilities::SessionReaderSharedPtr& pSession,
         const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
-    virtual void v_InitObject() override;
+    virtual void v_InitObject(bool DeclareFields=true) override;
 
     virtual void v_DoDiffusion(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,

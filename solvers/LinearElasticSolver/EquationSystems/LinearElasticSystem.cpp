@@ -137,9 +137,9 @@ LinearElasticSystem::LinearElasticSystem(
  * coupled assembly map and creates containers for the statically condensed
  * block matrix system.
  */
-void LinearElasticSystem::v_InitObject()
+void LinearElasticSystem::v_InitObject(bool DeclareFields)
 {
-    EquationSystem::v_InitObject();
+    EquationSystem::v_InitObject(DeclareFields);
 
     const int nVel = m_fields[0]->GetCoordim(0);
     int n;

@@ -59,4 +59,12 @@ IF( NEKTAR_SOLVER_PULSEWAVE )
     ADD_NEKTAR_TEST(Viscoelasticity)
     ADD_NEKTAR_TEST(EmpiricalPressure)
     ADD_NEKTAR_TEST(PowerPressure)
+
+
+    IF (NEKTAR_USE_MPI)
+        ADD_NEKTAR_TEST(55_Artery_Network_par)
+        ADD_NEKTAR_TEST(TwoBifurcations_par)
+        TARGET_LINK_LIBRARIES(PulseWaveSolver LINK_PRIVATE ${GSMPI_LIBRARY} ${XXT_LIBRARY})
+    ENDIF (NEKTAR_USE_MPI)
+
 ENDIF( NEKTAR_SOLVER_PULSEWAVE )

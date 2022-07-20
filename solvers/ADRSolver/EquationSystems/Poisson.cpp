@@ -48,9 +48,9 @@ namespace Nektar
     {
     }
 
-    void Poisson::v_InitObject()
+    void Poisson::v_InitObject(bool DeclareFields)
     {
-        Laplace::v_InitObject();
+        Laplace::v_InitObject(DeclareFields);
 
         GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
     }

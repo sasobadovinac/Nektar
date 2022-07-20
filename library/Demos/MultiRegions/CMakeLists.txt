@@ -36,9 +36,6 @@ IF (IS_DIRECTORY ExtraDemos)
     ADD_SUBDIRECTORY(ExtraDemos)
 ENDIF()
 
-# Add Redesign  subdirectory.
-ADD_SUBDIRECTORY(Redesign)
-
 ADD_NEKTAR_TEST(Helmholtz1D_CG_P8)
 ADD_NEKTAR_TEST(Helmholtz1D_CG_P8_periodic)
 ADD_NEKTAR_TEST(Helmholtz1D_CG_P8_RBC)

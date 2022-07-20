@@ -70,7 +70,7 @@ namespace Nektar
 
         virtual ~VCSMapping();
 
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareField = true);
 
     protected:
         // Mapping object

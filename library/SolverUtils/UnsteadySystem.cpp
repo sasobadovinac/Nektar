@@ -78,9 +78,9 @@ namespace Nektar
         /**
          * Initialization object for UnsteadySystem class.
          */
-        void UnsteadySystem::v_InitObject()
+        void UnsteadySystem::v_InitObject(bool DeclareField)
         {
-            EquationSystem::v_InitObject();
+            EquationSystem::v_InitObject(DeclareField);
 
             m_initialStep = 0;
 

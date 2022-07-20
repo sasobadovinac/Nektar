@@ -55,9 +55,9 @@ namespace Nektar
     /**
      * @brief Initialisation object for the unsteady diffusion problem.
      */
-    void UnsteadyDiffusion::v_InitObject()
+    void UnsteadyDiffusion::v_InitObject(bool DeclareFields)
     {
-        UnsteadySystem::v_InitObject();
+        UnsteadySystem::v_InitObject(DeclareFields);
 
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
         m_session->LoadParameter("epsilon",    m_epsilon,  1.0);

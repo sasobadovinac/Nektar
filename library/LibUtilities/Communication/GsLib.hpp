@@ -141,14 +141,16 @@ typedef enum {
     gs_all_reduce
 } gs_method;
 
-extern "C" {
-void nektar_gs(void *u, gs_dom dom, gs_op op, unsigned transpose, gs_data *gsh,
-               buffer *buf);
-gs_data *nektar_gs_setup(const long *id, unsigned int n,
-                         const struct comm *comm, int unique, gs_method method,
-                         int verbose);
-void nektar_gs_free(gs_data *gsh);
-void nektar_gs_unique(const long *id, unsigned int n, const struct comm *comm);
+extern "C"
+{
+    void nektar_gs(void *u, gs_dom dom, gs_op op, unsigned transpose,
+                   gs_data *gsh, buffer *buf);
+    gs_data *nektar_gs_setup(const long *id, unsigned int n,
+                             const struct comm *comm, int unique,
+                             gs_method method, int verbose);
+    void nektar_gs_free(gs_data *gsh);
+    void nektar_gs_unique(const long *id, unsigned int n,
+                          const struct comm *comm);
 }
 
 /**

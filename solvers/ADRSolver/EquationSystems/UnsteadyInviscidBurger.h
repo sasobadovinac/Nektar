@@ -97,7 +97,7 @@ namespace Nektar
         Array<OneD, NekDouble> &GetNormalVelocity();
 
         /// Initialise the object
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareFields=true);
 
     private:
     };

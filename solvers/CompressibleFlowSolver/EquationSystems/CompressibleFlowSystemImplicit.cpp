@@ -53,9 +53,9 @@ namespace Nektar
     /**
      * @brief Initialization object for CFSImplicit class.
      */
-    void CFSImplicit::v_InitObject()
+    void CFSImplicit::v_InitObject(bool DeclareFields)
     {
-        CompressibleFlowSystem::v_InitObject();
+        CompressibleFlowSystem::v_InitObject(DeclareFields);
         m_explicitAdvection = false;
         m_explicitDiffusion = false;
 

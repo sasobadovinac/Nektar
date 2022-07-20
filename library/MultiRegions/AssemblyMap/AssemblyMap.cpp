@@ -96,9 +96,10 @@ namespace Nektar
 
         AssemblyMap::AssemblyMap(
                 const LibUtilities::SessionReaderSharedPtr &pSession,
+                const LibUtilities::CommSharedPtr &comm,
                 const std::string variable):
             m_session(pSession),
-            m_comm(pSession->GetComm()),
+            m_comm(comm),
             m_hash(0),
             m_numLocalBndCoeffs(0),
             m_numGlobalBndCoeffs(0),

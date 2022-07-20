@@ -60,9 +60,9 @@ AdvectionSystem::~AdvectionSystem()
 /**
  *
  */
-void AdvectionSystem::v_InitObject()
+void AdvectionSystem::v_InitObject(bool DeclareField)
 {
-    UnsteadySystem::v_InitObject();
+    UnsteadySystem::v_InitObject(DeclareField);
     m_session->LoadParameter("IO_CFLSteps", m_cflsteps, 0);
     m_session->LoadParameter("IO_CFLWriteFld", m_cflWriteFld, 0);
     m_session->LoadParameter("IO_CFLWriteFldWaitSteps", m_cflWriteFldWaitSteps, 0);
