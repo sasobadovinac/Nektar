@@ -4226,6 +4226,7 @@ void ExpList::GetElmtNormalLength(Array<OneD, NekDouble> &lengthsFwd,
             loc_exp    = (*m_exp)[i];
             int offset = m_phys_offset[i];
 
+
             NekDouble factor = 1.0;
 
             int e_nmodes = loc_exp->GetBasis(0)->GetNumModes();
