@@ -12,6 +12,7 @@ workflow:
       when: never
     # Other merge requests trigger pipelines
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
 
 stages:
   - build-env-default
