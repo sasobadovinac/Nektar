@@ -509,6 +509,14 @@ win10-mpi-default-build-and-test:
   image: ${CI_REGISTRY_IMAGE}/${image_name}:$CI_COMMIT_SHORT_SHA
   <<: *execution-conditions
   stage: package-test
+  script:
+    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
+    - test_output=`IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml | grep "L 2 error (variable u)" | awk '{print ($7 < 1e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel IncNavierStokesSolver run"; exit 1; fi
+    - cd $CI_PROJECT_DIR/library/Demos/Python/MultiRegions
+    - mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml
+    - test_output=`mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml | grep "L 2 error (variable nek)" | awk '{print ($7 < 1e-4)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel Python run"; exit 1; fi
 
 # Docker Hub deployment template. Only builds for master or tags on the main
 # Nektar repository. The strategy is to login to the container registry and pull
@@ -582,10 +590,6 @@ dockerhub-test-nektar:
   needs: [ "dockerhub-build-nektar" ]
   variables:
     image_name: nektar
-  script:
-    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
-    - cd $CI_PROJECT_DIR/library/Demos/Python/MultiRegions
-    - mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml
 
 dockerhub-test-nektar-dev:
   <<: *dockerhub_test_template
@@ -595,6 +599,12 @@ dockerhub-test-nektar-dev:
   script:
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/local/lib64/nektar++/cmake 3 /usr/bin/cmake
+
+dockerhub-test-workbook:
+  <<: *dockerhub_test_template
+  needs: [ "dockerhub-build-workbook" ]
+  variables:
+    image_name: nektar-workbook
 
 # Deployment
 dockerhub-deploy-nektar:
