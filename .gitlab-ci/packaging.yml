@@ -502,6 +502,39 @@ package-debian-stretch-deploy:
     - package-debian-stretch-build
 
 ##
+## Ubuntu jammy
+##
+package-ubuntu-jammy-env:
+  <<: *package-env-build
+
+package-ubuntu-jammy-build:
+  <<: *package-deb-build
+  needs: ["package-ubuntu-jammy-env"]
+  variables:
+    image_name: pkg/ubuntu-jammy
+
+package-ubuntu-jammy-test:
+  <<: *package-deb-test
+  needs: ["package-ubuntu-jammy-build"]
+  dependencies:
+    - package-ubuntu-jammy-build
+  variables:
+    image_name: ubuntu:jammy
+
+package-ubuntu-jammy-deploy-dev:
+  <<: *package-deb-deploy-dev
+  needs: ["package-ubuntu-jammy-build", "package-ubuntu-jammy-test"]
+  dependencies:
+    - package-ubuntu-jammy-build
+
+package-ubuntu-jammy-deploy:
+  <<: *package-deb-deploy
+  needs: ["package-ubuntu-jammy-build", "package-ubuntu-jammy-deploy-dev"]
+  dependencies:
+    - package-ubuntu-jammy-build
+
+
+##
 ## Ubuntu focal
 ##
 package-ubuntu-focal-env:
