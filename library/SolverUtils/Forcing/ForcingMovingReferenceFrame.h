@@ -79,7 +79,6 @@ public:
 
     /// Name of the class
     static std::string classNameBody;
-    static std::string classNameField;
 
 protected:
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
