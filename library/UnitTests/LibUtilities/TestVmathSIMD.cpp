@@ -304,6 +304,8 @@ BOOST_AUTO_TEST_CASE(TestGathrSizet)
     }
 }
 
+// once sse is restored this #if should be removed
+#if defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
 BOOST_AUTO_TEST_CASE(TestGathrInt)
 {
     using dataType     = double;
@@ -343,5 +345,6 @@ BOOST_AUTO_TEST_CASE(TestGathrInt)
         BOOST_CHECK_CLOSE(z[i], x[y[i]], epsilon);
     }
 }
+#endif
 } // namespace VmathSIMDUnitTests
 } // namespace Nektar

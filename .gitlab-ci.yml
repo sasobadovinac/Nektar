@@ -77,6 +77,7 @@ include:
     - if [ ! -d $CCACHE_DIR ]; then mkdir -p $CCACHE_DIR && chown 1000:1000 $CCACHE_DIR; fi
     - docker run --name $CONTAINER_NAME -v ccache:/cache
       -e "BUILD_TYPE=$BUILD_TYPE"
+      -e "BUILD_SIMD=$BUILD_SIMD"
       -e "NUM_CPUS=$NUM_CPUS"
       -e "CCACHE_DIR=$CCACHE_DIR"
       $ENV_IMAGE
@@ -193,6 +194,14 @@ bullseye-full_py3-build-and-test:
   <<: *build-and-test-template
   needs: ["bullseye-full_py3-build-env"]
 
+bullseye-full_py3-avx2-build-and-test:
+  <<: *build-and-test-template
+  needs: ["bullseye-full_py3-build-env"]
+  variables:
+    BUILD_SIMD: avx2
+  tags:
+    - avx2
+
 buster-default-build-and-test:
   <<: *build-and-test-template
   needs: ["buster-default-build-env"]
@@ -221,6 +230,10 @@ bullseye-default-warnings:
 bullseye-full_py3-warnings:
   <<: *compiler-warning-template
   needs: ["bullseye-full_py3-build-and-test"]
+
+bullseye-full_py3-avx2-warnings:
+  <<: *compiler-warning-template
+  needs: ["bullseye-full_py3-avx2-build-and-test"]
 
 buster-default-warnings:
   <<: *compiler-warning-template
