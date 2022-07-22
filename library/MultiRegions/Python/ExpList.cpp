@@ -270,7 +270,7 @@ void ExpList_LoadField(ExpListSharedPtr exp, std::string filename, std::string v
         }
     }
 
-    exp->BwdTrans_IterPerExp(exp->GetCoeffs(), exp->UpdatePhys());
+    exp->BwdTrans(exp->GetCoeffs(), exp->UpdatePhys());
 }
 
 void export_ExpList()
