@@ -353,7 +353,6 @@ void ExpListHomogeneous2D::v_BwdTrans(
     }
 }
 
-
 void ExpListHomogeneous2D::v_IProductWRTBase(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)

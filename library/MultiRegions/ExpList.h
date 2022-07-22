@@ -1823,7 +1823,6 @@ inline void ExpList::SmoothField(Array<OneD, NekDouble> &field)
  *
  */
 
-
 /**
  * Given the coefficients of an expansion, this function evaluates the
  * spectral/hp expansion \f$u^{\delta}(\boldsymbol{x})\f$ at the

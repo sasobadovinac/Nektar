@@ -2051,9 +2051,9 @@ const DNekScalBlkMatSharedPtr &ExpList::GetBlockMatrix(
  * @param   outarray        The resulting vector of size
  *                          \f$N_{\mathrm{eof}}\f$.
  */
-void ExpList::GeneralMatrixOp(
-    const GlobalMatrixKey &gkey, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
+void ExpList::GeneralMatrixOp(const GlobalMatrixKey &gkey,
+                              const Array<OneD, const NekDouble> &inarray,
+                              Array<OneD, NekDouble> &outarray)
 {
     int nvarcoeffs = gkey.GetNVarCoeffs();
 
@@ -4225,7 +4225,6 @@ void ExpList::GetElmtNormalLength(Array<OneD, NekDouble> &lengthsFwd,
         {
             loc_exp    = (*m_exp)[i];
             int offset = m_phys_offset[i];
-
 
             NekDouble factor = 1.0;
 
