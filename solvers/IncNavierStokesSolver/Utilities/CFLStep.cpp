@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
             cnt += nquad;
         }
 
-        fields[n]->FwdTrans_IterPerExp(fields[n]->GetPhys(),
+        fields[n]->FwdTransLocalElmt(fields[n]->GetPhys(),
                                        fields[n]->UpdateCoeffs());
 
         // Need to reset varibale name for output

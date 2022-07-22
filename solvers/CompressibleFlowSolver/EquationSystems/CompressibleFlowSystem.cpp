@@ -655,7 +655,7 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
             --seed;
             Vmath::Vadd(phystot, m_fields[i]->GetPhys(), 1, noise, 1,
                         m_fields[i]->UpdatePhys(), 1);
-            m_fields[i]->FwdTrans_IterPerExp(m_fields[i]->GetPhys(),
+            m_fields[i]->FwdTransLocalElmt(m_fields[i]->GetPhys(),
                                              m_fields[i]->UpdateCoeffs());
         }
     }
@@ -891,17 +891,17 @@ void CompressibleFlowSystem::v_ExtraFldOutput(
         string velNames[3] = {"u", "v", "w"};
         for (int i = 0; i < m_spacedim; ++i)
         {
-            m_fields[0]->FwdTrans_IterPerExp(velocity[i], velFwd[i]);
+            m_fields[0]->FwdTransLocalElmt(velocity[i], velFwd[i]);
             variables.push_back(velNames[i]);
             fieldcoeffs.push_back(velFwd[i]);
         }
 
-        m_fields[0]->FwdTrans_IterPerExp(pressure, pFwd);
-        m_fields[0]->FwdTrans_IterPerExp(temperature, TFwd);
-        m_fields[0]->FwdTrans_IterPerExp(entropy, sFwd);
-        m_fields[0]->FwdTrans_IterPerExp(soundspeed, aFwd);
-        m_fields[0]->FwdTrans_IterPerExp(mach, mFwd);
-        m_fields[0]->FwdTrans_IterPerExp(sensor, sensFwd);
+        m_fields[0]->FwdTransLocalElmt(pressure, pFwd);
+        m_fields[0]->FwdTransLocalElmt(temperature, TFwd);
+        m_fields[0]->FwdTransLocalElmt(entropy, sFwd);
+        m_fields[0]->FwdTransLocalElmt(soundspeed, aFwd);
+        m_fields[0]->FwdTransLocalElmt(mach, mFwd);
+        m_fields[0]->FwdTransLocalElmt(sensor, sensFwd);
 
         variables.push_back("p");
         variables.push_back("T");
@@ -921,7 +921,7 @@ void CompressibleFlowSystem::v_ExtraFldOutput(
             // reuse pressure
             Array<OneD, NekDouble> sensorFwd(nCoeffs);
             m_artificialDiffusion->GetArtificialViscosity(tmp, pressure);
-            m_fields[0]->FwdTrans_IterPerExp(pressure, sensorFwd);
+            m_fields[0]->FwdTransLocalElmt(pressure, sensorFwd);
 
             variables.push_back("ArtificialVisc");
             fieldcoeffs.push_back(sensorFwd);

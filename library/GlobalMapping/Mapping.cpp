@@ -337,7 +337,7 @@ void Mapping::Output(LibUtilities::FieldMetaDataMap &fieldMetaDataMap,
             // copy coordinates Data into FieldData and set variable
             for (int j = 0; j < expdim; ++j)
             {
-                m_fields[0]->FwdTrans_IterPerExp(m_coords[j], fieldcoeffs);
+                m_fields[0]->FwdTrans(m_coords[j], fieldcoeffs);
 
                 for (int i = 0; i < FieldDef.size(); ++i)
                 {
@@ -353,7 +353,7 @@ void Mapping::Output(LibUtilities::FieldMetaDataMap &fieldMetaDataMap,
                 // variable
                 for (int j = 0; j < expdim; ++j)
                 {
-                    m_fields[0]->FwdTrans_IterPerExp(m_coordsVel[j],
+                    m_fields[0]->FwdTrans(m_coordsVel[j],
                                                      fieldcoeffs);
 
                     for (int i = 0; i < FieldDef.size(); ++i)
@@ -1196,7 +1196,7 @@ void Mapping::v_UpdateBCs(const NekDouble time)
                         BndExp[n]->SetWaveSpace(false);
                     }
 
-                    BndExp[n]->FwdTrans_BndConstrained(
+                    BndExp[n]->FwdTransBndConstrained(
                         BndExp[n]->GetPhys(), BndExp[n]->UpdateCoeffs());
                 }
             }

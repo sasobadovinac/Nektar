@@ -214,7 +214,7 @@ void FilterMaxMinFields::v_ProcessSample(
     for (int n = 0; n < m_variables.size(); ++n)
     {
         int nf = (n < pFields.size()) ? n : 0;
-        pFields[nf]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
+        pFields[nf]->FwdTransLocalElmt(m_outFieldsPhys[n], m_outFields[n]);
     }
 }
 

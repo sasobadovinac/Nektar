@@ -311,7 +311,7 @@ void ExpListHomogeneous2D::v_FwdTrans(
     }
 }
 
-void ExpListHomogeneous2D::v_FwdTrans_IterPerExp(
+void ExpListHomogeneous2D::v_FwdTransLocalElmt(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -321,8 +321,8 @@ void ExpListHomogeneous2D::v_FwdTrans_IterPerExp(
 
     for (int n = 0; n < nlines; ++n)
     {
-        m_lines[n]->FwdTrans_IterPerExp(inarray + cnt,
-                                        tmparray = outarray + cnt1);
+        m_lines[n]->FwdTransLocalElmt(inarray + cnt,
+                                      tmparray = outarray + cnt1);
 
         cnt += m_lines[n]->GetTotPoints();
         cnt1 += m_lines[n]->GetNcoeffs();

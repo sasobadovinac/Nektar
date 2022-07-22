@@ -135,7 +135,7 @@ void ProcessCFL::Process(po::variables_map &vm)
         int n  = s * addfields;
         Exp[n] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(npoints, outfield, 1, Exp[n]->UpdatePhys(), 1);
-        Exp[n]->FwdTrans_IterPerExp(outfield, Exp[n]->UpdateCoeffs());
+        Exp[n]->FwdTransLocalElmt(outfield, Exp[n]->UpdateCoeffs());
     }
 
     // update the fields

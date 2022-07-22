@@ -232,8 +232,8 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
             Vmath::Vsqrt(nqBnd, dist, 1, dist, 1);
         }
 
-        BndExp[i]->FwdTrans_IterPerExp(BndExp[i]->GetPhys(),
-                                       BndExp[i]->UpdateCoeffs());
+        BndExp[i]->FwdTransLocalElmt(BndExp[i]->GetPhys(),
+                                     BndExp[i]->UpdateCoeffs());
     }
 }
 } // namespace FieldUtils

@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
         {
             Vmath::Vsub(nphys, NonLinearDealiased[i], 1, NonLinear[i], 1,
                         NonLinear[i], 1);
-            fields[i]->FwdTrans_IterPerExp(NonLinear[i],
+            fields[i]->FwdTransLocalElmt(NonLinear[i],
                                            fields[i]->UpdateCoeffs());
             // Need to reset varibale name for output
             string name = "NL_Aliasing_" + session->GetVariable(i);

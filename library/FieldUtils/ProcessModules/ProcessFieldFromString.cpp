@@ -150,7 +150,7 @@ void ProcessFieldFromString::Process(po::variables_map &vm)
     strEval.Evaluate(exprId, interpfields, m_f->m_exp[fieldID]->UpdatePhys());
 
     // Update coeffs
-    m_f->m_exp[fieldID]->FwdTrans_IterPerExp(
+    m_f->m_exp[fieldID]->FwdTransLocalElmt(
         m_f->m_exp[fieldID]->GetPhys(), m_f->m_exp[fieldID]->UpdateCoeffs());
 }
 } // namespace FieldUtils

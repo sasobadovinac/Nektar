@@ -455,7 +455,7 @@ void ExpListHomogeneous1D::v_FwdTrans(
 /**
  * Forward transform element by element
  */
-void ExpListHomogeneous1D::v_FwdTrans_IterPerExp(
+void ExpListHomogeneous1D::v_FwdTransLocalElmt(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -465,8 +465,8 @@ void ExpListHomogeneous1D::v_FwdTrans_IterPerExp(
     // spectral element FwdTrans plane by plane
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FwdTrans_IterPerExp(inarray + cnt,
-                                         tmparray = outarray + cnt1);
+        m_planes[n]->FwdTransLocalElmt(inarray + cnt,
+                                       tmparray = outarray + cnt1);
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
@@ -479,7 +479,7 @@ void ExpListHomogeneous1D::v_FwdTrans_IterPerExp(
 /**
  * Forward transform element by element with boundaries constrained
  */
-void ExpListHomogeneous1D::v_FwdTrans_BndConstrained(
+void ExpListHomogeneous1D::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -489,7 +489,7 @@ void ExpListHomogeneous1D::v_FwdTrans_BndConstrained(
     // spectral element FwdTrans plane by plane
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FwdTrans_BndConstrained(inarray + cnt,
+        m_planes[n]->FwdTransBndConstrained(inarray + cnt,
                                              tmparray = outarray + cnt1);
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();

@@ -3614,7 +3614,7 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                     Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
                                 locExpList->UpdatePhys(), 1);
 
-                    locExpList->FwdTrans_BndConstrained(
+                    locExpList->FwdTransBndConstrained(
                         locExpList->GetPhys(), locExpList->UpdateCoeffs());
                 }
                 else if (m_bndConditions[i]->GetBoundaryConditionType() ==

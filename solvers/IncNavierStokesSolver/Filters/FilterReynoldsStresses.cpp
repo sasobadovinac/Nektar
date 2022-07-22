@@ -303,7 +303,7 @@ void FilterReynoldsStresses::v_PrepareOutput(
     {
         if (i != dim)
         {
-            pFields[0]->FwdTrans_IterPerExp(m_fields[i], m_outFields[i]);
+            pFields[0]->FwdTransLocalElmt(m_fields[i], m_outFields[i]);
         }
     }
 

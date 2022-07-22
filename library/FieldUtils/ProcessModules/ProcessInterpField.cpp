@@ -280,8 +280,8 @@ void ProcessInterpField::Process(po::variables_map &vm)
                 m_f->m_exp[i]->UpdatePhys()[j] = clamp_low;
             }
         }
-        m_f->m_exp[i]->FwdTrans_IterPerExp(m_f->m_exp[i]->GetPhys(),
-                                           m_f->m_exp[i]->UpdateCoeffs());
+        m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
+                                         m_f->m_exp[i]->UpdateCoeffs());
     }
     // save field names
     m_f->m_variables = fromField->m_fielddef[0]->m_fields;

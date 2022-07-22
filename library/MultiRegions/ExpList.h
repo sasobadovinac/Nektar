@@ -289,8 +289,8 @@ public:
     /// This function elementally evaluates the forward transformation
     /// of a function \f$u(\boldsymbol{x})\f$ onto the global
     /// spectral/hp expansion.
-    inline void FwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray);
+    inline void FwdTransLocalElmt(const Array<OneD, const NekDouble> &inarray,
+                                  Array<OneD, NekDouble> &outarray);
 
     ///
     inline void FwdTrans(const Array<OneD, const NekDouble> &inarray,
@@ -349,7 +349,7 @@ public:
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
 
     ///
-    MULTI_REGIONS_EXPORT void FwdTrans_BndConstrained(
+    MULTI_REGIONS_EXPORT void FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
@@ -1396,11 +1396,11 @@ protected:
     virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FwdTrans_IterPerExp(
+    virtual void v_FwdTransLocalElmt(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FwdTrans_BndConstrained(
+    virtual void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
@@ -1794,21 +1794,21 @@ inline void ExpList::FwdTrans(const Array<OneD, const NekDouble> &inarray,
 /**
  *
  */
-inline void ExpList::FwdTrans_IterPerExp(
+inline void ExpList::FwdTransLocalElmt(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    v_FwdTrans_IterPerExp(inarray, outarray);
+    v_FwdTransLocalElmt(inarray, outarray);
 }
 
 /**
  *
  */
-inline void ExpList::FwdTrans_BndConstrained(
+inline void ExpList::FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    v_FwdTrans_BndConstrained(inarray, outarray);
+    v_FwdTransBndConstrained(inarray, outarray);
 }
 
 /**

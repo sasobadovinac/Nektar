@@ -1037,7 +1037,7 @@ void VortexWaveInteraction::CalcNonLinearWaveForce(void)
             m_wavePressure->GetPlane(0)->GetCoeffs(),
             m_wavePressure->GetPlane(0)->UpdatePhys());
         outfield[2] = Array<OneD, NekDouble>(ncoeffs);
-        m_waveVelocities[0]->GetPlane(0)->FwdTrans_IterPerExp(
+        m_waveVelocities[0]->GetPlane(0)->FwdTransLocalElmt(
             m_wavePressure->GetPlane(0)->GetPhys(), outfield[2]);
         m_wavePressure->GetPlane(1)->BwdTrans(
             m_wavePressure->GetPlane(1)->GetCoeffs(),
@@ -1054,7 +1054,7 @@ void VortexWaveInteraction::CalcNonLinearWaveForce(void)
         cout << "PLinf: " << Vmath::Vmax(npts, val, 1) << endl;
 
         outfield[3] = Array<OneD, NekDouble>(ncoeffs);
-        m_waveVelocities[1]->GetPlane(0)->FwdTrans_IterPerExp(
+        m_waveVelocities[1]->GetPlane(0)->FwdTransLocalElmt(
             m_wavePressure->GetPlane(1)->GetPhys(), outfield[3]);
 
         std::string outname = m_sessionName + ".vwi";
@@ -2187,7 +2187,7 @@ void VortexWaveInteraction::FileRelaxation(int reg)
         // generate again the bcs files:
 
         Array<OneD, Array<OneD, NekDouble>> fieldcoeffs(1);
-        Ilayer->FwdTrans_IterPerExp(Ilayer->GetPhys(), Ilayer->UpdateCoeffs());
+        Ilayer->FwdTransLocalElmt(Ilayer->GetPhys(), Ilayer->UpdateCoeffs());
         fieldcoeffs[0] = Ilayer->UpdateCoeffs();
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef1 =
             Ilayer->GetFieldDefinitions();
@@ -2235,7 +2235,7 @@ void VortexWaveInteraction::FileRelaxation(int reg)
                      1, Ilayer->UpdatePhys(), 1);
         // generate again the bcs files:
         Array<OneD, Array<OneD, NekDouble>> fieldcoeffs(1);
-        Ilayer->FwdTrans_IterPerExp(Ilayer->GetPhys(), Ilayer->UpdateCoeffs());
+        Ilayer->FwdTransLocalElmt(Ilayer->GetPhys(), Ilayer->UpdateCoeffs());
         fieldcoeffs[0] = Ilayer->UpdateCoeffs();
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef2 =
             Ilayer->GetFieldDefinitions();

@@ -109,7 +109,7 @@ void ProcessQualityMetric::Process(po::variables_map &vm)
         Vmath::Vcopy(q.size(), q, 1, out, 1);
     }
 
-    exp->FwdTrans_IterPerExp(phys, coeffs);
+    exp->FwdTransLocalElmt(phys, coeffs);
 }
 
 inline vector<DNekMat> MappingIdealToRef(SpatialDomains::GeometrySharedPtr geom,

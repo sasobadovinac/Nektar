@@ -198,7 +198,7 @@ void OutputFileBase::Process(po::variables_map &vm)
                                 m_f->m_exp[nfields + j]->GetTotPoints(),
                                 NormPhys[j], 1,
                                 m_f->m_exp[nfields + j]->UpdatePhys(), 1);
-                            m_f->m_exp[nfields + j]->FwdTrans_IterPerExp(
+                            m_f->m_exp[nfields + j]->FwdTransLocalElmt(
                                 m_f->m_exp[nfields + j]->GetPhys(),
                                 m_f->m_exp[nfields + j]->UpdateCoeffs());
                         }

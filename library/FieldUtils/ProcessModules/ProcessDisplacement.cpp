@@ -197,10 +197,10 @@ void ProcessDisplacement::Process(po::variables_map &vm)
         }
 
         // bndconstrained?
-        bndCondExpU->FwdTrans_BndConstrained(bndCondExpU->GetPhys(),
-                                             bndCondExpU->UpdateCoeffs());
-        bndCondExpV->FwdTrans_BndConstrained(bndCondExpV->GetPhys(),
-                                             bndCondExpV->UpdateCoeffs());
+        bndCondExpU->FwdTransBndConstrained(bndCondExpU->GetPhys(),
+                                            bndCondExpU->UpdateCoeffs());
+        bndCondExpV->FwdTransBndConstrained(bndCondExpV->GetPhys(),
+                                            bndCondExpV->UpdateCoeffs());
     }
     else if (bndGraph->GetMeshDimension() == 2)
     {
@@ -293,12 +293,12 @@ void ProcessDisplacement::Process(po::variables_map &vm)
         }
 
         // bndconstrained?
-        bndCondExpU->FwdTrans_BndConstrained(bndCondExpU->GetPhys(),
-                                             bndCondExpU->UpdateCoeffs());
-        bndCondExpV->FwdTrans_BndConstrained(bndCondExpV->GetPhys(),
-                                             bndCondExpV->UpdateCoeffs());
-        bndCondExpW->FwdTrans_BndConstrained(bndCondExpW->GetPhys(),
-                                             bndCondExpW->UpdateCoeffs());
+        bndCondExpU->FwdTransBndConstrained(bndCondExpU->GetPhys(),
+                                            bndCondExpU->UpdateCoeffs());
+        bndCondExpV->FwdTransBndConstrained(bndCondExpV->GetPhys(),
+                                            bndCondExpV->UpdateCoeffs());
+        bndCondExpW->FwdTransBndConstrained(bndCondExpW->GetPhys(),
+                                            bndCondExpW->UpdateCoeffs());
     }
 }
 } // namespace FieldUtils

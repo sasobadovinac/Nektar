@@ -1799,8 +1799,8 @@ void ExpList::MultiplyByElmtInvMass(const Array<OneD, const NekDouble> &inarray,
  *                          \f$\hat{u}_n^e\f$ will be stored in this
  *                          array of size \f$N_{\mathrm{eof}}\f$.
  */
-void ExpList::v_FwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray)
+void ExpList::v_FwdTransLocalElmt(const Array<OneD, const NekDouble> &inarray,
+                                  Array<OneD, NekDouble> &outarray)
 {
     Array<OneD, NekDouble> f(m_ncoeffs);
 
@@ -1808,7 +1808,7 @@ void ExpList::v_FwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
     MultiplyByElmtInvMass(f, outarray);
 }
 
-void ExpList::v_FwdTrans_BndConstrained(
+void ExpList::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -1818,9 +1818,9 @@ void ExpList::v_FwdTrans_BndConstrained(
 
     for (i = 0; i < (*m_exp).size(); ++i)
     {
-        (*m_exp)[i]->FwdTrans_BndConstrained(inarray + m_phys_offset[i],
-                                             e_outarray =
-                                                 outarray + m_coeff_offset[i]);
+        (*m_exp)[i]->FwdTransBndConstrained(inarray + m_phys_offset[i],
+                                            e_outarray =
+                                            outarray + m_coeff_offset[i]);
     }
 }
 
@@ -4691,7 +4691,7 @@ void ExpList::v_GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
 void ExpList::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray)
 {
-    v_FwdTrans_IterPerExp(inarray, outarray);
+    v_FwdTransLocalElmt(inarray, outarray);
 }
 
 /**
