@@ -1,6 +1,5 @@
 SET(MultiRegionsUnitTestsSources
     main.cpp
-    TestFieldStorage.cpp
 )
 
 ADD_DEFINITIONS(-DENABLE_NEKTAR_EXCEPTIONS)
