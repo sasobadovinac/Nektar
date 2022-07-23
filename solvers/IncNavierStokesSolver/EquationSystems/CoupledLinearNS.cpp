@@ -64,9 +64,9 @@ namespace Nektar
     {
     }
 
-    void CoupledLinearNS::v_InitObject()
+    void CoupledLinearNS::v_InitObject(bool DeclareField)
     {
-        IncNavierStokes::v_InitObject();
+        IncNavierStokes::v_InitObject(DeclareField);
 
         int  i;
         int  expdim = m_graph->GetMeshDimension();

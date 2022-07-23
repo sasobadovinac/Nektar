@@ -54,9 +54,9 @@ namespace Nektar
     {
     }
 
-    void SteadyAdvectionDiffusion::v_InitObject()
+    void SteadyAdvectionDiffusion::v_InitObject(bool DeclareFields)
     {
-        EquationSystem::v_InitObject();
+        EquationSystem::v_InitObject(DeclareFields);
 
         std::vector<std::string> vel;
         vel.push_back("Vx");

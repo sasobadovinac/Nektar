@@ -59,9 +59,9 @@ namespace Nektar
     /**
      * @brief Initialization object for CompressibleFlowSystem class.
      */
-    void NavierStokesCFE::v_InitObject()
+    void NavierStokesCFE::v_InitObject(bool DeclareFields)
     {
-        CompressibleFlowSystem::v_InitObject();
+        CompressibleFlowSystem::v_InitObject(DeclareFields);
 
         // rest of initialisation is in this routine so it can also be called
         // in NavierStokesImplicitCFE initialisation

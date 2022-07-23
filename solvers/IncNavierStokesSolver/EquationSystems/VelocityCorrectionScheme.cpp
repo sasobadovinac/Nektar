@@ -69,11 +69,11 @@ namespace Nektar
 
     }
 
-    void VelocityCorrectionScheme::v_InitObject()
+    void VelocityCorrectionScheme::v_InitObject(bool DeclareField)
     {
         int n;
 
-        IncNavierStokes::v_InitObject();
+        IncNavierStokes::v_InitObject(DeclareField);
         m_explicitDiffusion = false;
 
         // Set m_pressure to point to last field of m_fields;

@@ -257,7 +257,7 @@ void BetaPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         invJ.SetValue(5, 4, 0.5 * Au[2] * Au[1] * c[0] / K[2]);
         invJ.SetValue(5, 5, -0.5 * Au[2] * (Au[1] * c[0] + c[1] * Au[0]) / K[2]);
     }
-    else if (type == "Junction")
+    else if (type == "Interface")
     {
         NekMatrix<NekDouble> J(4, 4);
         Array<OneD, NekDouble> c(2);

@@ -84,7 +84,8 @@ namespace Nektar
             SOLVER_UTILS_EXPORT void SetUpTraceNormals(void);
 
             /// Initialises the members of this object.
-            SOLVER_UTILS_EXPORT inline void InitObject();
+            SOLVER_UTILS_EXPORT inline void InitObject
+            (bool DeclareField = true);
 
             /// Perform any initialisation necessary before solving the problem.
             SOLVER_UTILS_EXPORT inline void DoInitialise();
@@ -449,7 +450,7 @@ namespace Nektar
                 const LibUtilities::SessionReaderSharedPtr& pSession,
                 const SpatialDomains::MeshGraphSharedPtr& pGraph);
 
-            SOLVER_UTILS_EXPORT virtual void v_InitObject();
+            SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareFeld = true);
 
             /// Virtual function for initialisation implementation.
             SOLVER_UTILS_EXPORT virtual void v_DoInitialise();
@@ -517,9 +518,9 @@ namespace Nektar
          * Calls to virtual functions will correctly resolve to the derived class
          * during this phase of the construction.
          */
-        inline void EquationSystem::InitObject()
+        inline void EquationSystem::InitObject(bool DeclareField)
         {
-            v_InitObject();
+            v_InitObject(DeclareField);
         }
 
 

@@ -59,10 +59,10 @@ MMFAdvection::MMFAdvection(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * @brief Initialisation object for the unsteady linear advection equation.
  */
-void MMFAdvection::v_InitObject()
+void MMFAdvection::v_InitObject(bool DeclareFields)
 {
     // Call to the initialisation object
-    UnsteadySystem::v_InitObject();
+    UnsteadySystem::v_InitObject(DeclareFields);
 
     int nq       = m_fields[0]->GetNpoints();
     int shapedim = m_fields[0]->GetShapeDimension();

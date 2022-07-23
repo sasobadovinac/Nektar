@@ -57,7 +57,7 @@ namespace Nektar
         const MultiRegions::ExpListSharedPtr &pressure,
         const int nz_loc,
         const bool CheckforSingularSys):
-        AssemblyMapCG(pSession)
+        AssemblyMapCG(pSession, fields[0]->GetComm())
     {
         int i,j,k,n;
         int cnt = 0,offset=0;

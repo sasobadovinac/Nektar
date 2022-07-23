@@ -65,7 +65,7 @@ namespace Nektar
 
         virtual ~VelocityCorrectionScheme();
 
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareField = true);
         
         void SetUpPressureForcing(
                     const Array<OneD, const Array<OneD, NekDouble> > &fields,

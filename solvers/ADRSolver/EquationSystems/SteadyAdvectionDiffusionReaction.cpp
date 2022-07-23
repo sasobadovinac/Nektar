@@ -48,9 +48,9 @@ namespace Nektar
     {
     }
 
-    void SteadyAdvectionDiffusionReaction::v_InitObject()
+    void SteadyAdvectionDiffusionReaction::v_InitObject(bool DeclareFields)
     {
-        SteadyAdvectionDiffusion::v_InitObject();
+        SteadyAdvectionDiffusion::v_InitObject(DeclareFields);
 
         if (m_session->DefinesParameter("Lambda"))
         {

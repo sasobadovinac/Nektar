@@ -55,9 +55,9 @@ namespace Nektar
     {
     }
 
-    void ImageWarpingSystem::v_InitObject()
+    void ImageWarpingSystem::v_InitObject(bool DeclareField)
     {
-        AdvectionSystem::v_InitObject();
+        AdvectionSystem::v_InitObject(DeclareField);
 
         // Define Velocity fields
         m_velocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);

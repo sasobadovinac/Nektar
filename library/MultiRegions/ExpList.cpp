@@ -310,23 +310,21 @@ namespace Nektar
          *                       in operators
          */
         ExpList::ExpList(
-                         const LibUtilities::SessionReaderSharedPtr &pSession,
-                         const Array<OneD,const ExpListSharedPtr>   &bndConstraint,
-                         const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
-                         &bndCond,
-                         const LocalRegions::ExpansionVector        &locexp,
-                         const SpatialDomains::MeshGraphSharedPtr   &graph,
-                         const bool                                  DeclareCoeffPhysArrays,
-                         const std::string                           variable,
-                         const Collections::ImplementationType       ImpType):
-            m_comm(pSession->GetComm()),
-            m_session(pSession),
-            m_graph(graph),
-            m_physState(false),
-            m_exp(MemoryManager<LocalRegions::ExpansionVector>
-                  ::AllocateSharedPtr()),
-            m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
-            m_WaveSpace(false)
+            const LibUtilities::SessionReaderSharedPtr &pSession,
+            const Array<OneD, const ExpListSharedPtr> &bndConstraint,
+            const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+                &bndCond,
+            const LocalRegions::ExpansionVector &locexp,
+            const SpatialDomains::MeshGraphSharedPtr &graph,
+            const LibUtilities::CommSharedPtr &comm,
+            const bool DeclareCoeffPhysArrays, const std::string variable,
+            const Collections::ImplementationType ImpType)
+            : m_comm(comm), m_session(pSession), m_graph(graph),
+              m_physState(false),
+              m_exp(MemoryManager<
+                    LocalRegions::ExpansionVector>::AllocateSharedPtr()),
+              m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
+              m_WaveSpace(false)
         {
             boost::ignore_unused(variable,ImpType);
             int i, j, id, elmtid = 0;

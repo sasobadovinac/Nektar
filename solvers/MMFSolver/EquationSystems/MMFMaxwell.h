@@ -91,7 +91,7 @@ public:
     static std::string className;
 
     /// Initialise the object
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields=true);
 
     virtual void v_DoSolve();
 

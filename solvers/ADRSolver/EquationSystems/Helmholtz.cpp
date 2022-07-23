@@ -52,9 +52,9 @@ namespace Nektar
         }
     }
 
-    void Helmholtz::v_InitObject()
+    void Helmholtz::v_InitObject(bool DeclareFields)
     {
-        Poisson::v_InitObject();
+        Poisson::v_InitObject(DeclareFields);
     }
 
     Helmholtz::~Helmholtz()

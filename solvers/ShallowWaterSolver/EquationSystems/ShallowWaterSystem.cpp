@@ -72,9 +72,9 @@ namespace Nektar
     {
     }
 
-    void ShallowWaterSystem::v_InitObject()
+    void ShallowWaterSystem::v_InitObject(bool DeclareFields)
     {
-        UnsteadySystem::v_InitObject();
+        UnsteadySystem::v_InitObject(DeclareFields);
 
        	// if discontinuous Galerkin determine numerical flux to use
 	if (m_projectionType == MultiRegions::eDiscontinuous)
