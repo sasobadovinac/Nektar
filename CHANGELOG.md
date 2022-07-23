@@ -44,6 +44,7 @@ v5.2.0
 - Added Boundary conditions for moving reference frame (!1305)
 - Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
 - Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
+- Equation types are registered to the session reader (!1344)
 
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
