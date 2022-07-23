@@ -37,7 +37,6 @@
 
 #include <memory>
 
-
 namespace Nektar
 {
 namespace MultiRegions
@@ -56,13 +55,16 @@ public:
     int GetNpoints();
     int GetNcoeffs();
 
-    std::shared_ptr<ExpList> GetExpList() { return m_e; }
+    std::shared_ptr<ExpList> GetExpList()
+    {
+        return m_e;
+    }
 
 private:
     std::shared_ptr<ExpList> m_e;
 };
 
-}
+} // namespace details
 } // namespace MultiRegions
 } // namespace Nektar
 
