@@ -64,6 +64,9 @@ v5.2.0
 - Remove unused build options (!1360)
 - Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
 
+**Packaging**
+- Fix various issues with debian unstable and centos8 packaging (!1362)
+
 v5.1.1
 ------
 **Library**
