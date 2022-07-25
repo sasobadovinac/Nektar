@@ -5,6 +5,10 @@ v6.0.0
 
 v5.3
 ------
+
+**Filter**
+- Added structure preserving filter (Request:nektar/nektar!1367)
+
 **Library**
 - Fixed avx512 back-end for SimdLib (!1333)
 - Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
