@@ -308,7 +308,7 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                 locExpList->SetWaveSpace(false);
 
                 locExpList->FwdTransBndConstrained(locExpList->GetPhys(),
-                                                    locExpList->UpdateCoeffs());
+                                                   locExpList->UpdateCoeffs());
             }
             else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                      SpatialDomains::eNeumann)

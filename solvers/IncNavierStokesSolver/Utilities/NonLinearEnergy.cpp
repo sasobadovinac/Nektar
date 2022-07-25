@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
         for (i = 0; i < nConvectiveFields; ++i)
         {
             fields[i]->FwdTransLocalElmt(NonLinear[i],
-                                           fields[i]->UpdateCoeffs());
+                                         fields[i]->UpdateCoeffs());
 
             // subtract off all modes but top from orthogonal projection
             for (int n = 0; n < fields[i]->GetExpSize(); ++n)

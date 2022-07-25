@@ -490,7 +490,7 @@ void ExpListHomogeneous1D::v_FwdTransBndConstrained(
     for (int n = 0; n < m_planes.size(); ++n)
     {
         m_planes[n]->FwdTransBndConstrained(inarray + cnt,
-                                             tmparray = outarray + cnt1);
+                                            tmparray = outarray + cnt1);
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }

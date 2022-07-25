@@ -263,14 +263,14 @@ void BidomainRoth::v_InitObject()
         {
             // Transform variable coefficient and write out to file.
             m_fields[0]->FwdTransLocalElmt(m_vardiffi[varCoeffEnum[k]],
-                                             m_fields[0]->UpdateCoeffs());
+                                           m_fields[0]->UpdateCoeffs());
             std::stringstream filenamei;
             filenamei << "IConductivity_" << varCoeffString[k] << ".fld";
             WriteFld(filenamei.str());
 
             // Transform variable coefficient and write out to file.
             m_fields[0]->FwdTransLocalElmt(m_vardiffe[varCoeffEnum[k]],
-                                             m_fields[0]->UpdateCoeffs());
+                                           m_fields[0]->UpdateCoeffs());
             std::stringstream filenamee;
             filenamee << "EConductivity_" << varCoeffString[k] << ".fld";
             WriteFld(filenamee.str());

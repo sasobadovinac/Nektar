@@ -174,7 +174,7 @@ bool Dummy::v_PostIntegrate(int step)
     {
 
         m_fields[i]->FwdTransLocalElmt(m_fields[i]->UpdatePhys(),
-                                         m_fields[i]->UpdateCoeffs());
+                                       m_fields[i]->UpdateCoeffs());
         m_fields[i]->SetPhysState(false);
     }
 

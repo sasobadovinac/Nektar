@@ -1820,7 +1820,7 @@ void ExpList::v_FwdTransBndConstrained(
     {
         (*m_exp)[i]->FwdTransBndConstrained(inarray + m_phys_offset[i],
                                             e_outarray =
-                                            outarray + m_coeff_offset[i]);
+                                                outarray + m_coeff_offset[i]);
     }
 }
 

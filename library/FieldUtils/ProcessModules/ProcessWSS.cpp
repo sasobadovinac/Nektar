@@ -262,7 +262,7 @@ void ProcessWSS::Process(po::variables_map &vm)
                 Vmath::Vvtvp(nqb, normals[i], 1, fshear[nshear - 1], 1,
                              fshear[i], 1, fshear[i], 1);
                 BndExp[i]->FwdTransLocalElmt(fshear[i],
-                                            BndExp[i]->UpdateCoeffs());
+                                             BndExp[i]->UpdateCoeffs());
             }
 
             // Tw

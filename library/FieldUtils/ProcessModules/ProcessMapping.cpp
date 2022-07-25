@@ -129,8 +129,8 @@ void ProcessMapping::Process(po::variables_map &vm)
                     Vmath::Vcopy(npoints, vel[i], 1,
                                  m_f->m_exp[i]->UpdatePhys(), 1);
                 }
-                m_f->m_exp[i]->FwdTransLocalElmt(
-                    m_f->m_exp[i]->GetPhys(), m_f->m_exp[i]->UpdateCoeffs());
+                m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
+                                                 m_f->m_exp[i]->UpdateCoeffs());
             }
         }
     }

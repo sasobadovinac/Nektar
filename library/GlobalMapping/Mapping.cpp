@@ -353,8 +353,7 @@ void Mapping::Output(LibUtilities::FieldMetaDataMap &fieldMetaDataMap,
                 // variable
                 for (int j = 0; j < expdim; ++j)
                 {
-                    m_fields[0]->FwdTrans(m_coordsVel[j],
-                                                     fieldcoeffs);
+                    m_fields[0]->FwdTrans(m_coordsVel[j], fieldcoeffs);
 
                     for (int i = 0; i < FieldDef.size(); ++i)
                     {

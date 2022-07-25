@@ -1578,7 +1578,7 @@ void CoupledLinearNS::v_TransPhysToCoeff(void)
     {
         // Forward Transformation in physical space for time evolution
         m_fields[k]->FwdTransLocalElmt(m_fields[k]->GetPhys(),
-                                         m_fields[k]->UpdateCoeffs());
+                                       m_fields[k]->UpdateCoeffs());
     }
 }
 
@@ -1717,8 +1717,8 @@ void CoupledLinearNS::DefineForcingTerm(void)
         GetFunction("ForcingTerm")->Evaluate(fieldStr, m_ForcingTerm);
         for (int i = 0; i < m_velocity.size(); ++i)
         {
-            m_fields[m_velocity[i]]->FwdTransLocalElmt(
-                m_ForcingTerm[i], m_ForcingTerm_Coeffs[i]);
+            m_fields[m_velocity[i]]->FwdTransLocalElmt(m_ForcingTerm[i],
+                                                       m_ForcingTerm_Coeffs[i]);
         }
     }
     else

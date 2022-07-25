@@ -656,7 +656,7 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
             Vmath::Vadd(phystot, m_fields[i]->GetPhys(), 1, noise, 1,
                         m_fields[i]->UpdatePhys(), 1);
             m_fields[i]->FwdTransLocalElmt(m_fields[i]->GetPhys(),
-                                             m_fields[i]->UpdateCoeffs());
+                                           m_fields[i]->UpdateCoeffs());
         }
     }
 

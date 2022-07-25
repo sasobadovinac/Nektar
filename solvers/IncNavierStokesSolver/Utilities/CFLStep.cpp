@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
         }
 
         fields[n]->FwdTransLocalElmt(fields[n]->GetPhys(),
-                                       fields[n]->UpdateCoeffs());
+                                     fields[n]->UpdateCoeffs());
 
         // Need to reset varibale name for output
         session->SetVariable(n, "CFL");

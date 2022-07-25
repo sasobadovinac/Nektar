@@ -443,7 +443,7 @@ public:
                          Array<OneD, NekDouble> &outarray);
 
     void FwdTransBndConstrained(const Array<OneD, const NekDouble> &inarray,
-                                 Array<OneD, NekDouble> &outarray)
+                                Array<OneD, NekDouble> &outarray)
     {
         v_FwdTransBndConstrained(inarray, outarray);
     }
