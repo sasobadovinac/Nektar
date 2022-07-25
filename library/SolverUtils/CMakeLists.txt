@@ -37,6 +37,7 @@ SET(SOLVER_UTILS_SOURCES
   Filters/FilterFieldConvert.cpp
   Filters/FilterThresholdMax.cpp
   Filters/FilterThresholdMin.cpp
+  Filters/FilterStructurePres.cpp
   RiemannSolvers/RiemannSolver.cpp
   RiemannSolvers/UpwindSolver.cpp
   RiemannSolvers/UpwindLDGSolver.cpp
@@ -89,6 +90,7 @@ SET(SOLVER_UTILS_HEADERS
   Filters/FilterMovingAverage.h
   Filters/FilterFieldConvert.h
   Filters/FilterThresholdMax.h
+  Filters/FilterStructurePres.h
   Filters/FilterThresholdMin.h
   RiemannSolvers/RiemannSolver.h
   RiemannSolvers/UpwindSolver.h

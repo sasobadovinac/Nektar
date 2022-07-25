@@ -115,6 +115,9 @@ namespace Polylib
   M A I N     R O U T I N E S
   -----------------------------------------------------------------------*/
 
+LIB_UTILITIES_EXPORT void  RecCoeff(const int, double *, double *,const double,
+			       const double);
+  
 /* Points and weights */
 LIB_UTILITIES_EXPORT void zwgj(double *, double *, const int, const double,
                                const double);

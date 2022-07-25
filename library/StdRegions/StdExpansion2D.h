@@ -113,6 +113,10 @@ public:
         Array<OneD, NekDouble> &outarray, Array<OneD, NekDouble> &wsp,
         bool doCheckCollDir0 = true, bool doCheckCollDir1 = true);
 
+    STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+        const Array<OneD, const Array<OneD, NekDouble>> coords,
+        const Array<OneD, Array<OneD, NekDouble>> storage, int mode) final;
+
 protected:
     /** \brief This function evaluates the expansion at a single
      *  (arbitrary) point of the domain
@@ -143,6 +147,15 @@ protected:
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, DNekMatSharedPtr> &I,
         const Array<OneD, const NekDouble> &physvals);
+
+    STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
+    v_GetPhysEvaluateStorage() final;
+
+    STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+        const Array<OneD, const Array<OneD, NekDouble>> coords,
+        Array<OneD, Array<OneD, NekDouble>> storage,
+        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
+        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final;
 
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,

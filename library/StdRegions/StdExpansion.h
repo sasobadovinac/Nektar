@@ -967,6 +967,66 @@ public:
         return v_PhysEvaluateBasis(coords, mode);
     }
 
+          /**
+       * @brief This function populates the PhysEvaluateBasis storage
+       * which is an array of arrays that holds the evaluation of
+       * the basis functions at all the quad points, and the derivatives
+       * of the same. This storage is required for slow implementation
+       * of basisderiv interpolation. In fast implementation, this
+       * will no longer be needed and should be deprecated.
+       * @return array of arrays containing basis function evaluations.
+       */
+      Array<OneD, Array<OneD, NekDouble>> GetPhysEvaluateStorage()
+	{
+	  return v_GetPhysEvaluateStorage();
+	}
+
+      /**
+       * @brief This function evaluates all the modes of the basis function,
+       * and their derivatives at a given set of points @p coords of the domain.
+       *
+       * This is a slow version which uses the pre-stored array of arrays
+       * called m_physevalall. m_physevalall contains the evaluation
+       * of the basis function for all the modes at all the
+       * quad points, and the derivatives of the same.
+       *
+       *
+       * @param coord   The coordinates inside the standard region..
+       *
+       * @return The value of the basis function for all the modes  at @p coords,
+       * derivatives of the basis function for all the modes at @p coords.
+       */
+
+      Array<OneD, NekDouble> PhysEvaluateBasis(
+					       const Array<OneD, Array<OneD, NekDouble>> coords,
+					       const Array<OneD, Array<OneD, NekDouble>> storage,
+					       Array<OneD, NekDouble> &out_d0,
+					       Array<OneD, NekDouble> &out_d1,
+					       Array<OneD, NekDouble> &out_d2)
+	{
+	  return v_PhysEvaluateBasis(coords, storage, out_d0, out_d1, out_d2);
+	}
+
+          /**
+       * @brief This function evaluates the basis function mode @p mode at an
+       * array of points @p coords of the domain.
+       *
+       * This function uses barycentric interpolation with the tensor
+       * product separation of the basis function to improve performance.
+       *
+       * @param coord   The coordinate inside the standard region.
+       * @param mode    The mode number to be evaluated.
+       *
+       * @return The values of the basis function mode @p mode at @p coords.
+       */
+      Array<OneD, NekDouble> PhysEvaluateBasis(
+					       const Array<OneD, const Array<OneD, NekDouble>> coords,
+					       const Array<OneD, Array<OneD, NekDouble>> storage, int mode)
+
+	{
+	  return v_PhysEvaluateBasis(coords, storage, mode);
+	}
+
     /**
      * \brief Convert local cartesian coordinate \a xi into local
      * collapsed coordinates \a eta
@@ -1362,6 +1422,9 @@ protected:
     }
 
 private:
+    STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
+      v_GetPhysEvaluateStorage();
+
     // Virtual functions
     STD_REGIONS_EXPORT virtual int v_GetNverts() const = 0;
     STD_REGIONS_EXPORT virtual int v_GetNtraces() const;
@@ -1486,6 +1549,17 @@ private:
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasis(
         const Array<OneD, const NekDouble> &coords, int mode);
 
+    STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+									    const Array<OneD, const Array<OneD, NekDouble>> coords,
+									    const Array<OneD, Array<OneD, NekDouble>> storage, int mode);
+
+    
+    STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+									  const Array<OneD, const Array<OneD, NekDouble>> coords,
+									  const Array<OneD, Array<OneD, NekDouble>> storage,
+									  Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
+									  Array<OneD, NekDouble> &out_d2);
+    
     STD_REGIONS_EXPORT virtual void v_LocCoordToLocCollapsed(
         const Array<OneD, const NekDouble> &xi, Array<OneD, NekDouble> &eta);
 

@@ -150,6 +150,12 @@ public:
         v_GetEdgeInteriorToElementMap(tid, maparray, signarray, traceOrient);
     }
 
+    STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+        const Array<OneD, const Array<OneD, NekDouble>> coords,
+        const Array<OneD, Array<OneD, NekDouble>> storage, int mode) final;
+
+
+    
 protected:
     /** \brief This function evaluates the expansion at a single
      *  (arbitrary) point of the domain
@@ -209,6 +215,17 @@ protected:
     STD_REGIONS_EXPORT virtual int v_GetNedges(void) const;
     STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
 
+    STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
+    v_GetPhysEvaluateStorage() final;
+
+    STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+	const Array<OneD, const Array<OneD, NekDouble>> coords,
+	Array<OneD, Array<OneD, NekDouble>> storage,
+	Array<OneD, NekDouble> &out_d0,
+        Array<OneD, NekDouble> &out_d1,
+        Array<OneD, NekDouble> &out_d2) final;
+
+    
     STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(
         const int tid, Array<OneD, unsigned int> &maparray,
         Array<OneD, int> &signarray, Orientation traceOrient = eForwards);

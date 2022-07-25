@@ -82,7 +82,7 @@ static void Jacobz(const int n, double *z, const double alpha,
 static void TriQL(const int, double *, double *, double **);
 double gammaF(const double);
 double gammaFracGammaF(const int, const double, const int, const double);
-static void RecCoeff(const int, double *, double *, const double, const double);
+  //static void RecCoeff(const int, double *, double *, const double, const double);
 void JKMatrix(int, double *, double *);
 void chri1(int, double *, double *, double *, double *, double);
 
@@ -1435,7 +1435,7 @@ void JacZeros(const int n, double *a, double *b, const double alpha,
 \brief  The routine finds the recurrence coefficients \a a and
 \a b of the orthogonal polynomials
 */
-static void RecCoeff(const int n, double *a, double *b, const double alpha,
+void RecCoeff(const int n, double *a, double *b, const double alpha,
                      const double beta)
 {
 

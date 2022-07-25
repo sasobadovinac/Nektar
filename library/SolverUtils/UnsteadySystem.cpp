@@ -235,11 +235,29 @@ void UnsteadySystem::v_DoSolve()
     // Initialise time integration scheme
     m_intScheme->InitializeScheme(m_timestep, fields, m_time, m_ode);
 
+    //Nektar::LibUtilities::Timer tinit;
+    //tinit.Start();
+
+    std::string filtername = "StructurePres";
+
     // Initialise filters
     for (auto &x : m_filters)
     {
         x.second->Initialise(m_fields, m_time);
+	if(!filtername.compare(x.first) )
+	  {
+	    for(i = 0; i < nvariables; ++i)
+	      {
+
+		fields[i] = m_fields[m_intVariables[i]]->GetPhys();
+		m_fields[m_intVariables[i]]->SetPhysState(false);
+	      }
+	    m_intScheme->SetSolutionVector( 0, fields);
+	  }
     }
+    // tinit.Stop();
+    // cout<<"\n filter init time = "<<tinit.TimePerTest(1)<<"\n\n";
+    
 
     LibUtilities::Timer timer;
     bool doCheckTime        = false;
@@ -271,8 +289,17 @@ void UnsteadySystem::v_DoSolve()
     while ((step < m_steps || m_time < m_fintime - NekConstants::kNekZeroTol) &&
            abortFlags[1] == 0)
     {
-        restartStep++;
+        for (auto &x : m_filters)
+	{
 
+	  if(!filtername.compare(x.first) )
+	    {
+	      m_intScheme->SetSolutionVector( 0, fields);
+	    }
+	}
+	  
+        restartStep++;
+	  
         if (m_CFLGrowth > 1.0 && m_cflSafetyFactor < m_CFLEnd)
         {
             tmp_cflSafetyFactor =
@@ -432,12 +459,33 @@ void UnsteadySystem::v_DoSolve()
         // Update filters
         for (auto &x : m_filters)
         {
+
+	  if(!filtername.compare(x.first))
+	    {
+	      for (i = 0; i < nvariables; ++i)
+		{
+		  m_fields[m_intVariables[i]]->SetPhys(fields[i]);
+		}
+	    }
+	  
             timer.Start();
             x.second->Update(m_fields, m_time);
             timer.Stop();
             elapsed = timer.TimePerTest(1);
             totFilterTime += elapsed;
+	    if(!filtername.compare(x.first))
+	      {
+		for (i = 0; i < nvariables; ++i)
+		  {
+		    fields[i] =  m_fields[m_intVariables[i]]->UpdatePhys();
+		    m_fields[m_intVariables[i]]->FwdTrans_IterPerExp( m_fields[m_intVariables[i]]->GetPhys(),
+								      m_fields[m_intVariables[i]]->UpdateCoeffs());
 
+		    m_fields[m_intVariables[i]]->SetPhysState(false);
+		  }
+	      }
+
+	    
             // Write out individual filter status information
             if (m_session->GetComm()->GetRank() == 0 &&
                 !((step + 1) % m_filtersInfosteps) && !m_filters.empty() &&

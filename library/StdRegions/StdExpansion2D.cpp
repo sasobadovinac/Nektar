@@ -112,6 +112,128 @@ void StdExpansion2D::PhysTensorDeriv(
     }
 }
 
+Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
+    const Array<OneD, const Array<OneD, NekDouble>> coords,
+    const Array<OneD, Array<OneD, NekDouble>> storage, int mode)
+{
+    int tot = GetTotPoints();
+    Array<OneD, NekDouble> physall(tot), ret(coords[0].size());
+    Vmath::Vcopy(tot, &storage[0][mode * tot], 1, &physall[0], 1);
+    
+    for (int i = 0; i < coords[0].size(); i++)
+    {
+      Array<OneD, NekDouble> ctemp(2);
+        ctemp[0] = coords[0][i];
+        ctemp[1] = coords[1][i];
+	ret[i] = v_PhysEvaluate(ctemp, physall);
+    }
+    return ret;
+}
+
+Array<OneD, NekDouble> StdExpansion2D::v_PhysEvaluateBasis(
+    const Array<OneD, const Array<OneD, NekDouble>> coords,
+    Array<OneD, Array<OneD, NekDouble>> storage, Array<OneD, NekDouble> &out_d0,
+    Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2)
+{
+    boost::ignore_unused(out_d2);
+
+    int tot = GetTotPoints();
+
+    int neq = m_ncoeffs;
+    Array<OneD, NekDouble> physvals(tot);
+    Array<OneD, NekDouble> coll(2);
+
+    Array<OneD, NekDouble> out_eval(coords[0].size() * neq);
+    //    Nektar::LibUtilities::Timer tmr;
+    //    tmr.Start();
+    for (int k = 0; k < neq; k++)
+    {
+        Vmath::Vcopy(tot, &storage[0][k * tot], 1, &physvals[0], 1);
+
+        for (int i = 0; i < coords[0].size(); i++)
+        {
+	  coll[0] = coords[0][i];
+	  coll[1] = coords[1][i];
+	  
+	  out_eval[k * coords[0].size() + i] = v_PhysEvaluate(coll, physvals);
+        }
+
+    }
+    // tmr.Stop();
+    // std::cout<<"\n time taken for only basis eval 2D = "<<tmr.TimePerTest(1);
+    // tmr.Start();
+    if (out_d0.size() > 0)
+    {
+        for (int k = 0; k < neq; k++)
+        {
+            Vmath::Vcopy(tot, &storage[1][k * tot], 1, &physvals[0], 1);
+	    
+            for (int i = 0; i < coords[0].size(); i++)
+            {
+                coll[0]             = coords[0][i];
+                coll[1]             = coords[1][i];
+                out_d0[i + coords[0].size() * k] = v_PhysEvaluate(coll, physvals);
+            }
+        }
+
+    }
+    // tmr.Stop();
+    // std::cout<<"\n time taken for only phi_x(x,y) der eval = "<<tmr.TimePerTest(1);  
+    // tmr.Start();
+    if (out_d1.size() > 0)
+    {
+
+        for (int k = 0; k < neq; k++)
+        {
+            Vmath::Vcopy(tot, &storage[2][k * tot], 1, &physvals[0], 1);
+
+            for (int i = 0; i < coords[0].size(); i++)
+            {
+                coll[0]             = coords[0][i];
+                coll[1]             = coords[1][i];
+                out_d1[k * coords[0].size() + i] = v_PhysEvaluate(coll, physvals);
+            }
+        }
+    }
+    // tmr.Stop();
+    // std::cout<<"\n time taken for only phi_y(x,y) der eval = "<<tmr.TimePerTest(1);  
+
+    return out_eval;
+}
+
+// create and populate storage for slow versions of physderiv
+// and physbasisderiv
+Array<OneD, Array<OneD, NekDouble>> StdExpansion2D::v_GetPhysEvaluateStorage()
+{
+
+    Array<OneD, Array<OneD, NekDouble>> ret(3);
+    NekDouble nq = GetTotPoints();
+
+    ret[0] = Array<OneD, NekDouble>(m_ncoeffs * nq);
+    ret[1] = Array<OneD, NekDouble>(m_ncoeffs * nq);
+    ret[2] = Array<OneD, NekDouble>(m_ncoeffs * nq);
+    for (int i = 0; i < m_ncoeffs; i++)
+    {
+        Array<OneD, NekDouble> tmp(nq);
+
+        Array<OneD, NekDouble> tmp2(nq);
+
+        Array<OneD, NekDouble> tmp3(nq);
+
+        FillMode(i, tmp);
+        Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i * nq], 1);
+
+        PhysDeriv(0, tmp, tmp2);
+        Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i * nq], 1);
+
+        PhysDeriv(1, tmp, tmp3);
+        Vmath::Vcopy(nq, &tmp3[0], 1, &ret[2][i * nq], 1);
+    }
+
+    return ret;
+}
+
+  
 NekDouble StdExpansion2D::v_PhysEvaluate(
     const Array<OneD, const NekDouble> &coords,
     const Array<OneD, const NekDouble> &physvals)

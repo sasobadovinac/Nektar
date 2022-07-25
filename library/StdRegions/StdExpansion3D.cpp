@@ -205,6 +205,157 @@ void StdExpansion3D::v_GenStdMatBwdDeriv(const int dir, DNekMatSharedPtr &mat)
     }
 }
 
+Array<OneD, NekDouble> StdExpansion3D::v_PhysEvaluateBasis(
+    const Array<OneD, const Array<OneD, NekDouble>> coords,
+    const Array<OneD, Array<OneD, NekDouble>> storage, int mode)
+{
+    int tot = GetTotPoints();
+
+    Array<OneD, NekDouble> physall(tot), ret(coords[0].size());
+
+    Vmath::Vcopy(tot, &storage[0][mode * tot], 1, &physall[0], 1);
+    for (int i = 0; i < coords[0].size(); i++)
+    {
+        Array<OneD, NekDouble> ctemp(3);
+        ctemp[0] = coords[0][i];
+        ctemp[1] = coords[1][i];
+        ctemp[2] = coords[2][i];
+
+        ret[i] = v_PhysEvaluate(ctemp, physall);
+    }
+    return ret;
+}
+
+Array<OneD, NekDouble> StdExpansion3D::v_PhysEvaluateBasis(
+    const Array<OneD, const Array<OneD, NekDouble>> coords,
+    Array<OneD, Array<OneD, NekDouble>> storage, Array<OneD, NekDouble> &out_d0,
+    Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2)
+{
+  int tot = GetTotPoints();
+
+    Array<OneD, NekDouble> physall(tot);
+
+    const int nq1 = m_base[1]->GetNumPoints();
+    const int nq2 = m_base[2]->GetNumPoints();
+
+    int neq = m_ncoeffs;
+    Array<OneD, NekDouble> wsp1(nq1 * nq2), wsp2(nq2);
+    Array<OneD, NekDouble> out_eval(coords[0].size() * neq);
+    // Nektar::LibUtilities::Timer tmr;
+    // tmr.Start();
+    for (int k = 0; k < neq; k++)
+    {
+        Vmath::Vcopy(tot, &storage[0][k * tot], 1, &physall[0], 1);
+        for (int i = 0; i < coords[0].size(); i++)
+        {
+            Array<OneD, NekDouble> ctemp(3);
+            ctemp[0] = coords[0][i];
+            ctemp[1] = coords[1][i];
+            ctemp[2] = coords[2][i];
+
+            out_eval[k * coords[0].size() + i] = v_PhysEvaluate(ctemp, physall);
+        }
+    }
+    // tmr.Stop();
+    // std::cout<<"\n time taken for only basis eval = "<<tmr.TimePerTest(1);
+    // tmr.Start();
+    if (out_d0.size() > 0)
+    {
+        for (int k = 0; k < neq; k++)
+        {
+            Vmath::Vcopy(tot, &storage[1][k * tot], 1, &physall[0], 1);
+            for (int i = 0; i < coords[0].size(); i++)
+            {
+                Array<OneD, NekDouble> ctemp(3);
+                ctemp[0] = coords[0][i];
+                ctemp[1] = coords[1][i];
+                ctemp[2] = coords[2][i];
+
+                out_d0[k *coords[0].size() + i] = v_PhysEvaluate(ctemp, physall);
+            }
+        }
+    }
+    // tmr.Stop();
+    // std::cout<<"\n time taken for only phi_x(x,y,z) eval = "<<tmr.TimePerTest(1);  
+    // tmr.Start();
+    if (out_d1.size() > 0)
+    {
+
+        for (int k = 0; k < neq; k++)
+        {
+            Vmath::Vcopy(tot, &storage[2][k * tot], 1, &physall[0], 1);
+            for (int i = 0; i < coords[0].size(); i++)
+            {
+                Array<OneD, NekDouble> ctemp(3);
+                ctemp[0] = coords[0][i];
+                ctemp[1] = coords[1][i];
+                ctemp[2] = coords[2][i];
+
+                out_d1[k * coords[0].size() + i] = v_PhysEvaluate(ctemp, physall);
+            }
+        }
+    }
+    // tmr.Stop();
+    // std::cout<<"\n time taken for only phi_y(x,y,z) der eval = "<<tmr.TimePerTest(1);  
+    // tmr.Start();
+    if (out_d2.size() > 0)
+    {
+
+        for (int k = 0; k < neq; k++)
+        {
+            Vmath::Vcopy(tot, &storage[3][k * tot], 1, &physall[0], 1);
+            for (int i = 0; i < coords[0].size(); i++)
+            {
+                Array<OneD, NekDouble> ctemp(3);
+                ctemp[0] = coords[0][i];
+                ctemp[1] = coords[1][i];
+                ctemp[2] = coords[2][i];
+
+                out_d2[k * coords[0].size() + i] = v_PhysEvaluate(ctemp, physall);
+            }
+        }
+    }
+    // tmr.Stop();
+    // std::cout<<"\n time taken for only phi_z(x,y,z) der eval = "<<tmr.TimePerTest(1);  
+
+
+    return out_eval;
+}
+
+Array<OneD, Array<OneD, NekDouble>> StdExpansion3D::v_GetPhysEvaluateStorage()
+{
+    Array<OneD, Array<OneD, NekDouble>> ret(4);
+    NekDouble nq = GetTotPoints();
+
+    ret[0] = Array<OneD, NekDouble>(m_ncoeffs * nq);
+    ret[1] = Array<OneD, NekDouble>(m_ncoeffs * nq);
+    ret[2] = Array<OneD, NekDouble>(m_ncoeffs * nq);
+    ret[3] = Array<OneD, NekDouble>(m_ncoeffs * nq);
+    for (int i = 0; i < m_ncoeffs; i++)
+    {
+        Array<OneD, NekDouble> tmp(nq);
+
+        Array<OneD, NekDouble> tmp2(nq);
+
+        Array<OneD, NekDouble> tmp3(nq);
+
+        Array<OneD, NekDouble> tmp4(nq);
+
+        FillMode(i, tmp);
+        Vmath::Vcopy(nq, &tmp[0], 1, &ret[0][i * nq], 1);
+
+        PhysDeriv(0, tmp, tmp2);
+        Vmath::Vcopy(nq, &tmp2[0], 1, &ret[1][i * nq], 1);
+
+        PhysDeriv(1, tmp, tmp3);
+        Vmath::Vcopy(nq, &tmp3[0], 1, &ret[2][i * nq], 1);
+
+        PhysDeriv(2, tmp, tmp4);
+        Vmath::Vcopy(nq, &tmp4[0], 1, &ret[3][i * nq], 1);
+    }
+    return ret;
+}
+
 NekDouble StdExpansion3D::v_PhysEvaluate(
     const Array<OneD, const NekDouble> &coords,
     const Array<OneD, const NekDouble> &physvals)

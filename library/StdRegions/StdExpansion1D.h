@@ -69,11 +69,27 @@ public:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
+        STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+        const Array<OneD, const Array<OneD, NekDouble>> coords,
+        const Array<OneD, Array<OneD, NekDouble>> storage, int mode) final;
+
+
 protected:
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals) override;
 
+    STD_REGIONS_EXPORT virtual Array<OneD, Array<OneD, NekDouble>>
+    v_GetPhysEvaluateStorage() final;
+
+    STD_REGIONS_EXPORT virtual Array<OneD, NekDouble> v_PhysEvaluateBasis(
+        const Array<OneD, const Array<OneD, NekDouble>> coords,
+        Array<OneD, Array<OneD, NekDouble>> storage,
+        Array<OneD, NekDouble> &out_d0,
+        Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
+        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final;
+
+    
 private:
     // Virtual Functions ----------------------------------------
 
