@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef DEMOS_STDREGIONS_STRUCTUREPRESFILTERSUPPORT_HPP
-#define DEMOS_STDREGIONS_STRUCTUREPRESFILTERSUPPORT_HPP
+#ifndef FILTERS_STRUCTUREPRESFILTERSUPPORT_HPP
+#define FILTERS_STRUCTUREPRESFILTERSUPPORT_HPP
 
 #include <string>
 #include <vector>
@@ -1374,6 +1374,10 @@ public:
   {
     gamhold = g;
   }
+  void Setverbose(NekDouble g)
+  {
+    verbose = g;
+  }
   
   void Setchold(NekDouble c)
   {
@@ -1388,6 +1392,10 @@ public:
   {
     return    tol_gd; 
   }
+  NekDouble Getverbose()
+  {
+    return    verbose; 
+  }
 
 protected:
 
@@ -1400,7 +1408,7 @@ protected:
   NekDouble gamhold = 0.2;
   Array<OneD, NekDouble> startarr;  
   Array<OneD, NekDouble> bcheb;  
-  //  int verbose = 0;
-};
+  int verbose = 0;
 
+};
 #endif

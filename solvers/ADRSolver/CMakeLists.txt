@@ -82,6 +82,9 @@ IF( NEKTAR_SOLVER_ADR )
     ADD_NEKTAR_TEST(Advection2D_ISO_regular_SSPRK2)
     ADD_NEKTAR_TEST(Advection2D_ISO_regular_SSPRK3)
 
+    # 2D Structure Preserving filter
+    ADD_NEKTAR_TEST(Advection2D_structure_preserving_filter)
+
     # GJP tests
     ADD_NEKTAR_TEST(Advection2D_Quad_GJP)
     ADD_NEKTAR_TEST(Advection2D_Tri_GJP)

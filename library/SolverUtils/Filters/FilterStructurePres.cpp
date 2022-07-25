@@ -68,6 +68,11 @@ FilterStructurePres::FilterStructurePres(
         demo.SettolGD(std::stod(it->second));
     }
 
+    it = pParams.find("verbose");
+    if (it != pParams.end())
+    {
+        demo.Setverbose(std::stod(it->second));
+    }
     // OutputFrequency
     it = pParams.find("OutputFrequency");
     if (it == pParams.end())
@@ -80,12 +85,14 @@ FilterStructurePres::FilterStructurePres(
 
 FilterStructurePres::~FilterStructurePres()
 {
+  if(demo.Getverbose())
+  {
     cout << "\n time spent inside str pres filter: \t" << timeStrPres;
     cout << "\n time spent checking for target elements: \t" << timeFindIds;
     cout << "\n time spent for orthonormalization and reverse : \t" << timeOrth
          << " ";
     cout << "\n number of iterations for GD (all) = " << retGDall;
-    cout << "\n time spent inside basis eval = " << basiscalls;
+    //cout << "\n time spent inside basis eval = " << basiscalls;
 
     //      cout<<"\n time taken inside GD  (all) = "<<retGDtime;
     cout << "\n number of iterations for filter = " << tot_optiter << " ";
@@ -104,6 +111,7 @@ FilterStructurePres::~FilterStructurePres()
     {
         cout << "\n time spent inside 2d GD = " << roots2dtimehold << "\n";
     }
+  }
 }
 
 void FilterStructurePres::v_Initialise(
