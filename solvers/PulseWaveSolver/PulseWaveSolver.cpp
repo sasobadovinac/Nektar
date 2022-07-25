@@ -64,7 +64,11 @@ int main(int argc, char *argv[])
         drv->Execute();
 
         // Print out timings
-        LibUtilities::Timer::PrintElapsedRegions(session->GetComm());
+        int iolevel = 0;
+        session->LoadParameter("IO_Timer_Level", iolevel, -1);
+
+        LibUtilities::Timer::PrintElapsedRegions(session->GetComm(),std::cout, iolevel);
+
         // Finalise session
         session->Finalise();
     }

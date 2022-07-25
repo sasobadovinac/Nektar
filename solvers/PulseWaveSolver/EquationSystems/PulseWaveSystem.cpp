@@ -45,6 +45,8 @@ using namespace std;
 namespace Nektar
 {
 
+#define NEWCOMM 0 
+    
 /**
  *  @class PulseWaveSystem
  *
@@ -1010,16 +1012,25 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
     }
 
     // finally set up a communicator for interface data collection
-    Array<OneD, long> tmp1(3 * nvid2dom);
+    int numint = 3*nvid2dom; 
+#if NEWCOMM
+    Array<OneD, long> tmp1(5 * numint);
+#else    
+    Array<OneD, long> tmp1(numint);
+#endif
+
     if (nvid2dom)
     {
-        Vmath::Zero(3 * nvid2dom, tmp1, 1);
+        Vmath::Zero(numint, tmp1, 1);
     }
 
     cnt = 0;
+    int maxvid = 0;
+    // set up unique numbering for global communication pattern
     for (int n = 0; n < m_bifurcations.size(); ++n, ++cnt)
     {
         int vid = m_bifurcations[n][0]->m_vid;
+        maxvid = max(vid,maxvid);
         for (int i = 0; i < 3; ++i)
         {
             tmp1[3 * cnt + i] = (NekDouble)(3 * vid + i + 1);
@@ -1029,6 +1040,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
     for (int n = 0; n < m_mergingJcts.size(); ++n, ++cnt)
     {
         int vid = m_mergingJcts[n][0]->m_vid;
+        maxvid = max(vid,maxvid);
         for (int i = 0; i < 3; ++i)
         {
             int offset        = m_mergingJcts[n][i]->m_riemannOrd;
@@ -1039,12 +1051,26 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
     for (int n = 0; n < m_vesselIntfcs.size(); ++n, ++cnt)
     {
         int vid = m_vesselIntfcs[n][0]->m_vid;
+        maxvid = max(vid,maxvid);
         for (int i = 0; i < 3; ++i)
         {
             tmp1[3 * cnt + i] = (NekDouble)(3 * vid + i + 1);
         }
     }
 
+
+#if NEWCOMM
+    // set up unique numbering for other variables to be communicated based on
+    // ordering of first list
+    for(int n = 1; n < 5; ++n)
+    {
+        for(int i = 0; i < numint; ++i)
+        {
+            tmp1[n*numint + i] = tmp1[i] + 3*n*maxvid; 
+        }
+    }
+#endif
+    
     m_intComm = Gs::Init(tmp1, m_comm->GetRowComm(), verbose);
 }
 
@@ -1380,12 +1406,22 @@ void PulseWaveSystem::EnforceInterfaceConditions(
     int totif =
         m_bifurcations.size() + m_mergingJcts.size() + m_vesselIntfcs.size();
 
-    Array<OneD, NekDouble> Aut, Au(3 * totif, 0.0);
-    Array<OneD, NekDouble> uut, uu(3 * totif, 0.0);
-    Array<OneD, NekDouble> betat, beta(3 * totif, 0.0);
-    Array<OneD, NekDouble> A_0t, A_0(3 * totif, 0.0);
-    Array<OneD, NekDouble> alphat, alpha(3 * totif, 0.0);
+    Array<OneD, NekDouble> Aut,   Au; 
+    Array<OneD, NekDouble> uut,   uu; 
+    Array<OneD, NekDouble> betat, beta; 
+    Array<OneD, NekDouble> A_0t,  A_0; 
+    Array<OneD, NekDouble> alphat, alpha;
 
+    // declare all communicated data in one array. 
+    Array<OneD, NekDouble> data(15*totif,0.0);
+
+    // set up local arrays to point to different part of data array. 
+    Au    = data;
+    uu    = data + 3*totif;
+    beta  = data + 6*totif;
+    A_0   = data + 9*totif;
+    alpha = data + 12*totif; 
+    
     // Bifurcations Data:
     int cnt = 0;
     for (int n = 0; n < m_bifurcations.size(); ++n, ++cnt)
@@ -1424,12 +1460,22 @@ void PulseWaveSystem::EnforceInterfaceConditions(
         }
     }
 
+    LibUtilities::Timer time_EnforceInterfaceConditionsComm;
+    time_EnforceInterfaceConditionsComm.Start();
+
+#if NEWCOMM
+    Gs::Gather(data, Gs::gs_add, m_intComm);
+#else    
     // Gather data if running in parallel
     Gs::Gather(Au, Gs::gs_add, m_intComm);
     Gs::Gather(uu, Gs::gs_add, m_intComm);
     Gs::Gather(beta, Gs::gs_add, m_intComm);
     Gs::Gather(A_0, Gs::gs_add, m_intComm);
     Gs::Gather(alpha, Gs::gs_add, m_intComm);
+#endif
+    time_EnforceInterfaceConditionsComm.Stop();
+    time_EnforceInterfaceConditionsComm.AccumulateRegion(
+        "PulseWaveSystem::EnforceInterfaceConditionsComm", 1);
 
     // Enforce Bifurcations:
     cnt = 0;
