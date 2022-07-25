@@ -45,7 +45,7 @@ using namespace std;
 namespace Nektar
 {
 
-#define NEWCOMM 0 
+#define NEWCOMM 0
     
 /**
  *  @class PulseWaveSystem
@@ -1060,6 +1060,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
 
 
 #if NEWCOMM
+    m_comm->GetRowComm()->AllReduce(maxvid, LibUtilities::ReduceMax);
     // set up unique numbering for other variables to be communicated based on
     // ordering of first list
     for(int n = 1; n < 5; ++n)
