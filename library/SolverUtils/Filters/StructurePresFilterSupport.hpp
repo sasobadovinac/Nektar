@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Support file for Structure Preserving Filter
+// Description: Demo for testing functionality of StdProject
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -506,7 +506,8 @@ public:
 	
 	NekDouble c = chold;
 	tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
-	
+	//tot_interp_points += xastaa[0].size();
+
 	totalbasiscalls++;
 	for(int p = 0; p < dim; p++)
 	  {
@@ -573,8 +574,13 @@ public:
 		  }
 		
 		ctr++;
+		//tmr.Start();
 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
+		//tot_interp_points += xastaa[0].size();
+
 		totalbasiscalls++;
+		//tmr.Stop();
+		//cout<<"\n 2D eval basis 2 call takes = "<<tmr.TimePerTest(1);
 		pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1, nu);
 		for(int p = 0; p < dim; p++)
 		  {
@@ -638,9 +644,13 @@ public:
 			    chkval = chkval ||  abs(xastaa[0][0] + xastaa[1][0]) > 1;
 			  }
 		      }
+		    // tmr.Start();
 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2]
 						       , tempeval[3]);
+		    //tot_interp_points += xastaa[0].size();
 		    totalbasiscalls++;
+		    //tmr.Stop();
+		    //cout<<"\n 2D eval basis 3 call takes: "<<tmr.TimePerTest(1);
 		    for(int p = 0; p < dim; p++)
 		      {
 			derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
@@ -733,6 +743,8 @@ public:
 	retarr[1] = Array<OneD, NekDouble>(1, savesavehold[1]);
 	avgiterGD = ctr;
 	tmr.Stop();
+	//	totalbasiscalls = tmr.TimePerTest(1);
+	//	cout<<"\n iters taken by 2D GD during 1 call = "<<ctr;
 	totalcallstobasis = totalbasiscalls; 
 	return;	
       }
@@ -740,13 +752,579 @@ public:
       {
 	//	cout<<"\n returning NULL after ctr = "<<avgiterGD;
 	tmr.Stop();
+	//totalbasiscalls = tmr.TimePerTest(1);
+	//	cout<<"\n iters taken by 2D GD during 1 call = "<<ctr;
 	totalcallstobasis = totalbasiscalls; 
+	
 	retarr = NullNekDoubleArrayOfArray;
 	return;
       }
     
   }
 
+  
+
+  //GD with backtracking
+  // void steepestgradientdescent3D(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> > &coordpts, Array<OneD, Array<OneD, NekDouble> > &coordmidpts, Array<OneD, NekDouble> &interioreval, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, NekDouble &totalcallstobasis, NekDouble tol, NekDouble nu, int   &tot_interp_points)
+  // {
+  //   Timer tbeg;
+  //   tbeg.Start();
+  //   NekDouble totalbasiscalls = 0;
+  //   int dim = 3;
+  //   Array<OneD, NekDouble> g(dim);
+  //   double inf = numeric_limits<double>::infinity();
+  //   retarr = Array<OneD, Array<OneD, NekDouble> >(dim);
+
+  //   for(int p = 0; p < dim; p++)
+  //     {
+  // 	retarr[p] = Array<OneD,NekDouble>(1);
+  //     }
+
+    
+  //   Array<OneD,NekDouble> xnew(dim) ,x(dim);
+  //   NekDouble gprev = inf;
+  //   Array<OneD, NekDouble>  temp3, temp2(coordpts[0].size()), xstart(dim);
+  //   NekDouble gnew = inf;
+
+  //   int idxgprev;
+  //   int sz = coordpts[0].size();
+  //   Array<OneD, Array<OneD, NekDouble > > tempeval(4);
+  //   for(int k = 0; k < tempeval.size(); k++)
+  //     {
+  // 	tempeval[k] = Array<OneD, NekDouble>(uhats.size());
+  //     }
+  //   //NekDouble tmpq = 0;
+  //   //tbeg.Start();
+  //   pq(uhats, coordpts, storage[0], NullNekDouble1DArray, temp2, nu );
+  //   //tbeg.Stop();
+  //   //tmpq += tbeg.TimePerTest(1);
+    
+  //   gprev = Vmath::Vmin(sz, temp2, 1);
+  //   idxgprev = Vmath::Imin(temp2.size(), temp2, 1);
+    
+  //   for(int p = 0; p < dim; p++)
+  //     {
+  // 	xnew[p] = coordpts[p][idxgprev];
+  // 	xstart[p] = xnew[p];   	    
+  //     }
+    
+  //   //tbeg.Start();     
+  //   pq(uhats, coordmidpts, interioreval, NullNekDouble1DArray, temp3, nu );
+  //   //tbeg.Stop();
+  //   // tmpq += tbeg.TimePerTest(1);   
+  //   NekDouble gprevmid =  Vmath::Vmin(temp3.size(), temp3, 1);
+  //   if(gprev > gprevmid)
+  //     {
+  //       gprev = gprevmid;
+  //       idxgprev = Vmath::Imin(temp3.size(), temp3, 1);
+  // 	for(int p = 0; p < dim; p++)
+  // 	  {
+  // 	    xnew[p] = coordmidpts[p][idxgprev];
+  // 	    xstart[p] = xnew[p];   	    
+    
+  // 	  }
+
+  //     }
+
+  //   // if(startarr.size() > 0)
+  //     //{
+  // 	//	    	cout<<"\nexpected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<", "<<startarr[2]<<" val = "<<startarr[3]<< " GD starts at: "<<xnew[0]<<","<<xnew[1]<<","<<xnew[2];
+
+  // 	//	flagTest = 0;
+  // 	//}
+  //   // tbeg.Stop();
+  //   // cout<<"\n (re) eval pq on lattice takes "<<tbeg.TimePerTest(1);
+  //   Array<OneD, NekDouble> dereval(dim);
+  //   //    cout<<"\n gprev = "<<gprev<<" tol_gd = "<<tol_gd<<"\n";
+  //   if(gprev < 0 && abs(gprev)>tol_gd) 
+  //     {
+  //       Array<OneD, Array<OneD, NekDouble > > xastaa(dim);
+  // 	for(int p = 0; p < dim; p++)
+  // 	  {
+  // 	    xastaa[p] = Array<OneD, NekDouble> (1, xnew[p]);
+  // 	  }
+	
+  // 	NekDouble c = chold;
+  // 	tbeg.Start();
+  // 	tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
+  // 	tot_interp_points += xastaa[0].size();
+
+  // 	//	totalbasiscalls++;
+  // 	tbeg.Stop();
+  // 	totalbasiscalls += tbeg.TimePerTest(1);
+
+  // 	//tbeg.Stop();
+  // 	//cout<<"\n 3D eval basis 1 call takes "<<tbeg.TimePerTest(1)<<"\n\n";
+  // 	//exit(0);
+  // 	for(int p = 0; p < dim; p++)
+  // 	  {
+  // 	    //tbeg.Start();
+  // 	    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
+  // 	    //tbeg.Stop();
+  // 	    //tmpq += tbeg.TimePerTest(1);
+  // 	    g[p] = nu*dereval[p];
+  // 	  }
+  // 	gnew = 0;
+  // 	for(int p = 0; p < dim; p++)
+  // 	  {
+  // 	    gnew += pow(g[p],2);
+  // 	  }
+	    
+  // 	gnew = pow( gnew, 0.5);
+  // 	if(abs(g[0]) > 1 || abs(g[1]) > 1 || abs(g[2]) > 1)
+  //         {
+  //           g[0] = g[0]/gnew;
+  //           g[1] = g[1]/gnew;
+  // 	    g[2] = g[2]/gnew;
+  // 	  }
+  // 	Array<OneD, NekDouble> t1(1);
+  // 	Timer tmr;
+  // 	pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1, nu);
+  // 	Array<OneD, NekDouble > holdxandval(dim+1), saveholdxandval(dim+1), savesavehold(dim+1), minall(dim+1);
+
+  // 	for(int p = 0; p < dim; p++)
+  // 	  {
+  // 	    holdxandval[p] = xastaa[p][0];
+  // 	  }
+  // 	holdxandval[dim] = t1[0];
+  // 	savesavehold[dim] = inf;//t1[0];
+  // 	NekDouble allg;
+  // 	for(int p = 0; p < dim; p++)
+  // 	  {
+  // 	    allg = allg + g[p];
+  // 	  }
+  // 	int truth_val = abs(allg) > tol;
+  // 	int ctr = 0, ct  = 0, max_backtracksteps = 1;
+  // 	NekDouble savevalprev0 = 0, savevalprev1 = 0, saveholdval = 0, fac = 1,  gnew0 = gnew, gnew1 = gnew, gnew2 = gnew ;
+
+  // 	if(truth_val)
+  // 	  {
+  // 	    NekDouble iter = secarg;
+  // 	    int counter_min_change = 0; 
+  // 	    while(ctr < iter  && fac > 1e-3 && ((abs(g[0]) > tol_gd) || abs(g[1]) > tol_gd ||  abs(g[2]) > tol_gd) && counter_min_change <max_backtracksteps )
+  // 	      {
+		
+  // 		if(ctr > 2 && abs(gnew0 - gnew2) < tol_gd)// && abs(gnew0 - gnew1) < tol_gd && abs(gnew1- gnew2) < tol_gd)
+  // 		  {
+  // 		    break;
+  // 		  }
+		
+  // 		if(ctr > 1)
+  // 		  {
+  // 		    fac = gamhold;
+  // 		  }
+  // 		for(int p = 0; p < dim; p++)
+  // 		  {
+  // 		    saveholdxandval[p] = xastaa[p][0];
+  // 		  }
+  // 		saveholdxandval[dim] = t1[0];
+  // 		for(int p = 0; p < dim; p++)
+  // 		  {
+  // 		    xastaa[p][0] = saveholdxandval[p]  - fac*g[p];
+  // 		  }
+	        
+  // 		// switch(E->DetShapeType())
+  // 		//   {
+  // 		//   case LibUtilities::eHexahedron:
+  // 		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1)
+  // 		      {
+  // 			for(int p = 0; p < dim; p++)
+  // 			  {
+  // 			    xastaa[p][0] = holdxandval[p]  - fac*g[p];
+  // 			  }
+  // 			fac = fac*gamhold;
+  // 			if(fac < 1e-4)
+  // 			  {
+  // 			    break;
+  // 			  }
+  // 		      }
+  // 		  //   break;
+  // 		  // case LibUtilities::eTetrahedron:
+  // 		  //   // while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[2][0] + xastaa[1][0] > 1e-8 || xastaa[0][0] + xastaa[2][0] > 1e-8 || xastaa[1][0] + xastaa[2][0] > 1e-8)
+  // 		  //   while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[2][0] + xastaa[1][0] > 0 || xastaa[0][0] + xastaa[2][0] > 0 || xastaa[1][0] + xastaa[2][0] > 0)
+  // 		  //     {
+  // 		  // 	for(int p = 0; p < dim; p++)
+  // 		  // 	  {
+  // 		  // 	    xastaa[p][0] = holdxandval[p]  - fac*g[p];
+  // 		  // 	  }
+  // 		  // 	fac = fac*gamhold;
+  // 		  // 	if(fac <1e-7)
+  // 		  // 	  break;
+  // 		  //     }
+  // 		  //   break;
+  // 		  // case LibUtilities::ePyramid:
+  // 		  //   while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 0 ||  xastaa[0][0] + xastaa[2][0] > 0 ) // x+y+z > 0??
+  // 		  //     {
+  //                 //       for(int p = 0; p < dim; p++)
+  //                 //         {
+  //                 //           xastaa[p][0] = holdxandval[p]  - fac*g[p];
+  //                 //         }
+  //                 //       fac = fac*gamhold;
+  // 		  // 	if(fac < 1e-7)
+  // 		  // 	break;
+  // 		  //     }
+  // 		  //   break;
+  // 		  // case LibUtilities::ePrism:
+  // 		  //   while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[2][0] > 1e-8 )
+  // 		  //     {
+  //                 //       for(int p = 0; p < dim; p++)
+  //                 //         {
+  //                 //           xastaa[p][0] = holdxandval[p]  - fac*g[p];
+  //                 //         }
+  //                 //       fac = fac*gamhold;
+  // 		  // 	if(fac < 1e-7)
+  // 		  // 	break;
+  // 		  //     }
+
+  // 		  //   break;
+  // 		  // default: cout<<"\n invalid element, not yet supported!";
+  // 		  //   exit(0);
+  // 		  // }
+  // 		ctr++;
+  // 		tmr.Start();
+  // 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
+  // 		tot_interp_points += xastaa[0].size();
+
+  // 		//totalbasiscalls++;
+  // 		// tmr.Stop();
+  // 		    tmr.Stop();
+  // 		    totalbasiscalls += tmr.TimePerTest(1);
+
+  // 		// cout<<"\n 3D eval basis 2 call takes: "<<tmr.TimePerTest(1);
+  // 		//tbeg.Start();
+  // 		pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1, nu);
+  // 		//	tbeg.Stop();
+  // 		//tmpq += tbeg.TimePerTest(1);
+  // 		if(savesavehold[dim] > t1[0])
+  // 		  {
+  // 		    minall[dim] = savesavehold[dim];
+  // 		    for(int j = 0; j < dim; j++)
+  // 		      {
+  // 			minall[j] = savesavehold[j];
+  // 			savesavehold[j] = xastaa[j][0];
+  // 		      }
+  // 		    savesavehold[dim] = t1[0];
+  // 		  }
+  // 		for(int p = 0; p < dim; p++)
+  // 		  {
+  // 		    //tbeg.Start();
+  // 		    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
+  // 		    //tbeg.Stop();
+  // 		    // tmpq += tbeg.TimePerTest(1);
+  // 		    g[p] = dereval[p];
+  // 		  }
+
+  // 		gnew2 = gnew1;
+  // 		gnew1 = gnew0;
+  // 		gnew = 0;
+  // 		for(int p = 0; p < dim; p++)
+  // 		  {
+  // 		    gnew += pow(g[p],2);
+  // 		  }
+
+  // 		gnew = pow( gnew, 0.5);
+  // 		gnew0 = gnew;
+	        
+  // 		if(abs(g[0]) > 1 || abs(g[1])>1 || abs(g[2])>1)
+  // 		  {
+  // 		    for(int p = 0; p < dim; p++)
+  // 		      {
+  // 			g[p] = g[p]/gnew;
+  // 		      }
+  // 		  }
+		
+  // 		savevalprev0 = savevalprev1;
+  // 		savevalprev1 = saveholdval;
+  // 		saveholdval = t1[0];
+  // 		NekDouble holdval = t1[0];
+  // 	        Array<OneD, NekDouble> gsave(dim);
+
+  // 		for(int p = 0; p < dim; p++)
+  // 		  {
+  // 		    gsave[p] = g[p];
+  // 		  }
+  // 		ct = 0;
+  // 		while(holdval > saveholdxandval[dim] - c*fac*(gsave[0] + gsave[1] + gsave[2]) && ct < iter && fac > 1e-3)
+  // 		  {
+  // 		    ct++;
+  // 		    for(int p = 0; p < dim; p++)
+  // 		      {
+  // 			holdxandval[p] = xastaa[p][0];
+  // 		      }
+  // 		    holdxandval[dim] = holdval;
+
+  // 		    fac = fac*gamhold;
+  // 		    for(int p = 0; p < dim; p++)
+  // 		      {
+  // 			xastaa[p][0] = holdxandval[p]  - fac*g[p];
+  // 		      }
+		    
+  // 		    // switch(E->DetShapeType())
+  // 		    //   {
+  // 		    //		      case LibUtilities::eHexahedron:
+  // 			while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1) )
+  // 			  {
+  // 			    for(int p = 0; p < dim; p++)
+  // 			      {
+  // 				xastaa[p][0] = holdxandval[p]  - fac*g[p];
+				
+  // 			      }
+  // 			    fac = fac*gamhold;
+  // 			    if(fac < 1e-4)
+  // 			      {
+  // 				break;
+  // 			      }
+  // 			  }
+  // 		      // 	break;
+  // 		      // case LibUtilities::eTetrahedron:
+		        
+  // 		      // 	while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[1][0] > 0 || xastaa[0][0] + xastaa[2][0] > 0 || xastaa[1][0] + xastaa[2][0] > 0)) 
+  // 		      // 	  {
+  // 		      // 	    for(int p = 0; p < dim; p++)
+  // 		      // 	      {
+  // 		      // 		xastaa[p][0] = holdxandval[p]  - fac*g[p];
+  // 		      // 	      }
+			
+  // 		      // 	    fac = fac*gamhold;
+  // 		      // 	if(fac < 1e-7)
+  // 		      // 	  break;
+  // 		      // 	  }
+  // 		      // 	break;
+  // 		      // 	case LibUtilities::ePyramid:
+  // 		      // 	  while((abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1  ||  xastaa[0][0] + xastaa[2][0] > 0 || xastaa[0][0] + xastaa[1][0] > 0) )
+  // 		      // 	    {
+  // 		      // 	      for(int p = 0; p < dim; p++)
+  // 		      // 		{
+  // 		      // 		  xastaa[p][0] = holdxandval[p]  - fac*g[p];
+				  
+  // 		      // 		}
+  // 		      // 	      fac = fac*gamhold;
+  // 		      // 	      if(fac < 1e-7)
+  // 		      // 		break;
+				  
+  // 		      // 	    }
+			    
+  // 		      // 	  break;
+  // 		      // case LibUtilities::ePrism:
+
+  // 		      // 	while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[0][0] + xastaa[2][0] > 0 )
+  // 		      // 	  {
+  // 		      // 	    for(int p = 0; p < dim; p++)
+  // 		      // 	      {
+  // 		      // 		xastaa[p][0] = holdxandval[p]  - fac*g[p];
+  // 		      // 	      }
+  // 		      // 	    fac = fac*gamhold;
+  // 		      // 	    if(fac < 1e-7)
+  // 		      // 	      break;
+  // 		      // 	  }
+  // 		      // 	break;
+  // 		      // default:
+  // 		      // 	cout<<"\n invalid element!\n";
+  // 		      // 	exit(0);
+  // 		      // }
+  // 		    //    if(fac < 1e-6)
+  // 		    //  break;
+		    
+  // 			tmr.Start();
+  // 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2]
+  // 						       , tempeval[3]);
+  // 		    tot_interp_points += xastaa[0].size();
+
+  // 		    //totalbasiscalls++;
+  // 		    tmr.Stop();
+  // 		    totalbasiscalls += tmr.TimePerTest(1);
+		    
+  // 		    // cout<<"\n 3D eval basis 3 call takes: "<<tmr.TimePerTest(1); 
+
+		    
+  // 		    for(int p = 0; p < dim; p++)
+  // 		      {
+  // 			//	tbeg.Start();
+  // 			derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
+  // 			//tbeg.Stop();
+  // 			//tmpq += tbeg.TimePerTest(1);
+  // 			g[p] = nu*dereval[p];
+  // 		      }
+  // 		    gnew2 = gnew1;
+  // 		    gnew1 = gnew0;
+
+  // 		    gnew = 0;
+  // 		    for(int p = 0; p < dim; p++)
+  // 		      {
+  // 			gnew += pow(g[p],2);
+  // 		      }
+		    
+  // 		    gnew = pow(gnew ,0.5);
+  // 		    gnew0 = gnew;
+
+		    
+  // 		    if(abs(g[2])>1 || abs(g[0]) > 1 || abs(g[1])>1)
+  // 		      {
+  // 			for(int p = 0; p < dim; p++)
+  // 			  {
+  // 			    g[p] = g[p]/gnew;
+  // 			  }
+  // 		      }
+
+  // 		    //tbeg.Start(); 
+  // 		    pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1, nu);
+  // 		    //tbeg.Stop();
+  // 		    // tmpq += tbeg.TimePerTest(1);  
+  // 		    if(savesavehold[dim] > t1[0])
+  // 		      {
+  // 			minall[dim] = savesavehold[dim];
+  // 			for(int j = 0; j < dim; j++)
+  // 			  {
+  // 			    minall[j] = savesavehold[j];
+  // 			    savesavehold[j] = xastaa[j][0];
+  // 			  }
+  // 			savesavehold[dim] = t1[0];
+  // 		      }
+  // 	            if(abs(holdval -t1[0]) > 1e-5)
+  // 		      {
+  // 			holdval = t1[0];
+  // 		      }
+  // 		    else
+  // 		      break;
+  // 		  }
+		
+  // 		avgiterGD = ctr;
+  // 		// if(saveholdval < holdval)
+  // 		//   {
+  // 		//     if((saveholdxandval[dim]<savesavehold[dim]) && abs(saveholdxandval[dim] - savesavehold[dim] >tol_gd))//ctr > 1 && minall[dim] <  savesavehold[dim] && abs(minall[dim] -  savesavehold[dim]) >tol_gd)
+  // 		//       {
+  // 		// 	for(int p = 0; p < dim; p++)
+  // 		// 	  { 
+  // 		// 	    savesavehold[p] = saveholdxandval[p];
+  // 		// 	  }
+  // 		// 	//savesavehold[dim] = minall[dim];
+  // 		// 	counter_min_change = 0;
+  // 		//       }
+  // 		//     else
+  // 		//       {
+  // 		// 	counter_min_change++;
+  // 		//       }
+  // 		//     for(int p = 0; p < dim; p++)
+  // 		//       {
+  // 		// 	xastaa[p][0] = saveholdxandval[p];
+  // 		//       }
+  // 		//     // t1[0] = holdval;
+  // 		//     t1[0] = saveholdval;
+  // 		//   }
+  // 		// else
+  // 		//   {
+  // 		//     if((saveholdxandval[dim]<savesavehold[dim]) && abs(saveholdxandval[dim] - savesavehold[dim])>tol_gd)
+  // 		//       {
+  // 		// 	for(int p = 0; p < dim+1; p++)
+  // 		// 	  {
+  // 		// 	    savesavehold[p] = saveholdxandval[p]; 
+  // 		// 	  }
+  // 		// 	counter_min_change = 0;      
+  // 		//       }
+  // 		//     else
+  // 		//       {
+  // 		// 	counter_min_change++; 
+  // 		//       }
+  // 		//     t1[0] = holdval;
+		    
+		    
+  // 		//     fac = 1;
+		    
+  // 		//     if(ctr > 2 && abs(savevalprev0 - saveholdval) < 1e-5)
+  // 		//       {
+  // 		// 	break;
+  // 		//       }
+		
+  // 		//   }
+
+  // 	      }
+  // 	    		    int opt = 0;
+  // 			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1;
+  // 			if(opt)
+  // 		      {
+			
+  // 			cout<<"\n opt = "<<opt<<"\n";
+  // 		cout<<"\n retarr =  ("<<retarr[0][0]<<","<<retarr[1][0]<<","<<retarr[2][0]<<")";
+  // 			cout<<"\n savesavehold =  ("<<savesavehold[0]<<","<<savesavehold[1]<<","<<savesavehold[2][0]<<")";
+	
+  // 			for(int p = 0; p < dim; p++)
+  // 			  {
+  // 			    xastaa[p][0] = savesavehold[p];
+  // 			  }
+  // 		      }
+
+
+  // 	  }
+  // 	else
+  // 	  {
+  // 	    cout<<"\n in 3d GD else\n";
+  // 		    int opt = 0;
+  // 		    // switch(E->DetShapeType())
+  // 		    //   {
+  // 		    //  case LibUtilities::eHexahedron:
+  // 			opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0])>1;
+  // 			//break;
+			
+  // 		      // case LibUtilities::eTetrahedron:
+  // 		      // 	opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[1][0] > 0 || xastaa[0][0] + xastaa[2][0] > 0 || xastaa[1][0] + xastaa[2][0] > 0;
+  // 		      // 	break;
+			
+  // 		      // case LibUtilities::ePyramid:
+  // 		      // 	opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[2][0] > 0 || xastaa[2][0] + xastaa[1][0] > 0;  
+  // 		      // 	break;
+  // 		      // case LibUtilities::ePrism:
+  // 		      // 	opt = abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1|| xastaa[0][0] + xastaa[2][0] > 0;
+  // 		      // 	break;
+  // 		      // default: cout<<"\n invalid element type!\n";
+  // 		      // 	exit(0);
+  // 		      // }
+		    
+  // 		    if(opt)
+  // 		      {
+  // 			cout<<"\n opt = "<<opt<<"\n";
+  // 			cout<<"\n retarr =  ("<<retarr[0][0]<<","<<retarr[1][0]<<","<<retarr[2][0]<<")";
+  // 			cout<<"\n savesavehold =  ("<<savesavehold[0][0]<<","<<savesavehold[1][0]<<","<<savesavehold[2][0]<<")";
+	
+  // 			for(int p = 0; p < dim; p++)
+  // 			  {
+  // 			    xastaa[p][0] = savesavehold[p];
+  // 			  }
+  // 		      }
+
+  // 	  //   for(int p = 0; p < dim; p++)
+  // 	  //     savesavehold[p] = xastaa[p][0];
+  // 	   }
+  // 	//	cout<<"\n at ctr = "<<ctr<<"  returning: "; 
+  // 	for(int p = 0; p < dim; p++)
+  // 	  {
+  // 	    retarr[p] = Array<OneD, NekDouble>(1, savesavehold[p]);
+  // 	    //	    cout<<" "<<savesavehold[p]<<" ";
+  // 	  }
+  // 	//	cout<<"\n iters taken by GD during 1 call = "<<ctr <<" calls to basis eval = "<<totalbasiscalls<<" returning ("<<retarr[0][0]<<","<<retarr[1][0]<<","<<retarr[2][0]<<")";
+  // 	//	totalcallstobasis = tbeg.TimePerTest(1);//totalbasiscalls;
+  // 	avgiterGD = ctr;
+  // 	//cout<<"\n time spent inside pq and derpq="<<tmpq<<"\n";
+  // 	//exit(0);
+  // 	tbeg.Stop();
+  // 	totalcallstobasis = totalbasiscalls;
+	
+  // 		cout<<"\n number of iteration taken by 3D GD ="<<ctr;
+  // 	return;
+  //     }
+  //   else
+  //     {
+  // 	retarr = NullNekDoubleArrayOfArray;
+  // 		cout<<"\n returning NULL after ctr = "<<avgiterGD;
+  // 	//cout<<"\n time spent inside pq and derpq="<<tmpq<<"\n";
+  // 	tbeg.Stop();
+  // 	totalcallstobasis = totalbasiscalls;
+  // 		cout<<"\n number of iteration taken by 3D GD =0";
+  // 	//exit(0);
+  // 	return;
+  //     }
+    
+  // }
+    // void steepestgradientdescent3D(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> > &coordpts, Array<OneD, Array<OneD, NekDouble> > &coordmidpts, Array<OneD, NekDouble> &interioreval, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, NekDouble &totalcallstobasis, NekDouble tol, NekDouble nu, )
   //GD with backtracking
   void steepestgradientdescent3D(Array<OneD, NekDouble> &uhats, StdExpansion *E, Array<OneD, Array<OneD, NekDouble> > &storage, Array<OneD, Array<OneD, NekDouble> > &coordpts, Array<OneD, Array<OneD, NekDouble> > &coordmidpts, Array<OneD, NekDouble> &interioreval, Array<OneD, Array<OneD, NekDouble> >&retarr, NekDouble &avgiterGD, NekDouble &totalcallstobasis, NekDouble tol, NekDouble nu, int   &tot_interp_points)
   {
@@ -806,7 +1384,16 @@ public:
 
       }
 
+    if(startarr.size() > 0)
+      {
+	//    cout<<"\nexpected root roughly = "<< startarr[0]<<" , "<<startarr[1]<<", "<<startarr[2]<<" val = "<<startarr[3]<< " GD starts at: "<<xnew[0]<<","<<xnew[1]<<","<<xnew[2];
+
+	//flagTest = 0;
+      }
+    // tbeg.Stop();
+    // cout<<"\n (re) eval pq on lattice takes "<<tbeg.TimePerTest(1);
     Array<OneD, NekDouble> dereval(dim);
+    //    cout<<"\n gprev = "<<gprev<<" tol_gd = "<<tol_gd<<"\n";
     if(gprev < 0 && abs(gprev)>tol_gd)
       {
 	Array<OneD, Array<OneD, NekDouble > > xastaa(dim);
@@ -816,8 +1403,12 @@ public:
 	  }
 
 	NekDouble c = chold;
+	//tbeg.Start();
 	tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
 	totalbasiscalls++;
+	//tbeg.Stop();
+	//cout<<"\n 3D eval basis 1 call takes "<<tbeg.TimePerTest(1)<<"\n\n";
+	//exit(0);
 	for(int p = 0; p < dim; p++)
 	  {
 	    derpq(uhats, dereval[p], tempeval[0], tempeval[p+1]);
@@ -863,7 +1454,7 @@ public:
 	    while(ctr < iter  && fac > 1e-7 && ((abs(g[0]) > tol_gd) || abs(g[1]) > tol_gd ||  abs(g[2]) > tol_gd) && counter_min_change <max_backtracksteps )
 	      {
 
-		if(ctr > 2 && abs(gnew0 - gnew2) < tol_gd)
+		if(ctr > 2 && abs(gnew0 - gnew2) < tol_gd)// && abs(gnew0 - gnew1) < tol_gd && abs(gnew1- gnew2) < tol_gd)
 		  {
 		    break;
 		  }
@@ -899,6 +1490,7 @@ public:
 		      }
 		    break;
 		  case LibUtilities::eTetrahedron:
+		    // while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[2][0] + xastaa[1][0] > 1e-8 || xastaa[0][0] + xastaa[2][0] > 1e-8 || xastaa[1][0] + xastaa[2][0] > 1e-8)
 		    while(abs(xastaa[0][0])>1 || abs(xastaa[1][0])>1 || abs(xastaa[2][0] ) > 1 || xastaa[2][0] + xastaa[1][0] > 0 || xastaa[0][0] + xastaa[2][0] > 0 || xastaa[1][0] + xastaa[2][0] > 0)
 		      {
 			for(int p = 0; p < dim; p++)
@@ -939,8 +1531,11 @@ public:
 		    exit(0);
 		  }
 		ctr++;
+		//tmr.Start();
 		tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2], tempeval[3]);
 		totalbasiscalls++;
+		// tmr.Stop();
+		// cout<<"\n 3D eval basis 2 call takes: "<<tmr.TimePerTest(1);
 		pq(uhats, xastaa, tempeval[0], NullNekDouble1DArray, t1, nu);
 
 		if(savesavehold[dim] > t1[0])
@@ -1067,9 +1662,15 @@ public:
 			cout<<"\n invalid element!\n";
 			exit(0);
 		      }
+		    //    if(fac < 1e-6)
+		    //  break;
+
+		    //    tmr.Start();
 		    tempeval[0] = E->PhysEvaluateBasis(xastaa, storage, tempeval[1], tempeval[2]
 						       , tempeval[3]);
 		    totalbasiscalls++;
+		    // tmr.Stop();
+		    // cout<<"\n 3D eval basis 3 call takes: "<<tmr.TimePerTest(1);
 
 
 		    for(int p = 0; p < dim; p++)
@@ -1121,12 +1722,13 @@ public:
 		avgiterGD = ctr;
 		if(saveholdval < holdval)
 		  {
-		    if((saveholdxandval[dim]<savesavehold[dim]) && abs(saveholdxandval[dim] - savesavehold[dim] >tol_gd))
+		    if((saveholdxandval[dim]<savesavehold[dim]) && abs(saveholdxandval[dim] - savesavehold[dim] >tol_gd))//ctr > 1 && minall[dim] <  savesavehold[dim] && abs(minall[dim] -  savesavehold[dim]) >tol_gd)
 		      {
 			for(int p = 0; p < dim; p++)
 			  {
 			    savesavehold[p] = saveholdxandval[p];
 			  }
+			//savesavehold[dim] = minall[dim];
 			counter_min_change = 0;
 		      }
 		    else
@@ -1137,6 +1739,7 @@ public:
 		      {
 			xastaa[p][0] = saveholdxandval[p];
 		      }
+		    // t1[0] = holdval;
 		    t1[0] = saveholdval;
 		  }
 		else
@@ -1200,10 +1803,13 @@ public:
 	    for(int p = 0; p < dim; p++)
 	      savesavehold[p] = xastaa[p][0];
 	  }
+	//cout<<"\n at ctr = "<<ctr<<"  returning: ";
 	for(int p = 0; p < dim; p++)
 	  {
 	    retarr[p] = Array<OneD, NekDouble>(1, savesavehold[p]);
+	    //    cout<<" "<<savesavehold[p]<<" ";
 	  }
+	//cout<<"\n iters taken by GD during 1 call = "<<ctr <<" calls to basis eval = "<<totalbasiscalls<<" returning ("<<retarr[0][0]<<","<<retarr[1][0]<<","<<retarr[2][0]<<")";
 	totalcallstobasis = totalbasiscalls;
 	avgiterGD = ctr;
 	return;
@@ -1211,6 +1817,7 @@ public:
     else
       {
 	retarr = NullNekDoubleArrayOfArray;
+	//cout<<"\n returning NULL after ctr = "<<avgiterGD;
 	return;
       }
   }
@@ -1395,7 +2002,9 @@ protected:
   NekDouble tol_gd = 1e-6;
   NekDouble secarg = 1e4;
   NekDouble eps = -0.1;
+
   int avgnum = 1;
+  //defaults
   NekDouble chold = 0.2;
   NekDouble gamhold = 0.2;
   Array<OneD, NekDouble> startarr;  
