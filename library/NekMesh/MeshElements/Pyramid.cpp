@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/PyrGeom.h>
 #include <NekMesh/MeshElements/Pyramid.h>
+#include <SpatialDomains/PyrGeom.h>
 
 using namespace std;
 
@@ -43,19 +43,17 @@ namespace NekMesh
 {
 
 LibUtilities::ShapeType Pyramid::type =
-    GetElementFactory().RegisterCreatorFunction(
-        LibUtilities::ePyramid, Pyramid::create, "Pyramid");
+    GetElementFactory().RegisterCreatorFunction(LibUtilities::ePyramid,
+                                                Pyramid::create, "Pyramid");
 
 /// Vertex IDs that make up pyramid faces.
 int Pyramid::m_faceIds[5][4] = {
-    {0, 1, 2, 3}, {0, 1, 4, -1}, {1, 2, 4, -1}, {3, 2, 4, -1}, {0, 3, 4, -1}
-};
+    {0, 1, 2, 3}, {0, 1, 4, -1}, {1, 2, 4, -1}, {3, 2, 4, -1}, {0, 3, 4, -1}};
 
 /**
  * @brief Create a pyramidic element.
  */
-Pyramid::Pyramid(ElmtConfig pConf,
-                 vector<NodeSharedPtr> pNodeList,
+Pyramid::Pyramid(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
                  vector<int> pTagList)
     : Element(pConf, GetNumNodes(pConf), pNodeList.size())
 {
@@ -94,10 +92,9 @@ Pyramid::Pyramid(ElmtConfig pConf,
                 edgeNodes.push_back(pNodeList[j - 1]);
             }
         }
-        m_edge.push_back(EdgeSharedPtr(new Edge(pNodeList[it->first.first - 1],
-                                                pNodeList[it->first.second - 1],
-                                                edgeNodes,
-                                                m_conf.m_edgeCurveType)));
+        m_edge.push_back(EdgeSharedPtr(new Edge(
+            pNodeList[it->first.first - 1], pNodeList[it->first.second - 1],
+            edgeNodes, m_conf.m_edgeCurveType)));
         m_edge.back()->m_id = eid++;
     }
 
@@ -163,8 +160,8 @@ SpatialDomains::GeometrySharedPtr Pyramid::GetGeom(int coordDim)
         faces[i] = m_face[i]->GetGeom(coordDim);
     }
 
-    m_geom = MemoryManager<SpatialDomains::PyrGeom>::AllocateSharedPtr(
-        m_id, faces);
+    m_geom =
+        MemoryManager<SpatialDomains::PyrGeom>::AllocateSharedPtr(m_id, faces);
     m_geom->Setup();
 
     return m_geom;
@@ -180,12 +177,12 @@ unsigned int Pyramid::GetNumNodes(ElmtConfig pConf)
     if (pConf.m_faceNodes)
     {
         // @todo currently only valid for 2nd order pyramids
-        return 5 + 8 * (n - 1) + (n - 1)*(n - 1);
+        return 5 + 8 * (n - 1) + (n - 1) * (n - 1);
     }
     else
     {
         return 5 + 8 * (n - 1);
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

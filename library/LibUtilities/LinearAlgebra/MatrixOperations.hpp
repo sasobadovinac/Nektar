@@ -172,9 +172,8 @@ void NekMultiplyFullMatrixFullMatrix(
     }
 
     Blas::Gemm(lhs.GetTransposeFlag(), rhs.GetTransposeFlag(), M, N, K,
-                lhs.Scale() * rhs.Scale(), lhs.GetRawPtr(), LDA,
-                rhs.GetRawPtr(), LDB, 0.0, result.GetRawPtr(),
-                result.GetRows());
+               lhs.Scale() * rhs.Scale(), lhs.GetRawPtr(), LDA, rhs.GetRawPtr(),
+               LDB, 0.0, result.GetRawPtr(), result.GetRows());
 }
 
 template <typename LhsDataType, typename RhsDataType, typename DataType,
@@ -188,8 +187,8 @@ void MultiplyEqual(
     NekMatrix<RhsInnerType, StandardMatrixTag> &result,
     const NekMatrix<RhsInnerType, RhsMatrixType> &rhs,
     typename std::enable_if<
-        std::is_same<RawType_t<typename NekMatrix<
-                         RhsInnerType, RhsMatrixType>::NumberType>,
+        std::is_same<RawType_t<typename NekMatrix<RhsInnerType,
+                                                  RhsMatrixType>::NumberType>,
                      RhsInnerType>::value &&
         CanGetRawPtr<NekMatrix<RhsInnerType, RhsMatrixType>>::value>::type *t =
         0)
@@ -212,11 +211,11 @@ void MultiplyEqual(
     {
         LDB = N;
     }
-    RhsInnerType scale = rhs.Scale();
+    RhsInnerType scale             = rhs.Scale();
     Array<OneD, RhsInnerType> &buf = result.GetTempSpace();
     Blas::Gemm(result.GetTransposeFlag(), rhs.GetTransposeFlag(), M, N, K,
-                scale, result.GetRawPtr(), LDA, rhs.GetRawPtr(), LDB, 0.0,
-                buf.data(), result.GetRows());
+               scale, result.GetRawPtr(), LDA, rhs.GetRawPtr(), LDB, 0.0,
+               buf.data(), result.GetRows());
     result.SetSize(result.GetRows(), rhs.GetColumns());
     result.SwapTempAndDataBuffers();
 }
@@ -226,8 +225,8 @@ void MultiplyEqual(
     NekMatrix<DataType, StandardMatrixTag> &result,
     const NekMatrix<RhsInnerType, RhsMatrixType> &rhs,
     typename std::enable_if<
-        !std::is_same<RawType_t<typename NekMatrix<
-                          RhsInnerType, RhsMatrixType>::NumberType>,
+        !std::is_same<RawType_t<typename NekMatrix<RhsInnerType,
+                                                   RhsMatrixType>::NumberType>,
                       DataType>::value ||
         !CanGetRawPtr<NekMatrix<RhsInnerType, RhsMatrixType>>::value>::type *t =
         0)
@@ -364,11 +363,11 @@ template <typename LhsDataType, typename LhsMatrixType, typename RhsDataType,
 NekMatrix<typename NekMatrix<LhsDataType, LhsMatrixType>::NumberType,
           StandardMatrixTag>
 operator-(const NekMatrix<LhsDataType, LhsMatrixType> &lhs,
-         const NekMatrix<RhsDataType, RhsMatrixType> &rhs)
+          const NekMatrix<RhsDataType, RhsMatrixType> &rhs)
 {
     return Subtract(lhs, rhs);
 }
 
-}
+} // namespace Nektar
 
 #endif

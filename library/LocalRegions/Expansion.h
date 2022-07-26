@@ -35,481 +35,440 @@
 #ifndef EXPANSION_H
 #define EXPANSION_H
 
-#include <StdRegions/StdExpansion.h>
-#include <SpatialDomains/Geometry.h>
-#include <SpatialDomains/GeomFactors.h>
-#include <LocalRegions/LocalRegionsDeclspec.h>
 #include <LocalRegions/IndexMapKey.h>
+#include <LocalRegions/LocalRegionsDeclspec.h>
+#include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/Geometry.h>
+#include <StdRegions/StdExpansion.h>
+#include <map>
 #include <memory>
 #include <vector>
-#include <map>
 
 namespace Nektar
 {
-    namespace LocalRegions 
+namespace LocalRegions
+{
+
+class Expansion;
+class MatrixKey;
+
+typedef Array<OneD, Array<OneD, NekDouble>> NormalVector;
+
+enum MetricType
+{
+    eMetricLaplacian00,
+    eMetricLaplacian01,
+    eMetricLaplacian02,
+    eMetricLaplacian11,
+    eMetricLaplacian12,
+    eMetricLaplacian22,
+    eMetricQuadrature
+};
+
+typedef std::shared_ptr<Expansion> ExpansionSharedPtr;
+typedef std::weak_ptr<Expansion> ExpansionWeakPtr;
+typedef std::vector<ExpansionSharedPtr> ExpansionVector;
+typedef std::map<MetricType, Array<OneD, NekDouble>> MetricMap;
+
+class Expansion : virtual public StdRegions::StdExpansion
+{
+public:
+    LOCAL_REGIONS_EXPORT Expansion(
+        SpatialDomains::GeometrySharedPtr pGeom); // default constructor.
+    LOCAL_REGIONS_EXPORT Expansion(const Expansion &pSrc); // copy constructor.
+    LOCAL_REGIONS_EXPORT virtual ~Expansion();
+
+    LOCAL_REGIONS_EXPORT void SetTraceExp(const int traceid,
+                                          ExpansionSharedPtr &f);
+    LOCAL_REGIONS_EXPORT ExpansionSharedPtr GetTraceExp(const int traceid);
+
+    LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
+    GetLocMatrix(const LocalRegions::MatrixKey &mkey);
+
+    LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr GetLocMatrix(
+        const StdRegions::MatrixType mtype,
+        const StdRegions::ConstFactorMap &factors =
+            StdRegions::NullConstFactorMap,
+        const StdRegions::VarCoeffMap &varcoeffs = StdRegions::NullVarCoeffMap);
+
+    LOCAL_REGIONS_EXPORT SpatialDomains::GeometrySharedPtr GetGeom() const;
+
+    LOCAL_REGIONS_EXPORT void Reset();
+
+    LOCAL_REGIONS_EXPORT IndexMapValuesSharedPtr
+    CreateIndexMap(const IndexMapKey &ikey);
+
+    LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr
+    CreateStaticCondMatrix(const MatrixKey &mkey);
+
+    LOCAL_REGIONS_EXPORT const SpatialDomains::GeomFactorsSharedPtr &GetMetricInfo()
+        const;
+
+    LOCAL_REGIONS_EXPORT DNekMatSharedPtr
+    BuildTransformationMatrix(const DNekScalMatSharedPtr &r_bnd,
+                              const StdRegions::MatrixType matrixType);
+
+    LOCAL_REGIONS_EXPORT DNekMatSharedPtr
+    BuildVertexMatrix(const DNekScalMatSharedPtr &r_bnd);
+
+    LOCAL_REGIONS_EXPORT void ExtractDataToCoeffs(
+        const NekDouble *data, const std::vector<unsigned int> &nummodes,
+        const int nmodes_offset, NekDouble *coeffs,
+        std::vector<LibUtilities::BasisType> &fromType);
+
+    LOCAL_REGIONS_EXPORT void AddEdgeNormBoundaryInt(
+        const int edge, const std::shared_ptr<Expansion> &EdgeExp,
+        const Array<OneD, const NekDouble> &Fx,
+        const Array<OneD, const NekDouble> &Fy,
+        Array<OneD, NekDouble> &outarray);
+    LOCAL_REGIONS_EXPORT void AddEdgeNormBoundaryInt(
+        const int edge, const std::shared_ptr<Expansion> &EdgeExp,
+        const Array<OneD, const NekDouble> &Fn,
+        Array<OneD, NekDouble> &outarray);
+    LOCAL_REGIONS_EXPORT void AddFaceNormBoundaryInt(
+        const int face, const std::shared_ptr<Expansion> &FaceExp,
+        const Array<OneD, const NekDouble> &Fn,
+        Array<OneD, NekDouble> &outarray);
+    LOCAL_REGIONS_EXPORT void DGDeriv(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, ExpansionSharedPtr> &EdgeExp,
+        Array<OneD, Array<OneD, NekDouble>> &coeffs,
+        Array<OneD, NekDouble> &outarray);
+    LOCAL_REGIONS_EXPORT NekDouble
+    VectorFlux(const Array<OneD, Array<OneD, NekDouble>> &vec);
+
+    LOCAL_REGIONS_EXPORT void NormalTraceDerivFactors(
+        Array<OneD, Array<OneD, NekDouble>> &factors,
+        Array<OneD, Array<OneD, NekDouble>> &d0factors,
+        Array<OneD, Array<OneD, NekDouble>> &d1factors);
+
+    inline IndexMapValuesSharedPtr GetIndexMap(const IndexMapKey &ikey)
     {
+        return m_indexMapManager[ikey];
+    }
 
-        class Expansion;
-        class MatrixKey;
-        
-        typedef Array<OneD, Array<OneD, NekDouble> > NormalVector;
-        
-        enum MetricType
-        {
-            eMetricLaplacian00,
-            eMetricLaplacian01,
-            eMetricLaplacian02,
-            eMetricLaplacian11,
-            eMetricLaplacian12,
-            eMetricLaplacian22,
-            eMetricQuadrature
-        };
+    LOCAL_REGIONS_EXPORT void AlignVectorToCollapsedDir(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray)
+    {
+        v_AlignVectorToCollapsedDir(dir, inarray, outarray);
+    }
 
-        typedef std::shared_ptr<Expansion> ExpansionSharedPtr;
-        typedef std::weak_ptr<Expansion> ExpansionWeakPtr;
-        typedef std::vector< ExpansionSharedPtr > ExpansionVector;
-        typedef std::map<MetricType, Array<OneD, NekDouble> > MetricMap;
-        
-        class Expansion : virtual public StdRegions::StdExpansion
-        {
-        public:
-            LOCAL_REGIONS_EXPORT Expansion(SpatialDomains::GeometrySharedPtr pGeom); // default constructor.
-            LOCAL_REGIONS_EXPORT Expansion(const Expansion &pSrc); // copy constructor.
-            LOCAL_REGIONS_EXPORT virtual ~Expansion();
-            
-            LOCAL_REGIONS_EXPORT void SetTraceExp(const int traceid, ExpansionSharedPtr &f);                
-            LOCAL_REGIONS_EXPORT ExpansionSharedPtr GetTraceExp(const int traceid);            
-            
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
-                          GetLocMatrix(const LocalRegions::MatrixKey &mkey);
-            
-            LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr GetLocMatrix
-                (const StdRegions::MatrixType mtype,
-                 const StdRegions::ConstFactorMap &factors = StdRegions::NullConstFactorMap,
-                 const StdRegions::VarCoeffMap &varcoeffs = StdRegions::NullVarCoeffMap);
+    inline ExpansionSharedPtr GetLeftAdjacentElementExp() const;
 
-            LOCAL_REGIONS_EXPORT SpatialDomains::GeometrySharedPtr GetGeom() const;
-            
-            LOCAL_REGIONS_EXPORT void Reset();
-            
-            LOCAL_REGIONS_EXPORT IndexMapValuesSharedPtr CreateIndexMap(const IndexMapKey &ikey);
+    inline ExpansionSharedPtr GetRightAdjacentElementExp() const;
 
-            LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr
-                  CreateStaticCondMatrix(const MatrixKey &mkey);
+    inline int GetLeftAdjacentElementTrace() const;
 
-            LOCAL_REGIONS_EXPORT const SpatialDomains::GeomFactorsSharedPtr& GetMetricInfo() const;
+    inline int GetRightAdjacentElementTrace() const;
 
-            LOCAL_REGIONS_EXPORT DNekMatSharedPtr BuildTransformationMatrix(
-                          const DNekScalMatSharedPtr &r_bnd, 
-                          const StdRegions::MatrixType matrixType);
-            
-            LOCAL_REGIONS_EXPORT DNekMatSharedPtr BuildVertexMatrix(
-                          const DNekScalMatSharedPtr &r_bnd);
+    inline void SetAdjacentElementExp(int traceid, ExpansionSharedPtr &e);
 
-            LOCAL_REGIONS_EXPORT void ExtractDataToCoeffs(
-                          const NekDouble *data,
-                          const std::vector<unsigned int > &nummodes,
-                          const int nmodes_offset,
-                          NekDouble *coeffs,
-                          std::vector<LibUtilities::BasisType> &fromType);
+    inline StdRegions::Orientation GetTraceOrient(int trace)
+    {
+        return v_GetTraceOrient(trace);
+    }
 
-            LOCAL_REGIONS_EXPORT void AddEdgeNormBoundaryInt(
-                    const int                           edge,
-                    const std::shared_ptr<Expansion>   &EdgeExp,
-                    const Array<OneD, const NekDouble> &Fx,
-                    const Array<OneD, const NekDouble> &Fy,
-                          Array<OneD,       NekDouble> &outarray);
-            LOCAL_REGIONS_EXPORT void AddEdgeNormBoundaryInt(
-                    const int                           edge,
-                    const std::shared_ptr<Expansion>   &EdgeExp,
-                    const Array<OneD, const NekDouble> &Fn,
-                          Array<OneD,       NekDouble> &outarray);
-            LOCAL_REGIONS_EXPORT void AddFaceNormBoundaryInt(
-                    const int                           face,
-                    const std::shared_ptr<Expansion>   &FaceExp,
-                    const Array<OneD, const NekDouble> &Fn,
-                          Array<OneD,       NekDouble> &outarray);
-            LOCAL_REGIONS_EXPORT void DGDeriv(
-                    const int                                   dir,
-                    const Array<OneD, const NekDouble>&         inarray,
-                          Array<OneD, ExpansionSharedPtr>      &EdgeExp,
-                          Array<OneD, Array<OneD, NekDouble> > &coeffs,
-                          Array<OneD,             NekDouble>   &outarray);
-            LOCAL_REGIONS_EXPORT NekDouble VectorFlux(
-                    const Array<OneD, Array<OneD, NekDouble > > &vec);
+    inline void SetCoeffsToOrientation(StdRegions::Orientation dir,
+                                       Array<OneD, const NekDouble> &inarray,
+                                       Array<OneD, NekDouble> &outarray)
+    {
+        v_SetCoeffsToOrientation(dir, inarray, outarray);
+    }
 
-            LOCAL_REGIONS_EXPORT  void NormalTraceDerivFactors
-                 (Array<OneD, Array<OneD, NekDouble> > &factors,
-                  Array<OneD, Array<OneD, NekDouble> > &d0factors,
-                  Array<OneD, Array<OneD, NekDouble> > &d1factors);
+    /// Divided by the metric jacobi and quadrature weights
+    inline void DivideByQuadratureMetric(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray)
+    {
+        v_DivideByQuadratureMetric(inarray, outarray);
+    }
 
-            inline IndexMapValuesSharedPtr GetIndexMap(const IndexMapKey &ikey)
-            {
-                return m_indexMapManager[ikey];
-            }
+    /**
+     * @brief Extract the metric factors to compute the contravariant
+     * fluxes along edge \a edge and stores them into \a outarray
+     * following the local edge orientation (i.e. anticlockwise
+     * convention).
+     */
+    inline void GetTraceQFactors(const int trace,
+                                 Array<OneD, NekDouble> &outarray)
+    {
+        v_GetTraceQFactors(trace, outarray);
+    }
 
+    inline void GetTracePhysVals(
+        const int trace, const StdRegions::StdExpansionSharedPtr &TraceExp,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        StdRegions::Orientation orient = StdRegions::eNoOrientation)
+    {
+        v_GetTracePhysVals(trace, TraceExp, inarray, outarray, orient);
+    }
 
-            LOCAL_REGIONS_EXPORT void AlignVectorToCollapsedDir(
-                    const int dir, 
-                    const Array<OneD, const NekDouble>      &inarray, 
-                    Array<OneD, Array<OneD, NekDouble> >    &outarray)
-            {
-                v_AlignVectorToCollapsedDir(dir,inarray,outarray);
-            }
+    inline void GetTracePhysMap(const int edge, Array<OneD, int> &outarray)
+    {
+        v_GetTracePhysMap(edge, outarray);
+    }
 
-            inline ExpansionSharedPtr GetLeftAdjacentElementExp() const;
+    inline void ReOrientTracePhysMap(const StdRegions::Orientation orient,
+                                     Array<OneD, int> &idmap, const int nq0,
+                                     const int nq1)
+    {
+        v_ReOrientTracePhysMap(orient, idmap, nq0, nq1);
+    }
 
-            inline ExpansionSharedPtr GetRightAdjacentElementExp() const;
-            
-            inline int GetLeftAdjacentElementTrace() const;
-            
-            inline int GetRightAdjacentElementTrace() const;
+    LOCAL_REGIONS_EXPORT const NormalVector &GetTraceNormal(const int id);
 
-            inline void SetAdjacentElementExp(
-                    int                traceid,
-                    ExpansionSharedPtr &e);
-                
-            inline StdRegions::Orientation GetTraceOrient(int trace)
-            {
-                return v_GetTraceOrient(trace);
-            }
-            
-            inline void SetCoeffsToOrientation(
-                StdRegions::Orientation dir,
-                Array<OneD, const NekDouble> &inarray,
-                Array<OneD, NekDouble> &outarray)
-            {
-                v_SetCoeffsToOrientation(dir,inarray,outarray);
-            }
+    inline void ComputeTraceNormal(const int id)
+    {
+        v_ComputeTraceNormal(id);
+    }
 
-            /// Divided by the metric jacobi and quadrature weights
-            inline void DivideByQuadratureMetric(
-                    const Array<OneD, const NekDouble> &inarray,
-                    Array<OneD, NekDouble> &outarray)
-            {
-                v_DivideByQuadratureMetric(inarray, outarray);
-            }
-            
-            /**
-             * @brief Extract the metric factors to compute the contravariant
-             * fluxes along edge \a edge and stores them into \a outarray
-             * following the local edge orientation (i.e. anticlockwise
-             * convention).
-             */
-            inline void GetTraceQFactors(const int trace,
-                                     Array<OneD, NekDouble> &outarray)
-            {
-                v_GetTraceQFactors(trace, outarray);
-            }
+    inline const Array<OneD, const NekDouble> &GetPhysNormals(void)
+    {
+        return v_GetPhysNormals();
+    }
 
-            inline void GetTracePhysVals(const int trace,
-                  const StdRegions::StdExpansionSharedPtr &TraceExp,
-                  const Array<OneD, const NekDouble> &inarray,
-                  Array<OneD,       NekDouble> &outarray,
-                  StdRegions::Orientation orient = StdRegions::eNoOrientation)
-            {
-                v_GetTracePhysVals(trace,TraceExp,inarray,outarray,orient);
-            }
-            
-            inline void GetTracePhysMap(
-                    const int           edge,
-                    Array<OneD, int>   &outarray)
-            {
-                v_GetTracePhysMap(edge, outarray);
-            }
-        
-            inline void ReOrientTracePhysMap(
-                            const StdRegions::Orientation orient,
-                            Array<OneD, int> &idmap,
-                            const int nq0,
-                            const int nq1)
-            {
-                v_ReOrientTracePhysMap(orient,idmap,nq0,nq1);
-            }
+    inline void SetPhysNormals(Array<OneD, const NekDouble> &normal)
+    {
+        v_SetPhysNormals(normal);
+    }
 
-            LOCAL_REGIONS_EXPORT const NormalVector &GetTraceNormal(const int id);
-            
-            inline void ComputeTraceNormal(const int id)
-            {
-                v_ComputeTraceNormal(id);
-            }
-        
-            inline const Array<OneD, const NekDouble>& GetPhysNormals(void)
-            {
-                return v_GetPhysNormals();
-            }
-            
-            inline void SetPhysNormals(Array<OneD, const NekDouble> &normal)
-            {
-                v_SetPhysNormals(normal);
-            }
-            
-            inline void SetUpPhysNormals(const int trace)
-            {
-                v_SetUpPhysNormals(trace);
-            }
-            
-            inline void AddRobinMassMatrix(const int traceid,
-                          const Array<OneD, const NekDouble > &primCoeffs,
-                                           DNekMatSharedPtr &inoutmat)
-            {
-                v_AddRobinMassMatrix(traceid,primCoeffs,inoutmat);
-            }
-            
-            inline void TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
-            {
-                v_TraceNormLen(traceid,h,p);
-            }
+    inline void SetUpPhysNormals(const int trace)
+    {
+        v_SetUpPhysNormals(trace);
+    }
 
-            virtual void AddRobinTraceContribution(
-                const int traceid,
-                const Array<OneD, const NekDouble> &primCoeffs,
-                const Array<OneD, NekDouble> &incoeffs,
-                Array<OneD, NekDouble> &coeffs)
-            {
-                v_AddRobinTraceContribution(traceid,primCoeffs,incoeffs,coeffs);
-            }
+    inline void AddRobinMassMatrix(
+        const int traceid, const Array<OneD, const NekDouble> &primCoeffs,
+        DNekMatSharedPtr &inoutmat)
+    {
+        v_AddRobinMassMatrix(traceid, primCoeffs, inoutmat);
+    }
 
-            LOCAL_REGIONS_EXPORT const Array<OneD, const NekDouble > 
-                        &GetElmtBndNormDirElmtLen(const int nbnd) const;
+    inline void TraceNormLen(const int traceid, NekDouble &h, NekDouble &p)
+    {
+        v_TraceNormLen(traceid, h, p);
+    }
 
-            LOCAL_REGIONS_EXPORT void StdDerivBaseOnTraceMat(
-                Array<OneD, DNekMatSharedPtr> &DerivMat);
+    virtual void AddRobinTraceContribution(
+        const int traceid, const Array<OneD, const NekDouble> &primCoeffs,
+        const Array<OneD, NekDouble> &incoeffs, Array<OneD, NekDouble> &coeffs)
+    {
+        v_AddRobinTraceContribution(traceid, primCoeffs, incoeffs, coeffs);
+    }
 
-        protected:
-	    LibUtilities::NekManager<IndexMapKey,
-                      IndexMapValues, IndexMapKey::opLess> m_indexMapManager;
+    LOCAL_REGIONS_EXPORT const Array<OneD, const NekDouble>
+        &GetElmtBndNormDirElmtLen(const int nbnd) const;
 
-            std::map<int,ExpansionWeakPtr>        m_traceExp;
-            SpatialDomains::GeometrySharedPtr    m_geom;
-            SpatialDomains::GeomFactorsSharedPtr m_metricinfo;
-            MetricMap        m_metrics;
-            std::map<int, NormalVector>        m_traceNormals;
-            ExpansionWeakPtr m_elementLeft;
-            ExpansionWeakPtr m_elementRight;
-            int              m_elementTraceLeft  = -1;
-            int              m_elementTraceRight = -1;
+    LOCAL_REGIONS_EXPORT void StdDerivBaseOnTraceMat(
+        Array<OneD, DNekMatSharedPtr> &DerivMat);
 
-            /// the element length in each element boundary(Vertex, edge
-            /// or face) normal direction calculated based on the local
-            /// m_metricinfo times the standard element length (which is
-            /// 2.0)
-            std::map<int, Array<OneD, NekDouble>> m_elmtBndNormDirElmtLen;
-            
-            void ComputeLaplacianMetric();
-            void ComputeQuadratureMetric();
-            void ComputeGmatcdotMF(const Array<TwoD, const NekDouble> &df,
-                                   const Array<OneD, const NekDouble> &direction,
-                                   Array<OneD, Array<OneD, NekDouble> > &dfdir);
-            
-            virtual void v_MultiplyByQuadratureMetric(
-                     const Array<OneD, const NekDouble> &inarray,
-                     Array<OneD,       NekDouble> &outarray);
+protected:
+    LibUtilities::NekManager<IndexMapKey, IndexMapValues, IndexMapKey::opLess>
+        m_indexMapManager;
 
-            virtual void v_DivideByQuadratureMetric(
-                     const Array<OneD, 
-                     const NekDouble>& inarray,
-                     Array<OneD, NekDouble> &outarray);
+    std::map<int, ExpansionWeakPtr> m_traceExp;
+    SpatialDomains::GeometrySharedPtr m_geom;
+    SpatialDomains::GeomFactorsSharedPtr m_metricinfo;
+    MetricMap m_metrics;
+    std::map<int, NormalVector> m_traceNormals;
+    ExpansionWeakPtr m_elementLeft;
+    ExpansionWeakPtr m_elementRight;
+    int m_elementTraceLeft  = -1;
+    int m_elementTraceRight = -1;
 
-            virtual void v_ComputeLaplacianMetric()
-                         {}
-            
-            virtual void v_GetCoords(Array<OneD,NekDouble> &coords_1,
-                                     Array<OneD,NekDouble> &coords_2,
-                                     Array<OneD,NekDouble> &coords_3);
-            
-            Array<OneD, NekDouble> v_GetMF(
-                    const int dir,
-                    const int shapedim,
-                    const StdRegions::VarCoeffMap &varcoeffs);
+    /// the element length in each element boundary(Vertex, edge
+    /// or face) normal direction calculated based on the local
+    /// m_metricinfo times the standard element length (which is
+    /// 2.0)
+    std::map<int, Array<OneD, NekDouble>> m_elmtBndNormDirElmtLen;
 
-            Array<OneD, NekDouble> v_GetMFDiv(
-                    const int dir,
-                    const StdRegions::VarCoeffMap &varcoeffs);
+    void ComputeLaplacianMetric();
+    void ComputeQuadratureMetric();
+    void ComputeGmatcdotMF(const Array<TwoD, const NekDouble> &df,
+                           const Array<OneD, const NekDouble> &direction,
+                           Array<OneD, Array<OneD, NekDouble>> &dfdir);
 
-            Array<OneD, NekDouble> v_GetMFMag(
-                    const int dir,
-                    const StdRegions::VarCoeffMap &varcoeffs);
+    virtual void v_MultiplyByQuadratureMetric(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
 
-            virtual DNekScalMatSharedPtr v_GetLocMatrix(
-                    const LocalRegions::MatrixKey &mkey);
+    virtual void v_DivideByQuadratureMetric(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
 
-            virtual DNekMatSharedPtr v_BuildTransformationMatrix(
-                    const DNekScalMatSharedPtr &r_bnd,
-                    const StdRegions::MatrixType matrixType);
+    virtual void v_ComputeLaplacianMetric()
+    {
+    }
 
-            virtual DNekMatSharedPtr v_BuildVertexMatrix(
-                    const DNekScalMatSharedPtr &r_bnd);
+    virtual void v_GetCoords(Array<OneD, NekDouble> &coords_1,
+                             Array<OneD, NekDouble> &coords_2,
+                             Array<OneD, NekDouble> &coords_3);
 
-            virtual void v_ExtractDataToCoeffs(
-                    const NekDouble *data,
-                    const std::vector<unsigned int > &nummodes,
-                    const int nmodes_offset,
-                    NekDouble *coeffs,
-                    std::vector<LibUtilities::BasisType> &fromType);
+    Array<OneD, NekDouble> v_GetMF(const int dir, const int shapedim,
+                                   const StdRegions::VarCoeffMap &varcoeffs);
 
-            virtual void v_AddEdgeNormBoundaryInt(
-                    const int                           edge,
-                    const std::shared_ptr<Expansion>   &EdgeExp,
-                    const Array<OneD, const NekDouble> &Fx,
-                    const Array<OneD, const NekDouble> &Fy,
-                          Array<OneD,       NekDouble> &outarray);
-            virtual void v_AddEdgeNormBoundaryInt(
-                    const int                           edge,
-                    const std::shared_ptr<Expansion>   &EdgeExp,
-                    const Array<OneD, const NekDouble> &Fn,
-                          Array<OneD,       NekDouble> &outarray);
-            virtual void v_AddFaceNormBoundaryInt(
-                    const int                           face,
-                    const std::shared_ptr<Expansion>   &FaceExp,
-                    const Array<OneD, const NekDouble> &Fn,
-                          Array<OneD,       NekDouble> &outarray);
-            virtual void v_DGDeriv(
-                    const int                                   dir,
-                    const Array<OneD, const NekDouble>&         inarray,
-                          Array<OneD, ExpansionSharedPtr>      &EdgeExp,
-                          Array<OneD, Array<OneD, NekDouble> > &coeffs,
-                          Array<OneD,             NekDouble>   &outarray);
-            virtual NekDouble v_VectorFlux(
-                    const Array<OneD, Array<OneD, NekDouble > > &vec);
+    Array<OneD, NekDouble> v_GetMFDiv(const int dir,
+                                      const StdRegions::VarCoeffMap &varcoeffs);
 
-            virtual void v_NormalTraceDerivFactors
-                 (Array<OneD, Array<OneD, NekDouble> > &factors,
-                  Array<OneD, Array<OneD, NekDouble> > &d0factors,
-                  Array<OneD, Array<OneD, NekDouble> > &d1factors); 
+    Array<OneD, NekDouble> v_GetMFMag(const int dir,
+                                      const StdRegions::VarCoeffMap &varcoeffs);
 
-            virtual void v_AlignVectorToCollapsedDir
-                   (const int dir, 
-                    const Array<OneD, const NekDouble>      &inarray, 
-                    Array<OneD, Array<OneD, NekDouble> >    &outarray);
-            
-            virtual StdRegions::Orientation v_GetTraceOrient(int trace);
+    virtual DNekScalMatSharedPtr v_GetLocMatrix(
+        const LocalRegions::MatrixKey &mkey);
 
-            virtual void v_SetCoeffsToOrientation(StdRegions::Orientation dir,
-                                                  Array<OneD, const NekDouble> &inarray,
-                                                  Array<OneD, NekDouble> &outarray);
+    virtual DNekMatSharedPtr v_BuildTransformationMatrix(
+        const DNekScalMatSharedPtr &r_bnd,
+        const StdRegions::MatrixType matrixType);
 
-            virtual void v_GetTraceQFactors(const int trace,
-                                           Array<OneD, NekDouble> &outarray);
+    virtual DNekMatSharedPtr v_BuildVertexMatrix(
+        const DNekScalMatSharedPtr &r_bnd);
 
-            virtual void v_GetTracePhysVals(const int trace,
-                     const StdRegions::StdExpansionSharedPtr &TraceExp,
-                     const Array<OneD, const NekDouble> &inarray,
-                     Array<OneD,       NekDouble> &outarray,
-                     StdRegions::Orientation  orient);
-            
-            virtual void v_GetTracePhysMap( const int       edge,
-                                            Array<OneD,int> &outarray);
+    virtual void v_ExtractDataToCoeffs(
+        const NekDouble *data, const std::vector<unsigned int> &nummodes,
+        const int nmodes_offset, NekDouble *coeffs,
+        std::vector<LibUtilities::BasisType> &fromType);
 
-            virtual void v_ReOrientTracePhysMap(
-                                const StdRegions::Orientation orient,
-                                 Array<OneD, int> &idmap,
-                                 const int nq0,
-                                 const int nq1 = -1);
-            
-            virtual void v_ComputeTraceNormal(const int id);
-            
-            virtual const Array<OneD, const NekDouble>& v_GetPhysNormals(void);
+    virtual void v_AddEdgeNormBoundaryInt(
+        const int edge, const std::shared_ptr<Expansion> &EdgeExp,
+        const Array<OneD, const NekDouble> &Fx,
+        const Array<OneD, const NekDouble> &Fy,
+        Array<OneD, NekDouble> &outarray);
+    virtual void v_AddEdgeNormBoundaryInt(
+        const int edge, const std::shared_ptr<Expansion> &EdgeExp,
+        const Array<OneD, const NekDouble> &Fn,
+        Array<OneD, NekDouble> &outarray);
+    virtual void v_AddFaceNormBoundaryInt(
+        const int face, const std::shared_ptr<Expansion> &FaceExp,
+        const Array<OneD, const NekDouble> &Fn,
+        Array<OneD, NekDouble> &outarray);
+    virtual void v_DGDeriv(const int dir,
+                           const Array<OneD, const NekDouble> &inarray,
+                           Array<OneD, ExpansionSharedPtr> &EdgeExp,
+                           Array<OneD, Array<OneD, NekDouble>> &coeffs,
+                           Array<OneD, NekDouble> &outarray);
+    virtual NekDouble v_VectorFlux(
+        const Array<OneD, Array<OneD, NekDouble>> &vec);
 
-            virtual void v_SetPhysNormals(Array<OneD, const NekDouble> &normal);
-            
-            virtual void v_SetUpPhysNormals(const int id);
-                
-            virtual void v_AddRobinMassMatrix(
-                const int                           face, 
-                const Array<OneD, const NekDouble> &primCoeffs, 
-                DNekMatSharedPtr                   &inoutmat);
+    virtual void v_NormalTraceDerivFactors(
+        Array<OneD, Array<OneD, NekDouble>> &factors,
+        Array<OneD, Array<OneD, NekDouble>> &d0factors,
+        Array<OneD, Array<OneD, NekDouble>> &d1factors);
 
-            virtual void v_AddRobinTraceContribution(
-                const int traceid,
-                const Array<OneD, const NekDouble> &primCoeffs,
-                const Array<OneD, NekDouble> &incoeffs,
-                Array<OneD, NekDouble> &coeffs);
+    virtual void v_AlignVectorToCollapsedDir(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-            virtual void v_TraceNormLen(const int traceid,
-                                        NekDouble &h, NekDouble &p);
-            
-            virtual void v_GenTraceExp(const int traceid, ExpansionSharedPtr &exp);
+    virtual StdRegions::Orientation v_GetTraceOrient(int trace);
 
-        private:
+    virtual void v_SetCoeffsToOrientation(StdRegions::Orientation dir,
+                                          Array<OneD, const NekDouble> &inarray,
+                                          Array<OneD, NekDouble> &outarray);
 
-        };
+    virtual void v_GetTraceQFactors(const int trace,
+                                    Array<OneD, NekDouble> &outarray);
 
-        inline ExpansionSharedPtr Expansion::GetTraceExp(const int  traceid)
-        {
-            ASSERTL1(traceid < GetNtraces(), "Trace is out of range.");
+    virtual void v_GetTracePhysVals(
+        const int trace, const StdRegions::StdExpansionSharedPtr &TraceExp,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, StdRegions::Orientation orient);
 
-            ExpansionSharedPtr returnval; 
+    virtual void v_GetTracePhysMap(const int edge, Array<OneD, int> &outarray);
 
-            if(m_traceExp.count(traceid))
-            {
-                // Use stored value
-                returnval = m_traceExp[traceid].lock();
-            }
-            else
-            {
-                // Generate trace exp
-                v_GenTraceExp(traceid,returnval); 
-            }
-            
-            return returnval; 
-        }
+    virtual void v_ReOrientTracePhysMap(const StdRegions::Orientation orient,
+                                        Array<OneD, int> &idmap, const int nq0,
+                                        const int nq1 = -1);
 
-        inline void Expansion::SetTraceExp(
-            const int           traceid,
-            ExpansionSharedPtr &exp)
-        {
-            ASSERTL1(traceid < GetNtraces(), "Trace out of range.");
+    virtual void v_ComputeTraceNormal(const int id);
 
-            m_traceExp[traceid] = exp;
-        }
-        
-        inline ExpansionSharedPtr Expansion::
-            GetLeftAdjacentElementExp() const
-        {
-            ASSERTL1(m_elementLeft.lock().get(),
-                     "Left adjacent element not set.");
-            return m_elementLeft.lock();
-        }
+    virtual const Array<OneD, const NekDouble> &v_GetPhysNormals(void);
 
-        inline ExpansionSharedPtr Expansion::
-            GetRightAdjacentElementExp() const
-        {
-            ASSERTL1(m_elementLeft.lock().get(),
-                     "Right adjacent element not set.");
-            
-            return m_elementRight.lock();
-        }
+    virtual void v_SetPhysNormals(Array<OneD, const NekDouble> &normal);
 
-        inline int Expansion::GetLeftAdjacentElementTrace() const
-        {
-            return m_elementTraceLeft;
-        }
+    virtual void v_SetUpPhysNormals(const int id);
 
-        inline int Expansion::GetRightAdjacentElementTrace() const
-        {
-            return m_elementTraceRight;
-        }
+    virtual void v_AddRobinMassMatrix(
+        const int face, const Array<OneD, const NekDouble> &primCoeffs,
+        DNekMatSharedPtr &inoutmat);
 
-        inline void Expansion::SetAdjacentElementExp(
-            int                 traceid,
-            ExpansionSharedPtr &exp)
-        {
-            if (m_elementLeft.lock().get())
-            {
-                m_elementRight      = exp;
-                m_elementTraceRight = traceid;
-            }
-            else
-            {
-                m_elementLeft      = exp;
-                m_elementTraceLeft = traceid;
-            }
-        }
+    virtual void v_AddRobinTraceContribution(
+        const int traceid, const Array<OneD, const NekDouble> &primCoeffs,
+        const Array<OneD, NekDouble> &incoeffs, Array<OneD, NekDouble> &coeffs);
 
-        
-        
-    } //end of namespace
-} //end of namespace
+    virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
+
+    virtual void v_GenTraceExp(const int traceid, ExpansionSharedPtr &exp);
+
+private:
+};
+
+inline ExpansionSharedPtr Expansion::GetTraceExp(const int traceid)
+{
+    ASSERTL1(traceid < GetNtraces(), "Trace is out of range.");
+
+    ExpansionSharedPtr returnval;
+
+    if (m_traceExp.count(traceid))
+    {
+        // Use stored value
+        returnval = m_traceExp[traceid].lock();
+    }
+    else
+    {
+        // Generate trace exp
+        v_GenTraceExp(traceid, returnval);
+    }
+
+    return returnval;
+}
+
+inline void Expansion::SetTraceExp(const int traceid, ExpansionSharedPtr &exp)
+{
+    ASSERTL1(traceid < GetNtraces(), "Trace out of range.");
+
+    m_traceExp[traceid] = exp;
+}
+
+inline ExpansionSharedPtr Expansion::GetLeftAdjacentElementExp() const
+{
+    ASSERTL1(m_elementLeft.lock().get(), "Left adjacent element not set.");
+    return m_elementLeft.lock();
+}
+
+inline ExpansionSharedPtr Expansion::GetRightAdjacentElementExp() const
+{
+    ASSERTL1(m_elementLeft.lock().get(), "Right adjacent element not set.");
+
+    return m_elementRight.lock();
+}
+
+inline int Expansion::GetLeftAdjacentElementTrace() const
+{
+    return m_elementTraceLeft;
+}
+
+inline int Expansion::GetRightAdjacentElementTrace() const
+{
+    return m_elementTraceRight;
+}
+
+inline void Expansion::SetAdjacentElementExp(int traceid,
+                                             ExpansionSharedPtr &exp)
+{
+    if (m_elementLeft.lock().get())
+    {
+        m_elementRight      = exp;
+        m_elementTraceRight = traceid;
+    }
+    else
+    {
+        m_elementLeft      = exp;
+        m_elementTraceLeft = traceid;
+    }
+}
+
+} // namespace LocalRegions
+} // namespace Nektar
 
 #endif

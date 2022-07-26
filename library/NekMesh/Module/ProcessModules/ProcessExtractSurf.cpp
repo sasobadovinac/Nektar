@@ -32,9 +32,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "ProcessExtractSurf.h"
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <NekMesh/MeshElements/Element.h>
-#include "ProcessExtractSurf.h"
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -46,8 +46,7 @@ namespace NekMesh
 
 ModuleKey ProcessExtractSurf::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "extract"),
-        ProcessExtractSurf::create,
+        ModuleKey(eProcessModule, "extract"), ProcessExtractSurf::create,
         "Process elements to extract a specified surface(s) or composites(s).");
 
 ProcessExtractSurf::ProcessExtractSurf(MeshSharedPtr m) : ProcessModule(m)
@@ -125,10 +124,7 @@ void ProcessExtractSurf::Process()
         vector<int> inter, tags = el[i]->GetTagList();
 
         sort(tags.begin(), tags.end());
-        set_intersection(surfs.begin(),
-                         surfs.end(),
-                         tags.begin(),
-                         tags.end(),
+        set_intersection(surfs.begin(), surfs.end(), tags.begin(), tags.end(),
                          back_inserter(inter));
 
         // It doesn't continue to next element.
@@ -276,7 +272,7 @@ void ProcessExtractSurf::Process()
             // composite, otherwise we create a new composite and store
             // it in newComps.
             string tag = el[i]->GetTag();
-            auto it2 = newComps.find(tag);
+            auto it2   = newComps.find(tag);
             if (it2 == newComps.end())
             {
                 CompositeSharedPtr newComp(new Composite());
@@ -346,11 +342,8 @@ void ProcessExtractSurf::Process()
             }
 
             sort(tags.begin(), tags.end());
-            set_intersection(surfs.begin(),
-                             surfs.end(),
-                             tags.begin(),
-                             tags.end(),
-                             back_inserter(inter));
+            set_intersection(surfs.begin(), surfs.end(), tags.begin(),
+                             tags.end(), back_inserter(inter));
 
             // It does so continue to next element.
             if (inter.size() == 1)
@@ -446,5 +439,5 @@ void ProcessExtractSurf::Process()
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

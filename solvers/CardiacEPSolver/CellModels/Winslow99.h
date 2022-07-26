@@ -39,42 +39,42 @@
 
 namespace Nektar
 {
-    class Winslow99 : public CellModel
+class Winslow99 : public CellModel
+{
+
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField)
     {
+        return MemoryManager<Winslow99>::AllocateSharedPtr(pSession, pField);
+    }
 
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField)
-        {
-            return MemoryManager<Winslow99>::AllocateSharedPtr(pSession, pField);
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Constructor
+    Winslow99(const LibUtilities::SessionReaderSharedPtr &pSession,
+              const MultiRegions::ExpListSharedPtr &pField);
 
-        /// Constructor
-        Winslow99(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField);
+    /// Destructor
+    virtual ~Winslow99()
+    {
+    }
 
-        /// Destructor
-        virtual ~Winslow99() {}
+protected:
+    /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    protected:
-        /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
-        virtual void v_Update(
-               const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                     Array<OneD,        Array<OneD, NekDouble> >&outarray,
-               const NekDouble time);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
-
-        /// Set initial conditions for cell model
-        virtual void v_SetInitialConditions();
-    };
-}
+    /// Set initial conditions for cell model
+    virtual void v_SetInitialConditions();
+};
+} // namespace Nektar
 
 #endif

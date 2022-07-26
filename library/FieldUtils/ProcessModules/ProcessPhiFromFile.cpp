@@ -33,9 +33,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "ProcessPhiFromFile.h"
-#include <boost/core/ignore_unused.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 using namespace Nektar;
 using namespace std;
@@ -47,10 +47,8 @@ namespace FieldUtils
 
 ModuleKey ProcessPhiFromFile::m_className = {
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "phifile"),
-        ProcessPhiFromFile::create,
-        "Computes the Phi function from a file, used in IB methods.")
-};
+        ModuleKey(eProcessModule, "phifile"), ProcessPhiFromFile::create,
+        "Computes the Phi function from a file, used in IB methods.")};
 
 /**
  * @brief Set up ProcessPhiFromFile object.
@@ -58,10 +56,10 @@ ModuleKey ProcessPhiFromFile::m_className = {
  */
 ProcessPhiFromFile::ProcessPhiFromFile(FieldSharedPtr f) : ProcessModule(f)
 {
-    m_config["scale"] = ConfigOption(false, "NotSet",
-                                     "Scale coefficient for Phi.");
-    m_config["file"] = ConfigOption(false, "NotSet",
-                                    "File with the IB definition.");
+    m_config["scale"] =
+        ConfigOption(false, "NotSet", "Scale coefficient for Phi.");
+    m_config["file"] =
+        ConfigOption(false, "NotSet", "File with the IB definition.");
 }
 
 /**
@@ -127,11 +125,14 @@ Array<OneD, NekDouble> ProcessPhiFromFile::ReadVector(ifstream &in)
     char buf[4];
 
     in.read(buf, sizeof(buf));
-    memcpy(&tmp, buf, sizeof(buf)); out[0] = tmp;
+    memcpy(&tmp, buf, sizeof(buf));
+    out[0] = tmp;
     in.read(buf, sizeof(buf));
-    memcpy(&tmp, buf, sizeof(buf)); out[1] = tmp;
+    memcpy(&tmp, buf, sizeof(buf));
+    out[1] = tmp;
     in.read(buf, sizeof(buf));
-    memcpy(&tmp, buf, sizeof(buf)); out[2] = tmp;
+    memcpy(&tmp, buf, sizeof(buf));
+    out[2] = tmp;
 
     return out;
 }
@@ -162,7 +163,7 @@ ProcessPhiFromFile::STLobject ProcessPhiFromFile::ReadSTL(string filename)
     memcpy(&out.numTri, numTriBuf, sizeof(numTriBuf));
 
     // Read triangle data
-    out.triangles  = Array<OneD, triangle>(out.numTri);
+    out.triangles = Array<OneD, triangle>(out.numTri);
     for (NekUInt32 i = 0; i < out.numTri; ++i)
     {
         // Read normal vector
@@ -176,9 +177,9 @@ ProcessPhiFromFile::STLobject ProcessPhiFromFile::ReadSTL(string filename)
 
         // Add centroid to the triangle object
         Array<OneD, NekDouble> centre(3);
-        centre[0] = (tmpTri.v0[0]+tmpTri.v1[0]+tmpTri.v2[0]) / 3.0;
-        centre[1] = (tmpTri.v0[1]+tmpTri.v1[1]+tmpTri.v2[1]) / 3.0;
-        centre[2] = (tmpTri.v0[2]+tmpTri.v1[2]+tmpTri.v2[2]) / 3.0;
+        centre[0]       = (tmpTri.v0[0] + tmpTri.v1[0] + tmpTri.v2[0]) / 3.0;
+        centre[1]       = (tmpTri.v0[1] + tmpTri.v1[1] + tmpTri.v2[1]) / 3.0;
+        centre[2]       = (tmpTri.v0[2] + tmpTri.v1[2] + tmpTri.v2[2]) / 3.0;
         tmpTri.centroid = centre;
 
         out.triangles[i] = tmpTri;
@@ -203,7 +204,7 @@ ProcessPhiFromFile::STLobject ProcessPhiFromFile::ReadSTL(string filename)
  */
 NekDouble ProcessPhiFromFile::PhiFunction(double dist, double coeff)
 {
-    return -0.5*(std::tanh(dist/coeff)-1.0);
+    return -0.5 * (std::tanh(dist / coeff) - 1.0);
 }
 
 /**
@@ -234,12 +235,12 @@ void ProcessPhiFromFile::GetPhifromSession()
     for (int s = 0; s < nStrips; ++s)
     {
         // Get current coords of the point
-        Array<OneD, Array<OneD, NekDouble> > coords(3);
+        Array<OneD, Array<OneD, NekDouble>> coords(3);
         for (int i = 0; i < 3; ++i)
         {
             coords[i] = Array<OneD, NekDouble>(nPts, 0.0);
         }
-        m_f->m_exp[s*nVars]->GetCoords(coords[0], coords[1], coords[2]);
+        m_f->m_exp[s * nVars]->GetCoords(coords[0], coords[1], coords[2]);
 
         // Append Phi expansion to 'm_f'
         MultiRegions::ExpListSharedPtr Exp;
@@ -259,14 +260,14 @@ void ProcessPhiFromFile::GetPhifromSession()
  * @param file
  */
 void ProcessPhiFromFile::GetPhifromSTL(
-        const ProcessPhiFromFile::STLobject &file)
+    const ProcessPhiFromFile::STLobject &file)
 {
     // Get info about the domain
     int nPts  = m_f->m_exp[0]->GetNpoints();
     int nVars = m_f->m_variables.size();
 
     // Get coordinates
-    Array<OneD, Array<OneD, NekDouble> > coords(3);
+    Array<OneD, Array<OneD, NekDouble>> coords(3);
     for (int i = 0; i < 3; ++i)
     {
         coords[i] = Array<OneD, NekDouble>(nPts, 0.0);
@@ -300,11 +301,11 @@ void ProcessPhiFromFile::GetPhifromSTL(
     // and add a margin to avoid rounding errors
     for (int i = 0; i < 6; ++i)
     {
-        bounds[i] -= pow(-1,i) * 1e-10;
+        bounds[i] -= pow(-1, i) * 1e-10;
     }
 
     // Array of centroids of triangles in the STL object
-    Array<OneD, Array<OneD, NekDouble> > centroids(file.numTri);
+    Array<OneD, Array<OneD, NekDouble>> centroids(file.numTri);
     for (int i = 0; i < file.numTri; ++i)
     {
         centroids[i] = file.triangles[i].centroid;
@@ -334,8 +335,8 @@ void ProcessPhiFromFile::GetPhifromSTL(
             FindShortestDist(file, tmpCoords, dist);
 
             // Get corresponding value of Phi
-            phi->UpdatePhys()[i] = PhiFunction(dist, 
-                                               m_config["scale"].as<double>());
+            phi->UpdatePhys()[i] =
+                PhiFunction(dist, m_config["scale"].as<double>());
         }
 
         // Update vector of expansions
@@ -377,8 +378,8 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
 
     // If det == 0, ray parallel to triangle
     Array<OneD, NekDouble> Pvec = Cross(Dvec, E2);
-    double det = Vmath::Dot(3, Pvec, E1);
-    double inv_det = 1.0 / det;
+    double det                  = Vmath::Dot(3, Pvec, E1);
+    double inv_det              = 1.0 / det;
     if (IsEqual(0.0, det, 1e-10))
     {
         distance = numeric_limits<double>::max();
@@ -394,11 +395,11 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
 
     // Vector Q and parameter v = (0.0, 1.0)
     Array<OneD, NekDouble> Qvec = Cross(Tvec, E1);
-    v = Vmath::Dot(3, Qvec, Dvec) * inv_det;
+    v                           = Vmath::Dot(3, Qvec, Dvec) * inv_det;
 
     // There is a hit if (u,v) coordinates are bounded
     distance = Vmath::Dot(3, Qvec, E2) * inv_det;
-    if ((u < 0.0 || u > 1.0) || (v < 0.0 || u+v > 1.0))
+    if ((u < 0.0 || u > 1.0) || (v < 0.0 || u + v > 1.0))
     {
         return false;
     }
@@ -417,9 +418,8 @@ bool ProcessPhiFromFile::CheckHit(const ProcessPhiFromFile::triangle &tri,
  * @param dist
  */
 void ProcessPhiFromFile::FindShortestDist(
-                                const ProcessPhiFromFile::STLobject &file,
-                                const Array<OneD, NekDouble> &x,
-                                double &dist)
+    const ProcessPhiFromFile::STLobject &file, const Array<OneD, NekDouble> &x,
+    double &dist)
 {
     // Find closest triangles
     // First, use the ones in the node of 'x'
@@ -483,15 +483,15 @@ void ProcessPhiFromFile::FindShortestDist(
             else
             {
                 // The minimum has to be in one of the edges
-                if (v < 0)   // Edge V0-V1
+                if (v < 0) // Edge V0-V1
                 {
                     distVector = Vector2edge(x, tri.v0, tri.v1);
                 }
-                else if (u < 0)   // Edge V0-V2
+                else if (u < 0) // Edge V0-V2
                 {
                     distVector = Vector2edge(x, tri.v0, tri.v2);
                 }
-                else   // Edge V1-V2
+                else // Edge V1-V2
                 {
                     distVector = Vector2edge(x, tri.v1, tri.v2);
                 }
@@ -503,7 +503,7 @@ void ProcessPhiFromFile::FindShortestDist(
             // giving contradictory information and, if so, use the one
             // closer to 'x'. Otherwise, some exterior points will be treated
             // as interior and viceversa
-            if (dist-currentDist > 1e-5*currentDist ||
+            if (dist - currentDist > 1e-5 * currentDist ||
                 (IsEqual(dist, currentDist, 1e-5) &&
                  IsNegative(Vmath::Dot(3, triNormal, tri.normal), 1e-5) &&
                  fabs(currentTparam) > fabs(tParam)))
@@ -530,7 +530,7 @@ void ProcessPhiFromFile::FindShortestDist(
  */
 bool ProcessPhiFromFile::IsEqual(double x, double y, double relTol)
 {
-    return (fabs(x-y) <= relTol*y);
+    return (fabs(x - y) <= relTol * y);
 }
 
 /**
@@ -554,14 +554,13 @@ bool ProcessPhiFromFile::IsNegative(double x, double tol)
  * @return Array<OneD, NekDouble>
  */
 Array<OneD, NekDouble> ProcessPhiFromFile::Cross(
-                                const Array<OneD, NekDouble> &v0,
-                                const Array<OneD, NekDouble> &v1)
+    const Array<OneD, NekDouble> &v0, const Array<OneD, NekDouble> &v1)
 {
     Array<OneD, NekDouble> out(3);
 
-    out[0] = v0[1]*v1[2] - v0[2]*v1[1];
-    out[1] = v0[2]*v1[0] - v0[0]*v1[2];
-    out[2] = v0[0]*v1[1] - v0[1]*v1[0];
+    out[0] = v0[1] * v1[2] - v0[2] * v1[1];
+    out[1] = v0[2] * v1[0] - v0[0] * v1[2];
+    out[2] = v0[0] * v1[1] - v0[1] * v1[0];
 
     return out;
 }
@@ -578,9 +577,8 @@ Array<OneD, NekDouble> ProcessPhiFromFile::Cross(
  * @return Array<OneD, NekDouble>
  */
 Array<OneD, NekDouble> ProcessPhiFromFile::Vector2edge(
-                                        const Array<OneD, NekDouble> &x,
-                                        const Array<OneD, NekDouble> &e1,
-                                        const Array<OneD, NekDouble> &e2)
+    const Array<OneD, NekDouble> &x, const Array<OneD, NekDouble> &e1,
+    const Array<OneD, NekDouble> &e2)
 {
     size_t n = x.size();
     Array<OneD, NekDouble> e1x(n);
@@ -610,5 +608,5 @@ Array<OneD, NekDouble> ProcessPhiFromFile::Vector2edge(
 
     return out;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

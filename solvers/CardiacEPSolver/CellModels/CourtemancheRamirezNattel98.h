@@ -39,98 +39,98 @@
 
 namespace Nektar
 {
-    class CourtemancheRamirezNattel98: public CellModel
+class CourtemancheRamirezNattel98 : public CellModel
+{
+
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField)
     {
+        return MemoryManager<CourtemancheRamirezNattel98>::AllocateSharedPtr(
+            pSession, pField);
+    }
 
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField)
-        {
-            return MemoryManager<CourtemancheRamirezNattel98>
-                                        ::AllocateSharedPtr(pSession, pField);
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Constructor
+    CourtemancheRamirezNattel98(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField);
 
-        /// Constructor
-        CourtemancheRamirezNattel98(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField);
+    /// Destructor
+    virtual ~CourtemancheRamirezNattel98();
 
-        /// Destructor
-        virtual ~CourtemancheRamirezNattel98();
+protected:
+    /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    protected:
-        /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
-        virtual void v_Update(
-                const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-                      Array<OneD, Array<OneD, NekDouble> >&outarray,
-                const NekDouble time);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
+    virtual void v_SetInitialConditions();
 
-        virtual void v_SetInitialConditions();
+    virtual std::string v_GetCellVarName(unsigned int idx);
 
-        virtual std::string v_GetCellVarName(unsigned int idx);
+private:
+    NekDouble C_m;
+    NekDouble g_Na;
+    NekDouble g_K1;
+    NekDouble g_to;
+    NekDouble g_Kr;
+    NekDouble g_Kur_scaling;
+    NekDouble g_Ks;
+    NekDouble g_b_Na;
+    NekDouble g_b_Ca;
+    NekDouble g_Ca_L;
+    NekDouble R;
+    NekDouble T;
+    NekDouble F;
+    NekDouble Na_o;
+    NekDouble K_o;
+    NekDouble sigma;
+    NekDouble K_i;
+    NekDouble K_m_Na_i;
+    NekDouble I_Na_K_max;
+    NekDouble I_NaCa_max;
+    NekDouble gamma;
+    NekDouble Ca_o;
+    NekDouble K_m_Na;
+    NekDouble K_m_Ca;
+    NekDouble K_sat;
+    NekDouble I_p_Ca_max;
+    NekDouble Trpn_max;
+    NekDouble Km_Trpn;
+    NekDouble Cmdn_max;
+    NekDouble Csqn_max;
+    NekDouble Km_Cmdn;
+    NekDouble Km_Csqn;
+    NekDouble NSR_I_up_max;
+    NekDouble NSR_I_Ca_max;
+    NekDouble NSR_K_up;
+    NekDouble JSR_K_rel;
+    NekDouble JSR_V_cell;
+    NekDouble JSR_V_rel;
+    NekDouble JSR_V_up;
+    NekDouble tau_tr;
+    NekDouble K_Q10;
+    NekDouble V_i;
 
-    private:
-        NekDouble C_m;
-        NekDouble g_Na;
-        NekDouble g_K1;
-        NekDouble g_to;
-        NekDouble g_Kr;
-        NekDouble g_Kur_scaling;
-        NekDouble g_Ks;
-        NekDouble g_b_Na;
-        NekDouble g_b_Ca;
-        NekDouble g_Ca_L;
-        NekDouble R;
-        NekDouble T;
-        NekDouble F;
-        NekDouble Na_o;
-        NekDouble K_o;
-        NekDouble sigma;
-        NekDouble K_i;
-        NekDouble K_m_Na_i;
-        NekDouble I_Na_K_max;
-        NekDouble I_NaCa_max;
-        NekDouble gamma;
-        NekDouble Ca_o;
-        NekDouble K_m_Na;
-        NekDouble K_m_Ca;
-        NekDouble K_sat;
-        NekDouble I_p_Ca_max;
-        NekDouble Trpn_max;
-        NekDouble Km_Trpn;
-        NekDouble Cmdn_max;
-        NekDouble Csqn_max;
-        NekDouble Km_Cmdn;
-        NekDouble Km_Csqn;
-        NekDouble NSR_I_up_max;
-        NekDouble NSR_I_Ca_max;
-        NekDouble NSR_K_up;
-        NekDouble JSR_K_rel;
-        NekDouble JSR_V_cell;
-        NekDouble JSR_V_rel;
-        NekDouble JSR_V_up;
-        NekDouble tau_tr;
-        NekDouble K_Q10;
-        NekDouble V_i;
-
-        enum Variants {
-            eOriginal,
-            eAF
-        };
-        enum Variants model_variant;
-
-        static std::string lookupIds[];
-        static std::string def;
+    enum Variants
+    {
+        eOriginal,
+        eAF
     };
+    enum Variants model_variant;
 
-}
+    static std::string lookupIds[];
+    static std::string def;
+};
+
+} // namespace Nektar
 
 #endif

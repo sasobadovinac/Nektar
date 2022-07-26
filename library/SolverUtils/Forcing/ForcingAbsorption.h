@@ -44,8 +44,8 @@
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
-#include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/SolverUtilsDeclspec.h>
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -54,74 +54,70 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-    class ForcingAbsorption : public Forcing
+class ForcingAbsorption : public Forcing
+{
+public:
+    friend class MemoryManager<ForcingAbsorption>;
+
+    /// Creates an instance of this class
+    SOLVER_UTILS_EXPORT static ForcingSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
     {
-        public:
-            friend class MemoryManager<ForcingAbsorption> ;
+        ForcingSharedPtr p =
+            MemoryManager<ForcingAbsorption>::AllocateSharedPtr(pSession,
+                                                                pEquation);
+        p->InitObject(pFields, pNumForcingFields, pForce);
+        return p;
+    }
 
-            /// Creates an instance of this class
-            SOLVER_UTILS_EXPORT static ForcingSharedPtr create(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const std::weak_ptr<EquationSystem>      &pEquation,
-                    const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                    const unsigned int& pNumForcingFields,
-                    const TiXmlElement* pForce)
-            {
-                ForcingSharedPtr p = MemoryManager<ForcingAbsorption>::
-                                        AllocateSharedPtr(pSession, pEquation);
-                p->InitObject(pFields, pNumForcingFields, pForce);
-                return p;
-            }
+    /// Name of the class
+    static std::string className;
 
-            ///Name of the class
-            static std::string className;
+protected:
+    typedef bg::model::point<NekDouble, 3, bg::cs::cartesian> BPoint;
+    typedef std::pair<BPoint, unsigned int> BPointPair;
+    typedef bgi::rtree<BPointPair, bgi::rstar<16>> BRTree;
 
-        protected:
+    bool m_hasRefFlow;
+    bool m_hasRefFlowTime;
+    Array<OneD, Array<OneD, NekDouble>> m_Absorption;
+    Array<OneD, Array<OneD, NekDouble>> m_Refflow;
+    std::string m_funcNameTime;
+    std::vector<unsigned int> m_bRegions;
+    std::shared_ptr<BRTree> m_rtree;
 
-            typedef bg::model::point<NekDouble, 3, bg::cs::cartesian> BPoint;
-            typedef std::pair<BPoint, unsigned int>                   BPointPair;
-            typedef bgi::rtree<BPointPair, bgi::rstar<16> >           BRTree;
+    void CalculateForcing(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        const NekDouble &time);
 
-            bool                                    m_hasRefFlow;
-            bool                                    m_hasRefFlowTime;
-            Array<OneD, Array<OneD, NekDouble> >    m_Absorption;
-            Array<OneD, Array<OneD, NekDouble> >    m_Refflow;
-            std::string                             m_funcNameTime;
-            std::vector<unsigned int>               m_bRegions;
-            std::shared_ptr<BRTree>               m_rtree;
-            
-            void CalculateForcing(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                    const NekDouble &time);
-                    
-            SOLVER_UTILS_EXPORT virtual void v_InitObject(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                    const unsigned int& pNumForcingFields,
-                    const TiXmlElement* pForce);
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
 
-            SOLVER_UTILS_EXPORT virtual void v_Apply(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                    const Array<OneD, Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    const NekDouble &time);
-            SOLVER_UTILS_EXPORT virtual void v_ApplyCoeff(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                    const Array<OneD, Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    const NekDouble &time);
-        private:
-            ForcingAbsorption(
-                const LibUtilities::SessionReaderSharedPtr &pSession,
-                const std::weak_ptr<EquationSystem>      &pEquation);
-            virtual ~ForcingAbsorption(void){};
+    SOLVER_UTILS_EXPORT virtual void v_Apply(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
+    SOLVER_UTILS_EXPORT virtual void v_ApplyCoeff(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
 
-            void CalcAbsorption(
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-                const TiXmlElement *pForce);
-    };
-}
-}
-// Hui XU  21 Jul 2013 Created 
-// Yumnah Mohamied May 2014 Modified and generalised. 
+private:
+    ForcingAbsorption(const LibUtilities::SessionReaderSharedPtr &pSession,
+                      const std::weak_ptr<EquationSystem> &pEquation);
+    virtual ~ForcingAbsorption(void){};
+
+    void CalcAbsorption(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const TiXmlElement *pForce);
+};
+} // namespace SolverUtils
+} // namespace Nektar
+// Hui XU  21 Jul 2013 Created
+// Yumnah Mohamied May 2014 Modified and generalised.
 #endif

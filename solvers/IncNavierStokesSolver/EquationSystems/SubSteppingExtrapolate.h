@@ -46,104 +46,92 @@
 
 namespace Nektar
 {
-    //--------
-    // Substepping
-    // --------
-    
-    class SubSteppingExtrapolate;
-    
-    typedef std::shared_ptr<SubSteppingExtrapolate> SubSteppingExtrapolateSharedPtr;
-    
-    class SubSteppingExtrapolate : public Extrapolate
+//--------
+// Substepping
+// --------
+
+class SubSteppingExtrapolate;
+
+typedef std::shared_ptr<SubSteppingExtrapolate> SubSteppingExtrapolateSharedPtr;
+
+class SubSteppingExtrapolate : public Extrapolate
+{
+public:
+    /// Creates an instance of this class
+    static ExtrapolateSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        MultiRegions::ExpListSharedPtr &pPressure, const Array<OneD, int> &pVel,
+        const SolverUtils::AdvectionSharedPtr &advObject)
     {
-    public:
+        ExtrapolateSharedPtr p =
+            MemoryManager<SubSteppingExtrapolate>::AllocateSharedPtr(
+                pSession, pFields, pPressure, pVel, advObject);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static ExtrapolateSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
-            Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-            MultiRegions::ExpListSharedPtr              &pPressure,
-            const Array<OneD, int>                      &pVel,
-            const SolverUtils::AdvectionSharedPtr       &advObject)
-        {
-            ExtrapolateSharedPtr p = MemoryManager<SubSteppingExtrapolate>
-                ::AllocateSharedPtr(pSession,pFields,pPressure,pVel,advObject);
-            return p;
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    SubSteppingExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
+                           Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
+                           MultiRegions::ExpListSharedPtr pPressure,
+                           const Array<OneD, int> pVel,
+                           const SolverUtils::AdvectionSharedPtr advObject);
 
-        SubSteppingExtrapolate(
-            const LibUtilities::SessionReaderSharedPtr pSession,
-            Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
-            MultiRegions::ExpListSharedPtr              pPressure,
-            const Array<OneD, int> pVel,
-            const SolverUtils::AdvectionSharedPtr advObject);
+    virtual ~SubSteppingExtrapolate();
 
-        virtual ~SubSteppingExtrapolate();
-        
-    protected:
-        virtual void v_EvaluatePressureBCs(const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                                           const Array<OneD, const Array<OneD, NekDouble> >  &N,
-                                           NekDouble kinvis);
+protected:
+    virtual void v_EvaluatePressureBCs(
+        const Array<OneD, const Array<OneD, NekDouble>> &fields,
+        const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis);
 
-        virtual void v_SubSteppingTimeIntegration(
-            const LibUtilities::TimeIntegrationSchemeSharedPtr & IntegrationScheme );
- 
-        virtual void v_SubStepSaveFields(
-            int nstep);
+    virtual void v_SubSteppingTimeIntegration(
+        const LibUtilities::TimeIntegrationSchemeSharedPtr &IntegrationScheme);
 
-        virtual void v_SubStepSetPressureBCs(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray, 
-            NekDouble Aii_Dt,
-            NekDouble kinvis);
+    virtual void v_SubStepSaveFields(int nstep);
 
-        virtual void v_SubStepAdvance(
-            int nstep, 
-            NekDouble time);
+    virtual void v_SubStepSetPressureBCs(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        NekDouble Aii_Dt, NekDouble kinvis);
 
-        virtual void v_MountHOPBCs(
-            int HBCdata, 
-            NekDouble kinvis, 
-            Array<OneD, NekDouble> &Q, 
-            Array<OneD, const NekDouble> &Advection);
-        
-        virtual std::string v_GetSubStepName(void);
+    virtual void v_SubStepAdvance(int nstep, NekDouble time);
 
-        void SubStepAdvection(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,  
-            Array<OneD, Array<OneD,NekDouble> > &outarray,
-            const NekDouble time);
+    virtual void v_MountHOPBCs(int HBCdata, NekDouble kinvis,
+                               Array<OneD, NekDouble> &Q,
+                               Array<OneD, const NekDouble> &Advection);
 
-        void SubStepProjection(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,  
-            Array<OneD, Array<OneD, NekDouble> > &outarray, 
-            const NekDouble time);
+    virtual std::string v_GetSubStepName(void);
 
-        void SubStepExtrapolateField(
-            NekDouble toff, 
-            Array< OneD, Array<OneD, NekDouble> > &ExtVel);
+    void SubStepAdvection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        void AddAdvectionPenaltyFlux(
-            const Array<OneD, const Array<OneD, NekDouble> > &velfield,
-            const Array<OneD, const Array<OneD, NekDouble> > &physfield,Array<OneD, 
-            Array<OneD, NekDouble> > &outarray);
+    void SubStepProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        NekDouble GetSubstepTimeStep();
+    void SubStepExtrapolateField(NekDouble toff,
+                                 Array<OneD, Array<OneD, NekDouble>> &ExtVel);
 
-        LibUtilities::TimeIntegrationSchemeSharedPtr m_intScheme;
-        LibUtilities::TimeIntegrationSchemeSharedPtr m_subStepIntegrationScheme;
-        LibUtilities::TimeIntegrationSchemeOperators m_subStepIntegrationOps;
+    void AddAdvectionPenaltyFlux(
+        const Array<OneD, const Array<OneD, NekDouble>> &velfield,
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-        Array<OneD, Array<OneD, NekDouble> > m_previousVelFields;
+    NekDouble GetSubstepTimeStep();
 
-        NekDouble m_cflSafetyFactor;
-        int m_infosteps;
-        int m_minsubsteps;
-        int m_maxsubsteps;
-    };
-}
+    LibUtilities::TimeIntegrationSchemeSharedPtr m_intScheme;
+    LibUtilities::TimeIntegrationSchemeSharedPtr m_subStepIntegrationScheme;
+    LibUtilities::TimeIntegrationSchemeOperators m_subStepIntegrationOps;
+
+    Array<OneD, Array<OneD, NekDouble>> m_previousVelFields;
+
+    NekDouble m_cflSafetyFactor;
+    int m_infosteps;
+    int m_minsubsteps;
+    int m_maxsubsteps;
+};
+} // namespace Nektar
 
 #endif
-

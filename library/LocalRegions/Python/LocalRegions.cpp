@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Python wrapper for LocalRegions classes. 
+// Description: Python wrapper for LocalRegions classes.
 //
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -44,14 +44,13 @@ namespace NekMesh
 {
 
 LibUtilities::ShapeType Line::m_type =
-    GetElementFactory().RegisterCreatorFunction(
-        LibUtilities::eSegment, Line::create, "Line");
+    GetElementFactory().RegisterCreatorFunction(LibUtilities::eSegment,
+                                                Line::create, "Line");
 
 /**
  * @brief Create a line element.
  */
-Line::Line(ElmtConfig pConf,
-           vector<NodeSharedPtr> pNodeList,
+Line::Line(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
            vector<int> pTagList)
     : Element(pConf, GetNumNodes(pConf), pNodeList.size())
 {
@@ -97,19 +96,18 @@ SpatialDomains::GeometrySharedPtr Line::GetGeom(int coordDim)
         }
         c->m_points.push_back(p[1]);
 
-        ret = MemoryManager<SpatialDomains::SegGeom>::AllocateSharedPtr(
-            m_id, 2, p, c);
+        ret = MemoryManager<SpatialDomains::SegGeom>::AllocateSharedPtr(m_id, 2,
+                                                                        p, c);
     }
     else
     {
-        ret = MemoryManager<SpatialDomains::SegGeom>::AllocateSharedPtr(
-            m_id, 2, p);
+        ret = MemoryManager<SpatialDomains::SegGeom>::AllocateSharedPtr(m_id, 2,
+                                                                        p);
     }
 
     ret->Setup();
     return ret;
 }
-
 
 void Line::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
 {
@@ -120,12 +118,9 @@ void Line::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     }
     nodeList.push_back(m_vertex[1]);
 }
-void Line::MakeOrder(int                                order,
-                     SpatialDomains::GeometrySharedPtr  geom,
-                     LibUtilities::PointsType           pType,
-                     int                                coordDim,
-                     int                               &id,
-                     bool                               justConfig)
+void Line::MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                     LibUtilities::PointsType pType, int coordDim, int &id,
+                     bool justConfig)
 {
     m_conf.m_order       = order;
     m_curveType          = pType;
@@ -146,7 +141,7 @@ void Line::MakeOrder(int                                order,
         return;
     }
 
-    int nPoints = order + 1;
+    int nPoints                            = order + 1;
     StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
 
     Array<OneD, NekDouble> px;
@@ -154,7 +149,7 @@ void Line::MakeOrder(int                                order,
     ASSERTL1(pKey.GetPointsDim() == 1, "Points distribution must be 1D");
     LibUtilities::PointsManager()[pKey]->GetPoints(px);
 
-    Array<OneD, Array<OneD, NekDouble> > phys(coordDim);
+    Array<OneD, Array<OneD, NekDouble>> phys(coordDim);
 
     for (int i = 0; i < coordDim; ++i)
     {
@@ -165,7 +160,7 @@ void Line::MakeOrder(int                                order,
     int nQuadIntPts = (nPoints - 2) * (nPoints - 2);
     m_volumeNodes.resize(nQuadIntPts);
 
-    for (int i = 1, cnt = 0; i < nPoints-1; ++i)
+    for (int i = 1, cnt = 0; i < nPoints - 1; ++i)
     {
         Array<OneD, NekDouble> xp(1);
         xp[0] = px[i];
@@ -176,8 +171,8 @@ void Line::MakeOrder(int                                order,
             x[k] = xmap->PhysEvaluate(xp, phys[k]);
         }
 
-        m_volumeNodes[cnt] = std::shared_ptr<Node>(
-            new Node(id++, x[0], x[1], x[2]));
+        m_volumeNodes[cnt] =
+            std::shared_ptr<Node>(new Node(id++, x[0], x[1], x[2]));
     }
 }
 
@@ -188,5 +183,5 @@ unsigned int Line::GetNumNodes(ElmtConfig pConf)
 {
     return pConf.m_order + 1;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

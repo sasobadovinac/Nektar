@@ -39,43 +39,43 @@ using namespace std;
 
 namespace Nektar
 {
-    MetricFactory& GetMetricFactory()
-    {
-        static MetricFactory instance;
-        return instance;
-    }
-    
-    /**
-     * @brief Constructor.
-     */
-    Metric::Metric(TiXmlElement *metric, bool generate) :
-        m_generate(generate), m_metric(metric)
-    {
-        if (!metric->Attribute("id"))
-        {
-            cerr << "Metric has no ID" << endl;
-        }
-        if (!metric->Attribute("type"))
-        {
-            cerr << "Metric has no type" << endl;
-        }
-        m_id = atoi(metric->Attribute("id"));
-        m_type = boost::to_upper_copy(string(metric->Attribute("type")));
-    }
+MetricFactory &GetMetricFactory()
+{
+    static MetricFactory instance;
+    return instance;
+}
 
-    /**
-     * @brief Test a line of output from an executible.
-     */
-    bool Metric::Test(std::istream& pStdout, std::istream& pStderr)
+/**
+ * @brief Constructor.
+ */
+Metric::Metric(TiXmlElement *metric, bool generate)
+    : m_generate(generate), m_metric(metric)
+{
+    if (!metric->Attribute("id"))
     {
-        if (m_generate)
-        {
-            v_Generate(pStdout, pStderr);
-            return true;
-        }
-        else
-        {
-            return v_Test(pStdout, pStderr);
-        }
+        cerr << "Metric has no ID" << endl;
+    }
+    if (!metric->Attribute("type"))
+    {
+        cerr << "Metric has no type" << endl;
+    }
+    m_id   = atoi(metric->Attribute("id"));
+    m_type = boost::to_upper_copy(string(metric->Attribute("type")));
+}
+
+/**
+ * @brief Test a line of output from an executible.
+ */
+bool Metric::Test(std::istream &pStdout, std::istream &pStderr)
+{
+    if (m_generate)
+    {
+        v_Generate(pStdout, pStderr);
+        return true;
+    }
+    else
+    {
+        return v_Test(pStdout, pStderr);
     }
 }
+} // namespace Nektar

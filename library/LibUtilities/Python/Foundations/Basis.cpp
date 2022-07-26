@@ -57,8 +57,8 @@ void export_Basis()
     // Enumerator for basis type
     NEKPY_WRAP_ENUM(BasisType, BasisTypeMap);
 
-    py::class_<BasisKey>("BasisKey", py::init<const BasisType&, const int,
-                         const PointsKey&>())
+    py::class_<BasisKey>(
+        "BasisKey", py::init<const BasisType &, const int, const PointsKey &>())
 
         .def("GetNumModes", &BasisKey::GetNumModes)
         .def("GetTotNumModes", &BasisKey::GetTotNumModes)
@@ -67,12 +67,9 @@ void export_Basis()
         .def("GetBasisType", &BasisKey::GetBasisType)
         .def("GetPointsKey", &BasisKey::GetPointsKey)
         .def("GetPointsType", &BasisKey::GetPointsType)
-        .def("Collocation", &BasisKey::Collocation)
-        ;
+        .def("Collocation", &BasisKey::Collocation);
 
-    py::class_<Basis,
-               std::shared_ptr<Basis> >(
-               "Basis", py::no_init)
+    py::class_<Basis, std::shared_ptr<Basis>>("Basis", py::no_init)
 
         .def("Create", &Basis_Create)
         .staticmethod("Create")
@@ -96,6 +93,5 @@ void export_Basis()
         .def("GetBdata", &Basis::GetBdata,
              py::return_value_policy<py::copy_const_reference>())
         .def("GetDbdata", &Basis::GetDbdata,
-             py::return_value_policy<py::copy_const_reference>())
-        ;
+             py::return_value_policy<py::copy_const_reference>());
 }

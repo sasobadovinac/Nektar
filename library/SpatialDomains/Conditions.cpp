@@ -35,8 +35,8 @@
 
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <SpatialDomains/Conditions.h>
-#include <tinyxml.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <tinyxml.h>
 
 using namespace std;
 
@@ -290,8 +290,8 @@ void BoundaryConditions::ReadBoundaryRegions(TiXmlElement *conditions)
 
             ASSERTL0(m_boundaryRegions.count(indx) == 0,
                      "Boundary region " + indxStr +
-                     " defined more than "
-                     "once!");
+                         " defined more than "
+                         "once!");
 
             m_meshGraph->GetCompositeList(indxStr, *boundaryRegion);
             if (boundaryRegion->size() > 0)
@@ -338,8 +338,8 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
 
         ASSERTL0(m_boundaryConditions.count(boundaryRegionID) == 0,
                  "Boundary region '" +
-                 boost::lexical_cast<std::string>(boundaryRegionID) +
-                 "' appears multiple times.");
+                     boost::lexical_cast<std::string>(boundaryRegionID) +
+                     "' appears multiple times.");
 
         // Find the boundary region corresponding to this ID.
         std::string boundaryRegionIDStr;
@@ -354,8 +354,8 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
 
         ASSERTL0(m_boundaryRegions.count(boundaryRegionID) == 1,
                  "Boundary region " +
-                 boost::lexical_cast<string>(boundaryRegionID) +
-                 " not found");
+                     boost::lexical_cast<string>(boundaryRegionID) +
+                     " not found");
 
         // Find the communicator that belongs to this ID
         LibUtilities::CommSharedPtr boundaryRegionComm =
@@ -396,7 +396,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                     {
                         BoundaryConditionShPtr neumannCondition(
                             MemoryManager<NeumannBoundaryCondition>::
-                            AllocateSharedPtr(m_session, "00.0"));
+                                AllocateSharedPtr(m_session, "00.0"));
                         (*boundaryConditions)[varIter] = neumannCondition;
                     }
                 }
@@ -473,9 +473,9 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
 
                         BoundaryConditionShPtr neumannCondition(
                             MemoryManager<NeumannBoundaryCondition>::
-                            AllocateSharedPtr(m_session, equation,
-                                              userDefined, filename,
-                                              boundaryRegionComm));
+                                AllocateSharedPtr(m_session, equation,
+                                                  userDefined, filename,
+                                                  boundaryRegionComm));
                         neumannCondition->SetIsTimeDependent(isTimeDependent);
                         (*boundaryConditions)[*iter] = neumannCondition;
                     }
@@ -484,7 +484,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                         // This variable's condition is zero.
                         BoundaryConditionShPtr neumannCondition(
                             MemoryManager<NeumannBoundaryCondition>::
-                            AllocateSharedPtr(m_session, "0"));
+                                AllocateSharedPtr(m_session, "0"));
                         (*boundaryConditions)[*iter] = neumannCondition;
                     }
                 }
@@ -498,7 +498,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                     {
                         BoundaryConditionShPtr dirichletCondition(
                             MemoryManager<DirichletBoundaryCondition>::
-                            AllocateSharedPtr(m_session, "0"));
+                                AllocateSharedPtr(m_session, "0"));
                         (*boundaryConditions)[varIter] = dirichletCondition;
                     }
                 }
@@ -548,13 +548,14 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
 
                                 equation = attrData;
 
-                                if ( !boost::iequals(attrData,"0") &&
-                                     (boost::iequals(userDefined,"WallAdiabatic") ||
-                                      boost::iequals(userDefined,"WallViscous")) )
+                                if (!boost::iequals(attrData, "0") &&
+                                    (boost::iequals(userDefined,
+                                                    "WallAdiabatic") ||
+                                     boost::iequals(userDefined,
+                                                    "WallViscous")))
                                 {
                                     isTimeDependent = true;
                                 }
-
                             }
                             else if (attrName == "FILE")
                             {
@@ -584,9 +585,9 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
 
                         BoundaryConditionShPtr dirichletCondition(
                             MemoryManager<DirichletBoundaryCondition>::
-                            AllocateSharedPtr(m_session, equation,
-                                              userDefined, filename,
-                                              boundaryRegionComm));
+                                AllocateSharedPtr(m_session, equation,
+                                                  userDefined, filename,
+                                                  boundaryRegionComm));
                         dirichletCondition->SetIsTimeDependent(isTimeDependent);
                         (*boundaryConditions)[*iter] = dirichletCondition;
                     }
@@ -595,7 +596,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                         // This variable's condition is zero.
                         BoundaryConditionShPtr dirichletCondition(
                             MemoryManager<DirichletBoundaryCondition>::
-                            AllocateSharedPtr(m_session, "0"));
+                                AllocateSharedPtr(m_session, "0"));
                         (*boundaryConditions)[*iter] = dirichletCondition;
                     }
                 }
@@ -609,7 +610,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                     {
                         BoundaryConditionShPtr robinCondition(
                             MemoryManager<RobinBoundaryCondition>::
-                            AllocateSharedPtr(m_session, "0", "0"));
+                                AllocateSharedPtr(m_session, "0", "0"));
                         (*boundaryConditions)[varIter] = robinCondition;
                     }
                 }
@@ -700,9 +701,9 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                         }
                         BoundaryConditionShPtr robinCondition(
                             MemoryManager<RobinBoundaryCondition>::
-                            AllocateSharedPtr(
-                                m_session, equation1, equation2,
-                                userDefined, filename, boundaryRegionComm));
+                                AllocateSharedPtr(
+                                    m_session, equation1, equation2,
+                                    userDefined, filename, boundaryRegionComm));
                         (*boundaryConditions)[*iter] = robinCondition;
                     }
                     else
@@ -710,7 +711,7 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                         // This variable's condition is zero.
                         BoundaryConditionShPtr robinCondition(
                             MemoryManager<RobinBoundaryCondition>::
-                            AllocateSharedPtr(m_session, "0", "0"));
+                                AllocateSharedPtr(m_session, "0", "0"));
                         robinCondition->SetIsTimeDependent(isTimeDependent);
                         (*boundaryConditions)[*iter] = robinCondition;
                     }
@@ -776,10 +777,10 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
 
                                 ASSERTL0(
                                     parseGood &&
-                                    (periodicBndRegionIndex.size() == 1),
+                                        (periodicBndRegionIndex.size() == 1),
                                     (std::string(
-                                        "Unable to read periodic boundary "
-                                        "condition for boundary region: ") +
+                                         "Unable to read periodic boundary "
+                                         "condition for boundary region: ") +
                                      boundaryRegionIDStrm.str())
                                         .c_str());
                             }
@@ -787,9 +788,9 @@ void BoundaryConditions::ReadBoundaryConditions(TiXmlElement *conditions)
                         }
                         BoundaryConditionShPtr periodicCondition(
                             MemoryManager<PeriodicBoundaryCondition>::
-                            AllocateSharedPtr(periodicBndRegionIndex[0],
-                                              userDefined,
-                                              boundaryRegionComm));
+                                AllocateSharedPtr(periodicBndRegionIndex[0],
+                                                  userDefined,
+                                                  boundaryRegionComm));
                         (*boundaryConditions)[*iter] = periodicCondition;
                     }
                     else

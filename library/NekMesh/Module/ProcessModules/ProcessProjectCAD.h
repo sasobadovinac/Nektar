@@ -38,12 +38,12 @@
 #include <NekMesh/Module/Module.h>
 
 #include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/point.hpp>
 
 #include <boost/geometry/index/rtree.hpp>
 
-namespace bg = boost::geometry;
+namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
 
 typedef bg::model::point<float, 3, bg::cs::cartesian> point;
@@ -54,7 +54,6 @@ namespace Nektar
 {
 namespace NekMesh
 {
-
 
 class ProcessProjectCAD : public NekMesh::ProcessModule
 {
@@ -76,15 +75,14 @@ public:
     {
         return "ProcessProjectCAD";
     }
-private:
 
-    bool findAndProject(bgi::rtree<boxI, bgi::quadratic<16> > &rtree,
-                                           Array<OneD, NekDouble> in,
-                                           int &surf);
+private:
+    bool findAndProject(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
+                        Array<OneD, NekDouble> in, int &surf);
 
     bool IsNotValid(std::vector<NekMesh::ElementSharedPtr> &els);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

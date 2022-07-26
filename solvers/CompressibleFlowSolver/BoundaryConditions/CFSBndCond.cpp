@@ -38,26 +38,21 @@ using namespace std;
 
 namespace Nektar
 {
-CFSBndCondFactory& GetCFSBndCondFactory()
+CFSBndCondFactory &GetCFSBndCondFactory()
 {
     static CFSBndCondFactory instance;
     return instance;
 }
 
-CFSBndCond::CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >&       pTraceNormals,
-                const int pSpaceDim,
-                const int bcRegion,
-                const int cnt)
-        : m_session(pSession),
-        m_fields(pFields),
-        m_traceNormals(pTraceNormals),
-        m_spacedim(pSpaceDim),
-        m_bcRegion(bcRegion),
-        m_offset(cnt)
+CFSBndCond::CFSBndCond(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+    const int pSpaceDim, const int bcRegion, const int cnt)
+    : m_session(pSession), m_fields(pFields), m_traceNormals(pTraceNormals),
+      m_spacedim(pSpaceDim), m_bcRegion(bcRegion), m_offset(cnt)
 {
-    m_velInf = Array<OneD, NekDouble> (m_spacedim, 0.0);
+    m_velInf = Array<OneD, NekDouble>(m_spacedim, 0.0);
     m_session->LoadParameter("Gamma", m_gamma, 1.4);
     m_session->LoadParameter("rhoInf", m_rhoInf, 1.225);
     m_session->LoadParameter("pInf", m_pInf, 101325);
@@ -72,42 +67,41 @@ CFSBndCond::CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
     }
 
     // Create auxiliary object to convert variables
-    m_varConv = MemoryManager<VariableConverter>::AllocateSharedPtr(
-                m_session, m_spacedim);
-    
+    m_varConv = MemoryManager<VariableConverter>::AllocateSharedPtr(m_session,
+                                                                    m_spacedim);
+
     m_diffusionAveWeight = 1.0;
 }
 
 /**
  * @param   bcRegion      id of the boundary region
- * @param   cnt           
- * @param   Fwd    
+ * @param   cnt
+ * @param   Fwd
  * @param   physarray
  * @param   time
  */
-void CFSBndCond::Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time)
+void CFSBndCond::Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                       Array<OneD, Array<OneD, NekDouble>> &physarray,
+                       const NekDouble &time)
 {
     v_Apply(Fwd, physarray, time);
 }
 
 /**
  * @ brief Newly added bc should specify this virtual function
- * if the Bwd/value in m_bndCondExpansions is the target value like Direchlet 
+ * if the Bwd/value in m_bndCondExpansions is the target value like Direchlet
  * bc weight should be 1.0.
- * if some average Fwd and Bwd/value in m_bndCondExpansions 
+ * if some average Fwd and Bwd/value in m_bndCondExpansions
  * is the target value like WallViscousBC weight should be 0.5.
  */
 void CFSBndCond::v_ApplyBwdWeight()
 {
-    NekDouble weight = m_diffusionAveWeight;
+    NekDouble weight  = m_diffusionAveWeight;
     size_t nVariables = m_fields.size();
-    for (int i=0;i < nVariables; ++i)
+    for (int i = 0; i < nVariables; ++i)
     {
         m_fields[i]->SetBndCondBwdWeight(m_bcRegion, weight);
     }
 }
 
-}
+} // namespace Nektar

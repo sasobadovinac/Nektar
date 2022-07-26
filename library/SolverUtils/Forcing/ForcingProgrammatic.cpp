@@ -41,54 +41,51 @@ namespace Nektar
 namespace SolverUtils
 {
 
-    std::string ForcingProgrammatic::className = GetForcingFactory().
-                                RegisterCreatorFunction("Programmatic",
-                                                        ForcingProgrammatic::create,
-                                                        "Programmatic Forcing");
+std::string ForcingProgrammatic::className =
+    GetForcingFactory().RegisterCreatorFunction(
+        "Programmatic", ForcingProgrammatic::create, "Programmatic Forcing");
 
-    ForcingProgrammatic::ForcingProgrammatic(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
-            const std::weak_ptr<EquationSystem>      &pEquation)
-        : Forcing(pSession, pEquation)
-    {
-    }
-
-    Array<OneD, Array<OneD, NekDouble> >& ForcingProgrammatic::UpdateForces()
-    {
-        return m_Forcing;
-    }
-
-    void ForcingProgrammatic::v_InitObject(
-            const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-            const unsigned int& pNumForcingFields,
-            const TiXmlElement* pForce)
-    {
-        boost::ignore_unused(pForce);
-
-        m_NumVariable = pNumForcingFields;
-        int nq         = pFields[0]->GetTotPoints();
-
-        m_Forcing = Array<OneD, Array<OneD, NekDouble> > (m_NumVariable);
-        for (int i = 0; i < m_NumVariable; ++i)
-        {
-            m_Forcing[i] = Array<OneD, NekDouble> (nq, 0.0);
-        }
-    }
-
-    void ForcingProgrammatic::v_Apply(
-            const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-            const Array<OneD, Array<OneD, NekDouble> > &inarray,
-            Array<OneD, Array<OneD, NekDouble> > &outarray,
-            const NekDouble &time)
-    {
-        boost::ignore_unused(fields, inarray, time);
-
-        for (int i = 0; i < m_NumVariable; i++)
-        {
-            Vmath::Vadd(outarray[i].size(), outarray[i], 1,
-                        m_Forcing[i], 1, outarray[i], 1);
-        }
-    }
-
+ForcingProgrammatic::ForcingProgrammatic(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<EquationSystem> &pEquation)
+    : Forcing(pSession, pEquation)
+{
 }
+
+Array<OneD, Array<OneD, NekDouble>> &ForcingProgrammatic::UpdateForces()
+{
+    return m_Forcing;
 }
+
+void ForcingProgrammatic::v_InitObject(
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
+{
+    boost::ignore_unused(pForce);
+
+    m_NumVariable = pNumForcingFields;
+    int nq        = pFields[0]->GetTotPoints();
+
+    m_Forcing = Array<OneD, Array<OneD, NekDouble>>(m_NumVariable);
+    for (int i = 0; i < m_NumVariable; ++i)
+    {
+        m_Forcing[i] = Array<OneD, NekDouble>(nq, 0.0);
+    }
+}
+
+void ForcingProgrammatic::v_Apply(
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time)
+{
+    boost::ignore_unused(fields, inarray, time);
+
+    for (int i = 0; i < m_NumVariable; i++)
+    {
+        Vmath::Vadd(outarray[i].size(), outarray[i], 1, m_Forcing[i], 1,
+                    outarray[i], 1);
+    }
+}
+
+} // namespace SolverUtils
+} // namespace Nektar

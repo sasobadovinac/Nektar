@@ -32,98 +32,89 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 
 namespace Nektar
 {
-    namespace SolverUtils
+namespace SolverUtils
+{
+/**
+ * @brief Wrapper class for Riemann solver scalars.
+ */
+class HomoRSScalar
+{
+public:
+    HomoRSScalar(RSScalarFuncType func, int nPlanes)
+        : m_func(func), m_planeNumber(0), m_numPlanes(nPlanes), m_tmp()
     {
-        /**
-         * @brief Wrapper class for Riemann solver scalars.
-         */
-        class HomoRSScalar
-        {
-        public:
-            HomoRSScalar(RSScalarFuncType func,
-                         int              nPlanes)
-                : m_func       (func),
-                  m_planeNumber(0),
-                  m_numPlanes  (nPlanes),
-                  m_tmp        ()
-            {
-            }
-
-            const Array<OneD, const NekDouble>& Exec()
-            {
-                if (m_planeNumber == 0)
-                {
-                    m_tmp = m_func();
-                }
-
-                const int nPts   = m_tmp.size() / m_numPlanes;
-                const int offset = m_planeNumber * nPts;
-
-                m_tmp2 = Array<OneD, NekDouble>(nPts, m_tmp + offset);
-                m_planeNumber = (m_planeNumber + 1) % m_numPlanes;
-
-                return m_tmp2;
-            }
-
-        private:
-            RSScalarFuncType             m_func;
-            int                          m_planeNumber;
-            int                          m_numPlanes;
-            Array<OneD, const NekDouble> m_tmp;
-            Array<OneD, const NekDouble> m_tmp2;
-        };
-
-        /**
-         * @brief Wrapper class for Riemann solver scalars.
-         */
-        class HomoRSVector
-        {
-        public:
-            HomoRSVector(RSVecFuncType func,
-                         int           nPlanes,
-                         std::string   desc = "")
-                : m_func       (func),
-                  m_planeNumber(0),
-                  m_numPlanes  (nPlanes),
-                  m_tmp        (),
-                  m_desc       (desc)
-            {
-            }
-
-            const Array<OneD, const Array<OneD, NekDouble> >& Exec()
-            {
-                if (m_planeNumber == 0)
-                {
-                    m_tmp = m_func();
-                }
-
-                const int nDim   = m_tmp.size();
-                const int nPts   = m_tmp[0].size() / m_numPlanes;
-                const int offset = m_planeNumber * nPts;
-                m_tmp2 = Array<OneD, Array<OneD, NekDouble> >(nDim);
-
-                for (int i = 0; i < m_tmp.size(); ++i)
-                {
-                    m_tmp2[i] = Array<OneD, NekDouble>(nPts, m_tmp[i] + offset);
-                }
-
-                m_planeNumber = (m_planeNumber + 1) % m_numPlanes;
-
-                return m_tmp2;
-            }
-
-        private:
-            RSVecFuncType                        m_func;
-            int                                  m_planeNumber;
-            int                                  m_numPlanes;
-            Array<OneD, Array<OneD, NekDouble> > m_tmp;
-            Array<OneD, Array<OneD, NekDouble> > m_tmp2;
-            std::string                          m_desc;
-        };
     }
-}
+
+    const Array<OneD, const NekDouble> &Exec()
+    {
+        if (m_planeNumber == 0)
+        {
+            m_tmp = m_func();
+        }
+
+        const int nPts   = m_tmp.size() / m_numPlanes;
+        const int offset = m_planeNumber * nPts;
+
+        m_tmp2        = Array<OneD, NekDouble>(nPts, m_tmp + offset);
+        m_planeNumber = (m_planeNumber + 1) % m_numPlanes;
+
+        return m_tmp2;
+    }
+
+private:
+    RSScalarFuncType m_func;
+    int m_planeNumber;
+    int m_numPlanes;
+    Array<OneD, const NekDouble> m_tmp;
+    Array<OneD, const NekDouble> m_tmp2;
+};
+
+/**
+ * @brief Wrapper class for Riemann solver scalars.
+ */
+class HomoRSVector
+{
+public:
+    HomoRSVector(RSVecFuncType func, int nPlanes, std::string desc = "")
+        : m_func(func), m_planeNumber(0), m_numPlanes(nPlanes), m_tmp(),
+          m_desc(desc)
+    {
+    }
+
+    const Array<OneD, const Array<OneD, NekDouble>> &Exec()
+    {
+        if (m_planeNumber == 0)
+        {
+            m_tmp = m_func();
+        }
+
+        const int nDim   = m_tmp.size();
+        const int nPts   = m_tmp[0].size() / m_numPlanes;
+        const int offset = m_planeNumber * nPts;
+        m_tmp2           = Array<OneD, Array<OneD, NekDouble>>(nDim);
+
+        for (int i = 0; i < m_tmp.size(); ++i)
+        {
+            m_tmp2[i] = Array<OneD, NekDouble>(nPts, m_tmp[i] + offset);
+        }
+
+        m_planeNumber = (m_planeNumber + 1) % m_numPlanes;
+
+        return m_tmp2;
+    }
+
+private:
+    RSVecFuncType m_func;
+    int m_planeNumber;
+    int m_numPlanes;
+    Array<OneD, Array<OneD, NekDouble>> m_tmp;
+    Array<OneD, Array<OneD, NekDouble>> m_tmp2;
+    std::string m_desc;
+};
+} // namespace SolverUtils
+} // namespace Nektar

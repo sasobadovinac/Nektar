@@ -39,23 +39,25 @@ namespace Nektar
 namespace NekMesh
 {
 
-/// Define node equality based on coordinate with optional custom tolerance factor.
+/// Define node equality based on coordinate with optional custom tolerance
+/// factor.
 NEKMESH_EXPORT bool IsNodeEqual(const Node &n1, const Node &n2,
-    const unsigned int fact)
+                                const unsigned int fact)
 {
     return LibUtilities::IsRealEqual(n1.m_x, n2.m_x, fact) &&
            LibUtilities::IsRealEqual(n1.m_y, n2.m_y, fact) &&
            LibUtilities::IsRealEqual(n1.m_z, n2.m_z, fact);
 }
 
-/// Define node equality based on coordinate with optional custom tolerance factor.
+/// Define node equality based on coordinate with optional custom tolerance
+/// factor.
 NEKMESH_EXPORT bool IsNodeClose(const Node &n1, const Node &n2,
-    const NekDouble tol)
+                                const NekDouble tol)
 {
     return LibUtilities::IsRealClose(n1.m_x, n2.m_x, tol) &&
            LibUtilities::IsRealClose(n1.m_y, n2.m_y, tol) &&
            LibUtilities::IsRealClose(n1.m_z, n2.m_z, tol);
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

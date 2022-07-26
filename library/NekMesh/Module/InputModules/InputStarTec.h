@@ -66,34 +66,28 @@ public:
     }
 
 protected:
-    void GenElement3D(std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                      int i,
+    void GenElement3D(std::vector<NekMesh::NodeSharedPtr> &Nodes, int i,
                       std::vector<int> &ElementFaces,
-                      std::vector<std::vector<int> > &FaceNodes,
-                      int ncomposite,
+                      std::vector<std::vector<int>> &FaceNodes, int ncomposite,
                       bool DoOrient);
 
-    void GenElement2D(std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                      int i,
+    void GenElement2D(std::vector<NekMesh::NodeSharedPtr> &Nodes, int i,
                       std::vector<int> &ElementFaces,
-                      std::vector<std::vector<int> > &FaceNodes,
-                      int ncomposite);
+                      std::vector<std::vector<int>> &FaceNodes, int ncomposite);
 
-    Array<OneD, int> SortEdgeNodes(
-                        std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                        std::vector<int> &ElementFaces,
-                        std::vector<std::vector<int> > &FaceNodes);
+    Array<OneD, int> SortEdgeNodes(std::vector<NekMesh::NodeSharedPtr> &Nodes,
+                                   std::vector<int> &ElementFaces,
+                                   std::vector<std::vector<int>> &FaceNodes);
 
-    Array<OneD, int> SortFaceNodes(
-                    std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                    std::vector<int> &ElementFaces,
-                    std::vector<std::vector<int> > &FaceNodes);
+    Array<OneD, int> SortFaceNodes(std::vector<NekMesh::NodeSharedPtr> &Nodes,
+                                   std::vector<int> &ElementFaces,
+                                   std::vector<std::vector<int>> &FaceNodes);
 
     void ResetNodes(std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                    Array<OneD, std::vector<int> > &ElementFaces,
-                    std::vector<std::vector<int> > &FaceNodes);
+                    Array<OneD, std::vector<int>> &ElementFaces,
+                    std::vector<std::vector<int>> &FaceNodes);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

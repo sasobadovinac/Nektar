@@ -40,8 +40,8 @@
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 
-#include <NekMesh/MeshElements/Node.h>
 #include <NekMesh/MeshElements/Mesh.h>
+#include <NekMesh/MeshElements/Node.h>
 
 #define TETLIBRARY
 #include <tetgen.h>
@@ -70,13 +70,13 @@ public:
     /**
      * @brief Assign parameters for meshing
      */
-    void InitialMesh(std::map<int, NodeSharedPtr>   tgidton,
-                     std::vector<Array<OneD, int> > tri);
+    void InitialMesh(std::map<int, NodeSharedPtr> tgidton,
+                     std::vector<Array<OneD, int>> tri);
 
     /**
      * @brief Gets the locations of the Stiener points added by TetGen
      */
-    void GetNewPoints(int num, std::vector<Array<OneD, NekDouble> > &newp);
+    void GetNewPoints(int num, std::vector<Array<OneD, NekDouble>> &newp);
 
     /**
      * @brief Refines a previously made tetmesh with node delta information
@@ -87,7 +87,7 @@ public:
     /**
      * @brief Get the list of connectivites of the nodes
      */
-    std::vector<Array<OneD, int> > Extract();
+    std::vector<Array<OneD, int>> Extract();
 
     /**
      * @brief Clear previous mesh
@@ -103,6 +103,6 @@ private:
 };
 
 typedef std::shared_ptr<TetGenInterface> TetGenInterfaceSharedPtr;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 #endif

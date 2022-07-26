@@ -35,8 +35,8 @@
 #ifndef UTILITIES_NEKMESH_OUTPUTGMSH
 #define UTILITIES_NEKMESH_OUTPUTGMSH
 
-#include <NekMesh/Module/Module.h>
 #include <LibUtilities/BasicUtils/HashUtils.hpp>
+#include <NekMesh/Module/Module.h>
 
 namespace Nektar
 {
@@ -45,10 +45,10 @@ namespace NekMesh
 
 struct ElmtConfigHash : std::unary_function<NekMesh::ElmtConfig, std::size_t>
 {
-    std::size_t operator()(NekMesh::ElmtConfig const& el) const
+    std::size_t operator()(NekMesh::ElmtConfig const &el) const
     {
-        return hash_combine(
-            (int)el.m_e, el.m_faceNodes, el.m_volumeNodes, el.m_order);
+        return hash_combine((int)el.m_e, el.m_faceNodes, el.m_volumeNodes,
+                            el.m_order);
     }
 };
 
@@ -57,7 +57,8 @@ class OutputGmsh : public NekMesh::OutputModule
 {
 public:
     /// Creates an instance of this class
-    static std::shared_ptr<Module> create(NekMesh::MeshSharedPtr m) {
+    static std::shared_ptr<Module> create(NekMesh::MeshSharedPtr m)
+    {
         return MemoryManager<OutputGmsh>::AllocateSharedPtr(m);
     }
     static NekMesh::ModuleKey className;
@@ -67,17 +68,18 @@ public:
 
     /// Write mesh to output file.
     virtual void Process();
-    
+
     virtual std::string GetModuleName()
     {
         return "OutputGmsh";
     }
 
 private:
-    std::unordered_map<NekMesh::ElmtConfig, unsigned int, ElmtConfigHash> elmMap;
+    std::unordered_map<NekMesh::ElmtConfig, unsigned int, ElmtConfigHash>
+        elmMap;
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

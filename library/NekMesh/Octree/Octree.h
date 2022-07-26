@@ -35,8 +35,8 @@
 #ifndef NEKTAR_MESHUTILS_OCTREE_OCTREE
 #define NEKTAR_MESHUTILS_OCTREE_OCTREE
 
-#include "SourcePoint.hpp"
 #include "Octant.h"
+#include "SourcePoint.hpp"
 #include <NekMesh/MeshElements/Mesh.h>
 #include <NekMesh/Module/Log.hpp>
 
@@ -47,15 +47,13 @@ namespace Nektar
 namespace NekMesh
 {
 
-//struct to assist in the creation of linesources in the code
+// struct to assist in the creation of linesources in the code
 struct linesource
 {
     Array<OneD, NekDouble> x1, x2;
     NekDouble R, delta;
-    linesource(Array<OneD, NekDouble> p1,
-               Array<OneD, NekDouble> p2,
-               NekDouble r,
-               NekDouble d)
+    linesource(Array<OneD, NekDouble> p1, Array<OneD, NekDouble> p2,
+               NekDouble r, NekDouble d)
         : x1(p1), x2(p2), R(r), delta(d)
     {
     }
@@ -75,10 +73,13 @@ struct linesource
         dev[2] = Le[0] * Re[1] - Re[0] * Le[1];
 
         NekDouble dist =
-            sqrt(dev[0] * dev[0] + dev[1] * dev[1] + dev[2] * dev[2]) / Length();
+            sqrt(dev[0] * dev[0] + dev[1] * dev[1] + dev[2] * dev[2]) /
+            Length();
 
-        NekDouble t = -1.0 * ((x1[0] - p[0]) * s[0] + (x1[1] - p[1]) * s[1] +
-                              (x1[2] - p[2]) * s[2]) / Length() / Length();
+        NekDouble t = -1.0 *
+                      ((x1[0] - p[0]) * s[0] + (x1[1] - p[1]) * s[1] +
+                       (x1[2] - p[2]) * s[2]) /
+                      Length() / Length();
 
         if (dist < R && !(t > 1) && !(t < 0))
         {
@@ -107,7 +108,6 @@ struct linesource
 class Octree
 {
 public:
-
     Octree(MeshSharedPtr m, Logger log) : m_mesh(m), m_log(log)
     {
         m_log.SetPrefix("Octree");
@@ -146,7 +146,7 @@ public:
     {
         m_minDelta = min;
         m_maxDelta = max;
-        m_eps = ep;
+        m_eps      = ep;
     }
 
     /**
@@ -167,7 +167,6 @@ public:
     }
 
 private:
-
     /**
      * @brief Smooths specification over all octants to a gradation criteria
      */
@@ -243,7 +242,7 @@ private:
 };
 typedef std::shared_ptr<Octree> OctreeSharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

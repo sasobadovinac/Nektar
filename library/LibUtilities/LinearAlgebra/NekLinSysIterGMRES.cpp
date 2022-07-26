@@ -63,7 +63,8 @@ NekLinSysIterGMRES::NekLinSysIterGMRES(
 
     pSession->MatchSolverInfo("GMRESLeftPrecon", "True", m_NekLinSysLeftPrecon,
                               pKey.m_NekLinSysLeftPrecon);
-    pSession->MatchSolverInfo("GMRESRightPrecon", "False", m_NekLinSysRightPrecon,
+    pSession->MatchSolverInfo("GMRESRightPrecon", "False",
+                              m_NekLinSysRightPrecon,
                               pKey.m_NekLinSysRightPrecon);
 
     if (pSession->DefinesGlobalSysSolnInfo(variable, "GMRESMaxHessMatBand"))
@@ -151,7 +152,7 @@ int NekLinSysIterGMRES::DoGMRES(const int nGlobal,
         NekVector<NekDouble> inGlob(nGlobal, pInput, eWrapper);
         Set_Rhs_Magnitude(inGlob);
     }
-    
+
     m_rhs_magnitude = 1.0;
 
     // Get vector sizes
@@ -474,7 +475,7 @@ void NekLinSysIterGMRES::DoArnoldi(const int starttem, const int endtem,
     NekDouble vExchange = 0.0;
     // w=AV(:,nd)
     Array<OneD, NekDouble> w(nGlobal, 0.0);
-    
+
     LibUtilities::Timer timer;
     timer.Start();
     m_operator.DoNekSysLhsEval(Vsingle1, w, m_DifferenceFlag1);

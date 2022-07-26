@@ -169,7 +169,7 @@ public:
     LIB_UTILITIES_EXPORT inline bool RemoveExistingFiles();
 
     LIB_UTILITIES_EXPORT inline std::pair<CommSharedPtr, CommSharedPtr>
-        SplitCommNode();
+    SplitCommNode();
 
 protected:
     int m_size;                 ///< Number of processes
@@ -252,7 +252,7 @@ protected:
 
     LIB_UTILITIES_EXPORT virtual bool v_RemoveExistingFiles();
     LIB_UTILITIES_EXPORT virtual std::pair<CommSharedPtr, CommSharedPtr>
-        v_SplitCommNode();
+    v_SplitCommNode();
 };
 
 /**

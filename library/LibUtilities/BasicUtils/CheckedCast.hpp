@@ -44,15 +44,12 @@ namespace Nektar
 namespace LibUtilities
 {
 /// checked cast from float types only to int types
-template
-<
-    class To, class Ti,
-    class = typename std::enable_if
-    <
-        std::is_floating_point<typename std::remove_reference<Ti>::type>::value
-        && std::is_integral <typename std::remove_reference<To>::type>::value
-    >::type
->
+template <class To, class Ti,
+          class = typename std::enable_if<
+              std::is_floating_point<
+                  typename std::remove_reference<Ti>::type>::value &&
+              std::is_integral<
+                  typename std::remove_reference<To>::type>::value>::type>
 inline To checked_cast(const Ti param)
 {
     Ti min = std::numeric_limits<To>::min();
@@ -62,7 +59,7 @@ inline To checked_cast(const Ti param)
     return static_cast<To>(param);
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

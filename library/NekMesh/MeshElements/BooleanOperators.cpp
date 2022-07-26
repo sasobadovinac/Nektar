@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Triangle.h>
 #include <NekMesh/MeshElements/Mesh.h>
+#include <NekMesh/MeshElements/Triangle.h>
 
 using namespace std;
 
@@ -140,7 +140,7 @@ bool operator!=(NodeSharedPtr const &p1, NodeSharedPtr const &p2)
 /**
  * @brief Defines ordering between two #NodeSharedPtr objects.
  */
-bool operator< (NodeSharedPtr const &p1, NodeSharedPtr const &p2)
+bool operator<(NodeSharedPtr const &p1, NodeSharedPtr const &p2)
 {
     return *p1 < *p2;
 }
@@ -160,14 +160,14 @@ std::ostream &operator<<(std::ostream &os, const NodeSharedPtr &n)
  */
 bool operator==(EdgeSharedPtr const &p1, EdgeSharedPtr const &p2)
 {
-    return ( ((*(p1->m_n1) == *(p2->m_n1)) && (*(p1->m_n2) == *(p2->m_n2)))
-          || ((*(p1->m_n2) == *(p2->m_n1)) && (*(p1->m_n1) == *(p2->m_n2))));
+    return (((*(p1->m_n1) == *(p2->m_n1)) && (*(p1->m_n2) == *(p2->m_n2))) ||
+            ((*(p1->m_n2) == *(p2->m_n1)) && (*(p1->m_n1) == *(p2->m_n2))));
 }
 
 /**
  * @brief Defines ordering between two edges (based on ID of edges).
  */
-bool operator< (EdgeSharedPtr const &p1, EdgeSharedPtr const &p2)
+bool operator<(EdgeSharedPtr const &p1, EdgeSharedPtr const &p2)
 {
     return p1->m_id < p2->m_id;
 }
@@ -181,8 +181,8 @@ bool operator==(FaceSharedPtr const &p1, FaceSharedPtr const &p2)
     std::vector<NodeSharedPtr>::iterator it1;
     for (it1 = p1->m_vertexList.begin(); it1 != p1->m_vertexList.end(); ++it1)
     {
-        if (find(p2->m_vertexList.begin(), p2->m_vertexList.end(), *it1)
-            == p2->m_vertexList.end())
+        if (find(p2->m_vertexList.begin(), p2->m_vertexList.end(), *it1) ==
+            p2->m_vertexList.end())
         {
             return false;
         }
@@ -194,10 +194,10 @@ bool operator==(FaceSharedPtr const &p1, FaceSharedPtr const &p2)
  * @brief Defines ordering between two faces (depending on ID of
  * faces).
  */
-bool operator< (FaceSharedPtr const &p1, FaceSharedPtr const &p2)
+bool operator<(FaceSharedPtr const &p1, FaceSharedPtr const &p2)
 {
     return p1->m_id < p2->m_id;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

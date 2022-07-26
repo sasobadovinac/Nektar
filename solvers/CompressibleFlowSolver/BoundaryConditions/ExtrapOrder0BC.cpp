@@ -41,36 +41,33 @@ using namespace std;
 namespace Nektar
 {
 
-std::string ExtrapOrder0BC::className = GetCFSBndCondFactory().
-    RegisterCreatorFunction("ExtrapOrder0",
-                            ExtrapOrder0BC::create,
-                            "Extrapolation of order 0 boundary condition.");
+std::string ExtrapOrder0BC::className =
+    GetCFSBndCondFactory().RegisterCreatorFunction(
+        "ExtrapOrder0", ExtrapOrder0BC::create,
+        "Extrapolation of order 0 boundary condition.");
 
-ExtrapOrder0BC::ExtrapOrder0BC(const LibUtilities::SessionReaderSharedPtr& pSession,
-           const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-           const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-           const int pSpaceDim,
-           const int bcRegion,
-           const int cnt)
+ExtrapOrder0BC::ExtrapOrder0BC(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+    const int pSpaceDim, const int bcRegion, const int cnt)
     : CFSBndCond(pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt)
 {
 }
 
-void ExtrapOrder0BC::v_Apply(
-        Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-        Array<OneD, Array<OneD, NekDouble> >               &physarray,
-        const NekDouble                                    &time)
+void ExtrapOrder0BC::v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                             Array<OneD, Array<OneD, NekDouble>> &physarray,
+                             const NekDouble &time)
 {
     boost::ignore_unused(time);
 
     int i, j;
     int e, pnt;
     int id1, id2, nBCEdgePts;
-    int nVariables = physarray.size();
+    int nVariables  = physarray.size();
     int nDimensions = m_spacedim;
 
-    const Array<OneD, const int> &traceBndMap
-        = m_fields[0]->GetTraceBndMap();
+    const Array<OneD, const int> &traceBndMap = m_fields[0]->GetTraceBndMap();
 
     int eMax;
 
@@ -79,29 +76,34 @@ void ExtrapOrder0BC::v_Apply(
     // Loop on m_bcRegions
     for (e = 0; e < eMax; ++e)
     {
-        nBCEdgePts = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-            GetExp(e)->GetTotPoints();
-        id1 = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-            GetPhys_Offset(e) ;
-        id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
+        nBCEdgePts = m_fields[0]
+                         ->GetBndCondExpansions()[m_bcRegion]
+                         ->GetExp(e)
+                         ->GetTotPoints();
+        id1 =
+            m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetPhys_Offset(e);
+        id2 =
+            m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset + e]);
 
         // Loop on points of m_bcRegion 'e'
         for (i = 0; i < nBCEdgePts; i++)
         {
-            pnt = id2+i;
+            pnt = id2 + i;
 
             // Setting up bcs for density and velocities
-            for (j = 0; j <=nDimensions; ++j)
+            for (j = 0; j <= nDimensions; ++j)
             {
-                (m_fields[j]->GetBndCondExpansions()[m_bcRegion]->
-                 UpdatePhys())[id1+i] = Fwd[j][pnt];
+                (m_fields[j]
+                     ->GetBndCondExpansions()[m_bcRegion]
+                     ->UpdatePhys())[id1 + i] = Fwd[j][pnt];
             }
 
             // Setting up bcs for energy
-            (m_fields[nVariables-1]->GetBndCondExpansions()[m_bcRegion]->
-                UpdatePhys())[id1+i] = Fwd[nVariables-1][pnt];
+            (m_fields[nVariables - 1]
+                 ->GetBndCondExpansions()[m_bcRegion]
+                 ->UpdatePhys())[id1 + i] = Fwd[nVariables - 1][pnt];
         }
     }
 }
 
-}
+} // namespace Nektar

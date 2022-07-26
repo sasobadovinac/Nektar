@@ -41,83 +41,78 @@
 
 namespace Nektar
 {
-    namespace SolverUtils
+namespace SolverUtils
+{
+class AdvectionWeakDG : public Advection
+{
+public:
+    static AdvectionSharedPtr create(std::string advType)
     {
-        class AdvectionWeakDG : public Advection
-        {
-        public:
-            static AdvectionSharedPtr create(std::string advType)
-            {
-                boost::ignore_unused(advType);
-                return AdvectionSharedPtr(new AdvectionWeakDG());
-            }
-
-            static std::string type;
-
-        protected:
-            AdvectionWeakDG();
-
-            virtual void v_InitObject(
-                LibUtilities::SessionReaderSharedPtr               pSession,
-                Array<OneD, MultiRegions::ExpListSharedPtr>        pFields);
-
-            virtual void v_Advect(
-                const int                                         nConvective,
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                      Array<OneD, Array<OneD, NekDouble> >        &outarray,
-                const NekDouble                                   &time,
-                const Array<OneD, Array<OneD, NekDouble> >
-                    &pFwd = NullNekDoubleArrayOfArray,
-                const Array<OneD, Array<OneD, NekDouble> >
-                    &pBwd = NullNekDoubleArrayOfArray);
-
-            virtual void v_AdvectCoeffs(
-                const int                                          nConvective,
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                      Array<OneD, Array<OneD, NekDouble> >        &outarray,
-                const NekDouble                                   &time,
-                const Array<OneD, Array<OneD, NekDouble> >
-                    &pFwd = NullNekDoubleArrayOfArray,
-                const Array<OneD, Array<OneD, NekDouble> >
-                    &pBwd = NullNekDoubleArrayOfArray);
-
-             virtual void v_AdvectVolumeFlux(
-                const int                                     nConvectiveFields,
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                const Array<OneD, Array<OneD, NekDouble>>         &advVel,
-                const Array<OneD, Array<OneD, NekDouble>>         &inarray,
-                TensorOfArray3D<NekDouble>                        &VolumeFlux,
-                const NekDouble &time)
-            {
-                boost::ignore_unused(nConvectiveFields, fields, advVel, inarray,
-                                        VolumeFlux, time);
-                m_fluxVector(inarray, VolumeFlux);
-            }
-
-             virtual void v_AdvectTraceFlux(
-                const int nConvective,
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                const Array<OneD, Array<OneD, NekDouble>>         &advVel,
-                const Array<OneD, Array<OneD, NekDouble>>         &inarray,
-                      Array<OneD, Array<OneD, NekDouble>>         &TraceFlux,
-                const NekDouble                                   &time,
-                const Array<OneD, Array<OneD, NekDouble>>
-                    &pFwd =NullNekDoubleArrayOfArray,
-                const Array<OneD, Array<OneD, NekDouble>>
-                    &pBwd =NullNekDoubleArrayOfArray);
-
-            virtual void v_AddVolumJacToMat( 
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-                const int &nConvectiveFields,
-                const TensorOfArray5D<NekDouble> &ElmtJacArray,
-                Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> &gmtxarray);
-
-        };
+        boost::ignore_unused(advType);
+        return AdvectionSharedPtr(new AdvectionWeakDG());
     }
-}
+
+    static std::string type;
+
+protected:
+    AdvectionWeakDG();
+
+    virtual void v_InitObject(
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+
+    virtual void v_Advect(
+        const int nConvective,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
+
+    virtual void v_AdvectCoeffs(
+        const int nConvective,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
+
+    virtual void v_AdvectVolumeFlux(
+        const int nConvectiveFields,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        TensorOfArray3D<NekDouble> &VolumeFlux, const NekDouble &time)
+    {
+        boost::ignore_unused(nConvectiveFields, fields, advVel, inarray,
+                             VolumeFlux, time);
+        m_fluxVector(inarray, VolumeFlux);
+    }
+
+    virtual void v_AdvectTraceFlux(
+        const int nConvective,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &TraceFlux, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
+
+    virtual void v_AddVolumJacToMat(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const int &nConvectiveFields,
+        const TensorOfArray5D<NekDouble> &ElmtJacArray,
+        Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> &gmtxarray);
+};
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

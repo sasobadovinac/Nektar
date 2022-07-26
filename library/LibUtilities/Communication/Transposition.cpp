@@ -619,5 +619,5 @@ void Transposition::TransposeZYtoYZ(const Array<OneD, const NekDouble> &inarray,
 }
 
 // TODO: Impelement 2D and 3D transposition routines
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

@@ -49,7 +49,7 @@ namespace LibUtilities
 {
 typedef MPI_Datatype CommDataType;
 }
-}
+} // namespace Nektar
 
 #elif NEKTAR_USING_PETSC
 
@@ -59,7 +59,7 @@ namespace LibUtilities
 {
 typedef unsigned int CommDataType;
 }
-}
+} // namespace Nektar
 
 #else
 
@@ -70,46 +70,46 @@ namespace LibUtilities
 typedef unsigned int CommDataType;
 
 #ifndef MPI_CHAR
-    #define MPI_CHAR           ((CommDataType)0x4c000101)
+#define MPI_CHAR ((CommDataType)0x4c000101)
 #endif
 
 #ifndef MPI_INT
-    #define MPI_INT            ((CommDataType)0x4c000405)
+#define MPI_INT ((CommDataType)0x4c000405)
 #endif
 
 #ifndef MPI_UNSIGNED
-    #define MPI_UNSIGNED       ((CommDataType)0x4c000406)
+#define MPI_UNSIGNED ((CommDataType)0x4c000406)
 #endif
 
 #ifndef MPI_LONG
-    #define MPI_LONG           ((CommDataType)0x4c000807)
+#define MPI_LONG ((CommDataType)0x4c000807)
 #endif
 
 #ifndef MPI_UNSIGNED_LONG
-    #define MPI_UNSIGNED_LONG  ((CommDataType)0x4c000808)
+#define MPI_UNSIGNED_LONG ((CommDataType)0x4c000808)
 #endif
 
 #ifndef MPI_LONG_LONG
-    #define MPI_LONG_LONG      ((CommDataType)0x4c000809)
+#define MPI_LONG_LONG ((CommDataType)0x4c000809)
 #endif
 
 #ifndef MPI_UNSIGNED_LONG_LONG
-    #define MPI_UNSIGNED_LONG_LONG ((CommDataType)0x4c000819)
+#define MPI_UNSIGNED_LONG_LONG ((CommDataType)0x4c000819)
 #endif
 
 #ifndef MPI_FLOAT
-    #define MPI_FLOAT          ((CommDataType)0x4c00040a)
+#define MPI_FLOAT ((CommDataType)0x4c00040a)
 #endif
 
 #ifndef MPI_DOUBLE
-    #define MPI_DOUBLE         ((CommDataType)0x4c00080b)
+#define MPI_DOUBLE ((CommDataType)0x4c00080b)
 #endif
 
 #ifndef MPI_LONG_DOUBLE
-    #define MPI_LONG_DOUBLE    ((CommDataType)0x4c00100c)
+#define MPI_LONG_DOUBLE ((CommDataType)0x4c00100c)
 #endif
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 #endif
 
 namespace Nektar
@@ -145,7 +145,7 @@ public:
 /**
  * Partial specialisation for vectors
  */
-template <class elemT> class CommDataTypeTraits<std::vector<elemT> >
+template <class elemT> class CommDataTypeTraits<std::vector<elemT>>
 {
 public:
     static CommDataType &GetDataType()
@@ -176,7 +176,7 @@ public:
 /**
  * Partial specialisation for vectors
  */
-template <class elemT> class CommDataTypeTraits<Array<OneD, elemT> >
+template <class elemT> class CommDataTypeTraits<Array<OneD, elemT>>
 {
 public:
     static CommDataType &GetDataType()
@@ -197,7 +197,7 @@ public:
     }
     const static bool IsVector = true;
 };
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

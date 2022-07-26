@@ -35,9 +35,11 @@
 #ifndef NEKTAR_SOLVERUTILS_FILTERS_FILTERINTERFACES_HPP
 #define NEKTAR_SOLVERUTILS_FILTERS_FILTERINTERFACES_HPP
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
+
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <SolverUtils/SolverUtilsDeclspec.h>
 
 namespace Nektar
 {
@@ -51,20 +53,20 @@ public:
 
     /// Extract array with velocity from physfield
     SOLVER_UTILS_EXPORT virtual void GetVelocity(
-        const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-              Array<OneD, Array<OneD, NekDouble> >       &velocity) = 0;
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, NekDouble>> &velocity) = 0;
 
     SOLVER_UTILS_EXPORT virtual bool HasConstantDensity() = 0;
 
     /// Extract array with density from physfield
     SOLVER_UTILS_EXPORT virtual void GetDensity(
-        const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-              Array<OneD, NekDouble>                     &density) = 0;
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, NekDouble> &density) = 0;
 
     /// Extract array with pressure from physfield
     SOLVER_UTILS_EXPORT virtual void GetPressure(
-        const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-              Array<OneD, NekDouble>                     &pressure) = 0;
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, NekDouble> &pressure) = 0;
 
     // gave access and set to the moving frame velocity
     // for Moving reference frame formulation
@@ -97,7 +99,7 @@ public:
     // gave access and set the angle between moving frame and stationary
     // inertial frame
     SOLVER_UTILS_EXPORT virtual void SetMovingFrameAngles(
-        const Array < OneD, NekDouble> &vFrameTheta)
+        const Array<OneD, NekDouble> &vFrameTheta)
     {
         boost::ignore_unused(vFrameTheta);
     }
@@ -109,7 +111,7 @@ public:
     }
 };
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

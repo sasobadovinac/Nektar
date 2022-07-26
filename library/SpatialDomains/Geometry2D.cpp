@@ -65,8 +65,7 @@ Geometry2D::~Geometry2D()
 void Geometry2D::NewtonIterationForLocCoord(
     const Array<OneD, const NekDouble> &coords,
     const Array<OneD, const NekDouble> &ptsx,
-    const Array<OneD, const NekDouble> &ptsy,
-    Array<OneD, NekDouble> &Lcoords,
+    const Array<OneD, const NekDouble> &ptsy, Array<OneD, NekDouble> &Lcoords,
     NekDouble &dist)
 {
     // Maximum iterations for convergence
@@ -79,8 +78,8 @@ void Geometry2D::NewtonIterationForLocCoord(
     Array<OneD, const NekDouble> Jac =
         m_geomFactors->GetJac(m_xmap->GetPointsKeys());
 
-    NekDouble ScaledTol = Vmath::Vsum(Jac.size(), Jac, 1) /
-                          ((NekDouble)Jac.size());
+    NekDouble ScaledTol =
+        Vmath::Vsum(Jac.size(), Jac, 1) / ((NekDouble)Jac.size());
     ScaledTol *= Tol;
 
     NekDouble xmap, ymap, F1, F2;
@@ -142,7 +141,7 @@ void Geometry2D::NewtonIterationForLocCoord(
             Lcoords[1] +
             (-dery_1 * (coords[0] - xmap) + derx_1 * (coords[1] - ymap)) / jac;
 
-        if( !(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1])) )
+        if (!(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1])))
         {
             dist = 1e16;
             std::ostringstream ss;
@@ -158,15 +157,15 @@ void Geometry2D::NewtonIterationForLocCoord(
     }
 
     m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
-    if(ClampLocCoords(eta, 0.))
+    if (ClampLocCoords(eta, 0.))
     {
         I[0] = m_xmap->GetBasis(0)->GetI(eta);
         I[1] = m_xmap->GetBasis(1)->GetI(eta + 1);
         // calculate the global point corresponding to Lcoords
         xmap = m_xmap->PhysEvaluate(I, ptsx);
         ymap = m_xmap->PhysEvaluate(I, ptsy);
-        F1 = coords[0] - xmap;
-        F2 = coords[1] - ymap;
+        F1   = coords[0] - xmap;
+        F2   = coords[1] - ymap;
         dist = sqrt(F1 * F1 + F2 * F2);
     }
     else
@@ -200,17 +199,17 @@ void Geometry2D::NewtonIterationForLocCoord(
 }
 
 NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                   Array<OneD, NekDouble> &Lcoords)
+                                     Array<OneD, NekDouble> &Lcoords)
 {
     NekDouble dist = 0.;
     if (GetMetricInfo()->GetGtype() == eRegular)
     {
         int v2;
-        if(m_shapeType == LibUtilities::eTriangle)
+        if (m_shapeType == LibUtilities::eTriangle)
         {
             v2 = 2;
         }
-        else if(m_shapeType == LibUtilities::eQuadrilateral)
+        else if (m_shapeType == LibUtilities::eQuadrilateral)
         {
             v2 = 3;
         }
@@ -246,15 +245,15 @@ NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
         // Set distance
         Array<OneD, NekDouble> eta(2, 0.);
         m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
-        if(ClampLocCoords(eta, 0.))
+        if (ClampLocCoords(eta, 0.))
         {
             Array<OneD, NekDouble> xi(2, 0.);
             m_xmap->LocCollapsedToLocCoord(eta, xi);
-            xi[0] = (xi[0] + 1.) * 0.5; //re-scaled to ratio [0, 1]
+            xi[0] = (xi[0] + 1.) * 0.5; // re-scaled to ratio [0, 1]
             xi[1] = (xi[1] + 1.) * 0.5;
             for (int i = 0; i < m_coordim; ++i)
             {
-                NekDouble tmp = xi[0]*e10[i] + xi[1]*e20[i] - er0[i];
+                NekDouble tmp = xi[0] * e10[i] + xi[1] * e20[i] - er0[i];
                 dist += tmp * tmp;
             }
             dist = sqrt(dist);
@@ -270,20 +269,20 @@ NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
 
         // Determine 3D manifold orientation
         int idx = 0, idy = 1;
-        if(m_coordim == 3)
+        if (m_coordim == 3)
         {
             PointGeom e01, e21, norm;
             e01.Sub(*m_verts[0], *m_verts[1]);
             e21.Sub(*m_verts[2], *m_verts[1]);
             norm.Mult(e01, e21);
-            int tmpi = 0;
+            int tmpi   = 0;
             double tmp = std::fabs(norm[0]);
-            if(tmp < fabs(norm[1]))
+            if (tmp < fabs(norm[1]))
             {
-                tmp = fabs(norm[1]);
+                tmp  = fabs(norm[1]);
                 tmpi = 1;
             }
-            if(tmp < fabs(norm[2]))
+            if (tmp < fabs(norm[2]))
             {
                 tmpi = 2;
             }
@@ -352,5 +351,5 @@ int Geometry2D::v_GetShapeDim() const
     return 2;
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

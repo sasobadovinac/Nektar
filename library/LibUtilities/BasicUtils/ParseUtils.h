@@ -36,9 +36,9 @@
 #ifndef NEKTAR_LIBUTILITIES_PARSEUTILS_H
 #define NEKTAR_LIBUTILITIES_PARSEUTILS_H
 
+#include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <sstream>
 #include <vector>
-#include <LibUtilities/LibUtilitiesDeclspec.h>
 
 namespace Nektar
 {
@@ -106,6 +106,6 @@ public:
     }
 };
 
-}
+} // namespace Nektar
 
-#endif //NEKTAR_LIBUTILITIES_PARSEUTILS_HPP
+#endif // NEKTAR_LIBUTILITIES_PARSEUTILS_HPP

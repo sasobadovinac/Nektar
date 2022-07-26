@@ -42,20 +42,20 @@ namespace NekMesh
 {
 
 std::string CADVertCFI::key = GetCADVertFactory().RegisterCreatorFunction(
-        "cfi", CADVertCFI::create, "CAD vert cfi");
+    "cfi", CADVertCFI::create, "CAD vert cfi");
 
-void CADVertCFI::Initialise(int i, cfi::Point* in, NekDouble s)
+void CADVertCFI::Initialise(int i, cfi::Point *in, NekDouble s)
 {
-    m_id      = i;
+    m_id       = i;
     m_cfipoint = in;
-    m_scal = s;
+    m_scal     = s;
 
     cfi::Position pos = m_cfipoint->getGeometry();
 
     m_node = std::shared_ptr<Node>(
-        new Node(i - 1, pos.x*m_scal, pos.y*m_scal, pos.z*m_scal));
+        new Node(i - 1, pos.x * m_scal, pos.y * m_scal, pos.z * m_scal));
     degen = false;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

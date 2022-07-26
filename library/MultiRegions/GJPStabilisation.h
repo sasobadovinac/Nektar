@@ -28,82 +28,80 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: GJP data 
+// Description: GJP data
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_LIBS_MULTIREGIONS_GJPSTABILISATION_H
 #define NEKTAR_LIBS_MULTIREGIONS_GJPSTABILISATION_H
 
-#include <MultiRegions/MultiRegionsDeclspec.h>
+#include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
 #include <MultiRegions/DisContField.h>
 #include <MultiRegions/GlobalMatrix.h>
-#include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+
+class GJPStabilisation
+{
+public:
+    MULTI_REGIONS_EXPORT GJPStabilisation(ExpListSharedPtr field);
+
+    MULTI_REGIONS_EXPORT ~GJPStabilisation(){};
+
+    MULTI_REGIONS_EXPORT void Apply(
+        const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &outarray,
+        const Array<OneD, NekDouble> &pUnorm = NullNekDouble1DArray,
+        const NekDouble scale                = 1.0) const;
+
+    Array<OneD, Array<OneD, NekDouble>> &GetTraceNormals(void)
     {
-
-        class GJPStabilisation
-        {
-        public:
-            MULTI_REGIONS_EXPORT GJPStabilisation(ExpListSharedPtr field);
-
-            MULTI_REGIONS_EXPORT ~GJPStabilisation() {};
-
-            MULTI_REGIONS_EXPORT void Apply(const Array<OneD, NekDouble>  &inarray,
-                       Array<OneD, NekDouble> &outarray,
-                       const Array<OneD, NekDouble> &pUnorm = NullNekDouble1DArray,
-                       const NekDouble scale = 1.0) const;
-            
-
-            Array<OneD, Array<OneD, NekDouble>> &GetTraceNormals(void)
-            {
-                return m_traceNormals;
-            }
-
-            int GetNumTracePts(void) const
-            {
-                return m_dgfield->GetTrace()->GetTotPoints();
-            }
-
-            bool IsSemiImplicit() const 
-            {
-                return m_useGJPSemiImplicit;
-            }
-        private:
-            int m_coordDim; 
-            int m_traceDim; 
-            bool m_useGJPSemiImplicit; 
-
-            // Trace normals 
-            Array<OneD, Array<OneD, NekDouble> > m_traceNormals; 
-            
-            /// DG expansion for projection evalaution along trace
-            MultiRegions::ExpListSharedPtr m_dgfield;    
-            /// LocaTraceToTraceMap 
-            MultiRegions::LocTraceToTraceMapSharedPtr  m_locTraceToTraceMap;
-            /// Local Elemental trace expansions
-            MultiRegions::ExpListSharedPtr m_locElmtTrace;
-
-            /// Scale factor for phys values along trace involving the lcoal
-            /// normals and tangent geometric factors n
-            Array<OneD, Array<OneD, NekDouble>> m_scalTrace;
-            
-            std::vector<std::pair<int,Array<OneD, DNekMatSharedPtr>>>
-                m_StdDBaseOnTraceMat; 
-
-            void SetUpExpansionInfoMapForGJP
-                             (SpatialDomains::MeshGraphSharedPtr graph,
-                              std::string variable);
-
-            void MultiplyByStdDerivBaseOnTraceMat(int i,
-                                           Array<OneD, NekDouble> &in,
-                                           Array<OneD, NekDouble> &out) const;
-        };
-
-        typedef std::shared_ptr<GJPStabilisation>  GJPStabilisationSharedPtr;
+        return m_traceNormals;
     }
-}
+
+    int GetNumTracePts(void) const
+    {
+        return m_dgfield->GetTrace()->GetTotPoints();
+    }
+
+    bool IsSemiImplicit() const
+    {
+        return m_useGJPSemiImplicit;
+    }
+
+private:
+    int m_coordDim;
+    int m_traceDim;
+    bool m_useGJPSemiImplicit;
+
+    // Trace normals
+    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
+
+    /// DG expansion for projection evalaution along trace
+    MultiRegions::ExpListSharedPtr m_dgfield;
+    /// LocaTraceToTraceMap
+    MultiRegions::LocTraceToTraceMapSharedPtr m_locTraceToTraceMap;
+    /// Local Elemental trace expansions
+    MultiRegions::ExpListSharedPtr m_locElmtTrace;
+
+    /// Scale factor for phys values along trace involving the lcoal
+    /// normals and tangent geometric factors n
+    Array<OneD, Array<OneD, NekDouble>> m_scalTrace;
+
+    std::vector<std::pair<int, Array<OneD, DNekMatSharedPtr>>>
+        m_StdDBaseOnTraceMat;
+
+    void SetUpExpansionInfoMapForGJP(SpatialDomains::MeshGraphSharedPtr graph,
+                                     std::string variable);
+
+    void MultiplyByStdDerivBaseOnTraceMat(int i, Array<OneD, NekDouble> &in,
+                                          Array<OneD, NekDouble> &out) const;
+};
+
+typedef std::shared_ptr<GJPStabilisation> GJPStabilisationSharedPtr;
+} // namespace MultiRegions
+} // namespace Nektar
 #endif

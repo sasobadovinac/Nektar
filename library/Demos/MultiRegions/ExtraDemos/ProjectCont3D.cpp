@@ -1,10 +1,10 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
-#include <MultiRegions/MultiRegions.hpp>
+#include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <MultiRegions/ContField.h>
+#include <MultiRegions/MultiRegions.hpp>
 #include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
@@ -15,40 +15,42 @@ using namespace Nektar;
 
 int main(int argc, char *argv[])
 {
-    LibUtilities::SessionReaderSharedPtr vSession
-            = LibUtilities::SessionReader::CreateInstance(argc, argv);
+    LibUtilities::SessionReaderSharedPtr vSession =
+        LibUtilities::SessionReader::CreateInstance(argc, argv);
 
-    MultiRegions::ContFieldSharedPtr Exp,Fce;
-    int     i, j, nq,  coordim;
-    Array<OneD,NekDouble>  fce;
-    Array<OneD,NekDouble>  xc0,xc1,xc2;
+    MultiRegions::ContFieldSharedPtr Exp, Fce;
+    int i, j, nq, coordim;
+    Array<OneD, NekDouble> fce;
+    Array<OneD, NekDouble> xc0, xc1, xc2;
 
-    if(argc != 2)
+    if (argc != 2)
     {
-        fprintf(stderr,"Usage: ProjectCont3D  meshfile \n");
+        fprintf(stderr, "Usage: ProjectCont3D  meshfile \n");
         exit(1);
     }
 
     //----------------------------------------------
     // Read in mesh from input file
-    SpatialDomains::MeshGraphSharedPtr graph3D = SpatialDomains::MeshGraph::Read(vSession);
+    SpatialDomains::MeshGraphSharedPtr graph3D =
+        SpatialDomains::MeshGraph::Read(vSession);
     //----------------------------------------------
 
     //----------------------------------------------
     // Print summary of solution details
-    const SpatialDomains::ExpansionInfoMap &expansions = graph3D->GetExpansionInfos();
-    LibUtilities::BasisKey bkey
-                            = expansions.begin()->second->m_basisKeyVector[0];
-    int nmodes =  bkey.GetNumModes();
-    cout << "Solving 3D C0 continuous Projection"  << endl;
+    const SpatialDomains::ExpansionInfoMap &expansions =
+        graph3D->GetExpansionInfos();
+    LibUtilities::BasisKey bkey =
+        expansions.begin()->second->m_basisKeyVector[0];
+    int nmodes = bkey.GetNumModes();
+    cout << "Solving 3D C0 continuous Projection" << endl;
     cout << "    No. modes  : " << nmodes << endl;
     cout << endl;
     //----------------------------------------------
 
     //----------------------------------------------
     // Define Expansion
-    Exp = MemoryManager<MultiRegions::ContField>
-                                ::AllocateSharedPtr(vSession,graph3D,vSession->GetVariable(0));
+    Exp = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
+        vSession, graph3D, vSession->GetVariable(0));
     //----------------------------------------------
 
     //----------------------------------------------
@@ -56,36 +58,36 @@ int main(int argc, char *argv[])
     coordim = Exp->GetCoordim(0);
     nq      = Exp->GetTotPoints();
 
-    xc0 = Array<OneD,NekDouble>(nq,0.0);
-    xc1 = Array<OneD,NekDouble>(nq,0.0);
-    xc2 = Array<OneD,NekDouble>(nq,0.0);
+    xc0 = Array<OneD, NekDouble>(nq, 0.0);
+    xc1 = Array<OneD, NekDouble>(nq, 0.0);
+    xc2 = Array<OneD, NekDouble>(nq, 0.0);
 
-    switch(coordim)
+    switch (coordim)
     {
-    case 1:
-        Exp->GetCoords(xc0);
-        break;
-    case 2:
-        Exp->GetCoords(xc0,xc1);
-        break;
-    case 3:
-        Exp->GetCoords(xc0,xc1,xc2);
-        break;
+        case 1:
+            Exp->GetCoords(xc0);
+            break;
+        case 2:
+            Exp->GetCoords(xc0, xc1);
+            break;
+        case 3:
+            Exp->GetCoords(xc0, xc1, xc2);
+            break;
     }
     //----------------------------------------------
 
     //----------------------------------------------
     // Define forcing function
-    fce = Array<OneD,NekDouble>(nq);
+    fce = Array<OneD, NekDouble>(nq);
 
-    for(i = 0; i < nq; ++i)
+    for (i = 0; i < nq; ++i)
     {
         fce[i] = 0.0;
-        for(j = 0; j < nmodes; ++j)
+        for (j = 0; j < nmodes; ++j)
         {
-            fce[i] += pow(xc0[i],j);
-            fce[i] += pow(xc1[i],j);
-            fce[i] += pow(xc2[i],j);
+            fce[i] += pow(xc0[i], j);
+            fce[i] += pow(xc1[i], j);
+            fce[i] += pow(xc2[i], j);
         }
     }
 
@@ -97,14 +99,14 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------
     // Write solution
-    //ofstream outfile("ProjectContFileOrig3D.dat");
-    //Fce->WriteToFile(outfile,eGnuplot);
-    //outfile.close();
+    // ofstream outfile("ProjectContFileOrig3D.dat");
+    // Fce->WriteToFile(outfile,eGnuplot);
+    // outfile.close();
     //----------------------------------------------
 
     //---------------------------------------------
     // Project onto Expansion
-    Exp->FwdTrans(Fce->GetPhys(), Exp->UpdateCoeffs());    
+    Exp->FwdTrans(Fce->GetPhys(), Exp->UpdateCoeffs());
     //---------------------------------------------
 
     //-------------------------------------------
@@ -114,15 +116,15 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------
     // Write solution
-    //ofstream outfile2("ProjectContFile3D.dat");
-    //Exp->WriteToFile(outfile2,eGnuplot);
-    //outfile2.close();
+    // ofstream outfile2("ProjectContFile3D.dat");
+    // Exp->WriteToFile(outfile2,eGnuplot);
+    // outfile2.close();
     //----------------------------------------------
 
     //--------------------------------------------
     // Calculate L_inf error
     cout << "L infinity error: " << Exp->Linf(Fce->GetPhys()) << endl;
-    cout << "L 2 error:        " << Exp->L2  (Fce->GetPhys()) << endl;
+    cout << "L 2 error:        " << Exp->L2(Fce->GetPhys()) << endl;
     //--------------------------------------------
 
     vSession->Finalise();

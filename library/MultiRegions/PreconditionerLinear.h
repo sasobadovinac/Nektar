@@ -33,75 +33,74 @@
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEAR_H
 #define NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEAR_H
-#include <MultiRegions/GlobalLinSys.h>
-#include <MultiRegions/Preconditioner.h>
-#include <MultiRegions/MultiRegionsDeclspec.h>
-#include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
-#include <LocalRegions/TetExp.h>
 #include <LocalRegions/PrismExp.h>
-
+#include <LocalRegions/TetExp.h>
+#include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
+#include <MultiRegions/GlobalLinSys.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
+#include <MultiRegions/Preconditioner.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+enum LinearPreconSolver
+{
+    eLinearPreconXxt,
+    eLinearPreconPETSc
+};
+
+class PreconditionerLinear;
+typedef std::shared_ptr<PreconditionerLinear> PreconditionerLinearSharedPtr;
+
+class PreconditionerLinear : public Preconditioner
+{
+public:
+    /// Creates an instance of this class
+    static PreconditionerSharedPtr create(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        enum LinearPreconSolver
-        {
-            eLinearPreconXxt,
-            eLinearPreconPETSc
-        };
-
-        class PreconditionerLinear;
-        typedef std::shared_ptr<PreconditionerLinear>  PreconditionerLinearSharedPtr;
-
-        class PreconditionerLinear: public Preconditioner
-	{
-        public:
-            /// Creates an instance of this class
-            static PreconditionerSharedPtr create(
-                        const std::shared_ptr<GlobalLinSys> &plinsys,
-                        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
-            {
-	        PreconditionerSharedPtr p = MemoryManager<PreconditionerLinear>::AllocateSharedPtr(plinsys,pLocToGloMap);
-	        p->InitObject();
-	        return p;
-            }
-
-            /// Name of class
-            static std::string className1;
-
-            MULTI_REGIONS_EXPORT PreconditionerLinear(
-                         const std::shared_ptr<GlobalLinSys> &plinsys,
-	                 const AssemblyMapSharedPtr &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT
-            virtual ~PreconditionerLinear() {}
-            
-	protected:
-            GlobalLinSysSharedPtr                       m_vertLinsys;
-            std::shared_ptr<AssemblyMap>                m_vertLocToGloMap;
-
-	private:
-            static std::string                       solveType;
-            static std::string                       solveTypeIds[];
-
-            virtual void v_InitObject();
-
-
-            virtual void v_DoPreconditionerWithNonVertOutput(
-                                  const Array<OneD, NekDouble>& pInput,
-                                  Array<OneD, NekDouble>& pOutput,
-                                  const Array<OneD, NekDouble>& pNonVertOutput,
-                                  Array<OneD, NekDouble>& pVertForce);
-            
-            virtual void v_DoPreconditioner(                
-                      const Array<OneD, NekDouble>& pInput,
-		      Array<OneD, NekDouble>& pOutput);
-		      
-            virtual void v_BuildPreconditioner();
-
-        };
+        PreconditionerSharedPtr p =
+            MemoryManager<PreconditionerLinear>::AllocateSharedPtr(
+                plinsys, pLocToGloMap);
+        p->InitObject();
+        return p;
     }
-}
+
+    /// Name of class
+    static std::string className1;
+
+    MULTI_REGIONS_EXPORT PreconditionerLinear(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const AssemblyMapSharedPtr &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT
+    virtual ~PreconditionerLinear()
+    {
+    }
+
+protected:
+    GlobalLinSysSharedPtr m_vertLinsys;
+    std::shared_ptr<AssemblyMap> m_vertLocToGloMap;
+
+private:
+    static std::string solveType;
+    static std::string solveTypeIds[];
+
+    virtual void v_InitObject();
+
+    virtual void v_DoPreconditionerWithNonVertOutput(
+        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
+        const Array<OneD, NekDouble> &pNonVertOutput,
+        Array<OneD, NekDouble> &pVertForce);
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_BuildPreconditioner();
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

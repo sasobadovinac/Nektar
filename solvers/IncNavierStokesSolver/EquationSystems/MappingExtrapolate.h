@@ -35,8 +35,8 @@
 #ifndef NEKTAR_SOLVERS_MAPPINGEXTRAPOLATE_H
 #define NEKTAR_SOLVERS_MAPPINGEXTRAPOLATE_H
 
-#include <IncNavierStokesSolver/EquationSystems/StandardExtrapolate.h>
 #include <GlobalMapping/Mapping.h>
+#include <IncNavierStokesSolver/EquationSystems/StandardExtrapolate.h>
 
 namespace Nektar
 {
@@ -55,8 +55,7 @@ public:
     static ExtrapolateSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        MultiRegions::ExpListSharedPtr &pPressure,
-        const Array<OneD, int> &pVel,
+        MultiRegions::ExpListSharedPtr &pPressure, const Array<OneD, int> &pVel,
         const SolverUtils::AdvectionSharedPtr &advObject)
     {
         ExtrapolateSharedPtr p =
@@ -71,9 +70,8 @@ public:
     virtual void v_CorrectPressureBCs(const Array<OneD, NekDouble> &pressure);
 
     virtual void v_CalcNeumannPressureBCs(
-        const Array<OneD, const Array<OneD, NekDouble> > &fields,
-        const Array<OneD, const Array<OneD, NekDouble> > &N,
-        NekDouble kinvis);
+        const Array<OneD, const Array<OneD, NekDouble>> &fields,
+        const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis);
 
     MappingExtrapolate(const LibUtilities::SessionReaderSharedPtr pSession,
                        Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
@@ -97,6 +95,6 @@ protected:
     //       system (when solved iteratively)
     NekDouble m_pressureRelaxation;
 };
-}
+} // namespace Nektar
 
 #endif

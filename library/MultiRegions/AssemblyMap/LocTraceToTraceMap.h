@@ -37,9 +37,9 @@
 
 #include <tuple>
 
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/Points.h>
 #include <LibUtilities/LinearAlgebra/NekTypeDefs.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
@@ -48,7 +48,7 @@ namespace LocalRegions
 {
 class Expansion;
 typedef std::shared_ptr<Expansion> ExpansionSharedPtr;
-}
+} // namespace LocalRegions
 
 namespace MultiRegions
 {
@@ -75,10 +75,9 @@ enum InterpLocTraceToTrace
  * distributions, the latter the target trace distributions. In the 2D case,
  * unused trace directions are set to LibUtilities::eNoPointsType.
  */
-typedef std::tuple<LibUtilities::PointsKey,
-                   LibUtilities::PointsKey,
-                   LibUtilities::PointsKey,
-                   LibUtilities::PointsKey> TraceInterpPoints;
+typedef std::tuple<LibUtilities::PointsKey, LibUtilities::PointsKey,
+                   LibUtilities::PointsKey, LibUtilities::PointsKey>
+    TraceInterpPoints;
 
 struct cmpop
 {
@@ -155,9 +154,8 @@ class LocTraceToTraceMap
 public:
     // Constructor
     MULTI_REGIONS_EXPORT LocTraceToTraceMap(
-        const ExpList &locExp,
-        const ExpListSharedPtr &trace,
-        const Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
+        const ExpList &locExp, const ExpListSharedPtr &trace,
+        const Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr>>
             &elmtToTrace,
         const std::vector<bool> &LeftAdjacents);
 
@@ -165,12 +163,11 @@ public:
     MULTI_REGIONS_EXPORT virtual ~LocTraceToTraceMap();
 
     MULTI_REGIONS_EXPORT void Setup(
-        const ExpList &locExp,
-        const ExpListSharedPtr &trace,
-        const Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> >
-        &elmtToTrace,
+        const ExpList &locExp, const ExpListSharedPtr &trace,
+        const Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr>>
+            &elmtToTrace,
         const std::vector<bool> &LeftAdjacents);
-        
+
     MULTI_REGIONS_EXPORT void LocTracesFromField(
         const Array<OneD, const NekDouble> &field,
         Array<OneD, NekDouble> faces);
@@ -179,80 +176,66 @@ public:
         const Array<OneD, const NekDouble> &field,
         Array<OneD, NekDouble> faces);
     MULTI_REGIONS_EXPORT void AddLocTracesToField(
-        const Array<OneD, const NekDouble>  &faces,
-        Array<OneD, NekDouble>              &field);
-
+        const Array<OneD, const NekDouble> &faces,
+        Array<OneD, NekDouble> &field);
 
     MULTI_REGIONS_EXPORT void ReshuffleLocTracesForInterp(
-        const int dir,
-        const Array<OneD, const NekDouble> &loctraces,
+        const int dir, const Array<OneD, const NekDouble> &loctraces,
         Array<OneD, NekDouble> reshuffle);
 
     MULTI_REGIONS_EXPORT void UnshuffleLocTraces(
-        const int dir,
-        const Array<OneD, const NekDouble> &loctraces,
+        const int dir, const Array<OneD, const NekDouble> &loctraces,
         Array<OneD, NekDouble> unshuffle);
 
     MULTI_REGIONS_EXPORT void InterpLocTracesToTrace(
-        const int dir,
-        const Array<OneD, const NekDouble> &loctraces,
+        const int dir, const Array<OneD, const NekDouble> &loctraces,
         Array<OneD, NekDouble> &traces);
 
     MULTI_REGIONS_EXPORT inline void InterpLocEdgesToTrace(
-        const int dir,
-        const Array<OneD, const NekDouble> &locfaces,
+        const int dir, const Array<OneD, const NekDouble> &locfaces,
         Array<OneD, NekDouble> &edges);
 
     MULTI_REGIONS_EXPORT void InterpLocFacesToTrace(
-        const int dir,
-        const Array<OneD, const NekDouble> &locfaces,
+        const int dir, const Array<OneD, const NekDouble> &locfaces,
         Array<OneD, NekDouble> faces);
 
     MULTI_REGIONS_EXPORT void InterpLocTracesToTraceTranspose(
-        const int dir,
-        const Array<OneD, const NekDouble> &traces,
+        const int dir, const Array<OneD, const NekDouble> &traces,
         Array<OneD, NekDouble> &loctraces);
 
     /// Transpose of interp local edges to Trace methods
     MULTI_REGIONS_EXPORT void InterpLocEdgesToTraceTranspose(
-        const int                           dir,
-        const Array<OneD, const NekDouble>  &edges,
-        Array<OneD, NekDouble>              &locedges);
+        const int dir, const Array<OneD, const NekDouble> &edges,
+        Array<OneD, NekDouble> &locedges);
 
     /// Transpose of interp local faces to Trace methods
     MULTI_REGIONS_EXPORT void InterpLocFacesToTraceTranspose(
-        const int                           dir,
-        const Array<OneD, const NekDouble>  &traces,
-        Array<OneD, NekDouble>              &loctraces);
+        const int dir, const Array<OneD, const NekDouble> &traces,
+        Array<OneD, NekDouble> &loctraces);
 
     MULTI_REGIONS_EXPORT void InterpTraceToLocTrace(
-        const int dir,
-        const Array<OneD, NekDouble> &traces,
+        const int dir, const Array<OneD, NekDouble> &traces,
         Array<OneD, NekDouble> &loctraces);
 
     MULTI_REGIONS_EXPORT inline void InterpTraceToLocEdges(
-        const int dir,
-        const Array<OneD, const NekDouble> &locfaces,
+        const int dir, const Array<OneD, const NekDouble> &locfaces,
         Array<OneD, NekDouble> &edges);
-    
+
     MULTI_REGIONS_EXPORT void InterpTraceToLocFaces(
-        const int dir,
-        const Array<OneD, const NekDouble> &faces,
-        Array<OneD,  NekDouble> &locfaces);
+        const int dir, const Array<OneD, const NekDouble> &faces,
+        Array<OneD, NekDouble> &locfaces);
 
     MULTI_REGIONS_EXPORT void AddTraceCoeffsToFieldCoeffs(
         const Array<OneD, const NekDouble> &trace,
         Array<OneD, NekDouble> &field);
 
     MULTI_REGIONS_EXPORT void AddTraceCoeffsToFieldCoeffs(
-        const int dir,
-        const Array<OneD, const NekDouble> &race,
+        const int dir, const Array<OneD, const NekDouble> &race,
         Array<OneD, NekDouble> &field);
 
     MULTI_REGIONS_EXPORT void CalcLocTracePhysToTraceIDMap(
-        const ExpListSharedPtr &tracelist,
-        const int               ndim);
-    
+        const ExpListSharedPtr &tracelist, const int ndim);
+
     MULTI_REGIONS_EXPORT void CalcLocTracePhysToTraceIDMap_2D(
         const ExpListSharedPtr &tracelist);
 
@@ -281,62 +264,61 @@ public:
         return m_leftRightAdjacentExpFlag;
     }
 
-    MULTI_REGIONS_EXPORT inline const Array<OneD, const Array<OneD, int >>
+    MULTI_REGIONS_EXPORT inline const Array<OneD, const Array<OneD, int>>
         &GetLeftRightAdjacentExpId() const
     {
         return m_leftRightAdjacentExpId;
     }
 
     MULTI_REGIONS_EXPORT inline const Array<OneD,
-        const Array<OneD, Array<OneD, int > > >
+                                            const Array<OneD, Array<OneD, int>>>
         &GetTraceCoeffToLeftRightExpCoeffMap() const
     {
         return m_traceCoeffToLeftRightExpCoeffMap;
     }
 
     MULTI_REGIONS_EXPORT inline const Array<OneD,
-        const Array<OneD, Array<OneD, int > > >
+                                            const Array<OneD, Array<OneD, int>>>
         &GetTraceCoeffToLeftRightExpCoeffSign() const
     {
         return m_traceCoeffToLeftRightExpCoeffSign;
     }
 
-    MULTI_REGIONS_EXPORT inline const Array<OneD, int >
-           &GetElemNeighbsNumb() const
+    MULTI_REGIONS_EXPORT inline const Array<OneD, int> &GetElemNeighbsNumb()
+        const
     {
         return m_ElemNeighbsNumb;
     }
 
-    MULTI_REGIONS_EXPORT inline const Array<OneD, const Array<OneD, int > >
-           &GetElemNeighbsId() const
+    MULTI_REGIONS_EXPORT inline const Array<OneD, const Array<OneD, int>>
+        &GetElemNeighbsId() const
     {
         return m_ElemNeighbsId;
     }
 
-    MULTI_REGIONS_EXPORT inline const Array<OneD, const Array<OneD, int > >
-           &GetLocTracephysToTraceIDMap() const
+    MULTI_REGIONS_EXPORT inline const Array<OneD, const Array<OneD, int>>
+        &GetLocTracephysToTraceIDMap() const
     {
         return m_LocTracephysToTraceIDMap;
     }
 
-    MULTI_REGIONS_EXPORT inline void SetLocTracePhysToTraceIDMap
-            (const Array<OneD, Array<OneD, int > > & inarray)
+    MULTI_REGIONS_EXPORT inline void SetLocTracePhysToTraceIDMap(
+        const Array<OneD, Array<OneD, int>> &inarray)
     {
         m_LocTracephysToTraceIDMap = inarray;
     }
 
-    MULTI_REGIONS_EXPORT inline const Array<OneD, const int >
-           &GetLocTraceToFieldMap() const
+    MULTI_REGIONS_EXPORT inline const Array<OneD, const int>
+        &GetLocTraceToFieldMap() const
     {
         return m_locTraceToFieldMap;
     }
 
     MULTI_REGIONS_EXPORT void TraceLocToElmtLocCoeffMap(
-        const ExpList &locExp,
-        const ExpListSharedPtr &trace);
+        const ExpList &locExp, const ExpListSharedPtr &trace);
 
 private:
-    /// Expansion Dimension we have setup for trace mapping. 
+    /// Expansion Dimension we have setup for trace mapping.
     int m_expdim;
     /// The number of forward trace points. A local trace element is `forward'
     /// if it is the side selected for the global trace.
@@ -352,62 +334,62 @@ private:
     /// A mapping from the local elemental trace points, arranged as
     /// all forwards traces followed by backwards traces, to elemental
     /// storage.
-    Array<OneD, Array<OneD, int> > m_locTraceToElmtTraceMap;
+    Array<OneD, Array<OneD, int>> m_locTraceToElmtTraceMap;
     /// A mapping from local trace points to the global trace. Dimension 0 holds
     /// forward traces, dimension 1 backward.
-    Array<OneD, Array<OneD, int> > m_locInterpTraceToTraceMap;
+    Array<OneD, Array<OneD, int>> m_locInterpTraceToTraceMap;
     /// A mapping holding the type of interpolation needed for each local trace.
     /// Dimension 0 holds forward traces, dimension 1 backward.
-    Array<OneD, Array<OneD, InterpLocTraceToTrace> > m_interpTrace;
+    Array<OneD, Array<OneD, InterpLocTraceToTrace>> m_interpTrace;
     /// Interpolation matrices for either 2D edges or first coordinate of 3D
     /// face.
-    Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpTraceI0;
+    Array<OneD, Array<OneD, DNekMatSharedPtr>> m_interpTraceI0;
     /// Interpolation matrices for the second coordinate of 3D face, not used in
     /// 2D.
-    Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpTraceI1;
+    Array<OneD, Array<OneD, DNekMatSharedPtr>> m_interpTraceI1;
     /// Interpolation matrices for either 2D edges or first coordinate
     /// of 3D face using going "from' to 'to' points (i.e. the reverse
     /// of other techniques)
-    Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpFromTraceI0;
+    Array<OneD, Array<OneD, DNekMatSharedPtr>> m_interpFromTraceI0;
     /// Interpolation matrices for either 2D edges or first coordinate
     /// of 3D face using going "from' to 'to' points (i.e. the reverse
     /// of other techniques)
-    Array<OneD, Array<OneD, DNekMatSharedPtr> > m_interpFromTraceI1;
+    Array<OneD, Array<OneD, DNekMatSharedPtr>> m_interpFromTraceI1;
     /// Interpolation points key distributions to each of the local to global
     /// mappings.
-    Array<OneD, Array<OneD, TraceInterpPoints> > m_interpPoints;
+    Array<OneD, Array<OneD, TraceInterpPoints>> m_interpPoints;
     /// Mapping to hold first coordinate direction endpoint interpolation, which
     /// can be more optimal if using Gauss-Radau distribution for triangles
-    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_interpEndPtI0;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_interpEndPtI0;
     /// Mapping to hold second coordinate direction endpoint interpolation,
     /// which can be more optimal if using Gauss-Radau distribution for
     /// triangles
-    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_interpEndPtI1;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_interpEndPtI1;
     /// Number of edges/faces on a 2D/3D element that require interpolation.
-    Array<OneD, Array<OneD, int> > m_interpNtraces;
+    Array<OneD, Array<OneD, int>> m_interpNtraces;
     /// Number of forwards/backwards trace coefficients.
     int m_nTraceCoeffs[2];
     /// Mapping from forwards/backwards trace coefficients to elemental
     /// coefficient storage.
-    Array<OneD, Array<OneD, int> > m_traceCoeffsToElmtMap;
+    Array<OneD, Array<OneD, int>> m_traceCoeffsToElmtMap;
     /// Mapping from forwards/backwards trace coefficients to the position of
     /// the trace element in global storage.
-    Array<OneD, Array<OneD, int> > m_traceCoeffsToElmtTrace;
+    Array<OneD, Array<OneD, int>> m_traceCoeffsToElmtTrace;
     /// Sign array for mapping from forwards/backwards trace coefficients to
     /// local trace storage.
-    Array<OneD, Array<OneD, int> > m_traceCoeffsToElmtSign;
+    Array<OneD, Array<OneD, int>> m_traceCoeffsToElmtSign;
     /// Flag indicates whether the expansion that are the left & right adjacent
     /// to current trace exists.
-    Array<OneD, Array<OneD, bool> > m_leftRightAdjacentExpFlag;
+    Array<OneD, Array<OneD, bool>> m_leftRightAdjacentExpFlag;
     /// The expansion ID that are the left & right adjacent to current trace.
-    Array<OneD, Array<OneD, int> > m_leftRightAdjacentExpId;
+    Array<OneD, Array<OneD, int>> m_leftRightAdjacentExpId;
     /// The map of every coeff from current trace to the left & right adjacent
     /// expasion coeffs.
-    Array<OneD, Array<OneD, Array<OneD, int> > >
+    Array<OneD, Array<OneD, Array<OneD, int>>>
         m_traceCoeffToLeftRightExpCoeffMap;
     /// The sign of every coeff from current trace to the left & right adjacent
     /// expasion coeffs.
-    Array<OneD, Array<OneD, Array<OneD, int> > >
+    Array<OneD, Array<OneD, Array<OneD, int>>>
         m_traceCoeffToLeftRightExpCoeffSign;
     /// The map of every phys from current trace to the left & right adjacent
     /// expasion phys. This map is only used when no interpolation is needed in
@@ -417,22 +399,21 @@ private:
     Array<OneD, Array<OneD, Array<OneD, int>>> m_tracePhysToLeftRightExpPhysMap;
 
     // store the number of neighbor elements for each element
-    Array<OneD, int >                               m_ElemNeighbsNumb;
+    Array<OneD, int> m_ElemNeighbsNumb;
     // store the id of neighbor elements for each element
-    Array<OneD, Array<OneD, int > >                 m_ElemNeighbsId;
+    Array<OneD, Array<OneD, int>> m_ElemNeighbsId;
 
-    Array<OneD, Array<OneD, int> >                  m_LocTracephysToTraceIDMap;
+    Array<OneD, Array<OneD, int>> m_LocTracephysToTraceIDMap;
 
-    void FindElmtNeighbors(
-        const ExpList &locExp,
-        const ExpListSharedPtr &trace);
+    void FindElmtNeighbors(const ExpList &locExp,
+                           const ExpListSharedPtr &trace);
 };
 
 typedef std::shared_ptr<LocTraceToTraceMap> LocTraceToTraceMapSharedPtr;
 
-    static LocTraceToTraceMapSharedPtr NullLocTraceToTraceMapSharedPtr;
+static LocTraceToTraceMapSharedPtr NullLocTraceToTraceMapSharedPtr;
 
-}
-}
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif
