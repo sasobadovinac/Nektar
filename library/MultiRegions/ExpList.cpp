@@ -433,9 +433,11 @@ namespace Nektar
 
             for(i = 0; i < locexp.size(); ++i)
             {
-                if((exp1D =
-                    std::dynamic_pointer_cast<
-                    LocalRegions::Expansion1D>(locexp[i])))
+	      // A change heren
+	      bool exp1D =
+		std::dynamic_pointer_cast<
+		  LocalRegions::Expansion1D>(locexp[i]);
+                if(exp1D)
                 {
                     m_expType = e0D;
 
