@@ -452,6 +452,8 @@ namespace Nektar
                             continue;
                         }
 
+			// I am making a change here
+			// and another one here.
                         exp = MemoryManager<LocalRegions::PointExp>::
                             AllocateSharedPtr(PointGeom);
                         tracesDone.insert(id);
