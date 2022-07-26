@@ -74,18 +74,23 @@ public:
         m_numVariables(nvar),
         m_dataOrder(Order)
     {
-        m_expIF = std::make_shared<MultiRegions::details::
-                                   ExpListFieldInterface>(exp);
+        m_expIF.push_back(std::make_shared<MultiRegions::details::
+                          ExpListFieldInterface>(exp));
+        // soft copy passed expansion into nvar 
+        for(int i = 1; i < nvar; ++i)
+        {
+            m_expIF.push_back(m_expIF[0]);
+        }
 
         m_storage = Array<OneD, Array<OneD, NekDouble> >(nvar); 
         int varsize; 
         if (TStype == ePhys)
         {
-            varsize = m_expIF->GetNpoints(); 
+            varsize = m_expIF[0]->GetNpoints(); 
         }
         else if (TStype == eCoeff)
         {
-            varsize = m_expIF->GetNcoeffs(); 
+            varsize = m_expIF[0]->GetNcoeffs(); 
         }
 
         m_storage[m_numVariables-1] =Array<OneD, TData>(varsize*m_numVariables,defval);
@@ -96,6 +101,36 @@ public:
         }
     }
 
+    Field(Array<OneD, std::shared_ptr<MultiRegions::ExpList>> exp,
+                 TData defval = 0, DataLayout Order = eField) :
+        m_numVariables(exp.size()),
+        m_dataOrder(Order)
+    {
+        for(int i = 0; i < m_numVariables; ++i)
+        {
+            m_expIF.push_back(std::make_shared<MultiRegions::details::
+                          ExpListFieldInterface>(exp[i]));
+        }
+
+        m_storage = Array<OneD, Array<OneD, NekDouble> >(m_numVariables); 
+        int varsize; 
+        if (TStype == ePhys)
+        {
+            varsize = m_expIF[0]->GetNpoints(); 
+        }
+        else if (TStype == eCoeff)
+        {
+            varsize = m_expIF[0]->GetNcoeffs(); 
+        }
+
+        m_storage[m_numVariables-1] =Array<OneD, TData>(varsize*m_numVariables,defval);
+
+        for(int i = m_numVariables-1; i > 0; --i)
+        {
+            m_storage[i-1] = m_storage[i] + varsize; 
+        }
+    }
+    
     Field(const Field &F)
         : m_expIF(F.m_expIF),
           m_storage(Array<OneD, Array<OneD, TData>>(F.m_numVariables)),
@@ -148,9 +183,14 @@ public:
         return m_storage[varid];
     }
 
-    std::shared_ptr<MultiRegions::ExpList> GetExpList() const
+    std::vector<std::shared_ptr<MultiRegions::ExpList>> GetExpList() const
     {
-        return m_expIF->GetExpList();
+        return m_expIF[0]->GetExpList();
+    }
+
+    std::shared_ptr<MultiRegions::ExpList> GetExpList(int varid) const
+    {
+        return m_expIF[varid]->GetExpList();
     }
 
     inline int GetNumVariables() const 
@@ -159,7 +199,8 @@ public:
     }
 protected: 
     /// interface to allow access to ExpList 
-    std::shared_ptr<MultiRegions::details::ExpListFieldInterface> m_expIF;
+    std::vector<std::shared_ptr<MultiRegions::details::ExpListFieldInterface>> m_expIF;
+    
     /// native storage in field
     Array<OneD, Array<OneD, TData> >   m_storage;
     

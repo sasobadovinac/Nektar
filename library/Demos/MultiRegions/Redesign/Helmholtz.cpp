@@ -60,16 +60,19 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Define Expansion
-        MultiRegions::ContFieldSharedPtr Exp =
-            MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
-                vSession, graph, vSession->GetVariable(0));
+        int nvars = vSession->GetVariables().size();
+        Array<OneD, MultiRegions::ExpListSharedPtr> Exp(nvars);
+        for(int v = 0; v < nvars; ++v)
+        {
+            Exp[v] =   MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
+                vSession, graph, vSession->GetVariable(v));
+        }
         //----------------------------------------------
 
         //----------------------------------------------
         // Set up coordinates of mesh for Forcing function evaluation
-        Field<NekDouble, ePhys> xc(Exp, 0.0, 3);
-        Exp->GetCoords(xc);
-
+        Field<NekDouble, ePhys> xc(Exp[0], 0.0, 3);
+        Exp[0]->GetCoords(xc);
         //----------------------------------------------
 
         //----------------------------------------------
@@ -80,24 +83,29 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Define forcing function for first variable defined in file
-        LibUtilities::EquationSharedPtr ffunc =
-            vSession->GetFunction("Forcing", 0);
-        Field<NekDouble, ePhys> Fce(Exp);
-        ffunc->Evaluate(xc, Fce);
+        Field<NekDouble, ePhys> Fce(Exp, 0.0);
+        LibUtilities::EquationSharedPtr ffunc;
+        for(int v = 0; v < nvars; ++v)
+        {
+            ffunc = vSession->GetFunction("Forcing",  vSession->GetVariable(v));
+            ffunc->Evaluate(xc, Fce.UpdateArray1D(v));
+        }
         //----------------------------------------------
 
         //----------------------------------------------
         // Helmholtz solution taking physical forcing after setting
         // initial condition to zero
-        Field<NekDouble, eCoeff> Coeffs(Exp);
-        Vmath::Zero(Exp->GetNcoeffs(), Coeffs.UpdateData(), 1);
-        Exp->HelmSolve(Fce, Coeffs, factors, varcoeffs);
+        Field<NekDouble, eCoeff> Coeffs(Exp, 0.0);
+        for(int v = 0; v < nvars; ++v)
+        {
+            Exp[v]->HelmSolve(v, Fce, Coeffs, factors, varcoeffs);
+        }
         //----------------------------------------------
 
         //----------------------------------------------
         // Backward Transform Solution to get solved values at
-        Field<NekDouble, ePhys> Phys(Exp);
-        Exp->BwdTrans(Coeffs, Phys);
+        Field<NekDouble, ePhys> Phys(Exp, 0.0);
+        Exp[0]->BwdTrans(Coeffs, Phys);
         //----------------------------------------------
 
         //-----------------------------------------------
@@ -106,12 +114,16 @@ int main(int argc, char *argv[])
             LibUtilities::FieldIO::CreateDefault(vSession);
         string out = vSession->GetSessionName() + ".fld";
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
-            Exp->GetFieldDefinitions();
+            Exp[0]->GetFieldDefinitions();
         std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
-        for (int i = 0; i < FieldDef.size(); ++i)
+        for (int v = 0; v < nvars; ++v)
         {
-            FieldDef[i]->m_fields.push_back("u");
-            Exp->AppendFieldData(FieldDef[i], FieldData[i]);
+            for (int i = 0; i < FieldDef.size(); ++i)
+            {
+                FieldDef[i]->m_fields.push_back(vSession->GetVariable(v));
+                Exp[v]->AppendFieldData(FieldDef[i], FieldData[i],
+                                        Coeffs.UpdateArray1D(v));
+            }
         }
         fld->Write(out, FieldDef, FieldData);
         //-----------------------------------------------
@@ -119,28 +131,34 @@ int main(int argc, char *argv[])
         //----------------------------------------------
         // See if there is an exact solution, if so
         // evaluate and plot errors
-        LibUtilities::EquationSharedPtr ex_sol =
-            vSession->GetFunction("ExactSolution", 0);
-
-        if (ex_sol)
+        for(int v = 0; v < nvars; ++v)
         {
-            //----------------------------------------------
-            // evaluate exact solution
-            ex_sol->Evaluate(xc, Fce);
-            //----------------------------------------------
+            LibUtilities::EquationSharedPtr ex_sol =
+                vSession->GetFunction("ExactSolution", v);
 
-            //--------------------------------------------
-            // Calculate errors
-            NekDouble vLinfError = Exp->Linf(Phys, Fce);
-            NekDouble vL2Error   = Exp->L2(Phys, Fce);
-            NekDouble vH1Error   = Exp->H1(Phys, Fce);
-            if (vComm->GetRank() == 0)
+            if (ex_sol)
             {
-                cout << "L infinity error: " << vLinfError << endl;
-                cout << "L 2 error:        " << vL2Error << endl;
-                cout << "H 1 error:        " << vH1Error << endl;
+                //----------------------------------------------
+                // evaluate exact solution
+                ex_sol->Evaluate(xc, Fce.UpdateArray1D(v));
+                //----------------------------------------------
+
+                //--------------------------------------------
+                // Calculate errors
+                NekDouble vLinfError = Exp[0]->Linf(Phys, Fce, v);
+                NekDouble vL2Error   = Exp[0]->L2  (Phys, Fce, v);
+                NekDouble vH1Error   = Exp[0]->H1  (Phys, Fce, v);
+                if (vComm->GetRank() == 0)
+                {
+                    cout << "L inf error (variable "<< vSession->GetVariable(v) <<
+                        ") : " << vLinfError << endl;
+                    cout << "L 2 error   (variable "<< vSession->GetVariable(v) <<
+                        ") : " << vL2Error << endl;
+                    cout << "H 1 error   (variable "<< vSession->GetVariable(v) <<
+                        ") : " << vH1Error << endl;
+                }
+                //--------------------------------------------
             }
-            //--------------------------------------------
         }
         //----------------------------------------------
     }

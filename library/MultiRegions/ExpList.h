@@ -354,6 +354,17 @@ public:
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray,
         const bool PhysSpaceForcing                    = true);
 
+    inline void HelmSolve(
+        const int varid, 
+        const Field<NekDouble, ePhys> &in,
+        Field<NekDouble, eCoeff> &out,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff = StdRegions::NullVarCoeffMap,
+        const MultiRegions::VarFactorsMap &varfactors =
+            MultiRegions::NullVarFactorsMap,
+        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray,
+        const bool PhysSpaceForcing                    = true);
+    
     /// Solve Advection Diffusion Reaction
     inline void LinearAdvectionDiffusionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
@@ -2010,6 +2021,23 @@ inline void ExpList::HelmSolve(const Field<NekDouble, ePhys> &in,
         v_HelmSolve(in.GetArray1D(i), out.UpdateArray1D(i), factors, varcoeff,
                     varfactors, dirForcing, PhysSpaceForcing);
     }
+}
+
+inline void ExpList::HelmSolve(const int varid,
+                               const Field<NekDouble, ePhys> &in,
+                               Field<NekDouble, eCoeff> &out,
+                               const StdRegions::ConstFactorMap &factors,
+                               const StdRegions::VarCoeffMap &varcoeff,
+                               const MultiRegions::VarFactorsMap &varfactors,
+                               const Array<OneD, const NekDouble> &dirForcing,
+                               const bool PhysSpaceForcing)
+
+{
+    ASSERTL1(varid <= out.GetNumVariables(), "number of variables "
+             "in storage (out) is less than those in input variable (in)");
+
+    v_HelmSolve(in.GetArray1D(varid), out.UpdateArray1D(varid), factors, varcoeff,
+                    varfactors, dirForcing, PhysSpaceForcing);
 }
 
 /**
