@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpListFieldStorageInterface.cpp
+// File ExpListFieldInterface.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,42 +28,44 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Provide an decoupling interface to ExpList from FieldStorage.
+// Description: Provide an decoupling interface to ExpList from Field.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <MultiRegions/ExpList.h>
-#include <MultiRegions/FieldStorage/ExpListFieldStorageInterface.h>
+#ifndef CLASS_EXPLIST_FIELDSTORAGE_INTERFACE
+#define CLASS_EXPLIST_FIELDSTORAGE_INTERFACE
+
+#include <memory>
 
 namespace Nektar
 {
 namespace MultiRegions
 {
+class ExpList;
+
 namespace details
 {
 
-ExpListFieldStorageInterface::ExpListFieldStorageInterface(
-    std::shared_ptr<ExpList> e)
+class ExpListFieldInterface
 {
-    m_e = e;
-}
+public:
+    ExpListFieldInterface(std::shared_ptr<ExpList> e);
+    ExpListFieldInterface(const ExpListFieldInterface &src);
 
-ExpListFieldStorageInterface::ExpListFieldStorageInterface(
-    const ExpListFieldStorageInterface &src)
-    : m_e(src.m_e)
-{
-}
+    int GetNpoints();
+    int GetNcoeffs();
 
-int ExpListFieldStorageInterface::GetNpoints()
-{
-    return m_e->GetNpoints();
-}
+    std::shared_ptr<ExpList> GetExpList()
+    {
+        return m_e;
+    }
 
-int ExpListFieldStorageInterface::GetNcoeffs()
-{
-    return m_e->GetNcoeffs();
-}
+private:
+    std::shared_ptr<ExpList> m_e;
+};
 
 } // namespace details
 } // namespace MultiRegions
 } // namespace Nektar
+
+#endif

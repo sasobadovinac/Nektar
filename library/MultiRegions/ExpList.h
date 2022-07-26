@@ -45,7 +45,7 @@
 #include <LocalRegions/Expansion.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
-#include <MultiRegions/FieldStorage/FieldStorage.hpp>
+#include <MultiRegions/Field/Field.hpp>
 #include <MultiRegions/GlobalLinSysKey.h>
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalMatrixKey.h>
@@ -302,8 +302,8 @@ public:
     inline void FwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
 
-    inline void FwdTrans(const FieldStorage<NekDouble, ePhys> &in,
-                         FieldStorage<NekDouble, eCoeff> &out);
+    inline void FwdTrans(const Field<NekDouble, ePhys> &in,
+                         Field<NekDouble, eCoeff> &out);
 
     MULTI_REGIONS_EXPORT void ExponentialFilter(Array<OneD, NekDouble> &array,
                                                 const NekDouble alpha,
@@ -343,10 +343,10 @@ public:
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray,
         const bool PhysSpaceForcing                    = true);
 
-    /// Solve helmholtz problem - FieldStorage input
+    /// Solve helmholtz problem - Field input
     inline void HelmSolve(
-        const FieldStorage<NekDouble, ePhys> &in,
-        FieldStorage<NekDouble, eCoeff> &out,
+        const Field<NekDouble, ePhys> &in,
+        Field<NekDouble, eCoeff> &out,
         const StdRegions::ConstFactorMap &factors,
         const StdRegions::VarCoeffMap &varcoeff = StdRegions::NullVarCoeffMap,
         const MultiRegions::VarFactorsMap &varfactors =
@@ -374,8 +374,8 @@ public:
         Array<OneD, NekDouble> &outarray);
 
     ///
-    inline void BwdTrans(const FieldStorage<NekDouble, eCoeff> &in,
-                         FieldStorage<NekDouble, ePhys> &out);
+    inline void BwdTrans(const Field<NekDouble, eCoeff> &in,
+                         Field<NekDouble, ePhys> &out);
 
     /// Performs the backward transformation of the spectral/hp
     /// element expansion.
@@ -390,9 +390,11 @@ public:
         Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
     inline void GetCoords(
-        FieldStorage<NekDouble, ePhys> &coord_0,
-        FieldStorage<NekDouble, ePhys> &coord_1 = ZeroFieldStoragePhys,
-        FieldStorage<NekDouble, ePhys> &coord_2 = ZeroFieldStoragePhys);
+        Field<NekDouble, ePhys> &coord_0,
+        Field<NekDouble, ePhys> &coord_1, 
+        Field<NekDouble, ePhys> &coord_2 = ZeroFieldPhys);
+
+    inline void GetCoords(Field<NekDouble, ePhys> &coords);
 
     // Homogeneous transforms
     inline void HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
@@ -572,8 +574,9 @@ public:
     /// This function calculates the \f$L_\infty\f$ error of the global
     /// spectral/hp element approximation.
     MULTI_REGIONS_EXPORT inline NekDouble Linf(
-        const FieldStorage<NekDouble, ePhys> &in,
-        const FieldStorage<NekDouble, ePhys> &sol = ZeroFieldStoragePhys);
+        const Field<NekDouble, ePhys> &in,
+        const Field<NekDouble, ePhys> &sol = ZeroFieldPhys,
+        const int varid = 0); 
 
     /// This function calculates the \f$L_2\f$ error with
     /// respect to soln of the global
@@ -589,16 +592,20 @@ public:
     /// respect to soln of the global
     /// spectral/hp element approximation.
     NekDouble L2(
-        const FieldStorage<NekDouble, ePhys> &in,
-        const FieldStorage<NekDouble, ePhys> &sol = ZeroFieldStoragePhys)
+        const Field<NekDouble, ePhys> &in,
+        const Field<NekDouble, ePhys> &sol = ZeroFieldPhys,
+        const int varid = 0)
     {
-        if (sol.GetData().size())
+        ASSERTL1(varid < in.GetNumVariables(), "request to access varid larger than "
+                 "number of variables in input (in).");
+        
+        if (sol.GetArray1D(0).size())
         {
-            return v_L2(in.GetData(), sol.GetData());
+            return v_L2(in.GetArray1D(varid), sol.GetArray1D(varid));
         }
         else
         {
-            return v_L2(in.GetData(), NullNekDouble1DArray);
+            return v_L2(in.GetArray1D(varid), NullNekDouble1DArray);
         }
     }
 
@@ -611,16 +618,20 @@ public:
     /// Calculates the \f$H^1\f$ error of the global spectral/hp
     /// element approximation.
     MULTI_REGIONS_EXPORT NekDouble
-    H1(const FieldStorage<NekDouble, ePhys> &in,
-       const FieldStorage<NekDouble, ePhys> &sol = ZeroFieldStoragePhys)
+    H1(const Field<NekDouble, ePhys> &in,
+       const Field<NekDouble, ePhys> &sol = ZeroFieldPhys,
+       const int varid = 0)
     {
-        if (sol.GetData().size())
+        ASSERTL1(varid < in.GetNumVariables(), "request to access varid larger than "
+                 "number of variables in input (in).");
+
+        if (sol.GetArray1D(0).size())
         {
-            return H1(in.GetData(), sol.GetData());
+            return H1(in.GetArray1D(varid), sol.GetArray1D(varid));
         }
         else
         {
-            return H1(in.GetData(), NullNekDouble1DArray);
+            return H1(in.GetArray1D(varid), NullNekDouble1DArray);
         }
     }
 
@@ -1489,9 +1500,9 @@ protected:
                                    const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray);
 
-    virtual void v_GetCoords(
-        Array<OneD, NekDouble> &coord_0, Array<OneD, NekDouble> &coord_1,
-        Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
+    virtual void v_GetCoords(Array<OneD, NekDouble> &coord_0,
+                             Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
+                             Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
     virtual void v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
                              Array<OneD, NekDouble> &out_d0,
@@ -1881,10 +1892,15 @@ inline void ExpList::FwdTrans(const Array<OneD, const NekDouble> &inarray,
     v_FwdTrans(inarray, outarray);
 }
 
-inline void ExpList::FwdTrans(const FieldStorage<NekDouble, ePhys> &in,
-                              FieldStorage<NekDouble, eCoeff> &out)
+inline void ExpList::FwdTrans(const Field<NekDouble, ePhys> &in,
+                              Field<NekDouble, eCoeff> &out)
 {
-    v_FwdTrans(in.GetData(), out.UpdateData());
+    ASSERTL1(in.GetNumVariables() <= out.GetNumVariables(), "number of variables "
+             "in storage (out) is less than those in input variable (in)");
+    for(int i = 0; i < in.GetNumVariables(); ++i)
+    {
+        v_FwdTrans(in.GetArray1D(i), out.UpdateArray1D(i));
+    }
 }
 
 /**
@@ -1918,10 +1934,15 @@ inline void ExpList::SmoothField(Array<OneD, NekDouble> &field)
 /**
  *
  */
-inline void ExpList::BwdTrans(const FieldStorage<NekDouble, eCoeff> &in,
-                              FieldStorage<NekDouble, ePhys> &out)
+inline void ExpList::BwdTrans(const Field<NekDouble, eCoeff> &in,
+                              Field<NekDouble, ePhys> &out)
 {
-    v_BwdTrans(in.GetData(), out.UpdateData());
+    ASSERTL1(in.GetNumVariables() <= out.GetNumVariables(), "number of variables "
+             "in storage (out) is less than those in input variable (in)");
+    for(int i = 0; i < in.GetNumVariables(); ++i)
+    {
+        v_BwdTrans(in.GetArray1D(i), out.UpdateArray1D(i));
+    }
 }
 
 /**
@@ -1973,8 +1994,8 @@ inline void ExpList::HelmSolve(const Array<OneD, const NekDouble> &inarray,
 /**
  * Helmholtz operator using Field Storage i/o
  */
-inline void ExpList::HelmSolve(const FieldStorage<NekDouble, ePhys> &in,
-                               FieldStorage<NekDouble, eCoeff> &out,
+inline void ExpList::HelmSolve(const Field<NekDouble, ePhys> &in,
+                               Field<NekDouble, eCoeff> &out,
                                const StdRegions::ConstFactorMap &factors,
                                const StdRegions::VarCoeffMap &varcoeff,
                                const MultiRegions::VarFactorsMap &varfactors,
@@ -1982,8 +2003,13 @@ inline void ExpList::HelmSolve(const FieldStorage<NekDouble, ePhys> &in,
                                const bool PhysSpaceForcing)
 
 {
-    v_HelmSolve(in.GetData(), out.UpdateData(), factors, varcoeff, varfactors,
-                dirForcing, PhysSpaceForcing);
+    ASSERTL1(in.GetNumVariables() <= out.GetNumVariables(), "number of variables "
+             "in storage (out) is less than those in input variable (in)");
+    for(int i = 0; i < in.GetNumVariables(); ++i)
+    {
+        v_HelmSolve(in.GetArray1D(i), out.UpdateArray1D(i), factors, varcoeff,
+                    varfactors, dirForcing, PhysSpaceForcing);
+    }
 }
 
 /**
@@ -2023,12 +2049,41 @@ inline void ExpList::GetCoords(Array<OneD, NekDouble> &coord_0,
 /**
  *
  */
-inline void ExpList::GetCoords(FieldStorage<NekDouble, ePhys> &coord_0,
-                               FieldStorage<NekDouble, ePhys> &coord_1,
-                               FieldStorage<NekDouble, ePhys> &coord_2)
+inline void ExpList::GetCoords(Field<NekDouble, ePhys> &coord_0,
+                               Field<NekDouble, ePhys> &coord_1,
+                               Field<NekDouble, ePhys> &coord_2)
 {
-    v_GetCoords(coord_0.UpdateData(), coord_1.UpdateData(),
-                coord_2.UpdateData());
+    v_GetCoords(coord_0.UpdateArray1D(), coord_1.UpdateArray1D(),
+                coord_2.UpdateArray1D());
+}
+
+/**
+ *
+ */
+inline void ExpList::GetCoords(Field<NekDouble, ePhys> &coords)
+{
+    switch(coords.GetNumVariables())
+    {
+    case 1:
+        {
+            v_GetCoords(coords.UpdateArray1D(0));
+        }
+        break;
+    case 2:
+        {
+            v_GetCoords(coords.UpdateArray1D(0),coords.UpdateArray1D(1));
+        }
+    break;
+    case 3:
+        {
+            v_GetCoords(coords.UpdateArray1D(0), coords.UpdateArray1D(1),
+                        coords.UpdateArray1D(2));
+        }
+        break;
+    default:
+        NEKERROR(ErrorUtil::efatal,
+                 "Number of variables is not between 1 and 3");
+    }
 }
 
 /**
@@ -2640,16 +2695,20 @@ inline std::vector<bool> &ExpList::GetLeftAdjacentTraces(void)
     return v_GetLeftAdjacentTraces();
 }
 
-inline NekDouble ExpList::Linf(const FieldStorage<NekDouble, ePhys> &in,
-                               const FieldStorage<NekDouble, ePhys> &sol)
+inline NekDouble ExpList::Linf(const Field<NekDouble, ePhys> &in,
+                               const Field<NekDouble, ePhys> &sol,
+                               const int varid)
 {
-    if (sol.GetData().size())
+    ASSERTL1(varid < in.GetNumVariables(), "request to access varid larger than "
+             "number of variables in input (in).");
+    
+    if (sol.GetArray1D(0).size())
     {
-        return Linf(in.GetData(), sol.GetData());
+        return Linf(in.GetArray1D(varid), sol.GetArray1D(varid));
     }
     else
     {
-        return Linf(in.GetData(), NullNekDouble1DArray);
+        return Linf(in.GetArray1D(varid), NullNekDouble1DArray);
     }
 }
 const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;

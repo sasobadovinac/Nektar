@@ -6,16 +6,14 @@
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <MultiRegions/ContField.h>
 #include <MultiRegions/ExpList.h>
-#include <MultiRegions/FieldStorage/FieldStorage.hpp>
+#include <MultiRegions/Field/Field.hpp>
 #include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
 using namespace Nektar;
 
 void SetVariableCoeffs(LibUtilities::SessionReaderSharedPtr &vSession,
-                       FieldStorage<NekDouble, ePhys> &xc0,
-                       FieldStorage<NekDouble, ePhys> &xc1,
-                       FieldStorage<NekDouble, ePhys> &xc2,
+                       Field<NekDouble, ePhys> &xc,
                        StdRegions::VarCoeffMap &varcoeffs);
 
 int main(int argc, char *argv[])
@@ -69,36 +67,36 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Set up coordinates of mesh for Forcing function evaluation
-        FieldStorage<NekDouble, ePhys> xc0(Exp, 0.0), xc1(Exp, 0.0),
-            xc2(Exp, 0.0);
-        Exp->GetCoords(xc0, xc1, xc2);
+        Field<NekDouble, ePhys> xc(Exp, 0.0, 3);
+        Exp->GetCoords(xc);
+
         //----------------------------------------------
 
         //----------------------------------------------
         // Set up variable coefficients if defined
         StdRegions::VarCoeffMap varcoeffs;
-        SetVariableCoeffs(vSession, xc0, xc1, xc2, varcoeffs);
+        SetVariableCoeffs(vSession, xc, varcoeffs);
         //----------------------------------------------
 
         //----------------------------------------------
         // Define forcing function for first variable defined in file
         LibUtilities::EquationSharedPtr ffunc =
             vSession->GetFunction("Forcing", 0);
-        FieldStorage<NekDouble, ePhys> Fce(Exp);
-        ffunc->Evaluate(xc0, xc1, xc2, Fce);
+        Field<NekDouble, ePhys> Fce(Exp);
+        ffunc->Evaluate(xc, Fce);
         //----------------------------------------------
 
         //----------------------------------------------
         // Helmholtz solution taking physical forcing after setting
         // initial condition to zero
-        FieldStorage<NekDouble, eCoeff> Coeffs(Exp);
+        Field<NekDouble, eCoeff> Coeffs(Exp);
         Vmath::Zero(Exp->GetNcoeffs(), Coeffs.UpdateData(), 1);
         Exp->HelmSolve(Fce, Coeffs, factors, varcoeffs);
         //----------------------------------------------
 
         //----------------------------------------------
         // Backward Transform Solution to get solved values at
-        FieldStorage<NekDouble, ePhys> Phys(Exp);
+        Field<NekDouble, ePhys> Phys(Exp);
         Exp->BwdTrans(Coeffs, Phys);
         //----------------------------------------------
 
@@ -128,7 +126,7 @@ int main(int argc, char *argv[])
         {
             //----------------------------------------------
             // evaluate exact solution
-            ex_sol->Evaluate(xc0, xc1, xc2, Fce);
+            ex_sol->Evaluate(xc, Fce);
             //----------------------------------------------
 
             //--------------------------------------------
@@ -158,62 +156,62 @@ int main(int argc, char *argv[])
 }
 
 void SetVariableCoeffs(LibUtilities::SessionReaderSharedPtr &vSession,
-                       FieldStorage<NekDouble, ePhys> &xc0,
-                       FieldStorage<NekDouble, ePhys> &xc1,
-                       FieldStorage<NekDouble, ePhys> &xc2,
+                       Field<NekDouble, ePhys> &xc,
                        StdRegions::VarCoeffMap &varcoeffs)
 {
+    int varsize = xc.GetArray1D(xc.GetNumVariables()-1).size();
+        
     if (vSession->DefinesFunction("d00"))
     {
-        FieldStorage<NekDouble, ePhys> d00(xc0);
+        Array<OneD, NekDouble> d00(varsize);
         LibUtilities::EquationSharedPtr d00func =
             vSession->GetFunction("d00", 0);
-        d00func->Evaluate(xc0, xc1, xc2, d00);
-        varcoeffs[StdRegions::eVarCoeffD00] = d00.UpdateData();
+        d00func->Evaluate(xc, d00);
+        varcoeffs[StdRegions::eVarCoeffD00] = d00;
     }
 
     if (vSession->DefinesFunction("d01"))
     {
-        FieldStorage<NekDouble, ePhys> d01(xc0);
+        Array<OneD, NekDouble> d01(varsize);
         LibUtilities::EquationSharedPtr d01func =
             vSession->GetFunction("d01", 0);
-        d01func->Evaluate(xc0, xc1, xc2, d01);
-        varcoeffs[StdRegions::eVarCoeffD01] = d01.UpdateData();
+        d01func->Evaluate(xc, d01);
+        varcoeffs[StdRegions::eVarCoeffD01] = d01;
     }
 
     if (vSession->DefinesFunction("d02"))
     {
-        FieldStorage<NekDouble, ePhys> d02(xc0);
+        Array<OneD, NekDouble> d02(varsize);
         LibUtilities::EquationSharedPtr d02func =
             vSession->GetFunction("d02", 0);
-        d02func->Evaluate(xc0, xc1, xc2, d02);
-        varcoeffs[StdRegions::eVarCoeffD02] = d02.UpdateData();
+        d02func->Evaluate(xc, d02);
+        varcoeffs[StdRegions::eVarCoeffD02] = d02;
     }
 
     if (vSession->DefinesFunction("d11"))
     {
-        FieldStorage<NekDouble, ePhys> d11(xc0);
+        Array<OneD, NekDouble> d11(varsize);
         LibUtilities::EquationSharedPtr d11func =
             vSession->GetFunction("d11", 0);
-        d11func->Evaluate(xc0, xc1, xc2, d11);
-        varcoeffs[StdRegions::eVarCoeffD11] = d11.UpdateData();
+        d11func->Evaluate(xc, d11);
+        varcoeffs[StdRegions::eVarCoeffD11] = d11;
     }
 
     if (vSession->DefinesFunction("d12"))
     {
-        FieldStorage<NekDouble, ePhys> d12(xc0);
+        Array<OneD, NekDouble> d12(varsize);
         LibUtilities::EquationSharedPtr d12func =
             vSession->GetFunction("d12", 0);
-        d12func->Evaluate(xc0, xc1, xc2, d12);
-        varcoeffs[StdRegions::eVarCoeffD12] = d12.UpdateData();
+        d12func->Evaluate(xc, d12);
+        varcoeffs[StdRegions::eVarCoeffD12] = d12;
     }
 
     if (vSession->DefinesFunction("d22"))
     {
-        FieldStorage<NekDouble, ePhys> d22(xc0);
+        Array<OneD, NekDouble> d22(varsize);
         LibUtilities::EquationSharedPtr d22func =
             vSession->GetFunction("d22", 0);
-        d22func->Evaluate(xc0, xc1, xc2, d22);
-        varcoeffs[StdRegions::eVarCoeffD22] = d22.UpdateData();
+        d22func->Evaluate(xc, d22);
+        varcoeffs[StdRegions::eVarCoeffD22] = d22;
     }
 }
