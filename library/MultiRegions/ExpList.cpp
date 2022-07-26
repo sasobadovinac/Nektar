@@ -352,7 +352,9 @@ namespace Nektar
                 if(bndCond[i]->GetBoundaryConditionType() ==
                    SpatialDomains::eDirichlet)
                 {
-                    for(j = 0; j < bndConstraint[i]->GetExpSize(); ++j)
+		  // A cahnge here
+		  int size = bndConstraint[i]->GetExpSize();
+                    for(j = 0; j < size; ++j)
                     {
                         if((exp0D = std::dynamic_pointer_cast<
                             LocalRegions::Expansion0D>(
