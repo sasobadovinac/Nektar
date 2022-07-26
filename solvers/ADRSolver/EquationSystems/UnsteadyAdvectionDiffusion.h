@@ -128,7 +128,7 @@ namespace Nektar
                           const Array<OneD, const Array<OneD, NekDouble> > &velfield);
 
         /// Initialise the object
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareFields=true);
 
         /// Print Summary
         virtual void v_GenerateSummary(SolverUtils::SummaryList& s);

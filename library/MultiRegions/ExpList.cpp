@@ -310,23 +310,21 @@ namespace Nektar
          *                       in operators
          */
         ExpList::ExpList(
-                         const LibUtilities::SessionReaderSharedPtr &pSession,
-                         const Array<OneD,const ExpListSharedPtr>   &bndConstraint,
-                         const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
-                         &bndCond,
-                         const LocalRegions::ExpansionVector        &locexp,
-                         const SpatialDomains::MeshGraphSharedPtr   &graph,
-                         const bool                                  DeclareCoeffPhysArrays,
-                         const std::string                           variable,
-                         const Collections::ImplementationType       ImpType):
-            m_comm(pSession->GetComm()),
-            m_session(pSession),
-            m_graph(graph),
-            m_physState(false),
-            m_exp(MemoryManager<LocalRegions::ExpansionVector>
-                  ::AllocateSharedPtr()),
-            m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
-            m_WaveSpace(false)
+            const LibUtilities::SessionReaderSharedPtr &pSession,
+            const Array<OneD, const ExpListSharedPtr> &bndConstraint,
+            const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+                &bndCond,
+            const LocalRegions::ExpansionVector &locexp,
+            const SpatialDomains::MeshGraphSharedPtr &graph,
+            const LibUtilities::CommSharedPtr &comm,
+            const bool DeclareCoeffPhysArrays, const std::string variable,
+            const Collections::ImplementationType ImpType)
+            : m_comm(comm), m_session(pSession), m_graph(graph),
+              m_physState(false),
+              m_exp(MemoryManager<
+                    LocalRegions::ExpansionVector>::AllocateSharedPtr()),
+              m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
+              m_WaveSpace(false)
         {
             boost::ignore_unused(variable,ImpType);
             int i, j, id, elmtid = 0;
@@ -1589,7 +1587,7 @@ namespace Nektar
             LIKWID_MARKER_STOP("IProductWRTDerivBase_coll");
 
             // Elapsed time
-            timer.AccumulateRegion("Collections:IProductWRTDerivBase");
+            timer.AccumulateRegion("Collections:IProductWRTDerivBase",10);
 
         }
         /**
@@ -1664,7 +1662,7 @@ namespace Nektar
             }
             timer.Stop();
             // Elapsed time
-            timer.AccumulateRegion("Collections:PhysDeriv");
+            timer.AccumulateRegion("Collections:PhysDeriv",10);
         }
 
         void ExpList::v_PhysDeriv(const int dir,
@@ -2578,7 +2576,7 @@ namespace Nektar
                 }
                 
                 LIKWID_MARKER_START("v_BwdTrans_IterPerExp");
-                // timer.Start();
+                timer.Start();
                 
                 Array<OneD, NekDouble> tmp;
                 for (int i = 0; i < m_collections.size(); ++i)
@@ -2587,13 +2585,14 @@ namespace Nektar
                                                    inarray + m_coll_coeff_offset[i],
                                                    tmp = outarray + m_coll_phys_offset[i]);
                 }
+
+                timer.Stop();
+                LIKWID_MARKER_STOP("v_BwdTrans_IterPerExp");
+
             }
 
-            timer.Stop();
-            LIKWID_MARKER_STOP("v_BwdTrans_IterPerExp");
-
             // Elapsed time
-            timer.AccumulateRegion("Collections:BwdTrans");
+            timer.AccumulateRegion("Collections:BwdTrans",10);
         }
 
         LocalRegions::ExpansionSharedPtr& ExpList::GetExp(

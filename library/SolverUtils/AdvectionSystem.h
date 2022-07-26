@@ -51,7 +51,7 @@ public:
 
     SOLVER_UTILS_EXPORT virtual ~AdvectionSystem();
 
-    SOLVER_UTILS_EXPORT virtual void v_InitObject();
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareField = true);
 
     /// Returns the advection object held by this instance.
     SOLVER_UTILS_EXPORT AdvectionSharedPtr GetAdvObject()

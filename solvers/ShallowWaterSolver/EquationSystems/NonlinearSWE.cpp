@@ -55,9 +55,9 @@ namespace Nektar
   {
   }
 
-  void NonlinearSWE::v_InitObject()
+  void NonlinearSWE::v_InitObject(bool DeclareFields)
   {
-      ShallowWaterSystem::v_InitObject();
+      ShallowWaterSystem::v_InitObject(DeclareFields);
 
     if (m_explicitAdvection)
       {

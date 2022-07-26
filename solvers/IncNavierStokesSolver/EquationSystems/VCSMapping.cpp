@@ -62,9 +62,9 @@ namespace Nektar
 
     }
 
-    void VCSMapping::v_InitObject()
+    void VCSMapping::v_InitObject(bool DeclareField)
     {
-        VelocityCorrectionScheme::v_InitObject();
+        VelocityCorrectionScheme::v_InitObject(DeclareField);
 
         m_mapping = GlobalMapping::Mapping::Load(m_session, m_fields);
         ASSERTL0(m_mapping,

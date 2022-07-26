@@ -416,6 +416,21 @@ elements of the original mesh. We note there is one exception to this
 convention in three-dimensional meshes where a face composite can
 contain both triangular and quadrilateral elements.
 
+Typically a NekMesh call requires both an input and output module to be
+called, however, by specifying the output file name or file extension
+as \inltt{stdout} no output file will be created. This option is typically
+used for mesh statistics processing or inspecting composite values etc.
+An example call would be:
+
+\begin{lstlisting}[style=BashInputStyle]
+  NekMesh input.xml stdout
+\end{lstlisting}
+
+or 
+
+\begin{lstlisting}[style=BashInputStyle]
+  NekMesh input.xml name.stdout
+\end{lstlisting}
 
 
 \subsection{Output modules}

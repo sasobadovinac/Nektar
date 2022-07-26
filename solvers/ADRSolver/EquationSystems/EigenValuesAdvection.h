@@ -76,7 +76,7 @@ namespace Nektar
         /// Get the normal velocity
         Array<OneD, NekDouble> &GetNormalVelocity();
 
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareFields=true);
         virtual void v_DoInitialise();
         virtual void v_DoSolve();
 

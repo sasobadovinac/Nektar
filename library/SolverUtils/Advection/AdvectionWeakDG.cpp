@@ -97,23 +97,26 @@ namespace Nektar
             {
                 tmp[i] = Array<OneD, NekDouble> {nCoeffs, 0.0};
             }
-
+            LibUtilities::Timer timer;
+            timer.Start();
             AdvectionWeakDG::v_AdvectCoeffs(
                 nConvectiveFields, fields, advVel, inarray, tmp, time,
                 pFwd, pBwd);
+            timer.Stop();
+            timer.AccumulateRegion("AdvWeakDG:v_AdvectCoeffs",2);
 
             // why was this broken in many loops over convective fields?
             // this is terrible for locality
-            LibUtilities::Timer timer;
+
             timer.Start();
             for (int i = 0; i < nConvectiveFields; ++i)
             {
                 fields[i]->BwdTrans(tmp[i], outarray[i]);
             }
             timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_BwdTrans",1);
+            timer.AccumulateRegion("AdvWeakDG:_BwdTrans",10);
             timer1.Stop();
-            timer1.AccumulateRegion("AdvWeakDG:All");
+            timer1.AccumulateRegion("AdvWeakDG:All",10);
         }
 
         void AdvectionWeakDG::v_AdvectCoeffs(
@@ -126,8 +129,6 @@ namespace Nektar
             const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
             const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
         {
-            LibUtilities::Timer timer1;
-            timer1.Start();
             size_t nPointsTot      = fields[0]->GetTotPoints();
             size_t nCoeffs         = fields[0]->GetNcoeffs();
             size_t nTracePointsTot = fields[0]->GetTrace()->GetTotPoints();
@@ -150,7 +151,7 @@ namespace Nektar
             v_AdvectVolumeFlux(nConvectiveFields, fields, advVel, inarray,
                                 fluxvector, time);
             timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_fluxVector",1);
+            timer.AccumulateRegion("AdvWeakDG:_fluxVector",3);
 
 
             timer.Start();
@@ -161,7 +162,7 @@ namespace Nektar
                 fields[i]->IProductWRTDerivBase(fluxvector[i], outarray[i]);
             }
             timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_IProductWRTDerivBase",1);
+            timer.AccumulateRegion("AdvWeakDG:_IProductWRTDerivBase",10);
 
             Array<OneD, Array<OneD, NekDouble> >
                 numflux{size_t(nConvectiveFields)};
@@ -182,17 +183,14 @@ namespace Nektar
                 timer.Start();
                 fields[i]->AddTraceIntegral     (numflux[i], outarray[i]);
                 timer.Stop();
-                timer.AccumulateRegion("AdvWeakDG:_AddTraceIntegral",1);
+                timer.AccumulateRegion("AdvWeakDG:_AddTraceIntegral",10);
 
                 timer.Start();
                 fields[i]->MultiplyByElmtInvMass(outarray[i], outarray[i]);
                 timer.Stop();
-                timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass",1);
+                timer.AccumulateRegion("AdvWeakDG:_MultiplyByElmtInvMass",10);
             }
-
-            timer1.Stop();
-            timer1.AccumulateRegion("AdvWeakDG: Coeff All");
-        }
+	}
         
         void AdvectionWeakDG::v_AdvectTraceFlux(
             const int                                         nConvectiveFields,
@@ -237,8 +235,7 @@ namespace Nektar
             timer.Start();
             m_riemann->Solve(m_spaceDim, Fwd, Bwd, TraceFlux);
             timer.Stop();
-            timer.AccumulateRegion("AdvWeakDG:_Riemann",1);
-
+            timer.AccumulateRegion("AdvWeakDG:_Riemann",10);
         }
 
         void AdvectionWeakDG::v_AddVolumJacToMat( 

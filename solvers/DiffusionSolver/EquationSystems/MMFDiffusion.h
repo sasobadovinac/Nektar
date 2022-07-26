@@ -119,7 +119,7 @@ namespace Nektar
 	InitWaveType                                    m_InitWaveType;
 
 	
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareField=true);
 
         /// Solve for the diffusion term.
         void DoImplicitSolve(

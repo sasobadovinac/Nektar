@@ -63,9 +63,9 @@ NonlinearPeregrine::NonlinearPeregrine(
     // we need to investigate the behaviuor w.r.t. tau
 }
 
-void NonlinearPeregrine::v_InitObject()
+void NonlinearPeregrine::v_InitObject(bool DeclareFields)
 {
-    ShallowWaterSystem::v_InitObject();
+    ShallowWaterSystem::v_InitObject(DeclareFields);
 
     if (m_session->DefinesSolverInfo("PROBLEMTYPE"))
     {

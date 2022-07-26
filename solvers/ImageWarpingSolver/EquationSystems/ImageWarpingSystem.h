@@ -83,7 +83,7 @@ namespace Nektar
         /// Get the normal velocity
         Array<OneD, NekDouble> &GetNormalVelocity();
 
-        virtual void v_InitObject();
+        virtual void v_InitObject(bool DeclareField = true);
 
         // DG Advection routines
         void GetFluxVector(

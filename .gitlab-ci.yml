@@ -65,7 +65,7 @@ include:
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 1)
     - BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - export CCACHE_DIR=/cache/nektar/$OS_VERSION/
-    - export NUM_CPUS=4
+    - export NUM_CPUS=8
     - export CONTAINER_NAME=test-$CI_JOB_ID
     - export ENV_NAME=env-${OS_VERSION}-${BUILD_TYPE}
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -431,7 +431,7 @@ win10-default-build-and-test:
     - cmake.exe -G "Visual Studio 14 2015 Win64" --config Debug ..
     - cmake.exe --build . --target ALL_BUILD --config Debug
     - cmake.exe --build . --target INSTALL --config Debug
-    - ctest --output-on-failure -C Debug -j3
+    - ctest --output-on-failure -C Debug -j8
   after_script:
     - Remove-Item -Recurse -Force build
   needs: []
@@ -449,7 +449,7 @@ win10-mpi-default-build-and-test:
     - cmake.exe -G "Visual Studio 14 2015 Win64" -DNEKTAR_USE_MPI=ON --config Debug ..
     - cmake.exe --build . --target ALL_BUILD --config Debug
     - cmake.exe --build . --target INSTALL --config Debug
-    - ctest --output-on-failure -C Debug -j3
+    - ctest --output-on-failure -C Debug -j8
   after_script:
     - Remove-Item -Recurse -Force build
   needs: []
@@ -552,7 +552,7 @@ dockerhub-build-dev:
     args: --build-arg ENV_IMAGE=$CI_REGISTRY_IMAGE/nektar-env:$CI_COMMIT_SHORT_SHA --build-arg NEKTAR_IMAGE=$CI_REGISTRY_IMAGE/nektar:$CI_COMMIT_SHORT_SHA
     dockerfile: docker/nektar-dev/Dockerfile
 
-# Test the dockerhub images
+# Test the dockerhub images: runs a quick solve and Python code.
 dockerhub-test-nektar:
   <<: *dockerhub_test_template
   needs: [ "dockerhub-build-nektar" ]
@@ -560,6 +560,8 @@ dockerhub-test-nektar:
     image_name: nektar
   script:
     - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
+    - cd $CI_PROJECT_DIR/library/Demos/Python/MultiRegions
+    - mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml
 
 dockerhub-test-nektar-dev:
   <<: *dockerhub_test_template

@@ -284,14 +284,14 @@ void ProcessWSS::Process(po::variables_map &vm)
 
     if (m_spacedim == 2)
     {
-        m_f->m_variables[0] = "Shear_x";
-        m_f->m_variables[1] = "Shear_y";
+        m_f->m_variables[0] = "Shear_s";
+        m_f->m_variables[1] = "Shear_n";
         m_f->m_variables[2] = "Shear_mag";
     }
     else
     {
-        m_f->m_variables[0] = "Shear_x";
-        m_f->m_variables[1] = "Shear_y";
+        m_f->m_variables[0] = "Shear_s";
+        m_f->m_variables[1] = "Shear_n";
         m_f->m_variables[2] = "Shear_z";
         m_f->m_variables[3] = "Shear_mag";
     }

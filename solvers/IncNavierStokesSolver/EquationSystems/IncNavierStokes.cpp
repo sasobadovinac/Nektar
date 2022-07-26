@@ -75,9 +75,9 @@ namespace Nektar
     {
     }
 
-    void IncNavierStokes::v_InitObject()
+    void IncNavierStokes::v_InitObject(bool DeclareField)
     {
-        AdvectionSystem::v_InitObject();
+        AdvectionSystem::v_InitObject(DeclareField);
 
         int i,j;
         int numfields = m_fields.size();
