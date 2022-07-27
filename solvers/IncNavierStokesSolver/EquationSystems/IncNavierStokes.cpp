@@ -592,7 +592,7 @@ void IncNavierStokes::SetZeroNormalVelocity()
                     Bc = BndExp[k][n]->GetExp(i);
                     Vmath::Vvtvp(nq, normvel, 1, normals[k], 1, Bphys, 1, Bphys,
                                  1);
-                    Bc->FwdTrans_BndConstrained(Bphys, Bcoeffs);
+                    Bc->FwdTransBndConstrained(Bphys, Bcoeffs);
                 }
             }
         }
@@ -1018,7 +1018,7 @@ void IncNavierStokes::SetMRFWallBCs(const NekDouble &time)
                 {
                     BndExp[k][n]->SetWaveSpace(false);
                 }
-                BndExp[k][n]->FwdTrans_BndConstrained(
+                BndExp[k][n]->FwdTransBndConstrained(
                     BndExp[k][n]->GetPhys(), BndExp[k][n]->UpdateCoeffs());
             }
         }
@@ -1119,7 +1119,7 @@ void IncNavierStokes::SetMRFDomainVelBCs(const NekDouble &time)
                 {
                     BndExp[k][n]->SetWaveSpace(false);
                 }
-                BndExp[k][n]->FwdTrans_BndConstrained(
+                BndExp[k][n]->FwdTransBndConstrained(
                     BndExp[k][n]->GetPhys(), BndExp[k][n]->UpdateCoeffs());
             }
         }

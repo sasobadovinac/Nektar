@@ -102,23 +102,12 @@ public:
     /// Returns the map from local to global level.
     inline const AssemblyMapCGSharedPtr &GetLocalToGlobalMap() const;
 
-    /// Calculates the inner product of a function
-    /// \f$f(\boldsymbol{x})\f$ with respect to all <em>global</em>
-    /// expansion modes \f$\phi_n^e(\boldsymbol{x})\f$.
-    inline void IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray);
-
     /// Performs the global forward transformation of a function
     /// \f$f(\boldsymbol{x})\f$, subject to the boundary conditions
     /// specified.
     MULTI_REGIONS_EXPORT void FwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-
-    /// Performs the backward transformation of the spectral/hp
-    /// element expansion.
-    inline void BwdTrans(const Array<OneD, const NekDouble> &inarray,
-                         Array<OneD, NekDouble> &outarray);
 
     /// Multiply a solution by the inverse mass matrix.
     MULTI_REGIONS_EXPORT void MultiplyByInvMassMatrix(
@@ -262,13 +251,6 @@ protected:
         const Array<OneD, const NekDouble> &dirForcing,
         const bool PhysSpaceForcing);
 
-    /// Calculates the result of the multiplication of a global
-    /// matrix of type specified by \a mkey with a vector given by \a
-    /// inarray.
-    virtual void v_GeneralMatrixOp(const GlobalMatrixKey &gkey,
-                                   const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD, NekDouble> &outarray);
-
     // Solve the linear advection problem assuming that m_coeffs
     // vector contains an intial estimate for solution
     MULTI_REGIONS_EXPORT virtual void v_LinearAdvectionDiffusionReactionSolve(
@@ -360,49 +342,6 @@ inline void ContField::Assemble(const Array<OneD, const NekDouble> &inarray,
 inline const AssemblyMapCGSharedPtr &ContField::GetLocalToGlobalMap() const
 {
     return m_locToGloMap;
-}
-
-/**
- * The operation is evaluated locally (i.e. with respect to all local
- * expansion modes) by the function ExpList#IProductWRTBase. The inner
- * product with respect to the global expansion modes is than obtained
- * by a global assembly operation.
- *
- * The values of the function \f$f(\boldsymbol{x})\f$ evaluated at the
- * quadrature points \f$\boldsymbol{x}_i\f$ should be contained in the
- * variable #m_phys of the ExpList object \a in. The result is stored
- * in the array #m_coeffs.
- *
- * @param   In          An ExpList, containing the discrete evaluation
- *                      of \f$f(\boldsymbol{x})\f$ at the quadrature
- *                      points in its array #m_phys.
- */
-inline void ContField::IProductWRTBase(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-
-{
-    IProductWRTBase_IterPerExp(inarray, outarray);
-}
-
-/**
- * Given the coefficients of an expansion, this function evaluates the
- * spectral/hp expansion \f$u^{\delta}(\boldsymbol{x})\f$ at the
- * quadrature points \f$\boldsymbol{x}_i\f$. This operation is
- * evaluated locally by the function ExpList#BwdTrans.
- *
- * The coefficients of the expansion should be contained in the variable
- * #m_coeffs of the ExpList object \a In. The resulting physical values
- * at the quadrature points \f$u^{\delta}(\boldsymbol{x}_i)\f$ are
- * stored in the array #m_phys.
- *
- * @param   In          An ExpList, containing the local coefficients
- *                      \f$\hat{u}_n^e\f$ in its array #m_coeffs.
- */
-inline void ContField::BwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray)
-{
-    BwdTrans_IterPerExp(inarray, outarray);
 }
 
 inline const Array<OneD, const MultiRegions::ExpListSharedPtr>

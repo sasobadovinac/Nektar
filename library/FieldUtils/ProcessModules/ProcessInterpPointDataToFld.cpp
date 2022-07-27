@@ -194,8 +194,8 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
     // forward transform fields
     for (i = 0; i < nFields; ++i)
     {
-        m_f->m_exp[i]->FwdTrans_IterPerExp(m_f->m_exp[i]->GetPhys(),
-                                           m_f->m_exp[i]->UpdateCoeffs());
+        m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
+                                         m_f->m_exp[i]->UpdateCoeffs());
     }
 
     // save field names

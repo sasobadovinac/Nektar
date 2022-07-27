@@ -330,7 +330,7 @@ void UnsteadyAdvectionDiffusion::DoOdeProjection(
             for (i = 0; i < nvariables; ++i)
             {
                 m_fields[i]->FwdTrans(inarray[i], coeffs);
-                m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
+                m_fields[i]->BwdTrans(coeffs, outarray[i]);
             }
             break;
         }

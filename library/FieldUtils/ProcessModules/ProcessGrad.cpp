@@ -193,7 +193,7 @@ void ProcessGrad::Process(po::variables_map &vm)
         m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(npoints, grad[i], 1, m_f->m_exp[nfields + i]->UpdatePhys(),
                      1);
-        m_f->m_exp[nfields + i]->FwdTrans_IterPerExp(
+        m_f->m_exp[nfields + i]->FwdTransLocalElmt(
             grad[i], m_f->m_exp[nfields + i]->UpdateCoeffs());
     }
 }

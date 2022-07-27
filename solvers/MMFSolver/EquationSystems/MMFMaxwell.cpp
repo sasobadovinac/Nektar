@@ -683,7 +683,7 @@ void MMFMaxwell::v_DoSolve()
         for (i = 0; i < nvariables; ++i)
         {
             m_fields[m_intVariables[i]]->SetPhys(fields[i]);
-            m_fields[m_intVariables[i]]->FwdTrans_IterPerExp(
+            m_fields[m_intVariables[i]]->FwdTransLocalElmt(
                 fields[i], m_fields[m_intVariables[i]]->UpdateCoeffs());
             m_fields[m_intVariables[i]]->SetPhysState(false);
         }
@@ -2826,7 +2826,7 @@ Array<OneD, NekDouble> MMFMaxwell::GaussianPulse(const NekDouble time,
                                          (rad / Gaussianradius));
     }
 
-    m_fields[0]->FwdTrans_IterPerExp(outarray, tmpc);
+    m_fields[0]->FwdTransLocalElmt(outarray, tmpc);
     m_fields[0]->BwdTrans(tmpc, outarray);
 
     return outarray;
