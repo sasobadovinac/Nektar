@@ -260,7 +260,7 @@ bullseye-clang-format:
 
 
 # DOCUMENTATION
-buster-documentation-build-env:
+bullseye-documentation-build-env:
   <<: *execution-conditions
   image: docker:19.03.6
   stage: build-env-full
@@ -271,12 +271,12 @@ buster-documentation-build-env:
     - docker pull $IMAGE || true
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
-  needs: ["buster-default-build-env"]
+  needs: ["bullseye-default-build-env"]
 
 .build-documentation-template: &build-documentation-template
   <<: *build-and-test-template
   image: $CI_REGISTRY_IMAGE:env-documentation
-  needs: ["buster-documentation-build-env"]
+  needs: ["bullseye-documentation-build-env"]
 
 user-guide-build:
   <<: *build-documentation-template

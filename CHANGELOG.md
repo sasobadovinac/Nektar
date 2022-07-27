@@ -61,6 +61,9 @@ v5.2.0
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
 - Added timers around important functions using the Timer class. Timers are available by specifying IO_Timer_Level > -1 (!1347)
 
+**Documentation**
+- Fix images not being displayed in HTML documentation and tutorials (!1370)
+
 **CI**
 - Remove unused build options (!1360)
 - Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
