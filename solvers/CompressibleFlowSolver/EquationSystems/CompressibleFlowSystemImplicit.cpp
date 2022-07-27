@@ -323,6 +323,21 @@ void CFSImplicit::DoImplicitSolve(
     Array<OneD, NekDouble> out(ntotal);
     Array<OneD, NekDouble> tmpArray;
 
+#if 0 
+    // Set artificial viscosity based on NS viscous tensor
+    if (m_is_shockCaptPhys)
+    {
+        size_t npoints    = GetNpoints();
+        Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
+
+        // Note this is not required if Divergence sensor of ducross sensor is not used. 
+        //GetDivCurlSquared(m_fields, inpnts, div, curlSquare, pFwd, pBwd);
+
+        // Set volume and trace artificial viscosity
+        m_varConv->SetAv(m_fields, inpnts, div, curlSquare);
+    }
+#endif
+    
     for (int i = 0; i < nvariables; ++i)
     {
         int noffset = i * ncoeffs;
