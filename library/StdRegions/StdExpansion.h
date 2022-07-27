@@ -442,10 +442,10 @@ public:
     inline void FwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
 
-    void FwdTrans_BndConstrained(const Array<OneD, const NekDouble> &inarray,
-                                 Array<OneD, NekDouble> &outarray)
+    void FwdTransBndConstrained(const Array<OneD, const NekDouble> &inarray,
+                                Array<OneD, NekDouble> &outarray)
     {
-        v_FwdTrans_BndConstrained(inarray, outarray);
+        v_FwdTransBndConstrained(inarray, outarray);
     }
 
     /** \brief This function integrates the specified function over the
@@ -1437,7 +1437,7 @@ private:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    STD_REGIONS_EXPORT virtual void v_FwdTrans_BndConstrained(
+    STD_REGIONS_EXPORT virtual void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 

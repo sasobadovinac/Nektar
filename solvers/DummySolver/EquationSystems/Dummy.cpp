@@ -173,8 +173,8 @@ bool Dummy::v_PostIntegrate(int step)
     for (int i = 0; i < m_session->GetVariables().size(); ++i)
     {
 
-        m_fields[i]->FwdTrans_IterPerExp(m_fields[i]->UpdatePhys(),
-                                         m_fields[i]->UpdateCoeffs());
+        m_fields[i]->FwdTransLocalElmt(m_fields[i]->UpdatePhys(),
+                                       m_fields[i]->UpdateCoeffs());
         m_fields[i]->SetPhysState(false);
     }
 

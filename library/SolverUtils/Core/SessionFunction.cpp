@@ -128,8 +128,8 @@ void SessionFunction::Evaluate(
     for (int i = 0; i < pFieldNames.size(); i++)
     {
         Evaluate(pFieldNames[i], pFields[i]->UpdatePhys(), pTime, domain);
-        pFields[i]->FwdTrans_IterPerExp(pFields[i]->GetPhys(),
-                                        pFields[i]->UpdateCoeffs());
+        pFields[i]->FwdTransLocalElmt(pFields[i]->GetPhys(),
+                                      pFields[i]->UpdateCoeffs());
     }
 }
 
@@ -361,7 +361,7 @@ void SessionFunction::EvaluateFld(string pFieldName,
         }
     }
 
-    m_field->BwdTrans_IterPerExp(vCoeffs, pArray);
+    m_field->BwdTrans(vCoeffs, pArray);
 }
 
 /**

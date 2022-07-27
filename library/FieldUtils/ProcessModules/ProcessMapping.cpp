@@ -129,8 +129,8 @@ void ProcessMapping::Process(po::variables_map &vm)
                     Vmath::Vcopy(npoints, vel[i], 1,
                                  m_f->m_exp[i]->UpdatePhys(), 1);
                 }
-                m_f->m_exp[i]->FwdTrans_IterPerExp(
-                    m_f->m_exp[i]->GetPhys(), m_f->m_exp[i]->UpdateCoeffs());
+                m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
+                                                 m_f->m_exp[i]->UpdateCoeffs());
             }
         }
     }
@@ -145,7 +145,7 @@ void ProcessMapping::Process(po::variables_map &vm)
         m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(npoints, coords[i], 1,
                      m_f->m_exp[nfields + i]->UpdatePhys(), 1);
-        m_f->m_exp[nfields + i]->FwdTrans_IterPerExp(
+        m_f->m_exp[nfields + i]->FwdTransLocalElmt(
             coords[i], m_f->m_exp[nfields + i]->UpdateCoeffs());
     }
 }

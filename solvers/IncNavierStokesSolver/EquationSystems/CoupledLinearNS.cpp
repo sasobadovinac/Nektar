@@ -1454,7 +1454,7 @@ void CoupledLinearNS::v_DoInitialise(void)
 
                 for (int i = 0; i < m_velocity.size(); ++i)
                 {
-                    m_fields[m_velocity[i]]->FwdTrans_IterPerExp(
+                    m_fields[m_velocity[i]]->FwdTransLocalElmt(
                         Restart[i], m_fields[m_velocity[i]]->UpdateCoeffs());
                 }
                 cout << "Saving the RESTART file for m_kinvis = " << m_kinvis
@@ -1566,8 +1566,8 @@ void CoupledLinearNS::v_TransCoeffToPhys(void)
     for (int k = 0; k < nfields; ++k)
     {
         // Backward Transformation in physical space for time evolution
-        m_fields[k]->BwdTrans_IterPerExp(m_fields[k]->GetCoeffs(),
-                                         m_fields[k]->UpdatePhys());
+        m_fields[k]->BwdTrans(m_fields[k]->GetCoeffs(),
+                              m_fields[k]->UpdatePhys());
     }
 }
 
@@ -1577,8 +1577,8 @@ void CoupledLinearNS::v_TransPhysToCoeff(void)
     for (int k = 0; k < nfields; ++k)
     {
         // Forward Transformation in physical space for time evolution
-        m_fields[k]->FwdTrans_IterPerExp(m_fields[k]->GetPhys(),
-                                         m_fields[k]->UpdateCoeffs());
+        m_fields[k]->FwdTransLocalElmt(m_fields[k]->GetPhys(),
+                                       m_fields[k]->UpdateCoeffs());
     }
 }
 
@@ -1717,8 +1717,8 @@ void CoupledLinearNS::DefineForcingTerm(void)
         GetFunction("ForcingTerm")->Evaluate(fieldStr, m_ForcingTerm);
         for (int i = 0; i < m_velocity.size(); ++i)
         {
-            m_fields[m_velocity[i]]->FwdTrans_IterPerExp(
-                m_ForcingTerm[i], m_ForcingTerm_Coeffs[i]);
+            m_fields[m_velocity[i]]->FwdTransLocalElmt(m_ForcingTerm[i],
+                                                       m_ForcingTerm_Coeffs[i]);
         }
     }
     else
@@ -1772,7 +1772,7 @@ void CoupledLinearNS::SolveSteadyNavierStokes(void)
 
             for (int i = 0; i < m_velocity.size(); ++i)
             {
-                m_fields[m_velocity[i]]->BwdTrans_IterPerExp(
+                m_fields[m_velocity[i]]->BwdTrans(
                     m_fields[m_velocity[i]]->GetCoeffs(), Velocity_Phys[i]);
             }
 
@@ -1797,9 +1797,8 @@ void CoupledLinearNS::SolveSteadyNavierStokes(void)
 
         for (int i = 0; i < m_velocity.size(); ++i)
         {
-            m_fields[m_velocity[i]]->BwdTrans_IterPerExp(RHS_Coeffs[i],
-                                                         RHS_Phys[i]);
-            m_fields[m_velocity[i]]->BwdTrans_IterPerExp(
+            m_fields[m_velocity[i]]->BwdTrans(RHS_Coeffs[i], RHS_Phys[i]);
+            m_fields[m_velocity[i]]->BwdTrans(
                 m_fields[m_velocity[i]]->GetCoeffs(), delta_velocity_Phys[i]);
         }
 
@@ -1850,8 +1849,8 @@ void CoupledLinearNS::Continuation(void)
     {
         u_N[i] = Array<OneD, NekDouble>(m_fields[m_velocity[i]]->GetTotPoints(),
                                         0.0);
-        m_fields[m_velocity[i]]->BwdTrans_IterPerExp(
-            m_fields[m_velocity[i]]->GetCoeffs(), u_N[i]);
+        m_fields[m_velocity[i]]->BwdTrans(m_fields[m_velocity[i]]->GetCoeffs(),
+                                          u_N[i]);
 
         RHS[i] = Array<OneD, NekDouble>(m_fields[m_velocity[i]]->GetTotPoints(),
                                         0.0);
@@ -1874,8 +1873,8 @@ void CoupledLinearNS::Continuation(void)
     {
         u_star[i] = Array<OneD, NekDouble>(
             m_fields[m_velocity[i]]->GetTotPoints(), 0.0);
-        m_fields[m_velocity[i]]->BwdTrans_IterPerExp(
-            m_fields[m_velocity[i]]->GetCoeffs(), u_star[i]);
+        m_fields[m_velocity[i]]->BwdTrans(m_fields[m_velocity[i]]->GetCoeffs(),
+                                          u_star[i]);
 
         // u_star(k+1) = u_N(k) + DeltaKinvis *  u_star(k)
         Vmath::Smul(u_star[i].size(), m_kinvis, u_star[i], 1, u_star[i], 1);
@@ -2429,15 +2428,15 @@ void CoupledLinearNS::v_Output(void)
     if (m_singleMode == true)
     {
         Array<OneD, NekDouble> tmpfieldcoeffs(m_fields[0]->GetNcoeffs() / 2);
-        m_pressure->GetPlane(0)->BwdTrans_IterPerExp(
+        m_pressure->GetPlane(0)->BwdTrans(
             m_pressure->GetPlane(0)->GetCoeffs(),
             m_pressure->GetPlane(0)->UpdatePhys());
-        m_pressure->GetPlane(1)->BwdTrans_IterPerExp(
+        m_pressure->GetPlane(1)->BwdTrans(
             m_pressure->GetPlane(1)->GetCoeffs(),
             m_pressure->GetPlane(1)->UpdatePhys());
-        m_fields[0]->GetPlane(0)->FwdTrans_IterPerExp(
+        m_fields[0]->GetPlane(0)->FwdTransLocalElmt(
             m_pressure->GetPlane(0)->GetPhys(), fieldcoeffs[i]);
-        m_fields[0]->GetPlane(1)->FwdTrans_IterPerExp(
+        m_fields[0]->GetPlane(1)->FwdTransLocalElmt(
             m_pressure->GetPlane(1)->GetPhys(), tmpfieldcoeffs);
         for (int e = 0; e < m_fields[0]->GetNcoeffs() / 2; e++)
         {
@@ -2447,9 +2446,8 @@ void CoupledLinearNS::v_Output(void)
     }
     else
     {
-        m_pressure->BwdTrans_IterPerExp(m_pressure->GetCoeffs(),
-                                        m_pressure->UpdatePhys());
-        m_fields[0]->FwdTrans_IterPerExp(m_pressure->GetPhys(), fieldcoeffs[i]);
+        m_pressure->BwdTrans(m_pressure->GetCoeffs(), m_pressure->UpdatePhys());
+        m_fields[0]->FwdTransLocalElmt(m_pressure->GetPhys(), fieldcoeffs[i]);
     }
     variables[i] = "p";
 

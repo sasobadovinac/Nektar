@@ -255,8 +255,8 @@ void Monodomain::v_InitObject()
         for (int i = 0; i < j + 1; ++i)
         {
             // Transform variable coefficient and write out to file.
-            m_fields[0]->FwdTrans_IterPerExp(m_vardiff[varCoeffEnum[k]],
-                                             m_fields[0]->UpdateCoeffs());
+            m_fields[0]->FwdTransLocalElmt(m_vardiff[varCoeffEnum[k]],
+                                           m_fields[0]->UpdateCoeffs());
             std::stringstream filename;
             filename << "Conductivity_" << varCoeffString[k] << ".fld";
             WriteFld(filename.str());

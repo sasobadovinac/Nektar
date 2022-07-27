@@ -7,6 +7,7 @@ v5.3
 ------
 **Library**
 - Fixed avx512 back-end for SimdLib (!1333)
+- Remove unnecessary IterPerExp methods (!1366)
 - Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
 
 **FieldConver**
