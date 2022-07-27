@@ -113,7 +113,7 @@ void ArtificialDiffusion::v_DoArtificialDiffusionCoeff(
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
     size_t nvariables = inarray.size();
-     size_t ncoeffs    = m_fields[0]->GetNcoeffs();
+    size_t ncoeffs    = m_fields[0]->GetNcoeffs();
 
     Array<OneD, Array<OneD, NekDouble>> outarrayDiff{nvariables};
 
