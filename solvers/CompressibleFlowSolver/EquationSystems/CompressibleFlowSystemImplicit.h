@@ -322,7 +322,11 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, const Array<OneD, NekDouble>> &pBwd)
     {
-        boost::ignore_unused(inarray, outarray, pFwd, pBwd);
+        boost::ignore_unused(pFwd,pBwd);
+        if (m_artificialDiffusion)
+        {
+            m_artificialDiffusion->DoArtificialDiffusionCoeff(inarray, outarray);
+        }
     }
 
     virtual void v_CalcMuDmuDT(

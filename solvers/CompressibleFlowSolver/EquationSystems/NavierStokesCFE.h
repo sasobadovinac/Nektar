@@ -74,9 +74,6 @@ protected:
     /// flag to switch between IP and LDG
     /// an enum could be added for more options
     bool m_is_diffIP{false};
-    /// flag for shock capturing switch on/off
-    /// an enum could be added for more options
-    bool m_is_shockCaptPhys{false};
 
     NekDouble m_Cp;
     NekDouble m_Cv;

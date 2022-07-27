@@ -106,11 +106,9 @@ protected:
     // Parameters for local time-stepping
     bool m_useLocalTimeStep;
 
-    // Store physical artificial viscosity
-    Array<OneD, NekDouble> m_muav;
-
-    // Store physical artificial viscosity
-    Array<OneD, NekDouble> m_muavTrace;
+    /// flag for shock capturing switch on/off
+    /// an enum could be added for more options
+    bool m_is_shockCaptPhys{false};
 
     // Auxiliary object to convert variables
     VariableConverterSharedPtr m_varConv;
