@@ -167,11 +167,18 @@ void NavierStokesCFE::v_DoDiffusion(
     // Set artificial viscosity based on NS viscous tensor
     if (m_is_shockCaptPhys)
     {
-        Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
-        GetDivCurlSquared(m_fields, inarray, div, curlSquare, pFwd, pBwd);
+        if(m_shockCaptureType != "Off" && m_CalcPhysicalAV)
+        {
+            Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
+            GetDivCurlSquared(m_fields, inarray, div, curlSquare, pFwd, pBwd);
 
-        // Set volume and trace artificial viscosity
-        m_varConv->SetAv(m_fields, inarray, div, curlSquare);
+            // Set volume and trace artificial viscosity
+            m_varConv->SetAv(m_fields, inarray, div, curlSquare);
+        }
+        else
+        {
+            m_varConv->SetAv(m_fields, inarray);
+        }
     }
 
     if (m_is_diffIP)
