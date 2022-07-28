@@ -93,6 +93,11 @@ VariableConverter::VariableConverter(
                 m_session, pGraph, m_session->GetVariable(0));
     }
 
+    if (m_ducrosSensor != "Off" || m_shockSensorType == "Dilatation")
+    {
+        m_flagCalcDivCurl = true;
+    }
+
     std::string viscosityType;
     m_session->LoadSolverInfo("ViscosityType", viscosityType, "Constant");
     if ("Variable" == viscosityType)
