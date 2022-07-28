@@ -110,6 +110,11 @@ protected:
     /// an enum could be added for more options
     bool m_is_shockCaptPhys{false};
 
+    /// flag for shock capturing switch on/off
+    /// an enum could be added for more options
+    bool m_calcPhysicalAV{true};
+    
+    
     // Auxiliary object to convert variables
     VariableConverterSharedPtr m_varConv;
 

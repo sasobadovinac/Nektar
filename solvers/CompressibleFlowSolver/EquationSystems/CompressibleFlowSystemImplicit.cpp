@@ -323,7 +323,10 @@ void CFSImplicit::DoImplicitSolve(
     Array<OneD, NekDouble> out(ntotal);
     Array<OneD, NekDouble> tmpArray;
 
-    
+    // Turn on physical Av evaluation for this implicit solver
+    // this will only be used if m_is_shockCaptPhys is activated. 
+    m_calcPhysicalAV = true; 
+        
     for (int i = 0; i < nvariables; ++i)
     {
         int noffset = i * ncoeffs;

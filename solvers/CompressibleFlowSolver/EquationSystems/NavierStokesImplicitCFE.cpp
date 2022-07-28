@@ -122,9 +122,8 @@ void NavierStokesImplicitCFE::v_DoDiffusionCoeff(
     }
 
 
-#if 1 
     // Set artificial viscosity based on NS viscous tensor
-    if (m_is_shockCaptPhys)
+    if (m_is_shockCaptPhys&&m_calcPhysicalAV)
     {
         size_t npoints    = GetNpoints();
         Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
@@ -133,8 +132,10 @@ void NavierStokesImplicitCFE::v_DoDiffusionCoeff(
 
         // Set volume and trace artificial viscosity
         m_varConv->SetAv(m_fields, inarray, div, curlSquare);
+
+        // turn off setAv until reactivated at nexst time step
+        m_calcPhysicalAV = false; 
     }
-#endif
 
     if (m_is_diffIP)
     {
