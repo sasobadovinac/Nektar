@@ -62,8 +62,8 @@ VariableConverter::VariableConverter(
     m_oneOverT_star = (m_rhoInf * m_gasConstant) / m_pInf;
 
     // Parameters for sensor
-    m_session->LoadParameter("Skappa", m_Skappa, -1.0);
-    m_session->LoadParameter("Kappa", m_Kappa, 0.25);
+    m_session->LoadParameter("Skappa", m_Skappa, -2.5);
+    m_session->LoadParameter("Kappa", m_Kappa, 0.2);
 
     m_hOverP = NullNekDouble1DArray;
 
@@ -72,7 +72,7 @@ VariableConverter::VariableConverter(
     if (m_shockCaptureType == "Physical")
     {
         // Artificial viscosity scaling constant
-        m_session->LoadParameter("mu0", m_mu0, 1.0);
+        m_session->LoadParameter("mu0", m_mu0, 0.5);
 
         m_muAv      = NullNekDouble1DArray;
         m_muAvTrace = NullNekDouble1DArray;
@@ -457,7 +457,7 @@ void VariableConverter::SetAv(
 
     // Set trace AV
     Array<OneD, NekDouble> muFwd(nTracePts, 0.0), muBwd(nTracePts, 0.0);
-    fields[0]->GetFwdBwdTracePhys(m_muAv, muFwd, muBwd, false, false, false);
+    fields[0]->GetFwdBwdTracePhys(m_muAv, muFwd, muBwd, false, false, true);
     for (size_t p = 0; p < nTracePts; ++p)
     {
         m_muAvTrace[p] = 0.5 * (muFwd[p] + muBwd[p]);
@@ -604,7 +604,7 @@ void VariableConverter::GetSensor(
         numerator   = Vmath::Dot(nElmtPoints, difference, difference);
         denominator = Vmath::Dot(nElmtPoints, elmtPhys, elmtPhys);
 
-        NekDouble elmtSensor = sqrt(numerator / denominator);
+        NekDouble elmtSensor = numerator / denominator;
         elmtSensor = log10(max(elmtSensor, NekConstants::kNekSqrtTol));
 
         Vmath::Fill(nElmtPoints, elmtSensor, tmp = Sensor + physOffset, 1);
@@ -613,7 +613,7 @@ void VariableConverter::GetSensor(
         order = max(numModesElement - 1, 1);
         if (order > 0)
         {
-            Skappa = m_Skappa - 4.25 * log10(static_cast<NekDouble>(order));
+            Skappa = m_Skappa - 4.0 * log10(static_cast<NekDouble>(order));
         }
         else
         {
