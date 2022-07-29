@@ -337,7 +337,7 @@ void Mapping::Output(LibUtilities::FieldMetaDataMap &fieldMetaDataMap,
             // copy coordinates Data into FieldData and set variable
             for (int j = 0; j < expdim; ++j)
             {
-                m_fields[0]->FwdTrans(m_coords[j], fieldcoeffs);
+                m_fields[0]->FwdTransLocalElmt(m_coords[j], fieldcoeffs);
 
                 for (int i = 0; i < FieldDef.size(); ++i)
                 {
