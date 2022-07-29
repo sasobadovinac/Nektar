@@ -4226,8 +4226,6 @@ void ExpList::GetElmtNormalLength(Array<OneD, NekDouble> &lengthsFwd,
             loc_exp    = (*m_exp)[i];
             int offset = m_phys_offset[i];
 
-            NekDouble factor = 1.0;
-
             int e_nmodes = loc_exp->GetBasis(0)->GetNumModes();
             e_npoints    = (*m_exp)[i]->GetNumPoints(0);
             if (e_npoints0 < e_npoints)
@@ -4268,20 +4266,10 @@ void ExpList::GetElmtNormalLength(Array<OneD, NekDouble> &lengthsFwd,
                         lengAdd[nlr] = lengintp[nlr];
                     }
                 }
-                else
-                {
-                    if (1 == nlr)
-                    {
-                        lengAdd[nlr] = lengAdd[0];
-                        factor       = 0.5;
-                    }
-                }
-            }
-            for (int nlr = 0; nlr < 2; nlr++)
-            {
+
                 for (int j = 0; j < e_npoints; ++j)
                 {
-                    lengLR[nlr][offset + j] = factor * lengAdd[nlr][j];
+                    lengLR[nlr][offset + j] = lengAdd[nlr][j];
                 }
             }
         }
@@ -4292,8 +4280,6 @@ void ExpList::GetElmtNormalLength(Array<OneD, NekDouble> &lengthsFwd,
         {
             loc_exp    = (*m_exp)[i];
             int offset = m_phys_offset[i];
-
-            NekDouble factor = 1.0;
 
             LibUtilities::BasisKey traceBasis0 =
                 loc_exp->GetBasis(0)->GetBasisKey();
@@ -4355,18 +4341,10 @@ void ExpList::GetElmtNormalLength(Array<OneD, NekDouble> &lengthsFwd,
                         alignedLeng, traceBasis0.GetPointsKey(),
                         traceBasis1.GetPointsKey(), lengintp[nlr]);
                 }
-                else
-                {
-                    if (1 == nlr)
-                    {
-                        Vmath::Vcopy(e_npoints, lengintp[0], 1, lengintp[1], 1);
-                        factor = 0.5;
-                    }
-                }
 
                 for (int j = 0; j < e_npoints; ++j)
                 {
-                    lengLR[nlr][offset + j] = factor * lengintp[nlr][j];
+                    lengLR[nlr][offset + j] = lengintp[nlr][j];
                 }
             }
         }
