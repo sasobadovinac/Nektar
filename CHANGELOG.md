@@ -10,7 +10,7 @@ v5.3
 - Remove unnecessary IterPerExp methods (!1366)
 - Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
 
-**FieldConver**
+**FieldConvert**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
 - Fixed the output field names of WSS module of FieldConvert
 
@@ -60,6 +60,7 @@ v5.2.0
 **CompressibleFlowSolver**
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
 - Added timers around important functions using the Timer class. Timers are available by specifying IO_Timer_Level > -1 (!1347)
+- Fixed bug in the calculation of the discontinuity penalty factor for the DiffusionIP implementation (!1368)
 
 **Documentation**
 - Fix images not being displayed in HTML documentation and tutorials (!1370)
