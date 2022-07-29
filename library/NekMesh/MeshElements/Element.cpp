@@ -63,7 +63,7 @@ Element::Element(ElmtConfig pConf, unsigned int pNumNodes,
 void Element::SetVertex(unsigned int p, NodeSharedPtr pNew, bool descend)
 {
     NodeSharedPtr vOld = m_vertex[p];
-    m_vertex[p] = pNew;
+    m_vertex[p]        = pNew;
 
     if (!descend)
     {
@@ -108,7 +108,7 @@ void Element::SetVertex(unsigned int p, NodeSharedPtr pNew, bool descend)
 void Element::SetEdge(unsigned int p, EdgeSharedPtr pNew, bool descend)
 {
     EdgeSharedPtr vOld = m_edge[p];
-    m_edge[p] = pNew;
+    m_edge[p]          = pNew;
 
     if (!descend)
     {
@@ -227,5 +227,5 @@ string Element::GetXmlCurveString()
     return s.str();
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -32,12 +32,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/HexGeom.h>
-#include <SpatialDomains/Geometry1D.h>
-#include <StdRegions/StdHexExp.h>
-#include <SpatialDomains/SegGeom.h>
-#include <SpatialDomains/QuadGeom.h>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/Geometry1D.h>
+#include <SpatialDomains/HexGeom.h>
+#include <SpatialDomains/QuadGeom.h>
+#include <SpatialDomains/SegGeom.h>
+#include <StdRegions/StdHexExp.h>
 
 using namespace std;
 
@@ -47,7 +47,7 @@ namespace SpatialDomains
 {
 
 const unsigned int HexGeom::VertexEdgeConnectivity[8][3] = {
-    {0, 3, 4}, {0, 1, 5}, {1, 2, 6}, {2, 3, 7},
+    {0, 3, 4},  {0, 1, 5}, {1, 2, 6},  {2, 3, 7},
     {4, 8, 11}, {5, 8, 9}, {6, 9, 10}, {7, 10, 11}};
 const unsigned int HexGeom::VertexFaceConnectivity[8][3] = {
     {0, 1, 4}, {0, 1, 2}, {0, 2, 3}, {0, 3, 4},
@@ -58,7 +58,7 @@ const unsigned int HexGeom::EdgeFaceConnectivity[12][2] = {
 const unsigned int HexGeom::EdgeNormalToFaceVert[6][4] = {
     {4, 5, 6, 7},  {1, 3, 9, 11}, {0, 2, 8, 10},
     {1, 3, 9, 11}, {0, 2, 8, 10}, {4, 5, 6, 7}};
-    
+
 HexGeom::HexGeom()
 {
     m_shapeType = LibUtilities::eHexahedron;
@@ -68,7 +68,7 @@ HexGeom::HexGeom(int id, const QuadGeomSharedPtr faces[])
     : Geometry3D(faces[0]->GetEdge(0)->GetVertex(0)->GetCoordim())
 {
     m_shapeType = LibUtilities::eHexahedron;
-    m_globalID = id;
+    m_globalID  = id;
 
     /// Copy the face shared pointers
     m_faces.insert(m_faces.begin(), faces, faces + HexGeom::kNfaces);
@@ -89,7 +89,7 @@ HexGeom::~HexGeom()
 
 void HexGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         HexGeom::v_Setup();
     }
@@ -116,12 +116,8 @@ void HexGeom::v_GenGeomFactors()
         if (Gtype == eRegular)
         {
             const unsigned int faceVerts[kNfaces][QuadGeom::kNverts] = {
-                {0, 1, 2, 3},
-                {0, 1, 5, 4},
-                {1, 2, 6, 5},
-                {3, 2, 6, 7},
-                {0, 3, 7, 4},
-                {4, 5, 6, 7}};
+                {0, 1, 2, 3}, {0, 1, 5, 4}, {1, 2, 6, 5},
+                {3, 2, 6, 7}, {0, 3, 7, 4}, {4, 5, 6, 7}};
 
             for (f = 0; f < kNfaces; f++)
             {
@@ -462,12 +458,9 @@ void HexGeom::SetUpFaceOrientation()
     // for every face. For every face, they are ordered in such
     // a way that the implementation below allows a unified approach
     // for all faces.
-    const unsigned int faceVerts[kNfaces][QuadGeom::kNverts] = {{0, 1, 2, 3},
-                                                                {0, 1, 5, 4},
-                                                                {1, 2, 6, 5},
-                                                                {3, 2, 6, 7},
-                                                                {0, 3, 7, 4},
-                                                                {4, 5, 6, 7}};
+    const unsigned int faceVerts[kNfaces][QuadGeom::kNverts] = {
+        {0, 1, 2, 3}, {0, 1, 5, 4}, {1, 2, 6, 5},
+        {3, 2, 6, 7}, {0, 3, 7, 4}, {4, 5, 6, 7}};
 
     NekDouble dotproduct1 = 0.0;
     NekDouble dotproduct2 = 0.0;
@@ -480,8 +473,8 @@ void HexGeom::SetUpFaceOrientation()
         // initialisation
         elementAaxis_length = 0.0;
         elementBaxis_length = 0.0;
-        faceAaxis_length = 0.0;
-        faceBaxis_length = 0.0;
+        faceAaxis_length    = 0.0;
+        faceBaxis_length    = 0.0;
 
         dotproduct1 = 0.0;
         dotproduct2 = 0.0;
@@ -560,8 +553,8 @@ void HexGeom::SetUpFaceOrientation()
 
         elementAaxis_length = sqrt(elementAaxis_length);
         elementBaxis_length = sqrt(elementBaxis_length);
-        faceAaxis_length = sqrt(faceAaxis_length);
-        faceBaxis_length = sqrt(faceBaxis_length);
+        faceAaxis_length    = sqrt(faceAaxis_length);
+        faceBaxis_length    = sqrt(faceBaxis_length);
 
         // Calculate the inner product of both the A-axis
         // (i.e. Elemental A axis and face A axis)
@@ -570,7 +563,8 @@ void HexGeom::SetUpFaceOrientation()
             dotproduct1 += elementAaxis[i] * faceAaxis[i];
         }
 
-        NekDouble norm = fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
+        NekDouble norm =
+            fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
         orientation = 0;
 
         // if the innerproduct is equal to the (absolute value of the ) products
@@ -661,18 +655,9 @@ void HexGeom::SetUpEdgeOrientation()
     // This 2D array holds the local id's of all the vertices
     // for every edge. For every edge, they are ordered to what we
     // define as being Forwards
-    const unsigned int edgeVerts[kNedges][2] = {{0, 1},
-                                                {1, 2},
-                                                {2, 3},
-                                                {3, 0},
-                                                {0, 4},
-                                                {1, 5},
-                                                {2, 6},
-                                                {3, 7},
-                                                {4, 5},
-                                                {5, 6},
-                                                {6, 7},
-                                                {7, 4}};
+    const unsigned int edgeVerts[kNedges][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0},
+                                                {0, 4}, {1, 5}, {2, 6}, {3, 7},
+                                                {4, 5}, {5, 6}, {6, 7}, {7, 4}};
 
     int i;
     for (i = 0; i < kNedges; i++)
@@ -681,7 +666,8 @@ void HexGeom::SetUpEdgeOrientation()
         {
             m_eorient[i] = StdRegions::eForwards;
         }
-        else if (m_edges[i]->GetVid(0) == m_verts[edgeVerts[i][1]]->GetGlobalID())
+        else if (m_edges[i]->GetVid(0) ==
+                 m_verts[edgeVerts[i][1]]->GetGlobalID())
         {
             m_eorient[i] = StdRegions::eBackwards;
         }
@@ -707,7 +693,7 @@ void HexGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void HexGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 6; ++i)
         {
@@ -806,20 +792,20 @@ void HexGeom::SetUpXmap()
     int order2 = *max_element(tmp1.begin(), tmp1.end());
 
     const LibUtilities::BasisKey A(
-        LibUtilities::eModified_A,
-        order0,
-        LibUtilities::PointsKey(order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order0,
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey B(
-        LibUtilities::eModified_A,
-        order1,
-        LibUtilities::PointsKey(order1+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order1,
+        LibUtilities::PointsKey(order1 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey C(
-        LibUtilities::eModified_A,
-        order2,
-        LibUtilities::PointsKey(order2+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order2,
+        LibUtilities::PointsKey(order2 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
 
     m_xmap = MemoryManager<StdRegions::StdHexExp>::AllocateSharedPtr(A, B, C);
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

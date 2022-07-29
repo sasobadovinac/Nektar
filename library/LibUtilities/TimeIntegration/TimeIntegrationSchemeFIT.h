@@ -66,15 +66,13 @@ public:
     }
 
     /// Creator
-    static TimeIntegrationSchemeSharedPtr
-    create(std::string variant,
-           unsigned int order,
-           std::vector<NekDouble> freeParams)
+    static TimeIntegrationSchemeSharedPtr create(
+        std::string variant, unsigned int order,
+        std::vector<NekDouble> freeParams)
     {
-        TimeIntegrationSchemeSharedPtr p = MemoryManager<
-            FractionalInTimeIntegrationScheme>::AllocateSharedPtr(variant,
-                                                                  order,
-                                                                  freeParams);
+        TimeIntegrationSchemeSharedPtr p =
+            MemoryManager<FractionalInTimeIntegrationScheme>::AllocateSharedPtr(
+                variant, order, freeParams);
 
         return p;
     }
@@ -97,7 +95,7 @@ public:
         return m_order;
     }
 
-    LUE virtual std::vector< NekDouble > GetFreeParams() const
+    LUE virtual std::vector<NekDouble> GetFreeParams() const
     {
         return m_freeParams;
     }
@@ -134,9 +132,10 @@ public:
     }
 
     // The worker methods from the base class that are virtual
-    LUE virtual void InitializeScheme(
-        const NekDouble deltaT, ConstDoubleArray &y_0,
-        const NekDouble time, const TimeIntegrationSchemeOperators &op);
+    LUE virtual void InitializeScheme(const NekDouble deltaT,
+                                      ConstDoubleArray &y_0,
+                                      const NekDouble time,
+                                      const TimeIntegrationSchemeOperators &op);
 
     LUE virtual ConstDoubleArray &TimeIntegrate(
         const int timestep, const NekDouble delta_t,
@@ -146,9 +145,10 @@ public:
     LUE virtual void printFull(std::ostream &os) const;
 
     // Friend classes
-    LUE friend std::ostream &operator<<(std::ostream &os,
-        const FractionalInTimeIntegrationScheme &rhs);
-    LUE friend std::ostream &operator<<(std::ostream &os,
+    LUE friend std::ostream &operator<<(
+        std::ostream &os, const FractionalInTimeIntegrationScheme &rhs);
+    LUE friend std::ostream &operator<<(
+        std::ostream &os,
         const FractionalInTimeIntegrationSchemeSharedPtr &rhs);
 
 protected:
@@ -156,50 +156,50 @@ protected:
     {
         int base;
 
-        int  index;           // Index of this instance
-        bool active;          // Used to determine if active
-        int  activecounter;   // counter used to flip active bit
-        int  activebase;
+        int index;         // Index of this instance
+        bool active;       // Used to determine if active
+        int activecounter; // counter used to flip active bit
+        int activebase;
 
         // Major storage for auxilliary ODE solutions.
         // Storage for values of y currently used to update u
-        ComplexTripleArray    stage_y;
-        std::pair< int, int > stage_ind;  // Time-step counters indicating the
-                                          // interval ymain is associated with
+        ComplexTripleArray stage_y;
+        std::pair<int, int> stage_ind; // Time-step counters indicating the
+                                       // interval ymain is associated with
 
         // Staging allocation
         bool stage_active;
         int stage_ccounter;
-        int stage_cbase;    // This base is halved after the first cycle
+        int stage_cbase; // This base is halved after the first cycle
         int stage_fcounter;
-        int stage_fbase;    // This base is halved after the first cycle
+        int stage_fbase; // This base is halved after the first cycle
 
         // Ceiling stash allocation
-        int                   cstash_counter;  // Counter used to determine
-                                               // when to stash
-        int                   cstash_base;     // base for counter
-        ComplexTripleArray    cstash_y;
-        std::pair< int, int > cstash_ind;      // ind(1) is never used:
-                                               // it always matches main.ind(1)
+        int cstash_counter; // Counter used to determine
+                            // when to stash
+        int cstash_base;    // base for counter
+        ComplexTripleArray cstash_y;
+        std::pair<int, int> cstash_ind; // ind(1) is never used:
+                                        // it always matches main.ind(1)
 
         // Ceiling sandbox allocation
-        bool                  csandbox_active; // Flag to determine when
-                                               // stash 2 is utilized
-        int                   csandbox_counter;
-        ComplexTripleArray    csandbox_y;
-        std::pair< int, int > csandbox_ind;
+        bool csandbox_active; // Flag to determine when
+                              // stash 2 is utilized
+        int csandbox_counter;
+        ComplexTripleArray csandbox_y;
+        std::pair<int, int> csandbox_ind;
 
         // Floor stash
-        int                   fstash_base;
-        ComplexTripleArray    fstash_y;
-        std::pair< int, int > fstash_ind;
+        int fstash_base;
+        ComplexTripleArray fstash_y;
+        std::pair<int, int> fstash_ind;
 
         // Floor sandbox
-        bool                  fsandbox_active;
-        int                   fsandbox_activebase;
-        int                   fsandbox_stashincrement;
-        ComplexTripleArray    fsandbox_y;
-        std::pair< int, int > fsandbox_ind;
+        bool fsandbox_active;
+        int fsandbox_activebase;
+        int fsandbox_stashincrement;
+        ComplexTripleArray fsandbox_y;
+        std::pair<int, int> fsandbox_ind;
 
         // Talbot quadrature rule
         ComplexSingleArray z;
@@ -215,27 +215,24 @@ protected:
     inline unsigned int modIncrement(const unsigned int counter,
                                      const unsigned int base) const;
 
-    inline unsigned int computeL( const unsigned int base,
-                                  const unsigned int m ) const;
+    inline unsigned int computeL(const unsigned int base,
+                                 const unsigned int m) const;
 
-    inline unsigned int  computeQML( const unsigned int base,
-                                     const unsigned int m );
+    inline unsigned int computeQML(const unsigned int base,
+                                   const unsigned int m);
 
-    inline unsigned int computeTaus( const unsigned int base,
-                                     const unsigned int m );
+    inline unsigned int computeTaus(const unsigned int base,
+                                    const unsigned int m);
 
-    void talbotQuadrature(const unsigned int nQuadPts,
-                          const NekDouble mu,
-                          const NekDouble nu,
-                          const NekDouble sigma,
-                                ComplexSingleArray &lamb,
-                                ComplexSingleArray &w) const;
+    void talbotQuadrature(const unsigned int nQuadPts, const NekDouble mu,
+                          const NekDouble nu, const NekDouble sigma,
+                          ComplexSingleArray &lamb,
+                          ComplexSingleArray &w) const;
 
     void integralClassInitialize(const unsigned int index,
                                  Instance &instance) const;
 
-    void updateStage(const unsigned int timeStep,
-                           Instance &instance);
+    void updateStage(const unsigned int timeStep, Instance &instance);
 
     void finalIncrement(const unsigned int timeStep,
                         const TimeIntegrationSchemeOperators &op);
@@ -246,36 +243,35 @@ protected:
 
     void timeAdvance(const unsigned int timeStep,
                      const TimeIntegrationSchemeOperators &op,
-                           Instance &instance,
-                           ComplexTripleArray &y);
+                     Instance &instance, ComplexTripleArray &y);
 
     void advanceSandbox(const unsigned int timeStep,
                         const TimeIntegrationSchemeOperators &op,
-                              Instance &instance);
+                        Instance &instance);
 
     // Variables common to all schemes.
     std::string m_name;
     std::string m_variant;
     unsigned int m_order{0};
-    std::vector< NekDouble > m_freeParams;
+    std::vector<NekDouble> m_freeParams;
 
     TimeIntegrationSchemeType m_schemeType{eFractionalInTime};
 
     // Varaibles and methods specific to FIT integration schemes.
-    NekDouble    m_deltaT{0};
-    NekDouble    m_T{0};          // Finial time
-    unsigned int m_maxTimeSteps;  // Number of time steps.
-    NekDouble    m_alpha{0.3};    // Value for exp integration.
-    unsigned int m_base{4};       // "Base" of the algorithm.
-    unsigned int m_nQuadPts{20};  // Number of Talbot quadrature rule points
-    NekDouble    m_sigma{0};
-    NekDouble    m_mu0{8};
-    NekDouble    m_nu{0.6};
+    NekDouble m_deltaT{0};
+    NekDouble m_T{0};            // Finial time
+    unsigned int m_maxTimeSteps; // Number of time steps.
+    NekDouble m_alpha{0.3};      // Value for exp integration.
+    unsigned int m_base{4};      // "Base" of the algorithm.
+    unsigned int m_nQuadPts{20}; // Number of Talbot quadrature rule points
+    NekDouble m_sigma{0};
+    NekDouble m_mu0{8};
+    NekDouble m_nu{0.6};
 
-    int m_nvars{0};            // Number of variables in the integration scheme.
-    int m_npoints{0};          // Number of points    in the integration scheme.
+    int m_nvars{0};   // Number of variables in the integration scheme.
+    int m_npoints{0}; // Number of points    in the integration scheme.
 
-    unsigned int m_Lmax{0};    // Maxium number of integral groups.
+    unsigned int m_Lmax{0}; // Maxium number of integral groups.
     Array<OneD, Instance> m_integral_classes;
 
     // Demarcation integers
@@ -310,12 +306,10 @@ protected:
 
 }; // end class FractionalInTimeIntegrator
 
+LUE std::ostream &operator<<(std::ostream &os,
+                             const FractionalInTimeIntegrationScheme &rhs);
 LUE std::ostream &operator<<(
-    std::ostream &os,
-    const FractionalInTimeIntegrationScheme &rhs);
-LUE std::ostream &operator<<(
-    std::ostream &os,
-    const FractionalInTimeIntegrationSchemeSharedPtr &rhs);
+    std::ostream &os, const FractionalInTimeIntegrationSchemeSharedPtr &rhs);
 
 } // end namespace LibUtilities
 } // end namespace Nektar

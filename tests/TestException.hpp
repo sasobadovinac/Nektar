@@ -50,9 +50,12 @@ struct TesterException : public std::runtime_error
     }
 };
 
-#define ASSERTL0(condition, msg) \
-    if (!(condition)) { throw TesterException(msg); }
+#define ASSERTL0(condition, msg)                                               \
+    if (!(condition))                                                          \
+    {                                                                          \
+        throw TesterException(msg);                                            \
+    }
 
-}
+} // namespace Nektar
 
 #endif

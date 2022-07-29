@@ -35,8 +35,8 @@
 #ifndef NEKMESH_MESHELEMENTS_COMPOSITE
 #define NEKMESH_MESHELEMENTS_COMPOSITE
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -71,7 +71,7 @@ typedef std::shared_ptr<Composite> CompositeSharedPtr;
 /// Container of composites; key is the composite id, value is the
 /// composite.
 typedef std::map<unsigned int, CompositeSharedPtr> CompositeMap;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

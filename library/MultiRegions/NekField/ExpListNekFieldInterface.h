@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpListFieldInterface.cpp
+// File ExpListNekFieldInterface.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,42 +28,44 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Provide an decoupling interface to ExpList from Field.
+// Description: Provide an decoupling interface to ExpList from NekField.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <MultiRegions/ExpList.h>
-#include <MultiRegions/Field/ExpListFieldInterface.h>
+#ifndef CLASS_EXPLIST_FIELDSTORAGE_INTERFACE
+#define CLASS_EXPLIST_FIELDSTORAGE_INTERFACE
+
+#include <memory>
 
 namespace Nektar
 {
 namespace MultiRegions
 {
+class ExpList;
+
 namespace details
 {
 
-ExpListFieldInterface::ExpListFieldInterface(
-    std::shared_ptr<ExpList> e)
+class ExpListNekFieldInterface
 {
-    m_e = e;
-}
+public:
+    ExpListNekFieldInterface(std::shared_ptr<ExpList> e);
+    ExpListNekFieldInterface(const ExpListNekFieldInterface &src);
 
-ExpListFieldInterface::ExpListFieldInterface(
-    const ExpListFieldInterface &src)
-    : m_e(src.m_e)
-{
-}
+    int GetNpoints();
+    int GetNcoeffs();
 
-int ExpListFieldInterface::GetNpoints()
-{
-    return m_e->GetNpoints();
-}
+    std::shared_ptr<ExpList> GetExpList()
+    {
+        return m_e;
+    }
 
-int ExpListFieldInterface::GetNcoeffs()
-{
-    return m_e->GetNcoeffs();
-}
+private:
+    std::shared_ptr<ExpList> m_e;
+};
 
 } // namespace details
 } // namespace MultiRegions
 } // namespace Nektar
+
+#endif

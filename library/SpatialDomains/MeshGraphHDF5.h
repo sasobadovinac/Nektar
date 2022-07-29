@@ -36,9 +36,9 @@
 #ifndef NEKTAR_SPATIALDOMAINS_MGHDF5_H
 #define NEKTAR_SPATIALDOMAINS_MGHDF5_H
 
+#include <LibUtilities/BasicUtils/H5.h>
 #include <SpatialDomains/MeshEntities.hpp>
 #include <SpatialDomains/MeshGraph.h>
-#include <LibUtilities/BasicUtils/H5.h>
 
 namespace Nektar
 {
@@ -53,10 +53,9 @@ public:
     }
 
     SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
-        std::string &outfilename,
-        bool defaultExp = false,
-        const LibUtilities::FieldMetaDataMap &metadata
-                                         = LibUtilities::NullFieldMetaDataMap);
+        std::string &outfilename, bool defaultExp = false,
+        const LibUtilities::FieldMetaDataMap &metadata =
+            LibUtilities::NullFieldMetaDataMap);
 
     virtual ~MeshGraphHDF5()
     {
@@ -71,51 +70,43 @@ public:
 
 protected:
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        LibUtilities::DomainRangeShPtr rng,
-        bool             fillGraph);
+        LibUtilities::DomainRangeShPtr rng, bool fillGraph);
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session);
 
 private:
-
-    void ReadCurveMap(
-        CurveMap                      &curveMap,
-        std::string                    dsName,
-        const std::unordered_set<int> &readIds);
+    void ReadCurveMap(CurveMap &curveMap, std::string dsName,
+                      const std::unordered_set<int> &readIds);
     void ReadDomain();
     void ReadComposites();
 
-    template<class T>
+    template <class T>
     void WriteGeometryMap(std::map<int, std::shared_ptr<T>> &geomMap,
                           std::string datasetName);
 
-    template<class T, typename DataType> void ReadGeometryData(
-        std::map<int, std::shared_ptr<T>>      &geomMap,
-        std::string                             dataSet,
-        const std::unordered_set<int>          &readIds,
-        std::vector<int>                       &ids,
-        std::vector<DataType>                  &geomData);
-    template<class T, typename DataType> void FillGeomMap(
-        std::map<int, std::shared_ptr<T>> &geomMap,
-        const CurveMap                    &curveMap,
-        std::vector<int>                  &ids,
-        std::vector<DataType>             &geomData);
-    template<class T, typename DataType> void ConstructGeomObject(
-        std::map<int, std::shared_ptr<T>> &geomMap, int id,
-        DataType *data, CurveSharedPtr curve);
+    template <class T, typename DataType>
+    void ReadGeometryData(std::map<int, std::shared_ptr<T>> &geomMap,
+                          std::string dataSet,
+                          const std::unordered_set<int> &readIds,
+                          std::vector<int> &ids,
+                          std::vector<DataType> &geomData);
+    template <class T, typename DataType>
+    void FillGeomMap(std::map<int, std::shared_ptr<T>> &geomMap,
+                     const CurveMap &curveMap, std::vector<int> &ids,
+                     std::vector<DataType> &geomData);
+    template <class T, typename DataType>
+    void ConstructGeomObject(std::map<int, std::shared_ptr<T>> &geomMap, int id,
+                             DataType *data, CurveSharedPtr curve);
 
     CompositeDescriptor CreateCompositeDescriptor(
         std::unordered_map<int, int> &id2row);
 
-    void WriteCurveMap(CurveMap &curves,
-                       std::string dsName,
-                       MeshCurvedPts &curvedPts,
-                       int &ptOffset,
-                       int &newIdx);
+    void WriteCurveMap(CurveMap &curves, std::string dsName,
+                       MeshCurvedPts &curvedPts, int &ptOffset, int &newIdx);
     void WriteCurvePoints(MeshCurvedPts &curvedPts);
 
     void WriteComposites(CompositeMap &comps);
-    void WriteDomain(std::map<int,CompositeMap> &domain);
+    void WriteDomain(std::map<int, CompositeMap> &domain);
 
     std::string m_hdf5Name;
     LibUtilities::H5::FileSharedPtr m_file;
@@ -126,7 +117,7 @@ private:
     static const unsigned int FORMAT_VERSION;
 };
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

@@ -40,44 +40,40 @@
 namespace Nektar
 {
 
-    class RinglebFlow : public EulerCFE
+class RinglebFlow : public EulerCFE
+{
+public:
+    friend class MemoryManager<RinglebFlow>;
+
+    /// Creates an instance of this class.
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<RinglebFlow>;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<RinglebFlow>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
+    /// Name of class.
+    static std::string className;
 
-        /// Creates an instance of this class.
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            SolverUtils::EquationSystemSharedPtr p = MemoryManager<
-                RinglebFlow>::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        /// Name of class.
-        static std::string className;
+    virtual ~RinglebFlow();
 
-        virtual ~RinglebFlow();
+protected:
+    RinglebFlow(const LibUtilities::SessionReaderSharedPtr &pSession,
+                const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    protected:
+    /// Print a summary of time stepping parameters.
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
 
-        RinglebFlow(const LibUtilities::SessionReaderSharedPtr& pSession,
-                    const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    virtual void v_EvaluateExactSolution(unsigned int field,
+                                         Array<OneD, NekDouble> &outfield,
+                                         const NekDouble time = 0.0);
 
-        /// Print a summary of time stepping parameters.
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
-
-        virtual void v_EvaluateExactSolution(
-            unsigned int            field,
-            Array<OneD, NekDouble> &outfield,
-            const NekDouble         time = 0.0);
-
-    private:
-        /// Ringleb Flow Test Case.
-        void GetExactRinglebFlow(
-            int                                             field,
-            Array<OneD, NekDouble>                         &outarray);
-    };
-}
+private:
+    /// Ringleb Flow Test Case.
+    void GetExactRinglebFlow(int field, Array<OneD, NekDouble> &outarray);
+};
+} // namespace Nektar
 #endif

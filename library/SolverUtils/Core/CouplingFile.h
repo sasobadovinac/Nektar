@@ -68,15 +68,13 @@ protected:
     SOLVER_UTILS_EXPORT virtual void v_Init();
 
     SOLVER_UTILS_EXPORT virtual void v_Send(
-        const int step,
-        const NekDouble time,
-        const Array<OneD, const Array<OneD, NekDouble> > &field,
+        const int step, const NekDouble time,
+        const Array<OneD, const Array<OneD, NekDouble>> &field,
         std::vector<std::string> &varNames);
 
     SOLVER_UTILS_EXPORT virtual void v_Receive(
-        const int step,
-        const NekDouble time,
-        Array<OneD, Array<OneD, NekDouble> > &field,
+        const int step, const NekDouble time,
+        Array<OneD, Array<OneD, NekDouble>> &field,
         std::vector<std::string> &varNames);
 
 private:
@@ -85,7 +83,7 @@ private:
 
     SessionFunctionSharedPtr m_inputFunction;
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

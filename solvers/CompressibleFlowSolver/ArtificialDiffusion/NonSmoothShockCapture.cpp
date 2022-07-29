@@ -39,33 +39,33 @@ using namespace std;
 namespace Nektar
 {
 
-std::string NonSmoothShockCapture::className = GetArtificialDiffusionFactory().
-    RegisterCreatorFunction("NonSmooth",
-                        NonSmoothShockCapture::create,
-                        "NonSmooth artificial diffusion for shock capture.");
+std::string NonSmoothShockCapture::className =
+    GetArtificialDiffusionFactory().RegisterCreatorFunction(
+        "NonSmooth", NonSmoothShockCapture::create,
+        "NonSmooth artificial diffusion for shock capture.");
 
 NonSmoothShockCapture::NonSmoothShockCapture(
-           const LibUtilities::SessionReaderSharedPtr& pSession,
-           const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-           const int spacedim)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const int spacedim)
     : ArtificialDiffusion(pSession, pFields, spacedim)
 {
-    m_session->LoadParameter ("SensorOffset",  m_offset, 1);
+    m_session->LoadParameter("SensorOffset", m_offset, 1);
     // init h/p
     m_varConv->SetElmtMinHP(m_fields);
 }
 
 void NonSmoothShockCapture::v_GetArtificialViscosity(
-            const Array<OneD, Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble  >             &mu)
+    const Array<OneD, Array<OneD, NekDouble>> &physfield,
+    Array<OneD, NekDouble> &mu)
 {
-    int nPts = m_fields[0]->GetTotPoints();
+    int nPts      = m_fields[0]->GetTotPoints();
     int nElements = m_fields[0]->GetExpSize();
 
     // Determine the maximum wavespeed
-    Array <OneD, NekDouble > Lambda(nPts, 0.0);
-    Array <OneD, NekDouble > soundspeed(nPts, 0.0);
-    Array <OneD, NekDouble > absVelocity(nPts, 0.0);
+    Array<OneD, NekDouble> Lambda(nPts, 0.0);
+    Array<OneD, NekDouble> soundspeed(nPts, 0.0);
+    Array<OneD, NekDouble> absVelocity(nPts, 0.0);
     m_varConv->GetSoundSpeed(physfield, soundspeed);
     m_varConv->GetAbsoluteVelocity(physfield, absVelocity);
     Vmath::Vadd(nPts, absVelocity, 1, soundspeed, 1, Lambda, 1);
@@ -88,7 +88,7 @@ void NonSmoothShockCapture::v_GetArtificialViscosity(
         // Scale viscosity by the maximum wave speed and h/p
         LambdaElmt *= m_mu0 * m_varConv->GetElmtMinHP()[e];
         Vmath::Smul(nElmtPoints, LambdaElmt, tmp = mu + physOffset, 1,
-            tmp = mu + physOffset, 1);
+                    tmp = mu + physOffset, 1);
     }
 }
-}
+} // namespace Nektar

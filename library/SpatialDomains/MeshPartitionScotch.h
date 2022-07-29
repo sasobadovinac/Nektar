@@ -48,73 +48,57 @@ namespace Nektar
 {
 namespace SpatialDomains
 {
-    class MeshPartitionScotch : public MeshPartition
+class MeshPartitionScotch : public MeshPartition
+{
+public:
+    /// Creates an instance of this class
+    static MeshPartitionSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr session,
+        LibUtilities::CommSharedPtr comm, int meshDim,
+        std::map<int, MeshEntity> element, CompositeDescriptor compMap)
     {
-        public:
-            /// Creates an instance of this class
-            static MeshPartitionSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr session,
-                LibUtilities::CommSharedPtr                comm,
-                int                                        meshDim,
-                std::map<int, MeshEntity>                  element,
-                CompositeDescriptor                        compMap)
-            {
-                return MemoryManager<MeshPartitionScotch>::AllocateSharedPtr(
-                    session, comm, meshDim, element, compMap);
-            }
+        return MemoryManager<MeshPartitionScotch>::AllocateSharedPtr(
+            session, comm, meshDim, element, compMap);
+    }
 
-            /// Name of class
-            static std::string className;
-            static std::string cmdSwitch;
+    /// Name of class
+    static std::string className;
+    static std::string cmdSwitch;
 
-            MeshPartitionScotch(
-                const LibUtilities::SessionReaderSharedPtr session,
-                LibUtilities::CommSharedPtr                comm,
-                int                                        meshDim,
-                std::map<int, MeshEntity>                  element,
-                CompositeDescriptor                        compMap);
-            virtual ~MeshPartitionScotch();
+    MeshPartitionScotch(const LibUtilities::SessionReaderSharedPtr session,
+                        LibUtilities::CommSharedPtr comm, int meshDim,
+                        std::map<int, MeshEntity> element,
+                        CompositeDescriptor compMap);
+    virtual ~MeshPartitionScotch();
 
-        private:
-            virtual void PartitionGraphImpl(
-                    int&                              nVerts,
-                    int&                              nVertConds,
-                    Nektar::Array<Nektar::OneD, int>& xadj,
-                    Nektar::Array<Nektar::OneD, int>& adjcy,
-                    Nektar::Array<Nektar::OneD, int>& vertWgt,
-                    Nektar::Array<Nektar::OneD, int>& vertSize,
-                    Nektar::Array<Nektar::OneD, int>& edgeWgt,
-                    int&                              nparts,
-                    int&                              volume,
-                    Nektar::Array<Nektar::OneD, int>& part);
+private:
+    virtual void PartitionGraphImpl(int &nVerts, int &nVertConds,
+                                    Nektar::Array<Nektar::OneD, int> &xadj,
+                                    Nektar::Array<Nektar::OneD, int> &adjcy,
+                                    Nektar::Array<Nektar::OneD, int> &vertWgt,
+                                    Nektar::Array<Nektar::OneD, int> &vertSize,
+                                    Nektar::Array<Nektar::OneD, int> &edgeWgt,
+                                    int &nparts, int &volume,
+                                    Nektar::Array<Nektar::OneD, int> &part);
 
-            void PartGraphVKway(
-                    const SCOTCH_Num * const    n,
-                    const SCOTCH_Num * const    xadj,
-                    const SCOTCH_Num * const    adjncy,
-                    const SCOTCH_Num * const    vwgt,
-                    const SCOTCH_Num * const    vsize,
-                    const SCOTCH_Num * const    wgtflag,
-                    const SCOTCH_Num * const    numflag,
-                    const SCOTCH_Num * const    nparts,
-                    SCOTCH_Num * const          volume,
-                    SCOTCH_Num * const          part);
+    void PartGraphVKway(const SCOTCH_Num *const n, const SCOTCH_Num *const xadj,
+                        const SCOTCH_Num *const adjncy,
+                        const SCOTCH_Num *const vwgt,
+                        const SCOTCH_Num *const vsize,
+                        const SCOTCH_Num *const wgtflag,
+                        const SCOTCH_Num *const numflag,
+                        const SCOTCH_Num *const nparts,
+                        SCOTCH_Num *const volume, SCOTCH_Num *const part);
 
-            int PartGraph2 (
-                    const SCOTCH_Num * const    n,
-                    const SCOTCH_Num * const    xadj,
-                    const SCOTCH_Num * const    adjncy,
-                    const SCOTCH_Num * const    vwgt,
-                    const SCOTCH_Num * const    adjwgt,
-                    const SCOTCH_Num * const    numflag,
-                    const SCOTCH_Num * const    nparts,
-                    SCOTCH_Num * const          part,
-                    SCOTCH_Num                  flagval,
-                    double                      kbalval);
+    int PartGraph2(const SCOTCH_Num *const n, const SCOTCH_Num *const xadj,
+                   const SCOTCH_Num *const adjncy, const SCOTCH_Num *const vwgt,
+                   const SCOTCH_Num *const adjwgt,
+                   const SCOTCH_Num *const numflag,
+                   const SCOTCH_Num *const nparts, SCOTCH_Num *const part,
+                   SCOTCH_Num flagval, double kbalval);
+};
 
-    };
-
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

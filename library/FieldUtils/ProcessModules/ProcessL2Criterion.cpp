@@ -233,10 +233,10 @@ void ProcessL2Criterion::Process(po::variables_map &vm)
 
         Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(npoints, outfield2, 1, Exp->UpdatePhys(), 1);
-        Exp->FwdTrans_IterPerExp(outfield2, Exp->UpdateCoeffs());
+        Exp->FwdTransLocalElmt(outfield2, Exp->UpdateCoeffs());
         auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
         m_f->m_exp.insert(it, Exp);
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

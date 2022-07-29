@@ -35,8 +35,8 @@
 #ifndef NekMesh_MESHELEMENTS_HEX
 #define NekMesh_MESHELEMENTS_HEX
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -50,9 +50,8 @@ class Hexahedron : public Element
 public:
     /// Creates an instance of this class
     NEKMESH_EXPORT static ElementSharedPtr create(
-        ElmtConfig                 pConf,
-        std::vector<NodeSharedPtr> pNodeList,
-        std::vector<int>           pTagList)
+        ElmtConfig pConf, std::vector<NodeSharedPtr> pNodeList,
+        std::vector<int> pTagList)
     {
         return std::shared_ptr<Element>(
             new Hexahedron(pConf, pNodeList, pTagList));
@@ -77,12 +76,9 @@ public:
     NEKMESH_EXPORT virtual StdRegions::Orientation GetEdgeOrient(
         int edgeId, EdgeSharedPtr edge);
     NEKMESH_EXPORT virtual void MakeOrder(
-        int                                order,
-        SpatialDomains::GeometrySharedPtr  geom,
-        LibUtilities::PointsType           pType,
-        int                                coordDim,
-        int                               &id,
-        bool                               justConfig = false);
+        int order, SpatialDomains::GeometrySharedPtr geom,
+        LibUtilities::PointsType pType, int coordDim, int &id,
+        bool justConfig = false);
 
     NEKMESH_EXPORT static unsigned int GetNumNodes(ElmtConfig pConf);
     NEKMESH_EXPORT virtual int GetFaceVertex(int i, int j)
@@ -93,7 +89,7 @@ public:
 private:
     static int m_faceIds[6][4];
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

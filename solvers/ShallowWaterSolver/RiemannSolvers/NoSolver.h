@@ -39,22 +39,20 @@
 
 namespace Nektar
 {
-    class NoSolver : public LinearSWESolver
+class NoSolver : public LinearSWESolver
+{
+public:
+    static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        static RiemannSolverSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            return RiemannSolverSharedPtr(
-                new NoSolver(pSession));
-        }
-        
-        static std::string solverName;
-        
-    protected:
-        NoSolver(const LibUtilities::SessionReaderSharedPtr& pSession);
-        
-    };
-}
+        return RiemannSolverSharedPtr(new NoSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    NoSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+};
+} // namespace Nektar
 
 #endif

@@ -1,5 +1,11 @@
 FROM centos:8
 
+# Since CentOS 8 is now EOL, we need to update the package repo paths
+# before we can run package updates and install dependencies
+RUN sed -i -e "s|mirrorlist=|#mirrorlist=|g" \
+    -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" \
+    /etc/yum.repos.d/CentOS-Linux-*
+
 # Set up to use EPEL release files and PowerTools
 RUN yum install -y epel-release dnf-plugins-core && \
     yum config-manager --set-enabled powertools

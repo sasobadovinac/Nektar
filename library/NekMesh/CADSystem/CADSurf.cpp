@@ -62,12 +62,12 @@ void CADSurf::OrientateEdges(CADSurfSharedPtr surf,
         for (int j = 0; j < ein[i]->edges.size(); j++)
         {
             Array<OneD, NekDouble> bnds = ein[i]->edges[j]->GetBounds();
-            NekDouble dt = (bnds[1] - bnds[0]) / (np - 1);
+            NekDouble dt                = (bnds[1] - bnds[0]) / (np - 1);
             if (ein[i]->edgeo[j] == CADOrientation::eForwards)
             {
                 for (int k = 0; k < np - 1; k++)
                 {
-                    NekDouble t = bnds[0] + dt * k;
+                    NekDouble t               = bnds[0] + dt * k;
                     Array<OneD, NekDouble> l  = ein[i]->edges[j]->P(t);
                     Array<OneD, NekDouble> uv = surf->locuv(l);
                     loop.push_back(uv);
@@ -77,7 +77,7 @@ void CADSurf::OrientateEdges(CADSurfSharedPtr surf,
             {
                 for (int k = np - 1; k > 0; k--)
                 {
-                    NekDouble t = bnds[0] + dt * k;
+                    NekDouble t               = bnds[0] + dt * k;
                     Array<OneD, NekDouble> l  = ein[i]->edges[j]->P(t);
                     Array<OneD, NekDouble> uv = surf->locuv(l);
                     loop.push_back(uv);
@@ -165,5 +165,5 @@ void CADSurf::OrientateEdges(CADSurfSharedPtr surf,
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

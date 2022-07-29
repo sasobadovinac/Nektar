@@ -35,6 +35,7 @@
 #ifndef UTILITIES_NEKMESH_NODEOPTI_HESSIAN
 #define UTILITIES_NEKMESH_NODEOPTI_HESSIAN
 
+#include <NekMesh/Module/ProcessModules/ProcessVarOpti/NodeOpti.h>
 
 namespace Nektar
 {
@@ -153,14 +154,15 @@ template <> void NodeOpti::MinEigen<2>(NekDouble &val)
     NekDouble H[2][2];
     H[0][0] = m_grad[2];
     H[1][0] = m_grad[3];
-    //H[0][1] = H[1][0];
+    // H[0][1] = H[1][0];
     H[1][1] = m_grad[4];
 
-    NekDouble D = (H[0][0] - H[1][1]) * (H[0][0] - H[1][1]) + 4.0 * H[1][0] * H[1][0];
+    NekDouble D =
+        (H[0][0] - H[1][1]) * (H[0][0] - H[1][1]) + 4.0 * H[1][0] * H[1][0];
     NekDouble Dsqrt = sqrt(D);
 
-    //eval[0] = (H[0][0] + H[1][1] + Dsqrt ) / 2.0;
-    val = (H[0][0] + H[1][1] - Dsqrt ) / 2.0; // the minimum Eigenvalue
+    // eval[0] = (H[0][0] + H[1][1] + Dsqrt ) / 2.0;
+    val = (H[0][0] + H[1][1] - Dsqrt) / 2.0; // the minimum Eigenvalue
 }
 
 template <> void NodeOpti::MinEigen<3>(NekDouble &val)
@@ -176,15 +178,15 @@ template <> void NodeOpti::MinEigen<3>(NekDouble &val)
     H[1][2] = H[2][1];
     H[2][2] = m_grad[8];
 
-    //double eval[3]; // the eigenvalues
+    // double eval[3]; // the eigenvalues
 
     NekDouble p1 = H[0][1] * H[0][1] + H[0][2] * H[0][2] + H[1][2] * H[1][2];
     if (p1 == 0.0) // H is diagonal
     {
         // find the minimum Eigenvalue
-        if(H[0][0] < H[1][1])
+        if (H[0][0] < H[1][1])
         {
-            if(H[0][0] < H[2][2])
+            if (H[0][0] < H[2][2])
             {
                 val = H[0][0];
             }
@@ -195,7 +197,7 @@ template <> void NodeOpti::MinEigen<3>(NekDouble &val)
         }
         else
         {
-            if(H[1][1] < H[2][2])
+            if (H[1][1] < H[2][2])
             {
                 val = H[1][1];
             }
@@ -208,23 +210,23 @@ template <> void NodeOpti::MinEigen<3>(NekDouble &val)
     else
     {
         NekDouble q  = (H[0][0] + H[1][1] + H[2][2]) / 3.0;
-        NekDouble p2 =    (H[0][0] - q)*(H[0][0] - q)
-                     + (H[1][1] - q)*(H[1][1] - q)
-                     + (H[2][2] - q)*(H[2][2] - q)
-                     + 2.0 * p1;
+        NekDouble p2 = (H[0][0] - q) * (H[0][0] - q) +
+                       (H[1][1] - q) * (H[1][1] - q) +
+                       (H[2][2] - q) * (H[2][2] - q) + 2.0 * p1;
         NekDouble p = sqrt(p2 / 6.0);
 
-        NekDouble B[3][3];   // B = (1.0 / p) * (H - q * I)   with I being the identity matrix
+        NekDouble B[3][3]; // B = (1.0 / p) * (H - q * I)   with I being the
+                           // identity matrix
         NekDouble pinv = 1.0 / p;
-        B[0][0] = pinv * (H[0][0] - q);
-        B[1][1] = pinv * (H[1][1] - q);
-        B[2][2] = pinv * (H[2][2] - q);
-        B[0][1] = pinv * H[0][1];
-        B[1][0] = B[0][1];
-        B[0][2] = pinv * H[0][2];
-        B[2][0] = B[0][2];
-        B[1][2] = pinv * H[1][2];
-        B[2][1] = B[1][2];
+        B[0][0]        = pinv * (H[0][0] - q);
+        B[1][1]        = pinv * (H[1][1] - q);
+        B[2][2]        = pinv * (H[2][2] - q);
+        B[0][1]        = pinv * H[0][1];
+        B[1][0]        = B[0][1];
+        B[0][2]        = pinv * H[0][2];
+        B[2][0]        = B[0][2];
+        B[1][2]        = pinv * H[1][2];
+        B[2][1]        = B[1][2];
 
         NekDouble r = Determinant<3>(B) / 2.0;
 
@@ -245,13 +247,14 @@ template <> void NodeOpti::MinEigen<3>(NekDouble &val)
         }
 
         // the eigenvalues satisfy eval[2] <= eval[1] <= eval[0]
-        //eval[0] = q + 2.0 * p * cos(phi);
-        val = q + 2.0 * p * cos(phi + (2.0*M_PI/3.0));
-        //eval[1] = 3.0 * q - eval[0] - eval[2];     // since trace(H) = eval[0] + eval[1] + eval[2]
+        // eval[0] = q + 2.0 * p * cos(phi);
+        val = q + 2.0 * p * cos(phi + (2.0 * M_PI / 3.0));
+        // eval[1] = 3.0 * q - eval[0] - eval[2];     // since trace(H) =
+        // eval[0] + eval[1] + eval[2]
     }
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

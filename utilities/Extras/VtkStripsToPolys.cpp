@@ -1,24 +1,25 @@
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/VtkUtil.hpp>
 
-#include <vtkPolyDataReader.h>
-#include <vtkPolyDataWriter.h>
-#include <vtkPolyData.h>
+#include <vtkCellArray.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
-#include <vtkCellArray.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataReader.h>
+#include <vtkPolyDataWriter.h>
 #include <vtkTriangle.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    if (argc < 2 )
+    if (argc < 2)
     {
         cout << "Usage: VtkStripsToPolys vtk-file" << endl;
         exit(-1);
     }
 
     vtkIdType npts;
-#if VTK_MAJOR_VERSION >= 9 || (VTK_MAJOR_VERSION >= 8 && VTK_MINOR_VERSION >= 90)
+#if VTK_MAJOR_VERSION >= 9 ||                                                  \
+    (VTK_MAJOR_VERSION >= 8 && VTK_MINOR_VERSION >= 90)
     const vtkIdType *pts = 0;
 #else
     vtkIdType *pts = 0;
@@ -28,8 +29,8 @@ int main(int argc, char* argv[])
     vtkPolyDataReader *vtkMeshReader = vtkPolyDataReader::New();
     vtkMeshReader->SetFileName(argv[1]);
     vtkMeshReader->Update();
-    vtkPolyData *vtkMesh = vtkMeshReader->GetOutput();
-    vtkPoints *vtkPoints = vtkMesh->GetPoints();
+    vtkPolyData *vtkMesh    = vtkMeshReader->GetOutput();
+    vtkPoints *vtkPoints    = vtkMesh->GetPoints();
     vtkCellArray *vtkStrips = vtkMesh->GetStrips();
 
     // Check we found points and strips in the file.
@@ -58,7 +59,7 @@ int main(int argc, char* argv[])
     for (int i = 0; i < vtkMesh->GetPointData()->GetNumberOfArrays(); ++i)
     {
         vtkNewMesh->GetPointData()->SetScalars(
-                                        vtkMesh->GetPointData()->GetArray(i));
+            vtkMesh->GetPointData()->GetArray(i));
     }
 
     // Write out the new mesh

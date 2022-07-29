@@ -34,8 +34,8 @@
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
-#include <StdRegions/StdNodalPrismExp.h>
 #include <LocalRegions/PrismExp.h>
+#include <StdRegions/StdNodalPrismExp.h>
 
 #include <NekMesh/MeshElements/Element.h>
 
@@ -53,8 +53,7 @@ typedef std::pair<int, int> ipair;
 
 ModuleKey ProcessTetSplit::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "tetsplit"),
-        ProcessTetSplit::create,
+        ModuleKey(eProcessModule, "tetsplit"), ProcessTetSplit::create,
         "Split prismatic elements to tetrahedra");
 
 ProcessTetSplit::ProcessTetSplit(MeshSharedPtr m) : ProcessModule(m)
@@ -129,26 +128,19 @@ void ProcessTetSplit::Process()
 
     // Represents table 2 of paper; each row i represents a rotation of
     // the prism nodes such that vertex i is placed at position 0.
-    static int indir[6][6] = {{0, 1, 2, 3, 4, 5},
-                              {1, 2, 0, 4, 5, 3},
-                              {2, 0, 1, 5, 3, 4},
-                              {3, 5, 4, 0, 2, 1},
-                              {4, 3, 5, 1, 0, 2},
-                              {5, 4, 3, 2, 1, 0}};
+    static int indir[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3},
+                              {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1},
+                              {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
 
     // Represents table 3 of paper; the first three rows are the three
     // tetrahedra if the first condition is met; the latter three rows
     // are the three tetrahedra if the second condition is met.
-    static int prismTet[6][4] = {{0, 1, 2, 5},
-                                 {0, 1, 5, 4},
-                                 {0, 4, 5, 3},
-                                 {0, 1, 2, 4},
-                                 {0, 4, 2, 5},
-                                 {0, 4, 5, 3}};
+    static int prismTet[6][4] = {{0, 1, 2, 5}, {0, 1, 5, 4}, {0, 4, 5, 3},
+                                 {0, 1, 2, 4}, {0, 4, 2, 5}, {0, 4, 5, 3}};
 
     // Represents the order of tetrahedral edges (in Nektar++ ordering).
-    static int tetEdges[6][2] = {
-        {0, 1}, {1, 2}, {0, 2}, {0, 3}, {1, 3}, {2, 3}};
+    static int tetEdges[6][2] = {{0, 1}, {1, 2}, {0, 2},
+                                 {0, 3}, {1, 3}, {2, 3}};
 
     // A tetrahedron nodes -> faces map.
     static int tetFaceNodes[4][3] = {
@@ -191,7 +183,7 @@ void ProcessTetSplit::Process()
 
         // Determine minimum ID of the nodes in this prism.
         int minElId = nodeList[0]->m_id;
-        int minId = 0;
+        int minId   = 0;
         for (int j = 1; j < 6; ++j)
         {
             int curId = nodeList[j]->m_id;
@@ -230,29 +222,27 @@ void ProcessTetSplit::Process()
             std::dynamic_pointer_cast<SpatialDomains::PrismGeom>(
                 el[i]->GetGeom(m_mesh->m_spaceDim));
         LibUtilities::BasisKey B0(
-            LibUtilities::eOrtho_A,
-            nq,
+            LibUtilities::eOrtho_A, nq,
             LibUtilities::PointsKey(nq, LibUtilities::eGaussLobattoLegendre));
         LibUtilities::BasisKey B1(
-            LibUtilities::eOrtho_B,
-            nq,
+            LibUtilities::eOrtho_B, nq,
             LibUtilities::PointsKey(nq, LibUtilities::eGaussRadauMAlpha1Beta0));
         LocalRegions::PrismExpSharedPtr qs =
-            MemoryManager<LocalRegions::PrismExp>::AllocateSharedPtr(
-                B0, B0, B1, geomLayer);
+            MemoryManager<LocalRegions::PrismExp>::AllocateSharedPtr(B0, B0, B1,
+                                                                     geomLayer);
 
         // Get the coordinates of the high order prismatic element.
         Array<OneD, NekDouble> wsp(3 * nq * nq * nq);
-        Array<OneD, Array<OneD, NekDouble> > x(3);
+        Array<OneD, Array<OneD, NekDouble>> x(3);
         x[0] = wsp;
         x[1] = wsp + 1 * nq * nq * nq;
         x[2] = wsp + 2 * nq * nq * nq;
         qs->GetCoords(x[0], x[1], x[2]);
 
-        LibUtilities::BasisKey NB0(
-            LibUtilities::eModified_A, nq, LibUtilities::PointsKey(nq, pt));
-        LibUtilities::BasisKey NB1(
-            LibUtilities::eModified_B, nq, LibUtilities::PointsKey(nq, pt));
+        LibUtilities::BasisKey NB0(LibUtilities::eModified_A, nq,
+                                   LibUtilities::PointsKey(nq, pt));
+        LibUtilities::BasisKey NB1(LibUtilities::eModified_B, nq,
+                                   LibUtilities::PointsKey(nq, pt));
 
         // Process face data. Initially put coordinates into equally
         // spaced nodal distribution.
@@ -262,7 +252,7 @@ void ProcessTetSplit::Process()
 
         int nCoeffs = nodalPrism->GetNcoeffs();
         Array<OneD, NekDouble> wsp2(3 * nCoeffs);
-        Array<OneD, Array<OneD, NekDouble> > xn(3);
+        Array<OneD, Array<OneD, NekDouble>> xn(3);
         xn[0] = wsp2;
         xn[1] = wsp2 + 1 * nCoeffs;
         xn[2] = wsp2 + 2 * nCoeffs;
@@ -298,10 +288,10 @@ void ProcessTetSplit::Process()
                 // edge. Apply prism map to this to get Nektar++
                 // ordering (this works since as a permutation,
                 // prismMap^2 = id).
-                int n1 = mapPrism
-                    [indir[minId][prismTet[j + offset][tetEdges[k][0]]]];
-                int n2 = mapPrism
-                    [indir[minId][prismTet[j + offset][tetEdges[k][1]]]];
+                int n1 = mapPrism[indir[minId]
+                                       [prismTet[j + offset][tetEdges[k][0]]]];
+                int n2 = mapPrism[indir[minId]
+                                       [prismTet[j + offset][tetEdges[k][1]]]];
 
                 // Find offset/stride
                 auto it = edgeMap.find(pair<int, int>(n1, n2));
@@ -461,7 +451,7 @@ void ProcessTetSplit::Process()
                         triNodeList[0] = nodeList[mapPrism[tmp[0]]];
                         triNodeList[1] = nodeList[mapPrism[tmp[1]]];
                         triNodeList[2] = nodeList[mapPrism[tmp[2]]];
-                        elmt = GetElementFactory().CreateInstance(
+                        elmt           = GetElementFactory().CreateInstance(
                             LibUtilities::eTriangle, bconf, triNodeList, tagBE);
                         m_mesh->m_element[m_mesh->m_expDim - 1].push_back(elmt);
                     }
@@ -489,5 +479,5 @@ void ProcessTetSplit::Process()
     ProcessElements();
     ProcessComposites();
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -45,7 +45,7 @@
 #include <LocalRegions/Expansion.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
-#include <MultiRegions/Field/Field.hpp>
+#include <MultiRegions/NekField/NekField.hpp>
 #include <MultiRegions/GlobalLinSysKey.h>
 #include <MultiRegions/GlobalMatrix.h>
 #include <MultiRegions/GlobalMatrixKey.h>
@@ -263,11 +263,6 @@ public:
     /// This function calculates the inner product of a function
     /// \f$f(\boldsymbol{x})\f$ with respect to all \em local
     /// expansion modes \f$\phi_n^e(\boldsymbol{x})\f$.
-    inline void IProductWRTBase_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
-    ///
     inline void IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                 Array<OneD, NekDouble> &outarray);
 
@@ -295,15 +290,15 @@ public:
     /// This function elementally evaluates the forward transformation
     /// of a function \f$u(\boldsymbol{x})\f$ onto the global
     /// spectral/hp expansion.
-    inline void FwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray);
+    inline void FwdTransLocalElmt(const Array<OneD, const NekDouble> &inarray,
+                                  Array<OneD, NekDouble> &outarray);
 
     ///
     inline void FwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
 
-    inline void FwdTrans(const Field<NekDouble, ePhys> &in,
-                         Field<NekDouble, eCoeff> &out);
+    inline void FwdTrans(const NekField<NekDouble, ePhys> &in,
+                         NekField<NekDouble, eCoeff> &out);
 
     MULTI_REGIONS_EXPORT void ExponentialFilter(Array<OneD, NekDouble> &array,
                                                 const NekDouble alpha,
@@ -345,8 +340,8 @@ public:
 
     /// Solve helmholtz problem - Field input
     inline void HelmSolve(
-        const Field<NekDouble, ePhys> &in,
-        Field<NekDouble, eCoeff> &out,
+        const NekField<NekDouble, ePhys> &in,
+        NekField<NekDouble, eCoeff> &out,
         const StdRegions::ConstFactorMap &factors,
         const StdRegions::VarCoeffMap &varcoeff = StdRegions::NullVarCoeffMap,
         const MultiRegions::VarFactorsMap &varfactors =
@@ -356,8 +351,8 @@ public:
 
     inline void HelmSolve(
         const int varid, 
-        const Field<NekDouble, ePhys> &in,
-        Field<NekDouble, eCoeff> &out,
+        const NekField<NekDouble, ePhys> &in,
+        NekField<NekDouble, eCoeff> &out,
         const StdRegions::ConstFactorMap &factors,
         const StdRegions::VarCoeffMap &varcoeff = StdRegions::NullVarCoeffMap,
         const MultiRegions::VarFactorsMap &varfactors =
@@ -380,20 +375,19 @@ public:
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
 
     ///
-    MULTI_REGIONS_EXPORT void FwdTrans_BndConstrained(
+    MULTI_REGIONS_EXPORT void FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    ///
-    inline void BwdTrans(const Field<NekDouble, eCoeff> &in,
-                         Field<NekDouble, ePhys> &out);
-
-    /// Performs the backward transformation of the spectral/hp
-    /// element expansion.
+    /// This function elementally evaluates the backward transformation
+    /// of the global spectral/hp element expansion.
     inline void BwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
 
-    /// This function calculates the coordinates of all the elemental
+    inline void BwdTrans(const NekField<NekDouble, eCoeff> &in,
+                         NekField<NekDouble, ePhys> &out);
+
+/// This function calculates the coordinates of all the elemental
     /// quadrature points \f$\boldsymbol{x}_i\f$.
     inline void GetCoords(
         Array<OneD, NekDouble> &coord_0,
@@ -401,11 +395,11 @@ public:
         Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
     inline void GetCoords(
-        Field<NekDouble, ePhys> &coord_0,
-        Field<NekDouble, ePhys> &coord_1, 
-        Field<NekDouble, ePhys> &coord_2 = ZeroFieldPhys);
+        NekField<NekDouble, ePhys> &coord_0,
+        NekField<NekDouble, ePhys> &coord_1, 
+        NekField<NekDouble, ePhys> &coord_2 = ZeroNekFieldPhys);
 
-    inline void GetCoords(Field<NekDouble, ePhys> &coords);
+    inline void GetCoords(NekField<NekDouble, ePhys> &coords);
 
     // Homogeneous transforms
     inline void HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
@@ -585,8 +579,8 @@ public:
     /// This function calculates the \f$L_\infty\f$ error of the global
     /// spectral/hp element approximation.
     MULTI_REGIONS_EXPORT inline NekDouble Linf(
-        const Field<NekDouble, ePhys> &in,
-        const Field<NekDouble, ePhys> &sol = ZeroFieldPhys,
+        const NekField<NekDouble, ePhys> &in,
+        const NekField<NekDouble, ePhys> &sol = ZeroNekFieldPhys,
         const int varid = 0); 
 
     /// This function calculates the \f$L_2\f$ error with
@@ -599,12 +593,12 @@ public:
         return v_L2(inarray, soln);
     }
 
-    /// This function calculates the \f$L_2\f$ error with
+        /// This function calculates the \f$L_2\f$ error with
     /// respect to soln of the global
     /// spectral/hp element approximation.
     NekDouble L2(
-        const Field<NekDouble, ePhys> &in,
-        const Field<NekDouble, ePhys> &sol = ZeroFieldPhys,
+        const NekField<NekDouble, ePhys> &in,
+        const NekField<NekDouble, ePhys> &sol = ZeroNekFieldPhys,
         const int varid = 0)
     {
         ASSERTL1(varid < in.GetNumVariables(), "request to access varid larger than "
@@ -629,8 +623,8 @@ public:
     /// Calculates the \f$H^1\f$ error of the global spectral/hp
     /// element approximation.
     MULTI_REGIONS_EXPORT NekDouble
-    H1(const Field<NekDouble, ePhys> &in,
-       const Field<NekDouble, ePhys> &sol = ZeroFieldPhys,
+    H1(const NekField<NekDouble, ePhys> &in,
+       const NekField<NekDouble, ePhys> &sol = ZeroNekFieldPhys,
        const int varid = 0)
     {
         ASSERTL1(varid < in.GetNumVariables(), "request to access varid larger than "
@@ -1004,11 +998,7 @@ public:
     /// This function calculates the result of the multiplication of a
     /// matrix of type specified by \a mkey with a vector given by \a
     /// inarray.
-    inline void GeneralMatrixOp(const GlobalMatrixKey &gkey,
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray);
-
-    MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
+    MULTI_REGIONS_EXPORT void GeneralMatrixOp(
         const GlobalMatrixKey &gkey,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
@@ -1490,11 +1480,11 @@ protected:
     virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FwdTrans_IterPerExp(
+    virtual void v_FwdTransLocalElmt(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FwdTrans_BndConstrained(
+    virtual void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
@@ -1503,17 +1493,10 @@ protected:
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray);
 
-    virtual void v_IProductWRTBase_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
-    virtual void v_GeneralMatrixOp(const GlobalMatrixKey &gkey,
-                                   const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD, NekDouble> &outarray);
-
-    virtual void v_GetCoords(Array<OneD, NekDouble> &coord_0,
-                             Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
-                             Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
+    virtual void v_GetCoords(
+        Array<OneD, NekDouble> &coord_0,
+        Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
+        Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
     virtual void v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
                              Array<OneD, NekDouble> &out_d0,
@@ -1887,24 +1870,14 @@ inline void ExpList::IProductWRTBase(
 /**
  *
  */
-inline void ExpList::IProductWRTBase_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    v_IProductWRTBase_IterPerExp(inarray, outarray);
-}
-
-/**
- *
- */
 inline void ExpList::FwdTrans(const Array<OneD, const NekDouble> &inarray,
                               Array<OneD, NekDouble> &outarray)
 {
     v_FwdTrans(inarray, outarray);
 }
 
-inline void ExpList::FwdTrans(const Field<NekDouble, ePhys> &in,
-                              Field<NekDouble, eCoeff> &out)
+inline void ExpList::FwdTrans(const NekField<NekDouble, ePhys> &in,
+                              NekField<NekDouble, eCoeff> &out)
 {
     ASSERTL1(in.GetNumVariables() <= out.GetNumVariables(), "number of variables "
              "in storage (out) is less than those in input variable (in)");
@@ -1917,21 +1890,21 @@ inline void ExpList::FwdTrans(const Field<NekDouble, ePhys> &in,
 /**
  *
  */
-inline void ExpList::FwdTrans_IterPerExp(
+inline void ExpList::FwdTransLocalElmt(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    v_FwdTrans_IterPerExp(inarray, outarray);
+    v_FwdTransLocalElmt(inarray, outarray);
 }
 
 /**
  *
  */
-inline void ExpList::FwdTrans_BndConstrained(
+inline void ExpList::FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    v_FwdTrans_BndConstrained(inarray, outarray);
+    v_FwdTransBndConstrained(inarray, outarray);
 }
 
 /**
@@ -1945,8 +1918,8 @@ inline void ExpList::SmoothField(Array<OneD, NekDouble> &field)
 /**
  *
  */
-inline void ExpList::BwdTrans(const Field<NekDouble, eCoeff> &in,
-                              Field<NekDouble, ePhys> &out)
+inline void ExpList::BwdTrans(const NekField<NekDouble, eCoeff> &in,
+                              NekField<NekDouble, ePhys> &out)
 {
     ASSERTL1(in.GetNumVariables() <= out.GetNumVariables(), "number of variables "
              "in storage (out) is less than those in input variable (in)");
@@ -2003,10 +1976,10 @@ inline void ExpList::HelmSolve(const Array<OneD, const NekDouble> &inarray,
 }
 
 /**
- * Helmholtz operator using Field Storage i/o
+ * Helmholtz operator using NekField Storage i/o
  */
-inline void ExpList::HelmSolve(const Field<NekDouble, ePhys> &in,
-                               Field<NekDouble, eCoeff> &out,
+inline void ExpList::HelmSolve(const NekField<NekDouble, ePhys> &in,
+                               NekField<NekDouble, eCoeff> &out,
                                const StdRegions::ConstFactorMap &factors,
                                const StdRegions::VarCoeffMap &varcoeff,
                                const MultiRegions::VarFactorsMap &varfactors,
@@ -2024,8 +1997,8 @@ inline void ExpList::HelmSolve(const Field<NekDouble, ePhys> &in,
 }
 
 inline void ExpList::HelmSolve(const int varid,
-                               const Field<NekDouble, ePhys> &in,
-                               Field<NekDouble, eCoeff> &out,
+                               const NekField<NekDouble, ePhys> &in,
+                               NekField<NekDouble, eCoeff> &out,
                                const StdRegions::ConstFactorMap &factors,
                                const StdRegions::VarCoeffMap &varcoeff,
                                const MultiRegions::VarFactorsMap &varfactors,
@@ -2077,9 +2050,9 @@ inline void ExpList::GetCoords(Array<OneD, NekDouble> &coord_0,
 /**
  *
  */
-inline void ExpList::GetCoords(Field<NekDouble, ePhys> &coord_0,
-                               Field<NekDouble, ePhys> &coord_1,
-                               Field<NekDouble, ePhys> &coord_2)
+inline void ExpList::GetCoords(NekField<NekDouble, ePhys> &coord_0,
+                               NekField<NekDouble, ePhys> &coord_1,
+                               NekField<NekDouble, ePhys> &coord_2)
 {
     v_GetCoords(coord_0.UpdateArray1D(), coord_1.UpdateArray1D(),
                 coord_2.UpdateArray1D());
@@ -2088,7 +2061,7 @@ inline void ExpList::GetCoords(Field<NekDouble, ePhys> &coord_0,
 /**
  *
  */
-inline void ExpList::GetCoords(Field<NekDouble, ePhys> &coords)
+inline void ExpList::GetCoords(NekField<NekDouble, ePhys> &coords)
 {
     switch(coords.GetNumVariables())
     {
@@ -2637,41 +2610,6 @@ inline void ExpList::EvaluateBoundaryConditions(const NekDouble time,
     v_EvaluateBoundaryConditions(time, varName, x2_in, x3_in);
 }
 
-// Routines for continous matrix solution
-/**
- * This operation is equivalent to the evaluation of
- * \f$\underline{\boldsymbol{M}}^e\boldsymbol{\hat{u}}_l\f$, that is,
- * \f[ \left[
- * \begin{array}{cccc}
- * \boldsymbol{M}^1 & 0 & \hspace{3mm}0 \hspace{3mm}& 0 \\
- * 0 & \boldsymbol{M}^2 & 0 & 0 \\
- * 0 &  0 & \ddots &  0 \\
- * 0 &  0 & 0 & \boldsymbol{M}^{N_{\mathrm{el}}} \end{array} \right]
- *\left [ \begin{array}{c}
- * \boldsymbol{\hat{u}}^{1} \\
- * \boldsymbol{\hat{u}}^{2} \\
- * \vdots \\
- * \boldsymbol{\hat{u}}^{{{N_{\mathrm{el}}}}} \end{array} \right ]\f]
- * where \f$\boldsymbol{M}^e\f$ are the local matrices of type
- * specified by the key \a mkey. The decoupling of the local matrices
- * allows for a local evaluation of the operation. However, rather than
- * a local matrix-vector multiplication, the local operations are
- * evaluated as implemented in the function
- * StdRegions#StdExpansion#GeneralMatrixOp.
- *
- * @param   mkey            This key uniquely defines the type matrix
- *                          required for the operation.
- * @param   inarray         The vector \f$\boldsymbol{\hat{u}}_l\f$ of
- *                          size \f$N_{\mathrm{eof}}\f$.
- * @param   outarray        The resulting vector of size
- *                          \f$N_{\mathrm{eof}}\f$.
- */
-inline void ExpList::GeneralMatrixOp(
-    const GlobalMatrixKey &gkey, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    v_GeneralMatrixOp(gkey, inarray, outarray);
-}
 
 inline void ExpList::SetUpPhysNormals()
 {
@@ -2723,8 +2661,8 @@ inline std::vector<bool> &ExpList::GetLeftAdjacentTraces(void)
     return v_GetLeftAdjacentTraces();
 }
 
-inline NekDouble ExpList::Linf(const Field<NekDouble, ePhys> &in,
-                               const Field<NekDouble, ePhys> &sol,
+inline NekDouble ExpList::Linf(const NekField<NekDouble, ePhys> &in,
+                               const NekField<NekDouble, ePhys> &sol,
                                const int varid)
 {
     ASSERTL1(varid < in.GetNumVariables(), "request to access varid larger than "

@@ -35,52 +35,51 @@
 #ifndef NEKTAR_SOLVERUTILS_FILTERS_FilterCellHistoryPoints_H
 #define NEKTAR_SOLVERUTILS_FILTERS_FilterCellHistoryPoints_H
 
-#include <SolverUtils/Filters/FilterHistoryPoints.h>
 #include <CardiacEPSolver/CellModels/CellModel.h>
+#include <SolverUtils/Filters/FilterHistoryPoints.h>
 
 namespace Nektar
 {
 
 class FilterCellHistoryPoints : public SolverUtils::FilterHistoryPoints
 {
-    public:
-        friend class MemoryManager<FilterCellHistoryPoints>;
+public:
+    friend class MemoryManager<FilterCellHistoryPoints>;
 
-        /// Creates an instance of this class
-        static SolverUtils::FilterSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr         &pSession,
-            const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-            const ParamMap &pParams)
-        {
-            SolverUtils::FilterSharedPtr p
-                        = MemoryManager<FilterCellHistoryPoints>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
-            return p;
-        }
+    /// Creates an instance of this class
+    static SolverUtils::FilterSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+        const ParamMap &pParams)
+    {
+        SolverUtils::FilterSharedPtr p =
+            MemoryManager<FilterCellHistoryPoints>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
+        return p;
+    }
 
-        ///Name of the class
-        static std::string className;
+    /// Name of the class
+    static std::string className;
 
-        FilterCellHistoryPoints(
-            const LibUtilities::SessionReaderSharedPtr         &pSession,
-            const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-            const ParamMap &pParams);
-        ~FilterCellHistoryPoints();
+    FilterCellHistoryPoints(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+        const ParamMap &pParams);
+    ~FilterCellHistoryPoints();
 
-        void SetCellModel(CellModelSharedPtr &pCellModel)
-        {
-            m_cell = pCellModel;
-        }
+    void SetCellModel(CellModelSharedPtr &pCellModel)
+    {
+        m_cell = pCellModel;
+    }
 
-    protected:
-        virtual void v_Update(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+protected:
+    virtual void v_Update(
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
 
-        CellModelSharedPtr m_cell;
-
+    CellModelSharedPtr m_cell;
 };
 
-}
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERCHECKPOINT_H */

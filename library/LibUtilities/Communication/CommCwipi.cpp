@@ -94,5 +94,5 @@ void CommCwipi::v_Finalise()
     cwipi_finalize();
     CommMpi::v_Finalise();
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

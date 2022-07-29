@@ -34,9 +34,9 @@
 
 #include <MMFSolver/EquationSystems/MMFMaxwell.h>
 
-#include <boost/core/ignore_unused.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <iomanip>
 #include <iostream>
 
@@ -54,7 +54,7 @@ std::string MMFMaxwell::className =
         "MMFMaxwell", MMFMaxwell::create, "MMFMaxwell equation.");
 
 MMFMaxwell::MMFMaxwell(const LibUtilities::SessionReaderSharedPtr &pSession,
-                       const SpatialDomains::MeshGraphSharedPtr& pGraph)
+                       const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph), MMFSystem(pSession, pGraph)
 {
 }
@@ -484,8 +484,8 @@ void MMFMaxwell::v_DoSolve()
 
     // Check uniqueness of checkpoint output
     ASSERTL0((m_checktime == 0.0 && m_checksteps == 0) ||
-             (m_checktime > 0.0 && m_checksteps == 0) ||
-             (m_checktime == 0.0 && m_checksteps > 0),
+                 (m_checktime > 0.0 && m_checksteps == 0) ||
+                 (m_checktime == 0.0 && m_checksteps > 0),
              "Only one of IO_CheckTime and IO_CheckSteps "
              "should be set!");
 
@@ -633,7 +633,8 @@ void MMFMaxwell::v_DoSolve()
         // Write out status information
         if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
         {
-            std::cout << "Steps: " << std::setw(8) << std::left << step + 1 << " "
+            std::cout << "Steps: " << std::setw(8) << std::left << step + 1
+                      << " "
                       << "Time: " << std::setw(12) << std::left << m_time;
 
             std::stringstream ss;
@@ -682,7 +683,7 @@ void MMFMaxwell::v_DoSolve()
         for (i = 0; i < nvariables; ++i)
         {
             m_fields[m_intVariables[i]]->SetPhys(fields[i]);
-            m_fields[m_intVariables[i]]->FwdTrans_IterPerExp(
+            m_fields[m_intVariables[i]]->FwdTransLocalElmt(
                 fields[i], m_fields[m_intVariables[i]]->UpdateCoeffs());
             m_fields[m_intVariables[i]]->SetPhysState(false);
         }
@@ -716,7 +717,8 @@ void MMFMaxwell::v_DoSolve()
             {
                 std::cout << "|DBr|: D1 = " << RootMeanSquare(fields[3])
                           << ", D2 = " << RootMeanSquare(fields[4])
-                          << ", D3 = " << RootMeanSquare(fields[5]) << std::endl;
+                          << ", D3 = " << RootMeanSquare(fields[5])
+                          << std::endl;
 
                 int nTraceNumPoints = GetTraceNpoints();
                 int totbdryexp =
@@ -752,9 +754,8 @@ void MMFMaxwell::v_DoSolve()
                 for (int e = 0; e < totbdryexp; ++e)
                 {
                     id2 = m_fields[0]->GetTrace()->GetPhys_Offset(
-                        m_fields[0]
-                            ->GetTraceMap()
-                            ->GetBndCondIDToGlobalTraceID(cnt + e));
+                        m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(
+                            cnt + e));
 
                     Vmath::Vcopy(npts, &E1Fwd[id2], 1, &E1Fwdloc[0], 1);
                     Vmath::Vcopy(npts, &E2Fwd[id2], 1, &E2Fwdloc[0], 1);
@@ -1491,10 +1492,10 @@ Array<OneD, NekDouble> MMFMaxwell::TestMaxwell1D(const NekDouble time,
         NekDouble newomega, F, Fprime;
         for (int i = 0; i < 10000; ++i)
         {
-            F = m_n1 * tan(m_n2 * omega) + m_n2 * tan(m_n1 * omega);
-            Fprime =
-                m_n1 * m_n2 * (1.0 / cos(m_n2 * omega) / cos(m_n2 * omega) +
-                               1.0 / cos(m_n1 * omega) / cos(m_n1 * omega));
+            F      = m_n1 * tan(m_n2 * omega) + m_n2 * tan(m_n1 * omega);
+            Fprime = m_n1 * m_n2 *
+                     (1.0 / cos(m_n2 * omega) / cos(m_n2 * omega) +
+                      1.0 / cos(m_n1 * omega) / cos(m_n1 * omega));
 
             newomega = omega - F / Fprime;
 
@@ -1540,8 +1541,9 @@ Array<OneD, NekDouble> MMFMaxwell::TestMaxwell1D(const NekDouble time,
         Ec = (Ak * exp(im * nk * omega * x0[i]) -
               Bk * exp(-im * nk * omega * x0[i])) *
              exp(im * omega * time);
-        Hc = nk * (Ak * exp(im * nk * omega * x0[i]) +
-                   Bk * exp(-im * nk * omega * x0[i])) *
+        Hc = nk *
+             (Ak * exp(im * nk * omega * x0[i]) +
+              Bk * exp(-im * nk * omega * x0[i])) *
              exp(im * omega * time);
 
         E[i] = Ec.real();
@@ -1947,7 +1949,7 @@ void MMFMaxwell::Printout_SurfaceCurrent(
     for (int e = 0; e < totbdryexp; ++e)
     {
         id2 = m_fields[0]->GetTrace()->GetPhys_Offset(
-            m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt +                      e));
+            m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
 
         Vmath::Vcopy(npts, &phiFwd[id2], 1, &Jphi[e * npts], 1);
         Vmath::Vcopy(npts, &radFwd[id2], 1, &Jrad[e * npts], 1);
@@ -1959,7 +1961,7 @@ void MMFMaxwell::Printout_SurfaceCurrent(
     // Vmath::Vsqrt(totnpts, Jcurrent, 1, Jcurrent, 1);
 
     std::cout << "========================================================"
-             << std::endl;
+              << std::endl;
 
     std::cout << "phi = " << std::endl;
     for (int i = 0; i < totnpts; ++i)
@@ -2824,7 +2826,7 @@ Array<OneD, NekDouble> MMFMaxwell::GaussianPulse(const NekDouble time,
                                          (rad / Gaussianradius));
     }
 
-    m_fields[0]->FwdTrans_IterPerExp(outarray, tmpc);
+    m_fields[0]->FwdTransLocalElmt(outarray, tmpc);
     m_fields[0]->BwdTrans(tmpc, outarray);
 
     return outarray;
@@ -3028,9 +3030,8 @@ Array<OneD, NekDouble> MMFMaxwell::ComputeRadCloak(const int CloakNlayer)
             {
                 if ((Cloakregion[i] > 0) && (CloakNlayer > 0))
                 {
-                    radvec[i] =
-                        1.0 +
-                        (m_b - m_a) / CloakNlayer * (Cloakregion[i] - 0.5);
+                    radvec[i] = 1.0 + (m_b - m_a) / CloakNlayer *
+                                          (Cloakregion[i] - 0.5);
                 }
 
                 else
@@ -3143,4 +3144,4 @@ void MMFMaxwell::print_MMF(Array<OneD, Array<OneD, NekDouble>> &inarray)
     }
     reval = sqrt(reval / Ntot);
 }
-}
+} // namespace Nektar

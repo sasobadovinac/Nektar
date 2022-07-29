@@ -44,10 +44,9 @@ namespace Nektar
 namespace NekMesh
 {
 
-ModuleKey InputSem::className =
-    GetModuleFactory().RegisterCreatorFunction(ModuleKey(eInputModule, "sem"),
-                                               InputSem::create,
-                                               "Reads Semtex session files.");
+ModuleKey InputSem::className = GetModuleFactory().RegisterCreatorFunction(
+    ModuleKey(eInputModule, "sem"), InputSem::create,
+    "Reads Semtex session files.");
 
 /**
  * @brief Initialises the InputSem class.
@@ -196,8 +195,7 @@ void InputSem::Process()
             m_mesh->m_spaceDim = 3;
         }
         id -= 1; // counter starts at 0
-        m_mesh->m_node.push_back(
-            std::shared_ptr<Node>(new Node(id, x, y, z)));
+        m_mesh->m_node.push_back(std::shared_ptr<Node>(new Node(id, x, y, z)));
         ++i;
     }
 
@@ -279,10 +277,10 @@ void InputSem::Process()
             homeshFile.open(meshfile.c_str());
             if (!homeshFile.is_open())
             {
-                m_log(FATAL) << "Cannot open or find mesh file: '" << meshfile
-                             << "'\n"
-                             << "Make sure to run 'meshpr' on your session "
-                             << "file first." << endl;
+                m_log(FATAL)
+                    << "Cannot open or find mesh file: '" << meshfile << "'\n"
+                    << "Make sure to run 'meshpr' on your session "
+                    << "file first." << endl;
             }
 
             // Make sure we have matching header.
@@ -293,8 +291,8 @@ void InputSem::Process()
 
             if (nel != m_mesh->m_element[m_mesh->m_expDim].size())
             {
-                m_log(FATAL) << "Number of elements mismatch in mesh file."
-                             << endl;
+                m_log(FATAL)
+                    << "Number of elements mismatch in mesh file." << endl;
             }
 
             // Now read in all mesh data. This is horribly inefficient
@@ -370,8 +368,8 @@ void InputSem::Process()
                         stride = -np;
                         break;
                     default:
-                        m_log(FATAL) << "Unknown side for curve id " << id
-                                     << endl;
+                        m_log(FATAL)
+                            << "Unknown side for curve id " << id << endl;
                 }
 
                 for (j = 1; j < np - 1; ++j, ++nodeId)
@@ -402,16 +400,12 @@ void InputSem::Process()
             // vertices; insert these into existing edge nodes.
             ElementSharedPtr e           = m_mesh->m_element[2][elmt];
             vector<NodeSharedPtr> elvert = e->GetVertexList();
-            vector<int> tags = e->GetTagList();
+            vector<int> tags             = e->GetTagList();
             edgeNodes.insert(edgeNodes.begin(), elvert.begin(), elvert.end());
 
             // Create new element and replace with an incomplete
             // quadrilateral of the correct order.
-            ElmtConfig conf(elType,
-                            np - 1,
-                            true,
-                            false,
-                            true,
+            ElmtConfig conf(elType, np - 1, true, false, true,
                             LibUtilities::eGaussLobattoLegendre);
             m_mesh->m_element[2][elmt] = GetElementFactory().CreateInstance(
                 elType, conf, edgeNodes, tags);
@@ -490,7 +484,7 @@ void InputSem::Process()
             ss.str(line);
             ss >> id >> tag >> nF;
 
-            p                                      = ConditionSharedPtr(new Condition());
+            p = ConditionSharedPtr(new Condition());
             m_mesh->m_condition[conditionMap[tag]] = p;
 
             // Read boundary condition.
@@ -569,7 +563,7 @@ void InputSem::Process()
         int elmt, side;
         int periodicTagId = -1;
 
-        set<pair<int, int> > visitedPeriodic;
+        set<pair<int, int>> visitedPeriodic;
 
         while (i < nSurf)
         {
@@ -597,9 +591,10 @@ void InputSem::Process()
                         out->type.push_back(ePeriodic);
                         in->field.push_back(m_mesh->m_fields[j]);
                         out->field.push_back(m_mesh->m_fields[j]);
-                        in->value.push_back("[" + boost::lexical_cast<string>(
-                                                      periodicTagId + 1) +
-                                            "]");
+                        in->value.push_back(
+                            "[" +
+                            boost::lexical_cast<string>(periodicTagId + 1) +
+                            "]");
                         out->value.push_back(
                             "[" + boost::lexical_cast<string>(periodicTagId) +
                             "]");
@@ -635,8 +630,8 @@ void InputSem::Process()
             }
             else
             {
-                m_log(FATAL) << "Unrecognised or unsupported tag: '"
-                             << word << "'" << endl;
+                m_log(FATAL) << "Unrecognised or unsupported tag: '" << word
+                             << "'" << endl;
             }
             ++i;
         }
@@ -663,15 +658,11 @@ void InputSem::insertEdge(int elmt, int side, int tagId)
     vector<int> tags;
     tags.push_back(tagId);
 
-    ElmtConfig conf(LibUtilities::eSegment,
-                    order,
-                    order > 1,
-                    false,
-                    true,
+    ElmtConfig conf(LibUtilities::eSegment, order, order > 1, false, true,
                     LibUtilities::eGaussLobattoLegendre);
     ElementSharedPtr E = GetElementFactory().CreateInstance(
         LibUtilities::eSegment, conf, edgeNodes, tags);
     m_mesh->m_element[1].push_back(E);
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

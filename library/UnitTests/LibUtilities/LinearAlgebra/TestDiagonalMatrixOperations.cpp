@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -40,48 +40,44 @@
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 
-
 namespace Nektar
 {
-    namespace DiagonalMatrixOperationsUnitTests
-    {
-        BOOST_AUTO_TEST_CASE(TestDoubleDiagonalVectorMultiplication)
-        {
-            double m_buf[] = {1, 2, 3};
-            double v_buf[] = {4, 5, 6};
-            
-            NekMatrix<double> m(3, 3, m_buf, eDIAGONAL);
-            NekVector<double> v(3, v_buf);
-            
-            double expected_result_buf[] = {4, 10, 18};
-            NekVector<double> expected_result(3, expected_result_buf);
-            
-            NekVector<double> result = m*v;
-            
-            BOOST_CHECK_EQUAL(expected_result, result);
-        }
-        
-        BOOST_AUTO_TEST_CASE(TestDoubleScaledDiagonalVectorMultiplication)
-        {
-            double m_buf[] = {1, 2, 3};
-            double v_buf[] = {4, 5, 6};
-            
-            std::shared_ptr<NekMatrix<double> > inner(
-                new NekMatrix<double>(3, 3, m_buf, eDIAGONAL));
-            NekMatrix<NekMatrix<double>, ScaledMatrixTag> 
-                m(5.0, inner);
-                
-            NekVector<double> v(3, v_buf);
-            
-            double expected_result_buf[] = {20, 50, 90};
-            NekVector<double> expected_result(3, expected_result_buf);
-            
-            NekVector<double> result = m*v;
-            
-            BOOST_CHECK_EQUAL(expected_result, result);
+namespace DiagonalMatrixOperationsUnitTests
+{
+BOOST_AUTO_TEST_CASE(TestDoubleDiagonalVectorMultiplication)
+{
+    double m_buf[] = {1, 2, 3};
+    double v_buf[] = {4, 5, 6};
 
-        }
-       
-    }
+    NekMatrix<double> m(3, 3, m_buf, eDIAGONAL);
+    NekVector<double> v(3, v_buf);
+
+    double expected_result_buf[] = {4, 10, 18};
+    NekVector<double> expected_result(3, expected_result_buf);
+
+    NekVector<double> result = m * v;
+
+    BOOST_CHECK_EQUAL(expected_result, result);
 }
 
+BOOST_AUTO_TEST_CASE(TestDoubleScaledDiagonalVectorMultiplication)
+{
+    double m_buf[] = {1, 2, 3};
+    double v_buf[] = {4, 5, 6};
+
+    std::shared_ptr<NekMatrix<double>> inner(
+        new NekMatrix<double>(3, 3, m_buf, eDIAGONAL));
+    NekMatrix<NekMatrix<double>, ScaledMatrixTag> m(5.0, inner);
+
+    NekVector<double> v(3, v_buf);
+
+    double expected_result_buf[] = {20, 50, 90};
+    NekVector<double> expected_result(3, expected_result_buf);
+
+    NekVector<double> result = m * v;
+
+    BOOST_CHECK_EQUAL(expected_result, result);
+}
+
+} // namespace DiagonalMatrixOperationsUnitTests
+} // namespace Nektar

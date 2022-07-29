@@ -68,12 +68,13 @@ public:
     {
         return "ProcessDetectSurf";
     }
+
 private:
     void FindContiguousSurface(NekMesh::ElementSharedPtr start,
                                std::set<int> &doneIds,
                                std::vector<NekMesh::ElementSharedPtr> &block);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

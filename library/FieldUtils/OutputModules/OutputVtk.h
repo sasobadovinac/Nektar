@@ -72,8 +72,7 @@ protected:
     /// Write from data to output file.
     virtual void OutputFromData(po::variables_map &vm);
 
-    virtual fs::path GetPath(std::string &filename,
-                                    po::variables_map &vm);
+    virtual fs::path GetPath(std::string &filename, po::variables_map &vm);
 
     virtual fs::path GetFullOutName(std::string &filename,
                                     po::variables_map &vm);
@@ -89,7 +88,7 @@ private:
 
     std::string PrepareOutput(po::variables_map &vm);
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

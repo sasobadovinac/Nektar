@@ -39,32 +39,31 @@
 
 namespace Nektar
 {
-    class AUSM2Solver : public CompressibleSolver
+class AUSM2Solver : public CompressibleSolver
+{
+public:
+    static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        static RiemannSolverSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            return RiemannSolverSharedPtr(
-                new AUSM2Solver(pSession));
-        }
-        
-        static std::string solverName;
-        
-    protected:
-        AUSM2Solver(
-                const LibUtilities::SessionReaderSharedPtr& pSession);
-        
-        virtual void v_PointSolve(
-            double  rhoL, double  rhouL, double  rhovL, double  rhowL, double  EL,
-            double  rhoR, double  rhouR, double  rhovR, double  rhowR, double  ER,
-            double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef);
-        
-        double M1Function(int A, double M);
-        double M2Function(int A, double M);
-        double M4Function(int A, double beta,  double M);
-        double P5Function(int A, double alpha, double M);
-    };
-}
+        return RiemannSolverSharedPtr(new AUSM2Solver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    AUSM2Solver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    virtual void v_PointSolve(double rhoL, double rhouL, double rhovL,
+                              double rhowL, double EL, double rhoR,
+                              double rhouR, double rhovR, double rhowR,
+                              double ER, double &rhof, double &rhouf,
+                              double &rhovf, double &rhowf, double &Ef);
+
+    double M1Function(int A, double M);
+    double M2Function(int A, double M);
+    double M4Function(int A, double beta, double M);
+    double P5Function(int A, double alpha, double M);
+};
+} // namespace Nektar
 
 #endif

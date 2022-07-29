@@ -35,50 +35,47 @@
 #ifndef FOUNDATIONS_FWD_H
 #define FOUNDATIONS_FWD_H
 
-#include <vector>
-#include <memory>
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/NekManager.hpp>
+#include <memory>
+#include <vector>
 
 namespace Nektar
 {
-    namespace LibUtilities
-    {
+namespace LibUtilities
+{
 
-        class BLPoints;
-        class Basis;
-        class BasisKey;
-        class FourierPoints;
-        class FourierSingleModePoints;
-        class GaussPoints;
-        class GraphVertexObject;
-        class GraphEdgeObject;
-        class Graph;
-        class NodalTetEvenlySpaced;
-        class NodalTetElec;
-        class NodalPrismEvenlySpaced;
-        class NodalPrismElec;
-        class NodalTriElec;
-        class NodalTriEvenlySpaced;
-        class NodalTriFekete;
-        class PointsKey;
-        class PolyEPoints;
+class BLPoints;
+class Basis;
+class BasisKey;
+class FourierPoints;
+class FourierSingleModePoints;
+class GaussPoints;
+class GraphVertexObject;
+class GraphEdgeObject;
+class Graph;
+class NodalTetEvenlySpaced;
+class NodalTetElec;
+class NodalPrismEvenlySpaced;
+class NodalPrismElec;
+class NodalTriElec;
+class NodalTriEvenlySpaced;
+class NodalTriFekete;
+class PointsKey;
+class PolyEPoints;
 
-        template<typename DataT>
-        class Points;
+template <typename DataT> class Points;
 
+/// Name for a vector of BasisKeys.
+typedef std::vector<BasisKey> BasisKeyVector;
+typedef std::shared_ptr<Basis> BasisSharedPtr;
+typedef std::vector<BasisSharedPtr> BasisVector;
 
+typedef Points<NekDouble> PointsBaseType;
+typedef std::shared_ptr<Points<NekDouble>> PointsSharedPtr;
+typedef int GraphVertexID;
 
-        /// Name for a vector of BasisKeys.
-        typedef std::vector< BasisKey > BasisKeyVector;
-        typedef std::shared_ptr<Basis> BasisSharedPtr;
-        typedef std::vector< BasisSharedPtr > BasisVector;
-
-        typedef Points<NekDouble> PointsBaseType;
-        typedef std::shared_ptr<Points<NekDouble> > PointsSharedPtr;
-        typedef int GraphVertexID;
-
-    } // end of namespace
-} // end of namespace
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // FOUNDATIONS_FWD_H

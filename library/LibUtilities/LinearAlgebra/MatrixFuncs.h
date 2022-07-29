@@ -37,275 +37,296 @@
 #ifndef NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_FUNCS_H
 #define NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_FUNCS_H
 
-#include <limits>
-#include <tuple>
-#include <LibUtilities/LinearAlgebra/Lapack.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
+#include <LibUtilities/LinearAlgebra/Lapack.hpp>
+#include <limits>
+#include <tuple>
 
 namespace Nektar
 {
-    struct LIB_UTILITIES_EXPORT BandedMatrixFuncs
+struct LIB_UTILITIES_EXPORT BandedMatrixFuncs
+{
+    /// \brief Calculates and returns the storage size required.
+    ///
+    /// This method assumes that the matrix will be used with LU factorizationa
+    /// and allocates additional storage as appropriate.
+    static unsigned int GetRequiredStorageSize(unsigned int totalRows,
+                                               unsigned int totalColumns,
+                                               unsigned int subDiags,
+                                               unsigned int superDiags);
+
+    static unsigned int CalculateNumberOfDiags(unsigned int totalRows,
+                                               unsigned int diags);
+
+    static unsigned int CalculateNumberOfRows(unsigned int totalRows,
+                                              unsigned int subDiags,
+                                              unsigned int superDiags);
+
+    static unsigned int CalculateIndex(unsigned int totalRows,
+                                       unsigned int totalColumns,
+                                       unsigned int row, unsigned int column,
+                                       unsigned int sub, unsigned int super);
+
+    static std::tuple<unsigned int, unsigned int> Advance(
+        const unsigned int totalRows, const unsigned int totalColumns,
+        const unsigned int curRow, const unsigned int curColumn);
+};
+
+struct LIB_UTILITIES_EXPORT FullMatrixFuncs
+{
+
+    static unsigned int GetRequiredStorageSize(unsigned int rows,
+                                               unsigned int columns);
+    static unsigned int CalculateIndex(unsigned int totalRows,
+                                       unsigned int totalColumns,
+                                       unsigned int curRow,
+                                       unsigned int curColumn);
+
+    static std::tuple<unsigned int, unsigned int> Advance(
+        const unsigned int totalRows, const unsigned int totalColumns,
+        const unsigned int curRow, const unsigned int curColumn);
+
+    template <typename DataType>
+    static void Invert(unsigned int rows, unsigned int columns,
+                       Array<OneD, DataType> &data, const char transpose)
     {
-        /// \brief Calculates and returns the storage size required.
-        ///
-        /// This method assumes that the matrix will be used with LU factorizationa and
-        /// allocates additional storage as appropriate.
-        static unsigned int GetRequiredStorageSize(unsigned int totalRows, unsigned int totalColumns,
-                                                   unsigned int subDiags, unsigned int superDiags);
+        ASSERTL0(rows == columns, "Only square matrices can be inverted.");
+        ASSERTL0(transpose == 'N',
+                 "Only untransposed matrices may be inverted.");
 
-        static unsigned int CalculateNumberOfDiags(unsigned int totalRows, unsigned int diags);
+        int m    = rows;
+        int n    = columns;
+        int info = 0;
+        Array<OneD, int> ipivot(n);
+        Array<OneD, DataType> work(n);
 
-        static unsigned int CalculateNumberOfRows(unsigned int totalRows, unsigned int subDiags, unsigned int superDiags);
-
-        static unsigned int CalculateIndex(unsigned int totalRows,
-                                                            unsigned int totalColumns,
-                                                            unsigned int row, unsigned int column,
-                                                            unsigned int sub, unsigned int super);
-
-
-        static std::tuple<unsigned int, unsigned int>
-        Advance(const unsigned int totalRows, const unsigned int totalColumns,
-                const unsigned int curRow, const unsigned int curColumn);
-    };
-
-    struct LIB_UTILITIES_EXPORT FullMatrixFuncs
-    {
-
-        static unsigned int GetRequiredStorageSize(unsigned int rows, unsigned int columns);
-        static unsigned int CalculateIndex(unsigned int totalRows, unsigned int totalColumns, unsigned int curRow, unsigned int curColumn);
-
-
-        static std::tuple<unsigned int, unsigned int>
-        Advance(const unsigned int totalRows, const unsigned int totalColumns,
-                const unsigned int curRow, const unsigned int curColumn);
-
-        template<typename DataType>
-        static void Invert(unsigned int rows, unsigned int columns,
-                           Array<OneD, DataType>& data,
-                           const char transpose)
+        if (std::is_floating_point<DataType>::value)
         {
-                ASSERTL0(rows==columns, "Only square matrices can be inverted.");
-                ASSERTL0(transpose=='N', "Only untransposed matrices may be inverted.");
-
-                int m = rows;
-                int n = columns;
-                int info = 0;
-                Array<OneD, int> ipivot(n);
-                Array<OneD, DataType> work(n);
-
-                if(std::is_floating_point<DataType>::value)
-                {
-                    switch ( sizeof(DataType) )
-                    {
-                    case sizeof(NekDouble):
-                        break;
-                    case sizeof(NekSingle):
-                        break;
-                    default:
-                        ASSERTL0(false, 
+            switch (sizeof(DataType))
+            {
+                case sizeof(NekDouble):
+                    break;
+                case sizeof(NekSingle):
+                    break;
+                default:
+                    ASSERTL0(
+                        false,
                         "Invert DataType is neither NekDouble nor NekSingle");
-                        break;
-                    }
-                }
-                else
-                {
-                    ASSERTL0(false, 
-                    "FullMatrixFuncs::Invert DataType is not floating point");
-                }
-                
-                Lapack::DoSgetrf(m, n, data.get(), m, ipivot.get(), info);
-
-                if( info < 0 )
-                {
-                    std::string message = "ERROR: The " + std::to_string(-info) + "th parameter had an illegal parameter for dgetrf";
-                    ASSERTL0(false, message.c_str());
-                }
-                else if( info > 0 )
-                {
-                    std::string message = "ERROR: Element u_" + std::to_string(info) +   std::to_string(info) + " is 0 from dgetrf";
-                    ASSERTL0(false, message.c_str());
-                }
-
-                Lapack::DoSgetri(n, data.get(), n, ipivot.get(),
-                               work.get(), n, info);
-
-                if( info < 0 )
-                {
-                    std::string message = "ERROR: The " + std::to_string(-info) + "th parameter had an illegal parameter for dgetri";
-                    ASSERTL0(false, message.c_str());
-                }
-                else if( info > 0 )
-                {
-                    std::string message = "ERROR: Element u_" + std::to_string(info) +   std::to_string(info) + " is 0 from dgetri";
-                    ASSERTL0(false, message.c_str());
-                }
+                    break;
+            }
         }
-
-        template<typename DataType>
-        static void EigenSolve(unsigned int n,
-                               const Array<OneD, const DataType>& A,
-                               Array<OneD, DataType> &EigValReal,
-                               Array<OneD, DataType> &EigValImag,
-                               Array<OneD, DataType> &EigVecs)
+        else
         {
-            int lda = n,info = 0;
-            DataType dum;
-            char uplo = 'N';
-
-            if(EigVecs.size() != 0) // calculate Right Eigen Vectors
-            {
-                int lwork = 4*lda;
-                Array<OneD,DataType> work(4*lda);
-                char lrev = 'V';
-                Lapack::DoSgeev(uplo,lrev,lda, A.get(),lda,
-                              EigValReal.get(),
-                              EigValImag.get(),
-                              &dum,1,
-                              EigVecs.get(),lda,
-                              &work[0],lwork,info);
-            }
-            else
-            {
-                int lwork = 3*lda;
-                Array<OneD,DataType> work(3*lda);
-                char lrev = 'N';
-                Lapack::DoSgeev(uplo,lrev,lda,
-                              A.get(),lda,
-                              EigValReal.get(),
-                              EigValImag.get(),
-                              &dum,1,&dum,1,
-                              &work[0],lwork,info);
-            }
-            ASSERTL0(info == 0,"Info is not zero");
-
+            ASSERTL0(false,
+                     "FullMatrixFuncs::Invert DataType is not floating point");
         }
-    };
 
-    struct LIB_UTILITIES_EXPORT TriangularMatrixFuncs
-    {
-        static unsigned int GetRequiredStorageSize(unsigned int rows, unsigned int columns);
-    };
+        Lapack::DoSgetrf(m, n, data.get(), m, ipivot.get(), info);
 
-    struct LIB_UTILITIES_EXPORT UpperTriangularMatrixFuncs : public TriangularMatrixFuncs
-    {
-        static unsigned int CalculateIndex(unsigned int curRow, unsigned int curColumn);
-
-        static std::tuple<unsigned int, unsigned int>
-        Advance(const unsigned int totalRows, const unsigned int totalColumns,
-                const unsigned int curRow, const unsigned int curColumn);
-    };
-
-
-    struct LIB_UTILITIES_EXPORT LowerTriangularMatrixFuncs : public TriangularMatrixFuncs
-    {
-        static unsigned int CalculateIndex(unsigned int totalColumns, unsigned int curRow, unsigned int curColumn);
-
-        static std::tuple<unsigned int, unsigned int>
-        Advance(const unsigned int totalRows, const unsigned int totalColumns,
-                const unsigned int curRow, const unsigned int curColumn,
-                char transpose = 'N');
-    };
-
-        /// \internal
-    /// Symmetric matrices use upper triangular packed storage.
-    struct LIB_UTILITIES_EXPORT SymmetricMatrixFuncs : private TriangularMatrixFuncs
-    {
-        using TriangularMatrixFuncs::GetRequiredStorageSize;
-
-        static unsigned int CalculateIndex(unsigned int curRow, unsigned int curColumn);
-
-        template<typename DataType>
-        static void Invert(unsigned int rows, unsigned int columns,
-                           Array<OneD, DataType>& data)
+        if (info < 0)
         {
-            ASSERTL0(rows==columns, "Only square matrices can be inverted.");
-
-            int n = columns;
-            int info = 0;
-            Array<OneD, int> ipivot(n);
-            Array<OneD, DataType> work(n);
-
-            Lapack::DoSsptrf('U', n, data.get(), ipivot.get(), info);
-
-            if( info < 0 )
-            {
-                std::string message = "ERROR: The " + std::to_string(-info) + "th parameter had an illegal parameter for dsptrf";
-                ASSERTL0(false, message.c_str());
-            }
-            else if( info > 0 )
-            {
-                std::string message = "ERROR: Element u_" + std::to_string(info) +   std::to_string(info) + " is 0 from dsptrf";
-                ASSERTL0(false, message.c_str());
-            }
-
-            Lapack::DoSsptri('U', n, data.get(), ipivot.get(),
-                           work.get(), info);
-
-            if( info < 0 )
-            {
-                std::string message = "ERROR: The " + std::to_string(-info) + "th parameter had an illegal parameter for dsptri";
-                ASSERTL0(false, message.c_str());
-            }
-            else if( info > 0 )
-            {
-                std::string message = "ERROR: Element u_" + std::to_string(info) +   std::to_string(info) + " is 0 from dsptri";
-                ASSERTL0(false, message.c_str());
-            }
+            std::string message =
+                "ERROR: The " + std::to_string(-info) +
+                "th parameter had an illegal parameter for dgetrf";
+            ASSERTL0(false, message.c_str());
         }
-
-        static std::tuple<unsigned int, unsigned int>
-        Advance(const unsigned int totalRows, const unsigned int totalColumns,
-                const unsigned int curRow, const unsigned int curColumn);
-    };
-
-    struct LIB_UTILITIES_EXPORT DiagonalMatrixFuncs
-    {
-        static std::tuple<unsigned int, unsigned int>
-        Advance(const unsigned int totalRows, const unsigned int totalColumns,
-                const unsigned int curRow, const unsigned int curColumn);
-
-        template<typename DataType>
-        static void Invert(unsigned int rows, unsigned int columns,
-                           Array<OneD, DataType>& data)
+        else if (info > 0)
         {
-            ASSERTL0(rows==columns, "Only square matrices can be inverted.");
-            for(unsigned int i = 0; i < rows; ++i)
-            {
-                data[i] = 1.0/data[i];
-            }
+            std::string message = "ERROR: Element u_" + std::to_string(info) +
+                                  std::to_string(info) + " is 0 from dgetrf";
+            ASSERTL0(false, message.c_str());
         }
 
-        static unsigned int GetRequiredStorageSize(unsigned int rows, unsigned int columns);
+        Lapack::DoSgetri(n, data.get(), n, ipivot.get(), work.get(), n, info);
 
-        static unsigned int CalculateIndex(unsigned int row, unsigned int col);
-    };
+        if (info < 0)
+        {
+            std::string message =
+                "ERROR: The " + std::to_string(-info) +
+                "th parameter had an illegal parameter for dgetri";
+            ASSERTL0(false, message.c_str());
+        }
+        else if (info > 0)
+        {
+            std::string message = "ERROR: Element u_" + std::to_string(info) +
+                                  std::to_string(info) + " is 0 from dgetri";
+            ASSERTL0(false, message.c_str());
+        }
+    }
 
-
-    struct LIB_UTILITIES_EXPORT TriangularBandedMatrixFuncs
+    template <typename DataType>
+    static void EigenSolve(unsigned int n, const Array<OneD, const DataType> &A,
+                           Array<OneD, DataType> &EigValReal,
+                           Array<OneD, DataType> &EigValImag,
+                           Array<OneD, DataType> &EigVecs)
     {
-        static unsigned int GetRequiredStorageSize(unsigned int rows, unsigned int columns,
-                                                   unsigned int nSubSuperDiags);
-    };
+        int lda = n, info = 0;
+        DataType dum;
+        char uplo = 'N';
 
-    struct LIB_UTILITIES_EXPORT UpperTriangularBandedMatrixFuncs : public TriangularBandedMatrixFuncs
+        if (EigVecs.size() != 0) // calculate Right Eigen Vectors
+        {
+            int lwork = 4 * lda;
+            Array<OneD, DataType> work(4 * lda);
+            char lrev = 'V';
+            Lapack::DoSgeev(uplo, lrev, lda, A.get(), lda, EigValReal.get(),
+                            EigValImag.get(), &dum, 1, EigVecs.get(), lda,
+                            &work[0], lwork, info);
+        }
+        else
+        {
+            int lwork = 3 * lda;
+            Array<OneD, DataType> work(3 * lda);
+            char lrev = 'N';
+            Lapack::DoSgeev(uplo, lrev, lda, A.get(), lda, EigValReal.get(),
+                            EigValImag.get(), &dum, 1, &dum, 1, &work[0], lwork,
+                            info);
+        }
+        ASSERTL0(info == 0, "Info is not zero");
+    }
+};
+
+struct LIB_UTILITIES_EXPORT TriangularMatrixFuncs
+{
+    static unsigned int GetRequiredStorageSize(unsigned int rows,
+                                               unsigned int columns);
+};
+
+struct LIB_UTILITIES_EXPORT UpperTriangularMatrixFuncs
+    : public TriangularMatrixFuncs
+{
+    static unsigned int CalculateIndex(unsigned int curRow,
+                                       unsigned int curColumn);
+
+    static std::tuple<unsigned int, unsigned int> Advance(
+        const unsigned int totalRows, const unsigned int totalColumns,
+        const unsigned int curRow, const unsigned int curColumn);
+};
+
+struct LIB_UTILITIES_EXPORT LowerTriangularMatrixFuncs
+    : public TriangularMatrixFuncs
+{
+    static unsigned int CalculateIndex(unsigned int totalColumns,
+                                       unsigned int curRow,
+                                       unsigned int curColumn);
+
+    static std::tuple<unsigned int, unsigned int> Advance(
+        const unsigned int totalRows, const unsigned int totalColumns,
+        const unsigned int curRow, const unsigned int curColumn,
+        char transpose = 'N');
+};
+
+/// \internal
+/// Symmetric matrices use upper triangular packed storage.
+struct LIB_UTILITIES_EXPORT SymmetricMatrixFuncs : private TriangularMatrixFuncs
+{
+    using TriangularMatrixFuncs::GetRequiredStorageSize;
+
+    static unsigned int CalculateIndex(unsigned int curRow,
+                                       unsigned int curColumn);
+
+    template <typename DataType>
+    static void Invert(unsigned int rows, unsigned int columns,
+                       Array<OneD, DataType> &data)
     {
-    };
+        ASSERTL0(rows == columns, "Only square matrices can be inverted.");
 
-    struct LIB_UTILITIES_EXPORT LowerTriangularBandedMatrixFuncs : public TriangularBandedMatrixFuncs
+        int n    = columns;
+        int info = 0;
+        Array<OneD, int> ipivot(n);
+        Array<OneD, DataType> work(n);
+
+        Lapack::DoSsptrf('U', n, data.get(), ipivot.get(), info);
+
+        if (info < 0)
+        {
+            std::string message =
+                "ERROR: The " + std::to_string(-info) +
+                "th parameter had an illegal parameter for dsptrf";
+            ASSERTL0(false, message.c_str());
+        }
+        else if (info > 0)
+        {
+            std::string message = "ERROR: Element u_" + std::to_string(info) +
+                                  std::to_string(info) + " is 0 from dsptrf";
+            ASSERTL0(false, message.c_str());
+        }
+
+        Lapack::DoSsptri('U', n, data.get(), ipivot.get(), work.get(), info);
+
+        if (info < 0)
+        {
+            std::string message =
+                "ERROR: The " + std::to_string(-info) +
+                "th parameter had an illegal parameter for dsptri";
+            ASSERTL0(false, message.c_str());
+        }
+        else if (info > 0)
+        {
+            std::string message = "ERROR: Element u_" + std::to_string(info) +
+                                  std::to_string(info) + " is 0 from dsptri";
+            ASSERTL0(false, message.c_str());
+        }
+    }
+
+    static std::tuple<unsigned int, unsigned int> Advance(
+        const unsigned int totalRows, const unsigned int totalColumns,
+        const unsigned int curRow, const unsigned int curColumn);
+};
+
+struct LIB_UTILITIES_EXPORT DiagonalMatrixFuncs
+{
+    static std::tuple<unsigned int, unsigned int> Advance(
+        const unsigned int totalRows, const unsigned int totalColumns,
+        const unsigned int curRow, const unsigned int curColumn);
+
+    template <typename DataType>
+    static void Invert(unsigned int rows, unsigned int columns,
+                       Array<OneD, DataType> &data)
     {
-    };
+        ASSERTL0(rows == columns, "Only square matrices can be inverted.");
+        for (unsigned int i = 0; i < rows; ++i)
+        {
+            data[i] = 1.0 / data[i];
+        }
+    }
 
-    /// \internal
-    /// Symmetric banded matrices use upper triangular banded packed storage.
-    struct LIB_UTILITIES_EXPORT SymmetricBandedMatrixFuncs : private TriangularBandedMatrixFuncs
-    {
-        using TriangularBandedMatrixFuncs::GetRequiredStorageSize;
+    static unsigned int GetRequiredStorageSize(unsigned int rows,
+                                               unsigned int columns);
 
-        static unsigned int CalculateIndex(unsigned int curRow, unsigned int curColumn,
-                                           unsigned int nSuperDiags);
-    };
+    static unsigned int CalculateIndex(unsigned int row, unsigned int col);
+};
 
-}
+struct LIB_UTILITIES_EXPORT TriangularBandedMatrixFuncs
+{
+    static unsigned int GetRequiredStorageSize(unsigned int rows,
+                                               unsigned int columns,
+                                               unsigned int nSubSuperDiags);
+};
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_FUNCS_H
+struct LIB_UTILITIES_EXPORT UpperTriangularBandedMatrixFuncs
+    : public TriangularBandedMatrixFuncs
+{
+};
+
+struct LIB_UTILITIES_EXPORT LowerTriangularBandedMatrixFuncs
+    : public TriangularBandedMatrixFuncs
+{
+};
+
+/// \internal
+/// Symmetric banded matrices use upper triangular banded packed storage.
+struct LIB_UTILITIES_EXPORT SymmetricBandedMatrixFuncs
+    : private TriangularBandedMatrixFuncs
+{
+    using TriangularBandedMatrixFuncs::GetRequiredStorageSize;
+
+    static unsigned int CalculateIndex(unsigned int curRow,
+                                       unsigned int curColumn,
+                                       unsigned int nSuperDiags);
+};
+
+} // namespace Nektar
+
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_FUNCS_H

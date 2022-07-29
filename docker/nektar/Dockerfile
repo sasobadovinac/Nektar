@@ -27,6 +27,7 @@ RUN mkdir build && cd build &&                                  \
     -DNEKTAR_USE_HDF5=ON                                        \
     -DNEKTAR_USE_CCM=ON                                         \
     -DNEKTAR_USE_PETSC=ON                                       \
+    -DNEKTAR_USE_VTK=ON                                         \
     .. &&                                                       \
     make -j$(nproc) &&                                          \
     make -j$(nproc) user-guide-pdf developer-guide-pdf          \
@@ -46,7 +47,7 @@ RUN DEBIAN_RELEASE=bullseye && \
     libboost-thread1.74 libboost-iostreams1.74 libboost-filesystem1.74 libboost-system1.74 \
     libboost-program-options1.74 libboost-python1.74 libboost-regex1.74 libboost-numpy1.74 \
     libfftw3-3 libhdf5-103 libhdf5-openmpi-103 liblapack3 liboce-foundation11 \
-    liboce-modeling11 liboce-ocaf11 libtet1.5 libtriangle-1.6 python3-numpy \
+    liboce-modeling11 liboce-ocaf11 libtet1.5 libtriangle-1.6 python3-numpy libvtk9 \
     openmpi-bin libpetsc-real3.14 libptscotch-6.1 libarpack2 libtinyxml2.6.2v5 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 ARG INSTALL_PREFIX=/usr/local

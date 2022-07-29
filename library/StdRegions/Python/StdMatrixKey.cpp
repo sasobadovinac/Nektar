@@ -32,10 +32,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <vector>
+#include <LibUtilities/Python/NekPyConfig.hpp>
 #include <StdRegions/StdExpansion.h>
 #include <StdRegions/StdMatrixKey.h>
-#include <LibUtilities/Python/NekPyConfig.hpp>
+#include <vector>
 
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 
@@ -49,7 +49,7 @@ StdMatrixKey *StdMatrixKey_Init(const MatrixType matType,
                                 const py::object &varCoeffMap)
 {
     ConstFactorMap tmp = NullConstFactorMap;
-    VarCoeffMap tmp2 = NullVarCoeffMap;
+    VarCoeffMap tmp2   = NullVarCoeffMap;
 
     if (!constFactorMap.is_none())
     {
@@ -82,15 +82,15 @@ void export_StdMatrixKey()
         .def(py::map_indexing_suite<VarCoeffMap>());
 
     py::class_<StdMatrixKey>("StdMatrixKey", py::no_init)
-        .def("__init__", py::make_constructor(
+        .def("__init__",
+             py::make_constructor(
                  &StdMatrixKey_Init, py::default_call_policies(),
                  (py::arg("matType"), py::arg("shapeType"), py::arg("exp"),
                   py::arg("constFactorMap") = py::object(),
-                  py::arg("varCoeffMap") = py::object())))
+                  py::arg("varCoeffMap")    = py::object())))
 
         .def("GetMatrixType", &StdMatrixKey::GetMatrixType)
-        .def("GetShapeType",  &StdMatrixKey::GetShapeType)
-        .def("GetNcoeffs",    &StdMatrixKey::GetNcoeffs)
-        .def("GetBasis",      &StdMatrixKey::GetBasis)
-        ;
+        .def("GetShapeType", &StdMatrixKey::GetShapeType)
+        .def("GetNcoeffs", &StdMatrixKey::GetNcoeffs)
+        .def("GetBasis", &StdMatrixKey::GetBasis);
 }

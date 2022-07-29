@@ -10,6 +10,7 @@ enabled:
 - `NEKTAR_USE_MESHGEN`
 - `NEKTAR_USE_PETSC`
 - `NEKTAR_USE_CCM`
+- `NEKTAR_USE_VTK`
 
 ## Building
 

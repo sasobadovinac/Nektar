@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Simple mean value solver for the Linear Shallow Water 
+// Description: Simple mean value solver for the Linear Shallow Water
 //              Equations.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -39,46 +39,46 @@
 
 namespace Nektar
 {
-    std::string LinearAverageSolver::solverName =
-        SolverUtils::GetRiemannSolverFactory().RegisterCreatorFunction(
-            "LinearAverage",
-            LinearAverageSolver::create,
-            "Average Value Riemann solver");
+std::string LinearAverageSolver::solverName =
+    SolverUtils::GetRiemannSolverFactory().RegisterCreatorFunction(
+        "LinearAverage", LinearAverageSolver::create,
+        "Average Value Riemann solver");
 
-    LinearAverageSolver::LinearAverageSolver(
-        const LibUtilities::SessionReaderSharedPtr& pSession)
-        : LinearSWESolver(pSession)
-    {
-
-    }
-
-    /**
-     * @brief Average Value Riemann solver for the Linear Shallow 
-     * Water Equations
-     *
-     * @param etaL   Free surface elevation left state.
-     * @param etaR   Free surface elevation right state.  
-     * @param uL     x-velocity  left state.  
-     * @param uR     x-velocity  right state.  
-     * @param vL     y-velocity  left state.  
-     * @param vR     y-velocity  right state. 
-     * @param dL     still water depth component left state.  
-     * @param dR     still water depth component right state. 
-     * @param etaf   Computed Riemann flux for continuity.
-     * @param uf     Computed Riemann flux for x-momentum component 
-     * @param vf     Computed Riemann flux for y-momentum component 
-     */
-    void LinearAverageSolver::v_PointSolve(
-        NekDouble  etaL, NekDouble  uL, NekDouble  vL, NekDouble dL,
-        NekDouble  etaR, NekDouble  uR, NekDouble  vR, NekDouble dR,
-        NekDouble &etaf, NekDouble &uf, NekDouble &vf)
-    {
-        boost::ignore_unused(vL, vR);
-
-        static NekDouble g = m_params["gravity"]();
-
-        etaf  = 0.5 * (dL * uL + dR * uR);
-        uf    = 0.5 * (g * etaL + g * etaR);
-        vf    = 0.0;
-    }
+LinearAverageSolver::LinearAverageSolver(
+    const LibUtilities::SessionReaderSharedPtr &pSession)
+    : LinearSWESolver(pSession)
+{
 }
+
+/**
+ * @brief Average Value Riemann solver for the Linear Shallow
+ * Water Equations
+ *
+ * @param etaL   Free surface elevation left state.
+ * @param etaR   Free surface elevation right state.
+ * @param uL     x-velocity  left state.
+ * @param uR     x-velocity  right state.
+ * @param vL     y-velocity  left state.
+ * @param vR     y-velocity  right state.
+ * @param dL     still water depth component left state.
+ * @param dR     still water depth component right state.
+ * @param etaf   Computed Riemann flux for continuity.
+ * @param uf     Computed Riemann flux for x-momentum component
+ * @param vf     Computed Riemann flux for y-momentum component
+ */
+void LinearAverageSolver::v_PointSolve(NekDouble etaL, NekDouble uL,
+                                       NekDouble vL, NekDouble dL,
+                                       NekDouble etaR, NekDouble uR,
+                                       NekDouble vR, NekDouble dR,
+                                       NekDouble &etaf, NekDouble &uf,
+                                       NekDouble &vf)
+{
+    boost::ignore_unused(vL, vR);
+
+    static NekDouble g = m_params["gravity"]();
+
+    etaf = 0.5 * (dL * uL + dR * uR);
+    uf   = 0.5 * (g * etaL + g * etaR);
+    vf   = 0.0;
+}
+} // namespace Nektar

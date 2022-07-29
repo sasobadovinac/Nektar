@@ -53,11 +53,11 @@ public:
     SPATIAL_DOMAINS_EXPORT HexGeom(int id, const QuadGeomSharedPtr faces[]);
     SPATIAL_DOMAINS_EXPORT ~HexGeom();
 
-    SPATIAL_DOMAINS_EXPORT static const int kNverts = 8;
-    SPATIAL_DOMAINS_EXPORT static const int kNedges = 12;
+    SPATIAL_DOMAINS_EXPORT static const int kNverts  = 8;
+    SPATIAL_DOMAINS_EXPORT static const int kNedges  = 12;
     SPATIAL_DOMAINS_EXPORT static const int kNqfaces = 6;
     SPATIAL_DOMAINS_EXPORT static const int kNtfaces = 0;
-    SPATIAL_DOMAINS_EXPORT static const int kNfaces = kNqfaces + kNtfaces;
+    SPATIAL_DOMAINS_EXPORT static const int kNfaces  = kNqfaces + kNtfaces;
     SPATIAL_DOMAINS_EXPORT static const std::string XMLElementType;
 
 protected:
@@ -85,7 +85,7 @@ private:
 
 typedef std::shared_ptr<HexGeom> HexGeomSharedPtr;
 typedef std::map<int, HexGeomSharedPtr> HexGeomMap;
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

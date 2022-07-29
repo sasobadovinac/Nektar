@@ -40,73 +40,68 @@
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+// Forward declarations
+class ExpList;
+class GlobalLinSysDirectStaticCond;
+
+typedef std::shared_ptr<GlobalLinSysDirectStaticCond>
+    GlobalLinSysDirectStaticCondSharedPtr;
+
+/// A global linear system.
+class GlobalLinSysDirectStaticCond : virtual public GlobalLinSysDirect,
+                                     virtual public GlobalLinSysStaticCond
+{
+public:
+    /// Creates an instance of this class
+    static GlobalLinSysSharedPtr create(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        // Forward declarations
-        class ExpList;
-        class GlobalLinSysDirectStaticCond;
-
-        typedef std::shared_ptr<GlobalLinSysDirectStaticCond>
-                                        GlobalLinSysDirectStaticCondSharedPtr;
-
-        /// A global linear system.
-        class GlobalLinSysDirectStaticCond : virtual public GlobalLinSysDirect,
-                                             virtual public GlobalLinSysStaticCond
-        {
-        public:
-            /// Creates an instance of this class
-            static GlobalLinSysSharedPtr create(
-                        const GlobalLinSysKey                &pLinSysKey,
-                        const std::weak_ptr<ExpList>         &pExpList,
-                        const std::shared_ptr<AssemblyMap>   &pLocToGloMap)
-            {
-                GlobalLinSysDirectStaticCondSharedPtr ret =
-                    MemoryManager<GlobalLinSysDirectStaticCond>
-                    ::AllocateSharedPtr(pLinSysKey, pExpList, pLocToGloMap);
-                ret->InitObject();
-                return ret;
-            }
-
-            /// Name of class
-            MULTI_REGIONS_EXPORT static std::string className;
-            static std::string className2;
-
-            /// Constructor for full direct matrix solve.
-            MULTI_REGIONS_EXPORT GlobalLinSysDirectStaticCond(
-                        const GlobalLinSysKey                &mkey,
-                        const std::weak_ptr<ExpList>         &pExpList,
-                        const std::shared_ptr<AssemblyMap>   &locToGloMap);
-
-            /// Constructor for full direct matrix solve.
-            MULTI_REGIONS_EXPORT GlobalLinSysDirectStaticCond(
-                        const GlobalLinSysKey                &mkey,
-                        const std::weak_ptr<ExpList>         &pExpList,
-                        const DNekScalBlkMatSharedPtr         pSchurCompl,
-                        const DNekScalBlkMatSharedPtr         pBinvD,
-                        const DNekScalBlkMatSharedPtr         pC,
-                        const DNekScalBlkMatSharedPtr         pInvD,
-                        const std::shared_ptr<AssemblyMap>   &locToGloMap);
-
-            MULTI_REGIONS_EXPORT virtual ~GlobalLinSysDirectStaticCond();
-
-        protected:
-            virtual void v_AssembleSchurComplement(
-                std::shared_ptr<AssemblyMap> pLocToGloMap);
-            virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
-                const GlobalLinSysKey                &mkey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const DNekScalBlkMatSharedPtr         pSchurCompl,
-                const DNekScalBlkMatSharedPtr         pBinvD,
-                const DNekScalBlkMatSharedPtr         pC,
-                const DNekScalBlkMatSharedPtr         pInvD,
-                const std::shared_ptr<AssemblyMap>   &l2gMap);
-
-        private:
-            /// Matrix Storage type for known matrices
-            MatrixStorage DetermineMatrixStorage(
-                   const std::shared_ptr<AssemblyMap>& locToGloMap);
-        };
+        GlobalLinSysDirectStaticCondSharedPtr ret =
+            MemoryManager<GlobalLinSysDirectStaticCond>::AllocateSharedPtr(
+                pLinSysKey, pExpList, pLocToGloMap);
+        ret->InitObject();
+        return ret;
     }
-}
+
+    /// Name of class
+    MULTI_REGIONS_EXPORT static std::string className;
+    static std::string className2;
+
+    /// Constructor for full direct matrix solve.
+    MULTI_REGIONS_EXPORT GlobalLinSysDirectStaticCond(
+        const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &locToGloMap);
+
+    /// Constructor for full direct matrix solve.
+    MULTI_REGIONS_EXPORT GlobalLinSysDirectStaticCond(
+        const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
+        const DNekScalBlkMatSharedPtr pSchurCompl,
+        const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
+        const DNekScalBlkMatSharedPtr pInvD,
+        const std::shared_ptr<AssemblyMap> &locToGloMap);
+
+    MULTI_REGIONS_EXPORT virtual ~GlobalLinSysDirectStaticCond();
+
+protected:
+    virtual void v_AssembleSchurComplement(
+        std::shared_ptr<AssemblyMap> pLocToGloMap);
+    virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
+        const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
+        const DNekScalBlkMatSharedPtr pSchurCompl,
+        const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
+        const DNekScalBlkMatSharedPtr pInvD,
+        const std::shared_ptr<AssemblyMap> &l2gMap);
+
+private:
+    /// Matrix Storage type for known matrices
+    MatrixStorage DetermineMatrixStorage(
+        const std::shared_ptr<AssemblyMap> &locToGloMap);
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

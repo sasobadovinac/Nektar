@@ -35,39 +35,38 @@
 #ifndef STDLINSYSKEY_HPP
 #define STDLINSYSKEY_HPP
 
-
-#include <StdRegions/StdRegions.hpp>
 #include <StdRegions/StdMatrixKey.h>
+#include <StdRegions/StdRegions.hpp>
 
 namespace Nektar
 {
-    namespace StdRegions
+namespace StdRegions
+{
+
+class StdLinSysKey : public StdMatrixKey
+{
+public:
+    StdLinSysKey(MatrixType matrixType, ExpansionType expansionType,
+                 StdExpansion &stdExpansion)
+        : StdMatrixKey(matrixType, expansionType, stdExpansion)
     {
-    
-        class StdLinSysKey: public StdMatrixKey
-        {  
-        public:
-            StdLinSysKey( MatrixType matrixType, ExpansionType expansionType, 
-              StdExpansion &stdExpansion):
-        StdMatrixKey(matrixType,expansionType,stdExpansion)
-         {
-            }
+    }
 
-//            StdLinSysKey( MatrixType matrixType, ExpansionType expansionType,
-//              StdExpansion &stdExpansion, LibUtilities::PointsType Ntype):
-//        StdMatrixKey(matrixType,expansionType,stdExpansion,StdRegions::NNtype)
-//         {
-//            }
-        
-            virtual ~StdLinSysKey()
-            {
-            }
-        
-        private:
+    //            StdLinSysKey( MatrixType matrixType, ExpansionType
+    //            expansionType,
+    //              StdExpansion &stdExpansion, LibUtilities::PointsType Ntype):
+    //        StdMatrixKey(matrixType,expansionType,stdExpansion,StdRegions::NNtype)
+    //         {
+    //            }
 
-        };
+    virtual ~StdLinSysKey()
+    {
+    }
 
-    } // end of namespace
-} // end of namespace
+private:
+};
 
-#endif //STDLINSYSKEY_HPP
+} // namespace StdRegions
+} // namespace Nektar
+
+#endif // STDLINSYSKEY_HPP

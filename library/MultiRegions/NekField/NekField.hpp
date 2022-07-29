@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Field.hpp
+// File NekField.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -39,7 +39,7 @@
 #include <vector>
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <MultiRegions/Field/ExpListFieldInterface.h>
+#include <MultiRegions/NekField/ExpListNekFieldInterface.h>
 
 namespace Nektar
 {
@@ -60,22 +60,22 @@ enum StorageType
 class ExpList;
 
 template <typename TData, StorageType TStype>
-class Field
+class NekField
 {
 public:
 
     // default contructor
-    Field(): m_numVariables(1)
+    NekField(): m_numVariables(1)
     {
     };
 
-    Field(std::shared_ptr<MultiRegions::ExpList> exp,
+    NekField(std::shared_ptr<MultiRegions::ExpList> exp,
                  TData defval = 0, int nvar = 1, DataLayout Order = eField) :
         m_numVariables(nvar),
         m_dataOrder(Order)
     {
         m_expIF.push_back(std::make_shared<MultiRegions::details::
-                          ExpListFieldInterface>(exp));
+                          ExpListNekFieldInterface>(exp));
         // soft copy passed expansion into nvar 
         for(int i = 1; i < nvar; ++i)
         {
@@ -101,7 +101,7 @@ public:
         }
     }
 
-    Field(Array<OneD, std::shared_ptr<MultiRegions::ExpList>> exp,
+    NekField(Array<OneD, std::shared_ptr<MultiRegions::ExpList>> exp,
                  TData defval = 0, DataLayout Order = eField) :
         m_numVariables(exp.size()),
         m_dataOrder(Order)
@@ -109,7 +109,7 @@ public:
         for(int i = 0; i < m_numVariables; ++i)
         {
             m_expIF.push_back(std::make_shared<MultiRegions::details::
-                          ExpListFieldInterface>(exp[i]));
+                          ExpListNekFieldInterface>(exp[i]));
         }
 
         m_storage = Array<OneD, Array<OneD, NekDouble> >(m_numVariables); 
@@ -131,7 +131,7 @@ public:
         }
     }
     
-    Field(const Field &F)
+    NekField(const NekField &F)
         : m_expIF(F.m_expIF),
           m_storage(Array<OneD, Array<OneD, TData>>(F.m_numVariables)),
           m_numVariables(F.m_numVariables)
@@ -150,7 +150,7 @@ public:
         }
     }
     
-    ~Field()
+    ~NekField()
     {
         // nothing to do... yet...
     }
@@ -199,7 +199,7 @@ public:
     }
 protected: 
     /// interface to allow access to ExpList 
-    std::vector<std::shared_ptr<MultiRegions::details::ExpListFieldInterface>> m_expIF;
+    std::vector<std::shared_ptr<MultiRegions::details::ExpListNekFieldInterface>> m_expIF;
     
     /// native storage in field
     Array<OneD, Array<OneD, TData> >   m_storage;
@@ -211,8 +211,8 @@ protected:
     DataLayout m_dataOrder; 
 };
 
-static Field<NekDouble,ePhys> ZeroFieldPhys; 
-static Field<NekDouble,eCoeff> ZerolFieldCoef; 
+static NekField<NekDouble,ePhys> ZeroNekFieldPhys; 
+static NekField<NekDouble,eCoeff> ZerolNekField; 
     
-} // namespace Nektar
+} // Namespace
 #endif

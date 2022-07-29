@@ -69,7 +69,7 @@ public:
         return "ProcessTetSplit";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

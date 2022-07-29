@@ -35,68 +35,67 @@
 #ifndef NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_LIN_ALG_ALGORITHMS_HPP
 #define NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_LIN_ALG_ALGORITHMS_HPP
 
-#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 #include <vector>
 
 namespace Nektar
 {
-    /// \brief Calculates the orthogonal, normalized vectors from
-    /// linearly independent input.
-    /// \return A list of ortogonalized vectors corresponding to the
-    ///         input vectors.  If the size of the output doesn't
-    ///         match the size of the input then an error occurred.
-    /// This algorithm is taken from "Parallel Scientific Computing in
-    /// C++ and MPI", Karniadakis and Kirby, page 55.
-    template<typename DataType>
-    std::vector<NekVector<DataType> > 
-    GramSchmidtOrthogonalization(const std::vector<NekVector<DataType> >& x)
-    {
-        typedef NekVector<DataType> VectorType;
-        typedef NekMatrix<DataType> MatrixType;
-        
-        //typename dim = x[0].GetDimension(); 
-        unsigned int dim = x[0].GetDimension();
-        std::vector<VectorType> q(x.size(), VectorType());
-        
-        // This matrix holds the r_ij values.  Using the matrix object
-        // is a convenience since it provides a 2D access to a table
-        // of values.
-        MatrixType r(dim, dim);
-        r(0,0) = x[0].L2Norm();
+/// \brief Calculates the orthogonal, normalized vectors from
+/// linearly independent input.
+/// \return A list of ortogonalized vectors corresponding to the
+///         input vectors.  If the size of the output doesn't
+///         match the size of the input then an error occurred.
+/// This algorithm is taken from "Parallel Scientific Computing in
+/// C++ and MPI", Karniadakis and Kirby, page 55.
+template <typename DataType>
+std::vector<NekVector<DataType>> GramSchmidtOrthogonalization(
+    const std::vector<NekVector<DataType>> &x)
+{
+    typedef NekVector<DataType> VectorType;
+    typedef NekMatrix<DataType> MatrixType;
 
-        if( r(0,0) == DataType(0) )
+    // typename dim = x[0].GetDimension();
+    unsigned int dim = x[0].GetDimension();
+    std::vector<VectorType> q(x.size(), VectorType());
+
+    // This matrix holds the r_ij values.  Using the matrix object
+    // is a convenience since it provides a 2D access to a table
+    // of values.
+    MatrixType r(dim, dim);
+    r(0, 0) = x[0].L2Norm();
+
+    if (r(0, 0) == DataType(0))
+    {
+        return q;
+    }
+
+    q[0] = x[0] / r(0, 0);
+
+    for (unsigned int j = 1; j < x.size(); ++j)
+    {
+        for (unsigned int i = 0; i <= j - 1; ++i)
+        {
+            r(i, j) = q[i].Dot(x[j]);
+        }
+
+        VectorType y = x[j];
+        for (unsigned int i = 0; i <= j - 1; ++i)
+        {
+            y = y - r(i, j) * q[i];
+        }
+
+        r(j, j) = y.L2Norm();
+        if (r(j, j) == DataType(0))
         {
             return q;
         }
 
-        q[0] = x[0]/r(0,0);
-
-        for(unsigned int j = 1; j < x.size(); ++j)
-        {
-            for(unsigned int i = 0; i <= j-1; ++i)
-            {
-                r(i,j) = q[i].Dot(x[j]);
-            }
-            
-            VectorType y = x[j];
-            for(unsigned int i = 0; i <= j-1; ++i)
-            {
-                y = y - r(i,j)*q[i];
-            }
-            
-            r(j,j) = y.L2Norm();
-            if( r(j,j) == DataType(0) )
-            {
-                return q;
-            }
-            
-            q[j] = y/r(j,j);
-        }
-        
-        return q;
+        q[j] = y / r(j, j);
     }
+
+    return q;
 }
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_LIN_ALG_ALGORITHMS_HPP
-
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_LIN_ALG_ALGORITHMS_HPP

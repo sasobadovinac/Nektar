@@ -167,7 +167,7 @@ protected:
     virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FwdTrans_IterPerExp(
+    virtual void v_FwdTransLocalElmt(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
@@ -176,10 +176,6 @@ protected:
 
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray);
-
-    virtual void v_IProductWRTBase_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
 
     virtual std::vector<LibUtilities::FieldDefinitionsSharedPtr>
     v_GetFieldDefinitions(void);

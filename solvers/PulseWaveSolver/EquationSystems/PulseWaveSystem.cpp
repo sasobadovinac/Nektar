@@ -35,11 +35,11 @@
 
 #include <iostream>
 
-#include <MultiRegions/ContField.h>
-#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
-#include <PulseWaveSolver/EquationSystems/PulseWaveSystem.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/Communication/CommSerial.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
+#include <MultiRegions/ContField.h>
+#include <PulseWaveSolver/EquationSystems/PulseWaveSystem.h>
 using namespace std;
 
 namespace Nektar
@@ -1888,7 +1888,7 @@ void PulseWaveSystem::WriteVessels(const std::string &outname)
         // Outputs pressure
         Array<OneD, NekDouble> PFwd(m_vessels[n * m_nVariables]->GetNcoeffs());
 
-        m_vessels[n * m_nVariables]->FwdTrans_IterPerExp(m_pressure[n], PFwd);
+        m_vessels[n * m_nVariables]->FwdTransLocalElmt(m_pressure[n], PFwd);
 
         for (int i = 0; i < nFieldDefPerDomain; ++i)
         {
@@ -1909,9 +1909,9 @@ void PulseWaveSystem::WriteVessels(const std::string &outname)
             Array<OneD, NekDouble> W2Fwd(
                 m_vessels[n * m_nVariables]->GetNcoeffs());
 
-            m_vessels[n * m_nVariables]->FwdTrans_IterPerExp(m_PWV[n], PWVFwd);
-            m_vessels[n * m_nVariables]->FwdTrans_IterPerExp(m_W1[n], W1Fwd);
-            m_vessels[n * m_nVariables]->FwdTrans_IterPerExp(m_W2[n], W2Fwd);
+            m_vessels[n * m_nVariables]->FwdTransLocalElmt(m_PWV[n], PWVFwd);
+            m_vessels[n * m_nVariables]->FwdTransLocalElmt(m_W1[n], W1Fwd);
+            m_vessels[n * m_nVariables]->FwdTransLocalElmt(m_W2[n], W2Fwd);
 
             for (int i = 0; i < nFieldDefPerDomain; ++i)
             {

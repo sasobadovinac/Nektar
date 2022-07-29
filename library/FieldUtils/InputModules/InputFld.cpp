@@ -48,18 +48,16 @@ namespace FieldUtils
 
 ModuleKey InputFld::m_className[4] = {
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eInputModule, "fld"),
-        InputFld::create, "Reads Fld file."),
+        ModuleKey(eInputModule, "fld"), InputFld::create, "Reads Fld file."),
+    GetModuleFactory().RegisterCreatorFunction(ModuleKey(eInputModule, "chk"),
+                                               InputFld::create,
+                                               "Reads checkpoint file."),
+    GetModuleFactory().RegisterCreatorFunction(ModuleKey(eInputModule, "rst"),
+                                               InputFld::create,
+                                               "Reads restart file."),
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eInputModule, "chk"),
-        InputFld::create, "Reads checkpoint file."),
-    GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eInputModule, "rst"),
-        InputFld::create, "Reads restart file."),
-    GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eInputModule, "bse"),
-        InputFld::create, "Reads stability base-flow file.")
-};
+        ModuleKey(eInputModule, "bse"), InputFld::create,
+        "Reads stability base-flow file.")};
 
 /**
  * @brief Set up InputFld object.
@@ -90,16 +88,15 @@ void InputFld::Process(po::variables_map &vm)
     int i;
     string fileName = m_config["infile"].as<string>();
 
-    LibUtilities::FieldIOSharedPtr fld =
-                m_f->FieldIOForFile(fileName);
+    LibUtilities::FieldIOSharedPtr fld = m_f->FieldIOForFile(fileName);
 
     int oldSize = m_f->m_fielddef.size();
-    if(m_f->m_graph)
+    if (m_f->m_graph)
     {
         // Determine IDs of elements in the domain
         vector<int> IDs;
         auto domain = m_f->m_graph->GetDomain();
-        for(int d = 0; d < domain.size(); ++d)
+        for (int d = 0; d < domain.size(); ++d)
         {
             for (auto &compIter : domain[d])
             {
@@ -118,30 +115,27 @@ void InputFld::Process(po::variables_map &vm)
         // Move to an array to match FieldIO interface
         Array<OneD, int> ElementGIDs(IDs.size(), IDs.data());
 
-        fld->Import(
-            fileName, m_f->m_fielddef, m_f->m_data,
-            m_f->m_fieldMetaDataMap, ElementGIDs);
+        fld->Import(fileName, m_f->m_fielddef, m_f->m_data,
+                    m_f->m_fieldMetaDataMap, ElementGIDs);
     }
     else // load all data.
     {
-        fld->Import(
-            fileName, m_f->m_fielddef, m_f->m_data,
-            m_f->m_fieldMetaDataMap);
+        fld->Import(fileName, m_f->m_fielddef, m_f->m_data,
+                    m_f->m_fieldMetaDataMap);
     }
 
     // save field names
-    for(i = 0; i < m_f->m_fielddef[oldSize]->m_fields.size(); ++i)
+    for (i = 0; i < m_f->m_fielddef[oldSize]->m_fields.size(); ++i)
     {
         // check for multiple fld files
-        auto it = find (m_f->m_variables.begin(),
-                        m_f->m_variables.end(),
-                        m_f->m_fielddef[oldSize]->m_fields[i]);
+        auto it = find(m_f->m_variables.begin(), m_f->m_variables.end(),
+                       m_f->m_fielddef[oldSize]->m_fields[i]);
 
-        if(it == m_f->m_variables.end())
+        if (it == m_f->m_variables.end())
         {
             m_f->m_variables.push_back(m_f->m_fielddef[oldSize]->m_fields[i]);
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

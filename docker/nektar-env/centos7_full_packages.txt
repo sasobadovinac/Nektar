@@ -10,3 +10,4 @@ ptscotch-openmpi-devel
 python-devel
 scotch-devel
 tetgen-devel
+vtk-devel

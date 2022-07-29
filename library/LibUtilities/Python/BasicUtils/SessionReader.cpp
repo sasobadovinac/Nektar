@@ -55,7 +55,7 @@ CommSharedPtr MPICOMM = CommSharedPtr();
 SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
 {
     int i, argc = py::len(ns), bufSize = 0;
-    char **argv = new char *[argc+1], *p;
+    char **argv = new char *[argc + 1], *p;
 
     // Create argc, argv to give to the session reader. Note that this needs to
     // be a contiguous block in memory, otherwise MPI (specifically OpenMPI)
@@ -72,8 +72,8 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
         std::string tmp = py::extract<std::string>(ns[i]);
         std::copy(tmp.begin(), tmp.end(), p);
         p[tmp.size()] = '\0';
-        argv[i] = p;
-        p += tmp.size()+1;
+        argv[i]       = p;
+        p += tmp.size() + 1;
     }
 
     // Also make sure we set argv[argc] = NULL otherwise OpenMPI will also
@@ -91,22 +91,22 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
         MPICOMM = GetCommFactory().CreateInstance("ParallelMPI", argc, argv);
     }
 
-    std::vector<std::string> filenames(argc-1);
+    std::vector<std::string> filenames(argc - 1);
     for (i = 1; i < argc; ++i)
     {
-        filenames[i-1] = std::string(argv[i]);
+        filenames[i - 1] = std::string(argv[i]);
     }
 
     // Create session reader.
-    SessionReaderSharedPtr sr = SessionReader::CreateInstance(
-        argc, argv, filenames, MPICOMM);
+    SessionReaderSharedPtr sr =
+        SessionReader::CreateInstance(argc, argv, filenames, MPICOMM);
 #else
     // Create session reader.
     SessionReaderSharedPtr sr = SessionReader::CreateInstance(argc, argv);
 #endif
 
     // Clean up.
-    delete [] argv;
+    delete[] argv;
 
     return sr;
 }
@@ -121,10 +121,8 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
  */
 void export_SessionReader()
 {
-    py::class_<SessionReader,
-           std::shared_ptr<SessionReader>,
-           boost::noncopyable>(
-               "SessionReader", py::no_init)
+    py::class_<SessionReader, std::shared_ptr<SessionReader>,
+               boost::noncopyable>("SessionReader", py::no_init)
 
         .def("CreateInstance", SessionReader_CreateInstance)
         .staticmethod("CreateInstance")

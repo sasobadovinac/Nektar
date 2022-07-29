@@ -50,12 +50,16 @@ enum TestType
 };
 
 const char *const TestTypeMap[] = {
-    "TestPlane", "TestPlaneMassConsv", "TestCube", "AdvectionBell",
+    "TestPlane",
+    "TestPlaneMassConsv",
+    "TestCube",
+    "AdvectionBell",
 };
 
 namespace Nektar
 {
-class MMFAdvection : public SolverUtils::MMFSystem, public SolverUtils::AdvectionSystem
+class MMFAdvection : public SolverUtils::MMFSystem,
+                     public SolverUtils::AdvectionSystem
 {
 public:
     friend class MemoryManager<MMFAdvection>;
@@ -63,7 +67,7 @@ public:
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
         SolverUtils::EquationSystemSharedPtr p =
             MemoryManager<MMFAdvection>::AllocateSharedPtr(pSession, pGraph);
@@ -79,7 +83,7 @@ public:
     virtual ~MMFAdvection();
 
 protected:
-    SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
+    SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
 
     NekDouble m_advx, m_advy, m_advz;
     NekDouble m_waveFreq, m_RotAngle;
@@ -100,7 +104,7 @@ protected:
 
     /// Session reader
     MMFAdvection(const LibUtilities::SessionReaderSharedPtr &pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph);
+                 const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     void WeakDGDirectionalAdvection(
         const Array<OneD, Array<OneD, NekDouble>> &InField,
@@ -147,7 +151,7 @@ protected:
     void Test3Dproblem(const NekDouble time, Array<OneD, NekDouble> &outfield);
 
     /// Initialise the object
-    virtual void v_InitObject(bool DeclareFields=true);
+    virtual void v_InitObject(bool DeclareFields = true);
 
     virtual void v_DoSolve();
 
@@ -164,6 +168,6 @@ protected:
 
 private:
 };
-}
+} // namespace Nektar
 
 #endif

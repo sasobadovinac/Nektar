@@ -49,8 +49,7 @@ namespace FieldUtils
 
 ModuleKey ProcessScaleInFld::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "scaleinputfld"),
-        ProcessScaleInFld::create,
+        ModuleKey(eProcessModule, "scaleinputfld"), ProcessScaleInFld::create,
         "rescale input field by a constant factor.");
 
 ProcessScaleInFld::ProcessScaleInFld(FieldSharedPtr f) : ProcessModule(f)
@@ -80,5 +79,5 @@ void ProcessScaleInFld::Process(po::variables_map &vm)
                     &(m_f->m_data[i][0]), 1);
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

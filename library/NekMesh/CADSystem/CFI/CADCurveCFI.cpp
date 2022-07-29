@@ -57,7 +57,7 @@ NekDouble CADCurveCFI::tAtArcLength(NekDouble s)
 {
     s /= m_scal;
     Array<OneD, NekDouble> bds = GetBounds();
-    NekDouble dt = (bds[1] - bds[0]) / 1000;
+    NekDouble dt               = (bds[1] - bds[0]) / 1000;
 
     NekDouble t   = bds[0];
     NekDouble len = 0.0;
@@ -97,7 +97,7 @@ NekDouble CADCurveCFI::loct(Array<OneD, NekDouble> xyz, NekDouble &t)
 NekDouble CADCurveCFI::Length(NekDouble ti, NekDouble tf)
 {
     Array<OneD, NekDouble> bds = GetBounds();
-    NekDouble dt = (bds[1] - bds[0]) / 1000;
+    NekDouble dt               = (bds[1] - bds[0]) / 1000;
 
     NekDouble t   = ti;
     NekDouble len = 0.0;
@@ -199,5 +199,5 @@ Array<OneD, NekDouble> CADCurveCFI::GetMinMax()
 
     return locs;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

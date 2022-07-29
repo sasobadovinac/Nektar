@@ -48,8 +48,8 @@ public:
 
     /// Creates an instance of this class
     static EquationSystemSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
         auto p = MemoryManager<Laplace>::AllocateSharedPtr(pSession, pGraph);
         p->InitObject();
@@ -62,13 +62,13 @@ public:
 protected:
     StdRegions::ConstFactorMap m_factors;
 
-    Laplace(const LibUtilities::SessionReaderSharedPtr& pSession,
+    Laplace(const LibUtilities::SessionReaderSharedPtr &pSession,
             const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     virtual ~Laplace();
 
     virtual void v_InitObject();
-    virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
     virtual void v_DoSolve();
 
 private:

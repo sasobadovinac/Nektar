@@ -52,15 +52,15 @@ class CoupledAssemblyMap : public MultiRegions::AssemblyMapCG
 
 public:
     CoupledAssemblyMap(
-        const LibUtilities::SessionReaderSharedPtr        &pSession,
-        const SpatialDomains::MeshGraphSharedPtr          &graph,
-        const MultiRegions::AssemblyMapCGSharedPtr        &cgMap,
-        const Array<OneD, const BoundaryCondShPtr>        &boundaryConditions,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &graph,
+        const MultiRegions::AssemblyMapCGSharedPtr &cgMap,
+        const Array<OneD, const BoundaryCondShPtr> &boundaryConditions,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
 };
 
 typedef std::shared_ptr<CoupledAssemblyMap> CoupledAssemblyMapSharedPtr;
 
-}
+} // namespace Nektar
 
 #endif

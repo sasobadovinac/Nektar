@@ -6,14 +6,14 @@
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <MultiRegions/ContField.h>
 #include <MultiRegions/ExpList.h>
-#include <MultiRegions/Field/Field.hpp>
+#include <MultiRegions/NekField/NekField.hpp>
 #include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
 using namespace Nektar;
 
 void SetVariableCoeffs(LibUtilities::SessionReaderSharedPtr &vSession,
-                       Field<NekDouble, ePhys> &xc,
+                       NekField<NekDouble, ePhys> &xc,
                        StdRegions::VarCoeffMap &varcoeffs);
 
 int main(int argc, char *argv[])
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Set up coordinates of mesh for Forcing function evaluation
-        Field<NekDouble, ePhys> xc(Exp[0], 0.0, 3);
+        NekField<NekDouble, ePhys> xc(Exp[0], 0.0, 3);
         Exp[0]->GetCoords(xc);
         //----------------------------------------------
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Define forcing function for first variable defined in file
-        Field<NekDouble, ePhys> Fce(Exp, 0.0);
+        NekField<NekDouble, ePhys> Fce(Exp, 0.0);
         LibUtilities::EquationSharedPtr ffunc;
         for(int v = 0; v < nvars; ++v)
         {
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
         //----------------------------------------------
         // Helmholtz solution taking physical forcing after setting
         // initial condition to zero
-        Field<NekDouble, eCoeff> Coeffs(Exp, 0.0);
+        NekField<NekDouble, eCoeff> Coeffs(Exp, 0.0);
         for(int v = 0; v < nvars; ++v)
         {
             Exp[v]->HelmSolve(v, Fce, Coeffs, factors, varcoeffs);
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Backward Transform Solution to get solved values at
-        Field<NekDouble, ePhys> Phys(Exp, 0.0);
+        NekField<NekDouble, ePhys> Phys(Exp, 0.0);
         Exp[0]->BwdTrans(Coeffs, Phys);
         //----------------------------------------------
 
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 }
 
 void SetVariableCoeffs(LibUtilities::SessionReaderSharedPtr &vSession,
-                       Field<NekDouble, ePhys> &xc,
+                       NekField<NekDouble, ePhys> &xc,
                        StdRegions::VarCoeffMap &varcoeffs)
 {
     int varsize = xc.GetArray1D(xc.GetNumVariables()-1).size();

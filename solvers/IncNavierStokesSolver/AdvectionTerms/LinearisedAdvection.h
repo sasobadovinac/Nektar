@@ -35,14 +35,13 @@
 #ifndef NEKTAR_SOLVERS_LINEARISEDADVECTION_H
 #define NEKTAR_SOLVERS_LINEARISEDADVECTION_H
 
-#include <SolverUtils/Advection/Advection.h>
 #include <LibUtilities/FFT/NektarFFT.h>
-
+#include <SolverUtils/Advection/Advection.h>
 
 namespace Nektar
 {
 
-class LinearisedAdvection: public SolverUtils::Advection
+class LinearisedAdvection : public SolverUtils::Advection
 {
     enum FloquetMatType
     {
@@ -52,7 +51,7 @@ class LinearisedAdvection: public SolverUtils::Advection
 
     /// A map between  matrix keys and their associated block
     /// matrices.
-    typedef std::map< FloquetMatType, DNekBlkMatSharedPtr> FloquetBlockMatrixMap;
+    typedef std::map<FloquetMatType, DNekBlkMatSharedPtr> FloquetBlockMatrixMap;
     /// A shared pointer to a BlockMatrixMap.
     typedef std::shared_ptr<FloquetBlockMatrixMap> FloquetBlockMatrixMapShPtr;
 
@@ -74,86 +73,79 @@ protected:
     int m_expdim;
 
     /// Storage for base flow
-    Array<OneD, Array<OneD, NekDouble> >            m_baseflow;
-    Array<OneD, Array<OneD, NekDouble> >            m_gradBase;
+    Array<OneD, Array<OneD, NekDouble>> m_baseflow;
+    Array<OneD, Array<OneD, NekDouble>> m_gradBase;
 
     /// number of slices
-    int                                             m_start;
-    int                                             m_skip;
-    int                                             m_slices;
+    int m_start;
+    int m_skip;
+    int m_slices;
     /// period length
-    NekDouble                                       m_period;
-    int                                             m_isperiodic;
-    int                                             m_interporder;
+    NekDouble m_period;
+    int m_isperiodic;
+    int m_interporder;
     /// interpolation vector
-    Array<OneD, Array<OneD, NekDouble> >            m_interp;
+    Array<OneD, Array<OneD, NekDouble>> m_interp;
     /// auxiliary variables
-    LibUtilities::NektarFFTSharedPtr                m_FFT;
-    Array<OneD,NekDouble>                           m_tmpIN;
-    Array<OneD,NekDouble>                           m_tmpOUT;
-    bool                                            m_useFFTW;
+    LibUtilities::NektarFFTSharedPtr m_FFT;
+    Array<OneD, NekDouble> m_tmpIN;
+    Array<OneD, NekDouble> m_tmpOUT;
+    bool m_useFFTW;
     /// flag to determine if use single mode or not
-    bool                                            m_singleMode;
+    bool m_singleMode;
     /// flag to determine if use half mode or not
-    bool                                            m_halfMode;
+    bool m_halfMode;
     /// flag to determine if use multiple mode or not
-    bool                                            m_multipleModes;
+    bool m_multipleModes;
 
-    DNekBlkMatSharedPtr GetFloquetBlockMatrix(
-            FloquetMatType mattype,
-            bool UseContCoeffs = false) const;
-    DNekBlkMatSharedPtr GenFloquetBlockMatrix(
-            FloquetMatType mattype,
-            bool UseContCoeffs = false) const;
-    FloquetBlockMatrixMapShPtr                      m_FloquetBlockMat;
-
+    DNekBlkMatSharedPtr GetFloquetBlockMatrix(FloquetMatType mattype,
+                                              bool UseContCoeffs = false) const;
+    DNekBlkMatSharedPtr GenFloquetBlockMatrix(FloquetMatType mattype,
+                                              bool UseContCoeffs = false) const;
+    FloquetBlockMatrixMapShPtr m_FloquetBlockMat;
 
     LinearisedAdvection();
 
     virtual ~LinearisedAdvection();
 
     virtual void v_InitObject(
-              LibUtilities::SessionReaderSharedPtr         pSession,
-              Array<OneD, MultiRegions::ExpListSharedPtr>  pFields);
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
 
     virtual void v_Advect(
         const int nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-              Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayOfArray);
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
 
     virtual void v_SetBaseFlow(
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
 
-    void UpdateBase(
-        const NekDouble                                    m_slices,
-        const Array<OneD, const NekDouble>                &inarray,
-              Array<OneD, NekDouble>                      &outarray,
-        const NekDouble                                    m_time,
-        const NekDouble                                    m_period);
+    void UpdateBase(const NekDouble m_slices,
+                    const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray, const NekDouble m_time,
+                    const NekDouble m_period);
 
-    void UpdateGradBase(
-        const int                                          var,
-        const MultiRegions::ExpListSharedPtr              &field);
+    void UpdateGradBase(const int var,
+                        const MultiRegions::ExpListSharedPtr &field);
 
-    void DFT(
-        const std::string                                  file,
-              Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble                                    m_slices);
+    void DFT(const std::string file,
+             Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+             const NekDouble m_slices);
 
     /// Import Base flow
-    void ImportFldBase(
-              std::string                                  pInfile,
-              Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-              int                                          slice);
+    void ImportFldBase(std::string pInfile,
+                       Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+                       int slice);
 
 private:
-    ///Parameter for homogeneous expansions
+    /// Parameter for homogeneous expansions
     enum HomogeneousType
     {
         eHomogeneous1D,
@@ -171,17 +163,17 @@ private:
     NekDouble m_LhomY; ///< physical length in Y direction (if homogeneous)
     NekDouble m_LhomZ; ///< physical length in Z direction (if homogeneous)
 
-    int m_npointsX;    ///< number of points in X direction (if homogeneous)
-    int m_npointsY;    ///< number of points in Y direction (if homogeneous)
-    int m_npointsZ;    ///< number of points in Z direction (if homogeneous)
+    int m_npointsX; ///< number of points in X direction (if homogeneous)
+    int m_npointsY; ///< number of points in Y direction (if homogeneous)
+    int m_npointsZ; ///< number of points in Z direction (if homogeneous)
 
-    int m_HomoDirec;   ///< number of homogenous directions
+    int m_HomoDirec; ///< number of homogenous directions
 
-    int m_NumMode;     ///< Mode to use in case of single mode analysis
+    int m_NumMode; ///< Mode to use in case of single mode analysis
 
     SpatialDomains::BoundaryConditionsSharedPtr m_boundaryConditions;
 };
 
-}
+} // namespace Nektar
 
-#endif //NEKTAR_SOLVERS_INCNAVIERSTOKES_H
+#endif // NEKTAR_SOLVERS_INCNAVIERSTOKES_H

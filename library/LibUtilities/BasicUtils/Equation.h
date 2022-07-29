@@ -43,7 +43,7 @@
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Interpreter/Interpreter.h>
-#include <MultiRegions/Field/Field.hpp>
+#include <MultiRegions/NekField/NekField.hpp>
 
 namespace Nektar
 {
@@ -92,33 +92,33 @@ public:
                                        Array<OneD, NekDouble> &result) const;
 
     LIB_UTILITIES_EXPORT void Evaluate(
-        const Field<NekDouble, ePhys> &x,
-        const Field<NekDouble, ePhys> &y,
-        const Field<NekDouble, ePhys> &z,
-        Field<NekDouble, ePhys> &result) const
+        const NekField<NekDouble, ePhys> &x,
+        const NekField<NekDouble, ePhys> &y,
+        const NekField<NekDouble, ePhys> &z,
+        NekField<NekDouble, ePhys> &result) const
     {
         Evaluate(x.GetArray1D(), y.GetArray1D(), z.GetArray1D(), result.UpdateData());
     }
 
     LIB_UTILITIES_EXPORT void Evaluate(
-        const Field<NekDouble, ePhys> &x,
-        const Field<NekDouble, ePhys> &y,
-        const Field<NekDouble, ePhys> &z,
+        const NekField<NekDouble, ePhys> &x,
+        const NekField<NekDouble, ePhys> &y,
+        const NekField<NekDouble, ePhys> &z,
         Array<OneD, NekDouble> &result) const
     {
         Evaluate(x.GetArray1D(), y.GetArray1D(), z.GetArray1D(), result);
     }
     
     LIB_UTILITIES_EXPORT void Evaluate(
-        const Field<NekDouble, ePhys> &coord,
-        Field<NekDouble, ePhys> &result) const
+        const NekField<NekDouble, ePhys> &coord,
+        NekField<NekDouble, ePhys> &result) const
     {
         Evaluate(coord.GetArray1D(0), coord.GetArray1D(1), coord.GetArray1D(2),
                  result.UpdateData());
     }
 
     LIB_UTILITIES_EXPORT void Evaluate(
-        const Field<NekDouble, ePhys> &coord,
+        const NekField<NekDouble, ePhys> &coord,
         Array<OneD, NekDouble> &result) const
     {
         Evaluate(coord.GetArray1D(0), coord.GetArray1D(1), coord.GetArray1D(2),

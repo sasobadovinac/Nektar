@@ -35,12 +35,10 @@
 #ifndef FIELDUTILS_PROCESSINTERPDATATOFLD
 #define FIELDUTILS_PROCESSINTERPDATATOFLD
 
-#include <LibUtilities/BasicUtils/Progressbar.hpp>
 #include <LibUtilities/BasicUtils/DomainRange.h>
+#include <LibUtilities/BasicUtils/Progressbar.hpp>
 
 #include "../Module.h"
-
-
 
 namespace Nektar
 {
@@ -88,7 +86,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

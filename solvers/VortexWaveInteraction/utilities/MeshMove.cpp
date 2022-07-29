@@ -789,8 +789,8 @@ int main(int argc, char *argv[])
                 // Sign[qp_closer]*Delta_c[qp_closer]*ratio;
 
                 // ratio = (1-y)*(1+y)/(
-                // (1-yold_up[qp_closer])*(1+yold_up[qp_closer]) ); distance prop
-                // to layerup
+                // (1-yold_up[qp_closer])*(1+yold_up[qp_closer]) ); distance
+                // prop to layerup
                 ynew[i] = y_c[qp_closer] + (y - yold_c[qp_closer]) *
                                                (1 - y_c[qp_closer]) /
                                                (1 - yold_c[qp_closer]);
@@ -931,7 +931,7 @@ int main(int argc, char *argv[])
         Vmath::Vcopy(nquad_lay, ycQ, 1, Cont_y->UpdatePhys(), 1);
         Array<OneD, NekDouble> coeffsy(Cont_y->GetNcoeffs(), 0.0);
 
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffsy);
         Cont_y->BwdTrans(coeffsy, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, ycQ, 1);
 
@@ -1028,12 +1028,12 @@ int main(int argc, char *argv[])
         // force continuity tx,ty
         // tx
         Vmath::Vcopy(nquad_lay, txQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffsy);
         Cont_y->BwdTrans(coeffsy, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, txQ, 1);
         // ty
         Vmath::Vcopy(nquad_lay, tyQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffsy);
         Cont_y->BwdTrans(coeffsy, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, tyQ, 1);
 
@@ -1122,12 +1122,12 @@ int main(int argc, char *argv[])
         // force continuity of the tangent
         // tyQ
         Vmath::Vcopy(nquad_lay, tyQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffstmp);
         Cont_y->BwdTrans(coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, tyQ, 1);
         // txQ
         Vmath::Vcopy(nquad_lay, txQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffstmp);
         Cont_y->BwdTrans(coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, txQ, 1);
 
@@ -1172,14 +1172,14 @@ int main(int argc, char *argv[])
         // REMEMBER: the Fwd/Bwd operation get wrong with the border values!!!
         Vmath::Vcopy(nquad_lay, nyQ, 1, Cont_y->UpdatePhys(), 1);
 
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffstmp);
         Cont_y->BwdTrans(coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, nyQ, 1);
 
         Vmath::Zero(nquad_lay, Cont_y->UpdatePhys(), 1);
         Vmath::Zero(Cont_y->GetNcoeffs(), Cont_y->UpdateCoeffs(), 1);
         Vmath::Vcopy(nquad_lay, nxQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffstmp);
         Cont_y->BwdTrans(coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, nxQ, 1);
 
@@ -1333,7 +1333,8 @@ int main(int argc, char *argv[])
                 // for each layer
 
                 // cout<<m<<"Vid:"<<lay_Vids[m][h]<<"  mod from
-                // y="<<ynew[lay_Vids[m][h] ]<<"  to y="<<y_c[h] +delta[m]<<endl;
+                // y="<<ynew[lay_Vids[m][h] ]<<"  to y="<<y_c[h]
+                // +delta[m]<<endl;
                 if (move_norm == false)
                 {
                     ynew[lay_Vids[m][h]] = y_c[h] + delta[m];
@@ -1714,7 +1715,8 @@ int main(int argc, char *argv[])
             // cout<<nedges<<"nedges"<<npedge<<" np_lay="<<np_lay<<endl;
             // calc lay coords
             // MoveLayerNfixedxpos(nvertl, npedge, xcPhysMOD, tmpx_lay,
-            // tmpy_lay, 	 lay_Vids[m], layers_x[m], layers_y[m],xnew,ynew);
+            // tmpy_lay, 	 lay_Vids[m], layers_x[m],
+            // layers_y[m],xnew,ynew);
             MoveLayerNnormpos(nvertl, npedge, xcPhysMOD, tmpx_lay, tmpy_lay,
                               lay_Vids[m], layers_x[m], layers_y[m], xnew,
                               ynew);
@@ -1889,9 +1891,9 @@ int main(int argc, char *argv[])
         } // close layers!!! m index
 
         // MoveOutsidePointsfixedxpos(npedge, graphShPt,xold_c, yold_c,
-        // xold_low, yold_low, 	         xold_up, yold_up, layers_y[0], layers_y[nlays-1],
-        //xnew, ynew);
-
+        // xold_low, yold_low, 	         xold_up, yold_up, layers_y[0],
+        // layers_y[nlays-1],
+        // xnew, ynew);
         // lastIregion -1 = laydown
         // lastIregion -2 = layup
         MoveOutsidePointsNnormpos(
@@ -3212,7 +3214,7 @@ void MoveLayersvertically(int nlays, int nvertl, int cntlow, int cntup,
                 xnew[lay_Vids[h][s]] = xc[s];
                 // cout<<"ynew="<<ynew[ lay_Vids[h][s] ]<<"
                 // ydown="<<ynew[Down[s]]<< " delta="<<abs(ynew[Down[s]] -
-                //y_c[s])/(cntlow+1)<<endl; until now layers_y=yold
+                // y_c[s])/(cntlow+1)<<endl; until now layers_y=yold
                 layers_y[h][s] = ynew[lay_Vids[h][s]];
                 layers_x[h][s] = xnew[lay_Vids[h][s]];
             }

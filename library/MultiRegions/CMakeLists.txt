@@ -17,7 +17,7 @@ ExpList2DHomogeneous1D.cpp
 ExpList1DHomogeneous2D.cpp
 ExpList3DHomogeneous1D.cpp
 ExpList3DHomogeneous2D.cpp
-Field/ExpListFieldInterface.cpp
+NekField/ExpListNekFieldInterface.cpp
 GJPStabilisation.cpp
 GlobalLinSys.cpp
 GlobalLinSysKey.cpp
@@ -51,7 +51,7 @@ ExpList2DHomogeneous1D.h
 ExpList1DHomogeneous2D.h
 ExpList3DHomogeneous1D.h
 ExpList3DHomogeneous2D.h
-Field/ExpListFieldInterface.h
+NekField/ExpListNekFieldInterface.h
 GJPStabilisation.h
 GlobalLinSys.h
 GlobalLinSysKey.h
