@@ -7,7 +7,6 @@ v5.3
 ------
 **Library**
 - Fixed avx512 back-end for SimdLib (!1333)
-- Remove unnecessary IterPerExp methods (!1366)
 - Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
 
 **FieldConvert**
@@ -37,7 +36,9 @@ v5.2.0
 - Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
 - Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
 - Reformat code with clang-format (!1359)
-
+- Remove unnecessary IterPerExp methods (!1366)
+-  Fix erronous call to FwdTrans from MR 1366 (!1374)
+	
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)
 
