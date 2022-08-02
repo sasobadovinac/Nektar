@@ -1338,8 +1338,8 @@ void FilterAeroForces::CalculateForces(
                             m_Fpplane[j][plane] += fptmp;
                             m_Fvplane[j][plane] += fvtmp;
 
-                            m_FpZ[j][kidx] = fptmp;
-                            m_FvZ[j][kidx] = fvtmp;
+                            m_FpZ[j][kidx] += fptmp;
+                            m_FvZ[j][kidx] += fvtmp;
                             //m_ftZ[j][kidx] = (fptmp + fvtmp);
                         }
                         for ( int j = 0; j < momdim; ++j)
@@ -1353,8 +1353,8 @@ void FilterAeroForces::CalculateForces(
                             m_Mpplane[j][plane] += Mptmp;
                             m_Mvplane[j][plane] += Mvtmp;
 
-                            m_MpZ[j][kidx] = Mptmp;
-                            m_MvZ[j][kidx] = Mvtmp;
+                            m_MpZ[j][kidx] += Mptmp;
+                            m_MvZ[j][kidx] += Mvtmp;
                             //m_MtZ[j][kidx] = (Mptmp + Mvtmp);
                         }
 
