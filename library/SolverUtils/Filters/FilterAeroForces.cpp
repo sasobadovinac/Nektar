@@ -783,7 +783,8 @@ void FilterAeroForces::v_Update(
 
         }
     }
-
+    m_outputStream_zDist.close();
+    exit(0);
 }
 
 
