@@ -109,10 +109,12 @@ protected:
                              Array<OneD, NekDouble> &coord_1,
                              Array<OneD, NekDouble> &coord_2);
 
+#if EXPLISTDATA
     virtual void v_WriteTecplotZone(std::ostream &outfile, int expansion);
 
     virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                                        int istrip);
+#endif
 
     virtual void v_GetNormals(Array<OneD, Array<OneD, NekDouble>> &normals);
 

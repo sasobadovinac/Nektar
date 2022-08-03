@@ -718,12 +718,14 @@ void ExpListHomogeneous2D::v_AppendFieldData(
     }
 }
 
+#if EXPLISTDATA
 void ExpListHomogeneous2D::v_AppendFieldData(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata)
 {
     v_AppendFieldData(fielddef, fielddata, m_coeffs);
 }
+#endif
 
 // Extract the data in fielddata into the m_coeff list
 void ExpListHomogeneous2D::v_ExtractDataToCoeffs(
@@ -773,7 +775,8 @@ void ExpListHomogeneous2D::v_ExtractDataToCoeffs(
     }
 }
 
-void ExpListHomogeneous2D::v_WriteVtkPieceData(std::ostream &outfile,
+#if EXPLISTDATA
+    void ExpListHomogeneous2D::v_WriteVtkPieceData(std::ostream &outfile,
                                                int expansion, std::string var)
 {
     int i;
@@ -797,7 +800,8 @@ void ExpListHomogeneous2D::v_WriteVtkPieceData(std::ostream &outfile,
     outfile << endl;
     outfile << "        </DataArray>" << endl;
 }
-
+#endif
+    
 void ExpListHomogeneous2D::v_PhysDeriv(
     const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
     Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2)

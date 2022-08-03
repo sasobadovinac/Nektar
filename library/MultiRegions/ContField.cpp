@@ -238,12 +238,8 @@ ContField::~ContField()
  *
  * The values of the function \f$f(\boldsymbol{x})\f$ evaluated at the
  * quadrature points \f$\boldsymbol{x}_i\f$ should be contained in the
- * variable #m_phys of the ExpList object \a Sin. The resulting global
- * coefficients \f$\hat{u}_g\f$ are stored in the array #m_coeffs.
- *
- * @param   Sin         An ExpList, containing the discrete evaluation
- *                      of \f$f(\boldsymbol{x})\f$ at the quadrature
- *                      points in its array #m_phys.
+ * variable #inarray of the ExpList object \a Sin. The resulting global
+ * coefficients \f$\hat{u}_g\f$ are stored in the array #outarray.
  */
 void ContField::FwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray)
@@ -312,13 +308,16 @@ void ContField::MultiplyByInvMassMatrix(
  *
  * The values of the function \f$f(\boldsymbol{x})\f$ evaluated at the
  * quadrature points \f$\boldsymbol{x}_i\f$ should be contained in the
- * variable #m_phys of the ExpList object \a Sin. The resulting global
- * coefficients \f$\boldsymbol{\hat{u}}_g\f$ are stored in the array
- * #m_coeffs.
+ * variable #inarray
  *
- * @param   Sin         An ExpList, containing the discrete evaluation
- *                      of the forcing function \f$f(\boldsymbol{x})\f$
- *                      at the quadrature points in its array #m_phys.
+ * @param inarray An Array<OneD, NekDouble> containing the discrete
+ *                      evaluation of the forcing function
+ *                      \f$f(\boldsymbol{x})\f$ at the quadrature
+ *                      points.
+ *
+ * @param outarray An Array<OneD, NekDouble> containing the
+ *                      coefficients of the solution
+ *
  * @param   variablecoeffs The (optional) parameter containing the
  *                      coefficients evaluated at the quadrature
  *                      points. It is an Array of (three) arrays which
@@ -367,8 +366,14 @@ void ContField::LaplaceSolve(
             m_bndConditions[i]->GetBoundaryConditionType() ==
                 SpatialDomains::eRobin)
         {
-            const Array<OneD, NekDouble> bndcoeff =
+
+#if EXPLISTDATA
+            const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
+#else 
+            const Array<OneD, const NekDouble> bndcoeff =
+                m_bndCondFieldCoeff[i]->GetArray1D();
+#endif
 
             if (m_locToGloMap->GetSignChange())
             {
@@ -580,8 +585,14 @@ void ContField::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
         if (m_bndConditions[i]->GetBoundaryConditionType() ==
             SpatialDomains::eDirichlet)
         {
-            const Array<OneD, NekDouble> bndcoeff =
+
+#if EXPLISTDATA
+            const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
+#else 
+            const Array<OneD, const NekDouble> bndcoeff =
+                m_bndCondFieldCoeff[i]->GetArray1D();
+#endif
 
             if (m_locToGloMap->GetSignChange())
             {
@@ -624,6 +635,7 @@ void ContField::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
     }
 }
 
+#if EXPLISTDATA
 void ContField::v_FillBndCondFromField(void)
 {
     int bndcnt = 0;
@@ -692,6 +704,20 @@ void ContField::v_FillBndCondFromField(const int nreg)
         }
     }
 }
+#else
+void ContField::v_FillBndCondFromField(void)
+{
+    NEKERROR(ErrorUtil::efatal,
+             "Needs redefining in terms of NekField storage");
+}
+
+void ContField::v_FillBndCondFromField(const int nreg)
+{
+    boost::ignore_unused(nreg);
+    NEKERROR(ErrorUtil::efatal,
+             "Needs redefining in terms of NekField storage");
+}
+#endif
 
 /**
  * This operation is evaluated as:
@@ -712,10 +738,6 @@ void ContField::v_FillBndCondFromField(const int nreg)
  * where \f$\mathcal{A}\f$ is the
  * \f$N_{\mathrm{eof}}\times N_{\mathrm{dof}}\f$ permutation matrix.
  *
- * @note The array #m_coeffs should be filled with the global
- * coefficients \f$\boldsymbol{\hat{u}}_g\f$ and that the resulting
- * local coefficients \f$\boldsymbol{\hat{u}}_l\f$ will be stored in
- * #m_coeffs.
  */
 void ContField::v_GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
                                 Array<OneD, NekDouble> &outarray)
@@ -723,10 +745,12 @@ void ContField::v_GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
     m_locToGloMap->GlobalToLocal(inarray, outarray);
 }
 
+#if EXPLISTDATA
 void ContField::v_GlobalToLocal(void)
 {
     m_locToGloMap->GlobalToLocal(m_coeffs, m_coeffs);
 }
+#endif
 
 /**
  * This operation is evaluated as:
@@ -747,13 +771,6 @@ void ContField::v_GlobalToLocal(void)
  * where \f$\mathcal{A}\f$ is the
  * \f$N_{\mathrm{eof}}\times N_{\mathrm{dof}}\f$ permutation matrix.
  *
- * @note The array #m_coeffs should be filled with the local
- *          coefficients \f$\boldsymbol{\hat{u}}_l\f$ and that
- *          the resulting global coefficients
- *          \f$\boldsymbol{\hat{u}}_g\f$ will be stored in
- *          #m_coeffs. Also if useComm is set to false then no
- *          communication call will be made to check if all
- *          values are consistent over processors
  */
 
 void ContField::v_LocalToGlobal(const Array<OneD, const NekDouble> &inarray,
@@ -762,11 +779,13 @@ void ContField::v_LocalToGlobal(const Array<OneD, const NekDouble> &inarray,
     m_locToGloMap->LocalToGlobal(inarray, outarray, useComm);
 }
 
+#if EXPLISTDATA
 void ContField::v_LocalToGlobal(bool useComm)
 
 {
     m_locToGloMap->LocalToGlobal(m_coeffs, m_coeffs, useComm);
 }
+#endif
 
 /**
  *
@@ -790,17 +809,12 @@ void ContField::v_MultiplyByInvMassMatrix(
  * \f$\boldsymbol{L}\f$ and \f$\boldsymbol{M}\f$ are the Laplacian and
  * mass matrix respectively. This function solves the system above for
  * the global coefficients \f$\boldsymbol{\hat{u}}\f$ by a call to the
- * function #GlobalSolve. It is assumed #m_coeff contains an
- * initial estimate for the solution.
+ * function #GlobalSolve. 
  *
- * The values of the function \f$f(\boldsymbol{x})\f$
- * evaluated at the quadrature points \f$\boldsymbol{x}_i\f$
- * should be contained in the variable #m_phys of the ExpList
- * object \a inarray.
- *
- * @param   inarray     An ExpList, containing the discrete evaluation
- *                      of the forcing function \f$f(\boldsymbol{x})\f$
- *                      at the quadrature points in its array #m_phys.
+ * @param inarray An Array<OneD, NekDouble> , containing the discrete
+ *                      evaluation of the forcing function
+ *                      \f$f(\boldsymbol{x})\f$ at the quadrature
+ *                      points
  * @param   factors    The parameter \f$\lambda\f$ of the Helmholtz
  *                      equation is specified through the factors map
  */
@@ -845,8 +859,14 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
             m_bndConditions[i]->GetBoundaryConditionType() ==
                 SpatialDomains::eRobin)
         {
-            const Array<OneD, NekDouble> bndcoeff =
+
+#if EXPLISTDATA
+            const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
+#else 
+            const Array<OneD, const NekDouble> bndcoeff =
+                m_bndCondFieldCoeff[i]->GetArray1D();
+#endif
 
             if (m_locToGloMap->GetSignChange())
             {
@@ -943,8 +963,14 @@ void ContField::v_LinearAdvectionDiffusionReactionSolve(
             m_bndConditions[i]->GetBoundaryConditionType() ==
                 SpatialDomains::eRobin)
         {
-            const Array<OneD, NekDouble> bndcoeff =
+
+#if EXPLISTDATA
+            const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
+#else 
+            const Array<OneD, const NekDouble> bndcoeff =
+                m_bndCondFieldCoeff[i]->GetArray1D();
+#endif
 
             if (m_locToGloMap->GetSignChange())
             {

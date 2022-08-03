@@ -183,9 +183,11 @@ protected:
     virtual void v_GetFieldDefinitions(
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> &fielddef);
 
+#if EXPLISTDATA
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata);
+#endif
 
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
@@ -196,8 +198,10 @@ protected:
         std::vector<NekDouble> &fielddata, std::string &field,
         Array<OneD, NekDouble> &coeffs);
 
+#if EXPLISTDATA
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
                                      std::string var);
+#endif
 
     virtual void v_HomogeneousFwdTrans(
         const Array<OneD, const NekDouble> &inarray,

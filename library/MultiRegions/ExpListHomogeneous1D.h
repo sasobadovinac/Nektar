@@ -207,9 +207,11 @@ protected:
     virtual void v_GetFieldDefinitions(
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> &fielddef);
 
+#if EXPLISTDATA
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata);
+#endif
 
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
@@ -225,8 +227,10 @@ protected:
         const Array<OneD, const NekDouble> &fromCoeffs,
         Array<OneD, NekDouble> &toCoeffs);
 
+#if EXPLISTDATA
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
                                      std::string var);
+#endif
 
     virtual void v_PhysInterp1DScaled(const NekDouble scale,
                                       const Array<OneD, NekDouble> &inarray,

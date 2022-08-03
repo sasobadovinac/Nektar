@@ -280,14 +280,28 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     std::static_pointer_cast<
                         SpatialDomains::DirichletBoundaryCondition>(
                         m_bndConditions[i]);
-                std::string filebcs = bcPtr->m_filename;
-                std::string exprbcs = bcPtr->m_expr;
+                std::string bcfilename  = bcPtr->m_filename;
+                std::string exprbcs     = bcPtr->m_expr;
 
-                if (filebcs != "")
+                if (bcfilename != "")
                 {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
-                    valuesFile = locExpList->GetPhys();
+#if EXPLISTDATA
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             locExpList->UpdateCoeffs());
+                        locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                             locExpList->UpdatePhys());
+
+                        valuesFile = locExpList->GetPhys();
+#else
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             m_bndCondFieldCoeff[i]->UpdateArray1D());
+
+                        valuesFile = m_bndCondFieldPhys[i]->UpdateArray1D();
+                        locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                             valuesFile);
+#endif
                 }
 
                 if (exprbcs != "")
@@ -301,14 +315,23 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     condition.Evaluate(x0, x1, x2, time, valuesExp);
                 }
 
-                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
-                            locExpList->UpdatePhys(), 1);
+#if EXPLISTDATA
+                    Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
+                                locExpList->UpdatePhys(), 1);
 
+                    locExpList->FwdTransBndConstrained(
+                        locExpList->GetPhys(), locExpList->UpdateCoeffs());
+#else
+                    Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
+                                m_bndCondFieldPhys[i]->UpdateArray1D(),1);
+
+                    locExpList->FwdTransBndConstrained(
+                                    m_bndCondFieldPhys[i]->GetArray1D(),
+                                    m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif 
                 // set wave space to false since have set up phys values
                 locExpList->SetWaveSpace(false);
 
-                locExpList->FwdTransBndConstrained(locExpList->GetPhys(),
-                                                   locExpList->UpdateCoeffs());
             }
             else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                      SpatialDomains::eNeumann)
@@ -317,12 +340,24 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     SpatialDomains::NeumannBoundaryCondition>(
                     m_bndConditions[i]);
 
-                std::string filebcs = bcPtr->m_filename;
-
-                if (filebcs != "")
+                std::string bcfilename = bcPtr->m_filename;
+                
+                if (bcfilename != "")
                 {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
+#if EXPLISTDATA
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             locExpList->UpdateCoeffs());
+                        locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                             locExpList->UpdatePhys());
+#else
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             m_bndCondFieldCoeff[i]->UpdateArray1D());
+
+                        locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                           m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
                 }
                 else
                 {
@@ -332,24 +367,47 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                             m_bndConditions[i])
                             ->m_neumannCondition;
 
+#if EXPLISTDATA
                     condition.Evaluate(x0, x1, x2, time,
                                        locExpList->UpdatePhys());
+#else
+                    condition.Evaluate(x0, x1, x2, time,
+                                       m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
+                }
 
+#if EXPLISTDATA
                     locExpList->IProductWRTBase(locExpList->GetPhys(),
                                                 locExpList->UpdateCoeffs());
-                }
+#else
+                    locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
+                                           m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif
             }
             else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                      SpatialDomains::eRobin)
             {
                 SpatialDomains::RobinBCShPtr bcPtr = std::static_pointer_cast<
                     SpatialDomains::RobinBoundaryCondition>(m_bndConditions[i]);
-                std::string filebcs = bcPtr->m_filename;
 
-                if (filebcs != "")
+                std::string bcfilename = bcPtr->m_filename;
+                
+                if (bcfilename != "")
                 {
-                    ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                   locExpList);
+#if EXPLISTDATA
+                    locExpList->ExtractCoeffsFromFile
+                        (bcfilename, bcPtr->GetComm(), varName,
+                         locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
+#else
+                    locExpList->ExtractCoeffsFromFile
+                        (bcfilename, bcPtr->GetComm(), varName,
+                         m_bndCondFieldCoeff[i]->UpdateArray1D());
+                    
+                    locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                         m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
                 }
                 else
                 {
@@ -359,12 +417,22 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                             m_bndConditions[i])
                             ->m_robinFunction;
 
+#if EXPLISTDATA
                     condition.Evaluate(x0, x1, x2, time,
                                        locExpList->UpdatePhys());
+#else
+                    condition.Evaluate(x0, x1, x2, time,
+                                       m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
                 }
 
+#if EXPLISTDATA
                 locExpList->IProductWRTBase(locExpList->GetPhys(),
                                             locExpList->UpdateCoeffs());
+#else
+                locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
+                                            m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif
             }
             else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                      SpatialDomains::ePeriodic)
@@ -468,6 +536,7 @@ void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
     // Copy phys and coeffs to new explist
     if (DeclareCoeffPhysArrays)
     {
+#if EXPLISTDATA
         Array<OneD, NekDouble> tmp1, tmp2;
         for (n = 0; n < result->GetExpSize(); ++n)
         {
@@ -483,6 +552,12 @@ void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
             Vmath::Vcopy(nq, tmp1 = GetCoeffs() + offsetOld, 1,
                          tmp2 = result->UpdateCoeffs() + offsetNew, 1);
         }
+#else
+        boost::ignore_unused(offsetOld,offsetNew,nq);
+        NEKERROR(ErrorUtil::efatal,
+                 "This method needs updating for FieldStorage usage");
+        
+#endif
     }
 
     // Set wavespace value
@@ -586,6 +661,7 @@ void DisContField3DHomogeneous1D::NormVectorIProductWRTBase(
     }
 }
 
+#if EXPLISTDATA
 void DisContField3DHomogeneous1D::v_ExtractTracePhys(
     Array<OneD, NekDouble> &outarray)
 {
@@ -594,6 +670,7 @@ void DisContField3DHomogeneous1D::v_ExtractTracePhys(
 
     v_ExtractTracePhys(m_phys, outarray);
 }
+#endif
 
 /**
  * @brief This method extracts the trace (edges in 2D) for each plane

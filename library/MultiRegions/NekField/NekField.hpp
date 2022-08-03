@@ -134,7 +134,8 @@ public:
     NekField(const NekField &F)
         : m_expIF(F.m_expIF),
           m_storage(Array<OneD, Array<OneD, TData>>(F.m_numVariables)),
-          m_numVariables(F.m_numVariables)
+          m_numVariables(F.m_numVariables),
+          m_dataOrder(F.m_dataOrder)
     {
         // Fecalre field in reverse order so that data could be
         // accessed in one block but m_storatge[0] will return correct
@@ -142,12 +143,22 @@ public:
         // sizing variable in code. Probably there is a better
         // solution but hack for now.
         int varsize = F.m_storage[0].size();
-        m_storage[m_numVariables-1] =Array<OneD, TData>(varsize*m_numVariables,F.m_storage[0]);
+        m_storage[m_numVariables-1] =Array<OneD, TData>(varsize*m_numVariables,F.m_storage.GetData());
 
         for(int i = m_numVariables-1; i > 0; --i)
         {
             m_storage[i-1] = m_storage[i] + varsize; 
         }
+    }
+
+    /// \brief Creates a reference to rhs.
+    NekField &operator=(const NekField &rhs)
+    {
+        m_expIF        = rhs.m_expIF; 
+        m_storage      = rhs.m_storage; 
+        m_numVariables = rhs.m_numVariables; 
+        m_dataOrder    = rhs.m_dataOrder; 
+
     }
     
     ~NekField()
@@ -213,6 +224,8 @@ protected:
 
 static NekField<NekDouble,ePhys> ZeroNekFieldPhys; 
 static NekField<NekDouble,eCoeff> ZerolNekField; 
-    
+
+typedef std::shared_ptr<NekField<NekDouble,eCoeff>> NekFieldCoeffSharedPtr;
+typedef std::shared_ptr<NekField<NekDouble,ePhys >> NekFieldPhysSharedPtr; 
 } // Namespace
 #endif

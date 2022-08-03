@@ -176,6 +176,21 @@ protected:
 
     Array<OneD, MultiRegions::ExpListSharedPtr> m_bndCondExpansions;
 
+#if EXPLISTDATA
+#else
+    /**
+     * A NekField sharedpoints containing the coefficient space
+     * boundary condition information
+     */ 
+    Array<OneD, NekFieldCoeffSharedPtr> m_bndCondFieldCoeff; 
+
+    /**
+     * A NekField sharedpoints containing the physical space
+     * boundary condition information
+     */ 
+    Array<OneD, NekFieldPhysSharedPtr> m_bndCondFieldPhys; 
+#endif
+
     Array<OneD, NekDouble> m_bndCondBndWeight;
 
     ExpListSharedPtr m_trace;
@@ -246,8 +261,10 @@ protected:
     virtual void v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray);
 
+#if EXPLISTDATA
     virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray);
-
+#endif
+    
     virtual void v_GetBoundaryNormals(
         int i, Array<OneD, Array<OneD, NekDouble>> &normals);
 

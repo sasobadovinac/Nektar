@@ -113,9 +113,11 @@ public:
     MULTI_REGIONS_EXPORT std::vector<bool> &GetNegatedFluxNormal(void);
 
     MULTI_REGIONS_EXPORT NekDouble
-    L2_DGDeriv(const int dir, const Array<OneD, const NekDouble> &soln);
+    L2_DGDeriv(const int dir, const Array<OneD, const NekDouble> &coeffs,
+               const Array<OneD, const NekDouble> &soln);
 
     MULTI_REGIONS_EXPORT void EvaluateHDGPostProcessing(
+        const Array<OneD, const NekDouble> &coeffs,
         Array<OneD, NekDouble> &outarray);
 
     MULTI_REGIONS_EXPORT void GetLocTraceToTraceMap(
@@ -128,6 +130,10 @@ protected:
     /// The number of boundary segments on which Dirichlet boundary
     /// conditions are imposed.
     int m_numDirBndCondExpansions;
+
+    /// An array which contains the information about the boundary
+    /// condition structure definition on the different boundary regions.
+    Array<OneD, SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
     /**
      * @brief An object which contains the discretised boundary
@@ -142,17 +148,37 @@ protected:
      */
     Array<OneD, MultiRegions::ExpListSharedPtr> m_bndCondExpansions;
 
-    Array<OneD, NekDouble> m_bndCondBndWeight;
+#if EXPLISTDATA
+#else
+    /**
+     * A NekField sharedpoints containing the coefficient space
+     * boundary condition information
+     */ 
+    Array<OneD, NekFieldCoeffSharedPtr> m_bndCondFieldCoeff; 
 
-    /// An array which contains the information about the boundary
-    /// condition on the different boundary regions.
-    Array<OneD, SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
+    /**
+     * A NekField sharedpoints containing the physical space
+     * boundary condition information
+     */ 
+    Array<OneD, NekFieldPhysSharedPtr> m_bndCondFieldPhys; 
+#endif
+    
+    Array<OneD, NekDouble> m_bndCondBndWeight;
 
     /// Global boundary matrix.
     GlobalLinSysMapShPtr m_globalBndMat;
 
     /// Trace space storage for points between elements.
     ExpListSharedPtr m_trace;
+
+#if EXPLISTDATA
+#else
+    /// Trace coefficient Space storage
+    NekFieldCoeffSharedPtr m_traceFieldCoeff; 
+
+    /// Trace physical Space storage
+    NekFieldPhysSharedPtr m_traceFieldPhys; 
+#endif
 
     /// Local to global DG mapping for trace space.
     AssemblyMapDGSharedPtr m_traceMap;
@@ -244,7 +270,9 @@ protected:
     virtual void v_AddTraceQuadPhysToField(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &field);
+#if EXPLISTDATA
     virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray);
+#endif
     virtual void v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray);
 
@@ -322,9 +350,11 @@ protected:
     virtual void v_FillBwdWithBwdWeight(Array<OneD, NekDouble> &weightave,
                                         Array<OneD, NekDouble> &weightjmp);
 
+#if EXPLISTDATA
     inline virtual void v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
                                              Array<OneD, NekDouble> &Bwd);
-
+#endif
+    
     virtual void v_GetFwdBwdTracePhys(const Array<OneD, const NekDouble> &field,
                                       Array<OneD, NekDouble> &Fwd,
                                       Array<OneD, NekDouble> &Bwd,
@@ -369,13 +399,14 @@ private:
         Array<OneD, NekDouble> &outarray);
 };
 
+typedef std::shared_ptr<DisContField> DisContFieldSharedPtr;
+
 inline std::vector<bool> &DisContField::v_GetLeftAdjacentTraces(void)
 {
     return m_leftAdjacentTraces;
 }
 
-typedef std::shared_ptr<DisContField> DisContFieldSharedPtr;
-
+#if EXPLISTDATA
 /**
  * Generate the forward or backward state for each trace point.
  * @param   Fwd     Forward state.
@@ -386,6 +417,7 @@ void DisContField::v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
 {
     v_GetFwdBwdTracePhys(m_phys, Fwd, Bwd);
 }
+#endif
 
 const Array<OneD, const NekDouble> &DisContField::v_GetBndCondBwdWeight()
 {

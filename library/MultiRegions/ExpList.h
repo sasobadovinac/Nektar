@@ -58,6 +58,9 @@ namespace Nektar
 {
 namespace MultiRegions
 {
+
+#define EXPLISTDATA 0
+
 // Forward declarations
 class ExpList;
 class GlobalLinSys;
@@ -226,13 +229,14 @@ public:
     /// Set Modified Basis for the stability analysis
     inline void SetModifiedBasis(const bool modbasis);
 
-    /// Set the \a i th value of \a m_phys to value \a val
-    inline void SetPhys(int i, NekDouble val);
-
     /// This function returns the third direction expansion condition,
     /// which can be in wave space (coefficient) or not
     /// It is stored in the variable m_WaveSpace.
     inline bool GetWaveSpace(void) const;
+
+#if EXPLISTDATA
+    /// Set the \a i th value of \a m_phys to value \a val
+    inline void SetPhys(int i, NekDouble val);
 
     /// Fills the array #m_phys
     inline void SetPhys(const Array<OneD, const NekDouble> &inarray);
@@ -249,6 +253,7 @@ public:
     /// \f$\boldsymbol{u}_l\f$ (implemented as #m_phys) is filled or
     /// not.
     inline bool GetPhysState(void) const;
+#endif
 
     /// multiply the metric jacobi and quadrature weights
     MULTI_REGIONS_EXPORT void MultiplyByQuadratureMetric(
@@ -440,6 +445,7 @@ public:
         v_Reset();
     }
 
+#if EXPLISTDATA // not sure we really need these in ExpList
     void WriteTecplotHeader(std::ostream &outfile, std::string var = "")
     {
         v_WriteTecplotHeader(outfile, var);
@@ -477,12 +483,14 @@ public:
     {
         v_WriteVtkPieceData(outfile, expansion, var);
     }
+#endif
 
     /// This function returns the dimension of the coordinates of the
     /// element \a eid.
     // inline
     MULTI_REGIONS_EXPORT int GetCoordim(int eid);
 
+#if EXPLISTDATA
     /// Set the \a i th coefficiient in \a m_coeffs to value \a val
     inline void SetCoeff(int i, NekDouble val);
 
@@ -491,16 +499,19 @@ public:
 
     /// Set the  #m_coeffs array to inarray
     inline void SetCoeffsArray(Array<OneD, NekDouble> &inarray);
+#endif
 
     /// This function returns the dimension of the shape of the
     /// element \a eid.
     // inline
     MULTI_REGIONS_EXPORT int GetShapeDimension();
 
+#if EXPLISTDATA
     /// This function returns (a reference to) the array
     /// \f$\boldsymbol{\hat{u}}_l\f$ (implemented as #m_coeffs)
     /// containing all local expansion coefficients.
     inline const Array<OneD, const NekDouble> &GetCoeffs() const;
+#endif
 
     /// Impose Dirichlet Boundary Conditions onto Array
     inline void ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
@@ -557,6 +568,7 @@ public:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
+#if EXPLISTDATA
     /// Get the \a i th value  (coefficient) of #m_coeffs
     inline NekDouble GetCoeff(int i);
 
@@ -569,6 +581,7 @@ public:
     /// quadrature points.
     // inline
     MULTI_REGIONS_EXPORT const Array<OneD, const NekDouble> &GetPhys() const;
+#endif
 
     /// This function calculates the \f$L_\infty\f$ error of the global
     /// spectral/hp element approximation.
@@ -640,6 +653,7 @@ public:
         }
     }
 
+#if EXPLISTDATA
     /**
      * The integration is evaluated locally, that is
      * \f[\int
@@ -662,6 +676,7 @@ public:
 
         return Integral(m_phys);
     }
+#endif
 
     /**
      * The integration is evaluated locally, that is
@@ -689,12 +704,22 @@ public:
         return v_VectorFlux(inarray);
     }
 
+#if EXPLISTDATA
     /// This function calculates the energy associated with
     /// each one of the modesof a 3D homogeneous nD expansion
     Array<OneD, const NekDouble> HomogeneousEnergy(void)
     {
         return v_HomogeneousEnergy();
     }
+#else
+    /// This function calculates the energy associated with
+    /// each one of the modesof a 3D homogeneous nD expansion
+    Array<OneD, const NekDouble> HomogeneousEnergy(
+                                   const Array<OneD, const NekDouble> &coeffs)
+    {
+        return v_HomogeneousEnergy(coeffs);
+    }
+#endif
 
     /// This function sets the Spectral Vanishing Viscosity
     /// in homogeneous1D expansion.
@@ -834,14 +859,15 @@ public:
     PhysEvaluate(const Array<OneD, const NekDouble> &coords,
                  const Array<OneD, const NekDouble> &phys);
 
-    /// Get the start offset position for a global list of #m_coeffs
-    /// correspoinding to element n.
+    /// Get the start offset position for a local contiguous list of
+    /// coeffs correspoinding to element n.
     inline int GetCoeff_Offset(int n) const;
 
-    /// Get the start offset position for a global list of m_phys
-    /// correspoinding to element n.
+    /// Get the start offset position for a local contiguous list of
+    /// quadrature points in a full array correspoinding to element n.
     inline int GetPhys_Offset(int n) const;
 
+#if EXPLISTDATA
     /// This function returns (a reference to) the array
     /// \f$\boldsymbol{\hat{u}}_l\f$ (implemented as #m_coeffs)
     /// containing all local expansion coefficients.
@@ -852,6 +878,7 @@ public:
     /// function \f$u^{\delta}(\boldsymbol{x})\f$ evaluated at the
     /// quadrature points.
     inline Array<OneD, NekDouble> &UpdatePhys();
+#endif
 
     inline void PhysDeriv(Direction edir,
                           const Array<OneD, const NekDouble> &inarray,
@@ -936,8 +963,10 @@ public:
                                        const Array<OneD, const NekDouble> &Bwd,
                                        Array<OneD, NekDouble> &outarray);
 
+#if EXPLISTDATA
     inline void GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
                                    Array<OneD, NekDouble> &Bwd);
+#endif
 
     inline void GetFwdBwdTracePhys(const Array<OneD, const NekDouble> &field,
                                    Array<OneD, NekDouble> &Fwd,
@@ -978,7 +1007,9 @@ public:
 
     inline const std::vector<bool> &GetLeftAdjacentFaces(void) const;
 
+#if EXPLISTDATA
     inline void ExtractTracePhys(Array<OneD, NekDouble> &outarray);
+#endif
 
     inline void ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                  Array<OneD, NekDouble> &outarray);
@@ -1062,6 +1093,7 @@ public:
         v_GetFieldDefinitions(fielddef);
     }
 
+#if EXPLISTDATA
     /// Append the element data listed in elements
     /// fielddef->m_ElementIDs onto fielddata
     void AppendFieldData(LibUtilities::FieldDefinitionsSharedPtr &fielddef,
@@ -1069,6 +1101,7 @@ public:
     {
         v_AppendFieldData(fielddef, fielddata);
     }
+#endif
 
     /// Append the data in coeffs listed in elements
     /// fielddef->m_ElementIDs onto fielddata
@@ -1104,6 +1137,12 @@ public:
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
         Array<OneD, NekDouble> &coeffs);
+
+    // Extract data from file fileName and put coefficents into array coefffs
+    MULTI_REGIONS_EXPORT void ExtractCoeffsFromFile(const std::string &fileName,
+                               LibUtilities::CommSharedPtr comm,
+                               const std::string &varName,
+                               Array<OneD, NekDouble> &coeffs);
 
     MULTI_REGIONS_EXPORT void GenerateElementVector(
         const int ElementID, const NekDouble scalar1, const NekDouble scalar2,
@@ -1219,6 +1258,7 @@ protected:
      **/
     int m_npoints;
 
+#if EXPLISTDATA
     /**
      * \brief Concatenation of all local expansion coefficients.
      *
@@ -1261,6 +1301,7 @@ protected:
      * points \f$\boldsymbol{x}_i\f$, is filled with these values.
      */
     bool m_physState;
+#endif
 
     /**
      * \brief The list of local expansions.
@@ -1425,7 +1466,9 @@ protected:
 
     virtual const std::vector<bool> &v_GetLeftAdjacentFaces(void) const;
 
+#if EXPLISTDATA
     virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray);
+#endif
 
     virtual void v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray);
@@ -1585,9 +1628,11 @@ protected:
     virtual void v_GetFieldDefinitions(
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> &fielddef);
 
+#if EXPLISTDATA
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata);
+#endif
 
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
@@ -1603,6 +1648,7 @@ protected:
         const Array<OneD, const NekDouble> &fromCoeffs,
         Array<OneD, NekDouble> &toCoeffs);
 
+#if EXPLISTDATA
     virtual void v_WriteTecplotHeader(std::ostream &outfile,
                                       std::string var = "");
     virtual void v_WriteTecplotZone(std::ostream &outfile, int expansion);
@@ -1614,6 +1660,7 @@ protected:
 
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
                                      std::string var);
+#endif
 
     virtual NekDouble v_L2(
         const Array<OneD, const NekDouble> &phys,
@@ -1623,7 +1670,13 @@ protected:
     virtual NekDouble v_VectorFlux(
         const Array<OneD, Array<OneD, NekDouble>> &inarray);
 
+#if EXPLISTDATA
     virtual Array<OneD, const NekDouble> v_HomogeneousEnergy(void);
+#else
+    virtual Array<OneD, const NekDouble> v_HomogeneousEnergy(
+                                   const Array<OneD, const NekDouble> &coeffs);
+#endif
+    
     virtual LibUtilities::TranspositionSharedPtr v_GetTransposition(void);
     virtual NekDouble v_GetHomoLen(void);
     virtual void v_SetHomoLen(const NekDouble lhom);
@@ -1640,11 +1693,6 @@ protected:
         Array<OneD, NekDouble> &outarray);
 
     virtual void v_ClearGlobalLinSysManager(void);
-
-    void ExtractFileBCs(const std::string &fileName,
-                        LibUtilities::CommSharedPtr comm,
-                        const std::string &varName,
-                        const std::shared_ptr<ExpList> locExpList);
 
     // Utility function for a common case of retrieving a
     // BoundaryCondition from a boundary condition collection.
@@ -1813,6 +1861,7 @@ inline bool ExpList::GetWaveSpace() const
     return m_WaveSpace;
 }
 
+#if EXPLISTDATA
 /// Set the \a i th value of\a m_phys to value \a val
 inline void ExpList::SetPhys(int i, NekDouble val)
 {
@@ -1856,6 +1905,7 @@ inline bool ExpList::GetPhysState() const
 {
     return m_physState;
 }
+#endif
 
 /**
  *
@@ -1932,16 +1982,7 @@ inline void ExpList::BwdTrans(const NekField<NekDouble, eCoeff> &in,
 /**
  * Given the coefficients of an expansion, this function evaluates the
  * spectral/hp expansion \f$u^{\delta}(\boldsymbol{x})\f$ at the
- * quadrature points \f$\boldsymbol{x}_i\f$. This operation is
- * evaluated locally by the function ExpList#BwdTrans.
- *
- * The coefficients of the expansion should be contained in the variable
- * #m_coeffs of the ExpList object \a In. The resulting physical values
- * at the quadrature points \f$u^{\delta}(\boldsymbol{x}_i)\f$ are
- * stored in the array #m_phys.
- *
- * @param   In          An ExpList, containing the local coefficients
- *                      \f$\hat{u}_n^e\f$ in its array #m_coeffs.
+ * quadrature points \f$\boldsymbol{x}_i\f$. 
  */
 inline void ExpList::BwdTrans(const Array<OneD, const NekDouble> &inarray,
                               Array<OneD, NekDouble> &outarray)
@@ -2234,6 +2275,7 @@ inline int ExpList::GetShapeDimension()
     return (*m_exp)[0]->GetShapeDimension();
 }
 
+#if EXPLISTDATA
 /**
  * @param   i           The index of m_coeffs to be set
  * @param   val         The value which m_coeffs[i] is to be set to.
@@ -2269,6 +2311,7 @@ inline const Array<OneD, const NekDouble> &ExpList::GetCoeffs() const
 {
     return m_coeffs;
 }
+#endif 
 
 inline void ExpList::ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
 {
@@ -2334,6 +2377,7 @@ inline void ExpList::GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
     v_GlobalToLocal(inarray, outarray);
 }
 
+#if EXPLISTDATA
 /**
  * @param   i               The index of #m_coeffs to be returned
  * @return  The NekDouble held in #m_coeffs[i].
@@ -2364,6 +2408,7 @@ inline const Array<OneD, const NekDouble> &ExpList::GetPhys() const
 {
     return m_phys;
 }
+#endif 
 
 /**
  * @return  \f$N_{\mathrm{el}}\f$, the number of elements in the
@@ -2410,6 +2455,7 @@ inline int ExpList::GetPhys_Offset(int n) const
     return m_phys_offset[n];
 }
 
+#if EXPLISTDATA 
 /**
  * If one wants to get hold of the underlying data without modifying
  * them, rather use the function #GetCoeffs instead.
@@ -2432,6 +2478,7 @@ inline Array<OneD, NekDouble> &ExpList::UpdatePhys()
     m_physState = true;
     return m_phys;
 }
+#endif 
 
 // functions associated with DisContField
 inline const Array<OneD, const std::shared_ptr<ExpList>>
@@ -2524,11 +2571,13 @@ inline void ExpList::AddFwdBwdTraceIntegral(
     v_AddFwdBwdTraceIntegral(Fwd, Bwd, outarray);
 }
 
+#if EXPLISTDATA
 inline void ExpList::GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
                                         Array<OneD, NekDouble> &Bwd)
 {
     v_GetFwdBwdTracePhys(Fwd, Bwd);
 }
+#endif
 
 inline void ExpList::GetFwdBwdTracePhys(
     const Array<OneD, const NekDouble> &field, Array<OneD, NekDouble> &Fwd,
@@ -2578,10 +2627,12 @@ inline const std::vector<bool> &ExpList::GetLeftAdjacentFaces(void) const
     return v_GetLeftAdjacentFaces();
 }
 
+#if EXPLISTDATA
 inline void ExpList::ExtractTracePhys(Array<OneD, NekDouble> &outarray)
 {
     v_ExtractTracePhys(outarray);
 }
+#endif
 
 inline void ExpList::ExtractTracePhys(
     const Array<OneD, const NekDouble> &inarray,

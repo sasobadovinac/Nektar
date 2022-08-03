@@ -93,16 +93,17 @@ namespace MultiRegions
  *
  * The class stores a vector of expansions, \a m_exp, (each derived from
  * StdRegions#StdExpansion) which define the constituent components of
- * the domain. The coefficients from these expansions are concatenated
- * in \a m_coeffs, while the expansion evaluated at the quadrature
- * points is stored in \a m_phys.
+ * the domain.
  */
 
 /**
  * Creates an empty expansion list.
  */
 ExpList::ExpList(const ExpansionType type)
-    : m_expType(type), m_ncoeffs(0), m_npoints(0), m_physState(false),
+    : m_expType(type), m_ncoeffs(0), m_npoints(0),
+#if EXPLISTDATA
+      m_physState(false),
+#endif
       m_exp(MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr()),
       m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
       m_WaveSpace(false)
@@ -119,8 +120,12 @@ ExpList::ExpList(const ExpansionType type)
  */
 ExpList::ExpList(const ExpList &in, const bool DeclareCoeffPhysArrays)
     : std::enable_shared_from_this<ExpList>(in), m_expType(in.m_expType),
-      m_comm(in.m_comm), m_session(in.m_session), m_graph(in.m_graph),
-      m_ncoeffs(in.m_ncoeffs), m_npoints(in.m_npoints), m_physState(false),
+      
+m_comm(in.m_comm), m_session(in.m_session), m_graph(in.m_graph),
+      m_ncoeffs(in.m_ncoeffs), m_npoints(in.m_npoints),
+#if EXPLISTDATA
+      m_physState(false),
+#endif
       m_exp(in.m_exp), m_collections(in.m_collections),
       m_collectionsDoInit(in.m_collectionsDoInit),
       m_coll_coeff_offset(in.m_coll_coeff_offset),
@@ -143,7 +148,10 @@ ExpList::ExpList(const ExpList &in, const std::vector<unsigned int> &eIDs,
                  const bool DeclareCoeffPhysArrays,
                  const Collections::ImplementationType ImpType)
     : m_expType(in.m_expType), m_comm(in.m_comm), m_session(in.m_session),
-      m_graph(in.m_graph), m_physState(false),
+      m_graph(in.m_graph),
+#if EXPLISTDATA
+      m_physState(false),
+#endif
       m_exp(MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr()),
       m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
       m_WaveSpace(false)
@@ -166,8 +174,7 @@ ExpList::ExpList(const ExpList &in, const std::vector<unsigned int> &eIDs,
  * constructor fills the list of local expansions
  * \texttt{m_exp} with the proper expansions, calculates the
  * total number of quadrature points \f$x_i\f$ and local
- * expansion coefficients \f$\hat{u}^e_n\f$ and allocates
- * memory for the arrays #m_coeffs and #m_phys.
+ * expansion coefficients \f$\hat{u}^e_n\f$ and 
  *
  * @param  pSession    A session within information about expansion
  *
@@ -185,7 +192,9 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
                  const bool DeclareCoeffPhysArrays, const std::string &var,
                  const Collections::ImplementationType ImpType)
     : m_comm(pSession->GetComm()), m_session(pSession), m_graph(graph),
+#if EXPLISTDATA
       m_physState(false),
+#endif
       m_exp(MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr()),
       m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
       m_WaveSpace(false)
@@ -211,8 +220,7 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
  * expansions \texttt{m_exp} with the proper expansions,
  * calculates the total number of quadrature points
  * \f$\boldsymbol{x}_i\f$ and local expansion coefficients
- * \f$\hat{u}^e_n\f$ and allocates memory for the arrays
- * #m_coeffs and #m_phys.
+ * \f$\hat{u}^e_n\f$. 
  *
  * @param  pSession      A session within information about expansion
  * @param expansions     A vector containing information about the
@@ -227,7 +235,10 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
                  const SpatialDomains::ExpansionInfoMap &expansions,
                  const bool DeclareCoeffPhysArrays,
                  const Collections::ImplementationType ImpType)
-    : m_comm(pSession->GetComm()), m_session(pSession), m_physState(false),
+    : m_comm(pSession->GetComm()), m_session(pSession),
+#if EXPLISTDATA
+      m_physState(false),
+#endif
       m_exp(MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr()),
       m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
       m_WaveSpace(false)
@@ -247,7 +258,10 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
 //                        0D Expansion Constructors
 //----------------------------------------------------------------------
 ExpList::ExpList(const SpatialDomains::PointGeomSharedPtr &geom)
-    : m_expType(e0D), m_ncoeffs(1), m_npoints(1), m_physState(false),
+    : m_expType(e0D), m_ncoeffs(1), m_npoints(1),
+#if EXPLISTDATA
+      m_physState(false),
+#endif
       m_exp(MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr()),
       m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
       m_WaveSpace(false)
@@ -286,7 +300,10 @@ ExpList::ExpList(
     const SpatialDomains::MeshGraphSharedPtr &graph,
     const LibUtilities::CommSharedPtr &comm, const bool DeclareCoeffPhysArrays,
     const std::string variable, const Collections::ImplementationType ImpType)
-    : m_comm(comm), m_session(pSession), m_graph(graph), m_physState(false),
+    : m_comm(comm), m_session(pSession), m_graph(graph),
+#if EXPLISTDATA
+      m_physState(false),
+#endif
       m_exp(MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr()),
       m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
       m_WaveSpace(false)
@@ -775,7 +792,9 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
                  const bool DeclareCoeffPhysArrays, const std::string variable,
                  const Collections::ImplementationType ImpType)
     : m_comm(pSession->GetComm()), m_session(pSession), m_graph(graph),
+#if EXPLISTDATA
       m_physState(false),
+#endif
       m_exp(MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr()),
       m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
       m_WaveSpace(false)
@@ -939,7 +958,10 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
                  bool SetToOneSpaceDimension,
                  const LibUtilities::CommSharedPtr comm,
                  const Collections::ImplementationType ImpType)
-    : m_comm(comm), m_session(pSession), m_graph(graph), m_physState(false),
+    : m_comm(comm), m_session(pSession), m_graph(graph),
+#if EXPLISTDATA
+      m_physState(false),
+#endif
       m_exp(MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr()),
       m_blockMat(MemoryManager<BlockMatrixMap>::AllocateSharedPtr()),
       m_WaveSpace(false)
@@ -1082,7 +1104,7 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * Each expansion (local element) is processed in turn to
  * determine the number of coefficients and physical data
- * points it contributes to the domain. Twoe arrays,
+ * points it contributes to the domain. Two arrays,
  * #m_coeff_offset are #m_phys_offset are also initialised and
  * updated to store the data offsets of each element in the
  * #m_coeffs and #m_phys arrays, and the element id that each
@@ -1110,11 +1132,15 @@ void ExpList::SetupCoeffPhys(bool DeclareCoeffPhysArrays, bool SetupOffsets)
         }
     }
 
+#if EXPLISTDATA
     if (DeclareCoeffPhysArrays)
     {
         m_coeffs = Array<OneD, NekDouble>(m_ncoeffs, 0.0);
         m_phys   = Array<OneD, NekDouble>(m_npoints, 0.0);
     }
+#else
+    boost::ignore_unused(DeclareCoeffPhysArrays);
+#endif
 
     m_coeffsToElmt = Array<OneD, pair<int, int>>{size_t(m_ncoeffs)};
 
@@ -1133,7 +1159,7 @@ void ExpList::SetupCoeffPhys(bool DeclareCoeffPhysArrays, bool SetupOffsets)
 }
 
 void ExpList::InitialiseExpVector(
-    const SpatialDomains::ExpansionInfoMap &expmap)
+                                  const SpatialDomains::ExpansionInfoMap &expmap)
 {
 
     SpatialDomains::SegGeomSharedPtr SegmentGeom;
@@ -1155,22 +1181,22 @@ void ExpList::InitialiseExpVector(
 
         switch (expInfo->m_basisKeyVector.size())
         {
-            case 1: // Segment Expansions
+        case 1: // Segment Expansions
             {
                 ASSERTL1(m_expType == e1D || m_expType == eNoType,
                          "Cannot mix expansion dimensions in one vector");
                 m_expType = e1D;
 
                 if ((SegmentGeom =
-                         std::dynamic_pointer_cast<SpatialDomains::SegGeom>(
-                             expInfo->m_geomShPtr)))
+                     std::dynamic_pointer_cast<SpatialDomains::SegGeom>(
+                                                                        expInfo->m_geomShPtr)))
                 {
                     // Retrieve basis key from expansion
                     LibUtilities::BasisKey bkey = expInfo->m_basisKeyVector[0];
 
                     exp =
                         MemoryManager<LocalRegions::SegExp>::AllocateSharedPtr(
-                            bkey, SegmentGeom);
+                                                                               bkey, SegmentGeom);
                 }
                 else
                 {
@@ -1179,7 +1205,7 @@ void ExpList::InitialiseExpVector(
                 }
             }
             break;
-            case 2:
+        case 2:
             {
                 ASSERTL1(m_expType == e2D || m_expType == eNoType,
                          "Cannot mix expansion dimensions in one vector");
@@ -1189,8 +1215,8 @@ void ExpList::InitialiseExpVector(
                 LibUtilities::BasisKey Bb = expInfo->m_basisKeyVector[1];
 
                 if ((TriangleGeom =
-                         std::dynamic_pointer_cast<SpatialDomains ::TriGeom>(
-                             expInfo->m_geomShPtr)))
+                     std::dynamic_pointer_cast<SpatialDomains ::TriGeom>(
+                                                                         expInfo->m_geomShPtr)))
                 {
 
                     // This is not elegantly implemented needs re-thinking.
@@ -1212,11 +1238,11 @@ void ExpList::InitialiseExpVector(
                     }
                 }
                 else if ((QuadrilateralGeom = std::dynamic_pointer_cast<
-                              SpatialDomains::QuadGeom>(expInfo->m_geomShPtr)))
+                          SpatialDomains::QuadGeom>(expInfo->m_geomShPtr)))
                 {
                     exp =
                         MemoryManager<LocalRegions::QuadExp>::AllocateSharedPtr(
-                            Ba, Bb, QuadrilateralGeom);
+                                                                                Ba, Bb, QuadrilateralGeom);
                 }
                 else
                 {
@@ -1225,7 +1251,7 @@ void ExpList::InitialiseExpVector(
                 }
             }
             break;
-            case 3:
+        case 3:
             {
                 ASSERTL1(m_expType == e3D || m_expType == eNoType,
                          "Cannot mix expansion dimensions in one vector");
@@ -1236,8 +1262,8 @@ void ExpList::InitialiseExpVector(
                 LibUtilities::BasisKey Bc = expInfo->m_basisKeyVector[2];
 
                 if ((TetGeom =
-                         std::dynamic_pointer_cast<SpatialDomains::TetGeom>(
-                             expInfo->m_geomShPtr)))
+                     std::dynamic_pointer_cast<SpatialDomains::TetGeom>(
+                                                                        expInfo->m_geomShPtr)))
                 {
 
                     if (Ba.GetBasisType() == LibUtilities::eGLL_Lagrange ||
@@ -1255,27 +1281,27 @@ void ExpList::InitialiseExpVector(
                     }
                 }
                 else if ((PrismGeom = std::dynamic_pointer_cast<
-                              SpatialDomains ::PrismGeom>(
-                              expInfo->m_geomShPtr)))
+                          SpatialDomains ::PrismGeom>(
+                                                      expInfo->m_geomShPtr)))
                 {
                     exp = MemoryManager<
                         LocalRegions::PrismExp>::AllocateSharedPtr(Ba, Bb, Bc,
                                                                    PrismGeom);
                 }
                 else if ((PyrGeom = std::dynamic_pointer_cast<
-                              SpatialDomains::PyrGeom>(expInfo->m_geomShPtr)))
+                          SpatialDomains::PyrGeom>(expInfo->m_geomShPtr)))
                 {
 
                     exp =
                         MemoryManager<LocalRegions::PyrExp>::AllocateSharedPtr(
-                            Ba, Bb, Bc, PyrGeom);
+                                                                               Ba, Bb, Bc, PyrGeom);
                 }
                 else if ((HexGeom = std::dynamic_pointer_cast<
-                              SpatialDomains::HexGeom>(expInfo->m_geomShPtr)))
+                          SpatialDomains::HexGeom>(expInfo->m_geomShPtr)))
                 {
                     exp =
                         MemoryManager<LocalRegions::HexExp>::AllocateSharedPtr(
-                            Ba, Bb, Bc, HexGeom);
+                                                                               Ba, Bb, Bc, HexGeom);
                 }
                 else
                 {
@@ -1284,9 +1310,9 @@ void ExpList::InitialiseExpVector(
                 }
             }
             break;
-            default:
-                NEKERROR(ErrorUtil::efatal,
-                         "Dimension of basis key is greater than 3");
+        default:
+            NEKERROR(ErrorUtil::efatal,
+                     "Dimension of basis key is greater than 3");
         }
 
         // Assign next id
@@ -1338,8 +1364,8 @@ void ExpList::MultiplyByBlockMatrix(const GlobalMatrixKey &gkey,
  * multiply the metric jacobi and quadrature weights
  */
 void ExpList::MultiplyByQuadratureMetric(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
+                                         const Array<OneD, const NekDouble> &inarray,
+                                         Array<OneD, NekDouble> &outarray)
 {
     Array<OneD, NekDouble> e_outarray;
 
@@ -1347,7 +1373,7 @@ void ExpList::MultiplyByQuadratureMetric(
     {
         (*m_exp)[i]->MultiplyByQuadratureMetric(inarray + m_phys_offset[i],
                                                 e_outarray = outarray +
-                                                             m_phys_offset[i]);
+                                                m_phys_offset[i]);
     }
 }
 
@@ -1355,8 +1381,8 @@ void ExpList::MultiplyByQuadratureMetric(
  * Divided by the metric jacobi and quadrature weights
  */
 void ExpList::DivideByQuadratureMetric(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
+                                       const Array<OneD, const NekDouble> &inarray,
+                                       Array<OneD, NekDouble> &outarray)
 {
     Array<OneD, NekDouble> e_outarray;
 
@@ -1364,7 +1390,7 @@ void ExpList::DivideByQuadratureMetric(
     {
         (*m_exp)[i]->DivideByQuadratureMetric(inarray + m_phys_offset[i],
                                               e_outarray =
-                                                  outarray + m_phys_offset[i]);
+                                              outarray + m_phys_offset[i]);
     }
 }
 
@@ -1393,7 +1419,7 @@ void ExpList::IProductWRTDerivBase(const int dir,
     {
         (*m_exp)[i]->IProductWRTDerivBase(dir, inarray + m_phys_offset[i],
                                           e_outarray =
-                                              outarray + m_coeff_offset[i]);
+                                          outarray + m_coeff_offset[i]);
     }
 }
 
@@ -1402,9 +1428,9 @@ void ExpList::IProductWRTDerivBase(const int dir,
  *
  */
 void ExpList::IProductWRTDirectionalDerivBase(
-    const Array<OneD, const NekDouble> &direction,
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
+                                              const Array<OneD, const NekDouble> &direction,
+                                              const Array<OneD, const NekDouble> &inarray,
+                                              Array<OneD, NekDouble> &outarray)
 {
     int npts_e;
     int coordim = (*m_exp)[0]->GetGeom()->GetCoordim();
@@ -1427,8 +1453,8 @@ void ExpList::IProductWRTDirectionalDerivBase(
         }
 
         (*m_exp)[i]->IProductWRTDirectionalDerivBase(
-            locdir, inarray + m_phys_offset[i],
-            e_outarray = outarray + m_coeff_offset[i]);
+                                                     locdir, inarray + m_phys_offset[i],
+                                                     e_outarray = outarray + m_coeff_offset[i]);
     }
 }
 
@@ -1444,8 +1470,8 @@ void ExpList::IProductWRTDirectionalDerivBase(
  *                          used to store the result.
  */
 void ExpList::IProductWRTDerivBase(
-    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-    Array<OneD, NekDouble> &outarray)
+                                   const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                                   Array<OneD, NekDouble> &outarray)
 {
     Array<OneD, NekDouble> tmp0, tmp1, tmp2;
     // assume coord dimension defines the size of Deriv Base
@@ -1470,39 +1496,39 @@ void ExpList::IProductWRTDerivBase(
 
     switch (dim)
     {
-        case 1:
-            for (int i = 0; i < m_collections.size(); ++i)
-            {
-                m_collections[i].ApplyOperator(
-                    Collections::eIProductWRTDerivBase,
-                    inarray[0] + m_coll_phys_offset[i],
-                    tmp0 = outarray + m_coll_coeff_offset[i]);
-            }
-            break;
-        case 2:
-            for (int i = 0; i < m_collections.size(); ++i)
-            {
-                m_collections[i].ApplyOperator(
-                    Collections::eIProductWRTDerivBase,
-                    inarray[0] + m_coll_phys_offset[i],
-                    tmp0 = inarray[1] + m_coll_phys_offset[i],
-                    tmp1 = outarray + m_coll_coeff_offset[i]);
-            }
-            break;
-        case 3:
-            for (int i = 0; i < m_collections.size(); ++i)
-            {
-                m_collections[i].ApplyOperator(
-                    Collections::eIProductWRTDerivBase,
-                    inarray[0] + m_coll_phys_offset[i],
-                    tmp0 = inarray[1] + m_coll_phys_offset[i],
-                    tmp1 = inarray[2] + m_coll_phys_offset[i],
-                    tmp2 = outarray + m_coll_coeff_offset[i]);
-            }
-            break;
-        default:
-            NEKERROR(ErrorUtil::efatal, "Dimension of inarray not correct");
-            break;
+    case 1:
+        for (int i = 0; i < m_collections.size(); ++i)
+        {
+            m_collections[i].ApplyOperator(
+                                           Collections::eIProductWRTDerivBase,
+                                           inarray[0] + m_coll_phys_offset[i],
+                                           tmp0 = outarray + m_coll_coeff_offset[i]);
+        }
+        break;
+    case 2:
+        for (int i = 0; i < m_collections.size(); ++i)
+        {
+            m_collections[i].ApplyOperator(
+                                           Collections::eIProductWRTDerivBase,
+                                           inarray[0] + m_coll_phys_offset[i],
+                                           tmp0 = inarray[1] + m_coll_phys_offset[i],
+                                           tmp1 = outarray + m_coll_coeff_offset[i]);
+        }
+        break;
+    case 3:
+        for (int i = 0; i < m_collections.size(); ++i)
+        {
+            m_collections[i].ApplyOperator(
+                                           Collections::eIProductWRTDerivBase,
+                                           inarray[0] + m_coll_phys_offset[i],
+                                           tmp0 = inarray[1] + m_coll_phys_offset[i],
+                                           tmp1 = inarray[2] + m_coll_phys_offset[i],
+                                           tmp2 = outarray + m_coll_coeff_offset[i]);
+        }
+        break;
+    default:
+        NEKERROR(ErrorUtil::efatal, "Dimension of inarray not correct");
+        break;
     }
 
     timer.Stop();
@@ -1658,7 +1684,7 @@ void ExpList::v_CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
 
     switch (m_expType)
     {
-        case e2D:
+    case e2D:
         {
             PhysDeriv(xDir, Vel[yDir], Vx);
             PhysDeriv(yDir, Vel[xDir], Uy);
@@ -1671,9 +1697,9 @@ void ExpList::v_CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
         }
         break;
 
-        case e3D:
-        case e3DH1D:
-        case e3DH2D:
+    case e3D:
+    case e3DH1D:
+    case e3DH2D:
         {
             Array<OneD, NekDouble> Vz(nq);
             Array<OneD, NekDouble> Uz(nq);
@@ -1704,16 +1730,16 @@ void ExpList::v_CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
             Vmath::Vsub(nq, Vx, 1, Uy, 1, Q[2], 1);
         }
         break;
-        default:
-            ASSERTL0(0, "Dimension not supported");
-            break;
+    default:
+        ASSERTL0(0, "Dimension not supported");
+        break;
     }
 }
 
 void ExpList::v_PhysDirectionalDeriv(
-    const Array<OneD, const NekDouble> &direction,
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
+                                     const Array<OneD, const NekDouble> &direction,
+                                     const Array<OneD, const NekDouble> &inarray,
+                                     Array<OneD, NekDouble> &outarray)
 {
     int npts_e;
     int coordim = (*m_exp)[0]->GetGeom()->GetCoordim();
@@ -1736,7 +1762,7 @@ void ExpList::v_PhysDirectionalDeriv(
 
         (*m_exp)[i]->PhysDirectionalDeriv(inarray + m_phys_offset[i], locdir,
                                           e_outarray =
-                                              outarray + m_phys_offset[i]);
+                                          outarray + m_phys_offset[i]);
     }
 }
 
@@ -1809,8 +1835,8 @@ void ExpList::v_FwdTransLocalElmt(const Array<OneD, const NekDouble> &inarray,
 }
 
 void ExpList::v_FwdTransBndConstrained(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
+                                       const Array<OneD, const NekDouble> &inarray,
+                                       Array<OneD, NekDouble> &outarray)
 {
     int i;
 
@@ -1820,7 +1846,7 @@ void ExpList::v_FwdTransBndConstrained(
     {
         (*m_exp)[i]->FwdTransBndConstrained(inarray + m_phys_offset[i],
                                             e_outarray =
-                                                outarray + m_coeff_offset[i]);
+                                            outarray + m_coeff_offset[i]);
     }
 }
 
@@ -1845,7 +1871,7 @@ void ExpList::v_SmoothField(Array<OneD, NekDouble> &field)
     // implementation for modal basis.
 
     ASSERTL0((*m_exp)[0]->GetBasisType(0) == LibUtilities::eGLL_Lagrange ||
-                 (*m_exp)[0]->GetBasisType(0) == LibUtilities::eGauss_Lagrange,
+             (*m_exp)[0]->GetBasisType(0) == LibUtilities::eGauss_Lagrange,
              "Smoothing is currently not allowed unless you are using "
              "a nodal base for efficiency reasons. The implemented "
              "smoothing technique requires the mass matrix inversion "
@@ -1872,7 +1898,7 @@ void ExpList::v_SmoothField(Array<OneD, NekDouble> &field)
  * @param   constant        an optional parameter
  */
 const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
-    const GlobalMatrixKey &gkey)
+                                                      const GlobalMatrixKey &gkey)
 {
     int i, cnt1;
     int n_exp = 0;
@@ -1905,7 +1931,7 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
 
     switch (gkey.GetMatrixType())
     {
-        case StdRegions::eBwdTrans:
+    case StdRegions::eBwdTrans:
         {
             // set up an array of integers for block matrix construction
             for (i = 0; i < n_exp; ++i)
@@ -1915,7 +1941,7 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
             }
         }
         break;
-        case StdRegions::eIProductWRTBase:
+    case StdRegions::eIProductWRTBase:
         {
             // set up an array of integers for block matrix construction
             for (i = 0; i < n_exp; ++i)
@@ -1925,11 +1951,11 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
             }
         }
         break;
-        case StdRegions::eMass:
-        case StdRegions::eInvMass:
-        case StdRegions::eHelmholtz:
-        case StdRegions::eLaplacian:
-        case StdRegions::eInvHybridDGHelmholtz:
+    case StdRegions::eMass:
+    case StdRegions::eInvMass:
+    case StdRegions::eHelmholtz:
+    case StdRegions::eLaplacian:
+    case StdRegions::eInvHybridDGHelmholtz:
         {
             // set up an array of integers for block matrix construction
             for (i = 0; i < n_exp; ++i)
@@ -1940,7 +1966,7 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
         }
         break;
 
-        case StdRegions::eHybridDGLamToU:
+    case StdRegions::eHybridDGLamToU:
         {
             // set up an array of integers for block matrix construction
             for (i = 0; i < n_exp; ++i)
@@ -1951,7 +1977,7 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
             }
         }
         break;
-        case StdRegions::eHybridDGHelmBndLam:
+    case StdRegions::eHybridDGHelmBndLam:
         {
             // set up an array of integers for block matrix construction
             for (i = 0; i < n_exp; ++i)
@@ -1963,7 +1989,7 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
             }
         }
         break;
-        default:
+    default:
         {
             NEKERROR(ErrorUtil::efatal,
                      "Global Matrix creation not defined for this "
@@ -1995,12 +2021,12 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
         }
 
         LocalRegions::MatrixKey matkey(
-            gkey.GetMatrixType(), (*m_exp)[eid]->DetShapeType(), *(*m_exp)[eid],
-            gkey.GetConstFactors(), varcoeffs);
+                                       gkey.GetMatrixType(), (*m_exp)[eid]->DetShapeType(), *(*m_exp)[eid],
+                                       gkey.GetConstFactors(), varcoeffs);
 
         loc_mat = std::dynamic_pointer_cast<LocalRegions::Expansion>(
-                      (*m_exp)[elmt_id.find(i)->second])
-                      ->GetLocMatrix(matkey);
+                                                                     (*m_exp)[elmt_id.find(i)->second])
+            ->GetLocMatrix(matkey);
         BlkMatrix->SetBlock(i, i, loc_mat);
     }
 
@@ -2008,7 +2034,7 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
 }
 
 const DNekScalBlkMatSharedPtr &ExpList::GetBlockMatrix(
-    const GlobalMatrixKey &gkey)
+                                                       const GlobalMatrixKey &gkey)
 {
     auto matrixIter = m_blockMat->find(gkey);
 
@@ -2084,8 +2110,8 @@ void ExpList::GeneralMatrixOp(const GlobalMatrixKey &gkey,
         for (int i = 0; i < m_collections.size(); ++i)
         {
             m_collections[i].ApplyOperator(
-                Collections::eHelmholtz, inarray + m_coll_coeff_offset[i],
-                tmp = outarray + m_coll_coeff_offset[i]);
+                                           Collections::eHelmholtz, inarray + m_coll_coeff_offset[i],
+                                           tmp = outarray + m_coll_coeff_offset[i]);
         }
     }
     else
@@ -2106,12 +2132,12 @@ void ExpList::GeneralMatrixOp(const GlobalMatrixKey &gkey,
             }
 
             StdRegions::StdMatrixKey mkey(
-                gkey.GetMatrixType(), (*m_exp)[i]->DetShapeType(),
-                *((*m_exp)[i]), gkey.GetConstFactors(), varcoeffs);
+                                          gkey.GetMatrixType(), (*m_exp)[i]->DetShapeType(),
+                                          *((*m_exp)[i]), gkey.GetConstFactors(), varcoeffs);
 
             (*m_exp)[i]->GeneralMatrixOp(
-                inarray + m_coeff_offset[i],
-                tmp_outarray = outarray + m_coeff_offset[i], mkey);
+                                         inarray + m_coeff_offset[i],
+                                         tmp_outarray = outarray + m_coeff_offset[i], mkey);
         }
     }
 }
@@ -2124,7 +2150,7 @@ void ExpList::GeneralMatrixOp(const GlobalMatrixKey &gkey,
  * @returns Shared pointer to the generated global matrix.
  */
 GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
-    const GlobalMatrixKey &mkey, const AssemblyMapCGSharedPtr &locToGloMap)
+                                               const GlobalMatrixKey &mkey, const AssemblyMapCGSharedPtr &locToGloMap)
 {
     int i, j, n, gid1, gid2, cntdim1, cntdim2;
     NekDouble sign1, sign2;
@@ -2140,7 +2166,7 @@ GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
 
     switch (mkey.GetMatrixType())
     {
-        case StdRegions::eBwdTrans:
+    case StdRegions::eBwdTrans:
         {
             glob_rows = m_npoints;
             glob_cols = locToGloMap->GetNumGlobalCoeffs();
@@ -2149,7 +2175,7 @@ GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
             assembleSecondDim = true;
         }
         break;
-        case StdRegions::eIProductWRTBase:
+    case StdRegions::eIProductWRTBase:
         {
             glob_rows = locToGloMap->GetNumGlobalCoeffs();
             glob_cols = m_npoints;
@@ -2158,10 +2184,10 @@ GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
             assembleSecondDim = false;
         }
         break;
-        case StdRegions::eMass:
-        case StdRegions::eHelmholtz:
-        case StdRegions::eLaplacian:
-        case StdRegions::eHybridDGHelmBndLam:
+    case StdRegions::eMass:
+    case StdRegions::eHelmholtz:
+    case StdRegions::eLaplacian:
+    case StdRegions::eHybridDGHelmBndLam:
         {
             glob_rows = locToGloMap->GetNumGlobalCoeffs();
             glob_cols = locToGloMap->GetNumGlobalCoeffs();
@@ -2170,7 +2196,7 @@ GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
             assembleSecondDim = true;
         }
         break;
-        default:
+    default:
         {
             NEKERROR(ErrorUtil::efatal,
                      "Global Matrix creation not defined for this "
@@ -2201,12 +2227,12 @@ GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
         }
 
         LocalRegions::MatrixKey matkey(
-            mkey.GetMatrixType(), (*m_exp)[eid]->DetShapeType(),
-            *((*m_exp)[eid]), mkey.GetConstFactors(), varcoeffs);
+                                       mkey.GetMatrixType(), (*m_exp)[eid]->DetShapeType(),
+                                       *((*m_exp)[eid]), mkey.GetConstFactors(), varcoeffs);
 
         loc_mat =
             std::dynamic_pointer_cast<LocalRegions::Expansion>((*m_exp)[n])
-                ->GetLocMatrix(matkey);
+            ->GetLocMatrix(matkey);
 
         loc_rows = loc_mat->GetRows();
         loc_cols = loc_mat->GetColumns();
@@ -2258,7 +2284,7 @@ GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
 }
 
 DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
-    const GlobalLinSysKey &mkey, const AssemblyMapCGSharedPtr &locToGloMap)
+                                              const GlobalLinSysKey &mkey, const AssemblyMapCGSharedPtr &locToGloMap)
 {
     int i, j, n, gid1, gid2, loc_lda, eid;
     NekDouble sign1, sign2, value;
@@ -2281,25 +2307,25 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
 
     switch (mkey.GetMatrixType())
     {
-            // case for all symmetric matices
-        case StdRegions::eHelmholtz:
-        case StdRegions::eLaplacian:
-            if ((2 * (bwidth + 1)) < rows)
-            {
-                matStorage = ePOSITIVE_DEFINITE_SYMMETRIC_BANDED;
-                Gmat       = MemoryManager<DNekMat>::AllocateSharedPtr(
-                    rows, cols, zero, matStorage, bwidth, bwidth);
-            }
-            else
-            {
-                matStorage = ePOSITIVE_DEFINITE_SYMMETRIC;
-                Gmat       = MemoryManager<DNekMat>::AllocateSharedPtr(
-                    rows, cols, zero, matStorage);
-            }
+        // case for all symmetric matices
+    case StdRegions::eHelmholtz:
+    case StdRegions::eLaplacian:
+        if ((2 * (bwidth + 1)) < rows)
+        {
+            matStorage = ePOSITIVE_DEFINITE_SYMMETRIC_BANDED;
+            Gmat       = MemoryManager<DNekMat>::AllocateSharedPtr(
+                                                                   rows, cols, zero, matStorage, bwidth, bwidth);
+        }
+        else
+        {
+            matStorage = ePOSITIVE_DEFINITE_SYMMETRIC;
+            Gmat       = MemoryManager<DNekMat>::AllocateSharedPtr(
+                                                                   rows, cols, zero, matStorage);
+        }
 
-            break;
-        default: // Assume general matrix - currently only set up
-                 // for full invert
+        break;
+    default: // Assume general matrix - currently only set up
+        // for full invert
         {
             matStorage = eFULL;
             Gmat = MemoryManager<DNekMat>::AllocateSharedPtr(rows, cols, zero,
@@ -2324,12 +2350,12 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
         }
 
         LocalRegions::MatrixKey matkey(
-            mkey.GetMatrixType(), (*m_exp)[eid]->DetShapeType(),
-            *((*m_exp)[eid]), mkey.GetConstFactors(), varcoeffs);
+                                       mkey.GetMatrixType(), (*m_exp)[eid]->DetShapeType(),
+                                       *((*m_exp)[eid]), mkey.GetConstFactors(), varcoeffs);
 
         loc_mat =
             std::dynamic_pointer_cast<LocalRegions::Expansion>((*m_exp)[n])
-                ->GetLocMatrix(matkey);
+            ->GetLocMatrix(matkey);
 
         if (RobinBCInfo.count(n) != 0) // add robin mass matrix
         {
@@ -2347,7 +2373,7 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
             for (rBC = RobinBCInfo.find(n)->second; rBC; rBC = rBC->next)
             {
                 (*m_exp)[n]->AddRobinMassMatrix(
-                    rBC->m_robinID, rBC->m_robinPrimitiveCoeffs, new_mat);
+                                                rBC->m_robinID, rBC->m_robinPrimitiveCoeffs, new_mat);
             }
 
             NekDouble one = 1.0;
@@ -2361,7 +2387,7 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
         for (i = 0; i < loc_lda; ++i)
         {
             gid1 = locToGloMap->GetLocalToGlobalMap(m_coeff_offset[n] + i) -
-                   NumDirBCs;
+                NumDirBCs;
             sign1 = locToGloMap->GetLocalToGlobalSign(m_coeff_offset[n] + i);
             if (gid1 >= 0)
             {
@@ -2369,9 +2395,9 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
                 {
                     gid2 = locToGloMap->GetLocalToGlobalMap(m_coeff_offset[n] +
                                                             j) -
-                           NumDirBCs;
+                        NumDirBCs;
                     sign2 = locToGloMap->GetLocalToGlobalSign(
-                        m_coeff_offset[n] + j);
+                                                              m_coeff_offset[n] + j);
                     if (gid2 >= 0)
                     {
                         // When global matrix is symmetric,
@@ -2381,7 +2407,7 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
                         if ((matStorage == eFULL) || (gid2 >= gid1))
                         {
                             value = Gmat->GetValue(gid1, gid2) +
-                                    sign1 * sign2 * (*loc_mat)(i, j);
+                                sign1 * sign2 * (*loc_mat)(i, j);
                             Gmat->SetValue(gid1, gid2, value);
                         }
                     }
@@ -2411,7 +2437,7 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
  *          required format.
  */
 GlobalLinSysSharedPtr ExpList::GenGlobalLinSys(
-    const GlobalLinSysKey &mkey, const AssemblyMapCGSharedPtr &locToGloMap)
+                                               const GlobalLinSysKey &mkey, const AssemblyMapCGSharedPtr &locToGloMap)
 {
     GlobalLinSysSharedPtr returnlinsys;
     std::shared_ptr<ExpList> vExpList = GetSharedThisPtr();
@@ -2429,7 +2455,7 @@ GlobalLinSysSharedPtr ExpList::GenGlobalLinSys(
 }
 
 GlobalLinSysSharedPtr ExpList::GenGlobalBndLinSys(
-    const GlobalLinSysKey &mkey, const AssemblyMapSharedPtr &locToGloMap)
+                                                  const GlobalLinSysKey &mkey, const AssemblyMapSharedPtr &locToGloMap)
 {
     std::shared_ptr<ExpList> vExpList                 = GetSharedThisPtr();
     const map<int, RobinBCInfoSharedPtr> vRobinBCInfo = GetRobinBCInfo();
@@ -2492,8 +2518,8 @@ void ExpList::v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
         for (int i = 0; i < m_collections.size(); ++i)
         {
             m_collections[i].ApplyOperator(
-                Collections::eBwdTrans, inarray + m_coll_coeff_offset[i],
-                tmp = outarray + m_coll_phys_offset[i]);
+                                           Collections::eBwdTrans, inarray + m_coll_coeff_offset[i],
+                                           tmp = outarray + m_coll_phys_offset[i]);
         }
 
         timer.Stop();
@@ -2505,7 +2531,7 @@ void ExpList::v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
 }
 
 LocalRegions::ExpansionSharedPtr &ExpList::GetExp(
-    const Array<OneD, const NekDouble> &gloCoord)
+                                                  const Array<OneD, const NekDouble> &gloCoord)
 {
     return GetExp(GetExpIndex(gloCoord));
 }
@@ -2575,7 +2601,7 @@ int ExpList::GetExpIndex(const Array<OneD, const NekDouble> &gloCoords,
     NekDouble z = (gloCoords.size() > 2 ? gloCoords[2] : 0.0);
     SpatialDomains::PointGeomSharedPtr p =
         MemoryManager<SpatialDomains::PointGeom>::AllocateSharedPtr(
-            GetExp(0)->GetCoordim(), -1, x, y, z);
+                                                                    GetExp(0)->GetCoordim(), -1, x, y, z);
 
     // Get the list of elements whose bounding box contains the desired
     // point.
@@ -2689,6 +2715,7 @@ void ExpList::v_Reset()
     }
 }
 
+#if EXPLISTDATA
 /**
  * Write Tecplot Files Header
  * @param   outfile Output file name.
@@ -2799,15 +2826,15 @@ void ExpList::v_WriteTecplotZone(std::ostream &outfile, int expansion)
 
     switch (nBases)
     {
-        case 2:
-            outfile << ", ET=QUADRILATERAL" << std::endl;
-            break;
-        case 3:
-            outfile << ", ET=BRICK" << std::endl;
-            break;
-        default:
-            NEKERROR(ErrorUtil::efatal, "Not set up for this type of output");
-            break;
+    case 2:
+        outfile << ", ET=QUADRILATERAL" << std::endl;
+        break;
+    case 3:
+        outfile << ", ET=BRICK" << std::endl;
+        break;
+    default:
+        NEKERROR(ErrorUtil::efatal, "Not set up for this type of output");
+        break;
     }
 
     // Write out coordinates
@@ -2836,7 +2863,7 @@ void ExpList::v_WriteTecplotConnectivity(std::ostream &outfile, int expansion)
     if (expansion != -1)
     {
         exp = std::shared_ptr<LocalRegions::ExpansionVector>(
-            new LocalRegions::ExpansionVector(1));
+                                                             new LocalRegions::ExpansionVector(1));
         (*exp)[0] = (*m_exp)[expansion];
     }
 
@@ -2913,6 +2940,7 @@ void ExpList::v_WriteTecplotField(std::ostream &outfile, int expansion)
         if (m_physState == false)
         {
             BwdTrans(m_coeffs, m_phys);
+
         }
 
         for (int i = 0; i < totpoints; ++i)
@@ -3000,7 +3028,7 @@ void ExpList::v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
     string ostr;
     switch (m_expType)
     {
-        case e1D:
+    case e1D:
         {
             ns   = 2;
             ostr = "3 ";
@@ -3010,7 +3038,7 @@ void ExpList::v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
             }
         }
         break;
-        case e2D:
+    case e2D:
         {
             ns   = 4;
             ostr = "9 ";
@@ -3025,7 +3053,7 @@ void ExpList::v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
             }
         }
         break;
-        case e3D:
+    case e3D:
         {
             ns   = 8;
             ostr = "12 ";
@@ -3040,28 +3068,28 @@ void ExpList::v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                             << k * nquad[0] * nquad[1] + j * nquad[0] + i + 1
                             << " "
                             << k * nquad[0] * nquad[1] + (j + 1) * nquad[0] +
-                                   i + 1
+                            i + 1
                             << " "
                             << k * nquad[0] * nquad[1] + (j + 1) * nquad[0] + i
                             << " "
                             << (k + 1) * nquad[0] * nquad[1] + j * nquad[0] + i
                             << " "
                             << (k + 1) * nquad[0] * nquad[1] + j * nquad[0] +
-                                   i + 1
+                            i + 1
                             << " "
                             << (k + 1) * nquad[0] * nquad[1] +
-                                   (j + 1) * nquad[0] + i + 1
+                            (j + 1) * nquad[0] + i + 1
                             << " "
                             << (k + 1) * nquad[0] * nquad[1] +
-                                   (j + 1) * nquad[0] + i
+                            (j + 1) * nquad[0] + i
                             << " " << endl;
                     }
                 }
             }
         }
         break;
-        default:
-            break;
+    default:
+        break;
     }
 
     outfile << endl;
@@ -3112,6 +3140,7 @@ void ExpList::v_WriteVtkPieceData(std::ostream &outfile, int expansion,
     outfile << endl;
     outfile << "        </DataArray>" << endl;
 }
+#endif
 
 /**
  * Given a spectral/hp approximation
@@ -3248,8 +3277,14 @@ NekDouble ExpList::v_VectorFlux(
     return flux;
 }
 
+#if EXPLISTDATA
 Array<OneD, const NekDouble> ExpList::v_HomogeneousEnergy(void)
+#else
+Array<OneD, const NekDouble> ExpList::v_HomogeneousEnergy(
+                                   const Array<OneD, const NekDouble> &coeffs)
+#endif
 {
+    boost::ignore_unused(coeffs);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
     Array<OneD, NekDouble> NoEnergy(1, 0.0);
@@ -3301,10 +3336,10 @@ void ExpList::v_ClearGlobalLinSysManager(void)
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::ExtractFileBCs(const std::string &fileName,
-                             LibUtilities::CommSharedPtr comm,
-                             const std::string &varName,
-                             const std::shared_ptr<ExpList> locExpList)
+void ExpList::ExtractCoeffsFromFile(const std::string &fileName,
+                                    LibUtilities::CommSharedPtr comm,
+                                    const std::string &varName,
+                                    Array<OneD, NekDouble> &coeffs)
 {
     string varString = fileName.substr(0, fileName.find_last_of("."));
     int j, k, len = varString.length();
@@ -3328,9 +3363,9 @@ void ExpList::ExtractFileBCs(const std::string &fileName,
             if (FieldDef[j]->m_fields[k] == varName)
             {
                 // Copy FieldData into locExpList
-                locExpList->ExtractDataToCoeffs(FieldDef[j], FieldData[j],
-                                                FieldDef[j]->m_fields[k],
-                                                locExpList->UpdateCoeffs());
+                ExtractDataToCoeffs(FieldDef[j], FieldData[j],
+                                    FieldDef[j]->m_fields[k],
+                                    coeffs);
                 found = true;
             }
         }
@@ -3338,7 +3373,6 @@ void ExpList::ExtractFileBCs(const std::string &fileName,
 
     ASSERTL0(found, "Could not find variable '" + varName +
                         "' in file boundary condition " + fileName);
-    locExpList->BwdTrans(locExpList->GetCoeffs(), locExpList->UpdatePhys());
 }
 
 /**
@@ -3501,6 +3535,7 @@ void ExpList::v_GetFieldDefinitions(
     GeneralGetFieldDefinitions(fielddef);
 }
 
+#if EXPLISTDATA
 // Append the element data listed in elements
 // fielddef->m_ElementIDs onto fielddata
 void ExpList::v_AppendFieldData(
@@ -3509,6 +3544,7 @@ void ExpList::v_AppendFieldData(
 {
     v_AppendFieldData(fielddef, fielddata, m_coeffs);
 }
+#endif
 
 void ExpList::v_AppendFieldData(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
@@ -4478,12 +4514,14 @@ const vector<bool> &ExpList::v_GetLeftAdjacentFaces(void) const
     return tmp;
 }
 
+#if EXPLISTDATA
 void ExpList::v_ExtractTracePhys(Array<OneD, NekDouble> &outarray)
 {
     boost::ignore_unused(outarray);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
+#endif
 
 void ExpList::v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                  Array<OneD, NekDouble> &outarray)

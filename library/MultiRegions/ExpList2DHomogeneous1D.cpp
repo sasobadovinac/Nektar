@@ -160,8 +160,10 @@ void ExpList2DHomogeneous1D::SetCoeffPhys(void)
     m_ncoeffs = ncoeffs_per_plane * nzplanes;
     m_npoints = npoints_per_plane * nzplanes;
 
+#if EXPLISTDATA
     m_coeffs = Array<OneD, NekDouble>(m_ncoeffs, 0.0);
     m_phys   = Array<OneD, NekDouble>(m_npoints, 0.0);
+#endif
 
     int nel        = m_planes[0]->GetExpSize();
     m_coeff_offset = Array<OneD, int>(nel * nzplanes);
@@ -170,9 +172,11 @@ void ExpList2DHomogeneous1D::SetCoeffPhys(void)
 
     for (cnt = n = 0; n < nzplanes; ++n)
     {
+#if EXPLISTDATA
         m_planes[n]->SetCoeffsArray(tmparray =
                                         m_coeffs + ncoeffs_per_plane * n);
         m_planes[n]->SetPhysArray(tmparray = m_phys + npoints_per_plane * n);
+#endif
 
         for (i = 0; i < nel; ++i)
         {
@@ -308,6 +312,7 @@ void ExpList2DHomogeneous1D::v_GetCoords(Array<OneD, NekDouble> &xc0,
     }
 }
 
+#if EXPLISTDATA
 /**
  * Write Tecplot Files Zone
  * @param   outfile    Output file name.
@@ -438,6 +443,7 @@ void ExpList2DHomogeneous1D::v_WriteVtkPieceHeader(std::ostream &outfile,
     outfile << "      </Cells>" << endl;
     outfile << "      <PointData>" << endl;
 }
+#endif
 
 void ExpList2DHomogeneous1D::v_GetNormals(
     Array<OneD, Array<OneD, NekDouble>> &normals)

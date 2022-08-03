@@ -191,6 +191,7 @@ void DisContField3DHomogeneous2D::EvaluateBoundaryConditions(
         }
     }
 
+#if EXPLISTDATA
     // Fourier transform coefficient space boundary values
     for (n = 0; n < m_bndCondExpansions.size(); ++n)
     {
@@ -202,6 +203,19 @@ void DisContField3DHomogeneous2D::EvaluateBoundaryConditions(
                 m_bndCondExpansions[n]->UpdateCoeffs());
         }
     }
+#else
+    // Fourier transform coefficient space boundary values
+    for (n = 0; n < m_bndCondExpansions.size(); ++n)
+    {
+        if (time == 0.0 || m_bndConditions[n]->IsTimeDependent())
+        {
+            m_bndCondBndWeight[n] = 1.0;
+            m_bndCondExpansions[n]->HomogeneousFwdTrans(
+                m_bndCondFieldCoeff[n]->GetArray1D(),
+                m_bndCondFieldPhys[n]->UpdateArray1D());
+        }
+    }
+#endif
 }
 
 void DisContField3DHomogeneous2D::v_HelmSolve(
@@ -358,6 +372,7 @@ void DisContField3DHomogeneous2D::v_GetBndElmtExpansion(
     // Copy phys and coeffs to new explist
     if (DeclareCoeffPhysArrays)
     {
+#if EXPLISTDATA
         Array<OneD, NekDouble> tmp1, tmp2;
         for (n = 0; n < result->GetExpSize(); ++n)
         {
@@ -373,6 +388,12 @@ void DisContField3DHomogeneous2D::v_GetBndElmtExpansion(
             Vmath::Vcopy(nq, tmp1 = GetCoeffs() + offsetOld, 1,
                          tmp2 = result->UpdateCoeffs() + offsetNew, 1);
         }
+#else
+        boost::ignore_unused(offsetOld,offsetNew,nq);
+        NEKERROR(ErrorUtil::efatal,
+                 "This method needs updating for FieldStorage usage");
+        
+#endif
     }
 
     // Set wavespace value

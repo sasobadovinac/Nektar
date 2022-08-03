@@ -62,7 +62,7 @@ namespace MultiRegions
  * Constructs an empty expansion list with no boundary conditions.
  */
 DisContField::DisContField()
-    : ExpList(), m_bndCondExpansions(), m_bndConditions(),
+    : ExpList(), m_bndConditions(), m_bndCondExpansions(),
       m_trace(NullExpListSharedPtr)
 {
 }
@@ -106,6 +106,21 @@ DisContField::DisContField(const LibUtilities::SessionReaderSharedPtr &pSession,
                                            DeclareCoeffPhysArrays);
         if (DeclareCoeffPhysArrays)
         {
+#if EXPLISTDATA
+#else            
+            int bndsize = m_bndCondExpansions.size();
+            m_bndCondFieldCoeff = Array<OneD, NekFieldCoeffSharedPtr>(bndsize);
+            m_bndCondFieldPhys  = Array<OneD, NekFieldPhysSharedPtr>(bndsize);
+            
+            for(int b = 0; b < bndsize; ++b)
+            {
+                m_bndCondFieldCoeff[b] = std::make_shared<
+                    NekField<NekDouble, eCoeff>>(m_bndCondExpansions[b]);
+                m_bndCondFieldPhys[b] = std::make_shared<
+                    NekField<NekDouble, ePhys>>(m_bndCondExpansions[b]);
+            }
+#endif
+
             EvaluateBoundaryConditions(0.0, bcvar);
         }
         ApplyGeomInfo();
@@ -175,6 +190,12 @@ void DisContField::SetUpDG(const std::string variable)
     m_trace = MemoryManager<ExpList>::AllocateSharedPtr(
         m_session, m_bndCondExpansions, m_bndConditions, *m_exp, m_graph,
         m_comm);
+#if EXPLISTDATA
+#else            
+    m_traceFieldCoeff = std::make_shared<NekField<NekDouble, eCoeff>>(m_trace);
+    m_traceFieldPhys  = std::make_shared<NekField<NekDouble, ePhys>>(m_trace);
+    
+#endif
 
     PeriodicMap periodicTraces = (m_expType == e1D)   ? m_periodicVerts
                                  : (m_expType == e2D) ? m_periodicEdges
@@ -634,8 +655,9 @@ DisContField::DisContField(const LibUtilities::SessionReaderSharedPtr &pSession,
 DisContField::DisContField(const DisContField &In,
                            const bool DeclareCoeffPhysArrays)
     : ExpList(In, DeclareCoeffPhysArrays),
+      m_bndConditions(In.m_bndConditions),
       m_bndCondExpansions(In.m_bndCondExpansions),
-      m_bndConditions(In.m_bndConditions), m_globalBndMat(In.m_globalBndMat),
+      m_globalBndMat(In.m_globalBndMat),
       m_traceMap(In.m_traceMap), m_boundaryTraces(In.m_boundaryTraces),
       m_periodicVerts(In.m_periodicVerts),
       m_periodicFwdCopy(In.m_periodicFwdCopy),
@@ -2577,7 +2599,7 @@ void DisContField::FindPeriodicTraces(
                 auto eIt                       = eIdMap.find(perIt.first);
                 SpatialDomains::PointGeom v[2] = {*vCoMap[eIt->second.first],
                                                   *vCoMap[eIt->second.second]};
-
+                
                 // check to see if perioid boundary is rotated
                 if (rotComp.count(eIdToCompId[perIt.first]))
                 {
@@ -2959,9 +2981,17 @@ void DisContField::v_FillBwdWithBoundCond(const Array<OneD, NekDouble> &Fwd,
                     auto id1 = m_bndCondExpansions[n]->GetPhys_Offset(e);
                     auto id2 = m_trace->GetPhys_Offset(
                         m_traceMap->GetBndCondIDToGlobalTraceID(cnt + e));
+
+#if EXPLISTDATA
                     Vmath::Vcopy(npts,
                                  &(m_bndCondExpansions[n]->GetPhys())[id1], 1,
                                  &Bwd[id2], 1);
+#else
+                    Vmath::Vcopy(npts,
+                                 &(m_bndCondFieldPhys[n]->GetArray1D())[id1], 1,
+                                 &Bwd[id2], 1);
+#endif
+
                 }
                 cnt += ne;
             }
@@ -2976,11 +3006,19 @@ void DisContField::v_FillBwdWithBoundCond(const Array<OneD, NekDouble> &Fwd,
                     auto npts =
                         m_bndCondExpansions[n]->GetExp(e)->GetTotPoints();
                     auto id1 = m_bndCondExpansions[n]->GetPhys_Offset(e);
+
+#if EXPLISTDATA
                     ASSERTL0((m_bndCondExpansions[n]->GetPhys())[id1] == 0.0,
                              "Method not set up for non-zero "
                              "Neumann boundary condition");
+#else
+                    ASSERTL0((m_bndCondFieldPhys[n]->GetArray1D())[id1] == 0.0,
+                             "Method not set up for non-zero "
+                             "Neumann boundary condition");
+#endif
                     auto id2 = m_trace->GetPhys_Offset(
                         m_traceMap->GetBndCondIDToGlobalTraceID(cnt + e));
+
                     Vmath::Vcopy(npts, &Fwd[id2], 1, &Bwd[id2], 1);
                 }
 
@@ -3015,7 +3053,7 @@ void DisContField::v_AddTraceQuadPhysToField(
 
         Array<OneD, NekDouble> invals =
             tracevals + m_locTraceToTraceMap->GetNFwdLocTracePts();
-
+        
         m_locTraceToTraceMap->InterpTraceToLocTrace(1, Bwd, invals);
 
         m_locTraceToTraceMap->InterpTraceToLocTrace(0, Fwd, tracevals);
@@ -3029,11 +3067,14 @@ void DisContField::v_AddTraceQuadPhysToField(
     }
 }
 
+
+#if EXPLISTDATA
 void DisContField::v_ExtractTracePhys(Array<OneD, NekDouble> &outarray)
 {
     ASSERTL1(m_physState == true, "local physical space is not true ");
     v_ExtractTracePhys(m_phys, outarray);
 }
+#endif
 
 /**
  * @brief This method extracts the trace (verts in 1D) from
@@ -3396,8 +3437,13 @@ void DisContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
     cnt = 0;
     for (i = 0; i < m_bndCondExpansions.size(); ++i)
     {
-        Array<OneD, const NekDouble> bndcoeffs =
+#if EXPLISTDATA
+        const Array<OneD, const NekDouble> bndcoeffs =
             m_bndCondExpansions[i]->GetCoeffs();
+#else
+        const Array<OneD, const NekDouble> bndcoeffs =
+            m_bndCondFieldCoeff[i]->GetArray1D();
+#endif
 
         if (m_bndConditions[i]->GetBoundaryConditionType() ==
             SpatialDomains::eDirichlet)
@@ -3437,7 +3483,13 @@ void DisContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
 
         // For consistency with previous version put global
         // solution into m_trace->m_coeffs
+
+#if EXPLISTDATA
         m_traceMap->LocalToGlobal(loclambda, m_trace->UpdateCoeffs());
+#else
+        m_traceMap->LocalToGlobal(loclambda, m_traceFieldCoeff->UpdateArray1D());
+#endif
+        
     }
 
     //----------------------------------
@@ -3533,6 +3585,8 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                 if (m_bndConditions[i]->GetBoundaryConditionType() ==
                     SpatialDomains::eDirichlet)
                 {
+
+#if EXPLISTDATA
                     m_bndCondExpansions[i]->SetCoeff(
                         0, (std::static_pointer_cast<
                                 SpatialDomains ::DirichletBoundaryCondition>(
@@ -3541,26 +3595,51 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                                .Evaluate(x0[0], x1[0], x2[0], time));
                     m_bndCondExpansions[i]->SetPhys(
                         0, m_bndCondExpansions[i]->GetCoeff(0));
+#else
+                    m_bndCondFieldCoeff[i]->UpdateArray1D()[0] =
+                        (std::static_pointer_cast<
+                            SpatialDomains ::DirichletBoundaryCondition>(
+                             m_bndConditions[i])->m_dirichletCondition)
+                        .Evaluate(x0[0], x1[0], x2[0], time);
+                    m_bndCondFieldPhys[i]->UpdateArray1D()[0] =
+                         m_bndCondFieldCoeff[i]->GetArray1D()[0]; 
+#endif
                 }
                 else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                          SpatialDomains::eNeumann)
                 {
+#if EXPLISTDATA
                     m_bndCondExpansions[i]->SetCoeff(
                         0, (std::static_pointer_cast<
                                 SpatialDomains ::NeumannBoundaryCondition>(
                                 m_bndConditions[i])
                                 ->m_neumannCondition)
                                .Evaluate(x0[0], x1[0], x2[0], time));
+#else
+                    m_bndCondFieldCoeff[i]->UpdateArray1D()[0] =
+                        (std::static_pointer_cast<
+                            SpatialDomains ::NeumannBoundaryCondition>(
+                             m_bndConditions[i])->m_neumannCondition)
+                        .Evaluate(x0[0], x1[0], x2[0], time);
+#endif
                 }
                 else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                          SpatialDomains::eRobin)
                 {
+#if EXPLISTDATA
                     m_bndCondExpansions[i]->SetCoeff(
                         0, (std::static_pointer_cast<
                                 SpatialDomains ::RobinBoundaryCondition>(
                                 m_bndConditions[i])
                                 ->m_robinFunction)
                                .Evaluate(x0[0], x1[0], x2[0], time));
+#else
+                    m_bndCondFieldCoeff[i]->UpdateArray1D()[0] =
+                        (std::static_pointer_cast<
+                            SpatialDomains ::RobinBoundaryCondition>(
+                             m_bndConditions[i])->m_robinFunction)
+                        .Evaluate(x0[0], x1[0], x2[0], time);
+#endif
                 }
                 else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                          SpatialDomains::ePeriodic)
@@ -3590,14 +3669,28 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                     Array<OneD, NekDouble> valuesFile(npoints, 1.0),
                         valuesExp(npoints, 1.0);
 
-                    string filebcs = bcPtr->m_filename;
-                    string exprbcs = bcPtr->m_expr;
+                    string bcfilename = bcPtr->m_filename;
+                    string exprbcs    = bcPtr->m_expr;
 
-                    if (filebcs != "")
+                    if (bcfilename != "")
                     {
-                        ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                       locExpList);
+#if EXPLISTDATA
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             locExpList->UpdateCoeffs());
+                        locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                             locExpList->UpdatePhys());
+
                         valuesFile = locExpList->GetPhys();
+#else
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             m_bndCondFieldCoeff[i]->UpdateArray1D());
+
+                        valuesFile = m_bndCondFieldPhys[i]->UpdateArray1D();
+                        locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                             valuesFile);
+#endif
                     }
 
                     if (exprbcs != "")
@@ -3611,11 +3704,22 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                         condition.Evaluate(x0, x1, x2, time, valuesExp);
                     }
 
+#if EXPLISTDATA
                     Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
                                 locExpList->UpdatePhys(), 1);
 
                     locExpList->FwdTransBndConstrained(
                         locExpList->GetPhys(), locExpList->UpdateCoeffs());
+#else
+                    Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
+                                m_bndCondFieldPhys[i]->UpdateArray1D(),1);
+
+                    locExpList->FwdTransBndConstrained(
+                                    m_bndCondFieldPhys[i]->GetArray1D(),
+                                    m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif 
+
+                    
                 }
                 else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                          SpatialDomains::eNeumann)
@@ -3624,11 +3728,24 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                         std::static_pointer_cast<
                             SpatialDomains::NeumannBoundaryCondition>(
                             m_bndConditions[i]);
-                    string filebcs = bcPtr->m_filename;
-                    if (filebcs != "")
+                    string bcfilename = bcPtr->m_filename;
+
+                    if (bcfilename != "")
                     {
-                        ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                       locExpList);
+#if EXPLISTDATA
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             locExpList->UpdateCoeffs());
+                        locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                             locExpList->UpdatePhys());
+#else
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             m_bndCondFieldCoeff[i]->UpdateArray1D());
+
+                        locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                           m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
                     }
                     else
                     {
@@ -3637,12 +3754,22 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                                 SpatialDomains::NeumannBoundaryCondition>(
                                 m_bndConditions[i])
                                 ->m_neumannCondition;
+#if EXPLISTDATA
                         condition.Evaluate(x0, x1, x2, time,
                                            locExpList->UpdatePhys());
+#else
+                        condition.Evaluate(x0, x1, x2, time,
+                                           m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
                     }
 
+#if EXPLISTDATA
                     locExpList->IProductWRTBase(locExpList->GetPhys(),
                                                 locExpList->UpdateCoeffs());
+#else
+                    locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
+                                           m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif
                 }
                 else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                          SpatialDomains::eRobin)
@@ -3652,12 +3779,25 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                             SpatialDomains::RobinBoundaryCondition>(
                             m_bndConditions[i]);
 
-                    string filebcs = bcPtr->m_filename;
+                    string bcfilename = bcPtr->m_filename;
 
-                    if (filebcs != "")
+                    if (bcfilename != "")
                     {
-                        ExtractFileBCs(filebcs, bcPtr->GetComm(), varName,
-                                       locExpList);
+#if EXPLISTDATA
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             locExpList->UpdateCoeffs());
+                        locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                             locExpList->UpdatePhys());
+#else
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             m_bndCondFieldCoeff[i]->UpdateArray1D());
+
+                        locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                           m_bndCondFieldPhys[i]->UpdateArray1D());
+
+#endif
                     }
                     else
                     {
@@ -3666,12 +3806,22 @@ void DisContField::v_EvaluateBoundaryConditions(const NekDouble time,
                                 SpatialDomains::RobinBoundaryCondition>(
                                 m_bndConditions[i])
                                 ->m_robinFunction;
+#if EXPLISTDATA
                         condition.Evaluate(x0, x1, x2, time,
                                            locExpList->UpdatePhys());
+#else
+                        condition.Evaluate(x0, x1, x2, time,
+                                           m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
                     }
 
+#if EXPLISTDATA
                     locExpList->IProductWRTBase(locExpList->GetPhys(),
                                                 locExpList->UpdateCoeffs());
+#else
+                    locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
+                                           m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif
                 }
                 else if (m_bndConditions[i]->GetBoundaryConditionType() ==
                          SpatialDomains::ePeriodic)
@@ -3930,6 +4080,7 @@ void DisContField::v_GetBndElmtExpansion(int i,
     // Copy phys and coeffs to new explist
     if (DeclareCoeffPhysArrays)
     {
+#if EXPLISTDATA
         Array<OneD, NekDouble> tmp1, tmp2;
         for (n = 0; n < result->GetExpSize(); ++n)
         {
@@ -3945,6 +4096,12 @@ void DisContField::v_GetBndElmtExpansion(int i,
             Vmath::Vcopy(nq, tmp1 = GetCoeffs() + offsetOld, 1,
                          tmp2 = result->UpdateCoeffs() + offsetNew, 1);
         }
+#else
+        boost::ignore_unused(offsetOld,offsetNew,nq);
+        NEKERROR(ErrorUtil::efatal,
+                 "This method needs updating for FieldStorage usage");
+        
+#endif
     }
 }
 
@@ -4044,6 +4201,7 @@ map<int, RobinBCInfoSharedPtr> DisContField::v_GetRobinBCInfo(void)
  * evaluate \f$ Q_{\rm dir} \f$.
  */
 NekDouble DisContField::L2_DGDeriv(const int dir,
+                                   const Array<OneD, const NekDouble> &coeffs,
                                    const Array<OneD, const NekDouble> &soln)
 {
     int i, e, ncoeff_edge;
@@ -4058,8 +4216,11 @@ NekDouble DisContField::L2_DGDeriv(const int dir,
     int cnt;
     int LocBndCoeffs = m_traceMap->GetNumLocalBndCoeffs();
     Array<OneD, NekDouble> loc_lambda(LocBndCoeffs), edge_lambda;
-
+#if EXPLISTDATA
     m_traceMap->GlobalToLocalBnd(m_trace->GetCoeffs(), loc_lambda);
+#else
+    m_traceMap->GlobalToLocalBnd(m_traceFieldCoeff->GetArray1D(), loc_lambda);
+#endif
 
     edge_lambda = loc_lambda;
 
@@ -4083,14 +4244,15 @@ NekDouble DisContField::L2_DGDeriv(const int dir,
             edge_lambda = edge_lambda + ncoeff_edge;
         }
 
-        (*m_exp)[i]->DGDeriv(dir, tmp_coeffs = m_coeffs + m_coeff_offset[i],
+        (*m_exp)[i]->DGDeriv(dir, tmp_coeffs = coeffs + m_coeff_offset[i],
                              elmtToTrace[i], edgeCoeffs, out_tmp = out_d + cnt);
         cnt += (*m_exp)[i]->GetNcoeffs();
     }
 
-    BwdTrans(out_d, m_phys);
-    Vmath::Vsub(m_npoints, m_phys, 1, soln, 1, m_phys, 1);
-    return L2(m_phys);
+    Array<OneD, NekDouble> phys(m_npoints); 
+    BwdTrans(out_d, phys);
+    Vmath::Vsub(m_npoints, phys, 1, soln, 1, phys, 1);
+    return L2(phys);
 }
 
 /**
@@ -4113,7 +4275,9 @@ NekDouble DisContField::L2_DGDeriv(const int dir,
  *
  * @param outarray  The resulting field \f$ u^* \f$.
  */
-void DisContField::EvaluateHDGPostProcessing(Array<OneD, NekDouble> &outarray)
+void DisContField::EvaluateHDGPostProcessing(
+                                   const Array<OneD, const NekDouble> &coeffs,
+                                   Array<OneD, NekDouble> &outarray)
 {
     int i, cnt, e, ncoeff_trace;
     Array<OneD, NekDouble> force, out_tmp, qrhs, qrhs1;
@@ -4126,7 +4290,11 @@ void DisContField::EvaluateHDGPostProcessing(Array<OneD, NekDouble> &outarray)
     int LocBndCoeffs = m_traceMap->GetNumLocalBndCoeffs();
     Array<OneD, NekDouble> loc_lambda(LocBndCoeffs), trace_lambda;
     Array<OneD, NekDouble> tmp_coeffs;
+#if EXPLISTDATA
     m_traceMap->GlobalToLocalBnd(m_trace->GetCoeffs(), loc_lambda);
+#else
+    m_traceMap->GlobalToLocalBnd(m_traceFieldCoeff->GetArray1D(), loc_lambda);
+#endif
 
     trace_lambda = loc_lambda;
 
@@ -4267,13 +4435,13 @@ void DisContField::EvaluateHDGPostProcessing(Array<OneD, NekDouble> &outarray)
 
         // DGDeriv
         // (d/dx w, d/dx q_0)
-        (*m_exp)[i]->DGDeriv(0, tmp_coeffs = m_coeffs + m_coeff_offset[i],
+        (*m_exp)[i]->DGDeriv(0, tmp_coeffs = coeffs + m_coeff_offset[i],
                              elmtToTrace[i], traceCoeffs, out_tmp);
         (*m_exp)[i]->BwdTrans(out_tmp, qrhs);
         ppExp->IProductWRTDerivBase(0, qrhs, force);
 
         // + (d/dy w, d/dy q_1)
-        (*m_exp)[i]->DGDeriv(1, tmp_coeffs = m_coeffs + m_coeff_offset[i],
+        (*m_exp)[i]->DGDeriv(1, tmp_coeffs = coeffs + m_coeff_offset[i],
                              elmtToTrace[i], traceCoeffs, out_tmp);
 
         (*m_exp)[i]->BwdTrans(out_tmp, qrhs);
@@ -4282,7 +4450,7 @@ void DisContField::EvaluateHDGPostProcessing(Array<OneD, NekDouble> &outarray)
         Vmath::Vadd(nm_elmt, force, 1, out_tmp, 1, force, 1);
 
         // determine force[0] = (1,u)
-        (*m_exp)[i]->BwdTrans(tmp_coeffs = m_coeffs + m_coeff_offset[i], qrhs);
+        (*m_exp)[i]->BwdTrans(tmp_coeffs = coeffs + m_coeff_offset[i], qrhs);
         force[0] = (*m_exp)[i]->Integral(qrhs);
 
         // multiply by inverse Laplacian matrix

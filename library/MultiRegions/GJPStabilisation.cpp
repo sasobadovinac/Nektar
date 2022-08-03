@@ -220,8 +220,13 @@ void GJPStabilisation::Apply(const Array<OneD, NekDouble> &inarray,
     Array<OneD, NekDouble> Fwd(nTracePts), Bwd(nTracePts);
 
     Array<OneD, NekDouble> wsp(nLocETrace), tmp;
+#if EXPLISTDATA
     Array<OneD, NekDouble> LocElmtTracePhys   = m_locElmtTrace->UpdatePhys();
     Array<OneD, NekDouble> LocElmtTraceCoeffs = m_locElmtTrace->UpdateCoeffs();
+#else
+    Array<OneD, NekDouble> LocElmtTracePhys(m_locElmtTrace->GetNpoints());
+    Array<OneD, NekDouble> LocElmtTraceCoefs(m_locElmtTrace->GetNcoeffs()); 
+#endif
 
     ASSERTL1(LocElmtTracePhys.size() <= nLocETrace,
              "expect this vector to be at least of size nLocETrace");

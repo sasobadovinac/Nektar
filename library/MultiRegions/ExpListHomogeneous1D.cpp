@@ -721,13 +721,13 @@ DNekBlkMatSharedPtr ExpListHomogeneous1D::GenHomogeneous1DBlockMatrix(
     int num_trans_per_proc = 0;
 
     if ((mattype == eForwardsCoeffSpace1D) ||
-        (mattype == eBackwardsCoeffSpace1D)) // will operate on m_coeffs
+        (mattype == eBackwardsCoeffSpace1D)) // will operate on coeffs
     {
         n_exp = m_planes[0]->GetNcoeffs();
     }
     else
     {
-        n_exp = m_planes[0]->GetTotPoints(); // will operatore on m_phys
+        n_exp = m_planes[0]->GetTotPoints(); // will operatore on phys
     }
 
     num_trans_per_proc = n_exp / m_comm->GetColumnComm()->GetSize() +
@@ -923,12 +923,15 @@ void ExpListHomogeneous1D::v_AppendFieldData(
     }
 }
 
+
+#if EXPLISTDATA
 void ExpListHomogeneous1D::v_AppendFieldData(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata)
 {
     v_AppendFieldData(fielddef, fielddata, m_coeffs);
 }
+#endif
 
 // Extract the data in fielddata into the m_coeff list
 void ExpListHomogeneous1D::v_ExtractDataToCoeffs(
@@ -1079,6 +1082,7 @@ void ExpListHomogeneous1D::v_ExtractCoeffsToCoeffs(
     }
 }
 
+#if EXPLISTDATA
 void ExpListHomogeneous1D::v_WriteVtkPieceData(std::ostream &outfile,
                                                int expansion, std::string var)
 {
@@ -1147,6 +1151,7 @@ void ExpListHomogeneous1D::v_WriteVtkPieceData(std::ostream &outfile,
     outfile << endl;
     outfile << "        </DataArray>" << endl;
 }
+#endif
 
 void ExpListHomogeneous1D::v_PhysInterp1DScaled(
     const NekDouble scale, const Array<OneD, NekDouble> &inarray,

@@ -116,6 +116,22 @@ protected:
 
     Array<OneD, SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
+
+#if EXPLISTDATA
+#else
+    /**
+     * A NekField sharedpoints containing the coefficient space
+     * boundary condition information
+     */ 
+    Array<OneD, NekFieldCoeffSharedPtr> m_bndCondFieldCoeff; 
+
+    /**
+     * A NekField sharedpoints containing the physical space
+     * boundary condition information
+     */ 
+    Array<OneD, NekFieldPhysSharedPtr> m_bndCondFieldPhys; 
+#endif
+
     virtual void v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                         Array<OneD, int> &EdgeID)
     {
