@@ -67,11 +67,6 @@ project. It's a pretty simple process:
   to keep test files as small as possible. If so you'll need to rebase or
   filter-branch to remove those from the commit history.
 - Is the code formatted correctly?
-  - **Note:** unfortunately, Nektar++ has pretty inconsistent code formatting at
-    the moment. To help in reviewing your submission, new files should be
-    formatted according to the guidelines (or use `clang-format` as described
-    below) -- otherwise, try to keep formatting consistent with the file you're
-    working on.
 
 ## Git cheatsheet
 Although Gitlab gives a nice interface to view the diff between a branch and
@@ -288,8 +283,8 @@ changes are required before merging.
 Code formatting is reasonably boring, so Nektar++ comes with a `.clang-format`
 file to allow for automatic code formatting.
 
-Installing it is straightforward on most package managers. Nektar++ relies on
-options that are used in version 11 or later.
+Installing it is straightforward on most package managers. Nektar++'s
+source code is formatted using **clang-format 11**.
 
 There are a number of instructions on how to use `clang-format` inside a number
 of text editors on the
