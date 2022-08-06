@@ -49,6 +49,12 @@ namespace Nektar
 {
 namespace MultiRegions
 {
+
+#if EXPLISTDATA
+#else            
+class DisContField3DHomogeneous1D;
+#endif
+    
 /// This class is the abstractio  n of a global discontinuous two-
 /// dimensional spectral/hp element expansion which approximates the
 /// solution of a set of partial differential equations.
@@ -112,6 +118,8 @@ public:
     // is negated with respect to the segment normal
     MULTI_REGIONS_EXPORT std::vector<bool> &GetNegatedFluxNormal(void);
 
+
+#if EXPLISTDATA
     MULTI_REGIONS_EXPORT NekDouble
     L2_DGDeriv(const int dir, const Array<OneD, const NekDouble> &coeffs,
                const Array<OneD, const NekDouble> &soln);
@@ -119,6 +127,7 @@ public:
     MULTI_REGIONS_EXPORT void EvaluateHDGPostProcessing(
         const Array<OneD, const NekDouble> &coeffs,
         Array<OneD, NekDouble> &outarray);
+#endif
 
     MULTI_REGIONS_EXPORT void GetLocTraceToTraceMap(
         LocTraceToTraceMapSharedPtr &LocTraceToTraceMap)
@@ -170,15 +179,6 @@ protected:
 
     /// Trace space storage for points between elements.
     ExpListSharedPtr m_trace;
-
-#if EXPLISTDATA
-#else
-    /// Trace coefficient Space storage
-    NekFieldCoeffSharedPtr m_traceFieldCoeff; 
-
-    /// Trace physical Space storage
-    NekFieldPhysSharedPtr m_traceFieldPhys; 
-#endif
 
     /// Local to global DG mapping for trace space.
     AssemblyMapDGSharedPtr m_traceMap;
@@ -387,6 +387,11 @@ protected:
     }
 
 private:
+#if EXPLISTDATA
+#else            
+    friend class DisContField3DHomogeneous1D;
+#endif
+    
     std::vector<bool> m_negatedFluxNormal;
 
     SpatialDomains::BoundaryConditionsSharedPtr GetDomainBCs(

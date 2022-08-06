@@ -4,29 +4,21 @@
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
-#include <MultiRegions/DisContField.h>
+#include <MultiRegions/ContField3DHomogeneous1D.h>
 #include <MultiRegions/NekField/NekField.hpp>
 #include <SpatialDomains/MeshGraph.h>
-
-//#define TIMING
-#ifdef TIMING
-#include <time.h>
-#define Timing(s)                                                              \
-    fprintf(stdout, "%s Took %g seconds\n", s,                                 \
-            (clock() - st) / (double)CLOCKS_PER_SEC);                          \
-    st = clock();
-#else
-#define Timing(s) /* Nothing */
-#endif
 
 using namespace std;
 using namespace Nektar;
 
+int NoCaseStringCompare(const string &s1, const string &s2);
+
 int main(int argc, char *argv[])
 {
+
     if (argc < 2)
     {
-        fprintf(stderr, "Usage: HDGHelmholtz  meshfile \n");
+        fprintf(stderr, "Usage: Helmholtz3DHomo1D meshfile [SysSolnType]   \n");
         exit(1);
     }
 
@@ -34,7 +26,7 @@ int main(int argc, char *argv[])
         LibUtilities::SessionReader::CreateInstance(argc, argv);
 
     LibUtilities::CommSharedPtr vComm = vSession->GetComm();
-
+    string meshfile(argv[1]);
 
     try
     {
@@ -44,42 +36,43 @@ int main(int argc, char *argv[])
             SpatialDomains::MeshGraph::Read(vSession);
         //----------------------------------------------
 
+        //----------------------------------------------
+        // Define Expansion
+        int nplanes  = vSession->GetParameter("HomModesZ");
+        NekDouble lz = vSession->GetParameter("LZ");
+        bool useFFT  = false;
+        bool deal    = false;
+        const LibUtilities::PointsKey Pkey(nplanes,
+                                           LibUtilities::eFourierEvenlySpaced);
+        const LibUtilities::BasisKey Bkey(LibUtilities::eFourier, nplanes, Pkey);
+ 
+        int nvars = vSession->GetVariables().size();
+        Array<OneD, MultiRegions::ExpListSharedPtr> Exp(nvars);
+        for(int v = 0; v < nvars; ++v)
+        {
+            Exp[v] = MemoryManager<MultiRegions::ContField3DHomogeneous1D>::
+                AllocateSharedPtr(vSession, Bkey, lz, useFFT, deal, graph,
+                                  vSession->GetVariable(v));
+        }
 
+        //----------------------------------------------
+        
         //----------------------------------------------
         // Print summary of solution details
         StdRegions::ConstFactorMap factors;
         factors[StdRegions::eFactorLambda] = vSession->GetParameter("Lambda");
-        factors[StdRegions::eFactorTau]    = 1.0;
         const SpatialDomains::ExpansionInfoMap &expansions =
             graph->GetExpansionInfo();
         LibUtilities::BasisKey bkey0 =
             expansions.begin()->second->m_basisKeyVector[0];
         
-        if (vComm->GetRank() == 0)
-        {
-            cout << "Solving Helmholtz (HDG): " << endl;
-            cout << "         Communication: " << vSession->GetComm()->GetType()
-                 << endl;
-            cout << "         Solver type  : "
-                 << vSession->GetSolverInfo("GlobalSysSoln") << endl;
-            cout << "         Lambda       : " << factors[StdRegions::eFactorLambda]
-                 << endl;
-            cout << "         No. modes    : " << bkey0.GetNumModes() << endl;
-            cout << endl;
-        }
-        
-        //----------------------------------------------
-        
-
-        //----------------------------------------------
-        // Define Expansion
-        int nvars = vSession->GetVariables().size();
-        Array<OneD, MultiRegions::ExpListSharedPtr> Exp(nvars);
-        for(int v = 0; v < nvars; ++v)
-        {
-            Exp[v] = MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr(
-                                    vSession, graph, vSession->GetVariable(v));
-        }
+        cout << "Solving 3D Helmholtz (Homogeneous in z-direction):" << endl;
+        cout << "         Lambda          : " << factors[StdRegions::eFactorLambda]
+             << endl;
+        cout << "         Lz              : " << lz << endl;
+        cout << "         No. modes       : " << bkey0.GetNumModes() << endl;
+        cout << "         No. hom. modes  : " << Bkey.GetNumModes() << endl;
+        cout << endl;
         //----------------------------------------------
 
         //----------------------------------------------
@@ -97,7 +90,6 @@ int main(int argc, char *argv[])
             ffunc = vSession->GetFunction("Forcing",  vSession->GetVariable(v));
             ffunc->Evaluate(xc, Fce.UpdateArray1D(v));
         }
-        //----------------------------------------------
 
         //----------------------------------------------
         // Helmholtz solution taking physical forcing after setting
@@ -135,7 +127,7 @@ int main(int argc, char *argv[])
         fld->Write(out, FieldDef, FieldData);
         //-----------------------------------------------
 
-        //-----------------------------------------------
+        //----------------------------------------------
         // See if there is an exact solution, if so
         // evaluate and plot errors
         for(int v = 0; v < nvars; ++v)
@@ -145,41 +137,34 @@ int main(int argc, char *argv[])
 
             if (ex_sol)
             {
-                Array<OneD, NekDouble> tmp =
-                    Array<OneD, NekDouble>(Exp[0]->GetTotPoints());
-                
                 //----------------------------------------------
                 // evaluate exact solution
                 ex_sol->Evaluate(xc, Fce.UpdateArray1D(v));
                 //----------------------------------------------
-                
+
                 //--------------------------------------------
-                // Calculate error
+                // Calculate errors
                 NekDouble vLinfError = Exp[0]->Linf(Phys, Fce, v);
                 NekDouble vL2Error   = Exp[0]->L2  (Phys, Fce, v);
-                NekDouble vH1Error   = Exp[0]->H1  (Phys, Fce, v);
-
-                if (vSession->GetComm()->GetRank() == 0)
+                if (vComm->GetRank() == 0)
                 {
-                    std::string var = vSession->GetVariable(v); 
-                    cout << "L inf error (variable "<< var << ") : " <<
-                        vLinfError << endl;
-                    cout << "L 2 error   (variable "<< var << ") : " <<
-                        vL2Error << endl;
-                    cout << "H 1 error   (variable "<< var << ") : " <<
-                        vH1Error << endl;
+                    cout << "L inf error (variable "<< vSession->GetVariable(v) <<
+                        ") : " << vLinfError << endl;
+                    cout << "L 2 error   (variable "<< vSession->GetVariable(v) <<
+                        ") : " << vL2Error << endl;
                 }
+                //--------------------------------------------
             }
-        }
-        //--------------------------------------------
+        }    
     }
     catch (const std::runtime_error &)
     {
         cerr << "Caught exception." << endl;
         return 1;
     }
-    
+
     vSession->Finalise();
 
     return 0;
 }
+

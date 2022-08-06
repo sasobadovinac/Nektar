@@ -162,13 +162,27 @@ void DisContField3DHomogeneous1D::SetupBoundaryConditions(
     const SpatialDomains::BoundaryConditionCollection &bconditions =
         bcs.GetBoundaryConditions();
 
+    int nplanes = m_planes.size();
+
     m_bndCondExpansions =
         Array<OneD, MultiRegions::ExpListSharedPtr>(bregions.size());
     m_bndConditions = m_planes[0]->UpdateBndConditions();
+#if EXPLISTDATA
+#else            
+    int bndsize = m_bndCondExpansions.size();
+    m_bndCondFieldCoeff = Array<OneD, NekFieldCoeffSharedPtr>(bndsize);
+    m_bndCondFieldPhys  = Array<OneD, NekFieldPhysSharedPtr>(bndsize);
 
+    for (n = 0; n < nplanes; ++n)
+    {
+        std::dynamic_pointer_cast<DisContField>(m_planes[n])
+            ->m_bndCondFieldCoeff =
+            Array<OneD, NekFieldCoeffSharedPtr>(bndsize);
+    }
+#endif
+            
     m_bndCondBndWeight = Array<OneD, NekDouble>{bregions.size(), 0.0};
 
-    int nplanes = m_planes.size();
     Array<OneD, MultiRegions::ExpListSharedPtr> PlanesBndCondExp(nplanes);
 
     for (auto &it : bregions)
@@ -192,10 +206,38 @@ void DisContField3DHomogeneous1D::SetupBoundaryConditions(
                             size / m_StripZcomm->GetSize());
         }
 
+#if EXPLISTDATA
         m_bndCondExpansions[cnt++] =
             MemoryManager<MultiRegions::ExpList2DHomogeneous1D>::
                 AllocateSharedPtr(m_session, HomoBasis, lhom, m_useFFT, false,
                                   PlanesBndCondExp, comm);
+#else            
+        m_bndCondExpansions[cnt] =
+            MemoryManager<MultiRegions::ExpList2DHomogeneous1D>::
+                AllocateSharedPtr(m_session, HomoBasis, lhom, m_useFFT, false,
+                                  PlanesBndCondExp, comm);
+        m_bndCondFieldCoeff[cnt] = std::make_shared<
+            NekField<NekDouble, eCoeff>>(m_bndCondExpansions[cnt]);
+        m_bndCondFieldPhys[cnt] = std::make_shared<
+            NekField<NekDouble, ePhys>>(m_bndCondExpansions[cnt]);
+
+        // point m_bndCondFieldCoeff in m_planes to member of 1D array
+        // attached to m_bndCondFieldCoeff - very hacky!
+        int bnd_ncoeffs = PlanesBndCondExp[0]->GetNcoeffs(); 
+        for (n = 0; n < nplanes; ++n)
+        {
+            DisContFieldSharedPtr dgfield =
+                std::dynamic_pointer_cast<DisContField>(m_planes[n]);
+
+            dgfield->m_bndCondFieldCoeff[cnt] =
+                std::make_shared<NekField<NekDouble, eCoeff>>
+                (dgfield->m_bndCondExpansions[cnt]);
+            dgfield->m_bndCondFieldCoeff[cnt]->UpdateArray1D() =
+                m_bndCondFieldCoeff[cnt]->UpdateArray1D() + n*bnd_ncoeffs;
+        }
+
+        cnt++;
+#endif
     }
     v_EvaluateBoundaryConditions(0.0, variable);
 }
@@ -286,21 +328,21 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                 if (bcfilename != "")
                 {
 #if EXPLISTDATA
-                        locExpList->ExtractCoeffsFromFile
-                            (bcfilename, bcPtr->GetComm(), varName,
-                             locExpList->UpdateCoeffs());
-                        locExpList->BwdTrans(locExpList->GetCoeffs(),
-                                             locExpList->UpdatePhys());
-
-                        valuesFile = locExpList->GetPhys();
+                    locExpList->ExtractCoeffsFromFile
+                        (bcfilename, bcPtr->GetComm(), varName,
+                         locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
+                    
+                    valuesFile = locExpList->GetPhys();
 #else
-                        locExpList->ExtractCoeffsFromFile
-                            (bcfilename, bcPtr->GetComm(), varName,
-                             m_bndCondFieldCoeff[i]->UpdateArray1D());
-
-                        valuesFile = m_bndCondFieldPhys[i]->UpdateArray1D();
-                        locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
-                                             valuesFile);
+                    locExpList->ExtractCoeffsFromFile
+                        (bcfilename, bcPtr->GetComm(), varName,
+                         m_bndCondFieldCoeff[i]->UpdateArray1D());
+                    
+                    valuesFile = m_bndCondFieldPhys[i]->UpdateArray1D();
+                    locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                         valuesFile);
 #endif
                 }
 
@@ -316,21 +358,25 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                 }
 
 #if EXPLISTDATA
-                    Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
-                                locExpList->UpdatePhys(), 1);
-
-                    locExpList->FwdTransBndConstrained(
+                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
+                            locExpList->UpdatePhys(), 1);
+                
+                // set wave space to false since have set up phys values
+                locExpList->SetWaveSpace(false);
+                
+                locExpList->FwdTransBndConstrained(
                         locExpList->GetPhys(), locExpList->UpdateCoeffs());
 #else
-                    Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
-                                m_bndCondFieldPhys[i]->UpdateArray1D(),1);
-
-                    locExpList->FwdTransBndConstrained(
+                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
+                            m_bndCondFieldPhys[i]->UpdateArray1D(),1);
+                
+                // set wave space to false since have set up phys values
+                locExpList->SetWaveSpace(false);
+                
+                locExpList->FwdTransBndConstrained(
                                     m_bndCondFieldPhys[i]->GetArray1D(),
                                     m_bndCondFieldCoeff[i]->UpdateArray1D());
 #endif 
-                // set wave space to false since have set up phys values
-                locExpList->SetWaveSpace(false);
 
             }
             else if (m_bndConditions[i]->GetBoundaryConditionType() ==

@@ -190,12 +190,6 @@ void DisContField::SetUpDG(const std::string variable)
     m_trace = MemoryManager<ExpList>::AllocateSharedPtr(
         m_session, m_bndCondExpansions, m_bndConditions, *m_exp, m_graph,
         m_comm);
-#if EXPLISTDATA
-#else            
-    m_traceFieldCoeff = std::make_shared<NekField<NekDouble, eCoeff>>(m_trace);
-    m_traceFieldPhys  = std::make_shared<NekField<NekDouble, ePhys>>(m_trace);
-    
-#endif
 
     PeriodicMap periodicTraces = (m_expType == e1D)   ? m_periodicVerts
                                  : (m_expType == e2D) ? m_periodicEdges
@@ -657,6 +651,11 @@ DisContField::DisContField(const DisContField &In,
     : ExpList(In, DeclareCoeffPhysArrays),
       m_bndConditions(In.m_bndConditions),
       m_bndCondExpansions(In.m_bndCondExpansions),
+#if EXPLISTDATA
+#else
+      m_bndCondFieldCoeff(In.m_bndCondFieldCoeff),
+      m_bndCondFieldPhys(In.m_bndCondFieldPhys),
+#endif
       m_globalBndMat(In.m_globalBndMat),
       m_traceMap(In.m_traceMap), m_boundaryTraces(In.m_boundaryTraces),
       m_periodicVerts(In.m_periodicVerts),
@@ -694,6 +693,20 @@ DisContField::DisContField(const DisContField &In,
 
         if (DeclareCoeffPhysArrays)
         {
+#if EXPLISTDATA
+#else            
+            int bndsize = m_bndCondExpansions.size();
+            m_bndCondFieldCoeff = Array<OneD, NekFieldCoeffSharedPtr>(bndsize);
+            m_bndCondFieldPhys  = Array<OneD, NekFieldPhysSharedPtr>(bndsize);
+            
+            for(int b = 0; b < bndsize; ++b)
+            {
+                m_bndCondFieldCoeff[b] = std::make_shared<
+                    NekField<NekDouble, eCoeff>>(m_bndCondExpansions[b]);
+                m_bndCondFieldPhys[b] = std::make_shared<
+                    NekField<NekDouble, ePhys>>(m_bndCondExpansions[b]);
+            }
+#endif
             EvaluateBoundaryConditions(0.0, variable);
         }
 
@@ -3481,13 +3494,13 @@ void DisContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
         GlobalLinSysSharedPtr LinSys = GetGlobalBndLinSys(key);
         LinSys->Solve(bndrhs, loclambda, m_traceMap);
 
-        // For consistency with previous version put global
-        // solution into m_trace->m_coeffs
 
 #if EXPLISTDATA
+        // For consistency with previous version put global
+        // solution into m_trace->m_coeffs
         m_traceMap->LocalToGlobal(loclambda, m_trace->UpdateCoeffs());
 #else
-        m_traceMap->LocalToGlobal(loclambda, m_traceFieldCoeff->UpdateArray1D());
+        // Current do nothing since we want to deprecate m_trace coeff
 #endif
         
     }
@@ -4190,6 +4203,7 @@ map<int, RobinBCInfoSharedPtr> DisContField::v_GetRobinBCInfo(void)
     return returnval;
 }
 
+#if EXPLISTDATA
 /**
  * @brief Calculate the \f$ L^2 \f$ error of the \f$ Q_{\rm dir} \f$
  * derivative using the consistent DG evaluation of \f$ Q_{\rm dir} \f$.
@@ -4216,11 +4230,7 @@ NekDouble DisContField::L2_DGDeriv(const int dir,
     int cnt;
     int LocBndCoeffs = m_traceMap->GetNumLocalBndCoeffs();
     Array<OneD, NekDouble> loc_lambda(LocBndCoeffs), edge_lambda;
-#if EXPLISTDATA
     m_traceMap->GlobalToLocalBnd(m_trace->GetCoeffs(), loc_lambda);
-#else
-    m_traceMap->GlobalToLocalBnd(m_traceFieldCoeff->GetArray1D(), loc_lambda);
-#endif
 
     edge_lambda = loc_lambda;
 
@@ -4290,11 +4300,7 @@ void DisContField::EvaluateHDGPostProcessing(
     int LocBndCoeffs = m_traceMap->GetNumLocalBndCoeffs();
     Array<OneD, NekDouble> loc_lambda(LocBndCoeffs), trace_lambda;
     Array<OneD, NekDouble> tmp_coeffs;
-#if EXPLISTDATA
     m_traceMap->GlobalToLocalBnd(m_trace->GetCoeffs(), loc_lambda);
-#else
-    m_traceMap->GlobalToLocalBnd(m_traceFieldCoeff->GetArray1D(), loc_lambda);
-#endif
 
     trace_lambda = loc_lambda;
 
@@ -4470,6 +4476,7 @@ void DisContField::EvaluateHDGPostProcessing(
         (*m_exp)[i]->FwdTrans(work, tmp_coeffs = outarray + m_coeff_offset[i]);
     }
 }
+#endif
 
 void DisContField::v_GetLocTraceFromTracePts(
     const Array<OneD, const NekDouble> &Fwd,
