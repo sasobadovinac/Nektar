@@ -3279,12 +3279,13 @@ NekDouble ExpList::v_VectorFlux(
 
 #if EXPLISTDATA
 Array<OneD, const NekDouble> ExpList::v_HomogeneousEnergy(void)
+{
 #else
 Array<OneD, const NekDouble> ExpList::v_HomogeneousEnergy(
                                    const Array<OneD, const NekDouble> &coeffs)
-#endif
 {
     boost::ignore_unused(coeffs);
+#endif
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
     Array<OneD, NekDouble> NoEnergy(1, 0.0);
