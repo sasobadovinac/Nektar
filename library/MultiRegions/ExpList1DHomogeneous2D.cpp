@@ -185,6 +185,19 @@ void ExpList1DHomogeneous2D::GetCoords(const int eid,
     }
 }
 
+void ExpList1DHomogeneous2D::v_FwdTrans(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    // just have a point expansion so copy inarray to outarray
+    Vmath::Vcopy(m_npoints,inarray,1,outarray,1);
+
+    if (!m_WaveSpace)
+    {
+        HomogeneousFwdTrans(outarray, outarray);
+    }
+}
+
 /**
  * The operation calls the 2D plane coordinates through the
  * function ExpList#GetCoords and then evaluated the third
@@ -254,20 +267,6 @@ void ExpList1DHomogeneous2D::v_GetCoords(Array<OneD, NekDouble> &xc0,
 }
 
 #if EXPLISTDATA
-/**
- * Perform the 2D Forward transform of a set of points representing a plane of
- * boundary conditions which are merely the collection of the boundary
- * conditions coming from each 1D expansion.
- * @param   inarray    The value of the BC on each point of the y-z homogeneous
- * plane.
- * @param   outarray   The value of the the coefficient of the 2D Fourier
- * expansion
- */
-// void HomoFwdTrans2D(const Array<OneD, const NekDouble> &inarray, Array<OneD,
-// NekDouble> &outarray)
-//{
-
-//}
 
 /**
  * Write Tecplot Files Zone

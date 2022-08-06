@@ -103,6 +103,22 @@ protected:
                              Array<OneD, NekDouble> &coord_1,
                              Array<OneD, NekDouble> &coord_2);
 
+    virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
+                            Array<OneD, NekDouble> &outarray);
+    virtual void v_FwdTransLocalElmt(const Array<OneD, const NekDouble> &inarray,
+                            Array<OneD, NekDouble> &outarray)
+    {
+        v_FwdTrans(inarray,outarray);
+    }
+    // This is same as fwdtrans for this expansion
+    virtual void v_FwdTransBndConstrained(const Array<OneD,
+                                          const NekDouble> &inarray,
+                            Array<OneD, NekDouble> &outarray)
+    {
+        v_FwdTrans(inarray,outarray);
+    }
+
+    
 #if EXPLISTDATA
     virtual void v_WriteTecplotZone(std::ostream &outfile, int expansion);
 

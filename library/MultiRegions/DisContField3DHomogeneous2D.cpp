@@ -129,7 +129,7 @@ DisContField3DHomogeneous2D::DisContField3DHomogeneous2D(
 
     SetCoeffPhys();
 
-    SetupBoundaryConditions(HomoBasis_y, HomoBasis_z, lhom_y, lhom_z, bcs);
+    SetupBoundaryConditions(HomoBasis_y, HomoBasis_z, lhom_y, lhom_z, bcs,variable);
 }
 
 DisContField3DHomogeneous2D::~DisContField3DHomogeneous2D()
@@ -139,7 +139,8 @@ DisContField3DHomogeneous2D::~DisContField3DHomogeneous2D()
 void DisContField3DHomogeneous2D::SetupBoundaryConditions(
     const LibUtilities::BasisKey &HomoBasis_y,
     const LibUtilities::BasisKey &HomoBasis_z, const NekDouble lhom_y,
-    const NekDouble lhom_z, SpatialDomains::BoundaryConditions &bcs)
+    const NekDouble lhom_z, SpatialDomains::BoundaryConditions &bcs,
+    const std::string variable)
 {
     // Setup an ExpList1DHomogeneous2D expansion for boundary
     // conditions and link to class declared in m_lines.
@@ -157,6 +158,19 @@ void DisContField3DHomogeneous2D::SetupBoundaryConditions(
     Array<OneD, MultiRegions::ExpListSharedPtr> LinesBndCondExp(nlines);
 
     m_bndConditions = m_lines[0]->UpdateBndConditions();
+#if EXPLISTDATA
+#else            
+    int bndsize = m_bndCondExpansions.size();
+    m_bndCondFieldCoeff = Array<OneD, NekFieldCoeffSharedPtr>(bndsize);
+    m_bndCondFieldPhys  = Array<OneD, NekFieldPhysSharedPtr>(bndsize);
+
+    for (int n = 0; n < nlines; ++n)
+    {
+        std::dynamic_pointer_cast<DisContField>(m_lines[n])
+            ->m_bndCondFieldCoeff =
+            Array<OneD, NekFieldCoeffSharedPtr>(bndsize);
+    }
+#endif
 
     for (int i = 0; i < nbnd; ++i)
     {
@@ -169,53 +183,32 @@ void DisContField3DHomogeneous2D::SetupBoundaryConditions(
             MemoryManager<ExpList1DHomogeneous2D>::AllocateSharedPtr(
                 m_session, HomoBasis_y, HomoBasis_z, lhom_y, lhom_z, m_useFFT,
                 false, LinesBndCondExp);
-    }
-
-    EvaluateBoundaryConditions();
-}
-
-void DisContField3DHomogeneous2D::EvaluateBoundaryConditions(
-    const NekDouble time, const std::string varName)
-{
-    int n, m;
-    const Array<OneD, const NekDouble> y = m_homogeneousBasis_y->GetZ();
-    const Array<OneD, const NekDouble> z = m_homogeneousBasis_z->GetZ();
-
-    for (n = 0; n < m_nz; ++n)
-    {
-        for (m = 0; m < m_ny; ++m)
-        {
-            m_lines[m + (n * m_ny)]->EvaluateBoundaryConditions(
-                time, varName, 0.5 * m_lhom_y * (1.0 + y[m]),
-                0.5 * m_lhom_z * (1.0 + z[n]));
-        }
-    }
 
 #if EXPLISTDATA
-    // Fourier transform coefficient space boundary values
-    for (n = 0; n < m_bndCondExpansions.size(); ++n)
-    {
-        if (time == 0.0 || m_bndConditions[n]->IsTimeDependent())
+#else        
+        m_bndCondFieldCoeff[i] = std::make_shared<
+            NekField<NekDouble, eCoeff>>(m_bndCondExpansions[i]);
+        m_bndCondFieldPhys[i] = std::make_shared<
+            NekField<NekDouble, ePhys>>(m_bndCondExpansions[i]);
+
+        // point m_bndCondFieldCoeff in m_planes to member of 1D array
+        // attached to m_bndCondFieldCoeff - very hacky!
+        int bnd_ncoeffs = LinesBndCondExp[0]->GetNcoeffs(); 
+        for (int n = 0; n < nlines; ++n)
         {
-            m_bndCondBndWeight[n] = 1.0;
-            m_bndCondExpansions[n]->HomogeneousFwdTrans(
-                m_bndCondExpansions[n]->GetCoeffs(),
-                m_bndCondExpansions[n]->UpdateCoeffs());
+            DisContFieldSharedPtr dgfield =
+                std::dynamic_pointer_cast<DisContField>(m_lines[n]);
+
+            dgfield->m_bndCondFieldCoeff[i] =
+                std::make_shared<NekField<NekDouble, eCoeff>>
+                (dgfield->m_bndCondExpansions[i]);
+            dgfield->m_bndCondFieldCoeff[i]->UpdateArray1D() =
+                m_bndCondFieldCoeff[i]->UpdateArray1D() + n*bnd_ncoeffs;
         }
-    }
-#else
-    // Fourier transform coefficient space boundary values
-    for (n = 0; n < m_bndCondExpansions.size(); ++n)
-    {
-        if (time == 0.0 || m_bndConditions[n]->IsTimeDependent())
-        {
-            m_bndCondBndWeight[n] = 1.0;
-            m_bndCondExpansions[n]->HomogeneousFwdTrans(
-                m_bndCondFieldCoeff[n]->GetArray1D(),
-                m_bndCondFieldPhys[n]->UpdateArray1D());
-        }
-    }
 #endif
+    }
+
+    v_EvaluateBoundaryConditions(0.0, variable);
 }
 
 void DisContField3DHomogeneous2D::v_HelmSolve(
@@ -269,13 +262,256 @@ void DisContField3DHomogeneous2D::v_HelmSolve(
     }
 }
 
+#if 1
 void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
     const NekDouble time, const std::string varName, const NekDouble x2_in,
     const NekDouble x3_in)
 {
     boost::ignore_unused(x2_in, x3_in);
-    EvaluateBoundaryConditions(time, varName);
+    int i;
+    int npoints;
+    int nbnd = m_bndCondExpansions.size();
+    MultiRegions::ExpListSharedPtr locExpList;
+
+    for (i = 0; i < nbnd; ++i)
+    {
+        if (time == 0.0 || m_bndConditions[i]->IsTimeDependent())
+        {
+            locExpList = m_bndCondExpansions[i];
+            npoints    = locExpList->GetNpoints();
+
+            Array<OneD, NekDouble> x0(npoints, 0.0);
+            Array<OneD, NekDouble> x1(npoints, 0.0);
+            Array<OneD, NekDouble> x2(npoints, 0.0);
+            Array<OneD, NekDouble> valuesFile(npoints, 1.0),
+                valuesExp(npoints, 1.0);
+
+            locExpList->GetCoords(x0, x1, x2);
+
+            if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                SpatialDomains::eDirichlet)
+            {
+                SpatialDomains::DirichletBCShPtr bcPtr =
+                    std::static_pointer_cast<
+                        SpatialDomains::DirichletBoundaryCondition>(
+                        m_bndConditions[i]);
+                std::string bcfilename  = bcPtr->m_filename;
+                std::string exprbcs     = bcPtr->m_expr;
+
+                if (bcfilename != "")
+                {
+#if EXPLISTDATA
+                    locExpList->ExtractCoeffsFromFile
+                        (bcfilename, bcPtr->GetComm(), varName,
+                         locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
+                    
+                    valuesFile = locExpList->GetPhys();
+#else
+                    locExpList->ExtractCoeffsFromFile
+                        (bcfilename, bcPtr->GetComm(), varName,
+                         m_bndCondFieldCoeff[i]->UpdateArray1D());
+                    
+                    valuesFile = m_bndCondFieldPhys[i]->UpdateArray1D();
+                    locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                         valuesFile);
+#endif
+                }
+
+                if (exprbcs != "")
+                {
+                    LibUtilities::Equation condition =
+                        std::static_pointer_cast<
+                            SpatialDomains::DirichletBoundaryCondition>(
+                            m_bndConditions[i])
+                            ->m_dirichletCondition;
+
+                    condition.Evaluate(x0, x1, x2, time, valuesExp);
+                }
+
+#if EXPLISTDATA
+                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
+                            locExpList->UpdatePhys(), 1);
+                
+                // set wave space to false since have set up phys values
+                locExpList->SetWaveSpace(false);
+                
+                locExpList->FwdTransBndConstrained(
+                        locExpList->GetPhys(), locExpList->UpdateCoeffs());
+#else
+                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
+                            m_bndCondFieldPhys[i]->UpdateArray1D(),1);
+                
+                // set wave space to false since have set up phys values
+                locExpList->SetWaveSpace(false);
+                
+                locExpList->FwdTransBndConstrained(
+                                    m_bndCondFieldPhys[i]->GetArray1D(),
+                                    m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif 
+
+            }
+            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                     SpatialDomains::eNeumann)
+            {
+                SpatialDomains::NeumannBCShPtr bcPtr = std::static_pointer_cast<
+                    SpatialDomains::NeumannBoundaryCondition>(
+                    m_bndConditions[i]);
+
+                std::string bcfilename = bcPtr->m_filename;
+                
+                if (bcfilename != "")
+                {
+#if EXPLISTDATA
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             locExpList->UpdateCoeffs());
+                        locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                             locExpList->UpdatePhys());
+#else
+                        locExpList->ExtractCoeffsFromFile
+                            (bcfilename, bcPtr->GetComm(), varName,
+                             m_bndCondFieldCoeff[i]->UpdateArray1D());
+
+                        locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                           m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
+                }
+                else
+                {
+                    LibUtilities::Equation condition =
+                        std::static_pointer_cast<
+                            SpatialDomains::NeumannBoundaryCondition>(
+                            m_bndConditions[i])
+                            ->m_neumannCondition;
+
+#if EXPLISTDATA
+                    condition.Evaluate(x0, x1, x2, time,
+                                       locExpList->UpdatePhys());
+#else
+                    condition.Evaluate(x0, x1, x2, time,
+                                       m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
+                }
+
+#if EXPLISTDATA
+                    locExpList->IProductWRTBase(locExpList->GetPhys(),
+                                                locExpList->UpdateCoeffs());
+#else
+                    locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
+                                           m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif
+            }
+            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                     SpatialDomains::eRobin)
+            {
+                SpatialDomains::RobinBCShPtr bcPtr = std::static_pointer_cast<
+                    SpatialDomains::RobinBoundaryCondition>(m_bndConditions[i]);
+
+                std::string bcfilename = bcPtr->m_filename;
+                
+                if (bcfilename != "")
+                {
+#if EXPLISTDATA
+                    locExpList->ExtractCoeffsFromFile
+                        (bcfilename, bcPtr->GetComm(), varName,
+                         locExpList->UpdateCoeffs());
+                    locExpList->BwdTrans(locExpList->GetCoeffs(),
+                                         locExpList->UpdatePhys());
+#else
+                    locExpList->ExtractCoeffsFromFile
+                        (bcfilename, bcPtr->GetComm(), varName,
+                         m_bndCondFieldCoeff[i]->UpdateArray1D());
+                    
+                    locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
+                                         m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
+                }
+                else
+                {
+                    LibUtilities::Equation condition =
+                        std::static_pointer_cast<
+                            SpatialDomains::RobinBoundaryCondition>(
+                            m_bndConditions[i])
+                            ->m_robinFunction;
+
+#if EXPLISTDATA
+                    condition.Evaluate(x0, x1, x2, time,
+                                       locExpList->UpdatePhys());
+#else
+                    condition.Evaluate(x0, x1, x2, time,
+                                       m_bndCondFieldPhys[i]->UpdateArray1D());
+#endif
+                }
+
+#if EXPLISTDATA
+                locExpList->IProductWRTBase(locExpList->GetPhys(),
+                                            locExpList->UpdateCoeffs());
+#else
+                locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
+                                            m_bndCondFieldCoeff[i]->UpdateArray1D());
+#endif
+            }
+            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
+                     SpatialDomains::ePeriodic)
+            {
+                continue;
+            }
+            else
+            {
+                ASSERTL0(false, "This type of BC not implemented yet");
+            }
+        }
+    }
 }
+#else
+    void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
+    const NekDouble time, const std::string varName, const NekDouble x2_in,
+    const NekDouble x3_in)
+{
+    boost::ignore_unused(x2_in, x3_in);
+    int n, m;
+    const Array<OneD, const NekDouble> y = m_homogeneousBasis_y->GetZ();
+    const Array<OneD, const NekDouble> z = m_homogeneousBasis_z->GetZ();
+
+    for (n = 0; n < m_nz; ++n)
+    {
+        for (m = 0; m < m_ny; ++m)
+        {
+            m_lines[m + (n * m_ny)]->EvaluateBoundaryConditions(
+                time, varName, 0.5 * m_lhom_y * (1.0 + y[m]),
+                0.5 * m_lhom_z * (1.0 + z[n]));
+        }
+    }
+
+#if EXPLISTDATA
+    // Fourier transform coefficient space boundary values
+    for (n = 0; n < m_bndCondExpansions.size(); ++n)
+    {
+        if (time == 0.0 || m_bndConditions[n]->IsTimeDependent())
+        {
+            m_bndCondBndWeight[n] = 1.0;
+            m_bndCondExpansions[n]->HomogeneousFwdTrans(
+                m_bndCondExpansions[n]->GetCoeffs(),
+                m_bndCondExpansions[n]->UpdateCoeffs());
+        }
+    }
+#else
+    // Fourier transform coefficient space boundary values
+    for (n = 0; n < m_bndCondExpansions.size(); ++n)
+    {
+        if (time == 0.0 || m_bndConditions[n]->IsTimeDependent())
+        {
+            m_bndCondBndWeight[n] = 1.0;
+            m_bndCondExpansions[n]->HomogeneousFwdTrans(
+                m_bndCondFieldCoeff[n]->GetArray1D(),
+                m_bndCondFieldPhys[n]->UpdateArray1D());
+        }
+    }
+#endif
+}
+#endif
 
 const Array<OneD, const std::shared_ptr<ExpList>>
     &DisContField3DHomogeneous2D::v_GetBndCondExpansions(void)

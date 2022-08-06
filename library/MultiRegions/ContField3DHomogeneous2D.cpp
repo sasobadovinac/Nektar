@@ -110,7 +110,7 @@ ContField3DHomogeneous2D::ContField3DHomogeneous2D(
 
     SetCoeffPhys();
 
-    SetupBoundaryConditions(HomoBasis_y, HomoBasis_z, lhom_y, lhom_z, bcs);
+    SetupBoundaryConditions(HomoBasis_y, HomoBasis_z, lhom_y, lhom_z, bcs,variable);
 }
 
 void ContField3DHomogeneous2D::v_ImposeDirichletConditions(

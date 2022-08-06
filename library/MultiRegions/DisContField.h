@@ -390,6 +390,7 @@ private:
 #if EXPLISTDATA
 #else            
     friend class DisContField3DHomogeneous1D;
+    friend class DisContField3DHomogeneous2D;
 #endif
     
     std::vector<bool> m_negatedFluxNormal;
