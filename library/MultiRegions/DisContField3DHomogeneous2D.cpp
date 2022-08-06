@@ -37,7 +37,7 @@
 
 #include <MultiRegions/DisContField.h>
 #include <MultiRegions/DisContField3DHomogeneous2D.h>
-#include <MultiRegions/ExpList1DHomogeneous2D.h>
+#include <MultiRegions/ExpList2DHomogeneous2D.h>
 
 namespace Nektar
 {
@@ -142,7 +142,7 @@ void DisContField3DHomogeneous2D::SetupBoundaryConditions(
     const NekDouble lhom_z, SpatialDomains::BoundaryConditions &bcs,
     const std::string variable)
 {
-    // Setup an ExpList1DHomogeneous2D expansion for boundary
+    // Setup an ExpList2DHomogeneous2D expansion for boundary
     // conditions and link to class declared in m_lines.
 
     size_t nlines = m_lines.size();
@@ -180,7 +180,7 @@ void DisContField3DHomogeneous2D::SetupBoundaryConditions(
         }
 
         m_bndCondExpansions[i] =
-            MemoryManager<ExpList1DHomogeneous2D>::AllocateSharedPtr(
+            MemoryManager<ExpList2DHomogeneous2D>::AllocateSharedPtr(
                 m_session, HomoBasis_y, HomoBasis_z, lhom_y, lhom_z, m_useFFT,
                 false, LinesBndCondExp);
 

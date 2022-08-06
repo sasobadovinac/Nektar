@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpList1DHomogeneous2D.h
+// File ExpList2DHomogeneous2D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -46,23 +46,23 @@ namespace MultiRegions
 {
 
 // Forward declaration for typedefs
-class ExpList1DHomogeneous2D;
+class ExpList2DHomogeneous2D;
 
-/// Shared pointer to an ExpList1DHomogeneous2D object.
-typedef std::shared_ptr<ExpList1DHomogeneous2D> ExpList1DHomogeneous2DSharedPtr;
-/// Vector of pointers to ExpList1DHomogeneous2D objects.
-typedef std::vector<ExpList1DHomogeneous2DSharedPtr>
-    ExpList1DHomogeneous2DVector;
+/// Shared pointer to an ExpList2DHomogeneous2D object.
+typedef std::shared_ptr<ExpList2DHomogeneous2D> ExpList2DHomogeneous2DSharedPtr;
+/// Vector of pointers to ExpList2DHomogeneous2D objects.
+typedef std::vector<ExpList2DHomogeneous2DSharedPtr>
+    ExpList2DHomogeneous2DVector;
 
 /// Abstraction of a one-dimensional multi-elemental expansion which
 /// is merely a collection of local expansions.
-class ExpList1DHomogeneous2D : public ExpListHomogeneous2D
+class ExpList2DHomogeneous2D : public ExpListHomogeneous2D
 {
 public:
     /// Default constructor.
-    MULTI_REGIONS_EXPORT ExpList1DHomogeneous2D();
+    MULTI_REGIONS_EXPORT ExpList2DHomogeneous2D();
 
-    MULTI_REGIONS_EXPORT ExpList1DHomogeneous2D(
+    MULTI_REGIONS_EXPORT ExpList2DHomogeneous2D(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const LibUtilities::BasisKey &HomoBasis_y,
         const LibUtilities::BasisKey &HomoBasis_z, const NekDouble lhom_y,
@@ -70,11 +70,11 @@ public:
         const Array<OneD, ExpListSharedPtr> &points);
 
     /// Copy constructor.
-    MULTI_REGIONS_EXPORT ExpList1DHomogeneous2D(
-        const ExpList1DHomogeneous2D &In);
+    MULTI_REGIONS_EXPORT ExpList2DHomogeneous2D(
+        const ExpList2DHomogeneous2D &In);
 
     /// Destructor.
-    MULTI_REGIONS_EXPORT virtual ~ExpList1DHomogeneous2D();
+    MULTI_REGIONS_EXPORT virtual ~ExpList2DHomogeneous2D();
 
     /// This function calculates the coordinates of all the elemental
     /// quadrature points \f$\boldsymbol{x}_i\f$.
@@ -129,7 +129,7 @@ protected:
 private:
 };
 
-inline void ExpList1DHomogeneous2D::GetCoords(Array<OneD, NekDouble> &coord_0,
+inline void ExpList2DHomogeneous2D::GetCoords(Array<OneD, NekDouble> &coord_0,
                                               Array<OneD, NekDouble> &coord_1,
                                               Array<OneD, NekDouble> &coord_2)
 
