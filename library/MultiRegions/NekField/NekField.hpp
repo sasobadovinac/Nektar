@@ -83,21 +83,20 @@ public:
         }
 
         m_storage = Array<OneD, Array<OneD, NekDouble> >(nvar); 
-        int varsize; 
         if (TStype == ePhys)
         {
-            varsize = m_expIF[0]->GetNpoints(); 
+            m_varSize = m_expIF[0]->GetNpoints(); 
         }
         else if (TStype == eCoeff)
         {
-            varsize = m_expIF[0]->GetNcoeffs(); 
+            m_varSize = m_expIF[0]->GetNcoeffs(); 
         }
 
-        m_storage[m_numVariables-1] =Array<OneD, TData>(varsize*m_numVariables,defval);
+        m_storage[m_numVariables-1] =Array<OneD, TData>(m_varSize*m_numVariables,defval);
 
         for(int i = m_numVariables-1; i > 0; --i)
         {
-            m_storage[i-1] = m_storage[i] + varsize; 
+            m_storage[i-1] = m_storage[i] + m_varSize; 
         }
     }
 
@@ -113,21 +112,20 @@ public:
         }
 
         m_storage = Array<OneD, Array<OneD, NekDouble> >(m_numVariables); 
-        int varsize; 
         if (TStype == ePhys)
         {
-            varsize = m_expIF[0]->GetNpoints(); 
+            m_varSize = m_expIF[0]->GetNpoints(); 
         }
         else if (TStype == eCoeff)
         {
-            varsize = m_expIF[0]->GetNcoeffs(); 
+            m_varSize = m_expIF[0]->GetNcoeffs(); 
         }
 
-        m_storage[m_numVariables-1] =Array<OneD, TData>(varsize*m_numVariables,defval);
+        m_storage[m_numVariables-1] =Array<OneD, TData>(m_varSize*m_numVariables,defval);
 
         for(int i = m_numVariables-1; i > 0; --i)
         {
-            m_storage[i-1] = m_storage[i] + varsize; 
+            m_storage[i-1] = m_storage[i] + m_varSize; 
         }
     }
     
@@ -135,6 +133,7 @@ public:
         : m_expIF(F.m_expIF),
           m_storage(Array<OneD, Array<OneD, TData>>(F.m_numVariables)),
           m_numVariables(F.m_numVariables),
+          m_varSize(F.m_varSize),
           m_dataOrder(F.m_dataOrder)
     {
         // Fecalre field in reverse order so that data could be
@@ -142,12 +141,11 @@ public:
         // array length for one variable since this is often used as a
         // sizing variable in code. Probably there is a better
         // solution but hack for now.
-        int varsize = F.m_storage[0].size();
-        m_storage[m_numVariables-1] =Array<OneD, TData>(varsize*m_numVariables,F.m_storage.GetData());
+        m_storage[m_numVariables-1] =Array<OneD, TData>(m_varSize*m_numVariables,F.m_storage.GetData());
 
         for(int i = m_numVariables-1; i > 0; --i)
         {
-            m_storage[i-1] = m_storage[i] + varsize; 
+            m_storage[i-1] = m_storage[i] + m_varSize; 
         }
     }
 
@@ -157,8 +155,8 @@ public:
         m_expIF        = rhs.m_expIF; 
         m_storage      = rhs.m_storage; 
         m_numVariables = rhs.m_numVariables; 
+        m_varSize      = rhs.m_varSize; 
         m_dataOrder    = rhs.m_dataOrder; 
-
     }
     
     ~NekField()
@@ -208,6 +206,11 @@ public:
     {
         return m_numVariables; 
     }
+
+    inline int GetVarSize() const 
+    {
+        return m_varSize; 
+    }
 protected: 
     /// interface to allow access to ExpList 
     std::vector<std::shared_ptr<MultiRegions::details::ExpListNekFieldInterface>> m_expIF;
@@ -217,6 +220,9 @@ protected:
     
     /// number of variables in storage 
     int m_numVariables;
+
+    /// size of storage  per variable
+    int m_varSize;
 
     /// Data ordering format 
     DataLayout m_dataOrder; 

@@ -96,8 +96,13 @@ DisContField3DHomogeneous1D::DisContField3DHomogeneous1D(
     SpatialDomains::BoundaryConditions bcs(m_session, graph2D);
 
     // note that nzplanes can be larger than nzmodes
+#if EXPLISTDATA
     m_planes[0] = plane_zero = MemoryManager<DisContField>::AllocateSharedPtr(
         pSession, graph2D, variable, true, false, ImpType);
+#else            
+    m_planes[0] = plane_zero = MemoryManager<DisContField>::AllocateSharedPtr(
+        pSession, graph2D, variable, true, true, ImpType);
+#endif
 
     m_exp = MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr();
 
@@ -110,8 +115,14 @@ DisContField3DHomogeneous1D::DisContField3DHomogeneous1D(
 
     for (n = 1; n < m_planes.size(); ++n)
     {
+#if EXPLISTDATA
         m_planes[n] = MemoryManager<DisContField>::AllocateSharedPtr(
             *plane_zero, graph2D, variable, true, false);
+#else
+        m_planes[n] = MemoryManager<DisContField>::AllocateSharedPtr(
+            *plane_zero, graph2D, variable, true, true);
+#endif
+        
         for (i = 0; i < nel; ++i)
         {
             (*m_exp).push_back((*m_exp)[i]);
@@ -167,28 +178,38 @@ void DisContField3DHomogeneous1D::SetupBoundaryConditions(
     m_bndCondExpansions =
         Array<OneD, MultiRegions::ExpListSharedPtr>(bregions.size());
     m_bndConditions = m_planes[0]->UpdateBndConditions();
+
 #if EXPLISTDATA
 #else            
     int bndsize = m_bndCondExpansions.size();
     m_bndCondFieldCoeff = Array<OneD, NekFieldCoeffSharedPtr>(bndsize);
     m_bndCondFieldPhys  = Array<OneD, NekFieldPhysSharedPtr>(bndsize);
 
+    // set up array pointing to planes bndCoeffFields. 
+    m_planesBndCondFieldCoeff =
+        Array<OneD,Array<OneD, NekFieldCoeffSharedPtr>>(nplanes);
+
     for (n = 0; n < nplanes; ++n)
     {
-        std::dynamic_pointer_cast<DisContField>(m_planes[n])
-            ->m_bndCondFieldCoeff =
-            Array<OneD, NekFieldCoeffSharedPtr>(bndsize);
+        m_planesBndCondFieldCoeff[n] = std::dynamic_pointer_cast<DisContField>
+            (m_planes[n])->UpdateBndCondFieldCoeff();
     }
+
+    
+        
+
 #endif
             
     m_bndCondBndWeight = Array<OneD, NekDouble>{bregions.size(), 0.0};
 
     Array<OneD, MultiRegions::ExpListSharedPtr> PlanesBndCondExp(nplanes);
 
+
     for (auto &it : bregions)
     {
         SpatialDomains::BoundaryConditionShPtr boundaryCondition =
             GetBoundaryCondition(bconditions, it.first, variable);
+
         for (n = 0; n < nplanes; ++n)
         {
             PlanesBndCondExp[n] = m_planes[n]->UpdateBndCondExpansion(cnt);
@@ -221,26 +242,16 @@ void DisContField3DHomogeneous1D::SetupBoundaryConditions(
         m_bndCondFieldPhys[cnt] = std::make_shared<
             NekField<NekDouble, ePhys>>(m_bndCondExpansions[cnt]);
 
-        // point m_bndCondFieldCoeff in m_planes to member of 1D array
-        // attached to m_bndCondFieldCoeff - very hacky!
-        int bnd_ncoeffs = PlanesBndCondExp[0]->GetNcoeffs(); 
-        for (n = 0; n < nplanes; ++n)
-        {
-            DisContFieldSharedPtr dgfield =
-                std::dynamic_pointer_cast<DisContField>(m_planes[n]);
-
-            dgfield->m_bndCondFieldCoeff[cnt] =
-                std::make_shared<NekField<NekDouble, eCoeff>>
-                (dgfield->m_bndCondExpansions[cnt]);
-            dgfield->m_bndCondFieldCoeff[cnt]->UpdateArray1D() =
-                m_bndCondFieldCoeff[cnt]->UpdateArray1D() + n*bnd_ncoeffs;
-        }
-
         cnt++;
 #endif
     }
     v_EvaluateBoundaryConditions(0.0, variable);
+#if EXPLISTDATA
+#else
+    CopyCoeffBCsToPlanes();
+#endif
 }
+
 
 void DisContField3DHomogeneous1D::v_HelmSolve(
     const Array<OneD, const NekDouble> &inarray,
@@ -268,6 +279,12 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
     {
         HomogeneousFwdTrans(inarray, fce);
     }
+
+#if EXPLISTDATA
+#else
+    // setup coeff bcs. Might also need Phys for DG
+    CopyCoeffBCsToPlanes();
+#endif
 
     for (n = 0; n < m_planes.size(); ++n)
     {

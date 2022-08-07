@@ -127,6 +127,12 @@ public:
     MULTI_REGIONS_EXPORT void EvaluateHDGPostProcessing(
         const Array<OneD, const NekDouble> &coeffs,
         Array<OneD, NekDouble> &outarray);
+#else
+    inline Array<OneD, NekFieldCoeffSharedPtr>
+                           &UpdateBndCondFieldCoeff(void)
+    {
+        return m_bndCondFieldCoeff; 
+    }
 #endif
 
     MULTI_REGIONS_EXPORT void GetLocTraceToTraceMap(
@@ -389,7 +395,6 @@ protected:
 private:
 #if EXPLISTDATA
 #else            
-    friend class DisContField3DHomogeneous1D;
     friend class DisContField3DHomogeneous2D;
 #endif
     

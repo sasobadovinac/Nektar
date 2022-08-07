@@ -145,16 +145,24 @@ protected:
 #if EXPLISTDATA
 #else
     /**
-     * A NekField sharedpoints containing the coefficient space
-     * boundary condition information
+     * An array of NekField sharedpointers containing the coefficient
+     * space boundary condition information
      */ 
     Array<OneD, NekFieldCoeffSharedPtr> m_bndCondFieldCoeff; 
 
     /**
-     * A NekField sharedpoints containing the physical space
-     * boundary condition information
+     * An array of NekField sharedpointers containing the physical
+     * space boundary condition information
      */ 
-    Array<OneD, NekFieldPhysSharedPtr> m_bndCondFieldPhys; 
+    Array<OneD, NekFieldPhysSharedPtr> m_bndCondFieldPhys;
+
+    
+    /**
+     * An array the array of NekFields of the coefficient on each plane
+     */
+    Array<OneD, Array<OneD, NekFieldCoeffSharedPtr> > m_planesBndCondFieldCoeff; 
+
+    inline void CopyCoeffBCsToPlanes(int varid = 0);
 #endif
 
     Array<OneD, NekDouble> m_bndCondBndWeight;
@@ -325,6 +333,32 @@ inline void DisContField3DHomogeneous1D::v_SetBndCondBwdWeight(
 {
     m_bndCondBndWeight[index] = value;
 }
+
+
+#if EXPLISTDATA
+#else            
+inline void DisContField3DHomogeneous1D::CopyCoeffBCsToPlanes(int varid)
+{
+
+    int nplanes = m_planes.size();
+
+    for (int i = 0; i < m_bndCondExpansions.size(); ++i)
+    {
+        const Array<OneD, const NekDouble> bc = m_bndCondFieldCoeff[i]->
+            GetArray1D(varid); 
+            
+        int bnd_ncoeffs = m_planesBndCondFieldCoeff[0][i]->GetVarSize();
+        int offset = 0; 
+        for (int n = 0; n < nplanes; ++n)
+        {
+            Vmath::Vcopy(bnd_ncoeffs,bc + offset,1,
+                         m_planesBndCondFieldCoeff[n][i]->UpdateArray1D(varid),1);
+            offset += bnd_ncoeffs;
+        }
+    }
+}
+#endif
+    
 } // namespace MultiRegions
 } // namespace Nektar
 
