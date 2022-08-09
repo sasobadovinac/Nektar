@@ -99,7 +99,7 @@ void ProcessVariableProduct::Process(po::variables_map &vm)
                             m_f->m_exp[j]->GetPhys(), 1,
                             m_f->m_exp[nfields + addfields]->UpdatePhys(), 1);
 
-            m_f->m_exp[nfields + addfields]->FwdTrans_IterPerExp(
+            m_f->m_exp[nfields + addfields]->FwdTransLocalElmt(
                 m_f->m_exp[nfields + addfields]->GetPhys(),
                 m_f->m_exp[nfields + addfields]->UpdateCoeffs());
             addfields++;
