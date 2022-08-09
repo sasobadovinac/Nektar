@@ -45,7 +45,7 @@ namespace LibUtilities
 {
 class BasisKey;
 }
-}
+} // namespace Nektar
 
 namespace Nektar
 {
@@ -163,6 +163,6 @@ private:
 };
 
 typedef std::shared_ptr<Transposition> TranspositionSharedPtr;
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 #endif

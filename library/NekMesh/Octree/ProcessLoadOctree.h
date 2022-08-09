@@ -62,7 +62,7 @@ public:
         return "LoadOctree";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

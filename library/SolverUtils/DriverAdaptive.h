@@ -35,8 +35,8 @@
 #ifndef NEKTAR_SOLVERUTILS_DRIVERADAPTIVE_H
 #define NEKTAR_SOLVERUTILS_DRIVERADAPTIVE_H
 
-#include <SolverUtils/Driver.h>
 #include <MultiRegions/GlobalLinSys.h>
+#include <SolverUtils/Driver.h>
 
 namespace Nektar
 {
@@ -52,7 +52,7 @@ public:
     /// Creates an instance of this class
     static DriverSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
         DriverSharedPtr p =
             MemoryManager<DriverAdaptive>::AllocateSharedPtr(pSession, pGraph);
@@ -73,18 +73,19 @@ protected:
     SOLVER_UTILS_EXPORT virtual ~DriverAdaptive();
 
     /// Second-stage initialisation
-    SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        std::ostream &out = std::cout);
 
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
 
     SOLVER_UTILS_EXPORT void ReplaceExpansion(
         Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        std::map<int, int>                           deltaP);
+        std::map<int, int> deltaP);
 
     static std::string driverLookupId;
 };
-}
-} // end of namespace
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif // NEKTAR_SOLVERUTILS_DRIVERADAPTIVE_H

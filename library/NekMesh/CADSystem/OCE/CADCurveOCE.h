@@ -83,7 +83,7 @@ private:
     /// store the parametric bounds of the curve
     Array<OneD, NekDouble> m_b;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

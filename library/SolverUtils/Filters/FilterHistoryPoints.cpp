@@ -35,30 +35,28 @@
 #include <iomanip>
 using namespace std;
 
-#include <boost/core/ignore_unused.hpp>
-#include <boost/format.hpp>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
-#include <SolverUtils/Filters/FilterHistoryPoints.h>
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
-
+#include <SolverUtils/Filters/FilterHistoryPoints.h>
+#include <boost/core/ignore_unused.hpp>
+#include <boost/format.hpp>
 
 namespace Nektar
 {
 namespace SolverUtils
 {
 std::string FilterHistoryPoints::className =
-        GetFilterFactory().RegisterCreatorFunction(
-                "HistoryPoints", FilterHistoryPoints::create);
+    GetFilterFactory().RegisterCreatorFunction("HistoryPoints",
+                                               FilterHistoryPoints::create);
 
 /**
  *
  */
 FilterHistoryPoints::FilterHistoryPoints(
     const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>      &pEquation,
-    const ParamMap &pParams) :
-    Filter(pSession, pEquation)
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
+    : Filter(pSession, pEquation)
 {
     // OutputFile
     auto it = pParams.find("OutputFile");
@@ -71,8 +69,8 @@ FilterHistoryPoints::FilterHistoryPoints(
         ASSERTL0(it->second.length() > 0, "Missing parameter 'OutputFile'.");
         m_outputFile = it->second;
     }
-    if ( m_outputFile.length() >= 4
-         && m_outputFile.substr(m_outputFile.length() - 4) == ".his")
+    if (m_outputFile.length() >= 4 &&
+        m_outputFile.substr(m_outputFile.length() - 4) == ".his")
     {
         m_outputFile = m_outputFile.substr(0, m_outputFile.length() - 4);
     }
@@ -85,8 +83,7 @@ FilterHistoryPoints::FilterHistoryPoints(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_outputFrequency = round(equ.Evaluate());
     }
 
@@ -99,8 +96,8 @@ FilterHistoryPoints::FilterHistoryPoints(
     else
     {
         std::string sOption = it->second.c_str();
-         m_outputOneFile    = ( boost::iequals(sOption,"true")) ||
-                                  ( boost::iequals(sOption,"yes"));
+        m_outputOneFile     = (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes"));
     }
 
     // OutputPlane
@@ -114,8 +111,7 @@ FilterHistoryPoints::FilterHistoryPoints(
         }
         else
         {
-            LibUtilities::Equation equ(
-                m_session->GetInterpreter(), it->second);
+            LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
             m_outputPlane = round(equ.Evaluate());
         }
 
@@ -127,27 +123,25 @@ FilterHistoryPoints::FilterHistoryPoints(
         else
         {
             std::string sOption = it->second.c_str();
-            m_waveSpace         = ( boost::iequals(sOption,"true")) ||
-                                  ( boost::iequals(sOption,"yes"));
+            m_waveSpace         = (boost::iequals(sOption, "true")) ||
+                          (boost::iequals(sOption, "yes"));
         }
     }
 
     // Points
-    if ( pParams.end() != (it = pParams.find("Points")) )
+    if (pParams.end() != (it = pParams.find("Points")))
     {
-        m_pointNumMap[LibUtilities::ePtsFile] = Array<OneD, int>(1,0);
+        m_pointNumMap[LibUtilities::ePtsFile] = Array<OneD, int>(1, 0);
         m_historyPointStream.str(it->second);
     }
     else if (pParams.end() != (it = pParams.find("line")))
     {
         vector<NekDouble> values;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     it->second, values),
+        ASSERTL0(ParseUtils::GenerateVector(it->second, values),
                  "Failed to interpret line string");
 
-        ASSERTL0(values.size() > 2,
-                 "line string should contain 2*Dim+1 values "
-                 "N,x0,y0,z0,x1,y1,z1");
+        ASSERTL0(values.size() > 2, "line string should contain 2*Dim+1 values "
+                                    "N,x0,y0,z0,x1,y1,z1");
 
         double tmp;
         ASSERTL0(std::modf(values[0], &tmp) == 0.0, "N is not an integer");
@@ -160,8 +154,8 @@ FilterHistoryPoints::FilterHistoryPoints(
         Array<OneD, NekDouble> delta(6, 0.);
         for (int i = 0; i < dim; ++i)
         {
-            delta[i+0] = values[i + 1];
-            delta[i+3] = (values[dim + i + 1] - values[ i + 1]) / (npts - 1);
+            delta[i + 0] = values[i + 1];
+            delta[i + 3] = (values[dim + i + 1] - values[i + 1]) / (npts - 1);
         }
         m_pointDatMap[LibUtilities::ePtsLine] = delta;
         m_pointNumMap[LibUtilities::ePtsLine] = num;
@@ -169,8 +163,7 @@ FilterHistoryPoints::FilterHistoryPoints(
     else if (pParams.end() != (it = pParams.find("plane")))
     {
         vector<NekDouble> values;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     it->second, values),
+        ASSERTL0(ParseUtils::GenerateVector(it->second, values),
                  "Failed to interpret plane string");
 
         ASSERTL0(values.size() > 9,
@@ -191,13 +184,15 @@ FilterHistoryPoints::FilterHistoryPoints(
         npts[1] = values[0] * values[1];
         npts[2] = values[1];
 
-        Array<OneD, NekDouble>  delta(12, 0.);
+        Array<OneD, NekDouble> delta(12, 0.);
         for (int i = 0; i < dim; ++i)
         {
-            delta[i+0] = values[2+i];
-            delta[i+3] = values[2+3*dim+i];
-            delta[i+6] = (values[2+1*dim + i] - values[2+0*dim+i])/(values[0]-1);
-            delta[i+9] = (values[2+2*dim + i] - values[2+3*dim+i])/(values[0]-1);
+            delta[i + 0] = values[2 + i];
+            delta[i + 3] = values[2 + 3 * dim + i];
+            delta[i + 6] = (values[2 + 1 * dim + i] - values[2 + 0 * dim + i]) /
+                           (values[0] - 1);
+            delta[i + 9] = (values[2 + 2 * dim + i] - values[2 + 3 * dim + i]) /
+                           (values[0] - 1);
         }
         m_pointDatMap[LibUtilities::ePtsPlane] = delta;
         m_pointNumMap[LibUtilities::ePtsPlane] = npts;
@@ -205,13 +200,11 @@ FilterHistoryPoints::FilterHistoryPoints(
     else if (pParams.end() != (it = pParams.find("box")))
     {
         vector<NekDouble> values;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     it->second, values),
+        ASSERTL0(ParseUtils::GenerateVector(it->second, values),
                  "Failed to interpret box string");
 
-        ASSERTL0(values.size() == 9,
-                 "box string should contain 9 values "
-                 "N1,N2,N3,xmin,xmax,ymin,ymax,zmin,zmax");
+        ASSERTL0(values.size() == 9, "box string should contain 9 values "
+                                     "N1,N2,N3,xmin,xmax,ymin,ymax,zmin,zmax");
 
         int dim = 3;
         Array<OneD, int> npts(3);
@@ -222,8 +215,9 @@ FilterHistoryPoints::FilterHistoryPoints(
         Array<OneD, NekDouble> delta(6, 0.);
         for (int i = 0; i < dim; ++i)
         {
-            delta[i+0]   = values[3 + 2*i];
-            delta[i+3] = (values[4 + 2*i] - values[3 + 2*i]) / (values[i] - 1);
+            delta[i + 0] = values[3 + 2 * i];
+            delta[i + 3] =
+                (values[4 + 2 * i] - values[3 + 2 * i]) / (values[i] - 1);
         }
         m_pointDatMap[LibUtilities::ePtsBox] = delta;
         m_pointNumMap[LibUtilities::ePtsBox] = npts;
@@ -234,32 +228,29 @@ FilterHistoryPoints::FilterHistoryPoints(
     }
 }
 
-
 /**
  *
  */
 FilterHistoryPoints::~FilterHistoryPoints()
 {
-
 }
 
 bool FilterHistoryPoints::GetPoint(Array<OneD, NekDouble> gloCoord, int I)
 {
     if (m_pointNumMap.count(LibUtilities::ePtsFile))
     {
-        m_historyPointStream >> gloCoord[0]
-                             >> gloCoord[1]
-                             >> gloCoord[2];
+        m_historyPointStream >> gloCoord[0] >> gloCoord[1] >> gloCoord[2];
         return !m_historyPointStream.fail();
     }
     else if (m_pointNumMap.count(LibUtilities::ePtsLine))
     {
-        if (I>=m_pointNumMap[LibUtilities::ePtsLine][0])
+        if (I >= m_pointNumMap[LibUtilities::ePtsLine][0])
         {
             return false;
         }
         Array<OneD, NekDouble> values = m_pointDatMap[LibUtilities::ePtsLine];
-        Array<OneD, NekDouble> delta  = m_pointDatMap[LibUtilities::ePtsLine] + 3;
+        Array<OneD, NekDouble> delta =
+            m_pointDatMap[LibUtilities::ePtsLine] + 3;
         for (int n = 0; n < 3; ++n)
         {
             gloCoord[n] = values[n] + I * delta[n];
@@ -268,37 +259,38 @@ bool FilterHistoryPoints::GetPoint(Array<OneD, NekDouble> gloCoord, int I)
     }
     else if (m_pointNumMap.count(LibUtilities::ePtsPlane))
     {
-        if (I>=m_pointNumMap[LibUtilities::ePtsPlane][1])
+        if (I >= m_pointNumMap[LibUtilities::ePtsPlane][1])
         {
             return false;
         }
         Array<OneD, NekDouble> values = m_pointDatMap[LibUtilities::ePtsPlane];
-        Array<OneD, NekDouble> delta  = m_pointDatMap[LibUtilities::ePtsPlane] + 6;
+        Array<OneD, NekDouble> delta =
+            m_pointDatMap[LibUtilities::ePtsPlane] + 6;
         Array<OneD, int> i(2);
-        i[1] = I / m_pointNumMap[LibUtilities::ePtsPlane][0];
-        i[0] = I - i[1] * m_pointNumMap[LibUtilities::ePtsPlane][0];
-        double n1 = -1. + (NekDouble) m_pointNumMap[LibUtilities::ePtsPlane][2];
-        for(int n=0; n<3; ++n)
+        i[1]      = I / m_pointNumMap[LibUtilities::ePtsPlane][0];
+        i[0]      = I - i[1] * m_pointNumMap[LibUtilities::ePtsPlane][0];
+        double n1 = -1. + (NekDouble)m_pointNumMap[LibUtilities::ePtsPlane][2];
+        for (int n = 0; n < 3; ++n)
         {
-            gloCoord[n] = (values[n  ] + i[0] * delta[n  ]) * (1.0 - i[1] / n1) +
-                          (values[3+n] + i[0] * delta[3+n]) * (i[1] / n1);
+            gloCoord[n] = (values[n] + i[0] * delta[n]) * (1.0 - i[1] / n1) +
+                          (values[3 + n] + i[0] * delta[3 + n]) * (i[1] / n1);
         }
         return true;
     }
     else if (m_pointNumMap.count(LibUtilities::ePtsBox))
     {
-        if (I>=m_pointNumMap[LibUtilities::ePtsBox][2])
+        if (I >= m_pointNumMap[LibUtilities::ePtsBox][2])
         {
             return false;
         }
         Array<OneD, NekDouble> values = m_pointDatMap[LibUtilities::ePtsBox];
-        Array<OneD, NekDouble> delta  = m_pointDatMap[LibUtilities::ePtsBox] + 3;
+        Array<OneD, NekDouble> delta = m_pointDatMap[LibUtilities::ePtsBox] + 3;
         Array<OneD, int> i(3);
         i[2] = I / m_pointNumMap[LibUtilities::ePtsBox][1];
         I -= i[2] * m_pointNumMap[LibUtilities::ePtsBox][1];
         i[1] = I / m_pointNumMap[LibUtilities::ePtsBox][0];
         i[0] = I - i[1] * m_pointNumMap[LibUtilities::ePtsBox][0];
-        for (int n=0; n<3; ++n)
+        for (int n = 0; n < 3; ++n)
         {
             gloCoord[n] = values[n] + i[n] * delta[n];
         }
@@ -314,10 +306,9 @@ void FilterHistoryPoints::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
-    ASSERTL0(!m_historyPointStream.fail(),
-             "No history points in stream.");
+    ASSERTL0(!m_historyPointStream.fail(), "No history points in stream.");
 
-    m_index = 0;
+    m_index       = 0;
     m_outputIndex = 0;
     m_historyList.clear();
 
@@ -325,21 +316,20 @@ void FilterHistoryPoints::v_Initialise(
 
     vector<unsigned int> planeIDs;
     // Read history points
-    Array<OneD, NekDouble>  gloCoord(3,0.0);
-    int coordim = pFields[0]->GetGraph()->GetSpaceDimension();
+    Array<OneD, NekDouble> gloCoord(3, 0.0);
+    int coordim    = pFields[0]->GetGraph()->GetSpaceDimension();
     int numHomoDir = m_isHomogeneous1D ? 1 : 0;
-    int spacedim = coordim+numHomoDir;
+    int spacedim   = coordim + numHomoDir;
 
     int i = -1;
     while (GetPoint(gloCoord, ++i))
     {
         // Overwrite gloCoord[2] for 3DH1D using m_outputPlane
         // if it is defined
-        if(m_isHomogeneous1D && (m_outputPlane != -1 || m_waveSpace))
+        if (m_isHomogeneous1D && (m_outputPlane != -1 || m_waveSpace))
         {
-            int nplanes     = pFields[0]->GetHomogeneousBasis()
-                                        ->GetZ().size();
-            NekDouble lhom  = pFields[0]->GetHomoLen();
+            int nplanes    = pFields[0]->GetHomogeneousBasis()->GetZ().size();
+            NekDouble lhom = pFields[0]->GetHomoLen();
             int plane;
             if (m_outputPlane != -1)
             {
@@ -348,16 +338,16 @@ void FilterHistoryPoints::v_Initialise(
             else
             {
                 // Pick plane near the point
-                plane = round((gloCoord[coordim]*nplanes)/lhom);
+                plane = round((gloCoord[coordim] * nplanes) / lhom);
             }
             if (m_waveSpace)
             {
                 planeIDs.push_back(plane);
             }
-            NekDouble Z = (pFields[0]->GetHomogeneousBasis()
-                                        ->GetZ())[plane];
-            Z = (Z+1)*lhom/2;
-            if(fabs(gloCoord[coordim]-Z) > NekConstants::kVertexTheSameDouble &&
+            NekDouble Z = (pFields[0]->GetHomogeneousBasis()->GetZ())[plane];
+            Z           = (Z + 1) * lhom / 2;
+            if (fabs(gloCoord[coordim] - Z) >
+                    NekConstants::kVertexTheSameDouble &&
                 vComm->GetRank() == 0)
             {
                 cout << "Resetting History point from z = " << gloCoord[coordim]
@@ -366,35 +356,34 @@ void FilterHistoryPoints::v_Initialise(
             gloCoord[coordim] = Z;
         }
 
-        SpatialDomains::PointGeomSharedPtr vert
-            = MemoryManager<SpatialDomains::PointGeom>
-            ::AllocateSharedPtr(spacedim, i, gloCoord[0],
-                                gloCoord[1], gloCoord[2]);
+        SpatialDomains::PointGeomSharedPtr vert =
+            MemoryManager<SpatialDomains::PointGeom>::AllocateSharedPtr(
+                spacedim, i, gloCoord[0], gloCoord[1], gloCoord[2]);
 
         m_historyPoints.push_back(vert);
     }
-    Array<OneD, Array<OneD, NekDouble> > pts(spacedim);
+    Array<OneD, Array<OneD, NekDouble>> pts(spacedim);
     for (i = 0; i < spacedim; ++i)
     {
-        pts[i]   = Array<OneD, NekDouble>(m_historyPoints.size());
+        pts[i] = Array<OneD, NekDouble>(m_historyPoints.size());
     }
-    m_planeIDs = Array<OneD, int> (planeIDs.size(),-1);
-    for (i=0; i<planeIDs.size(); ++i)
+    m_planeIDs = Array<OneD, int>(planeIDs.size(), -1);
+    for (i = 0; i < planeIDs.size(); ++i)
     {
         m_planeIDs[i] = planeIDs[i];
     }
 
     // Determine the unique process responsible for each history point
     // For points on a partition boundary, must select a single process
-    int vRank = vComm->GetRank();
+    int vRank       = vComm->GetRank();
     int vColumnRank = vComm->GetColumnComm()->GetRank();
-    int vRowRank = vComm->GetRowComm()->GetRank();
-    int vHP   = m_historyPoints.size();
-    Array<OneD, int>       procList(vHP, -1   );
-    Array<OneD, int>       idList  (vHP, -1   );
-    Array<OneD, NekDouble> dist    (vHP,  1e16);
-    Array<OneD, NekDouble> dist_loc(vHP,  1e16);
-    std::vector<Array<OneD, NekDouble> > LocCoords;
+    int vRowRank    = vComm->GetRowComm()->GetRank();
+    int vHP         = m_historyPoints.size();
+    Array<OneD, int> procList(vHP, -1);
+    Array<OneD, int> idList(vHP, -1);
+    Array<OneD, NekDouble> dist(vHP, 1e16);
+    Array<OneD, NekDouble> dist_loc(vHP, 1e16);
+    std::vector<Array<OneD, NekDouble>> LocCoords;
 
     // Find the nearest element on this process to which the history
     // point could belong and note down the distance from the element
@@ -402,9 +391,7 @@ void FilterHistoryPoints::v_Initialise(
     for (i = 0; i < vHP; ++i)
     {
         Array<OneD, NekDouble> locCoords(pFields[0]->GetShapeDimension());
-        m_historyPoints[i]->GetCoords(  gloCoord[0],
-                                        gloCoord[1],
-                                        gloCoord[2]);
+        m_historyPoints[i]->GetCoords(gloCoord[0], gloCoord[1], gloCoord[2]);
         for (int j = 0; j < spacedim; ++j)
         {
             pts[j][i] = gloCoord[j];
@@ -412,16 +399,16 @@ void FilterHistoryPoints::v_Initialise(
         // Determine the expansion and local coordinates
         if (m_isHomogeneous1D)
         {
-            idList[i] = pFields[0]->GetPlane(0)->GetExpIndex(gloCoord,locCoords,
-                                        NekConstants::kGeomFactorsTol);
+            idList[i] = pFields[0]->GetPlane(0)->GetExpIndex(
+                gloCoord, locCoords, NekConstants::kGeomFactorsTol);
         }
         else
         {
-            idList[i] = pFields[0]->GetExpIndex(gloCoord,locCoords,
-                                        NekConstants::kGeomFactorsTol);
+            idList[i] = pFields[0]->GetExpIndex(gloCoord, locCoords,
+                                                NekConstants::kGeomFactorsTol);
         }
 
-        for(int j = 0; j < locCoords.size(); ++j)
+        for (int j = 0; j < locCoords.size(); ++j)
         {
             locCoords[j] = std::max(locCoords[j], -1.0);
             locCoords[j] = std::min(locCoords[j], 1.0);
@@ -436,16 +423,16 @@ void FilterHistoryPoints::v_Initialise(
         if (idList[i] != -1 && vColumnRank == 0)
         {
             SpatialDomains::GeometrySharedPtr g =
-                            pFields[0]->GetExp(idList[i])->GetGeom();
+                pFields[0]->GetExp(idList[i])->GetGeom();
             StdRegions::StdExpansionSharedPtr e = g->GetXmap();
             Array<OneD, NekDouble> coordVals(e->GetTotPoints());
             dist_loc[i] = 0.0;
             for (int j = 0; j < g->GetCoordim(); ++j)
             {
                 e->BwdTrans(g->GetCoeffs(j), coordVals);
-                NekDouble x = e->PhysEvaluate(locCoords, coordVals)
-                                                         - gloCoord[j];
-                dist_loc[i] += x*x;
+                NekDouble x =
+                    e->PhysEvaluate(locCoords, coordVals) - gloCoord[j];
+                dist_loc[i] += x * x;
             }
         }
     }
@@ -470,7 +457,7 @@ void FilterHistoryPoints::v_Initialise(
     // Reduce process IDs for all history points. The process with
     // largest rank will handle the history point in the case where the
     // distance was the same.
-    vComm->AllReduce(procList,  LibUtilities::ReduceMax);
+    vComm->AllReduce(procList, LibUtilities::ReduceMax);
 
     // Determine the element in which each history point resides.
     // If point is not in mesh (on this process), id is -1.
@@ -493,9 +480,9 @@ void FilterHistoryPoints::v_Initialise(
         {
             m_historyLocalPointMap[m_historyList.size()] = i;
             m_historyList.push_back(
-                     std::pair<SpatialDomains::PointGeomSharedPtr,
-                                              Array<OneD, NekDouble> >
-                              (m_historyPoints[i], LocCoords[i]));
+                std::pair<SpatialDomains::PointGeomSharedPtr,
+                          Array<OneD, NekDouble>>(m_historyPoints[i],
+                                                  LocCoords[i]));
         }
     }
 
@@ -506,42 +493,39 @@ void FilterHistoryPoints::v_Initialise(
     {
         for (i = 0; i < vHP; ++i)
         {
-            m_historyPoints[i]->GetCoords(  gloCoord[0],
-                                            gloCoord[1],
-                                            gloCoord[2]);
+            m_historyPoints[i]->GetCoords(gloCoord[0], gloCoord[1],
+                                          gloCoord[2]);
 
             // Write an error if no process owns history point
             ASSERTL0(idList[i] != -1,
-                     "History point "
-                     + boost::lexical_cast<std::string>(gloCoord[0])
-                     + ", "
-                     + boost::lexical_cast<std::string>(gloCoord[1])
-                     + ", "
-                     + boost::lexical_cast<std::string>(gloCoord[2])
-                     + " cannot be found in the mesh.");
+                     "History point " +
+                         boost::lexical_cast<std::string>(gloCoord[0]) + ", " +
+                         boost::lexical_cast<std::string>(gloCoord[1]) + ", " +
+                         boost::lexical_cast<std::string>(gloCoord[2]) +
+                         " cannot be found in the mesh.");
 
             // Print a warning if a process owns it but it is not close
             // enough to the element.
             if (dist[i] > NekConstants::kGeomFactorsTol)
             {
-                cout << "Warning: History point " << i << " at ("
-                     << gloCoord[0] << "," << gloCoord[1] << ","
-                     << gloCoord[2] << ") lies a distance of "
-                     << sqrt(dist[i]) << " from the manifold." << endl;
+                cout << "Warning: History point " << i << " at (" << gloCoord[0]
+                     << "," << gloCoord[1] << "," << gloCoord[2]
+                     << ") lies a distance of " << sqrt(dist[i])
+                     << " from the manifold." << endl;
             }
         }
 
-        m_session->MatchSolverInfo("Driver", "Adaptive",
-                                    m_adaptive, false);
+        m_session->MatchSolverInfo("Driver", "Adaptive", m_adaptive, false);
     }
     v_Update(pFields, time);
 }
 
-
 /**
  *
  */
-void FilterHistoryPoints::v_Update(const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields, const NekDouble &time)
+void FilterHistoryPoints::v_Update(
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     // Only output every m_outputFrequency.
     if ((m_index++) % m_outputFrequency)
@@ -553,53 +537,57 @@ void FilterHistoryPoints::v_Update(const Array<OneD, const MultiRegions::ExpList
     int k         = 0;
     int numPoints = m_historyPoints.size();
     int numFields = pFields.size();
-    int coordim = pFields[0]->GetGraph()->GetSpaceDimension();
+    int coordim   = pFields[0]->GetGraph()->GetSpaceDimension();
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
-    Array<OneD, NekDouble> data(numPoints*numFields, 0.0);
+    Array<OneD, NekDouble> data(numPoints * numFields, 0.0);
     Array<OneD, NekDouble> physvals;
     Array<OneD, NekDouble> locCoord;
     int expId;
 
     // Pull out data values field by field
-    Array<OneD, NekDouble>  gloCoord(3,0.0);
+    Array<OneD, NekDouble> gloCoord(3, 0.0);
     for (j = 0; j < numFields; ++j)
     {
-        if(m_isHomogeneous1D)
+        if (m_isHomogeneous1D)
         {
-            k = 0;
+            k                                      = 0;
             Array<OneD, const unsigned int> planes = pFields[j]->GetZIDs();
-            int nPlanes = pFields[j]->GetHomogeneousBasis()->GetZ().size();
+            int nPlanes    = pFields[j]->GetHomogeneousBasis()->GetZ().size();
             NekDouble lHom = pFields[j]->GetHomoLen();
             for (auto &x : m_historyList)
             {
                 ASSERTL0(pFields[j]->GetWaveSpace(),
-                        "HistoryPoints in Homogeneous1D require that solution is in wavespace");
+                         "HistoryPoints in Homogeneous1D require that solution "
+                         "is in wavespace");
                 locCoord = x.second;
                 expId    = x.first->GetGlobalID();
                 x.first->GetCoords(gloCoord[0], gloCoord[1], gloCoord[2]);
 
                 NekDouble value = 0.0;
-                NekDouble BetaT = 2.*M_PI*fmod (gloCoord[coordim], lHom) / lHom;
-                for ( size_t n = 0; n < planes.size(); ++n)
+                NekDouble BetaT =
+                    2. * M_PI * fmod(gloCoord[coordim], lHom) / lHom;
+                for (size_t n = 0; n < planes.size(); ++n)
                 {
-                    if (m_waveSpace && planes[n]!=m_planeIDs[m_historyLocalPointMap[k]])
+                    if (m_waveSpace &&
+                        planes[n] != m_planeIDs[m_historyLocalPointMap[k]])
                     {
                         continue;
                     }
-                    physvals = pFields[j]->GetPlane(n)->
-                                UpdatePhys() + pFields[j]->GetPhys_Offset(expId);
+                    physvals = pFields[j]->GetPlane(n)->UpdatePhys() +
+                               pFields[j]->GetPhys_Offset(expId);
 
                     // transform elemental data if required.
-                    if(pFields[j]->GetPhysState() == false)
+                    if (pFields[j]->GetPhysState() == false)
                     {
-                        pFields[j]->GetPlane(n)->GetExp(expId)->
-                                    BwdTrans(pFields[j]->GetPlane(n)->
-                                    GetCoeffs() + pFields[j]->
-                                    GetCoeff_Offset(expId),physvals);
+                        pFields[j]->GetPlane(n)->GetExp(expId)->BwdTrans(
+                            pFields[j]->GetPlane(n)->GetCoeffs() +
+                                pFields[j]->GetCoeff_Offset(expId),
+                            physvals);
                     }
                     // Interpolate data
-                    NekDouble coeff = pFields[j]->GetPlane(n)->GetExp(expId)->
-                            StdPhysEvaluate(locCoord,physvals);
+                    NekDouble coeff =
+                        pFields[j]->GetPlane(n)->GetExp(expId)->StdPhysEvaluate(
+                            locCoord, physvals);
 
                     if (m_waveSpace)
                     {
@@ -613,22 +601,22 @@ void FilterHistoryPoints::v_Update(const Array<OneD, const MultiRegions::ExpList
                         }
                         else if (planes[n] == 1)
                         {
-                            value += cos(0.5*nPlanes*BetaT)*coeff;
+                            value += cos(0.5 * nPlanes * BetaT) * coeff;
                         }
-                        else if (planes[n]%2 == 0)
+                        else if (planes[n] % 2 == 0)
                         {
-                            NekDouble phase = (planes[n]>>1) * BetaT;
-                            value += cos(phase)*coeff;
+                            NekDouble phase = (planes[n] >> 1) * BetaT;
+                            value += cos(phase) * coeff;
                         }
                         else
                         {
-                            NekDouble phase = (planes[n]>>1) * BetaT;
-                            value += - sin(phase)*coeff;
+                            NekDouble phase = (planes[n] >> 1) * BetaT;
+                            value += -sin(phase) * coeff;
                         }
                     }
                 }
                 // store data
-                data[m_historyLocalPointMap[k]*numFields+j] = value;
+                data[m_historyLocalPointMap[k] * numFields + j] = value;
                 ++k;
             }
         }
@@ -640,16 +628,22 @@ void FilterHistoryPoints::v_Update(const Array<OneD, const MultiRegions::ExpList
                 locCoord = x.second;
                 expId    = x.first->GetGlobalID();
 
-                physvals = pFields[j]->UpdatePhys() + pFields[j]->GetPhys_Offset(expId);
+                physvals = pFields[j]->UpdatePhys() +
+                           pFields[j]->GetPhys_Offset(expId);
 
                 // transform elemental data if required.
-                if(pFields[j]->GetPhysState() == false)
+                if (pFields[j]->GetPhysState() == false)
                 {
-                    pFields[j]->GetExp(expId)->BwdTrans(pFields[j]->GetCoeffs() + pFields[j]->GetCoeff_Offset(expId),physvals);
+                    pFields[j]->GetExp(expId)->BwdTrans(
+                        pFields[j]->GetCoeffs() +
+                            pFields[j]->GetCoeff_Offset(expId),
+                        physvals);
                 }
 
                 // interpolate point
-                data[m_historyLocalPointMap[k]*numFields+j] = pFields[j]->GetExp(expId)->StdPhysEvaluate(locCoord,physvals);
+                data[m_historyLocalPointMap[k] * numFields + j] =
+                    pFields[j]->GetExp(expId)->StdPhysEvaluate(locCoord,
+                                                               physvals);
                 ++k;
             }
         }
@@ -661,13 +655,15 @@ void FilterHistoryPoints::v_Update(const Array<OneD, const MultiRegions::ExpList
     WriteData(vComm->GetRank(), data, numFields, time);
 }
 
-void FilterHistoryPoints::WriteData(const int &rank, const Array<OneD, NekDouble> &data, const int &numFields, const NekDouble &time)
+void FilterHistoryPoints::WriteData(const int &rank,
+                                    const Array<OneD, NekDouble> &data,
+                                    const int &numFields, const NekDouble &time)
 {
     // Only the root process writes out history data
     if (rank == 0)
     {
-        Array<OneD, NekDouble>  gloCoord(3,0.0);
-        if ( !m_outputOneFile || m_index == 1)
+        Array<OneD, NekDouble> gloCoord(3, 0.0);
+        if (!m_outputOneFile || m_index == 1)
         {
             std::stringstream vOutputFilename;
             if (m_outputOneFile)
@@ -676,12 +672,14 @@ void FilterHistoryPoints::WriteData(const int &rank, const Array<OneD, NekDouble
             }
             else
             {
-                vOutputFilename << m_outputFile << "_" << m_outputIndex << ".his";
+                vOutputFilename << m_outputFile << "_" << m_outputIndex
+                                << ".his";
             }
             ++m_outputIndex;
             if (m_adaptive)
             {
-                m_outputStream.open(vOutputFilename.str().c_str(), ofstream::app);
+                m_outputStream.open(vOutputFilename.str().c_str(),
+                                    ofstream::app);
             }
             else
             {
@@ -691,10 +689,10 @@ void FilterHistoryPoints::WriteData(const int &rank, const Array<OneD, NekDouble
 
             for (int i = 0; i < numFields; ++i)
             {
-                m_outputStream << m_session->GetVariable(i) <<",";
+                m_outputStream << m_session->GetVariable(i) << ",";
             }
 
-            if(m_isHomogeneous1D)
+            if (m_isHomogeneous1D)
             {
                 m_outputStream << ") at points:" << endl;
             }
@@ -705,9 +703,8 @@ void FilterHistoryPoints::WriteData(const int &rank, const Array<OneD, NekDouble
 
             for (int i = 0; i < m_historyPoints.size(); ++i)
             {
-                m_historyPoints[i]->GetCoords(  gloCoord[0],
-                                                gloCoord[1],
-                                                gloCoord[2]);
+                m_historyPoints[i]->GetCoords(gloCoord[0], gloCoord[1],
+                                              gloCoord[2]);
 
                 m_outputStream << "# " << boost::format("%6.0f") % i;
                 m_outputStream << " " << boost::format("%25.19e") % gloCoord[0];
@@ -716,7 +713,7 @@ void FilterHistoryPoints::WriteData(const int &rank, const Array<OneD, NekDouble
                 m_outputStream << endl;
             }
 
-            if(m_isHomogeneous1D)
+            if (m_isHomogeneous1D)
             {
                 if (m_waveSpace)
                 {
@@ -731,23 +728,27 @@ void FilterHistoryPoints::WriteData(const int &rank, const Array<OneD, NekDouble
             m_outputStream << boost::format("%25.19e") % time;
             for (int j = 0; j < numFields; ++j)
             {
-                m_outputStream << " " << boost::format("%25.19e") % data[k*numFields+j];
+                m_outputStream
+                    << " "
+                    << boost::format("%25.19e") % data[k * numFields + j];
             }
             m_outputStream << endl;
         }
 
-        if ( !m_outputOneFile)
+        if (!m_outputOneFile)
         {
-            m_outputStream.close();;
+            m_outputStream.close();
+            ;
         }
     }
 }
 
-
 /**
  *
  */
-void FilterHistoryPoints::v_Finalise(const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields, const NekDouble &time)
+void FilterHistoryPoints::v_Finalise(
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     boost::ignore_unused(time);
 
@@ -757,7 +758,6 @@ void FilterHistoryPoints::v_Finalise(const Array<OneD, const MultiRegions::ExpLi
     }
 }
 
-
 /**
  *
  */
@@ -765,5 +765,5 @@ bool FilterHistoryPoints::v_IsTimeDependent()
 {
     return true;
 }
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

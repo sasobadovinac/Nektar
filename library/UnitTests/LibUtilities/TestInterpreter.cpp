@@ -3,7 +3,6 @@
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 
-
 #include <iostream>
 
 namespace Nektar
@@ -17,7 +16,7 @@ BOOST_AUTO_TEST_CASE(TestConstant)
     int func1 = interp.DefineFunction("x", "-2");
     Array<OneD, NekDouble> in(1, 2.0), out(1);
 
-    interp.Evaluate(func1, { in }, out);
+    interp.Evaluate(func1, {in}, out);
     BOOST_CHECK_EQUAL(out[0], -2);
 }
 
@@ -29,15 +28,15 @@ BOOST_AUTO_TEST_CASE(TestPowOperator)
     int func3 = interp.DefineFunction("x", "2^2^4");
     Array<OneD, NekDouble> in(1, 2.0), out(1);
 
-    interp.Evaluate(func1, { in }, out);
+    interp.Evaluate(func1, {in}, out);
     BOOST_CHECK_EQUAL(out[0], -1280);
 
-    interp.Evaluate(func2, { in }, out);
+    interp.Evaluate(func2, {in}, out);
     BOOST_CHECK_EQUAL(out[0], -4);
 
-    interp.Evaluate(func3, { in }, out);
+    interp.Evaluate(func3, {in}, out);
     BOOST_CHECK_EQUAL(out[0], 65536);
 }
 
-}
-}
+} // namespace InterpreterUnitTests
+} // namespace Nektar

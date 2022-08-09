@@ -37,18 +37,18 @@
 
 #include <SolverUtils/Advection/Advection.h>
 
-
 namespace Nektar
-{     
+{
 
-class NavierStokesAdvection: public SolverUtils::Advection
+class NavierStokesAdvection : public SolverUtils::Advection
 
 {
 public:
     friend class MemoryManager<NavierStokesAdvection>;
 
     /// Creates an instance of this class
-    static SolverUtils::AdvectionSharedPtr create(std::string) {
+    static SolverUtils::AdvectionSharedPtr create(std::string)
+    {
         return MemoryManager<NavierStokesAdvection>::AllocateSharedPtr();
     }
 
@@ -62,26 +62,26 @@ public:
     }
 
 protected:
-
     NavierStokesAdvection();
 
     virtual ~NavierStokesAdvection();
 
     virtual void v_InitObject(
-              LibUtilities::SessionReaderSharedPtr         pSession,
-              Array<OneD, MultiRegions::ExpListSharedPtr>  pFields);
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
 
     virtual void v_Advect(
         const int nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-              Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayOfArray);
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
 
-        static std::string navierStokesAdvectionTypeLookupIds[];
+    static std::string navierStokesAdvectionTypeLookupIds[];
 
 private:
     bool m_specHP_dealiasing;
@@ -89,8 +89,7 @@ private:
     bool m_SingleMode;
     bool m_HalfMode;
 };
-    
-    
-} //end of namespace
 
-#endif //NEKTAR_SOLVERS_INCNAVIERSTOKES_H
+} // namespace Nektar
+
+#endif // NEKTAR_SOLVERS_INCNAVIERSTOKES_H

@@ -156,9 +156,9 @@ void NodeOpti2D3D::Optimise()
 
         // needs to optimise
         Array<OneD, NekDouble> uvc = m_node->GetCADSurfInfo(surf->GetId());
-        NekDouble xc = m_node->m_x;
-        NekDouble yc = m_node->m_y;
-        NekDouble zc = m_node->m_z;
+        NekDouble xc               = m_node->m_x;
+        NekDouble yc               = m_node->m_y;
+        NekDouble zc               = m_node->m_z;
         Array<OneD, NekDouble> uvt(2);
         vector<NekDouble> bd(4);
         surf->GetBounds(bd[0], bd[1], bd[2], bd[3]);
@@ -427,9 +427,9 @@ void NodeOpti2D3D::ProcessGradient()
 
 void NodeOpti1D2D::ProcessGradient()
 {
-    NekDouble tc = m_node->GetCADCurveInfo(curve->GetId());
+    NekDouble tc           = m_node->GetCADCurveInfo(curve->GetId());
     vector<NekDouble> grad = m_grad;
-    m_grad = vector<NekDouble>(2, 0.0);
+    m_grad                 = vector<NekDouble>(2, 0.0);
 
     // Grab first and second order CAD derivatives
     Array<OneD, NekDouble> d2 = curve->D2(tc);
@@ -443,5 +443,5 @@ void NodeOpti1D2D::ProcessGradient()
                 d2[3] * (grad[2] * d2[3] + grad[3] * d2[4]) +
                 d2[4] * (grad[3] * d2[3] + grad[4] * d2[4]);
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

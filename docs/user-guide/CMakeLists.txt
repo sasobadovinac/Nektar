@@ -24,22 +24,27 @@ ADD_CUSTOM_TARGET(user-guide-html
 )
 
 # If tex4ht successful, create img dir and copy images across
-FILE(GLOB_RECURSE imgfiles "img/*.png" "img/*.jpg" "*/img/*.png" "*/img/*.jpg")
-ADD_CUSTOM_COMMAND(TARGET user-guide-html
-    POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${USERGUIDE}/html/img)
+FILE(GLOB_RECURSE imgfiles RELATIVE ${USERGUIDESRC}
+     "img/*.png" "img/*.jpg" "*/img/*.png" "*/img/*.jpg")
 FOREACH(img ${imgfiles})
-    ADD_CUSTOM_COMMAND(TARGET user-guide-html
-        POST_BUILD COMMAND 
-            ${CMAKE_COMMAND} -E copy ${img} ${USERGUIDE}/html/img)
+    GET_FILENAME_COMPONENT(DIRNAME ${img} DIRECTORY)
+    ADD_CUSTOM_COMMAND(TARGET user-guide-html POST_BUILD
+        COMMENT "Copying ${img} to ${USERGUIDE}/html/${img}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${USERGUIDE}/html/${DIRNAME}
+        COMMAND ${CMAKE_COMMAND} -E copy ${img} ${USERGUIDE}/html/${img}
+        WORKING_DIRECTORY ${USERGUIDESRC})
 ENDFOREACH()
 
-FILE(GLOB_RECURSE pdffiles "*/img/*.pdf")
+FILE(GLOB_RECURSE pdffiles RELATIVE ${USERGUIDESRC} "*/img/*.pdf")
 FIND_PROGRAM(CONVERT convert)
 FOREACH(pdf ${pdffiles})
-    GET_FILENAME_COMPONENT(BASENAME ${pdf} NAME_WE)
-    ADD_CUSTOM_COMMAND(TARGET user-guide-html
-        POST_BUILD COMMAND
-        ${CONVERT} ${pdf} ${USERGUIDE}/html/img/${BASENAME}.png)
+    GET_FILENAME_COMPONENT(BASE ${pdf} NAME_WE)
+    GET_FILENAME_COMPONENT(DIR  ${pdf} DIRECTORY)
+    ADD_CUSTOM_COMMAND(TARGET user-guide-html POST_BUILD
+        COMMENT "Converting ${pdf} to ${USERGUIDE}/html/${DIR}/${BASE}.png"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${USERGUIDE}/html/${DIR}
+        COMMAND ${CONVERT} ${pdf} ${USERGUIDE}/html/${DIR}/${BASE}.png
+        WORKING_DIRECTORY ${USERGUIDESRC})
 ENDFOREACH()
 
 ADD_CUSTOM_TARGET(user-guide-pdf

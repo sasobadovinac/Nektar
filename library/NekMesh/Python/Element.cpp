@@ -40,18 +40,15 @@
 using namespace Nektar;
 using namespace Nektar::NekMesh;
 
-ElmtConfig *ElmtConfig_Init(
-    LibUtilities::ShapeType shapeType,
-    unsigned int            order,
-    bool                    faceNodes,
-    bool                    volNodes,
-    const py::object       &reorient,
-    const py::object       &edgeNodeType,
-    const py::object       &faceNodeType)
+ElmtConfig *ElmtConfig_Init(LibUtilities::ShapeType shapeType,
+                            unsigned int order, bool faceNodes, bool volNodes,
+                            const py::object &reorient,
+                            const py::object &edgeNodeType,
+                            const py::object &faceNodeType)
 {
     // These are the three default arguments that are present in the ElmtConfig
     // constructor.
-    bool orient = true;
+    bool orient                    = true;
     LibUtilities::PointsType eType = LibUtilities::ePolyEvenlySpaced;
     LibUtilities::PointsType fType = LibUtilities::ePolyEvenlySpaced;
 
@@ -75,12 +72,11 @@ ElmtConfig *ElmtConfig_Init(
     // Create a new ElmtConfig object. We return a pointer deliberately, since
     // boost::python has to store either a pointer or a shared_ptr to this
     // object.
-    return new ElmtConfig(
-        shapeType, order, faceNodes, volNodes, orient, eType, fType);
+    return new ElmtConfig(shapeType, order, faceNodes, volNodes, orient, eType,
+                          fType);
 }
 
-std::shared_ptr<Element> Element_Create(ElmtConfig *conf,
-                                        py::list &nodes,
+std::shared_ptr<Element> Element_Create(ElmtConfig *conf, py::list &nodes,
                                         py::list &tags)
 {
     int numNodes = py::len(nodes), numTags = py::len(tags);
@@ -105,7 +101,7 @@ struct ElementMapHelper
     using T = ElementMap;
     using V = std::vector<ElementSharedPtr>;
 
-    static V& get(T &x, int i)
+    static V &get(T &x, int i)
     {
         if (i < 0 || i > 3)
         {
@@ -127,18 +123,17 @@ void export_Element()
 {
     // Export element configuration struct
     py::class_<ElmtConfig>("ElmtConfig", py::no_init)
-        .def("__init__", py::make_constructor(
-                 &ElmtConfig_Init, py::default_call_policies(),
-                 (py::arg("shapeType"), py::arg("order"), py::arg("faceNodes"),
-                  py::arg("volNodes"), py::arg("reorient") = py::object(),
-                  py::arg("edgeNodeType") = py::object(),
-                  py::arg("faceNodeType") = py::object())));
+        .def("__init__",
+             py::make_constructor(&ElmtConfig_Init, py::default_call_policies(),
+                                  (py::arg("shapeType"), py::arg("order"),
+                                   py::arg("faceNodes"), py::arg("volNodes"),
+                                   py::arg("reorient")     = py::object(),
+                                   py::arg("edgeNodeType") = py::object(),
+                                   py::arg("faceNodeType") = py::object())));
 
     // Export element base class
-    py::class_<Element,
-               std::shared_ptr<Element>,
-               boost::noncopyable>(
-                   "Element", py::no_init)
+    py::class_<Element, std::shared_ptr<Element>, boost::noncopyable>(
+        "Element", py::no_init)
         .def("GetId", &Element::GetId)
         .def("GetDim", &Element::GetDim)
         .def("GetShapeType", &Element::GetShapeType)
@@ -146,18 +141,15 @@ void export_Element()
 
         // Factory methods
         .def("Create", &Element_Create)
-        .staticmethod("Create")
-        ;
+        .staticmethod("Create");
 
     // Export handler for element mesh storage (ElementMap)
     py::class_<ElementMap>("ElementMap")
         .def("__len__", &ElementMapHelper::len)
         .def("__getitem__", &ElementMapHelper::get,
-             py::return_internal_reference<>())
-        ;
+             py::return_internal_reference<>());
 
     // Export handler for list of elements (std::vector<ElementSharedPtr>)
     py::class_<std::vector<ElementSharedPtr>>("ElementVector")
-        .def(py::vector_indexing_suite<std::vector<ElementSharedPtr>>())
-    ;
+        .def(py::vector_indexing_suite<std::vector<ElementSharedPtr>>());
 }

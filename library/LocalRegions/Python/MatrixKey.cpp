@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <vector>
 #include <LocalRegions/MatrixKey.h>
+#include <vector>
 
 #include <LibUtilities/Python/NekPyConfig.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
@@ -48,7 +48,7 @@ MatrixKey *MatrixKey_Init(const StdRegions::MatrixType matType,
                           const py::object &varCoeffMap)
 {
     StdRegions::ConstFactorMap tmp = StdRegions::NullConstFactorMap;
-    StdRegions::VarCoeffMap tmp2 = StdRegions::NullVarCoeffMap;
+    StdRegions::VarCoeffMap tmp2   = StdRegions::NullVarCoeffMap;
 
     if (!constFactorMap.is_none())
     {
@@ -68,13 +68,12 @@ MatrixKey *MatrixKey_Init(const StdRegions::MatrixType matType,
  */
 void export_MatrixKey()
 {
-    py::class_<MatrixKey, py::bases<StdRegions::StdMatrixKey>>(
-        "MatrixKey", py::no_init)
+    py::class_<MatrixKey, py::bases<StdRegions::StdMatrixKey>>("MatrixKey",
+                                                               py::no_init)
         .def("__init__",
-             py::make_constructor(
-                 &MatrixKey_Init, py::default_call_policies(),
-                 (py::arg("matType"), py::arg("shapeType"), py::arg("exp"),
-                  py::arg("constFactorMap") = py::object(),
-                  py::arg("varCoeffMap") = py::object())))
-        ;
+             py::make_constructor(&MatrixKey_Init, py::default_call_policies(),
+                                  (py::arg("matType"), py::arg("shapeType"),
+                                   py::arg("exp"),
+                                   py::arg("constFactorMap") = py::object(),
+                                   py::arg("varCoeffMap")    = py::object())));
 }

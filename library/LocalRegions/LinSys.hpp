@@ -35,34 +35,32 @@
 #ifndef LINSYSKEY_HPP
 #define LINSYSKEY_HPP
 
-
-#include <StdRegions/StdRegions.hpp>
 #include <StdRegions/StdMatrixKey.h>
+#include <StdRegions/StdRegions.hpp>
 
 namespace Nektar
 {
-    namespace LocalRegions
+namespace LocalRegions
+{
+
+class LinSysKey : public MatrixKey
+{
+public:
+    LinSysKey(StdRegions::MatrixType matrixType,
+              StdRegions::ExpansionType expansionType,
+              StdRegions::StdExpansion &stdExpansion)
+        : MatrixKey(matrixType, expansionType, stdExpansion)
     {
-    
-        class LinSysKey: public MatrixKey
-        {  
-        public:
-            LinSysKey(StdRegions::MatrixType matrixType, StdRegions::ExpansionType expansionType, 
-              StdRegions::StdExpansion &stdExpansion):
-        MatrixKey(matrixType,expansionType,stdExpansion)
-        {
-                }
-        
-            virtual ~LinSysKey()
-            {
-            }
-        
-        private:
-        
-        };
+    }
 
-    } // end of namespace
-} // end of namespace
+    virtual ~LinSysKey()
+    {
+    }
 
-#endif //LINSYSKEY_HPP
+private:
+};
 
+} // namespace LocalRegions
+} // namespace Nektar
+
+#endif // LINSYSKEY_HPP

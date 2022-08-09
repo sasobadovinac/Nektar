@@ -33,213 +33,187 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <boost/bind.hpp>
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
-#include <iostream>
-#include <boost/bind.hpp>
 #include <functional>
+#include <iostream>
 
 namespace Nektar
 {
 
-    // Note - All tests should excercise both the blas and normal code.
-    // The easiest way to do this is to perform one test with integers and 
-    // one with doubles.
-    namespace MatrixMultiplicationTests
+// Note - All tests should excercise both the blas and normal code.
+// The easiest way to do this is to perform one test with integers and
+// one with doubles.
+namespace MatrixMultiplicationTests
+{
+BOOST_AUTO_TEST_CASE(TestStandardFullTimesStandardFull)
+{
+
     {
-        BOOST_AUTO_TEST_CASE(TestStandardFullTimesStandardFull)
-        {
+        // double buf1[] = {1, 2, 3,
+        //                4, 5, 6,
+        //                7, 8, 9};
+        // double buf2[] = { 10, 11, 12,
+        //    15, 16, 17,
+        //    19, 20, 21 };
+        double buf1[] = {1, 4, 7, 2, 5, 8, 3, 6, 9};
+        double buf2[] = {10, 15, 19, 11, 16, 20, 12, 17, 21};
 
-             {
-                 //double buf1[] = {1, 2, 3,
-                 //                4, 5, 6,
-                 //                7, 8, 9};
-                 //double buf2[] = { 10, 11, 12,
-                 //    15, 16, 17,
-                 //    19, 20, 21 };
-                 double buf1[] = {1, 4, 7,
-                                  2, 5, 8,
-                                  3, 6, 9};
-                 double buf2[] = {10, 15, 19,
-                                  11, 16, 20,
-                                  12, 17, 21};
- 
-                                  
-                 NekMatrix<double> lhs(3, 3, buf1);
-                 NekMatrix<double> rhs(3, 3, buf2);
- 
-                 NekMatrix<double> result = lhs*rhs;
- 
-                 BOOST_CHECK(result.GetRows() == 3);
-                 BOOST_CHECK(result.GetColumns() == 3);
- 
-                 double epsilon = 1e-12;
-                 BOOST_CHECK_CLOSE(*result(0,0), 97.0, epsilon);
-                 BOOST_CHECK_CLOSE(*result(0,1), 103.0, epsilon);
-                 BOOST_CHECK_CLOSE(*result(0,2), 109.0, epsilon);
- 
-                 BOOST_CHECK_CLOSE(*result(1,0), 229.0, epsilon);
-                 BOOST_CHECK_CLOSE(*result(1,1), 244.0, epsilon);
-                 BOOST_CHECK_CLOSE(*result(1,2), 259.0, epsilon);
- 
-                 BOOST_CHECK_CLOSE(*result(2,0), 361.0, epsilon);
-                 BOOST_CHECK_CLOSE(*result(2,1), 385.0, epsilon);
-                 BOOST_CHECK_CLOSE(*result(2,2), 409.0, epsilon);
-             }
-        }
+        NekMatrix<double> lhs(3, 3, buf1);
+        NekMatrix<double> rhs(3, 3, buf2);
 
-        BOOST_AUTO_TEST_CASE(TestStandardFullTimesVector)
-        {
+        NekMatrix<double> result = lhs * rhs;
 
-             {
-                 //double buf1[] = {1, 2, 3,
-                 //                4, 5, 6,
-                 //                7, 8, 9};
-                 double buf1[] = {1, 4, 7,
-                                  2, 5, 8,
-                                  3, 6, 9};
-                 double buf2[] = { 10, 11, 12};
- 
-                                  
-                 NekMatrix<double> lhs(3, 3, buf1);
-                 NekVector<double> rhs(3, buf2); 
-                 NekVector<double> result = lhs*rhs;
- 
-                 BOOST_CHECK(result.GetRows() == 3);
+        BOOST_CHECK(result.GetRows() == 3);
+        BOOST_CHECK(result.GetColumns() == 3);
 
- 
-                 double epsilon = 1e-12;
-                 BOOST_CHECK_CLOSE(result[0], 68.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[1], 167.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[2], 266.0, epsilon);
-             }
+        double epsilon = 1e-12;
+        BOOST_CHECK_CLOSE(*result(0, 0), 97.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(0, 1), 103.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(0, 2), 109.0, epsilon);
 
-             {
-                 //double buf1[] = {1, 2, 3,
-                 //                4, 5, 6,
-                 //                7, 8, 9,
-                 //                10, 11, 12};
-                 double buf1[] = {1, 4, 7, 10,
-                                  2, 5, 8, 11,
-                                  3, 6, 9, 12};
-                 double buf2[] = { 10, 11, 12};
- 
-                                  
-                 NekMatrix<double> lhs(4, 3, buf1);
-                 NekVector<double> rhs(3, buf2); 
-                 NekVector<double> result = lhs*rhs;
- 
-                 BOOST_CHECK(result.GetRows() == 4);
+        BOOST_CHECK_CLOSE(*result(1, 0), 229.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(1, 1), 244.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(1, 2), 259.0, epsilon);
 
- 
-                 double epsilon = 1e-12;
-                 BOOST_CHECK_CLOSE(result[0], 68.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[1], 167.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[2], 266.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[3], 365.0, epsilon);
-             }
-        }
-
-        BOOST_AUTO_TEST_CASE(TestScaledFullTimesScaledFull)
-        {
-
-
-            {
-                //double buf1[] = {1, 2, 3,
-                //                 4, 5, 6,
-                //                 7, 8, 9};
-                //double buf2[] = { 10, 11, 12,
-                //                  15, 16, 17,
-                //                  19, 20, 21 };
-                double buf1[] = {1, 4, 7,
-                                 2, 5, 8,
-                                 3, 6, 9};
-                double buf2[] = { 10, 15, 19,
-                                  11, 16, 20,
-                                  12, 17, 21};
-
-                std::shared_ptr<NekMatrix<double> > lhsInnerMatrix(                              
-                    new NekMatrix<double>(3, 3, buf1));
-                std::shared_ptr<NekMatrix<double> > rhsInnerMatrix(                              
-                    new NekMatrix<double>(3, 3, buf2));
-
-                NekMatrix<NekMatrix<double>, ScaledMatrixTag> lhs(2.0, lhsInnerMatrix);
-                NekMatrix<NekMatrix<double>, ScaledMatrixTag> rhs(3.0, rhsInnerMatrix);
-                
-                NekMatrix<double> result = lhs*rhs;
-
-                BOOST_CHECK(result.GetRows() == 3);
-                BOOST_CHECK(result.GetColumns() == 3);
-
-                double epsilon = 1e-12;
-                BOOST_CHECK_CLOSE(*result(0,0), 582.0, epsilon);
-                BOOST_CHECK_CLOSE(*result(0,1), 618.0, epsilon);
-                BOOST_CHECK_CLOSE(*result(0,2), 654.0, epsilon);
-
-                BOOST_CHECK_CLOSE(*result(1,0), 1374.0, epsilon);
-                BOOST_CHECK_CLOSE(*result(1,1), 1464.0, epsilon);
-                BOOST_CHECK_CLOSE(*result(1,2), 1554.0, epsilon);
-
-                BOOST_CHECK_CLOSE(*result(2,0), 2166.0, epsilon);
-                BOOST_CHECK_CLOSE(*result(2,1), 2310.0, epsilon);
-                BOOST_CHECK_CLOSE(*result(2,2), 2454.0, epsilon);
-            }
-        }
-
-        BOOST_AUTO_TEST_CASE(TestScaledFullTimesVector)
-        {
-
-             {
-                 //double buf1[] = {1, 2, 3,
-                 //                4, 5, 6,
-                 //                7, 8, 9};
-                 double buf1[] = {1, 4, 7,
-                                  2, 5, 8,
-                                  3, 6, 9};
-                 double buf2[] = { 10, 11, 12};
- 
-                                  
-                 std::shared_ptr<NekMatrix<double> > innerMatrix(
-                     new NekMatrix<double>(3, 3, buf1));
-                 NekMatrix<NekMatrix<double>, ScaledMatrixTag> lhs(2.0, innerMatrix);
-                 NekVector<double> rhs(3, buf2); 
-                 NekVector<double> result = lhs*rhs;
- 
-                 BOOST_CHECK(result.GetRows() == 3);
-
-                 double epsilon = 1e-12;
-                 BOOST_CHECK_CLOSE(result[0], 136.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[1], 334.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[2], 532.0, epsilon);
-             }
-
-             {
-                 //double buf1[] = {1, 2, 3,
-                 //                4, 5, 6,
-                 //                7, 8, 9,
-                 //                10, 11, 12};
-                 double buf1[] = {1, 4, 7, 10,
-                                  2, 5, 8, 11,
-                                  3, 6, 9, 12};
-                 double buf2[] = { 10, 11, 12};
- 
-                 std::shared_ptr<NekMatrix<double> > innerMatrix(
-                     new NekMatrix<double>(4, 3, buf1));
-                 NekMatrix<NekMatrix<double>, ScaledMatrixTag> lhs(3.0, innerMatrix);
-                 NekVector<double> rhs(3, buf2); 
-                 NekVector<double> result = lhs*rhs;
- 
-                 BOOST_CHECK(result.GetRows() == 4);
-
-                 double epsilon = 1e-12;
-                 BOOST_CHECK_CLOSE(result[0], 204.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[1], 501.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[2], 798.0, epsilon);
-                 BOOST_CHECK_CLOSE(result[3], 1095.0, epsilon);
-             }
-        }
+        BOOST_CHECK_CLOSE(*result(2, 0), 361.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(2, 1), 385.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(2, 2), 409.0, epsilon);
     }
 }
 
+BOOST_AUTO_TEST_CASE(TestStandardFullTimesVector)
+{
 
+    {
+        // double buf1[] = {1, 2, 3,
+        //                4, 5, 6,
+        //                7, 8, 9};
+        double buf1[] = {1, 4, 7, 2, 5, 8, 3, 6, 9};
+        double buf2[] = {10, 11, 12};
 
+        NekMatrix<double> lhs(3, 3, buf1);
+        NekVector<double> rhs(3, buf2);
+        NekVector<double> result = lhs * rhs;
+
+        BOOST_CHECK(result.GetRows() == 3);
+
+        double epsilon = 1e-12;
+        BOOST_CHECK_CLOSE(result[0], 68.0, epsilon);
+        BOOST_CHECK_CLOSE(result[1], 167.0, epsilon);
+        BOOST_CHECK_CLOSE(result[2], 266.0, epsilon);
+    }
+
+    {
+        // double buf1[] = {1, 2, 3,
+        //                4, 5, 6,
+        //                7, 8, 9,
+        //                10, 11, 12};
+        double buf1[] = {1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12};
+        double buf2[] = {10, 11, 12};
+
+        NekMatrix<double> lhs(4, 3, buf1);
+        NekVector<double> rhs(3, buf2);
+        NekVector<double> result = lhs * rhs;
+
+        BOOST_CHECK(result.GetRows() == 4);
+
+        double epsilon = 1e-12;
+        BOOST_CHECK_CLOSE(result[0], 68.0, epsilon);
+        BOOST_CHECK_CLOSE(result[1], 167.0, epsilon);
+        BOOST_CHECK_CLOSE(result[2], 266.0, epsilon);
+        BOOST_CHECK_CLOSE(result[3], 365.0, epsilon);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestScaledFullTimesScaledFull)
+{
+
+    {
+        // double buf1[] = {1, 2, 3,
+        //                 4, 5, 6,
+        //                 7, 8, 9};
+        // double buf2[] = { 10, 11, 12,
+        //                  15, 16, 17,
+        //                  19, 20, 21 };
+        double buf1[] = {1, 4, 7, 2, 5, 8, 3, 6, 9};
+        double buf2[] = {10, 15, 19, 11, 16, 20, 12, 17, 21};
+
+        std::shared_ptr<NekMatrix<double>> lhsInnerMatrix(
+            new NekMatrix<double>(3, 3, buf1));
+        std::shared_ptr<NekMatrix<double>> rhsInnerMatrix(
+            new NekMatrix<double>(3, 3, buf2));
+
+        NekMatrix<NekMatrix<double>, ScaledMatrixTag> lhs(2.0, lhsInnerMatrix);
+        NekMatrix<NekMatrix<double>, ScaledMatrixTag> rhs(3.0, rhsInnerMatrix);
+
+        NekMatrix<double> result = lhs * rhs;
+
+        BOOST_CHECK(result.GetRows() == 3);
+        BOOST_CHECK(result.GetColumns() == 3);
+
+        double epsilon = 1e-12;
+        BOOST_CHECK_CLOSE(*result(0, 0), 582.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(0, 1), 618.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(0, 2), 654.0, epsilon);
+
+        BOOST_CHECK_CLOSE(*result(1, 0), 1374.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(1, 1), 1464.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(1, 2), 1554.0, epsilon);
+
+        BOOST_CHECK_CLOSE(*result(2, 0), 2166.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(2, 1), 2310.0, epsilon);
+        BOOST_CHECK_CLOSE(*result(2, 2), 2454.0, epsilon);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestScaledFullTimesVector)
+{
+
+    {
+        // double buf1[] = {1, 2, 3,
+        //                4, 5, 6,
+        //                7, 8, 9};
+        double buf1[] = {1, 4, 7, 2, 5, 8, 3, 6, 9};
+        double buf2[] = {10, 11, 12};
+
+        std::shared_ptr<NekMatrix<double>> innerMatrix(
+            new NekMatrix<double>(3, 3, buf1));
+        NekMatrix<NekMatrix<double>, ScaledMatrixTag> lhs(2.0, innerMatrix);
+        NekVector<double> rhs(3, buf2);
+        NekVector<double> result = lhs * rhs;
+
+        BOOST_CHECK(result.GetRows() == 3);
+
+        double epsilon = 1e-12;
+        BOOST_CHECK_CLOSE(result[0], 136.0, epsilon);
+        BOOST_CHECK_CLOSE(result[1], 334.0, epsilon);
+        BOOST_CHECK_CLOSE(result[2], 532.0, epsilon);
+    }
+
+    {
+        // double buf1[] = {1, 2, 3,
+        //                4, 5, 6,
+        //                7, 8, 9,
+        //                10, 11, 12};
+        double buf1[] = {1, 4, 7, 10, 2, 5, 8, 11, 3, 6, 9, 12};
+        double buf2[] = {10, 11, 12};
+
+        std::shared_ptr<NekMatrix<double>> innerMatrix(
+            new NekMatrix<double>(4, 3, buf1));
+        NekMatrix<NekMatrix<double>, ScaledMatrixTag> lhs(3.0, innerMatrix);
+        NekVector<double> rhs(3, buf2);
+        NekVector<double> result = lhs * rhs;
+
+        BOOST_CHECK(result.GetRows() == 4);
+
+        double epsilon = 1e-12;
+        BOOST_CHECK_CLOSE(result[0], 204.0, epsilon);
+        BOOST_CHECK_CLOSE(result[1], 501.0, epsilon);
+        BOOST_CHECK_CLOSE(result[2], 798.0, epsilon);
+        BOOST_CHECK_CLOSE(result[3], 1095.0, epsilon);
+    }
+}
+} // namespace MatrixMultiplicationTests
+} // namespace Nektar

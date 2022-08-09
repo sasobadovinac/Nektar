@@ -39,104 +39,102 @@
 
 namespace Nektar
 {
-    class FentonKarma: public CellModel
+class FentonKarma : public CellModel
+{
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField)
     {
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField)
-        {
-            return MemoryManager<FentonKarma>
-            ::AllocateSharedPtr(pSession, pField);
-        }
+        return MemoryManager<FentonKarma>::AllocateSharedPtr(pSession, pField);
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        /// Constructor
-        FentonKarma(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField);
+    /// Constructor
+    FentonKarma(const LibUtilities::SessionReaderSharedPtr &pSession,
+                const MultiRegions::ExpListSharedPtr &pField);
 
-        /// Destructor
-        virtual ~FentonKarma();
+    /// Destructor
+    virtual ~FentonKarma();
 
-    protected:
-        /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
-        virtual void v_Update(
-                const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-                      Array<OneD, Array<OneD, NekDouble> >&outarray,
-                const NekDouble time);
+protected:
+    /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        virtual void v_SetInitialConditions();
+    virtual void v_SetInitialConditions();
 
-        virtual std::string v_GetCellVarName(unsigned int idx);
+    virtual std::string v_GetCellVarName(unsigned int idx);
 
-    private:
-        NekDouble C_m;
-        NekDouble V_0;
-        NekDouble V_fi;
-        NekDouble u_fi;
-        NekDouble u_c;
-        NekDouble u_v;
-        NekDouble u_r;
-        NekDouble g_fi_max;
-        NekDouble tau_d;
-        NekDouble tau_v1_minus;
-        NekDouble tau_v2_minus;
-        NekDouble tau_v_plus;
-        NekDouble tau_0;
-        NekDouble tau_r;
-        NekDouble tau_si;
-        NekDouble tau_y_plus;
-        NekDouble tau_y_minus;
-        NekDouble u_csi;
-        NekDouble k1;
-        NekDouble k2;
-        NekDouble tau_w_minus;
-        NekDouble tau_w_plus;
+private:
+    NekDouble C_m;
+    NekDouble V_0;
+    NekDouble V_fi;
+    NekDouble u_fi;
+    NekDouble u_c;
+    NekDouble u_v;
+    NekDouble u_r;
+    NekDouble g_fi_max;
+    NekDouble tau_d;
+    NekDouble tau_v1_minus;
+    NekDouble tau_v2_minus;
+    NekDouble tau_v_plus;
+    NekDouble tau_0;
+    NekDouble tau_r;
+    NekDouble tau_si;
+    NekDouble tau_y_plus;
+    NekDouble tau_y_minus;
+    NekDouble u_csi;
+    NekDouble k1;
+    NekDouble k2;
+    NekDouble tau_w_minus;
+    NekDouble tau_w_plus;
 
-        bool isCF3;
+    bool isCF3;
 
-        enum Variants {
-            eBR,
-            eMBR,
-            eMLR1,
-            eGP,
-            eCF1,
-            eCF2a,
-            eCF2b,
-            eCF2c,
-            eCF3a,
-            eCF3b,
-            eFC2002Set1a,
-            eFC2002Set1b,
-            eFC2002Set1c,
-            eFC2002Set1d,
-            eFC2002Set1e,
-            eFC2002Set2,
-            eFC2002Set4a,
-            eFC2002Set4b,
-            eFC2002Set4c,
-            eFC2002Set4d,
-            eFC2002Set5,
-            eFC2002Set6,
-            eFC2002Set7,
-            eFC2002Set8,
-            eFC2002Set9,
-            eLawson,
-            eCAF
-        };
-        enum Variants model_variant;
-
-        static std::string lookupIds[];
-        static std::string def;
+    enum Variants
+    {
+        eBR,
+        eMBR,
+        eMLR1,
+        eGP,
+        eCF1,
+        eCF2a,
+        eCF2b,
+        eCF2c,
+        eCF3a,
+        eCF3b,
+        eFC2002Set1a,
+        eFC2002Set1b,
+        eFC2002Set1c,
+        eFC2002Set1d,
+        eFC2002Set1e,
+        eFC2002Set2,
+        eFC2002Set4a,
+        eFC2002Set4b,
+        eFC2002Set4c,
+        eFC2002Set4d,
+        eFC2002Set5,
+        eFC2002Set6,
+        eFC2002Set7,
+        eFC2002Set8,
+        eFC2002Set9,
+        eLawson,
+        eCAF
     };
+    enum Variants model_variant;
 
-}
+    static std::string lookupIds[];
+    static std::string def;
+};
+
+} // namespace Nektar
 
 #endif

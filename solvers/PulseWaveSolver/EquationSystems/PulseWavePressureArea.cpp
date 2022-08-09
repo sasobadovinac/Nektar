@@ -51,7 +51,6 @@ PulseWavePressureArea::~PulseWavePressureArea()
 {
 }
 
-
 PressureAreaFactory &GetPressureAreaFactory()
 {
     static PressureAreaFactory instance;

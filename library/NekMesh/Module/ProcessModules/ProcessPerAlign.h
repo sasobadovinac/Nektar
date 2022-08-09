@@ -62,9 +62,10 @@ public:
     {
         return "ProcessPerAlign";
     }
+
 private:
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

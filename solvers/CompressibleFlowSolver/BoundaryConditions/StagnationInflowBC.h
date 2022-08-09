@@ -37,60 +37,55 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
 /**
- * @brief Stagnation conditions inflow boundary conditions 
+ * @brief Stagnation conditions inflow boundary conditions
  * for compressible flow problems where the energy and density are prescribed
  */
 class StagnationInflowBC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<StagnationInflowBC>;
 
-        friend class MemoryManager<StagnationInflowBC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p =
+            MemoryManager<StagnationInflowBC>::AllocateSharedPtr(
+                pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<StagnationInflowBC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pSpaceDim, bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-    protected:
+private:
+    StagnationInflowBC(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
+    virtual ~StagnationInflowBC(void){};
 
-    private:
-        StagnationInflowBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-        
-        virtual ~StagnationInflowBC(void){};
+    // Field storage for StagnationInflowBC
+    Array<OneD, Array<OneD, NekDouble>> m_fieldStorage;
 
-        // Field storage for StagnationInflowBC
-        Array<OneD, Array<OneD, NekDouble> > m_fieldStorage;
-
-        // Flag determining if we have an axi-symmetric case with swirl
-        bool                                 m_swirl;
+    // Flag determining if we have an axi-symmetric case with swirl
+    bool m_swirl;
 };
 
-}
+} // namespace Nektar
 
 #endif

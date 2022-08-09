@@ -73,9 +73,8 @@ public:
     {
         return eOutput;
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

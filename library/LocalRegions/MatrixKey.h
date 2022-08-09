@@ -35,60 +35,64 @@
 #ifndef MATRIXKEY_H
 #define MATRIXKEY_H
 
-#include <StdRegions/StdMatrixKey.h>
-#include <SpatialDomains/GeomFactors.h>
 #include <LocalRegions/LocalRegionsDeclspec.h>
+#include <SpatialDomains/GeomFactors.h>
+#include <StdRegions/StdMatrixKey.h>
 
 namespace Nektar
 {
-    namespace LocalRegions
+namespace LocalRegions
+{
+
+class MatrixKey : public StdRegions::StdMatrixKey
+{
+public:
+    LOCAL_REGIONS_EXPORT MatrixKey(
+        const StdRegions::MatrixType matrixType,
+        const LibUtilities::ShapeType shapeType,
+        const StdRegions::StdExpansion &stdExpansion,
+        const StdRegions::ConstFactorMap &factorMap =
+            StdRegions::NullConstFactorMap,
+        const StdRegions::VarCoeffMap &varCoeffMap =
+            StdRegions::NullVarCoeffMap,
+        LibUtilities::PointsType nodalType = LibUtilities::eNoPointsType);
+
+    LOCAL_REGIONS_EXPORT MatrixKey(const MatrixKey &mkey,
+                                   const StdRegions::MatrixType matrixType);
+
+    LOCAL_REGIONS_EXPORT MatrixKey(const StdRegions::StdMatrixKey &mkey);
+
+    virtual ~MatrixKey()
     {
+    }
 
-        class MatrixKey : public StdRegions::StdMatrixKey
-        {
-        public:
-            LOCAL_REGIONS_EXPORT MatrixKey(const StdRegions::MatrixType matrixType,
-                      const LibUtilities::ShapeType shapeType,
-                      const StdRegions::StdExpansion &stdExpansion,
-                      const StdRegions::ConstFactorMap &factorMap = StdRegions::NullConstFactorMap,
-                      const StdRegions::VarCoeffMap &varCoeffMap = StdRegions::NullVarCoeffMap,
-                      LibUtilities::PointsType nodalType = LibUtilities::eNoPointsType);
+    /// Used to lookup the create function in NekManager.
+    struct opLess
+    {
+        LOCAL_REGIONS_EXPORT bool operator()(const MatrixKey &lhs,
+                                             const MatrixKey &rhs) const;
+    };
 
-            LOCAL_REGIONS_EXPORT MatrixKey(const MatrixKey& mkey,
-                          const StdRegions::MatrixType matrixType);
-            
-            LOCAL_REGIONS_EXPORT MatrixKey(const StdRegions::StdMatrixKey &mkey);
+    /// Used for finding value given the key in NekManager.
+    LOCAL_REGIONS_EXPORT friend bool operator<(const MatrixKey &lhs,
+                                               const MatrixKey &rhs);
+    LOCAL_REGIONS_EXPORT friend bool opLess::operator()(
+        const MatrixKey &lhs, const MatrixKey &rhs) const;
 
-            virtual ~MatrixKey()
-            {
-            }
+    SpatialDomains::GeomFactorsSharedPtr GetMetricInfo() const
+    {
+        return m_metricinfo;
+    }
 
-            /// Used to lookup the create function in NekManager.
-            struct opLess
-            {
-                LOCAL_REGIONS_EXPORT bool operator()(const MatrixKey &lhs, const MatrixKey &rhs) const;
-            };
+protected:
+    MatrixKey();
 
-            /// Used for finding value given the key in NekManager.
-            LOCAL_REGIONS_EXPORT friend bool operator<(const MatrixKey &lhs, const MatrixKey &rhs);
-            LOCAL_REGIONS_EXPORT friend bool opLess::operator()(const MatrixKey &lhs, 
-                const MatrixKey &rhs) const;
+    SpatialDomains::GeomFactorsSharedPtr m_metricinfo;
 
-            SpatialDomains::GeomFactorsSharedPtr GetMetricInfo() const
-            {
-                return m_metricinfo;
-            }
+private:
+};
 
-        protected:
-            MatrixKey();
+} // namespace LocalRegions
+} // namespace Nektar
 
-            SpatialDomains::GeomFactorsSharedPtr  m_metricinfo; 
-
-        private:
-        };
-
-    } // end of namespace
-} // end of namespace
-
-#endif //STDMATRIXKEY_H
-
+#endif // STDMATRIXKEY_H

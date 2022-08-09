@@ -88,7 +88,7 @@ static bool default_verbose = false;
  * @brief Module wrapper to handle virtual function calls in @c Module and its
  * subclasses as defined by the template parameter @tparam MODTYPE.
  */
-template<class MODTYPE>
+template <class MODTYPE>
 struct ModuleWrap : public MODTYPE, public py::wrapper<MODTYPE>
 {
     /**
@@ -128,9 +128,8 @@ struct ModuleWrap : public MODTYPE, public py::wrapper<MODTYPE>
     using MODTYPE::m_mesh;
 };
 
-template<typename T>
-T Module_GetConfig(std::shared_ptr<Module> mod,
-                   const std::string &key)
+template <typename T>
+T Module_GetConfig(std::shared_ptr<Module> mod, const std::string &key)
 {
     return mod->GetConfigOption(key).as<T>();
 }
@@ -142,8 +141,7 @@ T Module_GetConfig(std::shared_ptr<Module> mod,
  * @param reprocess  If true then edges will be reprocessed (i.e. match 1D
  *                   elements to 2D element edges to construct boundaries).
  */
-void Module_ProcessEdges(std::shared_ptr<Module> mod,
-                         bool reprocess = true)
+void Module_ProcessEdges(std::shared_ptr<Module> mod, bool reprocess = true)
 {
     mod->ProcessEdges(reprocess);
 }
@@ -155,31 +153,26 @@ void Module_ProcessEdges(std::shared_ptr<Module> mod,
  * @param reprocess  If true then faces will be reprocessed (i.e. match 2D
  *                   elements to 3D element faces to construct boundaries).
  */
-void Module_ProcessFaces(std::shared_ptr<Module> mod,
-                         bool reprocess = true)
+void Module_ProcessFaces(std::shared_ptr<Module> mod, bool reprocess = true)
 {
     mod->ProcessFaces(reprocess);
 }
 
-template<typename MODTYPE>
-struct ModuleTypeProxy
+template <typename MODTYPE> struct ModuleTypeProxy
 {
 };
 
-template<>
-struct ModuleTypeProxy<InputModule>
+template <> struct ModuleTypeProxy<InputModule>
 {
     static const ModuleType value = eInputModule;
 };
 
-template<>
-struct ModuleTypeProxy<ProcessModule>
+template <> struct ModuleTypeProxy<ProcessModule>
 {
     static const ModuleType value = eProcessModule;
 };
 
-template<>
-struct ModuleTypeProxy<OutputModule>
+template <> struct ModuleTypeProxy<OutputModule>
 {
     static const ModuleType value = eOutputModule;
 };
@@ -196,7 +189,7 @@ const ModuleType ModuleTypeProxy<OutputModule>::value;
  * @param  mesh     Mesh that will be passed between modules.
  * @tparam MODTYPE  Subclass of Module (e.g #InputModule, #OutputModule)
  */
-template<typename MODTYPE>
+template <typename MODTYPE>
 ModuleSharedPtr Module_Create(py::tuple args, py::dict kwargs)
 {
     ModuleType modType = ModuleTypeProxy<MODTYPE>::value;
@@ -208,13 +201,14 @@ ModuleSharedPtr Module_Create(py::tuple args, py::dict kwargs)
     }
     else if (modType != eProcessModule && py::len(args) != 3)
     {
-        throw NekMeshError(ModuleTypeMap[modType] + "Module.Create() requires "
+        throw NekMeshError(ModuleTypeMap[modType] +
+                           "Module.Create() requires "
                            "three arguments: module name, a Mesh object, and a "
                            "filename");
     }
 
     std::string modName = py::extract<std::string>(args[0]);
-    ModuleKey modKey = std::make_pair(modType, modName);
+    ModuleKey modKey    = std::make_pair(modType, modName);
 
     if (!py::extract<MeshSharedPtr>(args[1]).check())
     {
@@ -255,17 +249,29 @@ ModuleSharedPtr Module_Create(py::tuple args, py::dict kwargs)
         if (arg == "verbose")
         {
             verbose = py::extract<bool>(items[i][1]);
+        }
+
+        continue;
+    }
+
+    // Set a logger for this module.
+    auto pythonLog = std::make_shared<PythonStream>();
+    Logger log     = Logger(pythonLog, verbose ? VERBOSE : INFO);
+    mod->SetLogger(log);
+
+    for (int i = 0; i < py::len(items); ++i)
+    {
+        std::string arg = py::extract<std::string>(items[i][0]), val;
+
+        // Enable or disable verbose for this module accordingly.
+        if (arg == "verbose")
+        {
             continue;
         }
 
         val = py::extract<std::string>(items[i][1].attr("__str__")());
         mod->RegisterConfig(arg, val);
     }
-
-    // Set a logger for this module.
-    auto pythonLog = std::make_shared<PythonStream>();
-    Logger log = Logger(pythonLog, verbose ? VERBOSE : INFO);
-    mod->SetLogger(log);
 
     // Set other default arguments.
     mod->SetDefaults();
@@ -280,8 +286,7 @@ ModuleSharedPtr Module_Create(py::tuple args, py::dict kwargs)
  * @param key    Configuration key.
  * @param value  Optional value (some configuration options are boolean).
  */
-void Module_RegisterConfig(std::shared_ptr<Module> mod,
-                           std::string const &key,
+void Module_RegisterConfig(std::shared_ptr<Module> mod, std::string const &key,
                            std::string const &value)
 {
     mod->RegisterConfig(key, value);
@@ -297,12 +302,11 @@ void Module_RegisterConfig(std::shared_ptr<Module> mod,
  * @param  desc      Description of the option.
  * @param  isBool    If true, denotes that the option will be bool-type.
  */
-template<typename MODTYPE>
+template <typename MODTYPE>
 void ModuleWrap_AddConfigOption(std::shared_ptr<ModuleWrap<MODTYPE>> mod,
                                 std::string const &key,
                                 std::string const &defValue,
-                                std::string const &desc,
-                                bool isBool)
+                                std::string const &desc, bool isBool)
 {
     mod->AddConfigOption(key, defValue, desc, isBool);
 }
@@ -389,8 +393,7 @@ void ModuleCapsuleDestructor(PyObject *ptr)
  *   instance, and register this in the global namespace of the current
  *   module. This then ties the capsule to the lifetime of the module.
  */
-void Module_Register(ModuleType const  &modType,
-                     std::string const &modName,
+void Module_Register(ModuleType const &modType, std::string const &modName,
                      py::object &obj)
 {
     // Create a module register helper, which will call the C++ function to
@@ -400,9 +403,8 @@ void Module_Register(ModuleType const  &modType,
     // Register this with the module factory using std::bind to grab a function
     // pointer to that particular object's function.
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(modType, modName),
-        std::bind(
-            &ModuleRegisterHelper::create, helper, std::placeholders::_1));
+        ModuleKey(modType, modName), std::bind(&ModuleRegisterHelper::create,
+                                               helper, std::placeholders::_1));
 
     // Create a capsule that will be embedded in the __main__ namespace. So
     // deallocation will occur, but only once Python ends or the Python module
@@ -430,8 +432,7 @@ void Module_Verbose(bool verbose)
     default_verbose = verbose;
 }
 
-template <typename MODTYPE>
-struct ModuleWrapConverter
+template <typename MODTYPE> struct ModuleWrapConverter
 {
     ModuleWrapConverter()
     {
@@ -441,9 +442,8 @@ struct ModuleWrapConverter
         py::objects::class_value_wrapper<
             std::shared_ptr<MODTYPE>,
             py::objects::make_ptr_instance<
-                MODTYPE,
-                py::objects::pointer_holder<std::shared_ptr<MODTYPE>, MODTYPE>>
-            >();
+                MODTYPE, py::objects::pointer_holder<std::shared_ptr<MODTYPE>,
+                                                     MODTYPE>>>();
     }
 };
 
@@ -451,28 +451,24 @@ struct ModuleWrapConverter
  * @brief Wrapper for subclasses of the Module class, e.g. #InputModule, which
  * can then be inhereted from inside Python.
  */
-template <typename MODTYPE>
-struct PythonModuleClass
+template <typename MODTYPE> struct PythonModuleClass
 {
     PythonModuleClass(std::string modName)
     {
-        py::class_<ModuleWrap<MODTYPE>,
-                   std::shared_ptr<ModuleWrap<MODTYPE>>,
-                   py::bases<Module>,
-                   boost::noncopyable>(
-                       modName.c_str(), py::init<MeshSharedPtr>())
+        py::class_<ModuleWrap<MODTYPE>, std::shared_ptr<ModuleWrap<MODTYPE>>,
+                   py::bases<Module>, boost::noncopyable>(
+            modName.c_str(), py::init<MeshSharedPtr>())
 
-            .def("AddConfigOption", ModuleWrap_AddConfigOption<MODTYPE>, (
-                     py::arg("key"), py::arg("defValue"), py::arg("desc"),
-                     py::arg("isBool") = false))
+            .def("AddConfigOption", ModuleWrap_AddConfigOption<MODTYPE>,
+                 (py::arg("key"), py::arg("defValue"), py::arg("desc"),
+                  py::arg("isBool") = false))
 
             // Allow direct access to mesh object through a property.
             .def_readwrite("mesh", &ModuleWrap<MODTYPE>::m_mesh)
 
             .def("Process", py::pure_virtual(&MODTYPE::Process))
             .def("Create", py::raw_function(Module_Create<MODTYPE>))
-            .staticmethod("Create")
-            ;
+            .staticmethod("Create");
 
         ModuleWrapConverter<MODTYPE>();
     }
@@ -499,36 +495,34 @@ void export_Module()
     // us. In the lightweight wrappers above, we therefore need to ensure we're
     // passing std::shared_ptr<Module> as the first argument, otherwise they
     // won't accept objects constructed from Python.
-    py::class_<ModuleWrap<Module>,
-               std::shared_ptr<ModuleWrap<Module>>,
-               boost::noncopyable>(
-                   "Module", py::init<MeshSharedPtr>())
+    py::class_<ModuleWrap<Module>, std::shared_ptr<ModuleWrap<Module>>,
+               boost::noncopyable>("Module", py::init<MeshSharedPtr>())
 
         // Process function for this module.
         .def("Process", py::pure_virtual(&Module::Process))
 
         // Configuration options.
-        .def("RegisterConfig", Module_RegisterConfig, (
-                 py::arg("key"), py::arg("value") = ""))
+        .def("RegisterConfig", Module_RegisterConfig,
+             (py::arg("key"), py::arg("value") = ""))
         .def("PrintConfig", &Module::PrintConfig)
         .def("SetDefaults", &Module::SetDefaults)
         .def("GetStringConfig", Module_GetConfig<std::string>)
         .def("GetFloatConfig", Module_GetConfig<double>)
         .def("GetIntConfig", Module_GetConfig<int>)
         .def("GetBoolConfig", Module_GetConfig<bool>)
-        .def("AddConfigOption", ModuleWrap_AddConfigOption<Module>, (
-                 py::arg("key"), py::arg("defValue"), py::arg("desc"),
-                 py::arg("isBool") = false))
+        .def("AddConfigOption", ModuleWrap_AddConfigOption<Module>,
+             (py::arg("key"), py::arg("defValue"), py::arg("desc"),
+              py::arg("isBool") = false))
 
         // Mesh accessor method.
         .def("GetMesh", &Module::GetMesh)
 
         // Mesh processing functions.
         .def("ProcessVertices", &Module::ProcessVertices)
-        .def("ProcessEdges", Module_ProcessEdges, (
-                 py::arg("reprocessEdges") = true))
-        .def("ProcessFaces", Module_ProcessFaces, (
-                 py::arg("reprocessFaces") = true))
+        .def("ProcessEdges", Module_ProcessEdges,
+             (py::arg("reprocessEdges") = true))
+        .def("ProcessFaces", Module_ProcessFaces,
+             (py::arg("reprocessFaces") = true))
         .def("ProcessElements", &Module::ProcessElements)
         .def("ProcessComposites", &Module::ProcessComposites)
         .def("ClearElementLinks", &Module::ClearElementLinks)
@@ -542,8 +536,7 @@ void export_Module()
 
         // Enable verbose output (or not).
         .def("Verbose", &Module_Verbose)
-        .staticmethod("Verbose")
-        ;
+        .staticmethod("Verbose");
 
     ModuleWrapConverter<Module>();
 

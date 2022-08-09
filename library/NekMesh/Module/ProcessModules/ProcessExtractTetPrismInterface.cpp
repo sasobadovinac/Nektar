@@ -133,8 +133,8 @@ void ProcessExtractTetPrismInterface::Process()
                 tags[0] = m_mesh->m_composite.size();
 
                 nodeList = face->m_vertexList;
-                ElmtConfig conf(
-                    LibUtilities::eTriangle, 1, false, false, false);
+                ElmtConfig conf(LibUtilities::eTriangle, 1, false, false,
+                                false);
                 ElementSharedPtr tri = GetElementFactory().CreateInstance(
                     LibUtilities::eTriangle, conf, nodeList, tags);
 
@@ -149,5 +149,5 @@ void ProcessExtractTetPrismInterface::Process()
     ProcessElements();
     ProcessComposites();
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -150,5 +150,5 @@ void OutputSTL::Process()
         m_mshFile << "endsolid" << endl;
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

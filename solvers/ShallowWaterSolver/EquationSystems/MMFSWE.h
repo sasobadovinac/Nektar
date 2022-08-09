@@ -66,7 +66,7 @@ public:
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
         SolverUtils::EquationSystemSharedPtr p =
             MemoryManager<MMFSWE>::AllocateSharedPtr(pSession, pGraph);
@@ -116,7 +116,7 @@ protected:
 
     /// Session reader
     MMFSWE(const LibUtilities::SessionReaderSharedPtr &pSession,
-           const SpatialDomains::MeshGraphSharedPtr& pGraph);
+           const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     /// Compute the RHS
     void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
@@ -247,7 +247,7 @@ protected:
                         Array<OneD, Array<OneD, NekDouble>> &physarray);
 
     /// Initialise the object
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields = true);
 
     virtual void v_DoSolve();
 
@@ -280,6 +280,6 @@ private:
 
     void Checkpoint_Output_Cartesian(std::string outname);
 };
-}
+} // namespace Nektar
 
 #endif

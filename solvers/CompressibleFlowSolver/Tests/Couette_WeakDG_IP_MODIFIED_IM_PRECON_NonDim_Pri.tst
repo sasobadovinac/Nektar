@@ -25,18 +25,18 @@
     </files>
     <metrics>
         <metric type="L2" id="1">
-            <value variable="rho"  tolerance="5e-8" >3.61898e-05</value>
-            <value variable="rhou" tolerance="5e-8" >0.00010282 </value>
-            <value variable="rhov" tolerance="5e-8" >1.63907e-05</value>
-            <value variable="rhow" tolerance="5e-12">7.91783e-15</value>
-            <value variable="E"    tolerance="5e-8" >4.09962e-05</value>
+            <value variable="rho"  tolerance="5e-8" >3.73741e-05</value>
+            <value variable="rhou" tolerance="5e-8" >0.000110546</value>
+            <value variable="rhov" tolerance="5e-8" >1.64516e-05</value>
+            <value variable="rhow" tolerance="5e-12">1.26586e-15</value>
+            <value variable="E"    tolerance="5e-8" >4.21625e-05</value>
         </metric>
         <metric type="Linf" id="2">
-            <value variable="rho"  tolerance="5e-8" >0.000177772</value>
-            <value variable="rhou" tolerance="5e-8" >0.000194247</value>
-            <value variable="rhov" tolerance="5e-8" >4.34645e-05</value>
-            <value variable="rhow" tolerance="5e-12">1.01303e-14</value>
-            <value variable="E"    tolerance="5e-8" >0.00021377 </value>
+            <value variable="rho"  tolerance="5e-8" >0.00017523</value>
+            <value variable="rhou" tolerance="5e-8" >0.000177817</value>
+            <value variable="rhov" tolerance="5e-8" >4.25271e-05</value>
+            <value variable="rhow" tolerance="5e-12">1.71785e-15</value>
+            <value variable="E"    tolerance="5e-8" >0.000213984</value>
         </metric>
     </metrics>
 </test>

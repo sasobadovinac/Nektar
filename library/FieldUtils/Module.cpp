@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <iomanip>
 #include <boost/algorithm/string.hpp>
+#include <iomanip>
 
 #include "Module.h"
 
@@ -109,13 +109,13 @@ void Module::RegisterConfig(string key, string val)
         ConfigOption conf(false, "", "");
         conf.m_beenSet = true;
         conf.m_value   = val;
-        m_config[key] = conf;
+        m_config[key]  = conf;
     }
     else
     {
         it->second.m_beenSet = true;
 
-        if (it->second.m_isBool && val=="")
+        if (it->second.m_isBool && val == "")
         {
             it->second.m_value = "1";
         }
@@ -198,5 +198,5 @@ void InputModule::PrintSummary()
     cout << "Field size = " << m_f->m_data[0].size() * sizeof(NekDouble)
          << endl;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

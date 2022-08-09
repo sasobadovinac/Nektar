@@ -32,153 +32,145 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
 #include <MultiRegions/GlobalMatrixKey.h>
 
 using namespace std;
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+GlobalMatrixKey::GlobalMatrixKey(const StdRegions::MatrixType matrixType,
+                                 const AssemblyMapSharedPtr &locToGloMap,
+                                 const StdRegions::ConstFactorMap &factors,
+                                 const StdRegions::VarCoeffMap &varCoeffs)
+    : m_matrixType(matrixType), m_shapeType(LibUtilities::eNoShapeType),
+      m_constFactors(factors), m_varCoeffs(varCoeffs),
+      m_locToGloMap(locToGloMap)
+{
+}
+
+GlobalMatrixKey::GlobalMatrixKey(const GlobalMatrixKey &key,
+                                 const LibUtilities::ShapeType shapeType)
+    : m_matrixType(key.m_matrixType), m_shapeType(shapeType),
+      m_constFactors(key.m_constFactors), m_varCoeffs(key.m_varCoeffs),
+      m_locToGloMap(key.m_locToGloMap)
+{
+}
+
+GlobalMatrixKey::GlobalMatrixKey(const GlobalMatrixKey &key)
+    : m_matrixType(key.m_matrixType), m_shapeType(key.m_shapeType),
+      m_constFactors(key.m_constFactors), m_varCoeffs(key.m_varCoeffs),
+      m_locToGloMap(key.m_locToGloMap)
+{
+}
+
+GlobalMatrixKey::~GlobalMatrixKey()
+{
+}
+
+bool operator<(const GlobalMatrixKey &lhs, const GlobalMatrixKey &rhs)
+{
+    if (lhs.m_matrixType < rhs.m_matrixType)
     {
-        GlobalMatrixKey::GlobalMatrixKey(const StdRegions::MatrixType matrixType,
-                    const AssemblyMapSharedPtr &locToGloMap,
-                    const StdRegions::ConstFactorMap &factors,
-                    const StdRegions::VarCoeffMap &varCoeffs) :
-            m_matrixType(matrixType),
-            m_shapeType(LibUtilities::eNoShapeType),
-            m_constFactors(factors),
-            m_varCoeffs(varCoeffs),
-            m_locToGloMap(locToGloMap)
-        {
-        }
+        return true;
+    }
 
-        GlobalMatrixKey::GlobalMatrixKey(const GlobalMatrixKey &key,
-                                         const LibUtilities::ShapeType shapeType):
-            m_matrixType(key.m_matrixType),
-            m_shapeType(shapeType),
-            m_constFactors(key.m_constFactors),
-            m_varCoeffs(key.m_varCoeffs),
-            m_locToGloMap(key.m_locToGloMap)
-        {
-        }
+    if (lhs.m_matrixType > rhs.m_matrixType)
+    {
+        return false;
+    }
 
-        GlobalMatrixKey::GlobalMatrixKey(const GlobalMatrixKey &key):
-            m_matrixType(key.m_matrixType),
-            m_shapeType(key.m_shapeType),
-            m_constFactors(key.m_constFactors),
-            m_varCoeffs(key.m_varCoeffs),
-            m_locToGloMap(key.m_locToGloMap)
-        {
-        }
+    if (lhs.m_shapeType < rhs.m_shapeType)
+    {
+        return true;
+    }
 
-        GlobalMatrixKey::~GlobalMatrixKey()
-        {
-        }
+    if (lhs.m_shapeType > rhs.m_shapeType)
+    {
+        return false;
+    }
 
-        bool operator<(const GlobalMatrixKey &lhs, const GlobalMatrixKey &rhs)
+    if (lhs.m_constFactors.size() < rhs.m_constFactors.size())
+    {
+        return true;
+    }
+    else if (lhs.m_constFactors.size() > rhs.m_constFactors.size())
+    {
+        return false;
+    }
+    else
+    {
+        StdRegions::ConstFactorMap::const_iterator x, y;
+        for (x = lhs.m_constFactors.begin(), y = rhs.m_constFactors.begin();
+             x != lhs.m_constFactors.end(); ++x, ++y)
         {
-            if(lhs.m_matrixType < rhs.m_matrixType)
+            if (x->second < y->second)
             {
                 return true;
             }
-
-            if(lhs.m_matrixType > rhs.m_matrixType)
+            if (x->second > y->second)
             {
                 return false;
             }
-
-
-            if(lhs.m_shapeType < rhs.m_shapeType)
-            {
-                return true;
-            }
-            
-
-            if(lhs.m_shapeType > rhs.m_shapeType)
-            {
-                return false;
-            }
-            
-            if(lhs.m_constFactors.size() < rhs.m_constFactors.size())
-            {
-                return true;
-            }
-            else if(lhs.m_constFactors.size() > rhs.m_constFactors.size())
-            {
-                return false;
-            }
-            else
-            {
-                StdRegions::ConstFactorMap::const_iterator x, y;
-                for(x = lhs.m_constFactors.begin(), y = rhs.m_constFactors.begin();
-                    x != lhs.m_constFactors.end(); ++x, ++y)
-                {
-                    if (x->second < y->second)
-                    {
-                        return true;
-                    }
-                    if (x->second > y->second)
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            if(lhs.m_varCoeffs.size() < rhs.m_varCoeffs.size())
-            {
-                return true;
-            }
-            else if(lhs.m_varCoeffs.size() > rhs.m_varCoeffs.size())
-            {
-                return false;
-            }
-//            else
-//            {
-//                StdRegions::VarCoeffMap::const_iterator x, y;
-//                for (x = lhs.m_varCoeffs.begin(), y = rhs.m_varCoeffs.begin();
-//                     x != lhs.m_varCoeffs.end(); ++x, ++y)
-//                {
-//                    if (x->second.get() < y->second.get())
-//                    {
-//                        return true;
-//                    }
-//                    if (x->second.get() > y->second.get())
-//                    {
-//                        return false;
-//                    }
-//                }
-//            }
-
-            if(!rhs.m_locToGloMap.lock().get())
-            {
-                return false;
-            }
-            else if(!lhs.m_locToGloMap.lock().get() && rhs.m_locToGloMap.lock().get() )
-            {
-                return true;
-            }
-            if(lhs.m_locToGloMap.lock()->GetHash() < rhs.m_locToGloMap.lock()->GetHash())
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        std::ostream& operator<<(std::ostream& os, const GlobalMatrixKey& rhs)
-        {
-            os << "MatrixType: " << rhs.GetMatrixType() << endl;
-            os << "Number of constants: " << rhs.GetNConstFactors() << endl;
-            for(auto &x : rhs.GetConstFactors())
-            {
-                os << "  Constant " << StdRegions::ConstFactorTypeMap[x.first]
-                   << ": " << x.second << endl;
-            }
-            os << "Number of variable coefficients: " 
-               << rhs.GetNVarCoeffs() << endl;
-
-            return os;
         }
     }
+
+    if (lhs.m_varCoeffs.size() < rhs.m_varCoeffs.size())
+    {
+        return true;
+    }
+    else if (lhs.m_varCoeffs.size() > rhs.m_varCoeffs.size())
+    {
+        return false;
+    }
+    //            else
+    //            {
+    //                StdRegions::VarCoeffMap::const_iterator x, y;
+    //                for (x = lhs.m_varCoeffs.begin(), y =
+    //                rhs.m_varCoeffs.begin();
+    //                     x != lhs.m_varCoeffs.end(); ++x, ++y)
+    //                {
+    //                    if (x->second.get() < y->second.get())
+    //                    {
+    //                        return true;
+    //                    }
+    //                    if (x->second.get() > y->second.get())
+    //                    {
+    //                        return false;
+    //                    }
+    //                }
+    //            }
+
+    if (!rhs.m_locToGloMap.lock().get())
+    {
+        return false;
+    }
+    else if (!lhs.m_locToGloMap.lock().get() && rhs.m_locToGloMap.lock().get())
+    {
+        return true;
+    }
+    if (lhs.m_locToGloMap.lock()->GetHash() <
+        rhs.m_locToGloMap.lock()->GetHash())
+    {
+        return true;
+    }
+
+    return false;
 }
+
+std::ostream &operator<<(std::ostream &os, const GlobalMatrixKey &rhs)
+{
+    os << "MatrixType: " << rhs.GetMatrixType() << endl;
+    os << "Number of constants: " << rhs.GetNConstFactors() << endl;
+    for (auto &x : rhs.GetConstFactors())
+    {
+        os << "  Constant " << StdRegions::ConstFactorTypeMap[x.first] << ": "
+           << x.second << endl;
+    }
+    os << "Number of variable coefficients: " << rhs.GetNVarCoeffs() << endl;
+
+    return os;
+}
+} // namespace MultiRegions
+} // namespace Nektar

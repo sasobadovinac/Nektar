@@ -491,7 +491,7 @@ CommSharedPtr CommMpi::v_CommCreateIf(int flag)
     // color == MPI_UNDEF => not in the new communicator
     // key == 0 on all => use rank to order them. OpenMPI, at least,
     // implies this is faster than ordering them ourselves.
-    MPI_Comm_split(m_comm, flag ? 0 : MPI_UNDEFINED, 0, &newComm);
+    MPI_Comm_split(m_comm, flag ? flag : MPI_UNDEFINED, 0, &newComm);
 
     if (flag == 0)
     {
@@ -519,9 +519,9 @@ std::pair<CommSharedPtr, CommSharedPtr> CommMpi::v_SplitCommNode()
 
     // For rank 0 of the intra-node communicator, split the main
     // communicator. Everyone else will get a null communicator.
-    ret.first = std::shared_ptr<Comm>(new CommMpi(nodeComm));
+    ret.first  = std::shared_ptr<Comm>(new CommMpi(nodeComm));
     ret.second = CommMpi::v_CommCreateIf(ret.first->GetRank() == 0);
-    if(ret.first->GetRank() == 0)
+    if (ret.first->GetRank() == 0)
     {
         ret.second->SplitComm(1, ret.second->GetSize());
     }

@@ -65,10 +65,11 @@ public:
     {
         return "ProcessLinear";
     }
+
 private:
     bool Invalid(NekMesh::ElementSharedPtr el, NekDouble thr);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

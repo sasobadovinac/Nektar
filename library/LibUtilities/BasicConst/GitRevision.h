@@ -32,35 +32,45 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef  GITREVISION_H
-#define  GITREVISION_H
+#ifndef GITREVISION_H
+#define GITREVISION_H
 
-#include <string>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
+#include <string>
 
 namespace Nektar
 {
-    namespace NekConstants
-    {
-        LIB_UTILITIES_EXPORT extern const std::string kGitSha1;
-        LIB_UTILITIES_EXPORT extern const std::string kGitBranch;
-    }
+namespace NekConstants
+{
+LIB_UTILITIES_EXPORT extern const std::string kGitSha1;
+LIB_UTILITIES_EXPORT extern const std::string kGitBranch;
+} // namespace NekConstants
 
-    //This class is a workaround for a windows quirk which means that it cant
-    //figure out how the extern works when a library other than LibUtilities
-    //wants accsess to the information. This class wraps the consts with a class
-    //so that they can be used elsewhere (such as nekmesh)
-    namespace LibUtilities
+// This class is a workaround for a windows quirk which means that it cant
+// figure out how the extern works when a library other than LibUtilities
+// wants accsess to the information. This class wraps the consts with a class
+// so that they can be used elsewhere (such as nekmesh)
+namespace LibUtilities
+{
+class GitConsts
+{
+public:
+    LIB_UTILITIES_EXPORT GitConsts()
     {
-        class GitConsts
-        {
-        public:
-            LIB_UTILITIES_EXPORT GitConsts(){}
-            LIB_UTILITIES_EXPORT ~GitConsts(){}
-            LIB_UTILITIES_EXPORT std::string GetSha1(){return NekConstants::kGitSha1;}
-            LIB_UTILITIES_EXPORT std::string GetBranch(){return NekConstants::kGitBranch;}
-        };
     }
-}
+    LIB_UTILITIES_EXPORT ~GitConsts()
+    {
+    }
+    LIB_UTILITIES_EXPORT std::string GetSha1()
+    {
+        return NekConstants::kGitSha1;
+    }
+    LIB_UTILITIES_EXPORT std::string GetBranch()
+    {
+        return NekConstants::kGitBranch;
+    }
+};
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

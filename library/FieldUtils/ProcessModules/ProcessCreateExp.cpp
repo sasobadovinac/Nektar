@@ -48,8 +48,7 @@ namespace FieldUtils
 
 ModuleKey ProcessCreateExp::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "createExp"),
-        ProcessCreateExp::create,
+        ModuleKey(eProcessModule, "createExp"), ProcessCreateExp::create,
         "dummy module used to create m_exp.");
 
 ProcessCreateExp::ProcessCreateExp(FieldSharedPtr f) : ProcessModule(f)
@@ -62,7 +61,7 @@ ProcessCreateExp::~ProcessCreateExp()
 
 void ProcessCreateExp::Process(po::variables_map &vm)
 {
-    if(m_f->m_graph)
+    if (m_f->m_graph)
     {
         LibUtilities::Timer timerpart;
         if (m_f->m_verbose)
@@ -75,7 +74,7 @@ void ProcessCreateExp::Process(po::variables_map &vm)
         // check to see if fld file defined so can use in
         // expansion defintion if required
         bool fldfilegiven = (m_f->m_fielddef.size() != 0);
-        bool expFromFld   = fldfilegiven  && !vm.count("useSessionExpansion");
+        bool expFromFld   = fldfilegiven && !vm.count("useSessionExpansion");
 
         // load fielddef header if fld file is defined. This gives
         // precedence to Homogeneous definition in fld file
@@ -92,17 +91,17 @@ void ProcessCreateExp::Process(po::variables_map &vm)
             if (m_f->m_session->DefinesSolverInfo("HOMOGENEOUS"))
             {
                 std::string HomoStr =
-                        m_f->m_session->GetSolverInfo("HOMOGENEOUS");
+                    m_f->m_session->GetSolverInfo("HOMOGENEOUS");
 
                 if ((HomoStr == "HOMOGENEOUS1D") ||
-                    (HomoStr == "Homogeneous1D") ||
-                    (HomoStr == "1D") || (HomoStr == "Homo1D"))
+                    (HomoStr == "Homogeneous1D") || (HomoStr == "1D") ||
+                    (HomoStr == "Homo1D"))
                 {
                     m_f->m_numHomogeneousDir = 1;
                 }
                 if ((HomoStr == "HOMOGENEOUS2D") ||
-                    (HomoStr == "Homogeneous2D") ||
-                    (HomoStr == "2D") || (HomoStr == "Homo2D"))
+                    (HomoStr == "Homogeneous2D") || (HomoStr == "2D") ||
+                    (HomoStr == "Homo2D"))
                 {
                     m_f->m_numHomogeneousDir = 2;
                 }
@@ -113,7 +112,7 @@ void ProcessCreateExp::Process(po::variables_map &vm)
         // Check  if there are any elements to process
         vector<int> IDs;
         auto domain = m_f->m_graph->GetDomain();
-        for(int d = 0; d < domain.size(); ++d)
+        for (int d = 0; d < domain.size(); ++d)
         {
             for (auto &compIter : domain[d])
             {
@@ -128,8 +127,8 @@ void ProcessCreateExp::Process(po::variables_map &vm)
         // expansion if no elements present.
         if (!IDs.size())
         {
-            m_f->m_exp[0] = MemoryManager<MultiRegions::ExpList>::
-                            AllocateSharedPtr();
+            m_f->m_exp[0] =
+                MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr();
             return;
         }
 
@@ -149,9 +148,8 @@ void ProcessCreateExp::Process(po::variables_map &vm)
 
                 stringstream ss;
                 ss << cpuTime << "s";
-                cout << "\t ProcessCreateExp setexpansion CPU Time: "
-                     << setw(8) << left
-                     << ss.str() << endl;
+                cout << "\t ProcessCreateExp setexpansion CPU Time: " << setw(8)
+                     << left << ss.str() << endl;
                 timerpart.Start();
             }
         }
@@ -162,8 +160,8 @@ void ProcessCreateExp::Process(po::variables_map &vm)
             m_f->m_fielddef[0]->m_numModes[expdim] =
                 vm["output-points-hom-z"].as<int>();
         }
-        m_f->m_exp[0] = m_f->SetUpFirstExpList(m_f->m_numHomogeneousDir,
-                                                expFromFld);
+        m_f->m_exp[0] =
+            m_f->SetUpFirstExpList(m_f->m_numHomogeneousDir, expFromFld);
         if (m_f->m_verbose)
         {
             if (m_f->m_comm->TreatAsRankZero())
@@ -175,8 +173,7 @@ void ProcessCreateExp::Process(po::variables_map &vm)
 
                 ss1 << cpuTime << "s";
                 cout << "\t ProcessCreateExp set first exp CPU Time: "
-                     << setw(8)   << left
-                     << ss1.str() << endl;
+                     << setw(8) << left << ss1.str() << endl;
             }
         }
 
@@ -185,7 +182,6 @@ void ProcessCreateExp::Process(po::variables_map &vm)
             LoadFieldData(vm.count("useSessionVariables"));
         }
     }
-
 }
 
 void ProcessCreateExp::LoadFieldData(bool useSessionVariables)
@@ -195,7 +191,7 @@ void ProcessCreateExp::LoadFieldData(bool useSessionVariables)
     m_f->m_session->LoadParameter("Strip_Z", nstrips, 1);
     vector<string> vars = m_f->m_session->GetVariables();
 
-    //if (vm.count("useSessionVariables"))
+    // if (vm.count("useSessionVariables"))
     if (useSessionVariables)
     {
         m_f->m_variables = vars;
@@ -213,21 +209,21 @@ void ProcessCreateExp::LoadFieldData(bool useSessionVariables)
                 // check to see if field already defined
                 if (!m_f->m_exp[s * nfields + i])
                 {
-                    m_f->m_exp[s * nfields + i] = m_f->AppendExpList(
-                        m_f->m_numHomogeneousDir, vars[i]);
+                    m_f->m_exp[s * nfields + i] =
+                        m_f->AppendExpList(m_f->m_numHomogeneousDir, vars[i]);
                 }
             }
             else
             {
                 if (vars.size())
                 {
-                    m_f->m_exp[s * nfields + i] = m_f->AppendExpList(
-                        m_f->m_numHomogeneousDir, vars[0]);
+                    m_f->m_exp[s * nfields + i] =
+                        m_f->AppendExpList(m_f->m_numHomogeneousDir, vars[0]);
                 }
                 else
                 {
-                    m_f->m_exp[s * nfields + i] = m_f->AppendExpList(
-                        m_f->m_numHomogeneousDir);
+                    m_f->m_exp[s * nfields + i] =
+                        m_f->AppendExpList(m_f->m_numHomogeneousDir);
                 }
             }
         }
@@ -243,15 +239,13 @@ void ProcessCreateExp::LoadFieldData(bool useSessionVariables)
                 int n = i * nstrips + s;
                 // In case of multiple flds, we might not have a
                 //   variable in this m_data[n] -> skip in this case
-                auto it = find (m_f->m_fielddef[n]->m_fields.begin(),
-                                m_f->m_fielddef[n]->m_fields.end(),
-                                m_f->m_variables[j]);
-                if(it !=m_f->m_fielddef[n]->m_fields.end())
+                auto it = find(m_f->m_fielddef[n]->m_fields.begin(),
+                               m_f->m_fielddef[n]->m_fields.end(),
+                               m_f->m_variables[j]);
+                if (it != m_f->m_fielddef[n]->m_fields.end())
                 {
                     m_f->m_exp[s * nfields + j]->ExtractDataToCoeffs(
-                        m_f->m_fielddef[n],
-                        m_f->m_data[n],
-                        m_f->m_variables[j],
+                        m_f->m_fielddef[n], m_f->m_data[n], m_f->m_variables[j],
                         m_f->m_exp[s * nfields + j]->UpdateCoeffs());
                 }
             }
@@ -263,9 +257,8 @@ void ProcessCreateExp::LoadFieldData(bool useSessionVariables)
     // Clear fielddef and data (they should not be used after running this
     // module)
     m_f->m_fielddef = vector<LibUtilities::FieldDefinitionsSharedPtr>();
-    m_f->m_data     = vector<std::vector<NekDouble> >();
+    m_f->m_data     = vector<std::vector<NekDouble>>();
 }
 
-
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

@@ -50,7 +50,7 @@ public:
     /// Creates an instance of this class
     static EquationSystemSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
         EquationSystemSharedPtr p =
             MemoryManager<Projection>::AllocateSharedPtr(pSession, pGraph);
@@ -65,14 +65,14 @@ public:
 
 protected:
     Projection(const LibUtilities::SessionReaderSharedPtr &pSession,
-               const SpatialDomains::MeshGraphSharedPtr& pGraph);
+               const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields = true);
     virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
     virtual void v_DoSolve();
 
 private:
 };
-}
+} // namespace Nektar
 
 #endif

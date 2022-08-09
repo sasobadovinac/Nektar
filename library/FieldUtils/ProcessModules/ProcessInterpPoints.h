@@ -83,15 +83,14 @@ public:
 private:
     void CreateFieldPts(po::variables_map &vm);
 
-    void InterpolateFieldToPts(std::vector<MultiRegions::ExpListSharedPtr> &field0,
-                               LibUtilities::PtsFieldSharedPtr &pts,
-                               NekDouble clamp_low,
-                               NekDouble clamp_up,
-                               NekDouble def_value);
+    void InterpolateFieldToPts(
+        std::vector<MultiRegions::ExpListSharedPtr> &field0,
+        LibUtilities::PtsFieldSharedPtr &pts, NekDouble clamp_low,
+        NekDouble clamp_up, NekDouble def_value);
 
     void calcCp0();
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

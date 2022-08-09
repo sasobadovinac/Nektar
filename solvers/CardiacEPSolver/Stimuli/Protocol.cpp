@@ -36,37 +36,36 @@
 
 namespace Nektar
 {
-    ProtocolFactory& GetProtocolFactory()
-    {
-        static ProtocolFactory instance;
-        return instance;
-    }
-
-    /**
-     * @class Protocol
-     *
-     * The Stimuli class and derived classes implement a range of stimuli.
-     * The stimulus contains input stimuli that can be applied throughout the
-     * domain, on specified regions determined by the derived classes of
-     * Stimulus, at specified frequencies determined by the derived classes of
-     * Protocol.
-     */
-
-    /**
-     * Protocol base class constructor.
-     */
-    Protocol::Protocol(const LibUtilities::SessionReaderSharedPtr& pSession,
-                       const TiXmlElement* pXml)
-        : m_session(pSession)
-    {
-    }
-
-
-    /**
-     * Initialise the protocol. Allocate workspace and variable storage.
-     */
-    void Protocol::Initialise()
-    {
-    }
-
+ProtocolFactory &GetProtocolFactory()
+{
+    static ProtocolFactory instance;
+    return instance;
 }
+
+/**
+ * @class Protocol
+ *
+ * The Stimuli class and derived classes implement a range of stimuli.
+ * The stimulus contains input stimuli that can be applied throughout the
+ * domain, on specified regions determined by the derived classes of
+ * Stimulus, at specified frequencies determined by the derived classes of
+ * Protocol.
+ */
+
+/**
+ * Protocol base class constructor.
+ */
+Protocol::Protocol(const LibUtilities::SessionReaderSharedPtr &pSession,
+                   const TiXmlElement *pXml)
+    : m_session(pSession)
+{
+}
+
+/**
+ * Initialise the protocol. Allocate workspace and variable storage.
+ */
+void Protocol::Initialise()
+{
+}
+
+} // namespace Nektar

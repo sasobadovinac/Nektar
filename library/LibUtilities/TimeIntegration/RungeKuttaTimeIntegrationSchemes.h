@@ -343,9 +343,8 @@ class RungeKutta4TimeIntegrationScheme
     : public ClassicalRungeKutta4TimeIntegrationScheme
 {
 public:
-    RungeKutta4TimeIntegrationScheme(std::string variant,
-                                              unsigned int order,
-                                              std::vector<NekDouble> freeParams)
+    RungeKutta4TimeIntegrationScheme(std::string variant, unsigned int order,
+                                     std::vector<NekDouble> freeParams)
         : ClassicalRungeKutta4TimeIntegrationScheme(variant, order, freeParams)
     {
     }

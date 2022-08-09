@@ -38,26 +38,26 @@
 #include <vtkRenderer.h>
 
 #if VTK_MAJOR_VERSION >= 9
-#include <stdexcept>
 #include <limits>
+#include <stdexcept>
 #endif
 
+#include <vtkCamera.h>
+#include <vtkDataSetMapper.h>
+#include <vtkGraphicsFactory.h>
+#include <vtkLookupTable.h>
+#include <vtkPNGWriter.h>
+#include <vtkPointData.h>
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 #include <vtkSphereSource.h>
 #include <vtkWindowToImageFilter.h>
-#include <vtkPNGWriter.h>
-#include <vtkGraphicsFactory.h>
 #include <vtkXMLUnstructuredGridReader.h>
-#include <vtkDataSetMapper.h>
-#include <vtkLookupTable.h>
-#include <vtkPointData.h>
-#include <vtkCamera.h>
 
 #include <iostream>
 using namespace std;
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
     if (argc != 2 && argc != 4)
     {
@@ -65,23 +65,23 @@ int main(int argc, char * argv[])
         exit(-1);
     }
 
-    string vInput = argv[1];
+    string vInput  = argv[1];
     string vOutput = vInput.substr(0, vInput.find_last_of('.')) + ".png";
 
     // Setup offscreen rendering
     vtkSmartPointer<vtkGraphicsFactory> graphics_factory =
-            vtkSmartPointer<vtkGraphicsFactory>::New();
-    graphics_factory->SetOffScreenOnlyMode( 1);
-    graphics_factory->SetUseMesaClasses( 1 );
+        vtkSmartPointer<vtkGraphicsFactory>::New();
+    graphics_factory->SetOffScreenOnlyMode(1);
+    graphics_factory->SetUseMesaClasses(1);
 
     // Create a poly data reader and retrieve dataset from file
     vtkSmartPointer<vtkXMLUnstructuredGridReader> reader =
-            vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+        vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
     reader->SetFileName(vInput.c_str());
     reader->Update();
 
-    vtkSmartPointer<vtkDataSet> data = 
-            vtkSmartPointer<vtkDataSet>(reader->GetOutputAsDataSet());
+    vtkSmartPointer<vtkDataSet> data =
+        vtkSmartPointer<vtkDataSet>(reader->GetOutputAsDataSet());
     data->GetPointData()->SetActiveScalars("u");
 
     double scalar_range[2];
@@ -93,16 +93,17 @@ int main(int argc, char * argv[])
     }
 
     // Lookup table
-    vtkSmartPointer<vtkLookupTable> lookup = vtkSmartPointer<vtkLookupTable>::New();
-    lookup->SetHueRange(0.0,1.0);
-    lookup->SetSaturationRange(1,1);
+    vtkSmartPointer<vtkLookupTable> lookup =
+        vtkSmartPointer<vtkLookupTable>::New();
+    lookup->SetHueRange(0.0, 1.0);
+    lookup->SetSaturationRange(1, 1);
     lookup->SetTableRange(scalar_range);
-    lookup->SetValueRange(1,1);
+    lookup->SetValueRange(1, 1);
     lookup->Build();
 
     // Create a mapper and actor
     vtkSmartPointer<vtkDataSetMapper> mapper =
-            vtkSmartPointer<vtkDataSetMapper>::New();
+        vtkSmartPointer<vtkDataSetMapper>::New();
 #if VTK_MAJOR_VERSION <= 5
     mapper->SetInput(data);
 #else
@@ -110,37 +111,34 @@ int main(int argc, char * argv[])
 #endif
 
 #if VTK_MAJOR_VERSION < 8 || (VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION <= 1)
-    //deprecated as of vtk 8.1
+    // deprecated as of vtk 8.1
     mapper->ImmediateModeRenderingOn();
 #endif
-    
+
     mapper->ScalarVisibilityOn();
     mapper->SetScalarModeToUsePointData();
     mapper->UseLookupTableScalarRangeOn();
-    //mapper->SetScalarRange(data->GetScalarRange());
+    // mapper->SetScalarRange(data->GetScalarRange());
     mapper->SetLookupTable(lookup);
 
-
-    vtkSmartPointer<vtkActor> actor =
-            vtkSmartPointer<vtkActor>::New();
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
 
     // Configure camera position and direction
     vtkSmartPointer<vtkCamera> camera = vtkSmartPointer<vtkCamera>::New();
-    camera->SetPosition(0.0,-1.0,1.0);
-    camera->SetFocalPoint(0,0,0);
+    camera->SetPosition(0.0, -1.0, 1.0);
+    camera->SetFocalPoint(0, 0, 0);
 
     // A renderer and render window
-    vtkSmartPointer<vtkRenderer> renderer =
-            vtkSmartPointer<vtkRenderer>::New();
+    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
     vtkSmartPointer<vtkRenderWindow> renderWindow =
-            vtkSmartPointer<vtkRenderWindow>::New();
-    renderWindow->SetOffScreenRendering( 1 );
+        vtkSmartPointer<vtkRenderWindow>::New();
+    renderWindow->SetOffScreenRendering(1);
     renderWindow->AddRenderer(renderer);
 
     // Add the actors to the scene
     renderer->AddActor(actor);
-    renderer->SetBackground(0,0,0); // Background color white
+    renderer->SetBackground(0, 0, 0); // Background color white
     renderer->SetActiveCamera(camera);
     renderer->ResetCamera();
 
@@ -148,11 +146,11 @@ int main(int argc, char * argv[])
 
     // Create an image of scene
     vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
-            vtkSmartPointer<vtkWindowToImageFilter>::New();
+        vtkSmartPointer<vtkWindowToImageFilter>::New();
     windowToImageFilter->SetInput(renderWindow);
 
 #if VTK_MAJOR_VERSION < 8 || (VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION <= 1)
-    //deprecated as of vtk 8.1
+    // deprecated as of vtk 8.1
     windowToImageFilter->SetMagnification(4);
 #else
     windowToImageFilter->SetScale(4, 4);
@@ -160,8 +158,7 @@ int main(int argc, char * argv[])
     windowToImageFilter->Update();
 
     // Write image to PNG
-    vtkSmartPointer<vtkPNGWriter> writer =
-            vtkSmartPointer<vtkPNGWriter>::New();
+    vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
     writer->SetFileName(vOutput.c_str());
     writer->SetInputConnection(windowToImageFilter->GetOutputPort());
     writer->Write();

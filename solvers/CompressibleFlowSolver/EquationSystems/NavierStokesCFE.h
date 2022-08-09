@@ -42,152 +42,148 @@
 
 namespace Nektar
 {
-  /**
-   *
-   *
-   **/
-  class NavierStokesCFE : virtual public CompressibleFlowSystem
-  {
-  public:
-      friend class MemoryManager<NavierStokesCFE>;
+/**
+ *
+ *
+ **/
+class NavierStokesCFE : virtual public CompressibleFlowSystem
+{
+public:
+    friend class MemoryManager<NavierStokesCFE>;
 
     // Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-      SolverUtils::EquationSystemSharedPtr p =
-          MemoryManager<NavierStokesCFE>::AllocateSharedPtr(pSession, pGraph);
-      p->InitObject();
-      return p;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<NavierStokesCFE>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
     }
     // Name of class
     static std::string className;
 
     virtual ~NavierStokesCFE();
 
-  protected:
-    std::string                         m_ViscosityType;
+protected:
+    std::string m_ViscosityType;
     /// flag to switch between constant viscosity and Sutherland
     /// an enum could be added for more options
-    bool                                m_is_mu_variable{false};
+    bool m_is_mu_variable{false};
     /// flag to switch between IP and LDG
     /// an enum could be added for more options
-    bool                                m_is_diffIP{false};
+    bool m_is_diffIP{false};
+    /// flag for shock capturing switch on/off
+    /// an enum could be added for more options
+    bool m_is_shockCaptPhys{false};
 
-    NekDouble                           m_Cp;
-    NekDouble                           m_Cv;
-    NekDouble                           m_Prandtl;
-    
-    NekDouble                           m_mu0;
-    std::string                         m_physicalSensorType;
-    std::string                         m_smoothing;
-    MultiRegions::ContFieldSharedPtr    m_C0ProjectExp;
+    NekDouble m_Cp;
+    NekDouble m_Cv;
+    NekDouble m_Prandtl;
+
+    std::string m_physicalSensorType;
+    std::string m_smoothing;
+    MultiRegions::ContFieldSharedPtr m_C0ProjectExp;
 
     /// Equation of system for computing temperature
-    EquationOfStateSharedPtr            m_eos;
+    EquationOfStateSharedPtr m_eos;
 
-    NekDouble                           m_Twall;
+    NekDouble m_Twall;
+    NekDouble m_muRef;
+    NekDouble m_thermalConductivityRef;
 
-    NekDouble                           m_muRef;
-    NekDouble                           m_thermalConductivityRef;
-    Array<OneD, NekDouble>              m_mu;
-    Array<OneD, NekDouble>              m_thermalConductivity;
-
-    NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
-                    const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    NavierStokesCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
+                    const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     void GetViscousFluxVectorConservVar(
-        const int                                                nDim,
-        const Array<OneD, Array<OneD, NekDouble> >               &inarray,
-        const TensorOfArray3D<NekDouble>                         &qfields,
-        TensorOfArray3D<NekDouble>                               &outarray,
-        Array< OneD, int > &nonZeroIndex = NullInt1DArray,
-        const Array<OneD, Array<OneD, NekDouble>>
-            &normal             =   NullNekDoubleArrayOfArray,
-        const Array<OneD, NekDouble> &ArtifDiffFactor = NullNekDouble1DArray);
-    void GetViscousSymmtrFluxConservVar(
-            const int                                           nSpaceDim,
-            const Array<OneD, Array<OneD, NekDouble> >          &inaverg,
-            const Array<OneD, Array<OneD, NekDouble > >         &inarray,
-            TensorOfArray3D<NekDouble>                          &outarray,
-            Array< OneD, int >                                  &nonZeroIndex,
-            const Array<OneD, Array<OneD, NekDouble> >          &normals);
+        const int nDim, const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        const TensorOfArray3D<NekDouble> &qfields,
+        TensorOfArray3D<NekDouble> &outarray,
+        Array<OneD, int> &nonZeroIndex = NullInt1DArray,
+        const Array<OneD, Array<OneD, NekDouble>> &normal =
+            NullNekDoubleArrayOfArray);
 
-    void SpecialBndTreat(
-              Array<OneD,       Array<OneD, NekDouble> >    &consvar);
+    void GetViscousSymmtrFluxConservVar(
+        const int nSpaceDim, const Array<OneD, Array<OneD, NekDouble>> &inaverg,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        TensorOfArray3D<NekDouble> &outarray, Array<OneD, int> &nonZeroIndex,
+        const Array<OneD, Array<OneD, NekDouble>> &normals);
+
+    void SpecialBndTreat(Array<OneD, Array<OneD, NekDouble>> &consvar);
 
     void GetArtificialViscosity(
-        const Array<OneD, Array<OneD, NekDouble> >  &inarray,
-              Array<OneD,             NekDouble  >  &muav);
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, NekDouble> &muav);
 
-    void CalcViscosity(
-        const Array<OneD, const Array<OneD, NekDouble>> &inaverg,
-              Array<OneD, NekDouble>                    &mu);
+    void CalcViscosity(const Array<OneD, const Array<OneD, NekDouble>> &inaverg,
+                       Array<OneD, NekDouble> &mu);
 
     void InitObject_Explicit();
-      
-    virtual void v_InitObject();
 
-    virtual void v_ExtraFldOutput(
-        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
-        std::vector<std::string>            &variables);
+    virtual void v_InitObject(bool DeclareField = true) override;
 
     virtual void v_DoDiffusion(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-              Array<OneD, Array<OneD, NekDouble>> &outarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override;
 
     virtual void v_GetViscousFluxVector(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
-              TensorOfArray3D<NekDouble>                &derivatives,
-              TensorOfArray3D<NekDouble>                &viscousTensor);
+        TensorOfArray3D<NekDouble> &derivatives,
+        TensorOfArray3D<NekDouble> &viscousTensor);
 
     virtual void v_GetViscousFluxVectorDeAlias(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
-              TensorOfArray3D<NekDouble>                &derivatives,
-              TensorOfArray3D<NekDouble>                &viscousTensor);
+        TensorOfArray3D<NekDouble> &derivatives,
+        TensorOfArray3D<NekDouble> &viscousTensor);
 
     void GetPhysicalAV(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield);
-      
-    void Ducros( Array<OneD, NekDouble> &field );
+
+    void Ducros(Array<OneD, NekDouble> &field);
     void C0Smooth(Array<OneD, NekDouble> &field);
-  
 
     virtual void v_GetFluxPenalty(
         const Array<OneD, const Array<OneD, NekDouble>> &uFwd,
         const Array<OneD, const Array<OneD, NekDouble>> &uBwd,
-              Array<OneD,       Array<OneD, NekDouble>> &penaltyCoeff);
+        Array<OneD, Array<OneD, NekDouble>> &penaltyCoeff);
 
     void GetViscosityAndThermalCondFromTemp(
-        const Array<OneD, NekDouble> &temperature,
-              Array<OneD, NekDouble> &mu,
-              Array<OneD, NekDouble> &thermalCond);
+        const Array<OneD, NekDouble> &temperature, Array<OneD, NekDouble> &mu,
+        Array<OneD, NekDouble> &thermalCond);
 
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline void GetViscosityAndThermalCondFromTempKernel(
-        const T& temperature, T& mu, T& thermalCond)
+    void GetDivCurlSquared(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &cnsVar,
+        Array<OneD, NekDouble> &div, Array<OneD, NekDouble> &curlSquare,
+        const Array<OneD, Array<OneD, NekDouble>> &cnsVarFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &cnsVarBwd);
+
+    void GetDivCurlFromDvelT(const TensorOfArray3D<NekDouble> &pVarDer,
+                             Array<OneD, NekDouble> &div,
+                             Array<OneD, NekDouble> &curlSquare);
+
+    virtual void v_ExtraFldOutput(
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
+        std::vector<std::string> &variables) override;
+
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline void GetViscosityAndThermalCondFromTempKernel(const T &temperature,
+                                                         T &mu, T &thermalCond)
     {
         GetViscosityFromTempKernel(temperature, mu);
         NekDouble tRa = m_Cp / m_Prandtl;
-        thermalCond = tRa * mu;
+        thermalCond   = tRa * mu;
     }
 
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline void GetViscosityFromTempKernel(
-        const T& temperature, T& mu)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline void GetViscosityFromTempKernel(const T &temperature, T &mu)
     {
         // Variable viscosity through the Sutherland's law
         if (m_is_mu_variable)
@@ -208,34 +204,26 @@ namespace Nektar
      * @param out
      * outarray[nvars] flux
      */
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
     inline void GetViscousFluxBilinearFormKernel(
-        const unsigned short nDim,
-        const unsigned short FluxDirection,
+        const unsigned short nDim, const unsigned short FluxDirection,
         const unsigned short DerivDirection,
         // these need to be a pointers because of the custom allocator of vec_t
-        const T*             inaverg,
-        const T*             injumpp,
-        const T&             mu,
-        T*                   outarray)
+        const T *inaverg, const T *injumpp, const T &mu, T *outarray)
     {
         // Constants
-        unsigned short nDim_plus_one = nDim + 1;
-        unsigned short FluxDirection_plus_one = FluxDirection + 1;
+        unsigned short nDim_plus_one           = nDim + 1;
+        unsigned short FluxDirection_plus_one  = FluxDirection + 1;
         unsigned short DerivDirection_plus_one = DerivDirection + 1;
 
-        NekDouble gammaoPr = m_gamma / m_Prandtl;
+        NekDouble gammaoPr           = m_gamma / m_Prandtl;
         NekDouble one_minus_gammaoPr = 1.0 - gammaoPr;
 
-        constexpr NekDouble OneThird = 1. / 3.;
-        constexpr NekDouble TwoThird = 2. * OneThird;
+        constexpr NekDouble OneThird  = 1. / 3.;
+        constexpr NekDouble TwoThird  = 2. * OneThird;
         constexpr NekDouble FourThird = 4. * OneThird;
-
 
         if (DerivDirection == FluxDirection)
         {
@@ -250,8 +238,8 @@ namespace Nektar
             T u2sum{};
             for (unsigned short d = 0; d < nDim; ++d)
             {
-                u[d] = inaverg[d+1] * oneOrho; // load 1x
-                u2[d] = u[d]*u[d];
+                u[d]  = inaverg[d + 1] * oneOrho; // load 1x
+                u2[d] = u[d] * u[d];
                 u2sum += u2[d];
             }
 
@@ -267,21 +255,21 @@ namespace Nektar
 
             T tmp1 = OneThird * u2[FluxDirection] + u2sum;
             tmp1 += gammaoPr * E_minus_u2sum;
-            tmp1 *= injumpp[0]; //load 1x
+            tmp1 *= injumpp[0]; // load 1x
 
-            T tmp2 = gammaoPr * injumpp[nDim_plus_one] - tmp1; //load 1x
+            T tmp2 = gammaoPr * injumpp[nDim_plus_one] - tmp1; // load 1x
 
             // local var for energy output
             T outTmpE = 0.0;
             for (unsigned short d = 0; d < nDim; ++d)
             {
                 unsigned short d_plus_one = d + 1;
-                //flux[rhou, rhov, rhow]
+                // flux[rhou, rhov, rhow]
                 T outTmpD = injumpp[d_plus_one] - u[d] * injumpp[0];
                 outTmpD *= nu;
-                //flux rhoE
+                // flux rhoE
                 T tmp3 = one_minus_gammaoPr * u[d];
-                outTmpE +=  tmp3 * injumpp[d_plus_one];
+                outTmpE += tmp3 * injumpp[d_plus_one];
 
                 if (d == FluxDirection)
                 {
@@ -290,13 +278,12 @@ namespace Nektar
                     outTmpE += tmp4 * injumpp[FluxDirection_plus_one];
                 }
 
-                outarray[d_plus_one] = outTmpD; //store 1x
+                outarray[d_plus_one] = outTmpD; // store 1x
             }
 
             outTmpE += tmp2;
             outTmpE *= nu;
-            outarray[nDim_plus_one] = outTmpE; //store 1x
-
+            outarray[nDim_plus_one] = outTmpE; // store 1x
         }
         else
         {
@@ -311,8 +298,8 @@ namespace Nektar
             for (unsigned short d = 0; d < nDim; ++d)
             {
                 unsigned short d_plus_one = d + 1;
-                u[d] = inaverg[d_plus_one] * oneOrho; // load 1x
-                u2[d] = u[d]*u[d];
+                u[d]  = inaverg[d_plus_one] * oneOrho; // load 1x
+                u2[d] = u[d] * u[d];
                 u2sum += u2[d];
                 // Not all directions are set
                 // one could work out the one that is not set
@@ -330,58 +317,62 @@ namespace Nektar
             // ^^^^ above is almost the same for both loops
 
             T tmp1 = u[DerivDirection] * injumpp[0] -
-                injumpp[DerivDirection_plus_one]; // load 2x
+                     injumpp[DerivDirection_plus_one]; // load 2x
             tmp1 *= TwoThird;
             outarray[FluxDirection_plus_one] = nu * tmp1; // store 1x
 
-            tmp1 = injumpp[FluxDirection_plus_one] - u[FluxDirection] * injumpp[0];
+            tmp1 =
+                injumpp[FluxDirection_plus_one] - u[FluxDirection] * injumpp[0];
             outarray[DerivDirection_plus_one] = nu * tmp1; // store 1x
 
             tmp1 = OneThird * u[FluxDirection] * u[DerivDirection];
             tmp1 *= injumpp[0];
 
-            T tmp2 = TwoThird * u[FluxDirection] *
-                injumpp[DerivDirection_plus_one];
+            T tmp2 =
+                TwoThird * u[FluxDirection] * injumpp[DerivDirection_plus_one];
 
             tmp1 += tmp2;
 
-            tmp1 = u[DerivDirection] * injumpp[FluxDirection_plus_one] -
-                tmp1;
+            tmp1 = u[DerivDirection] * injumpp[FluxDirection_plus_one] - tmp1;
             outarray[nDim_plus_one] = nu * tmp1; // store 1x
-
         }
     }
-
-
 
     /**
      * @brief Return the flux vector for the IP diffusion problem, based on
      * conservative variables
      */
-    template<bool IS_TRACE>
+    template <bool IS_TRACE>
     void GetViscousFluxVectorConservVar(
-        const int                                              nDim,
-        const Array<OneD, Array<OneD, NekDouble> >             &inarray,
-        const TensorOfArray3D<NekDouble>                       &qfields,
-        TensorOfArray3D<NekDouble>                             &outarray,
-        Array< OneD, int >                                     &nonZeroIndex,
-        const Array<OneD, Array<OneD, NekDouble> >             &normal,
-        const Array<OneD, NekDouble>                           &ArtifDiffFactor)
+        const int nDim, const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        const TensorOfArray3D<NekDouble> &qfields,
+        TensorOfArray3D<NekDouble> &outarray, Array<OneD, int> &nonZeroIndex,
+        const Array<OneD, Array<OneD, NekDouble>> &normal)
     {
         size_t nConvectiveFields = inarray.size();
-        size_t nPts = inarray[0].size();
-        size_t n_nonZero = nConvectiveFields - 1;
+        size_t nPts              = inarray[0].size();
+        size_t n_nonZero         = nConvectiveFields - 1;
 
         // max outfield dimensions
         constexpr unsigned short nOutMax = 3 - 2 * IS_TRACE;
         constexpr unsigned short nVarMax = 5;
         constexpr unsigned short nDimMax = 3;
 
+        // Update viscosity and thermal conductivity
+        // unfortunately the artificial viscosity is difficult to vectorize
+        // with the current implementation
+        Array<OneD, NekDouble> temperature(nPts, 0.0);
+        Array<OneD, NekDouble> mu(nPts, 0.0);
+        Array<OneD, NekDouble> thermalConductivity(nPts, 0.0);
+        m_varConv->GetTemperature(inarray, temperature);
+        GetViscosityAndThermalCondFromTemp(temperature, mu,
+                                           thermalConductivity);
+
         // vector loop
         using namespace tinysimd;
-        using vec_t = simd<NekDouble>;
+        using vec_t    = simd<NekDouble>;
         size_t sizeVec = (nPts / vec_t::width) * vec_t::width;
-        size_t p = 0;
+        size_t p       = 0;
 
         for (; p < sizeVec; p += vec_t::width)
         {
@@ -417,24 +408,24 @@ namespace Nektar
                 }
             }
 
-            // get temp
-            vec_t temperature = m_varConv->GetTemperature(inTmp.data());
             // get viscosity
-            vec_t mu;
-            GetViscosityFromTempKernel(temperature, mu);
+            vec_t muV{};
+            muV.load(&(mu[p]), is_not_aligned);
 
             for (size_t nderiv = 0; nderiv < nDim; ++nderiv)
             {
                 // rearrenge and load data
                 for (size_t f = 0; f < nConvectiveFields; ++f)
                 {
-                    qfieldsTmp[f].load(&(qfields[nderiv][f][p]), is_not_aligned);
+                    qfieldsTmp[f].load(&(qfields[nderiv][f][p]),
+                                       is_not_aligned);
                 }
 
                 for (size_t d = 0; d < nDim; ++d)
                 {
-                    GetViscousFluxBilinearFormKernel(nDim, d, nderiv,
-                        inTmp.data(), qfieldsTmp.data(), mu, outTmp.data());
+                    GetViscousFluxBilinearFormKernel(
+                        nDim, d, nderiv, inTmp.data(), qfieldsTmp.data(), muV,
+                        outTmp.data());
 
                     if (IS_TRACE)
                     {
@@ -497,7 +488,6 @@ namespace Nektar
                     }
                 }
             }
-            
 
             if (IS_TRACE)
             {
@@ -507,11 +497,8 @@ namespace Nektar
                 }
             }
 
-            // get temp
-            NekDouble temperature = m_varConv->GetTemperature(inTmp.data());
             // get viscosity
-            NekDouble mu;
-            GetViscosityFromTempKernel(temperature, mu);
+            NekDouble muS = mu[p];
 
             for (int nderiv = 0; nderiv < nDim; ++nderiv)
             {
@@ -523,8 +510,9 @@ namespace Nektar
 
                 for (int d = 0; d < nDim; ++d)
                 {
-                    GetViscousFluxBilinearFormKernel(nDim, d, nderiv,
-                        inTmp.data(), qfieldsTmp.data(), mu, outTmp.data());
+                    GetViscousFluxBilinearFormKernel(
+                        nDim, d, nderiv, inTmp.data(), qfieldsTmp.data(), muS,
+                        outTmp.data());
 
                     if (IS_TRACE)
                     {
@@ -540,7 +528,6 @@ namespace Nektar
                             outArrTmp[f + nConvectiveFields * d] += outTmp[f];
                         }
                     }
-
                 }
             }
 
@@ -558,51 +545,21 @@ namespace Nektar
                 {
                     for (int f = 0; f < nConvectiveFields; ++f)
                     {
-                        outarray[d][f][p] = outArrTmp[f + nConvectiveFields * d];
-                    }
-                }
-            }
-        }
-
-
-        // this loop would need to be brought up into the main loop so that it
-        // can be vectorized as well
-        if (ArtifDiffFactor.size())
-        {
-            n_nonZero = nConvectiveFields;
-
-            for (size_t p = 0; p < nPts; ++p)
-            {
-                for (int d = 0; d < nDim; ++d)
-                {
-                    if (IS_TRACE)
-                    {
-                        NekDouble tmp = ArtifDiffFactor[p] * normal[d][p];
-
-                        for (int j = 0; j < nConvectiveFields; ++j)
-                        {
-                            outarray[0][j][p] += tmp * qfields[d][j][p];
-                        }
-                    }
-                    else
-                    {
-                        for (int j = 0; j < nConvectiveFields; ++j)
-                        {
-                            outarray[d][j][p] += ArtifDiffFactor[p] * qfields[d][j][p];
-                        }
+                        outarray[d][f][p] =
+                            outArrTmp[f + nConvectiveFields * d];
                     }
                 }
             }
         }
 
         // this is always the same, it should be initialized with the IP class
-        nonZeroIndex = Array< OneD, int > {n_nonZero, 0};
+        nonZeroIndex = Array<OneD, int>{n_nonZero, 0};
         for (int i = 1; i < n_nonZero + 1; ++i)
         {
-            nonZeroIndex[n_nonZero - i] =   nConvectiveFields - i;
+            nonZeroIndex[n_nonZero - i] = nConvectiveFields - i;
         }
     }
+};
 
-  };
-}
+} // namespace Nektar
 #endif

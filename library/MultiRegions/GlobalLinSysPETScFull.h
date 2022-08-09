@@ -35,62 +35,58 @@
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSPETSCFULL_H
 #define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSPETSCFULL_H
 
-#include <MultiRegions/MultiRegionsDeclspec.h>
-#include <MultiRegions/GlobalLinSysPETSc.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
+#include <MultiRegions/GlobalLinSysPETSc.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+// Forward declarations
+
+// class AssemblyMapDG;
+class ExpList;
+
+/// A global linear system.
+class GlobalLinSysPETScFull : public GlobalLinSysPETSc
+{
+public:
+    /// Creates an instance of this class
+    static GlobalLinSysSharedPtr create(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        // Forward declarations
-
-        //class AssemblyMapDG;
-        class ExpList;
-
-        /// A global linear system.
-        class GlobalLinSysPETScFull : public GlobalLinSysPETSc
-        {
-        public:
-
-            /// Creates an instance of this class
-            static GlobalLinSysSharedPtr create(
-                const GlobalLinSysKey                &pLinSysKey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const std::shared_ptr<AssemblyMap>   &pLocToGloMap)
-            {
-                return MemoryManager<GlobalLinSysPETScFull>
-                    ::AllocateSharedPtr(pLinSysKey, pExpList, pLocToGloMap);
-            }
-
-            /// Name of class
-            MULTI_REGIONS_EXPORT static std::string className;
-
-            /// Constructor for full direct matrix solve.
-            MULTI_REGIONS_EXPORT GlobalLinSysPETScFull(
-                const GlobalLinSysKey                &pLinSysKey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const std::shared_ptr<AssemblyMap>   &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT virtual ~GlobalLinSysPETScFull();
-
-        private:
-            // Local to global map.
-            std::shared_ptr<AssemblyMap>     m_locToGloMap;
-
-            /// Solve the linear system for given input and output vectors
-            /// using a specified local to global map.
-            virtual void v_Solve(
-                const Array<OneD, const NekDouble> &in,
-                      Array<OneD,       NekDouble> &out,
-                const AssemblyMapSharedPtr         &locToGloMap,
-                const Array<OneD, const NekDouble> &dirForcing
-                                                        = NullNekDouble1DArray);
-            virtual void v_DoMatrixMultiply(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output);
-        };
+        return MemoryManager<GlobalLinSysPETScFull>::AllocateSharedPtr(
+            pLinSysKey, pExpList, pLocToGloMap);
     }
-}
+
+    /// Name of class
+    MULTI_REGIONS_EXPORT static std::string className;
+
+    /// Constructor for full direct matrix solve.
+    MULTI_REGIONS_EXPORT GlobalLinSysPETScFull(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT virtual ~GlobalLinSysPETScFull();
+
+private:
+    // Local to global map.
+    std::shared_ptr<AssemblyMap> m_locToGloMap;
+
+    /// Solve the linear system for given input and output vectors
+    /// using a specified local to global map.
+    virtual void v_Solve(
+        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
+        const AssemblyMapSharedPtr &locToGloMap,
+        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+    virtual void v_DoMatrixMultiply(const Array<OneD, const NekDouble> &input,
+                                    Array<OneD, NekDouble> &output);
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

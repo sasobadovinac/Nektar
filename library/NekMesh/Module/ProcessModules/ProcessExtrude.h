@@ -64,7 +64,7 @@ public:
         return "ProcessExtrude";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -35,12 +35,12 @@
 #ifndef NEKMESH_MODULE_LOG_HPP
 #define NEKMESH_MODULE_LOG_HPP
 
-#include <iostream>
+#include <cmath>
 #include <iomanip>
+#include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
-#include <memory>
-#include <cmath>
 
 #ifdef _WIN32
 #include <io.h>
@@ -62,11 +62,11 @@ namespace NekMesh
  */
 enum LogLevel
 {
-    FATAL,     ///< Fatal errors that trigger exceptions.
-    WARNING,   ///< Warnings (i.e. recoverable errors).
-    INFO,      ///< Normal output.
-    VERBOSE,   ///< Verbose output.
-    TRACE      ///< Debug-level output.
+    FATAL,   ///< Fatal errors that trigger exceptions.
+    WARNING, ///< Warnings (i.e. recoverable errors).
+    INFO,    ///< Normal output.
+    VERBOSE, ///< Verbose output.
+    TRACE    ///< Debug-level output.
 };
 
 /**
@@ -75,8 +75,8 @@ enum LogLevel
 class NekMeshError : public std::runtime_error
 {
 public:
-    NekMeshError(const std::string& message) : std::runtime_error(message),
-                                               m_message(message)
+    NekMeshError(const std::string &message)
+        : std::runtime_error(message), m_message(message)
     {
     }
 
@@ -84,6 +84,7 @@ public:
     {
         return m_message;
     }
+
 protected:
     std::string m_message;
 };
@@ -98,7 +99,7 @@ class LogOutput
 {
 public:
     /// Default constructor.
-    LogOutput() = default;
+    LogOutput()          = default;
     virtual ~LogOutput() = default;
 
     /**
@@ -197,7 +198,7 @@ const std::string cyan = "\033[0;36m";
 const std::string magenta = "\033[0;35m";
 /// Reset/remove all formatting
 const std::string reset = "\033[0m";
-}
+} // namespace ansi
 
 /**
  * @brief Basic logging class for the NekMesh library.
@@ -235,8 +236,8 @@ const std::string reset = "\033[0m";
  */
 class Logger
 {
-    typedef std::ostream&  (*ManipFn)(std::ostream&);
-    typedef std::ios_base& (*FlagsFn)(std::ios_base&);
+    typedef std::ostream &(*ManipFn)(std::ostream &);
+    typedef std::ios_base &(*FlagsFn)(std::ios_base &);
 
 public:
     /// Default constructor.
@@ -246,8 +247,8 @@ public:
      * @brief Create a Logger given an output object @p logOutput and a minimum
      * logging level @p level. Log messages above this level will be suppressed.
      */
-    Logger(std::shared_ptr<LogOutput> logOutput, LogLevel level) :
-        m_logOutput(logOutput), m_level(level)
+    Logger(std::shared_ptr<LogOutput> logOutput, LogLevel level)
+        : m_logOutput(logOutput), m_level(level)
     {
     }
 
@@ -256,9 +257,9 @@ public:
      */
     Logger(const Logger &log)
     {
-        m_prefix = log.m_prefix;
-        m_level = log.m_level;
-        m_curLevel = log.m_curLevel;
+        m_prefix    = log.m_prefix;
+        m_level     = log.m_level;
+        m_curLevel  = log.m_curLevel;
         m_logOutput = log.m_logOutput;
         m_prefixLen = log.m_prefixLen;
     }
@@ -268,9 +269,9 @@ public:
      */
     Logger &operator=(const Logger &log)
     {
-        m_prefix = log.m_prefix;
-        m_level = log.m_level;
-        m_curLevel = log.m_curLevel;
+        m_prefix    = log.m_prefix;
+        m_level     = log.m_level;
+        m_curLevel  = log.m_curLevel;
         m_logOutput = log.m_logOutput;
         m_prefixLen = log.m_prefixLen;
         return *this;
@@ -281,8 +282,7 @@ public:
      *
      * Writes the value @p val internally to a std::stringstream.
      */
-    template <typename T>
-    Logger &operator<<(const T& val)
+    template <typename T> Logger &operator<<(const T &val)
     {
         m_buffer << val;
         return *this;
@@ -338,7 +338,7 @@ public:
      *
      * Applies the flags function @p manip internally to a std::stringstream.
      */
-    Logger& operator<<(FlagsFn manip)
+    Logger &operator<<(FlagsFn manip)
     {
         manip(m_buffer);
         return *this;
@@ -363,7 +363,7 @@ public:
         if (m_logOutput->IsTty())
         {
             float progress = position / float(goal);
-            int  numeq = static_cast<int>(ceil(progress *49));
+            int numeq      = static_cast<int>(ceil(progress * 49));
 
             // Avoid lots of output.
             if (lastprogress == numeq)
@@ -372,9 +372,8 @@ public:
             }
 
             // carriage return
-            ss << "\r" << GetPrefixString()
-               << message << ": "
-               << std::setw(3) << ceil(100 * progress) << "% [";
+            ss << "\r" << GetPrefixString() << message << ": " << std::setw(3)
+               << ceil(100 * progress) << "% [";
 
             for (int j = 0; j < numeq; j++)
             {
@@ -389,7 +388,7 @@ public:
         else
         {
             // print only every 2 percent
-            if (int(ceil(double(100 * position / goal))) % 2 ==  0)
+            if (int(ceil(double(100 * position / goal))) % 2 == 0)
             {
                 ss << ".";
             }
@@ -500,7 +499,7 @@ private:
         std::stringstream ss;
         std::string msgcolour = "", msgprefix = "";
 
-        switch(m_curLevel)
+        switch (m_curLevel)
         {
             case FATAL:
                 msgcolour = ansi::red;
@@ -542,7 +541,7 @@ private:
     }
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

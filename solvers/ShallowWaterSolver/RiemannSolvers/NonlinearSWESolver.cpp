@@ -38,54 +38,50 @@
 
 namespace Nektar
 {
-    NonlinearSWESolver::NonlinearSWESolver(
-        const LibUtilities::SessionReaderSharedPtr& pSession)
-        : RiemannSolver(pSession), m_pointSolve(true)
+NonlinearSWESolver::NonlinearSWESolver(
+    const LibUtilities::SessionReaderSharedPtr &pSession)
+    : RiemannSolver(pSession), m_pointSolve(true)
+{
+    m_requiresRotation = true;
+}
+
+void NonlinearSWESolver::v_Solve(
+    const int nDim, const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
+    const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
+    Array<OneD, Array<OneD, NekDouble>> &flux)
+{
+    boost::ignore_unused(nDim);
+
+    if (m_pointSolve)
     {
-        m_requiresRotation = true;
+        int expDim = Fwd.size() - 1;
+        NekDouble hvf;
+
+        if (expDim == 1)
+        {
+            for (int i = 0; i < Fwd[0].size(); ++i)
+            {
+                v_PointSolve(Fwd[0][i], Fwd[1][i], 0.0, Bwd[0][i], Bwd[1][i],
+                             0.0, flux[0][i], flux[1][i], hvf);
+            }
+        }
+        else if (expDim == 2)
+        {
+            for (int i = 0; i < Fwd[0].size(); ++i)
+            {
+                v_PointSolve(Fwd[0][i], Fwd[1][i], Fwd[2][i], Bwd[0][i],
+                             Bwd[1][i], Bwd[2][i], flux[0][i], flux[1][i],
+                             flux[2][i]);
+            }
+        }
+        else if (expDim == 3)
+        {
+            ASSERTL0(false, "No 3D Shallow water supported.");
+        }
     }
-
-    void  NonlinearSWESolver::v_Solve(
-        const int                                         nDim,
-        const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
-        const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-              Array<OneD,       Array<OneD, NekDouble> > &flux)
+    else
     {
-        boost::ignore_unused(nDim);
-
-        if (m_pointSolve)
-        {
-            int expDim = Fwd.size()-1;
-            NekDouble hvf;
-
-            if (expDim == 1)
-            {
-                for (int i = 0; i < Fwd[0].size(); ++i)
-                {
-                    v_PointSolve(
-                        Fwd [0][i], Fwd [1][i], 0.0,
-                        Bwd [0][i], Bwd [1][i], 0.0,
-                        flux[0][i], flux[1][i], hvf);
-                }
-            }
-            else if (expDim == 2)
-            {
-                for (int i = 0; i < Fwd[0].size(); ++i)
-                {
-                    v_PointSolve(
-                        Fwd [0][i], Fwd [1][i], Fwd [2][i],
-                        Bwd [0][i], Bwd [1][i], Bwd [2][i],
-                        flux[0][i], flux[1][i], flux[2][i]);
-                }
-            }
-            else if (expDim == 3)
-            {
-	      ASSERTL0(false, "No 3D Shallow water supported.");
-	    }
-        }
-        else
-        {
-            v_ArraySolve(Fwd, Bwd, flux);
-        }
+        v_ArraySolve(Fwd, Bwd, flux);
     }
 }
+} // namespace Nektar

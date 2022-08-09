@@ -38,30 +38,28 @@
 
 namespace Nektar
 {
-std::string ForcingStabilityCoupledLNS::className = SolverUtils::GetForcingFactory().
-            RegisterCreatorFunction("StabilityCoupledLNS",
-                                    ForcingStabilityCoupledLNS::create,
-                                    "RHS forcing for coupled LNS stability solver");
+std::string ForcingStabilityCoupledLNS::className =
+    SolverUtils::GetForcingFactory().RegisterCreatorFunction(
+        "StabilityCoupledLNS", ForcingStabilityCoupledLNS::create,
+        "RHS forcing for coupled LNS stability solver");
 
 ForcingStabilityCoupledLNS::ForcingStabilityCoupledLNS(
-                const LibUtilities::SessionReaderSharedPtr         &pSession,
-                const std::weak_ptr<SolverUtils::EquationSystem> &pEquation)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<SolverUtils::EquationSystem> &pEquation)
     : Forcing(pSession, pEquation)
 {
 }
 
 void ForcingStabilityCoupledLNS::v_InitObject(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-        const unsigned int& pNumForcingFields,
-        const TiXmlElement* pForce)
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
 {
 }
 
 void ForcingStabilityCoupledLNS::v_Apply(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&  fields,
-        const Array<OneD, Array<OneD, NekDouble> >&         inarray,
-              Array<OneD, Array<OneD, NekDouble> >&         outarray,
-        const NekDouble&                                    time)
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time)
 {
     int npts = fields[0]->GetTotPoints();
 
@@ -71,10 +69,9 @@ void ForcingStabilityCoupledLNS::v_Apply(
     // Apply m_forcing terms
     for (int i = 0; i < fields.size(); i++)
     {
-        Vmath::Vadd(npts, fields[i]->GetPhys(), 1, outarray[i], 1,
-                    outarray[i], 1);
+        Vmath::Vadd(npts, fields[i]->GetPhys(), 1, outarray[i], 1, outarray[i],
+                    1);
     }
-
 }
 
-}
+} // namespace Nektar

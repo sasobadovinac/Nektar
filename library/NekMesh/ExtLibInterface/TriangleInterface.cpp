@@ -47,7 +47,7 @@ void TriangleInterface::Mesh(bool Quality)
     SetUp();
 
     int numPoints = 0;
-    int numSeg = 0;
+    int numSeg    = 0;
     for (int i = 0; i < m_boundingloops.size(); i++)
     {
         numSeg += m_boundingloops[i].size();
@@ -82,14 +82,14 @@ void TriangleInterface::Mesh(bool Quality)
     {
         nodemap[pointc] = m_stienerpoints[i];
 
-        Array<OneD, NekDouble> uv    = m_stienerpoints[i]->GetCADSurfInfo(sid);
+        Array<OneD, NekDouble> uv = m_stienerpoints[i]->GetCADSurfInfo(sid);
         dt.in.pointlist[pointc * 2 + 0] = uv[0] * m_str;
         dt.in.pointlist[pointc * 2 + 1] = uv[1];
     }
 
     dt.in.numberofsegments = numSeg;
     dt.in.segmentlist      = new int[dt.in.numberofsegments * 2];
-    pointc = 0;
+    pointc                 = 0;
     for (int i = 0; i < m_boundingloops.size(); i++, pointc++)
     {
         int first = pointc;
@@ -129,40 +129,40 @@ void TriangleInterface::Mesh(bool Quality)
 
 void TriangleInterface::SetUp()
 {
-    dt.in.pointlist                   = (double *)NULL;
-    dt.in.pointattributelist          = (double *)NULL;
-    dt.in.pointmarkerlist             = (int *)NULL;
-    dt.in.numberofpoints              = 0;
-    dt.in.numberofpointattributes     = 0;
+    dt.in.pointlist               = (double *)NULL;
+    dt.in.pointattributelist      = (double *)NULL;
+    dt.in.pointmarkerlist         = (int *)NULL;
+    dt.in.numberofpoints          = 0;
+    dt.in.numberofpointattributes = 0;
     //
-    dt.in.trianglelist                = (int *)NULL;
-    dt.in.triangleattributelist       = (double *)NULL;
-    dt.in.trianglearealist            = (double *)NULL;
-    dt.in.neighborlist                = (int *)NULL;
-    dt.in.numberoftriangles           = 0;
-    dt.in.numberofcorners             = 0;
-    dt.in.numberoftriangleattributes  = 0;
+    dt.in.trianglelist               = (int *)NULL;
+    dt.in.triangleattributelist      = (double *)NULL;
+    dt.in.trianglearealist           = (double *)NULL;
+    dt.in.neighborlist               = (int *)NULL;
+    dt.in.numberoftriangles          = 0;
+    dt.in.numberofcorners            = 0;
+    dt.in.numberoftriangleattributes = 0;
     //
-    dt.in.segmentlist                 = (int *)NULL;
-    dt.in.segmentmarkerlist           = (int *)NULL;
-    dt.in.numberofsegments            = 0;
+    dt.in.segmentlist       = (int *)NULL;
+    dt.in.segmentmarkerlist = (int *)NULL;
+    dt.in.numberofsegments  = 0;
     //
-    dt.in.holelist                    = (double *)NULL;
-    dt.in.numberofholes               = 0;
+    dt.in.holelist      = (double *)NULL;
+    dt.in.numberofholes = 0;
     //
-    dt.in.regionlist                  = (double *)NULL;
-    dt.in.numberofregions             = 0;
+    dt.in.regionlist      = (double *)NULL;
+    dt.in.numberofregions = 0;
     //
-    dt.in.edgelist                    = (int *)NULL;
-    dt.in.edgemarkerlist              = (int *)NULL;
-    dt.in.normlist                    = (double *)NULL;
-    dt.in.numberofedges               = 0;
+    dt.in.edgelist       = (int *)NULL;
+    dt.in.edgemarkerlist = (int *)NULL;
+    dt.in.normlist       = (double *)NULL;
+    dt.in.numberofedges  = 0;
     //
-    dt.out.pointlist                  = (double *)NULL;
-    dt.out.pointattributelist         = (double *)NULL;
-    dt.out.pointmarkerlist            = (int *)NULL;
-    dt.out.numberofpoints             = 0;
-    dt.out.numberofpointattributes    = 0;
+    dt.out.pointlist               = (double *)NULL;
+    dt.out.pointattributelist      = (double *)NULL;
+    dt.out.pointmarkerlist         = (int *)NULL;
+    dt.out.numberofpoints          = 0;
+    dt.out.numberofpointattributes = 0;
     //
     dt.out.trianglelist               = (int *)NULL;
     dt.out.triangleattributelist      = (double *)NULL;
@@ -172,24 +172,23 @@ void TriangleInterface::SetUp()
     dt.out.numberofcorners            = 0;
     dt.out.numberoftriangleattributes = 0;
     //
-    dt.out.segmentlist                = (int *)NULL;
-    dt.out.segmentmarkerlist          = (int *)NULL;
-    dt.out.numberofsegments           = 0;
+    dt.out.segmentlist       = (int *)NULL;
+    dt.out.segmentmarkerlist = (int *)NULL;
+    dt.out.numberofsegments  = 0;
     //
-    dt.out.holelist                   = (double *)NULL;
-    dt.out.numberofholes              = 0;
+    dt.out.holelist      = (double *)NULL;
+    dt.out.numberofholes = 0;
     //
-    dt.out.regionlist                 = (double *)NULL;
-    dt.out.numberofregions            = 0;
+    dt.out.regionlist      = (double *)NULL;
+    dt.out.numberofregions = 0;
     //
-    dt.out.edgelist                   = (int *)NULL;
-    dt.out.edgemarkerlist             = (int *)NULL;
-    dt.out.normlist                   = (double *)NULL;
-    dt.out.numberofedges              = 0;
+    dt.out.edgelist       = (int *)NULL;
+    dt.out.edgemarkerlist = (int *)NULL;
+    dt.out.normlist       = (double *)NULL;
+    dt.out.numberofedges  = 0;
 }
 
-void TriangleInterface::Extract(
-    std::vector<std::vector<NodeSharedPtr> > &Connec)
+void TriangleInterface::Extract(std::vector<std::vector<NodeSharedPtr>> &Connec)
 {
     Connec.clear();
     for (int i = 0; i < dt.out.numberoftriangles; i++)
@@ -210,5 +209,5 @@ void TriangleInterface::Extract(
         Connec.push_back(tri);
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

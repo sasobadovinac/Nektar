@@ -1,24 +1,24 @@
-#include <SpatialDomains/MeshComponents.h>
-#include <MultiRegions/ExpList.h>
 #include <CardiacEPSolver/CellModels/CellModel.h>
 #include <CardiacEPSolver/Stimuli/Stimulus.h>
+#include <MultiRegions/ExpList.h>
+#include <SpatialDomains/MeshComponents.h>
 
 using namespace std;
 using namespace Nektar;
 
 int main(int argc, char *argv[])
 {
-    SpatialDomains::PointGeomSharedPtr          vPoint;
-    MultiRegions::ExpListSharedPtr              vExp;
-    LibUtilities::SessionReaderSharedPtr        vSession;
-    std::string                                 vCellModel;
-    CellModelSharedPtr                          vCell;
-    std::vector<StimulusSharedPtr>              vStimulus;
-    Array<OneD, Array<OneD, NekDouble> >        vWsp(1);
-    Array<OneD, Array<OneD, NekDouble> >        vSol(1);
-    NekDouble                                   vDeltaT;
-    NekDouble                                   vTime;
-    unsigned int                                nSteps;
+    SpatialDomains::PointGeomSharedPtr vPoint;
+    MultiRegions::ExpListSharedPtr vExp;
+    LibUtilities::SessionReaderSharedPtr vSession;
+    std::string vCellModel;
+    CellModelSharedPtr vCell;
+    std::vector<StimulusSharedPtr> vStimulus;
+    Array<OneD, Array<OneD, NekDouble>> vWsp(1);
+    Array<OneD, Array<OneD, NekDouble>> vSol(1);
+    NekDouble vDeltaT;
+    NekDouble vTime;
+    unsigned int nSteps;
 
     // Create a session reader to read pacing parameters
     vSession = LibUtilities::SessionReader::CreateInstance(argc, argv);
@@ -27,17 +27,16 @@ int main(int argc, char *argv[])
     try
     {
         // Construct a field consisting of a single vertex
-        vPoint = MemoryManager<SpatialDomains::PointGeom>
-                        ::AllocateSharedPtr(3, 0, 0.0, 0.0, 0.0);
-        vExp = MemoryManager<MultiRegions::ExpList>
-            ::AllocateSharedPtr(vPoint);
+        vPoint = MemoryManager<SpatialDomains::PointGeom>::AllocateSharedPtr(
+            3, 0, 0.0, 0.0, 0.0);
+        vExp = MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr(vPoint);
 
         // Get cell model name and create it
         vSession->LoadSolverInfo("CELLMODEL", vCellModel, "");
         ASSERTL0(vCellModel != "", "Cell Model not specified.");
 
-        vCell = GetCellModelFactory().CreateInstance(
-                                            vCellModel, vSession, vExp);
+        vCell =
+            GetCellModelFactory().CreateInstance(vCellModel, vSession, vExp);
         vCell->Initialise();
 
         // Load the stimuli
@@ -51,7 +50,7 @@ int main(int argc, char *argv[])
         nSteps  = vSession->GetParameter("NumSteps");
 
         LibUtilities::EquationSharedPtr e =
-                            vSession->GetFunction("InitialConditions", "u");
+            vSession->GetFunction("InitialConditions", "u");
         vSol[0][0] = e->Evaluate(0.0, 0.0, 0.0, 0.0);
 
         cout << "#";

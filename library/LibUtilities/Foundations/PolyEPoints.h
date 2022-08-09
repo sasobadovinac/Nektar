@@ -27,8 +27,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-// 
-// Description: Header file of 1D Evenly-Spaced Point Definitions 
+//
+// Description: Header file of 1D Evenly-Spaced Point Definitions
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,63 +37,70 @@
 
 #include <memory>
 
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/Points.h>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 namespace Nektar
 {
-    namespace LibUtilities 
+namespace LibUtilities
+{
+
+class PolyEPoints : public Points<NekDouble>
+{
+public:
+    typedef Points<NekDouble> PointsBaseType;
+
+    virtual ~PolyEPoints()
     {
+    }
 
+    LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
+        const PointsKey &key);
 
+    LIB_UTILITIES_EXPORT const std::shared_ptr<NekMatrix<NekDouble>> GetI(
+        const PointsKey &pkey);
+    LIB_UTILITIES_EXPORT const std::shared_ptr<NekMatrix<NekDouble>> GetI(
+        const Array<OneD, const NekDouble> &x);
+    LIB_UTILITIES_EXPORT const std::shared_ptr<NekMatrix<NekDouble>> GetI(
+        unsigned int numpoints, const Array<OneD, const NekDouble> &x);
 
-        class PolyEPoints: public Points<NekDouble>
-        {
-        public:
-            typedef Points<NekDouble> PointsBaseType;
+    PolyEPoints(const PointsKey &key) : PointsBaseType(key)
+    {
+    }
 
-            virtual ~PolyEPoints()
-            {
-            }            
+private:
+    static bool initPointsManager[];
 
-            LIB_UTILITIES_EXPORT static std::shared_ptr< PointsBaseType > Create(const PointsKey &key);
+    /// Default constructor should not be called except by Create method.
+    PolyEPoints() : PointsBaseType(NullPointsKey)
+    {
+    }
 
-            LIB_UTILITIES_EXPORT const std::shared_ptr<NekMatrix<NekDouble> > GetI(const PointsKey &pkey);
-            LIB_UTILITIES_EXPORT const std::shared_ptr<NekMatrix<NekDouble> > GetI(const Array<OneD, const NekDouble>& x);
-            LIB_UTILITIES_EXPORT const std::shared_ptr<NekMatrix<NekDouble> > GetI(unsigned int numpoints, const Array<OneD, const NekDouble>& x);
+    /// Copy constructor should not be called.
+    PolyEPoints(const PolyEPoints &points) : PointsBaseType(points.m_pointsKey)
+    {
+    }
 
-            PolyEPoints(const PointsKey &key):PointsBaseType(key)
-            {
-            }
+    void CalculatePoints();
+    void CalculateWeights();
+    void CalculateDerivMatrix();
+    void CalculateInterpMatrix(unsigned int npts,
+                               const Array<OneD, const NekDouble> &xpoints,
+                               Array<OneD, NekDouble> &interp);
 
-        private:
-            static bool initPointsManager[];
+    NekDouble LagrangeInterpolant(NekDouble x, int npts,
+                                  const Array<OneD, const NekDouble> &xpts,
+                                  const Array<OneD, const NekDouble> &funcvals);
+    NekDouble LagrangePoly(NekDouble x, int pt, int npts,
+                           const Array<OneD, const NekDouble> &xpts);
+    NekDouble LagrangePolyDeriv(NekDouble x, int pt, int npts,
+                                const Array<OneD, const NekDouble> &xpts);
 
-            /// Default constructor should not be called except by Create method.
-            PolyEPoints():PointsBaseType(NullPointsKey)
-            {
-            }
+}; // class PolyEPoints
+} // namespace LibUtilities
+} // namespace Nektar
 
-            /// Copy constructor should not be called.
-            PolyEPoints(const PolyEPoints &points):PointsBaseType(points.m_pointsKey)
-            {
-            }
-            
-            void CalculatePoints();
-            void CalculateWeights();
-            void CalculateDerivMatrix();
-            void CalculateInterpMatrix(unsigned int npts, const Array<OneD, const NekDouble>& xpoints, Array<OneD, NekDouble>&  interp);
-
-            NekDouble LagrangeInterpolant(NekDouble x, int npts, const Array<OneD, const NekDouble>& xpts, const Array<OneD, const NekDouble>& funcvals);
-            NekDouble LagrangePoly(NekDouble x, int pt, int npts, const Array<OneD, const NekDouble>& xpts);     
-            NekDouble LagrangePolyDeriv(NekDouble x, int pt, int npts, const Array<OneD, const NekDouble>& xpts);
-
-        }; // class PolyEPoints
-    } // end of namespace
-} // end of namespace 
-
-
-#endif //POLYEPOINTS_H
+#endif // POLYEPOINTS_H
