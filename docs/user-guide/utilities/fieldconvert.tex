@@ -278,6 +278,7 @@ possibly also Reynolds stresses) into single file;
 \item \inltt{streamfunction}: Calculates stream function of a 2D incompressible flow.
 \item \inltt{surfdistance}: Computes height of a prismatic boundary layer mesh and projects onto the surface (for e.g. $y^+$ calculation).
 \item \inltt{vorticity}: Computes the vorticity field.
+\item \inltt{varprod}: Computes products of fields
 \item \inltt{wss}: Computes wall shear stress field.
 \item \inltt{phifile}: Computes the $\Phi$ function representing a body defined
   in an \inltt{.stl} file. Useful for the Smoothed Profile Method solver.
@@ -1150,6 +1151,21 @@ data containing the vorticity solution, the user can run
 FieldConvert -m vorticity test.xml test.fld test-vort.fld
 \end{lstlisting}
 where the file \inltt{test-vort.fld} can be processed in a similar
+way as described in section \ref{s:utilities:fieldconvert:sub:convert}.
+%
+%
+%
+
+%
+%
+%
+\subsection{Calculate product of fields: \textit{varprod} module}
+To produce a field that contains products of all fields
+and stores them as new fields, the user can run
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -m vorprod test.xml test.fld test-vprod.fld
+\end{lstlisting}
+where the file \inltt{test-vprod.fld} can be processed in a similar
 way as described in section \ref{s:utilities:fieldconvert:sub:convert}.
 %
 %
