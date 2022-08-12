@@ -8,6 +8,7 @@ v5.3
 **Library**
 - Fixed avx512 back-end for SimdLib (!1333)
 - Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
+- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
 
 **FieldConvert**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
