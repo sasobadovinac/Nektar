@@ -54,12 +54,19 @@ CommMpi::CommMpi(int narg, char *arg[]) : Comm(narg, arg)
 {
     int init = 0;
     MPI_Initialized(&init);
-    ASSERTL0(!init, "MPI has already been initialised.");
 
-    int retval = MPI_Init(&narg, &arg);
-    if (retval != MPI_SUCCESS)
+    if (!init)
     {
-        ASSERTL0(false, "Failed to initialise MPI");
+        ASSERTL0(MPI_Init(&narg, &arg) == MPI_SUCCESS,
+                 "Failed to initialise MPI");
+        // store bool to indicate that Nektar++ is in charge of finalizing MPI.
+        m_controls_mpi = true;
+    }
+    else
+    {
+        // Another code is in charge of finalizing MPI and this is not the
+        // responsiblity of Nektar++
+        m_controls_mpi = false;
     }
 
     m_comm = MPI_COMM_WORLD;
@@ -116,7 +123,7 @@ void CommMpi::v_Finalise()
 #endif
     int flag;
     MPI_Finalized(&flag);
-    if (!flag)
+    if ((!flag) && m_controls_mpi)
     {
         MPI_Finalize();
     }
