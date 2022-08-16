@@ -59,9 +59,6 @@ std::string ForcingMovingReferenceFrame::classNameBody =
     GetForcingFactory().RegisterCreatorFunction(
         "MovingReferenceFrame", ForcingMovingReferenceFrame::create,
         "Moving Frame");
-std::string ForcingMovingReferenceFrame::classNameField =
-    GetForcingFactory().RegisterCreatorFunction(
-        "Field", ForcingMovingReferenceFrame::create, "Field Forcing");
 
 /**
  * @brief

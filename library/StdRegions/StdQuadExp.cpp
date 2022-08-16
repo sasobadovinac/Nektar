@@ -237,7 +237,7 @@ void StdQuadExp::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
     }
 }
 
-void StdQuadExp::v_FwdTrans_BndConstrained(
+void StdQuadExp::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -286,7 +286,7 @@ void StdQuadExp::v_FwdTrans_BndConstrained(
 
         for (i = 0; i < 4; i++)
         {
-            segexp[i % 2]->FwdTrans_BndConstrained(physEdge[i], coeffEdge[i]);
+            segexp[i % 2]->FwdTransBndConstrained(physEdge[i], coeffEdge[i]);
 
             GetTraceToElementMap(i, mapArray, signArray);
             for (j = 0; j < nmodes[i % 2]; j++)

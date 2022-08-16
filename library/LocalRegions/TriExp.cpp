@@ -266,7 +266,7 @@ void TriExp::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
     out = (*matsys) * in;
 }
 
-void TriExp::v_FwdTrans_BndConstrained(
+void TriExp::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -338,7 +338,7 @@ void TriExp::v_FwdTrans_BndConstrained(
 
     for (i = 0; i < 3; i++)
     {
-        segexp[i]->FwdTrans_BndConstrained(physEdge[i], coeffEdge[i]);
+        segexp[i]->FwdTransBndConstrained(physEdge[i], coeffEdge[i]);
 
         // this orient goes with the one above and so could
         // probably set both to eForwards

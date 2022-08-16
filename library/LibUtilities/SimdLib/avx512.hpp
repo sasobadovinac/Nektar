@@ -284,18 +284,17 @@ struct avx512Double8
     }
 
     // gather/scatter
+    // template <typename T>
+    // inline void gather(scalarType const* p, const avx2Int8<T>& indices)
+    // {
+    //     _data = _mm512_i32gather_pd(indices._data, p, 8);
+    // }
 
-    template <typename T>
-    inline void gather(scalarType const *p, const avx2Int8<T> &indices)
-    {
-        _data = _mm512_i32gather_pd(p, indices._data, 8);
-    }
-
-    template <typename T>
-    inline void scatter(scalarType *out, const avx2Int8<T> &indices) const
-    {
-        _mm512_i32scatter_pd(out, indices._data, 8);
-    }
+    // template <typename T>
+    // inline void scatter(scalarType* out, const avx2Int8<T>& indices) const
+    // {
+    //     _mm512_i32scatter_pd(out, indices._data, _data, 8);
+    // }
 
     template <typename T>
     inline void gather(scalarType const *p, const avx512Long8<T> &indices)
@@ -443,30 +442,6 @@ inline void deinterleave_store(
     const std::vector<avx512Double8, allocator<avx512Double8>> &in,
     size_t dataLen, double *out)
 {
-#if 0
-    double *out0 = out;
-    double *out1 = out + dataLen;
-    double *out2 = out + 2 * dataLen;
-    double *out3 = out + 3 * dataLen;
-    double *out4 = out + 4 * dataLen;
-    double *out5 = out + 5 * dataLen;
-    double *out6 = out + 6 * dataLen;
-    double *out7 = out + 7 * dataLen;
-
-
-    for (size_t i = 0; i < dataLen; ++i)
-    {
-        out0[i] = in[i][0];
-        out1[i] = in[i][1];
-        out2[i] = in[i][2];
-        out3[i] = in[i][3];
-        out4[i] = in[i][4];
-        out5[i] = in[i][5];
-        out6[i] = in[i][6];
-        out7[i] = in[i][7];
-    }
-#else
-
     // size_t nBlocks = dataLen / 4;
 
     alignas(avx512Double8::alignment) size_t tmp[avx512Double8::width] = {
@@ -503,7 +478,6 @@ inline void deinterleave_store(
         in[i].scatter(out, index0);
         index0 = index0 + 1;
     }
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////

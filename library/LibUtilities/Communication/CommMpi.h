@@ -108,6 +108,7 @@ public:
 protected:
     MPI_Comm m_comm;
     int m_rank{};
+    bool m_controls_mpi;
 
     explicit CommMpi(MPI_Comm pComm);
 

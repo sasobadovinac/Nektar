@@ -96,7 +96,7 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) final;
 
-    LOCAL_REGIONS_EXPORT void v_FwdTrans_BndConstrained(
+    LOCAL_REGIONS_EXPORT void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) final;
 

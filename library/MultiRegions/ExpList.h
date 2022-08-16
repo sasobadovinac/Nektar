@@ -263,11 +263,6 @@ public:
     /// This function calculates the inner product of a function
     /// \f$f(\boldsymbol{x})\f$ with respect to all \em local
     /// expansion modes \f$\phi_n^e(\boldsymbol{x})\f$.
-    inline void IProductWRTBase_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
-    ///
     inline void IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                 Array<OneD, NekDouble> &outarray);
 
@@ -295,8 +290,8 @@ public:
     /// This function elementally evaluates the forward transformation
     /// of a function \f$u(\boldsymbol{x})\f$ onto the global
     /// spectral/hp expansion.
-    inline void FwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray);
+    inline void FwdTransLocalElmt(const Array<OneD, const NekDouble> &inarray,
+                                  Array<OneD, NekDouble> &outarray);
 
     ///
     inline void FwdTrans(const Array<OneD, const NekDouble> &inarray,
@@ -355,16 +350,12 @@ public:
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
 
     ///
-    MULTI_REGIONS_EXPORT void FwdTrans_BndConstrained(
+    MULTI_REGIONS_EXPORT void FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
     /// This function elementally evaluates the backward transformation
     /// of the global spectral/hp element expansion.
-    inline void BwdTrans_IterPerExp(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray);
-
-    ///
     inline void BwdTrans(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray);
 
@@ -929,11 +920,7 @@ public:
     /// This function calculates the result of the multiplication of a
     /// matrix of type specified by \a mkey with a vector given by \a
     /// inarray.
-    inline void GeneralMatrixOp(const GlobalMatrixKey &gkey,
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray);
-
-    MULTI_REGIONS_EXPORT void GeneralMatrixOp_IterPerExp(
+    MULTI_REGIONS_EXPORT void GeneralMatrixOp(
         const GlobalMatrixKey &gkey,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
@@ -1430,32 +1417,20 @@ protected:
     virtual void v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray);
 
-    virtual void v_BwdTrans_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
     virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FwdTrans_IterPerExp(
+    virtual void v_FwdTransLocalElmt(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FwdTrans_BndConstrained(
+    virtual void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
     virtual void v_SmoothField(Array<OneD, NekDouble> &field);
 
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD, NekDouble> &outarray);
-
-    virtual void v_IProductWRTBase_IterPerExp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
-    virtual void v_GeneralMatrixOp(const GlobalMatrixKey &gkey,
-                                   const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray);
 
     virtual void v_GetCoords(
@@ -1834,16 +1809,6 @@ inline void ExpList::IProductWRTBase(
 /**
  *
  */
-inline void ExpList::IProductWRTBase_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    v_IProductWRTBase_IterPerExp(inarray, outarray);
-}
-
-/**
- *
- */
 inline void ExpList::FwdTrans(const Array<OneD, const NekDouble> &inarray,
                               Array<OneD, NekDouble> &outarray)
 {
@@ -1853,21 +1818,21 @@ inline void ExpList::FwdTrans(const Array<OneD, const NekDouble> &inarray,
 /**
  *
  */
-inline void ExpList::FwdTrans_IterPerExp(
+inline void ExpList::FwdTransLocalElmt(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    v_FwdTrans_IterPerExp(inarray, outarray);
+    v_FwdTransLocalElmt(inarray, outarray);
 }
 
 /**
  *
  */
-inline void ExpList::FwdTrans_BndConstrained(
+inline void ExpList::FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    v_FwdTrans_BndConstrained(inarray, outarray);
+    v_FwdTransBndConstrained(inarray, outarray);
 }
 
 /**
@@ -1881,20 +1846,25 @@ inline void ExpList::SmoothField(Array<OneD, NekDouble> &field)
 /**
  *
  */
+
+/**
+ * Given the coefficients of an expansion, this function evaluates the
+ * spectral/hp expansion \f$u^{\delta}(\boldsymbol{x})\f$ at the
+ * quadrature points \f$\boldsymbol{x}_i\f$. This operation is
+ * evaluated locally by the function ExpList#BwdTrans.
+ *
+ * The coefficients of the expansion should be contained in the variable
+ * #m_coeffs of the ExpList object \a In. The resulting physical values
+ * at the quadrature points \f$u^{\delta}(\boldsymbol{x}_i)\f$ are
+ * stored in the array #m_phys.
+ *
+ * @param   In          An ExpList, containing the local coefficients
+ *                      \f$\hat{u}_n^e\f$ in its array #m_coeffs.
+ */
 inline void ExpList::BwdTrans(const Array<OneD, const NekDouble> &inarray,
                               Array<OneD, NekDouble> &outarray)
 {
     v_BwdTrans(inarray, outarray);
-}
-
-/**
- *
- */
-inline void ExpList::BwdTrans_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    v_BwdTrans_IterPerExp(inarray, outarray);
 }
 
 /**
@@ -2494,42 +2464,6 @@ inline void ExpList::EvaluateBoundaryConditions(const NekDouble time,
                                                 const NekDouble x3_in)
 {
     v_EvaluateBoundaryConditions(time, varName, x2_in, x3_in);
-}
-
-// Routines for continous matrix solution
-/**
- * This operation is equivalent to the evaluation of
- * \f$\underline{\boldsymbol{M}}^e\boldsymbol{\hat{u}}_l\f$, that is,
- * \f[ \left[
- * \begin{array}{cccc}
- * \boldsymbol{M}^1 & 0 & \hspace{3mm}0 \hspace{3mm}& 0 \\
- * 0 & \boldsymbol{M}^2 & 0 & 0 \\
- * 0 &  0 & \ddots &  0 \\
- * 0 &  0 & 0 & \boldsymbol{M}^{N_{\mathrm{el}}} \end{array} \right]
- *\left [ \begin{array}{c}
- * \boldsymbol{\hat{u}}^{1} \\
- * \boldsymbol{\hat{u}}^{2} \\
- * \vdots \\
- * \boldsymbol{\hat{u}}^{{{N_{\mathrm{el}}}}} \end{array} \right ]\f]
- * where \f$\boldsymbol{M}^e\f$ are the local matrices of type
- * specified by the key \a mkey. The decoupling of the local matrices
- * allows for a local evaluation of the operation. However, rather than
- * a local matrix-vector multiplication, the local operations are
- * evaluated as implemented in the function
- * StdRegions#StdExpansion#GeneralMatrixOp.
- *
- * @param   mkey            This key uniquely defines the type matrix
- *                          required for the operation.
- * @param   inarray         The vector \f$\boldsymbol{\hat{u}}_l\f$ of
- *                          size \f$N_{\mathrm{eof}}\f$.
- * @param   outarray        The resulting vector of size
- *                          \f$N_{\mathrm{eof}}\f$.
- */
-inline void ExpList::GeneralMatrixOp(
-    const GlobalMatrixKey &gkey, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    v_GeneralMatrixOp(gkey, inarray, outarray);
 }
 
 inline void ExpList::SetUpPhysNormals()

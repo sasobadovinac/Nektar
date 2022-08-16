@@ -73,8 +73,8 @@ int main(int argc, char *argv[])
         // Evaulate Difference and put into fields;
         for (i = 0; i < nConvectiveFields; ++i)
         {
-            fields[i]->FwdTrans_IterPerExp(NonLinear[i],
-                                           fields[i]->UpdateCoeffs());
+            fields[i]->FwdTransLocalElmt(NonLinear[i],
+                                         fields[i]->UpdateCoeffs());
 
             // subtract off all modes but top from orthogonal projection
             for (int n = 0; n < fields[i]->GetExpSize(); ++n)

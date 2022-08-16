@@ -10,7 +10,7 @@ RUN DEBIAN_RELEASE=bullseye && \
     libboost-thread-dev libboost-iostreams-dev libboost-filesystem-dev libboost-system-dev \
     libboost-program-options-dev libboost-python-dev libboost-numpy-dev libboost-regex-dev \
     libfftw3-dev libhdf5-dev libhdf5-mpi-dev liblapack-dev liboce-foundation-dev \
-    liboce-modeling-dev liboce-ocaf-dev libtet1.5-dev libtriangle-dev \
+    liboce-modeling-dev liboce-ocaf-dev libtet1.5-dev libtriangle-dev libvtk9-dev \
     libtinyxml-dev mpi-default-dev petsc-dev zlib1g-dev python3-numpy libptscotch-dev \
     libarpack2-dev \
     texlive-base texlive-latex-extra texlive-science texlive-fonts-recommended texlive-pstricks \

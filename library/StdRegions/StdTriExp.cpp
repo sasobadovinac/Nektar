@@ -301,7 +301,7 @@ void StdTriExp::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
     out = (*matsys) * in;
 }
 
-void StdTriExp::v_FwdTrans_BndConstrained(
+void StdTriExp::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -343,7 +343,7 @@ void StdTriExp::v_FwdTrans_BndConstrained(
 
     for (i = 0; i < 3; i++)
     {
-        segexp[i != 0]->FwdTrans_BndConstrained(physEdge[i], coeffEdge[i]);
+        segexp[i != 0]->FwdTransBndConstrained(physEdge[i], coeffEdge[i]);
 
         GetTraceToElementMap(i, mapArray, signArray);
         for (j = 0; j < nmodes[i != 0]; j++)

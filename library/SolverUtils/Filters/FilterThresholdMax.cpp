@@ -146,7 +146,7 @@ void FilterThresholdMax::v_Finalise(
     std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
 
     Array<OneD, NekDouble> vCoeffs(pFields[0]->GetNcoeffs());
-    pFields[m_thresholdVar]->FwdTrans_IterPerExp(m_threshold, vCoeffs);
+    pFields[m_thresholdVar]->FwdTransLocalElmt(m_threshold, vCoeffs);
 
     // copy Data into FieldData and set variable
     for (int i = 0; i < FieldDef.size(); ++i)

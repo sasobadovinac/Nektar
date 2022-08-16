@@ -646,8 +646,8 @@ void VelocityCorrectionScheme::v_TransCoeffToPhys(void)
     for (int k = 0; k < nfields; ++k)
     {
         // Backward Transformation in physical space for time evolution
-        m_fields[k]->BwdTrans_IterPerExp(m_fields[k]->GetCoeffs(),
-                                         m_fields[k]->UpdatePhys());
+        m_fields[k]->BwdTrans(m_fields[k]->GetCoeffs(),
+                              m_fields[k]->UpdatePhys());
     }
 }
 
@@ -661,8 +661,8 @@ void VelocityCorrectionScheme::v_TransPhysToCoeff(void)
     for (int k = 0; k < nfields; ++k)
     {
         // Forward Transformation in physical space for time evolution
-        m_fields[k]->FwdTrans_IterPerExp(m_fields[k]->GetPhys(),
-                                         m_fields[k]->UpdateCoeffs());
+        m_fields[k]->FwdTransLocalElmt(m_fields[k]->GetPhys(),
+                                       m_fields[k]->UpdateCoeffs());
     }
 }
 
@@ -776,8 +776,8 @@ void VelocityCorrectionScheme::SolveUnsteadyStokesSystem(
             Vmath::Svtvp(physTot, m_alpha, m_flowrateStokes[i], 1, outarray[i],
                          1, outarray[i], 1);
             // Enusre coeff space is updated for next time step
-            m_fields[i]->FwdTrans_IterPerExp(outarray[i],
-                                             m_fields[i]->UpdateCoeffs());
+            m_fields[i]->FwdTransLocalElmt(outarray[i],
+                                           m_fields[i]->UpdateCoeffs());
             // Impsoe symmetry of flow on coeff space (good to enfore
             // periodicity).
             m_fields[i]->LocalToGlobal();

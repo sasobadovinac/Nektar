@@ -238,6 +238,7 @@ protected:
     {
         return m_equationType;
     }
+    static std::string eqTypeLookupIds[];
 
     void EvaluateAdvectionTerms(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,

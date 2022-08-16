@@ -12,6 +12,8 @@ v5.3
 - Overload PhysEvaluate to give first derivatives using barycentric
   interpolation (!1323)
 - Non-conformal interface support (!1323)
+- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
+- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
 
 **FieldConvert**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
@@ -47,7 +49,9 @@ v5.2.0
 - Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
 - Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
 - Reformat code with clang-format (!1359)
-
+- Remove unnecessary IterPerExp methods (!1366)
+-  Fix erronous call to FwdTrans from MR 1366 (!1374)
+	
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)
 
@@ -55,6 +59,7 @@ v5.2.0
 - Added Boundary conditions for moving reference frame (!1305)
 - Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
 - Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
+- Equation types are registered to the session reader (!1344)
 
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
@@ -69,6 +74,17 @@ v5.2.0
 **CompressibleFlowSolver**
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
 - Added timers around important functions using the Timer class. Timers are available by specifying IO_Timer_Level > -1 (!1347)
+- Fixed bug in the calculation of the discontinuity penalty factor for the DiffusionIP implementation (!1368)
+
+**Documentation**
+- Fix images not being displayed in HTML documentation and tutorials (!1370)
+
+**CI**
+- Remove unused build options (!1360)
+- Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
+
+**Packaging**
+- Fix various issues with debian unstable and centos8 packaging (!1362)
 
 v5.1.1
 ------
