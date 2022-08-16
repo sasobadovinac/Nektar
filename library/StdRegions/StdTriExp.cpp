@@ -899,10 +899,28 @@ const LibUtilities::BasisKey StdTriExp::v_GetTraceBasisKey(const int i,
                         break;
                     }
 
+                    case LibUtilities::ePolyEvenlySpaced:
+                    {
+                        LibUtilities::PointsKey pkey(
+                            m_base[1]
+                                    ->GetBasisKey()
+                                    .GetPointsKey()
+                                    .GetNumPoints() +
+                                1,
+                            LibUtilities::ePolyEvenlySpaced);
+                        return LibUtilities::BasisKey(LibUtilities::eModified_A,
+                                                      m_base[1]->GetNumModes(),
+                                                      pkey);
+                        break;
+                    }
+
                     break;
                     default:
                         NEKERROR(ErrorUtil::efatal,
-                                 "unexpected points distribution");
+                                 "Unexpected points distribution " +
+                                     LibUtilities::kPointsTypeStr
+                                         [m_base[1]->GetPointsType()] +
+                                     " in StdTriExp::v_GetTraceBasisKey");
                         break;
                 }
                 break;

@@ -508,8 +508,11 @@ DNekMatSharedPtr StdExpansion::CreateGeneralMatrix(const StdMatrixKey &mkey)
         break;
         default:
         {
-            NEKERROR(ErrorUtil::efatal, "This type of matrix can not be "
-                                        "created using a general approach");
+            NEKERROR(ErrorUtil::efatal,
+                     "This type of matrix, " +
+                         static_cast<std::string>(
+                             MatrixTypeMap[mkey.GetMatrixType()]) +
+                         ", can not be created using a general approach");
         }
         break;
     }
@@ -1641,7 +1644,11 @@ void StdExpansion::v_GetSimplexEquiSpacedConnectivity(Array<OneD, int> &conn,
                                                       bool standard)
 {
     boost::ignore_unused(conn, standard);
-    ASSERTL0(false, "Not implemented.");
+    NEKERROR(ErrorUtil::efatal,
+             "GetSimplexEquiSpacedConnectivity not"
+             " implemented for " +
+                 static_cast<std::string>(
+                     LibUtilities::ShapeTypeMap[DetShapeType()]));
 }
 
 void StdExpansion::EquiSpacedToCoeffs(

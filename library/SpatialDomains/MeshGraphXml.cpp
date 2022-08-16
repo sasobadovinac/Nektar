@@ -1935,6 +1935,14 @@ void MeshGraphXml::ReadComposites()
                     .c_str());
         }
 
+        // Read optional name as string and save to m_compositeLabels if exists
+        std::string name;
+        err = node->QueryStringAttribute("NAME", &name);
+        if (err == TIXML_SUCCESS)
+        {
+            m_compositesLabels[indx] = name;
+        }
+
         /// Keep looking for additional composite definitions.
         node = node->NextSiblingElement("C");
     }

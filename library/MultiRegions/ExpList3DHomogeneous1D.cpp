@@ -220,10 +220,11 @@ void ExpList3DHomogeneous1D::SetCoeffPhys(void)
     }
 }
 
-void ExpList3DHomogeneous1D::GetCoords(const int eid,
-                                       Array<OneD, NekDouble> &xc0,
-                                       Array<OneD, NekDouble> &xc1,
-                                       Array<OneD, NekDouble> &xc2)
+// @TODO: Could potentially move the extra plane coordinate output here
+void ExpList3DHomogeneous1D::v_GetCoords(const int eid,
+                                         Array<OneD, NekDouble> &xc0,
+                                         Array<OneD, NekDouble> &xc1,
+                                         Array<OneD, NekDouble> &xc2)
 {
     int n;
     Array<OneD, NekDouble> tmp_xc;
@@ -382,7 +383,7 @@ void ExpList3DHomogeneous1D::v_WriteVtkPieceHeader(std::ostream &outfile,
     coords[0] = Array<OneD, NekDouble>(ntot);
     coords[1] = Array<OneD, NekDouble>(ntot);
     coords[2] = Array<OneD, NekDouble>(ntot);
-    GetCoords(expansion, coords[0], coords[1], coords[2]);
+    v_GetCoords(expansion, coords[0], coords[1], coords[2]);
 
     if (outputExtraPlane)
     {

@@ -13,6 +13,7 @@ v5.3
 **FieldConvert**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
 - Fixed the output field names of WSS module of FieldConvert
+- Add VTU output using VTK library (high-order & multi-block options)
 
 v5.2.0
 ------
