@@ -38,62 +38,63 @@
 
 namespace Nektar
 {
-    namespace StdRegions
+namespace StdRegions
+{
+StdExpansion0D::StdExpansion0D(int numcoeffs, const LibUtilities::BasisKey &Ba)
+    : StdExpansion(numcoeffs, 1, Ba)
+{
+}
+
+StdExpansion0D::StdExpansion0D(const StdExpansion0D &T) : StdExpansion(T)
+{
+}
+
+//----------------------------
+// Differentiation Methods
+//-----------------------------
+
+void StdExpansion0D::PhysTensorDeriv(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nquad          = GetTotPoints();
+    DNekMatSharedPtr D = m_base[0]->GetD();
+
+    if (inarray.data() == outarray.data())
     {
-        StdExpansion0D::StdExpansion0D(int numcoeffs, const LibUtilities::BasisKey &Ba):
-            StdExpansion(numcoeffs,1,Ba)
-        {
-        }
-		
-        StdExpansion0D::StdExpansion0D(const StdExpansion0D &T):StdExpansion(T)
-        {
-        }
+        Array<OneD, NekDouble> wsp(nquad);
+        CopyArray(inarray, wsp);
+        Blas::Dgemv('N', nquad, nquad, 1.0, &(D->GetPtr())[0], nquad, &wsp[0],
+                    1, 0.0, &outarray[0], 1);
+    }
+    else
+    {
+        Blas::Dgemv('N', nquad, nquad, 1.0, &(D->GetPtr())[0], nquad,
+                    &inarray[0], 1, 0.0, &outarray[0], 1);
+    }
+}
 
-        //----------------------------
-        // Differentiation Methods
-        //-----------------------------
-	
-        void StdExpansion0D::PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
-                                             Array<OneD, NekDouble>& outarray)
-        {
-            int nquad = GetTotPoints();
-            DNekMatSharedPtr D = m_base[0]->GetD();
+NekDouble StdExpansion0D::v_PhysEvaluate(
+    const Array<OneD, const NekDouble> &Lcoord,
+    const Array<OneD, const NekDouble> &physvals)
+{
+    ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol, "Lcoord[0] < -1");
+    ASSERTL2(Lcoord[0] <= 1 + NekConstants::kNekZeroTol, "Lcoord[0] >  1");
 
-            if( inarray.data() == outarray.data())
-            {
-                Array<OneD, NekDouble> wsp(nquad);
-                CopyArray(inarray, wsp);
-                Blas::Dgemv('N',nquad,nquad,1.0,&(D->GetPtr())[0],nquad,
-                            &wsp[0],1,0.0,&outarray[0],1);
-			}
-            else
-            {
-                Blas::Dgemv('N',nquad,nquad,1.0,&(D->GetPtr())[0],nquad,
-                            &inarray[0],1,0.0,&outarray[0],1);
-            }
-        }
-	
-        NekDouble StdExpansion0D::v_PhysEvaluate(
-            const Array<OneD, const NekDouble>& Lcoord,
-            const Array<OneD, const NekDouble>& physvals)
-        {
-            ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol, "Lcoord[0] < -1");
-            ASSERTL2(Lcoord[0] <= 1 + NekConstants::kNekZeroTol, "Lcoord[0] >  1");
+    return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
+}
 
-            return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
-        }
+NekDouble StdExpansion0D::v_PhysEvaluate(
+    const Array<OneD, DNekMatSharedPtr> &I,
+    const Array<OneD, const NekDouble> &physvals)
+{
+    NekDouble val;
+    int nquad = GetTotPoints();
 
-        NekDouble StdExpansion0D::v_PhysEvaluate(
-            const Array<OneD, DNekMatSharedPtr > &I,
-            const Array<OneD, const NekDouble>& physvals)
-        {
-            NekDouble  val;
-            int    nquad = GetTotPoints();
-            
-            val = Blas::Ddot(nquad, I[0]->GetPtr(), 1, physvals, 1);
-            
-            return val;
-        }
-	
-    }//end namespace
-}//end namespace
+    val = Blas::Ddot(nquad, I[0]->GetPtr(), 1, physvals, 1);
+
+    return val;
+}
+
+} // namespace StdRegions
+} // namespace Nektar

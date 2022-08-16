@@ -168,7 +168,7 @@ protected:
     virtual void v_Irsend(void *buf, int count, CommDataType dt, int dest,
                           CommRequestSharedPtr request, int loc) final;
     virtual void v_Isend(void *buf, int count, CommDataType dt, int dest,
-                          CommRequestSharedPtr request, int loc) final;
+                         CommRequestSharedPtr request, int loc) final;
     virtual void v_SendInit(void *buf, int count, CommDataType dt, int dest,
                             CommRequestSharedPtr request, int loc) final;
     virtual void v_Irecv(void *buf, int count, CommDataType dt, int source,
@@ -183,7 +183,6 @@ protected:
     virtual CommSharedPtr v_CommCreateIf(int flag) final;
 
     virtual std::pair<CommSharedPtr, CommSharedPtr> v_SplitCommNode() final;
-
 };
 } // namespace LibUtilities
 } // namespace Nektar

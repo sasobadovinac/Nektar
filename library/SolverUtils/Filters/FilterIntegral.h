@@ -82,23 +82,22 @@ protected:
         const NekDouble &time) final;
 
     /**
-    * Performs the integration on the stored composite expansions and outputs
-    * in to the output data file
-    *
-    * @param pFields Field data
-    * @param time Current time
-    */
+     * Performs the integration on the stored composite expansions and outputs
+     * in to the output data file
+     *
+     * @param pFields Field data
+     * @param time Current time
+     */
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time) final;
 
-
     /**
-    * Closes the output data file
-    *
-    * @param pFields Field data
-    * @param time Current time
-    */
+     * Closes the output data file
+     *
+     * @param pFields Field data
+     * @param time Current time
+     */
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time) final;

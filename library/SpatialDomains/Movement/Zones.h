@@ -55,14 +55,8 @@ enum class MovementType
 };
 
 /// Map of zone movement type to movement type string
-const std::string MovementTypeStr[] =
-{
-    "None",
-    "Fixed",
-    "Rotated",
-    "Translated",
-    "Prescribed"
-};
+const std::string MovementTypeStr[] = {"None", "Fixed", "Rotated", "Translated",
+                                       "Prescribed"};
 
 /// Zone base: Contains the shared functions and variables
 struct ZoneBase
@@ -122,7 +116,7 @@ struct ZoneBase
 protected:
     /// Type of zone movement
     MovementType m_type = MovementType::eNone;
-    ///Zone ID
+    /// Zone ID
     int m_id;
     /// Zone domain
     CompositeMap m_domain;
@@ -143,7 +137,7 @@ protected:
 typedef std::shared_ptr<ZoneBase> ZoneBaseShPtr;
 
 /// Rotating zone: Motion of every point around a given axis on an origin
-struct ZoneRotate final: public ZoneBase
+struct ZoneRotate final : public ZoneBase
 {
     /**
      * Constructor for rotating zones
@@ -155,11 +149,8 @@ struct ZoneRotate final: public ZoneBase
      * @param axis Axis that the zone rotates about
      * @param angularVelEqn Equation for the angular velocity of rotation
      */
-    ZoneRotate(int id,
-               const CompositeMap &domain,
-               const int coordDim,
-               const NekPoint<NekDouble> &origin,
-               const DNekVec &axis,
+    ZoneRotate(int id, const CompositeMap &domain, const int coordDim,
+               const NekPoint<NekDouble> &origin, const DNekVec &axis,
                const LibUtilities::EquationSharedPtr &angularVelEqn);
 
     /// Default destructor
@@ -179,13 +170,13 @@ protected:
     /// Equation defining angular velocity as a function of time
     LibUtilities::EquationSharedPtr m_angularVelEqn;
     /// W matrix Rodrigues' rotation formula, cross product of axis
-    DNekMat m_W  = DNekMat(3, 3, 0.0);
+    DNekMat m_W = DNekMat(3, 3, 0.0);
     /// W^2 matrix Rodrigues' rotation formula, cross product of axis squared
     DNekMat m_W2 = DNekMat(3, 3, 0.0);
 };
 
 /// Translating zone: addition of a constant vector to every point
-struct ZoneTranslate final: public ZoneBase
+struct ZoneTranslate final : public ZoneBase
 {
     /**
      * Constructor for translating zone
@@ -195,9 +186,7 @@ struct ZoneTranslate final: public ZoneBase
      * @param coordDim Coordinate dimension
      * @param velocity Vector of translation velocity in x,y,z direction
      */
-    ZoneTranslate(int id,
-                  const CompositeMap &domain,
-                  const int coordDim,
+    ZoneTranslate(int id, const CompositeMap &domain, const int coordDim,
                   const std::vector<NekDouble> &velocity)
         : ZoneBase(MovementType::eTranslate, id, domain, coordDim),
           m_velocity(velocity)
@@ -221,7 +210,7 @@ protected:
 };
 
 /// Prescribed zone: applies equation to every point
-struct ZonePrescribe final: public ZoneBase
+struct ZonePrescribe final : public ZoneBase
 {
     /**
      * Constructor for prescribed zone
@@ -233,9 +222,7 @@ struct ZonePrescribe final: public ZoneBase
      * @param yDeform Equation for prescribed motion of y-coordinate
      * @param zDeform Equation for prescribed motion of z-coordinate
      */
-    ZonePrescribe(int id,
-                  const CompositeMap &domain,
-                  const int coordDim,
+    ZonePrescribe(int id, const CompositeMap &domain, const int coordDim,
                   LibUtilities::EquationSharedPtr xDeform,
                   LibUtilities::EquationSharedPtr yDeform,
                   LibUtilities::EquationSharedPtr zDeform)
@@ -256,7 +243,8 @@ struct ZonePrescribe final: public ZoneBase
      * @param t time
      * @return deformation in x direction
      */
-    inline NekDouble GetXDeform(NekDouble x, NekDouble y,  NekDouble z, NekDouble t) const
+    inline NekDouble GetXDeform(NekDouble x, NekDouble y, NekDouble z,
+                                NekDouble t) const
     {
         return m_xDeform->Evaluate(x, y, z, t);
     }
@@ -270,7 +258,8 @@ struct ZonePrescribe final: public ZoneBase
      * @param t time
      * @return deformation in y direction
      */
-    inline NekDouble GetYDeform(NekDouble x, NekDouble y,  NekDouble z, NekDouble t) const
+    inline NekDouble GetYDeform(NekDouble x, NekDouble y, NekDouble z,
+                                NekDouble t) const
     {
         return m_yDeform->Evaluate(x, y, z, t);
     }
@@ -284,7 +273,8 @@ struct ZonePrescribe final: public ZoneBase
      * @param t time
      * @return deformation in z direction
      */
-    inline NekDouble GetZDeform(NekDouble x, NekDouble y,  NekDouble z, NekDouble t) const
+    inline NekDouble GetZDeform(NekDouble x, NekDouble y, NekDouble z,
+                                NekDouble t) const
     {
         return m_zDeform->Evaluate(x, y, z, t);
     }
@@ -302,12 +292,10 @@ protected:
 };
 
 /// Fixed zone: does not move
-struct ZoneFixed final: public ZoneBase
+struct ZoneFixed final : public ZoneBase
 {
     /// Constructor
-    ZoneFixed(int id,
-              const CompositeMap &domain,
-              const int coordDim)
+    ZoneFixed(int id, const CompositeMap &domain, const int coordDim)
         : ZoneBase(MovementType::eFixed, id, domain, coordDim)
     {
     }
@@ -317,7 +305,6 @@ struct ZoneFixed final: public ZoneBase
 
     /// Virtual function for movement of the zone at @param time
     virtual bool v_Move(NekDouble time) final;
-
 };
 
 typedef std::shared_ptr<ZoneRotate> ZoneRotateShPtr;

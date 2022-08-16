@@ -296,7 +296,7 @@ private:
     /// Timing of the MPI exchange method.
     static std::tuple<NekDouble, NekDouble, NekDouble> Timing(
         const LibUtilities::CommSharedPtr &comm, const int &count,
-        const int &num, const ExchangeMethodSharedPtr& f);
+        const int &num, const ExchangeMethodSharedPtr &f);
 };
 
 typedef std::shared_ptr<AssemblyCommDG> AssemblyCommDGSharedPtr;

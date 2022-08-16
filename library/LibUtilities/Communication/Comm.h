@@ -146,7 +146,7 @@ public:
                 const CommRequestSharedPtr &request, int loc);
     template <class T>
     void Isend(int pProc, T &pData, int count,
-                const CommRequestSharedPtr &request, int loc);
+               const CommRequestSharedPtr &request, int loc);
     template <class T>
     void SendInit(int pProc, T &pData, int count,
                   const CommRequestSharedPtr &request, int loc);
@@ -172,7 +172,7 @@ public:
     LIB_UTILITIES_EXPORT inline bool RemoveExistingFiles();
 
     LIB_UTILITIES_EXPORT inline std::pair<CommSharedPtr, CommSharedPtr>
-        SplitCommNode();
+    SplitCommNode();
 
 protected:
     int m_size;                 ///< Number of processes
@@ -239,7 +239,7 @@ protected:
     virtual void v_Irsend(void *buf, int count, CommDataType dt, int dest,
                           CommRequestSharedPtr request, int loc)   = 0;
     virtual void v_Isend(void *buf, int count, CommDataType dt, int dest,
-                          CommRequestSharedPtr request, int loc)   = 0;
+                         CommRequestSharedPtr request, int loc)    = 0;
     virtual void v_SendInit(void *buf, int count, CommDataType dt, int dest,
                             CommRequestSharedPtr request, int loc) = 0;
     virtual void v_Irecv(void *buf, int count, CommDataType dt, int source,
@@ -257,7 +257,7 @@ protected:
 
     LIB_UTILITIES_EXPORT virtual bool v_RemoveExistingFiles();
     LIB_UTILITIES_EXPORT virtual std::pair<CommSharedPtr, CommSharedPtr>
-        v_SplitCommNode();
+    v_SplitCommNode();
 };
 
 /**
@@ -616,10 +616,10 @@ void Comm::Irsend(int pProc, T &pData, int count,
  */
 template <class T>
 void Comm::Isend(int pProc, T &pData, int count,
-                  const CommRequestSharedPtr &request, int loc)
+                 const CommRequestSharedPtr &request, int loc)
 {
     v_Isend(CommDataTypeTraits<T>::GetPointer(pData), count,
-             CommDataTypeTraits<T>::GetDataType(), pProc, request, loc);
+            CommDataTypeTraits<T>::GetDataType(), pProc, request, loc);
 }
 
 /**

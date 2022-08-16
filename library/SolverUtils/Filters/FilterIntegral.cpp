@@ -38,8 +38,8 @@
 #include <LocalRegions/Expansion3D.h>
 #include <SolverUtils/Filters/FilterIntegral.h>
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 namespace Nektar
 {
@@ -327,7 +327,7 @@ void FilterIntegral::v_Update(
                     {
                         Array<OneD, NekDouble> facePhys;
                         exp->GetTracePhysVals(expPair.second, exp, phys,
-                                             facePhys);
+                                              facePhys);
                         input =
                             pFields[i]
                                 ->GetTrace()
@@ -337,7 +337,8 @@ void FilterIntegral::v_Update(
                     else if (meshDim == 2 && dim == 1)
                     {
                         Array<OneD, NekDouble> edgePhys;
-                        exp->GetTracePhysVals(expPair.second, exp, phys, edgePhys);
+                        exp->GetTracePhysVals(expPair.second, exp, phys,
+                                              edgePhys);
                         input =
                             pFields[i]
                                 ->GetTrace()

@@ -42,285 +42,267 @@
 
 namespace Nektar
 {
-    namespace StdRegions
+namespace StdRegions
+{
+
+class StdExpansion3D;
+typedef std::shared_ptr<StdExpansion3D> StdExpansion3DSharedPtr;
+
+class StdExpansion3D : virtual public StdExpansion
+{
+
+public:
+    STD_REGIONS_EXPORT StdExpansion3D() = default;
+    STD_REGIONS_EXPORT StdExpansion3D(int numcoeffs,
+                                      const LibUtilities::BasisKey &Ba,
+                                      const LibUtilities::BasisKey &Bb,
+                                      const LibUtilities::BasisKey &Bc);
+    STD_REGIONS_EXPORT StdExpansion3D(const StdExpansion3D &T);
+    STD_REGIONS_EXPORT virtual ~StdExpansion3D() override = default;
+
+    // Differentiation
+
+    /** \brief Calculate the 3D derivative in the local
+     *  tensor/collapsed coordinate at the physical points
+     *
+     *    This function is independent of the expansion basis and can
+     *    therefore be defined for all tensor product distribution of
+     *    quadrature points in a generic manner.  The key operations are:
+     *
+     *    - \f$ \frac{d}{d\eta_1} \rightarrow {\bf D^T_0 u } \f$ \n
+     *    - \f$ \frac{d}{d\eta_2} \rightarrow {\bf D_1 u } \f$
+     *    - \f$ \frac{d}{d\eta_3} \rightarrow {\bf D_2 u } \f$
+     *
+     *  \param inarray array of physical points to be differentiated
+     *  \param  outarray_d1 the resulting array of derivative in the
+     *  \f$\eta_1\f$ direction will be stored in outarray_d1 as output
+     *  of the function
+     *  \param outarray_d2 the resulting array of derivative in the
+     *  \f$\eta_2\f$ direction will be stored in outarray_d2 as output
+     *  of the function
+     *  \param outarray_d3 the resulting array of derivative in the
+     *  \f$\eta_3\f$ direction will be stored in outarray_d3 as output
+     *  of the function
+     *
+     *  Recall that:
+     *  \f$
+     *  \hspace{1cm} \begin{array}{llll}
+     *  \mbox{Shape}    & \mbox{Cartesian coordinate range} &
+     *  \mbox{Collapsed coord.}      &
+     *  \mbox{Collapsed coordinate definition}\\
+     *  \mbox{Hexahedral}  & -1 \leq \xi_1,\xi_2, \xi_3 \leq  1
+     *  & -1 \leq \eta_1,\eta_2, \eta_3 \leq 1
+     *  & \eta_1 = \xi_1, \eta_2 = \xi_2, \eta_3 = \xi_3 \\
+     *  \mbox{Tetrahedral}  & -1 \leq \xi_1,\xi_2,\xi_3; \xi_1+\xi_2 +\xi_3 \leq
+     * -1 & -1 \leq \eta_1,\eta_2, \eta_3 \leq 1
+     *  & \eta_1 = \frac{2(1+\xi_1)}{-\xi_2 -\xi_3}-1, \eta_2 =
+     * \frac{2(1+\xi_2)}{1 - \xi_3}-1, \eta_3 = \xi_3 \\ \end{array} \f$
+     */
+    STD_REGIONS_EXPORT void PhysTensorDeriv(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray_d1,
+        Array<OneD, NekDouble> &outarray_d2,
+        Array<OneD, NekDouble> &outarray_d3);
+
+    STD_REGIONS_EXPORT void BwdTrans_SumFacKernel(
+        const Array<OneD, const NekDouble> &base0,
+        const Array<OneD, const NekDouble> &base1,
+        const Array<OneD, const NekDouble> &base2,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, Array<OneD, NekDouble> &wsp,
+        bool doCheckCollDir0, bool doCheckCollDir1, bool doCheckCollDir2);
+
+    STD_REGIONS_EXPORT void IProductWRTBase_SumFacKernel(
+        const Array<OneD, const NekDouble> &base0,
+        const Array<OneD, const NekDouble> &base1,
+        const Array<OneD, const NekDouble> &base2,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, Array<OneD, NekDouble> &wsp,
+        bool doCheckCollDir0, bool doCheckCollDir1, bool doCheckCollDir2);
+
+    /** \brief return the number of edges in 3D expansion
+     */
+    int GetNedges() const
     {
+        return v_GetNedges();
+    }
 
-	class StdExpansion3D;
-	typedef std::shared_ptr<StdExpansion3D> StdExpansion3DSharedPtr;
+    /** \brief This function returns the number of expansion coefficients
+     *  belonging to the \a i-th edge
+     *
+     *  This function is a wrapper around the virtual function
+     *  \a v_GetEdgeNcoeffs()
+     *
+     *  \param i specifies which edge
+     *  \return returns the number of expansion coefficients belonging to
+     *  the \a i-th edge
+     */
+    int GetEdgeNcoeffs(const int i) const
+    {
+        return v_GetEdgeNcoeffs(i);
+    }
 
-    class StdExpansion3D: virtual public StdExpansion
+    void GetEdgeInteriorToElementMap(const int tid,
+                                     Array<OneD, unsigned int> &maparray,
+                                     Array<OneD, int> &signarray,
+                                     Orientation traceOrient = eForwards)
+    {
+        v_GetEdgeInteriorToElementMap(tid, maparray, signarray, traceOrient);
+    }
+
+protected:
+    /** \brief This function evaluates the expansion at a single
+     *  (arbitrary) point of the domain
+     *
+     *
+     *  Based on the value of the expansion at the quadrature points,
+     *  this function calculates the value of the expansion at an
+     *  arbitrary single points (with coordinates \f$ \mathbf{x_c}\f$
+     *  given by the pointer \a coords). This operation, equivalent to
+     *  \f[ u(\mathbf{x_c})  = \sum_p \phi_p(\mathbf{x_c}) \hat{u}_p \f]
+     *  is evaluated using Lagrangian interpolants through the quadrature
+     *  points:
+     *  \f[ u(\mathbf{x_c}) = \sum_p h_p(\mathbf{x_c}) u_p\f]
+     *
+     *  This function requires that the physical value array
+     *  \f$\mathbf{u}\f$ (implemented as the attribute #phys)
+     *  is set.
+     *
+     *  \param coords the coordinates of the single point
+     *  \return returns the value of the expansion at the single point
+     */
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, const NekDouble> &coords,
+        const Array<OneD, const NekDouble> &physvals) override;
+
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, DNekMatSharedPtr> &I,
+        const Array<OneD, const NekDouble> &physvals) override;
+
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
+
+    STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
+        const Array<OneD, const NekDouble> &base0,
+        const Array<OneD, const NekDouble> &base1,
+        const Array<OneD, const NekDouble> &base2,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, Array<OneD, NekDouble> &wsp,
+        bool doCheckCollDir0, bool doCheckCollDir1, bool doCheckCollDir2) = 0;
+
+    STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFacKernel(
+        const Array<OneD, const NekDouble> &base0,
+        const Array<OneD, const NekDouble> &base1,
+        const Array<OneD, const NekDouble> &base2,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, Array<OneD, NekDouble> &wsp,
+        bool doCheckCollDir0, bool doCheckCollDir1, bool doCheckCollDir2) = 0;
+
+    STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override;
+
+    STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override;
+
+    STD_REGIONS_EXPORT virtual NekDouble v_Integral(
+        const Array<OneD, const NekDouble> &inarray) override;
+
+    STD_REGIONS_EXPORT virtual int v_GetNedges(void) const;
+    STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
+
+    /**
+     * Performs tensor product evaluation in 3D to evaluate the physical
+     * and derivative values in each direction at input coordinate
+     * @param coord using input physical values at quadrature points
+     * @param inarray. Returns via reference the derivatives.
+
+     * @param coord Global coordinate
+     * @param inarray Phys values
+     * @param out_d0 Return by reference parameter for 0th derivative
+     * @param out_d1 Return by reference parameter for 1st derivative
+     * @param out_d2 Return by reference parameter for 2nd derivative
+     * @return Physical value at @param coord
+     */
+    STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs)
+    {
+        const int nq0 = m_base[0]->GetNumPoints();
+        const int nq1 = m_base[1]->GetNumPoints();
+        const int nq2 = m_base[2]->GetNumPoints();
+
+        const NekDouble *ptr = &inarray[0];
+        Array<OneD, NekDouble> deriv0(nq1 * nq2, 0.0);
+        Array<OneD, NekDouble> phys0(nq1 * nq2, 0.0);
+        Array<OneD, NekDouble> deriv0phys1(nq1, 0.0);
+        Array<OneD, NekDouble> phys0deriv1(nq1, 0.0);
+        Array<OneD, NekDouble> phys0phys1(nq1, 0.0);
+
+        for (int j = 0; j < nq1 * nq2; ++j, ptr += nq0)
         {
+            phys0[j] =
+                StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
+        }
 
-        public:
-            STD_REGIONS_EXPORT StdExpansion3D() = default;
-            STD_REGIONS_EXPORT StdExpansion3D(int numcoeffs, const LibUtilities::BasisKey &Ba,
-                           const LibUtilities::BasisKey &Bb, const LibUtilities::BasisKey &Bc);
-            STD_REGIONS_EXPORT StdExpansion3D(const StdExpansion3D &T);
-            STD_REGIONS_EXPORT virtual ~StdExpansion3D() override = default;
+        for (int j = 0; j < nq2; ++j)
+        {
+            deriv0phys1[j] = StdExpansion::BaryEvaluate<1, false>(
+                coord[1], &deriv0[j * nq1]);
+        }
+        firstOrderDerivs[0] =
+            StdExpansion::BaryEvaluate<2, false>(coord[2], &deriv0phys1[0]);
 
-            // Differentiation
+        for (int j = 0; j < nq2; ++j)
+        {
+            phys0phys1[j] = StdExpansion::BaryEvaluate<1, true>(
+                coord[1], &phys0[j * nq1], phys0deriv1[j]);
+        }
+        firstOrderDerivs[1] =
+            StdExpansion::BaryEvaluate<2, false>(coord[2], &phys0deriv1[0]);
 
-            /** \brief Calculate the 3D derivative in the local
-             *  tensor/collapsed coordinate at the physical points
-             *
-             *    This function is independent of the expansion basis and can
-             *    therefore be defined for all tensor product distribution of
-             *    quadrature points in a generic manner.  The key operations are:
-             *
-             *    - \f$ \frac{d}{d\eta_1} \rightarrow {\bf D^T_0 u } \f$ \n
-             *    - \f$ \frac{d}{d\eta_2} \rightarrow {\bf D_1 u } \f$
-             *    - \f$ \frac{d}{d\eta_3} \rightarrow {\bf D_2 u } \f$
-             *
-             *  \param inarray array of physical points to be differentiated
-             *  \param  outarray_d1 the resulting array of derivative in the
-             *  \f$\eta_1\f$ direction will be stored in outarray_d1 as output
-             *  of the function
-             *  \param outarray_d2 the resulting array of derivative in the
-             *  \f$\eta_2\f$ direction will be stored in outarray_d2 as output
-             *  of the function
-             *  \param outarray_d3 the resulting array of derivative in the
-             *  \f$\eta_3\f$ direction will be stored in outarray_d3 as output
-             *  of the function
-             *
-             *  Recall that:
-             *  \f$
-             *  \hspace{1cm} \begin{array}{llll}
-             *  \mbox{Shape}    & \mbox{Cartesian coordinate range} &
-             *  \mbox{Collapsed coord.}      &
-             *  \mbox{Collapsed coordinate definition}\\
-             *  \mbox{Hexahedral}  & -1 \leq \xi_1,\xi_2, \xi_3 \leq  1
-             *  & -1 \leq \eta_1,\eta_2, \eta_3 \leq 1
-             *  & \eta_1 = \xi_1, \eta_2 = \xi_2, \eta_3 = \xi_3 \\
-             *  \mbox{Tetrahedral}  & -1 \leq \xi_1,\xi_2,\xi_3; \xi_1+\xi_2 +\xi_3 \leq  -1
-             *  & -1 \leq \eta_1,\eta_2, \eta_3 \leq 1
-             *  & \eta_1 = \frac{2(1+\xi_1)}{-\xi_2 -\xi_3}-1, \eta_2 = \frac{2(1+\xi_2)}{1 - \xi_3}-1, \eta_3 = \xi_3 \\
-             *  \end{array} \f$
-             */
-            STD_REGIONS_EXPORT void PhysTensorDeriv(const Array<OneD, const NekDouble> &inarray,
-                                 Array<OneD, NekDouble> &outarray_d1,
-                                 Array<OneD, NekDouble> &outarray_d2,
-                                 Array<OneD, NekDouble> &outarray_d3);
+        return StdExpansion::BaryEvaluate<2, true>(coord[2], &phys0phys1[0],
+                                                   firstOrderDerivs[2]);
+    }
 
-            STD_REGIONS_EXPORT void BwdTrans_SumFacKernel(
-                const Array<OneD, const NekDouble>& base0,
-                const Array<OneD, const NekDouble>& base1,
-                const Array<OneD, const NekDouble>& base2,
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD,       NekDouble>& outarray,
-                      Array<OneD,       NekDouble>& wsp,
-                bool                                doCheckCollDir0,
-                bool                                doCheckCollDir1,
-                bool                                doCheckCollDir2);
+    STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(
+        const int tid, Array<OneD, unsigned int> &maparray,
+        Array<OneD, int> &signarray, Orientation traceOrient = eForwards);
 
-            STD_REGIONS_EXPORT void IProductWRTBase_SumFacKernel(
-                    const Array<OneD, const NekDouble>& base0,
-                    const Array<OneD, const NekDouble>& base1,
-                    const Array<OneD, const NekDouble>& base2,
-                    const Array<OneD, const NekDouble>& inarray,
-                          Array<OneD, NekDouble> &outarray,
-                          Array<OneD, NekDouble> &wsp,
-                    bool doCheckCollDir0,
-                    bool doCheckCollDir1,
-                    bool doCheckCollDir2);
+    STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
+        const int tid, Array<OneD, unsigned int> &maparray,
+        Array<OneD, int> &signarray, Orientation traceOrient, int P,
+        int Q) override;
 
-            /** \brief return the number of edges in 3D expansion
-             */
-            int GetNedges() const
-            {
-                return v_GetNedges();
-            }
-            
-            /** \brief This function returns the number of expansion coefficients
-             *  belonging to the \a i-th edge
-             *
-             *  This function is a wrapper around the virtual function
-             *  \a v_GetEdgeNcoeffs()
-             *
-             *  \param i specifies which edge
-             *  \return returns the number of expansion coefficients belonging to
-             *  the \a i-th edge
-             */
-            int GetEdgeNcoeffs(const int i) const
-            {
-                return v_GetEdgeNcoeffs(i);
-            }
+    STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
+        const int dir, DNekMatSharedPtr &mat) override;
 
-            void GetEdgeInteriorToElementMap(
-                    const int                  tid,
-                    Array<OneD, unsigned int> &maparray,
-                    Array<OneD,          int> &signarray,
-                    Orientation                traceOrient = eForwards)
-            {
-                v_GetEdgeInteriorToElementMap(tid,maparray,signarray,traceOrient);
-            }
+private:
+    virtual int v_GetShapeDimension() const final
+    {
+        return 3;
+    }
 
-        protected:
+    virtual int v_GetCoordim(void) override
+    {
+        return 3;
+    }
+};
 
-            /** \brief This function evaluates the expansion at a single
-             *  (arbitrary) point of the domain
-             *
-             *
-             *  Based on the value of the expansion at the quadrature points,
-             *  this function calculates the value of the expansion at an
-             *  arbitrary single points (with coordinates \f$ \mathbf{x_c}\f$
-             *  given by the pointer \a coords). This operation, equivalent to
-             *  \f[ u(\mathbf{x_c})  = \sum_p \phi_p(\mathbf{x_c}) \hat{u}_p \f]
-             *  is evaluated using Lagrangian interpolants through the quadrature
-             *  points:
-             *  \f[ u(\mathbf{x_c}) = \sum_p h_p(\mathbf{x_c}) u_p\f]
-             *
-             *  This function requires that the physical value array
-             *  \f$\mathbf{u}\f$ (implemented as the attribute #phys)
-             *  is set.
-             *
-             *  \param coords the coordinates of the single point
-             *  \return returns the value of the expansion at the single point
-             */
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals) override;
+STD_REGIONS_EXPORT LibUtilities::BasisKey EvaluateTriFaceBasisKey(
+    const int facedir, const LibUtilities::BasisType faceDirBasisType,
+    const int numpoints, const int nummodes);
 
+STD_REGIONS_EXPORT LibUtilities::BasisKey EvaluateQuadFaceBasisKey(
+    const int facedir, const LibUtilities::BasisType faceDirBasisType,
+    const int numpoints, const int nummodes);
+} // namespace StdRegions
+} // namespace Nektar
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                    const Array<OneD, DNekMatSharedPtr >& I,
-                    const Array<OneD, const NekDouble >& physvals) override;
-
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                std::array<NekDouble, 3> &firstOrderDerivs) override;
-
-            STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
-                const Array<OneD, const NekDouble>& base0,
-                const Array<OneD, const NekDouble>& base1,
-                const Array<OneD, const NekDouble>& base2,
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD,       NekDouble>& outarray,
-                      Array<OneD,       NekDouble>& wsp,
-                bool                                doCheckCollDir0,
-                bool                                doCheckCollDir1,
-                bool                                doCheckCollDir2) = 0;
-
-            STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFacKernel(
-                const Array<OneD, const NekDouble>& base0,
-                const Array<OneD, const NekDouble>& base1,
-                const Array<OneD, const NekDouble>& base2,
-                const Array<OneD, const NekDouble>& inarray,
-                      Array<OneD, NekDouble>&       outarray,
-                      Array<OneD, NekDouble>&       wsp,
-                bool                                doCheckCollDir0,
-                bool                                doCheckCollDir1,
-                bool                                doCheckCollDir2) = 0;
-
-            STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree(
-                    const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD,NekDouble> &outarray,
-                    const StdRegions::StdMatrixKey &mkey) override;
-
-            STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(
-                    const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD,NekDouble> &outarray,
-                    const StdRegions::StdMatrixKey &mkey) override;
-
-            STD_REGIONS_EXPORT virtual NekDouble v_Integral(
-                const Array<OneD, const NekDouble>& inarray) override;
-
-            STD_REGIONS_EXPORT virtual int v_GetNedges(void) const;
-            STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
-
-
-            /**
-             * Performs tensor product evaluation in 3D to evaluate the physical
-             * and derivative values in each direction at input coordinate
-             * @param coord using input physical values at quadrature points
-             * @param inarray. Returns via reference the derivatives.
-
-             * @param coord Global coordinate
-             * @param inarray Phys values
-             * @param out_d0 Return by reference parameter for 0th derivative
-             * @param out_d1 Return by reference parameter for 1st derivative
-             * @param out_d2 Return by reference parameter for 2nd derivative
-             * @return Physical value at @param coord
-             */
-            STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                std::array<NekDouble, 3> &firstOrderDerivs)
-            {
-                const int nq0 = m_base[0]->GetNumPoints();
-                const int nq1 = m_base[1]->GetNumPoints();
-                const int nq2 = m_base[2]->GetNumPoints();
-
-                const NekDouble *ptr = &inarray[0];
-                Array<OneD, NekDouble> deriv0(nq1 * nq2, 0.0);
-                Array<OneD, NekDouble> phys0(nq1 * nq2, 0.0);
-                Array<OneD, NekDouble> deriv0phys1(nq1, 0.0);
-                Array<OneD, NekDouble> phys0deriv1(nq1, 0.0);
-                Array<OneD, NekDouble> phys0phys1(nq1, 0.0);
-
-                for (int j = 0; j < nq1 * nq2; ++j, ptr += nq0)
-                {
-                    phys0[j] = StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
-                }
-
-                for (int j = 0; j < nq2; ++j)
-                {
-                    deriv0phys1[j] = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[j * nq1]);
-                }
-                firstOrderDerivs[0] = StdExpansion::BaryEvaluate<2, false>(coord[2], &deriv0phys1[0]);
-
-                for (int j = 0; j < nq2; ++j)
-                {
-                    phys0phys1[j] = StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[j * nq1], phys0deriv1[j]);
-                }
-                firstOrderDerivs[1] = StdExpansion::BaryEvaluate<2, false>(coord[2], &phys0deriv1[0]);
-
-                return StdExpansion::BaryEvaluate<2, true>(coord[2], &phys0phys1[0], firstOrderDerivs[2]);
-            }
-
-            STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(
-               const int                  tid,
-               Array<OneD, unsigned int> &maparray,
-               Array<OneD,          int> &signarray,
-               Orientation                traceOrient = eForwards);
-
-            STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
-                const int                  tid,
-                Array<OneD, unsigned int>& maparray,
-                Array<OneD, int>&          signarray,
-                Orientation                traceOrient,
-                int P,  int Q) override;
-            
-            STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
-                  const int dir,
-                  DNekMatSharedPtr &mat) override;
-
-        private:
-
-            virtual int v_GetShapeDimension() const final
-            {
-                return 3;
-            }
-
-            virtual int v_GetCoordim(void) override
-            {
-                return 3;
-            }
-            
-    };
-
-        STD_REGIONS_EXPORT LibUtilities::BasisKey EvaluateTriFaceBasisKey(
-            const int                     facedir,
-            const LibUtilities::BasisType faceDirBasisType,
-            const int                     numpoints,
-            const int                     nummodes);
-
-        STD_REGIONS_EXPORT LibUtilities::BasisKey EvaluateQuadFaceBasisKey(
-            const int                     facedir,
-            const LibUtilities::BasisType faceDirBasisType,
-            const int                     numpoints,
-            const int                     nummodes);
-    } //end of namespace
-} //end of namespace
-
-#endif //STDEXP3D_H
+#endif // STDEXP3D_H

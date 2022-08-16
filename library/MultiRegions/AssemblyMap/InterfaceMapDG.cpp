@@ -126,13 +126,13 @@ InterfaceMapDG::InterfaceMapDG(
 
     // Find what interface Ids match with other ranks, then check if opposite
     // edge
-    size_t myRank     = comm->GetRank();
+    size_t myRank        = comm->GetRank();
     size_t numInterfaces = interfaceCollection.size();
     for (int i = 0; i < nRanks; ++i)
     {
         for (size_t j = 0; j < numInterfaces; ++j)
         {
-            int otherId   = indxToInterfaceID[j];
+            int otherId = indxToInterfaceID[j];
 
             // otherCode represents for a specific interface ID what sides are
             // present on rank i, 0=non, 1=left, 2=right, 3=both
@@ -140,7 +140,7 @@ InterfaceMapDG::InterfaceMapDG(
 
             // myCode represents for a specific interface ID what sides are
             // present on this rank/process 0=non, 1=left, 2=right, 3=both
-            int myCode    = myIndxLRMap[otherId];
+            int myCode = myIndxLRMap[otherId];
 
             // Special case if checking current rank (this process)
             if (i == myRank)
@@ -251,9 +251,8 @@ void InterfaceTrace::CalcLocalMissing()
         int cnt = 0;
         for (auto &childId : childEdge)
         {
-            auto childElmt =
-                m_trace->GetExpFromGeomId(childId.first);
-            size_t nq = childElmt->GetTotPoints();
+            auto childElmt = m_trace->GetExpFromGeomId(childId.first);
+            size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset =
@@ -285,9 +284,8 @@ void InterfaceTrace::CalcLocalMissing()
     {
         for (auto &childId : childEdge)
         {
-            auto childElmt =
-                m_trace->GetExpFromGeomId(childId.first);
-            size_t nq = childElmt->GetTotPoints();
+            auto childElmt = m_trace->GetExpFromGeomId(childId.first);
+            size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset =
@@ -530,7 +528,7 @@ void InterfaceExchange::SendFwdTrace(
 
     for (auto &i : m_foundRankCoords[m_rank])
     {
-        int traceId                     = m_trace->GetElmtToExpId(i.second.first);
+        int traceId = m_trace->GetElmtToExpId(i.second.first);
         Array<OneD, NekDouble> locCoord = i.second.second;
 
         Array<OneD, NekDouble> edgePhys =

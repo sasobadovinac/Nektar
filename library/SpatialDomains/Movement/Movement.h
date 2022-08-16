@@ -36,8 +36,8 @@
 #ifndef NEKTAR_SPATIALDOMAINS_MOVEMENT_H
 #define NEKTAR_SPATIALDOMAINS_MOVEMENT_H
 
-#include <SpatialDomains/Movement/Zones.h>
 #include <SpatialDomains/Movement/InterfaceInterpolation.h>
+#include <SpatialDomains/Movement/Zones.h>
 
 namespace Nektar
 {
@@ -45,7 +45,8 @@ namespace Nektar
 namespace SpatialDomains
 {
 
-typedef std::map<std::pair<int, std::string>, InterfacePairShPtr> InterfaceCollection;
+typedef std::map<std::pair<int, std::string>, InterfacePairShPtr>
+    InterfaceCollection;
 
 class Movement
 {
@@ -53,7 +54,7 @@ public:
     /// Constructor
     SPATIAL_DOMAINS_EXPORT Movement(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        MeshGraph* meshGraph);
+        MeshGraph *meshGraph);
 
     /// Default destructor
     SPATIAL_DOMAINS_EXPORT ~Movement() = default;
@@ -78,12 +79,10 @@ protected:
 
 private:
     /// Read zones given TiXmlDocument
-    void ReadZones(TiXmlElement *zonesTag,
-                   MeshGraph* meshGraph,
+    void ReadZones(TiXmlElement *zonesTag, MeshGraph *meshGraph,
                    const LibUtilities::SessionReaderSharedPtr &pSession);
     /// Read interfaces given TiXmlDocument
-    void ReadInterfaces(TiXmlElement *interfacesTag,
-                        MeshGraph* meshGraph);
+    void ReadInterfaces(TiXmlElement *interfacesTag, MeshGraph *meshGraph);
 };
 
 typedef std::shared_ptr<Movement> MovementSharedPtr;

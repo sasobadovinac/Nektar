@@ -37,362 +37,368 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <StdRegions/StdNodalTriExp.h>
 #include <SpatialDomains/TriGeom.h>
+#include <StdRegions/StdNodalTriExp.h>
 
-#include <LocalRegions/MatrixKey.h>
-#include <LocalRegions/LocalRegionsDeclspec.h>
 #include <LocalRegions/Expansion2D.h>
+#include <LocalRegions/LocalRegionsDeclspec.h>
+#include <LocalRegions/MatrixKey.h>
 
 namespace Nektar
 {
-    namespace LocalRegions 
-    {  
-        
-    class NodalTriExp final: virtual public StdRegions::StdNodalTriExp, virtual public Expansion2D
+namespace LocalRegions
+{
+
+class NodalTriExp final : virtual public StdRegions::StdNodalTriExp,
+                          virtual public Expansion2D
+{
+public:
+    /** \brief Constructor using BasisKey class for quadrature
+        points and order definition */
+    LOCAL_REGIONS_EXPORT NodalTriExp(
+        const LibUtilities::BasisKey &Ba, const LibUtilities::BasisKey &Bb,
+        const LibUtilities::PointsType Ntype,
+        const SpatialDomains::TriGeomSharedPtr &geom);
+
+    /// Copy Constructor
+    LOCAL_REGIONS_EXPORT NodalTriExp(const NodalTriExp &T);
+
+    /// Destructor
+    LOCAL_REGIONS_EXPORT ~NodalTriExp() final = default;
+
+    LOCAL_REGIONS_EXPORT void GetCoords(
+        Array<OneD, NekDouble> &coords_1, Array<OneD, NekDouble> &coords_2,
+        Array<OneD, NekDouble> &coords_3 = NullNekDouble1DArray);
+    LOCAL_REGIONS_EXPORT void GetCoord(
+        const Array<OneD, const NekDouble> &Lcoords,
+        Array<OneD, NekDouble> &coords);
+
+    //----------------------------
+    // Integration Methods
+    //----------------------------
+
+    /// \brief Integrate the physical point list \a inarray over region
+    LOCAL_REGIONS_EXPORT NekDouble
+    Integral(const Array<OneD, const NekDouble> &inarray);
+
+    /** \brief  Inner product of \a inarray over region with respect to the
+        expansion basis (this)->_Base[0] and return in \a outarray */
+    void IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
+                         Array<OneD, NekDouble> &outarray)
+    {
+        NodalTriExp::IProductWRTBase_SumFac(inarray, outarray);
+    }
+
+    void IProductWRTDerivBase(const int dir,
+                              const Array<OneD, const NekDouble> &inarray,
+                              Array<OneD, NekDouble> &outarray)
+    {
+        NodalTriExp::IProductWRTDerivBase_SumFac(dir, inarray, outarray);
+    }
+
+    //-----------------------------
+    // Differentiation Methods
+    //-----------------------------
+
+    LOCAL_REGIONS_EXPORT void PhysDeriv(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
+        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);
+
+    //----------------------------
+    // Evaluations Methods
+    //---------------------------
+
+    /** \brief Forward transform from physical quadrature space
+        stored in \a inarray and evaluate the expansion coefficients and
+        store in \a (this)->_coeffs  */
+    LOCAL_REGIONS_EXPORT void FwdTrans(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
+
+    LOCAL_REGIONS_EXPORT NekDouble
+    PhysEvaluate(const Array<OneD, const NekDouble> &coord,
+                 const Array<OneD, const NekDouble> &physvals);
+
+    void MassMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                      Array<OneD, NekDouble> &outarray,
+                      const StdRegions::StdMatrixKey &mkey)
+    {
+        StdExpansion::MassMatrixOp_MatFree(inarray, outarray, mkey);
+    }
+
+    LOCAL_REGIONS_EXPORT NekDouble
+    v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                   const Array<OneD, const NekDouble> &inarray,
+                   std::array<NekDouble, 3> &firstOrderDerivs) final;
+
+    void LaplacianMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                           Array<OneD, NekDouble> &outarray,
+                           const StdRegions::StdMatrixKey &mkey)
+    {
+        StdExpansion::LaplacianMatrixOp_MatFree_GenericImpl(inarray, outarray,
+                                                            mkey);
+    }
+
+    void LaplacianMatrixOp(const int k1, const int k2,
+                           const Array<OneD, const NekDouble> &inarray,
+                           Array<OneD, NekDouble> &outarray,
+                           const StdRegions::StdMatrixKey &mkey)
+    {
+        StdExpansion::LaplacianMatrixOp_MatFree(k1, k2, inarray, outarray,
+                                                mkey);
+    }
+
+    void WeakDerivMatrixOp(const int i,
+                           const Array<OneD, const NekDouble> &inarray,
+                           Array<OneD, NekDouble> &outarray,
+                           const StdRegions::StdMatrixKey &mkey)
+    {
+        StdExpansion::WeakDerivMatrixOp_MatFree(i, inarray, outarray, mkey);
+    }
+
+    void HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                           Array<OneD, NekDouble> &outarray,
+                           const StdRegions::StdMatrixKey &mkey)
+    {
+        StdExpansion::HelmholtzMatrixOp_MatFree_GenericImpl(inarray, outarray,
+                                                            mkey);
+    }
+
+protected:
+    DNekMatSharedPtr CreateStdMatrix(const StdRegions::StdMatrixKey &mkey);
+
+    void IProductWRTBase_SumFac(const Array<OneD, const NekDouble> &inarray,
+                                Array<OneD, NekDouble> &outarray,
+                                bool multiplybyweights = true);
+    void IProductWRTBase_MatOp(const Array<OneD, const NekDouble> &inarray,
+                               Array<OneD, NekDouble> &outarray);
+
+    void IProductWRTDerivBase_SumFac(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
+    void IProductWRTDerivBase_MatOp(const int dir,
+                                    const Array<OneD, const NekDouble> &inarray,
+                                    Array<OneD, NekDouble> &outarray);
+
+    void GeneralMatrixOp_MatOp(const Array<OneD, const NekDouble> &inarray,
+                               Array<OneD, NekDouble> &outarray,
+                               const StdRegions::StdMatrixKey &mkey);
+
+    StdRegions::StdExpansionSharedPtr v_GetStdExp(void) const final;
+
+    StdRegions::StdExpansionSharedPtr v_GetLinStdExp(void) const final;
+
+    DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey) final;
+
+private:
+    LibUtilities::NekManager<MatrixKey, DNekScalMat, MatrixKey::opLess>
+        m_matrixManager;
+    LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess>
+        m_staticCondMatrixManager;
+
+    // virtual StdRegions::ExpansionType v_DetExpansionType() const
+    //{
+    //   return DetExpansionType();
+    //}
+
+    virtual DNekMatSharedPtr v_GenNBasisTransMatrix()
+    {
+        return StdNodalTriExp::GenNBasisTransMatrix();
+    }
+
+    void v_GetCoords(
+        Array<OneD, NekDouble> &coords_0,
+        Array<OneD, NekDouble> &coords_1 = NullNekDouble1DArray,
+        Array<OneD, NekDouble> &coords_2 = NullNekDouble1DArray) final
+    {
+        GetCoords(coords_0, coords_1, coords_2);
+    }
+
+    void v_GetCoord(const Array<OneD, const NekDouble> &lcoord,
+                    Array<OneD, NekDouble> &coord) final
+    {
+        GetCoord(lcoord, coord);
+    }
+
+    virtual void v_GetNodalPoints(Array<OneD, const NekDouble> &x,
+                                  Array<OneD, const NekDouble> &y)
+    {
+        return StdNodalTriExp::GetNodalPoints(x, y);
+    }
+
+    /** \brief Virtual call to integrate the physical point list \a inarray
+        over region (see SegExp::Integral) */
+    NekDouble v_Integral(const Array<OneD, const NekDouble> &inarray) final
+    {
+        return Integral(inarray);
+    }
+
+    /** \brief Virtual call to TriExp::IProduct_WRT_B */
+    void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
+                           Array<OneD, NekDouble> &outarray) final
+    {
+        IProductWRTBase(inarray, outarray);
+    }
+
+    void v_IProductWRTDerivBase(const int dir,
+                                const Array<OneD, const NekDouble> &inarray,
+                                Array<OneD, NekDouble> &outarray) final
+    {
+        IProductWRTDerivBase(dir, inarray, outarray);
+    }
+
+    void v_StdPhysDeriv(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
+        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final
+    {
+        StdTriExp::v_PhysDeriv(inarray, out_d0, out_d1, out_d2);
+    }
+
+    void v_PhysDeriv(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
+        Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final
+    {
+        boost::ignore_unused(out_d2);
+        PhysDeriv(inarray, out_d0, out_d1);
+    }
+
+    void v_PhysDeriv(const int dir, const Array<OneD, const NekDouble> &inarray,
+                     Array<OneD, NekDouble> &outarray) final
+    {
+        Array<OneD, NekDouble> tmp;
+        switch (dir)
         {
-        public:
-            /** \brief Constructor using BasisKey class for quadrature
-                points and order definition */
-            LOCAL_REGIONS_EXPORT NodalTriExp(const LibUtilities::BasisKey &Ba,
-                        const LibUtilities::BasisKey &Bb,
-                        const LibUtilities::PointsType Ntype,
-                        const SpatialDomains::TriGeomSharedPtr &geom);
-            
-            /// Copy Constructor
-            LOCAL_REGIONS_EXPORT NodalTriExp(const NodalTriExp &T); 
-            
-            /// Destructor
-            LOCAL_REGIONS_EXPORT ~NodalTriExp() final = default;
-        
-            
-            LOCAL_REGIONS_EXPORT void GetCoords(Array<OneD,NekDouble> &coords_1,
-                           Array<OneD,NekDouble> &coords_2, 
-                           Array<OneD,NekDouble> &coords_3 = NullNekDouble1DArray);
-            LOCAL_REGIONS_EXPORT void GetCoord(const Array<OneD, const NekDouble>& Lcoords, 
-                          Array<OneD,NekDouble> &coords);
+            case 0:
+            {
+                PhysDeriv(inarray, outarray, tmp);
+            }
+            break;
+            case 1:
+            {
+                PhysDeriv(inarray, tmp, outarray);
+            }
+            break;
+            default:
+            {
+                ASSERTL1(dir >= 0 && dir < 2, "input dir is out of range");
+            }
+            break;
+        }
+    }
 
-            //----------------------------
-            // Integration Methods
-            //----------------------------
-            
-            /// \brief Integrate the physical point list \a inarray over region
-            LOCAL_REGIONS_EXPORT NekDouble Integral(const Array<OneD, const NekDouble> &inarray);
-            
-            /** \brief  Inner product of \a inarray over region with respect to the
-                expansion basis (this)->_Base[0] and return in \a outarray */
-            void IProductWRTBase(const Array<OneD, const NekDouble>& inarray, 
-                                 Array<OneD, NekDouble> &outarray)
-            {
-                NodalTriExp::IProductWRTBase_SumFac(inarray,outarray);
-            }
+    /// Virtual call to SegExp::FwdTrans
+    void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
+                    Array<OneD, NekDouble> &outarray) final
+    {
+        FwdTrans(inarray, outarray);
+    }
 
-            void IProductWRTDerivBase(const int dir,
-                                      const Array<OneD, const NekDouble>& inarray,
-                                      Array<OneD, NekDouble> & outarray)
-            {
-                NodalTriExp::IProductWRTDerivBase_SumFac(dir,inarray,outarray);
-            }
-            
-            //-----------------------------
-            // Differentiation Methods
-            //-----------------------------
-            
-            LOCAL_REGIONS_EXPORT void PhysDeriv(const Array<OneD, const NekDouble> &inarray, 
-                           Array<OneD, NekDouble> &out_d0,
-                           Array<OneD, NekDouble> &out_d1,
-                           Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray);  
-            
-            //----------------------------
-            // Evaluations Methods
-            //---------------------------
-            
-            /** \brief Forward transform from physical quadrature space
-                stored in \a inarray and evaluate the expansion coefficients and
-                store in \a (this)->_coeffs  */
-            LOCAL_REGIONS_EXPORT void FwdTrans(const Array<OneD, const NekDouble> &inarray, 
-                          Array<OneD, NekDouble> &outarray);
-            
-            LOCAL_REGIONS_EXPORT NekDouble PhysEvaluate(
-                            const Array<OneD, const NekDouble> &coord,
-                            const Array<OneD, const NekDouble> & physvals);
+    /// Virtual call to TriExp::Evaluate
+    NekDouble v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
+                             const Array<OneD, const NekDouble> &physvals) final
 
-            void MassMatrixOp(const Array<OneD, const NekDouble> &inarray, 
-                              Array<OneD,NekDouble> &outarray,
-                              const StdRegions::StdMatrixKey &mkey)
-            {              
-                StdExpansion::MassMatrixOp_MatFree(inarray,outarray,mkey);
-            }
+    {
+        return PhysEvaluate(coord, physvals);
+    }
 
-            LOCAL_REGIONS_EXPORT NekDouble v_PhysEvaluate(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                std::array<NekDouble, 3> &firstOrderDerivs) final;
+    DNekMatSharedPtr v_CreateStdMatrix(
+        const StdRegions::StdMatrixKey &mkey) final
+    {
+        return CreateStdMatrix(mkey);
+    }
 
-            void LaplacianMatrixOp(const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD,NekDouble> &outarray,
-                                   const StdRegions::StdMatrixKey &mkey)
-            {           
-                StdExpansion::LaplacianMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
-            }
+    DNekScalMatSharedPtr v_GetLocMatrix(const MatrixKey &mkey) final
+    {
+        return m_matrixManager[mkey];
+    }
 
-            void LaplacianMatrixOp(const int k1, const int k2, 
-                                   const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD,NekDouble> &outarray,
-                                   const StdRegions::StdMatrixKey &mkey)
-            {           
-                StdExpansion::LaplacianMatrixOp_MatFree(k1,k2,inarray,outarray,mkey);
-            }
+    //            virtual DNekScalMatSharedPtr v_GetLocMatrix(const
+    //            StdRegions::MatrixType mtype, NekDouble lambdaval, NekDouble
+    //            tau)
+    //            {
+    //                MatrixKey
+    //                mkey(mtype,DetExpansionType(),*this,lambdaval,tau); return
+    //                m_matrixManager[mkey];
+    //            }
 
-            void WeakDerivMatrixOp(const int i,
-                                   const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD,NekDouble> &outarray,
-                                   const StdRegions::StdMatrixKey &mkey)
-            {
-                StdExpansion::WeakDerivMatrixOp_MatFree(i,inarray,outarray,mkey);
-            }
-            
-            void HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD,NekDouble> &outarray,
-                                   const StdRegions::StdMatrixKey &mkey)
-            {
-                StdExpansion::HelmholtzMatrixOp_MatFree_GenericImpl(inarray,outarray,mkey);
-            }  
-            
-        protected:
-            
-            DNekMatSharedPtr CreateStdMatrix(const StdRegions::StdMatrixKey &mkey);
+    DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
+        const MatrixKey &mkey) final
+    {
+        return m_staticCondMatrixManager[mkey];
+    }
 
-            void IProductWRTBase_SumFac(const Array<OneD, const NekDouble>& inarray, 
-                                        Array<OneD, NekDouble> &outarray,
-                                        bool multiplybyweights = true);
-            void IProductWRTBase_MatOp(const Array<OneD, const NekDouble>& inarray, 
-                                       Array<OneD, NekDouble> &outarray);
+    void v_BwdTrans_SumFac(const Array<OneD, const NekDouble> &inarray,
+                           Array<OneD, NekDouble> &outarray) final
+    {
+        StdNodalTriExp::v_BwdTrans_SumFac(inarray, outarray);
+    }
 
-            void IProductWRTDerivBase_SumFac(const int dir,
-                                             const Array<OneD, const NekDouble>& inarray,
-                                             Array<OneD, NekDouble> & outarray);
-            void IProductWRTDerivBase_MatOp(const int dir,
-                                             const Array<OneD, const NekDouble>& inarray,
-                                             Array<OneD, NekDouble> & outarray);
+    void v_IProductWRTBase_SumFac(const Array<OneD, const NekDouble> &inarray,
+                                  Array<OneD, NekDouble> &outarray,
+                                  bool multiplybyweights = true) final
+    {
+        boost::ignore_unused(multiplybyweights);
+        IProductWRTBase_SumFac(inarray, outarray);
+    }
 
+    void v_IProductWRTDerivBase_SumFac(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray) final
+    {
+        IProductWRTDerivBase_SumFac(dir, inarray, outarray);
+    }
 
-            void GeneralMatrixOp_MatOp(const Array<OneD, const NekDouble> &inarray,
-                                       Array<OneD,NekDouble> &outarray,
-                                       const StdRegions::StdMatrixKey &mkey); 
-            
-            StdRegions::StdExpansionSharedPtr v_GetStdExp(void) const final;
+    void v_AlignVectorToCollapsedDir(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray) final;
 
-            StdRegions::StdExpansionSharedPtr v_GetLinStdExp(void) const final;
-            
-            DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey) final;
+    void v_MassMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                        Array<OneD, NekDouble> &outarray,
+                        const StdRegions::StdMatrixKey &mkey) final
+    {
+        MassMatrixOp(inarray, outarray, mkey);
+    }
 
-        private:           
-            LibUtilities::NekManager<MatrixKey, DNekScalMat, MatrixKey::opLess> m_matrixManager;
-            LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess> m_staticCondMatrixManager;
-            
+    void v_LaplacianMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                             Array<OneD, NekDouble> &outarray,
+                             const StdRegions::StdMatrixKey &mkey) final
+    {
+        LaplacianMatrixOp(inarray, outarray, mkey);
+    }
 
-            //virtual StdRegions::ExpansionType v_DetExpansionType() const
-            //{
-            //   return DetExpansionType();
-            //}
-            
-            virtual DNekMatSharedPtr v_GenNBasisTransMatrix()
-            {
-                return StdNodalTriExp::GenNBasisTransMatrix();
-            }
-            
-            void v_GetCoords(Array<OneD, NekDouble> &coords_0,
-                                     Array<OneD, NekDouble> &coords_1 = NullNekDouble1DArray,
-                                     Array<OneD, NekDouble> &coords_2 = NullNekDouble1DArray) final
-            {
-                GetCoords(coords_0, coords_1, coords_2);
-            }
-            
-            void v_GetCoord(const Array<OneD, const NekDouble> &lcoord,
-                                    Array<OneD, NekDouble> &coord) final
-            {
-                GetCoord(lcoord, coord);
-            }
+    void v_LaplacianMatrixOp(const int k1, const int k2,
+                             const Array<OneD, const NekDouble> &inarray,
+                             Array<OneD, NekDouble> &outarray,
+                             const StdRegions::StdMatrixKey &mkey) final
+    {
+        LaplacianMatrixOp(k1, k2, inarray, outarray, mkey);
+    }
 
-            virtual void v_GetNodalPoints(Array<OneD, const NekDouble> &x, 
-                                          Array<OneD, const NekDouble> &y)
-            {
-                return StdNodalTriExp::GetNodalPoints(x,y);
-            }
-            
-            /** \brief Virtual call to integrate the physical point list \a inarray
-                over region (see SegExp::Integral) */
-            NekDouble v_Integral(const Array<OneD, const NekDouble> &inarray ) final
-            {
-                return Integral(inarray);
-            }
-            
-            /** \brief Virtual call to TriExp::IProduct_WRT_B */
-            void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
-                                           Array<OneD, NekDouble> &outarray) final
-            {
-                IProductWRTBase(inarray,outarray);
-            }
+    void v_WeakDerivMatrixOp(const int i,
+                             const Array<OneD, const NekDouble> &inarray,
+                             Array<OneD, NekDouble> &outarray,
+                             const StdRegions::StdMatrixKey &mkey) final
+    {
+        WeakDerivMatrixOp(i, inarray, outarray, mkey);
+    }
 
-            void v_IProductWRTDerivBase (const int dir,
-                                                 const Array<OneD, const NekDouble> &inarray,
-                                                 Array<OneD, NekDouble> &outarray) final
-            {
-                IProductWRTDerivBase(dir,inarray,outarray);
-            }
-            
-            void v_StdPhysDeriv(
-                const Array<OneD, const NekDouble> &inarray, 
-                      Array<OneD,       NekDouble> &out_d0,
-                      Array<OneD,       NekDouble> &out_d1,
-                      Array<OneD,       NekDouble> &out_d2 = NullNekDouble1DArray) final
-            {
-                StdTriExp::v_PhysDeriv(inarray, out_d0, out_d1, out_d2);
-            }
-        
-            void v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
-                                     Array<OneD, NekDouble> &out_d0,
-                                     Array<OneD, NekDouble> &out_d1,
-                                     Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) final
-            {
-                boost::ignore_unused(out_d2);
-                PhysDeriv(inarray, out_d0, out_d1);
-            }
+    void v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
+                             Array<OneD, NekDouble> &outarray,
+                             const StdRegions::StdMatrixKey &mkey) final
+    {
+        HelmholtzMatrixOp(inarray, outarray, mkey);
+    }
 
-            void v_PhysDeriv(const int dir,
-                                     const Array<OneD, const NekDouble>& inarray,
-                                     Array<OneD, NekDouble> &outarray) final
-            {
-                Array<OneD,NekDouble> tmp;
-                switch(dir)
-                {
-                case 0:
-                    {
-                        PhysDeriv(inarray, outarray, tmp);   
-                    }
-                    break;
-                case 1:
-                    {
-                        PhysDeriv(inarray, tmp, outarray);   
-                    }
-                    break;
-                default:
-                    {
-                        ASSERTL1(dir >= 0 &&dir < 2,"input dir is out of range");
-                    }
-                    break;
-                }             
-            }
-            
-            /// Virtual call to SegExp::FwdTrans
-            void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray) final
-            {
-                FwdTrans(inarray,outarray);
-            }
-            
-            /// Virtual call to TriExp::Evaluate
-            NekDouble v_PhysEvaluate(
-                const Array<OneD, const NekDouble> &coord,
-                const Array<OneD, const NekDouble> &physvals) final
+    void v_ComputeTraceNormal(const int edge) final;
+};
 
-            {
-                return PhysEvaluate(coord, physvals);
-            }
-            
-            DNekMatSharedPtr v_CreateStdMatrix(const StdRegions::StdMatrixKey &mkey) final
-            {
-                return CreateStdMatrix(mkey);
-            }
-            
-            DNekScalMatSharedPtr v_GetLocMatrix(const MatrixKey &mkey) final
-            {
-                return m_matrixManager[mkey];
-            }
-            
-//            virtual DNekScalMatSharedPtr v_GetLocMatrix(const StdRegions::MatrixType mtype, NekDouble lambdaval, NekDouble tau)
-//            {
-//                MatrixKey mkey(mtype,DetExpansionType(),*this,lambdaval,tau);
-//                return m_matrixManager[mkey];
-//            }
-            
-            DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(const MatrixKey &mkey) final
-            {
-                return m_staticCondMatrixManager[mkey];
-            }
+typedef std::shared_ptr<NodalTriExp> NodalTriExpSharedPtr;
+typedef std::vector<NodalTriExpSharedPtr> NodalTriExpVector;
 
-            void v_BwdTrans_SumFac(const Array<OneD, const NekDouble>& inarray,
-                                           Array<OneD, NekDouble> &outarray) final
-            {
-                StdNodalTriExp::v_BwdTrans_SumFac(inarray,outarray);
-            }    
-            
-            void v_IProductWRTBase_SumFac(const Array<OneD, const NekDouble>& inarray,
-                                                  Array<OneD, NekDouble> &outarray,
-                                                  bool multiplybyweights = true) final
-            {
-                boost::ignore_unused(multiplybyweights);
-                IProductWRTBase_SumFac(inarray,outarray);
-            }            
-            
-            void v_IProductWRTDerivBase_SumFac(const int dir,
-                                                       const Array<OneD, const NekDouble>& inarray, 
-                                                       Array<OneD, NekDouble> &outarray) final
-            {
-                IProductWRTDerivBase_SumFac(dir,inarray,outarray);
-            }    
-
-            void v_AlignVectorToCollapsedDir(
-                const int dir, 
-                const Array<OneD, const NekDouble>      &inarray, 
-                Array<OneD, Array<OneD, NekDouble> >    &outarray) final;
-
-            void v_MassMatrixOp(const Array<OneD, const NekDouble> &inarray,
-                                        Array<OneD,NekDouble> &outarray,
-                                        const StdRegions::StdMatrixKey &mkey) final
-            {
-                MassMatrixOp(inarray,outarray,mkey);
-            }  
-            
-            void v_LaplacianMatrixOp(const Array<OneD, const NekDouble> &inarray,
-                                             Array<OneD,NekDouble> &outarray,
-                                             const StdRegions::StdMatrixKey &mkey) final
-            {
-                LaplacianMatrixOp(inarray,outarray,mkey);
-            }
-
-            void v_LaplacianMatrixOp(const int k1, const int k2,
-                                             const Array<OneD, const NekDouble> &inarray,
-                                             Array<OneD,NekDouble> &outarray,
-                                             const StdRegions::StdMatrixKey &mkey) final
-            {
-                LaplacianMatrixOp(k1,k2,inarray,outarray,mkey);
-            }
-
-            void v_WeakDerivMatrixOp(const int i,
-                                             const Array<OneD, const NekDouble> &inarray,
-                                             Array<OneD,NekDouble> &outarray,
-                                             const StdRegions::StdMatrixKey &mkey) final
-            {
-                WeakDerivMatrixOp(i,inarray,outarray,mkey);
-            }
-            
-            void v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
-                                             Array<OneD,NekDouble> &outarray,
-                                             const StdRegions::StdMatrixKey &mkey) final
-            {
-                HelmholtzMatrixOp(inarray,outarray,mkey);
-            }  
-            
-            void v_ComputeTraceNormal(const int edge) final;
-        };
-    
-        typedef std::shared_ptr<NodalTriExp> NodalTriExpSharedPtr;
-        typedef std::vector< NodalTriExpSharedPtr > NodalTriExpVector;
-    
-    } //end of namespace
-} //end of namespace
+} // namespace LocalRegions
+} // namespace Nektar
 
 #endif // NODALTRIEXP_H
-

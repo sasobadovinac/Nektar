@@ -80,7 +80,6 @@ struct Interface
         return m_edge[id];
     }
 
-
     /// Checks if the interface edge is empty (used for parallelisation)
     inline bool IsEmpty() const
     {
@@ -121,11 +120,10 @@ struct InterfacePair
     /// Constructor
     InterfacePair(const InterfaceShPtr &leftInterface,
                   const InterfaceShPtr &rightInterface)
-        : m_leftInterface(leftInterface),
-          m_rightInterface(rightInterface)
+        : m_leftInterface(leftInterface), m_rightInterface(rightInterface)
     {
         // Sets the opposite interfaces
-        leftInterface->GetOppInterface() = rightInterface;
+        leftInterface->GetOppInterface()  = rightInterface;
         rightInterface->GetOppInterface() = leftInterface;
     }
 

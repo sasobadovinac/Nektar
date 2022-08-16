@@ -50,9 +50,9 @@ std::string static inline ReadTag(std::string &tagStr)
     std::string::size_type indxEnd = tagStr.find_last_of(']') - 1;
 
     ASSERTL0(
-            indxBeg <= indxEnd,
-            (std::string("Error reading interface region definition:") + tagStr)
-                    .c_str());
+        indxBeg <= indxEnd,
+        (std::string("Error reading interface region definition:") + tagStr)
+            .c_str());
 
     std::string indxStr = tagStr.substr(indxBeg, indxEnd - indxBeg + 1);
 
@@ -60,10 +60,10 @@ std::string static inline ReadTag(std::string &tagStr)
 }
 
 Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
-                   MeshGraph* meshGraph)
+                   MeshGraph *meshGraph)
 {
     TiXmlNode *nektar = pSession->GetElement("NEKTAR");
-    if(nektar == nullptr)
+    if (nektar == nullptr)
     {
         return;
     }
@@ -74,15 +74,15 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
         bool zones = movement->FirstChild("ZONES") != nullptr;
         if (zones)
         {
-            ReadZones(pSession->GetElement(
-                "NEKTAR/MOVEMENT/ZONES"), meshGraph, pSession);
+            ReadZones(pSession->GetElement("NEKTAR/MOVEMENT/ZONES"), meshGraph,
+                      pSession);
         }
 
         bool interfaces = movement->FirstChild("INTERFACES") != nullptr;
         if (interfaces)
         {
-            ReadInterfaces(pSession->GetElement(
-                "NEKTAR/MOVEMENT/INTERFACES"), meshGraph);
+            ReadInterfaces(pSession->GetElement("NEKTAR/MOVEMENT/INTERFACES"),
+                           meshGraph);
         }
 
         ASSERTL0(zones == interfaces,
@@ -90,7 +90,7 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                  "block.")
 
         // Don't support interior penalty yet
-        if(pSession->DefinesSolverInfo("DiffusionType"))
+        if (pSession->DefinesSolverInfo("DiffusionType"))
         {
             ASSERTL0(pSession->GetSolverInfo("DiffusionType") == "LDGNS",
                      "Only LDGNS is supported as the DiffusionType in "
@@ -114,20 +114,19 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             comm->AllReduce(numEl, LibUtilities::ReduceSum);
 
             // Find shape type if not on this proc
-            int shapeType = !zone.second->GetElements().empty()
-                    ? zone.second->GetElements().front()->GetShapeType() : -1;
+            int shapeType =
+                !zone.second->GetElements().empty()
+                    ? zone.second->GetElements().front()->GetShapeType()
+                    : -1;
             comm->AllReduce(shapeType, LibUtilities::ReduceMax);
 
             if (comm->TreatAsRankZero())
             {
-                std::cout
-                    << "\t- " << zone.first << " "
-                    << MovementTypeStr[static_cast<int>(
-                           zone.second->GetMovementType())]
-                    << ": " << numEl << " "
-                    << LibUtilities::ShapeTypeMap
-                           [shapeType]
-                    << "s\n";
+                std::cout << "\t- " << zone.first << " "
+                          << MovementTypeStr[static_cast<int>(
+                                 zone.second->GetMovementType())]
+                          << ": " << numEl << " "
+                          << LibUtilities::ShapeTypeMap[shapeType] << "s\n";
             }
         }
 
@@ -146,31 +145,34 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
             comm->AllReduce(numRight, LibUtilities::ReduceSum);
 
             // Find shape type if not on this proc
-            int shapeTypeLeft = ! interface.second->GetLeftInterface()
-                                        ->GetEdge().empty()
-                                ? interface.second->GetLeftInterface()
-                                          ->GetEdge().begin()
-                                          ->second->GetShapeType() : -1;
+            int shapeTypeLeft =
+                !interface.second->GetLeftInterface()->GetEdge().empty()
+                    ? interface.second->GetLeftInterface()
+                          ->GetEdge()
+                          .begin()
+                          ->second->GetShapeType()
+                    : -1;
             comm->AllReduce(shapeTypeLeft, LibUtilities::ReduceMax);
-            int shapeTypeRight = ! interface.second->GetRightInterface()
-                                        ->GetEdge().empty()
-                                    ? interface.second->GetRightInterface()
-                                          ->GetEdge().begin()
-                                          ->second->GetShapeType() : -1;
+            int shapeTypeRight =
+                !interface.second->GetRightInterface()->GetEdge().empty()
+                    ? interface.second->GetRightInterface()
+                          ->GetEdge()
+                          .begin()
+                          ->second->GetShapeType()
+                    : -1;
             comm->AllReduce(shapeTypeRight, LibUtilities::ReduceMax);
 
             if (comm->TreatAsRankZero())
             {
-                std::cout
-                    << "\t- \"" << interface.first.second << "\": "
-                    << interface.second->GetLeftInterface()->GetId() << " ("
-                    << numLeft << " "
-                    << LibUtilities::ShapeTypeMap[shapeTypeLeft]
-                    << "s) <-> "
-                    << interface.second->GetRightInterface()->GetId() << " ("
-                    << numRight << " "
-                    << LibUtilities::ShapeTypeMap[shapeTypeRight]
-                    << "s)\n";
+                std::cout << "\t- \"" << interface.first.second << "\": "
+                          << interface.second->GetLeftInterface()->GetId()
+                          << " (" << numLeft << " "
+                          << LibUtilities::ShapeTypeMap[shapeTypeLeft]
+                          << "s) <-> "
+                          << interface.second->GetRightInterface()->GetId()
+                          << " (" << numRight << " "
+                          << LibUtilities::ShapeTypeMap[shapeTypeRight]
+                          << "s)\n";
             }
         }
 
@@ -182,8 +184,7 @@ Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
     }
 }
 
-void Movement::ReadZones(TiXmlElement *zonesTag,
-                         MeshGraph* meshGraph,
+void Movement::ReadZones(TiXmlElement *zonesTag, MeshGraph *meshGraph,
                          const LibUtilities::SessionReaderSharedPtr &pSession)
 {
     int coordDim = meshGraph->GetSpaceDimension();
@@ -213,14 +214,12 @@ void Movement::ReadZones(TiXmlElement *zonesTag,
         }
 
         ZoneBaseShPtr zone;
-        if (zoneType == "F" ||
-            zoneType == "FIXED")
+        if (zoneType == "F" || zoneType == "FIXED")
         {
             zone = ZoneFixedShPtr(MemoryManager<ZoneFixed>::AllocateSharedPtr(
                 indx, domain, coordDim));
         }
-        else if (zoneType == "R" ||
-                 zoneType == "ROTATE" ||
+        else if (zoneType == "R" || zoneType == "ROTATE" ||
                  zoneType == "ROTATING")
         {
             std::string originStr;
@@ -251,8 +250,7 @@ void Movement::ReadZones(TiXmlElement *zonesTag,
 
             m_moveFlag = true;
         }
-        else if (zoneType == "T" ||
-                 zoneType == "TRANSLATE" ||
+        else if (zoneType == "T" || zoneType == "TRANSLATE" ||
                  zoneType == "TRANSLATING")
         {
             std::string velocityStr;
@@ -267,8 +265,7 @@ void Movement::ReadZones(TiXmlElement *zonesTag,
 
             m_moveFlag = true;
         }
-        else if (zoneType == "P" ||
-                 zoneType == "PRESCRIBED")
+        else if (zoneType == "P" || zoneType == "PRESCRIBED")
         {
             std::string xDeformStr;
             err = zonesElement->QueryStringAttribute("XDEFORM", &xDeformStr);
@@ -293,7 +290,8 @@ void Movement::ReadZones(TiXmlElement *zonesTag,
 
             zone = ZonePrescribeShPtr(
                 MemoryManager<ZonePrescribe>::AllocateSharedPtr(
-                    indx, domain, coordDim, xDeformEqn, yDeformEqn, zDeformEqn));
+                    indx, domain, coordDim, xDeformEqn, yDeformEqn,
+                    zDeformEqn));
 
             m_moveFlag = true;
         }
@@ -305,12 +303,11 @@ void Movement::ReadZones(TiXmlElement *zonesTag,
         }
 
         m_zones[indx] = zone;
-        zonesElement = zonesElement->NextSiblingElement();
+        zonesElement  = zonesElement->NextSiblingElement();
     }
 }
 
-void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
-                              MeshGraph* meshGraph)
+void Movement::ReadInterfaces(TiXmlElement *interfacesTag, MeshGraph *meshGraph)
 {
     ASSERTL0(interfacesTag, "Unable to find INTERFACES tag in file.");
     TiXmlElement *interfaceElement = interfacesTag->FirstChildElement();
@@ -335,7 +332,8 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
         std::vector<int> cnt;
         while (sideElement)
         {
-            ASSERTL0(cnt.size() < 2,
+            ASSERTL0(
+                cnt.size() < 2,
                 "In INTERFACE NAME " + name +
                     ", only two sides may be present in each INTERFACE block.")
 
@@ -366,12 +364,14 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
             }
             else
             {
-                NEKERROR(ErrorUtil::efatal, sideElement->ValueStr() +
+                NEKERROR(ErrorUtil::efatal,
+                         sideElement->ValueStr() +
                              " is not a valid interface side for interface "
-                             "NAME " + name + ". Please only use LEFT or RIGHT.")
+                             "NAME " +
+                             name + ". Please only use LEFT or RIGHT.")
             }
 
-            interfaces[cnt[cnt.size()-1]] =
+            interfaces[cnt[cnt.size() - 1]] =
                 InterfaceShPtr(MemoryManager<Interface>::AllocateSharedPtr(
                     indx, boundaryEdge));
 
@@ -380,7 +380,8 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag,
 
         ASSERTL0(std::accumulate(cnt.begin(), cnt.end(), 0) == 1,
                  "You must have only one LEFT and one RIGHT side"
-                 " present in interface NAME " + name)
+                 " present in interface NAME " +
+                     name)
 
         m_interfaces[std::make_pair(m_interfaces.size(), name)] =
             InterfacePairShPtr(MemoryManager<InterfacePair>::AllocateSharedPtr(
@@ -417,5 +418,5 @@ void Movement::PerformMovement(NekDouble timeStep)
     }
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

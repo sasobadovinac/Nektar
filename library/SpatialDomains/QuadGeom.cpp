@@ -33,13 +33,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/QuadGeom.h>
 #include <LibUtilities/Foundations/Interp.h>
+#include <SpatialDomains/QuadGeom.h>
 
-#include <StdRegions/StdQuadExp.h>
-#include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/Curve.hpp>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/SegGeom.h>
+#include <StdRegions/StdQuadExp.h>
 
 using namespace std;
 
@@ -53,15 +53,14 @@ QuadGeom::QuadGeom()
     m_shapeType = LibUtilities::eQuadrilateral;
 }
 
-QuadGeom::QuadGeom(const int id,
-                   const SegGeomSharedPtr edges[],
+QuadGeom::QuadGeom(const int id, const SegGeomSharedPtr edges[],
                    const CurveSharedPtr curve)
     : Geometry2D(edges[0]->GetVertex(0)->GetCoordim(), curve)
 {
     int j;
 
     m_shapeType = LibUtilities::eQuadrilateral;
-    m_globalID = id;
+    m_globalID  = id;
 
     /// Copy the edge shared pointers.
     m_edges.insert(m_edges.begin(), edges, edges + QuadGeom::kNedges);
@@ -77,20 +76,20 @@ QuadGeom::QuadGeom(const int id,
 
     for (j = 2; j < kNedges; ++j)
     {
-        m_eorient[j] = m_eorient[j] == StdRegions::eBackwards ?
-            StdRegions::eForwards : StdRegions::eBackwards;
+        m_eorient[j] = m_eorient[j] == StdRegions::eBackwards
+                           ? StdRegions::eForwards
+                           : StdRegions::eBackwards;
     }
 
     m_coordim = edges[0]->GetVertex(0)->GetCoordim();
     ASSERTL0(m_coordim > 1, "Cannot call function with dim == 1");
 }
 
-QuadGeom::QuadGeom(const QuadGeom &in)
-    : Geometry2D(in)
+QuadGeom::QuadGeom(const QuadGeom &in) : Geometry2D(in)
 {
     // From Geometry
     m_shapeType = in.m_shapeType;
-    m_globalID = in.m_globalID;
+    m_globalID  = in.m_globalID;
 
     // From QuadGeom
     m_verts = in.m_verts;
@@ -113,13 +112,13 @@ void QuadGeom::SetUpXmap()
                      m_edges[3]->GetXmap()->GetBasis(0)->GetNumModes());
 
     const LibUtilities::BasisKey B0(
-        LibUtilities::eModified_A,
-        order0,
-        LibUtilities::PointsKey(order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order0,
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey B1(
-        LibUtilities::eModified_A,
-        order1,
-        LibUtilities::PointsKey(order1+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order1,
+        LibUtilities::PointsKey(order1 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
 
     m_xmap = MemoryManager<StdRegions::StdQuadExp>::AllocateSharedPtr(B0, B1);
 }
@@ -137,10 +136,12 @@ NekDouble QuadGeom::v_GetCoord(const int i,
 
 StdRegions::Orientation QuadGeom::GetFaceOrientation(const QuadGeom &face1,
                                                      const QuadGeom &face2,
-            bool doRot, int dir, NekDouble angle, NekDouble tol)
+                                                     bool doRot, int dir,
+                                                     NekDouble angle,
+                                                     NekDouble tol)
 {
-    return GetFaceOrientation(face1.m_verts, face2.m_verts,
-                              doRot, dir, angle, tol);
+    return GetFaceOrientation(face1.m_verts, face2.m_verts, doRot, dir, angle,
+                              tol);
 }
 
 /**
@@ -148,12 +149,12 @@ StdRegions::Orientation QuadGeom::GetFaceOrientation(const QuadGeom &face1,
  * not face1 to face2!).
  */
 StdRegions::Orientation QuadGeom::GetFaceOrientation(
-            const PointGeomVector &face1, const PointGeomVector &face2,
-            bool doRot, int dir, NekDouble angle, NekDouble tol)
+    const PointGeomVector &face1, const PointGeomVector &face2, bool doRot,
+    int dir, NekDouble angle, NekDouble tol)
 {
     int i, j, vmap[4] = {-1, -1, -1, -1};
 
-    if(doRot)
+    if (doRot)
     {
         PointGeom rotPt;
 
@@ -260,7 +261,7 @@ StdRegions::Orientation QuadGeom::GetFaceOrientation(
  */
 void QuadGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         QuadGeom::v_Setup();
     }
@@ -345,7 +346,7 @@ void QuadGeom::v_FillGeom()
 
         if (m_curve)
         {
-            int npts = m_curve->m_points.size();
+            int npts     = m_curve->m_points.size();
             int nEdgePts = (int)sqrt(static_cast<NekDouble>(npts));
             Array<OneD, NekDouble> tmp(npts);
             Array<OneD, NekDouble> tmp2(m_xmap->GetTotPoints());
@@ -375,9 +376,7 @@ void QuadGeom::v_FillGeom()
                 }
 
                 // Interpolate m_curve points to GLL points
-                LibUtilities::Interp2D(curveKey,
-                                       curveKey,
-                                       tmp,
+                LibUtilities::Interp2D(curveKey, curveKey, tmp,
                                        m_xmap->GetBasis(0)->GetPointsKey(),
                                        m_xmap->GetBasis(1)->GetPointsKey(),
                                        tmp2);
@@ -394,7 +393,7 @@ void QuadGeom::v_FillGeom()
         for (i = 0; i < kNedges; i++)
         {
             m_edges[i]->FillGeom();
-            m_xmap->GetTraceToElementMap(i,  mapArray, signArray, m_eorient[i]);
+            m_xmap->GetTraceToElementMap(i, mapArray, signArray, m_eorient[i]);
 
             nEdgeCoeffs = m_edges[i]->GetXmap()->GetNcoeffs();
 
@@ -416,7 +415,7 @@ int QuadGeom::v_GetDir(const int i, const int j) const
 {
     boost::ignore_unused(j); // required in 3D shapes
 
-    return i%2;
+    return i % 2;
 }
 
 void QuadGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
@@ -440,7 +439,7 @@ void QuadGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void QuadGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 4; ++i)
         {
@@ -452,5 +451,5 @@ void QuadGeom::v_Setup()
     }
 }
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar

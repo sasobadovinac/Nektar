@@ -157,7 +157,8 @@ ZoneRotate::ZoneRotate(int id, const CompositeMap &domain, const int coordDim,
 
 void ZoneBase::ClearBoundingBoxes()
 {
-    // Clear bboxes (these will be regenerated next time GetBoundingBox is called)
+    // Clear bboxes (these will be regenerated next time GetBoundingBox is
+    // called)
     for (auto &el : m_elements)
     {
         el->ClearBoundingBox();
@@ -178,7 +179,7 @@ void ZoneBase::ClearBoundingBoxes()
 
 NekDouble ZoneRotate::GetAngularVel(NekDouble &time) const
 {
-    return m_angularVelEqn->Evaluate(0,0,0,time);
+    return m_angularVelEqn->Evaluate(0, 0, 0, time);
 }
 
 // Calculate new location of points using Rodrigues formula
@@ -200,12 +201,11 @@ bool ZoneRotate::v_Move(NekDouble time)
     for (auto &vert : m_verts)
     {
         NekPoint<NekDouble> pnt = m_origVerts[cnt] - m_origin;
-        DNekVec pntVec = {pnt[0], pnt[1], pnt[2]};
+        DNekVec pntVec          = {pnt[0], pnt[1], pnt[2]};
 
         DNekVec newLoc = rot * pntVec;
 
-        vert->UpdatePosition(newLoc(0) + m_origin[0],
-                             newLoc(1) + m_origin[1],
+        vert->UpdatePosition(newLoc(0) + m_origin[0], newLoc(1) + m_origin[1],
                              newLoc(2) + m_origin[2]);
         cnt++;
     }
@@ -215,7 +215,7 @@ bool ZoneRotate::v_Move(NekDouble time)
         for (auto &vert : curve->m_points)
         {
             NekPoint<NekDouble> pnt = m_origVerts[cnt] - m_origin;
-            DNekVec pntVec = {pnt[0], pnt[1], pnt[2]};
+            DNekVec pntVec          = {pnt[0], pnt[1], pnt[2]};
 
             DNekVec newLoc = rot * pntVec;
 
@@ -293,9 +293,12 @@ bool ZonePrescribe::v_Move(NekDouble time)
         vert->GetCoords(coords);
 
         Array<OneD, NekDouble> newLoc(3, 0.0);
-        newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(0);
-        newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(1);
-        newLoc[2] = m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(2);
+        newLoc[0] =
+            m_xDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(0);
+        newLoc[1] =
+            m_yDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(1);
+        newLoc[2] =
+            m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(2);
 
         vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
     }
@@ -305,5 +308,5 @@ bool ZonePrescribe::v_Move(NekDouble time)
     return true;
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

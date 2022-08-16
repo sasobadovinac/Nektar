@@ -38,69 +38,70 @@
 
 namespace Nektar
 {
-    namespace StdRegions
+namespace StdRegions
+{
+StdExpansion1D::StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba)
+    : StdExpansion(numcoeffs, 1, Ba)
+{
+}
+
+StdExpansion1D::StdExpansion1D(const StdExpansion1D &T) : StdExpansion(T)
+{
+}
+
+//----------------------------
+// Differentiation Methods
+//-----------------------------
+
+void StdExpansion1D::PhysTensorDeriv(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nquad          = GetTotPoints();
+    DNekMatSharedPtr D = m_base[0]->GetD();
+
+    if (inarray.data() == outarray.data())
     {
-    StdExpansion1D::StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba):
-        StdExpansion(numcoeffs,1,Ba)
-    {
+        Array<OneD, NekDouble> wsp(nquad);
+        CopyArray(inarray, wsp);
+        Blas::Dgemv('N', nquad, nquad, 1.0, &(D->GetPtr())[0], nquad, &wsp[0],
+                    1, 0.0, &outarray[0], 1);
     }
-
-    StdExpansion1D::StdExpansion1D(const StdExpansion1D &T):StdExpansion(T)
+    else
     {
+        Blas::Dgemv('N', nquad, nquad, 1.0, &(D->GetPtr())[0], nquad,
+                    &inarray[0], 1, 0.0, &outarray[0], 1);
     }
+}
 
-    //----------------------------
-    // Differentiation Methods
-    //-----------------------------
+NekDouble StdExpansion1D::v_PhysEvaluate(
+    const Array<OneD, const NekDouble> &Lcoord,
+    const Array<OneD, const NekDouble> &physvals)
+{
+    ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol, "Lcoord[0] < -1");
+    ASSERTL2(Lcoord[0] <= 1 + NekConstants::kNekZeroTol, "Lcoord[0] >  1");
 
-    void StdExpansion1D::PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
-                         Array<OneD, NekDouble>& outarray)
-    {
-        int nquad = GetTotPoints();
-        DNekMatSharedPtr D = m_base[0]->GetD();
+    return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
+}
 
-        if( inarray.data() == outarray.data())
-        {
-            Array<OneD, NekDouble> wsp(nquad);
-            CopyArray(inarray, wsp);
-            Blas::Dgemv('N',nquad,nquad,1.0,&(D->GetPtr())[0],nquad,
-                        &wsp[0],1,0.0,&outarray[0],1);
-        }
-        else
-        {
-            Blas::Dgemv('N',nquad,nquad,1.0,&(D->GetPtr())[0],nquad,
-                        &inarray[0],1,0.0,&outarray[0],1);
-        }
-    }
+NekDouble StdExpansion1D::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    boost::ignore_unused(coord, inarray, firstOrderDerivs);
+    return 0;
+}
 
-    NekDouble StdExpansion1D::v_PhysEvaluate(
-        const Array<OneD, const NekDouble>& Lcoord,
-        const Array<OneD, const NekDouble>& physvals)
-    {
-        ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol,"Lcoord[0] < -1");
-        ASSERTL2(Lcoord[0] <=  1 + NekConstants::kNekZeroTol,"Lcoord[0] >  1");
+NekDouble StdExpansion1D::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs,
+    std::array<NekDouble, 6> &secondOrderDerivs)
+{
+    boost::ignore_unused(coord, inarray, firstOrderDerivs, secondOrderDerivs);
+    return 0;
+}
 
-        return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
-    }
-    
-    NekDouble StdExpansion1D::v_PhysEvaluate(
-        const Array<OneD, NekDouble> &coord,
-        const Array<OneD, const NekDouble> &inarray,
-        std::array<NekDouble, 3> &firstOrderDerivs)
-    {
-        boost::ignore_unused(coord, inarray, firstOrderDerivs);
-        return 0;
-    }
-
-    NekDouble StdExpansion1D::v_PhysEvaluate(
-            const Array<OneD, NekDouble> &coord,
-            const Array<OneD, const NekDouble> &inarray,
-            std::array<NekDouble, 3> &firstOrderDerivs,
-            std::array<NekDouble, 6> &secondOrderDerivs)
-    {
-        boost::ignore_unused(coord, inarray, firstOrderDerivs, secondOrderDerivs);
-        return 0;
-    }
-
-    }//end namespace
-}//end namespace
+} // namespace StdRegions
+} // namespace Nektar

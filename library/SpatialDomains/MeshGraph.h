@@ -37,12 +37,12 @@
 
 #include <unordered_map>
 
-#include <LibUtilities/BasicUtils/SessionReader.h>
-#include <LibUtilities/BasicUtils/FieldIO.h>
 #include <LibUtilities/BasicUtils/DomainRange.h>
+#include <LibUtilities/BasicUtils/FieldIO.h>
+#include <LibUtilities/BasicUtils/SessionReader.h>
 
-#include <SpatialDomains/MeshEntities.hpp>
 #include <SpatialDomains/HexGeom.h>
+#include <SpatialDomains/MeshEntities.hpp>
 #include <SpatialDomains/PrismGeom.h>
 #include <SpatialDomains/PyrGeom.h>
 #include <SpatialDomains/QuadGeom.h>
@@ -60,7 +60,7 @@ namespace Nektar
 namespace SpatialDomains
 {
 typedef std::map<int, std::pair<LibUtilities::ShapeType, std::vector<int>>>
-CompositeDescriptor;
+    CompositeDescriptor;
 
 enum ExpansionType
 {
@@ -145,25 +145,23 @@ typedef std::map<int, ExpansionInfoShPtr> ExpansionInfoMap;
 typedef std::shared_ptr<ExpansionInfoMap> ExpansionInfoMapShPtr;
 typedef std::map<std::string, ExpansionInfoMapShPtr> ExpansionInfoMapShPtrMap;
 
-
 struct ExpansionInfo
 {
     ExpansionInfo(GeometrySharedPtr geomShPtr,
-              const LibUtilities::BasisKeyVector basiskeyvec)
+                  const LibUtilities::BasisKeyVector basiskeyvec)
         : m_geomShPtr(geomShPtr), m_basisKeyVector(basiskeyvec)
     {
     }
 
     ExpansionInfo(ExpansionInfoShPtr ExpInfo)
         : m_geomShPtr(ExpInfo->m_geomShPtr),
-        m_basisKeyVector(ExpInfo->m_basisKeyVector)
+          m_basisKeyVector(ExpInfo->m_basisKeyVector)
     {
     }
-    
+
     GeometrySharedPtr m_geomShPtr;
     LibUtilities::BasisKeyVector m_basisKeyVector;
 };
-
 
 typedef std::map<std::string, std::string> GeomInfoMap;
 typedef std::shared_ptr<std::vector<std::pair<GeometrySharedPtr, int>>>
@@ -186,14 +184,13 @@ public:
 
     SPATIAL_DOMAINS_EXPORT static MeshGraphSharedPtr Read(
         const LibUtilities::SessionReaderSharedPtr pSession,
-        LibUtilities::DomainRangeShPtr             rng       = LibUtilities::NullDomainRangeShPtr,
-        bool                                       fillGraph = true);
+        LibUtilities::DomainRangeShPtr rng = LibUtilities::NullDomainRangeShPtr,
+        bool fillGraph                     = true);
 
     SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
-        std::string &outfilename,
-        bool defaultExp = false,
-        const LibUtilities::FieldMetaDataMap &metadata
-                                     = LibUtilities::NullFieldMetaDataMap) = 0;
+        std::string &outfilename, bool defaultExp = false,
+        const LibUtilities::FieldMetaDataMap &metadata =
+            LibUtilities::NullFieldMetaDataMap) = 0;
 
     void Empty(int dim, int space)
     {
@@ -248,12 +245,11 @@ public:
         return m_meshComposites.find(whichComposite)->second;
     }
 
-    SPATIAL_DOMAINS_EXPORT GeometrySharedPtr GetCompositeItem(
-        int whichComposite, int whichItem);
+    SPATIAL_DOMAINS_EXPORT GeometrySharedPtr
+    GetCompositeItem(int whichComposite, int whichItem);
 
     SPATIAL_DOMAINS_EXPORT void GetCompositeList(
-        const std::string &compositeStr,
-        CompositeMap &compositeVector) const;
+        const std::string &compositeStr, CompositeMap &compositeVector) const;
 
     std::map<int, CompositeSharedPtr> &GetComposites()
     {
@@ -306,7 +302,7 @@ public:
     /// entry #variable
 
     inline void SetExpansionInfo(const std::string variable,
-                              ExpansionInfoMapShPtr &exp);
+                                 ExpansionInfoMapShPtr &exp);
 
     inline void SetSession(LibUtilities::SessionReaderSharedPtr pSession);
 
@@ -316,15 +312,14 @@ public:
                                             std::string var = "DefaultVar");
 
     SPATIAL_DOMAINS_EXPORT void ResetExpansionInfoToBasisKey(
-                                      ExpansionInfoMapShPtr &expansionMap,
-                                      LibUtilities::ShapeType shape,
-                                      LibUtilities::BasisKeyVector &keys);
-    
+        ExpansionInfoMapShPtr &expansionMap, LibUtilities::ShapeType shape,
+        LibUtilities::BasisKeyVector &keys);
+
     inline bool SameExpansionInfo(const std::string var1,
                                   const std::string var2);
 
     inline bool ExpansionInfoDefined(const std::string var);
-    
+
     inline bool CheckForGeomInfo(std::string parameter);
 
     inline const std::string GetGeomInfo(std::string parameter);
@@ -415,11 +410,11 @@ public:
     SPATIAL_DOMAINS_EXPORT LibUtilities::BasisKey GetEdgeBasisKey(
         SegGeomSharedPtr edge, const std::string variable = "DefaultVar");
 
-    SPATIAL_DOMAINS_EXPORT GeometryLinkSharedPtr GetElementsFromEdge(
-        Geometry1DSharedPtr edge);
+    SPATIAL_DOMAINS_EXPORT GeometryLinkSharedPtr
+    GetElementsFromEdge(Geometry1DSharedPtr edge);
 
-    SPATIAL_DOMAINS_EXPORT GeometryLinkSharedPtr GetElementsFromFace(
-        Geometry2DSharedPtr face);
+    SPATIAL_DOMAINS_EXPORT GeometryLinkSharedPtr
+    GetElementsFromFace(Geometry2DSharedPtr face);
 
     SPATIAL_DOMAINS_EXPORT LibUtilities::BasisKey GetFaceBasisKey(
         Geometry2DSharedPtr face, const int facedir,
@@ -437,13 +432,11 @@ public:
 
     /*an inital read which loads a very light weight data structure*/
     SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        LibUtilities::DomainRangeShPtr rng,
-        bool             fillGraph) = 0;
+        LibUtilities::DomainRangeShPtr rng, bool fillGraph) = 0;
     SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
         LibUtilities::SessionReaderSharedPtr session) = 0;
 
-    SPATIAL_DOMAINS_EXPORT std::map<int, MeshEntity>
-        CreateMeshEntities();
+    SPATIAL_DOMAINS_EXPORT std::map<int, MeshEntity> CreateMeshEntities();
     SPATIAL_DOMAINS_EXPORT CompositeDescriptor CreateCompositeDescriptor();
 
     SPATIAL_DOMAINS_EXPORT inline MovementSharedPtr &GetMovement()
@@ -452,7 +445,6 @@ public:
     }
 
 protected:
-
     void PopulateFaceToElMap(Geometry3DSharedPtr element, int kNfaces);
     ExpansionInfoMapShPtr SetUpExpansionInfoMap();
     std::string GetCompositeString(CompositeSharedPtr comp);
@@ -506,14 +498,15 @@ SPATIAL_DOMAINS_EXPORT MeshGraphFactory &GetMeshGraphFactory();
  *
  */
 void MeshGraph::SetExpansionInfo(const std::string variable,
-                              ExpansionInfoMapShPtr &exp)
+                                 ExpansionInfoMapShPtr &exp)
 {
     if (m_expansionMapShPtrMap.count(variable) != 0)
     {
-        ASSERTL0(false,
-                 (std::string("ExpansionInfo field is already set for variable ") +
-                  variable)
-                     .c_str());
+        ASSERTL0(
+            false,
+            (std::string("ExpansionInfo field is already set for variable ") +
+             variable)
+                .c_str());
     }
     else
     {
@@ -525,7 +518,7 @@ void MeshGraph::SetExpansionInfo(const std::string variable,
  *
  */
 inline bool MeshGraph::SameExpansionInfo(const std::string var1,
-                                          const std::string var2)
+                                         const std::string var2)
 {
     ExpansionInfoMapShPtr expVec1 = m_expansionMapShPtrMap.find(var1)->second;
     ExpansionInfoMapShPtr expVec2 = m_expansionMapShPtrMap.find(var2)->second;
@@ -543,7 +536,7 @@ inline bool MeshGraph::SameExpansionInfo(const std::string var1,
  */
 inline bool MeshGraph::ExpansionInfoDefined(const std::string var)
 {
-    return m_expansionMapShPtrMap.count(var); 
+    return m_expansionMapShPtrMap.count(var);
 }
 
 /**
@@ -564,6 +557,6 @@ inline const std::string MeshGraph::GetGeomInfo(std::string parameter)
     return m_geomInfo[parameter];
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 #endif
