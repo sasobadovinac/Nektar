@@ -221,8 +221,9 @@ GroupSharedPtr CanHaveGroupsDataSets::CreateGroup(const std::string &name,
                                                   PListSharedPtr accessPL)
 {
     hid_t grp;
-    H5_CONSTRUCT(grp, H5Gcreate2, (m_Id, name.c_str(), H5P_DEFAULT,
-                                   createPL->GetId(), accessPL->GetId()));
+    H5_CONSTRUCT(grp, H5Gcreate2,
+                 (m_Id, name.c_str(), H5P_DEFAULT, createPL->GetId(),
+                  accessPL->GetId()));
     GroupSharedPtr ans(new Group(grp));
     return ans;
 }
@@ -266,9 +267,9 @@ DataSetSharedPtr CanHaveGroupsDataSets::OpenDataSet(
 
 bool CanHaveGroupsDataSets::ContainsDataSet(std::string nm)
 {
-    for(auto it = begin(); it != end(); ++it)
+    for (auto it = begin(); it != end(); ++it)
     {
-        if(it.GetName() == nm)
+        if (it.GetName() == nm)
         {
             return true;
         }
@@ -303,8 +304,8 @@ const std::string &CanHaveGroupsDataSets::LinkIterator::operator*()
 {
     return m_currentName;
 }
-CanHaveGroupsDataSets::LinkIterator
-    &CanHaveGroupsDataSets::LinkIterator::operator++()
+CanHaveGroupsDataSets::LinkIterator &CanHaveGroupsDataSets::LinkIterator::
+operator++()
 {
     m_idx = m_next;
     if (m_idx < m_size)
@@ -320,7 +321,7 @@ bool CanHaveGroupsDataSets::LinkIterator::operator==(
     return (m_grp == other.m_grp && m_idx == other.m_idx);
 }
 herr_t CanHaveGroupsDataSets::LinkIterator::helper(hid_t g_id, const char *name,
-                                                   const H5L_info_t * info,
+                                                   const H5L_info_t *info,
                                                    void *op_data)
 {
     boost::ignore_unused(g_id, info);
@@ -392,7 +393,7 @@ bool CanHaveAttributes::AttrIterator::operator==(
 }
 
 herr_t CanHaveAttributes::AttrIterator::helper(hid_t g_id, const char *name,
-                                               const H5A_info_t * info,
+                                               const H5A_info_t *info,
                                                void *op_data)
 {
     boost::ignore_unused(g_id, info);
@@ -593,14 +594,14 @@ template <> const hid_t DataTypeTraits<double>::NativeType = H5T_NATIVE_DOUBLE;
 
 template <> const hid_t DataTypeTraits<BasisType>::NativeType = H5T_NATIVE_INT;
 
-
 AttributeSharedPtr Attribute::Create(hid_t parent, const std::string &name,
                                      DataTypeSharedPtr type,
                                      DataSpaceSharedPtr space)
 {
     hid_t id;
-    H5_CONSTRUCT(id, H5Acreate2, (parent, name.c_str(), type->GetId(),
-                                  space->GetId(), H5P_DEFAULT, H5P_DEFAULT));
+    H5_CONSTRUCT(id, H5Acreate2,
+                 (parent, name.c_str(), type->GetId(), space->GetId(),
+                  H5P_DEFAULT, H5P_DEFAULT));
     return AttributeSharedPtr(new Attribute(id));
 }
 
@@ -633,8 +634,9 @@ FileSharedPtr File::Create(const std::string &filename, unsigned mode,
                            PListSharedPtr createPL, PListSharedPtr accessPL)
 {
     hid_t id;
-    H5_CONSTRUCT(id, H5Fcreate, (filename.c_str(), mode, createPL->GetId(),
-                                 accessPL->GetId()));
+    H5_CONSTRUCT(
+        id, H5Fcreate,
+        (filename.c_str(), mode, createPL->GetId(), accessPL->GetId()));
     return FileSharedPtr(new File(id));
 }
 FileSharedPtr File::Open(const std::string &filename, unsigned mode,
@@ -691,10 +693,10 @@ hsize_t Group::GetNumElements()
 std::vector<std::string> Group::GetElementNames()
 {
     std::vector<std::string> ret;
-    for(int i = 0; i < GetNumElements(); i++)
+    for (int i = 0; i < GetNumElements(); i++)
     {
         char name[50];
-        H5Gget_objname_by_idx(m_Id, (size_t)i, name, 50 );
+        H5Gget_objname_by_idx(m_Id, (size_t)i, name, 50);
         ret.push_back(std::string(name));
     }
     return ret;
@@ -719,6 +721,6 @@ DataSpaceSharedPtr DataSet::GetSpace() const
 {
     return DataSpaceSharedPtr(new DataSpace(H5Dget_space(m_Id)));
 }
-}
-}
-}
+} // namespace H5
+} // namespace LibUtilities
+} // namespace Nektar

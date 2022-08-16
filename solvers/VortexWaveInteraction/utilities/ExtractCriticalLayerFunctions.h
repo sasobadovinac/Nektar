@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Compute location of critical layer from streak file 
+// Description: Compute location of critical layer from streak file
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -41,9 +41,8 @@
 #define NEKTAR_SOLVERS_EXTRACTCRITICALLAYERFUNCTION
 
 void Computestreakpositions(MultiRegions::ExpListSharedPtr &streak,
-                            Array<OneD, NekDouble> &xc,  
-                            Array<OneD, NekDouble> &yc,
-                            NekDouble cr,
+                            Array<OneD, NekDouble> &xc,
+                            Array<OneD, NekDouble> &yc, NekDouble cr,
                             NekDouble trans = NekConstants::kNekUnsetDouble);
 
 #endif

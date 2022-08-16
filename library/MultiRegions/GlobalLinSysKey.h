@@ -34,93 +34,89 @@
 
 #ifndef NEKTAR_LIBS_MULTIREGIONS_GLOBALLINSYSKEY_H
 #define NEKTAR_LIBS_MULTIREGIONS_GLOBALLINSYSKEY_H
-#include <MultiRegions/MultiRegionsDeclspec.h>
-#include <MultiRegions/MultiRegions.hpp>
 #include <MultiRegions/GlobalMatrixKey.h>
+#include <MultiRegions/MultiRegions.hpp>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
-    {
+namespace MultiRegions
+{
 
-        typedef std::map<StdRegions::ConstFactorType, Array<OneD, NekDouble> > VarFactorsMap;
-        static VarFactorsMap NullVarFactorsMap;
+typedef std::map<StdRegions::ConstFactorType, Array<OneD, NekDouble>>
+    VarFactorsMap;
+static VarFactorsMap NullVarFactorsMap;
 
-        /// Describe a linear system.
-        class GlobalLinSysKey : public GlobalMatrixKey
-        {
-        public:
-            MULTI_REGIONS_EXPORT GlobalLinSysKey(
-               const StdRegions::MatrixType matrixType,
-               const AssemblyMapSharedPtr &locToGloMap = 
-                            NullAssemblyMapSharedPtr,
-               const StdRegions::ConstFactorMap &factors =
-                            StdRegions::NullConstFactorMap,
-               const StdRegions::VarCoeffMap &varCoeffs =
-                             StdRegions::NullVarCoeffMap,
-               const VarFactorsMap &varFactos = NullVarFactorsMap);
-            
-            /// Copy constructor.
-            MULTI_REGIONS_EXPORT GlobalLinSysKey(const GlobalLinSysKey &key);
-            
-            /// Destructor.
-            MULTI_REGIONS_EXPORT virtual ~GlobalLinSysKey();
+/// Describe a linear system.
+class GlobalLinSysKey : public GlobalMatrixKey
+{
+public:
+    MULTI_REGIONS_EXPORT GlobalLinSysKey(
+        const StdRegions::MatrixType matrixType,
+        const AssemblyMapSharedPtr &locToGloMap = NullAssemblyMapSharedPtr,
+        const StdRegions::ConstFactorMap &factors =
+            StdRegions::NullConstFactorMap,
+        const StdRegions::VarCoeffMap &varCoeffs = StdRegions::NullVarCoeffMap,
+        const VarFactorsMap &varFactos           = NullVarFactorsMap);
 
-            /// Less-than operator for GlobalLinSysKey comparison.
-            MULTI_REGIONS_EXPORT friend bool operator<(
-                                  const GlobalLinSysKey &lhs, 
-                                  const GlobalLinSysKey &rhs);
-            
-            /// Return the associated solution type.
-            inline GlobalSysSolnType  GetGlobalSysSolnType() const;
+    /// Copy constructor.
+    MULTI_REGIONS_EXPORT GlobalLinSysKey(const GlobalLinSysKey &key);
 
-            MULTI_REGIONS_EXPORT int GetNVarFactors() const;
+    /// Destructor.
+    MULTI_REGIONS_EXPORT virtual ~GlobalLinSysKey();
 
-            MULTI_REGIONS_EXPORT const Array<OneD, const NekDouble> &
-                GetVarFactors(const StdRegions::ConstFactorType& coeff) const;
-            
-            MULTI_REGIONS_EXPORT const VarFactorsMap & GetVarFactors() const;
+    /// Less-than operator for GlobalLinSysKey comparison.
+    MULTI_REGIONS_EXPORT friend bool operator<(const GlobalLinSysKey &lhs,
+                                               const GlobalLinSysKey &rhs);
 
-        protected:
-            /// Store the solution type associated with the linear system. This
-            /// may be none, full matrix, static condensation or multi-level
-            /// static condensation.
-            GlobalSysSolnType        m_solnType;            
-            VarFactorsMap            m_varFactors;
-            std::vector<std::size_t> m_varFactors_hashes;
-            
-        private:
-        };
+    /// Return the associated solution type.
+    inline GlobalSysSolnType GetGlobalSysSolnType() const;
 
-        /// Writes information about the object to a given stream.
-        MULTI_REGIONS_EXPORT std::ostream& operator<<(std::ostream& os, const GlobalLinSysKey& rhs);
+    MULTI_REGIONS_EXPORT int GetNVarFactors() const;
 
-        inline GlobalSysSolnType GlobalLinSysKey::GetGlobalSysSolnType() 
-                                                                        const
-        {
-            return m_solnType; 
-        }
+    MULTI_REGIONS_EXPORT const Array<OneD, const NekDouble> &GetVarFactors(
+        const StdRegions::ConstFactorType &coeff) const;
 
+    MULTI_REGIONS_EXPORT const VarFactorsMap &GetVarFactors() const;
 
-        inline int GlobalLinSysKey::GetNVarFactors() const
-        {
-            return m_varFactors.size();
-        }
-        
-        inline const Array<OneD, const NekDouble> &
-            GlobalLinSysKey::GetVarFactors(const StdRegions::ConstFactorType
-                                           &factor) const
-        {
-            ASSERTL1(m_varFactors.count(factor) > 0, "factor not found");
-            VarFactorsMap::const_iterator found = m_varFactors.find(factor);
-            return (*found).second;
-        }
+protected:
+    /// Store the solution type associated with the linear system. This
+    /// may be none, full matrix, static condensation or multi-level
+    /// static condensation.
+    GlobalSysSolnType m_solnType;
+    VarFactorsMap m_varFactors;
+    std::vector<std::size_t> m_varFactors_hashes;
 
-        inline const VarFactorsMap & GlobalLinSysKey::GetVarFactors() const
-        {
-            return m_varFactors;
-        }
-    } //end of namespace
-} //end of namespace
+private:
+};
+
+/// Writes information about the object to a given stream.
+MULTI_REGIONS_EXPORT std::ostream &operator<<(std::ostream &os,
+                                              const GlobalLinSysKey &rhs);
+
+inline GlobalSysSolnType GlobalLinSysKey::GetGlobalSysSolnType() const
+{
+    return m_solnType;
+}
+
+inline int GlobalLinSysKey::GetNVarFactors() const
+{
+    return m_varFactors.size();
+}
+
+inline const Array<OneD, const NekDouble> &GlobalLinSysKey::GetVarFactors(
+    const StdRegions::ConstFactorType &factor) const
+{
+    ASSERTL1(m_varFactors.count(factor) > 0, "factor not found");
+    VarFactorsMap::const_iterator found = m_varFactors.find(factor);
+    return (*found).second;
+}
+
+inline const VarFactorsMap &GlobalLinSysKey::GetVarFactors() const
+{
+    return m_varFactors;
+}
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

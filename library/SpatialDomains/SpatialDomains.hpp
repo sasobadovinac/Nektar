@@ -37,69 +37,61 @@
 
 namespace Nektar
 {
-    namespace SpatialDomains
-    {
-        /**
-         * @brief Indicates the type of element geometry.
-         *
-         * This property of the element geometry is used to indicate the
-         * necessary storage for the element's geometric information and its
-         * corresponding computational complexity. In many cases significant
-         * savings in both cases can be made based on this information, in
-         * comparison to the most generic case.
-         */
-        enum GeomType
-        {
-            eNoGeomType,    ///< No type defined.
-            eRegular,       ///< Geometry is straight-sided with constant
-                            ///  geometric factors.
-            eDeformed,      ///< Geometry is curved or has non-constant factors.
-            eMovingRegular, ///< Currently unused.
-        };
+namespace SpatialDomains
+{
+/**
+ * @brief Indicates the type of element geometry.
+ *
+ * This property of the element geometry is used to indicate the
+ * necessary storage for the element's geometric information and its
+ * corresponding computational complexity. In many cases significant
+ * savings in both cases can be made based on this information, in
+ * comparison to the most generic case.
+ */
+enum GeomType
+{
+    eNoGeomType,    ///< No type defined.
+    eRegular,       ///< Geometry is straight-sided with constant
+                    ///  geometric factors.
+    eDeformed,      ///< Geometry is curved or has non-constant factors.
+    eMovingRegular, ///< Currently unused.
+};
 
-        /**
-         * @brief Indicates if the geometric information for an element has
-         *        been populated.
-         */
-        enum GeomState
-        {
-            eNotFilled,     ///< Geometric information has not been generated.
-            ePtsFilled      ///< Geometric information has been generated.
-        };
+/**
+ * @brief Indicates if the geometric information for an element has
+ *        been populated.
+ */
+enum GeomState
+{
+    eNotFilled, ///< Geometric information has not been generated.
+    ePtsFilled  ///< Geometric information has been generated.
+};
 
-        /**
-         * @brief Principle direction for MMF
-         */
-        enum GeomMMF
-        {
-            eTangentX,          ///< X coordinate direction.
-            eTangentY,          ///< Y coordinate direction.
-            eTangentXY,         ///< XY direction.
-            eTangentZ,          ///< Z coordinate direction.
-            eTangentCircular,   ///< Circular around the centre of domain.
-            eTangentIrregular,  ///< Circular around the centre of domain.
-            eTangentNonconvex,  ///< Circular around the centre of domain.
-            eLOCAL,             ///< No Principal direction.
-        };
+/**
+ * @brief Principle direction for MMF
+ */
+enum GeomMMF
+{
+    eTangentX,         ///< X coordinate direction.
+    eTangentY,         ///< Y coordinate direction.
+    eTangentXY,        ///< XY direction.
+    eTangentZ,         ///< Z coordinate direction.
+    eTangentCircular,  ///< Circular around the centre of domain.
+    eTangentIrregular, ///< Circular around the centre of domain.
+    eTangentNonconvex, ///< Circular around the centre of domain.
+    eLOCAL,            ///< No Principal direction.
+};
 
-        /**
-         * @brief Session file names associated with tangent principle
-         * directions.
-         */
-        const char* const GeomMMFMap[] =
-        {
-            "TangentX",
-            "TangentY",
-            "TangentXY",
-            "TangentZ",
-            "TangentCircular",
-            "TangentIrregular",
-            "TangentNonconvex",
-            "LOCAL",
-        };
+/**
+ * @brief Session file names associated with tangent principle
+ * directions.
+ */
+const char *const GeomMMFMap[] = {
+    "TangentX",        "TangentY",         "TangentXY",        "TangentZ",
+    "TangentCircular", "TangentIrregular", "TangentNonconvex", "LOCAL",
+};
 
-    } // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar
 
-#endif //NEKTAR_SPATIALDOMAINS_SPATIALDOMAINS_H
-
+#endif // NEKTAR_SPATIALDOMAINS_SPATIALDOMAINS_H

@@ -32,10 +32,10 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <LocalRegions/SegExp.h>
-#include <LocalRegions/QuadExp.h>
-#include <LocalRegions/TriExp.h>
 #include <LocalRegions/NodalTriExp.h>
+#include <LocalRegions/QuadExp.h>
+#include <LocalRegions/SegExp.h>
+#include <LocalRegions/TriExp.h>
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
@@ -71,12 +71,12 @@ void ProcessCurvedEdges::Process()
 {
     int surfTag         = m_config["surf"].as<int>();
     int prismedge[2][3] = {{0, 5, 4}, {2, 6, 7}};
-    int dim = m_mesh->m_expDim;
+    int dim             = m_mesh->m_expDim;
 
     for (int i = 0; i < m_mesh->m_element[dim].size(); ++i)
     {
         ElementSharedPtr el = m_mesh->m_element[dim][i];
-        int nSurf           = dim == 3 ? el->GetFaceCount() : el->GetEdgeCount();
+        int nSurf = dim == 3 ? el->GetFaceCount() : el->GetEdgeCount();
 
         for (int j = 0; j < nSurf; ++j)
         {
@@ -105,24 +105,25 @@ void ProcessCurvedEdges::Process()
 
                 case 3:
                 {
-                    ASSERTL0(j == 1 || j == 3,
-                            "Curved edge needs to be on prism triangular face");
+                    ASSERTL0(
+                        j == 1 || j == 3,
+                        "Curved edge needs to be on prism triangular face");
                     // Check all edge interior points.
                     for (int k = 0; k < 3; ++k)
                     {
                         EdgeSharedPtr edge =
-                                el->GetEdge(prismedge[(j - 1) / 2][k]);
+                            el->GetEdge(prismedge[(j - 1) / 2][k]);
                         GenerateEdgeNodes(edge);
                     }
                 }
                 break;
 
                 default:
-                    ASSERTL0(0,"Dimension not supported");
-                break;
+                    ASSERTL0(0, "Dimension not supported");
+                    break;
             }
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

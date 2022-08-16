@@ -46,349 +46,340 @@
 
 namespace Nektar
 {
-    namespace LibUtilities
+namespace LibUtilities
+{
+
+// Types of geometry types.
+enum ShapeType
+{
+    eNoShapeType,
+    ePoint,
+    eSegment,
+    eTriangle,
+    eQuadrilateral,
+    eTetrahedron,
+    ePyramid,
+    ePrism,
+    eHexahedron,
+    SIZE_ShapeType,
+
+    // These are the short names used for MatrixFree operators
+    Point = ePoint,
+    Seg   = eSegment,
+    Tri   = eTriangle,
+    Quad  = eQuadrilateral,
+    Tet   = eTetrahedron,
+    Pyr   = ePyramid,
+    Prism = ePrism,
+    Hex   = eHexahedron,
+};
+
+const char *const ShapeTypeMap[SIZE_ShapeType] = {
+    "NoGeomShapeType", "Point",   "Segment", "Triangle",   "Quadrilateral",
+    "Tetrahedron",     "Pyramid", "Prism",   "Hexahedron",
+};
+
+// Hold the dimension of each of the types of shapes.
+constexpr unsigned int ShapeTypeDimMap[SIZE_ShapeType] = {
+    0, // Unknown
+    0, // ePoint
+    1, // eSegment
+    2, // eTriangle
+    2, // eQuadrilateral
+    3, // eTetrahedron
+    3, // ePyramid
+    3, // ePrism
+    3, // eHexahedron
+};
+
+namespace StdSegData
+{
+inline int getNumberOfCoefficients(int Na)
+{
+    return Na;
+}
+
+inline int getNumberOfBndCoefficients(int Na)
+{
+    boost::ignore_unused(Na);
+    return 2;
+}
+} // namespace StdSegData
+
+// Dimensions of coefficients for each space
+namespace StdTriData
+{
+inline int getNumberOfCoefficients(int Na, int Nb)
+{
+    // Note these assertions have been set to > 0 because
+    // it can also be used to evaluate face expansion
+    // order
+    ASSERTL2(Na > 0, "Order in 'a' direction must be > 0.");
+    ASSERTL2(Nb > 0, "Order in 'b' direction must be > 0.");
+    ASSERTL1(Na <= Nb, "order in 'a' direction is higher "
+                       "than order in 'b' direction");
+    return Na * (Na + 1) / 2 + Na * (Nb - Na);
+}
+
+inline int getNumberOfBndCoefficients(int Na, int Nb)
+{
+    ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL1(Na <= Nb, "order in 'a' direction is higher "
+                       "than order in 'b' direction");
+    return (Na - 1) + 2 * (Nb - 1);
+}
+} // namespace StdTriData
+
+namespace StdQuadData
+{
+inline int getNumberOfCoefficients(int Na, int Nb)
+{
+    // Note these assertions have been set to > 0 because
+    // it can also be used to evaluate face expansion
+    // order
+    ASSERTL2(Na > 0, "Order in 'a' direction must be > 0.");
+    ASSERTL2(Nb > 0, "Order in 'b' direction must be > 0.");
+    return Na * Nb;
+}
+
+inline int getNumberOfBndCoefficients(int Na, int Nb)
+{
+    ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
+    return 2 * (Na - 1) + 2 * (Nb - 1);
+}
+} // namespace StdQuadData
+
+namespace StdHexData
+{
+inline int getNumberOfCoefficients(int Na, int Nb, int Nc)
+{
+    ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL2(Nc > 1, "Order in 'c' direction must be > 1.");
+    return Na * Nb * Nc;
+}
+
+inline int getNumberOfBndCoefficients(int Na, int Nb, int Nc)
+{
+    ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL2(Nc > 1, "Order in 'c' direction must be > 1.");
+    return 2 * Na * Nb + 2 * Na * Nc + 2 * Nb * Nc - 4 * (Na + Nb + Nc) + 8;
+}
+} // namespace StdHexData
+
+namespace StdTetData
+{
+/**
+ * Adds up the number of cells in a truncated Nc by Nc by Nc
+ * pyramid, where the longest Na rows and longest Nb columns are
+ * kept. Example: (Na, Nb, Nc) = (3, 4, 5); The number of
+ * coefficients is the sum of the elements of the following
+ * matrix:
+ *
+ * |5  4  3  2  0|
+ * |4  3  2  0   |
+ * |3  2  0      |
+ * |0  0         |
+ * |0            |
+ *
+ * Sum = 28 = number of tet coefficients.
+ */
+inline int getNumberOfCoefficients(int Na, int Nb, int Nc)
+{
+    ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL2(Nc > 1, "Order in 'c' direction must be > 1.");
+    ASSERTL1(Na <= Nc, "order in 'a' direction is higher "
+                       "than order in 'c' direction");
+    ASSERTL1(Nb <= Nc, "order in 'b' direction is higher "
+                       "than order in 'c' direction");
+    int nCoef = 0;
+    for (int a = 0; a < Na; ++a)
     {
-
-        // Types of geometry types.
-        enum ShapeType
+        for (int b = 0; b < Nb - a; ++b)
         {
-            eNoShapeType,
-            ePoint,
-            eSegment,
-            eTriangle,
-            eQuadrilateral,
-            eTetrahedron,
-            ePyramid,
-            ePrism,
-            eHexahedron,
-            SIZE_ShapeType,
-
-            // These are the short names used for MatrixFree operators
-            Point = ePoint,
-            Seg   = eSegment,
-            Tri   = eTriangle,
-            Quad  = eQuadrilateral,
-            Tet   = eTetrahedron,
-            Pyr   = ePyramid,
-            Prism = ePrism,
-            Hex   = eHexahedron,
-        };
-
-        const char* const ShapeTypeMap[SIZE_ShapeType] =
-        {
-            "NoGeomShapeType",
-            "Point",
-            "Segment",
-            "Triangle",
-            "Quadrilateral",
-            "Tetrahedron",
-            "Pyramid",
-            "Prism",
-            "Hexahedron",
-        };
-
-
-        // Hold the dimension of each of the types of shapes.
-        constexpr unsigned int ShapeTypeDimMap[SIZE_ShapeType] =
-        {
-            0,  // Unknown
-            0,  // ePoint
-            1,  // eSegment
-            2,  // eTriangle
-            2,  // eQuadrilateral
-            3,  // eTetrahedron
-            3,  // ePyramid
-            3,  // ePrism
-            3,  // eHexahedron
-        };
-
-
-        namespace StdSegData
-        {
-            inline int getNumberOfCoefficients(int Na)
+            for (int c = 0; c < Nc - a - b; ++c)
             {
-                return Na;
+                ++nCoef;
             }
-
-            inline int getNumberOfBndCoefficients(int Na)
-            {
-                boost::ignore_unused(Na);
-                return 2;
-            }
-        }
-
-        // Dimensions of coefficients for each space
-        namespace StdTriData
-        {
-            inline int getNumberOfCoefficients(int Na, int Nb)
-            {
-                // Note these assertions have been set to > 0 because
-                // it can also be used to evaluate face expansion
-                // order
-                ASSERTL2(Na > 0, "Order in 'a' direction must be > 0.");
-                ASSERTL2(Nb > 0, "Order in 'b' direction must be > 0.");
-                ASSERTL1(Na <= Nb, "order in 'a' direction is higher "
-                         "than order in 'b' direction");
-                return Na*(Na+1)/2 + Na*(Nb-Na);
-            }
-
-            inline int getNumberOfBndCoefficients(int Na, int Nb)
-            {
-                ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL1(Na <= Nb, "order in 'a' direction is higher "
-                         "than order in 'b' direction");
-                return (Na-1) + 2*(Nb-1);
-            }
-        }
-
-        namespace StdQuadData
-        {
-            inline int getNumberOfCoefficients(int Na, int Nb)
-            {
-                // Note these assertions have been set to > 0 because
-                // it can also be used to evaluate face expansion
-                // order
-                ASSERTL2(Na > 0, "Order in 'a' direction must be > 0.");
-                ASSERTL2(Nb > 0, "Order in 'b' direction must be > 0.");
-                return Na*Nb;
-            }
-
-            inline int getNumberOfBndCoefficients(int Na, int Nb)
-            {
-                ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
-                return 2*(Na-1) + 2*(Nb-1);
-            }
-        }
-
-
-
-        namespace StdHexData
-        {
-            inline int getNumberOfCoefficients( int Na, int Nb, int Nc )
-            {
-                ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL2(Nc > 1, "Order in 'c' direction must be > 1.");
-                return Na*Nb*Nc;
-            }
-
-            inline int getNumberOfBndCoefficients(int Na, int Nb, int Nc)
-            {
-                ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL2(Nc > 1, "Order in 'c' direction must be > 1.");
-                return 2*Na*Nb + 2*Na*Nc + 2*Nb*Nc
-                        - 4*(Na + Nb + Nc) + 8;
-            }
-        }
-
-        namespace StdTetData
-        {
-            /**
-             * Adds up the number of cells in a truncated Nc by Nc by Nc
-             * pyramid, where the longest Na rows and longest Nb columns are
-             * kept. Example: (Na, Nb, Nc) = (3, 4, 5); The number of
-             * coefficients is the sum of the elements of the following
-             * matrix:
-             *
-             * |5  4  3  2  0|
-             * |4  3  2  0   |
-             * |3  2  0      |
-             * |0  0         |
-             * |0            |
-             *
-             * Sum = 28 = number of tet coefficients.
-             */
-            inline int getNumberOfCoefficients(int Na, int Nb, int Nc)
-            {
-                ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL2(Nc > 1, "Order in 'c' direction must be > 1.");
-                ASSERTL1(Na <= Nc, "order in 'a' direction is higher "
-                         "than order in 'c' direction");
-                ASSERTL1(Nb <= Nc, "order in 'b' direction is higher "
-                         "than order in 'c' direction");
-                int nCoef = 0;
-                for (int a = 0; a < Na; ++a)
-                {
-                    for (int b = 0; b < Nb - a; ++b)
-                    {
-                        for (int c = 0; c < Nc - a - b; ++c)
-                        {
-                            ++nCoef;
-                        }
-                    }
-                }
-                return nCoef;
-            }
-
-            inline int getNumberOfBndCoefficients(int Na, int Nb, int Nc)
-            {
-                ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL2(Nc > 1, "Order in 'c' direction must be > 1.");
-                ASSERTL1(Na <= Nc, "order in 'a' direction is higher "
-                         "than order in 'c' direction");
-                ASSERTL1(Nb <= Nc, "order in 'b' direction is higher "
-                         "than order in 'c' direction");
-
-                int nCoef =    Na*(Na+1)/2 + (Nb-Na)*Na // base
-                          +    Na*(Na+1)/2 + (Nc-Na)*Na // front
-                          + 2*(Nb*(Nb+1)/2 + (Nc-Nb)*Nb)// 2 other sides
-                          - Na - 2*Nb - 3*Nc            // less edges
-                          + 4;                          // plus vertices
-
-                return nCoef;
-            }
-        }
-
-
-        namespace StdPyrData
-        {
-            inline int getNumberOfCoefficients(int Na, int Nb, int Nc)
-            {
-                ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL1(Nc > 1, "Order in 'c' direction must be > 1.");
-                ASSERTL1(Na <= Nc, "Order in 'a' direction is higher "
-                        "than order in 'c' direction.");
-                ASSERTL1(Nb <= Nc, "Order in 'b' direction is higher "
-                        "than order in 'c' direction.");
-
-                // Count number of coefficients explicitly.
-                int nCoeff = 0;
-
-                // Count number of interior tet modes
-                for (int a = 0; a < Na; ++a)
-                {
-                    for (int b = 0; b < Nb; ++b)
-                    {
-                        for (int c = 0; c < Nc - std::max(a,b); ++c)
-                        {
-                            ++nCoeff;
-                        }
-                    }
-                }
-                return nCoeff;
-            }
-
-            inline int getNumberOfBndCoefficients(int Na, int Nb, int Nc)
-            {
-                ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL1(Nc > 1, "Order in 'c' direction must be > 1.");
-                ASSERTL1(Na <= Nc, "Order in 'a' direction is higher "
-                        "than order in 'c' direction.");
-                ASSERTL1(Nb <= Nc, "Order in 'b' direction is higher "
-                        "than order in 'c' direction.");
-
-                return Na*Nb                        // base
-                     + 2*(Na*(Na+1)/2 + (Nc-Na)*Na) // front and back
-                     + 2*(Nb*(Nb+1)/2 + (Nc-Nb)*Nb) // sides
-                     - 2*Na - 2*Nb - 4*Nc           // less edges
-                     + 5;                           // plus vertices
-            }
-        }
-
-        namespace StdPrismData
-        {
-            inline int getNumberOfCoefficients( int Na, int Nb, int Nc )
-            {
-                ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL1(Nc > 1, "Order in 'c' direction must be > 1.");
-                ASSERTL1(Na <= Nc, "Order in 'a' direction is higher "
-                        "than order in 'c' direction.");
-
-                return Nb*StdTriData::getNumberOfCoefficients(Na,Nc);
-            }
-
-            inline int getNumberOfBndCoefficients( int Na, int Nb, int Nc)
-            {
-                ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
-                ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
-                ASSERTL1(Nc > 1, "Order in 'c' direction must be > 1.");
-                ASSERTL1(Na <= Nc, "Order in 'a' direction is higher "
-                        "than order in 'c' direction.");
-
-                return Na*Nb + 2*Nb*Nc              // rect faces
-                   + 2*( Na*(Na+1)/2 + (Nc-Na)*Na ) // tri faces
-                   - 2*Na - 3*Nb - 4*Nc             // less edges
-                   + 6;                             // plus vertices
-            }
-        }
-
-        inline int GetNumberOfCoefficients(ShapeType shape, std::vector<unsigned int> &modes, int offset=0)
-        {
-            int returnval = 0;
-            switch(shape)
-            {
-            case eSegment:
-                returnval = modes[offset];
-                break;
-            case eTriangle:
-                returnval = StdTriData::getNumberOfCoefficients(modes[offset],modes[offset+1]);
-                break;
-            case eQuadrilateral:
-                returnval = modes[offset]*modes[offset+1];
-                break;
-            case eTetrahedron:
-                returnval = StdTetData::getNumberOfCoefficients(modes[offset],modes[offset+1],modes[offset+2]);
-                break;
-            case ePyramid:
-                returnval = StdPyrData::getNumberOfCoefficients(modes[offset],modes[offset+1],modes[offset+2]);
-                break;
-            case ePrism:
-                returnval = StdPrismData::getNumberOfCoefficients(modes[offset],modes[offset+1],modes[offset+2]);
-                break;
-            case eHexahedron:
-                returnval = modes[offset]*modes[offset+1]*modes[offset+2];
-                break;
-            default:
-                NEKERROR(ErrorUtil::efatal,"Unknown Shape Type");
-                break;
-            }
-
-            return returnval;
-        }
-
-
-        inline int GetNumberOfCoefficients(ShapeType shape, int na, int nb = 0, int nc = 0)
-        {
-            int returnval = 0;
-            switch(shape)
-            {
-            case eSegment:
-                returnval = na;
-                break;
-            case eTriangle:
-                returnval = StdTriData::getNumberOfCoefficients(na,nb);
-                break;
-            case eQuadrilateral:
-                returnval = na*nb;
-                break;
-            case eTetrahedron:
-                returnval = StdTetData::getNumberOfCoefficients(na,nb,nc);
-                break;
-            case ePyramid:
-                returnval = StdPyrData::getNumberOfCoefficients(na,nb,nc);
-                break;
-            case ePrism:
-                returnval = StdPrismData::getNumberOfCoefficients(na,nb,nc);
-                break;
-            case eHexahedron:
-                returnval = na*nb*nc;
-                break;
-            default:
-                NEKERROR(ErrorUtil::efatal,"Unknown Shape Type");
-                break;
-            }
-
-            return returnval;
         }
     }
+    return nCoef;
 }
+
+inline int getNumberOfBndCoefficients(int Na, int Nb, int Nc)
+{
+    ASSERTL2(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL2(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL2(Nc > 1, "Order in 'c' direction must be > 1.");
+    ASSERTL1(Na <= Nc, "order in 'a' direction is higher "
+                       "than order in 'c' direction");
+    ASSERTL1(Nb <= Nc, "order in 'b' direction is higher "
+                       "than order in 'c' direction");
+
+    int nCoef = Na * (Na + 1) / 2 + (Nb - Na) * Na         // base
+                + Na * (Na + 1) / 2 + (Nc - Na) * Na       // front
+                + 2 * (Nb * (Nb + 1) / 2 + (Nc - Nb) * Nb) // 2 other sides
+                - Na - 2 * Nb - 3 * Nc                     // less edges
+                + 4;                                       // plus vertices
+
+    return nCoef;
+}
+} // namespace StdTetData
+
+namespace StdPyrData
+{
+inline int getNumberOfCoefficients(int Na, int Nb, int Nc)
+{
+    ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL1(Nc > 1, "Order in 'c' direction must be > 1.");
+    ASSERTL1(Na <= Nc, "Order in 'a' direction is higher "
+                       "than order in 'c' direction.");
+    ASSERTL1(Nb <= Nc, "Order in 'b' direction is higher "
+                       "than order in 'c' direction.");
+
+    // Count number of coefficients explicitly.
+    int nCoeff = 0;
+
+    // Count number of interior tet modes
+    for (int a = 0; a < Na; ++a)
+    {
+        for (int b = 0; b < Nb; ++b)
+        {
+            for (int c = 0; c < Nc - std::max(a, b); ++c)
+            {
+                ++nCoeff;
+            }
+        }
+    }
+    return nCoeff;
+}
+
+inline int getNumberOfBndCoefficients(int Na, int Nb, int Nc)
+{
+    ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL1(Nc > 1, "Order in 'c' direction must be > 1.");
+    ASSERTL1(Na <= Nc, "Order in 'a' direction is higher "
+                       "than order in 'c' direction.");
+    ASSERTL1(Nb <= Nc, "Order in 'b' direction is higher "
+                       "than order in 'c' direction.");
+
+    return Na * Nb                                    // base
+           + 2 * (Na * (Na + 1) / 2 + (Nc - Na) * Na) // front and back
+           + 2 * (Nb * (Nb + 1) / 2 + (Nc - Nb) * Nb) // sides
+           - 2 * Na - 2 * Nb - 4 * Nc                 // less edges
+           + 5;                                       // plus vertices
+}
+} // namespace StdPyrData
+
+namespace StdPrismData
+{
+inline int getNumberOfCoefficients(int Na, int Nb, int Nc)
+{
+    ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL1(Nc > 1, "Order in 'c' direction must be > 1.");
+    ASSERTL1(Na <= Nc, "Order in 'a' direction is higher "
+                       "than order in 'c' direction.");
+
+    return Nb * StdTriData::getNumberOfCoefficients(Na, Nc);
+}
+
+inline int getNumberOfBndCoefficients(int Na, int Nb, int Nc)
+{
+    ASSERTL1(Na > 1, "Order in 'a' direction must be > 1.");
+    ASSERTL1(Nb > 1, "Order in 'b' direction must be > 1.");
+    ASSERTL1(Nc > 1, "Order in 'c' direction must be > 1.");
+    ASSERTL1(Na <= Nc, "Order in 'a' direction is higher "
+                       "than order in 'c' direction.");
+
+    return Na * Nb + 2 * Nb * Nc                      // rect faces
+           + 2 * (Na * (Na + 1) / 2 + (Nc - Na) * Na) // tri faces
+           - 2 * Na - 3 * Nb - 4 * Nc                 // less edges
+           + 6;                                       // plus vertices
+}
+} // namespace StdPrismData
+
+inline int GetNumberOfCoefficients(ShapeType shape,
+                                   std::vector<unsigned int> &modes,
+                                   int offset = 0)
+{
+    int returnval = 0;
+    switch (shape)
+    {
+        case eSegment:
+            returnval = modes[offset];
+            break;
+        case eTriangle:
+            returnval = StdTriData::getNumberOfCoefficients(modes[offset],
+                                                            modes[offset + 1]);
+            break;
+        case eQuadrilateral:
+            returnval = modes[offset] * modes[offset + 1];
+            break;
+        case eTetrahedron:
+            returnval = StdTetData::getNumberOfCoefficients(
+                modes[offset], modes[offset + 1], modes[offset + 2]);
+            break;
+        case ePyramid:
+            returnval = StdPyrData::getNumberOfCoefficients(
+                modes[offset], modes[offset + 1], modes[offset + 2]);
+            break;
+        case ePrism:
+            returnval = StdPrismData::getNumberOfCoefficients(
+                modes[offset], modes[offset + 1], modes[offset + 2]);
+            break;
+        case eHexahedron:
+            returnval = modes[offset] * modes[offset + 1] * modes[offset + 2];
+            break;
+        default:
+            NEKERROR(ErrorUtil::efatal, "Unknown Shape Type");
+            break;
+    }
+
+    return returnval;
+}
+
+inline int GetNumberOfCoefficients(ShapeType shape, int na, int nb = 0,
+                                   int nc = 0)
+{
+    int returnval = 0;
+    switch (shape)
+    {
+        case eSegment:
+            returnval = na;
+            break;
+        case eTriangle:
+            returnval = StdTriData::getNumberOfCoefficients(na, nb);
+            break;
+        case eQuadrilateral:
+            returnval = na * nb;
+            break;
+        case eTetrahedron:
+            returnval = StdTetData::getNumberOfCoefficients(na, nb, nc);
+            break;
+        case ePyramid:
+            returnval = StdPyrData::getNumberOfCoefficients(na, nb, nc);
+            break;
+        case ePrism:
+            returnval = StdPrismData::getNumberOfCoefficients(na, nb, nc);
+            break;
+        case eHexahedron:
+            returnval = na * nb * nc;
+            break;
+        default:
+            NEKERROR(ErrorUtil::efatal, "Unknown Shape Type");
+            break;
+    }
+
+    return returnval;
+}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

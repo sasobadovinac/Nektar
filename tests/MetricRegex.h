@@ -41,50 +41,52 @@
 
 namespace Nektar
 {
-    /**
-     * @brief Data structure for a Regex value to match.
-     */
-    struct MetricRegexFieldValue
+/**
+ * @brief Data structure for a Regex value to match.
+ */
+struct MetricRegexFieldValue
+{
+    MetricRegexFieldValue()
+        : m_value(""), m_useTolerance(false), m_tolerance(0.0),
+          m_useIntTolerance(false), m_intTolerance(0)
     {
-        MetricRegexFieldValue()
-            : m_value(""), m_useTolerance(false), m_tolerance(0.0),
-              m_useIntTolerance(false), m_intTolerance(0)
-        {
-        }
+    }
 
-        std::string m_value;
-        bool m_useTolerance;
-        double m_tolerance;
+    std::string m_value;
+    bool m_useTolerance;
+    double m_tolerance;
 
-        bool m_useIntTolerance;
-        int m_intTolerance;
-    };
+    bool m_useIntTolerance;
+    int m_intTolerance;
+};
 
-    class MetricRegex : public Metric
+class MetricRegex : public Metric
+{
+public:
+    virtual ~MetricRegex()
     {
-    public:
-        virtual ~MetricRegex() {}
+    }
 
-        static MetricSharedPtr create(TiXmlElement *metric, bool generate)
-        {
-            return MetricSharedPtr(new MetricRegex(metric, generate));
-        }
+    static MetricSharedPtr create(TiXmlElement *metric, bool generate)
+    {
+        return MetricSharedPtr(new MetricRegex(metric, generate));
+    }
 
-        static std::string type;
+    static std::string type;
 
-    protected:
-        /// Storage for the boost regex.
-        boost::regex                                     m_regex;
-        /// Stores the multiple matches defined in each <MATCH> tag.
-        std::vector<std::vector<MetricRegexFieldValue> > m_matches;
-        /// If true, regex matches may be in any order in output
-        bool m_unordered;
+protected:
+    /// Storage for the boost regex.
+    boost::regex m_regex;
+    /// Stores the multiple matches defined in each <MATCH> tag.
+    std::vector<std::vector<MetricRegexFieldValue>> m_matches;
+    /// If true, regex matches may be in any order in output
+    bool m_unordered;
 
-        MetricRegex(TiXmlElement *metric, bool generate);
+    MetricRegex(TiXmlElement *metric, bool generate);
 
-        virtual bool v_Test    (std::istream& pStdout, std::istream& pStderr);
-        virtual void v_Generate(std::istream& pStdout, std::istream& pStderr);
-    };
-}
+    virtual bool v_Test(std::istream &pStdout, std::istream &pStderr);
+    virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
+};
+} // namespace Nektar
 
 #endif

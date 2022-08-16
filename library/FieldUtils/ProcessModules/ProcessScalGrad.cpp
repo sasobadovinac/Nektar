@@ -48,8 +48,7 @@ namespace FieldUtils
 
 ModuleKey ProcessScalGrad::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "scalargrad"),
-        ProcessScalGrad::create,
+        ModuleKey(eProcessModule, "scalargrad"), ProcessScalGrad::create,
         "Computes scalar gradient field.");
 
 ProcessScalGrad::ProcessScalGrad(FieldSharedPtr f) : ProcessBoundaryExtract(f)
@@ -98,13 +97,13 @@ void ProcessScalGrad::Process(po::variables_map &vm)
     int n, cnt, elmtid, nq, offset, boundary, nfq;
     int npoints = m_f->m_exp[0]->GetNpoints();
     Array<OneD, NekDouble> scalar;
-    Array<OneD, Array<OneD, NekDouble> > grad(ngrad), fgrad(ngrad),
+    Array<OneD, Array<OneD, NekDouble>> grad(ngrad), fgrad(ngrad),
         outfield(nfields);
 
     LocalRegions::ExpansionSharedPtr elmt;
     StdRegions::StdExpansion2DSharedPtr bc;
     Array<OneD, int> BoundarytoElmtID, BoundarytoTraceID;
-    Array<OneD, Array<OneD, MultiRegions::ExpListSharedPtr> > BndExp(nfields);
+    Array<OneD, Array<OneD, MultiRegions::ExpListSharedPtr>> BndExp(nfields);
 
     m_f->m_exp[0]->GetBoundaryToElmtMap(BoundarytoElmtID, BoundarytoTraceID);
 
@@ -162,12 +161,16 @@ void ProcessScalGrad::Process(po::variables_map &vm)
                         // identify boundary of element looking at.
                         boundary = BoundarytoTraceID[cnt];
 
-                        const LocalRegions::Expansion * lep = dynamic_cast<const LocalRegions::Expansion*>( &( *bc ) );
+                        const LocalRegions::Expansion *lep =
+                            dynamic_cast<const LocalRegions::Expansion *>(
+                                &(*bc));
 
                         // Get face normals
-                        const SpatialDomains::GeomFactorsSharedPtr m_metricinfo = lep->GetMetricInfo();
+                        const SpatialDomains::GeomFactorsSharedPtr
+                            m_metricinfo = lep->GetMetricInfo();
 
-                        const Array<OneD, const Array<OneD, NekDouble> > normals = elmt->GetTraceNormal(boundary);
+                        const Array<OneD, const Array<OneD, NekDouble>>
+                            normals = elmt->GetTraceNormal(boundary);
 
                         // initialise arrays
                         for (j = 0; j < ngrad; ++j)
@@ -186,7 +189,7 @@ void ProcessScalGrad::Process(po::variables_map &vm)
                             for (j = 0; j < ngrad; ++j)
                             {
                                 elmt->GetTracePhysVals(boundary, bc, grad[j],
-                                                      fgrad[j]);
+                                                       fgrad[j]);
                             }
 
                             // surface curved
@@ -228,5 +231,5 @@ void ProcessScalGrad::Process(po::variables_map &vm)
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

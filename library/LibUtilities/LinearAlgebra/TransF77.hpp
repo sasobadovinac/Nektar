@@ -32,10 +32,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef  TRANSF77_HPP
-#define  TRANSF77_HPP
+#ifndef TRANSF77_HPP
+#define TRANSF77_HPP
 
-#if defined (_AIX) || defined (__hpux) || defined (_CRAY) 
+#if defined(_AIX) || defined(__hpux) || defined(_CRAY)
 
 /// Fortran routines need no underscore
 #define F77NAME(x) x
@@ -46,4 +46,4 @@
 #define F77NAME(x) x##_
 
 #endif
-#endif //TRANSF77_HPP
+#endif // TRANSF77_HPP

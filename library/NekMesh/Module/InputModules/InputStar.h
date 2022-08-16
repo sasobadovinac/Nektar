@@ -68,33 +68,28 @@ public:
     }
 
 protected:
-    void GenElement3D(std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                      int i,
+    void GenElement3D(std::vector<NekMesh::NodeSharedPtr> &Nodes, int i,
                       std::vector<int> &ElementFaces,
-                      std::unordered_map<int, std::vector<int> > &FaceNodes,
-                      int ncomposite,
-                      bool DoOrient);
+                      std::unordered_map<int, std::vector<int>> &FaceNodes,
+                      int ncomposite, bool DoOrient);
 
-    void GenElement2D(std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                      int i,
-                      std::vector<int> &FaceNodes,
-                      int ncomposite);
+    void GenElement2D(std::vector<NekMesh::NodeSharedPtr> &Nodes, int i,
+                      std::vector<int> &FaceNodes, int ncomposite);
 
-    Array<OneD, int> SortEdgeNodes(
-                    std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                    std::vector<int> &FaceNodes);
+    Array<OneD, int> SortEdgeNodes(std::vector<NekMesh::NodeSharedPtr> &Nodes,
+                                   std::vector<int> &FaceNodes);
 
     Array<OneD, int> SortFaceNodes(
-                    std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                    std::vector<int> &ElementFaces,
-                    std::unordered_map<int, std::vector<int> > &FaceNodes);
+        std::vector<NekMesh::NodeSharedPtr> &Nodes,
+        std::vector<int> &ElementFaces,
+        std::unordered_map<int, std::vector<int>> &FaceNodes);
 
     void ResetNodes(std::vector<NekMesh::NodeSharedPtr> &Nodes,
-                    Array<OneD, std::vector<int> > &ElementFaces,
-                    std::unordered_map<int, std::vector<int> > &FaceNodes);
+                    Array<OneD, std::vector<int>> &ElementFaces,
+                    std::unordered_map<int, std::vector<int>> &FaceNodes);
 
 private:
-    CCMIOError m_ccmErr; // Star CCM error flag
+    CCMIOError m_ccmErr;   // Star CCM error flag
     CCMIOID m_ccmTopology; // Star CCM mesh topology
     CCMIOID m_ccmProcessor;
     std::map<int, std::string> m_faceLabels; // label from CCM into composite
@@ -103,17 +98,19 @@ private:
 
     void ReadNodes(std::vector<NekMesh::NodeSharedPtr> &Nodes);
 
-    void ReadInternalFaces(std::unordered_map<int, std::vector<int> > &FacesNodes,
-                           Array<OneD, std::vector<int> > &ElementFaces);
+    void ReadInternalFaces(
+        std::unordered_map<int, std::vector<int>> &FacesNodes,
+        Array<OneD, std::vector<int>> &ElementFaces);
 
-    void ReadBoundaryFaces(std::vector<std::vector<int> > &BndElementFaces,
-                           std::unordered_map<int, std::vector<int> > &FacesNodes,
-                           Array<OneD, std::vector<int> > &ElementFaces,
-                           std::vector<std::string> &facelabels);
+    void ReadBoundaryFaces(
+        std::vector<std::vector<int>> &BndElementFaces,
+        std::unordered_map<int, std::vector<int>> &FacesNodes,
+        Array<OneD, std::vector<int>> &ElementFaces,
+        std::vector<std::string> &facelabels);
 
     void SetupElements(void);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

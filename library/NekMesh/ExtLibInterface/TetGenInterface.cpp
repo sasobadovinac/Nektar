@@ -44,8 +44,8 @@ namespace Nektar
 namespace NekMesh
 {
 
-void TetGenInterface::InitialMesh(map<int, NodeSharedPtr>  tgidton,
-                                  vector<Array<OneD, int> > tri)
+void TetGenInterface::InitialMesh(map<int, NodeSharedPtr> tgidton,
+                                  vector<Array<OneD, int>> tri)
 {
     surface.initialize();
     output.initialize();
@@ -113,7 +113,7 @@ void TetGenInterface::InitialMesh(map<int, NodeSharedPtr>  tgidton,
 }
 
 void TetGenInterface::GetNewPoints(int num,
-                                   vector<Array<OneD, NekDouble> > &newp)
+                                   vector<Array<OneD, NekDouble>> &newp)
 {
     for (int i = num; i < output.numberofpoints; i++)
     {
@@ -145,9 +145,9 @@ void TetGenInterface::RefineMesh(std::map<int, NekDouble> delta)
     tetrahedralize(cstr, &input, &output);
 }
 
-vector<Array<OneD, int> > TetGenInterface::Extract()
+vector<Array<OneD, int>> TetGenInterface::Extract()
 {
-    vector<Array<OneD, int> > tets;
+    vector<Array<OneD, int>> tets;
 
     for (int i = 0; i < output.numberoftetrahedra; i++)
     {
@@ -168,5 +168,5 @@ void TetGenInterface::freetet()
     input.deinitialize();
     output.deinitialize();
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -33,9 +33,9 @@
 
 namespace Nektar
 {
-    MemPool& GetMemoryPool()
-    {
-        static MemPool instance;
-        return instance;
-    }
+MemPool &GetMemoryPool()
+{
+    static MemPool instance;
+    return instance;
 }
+} // namespace Nektar

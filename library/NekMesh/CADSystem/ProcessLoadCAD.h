@@ -62,7 +62,7 @@ public:
         return "LoadCAD";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

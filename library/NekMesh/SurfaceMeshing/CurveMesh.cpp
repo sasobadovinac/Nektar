@@ -47,7 +47,7 @@ void CurveMesh::ReMesh()
     m_dst.clear();
     m_ps.clear();
     meshsvalue.clear();
-    for(int i = 0; i < m_meshedges.size(); i++)
+    for (int i = 0; i < m_meshedges.size(); i++)
     {
         m_mesh->m_edgeSet.erase(m_meshedges[i]);
     }
@@ -104,12 +104,12 @@ void CurveMesh::Mesh(bool forceThree)
             meshsvalue[Ne - 1] = m_curvelength - m_endoffset[1];
         }
     }
-    else if(Ne + 1 == 2 && forceThree)
+    else if (Ne + 1 == 2 && forceThree)
     {
         Ne++;
         meshsvalue.resize(Ne + 1);
         meshsvalue[0] = 0.0;
-        meshsvalue[1] = m_curvelength/ 2.0;
+        meshsvalue[1] = m_curvelength / 2.0;
         meshsvalue[2] = m_curvelength;
     }
     else
@@ -162,7 +162,7 @@ void CurveMesh::Mesh(bool forceThree)
     Array<OneD, NekDouble> loc;
 
     vector<CADVertSharedPtr> verts = m_cadcurve->GetVertex();
-    vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation> > s =
+    vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation>> s =
         m_cadcurve->GetAdjSurf();
 
     NodeSharedPtr n = verts[0]->GetNode();
@@ -232,7 +232,8 @@ void CurveMesh::Mesh(bool forceThree)
     // Nuke progress bar
     m_log(VERBOSE).Overwrite();
     m_log(VERBOSE) << "    - Curve " << m_id << endl;
-    m_log(VERBOSE) << "        Length       : " << scientific << m_curvelength << endl;
+    m_log(VERBOSE) << "        Length       : " << scientific << m_curvelength
+                   << endl;
     m_log(VERBOSE) << "        Nodes        : " << m_meshpoints.size() << endl;
     m_log(VERBOSE) << "        Sample points: " << m_numSamplePoints << endl;
 }
@@ -264,7 +265,7 @@ NekDouble CurveMesh::EvaluateDS(NekDouble s)
     int a = 0;
     int b = 0;
 
-    ASSERTL1(!(s < 0)&& !(s > m_curvelength), "s out of bounds");
+    ASSERTL1(!(s < 0) && !(s > m_curvelength), "s out of bounds");
 
     if (s == 0)
     {
@@ -411,18 +412,19 @@ void CurveMesh::PeriodicOverwrite(CurveMeshSharedPtr from)
 
     vector<NodeSharedPtr> nodes = from->GetMeshPoints();
 
-    vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation> > surfs =
+    vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation>> surfs =
         m_cadcurve->GetAdjSurf();
 
     for (int i = 1; i < nodes.size() - 1; i++)
     {
         Array<OneD, NekDouble> loc = nodes[i]->GetLoc();
-        NodeSharedPtr nn = NodeSharedPtr(
+        NodeSharedPtr nn           = NodeSharedPtr(
             new Node(m_mesh->m_numNodes++, loc[0] + T[0], loc[1] + T[1], 0.0));
 
         for (int j = 0; j < surfs.size(); j++)
         {
-            Array<OneD, NekDouble> uv = surfs[j].first.lock()->locuv(nn->GetLoc());
+            Array<OneD, NekDouble> uv =
+                surfs[j].first.lock()->locuv(nn->GetLoc());
             nn->SetCADSurf(surfs[j].first.lock(), uv);
         }
 
@@ -455,5 +457,5 @@ void CurveMesh::PeriodicOverwrite(CurveMeshSharedPtr from)
         m_meshedges.push_back(e);
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

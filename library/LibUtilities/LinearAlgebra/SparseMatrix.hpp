@@ -36,79 +36,73 @@
 #ifndef NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_MATRIX_HPP
 #define NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_MATRIX_HPP
 
-#include <map>
-#include <vector>
-#include <utility>
 #include <algorithm>
 #include <fstream>
+#include <map>
+#include <utility>
+#include <vector>
 
-#include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 
 #include <boost/call_traits.hpp>
-
 
 namespace Nektar
 {
 
-    /*
-     * This is a class-container to a single sparse matrices.
-     * The type of sparse entry is defined with template parameter.
-     *
-     */
-    template<typename SparseStorageType>
-    class NekSparseMatrix
-    {
-    public:
+/*
+ * This is a class-container to a single sparse matrices.
+ * The type of sparse entry is defined with template parameter.
+ *
+ */
+template <typename SparseStorageType> class NekSparseMatrix
+{
+public:
+    typedef SparseStorageType StorageType;
+    typedef typename SparseStorageType::DataType DataType;
+    typedef std::shared_ptr<SparseStorageType> SparseStorageSharedPtr;
+    typedef Array<OneD, DataType> DataVectorType;
+    typedef Array<OneD, const DataType> ConstDataVectorType;
 
-        typedef SparseStorageType                    StorageType;
-        typedef typename SparseStorageType::DataType DataType;
-        typedef std::shared_ptr<SparseStorageType>   SparseStorageSharedPtr;
-        typedef Array<OneD, DataType>                DataVectorType;
-        typedef Array<OneD, const DataType>          ConstDataVectorType;
+    LIB_UTILITIES_EXPORT NekSparseMatrix(
+        const SparseStorageSharedPtr &sparseStoragePtr);
+    LIB_UTILITIES_EXPORT NekSparseMatrix(const NekSparseMatrix &src);
+    LIB_UTILITIES_EXPORT ~NekSparseMatrix();
 
+    LIB_UTILITIES_EXPORT IndexType GetRows() const;
+    LIB_UTILITIES_EXPORT IndexType GetColumns() const;
+    LIB_UTILITIES_EXPORT IndexType GetNumNonZeroEntries() const;
 
-        LIB_UTILITIES_EXPORT NekSparseMatrix(const SparseStorageSharedPtr& sparseStoragePtr);
-        LIB_UTILITIES_EXPORT NekSparseMatrix(const NekSparseMatrix& src);
-        LIB_UTILITIES_EXPORT ~NekSparseMatrix();
+    LIB_UTILITIES_EXPORT const DataType GetFillInRatio() const;
+    LIB_UTILITIES_EXPORT size_t GetMemoryFootprint() const;
+    LIB_UTILITIES_EXPORT unsigned long GetMulCallsCounter() const;
+    LIB_UTILITIES_EXPORT const DataType GetAvgRowDensity() const;
+    LIB_UTILITIES_EXPORT IndexType GetBandwidth();
+    LIB_UTILITIES_EXPORT COOMatTypeSharedPtr GetCooStorage();
 
-        LIB_UTILITIES_EXPORT IndexType GetRows() const;
-        LIB_UTILITIES_EXPORT IndexType GetColumns() const;
-        LIB_UTILITIES_EXPORT IndexType GetNumNonZeroEntries() const;
+    LIB_UTILITIES_EXPORT typename boost::call_traits<DataType>::const_reference
+    operator()(const IndexType row, const IndexType column) const;
+    LIB_UTILITIES_EXPORT typename SparseStorageType::const_iterator begin()
+        const;
+    LIB_UTILITIES_EXPORT typename SparseStorageType::const_iterator end() const;
 
-        LIB_UTILITIES_EXPORT const DataType  GetFillInRatio() const;
-        LIB_UTILITIES_EXPORT size_t          GetMemoryFootprint() const;
-        LIB_UTILITIES_EXPORT unsigned long   GetMulCallsCounter() const;
-        LIB_UTILITIES_EXPORT const DataType  GetAvgRowDensity() const;
-        LIB_UTILITIES_EXPORT IndexType       GetBandwidth();
-        LIB_UTILITIES_EXPORT COOMatTypeSharedPtr GetCooStorage();
+    LIB_UTILITIES_EXPORT void Multiply(const DataVectorType &in,
+                                       DataVectorType &out);
+    LIB_UTILITIES_EXPORT void Multiply(const DataType *in, DataType *out);
 
+    LIB_UTILITIES_EXPORT void writeSparsityPatternTo(std::ostream &out,
+                                                     IndexType blockSize = 64);
+    LIB_UTILITIES_EXPORT void writeBlockSparsityPatternTo(
+        std::ostream &out, const IndexType blk_row = 0,
+        const IndexType blk_col = 0, IndexType blockSize = 64);
 
+protected:
+    unsigned long m_mulCallsCounter;
+    SparseStorageSharedPtr m_sparseStorage;
 
-        LIB_UTILITIES_EXPORT typename boost::call_traits<DataType>::const_reference
-                 operator()(const IndexType row, const IndexType column) const;
-        LIB_UTILITIES_EXPORT typename SparseStorageType::const_iterator begin() const;
-        LIB_UTILITIES_EXPORT typename SparseStorageType::const_iterator end() const;
+private:
+};
 
-        LIB_UTILITIES_EXPORT void Multiply(const DataVectorType &in,
-                            DataVectorType &out);
-        LIB_UTILITIES_EXPORT void Multiply(const DataType* in,
-                            DataType* out);
+} // namespace Nektar
 
-
-        LIB_UTILITIES_EXPORT void writeSparsityPatternTo(std::ostream& out, IndexType blockSize = 64);
-        LIB_UTILITIES_EXPORT void writeBlockSparsityPatternTo(std::ostream& out,
-                        const IndexType blk_row = 0, const IndexType blk_col = 0, IndexType blockSize = 64);
-
-    protected:
-
-        unsigned long           m_mulCallsCounter;
-        SparseStorageSharedPtr  m_sparseStorage;
-
-    private:
-
-    };
-
-}
-
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_MATRIX_HPP
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_MATRIX_HPP

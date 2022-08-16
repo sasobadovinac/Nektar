@@ -45,8 +45,7 @@ namespace FieldUtils
 
 ModuleKey ProcessSurfDistance::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "surfdistance"),
-        ProcessSurfDistance::create,
+        ModuleKey(eProcessModule, "surfdistance"), ProcessSurfDistance::create,
         "Computes height of element connected to a surface.");
 
 ProcessSurfDistance::ProcessSurfDistance(FieldSharedPtr f)
@@ -61,8 +60,8 @@ ProcessSurfDistance::~ProcessSurfDistance()
 void ProcessSurfDistance::Process(po::variables_map &vm)
 {
     ProcessBoundaryExtract::Process(vm);
-    ASSERTL0( !boost::iequals(m_config["bnd"].as<string>(), "All"),
-        "ProcessSurfDistance needs bnd parameter with a single id.");
+    ASSERTL0(!boost::iequals(m_config["bnd"].as<string>(), "All"),
+             "ProcessSurfDistance needs bnd parameter with a single id.");
 
     int i, j, k, cnt;
     int surf   = m_config["bnd"].as<int>();
@@ -70,7 +69,7 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
 
     ASSERTL0(surf >= 0, "Invalid surface " + boost::lexical_cast<string>(surf));
 
-    int nfields           = m_f->m_variables.size();
+    int nfields = m_f->m_variables.size();
     m_f->m_variables.push_back("dist");
 
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -101,7 +100,7 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
     exp->GetBoundaryToElmtMap(BoundarytoElmtID, BoundarytoTraceID);
 
     ASSERTL0(!(m_f->m_numHomogeneousDir),
-            "Homogeneous expansions not supported");
+             "Homogeneous expansions not supported");
 
     for (i = cnt = 0; i < BndExp.size(); ++i)
     {
@@ -119,8 +118,7 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
 
             // Get boundary and element expansions.
             LocalRegions::ExpansionSharedPtr bndElmt = BndExp[i]->GetExp(j);
-            LocalRegions::ExpansionSharedPtr elmt =
-                exp->GetExp(elmtNum);
+            LocalRegions::ExpansionSharedPtr elmt    = exp->GetExp(elmtNum);
 
             // Determine which face is opposite to the surface
             switch (elmt->DetShapeType())
@@ -183,7 +181,7 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
             int nq    = elmt->GetTotPoints();
             int nqBnd = bndElmt->GetTotPoints();
 
-            Array<OneD, Array<OneD, NekDouble> > x(3);
+            Array<OneD, Array<OneD, NekDouble>> x(3);
             x[0] = Array<OneD, NekDouble>(nq);
             x[1] = Array<OneD, NekDouble>(nq);
             x[2] = Array<OneD, NekDouble>(nq);
@@ -205,7 +203,7 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
                     {
                         elmt->GetTracePhysVals(facetNum, bndElmt, x[k], face1);
                         elmt->GetTracePhysVals(oppositeNum, bndElmt, x[k],
-                                              face2);
+                                               face2);
                         // Consider edge orientation
                         if (elmt->GetTraceOrient(facetNum) !=
                             elmt->GetTraceOrient(oppositeNum))
@@ -220,9 +218,9 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
                         StdRegions::Orientation orientation =
                             elmt->GetTraceOrient(facetNum);
                         elmt->GetTracePhysVals(facetNum, bndElmt, x[k], face1,
-                                              orientation);
-                        elmt->GetTracePhysVals(oppositeNum, bndElmt, x[k], face2,
-                                              orientation);
+                                               orientation);
+                        elmt->GetTracePhysVals(oppositeNum, bndElmt, x[k],
+                                               face2, orientation);
                     }
                     break;
                     default:
@@ -238,5 +236,5 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
                                        BndExp[i]->UpdateCoeffs());
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

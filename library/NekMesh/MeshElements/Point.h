@@ -35,8 +35,8 @@
 #ifndef NEKMESH_MESHELEMENTS_POINT
 #define NEKMESH_MESHELEMENTS_POINT
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -58,9 +58,8 @@ public:
     /// Element type
     static LibUtilities::ShapeType m_type;
 
-    NEKMESH_EXPORT Point(ElmtConfig pConf,
-                              std::vector<NodeSharedPtr> pNodeList,
-                              std::vector<int> pTagList);
+    NEKMESH_EXPORT Point(ElmtConfig pConf, std::vector<NodeSharedPtr> pNodeList,
+                         std::vector<int> pTagList);
     NEKMESH_EXPORT Point(const Point &pSrc);
     NEKMESH_EXPORT virtual ~Point()
     {
@@ -68,7 +67,7 @@ public:
 
     NEKMESH_EXPORT static unsigned int GetNumNodes(ElmtConfig pConf);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

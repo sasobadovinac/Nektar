@@ -1408,6 +1408,7 @@ void StdPyrExp::v_GetElmtTraceToTraceMap(const unsigned int fid,
             {
                 maparray[idx++] = cnt;
             }
+        }
 
             cnt += nummodesB - minQB;
 

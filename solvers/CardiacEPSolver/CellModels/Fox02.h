@@ -38,47 +38,48 @@
 #include <CardiacEPSolver/CellModels/CellModel.h>
 namespace Nektar
 {
-    class Fox02 : public CellModel
+class Fox02 : public CellModel
+{
+
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField)
     {
+        return MemoryManager<Fox02>::AllocateSharedPtr(pSession, pField);
+    }
 
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField)
-        {
-            return MemoryManager<Fox02>::AllocateSharedPtr(pSession, pField);
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Constructor
+    Fox02(const LibUtilities::SessionReaderSharedPtr &pSession,
+          const MultiRegions::ExpListSharedPtr &pField);
 
-        /// Constructor
-        Fox02(  const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField);
+    /// Destructor
+    virtual ~Fox02()
+    {
+    }
 
-        /// Destructor
-        virtual ~Fox02() {}
+protected:
+    /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
 
-    protected:
-        /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
-        virtual void v_Update(
-               const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                     Array<OneD,        Array<OneD, NekDouble> >&outarray,
-               const NekDouble time);
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
+    virtual void v_SetInitialConditions();
 
-        virtual void v_SetInitialConditions();
+private:
+    //
+    // Settable parameters and readable variables
+    //
+    NekDouble m_chi;
+    NekDouble m_sigmai;
+};
 
-    private:
-        //
-        // Settable parameters and readable variables
-        //
-        NekDouble m_chi;
-        NekDouble m_sigmai;
-    };
-
-}
+} // namespace Nektar
 
 #endif

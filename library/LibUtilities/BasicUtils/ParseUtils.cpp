@@ -33,13 +33,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <sstream>
-#include <boost/core/ignore_unused.hpp>
-#include <boost/spirit/include/qi_core.hpp>
-#include <boost/spirit/include/qi_auto.hpp>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
+#include <boost/core/ignore_unused.hpp>
+#include <boost/spirit/include/qi_auto.hpp>
+#include <boost/spirit/include/qi_core.hpp>
+#include <sstream>
 
-namespace qi = boost::spirit::qi;
+namespace qi     = boost::spirit::qi;
 namespace fusion = boost::fusion;
 
 namespace Nektar
@@ -51,10 +51,11 @@ namespace Nektar
  *
  * @see ParseUtils::GenerateSeqVector
  */
-template<typename T>
-struct PushBackFunctor
+template <typename T> struct PushBackFunctor
 {
-    PushBackFunctor(std::vector<T> &in) : m_vec(in) {}
+    PushBackFunctor(std::vector<T> &in) : m_vec(in)
+    {
+    }
 
     /**
      * @brief Pushes back values onto #m_vec as given by @p num.
@@ -76,6 +77,7 @@ struct PushBackFunctor
             m_vec.push_back(i);
         }
     }
+
 private:
     // Do not allow assignment
     PushBackFunctor &operator=(const PushBackFunctor &src) = delete;
@@ -101,15 +103,14 @@ private:
  *
  * @see ParseUtils::GenerateSeqString
  */
-bool ParseUtils::GenerateSeqVector(
-    const std::string &str, std::vector<unsigned int> &out)
+bool ParseUtils::GenerateSeqVector(const std::string &str,
+                                   std::vector<unsigned int> &out)
 {
     PushBackFunctor<unsigned int> f1(out), f2(out);
 
-    auto it = str.begin();
+    auto it      = str.begin();
     bool success = qi::phrase_parse(
-        it,
-        str.end(),
+        it, str.end(),
         ((qi::uint_ >> '-' >> qi::uint_)[f2] | qi::uint_[f1]) % ',',
         qi::ascii::space);
 
@@ -131,8 +132,8 @@ template <typename T>
 bool ParseUtils::GenerateVector(const std::string &str, std::vector<T> &out)
 {
     auto it = str.begin();
-    bool success = qi::phrase_parse(
-        it, str.end(), qi::auto_ % ',', qi::ascii::space, out);
+    bool success =
+        qi::phrase_parse(it, str.end(), qi::auto_ % ',', qi::ascii::space, out);
     return success && it == str.end();
 }
 
@@ -153,14 +154,14 @@ template LIB_UTILITIES_EXPORT bool ParseUtils::GenerateVector<float>(
  * This routine specialises for the std::string data type as this type is not
  * supported by boost::spirit::qi::auto_.
  */
-template <> LIB_UTILITIES_EXPORT
-bool ParseUtils::GenerateVector(const std::string &str,
-                                std::vector<std::string> &out)
+template <>
+LIB_UTILITIES_EXPORT bool ParseUtils::GenerateVector(
+    const std::string &str, std::vector<std::string> &out)
 {
-    auto it = str.begin();
-    bool success = qi::phrase_parse(
-        it, str.end(), +~qi::char_(",") % ',', qi::ascii::space, out);
+    auto it      = str.begin();
+    bool success = qi::phrase_parse(it, str.end(), +~qi::char_(",") % ',',
+                                    qi::ascii::space, out);
     return success && it == str.end();
 }
 
-}
+} // namespace Nektar

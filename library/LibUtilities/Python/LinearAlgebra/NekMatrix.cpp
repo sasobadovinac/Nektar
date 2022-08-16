@@ -32,24 +32,22 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 #include <LibUtilities/LinearAlgebra/MatrixStorageType.h>
+#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 #include <LibUtilities/Python/NekPyConfig.hpp>
 
 using namespace Nektar;
 using namespace Nektar::LibUtilities;
 
 #if PY_MAJOR_VERSION == 2
-template<typename T, typename F>
-void NekMatrixCapsuleDestructor(void *ptr)
+template <typename T, typename F> void NekMatrixCapsuleDestructor(void *ptr)
 {
     std::shared_ptr<NekMatrix<T, F>> *mat =
         (std::shared_ptr<NekMatrix<T, F>> *)ptr;
     delete mat;
 }
 #else
-template<typename T, typename F>
-void NekMatrixCapsuleDestructor(PyObject *ptr)
+template <typename T, typename F> void NekMatrixCapsuleDestructor(PyObject *ptr)
 {
     std::shared_ptr<NekMatrix<T, F>> *mat =
         (std::shared_ptr<NekMatrix<T, F>> *)PyCapsule_GetPointer(ptr, 0);
@@ -57,8 +55,7 @@ void NekMatrixCapsuleDestructor(PyObject *ptr)
 }
 #endif
 
-template<typename T>
-struct NekMatrixToPython
+template <typename T> struct NekMatrixToPython
 {
     static PyObject *convert(
         std::shared_ptr<NekMatrix<T, StandardMatrixTag>> const &mat)
@@ -67,33 +64,32 @@ struct NekMatrixToPython
         // copy of arr. That way we guarantee Python will still have access to
         // the memory allocated inside arr even if arr is deallocated in C++.
 #if PY_MAJOR_VERSION == 2
-        py::object capsule(
-            py::handle<>(PyCObject_FromVoidPtr(
-                             new std::shared_ptr<NekMatrix<T, StandardMatrixTag>>(mat),
-                             NekMatrixCapsuleDestructor<T, StandardMatrixTag>)));
+        py::object capsule(py::handle<>(PyCObject_FromVoidPtr(
+            new std::shared_ptr<NekMatrix<T, StandardMatrixTag>>(mat),
+            NekMatrixCapsuleDestructor<T, StandardMatrixTag>)));
 #else
-        py::object capsule(
-            py::handle<>(PyCapsule_New(
-                             (void *)new std::shared_ptr<NekMatrix<T, StandardMatrixTag>>(mat), NULL,
-                             (PyCapsule_Destructor)&NekMatrixCapsuleDestructor<T, StandardMatrixTag>)));
+        py::object capsule(py::handle<>(PyCapsule_New(
+            (void *)new std::shared_ptr<NekMatrix<T, StandardMatrixTag>>(mat),
+            NULL,
+            (PyCapsule_Destructor)&NekMatrixCapsuleDestructor<
+                T, StandardMatrixTag>)));
 #endif
 
         int nRows = mat->GetRows(), nCols = mat->GetColumns();
         MatrixStorage storage = mat->GetStorageType();
 
-        ASSERTL0(storage == eFULL, "Only full storage matrices are currently supported.");
+        ASSERTL0(storage == eFULL,
+                 "Only full storage matrices are currently supported.");
 
         return py::incref(
-            np::from_data(
-                mat->GetRawPtr(), np::dtype::get_builtin<T>(),
-                py::make_tuple(nRows, nCols),
-                py::make_tuple(sizeof(T), nRows * sizeof(T)),
-                capsule).ptr());
+            np::from_data(mat->GetRawPtr(), np::dtype::get_builtin<T>(),
+                          py::make_tuple(nRows, nCols),
+                          py::make_tuple(sizeof(T), nRows * sizeof(T)), capsule)
+                .ptr());
     }
 };
 
-template<typename T>
-void export_NekMatrix()
+template <typename T> void export_NekMatrix()
 {
     py::to_python_converter<std::shared_ptr<NekMatrix<T, StandardMatrixTag>>,
                             NekMatrixToPython<T>>();

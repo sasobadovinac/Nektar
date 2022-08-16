@@ -79,7 +79,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

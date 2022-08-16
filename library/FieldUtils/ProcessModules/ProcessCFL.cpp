@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Computes CFL number over the entire domain for the 
+//  Description: Computes CFL number over the entire domain for the
 //  incompressible flow simulaiton. This is helpful in terms of debugging
 //  and tracing the evolution of CFL in time over the domain.
 //
@@ -43,19 +43,17 @@ using namespace std;
 #include <GlobalMapping/Mapping.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
-#include "ProcessMapping.h"
 #include "ProcessCFL.h"
+#include "ProcessMapping.h"
 
 namespace Nektar
 {
 namespace FieldUtils
 {
 
-ModuleKey ProcessCFL::className =
-    GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "CFL"),
-        ProcessCFL::create,
-        "Computes CFL number for the entire domain for Incompressible flow.");
+ModuleKey ProcessCFL::className = GetModuleFactory().RegisterCreatorFunction(
+    ModuleKey(eProcessModule, "CFL"), ProcessCFL::create,
+    "Computes CFL number for the entire domain for Incompressible flow.");
 
 ProcessCFL::ProcessCFL(FieldSharedPtr f) : ProcessModule(f)
 {
@@ -282,5 +280,5 @@ Array<OneD, NekDouble> ProcessCFL::GetMaxStdVelocity(
 
     return maxV;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

@@ -39,59 +39,63 @@
 
 namespace Nektar
 {
-    class TenTusscher06 : public CellModel
+class TenTusscher06 : public CellModel
+{
+
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField)
     {
+        return MemoryManager<TenTusscher06>::AllocateSharedPtr(pSession,
+                                                               pField);
+    }
 
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField)
-        {
-            return MemoryManager<TenTusscher06>::AllocateSharedPtr(pSession, pField);
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Constructor
+    TenTusscher06(const LibUtilities::SessionReaderSharedPtr &pSession,
+                  const MultiRegions::ExpListSharedPtr &pField);
 
-        /// Constructor
-        TenTusscher06(const LibUtilities::SessionReaderSharedPtr& pSession, const MultiRegions::ExpListSharedPtr& pField);
+    /// Desctructor
+    virtual ~TenTusscher06()
+    {
+    }
 
-        /// Desctructor
-        virtual ~TenTusscher06() {}
+protected:
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    protected:
-        virtual void v_Update(
-               const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                     Array<OneD,        Array<OneD, NekDouble> >&outarray,
-               const NekDouble time);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
+    virtual void v_SetInitialConditions();
 
-        virtual void v_SetInitialConditions();
+    NekDouble g_to;
+    NekDouble g_Ks;
+    NekDouble s_inf_factor;
+    NekDouble s_tau_f1;
+    NekDouble s_tau_f2;
+    NekDouble s_tau_f3;
+    NekDouble s_tau_f4;
+    NekDouble s_tau_f5;
+    NekDouble k_0;
 
-        NekDouble g_to;
-        NekDouble g_Ks;
-        NekDouble s_inf_factor;
-        NekDouble s_tau_f1;
-        NekDouble s_tau_f2;
-        NekDouble s_tau_f3;
-        NekDouble s_tau_f4;
-        NekDouble s_tau_f5;
-        NekDouble k_0;
-
-        enum Variants {
-        	eEpicardium,
-        	eEndocardium,
-        	eMid,
-        	eIschemia
-        };
-        enum Variants model_variant;
-
-        static std::string lookupIds[];
-        static std::string def;
+    enum Variants
+    {
+        eEpicardium,
+        eEndocardium,
+        eMid,
+        eIschemia
     };
-}
+    enum Variants model_variant;
+
+    static std::string lookupIds[];
+    static std::string def;
+};
+} // namespace Nektar
 
 #endif

@@ -33,14 +33,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <map>
-#include <vector>
 #include <sstream>
 #include <string>
+#include <vector>
 
-#include <boost/algorithm/string.hpp>
 #include <LibUtilities/BasicUtils/HashUtils.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <boost/algorithm/string.hpp>
 
 #include "InputNek5000.h"
 
@@ -53,8 +53,8 @@ namespace NekMesh
 {
 
 ModuleKey InputNek5000::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eInputModule, "rea5000"),
-    InputNek5000::create, "Reads Nektar rea file.");
+    ModuleKey(eInputModule, "rea5000"), InputNek5000::create,
+    "Reads Nektar rea file.");
 
 InputNek5000::InputNek5000(MeshSharedPtr m) : InputModule(m)
 {
@@ -81,7 +81,7 @@ void InputNek5000::Process()
     string line, word;
     int nParam, nElements, nCurves;
     int i, j, k, nodeCounter = 0;
-    int nComposite           = 1;
+    int nComposite = 1;
     LibUtilities::ShapeType elType;
     double vertex[8][3];
 
@@ -213,8 +213,7 @@ void InputNek5000::Process()
         for (k = 0; k < nNodes; ++k)
         {
             nodeList[k] = std::shared_ptr<Node>(
-                new Node(
-                    0, vertex[k][0], vertex[k][1], vertex[k][2]));
+                new Node(0, vertex[k][0], vertex[k][1], vertex[k][2]));
             auto testIns = m_mesh->m_vertexSet.insert(nodeList[k]);
 
             if (!testIns.second)
@@ -229,8 +228,8 @@ void InputNek5000::Process()
 
         vector<int> tags(1, 0);
         ElmtConfig conf(elType, 1, false, false);
-        ElementSharedPtr E = GetElementFactory().CreateInstance(
-            elType, conf, nodeList, tags);
+        ElementSharedPtr E =
+            GetElementFactory().CreateInstance(elType, conf, nodeList, tags);
         m_mesh->m_element[E->GetDim()].push_back(E);
     }
 
@@ -255,16 +254,12 @@ void InputNek5000::Process()
     // Map to reorder Nek5000 -> Nektar++ edge ordering. Nek5000 has the same
     // counter-clockwise ordering of edges/vertices; however the vertical
     // (i.e. t- or xi_3-direction) edges come last.
-    int nek2nekedge[12] = {
-        0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7
-    };
+    int nek2nekedge[12] = {0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7};
 
     // Map to reorder Nek5000 -> Nektar++ face ordering. Again we have the same
     // counter-clockwise ordering; however the 4 vertical faces of the hex are
     // first, followed by bottom face and then top face.
-    int nek2nekface[6] = {
-        1, 2, 3, 4, 0, 5
-    };
+    int nek2nekface[6] = {1, 2, 3, 4, 0, 5};
 
     if (nCurves > 0)
     {
@@ -329,13 +324,13 @@ void InputNek5000::Process()
                     // z-dependence. The following code is adapted from Semtex
                     // (src/mesh.C)
                     NekDouble radius = curveData[0];
-                    int convexity = radius < 0 ? -1 : 1;
-                    radius = fabs(radius);
+                    int convexity    = radius < 0 ? -1 : 1;
+                    radius           = fabs(radius);
 
                     ElementSharedPtr el =
                         m_mesh->m_element[m_mesh->m_expDim][elmt];
                     EdgeSharedPtr edge = el->GetEdge(side);
-                    edge->m_curveType = LibUtilities::eGaussLobattoLegendre;
+                    edge->m_curveType  = LibUtilities::eGaussLobattoLegendre;
 
                     // Assume 2D projection
                     Node P1(*(edge->m_n1)), P2(*(edge->m_n2));
@@ -348,7 +343,7 @@ void InputNek5000::Process()
                     P1.m_z = P2.m_z = 0.0;
 
                     Node unitNormal, link, centroid, centre;
-                    Node midpoint = (P1 + P2)*0.5, dx = P2 - P1;
+                    Node midpoint = (P1 + P2) * 0.5, dx = P2 - P1;
                     NekDouble l = sqrt(dx.abs2()), sign = 0.0, semiangle = 0.0;
 
                     unitNormal.m_x = -dx.m_y / l;
@@ -360,12 +355,12 @@ void InputNek5000::Process()
                     }
                     else
                     {
-                        semiangle = asin (0.5 * l / radius);
+                        semiangle = asin(0.5 * l / radius);
                     }
 
                     // Calculate element centroid
                     vector<NodeSharedPtr> elNodes = el->GetVertexList();
-                    int nNodes = elNodes.size();
+                    int nNodes                    = elNodes.size();
 
                     for (int i = 0; i < nNodes; ++i)
                     {
@@ -376,31 +371,30 @@ void InputNek5000::Process()
                     }
 
                     centroid /= (NekDouble)nNodes;
-                    link      = centroid - midpoint;
-                    sign      = link.dot(unitNormal);
-                    sign      = convexity * sign / fabs(sign);
-                    centre    = midpoint + unitNormal * (sign * cos(semiangle) *
-                                                         radius);
+                    link   = centroid - midpoint;
+                    sign   = link.dot(unitNormal);
+                    sign   = convexity * sign / fabs(sign);
+                    centre = midpoint +
+                             unitNormal * (sign * cos(semiangle) * radius);
 
                     NekDouble theta1, theta2, dtheta, phi;
-                    theta1 = atan2 (P1.m_y - centre.m_y, P1.m_x - centre.m_x);
-                    theta2 = atan2 (P2.m_y - centre.m_y, P2.m_x - centre.m_x);
+                    theta1 = atan2(P1.m_y - centre.m_y, P1.m_x - centre.m_x);
+                    theta2 = atan2(P2.m_y - centre.m_y, P2.m_x - centre.m_x);
                     dtheta = theta2 - theta1;
 
-                    if (fabs(dtheta) > 2.0*semiangle + 1e-15)
+                    if (fabs(dtheta) > 2.0 * semiangle + 1e-15)
                     {
-                        dtheta += (dtheta < 0.0) ? 2.0*M_PI : -2.0*M_PI;
+                        dtheta += (dtheta < 0.0) ? 2.0 * M_PI : -2.0 * M_PI;
                     }
 
                     edge->m_edgeNodes.clear();
 
-                    for (j = 1; j < nq-1; ++j) {
+                    for (j = 1; j < nq - 1; ++j)
+                    {
                         phi = theta1 + dtheta * 0.5 * (rp[j] + 1.0);
                         NodeSharedPtr asd(new Node(
-                                              0,
-                                              centre.m_x + radius * cos(phi),
-                                              centre.m_y + radius * sin(phi),
-                                              edge->m_n1->m_z));
+                            0, centre.m_x + radius * cos(phi),
+                            centre.m_y + radius * sin(phi), edge->m_n1->m_z));
                         edge->m_edgeNodes.push_back(asd);
                     }
                     break;
@@ -525,7 +519,7 @@ void InputNek5000::Process()
 
         ElementSharedPtr el = m_mesh->m_element[m_mesh->m_spaceDim][elmt];
 
-        std::string fields[] = { "u", "v", "w", "p" };
+        std::string fields[] = {"u", "v", "w", "p"};
 
         switch (bcType)
         {
@@ -559,13 +553,13 @@ void InputNek5000::Process()
                 bool setup = false;
                 if (periodicInId == -1)
                 {
-                    periodicInId = m_mesh->m_condition.size();
-                    periodicOutId = m_mesh->m_condition.size()+1;
-                    setup = true;
+                    periodicInId  = m_mesh->m_condition.size();
+                    periodicOutId = m_mesh->m_condition.size() + 1;
+                    setup         = true;
                 }
 
                 bool hasIn = periodicIn.find(make_pair(perElmt, perFace)) !=
-                    periodicIn.end();
+                             periodicIn.end();
 
                 if (hasIn)
                 {
@@ -578,10 +572,10 @@ void InputNek5000::Process()
                     perIn++;
                 }
 
-                std::string periodicInStr = "[" +
-                    boost::lexical_cast<string>(periodicInId) + "]";
-                std::string periodicOutStr = "[" +
-                    boost::lexical_cast<string>(periodicOutId) + "]";
+                std::string periodicInStr =
+                    "[" + boost::lexical_cast<string>(periodicInId) + "]";
+                std::string periodicOutStr =
+                    "[" + boost::lexical_cast<string>(periodicOutId) + "]";
 
                 for (i = 0; i < m_mesh->m_fields.size() - 1; ++i)
                 {
@@ -596,20 +590,20 @@ void InputNek5000::Process()
 
                 if (setup)
                 {
-                    ConditionSharedPtr c2 = MemoryManager<Condition>
-                        ::AllocateSharedPtr();
+                    ConditionSharedPtr c2 =
+                        MemoryManager<Condition>::AllocateSharedPtr();
 
                     c->m_composite.push_back(nComposite++);
                     c2->m_composite.push_back(nComposite++);
 
                     c2->field = c->field;
-                    c2->type = c->type;
+                    c2->type  = c->type;
                     for (i = 0; i < c->type.size(); ++i)
                     {
                         c2->value.push_back(periodicInStr);
                     }
 
-                    m_mesh->m_condition[periodicInId] = c;
+                    m_mesh->m_condition[periodicInId]  = c;
                     m_mesh->m_condition[periodicOutId] = c2;
                 }
 
@@ -633,17 +627,14 @@ void InputNek5000::Process()
         {
             FaceSharedPtr f = el->GetFace(nek2nekface[side]);
             vector<NodeSharedPtr> nodeList;
-            nodeList.insert(nodeList.begin(),
-                            f->m_vertexList.begin(),
+            nodeList.insert(nodeList.begin(), f->m_vertexList.begin(),
                             f->m_vertexList.end());
 
             vector<int> tags;
-            ElmtConfig conf(
-                LibUtilities::eQuadrilateral, 1, true, true, false,
-                LibUtilities::eGaussLobattoLegendre);
-            surfEl =
-                GetElementFactory().CreateInstance(LibUtilities::eQuadrilateral,
-                                                   conf, nodeList, tags);
+            ElmtConfig conf(LibUtilities::eQuadrilateral, 1, true, true, false,
+                            LibUtilities::eGaussLobattoLegendre);
+            surfEl = GetElementFactory().CreateInstance(
+                LibUtilities::eQuadrilateral, conf, nodeList, tags);
 
             // Copy high-order surface information from edges.
             for (int i = 0; i < f->m_vertexList.size(); ++i)
@@ -662,11 +653,10 @@ void InputNek5000::Process()
 
             vector<int> tags;
 
-            ElmtConfig conf(
-                LibUtilities::eSegment, 1, true, true, false,
-                LibUtilities::eGaussLobattoLegendre);
-            surfEl = GetElementFactory().CreateInstance(
-                LibUtilities::eSegment, conf, nodeList, tags);
+            ElmtConfig conf(LibUtilities::eSegment, 1, true, true, false,
+                            LibUtilities::eGaussLobattoLegendre);
+            surfEl = GetElementFactory().CreateInstance(LibUtilities::eSegment,
+                                                        conf, nodeList, tags);
         }
 
         // Now attempt to find this boundary condition inside
@@ -678,7 +668,7 @@ void InputNek5000::Process()
             if (c == it.second)
             {
                 found = true;
-                c = it.second;
+                c     = it.second;
                 break;
             }
         }
@@ -686,7 +676,7 @@ void InputNek5000::Process()
         if (!found)
         {
             conditionId = m_mesh->m_condition.size();
-            compTag = nComposite;
+            compTag     = nComposite;
             c->m_composite.push_back(compTag);
             m_mesh->m_condition[conditionId] = c;
         }
@@ -729,12 +719,12 @@ void InputNek5000::Process()
     // -- Set periodic composites to not be reordered.
     if (periodicInId != -1)
     {
-        m_mesh->m_composite[m_mesh->m_condition[periodicInId]
-                            ->m_composite[0]]->m_reorder = false;
-        m_mesh->m_composite[m_mesh->m_condition[periodicOutId]
-                            ->m_composite[0]]->m_reorder = false;
+        m_mesh->m_composite[m_mesh->m_condition[periodicInId]->m_composite[0]]
+            ->m_reorder = false;
+        m_mesh->m_composite[m_mesh->m_condition[periodicOutId]->m_composite[0]]
+            ->m_reorder = false;
     }
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

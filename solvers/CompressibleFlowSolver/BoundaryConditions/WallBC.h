@@ -37,53 +37,46 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
 /**
-* @brief Wall boundary conditions for compressible flow problems.
-*/
+ * @brief Wall boundary conditions for compressible flow problems.
+ */
 class WallBC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<WallBC>;
 
-        friend class MemoryManager<WallBC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p = MemoryManager<WallBC>::AllocateSharedPtr(
+            pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<WallBC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pSpaceDim, bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-    protected:
+private:
+    WallBC(const LibUtilities::SessionReaderSharedPtr &pSession,
+           const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+           const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+           const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
-
-    private:
-        WallBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-        
-        virtual ~WallBC(void){};
+    virtual ~WallBC(void){};
 };
 
-}
+} // namespace Nektar
 
 #endif

@@ -37,69 +37,67 @@ using namespace std;
 
 namespace Nektar
 {
-    string SteadyAdvectionDiffusion::className = GetEquationSystemFactory().RegisterCreatorFunction("SteadyAdvectionDiffusion", SteadyAdvectionDiffusion::create);
+string SteadyAdvectionDiffusion::className =
+    GetEquationSystemFactory().RegisterCreatorFunction(
+        "SteadyAdvectionDiffusion", SteadyAdvectionDiffusion::create);
 
-    /**
-     * @class SteadyAdvectionDiffusion
-     * This is a solver class for solving the  problems.
-     * - SteadyAdvectionDiffusion:
-     *   \f$ c \cdot \nabla u -\nabla \cdot (\nabla u)  = f(x)\f$
-     */
+/**
+ * @class SteadyAdvectionDiffusion
+ * This is a solver class for solving the  problems.
+ * - SteadyAdvectionDiffusion:
+ *   \f$ c \cdot \nabla u -\nabla \cdot (\nabla u)  = f(x)\f$
+ */
 
-    SteadyAdvectionDiffusion::SteadyAdvectionDiffusion(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : EquationSystem(pSession, pGraph),
-          m_lambda(0.0)
-    {
-    }
-
-    void SteadyAdvectionDiffusion::v_InitObject(bool DeclareFields)
-    {
-        EquationSystem::v_InitObject(DeclareFields);
-
-        std::vector<std::string> vel;
-        vel.push_back("Vx");
-        vel.push_back("Vy");
-        vel.push_back("Vz");
-
-        // Resize the advection velocities vector to dimension of the problem
-        vel.resize(m_spacedim);
-
-        // Store in the global variable m_velocity the advection velocities
-        m_velocity = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
-        GetFunction( "BaseFlow")->Evaluate(vel,  m_velocity);
-    }
-
-    SteadyAdvectionDiffusion::~SteadyAdvectionDiffusion()
-    {
-
-    }
-
-    void SteadyAdvectionDiffusion::v_GenerateSummary(SolverUtils::SummaryList& s)
-    {
-        SolverUtils::AddSummaryItem(s, "Lambda", m_lambda);
-    }
-
-
-    void SteadyAdvectionDiffusion::v_DoInitialise()
-    {
-        // set initial forcing from session file
-        GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
-    }
-
-    void SteadyAdvectionDiffusion::v_DoSolve()
-    {
-        for(int i = 0; i < m_fields.size(); ++i)
-        {
-	    // Zero initial guess
-            Vmath::Zero(m_fields[i]->GetNcoeffs(),m_fields[i]->UpdateCoeffs(),1);
-            m_fields[i]->LinearAdvectionDiffusionReactionSolve(m_velocity,
-                                                               m_fields[i]->GetPhys(),
-                                                               m_fields[i]->UpdateCoeffs(),
-                                                               m_lambda);
-            m_fields[i]->SetPhysState(false);
-        }
-    }
-
+SteadyAdvectionDiffusion::SteadyAdvectionDiffusion(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : EquationSystem(pSession, pGraph), m_lambda(0.0)
+{
 }
+
+void SteadyAdvectionDiffusion::v_InitObject(bool DeclareFields)
+{
+    EquationSystem::v_InitObject(DeclareFields);
+
+    std::vector<std::string> vel;
+    vel.push_back("Vx");
+    vel.push_back("Vy");
+    vel.push_back("Vz");
+
+    // Resize the advection velocities vector to dimension of the problem
+    vel.resize(m_spacedim);
+
+    // Store in the global variable m_velocity the advection velocities
+    m_velocity = Array<OneD, Array<OneD, NekDouble>>(m_spacedim);
+    GetFunction("BaseFlow")->Evaluate(vel, m_velocity);
+}
+
+SteadyAdvectionDiffusion::~SteadyAdvectionDiffusion()
+{
+}
+
+void SteadyAdvectionDiffusion::v_GenerateSummary(SolverUtils::SummaryList &s)
+{
+    SolverUtils::AddSummaryItem(s, "Lambda", m_lambda);
+}
+
+void SteadyAdvectionDiffusion::v_DoInitialise()
+{
+    // set initial forcing from session file
+    GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
+}
+
+void SteadyAdvectionDiffusion::v_DoSolve()
+{
+    for (int i = 0; i < m_fields.size(); ++i)
+    {
+        // Zero initial guess
+        Vmath::Zero(m_fields[i]->GetNcoeffs(), m_fields[i]->UpdateCoeffs(), 1);
+        m_fields[i]->LinearAdvectionDiffusionReactionSolve(
+            m_velocity, m_fields[i]->GetPhys(), m_fields[i]->UpdateCoeffs(),
+            m_lambda);
+        m_fields[i]->SetPhysState(false);
+    }
+}
+
+} // namespace Nektar

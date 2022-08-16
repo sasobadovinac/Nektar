@@ -33,15 +33,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <map>
-#include <vector>
 #include <sstream>
 #include <string>
+#include <vector>
 
-#include <boost/algorithm/string.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <NekMesh/MeshElements/Element.h>
 #include <NekMesh/MeshElements/Prism.h>
 #include <NekMesh/MeshElements/Tetrahedron.h>
+#include <boost/algorithm/string.hpp>
 
 #include "InputNek.h"
 
@@ -83,12 +83,12 @@ void InputNek::Process()
     string line, word;
     int nParam, nElements, nCurves;
     int i, j, k, nodeCounter = 0;
-    int nComposite           = 0;
+    int nComposite = 0;
     LibUtilities::ShapeType elType;
     double vertex[3][8];
     map<LibUtilities::ShapeType, int> domainComposite;
-    map<LibUtilities::ShapeType, vector<vector<NodeSharedPtr> > > elNodes;
-    map<LibUtilities::ShapeType, vector<int> > elIds;
+    map<LibUtilities::ShapeType, vector<vector<NodeSharedPtr>>> elNodes;
+    map<LibUtilities::ShapeType, vector<int>> elIds;
     std::unordered_map<int, int> elMap;
     vector<LibUtilities::ShapeType> elmOrder;
 
@@ -282,8 +282,8 @@ void InputNek::Process()
 
     for (i = 0; i < elmOrder.size(); ++i)
     {
-        LibUtilities::ShapeType elType      = elmOrder[i];
-        vector<vector<NodeSharedPtr> > &tmp = elNodes[elType];
+        LibUtilities::ShapeType elType     = elmOrder[i];
+        vector<vector<NodeSharedPtr>> &tmp = elNodes[elType];
 
         for (j = 0; j < tmp.size(); ++j)
         {
@@ -409,8 +409,7 @@ void InputNek::Process()
 
             if (el->GetConf().m_e == LibUtilities::ePrism && faceId % 2 == 0)
             {
-                std::shared_ptr<Prism> p =
-                    std::dynamic_pointer_cast<Prism>(el);
+                std::shared_ptr<Prism> p = std::dynamic_pointer_cast<Prism>(el);
                 if (p->m_orientation == 1)
                 {
                     faceId = (faceId + 2) % 6;
@@ -475,7 +474,7 @@ void InputNek::Process()
 
                 for (j = 0; j < tmp.size(); ++j)
                 {
-                    int id = tmp[(j + offset) % tmp.size()]->m_id;
+                    int id   = tmp[(j + offset) % tmp.size()]->m_id;
                     auto vIt = m_mesh->m_vertexNormals.find(id);
 
                     if (vIt == m_mesh->m_vertexNormals.end())
@@ -509,8 +508,9 @@ void InputNek::Process()
                     for (j = 0; j < 3; ++j)
                     {
                         int v =
-                            tet->GetVertex(tet->m_origVertMap
-                                               [tetFaceVerts[origFaceId][j]])
+                            tet->GetVertex(
+                                   tet->m_origVertMap[tetFaceVerts[origFaceId]
+                                                                  [j]])
                                 ->m_id;
 
                         for (k = 0; k < 3; ++k)
@@ -625,7 +625,7 @@ void InputNek::Process()
     // value is a vector of pairs of composites and element
     // types. Essentially this map takes conditions -> composites for
     // each element type.
-    map<int, vector<pair<int, LibUtilities::ShapeType> > > surfaceCompMap;
+    map<int, vector<pair<int, LibUtilities::ShapeType>>> surfaceCompMap;
 
     // Skip boundary conditions line.
     getline(m_mshFile, line);
@@ -755,8 +755,8 @@ void InputNek::Process()
                 break;
 
             default:
-                m_log(FATAL) << "Unknown boundary condition type " << line[0]
-                             << endl;
+                m_log(FATAL)
+                    << "Unknown boundary condition type " << line[0] << endl;
         }
 
         // Populate condition information.
@@ -768,7 +768,7 @@ void InputNek::Process()
         // m_mesh->condition. This is currently a linear search and should
         // probably be made faster!
         bool found = false;
-        auto it = m_mesh->m_condition.begin();
+        auto it    = m_mesh->m_condition.begin();
         for (; it != m_mesh->m_condition.end(); ++it)
         {
             if (c == it->second)
@@ -813,16 +813,15 @@ void InputNek::Process()
             bool tri        = f->m_vertexList.size() == 3;
 
             vector<NodeSharedPtr> nodeList;
-            nodeList.insert(nodeList.begin(),
-                            f->m_vertexList.begin(),
+            nodeList.insert(nodeList.begin(), f->m_vertexList.begin(),
                             f->m_vertexList.end());
 
             vector<int> tags;
 
             LibUtilities::ShapeType seg =
                 tri ? LibUtilities::eTriangle : LibUtilities::eQuadrilateral;
-            ElmtConfig conf(
-                seg, 1, true, true, false, LibUtilities::eGaussLobattoLegendre);
+            ElmtConfig conf(seg, 1, true, true, false,
+                            LibUtilities::eGaussLobattoLegendre);
             surfEl =
                 GetElementFactory().CreateInstance(seg, conf, nodeList, tags);
 
@@ -843,14 +842,10 @@ void InputNek::Process()
 
             vector<int> tags;
 
-            ElmtConfig conf(LibUtilities::eSegment,
-                            1,
-                            true,
-                            true,
-                            false,
+            ElmtConfig conf(LibUtilities::eSegment, 1, true, true, false,
                             LibUtilities::eGaussLobattoLegendre);
-            surfEl = GetElementFactory().CreateInstance(
-                LibUtilities::eSegment, conf, nodeList, tags);
+            surfEl = GetElementFactory().CreateInstance(LibUtilities::eSegment,
+                                                        conf, nodeList, tags);
         }
 
         if (!surfEl)
@@ -866,7 +861,7 @@ void InputNek::Process()
             // list, create new composite tag and put inside
             // surfaceCompMap.
             conditionId = m_mesh->m_condition.size();
-            compTag = nComposite;
+            compTag     = nComposite;
             c->m_composite.push_back(compTag);
             m_mesh->m_condition[conditionId] = c;
 
@@ -1044,7 +1039,7 @@ void InputNek::LoadHOSurfaces()
         getline(hsf, line);
 
         // Read in nodal points for each face.
-        map<int, vector<NodeSharedPtr> > faceMap;
+        map<int, vector<NodeSharedPtr>> faceMap;
         for (int i = 0; i < Nface; ++i)
         {
             getline(hsf, line);
@@ -1082,8 +1077,8 @@ void InputNek::LoadHOSurfaces()
 
             if (tmp != "#")
             {
-                m_log(FATAL) << "Unable to read hsf connectivity information."
-                             << endl;
+                m_log(FATAL)
+                    << "Unable to read hsf connectivity information." << endl;
             }
 
             hoData[it.first].insert(
@@ -1134,5 +1129,5 @@ int InputNek::GetNnodes(LibUtilities::ShapeType InputNekEntity)
 
     return nNodes;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

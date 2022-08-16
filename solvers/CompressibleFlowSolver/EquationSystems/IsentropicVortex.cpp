@@ -134,6 +134,7 @@ void IsentropicVortex::v_EvaluateExactSolution(unsigned int field,
     {
         u[i] = Array<OneD, NekDouble>(nTotQuadPoints);
     }
+}
 
     EvaluateIsentropicVortex(x, y, z, u, time);
 

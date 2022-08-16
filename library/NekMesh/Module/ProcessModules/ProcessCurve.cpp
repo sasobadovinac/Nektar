@@ -34,13 +34,13 @@
 
 #include <LibUtilities/BasicUtils/Interpolator.h>
 
-#include <LocalRegions/SegExp.h>
-#include <LocalRegions/QuadExp.h>
-#include <LocalRegions/TriExp.h>
 #include <LocalRegions/NodalTriExp.h>
+#include <LocalRegions/QuadExp.h>
+#include <LocalRegions/SegExp.h>
+#include <LocalRegions/TriExp.h>
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/BasicUtils/PtsIO.h>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include <NekMesh/MeshElements/Element.h>
 
@@ -55,8 +55,7 @@ namespace NekMesh
 {
 
 ModuleKey ProcessCurve::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "curve"), 
-    ProcessCurve::create,
+    ModuleKey(eProcessModule, "curve"), ProcessCurve::create,
     "Creates curved edge information using a function y=f(x) (2D only).");
 
 /**
@@ -64,14 +63,14 @@ ModuleKey ProcessCurve::className = GetModuleFactory().RegisterCreatorFunction(
  */
 ProcessCurve::ProcessCurve(MeshSharedPtr m) : ProcessCurvedEdges(m)
 {
-    m_config["function"] = ConfigOption(false, "NotSet",
-        "Expression of the curve: y = f(x).");
-    m_config["file"] = ConfigOption(false, "NotSet",
-        "Pts file containing coordinates (x,y).");
+    m_config["function"] =
+        ConfigOption(false, "NotSet", "Expression of the curve: y = f(x).");
+    m_config["file"] =
+        ConfigOption(false, "NotSet", "Pts file containing coordinates (x,y).");
     m_config["niter"] = ConfigOption(false, "50",
-        "Number of iterations to perform to obtain evenly distribution of points.");
-    m_config["gamma"] = ConfigOption(false, "0.1",
-        "Relaxation parameter.");
+                                     "Number of iterations to perform to "
+                                     "obtain evenly distribution of points.");
+    m_config["gamma"] = ConfigOption(false, "0.1", "Relaxation parameter.");
 }
 
 /**
@@ -109,8 +108,8 @@ void ProcessCurve::v_GenerateEdgeNodes(EdgeSharedPtr edge)
     NodeSharedPtr n1 = edge->m_n1;
     NodeSharedPtr n2 = edge->m_n2;
 
-    int       nq    = m_config["N"].as<int>();
-    int       niter = m_config["niter"].as<int>();
+    int nq          = m_config["N"].as<int>();
+    int niter       = m_config["niter"].as<int>();
     NekDouble gamma = m_config["gamma"].as<double>();
 
     edge->m_edgeNodes.resize(nq - 2);
@@ -119,43 +118,43 @@ void ProcessCurve::v_GenerateEdgeNodes(EdgeSharedPtr edge)
     if (m_config["function"].as<string>().compare("NotSet") != 0)
     {
         ASSERTL0(m_config["file"].as<string>().compare("NotSet") == 0,
-             "Function and file cannot be defined at the same time.");
+                 "Function and file cannot be defined at the same time.");
 
         std::string fstr = m_config["function"].as<string>();
-        m_fExprId = m_fEval.DefineFunction("x y z", fstr);
-        m_fromFile = false;
+        m_fExprId        = m_fEval.DefineFunction("x y z", fstr);
+        m_fromFile       = false;
     }
     else
     {
         ASSERTL0(m_config["file"].as<string>().compare("NotSet") != 0,
-             "Need to define either function or file.");
+                 "Need to define either function or file.");
         std::string inFile = m_config["file"].as<string>();
 
-        LibUtilities::CommSharedPtr  c =
-                LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
+        LibUtilities::CommSharedPtr c =
+            LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
         LibUtilities::PtsIOSharedPtr ptsIO =
-                MemoryManager<LibUtilities::PtsIO>::AllocateSharedPtr(c);
+            MemoryManager<LibUtilities::PtsIO>::AllocateSharedPtr(c);
         ptsIO->Import(inFile, m_fieldPts);
 
         m_fromFile = true;
     }
 
     // Coordinates of points
-    Array<OneD, NekDouble> x(nq,0.0);
-    Array<OneD, NekDouble> y(nq,0.0);
+    Array<OneD, NekDouble> x(nq, 0.0);
+    Array<OneD, NekDouble> y(nq, 0.0);
     // Distances between points
-    Array<OneD, NekDouble> dx(nq-1,0.0);
-    Array<OneD, NekDouble> dy(nq-1,0.0);
-    Array<OneD, NekDouble> ds(nq-1,0.0);
+    Array<OneD, NekDouble> dx(nq - 1, 0.0);
+    Array<OneD, NekDouble> dy(nq - 1, 0.0);
+    Array<OneD, NekDouble> ds(nq - 1, 0.0);
     // Average distance and deviation from average
-    Array<OneD, NekDouble> s_deviation(nq-1,0.0);
+    Array<OneD, NekDouble> s_deviation(nq - 1, 0.0);
     NekDouble s_average;
 
     // Fix start point
-    x[0] =  n1->m_x;
-    y[0] =  EvaluateCoordinate(x[0]);
+    x[0] = n1->m_x;
+    y[0] = EvaluateCoordinate(x[0]);
     // Start with uniform distribution along x-axis
-    Vmath::Sadd(nq-1, (n2->m_x - n1->m_x) / (nq-1), dx, 1, dx, 1);
+    Vmath::Sadd(nq - 1, (n2->m_x - n1->m_x) / (nq - 1), dx, 1, dx, 1);
 
     // Iterate a few times to make points more evenly distributed
     for (int s = 0; s < niter; ++s)
@@ -163,33 +162,32 @@ void ProcessCurve::v_GenerateEdgeNodes(EdgeSharedPtr edge)
         s_average = 0.0;
         for (int k = 1; k < nq; ++k)
         {
-            x[k] = x[k-1] + dx[k-1] + gamma*s_deviation[k-1];
-            y[k] =  EvaluateCoordinate(x[k]);
+            x[k] = x[k - 1] + dx[k - 1] + gamma * s_deviation[k - 1];
+            y[k] = EvaluateCoordinate(x[k]);
 
-            dx[k-1] = x[k] - x[k-1];
-            dy[k-1] = y[k] - y[k-1];
-            ds[k-1] = sqrt(dx[k-1]*dx[k-1] + dy[k-1]*dy[k-1]);
+            dx[k - 1] = x[k] - x[k - 1];
+            dy[k - 1] = y[k] - y[k - 1];
+            ds[k - 1] = sqrt(dx[k - 1] * dx[k - 1] + dy[k - 1] * dy[k - 1]);
 
-            s_average = s_average + ds[k-1]/(nq-1);
+            s_average = s_average + ds[k - 1] / (nq - 1);
         }
         // Calculate correction for next iteration
-        for (int k = 0; k < nq-1; ++k)
+        for (int k = 0; k < nq - 1; ++k)
         {
-            s_deviation[k] =  (s_average - ds[k])* 
-                                ( dx[k]/abs(dx[k]));
+            s_deviation[k] = (s_average - ds[k]) * (dx[k] / abs(dx[k]));
         }
         // Adjust gama to make sure next partition is valid
         // (no reversals in dx)
         bool valid = false;
-        gamma = m_config["gamma"].as<double>();
-        while( !valid)
+        gamma      = m_config["gamma"].as<double>();
+        while (!valid)
         {
             valid = true;
-            for (int k = 0; k < nq-1; ++k)
+            for (int k = 0; k < nq - 1; ++k)
             {
-                if( dx[k]*(dx[k]+gamma*s_deviation[k]) < 0.0)
+                if (dx[k] * (dx[k] + gamma * s_deviation[k]) < 0.0)
                 {
-                    gamma = gamma/2;
+                    gamma = gamma / 2;
                     valid = false;
                     continue;
                 }
@@ -198,10 +196,10 @@ void ProcessCurve::v_GenerateEdgeNodes(EdgeSharedPtr edge)
     }
 
     // Write interior nodes to edge
-    for (int k = 1; k < nq-1; ++k)
+    for (int k = 1; k < nq - 1; ++k)
     {
-        edge->m_edgeNodes[k-1] = NodeSharedPtr(
-                    new Node(0, x[k], y[k], n1->m_z));
+        edge->m_edgeNodes[k - 1] =
+            NodeSharedPtr(new Node(0, x[k], y[k], n1->m_z));
     }
     edge->m_curveType = LibUtilities::ePolyEvenlySpaced;
 }
@@ -210,7 +208,7 @@ NekDouble ProcessCurve::EvaluateCoordinate(NekDouble xCoord)
 {
     if (m_fromFile)
     {
-        Array<OneD, Array<OneD, NekDouble> > tmp(2);
+        Array<OneD, Array<OneD, NekDouble>> tmp(2);
         tmp[0] = Array<OneD, NekDouble>(1, xCoord);
         tmp[1] = Array<OneD, NekDouble>(1, 0.0);
 
@@ -228,5 +226,5 @@ NekDouble ProcessCurve::EvaluateCoordinate(NekDouble xCoord)
     }
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

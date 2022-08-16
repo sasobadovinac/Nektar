@@ -64,7 +64,7 @@ public:
         return "InputSwan";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

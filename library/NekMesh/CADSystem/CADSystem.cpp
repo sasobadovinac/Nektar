@@ -85,7 +85,7 @@ Array<OneD, NekDouble> CADSystem::GetPeriodicTranslationVector(int first,
     }
 
     vector<CADVertSharedPtr> v1 = c1->GetVertex();
-    Array<OneD, NekDouble> p1 = v1[0]->GetLoc();
+    Array<OneD, NekDouble> p1   = v1[0]->GetLoc();
 
     Array<OneD, NekDouble> p2;
     vector<CADVertSharedPtr> v2 = c2->GetVertex();
@@ -106,5 +106,5 @@ Array<OneD, NekDouble> CADSystem::GetPeriodicTranslationVector(int first,
     return ret;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

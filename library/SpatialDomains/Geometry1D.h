@@ -62,12 +62,11 @@ public:
 
 protected:
     virtual int v_GetShapeDim() const;
-    virtual NekDouble v_GetLocCoords(
-        const Array<OneD, const NekDouble> &coords,
-        Array<OneD, NekDouble> &Lcoords);
+    virtual NekDouble v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
+                                     Array<OneD, NekDouble> &Lcoords);
 };
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_GEOMETRY1D_H

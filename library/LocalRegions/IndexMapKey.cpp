@@ -37,173 +37,157 @@
 
 namespace Nektar
 {
-    namespace LocalRegions
+namespace LocalRegions
+{
+IndexMapKey::IndexMapKey(const IndexMapType indexmapType,
+                         const LibUtilities::ShapeType shapeType,
+                         const unsigned short p, const unsigned short q,
+                         const unsigned short r, const unsigned short entityID,
+                         const StdRegions::Orientation orientation)
+    : m_indexMapType(indexmapType), m_shapeType(shapeType), m_p(p), m_q(q),
+      m_r(r), m_entityID(entityID), m_orientation(orientation)
+{
+}
+
+IndexMapKey::IndexMapKey(const IndexMapKey &rhs,
+                         const IndexMapType indexmapType)
+    : m_indexMapType(indexmapType), m_shapeType(rhs.m_shapeType), m_p(rhs.m_p),
+      m_q(rhs.m_q), m_r(rhs.m_r), m_entityID(rhs.m_entityID),
+      m_orientation(rhs.m_orientation)
+{
+}
+
+IndexMapKey::IndexMapKey(const IndexMapKey &rhs)
+    : m_indexMapType(rhs.m_indexMapType), m_shapeType(rhs.m_shapeType),
+      m_p(rhs.m_p), m_q(rhs.m_q), m_r(rhs.m_r), m_entityID(rhs.m_entityID),
+      m_orientation(rhs.m_orientation)
+{
+}
+
+bool IndexMapKey::opLess::operator()(const IndexMapKey &lhs,
+                                     const IndexMapKey &rhs) const
+{
+    return (lhs.m_indexMapType < rhs.m_indexMapType);
+}
+
+bool operator<(const IndexMapKey &lhs, const IndexMapKey &rhs)
+{
+    if (lhs.m_indexMapType < rhs.m_indexMapType)
     {
-        IndexMapKey::IndexMapKey(
-            const IndexMapType  indexmapType,
-            const LibUtilities::ShapeType   shapeType,
-            const unsigned short            p, 
-            const unsigned short            q,
-            const unsigned short            r,
-            const unsigned short            entityID,
-            const StdRegions::Orientation   orientation)
-            : m_indexMapType(indexmapType),
-              m_shapeType(shapeType),
-              m_p(p),
-              m_q(q),
-              m_r(r),
-              m_entityID(entityID),
-              m_orientation(orientation)
-        {
-        }
+        return true;
+    }
 
-        IndexMapKey::IndexMapKey(const IndexMapKey& rhs,
-                                 const IndexMapType indexmapType):
-            m_indexMapType (indexmapType),
-            m_shapeType(rhs.m_shapeType),
-            m_p            (rhs.m_p),
-            m_q            (rhs.m_q),
-            m_r            (rhs.m_r),
-            m_entityID     (rhs.m_entityID),
-            m_orientation  (rhs.m_orientation)
-        {
-        }
+    if (lhs.m_indexMapType > rhs.m_indexMapType)
+    {
+        return false;
+    }
 
-        IndexMapKey::IndexMapKey(const IndexMapKey& rhs):
-            m_indexMapType (rhs.m_indexMapType),
-            m_shapeType(rhs.m_shapeType),
-            m_p            (rhs.m_p),
-            m_q            (rhs.m_q),
-            m_r            (rhs.m_r),
-            m_entityID     (rhs.m_entityID),
-            m_orientation  (rhs.m_orientation)
-        {
-        }
+    if (lhs.m_shapeType < rhs.m_shapeType)
+    {
+        return true;
+    }
 
-        bool IndexMapKey::opLess::operator()(const IndexMapKey &lhs, 
-                                             const IndexMapKey &rhs) const
-        {        
-            return (lhs.m_indexMapType < rhs.m_indexMapType);
-        }
+    if (lhs.m_shapeType > rhs.m_shapeType)
+    {
+        return false;
+    }
 
-        bool operator<(const IndexMapKey &lhs, const IndexMapKey &rhs)
-        {   
-            if(lhs.m_indexMapType < rhs.m_indexMapType)
-            {
-                return true;
-            }
+    if (lhs.m_p < rhs.m_p)
+    {
+        return true;
+    }
 
-            if(lhs.m_indexMapType > rhs.m_indexMapType)
-            {
-                return false;
-            }
-            
-            if(lhs.m_shapeType < rhs.m_shapeType)
-            {
-                return true;
-            }
-            
-            if(lhs.m_shapeType > rhs.m_shapeType)
-            {
-                return false;
-            }
+    if (lhs.m_p > rhs.m_p)
+    {
+        return false;
+    }
 
-            if(lhs.m_p < rhs.m_p)
-            {
-                return true;
-            }
-            
-            if(lhs.m_p > rhs.m_p)
-            {
-                return false;
-            }
+    if (lhs.m_q < rhs.m_q)
+    {
+        return true;
+    }
 
-            if(lhs.m_q < rhs.m_q)
-            {
-                return true;
-            }
-            
-            if(lhs.m_q > rhs.m_q)
-            {
-                return false;
-            }
+    if (lhs.m_q > rhs.m_q)
+    {
+        return false;
+    }
 
-            if(lhs.m_r < rhs.m_r)
-            {
-                return true;
-            }
-            
-            if(lhs.m_r > rhs.m_r)
-            {
-                return false;
-            }
+    if (lhs.m_r < rhs.m_r)
+    {
+        return true;
+    }
 
-            if(lhs.m_entityID < rhs.m_entityID)
-            {
-                return true;
-            }
-            if(lhs.m_entityID > rhs.m_entityID)
-            {
-                return false;
-            }
+    if (lhs.m_r > rhs.m_r)
+    {
+        return false;
+    }
 
-            if(lhs.m_orientation < rhs.m_orientation)
-            {
-                return true;
-            }
-            if(lhs.m_orientation > rhs.m_orientation)
-            {
-                return false;
-            }
+    if (lhs.m_entityID < rhs.m_entityID)
+    {
+        return true;
+    }
+    if (lhs.m_entityID > rhs.m_entityID)
+    {
+        return false;
+    }
 
-            return false;
-        }
+    if (lhs.m_orientation < rhs.m_orientation)
+    {
+        return true;
+    }
+    if (lhs.m_orientation > rhs.m_orientation)
+    {
+        return false;
+    }
 
-        bool operator==(const IndexMapKey &lhs, const IndexMapKey &rhs)
-        {
-            if(lhs.m_indexMapType != rhs.m_indexMapType)
-            {
-                return false;
-            }
+    return false;
+}
 
-            if(lhs.m_shapeType != rhs.m_shapeType)
-            {
-                return false;
-            }
+bool operator==(const IndexMapKey &lhs, const IndexMapKey &rhs)
+{
+    if (lhs.m_indexMapType != rhs.m_indexMapType)
+    {
+        return false;
+    }
 
-            if(lhs.m_p != rhs.m_p)
-            {
-                return false;
-            }
+    if (lhs.m_shapeType != rhs.m_shapeType)
+    {
+        return false;
+    }
 
-            if(lhs.m_q != rhs.m_q)
-            {
-                return false;
-            }
+    if (lhs.m_p != rhs.m_p)
+    {
+        return false;
+    }
 
-            if(lhs.m_r != rhs.m_r)
-            {
-                return false;
-            }
+    if (lhs.m_q != rhs.m_q)
+    {
+        return false;
+    }
 
-            if(lhs.m_entityID != rhs.m_entityID)
-            {
-                return false;
-            }
+    if (lhs.m_r != rhs.m_r)
+    {
+        return false;
+    }
 
-            if(lhs.m_orientation != rhs.m_orientation)
-            {
-                return false;
-            }
+    if (lhs.m_entityID != rhs.m_entityID)
+    {
+        return false;
+    }
 
-            return true;
-        }
+    if (lhs.m_orientation != rhs.m_orientation)
+    {
+        return false;
+    }
 
-        std::ostream& operator<<(std::ostream& os, const IndexMapKey& rhs)
-        {
-            os << "IndexMapType: " << IndexMapTypeMap[rhs.GetIndexMapType()] 
-               << std::endl;
-            return os;
-        }
-    } // end LocalRegion namespace
-} // end Nektar namespace
+    return true;
+}
+
+std::ostream &operator<<(std::ostream &os, const IndexMapKey &rhs)
+{
+    os << "IndexMapType: " << IndexMapTypeMap[rhs.GetIndexMapType()]
+       << std::endl;
+    return os;
+}
+} // namespace LocalRegions
+} // namespace Nektar

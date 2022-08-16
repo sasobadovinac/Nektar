@@ -238,5 +238,5 @@ void ProcessL2Criterion::Process(po::variables_map &vm)
         m_f->m_exp.insert(it, Exp);
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

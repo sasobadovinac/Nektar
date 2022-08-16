@@ -41,11 +41,11 @@ namespace Nektar
 {
 
 /**
-* @brief van der Waals equation of state:
+ * @brief van der Waals equation of state:
  *       p = RT/(1/rho - b) - a * rho^2
  *       with a = 27/64 * (R*Tc)^2 / Pc
  *            b = 1/8   * (R*Tc) / Pc
-*/
+ */
 class VanDerWaalsEoS : public EquationOfState
 {
 public:
@@ -67,13 +67,13 @@ protected:
     NekDouble m_a;
     NekDouble m_b;
 
-    NekDouble GetTemperature(const NekDouble& rho, const NekDouble& e) final;
+    NekDouble GetTemperature(const NekDouble &rho, const NekDouble &e) final;
 
-    vec_t GetTemperature(const vec_t& rho, const vec_t& e) final;
+    vec_t GetTemperature(const vec_t &rho, const vec_t &e) final;
 
-    NekDouble GetPressure(const NekDouble& rho, const NekDouble& e) final;
+    NekDouble GetPressure(const NekDouble &rho, const NekDouble &e) final;
 
-    vec_t GetPressure(const vec_t& rho, const vec_t& e) final;
+    vec_t GetPressure(const vec_t &rho, const vec_t &e) final;
 
     NekDouble v_GetEntropy(const NekDouble &rho, const NekDouble &e) final;
 
@@ -90,31 +90,23 @@ private:
 
     ~VanDerWaalsEoS(void){};
 
-
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T GetTemperatureKernel(const T& rho, const T& e)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T GetTemperatureKernel(const T &rho, const T &e)
     {
         return (e + m_a * rho) * (m_gamma - 1) / m_gasConstant;
     }
 
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T GetPressureKernel(const T& rho, const T& e)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T GetPressureKernel(const T &rho, const T &e)
     {
         return (e + m_a * rho) * (m_gamma - 1) / (1.0 / rho - m_b) -
                m_a * rho * rho;
     }
-
 };
-}
+} // namespace Nektar
 
 #endif

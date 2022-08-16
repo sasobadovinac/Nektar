@@ -425,22 +425,23 @@ private:
 /// Shared pointer to a Node.
 
 NEKMESH_EXPORT bool operator==(NodeSharedPtr const &p1,
-                                    NodeSharedPtr const &p2);
-NEKMESH_EXPORT bool operator<(NodeSharedPtr const &p1,
-                                   NodeSharedPtr const &p2);
+                               NodeSharedPtr const &p2);
+NEKMESH_EXPORT bool operator<(NodeSharedPtr const &p1, NodeSharedPtr const &p2);
 NEKMESH_EXPORT bool operator!=(NodeSharedPtr const &p1,
-                                    NodeSharedPtr const &p2);
+                               NodeSharedPtr const &p2);
 NEKMESH_EXPORT std::ostream &operator<<(std::ostream &os,
-                                             const NodeSharedPtr &n);
+                                        const NodeSharedPtr &n);
 
-/// Define node equality based on coordinate with optional custom tolerance factor.
-/// This routine checks the relative distance between the coordinates
-NEKMESH_EXPORT bool IsNodeEqual(const Node &n1, const Node &n2,
+/// Define node equality based on coordinate with optional custom tolerance
+/// factor. This routine checks the relative distance between the coordinates
+NEKMESH_EXPORT bool IsNodeEqual(
+    const Node &n1, const Node &n2,
     const unsigned int fact = NekConstants::kNekFloatCompFact);
 
-/// Define node equality based on coordinate with optional custom tolerance factor.
-/// This routine checks the absolute distance between the coordinates
-NEKMESH_EXPORT bool IsNodeClose(const Node &n1, const Node &n2,
+/// Define node equality based on coordinate with optional custom tolerance
+/// factor. This routine checks the absolute distance between the coordinates
+NEKMESH_EXPORT bool IsNodeClose(
+    const Node &n1, const Node &n2,
     const NekDouble tol = NekConstants::kNekMachineEpsilon);
 
 /**
@@ -457,7 +458,7 @@ struct NodeHash : std::unary_function<NodeSharedPtr, std::size_t>
     }
 };
 typedef std::unordered_set<NodeSharedPtr, NodeHash> NodeSet;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

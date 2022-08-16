@@ -35,41 +35,41 @@
 #ifndef NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_VECTORDISTMATHARRAY_HPP
 #define NEKTAR_LIB_LIBUTILITIES_BASSICUTILS_VECTORDISTMATHARRAY_HPP
 
-#include <LibUtilities/BasicUtils/VDmath.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/BasicUtils/VDmath.hpp>
 #include <LibUtilities/Communication/Comm.h>
-
 
 namespace VDmath
 {
-    using namespace Nektar;
+using namespace Nektar;
 
-    /// \brief
-    template<class T> T Ddot2(LibUtilities::CommSharedPtr& pComm, int n,
-                              const Array<OneD, const T> &w,
-                              const Array<OneD, const T> &x,
-                              const Array<OneD, const int> &y)
-    {
-        ASSERTL1(n <= w.size()+w.GetOffset(),"Array out of bounds");
-        ASSERTL1(n <= x.size()+x.GetOffset(),"Array out of bounds");
-        ASSERTL1(n <= y.size()+y.GetOffset(),"Array out of bounds");
+/// \brief
+template <class T>
+T Ddot2(LibUtilities::CommSharedPtr &pComm, int n,
+        const Array<OneD, const T> &w, const Array<OneD, const T> &x,
+        const Array<OneD, const int> &y)
+{
+    ASSERTL1(n <= w.size() + w.GetOffset(), "Array out of bounds");
+    ASSERTL1(n <= x.size() + x.GetOffset(), "Array out of bounds");
+    ASSERTL1(n <= y.size() + y.GetOffset(), "Array out of bounds");
 
-        return Ddot2(pComm, n,&w[0],&x[0],&y[0]);
-    }
-
-    /// \brief
-    template<class T> T Ddot2(LibUtilities::CommSharedPtr& pComm, int n,
-                              const Array<OneD, const T> &w, const int incw,
-                              const Array<OneD, const T> &x, const int incx,
-                              const Array<OneD, const int> &y, const int incy)
-    {
-        ASSERTL1(n*incw <= w.size()+w.GetOffset(),"Array out of bounds");
-        ASSERTL1(n*incx <= x.size()+x.GetOffset(),"Array out of bounds");
-        ASSERTL1(n*incy <= y.size()+y.GetOffset(),"Array out of bounds");
-
-        return Ddot2(pComm, n,&w[0],incw,&x[0],incx,&y[0],incy);
-    }
-
+    return Ddot2(pComm, n, &w[0], &x[0], &y[0]);
 }
+
+/// \brief
+template <class T>
+T Ddot2(LibUtilities::CommSharedPtr &pComm, int n,
+        const Array<OneD, const T> &w, const int incw,
+        const Array<OneD, const T> &x, const int incx,
+        const Array<OneD, const int> &y, const int incy)
+{
+    ASSERTL1(n * incw <= w.size() + w.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
+
+    return Ddot2(pComm, n, &w[0], incw, &x[0], incx, &y[0], incy);
+}
+
+} // namespace VDmath
 
 #endif /* VDMATHARRAY_HPP_ */

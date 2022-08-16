@@ -32,29 +32,28 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <MultiRegions/ContField.h>
 #include <LibUtilities/Python/NekPyConfig.hpp>
+#include <MultiRegions/ContField.h>
 
 using namespace Nektar;
 using namespace Nektar::MultiRegions;
 
 std::shared_ptr<ContField> CreateContField(
     const LibUtilities::SessionReaderSharedPtr &session,
-    const SpatialDomains::MeshGraphSharedPtr &graph,
-    const std::string &var,
+    const SpatialDomains::MeshGraphSharedPtr &graph, const std::string &var,
     const bool checkSingular)
 {
-    return std::make_shared<ContField>(session, graph, var,
-                                       true, checkSingular);
+    return std::make_shared<ContField>(session, graph, var, true,
+                                       checkSingular);
 }
 
 void export_ContField()
 {
     py::class_<ContField, py::bases<ExpList>, std::shared_ptr<ContField>>(
         "ContField", py::no_init)
-        .def("__init__", py::make_constructor(
-                 &CreateContField,
-                 py::default_call_policies(),
-                 (py::arg("session"), py::arg("graph"), py::arg("var"),
-                  py::arg("checkSingular") = true)));
+        .def("__init__",
+             py::make_constructor(&CreateContField, py::default_call_policies(),
+                                  (py::arg("session"), py::arg("graph"),
+                                   py::arg("var"),
+                                   py::arg("checkSingular") = true)));
 }

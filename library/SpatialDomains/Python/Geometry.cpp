@@ -32,17 +32,17 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <LibUtilities/Python/NekPyConfig.hpp>
 #include <SpatialDomains/Geometry.h>
 #include <SpatialDomains/Geometry1D.h>
 #include <SpatialDomains/Geometry2D.h>
-#include <LibUtilities/Python/NekPyConfig.hpp>
 
 using namespace Nektar;
 using namespace Nektar::SpatialDomains;
 
 // Thin wrapper for ContainsPoint
 bool Geometry_ContainsPoint(GeometrySharedPtr geom,
-                            const Array<OneD, const NekDouble>& gloCoord)
+                            const Array<OneD, const NekDouble> &gloCoord)
 {
     return geom->ContainsPoint(gloCoord);
 }
@@ -54,38 +54,35 @@ void Geometry_GenGeomFactors(GeometrySharedPtr geom)
 
 void export_Geometry()
 {
-    py::class_<Geometry,
-               std::shared_ptr<Geometry>,
-               boost::noncopyable>(
-                   "Geometry", py::no_init)
+    py::class_<Geometry, std::shared_ptr<Geometry>, boost::noncopyable>(
+        "Geometry", py::no_init)
 
-        .def("GetCoordim",     &Geometry::GetCoordim)
-        .def("GetGlobalID",    &Geometry::GetGlobalID)
+        .def("GetCoordim", &Geometry::GetCoordim)
+        .def("GetGlobalID", &Geometry::GetGlobalID)
 
-        .def("Setup",          &Geometry::Setup)
-        .def("FillGeom",       &Geometry::FillGeom)
+        .def("Setup", &Geometry::Setup)
+        .def("FillGeom", &Geometry::FillGeom)
         .def("GenGeomFactors", &Geometry_GenGeomFactors)
 
-        .def("ContainsPoint",  &Geometry_ContainsPoint)
+        .def("ContainsPoint", &Geometry_ContainsPoint)
 
-        .def("GetVertex",      &Geometry::GetVertex)
-        .def("GetEdge",        &Geometry::GetEdge)
-        .def("GetFace",        &Geometry::GetFace)
-        .def("GetVid",         &Geometry::GetVid)
-        .def("GetEid",         &Geometry::GetEid)
-        .def("GetFid",         &Geometry::GetFid)
-        .def("GetTid",         &Geometry::GetTid)
+        .def("GetVertex", &Geometry::GetVertex)
+        .def("GetEdge", &Geometry::GetEdge)
+        .def("GetFace", &Geometry::GetFace)
+        .def("GetVid", &Geometry::GetVid)
+        .def("GetEid", &Geometry::GetEid)
+        .def("GetFid", &Geometry::GetFid)
+        .def("GetTid", &Geometry::GetTid)
 
-        .def("GetNumVerts",    &Geometry::GetNumVerts)
-        .def("GetNumEdges",    &Geometry::GetNumEdges)
-        .def("GetNumFaces",    &Geometry::GetNumFaces)
-        .def("GetShapeDim",    &Geometry::GetShapeDim)
-        .def("GetShapeType",   &Geometry::GetShapeType)
-        .def("GetEorient",     &Geometry::GetEorient)
-        .def("GetForient",     &Geometry::GetForient)
+        .def("GetNumVerts", &Geometry::GetNumVerts)
+        .def("GetNumEdges", &Geometry::GetNumEdges)
+        .def("GetNumFaces", &Geometry::GetNumFaces)
+        .def("GetShapeDim", &Geometry::GetShapeDim)
+        .def("GetShapeType", &Geometry::GetShapeType)
+        .def("GetEorient", &Geometry::GetEorient)
+        .def("GetForient", &Geometry::GetForient)
 
-        .def("GetXmap",        &Geometry::GetXmap)
-        .def("GetCoeffs",      &Geometry::GetCoeffs,
-             py::return_value_policy<py::copy_const_reference>())
-        ;
+        .def("GetXmap", &Geometry::GetXmap)
+        .def("GetCoeffs", &Geometry::GetCoeffs,
+             py::return_value_policy<py::copy_const_reference>());
 }

@@ -38,42 +38,43 @@ using namespace std;
 
 namespace Nektar
 {
-    string Poisson::className1 = GetEquationSystemFactory().RegisterCreatorFunction("Poisson", Poisson::create);
-    string Poisson::className2 = GetEquationSystemFactory().RegisterCreatorFunction("SteadyDiffusion", Poisson::create);
+string Poisson::className1 = GetEquationSystemFactory().RegisterCreatorFunction(
+    "Poisson", Poisson::create);
+string Poisson::className2 = GetEquationSystemFactory().RegisterCreatorFunction(
+    "SteadyDiffusion", Poisson::create);
 
-    Poisson::Poisson(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : Laplace(pSession, pGraph)
+Poisson::Poisson(const LibUtilities::SessionReaderSharedPtr &pSession,
+                 const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : Laplace(pSession, pGraph)
+{
+}
+
+void Poisson::v_InitObject(bool DeclareFields)
+{
+    Laplace::v_InitObject(DeclareFields);
+
+    GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
+}
+
+Poisson::~Poisson()
+{
+}
+
+void Poisson::v_GenerateSummary(SolverUtils::SummaryList &s)
+{
+    Laplace::v_GenerateSummary(s);
+    for (int i = 0; i < m_fields.size(); ++i)
     {
-    }
-
-    void Poisson::v_InitObject(bool DeclareFields)
-    {
-        Laplace::v_InitObject(DeclareFields);
-
-        GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
-    }
-
-    Poisson::~Poisson()
-    {
-
-    }
-
-    void Poisson::v_GenerateSummary(SolverUtils::SummaryList& s)
-    {
-        Laplace::v_GenerateSummary(s);
-        for (int i = 0; i < m_fields.size(); ++i)
-        {
-            stringstream name;
-            name << "Forcing func [" << i << "]";
-            SolverUtils::AddSummaryItem(s, name.str(),
-                    GetFunction("Forcing")->Describe(m_session->GetVariable(0)));
-        }
-    }
-
-    Array<OneD, bool> Poisson::v_GetSystemSingularChecks()
-    {
-        return Array<OneD, bool>(m_session->GetVariables().size(), true);
+        stringstream name;
+        name << "Forcing func [" << i << "]";
+        SolverUtils::AddSummaryItem(
+            s, name.str(),
+            GetFunction("Forcing")->Describe(m_session->GetVariable(0)));
     }
 }
+
+Array<OneD, bool> Poisson::v_GetSystemSingularChecks()
+{
+    return Array<OneD, bool>(m_session->GetVariables().size(), true);
+}
+} // namespace Nektar

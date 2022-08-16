@@ -35,8 +35,8 @@
 #ifndef NEKMESH_CADSYSTEM_CADVERT
 #define NEKMESH_CADSYSTEM_CADVERT
 
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include <NekMesh/CADSystem/CADObject.h>
 
@@ -47,7 +47,7 @@ namespace Nektar
 namespace NekMesh
 {
 
-//forward decleration
+// forward decleration
 class Node;
 typedef std::shared_ptr<Node> NodeSharedPtr;
 class CADSurf;
@@ -120,7 +120,7 @@ public:
     /**
      * @brief Get list of CAD curves which are bound by this vertex
      */
-    std::vector<std::weak_ptr<CADCurve> > GetAdjCurves()
+    std::vector<std::weak_ptr<CADCurve>> GetAdjCurves()
     {
         return curves;
     }
@@ -133,16 +133,16 @@ protected:
     /// degen surface
     int degensurf;
     /// adjacent curves
-    std::vector<std::weak_ptr<CADCurve> > curves;
+    std::vector<std::weak_ptr<CADCurve>> curves;
 };
 
 typedef std::shared_ptr<CADVert> CADVertSharedPtr;
 
 typedef LibUtilities::NekFactory<std::string, CADVert> CADVertFactory;
 
-CADVertFactory& GetCADVertFactory();
+CADVertFactory &GetCADVertFactory();
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

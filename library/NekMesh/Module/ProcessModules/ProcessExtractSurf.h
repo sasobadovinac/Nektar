@@ -69,7 +69,7 @@ public:
         return "ProcessExtractSurf";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -27,7 +27,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-// 
+//
 // Description: Header file of 1D Fourier Single Mode space distribution
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -35,83 +35,102 @@
 #ifndef FOURIERSINGLEMODEPOINTS_H
 #define FOURIERSINGLEMODEPOINTS_H
 
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
+#include <LibUtilities/BasicUtils/NekManager.hpp> // for NekManager
 #include <LibUtilities/Foundations/Foundations.hpp>
+#include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/Points.h>
-#include <LibUtilities/BasicUtils/NekManager.hpp>  // for NekManager
 
 namespace Nektar
 {
-    namespace LibUtilities 
+namespace LibUtilities
+{
+class FourierSingleModePoints : public Points<NekDouble>
+{
+public:
+    virtual ~FourierSingleModePoints()
     {
-        class FourierSingleModePoints: public Points<NekDouble>
-        {
-            public:
-                virtual ~FourierSingleModePoints()
-                {
-                }            
+    }
 
-                LIB_UTILITIES_EXPORT static std::shared_ptr< PointsBaseType > Create(const PointsKey &key);
-                LIB_UTILITIES_EXPORT std::shared_ptr< NekMatrix<NekDouble> > CreateMatrix(const PointsKey &pkey);
+    LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
+        const PointsKey &key);
+    LIB_UTILITIES_EXPORT std::shared_ptr<NekMatrix<NekDouble>> CreateMatrix(
+        const PointsKey &pkey);
 
-                LIB_UTILITIES_EXPORT const MatrixSharedPtrType GetI(const PointsKey &pkey);
-                LIB_UTILITIES_EXPORT const MatrixSharedPtrType GetI(const Array<OneD, const NekDouble>& x);
-                LIB_UTILITIES_EXPORT const MatrixSharedPtrType GetI(unsigned int numpoints, const Array<OneD, const NekDouble>& x);
+    LIB_UTILITIES_EXPORT const MatrixSharedPtrType GetI(const PointsKey &pkey);
+    LIB_UTILITIES_EXPORT const MatrixSharedPtrType
+    GetI(const Array<OneD, const NekDouble> &x);
+    LIB_UTILITIES_EXPORT const MatrixSharedPtrType
+    GetI(unsigned int numpoints, const Array<OneD, const NekDouble> &x);
 
-                FourierSingleModePoints(const PointsKey &key):PointsBaseType(key)
-                {
-                    namespace pl = std::placeholders;
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussGaussLegendre),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussRadauMLegendre),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussRadauPLegendre),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussLobattoLegendre),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussGaussChebyshev),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussRadauMChebyshev),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussRadauPChebyshev),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussLobattoChebyshev),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussRadauMAlpha0Beta1),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussRadauMAlpha0Beta2),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussRadauMAlpha1Beta0),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eGaussRadauMAlpha2Beta0),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, ePolyEvenlySpaced),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eFourierEvenlySpaced),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                    m_InterpManager.RegisterCreator(PointsKey(0, eFourierSingleModeSpaced),
-                        std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
-                }
+    FourierSingleModePoints(const PointsKey &key) : PointsBaseType(key)
+    {
+        namespace pl = std::placeholders;
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussGaussLegendre),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMLegendre),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauPLegendre),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussLobattoLegendre),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussGaussChebyshev),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMChebyshev),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauPChebyshev),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussLobattoChebyshev),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMAlpha0Beta1),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMAlpha0Beta2),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMAlpha1Beta0),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMAlpha2Beta0),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, ePolyEvenlySpaced),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eFourierEvenlySpaced),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eFourierSingleModeSpaced),
+            std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
+    }
 
-            private:
-                static bool initPointsManager[];
+private:
+    static bool initPointsManager[];
 
-                /// Default constructor should not be called except by Create method.
-                FourierSingleModePoints();
+    /// Default constructor should not be called except by Create method.
+    FourierSingleModePoints();
 
-                /// Copy constructor should not be called.
-                FourierSingleModePoints(const FourierSingleModePoints &points);
+    /// Copy constructor should not be called.
+    FourierSingleModePoints(const FourierSingleModePoints &points);
 
-                void CalculatePoints();
-                void CalculateWeights();
-                void CalculateDerivMatrix();
+    void CalculatePoints();
+    void CalculateWeights();
+    void CalculateDerivMatrix();
 
-                void CalculateInterpMatrix(unsigned int npts, const Array<OneD, const NekDouble>& xpoints, 
-                                           Array<OneD, NekDouble>& interp);
-                               NekDouble PeriodicSincFunction(const NekDouble x, const NekDouble h);
-        }; // class FourierPoints
-    } // end of namespace
-} // end of namespace 
+    void CalculateInterpMatrix(unsigned int npts,
+                               const Array<OneD, const NekDouble> &xpoints,
+                               Array<OneD, NekDouble> &interp);
+    NekDouble PeriodicSincFunction(const NekDouble x, const NekDouble h);
+}; // class FourierPoints
+} // namespace LibUtilities
+} // namespace Nektar
 
-
-#endif //FOURIERSINGLEMODEPOINTS_H
+#endif // FOURIERSINGLEMODEPOINTS_H
