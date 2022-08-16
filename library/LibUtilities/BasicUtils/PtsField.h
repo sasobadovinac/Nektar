@@ -147,6 +147,11 @@ public:
     LIB_UTILITIES_EXPORT void SetPointsPerEdge(
         const std::vector<size_t> nPtsPerEdge);
 
+    LIB_UTILITIES_EXPORT void SetPointsPerElement(
+        const std::vector<int> nPtsPerElement);
+
+    LIB_UTILITIES_EXPORT std::vector<int> GetPointsPerElement() const;
+
     LIB_UTILITIES_EXPORT PtsType GetPtsType() const;
 
     LIB_UTILITIES_EXPORT void SetPtsType(const PtsType type);
@@ -170,6 +175,7 @@ private:
     /// specific shape (ePtsLine) or is a block (ePtsTetBlock,
     /// ePtsTriBlock), size=1 for ePtsLine and 2 for a ePtsPlane
     std::vector<size_t> m_nPtsPerEdge;
+    std::vector<int> m_nPtsPerElement;
     /// Connectivity data needed for ePtsTetBlock and ePtsTriBlock. For n
     /// Blocks with m elements each, m_ptsConn is a vector of n arrays with
     /// 3*m (ePtsTriBlock) or 4*m (ePtsTetBlock) entries.

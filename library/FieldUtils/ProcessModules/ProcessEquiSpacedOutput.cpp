@@ -202,7 +202,7 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
     for (int i = 0; i < nel; ++i)
     {
         e = m_f->m_exp[0]->GetExp(i);
-        if (m_config["tetonly"].as<bool>())
+        if (m_config["tetonly"].m_beenSet && m_config["tetonly"].as<bool>())
         {
             if (m_f->m_exp[0]->GetExp(i)->DetShapeType() !=
                 LibUtilities::eTetrahedron)
@@ -368,7 +368,8 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
         cnt      = 0;
         int cnt1 = 0;
 
-        if (m_config["modalenergy"].as<bool>())
+        if (m_config["modalenergy"].m_beenSet &&
+            m_config["modalenergy"].as<bool>())
         {
             Array<OneD, const NekDouble> phys = m_f->m_exp[n]->GetPhys();
             for (int i = 0; i < nel; ++i)
@@ -411,6 +412,9 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
     {
         SetHomogeneousConnectivity();
     }
+
+    // Save points per element in the point field
+    m_f->m_fieldPts->SetPointsPerElement(ppe);
 
     // Clear m_exp
     m_f->m_exp = vector<MultiRegions::ExpListSharedPtr>();

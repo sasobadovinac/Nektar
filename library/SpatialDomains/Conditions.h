@@ -262,12 +262,18 @@ public:
         return m_boundaryCommunicators;
     }
 
+    const std::map<int, std::string> &GetBoundaryLabels(void) const
+    {
+        return m_boundaryLabels;
+    }
+
 protected:
     /// The mesh graph to use for referencing geometry info.
     MeshGraphSharedPtr m_meshGraph;
     LibUtilities::SessionReaderSharedPtr m_session;
 
     BoundaryRegionCollection m_boundaryRegions;
+    std::map<int, std::string> m_boundaryLabels;
     BoundaryConditionCollection m_boundaryConditions;
     std::map<int, LibUtilities::CommSharedPtr> m_boundaryCommunicators;
 

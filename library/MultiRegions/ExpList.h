@@ -365,6 +365,11 @@ public:
         Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
         Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
+    inline void GetCoords(
+        const int eid, Array<OneD, NekDouble> &coord_0,
+        Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
+        Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
+
     // Homogeneous transforms
     inline void HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
@@ -1413,6 +1418,10 @@ protected:
         Array<OneD, NekDouble> &coord_0, Array<OneD, NekDouble> &coord_1,
         Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
+    virtual void v_GetCoords(const int eid, Array<OneD, NekDouble> &xc0,
+                             Array<OneD, NekDouble> &xc1,
+                             Array<OneD, NekDouble> &xc2);
+
     virtual void v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
                              Array<OneD, NekDouble> &out_d0,
                              Array<OneD, NekDouble> &out_d1,
@@ -1901,6 +1910,13 @@ inline void ExpList::GetCoords(Array<OneD, NekDouble> &coord_0,
 
 {
     v_GetCoords(coord_0, coord_1, coord_2);
+}
+
+inline void ExpList::GetCoords(const int eid, Array<OneD, NekDouble> &xc0,
+                               Array<OneD, NekDouble> &xc1,
+                               Array<OneD, NekDouble> &xc2)
+{
+    v_GetCoords(eid, xc0, xc1, xc2);
 }
 
 /**
