@@ -49,6 +49,7 @@
 
 class TiXmlElement;
 class TiXmlDocument;
+class TiXmlHandle;
 
 namespace Nektar
 {
@@ -635,6 +636,11 @@ inline std::string SessionReader::RegisterCmdLineFlag(
     GetCmdLineArgMap()[pName] = x;
     return pName;
 }
+
+TiXmlElement *GetChildElementOrThrow(const std::string &filename,
+                                     std::string childElementName,
+                                     const TiXmlHandle &docHandle);
+
 } // namespace LibUtilities
 } // namespace Nektar
 
