@@ -216,6 +216,12 @@ protected:
     v_CreateStdMatrix(const StdMatrixKey &mkey) override;
 
     //---------------------------------------
+    // Output interpolation functions
+    //---------------------------------------
+    STD_REGIONS_EXPORT virtual void v_GetSimplexEquiSpacedConnectivity(
+        Array<OneD, int> &conn, bool standard = true);
+
+    //---------------------------------------
     // Operator evaluation functions
     //---------------------------------------
     STD_REGIONS_EXPORT void v_MassMatrixOp(

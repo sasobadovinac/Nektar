@@ -432,6 +432,16 @@ For example,
 </BOUNDARYREGIONS>
 \end{lstlisting}
 
+The boundary regions can also optionally contain a name which is then used in the
+multi-block VTK output to label the block descriptively rather than by ID, for
+example
+\begin{lstlisting}[style=XMLStyle]
+<BOUNDARYREGIONS>
+  <B ID="0" NAME="Wall"> C[2] </B>
+  <B ID="1" NAME="Farfield"> C[3] </B>
+</BOUNDARYREGIONS>
+\end{lstlisting}
+
 The second XML element defines, for each variable, the condition to impose on
 each boundary region, and has the form,
 \begin{lstlisting}[style=XMLStyle]

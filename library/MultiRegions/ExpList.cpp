@@ -4774,6 +4774,13 @@ void ExpList::v_GetCoords(Array<OneD, NekDouble> &coord_0,
     }
 }
 
+void ExpList::v_GetCoords(const int eid, Array<OneD, NekDouble> &xc0,
+                          Array<OneD, NekDouble> &xc1,
+                          Array<OneD, NekDouble> &xc2)
+{
+    (*m_exp)[eid]->GetCoords(xc0, xc1, xc2);
+}
+
 /**
  * @brief: Set up a normal along the trace elements between
  * two elements at elemental level

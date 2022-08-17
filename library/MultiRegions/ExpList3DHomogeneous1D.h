@@ -103,18 +103,6 @@ public:
     /// Destructor.
     MULTI_REGIONS_EXPORT virtual ~ExpList3DHomogeneous1D();
 
-    /// This function calculates the coordinates of all the elemental
-    /// quadrature points \f$\boldsymbol{x}_i\f$.
-    inline void GetCoords(
-        Array<OneD, NekDouble> &coord_0,
-        Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
-        Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
-
-    MULTI_REGIONS_EXPORT void GetCoords(const int eid,
-                                        Array<OneD, NekDouble> &xc0,
-                                        Array<OneD, NekDouble> &xc1,
-                                        Array<OneD, NekDouble> &xc2);
-
 protected:
     /// Definition of the total number of degrees of freedom and
     /// quadrature points. Sets up the storage for \a m_coeff and \a
@@ -125,6 +113,10 @@ protected:
     virtual void v_GetCoords(Array<OneD, NekDouble> &coord_0,
                              Array<OneD, NekDouble> &coord_1,
                              Array<OneD, NekDouble> &coord_2);
+
+    void v_GetCoords(const int eid, Array<OneD, NekDouble> &xc0,
+                     Array<OneD, NekDouble> &xc1,
+                     Array<OneD, NekDouble> &xc2) final;
 
     virtual void v_WriteTecplotConnectivity(std::ostream &outfile,
                                             int expansion);
@@ -152,13 +144,6 @@ private:
         const Collections::ImplementationType ImpType);
 };
 
-inline void ExpList3DHomogeneous1D::GetCoords(Array<OneD, NekDouble> &coord_0,
-                                              Array<OneD, NekDouble> &coord_1,
-                                              Array<OneD, NekDouble> &coord_2)
-
-{
-    v_GetCoords(coord_0, coord_1, coord_2);
-}
 } // namespace MultiRegions
 } // namespace Nektar
 

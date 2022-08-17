@@ -614,8 +614,7 @@ void FilterFieldConvert::CreateModules(std::vector<std::string> &modcmds)
             {
                 int dot         = tmp1[0].find_last_of('.') + 1;
                 std::string ext = tmp1[0].substr(dot, tmp1[0].length() - dot);
-
-                module.second = ext;
+                module.second   = ext;
                 tmp1.push_back(std::string("outfile=") + tmp1[0]);
             }
             else
