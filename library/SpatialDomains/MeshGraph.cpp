@@ -2547,38 +2547,35 @@ ExpansionInfoMapShPtr MeshGraph::SetUpExpansionInfoMap(void)
     ExpansionInfoMapShPtr returnval;
     returnval = MemoryManager<ExpansionInfoMap>::AllocateSharedPtr();
 
-    for (int d = 0; d < m_domain.size(); ++d)
+    for (auto &d : m_domain)
     {
-        for (auto compIter = m_domain[d].begin(); compIter != m_domain[d].end();
-             ++compIter)
+        for (auto &compIter : d.second)
         {
             // regular elements first
-            for (auto x = compIter->second->m_geomVec.begin();
-                 x != compIter->second->m_geomVec.end(); ++x)
+            for (auto & x : compIter.second->m_geomVec)
             {
-                if ((*x)->GetGeomFactors()->GetGtype() !=
+                if (x->GetGeomFactors()->GetGtype() !=
                     SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x,
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x,
                                                                         def);
-                    int id           = (*x)->GetGlobalID();
+                    int id           = x->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
             }
             // deformed elements
-            for (auto x = compIter->second->m_geomVec.begin();
-                 x != compIter->second->m_geomVec.end(); ++x)
+            for (auto & x : compIter.second->m_geomVec)
             {
-                if ((*x)->GetGeomFactors()->GetGtype() ==
+                if (x->GetGeomFactors()->GetGtype() ==
                     SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x,
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x,
                                                                         def);
-                    int id           = (*x)->GetGlobalID();
+                    int id           = x->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
             }
@@ -2662,11 +2659,11 @@ void MeshGraph::ReadExpansionInfo()
             // Collect all composites of the domain to control which
             // composites are defined for each variable.
             map<int, bool> domainCompList;
-            for (int d = 0; d < m_domain.size(); ++d)
+            for (auto &d : m_domain)
             {
-                for (auto c = m_domain[d].begin(); c != m_domain[d].end(); ++c)
+                for (auto &c : d.second)
                 {
-                    domainCompList[c->first] = false;
+                    domainCompList[c.first] = false;
                 }
             }
             map<std::string, map<int, bool>> fieldDomainCompList;
@@ -3114,11 +3111,11 @@ void MeshGraph::ReadExpansionInfo()
             // Collect all composites of the domain to control which
             // composites are defined for each variable.
             map<int, bool> domainCompList;
-            for (int d = 0; d < m_domain.size(); ++d)
+            for (auto &d : m_domain)
             {
-                for (auto c = m_domain[d].begin(); c != m_domain[d].end(); ++c)
+                for (auto &c : d.second)
                 {
-                    domainCompList[c->first] = false;
+                    domainCompList[c.first] = false;
                 }
             }
             map<std::string, map<int, bool>> fieldDomainCompList;
@@ -3542,12 +3539,11 @@ GeometryLinkSharedPtr MeshGraph::GetElementsFromEdge(Geometry1DSharedPtr edge)
     TriGeomSharedPtr triGeomShPtr;
     QuadGeomSharedPtr quadGeomShPtr;
 
-    for (int d = 0; d < m_domain.size(); ++d)
+    for (auto &d : m_domain)
     {
-        for (auto compIter = m_domain[d].begin(); compIter != m_domain[d].end();
-             ++compIter)
+        for (auto &compIter : d.second)
         {
-            for (auto &geomIter : compIter->second->m_geomVec)
+            for (auto &geomIter : compIter.second->m_geomVec)
             {
                 triGeomShPtr  = std::dynamic_pointer_cast<TriGeom>(geomIter);
                 quadGeomShPtr = std::dynamic_pointer_cast<QuadGeom>(geomIter);
