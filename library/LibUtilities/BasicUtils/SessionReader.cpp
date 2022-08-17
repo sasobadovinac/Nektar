@@ -1469,7 +1469,7 @@ TiXmlDocument *SessionReader::MergeDoc(
 
     TiXmlHandle vMainHandle(vMainDoc);
     TiXmlElement *vMainNektar =
-        vMainHandle.FirstChildElement("NEKTAR").Element();
+        GetChildElementOrThrow(pFilenames[0], "NEKTAR", vMainHandle);
 
     // Read all subsequent XML documents.
     // For each element within the NEKTAR tag, use it to replace the
@@ -1485,9 +1485,8 @@ TiXmlDocument *SessionReader::MergeDoc(
             LoadDoc(pFilenames[i], vTempDoc);
 
             TiXmlHandle docHandle(vTempDoc);
-            TiXmlElement *vTempNektar;
-            vTempNektar = docHandle.FirstChildElement("NEKTAR").Element();
-            ASSERTL0(vTempNektar, "Unable to find NEKTAR tag in file.");
+            TiXmlElement *vTempNektar =
+                GetChildElementOrThrow(pFilenames[i], "NEKTAR", docHandle);
             TiXmlElement *p = vTempNektar->FirstChildElement();
 
             while (p)
@@ -2531,5 +2530,27 @@ InterpreterSharedPtr SessionReader::GetInterpreter()
 {
     return m_interpreter;
 }
+
+/**
+ * Helper function that gets a pointer to a child element, or throws an
+ * exception if no such element exists
+ */
+TiXmlElement *GetChildElementOrThrow(const std::string &filename,
+                                     std::string elementName,
+                                     const TiXmlHandle &docHandle)
+{
+    TiXmlElement *element = docHandle.FirstChildElement(elementName).Element();
+    if (element)
+    {
+        return element;
+    }
+    else
+    {
+        NEKERROR(ErrorUtil::efatal, "Unable to find '" + elementName +
+                                        "' XML node in " + filename);
+        return nullptr; // Never reached; purely to keep gcc happy...
+    }
+}
+
 } // namespace LibUtilities
 } // namespace Nektar
