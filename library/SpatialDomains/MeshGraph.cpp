@@ -2552,29 +2552,27 @@ ExpansionInfoMapShPtr MeshGraph::SetUpExpansionInfoMap(void)
         for (auto &compIter : d.second)
         {
             // regular elements first
-            for (auto & x : compIter.second->m_geomVec)
+            for (auto &x : compIter.second->m_geomVec)
             {
                 if (x->GetGeomFactors()->GetGtype() !=
                     SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x,
-                                                                        def);
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x, def);
                     int id           = x->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
             }
             // deformed elements
-            for (auto & x : compIter.second->m_geomVec)
+            for (auto &x : compIter.second->m_geomVec)
             {
                 if (x->GetGeomFactors()->GetGtype() ==
                     SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x,
-                                                                        def);
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x, def);
                     int id           = x->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }

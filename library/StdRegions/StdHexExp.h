@@ -218,8 +218,8 @@ protected:
     //---------------------------------------
     // Output interpolation functions
     //---------------------------------------
-    STD_REGIONS_EXPORT virtual void v_GetSimplexEquiSpacedConnectivity(
-        Array<OneD, int> &conn, bool standard = true);
+    STD_REGIONS_EXPORT void v_GetSimplexEquiSpacedConnectivity(
+        Array<OneD, int> &conn, bool standard = true) override;
 
     //---------------------------------------
     // Operator evaluation functions
