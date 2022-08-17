@@ -356,23 +356,21 @@ void Vvtvm(int n, const Array<OneD, const T> &w, const int incw,
 #else
     Vvtvm(n, &w[0], incw, &x[0], incx, &y[0], incy, &z[0], incz);
 #endif
+}
 
-        }
-
-        /// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + x*y
-        template<class T> void Vvtvvtp (
-            int n,
-            const Array<OneD,const T> &v, int incv,
-            const Array<OneD,const T> &w, int incw,
-            const Array<OneD,const T> &x, int incx,
-            const Array<OneD,const T> &y, int incy,
-                  Array<OneD,      T> &z, int incz)
-        {
-            ASSERTL1(n*incv <= v.size()+v.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incw <= w.size()+w.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incx <= x.size()+x.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incy <= y.size()+y.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incz <= z.size()+z.GetOffset(),"Array out of bounds");
+/// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + x*y
+template <class T>
+void Vvtvvtp(int n, const Array<OneD, const T> &v, int incv,
+             const Array<OneD, const T> &w, int incw,
+             const Array<OneD, const T> &x, int incx,
+             const Array<OneD, const T> &y, int incy, Array<OneD, T> &z,
+             int incz)
+{
+    ASSERTL1(n * incv <= v.size() + v.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incw <= w.size() + w.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
 
 #ifdef NEKTAR_ENABLE_SIMD_VMATH
     boost::ignore_unused(incv, incw, incx, incy, incz);
@@ -384,53 +382,51 @@ void Vvtvm(int n, const Array<OneD, const T> &w, const int incw,
 #else
     Vvtvvtp(n, &v[0], incv, &w[0], incw, &x[0], incx, &y[0], incy, &z[0], incz);
 #endif
-        }
+}
 
-        /// \brief vvtvvtm (vector times vector minus vector times vector): z = v*w - x*y
-        template<class T> void Vvtvvtm (
-            int n,
-            const Array<OneD,const T> &v, int incv,
-            const Array<OneD,const T> &w, int incw,
-            const Array<OneD,const T> &x, int incx,
-            const Array<OneD,const T> &y, int incy,
-            Array<OneD,      T> &z, int incz)
-        {
-            ASSERTL1(n*incv <= v.size()+v.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incw <= w.size()+w.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incx <= x.size()+x.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incy <= y.size()+y.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incz <= z.size()+z.GetOffset(),"Array out of bounds");
+/// \brief vvtvvtm (vector times vector minus vector times vector): z = v*w -
+/// x*y
+template <class T>
+void Vvtvvtm(int n, const Array<OneD, const T> &v, int incv,
+             const Array<OneD, const T> &w, int incw,
+             const Array<OneD, const T> &x, int incx,
+             const Array<OneD, const T> &y, int incy, Array<OneD, T> &z,
+             int incz)
+{
+    ASSERTL1(n * incv <= v.size() + v.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incw <= w.size() + w.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
 
-            Vvtvvtm(n,&v[0],incv,&w[0],incw,&x[0],incx,&y[0],incy,&z[0],incz);
-        }
+    Vvtvvtm(n, &v[0], incv, &w[0], incw, &x[0], incx, &y[0], incy, &z[0], incz);
+}
 
-        /// \brief svtsvtp (scalar times vector plus scalar times vector): z = alpha*x + beta*y
-        template<class T> void Svtsvtp(int n, const T alpha, const Array<OneD,const T> &x, const int incx, const T beta, const Array<OneD,const T> &y, const int incy,  Array<OneD,T> &z, const int incz)
-        {
-            ASSERTL1(n*incx <= x.size()+x.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incy <= y.size()+y.GetOffset(),"Array out of bounds");
-            ASSERTL1(n*incz <= z.size()+z.GetOffset(),"Array out of bounds");
+/// \brief svtsvtp (scalar times vector plus scalar times vector): z = alpha*x +
+/// beta*y
+template <class T>
+void Svtsvtp(int n, const T alpha, const Array<OneD, const T> &x,
+             const int incx, const T beta, const Array<OneD, const T> &y,
+             const int incy, Array<OneD, T> &z, const int incz)
+{
+    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
 
-            Svtsvtp(n,alpha,&x[0],incx,beta,&y[0],incy,&z[0],incz);
-        }
+    Svtsvtp(n, alpha, &x[0], incx, beta, &y[0], incy, &z[0], incz);
+}
 
+/************ Misc routine from Veclib (and extras)  ************/
 
-
-
-        /************ Misc routine from Veclib (and extras)  ************/
-
-        /// \brief Gather vector z[i] = x[y[i]]
-        template<class T, class I, typename = typename std::enable_if
-            <
-                std::is_floating_point<T>::value &&
-                std::is_integral<I>::value
-            >::type
-        >
-        void Gathr(I n, const Array<OneD, const T> &x, const Array<OneD, I> &y,
-            Array<OneD,T> &z)
-        {
-            ASSERTL1(n <= y.size()+y.GetOffset(),"Array out of bounds");
-            ASSERTL1(n <= z.size()+z.GetOffset(),"Array out of bounds");
+/// \brief Gather vector z[i] = x[y[i]]
+template <class T, class I,
+          typename = typename std::enable_if<std::is_floating_point<T>::value &&
+                                             std::is_integral<I>::value>::type>
+void Gathr(I n, const Array<OneD, const T> &x, const Array<OneD, I> &y,
+           Array<OneD, T> &z)
+{
+    ASSERTL1(n <= y.size() + y.GetOffset(), "Array out of bounds");
+    ASSERTL1(n <= z.size() + z.GetOffset(), "Array out of bounds");
 
 #ifdef NEKTAR_ENABLE_SIMD_VMATH
     SIMD::Gathr(n, &x[0], &y[0], &z[0]);

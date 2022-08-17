@@ -589,20 +589,6 @@ void StdPrismExp::v_IProductWRTDerivBase_SumFac(
                 m_base[2]->GetBdata(), tmp0, outarray, wsp, true, true, true);
             break;
         }
-    }
-}
-
-/**
- * \brief Inner product of \a inarray over region with respect to the
- * object's default expansion basis; output in \a outarray.
- */
-void StdPrismExp::v_IProductWRTDerivBase(
-    const int dir, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    v_IProductWRTDerivBase_SumFac(dir, inarray, outarray);
-}
-
         case 1:
         {
             MultiplyByQuadratureMetric(inarray, tmp0);

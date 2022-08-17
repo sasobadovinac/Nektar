@@ -60,12 +60,13 @@ static const NekDouble kNekMachineEpsilon =
 static const NekDouble GeomTol = 1E-2;
 static const NekDouble CoinTol = 1E-6;
 
-        // Factor for tolerance for floating point comparison
-        static const unsigned int kNekFloatCompFact = 4;
+// Factor for tolerance for floating point comparison
+static const unsigned int kNekFloatCompFact = 4;
 
-        static const NekDouble kFindDistanceMin = 5e-05;
-        static const unsigned int kNewtonIterations = 51;
-    }
-} //end of namespace
+// Constants for minimisation functions
+static const NekDouble kFindDistanceMin     = 5e-05;
+static const unsigned int kNewtonIterations = 51;
+} // namespace NekConstants
+} // namespace Nektar
 
 #endif

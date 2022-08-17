@@ -2007,7 +2007,6 @@ void DisContField::FindPeriodicTraces(
                                          ? StdRegions::eBackwards
                                          : StdRegions::eForwards;
                     }
-                }
 
                     if (edgeOrient == StdRegions::eBackwards)
                     {
@@ -2214,16 +2213,6 @@ void DisContField::FindPeriodicTraces(
                         PeriodicEntity ent(ids[other], o, local[other]);
                         m_periodicFaces[ids[i]].push_back(ent);
                     }
-                }
-                else
-                {
-                    std::stringstream ss;
-                    ss << "Boundary region " << cId1 << " should be "
-                       << "periodic with " << perComps[cId1] << " but "
-                       << "found " << cId2 << " instead!";
-                    ASSERTL0(perComps[cId1] == cId1, ss.str());
-                }
-            }
 
                     int nFaceVerts = vertMap[ids[0]].size();
 
@@ -2571,11 +2560,6 @@ void DisContField::FindPeriodicTraces(
                             {
                                 break;
                             }
-                        }
-
-                        if (k == perIt.second.size())
-                        {
-                            perIt.second.push_back(perIt2->second[j]);
                         }
 
                         if (k == perIt.second.size())
@@ -3088,7 +3072,6 @@ void DisContField::v_ExtractTracePhys(
             m_locTraceToTraceMap->GetNFwdLocTracePts());
         m_locTraceToTraceMap->FwdLocTracesFromField(inarray, tracevals);
         m_locTraceToTraceMap->InterpLocTracesToTrace(0, tracevals, outarray);
-
         m_traceMap->GetAssemblyCommDG()->PerformExchange(outarray, outarray);
     }
     else
