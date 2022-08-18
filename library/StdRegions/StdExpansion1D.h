@@ -108,13 +108,12 @@ protected:
 
 private:
     // Virtual Functions ----------------------------------------
-
-    int v_GetCoordim(void) override
+    virtual int v_GetCoordim(void) override
     {
         return 1;
     }
 
-    int v_GetShapeDimension() const final
+    virtual int v_GetShapeDimension() const final
     {
         return 1;
     }

@@ -118,7 +118,7 @@ void Geometry3D::NewtonIterationForLocCoord(
     Array<OneD, NekDouble> eta(3);
 
     F1 = F2 = F3 = 2000; // Starting value of Function
-    NekDouble resid;
+    NekDouble resid = 0;
     while (cnt++ < MaxIterations)
     {
         //  evaluate lagrange interpolant at Lcoords
