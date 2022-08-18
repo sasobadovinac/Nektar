@@ -102,7 +102,7 @@ void Geometry2D::NewtonIterationForLocCoord(
     Array<OneD, NekDouble> eta(2);
 
     F1 = F2 = 2000; // Starting value of Function
-    NekDouble resid = 0;
+    NekDouble resid;
     while (cnt++ < MaxIterations)
     {
         //  evaluate lagrange interpolant at Lcoords
