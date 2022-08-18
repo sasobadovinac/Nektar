@@ -60,9 +60,9 @@ class Edge
 public:
     /// Creates a new edge.
     NEKMESH_EXPORT Edge(NodeSharedPtr              pVertex1,
-                             NodeSharedPtr              pVertex2,
-                             std::vector<NodeSharedPtr> pEdgeNodes,
-                             LibUtilities::PointsType   pCurveType)
+                        NodeSharedPtr              pVertex2,
+                        std::vector<NodeSharedPtr> pEdgeNodes,
+                        LibUtilities::PointsType   pCurveType)
         : m_n1(pVertex1), m_n2(pVertex2), m_edgeNodes(pEdgeNodes),
           m_curveType(pCurveType), m_geom(){}
 

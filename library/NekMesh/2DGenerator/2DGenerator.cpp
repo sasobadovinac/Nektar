@@ -106,6 +106,7 @@ void Generator2D::Process()
     for (int faceid = 1; faceid <= m_mesh->m_cad->GetNumSurf(); faceid++)
     {
         m_curvemeshes.resize(m_curvemeshes.size()+1);
+        // check if a boundary layer from the curve was generated on the current face
         for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
         {
             bool curvemeshes_found = false;
@@ -123,7 +124,7 @@ void Generator2D::Process()
                 m_curvemeshes[faceid-1][i] = m_curvemeshes[faceid-2][i];
                 continue;
             }
-            else
+            else // if boundary layer from the curve was not generated on the current face id
             {
                 std::vector<int> edgeIds;
                 for (auto &edges_in_edgeloop : m_mesh->m_cad->GetSurf(faceid)->GetEdges())
