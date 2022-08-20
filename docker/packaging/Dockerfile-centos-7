@@ -20,4 +20,4 @@ RUN wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl.zip && \
     tlmgr install lm babel microtype amsmath amsfonts mathtools psnfss graphics \
         import tools xcolor listings lstaddons pgf environ bclogo hyperref memoir ec \
         xkeyval trimspaces mdframed l3packages etoolbox footmisc caption standalone \
-        currfile filehook filemod epstopdf zref multirow jknapltx rsfs
+        currfile filehook filemod epstopdf zref multirow jknapltx rsfs dirtree

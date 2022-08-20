@@ -1,20 +1,6 @@
 Changelog
 =========
 
-v6.0.0
-
-v5.3
-------
-**Library**
-- Fixed avx512 back-end for SimdLib (!1333)
-- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
-- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
-
-**FieldConvert**
-- Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
-- Fixed the output field names of WSS module of FieldConvert
-- Add VTU output using VTK library (high-order & multi-block options)
-
 v5.2.0
 ------
 **Library**
@@ -39,10 +25,16 @@ v5.2.0
 - Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
 - Reformat code with clang-format (!1359)
 - Remove unnecessary IterPerExp methods (!1366)
--  Fix erronous call to FwdTrans from MR 1366 (!1374)
+- Fix erronous call to FwdTrans from MR 1366 (!1374)
+- Fixed avx512 back-end for SimdLib (!1333)
+- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
+- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
 	
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)
+- Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+- Fixed the output field names of WSS module of FieldConvert (!1352)
+- Add VTU output using VTK library (high-order & multi-block options) (!1343)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
@@ -74,6 +66,7 @@ v5.2.0
 
 **Packaging**
 - Fix various issues with debian unstable and centos8 packaging (!1362)
+- Fix missing texlive package dependency for centos packaging (!1382)
 
 v5.1.1
 ------
