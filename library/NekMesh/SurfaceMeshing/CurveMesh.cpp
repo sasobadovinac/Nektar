@@ -63,7 +63,7 @@ void CurveMesh::Mesh(bool forceThree)
     m_bounds      = m_cadcurve->GetBounds();
     m_curvelength = m_cadcurve->GetTotLength();
     m_numSamplePoints =
-        int(m_curvelength / m_mesh->m_octree->GetMinDelta()) + 10; // Why +10?
+        int(m_curvelength / m_mesh->m_octree->GetMinDelta()) + 10;
     ds = m_curvelength / (m_numSamplePoints - 1);
 
     // compute the offset due to adjacent BLs
