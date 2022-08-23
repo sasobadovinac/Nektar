@@ -29,7 +29,8 @@ v5.2.0
 - Fixed avx512 back-end for SimdLib (!1333)
 - Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
 - Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
-	
+- Fixed incorrect summary output for diffusion/reaction terms (!1383)
+
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
