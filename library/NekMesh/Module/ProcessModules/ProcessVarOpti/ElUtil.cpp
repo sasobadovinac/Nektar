@@ -751,6 +751,7 @@ void ElUtil::InitialMinJac()
 
 void ElUtil::UpdateMapping()
 {
+    NekDouble scaling = 1.0;
     if (m_interp.GetInField())
     {
         if (!m_interpField)
@@ -794,36 +795,37 @@ void ElUtil::UpdateMapping()
 
         m_interp.CalcWeights(m_interp.GetInField(), m_interpField, true);
         m_interp.Interpolate(m_interp.GetInField(), m_interpField);
+
+        scaling = m_interpField->GetPointVal(m_dim, 0);
     }
 
-    NekDouble scaling = 1.0;
-
-    if (m_interp.GetInField())
+    if (scaling == 1.0)
     {
-        scaling = m_interpField->GetPointVal(m_dim + 0, 0);
+        maps    = m_maps;
+        mapsStd = m_mapsStd;
     }
 
-    for (int i = 0; i < m_maps.size(); ++i)
+    else
     {
-        for (int j = 0; j < 9; ++j)
-        {
-            maps[i][j]    = m_maps[i][j] / scaling;
-            mapsStd[i][j] = m_mapsStd[i][j] / scaling;
-        }
+        ASSERTL0(m_dim > 1, "Scaling for mesh dim < 2 not implemented.");
+        NekDouble det_scaling =
+            m_dim == 2 ? scaling * scaling : scaling * scaling * scaling;
 
-        if (m_dim == 2)
+        for (int i = 0; i < m_maps.size(); ++i)
         {
-            maps[i][9]    = m_maps[i][9] * scaling * scaling;
-            mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling;
+            for (int j = 0; j < 9; ++j)
+            {
+                maps[i][j] = m_maps[i][j] / scaling;
+            }
+            maps[i][9] = m_maps[i][9] * det_scaling;
         }
-        else if (m_dim == 3)
+        for (int i = 0; i < m_mapsStd.size(); ++i)
         {
-            maps[i][9]    = m_maps[i][9] * scaling * scaling * scaling;
-            mapsStd[i][9] = m_mapsStd[i][9] * scaling * scaling * scaling;
-        }
-        else
-        {
-            ASSERTL0(false, "not coded");
+            for (int j = 0; j < 9; ++j)
+            {
+                mapsStd[i][j] = m_mapsStd[i][j] / scaling;
+            }
+            mapsStd[i][9] = m_mapsStd[i][9] * det_scaling;
         }
     }
 }
