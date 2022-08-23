@@ -51,6 +51,7 @@ v5.2.0
 **NekMesh**
 - Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
 - Small bug-fix for Python API for unused configuration options (!1348)
+- Fix bug in ProcessVarOpti/ElUtil for segfault on non-tri or tet meshes (!1381)
 
 **CompressibleFlowSolver**
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
