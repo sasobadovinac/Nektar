@@ -63,8 +63,8 @@ template <typename scalarType, int width = 0> struct avx2
 #if defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
 
 // forward declaration of concrete types
-template <typename T> struct avx2Int8;
 template <typename T> struct avx2Long4;
+template <typename T> struct avx2Int8;
 struct avx2Double4;
 struct avx2Float8;
 struct avx2Mask4;
@@ -539,7 +539,7 @@ inline avx2Double4 log(avx2Double4 in)
 }
 
 inline void load_interleave(
-    const double *in, size_t dataLen,
+    const double *in, std::uint32_t dataLen,
     std::vector<avx2Double4, allocator<avx2Double4>> &out)
 {
     alignas(avx2Double4::alignment)
@@ -574,8 +574,8 @@ inline void load_interleave(
 }
 
 inline void deinterleave_store(
-    const std::vector<avx2Double4, allocator<avx2Double4>> &in, size_t dataLen,
-    double *out)
+    const std::vector<avx2Double4, allocator<avx2Double4>> &in,
+    std::uint32_t dataLen, double *out)
 {
     alignas(avx2Double4::alignment)
         size_t tmp[avx2Double4::width] = {0, dataLen, 2 * dataLen, 3 * dataLen};
