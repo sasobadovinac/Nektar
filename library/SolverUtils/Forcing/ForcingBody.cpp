@@ -166,7 +166,7 @@ void ForcingBody::Update(
     {
         for (int i = 0; i < m_NumVariable; ++i)
         {
-            pFields[0]->HomogeneousFwdTrans(m_Forcing[i], m_Forcing[i]);
+            pFields[0]->HomogeneousFwdTrans(pFields[0]->GetTotPoints(),m_Forcing[i], m_Forcing[i]);
         }
     }
 }

@@ -119,7 +119,56 @@ void ProcessVorticity::Process(po::variables_map &vm)
         tmp[i] = Array<OneD, NekDouble>(npoints);
     }
 
-    vector<MultiRegions::ExpListSharedPtr> Exp(nstrips * addfields);
+
+#if EXPLISTDATA
+    // add in new fields 
+    for (s = 0; s < nstrips; ++s)
+    {
+        for (i = 0; i < addfields; ++i)
+        {
+            MultiRegions::ExpListSharedPtr
+                Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+            
+            m_f->m_exp.insert(m_f->m_exp.begin() + s*(nfields + addfields)+
+                                  nfields + i, Exp);
+        }
+    }
+#else
+    std::vector<MultiRegions::ExpListSharedPtr> varExp;
+    // add in new fields 
+    for (s = 0; s < nstrips; ++s)
+    {
+        for (i = 0; i < addfields; ++i)
+        {
+            MultiRegions::ExpListSharedPtr
+                Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+            
+            m_f->m_exp.insert(m_f->m_exp.begin() + s*(nfields + addfields)+
+                                  nfields + i, Exp);
+            varExp.push_back(Exp);
+        }
+    }
+
+    m_f->m_fieldPhys  ->AddVariable(varExp);
+    m_f->m_fieldCoeffs->AddVariable(varExp);
+
+    // Need to reshuffle data for strip case before filling new variables.
+    for (s = nstrips-1; s > 0; --s) // homogeneous strip varient
+    {    
+        int ncoeffs = m_f->m_exp[0]->GetNcoeffs();
+        for(int n = nfields; n > 0; --n)
+        {
+            int fid  = s*(nfields)+n;
+            int fid1 = s*(nfields+addfields)+n;
+
+            Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
+                         m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
+
+            Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
+                         m_f->m_fieldPhys->UpdateArray1D(fid1-1),1);
+        }
+    }
+#endif
 
     // Get mapping
     GlobalMapping::MappingSharedPtr mapping = ProcessMapping::GetMapping(m_f);
@@ -129,7 +178,7 @@ void ProcessVorticity::Process(po::variables_map &vm)
         // Get velocity and convert to Cartesian system,
         //      if it is still in transformed system
         Array<OneD, Array<OneD, NekDouble>> vel(m_spacedim);
-        GetVelocity(vel, s);
+        GetVelocity(vel, nfields + addfields, s);
         if (m_f->m_fieldMetaDataMap.count("MappingCartesianVel"))
         {
             if (m_f->m_fieldMetaDataMap["MappingCartesianVel"] == "False")
@@ -139,7 +188,7 @@ void ProcessVorticity::Process(po::variables_map &vm)
                 {
                     for (int i = 0; i < m_spacedim; ++i)
                     {
-                        m_f->m_exp[0]->HomogeneousBwdTrans(vel[i], vel[i]);
+                        m_f->m_exp[0]->HomogeneousBwdTrans(npoints, vel[i], vel[i]);
                     }
                 }
                 // Convert velocity to cartesian system
@@ -149,7 +198,7 @@ void ProcessVorticity::Process(po::variables_map &vm)
                 {
                     for (int i = 0; i < m_spacedim; ++i)
                     {
-                        m_f->m_exp[0]->HomogeneousFwdTrans(vel[i], vel[i]);
+                        m_f->m_exp[0]->HomogeneousFwdTrans(npoints, vel[i], vel[i]);
                     }
                 }
             }
@@ -197,30 +246,29 @@ void ProcessVorticity::Process(po::variables_map &vm)
                         grad[0 * m_spacedim + 1], 1, outfield[2], 1);
         }
 
+#if EXPLISTDATA
         for (i = 0; i < addfields; ++i)
         {
-            int n  = s * addfields + i;
-            Exp[n] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-            Vmath::Vcopy(npoints, outfield[i], 1, Exp[n]->UpdatePhys(), 1);
-            Exp[n]->FwdTransLocalElmt(outfield[i], Exp[n]->UpdateCoeffs());
+            int fid  = s * (nfields + addfields)  + nfields + i;
+            Vmath::Vcopy(npoints, outfield[i], 1, m_f->m_exp[fid]->UpdatePhys(), 1);
+            m_f->m_exp[fid]->FwdTransLocalElmt(outfield[i],
+                                               m_f->m_exp[fid]->UpdateCoeffs());
         }
-    }
-
-    for (s = 0; s < nstrips; ++s)
-    {
+#else
         for (i = 0; i < addfields; ++i)
         {
-            m_f->m_exp.insert(m_f->m_exp.begin() + s * (nfields + addfields) +
-                                  nfields + i,
-                              Exp[s * addfields + i]);
+            int fid  = s * (nfields + addfields)  + nfields + i;
+            Vmath::Vcopy(npoints, outfield[i], 1, m_f->m_fieldPhys->UpdateArray1D(fid), 1);
+            m_f->m_exp[fid]->FwdTransLocalElmt(outfield[i],
+                                               m_f->m_fieldCoeffs->UpdateArray1D(fid));
         }
+#endif
     }
 }
 
 void ProcessVorticity::GetVelocity(Array<OneD, Array<OneD, NekDouble>> &vel,
-                                   int strip)
+                                   int totfields, int strip)
 {
-    int nfields = m_f->m_variables.size();
     int npoints = m_f->m_exp[0]->GetNpoints();
     if (boost::iequals(m_f->m_variables[0], "u"))
     {
@@ -228,8 +276,13 @@ void ProcessVorticity::GetVelocity(Array<OneD, Array<OneD, NekDouble>> &vel,
         for (int i = 0; i < m_spacedim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-            Vmath::Vcopy(npoints, m_f->m_exp[strip * nfields + i]->GetPhys(), 1,
+#if EXPLISTDATA
+            Vmath::Vcopy(npoints, m_f->m_exp[strip * totfields + i]->GetPhys(), 1,
                          vel[i], 1);
+#else
+            Vmath::Vcopy(npoints, m_f->m_fieldPhys->GetArray1D(strip*totfields+i), 1,
+                         vel[i], 1);
+#endif
         }
     }
     else if (boost::iequals(m_f->m_variables[0], "rho") &&
@@ -239,9 +292,15 @@ void ProcessVorticity::GetVelocity(Array<OneD, Array<OneD, NekDouble>> &vel,
         for (int i = 0; i < m_spacedim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-            Vmath::Vdiv(npoints, m_f->m_exp[strip * nfields + i + 1]->GetPhys(),
-                        1, m_f->m_exp[strip * nfields + 0]->GetPhys(), 1,
+#if EXPLISTDATA
+            Vmath::Vdiv(npoints, m_f->m_exp[strip * totfields + i + 1]->GetPhys(),
+                        1, m_f->m_exp[strip * totfields + 0]->GetPhys(), 1,
                         vel[i], 1);
+#else
+            Vmath::Vdiv(npoints, m_f->m_fieldPhys->GetArray1D(strip*totfields+i+1),
+                        1, m_f->m_fieldPhys->GetArray1D(strip*totfields), 1,
+                        vel[i], 1);
+#endif
         }
     }
     else

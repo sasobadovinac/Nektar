@@ -99,22 +99,43 @@ void ProcessHomogeneousStretch::Process(po::variables_map &vm)
         {
             int n       = s * nfields + i;
             int ncoeffs = m_f->m_exp[n]->GetPlane(0)->GetNcoeffs();
+            
+#if EXPLISTDATA
+#else
+            Array<OneD, NekDouble> coeffs = m_f->m_fieldCoeffs->UpdateArray1D(n);
+            Array<OneD, NekDouble> tmp;
+#endif
+
             // Loop planes backwards so we can copy in place
             for (int p = nplanes - 1; p > 1; --p)
             {
                 int newP = 2 * factor * (p / 2) + p % 2;
                 if (newP < nplanes)
                 {
+#if EXPLISTDATA
                     Vmath::Vcopy(
                         ncoeffs, m_f->m_exp[n]->GetPlane(p)->GetCoeffs(), 1,
                         m_f->m_exp[n]->GetPlane(newP)->UpdateCoeffs(), 1);
+#else
+                    Vmath::Vcopy(ncoeffs, coeffs + p*ncoeffs, 1,
+                                 tmp = coeffs + newP*ncoeffs,1 );                          
+#endif
+
                 }
+#if EXPLISTDATA
                 Vmath::Zero(ncoeffs, m_f->m_exp[n]->GetPlane(p)->UpdateCoeffs(),
                             1);
+#else
+                Vmath::Zero(ncoeffs, tmp = coeffs + p*ncoeffs, 1);                          
+#endif
             }
 
+#if EXPLISTDATA
             m_f->m_exp[n]->BwdTrans(m_f->m_exp[n]->GetCoeffs(),
                                     m_f->m_exp[n]->UpdatePhys());
+#else
+            m_f->m_exp[n]->BwdTrans(coeffs, m_f->m_fieldPhys->UpdateArray1D(n));
+#endif
             m_f->m_exp[n]->SetHomoLen(factor * m_f->m_exp[n]->GetHomoLen());
         }
     }

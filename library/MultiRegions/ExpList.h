@@ -59,7 +59,7 @@ namespace Nektar
 namespace MultiRegions
 {
 
-#define EXPLISTDATA 0
+#define EXPLISTDATA 1
 
 // Forward declarations
 class ExpList;
@@ -407,19 +407,22 @@ public:
     inline void GetCoords(NekField<NekDouble, ePhys> &coords);
 
     // Homogeneous transforms
-    inline void HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
+    inline void HomogeneousFwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff = true, bool UnShuff = true);
 
-    inline void HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray,
+    inline void HomogeneousBwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff = true, bool UnShuff = true);
 
-    inline void DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+    inline void DealiasedProd(const int num_dofs,
+                              const Array<OneD, NekDouble> &inarray1,
                               const Array<OneD, NekDouble> &inarray2,
                               Array<OneD, NekDouble> &outarray);
 
-    inline void DealiasedDotProd(
+    inline void DealiasedDotProd(const int num_dofs, 
         const Array<OneD, Array<OneD, NekDouble>> &inarray1,
         const Array<OneD, Array<OneD, NekDouble>> &inarray2,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
@@ -468,6 +471,7 @@ public:
 
     MULTI_REGIONS_EXPORT void WriteVtkHeader(std::ostream &outfile);
     MULTI_REGIONS_EXPORT void WriteVtkFooter(std::ostream &outfile);
+#endif
 
     void WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                              int istrip = 0)
@@ -478,10 +482,18 @@ public:
     MULTI_REGIONS_EXPORT void WriteVtkPieceFooter(std::ostream &outfile,
                                                   int expansion);
 
+#if EXPLISTDATA
     void WriteVtkPieceData(std::ostream &outfile, int expansion,
                            std::string var = "v")
     {
         v_WriteVtkPieceData(outfile, expansion, var);
+    }
+#else
+    void WriteVtkPieceData(std::ostream &outfile, int expansion,
+                           const Array<OneD, const NekDouble> &phys,
+                           std::string var = "v")
+    {
+        v_WriteVtkPieceData(outfile, expansion, phys, var);
     }
 #endif
 
@@ -1568,20 +1580,23 @@ protected:
         Array<OneD, Array<OneD, NekDouble>> &outarray);
 
     virtual void v_HomogeneousFwdTrans(
+        const int npts,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
         bool UnShuff = true);
 
     virtual void v_HomogeneousBwdTrans(
+        const int npts,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
         bool UnShuff = true);
 
-    virtual void v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+    virtual void v_DealiasedProd(const int num_dofs,
+                                 const Array<OneD, NekDouble> &inarray1,
                                  const Array<OneD, NekDouble> &inarray2,
                                  Array<OneD, NekDouble> &outarray);
 
-    virtual void v_DealiasedDotProd(
+    virtual void v_DealiasedDotProd(const int num_dofs,
         const Array<OneD, Array<OneD, NekDouble>> &inarray1,
         const Array<OneD, Array<OneD, NekDouble>> &inarray2,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
@@ -1655,12 +1670,16 @@ protected:
     virtual void v_WriteTecplotField(std::ostream &outfile, int expansion);
     virtual void v_WriteTecplotConnectivity(std::ostream &outfile,
                                             int expansion);
-    virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
-                                       int istrip);
 
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
                                      std::string var);
+#else
+    virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
+                                  const Array<OneD, const NekDouble> &phys,
+                                     std::string var);
 #endif
+    virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
+                                       int istrip);
 
     virtual NekDouble v_L2(
         const Array<OneD, const NekDouble> &phys,
@@ -2192,41 +2211,44 @@ inline void ExpList::CurlCurl(Array<OneD, Array<OneD, NekDouble>> &Vel,
  *
  */
 inline void ExpList::HomogeneousFwdTrans(
+    const int npts,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
-    v_HomogeneousFwdTrans(inarray, outarray, Shuff, UnShuff);
+    v_HomogeneousFwdTrans(npts, inarray, outarray, Shuff, UnShuff);
 }
 
 /**
  *
  */
 inline void ExpList::HomogeneousBwdTrans(
+    const int npts,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
-    v_HomogeneousBwdTrans(inarray, outarray, Shuff, UnShuff);
+    v_HomogeneousBwdTrans(npts, inarray, outarray, Shuff, UnShuff);
 }
 
 /**
  *
  */
-inline void ExpList::DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+inline void ExpList::DealiasedProd(const int num_dofs,
+                                   const Array<OneD, NekDouble> &inarray1,
                                    const Array<OneD, NekDouble> &inarray2,
                                    Array<OneD, NekDouble> &outarray)
 {
-    v_DealiasedProd(inarray1, inarray2, outarray);
+    v_DealiasedProd(num_dofs, inarray1, inarray2, outarray);
 }
 
 /**
  *
  */
-inline void ExpList::DealiasedDotProd(
+inline void ExpList::DealiasedDotProd(const int num_dofs, 
     const Array<OneD, Array<OneD, NekDouble>> &inarray1,
     const Array<OneD, Array<OneD, NekDouble>> &inarray2,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    v_DealiasedDotProd(inarray1, inarray2, outarray);
+    v_DealiasedDotProd(num_dofs, inarray1, inarray2, outarray);
 }
 
 /**

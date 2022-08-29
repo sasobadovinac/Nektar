@@ -39,6 +39,7 @@
 #include <vector>
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/BasicUtils/Vmath.hpp>
 #include <MultiRegions/NekField/ExpListNekFieldInterface.h>
 
 namespace Nektar
@@ -65,7 +66,7 @@ class NekField
 public:
 
     // default contructor
-    NekField(): m_numVariables(1)
+    NekField(): m_numVariables(0), m_varSize(0)
     {
     };
 
@@ -101,6 +102,35 @@ public:
     }
 
     NekField(Array<OneD, std::shared_ptr<MultiRegions::ExpList>> exp,
+                 TData defval = 0, DataLayout Order = eField) :
+        m_numVariables(exp.size()),
+        m_dataOrder(Order)
+    {
+        for(int i = 0; i < m_numVariables; ++i)
+        {
+            m_expIF.push_back(std::make_shared<MultiRegions::details::
+                          ExpListNekFieldInterface>(exp[i]));
+        }
+
+        m_storage = Array<OneD, Array<OneD, NekDouble> >(m_numVariables); 
+        if (TStype == ePhys)
+        {
+            m_varSize = m_expIF[0]->GetNpoints(); 
+        }
+        else if (TStype == eCoeff)
+        {
+            m_varSize = m_expIF[0]->GetNcoeffs(); 
+        }
+
+        m_storage[m_numVariables-1] =Array<OneD, TData>(m_varSize*m_numVariables,defval);
+
+        for(int i = m_numVariables-1; i > 0; --i)
+        {
+            m_storage[i-1] = m_storage[i] + m_varSize; 
+        }
+    }
+
+    NekField(std::vector<std::shared_ptr<MultiRegions::ExpList>> exp,
                  TData defval = 0, DataLayout Order = eField) :
         m_numVariables(exp.size()),
         m_dataOrder(Order)
@@ -164,6 +194,91 @@ public:
         // nothing to do... yet...
     }
 
+    void AddVariable(std::shared_ptr<MultiRegions::ExpList> exp,
+                           TData defval = 0)
+    {
+
+        m_expIF.push_back(std::make_shared<MultiRegions::details::
+                          ExpListNekFieldInterface>(exp));
+
+        m_numVariables +=1;
+
+        // set up varSize in case initialised from default constructor. 
+        if(m_varSize == 0)
+        {
+            if (TStype == ePhys)
+            {
+                m_varSize = m_expIF[0]->GetNpoints(); 
+            }
+            else if (TStype == eCoeff)
+            {
+                m_varSize = m_expIF[0]->GetNcoeffs(); 
+            }
+        }
+        
+        Array<OneD, Array<OneD, NekDouble> > storage(m_numVariables); 
+
+        
+        storage[m_numVariables-1] =
+            Array<OneD, TData>(m_varSize*m_numVariables,defval);
+        
+        // copy over original data. 
+        Vmath::Vcopy(m_varSize*(m_numVariables-1),m_storage[m_numVariables-2].data(),1,
+                     storage[m_numVariables-1].data() + m_varSize,1);
+
+        m_storage = storage;
+        for(int i = m_numVariables-1; i > 0; --i)
+        {
+            m_storage[i-1] = m_storage[i] + m_varSize; 
+        }
+    }
+
+
+    void AddVariable(std::vector<std::shared_ptr<MultiRegions::ExpList>> exp,
+                     TData defval = 0)
+    {
+
+        int nvar = exp.size();
+        for(int i = 0; i < nvar; ++i)
+        {
+            m_expIF.push_back(std::make_shared<MultiRegions::details::
+                              ExpListNekFieldInterface>(exp[i]));
+        }
+
+        m_numVariables += nvar;
+
+
+        // set up varSize in case initialised from default constructor. 
+        if(m_varSize == 0)
+        {
+            if (TStype == ePhys)
+            {
+                m_varSize = m_expIF[0]->GetNpoints(); 
+            }
+            else if (TStype == eCoeff)
+            {
+                m_varSize = m_expIF[0]->GetNcoeffs(); 
+            }
+        }
+        
+        Array<OneD, Array<OneD, NekDouble> > storage(m_numVariables); 
+
+        storage[m_numVariables-1] =
+            Array<OneD, TData>(m_varSize*m_numVariables,defval);
+        
+        // copy over original data offsetting to that reverse ordering is then correct
+        Vmath::Vcopy(m_varSize*(m_numVariables-nvar),
+                     m_storage[m_numVariables-nvar-1].data(),1,
+                     storage[m_numVariables-1].data() + nvar*m_varSize,1);
+
+        m_storage = storage;
+        // impose reverse ordering
+        for(int i = m_numVariables-1; i > 0; --i)
+        {
+            m_storage[i-1] = m_storage[i] + m_varSize; 
+        }
+    }
+    
     const Array<OneD, const TData> GetData(int varid=0) const
     {
         ASSERTL1(varid < m_numVariables, "variable id (varid) is out of range");

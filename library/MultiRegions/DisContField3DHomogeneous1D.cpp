@@ -266,8 +266,9 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
     NekDouble beta;
     StdRegions::ConstFactorMap new_factors;
 
+    int npts_fce = PhysSpaceForcing? m_npoints: m_ncoeffs; 
     Array<OneD, NekDouble> e_out;
-    Array<OneD, NekDouble> fce(inarray.size());
+    Array<OneD, NekDouble> fce(npts_fce);
     Array<OneD, const NekDouble> wfce;
 
     // Transform forcing function in half-physical space if required
@@ -277,7 +278,7 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
     }
     else
     {
-        HomogeneousFwdTrans(inarray, fce);
+        HomogeneousFwdTrans(npts_fce,inarray, fce);
     }
 
 #if EXPLISTDATA

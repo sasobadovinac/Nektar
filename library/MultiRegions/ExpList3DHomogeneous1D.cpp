@@ -356,6 +356,7 @@ void ExpList3DHomogeneous1D::v_WriteTecplotConnectivity(std::ostream &outfile,
         cnt += np0 * np1;
     }
 }
+#endif
 
 void ExpList3DHomogeneous1D::v_WriteVtkPieceHeader(std::ostream &outfile,
                                                    int expansion, int istrip)
@@ -469,7 +470,6 @@ void ExpList3DHomogeneous1D::v_WriteVtkPieceHeader(std::ostream &outfile,
     outfile << "      </Cells>" << endl;
     outfile << "      <PointData>" << endl;
 }
-#endif
 
 NekDouble ExpList3DHomogeneous1D::v_L2(
     const Array<OneD, const NekDouble> &inarray,

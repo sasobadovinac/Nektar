@@ -75,22 +75,48 @@ public:
     {
     }
 
+#if EXPLISTDATA
     /// Interpolate from an expansion to an expansion
     FIELD_UTILS_EXPORT void Interpolate(
         const std::vector<MultiRegions::ExpListSharedPtr> expInField,
         std::vector<MultiRegions::ExpListSharedPtr> &expOutField,
         NekDouble def_value = 0.0);
+#else
+    FIELD_UTILS_EXPORT void Interpolate(
+        const std::vector<MultiRegions::ExpListSharedPtr> expInField,
+        const NekFieldPhysSharedPtr fieldInPhys, 
+        std::vector<MultiRegions::ExpListSharedPtr> &expOutField,
+        NekFieldPhysSharedPtr fieldOutPhys, 
+        NekDouble def_value = 0.0);
+#endif
 
+#if EXPLISTDATA
     /// Interpolate from an expansion to a pts field
     FIELD_UTILS_EXPORT void Interpolate(
         const std::vector<MultiRegions::ExpListSharedPtr> expInField,
         LibUtilities::PtsFieldSharedPtr &ptsOutField,
         NekDouble def_value = 0.0);
-
+#else
+    /// Interpolate from an expansion to a pts field
+    FIELD_UTILS_EXPORT void Interpolate(
+        const std::vector<MultiRegions::ExpListSharedPtr> expInField,
+        const NekFieldPhysSharedPtr fieldInPhys, 
+        LibUtilities::PtsFieldSharedPtr &ptsOutField,
+        NekDouble def_value = 0.0);
+#endif
+    
+#if EXPLISTDATA
     /// Interpolate from a pts field to an expansion
     FIELD_UTILS_EXPORT void Interpolate(
         const LibUtilities::PtsFieldSharedPtr ptsInField,
         std::vector<MultiRegions::ExpListSharedPtr> &expOutField);
+#else
+    /// Interpolate from a pts field to an expansion
+    FIELD_UTILS_EXPORT void Interpolate(
+        const LibUtilities::PtsFieldSharedPtr ptsInField,
+        std::vector<MultiRegions::ExpListSharedPtr> &expOutField,
+        NekFieldPhysSharedPtr fieldOutPhys);
+#endif
 
     /// Interpolate from a pts field to a pts field
     FIELD_UTILS_EXPORT void Interpolate(
@@ -100,8 +126,16 @@ public:
 protected:
     /// input field
     std::vector<MultiRegions::ExpListSharedPtr> m_expInField;
+#if EXPLISTDATA
+#else
+    NekFieldPhysSharedPtr  m_fieldInPhys;
+#endif
     /// output field
     std::vector<MultiRegions::ExpListSharedPtr> m_expOutField;
+#if EXPLISTDATA
+#else
+    NekFieldPhysSharedPtr  m_fieldOutPhys;
+#endif
 };
 
 typedef std::shared_ptr<Interpolator> InterpolatorSharedPtr;

@@ -88,14 +88,25 @@ void ProcessQualityMetric::Process(po::variables_map &vm)
         exp = m_f->AppendExpList(NumHomogeneousDir);
 
         m_f->m_exp[nfields] = exp;
+#if EXPLISTDATA
+#else
+        m_f->m_fieldPhys->AddVariable(exp);
+        m_f->m_fieldCoeffs->AddVariable(exp);
+#endif
     }
     else
     {
         exp = m_f->m_exp[0];
     }
 
+#if EXPLISTDATA
     Array<OneD, NekDouble> &phys   = exp->UpdatePhys();
     Array<OneD, NekDouble> &coeffs = exp->UpdateCoeffs();
+#else
+    Array<OneD, NekDouble> &phys   = m_f->m_fieldPhys->UpdateArray1D(nfields);
+    Array<OneD, NekDouble> &coeffs = m_f->m_fieldCoeffs->UpdateArray1D(nfields);
+#endif
+
 
     for (int i = 0; i < exp->GetExpSize(); ++i)
     {

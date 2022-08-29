@@ -125,9 +125,10 @@ void ProcessGrad::Process(po::variables_map &vm)
             for (int i = 0; i < spacedim; ++i)
             {
                 vel[i] = Array<OneD, NekDouble>(npoints);
+#if EXPLISTDATA
                 if (m_f->m_exp[0]->GetWaveSpace())
                 {
-                    m_f->m_exp[0]->HomogeneousBwdTrans(m_f->m_exp[i]->GetPhys(),
+                    m_f->m_exp[0]->HomogeneousBwdTrans(npoints, m_f->m_exp[i]->GetPhys(),
                                                        vel[i]);
                 }
                 else
@@ -135,6 +136,18 @@ void ProcessGrad::Process(po::variables_map &vm)
                     Vmath::Vcopy(npoints, m_f->m_exp[i]->GetPhys(), 1, vel[i],
                                  1);
                 }
+#else
+                if (m_f->m_exp[0]->GetWaveSpace())
+                {
+                    m_f->m_exp[0]->HomogeneousBwdTrans
+                        (npoints, m_f->m_fieldPhys->GetArray1D(i),vel[i]);
+                }
+                else
+                {
+                    Vmath::Vcopy(npoints, m_f->m_fieldPhys->GetArray1D(i),1,
+                                 vel[i],1);
+                }
+#endif
             }
             // Convert velocity to cartesian system
             mapping->ContravarToCartesian(vel, vel);
@@ -143,7 +156,7 @@ void ProcessGrad::Process(po::variables_map &vm)
             {
                 for (int i = 0; i < spacedim; ++i)
                 {
-                    m_f->m_exp[0]->HomogeneousFwdTrans(vel[i], vel[i]);
+                    m_f->m_exp[0]->HomogeneousFwdTrans(npoints, vel[i], vel[i]);
                 }
             }
         }
@@ -152,7 +165,12 @@ void ProcessGrad::Process(po::variables_map &vm)
             for (int i = 0; i < spacedim; ++i)
             {
                 vel[i] = Array<OneD, NekDouble>(npoints);
+#if EXPLISTDATA
                 Vmath::Vcopy(npoints, m_f->m_exp[i]->GetPhys(), 1, vel[i], 1);
+#else
+                Vmath::Vcopy(npoints, m_f->m_fieldPhys->GetArray1D(i),1,
+                                 vel[i],1);
+#endif
             }
         }
     }
@@ -161,7 +179,12 @@ void ProcessGrad::Process(po::variables_map &vm)
         for (int i = 0; i < spacedim && i < nfields; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
+#if EXPLISTDATA
             Vmath::Vcopy(npoints, m_f->m_exp[i]->GetPhys(), 1, vel[i], 1);
+#else
+            Vmath::Vcopy(npoints, m_f->m_fieldPhys->GetArray1D(i),1,
+                         vel[i],1);
+#endif
         }
     }
 
@@ -177,8 +200,13 @@ void ProcessGrad::Process(po::variables_map &vm)
             }
             else
             {
+#if EXPLISTDATA
                 m_f->m_exp[i]->PhysDeriv(MultiRegions::DirCartesianMap[j],
                                          m_f->m_exp[i]->GetPhys(), tmp[j]);
+#else
+                m_f->m_exp[i]->PhysDeriv(MultiRegions::DirCartesianMap[j],
+                                      m_f->m_fieldPhys->GetArray1D(i), tmp[j]);
+#endif
             }
         }
         mapping->CovarToCartesian(tmp, tmp);
@@ -191,10 +219,21 @@ void ProcessGrad::Process(po::variables_map &vm)
     for (i = 0; i < addfields; ++i)
     {
         m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+
+#if EXPLISTDATA
         Vmath::Vcopy(npoints, grad[i], 1, m_f->m_exp[nfields + i]->UpdatePhys(),
                      1);
         m_f->m_exp[nfields + i]->FwdTransLocalElmt(
             grad[i], m_f->m_exp[nfields + i]->UpdateCoeffs());
+#else
+        m_f->m_fieldPhys  ->AddVariable(m_f->m_exp[nfields + i]);
+        m_f->m_fieldCoeffs->AddVariable(m_f->m_exp[nfields + i]);
+        
+        Vmath::Vcopy(npoints, grad[i], 1,
+                     m_f->m_fieldPhys->UpdateArray1D(nfields + i), 1);
+        m_f->m_exp[nfields + i]->FwdTransLocalElmt
+                     (grad[i], m_f->m_fieldCoeffs->UpdateArray1D(nfields + i));
+#endif
     }
 }
 } // namespace FieldUtils

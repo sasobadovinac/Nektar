@@ -89,10 +89,17 @@ void ProcessStreamFunction::Process(po::variables_map &vm)
     m_f->m_exp[nfields] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
 
     // Calculate vorticity: -W_z = Uy - Vx
+#if EXPLISTDATA
     m_f->m_exp[0]->PhysDeriv(MultiRegions::DirCartesianMap[1],
                              m_f->m_exp[0]->GetPhys(), uy);
     m_f->m_exp[1]->PhysDeriv(MultiRegions::DirCartesianMap[0],
                              m_f->m_exp[1]->GetPhys(), vx);
+#else
+    m_f->m_exp[0]->PhysDeriv(MultiRegions::DirCartesianMap[1],
+                             m_f->m_fieldPhys->GetArray1D(0), uy);
+    m_f->m_exp[1]->PhysDeriv(MultiRegions::DirCartesianMap[0],
+                             m_f->m_fieldPhys->GetArray1D(1), vx);
+#endif
 
     Vmath::Vsub(npoints, uy, 1, vx, 1, vortNeg, 1);
 
@@ -102,10 +109,17 @@ void ProcessStreamFunction::Process(po::variables_map &vm)
     StdRegions::ConstFactorMap factor;
     factor[StdRegions::eFactorLambda] = 0.0;
 
+#if EXPLISTDATA
     m_f->m_exp[1]->HelmSolve(vortNeg, m_f->m_exp[nfields]->UpdateCoeffs(),
                              factor);
     m_f->m_exp[1]->BwdTrans(m_f->m_exp[nfields]->GetCoeffs(),
                             m_f->m_exp[nfields]->UpdatePhys());
+#else
+    m_f->m_exp[1]->HelmSolve(vortNeg, m_f->m_fieldCoeffs->UpdateArray1D(nfields),
+                             factor);
+    m_f->m_exp[1]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(nfields),
+                            m_f->m_fieldPhys->UpdateArray1D(nfields));
+#endif
 }
 
 } // namespace FieldUtils

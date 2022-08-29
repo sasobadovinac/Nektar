@@ -370,7 +370,12 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
 
         if (m_config["modalenergy"].as<bool>())
         {
+#if EXPLISTDATA
             Array<OneD, const NekDouble> phys = m_f->m_exp[n]->GetPhys();
+#else
+            Array<OneD, const NekDouble> phys = m_f->m_fieldPhys->
+                UpdateArray1D(n);
+#endif
             for (int i = 0; i < nel; ++i)
             {
                 GenOrthoModes(i, phys + cnt, tmp = pts[coordim + n] + cnt1);
@@ -380,7 +385,12 @@ void ProcessEquiSpacedOutput::Process(po::variables_map &vm)
         }
         else
         {
+#if EXPLISTDATA
             Array<OneD, const NekDouble> phys = m_f->m_exp[n]->GetPhys();
+#else
+            Array<OneD, const NekDouble> phys = m_f->m_fieldPhys->
+                UpdateArray1D(n);
+#endif
             for (int i = 0; i < nel; ++i)
             {
                 m_f->m_exp[0]->GetExp(i)->PhysInterpToSimplexEquiSpaced(

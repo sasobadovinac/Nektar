@@ -346,6 +346,7 @@ void ExpList2DHomogeneous1D::v_WriteTecplotZone(std::ostream &outfile,
         outfile << std::endl;
     }
 }
+#endif
 
 void ExpList2DHomogeneous1D::v_WriteVtkPieceHeader(std::ostream &outfile,
                                                    int expansion, int istrip)
@@ -443,7 +444,6 @@ void ExpList2DHomogeneous1D::v_WriteVtkPieceHeader(std::ostream &outfile,
     outfile << "      </Cells>" << endl;
     outfile << "      <PointData>" << endl;
 }
-#endif
 
 void ExpList2DHomogeneous1D::v_GetNormals(
     Array<OneD, Array<OneD, NekDouble>> &normals)

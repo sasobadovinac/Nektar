@@ -96,15 +96,18 @@ public:
     MULTI_REGIONS_EXPORT virtual ~ExpListHomogeneous1D();
 
     MULTI_REGIONS_EXPORT void Homogeneous1DTrans(
+        const int npts, 
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool IsForwards, bool Shuff = true,
         bool UnShuff = true);
 
-    inline void HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
+    inline void HomogeneousFwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff = true, bool UnShuff = true);
 
-    inline void HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray,
+    inline void HomogeneousBwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff = true, bool UnShuff = true);
 
@@ -230,6 +233,10 @@ protected:
 #if EXPLISTDATA
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
                                      std::string var);
+#else
+    virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
+                                  const Array<OneD, const NekDouble> &physIn,
+                                     std::string var);
 #endif
 
     virtual void v_PhysInterp1DScaled(const NekDouble scale,
@@ -241,20 +248,23 @@ protected:
         Array<OneD, NekDouble> &outarray);
 
     virtual void v_HomogeneousFwdTrans(
+        const int npts,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
         bool UnShuff = true);
 
     virtual void v_HomogeneousBwdTrans(
+        const int npts,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
         bool UnShuff = true);
 
-    virtual void v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+    virtual void v_DealiasedProd(const int num_dofs,
+                                 const Array<OneD, NekDouble> &inarray1,
                                  const Array<OneD, NekDouble> &inarray2,
                                  Array<OneD, NekDouble> &outarray);
 
-    virtual void v_DealiasedDotProd(
+    virtual void v_DealiasedDotProd(const int num_dofs,
         const Array<OneD, Array<OneD, NekDouble>> &inarray1,
         const Array<OneD, Array<OneD, NekDouble>> &inarray2,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
@@ -293,17 +303,19 @@ private:
 };
 
 inline void ExpListHomogeneous1D::HomogeneousFwdTrans(
+    const int npts,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
-    v_HomogeneousFwdTrans(inarray, outarray, Shuff, UnShuff);
+    v_HomogeneousFwdTrans(npts, inarray, outarray, Shuff, UnShuff);
 }
 
 inline void ExpListHomogeneous1D::HomogeneousBwdTrans(
+    const int npts,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
-    v_HomogeneousBwdTrans(inarray, outarray, Shuff, UnShuff);
+    v_HomogeneousBwdTrans(npts,inarray, outarray, Shuff, UnShuff);
 }
 
 } // namespace MultiRegions

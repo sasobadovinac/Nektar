@@ -159,7 +159,7 @@ void VCSMapping::v_DoInitialise(void)
                               m_pressure->GetPhys(), m_gradP[i]);
         if (m_pressure->GetWaveSpace())
         {
-            m_pressure->HomogeneousBwdTrans(m_gradP[i], m_gradP[i]);
+            m_pressure->HomogeneousBwdTrans(physTot, m_gradP[i], m_gradP[i]);
         }
     }
 }
@@ -234,7 +234,7 @@ void VCSMapping::v_SetUpPressureForcing(
         {
             if (m_fields[i]->GetWaveSpace())
             {
-                m_fields[i]->HomogeneousBwdTrans(fields[i], wk);
+                m_fields[i]->HomogeneousBwdTrans(physTot, fields[i], wk);
             }
             else
             {
@@ -243,7 +243,7 @@ void VCSMapping::v_SetUpPressureForcing(
             Vmath::Vmul(physTot, wk, 1, Jac, 1, wk, 1);
             if (m_fields[i]->GetWaveSpace())
             {
-                m_fields[i]->HomogeneousFwdTrans(wk, wk);
+                m_fields[i]->HomogeneousFwdTrans(physTot,wk, wk);
             }
             m_fields[i]->PhysDeriv(MultiRegions::DirCartesianMap[i], wk, wk);
             Vmath::Vadd(physTot, wk, 1, Forcing[0], 1, Forcing[0], 1);
@@ -268,7 +268,7 @@ void VCSMapping::v_SetUpPressureForcing(
                 velocity[i] = Array<OneD, NekDouble>(physTot, 0.0);
                 if (wavespace)
                 {
-                    m_fields[0]->HomogeneousBwdTrans(m_fields[i]->GetPhys(),
+                    m_fields[0]->HomogeneousBwdTrans(physTot, m_fields[i]->GetPhys(),
                                                      velocity[i]);
                 }
                 else
@@ -316,7 +316,7 @@ void VCSMapping::v_SetUpPressureForcing(
             // Put in wavespace
             if (wavespace)
             {
-                m_fields[0]->HomogeneousFwdTrans(
+                m_fields[0]->HomogeneousFwdTrans(physTot, 
                     m_presForcingCorrection[nlevels - 1], wk);
             }
             else
@@ -361,7 +361,7 @@ void VCSMapping::v_SetUpViscousForcing(
     {
         for (int i = 0; i < nvel; i++)
         {
-            m_pressure->HomogeneousBwdTrans(Forcing[i], m_gradP[i]);
+            m_pressure->HomogeneousBwdTrans(physTot, Forcing[i], m_gradP[i]);
         }
     }
     else
@@ -394,7 +394,7 @@ void VCSMapping::v_SetUpViscousForcing(
         {
             for (int i = 0; i < nvel; i++)
             {
-                m_pressure->HomogeneousFwdTrans(Forcing[i], Forcing[i]);
+                m_pressure->HomogeneousFwdTrans(physTot, Forcing[i], Forcing[i]);
             }
         }
     }
@@ -476,7 +476,7 @@ void VCSMapping::v_SolvePressure(const Array<OneD, NekDouble> &Forcing)
                                       previous_iter, gradP[i]);
                 if (m_pressure->GetWaveSpace())
                 {
-                    m_pressure->HomogeneousBwdTrans(gradP[i], wk1[i]);
+                    m_pressure->HomogeneousBwdTrans(physTot, gradP[i], wk1[i]);
                 }
                 else
                 {
@@ -495,7 +495,7 @@ void VCSMapping::v_SolvePressure(const Array<OneD, NekDouble> &Forcing)
                         F_corrected, 1);
             if (m_pressure->GetWaveSpace())
             {
-                m_pressure->HomogeneousFwdTrans(F_corrected, F_corrected);
+                m_pressure->HomogeneousFwdTrans(physTot, F_corrected, F_corrected);
             }
             // alpha*J*div(G(p)) - p_ii
             for (int i = 0; i < m_nConvectiveFields; ++i)
@@ -624,7 +624,7 @@ void VCSMapping::v_SolveViscous(
             {
                 for (int i = 0; i < nvel; ++i)
                 {
-                    m_fields[0]->HomogeneousBwdTrans(previous_iter[i], wk[i]);
+                    m_fields[0]->HomogeneousBwdTrans(physTot, previous_iter[i], wk[i]);
                 }
             }
             else
@@ -643,7 +643,7 @@ void VCSMapping::v_SolveViscous(
             {
                 for (int i = 0; i < nvel; ++i)
                 {
-                    m_fields[0]->HomogeneousFwdTrans(F_corrected[i],
+                    m_fields[0]->HomogeneousFwdTrans(physTot, F_corrected[i],
                                                      F_corrected[i]);
                 }
             }
@@ -735,7 +735,7 @@ void VCSMapping::ApplyIncNSMappingForcing(
         for (int i = 0; i < m_nConvectiveFields; ++i)
         {
             vel[i] = inarray[i];
-            m_fields[0]->HomogeneousBwdTrans(vel[i], velPhys[i]);
+            m_fields[0]->HomogeneousBwdTrans(physTot, vel[i], velPhys[i]);
         }
     }
     else
@@ -785,7 +785,7 @@ void VCSMapping::ApplyIncNSMappingForcing(
     {
         for (int i = 0; i < m_nConvectiveFields; ++i)
         {
-            m_fields[0]->HomogeneousFwdTrans(Forcing[i], Forcing[i]);
+            m_fields[0]->HomogeneousFwdTrans(physTot, Forcing[i], Forcing[i]);
         }
     }
 
@@ -856,7 +856,7 @@ void VCSMapping::MappingAccelerationCorrection(
                                        tmp[2]);
                 if (m_fields[0]->GetWaveSpace())
                 {
-                    m_fields[0]->HomogeneousBwdTrans(tmp[2], tmp[2]);
+                    m_fields[0]->HomogeneousBwdTrans(physTot, tmp[2], tmp[2]);
                 }
             }
 

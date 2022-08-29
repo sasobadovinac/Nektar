@@ -137,7 +137,11 @@ void ProcessFieldFromString::Process(po::variables_map &vm)
     for (int i = 0; i < nfields; ++i)
     {
         varstr += " " + m_f->m_variables[i];
+#if EXPLISTDATA
         interpfields.push_back(m_f->m_exp[i]->GetPhys());
+#else
+        interpfields.push_back(m_f->m_fieldPhys->GetArray1D(i));
+#endif
     }
 
     // Create new function
@@ -146,12 +150,21 @@ void ProcessFieldFromString::Process(po::variables_map &vm)
     string fieldstr = m_config["fieldstr"].as<string>();
     exprId          = strEval.DefineFunction(varstr.c_str(), fieldstr);
 
+#if EXPLISTDATA
     // Evaluate function
     strEval.Evaluate(exprId, interpfields, m_f->m_exp[fieldID]->UpdatePhys());
 
     // Update coeffs
     m_f->m_exp[fieldID]->FwdTransLocalElmt(m_f->m_exp[fieldID]->GetPhys(),
                                            m_f->m_exp[fieldID]->UpdateCoeffs());
+#else
+    // Evaluate function
+    strEval.Evaluate(exprId, interpfields,
+                     m_f->m_fieldPhys->UpdateArray1D(fieldID));
+
+    m_f->m_exp[fieldID]->FwdTransLocalElmt(m_f->m_fieldPhys->GetArray1D(fieldID),
+                                   m_f->m_fieldCoeffs->UpdateArray1D(fieldID));
+#endif
 }
 } // namespace FieldUtils
 } // namespace Nektar

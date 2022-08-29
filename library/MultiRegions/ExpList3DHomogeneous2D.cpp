@@ -325,6 +325,7 @@ void ExpList3DHomogeneous2D::v_GetCoords(Array<OneD, NekDouble> &xc0,
     }
 }
 
+#if EXPLISTDATA
 /**
  * Write Tecplot Files Zone
  * @param   outfile    Output file name.
@@ -359,6 +360,7 @@ void ExpList3DHomogeneous2D::v_WriteTecplotZone(std::ostream &outfile,
         outfile << std::endl;
     }
 }
+#endif
 
 void ExpList3DHomogeneous2D::v_WriteVtkPieceHeader(std::ostream &outfile,
                                                    int expansion, int)

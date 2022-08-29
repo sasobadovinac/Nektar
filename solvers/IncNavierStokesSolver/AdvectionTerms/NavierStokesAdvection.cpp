@@ -110,7 +110,7 @@ void NavierStokesAdvection::v_Advect(
             !m_homogen_dealiasing)
         {
             velocity[i] = Array<OneD, NekDouble>(nqtot, 0.0);
-            fields[i]->HomogeneousBwdTrans(advVel[i], velocity[i]);
+            fields[i]->HomogeneousBwdTrans(nqtot, advVel[i], velocity[i]);
         }
         else
         {
@@ -180,8 +180,8 @@ void NavierStokesAdvection::v_Advect(
             }
             break;
         case 2:
-            grad0 = Array<OneD, NekDouble>(fields[0]->GetNpoints());
-            grad1 = Array<OneD, NekDouble>(fields[0]->GetNpoints());
+            grad0 = Array<OneD, NekDouble>(nqtot);
+            grad1 = Array<OneD, NekDouble>(nqtot);
             for (int n = 0; n < nConvectiveFields; ++n)
             {
                 fields[0]->PhysDeriv(inarray[n], grad0, grad1);
@@ -222,7 +222,7 @@ void NavierStokesAdvection::v_Advect(
                 Array<OneD, Array<OneD, NekDouble>> Outarray(nConvectiveFields);
                 for (int i = 0; i < ndim; i++)
                 {
-                    grad[i] = Array<OneD, NekDouble>(fields[0]->GetNpoints());
+                    grad[i] = Array<OneD, NekDouble>(nqtot);
                 }
                 for (int i = 0; i < ndim * nConvectiveFields; i++)
                 {
@@ -246,7 +246,7 @@ void NavierStokesAdvection::v_Advect(
                     }
                 }
 
-                fields[0]->DealiasedDotProd(AdvVel, gradScaled, Outarray);
+                fields[0]->DealiasedDotProd(nPointsTot, AdvVel, gradScaled, Outarray);
 
                 timer.Start();
                 for (int n = 0; n < nConvectiveFields; n++)
@@ -279,39 +279,39 @@ void NavierStokesAdvection::v_Advect(
                                          grad[n * ndim + 2]);
                 }
 
-                fields[0]->DealiasedDotProd(AdvVel, grad, outarray);
+                fields[0]->DealiasedDotProd(nPointsTot, AdvVel, grad, outarray);
             }
             else
             {
-                grad0 = Array<OneD, NekDouble>(fields[0]->GetNpoints());
-                grad1 = Array<OneD, NekDouble>(fields[0]->GetNpoints());
-                grad2 = Array<OneD, NekDouble>(fields[0]->GetNpoints());
+                grad0 = Array<OneD, NekDouble>(nqtot);
+                grad1 = Array<OneD, NekDouble>(nqtot);
+                grad2 = Array<OneD, NekDouble>(nqtot);
                 Array<OneD, NekDouble> tmp = grad2;
                 for (int n = 0; n < nConvectiveFields; ++n)
                 {
                     if (fields[0]->GetWaveSpace() == true &&
                         fields[0]->GetExpType() == MultiRegions::e3DH1D)
                     {
-                        fields[0]->HomogeneousBwdTrans(inarray[n], tmp);
+                        fields[0]->HomogeneousBwdTrans(nqtot, inarray[n], tmp);
                         fields[0]->PhysDeriv(tmp, grad0, grad1);
                         // Take d/dz derivative using wave space field
                         fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2],
                                              inarray[n], outarray[n]);
-                        fields[0]->HomogeneousBwdTrans(outarray[n], grad2);
+                        fields[0]->HomogeneousBwdTrans(nqtot, outarray[n], grad2);
                     }
                     else if (fields[0]->GetWaveSpace() == true &&
                              fields[0]->GetExpType() == MultiRegions::e3DH2D)
                     {
-                        fields[0]->HomogeneousBwdTrans(inarray[n], tmp);
+                        fields[0]->HomogeneousBwdTrans(nqtot, inarray[n], tmp);
                         fields[0]->PhysDeriv(tmp, grad0);
                         // Take d/dy derivative using wave space field
                         fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[1],
                                              inarray[n], outarray[n]);
-                        fields[0]->HomogeneousBwdTrans(outarray[n], grad1);
+                        fields[0]->HomogeneousBwdTrans(nqtot, outarray[n], grad1);
                         // Take d/dz derivative using wave space field
                         fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[2],
                                              inarray[n], outarray[n]);
-                        fields[0]->HomogeneousBwdTrans(outarray[n], grad2);
+                        fields[0]->HomogeneousBwdTrans(nqtot, outarray[n], grad2);
                     }
                     else
                     {
@@ -359,7 +359,7 @@ void NavierStokesAdvection::v_Advect(
 
                     if (fields[0]->GetWaveSpace() == true)
                     {
-                        fields[0]->HomogeneousFwdTrans(outarray[n],
+                        fields[0]->HomogeneousFwdTrans(nqtot, outarray[n],
                                                        outarray[n]);
                     }
                 }

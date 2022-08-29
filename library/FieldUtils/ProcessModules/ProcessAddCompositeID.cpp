@@ -84,6 +84,12 @@ void ProcessAddCompositeID::Process(po::variables_map &vm)
         exp = m_f->AppendExpList(NumHomogeneousDir);
 
         m_f->m_exp[nfields] = exp;
+
+#if EXPLISTDATA
+#else
+        m_f->m_fieldCoeffs->AddVariable(exp);
+        m_f->m_fieldPhys->AddVariable(exp);
+#endif
     }
     else
     {
@@ -118,12 +124,22 @@ void ProcessAddCompositeID::Process(po::variables_map &vm)
         // Fill element with the value of the index
         int npts = elmt->GetTotPoints();
         Array<OneD, NekDouble> tmp;
+#if EXPLISTDATA
         Vmath::Fill(npts, (NekDouble)compid,
                     tmp = exp->UpdatePhys() + exp->GetPhys_Offset(n), 1);
+#else
+        Vmath::Fill(npts, (NekDouble)compid,
+                    tmp = m_f->m_fieldPhys->UpdateArray1D(nfields) + exp->GetPhys_Offset(n), 1);
+#endif
     }
 
     // forward transform
+#if EXPLISTDATA
     exp->FwdTransLocalElmt(exp->GetPhys(), exp->UpdateCoeffs());
+#else
+    exp->FwdTransLocalElmt(m_f->m_fieldPhys->GetArray1D(nfields),
+                           m_f->m_fieldCoeffs->UpdateArray1D(nfields)); 
+#endif
 }
 } // namespace FieldUtils
 } // namespace Nektar

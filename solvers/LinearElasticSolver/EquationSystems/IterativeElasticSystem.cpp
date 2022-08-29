@@ -131,6 +131,13 @@ void IterativeElasticSystem::v_DoSolve()
     // Write initial geometry for consistency/script purposes
     WriteGeometry(0);
 
+    Array<OneD, Array<OneD, NekDouble>> physvals(m_fields.size());
+
+    for(int i = 0; i < m_fields.size(); ++i)
+    {
+        physvals[i] = m_fields[i]->UpdatePhys(); 
+    }
+                                               
     // Now loop over desired number of steps
     for (i = 1; i <= m_numSteps; ++i)
     {
@@ -138,7 +145,7 @@ void IterativeElasticSystem::v_DoSolve()
 
         // Perform solve for this iteration and update geometry accordingly.
         LinearElasticSystem::v_DoSolve();
-        GlobalMapping::UpdateGeometry(m_graph, m_fields);
+        GlobalMapping::UpdateGeometry(m_graph, m_fields, physvals);
         WriteGeometry(i);
 
         // Check for invalid elements.

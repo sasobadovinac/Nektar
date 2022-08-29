@@ -194,7 +194,7 @@ void ExpList2DHomogeneous2D::v_FwdTrans(
 
     if (!m_WaveSpace)
     {
-        HomogeneousFwdTrans(outarray, outarray);
+        HomogeneousFwdTrans(m_npoints, outarray, outarray);
     }
 }
 
@@ -302,7 +302,7 @@ void ExpList2DHomogeneous2D::v_WriteTecplotZone(std::ostream &outfile,
         outfile << std::endl;
     }
 }
-
+#endif
 
 void ExpList2DHomogeneous2D::v_WriteVtkPieceHeader(std::ostream &outfile,
                                                    int expansion, int istrip)
@@ -374,7 +374,7 @@ void ExpList2DHomogeneous2D::v_WriteVtkPieceHeader(std::ostream &outfile,
     outfile << "      </Cells>" << endl;
     outfile << "      <PointData>" << endl;
 }
-#endif
+
 
 } // namespace MultiRegions
 } // namespace Nektar

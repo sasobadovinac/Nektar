@@ -250,8 +250,13 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
             // For this expansion write out each field.
             for (j = 0; j < nfields; ++j)
             {
+#if EXPLISTDATA
                 m_f->m_exp[s * nfields + j]->WriteVtkPieceData(
                     outfile, i, m_f->m_variables[j]);
+#else
+                m_f->m_exp[s * nfields + j]->WriteVtkPieceData(
+                   outfile, i, m_f->m_fieldPhys->GetArray1D(j), m_f->m_variables[j]);
+#endif
             }
             m_f->m_exp[0]->WriteVtkPieceFooter(outfile, i);
         }

@@ -133,6 +133,12 @@ public:
     {
         return m_bndCondFieldCoeff; 
     }
+
+    inline Array<OneD, NekFieldPhysSharedPtr>
+                           &UpdateBndCondFieldPhys(void)
+    {
+        return m_bndCondFieldPhys; 
+    }
 #endif
 
     MULTI_REGIONS_EXPORT void GetLocTraceToTraceMap(

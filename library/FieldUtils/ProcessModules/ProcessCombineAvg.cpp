@@ -116,6 +116,8 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
         ASSERTL0(fromField->m_fielddef[0]->m_fields[j] == m_f->m_variables[j],
                  "Field names do not match.");
 
+
+#if EXPLISTDATA
         // load new field (overwrite m_f->m_exp coeffs for now)
         for (int i = 0; i < fromField->m_data.size(); ++i)
         {
@@ -124,6 +126,16 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
                 m_f->m_variables[j], m_f->m_exp[j]->UpdateCoeffs());
         }
         m_f->m_exp[j]->BwdTrans(m_f->m_exp[j]->GetCoeffs(), fromPhys[j]);
+#else
+        // load new field (overwrite m_f->m_exp coeffs for now)
+        for (int i = 0; i < fromField->m_data.size(); ++i)
+        {
+            m_f->m_exp[j]->ExtractDataToCoeffs(
+                fromField->m_fielddef[i], fromField->m_data[i],
+                m_f->m_variables[j], m_f->m_fieldCoeffs->UpdateArray1D(j));
+        }
+        m_f->m_exp[j]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(j), fromPhys[j]);
+#endif
     }
 
     // Load number of samples in each file
@@ -158,6 +170,7 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
         {
             for (int j = i; j < spacedim; ++j, ++n)
             {
+#if EXPLISTDATA
                 // correction is zero for averages and
                 //      = (\bar{x_a}-\bar{x_b})*(\bar{y_a}-\bar{y_b})*na*nb/N
                 //      for Reynolds stresses
@@ -168,12 +181,25 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
                             tmp, 1);
                 Vmath::Vmul(nq, correction[n], 1, tmp, 1, correction[n], 1);
                 Vmath::Smul(nq, fac, correction[n], 1, correction[n], 1);
+#else
+                // correction is zero for averages and
+                //      = (\bar{x_a}-\bar{x_b})*(\bar{y_a}-\bar{y_b})*na*nb/N
+                //      for Reynolds stresses
+                NekDouble fac = ((NekDouble)(na * nb)) / ((NekDouble)(na + nb));
+                Vmath::Vsub(nq, m_f->m_fieldPhys->GetArray1D(i), 1,
+                            fromPhys[i], 1, correction[n], 1);
+                Vmath::Vsub(nq,  m_f->m_fieldPhys->GetArray1D(i), 1,
+                            fromPhys[j], 1, tmp, 1);
+                Vmath::Vmul(nq, correction[n], 1, tmp, 1, correction[n], 1);
+                Vmath::Smul(nq, fac, correction[n], 1, correction[n], 1);
+#endif
             }
         }
     }
     // Combine fields
     for (int j = 0; j < nfields; ++j)
     {
+#if EXPLISTDATA
         // The new value is: (x_a*na + x_b*nb + correction)/N
         Vmath::Smul(nq, 1.0 * na, m_f->m_exp[j]->GetPhys(), 1,
                     m_f->m_exp[j]->UpdatePhys(), 1);
@@ -186,6 +212,21 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
 
         m_f->m_exp[j]->FwdTransLocalElmt(m_f->m_exp[j]->GetPhys(),
                                          m_f->m_exp[j]->UpdateCoeffs());
+#else
+        // The new value is: (x_a*na + x_b*nb + correction)/N
+        Vmath::Smul(nq, 1.0 * na, m_f->m_fieldPhys->GetArray1D(j), 1,
+                    m_f->m_fieldPhys->UpdateArray1D(j), 1);
+        Vmath::Svtvp(nq, 1.0 * nb, fromPhys[j], 1,
+                     m_f->m_fieldPhys->GetArray1D(j), 1,
+                     m_f->m_fieldPhys->UpdateArray1D(j), 1);
+        Vmath::Vadd(nq,m_f->m_fieldPhys->GetArray1D(j), 1,
+                    correction[j], 1, m_f->m_fieldPhys->UpdateArray1D(j), 1);
+        Vmath::Smul(nq, 1.0 / (na + nb), m_f->m_fieldPhys->GetArray1D(j), 1,
+                     m_f->m_fieldPhys->UpdateArray1D(j), 1);
+
+        m_f->m_exp[j]->FwdTransLocalElmt(m_f->m_fieldPhys->GetArray1D(j),
+                                         m_f->m_fieldCoeffs->UpdateArray1D(j));
+#endif
     }
 
     // Update metadata

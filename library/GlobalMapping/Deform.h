@@ -50,7 +50,9 @@ namespace GlobalMapping
 /// Adds a summary item to the summary info list
 GLOBAL_MAPPING_EXPORT void UpdateGeometry(
     SpatialDomains::MeshGraphSharedPtr graph,
-    Array<OneD, MultiRegions::ExpListSharedPtr> &fields, bool modal = true);
+    Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    Array<OneD, Array<OneD, NekDouble>> &PhysVals,
+    bool modal = true);
 
 } // namespace GlobalMapping
 } // namespace Nektar

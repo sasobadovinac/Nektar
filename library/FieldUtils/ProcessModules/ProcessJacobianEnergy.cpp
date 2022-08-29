@@ -83,16 +83,25 @@ void ProcessJacobianEnergy::Process(po::variables_map &vm)
     {
         m_f->m_exp.resize(nfields + 1);
         exp = m_f->AppendExpList(NumHomogeneousDir);
-
         m_f->m_exp[nfields] = exp;
+#if EXPLISTDATA
+#else
+        m_f->m_fieldPhys  ->AddVariable(exp);
+        m_f->m_fieldCoeffs->AddVariable(exp);
+#endif
     }
     else
     {
         exp = m_f->m_exp[0];
     }
 
+#if EXPLISTDATA
     Array<OneD, NekDouble> phys   = exp->UpdatePhys();
     Array<OneD, NekDouble> coeffs = exp->UpdateCoeffs();
+#else
+    Array<OneD, NekDouble> phys   = m_f->m_fieldPhys->UpdateArray1D(nfields); 
+    Array<OneD, NekDouble> coeffs = m_f->m_fieldCoeffs->UpdateArray1D(nfields);
+#endif
     Array<OneD, NekDouble> tmp;
 
     for (int i = 0; i < exp->GetExpSize(); ++i)

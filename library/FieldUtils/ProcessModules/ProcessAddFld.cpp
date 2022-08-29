@@ -169,7 +169,12 @@ void ProcessAddFld::Process(po::variables_map &vm)
 
         for (int j = 0; j < nfields; ++j)
         {
+#if EXPLISTDATA
             Vmath::Vcopy(ncoeffs, m_f->m_exp[j]->GetCoeffs(), 1, SaveFld, 1);
+#else
+            Vmath::Vcopy(ncoeffs, m_f->m_fieldCoeffs->GetArray1D(j), 1,
+                         SaveFld, 1);
+#endif
 
             // Check if new field has this variable
             auto it =
@@ -183,15 +188,29 @@ void ProcessAddFld::Process(po::variables_map &vm)
             // load new field
             for (int i = 0; i < fromFieldData.size(); ++i)
             {
+#if EXPLISTDATA
                 m_f->m_exp[j]->ExtractDataToCoeffs(
                     fromFieldDef[i], fromFieldData[i], m_f->m_variables[j],
                     m_f->m_exp[j]->UpdateCoeffs());
+#else
+                m_f->m_exp[j]->ExtractDataToCoeffs(
+                    fromFieldDef[i], fromFieldData[i], m_f->m_variables[j],
+                    m_f->m_fieldCoeffs->UpdateArray1D(j));
+#endif
             }
 
+#if EXPLISTDATA
             Vmath::Vadd(ncoeffs, m_f->m_exp[j]->GetCoeffs(), 1, SaveFld, 1,
                         m_f->m_exp[j]->UpdateCoeffs(), 1);
             m_f->m_exp[j]->BwdTrans(m_f->m_exp[j]->GetCoeffs(),
                                     m_f->m_exp[j]->UpdatePhys());
+#else
+            Vmath::Vadd(ncoeffs, m_f->m_fieldCoeffs->GetArray1D(j), 1
+                        , SaveFld, 1,
+                        m_f->m_fieldCoeffs->UpdateArray1D(j), 1);
+            m_f->m_exp[j]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(j),
+                                    m_f->m_fieldPhys->UpdateArray1D(j));
+#endif
         }
     }
 }

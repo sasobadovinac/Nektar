@@ -299,9 +299,16 @@ void OutputTecplot::OutputFromExp(po::variables_map &vm)
         for (int i = 0; i < m_f->m_variables.size(); ++i)
         {
             m_fields[i + m_coordim] = Array<OneD, NekDouble>(totpoints);
+
+#if EXPLISTDATA
             Vmath::Vcopy(m_f->m_exp[0]->GetTotPoints(),
                          m_f->m_exp[i]->UpdatePhys(), 1,
                          m_fields[i + m_coordim], 1);
+#else
+            Vmath::Vcopy(m_f->m_exp[0]->GetTotPoints(),
+                         m_f->m_fieldPhys->GetArray1D(i), 1,
+                         m_fields[i + m_coordim], 1);
+#endif
         }
     }
     else
@@ -309,7 +316,11 @@ void OutputTecplot::OutputFromExp(po::variables_map &vm)
         // Add references to m_fields
         for (int i = 0; i < m_f->m_variables.size(); ++i)
         {
+#if EXPLISTDATA
             m_fields[i + m_coordim] = m_f->m_exp[i]->UpdatePhys();
+#else
+            m_fields[i + m_coordim] = m_f->m_fieldPhys->UpdateArray1D(i);
+#endif
         }
     }
 

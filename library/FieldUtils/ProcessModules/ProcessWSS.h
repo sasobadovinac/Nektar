@@ -73,11 +73,22 @@ public:
     }
 
 protected:
+#if EXPLISTDATA
     void GetViscosity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
                       Array<OneD, NekDouble> &mu, NekDouble &lambda);
 
     void GetVelocity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
                      Array<OneD, Array<OneD, NekDouble>> &vel);
+#else
+    void GetViscosity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+                      const Array<OneD, NekFieldPhysSharedPtr> &BndFieldPhys, 
+                      Array<OneD, NekDouble> &mu, NekDouble &lambda);
+
+    void GetVelocity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+                     const Array<OneD, NekFieldPhysSharedPtr> &BndFieldPhys, 
+                     Array<OneD, Array<OneD, NekDouble>> &vel);
+#endif
+    
 
 private:
     int m_spacedim;

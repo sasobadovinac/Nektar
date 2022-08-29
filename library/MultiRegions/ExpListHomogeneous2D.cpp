@@ -148,26 +148,29 @@ ExpListHomogeneous2D::~ExpListHomogeneous2D()
 }
 
 void ExpListHomogeneous2D::v_HomogeneousFwdTrans(
+    const int npts, 
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
     // Forwards trans
-    Homogeneous2DTrans(inarray, outarray, true, Shuff, UnShuff);
+    Homogeneous2DTrans(npts, inarray, outarray, true, Shuff, UnShuff);
 }
 
 void ExpListHomogeneous2D::v_HomogeneousBwdTrans(
+    const int npts, 
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
     // Backwards trans
-    Homogeneous2DTrans(inarray, outarray, false, Shuff, UnShuff);
+    Homogeneous2DTrans(npts,inarray, outarray, false, Shuff, UnShuff);
 }
 
 void ExpListHomogeneous2D::v_DealiasedProd(
+    const int npoints,
     const Array<OneD, NekDouble> &inarray1,
     const Array<OneD, NekDouble> &inarray2, Array<OneD, NekDouble> &outarray)
 {
-    int npoints = outarray.size(); // number of total physical points
+    //int npoints = outarray.size(); // number of total physical points
     int nlines =
         m_lines.size(); // number of lines == number of Fourier modes = number
                         // of Fourier coeff = number of points per slab
@@ -188,12 +191,12 @@ void ExpListHomogeneous2D::v_DealiasedProd(
     }
     else
     {
-        HomogeneousFwdTrans(inarray1, V1);
-        HomogeneousFwdTrans(inarray2, V2);
+        HomogeneousFwdTrans(npoints, inarray1, V1);
+        HomogeneousFwdTrans(npoints, inarray2, V2);
     }
 
-    m_transposition->Transpose(V1, ShufV1, false, LibUtilities::eXtoYZ);
-    m_transposition->Transpose(V2, ShufV2, false, LibUtilities::eXtoYZ);
+    m_transposition->Transpose(npoints, V1, ShufV1, false, LibUtilities::eXtoYZ);
+    m_transposition->Transpose(npoints, V2, ShufV2, false, LibUtilities::eXtoYZ);
 
     Array<OneD, NekDouble> PadV1_slab_coeff(m_padsize_y * m_padsize_z, 0.0);
     Array<OneD, NekDouble> PadV2_slab_coeff(m_padsize_y * m_padsize_z, 0.0);
@@ -255,19 +258,21 @@ void ExpListHomogeneous2D::v_DealiasedProd(
 
     if (m_WaveSpace)
     {
-        m_transposition->Transpose(ShufV1V2, outarray, false,
+        m_transposition->Transpose(npoints, ShufV1V2, outarray, false,
                                    LibUtilities::eYZtoX);
     }
     else
     {
-        m_transposition->Transpose(ShufV1V2, V1V2, false, LibUtilities::eYZtoX);
+        m_transposition->Transpose(npoints, ShufV1V2, V1V2, false,
+                                   LibUtilities::eYZtoX);
 
         // Moving the results in physical space for the output
-        HomogeneousBwdTrans(V1V2, outarray);
+        HomogeneousBwdTrans(npoints, V1V2, outarray);
     }
 }
 
 void ExpListHomogeneous2D::v_DealiasedDotProd(
+    const int npts,
     const Array<OneD, Array<OneD, NekDouble>> &inarray1,
     const Array<OneD, Array<OneD, NekDouble>> &inarray2,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
@@ -277,7 +282,7 @@ void ExpListHomogeneous2D::v_DealiasedDotProd(
     ASSERTL1(inarray2.size() % ndim == 0,
              "Wrong dimensions for DealiasedDotProd.");
     int nvec = inarray2.size() % ndim;
-    int npts = inarray1[0].size();
+    //int npts = inarray1[0].size();
 
     Array<OneD, NekDouble> out(npts);
     for (int i = 0; i < nvec; i++)
@@ -285,7 +290,7 @@ void ExpListHomogeneous2D::v_DealiasedDotProd(
         Vmath::Zero(npts, outarray[i], 1);
         for (int j = 0; j < ndim; j++)
         {
-            DealiasedProd(inarray1[j], inarray2[i * ndim + j], out);
+            DealiasedProd(npts, inarray1[j], inarray2[i * ndim + j], out);
             Vmath::Vadd(npts, outarray[i], 1, out, 1, outarray[i], 1);
         }
     }
@@ -307,7 +312,7 @@ void ExpListHomogeneous2D::v_FwdTrans(
     }
     if (!m_WaveSpace)
     {
-        HomogeneousFwdTrans(outarray, outarray);
+        HomogeneousFwdTrans(cnt1, outarray, outarray);
     }
 }
 
@@ -329,7 +334,7 @@ void ExpListHomogeneous2D::v_FwdTransLocalElmt(
     }
     if (!m_WaveSpace)
     {
-        HomogeneousFwdTrans(outarray, outarray);
+        HomogeneousFwdTrans(cnt1, outarray, outarray);
     }
 }
 
@@ -351,7 +356,7 @@ void ExpListHomogeneous2D::v_FwdTransBndConstrained(
     }
     if (!m_WaveSpace)
     {
-        HomogeneousFwdTrans(outarray, outarray);
+        HomogeneousFwdTrans(cnt1, outarray, outarray);
     }
 }
     
@@ -371,7 +376,7 @@ void ExpListHomogeneous2D::v_BwdTrans(
     }
     if (!m_WaveSpace)
     {
-        HomogeneousBwdTrans(outarray, outarray);
+        HomogeneousBwdTrans(cnt1, outarray, outarray);
     }
 }
 
@@ -393,6 +398,7 @@ void ExpListHomogeneous2D::v_IProductWRTBase(
 }
 
 void ExpListHomogeneous2D::Homogeneous2DTrans(
+    const int num_dofs,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool IsForwards, bool Shuff, bool UnShuff)
 {
@@ -403,16 +409,12 @@ void ExpListHomogeneous2D::Homogeneous2DTrans(
 
         int n = m_lines.size(); // number of Fourier points in the Fourier
                                 // directions (x-z grid)
-        int s = inarray.size(); // number of total points = n. of Fourier points
-                                // * n. of points per line
-        int p =
-            s /
-            n; // number of points per line = n of Fourier transform required
+        int p = num_dofs / n;          // number of points per line = n of Fourier transform required
 
-        Array<OneD, NekDouble> fft_in(s);
-        Array<OneD, NekDouble> fft_out(s);
+        Array<OneD, NekDouble> fft_in(num_dofs);
+        Array<OneD, NekDouble> fft_out(num_dofs);
 
-        m_transposition->Transpose(inarray, fft_in, false,
+        m_transposition->Transpose(num_dofs, inarray, fft_in, false,
                                    LibUtilities::eXtoYZ);
 
         if (IsForwards)
@@ -432,7 +434,7 @@ void ExpListHomogeneous2D::Homogeneous2DTrans(
             }
         }
 
-        m_transposition->Transpose(fft_out, fft_in, false,
+        m_transposition->Transpose(num_dofs, fft_out, fft_in, false,
                                    LibUtilities::eYZtoZY);
 
         if (IsForwards)
@@ -453,10 +455,10 @@ void ExpListHomogeneous2D::Homogeneous2DTrans(
         }
 
         // TODO: required ZYtoX routine
-        m_transposition->Transpose(fft_out, fft_in, false,
+        m_transposition->Transpose(num_dofs, fft_out, fft_in, false,
                                    LibUtilities::eZYtoYZ);
 
-        m_transposition->Transpose(fft_in, outarray, false,
+        m_transposition->Transpose(num_dofs, fft_in, outarray, false,
                                    LibUtilities::eYZtoX);
     }
     else
@@ -464,7 +466,7 @@ void ExpListHomogeneous2D::Homogeneous2DTrans(
         DNekBlkMatSharedPtr blkmatY;
         DNekBlkMatSharedPtr blkmatZ;
 
-        if (inarray.size() == m_npoints) // transform phys space
+        if (num_dofs == m_npoints) // transform phys space
         {
             if (IsForwards)
             {
@@ -509,20 +511,23 @@ void ExpListHomogeneous2D::Homogeneous2DTrans(
         NekVector<NekDouble> inZ(ncolsZ, sortedinarrayZ, eWrapper);
         NekVector<NekDouble> outZ(nrowsZ, sortedoutarrayZ, eWrapper);
 
-        m_transposition->Transpose(inarray, sortedinarrayY, !IsForwards,
-                                   LibUtilities::eXtoYZ);
+        m_transposition->Transpose(num_dofs, inarray, sortedinarrayY,
+                                   !IsForwards, LibUtilities::eXtoYZ);
 
         outY = (*blkmatY) * inY;
 
-        m_transposition->Transpose(sortedoutarrayY, sortedinarrayZ, false,
+        m_transposition->Transpose(sortedoutarrayY.size(), sortedoutarrayY,
+                                   sortedinarrayZ, false,
                                    LibUtilities::eYZtoZY);
 
         outZ = (*blkmatZ) * inZ;
 
-        m_transposition->Transpose(sortedoutarrayZ, sortedoutarrayY, false,
+        m_transposition->Transpose(sortedoutarrayZ.size(), sortedoutarrayZ,
+                                   sortedoutarrayY, false,
                                    LibUtilities::eZYtoYZ);
 
-        m_transposition->Transpose(sortedoutarrayY, outarray, false,
+        m_transposition->Transpose(sortedoutarrayY.size(), sortedoutarrayY,
+                                   outarray, false,
                                    LibUtilities::eYZtoX);
     }
 }
@@ -800,6 +805,13 @@ void ExpListHomogeneous2D::v_ExtractDataToCoeffs(
 #if EXPLISTDATA
     void ExpListHomogeneous2D::v_WriteVtkPieceData(std::ostream &outfile,
                                                int expansion, std::string var)
+#else
+    void ExpListHomogeneous2D::v_WriteVtkPieceData
+                                    (std::ostream &outfile,
+                                     int expansion,
+                                     const Array<OneD, const NekDouble> &physIn,
+                                     std::string var)
+#endif
 {
     int i;
     int nq               = (*m_exp)[expansion]->GetTotPoints();
@@ -811,8 +823,14 @@ void ExpListHomogeneous2D::v_ExtractDataToCoeffs(
     outfile << "          ";
     for (int n = 0; n < m_lines.size(); ++n)
     {
+#if EXPLISTDATA
         const Array<OneD, NekDouble> phys =
             m_phys + m_phys_offset[expansion] + n * npoints_per_line;
+#else
+        const Array<OneD, NekDouble> phys =
+            physIn + m_phys_offset[expansion] + n * npoints_per_line;
+#endif
+        
         for (i = 0; i < nq; ++i)
         {
             outfile << (fabs(phys[i]) < NekConstants::kNekZeroTol ? 0 : phys[i])
@@ -822,7 +840,6 @@ void ExpListHomogeneous2D::v_ExtractDataToCoeffs(
     outfile << endl;
     outfile << "        </DataArray>" << endl;
 }
-#endif
     
 void ExpListHomogeneous2D::v_PhysDeriv(
     const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
@@ -831,13 +848,11 @@ void ExpListHomogeneous2D::v_PhysDeriv(
 {
     int nyzlines = m_lines.size(); // number of Fourier points in the Fourier
                                    // directions (nF_pts)
-    int npoints = inarray.size();  // number of total points = n. of Fourier
-                                   // points * n. of points per line (nT_pts)
-    int n_points_line = npoints / nyzlines; // number of points per line
+    int n_points_line = m_npoints / nyzlines; // number of points per line
 
-    Array<OneD, NekDouble> temparray(npoints);
-    Array<OneD, NekDouble> temparray1(npoints);
-    Array<OneD, NekDouble> temparray2(npoints);
+    Array<OneD, NekDouble> temparray(m_npoints);
+    Array<OneD, NekDouble> temparray1(m_npoints);
+    Array<OneD, NekDouble> temparray2(m_npoints);
     Array<OneD, NekDouble> tmp1;
     Array<OneD, NekDouble> tmp2;
     Array<OneD, NekDouble> tmp3;
@@ -857,7 +872,7 @@ void ExpListHomogeneous2D::v_PhysDeriv(
         }
         else
         {
-            HomogeneousFwdTrans(inarray, temparray);
+            HomogeneousFwdTrans(m_npoints, inarray, temparray);
         }
         NekDouble sign = -1.0;
         NekDouble beta;
@@ -898,8 +913,8 @@ void ExpListHomogeneous2D::v_PhysDeriv(
         }
         else
         {
-            HomogeneousBwdTrans(temparray1, out_d1);
-            HomogeneousBwdTrans(temparray2, out_d2);
+            HomogeneousBwdTrans(m_npoints, temparray1, out_d1);
+            HomogeneousBwdTrans(m_npoints, temparray2, out_d2);
         }
     }
     else
@@ -914,7 +929,7 @@ void ExpListHomogeneous2D::v_PhysDeriv(
             StdRegions::StdQuadExp StdQuad(m_homogeneousBasis_y->GetBasisKey(),
                                            m_homogeneousBasis_z->GetBasisKey());
 
-            m_transposition->Transpose(inarray, temparray, false,
+            m_transposition->Transpose(m_npoints, inarray, temparray, false,
                                        LibUtilities::eXtoYZ);
 
             for (int i = 0; i < n_points_line; i++)
@@ -924,12 +939,12 @@ void ExpListHomogeneous2D::v_PhysDeriv(
                                   tmp3 = temparray2 + i * nyzlines);
             }
 
-            m_transposition->Transpose(temparray1, out_d1, false,
-                                       LibUtilities::eYZtoX);
-            m_transposition->Transpose(temparray2, out_d2, false,
-                                       LibUtilities::eYZtoX);
-            Vmath::Smul(npoints, 2.0 / m_lhom_y, out_d1, 1, out_d1, 1);
-            Vmath::Smul(npoints, 2.0 / m_lhom_z, out_d2, 1, out_d2, 1);
+            m_transposition->Transpose(m_npoints, temparray1, out_d1,
+                                       false, LibUtilities::eYZtoX);
+            m_transposition->Transpose(m_npoints, temparray2, out_d2,
+                                       false, LibUtilities::eYZtoX);
+            Vmath::Smul(m_npoints, 2.0 / m_lhom_y, out_d1, 1, out_d1, 1);
+            Vmath::Smul(m_npoints, 2.0 / m_lhom_z, out_d2, 1, out_d2, 1);
         }
     }
 }
@@ -941,15 +956,13 @@ void ExpListHomogeneous2D::v_PhysDeriv(
 {
     int nyzlines = m_lines.size(); // number of Fourier points in the Fourier
                                    // directions (nF_pts)
-    int npoints = inarray.size();  // number of total points = n. of Fourier
-                                   // points * n. of points per line (nT_pts)
-    int n_points_line = npoints / nyzlines; // number of points per line
+    int n_points_line = m_npoints / nyzlines; // number of points per line
     // convert enum into int
     int dir = (int)edir;
 
-    Array<OneD, NekDouble> temparray(npoints);
-    Array<OneD, NekDouble> temparray1(npoints);
-    Array<OneD, NekDouble> temparray2(npoints);
+    Array<OneD, NekDouble> temparray(m_npoints);
+    Array<OneD, NekDouble> temparray1(m_npoints);
+    Array<OneD, NekDouble> temparray2(m_npoints);
     Array<OneD, NekDouble> tmp1;
     Array<OneD, NekDouble> tmp2;
     Array<OneD, NekDouble> tmp3;
@@ -973,7 +986,7 @@ void ExpListHomogeneous2D::v_PhysDeriv(
             }
             else
             {
-                HomogeneousFwdTrans(inarray, temparray);
+                HomogeneousFwdTrans(m_npoints, inarray, temparray);
             }
             NekDouble sign = -1.0;
             NekDouble beta;
@@ -1003,7 +1016,7 @@ void ExpListHomogeneous2D::v_PhysDeriv(
                 }
                 else
                 {
-                    HomogeneousBwdTrans(temparray1, out_d);
+                    HomogeneousBwdTrans(m_npoints, temparray1, out_d);
                 }
             }
             else
@@ -1025,7 +1038,7 @@ void ExpListHomogeneous2D::v_PhysDeriv(
                 }
                 else
                 {
-                    HomogeneousBwdTrans(temparray2, out_d);
+                    HomogeneousBwdTrans(m_npoints, temparray2, out_d);
                 }
             }
         }
@@ -1042,8 +1055,8 @@ void ExpListHomogeneous2D::v_PhysDeriv(
                     m_homogeneousBasis_y->GetBasisKey(),
                     m_homogeneousBasis_z->GetBasisKey());
 
-                m_transposition->Transpose(inarray, temparray, false,
-                                           LibUtilities::eXtoYZ);
+                m_transposition->Transpose(m_npoints, inarray, temparray,
+                                           false, LibUtilities::eXtoYZ);
 
                 for (int i = 0; i < n_points_line; i++)
                 {
@@ -1054,15 +1067,17 @@ void ExpListHomogeneous2D::v_PhysDeriv(
 
                 if (dir == 1)
                 {
-                    m_transposition->Transpose(temparray1, out_d, false,
+                    m_transposition->Transpose(m_npoints, temparray1,
+                                               out_d, false,
                                                LibUtilities::eYZtoX);
-                    Vmath::Smul(npoints, 2.0 / m_lhom_y, out_d, 1, out_d, 1);
+                    Vmath::Smul(m_npoints, 2.0 / m_lhom_y, out_d, 1, out_d, 1);
                 }
                 else
                 {
-                    m_transposition->Transpose(temparray2, out_d, false,
+                    m_transposition->Transpose(m_npoints, temparray2,
+                                               out_d, false,
                                                LibUtilities::eYZtoX);
-                    Vmath::Smul(npoints, 2.0 / m_lhom_z, out_d, 1, out_d, 1);
+                    Vmath::Smul(m_npoints, 2.0 / m_lhom_z, out_d, 1, out_d, 1);
                 }
             }
         }

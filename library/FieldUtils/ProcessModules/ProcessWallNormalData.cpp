@@ -361,8 +361,13 @@ void ProcessWallNormalData::Process(po::variables_map &vm)
         m_spacedim, m_f->m_variables, ptsH, LibUtilities::NullPtsInfoMap);
 
     Interpolator interp;
+#if EXPLISTDATA
     interp.Interpolate(m_f->m_exp, m_f->m_fieldPts,
                        NekConstants::kNekUnsetDouble);
+#else
+    interp.Interpolate(m_f->m_exp, m_f->m_fieldPhys, m_f->m_fieldPts,
+                       NekConstants::kNekUnsetDouble);
+#endif
 }
 
 /**

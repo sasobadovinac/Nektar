@@ -94,6 +94,7 @@ public:
     LIB_UTILITIES_EXPORT Array<OneD, unsigned int> GetPlanesIDs(void);
 
     LIB_UTILITIES_EXPORT void Transpose(
+        const int npts,  
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool UseNumMode = false,
         TranspositionDir dir = eNoTrans);
@@ -107,26 +108,32 @@ protected:
 
 private:
     LIB_UTILITIES_EXPORT void TransposeXYtoZ(
+        const int npts,  
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool UseNumMode = false);
 
     LIB_UTILITIES_EXPORT void TransposeZtoXY(
+        const int npts,  
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool UseNumMode = false);
 
     LIB_UTILITIES_EXPORT void TransposeXtoYZ(
+        const int npts,  
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool UseNumMode = false);
 
     LIB_UTILITIES_EXPORT void TransposeYZtoX(
+        const int npts,  
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool UseNumMode = false);
 
     LIB_UTILITIES_EXPORT void TransposeYZtoZY(
+        const int npts,  
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool UseNumMode = false);
 
     LIB_UTILITIES_EXPORT void TransposeZYtoYZ(
+        const int npts,  
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool UseNumMode = false);
 

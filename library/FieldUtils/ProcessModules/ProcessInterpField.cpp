@@ -202,6 +202,15 @@ void ProcessInterpField::Process(po::variables_map &vm)
         fromField->m_exp[i] = fromField->AppendExpList(fromNumHomoDir);
     }
 
+#if EXPLISTDATA
+#else
+    // delcare memory
+    m_f->m_fieldCoeffs= std::make_shared<NekField<NekDouble,eCoeff>>(m_f->m_exp);
+    m_f->m_fieldPhys  = std::make_shared<NekField<NekDouble,ePhys >>(m_f->m_exp);
+    fromField->m_fieldCoeffs= std::make_shared<NekField<NekDouble,eCoeff>>(fromField->m_exp);
+    fromField->m_fieldPhys  = std::make_shared<NekField<NekDouble,ePhys >>(fromField->m_exp);
+#endif
+    
     // load field into expansion in fromfield.
     set<int> sinmode;
     if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
@@ -222,7 +231,11 @@ void ProcessInterpField::Process(po::variables_map &vm)
             fromField->m_exp[j]->ExtractDataToCoeffs(
                 fromField->m_fielddef[i], fromField->m_data[i],
                 fromField->m_fielddef[0]->m_fields[j],
+#if EXPLISTDATA
                 fromField->m_exp[j]->UpdateCoeffs());
+#else
+                fromField->m_fieldCoeffs->UpdateArray1D(j));
+#endif
         }
         if (fromNumHomoDir == 1)
         {
@@ -230,16 +243,33 @@ void ProcessInterpField::Process(po::variables_map &vm)
             if (sinmode.count(j))
             {
                 int Ncoeff = fromField->m_exp[j]->GetPlane(2)->GetNcoeffs();
+#if EXPLISTDATA
                 Vmath::Smul(
                     Ncoeff, -1., fromField->m_exp[j]->GetPlane(2)->GetCoeffs(),
                     1, fromField->m_exp[j]->GetPlane(3)->UpdateCoeffs(), 1);
                 Vmath::Zero(Ncoeff,
                             fromField->m_exp[j]->GetPlane(2)->UpdateCoeffs(),
                             1);
+#else
+                Array<OneD, NekDouble> tmp;
+                Vmath::Smul(Ncoeff, -1., fromField->m_fieldCoeffs->GetArray1D(j)
+                            + 2*Ncoeff, 1,
+                            tmp = fromField->m_fieldCoeffs->UpdateArray1D(j)
+                            + 3*Ncoeff, 1);
+                Vmath::Zero(Ncoeff,tmp = fromField->m_fieldCoeffs->
+                            UpdateArray1D(j) + 2*Ncoeff, 1);
+#endif
+                
             }
         }
+#if EXPLISTDATA
         fromField->m_exp[j]->BwdTrans(fromField->m_exp[j]->GetCoeffs(),
                                       fromField->m_exp[j]->UpdatePhys());
+#else
+        Array<OneD, NekDouble> tmp;
+        fromField->m_exp[j]->BwdTrans(fromField->m_fieldCoeffs->GetArray1D(j),
+                              tmp = fromField->m_fieldPhys->UpdateArray1D(j));
+#endif
     }
 
     int nq1 = m_f->m_exp[0]->GetTotPoints();
@@ -250,10 +280,14 @@ void ProcessInterpField::Process(po::variables_map &vm)
 
     for (int i = 0; i < nfields; i++)
     {
+#if EXPLISTDATA
         for (int j = 0; j < nq1; ++j)
         {
             m_f->m_exp[i]->UpdatePhys()[j] = def_value;
         }
+#else
+        Vmath::Fill(nq1,def_value,m_f->m_fieldPhys->UpdateArray1D(i),1);
+#endif
     }
 
     Interpolator interp;
@@ -261,7 +295,14 @@ void ProcessInterpField::Process(po::variables_map &vm)
     {
         interp.SetProgressCallback(&ProcessInterpField::PrintProgressbar, this);
     }
+
+#if EXPLISTDATA
     interp.Interpolate(fromField->m_exp, m_f->m_exp);
+#else
+    interp.Interpolate(fromField->m_exp, fromField->m_fieldPhys,
+                       m_f->m_exp, m_f->m_fieldPhys);
+#endif
+
     if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
     {
         cout << endl;
@@ -269,8 +310,9 @@ void ProcessInterpField::Process(po::variables_map &vm)
 
     for (int i = 0; i < nfields; ++i)
     {
+#if EXPLISTDATA
         for (int j = 0; j < nq1; ++j)
-        {
+        {            
             if (m_f->m_exp[i]->GetPhys()[j] > clamp_up)
             {
                 m_f->m_exp[i]->UpdatePhys()[j] = clamp_up;
@@ -282,6 +324,22 @@ void ProcessInterpField::Process(po::variables_map &vm)
         }
         m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
                                          m_f->m_exp[i]->UpdateCoeffs());
+#else
+        Array<OneD, NekDouble> phys = m_f->m_fieldPhys->UpdateArray1D(i);
+        for (int j = 0; j < nq1; ++j)
+        {            
+            if (phys[j] > clamp_up)
+            {
+                phys[j] = clamp_up;
+            }
+            else if (phys[j] < clamp_low)
+            {
+                phys[j] = clamp_low;
+            }
+        }
+        m_f->m_exp[i]->FwdTransLocalElmt(phys,
+                                    m_f->m_fieldCoeffs->UpdateArray1D(i));
+#endif
     }
     // save field names
     m_f->m_variables = fromField->m_fielddef[0]->m_fields;

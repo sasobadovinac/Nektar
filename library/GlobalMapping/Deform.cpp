@@ -60,6 +60,7 @@ namespace GlobalMapping
  */
 void UpdateGeometry(SpatialDomains::MeshGraphSharedPtr graph,
                     Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                    Array<OneD, Array<OneD, NekDouble>> &PhysVals,
                     bool modal)
 {
     // Clear existing curvature.
@@ -88,7 +89,7 @@ void UpdateGeometry(SpatialDomains::MeshGraphSharedPtr graph,
         for (j = 0; j < dim; ++j)
         {
             phys[j] =
-                Array<OneD, NekDouble>(nquad, fields[j]->UpdatePhys() + offset);
+                Array<OneD, NekDouble>(nquad, PhysVals[j] + offset);
             coord[j] = Array<OneD, NekDouble>(nquad);
         }
 
@@ -215,8 +216,8 @@ void UpdateGeometry(SpatialDomains::MeshGraphSharedPtr graph,
                 if (face->GetShapeType() == LibUtilities::eTriangle)
                 {
                     faceexp =
-                        MemoryManager<StdRegions::StdTriExp>::AllocateSharedPtr(
-                            B0, B1);
+                        MemoryManager<StdRegions::StdTriExp>::
+                        AllocateSharedPtr(B0, B1);
                 }
                 else
                 {
@@ -256,11 +257,8 @@ void UpdateGeometry(SpatialDomains::MeshGraphSharedPtr graph,
                 }
 
                 int edgeOff[2][4][2] = {
-                    {{0, 1}, {nq - 1, nq}, {nq * (nq - 1), -nq}, {-1, -1}},
-                    {{0, 1},
-                     {nq - 1, nq},
-                     {nq * nq - 1, -1},
-                     {nq * (nq - 1), -nq}}};
+                  {{0, 1}, {nq - 1, nq}, {nq * (nq - 1), -nq}, {-1, -1}},
+                  {{0, 1}, {nq - 1, nq}, {nq * nq - 1, -1}, {nq * (nq - 1), -nq}}};
 
                 for (k = 0; k < face->GetNumVerts(); ++k)
                 {

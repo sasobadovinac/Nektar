@@ -2979,6 +2979,7 @@ void ExpList::WriteVtkFooter(std::ostream &outfile)
     outfile << "  </UnstructuredGrid>" << endl;
     outfile << "</VTKFile>" << endl;
 }
+#endif
 
 void ExpList::v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                                     int istrip)
@@ -3121,8 +3122,14 @@ void ExpList::WriteVtkPieceFooter(std::ostream &outfile, int expansion)
     outfile << "    </Piece>" << endl;
 }
 
+#if EXPLISTDATA
 void ExpList::v_WriteVtkPieceData(std::ostream &outfile, int expansion,
                                   std::string var)
+#else
+void ExpList::v_WriteVtkPieceData(std::ostream &outfile, int expansion,
+                                  const Array<OneD, const NekDouble> &phys,
+                                  std::string var)
+#endif
 {
     int i;
     int nq = (*m_exp)[expansion]->GetTotPoints();
@@ -3131,7 +3138,11 @@ void ExpList::v_WriteVtkPieceData(std::ostream &outfile, int expansion,
     outfile << "        <DataArray type=\"Float64\" Name=\"" << var << "\">"
             << endl;
     outfile << "          ";
+
+#if EXPLISTDATA
     const Array<OneD, NekDouble> phys = m_phys + m_phys_offset[expansion];
+#endif
+
     for (i = 0; i < nq; ++i)
     {
         outfile << (fabs(phys[i]) < NekConstants::kNekZeroTol ? 0 : phys[i])
@@ -3140,7 +3151,6 @@ void ExpList::v_WriteVtkPieceData(std::ostream &outfile, int expansion,
     outfile << endl;
     outfile << "        </DataArray>" << endl;
 }
-#endif
 
 /**
  * Given a spectral/hp approximation
@@ -4576,39 +4586,42 @@ void ExpList::v_LinearAdvectionReactionSolve(
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
+void ExpList::v_HomogeneousFwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff, bool UnShuff)
 {
-    boost::ignore_unused(inarray, outarray, Shuff, UnShuff);
+    boost::ignore_unused(npts, inarray, outarray, Shuff, UnShuff);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray,
+void ExpList::v_HomogeneousBwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff, bool UnShuff)
 {
-    boost::ignore_unused(inarray, outarray, Shuff, UnShuff);
+    boost::ignore_unused(npts, inarray, outarray, Shuff, UnShuff);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+void ExpList::v_DealiasedProd(const int npts,
+                              const Array<OneD, NekDouble> &inarray1,
                               const Array<OneD, NekDouble> &inarray2,
                               Array<OneD, NekDouble> &outarray)
 {
-    boost::ignore_unused(inarray1, inarray2, outarray);
+    boost::ignore_unused(npts, inarray1, inarray2, outarray);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_DealiasedDotProd(
+void ExpList::v_DealiasedDotProd(const int npts, 
     const Array<OneD, Array<OneD, NekDouble>> &inarray1,
     const Array<OneD, Array<OneD, NekDouble>> &inarray2,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    boost::ignore_unused(inarray1, inarray2, outarray);
+    boost::ignore_unused(npts, inarray1, inarray2, outarray);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }

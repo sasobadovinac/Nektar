@@ -227,8 +227,9 @@ void DisContField3DHomogeneous2D::v_HelmSolve(
     NekDouble beta_z;
     StdRegions::ConstFactorMap new_factors;
 
+    int npts_fce = PhysSpaceForcing? m_npoints: m_ncoeffs; 
     Array<OneD, NekDouble> e_out;
-    Array<OneD, NekDouble> fce(inarray.size());
+    Array<OneD, NekDouble> fce(npts_fce);
     Array<OneD, const NekDouble> wfce;
 
     // Fourier transform forcing function
@@ -238,7 +239,7 @@ void DisContField3DHomogeneous2D::v_HelmSolve(
     }
     else
     {
-        HomogeneousFwdTrans(inarray, fce);
+        HomogeneousFwdTrans(npts_fce,inarray, fce);
     }
 
     for (n = 0; n < nhom_modes_z; ++n)
@@ -262,211 +263,7 @@ void DisContField3DHomogeneous2D::v_HelmSolve(
     }
 }
 
-#if 1
 void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
-    const NekDouble time, const std::string varName, const NekDouble x2_in,
-    const NekDouble x3_in)
-{
-    boost::ignore_unused(x2_in, x3_in);
-    int i;
-    int npoints;
-    int nbnd = m_bndCondExpansions.size();
-    MultiRegions::ExpListSharedPtr locExpList;
-
-    for (i = 0; i < nbnd; ++i)
-    {
-        if (time == 0.0 || m_bndConditions[i]->IsTimeDependent())
-        {
-            locExpList = m_bndCondExpansions[i];
-            npoints    = locExpList->GetNpoints();
-
-            Array<OneD, NekDouble> x0(npoints, 0.0);
-            Array<OneD, NekDouble> x1(npoints, 0.0);
-            Array<OneD, NekDouble> x2(npoints, 0.0);
-            Array<OneD, NekDouble> valuesFile(npoints, 1.0),
-                valuesExp(npoints, 1.0);
-
-            locExpList->GetCoords(x0, x1, x2);
-
-            if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                SpatialDomains::eDirichlet)
-            {
-                SpatialDomains::DirichletBCShPtr bcPtr =
-                    std::static_pointer_cast<
-                        SpatialDomains::DirichletBoundaryCondition>(
-                        m_bndConditions[i]);
-                std::string bcfilename  = bcPtr->m_filename;
-                std::string exprbcs     = bcPtr->m_expr;
-
-                if (bcfilename != "")
-                {
-#if EXPLISTDATA
-                    locExpList->ExtractCoeffsFromFile
-                        (bcfilename, bcPtr->GetComm(), varName,
-                         locExpList->UpdateCoeffs());
-                    locExpList->BwdTrans(locExpList->GetCoeffs(),
-                                         locExpList->UpdatePhys());
-                    
-                    valuesFile = locExpList->GetPhys();
-#else
-                    locExpList->ExtractCoeffsFromFile
-                        (bcfilename, bcPtr->GetComm(), varName,
-                         m_bndCondFieldCoeff[i]->UpdateArray1D());
-                    
-                    valuesFile = m_bndCondFieldPhys[i]->UpdateArray1D();
-                    locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
-                                         valuesFile);
-#endif
-                }
-
-                if (exprbcs != "")
-                {
-                    LibUtilities::Equation condition =
-                        std::static_pointer_cast<
-                            SpatialDomains::DirichletBoundaryCondition>(
-                            m_bndConditions[i])
-                            ->m_dirichletCondition;
-
-                    condition.Evaluate(x0, x1, x2, time, valuesExp);
-                }
-
-#if EXPLISTDATA
-                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
-                            locExpList->UpdatePhys(), 1);
-                
-                // set wave space to false since have set up phys values
-                locExpList->SetWaveSpace(false);
-                
-                locExpList->FwdTransBndConstrained(
-                        locExpList->GetPhys(), locExpList->UpdateCoeffs());
-#else
-                Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
-                            m_bndCondFieldPhys[i]->UpdateArray1D(),1);
-                
-                // set wave space to false since have set up phys values
-                locExpList->SetWaveSpace(false);
-                
-                locExpList->FwdTransBndConstrained(
-                                    m_bndCondFieldPhys[i]->GetArray1D(),
-                                    m_bndCondFieldCoeff[i]->UpdateArray1D());
-#endif 
-
-            }
-            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                     SpatialDomains::eNeumann)
-            {
-                SpatialDomains::NeumannBCShPtr bcPtr = std::static_pointer_cast<
-                    SpatialDomains::NeumannBoundaryCondition>(
-                    m_bndConditions[i]);
-
-                std::string bcfilename = bcPtr->m_filename;
-                
-                if (bcfilename != "")
-                {
-#if EXPLISTDATA
-                        locExpList->ExtractCoeffsFromFile
-                            (bcfilename, bcPtr->GetComm(), varName,
-                             locExpList->UpdateCoeffs());
-                        locExpList->BwdTrans(locExpList->GetCoeffs(),
-                                             locExpList->UpdatePhys());
-#else
-                        locExpList->ExtractCoeffsFromFile
-                            (bcfilename, bcPtr->GetComm(), varName,
-                             m_bndCondFieldCoeff[i]->UpdateArray1D());
-
-                        locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
-                                           m_bndCondFieldPhys[i]->UpdateArray1D());
-#endif
-                }
-                else
-                {
-                    LibUtilities::Equation condition =
-                        std::static_pointer_cast<
-                            SpatialDomains::NeumannBoundaryCondition>(
-                            m_bndConditions[i])
-                            ->m_neumannCondition;
-
-#if EXPLISTDATA
-                    condition.Evaluate(x0, x1, x2, time,
-                                       locExpList->UpdatePhys());
-#else
-                    condition.Evaluate(x0, x1, x2, time,
-                                       m_bndCondFieldPhys[i]->UpdateArray1D());
-#endif
-                }
-
-#if EXPLISTDATA
-                    locExpList->IProductWRTBase(locExpList->GetPhys(),
-                                                locExpList->UpdateCoeffs());
-#else
-                    locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
-                                           m_bndCondFieldCoeff[i]->UpdateArray1D());
-#endif
-            }
-            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                     SpatialDomains::eRobin)
-            {
-                SpatialDomains::RobinBCShPtr bcPtr = std::static_pointer_cast<
-                    SpatialDomains::RobinBoundaryCondition>(m_bndConditions[i]);
-
-                std::string bcfilename = bcPtr->m_filename;
-                
-                if (bcfilename != "")
-                {
-#if EXPLISTDATA
-                    locExpList->ExtractCoeffsFromFile
-                        (bcfilename, bcPtr->GetComm(), varName,
-                         locExpList->UpdateCoeffs());
-                    locExpList->BwdTrans(locExpList->GetCoeffs(),
-                                         locExpList->UpdatePhys());
-#else
-                    locExpList->ExtractCoeffsFromFile
-                        (bcfilename, bcPtr->GetComm(), varName,
-                         m_bndCondFieldCoeff[i]->UpdateArray1D());
-                    
-                    locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
-                                         m_bndCondFieldPhys[i]->UpdateArray1D());
-#endif
-                }
-                else
-                {
-                    LibUtilities::Equation condition =
-                        std::static_pointer_cast<
-                            SpatialDomains::RobinBoundaryCondition>(
-                            m_bndConditions[i])
-                            ->m_robinFunction;
-
-#if EXPLISTDATA
-                    condition.Evaluate(x0, x1, x2, time,
-                                       locExpList->UpdatePhys());
-#else
-                    condition.Evaluate(x0, x1, x2, time,
-                                       m_bndCondFieldPhys[i]->UpdateArray1D());
-#endif
-                }
-
-#if EXPLISTDATA
-                locExpList->IProductWRTBase(locExpList->GetPhys(),
-                                            locExpList->UpdateCoeffs());
-#else
-                locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
-                                            m_bndCondFieldCoeff[i]->UpdateArray1D());
-#endif
-            }
-            else if (m_bndConditions[i]->GetBoundaryConditionType() ==
-                     SpatialDomains::ePeriodic)
-            {
-                continue;
-            }
-            else
-            {
-                ASSERTL0(false, "This type of BC not implemented yet");
-            }
-        }
-    }
-}
-#else
-    void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
     const NekDouble time, const std::string varName, const NekDouble x2_in,
     const NekDouble x3_in)
 {
@@ -493,6 +290,7 @@ void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
         {
             m_bndCondBndWeight[n] = 1.0;
             m_bndCondExpansions[n]->HomogeneousFwdTrans(
+                m_bndCondExpansions[n]->GetNcoeffs(),
                 m_bndCondExpansions[n]->GetCoeffs(),
                 m_bndCondExpansions[n]->UpdateCoeffs());
         }
@@ -505,13 +303,13 @@ void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
         {
             m_bndCondBndWeight[n] = 1.0;
             m_bndCondExpansions[n]->HomogeneousFwdTrans(
+                m_bndCondExpansions[n]->GetNcoeffs(),
                 m_bndCondFieldCoeff[n]->GetArray1D(),
                 m_bndCondFieldPhys[n]->UpdateArray1D());
         }
     }
 #endif
 }
-#endif
 
 const Array<OneD, const std::shared_ptr<ExpList>>
     &DisContField3DHomogeneous2D::v_GetBndCondExpansions(void)

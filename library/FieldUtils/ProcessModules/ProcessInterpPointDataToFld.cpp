@@ -183,6 +183,7 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
         cout << endl;
     }
 
+#if EXPLISTDATA
     for (i = 0; i < totpoints; ++i)
     {
         for (j = 0; j < nFields; ++j)
@@ -190,13 +191,27 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
             m_f->m_exp[j]->SetPhys(i, outPts->GetPointVal(3 + j, i));
         }
     }
-
     // forward transform fields
     for (i = 0; i < nFields; ++i)
     {
         m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
                                          m_f->m_exp[i]->UpdateCoeffs());
     }
+#else
+    for (j = 0; j < nFields; ++j)
+    {
+        Array<OneD, NekDouble> phys = m_f->m_fieldPhys->GetArray1D(j); 
+        for (i = 0; i < totpoints; ++i)
+        {
+            phys[i] = outPts->GetPointVal(3 + j, i);
+        }
+
+        // forward transform fields
+        m_f->m_exp[j]->FwdTransLocalElmt(phys,
+                                    m_f->m_fieldCoeffs->UpdateArray1D(j));
+    }
+#endif
+
 
     // save field names
     for (int j = 0; j < fieldPts->GetNFields(); ++j)

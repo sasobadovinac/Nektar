@@ -139,7 +139,11 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
 
         for (int i = 0; i < nFields; ++i)
         {
+#if EXPLISTDATA
             Array<OneD, NekDouble> coeffs = m_f->m_exp[i]->UpdateCoeffs(), tmp;
+#else
+            Array<OneD, NekDouble> coeffs = m_f->m_fieldCoeffs->UpdateArray1D(i), tmp;
+#endif
             int cnt                       = 0;
             for (int e = 0; e < m_f->m_exp[0]->GetNumElmts(); ++e)
             {
@@ -152,8 +156,13 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
                     coeffs + offset, tmp = coeffs + offset);
                 cnt += ncoeffs;
             }
+#if EXPLISTDATA
             m_f->m_exp[i]->BwdTrans(m_f->m_exp[i]->GetCoeffs(),
                                     m_f->m_exp[i]->UpdatePhys());
+#else
+            m_f->m_exp[i]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(i),
+                                    m_f->m_fieldPhys->UpdateArray1D(i));
+#endif
         }
     }
     else
@@ -174,9 +183,9 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
             totpoints = min(totpoints, (int)pts[0].size());
         }
 
-        for (i = 0; i < totpoints; ++i)
+        for (j = 0; j < dim; ++j)
         {
-            for (j = 0; j < dim; ++j)
+            for (i = 0; i < totpoints; ++i)
             {
                 if (fabs(coords[j][i] - pts[j][i]) > 1e-4)
                 {
@@ -185,23 +194,35 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
                         boost::lexical_cast<string>(coords[j][i]) + " versus " +
                         boost::lexical_cast<string>(pts[j][i]) + " diff " +
                         boost::lexical_cast<string>(
-                            fabs(coords[j][i] - pts[j][i]));
+                                                    fabs(coords[j][i] - pts[j][i]));
                     ;
                     WARNINGL0(false, outstring);
                 }
             }
-
-            for (j = 0; j < nFields; ++j)
-            {
-                m_f->m_exp[j]->SetPhys(i, pts[j + dim][i]);
-            }
         }
 
-        // forward transform fields
-        for (i = 0; i < nFields; ++i)
+        for (j = 0; j < nFields; ++j)
         {
-            m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
-                                             m_f->m_exp[i]->UpdateCoeffs());
+#if EXPLISTDATA
+            Array<OneD, NekDouble> phys = m_f->m_exp[j]->UpdatePhys();
+#else
+            Array<OneD, NekDouble> phys = m_f->m_fieldPhys->UpdateArray1D(j);
+#endif
+            
+            for (i = 0; i < totpoints; ++i)
+            {
+                phys[i] = pts[j + dim][i];
+            }
+
+#if EXPLISTDATA
+            // forward transform fields
+            m_f->m_exp[j]->FwdTransLocalElmt(phys,
+                                             m_f->m_exp[j]->UpdateCoeffs());
+#else
+            // forward transform fields
+            m_f->m_exp[j]->FwdTransLocalElmt(phys,
+                                        m_f->m_fieldCoeffs->UpdateArray1D(j));
+#endif
         }
     }
 
