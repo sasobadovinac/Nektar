@@ -29,6 +29,8 @@
 // DEALINGS IN THE SOFTWARE.
 //
 // Description: Vector type using sse2 extension.
+// Note that this is not a full implementation: only the int type is
+// implemented as support index type for avx2.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -85,6 +87,7 @@ template <typename T> struct sse2Int4
 
     static constexpr unsigned int width     = 4;
     static constexpr unsigned int alignment = 16;
+    static constexpr const char* tag = "sse2Int4";
 
     using scalarType  = T;
     using vectorType  = __m128i;
@@ -181,7 +184,7 @@ template <typename T> struct sse2Int4
     }
 };
 
-#endif // defined(__AVX2__)
+#endif // defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
 
 } // namespace tinysimd
 #endif
