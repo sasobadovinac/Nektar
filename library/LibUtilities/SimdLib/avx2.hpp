@@ -109,14 +109,6 @@ template <> struct avx2<std::uint64_t, 4>
 {
     using type = avx2Long4<std::uint64_t>;
 };
-template <> struct avx2<std::int32_t, 8>
-{
-    using type = avx2Int8<std::int32_t>;
-};
-template <> struct avx2<std::uint32_t, 8>
-{
-    using type = avx2Int8<std::uint32_t>;
-};
 template <> struct avx2<std::int32_t, 4>
 {
     using type = sse2Int4<std::int32_t>;
@@ -124,6 +116,14 @@ template <> struct avx2<std::int32_t, 4>
 template <> struct avx2<std::uint32_t, 4>
 {
     using type = sse2Int4<std::uint32_t>;
+};
+template <> struct avx2<std::int32_t, 8>
+{
+    using type = avx2Int8<std::int32_t>;
+};
+template <> struct avx2<std::uint32_t, 8>
+{
+    using type = avx2Int8<std::uint32_t>;
 };
 // bool mapping
 template <> struct avx2<bool, 4>
@@ -145,7 +145,6 @@ template <typename T> struct avx2Int8
 
     static constexpr unsigned int width     = 8;
     static constexpr unsigned int alignment = 32;
-    static constexpr const char* tag = "avx2Int8";
 
     using scalarType  = T;
     using vectorType  = __m256i;
@@ -253,7 +252,6 @@ template <typename T> struct avx2Long4
 
     static constexpr unsigned int width     = 4;
     static constexpr unsigned int alignment = 32;
-    static constexpr const char* tag = "avx2Long4";
 
     using scalarType  = T;
     using vectorType  = __m256i;

@@ -87,7 +87,6 @@ template <typename T> struct sse2Int4
 
     static constexpr unsigned int width     = 4;
     static constexpr unsigned int alignment = 16;
-    static constexpr const char* tag = "sse2Int4";
 
     using scalarType  = T;
     using vectorType  = __m128i;

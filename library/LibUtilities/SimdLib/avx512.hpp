@@ -72,7 +72,7 @@ struct avx512Mask16;
 namespace abi
 {
 
-// mapping between abstract types and concrete types
+// mapping between abstract types and concrete floating point types
 template <> struct avx512<double>
 {
     using type = avx512Double8;
@@ -81,6 +81,8 @@ template <> struct avx512<float>
 {
     using type = avx512Float16;
 };
+// generic index mapping
+// assumes index type width same as floating point type
 template <> struct avx512<std::int64_t>
 {
     using type = avx512Long8<std::int64_t>;
@@ -97,6 +99,32 @@ template <> struct avx512<std::uint32_t>
 {
     using type = avx512Int16<std::uint32_t>;
 };
+// specialized index mapping
+template <> struct avx512<std::int64_t, 8>
+{
+    using type = avx512Long8<std::int64_t>;
+};
+template <> struct avx512<std::uint64_t, 8>
+{
+    using type = avx512Long8<std::uint64_t>;
+};
+template <> struct avx512<std::int32_t, 8>
+{
+    using type = avx2Int8<std::int32_t>;
+};
+template <> struct avx512<std::uint32_t, 8>
+{
+    using type = avx2Int8<std::uint32_t>;
+};
+template <> struct avx512<std::int32_t, 16>
+{
+    using type = avx512Int16<std::int32_t>;
+};
+template <> struct avx512<std::uint32_t, 16>
+{
+    using type = avx512Int16<std::uint32_t>;
+};
+// bool mapping
 template <> struct avx512<bool, 8>
 {
     using type = avx512Mask8;
@@ -418,17 +446,17 @@ struct avx512Double8
     }
 
     // gather/scatter
-    // template <typename T>
-    // inline void gather(scalarType const* p, const avx2Int8<T>& indices)
-    // {
-    //     _data = _mm512_i32gather_pd(indices._data, p, 8);
-    // }
+    template <typename T>
+    inline void gather(scalarType const* p, const avx2Int8<T>& indices)
+    {
+        _data = _mm512_i32gather_pd(indices._data, p, 8);
+    }
 
-    // template <typename T>
-    // inline void scatter(scalarType* out, const avx2Int8<T>& indices) const
-    // {
-    //     _mm512_i32scatter_pd(out, indices._data, _data, 8);
-    // }
+    template <typename T>
+    inline void scatter(scalarType* out, const avx2Int8<T>& indices) const
+    {
+        _mm512_i32scatter_pd(out, indices._data, _data, 8);
+    }
 
     template <typename T>
     inline void gather(scalarType const *p, const avx512Long8<T> &indices)
