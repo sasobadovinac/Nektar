@@ -73,7 +73,7 @@ struct avx2Mask8;
 namespace abi
 {
 
-// mapping between abstract types and concrete types
+// mapping between abstract types and concrete floating point types
 template <> struct avx2<double>
 {
     using type = avx2Double4;
@@ -83,6 +83,7 @@ template <> struct avx2<float>
     using type = avx2Float8;
 };
 // generic index mapping
+// assumes index type width same as floating point type
 template <> struct avx2<std::int64_t>
 {
     using type = avx2Long4<std::int64_t>;
