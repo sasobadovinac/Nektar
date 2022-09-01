@@ -4,6 +4,7 @@ Changelog
 v5.3
 ------
 **Library**
+- Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
 - Added float and restore avx512 back-end for SimdLib (!1387)
 
 v5.2.0
