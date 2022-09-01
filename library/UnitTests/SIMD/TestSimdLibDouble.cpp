@@ -42,29 +42,29 @@
 
 // define types in use and number of lanes
 #define NUM_LANES_64BITS 1
-#define ALIGNMENT_64BITS 8
+#define ALIGNMENT 8
 #define USING_SCALAR
 #if defined(__x86_64__)
 #if defined(__AVX512F__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
 #define USING_AVX512
 #undef NUM_LANES_64BITS
 #define NUM_LANES_64BITS 8
-#undef ALIGNMENT_64BITS
-#define ALIGNMENT_64BITS 64
+#undef ALIGNMENT
+#define ALIGNMENT 64
 #undef USING_SCALAR
 #elif defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
 #define USING_AVX2
 #undef NUM_LANES_64BITS
 #define NUM_LANES_64BITS 4
-#undef ALIGNMENT_64BITS
-#define ALIGNMENT_64BITS 32
+#undef ALIGNMENT
+#define ALIGNMENT 32
 #undef USING_SCALAR
 #elif defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
 #define USING_SSE2
 #undef NUM_LANES_64BITS
 #define NUM_LANES_64BITS 2
-#undef ALIGNMENT_64BITS
-#define ALIGNMENT_64BITS 16
+#undef ALIGNMENT
+#define ALIGNMENT 16
 #undef USING_SCALAR
 #endif
 #endif
@@ -84,17 +84,14 @@ using vec_t = simd<double>;
 
 BOOST_AUTO_TEST_CASE(SimdLibDouble_width_alignment)
 {
-
     std::size_t width, alignment;
 
 #if defined(USING_SCALAR)
     std::cout << "scalar double" << std::endl;
 #endif
-
 #if defined(USING_AVX2)
     std::cout << "avx2 double" << std::endl;
 #endif
-
 #if defined(USING_AVX512)
     std::cout << "avx512 double" << std::endl;
 #endif
@@ -103,23 +100,22 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_width_alignment)
     width     = simd<double>::width;
     alignment = simd<double>::alignment;
     BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
-    BOOST_CHECK_EQUAL(alignment, ALIGNMENT_64BITS);
+    BOOST_CHECK_EQUAL(alignment, ALIGNMENT);
     // std::int32_t index forcing # of lanes
     width     = simd<std::int32_t, vec_t::width>::width;
     alignment = simd<std::int32_t, vec_t::width>::alignment;
     BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
-    BOOST_CHECK_EQUAL(alignment, ALIGNMENT_64BITS/2);
+    BOOST_CHECK_EQUAL(alignment, ALIGNMENT/2);
     // std::int64_t index forcing # of lanes
     width     = simd<std::int64_t, vec_t::width>::width;
     alignment = simd<std::int64_t, vec_t::width>::alignment;
-    std::cout << simd<std::int64_t, vec_t::width>::tag << std::endl;
     BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
-    BOOST_CHECK_EQUAL(alignment, ALIGNMENT_64BITS);
+    BOOST_CHECK_EQUAL(alignment, ALIGNMENT);
     // std::int64_t default index
     width     = simd<std::int64_t>::width;
     alignment = simd<std::int64_t>::alignment;
     BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
-    BOOST_CHECK_EQUAL(alignment, ALIGNMENT_64BITS);
+    BOOST_CHECK_EQUAL(alignment, ALIGNMENT);
 
 #if defined(USING_SVE)
     std::cout << "sve double" << std::endl;
