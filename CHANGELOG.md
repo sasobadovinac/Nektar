@@ -11,6 +11,9 @@ v5.3.0
 - Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (MR!1372)
 - Added Physical AV to the implicit Navier Stokes solver (MR!1372)
 
+**CompressibleFlowSolver**
+- The Incomplete IP method was made the default method for the IP method (!1377).
+
 v5.2.0
 ------
 **Library**
