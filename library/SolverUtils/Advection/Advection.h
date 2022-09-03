@@ -45,8 +45,6 @@
 #include <SolverUtils/SolverUtilsDeclspec.h>
 #include <iomanip>
 
-using namespace std;
-
 namespace Nektar
 {
 namespace SolverUtils

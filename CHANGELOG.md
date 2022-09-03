@@ -1,10 +1,11 @@
 Changelog
 =========
 
-v5.3
+v5.3.0
 ------
 **Library**
 - Added float and restore avx512 back-end for SimdLib (!1387)
+- Fix namespace pollution which causes boost 1.74+ errors (!1389)
 
 v5.2.0
 ------
