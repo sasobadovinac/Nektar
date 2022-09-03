@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: MetricRegex.h
+// File: MetricPyUnitTest.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,69 +28,34 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Definition of the regular-expression metric.
+// Description: Definition of a metric for Python's unittest.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_TESTS_METRICREGEX_H
-#define NEKTAR_TESTS_METRICREGEX_H
+#ifndef NEKTAR_TESTS_METRICPYUNITTEST_H
+#define NEKTAR_TESTS_METRICPYUNITTEST_H
 
-#include <Metric.h>
-#include <boost/regex.hpp>
-#include <vector>
+#include <MetricRegex.h>
 
 namespace Nektar
 {
-/**
- * @brief Data structure for a Regex value to match.
- */
-struct MetricRegexFieldValue
-{
-    MetricRegexFieldValue()
-    {
-    }
 
-    MetricRegexFieldValue(std::string value) : m_value(value)
-    {
-    }
-
-    std::string m_value = "";
-    bool m_useTolerance = false;
-    double m_tolerance = 0.0;
-
-    bool m_useIntTolerance = false;
-    int m_intTolerance = 0;
-};
-
-class MetricRegex : public Metric
+class MetricPyUnitTest : public MetricRegex
 {
 public:
-    virtual ~MetricRegex()
-    {
-    }
-
     static MetricSharedPtr create(TiXmlElement *metric, bool generate)
     {
-        return MetricSharedPtr(new MetricRegex(metric, generate));
+        return MetricSharedPtr(new MetricPyUnitTest(metric, generate));
     }
 
     static std::string type;
 
 protected:
-    /// Storage for the boost regex.
-    boost::regex m_regex;
-    /// Stores the multiple matches defined in each <MATCH> tag.
-    std::vector<std::vector<MetricRegexFieldValue>> m_matches;
-    /// If true, regex matches may be in any order in output
-    bool m_unordered = false;
-    /// If true, use stderr for testing/generation instead of stdout.
-    bool m_useStderr = false;
+    MetricPyUnitTest(TiXmlElement *metric, bool generate);
 
-    MetricRegex(TiXmlElement *metric, bool generate);
-
-    virtual bool v_Test(std::istream &pStdout, std::istream &pStderr);
     virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
 };
+
 } // namespace Nektar
 
 #endif
