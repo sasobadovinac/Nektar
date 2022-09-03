@@ -4696,17 +4696,18 @@ void ExpList::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
 
 /**
  */
-void ExpList::v_FillBndCondFromField()
+void ExpList::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 {
+    boost::ignore_unused(coeffs);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
 /**
  */
-void ExpList::v_FillBndCondFromField(const int nreg)
+void ExpList::v_FillBndCondFromField(const int nreg, const Array<OneD, NekDouble> coeffs)
 {
-    boost::ignore_unused(nreg);
+    boost::ignore_unused(nreg,coeffs);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
@@ -4857,6 +4858,7 @@ void ExpList::v_SetUpPhysNormals()
 
 /**
  */
+#if EXPLISTDATA
 void ExpList::v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                     const bool DeclareCoeffPhysArrays)
 {
@@ -4864,6 +4866,15 @@ void ExpList::v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
+#else
+void ExpList::v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result)
+
+{
+    boost::ignore_unused(i, result);
+    NEKERROR(ErrorUtil::efatal,
+             "This method is not defined or valid for this class type");
+}
+#endif
 
 /**
  */

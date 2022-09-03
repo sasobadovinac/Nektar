@@ -96,8 +96,12 @@ public:
     MULTI_REGIONS_EXPORT void GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                                    Array<OneD, int> &EdgeID);
 
+#if EXPLISTDATA
     virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                        const bool DeclareCoeffPhysArrays);
+#else
+    virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result);
+#endif
 
     /// This funtion extract form a vector containing a full
     /// 3D-homogenous-1D field the value associated with a

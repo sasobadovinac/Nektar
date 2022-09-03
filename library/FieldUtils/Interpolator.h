@@ -86,7 +86,7 @@ public:
         const std::vector<MultiRegions::ExpListSharedPtr> expInField,
         const NekFieldPhysSharedPtr fieldInPhys, 
         std::vector<MultiRegions::ExpListSharedPtr> &expOutField,
-        NekFieldPhysSharedPtr fieldOutPhys, 
+        NekFieldPhysSharedPtr &fieldOutPhys, 
         NekDouble def_value = 0.0);
 #endif
 
@@ -124,18 +124,7 @@ public:
         LibUtilities::PtsFieldSharedPtr &ptsOutField);
 
 protected:
-    /// input field
-    std::vector<MultiRegions::ExpListSharedPtr> m_expInField;
-#if EXPLISTDATA
-#else
-    NekFieldPhysSharedPtr  m_fieldInPhys;
-#endif
-    /// output field
-    std::vector<MultiRegions::ExpListSharedPtr> m_expOutField;
-#if EXPLISTDATA
-#else
-    NekFieldPhysSharedPtr  m_fieldOutPhys;
-#endif
+
 };
 
 typedef std::shared_ptr<Interpolator> InterpolatorSharedPtr;

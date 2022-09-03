@@ -205,8 +205,8 @@ void ProcessInterpField::Process(po::variables_map &vm)
 #if EXPLISTDATA
 #else
     // delcare memory
-    m_f->m_fieldCoeffs= std::make_shared<NekField<NekDouble,eCoeff>>(m_f->m_exp);
-    m_f->m_fieldPhys  = std::make_shared<NekField<NekDouble,ePhys >>(m_f->m_exp);
+    m_f->m_fieldCoeffs      = std::make_shared<NekField<NekDouble,eCoeff>>(m_f->m_exp);
+    m_f->m_fieldPhys        = std::make_shared<NekField<NekDouble,ePhys >>(m_f->m_exp);
     fromField->m_fieldCoeffs= std::make_shared<NekField<NekDouble,eCoeff>>(fromField->m_exp);
     fromField->m_fieldPhys  = std::make_shared<NekField<NekDouble,ePhys >>(fromField->m_exp);
 #endif

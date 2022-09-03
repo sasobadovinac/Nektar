@@ -196,19 +196,22 @@ void ContField3DHomogeneous1D::v_ImposeDirichletConditions(
     }
 }
 
-void ContField3DHomogeneous1D::v_FillBndCondFromField(void)
+void ContField3DHomogeneous1D::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 {
+    int numcoeffs_per_plane = m_planes[0]->GetNcoeffs(); 
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FillBndCondFromField();
+        m_planes[n]->FillBndCondFromField(coeffs + n * numcoeffs_per_plane);
     }
 }
 
-void ContField3DHomogeneous1D::v_FillBndCondFromField(const int nreg)
+void ContField3DHomogeneous1D::v_FillBndCondFromField(const int nreg,
+                                                      const Array<OneD, NekDouble> coeffs)
 {
+    int numcoeffs_per_plane = m_planes[0]->GetNcoeffs(); 
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FillBndCondFromField(nreg);
+        m_planes[n]->FillBndCondFromField(nreg, coeffs + n * numcoeffs_per_plane);
     }
 }
 

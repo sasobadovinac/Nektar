@@ -59,7 +59,7 @@ namespace Nektar
 namespace MultiRegions
 {
 
-#define EXPLISTDATA 1
+#define EXPLISTDATA 0
 
 // Forward declarations
 class ExpList;
@@ -529,11 +529,11 @@ public:
     inline void ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
 
     /// Fill Bnd Condition expansion from the values stored in expansion
-    inline void FillBndCondFromField(void);
+    inline void FillBndCondFromField(const Array<OneD, NekDouble> coeffs);
 
     /// Fill Bnd Condition expansion in nreg from the values
     /// stored in expansion
-    inline void FillBndCondFromField(const int nreg);
+    inline void FillBndCondFromField(const int nreg,const Array<OneD, NekDouble> coeffs);
 
     /// Gathers the global coefficients \f$\boldsymbol{\hat{u}}_g\f$
     /// from the local coefficients \f$\boldsymbol{\hat{u}}_l\f$.
@@ -1051,8 +1051,12 @@ public:
     inline void GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                      Array<OneD, int> &EdgeID);
 
-    inline void GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
-                                    const bool DeclareCoeffPhysArrays = true);
+#if EXPLISTDATA
+    virtual void GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
+                                       const bool DeclareCoeffPhysArrays = true);
+#else
+    virtual void GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result);
+#endif
 
     inline void ExtractElmtToBndPhys(int i, const Array<OneD, NekDouble> &elmt,
                                      Array<OneD, NekDouble> &boundary);
@@ -1512,9 +1516,10 @@ protected:
     // wrapper functions about virtual functions
     virtual void v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FillBndCondFromField();
+    virtual void v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs);
 
-    virtual void v_FillBndCondFromField(const int nreg);
+    virtual void v_FillBndCondFromField(const int nreg,
+                                        const Array<OneD, NekDouble> coeffs);
 
     virtual void v_Reset();
 
@@ -1619,8 +1624,12 @@ protected:
     virtual void v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                         Array<OneD, int> &EdgeID);
 
+#if EXPLISTDATA
     virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                        const bool DeclareCoeffPhysArrays);
+#else
+    virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result);
+#endif
 
     virtual void v_ExtractElmtToBndPhys(const int i,
                                         const Array<OneD, NekDouble> &elmt,
@@ -2340,14 +2349,14 @@ inline void ExpList::ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
     v_ImposeDirichletConditions(outarray);
 }
 
-inline void ExpList::FillBndCondFromField(void)
+inline void ExpList::FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 {
-    v_FillBndCondFromField();
+    v_FillBndCondFromField(coeffs);
 }
 
-inline void ExpList::FillBndCondFromField(const int nreg)
+inline void ExpList::FillBndCondFromField(const int nreg,const Array<OneD, NekDouble> coeffs)
 {
-    v_FillBndCondFromField(nreg);
+    v_FillBndCondFromField(nreg,coeffs);
 }
 
 inline void ExpList::LocalToGlobal(bool useComm)
@@ -2695,12 +2704,20 @@ inline void ExpList::GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
     v_GetBoundaryToElmtMap(ElmtID, EdgeID);
 }
 
+#if EXPLISTDATA
 inline void ExpList::GetBndElmtExpansion(int i,
                                          std::shared_ptr<ExpList> &result,
                                          const bool DeclareCoeffPhysArrays)
 {
     v_GetBndElmtExpansion(i, result, DeclareCoeffPhysArrays);
 }
+#else
+inline void ExpList::GetBndElmtExpansion(int i,
+                                         std::shared_ptr<ExpList> &result)
+{
+    v_GetBndElmtExpansion(i, result);
+}
+#endif
 
 inline void ExpList::ExtractElmtToBndPhys(int i,
                                           const Array<OneD, NekDouble> &elmt,

@@ -126,7 +126,11 @@ void ProcessBoundaryExtract::Process(po::variables_map &vm)
         {
             for (int i = 0; i < m_f->m_exp.size(); ++i)
             {
-                m_f->m_exp[i]->FillBndCondFromField();
+#if EXPLISTDATA
+                m_f->m_exp[i]->FillBndCondFromField(m_f->m_exp[i]->GetCoeffs());
+#else
+                m_f->m_exp[i]->FillBndCondFromField(m_f->m_fieldCoeffs->GetArray1D(i));
+#endif
             }
         }
     }

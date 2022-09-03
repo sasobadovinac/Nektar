@@ -218,6 +218,13 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     {
         fromField->m_exp[i] = fromField->AppendExpList(NumHomogeneousDir);
     }
+
+#if EXPLISTDATA
+#else
+    fromField->m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(fromField->m_exp);
+    fromField->m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(fromField->m_exp);
+#endif
+
     // load field into expansion in fromfield.
     set<int> sinmode;
     if (m_config["realmodetoimag"].as<string>().compare("NotSet"))

@@ -337,8 +337,13 @@ protected:
 
     virtual void v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                         Array<OneD, int> &TraceID);
+#if EXPLISTDATA
     virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                        const bool DeclareCoeffPhysArrays);
+#else
+    virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result);
+#endif
+
     virtual void v_Reset();
 
     /// Evaluate all boundary conditions at a given time..

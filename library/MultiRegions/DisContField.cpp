@@ -4063,12 +4063,15 @@ void DisContField::v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
     TraceID = m_BCtoTraceMap;
 }
 
+#if EXPLISTDATA
 void DisContField::v_GetBndElmtExpansion(int i,
                                          std::shared_ptr<ExpList> &result,
                                          const bool DeclareCoeffPhysArrays)
+#else
+void DisContField::v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result)
+#endif
 {
-    int n, cnt, nq;
-    int offsetOld, offsetNew;
+    int n, cnt;
     std::vector<unsigned int> eIDs;
 
     Array<OneD, int> ElmtID, TraceID;
@@ -4086,6 +4089,7 @@ void DisContField::v_GetBndElmtExpansion(int i,
         eIDs.push_back(ElmtID[cnt + n]);
     }
 
+#if EXPLISTDATA
     // Create expansion list
     result = MemoryManager<ExpList>::AllocateSharedPtr(
         *this, eIDs, DeclareCoeffPhysArrays, Collections::eNoCollection);
@@ -4093,7 +4097,8 @@ void DisContField::v_GetBndElmtExpansion(int i,
     // Copy phys and coeffs to new explist
     if (DeclareCoeffPhysArrays)
     {
-#if EXPLISTDATA
+        int nq;
+        int offsetOld, offsetNew;
         Array<OneD, NekDouble> tmp1, tmp2;
         for (n = 0; n < result->GetExpSize(); ++n)
         {
@@ -4109,13 +4114,13 @@ void DisContField::v_GetBndElmtExpansion(int i,
             Vmath::Vcopy(nq, tmp1 = GetCoeffs() + offsetOld, 1,
                          tmp2 = result->UpdateCoeffs() + offsetNew, 1);
         }
-#else
-        boost::ignore_unused(offsetOld,offsetNew,nq);
-        NEKERROR(ErrorUtil::efatal,
-                 "This method needs updating for FieldStorage usage");
-        
-#endif
     }
+    
+#else
+    // Create expansion list
+    result = MemoryManager<ExpList>::AllocateSharedPtr(
+        *this, eIDs, false, Collections::eNoCollection);
+#endif
 }
 
 /**

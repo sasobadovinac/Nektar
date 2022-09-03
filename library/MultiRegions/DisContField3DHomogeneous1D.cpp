@@ -568,12 +568,15 @@ void DisContField3DHomogeneous1D::GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
     EdgeID = m_BCtoEdgMap;
 }
 
-void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
-    int i, std::shared_ptr<ExpList> &result, const bool DeclareCoeffPhysArrays)
+#if EXPLISTDATA
+void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(int i,
+                                         std::shared_ptr<ExpList> &result,
+                                         const bool DeclareCoeffPhysArrays)
+#else
+void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result)
+#endif
 {
-    int n, cnt, nq;
-    int offsetOld, offsetNew;
-
+    int cnt, n; 
     std::vector<unsigned int> eIDs;
     Array<OneD, int> ElmtID, EdgeID;
     GetBoundaryToElmtMap(ElmtID, EdgeID);
@@ -593,14 +596,15 @@ void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
     // Create expansion list
     // Note: third arguemnt declares phys coeffs that are not
     // required but currently it is needed to declare the
-    // planes because bool is liked
+    // planes because bool is linked
     result = MemoryManager<ExpList3DHomogeneous1D>::AllocateSharedPtr(
         *this, eIDs, true, Collections::eNoCollection);
 
+#if EXPLISTDATA
     // Copy phys and coeffs to new explist
     if (DeclareCoeffPhysArrays)
     {
-#if EXPLISTDATA
+        int nq, offsetOld, offsetNew;
         Array<OneD, NekDouble> tmp1, tmp2;
         for (n = 0; n < result->GetExpSize(); ++n)
         {
@@ -616,13 +620,8 @@ void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
             Vmath::Vcopy(nq, tmp1 = GetCoeffs() + offsetOld, 1,
                          tmp2 = result->UpdateCoeffs() + offsetNew, 1);
         }
-#else
-        boost::ignore_unused(offsetOld,offsetNew,nq);
-        NEKERROR(ErrorUtil::efatal,
-                 "This method needs updating for FieldStorage usage");
-        
-#endif
     }
+#endif
 
     // Set wavespace value
     result->SetWaveSpace(GetWaveSpace());

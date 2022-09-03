@@ -107,15 +107,15 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
 
 #if EXPLISTDATA
 #else
-    Array<OneD, NekFieldPhysSharedPtr>  BndExpCondFieldPhys  = std::dynamic_pointer_cast
+    Array<OneD, NekFieldPhysSharedPtr>  BndExpCondFieldPhys  =
+        std::dynamic_pointer_cast
         <MultiRegions::DisContField>(exp)->UpdateBndCondFieldPhys();
-    Array<OneD, NekFieldCoeffSharedPtr> BndExpCondFieldCoeff  = std::dynamic_pointer_cast
+    Array<OneD, NekFieldCoeffSharedPtr> BndExpCondFieldCoeff  =
+        std::dynamic_pointer_cast
         <MultiRegions::DisContField>(exp)->UpdateBndCondFieldCoeff();
 #endif
 
-
-
-        ASSERTL0(!(m_f->m_numHomogeneousDir),
+    ASSERTL0(!(m_f->m_numHomogeneousDir),
              "Homogeneous expansions not supported");
 
     for (i = cnt = 0; i < BndExp.size(); ++i)
@@ -248,8 +248,8 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
                     default:
                         ASSERTL0(false, "Expansion not supported");
                 }
-                Vmath::Vsub(nqBnd, face1, 1, face2, 1, face1, 1);
-                Vmath::Vvtvp(nqBnd, face1, 1, face1, 1, dist, 1, dist, 1);
+                Vmath::Vsub(nqBnd,  face1, 1, face2, 1, face1, 1);
+                Vmath::Vvtvp(nqBnd, face1, 1, face1, 1, dist,  1, dist, 1);
             }
             Vmath::Vsqrt(nqBnd, dist, 1, dist, 1);
         }

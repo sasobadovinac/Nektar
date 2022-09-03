@@ -106,11 +106,11 @@ void OutputFld::OutputFromExp(po::variables_map &vm)
 
                     FieldDef[n]->m_fields.push_back(m_f->m_variables[j]);
 #if EXPLISTDATA
-                    m_f->m_exp[s * nfields + j]->AppendFieldData
+                    m_f->m_exp[s*nfields + j]->AppendFieldData
                         (FieldDef[n], FieldData[n],
                          m_f->m_exp[s*nfields + j]->UpdateCoeffs());
 #else
-                    m_f->m_exp[s * nfields + j]->AppendFieldData
+                    m_f->m_exp[s*nfields + j]->AppendFieldData
                         (FieldDef[n],FieldData[n],
                          m_f->m_fieldCoeffs->UpdateArray1D(s*nfields + j));
 #endif

@@ -200,7 +200,7 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
 #else
     for (j = 0; j < nFields; ++j)
     {
-        Array<OneD, NekDouble> phys = m_f->m_fieldPhys->GetArray1D(j); 
+        Array<OneD, NekDouble> phys = m_f->m_fieldPhys->UpdateArray1D(j); 
         for (i = 0; i < totpoints; ++i)
         {
             phys[i] = outPts->GetPointVal(3 + j, i);

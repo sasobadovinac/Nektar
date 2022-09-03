@@ -96,8 +96,12 @@ public:
     MULTI_REGIONS_EXPORT void GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                                    Array<OneD, int> &EdgeID);
 
+#if EXPLISTDATA
     virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                        const bool DeclareCoeffPhysArrays);
+#else
+    virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result);
+#endif
 
     /// Storage space for the boundary to element and boundary to trace map.
     /// This member variable is really allocated just in case a boundary

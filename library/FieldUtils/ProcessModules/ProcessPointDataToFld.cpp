@@ -111,6 +111,13 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     {
         m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     }
+
+#if EXPLISTDATA
+#else
+    m_f->m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(m_f->m_exp);
+    m_f->m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(m_f->m_exp);
+#endif
+
     Array<OneD, Array<OneD, NekDouble>> pts;
     fieldPts->GetPts(pts);
 

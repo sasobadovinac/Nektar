@@ -474,8 +474,8 @@ void ProcessMultiShear::Process(po::variables_map &vm)
                                 m_f->m_exp[i]->UpdatePhys());
 
 #else
-        m_f->m_exp[i]->FwdTrans(outfield[i], m_f->m_fieldCoeffs->UpdateArray1D(i);
-        m_f->m_exp[i]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(i);
+        m_f->m_exp[i]->FwdTrans(outfield[i], m_f->m_fieldCoeffs->UpdateArray1D(i));
+        m_f->m_exp[i]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(i), 
                                 m_f->m_fieldPhys->UpdateArray1D(i));
 #endif
     }

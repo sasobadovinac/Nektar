@@ -635,8 +635,7 @@ void ContField::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
     }
 }
 
-#if EXPLISTDATA
-void ContField::v_FillBndCondFromField(void)
+void ContField::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 {
     int bndcnt = 0;
 
@@ -647,20 +646,25 @@ void ContField::v_FillBndCondFromField(void)
 
     for (int i = 0; i < m_bndCondExpansions.size(); ++i)
     {
-        Array<OneD, NekDouble> &coeffs = m_bndCondExpansions[i]->UpdateCoeffs();
+#if EXPLISTDATA
+        Array<OneD, NekDouble> &bcoeffs = m_bndCondExpansions[i]->UpdateCoeffs();
+
+#else 
+        Array<OneD, NekDouble> &bcoeffs = m_bndCondFieldCoeff[i]->UpdateArray1D();
+#endif
 
         if (m_locToGloMap->GetSignChange())
         {
             for (int j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); ++j)
             {
-                coeffs[j] = sign[bndcnt + j] * m_coeffs[bndmap[bndcnt + j]];
+                bcoeffs[j] = sign[bndcnt + j] * coeffs[bndmap[bndcnt + j]];
             }
         }
         else
         {
             for (int j = 0; j < (m_bndCondExpansions[i])->GetNcoeffs(); ++j)
             {
-                coeffs[j] = m_coeffs[bndmap[bndcnt + j]];
+                bcoeffs[j] = coeffs[bndmap[bndcnt + j]];
             }
         }
 
@@ -668,7 +672,7 @@ void ContField::v_FillBndCondFromField(void)
     }
 }
 
-void ContField::v_FillBndCondFromField(const int nreg)
+void ContField::v_FillBndCondFromField(const int nreg, const Array<OneD, NekDouble> coeffs)
 {
     int bndcnt = 0;
 
@@ -682,7 +686,11 @@ void ContField::v_FillBndCondFromField(const int nreg)
         m_locToGloMap->GetBndCondCoeffsToLocalCoeffsMap();
 
     // Now fill in all other Dirichlet coefficients.
-    Array<OneD, NekDouble> &coeffs = m_bndCondExpansions[nreg]->UpdateCoeffs();
+#if EXPLISTDATA
+    Array<OneD, NekDouble> &bcoeffs = m_bndCondExpansions[nreg]->UpdateCoeffs();
+#else 
+    Array<OneD, NekDouble> &bcoeffs = m_bndCondFieldCoeff[nreg]->UpdateArray1D();
+#endif
 
     for (int j = 0; j < nreg; ++j)
     {
@@ -693,31 +701,17 @@ void ContField::v_FillBndCondFromField(const int nreg)
     {
         for (int j = 0; j < (m_bndCondExpansions[nreg])->GetNcoeffs(); ++j)
         {
-            coeffs[j] = sign[bndcnt + j] * m_coeffs[bndmap[bndcnt + j]];
+            bcoeffs[j] = sign[bndcnt + j] * coeffs[bndmap[bndcnt + j]];
         }
     }
     else
     {
         for (int j = 0; j < (m_bndCondExpansions[nreg])->GetNcoeffs(); ++j)
         {
-            coeffs[j] = m_coeffs[bndmap[bndcnt + j]];
+            bcoeffs[j] = coeffs[bndmap[bndcnt + j]];
         }
     }
 }
-#else
-void ContField::v_FillBndCondFromField(void)
-{
-    NEKERROR(ErrorUtil::efatal,
-             "Needs redefining in terms of NekField storage");
-}
-
-void ContField::v_FillBndCondFromField(const int nreg)
-{
-    boost::ignore_unused(nreg);
-    NEKERROR(ErrorUtil::efatal,
-             "Needs redefining in terms of NekField storage");
-}
-#endif
 
 /**
  * This operation is evaluated as:

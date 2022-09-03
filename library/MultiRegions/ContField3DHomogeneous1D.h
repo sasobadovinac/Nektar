@@ -76,8 +76,9 @@ protected:
 private:
     virtual void v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
 
-    virtual void v_FillBndCondFromField();
-    virtual void v_FillBndCondFromField(const int nreg);
+    virtual void v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs);
+    virtual void v_FillBndCondFromField(const int nreg,
+                                        const Array<OneD, NekDouble> coeffs);
     /// Template method virtual forwarded for LocalToGlobal()
     virtual void v_LocalToGlobal(bool useComm);
 

@@ -91,6 +91,8 @@ void ProcessWSS::Process(po::variables_map &vm)
 
     Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(nshear);
     Array<OneD, MultiRegions::ExpListSharedPtr> BndElmtExp(nfields);
+    Array<OneD, Array<OneD, NekDouble> > BndElmtPhys(nfields);
+    Array<OneD, Array<OneD, NekDouble> > BndElmtCoeffs(nfields);
 
 #if EXPLISTDATA
 #else
@@ -150,10 +152,43 @@ void ProcessWSS::Process(po::variables_map &vm)
                     (m_f->m_exp[i])->UpdateBndCondFieldCoeff()[bnd]; 
 #endif
             }
+
+            Array<OneD, int> ElmtID, edgeID; 
+            Array<OneD, NekDouble> tmp1, tmp2;
+            
+#if EXPLISTDATA
             for (i = 0; i < nfields; i++)
             {
                 m_f->m_exp[i]->GetBndElmtExpansion(bnd, BndElmtExp[i]);
             }
+#else
+            int cnt,n; 
+            for (cnt = n = 0; n < bnd; ++n)
+            {
+                cnt += m_f->m_exp[0]->GetBndCondExpansions()[n]->GetExpSize();
+            }
+            
+            for (i = 0; i < nfields; i++)
+            {
+                m_f->m_exp[i]->GetBndElmtExpansion(bnd, BndElmtExp[i]);
+                // copy points over
+                BndElmtPhys[i] = Array<OneD, NekDouble>
+                    (BndElmtExp[i]->GetTotPoints());
+                m_f->m_exp[i]->GetBoundaryToElmtMap(ElmtID,edgeID);
+                
+                for (n = 0; n < BndElmtExp[i]->GetExpSize(); ++n)
+                {
+                    int nq = m_f->m_exp[i]->GetExp(ElmtID[cnt + n])
+                        ->GetTotPoints();
+                    int offsetOld = m_f->m_exp[i]->
+                        GetPhys_Offset(ElmtID[cnt + n]);
+                    int offsetNew = BndElmtExp[i]->GetPhys_Offset(n);
+                    Vmath::Vcopy(nq, tmp1 = m_f->m_fieldPhys
+                                 ->GetArray1D(i)+offsetOld, 1,
+                                 tmp2 = BndElmtPhys[i]+ offsetNew, 1);
+                }
+            }
+#endif
 
             // Get number of points in expansions
             int nqb = BndExp[0]->GetTotPoints();
@@ -186,20 +221,12 @@ void ProcessWSS::Process(po::variables_map &vm)
             }
 
             // Extract Velocities
-#if EXPLISTDATA
-            GetVelocity(BndElmtExp, velocity);
-#else
-            GetVelocity(BndElmtExp, BndFieldPhys, velocity);
-#endif
+            GetVelocity(BndElmtExp, BndElmtPhys, velocity);
 
             // Extract viscosity coefficients
             NekDouble lambda;
             Array<OneD, NekDouble> mu(nqe, 0.0);
-#if EXPLISTDATA
-            GetViscosity(BndElmtExp, mu, lambda);
-#else
-            GetViscosity(BndElmtExp, BndFieldPhys, mu, lambda);
-#endif
+            GetViscosity(BndElmtExp, BndElmtPhys, mu, lambda);
 
             // Compute gradients
             for (i = 0; i < m_spacedim; ++i)
@@ -334,16 +361,10 @@ void ProcessWSS::Process(po::variables_map &vm)
     }
 }
 
-#if EXPLISTDATA
 void ProcessWSS::GetViscosity(
     const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+    const Array<OneD, Array<OneD, NekDouble> > &BndElmtPhys, 
     Array<OneD, NekDouble> &mu, NekDouble &lambda)
-#else
-void ProcessWSS::GetViscosity(
-    const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
-    const Array<OneD, NekFieldPhysSharedPtr> &BndFieldPhys, 
-    Array<OneD, NekDouble> &mu, NekDouble &lambda)
-#endif
 {
     NekDouble m_mu;
     int npoints = exp[0]->GetNpoints();
@@ -400,26 +421,15 @@ void ProcessWSS::GetViscosity(
             Array<OneD, NekDouble> energy(npoints, 0.0);
             Array<OneD, NekDouble> temperature(npoints, 0.0);
             
-#if EXPLISTDATA
-            Vmath::Vcopy(npoints, exp[m_spacedim + 1]->GetPhys(), 1, energy, 1);
-#else
-            Vmath::Vcopy(npoints, BndFieldPhys[m_spacedim + 1]->GetArray1D(), 1, energy, 1);
-#endif
+            Vmath::Vcopy(npoints, BndElmtPhys[m_spacedim + 1], 1,
+                         energy, 1);
             for (int i = 0; i < m_spacedim; i++)
             {
-#if EXPLISTDATA
                 // rhou^2
-                Vmath::Vmul(npoints, exp[i + 1]->GetPhys(), 1,
-                            exp[i + 1]->GetPhys(), 1, tmp, 1);
+                Vmath::Vmul(npoints, BndElmtPhys[i + 1], 1,
+                            BndElmtPhys[i + 1], 1, tmp, 1);
                 // rhou^2/rho
-                Vmath::Vdiv(npoints, tmp, 1, exp[0]->GetPhys(), 1, tmp, 1);
-#else
-                // rhou^2
-                Vmath::Vmul(npoints, BndFieldPhys[i + 1]->GetArray1D(), 1,
-                            BndFieldPhys[i + 1]->GetArray1D(), 1, tmp, 1);
-                // rhou^2/rho
-                Vmath::Vdiv(npoints, tmp, 1, BndFieldPhys[0]->GetArray1D(), 1, tmp, 1);
-#endif
+                Vmath::Vdiv(npoints, tmp, 1, BndElmtPhys[0], 1, tmp, 1);
 
                 // 0.5 rhou^2/rho
                 Vmath::Smul(npoints, 0.5, tmp, 1, tmp, 1);
@@ -427,16 +437,10 @@ void ProcessWSS::GetViscosity(
                 Vmath::Vsub(npoints, energy, 1, tmp, 1, energy, 1);
             }
 
-#if EXPLISTDATA
-            // rhoe/rho
-            Vmath::Vdiv(npoints, energy, 1, exp[0]->GetPhys(), 1, energy, 1);
-#else
             // rhou^2/rho
-            Vmath::Vdiv(npoints, energy, 1, BndFieldPhys[0]->GetArray1D(), 1,
-                        energy, 1);
-#endif
+            Vmath::Vdiv(npoints, energy, 1, BndElmtPhys[0], 1, energy, 1);
 
-                // T = e/Cv
+            // T = e/Cv
             Vmath::Smul(npoints, cv_inv, energy, 1, temperature, 1);
 
             // Variable viscosity through the Sutherland's law
@@ -467,16 +471,10 @@ void ProcessWSS::GetViscosity(
     }
 }
 
-#if EXPLISTDATA
 void ProcessWSS::GetVelocity(
     const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+    const Array<OneD, Array<OneD, NekDouble> > &BndElmtPhys, 
     Array<OneD, Array<OneD, NekDouble>> &vel)
-#else
-void ProcessWSS::GetVelocity(
-    const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
-    const Array<OneD, NekFieldPhysSharedPtr> &BndFieldPhys, 
-    Array<OneD, Array<OneD, NekDouble>> &vel)
-#endif
 {
     int npoints = exp[0]->GetNpoints();
     if (boost::iequals(m_f->m_variables[0], "u"))
@@ -485,11 +483,8 @@ void ProcessWSS::GetVelocity(
         for (int i = 0; i < m_spacedim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-#if EXPLISTDATA
-            Vmath::Vcopy(npoints, exp[i]->GetPhys(), 1, vel[i], 1);
-#else
-            Vmath::Vcopy(npoints, BndFieldPhys[i]->GetArray1D(), 1, vel[i], 1);
-#endif
+            Vmath::Vcopy(npoints, BndElmtPhys[i], 1, vel[i], 1);
+
         }
     }
     else if (boost::iequals(m_f->m_variables[0], "rho") &&
@@ -499,13 +494,8 @@ void ProcessWSS::GetVelocity(
         for (int i = 0; i < m_spacedim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-#if EXPLISTDATA
-            Vmath::Vdiv(npoints, exp[i + 1]->GetPhys(), 1, exp[0]->GetPhys(), 1,
-                        vel[i], 1);
-#else
-            Vmath::Vdiv(npoints, BndFieldPhys[i + 1]->GetArray1D(), 1,
-                        BndFieldPhys[0]->GetArray1D(), 1, vel[i], 1);
-#endif
+            Vmath::Vdiv(npoints, BndElmtPhys[i+1], 1,
+                        BndElmtPhys[0], 1, vel[i], 1);
 
         }
     }
