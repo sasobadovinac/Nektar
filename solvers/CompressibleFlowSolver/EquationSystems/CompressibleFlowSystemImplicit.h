@@ -53,7 +53,7 @@ public:
 
     virtual ~CFSImplicit();
 
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     void InitialiseNonlinSysSolver();
 
@@ -112,6 +112,11 @@ protected:
     LibUtilities::NekNonlinSysSharedPtr m_nonlinsol;
 
     PreconCfsOpSharedPtr m_preconCfs;
+
+    // flag to update shock capturing artificial viscosity. this flag is
+    // switched on/off in DoImplicitSolve() to ensure that the AV is only
+    // updated once every stage in a multi-stage time integration scheme
+    bool m_updateShockCaptPhys{true};
 
     void PreconCoeff(const Array<OneD, NekDouble> &inarray,
                      Array<OneD, NekDouble> &outarray, const bool &flag);
@@ -370,7 +375,7 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, DNekMatSharedPtr>> &ElmtJac);
 
-    virtual bool UpdateTimeStepCheck();
+    virtual bool UpdateTimeStepCheck() override;
 };
 } // namespace Nektar
 #endif

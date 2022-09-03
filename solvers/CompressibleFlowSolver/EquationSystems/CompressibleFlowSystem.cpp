@@ -141,6 +141,11 @@ void CompressibleFlowSystem::InitialiseParameters()
     // Shock capture
     m_session->LoadSolverInfo("ShockCaptureType", m_shockCaptureType, "Off");
 
+    // Check if the shock capture type is supported
+    std::string err_msg = "Warning, ShockCaptureType = " + m_shockCaptureType +
+                          " is not supported by this solver";
+    ASSERTL0(SupportsShockCaptType(m_shockCaptureType), err_msg);
+
     // Load parameters for exponential filtering
     m_session->MatchSolverInfo("ExponentialFiltering", "True", m_useFiltering,
                                false);
@@ -609,22 +614,6 @@ NekDouble CompressibleFlowSystem::v_GetTimeStep(
     m_timestep       = tmp;
 
     return TimeStep;
-}
-
-/**
- * @brief Apply artificial diffusion (Laplacian operator)
- */
-void CompressibleFlowSystem::v_DoDiffusion(
-    const Array<OneD, Array<OneD, NekDouble>> &inarray,
-    Array<OneD, Array<OneD, NekDouble>> &outarray,
-    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
-{
-    boost::ignore_unused(pFwd, pBwd);
-    if (m_artificialDiffusion)
-    {
-        m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
-    }
 }
 
 /**
