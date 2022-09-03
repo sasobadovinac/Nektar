@@ -7,6 +7,10 @@ v5.3.0
 - Added float and restore avx512 back-end for SimdLib (!1387)
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
 
+**CompressibleFlowSolver**
+- Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (MR!1372)
+- Added Physical AV to the implicit Navier Stokes solver (MR!1372)
+
 v5.2.0
 ------
 **Library**

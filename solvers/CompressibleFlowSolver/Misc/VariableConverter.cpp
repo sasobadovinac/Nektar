@@ -83,6 +83,11 @@ VariableConverter::VariableConverter(
 
         // Check for Ducros sensor
         m_session->LoadSolverInfo("DucrosSensor", m_ducrosSensor, "Off");
+
+        if (m_ducrosSensor != "Off" || m_shockSensorType == "Dilatation")
+        {
+            m_flagCalcDivCurl = true;
+        }
     }
     // Load smoothing tipe
     m_session->LoadSolverInfo("Smoothing", m_smoothing, "Off");

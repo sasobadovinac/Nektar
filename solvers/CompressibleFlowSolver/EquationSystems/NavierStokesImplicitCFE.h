@@ -89,6 +89,17 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, const Array<OneD, NekDouble>> &pBwd) override;
 
+    void v_DoDiffusion(
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override final
+    {
+        boost::ignore_unused(inarray, outarray, pFwd, pBwd);
+        NEKERROR(ErrorUtil::efatal,
+                 "v_DoDiffusion is not implemented for implicit solvers");
+    }
+
     virtual void v_MinusDiffusionFluxJacPoint(
         const int nConvectiveFields, const int nElmtPnt,
         const Array<OneD, const Array<OneD, NekDouble>> &locVars,
@@ -225,6 +236,8 @@ protected:
                         const Array<OneD, NekDouble> &U,
                         const Array<OneD, const Array<OneD, NekDouble>> &qfield,
                         DNekMatSharedPtr &OutputMatrix);
+
+    bool SupportsShockCaptType(const std::string type) const override final;
 };
 } // namespace Nektar
 #endif
