@@ -1,10 +1,13 @@
 Changelog
 =========
 
-v5.3
+v5.3.0
 ------
 **Library**
 - Added float and restore avx512 back-end for SimdLib (!1387)
+
+**CompressibleFlowSolver**
+- The Incomplete IP method was made the default method for the IP method (!1377).
 
 v5.2.0
 ------
