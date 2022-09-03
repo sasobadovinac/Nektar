@@ -38,6 +38,8 @@
 
 void export_Basis();
 void export_Comm();
+void export_Interpreter();
+void export_Equation();
 void export_Points();
 void export_SessionReader();
 void export_ShapeType();
@@ -86,6 +88,8 @@ BOOST_PYTHON_MODULE(_LibUtilities)
     Nektar::ErrorUtil::SetErrorStream(errorStream);
 
     export_Basis();
+    export_Interpreter();
+    export_Equation();
     export_Points();
     export_SessionReader();
     export_ShapeType();

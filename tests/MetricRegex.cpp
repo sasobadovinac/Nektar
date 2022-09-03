@@ -51,10 +51,6 @@ std::string MetricRegex::type =
 MetricRegex::MetricRegex(TiXmlElement *metric, bool generate)
     : Metric(metric, generate)
 {
-    // Default behaviour is that the regexes listed in the input file must
-    // be matched in order.
-    m_unordered = false;
-
     // If we are a derived class, do nothing
     if (m_type != "REGEX")
     {
@@ -122,6 +118,9 @@ bool MetricRegex::v_Test(std::istream &pStdout, std::istream &pStderr)
 
     ASSERTL0(m_matches.size(), "No test conditions defined for Regex.");
 
+    // Select istream to use.
+    std::istream &is = m_useStderr ? pStderr : pStdout;
+
     std::vector<MetricRegexFieldValue> &okValues = m_matches[0];
     int nMatch                                   = m_matches.size();
     bool success                                 = true;
@@ -130,7 +129,7 @@ bool MetricRegex::v_Test(std::istream &pStdout, std::istream &pStderr)
 
     // Process output file line by line searching for regex matches
     std::string line;
-    while (getline(pStdout, line) && m_matches.size() > 0)
+    while (getline(is, line) && m_matches.size() > 0)
     {
         matchedTol = true;
 
@@ -270,11 +269,14 @@ void MetricRegex::v_Generate(std::istream &pStdout, std::istream &pStderr)
 {
     boost::ignore_unused(pStderr);
 
+    // Select istream to use.
+    std::istream &is = m_useStderr ? pStderr : pStdout;
+
     boost::cmatch matches;
 
     // Process output file line by line searching for regex matches
     std::string line;
-    while (getline(pStdout, line))
+    while (getline(is, line))
     {
         // Test to see if we have a match on this line.
         if (boost::regex_match(line.c_str(), matches, m_regex))
