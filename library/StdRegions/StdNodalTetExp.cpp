@@ -70,10 +70,6 @@ StdNodalTetExp::StdNodalTetExp(const StdNodalTetExp &T)
 {
 }
 
-StdNodalTetExp::~StdNodalTetExp()
-{
-}
-
 bool StdNodalTetExp::v_IsNodalNonTensorialExp()
 {
     return true;

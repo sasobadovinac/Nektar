@@ -604,9 +604,9 @@ void VortexWaveInteraction::CalcNonLinearWaveForce(void)
         string movedmesh  = m_sessionName + "_advPost_moved.xml";
         string filestreak = m_sessionName + "_streak.fld";
         char c[16]        = "";
-        sprintf(c, "%d", cnt);
+        snprintf(c, 16, "%d", cnt);
         char c_alpha[16] = "";
-        sprintf(c_alpha, "%f", m_alpha[0]);
+        snprintf(c_alpha, 16, "%f", m_alpha[0]);
         string syscall;
         if (m_sessionVWI->GetSolverInfo("INTERFACE") == "phase")
         {
@@ -1244,7 +1244,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
         // the rolls session file
         //}
 
-        sprintf(c, "%d", cnt);
+        snprintf(c, 16, "%d", cnt);
         // save old roll solution
         string oldroll = m_sessionName + "_roll_" + c + ".fld";
         syscall = "cp -f " + m_sessionName + "-Base.fld" + "  " + oldroll;
@@ -1264,7 +1264,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
             m_sessionName + "_wave_p_split_interp_" + c + ".fld";
         char alpchar[16] = "";
         cout << "alpha = " << m_alpha[0] << endl;
-        sprintf(alpchar, "%f", m_alpha[0]);
+        snprintf(alpchar, 16, "%f", m_alpha[0]);
 
         if (m_sessionVWI->GetSolverInfo("INTERFACE") != "phase")
         {
@@ -1380,7 +1380,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
                 // FileRelaxation(reg);
             }
             char c1[16] = "";
-            sprintf(c1, "%d", cnt);
+            snprintf(c1, 16, "%d", cnt);
             // calculate the jump conditions
             string wavefile = m_sessionName + ".fld";
             syscall = "../../utilities/PostProcessing/Extras/FldCalcBCs  " +
@@ -1537,7 +1537,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
                 // FileRelaxation(reg);
             }
             char c1[16] = "";
-            sprintf(c1, "%d", cnt);
+            snprintf(c1, 16, "%d", cnt);
 
             // cp wavepressure to m_sessionName.fld(to get
             // the right bcs names using FldCalcBCs)
@@ -1613,7 +1613,7 @@ void VortexWaveInteraction::ExecuteLoop(bool CalcWaveForce)
         {
             string syscall;
             char alpchar[16] = "";
-            sprintf(alpchar, "%f", m_alpha[0]);
+            snprintf(alpchar, 16, "%f", m_alpha[0]);
 
             string filePost         = m_sessionName + "_advPost.xml";
             string filestreak       = m_sessionName + "_streak.fld";

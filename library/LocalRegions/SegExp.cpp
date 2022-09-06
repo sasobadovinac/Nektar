@@ -81,13 +81,6 @@ SegExp::SegExp(const SegExp &S)
 {
 }
 
-/**
- *
- */
-SegExp::~SegExp()
-{
-}
-
 //----------------------------
 // Integration Methods
 //----------------------------
@@ -612,15 +605,26 @@ NekDouble SegExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     return StdExpansion1D::v_PhysEvaluate(Lcoord, physvals);
 }
 
-NekDouble SegExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
+NekDouble SegExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                  const Array<OneD, const NekDouble> &inarray,
-                                 NekDouble &out_d0, NekDouble &out_d1,
-                                 NekDouble &out_d2)
+                                 std::array<NekDouble, 3> &firstOrderDerivs)
 {
     Array<OneD, NekDouble> Lcoord(1);
     ASSERTL0(m_geom, "m_geom not defined");
     m_geom->GetLocCoords(coord, Lcoord);
-    return StdSegExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+    return StdSegExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
+}
+
+NekDouble SegExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                 const Array<OneD, const NekDouble> &inarray,
+                                 std::array<NekDouble, 3> &firstOrderDerivs,
+                                 std::array<NekDouble, 6> &secondOrderDerivs)
+{
+    Array<OneD, NekDouble> Lcoord(1);
+    ASSERTL0(m_geom, "m_geom not defined");
+    m_geom->GetLocCoords(coord, Lcoord);
+    return StdSegExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs,
+                                     secondOrderDerivs);
 }
 
 void SegExp::v_GetCoord(const Array<OneD, const NekDouble> &Lcoords,

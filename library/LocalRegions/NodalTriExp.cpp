@@ -62,13 +62,11 @@ NodalTriExp::NodalTriExp(const LibUtilities::BasisKey &Ba,
 }
 
 NodalTriExp::NodalTriExp(const NodalTriExp &T)
-    : StdExpansion(T), StdExpansion2D(T), StdRegions::StdNodalTriExp(T),
+    : StdExpansion(T),
+      StdExpansion2D(T), StdRegions::StdTriExp(T), StdRegions::StdNodalTriExp(
+                                                       T),
       Expansion(T), Expansion2D(T), m_matrixManager(T.m_matrixManager),
       m_staticCondMatrixManager(T.m_staticCondMatrixManager)
-{
-}
-
-NodalTriExp::~NodalTriExp()
 {
 }
 
@@ -463,15 +461,14 @@ NekDouble NodalTriExp::PhysEvaluate(
 }
 
 NekDouble NodalTriExp::v_PhysEvaluate(
-    const Array<OneD, NekDouble> coord,
-    const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-    NekDouble &out_d1, NekDouble &out_d2)
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs)
 {
     Array<OneD, NekDouble> Lcoord(2);
     ASSERTL0(m_geom, "m_geom not defined");
     m_geom->GetLocCoords(coord, Lcoord);
-    return StdExpansion2D::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1,
-                                          out_d2);
+    return StdExpansion2D::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
 }
 
 StdRegions::StdExpansionSharedPtr NodalTriExp::v_GetStdExp(void) const

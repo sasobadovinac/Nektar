@@ -603,7 +603,7 @@ void MeshGraph::GetCompositeList(const std::string &compositeStr,
             else
             {
                 char str[64];
-                ::sprintf(str, "%d", *iter);
+                ::snprintf(str, 64, "%d", *iter);
                 NEKERROR(ErrorUtil::ewarning,
                          (std::string("Undefined composite: ") + str).c_str());
             }
@@ -2549,36 +2549,31 @@ ExpansionInfoMapShPtr MeshGraph::SetUpExpansionInfoMap(void)
 
     for (auto &d : m_domain)
     {
-        for (auto compIter = d.second.begin(); compIter != d.second.end();
-             ++compIter)
+        for (auto &compIter : d.second)
         {
             // regular elements first
-            for (auto x = compIter->second->m_geomVec.begin();
-                 x != compIter->second->m_geomVec.end(); ++x)
+            for (auto &x : compIter.second->m_geomVec)
             {
-                if ((*x)->GetGeomFactors()->GetGtype() !=
+                if (x->GetGeomFactors()->GetGtype() !=
                     SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x,
-                                                                        def);
-                    int id           = (*x)->GetGlobalID();
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x, def);
+                    int id           = x->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
             }
             // deformed elements
-            for (auto x = compIter->second->m_geomVec.begin();
-                 x != compIter->second->m_geomVec.end(); ++x)
+            for (auto &x : compIter.second->m_geomVec)
             {
-                if ((*x)->GetGeomFactors()->GetGtype() ==
+                if (x->GetGeomFactors()->GetGtype() ==
                     SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x,
-                                                                        def);
-                    int id           = (*x)->GetGlobalID();
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x, def);
+                    int id           = x->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
             }
@@ -3544,10 +3539,9 @@ GeometryLinkSharedPtr MeshGraph::GetElementsFromEdge(Geometry1DSharedPtr edge)
 
     for (auto &d : m_domain)
     {
-        for (auto compIter = d.second.begin(); compIter != d.second.end();
-             ++compIter)
+        for (auto &compIter : d.second)
         {
-            for (auto &geomIter : compIter->second->m_geomVec)
+            for (auto &geomIter : compIter.second->m_geomVec)
             {
                 triGeomShPtr  = std::dynamic_pointer_cast<TriGeom>(geomIter);
                 quadGeomShPtr = std::dynamic_pointer_cast<QuadGeom>(geomIter);

@@ -29,8 +29,8 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:
-//
+//  Description: This file contains the base class for implementing
+//               non-conformal geometry using the Movement object
 //
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_SPATIALDOMAINS_MOVEMENT_H

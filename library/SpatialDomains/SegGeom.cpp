@@ -369,15 +369,21 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
         return sqrt(tmp);
     }
+    // If deformed edge then the inverse mapping is non-linear so need to
+    // numerically solve for the local coordinate
     else if (m_geomFactors->GetGtype() == eDeformed)
     {
         Array<OneD, NekDouble> xi(1, 0.0);
+
+        // Armijo constants:
+        // https://en.wikipedia.org/wiki/Backtracking_line_search
         const NekDouble c1 = 1e-4, c2 = 0.9;
 
         int dim = GetCoordim();
         int nq  = m_xmap->GetTotPoints();
 
         Array<OneD, Array<OneD, NekDouble>> x(dim), xder(dim), xder2(dim);
+        // Get x,y,z phys values from coefficients
         for (int i = 0; i < dim; ++i)
         {
             x[i]     = Array<OneD, NekDouble>(nq);
@@ -387,24 +393,25 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             m_xmap->BwdTrans(m_coeffs[i], x[i]);
         }
 
-        bool opt_succeed = false;
-
         NekDouble fx_prev = std::numeric_limits<NekDouble>::max();
 
-        for (int i = 0; i < 100; ++i)
+        // Minimisation loop (Quasi-newton method)
+        for (int i = 0; i < NekConstants::kNewtonIterations; ++i)
         {
-            // Compute f(x_k) and its derivatives
-            Array<OneD, NekDouble> xc(dim), xc_der(dim), xc_der2(dim);
+            // Compute the objective function, f(x_k) and its derivatives
+            Array<OneD, NekDouble> xc(dim);
+            Array<OneD, std::array<NekDouble, 3>> xc_der(dim);
+            Array<OneD, std::array<NekDouble, 6>> xc_der2(dim);
             NekDouble fx = 0, fxp = 0, fxp2 = 0, xcDiff = 0;
             for (int j = 0; j < dim; ++j)
             {
-                xc[j] = m_xmap->PhysEvaluate2ndDeriv(xi, x[j], xc_der[j],
-                                                     xc_der2[j]);
+                xc[j] = m_xmap->PhysEvaluate(xi, x[j], xc_der[j], xc_der2[j]);
 
                 xcDiff = xc[j] - xs[j];
+                // Objective function is the distance to the search point
                 fx += xcDiff * xcDiff;
-                fxp += xc_der[j] * xcDiff;
-                fxp2 += xc_der2[j] * xcDiff + xc_der[j] * xc_der[j];
+                fxp += xc_der[j][0] * xcDiff;
+                fxp2 += xc_der2[j][0] * xcDiff + xc_der[j][0] * xc_der[j][0];
             }
 
             fxp *= 2;
@@ -413,8 +420,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             // Check for convergence
             if (std::abs(fx - fx_prev) < 1e-12)
             {
-                opt_succeed = true;
-                fx_prev     = fx;
+                fx_prev = fx;
                 break;
             }
             else
@@ -428,7 +434,7 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             // Search direction: Newton's method
             NekDouble pk = -fxp / fxp2;
 
-            // Backtracking line search
+            // Perform backtracking line search
             while (gamma > 1e-10)
             {
                 Array<OneD, NekDouble> xi_pk(1);
@@ -440,7 +446,8 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                     continue;
                 }
 
-                Array<OneD, NekDouble> xc_pk(dim), xc_der_pk(dim);
+                Array<OneD, NekDouble> xc_pk(dim);
+                Array<OneD, std::array<NekDouble, 3>> xc_der_pk(dim);
                 NekDouble fx_pk = 0, fxp_pk = 0, xc_pkDiff = 0;
                 for (int j = 0; j < dim; ++j)
                 {
@@ -448,12 +455,13 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
                     xc_pkDiff = xc_pk[j] - xs[j];
                     fx_pk += xc_pkDiff * xc_pkDiff;
-                    fxp_pk += xc_der_pk[j] * xc_pkDiff;
+                    fxp_pk += xc_der_pk[j][0] * xc_pkDiff;
                 }
 
                 fxp_pk *= 2;
 
-                // Check Wolfe conditions
+                // Check Wolfe conditions using Armijo constants
+                // https://en.wikipedia.org/wiki/Wolfe_conditions
                 if ((fx_pk - (fx + c1 * gamma * pk * fxp)) <
                         std::numeric_limits<NekDouble>::epsilon() &&
                     (-pk * fxp_pk + c2 * pk * fxp) <
@@ -468,24 +476,14 @@ NekDouble SegGeom::v_FindDistance(const Array<OneD, const NekDouble> &xs,
 
             if (!conv)
             {
-                opt_succeed = false;
                 break;
             }
 
             xi[0] += gamma * pk;
         }
 
-        if (opt_succeed)
-        {
-            xiOut = xi;
-            return sqrt(fx_prev);
-        }
-        else
-        {
-            xiOut = Array<OneD, NekDouble>(
-                2, std::numeric_limits<NekDouble>::max());
-            return std::numeric_limits<NekDouble>::max();
-        }
+        xiOut = xi;
+        return sqrt(fx_prev);
     }
     else
     {

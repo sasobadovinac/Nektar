@@ -60,33 +60,68 @@ public:
     /// Name of the class
     static std::string className;
 
+    /// Constructs the integral filter and parses filter options, opens file
     SOLVER_UTILS_EXPORT FilterIntegral(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
+
+    /// Default destructor
     SOLVER_UTILS_EXPORT virtual ~FilterIntegral() = default;
 
 protected:
+    /**
+     * Initialises the integral filter and stores the composite expansions in
+     * #m_compExpMap for all composites specified in the XML file
+     *
+     * @param pFields Field data
+     * @param time Current time
+     */
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time) final;
+
+    /**
+     * Performs the integration on the stored composite expansions and outputs
+     * in to the output data file
+     *
+     * @param pFields Field data
+     * @param time Current time
+     */
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time) final;
+
+    /**
+     * Closes the output data file
+     *
+     * @param pFields Field data
+     * @param time Current time
+     */
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time) final;
+
+    /// Returns true as filter depends on time
     virtual bool v_IsTimeDependent() final;
 
 private:
     size_t m_index = 0;
+    /// Frequency to write to output data file in timesteps
     size_t m_outputFrequency;
+    /// Number of fields to perform integral on
     size_t m_numVariables;
+    /// Out file
     std::ofstream m_outFile;
+    /// Global communicator
     LibUtilities::CommSharedPtr m_comm;
+    /// Vector of composite IDs as a single string
     std::vector<std::string> m_splitCompString;
+    /// Vector of vector of composites IDs as integers
     std::vector<std::vector<unsigned int>> m_compVector;
+    /// Mapping from geometry ID to expansion ID
     std::map<size_t, size_t> m_geomElmtIdToExpId;
+    /// Map of composite ID to vector of expansions an face/edge local ID
     std::map<int, std::vector<std::pair<LocalRegions::ExpansionSharedPtr, int>>>
         m_compExpMap;
 };

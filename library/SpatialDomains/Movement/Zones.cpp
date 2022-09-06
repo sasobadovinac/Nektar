@@ -29,8 +29,8 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:
-//
+//  Description: Zones used in the non-conformal interfaces
+//               and ALE implementations
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -78,9 +78,11 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain,
         }
     }
 
-    // Fill verts/edges/faces that are to be moved
-    // @TODO: Any reason I can't have m_verts etc as sets??
-    std::set<int> seenVerts, seenEdges, seenFaces;
+    // The seenVerts/Edges/Faces keeps track of geometry so duplicates aren't
+    // emplaced in to the storage vector
+    std::unordered_set<int> seenVerts, seenEdges, seenFaces;
+
+    // Fill verts/edges/faces vector storage that are to be moved each timestep
     for (auto &comp : m_domain)
     {
         for (auto &geom : comp.second->m_geomVec)
@@ -204,6 +206,7 @@ NekDouble ZoneRotate::GetAngularVel(NekDouble &time) const
 // Calculate new location of points using Rodrigues formula
 bool ZoneRotate::v_Move(NekDouble time)
 {
+    // Currently only valid for constant angular velocity
     NekDouble angle = GetAngularVel(time) * time;
     // TODO: For none constant angular velocity this doesn't work ^^
     // @TODO: I need to take into account the total angle, summing timesteps

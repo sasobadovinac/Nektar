@@ -148,7 +148,16 @@ typedef std::shared_ptr<ZoneBase> ZoneBaseShPtr;
 /// Rotating zone: Motion of every point around a given axis on an origin
 struct ZoneRotate final : public ZoneBase
 {
-    /// Constructor
+    /**
+     * Constructor for rotating zones
+     *
+     * @param id Zone ID
+     * @param domain Domain that the zone consists of
+     * @param coordDim Coordinate dimension
+     * @param origin Origin that the zone rotates about
+     * @param axis Axis that the zone rotates about
+     * @param angularVelEqn Equation for the angular velocity of rotation
+     */
     ZoneRotate(int id, const CompositeMap &domain, const int coordDim,
                const NekPoint<NekDouble> &origin, const DNekVec &axis,
                const LibUtilities::EquationSharedPtr &angularVelEqn);
@@ -188,9 +197,15 @@ protected:
 /// Translating zone: addition of a constant vector to every point
 struct ZoneTranslate final : public ZoneBase
 {
-    /// Constructor
-    ZoneTranslate(
-        int id, const CompositeMap &domain, const int coordDim,
+    /**
+     * Constructor for translating zone
+     *
+     * @param id Zone ID
+     * @param domain Domain that the zone consists of
+     * @param coordDim Coordinate dimension
+     * @param velocity Vector of translation velocity in x,y,z direction
+     */
+    ZoneTranslate(int id, const CompositeMap &domain, const int coordDim,
         const Array<OneD, LibUtilities::EquationSharedPtr> &velocityEqns,
         const Array<OneD, LibUtilities::EquationSharedPtr> &displacementEqns)
         : ZoneBase(MovementType::eTranslate, id, domain, coordDim),
@@ -218,7 +233,16 @@ protected:
 /// Prescribed zone: applies equation to every point
 struct ZonePrescribe final : public ZoneBase
 {
-    /// Constructor
+    /**
+     * Constructor for prescribed zone
+     *
+     * @param id Zone ID
+     * @param domain Domain that the zone consists of
+     * @param coordDim Coordinate dimension
+     * @param xDeform Equation for prescribed motion of x-coordinate
+     * @param yDeform Equation for prescribed motion of y-coordinate
+     * @param zDeform Equation for prescribed motion of z-coordinate
+     */
     ZonePrescribe(int id, const CompositeMap &domain, const int coordDim,
                   LibUtilities::EquationSharedPtr xDeform,
                   LibUtilities::EquationSharedPtr yDeform,

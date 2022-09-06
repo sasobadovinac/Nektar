@@ -268,7 +268,7 @@ public:
 
     std::map<int, CompositeSharedPtr> &GetDomain(int domain)
     {
-        ASSERTL1(m_domain.count(domain) == 1,
+        ASSERTL1(m_domain.count(domain),
                  "Request for domain which does not exist");
         return m_domain[domain];
     }

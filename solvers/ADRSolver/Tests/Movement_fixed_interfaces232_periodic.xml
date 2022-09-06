@@ -48,6 +48,24 @@
 
     <COLLECTIONS DEFAULT="NoCollection"/>
 
+    <MOVEMENT>
+        <ZONES>
+            <FIXED ID="0" DOMAIN="D[0]" />
+            <FIXED ID="1" DOMAIN="D[1]" />
+            <FIXED ID="2" DOMAIN="D[2]" />
+        </ZONES>
+        <INTERFACES>
+            <INTERFACE NAME="Left interface">
+                <LEFT  ID="0" BOUNDARY="C[405]" />
+                <RIGHT ID="1" BOUNDARY="C[406]"  />
+            </INTERFACE>
+            <INTERFACE NAME="Right interface">
+                <LEFT  ID="1" BOUNDARY="C[407]" />
+                <RIGHT ID="2" BOUNDARY="C[408]"  />
+            </INTERFACE>
+        </INTERFACES>
+    </MOVEMENT>
+
     <CONDITIONS>
         <PARAMETERS>
             <P> NumSteps       = 100         </P>
@@ -66,24 +84,6 @@
             <I PROPERTY="UpwindType"            VALUE="Upwind"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>
-
-        <MOVEMENT>
-            <ZONES>
-                <FIXED ID="0" DOMAIN="D[0]" />
-                <FIXED ID="1" DOMAIN="D[1]" />
-                <FIXED ID="2" DOMAIN="D[2]" />
-            </ZONES>
-            <INTERFACES>
-                <INTERFACE NAME="Left interface">
-                    <LEFT  ID="0" BOUNDARY="C[405]" />
-                    <RIGHT ID="1" BOUNDARY="C[406]"  />
-                </INTERFACE>
-                <INTERFACE NAME="Right interface">
-                    <LEFT  ID="1" BOUNDARY="C[407]" />
-                    <RIGHT ID="2" BOUNDARY="C[408]"  />
-                </INTERFACE>
-            </INTERFACES>
-        </MOVEMENT>
 
         <VARIABLES>
             <V ID="0"> u </V>

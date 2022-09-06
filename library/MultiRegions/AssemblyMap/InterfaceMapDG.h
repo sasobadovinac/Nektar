@@ -51,7 +51,7 @@ namespace MultiRegions
 class InterfaceTrace
 {
 public:
-    /// Default constructor
+    /// Constructor
     MULTI_REGIONS_EXPORT InterfaceTrace(
         const ExpListSharedPtr &trace,
         const SpatialDomains::InterfaceShPtr &interfaceShPtr);
@@ -92,7 +92,7 @@ private:
     SpatialDomains::InterfaceShPtr m_interface;
     /// Flag whether the opposite side of the interface is present locally
     bool m_checkLocal = false;
-    /// Vector of coordinates on interface not present on opposite side local
+    /// Vector of coordinates on interface missing from the other side locally
     std::vector<Array<OneD, NekDouble>> m_missingCoords;
     /// Map of found coordinates present locally
     std::map<int, std::pair<int, Array<OneD, NekDouble>>> m_foundLocalCoords;

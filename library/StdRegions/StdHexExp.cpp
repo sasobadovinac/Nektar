@@ -44,11 +44,6 @@ namespace Nektar
 {
 namespace StdRegions
 {
-
-StdHexExp::StdHexExp()
-{
-}
-
 StdHexExp::StdHexExp(const LibUtilities::BasisKey &Ba,
                      const LibUtilities::BasisKey &Bb,
                      const LibUtilities::BasisKey &Bc)
@@ -60,10 +55,6 @@ StdHexExp::StdHexExp(const LibUtilities::BasisKey &Ba,
 }
 
 StdHexExp::StdHexExp(const StdHexExp &T) : StdExpansion(T), StdExpansion3D(T)
-{
-}
-
-StdHexExp::~StdHexExp()
 {
 }
 
@@ -1177,12 +1168,11 @@ void StdHexExp::v_GetBoundaryMap(Array<OneD, unsigned int> &outarray)
     sort(outarray.get(), outarray.get() + nBndCoeffs);
 }
 
-NekDouble StdHexExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
+NekDouble StdHexExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                     const Array<OneD, const NekDouble> &inarray,
-                                    NekDouble &out_d0, NekDouble &out_d1,
-                                    NekDouble &out_d2)
+                                    std::array<NekDouble, 3> &firstOrderDerivs)
 {
-    return BaryTensorDeriv(coord, inarray, out_d0, out_d1, out_d2);
+    return BaryTensorDeriv(coord, inarray, firstOrderDerivs);
 }
 
 /**

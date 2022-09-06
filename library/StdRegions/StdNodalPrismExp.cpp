@@ -64,10 +64,6 @@ StdNodalPrismExp::StdNodalPrismExp(const StdNodalPrismExp &T)
 {
 }
 
-StdNodalPrismExp::~StdNodalPrismExp()
-{
-}
-
 bool StdNodalPrismExp::v_IsNodalNonTensorialExp()
 {
     return true;

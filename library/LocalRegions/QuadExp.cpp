@@ -70,10 +70,6 @@ QuadExp::QuadExp(const QuadExp &T)
 {
 }
 
-QuadExp::~QuadExp()
-{
-}
-
 NekDouble QuadExp::v_Integral(const Array<OneD, const NekDouble> &inarray)
 {
     int nquad0                       = m_base[0]->GetNumPoints();
@@ -642,15 +638,14 @@ NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     return StdExpansion2D::v_PhysEvaluate(Lcoord, physvals);
 }
 
-NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
+NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                   const Array<OneD, const NekDouble> &inarray,
-                                  NekDouble &out_d0, NekDouble &out_d1,
-                                  NekDouble &out_d2)
+                                  std::array<NekDouble, 3> &firstOrderDerivs)
 {
     Array<OneD, NekDouble> Lcoord(2);
     ASSERTL0(m_geom, "m_geom not defined");
     m_geom->GetLocCoords(coord, Lcoord);
-    return StdQuadExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+    return StdQuadExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
 }
 
 // Get edge values from the 2D Phys space along an edge

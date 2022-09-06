@@ -685,7 +685,7 @@ void LinearisedAdvection::DFT(
     int nstart   = m_start;
     for (int i = nstart; i < nstart + m_slices * m_skip; i += m_skip)
     {
-        sprintf(buffer, file.c_str(), i);
+        snprintf(buffer, file.length() + 8, file.c_str(), i);
         ImportFldBase(buffer, pFields, (i - nstart) / m_skip);
         if (m_session->GetComm()->GetRank() == 0)
         {

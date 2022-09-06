@@ -43,10 +43,6 @@ namespace Nektar
 {
 namespace StdRegions
 {
-StdTetExp::StdTetExp()
-{
-}
-
 StdTetExp::StdTetExp(const LibUtilities::BasisKey &Ba,
                      const LibUtilities::BasisKey &Bb,
                      const LibUtilities::BasisKey &Bc)
@@ -69,10 +65,6 @@ StdTetExp::StdTetExp(const LibUtilities::BasisKey &Ba,
 }
 
 StdTetExp::StdTetExp(const StdTetExp &T) : StdExpansion(T), StdExpansion3D(T)
-{
-}
-
-StdTetExp::~StdTetExp()
 {
 }
 
@@ -912,18 +904,15 @@ NekDouble StdTetExp::v_PhysEvaluateBasis(
            StdExpansion::BaryEvaluateBasis<2>(coll[2], mode2);
 }
 
-NekDouble StdTetExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
+NekDouble StdTetExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                     const Array<OneD, const NekDouble> &inarray,
-                                    NekDouble &out_d0, NekDouble &out_d1,
-                                    NekDouble &out_d2)
+                                    std::array<NekDouble, 3> &firstOrderDerivs)
 {
     // Collapse coordinates
     Array<OneD, NekDouble> coll(3, 0.0);
     LocCoordToLocCollapsed(coord, coll);
 
     // If near singularity do the old interpolation matrix method
-    // @TODO: Dave thinks there might be a way in the Barycentric to
-    //        mathematically remove this singularity?
     if ((1 - coll[1]) < 1e-5 || (1 - coll[2]) < 1e-5)
     {
         int totPoints = GetTotPoints();
@@ -936,49 +925,45 @@ NekDouble StdTetExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
         I[1] = GetBase()[1]->GetI(coll + 1);
         I[2] = GetBase()[2]->GetI(coll + 2);
 
-        out_d0 = PhysEvaluate(I, EphysDeriv0);
-        out_d1 = PhysEvaluate(I, EphysDeriv1);
-        out_d2 = PhysEvaluate(I, EphysDeriv2);
+        firstOrderDerivs[0] = PhysEvaluate(I, EphysDeriv0);
+        firstOrderDerivs[1] = PhysEvaluate(I, EphysDeriv1);
+        firstOrderDerivs[2] = PhysEvaluate(I, EphysDeriv2);
         return PhysEvaluate(I, inarray);
     }
 
-    NekDouble out_dEta0;
-    NekDouble out_dEta1;
-    NekDouble out_dEta2;
-
-    NekDouble val =
-        BaryTensorDeriv(coll, inarray, out_dEta0, out_dEta1, out_dEta2);
+    std::array<NekDouble, 3> interDeriv;
+    NekDouble val = BaryTensorDeriv(coll, inarray, interDeriv);
 
     // calculate 2.0/((1-eta_1)(1-eta_2)) * Out_dEta0
     NekDouble temp = 2.0 / ((1 - coll[1]) * (1 - coll[2]));
-    out_dEta0 *= temp;
+    interDeriv[0] *= temp;
 
     // out_dxi0 = 4.0/((1-eta_1)(1-eta_2)) * Out_dEta0
-    out_d0 = 2 * out_dEta0;
+    firstOrderDerivs[0] = 2 * interDeriv[0];
 
     // fac0 = 1 + eta_0
     NekDouble fac0;
     fac0 = 1 + coll[0];
 
     // calculate 2.0*(1+eta_0)/((1-eta_1)(1-eta_2)) * Out_dEta0
-    out_dEta0 *= fac0;
+    interDeriv[0] *= fac0;
 
     // calculate 2/(1.0-eta_2) * out_dEta1
     fac0 = 2 / (1 - coll[2]);
-    out_dEta1 *= fac0;
+    interDeriv[1] *= fac0;
 
     // calculate out_dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2))
     //  * Out_dEta0 + 2/(1.0-eta_2) out_dEta1
-    out_d1 = out_dEta0 + out_dEta1;
+    firstOrderDerivs[1] = interDeriv[0] + interDeriv[1];
 
     // calculate (1 + eta_1)/(1 -eta_2)*out_dEta1
     fac0 = (1 + coll[1]) / 2;
-    out_dEta1 *= fac0;
+    interDeriv[1] *= fac0;
 
     // calculate out_dxi2 =
     // 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) Out_dEta0 +
     // (1 + eta_1)/(1 -eta_2)*out_dEta1 + out_dEta2
-    out_d2 = out_dEta0 + out_dEta1 + out_dEta2;
+    firstOrderDerivs[2] = interDeriv[0] + interDeriv[1] + interDeriv[2];
 
     return val;
 }

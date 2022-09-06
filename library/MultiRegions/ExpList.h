@@ -1124,8 +1124,8 @@ public:
     MULTI_REGIONS_EXPORT std::vector<bool> &GetLeftAdjacentTraces(void);
 
     /// This function returns the map of index inside m_exp to geom id
-    MULTI_REGIONS_EXPORT inline std::unordered_map<int, int> GetElmtToExpId(
-        void)
+    MULTI_REGIONS_EXPORT inline const std::unordered_map<int, int>
+        &GetElmtToExpId(void)
     {
         return m_elmtToExpId;
     }
@@ -2252,7 +2252,12 @@ inline LocalRegions::ExpansionSharedPtr &ExpList::GetExp(int n) const
  */
 inline LocalRegions::ExpansionSharedPtr &ExpList::GetExpFromGeomId(int n)
 {
-    return (*m_exp)[m_elmtToExpId[n]];
+    auto it = m_elmtToExpId.find(n);
+    ASSERTL0(it != m_elmtToExpId.end(), "Global geometry ID " +
+                                            std::to_string(n) +
+                                            " not found in element ID to "
+                                            "expansion ID map.")
+    return (*m_exp)[it->second];
 }
 
 /**

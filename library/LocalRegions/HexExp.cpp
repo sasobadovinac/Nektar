@@ -86,13 +86,6 @@ HexExp::HexExp(const HexExp &T)
 {
 }
 
-/**
- * \brief Destructor
- */
-HexExp::~HexExp()
-{
-}
-
 //-----------------------------
 // Integration Methods
 //-----------------------------
@@ -410,7 +403,7 @@ void HexExp::v_IProductWRTDerivBase(const int dir,
                                     const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray)
 {
-    HexExp::IProductWRTDerivBase_SumFac(dir, inarray, outarray);
+    HexExp::v_IProductWRTDerivBase_SumFac(dir, inarray, outarray);
 }
 
 /**
@@ -433,7 +426,7 @@ void HexExp::v_IProductWRTDerivBase(const int dir,
  * @param inarray   The function \f$ u \f$.
  * @param outarray  Value of the inner product.
  */
-void HexExp::IProductWRTDerivBase_SumFac(
+void HexExp::v_IProductWRTDerivBase_SumFac(
     const int dir, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -559,7 +552,7 @@ void HexExp::IProductWRTDerivBase_MatOp(
  * @param inarray   The function \f$ u \f$.
  * @param outarray  Value of the inner product.
  */
-void HexExp::IProductWRTDirectionalDerivBase_SumFac(
+void HexExp::v_IProductWRTDirectionalDerivBase_SumFac(
     const Array<OneD, const NekDouble> &direction,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
@@ -636,15 +629,14 @@ NekDouble HexExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
 }
 
-NekDouble HexExp::v_PhysEvaluate(const Array<OneD, NekDouble> coord,
+NekDouble HexExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                  const Array<OneD, const NekDouble> &inarray,
-                                 NekDouble &out_d0, NekDouble &out_d1,
-                                 NekDouble &out_d2)
+                                 std::array<NekDouble, 3> &firstOrderDerivs)
 {
     Array<OneD, NekDouble> Lcoord(3);
     ASSERTL0(m_geom, "m_geom not defined");
     m_geom->GetLocCoords(coord, Lcoord);
-    return StdHexExp::v_PhysEvaluate(Lcoord, inarray, out_d0, out_d1, out_d2);
+    return StdHexExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
 }
 
 StdRegions::StdExpansionSharedPtr HexExp::v_GetStdExp(void) const

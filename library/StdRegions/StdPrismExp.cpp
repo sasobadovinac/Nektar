@@ -43,12 +43,6 @@ namespace Nektar
 {
 namespace StdRegions
 {
-
-StdPrismExp::StdPrismExp() // Deafult construct of standard expansion directly
-                           // called.
-{
-}
-
 StdPrismExp::StdPrismExp(const LibUtilities::BasisKey &Ba,
                          const LibUtilities::BasisKey &Bb,
                          const LibUtilities::BasisKey &Bc)
@@ -65,11 +59,6 @@ StdPrismExp::StdPrismExp(const LibUtilities::BasisKey &Ba,
 
 StdPrismExp::StdPrismExp(const StdPrismExp &T)
     : StdExpansion(T), StdExpansion3D(T)
-{
-}
-
-// Destructor
-StdPrismExp::~StdPrismExp()
 {
 }
 
@@ -600,7 +589,6 @@ void StdPrismExp::v_IProductWRTDerivBase_SumFac(
                 m_base[2]->GetBdata(), tmp0, outarray, wsp, true, true, true);
             break;
         }
-
         case 1:
         {
             MultiplyByQuadratureMetric(inarray, tmp0);
@@ -697,9 +685,9 @@ void StdPrismExp::v_GetCoords(Array<OneD, NekDouble> &xi_x,
 }
 
 NekDouble StdPrismExp::v_PhysEvaluate(
-    const Array<OneD, NekDouble> coord,
-    const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-    NekDouble &out_d1, NekDouble &out_d2)
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs)
 {
     // Collapse coordinates
     Array<OneD, NekDouble> coll(3, 0.0);
@@ -720,17 +708,18 @@ NekDouble StdPrismExp::v_PhysEvaluate(
         I[1] = GetBase()[1]->GetI(coll + 1);
         I[2] = GetBase()[2]->GetI(coll + 2);
 
-        out_d0 = PhysEvaluate(I, EphysDeriv0);
-        out_d1 = PhysEvaluate(I, EphysDeriv1);
-        out_d2 = PhysEvaluate(I, EphysDeriv2);
+        firstOrderDerivs[0] = PhysEvaluate(I, EphysDeriv0);
+        firstOrderDerivs[1] = PhysEvaluate(I, EphysDeriv1);
+        firstOrderDerivs[2] = PhysEvaluate(I, EphysDeriv2);
         return PhysEvaluate(I, inarray);
     }
 
-    NekDouble dEta_bar1;
-    NekDouble val = BaryTensorDeriv(coll, inarray, dEta_bar1, out_d1, out_d2);
+    NekDouble val = BaryTensorDeriv(coll, inarray, firstOrderDerivs);
 
-    NekDouble fac = 2.0 / (1.0 - coll[2]);
-    out_d0        = fac * dEta_bar1;
+    NekDouble dEta_bar1 = firstOrderDerivs[0];
+
+    NekDouble fac       = 2.0 / (1.0 - coll[2]);
+    firstOrderDerivs[0] = fac * dEta_bar1;
 
     // divide dEta_Bar1 by (1-eta_z)
     fac       = 1.0 / (1.0 - coll[2]);
@@ -738,7 +727,7 @@ NekDouble StdPrismExp::v_PhysEvaluate(
 
     // Multiply dEta_Bar1 by (1+eta_x) and add ot out_dxi3
     fac = 1.0 + coll[0];
-    out_d2 += fac * dEta_bar1;
+    firstOrderDerivs[2] += fac * dEta_bar1;
 
     return val;
 }

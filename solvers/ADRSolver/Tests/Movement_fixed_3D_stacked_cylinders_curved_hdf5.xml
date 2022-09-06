@@ -5,6 +5,20 @@
         <E COMPOSITE="C[105]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
         <E COMPOSITE="C[106]" NUMMODES="7" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
+
+    <MOVEMENT>
+        <ZONES>
+            <FIXED ID="0" DOMAIN="D[0]" />
+            <FIXED ID="1" DOMAIN="D[1]" />
+        </ZONES>
+        <INTERFACES>
+            <INTERFACE NAME="Fixed">
+                <LEFT ID="0" BOUNDARY="C[100]" />
+                <RIGHT ID="1" BOUNDARY="C[101]" />
+            </INTERFACE>
+        </INTERFACES>
+    </MOVEMENT>
+
     <CONDITIONS>
         <PARAMETERS>
             <P>FinTime = 0.1</P>
@@ -25,18 +39,7 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
             <I PROPERTY="WEIGHTPARTITIONS" VALUE="DOF" />
         </SOLVERINFO>
-        <MOVEMENT>
-            <ZONES>
-                <FIXED ID="0" DOMAIN="D[0]" />
-                <FIXED ID="1" DOMAIN="D[1]" />
-            </ZONES>
-            <INTERFACES>
-                <INTERFACE NAME="Fixed">
-                    <LEFT ID="0" BOUNDARY="C[100]" />
-                    <RIGHT ID="1" BOUNDARY="C[101]" />
-                </INTERFACE>
-            </INTERFACES>
-        </MOVEMENT>
+
         <VARIABLES>
             <V ID="0">u</V>
         </VARIABLES>

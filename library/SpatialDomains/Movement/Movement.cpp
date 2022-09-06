@@ -29,8 +29,8 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:
-//
+//  Description: This file contains the base class for implementing
+//               non-conformal geometry using the Movement object
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,7 +39,12 @@
 #include <SpatialDomains/Movement/Movement.h>
 #include <tinyxml.h>
 
-std::string ReadTag(std::string &tagStr)
+namespace Nektar
+{
+namespace SpatialDomains
+{
+
+std::string static inline ReadTag(std::string &tagStr)
 {
     std::string::size_type indxBeg = tagStr.find_first_of('[') + 1;
     std::string::size_type indxEnd = tagStr.find_last_of(']') - 1;
@@ -54,42 +59,43 @@ std::string ReadTag(std::string &tagStr)
     return indxStr;
 }
 
-namespace Nektar
-{
-namespace SpatialDomains
-{
-
 Movement::Movement(const LibUtilities::SessionReaderSharedPtr &pSession,
                    MeshGraph *meshGraph)
 {
-    TiXmlNode *conditions =
-        pSession->GetElement("NEKTAR")->FirstChild("CONDITIONS");
-    if (conditions == nullptr)
+    TiXmlNode *nektar = pSession->GetElement("NEKTAR");
+    if (nektar == nullptr)
     {
         return;
     }
 
-    TiXmlNode *movement = conditions->FirstChild("MOVEMENT");
+    TiXmlNode *movement = nektar->FirstChild("MOVEMENT");
     if (movement != nullptr)
     {
         bool zones = movement->FirstChild("ZONES") != nullptr;
         if (zones)
         {
-            ReadZones(pSession->GetElement("NEKTAR/CONDITIONS/MOVEMENT/ZONES"),
-                      meshGraph, pSession);
+            ReadZones(pSession->GetElement("NEKTAR/MOVEMENT/ZONES"), meshGraph,
+                      pSession);
         }
 
         bool interfaces = movement->FirstChild("INTERFACES") != nullptr;
         if (interfaces)
         {
-            ReadInterfaces(
-                pSession->GetElement("NEKTAR/CONDITIONS/MOVEMENT/INTERFACES"),
-                meshGraph);
+            ReadInterfaces(pSession->GetElement("NEKTAR/MOVEMENT/INTERFACES"),
+                           meshGraph);
         }
 
         ASSERTL0(zones == interfaces,
                  "Only one of ZONES or INTERFACES present in the MOVEMENT "
                  "block.")
+
+        // Don't support interior penalty yet
+        if (pSession->DefinesSolverInfo("DiffusionType"))
+        {
+            ASSERTL0(pSession->GetSolverInfo("DiffusionType") == "LDGNS",
+                     "Only LDGNS is supported as the DiffusionType in "
+                     "SOLVERINFO when a MOVEMENT block is defined.")
+        }
     }
 
     // DEBUG COMMENTS
@@ -433,6 +439,8 @@ void Movement::ReadInterfaces(TiXmlElement *interfacesTag, MeshGraph *meshGraph)
     }
 }
 
+// Acts as a placeholder for when ALE function and moving geometry capability
+// is added. Currently unused.
 void Movement::PerformMovement(NekDouble timeStep)
 {
     std::set<int> movedZoneIds;
@@ -445,7 +453,6 @@ void Movement::PerformMovement(NekDouble timeStep)
     }
 
     // If zone has moved, set all interfaces on that zone to moved.
-    // @TODO: Probably better to save the moved flag on the interface pair obj?
     for (auto &interPair : m_interfaces)
     {
         int leftId  = interPair.second->GetLeftInterface()->GetId();

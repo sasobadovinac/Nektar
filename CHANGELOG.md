@@ -14,6 +14,8 @@ v5.3.0
 **FieldConvert**
 - Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
 - Fixed the output field names of WSS module of FieldConvert
+- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
+- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
 - Added float and restore avx512 back-end for SimdLib (!1387)
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
 

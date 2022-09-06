@@ -48,12 +48,12 @@ namespace StdRegions
 class StdExpansion2D : virtual public StdExpansion
 {
 public:
-    STD_REGIONS_EXPORT StdExpansion2D();
+    STD_REGIONS_EXPORT StdExpansion2D() = default;
     STD_REGIONS_EXPORT StdExpansion2D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba,
                                       const LibUtilities::BasisKey &Bb);
     STD_REGIONS_EXPORT StdExpansion2D(const StdExpansion2D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion2D();
+    STD_REGIONS_EXPORT virtual ~StdExpansion2D() override = default;
 
     // Generic operations in different element
 
@@ -102,10 +102,9 @@ public:
     // find derivative of u (inarray) at all coords points
     STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
         const Array<OneD, NekDouble> &coord,
-        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-        NekDouble &out_d1)
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs)
     {
-        // int sz = GetTotPoints();
         const int nq0 = m_base[0]->GetNumPoints();
         const int nq1 = m_base[1]->GetNumPoints();
 
@@ -118,9 +117,11 @@ public:
             phys0[j] =
                 StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
         }
-        out_d0 = StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
+        firstOrderDerivs[0] =
+            StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
 
-        return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0], out_d1);
+        return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0],
+                                                   firstOrderDerivs[1]);
     }
 
     STD_REGIONS_EXPORT void BwdTrans_SumFacKernel(
@@ -169,9 +170,9 @@ protected:
         const Array<OneD, const NekDouble> &physvals) override;
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-        const Array<OneD, NekDouble> coord,
-        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-        NekDouble &out_d1, NekDouble &out_d2) override;
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
 
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,

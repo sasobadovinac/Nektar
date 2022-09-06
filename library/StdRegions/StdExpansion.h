@@ -71,7 +71,7 @@ class StdExpansion : public std::enable_shared_from_this<StdExpansion>
 {
 public:
     /** \brief Default Constructor */
-    STD_REGIONS_EXPORT StdExpansion();
+    STD_REGIONS_EXPORT StdExpansion() = default;
 
     /** \brief Constructor */
     STD_REGIONS_EXPORT StdExpansion(
@@ -84,7 +84,7 @@ public:
     STD_REGIONS_EXPORT StdExpansion(const StdExpansion &T);
 
     /** \brief Destructor */
-    STD_REGIONS_EXPORT virtual ~StdExpansion();
+    STD_REGIONS_EXPORT virtual ~StdExpansion() = default;
 
     // Standard Expansion Routines Applicable Regardless of Region
 
@@ -923,7 +923,7 @@ public:
         return v_PhysEvaluate(coords, physvals);
     }
 
-    /** \brief This function evaluates the derivative of the expansion
+    /** \brief This function evaluates the first derivative of the expansion
      * at a single (arbitrary) point of the domain
      *
      *  This function is a wrapper around the virtual function
@@ -934,41 +934,22 @@ public:
      *  calculates the value of the expansion at a set of points
      * given in \a coords
      */
-    // @TODO: Change output to an array and template on size of array
-    // @TODO: If put in two arrays get 2nd derivs
     inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                   const Array<OneD, const NekDouble> &inarray,
-                                  NekDouble &out_d0, NekDouble &out_d1,
-                                  NekDouble &out_d2)
+                                  std::array<NekDouble, 3> &firstOrderDerivs)
 
     {
-        return v_PhysEvaluate(coord, inarray, out_d0, out_d1, out_d2);
+        return v_PhysEvaluate(coord, inarray, firstOrderDerivs);
     }
 
     inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
                                   const Array<OneD, const NekDouble> &inarray,
-                                  NekDouble &out_d0, NekDouble &out_d1)
+                                  std::array<NekDouble, 3> &firstOrderDerivs,
+                                  std::array<NekDouble, 6> &secondOrderDerivs)
 
     {
-        NekDouble unusedValue = 0.0;
-        return v_PhysEvaluate(coord, inarray, out_d0, out_d1, unusedValue);
-    }
-
-    inline NekDouble PhysEvaluate(const Array<OneD, NekDouble> &coord,
-                                  const Array<OneD, const NekDouble> &inarray,
-                                  NekDouble &out_d0)
-
-    {
-        NekDouble unusedValue = 0.0;
-        return v_PhysEvaluate(coord, inarray, out_d0, unusedValue, unusedValue);
-    }
-
-    inline NekDouble PhysEvaluate2ndDeriv(
-        const Array<OneD, NekDouble> &coord,
-        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-        NekDouble &out_2d0)
-    {
-        return v_PhysEvaluate2ndDeriv(coord, inarray, out_d0, out_2d0);
+        return v_PhysEvaluate(coord, inarray, firstOrderDerivs,
+                              secondOrderDerivs);
     }
 
     /** \brief This function evaluates the expansion at a single
@@ -1351,6 +1332,7 @@ protected:
      * @param  coord    The coordinate of the single point.
      * @param  physvals The polynomial stored at each quadrature point.
      * @param  deriv    The value of the derivative.
+     * @param  deriv    The value of the 2nd derivative.
      * @tparam DIR      The direction of evaluation.
      * @tparam DERIV    Bool to find derivative.
      *
@@ -1624,14 +1606,15 @@ private:
         const Array<OneD, const NekDouble> &physvals);
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-        const Array<OneD, NekDouble> coord,
-        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-        NekDouble &out_d1, NekDouble &out_d2);
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs);
 
-    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate2ndDeriv(
-        const Array<OneD, NekDouble> coord,
-        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-        NekDouble &out_2d0);
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs,
+        std::array<NekDouble, 6> &secondOrderDerivs);
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluateBasis(
         const Array<OneD, const NekDouble> &coords, int mode);

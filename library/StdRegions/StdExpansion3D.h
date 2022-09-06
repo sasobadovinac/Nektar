@@ -52,13 +52,13 @@ class StdExpansion3D : virtual public StdExpansion
 {
 
 public:
-    STD_REGIONS_EXPORT StdExpansion3D();
+    STD_REGIONS_EXPORT StdExpansion3D() = default;
     STD_REGIONS_EXPORT StdExpansion3D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba,
                                       const LibUtilities::BasisKey &Bb,
                                       const LibUtilities::BasisKey &Bc);
     STD_REGIONS_EXPORT StdExpansion3D(const StdExpansion3D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion3D();
+    STD_REGIONS_EXPORT virtual ~StdExpansion3D() override = default;
 
     // Differentiation
 
@@ -180,9 +180,9 @@ protected:
         const Array<OneD, const NekDouble> &physvals) override;
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-        const Array<OneD, NekDouble> coord,
-        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-        NekDouble &out_d1, NekDouble &out_d2) override;
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
 
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,
@@ -216,11 +216,23 @@ protected:
     STD_REGIONS_EXPORT virtual int v_GetNedges(void) const;
     STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
 
-    // find derivative of u (inarray) at all coords points
+    /**
+     * Performs tensor product evaluation in 3D to evaluate the physical
+     * and derivative values in each direction at input coordinate
+     * @param coord using input physical values at quadrature points
+     * @param inarray. Returns via reference the derivatives.
+
+     * @param coord Global coordinate
+     * @param inarray Phys values
+     * @param out_d0 Return by reference parameter for 0th derivative
+     * @param out_d1 Return by reference parameter for 1st derivative
+     * @param out_d2 Return by reference parameter for 2nd derivative
+     * @return Physical value at @param coord
+     */
     STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
         const Array<OneD, NekDouble> &coord,
-        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
-        NekDouble &out_d1, NekDouble &out_d2)
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs)
     {
         const int nq0 = m_base[0]->GetNumPoints();
         const int nq1 = m_base[1]->GetNumPoints();
@@ -244,7 +256,7 @@ protected:
             deriv0phys1[j] = StdExpansion::BaryEvaluate<1, false>(
                 coord[1], &deriv0[j * nq1]);
         }
-        out_d0 =
+        firstOrderDerivs[0] =
             StdExpansion::BaryEvaluate<2, false>(coord[2], &deriv0phys1[0]);
 
         for (int j = 0; j < nq2; ++j)
@@ -252,11 +264,11 @@ protected:
             phys0phys1[j] = StdExpansion::BaryEvaluate<1, true>(
                 coord[1], &phys0[j * nq1], phys0deriv1[j]);
         }
-        out_d1 =
+        firstOrderDerivs[1] =
             StdExpansion::BaryEvaluate<2, false>(coord[2], &phys0deriv1[0]);
 
         return StdExpansion::BaryEvaluate<2, true>(coord[2], &phys0phys1[0],
-                                                   out_d2);
+                                                   firstOrderDerivs[2]);
     }
 
     STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(

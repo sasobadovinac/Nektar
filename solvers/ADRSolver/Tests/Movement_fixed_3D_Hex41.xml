@@ -146,6 +146,20 @@
         <E COMPOSITE="C[10]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
         <E COMPOSITE="C[11]" NUMMODES="11" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
+
+    <MOVEMENT>
+        <ZONES>
+            <FIXED ID="0" DOMAIN="D[0]" />
+            <FIXED ID="1" DOMAIN="D[1]"/>
+        </ZONES>
+        <INTERFACES>
+            <INTERFACE NAME="Sliding">
+                <LEFT  ID="0" BOUNDARY="C[3]" />
+                <RIGHT ID="1" BOUNDARY="C[4]"  />
+            </INTERFACE>
+        </INTERFACES>
+    </MOVEMENT>
+
     <CONDITIONS>
         <PARAMETERS>
             <P> FinTime =  0.2 </P>
@@ -167,19 +181,6 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
             <I PROPERTY="WEIGHTPARTITIONS" VALUE="DOF" />
         </SOLVERINFO>
-
-        <MOVEMENT>
-            <ZONES>
-                <FIXED ID="0" DOMAIN="D[0]" />
-                <FIXED ID="1" DOMAIN="D[1]"/>
-            </ZONES>
-            <INTERFACES>
-                <INTERFACE NAME="Sliding">
-                    <LEFT  ID="0" BOUNDARY="C[3]" />
-                    <RIGHT ID="1" BOUNDARY="C[4]"  />
-                </INTERFACE>
-            </INTERFACES>
-        </MOVEMENT>
 
         <VARIABLES>
             <V ID="0"> u </V>

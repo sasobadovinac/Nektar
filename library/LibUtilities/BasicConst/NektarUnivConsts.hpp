@@ -62,6 +62,10 @@ static const NekDouble CoinTol = 1E-6;
 
 // Factor for tolerance for floating point comparison
 static const unsigned int kNekFloatCompFact = 4;
+
+// Constants for minimisation functions
+static const NekDouble kFindDistanceMin     = 5e-05;
+static const unsigned int kNewtonIterations = 51;
 } // namespace NekConstants
 } // namespace Nektar
 
