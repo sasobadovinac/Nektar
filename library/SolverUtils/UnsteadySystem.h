@@ -153,7 +153,7 @@ protected:
         const SpatialDomains::MeshGraphSharedPtr &pGraph);
     
     /// Init object for UnsteadySystem class.
-    SOLVER_UTILS_EXPORT virtual void v_InitObject();
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareField = true);
 
     /// Get the maximum timestep estimator for cfl control.
     SOLVER_UTILS_EXPORT NekDouble MaxTimeStepEstimator();

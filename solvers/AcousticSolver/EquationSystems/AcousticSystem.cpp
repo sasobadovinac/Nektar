@@ -65,9 +65,9 @@ AcousticSystem::AcousticSystem(
 /**
  * @brief Initialization object for the AcousticSystem class.
  */
-void AcousticSystem::v_InitObject()
+void AcousticSystem::v_InitObject(bool DeclareFields)
 {
-    AdvectionSystem::v_InitObject();
+    AdvectionSystem::v_InitObject(DeclareFields);
 
     ASSERTL0(
         m_projectionType == MultiRegions::eDiscontinuous,

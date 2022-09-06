@@ -51,9 +51,9 @@ namespace Nektar
         m_factors[StdRegions::eFactorTau] = 1.0;
     }
 
-    void Laplace::v_InitObject()
+    void Laplace::v_InitObject(bool DeclareFields)
     {
-        EquationSystem::v_InitObject();
+        EquationSystem::v_InitObject(DeclareFields);
     }
 
     Laplace::~Laplace()

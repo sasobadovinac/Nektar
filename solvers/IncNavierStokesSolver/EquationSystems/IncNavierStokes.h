@@ -144,7 +144,7 @@ namespace Nektar
         // Destructor
         virtual ~IncNavierStokes();
 
-        virtual void v_InitObject() override;
+        virtual void v_InitObject(bool DeclareField = true) override;
 
         int GetNConvectiveFields(void)
         {

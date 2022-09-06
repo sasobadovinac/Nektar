@@ -62,9 +62,9 @@ namespace Nektar
      * @brief Initialisation object for the unsteady linear advection
      * diffusion equation.
      */
-    void UnsteadyAdvectionDiffusion::v_InitObject()
+    void UnsteadyAdvectionDiffusion::v_InitObject(bool DeclareFields)
     {
-        AdvectionSystem::v_InitObject();
+        AdvectionSystem::v_InitObject(DeclareFields);
 
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
         m_session->LoadParameter("epsilon",    m_epsilon,  1.0); // Diffusion

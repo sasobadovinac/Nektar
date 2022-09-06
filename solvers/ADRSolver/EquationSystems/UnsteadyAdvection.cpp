@@ -57,10 +57,10 @@ namespace Nektar
     /**
      * @brief Initialisation object for the unsteady linear advection equation.
      */
-    void UnsteadyAdvection::v_InitObject()
+    void UnsteadyAdvection::v_InitObject(bool DeclareFields)
     {
         // Call to the initialisation object of UnsteadySystem
-        AdvectionSystem::v_InitObject();
+        AdvectionSystem::v_InitObject(DeclareFields);
 
         m_session->LoadParameter("wavefreq",   m_waveFreq, 0.0);
         // Read the advection velocities from session file

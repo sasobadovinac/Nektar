@@ -58,9 +58,9 @@ UnsteadyReactionDiffusion::UnsteadyReactionDiffusion(
 /**
  * @brief Initialisation object for the unsteady reaction-diffusion problem.
  */
-void UnsteadyReactionDiffusion::v_InitObject()
+void UnsteadyReactionDiffusion::v_InitObject(bool DeclareFields)
 {
-    UnsteadySystem::v_InitObject();
+    UnsteadySystem::v_InitObject(DeclareFields);
 
     ASSERTL0(m_intScheme->GetIntegrationSchemeType() == LibUtilities::eIMEX,
              "Reaction-diffusion requires an implicit-explicit timestepping"

@@ -237,7 +237,7 @@ void EmpiricalPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         invJ = J;
         invJ.Invert();
     }
-    else if (type == "Junction")
+    else if (type == "Interface")
     {
         NekMatrix<NekDouble> J(4, 4);
         Array<OneD, NekDouble> c(2);

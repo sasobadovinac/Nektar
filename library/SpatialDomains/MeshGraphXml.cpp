@@ -991,8 +991,7 @@ void MeshGraphXml::ReadDomain()
             ASSERTL0(!m_domain[indx].empty(),
                      (std::string(
                           "Unable to obtain domain's referenced composite: ") +
-                      indxStr)
-                         .c_str());
+                      indxStr).c_str());
 
             /// Keep looking
             multidomains = multidomains->NextSiblingElement("D");
@@ -3143,6 +3142,7 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
                     }
                 }
             }
+            domain[d.first] = domMap;
         }
 
         WriteDomain(geomTag, domain);

@@ -74,9 +74,9 @@ namespace Nektar
 
     }
 
-    void SmoothedProfileMethod::v_InitObject()
+    void SmoothedProfileMethod::v_InitObject(bool DeclareField)
     {
-        VelocityCorrectionScheme::v_InitObject();
+        VelocityCorrectionScheme::v_InitObject(DeclareField);
 
         // Update implicit time-intregration class operators
         m_ode.DefineImplicitSolve(

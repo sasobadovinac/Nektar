@@ -63,6 +63,7 @@ namespace Nektar
             /// Constructor with a communicator
             MULTI_REGIONS_EXPORT AssemblyMap(
                     const LibUtilities::SessionReaderSharedPtr &pSession,
+                    const LibUtilities::CommSharedPtr &comm,
                     const std::string variable = "DefaultVar");
 
             /// Constructor for next level in multi-level static condensation.
