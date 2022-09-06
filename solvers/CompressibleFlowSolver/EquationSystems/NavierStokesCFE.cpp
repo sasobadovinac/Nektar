@@ -174,7 +174,7 @@ void NavierStokesCFE::v_DoDiffusion(
     {
         if (m_varConv->GetFlagCalcDivCurl())
         {
-            Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
+            Array<OneD, NekDouble> div(npointsIn), curlSquare(npointsIn);
             GetDivCurlSquared(m_fields, inarray, div, curlSquare, pFwd, pBwd);
 
             // Set volume and trace artificial viscosity

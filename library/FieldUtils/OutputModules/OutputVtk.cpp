@@ -1527,8 +1527,6 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
     std::string body     = filename.substr(0, dot);
     filename             = body + ".pvtu";
 
-    int nprocs  = m_f->m_comm->GetSize();
-    string path = LibUtilities::PortablePath(GetPath(filename, vm));
     std::ofstream outfile(filename.c_str());
 
     int nprocs = m_f->m_comm->GetSize();

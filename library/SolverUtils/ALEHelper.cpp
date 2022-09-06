@@ -88,8 +88,8 @@ void ALEHelper::ALEPreMultiplyMass(Array<OneD, Array<OneD, NekDouble>> &fields)
     for (int i = 0; i < m_fieldsALE.size(); ++i)
     {
         fields[i] = Array<OneD, NekDouble>(nm);
-        m_fieldsALE[i]->GeneralMatrixOp_IterPerExp(
-            mkey, m_fieldsALE[i]->GetCoeffs(), fields[i]);
+        m_fieldsALE[i]->GeneralMatrixOp(mkey, m_fieldsALE[i]->GetCoeffs(),
+                                        fields[i]);
     }
 }
 

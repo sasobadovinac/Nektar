@@ -500,7 +500,7 @@ void UnsteadyAdvection::v_ExtraFldOutput(
         for (int i = 0; i < m_spacedim; ++i)
         {
             Array<OneD, NekDouble> gridVel(nCoeffs, 0.0);
-            m_fields[0]->FwdTrans_IterPerExp(m_gridVelocity[i], gridVel);
+            m_fields[0]->FwdTransLocalElmt(m_gridVelocity[i], gridVel);
             fieldcoeffs.emplace_back(gridVel);
             variables.emplace_back(gridVarName[i]);
         }
