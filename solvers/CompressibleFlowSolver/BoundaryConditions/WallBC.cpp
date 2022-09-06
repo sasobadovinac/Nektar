@@ -41,35 +41,30 @@ using namespace std;
 namespace Nektar
 {
 
-std::string WallBC::className = GetCFSBndCondFactory().
-    RegisterCreatorFunction("Wall",
-                            WallBC::create,
-                            "Slip wall boundary condition.");
+std::string WallBC::className = GetCFSBndCondFactory().RegisterCreatorFunction(
+    "Wall", WallBC::create, "Slip wall boundary condition.");
 
-WallBC::WallBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-           const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-           const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-           const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-           const int pSpaceDim,
-           const int bcRegion,
-           const int cnt)
-    : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt)
+WallBC::WallBC(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+               const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+               const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+               const int pSpaceDim, const int bcRegion, const int cnt)
+    : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
+                 bcRegion, cnt)
 {
     m_diffusionAveWeight = 0.5;
 }
 
-void WallBC::v_Apply(
-        Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-        Array<OneD, Array<OneD, NekDouble> >               &physarray,
-        const NekDouble                                    &time)
+void WallBC::v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                     Array<OneD, Array<OneD, NekDouble>> &physarray,
+                     const NekDouble &time)
 {
     boost::ignore_unused(time);
 
     int i;
     int nVariables = physarray.size();
 
-    const Array<OneD, const int> &traceBndMap
-        = m_fields[0]->GetTraceBndMap();
+    const Array<OneD, const int> &traceBndMap = m_fields[0]->GetTraceBndMap();
 
     // Adjust the physical values of the trace to take
     // user defined boundaries into account
@@ -79,16 +74,19 @@ void WallBC::v_Apply(
 
     for (e = 0; e < eMax; ++e)
     {
-        nBCEdgePts = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-            GetExp(e)->GetTotPoints();
-        id1 = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-            GetPhys_Offset(e);
-        id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
+        nBCEdgePts = m_fields[0]
+                         ->GetBndCondExpansions()[m_bcRegion]
+                         ->GetExp(e)
+                         ->GetTotPoints();
+        id1 =
+            m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetPhys_Offset(e);
+        id2 =
+            m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset + e]);
 
         // Boundary condition for epsilon term.
-        if (nVariables == m_spacedim+3)
+        if (nVariables == m_spacedim + 3)
         {
-            Vmath::Zero(nBCEdgePts, &Fwd[nVariables-1][id2], 1);
+            Vmath::Zero(nBCEdgePts, &Fwd[nVariables - 1][id2], 1);
         }
 
         // @TODO: Look at paper on this
@@ -96,27 +94,25 @@ void WallBC::v_Apply(
         // For 2D/3D, define: v* = v - 2(v.n)n
         Array<OneD, NekDouble> tmp(nBCEdgePts, 0.0);
 
-        //@TODO: v - vg here... check nguyen paper, only issue is getting the vg for the trace in here
+        //@TODO: v - vg here... check nguyen paper, only issue is getting the vg
+        //for the trace in here
         //@TODO: Update m_traceNormals, might be fine though.
 
         for (i = 0; i < m_spacedim; ++i)
         {
             // This now does Vg * rho + Vin
-            for(int j =0; j < nBCEdgePts; ++j)
+            for (int j = 0; j < nBCEdgePts; ++j)
             {
-                Fwd[i+1][id2+j] +=
-                    m_gridVelocityTrace[i][id2+j] * Fwd[0][id2+j];
+                Fwd[i + 1][id2 + j] +=
+                    m_gridVelocityTrace[i][id2 + j] * Fwd[0][id2 + j];
             }
         }
 
         // Calculate (v.n)
         for (i = 0; i < m_spacedim; ++i)
         {
-            Vmath::Vvtvp(nBCEdgePts,
-                         &Fwd[1+i][id2], 1,
-                         &m_traceNormals[i][id2], 1,
-                         &tmp[0], 1,
-                         &tmp[0], 1);
+            Vmath::Vvtvp(nBCEdgePts, &Fwd[1 + i][id2], 1,
+                         &m_traceNormals[i][id2], 1, &tmp[0], 1, &tmp[0], 1);
         }
 
         // Calculate 2.0(v.n)
@@ -125,21 +121,20 @@ void WallBC::v_Apply(
         // Calculate v* = v - 2.0(v.n)n
         for (i = 0; i < m_spacedim; ++i)
         {
-            Vmath::Vvtvp(nBCEdgePts,
-                         &tmp[0], 1,
-                         &m_traceNormals[i][id2], 1,
-                         &Fwd[1+i][id2], 1,
-                         &Fwd[1+i][id2], 1);
+            Vmath::Vvtvp(nBCEdgePts, &tmp[0], 1, &m_traceNormals[i][id2], 1,
+                         &Fwd[1 + i][id2], 1, &Fwd[1 + i][id2], 1);
         }
 
         // Copy boundary adjusted values into the boundary expansion
         for (i = 0; i < nVariables; ++i)
         {
             Vmath::Vcopy(nBCEdgePts, &Fwd[i][id2], 1,
-                         &(m_fields[i]->GetBndCondExpansions()[m_bcRegion]->
-                         UpdatePhys())[id1], 1);
+                         &(m_fields[i]
+                               ->GetBndCondExpansions()[m_bcRegion]
+                               ->UpdatePhys())[id1],
+                         1);
         }
     }
 }
 
-}
+} // namespace Nektar

@@ -40,59 +40,55 @@
 namespace Nektar
 {
 
-    class IsentropicVortex : public EulerCFE
+class IsentropicVortex : public EulerCFE
+{
+public:
+    friend class MemoryManager<IsentropicVortex>;
+
+    /// Creates an instance of this class.
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<IsentropicVortex>;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<IsentropicVortex>::AllocateSharedPtr(pSession,
+                                                               pGraph);
+        p->InitObject();
+        return p;
+    }
+    /// Name of class.
+    static std::string className;
 
-        /// Creates an instance of this class.
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            SolverUtils::EquationSystemSharedPtr p = MemoryManager<
-                IsentropicVortex>::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        /// Name of class.
-        static std::string className;
+    virtual ~IsentropicVortex();
 
-        virtual ~IsentropicVortex();
+protected:
+    IsentropicVortex(const LibUtilities::SessionReaderSharedPtr &pSession,
+                     const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    protected:
+    /// Print a summary of time stepping parameters.
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
 
-        IsentropicVortex(const LibUtilities::SessionReaderSharedPtr& pSession,
-                         const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    virtual void v_SetInitialConditions(NekDouble initialtime      = 0.0,
+                                        bool dumpInitialConditions = true,
+                                        const int domain           = 0);
 
-        /// Print a summary of time stepping parameters.
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    virtual void v_EvaluateExactSolution(unsigned int field,
+                                         Array<OneD, NekDouble> &outfield,
+                                         const NekDouble time = 0.0);
 
-        virtual void v_SetInitialConditions(
-            NekDouble               initialtime = 0.0,
-            bool                    dumpInitialConditions = true,
-            const int domain = 0);
+private:
+    /// Isentropic Vortex Test Case.
+    void EvaluateIsentropicVortex(const Array<OneD, NekDouble> &x,
+                                  const Array<OneD, NekDouble> &y,
+                                  const Array<OneD, NekDouble> &z,
+                                  Array<OneD, Array<OneD, NekDouble>> &u,
+                                  NekDouble time, const int o = 0);
 
-        virtual void v_EvaluateExactSolution(
-            unsigned int            field,
-            Array<OneD, NekDouble> &outfield,
-            const NekDouble         time = 0.0);
-
-    private:
-        /// Isentropic Vortex Test Case.
-        void EvaluateIsentropicVortex(
-            const Array<OneD, NekDouble>                    &x,
-            const Array<OneD, NekDouble>                    &y,
-            const Array<OneD, NekDouble>                    &z,
-                  Array<OneD, Array<OneD, NekDouble> >      &u,
-                  NekDouble                                  time,
-            const int                                        o = 0);
-
-        NekDouble m_beta;
-        NekDouble m_u0;
-        NekDouble m_v0;
-        NekDouble m_x0;
-        NekDouble m_y0;
-    };
-}
+    NekDouble m_beta;
+    NekDouble m_u0;
+    NekDouble m_v0;
+    NekDouble m_x0;
+    NekDouble m_y0;
+};
+} // namespace Nektar
 #endif

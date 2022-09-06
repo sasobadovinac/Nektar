@@ -65,8 +65,7 @@ Geometry2D::~Geometry2D()
 void Geometry2D::NewtonIterationForLocCoord(
     const Array<OneD, const NekDouble> &coords,
     const Array<OneD, const NekDouble> &ptsx,
-    const Array<OneD, const NekDouble> &ptsy,
-    Array<OneD, NekDouble> &Lcoords,
+    const Array<OneD, const NekDouble> &ptsy, Array<OneD, NekDouble> &Lcoords,
     NekDouble &dist)
 {
     // Maximum iterations for convergence
@@ -79,8 +78,8 @@ void Geometry2D::NewtonIterationForLocCoord(
     Array<OneD, const NekDouble> Jac =
         m_geomFactors->GetJac(m_xmap->GetPointsKeys());
 
-    NekDouble ScaledTol = Vmath::Vsum(Jac.size(), Jac, 1) /
-                          ((NekDouble)Jac.size());
+    NekDouble ScaledTol =
+        Vmath::Vsum(Jac.size(), Jac, 1) / ((NekDouble)Jac.size());
     ScaledTol *= Tol;
 
     NekDouble xmap, ymap, F1, F2;
@@ -142,7 +141,7 @@ void Geometry2D::NewtonIterationForLocCoord(
             Lcoords[1] +
             (-dery_1 * (coords[0] - xmap) + derx_1 * (coords[1] - ymap)) / jac;
 
-        if( !(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1])) )
+        if (!(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1])))
         {
             dist = 1e16;
             std::ostringstream ss;
@@ -158,15 +157,15 @@ void Geometry2D::NewtonIterationForLocCoord(
     }
 
     m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
-    if(ClampLocCoords(eta, 0.))
+    if (ClampLocCoords(eta, 0.))
     {
         I[0] = m_xmap->GetBasis(0)->GetI(eta);
         I[1] = m_xmap->GetBasis(1)->GetI(eta + 1);
         // calculate the global point corresponding to Lcoords
         xmap = m_xmap->PhysEvaluate(I, ptsx);
         ymap = m_xmap->PhysEvaluate(I, ptsy);
-        F1 = coords[0] - xmap;
-        F2 = coords[1] - ymap;
+        F1   = coords[0] - xmap;
+        F2   = coords[1] - ymap;
         dist = sqrt(F1 * F1 + F2 * F2);
     }
     else
@@ -200,17 +199,17 @@ void Geometry2D::NewtonIterationForLocCoord(
 }
 
 NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                   Array<OneD, NekDouble> &Lcoords)
+                                     Array<OneD, NekDouble> &Lcoords)
 {
     NekDouble dist = 0.;
     if (GetMetricInfo()->GetGtype() == eRegular)
     {
         int v2;
-        if(m_shapeType == LibUtilities::eTriangle)
+        if (m_shapeType == LibUtilities::eTriangle)
         {
             v2 = 2;
         }
-        else if(m_shapeType == LibUtilities::eQuadrilateral)
+        else if (m_shapeType == LibUtilities::eQuadrilateral)
         {
             v2 = 3;
         }
@@ -246,15 +245,15 @@ NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
         // Set distance
         Array<OneD, NekDouble> eta(2, 0.);
         m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
-        if(ClampLocCoords(eta, 0.))
+        if (ClampLocCoords(eta, 0.))
         {
             Array<OneD, NekDouble> xi(2, 0.);
             m_xmap->LocCollapsedToLocCoord(eta, xi);
-            xi[0] = (xi[0] + 1.) * 0.5; //re-scaled to ratio [0, 1]
+            xi[0] = (xi[0] + 1.) * 0.5; // re-scaled to ratio [0, 1]
             xi[1] = (xi[1] + 1.) * 0.5;
             for (int i = 0; i < m_coordim; ++i)
             {
-                NekDouble tmp = xi[0]*e10[i] + xi[1]*e20[i] - er0[i];
+                NekDouble tmp = xi[0] * e10[i] + xi[1] * e20[i] - er0[i];
                 dist += tmp * tmp;
             }
             dist = sqrt(dist);
@@ -270,20 +269,20 @@ NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
 
         // Determine 3D manifold orientation
         int idx = 0, idy = 1;
-        if(m_coordim == 3)
+        if (m_coordim == 3)
         {
             PointGeom e01, e21, norm;
             e01.Sub(*m_verts[0], *m_verts[1]);
             e21.Sub(*m_verts[2], *m_verts[1]);
             norm.Mult(e01, e21);
-            int tmpi = 0;
+            int tmpi   = 0;
             double tmp = std::fabs(norm[0]);
-            if(tmp < fabs(norm[1]))
+            if (tmp < fabs(norm[1]))
             {
-                tmp = fabs(norm[1]);
+                tmp  = fabs(norm[1]);
                 tmpi = 1;
             }
-            if(tmp < fabs(norm[2]))
+            if (tmp < fabs(norm[2]))
             {
                 tmpi = 2;
             }
@@ -353,11 +352,11 @@ int Geometry2D::v_GetShapeDim() const
 }
 
 NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
-                                  Array<OneD, NekDouble> &xiOut)
+                                     Array<OneD, NekDouble> &xiOut)
 {
-    if(m_geomFactors->GetGtype() == eRegular)
+    if (m_geomFactors->GetGtype() == eRegular)
     {
-        xiOut = Array<OneD, NekDouble>(2,0.0);
+        xiOut = Array<OneD, NekDouble>(2, 0.0);
 
         GetLocCoords(xs, xiOut);
         ClampLocCoords(xiOut);
@@ -367,9 +366,9 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         gloCoord[1] = GetCoord(1, xiOut);
         gloCoord[2] = GetCoord(2, xiOut);
 
-        return sqrt((xs[0] - gloCoord[0])*(xs[0] - gloCoord[0]) +
-                    (xs[1] - gloCoord[1])*(xs[1] - gloCoord[1]) +
-                    (xs[2] - gloCoord[2])*(xs[2] - gloCoord[2]));
+        return sqrt((xs[0] - gloCoord[0]) * (xs[0] - gloCoord[0]) +
+                    (xs[1] - gloCoord[1]) * (xs[1] - gloCoord[1]) +
+                    (xs[2] - gloCoord[2]) * (xs[2] - gloCoord[2]));
     }
     else if (m_geomFactors->GetGtype() == eDeformed)
     {
@@ -386,15 +385,16 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         m_xmap->BwdTrans(m_coeffs[1], y);
         m_xmap->BwdTrans(m_coeffs[2], z);
 
-        Array<OneD, NekDouble>
-            xderxi1(nq, 0.0),       yderxi1(nq, 0.0),       zderxi1(nq, 0.0),
-            xderxi2(nq, 0.0),       yderxi2(nq, 0.0),       zderxi2(nq, 0.0),
-            xderxi1xi1(nq, 0.0),    yderxi1xi1(nq, 0.0),    zderxi1xi1(nq, 0.0),
-            xderxi1xi2(nq, 0.0),    yderxi1xi2(nq, 0.0),    zderxi1xi2(nq, 0.0),
-            xderxi2xi1(nq, 0.0),    yderxi2xi1(nq, 0.0),    zderxi2xi1(nq, 0.0),
-            xderxi2xi2(nq, 0.0),    yderxi2xi2(nq, 0.0),    zderxi2xi2(nq, 0.0);
+        Array<OneD, NekDouble> xderxi1(nq, 0.0), yderxi1(nq, 0.0),
+            zderxi1(nq, 0.0), xderxi2(nq, 0.0), yderxi2(nq, 0.0),
+            zderxi2(nq, 0.0), xderxi1xi1(nq, 0.0), yderxi1xi1(nq, 0.0),
+            zderxi1xi1(nq, 0.0), xderxi1xi2(nq, 0.0), yderxi1xi2(nq, 0.0),
+            zderxi1xi2(nq, 0.0), xderxi2xi1(nq, 0.0), yderxi2xi1(nq, 0.0),
+            zderxi2xi1(nq, 0.0), xderxi2xi2(nq, 0.0), yderxi2xi2(nq, 0.0),
+            zderxi2xi2(nq, 0.0);
 
-        NekDouble xc_derxi1, yc_derxi1, zc_derxi1, xc_derxi2, yc_derxi2, zc_derxi2;
+        NekDouble xc_derxi1, yc_derxi1, zc_derxi1, xc_derxi2, yc_derxi2,
+            zc_derxi2;
 
         m_xmap->PhysDeriv(x, xderxi1, xderxi2);
         m_xmap->PhysDeriv(y, yderxi1, yderxi2);
@@ -433,9 +433,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
             NekDouble ydiff = yc - xs[1];
             NekDouble zdiff = zc - xs[2];
 
-            NekDouble fx = xdiff * xdiff +
-                           ydiff * ydiff +
-                           zdiff * zdiff;
+            NekDouble fx = xdiff * xdiff + ydiff * ydiff + zdiff * zdiff;
 
             NekDouble fx_derxi1 = 2.0 * xdiff * xc_derxi1 +
                                   2.0 * ydiff * yc_derxi1 +
@@ -445,17 +443,20 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                   2.0 * ydiff * yc_derxi2 +
                                   2.0 * zdiff * zc_derxi2;
 
-            NekDouble fx_derxi1xi1 = 2.0 * xdiff * xc_derxi1xi1 + 2.0 * xc_derxi1 * xc_derxi1 +
-                                     2.0 * ydiff * yc_derxi1xi1 + 2.0 * yc_derxi1 * yc_derxi1 +
-                                     2.0 * zdiff * zc_derxi1xi1 + 2.0 * zc_derxi1 * zc_derxi1;
+            NekDouble fx_derxi1xi1 =
+                2.0 * xdiff * xc_derxi1xi1 + 2.0 * xc_derxi1 * xc_derxi1 +
+                2.0 * ydiff * yc_derxi1xi1 + 2.0 * yc_derxi1 * yc_derxi1 +
+                2.0 * zdiff * zc_derxi1xi1 + 2.0 * zc_derxi1 * zc_derxi1;
 
-            NekDouble fx_derxi1xi2 =  2.0 * xdiff * xc_derxi1xi2 + 2.0 * xc_derxi2 * xc_derxi1 +
-                                      2.0 * ydiff * yc_derxi1xi2 + 2.0 * yc_derxi2 * yc_derxi1 +
-                                      2.0 * zdiff * zc_derxi1xi2 + 2.0 * zc_derxi2 * zc_derxi1;
+            NekDouble fx_derxi1xi2 =
+                2.0 * xdiff * xc_derxi1xi2 + 2.0 * xc_derxi2 * xc_derxi1 +
+                2.0 * ydiff * yc_derxi1xi2 + 2.0 * yc_derxi2 * yc_derxi1 +
+                2.0 * zdiff * zc_derxi1xi2 + 2.0 * zc_derxi2 * zc_derxi1;
 
-            NekDouble fx_derxi2xi2 = 2.0 * xdiff * xc_derxi2xi2 + 2.0 * xc_derxi2 * xc_derxi2 +
-                                     2.0 * ydiff * yc_derxi2xi2 + 2.0 * yc_derxi2 * yc_derxi2 +
-                                     2.0 * zdiff * zc_derxi2xi2 + 2.0 * zc_derxi2 * zc_derxi2;
+            NekDouble fx_derxi2xi2 =
+                2.0 * xdiff * xc_derxi2xi2 + 2.0 * xc_derxi2 * xc_derxi2 +
+                2.0 * ydiff * yc_derxi2xi2 + 2.0 * yc_derxi2 * yc_derxi2 +
+                2.0 * zdiff * zc_derxi2xi2 + 2.0 * zc_derxi2 * zc_derxi2;
 
             // Jacobian
             NekDouble jac[2];
@@ -501,22 +502,27 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                 Array<OneD, NekDouble> eta_pk(2, 0.0);
                 m_xmap->LocCoordToLocCollapsed(xi_pk, eta_pk);
 
-                if (eta_pk[0] < (-1 - std::numeric_limits<NekDouble>::epsilon()) ||
-                    eta_pk[0] > ( 1 + std::numeric_limits<NekDouble>::epsilon()) ||
-                    eta_pk[1] < (-1 - std::numeric_limits<NekDouble>::epsilon()) ||
-                    eta_pk[1] > ( 1 + std::numeric_limits<NekDouble>::epsilon()))
+                if (eta_pk[0] <
+                        (-1 - std::numeric_limits<NekDouble>::epsilon()) ||
+                    eta_pk[0] >
+                        (1 + std::numeric_limits<NekDouble>::epsilon()) ||
+                    eta_pk[1] <
+                        (-1 - std::numeric_limits<NekDouble>::epsilon()) ||
+                    eta_pk[1] > (1 + std::numeric_limits<NekDouble>::epsilon()))
                 {
                     gamma /= 2.0;
                     continue;
                 }
 
-                NekDouble xc_pk_derxi1, xc_pk_derxi2,
-                          yc_pk_derxi1, yc_pk_derxi2,
-                          zc_pk_derxi1, zc_pk_derxi2;
+                NekDouble xc_pk_derxi1, xc_pk_derxi2, yc_pk_derxi1,
+                    yc_pk_derxi2, zc_pk_derxi1, zc_pk_derxi2;
 
-                NekDouble xc_pk = m_xmap->PhysEvaluate(xi_pk, x, xc_pk_derxi1, xc_pk_derxi2);
-                NekDouble yc_pk = m_xmap->PhysEvaluate(xi_pk, y, yc_pk_derxi1, yc_pk_derxi2);
-                NekDouble zc_pk = m_xmap->PhysEvaluate(xi_pk, z, zc_pk_derxi1, zc_pk_derxi2);
+                NekDouble xc_pk =
+                    m_xmap->PhysEvaluate(xi_pk, x, xc_pk_derxi1, xc_pk_derxi2);
+                NekDouble yc_pk =
+                    m_xmap->PhysEvaluate(xi_pk, y, yc_pk_derxi1, yc_pk_derxi2);
+                NekDouble zc_pk =
+                    m_xmap->PhysEvaluate(xi_pk, z, zc_pk_derxi1, zc_pk_derxi2);
 
                 NekDouble xc_pk_diff = xc_pk - xs[0];
                 NekDouble yc_pk_diff = yc_pk - xs[1];
@@ -526,7 +532,9 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                                   yc_pk_diff * yc_pk_diff +
                                   zc_pk_diff * zc_pk_diff;
 
-                //std::cout << "xi_pk[0] = " << xi_pk[0] << ", xi_pk[1] = " << xi_pk[1] <<" xc_pk = " << xc_pk << ", yc_pk = " << yc_pk << ", zc_pk = " << zc_pk << ", fx_pk = " << fx_pk << std::endl;
+                // std::cout << "xi_pk[0] = " << xi_pk[0] << ", xi_pk[1] = " <<
+                // xi_pk[1] <<" xc_pk = " << xc_pk << ", yc_pk = " << yc_pk << ",
+                // zc_pk = " << zc_pk << ", fx_pk = " << fx_pk << std::endl;
 
                 NekDouble fx_pk_derxi1 = 2.0 * xc_pk_diff * xc_pk_derxi1 +
                                          2.0 * yc_pk_diff * yc_pk_derxi1 +
@@ -545,13 +553,14 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
                 // pk^T * fx_pk_der;
                 NekDouble tmp2 = pk[0] * fx_pk_derxi1 + pk[1] * fx_pk_derxi2;
 
-                //std::cout << "Armijo condition: " << fx_pk << " < " << fx + c1 * gamma * tmp << std::endl;
-                //std::cout << "Curvature condition: " << tmp2 << " < " <<  c2 * tmp << std::endl;
+                // std::cout << "Armijo condition: " << fx_pk << " < " << fx +
+                // c1 * gamma * tmp << std::endl; std::cout << "Curvature
+                // condition: " << tmp2 << " < " <<  c2 * tmp << std::endl;
                 // Armijo condition
-                if ((fx_pk  - (fx + c1 * gamma * tmp))
-                    < std::numeric_limits<NekDouble>::epsilon()
-                    && (-tmp2 - (-c2 * tmp))
-                       < std::numeric_limits<NekDouble>::epsilon())
+                if ((fx_pk - (fx + c1 * gamma * tmp)) <
+                        std::numeric_limits<NekDouble>::epsilon() &&
+                    (-tmp2 - (-c2 * tmp)) <
+                        std::numeric_limits<NekDouble>::epsilon())
                 {
                     conv = true;
                     break;
@@ -570,7 +579,7 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
         }
 
         xiOut = xi;
-        return  sqrt(fx_prev);
+        return sqrt(fx_prev);
     }
     else
     {
@@ -580,5 +589,5 @@ NekDouble Geometry2D::v_FindDistance(const Array<OneD, const NekDouble> &xs,
     return -1.0;
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

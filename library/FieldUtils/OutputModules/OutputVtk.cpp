@@ -32,9 +32,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <iomanip>
 #include <set>
 #include <string>
-#include <iomanip>
 using namespace std;
 
 #include <boost/core/ignore_unused.hpp>
@@ -100,7 +100,7 @@ void OutputVtk::OutputFromPts(po::variables_map &vm)
         }
         case LibUtilities::ePtsSegBlock:
         {
-            nvert = 2;
+            nvert   = 2;
             vtktype = 3;
             break;
         }
@@ -120,7 +120,7 @@ void OutputVtk::OutputFromPts(po::variables_map &vm)
             NEKERROR(ErrorUtil::efatal, "ptsType not supported yet.");
     }
 
-    vector<Array<OneD, int> > ptsConn;
+    vector<Array<OneD, int>> ptsConn;
     fPts->GetConnectivity(ptsConn);
 
     nfields = fPts->GetNFields();
@@ -133,12 +133,11 @@ void OutputVtk::OutputFromPts(po::variables_map &vm)
     }
 
     // write out pieces of data.
-    outfile << "    <Piece NumberOfPoints=\"" << nPts
-            << "\" NumberOfCells=\"" << numBlocks << "\">" << endl;
+    outfile << "    <Piece NumberOfPoints=\"" << nPts << "\" NumberOfCells=\""
+            << numBlocks << "\">" << endl;
     outfile << "      <Points>" << endl;
     outfile << "        <DataArray type=\"Float64\" "
-            << "NumberOfComponents=\"" << 3 << "\" format=\"ascii\">"
-            << endl;
+            << "NumberOfComponents=\"" << 3 << "\" format=\"ascii\">" << endl;
     for (i = 0; i < nPts; ++i)
     {
         for (j = 0; j < dim; ++j)
@@ -219,8 +218,7 @@ void OutputVtk::OutputFromPts(po::variables_map &vm)
     cout << "Written file: " << filename << endl;
 
     // output parallel outline info if necessary
-    if ( (m_f->m_comm->GetRank() == 0) &&
-         (m_f->m_comm->GetSize() != 1))
+    if ((m_f->m_comm->GetRank() == 0) && (m_f->m_comm->GetSize() != 1))
     {
         WritePVtu(vm);
         cout << "Written file: " << filename << endl;
@@ -234,14 +232,14 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
 
     // Move geometry based on zones data in .xml and time in .fld metadatamap
     // Perform movement of zones based on time in field files metadata map
-    if(m_f->m_graph->GetMovement()->GetMoveFlag())
+    if (m_f->m_graph->GetMovement()->GetMoveFlag())
     {
-        if(!m_f->m_fieldMetaDataMap["Time"].empty())
+        if (!m_f->m_fieldMetaDataMap["Time"].empty())
         {
             m_f->m_graph->GetMovement()->PerformMovement(
-                    boost::lexical_cast<NekDouble>(
-                            m_f->m_fieldMetaDataMap["Time"]));
-            for (auto &i: m_f->m_exp)
+                boost::lexical_cast<NekDouble>(
+                    m_f->m_fieldMetaDataMap["Time"]));
+            for (auto &i : m_f->m_exp)
             {
                 i->Reset();
             }
@@ -283,8 +281,7 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
     cout << "Written file: " << filename << endl;
 
     // output parallel outline info if necessary
-    if ( (m_f->m_comm->GetRank() == 0) &&
-         (m_f->m_comm->GetSize() != 1))
+    if ((m_f->m_comm->GetRank() == 0) && (m_f->m_comm->GetSize() != 1))
     {
         WritePVtu(vm);
     }
@@ -296,8 +293,7 @@ void OutputVtk::OutputFromData(po::variables_map &vm)
     NEKERROR(ErrorUtil::efatal, "OutputVtk can't write using only FieldData.");
 }
 
-fs::path OutputVtk::GetPath(std::string &filename,
-                            po::variables_map &vm)
+fs::path OutputVtk::GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
@@ -310,15 +306,14 @@ fs::path OutputVtk::GetPath(std::string &filename,
     else
     {
         // replace .vtu by _vtu
-        int    dot  = filename.find_last_of('.');
+        int dot     = filename.find_last_of('.');
         string path = filename.substr(0, dot) + "_vtu";
-        specPath = fs::path(path);
+        specPath    = fs::path(path);
     }
-    return   fs::path(specPath);
+    return fs::path(specPath);
 }
 
-fs::path OutputVtk::GetFullOutName(std::string &filename,
-                                po::variables_map &vm)
+fs::path OutputVtk::GetFullOutName(std::string &filename, po::variables_map &vm)
 {
     int nprocs = m_f->m_comm->GetSize();
 
@@ -338,7 +333,7 @@ fs::path OutputVtk::GetFullOutName(std::string &filename,
         fs::path poutfile(pad.str());
         fulloutname = specPath / poutfile;
     }
-    return   fulloutname;
+    return fulloutname;
 }
 
 void OutputVtk::WriteVtkHeader(std::ostream &outfile)
@@ -389,15 +384,15 @@ void OutputVtk::WriteEmptyVtkPiece(std::ofstream &outfile)
 
 void OutputVtk::WritePVtu(po::variables_map &vm)
 {
-    string filename  = m_config["outfile"].as<string>();
-    int dot          = filename.find_last_of('.');
-    string body      = filename.substr(0, dot);
-    filename         = body + ".pvtu";
+    string filename = m_config["outfile"].as<string>();
+    int dot         = filename.find_last_of('.');
+    string body     = filename.substr(0, dot);
+    filename        = body + ".pvtu";
 
     ofstream outfile(filename.c_str());
 
     int nprocs  = m_f->m_comm->GetSize();
-    string path = LibUtilities::PortablePath(GetPath(filename,vm));
+    string path = LibUtilities::PortablePath(GetPath(filename, vm));
 
     outfile << "<?xml version=\"1.0\"?>" << endl;
     outfile << "<VTKFile type=\"PUnstructuredGrid\" version=\"0.1\" "
@@ -421,8 +416,8 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
     outfile << "<PPointData Scalars=\"Material\">" << endl;
     for (int i = 0; i < m_f->m_variables.size(); ++i)
     {
-        outfile << "<PDataArray type=\"Float64\" Name=\""
-                << m_f->m_variables[i] << "\"/>" << endl;
+        outfile << "<PDataArray type=\"Float64\" Name=\"" << m_f->m_variables[i]
+                << "\"/>" << endl;
     }
     outfile << "</PPointData>" << endl;
 
@@ -430,8 +425,8 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
     {
         boost::format pad("P%1$07d.vtu");
         pad % i;
-        outfile << "<Piece Source=\"" << path << "/" << pad.str()
-                << "\"/>" << endl;
+        outfile << "<Piece Source=\"" << path << "/" << pad.str() << "\"/>"
+                << endl;
     }
     outfile << "</PUnstructuredGrid>" << endl;
     outfile << "</VTKFile>" << endl;
@@ -444,9 +439,9 @@ std::string OutputVtk::PrepareOutput(po::variables_map &vm)
     // Extract the output filename and extension
     string filename = m_config["outfile"].as<string>();
 
-    fs::path specPath    = GetPath(filename,vm);
-    fs::path fulloutname = GetFullOutName(filename,vm);
-    filename = LibUtilities::PortablePath(fulloutname);
+    fs::path specPath    = GetPath(filename, vm);
+    fs::path fulloutname = GetFullOutName(filename, vm);
+    filename             = LibUtilities::PortablePath(fulloutname);
 
     if (m_f->m_comm->GetSize() != 1)
     {
@@ -471,5 +466,5 @@ std::string OutputVtk::PrepareOutput(po::variables_map &vm)
     return filename;
 }
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

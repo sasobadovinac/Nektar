@@ -36,8 +36,8 @@
 #ifndef NEKTAR_LIB_UTILITIES_BASIC_UTILS_PTSFIELD_H
 #define NEKTAR_LIB_UTILITIES_BASIC_UTILS_PTSFIELD_H
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <boost/core/ignore_unused.hpp>
 
@@ -73,30 +73,31 @@ class PtsField
 {
 public:
     LIB_UTILITIES_EXPORT PtsField(
-        const int dim, const Array<OneD, Array<OneD, NekDouble> > &pts);
+        const int dim, const Array<OneD, Array<OneD, NekDouble>> &pts);
 
     LIB_UTILITIES_EXPORT PtsField(
-        const int dim,
-        const std::vector<std::string> fieldnames,
-        const Array<OneD, Array<OneD, NekDouble> > &pts,
+        const int dim, const std::vector<std::string> fieldnames,
+        const Array<OneD, Array<OneD, NekDouble>> &pts,
         std::map<PtsInfo, int> ptsInfo = NullPtsInfoMap)
         : m_ptsInfo(ptsInfo), m_dim(dim), m_fieldNames(fieldnames), m_pts(pts),
           m_ptsType(ePtsFile){};
 
     LIB_UTILITIES_EXPORT PtsField(
-        const int dim,
-        const std::vector<std::string> fieldnames,
-        const Array<OneD, Array<OneD, NekDouble> > &pts,
-        const Array<OneD, Array<OneD, float> > & weights,
-        const Array<OneD, Array<OneD, unsigned int> > & neighInds)
+        const int dim, const std::vector<std::string> fieldnames,
+        const Array<OneD, Array<OneD, NekDouble>> &pts,
+        const Array<OneD, Array<OneD, float>> &weights,
+        const Array<OneD, Array<OneD, unsigned int>> &neighInds)
         : m_ptsInfo(NullPtsInfoMap), m_dim(dim), m_fieldNames(fieldnames),
-          m_pts(pts), m_ptsType(ePtsFile) { boost::ignore_unused(weights, neighInds); };
+          m_pts(pts), m_ptsType(ePtsFile)
+    {
+        boost::ignore_unused(weights, neighInds);
+    };
 
     LIB_UTILITIES_EXPORT void GetConnectivity(
-        std::vector<Array<OneD, int> > &conn) const;
+        std::vector<Array<OneD, int>> &conn) const;
 
     LIB_UTILITIES_EXPORT void SetConnectivity(
-        const std::vector<Array<OneD, int> > &conn);
+        const std::vector<Array<OneD, int>> &conn);
 
     LIB_UTILITIES_EXPORT void SetDim(const int ptsDim);
 
@@ -116,7 +117,8 @@ public:
 
     LIB_UTILITIES_EXPORT void RemoveField(const std::string fieldName);
 
-    LIB_UTILITIES_EXPORT void AddPoints(const Array< OneD, const Array< OneD, NekDouble > > &pts);
+    LIB_UTILITIES_EXPORT void AddPoints(
+        const Array<OneD, const Array<OneD, NekDouble>> &pts);
 
     LIB_UTILITIES_EXPORT size_t GetNpoints() const;
 
@@ -128,15 +130,15 @@ public:
                                           const NekDouble val);
 
     LIB_UTILITIES_EXPORT void GetPts(
-        Array<OneD, Array<OneD, NekDouble> > &pts) const;
+        Array<OneD, Array<OneD, NekDouble>> &pts) const;
 
     LIB_UTILITIES_EXPORT Array<OneD, NekDouble> GetPts(
         const int fieldInd) const;
 
-    LIB_UTILITIES_EXPORT void SetPts(Array<OneD, Array<OneD, NekDouble> > &pts);
+    LIB_UTILITIES_EXPORT void SetPts(Array<OneD, Array<OneD, NekDouble>> &pts);
 
-    LIB_UTILITIES_EXPORT void SetPts(const int fldId, 
-                                     const Array< OneD, const NekDouble > &pts);
+    LIB_UTILITIES_EXPORT void SetPts(const int fldId,
+                                     const Array<OneD, const NekDouble> &pts);
 
     LIB_UTILITIES_EXPORT std::vector<size_t> GetPointsPerEdge() const;
 
@@ -146,7 +148,7 @@ public:
         const std::vector<size_t> nPtsPerEdge);
 
     LIB_UTILITIES_EXPORT void SetPointsPerElement(
-            const std::vector<int> nPtsPerElement);
+        const std::vector<int> nPtsPerElement);
 
     LIB_UTILITIES_EXPORT std::vector<int> GetPointsPerElement() const;
 
@@ -168,7 +170,7 @@ private:
     std::vector<std::string> m_fieldNames;
     /// Point data. For a n-dimensional field, the first m_dim fields are the
     /// points spatial coordinates. Structure: m_pts[fieldIdx][ptIdx]
-    Array<OneD, Array<OneD, NekDouble> > m_pts;
+    Array<OneD, Array<OneD, NekDouble>> m_pts;
     /// Number of points per edge. Empty if the point data has no
     /// specific shape (ePtsLine) or is a block (ePtsTetBlock,
     /// ePtsTriBlock), size=1 for ePtsLine and 2 for a ePtsPlane
@@ -177,7 +179,7 @@ private:
     /// Connectivity data needed for ePtsTetBlock and ePtsTriBlock. For n
     /// Blocks with m elements each, m_ptsConn is a vector of n arrays with
     /// 3*m (ePtsTriBlock) or 4*m (ePtsTetBlock) entries.
-    std::vector<Array<OneD, int> > m_ptsConn;
+    std::vector<Array<OneD, int>> m_ptsConn;
     /// Type of the PtsField
     PtsType m_ptsType;
 
@@ -187,7 +189,7 @@ private:
 
 typedef std::shared_ptr<PtsField> PtsFieldSharedPtr;
 static PtsFieldSharedPtr NullPtsField;
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

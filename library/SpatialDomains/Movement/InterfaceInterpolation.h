@@ -113,11 +113,10 @@ struct InterfacePair
     /// Constructor
     InterfacePair(const InterfaceShPtr &leftInterface,
                   const InterfaceShPtr &rightInterface)
-        : m_leftInterface(leftInterface),
-          m_rightInterface(rightInterface)
+        : m_leftInterface(leftInterface), m_rightInterface(rightInterface)
     {
         // Sets the opposite interfaces
-        leftInterface->GetOppInterface() = rightInterface;
+        leftInterface->GetOppInterface()  = rightInterface;
         rightInterface->GetOppInterface() = leftInterface;
     }
 

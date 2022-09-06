@@ -41,36 +41,32 @@ using namespace std;
 namespace Nektar
 {
 
-std::string SymmetryBC::className = GetCFSBndCondFactory().
-    RegisterCreatorFunction("Symmetry",
-                            SymmetryBC::create,
-                            "Symmetry boundary condition.");
+std::string SymmetryBC::className =
+    GetCFSBndCondFactory().RegisterCreatorFunction(
+        "Symmetry", SymmetryBC::create, "Symmetry boundary condition.");
 
-SymmetryBC::SymmetryBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-           const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-           const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-           const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-           const int pSpaceDim,
-           const int bcRegion,
-           const int cnt)
+SymmetryBC::SymmetryBC(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+    const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+    const int pSpaceDim, const int bcRegion, const int cnt)
     : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
                  bcRegion, cnt)
 {
     m_diffusionAveWeight = 0.5;
 }
 
-void SymmetryBC::v_Apply(
-        Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-        Array<OneD, Array<OneD, NekDouble> >               &physarray,
-        const NekDouble                                    &time)
+void SymmetryBC::v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time)
 {
     boost::ignore_unused(time);
 
     int i;
     int nVariables = physarray.size();
 
-    const Array<OneD, const int> &traceBndMap
-        = m_fields[0]->GetTraceBndMap();
+    const Array<OneD, const int> &traceBndMap = m_fields[0]->GetTraceBndMap();
 
     // Take into account that for PDE based shock capturing, eps = 0 at the
     // wall.
@@ -80,11 +76,14 @@ void SymmetryBC::v_Apply(
 
     for (e = 0; e < eMax; ++e)
     {
-        nBCEdgePts = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-            GetExp(e)->GetTotPoints();
-        id1  = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-            GetPhys_Offset(e);
-        id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
+        nBCEdgePts = m_fields[0]
+                         ->GetBndCondExpansions()[m_bcRegion]
+                         ->GetExp(e)
+                         ->GetTotPoints();
+        id1 =
+            m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetPhys_Offset(e);
+        id2 =
+            m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset + e]);
 
         // For 2D/3D, define: v* = v - 2(v.n)n
         Array<OneD, NekDouble> tmp(nBCEdgePts, 0.0);
@@ -92,11 +91,8 @@ void SymmetryBC::v_Apply(
         // Calculate (v.n)
         for (i = 0; i < m_spacedim; ++i)
         {
-            Vmath::Vvtvp(nBCEdgePts,
-                         &Fwd[1+i][id2], 1,
-                         &m_traceNormals[i][id2], 1,
-                         &tmp[0], 1,
-                         &tmp[0], 1);
+            Vmath::Vvtvp(nBCEdgePts, &Fwd[1 + i][id2], 1,
+                         &m_traceNormals[i][id2], 1, &tmp[0], 1, &tmp[0], 1);
         }
 
         // Calculate 2.0(v.n)
@@ -105,21 +101,20 @@ void SymmetryBC::v_Apply(
         // Calculate v* = v - 2.0(v.n)n
         for (i = 0; i < m_spacedim; ++i)
         {
-            Vmath::Vvtvp(nBCEdgePts,
-                         &tmp[0], 1,
-                         &m_traceNormals[i][id2], 1,
-                         &Fwd[1+i][id2], 1,
-                         &Fwd[1+i][id2], 1);
+            Vmath::Vvtvp(nBCEdgePts, &tmp[0], 1, &m_traceNormals[i][id2], 1,
+                         &Fwd[1 + i][id2], 1, &Fwd[1 + i][id2], 1);
         }
 
         // Copy boundary adjusted values into the boundary expansion
         for (i = 0; i < nVariables; ++i)
         {
             Vmath::Vcopy(nBCEdgePts, &Fwd[i][id2], 1,
-                         &(m_fields[i]->GetBndCondExpansions()[m_bcRegion]->
-                           UpdatePhys())[id1], 1);
+                         &(m_fields[i]
+                               ->GetBndCondExpansions()[m_bcRegion]
+                               ->UpdatePhys())[id1],
+                         1);
         }
     }
 }
 
-}
+} // namespace Nektar

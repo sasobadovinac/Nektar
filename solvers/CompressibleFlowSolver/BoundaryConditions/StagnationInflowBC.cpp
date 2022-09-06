@@ -41,18 +41,17 @@ using namespace std;
 namespace Nektar
 {
 
-std::string StagnationInflowBC::className = GetCFSBndCondFactory().
-    RegisterCreatorFunction("StagnationInflow",
-                            StagnationInflowBC::create,
-                            "Stagnation conditions inflow boundary condition.");
+std::string StagnationInflowBC::className =
+    GetCFSBndCondFactory().RegisterCreatorFunction(
+        "StagnationInflow", StagnationInflowBC::create,
+        "Stagnation conditions inflow boundary condition.");
 
-StagnationInflowBC::StagnationInflowBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-           const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-           const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-           const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-           const int pSpaceDim,
-           const int bcRegion,
-           const int cnt)
+StagnationInflowBC::StagnationInflowBC(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+    const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+    const int pSpaceDim, const int bcRegion, const int cnt)
     : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
                  bcRegion, cnt)
 {
@@ -61,45 +60,42 @@ StagnationInflowBC::StagnationInflowBC(const LibUtilities::SessionReaderSharedPt
     int spacedim   = pFields[0]->GetGraph()->GetSpaceDimension();
     m_swirl        = ((spacedim == 3) && (expdim == 2));
     // Loop over Boundary Regions for StagnationInflowBC
-    m_fieldStorage = Array<OneD, Array<OneD, NekDouble> > (nvariables);
+    m_fieldStorage = Array<OneD, Array<OneD, NekDouble>>(nvariables);
 
-    int numBCPts = m_fields[0]->
-        GetBndCondExpansions()[m_bcRegion]->GetNpoints();
+    int numBCPts =
+        m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetNpoints();
     for (int i = 0; i < nvariables; ++i)
     {
         m_fieldStorage[i] = Array<OneD, NekDouble>(numBCPts, 0.0);
-        Vmath::Vcopy(
-            numBCPts,
-            m_fields[i]->GetBndCondExpansions()[m_bcRegion]->GetPhys(), 1,
-            m_fieldStorage[i], 1);
+        Vmath::Vcopy(numBCPts,
+                     m_fields[i]->GetBndCondExpansions()[m_bcRegion]->GetPhys(),
+                     1, m_fieldStorage[i], 1);
     }
 }
 
-void StagnationInflowBC::v_Apply(
-        Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-        Array<OneD, Array<OneD, NekDouble> >               &physarray,
-        const NekDouble                                    &time)
+void StagnationInflowBC::v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                                 Array<OneD, Array<OneD, NekDouble>> &physarray,
+                                 const NekDouble &time)
 {
     boost::ignore_unused(time);
 
     int i, j;
-    int nTracePts  = m_fields[0]->GetTrace()->GetNpoints();
-    int numBCPts   = m_fields[0]->
-        GetBndCondExpansions()[m_bcRegion]->GetNpoints();
+    int nTracePts = m_fields[0]->GetTrace()->GetNpoints();
+    int numBCPts =
+        m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetNpoints();
     int nVariables = physarray.size();
 
-    const Array<OneD, const int> &traceBndMap
-        = m_fields[0]->GetTraceBndMap();
+    const Array<OneD, const int> &traceBndMap = m_fields[0]->GetTraceBndMap();
 
-    NekDouble gammaInv = 1.0 / m_gamma;
+    NekDouble gammaInv         = 1.0 / m_gamma;
     NekDouble gammaMinusOne    = m_gamma - 1.0;
     NekDouble gammaMinusOneInv = 1.0 / gammaMinusOne;
 
     // Get stagnation pressure (with zero swirl)
-    Array<OneD, NekDouble > pStag      (numBCPts);
+    Array<OneD, NekDouble> pStag(numBCPts);
     if (m_swirl)
     {
-        Array<OneD, NekDouble > tmp       (numBCPts);
+        Array<OneD, NekDouble> tmp(numBCPts);
         Vmath::Vcopy(numBCPts, m_fieldStorage[3], 1, tmp, 1);
         Vmath::Zero(numBCPts, m_fieldStorage[3], 1);
         m_varConv->GetPressure(m_fieldStorage, pStag);
@@ -111,8 +107,8 @@ void StagnationInflowBC::v_Apply(
     }
 
     // Get Mach from Fwd
-    Array<OneD, NekDouble > soundSpeed(nTracePts);
-    Array<OneD, NekDouble > Mach      (nTracePts);
+    Array<OneD, NekDouble> soundSpeed(nTracePts);
+    Array<OneD, NekDouble> Mach(nTracePts);
     m_varConv->GetSoundSpeed(Fwd, soundSpeed);
     m_varConv->GetMach(Fwd, soundSpeed, Mach);
 
@@ -121,14 +117,17 @@ void StagnationInflowBC::v_Apply(
     NekDouble rho, p;
 
     // Loop on the m_bcRegion
-    for (e = 0; e < m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-         GetExpSize(); ++e)
+    for (e = 0;
+         e < m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetExpSize(); ++e)
     {
-        npts = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-                GetExp(e)->GetTotPoints();
-        id1 = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-                GetPhys_Offset(e);
-        id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
+        npts = m_fields[0]
+                   ->GetBndCondExpansions()[m_bcRegion]
+                   ->GetExp(e)
+                   ->GetTotPoints();
+        id1 =
+            m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetPhys_Offset(e);
+        id2 =
+            m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset + e]);
 
         // Loop on points of m_bcRegion 'e'
         for (i = 0; i < npts; i++)
@@ -136,23 +135,25 @@ void StagnationInflowBC::v_Apply(
             pnt = id2 + i;
 
             // Pressure from stagnation pressure and Mach
-            p = pStag[id1+i] /
-                pow(1.0 + (gammaMinusOne)/2.0 * Mach[pnt]*Mach[pnt],
-                    m_gamma/(gammaMinusOne));
+            p = pStag[id1 + i] /
+                pow(1.0 + (gammaMinusOne) / 2.0 * Mach[pnt] * Mach[pnt],
+                    m_gamma / (gammaMinusOne));
 
             // rho from isentropic relation: rho = rhoStag *(p/pStag)^1/Gamma
-            rho = m_fieldStorage[0][id1+i] *
-                    pow(p/pStag[id1+i],gammaInv);
-            (m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-                UpdatePhys())[id1+i] = rho;
+            rho =
+                m_fieldStorage[0][id1 + i] * pow(p / pStag[id1 + i], gammaInv);
+            (m_fields[0]
+                 ->GetBndCondExpansions()[m_bcRegion]
+                 ->UpdatePhys())[id1 + i] = rho;
 
             // Extrapolation for velocity and Kinetic energy calculation
-            int lim = m_swirl ? nVariables - 2 : nVariables - 1;
+            int lim      = m_swirl ? nVariables - 2 : nVariables - 1;
             NekDouble Ek = 0.0;
             for (j = 1; j < lim; ++j)
             {
-                (m_fields[j]->GetBndCondExpansions()[m_bcRegion]->
-                     UpdatePhys())[id1+i] = Fwd[j][pnt];
+                (m_fields[j]
+                     ->GetBndCondExpansions()[m_bcRegion]
+                     ->UpdatePhys())[id1 + i] = Fwd[j][pnt];
 
                 Ek += 0.5 * (Fwd[j][pnt] * Fwd[j][pnt]) / Fwd[0][pnt];
             }
@@ -160,17 +161,21 @@ void StagnationInflowBC::v_Apply(
             if (m_swirl)
             {
                 // Prescribed swirl
-                (m_fields[3]->GetBndCondExpansions()[m_bcRegion]->
-                    UpdatePhys())[id1+i] = m_fieldStorage[3][id1+i];
-                Ek += 0.5 * (m_fieldStorage[3][id1+i] *
-                             m_fieldStorage[3][id1+i]) / Fwd[0][pnt];
+                (m_fields[3]
+                     ->GetBndCondExpansions()[m_bcRegion]
+                     ->UpdatePhys())[id1 + i] = m_fieldStorage[3][id1 + i];
+                Ek +=
+                    0.5 *
+                    (m_fieldStorage[3][id1 + i] * m_fieldStorage[3][id1 + i]) /
+                    Fwd[0][pnt];
             }
 
             // Energy
-            (m_fields[nVariables-1]->GetBndCondExpansions()[m_bcRegion]->
-                UpdatePhys())[id1+i] = p * gammaMinusOneInv + Ek;
+            (m_fields[nVariables - 1]
+                 ->GetBndCondExpansions()[m_bcRegion]
+                 ->UpdatePhys())[id1 + i] = p * gammaMinusOneInv + Ek;
         }
     }
 }
 
-}
+} // namespace Nektar

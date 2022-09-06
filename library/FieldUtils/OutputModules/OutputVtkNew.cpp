@@ -38,37 +38,48 @@
 #include "OutputVtkNew.h"
 #include <FieldUtils/ProcessModules/ProcessEquiSpacedOutput.h>
 
-#include <vtkXMLUnstructuredGridWriter.h>
-#include <vtkPoints.h>
-#include <vtkPointData.h>
 #include <vtkCellType.h>
 #include <vtkDoubleArray.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 
 namespace Nektar
 {
 namespace FieldUtils
 {
 
-ModuleKey OutputVtkNew::m_className = GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eOutputModule, "vtuNew"), OutputVtkNew::create, "Writes a VTU file.");
+ModuleKey OutputVtkNew::m_className =
+    GetModuleFactory().RegisterCreatorFunction(
+        ModuleKey(eOutputModule, "vtuNew"), OutputVtkNew::create,
+        "Writes a VTU file.");
 
 OutputVtkNew::OutputVtkNew(FieldSharedPtr f) : OutputVtk(std::move(f))
 {
     m_requireEquiSpaced = true;
-    m_config["legacy"] = ConfigOption(true, "0", "Output using legacy manual VTK file writers");
-    m_config["highorder"] = ConfigOption(true, "0", "Output using new high-order Lagrange elements");
+    m_config["legacy"] =
+        ConfigOption(true, "0", "Output using legacy manual VTK file writers");
+    m_config["highorder"] = ConfigOption(
+        true, "0", "Output using new high-order Lagrange elements");
     m_config["uncompress"] = ConfigOption(true, "0", "Uncompress xml sections");
-    m_config["compressionlevel"] = ConfigOption(false, "5", "Compression level for the VTU output: 1-9");
+    m_config["compressionlevel"] =
+        ConfigOption(false, "5", "Compression level for the VTU output: 1-9");
 }
 
 // Anonymous namespace for spectral order -> VTK order mapping functions
 namespace
 {
 // Hashing function for the ordering map taking two integers
-inline size_t key2(int i,int j) {return (size_t) i << 32 | (unsigned int) j;}
+inline size_t key2(int i, int j)
+{
+    return (size_t)i << 32 | (unsigned int)j;
+}
 
 // Hashing function for the ordering map taking three integers
-inline size_t key3(int i, int j, int k) {return (size_t) i << 10 ^ j << 5 ^ k;}
+inline size_t key3(int i, int j, int k)
+{
+    return (size_t)i << 10 ^ j << 5 ^ k;
+}
 
 // Map that takes (a,b,c) -> m
 typedef std::tuple<int, int, int> Mode;
@@ -105,7 +116,7 @@ void Rotate(int nrot, std::vector<long long> &surfVerts)
 {
     int n, i, j, cnt;
     int np = static_cast<int>(
-            (sqrt(8.0 * static_cast<int>(surfVerts.size()) + 1.0) - 1) / 2);
+        (sqrt(8.0 * static_cast<int>(surfVerts.size()) + 1.0) - 1) / 2);
     std::vector<long long> tmp(np * np);
 
     for (n = 0; n < nrot; ++n)
@@ -131,7 +142,7 @@ void Reflect(std::vector<long long> &surfVerts)
 {
     int i, j, cnt;
     int np = static_cast<int>(
-            (sqrt(8.0 * static_cast<double>(surfVerts.size()) + 1.0) - 1) / 2);
+        (sqrt(8.0 * static_cast<double>(surfVerts.size()) + 1.0) - 1) / 2);
     std::vector<long long> tmp(np * np);
 
     for (cnt = i = 0; i < np; ++i)
@@ -151,9 +162,8 @@ void Reflect(std::vector<long long> &surfVerts)
     }
 }
 
-void Align(std::vector<long long> thisVertId,
-                 std::vector<long long> vertId,
-                 std::vector<long long> &surfVerts)
+void Align(std::vector<long long> thisVertId, std::vector<long long> vertId,
+           std::vector<long long> &surfVerts)
 {
     if (vertId[0] == thisVertId[0])
     {
@@ -197,10 +207,11 @@ void Align(std::vector<long long> thisVertId,
     }
 }
 
-std::vector<long long> quadTensorNodeOrdering(const std::vector<long long> &nodes)
+std::vector<long long> quadTensorNodeOrdering(
+    const std::vector<long long> &nodes)
 {
     int nN = static_cast<int>(nodes.size());
-    int n = static_cast<int>(sqrt(nN));
+    int n  = static_cast<int>(sqrt(nN));
 
     std::vector<long long> nodeList(nN);
 
@@ -208,8 +219,8 @@ std::vector<long long> quadTensorNodeOrdering(const std::vector<long long> &node
     nodeList[0] = nodes[0];
     if (n > 1)
     {
-        nodeList[n - 1]     = nodes[1];
-        nodeList[n * n - 1] = nodes[2];
+        nodeList[n - 1]       = nodes[1];
+        nodeList[n * n - 1]   = nodes[2];
         nodeList[n * (n - 1)] = nodes[3];
     }
 
@@ -238,7 +249,7 @@ std::vector<long long> quadTensorNodeOrdering(const std::vector<long long> &node
                 nodeList[j * n + i] = nodes[(i - 3) - 2 * j + (3 + j) * n];
             }
 
-            //Edge 1 -> 2
+            // Edge 1 -> 2
             nodeList[(j + 1) * n - 1] = nodes[4 + (n - 2) + j - 1];
         }
     }
@@ -246,10 +257,11 @@ std::vector<long long> quadTensorNodeOrdering(const std::vector<long long> &node
     return nodeList;
 }
 
-std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes)
+std::vector<long long> triTensorNodeOrdering(
+    const std::vector<long long> &nodes)
 {
     int nN = static_cast<int>(nodes.size());
-    int n = static_cast<int>(std::sqrt(2 * nN));
+    int n  = static_cast<int>(std::sqrt(2 * nN));
 
     std::vector<long long> nodeList(nN);
     int cnt2;
@@ -258,7 +270,7 @@ std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes
     nodeList[0] = nodes[0];
     if (n > 1)
     {
-        nodeList[n - 1] = nodes[1];
+        nodeList[n - 1]               = nodes[1];
         nodeList[n * (n + 1) / 2 - 1] = nodes[2];
     }
 
@@ -277,8 +289,8 @@ std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes
     {
         // Reorder interior nodes
         std::vector<long long> interior((n - 3) * (n - 2) / 2);
-        std::copy(
-                nodes.begin() + 3 + 3 * (n - 2), nodes.end(), interior.begin());
+        std::copy(nodes.begin() + 3 + 3 * (n - 2), nodes.end(),
+                  interior.begin());
         interior = triTensorNodeOrdering(interior);
 
         // Copy into full node list
@@ -298,15 +310,17 @@ std::vector<long long> triTensorNodeOrdering(const std::vector<long long> &nodes
     return nodeList;
 }
 
-std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes)
+std::vector<long long> tetTensorNodeOrdering(
+    const std::vector<long long> &nodes)
 {
     int nN = static_cast<int>(nodes.size());
-    int n = static_cast<int>(std::cbrt(3 * nN + std::sqrt(9 * nN * nN - 1 / 27)) +
-                             std::cbrt(3 * nN - std::sqrt(9 * nN * nN - 1 / 27)) - 0.5);
+    int n  = static_cast<int>(
+        std::cbrt(3 * nN + std::sqrt(9 * nN * nN - 1 / 27)) +
+        std::cbrt(3 * nN - std::sqrt(9 * nN * nN - 1 / 27)) - 0.5);
 
     std::vector<long long> nodeList(nN);
-    int nTri = n*(n+1)/2;
-    int nTet = n*(n+1)*(n+2)/6;
+    int nTri = n * (n + 1) / 2;
+    int nTet = n * (n + 1) * (n + 2) / 6;
 
     // Vertices
     nodeList[0] = nodes[0];
@@ -333,27 +347,27 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
         {
             for (int i = 0; i < n - k - j; ++i)
             {
-                tmp[Mode(i,j,k)] = cnt++;
+                tmp[Mode(i, j, k)] = cnt++;
             }
         }
     }
 
     // Edges first 3
-    for (int i = 1; i < n-1; ++i)
+    for (int i = 1; i < n - 1; ++i)
     {
-        int eI = i-1;
-        nodeList[tmp[Mode(i,0,0)]]     = nodes[4 + eI];
-        nodeList[tmp[Mode(n-1-i,i,0)]] = nodes[4 + (n-2) + eI];
-        nodeList[tmp[Mode(0,n-1-i,0)]] = nodes[4 + 2*(n-2) + eI];
+        int eI                               = i - 1;
+        nodeList[tmp[Mode(i, 0, 0)]]         = nodes[4 + eI];
+        nodeList[tmp[Mode(n - 1 - i, i, 0)]] = nodes[4 + (n - 2) + eI];
+        nodeList[tmp[Mode(0, n - 1 - i, 0)]] = nodes[4 + 2 * (n - 2) + eI];
     }
 
     // Edges last 3 reversed (compared with NekMesh)
-    for (int i = 1; i < n-1; ++i)
+    for (int i = 1; i < n - 1; ++i)
     {
-        int eI = (n - 1 - i) - 1;
-        nodeList[tmp[Mode(0,0,n-1-i)]] = nodes[4 + 3*(n-2) + eI];
-        nodeList[tmp[Mode(i,0,n-1-i)]] = nodes[4 + 4*(n-2) + eI];
-        nodeList[tmp[Mode(0,i,n-1-i)]] = nodes[4 + 5*(n-2) + eI];
+        int eI                               = (n - 1 - i) - 1;
+        nodeList[tmp[Mode(0, 0, n - 1 - i)]] = nodes[4 + 3 * (n - 2) + eI];
+        nodeList[tmp[Mode(i, 0, n - 1 - i)]] = nodes[4 + 4 * (n - 2) + eI];
+        nodeList[tmp[Mode(0, i, n - 1 - i)]] = nodes[4 + 5 * (n - 2) + eI];
     }
 
     if (n == 3)
@@ -363,11 +377,11 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
 
     // For faces, we use the triTensorNodeOrdering routine to make our lives
     // slightly easier.
-    int nFacePts = (n-3)*(n-2)/2;
+    int nFacePts = (n - 3) * (n - 2) / 2;
 
     // Grab face points and reorder into a tensor-product type format
     std::vector<std::vector<long long>> tmpNodes(4);
-    int offset = 4 + 6*(n-2);
+    int offset = 4 + 6 * (n - 2);
 
     for (int i = 0; i < 4; ++i)
     {
@@ -400,14 +414,14 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
     }
 
     // Reordered from NekMesh to put base last
-    for (int j = 1, cnt = 0; j < n-2; ++j)
+    for (int j = 1, cnt = 0; j < n - 2; ++j)
     {
-        for (int i = 1; i < n-j-1; ++i, ++cnt)
+        for (int i = 1; i < n - j - 1; ++i, ++cnt)
         {
-            nodeList[tmp[Mode(i,j,0)]]       = tmpNodes[3][cnt];
-            nodeList[tmp[Mode(i,0,j)]]       = tmpNodes[0][cnt];
-            nodeList[tmp[Mode(n-1-i-j,i,j)]] = tmpNodes[1][cnt];
-            nodeList[tmp[Mode(0,i,j)]]       = tmpNodes[2][cnt];
+            nodeList[tmp[Mode(i, j, 0)]]             = tmpNodes[3][cnt];
+            nodeList[tmp[Mode(i, 0, j)]]             = tmpNodes[0][cnt];
+            nodeList[tmp[Mode(n - 1 - i - j, i, j)]] = tmpNodes[1][cnt];
+            nodeList[tmp[Mode(0, i, j)]]             = tmpNodes[2][cnt];
         }
     }
 
@@ -431,7 +445,7 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
         {
             for (int i = 1; i < n - k - j - 1; ++i)
             {
-                nodeList[tmp[Mode(i,j,k)]] = tmpInt[cnt++];
+                nodeList[tmp[Mode(i, j, k)]] = tmpInt[cnt++];
             }
         }
     }
@@ -439,39 +453,38 @@ std::vector<long long> tetTensorNodeOrdering(const std::vector<long long> &nodes
     return nodeList;
 }
 
-std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nodes)
+std::vector<long long> prismTensorNodeOrdering(
+    const std::vector<long long> &nodes)
 {
     int nN = static_cast<int>(nodes.size());
-    int n = static_cast<int>(std::cbrt(2*nN));
+    int n  = static_cast<int>(std::cbrt(2 * nN));
 
     std::vector<long long> nodeList(nN);
-    int nTri = n*(n+1)/2;
-    int nQuad = n*n;
-    int nPrism = n*n*(n+1)/2;
+    int nTri   = n * (n + 1) / 2;
+    int nQuad  = n * n;
+    int nPrism = n * n * (n + 1) / 2;
 
     // Vertices
     nodeList[0] = nodes[0];
     if (n > 1)
     {
         nodeList[n - 1] = nodes[1];
-        
 
-        nodeList[n * (n + 1) / 2 - 1] = nodes[2];
-        nodeList[(n - 1) * (n * (n + 1) / 2)] = nodes[3];
-        nodeList[(n - 1) * (n * (n + 1) / 2) + (n - 1)] = nodes[4];
+        nodeList[n * (n + 1) / 2 - 1]                               = nodes[2];
+        nodeList[(n - 1) * (n * (n + 1) / 2)]                       = nodes[3];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + (n - 1)]             = nodes[4];
         nodeList[(n - 1) * (n * (n + 1) / 2) + n * (n + 1) / 2 - 1] = nodes[5];
     }
 
     return nodeList;
 
-
     nodeList[0] = nodes[0];
     if (n > 1)
     {
-        nodeList[n - 1] = nodes[1];
-        nodeList[n * (n + 1) / 2 - 1] = nodes[2];
-        nodeList[(n - 1) * (n * (n + 1) / 2)] = nodes[3];
-        nodeList[(n - 1) * (n * (n + 1) / 2) + (n - 1)] = nodes[4];
+        nodeList[n - 1]                                             = nodes[1];
+        nodeList[n * (n + 1) / 2 - 1]                               = nodes[2];
+        nodeList[(n - 1) * (n * (n + 1) / 2)]                       = nodes[3];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + (n - 1)]             = nodes[4];
         nodeList[(n - 1) * (n * (n + 1) / 2) + n * (n + 1) / 2 - 1] = nodes[5];
     }
 
@@ -490,9 +503,12 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
     for (int i = 1; i < n - 1; ++i)
     {
         // Triangle 2 edges
-        nodeList[(n - 1) * (n * (n + 1) / 2) + i]                = nodes[6 + 3 * (n - 2) + i - 1];
-        nodeList[(n - 1) * (n * (n + 1) / 2) + cnt2]             = nodes[6 + 3 * (n - 2) + 3 * (n - 2) - i];
-        nodeList[(n - 1) * (n * (n + 1) / 2) + cnt2 + n - i - 1] = nodes[6 + 3 * (n - 2) + (n - 2) + i - 1];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + i] =
+            nodes[6 + 3 * (n - 2) + i - 1];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + cnt2] =
+            nodes[6 + 3 * (n - 2) + 3 * (n - 2) - i];
+        nodeList[(n - 1) * (n * (n + 1) / 2) + cnt2 + n - i - 1] =
+            nodes[6 + 3 * (n - 2) + (n - 2) + i - 1];
 
         cnt2 += n - i;
     }
@@ -500,9 +516,10 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
     // Quad edges
     for (int i = 1; i < n - 1; ++i)
     {
-        nodeList[nTri * i]                       = nodes[6 + 6 * (n - 2) + i - 1];
-        nodeList[nTri * i + (n - 1)]             = nodes[6 + 6 * (n - 2) + i - 1 + n - 2];
-        nodeList[nTri * i + n * (n + 1) / 2 - 1] = nodes[6 + 6 * (n - 2) + i - 1 + 2 * (n - 2)];
+        nodeList[nTri * i]           = nodes[6 + 6 * (n - 2) + i - 1];
+        nodeList[nTri * i + (n - 1)] = nodes[6 + 6 * (n - 2) + i - 1 + n - 2];
+        nodeList[nTri * i + n * (n + 1) / 2 - 1] =
+            nodes[6 + 6 * (n - 2) + i - 1 + 2 * (n - 2)];
     }
 
     int np = 6 + 9 * (n - 2);
@@ -532,7 +549,6 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
         cnt5 += n - i;
         cnt6 += n - i - 2;
     }
-
 
     np += (n - 3) * (n - 2) / 2;
     // Quad 1 surface
@@ -567,13 +583,13 @@ std::vector<long long> prismTensorNodeOrdering(const std::vector<long long> &nod
     }
 
     return nodeList;
-
 }
 
-std::vector<long long> hexTensorNodeOrdering(const std::vector<long long> &nodes)
+std::vector<long long> hexTensorNodeOrdering(
+    const std::vector<long long> &nodes)
 {
     int nN = static_cast<int>(nodes.size());
-    int n = static_cast<int>(std::cbrt(nN));
+    int n  = static_cast<int>(std::cbrt(nN));
 
     std::vector<long long> nodeList(nN);
 
@@ -585,29 +601,34 @@ std::vector<long long> hexTensorNodeOrdering(const std::vector<long long> &nodes
     }
 
     // Vertices: same order as Nektar++
-    nodeList[n - 1]               = nodes[1];
-    nodeList[n*n -1]              = nodes[2];
-    nodeList[n*(n-1)]             = nodes[3];
-    nodeList[n*n*(n-1)]           = nodes[4];
-    nodeList[n - 1 + n*n*(n-1)]   = nodes[5];
-    nodeList[n*n -1 + n*n*(n-1)]  = nodes[6];
-    nodeList[n*(n-1) + n*n*(n-1)] = nodes[7];
+    nodeList[n - 1]                         = nodes[1];
+    nodeList[n * n - 1]                     = nodes[2];
+    nodeList[n * (n - 1)]                   = nodes[3];
+    nodeList[n * n * (n - 1)]               = nodes[4];
+    nodeList[n - 1 + n * n * (n - 1)]       = nodes[5];
+    nodeList[n * n - 1 + n * n * (n - 1)]   = nodes[6];
+    nodeList[n * (n - 1) + n * n * (n - 1)] = nodes[7];
 
     if (n == 2)
     {
         return nodeList;
     }
 
-    int hexEdges[12][2] = {
-            { 0, 1 }, { n-1, n }, { n*n-1, -1 }, { n*(n-1), -n },
-            { 0, n*n }, { n-1, n*n }, { n*n - 1, n*n }, { n*(n-1), n*n },
-            { n*n*(n-1), 1 }, { n*n*(n-1) + n-1, n }, { n*n*n-1, -1 },
-            { n*n*(n-1) + n*(n-1), -n }
-    };
-    int hexFaces[6][3] = {
-            { 0, 1, n }, { 0, 1, n*n }, { n-1, n, n*n },
-            { n*(n-1), 1, n*n }, { 0, n, n*n }, { n*n*(n-1), 1, n }
-    };
+    int hexEdges[12][2]   = {{0, 1},
+                           {n - 1, n},
+                           {n * n - 1, -1},
+                           {n * (n - 1), -n},
+                           {0, n * n},
+                           {n - 1, n * n},
+                           {n * n - 1, n * n},
+                           {n * (n - 1), n * n},
+                           {n * n * (n - 1), 1},
+                           {n * n * (n - 1) + n - 1, n},
+                           {n * n * n - 1, -1},
+                           {n * n * (n - 1) + n * (n - 1), -n}};
+    int hexFaces[6][3]    = {{0, 1, n},         {0, 1, n * n},
+                          {n - 1, n, n * n}, {n * (n - 1), 1, n * n},
+                          {0, n, n * n},     {n * n * (n - 1), 1, n}};
     int gmshToNekEdge[12] = {0, 1, -2, -3, 8, 9, -10, -11, 4, 5, 6, 7};
 
     // Edges
@@ -618,16 +639,17 @@ std::vector<long long> hexTensorNodeOrdering(const std::vector<long long> &nodes
 
         if (i >= 0)
         {
-            for (int j = 1; j < n-1; ++j)
+            for (int j = 1; j < n - 1; ++j)
             {
-                nodeList[hexEdges[e][0] + j*hexEdges[e][1]] = nodes[offset++];
+                nodeList[hexEdges[e][0] + j * hexEdges[e][1]] = nodes[offset++];
             }
         }
         else
         {
-            for (int j = 1; j < n-1; ++j)
+            for (int j = 1; j < n - 1; ++j)
             {
-                nodeList[hexEdges[e][0] + (n-j-1)*hexEdges[e][1]] = nodes[offset++];
+                nodeList[hexEdges[e][0] + (n - j - 1) * hexEdges[e][1]] =
+                    nodes[offset++];
             }
         }
     }
@@ -637,18 +659,18 @@ std::vector<long long> hexTensorNodeOrdering(const std::vector<long long> &nodes
 
     // Map which defines orientation between Gmsh and Nektar++ faces.
     StdRegions::Orientation faceOrient[6] = {
-            StdRegions::eDir1FwdDir2_Dir2FwdDir1,
-            StdRegions::eDir1FwdDir1_Dir2FwdDir2,
-            StdRegions::eDir1FwdDir2_Dir2FwdDir1,
-            StdRegions::eDir1FwdDir1_Dir2FwdDir2,
-            StdRegions::eDir1BwdDir1_Dir2FwdDir2,
-            StdRegions::eDir1FwdDir1_Dir2FwdDir2};
+        StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+        StdRegions::eDir1FwdDir1_Dir2FwdDir2,
+        StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+        StdRegions::eDir1FwdDir1_Dir2FwdDir2,
+        StdRegions::eDir1BwdDir1_Dir2FwdDir2,
+        StdRegions::eDir1FwdDir1_Dir2FwdDir2};
 
     for (int i = 0; i < 6; ++i)
     {
-        int n2 = (n-2)*(n-2);
+        int n2   = (n - 2) * (n - 2);
         int face = gmsh2NekFace[i];
-        offset   = 8 + 12 * (n-2) + i * n2;
+        offset   = 8 + 12 * (n - 2) + i * n2;
 
         // Create a list of interior face nodes for this face only.
         std::vector<long long> faceNodes(n2);
@@ -671,39 +693,40 @@ std::vector<long long> hexTensorNodeOrdering(const std::vector<long long> &nodes
         else if (faceOrient[i] == StdRegions::eDir1FwdDir2_Dir2FwdDir1)
         {
             // Tranposed faces
-            for (int j = 0; j < n-2; ++j)
+            for (int j = 0; j < n - 2; ++j)
             {
-                for (int k = 0; k < n-2; ++k)
+                for (int k = 0; k < n - 2; ++k)
                 {
-                    tmp[j * (n-2) + k] = faceNodes[k * (n-2) + j];
+                    tmp[j * (n - 2) + k] = faceNodes[k * (n - 2) + j];
                 }
             }
         }
         else if (faceOrient[i] == StdRegions::eDir1BwdDir1_Dir2FwdDir2)
         {
-            for (int j = 0; j < n-2; ++j)
+            for (int j = 0; j < n - 2; ++j)
             {
-                for (int k = 0; k < n-2; ++k)
+                for (int k = 0; k < n - 2; ++k)
                 {
-                    tmp[j * (n-2) + k] = faceNodes[j * (n-2) + (n - k - 3)];
+                    tmp[j * (n - 2) + k] = faceNodes[j * (n - 2) + (n - k - 3)];
                 }
             }
         }
 
         // Now put this into the right place in the output array
-        for (int k = 1; k < n-1; ++k)
+        for (int k = 1; k < n - 1; ++k)
         {
-            for (int j = 1; j < n-1; ++j)
+            for (int j = 1; j < n - 1; ++j)
             {
-                nodeList[hexFaces[face][0] + j*hexFaces[face][1] + k*hexFaces[face][2]]
-                        = faceNodes[(k-1)*(n-2) + j-1];
+                nodeList[hexFaces[face][0] + j * hexFaces[face][1] +
+                         k * hexFaces[face][2]] =
+                    faceNodes[(k - 1) * (n - 2) + j - 1];
             }
         }
     }
 
     // Finally, recurse on interior volume
     std::vector<long long> intNodes, tmpInt;
-    for (int i = 8 + 12 * (n-2) + 6 * (n-2) * (n-2); i < n*n*n; ++i)
+    for (int i = 8 + 12 * (n - 2) + 6 * (n - 2) * (n - 2); i < n * n * n; ++i)
     {
         intNodes.push_back(nodes[i]);
     }
@@ -738,16 +761,20 @@ std::vector<long long> lowOrderMapping(int nDim, Array<OneD, int> nquad)
                 {
                     for (int l = 0; l < nquad[2] - 1; ++l)
                     {
-                        p.insert(p.end(),
-                                 {l * nquad[0] * nquad[1] + k * nquad[0] + j,
-                                  l * nquad[0] * nquad[1] + k * nquad[0] + j + 1,
-                                  l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + 1,
-                                  l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j,
-                                  (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j,
-                                  (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j + 1,
-                                  (l + 1) * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j + 1,
-                                  (l + 1) * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j}
-                                  );
+                        p.insert(
+                            p.end(),
+                            {l * nquad[0] * nquad[1] + k * nquad[0] + j,
+                             l * nquad[0] * nquad[1] + k * nquad[0] + j + 1,
+                             l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j +
+                                 1,
+                             l * nquad[0] * nquad[1] + (k + 1) * nquad[0] + j,
+                             (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j,
+                             (l + 1) * nquad[0] * nquad[1] + k * nquad[0] + j +
+                                 1,
+                             (l + 1) * nquad[0] * nquad[1] +
+                                 (k + 1) * nquad[0] + j + 1,
+                             (l + 1) * nquad[0] * nquad[1] +
+                                 (k + 1) * nquad[0] + j});
                     }
                 }
             }
@@ -757,22 +784,16 @@ std::vector<long long> lowOrderMapping(int nDim, Array<OneD, int> nquad)
             {
                 for (int k = 0; k < nquad[1] - 1; ++k)
                 {
-                    p.insert(p.end(),
-                             {k * nquad[0] + j,
-                              k * nquad[0] + j + 1,
-                              (k + 1) * nquad[0] + j + 1,
-                              (k + 1) * nquad[0] + j}
-                              );
+                    p.insert(p.end(), {k * nquad[0] + j, k * nquad[0] + j + 1,
+                                       (k + 1) * nquad[0] + j + 1,
+                                       (k + 1) * nquad[0] + j});
                 }
             }
             break;
         case 1:
             for (int j = 0; j < nquad[0] - 1; ++j)
             {
-                p.insert(p.end(),
-                         {j,
-                          j + 1}
-                          );
+                p.insert(p.end(), {j, j + 1});
             }
             break;
         default:
@@ -782,22 +803,19 @@ std::vector<long long> lowOrderMapping(int nDim, Array<OneD, int> nquad)
     return p;
 }
 
-}
+} // namespace
 
 int OutputVtkNew::GetHighOrderVtkCellType(int sType)
 {
     // For deformed elements this is a map of shape type to VTK type
     static const std::map<int, int> vtkCellType = {
-            {
-                {LibUtilities::eSegment, VTK_LAGRANGE_CURVE},
-                {LibUtilities::eTriangle, VTK_LAGRANGE_TRIANGLE},
-                {LibUtilities::eQuadrilateral, VTK_LAGRANGE_QUADRILATERAL},
-                {LibUtilities::eTetrahedron, VTK_LAGRANGE_TETRAHEDRON},
-                {LibUtilities::ePyramid, VTK_LAGRANGE_PYRAMID},
-                {LibUtilities::ePrism, VTK_LAGRANGE_WEDGE},
-                {LibUtilities::eHexahedron, VTK_LAGRANGE_HEXAHEDRON}
-            }
-    };
+        {{LibUtilities::eSegment, VTK_LAGRANGE_CURVE},
+         {LibUtilities::eTriangle, VTK_LAGRANGE_TRIANGLE},
+         {LibUtilities::eQuadrilateral, VTK_LAGRANGE_QUADRILATERAL},
+         {LibUtilities::eTetrahedron, VTK_LAGRANGE_TETRAHEDRON},
+         {LibUtilities::ePyramid, VTK_LAGRANGE_PYRAMID},
+         {LibUtilities::ePrism, VTK_LAGRANGE_WEDGE},
+         {LibUtilities::eHexahedron, VTK_LAGRANGE_HEXAHEDRON}}};
 
     return vtkCellType.at(sType);
 }
@@ -805,7 +823,8 @@ int OutputVtkNew::GetHighOrderVtkCellType(int sType)
 void OutputVtkNew::OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal, "OutputVtkNew can't write using only FieldData.");
+    NEKERROR(ErrorUtil::efatal,
+             "OutputVtkNew can't write using only FieldData.");
 }
 
 void OutputVtkNew::OutputFromPts(po::variables_map &vm)
@@ -835,7 +854,8 @@ void OutputVtkNew::OutputFromExp(po::variables_map &vm)
     }
 }
 
-void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &filename)
+void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm,
+                                         std::string &filename)
 {
     boost::ignore_unused(vm);
 
@@ -849,21 +869,23 @@ void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &fil
     std::unordered_map<size_t, std::vector<long long>> mappingCache;
 
     // Choose cell types and num quad points based on dimension
-    int nDim = m_f->m_exp[0]->GetShapeDimension();
-    auto type = (nDim == 3) ? VTK_HEXAHEDRON : (nDim == 2) ? VTK_QUAD : VTK_LINE;
-    int nQpts = (nDim == 3) ? 8              : (nDim == 2) ? 4        : 2;
+    int nDim  = m_f->m_exp[0]->GetShapeDimension();
+    auto type = (nDim == 3)   ? VTK_HEXAHEDRON
+                : (nDim == 2) ? VTK_QUAD
+                              : VTK_LINE;
+    int nQpts = (nDim == 3) ? 8 : (nDim == 2) ? 4 : 2;
 
     int nElmts = static_cast<int>(m_f->m_exp[0]->GetNumElmts());
     for (int i = 0; i < nElmts; ++i)
     {
         int nPts = static_cast<int>(m_f->m_exp[0]->GetExp(i)->GetTotPoints());
 
-        Array<OneD, NekDouble> x(nPts,0.0), y(nPts,0.0), z(nPts,0.0);
+        Array<OneD, NekDouble> x(nPts, 0.0), y(nPts, 0.0), z(nPts, 0.0);
         m_f->m_exp[0]->GetExp(i)->GetCoords(x, y, z);
 
         for (int j = 0; j < nPts; ++j)
         {
-          vtkPoints->InsertNextPoint(x[j], y[j], z[j]);
+            vtkPoints->InsertNextPoint(x[j], y[j], z[j]);
         }
 
         Array<OneD, int> nquad(3, 0);
@@ -879,13 +901,17 @@ void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &fil
         if (oIt == mappingCache.end())
         {
             auto p = lowOrderMapping(nDim, nquad);
-            oIt = mappingCache.insert(std::make_pair(key3(nquad[0], nquad[1], nquad[2]), p)).first;
+            oIt    = mappingCache
+                      .insert(
+                          std::make_pair(key3(nquad[0], nquad[1], nquad[2]), p))
+                      .first;
         }
 
         auto p = oIt->second;
-        std::for_each(p.begin(), p.end(),[offset](long long &d) { d += offset; });
+        std::for_each(p.begin(), p.end(),
+                      [offset](long long &d) { d += offset; });
 
-        for (int j = 0; j < p.size(); j+=nQpts)
+        for (int j = 0; j < p.size(); j += nQpts)
         {
             vtkMesh->InsertNextCell(type, nQpts, &p[j]);
         }
@@ -910,9 +936,11 @@ void OutputVtkNew::OutputFromExpLowOrder(po::variables_map &vm, std::string &fil
     WriteVTK(vtkMesh, filename, vm);
 }
 
-void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &filename)
+void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm,
+                                          std::string &filename)
 {
-    // Save shapetypes before convert to equispaced because that nukes the explist
+    // Save shapetypes before convert to equispaced because that nukes the
+    // explist
     std::vector<LibUtilities::ShapeType> sType;
     for (auto &i : *m_f->m_exp[0]->GetExp())
     {
@@ -920,7 +948,8 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
     }
 
     // Convert expansion to an equispaced points field
-    auto equispaced = MemoryManager<ProcessEquiSpacedOutput>::AllocateSharedPtr(m_f);
+    auto equispaced =
+        MemoryManager<ProcessEquiSpacedOutput>::AllocateSharedPtr(m_f);
     equispaced->Process(vm);
 
     // Insert points
@@ -931,7 +960,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
     Array<OneD, Array<OneD, NekDouble>> pts;
     fPts->GetPts(pts);
 
-    int dim = static_cast<int>(fPts->GetDim());
+    int dim  = static_cast<int>(fPts->GetDim());
     int nPts = static_cast<int>(fPts->GetNpoints());
     switch (dim)
     {
@@ -939,20 +968,21 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
             for (int i = 0; i < nPts; ++i)
             {
                 // @TODO: Remove debug (keep for now to do prism!)
-                //std::cout << pts[0][i] << " " << pts[1][i] << " " << pts[2][i] << std::endl;
-                vtkPoints->InsertNextPoint(pts[0][i],pts[1][i],pts[2][i]);
+                // std::cout << pts[0][i] << " " << pts[1][i] << " " <<
+                // pts[2][i] << std::endl;
+                vtkPoints->InsertNextPoint(pts[0][i], pts[1][i], pts[2][i]);
             }
             break;
         case 2:
             for (int i = 0; i < nPts; ++i)
             {
-                vtkPoints->InsertNextPoint(pts[0][i],pts[1][i], 0.0);
+                vtkPoints->InsertNextPoint(pts[0][i], pts[1][i], 0.0);
             }
             break;
         case 1:
             for (int i = 0; i < nPts; ++i)
             {
-                vtkPoints->InsertNextPoint(pts[0][i],0.0,0.0);
+                vtkPoints->InsertNextPoint(pts[0][i], 0.0, 0.0);
             }
             break;
         default:
@@ -1006,7 +1036,7 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
             // @TODO: Remove debug (keep for now to do prism!)
             for (int q = 0; q < p.size(); ++q)
             {
-                //std::cout << q << "\t" << p[q] << std::endl;
+                // std::cout << q << "\t" << p[q] << std::endl;
             }
 
             // Invert the ordering as this is for spectral -> recursive (VTU)
@@ -1017,20 +1047,24 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
             }
 
             // @TODO: Remove debug (keep for now to do prism!)
-            //std::cout << "----------------------------" << std::endl;
+            // std::cout << "----------------------------" << std::endl;
             for (int q = 0; q < p.size(); ++q)
             {
-                //std::cout << q << "\t" << inv[q] << std::endl;
+                // std::cout << q << "\t" << inv[q] << std::endl;
             }
 
-            oIt = mappingCache.insert(std::make_pair(key2(sType[i], ppe[i]), inv)).first;
+            oIt =
+                mappingCache.insert(std::make_pair(key2(sType[i], ppe[i]), inv))
+                    .first;
         }
 
         // Add offset to reordering
         std::vector<long long> p = oIt->second;
-        std::for_each(p.begin(), p.end(),[j = ppeOffset[i]](long long &d) { d += j; });
+        std::for_each(p.begin(), p.end(),
+                      [j = ppeOffset[i]](long long &d) { d += j; });
 
-        vtkMesh->InsertNextCell(GetHighOrderVtkCellType(sType[i]), ppe[i], &p[0]);
+        vtkMesh->InsertNextCell(GetHighOrderVtkCellType(sType[i]), ppe[i],
+                                &p[0]);
     }
 
     // Insert field information
@@ -1045,12 +1079,11 @@ void OutputVtkNew::OutputFromExpHighOrder(po::variables_map &vm, std::string &fi
     WriteVTK(vtkMesh, filename, vm);
 }
 
-void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh,
-                            std::string &filename,
+void OutputVtkNew::WriteVTK(vtkUnstructuredGrid *vtkMesh, std::string &filename,
                             po::variables_map &vm)
 {
     // Set time information if exists
-    if(!m_f->m_fieldMetaDataMap["Time"].empty())
+    if (!m_f->m_fieldMetaDataMap["Time"].empty())
     {
         vtkNew<vtkDoubleArray> t;
         t->SetName("TimeValue");
@@ -1058,7 +1091,7 @@ void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh,
         t->SetTuple1(0, std::stod(m_f->m_fieldMetaDataMap["Time"]));
         vtkMesh->GetFieldData()->AddArray(t);
     }
-    
+
     // Write out the new mesh in XML format (don't support legacy
     // format here as we still have standard OutputVtk.cpp)
     vtkNew<vtkXMLUnstructuredGridWriter> vtkMeshWriter;
@@ -1078,7 +1111,7 @@ void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh,
     if (m_config["compressionlevel"].m_beenSet)
     {
         vtkMeshWriter->SetCompressionLevel(
-                std::stoi(m_config["compressionlevel"].m_value));
+            std::stoi(m_config["compressionlevel"].m_value));
     }
 
     vtkMeshWriter->Update();
@@ -1089,7 +1122,7 @@ void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh,
     // We could use the VTK lib to do this, but that requires VTK with MPI
     // enabled & messing about with the parallel controller & changing
     // our file naming scheme as VTK forces _${proc-number} as a suffix...
-    if(m_f->m_comm->TreatAsRankZero() && !m_f->m_comm->IsSerial())
+    if (m_f->m_comm->TreatAsRankZero() && !m_f->m_comm->IsSerial())
     {
         WritePVtu(vm);
     }
@@ -1097,15 +1130,16 @@ void OutputVtkNew::WriteVTK(vtkUnstructuredGrid* vtkMesh,
 
 void OutputVtkNew::WritePVtu(po::variables_map &vm)
 {
-    std::string filename  = m_config["outfile"].as<std::string>();
-    int dot          = filename.find_last_of('.');
-    std::string body      = filename.substr(0, dot);
-    filename         = body + ".pvtu";
+    std::string filename = m_config["outfile"].as<std::string>();
+    int dot              = filename.find_last_of('.');
+    std::string body     = filename.substr(0, dot);
+    filename             = body + ".pvtu";
 
     std::ofstream outfile(filename.c_str());
 
-    int nprocs  = m_f->m_comm->GetSize();
-    std::string path = LibUtilities::PortablePath(OutputVtk::GetPath(filename,vm));
+    int nprocs = m_f->m_comm->GetSize();
+    std::string path =
+        LibUtilities::PortablePath(OutputVtk::GetPath(filename, vm));
 
     outfile << "<?xml version=\"1.0\"?>" << endl;
     outfile << "<VTKFile type=\"PUnstructuredGrid\" version=\"0.1\" "
@@ -1113,11 +1147,12 @@ void OutputVtkNew::WritePVtu(po::variables_map &vm)
     outfile << "  <PUnstructuredGrid GhostLevel=\"0\">" << endl;
 
     // Add time if exists
-    if(!m_f->m_fieldMetaDataMap["Time"].empty())
+    if (!m_f->m_fieldMetaDataMap["Time"].empty())
     {
         outfile << "    <FieldData> " << endl;
         outfile << "      <DataArray type=\"Float64\" Name=\"TimeValue\" "
-                   "NumberOfTuples=\"1\" format=\"ascii\">" << endl;
+                   "NumberOfTuples=\"1\" format=\"ascii\">"
+                << endl;
         outfile << m_f->m_fieldMetaDataMap["Time"] << std::endl;
         outfile << "      </DataArray>" << std::endl;
         outfile << "    </FieldData> " << endl;
@@ -1146,8 +1181,8 @@ void OutputVtkNew::WritePVtu(po::variables_map &vm)
     outfile << "    <PPointData>" << endl;
     for (auto &var : m_f->m_variables)
     {
-        outfile << "      <PDataArray type=\"Float64\" Name=\""
-                << var << "\"/>" << endl;
+        outfile << "      <PDataArray type=\"Float64\" Name=\"" << var << "\"/>"
+                << endl;
     }
     outfile << "    </PPointData>" << endl;
 
@@ -1156,8 +1191,8 @@ void OutputVtkNew::WritePVtu(po::variables_map &vm)
     {
         boost::format pad("P%1$07d.vtu");
         pad % i;
-        outfile << "    <Piece Source=\"" << path << "/" << pad.str()
-                << "\"/>" << endl;
+        outfile << "    <Piece Source=\"" << path << "/" << pad.str() << "\"/>"
+                << endl;
     }
     outfile << "  </PUnstructuredGrid>" << endl;
     outfile << "</VTKFile>" << endl;
@@ -1165,5 +1200,5 @@ void OutputVtkNew::WritePVtu(po::variables_map &vm)
     cout << "Written file: " << filename << endl;
 }
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

@@ -51,17 +51,16 @@ class CFSBndCond;
 typedef std::shared_ptr<CFSBndCond> CFSBndCondSharedPtr;
 
 /// Declaration of the boundary condition factory
-typedef LibUtilities::NekFactory<std::string, CFSBndCond,
-        const LibUtilities::SessionReaderSharedPtr&,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&,
-        const Array<OneD, Array<OneD, NekDouble> >&,
-        const Array<OneD, Array<OneD, NekDouble> >&,
-        const int,
-        const int,
-        const int> CFSBndCondFactory;
+typedef LibUtilities::NekFactory<
+    std::string, CFSBndCond, const LibUtilities::SessionReaderSharedPtr &,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &,
+    const Array<OneD, Array<OneD, NekDouble>> &,
+    const Array<OneD, Array<OneD, NekDouble>> &, const int, const int,
+    const int>
+    CFSBndCondFactory;
 
 /// Declaration of the boundary condition factory singleton
-CFSBndCondFactory& GetCFSBndCondFactory();
+CFSBndCondFactory &GetCFSBndCondFactory();
 
 /**
  * @class CFSBndCond
@@ -70,66 +69,64 @@ CFSBndCondFactory& GetCFSBndCondFactory();
  */
 class CFSBndCond
 {
-    public:
-        virtual ~CFSBndCond() {}
+public:
+    virtual ~CFSBndCond()
+    {
+    }
 
-        /// Apply the boundary condition
-        void Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time = 0);
+    /// Apply the boundary condition
+    void Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+               Array<OneD, Array<OneD, NekDouble>> &physarray,
+               const NekDouble &time = 0);
 
-        /// Apply the Weight of boundary condition
-        void ApplyBwdWeight()
-        {
-            v_ApplyBwdWeight();
-        }
+    /// Apply the Weight of boundary condition
+    void ApplyBwdWeight()
+    {
+        v_ApplyBwdWeight();
+    }
 
-    protected:
-        /// Session reader
-        LibUtilities::SessionReaderSharedPtr m_session;
-        /// Array of fields
-        Array<OneD, MultiRegions::ExpListSharedPtr> m_fields;
-        /// Trace normals
-        Array<OneD, Array<OneD, NekDouble> > m_traceNormals;
-        /// Grid Velocity
-        Array<OneD, Array<OneD, NekDouble> > m_gridVelocityTrace;
-        /// Space dimension
-        int m_spacedim;
-        /// Auxiliary object to convert variables
-        VariableConverterSharedPtr           m_varConv;
-        /// Weight for average calculation of diffusion term
-        NekDouble m_diffusionAveWeight;
+protected:
+    /// Session reader
+    LibUtilities::SessionReaderSharedPtr m_session;
+    /// Array of fields
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_fields;
+    /// Trace normals
+    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
+    /// Grid Velocity
+    Array<OneD, Array<OneD, NekDouble>> m_gridVelocityTrace;
+    /// Space dimension
+    int m_spacedim;
+    /// Auxiliary object to convert variables
+    VariableConverterSharedPtr m_varConv;
+    /// Weight for average calculation of diffusion term
+    NekDouble m_diffusionAveWeight;
 
-        /// Parameters of the flow
-        NekDouble m_gamma;
-        NekDouble m_rhoInf;
-        NekDouble m_pInf;
-        NekDouble m_pOut;
-        Array<OneD, NekDouble> m_velInf;
-        NekDouble m_angVel;
+    /// Parameters of the flow
+    NekDouble m_gamma;
+    NekDouble m_rhoInf;
+    NekDouble m_pInf;
+    NekDouble m_pOut;
+    Array<OneD, NekDouble> m_velInf;
+    NekDouble m_angVel;
 
-        /// Id of the boundary region
-        int       m_bcRegion;
-        /// Offset
-        int       m_offset;
+    /// Id of the boundary region
+    int m_bcRegion;
+    /// Offset
+    int m_offset;
 
-        /// Constructor
-        CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >&       pTraceNormals,
-                const Array<OneD, Array<OneD, NekDouble> >&       pGridVelocity,
-                   const int pSpaceDim,
-                const int bcRegion,
-                const int cnt);
+    /// Constructor
+    CFSBndCond(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+               const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+               const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+               const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time)=0;
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time) = 0;
 
-        virtual void v_ApplyBwdWeight();
+    virtual void v_ApplyBwdWeight();
 };
-}
+} // namespace Nektar
 
 #endif

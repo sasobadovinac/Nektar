@@ -58,13 +58,13 @@ ZoneBase::ZoneBase(MovementType type, int indx, CompositeMap domain,
             switch (geom->GetShapeDim())
             {
                 case 3:
-                    for(int i = 0; i < geom->GetNumFaces(); ++i)
+                    for (int i = 0; i < geom->GetNumFaces(); ++i)
                     {
                         m_constituentElements[2].insert(geom->GetFace(i));
                     }
                     /* fall through */
                 case 2:
-                    for(int i = 0; i < geom->GetNumEdges(); ++i)
+                    for (int i = 0; i < geom->GetNumEdges(); ++i)
                     {
                         m_constituentElements[1].insert(geom->GetEdge(i));
                     }
@@ -176,7 +176,8 @@ ZoneRotate::ZoneRotate(int id, const CompositeMap &domain, const int coordDim,
 
 void ZoneBase::ClearBoundingBoxes()
 {
-    // Clear bboxes (these will be regenerated next time GetBoundingBox is called)
+    // Clear bboxes (these will be regenerated next time GetBoundingBox is
+    // called)
     for (auto &el : m_elements)
     {
         el->ClearBoundingBox();
@@ -197,7 +198,7 @@ void ZoneBase::ClearBoundingBoxes()
 
 NekDouble ZoneRotate::GetAngularVel(NekDouble &time) const
 {
-    return m_angularVelEqn->Evaluate(0,0,0,time);
+    return m_angularVelEqn->Evaluate(0, 0, 0, time);
 }
 
 // Calculate new location of points using Rodrigues formula
@@ -205,8 +206,10 @@ bool ZoneRotate::v_Move(NekDouble time)
 {
     NekDouble angle = GetAngularVel(time) * time;
     // TODO: For none constant angular velocity this doesn't work ^^
-    // @TODO: I need to take into account the total angle, summing timesteps works here
-    // @TODO: but then it doesn't work for FieldConvert where only the checkpoint time is known
+    // @TODO: I need to take into account the total angle, summing timesteps
+    // works here
+    // @TODO: but then it doesn't work for FieldConvert where only the
+    // checkpoint time is known
     // TODO: I want to integrate m_angularVelEqn up to current time
 
     // Identity matrix
@@ -222,12 +225,11 @@ bool ZoneRotate::v_Move(NekDouble time)
     for (auto &vert : m_verts)
     {
         NekPoint<NekDouble> pnt = m_origVerts[cnt] - m_origin;
-        DNekVec pntVec = {pnt[0], pnt[1], pnt[2]};
+        DNekVec pntVec          = {pnt[0], pnt[1], pnt[2]};
 
         DNekVec newLoc = rot * pntVec;
 
-        vert->UpdatePosition(newLoc(0) + m_origin[0],
-                             newLoc(1) + m_origin[1],
+        vert->UpdatePosition(newLoc(0) + m_origin[0], newLoc(1) + m_origin[1],
                              newLoc(2) + m_origin[2]);
         cnt++;
     }
@@ -237,7 +239,7 @@ bool ZoneRotate::v_Move(NekDouble time)
         for (auto &vert : curve->m_points)
         {
             NekPoint<NekDouble> pnt = m_origVerts[cnt] - m_origin;
-            DNekVec pntVec = {pnt[0], pnt[1], pnt[2]};
+            DNekVec pntVec          = {pnt[0], pnt[1], pnt[2]};
 
             DNekVec newLoc = rot * pntVec;
 
@@ -258,7 +260,7 @@ std::vector<NekDouble> ZoneTranslate::GetVel(NekDouble &time) const
     std::vector<NekDouble> vel(m_coordDim);
     for (int i = 0; i < m_coordDim; ++i)
     {
-        vel[i] = m_velocityEqns[i]->Evaluate(0,0,0,time);
+        vel[i] = m_velocityEqns[i]->Evaluate(0, 0, 0, time);
     }
 
     return vel;
@@ -269,7 +271,7 @@ std::vector<NekDouble> ZoneTranslate::GetDisp(NekDouble &time) const
     std::vector<NekDouble> disp(m_coordDim);
     for (int i = 0; i < m_coordDim; ++i)
     {
-        disp[i] = m_displacementEqns[i]->Evaluate(0,0,0,time);
+        disp[i] = m_displacementEqns[i]->Evaluate(0, 0, 0, time);
     }
 
     return disp;
@@ -333,9 +335,12 @@ bool ZonePrescribe::v_Move(NekDouble time)
         vert->GetCoords(coords);
 
         Array<OneD, NekDouble> newLoc(3, 0.0);
-        newLoc[0] = m_xDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(0);
-        newLoc[1] = m_yDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(1);
-        newLoc[2] = m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(2);
+        newLoc[0] =
+            m_xDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(0);
+        newLoc[1] =
+            m_yDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(1);
+        newLoc[2] =
+            m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(2);
 
         vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
     }
@@ -345,5 +350,5 @@ bool ZonePrescribe::v_Move(NekDouble time)
     return true;
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

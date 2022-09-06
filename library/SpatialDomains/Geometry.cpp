@@ -52,8 +52,9 @@ GeomFactorsVector Geometry::m_regGeomFactorsManager;
  * @brief Default constructor.
  */
 Geometry::Geometry()
-    : m_coordim(0), m_geomFactorsState(eNotFilled), m_state(eNotFilled), m_setupState(false),
-      m_shapeType(LibUtilities::eNoShapeType), m_globalID(-1)
+    : m_coordim(0), m_geomFactorsState(eNotFilled), m_state(eNotFilled),
+      m_setupState(false), m_shapeType(LibUtilities::eNoShapeType),
+      m_globalID(-1)
 {
 }
 
@@ -61,8 +62,9 @@ Geometry::Geometry()
  * @brief Constructor when supplied a coordinate dimension.
  */
 Geometry::Geometry(const int coordim)
-    : m_coordim(coordim), m_geomFactorsState(eNotFilled), m_state(eNotFilled), m_setupState(false),
-      m_shapeType(LibUtilities::eNoShapeType), m_globalID(-1)
+    : m_coordim(coordim), m_geomFactorsState(eNotFilled), m_state(eNotFilled),
+      m_setupState(false), m_shapeType(LibUtilities::eNoShapeType),
+      m_globalID(-1)
 {
 }
 
@@ -249,19 +251,18 @@ StdRegions::StdExpansionSharedPtr Geometry::v_GetXmap() const
  *     NekDouble, NekDouble&)
  */
 bool Geometry::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                               Array<OneD, NekDouble> &locCoord,
-                               NekDouble tol,
+                               Array<OneD, NekDouble> &locCoord, NekDouble tol,
                                NekDouble &dist)
 {
     // Convert to the local (xi) coordinates.
     dist = GetLocCoords(gloCoord, locCoord);
-    if(dist<=tol + NekConstants::kNekMachineEpsilon)
+    if (dist <= tol + NekConstants::kNekMachineEpsilon)
     {
         return true;
     }
     Array<OneD, NekDouble> eta(GetShapeDim(), 0.);
     m_xmap->LocCoordToLocCollapsed(locCoord, eta);
-    if(ClampLocCoords(eta, tol))
+    if (ClampLocCoords(eta, tol))
     {
         m_xmap->LocCollapsedToLocCoord(eta, locCoord);
         return false;
@@ -324,7 +325,7 @@ int Geometry::v_GetEdgeNormalToFaceVert(const int i, const int j) const
              "This function has not been defined for this geometry");
     return 0;
 }
-    
+
 /**
  * @copydoc Geometry::GetDir()
  */
@@ -335,7 +336,7 @@ int Geometry::v_GetDir(const int i, const int j) const
              "This function has not been defined for this geometry");
     return 0;
 }
-    
+
 /**
  * @copydoc Geometry::GetCoord()
  */
@@ -377,7 +378,7 @@ void Geometry::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
     boost::ignore_unused(curvedEdges, curvedFaces);
 
     // Reset state
-    m_state = eNotFilled;
+    m_state            = eNotFilled;
     m_geomFactorsState = eNotFilled;
 
     // Junk geometric factors
@@ -390,7 +391,6 @@ void Geometry::v_Setup()
              "This function is only valid for expansion type geometries");
 }
 
-
 /**
  * @brief Generates the bounding box for the element.
  *
@@ -402,12 +402,12 @@ void Geometry::v_Setup()
  */
 std::array<NekDouble, 6> Geometry::GetBoundingBox()
 {
-    if(m_boundingBox.size() == 6)
+    if (m_boundingBox.size() == 6)
     {
-        return {{ m_boundingBox[0], m_boundingBox[1], m_boundingBox[2],
-                  m_boundingBox[3], m_boundingBox[4], m_boundingBox[5] }};
+        return {{m_boundingBox[0], m_boundingBox[1], m_boundingBox[2],
+                 m_boundingBox[3], m_boundingBox[4], m_boundingBox[5]}};
     }
-    //NekDouble minx, miny, minz, maxx, maxy, maxz;
+    // NekDouble minx, miny, minz, maxx, maxy, maxz;
     Array<OneD, NekDouble> min(3), max(3);
 
     // Always get vertexes min/max
@@ -456,26 +456,25 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
     for (int j = 0; j < 3; ++j)
     {
         const NekDouble len = max[j] - min[j];
-        min[j] -= (0.1*len + NekConstants::kGeomFactorsTol);
-        max[j] += (0.1*len + NekConstants::kGeomFactorsTol);
+        min[j] -= (0.1 * len + NekConstants::kGeomFactorsTol);
+        max[j] += (0.1 * len + NekConstants::kGeomFactorsTol);
     }
 
-    //save bounding box
+    // save bounding box
     m_boundingBox = Array<OneD, NekDouble>(6);
-    for(int j=0; j<3; ++j)
+    for (int j = 0; j < 3; ++j)
     {
-        m_boundingBox[j  ] = min[j];
-        m_boundingBox[j+3] = max[j];
+        m_boundingBox[j]     = min[j];
+        m_boundingBox[j + 3] = max[j];
     }
     // Return bounding box
-    return {{ min[0], min[1], min[2], max[0], max[1], max[2] }};
+    return {{min[0], min[1], min[2], max[0], max[1], max[2]}};
 }
 
 void Geometry::ClearBoundingBox()
 {
     m_boundingBox = {};
 }
-
 
 /**
  * @brief Check if given global coord is within the BoundingBox
@@ -495,7 +494,7 @@ bool Geometry::MinMaxCheck(const Array<OneD, const NekDouble> &gloCoord)
     std::array<NekDouble, 6> minMax = GetBoundingBox();
     for (int i = 0; i < m_coordim; ++i)
     {
-        if ( (gloCoord[i] < minMax[i]) || (gloCoord[i] > minMax[i+3]) )
+        if ((gloCoord[i] < minMax[i]) || (gloCoord[i] > minMax[i + 3]))
         {
             return false;
         }
@@ -503,14 +502,12 @@ bool Geometry::MinMaxCheck(const Array<OneD, const NekDouble> &gloCoord)
     return true;
 }
 
-
 /**
  * @brief Clamp local coords to be within standard regions [-1, 1]^dim.
  *
  * @param Lcoords  Corresponding local coordinates
  */
-bool Geometry::ClampLocCoords(Array<OneD, NekDouble> &locCoord,
-                                  NekDouble tol)
+bool Geometry::ClampLocCoords(Array<OneD, NekDouble> &locCoord, NekDouble tol)
 {
     // Validation checks
     ASSERTL1(locCoord.size() >= GetShapeDim(),
@@ -524,25 +521,24 @@ bool Geometry::ClampLocCoords(Array<OneD, NekDouble> &locCoord,
     bool clamp = false;
     for (int i = 0; i < GetShapeDim(); ++i)
     {
-        if(!std::isfinite(locCoord[i]))
+        if (!std::isfinite(locCoord[i]))
         {
             locCoord[i] = 0.;
-            clamp = true;
+            clamp       = true;
         }
         else if (locCoord[i] < -(1. + tol))
         {
             locCoord[i] = -(1. + tol);
-            clamp = true;
+            clamp       = true;
         }
         else if (locCoord[i] > (1. + tol))
         {
             locCoord[i] = 1. + tol;
-            clamp = true;
+            clamp       = true;
         }
     }
     return clamp;
 }
 
-
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

@@ -41,49 +41,44 @@ using namespace std;
 namespace Nektar
 {
 
-std::string RiemannInvariantBC::className = GetCFSBndCondFactory().
-    RegisterCreatorFunction("RiemannInvariant",
-                            RiemannInvariantBC::create,
-                            "Riemann invariant boundary condition.");
+std::string RiemannInvariantBC::className =
+    GetCFSBndCondFactory().RegisterCreatorFunction(
+        "RiemannInvariant", RiemannInvariantBC::create,
+        "Riemann invariant boundary condition.");
 
 RiemannInvariantBC::RiemannInvariantBC(
-           const LibUtilities::SessionReaderSharedPtr& pSession,
-           const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-           const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-           const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-           const int pSpaceDim,
-           const int bcRegion,
-           const int cnt)
-    : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+    const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+    const int pSpaceDim, const int bcRegion, const int cnt)
+    : CFSBndCond(pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
+                 bcRegion, cnt)
 {
     // Calculate VnInf
     int nTracePts = m_fields[0]->GetTrace()->GetNpoints();
-    m_VnInf = Array<OneD, NekDouble> (nTracePts, 0.0);
+    m_VnInf       = Array<OneD, NekDouble>(nTracePts, 0.0);
 
     // Computing the normal velocity for characteristics coming
     // from outside the computational domain
-    for( int i =0; i < m_spacedim; i++)
+    for (int i = 0; i < m_spacedim; i++)
     {
-        Vmath::Svtvp(nTracePts, m_velInf[i], 
-                     m_traceNormals[i], 1,
-                     m_VnInf, 1,
+        Vmath::Svtvp(nTracePts, m_velInf[i], m_traceNormals[i], 1, m_VnInf, 1,
                      m_VnInf, 1);
     }
 }
 
-void RiemannInvariantBC::v_Apply(
-        Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-        Array<OneD, Array<OneD, NekDouble> >               &physarray,
-        const NekDouble                                    &time)
+void RiemannInvariantBC::v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                                 Array<OneD, Array<OneD, NekDouble>> &physarray,
+                                 const NekDouble &time)
 {
     boost::ignore_unused(physarray, time);
 
     int i, j;
-    int nTracePts = m_fields[0]->GetTrace()->GetNpoints();
+    int nTracePts   = m_fields[0]->GetTrace()->GetNpoints();
     int nDimensions = m_spacedim;
 
-    const Array<OneD, const int> &traceBndMap
-        = m_fields[0]->GetTraceBndMap();
+    const Array<OneD, const int> &traceBndMap = m_fields[0]->GetTraceBndMap();
 
     NekDouble gammaInv         = 1.0 / m_gamma;
     NekDouble gammaMinusOne    = m_gamma - 1.0;
@@ -91,28 +86,28 @@ void RiemannInvariantBC::v_Apply(
 
     // Computing the normal velocity for characteristics coming
     // from inside the computational domain
-    Array<OneD, NekDouble > Vn (nTracePts, 0.0);
-    Array<OneD, NekDouble > Vel(nTracePts, 0.0);
+    Array<OneD, NekDouble> Vn(nTracePts, 0.0);
+    Array<OneD, NekDouble> Vel(nTracePts, 0.0);
     for (i = 0; i < nDimensions; ++i)
     {
-        Vmath::Vdiv(nTracePts, Fwd[i+1], 1, Fwd[0], 1, Vel, 1);
+        Vmath::Vdiv(nTracePts, Fwd[i + 1], 1, Fwd[0], 1, Vel, 1);
         Vmath::Vvtvp(nTracePts, m_traceNormals[i], 1, Vel, 1, Vn, 1, Vn, 1);
     }
 
     // Computing the absolute value of the velocity in order to compute the
     // Mach number to decide whether supersonic or subsonic
-    Array<OneD, NekDouble > absVel(nTracePts, 0.0);
+    Array<OneD, NekDouble> absVel(nTracePts, 0.0);
     m_varConv->GetAbsoluteVelocity(Fwd, absVel);
 
     // Get speed of sound
-    Array<OneD, NekDouble > pressure  (nTracePts);
-    Array<OneD, NekDouble > soundSpeed(nTracePts);
+    Array<OneD, NekDouble> pressure(nTracePts);
+    Array<OneD, NekDouble> soundSpeed(nTracePts);
 
     m_varConv->GetPressure(Fwd, pressure);
     m_varConv->GetSoundSpeed(Fwd, soundSpeed);
 
     // Get Mach
-    Array<OneD, NekDouble > Mach(nTracePts, 0.0);
+    Array<OneD, NekDouble> Mach(nTracePts, 0.0);
     Vmath::Vdiv(nTracePts, Vn, 1, soundSpeed, 1, Mach, 1);
     Vmath::Vabs(nTracePts, Mach, 1, Mach, 1);
 
@@ -129,17 +124,20 @@ void RiemannInvariantBC::v_Apply(
     // Loop on m_bcRegions
     for (e = 0; e < eMax; ++e)
     {
-        nBCEdgePts = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-            GetExp(e)->GetTotPoints();
+        nBCEdgePts = m_fields[0]
+                         ->GetBndCondExpansions()[m_bcRegion]
+                         ->GetExp(e)
+                         ->GetTotPoints();
 
-        id1 = m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-            GetPhys_Offset(e);
-        id2 = m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset+e]);
+        id1 =
+            m_fields[0]->GetBndCondExpansions()[m_bcRegion]->GetPhys_Offset(e);
+        id2 =
+            m_fields[0]->GetTrace()->GetPhys_Offset(traceBndMap[m_offset + e]);
 
         // Loop on the points of the m_bcRegion
         for (i = 0; i < nBCEdgePts; i++)
         {
-            pnt = id2+i;
+            pnt = id2 + i;
 
             // Impose inflow Riemann invariant
             if (Vn[pnt] <= 0.0)
@@ -168,39 +166,41 @@ void RiemannInvariantBC::v_Apply(
 
                 // Riemann boundary variables
                 VNBC = 0.5 * (rPlus + rMinus);
-                cBC = 0.25 * gammaMinusOne * (rPlus - rMinus);
+                cBC  = 0.25 * gammaMinusOne * (rPlus - rMinus);
                 VDBC = VNBC - m_VnInf[pnt];
 
                 // Thermodynamic boundary variables
-                sBC = m_pInf / (pow(m_rhoInf, m_gamma));
+                sBC   = m_pInf / (pow(m_rhoInf, m_gamma));
                 rhoBC = pow((cBC * cBC) / (m_gamma * sBC), gammaMinusOneInv);
-                pBC = rhoBC * cBC * cBC * gammaInv;
+                pBC   = rhoBC * cBC * cBC * gammaInv;
 
                 // Kinetic energy initialiasation
                 NekDouble EkBC = 0.0;
 
                 // Boundary velocities
-                for ( j = 0; j < nDimensions; ++j)
+                for (j = 0; j < nDimensions; ++j)
                 {
-                    velBC[j] = m_velInf[j] + VDBC * m_traceNormals[j][pnt];
+                    velBC[j]    = m_velInf[j] + VDBC * m_traceNormals[j][pnt];
                     rhoVelBC[j] = rhoBC * velBC[j];
-                    EkBC += 0.5 * rhoBC * velBC[j]*velBC[j];
+                    EkBC += 0.5 * rhoBC * velBC[j] * velBC[j];
                 }
 
                 // Boundary energy
                 EBC = pBC * gammaMinusOneInv + EkBC;
 
                 // Imposing Riemann Invariant boundary conditions
-                (m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-                 UpdatePhys())[id1+i] = rhoBC;
+                (m_fields[0]
+                     ->GetBndCondExpansions()[m_bcRegion]
+                     ->UpdatePhys())[id1 + i] = rhoBC;
                 for (j = 0; j < nDimensions; ++j)
                 {
-                    (m_fields[j+1]->GetBndCondExpansions()[m_bcRegion]->
-                     UpdatePhys())[id1+i] = rhoVelBC[j];
+                    (m_fields[j + 1]
+                         ->GetBndCondExpansions()[m_bcRegion]
+                         ->UpdatePhys())[id1 + i] = rhoVelBC[j];
                 }
-                (m_fields[nDimensions+1]->GetBndCondExpansions()[m_bcRegion]->
-                 UpdatePhys())[id1+i] = EBC;
-
+                (m_fields[nDimensions + 1]
+                     ->GetBndCondExpansions()[m_bcRegion]
+                     ->UpdatePhys())[id1 + i] = EBC;
             }
             else // Impose outflow Riemann invariant
             {
@@ -228,42 +228,45 @@ void RiemannInvariantBC::v_Apply(
 
                 // Riemann boundary variables
                 VNBC = 0.5 * (rPlus + rMinus);
-                cBC = 0.25 * gammaMinusOne * (rPlus - rMinus);
+                cBC  = 0.25 * gammaMinusOne * (rPlus - rMinus);
                 VDBC = VNBC - Vn[pnt];
 
                 // Thermodynamic boundary variables
-                sBC = pressure[pnt] / (pow(Fwd[0][pnt], m_gamma));
+                sBC   = pressure[pnt] / (pow(Fwd[0][pnt], m_gamma));
                 rhoBC = pow((cBC * cBC) / (m_gamma * sBC), gammaMinusOneInv);
-                pBC = rhoBC * cBC * cBC * gammaInv;
+                pBC   = rhoBC * cBC * cBC * gammaInv;
 
                 // Kinetic energy initialiasation
                 NekDouble EkBC = 0.0;
 
                 // Boundary velocities
-                for ( j = 0; j < nDimensions; ++j)
+                for (j = 0; j < nDimensions; ++j)
                 {
-                    velBC[j] = Fwd[j+1][pnt] / Fwd[0][pnt] +
-                                VDBC * m_traceNormals[j][pnt];
+                    velBC[j] = Fwd[j + 1][pnt] / Fwd[0][pnt] +
+                               VDBC * m_traceNormals[j][pnt];
                     rhoVelBC[j] = rhoBC * velBC[j];
-                    EkBC += 0.5 * rhoBC * velBC[j]*velBC[j];
+                    EkBC += 0.5 * rhoBC * velBC[j] * velBC[j];
                 }
 
                 // Boundary energy
                 EBC = pBC * gammaMinusOneInv + EkBC;
 
                 // Imposing Riemann Invariant boundary conditions
-                (m_fields[0]->GetBndCondExpansions()[m_bcRegion]->
-                 UpdatePhys())[id1+i] = rhoBC;
+                (m_fields[0]
+                     ->GetBndCondExpansions()[m_bcRegion]
+                     ->UpdatePhys())[id1 + i] = rhoBC;
                 for (j = 0; j < nDimensions; ++j)
                 {
-                    (m_fields[j+1]->GetBndCondExpansions()[m_bcRegion]->
-                     UpdatePhys())[id1+i] = rhoVelBC[j];
+                    (m_fields[j + 1]
+                         ->GetBndCondExpansions()[m_bcRegion]
+                         ->UpdatePhys())[id1 + i] = rhoVelBC[j];
                 }
-                (m_fields[nDimensions+1]->GetBndCondExpansions()[m_bcRegion]->
-                 UpdatePhys())[id1+i] = EBC;
+                (m_fields[nDimensions + 1]
+                     ->GetBndCondExpansions()[m_bcRegion]
+                     ->UpdatePhys())[id1 + i] = EBC;
             }
         }
     }
 }
 
-}
+} // namespace Nektar

@@ -38,7 +38,6 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
@@ -51,51 +50,46 @@ namespace Nektar
  */
 class PressureMachTemperatureBC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<PressureMachTemperatureBC>;
 
-        friend class MemoryManager<PressureMachTemperatureBC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p =
+            MemoryManager<PressureMachTemperatureBC>::AllocateSharedPtr(
+                pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
+                bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<PressureMachTemperatureBC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pGridVelocity, pSpaceDim,
-                                    bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-    protected:
+private:
+    PressureMachTemperatureBC(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+        const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
+    virtual ~PressureMachTemperatureBC(void){};
 
-    private:
-        PressureMachTemperatureBC(
-               const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-        
-        virtual ~PressureMachTemperatureBC(void){};
-
-        // Storage for boundary conditions in conserved variables format
-        Array<OneD, Array<OneD, NekDouble> > m_bcStorage;
+    // Storage for boundary conditions in conserved variables format
+    Array<OneD, Array<OneD, NekDouble>> m_bcStorage;
 };
 
-}
+} // namespace Nektar
 
 #endif

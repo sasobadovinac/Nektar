@@ -34,7 +34,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
 #ifndef STDEXP1D_H
 #define STDEXP1D_H
 
@@ -43,79 +42,79 @@
 
 namespace Nektar
 {
-    namespace StdRegions
+namespace StdRegions
+{
+
+class StdExpansion1D : virtual public StdExpansion
+{
+
+public:
+    STD_REGIONS_EXPORT StdExpansion1D();
+    STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs,
+                                      const LibUtilities::BasisKey &Ba);
+    STD_REGIONS_EXPORT StdExpansion1D(const StdExpansion1D &T);
+    STD_REGIONS_EXPORT virtual ~StdExpansion1D();
+
+    /** \brief Evaluate the derivative \f$ d/d{\xi_1} \f$ at the
+     *  physical quadrature points given by \a inarray and return in
+     *  \a outarray.
+     *
+     *  \param inarray array of a function evaluated at the quadrature
+     *  points
+     *  \param outarray the resulting array of the derivative \f$
+     *  du/d_{\xi_1}|_{\xi_{1i}} \f$ will be stored in the array
+     *  \a outarray as output of the function
+     */
+    STD_REGIONS_EXPORT void PhysTensorDeriv(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
+    // find derivative of u (inarray) at all coords points
+    // @TODO: Make this into a template also!
+    STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0)
     {
+        return StdExpansion::BaryEvaluate<0, true>(coord[0], &inarray[0],
+                                                   out_d0);
+    }
 
-        class StdExpansion1D: virtual public StdExpansion
-        {
+    // find derivative/2nd Derivative of u (inarray) at all coords points
+    STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+        NekDouble &out_2d0)
+    {
+        return StdExpansion::BaryEvaluate<0, true, true>(coord[0], &inarray[0],
+                                                         out_d0, out_2d0);
+    }
 
-        public:
+protected:
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, const NekDouble> &coords,
+        const Array<OneD, const NekDouble> &physvals) override;
 
-            STD_REGIONS_EXPORT StdExpansion1D();
-            STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba);
-            STD_REGIONS_EXPORT StdExpansion1D(const StdExpansion1D &T);
-            STD_REGIONS_EXPORT virtual ~StdExpansion1D();
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> coord,
+        const Array<OneD, const NekDouble> &inarray, NekDouble &out_d0,
+        NekDouble &out_d1, NekDouble &out_d2) override;
 
-            /** \brief Evaluate the derivative \f$ d/d{\xi_1} \f$ at the
-            *  physical quadrature points given by \a inarray and return in
-            *  \a outarray.
-            *
-            *  \param inarray array of a function evaluated at the quadrature
-            *  points
-            *  \param outarray the resulting array of the derivative \f$
-            *  du/d_{\xi_1}|_{\xi_{1i}} \f$ will be stored in the array
-            *  \a outarray as output of the function
-            */
-            STD_REGIONS_EXPORT void PhysTensorDeriv(
-                    const Array<OneD, const NekDouble>& inarray,
-                          Array<OneD,       NekDouble>& outarray);
-            // find derivative of u (inarray) at all coords points
-            // @TODO: Make this into a template also!
-            STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                NekDouble &out_d0)
-            {
-                return StdExpansion::BaryEvaluate<0, true>(coord[0], &inarray[0], out_d0);
-            }
+private:
+    // Virtual Functions ----------------------------------------
 
-            // find derivative/2nd Derivative of u (inarray) at all coords points
-            STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
-                const Array<OneD, NekDouble> &coord,
-                const Array<OneD, const NekDouble> &inarray,
-                NekDouble &out_d0,
-                NekDouble &out_2d0)
-            {
-                return StdExpansion::BaryEvaluate<0, true, true>(coord[0], &inarray[0], out_d0, out_2d0);
-            }
+    virtual int v_GetCoordim(void) override
+    {
+        return 1;
+    }
 
-        protected:
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals) override;
+    virtual int v_GetShapeDimension() const final
+    {
+        return 1;
+    }
+};
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, NekDouble> coord,
-                const Array<OneD, const NekDouble> &inarray,
-                NekDouble &out_d0, NekDouble &out_d1, NekDouble &out_d2) override;
-        private:
+typedef std::shared_ptr<StdExpansion1D> StdExpansion1DSharedPtr;
 
-            // Virtual Functions ----------------------------------------
+} // namespace StdRegions
+} // namespace Nektar
 
-            virtual int v_GetCoordim(void) override
-            {
-                return 1;
-            }
-
-            virtual int v_GetShapeDimension() const final
-            {
-                return 1;
-            }
-        };
-
-        typedef std::shared_ptr<StdExpansion1D> StdExpansion1DSharedPtr;
-
-    } //end of namespace
-} //end of namespace
-
-#endif //STDEXP1D_H
+#endif // STDEXP1D_H

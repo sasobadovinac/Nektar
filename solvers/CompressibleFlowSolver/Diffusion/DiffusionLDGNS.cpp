@@ -33,32 +33,33 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "DiffusionLDGNS.h"
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <LocalRegions/Expansion2D.h>
 
 namespace Nektar
 {
-std::string DiffusionLDGNS::type = GetDiffusionFactory().
-    RegisterCreatorFunction("LDGNS", DiffusionLDGNS::create, "LDG for Navier-Stokes");
+std::string DiffusionLDGNS::type =
+    GetDiffusionFactory().RegisterCreatorFunction(
+        "LDGNS", DiffusionLDGNS::create, "LDG for Navier-Stokes");
 
 DiffusionLDGNS::DiffusionLDGNS()
 {
 }
 
 void DiffusionLDGNS::v_InitObject(
-    LibUtilities::SessionReaderSharedPtr        pSession,
+    LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
 {
     m_session = pSession;
-    m_session->LoadParameter ("Twall", m_Twall, 300.15);
+    m_session->LoadParameter("Twall", m_Twall, 300.15);
 
     // Setting up the normals
-    std::size_t nDim = pFields[0]->GetCoordim(0);
+    std::size_t nDim      = pFields[0]->GetCoordim(0);
     std::size_t nTracePts = pFields[0]->GetTrace()->GetTotPoints();
 
     m_spaceDim = nDim;
@@ -69,24 +70,22 @@ void DiffusionLDGNS::v_InitObject(
 
     m_diffDim = m_spaceDim - nDim;
 
-    m_traceVel = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim}; // @TODO: What is this trace vel used for???
-    m_traceNormals = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim};
-    m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble> >{m_spaceDim};
+    m_traceVel = Array<OneD, Array<OneD, NekDouble>>{
+        m_spaceDim}; // @TODO: What is this trace vel used for???
+    m_traceNormals      = Array<OneD, Array<OneD, NekDouble>>{m_spaceDim};
+    m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble>>{m_spaceDim};
     for (std::size_t i = 0; i < m_spaceDim; ++i)
     {
-        m_traceVel[i] = Array<OneD, NekDouble> {nTracePts, 0.0};
-        m_traceNormals[i] = Array<OneD, NekDouble> {nTracePts};
-        m_gridVelocityTrace[i] = Array<OneD, NekDouble> {nTracePts};
+        m_traceVel[i]          = Array<OneD, NekDouble>{nTracePts, 0.0};
+        m_traceNormals[i]      = Array<OneD, NekDouble>{nTracePts};
+        m_gridVelocityTrace[i] = Array<OneD, NekDouble>{nTracePts};
     }
     pFields[0]->GetTrace()->GetNormals(m_traceNormals);
 
     // Create equation of state object
     std::string eosType;
-    m_session->LoadSolverInfo("EquationOfState",
-                              eosType, "IdealGas");
-    m_eos = GetEquationOfStateFactory()
-                            .CreateInstance(eosType, m_session);
-
+    m_session->LoadSolverInfo("EquationOfState", eosType, "IdealGas");
+    m_eos = GetEquationOfStateFactory().CreateInstance(eosType, m_session);
 
     // Set up {h} reference on the trace for penalty term
     //
@@ -100,43 +99,45 @@ void DiffusionLDGNS::v_InitObject(
     {
         NekDouble h{1.0e+10};
         std::size_t expDim = pFields[0]->GetShapeDimension();
-        switch(expDim)
+        switch (expDim)
         {
             case 3:
             {
                 LocalRegions::Expansion3DSharedPtr exp3D;
                 exp3D = pFields[0]->GetExp(e)->as<LocalRegions::Expansion3D>();
-                for(std::size_t i = 0; i < exp3D->GetNtraces(); ++i)
+                for (std::size_t i = 0; i < exp3D->GetNtraces(); ++i)
                 {
-                    h = std::min(h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->
-                        dist(*(exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
+                    h = std::min(
+                        h, exp3D->GetGeom3D()->GetEdge(i)->GetVertex(0)->dist(*(
+                               exp3D->GetGeom3D()->GetEdge(i)->GetVertex(1))));
                 }
-            break;
+                break;
             }
 
             case 2:
             {
                 LocalRegions::Expansion2DSharedPtr exp2D;
                 exp2D = pFields[0]->GetExp(e)->as<LocalRegions::Expansion2D>();
-                for(std::size_t i = 0; i < exp2D->GetNtraces(); ++i)
+                for (std::size_t i = 0; i < exp2D->GetNtraces(); ++i)
                 {
-                    h = std::min(h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->
-                        dist(*(exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
+                    h = std::min(
+                        h, exp2D->GetGeom2D()->GetEdge(i)->GetVertex(0)->dist(*(
+                               exp2D->GetGeom2D()->GetEdge(i)->GetVertex(1))));
                 }
-            break;
+                break;
             }
             case 1:
             {
                 LocalRegions::Expansion1DSharedPtr exp1D;
                 exp1D = pFields[0]->GetExp(e)->as<LocalRegions::Expansion1D>();
 
-                h = std::min(h, exp1D->GetGeom1D()->GetVertex(0)->
-                    dist(*(exp1D->GetGeom1D()->GetVertex(1))));
-            break;
+                h = std::min(h, exp1D->GetGeom1D()->GetVertex(0)->dist(
+                                    *(exp1D->GetGeom1D()->GetVertex(1))));
+                break;
             }
             default:
             {
-                ASSERTL0(false,"Dimension out of bound.")
+                ASSERTL0(false, "Dimension out of bound.")
             }
         }
 
@@ -149,27 +150,26 @@ void DiffusionLDGNS::v_InitObject(
     Array<OneD, NekDouble> tmp;
     for (std::size_t e = 0; e < pFields[0]->GetExpSize(); e++)
     {
-        std::size_t nElmtPoints     = pFields[0]->GetExp(e)->GetTotPoints();
-        std::size_t physOffset      = pFields[0]->GetPhys_Offset(e);
-        Vmath::Fill(nElmtPoints, hEle[e],
-            tmp = hElePts + physOffset, 1);
+        std::size_t nElmtPoints = pFields[0]->GetExp(e)->GetTotPoints();
+        std::size_t physOffset  = pFields[0]->GetPhys_Offset(e);
+        Vmath::Fill(nElmtPoints, hEle[e], tmp = hElePts + physOffset, 1);
     }
     // Get Fwd and Bwd traces
     Array<OneD, NekDouble> Fwd{nTracePts, 0.0};
     Array<OneD, NekDouble> Bwd{nTracePts, 0.0};
     pFields[0]->GetFwdBwdTracePhys(hElePts, Fwd, Bwd);
     // Fix boundaries
-    std::size_t cnt = 0;
+    std::size_t cnt         = 0;
     std::size_t nBndRegions = pFields[0]->GetBndCondExpansions().size();
     // Loop on the boundary regions
     for (std::size_t i = 0; i < nBndRegions; ++i)
     {
         // Number of boundary regions related to region 'i'
-        std::size_t nBndEdges = pFields[0]->
-        GetBndCondExpansions()[i]->GetExpSize();
+        std::size_t nBndEdges =
+            pFields[0]->GetBndCondExpansions()[i]->GetExpSize();
 
-        if (pFields[0]->GetBndConditions()[i]->GetBoundaryConditionType()
-            == SpatialDomains::ePeriodic)
+        if (pFields[0]->GetBndConditions()[i]->GetBoundaryConditionType() ==
+            SpatialDomains::ePeriodic)
         {
             continue;
         }
@@ -177,22 +177,23 @@ void DiffusionLDGNS::v_InitObject(
         // Get value from interior
         for (std::size_t e = 0; e < nBndEdges; ++e)
         {
-            std::size_t nBndEdgePts = pFields[0]->
-            GetBndCondExpansions()[i]->GetExp(e)->GetTotPoints();
+            std::size_t nBndEdgePts = pFields[0]
+                                          ->GetBndCondExpansions()[i]
+                                          ->GetExp(e)
+                                          ->GetTotPoints();
 
-            std::size_t id2 = pFields[0]->GetTrace()->
-            GetPhys_Offset(pFields[0]->GetTraceMap()->
-                           GetBndCondIDToGlobalTraceID(cnt++));
+            std::size_t id2 = pFields[0]->GetTrace()->GetPhys_Offset(
+                pFields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt++));
 
             Vmath::Vcopy(nBndEdgePts, &Fwd[id2], 1, &Bwd[id2], 1);
         }
     }
     // Get average of traces
     Array<OneD, NekDouble> traceH{nTracePts, 1.0};
-    m_traceOneOverH = Array<OneD, NekDouble> {nTracePts, 1.0};
+    m_traceOneOverH = Array<OneD, NekDouble>{nTracePts, 1.0};
     Vmath::Svtsvtp(nTracePts, 0.5, Fwd, 1, 0.5, Bwd, 1, traceH, 1);
     // Multiply by coefficient = - C11 / h
-    m_session->LoadParameter ("LDGNSc11", m_C11, 1.0);
+    m_session->LoadParameter("LDGNSc11", m_C11, 1.0);
     Vmath::Sdiv(nTracePts, -m_C11, traceH, 1, m_traceOneOverH, 1);
 }
 
@@ -209,16 +210,16 @@ void DiffusionLDGNS::v_InitObject(
  * with the velocities and with the energy.
  *
  */
- void DiffusionLDGNS::v_Diffuse(
-    const std::size_t                                  nConvectiveFields,
+void DiffusionLDGNS::v_Diffuse(
+    const std::size_t nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-    Array<OneD, Array<OneD, NekDouble> >              &outarray,
-    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-    const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
-    std::size_t nCoeffs   = fields[0]->GetNcoeffs();
-    Array<OneD, Array<OneD, NekDouble> > tmp2{nConvectiveFields};
+    std::size_t nCoeffs = fields[0]->GetNcoeffs();
+    Array<OneD, Array<OneD, NekDouble>> tmp2{nConvectiveFields};
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
         tmp2[i] = Array<OneD, NekDouble>{nCoeffs, 0.0};
@@ -232,20 +233,21 @@ void DiffusionLDGNS::v_InitObject(
 
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
-        fields[i]->BwdTrans             (tmp2[i], outarray[i]);
+        fields[i]->BwdTrans(tmp2[i], outarray[i]);
     }
 }
 
 void DiffusionLDGNS::v_DiffuseCoeffs(
-    const std::size_t                                  nConvectiveFields,
+    const std::size_t nConvectiveFields,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-    Array<OneD, Array<OneD, NekDouble> >              &outarray,
-    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-    const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
 
-    if(fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) // i.e. if m_ALESolver
+    if (fields[0]->GetGraph()->GetMovement()->GetMoveFlag()) // i.e. if
+                                                             // m_ALESolver
     {
         fields[0]->GetTrace()->GetNormals(m_traceNormals);
     }
@@ -256,29 +258,28 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     std::size_t nScalars  = inarray.size();
     std::size_t nTracePts = fields[0]->GetTrace()->GetTotPoints();
 
-
     TensorOfArray3D<NekDouble> derivativesO1{m_spaceDim};
 
     for (std::size_t j = 0; j < m_spaceDim; ++j)
     {
-        derivativesO1[j]   = Array<OneD, Array<OneD, NekDouble> >{nScalars};
+        derivativesO1[j] = Array<OneD, Array<OneD, NekDouble>>{nScalars};
 
         for (std::size_t i = 0; i < nScalars; ++i)
         {
-            derivativesO1[j][i]   = Array<OneD, NekDouble>{nPts, 0.0};
+            derivativesO1[j][i] = Array<OneD, NekDouble>{nPts, 0.0};
         }
     }
 
     DiffuseCalcDerivative(fields, inarray, derivativesO1, pFwd, pBwd);
 
     // Initialisation viscous tensor
-    m_viscTensor = TensorOfArray3D<NekDouble> {m_spaceDim};
-    Array<OneD, Array<OneD, NekDouble> > viscousFlux{nConvectiveFields};
+    m_viscTensor = TensorOfArray3D<NekDouble>{m_spaceDim};
+    Array<OneD, Array<OneD, NekDouble>> viscousFlux{nConvectiveFields};
 
     for (std::size_t j = 0; j < m_spaceDim; ++j)
     {
-        m_viscTensor[j] = Array<OneD, Array<OneD, NekDouble> >{nScalars+1};
-        for (std::size_t i = 0; i < nScalars+1; ++i)
+        m_viscTensor[j] = Array<OneD, Array<OneD, NekDouble>>{nScalars + 1};
+        for (std::size_t i = 0; i < nScalars + 1; ++i)
         {
             m_viscTensor[j][i] = Array<OneD, NekDouble>{nPts, 0.0};
         }
@@ -294,9 +295,9 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
     // Compute u from q_{\eta} and q_{\xi}
     // Obtain numerical fluxes
     DiffuseTraceFlux(fields, inarray, derivativesO1, m_viscTensor, viscousFlux,
-                        pFwd, pBwd);
+                     pFwd, pBwd);
 
-    Array<OneD, Array<OneD, NekDouble>>  tmpIn{nDim};
+    Array<OneD, Array<OneD, NekDouble>> tmpIn{nDim};
 
     for (std::size_t i = 0; i < nConvectiveFields; ++i)
     {
@@ -309,32 +310,32 @@ void DiffusionLDGNS::v_DiffuseCoeffs(
         fields[i]->IProductWRTDerivBase(tmpIn, outarray[i]);
 
         // Evaulate  <\phi, \hat{F}\cdot n> - outarray[i]
-        Vmath::Neg                      (nCoeffs, outarray[i], 1);
-        fields[i]->AddTraceIntegral     (viscousFlux[i], outarray[i]);
-        fields[i]->SetPhysState         (false);
+        Vmath::Neg(nCoeffs, outarray[i], 1);
+        fields[i]->AddTraceIntegral(viscousFlux[i], outarray[i]);
+        fields[i]->SetPhysState(false);
     }
 }
 
 void DiffusionLDGNS::v_DiffuseCalcDerivative(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-    TensorOfArray3D<NekDouble>                        &qfields,
-    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-    const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    TensorOfArray3D<NekDouble> &qfields,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
-    std::size_t nDim      = fields[0]->GetCoordim(0);
-    std::size_t nCoeffs   = fields[0]->GetNcoeffs();
-    std::size_t nScalars  = inarray.size();
-    std::size_t nTracePts = fields[0]->GetTrace()->GetTotPoints();
+    std::size_t nDim              = fields[0]->GetCoordim(0);
+    std::size_t nCoeffs           = fields[0]->GetNcoeffs();
+    std::size_t nScalars          = inarray.size();
+    std::size_t nTracePts         = fields[0]->GetTrace()->GetTotPoints();
     std::size_t nConvectiveFields = fields.size();
 
-    Array<OneD, NekDouble>               tmp1{nCoeffs};
-    Array<OneD, Array<OneD, NekDouble> > tmp2{nConvectiveFields};
+    Array<OneD, NekDouble> tmp1{nCoeffs};
+    Array<OneD, Array<OneD, NekDouble>> tmp2{nConvectiveFields};
     TensorOfArray3D<NekDouble> numericalFluxO1{m_spaceDim};
 
     for (std::size_t j = 0; j < m_spaceDim; ++j)
     {
-        numericalFluxO1[j] = Array<OneD, Array<OneD, NekDouble> >{nScalars};
+        numericalFluxO1[j] = Array<OneD, Array<OneD, NekDouble>>{nScalars};
 
         for (std::size_t i = 0; i < nScalars; ++i)
         {
@@ -348,12 +349,12 @@ void DiffusionLDGNS::v_DiffuseCalcDerivative(
     {
         for (std::size_t i = 0; i < nScalars; ++i)
         {
-            fields[i]->IProductWRTDerivBase (j, inarray[i], tmp1);
-            Vmath::Neg                      (nCoeffs, tmp1, 1);
-            fields[i]->AddTraceIntegral     (numericalFluxO1[j][i], tmp1);
-            fields[i]->SetPhysState         (false);
+            fields[i]->IProductWRTDerivBase(j, inarray[i], tmp1);
+            Vmath::Neg(nCoeffs, tmp1, 1);
+            fields[i]->AddTraceIntegral(numericalFluxO1[j][i], tmp1);
+            fields[i]->SetPhysState(false);
             fields[i]->MultiplyByElmtInvMass(tmp1, tmp1);
-            fields[i]->BwdTrans             (tmp1, qfields[j][i]);
+            fields[i]->BwdTrans(tmp1, qfields[j][i]);
         }
     }
     // For 3D Homogeneous 1D only take derivatives in 3rd direction
@@ -367,27 +368,24 @@ void DiffusionLDGNS::v_DiffuseCalcDerivative(
 }
 
 void DiffusionLDGNS::v_DiffuseVolumeFlux(
-    const Array<OneD, MultiRegions::ExpListSharedPtr>   &fields,
-    const Array<OneD, Array<OneD, NekDouble>>           &inarray,
-    TensorOfArray3D<NekDouble>                          &qfields,
-    TensorOfArray3D<NekDouble>                          &VolumeFlux,
-    Array< OneD, int >                                  &nonZeroIndex)
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    TensorOfArray3D<NekDouble> &qfields, TensorOfArray3D<NekDouble> &VolumeFlux,
+    Array<OneD, int> &nonZeroIndex)
 {
 
     boost::ignore_unused(fields, nonZeroIndex);
     m_fluxVectorNS(inarray, qfields, VolumeFlux);
-
 }
 
 void DiffusionLDGNS::v_DiffuseTraceFlux(
-    const Array<OneD, MultiRegions::ExpListSharedPtr>   &fields,
-    const Array<OneD, Array<OneD, NekDouble>>           &inarray,
-    TensorOfArray3D<NekDouble>                          &qfields,
-    TensorOfArray3D<NekDouble>                          &VolumeFlux,
-    Array<OneD, Array<OneD, NekDouble> >                &TraceFlux,
-    const Array<OneD, Array<OneD, NekDouble>>           &pFwd,
-    const Array<OneD, Array<OneD, NekDouble>>           &pBwd,
-    Array< OneD, int >                                  &nonZeroIndex)
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    TensorOfArray3D<NekDouble> &qfields, TensorOfArray3D<NekDouble> &VolumeFlux,
+    Array<OneD, Array<OneD, NekDouble>> &TraceFlux,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd,
+    Array<OneD, int> &nonZeroIndex)
 {
     boost::ignore_unused(inarray, qfields, nonZeroIndex);
     NumericalFluxO2(fields, VolumeFlux, TraceFlux, pFwd, pBwd);
@@ -398,17 +396,17 @@ void DiffusionLDGNS::v_DiffuseTraceFlux(
  *
  */
 void DiffusionLDGNS::NumericalFluxO1(
-    const Array<OneD, MultiRegions::ExpListSharedPtr>        &fields,
-    const Array<OneD, Array<OneD, NekDouble> >               &inarray,
-    TensorOfArray3D<NekDouble>                               &numericalFluxO1,
-    const Array<OneD, Array<OneD, NekDouble> >               &pFwd,
-    const Array<OneD, Array<OneD, NekDouble> >               &pBwd)
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    TensorOfArray3D<NekDouble> &numericalFluxO1,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
     std::size_t nTracePts = fields[0]->GetTrace()->GetTotPoints();
     std::size_t nScalars  = inarray.size();
 
-    //Upwind
-    Array<OneD, Array<OneD, NekDouble> > numflux{nScalars};
+    // Upwind
+    Array<OneD, Array<OneD, NekDouble>> numflux{nScalars};
     for (std::size_t i = 0; i < nScalars; ++i)
     {
         numflux[i] = {pFwd[i]};
@@ -425,8 +423,8 @@ void DiffusionLDGNS::NumericalFluxO1(
     {
         for (std::size_t i = 0; i < nScalars; ++i)
         {
-            Vmath::Vmul(nTracePts, m_traceNormals[j], 1,numflux[i], 1,
-                numericalFluxO1[j][i], 1);
+            Vmath::Vmul(nTracePts, m_traceNormals[j], 1, numflux[i], 1,
+                        numericalFluxO1[j][i], 1);
         }
     }
 }
@@ -437,10 +435,10 @@ void DiffusionLDGNS::NumericalFluxO1(
  */
 void DiffusionLDGNS::ApplyBCsO1(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-    const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-    const Array<OneD, Array<OneD, NekDouble> >        &pBwd,
-          Array<OneD, Array<OneD, NekDouble> >        &fluxO1)
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd,
+    Array<OneD, Array<OneD, NekDouble>> &fluxO1)
 {
     boost::ignore_unused(pBwd);
 
@@ -451,7 +449,7 @@ void DiffusionLDGNS::ApplyBCsO1(
     Array<OneD, NekDouble> tmp2{nTracePts, 0.0};
     Array<OneD, NekDouble> Tw{nTracePts, m_Twall};
 
-    Array< OneD, Array<OneD, NekDouble > > scalarVariables{nScalars};
+    Array<OneD, Array<OneD, NekDouble>> scalarVariables{nScalars};
 
     // Extract internal values of the scalar variables for Neumann bcs
     for (std::size_t i = 0; i < nScalars; ++i)
@@ -460,223 +458,234 @@ void DiffusionLDGNS::ApplyBCsO1(
     }
 
     // Compute boundary conditions for velocities
-    for (std::size_t i = 0; i < nScalars-1; ++i)
+    for (std::size_t i = 0; i < nScalars - 1; ++i)
     {
         // Note that cnt has to loop on nBndRegions and nBndEdges
         // and has to be reset to zero per each equation
-        std::size_t cnt = 0;
-        std::size_t nBndRegions = fields[i+1]->
-            GetBndCondExpansions().size();
+        std::size_t cnt         = 0;
+        std::size_t nBndRegions = fields[i + 1]->GetBndCondExpansions().size();
         for (std::size_t j = 0; j < nBndRegions; ++j)
         {
-            if (fields[i+1]->GetBndConditions()[j]->
-                GetBoundaryConditionType() == SpatialDomains::ePeriodic)
+            if (fields[i + 1]
+                    ->GetBndConditions()[j]
+                    ->GetBoundaryConditionType() == SpatialDomains::ePeriodic)
             {
                 continue;
             }
 
-            std::size_t nBndEdges = fields[i+1]->
-                GetBndCondExpansions()[j]->GetExpSize();
+            std::size_t nBndEdges =
+                fields[i + 1]->GetBndCondExpansions()[j]->GetExpSize();
             for (std::size_t e = 0; e < nBndEdges; ++e)
             {
-                std::size_t nBndEdgePts = fields[i+1]->
-                    GetBndCondExpansions()[j]->GetExp(e)->GetTotPoints();
+                std::size_t nBndEdgePts = fields[i + 1]
+                                              ->GetBndCondExpansions()[j]
+                                              ->GetExp(e)
+                                              ->GetTotPoints();
 
-                std::size_t id1 = fields[i+1]->
-                    GetBndCondExpansions()[j]->GetPhys_Offset(e);
+                std::size_t id1 =
+                    fields[i + 1]->GetBndCondExpansions()[j]->GetPhys_Offset(e);
 
-                std::size_t id2 = fields[0]->GetTrace()->
-                    GetPhys_Offset(fields[0]->GetTraceMap()->
-                                   GetBndCondIDToGlobalTraceID(cnt++));
+                std::size_t id2 = fields[0]->GetTrace()->GetPhys_Offset(
+                    fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(
+                        cnt++));
 
-                if (boost::iequals(fields[i]->GetBndConditions()[j]->
-                    GetUserDefined(),"WallViscous") ||
-                    boost::iequals(fields[i]->GetBndConditions()[j]->
-                    GetUserDefined(),"WallAdiabatic") ||
-                    boost::iequals(fields[i]->GetBndConditions()[j]->
-                    GetUserDefined(),"WallRotational"))
+                if (boost::iequals(
+                        fields[i]->GetBndConditions()[j]->GetUserDefined(),
+                        "WallViscous") ||
+                    boost::iequals(
+                        fields[i]->GetBndConditions()[j]->GetUserDefined(),
+                        "WallAdiabatic") ||
+                    boost::iequals(
+                        fields[i]->GetBndConditions()[j]->GetUserDefined(),
+                        "WallRotational"))
                 {
                     // Reinforcing bcs for velocity in case of Wall bcs
                     for (int pt = 0; pt < nBndEdgePts; ++pt)
                     {
-                        scalarVariables[i][id2 + pt] =
-                            m_gridVelocityTrace[i][id2 + pt]; // If movement this equals trace grid velocity otherwise 0
+                        scalarVariables[i][id2 + pt] = m_gridVelocityTrace
+                            [i][id2 + pt]; // If movement this equals trace grid
+                                           // velocity otherwise 0
                     }
                 }
-                else if (
-                    boost::iequals(fields[i]->GetBndConditions()[j]->
-                    GetUserDefined(),"Wall") ||
-                    boost::iequals(fields[i]->GetBndConditions()[j]->
-                    GetUserDefined(),"Symmetry"))
+                else if (boost::iequals(
+                             fields[i]->GetBndConditions()[j]->GetUserDefined(),
+                             "Wall") ||
+                         boost::iequals(
+                             fields[i]->GetBndConditions()[j]->GetUserDefined(),
+                             "Symmetry"))
                 {
                     // Symmetry bc: normal velocity is zero
                     //    get all velocities at once because we need u.n
-                    if (i==0)
+                    if (i == 0)
                     {
                         //    tmp1 = -(u.n)
                         Vmath::Zero(nBndEdgePts, tmp1, 1);
-                        for (std::size_t k = 0; k < nScalars-1; ++k)
+                        for (std::size_t k = 0; k < nScalars - 1; ++k)
                         {
                             Vmath::Vdiv(nBndEdgePts,
-                              &(fields[k+1]->GetBndCondExpansions()[j]->
-                                  UpdatePhys())[id1], 1,
-                              &(fields[0]->GetBndCondExpansions()[j]->
-                                  UpdatePhys())[id1], 1,
-                              &scalarVariables[k][id2], 1);
-                            Vmath::Vvtvp(nBndEdgePts,
-                                    &m_traceNormals[k][id2], 1,
-                                    &scalarVariables[k][id2], 1,
-                                    &tmp1[0], 1,
-                                    &tmp1[0], 1);
+                                        &(fields[k + 1]
+                                              ->GetBndCondExpansions()[j]
+                                              ->UpdatePhys())[id1],
+                                        1,
+                                        &(fields[0]
+                                              ->GetBndCondExpansions()[j]
+                                              ->UpdatePhys())[id1],
+                                        1, &scalarVariables[k][id2], 1);
+                            Vmath::Vvtvp(nBndEdgePts, &m_traceNormals[k][id2],
+                                         1, &scalarVariables[k][id2], 1,
+                                         &tmp1[0], 1, &tmp1[0], 1);
                         }
-                        Vmath::Smul(nBndEdgePts, -1.0,
-                                    &tmp1[0], 1,
-                                    &tmp1[0], 1);
+                        Vmath::Smul(nBndEdgePts, -1.0, &tmp1[0], 1, &tmp1[0],
+                                    1);
 
                         //    u_i - (u.n)n_i
-                        for (std::size_t k = 0; k < nScalars-1; ++k)
+                        for (std::size_t k = 0; k < nScalars - 1; ++k)
                         {
-                            Vmath::Vvtvp(nBndEdgePts,
-                                    &tmp1[0], 1,
-                                    &m_traceNormals[k][id2], 1,
-                                    &scalarVariables[k][id2], 1,
-                                    &scalarVariables[k][id2], 1);
+                            Vmath::Vvtvp(nBndEdgePts, &tmp1[0], 1,
+                                         &m_traceNormals[k][id2], 1,
+                                         &scalarVariables[k][id2], 1,
+                                         &scalarVariables[k][id2], 1);
                         }
                     }
                 }
-                else if (fields[i]->GetBndConditions()[j]->
-                         GetBoundaryConditionType() ==
+                else if (fields[i]
+                             ->GetBndConditions()[j]
+                             ->GetBoundaryConditionType() ==
                          SpatialDomains::eDirichlet)
                 {
                     // Imposing velocity bcs if not Wall
                     Vmath::Vdiv(nBndEdgePts,
-                            &(fields[i+1]->GetBndCondExpansions()[j]->
-                              UpdatePhys())[id1], 1,
-                            &(fields[0]->GetBndCondExpansions()[j]->
-                              UpdatePhys())[id1], 1,
-                            &scalarVariables[i][id2], 1);
+                                &(fields[i + 1]
+                                      ->GetBndCondExpansions()[j]
+                                      ->UpdatePhys())[id1],
+                                1,
+                                &(fields[0]
+                                      ->GetBndCondExpansions()[j]
+                                      ->UpdatePhys())[id1],
+                                1, &scalarVariables[i][id2], 1);
                 }
 
                 // For Dirichlet boundary condition: uflux = u_bcs
-                if (fields[i]->GetBndConditions()[j]->
-                    GetBoundaryConditionType() ==
+                if (fields[i]
+                        ->GetBndConditions()[j]
+                        ->GetBoundaryConditionType() ==
                     SpatialDomains::eDirichlet)
                 {
-                    Vmath::Vcopy(nBndEdgePts,
-                                 &scalarVariables[i][id2], 1,
+                    Vmath::Vcopy(nBndEdgePts, &scalarVariables[i][id2], 1,
                                  &fluxO1[i][id2], 1);
                 }
 
                 // For Neumann boundary condition: uflux = u_+
-                else if ((fields[i]->GetBndConditions()[j])->
-                         GetBoundaryConditionType() ==
+                else if ((fields[i]->GetBndConditions()[j])
+                             ->GetBoundaryConditionType() ==
                          SpatialDomains::eNeumann)
                 {
-                    Vmath::Vcopy(nBndEdgePts,
-                                 &pFwd[i][id2], 1,
-                                 &fluxO1[i][id2], 1);
+                    Vmath::Vcopy(nBndEdgePts, &pFwd[i][id2], 1, &fluxO1[i][id2],
+                                 1);
                 }
 
                 // Building kinetic energy to be used for T bcs
-                Vmath::Vmul(nBndEdgePts,
-                            &scalarVariables[i][id2], 1,
-                            &scalarVariables[i][id2], 1,
-                            &tmp1[id2], 1);
+                Vmath::Vmul(nBndEdgePts, &scalarVariables[i][id2], 1,
+                            &scalarVariables[i][id2], 1, &tmp1[id2], 1);
 
-                Vmath::Smul(nBndEdgePts, 0.5,
-                            &tmp1[id2], 1,
-                            &tmp1[id2], 1);
+                Vmath::Smul(nBndEdgePts, 0.5, &tmp1[id2], 1, &tmp1[id2], 1);
 
-                Vmath::Vadd(nBndEdgePts,
-                            &tmp2[id2], 1,
-                            &tmp1[id2], 1,
+                Vmath::Vadd(nBndEdgePts, &tmp2[id2], 1, &tmp1[id2], 1,
                             &tmp2[id2], 1);
             }
         }
     }
 
     // Compute boundary conditions  for temperature
-    std::size_t cnt = 0;
-    std::size_t nBndRegions = fields[nScalars]->
-    GetBndCondExpansions().size();
+    std::size_t cnt         = 0;
+    std::size_t nBndRegions = fields[nScalars]->GetBndCondExpansions().size();
     for (std::size_t j = 0; j < nBndRegions; ++j)
     {
-        if (fields[nScalars]->GetBndConditions()[j]->
-            GetBoundaryConditionType() ==
-            SpatialDomains::ePeriodic)
+        if (fields[nScalars]
+                ->GetBndConditions()[j]
+                ->GetBoundaryConditionType() == SpatialDomains::ePeriodic)
         {
             continue;
         }
 
-        std::size_t nBndEdges = fields[nScalars]->
-        GetBndCondExpansions()[j]->GetExpSize();
+        std::size_t nBndEdges =
+            fields[nScalars]->GetBndCondExpansions()[j]->GetExpSize();
         for (std::size_t e = 0; e < nBndEdges; ++e)
         {
-            std::size_t nBndEdgePts = fields[nScalars]->
-            GetBndCondExpansions()[j]->GetExp(e)->GetTotPoints();
+            std::size_t nBndEdgePts = fields[nScalars]
+                                          ->GetBndCondExpansions()[j]
+                                          ->GetExp(e)
+                                          ->GetTotPoints();
 
-            std::size_t id1 = fields[nScalars]->
-            GetBndCondExpansions()[j]->GetPhys_Offset(e);
+            std::size_t id1 =
+                fields[nScalars]->GetBndCondExpansions()[j]->GetPhys_Offset(e);
 
-            std::size_t id2 = fields[0]->GetTrace()->
-            GetPhys_Offset(fields[0]->GetTraceMap()->
-                           GetBndCondIDToGlobalTraceID(cnt++));
+            std::size_t id2 = fields[0]->GetTrace()->GetPhys_Offset(
+                fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt++));
 
             // Imposing Temperature Twall at the wall
-            if (boost::iequals(fields[nScalars]->GetBndConditions()[j]->
-                GetUserDefined(),"WallViscous"))
+            if (boost::iequals(
+                    fields[nScalars]->GetBndConditions()[j]->GetUserDefined(),
+                    "WallViscous"))
             {
-                Vmath::Vcopy(nBndEdgePts,
-                             &Tw[0], 1,
-                             &scalarVariables[nScalars-1][id2], 1);
+                Vmath::Vcopy(nBndEdgePts, &Tw[0], 1,
+                             &scalarVariables[nScalars - 1][id2], 1);
             }
             // Imposing Temperature through condition on the Energy
             // for no wall boundaries (e.g. farfield)
-            else if (fields[nScalars]->GetBndConditions()[j]->
-                     GetBoundaryConditionType() ==
+            else if (fields[nScalars]
+                         ->GetBndConditions()[j]
+                         ->GetBoundaryConditionType() ==
                      SpatialDomains::eDirichlet)
             {
                 // Use equation of state to evaluate temperature
                 NekDouble rho, ene;
                 for (std::size_t n = 0; n < nBndEdgePts; ++n)
                 {
-                    rho = fields[0]->
-                              GetBndCondExpansions()[j]->
-                              GetPhys()[id1+n];
-                    ene = fields[nScalars]->
-                              GetBndCondExpansions()[j]->
-                              GetPhys()[id1 +n] / rho - tmp2[id2+n];
-                    scalarVariables[nScalars-1][id2+n] =
-                            m_eos->GetTemperature(rho, ene);
+                    rho = fields[0]
+                              ->GetBndCondExpansions()[j]
+                              ->GetPhys()[id1 + n];
+                    ene = fields[nScalars]
+                                  ->GetBndCondExpansions()[j]
+                                  ->GetPhys()[id1 + n] /
+                              rho -
+                          tmp2[id2 + n];
+                    scalarVariables[nScalars - 1][id2 + n] =
+                        m_eos->GetTemperature(rho, ene);
                 }
             }
 
             // For Dirichlet boundary condition: uflux = u_bcs
-            if (fields[nScalars]->GetBndConditions()[j]->
-                GetBoundaryConditionType() == SpatialDomains::eDirichlet && (
-                !boost::iequals(fields[nScalars]->GetBndConditions()[j]
-                ->GetUserDefined(), "WallAdiabatic") ||
-                boost::iequals(fields[nScalars]->GetBndConditions()[j]->
-               GetUserDefined(),"WallRotational")))
+            if (fields[nScalars]
+                        ->GetBndConditions()[j]
+                        ->GetBoundaryConditionType() ==
+                    SpatialDomains::eDirichlet &&
+                (!boost::iequals(
+                     fields[nScalars]->GetBndConditions()[j]->GetUserDefined(),
+                     "WallAdiabatic") ||
+                 boost::iequals(
+                     fields[nScalars]->GetBndConditions()[j]->GetUserDefined(),
+                     "WallRotational")))
             {
-                Vmath::Vcopy(nBndEdgePts,
-                             &scalarVariables[nScalars-1][id2], 1,
-                             &fluxO1[nScalars-1][id2], 1);
-
+                Vmath::Vcopy(nBndEdgePts, &scalarVariables[nScalars - 1][id2],
+                             1, &fluxO1[nScalars - 1][id2], 1);
             }
 
             // For Neumann boundary condition: uflux = u_+
-            else if (((fields[nScalars]->GetBndConditions()[j])->
-                      GetBoundaryConditionType() == SpatialDomains::eNeumann) ||
-                      boost::iequals(fields[nScalars]->GetBndConditions()[j]->
-                                    GetUserDefined(), "WallAdiabatic") ||
-                     boost::iequals(fields[nScalars]->GetBndConditions()[j]->
-                                    GetUserDefined(), "WallRotational"))
+            else if (((fields[nScalars]->GetBndConditions()[j])
+                          ->GetBoundaryConditionType() ==
+                      SpatialDomains::eNeumann) ||
+                     boost::iequals(fields[nScalars]
+                                        ->GetBndConditions()[j]
+                                        ->GetUserDefined(),
+                                    "WallAdiabatic") ||
+                     boost::iequals(fields[nScalars]
+                                        ->GetBndConditions()[j]
+                                        ->GetUserDefined(),
+                                    "WallRotational"))
             {
-                Vmath::Vcopy(nBndEdgePts,
-                             &pFwd[nScalars-1][id2], 1,
-                             &fluxO1[nScalars-1][id2], 1);
-
+                Vmath::Vcopy(nBndEdgePts, &pFwd[nScalars - 1][id2], 1,
+                             &fluxO1[nScalars - 1][id2], 1);
             }
         }
     }
@@ -687,18 +696,18 @@ void DiffusionLDGNS::ApplyBCsO1(
  *
  */
 void DiffusionLDGNS::NumericalFluxO2(
-    const Array<OneD, MultiRegions::ExpListSharedPtr>        &fields,
-    TensorOfArray3D<NekDouble>                               &qfield,
-    Array<OneD, Array<OneD, NekDouble> >                     &qflux,
-    const Array<OneD, Array<OneD, NekDouble> >               &uFwd,
-    const Array<OneD, Array<OneD, NekDouble> >               &uBwd)
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    TensorOfArray3D<NekDouble> &qfield,
+    Array<OneD, Array<OneD, NekDouble>> &qflux,
+    const Array<OneD, Array<OneD, NekDouble>> &uFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &uBwd)
 {
     std::size_t nTracePts  = fields[0]->GetTrace()->GetTotPoints();
     std::size_t nVariables = fields.size();
 
     // Initialize penalty flux
-    Array<OneD, Array<OneD, NekDouble> >  fluxPen{nVariables-1};
-    for (std::size_t i = 0; i < nVariables-1; ++i)
+    Array<OneD, Array<OneD, NekDouble>> fluxPen{nVariables - 1};
+    for (std::size_t i = 0; i < nVariables - 1; ++i)
     {
         fluxPen[i] = Array<OneD, NekDouble>{nTracePts, 0.0};
     }
@@ -710,14 +719,14 @@ void DiffusionLDGNS::NumericalFluxO2(
     // qflux = \hat{q} \cdot u = q \cdot n
     // Notice: i = 1 (first row of the viscous tensor is zero)
 
-    Array<OneD, NekDouble > qFwd{nTracePts};
-    Array<OneD, NekDouble > qBwd{nTracePts};
-    Array<OneD, NekDouble > qtemp{nTracePts};
-    Array<OneD, NekDouble > qfluxtemp{nTracePts, 0.0};
+    Array<OneD, NekDouble> qFwd{nTracePts};
+    Array<OneD, NekDouble> qBwd{nTracePts};
+    Array<OneD, NekDouble> qtemp{nTracePts};
+    Array<OneD, NekDouble> qfluxtemp{nTracePts, 0.0};
     std::size_t nDim = fields[0]->GetCoordim(0);
     for (std::size_t i = 1; i < nVariables; ++i)
     {
-        qflux[i] = Array<OneD, NekDouble> {nTracePts, 0.0};
+        qflux[i] = Array<OneD, NekDouble>{nTracePts, 0.0};
         for (std::size_t j = 0; j < nDim; ++j)
         {
             // Compute qFwd and qBwd value of qfield in position 'ji'
@@ -731,8 +740,8 @@ void DiffusionLDGNS::NumericalFluxO2(
                         qfluxtemp, 1);
 
             // Add penalty term
-            Vmath::Vvtvp(nTracePts, m_traceOneOverH, 1, fluxPen[i-1], 1,
-                qfluxtemp, 1, qfluxtemp, 1);
+            Vmath::Vvtvp(nTracePts, m_traceOneOverH, 1, fluxPen[i - 1], 1,
+                         qfluxtemp, 1, qfluxtemp, 1);
 
             // Impose weak boundary condition with flux
             if (fields[0]->GetBndCondExpansions().size())
@@ -746,33 +755,31 @@ void DiffusionLDGNS::NumericalFluxO2(
     }
 }
 
-
 /**
  * @brief Imposes appropriate bcs for the 2nd order derivatives
  *
  */
 void DiffusionLDGNS::ApplyBCsO2(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const std::size_t                                  var,
-    const std::size_t                                  dir,
-    const Array<OneD, const NekDouble>                &qfield,
-    const Array<OneD, const NekDouble>                &qFwd,
-    const Array<OneD, const NekDouble>                &qBwd,
-          Array<OneD,       NekDouble>                &penaltyflux)
+    const std::size_t var, const std::size_t dir,
+    const Array<OneD, const NekDouble> &qfield,
+    const Array<OneD, const NekDouble> &qFwd,
+    const Array<OneD, const NekDouble> &qBwd,
+    Array<OneD, NekDouble> &penaltyflux)
 {
     boost::ignore_unused(qfield, qBwd);
 
-    std::size_t cnt = 0;
+    std::size_t cnt         = 0;
     std::size_t nBndRegions = fields[var]->GetBndCondExpansions().size();
     // Loop on the boundary regions to apply appropriate bcs
     for (std::size_t i = 0; i < nBndRegions; ++i)
     {
         // Number of boundary regions related to region 'i'
-        std::size_t nBndEdges = fields[var]->
-        GetBndCondExpansions()[i]->GetExpSize();
+        std::size_t nBndEdges =
+            fields[var]->GetBndCondExpansions()[i]->GetExpSize();
 
-        if (fields[var]->GetBndConditions()[i]->GetBoundaryConditionType()
-            == SpatialDomains::ePeriodic)
+        if (fields[var]->GetBndConditions()[i]->GetBoundaryConditionType() ==
+            SpatialDomains::ePeriodic)
         {
             continue;
         }
@@ -780,34 +787,37 @@ void DiffusionLDGNS::ApplyBCsO2(
         // Weakly impose bcs by modifying flux values
         for (std::size_t e = 0; e < nBndEdges; ++e)
         {
-            std::size_t nBndEdgePts = fields[var]->
-            GetBndCondExpansions()[i]->GetExp(e)->GetTotPoints();
+            std::size_t nBndEdgePts = fields[var]
+                                          ->GetBndCondExpansions()[i]
+                                          ->GetExp(e)
+                                          ->GetTotPoints();
 
-            std::size_t id2 = fields[0]->GetTrace()->
-            GetPhys_Offset(fields[0]->GetTraceMap()->
-                           GetBndCondIDToGlobalTraceID(cnt++));
+            std::size_t id2 = fields[0]->GetTrace()->GetPhys_Offset(
+                fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt++));
 
             // In case of Dirichlet bcs:
             // uflux = gD
-            if (fields[var]->GetBndConditions()[i]->
-               GetBoundaryConditionType() == SpatialDomains::eDirichlet
-               && !boost::iequals(fields[var]->GetBndConditions()[i]->
-                                  GetUserDefined(), "WallAdiabatic")
-               && !boost::iequals(fields[var]->GetBndConditions()[i]->
-                                GetUserDefined(), "WallRotational"))
+            if (fields[var]
+                        ->GetBndConditions()[i]
+                        ->GetBoundaryConditionType() ==
+                    SpatialDomains::eDirichlet &&
+                !boost::iequals(
+                    fields[var]->GetBndConditions()[i]->GetUserDefined(),
+                    "WallAdiabatic") &&
+                !boost::iequals(
+                    fields[var]->GetBndConditions()[i]->GetUserDefined(),
+                    "WallRotational"))
             {
-                Vmath::Vmul(nBndEdgePts,
-                            &m_traceNormals[dir][id2], 1,
-                            &qFwd[id2], 1,
-                            &penaltyflux[id2], 1);
+                Vmath::Vmul(nBndEdgePts, &m_traceNormals[dir][id2], 1,
+                            &qFwd[id2], 1, &penaltyflux[id2], 1);
             }
             // 3.4) In case of Neumann bcs:
             // uflux = u+
-            else if ((fields[var]->GetBndConditions()[i])->
-                GetBoundaryConditionType() == SpatialDomains::eNeumann)
+            else if ((fields[var]->GetBndConditions()[i])
+                         ->GetBoundaryConditionType() ==
+                     SpatialDomains::eNeumann)
             {
-                ASSERTL0(false,
-                         "Neumann bcs not implemented for LDGNS");
+                ASSERTL0(false, "Neumann bcs not implemented for LDGNS");
 
                 /*
                 Vmath::Vmul(nBndEdgePts,
@@ -818,10 +828,12 @@ void DiffusionLDGNS::ApplyBCsO2(
                             &penaltyflux[id2], 1);
                  */
             }
-            else if (boost::iequals(fields[var]->GetBndConditions()[i]->
-                                   GetUserDefined(), "WallAdiabatic") ||
-                     boost::iequals(fields[var]->GetBndConditions()[i]->
-                                    GetUserDefined(), "WallRotational"))
+            else if (boost::iequals(
+                         fields[var]->GetBndConditions()[i]->GetUserDefined(),
+                         "WallAdiabatic") ||
+                     boost::iequals(
+                         fields[var]->GetBndConditions()[i]->GetUserDefined(),
+                         "WallRotational"))
             {
                 if ((var == m_spaceDim + 1))
                 {
@@ -830,11 +842,8 @@ void DiffusionLDGNS::ApplyBCsO2(
                 else
                 {
 
-                    Vmath::Vmul(nBndEdgePts,
-                                &m_traceNormals[dir][id2], 1,
-                                &qFwd[id2], 1,
-                                &penaltyflux[id2], 1);
-
+                    Vmath::Vmul(nBndEdgePts, &m_traceNormals[dir][id2], 1,
+                                &qFwd[id2], 1, &penaltyflux[id2], 1);
                 }
             }
         }
@@ -847,15 +856,15 @@ void DiffusionLDGNS::ApplyBCsO2(
  */
 void DiffusionLDGNS::v_GetPrimVar(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const Array<OneD, Array<OneD, NekDouble>>         &inarray,
-            Array<OneD, Array<OneD, NekDouble>>         &primVar)
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &primVar)
 {
     int nDim = fields[0]->GetCoordim(0);
     int nPts = fields[0]->GetTotPoints();
-    for(int i = 0; i < nDim; ++i)
-        {
-            primVar[i] = Array<OneD, NekDouble>(nPts, 0.0);
-            primVar[i] = inarray[i];
-        }
+    for (int i = 0; i < nDim; ++i)
+    {
+        primVar[i] = Array<OneD, NekDouble>(nPts, 0.0);
+        primVar[i] = inarray[i];
+    }
 }
-}//end of namespace Nektar
+} // end of namespace Nektar

@@ -251,9 +251,8 @@ void InterfaceTrace::CalcLocalMissing()
         int cnt = 0;
         for (auto childId : childEdge)
         {
-            auto childElmt =
-                m_trace->GetExpFromGeomId(childId.first);
-            size_t nq = childElmt->GetTotPoints();
+            auto childElmt = m_trace->GetExpFromGeomId(childId.first);
+            size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset =
@@ -277,9 +276,8 @@ void InterfaceTrace::CalcLocalMissing()
     {
         for (auto &childId : childEdge)
         {
-            auto childElmt =
-                m_trace->GetExpFromGeomId(childId.first);
-            size_t nq = childElmt->GetTotPoints();
+            auto childElmt = m_trace->GetExpFromGeomId(childId.first);
+            size_t nq      = childElmt->GetTotPoints();
             Array<OneD, NekDouble> xc(nq, 0.0), yc(nq, 0.0), zc(nq, 0.0);
             childElmt->GetCoords(xc, yc, zc);
             int offset =
@@ -298,19 +296,20 @@ void InterfaceTrace::CalcLocalMissing()
                 if (foundLocalCoordsCopy.find(offset + i) !=
                     foundLocalCoordsCopy.end())
                 {
-                    auto edge = m_interface->GetOppInterface()
-                            ->GetEdge(foundLocalCoordsCopy[offset + i].first);
+                    auto edge = m_interface->GetOppInterface()->GetEdge(
+                        foundLocalCoordsCopy[offset + i].first);
                     NekDouble dist = edge->FindDistance(xs, foundLocCoord);
 
                     if (dist < 5e-5)
                     {
-                        m_foundLocalCoords[offset + i] = std::make_pair(
-                            edge->GetGlobalID(), foundLocCoord);
+                        m_foundLocalCoords[offset + i] =
+                            std::make_pair(edge->GetGlobalID(), foundLocCoord);
                         continue;
                     }
                 }
 
-                // If not in last timestep edge then loop over all interface edges
+                // If not in last timestep edge then loop over all interface
+                // edges
                 auto parentEdge = m_interface->GetOppInterface()->GetEdge();
                 for (auto &edge : parentEdge)
                 {
@@ -324,7 +323,7 @@ void InterfaceTrace::CalcLocalMissing()
                         edge.second->FindDistance(xs, foundLocCoord);
                     if (dist < 5e-5)
                     {
-                        found  = true;
+                        found                          = true;
                         m_foundLocalCoords[offset + i] = std::make_pair(
                             edge.second->GetGlobalID(), foundLocCoord);
                         break;
@@ -556,7 +555,7 @@ void InterfaceExchange::SendFwdTrace(
 
     for (auto &i : m_foundRankCoords[m_rank])
     {
-        int traceId                     = m_trace->GetElmtToExpId(i.second.first);
+        int traceId = m_trace->GetElmtToExpId(i.second.first);
         Array<OneD, NekDouble> locCoord = i.second.second;
 
         Array<OneD, NekDouble> edgePhys =
@@ -591,7 +590,9 @@ void InterfaceExchange::CalcRankDistances()
 {
     // Clear old found coordinates
     auto foundRankCoordsCopy = m_foundRankCoords;
-    m_foundRankCoords[m_rank].clear(); // @TODO: This may cause problems with 2 interfaces and one is fixed? With the skip below.
+    m_foundRankCoords[m_rank]
+        .clear(); // @TODO: This may cause problems with 2 interfaces and one is
+                  // fixed? With the skip below.
 
     Array<OneD, int> disp(m_recvSize[m_rank].size() + 1, 0.0);
     std::partial_sum(m_recvSize[m_rank].begin(), m_recvSize[m_rank].end(),
@@ -616,16 +617,17 @@ void InterfaceExchange::CalcRankDistances()
             xs[2] = m_recv[j + 2];
 
             // First search the edge the point was found in last timestep
-            if (foundRankCoordsCopy[m_rank].find(j / 3) != foundRankCoordsCopy[m_rank].end())
+            if (foundRankCoordsCopy[m_rank].find(j / 3) !=
+                foundRankCoordsCopy[m_rank].end())
             {
-                auto edge =m_interfaceTraces[i]->GetInterface()
-                                ->GetEdge(foundRankCoordsCopy[m_rank][j / 3].first);
+                auto edge = m_interfaceTraces[i]->GetInterface()->GetEdge(
+                    foundRankCoordsCopy[m_rank][j / 3].first);
                 NekDouble dist = edge->FindDistance(xs, foundLocCoord);
 
                 if (dist < 5e-5)
                 {
-                    m_foundRankCoords[m_rank][j / 3]  = std::make_pair(
-                        edge->GetGlobalID(), foundLocCoord);
+                    m_foundRankCoords[m_rank][j / 3] =
+                        std::make_pair(edge->GetGlobalID(), foundLocCoord);
                     continue;
                 }
             }

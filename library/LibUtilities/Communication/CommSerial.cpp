@@ -256,7 +256,7 @@ void CommSerial::v_Irsend(void *buf, int count, CommDataType dt, int dest,
 }
 
 void CommSerial::v_Isend(void *buf, int count, CommDataType dt, int dest,
-                          CommRequestSharedPtr request, int loc)
+                         CommRequestSharedPtr request, int loc)
 {
     boost::ignore_unused(buf, count, dt, dest, request, loc);
 }

@@ -32,10 +32,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/Driver.h>
+#include <LibUtilities/BasicUtils/Likwid.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/Timer.h>
-#include <LibUtilities/BasicUtils/Likwid.hpp>
+#include <SolverUtils/Driver.h>
 
 using namespace std;
 using namespace Nektar;
@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
     SpatialDomains::MeshGraphSharedPtr graph;
     string vDriverModule;
     DriverSharedPtr drv;
-
 
     try
     {
@@ -79,7 +78,7 @@ int main(int argc, char *argv[])
         if (session->DefinesCmdLineArgument("verbose"))
         {
             int iolevel;
-            session->LoadParameter("IO_Timer_Level",iolevel,1);
+            session->LoadParameter("IO_Timer_Level", iolevel, 1);
             LibUtilities::Timer::PrintElapsedRegions(session->GetComm(),
                                                      std::cout, iolevel);
         }
@@ -89,11 +88,11 @@ int main(int argc, char *argv[])
         // Finalise session
         session->Finalise();
     }
-    catch (const std::runtime_error& e)
+    catch (const std::runtime_error &e)
     {
         return 1;
     }
-    catch (const std::string& eStr)
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }

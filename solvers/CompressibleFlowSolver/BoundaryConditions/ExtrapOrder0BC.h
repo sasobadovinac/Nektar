@@ -37,7 +37,6 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
@@ -47,47 +46,42 @@ namespace Nektar
  */
 class ExtrapOrder0BC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<ExtrapOrder0BC>;
 
-        friend class MemoryManager<ExtrapOrder0BC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p =
+            MemoryManager<ExtrapOrder0BC>::AllocateSharedPtr(
+                pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
+                bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<ExtrapOrder0BC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pGridVelocity, pSpaceDim,
-                                    bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-    protected:
+private:
+    ExtrapOrder0BC(const LibUtilities::SessionReaderSharedPtr &pSession,
+                   const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+                   const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+                   const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+                   const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
-
-    private:
-        ExtrapOrder0BC(const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-        
-        virtual ~ExtrapOrder0BC(void){};
+    virtual ~ExtrapOrder0BC(void){};
 };
 
-}
+} // namespace Nektar
 
 #endif

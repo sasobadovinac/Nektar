@@ -209,9 +209,9 @@ Pairwise::Pairwise(const LibUtilities::CommSharedPtr &comm,
 
     size_t totSends = std::accumulate(sendCount.begin(), sendCount.end(), 0);
 
-    m_recvBuff   = Array<OneD, NekDouble>(totSends, -1);
-    m_sendBuff   = Array<OneD, NekDouble>(totSends, -1);
-    m_edgeTraceIndex = Array<OneD, int>  (totSends, -1);
+    m_recvBuff       = Array<OneD, NekDouble>(totSends, -1);
+    m_sendBuff       = Array<OneD, NekDouble>(totSends, -1);
+    m_edgeTraceIndex = Array<OneD, int>(totSends, -1);
 
     // Set up m_edgeTraceIndex to reduce complexity when performing exchange
     cnt = 0;
@@ -409,7 +409,9 @@ AssemblyCommDG::AssemblyCommDG(
         int maxStrLen = 0;
         for (size_t i = 0; i < MPIFuncs.size(); ++i)
         {
-            maxStrLen = MPIFuncsNames[i].size() > maxStrLen ? MPIFuncsNames[i].size() : maxStrLen;
+            maxStrLen = MPIFuncsNames[i].size() > maxStrLen
+                            ? MPIFuncsNames[i].size()
+                            : maxStrLen;
         }
 
         for (size_t i = 0; i < MPIFuncs.size(); ++i)
@@ -421,7 +423,8 @@ AssemblyCommDG::AssemblyCommDG(
             {
                 std::cout << "  " << MPIFuncsNames[i]
                           << " times (avg, min, max)"
-                          << std::string(maxStrLen - MPIFuncsNames[i].size(), ' ')
+                          << std::string(maxStrLen - MPIFuncsNames[i].size(),
+                                         ' ')
                           << ": " << avg[i] << " " << min << " " << max
                           << std::endl;
             }
@@ -587,7 +590,7 @@ void AssemblyCommDG::InitialiseStructure(
             int id = elmtToTrace[eid][j]->GetGeom()->GetGlobalID();
             localEdgeIds.emplace_back(id);
         }
-        
+
         quad = locExpansion->GetTotPoints();
         if (quad > m_maxQuad)
         {
@@ -716,7 +719,7 @@ void AssemblyCommDG::InitialiseStructure(
  */
 std::tuple<NekDouble, NekDouble, NekDouble> AssemblyCommDG::Timing(
     const LibUtilities::CommSharedPtr &comm, const int &count, const int &num,
-    const ExchangeMethodSharedPtr& f)
+    const ExchangeMethodSharedPtr &f)
 {
     Array<OneD, NekDouble> testFwd(num, 1);
     Array<OneD, NekDouble> testBwd(num, -2);

@@ -111,7 +111,7 @@ FilterError::FilterError(const LibUtilities::SessionReaderSharedPtr &pSession,
         ASSERTL0(it->second.length() > 0, "Empty parameter 'ConsoleOutput'.");
         ASSERTL0(it->second == "0" || it->second == "1",
                  "Parameter 'ConsoleOutput' can only be '0' or '1'.");
-        m_consoleOutput =  boost::lexical_cast<bool>(it->second);
+        m_consoleOutput = boost::lexical_cast<bool>(it->second);
     }
 }
 

@@ -32,11 +32,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Element.h>
 #include "ProcessCombine.h"
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <NekMesh/MeshElements/Element.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -46,15 +46,15 @@ namespace Nektar
 namespace NekMesh
 {
 
-ModuleKey ProcessCombine::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "combine"),
-    ProcessCombine::create,
-    "Combine two mesh files into one output file.");
+ModuleKey ProcessCombine::className =
+    GetModuleFactory().RegisterCreatorFunction(
+        ModuleKey(eProcessModule, "combine"), ProcessCombine::create,
+        "Combine two mesh files into one output file.");
 
 ProcessCombine::ProcessCombine(MeshSharedPtr m) : ProcessModule(m)
 {
-    m_config["file"] =
-        ConfigOption(false, "", "Second mesh file to be combined with the input mesh file.");
+    m_config["file"] = ConfigOption(
+        false, "", "Second mesh file to be combined with the input mesh file.");
 }
 
 ProcessCombine::~ProcessCombine()
@@ -63,7 +63,8 @@ ProcessCombine::~ProcessCombine()
 
 void ProcessCombine::Process()
 {
-    ASSERTL0(m_config["file"].beenSet, "The 'file' module parameter must be set.")
+    ASSERTL0(m_config["file"].beenSet,
+             "The 'file' module parameter must be set.")
 
     std::string fname = m_config["file"].as<std::string>();
 
@@ -81,14 +82,14 @@ void ProcessCombine::Process()
     boost::split(tmp1, fname, boost::is_any_of(":"));
     if (tmp1.size() == 1)
     {
-        int    dot    = tmp1[0].find_last_of('.') + 1;
-        string ext    = tmp1[0].substr(dot, tmp1[0].length() - dot);
+        int dot    = tmp1[0].find_last_of('.') + 1;
+        string ext = tmp1[0].substr(dot, tmp1[0].length() - dot);
 
         if (ext == "gz")
         {
             string tmp = tmp1[0].substr(0, tmp1[0].length() - 3);
-            dot = tmp.find_last_of('.') + 1;
-            ext = tmp.substr(dot, tmp.length() - dot);
+            dot        = tmp.find_last_of('.') + 1;
+            ext        = tmp.substr(dot, tmp.length() - dot);
         }
 
         module.second = ext;
@@ -102,9 +103,9 @@ void ProcessCombine::Process()
 
     // Copy communicator
     MeshSharedPtr mesh = std::make_shared<Mesh>();
-    mesh->m_comm = m_mesh->m_comm;
+    mesh->m_comm       = m_mesh->m_comm;
 
-    ModuleSharedPtr mod = GetModuleFactory().CreateInstance(module,mesh);
+    ModuleSharedPtr mod = GetModuleFactory().CreateInstance(module, mesh);
     mod->SetLogger(m_log);
     mod->GetLogger().SetPrefix("ProcessCombine");
 
@@ -138,7 +139,8 @@ void ProcessCombine::Process()
 
     // Check dimensions of both meshes are the same
     ASSERTL0(m_mesh->m_expDim == mesh2->m_expDim,
-             "The expansion dimensions of the meshes being combined must be the same.")
+             "The expansion dimensions of the meshes being combined must be "
+             "the same.")
 
     // Renumber vertices and copy in to m_vertexSet
     int vid = m_mesh->m_vertexSet.size();
@@ -146,14 +148,15 @@ void ProcessCombine::Process()
     {
         for (int j = 0; j < elmt->GetVertexCount(); ++j)
         {
-            pair<NodeSet::iterator,bool> testIns = m_mesh->m_vertexSet.insert(elmt->GetVertex(j));
+            pair<NodeSet::iterator, bool> testIns =
+                m_mesh->m_vertexSet.insert(elmt->GetVertex(j));
 
             if (testIns.second)
             {
                 (*testIns.first)->m_id = vid++;
             }
 
-            elmt->SetVertex(j,*testIns.first);
+            elmt->SetVertex(j, *testIns.first);
         }
     }
 
@@ -164,21 +167,21 @@ void ProcessCombine::Process()
         for (int j = 0; j < elmt->GetEdgeCount(); ++j)
         {
             EdgeSharedPtr ed = elmt->GetEdge(j);
-            pair<EdgeSet::iterator, bool> testIns = m_mesh->m_edgeSet.insert(ed);
+            pair<EdgeSet::iterator, bool> testIns =
+                m_mesh->m_edgeSet.insert(ed);
 
             if (testIns.second)
             {
                 EdgeSharedPtr ed2 = *testIns.first;
-                ed2->m_id = eid++;
-                //ed2->m_elLink.push_back(
+                ed2->m_id         = eid++;
+                // ed2->m_elLink.push_back(
                 //        pair<ElementSharedPtr, int>(elmt, j));
             }
             else
             {
                 EdgeSharedPtr e2 = *(testIns.first);
                 elmt->SetEdge(j, e2);
-                if (e2->m_edgeNodes.size() == 0 &&
-                    ed->m_edgeNodes.size() > 0)
+                if (e2->m_edgeNodes.size() == 0 && ed->m_edgeNodes.size() > 0)
                 {
                     e2->m_curveType = ed->m_curveType;
                     e2->m_edgeNodes = ed->m_edgeNodes;
@@ -186,18 +189,17 @@ void ProcessCombine::Process()
                     // Reverse nodes if appropriate.
                     if (e2->m_n1->m_id != ed->m_n1->m_id)
                     {
-                        reverse(e2->m_edgeNodes.begin(),
-                                e2->m_edgeNodes.end());
+                        reverse(e2->m_edgeNodes.begin(), e2->m_edgeNodes.end());
                     }
                 }
 
-                //if (ed->m_parentCAD)
+                // if (ed->m_parentCAD)
                 //{
                 //    e2->m_parentCAD = ed->m_parentCAD;
                 //}
 
                 // Update edge to element map.
-                //e2->m_elLink.push_back(
+                // e2->m_elLink.push_back(
                 //        pair<ElementSharedPtr, int>(elmt, j));
             }
 
@@ -213,7 +215,8 @@ void ProcessCombine::Process()
     {
         for (int j = 0; j < elmt->GetFaceCount(); ++j)
         {
-            pair<FaceSet::iterator,bool> testIns = m_mesh->m_faceSet.insert(elmt->GetFace(j));
+            pair<FaceSet::iterator, bool> testIns =
+                m_mesh->m_faceSet.insert(elmt->GetFace(j));
 
             if (testIns.second)
             {
@@ -229,7 +232,7 @@ void ProcessCombine::Process()
                 //        pair<ElementSharedPtr,int>(elmt,j));
             }
 
-            elmt->SetFace(j,*testIns.first);
+            elmt->SetFace(j, *testIns.first);
         }
     }
 
@@ -239,7 +242,7 @@ void ProcessCombine::Process()
     auto &elmts = mesh2->m_element;
     for (int d = 0; d < 4; ++d)
     {
-        int numEl = m_mesh->m_element[d].size();
+        int numEl  = m_mesh->m_element[d].size();
         auto elVec = elmts[d];
         for (auto &el : elVec)
         {
@@ -253,24 +256,28 @@ void ProcessCombine::Process()
     for (int d = 0; d <= m_mesh->m_expDim; ++d)
     {
         vector<ElementSharedPtr> &elmt = m_mesh->m_element[d];
-        for (int i = elmt.size() - mesh2->m_element[d].size(); i < elmt.size(); ++i) // for number of elements added by mesh 2
+        for (int i = elmt.size() - mesh2->m_element[d].size(); i < elmt.size();
+             ++i) // for number of elements added by mesh 2
         {
             CompositeMap::iterator it;
             unsigned int tagid = elmt[i]->GetTagList()[0];
 
             auto findKey = compRenumber.find(elmt[i]->GetTagList()[0]);
-            if(findKey != compRenumber.end())
+            if (findKey != compRenumber.end())
             {
                 tagid = findKey->second;
             }
             else
             {
                 // Checks if composite tag is already defined in mesh 1
-                while (m_mesh->m_composite.find(tagid) != m_mesh->m_composite.end())
+                while (m_mesh->m_composite.find(tagid) !=
+                       m_mesh->m_composite.end())
                 {
                     tagid++;
-                    // Checks if trying to replace the tag with a tag already defined in mesh 2
-                    if(mesh2->m_composite.find(tagid) != mesh2->m_composite.end())
+                    // Checks if trying to replace the tag with a tag already
+                    // defined in mesh 2
+                    if (mesh2->m_composite.find(tagid) !=
+                        mesh2->m_composite.end())
                     {
                         tagid++;
                     }
@@ -282,10 +289,10 @@ void ProcessCombine::Process()
             it = m_mesh->m_composite.find(tagid);
             if (it == m_mesh->m_composite.end())
             {
-                CompositeSharedPtr tmp = std::shared_ptr<Composite>(
-                        new Composite());
+                CompositeSharedPtr tmp =
+                    std::shared_ptr<Composite>(new Composite());
                 pair<CompositeMap::iterator, bool> testIns;
-                tmp->m_id = tagid;
+                tmp->m_id  = tagid;
                 tmp->m_tag = elmt[i]->GetTag();
                 if (mesh2->m_faceLabels.count(tmp->m_id) != 0)
                 {
@@ -293,7 +300,7 @@ void ProcessCombine::Process()
                 }
 
                 testIns = m_mesh->m_composite.insert(
-                        pair<unsigned int, CompositeSharedPtr>(tagid, tmp));
+                    pair<unsigned int, CompositeSharedPtr>(tagid, tmp));
                 it = testIns.first;
             }
 
@@ -302,19 +309,21 @@ void ProcessCombine::Process()
         }
     }
 
-    if(!compRenumber.empty())
+    if (!compRenumber.empty())
     {
-        m_log << "Duplicate composite IDs from mesh 1 detected in mesh 2." << endl;
+        m_log << "Duplicate composite IDs from mesh 1 detected in mesh 2."
+              << endl;
         m_log << "These will be remapped in the output file to:" << endl;
 
         for (auto &cIt : compRenumber)
         {
-            if(cIt.first != cIt.second)
+            if (cIt.first != cIt.second)
             {
-                m_log << "- C[" << cIt.first << "] => " << "C[" << cIt.second << "]" << endl;
+                m_log << "- C[" << cIt.first << "] => "
+                      << "C[" << cIt.second << "]" << endl;
             }
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

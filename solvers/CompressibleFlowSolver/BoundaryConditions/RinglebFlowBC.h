@@ -37,59 +37,52 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
 /**
-* @brief Wall boundary conditions for compressible flow problems.
-*/
+ * @brief Wall boundary conditions for compressible flow problems.
+ */
 class RinglebFlowBC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<RinglebFlowBC>;
 
-        friend class MemoryManager<RinglebFlowBC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p = MemoryManager<RinglebFlowBC>::AllocateSharedPtr(
+            pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
+            bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<RinglebFlowBC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pGridVelocity, pSpaceDim,
-                                    bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-    protected:
+private:
+    RinglebFlowBC(const LibUtilities::SessionReaderSharedPtr &pSession,
+                  const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+                  const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+                  const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+                  const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
+    virtual ~RinglebFlowBC(void){};
 
-    private:
-        RinglebFlowBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-        
-        virtual ~RinglebFlowBC(void){};
-
-        int    m_expdim;
-        bool   m_homo1D;
+    int m_expdim;
+    bool m_homo1D;
 };
 
-}
+} // namespace Nektar
 
 #endif

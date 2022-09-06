@@ -69,7 +69,7 @@ public:
         return "ProcessCombine";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

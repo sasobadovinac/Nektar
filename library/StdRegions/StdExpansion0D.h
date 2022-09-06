@@ -34,7 +34,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
 #ifndef STDEXP0D_H
 #define STDEXP0D_H
 
@@ -43,54 +42,53 @@
 
 namespace Nektar
 {
-    namespace StdRegions
+namespace StdRegions
+{
+
+class StdExpansion0D : virtual public StdExpansion
+{
+
+public:
+    STD_REGIONS_EXPORT StdExpansion0D();
+    STD_REGIONS_EXPORT StdExpansion0D(int numcoeffs,
+                                      const LibUtilities::BasisKey &Ba);
+    STD_REGIONS_EXPORT StdExpansion0D(const StdExpansion0D &T);
+    STD_REGIONS_EXPORT virtual ~StdExpansion0D();
+
+    STD_REGIONS_EXPORT void PhysTensorDeriv(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
+
+    // Virtual Functions ----------------------------------------
+protected:
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, const NekDouble> &coords,
+        const Array<OneD, const NekDouble> &physvals) final;
+
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, DNekMatSharedPtr> &I,
+        const Array<OneD, const NekDouble> &physvals) override;
+
+private:
+    virtual int v_GetCoordim(void) final
     {
+        return 1;
+    }
 
-        class StdExpansion0D: virtual public StdExpansion
-        {
+    virtual int v_GetShapeDimension() const final
+    {
+        return 1;
+    }
 
-        public:
+    virtual int v_GetNtraces() const override
+    {
+        return 0;
+    }
+};
 
-            STD_REGIONS_EXPORT StdExpansion0D();
-            STD_REGIONS_EXPORT StdExpansion0D(int numcoeffs, const LibUtilities::BasisKey &Ba);
-            STD_REGIONS_EXPORT StdExpansion0D(const StdExpansion0D &T);
-            STD_REGIONS_EXPORT virtual ~StdExpansion0D();
-			
-            STD_REGIONS_EXPORT void PhysTensorDeriv(const Array<OneD, const NekDouble>& inarray,
-                                                    Array<OneD,       NekDouble>& outarray);
-			
-            
-            // Virtual Functions ----------------------------------------
-        protected:
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                                         const Array<OneD, const NekDouble>& coords,
-                                         const Array<OneD, const NekDouble>& physvals) final;
+typedef std::shared_ptr<StdExpansion0D> StdExpansion0DSharedPtr;
 
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                const Array<OneD, DNekMatSharedPtr> &I,
-                const Array<OneD, const NekDouble> &physvals) override;
+} // namespace StdRegions
+} // namespace Nektar
 
-        private:
-            virtual int v_GetCoordim(void) final
-            {
-                return 1;
-            }
-
-            virtual int v_GetShapeDimension() const final
-            {
-                return 1;
-            }
-
-            virtual int v_GetNtraces() const override
-            {
-                return 0;
-            }
-
-        };
-
-        typedef std::shared_ptr<StdExpansion0D> StdExpansion0DSharedPtr;
-
-    } //end of namespace
-} //end of namespace
-
-#endif //STDEXP0D_H
+#endif // STDEXP0D_H

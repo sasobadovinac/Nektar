@@ -1,6 +1,6 @@
 #include "ALEHelper.h"
-#include <StdRegions/StdQuadExp.h>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <StdRegions/StdQuadExp.h>
 
 namespace Nektar
 {
@@ -11,42 +11,54 @@ namespace SolverUtils
 void ALEHelper::InitObject(int spaceDim,
                            Array<OneD, MultiRegions::ExpListSharedPtr> &fields)
 {
-    m_spaceDim = spaceDim;
+    m_spaceDim  = spaceDim;
     m_fieldsALE = fields;
 
     // Initialise grid velocities as 0s
-    m_gridVelocity = Array<OneD, Array<OneD, NekDouble>>(m_spaceDim);
+    m_gridVelocity      = Array<OneD, Array<OneD, NekDouble>>(m_spaceDim);
     m_gridVelocityTrace = Array<OneD, Array<OneD, NekDouble>>(m_spaceDim);
     for (int i = 0; i < spaceDim; ++i)
     {
-        m_gridVelocity[i] = Array<OneD, NekDouble>(fields[0]->GetTotPoints(), 0.0);
-        m_gridVelocityTrace[i] = Array<OneD, NekDouble>(fields[0]->GetTrace()->GetTotPoints(), 0.0);
+        m_gridVelocity[i] =
+            Array<OneD, NekDouble>(fields[0]->GetTotPoints(), 0.0);
+        m_gridVelocityTrace[i] =
+            Array<OneD, NekDouble>(fields[0]->GetTrace()->GetTotPoints(), 0.0);
     }
 
     // Create ALE objects for each interface zone
-    if(fields[0]->GetGraph() != nullptr) // homogeneous graphs are missing the graph data
+    if (fields[0]->GetGraph() !=
+        nullptr) // homogeneous graphs are missing the graph data
     {
         for (auto &zone : fields[0]->GetGraph()->GetMovement()->GetZones())
         {
-            switch(zone.second->GetMovementType())
+            switch (zone.second->GetMovementType())
             {
-                case SpatialDomains::MovementType::eFixed :
-                    m_ALEs.emplace_back(ALEFixedShPtr(MemoryManager<ALEFixed>::AllocateSharedPtr(zone.second)));
+                case SpatialDomains::MovementType::eFixed:
+                    m_ALEs.emplace_back(ALEFixedShPtr(
+                        MemoryManager<ALEFixed>::AllocateSharedPtr(
+                            zone.second)));
                     break;
-                case SpatialDomains::MovementType::eTranslate :
-                    m_ALEs.emplace_back(ALETranslateShPtr(MemoryManager<ALETranslate>::AllocateSharedPtr(zone.second)));
+                case SpatialDomains::MovementType::eTranslate:
+                    m_ALEs.emplace_back(ALETranslateShPtr(
+                        MemoryManager<ALETranslate>::AllocateSharedPtr(
+                            zone.second)));
                     m_ALESolver = true;
                     break;
-                case SpatialDomains::MovementType::eRotate :
-                    m_ALEs.emplace_back(ALERotateShPtr(MemoryManager<ALERotate>::AllocateSharedPtr(zone.second)));
+                case SpatialDomains::MovementType::eRotate:
+                    m_ALEs.emplace_back(ALERotateShPtr(
+                        MemoryManager<ALERotate>::AllocateSharedPtr(
+                            zone.second)));
                     m_ALESolver = true;
                     break;
-                case SpatialDomains::MovementType::ePrescribe :
-                    m_ALEs.emplace_back(ALEPrescribeShPtr(MemoryManager<ALEPrescribe>::AllocateSharedPtr(zone.second)));
+                case SpatialDomains::MovementType::ePrescribe:
+                    m_ALEs.emplace_back(ALEPrescribeShPtr(
+                        MemoryManager<ALEPrescribe>::AllocateSharedPtr(
+                            zone.second)));
                     m_ALESolver = true;
                     break;
-                case SpatialDomains::MovementType::eNone :
-                    WARNINGL0(false, "Zone cannot have movement type of 'None'.")
+                case SpatialDomains::MovementType::eNone:
+                    WARNINGL0(false,
+                              "Zone cannot have movement type of 'None'.")
             }
         }
     }
@@ -67,7 +79,7 @@ void ALEHelper::UpdateGridVelocity(const NekDouble &time)
     }
 }
 
-void ALEHelper::ALEPreMultiplyMass(Array<OneD, Array<OneD, NekDouble> > &fields)
+void ALEHelper::ALEPreMultiplyMass(Array<OneD, Array<OneD, NekDouble>> &fields)
 {
     const int nm = m_fieldsALE[0]->GetNcoeffs();
     MultiRegions::GlobalMatrixKey mkey(StdRegions::eMass);
@@ -81,7 +93,9 @@ void ALEHelper::ALEPreMultiplyMass(Array<OneD, Array<OneD, NekDouble> > &fields)
     }
 }
 
-void ALEHelper::ALEDoElmtInvMass(Array<OneD, Array<OneD, NekDouble> > &traceNormals, Array<OneD, Array<OneD, NekDouble> > &fields, NekDouble time)
+void ALEHelper::ALEDoElmtInvMass(
+    Array<OneD, Array<OneD, NekDouble>> &traceNormals,
+    Array<OneD, Array<OneD, NekDouble>> &fields, NekDouble time)
 {
     boost::ignore_unused(time, traceNormals);
     // Update m_fields with u^n by multiplying by inverse mass
@@ -93,9 +107,10 @@ void ALEHelper::ALEDoElmtInvMass(Array<OneD, Array<OneD, NekDouble> > &traceNorm
     for (int i = 0; i < m_fieldsALE.size(); ++i)
     {
         m_fieldsALE[i]->MultiplyByElmtInvMass(
-            fields[i], m_fieldsALE[i]->UpdateCoeffs()); // @TODO: Potentially matrix free?
-        m_fieldsALE[i]->BwdTrans(
-            m_fieldsALE[i]->GetCoeffs(), m_fieldsALE[i]->UpdatePhys());
+            fields[i],
+            m_fieldsALE[i]->UpdateCoeffs()); // @TODO: Potentially matrix free?
+        m_fieldsALE[i]->BwdTrans(m_fieldsALE[i]->GetCoeffs(),
+                                 m_fieldsALE[i]->UpdatePhys());
     }
 }
 
@@ -119,7 +134,8 @@ void ALEHelper::ALEDoElmtInvMassBwdTrans(
     }
 }
 
-void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDouble> > &traceNormals)
+void ALEHelper::MoveMesh(const NekDouble &time,
+                         Array<OneD, Array<OneD, NekDouble>> &traceNormals)
 {
     // Only move if timestepped
     if (time == m_prevStageTime)
@@ -132,7 +148,8 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
 
     LibUtilities::Timer timer;
     timer.Start();
-    m_fieldsALE[0]->GetGraph()->GetMovement()->PerformMovement(time); // @TODO: Moved out of loop!
+    m_fieldsALE[0]->GetGraph()->GetMovement()->PerformMovement(
+        time); // @TODO: Moved out of loop!
     timer.Stop();
     timer.AccumulateRegion("Movement::PerformMovement");
 
@@ -142,8 +159,9 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
         field->ResetMatrices();
     }
 
-    // Loop over all elements and faces and edges and reset geometry information.
-    // Only need to do this on the first field as the geometry information is shared.
+    // Loop over all elements and faces and edges and reset geometry
+    // information. Only need to do this on the first field as the geometry
+    // information is shared.
     for (auto &zone : m_fieldsALE[0]->GetGraph()->GetMovement()->GetZones())
     {
         if (zone.second->GetMoved())
@@ -158,9 +176,13 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
             }
 
             // We need to rebuild geometric factors on the trace elements
-            for (const auto &i : conEl[m_fieldsALE[0]->GetShapeDimension() - 1]) // This only takes the trace elements
+            for (const auto &i : conEl[m_fieldsALE[0]->GetShapeDimension() -
+                                       1]) // This only takes the trace elements
             {
-                m_fieldsALE[0]->GetTrace()->GetExpFromGeomId(i->GetGlobalID())->Reset();
+                m_fieldsALE[0]
+                    ->GetTrace()
+                    ->GetExpFromGeomId(i->GetGlobalID())
+                    ->Reset();
             }
         }
     }
@@ -172,8 +194,10 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
             if (zone.second->GetMoved())
             {
                 auto conEl = zone.second->GetConstituentElements();
-                // Loop over zone elements expansions and rebuild geometric factors
-                for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
+                // Loop over zone elements expansions and rebuild geometric
+                // factors
+                for (const auto &i :
+                     conEl[0]) // This only takes highest dimensioned elements
                 {
                     field->GetExpFromGeomId(i->GetGlobalID())->Reset();
                 }
@@ -186,12 +210,19 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
         if (zone.second->GetMoved())
         {
             auto conEl = zone.second->GetConstituentElements();
-            // Loop over zone elements expansions and rebuild geometric factors and recalc trace normals
-            for (const auto &i : conEl[0]) // This only takes highest dimensioned elements
+            // Loop over zone elements expansions and rebuild geometric factors
+            // and recalc trace normals
+            for (const auto &i :
+                 conEl[0]) // This only takes highest dimensioned elements
             {
-                for (int j = 0; j < m_fieldsALE[0]->GetExpFromGeomId(i->GetGlobalID())->GetNtraces();++j)
+                for (int j = 0; j < m_fieldsALE[0]
+                                        ->GetExpFromGeomId(i->GetGlobalID())
+                                        ->GetNtraces();
+                     ++j)
                 {
-                    m_fieldsALE[0]->GetExpFromGeomId(i->GetGlobalID())->ComputeTraceNormal(j);
+                    m_fieldsALE[0]
+                        ->GetExpFromGeomId(i->GetGlobalID())
+                        ->ComputeTraceNormal(j);
                 }
             }
         }
@@ -213,7 +244,8 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
     // Updates trace grid velocity
     for (int i = 0; i < m_gridVelocityTrace.size(); ++i)
     {
-        m_fieldsALE[0]->ExtractTracePhys(m_gridVelocity[i], m_gridVelocityTrace[i]);
+        m_fieldsALE[0]->ExtractTracePhys(m_gridVelocity[i],
+                                         m_gridVelocityTrace[i]);
     }
 
     // Set the flag to exchange coords in InterfaceMapDG to true
@@ -222,31 +254,32 @@ void ALEHelper::MoveMesh(const NekDouble &time, Array<OneD, Array<OneD, NekDoubl
     m_prevStageTime = time;
 }
 
-const Array<OneD, const Array<OneD, NekDouble> > &ALEHelper::GetGridVelocityTrace()
+const Array<OneD, const Array<OneD, NekDouble>>
+    &ALEHelper::GetGridVelocityTrace()
 {
     return m_gridVelocityTrace;
 }
 
-ALEFixed::ALEFixed(SpatialDomains::ZoneBaseShPtr zone) :
-    m_zone(std::static_pointer_cast<SpatialDomains::ZoneFixed>(zone))
+ALEFixed::ALEFixed(SpatialDomains::ZoneBaseShPtr zone)
+    : m_zone(std::static_pointer_cast<SpatialDomains::ZoneFixed>(zone))
 {
 }
 
-void ALEFixed::v_UpdateGridVel(NekDouble time,
-                                   Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                   Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
+void ALEFixed::v_UpdateGridVel(
+    NekDouble time, Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
     boost::ignore_unused(time, fields, gridVelocity);
 }
 
-ALETranslate::ALETranslate(SpatialDomains::ZoneBaseShPtr zone) :
-      m_zone(std::static_pointer_cast<SpatialDomains::ZoneTranslate>(zone))
+ALETranslate::ALETranslate(SpatialDomains::ZoneBaseShPtr zone)
+    : m_zone(std::static_pointer_cast<SpatialDomains::ZoneTranslate>(zone))
 {
 }
 
-void ALETranslate::v_UpdateGridVel(NekDouble time,
-                                   Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                   Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
+void ALETranslate::v_UpdateGridVel(
+    NekDouble time, Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
     boost::ignore_unused(time);
 
@@ -271,19 +304,19 @@ void ALETranslate::v_UpdateGridVel(NekDouble time,
     }
 }
 
-ALERotate::ALERotate(SpatialDomains::ZoneBaseShPtr zone) :
-    m_zone(std::static_pointer_cast<SpatialDomains::ZoneRotate>(zone))
+ALERotate::ALERotate(SpatialDomains::ZoneBaseShPtr zone)
+    : m_zone(std::static_pointer_cast<SpatialDomains::ZoneRotate>(zone))
 {
 }
 
-void ALERotate::v_UpdateGridVel(NekDouble time,
-                               Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                               Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
+void ALERotate::v_UpdateGridVel(
+    NekDouble time, Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
     boost::ignore_unused(time, fields, gridVelocity);
 
     auto angVel = m_zone->GetAngularVel(time);
-    auto axis = m_zone->GetAxis();
+    auto axis   = m_zone->GetAxis();
     auto origin = m_zone->GetOrigin();
 
     auto exp = fields[0]->GetExp();
@@ -302,13 +335,13 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
         for (int i = 0; i < nq; ++i)
         {
             // Vector from origin to point
-            DNekVec pointMinOrigin = {xc[i] - origin(0),
-                                      yc[i] - origin(1),
+            DNekVec pointMinOrigin = {xc[i] - origin(0), yc[i] - origin(1),
                                       zc[i] - origin(2)};
 
             // Vector orthogonal to plane formed by axis and point
             DNekVec norm = pointMinOrigin.Cross(axis);
-            // We negate here as by convention a positive angular velocity is counter-clockwise
+            // We negate here as by convention a positive angular velocity is
+            // counter-clockwise
             norm = norm * -angVel;
 
             for (int j = 0; j < gridVelocity.size(); ++j)
@@ -319,18 +352,18 @@ void ALERotate::v_UpdateGridVel(NekDouble time,
     }
 }
 
-ALEPrescribe::ALEPrescribe(SpatialDomains::ZoneBaseShPtr zone) :
-    m_zone(std::static_pointer_cast<SpatialDomains::ZonePrescribe>(zone))
+ALEPrescribe::ALEPrescribe(SpatialDomains::ZoneBaseShPtr zone)
+    : m_zone(std::static_pointer_cast<SpatialDomains::ZonePrescribe>(zone))
 {
 }
 
-void ALEPrescribe::v_UpdateGridVel(NekDouble time,
-                                Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                                Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
+void ALEPrescribe::v_UpdateGridVel(
+    NekDouble time, Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    Array<OneD, Array<OneD, NekDouble>> &gridVelocity)
 {
     boost::ignore_unused(time, fields, gridVelocity);
 
-    auto exp = fields[0]->GetExp();
+    auto exp      = fields[0]->GetExp();
     auto elements = m_zone->GetElements();
     for (auto &el : elements)
     {
@@ -338,10 +371,10 @@ void ALEPrescribe::v_UpdateGridVel(NekDouble time,
         int offset     = fields[0]->GetPhys_Offset(indx);
         auto expansion = (*exp)[indx];
 
-        LibUtilities::BasisKey bkeyx(expansion->GetBasis(0)->GetBasisType(),
-                                    2, expansion->GetBasis(0)->GetPointsKey());
-        LibUtilities::BasisKey bkeyy(expansion->GetBasis(1)->GetBasisType(),
-                                    2, expansion->GetBasis(1)->GetPointsKey());
+        LibUtilities::BasisKey bkeyx(expansion->GetBasis(0)->GetBasisType(), 2,
+                                     expansion->GetBasis(0)->GetPointsKey());
+        LibUtilities::BasisKey bkeyy(expansion->GetBasis(1)->GetBasisType(), 2,
+                                     expansion->GetBasis(1)->GetPointsKey());
         StdRegions::StdQuadExp stdexp(bkeyx, bkeyy);
 
         // Grid velocity of each quadrilateral vertex.
@@ -350,8 +383,12 @@ void ALEPrescribe::v_UpdateGridVel(NekDouble time,
         {
             auto vert = expansion->GetGeom()->GetVertex(j);
             // x/y velocity for each vertex
-            tmpx[j] = 0.1 * 2 * M_PI / 4 * cos(2 * M_PI * time / 4) * sin(2 * M_PI * vert->x() / 4) * sin(2 * M_PI * vert->y() / 4);
-            tmpy[j] = 0.1 * 2 * M_PI / 4 * cos(2 * M_PI * time / 4) * sin(2 * M_PI * vert->x() / 4) * sin(2 * M_PI * vert->y() / 4);
+            tmpx[j] = 0.1 * 2 * M_PI / 4 * cos(2 * M_PI * time / 4) *
+                      sin(2 * M_PI * vert->x() / 4) *
+                      sin(2 * M_PI * vert->y() / 4);
+            tmpy[j] = 0.1 * 2 * M_PI / 4 * cos(2 * M_PI * time / 4) *
+                      sin(2 * M_PI * vert->x() / 4) *
+                      sin(2 * M_PI * vert->y() / 4);
         }
 
         // swap to match tensor product order of coefficients
@@ -367,5 +404,5 @@ void ALEPrescribe::v_UpdateGridVel(NekDouble time,
     }
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

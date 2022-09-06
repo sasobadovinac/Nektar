@@ -410,7 +410,7 @@ void CommMpi::v_Irsend(void *buf, int count, CommDataType dt, int dest,
 }
 
 void CommMpi::v_Isend(void *buf, int count, CommDataType dt, int dest,
-                       CommRequestSharedPtr request, int loc)
+                      CommRequestSharedPtr request, int loc)
 {
     CommRequestMpiSharedPtr req =
         std::static_pointer_cast<CommRequestMpi>(request);
@@ -445,7 +445,7 @@ void CommMpi::v_StartAll(CommRequestSharedPtr request)
 {
     CommRequestMpiSharedPtr req =
         std::static_pointer_cast<CommRequestMpi>(request);
-    if(req->GetNumRequest() != 0)
+    if (req->GetNumRequest() != 0)
     {
         MPI_Startall(req->GetNumRequest(), req->GetRequest(0));
     }
@@ -455,9 +455,10 @@ void CommMpi::v_WaitAll(CommRequestSharedPtr request)
 {
     CommRequestMpiSharedPtr req =
         std::static_pointer_cast<CommRequestMpi>(request);
-    if(req->GetNumRequest() != 0)
+    if (req->GetNumRequest() != 0)
     {
-        MPI_Waitall(req->GetNumRequest(), req->GetRequest(0), MPI_STATUSES_IGNORE);
+        MPI_Waitall(req->GetNumRequest(), req->GetRequest(0),
+                    MPI_STATUSES_IGNORE);
     }
 }
 
@@ -533,9 +534,9 @@ std::pair<CommSharedPtr, CommSharedPtr> CommMpi::v_SplitCommNode()
 
     // For rank 0 of the intra-node communicator, split the main
     // communicator. Everyone else will get a null communicator.
-    ret.first = std::shared_ptr<Comm>(new CommMpi(nodeComm));
+    ret.first  = std::shared_ptr<Comm>(new CommMpi(nodeComm));
     ret.second = CommMpi::v_CommCreateIf(ret.first->GetRank() == 0);
-    if(ret.first->GetRank() == 0)
+    if (ret.first->GetRank() == 0)
     {
         ret.second->SplitComm(1, ret.second->GetSize());
     }

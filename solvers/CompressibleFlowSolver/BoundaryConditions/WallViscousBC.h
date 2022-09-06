@@ -37,60 +37,54 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
 /**
-* @brief Wall boundary conditions for viscous compressible flow problems.
-*/
+ * @brief Wall boundary conditions for viscous compressible flow problems.
+ */
 class WallViscousBC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<WallViscousBC>;
 
-        friend class MemoryManager<WallViscousBC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p = MemoryManager<WallViscousBC>::AllocateSharedPtr(
+            pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
+            bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<WallViscousBC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string classNameViscous;
+    static std::string classNameAdiabatic;
 
-        ///Name of the class
-        static std::string classNameViscous;
-        static std::string classNameAdiabatic;
+protected:
+    // Arrays of arrays pointing to the boundary condition physical
+    // space for the specified region.
+    Array<OneD, Array<OneD, NekDouble>> m_bndPhys;
 
-    protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-        // Arrays of arrays pointing to the boundary condition physical
-        // space for the specified region.
-        Array<OneD, Array<OneD, NekDouble> > m_bndPhys;
+private:
+    WallViscousBC(const LibUtilities::SessionReaderSharedPtr &pSession,
+                  const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+                  const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+                  const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+                  const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
-
-    private:
-        WallViscousBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-        
-        virtual ~WallViscousBC(void){};
+    virtual ~WallViscousBC(void){};
 };
 
-}
+} // namespace Nektar
 
 #endif

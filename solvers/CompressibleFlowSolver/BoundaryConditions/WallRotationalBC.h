@@ -37,55 +37,50 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
 /**
-* @brief Wall boundary conditions for Rotational compressible flow problems.
-*/
+ * @brief Wall boundary conditions for Rotational compressible flow problems.
+ */
 class WallRotationalBC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<WallRotationalBC>;
 
-        friend class MemoryManager<WallRotationalBC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p =
+            MemoryManager<WallRotationalBC>::AllocateSharedPtr(
+                pSession, pFields, pTraceNormals, pGridVelocity, pSpaceDim,
+                bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<WallRotationalBC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pGridVelocity, pSpaceDim, bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string classNameRotational;
 
-        ///Name of the class
-        static std::string classNameRotational;
+protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-    protected:
+private:
+    WallRotationalBC(const LibUtilities::SessionReaderSharedPtr &pSession,
+                     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+                     const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+                     const Array<OneD, Array<OneD, NekDouble>> &pGridVelocity,
+                     const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
-
-    private:
-        WallRotationalBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const Array<OneD, Array<OneD, NekDouble> >& pGridVelocity,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-        
-        virtual ~WallRotationalBC(void){};
+    virtual ~WallRotationalBC(void){};
 };
 
-}
+} // namespace Nektar
 
 #endif

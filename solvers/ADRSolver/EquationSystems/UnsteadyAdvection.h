@@ -35,95 +35,93 @@
 #ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYADVECTION_H
 #define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYADVECTION_H
 
-#include <SolverUtils/UnsteadySystem.h>
-#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 namespace Nektar
 {
-    class UnsteadyAdvection : public SolverUtils::AdvectionSystem
+class UnsteadyAdvection : public SolverUtils::AdvectionSystem
+{
+public:
+    friend class MemoryManager<UnsteadyAdvection>;
+
+    /// Creates an instance of this class
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<UnsteadyAdvection>;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<UnsteadyAdvection>::AllocateSharedPtr(pSession,
+                                                                pGraph);
+        p->InitObject();
+        return p;
+    }
+    /// Name of class
+    static std::string className;
 
-        /// Creates an instance of this class
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            SolverUtils::EquationSystemSharedPtr p = MemoryManager<
-                UnsteadyAdvection>::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        /// Name of class
-        static std::string className;
+    /// Destructor
+    ~UnsteadyAdvection() final = default;
 
-        /// Destructor
-        ~UnsteadyAdvection() final = default;
+protected:
+    bool m_useGJPStabilisation;
+    // scaling factor for GJP penalisation, default = 1.0
+    NekDouble m_GJPJumpScale;
+    SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
 
-    protected:
-        bool m_useGJPStabilisation;
-        // scaling factor for GJP penalisation, default = 1.0
-        NekDouble m_GJPJumpScale; 
-        SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
+    /// Advection velocity
+    Array<OneD, Array<OneD, NekDouble>> m_velocity;
+    Array<OneD, NekDouble> m_traceVn;
 
-        /// Advection velocity
-        Array<OneD, Array<OneD, NekDouble> >    m_velocity;
-        Array<OneD, NekDouble>                  m_traceVn;
+    // Plane (used only for Discontinous projection
+    //        with 3DHomogenoeus1D expansion)
+    int m_planeNumber;
 
-        // Plane (used only for Discontinous projection
-        //        with 3DHomogenoeus1D expansion)
-        int                                     m_planeNumber;
+    /// Forcing terms
+    std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
 
-        /// Forcing terms
-        std::vector<SolverUtils::ForcingSharedPtr>  m_forcing;
+    /// Session reader
+    UnsteadyAdvection(const LibUtilities::SessionReaderSharedPtr &pSession,
+                      const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        /// Session reader
-        UnsteadyAdvection(const LibUtilities::SessionReaderSharedPtr& pSession,
-                          const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    /// Evaluate the flux at each solution point
+    void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
+                       Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-        /// Evaluate the flux at each solution point
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+    /// Evaluate the flux at each solution point using dealiasing
+    void GetFluxVectorDeAlias(
+        const Array<OneD, Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-        /// Evaluate the flux at each solution point using dealiasing
-        void GetFluxVectorDeAlias(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+    /// Compute the RHS
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
-        /// Compute the RHS
-        void DoOdeRhs(
-            const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,         Array<OneD, NekDouble> > &outarray,
-            const NekDouble time);
+    /// Compute the projection
+    void DoOdeProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        /// Compute the projection
-        void DoOdeProjection(
-            const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,         Array<OneD, NekDouble> > &outarray,
-            const NekDouble time);
+    /// Get the normal velocity
+    Array<OneD, NekDouble> &GetNormalVelocity();
 
-        /// Get the normal velocity
-        Array<OneD, NekDouble> &GetNormalVelocity();
+    /// Initialise the object
+    virtual void v_InitObject(bool DeclareFields = true);
 
-        /// Initialise the object
-        virtual void v_InitObject(bool DeclareFields=true);
+    /// Print Summary
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
 
-        /// Print Summary
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    bool v_PreIntegrate(int step) final;
 
-        bool v_PreIntegrate(int step) final;
+    virtual void v_ExtraFldOutput(
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
+        std::vector<std::string> &variables);
 
-        virtual void v_ExtraFldOutput(
-            std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
-            std::vector<std::string>            &variables);
-
-    private:
-        NekDouble m_waveFreq;
-    };
-}
+private:
+    NekDouble m_waveFreq;
+};
+} // namespace Nektar
 
 #endif

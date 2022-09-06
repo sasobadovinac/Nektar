@@ -425,22 +425,23 @@ private:
 /// Shared pointer to a Node.
 
 NEKMESH_EXPORT bool operator==(NodeSharedPtr const &p1,
-                                    NodeSharedPtr const &p2);
-NEKMESH_EXPORT bool operator<(NodeSharedPtr const &p1,
-                                   NodeSharedPtr const &p2);
+                               NodeSharedPtr const &p2);
+NEKMESH_EXPORT bool operator<(NodeSharedPtr const &p1, NodeSharedPtr const &p2);
 NEKMESH_EXPORT bool operator!=(NodeSharedPtr const &p1,
-                                    NodeSharedPtr const &p2);
+                               NodeSharedPtr const &p2);
 NEKMESH_EXPORT std::ostream &operator<<(std::ostream &os,
-                                             const NodeSharedPtr &n);
+                                        const NodeSharedPtr &n);
 
-/// Define node equality based on coordinate with optional custom tolerance factor.
-/// This routine checks the relative distance between the coordinates
-NEKMESH_EXPORT bool IsNodeEqual(const Node &n1, const Node &n2,
+/// Define node equality based on coordinate with optional custom tolerance
+/// factor. This routine checks the relative distance between the coordinates
+NEKMESH_EXPORT bool IsNodeEqual(
+    const Node &n1, const Node &n2,
     const unsigned int fact = NekConstants::kNekFloatCompFact);
 
-/// Define node equality based on coordinate with optional custom tolerance factor.
-/// This routine checks the absolute distance between the coordinates
-NEKMESH_EXPORT bool IsNodeClose(const Node &n1, const Node &n2,
+/// Define node equality based on coordinate with optional custom tolerance
+/// factor. This routine checks the absolute distance between the coordinates
+NEKMESH_EXPORT bool IsNodeClose(
+    const Node &n1, const Node &n2,
     const NekDouble tol = NekConstants::kNekMachineEpsilon);
 
 /**
@@ -452,16 +453,18 @@ NEKMESH_EXPORT bool IsNodeClose(const Node &n1, const Node &n2,
 struct NodeHash : std::unary_function<NodeSharedPtr, std::size_t>
 {
 
-    // @TODO: Way of fixing this so it doesn't delete coincident nodes for non-conformal grids
+    // @TODO: Way of fixing this so it doesn't delete coincident nodes for
+    // non-conformal grids
     std::size_t operator()(NodeSharedPtr const &p) const
     {
         return hash_combine(p->m_x, p->m_y, p->m_z);
     }
 };
 
-// @TODO: Fixed by just hashing based on memory address, I feel like we shouldn't just delete vertices anyway...
+// @TODO: Fixed by just hashing based on memory address, I feel like we
+// shouldn't just delete vertices anyway...
 typedef std::unordered_set<NodeSharedPtr> NodeSet;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

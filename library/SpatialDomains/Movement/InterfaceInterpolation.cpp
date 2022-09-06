@@ -34,8 +34,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/Movement/InterfaceInterpolation.h>
 #include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/Movement/InterfaceInterpolation.h>
 
 namespace Nektar
 {
@@ -55,5 +55,5 @@ Interface::Interface(int indx, const CompositeMap &edge, bool skipCoordCheck)
     }
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
