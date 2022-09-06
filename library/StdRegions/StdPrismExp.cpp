@@ -600,6 +600,8 @@ void StdPrismExp::v_IProductWRTDerivBase_SumFac(
                 m_base[2]->GetBdata(), tmp0, outarray, wsp, true, true, true);
             break;
         }
+        MultiplyByQuadratureMetric(tmp0, tmp0);
+    }
 
         case 1:
         {

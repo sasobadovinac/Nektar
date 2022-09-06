@@ -35,9 +35,9 @@
 #ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYREACTIONDIFFUSION_H
 #define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_UNSTEADYREACTIONDIFFUSION_H
 
-#include <SolverUtils/UnsteadySystem.h>
 #include <SolverUtils/Diffusion/Diffusion.h>
 #include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 using namespace Nektar::SolverUtils;
 
@@ -50,11 +50,12 @@ public:
 
     /// Creates an instance of this class
     static EquationSystemSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-        EquationSystemSharedPtr p = MemoryManager<UnsteadyReactionDiffusion>
-            ::AllocateSharedPtr(pSession, pGraph);
+        EquationSystemSharedPtr p =
+            MemoryManager<UnsteadyReactionDiffusion>::AllocateSharedPtr(
+                pSession, pGraph);
         p->InitObject();
         return p;
     }
@@ -66,30 +67,27 @@ public:
 
 protected:
     UnsteadyReactionDiffusion(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph);
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject(bool DeclareFields=true);
+    virtual void v_InitObject(bool DeclareFields = true);
 
-    void DoOdeRhs(
-        const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-              Array<OneD,       Array<OneD, NekDouble> >&outarray,
-        const NekDouble time);
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
     void DoOdeProjection(
-        const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-              Array<OneD,       Array<OneD, NekDouble> > &outarray,
-        const NekDouble time);
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
     void DoImplicitSolve(
-        const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-              Array<OneD,       Array<OneD, NekDouble> >&outarray,
-        NekDouble time,
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
         NekDouble lambda);
 
 private:
     NekDouble m_epsilon;
     /// Forcing terms
-    std::vector<SolverUtils::ForcingSharedPtr>  m_forcing;
+    std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
 };
-}
+} // namespace Nektar
 
 #endif

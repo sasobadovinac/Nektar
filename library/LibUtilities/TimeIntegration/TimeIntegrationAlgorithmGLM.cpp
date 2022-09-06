@@ -36,10 +36,10 @@
 #include <LibUtilities/BasicUtils/VmathArray.hpp>
 #include <LibUtilities/LinearAlgebra/Blas.hpp>
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
-#include <LibUtilities/TimeIntegration/TimeIntegrationSolutionGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeOperators.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationSolutionGLM.h>
 
 #include <iostream>
 
@@ -53,18 +53,17 @@ namespace LibUtilities
 {
 
 ////////////////////////////////////////////////////////////////////////////////
-TimeIntegrationSolutionGLMSharedPtr
-    TimeIntegrationAlgorithmGLM::InitializeData(
-        const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
-        const TimeIntegrationSchemeOperators &op)
+TimeIntegrationSolutionGLMSharedPtr TimeIntegrationAlgorithmGLM::InitializeData(
+    const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
+    const TimeIntegrationSchemeOperators &op)
 {
     // create a TimeIntegrationSolutionGLM object based upon the
     // initial value. Initialise all other multi-step values
     // and derivatives to zero
 
     TimeIntegrationSolutionGLMSharedPtr y_out =
-        MemoryManager<TimeIntegrationSolutionGLM>::AllocateSharedPtr(this, y_0,
-                                                                  time, deltaT);
+        MemoryManager<TimeIntegrationSolutionGLM>::AllocateSharedPtr(
+            this, y_0, time, deltaT);
 
     if (m_schemeType == eExplicit || m_schemeType == eExponential)
     {
@@ -103,10 +102,9 @@ TimeIntegrationSolutionGLMSharedPtr
     return y_out;
 }
 
-ConstDoubleArray &TimeIntegrationAlgorithmGLM::
-TimeIntegrate(const NekDouble deltaT,
-              TimeIntegrationSolutionGLMSharedPtr &solvector,
-              const TimeIntegrationSchemeOperators &op)
+ConstDoubleArray &TimeIntegrationAlgorithmGLM::TimeIntegrate(
+    const NekDouble deltaT, TimeIntegrationSolutionGLMSharedPtr &solvector,
+    const TimeIntegrationSchemeOperators &op)
 {
     // ASSERTL1( !(m_parent->GetIntegrationSchemeType() == eImplicit), "Fully
     // Implicit integration scheme cannot be handled by this routine." );
@@ -214,8 +212,7 @@ TimeIntegrate(const NekDouble deltaT,
                 npoints); // output solution vector of the current scheme
 
         // Integrate one step
-        TimeIntegrate(deltaT,
-                      solvector_in->GetSolutionVector(),
+        TimeIntegrate(deltaT, solvector_in->GetSolutionVector(),
                       solvector_in->GetTimeVector(),
                       solvector_out->UpdateSolutionVector(),
                       solvector_out->UpdateTimeVector(), op);
@@ -353,8 +350,7 @@ TimeIntegrate(const NekDouble deltaT,
             MemoryManager<TimeIntegrationSolutionGLM>::AllocateSharedPtr(
                 this, nvar, npoints);
 
-        TimeIntegrate(deltaT,
-                      solvector->GetSolutionVector(),
+        TimeIntegrate(deltaT, solvector->GetSolutionVector(),
                       solvector->GetTimeVector(),
                       solvector_new->UpdateSolutionVector(),
                       solvector_new->UpdateTimeVector(), op);
@@ -366,15 +362,11 @@ TimeIntegrate(const NekDouble deltaT,
 
 } // end TimeIntegrate()
 
-
 // Does the actual multi-stage multi-step integration.
-void
-TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
-                                          ConstTripleArray &y_old,
-                                          ConstSingleArray &t_old,
-                                          TripleArray &y_new,
-                                          SingleArray &t_new,
-                                          const TimeIntegrationSchemeOperators &op )
+void TimeIntegrationAlgorithmGLM::TimeIntegrate(
+    const NekDouble deltaT, ConstTripleArray &y_old, ConstSingleArray &t_old,
+    TripleArray &y_new, SingleArray &t_new,
+    const TimeIntegrationSchemeOperators &op)
 {
     ASSERTL1(
         CheckTimeIntegrateArguments(/*deltaT,*/ y_old, t_old, y_new, t_new, op),
@@ -464,10 +456,10 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
     // must be recomputed.
     if (type == eExponential)
     {
-        if (m_lastDeltaT != deltaT || m_lastNVars != GetFirstDim(y_old) )
+        if (m_lastDeltaT != deltaT || m_lastNVars != GetFirstDim(y_old))
         {
-            ((TimeIntegrationSchemeGLM *) m_parent)->
-              InitializeSecondaryData( this, deltaT );
+            ((TimeIntegrationSchemeGLM *)m_parent)
+                ->InitializeSecondaryData(this, deltaT);
 
             m_lastDeltaT = deltaT;
             m_lastNVars  = GetFirstDim(y_old);
@@ -501,15 +493,15 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
                     }
                     else
                     {
-                        Vmath::Smul(m_npoints, deltaT * A(stage, 0),
-                                    m_F[0][k], 1, m_tmp[k], 1);
+                        Vmath::Smul(m_npoints, deltaT * A(stage, 0), m_F[0][k],
+                                    1, m_tmp[k], 1);
                     }
 
                     if (type == eIMEX)
                     {
                         Vmath::Svtvp(m_npoints, deltaT * A_IMEX(stage, 0),
-                                     m_F_IMEX[0][k], 1, m_tmp[k], 1,
-                                     m_tmp[k], 1);
+                                     m_F_IMEX[0][k], 1, m_tmp[k], 1, m_tmp[k],
+                                     1);
                     }
                 }
             }
@@ -527,15 +519,15 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
                     }
                     else
                     {
-                        Vmath::Svtvp(m_npoints, deltaT * A(stage, j),
-                                     m_F[j][k], 1, m_tmp[k], 1, m_tmp[k], 1);
+                        Vmath::Svtvp(m_npoints, deltaT * A(stage, j), m_F[j][k],
+                                     1, m_tmp[k], 1, m_tmp[k], 1);
                     }
 
                     if (type == eIMEX)
                     {
                         Vmath::Svtvp(m_npoints, deltaT * A_IMEX(stage, j),
-                                     m_F_IMEX[j][k], 1, m_tmp[k], 1,
-                                     m_tmp[k], 1);
+                                     m_F_IMEX[j][k], 1, m_tmp[k], 1, m_tmp[k],
+                                     1);
                     }
                 }
 
@@ -554,8 +546,8 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
                     }
                     else
                     {
-                        Vmath::Svtvp(m_npoints, U(stage, j),
-                                     y_old[j][k], 1, m_tmp[k], 1, m_tmp[k], 1);
+                        Vmath::Svtvp(m_npoints, U(stage, j), y_old[j][k], 1,
+                                     m_tmp[k], 1, m_tmp[k], 1);
                     }
                 }
 
@@ -566,9 +558,9 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
         // Calculate the stage derivative based upon the stage value
         if (type == eDiagonallyImplicit)
         {
-            if( (stage == 0) && m_firstStageEqualsOldSolution )
+            if ((stage == 0) && m_firstStageEqualsOldSolution)
             {
-                op.DoOdeRhs(m_Y, m_F[stage], m_T);        
+                op.DoOdeRhs(m_Y, m_F[stage], m_T);
             }
             else
             {
@@ -689,19 +681,19 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
         {
             if (type == eExponential)
             {
-                Vmath::Smul(m_npoints, deltaT * m_B_phi[k][i][0],
-                            m_F[0][k], 1, y_new[i][k], 1);
+                Vmath::Smul(m_npoints, deltaT * m_B_phi[k][i][0], m_F[0][k], 1,
+                            y_new[i][k], 1);
             }
             else
             {
-                Vmath::Smul(m_npoints, deltaT * B(i, 0),
-                            m_F[0][k], 1, y_new[i][k], 1);
+                Vmath::Smul(m_npoints, deltaT * B(i, 0), m_F[0][k], 1,
+                            y_new[i][k], 1);
             }
 
             if (type == eIMEX)
             {
-                Vmath::Svtvp(m_npoints, deltaT * B_IMEX(i, 0),
-                             m_F_IMEX[0][k], 1, y_new[i][k], 1, y_new[i][k], 1);
+                Vmath::Svtvp(m_npoints, deltaT * B_IMEX(i, 0), m_F_IMEX[0][k],
+                             1, y_new[i][k], 1, y_new[i][k], 1);
             }
         }
 
@@ -721,15 +713,15 @@ TimeIntegrationAlgorithmGLM::TimeIntegrate( const NekDouble deltaT,
                 }
                 else
                 {
-                    Vmath::Svtvp(m_npoints, deltaT * B(i, j),
-                                 m_F[j][k], 1, y_new[i][k], 1, y_new[i][k], 1);
+                    Vmath::Svtvp(m_npoints, deltaT * B(i, j), m_F[j][k], 1,
+                                 y_new[i][k], 1, y_new[i][k], 1);
                 }
 
                 if (type == eIMEX)
                 {
                     Vmath::Svtvp(m_npoints, deltaT * B_IMEX(i, j),
-                                 m_F_IMEX[j][k], 1, y_new[i][k], 1,
-                                 y_new[i][k], 1);
+                                 m_F_IMEX[j][k], 1, y_new[i][k], 1, y_new[i][k],
+                                 1);
                 }
             }
 
@@ -823,7 +815,7 @@ void TimeIntegrationAlgorithmGLM::CheckIfLastStageEqualsNewSolution()
     {
         for (int i = 0; i < m_numstages; i++)
         {
-            if (fabs(m_A[m][m_numstages-1][i] - m_B[m][0][i]) >
+            if (fabs(m_A[m][m_numstages - 1][i] - m_B[m][0][i]) >
                 NekConstants::kNekZeroTol)
             {
                 m_lastStageEqualsNewSolution = false;
@@ -835,7 +827,8 @@ void TimeIntegrationAlgorithmGLM::CheckIfLastStageEqualsNewSolution()
     // 2. Check second condition
     for (int i = 0; i < m_numsteps; i++)
     {
-        if (fabs(m_U[m_numstages-1][i] - m_V[0][i]) > NekConstants::kNekZeroTol)
+        if (fabs(m_U[m_numstages - 1][i] - m_V[0][i]) >
+            NekConstants::kNekZeroTol)
         {
             m_lastStageEqualsNewSolution = false;
             return;
@@ -882,7 +875,8 @@ void TimeIntegrationAlgorithmGLM::VerifyIntegrationSchemeType()
 
     if (IMEXdim == 2)
     {
-        ASSERTL1(m_B.size() == 2, "Coefficient Matrix B should have an "
+        ASSERTL1(m_B.size() == 2,
+                 "Coefficient Matrix B should have an "
                  "implicit and explicit part for IMEX schemes");
 
         if ((vertype[0] == eDiagonallyImplicit) && (vertype[1] == eExplicit))
@@ -896,16 +890,13 @@ void TimeIntegrationAlgorithmGLM::VerifyIntegrationSchemeType()
     }
 
     ASSERTL1(vertype[0] == m_schemeType,
-                 "Time integration scheme coefficients do not match its type");
+             "Time integration scheme coefficients do not match its type");
 #endif
 }
 
 bool TimeIntegrationAlgorithmGLM::CheckTimeIntegrateArguments(
-          ConstTripleArray &y_old,
-          ConstSingleArray &t_old,
-          TripleArray &y_new,
-          SingleArray &t_new,
-    const TimeIntegrationSchemeOperators &op) const
+    ConstTripleArray &y_old, ConstSingleArray &t_old, TripleArray &y_new,
+    SingleArray &t_new, const TimeIntegrationSchemeOperators &op) const
 {
 #ifdef DEBUG
     boost::ignore_unused(op);
@@ -915,33 +906,29 @@ bool TimeIntegrationAlgorithmGLM::CheckTimeIntegrateArguments(
 
     // Check if arrays are all of consistent size
 
-    ASSERTL1(y_old.size() == m_numsteps,
-             "Non-matching number of steps.");
-    ASSERTL1(y_new.size() == m_numsteps,
-             "Non-matching number of steps.");
+    ASSERTL1(y_old.size() == m_numsteps, "Non-matching number of steps.");
+    ASSERTL1(y_new.size() == m_numsteps, "Non-matching number of steps.");
 
     ASSERTL1(y_old[0].size() == y_new[0].size(),
              "Non-matching number of variables.");
     ASSERTL1(y_old[0][0].size() == y_new[0][0].size(),
              "Non-matching number of coefficients.");
 
-    ASSERTL1(t_old.size() == m_numsteps,
-             "Non-matching number of steps.");
-    ASSERTL1(t_new.size() == m_numsteps,
-             "Non-matching number of steps.");
+    ASSERTL1(t_old.size() == m_numsteps, "Non-matching number of steps.");
+    ASSERTL1(t_new.size() == m_numsteps, "Non-matching number of steps.");
 
     return true;
 }
 
 // Friend Operators
 std::ostream &operator<<(std::ostream &os,
-			 const TimeIntegrationAlgorithmGLMSharedPtr &rhs)
+                         const TimeIntegrationAlgorithmGLMSharedPtr &rhs)
 {
-    return operator << (os, *rhs);
+    return operator<<(os, *rhs);
 }
 
 std::ostream &operator<<(std::ostream &os,
-			 const TimeIntegrationAlgorithmGLM &rhs)
+                         const TimeIntegrationAlgorithmGLM &rhs)
 {
     int r                          = rhs.m_numsteps;
     int s                          = rhs.m_numstages;
@@ -950,8 +937,8 @@ std::ostream &operator<<(std::ostream &os,
     int oswidth     = 9;
     int osprecision = 6;
 
-    os << "Time Integration Scheme (Master): "
-       << rhs.m_parent->GetFullName() << "\n"
+    os << "Time Integration Scheme (Master): " << rhs.m_parent->GetFullName()
+       << "\n"
        << "Time Integration Phase  : " << rhs.m_name << "\n"
        << "- number of steps:  " << r << "\n"
        << "- number of stages: " << s << "\n"
@@ -1029,25 +1016,25 @@ std::ostream &operator<<(std::ostream &os,
         os.precision(osprecision);
         os << std::right << rhs.m_timeLevelOffset[i];
 
-        if( i < rhs.m_numMultiStepValues )
+        if (i < rhs.m_numMultiStepValues)
         {
-          os << std::right << " value";
+            os << std::right << " value";
         }
         else
         {
-          os << std::right << " derivative";
+            os << std::right << " derivative";
         }
 
         os << std::endl;
     }
 
-    if( type == eExponential )
+    if (type == eExponential)
     {
         for (int k = 0; k < rhs.m_nvars; k++)
         {
             os << std::endl
-               << "General linear method exponential tableau for variable "
-               << k << ":\n";
+               << "General linear method exponential tableau for variable " << k
+               << ":\n";
 
             for (int i = 0; i < s; i++)
             {
@@ -1070,8 +1057,8 @@ std::ostream &operator<<(std::ostream &os,
             }
 
             int imexflag = (type == eIMEX) ? 2 : 1;
-            for (int i = 0; i < (r + imexflag * s) * (oswidth + 1) + imexflag * 2 - 1;
-                 i++)
+            for (int i = 0;
+                 i < (r + imexflag * s) * (oswidth + 1) + imexflag * 2 - 1; i++)
             {
                 os << "-";
             }
@@ -1103,4 +1090,4 @@ std::ostream &operator<<(std::ostream &os,
 } // end function operator<<
 
 } // end namespace LibUtilities
-} // end namespace NekTar
+} // namespace Nektar

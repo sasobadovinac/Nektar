@@ -35,8 +35,8 @@
 #ifndef NEKTAR_SPATIALDOMAINS_TETGEOM
 #define NEKTAR_SPATIALDOMAINS_TETGEOM
 
-#include <SpatialDomains/SpatialDomainsDeclspec.h>
 #include <SpatialDomains/Geometry3D.h>
+#include <SpatialDomains/SpatialDomainsDeclspec.h>
 #include <SpatialDomains/TriGeom.h>
 
 namespace Nektar
@@ -51,11 +51,11 @@ public:
     SPATIAL_DOMAINS_EXPORT TetGeom(int id, const TriGeomSharedPtr faces[]);
     SPATIAL_DOMAINS_EXPORT ~TetGeom();
 
-    SPATIAL_DOMAINS_EXPORT static const int kNverts = 4;
-    SPATIAL_DOMAINS_EXPORT static const int kNedges = 6;
+    SPATIAL_DOMAINS_EXPORT static const int kNverts  = 4;
+    SPATIAL_DOMAINS_EXPORT static const int kNedges  = 6;
     SPATIAL_DOMAINS_EXPORT static const int kNqfaces = 0;
     SPATIAL_DOMAINS_EXPORT static const int kNtfaces = 4;
-    SPATIAL_DOMAINS_EXPORT static const int kNfaces = kNqfaces + kNtfaces;
+    SPATIAL_DOMAINS_EXPORT static const int kNfaces  = kNqfaces + kNtfaces;
     SPATIAL_DOMAINS_EXPORT static const std::string XMLElementType;
 
 protected:
@@ -85,8 +85,7 @@ typedef std::shared_ptr<TetGeom> TetGeomSharedPtr;
 typedef std::vector<TetGeomSharedPtr> TetGeomVector;
 typedef std::map<int, TetGeomSharedPtr> TetGeomMap;
 
-
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_TETGEOM

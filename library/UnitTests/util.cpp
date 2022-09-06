@@ -32,22 +32,21 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <UnitTests/util.h>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <UnitTests/util.h>
 #include <fstream>
 
 namespace Nektar
 {
-    namespace UnitTests
+namespace UnitTests
+{
+void RedirectCerrIfNeeded()
+{
+    if (!ErrorUtil::HasCustomErrorStream())
     {
-        void RedirectCerrIfNeeded()
-        {
-            if( !ErrorUtil::HasCustomErrorStream() )
-            {
-                static std::ofstream out("out.txt", std::ios::out);
-                ErrorUtil::SetErrorStream(out);
-            }
-        }
+        static std::ofstream out("out.txt", std::ios::out);
+        ErrorUtil::SetErrorStream(out);
     }
 }
-
+} // namespace UnitTests
+} // namespace Nektar

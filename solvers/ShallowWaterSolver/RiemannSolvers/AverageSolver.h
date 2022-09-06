@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Simple mean value solver for the Nonlinear Shallow Water 
+// Description: Simple mean value solver for the Nonlinear Shallow Water
 //              Equations.
 //              Do not use for anything else than testing and comparisons
 //
@@ -41,26 +41,24 @@
 
 namespace Nektar
 {
-    class AverageSolver : public NonlinearSWESolver
+class AverageSolver : public NonlinearSWESolver
+{
+public:
+    static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        static RiemannSolverSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            return RiemannSolverSharedPtr(
-                new AverageSolver(pSession));
-        }
-        
-        static std::string solverName;
-        
-    protected:
-        AverageSolver(const LibUtilities::SessionReaderSharedPtr& pSession);
-        
-        virtual void v_PointSolve(
-            NekDouble  hL, NekDouble  huL, NekDouble  hvL,
-            NekDouble  hR, NekDouble  huR, NekDouble  hvR,
-            NekDouble &hf, NekDouble &huf, NekDouble &hvf);
-    };
-}
+        return RiemannSolverSharedPtr(new AverageSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    AverageSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    virtual void v_PointSolve(NekDouble hL, NekDouble huL, NekDouble hvL,
+                              NekDouble hR, NekDouble huR, NekDouble hvR,
+                              NekDouble &hf, NekDouble &huf, NekDouble &hvf);
+};
+} // namespace Nektar
 
 #endif

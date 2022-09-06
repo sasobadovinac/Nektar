@@ -115,9 +115,9 @@ void ProcessHomogeneousStretch::Process(po::variables_map &vm)
 
             m_f->m_exp[n]->BwdTrans(m_f->m_exp[n]->GetCoeffs(),
                                     m_f->m_exp[n]->UpdatePhys());
-            m_f->m_exp[n]->SetHomoLen(factor*m_f->m_exp[n]->GetHomoLen());
+            m_f->m_exp[n]->SetHomoLen(factor * m_f->m_exp[n]->GetHomoLen());
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

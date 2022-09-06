@@ -72,7 +72,7 @@ private:
     /// Maps Semtex sections to positions inside the input file.
     std::map<std::string, std::streampos> sectionMap;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

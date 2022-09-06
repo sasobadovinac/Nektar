@@ -42,7 +42,7 @@ std::string UpwindPulseSolver::solverName =
         "UpwindPulse", UpwindPulseSolver::create, "UpwindPulseSolver");
 
 UpwindPulseSolver::UpwindPulseSolver(
-    const LibUtilities::SessionReaderSharedPtr& pSession)
+    const LibUtilities::SessionReaderSharedPtr &pSession)
     : RiemannSolver(pSession), m_session(pSession)
 {
 }
@@ -75,7 +75,8 @@ void UpwindPulseSolver::v_Solve(
     for (i = 0; i < nTracePts; ++i)
     {
         RiemannSolverUpwind(Fwd[0][i], Fwd[1][i], Bwd[0][i], Bwd[1][i],
-                            flux[0][i], flux[1][i], A0[i], beta[i], N[i], alpha[i]);
+                            flux[0][i], flux[1][i], A0[i], beta[i], N[i],
+                            alpha[i]);
     }
 }
 
@@ -117,12 +118,12 @@ void UpwindPulseSolver::RiemannSolverUpwind(NekDouble AL, NekDouble uL,
     if (m_session->DefinesSolverInfo("PressureArea"))
     {
         m_pressureArea = GetPressureAreaFactory().CreateInstance(
-                m_session->GetSolverInfo("PressureArea"), m_vessels, m_session);
+            m_session->GetSolverInfo("PressureArea"), m_vessels, m_session);
     }
     else
     {
-        m_pressureArea = GetPressureAreaFactory().CreateInstance("Beta",
-                                                          m_vessels, m_session);
+        m_pressureArea = GetPressureAreaFactory().CreateInstance(
+            "Beta", m_vessels, m_session);
     }
 
     // Compute the wave speeds to check dynamics are sub-sonic

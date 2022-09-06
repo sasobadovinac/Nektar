@@ -61,9 +61,8 @@ public:
     {
         return "VolumeMesh";
     }
-
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

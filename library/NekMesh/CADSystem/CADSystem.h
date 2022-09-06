@@ -44,9 +44,9 @@
 
 #include <NekMesh/Module/Log.hpp>
 
-#include <NekMesh/CADSystem/CADVert.h>
 #include <NekMesh/CADSystem/CADCurve.h>
 #include <NekMesh/CADSystem/CADSurf.h>
+#include <NekMesh/CADSystem/CADVert.h>
 
 #include "CADObject.h"
 
@@ -279,8 +279,7 @@ protected:
      */
     void Report()
     {
-        m_log(VERBOSE) << "Using CAD engine: '" << m_engine << "'"
-                       << std::endl;
+        m_log(VERBOSE) << "Using CAD engine: '" << m_engine << "'" << std::endl;
         m_log(VERBOSE) << "CAD report:" << std::endl;
         m_log(VERBOSE) << "  - CAD has: " << m_verts.size() << " verts."
                        << std::endl;
@@ -296,7 +295,7 @@ typedef LibUtilities::NekFactory<std::string, CADSystem, std::string>
     EngineFactory;
 
 EngineFactory &GetEngineFactory();
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

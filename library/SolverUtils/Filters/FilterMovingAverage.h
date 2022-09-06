@@ -50,12 +50,12 @@ public:
     /// Creates an instance of this class
     static FilterSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const std::map<std::string, std::string>   &pParams)
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const std::map<std::string, std::string> &pParams)
     {
         FilterSharedPtr p =
-            MemoryManager<FilterMovingAverage>::AllocateSharedPtr(pSession,
-                                                            pEquation, pParams);
+            MemoryManager<FilterMovingAverage>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
@@ -64,14 +64,14 @@ public:
 
     SOLVER_UTILS_EXPORT FilterMovingAverage(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
+        const std::weak_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
     SOLVER_UTILS_EXPORT virtual ~FilterMovingAverage();
 
 protected:
     virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
         const NekDouble &time);
     virtual std::string v_GetFileSuffix()
     {
@@ -80,7 +80,7 @@ protected:
 
     NekDouble m_alpha;
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERMOVINGAVERAGE_H */

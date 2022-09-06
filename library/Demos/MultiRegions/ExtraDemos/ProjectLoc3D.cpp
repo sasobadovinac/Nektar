@@ -1,9 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/Communication/Comm.h>
+#include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <MultiRegions/ExpList.h>
 #include <SpatialDomains/MeshGraph.h>
 
@@ -15,33 +15,36 @@ using namespace Nektar;
 
 int main(int argc, char *argv[])
 {
-    LibUtilities::SessionReaderSharedPtr vSession
-            = LibUtilities::SessionReader::CreateInstance(argc, argv);
+    LibUtilities::SessionReaderSharedPtr vSession =
+        LibUtilities::SessionReader::CreateInstance(argc, argv);
 
-    MultiRegions::ExpListSharedPtr Exp,Fce;
-    int     i, j, nq,  coordim;
-    Array<OneD,NekDouble>  fce, tmp, tmp2;
-    Array<OneD,NekDouble>  xc0,xc1,xc2;
+    MultiRegions::ExpListSharedPtr Exp, Fce;
+    int i, j, nq, coordim;
+    Array<OneD, NekDouble> fce, tmp, tmp2;
+    Array<OneD, NekDouble> xc0, xc1, xc2;
 
-    if(argc != 2)
+    if (argc != 2)
     {
-        fprintf(stderr,"Usage: ProjectLoc3D  meshfile \n");
+        fprintf(stderr, "Usage: ProjectLoc3D  meshfile \n");
         exit(1);
     }
 
     //----------------------------------------------
     // Read in mesh from input file
-    SpatialDomains::MeshGraphSharedPtr graph3D = SpatialDomains::MeshGraph::Read(vSession);
+    SpatialDomains::MeshGraphSharedPtr graph3D =
+        SpatialDomains::MeshGraph::Read(vSession);
     //----------------------------------------------
 
     //----------------------------------------------
     // Print summary of solution details
-    const SpatialDomains::ExpansionInfoMap &expansions = graph3D->GetExpansionInfos();
-    LibUtilities::BasisKey bkey = expansions.begin()->second->m_basisKeyVector[0];
+    const SpatialDomains::ExpansionInfoMap &expansions =
+        graph3D->GetExpansionInfos();
+    LibUtilities::BasisKey bkey =
+        expansions.begin()->second->m_basisKeyVector[0];
     int nmodes = bkey.GetNumModes();
     if (vSession->GetComm()->GetRank() == 0)
     {
-        cout << "Solving 3D Local Projection"  << endl;
+        cout << "Solving 3D Local Projection" << endl;
         cout << "    No. modes  : " << nmodes << endl;
         cout << endl;
     }
@@ -49,7 +52,8 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------
     // Define Expansion
-    Exp = MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr(vSession,graph3D);
+    Exp = MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr(vSession,
+                                                                  graph3D);
     //----------------------------------------------
 
     //----------------------------------------------
@@ -57,37 +61,37 @@ int main(int argc, char *argv[])
     coordim = Exp->GetCoordim(0);
     nq      = Exp->GetTotPoints();
 
-    xc0 = Array<OneD,NekDouble>(nq,0.0);
-    xc1 = Array<OneD,NekDouble>(nq,0.0);
-    xc2 = Array<OneD,NekDouble>(nq,0.0);
+    xc0 = Array<OneD, NekDouble>(nq, 0.0);
+    xc1 = Array<OneD, NekDouble>(nq, 0.0);
+    xc2 = Array<OneD, NekDouble>(nq, 0.0);
 
-    switch(coordim)
+    switch (coordim)
     {
-    case 1:
-        Exp->GetCoords(xc0);
-        break;
-    case 2:
-        Exp->GetCoords(xc0,xc1);
-        break;
-    case 3:
-        Exp->GetCoords(xc0,xc1,xc2);
-        break;
+        case 1:
+            Exp->GetCoords(xc0);
+            break;
+        case 2:
+            Exp->GetCoords(xc0, xc1);
+            break;
+        case 3:
+            Exp->GetCoords(xc0, xc1, xc2);
+            break;
     }
     //----------------------------------------------
 
     //----------------------------------------------
     // Define forcing function
-    fce = Array<OneD,NekDouble>(nq);
-    tmp = Array<OneD,NekDouble>(nq);
-    tmp2 = Array<OneD,NekDouble>(nq);
-    for(i = 0; i < nq; ++i)
+    fce  = Array<OneD, NekDouble>(nq);
+    tmp  = Array<OneD, NekDouble>(nq);
+    tmp2 = Array<OneD, NekDouble>(nq);
+    for (i = 0; i < nq; ++i)
     {
         fce[i] = 0.0;
-        for(j = 0; j < nmodes; ++j)
+        for (j = 0; j < nmodes; ++j)
         {
-            fce[i] += pow(xc0[i],j);
-            fce[i] += pow(xc1[i],j);
-            fce[i] += pow(xc2[i],j);
+            fce[i] += pow(xc0[i], j);
+            fce[i] += pow(xc1[i], j);
+            fce[i] += pow(xc2[i], j);
         }
     }
 
@@ -112,7 +116,7 @@ int main(int argc, char *argv[])
     if (vSession->GetComm()->GetRank() == 0)
     {
         cout << "L infinity error: " << Exp->Linf(Fce->GetPhys()) << endl;
-        cout << "L 2 error:        " << Exp->L2  (Fce->GetPhys()) << endl;
+        cout << "L 2 error:        " << Exp->L2(Fce->GetPhys()) << endl;
     }
     //--------------------------------------------
 

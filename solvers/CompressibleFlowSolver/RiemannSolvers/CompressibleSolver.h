@@ -37,62 +37,54 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 #include <CompressibleFlowSolver/Misc/EquationOfState.h>
+#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 
 using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-    class CompressibleSolver : public RiemannSolver
+class CompressibleSolver : public RiemannSolver
+{
+protected:
+    bool m_pointSolve;
+    EquationOfStateSharedPtr m_eos;
+    bool m_idealGas;
+
+    /// Session ctor
+    CompressibleSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    /// Programmatic ctor
+    CompressibleSolver();
+
+    using ND = NekDouble;
+
+    void v_Solve(const int nDim, const Array<OneD, const Array<OneD, ND>> &Fwd,
+                 const Array<OneD, const Array<OneD, ND>> &Bwd,
+                 Array<OneD, Array<OneD, ND>> &flux) override;
+
+    virtual void v_ArraySolve(const Array<OneD, const Array<OneD, ND>> &Fwd,
+                              const Array<OneD, const Array<OneD, ND>> &Bwd,
+                              Array<OneD, Array<OneD, ND>> &flux)
     {
-    protected:
-        bool m_pointSolve;
-        EquationOfStateSharedPtr m_eos;
-        bool m_idealGas;
+        boost::ignore_unused(Fwd, Bwd, flux);
+        NEKERROR(ErrorUtil::efatal,
+                 "This function should be defined by subclasses.");
+    }
 
-        /// Session ctor
-        CompressibleSolver(
-                const LibUtilities::SessionReaderSharedPtr& pSession);
+    virtual void v_PointSolve(ND rhoL, ND rhouL, ND rhovL, ND rhowL, ND EL,
+                              ND rhoR, ND rhouR, ND rhovR, ND rhowR, ND ER,
+                              ND &rhof, ND &rhouf, ND &rhovf, ND &rhowf, ND &Ef)
+    {
+        boost::ignore_unused(rhoL, rhouL, rhovL, rhowL, EL, rhoR, rhouR, rhovR,
+                             rhowR, ER, rhof, rhouf, rhovf, rhowf, Ef);
+        NEKERROR(ErrorUtil::efatal,
+                 "This function should be defined by subclasses.");
+    }
 
-        /// Programmatic ctor
-        CompressibleSolver();
-
-        using ND = NekDouble;
-
-        void v_Solve(
-            const int                                         nDim,
-            const Array<OneD, const Array<OneD, ND> > &Fwd,
-            const Array<OneD, const Array<OneD, ND> > &Bwd,
-                  Array<OneD,       Array<OneD, ND> > &flux) override;
-
-        virtual void v_ArraySolve(
-            const Array<OneD, const Array<OneD, ND> > &Fwd,
-            const Array<OneD, const Array<OneD, ND> > &Bwd,
-                  Array<OneD,       Array<OneD, ND> > &flux)
-        {
-            boost::ignore_unused(Fwd, Bwd, flux);
-            NEKERROR(ErrorUtil::efatal,
-                     "This function should be defined by subclasses.");
-        }
-
-        virtual void v_PointSolve(
-            ND  rhoL, ND  rhouL, ND  rhovL, ND  rhowL, ND  EL,
-            ND  rhoR, ND  rhouR, ND  rhovR, ND  rhowR, ND  ER,
-            ND &rhof, ND &rhouf, ND &rhovf, ND &rhowf, ND &Ef)
-        {
-            boost::ignore_unused(rhoL, rhouL, rhovL, rhowL, EL,
-                                 rhoR, rhouR, rhovR, rhowR, ER,
-                                 rhof, rhouf, rhovf, rhowf, Ef);
-            NEKERROR(ErrorUtil::efatal,
-                     "This function should be defined by subclasses.");
-        }
-
-        ND GetRoeSoundSpeed(
-            ND rhoL, ND pL, ND eL, ND HL, ND srL,
-            ND rhoR, ND pR, ND eR, ND HR, ND srR,
-            ND HRoe, ND URoe2, ND srLR);
-    };
-}
+    ND GetRoeSoundSpeed(ND rhoL, ND pL, ND eL, ND HL, ND srL, ND rhoR, ND pR,
+                        ND eR, ND HR, ND srR, ND HRoe, ND URoe2, ND srLR);
+};
+} // namespace Nektar
 
 #endif

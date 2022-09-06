@@ -2651,6 +2651,9 @@ void StdHexExp::v_GetSimplexEquiSpacedConnectivity(Array<OneD, int> &conn,
         }
         plane += np * np;
     }
+
+    // backward transform to physical space
+    OrthoExp.BwdTrans(orthocoeffs, array);
 }
 } // namespace StdRegions
 } // namespace Nektar

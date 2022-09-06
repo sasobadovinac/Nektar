@@ -29,106 +29,113 @@
 // DEALINGS IN THE SOFTWARE.
 //
 // Description: TypeDefs for Nek Matrices and vector.
-// 
+//
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_LIB_UTILITIES_NEK_TYPEDEFS_HPP
 #define NEKTAR_LIB_UTILITIES_NEK_TYPEDEFS_HPP
 
-#include <LibUtilities/LinearAlgebra/NekVector.hpp>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 #include <LibUtilities/LinearAlgebra/NekLinSys.hpp>
+#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 
 #include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 
 namespace Nektar
 {
-    typedef NekVector<NekDouble>                DNekVec;
+typedef NekVector<NekDouble> DNekVec;
 
-    typedef NekMatrix<NekDouble, StandardMatrixTag>
-            DNekMat;
-    typedef NekMatrix<NekDouble, StandardMatrixTag> DenseMatrix;
+typedef NekMatrix<NekDouble, StandardMatrixTag> DNekMat;
+typedef NekMatrix<NekDouble, StandardMatrixTag> DenseMatrix;
 
-    typedef NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, ScaledMatrixTag>
-            DNekScalMat;
-    typedef NekMatrix<DenseMatrix, ScaledMatrixTag> ScaledMatrix;
+typedef NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, ScaledMatrixTag>
+    DNekScalMat;
+typedef NekMatrix<DenseMatrix, ScaledMatrixTag> ScaledMatrix;
 
-    typedef NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, BlockMatrixTag>
-            DNekBlkMat;
-    typedef NekMatrix<DenseMatrix, BlockMatrixTag> BlockMatrix;
+typedef NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, BlockMatrixTag>
+    DNekBlkMat;
+typedef NekMatrix<DenseMatrix, BlockMatrixTag> BlockMatrix;
 
-    typedef NekMatrix<NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, BlockMatrixTag>, BlockMatrixTag>
-            BlkMatDNekBlkMat;
-    typedef NekMatrix<NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, ScaledMatrixTag>, BlockMatrixTag>
-            DNekScalBlkMat;
-    typedef NekMatrix<NekMatrix<NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, ScaledMatrixTag>, BlockMatrixTag>, BlockMatrixTag>
-            BlkMatDNekScalBlkMat;
+typedef NekMatrix<
+    NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, BlockMatrixTag>,
+    BlockMatrixTag>
+    BlkMatDNekBlkMat;
+typedef NekMatrix<
+    NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, ScaledMatrixTag>,
+    BlockMatrixTag>
+    DNekScalBlkMat;
+typedef NekMatrix<NekMatrix<NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>,
+                                      ScaledMatrixTag>,
+                            BlockMatrixTag>,
+                  BlockMatrixTag>
+    BlkMatDNekScalBlkMat;
 
-    typedef std::shared_ptr<DNekMat>               DNekMatSharedPtr;
-    typedef std::shared_ptr<DNekScalMat>           DNekScalMatSharedPtr;
-    typedef std::shared_ptr<DNekBlkMat>            DNekBlkMatSharedPtr;
-    typedef std::shared_ptr<BlkMatDNekBlkMat>      BlkMatDNekBlkMatSharedPtr;
-    typedef std::shared_ptr<DNekScalBlkMat>        DNekScalBlkMatSharedPtr;
-    typedef std::shared_ptr<BlkMatDNekScalBlkMat>  BlkMatDNekScalBlkMatSharedPtr;
-    typedef std::shared_ptr<BlkMatDNekScalBlkMat>  BlkMatDNekScalBlkMatSharedPtr;
+typedef std::shared_ptr<DNekMat> DNekMatSharedPtr;
+typedef std::shared_ptr<DNekScalMat> DNekScalMatSharedPtr;
+typedef std::shared_ptr<DNekBlkMat> DNekBlkMatSharedPtr;
+typedef std::shared_ptr<BlkMatDNekBlkMat> BlkMatDNekBlkMatSharedPtr;
+typedef std::shared_ptr<DNekScalBlkMat> DNekScalBlkMatSharedPtr;
+typedef std::shared_ptr<BlkMatDNekScalBlkMat> BlkMatDNekScalBlkMatSharedPtr;
+typedef std::shared_ptr<BlkMatDNekScalBlkMat> BlkMatDNekScalBlkMatSharedPtr;
 
+static DNekMatSharedPtr NullDNekMatSharedPtr;
+static DNekScalMatSharedPtr NullDNekScalMatSharedPtr;
+static DNekScalBlkMatSharedPtr NullDNekScalBlkMatSharedPtr;
 
-    static DNekMatSharedPtr NullDNekMatSharedPtr;
-    static DNekScalMatSharedPtr NullDNekScalMatSharedPtr;
-    static DNekScalBlkMatSharedPtr NullDNekScalBlkMatSharedPtr;
+typedef LinearSystem DNekLinSys;
+typedef std::shared_ptr<DNekLinSys> DNekLinSysSharedPtr;
 
-    typedef LinearSystem                      DNekLinSys;
-    typedef std::shared_ptr<DNekLinSys>       DNekLinSysSharedPtr;
+typedef LinearSystem DNekScalLinSys;
+typedef std::shared_ptr<DNekScalLinSys> DNekScalLinSysSharedPtr;
 
-    typedef LinearSystem                      DNekScalLinSys;
-    typedef std::shared_ptr<DNekScalLinSys>   DNekScalLinSysSharedPtr;
+static Array<OneD, DNekBlkMatSharedPtr> NullArrayDNekBlkMatSharedPtr;
 
-    static Array<OneD, DNekBlkMatSharedPtr>  NullArrayDNekBlkMatSharedPtr;
+typedef NekVector<NekSingle> SNekVec;
 
+typedef NekMatrix<NekSingle, StandardMatrixTag> SNekMat;
+typedef NekMatrix<NekSingle, StandardMatrixTag> SDenseMatrix;
 
+typedef NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, ScaledMatrixTag>
+    SNekScalMat;
+typedef NekMatrix<SDenseMatrix, ScaledMatrixTag> SScaledMatrix;
 
+typedef NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, BlockMatrixTag>
+    SNekBlkMat;
+typedef NekMatrix<SDenseMatrix, BlockMatrixTag> SBlockMatrix;
 
-    typedef NekVector<NekSingle>                SNekVec;
+typedef NekMatrix<
+    NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, BlockMatrixTag>,
+    BlockMatrixTag>
+    BlkMatSNekBlkMat;
+typedef NekMatrix<
+    NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, ScaledMatrixTag>,
+    BlockMatrixTag>
+    SNekScalBlkMat;
+typedef NekMatrix<NekMatrix<NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>,
+                                      ScaledMatrixTag>,
+                            BlockMatrixTag>,
+                  BlockMatrixTag>
+    BlkMatSNekScalBlkMat;
 
-    typedef NekMatrix<NekSingle, StandardMatrixTag>
-            SNekMat;
-    typedef NekMatrix<NekSingle, StandardMatrixTag> SDenseMatrix;
+typedef std::shared_ptr<SNekMat> SNekMatSharedPtr;
+typedef std::shared_ptr<SNekScalMat> SNekScalMatSharedPtr;
+typedef std::shared_ptr<SNekBlkMat> SNekBlkMatSharedPtr;
+typedef std::shared_ptr<BlkMatSNekBlkMat> BlkMatSNekBlkMatSharedPtr;
+typedef std::shared_ptr<SNekScalBlkMat> SNekScalBlkMatSharedPtr;
+typedef std::shared_ptr<BlkMatSNekScalBlkMat> BlkMatSNekScalBlkMatSharedPtr;
+typedef std::shared_ptr<BlkMatSNekScalBlkMat> BlkMatSNekScalBlkMatSharedPtr;
 
-    typedef NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, ScaledMatrixTag>
-            SNekScalMat;
-    typedef NekMatrix<SDenseMatrix, ScaledMatrixTag> SScaledMatrix;
-
-    typedef NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, BlockMatrixTag>
-            SNekBlkMat;
-    typedef NekMatrix<SDenseMatrix, BlockMatrixTag> SBlockMatrix;
-
-    typedef NekMatrix<NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, BlockMatrixTag>, BlockMatrixTag>
-            BlkMatSNekBlkMat;
-    typedef NekMatrix<NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, ScaledMatrixTag>, BlockMatrixTag>
-            SNekScalBlkMat;
-    typedef NekMatrix<NekMatrix<NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, ScaledMatrixTag>, BlockMatrixTag>, BlockMatrixTag>
-            BlkMatSNekScalBlkMat;
-
-    typedef std::shared_ptr<SNekMat>               SNekMatSharedPtr;
-    typedef std::shared_ptr<SNekScalMat>           SNekScalMatSharedPtr;
-    typedef std::shared_ptr<SNekBlkMat>            SNekBlkMatSharedPtr;
-    typedef std::shared_ptr<BlkMatSNekBlkMat>      BlkMatSNekBlkMatSharedPtr;
-    typedef std::shared_ptr<SNekScalBlkMat>        SNekScalBlkMatSharedPtr;
-    typedef std::shared_ptr<BlkMatSNekScalBlkMat>  BlkMatSNekScalBlkMatSharedPtr;
-    typedef std::shared_ptr<BlkMatSNekScalBlkMat>  BlkMatSNekScalBlkMatSharedPtr;
-
-
-    static SNekMatSharedPtr NullSNekMatSharedPtr;
-    static SNekScalMatSharedPtr NullSNekScalMatSharedPtr;
-    static SNekScalBlkMatSharedPtr NullSNekScalBlkMatSharedPtr;
+static SNekMatSharedPtr NullSNekMatSharedPtr;
+static SNekScalMatSharedPtr NullSNekScalMatSharedPtr;
+static SNekScalBlkMatSharedPtr NullSNekScalBlkMatSharedPtr;
 
 //     typedef LinearSystem                      DNekScalLinSys;
 //     typedef std::shared_ptr<DNekScalLinSys>   DNekScalLinSysSharedPtr;
 
-    static Array<OneD, SNekBlkMatSharedPtr>  NullArraySNekBlkMatSharedPtr;
+static Array<OneD, SNekBlkMatSharedPtr> NullArraySNekBlkMatSharedPtr;
 
-}
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_NEK_TYPEDEFS_HPP
+#endif // NEKTAR_LIB_UTILITIES_NEK_TYPEDEFS_HPP

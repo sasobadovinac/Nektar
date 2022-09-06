@@ -46,6 +46,7 @@ v5.2.0
 - Timer class was updated with safety checks to avoid wrong measurements (!1347)
 - Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
 - Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
+- Reformat code with clang-format (!1359)
 
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)

@@ -59,8 +59,8 @@ ModuleKey OutputFld::m_className[2] = {
 
 OutputFld::OutputFld(FieldSharedPtr f) : OutputFileBase(f)
 {
-    m_config["format"] = ConfigOption(
-        false, "Xml", "Output format of field file");
+    m_config["format"] =
+        ConfigOption(false, "Xml", "Output format of field file");
 }
 
 OutputFld::~OutputFld()
@@ -70,34 +70,32 @@ OutputFld::~OutputFld()
 void OutputFld::OutputFromPts(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal,
-             "OutputFld can't write using Pts information.");
+    NEKERROR(ErrorUtil::efatal, "OutputFld can't write using Pts information.");
 }
 
 void OutputFld::OutputFromExp(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    ASSERTL0(m_f->m_variables.size(),
-            "OutputFld: need input data.")
+    ASSERTL0(m_f->m_variables.size(), "OutputFld: need input data.")
 
     // Extract the output filename and extension
     string filename = m_config["outfile"].as<string>();
 
     // Set up FieldIO object.
     LibUtilities::FieldIOSharedPtr fld =
-        LibUtilities::GetFieldIOFactory().CreateInstance(
-            GetIOFormat(), m_f->m_comm, true);
+        LibUtilities::GetFieldIOFactory().CreateInstance(GetIOFormat(),
+                                                         m_f->m_comm, true);
 
     int i, j, s;
     int nfields = m_f->m_variables.size();
     int nstrips;
     m_f->m_session->LoadParameter("Strip_Z", nstrips, 1);
 
-    if(m_f->m_exp[0]->GetNumElmts() != 0)
+    if (m_f->m_exp[0]->GetNumElmts() != 0)
     {
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
             m_f->m_exp[0]->GetFieldDefinitions();
-        std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
+        std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
         for (s = 0; s < nstrips; ++s)
         {
             for (j = 0; j < nfields; ++j)
@@ -107,8 +105,8 @@ void OutputFld::OutputFromExp(po::variables_map &vm)
                     int n = s * FieldDef.size() / nstrips + i;
 
                     FieldDef[n]->m_fields.push_back(m_f->m_variables[j]);
-                    m_f->m_exp[s * nfields + j]->AppendFieldData(
-                        FieldDef[n], FieldData[n]);
+                    m_f->m_exp[s * nfields + j]->AppendFieldData(FieldDef[n],
+                                                                 FieldData[n]);
                 }
             }
         }
@@ -119,8 +117,8 @@ void OutputFld::OutputFromExp(po::variables_map &vm)
     {
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
             std::vector<LibUtilities::FieldDefinitionsSharedPtr>();
-        std::vector<std::vector<NekDouble> > FieldData =
-            std::vector<std::vector<NekDouble> >();
+        std::vector<std::vector<NekDouble>> FieldData =
+            std::vector<std::vector<NekDouble>>();
         fld->Write(filename, FieldDef, FieldData, m_f->m_fieldMetaDataMap);
     }
 }
@@ -133,22 +131,19 @@ void OutputFld::OutputFromData(po::variables_map &vm)
     string filename = m_config["outfile"].as<string>();
     // Set up FieldIO object.
     LibUtilities::FieldIOSharedPtr fld =
-        LibUtilities::GetFieldIOFactory().CreateInstance(
-            GetIOFormat(), m_f->m_comm, true);
+        LibUtilities::GetFieldIOFactory().CreateInstance(GetIOFormat(),
+                                                         m_f->m_comm, true);
 
-    fld->Write(filename, m_f->m_fielddef, m_f->m_data,
-                   m_f->m_fieldMetaDataMap);
+    fld->Write(filename, m_f->m_fielddef, m_f->m_data, m_f->m_fieldMetaDataMap);
 }
 
-fs::path OutputFld::GetPath(std::string &filename,
-                            po::variables_map &vm)
+fs::path OutputFld::GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    return   fs::path(filename);
+    return fs::path(filename);
 }
 
-fs::path OutputFld::GetFullOutName(std::string &filename,
-                            po::variables_map &vm)
+fs::path OutputFld::GetFullOutName(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
@@ -168,13 +163,13 @@ fs::path OutputFld::GetFullOutName(std::string &filename,
         fs::path poutfile(pad.str());
         fulloutname = specPath / poutfile;
     }
-    return   fulloutname;
+    return fulloutname;
 }
 
 std::string OutputFld::GetIOFormat()
 {
     std::string iofmt("Xml");
-    if(m_f->m_session)
+    if (m_f->m_session)
     {
         if (m_f->m_session->DefinesSolverInfo("IOFormat"))
         {
@@ -186,12 +181,12 @@ std::string OutputFld::GetIOFormat()
                 m_f->m_session->GetCmdLineArgument<std::string>("io-format");
         }
     }
-    if(m_config["format"].m_beenSet)
+    if (m_config["format"].m_beenSet)
     {
         iofmt = m_config["format"].as<string>();
     }
     return iofmt;
 }
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

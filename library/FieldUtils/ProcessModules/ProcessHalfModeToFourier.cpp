@@ -37,9 +37,9 @@
 #include <string>
 using namespace std;
 
-#include <boost/core/ignore_unused.hpp>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include "ProcessHalfModeToFourier.h"
 
@@ -50,17 +50,17 @@ namespace FieldUtils
 
 ModuleKey ProcessHalfModeToFourier::className =
     GetModuleFactory().RegisterCreatorFunction(
-            ModuleKey(eProcessModule, "halfmodetofourier"),
-            ProcessHalfModeToFourier::create,
-            "modify a FourierHalfMode into a Fourier expansion so it can be "
-            "processed as a 3D field.");
+        ModuleKey(eProcessModule, "halfmodetofourier"),
+        ProcessHalfModeToFourier::create,
+        "modify a FourierHalfMode into a Fourier expansion so it can be "
+        "processed as a 3D field.");
 
 ProcessHalfModeToFourier::ProcessHalfModeToFourier(FieldSharedPtr f)
     : ProcessModule(f)
 {
     m_priority = eModifyFieldData;
-    m_config["realmodetoimag"] = ConfigOption(
-        false, "NotSet", "Take fields as sin mode");
+    m_config["realmodetoimag"] =
+        ConfigOption(false, "NotSet", "Take fields as sin mode");
 }
 
 ProcessHalfModeToFourier::~ProcessHalfModeToFourier()
@@ -76,9 +76,9 @@ void ProcessHalfModeToFourier::Process(po::variables_map &vm)
     {
         vector<int> value;
         ASSERTL0(ParseUtils::GenerateVector(
-            m_config["realmodetoimag"].as<string>(), value),
-            "Failed to interpret realmodetoimag string");
-        for (int j: value)
+                     m_config["realmodetoimag"].as<string>(), value),
+                 "Failed to interpret realmodetoimag string");
+        for (int j : value)
         {
             sinmode.insert(j);
         }
@@ -87,9 +87,9 @@ void ProcessHalfModeToFourier::Process(po::variables_map &vm)
     for (int i = 0; i < m_f->m_data.size(); ++i)
     {
         ASSERTL0((m_f->m_fielddef[i]->m_basis[2] ==
-                  LibUtilities::eFourierHalfModeRe ||
+                      LibUtilities::eFourierHalfModeRe ||
                   m_f->m_fielddef[i]->m_basis[2] ==
-                  LibUtilities::eFourierHalfModeIm),
+                      LibUtilities::eFourierHalfModeIm),
                  "This module is only for fourier Half modes");
 
         // change HomogeneousID
@@ -104,9 +104,9 @@ void ProcessHalfModeToFourier::Process(po::variables_map &vm)
         }
         else
         {
-            for (int e=0; e<nelemts; ++e)
+            for (int e = 0; e < nelemts; ++e)
             {
-                m_f->m_fielddef[i]->m_numModes[3*e+2] = 4;
+                m_f->m_fielddef[i]->m_numModes[3 * e + 2] = 4;
             }
         }
 
@@ -114,21 +114,21 @@ void ProcessHalfModeToFourier::Process(po::variables_map &vm)
         m_f->m_fielddef[i]->m_basis[2] = LibUtilities::eFourier;
 
         // copy data
-        int ndata = m_f->m_data[i].size();
+        int ndata              = m_f->m_data[i].size();
         vector<NekDouble> data = m_f->m_data[i];
-        m_f->m_data[i].resize(2*ndata);
+        m_f->m_data[i].resize(2 * ndata);
         int offset = 0, count = 0;
         for (size_t n = 0; n < m_f->m_fielddef[i]->m_fields.size(); ++n)
         {
             int datalen = m_f->m_fielddef[i]->m_numModes[0] *
-                m_f->m_fielddef[i]->m_numModes[1];
+                          m_f->m_fielddef[i]->m_numModes[1];
             for (int e = 0; e < nelemts; ++e)
             {
-                if (! m_f->m_fielddef[i]->m_uniOrder)
+                if (!m_f->m_fielddef[i]->m_uniOrder)
                 {
 
-                    datalen = m_f->m_fielddef[i]->m_numModes[3*e] *
-                        m_f->m_fielddef[i]->m_numModes[3*e+1];
+                    datalen = m_f->m_fielddef[i]->m_numModes[3 * e] *
+                              m_f->m_fielddef[i]->m_numModes[3 * e + 1];
                 }
                 if (sinmode.count(n))
                 {
@@ -156,7 +156,6 @@ void ProcessHalfModeToFourier::Process(po::variables_map &vm)
             }
         }
     }
-
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

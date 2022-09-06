@@ -57,7 +57,7 @@ unsigned int TimeIntegrationSchemeGLM::GetOrder() const
     return m_integration_phases[m_integration_phases.size() - 1]->m_order;
 }
 
-std::vector< NekDouble > TimeIntegrationSchemeGLM::GetFreeParams() const
+std::vector<NekDouble> TimeIntegrationSchemeGLM::GetFreeParams() const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
@@ -80,11 +80,9 @@ unsigned int TimeIntegrationSchemeGLM::GetNumIntegrationPhases() const
 /**
  * @brief Worker method to initialize the integration scheme.
  */
-void TimeIntegrationSchemeGLM::
-    InitializeScheme(const NekDouble deltaT,
-                           ConstDoubleArray &y_0,
-                     const NekDouble time,
-                     const TimeIntegrationSchemeOperators &op)
+void TimeIntegrationSchemeGLM::InitializeScheme(
+    const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
+    const TimeIntegrationSchemeOperators &op)
 {
     m_solVector =
         m_integration_phases.back()->InitializeData(deltaT, y_0, time, op);
@@ -94,8 +92,7 @@ void TimeIntegrationSchemeGLM::
  * @brief Worker method that actually does the time integration.
  */
 ConstDoubleArray &TimeIntegrationSchemeGLM::TimeIntegrate(
-    const int timestep,
-    const NekDouble delta_t,
+    const int timestep, const NekDouble delta_t,
     const TimeIntegrationSchemeOperators &op)
 {
     int nPhases = m_integration_phases.size();
@@ -106,14 +103,13 @@ ConstDoubleArray &TimeIntegrationSchemeGLM::TimeIntegrate(
     return algorithm->TimeIntegrate(delta_t, m_solVector, op);
 }
 
-void TimeIntegrationSchemeGLM::
-InitializeSecondaryData(TimeIntegrationAlgorithmGLM *phase,
-                        NekDouble deltaT) const
+void TimeIntegrationSchemeGLM::InitializeSecondaryData(
+    TimeIntegrationAlgorithmGLM *phase, NekDouble deltaT) const
 {
     boost::ignore_unused(phase, deltaT);
 
-    ASSERTL0(false, "No InitializeSecondaryData method for scheme " +
-             GetFullName());
+    ASSERTL0(false,
+             "No InitializeSecondaryData method for scheme " + GetFullName());
 }
 
 /**
@@ -127,8 +123,7 @@ void TimeIntegrationSchemeGLM::print(std::ostream &os) const
 
     for (int i = 0; i < m_integration_phases.size(); i++)
     {
-        os << "            - "
-           << m_integration_phases[i]->m_name << std::endl;
+        os << "            - " << m_integration_phases[i]->m_name << std::endl;
     }
 }
 
@@ -140,18 +135,16 @@ void TimeIntegrationSchemeGLM::printFull(std::ostream &os) const
 
     for (int i = 0; i < m_integration_phases.size(); i++)
     {
-        os << "            - "
-           << m_integration_phases[i]->m_name << std::endl;
+        os << "            - " << m_integration_phases[i]->m_name << std::endl;
 
-        os << "            - "
-	   << m_integration_phases[i] << std::endl;
+        os << "            - " << m_integration_phases[i] << std::endl;
     }
 }
 
 // Friend Operators
 std::ostream &operator<<(std::ostream &os, const TimeIntegrationSchemeGLM &rhs)
 {
-    rhs.print( os );
+    rhs.print(os);
 
     return os;
 }
@@ -165,4 +158,4 @@ std::ostream &operator<<(std::ostream &os,
 }
 
 } // end namespace LibUtilities
-} // end namespace NekTar
+} // namespace Nektar

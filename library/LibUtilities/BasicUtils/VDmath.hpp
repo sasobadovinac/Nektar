@@ -40,44 +40,41 @@
 
 namespace VDmath
 {
-    /// \brief  vvtvp (vector times vector times vector): z = w*x*y
-    template<class T> T Ddot2(   Nektar::LibUtilities::CommSharedPtr& pComm,
-                                 int n,
-                                 const T   *w,
-                                 const T   *x,
-                                 const int *y)
+/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+template <class T>
+T Ddot2(Nektar::LibUtilities::CommSharedPtr &pComm, int n, const T *w,
+        const T *x, const int *y)
+{
+    T sum = 0;
+
+    while (n--)
     {
-        T sum = 0;
-
-        while( n-- )
-        {
-            sum += (*y == 1 ? (*w) * (*x) : 0 );
-            ++w;
-            ++x;
-            ++y;
-        }
-        pComm->AllReduce(sum, Nektar::LibUtilities::ReduceSum);
-        return sum;
+        sum += (*y == 1 ? (*w) * (*x) : 0);
+        ++w;
+        ++x;
+        ++y;
     }
-
-    /// \brief  vvtvp (vector times vector times vector): z = w*x*y
-    template<class T> T Ddot2(   Nektar::LibUtilities::CommSharedPtr& pComm,
-                                 int n,
-                                 const T   *w, const int incw,
-                                 const T   *x, const int incx,
-                                 const int *y, const int incy)
-    {
-        T sum = 0;
-
-        while( n-- )
-        {
-            sum += (*y == 1 ? (*w) * (*x) : 0.0 );
-            w += incw;
-            x += incx;
-            y += incy;
-        }
-        pComm->AllReduce(sum, Nektar::LibUtilities::ReduceSum);
-        return sum;
-    }
+    pComm->AllReduce(sum, Nektar::LibUtilities::ReduceSum);
+    return sum;
 }
+
+/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+template <class T>
+T Ddot2(Nektar::LibUtilities::CommSharedPtr &pComm, int n, const T *w,
+        const int incw, const T *x, const int incx, const int *y,
+        const int incy)
+{
+    T sum = 0;
+
+    while (n--)
+    {
+        sum += (*y == 1 ? (*w) * (*x) : 0.0);
+        w += incw;
+        x += incx;
+        y += incy;
+    }
+    pComm->AllReduce(sum, Nektar::LibUtilities::ReduceSum);
+    return sum;
+}
+} // namespace VDmath
 #endif /* DVMATH_HPP_ */

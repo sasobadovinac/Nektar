@@ -42,57 +42,56 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-    class ImageWarpingSystem : public AdvectionSystem
+class ImageWarpingSystem : public AdvectionSystem
+{
+public:
+    friend class MemoryManager<ImageWarpingSystem>;
+
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<ImageWarpingSystem>;
+        EquationSystemSharedPtr p =
+            MemoryManager<ImageWarpingSystem>::AllocateSharedPtr(pSession,
+                                                                 pGraph);
+        p->InitObject();
+        return p;
+    }
+    /// Name of class
+    static std::string className;
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr &pGraph)
-        {
-            EquationSystemSharedPtr p = MemoryManager<ImageWarpingSystem>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        /// Name of class
-        static std::string className;
+    virtual ~ImageWarpingSystem();
 
-        virtual ~ImageWarpingSystem();
+protected:
+    SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
+    Array<OneD, Array<OneD, NekDouble>> m_velocity;
+    Array<OneD, NekDouble> m_traceVn;
+    NekDouble m_alpha;
 
-    protected:
-        SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
-        Array<OneD, Array<OneD, NekDouble> > m_velocity;
-        Array<OneD, NekDouble>               m_traceVn;
-        NekDouble m_alpha;
+    ImageWarpingSystem(const LibUtilities::SessionReaderSharedPtr &pSession,
+                       const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        ImageWarpingSystem(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr &pGraph);
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
-        void DoOdeRhs(const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                      Array<OneD,  Array<OneD, NekDouble> > &outarray,
-                      const NekDouble time);
+    void DoOdeProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        void DoOdeProjection(const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                          Array<OneD,  Array<OneD, NekDouble> > &outarray,
-                          const NekDouble time);
+    /// Get the normal velocity
+    Array<OneD, NekDouble> &GetNormalVelocity();
 
-        /// Get the normal velocity
-        Array<OneD, NekDouble> &GetNormalVelocity();
+    virtual void v_InitObject(bool DeclareField = true);
 
-        virtual void v_InitObject(bool DeclareField = true);
+    // DG Advection routines
+    void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
+                       Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-        // DG Advection routines
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
-
-        // Print Summary
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
-    };
-}
+    // Print Summary
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+};
+} // namespace Nektar
 
 #endif

@@ -57,26 +57,23 @@ PengRobinsonEoS::PengRobinsonEoS(
     m_fw = 0.37464 + 1.54226 * m_omega - 0.2699 * m_omega * m_omega;
 }
 
-NekDouble PengRobinsonEoS::GetTemperature(
-    const NekDouble& rho, const NekDouble& e)
+NekDouble PengRobinsonEoS::GetTemperature(const NekDouble &rho,
+                                          const NekDouble &e)
 {
     return GetTemperatureKernel(rho, e);
 }
 
-vec_t PengRobinsonEoS::GetTemperature(
-    const vec_t& rho, const vec_t& e)
+vec_t PengRobinsonEoS::GetTemperature(const vec_t &rho, const vec_t &e)
 {
     return GetTemperatureKernel(rho, e);
 }
 
-NekDouble PengRobinsonEoS::GetPressure(
-    const NekDouble &rho, const NekDouble &e)
+NekDouble PengRobinsonEoS::GetPressure(const NekDouble &rho, const NekDouble &e)
 {
     return GetPressureKernel(rho, e);
 }
 
-vec_t PengRobinsonEoS::GetPressure(
-    const vec_t &rho, const vec_t &e)
+vec_t PengRobinsonEoS::GetPressure(const vec_t &rho, const vec_t &e)
 {
     return GetPressureKernel(rho, e);
 }
@@ -220,4 +217,4 @@ NekDouble PengRobinsonEoS::v_GetRhoFromPT(const NekDouble &p,
     return p / (Z * m_gasConstant * T);
 }
 
-}
+} // namespace Nektar

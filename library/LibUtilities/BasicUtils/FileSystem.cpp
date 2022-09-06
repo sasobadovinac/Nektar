@@ -32,17 +32,17 @@
 
 namespace Nektar
 {
-    namespace LibUtilities
-    {
-        /** 
-         * \brief create portable path on different platforms for 
-         *        boost::filesystem path 
-         */
-        std::string PortablePath(const boost::filesystem::path& path)
-        {
-            fs::path temp = path;
-            temp.make_preferred();
-            return temp.string();
-        }
-    }
+namespace LibUtilities
+{
+/**
+ * \brief create portable path on different platforms for
+ *        boost::filesystem path
+ */
+std::string PortablePath(const boost::filesystem::path &path)
+{
+    fs::path temp = path;
+    temp.make_preferred();
+    return temp.string();
 }
+} // namespace LibUtilities
+} // namespace Nektar

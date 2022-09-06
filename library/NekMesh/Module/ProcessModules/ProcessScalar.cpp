@@ -47,8 +47,7 @@ namespace NekMesh
 {
 
 ModuleKey ProcessScalar::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "scalar"),
-    ProcessScalar::create,
+    ModuleKey(eProcessModule, "scalar"), ProcessScalar::create,
     "Impose a scalar function z=f(x,y) on a surface.");
 
 ProcessScalar::ProcessScalar(MeshSharedPtr m) : ProcessModule(m)
@@ -94,10 +93,7 @@ void ProcessScalar::Process()
         vector<int> inter, tags = el[i]->GetTagList();
 
         sort(tags.begin(), tags.end());
-        set_intersection(surfs.begin(),
-                         surfs.end(),
-                         tags.begin(),
-                         tags.end(),
+        set_intersection(surfs.begin(), surfs.end(), tags.begin(), tags.end(),
                          back_inserter(inter));
 
         // It doesn't continue to next element.
@@ -133,7 +129,7 @@ void ProcessScalar::Process()
             for (k = 1; k < nq - 1; ++k)
             {
                 Node n = *n1 + disp * k / (nq - 1.0);
-                n.m_z = rEval.Evaluate(rExprId, n.m_x, n.m_y, 0.0, 0.0);
+                n.m_z  = rEval.Evaluate(rExprId, n.m_x, n.m_y, 0.0, 0.0);
                 if (n.m_z < 1e-32)
                 {
                     n.m_z = 0;
@@ -145,5 +141,5 @@ void ProcessScalar::Process()
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

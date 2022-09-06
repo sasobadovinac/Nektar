@@ -38,59 +38,53 @@
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+// Forward declarations
+class ExpList;
+
+/// A global linear system.
+class GlobalLinSysIterativeFull : public GlobalLinSysIterative
+{
+public:
+    /// Creates an instance of this class
+    static GlobalLinSysSharedPtr create(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        // Forward declarations
-        class ExpList;
-
-        /// A global linear system.
-        class GlobalLinSysIterativeFull : public GlobalLinSysIterative
-        {
-        public:
-            /// Creates an instance of this class
-            static GlobalLinSysSharedPtr create(
-                    const GlobalLinSysKey &pLinSysKey,
-                    const std::weak_ptr<ExpList> &pExpList,
-                    const std::shared_ptr<AssemblyMap>
-                                                           &pLocToGloMap)
-            {
-                return MemoryManager<GlobalLinSysIterativeFull>
-                    ::AllocateSharedPtr(pLinSysKey, pExpList, pLocToGloMap);
-            }
-
-            /// Name of class
-            static std::string className;
-
-            /// Constructor for full direct matrix solve.
-            MULTI_REGIONS_EXPORT GlobalLinSysIterativeFull(
-                    const GlobalLinSysKey &pLinSysKey,
-                    const std::weak_ptr<ExpList> &pExpList,
-                    const std::shared_ptr<AssemblyMap>
-                                                           &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT virtual ~GlobalLinSysIterativeFull();
-
-        private:
-            // Local to global map.
-            std::weak_ptr<AssemblyMap> m_locToGloMap;
-
-            /// Solve the linear system for given input and output vectors
-            /// using a specified local to global map.
-            virtual void v_Solve(
-                    const Array<OneD, const NekDouble> &in,
-                          Array<OneD,       NekDouble> &out,
-                    const AssemblyMapSharedPtr &locToGloMap,
-                    const Array<OneD, const NekDouble> &dirForcing
-                                                        = NullNekDouble1DArray);
-
-            virtual void v_DoMatrixMultiply(
-                    const Array<OneD, NekDouble>& pInput,
-                          Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_UniqueMap();
-
-        };
+        return MemoryManager<GlobalLinSysIterativeFull>::AllocateSharedPtr(
+            pLinSysKey, pExpList, pLocToGloMap);
     }
-}
+
+    /// Name of class
+    static std::string className;
+
+    /// Constructor for full direct matrix solve.
+    MULTI_REGIONS_EXPORT GlobalLinSysIterativeFull(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT virtual ~GlobalLinSysIterativeFull();
+
+private:
+    // Local to global map.
+    std::weak_ptr<AssemblyMap> m_locToGloMap;
+
+    /// Solve the linear system for given input and output vectors
+    /// using a specified local to global map.
+    virtual void v_Solve(
+        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
+        const AssemblyMapSharedPtr &locToGloMap,
+        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+
+    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_UniqueMap();
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

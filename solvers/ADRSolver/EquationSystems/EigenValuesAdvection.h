@@ -35,56 +35,55 @@
 #ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_EIGENVALUESADVECTION_H
 #define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_EIGENVALUESADVECTION_H
 
-#include <SolverUtils/EquationSystem.h>
 #include <SolverUtils/Advection/Advection.h>
+#include <SolverUtils/EquationSystem.h>
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 
 using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-    class EigenValuesAdvection : public EquationSystem
+class EigenValuesAdvection : public EquationSystem
+{
+public:
+    friend class MemoryManager<EigenValuesAdvection>;
+
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<EigenValuesAdvection>;
+        EquationSystemSharedPtr p =
+            MemoryManager<EigenValuesAdvection>::AllocateSharedPtr(pSession,
+                                                                   pGraph);
+        p->InitObject();
+        return p;
+    }
+    /// Name of class
+    static std::string className;
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            EquationSystemSharedPtr p = MemoryManager<EigenValuesAdvection>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        /// Name of class
-        static std::string className;
+    virtual ~EigenValuesAdvection();
 
-        virtual ~EigenValuesAdvection();
+protected:
+    SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
+    Array<OneD, Array<OneD, NekDouble>> m_velocity;
+    SolverUtils::AdvectionSharedPtr m_advObject;
+    Array<OneD, NekDouble> m_traceVn;
 
-    protected:
-        SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
-        Array<OneD, Array<OneD, NekDouble> > m_velocity;
-        SolverUtils::AdvectionSharedPtr m_advObject;
-        Array<OneD, NekDouble>               m_traceVn;
+    EigenValuesAdvection(const LibUtilities::SessionReaderSharedPtr &pSession,
+                         const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        EigenValuesAdvection(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    /// Get the normal velocity
+    Array<OneD, NekDouble> &GetNormalVelocity();
 
-        /// Get the normal velocity
-        Array<OneD, NekDouble> &GetNormalVelocity();
+    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_DoInitialise();
+    virtual void v_DoSolve();
 
-        virtual void v_InitObject(bool DeclareFields=true);
-        virtual void v_DoInitialise();
-        virtual void v_DoSolve();
-
-        // DG Advection routines
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
-    };
-}
+    // DG Advection routines
+    void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
+                       Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
+};
+} // namespace Nektar
 
 #endif
