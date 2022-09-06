@@ -142,6 +142,11 @@ void CompressibleFlowSystem::InitialiseParameters()
     // Shock capture
     m_session->LoadSolverInfo("ShockCaptureType", m_shockCaptureType, "Off");
 
+    // Check if the shock capture type is supported
+    std::string err_msg = "Warning, ShockCaptureType = " + m_shockCaptureType +
+                          " is not supported by this solver";
+    ASSERTL0(SupportsShockCaptType(m_shockCaptureType), err_msg);
+
     // Load parameters for exponential filtering
     m_session->MatchSolverInfo("ExponentialFiltering", "True", m_useFiltering,
                                false);
@@ -676,22 +681,6 @@ NekDouble CompressibleFlowSystem::v_GetTimeStep(
 }
 
 /**
- * @brief Apply artificial diffusion (Laplacian operator)
- */
-void CompressibleFlowSystem::v_DoDiffusion(
-    const Array<OneD, Array<OneD, NekDouble>> &inarray,
-    Array<OneD, Array<OneD, NekDouble>> &outarray,
-    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
-{
-    boost::ignore_unused(pFwd, pBwd);
-    if (m_artificialDiffusion)
-    {
-        m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
-    }
-}
-
-/**
  * @brief Set up logic for residual calculation.
  */
 void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
@@ -719,8 +708,8 @@ void CompressibleFlowSystem::v_SetInitialConditions(NekDouble initialtime,
             --seed;
             Vmath::Vadd(phystot, m_fields[i]->GetPhys(), 1, noise, 1,
                         m_fields[i]->UpdatePhys(), 1);
-            m_fields[i]->FwdTrans_IterPerExp(m_fields[i]->GetPhys(),
-                                             m_fields[i]->UpdateCoeffs());
+            m_fields[i]->FwdTransLocalElmt(m_fields[i]->GetPhys(),
+                                           m_fields[i]->UpdateCoeffs());
         }
     }
 
@@ -962,17 +951,17 @@ void CompressibleFlowSystem::v_ExtraFldOutput(
         string velNames[3] = {"u", "v", "w"};
         for (int i = 0; i < m_spacedim; ++i)
         {
-            m_fields[0]->FwdTrans_IterPerExp(velocity[i], velFwd[i]);
+            m_fields[0]->FwdTransLocalElmt(velocity[i], velFwd[i]);
             variables.push_back(velNames[i]);
             fieldcoeffs.push_back(velFwd[i]);
         }
 
-        m_fields[0]->FwdTrans_IterPerExp(pressure, pFwd);
-        m_fields[0]->FwdTrans_IterPerExp(temperature, TFwd);
-        m_fields[0]->FwdTrans_IterPerExp(entropy, sFwd);
-        m_fields[0]->FwdTrans_IterPerExp(soundspeed, aFwd);
-        m_fields[0]->FwdTrans_IterPerExp(mach, mFwd);
-        m_fields[0]->FwdTrans_IterPerExp(sensor, sensFwd);
+        m_fields[0]->FwdTransLocalElmt(pressure, pFwd);
+        m_fields[0]->FwdTransLocalElmt(temperature, TFwd);
+        m_fields[0]->FwdTransLocalElmt(entropy, sFwd);
+        m_fields[0]->FwdTransLocalElmt(soundspeed, aFwd);
+        m_fields[0]->FwdTransLocalElmt(mach, mFwd);
+        m_fields[0]->FwdTransLocalElmt(sensor, sensFwd);
 
         variables.push_back("p");
         variables.push_back("T");
@@ -992,7 +981,7 @@ void CompressibleFlowSystem::v_ExtraFldOutput(
             // reuse pressure
             Array<OneD, NekDouble> sensorFwd(nCoeffs);
             m_artificialDiffusion->GetArtificialViscosity(tmp, pressure);
-            m_fields[0]->FwdTrans_IterPerExp(pressure, sensorFwd);
+            m_fields[0]->FwdTransLocalElmt(pressure, sensorFwd);
 
             variables.push_back("ArtificialVisc");
             fieldcoeffs.push_back(sensorFwd);

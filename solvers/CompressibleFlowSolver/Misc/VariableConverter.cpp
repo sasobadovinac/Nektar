@@ -83,6 +83,11 @@ VariableConverter::VariableConverter(
 
         // Check for Ducros sensor
         m_session->LoadSolverInfo("DucrosSensor", m_ducrosSensor, "Off");
+
+        if (m_ducrosSensor != "Off" || m_shockSensorType == "Dilatation")
+        {
+            m_flagCalcDivCurl = true;
+        }
     }
     // Load smoothing tipe
     m_session->LoadSolverInfo("Smoothing", m_smoothing, "Off");
@@ -774,7 +779,7 @@ void VariableConverter::ApplyC0Smooth(Array<OneD, NekDouble> &field)
     Array<OneD, NekDouble> muFwd(nCoeffs);
     Array<OneD, NekDouble> weights(nCoeffs, 1.0);
     // Assemble global expansion coefficients for viscosity
-    m_C0ProjectExp->FwdTrans_IterPerExp(field, m_C0ProjectExp->UpdateCoeffs());
+    m_C0ProjectExp->FwdTransLocalElmt(field, m_C0ProjectExp->UpdateCoeffs());
     m_C0ProjectExp->Assemble();
     Vmath::Vcopy(nCoeffs, m_C0ProjectExp->GetCoeffs(), 1, muFwd, 1);
     // Global coefficients
@@ -789,7 +794,7 @@ void VariableConverter::ApplyC0Smooth(Array<OneD, NekDouble> &field)
     // Get local coefficients
     m_C0ProjectExp->GlobalToLocal();
     // Get C0 field
-    m_C0ProjectExp->BwdTrans_IterPerExp(m_C0ProjectExp->GetCoeffs(), field);
+    m_C0ProjectExp->BwdTrans(m_C0ProjectExp->GetCoeffs(), field);
 }
 
 } // namespace Nektar

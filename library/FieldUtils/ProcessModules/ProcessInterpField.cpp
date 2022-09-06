@@ -33,7 +33,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include <string>
-using namespace std;
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/geometry.hpp>
@@ -46,6 +45,7 @@ using namespace std;
 
 #include "ProcessInterpField.h"
 
+using namespace std;
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
 
@@ -280,8 +280,8 @@ void ProcessInterpField::Process(po::variables_map &vm)
                 m_f->m_exp[i]->UpdatePhys()[j] = clamp_low;
             }
         }
-        m_f->m_exp[i]->FwdTrans_IterPerExp(m_f->m_exp[i]->GetPhys(),
-                                           m_f->m_exp[i]->UpdateCoeffs());
+        m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
+                                         m_f->m_exp[i]->UpdateCoeffs());
     }
     // save field names
     m_f->m_variables = fromField->m_fielddef[0]->m_fields;

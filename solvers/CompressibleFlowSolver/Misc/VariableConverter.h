@@ -156,14 +156,20 @@ public:
     }
 
     // Shock sensor methods
-    void SetAv(const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-               const Array<OneD, const Array<OneD, NekDouble>> &consVar,
-               const Array<OneD, NekDouble> &div,
-               const Array<OneD, NekDouble> &curlSquared);
+    void SetAv(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, const Array<OneD, NekDouble>> &consVar,
+        const Array<OneD, NekDouble> &div         = NullNekDouble1DArray,
+        const Array<OneD, NekDouble> &curlSquared = NullNekDouble1DArray);
 
     Array<OneD, NekDouble> &GetAv();
 
     Array<OneD, NekDouble> &GetAvTrace();
+
+    bool GetFlagCalcDivCurl(void) const
+    {
+        return m_flagCalcDivCurl;
+    }
 
     void SetElmtMinHP(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
@@ -217,6 +223,7 @@ protected:
     /// storage
     Array<OneD, NekDouble> m_muAv;
     Array<OneD, NekDouble> m_muAvTrace;
+    bool m_flagCalcDivCurl = false;
 };
 
 } // namespace Nektar

@@ -298,6 +298,15 @@ void BoundaryConditions::ReadBoundaryRegions(TiXmlElement *conditions)
             {
                 m_boundaryRegions[indx] = boundaryRegion;
             }
+
+            // Read optional name as string and save to m_boundaryLabels if
+            // exists
+            std::string name;
+            err = boundaryRegionsElement->QueryStringAttribute("NAME", &name);
+            if (err == TIXML_SUCCESS)
+            {
+                m_boundaryLabels[indx] = name;
+            }
         }
 
         boundaryRegionsElement =

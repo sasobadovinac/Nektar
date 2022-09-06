@@ -12,7 +12,7 @@ SET(FieldUtilsHeaders
     OutputModules/OutputFileBase.h
     OutputModules/OutputInfo.h
     OutputModules/OutputTecplot.h
-    OutputModules/OutputVtk.h
+    OutputModules/OutputVtkBase.h
     OutputModules/OutputFld.h
     OutputModules/OutputStdOut.h
     OutputModules/OutputPts.h
@@ -75,7 +75,7 @@ SET(FieldUtilsSources
     OutputModules/OutputFileBase.cpp
     OutputModules/OutputInfo.cpp
     OutputModules/OutputTecplot.cpp
-    OutputModules/OutputVtk.cpp
+    OutputModules/OutputVtkBase.cpp
     OutputModules/OutputFld.cpp
     OutputModules/OutputStdOut.cpp
     OutputModules/OutputPts.cpp
@@ -127,9 +127,9 @@ SET(FieldUtilsSources
 
 IF (NEKTAR_USE_VTK)
     SET(FieldUtilsSources ${FieldUtilsSources}
-            OutputModules/OutputVtkNew.cpp)
+            OutputModules/OutputVtk.cpp)
     SET(FieldUtilsHeaders ${FieldUtilsHeaders}
-            OutputModules/OutputVtkNew.h)
+            OutputModules/OutputVtk.h)
 ENDIF()
 
 ADD_NEKTAR_LIBRARY(FieldUtils
@@ -143,14 +143,14 @@ ADD_DEFINITIONS(-DFIELD_UTILS_EXPORTS)
 
 IF (NEKTAR_USE_VTK)
     IF (VTK_MAJOR_VERSION LESS 6)
-        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC vtkCommon vtkIO vtkGraphics)
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC vtkCommon vtkIO vtkGraphics vtkFiltersCore)
     ELSEIF (VTK_MAJOR_VERSION  GREATER_EQUAL 9)
-        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML)
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML VTK::FiltersCore)
         vtk_module_autoinit(
                 TARGETS FieldUtils
-                MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML)
+                MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML VTK::FiltersCore)
     ELSE ()
-        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC vtkCommonCore vtkIOLegacy vtkIOXML)
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC vtkCommonCore vtkIOLegacy vtkIOXML vtkFiltersCore)
     ENDIF ()
 ENDIF (NEKTAR_USE_VTK)
 

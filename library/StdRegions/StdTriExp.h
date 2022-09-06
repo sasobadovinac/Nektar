@@ -97,7 +97,7 @@ protected:
     STD_REGIONS_EXPORT virtual void v_FwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
-    STD_REGIONS_EXPORT virtual void v_FwdTrans_BndConstrained(
+    STD_REGIONS_EXPORT virtual void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 

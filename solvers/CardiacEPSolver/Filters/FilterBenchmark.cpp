@@ -185,7 +185,7 @@ void FilterBenchmark::v_Finalise(
         std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
 
         Array<OneD, NekDouble> vCoeffs(pFields[0]->GetNcoeffs());
-        pFields[0]->FwdTrans_IterPerExp(m_threshold[i], vCoeffs);
+        pFields[0]->FwdTransLocalElmt(m_threshold[i], vCoeffs);
 
         // copy Data into FieldData and set variable
         for (int i = 0; i < FieldDef.size(); ++i)

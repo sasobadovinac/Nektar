@@ -455,7 +455,7 @@ void ExpListHomogeneous1D::v_FwdTrans(
 /**
  * Forward transform element by element
  */
-void ExpListHomogeneous1D::v_FwdTrans_IterPerExp(
+void ExpListHomogeneous1D::v_FwdTransLocalElmt(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -465,8 +465,8 @@ void ExpListHomogeneous1D::v_FwdTrans_IterPerExp(
     // spectral element FwdTrans plane by plane
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FwdTrans_IterPerExp(inarray + cnt,
-                                         tmparray = outarray + cnt1);
+        m_planes[n]->FwdTransLocalElmt(inarray + cnt,
+                                       tmparray = outarray + cnt1);
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
@@ -479,7 +479,7 @@ void ExpListHomogeneous1D::v_FwdTrans_IterPerExp(
 /**
  * Forward transform element by element with boundaries constrained
  */
-void ExpListHomogeneous1D::v_FwdTrans_BndConstrained(
+void ExpListHomogeneous1D::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -489,8 +489,8 @@ void ExpListHomogeneous1D::v_FwdTrans_BndConstrained(
     // spectral element FwdTrans plane by plane
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FwdTrans_BndConstrained(inarray + cnt,
-                                             tmparray = outarray + cnt1);
+        m_planes[n]->FwdTransBndConstrained(inarray + cnt,
+                                            tmparray = outarray + cnt1);
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
@@ -523,30 +523,6 @@ void ExpListHomogeneous1D::v_BwdTrans(
 }
 
 /**
- * Backward transform element by element
- */
-void ExpListHomogeneous1D::v_BwdTrans_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int cnt = 0, cnt1 = 0;
-    Array<OneD, NekDouble> tmparray;
-
-    for (int n = 0; n < m_planes.size(); ++n)
-    {
-        m_planes[n]->BwdTrans_IterPerExp(inarray + cnt,
-                                         tmparray = outarray + cnt1);
-
-        cnt += m_planes[n]->GetNcoeffs();
-        cnt1 += m_planes[n]->GetTotPoints();
-    }
-    if (!m_WaveSpace)
-    {
-        HomogeneousBwdTrans(outarray, outarray);
-    }
-}
-
-/**
  * Inner product
  */
 void ExpListHomogeneous1D::v_IProductWRTBase(
@@ -569,36 +545,6 @@ void ExpListHomogeneous1D::v_IProductWRTBase(
     for (int n = 0; n < m_planes.size(); ++n)
     {
         m_planes[n]->IProductWRTBase(tmpIn + cnt, tmparray = outarray + cnt1);
-
-        cnt1 += m_planes[n]->GetNcoeffs();
-        cnt += m_planes[n]->GetTotPoints();
-    }
-}
-
-/**
- * Inner product element by element
- */
-void ExpListHomogeneous1D::v_IProductWRTBase_IterPerExp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int cnt = 0, cnt1 = 0;
-    Array<OneD, NekDouble> tmparray, tmpIn;
-
-    if (m_WaveSpace)
-    {
-        tmpIn = inarray;
-    }
-    else
-    {
-        tmpIn = Array<OneD, NekDouble>(inarray.size(), 0.0);
-        HomogeneousFwdTrans(inarray, tmpIn);
-    }
-
-    for (int n = 0; n < m_planes.size(); ++n)
-    {
-        m_planes[n]->IProductWRTBase_IterPerExp(tmpIn + cnt,
-                                                tmparray = outarray + cnt1);
 
         cnt1 += m_planes[n]->GetNcoeffs();
         cnt += m_planes[n]->GetTotPoints();
@@ -1230,7 +1176,6 @@ void ExpListHomogeneous1D::v_PhysGalerkinProjection1DScaled(
     Array<OneD, NekDouble> tmparray;
     cnt  = m_planes[0]->Get1DScaledTotPoints(scale);
     cnt1 = m_planes[0]->GetTotPoints();
-
     ASSERTL1(m_planes.size() * cnt <= inarray.size(),
              "size of outarray does not match internal estimage");
 

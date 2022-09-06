@@ -1182,7 +1182,7 @@ void StdExpansion::v_IProductWRTDirectionalDerivBase(
 /**
  *
  */
-void StdExpansion::v_FwdTrans_BndConstrained(
+void StdExpansion::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {

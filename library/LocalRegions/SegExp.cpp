@@ -377,7 +377,7 @@ void SegExp::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
     }
 }
 
-void SegExp::v_FwdTrans_BndConstrained(
+void SegExp::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {

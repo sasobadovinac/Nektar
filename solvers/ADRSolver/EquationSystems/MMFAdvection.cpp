@@ -304,7 +304,7 @@ void MMFAdvection::v_DoSolve()
         for (i = 0; i < nvariables; ++i)
         {
             m_fields[m_intVariables[i]]->SetPhys(fields[i]);
-            m_fields[m_intVariables[i]]->FwdTrans_IterPerExp(
+            m_fields[m_intVariables[i]]->FwdTransLocalElmt(
                 fields[i], m_fields[m_intVariables[i]]->UpdateCoeffs());
             m_fields[m_intVariables[i]]->SetPhysState(false);
         }
@@ -496,7 +496,7 @@ void MMFAdvection::DoOdeProjection(
             for (i = 0; i < nVariables; ++i)
             {
                 m_fields[i]->FwdTrans(inarray[i], coeffs);
-                m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
+                m_fields[i]->BwdTrans(coeffs, outarray[i]);
             }
             break;
         }

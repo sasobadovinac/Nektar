@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
                                     fielddef[i]->m_fields[0],
                                     streak->UpdateCoeffs());
     }
-    streak->BwdTrans_IterPerExp(streak->GetCoeffs(), streak->UpdatePhys());
+    streak->BwdTrans(streak->GetCoeffs(), streak->UpdatePhys());
 
     //------------------------------------------------
     // determine the I regions (3 region expected)
@@ -931,8 +931,8 @@ int main(int argc, char *argv[])
         Vmath::Vcopy(nquad_lay, ycQ, 1, Cont_y->UpdatePhys(), 1);
         Array<OneD, NekDouble> coeffsy(Cont_y->GetNcoeffs(), 0.0);
 
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
-        Cont_y->BwdTrans_IterPerExp(coeffsy, Cont_y->UpdatePhys());
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffsy);
+        Cont_y->BwdTrans(coeffsy, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, ycQ, 1);
 
         cout << "xcQ, ycQ" << endl;
@@ -1028,13 +1028,13 @@ int main(int argc, char *argv[])
         // force continuity tx,ty
         // tx
         Vmath::Vcopy(nquad_lay, txQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
-        Cont_y->BwdTrans_IterPerExp(coeffsy, Cont_y->UpdatePhys());
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffsy);
+        Cont_y->BwdTrans(coeffsy, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, txQ, 1);
         // ty
         Vmath::Vcopy(nquad_lay, tyQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffsy);
-        Cont_y->BwdTrans_IterPerExp(coeffsy, Cont_y->UpdatePhys());
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffsy);
+        Cont_y->BwdTrans(coeffsy, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, tyQ, 1);
 
         // check if the tan points have the same curvature otherwise interp
@@ -1122,13 +1122,13 @@ int main(int argc, char *argv[])
         // force continuity of the tangent
         // tyQ
         Vmath::Vcopy(nquad_lay, tyQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
-        Cont_y->BwdTrans_IterPerExp(coeffstmp, Cont_y->UpdatePhys());
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffstmp);
+        Cont_y->BwdTrans(coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, tyQ, 1);
         // txQ
         Vmath::Vcopy(nquad_lay, txQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
-        Cont_y->BwdTrans_IterPerExp(coeffstmp, Cont_y->UpdatePhys());
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffstmp);
+        Cont_y->BwdTrans(coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, txQ, 1);
 
         for (int k = 0; k < nedges; k++)
@@ -1172,15 +1172,15 @@ int main(int argc, char *argv[])
         // REMEMBER: the Fwd/Bwd operation get wrong with the border values!!!
         Vmath::Vcopy(nquad_lay, nyQ, 1, Cont_y->UpdatePhys(), 1);
 
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
-        Cont_y->BwdTrans_IterPerExp(coeffstmp, Cont_y->UpdatePhys());
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffstmp);
+        Cont_y->BwdTrans(coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, nyQ, 1);
 
         Vmath::Zero(nquad_lay, Cont_y->UpdatePhys(), 1);
         Vmath::Zero(Cont_y->GetNcoeffs(), Cont_y->UpdateCoeffs(), 1);
         Vmath::Vcopy(nquad_lay, nxQ, 1, Cont_y->UpdatePhys(), 1);
-        Cont_y->FwdTrans_IterPerExp(Cont_y->GetPhys(), coeffstmp);
-        Cont_y->BwdTrans_IterPerExp(coeffstmp, Cont_y->UpdatePhys());
+        Cont_y->FwdTransLocalElmt(Cont_y->GetPhys(), coeffstmp);
+        Cont_y->BwdTrans(coeffstmp, Cont_y->UpdatePhys());
         Vmath::Vcopy(nquad_lay, Cont_y->GetPhys(), 1, nxQ, 1);
 
         // force the normal at interface point to be equal

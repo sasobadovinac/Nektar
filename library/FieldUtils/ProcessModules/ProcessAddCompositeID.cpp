@@ -123,7 +123,7 @@ void ProcessAddCompositeID::Process(po::variables_map &vm)
     }
 
     // forward transform
-    exp->FwdTrans_IterPerExp(exp->GetPhys(), exp->UpdateCoeffs());
+    exp->FwdTransLocalElmt(exp->GetPhys(), exp->UpdateCoeffs());
 }
 } // namespace FieldUtils
 } // namespace Nektar

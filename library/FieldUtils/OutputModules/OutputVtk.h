@@ -28,15 +28,19 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Vtk output module
+//  Description: Vtk output module using the VTK library
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef FIELDUTILS_OUTPUTVTK
 #define FIELDUTILS_OUTPUTVTK
 
-#include "OutputFileBase.h"
+#include "OutputVtkBase.h"
 #include <tinyxml.h>
+
+#include <vtkNew.h>
+#include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
 
 namespace Nektar
 {
@@ -44,48 +48,77 @@ namespace FieldUtils
 {
 
 /// Converter from fld to vtk.
-class OutputVtk : public OutputFileBase
+class OutputVtk final : public OutputVtkBase
 {
 public:
     /// Creates an instance of this class
-    static std::shared_ptr<Module> create(FieldSharedPtr f)
+    static std::shared_ptr<Module> create(const FieldSharedPtr &f)
     {
         return MemoryManager<OutputVtk>::AllocateSharedPtr(f);
     }
+
     static ModuleKey m_className;
 
-    OutputVtk(FieldSharedPtr f);
-    virtual ~OutputVtk();
+    explicit OutputVtk(FieldSharedPtr f);
 
-    virtual std::string GetModuleName()
+    ~OutputVtk() final = default;
+
+    std::string GetModuleName() final
     {
         return "OutputVtk";
     }
 
 protected:
     /// Write from pts to output file.
-    virtual void OutputFromPts(po::variables_map &vm);
+    void OutputFromPts(po::variables_map &vm) final;
 
     /// Write from m_exp to output file.
-    virtual void OutputFromExp(po::variables_map &vm);
+    void OutputFromExp(po::variables_map &vm) final;
 
     /// Write from data to output file.
-    virtual void OutputFromData(po::variables_map &vm);
+    void OutputFromData(po::variables_map &vm) final;
 
-    virtual fs::path GetPath(std::string &filename, po::variables_map &vm);
+    /// Cache file for unstructured grid VTK mesh data
+    vtkSmartPointer<vtkUnstructuredGrid> m_vtkMesh;
 
-    virtual fs::path GetFullOutName(std::string &filename,
-                                    po::variables_map &vm);
+    /// Number of planes if homogeneous
+    int m_numPlanes = 1;
+
+    /// Flag if extra plane in case of fourier expansion in homogeneous dir
+    bool m_extraPlane = false;
+
+    /// Flag if mesh has been cached
+    bool m_cachedMesh = false;
 
     std::string PrepareOutput(po::variables_map &vm);
 
 private:
-    void WriteVtkHeader(std::ostream &outfile);
+    /// Prepare high order Lagrange VTK output
+    vtkSmartPointer<vtkUnstructuredGrid> OutputFromExpHighOrder(
+        po::variables_map &vm);
 
-    void WriteVtkFooter(std::ostream &outfile);
+    /// Add field data to high order Lagrange VTK output
+    void AddFieldDataToVTKHighOrder(
+        po::variables_map &vm, std::string &filename,
+        vtkSmartPointer<vtkUnstructuredGrid> &vtkMesh);
 
-    void WriteEmptyVtkPiece(std::ofstream &outfile);
+    /// Prepare low order VTK output
+    vtkSmartPointer<vtkUnstructuredGrid> OutputFromExpLowOrder();
 
+    /// Add field data to low order VTK output
+    void AddFieldDataToVTKLowOrder(
+        po::variables_map &vm, std::string &filename,
+        vtkSmartPointer<vtkUnstructuredGrid> &vtkMesh);
+
+    /// Prepare low order multi-block VTK output & add field data
+    void OutputFromExpLowOrderMultiBlock(po::variables_map &vm,
+                                         std::string &filename);
+
+    /// Write VTK file using @param vtkMesh
+    void WriteVTK(vtkDataObject *vtkMesh, std::string &filename,
+                  po::variables_map &vm);
+
+    /// Write the parallel .pvtu file
     void WritePVtu(po::variables_map &vm);
 };
 } // namespace FieldUtils

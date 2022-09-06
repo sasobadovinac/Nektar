@@ -624,13 +624,13 @@ void UnsteadySystem::v_GenerateSummary(SummaryList &s)
     AddSummaryItem(s, "Advect. advancement",
                    m_explicitAdvection ? "explicit" : "implicit");
 
-    AddSummaryItem(s, "Advect. advancement",
+    AddSummaryItem(s, "Diffuse. advancement",
                    m_explicitDiffusion ? "explicit" : "implicit");
 
     if (m_session->GetSolverInfo("EQTYPE") ==
         "SteadyAdvectionDiffusionReaction")
     {
-        AddSummaryItem(s, "Advect. advancement",
+        AddSummaryItem(s, "React. advancement",
                        m_explicitReaction ? "explicit" : "implicit");
     }
 

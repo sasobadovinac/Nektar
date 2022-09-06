@@ -348,7 +348,7 @@ void UnsteadyAdvection::DoOdeProjection(
 
                 cfield->GlobalSolve(key, wsp, coeffs, NullNekDouble1DArray);
 
-                m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
+                m_fields[i]->BwdTrans(coeffs, outarray[i]);
             }
 #endif
             break;

@@ -5,13 +5,11 @@
 if [[ $BUILD_TYPE == "default" ]]; then
     BUILD_OPTS="-DCMAKE_BUILD_TYPE=Release \
         -DNEKTAR_TEST_ALL=ON \
-        -DNEKTAR_BUILD_TIMINGS=ON \
         -DNEKTAR_ERROR_ON_WARNINGS=OFF"
 elif [[ $BUILD_TYPE == "full" ]] || [[ $BUILD_TYPE == "full_py3" ]]; then
     BUILD_OPTS="-DCMAKE_BUILD_TYPE:STRING=Debug \
         -DNEKTAR_FULL_DEBUG:BOOL=ON \
         -DNEKTAR_TEST_ALL:BOOL=ON \
-        -DNEKTAR_BUILD_TIMINGS:BOOL=ON \
         -DNEKTAR_USE_ARPACK:BOOL=ON \
         -DNEKTAR_USE_FFTW:BOOL=ON \
         -DNEKTAR_USE_MPI:BOOL=ON \
@@ -22,11 +20,14 @@ elif [[ $BUILD_TYPE == "full" ]] || [[ $BUILD_TYPE == "full_py3" ]]; then
         -DNEKTAR_USE_CCM:BOOL=ON \
         -DNEKTAR_CCMIO_URL=https://www.nektar.info/ccmio/libccmio-2.6.1.tar.gz \
         -DNEKTAR_USE_CWIPI:BOOL=ON \
+        -DNEKTAR_USE_VTK:BOOL=ON \
         -DNEKTAR_BUILD_PYTHON:BOOL=ON \
         -DNEKTAR_TEST_USE_HOSTFILE=ON \
         -DNEKTAR_ERROR_ON_WARNINGS=OFF"
-    if [[ $BUILD_TYPE == "full_py3" ]]; then
-        BUILD_OPTS="$BUILD_OPTS -DNEKTAR_USE_PYTHON3:BOOL=ON"
+    if [[ $BUILD_SIMD == "avx2" ]]; then
+        BUILD_OPTS="$BUILD_OPTS -DNEKTAR_ENABLE_SIMD_AVX2:BOOL=ON"
+    elif [[ $BUILD_SIMD == "avx512" ]]; then
+        BUILD_OPTS="$BUILD_OPTS -DNEKTAR_ENABLE_SIMD_AVX512:BOOL=ON"
     fi
 fi
 

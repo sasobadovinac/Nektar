@@ -333,7 +333,7 @@ Array<OneD, NekDouble> CellModel::GetCellSolutionCoeffs(unsigned int idx)
     }
     else
     {
-        m_field->FwdTrans_IterPerExp(m_cellSol[idx], outarray);
+        m_field->FwdTransLocalElmt(m_cellSol[idx], outarray);
     }
 
     return outarray;

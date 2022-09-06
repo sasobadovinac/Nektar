@@ -34,6 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <SolverUtils/Diffusion/DiffusionIP.h>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 
@@ -57,7 +58,7 @@ void DiffusionIP::v_InitObject(
     m_session = pSession;
 
     m_session->LoadParameter("IPSymmFluxCoeff", m_IPSymmFluxCoeff,
-                             1.0); // SIP=1.0; NIP=-1.0; IIP=0.0
+                             0.0); // SIP=1.0; NIP=-1.0; IIP=0.0
 
     m_session->LoadParameter("IP2ndDervCoeff", m_IP2ndDervCoeff,
                              0.0); // 1.0/12.0
@@ -84,15 +85,40 @@ void DiffusionIP::v_InitObject(
     }
 
     pFields[0]->GetTrace()->GetNormals(m_traceNormals);
+
+    // Compute the length of the elements in the boundary-normal direction
+    // The function "GetElmtNormalLength" returns half the length of the left
+    // and right adjacent element in the lengthFwd and lengthBwd arrays. If
+    // the element belongs to a boundary (including periodic boundaries) or
+    // a parallel interface, the Bwd array will contain zeros.
     Array<OneD, NekDouble> lengthFwd{nTracePts, 0.0};
     Array<OneD, NekDouble> lengthBwd{nTracePts, 0.0};
     pFields[0]->GetTrace()->GetElmtNormalLength(lengthFwd, lengthBwd);
+
+    // Copy Fwd to Bwd on parallel interfaces
+    // TODO: Move this into GetElmtNormalLength()
+    pFields[0]->GetTraceMap()->GetAssemblyCommDG()->PerformExchange(lengthFwd,
+                                                                    lengthBwd);
+    // Copy Fwd to Bwd on periodic interfaces
+    // TODO: Move this into GetElmtNormalLength()
     pFields[0]->PeriodicBwdCopy(lengthFwd, lengthBwd);
+    // Scale the length by 0.5 on boundaries, and copy Fwd into Bwd
+    // Notes:
+    //  - It is not quite clear why we need to scale by 0.5 on the boundaries
+    //  - The current implementation is not perfect, it would be nicer to call
+    //    a function similar to DiscontField::v_FillBwdWithBoundCond() with
+    //    PutFwdInBwdOnBCs = true. If we wouldn't do the scaling by 0.5, this
+    //    function could have been used.
+    for (int i = 0; i < nTracePts; ++i)
+    {
+        if (std::abs(lengthBwd[i]) < NekConstants::kNekMachineEpsilon)
+        {
+            lengthFwd[i] *= 0.5;
+            lengthBwd[i] = lengthFwd[i];
+        }
+    }
 
-    const MultiRegions::AssemblyMapDGSharedPtr TraceMap =
-        pFields[0]->GetTraceMap();
-    TraceMap->GetAssemblyCommDG()->PerformExchange(lengthFwd, lengthBwd);
-
+    // Compute the average element normal length along the edge
     Array<OneD, NekDouble> lengthsum(nTracePts, 0.0);
     Array<OneD, NekDouble> lengthmul(nTracePts, 0.0);
     Vmath::Vadd(nTracePts, lengthBwd, 1, lengthFwd, 1, lengthsum, 1);

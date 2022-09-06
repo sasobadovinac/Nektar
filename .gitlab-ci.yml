@@ -12,6 +12,8 @@ workflow:
       when: never
     # Other merge requests trigger pipelines
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Manual runs
+    - if: $CI_PIPELINE_SOURCE == "web"
 
 stages:
   - build-env-default
@@ -76,6 +78,7 @@ include:
     - if [ ! -d $CCACHE_DIR ]; then mkdir -p $CCACHE_DIR && chown 1000:1000 $CCACHE_DIR; fi
     - docker run --name $CONTAINER_NAME -v ccache:/cache
       -e "BUILD_TYPE=$BUILD_TYPE"
+      -e "BUILD_SIMD=$BUILD_SIMD"
       -e "NUM_CPUS=$NUM_CPUS"
       -e "CCACHE_DIR=$CCACHE_DIR"
       $ENV_IMAGE
@@ -192,6 +195,22 @@ bullseye-full_py3-build-and-test:
   <<: *build-and-test-template
   needs: ["bullseye-full_py3-build-env"]
 
+bullseye-full_py3-avx2-build-and-test:
+  <<: *build-and-test-template
+  needs: ["bullseye-full_py3-build-env"]
+  variables:
+    BUILD_SIMD: avx2
+  tags:
+    - avx2
+
+bullseye-full_py3-avx512-build-and-test:
+  <<: *build-and-test-template
+  needs: ["bullseye-full_py3-build-env"]
+  variables:
+    BUILD_SIMD: avx512
+  tags:
+    - avx512
+
 buster-default-build-and-test:
   <<: *build-and-test-template
   needs: ["buster-default-build-env"]
@@ -221,6 +240,10 @@ bullseye-full_py3-warnings:
   <<: *compiler-warning-template
   needs: ["bullseye-full_py3-build-and-test"]
 
+bullseye-full_py3-avx2-warnings:
+  <<: *compiler-warning-template
+  needs: ["bullseye-full_py3-avx2-build-and-test"]
+
 buster-default-warnings:
   <<: *compiler-warning-template
   needs: ["buster-default-build-and-test"]
@@ -245,7 +268,7 @@ bullseye-clang-format:
 
 
 # DOCUMENTATION
-buster-documentation-build-env:
+bullseye-documentation-build-env:
   <<: *execution-conditions
   image: docker:19.03.6
   stage: build-env-full
@@ -256,12 +279,12 @@ buster-documentation-build-env:
     - docker pull $IMAGE || true
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
-  needs: ["buster-default-build-env"]
+  needs: ["bullseye-default-build-env"]
 
 .build-documentation-template: &build-documentation-template
   <<: *build-and-test-template
   image: $CI_REGISTRY_IMAGE:env-documentation
-  needs: ["buster-documentation-build-env"]
+  needs: ["bullseye-documentation-build-env"]
 
 user-guide-build:
   <<: *build-documentation-template
@@ -313,6 +336,13 @@ tutorials-build:
   <<: *build-env-ubuntu-template-default
   stage: build-env-full
 
+jammy-default-build-env:
+  <<: *build-env-ubuntu-template-default
+
+jammy-full_py3-build-env:
+  <<: *build-env-ubuntu-template-full
+  needs: ["jammy-default-build-env"]
+
 focal-default-build-env:
   <<: *build-env-ubuntu-template-default
 
@@ -326,6 +356,14 @@ bionic-default-build-env:
 bionic-full-build-env:
   <<: *build-env-ubuntu-template-full
   needs: ["bionic-default-build-env"]
+
+jammy-default-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-default-build-env"]
+
+jammy-full_py3-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full_py3-build-env"]
 
 focal-default-build-and-test:
   <<: *build-and-test-template
@@ -345,6 +383,14 @@ bionic-full-build-and-test:
 
 
 # COMPILER WARNINGS
+jammy-default-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-default-build-and-test"]
+
+jammy-full_py3-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full_py3-build-and-test"]
+
 focal-default-warnings:
   <<: *compiler-warning-template
   needs: ["focal-default-build-and-test"]
@@ -509,6 +555,14 @@ win10-mpi-default-build-and-test:
   image: ${CI_REGISTRY_IMAGE}/${image_name}:$CI_COMMIT_SHORT_SHA
   <<: *execution-conditions
   stage: package-test
+  script:
+    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
+    - test_output=`IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml | grep "L 2 error (variable u)" | awk '{print ($7 < 1e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel IncNavierStokesSolver run"; exit 1; fi
+    - cd $CI_PROJECT_DIR/library/Demos/Python/MultiRegions
+    - mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml
+    - test_output=`mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml | grep "L 2 error (variable nek)" | awk '{print ($7 < 1e-4)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel Python run"; exit 1; fi
 
 # Docker Hub deployment template. Only builds for master or tags on the main
 # Nektar repository. The strategy is to login to the container registry and pull
@@ -582,10 +636,6 @@ dockerhub-test-nektar:
   needs: [ "dockerhub-build-nektar" ]
   variables:
     image_name: nektar
-  script:
-    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
-    - cd $CI_PROJECT_DIR/library/Demos/Python/MultiRegions
-    - mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml
 
 dockerhub-test-nektar-dev:
   <<: *dockerhub_test_template
@@ -595,6 +645,12 @@ dockerhub-test-nektar-dev:
   script:
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/local/lib64/nektar++/cmake 3 /usr/bin/cmake
+
+dockerhub-test-workbook:
+  <<: *dockerhub_test_template
+  needs: [ "dockerhub-build-workbook" ]
+  variables:
+    image_name: nektar-workbook
 
 # Deployment
 dockerhub-deploy-nektar:

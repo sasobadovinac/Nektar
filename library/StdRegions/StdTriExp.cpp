@@ -310,7 +310,7 @@ void StdTriExp::v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
     out = (*matsys) * in;
 }
 
-void StdTriExp::v_FwdTrans_BndConstrained(
+void StdTriExp::v_FwdTransBndConstrained(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
@@ -352,7 +352,7 @@ void StdTriExp::v_FwdTrans_BndConstrained(
 
     for (i = 0; i < 3; i++)
     {
-        segexp[i != 0]->FwdTrans_BndConstrained(physEdge[i], coeffEdge[i]);
+        segexp[i != 0]->FwdTransBndConstrained(physEdge[i], coeffEdge[i]);
 
         GetTraceToElementMap(i, mapArray, signArray);
         for (j = 0; j < nmodes[i != 0]; j++)
@@ -949,10 +949,28 @@ const LibUtilities::BasisKey StdTriExp::v_GetTraceBasisKey(const int i,
                         break;
                     }
 
+                    case LibUtilities::ePolyEvenlySpaced:
+                    {
+                        LibUtilities::PointsKey pkey(
+                            m_base[1]
+                                    ->GetBasisKey()
+                                    .GetPointsKey()
+                                    .GetNumPoints() +
+                                1,
+                            LibUtilities::ePolyEvenlySpaced);
+                        return LibUtilities::BasisKey(LibUtilities::eModified_A,
+                                                      m_base[1]->GetNumModes(),
+                                                      pkey);
+                        break;
+                    }
+
                     break;
                     default:
                         NEKERROR(ErrorUtil::efatal,
-                                 "unexpected points distribution");
+                                 "Unexpected points distribution " +
+                                     LibUtilities::kPointsTypeStr
+                                         [m_base[1]->GetPointsType()] +
+                                     " in StdTriExp::v_GetTraceBasisKey");
                         break;
                 }
                 break;

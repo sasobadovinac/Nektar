@@ -121,6 +121,25 @@ void NavierStokesImplicitCFE::v_DoDiffusionCoeff(
         outarrayDiff[i] = Array<OneD, NekDouble>{ncoeffs, 0.0};
     }
 
+    // Set artificial viscosity based on NS viscous tensor
+    if (m_is_shockCaptPhys && m_updateShockCaptPhys)
+    {
+        if (m_varConv->GetFlagCalcDivCurl())
+        {
+            Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
+            GetDivCurlSquared(m_fields, inarray, div, curlSquare, pFwd, pBwd);
+
+            // Set volume and trace artificial viscosity
+            m_varConv->SetAv(m_fields, inarray, div, curlSquare);
+        }
+        else
+        {
+            m_varConv->SetAv(m_fields, inarray);
+        }
+        // set switch to false
+        m_updateShockCaptPhys = false;
+    }
+
     if (m_is_diffIP)
     {
         if (m_bndEvaluateTime < 0.0)
@@ -1319,4 +1338,18 @@ void NavierStokesImplicitCFE::v_CalcMuDmuDT(
         }
     }
 }
+
+bool NavierStokesImplicitCFE::SupportsShockCaptType(
+    const std::string type) const
+{
+    if (type == "Physical" || type == "Off")
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 } // namespace Nektar
