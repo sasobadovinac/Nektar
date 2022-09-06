@@ -497,11 +497,6 @@ void NavierStokesCFE::SpecialBndTreat(
         {
             continue;
         }
-        // Add k*T_i
-        Vmath::Vvtvp(nPts, thermalConductivity, 1, deriv_interp[i][m_spacedim],
-                     1, out_interp[i][m_spacedim + 1], 1,
-                     out_interp[i][m_spacedim + 1], 1);
-    }
 
         size_t nBndEdges =
             m_fields[nengy]->GetBndCondExpansions()[j]->GetExpSize();

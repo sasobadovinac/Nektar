@@ -534,7 +534,6 @@ void UnsteadySystem::v_DoSolve()
         // Step advance
         ++step;
         ++stepCounter;
-    }
 
     // Print out summary statistics
     if (m_session->GetComm()->GetRank() == 0)
@@ -799,97 +798,6 @@ void UnsteadySystem::SVVVarDiffCoeff(
         {
             nmodes = max(nmodes, m_fields[0]->GetExp(i)->GetBasisNumModes(n));
         }
-    }
-    if (m_session->DefinesCmdLineArgument("set-start-time"))
-    {
-        time = boost::lexical_cast<NekDouble>(
-            m_session->GetCmdLineArgument<std::string>("set-start-time")
-                .c_str());
-    }
-    if (m_session->DefinesCmdLineArgument("set-start-chknumber"))
-    {
-        nchk = boost::lexical_cast<int>(
-            m_session->GetCmdLineArgument<std::string>("set-start-chknumber"));
-    }
-    ASSERTL0(time >= 0 && nchk >= 0,
-             "Starting time and checkpoint number should be >= 0");
-}
-
-/**
- * @brief Return the timestep to be used for the next step in the
- * time-marching loop.
- *
- * This function can be overloaded to facilitate solver which utilise a
- * CFL (or other) parameter to determine a maximum timestep under which
- * the problem remains stable.
- */
-NekDouble UnsteadySystem::GetTimeStep(
-    const Array<OneD, const Array<OneD, NekDouble>> &inarray)
-{
-    return v_GetTimeStep(inarray);
-}
-
-/**
- * @brief Return the timestep to be used for the next step in the
- * time-marching loop.
- *
- * @see UnsteadySystem::GetTimeStep
- */
-NekDouble UnsteadySystem::v_GetTimeStep(
-    const Array<OneD, const Array<OneD, NekDouble>> &inarray)
-{
-    boost::ignore_unused(inarray);
-    NEKERROR(ErrorUtil::efatal, "Not defined for this class");
-    return 0.0;
-}
-
-bool UnsteadySystem::v_PreIntegrate(int step)
-{
-    boost::ignore_unused(step);
-    return false;
-}
-
-bool UnsteadySystem::v_PostIntegrate(int step)
-{
-    boost::ignore_unused(step);
-    return false;
-}
-
-void UnsteadySystem::SVVVarDiffCoeff(
-    const Array<OneD, Array<OneD, NekDouble>> vel,
-    StdRegions::VarCoeffMap &varCoeffMap)
-{
-    int phystot = m_fields[0]->GetTotPoints();
-    int nvel    = vel.size();
-
-    Array<OneD, NekDouble> varcoeff(phystot), tmp;
-
-    // calculate magnitude of v
-    Vmath::Vmul(phystot, vel[0], 1, vel[0], 1, varcoeff, 1);
-    for (int n = 1; n < nvel; ++n)
-    {
-        Vmath::Vvtvp(phystot, vel[n], 1, vel[n], 1, varcoeff, 1, varcoeff, 1);
-    }
-    Vmath::Vsqrt(phystot, varcoeff, 1, varcoeff, 1);
-
-    for (int i = 0; i < m_fields[0]->GetNumElmts(); ++i)
-    {
-        int offset = m_fields[0]->GetPhys_Offset(i);
-        int nq     = m_fields[0]->GetExp(i)->GetTotPoints();
-        Array<OneD, NekDouble> unit(nq, 1.0);
-
-        int nmodes = 0;
-
-        for (int n = 0; n < m_fields[0]->GetExp(i)->GetNumBases(); ++n)
-        {
-            nmodes = max(nmodes, m_fields[0]->GetExp(i)->GetBasisNumModes(n));
-        }
-
-        NekDouble h = m_fields[0]->GetExp(i)->Integral(unit);
-        h           = pow(h, (NekDouble)(1.0 / nvel)) / ((NekDouble)nmodes);
-
-        Vmath::Smul(nq, h, varcoeff + offset, 1, tmp = varcoeff + offset, 1);
-    }
 
         NekDouble h = m_fields[0]->GetExp(i)->Integral(unit);
         h           = pow(h, (NekDouble)(1.0 / nvel)) / ((NekDouble)nmodes);

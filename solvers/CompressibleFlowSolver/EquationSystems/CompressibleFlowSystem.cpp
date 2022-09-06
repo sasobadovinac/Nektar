@@ -503,7 +503,6 @@ void CompressibleFlowSystem::GetFluxVector(
             flux[m_spacedim + 1][f][p] = ePlusP * velocity[f]; // store
         }
     }
-}
 
     // @TODO : for each row (3 columns) negative grid velocity component (d * d
     // + 2 (4 rows)) rho, rhou, rhov, rhow, E,

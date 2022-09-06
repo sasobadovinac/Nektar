@@ -1526,11 +1526,6 @@ Array<OneD, bool> EquationSystem::v_GetSystemSingularChecks()
     return Array<OneD, bool>(m_session->GetVariables().size(), false);
 }
 
-Array<OneD, bool> EquationSystem::v_GetSystemSingularChecks()
-{
-    return Array<OneD, bool>(m_session->GetVariables().size(), false);
-}
-
 MultiRegions::ExpListSharedPtr EquationSystem::v_GetPressure()
 {
     ASSERTL0(false, "This function is not valid for the Base class");

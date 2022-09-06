@@ -3140,7 +3140,6 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
                     }
                 }
             }
-            domain[d.first] = domMap;
         }
 
         WriteDomain(geomTag, domain);
