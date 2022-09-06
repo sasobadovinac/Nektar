@@ -26,6 +26,8 @@ elif [[ $BUILD_TYPE == "full" ]] || [[ $BUILD_TYPE == "full_py3" ]]; then
         -DNEKTAR_ERROR_ON_WARNINGS=OFF"
     if [[ $BUILD_SIMD == "avx2" ]]; then
         BUILD_OPTS="$BUILD_OPTS -DNEKTAR_ENABLE_SIMD_AVX2:BOOL=ON"
+    elif [[ $BUILD_SIMD == "avx512" ]]; then
+        BUILD_OPTS="$BUILD_OPTS -DNEKTAR_ENABLE_SIMD_AVX512:BOOL=ON"
     fi
 fi
 

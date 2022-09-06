@@ -118,8 +118,8 @@ BOOST_AUTO_TEST_CASE(SimdLibSingle_width_alignment)
     // std::int32_t aka (usually) int (avx2int8)
     width     = simd<std::int32_t>::width;
     alignment = simd<std::int32_t>::alignment;
-    BOOST_CHECK_EQUAL(width, 8);
-    BOOST_CHECK_EQUAL(alignment, 32);
+    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
+    BOOST_CHECK_EQUAL(alignment, 64);
     // float
     width     = simd<float>::width;
     alignment = simd<float>::alignment;
@@ -344,12 +344,23 @@ BOOST_AUTO_TEST_CASE(SimdLibFloat_gather32)
         aindex[6] = 20;
         aindex[7] = 23;
     }
+    if (vec_t::width > 8)
+    {
+        aindex[8]  = 24;
+        aindex[9]  = 28;
+        aindex[10] = 33;
+        aindex[11] = 40;
+        aindex[12] = 41;
+        aindex[13] = 45;
+        aindex[14] = 60;
+        aindex[15] = 61;
+    }
 
     // load index
     aindexvec.load(aindex.data(), is_not_aligned);
 
     // create and fill scalar array
-    constexpr size_t scalarArraySize = 32;
+    constexpr size_t scalarArraySize = 64;
     std::array<float, scalarArraySize> ascalararr;
     for (size_t i = 0; i < scalarArraySize; ++i)
     {
@@ -390,12 +401,23 @@ BOOST_AUTO_TEST_CASE(SimdLibFloat_scatter32)
         aindex[6] = 20;
         aindex[7] = 30;
     }
+    if (vec_t::width > 8)
+    {
+        aindex[8]  = 31;
+        aindex[9]  = 32;
+        aindex[10] = 35;
+        aindex[11] = 40;
+        aindex[12] = 41;
+        aindex[13] = 45;
+        aindex[14] = 60;
+        aindex[15] = 61;
+    }
 
     // load index
     aindexvec.load(aindex.data(), is_not_aligned);
 
     // create scalar array
-    constexpr size_t scalarArraySize = 32;
+    constexpr size_t scalarArraySize = 64;
     std::array<float, scalarArraySize> ascalararr;
 
     // fill vector

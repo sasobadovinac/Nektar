@@ -33,6 +33,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef NEKTAR_LIBRARY_LIBUTILITIES_PYTHON_NEKPYCONFIG_HPP
+#define NEKTAR_LIBRARY_LIBUTILITIES_PYTHON_NEKPYCONFIG_HPP
+
 #include <boost/version.hpp>
 #include <memory>
 
@@ -107,4 +110,6 @@ namespace np = boost::numpy;
         PyDict_SetItemString(pto->tp_dict, "__doc__",                          \
                              PyUnicode_FromString(DOCSTRING));                 \
     }
+#endif
+
 #endif

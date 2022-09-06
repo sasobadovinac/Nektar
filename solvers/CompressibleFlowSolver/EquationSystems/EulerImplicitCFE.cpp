@@ -64,4 +64,16 @@ void EulerImplicitCFE::v_InitObject(bool DeclareFields)
 EulerImplicitCFE::~EulerImplicitCFE()
 {
 }
+
+bool EulerImplicitCFE::SupportsShockCaptType(const std::string type) const
+{
+    if (type == "Off")
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 } // namespace Nektar

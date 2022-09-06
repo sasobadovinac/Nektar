@@ -323,6 +323,9 @@ void CFSImplicit::DoImplicitSolve(
     Array<OneD, NekDouble> out(ntotal);
     Array<OneD, NekDouble> tmpArray;
 
+    // Switch flag to make sure the physical shock capturing AV is updated
+    m_updateShockCaptPhys = true;
+
     for (int i = 0; i < nvariables; ++i)
     {
         int noffset = i * ncoeffs;

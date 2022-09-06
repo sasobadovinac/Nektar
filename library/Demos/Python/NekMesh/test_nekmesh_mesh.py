@@ -1,13 +1,43 @@
+###############################################################################
+##
+## File: test_nekmesh_mesh.py
+##
+## For more information, please see: http://www.nektar.info
+##
+## The MIT License
+##
+## Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+## Department of Aeronautics, Imperial College London (UK), and Scientific
+## Computing and Imaging Institute, University of Utah (USA).
+##
+## Permission is hereby granted, free of charge, to any person obtaining a
+## copy of this software and associated documentation files (the "Software"),
+## to deal in the Software without restriction, including without limitation
+## the rights to use, copy, modify, merge, publish, distribute, sublicense,
+## and/or sell copies of the Software, and to permit persons to whom the
+## Software is furnished to do so, subject to the following conditions:
+##
+## The above copyright notice and this permission notice shall be included
+## in all copies or substantial portions of the Software.
+##
+## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+## OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+## FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+## THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+## LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+## DEALINGS IN THE SOFTWARE.
+##
+## Description: Unit tests for the Mesh class.
+##
+###############################################################################
+
 from NekPy.NekMesh import Mesh, Node, ElmtConfig, Element, NodeSet
 from NekPy.LibUtilities import ShapeType
 import unittest
 import numpy as np
 
 class TestMesh(unittest.TestCase):
-
-    def getCN(self):
-        return self.__class__.__name__
-
     def _initialize_static_values(self):
         self.coord_1x   = 0.0
         self.coord_1y   = 1.0
@@ -64,21 +94,12 @@ class TestMesh(unittest.TestCase):
         self._create_triangular_elements()
 
     def testMeshConstructor(self):
-        msg = self.getCN() + "::testMeshConstructor: "
-        try:
-            self.assertEqual(self.mesh.expDim   , self.expDim)
-            self.assertEqual(self.mesh.spaceDim , self.spaceDim)
-            self.assertEqual(self.mesh.nummode  , self.nummode)
-            self.assertEqual(self.mesh.verbose  , self.verbose)
-            msg += "PASS"
-            print(msg)
-        except:
-            msg += "FAIL"
-            print(msg)
-            raise
+        self.assertEqual(self.mesh.expDim   , self.expDim)
+        self.assertEqual(self.mesh.spaceDim , self.spaceDim)
+        self.assertEqual(self.mesh.nummode  , self.nummode)
+        self.assertEqual(self.mesh.verbose  , self.verbose)
 
     def testMeshFieldAccess(self):
-        msg = self.getCN() + "::testMeshFieldAccess: "
         self.nodeset = NodeSet()
         self.nodeset_def_len = 10
         for i in range(self.nodeset_def_len):
@@ -88,31 +109,27 @@ class TestMesh(unittest.TestCase):
             z  = float(self.nodeset_def_len**2 + i)
             n  = Node(id, x, y, z)
             self.nodeset.add(n)
+
+        self.expDim   = 2
+        self.spaceDim = 2
+        self.nummode  = 7
+        self.verbose  = False
+        self.mesh.node     = self.nodeset
+        self.mesh.expDim   = self.expDim
+        self.mesh.spaceDim = self.spaceDim
+        self.mesh.nummode  = self.nummode
+        self.mesh.verbose  = self.verbose
+        for node in self.nodeset:
+            self.assertTrue(node in self.mesh.node)
+        self.assertEqual(self.mesh.expDim   , self.expDim)
+        self.assertEqual(self.mesh.spaceDim , self.spaceDim)
+        self.assertEqual(self.mesh.nummode  , self.nummode)
+        self.assertEqual(self.mesh.verbose  , self.verbose)
+
         try:
-            self.expDim   = 2
-            self.spaceDim = 2
-            self.nummode  = 7
-            self.verbose  = False
-            self.mesh.node     = self.nodeset
-            self.mesh.expDim   = self.expDim
-            self.mesh.spaceDim = self.spaceDim
-            self.mesh.nummode  = self.nummode
-            self.mesh.verbose  = self.verbose
-            for node in self.nodeset:
-                self.assertTrue(node in self.mesh.node)
-            self.assertEqual(self.mesh.expDim   , self.expDim)
-            self.assertEqual(self.mesh.spaceDim , self.spaceDim)
-            self.assertEqual(self.mesh.nummode  , self.nummode)
-            self.assertEqual(self.mesh.verbose  , self.verbose)
-            try:
-                self.mesh.element = None
-            except AttributeError:
-                msg += "PASS"
-                print(msg)
-        except:
-            msg += "FAIL"
-            print(msg)
-            raise
+            self.mesh.element = None
+        except AttributeError:
+            pass
 
 if __name__ == '__main__':
     unittest.main()
