@@ -1605,6 +1605,22 @@ void OutputVtk::OutputFromPts(po::variables_map &vm)
 
 void OutputVtk::OutputFromExp(po::variables_map &vm)
 {
+    // Move geometry based on zones data in .xml and time in .fld metadatamap
+    // Perform movement of zones based on time in field files metadata map
+    if (m_f->m_graph->GetMovement()->GetMoveFlag())
+    {
+        if (!m_f->m_fieldMetaDataMap["Time"].empty())
+        {
+            m_f->m_graph->GetMovement()->PerformMovement(
+                boost::lexical_cast<NekDouble>(
+                    m_f->m_fieldMetaDataMap["Time"]));
+            for (auto &i : m_f->m_exp)
+            {
+                i->Reset();
+            }
+        }
+    }
+
     if (m_config["legacy"].m_beenSet)
     {
         ASSERTL0(!m_config["multiblock"].m_beenSet,
