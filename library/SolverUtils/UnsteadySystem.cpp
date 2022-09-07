@@ -405,6 +405,7 @@ void UnsteadySystem::v_DoSolve()
                 m_fields[m_intVariables[i]]->SetPhysState(false);
             }
         }
+
         // Perform any solver-specific post-integration steps
         if (v_PostIntegrate(step))
         {
@@ -436,7 +437,6 @@ void UnsteadySystem::v_DoSolve()
                     abortFlags[0] = 1;
                 }
             }
-        }
 
             // rank zero looks for abort file and deltes it
             // if it exists. The communicates the abort
@@ -534,6 +534,7 @@ void UnsteadySystem::v_DoSolve()
         // Step advance
         ++step;
         ++stepCounter;
+    }
 
     // Print out summary statistics
     if (m_session->GetComm()->GetRank() == 0)

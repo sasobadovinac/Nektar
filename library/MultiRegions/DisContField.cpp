@@ -2566,11 +2566,6 @@ void DisContField::FindPeriodicTraces(
                         {
                             perIt.second.push_back(perIt2->second[j]);
                         }
-
-                        if (k == perIt.second.size())
-                        {
-                            perIt.second.push_back(perIt2->second[j]);
-                        }
                     }
                 }
             }
