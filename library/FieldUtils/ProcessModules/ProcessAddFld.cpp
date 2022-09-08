@@ -193,9 +193,10 @@ void ProcessAddFld::Process(po::variables_map &vm)
                     fromFieldDef[i], fromFieldData[i], m_f->m_variables[j],
                     m_f->m_exp[j]->UpdateCoeffs());
 #else
+                Array<OneD, NekDouble> tmp; 
                 m_f->m_exp[j]->ExtractDataToCoeffs(
                     fromFieldDef[i], fromFieldData[i], m_f->m_variables[j],
-                    m_f->m_fieldCoeffs->UpdateArray1D(j));
+                    tmp = m_f->m_fieldCoeffs->UpdateArray1D(j));
 #endif
             }
 
@@ -205,11 +206,12 @@ void ProcessAddFld::Process(po::variables_map &vm)
             m_f->m_exp[j]->BwdTrans(m_f->m_exp[j]->GetCoeffs(),
                                     m_f->m_exp[j]->UpdatePhys());
 #else
-            Vmath::Vadd(ncoeffs, m_f->m_fieldCoeffs->GetArray1D(j), 1
-                        , SaveFld, 1,
-                        m_f->m_fieldCoeffs->UpdateArray1D(j), 1);
+            Array<OneD, NekDouble> tmp; 
+            Vmath::Vadd(ncoeffs, m_f->m_fieldCoeffs->GetArray1D(j), 1,
+                        SaveFld, 1,
+                        tmp =  m_f->m_fieldCoeffs->UpdateArray1D(j), 1);
             m_f->m_exp[j]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(j),
-                                    m_f->m_fieldPhys->UpdateArray1D(j));
+                                    tmp = m_f->m_fieldPhys->UpdateArray1D(j));
 #endif
         }
     }

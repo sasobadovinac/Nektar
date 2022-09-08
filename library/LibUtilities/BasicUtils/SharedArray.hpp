@@ -146,6 +146,38 @@ public:
                                                         data);
     }
 
+    /// \brief Creates a 1D wrapper array of the provided pointer to
+    /// data.
+    /// \param dim1Size the array's size.
+    ///  \param data The data to reference.
+    ///  \param WrapData flag to wrap data and set counter to 2 so
+    ///  that this array will not be able to release memory of
+    ///  data. If set to false then this array will release data when
+    ///  the Array goes out of scope.
+    ///
+    ///  Note there is a risk of generating arrays which do not
+    ///  release the data and so should be used with great care.  It
+    ///  is also possible to declare an array with insuffiicent
+    ///  declared memory!
+    Array(size_type dim1Size, DataType *data, bool WrapArray)
+        : m_size(dim1Size), m_capacity(dim1Size), m_data(data),
+          m_count(nullptr), m_offset(0)
+    {
+        m_count  = new size_type();
+
+        if(WrapArray)
+        {
+            // set count to 2 so that this wrapper cannot destroy
+            // memory and leaving underlying contrucotr of the data to
+            // release memory
+            *m_count = 2; 
+        }
+        else // allow array to release memory *data. 
+        {
+            *m_count = 1;
+        }
+    }
+
     /// \brief Creates a 1D array that references rhs.
     /// \param dim1Size The size of the array.  This is useful
     ///                 when you want this array to reference
@@ -188,7 +220,7 @@ public:
         (*m_pythonInfo)->m_pyObject = memory_pointer;
     }
 #endif
-
+    
     /// \brief Creates a reference to rhs.
     Array(const Array<OneD, const DataType> &rhs)
         :
@@ -606,6 +638,11 @@ public:
     {
     }
 
+    Array(size_type dim1Size, DataType *data, bool WrapArray)
+        : BaseType(dim1Size, data, WrapArray)
+    {
+    }
+
     Array(size_type dim1Size, const Array<OneD, DataType> &rhs)
         : BaseType(dim1Size, rhs)
     {
@@ -625,6 +662,7 @@ public:
     {
     }
 
+
 #ifdef WITH_PYTHON
     Array(size_type dim1Size, DataType *data, void *memory_pointer,
           void (*python_decrement)(void *))
@@ -637,6 +675,7 @@ public:
         BaseType::ToPythonArray(memory_pointer, python_decrement);
     }
 #endif
+
 
     Array<OneD, DataType> &operator=(const Array<OneD, DataType> &rhs)
     {

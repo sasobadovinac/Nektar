@@ -225,10 +225,11 @@ void ProcessDisplacement::Process(po::variables_map &vm)
         bndCondExpV->FwdTransBndConstrained(bndCondExpV->GetPhys(),
                                             bndCondExpV->UpdateCoeffs());
 #else
+        Array<OneD, NekDouble> tmp1; 
         bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysU->GetArray1D(),
-                                            bndCondFieldCoeffU->UpdateArray1D());
+                                   tmp1 = bndCondFieldCoeffU->UpdateArray1D());
         bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysV->GetArray1D(),
-                                            bndCondFieldCoeffV->UpdateArray1D());
+                                   tmp1 = bndCondFieldCoeffV->UpdateArray1D());
 #endif
     }
     else if (bndGraph->GetMeshDimension() == 2)
@@ -360,13 +361,14 @@ void ProcessDisplacement::Process(po::variables_map &vm)
         bndCondExpW->FwdTransBndConstrained(bndCondExpW->GetPhys(),
                                             bndCondExpW->UpdateCoeffs());
 #else
-        // bndconstrained?
+        Array<OneD, NekDouble> tmp1; 
+       // bndconstrained?
         bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysU->GetArray1D(),
-                                            bndCondFieldCoeffU->UpdateArray1D());
+                                        tmp1 = bndCondFieldCoeffU->UpdateArray1D());
         bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysV->GetArray1D(),
-                                            bndCondFieldCoeffV->UpdateArray1D());
+                                        tmp1 = bndCondFieldCoeffV->UpdateArray1D());
         bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysW->GetArray1D(),
-                                            bndCondFieldCoeffW->UpdateArray1D());
+                                        tmp1 = bndCondFieldCoeffW->UpdateArray1D());
 #endif
     }
 }

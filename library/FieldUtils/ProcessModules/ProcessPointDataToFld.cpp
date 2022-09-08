@@ -168,7 +168,7 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
                                     m_f->m_exp[i]->UpdatePhys());
 #else
             m_f->m_exp[i]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(i),
-                                    m_f->m_fieldPhys->UpdateArray1D(i));
+                                    tmp = m_f->m_fieldPhys->UpdateArray1D(i));
 #endif
         }
     }
@@ -226,9 +226,10 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
             m_f->m_exp[j]->FwdTransLocalElmt(phys,
                                              m_f->m_exp[j]->UpdateCoeffs());
 #else
+            Array<OneD, NekDouble> tmp; 
             // forward transform fields
             m_f->m_exp[j]->FwdTransLocalElmt(phys,
-                                        m_f->m_fieldCoeffs->UpdateArray1D(j));
+                                 tmp = m_f->m_fieldCoeffs->UpdateArray1D(j));
 #endif
         }
     }

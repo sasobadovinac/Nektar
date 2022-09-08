@@ -193,8 +193,9 @@ void ProcessC0Projection::Process(po::variables_map &vm)
             Vmath::Vcopy(ncoeffs, Coeffs,1,
                          m_f->m_exp[processFields[i]]->UpdateCoeffs(), 1);
 #else
+            Array<OneD, NekDouble> tmp; 
             Vmath::Vcopy(ncoeffs, Coeffs,1,
-                         m_f->m_fieldPhys->UpdateArray1D(processFields[i]), 1);
+                   tmp = m_f->m_fieldPhys->UpdateArray1D(processFields[i]), 1);
 #endif
         }
         else
@@ -229,15 +230,17 @@ void ProcessC0Projection::Process(po::variables_map &vm)
                     forcing, m_f->m_exp[processFields[i]]->UpdateCoeffs(),
                     factors);
 #else
+                Array<OneD, NekDouble> tmp; 
                 Vmath::Smul(npoints, -lambda,
-                            m_f->m_fieldPhys->GetArray1D(processFields[i]), 1,
+                            tmp = m_f->m_fieldPhys->GetArray1D(processFields[i]), 1,
                             forcing,1);
 
                 Vmath::Zero(ncoeffs,
-                         m_f->m_fieldCoeffs->UpdateArray1D(processFields[i]), 1);
+                            tmp = m_f->m_fieldCoeffs->UpdateArray1D(processFields[i]), 1);
 
                 C0ProjectExp[processFields[i]]->HelmSolve
-                    (forcing, m_f->m_fieldCoeffs->UpdateArray1D(processFields[i]),
+                    (forcing,
+                     tmp = m_f->m_fieldCoeffs->UpdateArray1D(processFields[i]),
                     factors);
 #endif
             }
@@ -250,22 +253,24 @@ void ProcessC0Projection::Process(po::variables_map &vm)
                     m_f->m_exp[processFields[i]]->GetPhys(),
                     m_f->m_exp[processFields[i]]->UpdateCoeffs());
 #else
+                Array<OneD, NekDouble> tmp; 
                 Vmath::Zero(ncoeffs,
-                            m_f->m_fieldCoeffs->UpdateArray1D(processFields[i]), 1);
+                    tmp = m_f->m_fieldCoeffs->UpdateArray1D(processFields[i]), 1);
                 C0ProjectExp[processFields[i]]->FwdTrans
                     (m_f->m_fieldPhys->GetArray1D(processFields[i]),
-                     m_f->m_fieldCoeffs->UpdateArray1D(processFields[i]));
+                     tmp = m_f->m_fieldCoeffs->UpdateArray1D(processFields[i]));
 #endif
             }
         }
 #if EXPLISTDATA
         C0ProjectExp[processFields[i]]->BwdTrans(
             m_f->m_exp[processFields[i]]->GetCoeffs(),
-            m_f->m_exp[processFields[i]]->UpdatePhys());
+            tmp = m_f->m_exp[processFields[i]]->UpdatePhys());
 #else
+        Array<OneD, NekDouble> tmp; 
         C0ProjectExp[processFields[i]]->BwdTrans
             (m_f->m_fieldCoeffs->GetArray1D(processFields[i]),
-             m_f->m_fieldPhys->UpdateArray1D(processFields[i]));
+             tmp = m_f->m_fieldPhys->UpdateArray1D(processFields[i]));
 #endif
     }
 }

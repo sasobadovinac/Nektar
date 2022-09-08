@@ -115,10 +115,12 @@ void ProcessStreamFunction::Process(po::variables_map &vm)
     m_f->m_exp[1]->BwdTrans(m_f->m_exp[nfields]->GetCoeffs(),
                             m_f->m_exp[nfields]->UpdatePhys());
 #else
-    m_f->m_exp[1]->HelmSolve(vortNeg, m_f->m_fieldCoeffs->UpdateArray1D(nfields),
+    Array<OneD, NekDouble> tmp; 
+    m_f->m_exp[1]->HelmSolve(vortNeg,
+                             tmp = m_f->m_fieldCoeffs->UpdateArray1D(nfields),
                              factor);
     m_f->m_exp[1]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(nfields),
-                            m_f->m_fieldPhys->UpdateArray1D(nfields));
+                            tmp = m_f->m_fieldPhys->UpdateArray1D(nfields));
 #endif
 }
 

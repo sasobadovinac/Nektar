@@ -103,8 +103,8 @@ void ProcessQualityMetric::Process(po::variables_map &vm)
     Array<OneD, NekDouble> &phys   = exp->UpdatePhys();
     Array<OneD, NekDouble> &coeffs = exp->UpdateCoeffs();
 #else
-    Array<OneD, NekDouble> &phys   = m_f->m_fieldPhys->UpdateArray1D(nfields);
-    Array<OneD, NekDouble> &coeffs = m_f->m_fieldCoeffs->UpdateArray1D(nfields);
+    Array<OneD, NekDouble> phys   = m_f->m_fieldPhys->UpdateArray1D(nfields);
+    Array<OneD, NekDouble> coeffs = m_f->m_fieldCoeffs->UpdateArray1D(nfields);
 #endif
 
 

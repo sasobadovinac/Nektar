@@ -162,6 +162,7 @@ void ProcessWSS::Process(po::variables_map &vm)
                 m_f->m_exp[i]->GetBndElmtExpansion(bnd, BndElmtExp[i]);
             }
 #else
+            Array<OneD, NekDouble> tmp; 
             int cnt,n; 
             for (cnt = n = 0; n < bnd; ++n)
             {
@@ -324,7 +325,7 @@ void ProcessWSS::Process(po::variables_map &vm)
                                              BndExp[i]->UpdateCoeffs());
 #else
                 BndExp[i]->FwdTransLocalElmt(fshear[i],
-                                             BndFieldCoeffs[i]->UpdateArray1D());
+                                      tmp = BndFieldCoeffs[i]->UpdateArray1D());
 #endif
             }
 
@@ -341,7 +342,8 @@ void ProcessWSS::Process(po::variables_map &vm)
                 fshear[nshear - 1], BndExp[nshear - 1]->UpdateCoeffs());
 #else
             BndExp[nshear - 1]->FwdTransLocalElmt(
-                fshear[nshear - 1], BndFieldCoeffs[nshear - 1]->UpdateArray1D());
+                fshear[nshear - 1],
+                tmp = BndFieldCoeffs[nshear - 1]->UpdateArray1D());
 #endif
         }
     }

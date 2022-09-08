@@ -80,8 +80,17 @@ ContField3DHomogeneous2D::ContField3DHomogeneous2D(
     ContFieldSharedPtr line_zero;
     SpatialDomains::BoundaryConditions bcs(pSession, graph1D);
 
-    m_lines[0] = line_zero = MemoryManager<ContField>::AllocateSharedPtr(
-        pSession, graph1D, variable, ImpType);
+#if EXPLISTDATA
+    m_lines[0] = line_zero =
+        MemoryManager<ContField>::AllocateSharedPtr(pSession, graph1D,
+                                                    variable, false, false,
+                                                    ImpType);
+#else
+    m_lines[0] = line_zero =
+        MemoryManager<ContField>::AllocateSharedPtr(pSession, graph1D,
+                                                    variable, true, false,
+                                                    ImpType);
+#endif
 
     m_exp = MemoryManager<LocalRegions::ExpansionVector>::AllocateSharedPtr();
     nel   = m_lines[0]->GetExpSize();
@@ -96,8 +105,13 @@ ContField3DHomogeneous2D::ContField3DHomogeneous2D(
 
     for (n = 1; n < nylines * nzlines; ++n)
     {
-        m_lines[n] = MemoryManager<ContField>::AllocateSharedPtr(
-            pSession, graph1D, variable, ImpType);
+#if EXPLISTDATA
+        m_lines[n] = MemoryManager<ContField>::AllocateSharedPtr
+            (pSession, graph1D, variable, false, false ImpType);
+#else
+        m_lines[n] = MemoryManager<ContField>::AllocateSharedPtr
+            (pSession, graph1D, variable, true, false, ImpType);
+#endif
 
         for (i = 0; i < nel; ++i)
         {

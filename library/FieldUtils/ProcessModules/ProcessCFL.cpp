@@ -107,6 +107,7 @@ void ProcessCFL::Process(po::variables_map &vm)
     }
 #else
     std::vector<MultiRegions::ExpListSharedPtr> varExp;
+    Array<OneD, NekDouble> tmp; 
     // add in new fields 
     for (int s = 0; s < nstrips; ++s)
     {
@@ -129,10 +130,10 @@ void ProcessCFL::Process(po::variables_map &vm)
             int fid1 = s*(nfields+1)+n;
 
             Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
-                         m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
+                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
 
             Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
-                         m_f->m_fieldPhys->UpdateArray1D(fid1-1),1);
+                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid1-1),1);
         }
     }
 #endif
@@ -176,12 +177,13 @@ void ProcessCFL::Process(po::variables_map &vm)
         m_f->m_exp[0]->FwdTransLocalElmt(outfield,
                        m_f->m_exp[s*(nfields+1) + nfields]->UpdateCoeffs());
 #else
-        Vmath::Vcopy(npoints, outfield, 1, m_f->m_fieldPhys->UpdateArray1D
+        Array<OneD, NekDouble> tmp; 
+        Vmath::Vcopy(npoints, outfield, 1, tmp = m_f->m_fieldPhys->UpdateArray1D
                      (s*(nfields+1) + nfields), 1); 
         
         m_f->m_exp[0]->FwdTransLocalElmt(outfield,
-                          m_f->m_fieldCoeffs->UpdateArray1D(s*(nfields+1)
-                                                            + nfields));
+                      tmp = m_f->m_fieldCoeffs->UpdateArray1D(s*(nfields+1)
+                                                              + nfields));
 #endif
     }
 }

@@ -242,6 +242,7 @@ void ProcessPhiFromFile::GetPhifromSession()
     }
 #else
     std::vector<MultiRegions::ExpListSharedPtr> varExp;
+    Array<OneD, NekDouble> tmp; 
     
     for (int s = 0; s < nStrips; ++s) // homogeneous strip varient
     {
@@ -264,9 +265,9 @@ void ProcessPhiFromFile::GetPhifromSession()
             int fid  = s*(nVars)+n;
             int fid1 = s*(nVars+1)+n;
             Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
-                         m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
+                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
             Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
-                         m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
+                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
         }
 
     }
@@ -292,9 +293,9 @@ void ProcessPhiFromFile::GetPhifromSession()
                                   m_f->m_exp[fid]->UpdateCoeffs());
 #else
         phiFunction->Evaluate(coords[0], coords[1], coords[2],
-                              m_f->m_fieldPhys->UpdateArray1D(fid));
+                              tmp = m_f->m_fieldPhys->UpdateArray1D(fid));
         m_f->m_exp[fid]->FwdTrans(m_f->m_fieldPhys->GetArray1D(fid),
-                               m_f->m_fieldCoeffs->UpdateArray1D(fid));
+                              tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid));
 #endif
     }
 }
@@ -369,6 +370,7 @@ void ProcessPhiFromFile::GetPhifromSTL(
     }
 #else
     std::vector<MultiRegions::ExpListSharedPtr> varExp;
+    Array<OneD, NekDouble> tmp; 
     
     for (int s = 0; s < nStrips; ++s) // homogeneous strip varient
     {
@@ -391,9 +393,9 @@ void ProcessPhiFromFile::GetPhifromSTL(
             int fid  = s*(nVars)+n;
             int fid1 = s*(nVars+1)+n;
             Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
-                         m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
+                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
             Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
-                         m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
+                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
         }
 
     }
@@ -432,7 +434,8 @@ void ProcessPhiFromFile::GetPhifromSTL(
         m_f->m_exp[fid]->FwdTrans(phys, m_f->m_exp[fid]->UpdateCoeffs());
 #else
         // Update vector of expansions
-        m_f->m_exp[fid]->FwdTrans(phys, m_f->m_fieldCoeffs->UpdateArray1D(fid));
+        m_f->m_exp[fid]->FwdTrans(phys,
+                                  tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid));
 #endif
     }
 }

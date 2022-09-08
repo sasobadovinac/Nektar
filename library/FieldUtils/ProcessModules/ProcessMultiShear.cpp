@@ -160,6 +160,7 @@ void ProcessMultiShear::Process(po::variables_map &vm)
 #else
         fromField[i]->m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(fromField[i]->m_exp);
         fromField[i]->m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(fromField[i]->m_exp);
+        Array<OneD, NekDouble> tmp; 
 #endif
 
         for (j = 1; j < nfields; ++j)
@@ -173,24 +174,24 @@ void ProcessMultiShear::Process(po::variables_map &vm)
             {
 #if EXPLISTDATA
                 fromField[i]->m_exp[j]->ExtractDataToCoeffs(
-                    fromField[i]->m_fielddef[k], fromField[i]->m_data[k],
-                    fromField[i]->m_fielddef[k]->m_fields[j],
-                    fromField[i]->m_exp[j]->UpdateCoeffs());
+                                                            fromField[i]->m_fielddef[k], fromField[i]->m_data[k],
+                                                            fromField[i]->m_fielddef[k]->m_fields[j],
+                                                            fromField[i]->m_exp[j]->UpdateCoeffs());
 #else
                 fromField[i]->m_exp[j]->ExtractDataToCoeffs(
-                    fromField[i]->m_fielddef[k], fromField[i]->m_data[k],
-                    fromField[i]->m_fielddef[k]->m_fields[j],
-                    fromField[i]->m_fieldCoeffs->UpdateArray1D(j));
+                                                            fromField[i]->m_fielddef[k], fromField[i]->m_data[k],
+                                                            fromField[i]->m_fielddef[k]->m_fields[j],
+                                                            tmp = fromField[i]->m_fieldCoeffs->UpdateArray1D(j));
 #endif
             }
 #if EXPLISTDATA
             fromField[i]->m_exp[j]->BwdTrans(
-                fromField[i]->m_exp[j]->GetCoeffs(),
-                fromField[i]->m_exp[j]->UpdatePhys());
+                                             fromField[i]->m_exp[j]->GetCoeffs(),
+                                             fromField[i]->m_exp[j]->UpdatePhys());
 #else
             fromField[i]->m_exp[j]->BwdTrans(
-                fromField[i]->m_fieldCoeffs->GetArray1D(j),
-                fromField[i]->m_fieldPhys->UpdateArray1D(j));
+                                             fromField[i]->m_fieldCoeffs->GetArray1D(j),
+                                             tmp = fromField[i]->m_fieldPhys->UpdateArray1D(j));
 #endif
         }
     }
@@ -474,9 +475,11 @@ void ProcessMultiShear::Process(po::variables_map &vm)
                                 m_f->m_exp[i]->UpdatePhys());
 
 #else
-        m_f->m_exp[i]->FwdTrans(outfield[i], m_f->m_fieldCoeffs->UpdateArray1D(i));
+        Array<OneD, NekDouble> tmp; 
+        m_f->m_exp[i]->FwdTrans(outfield[i],tmp =
+                                m_f->m_fieldCoeffs->UpdateArray1D(i));
         m_f->m_exp[i]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(i), 
-                                m_f->m_fieldPhys->UpdateArray1D(i));
+                                tmp = m_f->m_fieldPhys->UpdateArray1D(i));
 #endif
     }
 }

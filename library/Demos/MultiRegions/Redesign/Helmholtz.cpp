@@ -85,10 +85,11 @@ int main(int argc, char *argv[])
         // Define forcing function for first variable defined in file
         NekField<NekDouble, ePhys> Fce(Exp, 0.0);
         LibUtilities::EquationSharedPtr ffunc;
+        Array<OneD, NekDouble> tmp;
         for(int v = 0; v < nvars; ++v)
         {
             ffunc = vSession->GetFunction("Forcing",  vSession->GetVariable(v));
-            ffunc->Evaluate(xc, Fce.UpdateArray1D(v));
+            ffunc->Evaluate(xc, tmp = Fce.UpdateArray1D(v));
         }
         //----------------------------------------------
 
@@ -122,7 +123,7 @@ int main(int argc, char *argv[])
             {
                 FieldDef[i]->m_fields.push_back(vSession->GetVariable(v));
                 Exp[v]->AppendFieldData(FieldDef[i], FieldData[i],
-                                        Coeffs.UpdateArray1D(v));
+                                        tmp = Coeffs.UpdateArray1D(v));
             }
         }
         fld->Write(out, FieldDef, FieldData);
@@ -140,7 +141,7 @@ int main(int argc, char *argv[])
             {
                 //----------------------------------------------
                 // evaluate exact solution
-                ex_sol->Evaluate(xc, Fce.UpdateArray1D(v));
+                ex_sol->Evaluate(xc, tmp = Fce.UpdateArray1D(v));
                 //----------------------------------------------
 
                 //--------------------------------------------

@@ -134,7 +134,8 @@ void ProcessHomogeneousStretch::Process(po::variables_map &vm)
             m_f->m_exp[n]->BwdTrans(m_f->m_exp[n]->GetCoeffs(),
                                     m_f->m_exp[n]->UpdatePhys());
 #else
-            m_f->m_exp[n]->BwdTrans(coeffs, m_f->m_fieldPhys->UpdateArray1D(n));
+            m_f->m_exp[n]->BwdTrans(coeffs,
+                                   tmp = m_f->m_fieldPhys->UpdateArray1D(n));
 #endif
             m_f->m_exp[n]->SetHomoLen(factor * m_f->m_exp[n]->GetHomoLen());
         }

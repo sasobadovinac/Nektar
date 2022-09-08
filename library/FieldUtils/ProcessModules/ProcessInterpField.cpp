@@ -209,6 +209,7 @@ void ProcessInterpField::Process(po::variables_map &vm)
     m_f->m_fieldPhys        = std::make_shared<NekField<NekDouble,ePhys >>(m_f->m_exp);
     fromField->m_fieldCoeffs= std::make_shared<NekField<NekDouble,eCoeff>>(fromField->m_exp);
     fromField->m_fieldPhys  = std::make_shared<NekField<NekDouble,ePhys >>(fromField->m_exp);
+    Array<OneD, NekDouble> tmp; 
 #endif
     
     // load field into expansion in fromfield.
@@ -234,7 +235,7 @@ void ProcessInterpField::Process(po::variables_map &vm)
 #if EXPLISTDATA
                 fromField->m_exp[j]->UpdateCoeffs());
 #else
-                fromField->m_fieldCoeffs->UpdateArray1D(j));
+            tmp = fromField->m_fieldCoeffs->UpdateArray1D(j));
 #endif
         }
         if (fromNumHomoDir == 1)
@@ -257,7 +258,7 @@ void ProcessInterpField::Process(po::variables_map &vm)
                             tmp = fromField->m_fieldCoeffs->UpdateArray1D(j)
                             + 3*Ncoeff, 1);
                 Vmath::Zero(Ncoeff,tmp = fromField->m_fieldCoeffs->
-                            UpdateArray1D(j) + 2*Ncoeff, 1);
+                             UpdateArray1D(j) + 2*Ncoeff, 1);
 #endif
                 
             }
@@ -286,7 +287,8 @@ void ProcessInterpField::Process(po::variables_map &vm)
             m_f->m_exp[i]->UpdatePhys()[j] = def_value;
         }
 #else
-        Vmath::Fill(nq1,def_value,m_f->m_fieldPhys->UpdateArray1D(i),1);
+        Vmath::Fill(nq1,def_value,
+                    tmp = m_f->m_fieldPhys->UpdateArray1D(i),1);
 #endif
     }
 
@@ -338,7 +340,7 @@ void ProcessInterpField::Process(po::variables_map &vm)
             }
         }
         m_f->m_exp[i]->FwdTransLocalElmt(phys,
-                                    m_f->m_fieldCoeffs->UpdateArray1D(i));
+                      tmp = m_f->m_fieldCoeffs->UpdateArray1D(i));
 #endif
     }
     // save field names

@@ -206,6 +206,7 @@ void OutputFileBase::Process(po::variables_map &vm)
                     m_f->m_fieldPhys  = std::make_shared<NekField<NekDouble,ePhys >>(m_f->m_exp);
                     m_f->m_fieldCoeffs= std::make_shared<NekField<NekDouble,eCoeff>>(m_f->m_exp);
                     NekFieldCoeffSharedPtr BndFieldCoeffs; ;
+                    Array<OneD, NekDouble> tmp; 
 #endif
                     
                     for (int j = 0; j < exp.size(); ++j)
@@ -220,13 +221,13 @@ void OutputFileBase::Process(po::variables_map &vm)
                             (exp[j])->UpdateBndCondFieldCoeff()[Border]; 
                         
                         // copy boundary expansion into m_fieldCoeffs 
-                               Vmath::Vcopy(m_f->m_exp[j]->GetNcoeffs(),
-                                            BndFieldCoeffs->GetArray1D(),1,
-                                     m_f->m_fieldCoeffs->UpdateArray1D(j),1);
+                        Vmath::Vcopy(m_f->m_exp[j]->GetNcoeffs(),
+                                     BndFieldCoeffs->GetArray1D(),1,
+                                 tmp = m_f->m_fieldCoeffs->UpdateArray1D(j),1);
                     
                         // do bwd trnas into phys space
                         m_f->m_exp[j]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(j),
-                                                m_f->m_fieldPhys->UpdateArray1D(j));
+                                 tmp = m_f->m_fieldPhys->UpdateArray1D(j));
 #endif
                     }
 
@@ -253,10 +254,10 @@ void OutputFileBase::Process(po::variables_map &vm)
                             Vmath::Vcopy(
                                 m_f->m_exp[nfields + j]->GetTotPoints(),
                                 NormPhys[j], 1,
-                                m_f->m_fieldPhys->UpdateArray1D(nfields + j),1);
+                         tmp = m_f->m_fieldPhys->UpdateArray1D(nfields + j),1);
                             m_f->m_exp[nfields + j]->FwdTransLocalElmt
                                 (m_f->m_fieldPhys->GetArray1D(j),
-                                 m_f->m_fieldCoeffs->UpdateArray1D(j));
+                               tmp = m_f->m_fieldCoeffs->UpdateArray1D(j));
 #endif
                         }
                     }
@@ -390,6 +391,7 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
     NekFieldCoeffSharedPtr CoeffsOld = m_f->m_fieldCoeffs;
     m_f->m_fieldCoeffs= std::make_shared<NekField<NekDouble,eCoeff>>(m_f->m_exp);
     m_f->m_fieldPhys  = std::make_shared<NekField<NekDouble,ePhys>>(m_f->m_exp);
+    Array<OneD, NekDouble> tmp; 
 #endif
 
     // Extract result to new expansion
@@ -403,11 +405,11 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
 #else
         m_f->m_exp[i]->ExtractCoeffsToCoeffs
             (expOld[i],CoeffsOld->GetArray1D(i),
-             m_f->m_fieldCoeffs->UpdateArray1D(i));
+             tmp = m_f->m_fieldCoeffs->UpdateArray1D(i));
 
         m_f->m_exp[i]->BwdTrans
             (m_f->m_fieldCoeffs->GetArray1D(i),
-             m_f->m_fieldPhys->UpdateArray1D(i));
+             tmp = m_f->m_fieldPhys->UpdateArray1D(i));
 #endif
     }
     // Extract boundary expansion if needed
@@ -446,7 +448,7 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
                 BndExp = m_f->m_exp[i]->UpdateBndCondExpansion(j);
                 BndExp->ExtractCoeffsToCoeffs(BndExpOld[j],
                                               BndCoeffOld[i]->GetArray1D(j),
-                                              BndCoeff[i]->UpdateArray1D(j));
+                                         tmp = BndCoeff[i]->UpdateArray1D(j));
             }
         }
 #endif

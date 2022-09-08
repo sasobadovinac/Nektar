@@ -89,6 +89,7 @@ void OutputFld::OutputFromExp(po::variables_map &vm)
     int i, j, s;
     int nfields = m_f->m_variables.size();
     int nstrips;
+    Array<OneD, NekDouble> tmp; 
     m_f->m_session->LoadParameter("Strip_Z", nstrips, 1);
 
     if (m_f->m_exp[0]->GetNumElmts() != 0)
@@ -112,7 +113,7 @@ void OutputFld::OutputFromExp(po::variables_map &vm)
 #else
                     m_f->m_exp[s*nfields + j]->AppendFieldData
                         (FieldDef[n],FieldData[n],
-                         m_f->m_fieldCoeffs->UpdateArray1D(s*nfields + j));
+                       tmp = m_f->m_fieldCoeffs->UpdateArray1D(s*nfields + j));
 #endif
                 }
             }

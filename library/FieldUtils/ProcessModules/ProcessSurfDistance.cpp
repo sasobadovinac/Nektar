@@ -258,8 +258,9 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
         BndExp[i]->FwdTransLocalElmt(BndExp[i]->GetPhys(),
                                      BndExp[i]->UpdateCoeffs());
 #else
+        Array<OneD, NekDouble> tmp; 
         BndExp[i]->FwdTransLocalElmt(BndExpCondFieldPhys[i]->GetArray1D(),
-            BndExpCondFieldCoeff[i]->UpdateArray1D());
+                         tmp = BndExpCondFieldCoeff[i]->UpdateArray1D());
 #endif
     }
 }

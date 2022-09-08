@@ -158,12 +158,13 @@ void ProcessFieldFromString::Process(po::variables_map &vm)
     m_f->m_exp[fieldID]->FwdTransLocalElmt(m_f->m_exp[fieldID]->GetPhys(),
                                            m_f->m_exp[fieldID]->UpdateCoeffs());
 #else
+    Array<OneD, NekDouble> tmp; 
     // Evaluate function
     strEval.Evaluate(exprId, interpfields,
-                     m_f->m_fieldPhys->UpdateArray1D(fieldID));
+                     tmp = m_f->m_fieldPhys->UpdateArray1D(fieldID));
 
     m_f->m_exp[fieldID]->FwdTransLocalElmt(m_f->m_fieldPhys->GetArray1D(fieldID),
-                                   m_f->m_fieldCoeffs->UpdateArray1D(fieldID));
+                          tmp = m_f->m_fieldCoeffs->UpdateArray1D(fieldID));
 #endif
 }
 } // namespace FieldUtils

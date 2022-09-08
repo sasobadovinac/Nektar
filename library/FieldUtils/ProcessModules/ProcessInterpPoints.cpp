@@ -223,6 +223,7 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
 #else
     fromField->m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(fromField->m_exp);
     fromField->m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(fromField->m_exp);
+    Array<OneD, NekDouble> tmp; 
 #endif
 
     // load field into expansion in fromfield.
@@ -248,7 +249,7 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
 #if EXPLISTDATA
                 fromField->m_exp[j]->UpdateCoeffs());
 #else
-                fromField->m_fieldCoeffs->UpdateArray1D(j));
+                tmp = fromField->m_fieldCoeffs->UpdateArray1D(j));
 #endif
         }
         if (NumHomogeneousDir == 1)

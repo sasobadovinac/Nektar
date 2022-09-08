@@ -127,12 +127,14 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
         }
         m_f->m_exp[j]->BwdTrans(m_f->m_exp[j]->GetCoeffs(), fromPhys[j]);
 #else
+        Array<OneD, NekDouble> tmp; 
         // load new field (overwrite m_f->m_exp coeffs for now)
         for (int i = 0; i < fromField->m_data.size(); ++i)
         {
             m_f->m_exp[j]->ExtractDataToCoeffs(
                 fromField->m_fielddef[i], fromField->m_data[i],
-                m_f->m_variables[j], m_f->m_fieldCoeffs->UpdateArray1D(j));
+                m_f->m_variables[j],
+                tmp = m_f->m_fieldCoeffs->UpdateArray1D(j));
         }
         m_f->m_exp[j]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(j), fromPhys[j]);
 #endif
@@ -213,19 +215,21 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
         m_f->m_exp[j]->FwdTransLocalElmt(m_f->m_exp[j]->GetPhys(),
                                          m_f->m_exp[j]->UpdateCoeffs());
 #else
+        Array<OneD, NekDouble> tmp; 
         // The new value is: (x_a*na + x_b*nb + correction)/N
         Vmath::Smul(nq, 1.0 * na, m_f->m_fieldPhys->GetArray1D(j), 1,
-                    m_f->m_fieldPhys->UpdateArray1D(j), 1);
+                    tmp = m_f->m_fieldPhys->UpdateArray1D(j), 1);
         Vmath::Svtvp(nq, 1.0 * nb, fromPhys[j], 1,
                      m_f->m_fieldPhys->GetArray1D(j), 1,
-                     m_f->m_fieldPhys->UpdateArray1D(j), 1);
+                     tmp = m_f->m_fieldPhys->UpdateArray1D(j), 1);
         Vmath::Vadd(nq,m_f->m_fieldPhys->GetArray1D(j), 1,
-                    correction[j], 1, m_f->m_fieldPhys->UpdateArray1D(j), 1);
+                    correction[j], 1,
+                    tmp = m_f->m_fieldPhys->UpdateArray1D(j), 1);
         Vmath::Smul(nq, 1.0 / (na + nb), m_f->m_fieldPhys->GetArray1D(j), 1,
-                     m_f->m_fieldPhys->UpdateArray1D(j), 1);
+                    tmp = m_f->m_fieldPhys->UpdateArray1D(j), 1);
 
         m_f->m_exp[j]->FwdTransLocalElmt(m_f->m_fieldPhys->GetArray1D(j),
-                                         m_f->m_fieldCoeffs->UpdateArray1D(j));
+                                   tmp = m_f->m_fieldCoeffs->UpdateArray1D(j));
 #endif
     }
 

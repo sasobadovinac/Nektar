@@ -354,9 +354,12 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     
                     valuesFile = locExpList->GetPhys();
 #else
+                    Array<OneD, NekDouble> tmp; 
+
+
                     locExpList->ExtractCoeffsFromFile
                         (bcfilename, bcPtr->GetComm(), varName,
-                         m_bndCondFieldCoeff[i]->UpdateArray1D());
+                         tmp = m_bndCondFieldCoeff[i]->UpdateArray1D());
                     
                     valuesFile = m_bndCondFieldPhys[i]->UpdateArray1D();
                     locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
@@ -385,15 +388,17 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                 locExpList->FwdTransBndConstrained(
                         locExpList->GetPhys(), locExpList->UpdateCoeffs());
 #else
+                Array<OneD, NekDouble> tmp;
+                
                 Vmath::Vmul(npoints, valuesExp, 1, valuesFile, 1,
-                            m_bndCondFieldPhys[i]->UpdateArray1D(),1);
+                            tmp = m_bndCondFieldPhys[i]->UpdateArray1D(),1);
                 
                 // set wave space to false since have set up phys values
                 locExpList->SetWaveSpace(false);
                 
                 locExpList->FwdTransBndConstrained(
-                                    m_bndCondFieldPhys[i]->GetArray1D(),
-                                    m_bndCondFieldCoeff[i]->UpdateArray1D());
+                                m_bndCondFieldPhys[i]->GetArray1D(),
+                                tmp = m_bndCondFieldCoeff[i]->UpdateArray1D());
 #endif 
 
             }
@@ -415,12 +420,13 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                         locExpList->BwdTrans(locExpList->GetCoeffs(),
                                              locExpList->UpdatePhys());
 #else
+                        Array<OneD, NekDouble> tmp;
                         locExpList->ExtractCoeffsFromFile
                             (bcfilename, bcPtr->GetComm(), varName,
-                             m_bndCondFieldCoeff[i]->UpdateArray1D());
+                             tmp = m_bndCondFieldCoeff[i]->UpdateArray1D());
 
                         locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
-                                           m_bndCondFieldPhys[i]->UpdateArray1D());
+                                   tmp = m_bndCondFieldPhys[i]->UpdateArray1D());
 #endif
                 }
                 else
@@ -435,8 +441,9 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     condition.Evaluate(x0, x1, x2, time,
                                        locExpList->UpdatePhys());
 #else
+                    Array<OneD, NekDouble> tmp;
                     condition.Evaluate(x0, x1, x2, time,
-                                       m_bndCondFieldPhys[i]->UpdateArray1D());
+                                  tmp = m_bndCondFieldPhys[i]->UpdateArray1D());
 #endif
                 }
 
@@ -444,8 +451,9 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     locExpList->IProductWRTBase(locExpList->GetPhys(),
                                                 locExpList->UpdateCoeffs());
 #else
+                    Array<OneD, NekDouble> tmp;
                     locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
-                                           m_bndCondFieldCoeff[i]->UpdateArray1D());
+                            tmp = m_bndCondFieldCoeff[i]->UpdateArray1D());
 #endif
             }
             else if (m_bndConditions[i]->GetBoundaryConditionType() ==
@@ -465,12 +473,13 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     locExpList->BwdTrans(locExpList->GetCoeffs(),
                                          locExpList->UpdatePhys());
 #else
+                    Array<OneD, NekDouble> tmp;
                     locExpList->ExtractCoeffsFromFile
                         (bcfilename, bcPtr->GetComm(), varName,
-                         m_bndCondFieldCoeff[i]->UpdateArray1D());
+                         tmp = m_bndCondFieldCoeff[i]->UpdateArray1D());
                     
                     locExpList->BwdTrans(m_bndCondFieldCoeff[i]->GetArray1D(),
-                                         m_bndCondFieldPhys[i]->UpdateArray1D());
+                               tmp = m_bndCondFieldPhys[i]->UpdateArray1D());
 #endif
                 }
                 else
@@ -485,8 +494,9 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                     condition.Evaluate(x0, x1, x2, time,
                                        locExpList->UpdatePhys());
 #else
+                    Array<OneD, NekDouble> tmp;
                     condition.Evaluate(x0, x1, x2, time,
-                                       m_bndCondFieldPhys[i]->UpdateArray1D());
+                              tmp = m_bndCondFieldPhys[i]->UpdateArray1D());
 #endif
                 }
 
@@ -494,8 +504,9 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
                 locExpList->IProductWRTBase(locExpList->GetPhys(),
                                             locExpList->UpdateCoeffs());
 #else
+                Array<OneD, NekDouble> tmp;
                 locExpList->IProductWRTBase(m_bndCondFieldPhys[i]->GetArray1D(),
-                                            m_bndCondFieldCoeff[i]->UpdateArray1D());
+                              tmp = m_bndCondFieldCoeff[i]->UpdateArray1D());
 #endif
             }
             else if (m_bndConditions[i]->GetBoundaryConditionType() ==

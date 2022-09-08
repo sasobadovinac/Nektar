@@ -206,9 +206,10 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
             phys[i] = outPts->GetPointVal(3 + j, i);
         }
 
+        Array<OneD, NekDouble> tmp; 
         // forward transform fields
         m_f->m_exp[j]->FwdTransLocalElmt(phys,
-                                    m_f->m_fieldCoeffs->UpdateArray1D(j));
+                                tmp = m_f->m_fieldCoeffs->UpdateArray1D(j));
     }
 #endif
 

@@ -1959,9 +1959,10 @@ inline void ExpList::FwdTrans(const NekField<NekDouble, ePhys> &in,
 {
     ASSERTL1(in.GetNumVariables() <= out.GetNumVariables(), "number of variables "
              "in storage (out) is less than those in input variable (in)");
+    Array<OneD, NekDouble> tmp; 
     for(int i = 0; i < in.GetNumVariables(); ++i)
     {
-        v_FwdTrans(in.GetArray1D(i), out.UpdateArray1D(i));
+        v_FwdTrans(in.GetArray1D(i), tmp = out.UpdateArray1D(i));
     }
 }
 
@@ -2001,9 +2002,10 @@ inline void ExpList::BwdTrans(const NekField<NekDouble, eCoeff> &in,
 {
     ASSERTL1(in.GetNumVariables() <= out.GetNumVariables(), "number of variables "
              "in storage (out) is less than those in input variable (in)");
+    Array<OneD, NekDouble> tmp; 
     for(int i = 0; i < in.GetNumVariables(); ++i)
     {
-        v_BwdTrans(in.GetArray1D(i), out.UpdateArray1D(i));
+        v_BwdTrans(in.GetArray1D(i), tmp = out.UpdateArray1D(i));
     }
 }
 
@@ -2058,10 +2060,11 @@ inline void ExpList::HelmSolve(const NekField<NekDouble, ePhys> &in,
 {
     ASSERTL1(in.GetNumVariables() <= out.GetNumVariables(), "number of variables "
              "in storage (out) is less than those in input variable (in)");
+    Array<OneD, NekDouble> tmp; 
     for(int i = 0; i < in.GetNumVariables(); ++i)
     {
-        v_HelmSolve(in.GetArray1D(i), out.UpdateArray1D(i), factors, varcoeff,
-                    varfactors, dirForcing, PhysSpaceForcing);
+        v_HelmSolve(in.GetArray1D(i), tmp = out.UpdateArray1D(i), factors,
+                    varcoeff, varfactors, dirForcing, PhysSpaceForcing);
     }
 }
 
@@ -2078,8 +2081,9 @@ inline void ExpList::HelmSolve(const int varid,
     ASSERTL1(varid <= out.GetNumVariables(), "number of variables "
              "in storage (out) is less than those in input variable (in)");
 
-    v_HelmSolve(in.GetArray1D(varid), out.UpdateArray1D(varid), factors, varcoeff,
-                    varfactors, dirForcing, PhysSpaceForcing);
+    Array<OneD, NekDouble> tmp; 
+    v_HelmSolve(in.GetArray1D(varid), tmp = out.UpdateArray1D(varid), factors,
+                varcoeff, varfactors, dirForcing, PhysSpaceForcing);
 }
 
 /**
@@ -2123,8 +2127,10 @@ inline void ExpList::GetCoords(NekField<NekDouble, ePhys> &coord_0,
                                NekField<NekDouble, ePhys> &coord_1,
                                NekField<NekDouble, ePhys> &coord_2)
 {
-    v_GetCoords(coord_0.UpdateArray1D(), coord_1.UpdateArray1D(),
-                coord_2.UpdateArray1D());
+    Array<OneD, NekDouble> tmp0,tmp1,tmp2; 
+    v_GetCoords(tmp0 = coord_0.UpdateArray1D(),
+                tmp1 = coord_1.UpdateArray1D(),
+                tmp2 = coord_2.UpdateArray1D());
 }
 
 /**
@@ -2136,18 +2142,23 @@ inline void ExpList::GetCoords(NekField<NekDouble, ePhys> &coords)
     {
     case 1:
         {
-            v_GetCoords(coords.UpdateArray1D(0));
+            Array<OneD, NekDouble> tmp0; 
+            v_GetCoords(tmp0 = coords.UpdateArray1D(0));
         }
         break;
     case 2:
         {
-            v_GetCoords(coords.UpdateArray1D(0),coords.UpdateArray1D(1));
+            Array<OneD, NekDouble> tmp0,tmp1; 
+            v_GetCoords(tmp0 = coords.UpdateArray1D(0),
+                        tmp1 = coords.UpdateArray1D(1));
         }
     break;
     case 3:
         {
-            v_GetCoords(coords.UpdateArray1D(0), coords.UpdateArray1D(1),
-                        coords.UpdateArray1D(2));
+            Array<OneD, NekDouble> tmp0,tmp1,tmp2; 
+            v_GetCoords(tmp0 = coords.UpdateArray1D(0),
+                        tmp1 = coords.UpdateArray1D(1),
+                        tmp2 = coords.UpdateArray1D(2));
         }
         break;
     default:

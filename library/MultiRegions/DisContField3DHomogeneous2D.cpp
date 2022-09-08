@@ -194,16 +194,19 @@ void DisContField3DHomogeneous2D::SetupBoundaryConditions(
         // point m_bndCondFieldCoeff in m_planes to member of 1D array
         // attached to m_bndCondFieldCoeff - very hacky!
         int bnd_ncoeffs = LinesBndCondExp[0]->GetNcoeffs(); 
+        Array<OneD, NekDouble> tmp; 
         for (int n = 0; n < nlines; ++n)
         {
             DisContFieldSharedPtr dgfield =
                 std::dynamic_pointer_cast<DisContField>(m_lines[n]);
 
+            Array<OneD, NekDouble> tmp; 
             dgfield->m_bndCondFieldCoeff[i] =
                 std::make_shared<NekField<NekDouble, eCoeff>>
                 (dgfield->m_bndCondExpansions[i]);
-            dgfield->m_bndCondFieldCoeff[i]->UpdateArray1D() =
-                m_bndCondFieldCoeff[i]->UpdateArray1D() + n*bnd_ncoeffs;
+            Vmath::Vcopy(bnd_ncoeffs,m_bndCondFieldCoeff[i]->GetArray1D() +
+                         n*bnd_ncoeffs,1, tmp = dgfield->m_bndCondFieldCoeff[i]
+                         ->UpdateArray1D(),1);
         }
 #endif
     }
@@ -253,8 +256,9 @@ void DisContField3DHomogeneous2D::v_HelmSolve(
                 beta_y * beta_y + beta_z * beta_z;
 
             wfce = (PhysSpaceForcing) ? fce + cnt : fce + cnt1;
-            m_lines[n]->HelmSolve(wfce, e_out = outarray + cnt1, new_factors,
-                                  varcoeff, varfactors, dirForcing,
+            m_lines[n]->HelmSolve(wfce, e_out = outarray + cnt1,
+                                  new_factors, varcoeff,
+                                  varfactors, dirForcing,
                                   PhysSpaceForcing);
 
             cnt += m_lines[n]->GetTotPoints();
@@ -301,11 +305,12 @@ void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
     {
         if (time == 0.0 || m_bndConditions[n]->IsTimeDependent())
         {
+            Array<OneD, NekDouble> tmp; 
             m_bndCondBndWeight[n] = 1.0;
             m_bndCondExpansions[n]->HomogeneousFwdTrans(
                 m_bndCondExpansions[n]->GetNcoeffs(),
                 m_bndCondFieldCoeff[n]->GetArray1D(),
-                m_bndCondFieldPhys[n]->UpdateArray1D());
+                tmp = m_bndCondFieldPhys[n]->UpdateArray1D());
         }
     }
 #endif

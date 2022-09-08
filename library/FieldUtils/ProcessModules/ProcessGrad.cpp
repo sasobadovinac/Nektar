@@ -226,13 +226,15 @@ void ProcessGrad::Process(po::variables_map &vm)
         m_f->m_exp[nfields + i]->FwdTransLocalElmt(
             grad[i], m_f->m_exp[nfields + i]->UpdateCoeffs());
 #else
+        Array<OneD, NekDouble> tmp; 
         m_f->m_fieldPhys  ->AddVariable(m_f->m_exp[nfields + i]);
         m_f->m_fieldCoeffs->AddVariable(m_f->m_exp[nfields + i]);
         
         Vmath::Vcopy(npoints, grad[i], 1,
-                     m_f->m_fieldPhys->UpdateArray1D(nfields + i), 1);
+                     tmp = m_f->m_fieldPhys->UpdateArray1D(nfields + i), 1);
         m_f->m_exp[nfields + i]->FwdTransLocalElmt
-                     (grad[i], m_f->m_fieldCoeffs->UpdateArray1D(nfields + i));
+                     (grad[i],
+                      tmp = m_f->m_fieldCoeffs->UpdateArray1D(nfields + i));
 #endif
     }
 }

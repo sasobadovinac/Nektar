@@ -307,6 +307,7 @@ struct Field
 #else
             m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(m_exp);
             m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(m_exp);
+            Array<OneD, NekDouble> tmp; 
 #endif
 
             
@@ -330,7 +331,7 @@ struct Field
 #if EXPLISTDATA
                                 m_exp[s * nfields + j]->UpdateCoeffs());
 #else
-                                m_fieldCoeffs->UpdateArray1D(s * nfields + j));
+                                tmp = m_fieldCoeffs->UpdateArray1D(s * nfields + j));
 #endif
                         }
                     }
@@ -339,8 +340,8 @@ struct Field
                         m_exp[s * nfields + j]->GetCoeffs(),
                         m_exp[s * nfields + j]->UpdatePhys());
 #else
-                    m_fieldCoeffs->UpdateArray1D(s * nfields + j),
-                    m_fieldPhys ->UpdateArray1D(s * nfields + j));
+                        m_fieldCoeffs->GetArray1D(s * nfields + j),
+                        tmp = m_fieldPhys ->UpdateArray1D(s * nfields + j));
 #endif
                 }
             }

@@ -650,7 +650,7 @@ void ContField::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
         Array<OneD, NekDouble> &bcoeffs = m_bndCondExpansions[i]->UpdateCoeffs();
 
 #else 
-        Array<OneD, NekDouble> &bcoeffs = m_bndCondFieldCoeff[i]->UpdateArray1D();
+        Array<OneD, NekDouble> bcoeffs = m_bndCondFieldCoeff[i]->UpdateArray1D();
 #endif
 
         if (m_locToGloMap->GetSignChange())
@@ -689,7 +689,7 @@ void ContField::v_FillBndCondFromField(const int nreg, const Array<OneD, NekDoub
 #if EXPLISTDATA
     Array<OneD, NekDouble> &bcoeffs = m_bndCondExpansions[nreg]->UpdateCoeffs();
 #else 
-    Array<OneD, NekDouble> &bcoeffs = m_bndCondFieldCoeff[nreg]->UpdateArray1D();
+    Array<OneD, NekDouble> bcoeffs = m_bndCondFieldCoeff[nreg]->UpdateArray1D();
 #endif
 
     for (int j = 0; j < nreg; ++j)

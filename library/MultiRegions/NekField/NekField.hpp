@@ -71,7 +71,7 @@ public:
     };
 
     NekField(std::shared_ptr<MultiRegions::ExpList> exp,
-                 TData defval = 0, int nvar = 1, DataLayout Order = eField) :
+             TData defval = 0, int nvar = 1, DataLayout Order = eField) :
         m_numVariables(nvar),
         m_dataOrder(Order)
     {
@@ -83,7 +83,6 @@ public:
             m_expIF.push_back(m_expIF[0]);
         }
 
-        m_storage = Array<OneD, Array<OneD, NekDouble> >(nvar); 
         if (TStype == ePhys)
         {
             m_varSize = m_expIF[0]->GetNpoints(); 
@@ -93,12 +92,7 @@ public:
             m_varSize = m_expIF[0]->GetNcoeffs(); 
         }
 
-        m_storage[m_numVariables-1] =Array<OneD, TData>(m_varSize*m_numVariables,defval);
-
-        for(int i = m_numVariables-1; i > 0; --i)
-        {
-            m_storage[i-1] = m_storage[i] + m_varSize; 
-        }
+        m_storage.resize(m_numVariables*m_varSize, defval);
     }
 
     NekField(Array<OneD, std::shared_ptr<MultiRegions::ExpList>> exp,
@@ -112,7 +106,6 @@ public:
                           ExpListNekFieldInterface>(exp[i]));
         }
 
-        m_storage = Array<OneD, Array<OneD, NekDouble> >(m_numVariables); 
         if (TStype == ePhys)
         {
             m_varSize = m_expIF[0]->GetNpoints(); 
@@ -122,12 +115,7 @@ public:
             m_varSize = m_expIF[0]->GetNcoeffs(); 
         }
 
-        m_storage[m_numVariables-1] =Array<OneD, TData>(m_varSize*m_numVariables,defval);
-
-        for(int i = m_numVariables-1; i > 0; --i)
-        {
-            m_storage[i-1] = m_storage[i] + m_varSize; 
-        }
+        m_storage.resize(m_numVariables*m_varSize,defval);
     }
 
     NekField(std::vector<std::shared_ptr<MultiRegions::ExpList>> exp,
@@ -141,7 +129,6 @@ public:
                           ExpListNekFieldInterface>(exp[i]));
         }
 
-        m_storage = Array<OneD, Array<OneD, NekDouble> >(m_numVariables); 
         if (TStype == ePhys)
         {
             m_varSize = m_expIF[0]->GetNpoints(); 
@@ -151,32 +138,16 @@ public:
             m_varSize = m_expIF[0]->GetNcoeffs(); 
         }
 
-        m_storage[m_numVariables-1] =Array<OneD, TData>(m_varSize*m_numVariables,defval);
-
-        for(int i = m_numVariables-1; i > 0; --i)
-        {
-            m_storage[i-1] = m_storage[i] + m_varSize; 
-        }
+        m_storage.resize(m_numVariables*m_varSize, defval);
     }
     
     NekField(const NekField &F)
         : m_expIF(F.m_expIF),
-          m_storage(Array<OneD, Array<OneD, TData>>(F.m_numVariables)),
+          m_storage(F.m_storage),
           m_numVariables(F.m_numVariables),
           m_varSize(F.m_varSize),
           m_dataOrder(F.m_dataOrder)
     {
-        // Fecalre field in reverse order so that data could be
-        // accessed in one block but m_storatge[0] will return correct
-        // array length for one variable since this is often used as a
-        // sizing variable in code. Probably there is a better
-        // solution but hack for now.
-        m_storage[m_numVariables-1] =Array<OneD, TData>(m_varSize*m_numVariables,F.m_storage.GetData());
-
-        for(int i = m_numVariables-1; i > 0; --i)
-        {
-            m_storage[i-1] = m_storage[i] + m_varSize; 
-        }
     }
 
     /// \brief Creates a reference to rhs.
@@ -215,22 +186,8 @@ public:
                 m_varSize = m_expIF[0]->GetNcoeffs(); 
             }
         }
-        
-        Array<OneD, Array<OneD, NekDouble> > storage(m_numVariables); 
 
-        
-        storage[m_numVariables-1] =
-            Array<OneD, TData>(m_varSize*m_numVariables,defval);
-        
-        // copy over original data. 
-        Vmath::Vcopy(m_varSize*(m_numVariables-1),m_storage[m_numVariables-2].data(),1,
-                     storage[m_numVariables-1].data() + m_varSize,1);
-
-        m_storage = storage;
-        for(int i = m_numVariables-1; i > 0; --i)
-        {
-            m_storage[i-1] = m_storage[i] + m_varSize; 
-        }
+        m_storage.resize(m_varSize*m_numVariables, defval);
     }
 
 
@@ -261,34 +218,23 @@ public:
             }
         }
         
-        Array<OneD, Array<OneD, NekDouble> > storage(m_numVariables); 
-
-        storage[m_numVariables-1] =
-            Array<OneD, TData>(m_varSize*m_numVariables,defval);
-        
-        // copy over original data offsetting to that reverse ordering is then correct
-        Vmath::Vcopy(m_varSize*(m_numVariables-nvar),
-                     m_storage[m_numVariables-nvar-1].data(),1,
-                     storage[m_numVariables-1].data() + nvar*m_varSize,1);
-
-        m_storage = storage;
-        // impose reverse ordering
-        for(int i = m_numVariables-1; i > 0; --i)
-        {
-            m_storage[i-1] = m_storage[i] + m_varSize; 
-        }
+        m_storage.resize(m_varSize*m_numVariables, defval);
     }
     
     const Array<OneD, const TData> GetData(int varid=0) const
     {
         ASSERTL1(varid < m_numVariables, "variable id (varid) is out of range");
-        return m_storage[varid];
+        m_array1D = Array<OneD, TData>(m_varSize,
+                                       &m_storage[varid*m_varSize],true);
+        return m_array1D; 
     }
 
     Array<OneD, TData> &UpdateData(int varid = 0)
     {
         ASSERTL1(varid < m_numVariables, "variable id (varid) is out of range");
-        return m_storage[varid];
+        m_array1D = Array<OneD, TData>(m_varSize,
+                                       &m_storage[varid*m_varSize],true);
+        return m_array1D; 
     }
 
     const Array<OneD, const TData> GetArray1D(int varid=0) const
@@ -296,15 +242,18 @@ public:
         ASSERTL1(varid < m_numVariables, "variable id (varid) is out of range");
         ASSERTL1(m_dataOrder == eField,"Data must be in Array OneD format for"
                  " this method");
-        return m_storage[varid];
+        
+        return Array<OneD, TData> (m_varSize, &m_storage[varid*m_varSize]);
     }
     
-    Array<OneD, TData> &UpdateArray1D(int varid = 0)
+    Array<OneD, TData> UpdateArray1D(int varid = 0)
     {
         ASSERTL1(varid < m_numVariables, "variable id (varid) is out of range");
         ASSERTL1(m_dataOrder == eField,"Data must be in Array OneD format for"
                  " this method");
-        return m_storage[varid];
+
+        return Array<OneD, TData>(m_varSize,
+                                       &m_storage[varid*m_varSize],true);
     }
 
     std::vector<std::shared_ptr<MultiRegions::ExpList>> GetExpList() const
@@ -331,7 +280,9 @@ protected:
     std::vector<std::shared_ptr<MultiRegions::details::ExpListNekFieldInterface>> m_expIF;
     
     /// native storage in field
-    Array<OneD, Array<OneD, TData> >   m_storage;
+    std::vector<NekDouble>   m_storage;
+
+    Array<OneD, TData> m_array1D;
     
     /// number of variables in storage 
     int m_numVariables;

@@ -1168,8 +1168,9 @@ void Mapping::v_UpdateBCs(const NekDouble time)
                 m_fields[i]->ExtractPhysToBnd(n, values[i],
                                               BndExp[n]->UpdatePhys());
 #else
+                Array<OneD, NekDouble> tmp; 
                 m_fields[i]->ExtractPhysToBnd(n, values[i],
-                                           BndCondFieldPhys[n]->UpdateArray1D());
+                                tmp = BndCondFieldPhys[n]->UpdateArray1D());
 #endif
 
                 // Apply MovingBody correction
@@ -1187,9 +1188,10 @@ void Mapping::v_UpdateBCs(const NekDouble time)
                                 BndExp[n]->UpdatePhys(), 1);
 #else
                     // Apply correction
+                    Array<OneD, NekDouble> tmp; 
                     Vmath::Vadd(BndExp[n]->GetTotPoints(), coordVelBnd, 1,
-                                BndCondFieldPhys[n]->UpdateArray1D(), 1,
-                                BndCondFieldPhys[n]->UpdateArray1D(), 1);
+                                tmp = BndCondFieldPhys[n]->UpdateArray1D(), 1,
+                                tmp = BndCondFieldPhys[n]->UpdateArray1D(), 1);
 #endif
                 }
             }
@@ -1230,9 +1232,10 @@ void Mapping::v_UpdateBCs(const NekDouble time)
                     BndExp[n]->FwdTransBndConstrained(
                         BndExp[n]->GetPhys(), BndExp[n]->UpdateCoeffs());
 #else
+                    Array<OneD, NekDouble> tmp; 
                     BndExp[n]->FwdTransBndConstrained(
-                              BndCondFieldPhys[n]->UpdateArray1D(),
-                              BndCondFieldCoeff[n]->UpdateArray1D());
+                              tmp = BndCondFieldPhys[n]->UpdateArray1D(),
+                              tmp = BndCondFieldCoeff[n]->UpdateArray1D());
 #endif
                 }
             }

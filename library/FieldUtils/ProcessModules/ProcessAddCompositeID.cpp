@@ -137,8 +137,9 @@ void ProcessAddCompositeID::Process(po::variables_map &vm)
 #if EXPLISTDATA
     exp->FwdTransLocalElmt(exp->GetPhys(), exp->UpdateCoeffs());
 #else
+    Array<OneD, NekDouble> tmp; 
     exp->FwdTransLocalElmt(m_f->m_fieldPhys->GetArray1D(nfields),
-                           m_f->m_fieldCoeffs->UpdateArray1D(nfields)); 
+                           tmp = m_f->m_fieldCoeffs->UpdateArray1D(nfields)); 
 #endif
 }
 } // namespace FieldUtils

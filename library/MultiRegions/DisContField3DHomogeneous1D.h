@@ -353,10 +353,12 @@ inline void DisContField3DHomogeneous1D::CopyCoeffBCsToPlanes(int varid)
             
         int bnd_ncoeffs = m_planesBndCondFieldCoeff[0][i]->GetVarSize();
         int offset = 0; 
+        Array<OneD, NekDouble> tmp; 
         for (int n = 0; n < nplanes; ++n)
         {
             Vmath::Vcopy(bnd_ncoeffs,bc + offset,1,
-                         m_planesBndCondFieldCoeff[n][i]->UpdateArray1D(varid),1);
+                         tmp = m_planesBndCondFieldCoeff[n][i]->
+                         UpdateArray1D(varid),1);
             offset += bnd_ncoeffs;
         }
     }

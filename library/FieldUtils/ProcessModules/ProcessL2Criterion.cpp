@@ -189,6 +189,7 @@ void ProcessL2Criterion::Process(po::variables_map &vm)
     m_f->m_fieldPhys->AddVariable(varExp);
     m_f->m_fieldCoeffs->AddVariable(varExp);
 
+    Array<OneD, NekDouble> tmp; 
     // Need to reshuffle data for strip case before filling new variables.
     for (s = nstrips-1; s > 0; --s) // homogeneous strip varient
     {    
@@ -198,9 +199,9 @@ void ProcessL2Criterion::Process(po::variables_map &vm)
             int fid  = s*(nfields)+n;
             int fid1 = s*(nfields+1)+n;
             Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
-                         m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
+                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
             Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
-                         m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
+                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
         }
 
     }
@@ -283,9 +284,9 @@ void ProcessL2Criterion::Process(po::variables_map &vm)
                              m_f->m_exp[fid]->UpdateCoeffs());
 #else
         Vmath::Vcopy(npoints, outfield2, 1,
-                     m_f->m_fieldPhys->UpdateArray1D(fid), 1);
+                     tmp = m_f->m_fieldPhys->UpdateArray1D(fid), 1);
         m_f->m_exp[fid]->FwdTransLocalElmt(outfield2,
-                             m_f->m_fieldCoeffs->UpdateArray1D(fid));
+                           tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid));
 #endif
     }
 }

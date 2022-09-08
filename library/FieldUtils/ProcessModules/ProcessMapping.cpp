@@ -67,6 +67,7 @@ void ProcessMapping::Process(po::variables_map &vm)
     int npoints  = m_f->m_exp[0]->GetNpoints();
     int expdim   = m_f->m_graph->GetMeshDimension();
     int spacedim = expdim;
+    Array<OneD, NekDouble> tmp; 
     if ((m_f->m_numHomogeneousDir) == 1 || (m_f->m_numHomogeneousDir) == 2)
     {
         spacedim = 3;
@@ -137,7 +138,7 @@ void ProcessMapping::Process(po::variables_map &vm)
                         vel[i], m_f->m_exp[i]->UpdatePhys());
 #else
                     m_f->m_exp[0]->HomogeneousFwdTrans(npoints, 
-                        vel[i], m_f->m_fieldPhys->UpdateArray1D(i));
+                        vel[i], tmp = m_f->m_fieldPhys->UpdateArray1D(i));
 #endif
                 }
                 else
@@ -147,7 +148,7 @@ void ProcessMapping::Process(po::variables_map &vm)
                                  m_f->m_exp[i]->UpdatePhys(), 1);
 #else
                     Vmath::Vcopy(npoints, vel[i], 1,
-                               m_f->m_fieldPhys->UpdateArray1D(i), 1);
+                                 tmp = m_f->m_fieldPhys->UpdateArray1D(i), 1);
 #endif
                 }
 #if EXPLISTDATA
@@ -155,7 +156,7 @@ void ProcessMapping::Process(po::variables_map &vm)
                                                  m_f->m_exp[i]->UpdateCoeffs());
 #else
                 m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_fieldPhys->GetArray1D(i),
-                                                 m_f->m_fieldCoeffs->UpdateArray1D(i));
+                                    tmp = m_f->m_fieldCoeffs->UpdateArray1D(i));
 #endif
             }
         }
@@ -183,9 +184,9 @@ void ProcessMapping::Process(po::variables_map &vm)
         m_f->m_fieldCoeffs->AddVariable(m_f->m_exp[nfields+i]);
 
         Vmath::Vcopy(npoints, coords[i], 1,
-                     m_f->m_fieldPhys->UpdateArray1D(nfields + i), 1);
+                     tmp = m_f->m_fieldPhys->UpdateArray1D(nfields + i), 1);
         m_f->m_exp[nfields + i]->FwdTransLocalElmt(coords[i],
-                               m_f->m_fieldCoeffs->UpdateArray1D(nfields + i));
+                     tmp = m_f->m_fieldCoeffs->UpdateArray1D(nfields + i));
     }
 #endif
 }
