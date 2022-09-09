@@ -62,6 +62,9 @@ template <typename scalarType, int width = 0> struct avx2
 
 #if defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
 
+
+
+
 // forward declaration of concrete types
 template <typename T> struct avx2Long4;
 template <typename T> struct avx2Int8;
@@ -92,6 +95,12 @@ template <> struct avx2<std::uint64_t>
 {
     using type = avx2Long4<std::uint64_t>;
 };
+#if defined(__APPLE__)
+template <> struct avx2<std::size_t>
+{
+    using type = avx2Long4<std::size_t>;
+};
+#endif
 template <> struct avx2<std::int32_t>
 {
     using type = avx2Int8<std::int32_t>;
@@ -109,6 +118,12 @@ template <> struct avx2<std::uint64_t, 4>
 {
     using type = avx2Long4<std::uint64_t>;
 };
+#if defined(__APPLE__)
+template <> struct avx2<std::size_t, 4>
+{
+    using type = avx2Long4<std::size_t>;
+};
+#endif
 template <> struct avx2<std::int32_t, 4>
 {
     using type = sse2Int4<std::int32_t>;
@@ -167,6 +182,9 @@ template <typename T> struct avx2Int8
     {
         _data = _mm256_load_si256(reinterpret_cast<vectorType *>(rhs));
     }
+
+    // copy assignment
+    inline avx2Int8& operator=(const avx2Int8&) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -275,6 +293,9 @@ template <typename T> struct avx2Long4
         _data = _mm256_load_si256(reinterpret_cast<vectorType *>(rhs));
     }
 
+    // copy assignment
+    inline avx2Long4& operator=(const avx2Long4&) = default;
+
     // store
     inline void store(scalarType *p) const
     {
@@ -375,6 +396,9 @@ struct avx2Double4
     {
         _data = _mm256_set1_pd(rhs);
     }
+
+    // copy assignment
+    inline avx2Double4& operator=(const avx2Double4&) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -642,6 +666,9 @@ struct avx2Float8
     {
         _data = _mm256_set1_ps(rhs);
     }
+
+    // copy assignment
+    inline avx2Float8& operator=(const avx2Float8&) = default;
 
     // store
     inline void store(scalarType *p) const

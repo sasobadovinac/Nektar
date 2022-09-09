@@ -91,6 +91,12 @@ template <> struct avx512<std::uint64_t>
 {
     using type = avx512Long8<std::uint64_t>;
 };
+#if defined(__APPLE__)
+template <> struct avx512<std::size_t>
+{
+    using type = avx512Long8<std::size_t>;
+};
+#endif
 template <> struct avx512<std::int32_t>
 {
     using type = avx512Int16<std::int32_t>;
@@ -108,6 +114,12 @@ template <> struct avx512<std::uint64_t, 8>
 {
     using type = avx512Long8<std::uint64_t>;
 };
+#if defined(__APPLE__)
+template <> struct avx512<std::size_t, 8>
+{
+    using type = avx512Long8<std::size_t>;
+};
+#endif
 template <> struct avx512<std::int32_t, 8>
 {
     using type = avx2Int8<std::int32_t>;
@@ -168,6 +180,9 @@ template <typename T> struct avx512Int16
     {
         _data = _mm512_load_epi32(rhs);
     }
+
+    // copy assignment
+    inline avx512Int16& operator=(const avx512Int16&) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -281,6 +296,9 @@ template <typename T> struct avx512Long8
         _data = _mm512_load_epi64(rhs);
     }
 
+    // copy assignment
+    inline avx512Long8& operator=(const avx512Long8&) = default;
+
     // store
     inline void store(scalarType *p) const
     {
@@ -386,6 +404,9 @@ struct avx512Double8
     {
         _data = _mm512_set1_pd(rhs);
     }
+
+    // copy assignment
+    inline avx512Double8& operator=(const avx512Double8&) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -645,6 +666,9 @@ struct avx512Float16
     {
         _data = _mm512_set1_ps(rhs);
     }
+
+    // copy assignment
+    inline avx512Float16& operator=(const avx512Float16&) = default;
 
     // store
     inline void store(scalarType *p) const
