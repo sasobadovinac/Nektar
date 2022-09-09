@@ -136,7 +136,6 @@ BOOST_AUTO_TEST_CASE(SimdLibSingle_width_alignment)
 #endif
 }
 
-
 BOOST_AUTO_TEST_CASE(SimdLibFloat_type_traits)
 {
     using namespace details;

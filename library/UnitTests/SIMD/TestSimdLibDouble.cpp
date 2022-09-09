@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_width_alignment)
     width     = simd<std::int32_t, vec_t::width>::width;
     alignment = simd<std::int32_t, vec_t::width>::alignment;
     BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
-    BOOST_CHECK_EQUAL(alignment, ALIGNMENT/2);
+    BOOST_CHECK_EQUAL(alignment, ALIGNMENT / 2);
     // std::int64_t index forcing # of lanes
     width     = simd<std::int64_t, vec_t::width>::width;
     alignment = simd<std::int64_t, vec_t::width>::alignment;
@@ -141,7 +141,6 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_width_alignment)
     BOOST_CHECK_EQUAL(alignment, __ARM_FEATURE_SVE_BITS / sizeof(double));
 #endif
 }
-
 
 BOOST_AUTO_TEST_CASE(SimdLibDouble_type_traits)
 {

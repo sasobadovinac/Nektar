@@ -257,7 +257,6 @@ template <typename T> struct avx2Long4
     using vectorType  = __m256i;
     using scalarArray = scalarType[width];
 
-
     // storage
     vectorType _data;
 
