@@ -17,6 +17,10 @@ v5.3.0
 **CompressibleFlowSolver**
 - The Incomplete IP method was made the default method for the IP method (!1377).
 
+**NekMesh**
+- Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
+exporting in .vtu format (!1386)
+
 v5.2.0
 ------
 **Library**

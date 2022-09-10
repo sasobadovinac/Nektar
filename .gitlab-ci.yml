@@ -572,6 +572,7 @@ win10-mpi-default-build-and-test:
 # runners can be difficult if they are tagged multiple times, so we also perform
 # a quick rmi to make sure we only keep the images from the registry.
 .dockerhub-deploy-template: &dockerhub_deploy_template
+  <<: *execution-conditions
   image: docker:stable
   stage: package-deploy
   only:
