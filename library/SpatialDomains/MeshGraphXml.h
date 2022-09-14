@@ -116,7 +116,9 @@ protected:
     virtual void WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets);
     virtual void WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
                              CurveMap &faces);
-    void WriteComposites(TiXmlElement *geomTag, CompositeMap &comps);
+    void WriteComposites(TiXmlElement *geomTag,
+                         CompositeMap &comps,
+                         std::map<int, std::string> &compLabels);
     void WriteDomain(TiXmlElement *geomTag,
                      std::map<int, CompositeMap> &domain);
     void WriteDefaultExpansion(TiXmlElement *root);
