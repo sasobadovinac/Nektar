@@ -1220,57 +1220,61 @@ void OutputVtk::OutputFromExpLowOrderMultiBlock(po::variables_map &vm,
     }
 
     // Fill boundary multi blocks from composites
-    SpatialDomains::BoundaryConditions bcs(m_f->m_session,
-                                           m_f->m_exp[0]->GetGraph());
-    const SpatialDomains::BoundaryRegionCollection &bregions =
-        bcs.GetBoundaryRegions();
-
-    vtkNew<vtkMultiBlockDataSet> mainBoundaryBlock;
-    std::vector<vtkNew<vtkMultiBlockDataSet>> boundaryMultiBlocks(
-        bregions.size());
-    int cnt = 0;
-    for (auto &boundary : bregions)
+    if(m_f->m_session)
     {
-        // Loop over composites and see if in boundary
-        for (auto &comp : composites)
+        SpatialDomains::BoundaryConditions bcs(m_f->m_session,
+                                               m_f->m_exp[0]->GetGraph());
+        const SpatialDomains::BoundaryRegionCollection &bregions =
+            bcs.GetBoundaryRegions();
+
+        vtkNew<vtkMultiBlockDataSet> mainBoundaryBlock;
+        std::vector<vtkNew<vtkMultiBlockDataSet>> boundaryMultiBlocks(
+            bregions.size());
+        int cnt = 0;
+        for (auto &boundary : bregions)
         {
-            int compId = comp.first;
-            if (boundary.second->find(compId) != boundary.second->end())
+            // Loop over composites and see if in boundary
+            for (auto &comp : composites)
             {
-                unsigned int nBlock =
-                    boundaryMultiBlocks[cnt]->GetNumberOfBlocks();
-                boundaryMultiBlocks[cnt]->SetBlock(
-                    nBlock, vtkMesh[compId].GetPointer());
-                boundaryMultiBlocks[cnt]->GetMetaData(nBlock)->Set(
-                    vtkCompositeDataSet::NAME(),
-                    compositeNames[compId].c_str());
-                compSet.insert(compId);
+                int compId = comp.first;
+                if (boundary.second->find(compId) != boundary.second->end())
+                {
+                    unsigned int nBlock =
+                        boundaryMultiBlocks[cnt]->GetNumberOfBlocks();
+                    boundaryMultiBlocks[cnt]->SetBlock(
+                        nBlock, vtkMesh[compId].GetPointer());
+                    boundaryMultiBlocks[cnt]->GetMetaData(nBlock)->Set(
+                        vtkCompositeDataSet::NAME(),
+                        compositeNames[compId].c_str());
+                    compSet.insert(compId);
+                }
             }
+
+            unsigned int nBlock = mainBoundaryBlock->GetNumberOfBlocks();
+            mainBoundaryBlock->SetBlock(
+                nBlock, boundaryMultiBlocks[cnt++].GetPointer());
+
+            // Set name as boundary label if it exists otherwise index ID
+            std::string name = "Boundary ID " + std::to_string(boundary.first);
+            auto blabels     = bcs.GetBoundaryLabels();
+            auto oIt         = blabels.find(boundary.first);
+            if (oIt != blabels.end())
+            {
+                name = oIt->second;
+            }
+
+            mainBoundaryBlock->GetMetaData(nBlock)->Set(
+                vtkCompositeDataSet::NAME(), name.c_str());
         }
 
-        unsigned int nBlock = mainBoundaryBlock->GetNumberOfBlocks();
-        mainBoundaryBlock->SetBlock(nBlock,
-                                    boundaryMultiBlocks[cnt++].GetPointer());
-
-        // Set name as boundary label if it exists otherwise index ID
-        std::string name = "Boundary ID " + std::to_string(boundary.first);
-        auto blabels     = bcs.GetBoundaryLabels();
-        auto oIt         = blabels.find(boundary.first);
-        if (oIt != blabels.end())
+        if (mainBoundaryBlock->GetNumberOfBlocks() != 0)
         {
-            name = oIt->second;
+            auto nBlock =
+                static_cast<unsigned int>(mainBlock->GetNumberOfBlocks());
+            mainBlock->SetBlock(nBlock, mainBoundaryBlock.GetPointer());
+            mainBlock->GetMetaData(nBlock)->Set(vtkCompositeDataSet::NAME(),
+                                                "Boundaries");
         }
-
-        mainBoundaryBlock->GetMetaData(nBlock)->Set(vtkCompositeDataSet::NAME(),
-                                                    name.c_str());
-    }
-
-    if (mainBoundaryBlock->GetNumberOfBlocks() != 0)
-    {
-        auto nBlock = static_cast<unsigned int>(mainBlock->GetNumberOfBlocks());
-        mainBlock->SetBlock(nBlock, mainBoundaryBlock.GetPointer());
-        mainBlock->GetMetaData(nBlock)->Set(vtkCompositeDataSet::NAME(),
-                                            "Boundaries");
     }
 
     // Include all other composites (not domains or boundaries)
