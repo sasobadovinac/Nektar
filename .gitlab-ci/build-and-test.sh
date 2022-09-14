@@ -6,7 +6,7 @@ if [[ $BUILD_TYPE == "default" ]]; then
     BUILD_OPTS="-DCMAKE_BUILD_TYPE=Release \
         -DNEKTAR_TEST_ALL=ON \
         -DNEKTAR_ERROR_ON_WARNINGS=OFF"
-elif [[ $BUILD_TYPE == "full" ]] || [[ $BUILD_TYPE == "full_py3" ]]; then
+elif [[ $BUILD_TYPE == "full" ]]; then
     BUILD_OPTS="-DCMAKE_BUILD_TYPE:STRING=Debug \
         -DNEKTAR_FULL_DEBUG:BOOL=ON \
         -DNEKTAR_TEST_ALL:BOOL=ON \
@@ -29,6 +29,17 @@ elif [[ $BUILD_TYPE == "full" ]] || [[ $BUILD_TYPE == "full_py3" ]]; then
     elif [[ $BUILD_SIMD == "avx512" ]]; then
         BUILD_OPTS="$BUILD_OPTS -DNEKTAR_ENABLE_SIMD_AVX512:BOOL=ON"
     fi
+fi
+
+# Custom compiler
+if [[ $BUILD_CC != "" ]]; then
+   BUILD_OPTS="$BUILD_OPTS -DCMAKE_C_COMPILER=${BUILD_CC}"
+fi
+if [[ $BUILD_CXX != "" ]]; then
+   BUILD_OPTS="$BUILD_OPTS -DCMAKE_CXX_COMPILER=${BUILD_CXX}"
+fi
+if [[ $BUILD_FC != "" ]]; then
+   BUILD_OPTS="$BUILD_OPTS -DCMAKE_Fortran_COMPILER=${BUILD_FC}"
 fi
 
 rm -rf build && mkdir -p build && (cd build && cmake -G 'Unix Makefiles' $BUILD_OPTS ..) && \
