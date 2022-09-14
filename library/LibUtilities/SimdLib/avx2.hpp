@@ -190,6 +190,8 @@ template <typename T> struct avx2Int8
         _data = _mm256_set1_epi32(rhs);
     }
 
+    inline avx2Int8 &operator=(const avx2Int8 &) = default;
+
     // subscript
     // subscriptsoperators are convienient but expensive
     // should not be used in optimized kernels
@@ -232,7 +234,7 @@ template <typename T> struct avx2Long4
     // storage
     vectorType _data;
 
-    // ctors
+    // ctorsv
     inline avx2Long4()                     = default;
     inline avx2Long4(const avx2Long4 &rhs) = default;
     inline avx2Long4(const vectorType &rhs) : _data(rhs)
@@ -296,6 +298,8 @@ template <typename T> struct avx2Long4
     {
         _data = _mm256_set1_epi64x(rhs);
     }
+
+    inline avx2Long4 &operator=(const avx2Long4 &) = default;
 
     // subscript
     // subscript operators are convienient but expensive
@@ -466,6 +470,8 @@ struct avx2Double4
     }
 
     // unary ops
+    inline avx2Double4 &operator=(const avx2Double4 &) = default;
+
     inline void operator+=(avx2Double4 rhs)
     {
         _data = _mm256_add_pd(_data, rhs._data);
@@ -721,6 +727,8 @@ struct avx2Float8
     }
 
     // unary ops
+    inline avx2Float8 &operator=(const avx2Float8 &) = default;
+
     inline void operator+=(avx2Float8 rhs)
     {
         _data = _mm256_add_ps(_data, rhs._data);

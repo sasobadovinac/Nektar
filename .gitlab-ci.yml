@@ -79,6 +79,9 @@ include:
     - docker run --name $CONTAINER_NAME -v ccache:/cache
       -e "BUILD_TYPE=$BUILD_TYPE"
       -e "BUILD_SIMD=$BUILD_SIMD"
+      -e "BUILD_CC=$BUILD_CC"
+      -e "BUILD_CXX=$BUILD_CXX"
+      -e "BUILD_FC=$BUILD_FC"
       -e "NUM_CPUS=$NUM_CPUS"
       -e "CCACHE_DIR=$CCACHE_DIR"
       $ENV_IMAGE
@@ -166,7 +169,7 @@ include:
 bullseye-default-build-env:
   <<: *build-env-debian-template-default
 
-bullseye-full_py3-build-env:
+bullseye-full-build-env:
   <<: *build-env-debian-template-full
   variables:
     OS_DISTRO: debian
@@ -191,21 +194,21 @@ bullseye-default-build-and-test:
   <<: *build-and-test-template
   needs: ["bullseye-default-build-env"]
 
-bullseye-full_py3-build-and-test:
+bullseye-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["bullseye-full_py3-build-env"]
+  needs: ["bullseye-full-build-env"]
 
-bullseye-full_py3-avx2-build-and-test:
+bullseye-full-avx2-build-and-test:
   <<: *build-and-test-template
-  needs: ["bullseye-full_py3-build-env"]
+  needs: ["bullseye-full-build-env"]
   variables:
     BUILD_SIMD: avx2
   tags:
     - avx2
 
-bullseye-full_py3-avx512-build-and-test:
+bullseye-full-avx512-build-and-test:
   <<: *build-and-test-template
-  needs: ["bullseye-full_py3-build-env"]
+  needs: ["bullseye-full-build-env"]
   variables:
     BUILD_SIMD: avx512
   tags:
@@ -236,13 +239,13 @@ bullseye-default-warnings:
   <<: *compiler-warning-template
   needs: ["bullseye-default-build-and-test"]
 
-bullseye-full_py3-warnings:
+bullseye-full-warnings:
   <<: *compiler-warning-template
-  needs: ["bullseye-full_py3-build-and-test"]
+  needs: ["bullseye-full-build-and-test"]
 
-bullseye-full_py3-avx2-warnings:
+bullseye-full-avx2-warnings:
   <<: *compiler-warning-template
-  needs: ["bullseye-full_py3-avx2-build-and-test"]
+  needs: ["bullseye-full-avx2-build-and-test"]
 
 buster-default-warnings:
   <<: *compiler-warning-template
@@ -339,14 +342,14 @@ tutorials-build:
 jammy-default-build-env:
   <<: *build-env-ubuntu-template-default
 
-jammy-full_py3-build-env:
+jammy-full-build-env:
   <<: *build-env-ubuntu-template-full
   needs: ["jammy-default-build-env"]
 
 focal-default-build-env:
   <<: *build-env-ubuntu-template-default
 
-focal-full_py3-build-env:
+focal-full-build-env:
   <<: *build-env-ubuntu-template-full
   needs: ["focal-default-build-env"]
 
@@ -361,17 +364,44 @@ jammy-default-build-and-test:
   <<: *build-and-test-template
   needs: ["jammy-default-build-env"]
 
-jammy-full_py3-build-and-test:
+jammy-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["jammy-full_py3-build-env"]
+  needs: ["jammy-full-build-env"]
+
+jammy-full-clang14-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full-build-env"]
+  variables:
+    BUILD_CC: clang-14
+    BUILD_CXX: clang++-14
+
+jammy-full-clang14-avx2-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full-build-env"]
+  variables:
+    BUILD_CC: clang-14
+    BUILD_CXX: clang++-14
+    BUILD_SIMD: avx2
+  tags:
+    - avx2
+
+jammy-full-clang14-avx512-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full-build-env"]
+  variables:
+    BUILD_CC: clang-14
+    BUILD_CXX: clang++-14
+    BUILD_SIMD: avx512
+  tags:
+    - avx512
 
 focal-default-build-and-test:
   <<: *build-and-test-template
   needs: ["focal-default-build-env"]
 
-focal-full_py3-build-and-test:
+focal-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["focal-full_py3-build-env"]
+  needs: ["focal-full-build-env"]
 
 bionic-default-build-and-test:
   <<: *build-and-test-template
@@ -387,17 +417,29 @@ jammy-default-warnings:
   <<: *compiler-warning-template
   needs: ["jammy-default-build-and-test"]
 
-jammy-full_py3-warnings:
+jammy-full-warnings:
   <<: *compiler-warning-template
-  needs: ["jammy-full_py3-build-and-test"]
+  needs: ["jammy-full-build-and-test"]
+
+jammy-full-clang14-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full-clang14-build-and-test"]
+
+jammy-full-clang14-avx2-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full-clang14-avx2-build-and-test"]
+
+jammy-full-clang14-avx512-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full-clang14-avx512-build-and-test"]
 
 focal-default-warnings:
   <<: *compiler-warning-template
   needs: ["focal-default-build-and-test"]
 
-focal-full_py3-warnings:
+focal-full-warnings:
   <<: *compiler-warning-template
-  needs: ["focal-full_py3-build-and-test"]
+  needs: ["focal-full-build-and-test"]
 
 bionic-default-warnings:
   <<: *compiler-warning-template
