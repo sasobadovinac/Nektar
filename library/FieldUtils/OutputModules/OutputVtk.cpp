@@ -1220,6 +1220,7 @@ void OutputVtk::OutputFromExpLowOrderMultiBlock(po::variables_map &vm,
     }
 
     // Fill boundary multi blocks from composites
+    int cnt = 0;
     if(m_f->m_session)
     {
         SpatialDomains::BoundaryConditions bcs(m_f->m_session,
@@ -1230,7 +1231,6 @@ void OutputVtk::OutputFromExpLowOrderMultiBlock(po::variables_map &vm,
         vtkNew<vtkMultiBlockDataSet> mainBoundaryBlock;
         std::vector<vtkNew<vtkMultiBlockDataSet>> boundaryMultiBlocks(
             bregions.size());
-        int cnt = 0;
         for (auto &boundary : bregions)
         {
             // Loop over composites and see if in boundary
