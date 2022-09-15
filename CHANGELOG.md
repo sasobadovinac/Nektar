@@ -21,6 +21,7 @@ v5.3.0
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
+- Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
 
 v5.2.0
 ------
