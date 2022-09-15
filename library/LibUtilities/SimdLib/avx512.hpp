@@ -239,8 +239,6 @@ template <typename T> struct avx512Int16
         _data = _mm512_set1_epi32(rhs);
     }
 
-    inline avx512Int16 &operator=(const avx512Int16 &) = default;
-
     // subscript
     // subscript operators are convienient but expensive
     // should not be used in optimized kernels
@@ -355,8 +353,6 @@ template <typename T> struct avx512Long8
     {
         _data = _mm512_set1_epi64(rhs);
     }
-
-    inline avx512Long8 &operator=(const avx512Long8 &) = default;
 
     // subscript
     // subscript operators are convienient but expensive
@@ -511,9 +507,6 @@ struct avx512Double8
         store(tmp, is_aligned);
         return tmp[i];
     }
-
-    // unary ops
-    inline avx512Double8 &operator=(const avx512Double8 &) = default;
 
     inline void operator+=(avx512Double8 rhs)
     {
@@ -769,9 +762,6 @@ struct avx512Float16
         scalarType *tmp = reinterpret_cast<scalarType *>(&_data);
         return tmp[i];
     }
-
-    // unary ops
-    inline avx512Float16 &operator=(const avx512Float16 &) = default;
 
     inline void operator+=(avx512Float16 rhs)
     {

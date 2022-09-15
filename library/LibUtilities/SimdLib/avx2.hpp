@@ -233,8 +233,6 @@ template <typename T> struct avx2Int8
         _data = _mm256_set1_epi32(rhs);
     }
 
-    inline avx2Int8 &operator=(const avx2Int8 &) = default;
-
     // subscript
     // subscriptsoperators are convienient but expensive
     // should not be used in optimized kernels
@@ -344,8 +342,6 @@ template <typename T> struct avx2Long4
     {
         _data = _mm256_set1_epi64x(rhs);
     }
-
-    inline avx2Long4 &operator=(const avx2Long4 &) = default;
 
     // subscript
     // subscript operators are convienient but expensive
@@ -517,9 +513,6 @@ struct avx2Double4
         store(tmp, is_aligned);
         return tmp[i];
     }
-
-    // unary ops
-    inline avx2Double4 &operator=(const avx2Double4 &) = default;
 
     inline void operator+=(avx2Double4 rhs)
     {
@@ -777,9 +770,6 @@ struct avx2Float8
         scalarType *tmp = reinterpret_cast<scalarType *>(&_data);
         return tmp[i];
     }
-
-    // unary ops
-    inline avx2Float8 &operator=(const avx2Float8 &) = default;
 
     inline void operator+=(avx2Float8 rhs)
     {
