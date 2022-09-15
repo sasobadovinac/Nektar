@@ -267,6 +267,18 @@ In the HDG system, we take the block corresponding to each face and invert
 it. Each of these inverse blocks then forms one of the diagonal components of
 the block matrix $\mathbf{M}^{-1}$.
 
+Applied to the full matrix system $\mathbf{H}$, the preconditioner additionally includes the inverse of the interior modes $\mathbf{H}_{ii}$ and is defined by:
+%
+\[
+\mathbf{M}^{-1}=\left[\begin{array}{cccc}
+(\mathbf{H_{bb}})^{-1}_{vv} & 0 & 0 & 0 \\
+0 & (\mathbf{H_{bb}})^{-1}_{eb} & 0 & 0 \\
+0 & 0 & (\mathbf{H_{bb}})^{-1}_{fb} & 0 \\
+0 & 0 & 0 & (\mathbf{H}_{ii})^{-1}
+\end{array}\right]
+\]
+%
+
 \subsection{Low energy}
 
 Low energy basis preconditioning follows the methodology proposed by Sherwin \&
