@@ -21,6 +21,7 @@ v5.3.0
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
+- Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
 
 v5.2.0
 ------
