@@ -167,11 +167,18 @@ void NavierStokesCFE::v_DoDiffusion(
     // Set artificial viscosity based on NS viscous tensor
     if (m_is_shockCaptPhys)
     {
-        Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
-        GetDivCurlSquared(m_fields, inarray, div, curlSquare, pFwd, pBwd);
+        if (m_varConv->GetFlagCalcDivCurl())
+        {
+            Array<OneD, NekDouble> div(npoints), curlSquare(npoints);
+            GetDivCurlSquared(m_fields, inarray, div, curlSquare, pFwd, pBwd);
 
-        // Set volume and trace artificial viscosity
-        m_varConv->SetAv(m_fields, inarray, div, curlSquare);
+            // Set volume and trace artificial viscosity
+            m_varConv->SetAv(m_fields, inarray, div, curlSquare);
+        }
+        else
+        {
+            m_varConv->SetAv(m_fields, inarray);
+        }
     }
 
     if (m_is_diffIP)
@@ -240,6 +247,12 @@ void NavierStokesCFE::v_DoDiffusion(
             Vmath::Vadd(npoints, outarrayDiff[i], 1, outarray[i], 1,
                         outarray[i], 1);
         }
+    }
+
+    // Add artificial diffusion through Laplacian operator
+    if (m_artificialDiffusion)
+    {
+        m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
     }
 }
 
@@ -947,6 +960,18 @@ void NavierStokesCFE::v_ExtraFldOutput(
             variables.push_back("ArtificialVisc");
             fieldcoeffs.push_back(muavFwd);
         }
+    }
+}
+
+bool NavierStokesCFE::SupportsShockCaptType(const std::string type) const
+{
+    if (type == "NonSmooth" || type == "Physical" || type == "Off")
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 } // namespace Nektar

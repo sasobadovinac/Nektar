@@ -42,7 +42,7 @@ using namespace Nektar::LibUtilities;
 CommSharedPtr MPICOMM = CommSharedPtr();
 #endif
 
-/**
+/*
  * @brief Thin wrapper around SessionReader to provide a nicer Pythonic
  * interface.
  *
@@ -52,6 +52,7 @@ CommSharedPtr MPICOMM = CommSharedPtr();
  *
  * which is more natural in Python.
  */
+
 SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
 {
     int i, argc = py::len(ns), bufSize = 0;
@@ -111,6 +112,18 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
     return sr;
 }
 
+void SessionReader_SetParameterInt(SessionReaderSharedPtr session,
+                                   std::string paramName, int paramValue)
+{
+    session->SetParameter(paramName, paramValue);
+}
+
+void SessionReader_SetParameterDouble(SessionReaderSharedPtr session,
+                                      std::string paramName, double paramValue)
+{
+    session->SetParameter(paramName, paramValue);
+}
+
 /**
  * @brief SessionReader exports.
  *
@@ -119,6 +132,7 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
  *   - SessionReader::GetSessionName to return the session name
  *   - SessionReader::Finalise to deal with finalising things
  */
+
 void export_SessionReader()
 {
     py::class_<SessionReader, std::shared_ptr<SessionReader>,
@@ -136,10 +150,13 @@ void export_SessionReader()
         .def("GetParameter", &SessionReader::GetParameter,
              py::return_value_policy<py::return_by_value>())
 
+        .def("SetParameter", SessionReader_SetParameterInt)
+        .def("SetParameter", SessionReader_SetParameterDouble)
+
         .def("GetVariable", &SessionReader::GetVariable,
              py::return_value_policy<py::copy_const_reference>())
 
         .def("GetComm", &SessionReader::GetComm)
 
-        ;
+        .def("GetSharedFilesystem", &SessionReader::GetSharedFilesystem);
 }

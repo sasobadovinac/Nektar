@@ -196,12 +196,16 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
-        const Array<OneD, Array<OneD, NekDouble>> &pBwd);
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) = 0;
 
     virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
         const NekDouble SpeedSoundFactor);
 
     virtual void v_SteadyStateResidual(int step, Array<OneD, NekDouble> &L2);
+
+    // Virtual function that returns true if derived class supports a given
+    // shock capturing method
+    virtual bool SupportsShockCaptType(const std::string type) const = 0;
 };
 } // namespace Nektar
 #endif
