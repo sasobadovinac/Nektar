@@ -182,7 +182,7 @@ template <typename T> struct avx512Int16
     }
 
     // copy assignment
-    inline avx512Int16& operator=(const avx512Int16&) = default;
+    inline avx512Int16 &operator=(const avx512Int16 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -297,7 +297,7 @@ template <typename T> struct avx512Long8
     }
 
     // copy assignment
-    inline avx512Long8& operator=(const avx512Long8&) = default;
+    inline avx512Long8 &operator=(const avx512Long8 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -406,7 +406,7 @@ struct avx512Double8
     }
 
     // copy assignment
-    inline avx512Double8& operator=(const avx512Double8&) = default;
+    inline avx512Double8 &operator=(const avx512Double8 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -668,7 +668,7 @@ struct avx512Float16
     }
 
     // copy assignment
-    inline avx512Float16& operator=(const avx512Float16&) = default;
+    inline avx512Float16 &operator=(const avx512Float16 &) = default;
 
     // store
     inline void store(scalarType *p) const

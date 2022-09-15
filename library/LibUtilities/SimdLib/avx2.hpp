@@ -62,9 +62,6 @@ template <typename scalarType, int width = 0> struct avx2
 
 #if defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
 
-
-
-
 // forward declaration of concrete types
 template <typename T> struct avx2Long4;
 template <typename T> struct avx2Int8;
@@ -184,7 +181,7 @@ template <typename T> struct avx2Int8
     }
 
     // copy assignment
-    inline avx2Int8& operator=(const avx2Int8&) = default;
+    inline avx2Int8 &operator=(const avx2Int8 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -294,7 +291,7 @@ template <typename T> struct avx2Long4
     }
 
     // copy assignment
-    inline avx2Long4& operator=(const avx2Long4&) = default;
+    inline avx2Long4 &operator=(const avx2Long4 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -398,7 +395,7 @@ struct avx2Double4
     }
 
     // copy assignment
-    inline avx2Double4& operator=(const avx2Double4&) = default;
+    inline avx2Double4 &operator=(const avx2Double4 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -668,7 +665,7 @@ struct avx2Float8
     }
 
     // copy assignment
-    inline avx2Float8& operator=(const avx2Float8&) = default;
+    inline avx2Float8 &operator=(const avx2Float8 &) = default;
 
     // store
     inline void store(scalarType *p) const
