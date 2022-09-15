@@ -2702,7 +2702,8 @@ void MeshGraphXml::WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
     geomTag->LinkEndChild(curveTag);
 }
 
-void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps)
+void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps,
+                                   std::map<int, std::string> &compLabels)
 {
     TiXmlElement *compTag = new TiXmlElement("COMPOSITE");
 
@@ -2715,6 +2716,10 @@ void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps)
 
         TiXmlElement *c = new TiXmlElement("C");
         c->SetAttribute("ID", cIt.first);
+        if (!m_compositesLabels[cIt.first].empty())
+        {
+            c->SetAttribute("NAME", compLabels[cIt.first]);
+        }
         c->LinkEndChild(new TiXmlText(GetCompositeString(cIt.second)));
         compTag->LinkEndChild(c);
     }
@@ -2831,7 +2836,7 @@ void MeshGraphXml::WriteGeometry(std::string &outfilename, bool defaultExp,
         geomTag->LinkEndChild(elmtTag);
     }
     WriteCurves(geomTag, m_curvedEdges, m_curvedFaces);
-    WriteComposites(geomTag, m_meshComposites);
+    WriteComposites(geomTag, m_meshComposites, m_compositesLabels);
     WriteDomain(geomTag, m_domain);
 
     if (defaultExp)
@@ -3112,6 +3117,7 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
         WriteCurves(geomTag, localCurveEdge, localCurveFace);
 
         CompositeMap localComp;
+        std::map<int, std::string> localCompLabels;
 
         for (auto &j : m_meshComposites)
         {
@@ -3129,10 +3135,14 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
             if (comp->m_geomVec.size())
             {
                 localComp[j.first] = comp;
+                if (!m_compositesLabels[j.first].empty())
+                {
+                    localCompLabels[j.first] = m_compositesLabels[j.first];
+                }
             }
         }
 
-        WriteComposites(geomTag, localComp);
+        WriteComposites(geomTag, localComp, localCompLabels);
 
         map<int, CompositeMap> domain;
         for (auto &j : localComp)

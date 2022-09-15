@@ -14,6 +14,7 @@ v5.3.0
 - Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
 - Added float and restore avx512 back-end for SimdLib (!1387)
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
+- Fix missing copy assignment operator warnings in clang 13+ (!1391)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -32,6 +33,11 @@ v5.3.0
 - Multi domain input/output for Nekpp and HDF5 file formats (!1323)
 
 v5.2
+**NekMesh**
+- Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
+exporting in .vtu format (!1386)
+- Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
+
 v5.2.0
 ------
 **Library**
@@ -73,6 +79,7 @@ v5.2.0
 - Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
 - Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
 - Equation types are registered to the session reader (!1344)
+- Added Block-Preconditioner for Full Matrix solve (!1350)
 
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)

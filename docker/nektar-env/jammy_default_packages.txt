@@ -1,4 +1,5 @@
 ccache
+clang-14
 cmake
 g++
 libboost-filesystem-dev
