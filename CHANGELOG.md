@@ -22,6 +22,7 @@ v5.3.0
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
 - Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
+- Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
 
 v5.2.0
 ------
