@@ -9,7 +9,7 @@ RUN echo "deb http://deb.debian.org/debian bullseye non-free" > \
         apt-get install -y $(cat packages.txt) \
         && rm -rf /var/lib/apt/lists/*
 
-# Patch security policy to allow PDF conversion by ImageMagick
-RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/g' /etc/ImageMagick-6/policy.xml
+# Patch security policy to allow PDF, EPS and PS conversion by ImageMagick
+RUN sed -i 's/rights="none" pattern="\(PDF\|PS\|EPS\)"/rights="read|write" pattern="\1"/g' /etc/ImageMagick-6/policy.xml
 
 USER nektar:nektar

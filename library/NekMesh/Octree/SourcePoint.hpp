@@ -47,7 +47,7 @@ namespace NekMesh
 
 enum SPType
 {
-    eCBoundary,  // on a curved boundary
+    eCBoundary, // on a curved boundary
     ePBoundary, // on a planar boundary (R=inf)
     eSrcPoint   // source point
 };
@@ -66,7 +66,9 @@ public:
         m_loc = l;
     }
 
-    virtual ~SPBase(){}
+    virtual ~SPBase()
+    {
+    }
 
     SPType GetType()
     {
@@ -96,7 +98,7 @@ public:
     bool HasDelta()
     {
         bool ret;
-        if(m_type == eCBoundary || m_type == eSrcPoint)
+        if (m_type == eCBoundary || m_type == eSrcPoint)
         {
             ret = true;
         }
@@ -110,7 +112,7 @@ public:
     bool Isboundary()
     {
         bool ret;
-        if(m_type == eCBoundary || m_type == ePBoundary)
+        if (m_type == eCBoundary || m_type == ePBoundary)
         {
             ret = true;
         }
@@ -225,8 +227,8 @@ public:
 
     CPointSharedPtr ChangeType()
     {
-        CPointSharedPtr ret = MemoryManager<CPoint>::
-            AllocateSharedPtr(sid, m_uv, m_loc, -1.0);
+        CPointSharedPtr ret =
+            MemoryManager<CPoint>::AllocateSharedPtr(sid, m_uv, m_loc, -1.0);
         return ret;
     }
 
@@ -240,7 +242,7 @@ private:
 typedef std::shared_ptr<BPoint> BPointSharedPtr;
 
 /**
- * @brief class for a general source point 
+ * @brief class for a general source point
  */
 class SrcPoint : public SPBase
 {
@@ -250,8 +252,7 @@ public:
     /**
      * @brief constructor for a boundary point without delta
      */
-    SrcPoint(Array<OneD, NekDouble> l, NekDouble d)
-            : SPBase(l), m_delta(d)
+    SrcPoint(Array<OneD, NekDouble> l, NekDouble d) : SPBase(l), m_delta(d)
     {
         m_type = eSrcPoint;
     }
@@ -282,7 +283,7 @@ private:
 };
 typedef std::shared_ptr<SrcPoint> SrcPointSharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

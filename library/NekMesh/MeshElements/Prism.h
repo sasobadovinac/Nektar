@@ -35,8 +35,8 @@
 #ifndef NEKMESH_MESHELEMENTS_PRISM
 #define NEKMESH_MESHELEMENTS_PRISM
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -59,9 +59,8 @@ public:
     /// Element type
     static LibUtilities::ShapeType m_type;
 
-    NEKMESH_EXPORT Prism(ElmtConfig pConf,
-                              std::vector<NodeSharedPtr> pNodeList,
-                              std::vector<int> pTagList);
+    NEKMESH_EXPORT Prism(ElmtConfig pConf, std::vector<NodeSharedPtr> pNodeList,
+                         std::vector<int> pTagList);
     NEKMESH_EXPORT Prism(const Prism &pSrc);
     NEKMESH_EXPORT virtual ~Prism()
     {
@@ -74,12 +73,9 @@ public:
     NEKMESH_EXPORT virtual StdRegions::Orientation GetEdgeOrient(
         int edgeId, EdgeSharedPtr edge);
     NEKMESH_EXPORT virtual void MakeOrder(
-        int                                order,
-        SpatialDomains::GeometrySharedPtr  geom,
-        LibUtilities::PointsType           pType,
-        int                                coordDim,
-        int                               &id,
-        bool                               justConfig = false);
+        int order, SpatialDomains::GeometrySharedPtr geom,
+        LibUtilities::PointsType pType, int coordDim, int &id,
+        bool justConfig = false);
 
     NEKMESH_EXPORT static unsigned int GetNumNodes(ElmtConfig pConf);
     NEKMESH_EXPORT virtual int GetFaceVertex(int i, int j)
@@ -99,7 +95,7 @@ protected:
 private:
     static int m_faceIds[5][4];
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

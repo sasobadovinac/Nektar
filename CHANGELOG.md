@@ -1,16 +1,29 @@
 Changelog
 =========
 
-v6.0.0
-
-v5.3
+v5.3.0
 ------
 **Library**
-- Fixed avx512 back-end for SimdLib (!1333)
+- Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
+- Added float and restore avx512 back-end for SimdLib (!1387)
+- Fix namespace pollution which causes boost 1.74+ errors (!1389)
+- Fix missing copy assignment operator warnings in clang 13+ (!1391)
 
-**FieldConver**
-- Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
-- Fixed the output field names of WSS module of FieldConvert
+**Python**
+- Add wrappers for Interpreter and Equation classes (!1329)
+
+**CompressibleFlowSolver**
+- Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (!1372)
+- Added Physical AV to the implicit Navier Stokes solver (!1372)
+
+**CompressibleFlowSolver**
+- The Incomplete IP method was made the default method for the IP method (!1377).
+
+**NekMesh**
+- Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
+exporting in .vtu format (!1386)
+- Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
+- Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
 
 v5.2.0
 ------
@@ -26,31 +39,61 @@ v5.2.0
 - Added a dummy output module OutputStdOut for NekMesh utilities that don't require an output file (!1318)
 - Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
 - Fix cmake SIMD enable/disable options based on architecture (!1320)
+- Restrucutred the communicators to reduce direct dependence on session file communicator (!1337)
 - Fixed SIMD mask test (!1324)
 - Fix memory leak in Timer.cpp (!1330)
 - Fix cmake CWIPI option to remove Fortran check (!1331)
 - Fix excessive verbose output in GetBndElmtExpansions method (!1341)
 - Timer class was updated with safety checks to avoid wrong measurements (!1347)
 - Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
+- Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
+- Reformat code with clang-format (!1359)
+- Remove unnecessary IterPerExp methods (!1366)
+- Fix erronous call to FwdTrans from MR 1366 (!1374)
+- Fixed avx512 back-end for SimdLib (!1333)
+- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
+- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
+- Fixed incorrect summary output for diffusion/reaction terms (!1383)
 
 **FieldConvert**
 - Add calculation of CFL number for the incompressilbe flow (!1332)
+- Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+- Fixed the output field names of WSS module of FieldConvert (!1352)
+- Add VTU output using VTK library (high-order & multi-block options) (!1343)
 
 **IncNavierStokesSolver**
 - Added Boundary conditions for moving reference frame (!1305)
 - Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
 - Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
+- Equation types are registered to the session reader (!1344)
+- Added Block-Preconditioner for Full Matrix solve (!1350)
 
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
 
+**PulseWaveSolver**
+- Parallelised solver (!1337)
+	
 **NekMesh**
 - Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
 - Small bug-fix for Python API for unused configuration options (!1348)
+- Fix bug in ProcessVarOpti/ElUtil for segfault on non-tri or tet meshes (!1381)
 
 **CompressibleFlowSolver**
 - Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
 - Added timers around important functions using the Timer class. Timers are available by specifying IO_Timer_Level > -1 (!1347)
+- Fixed bug in the calculation of the discontinuity penalty factor for the DiffusionIP implementation (!1368)
+
+**Documentation**
+- Fix images not being displayed in HTML documentation and tutorials (!1370)
+
+**CI**
+- Remove unused build options (!1360)
+- Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
+
+**Packaging**
+- Fix various issues with debian unstable and centos8 packaging (!1362)
+- Fix missing texlive package dependency for centos packaging (!1382)
 
 v5.1.1
 ------

@@ -40,10 +40,9 @@
 #include <arm_sve.h>
 #endif
 
-#include <vector>
 #include "allocator.hpp"
 #include "traits.hpp"
-
+#include <vector>
 
 namespace tinysimd
 {
@@ -51,8 +50,7 @@ namespace tinysimd
 namespace abi
 {
 
-template <typename scalarType>
-struct sve
+template <typename scalarType> struct sve
 {
     using type = void;
 };
@@ -65,14 +63,17 @@ struct sve
 // from VLA to VLST
 // C++ does not allow for incomplete class member types
 // to get around that we force a known size at compile time
-typedef svfloat64_t svfloat64_vlst_t __attribute__((arm_sve_vector_bits(__ARM_FEATURE_SVE_BITS)));
-typedef svint64_t svint64_vlst_t __attribute__((arm_sve_vector_bits(__ARM_FEATURE_SVE_BITS)));
-typedef svuint64_t svuint64_vlst_t __attribute__((arm_sve_vector_bits(__ARM_FEATURE_SVE_BITS)));
-typedef svbool_t svbool_vlst_t __attribute__((arm_sve_vector_bits(__ARM_FEATURE_SVE_BITS)));
-
+typedef svfloat64_t svfloat64_vlst_t
+    __attribute__((arm_sve_vector_bits(__ARM_FEATURE_SVE_BITS)));
+typedef svint64_t svint64_vlst_t
+    __attribute__((arm_sve_vector_bits(__ARM_FEATURE_SVE_BITS)));
+typedef svuint64_t svuint64_vlst_t
+    __attribute__((arm_sve_vector_bits(__ARM_FEATURE_SVE_BITS)));
+typedef svbool_t svbool_vlst_t
+    __attribute__((arm_sve_vector_bits(__ARM_FEATURE_SVE_BITS)));
 
 // forward declaration of concrete types
-template<typename T> struct sveLong;
+template <typename T> struct sveLong;
 struct sveDouble;
 struct sveMask;
 
@@ -80,80 +81,85 @@ namespace abi
 {
 
 // mapping between abstract types and concrete types
-template <> struct sve<double> { using type = sveDouble; };
-template <> struct sve<std::int64_t> { using type = sveLong<std::int64_t>; };
-template <> struct sve<std::uint64_t> { using type = sveLong<std::uint64_t>; };
-template <> struct sve<bool> { using type = sveMask; };
+template <> struct sve<double>
+{
+    using type = sveDouble;
+};
+template <> struct sve<std::int64_t>
+{
+    using type = sveLong<std::int64_t>;
+};
+template <> struct sve<std::uint64_t>
+{
+    using type = sveLong<std::uint64_t>;
+};
+template <> struct sve<bool>
+{
+    using type = sveMask;
+};
 
 } // namespace abi
 
 // concrete types, could add enable if to allow only unsigned long and long...
-template<typename T>
-struct sveLong
+template <typename T> struct sveLong
 {
     static_assert(std::is_integral<T>::value && sizeof(T) == 8,
-        "8 bytes Integral required.");
+                  "8 bytes Integral required.");
 
-    static constexpr unsigned int alignment = __ARM_FEATURE_SVE_BITS/sizeof(T);
-    static constexpr unsigned int width = alignment/8;
+    static constexpr unsigned int alignment =
+        __ARM_FEATURE_SVE_BITS / sizeof(T);
+    static constexpr unsigned int width = alignment / 8;
 
     using scalarType = T;
-    using vectorType = typename std::conditional<
-        std::is_signed<T>::value, svint64_vlst_t, svuint64_vlst_t>::type;
+    using vectorType =
+        typename std::conditional<std::is_signed<T>::value, svint64_vlst_t,
+                                  svuint64_vlst_t>::type;
     using scalarArray = scalarType[width];
 
     // storage
     vectorType _data;
 
     // ctors
-    inline sveLong() = default;
-    inline sveLong(const sveLong& rhs) = default;
-    inline sveLong(const vectorType& rhs) : _data(rhs){}
+    inline sveLong()                   = default;
+    inline sveLong(const sveLong &rhs) = default;
+    inline sveLong(const vectorType &rhs) : _data(rhs)
+    {
+    }
     inline sveLong(const scalarType rhs)
     {
         _data = svdup_s64(rhs);
     }
-    explicit inline sveLong(scalarArray& rhs)
+    explicit inline sveLong(scalarArray &rhs)
     {
         _data = svld1(svptrue_b64(), rhs);
     }
 
     // store packed
-    inline void store(scalarType* p) const
+    inline void store(scalarType *p) const
     {
         svst1(svptrue_b64(), p, _data);
     }
     // refer to x86_64 implementations
     // sve has no requirements on alignment
     // nevertheless we should accept valid tags for compatibility
-    template 
-    <
-        typename TAG, 
-        typename std::enable_if<
-            is_load_tag<TAG>::value, bool
-        >::type = 0
-    >
-    inline void store(scalarType* p, TAG) const
+    template <typename TAG,
+              typename std::enable_if<is_load_tag<TAG>::value, bool>::type = 0>
+    inline void store(scalarType *p, TAG) const
     {
         svst1(svptrue_b64(), p, _data);
     }
 
     // load packed
-    inline void load(const scalarType* p)
+    inline void load(const scalarType *p)
     {
         _data = svld1(svptrue_b64(), p);
     }
     // refer to x86_64 implementations
     // sve has no requirements on alignment
     // nevertheless we should accept valid tags for compatibility
-    template 
-    <
-        typename TAG, 
-        typename std::enable_if<
-            is_load_tag<TAG>::value, bool
-        >::type = 0
-    >
-    inline void load(const scalarType* p, TAG)
+    template <typename TAG,
+              typename std::enable_if<is_load_tag<TAG>::value, bool>::type = 0>
+    inline void load(const scalarType *p, TAG)
     {
         _data = svld1(svptrue_b64(), p);
     }
@@ -187,48 +193,45 @@ struct sveLong
 
     inline void operator*=(sveLong rhs)
     {
-        _data =  svmul_x(svptrue_b64(), _data, rhs._data);
+        _data = svmul_x(svptrue_b64(), _data, rhs._data);
     }
 
     inline void operator/=(sveLong rhs)
     {
         _data = svdiv_x(svptrue_b64(), _data, rhs._data);
     }
-
 };
 
-template<typename T>
+template <typename T>
 inline sveLong<T> operator+(sveLong<T> lhs, sveLong<T> rhs)
 {
     return svadd_x(svptrue_b64(), lhs._data, rhs._data);
 }
 
-template<typename T>
-inline sveLong<T> operator+(sveLong<T> lhs, T rhs)
+template <typename T> inline sveLong<T> operator+(sveLong<T> lhs, T rhs)
 {
     return svadd_x(svptrue_b64(), lhs._data, sveLong<T>(rhs)._data);
 }
 
-template<typename T>
+template <typename T>
 inline sveLong<T> operator-(sveLong<T> lhs, sveLong<T> rhs)
 {
     return svsub_x(svptrue_b64(), lhs._data, rhs._data);
 }
 
-template<typename T>
+template <typename T>
 inline sveLong<T> operator*(sveLong<T> lhs, sveLong<T> rhs)
 {
     return svmul_x(svptrue_b64(), lhs._data, rhs._data);
 }
 
-template<typename T>
+template <typename T>
 inline sveLong<T> operator/(sveLong<T> lhs, sveLong<T> rhs)
 {
     return svdiv_x(svptrue_b64(), lhs._data, rhs._data);
 }
 
-template<typename T>
-inline sveLong<T> abs(sveLong<T> in)
+template <typename T> inline sveLong<T> abs(sveLong<T> in)
 {
     return svabs_x(svptrue_b64(), in._data);
 }
@@ -237,61 +240,54 @@ inline sveLong<T> abs(sveLong<T> in)
 
 struct sveDouble
 {
-    static constexpr unsigned int alignment = __ARM_FEATURE_SVE_BITS/sizeof(double);
-    static constexpr unsigned int width = alignment/8;
+    static constexpr unsigned int alignment =
+        __ARM_FEATURE_SVE_BITS / sizeof(double);
+    static constexpr unsigned int width = alignment / 8;
 
-    using scalarType = double;
-    using vectorType = svfloat64_vlst_t;
+    using scalarType  = double;
+    using vectorType  = svfloat64_vlst_t;
     using scalarArray = scalarType[width];
 
     // storage
     vectorType _data;
 
     // ctors
-    inline sveDouble() = default;
-    inline sveDouble(const sveDouble& rhs) = default;
-    inline sveDouble(const vectorType& rhs) : _data(rhs){}
+    inline sveDouble()                     = default;
+    inline sveDouble(const sveDouble &rhs) = default;
+    inline sveDouble(const vectorType &rhs) : _data(rhs)
+    {
+    }
     inline sveDouble(const scalarType rhs)
     {
         _data = svdup_f64(rhs);
     }
 
     // store packed
-    inline void store(scalarType* p) const
+    inline void store(scalarType *p) const
     {
         svst1_f64(svptrue_b64(), p, _data);
     }
     // refer to x86_64 implementations
     // sve has no requirements on alignment
     // nevertheless we should accept valid tags for compatibility
-    template 
-    <
-        typename T, 
-        typename std::enable_if<
-            is_load_tag<T>::value, bool
-        >::type = 0
-    >
-    inline void store(scalarType* p, T) const
+    template <typename T,
+              typename std::enable_if<is_load_tag<T>::value, bool>::type = 0>
+    inline void store(scalarType *p, T) const
     {
         svst1_f64(svptrue_b64(), p, _data);
     }
 
     // load packed
-    inline void load(const scalarType* p)
+    inline void load(const scalarType *p)
     {
         _data = svld1_f64(svptrue_b64(), p);
     }
     // refer to x86_64 implementations
     // sve has no requirements on alignment
     // nevertheless we should accept valid tags for compatibility
-    template 
-    <
-        typename T, 
-        typename std::enable_if<
-            is_load_tag<T>::value, bool
-        >::type = 0
-    >
-    inline void load(const scalarType* p, T)
+    template <typename T,
+              typename std::enable_if<is_load_tag<T>::value, bool>::type = 0>
+    inline void load(const scalarType *p, T)
     {
         _data = svld1_f64(svptrue_b64(), p);
     }
@@ -304,20 +300,20 @@ struct sveDouble
 
     // gather/scatter
     template <typename T>
-    inline void gather(scalarType const* p, const sveLong<T>& indices)
+    inline void gather(scalarType const *p, const sveLong<T> &indices)
     {
         _data = svld1_gather_index(svptrue_b64(), p, indices._data);
     }
 
     template <typename T>
-    inline void scatter(scalarType* out, const sveLong<T>& indices) const
+    inline void scatter(scalarType *out, const sveLong<T> &indices) const
     {
         svst1_scatter_index(svptrue_b64(), out, indices._data, _data);
     }
 
     // fma
     // this = this + a * b
-    inline void fma(const sveDouble& a, const sveDouble& b)
+    inline void fma(const sveDouble &a, const sveDouble &b)
     {
         _data = svmad_x(svptrue_b64(), a._data, b._data, _data);
     }
@@ -345,14 +341,13 @@ struct sveDouble
 
     inline void operator*=(sveDouble rhs)
     {
-        _data =  svmul_x(svptrue_b64(), _data, rhs._data);
+        _data = svmul_x(svptrue_b64(), _data, rhs._data);
     }
 
     inline void operator/=(sveDouble rhs)
     {
         _data = svdiv_x(svptrue_b64(), _data, rhs._data);
     }
-
 };
 
 inline sveDouble operator+(sveDouble lhs, sveDouble rhs)
@@ -400,10 +395,8 @@ inline sveDouble log(sveDouble in)
     return ret;
 }
 
-inline void load_interleave(
-    const double* in,
-    size_t dataLen,
-    std::vector<sveDouble, allocator<sveDouble>> &out)
+inline void load_interleave(const double *in, size_t dataLen,
+                            std::vector<sveDouble, allocator<sveDouble>> &out)
 {
 
     alignas(sveDouble::alignment) size_t tmp[sveDouble::width] = {};
@@ -412,7 +405,7 @@ inline void load_interleave(
     // (known at compile time)
     for (size_t i = 0; i < sveDouble::width; ++i)
     {
-        tmp[i] = i*dataLen;
+        tmp[i] = i * dataLen;
     }
 
     using index_t = sveLong<size_t>;
@@ -423,8 +416,8 @@ inline void load_interleave(
     size_t nBlocks = dataLen / 2;
     for (size_t i = 0; i < nBlocks; ++i)
     {
-        out[2*i + 0].gather(in, index0);
-        out[2*i + 1].gather(in, index1);
+        out[2 * i + 0].gather(in, index0);
+        out[2 * i + 1].gather(in, index1);
         index0 = index0 + 2ul;
         index1 = index1 + 2ul;
     }
@@ -437,10 +430,8 @@ inline void load_interleave(
     }
 }
 
-
 inline void deinterleave_store(
-    const std::vector<sveDouble, allocator<sveDouble>> &in,
-    size_t dataLen,
+    const std::vector<sveDouble, allocator<sveDouble>> &in, size_t dataLen,
     double *out)
 {
     alignas(sveDouble::alignment) size_t tmp[sveDouble::width] = {};
@@ -449,7 +440,7 @@ inline void deinterleave_store(
     // (known at compile time)
     for (size_t i = 0; i < sveDouble::width; ++i)
     {
-        tmp[i] = i*dataLen;
+        tmp[i] = i * dataLen;
     }
 
     using index_t = sveLong<size_t>;
@@ -476,7 +467,7 @@ struct sveMask : sveLong<std::uint64_t>
     // bring in ctors
     using sveLong::sveLong;
 
-    static constexpr scalarType true_v = -1;
+    static constexpr scalarType true_v  = -1;
     static constexpr scalarType false_v = 0;
 };
 

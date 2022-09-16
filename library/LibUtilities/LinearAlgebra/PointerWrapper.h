@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,16 +37,14 @@
 
 namespace Nektar
 {
-    /// \brief Specifies if the pointer passed to a NekMatrix or NekVector is copied into an internal 
-    ///         representation or used directly.
-    enum PointerWrapper 
-    { 
-        eWrapper, 
-        eCopy 
-    };
-}
+/// \brief Specifies if the pointer passed to a NekMatrix or NekVector is copied
+/// into an internal
+///         representation or used directly.
+enum PointerWrapper
+{
+    eWrapper,
+    eCopy
+};
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_POINTER_WRAPPER_H
-
-
-
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_POINTER_WRAPPER_H

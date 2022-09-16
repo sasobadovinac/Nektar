@@ -32,102 +32,106 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <UnitTests/util.h>
 #include <LibUtilities/LinearAlgebra/NekPoint.hpp>
-#include <boost/test/tools/floating_point_comparison.hpp>
-#include <boost/test/unit_test.hpp>
+#include <UnitTests/util.h>
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 
 namespace Nektar
 {
-    namespace UnitTests
+namespace UnitTests
+{
+class PointTestClass
+{
+public:
+    PointTestClass() : m_dataValue(0)
     {
-        class PointTestClass
-        {
-            public:
-                PointTestClass() : m_dataValue(0) {}
-                explicit PointTestClass(int data) : m_dataValue(data) {}
-                PointTestClass(const PointTestClass&) = default;
-                ~PointTestClass(){}
+    }
+    explicit PointTestClass(int data) : m_dataValue(data)
+    {
+    }
+    PointTestClass(const PointTestClass &) = default;
+    ~PointTestClass()
+    {
+    }
 
-                PointTestClass operator=(const PointTestClass& rhs)
-                {
-                    m_dataValue = rhs.m_dataValue;
-                    return *this;
-                }
+    PointTestClass operator=(const PointTestClass &rhs)
+    {
+        m_dataValue = rhs.m_dataValue;
+        return *this;
+    }
 
-                int value() const { return m_dataValue; }
+    int value() const
+    {
+        return m_dataValue;
+    }
 
-            private:
-                int m_dataValue;
-        };
+private:
+    int m_dataValue;
+};
 
-        bool operator==(const PointTestClass& lhs, const PointTestClass& rhs)
-        {
-            return lhs.value() == rhs.value();
-        }
+bool operator==(const PointTestClass &lhs, const PointTestClass &rhs)
+{
+    return lhs.value() == rhs.value();
+}
 
-        bool operator!=(const PointTestClass& lhs, const PointTestClass& rhs)
-        {
-            return !(lhs == rhs);
-        }
+bool operator!=(const PointTestClass &lhs, const PointTestClass &rhs)
+{
+    return !(lhs == rhs);
+}
 
-        class TestPoint : public Nektar::NekPoint<double>
-        {
-            public:
-                TestPoint() {}
-                TestPoint(const TestPoint& rhs) :
-                Nektar::NekPoint<double>(rhs)
-                {
-                }
-        };
+class TestPoint : public Nektar::NekPoint<double>
+{
+public:
+    TestPoint()
+    {
+    }
+    TestPoint(const TestPoint &rhs) : Nektar::NekPoint<double>(rhs)
+    {
+    }
+};
 
-        void test()
-        {
-            TestPoint p;
-            TestPoint p1(p);
-        }
+void test()
+{
+    TestPoint p;
+    TestPoint p1(p);
+}
 
-        struct TenD 
-        {
-            static const unsigned int Value = 10;
-        };
-        
-        BOOST_AUTO_TEST_CASE(testNekPointConstruction)
-        {
-            using namespace Nektar;
+struct TenD
+{
+    static const unsigned int Value = 10;
+};
 
-            // Test the constructors on a numeric type.
-            {
-                NekPoint<double> p1;
-                BOOST_CHECK(p1.x() == 0.0);
-                BOOST_CHECK(p1.y() == 0.0);
-                BOOST_CHECK(p1.z() == 0.0);
+BOOST_AUTO_TEST_CASE(testNekPointConstruction)
+{
+    using namespace Nektar;
 
+    // Test the constructors on a numeric type.
+    {
+        NekPoint<double> p1;
+        BOOST_CHECK(p1.x() == 0.0);
+        BOOST_CHECK(p1.y() == 0.0);
+        BOOST_CHECK(p1.z() == 0.0);
 
-                NekPoint<double> p3(p1);
-                BOOST_CHECK(p1==p3);
-            }
+        NekPoint<double> p3(p1);
+        BOOST_CHECK(p1 == p3);
+    }
 
-            // Now test it on an arbitrary type.
-            {
-                NekPoint<PointTestClass> p1;
-                BOOST_CHECK(p1.x() == PointTestClass(0));
-                BOOST_CHECK(p1.y() == PointTestClass(0));
-                BOOST_CHECK(p1.z() == PointTestClass(0));
+    // Now test it on an arbitrary type.
+    {
+        NekPoint<PointTestClass> p1;
+        BOOST_CHECK(p1.x() == PointTestClass(0));
+        BOOST_CHECK(p1.y() == PointTestClass(0));
+        BOOST_CHECK(p1.z() == PointTestClass(0));
 
-                BOOST_CHECK(p1.x() == PointTestClass());
-                BOOST_CHECK(p1.y() == PointTestClass());
-                BOOST_CHECK(p1.z() == PointTestClass());
+        BOOST_CHECK(p1.x() == PointTestClass());
+        BOOST_CHECK(p1.y() == PointTestClass());
+        BOOST_CHECK(p1.z() == PointTestClass());
 
-                NekPoint<PointTestClass> p3(p1);
-                BOOST_CHECK(p1==p3);
-            }
-
-        }
-
-        
-
+        NekPoint<PointTestClass> p3(p1);
+        BOOST_CHECK(p1 == p3);
     }
 }
+
+} // namespace UnitTests
+} // namespace Nektar

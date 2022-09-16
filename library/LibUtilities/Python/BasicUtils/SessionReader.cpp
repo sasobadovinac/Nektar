@@ -42,7 +42,7 @@ using namespace Nektar::LibUtilities;
 CommSharedPtr MPICOMM = CommSharedPtr();
 #endif
 
-/**
+/*
  * @brief Thin wrapper around SessionReader to provide a nicer Pythonic
  * interface.
  *
@@ -52,10 +52,11 @@ CommSharedPtr MPICOMM = CommSharedPtr();
  *
  * which is more natural in Python.
  */
+
 SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
 {
     int i, argc = py::len(ns), bufSize = 0;
-    char **argv = new char *[argc+1], *p;
+    char **argv = new char *[argc + 1], *p;
 
     // Create argc, argv to give to the session reader. Note that this needs to
     // be a contiguous block in memory, otherwise MPI (specifically OpenMPI)
@@ -72,8 +73,8 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
         std::string tmp = py::extract<std::string>(ns[i]);
         std::copy(tmp.begin(), tmp.end(), p);
         p[tmp.size()] = '\0';
-        argv[i] = p;
-        p += tmp.size()+1;
+        argv[i]       = p;
+        p += tmp.size() + 1;
     }
 
     // Also make sure we set argv[argc] = NULL otherwise OpenMPI will also
@@ -91,24 +92,36 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
         MPICOMM = GetCommFactory().CreateInstance("ParallelMPI", argc, argv);
     }
 
-    std::vector<std::string> filenames(argc-1);
+    std::vector<std::string> filenames(argc - 1);
     for (i = 1; i < argc; ++i)
     {
-        filenames[i-1] = std::string(argv[i]);
+        filenames[i - 1] = std::string(argv[i]);
     }
 
     // Create session reader.
-    SessionReaderSharedPtr sr = SessionReader::CreateInstance(
-        argc, argv, filenames, MPICOMM);
+    SessionReaderSharedPtr sr =
+        SessionReader::CreateInstance(argc, argv, filenames, MPICOMM);
 #else
     // Create session reader.
     SessionReaderSharedPtr sr = SessionReader::CreateInstance(argc, argv);
 #endif
 
     // Clean up.
-    delete [] argv;
+    delete[] argv;
 
     return sr;
+}
+
+void SessionReader_SetParameterInt(SessionReaderSharedPtr session,
+                                   std::string paramName, int paramValue)
+{
+    session->SetParameter(paramName, paramValue);
+}
+
+void SessionReader_SetParameterDouble(SessionReaderSharedPtr session,
+                                      std::string paramName, double paramValue)
+{
+    session->SetParameter(paramName, paramValue);
 }
 
 /**
@@ -119,12 +132,11 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
  *   - SessionReader::GetSessionName to return the session name
  *   - SessionReader::Finalise to deal with finalising things
  */
+
 void export_SessionReader()
 {
-    py::class_<SessionReader,
-           std::shared_ptr<SessionReader>,
-           boost::noncopyable>(
-               "SessionReader", py::no_init)
+    py::class_<SessionReader, std::shared_ptr<SessionReader>,
+               boost::noncopyable>("SessionReader", py::no_init)
 
         .def("CreateInstance", SessionReader_CreateInstance)
         .staticmethod("CreateInstance")
@@ -138,10 +150,13 @@ void export_SessionReader()
         .def("GetParameter", &SessionReader::GetParameter,
              py::return_value_policy<py::return_by_value>())
 
+        .def("SetParameter", SessionReader_SetParameterInt)
+        .def("SetParameter", SessionReader_SetParameterDouble)
+
         .def("GetVariable", &SessionReader::GetVariable,
              py::return_value_policy<py::copy_const_reference>())
 
         .def("GetComm", &SessionReader::GetComm)
 
-        ;
+        .def("GetSharedFilesystem", &SessionReader::GetSharedFilesystem);
 }

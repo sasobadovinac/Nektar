@@ -50,12 +50,11 @@ public:
     /// Creates an instance of this class
     static FilterSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const ParamMap &pParams)
+        const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
     {
         FilterSharedPtr p =
             MemoryManager<FilterThresholdMin>::AllocateSharedPtr(
-                    pSession, pEquation, pParams);
+                pSession, pEquation, pParams);
         return p;
     }
 
@@ -64,7 +63,7 @@ public:
 
     SOLVER_UTILS_EXPORT FilterThresholdMin(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
+        const std::weak_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
     SOLVER_UTILS_EXPORT virtual ~FilterThresholdMin();
 
@@ -86,22 +85,22 @@ protected:
 
 private:
     /// Storage for recording when each point in domain drops below threshold.
-    Array<OneD, NekDouble>          m_threshold;
+    Array<OneD, NekDouble> m_threshold;
     /// Time at which to start recording.
-    NekDouble                       m_startTime;
+    NekDouble m_startTime;
     /// Value of threshold.
-    NekDouble                       m_thresholdValue;
+    NekDouble m_thresholdValue;
     /// Variable on which to detect threshold
-    int                             m_thresholdVar;
+    int m_thresholdVar;
     /// Initial value of storage.
-    NekDouble                       m_initialValue;
+    NekDouble m_initialValue;
     /// File into which to write output data.
-    std::string                     m_outputFile;
+    std::string m_outputFile;
     /// FieldIO object for writing data.
-    LibUtilities::FieldIOSharedPtr  m_fld;
+    LibUtilities::FieldIOSharedPtr m_fld;
 };
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif /* FILTERTHRESHOLDMAX_H_ */

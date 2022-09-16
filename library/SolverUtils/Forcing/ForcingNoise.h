@@ -40,61 +40,56 @@
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
-#include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/SolverUtilsDeclspec.h>
 
 namespace Nektar
 {
 namespace SolverUtils
 {
-    class ForcingNoise : public Forcing
+class ForcingNoise : public Forcing
+{
+public:
+    friend class MemoryManager<ForcingNoise>;
+
+    /// Creates an instance of this class
+    SOLVER_UTILS_EXPORT static ForcingSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
     {
-        public:
+        ForcingSharedPtr p =
+            MemoryManager<ForcingNoise>::AllocateSharedPtr(pSession, pEquation);
+        p->InitObject(pFields, pNumForcingFields, pForce);
+        return p;
+    }
 
-            friend class MemoryManager<ForcingNoise>;
+    /// Name of the class
+    static std::string className;
 
-            /// Creates an instance of this class
-            SOLVER_UTILS_EXPORT static ForcingSharedPtr create(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const std::weak_ptr<EquationSystem>      &pEquation,
-                    const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                    const unsigned int& pNumForcingFields,
-                    const TiXmlElement* pForce)
-            {
-                ForcingSharedPtr p = MemoryManager<ForcingNoise>::
-                                        AllocateSharedPtr(pSession, pEquation);
-                p->InitObject(pFields, pNumForcingFields, pForce);
-                return p;
-            }
+protected:
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
 
-            ///Name of the class
-            static std::string className;
+    SOLVER_UTILS_EXPORT virtual void v_Apply(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
 
-        protected:
-            SOLVER_UTILS_EXPORT virtual void v_InitObject(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                    const unsigned int& pNumForcingFields,
-                    const TiXmlElement* pForce);
+private:
+    ForcingNoise(const LibUtilities::SessionReaderSharedPtr &pSession,
+                 const std::weak_ptr<EquationSystem> &pEquation);
+    virtual ~ForcingNoise(void){};
 
-            SOLVER_UTILS_EXPORT virtual void v_Apply(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                    const Array<OneD, Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    const NekDouble &time);
+    int m_index;
+    int m_updateFreq;
+    int m_numSteps;
+    NekDouble m_noise;
+};
 
-        private:
-            ForcingNoise(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const std::weak_ptr<EquationSystem>      &pEquation);
-            virtual ~ForcingNoise(void){};
-
-            int             m_index;
-            int             m_updateFreq;
-            int             m_numSteps;
-            NekDouble       m_noise;
-    };
-
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

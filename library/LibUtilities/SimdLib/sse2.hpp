@@ -29,6 +29,8 @@
 // DEALINGS IN THE SOFTWARE.
 //
 // Description: Vector type using sse2 extension.
+// Note that this is not a full implementation: only the int type is
+// implemented as support index type for avx2.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -36,13 +38,13 @@
 #define NEKTAR_LIB_LIBUTILITES_SIMDLIB_SSE2_H
 
 #if defined(__x86_64__)
-    #include <immintrin.h>
-    #if defined(__INTEL_COMPILER) && !defined(TINYSIMD_HAS_SVML)
-        #define TINYSIMD_HAS_SVML
-    #endif
+#include <immintrin.h>
+#if defined(__INTEL_COMPILER) && !defined(TINYSIMD_HAS_SVML)
+#define TINYSIMD_HAS_SVML
 #endif
-#include <cstdint>
+#endif
 #include "traits.hpp"
+#include <cstdint>
 
 namespace tinysimd
 {
@@ -50,125 +52,112 @@ namespace tinysimd
 namespace abi
 {
 
-template <typename scalarType>
-struct sse2
+template <typename scalarType> struct sse2
 {
     using type = void;
 };
 
 } // namespace abi
 
-
 #if defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
 
 // forward declaration of concrete types
-template <typename T>
-struct sse2Int4;
+template <typename T> struct sse2Int4;
 
 namespace abi
 {
 
 // mapping between abstract types and concrete types
-template <> struct sse2<std::int32_t> { using type = sse2Int4<std::int32_t>; };
-template <> struct sse2<std::uint32_t> { using type = sse2Int4<std::uint32_t>; };
+template <> struct sse2<std::int32_t>
+{
+    using type = sse2Int4<std::int32_t>;
+};
+template <> struct sse2<std::uint32_t>
+{
+    using type = sse2Int4<std::uint32_t>;
+};
 
 } // namespace abi
 
 // concrete types
-template <typename T>
-struct sse2Int4
+template <typename T> struct sse2Int4
 {
     static_assert(std::is_integral<T>::value && sizeof(T) == 4,
-        "4 bytes Integral required.");
+                  "4 bytes Integral required.");
 
-    static constexpr unsigned int width = 4;
+    static constexpr unsigned int width     = 4;
     static constexpr unsigned int alignment = 16;
 
-    using scalarType = T;
-    using vectorType = __m128i;
+    using scalarType  = T;
+    using vectorType  = __m128i;
     using scalarArray = scalarType[width];
 
     // storage
     vectorType _data;
 
     // ctors
-    inline sse2Int4() = default;
-    inline sse2Int4(const sse2Int4& rhs) = default;
-    inline sse2Int4(const vectorType& rhs) : _data(rhs){}
+    inline sse2Int4()                    = default;
+    inline sse2Int4(const sse2Int4 &rhs) = default;
+    inline sse2Int4(const vectorType &rhs) : _data(rhs)
+    {
+    }
     inline sse2Int4(const scalarType rhs)
     {
         _data = _mm_set1_epi32(rhs);
     }
 
     // store
-    inline void store(scalarType* p) const
+    inline void store(scalarType *p) const
     {
-        _mm_store_si128(reinterpret_cast<vectorType*>(p), _data);
+        _mm_store_si128(reinterpret_cast<vectorType *>(p), _data);
     }
 
-    template
-    <
-        class flag,
-        typename std::enable_if<
-            is_requiring_alignment<flag>::value  &&
-            !is_streaming<flag>::value, bool
-            >::type = 0
-    >
-    inline void store(scalarType* p, flag) const
+    template <class flag,
+              typename std::enable_if<is_requiring_alignment<flag>::value &&
+                                          !is_streaming<flag>::value,
+                                      bool>::type = 0>
+    inline void store(scalarType *p, flag) const
     {
-        _mm_store_si128(reinterpret_cast<vectorType*>(p), _data);
+        _mm_store_si128(reinterpret_cast<vectorType *>(p), _data);
     }
 
-    template
-    <
-        class flag,
-        typename std::enable_if<
-            !is_requiring_alignment<flag>::value, bool
-            >::type = 0
-    >
-    inline void store(scalarType* p, flag) const
+    template <class flag,
+              typename std::enable_if<!is_requiring_alignment<flag>::value,
+                                      bool>::type = 0>
+    inline void store(scalarType *p, flag) const
     {
-        _mm_storeu_si128(reinterpret_cast<vectorType*>(p), _data);
+        _mm_storeu_si128(reinterpret_cast<vectorType *>(p), _data);
     }
 
-    inline void load(const scalarType* p)
+    inline void load(const scalarType *p)
     {
-        _data = _mm_load_si128(reinterpret_cast<const vectorType*>(p));
+        _data = _mm_load_si128(reinterpret_cast<const vectorType *>(p));
     }
 
-    template
-    <
-        class flag,
-        typename std::enable_if<
-            is_requiring_alignment<flag>::value  &&
-            !is_streaming<flag>::value, bool
-            >::type = 0
-    >
-    inline void load(const scalarType* p, flag)
+    template <class flag,
+              typename std::enable_if<is_requiring_alignment<flag>::value &&
+                                          !is_streaming<flag>::value,
+                                      bool>::type = 0>
+    inline void load(const scalarType *p, flag)
     {
-        _data = _mm_load_si128(reinterpret_cast<const vectorType*>(p));
+        _data = _mm_load_si128(reinterpret_cast<const vectorType *>(p));
     }
 
-    template
-    <
-        class flag,
-        typename std::enable_if<
-            !is_requiring_alignment<flag>::value, bool
-            >::type = 0
-    >
-    inline void load(const scalarType* p, flag)
+    template <class flag,
+              typename std::enable_if<!is_requiring_alignment<flag>::value,
+                                      bool>::type = 0>
+    inline void load(const scalarType *p, flag)
     {
-        _data = _mm_loadu_si128(reinterpret_cast<const vectorType*>(p));
+        _data = _mm_loadu_si128(reinterpret_cast<const vectorType *>(p));
     }
-
 
     // gather/scatter with sse2
-    inline void gather(scalarType const* p, const sse2Int4<T>& indices)
+    inline void gather(scalarType const *p, const sse2Int4<T> &indices)
     {
         _data = _mm_i32gather_pd(p, indices._data, 8);
     }
 
-    inline void scatter(scalarType* out, const sse2Int4<T>& indices) const
+    inline void scatter(scalarType *out, const sse2Int4<T> &indices) const
     {
         // no scatter intrinsics for AVX2
         alignas(alignment) scalarArray tmp;
@@ -192,11 +181,9 @@ struct sse2Int4
         store(tmp, is_aligned);
         return tmp[i];
     }
-
-
 };
 
-#endif // defined(__AVX2__)
+#endif // defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
 
 } // namespace tinysimd
 #endif

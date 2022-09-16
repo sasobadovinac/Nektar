@@ -44,9 +44,8 @@ namespace Nektar
 namespace LibUtilities
 {
 
-bool NodalQuadElec::initPointsManager[] = {
-    PointsManager().RegisterCreator(PointsKey(0, eNodalQuadElec),         NodalQuadElec::Create)
-};
+bool NodalQuadElec::initPointsManager[] = {PointsManager().RegisterCreator(
+    PointsKey(0, eNodalQuadElec), NodalQuadElec::Create)};
 
 void NodalQuadElec::CalculatePoints()
 {
@@ -98,5 +97,5 @@ std::shared_ptr<PointsBaseType> NodalQuadElec::Create(const PointsKey &key)
     returnval->Initialize();
     return returnval;
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

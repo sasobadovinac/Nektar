@@ -36,22 +36,21 @@
 #include <cstdlib>
 #include <iomanip>
 
-#include <LibUtilities/Memory/NekMemoryManager.hpp>
+#include <Collections/Collection.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 #include <LibUtilities/Communication/Comm.h>
+#include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <MultiRegions/ExpList.h>
-#include <Collections/Collection.h>
 #include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
 using namespace Nektar;
 
 MultiRegions::ExpListSharedPtr SetupExpList(
-    int                                  N,
-    LibUtilities::SessionReaderSharedPtr session,
-    SpatialDomains::MeshGraphSharedPtr   graph,
-    Collections::ImplementationType      impType)
+    int N, LibUtilities::SessionReaderSharedPtr session,
+    SpatialDomains::MeshGraphSharedPtr graph,
+    Collections::ImplementationType impType)
 {
     graph->SetExpansionInfoToNumModes(N);
 
@@ -70,24 +69,20 @@ void printOutput(int N, int Ntest, LibUtilities::Timer &timer, bool fmt)
 
     if (fmt)
     {
-        cout << setw(6)  << N-1
-             << setw(18) << total_sec
-             << endl;
+        cout << setw(6) << N - 1 << setw(18) << total_sec << endl;
     }
     else
     {
-        cout << "P = " << N-1 << ": "
-             << total_sec << " s, "
-             << endl;
+        cout << "P = " << N - 1 << ": " << total_sec << " s, " << endl;
     }
 }
 
 int main(int argc, char *argv[])
 {
-    LibUtilities::SessionReader::RegisterCmdLineFlag(
-        "data", "d", "Print in data format");
-    LibUtilities::SessionReaderSharedPtr session
-        = LibUtilities::SessionReader::CreateInstance(argc, argv);
+    LibUtilities::SessionReader::RegisterCmdLineFlag("data", "d",
+                                                     "Print in data format");
+    LibUtilities::SessionReaderSharedPtr session =
+        LibUtilities::SessionReader::CreateInstance(argc, argv);
 
     bool fmt = session->DefinesCmdLineArgument("data");
 
@@ -96,7 +91,7 @@ int main(int argc, char *argv[])
     LibUtilities::Timer timer;
 
     int Ntest, maxOrder;
-    session->LoadParameter("Ntest",    Ntest,    1000);
+    session->LoadParameter("Ntest", Ntest, 1000);
     session->LoadParameter("maxOrder", maxOrder, 10);
     maxOrder++;
 
@@ -118,7 +113,7 @@ int main(int argc, char *argv[])
         for (int N = 2; N < maxOrder; ++N)
         {
             expList = SetupExpList(N, session, graph, impType);
-            Array<OneD, NekDouble> input (expList->GetNcoeffs());
+            Array<OneD, NekDouble> input(expList->GetNcoeffs());
             Array<OneD, NekDouble> output(expList->GetNpoints());
 
             timer.Start();
@@ -135,7 +130,7 @@ int main(int argc, char *argv[])
         for (int N = 2; N < maxOrder; ++N)
         {
             expList = SetupExpList(N, session, graph, impType);
-            Array<OneD, NekDouble> input (expList->GetNpoints());
+            Array<OneD, NekDouble> input(expList->GetNpoints());
             Array<OneD, NekDouble> output(expList->GetNcoeffs());
 
             timer.Start();
@@ -151,10 +146,10 @@ int main(int argc, char *argv[])
         cout << sl << "IProductWRTDerivBase Op: Ntest = " << Ntest << endl;
         for (int N = 2; N < maxOrder; ++N)
         {
-            expList = SetupExpList(N, session, graph, impType);
+            expList  = SetupExpList(N, session, graph, impType);
             int nDim = expList->GetCoordim(0);
-            Array<OneD, Array<OneD, NekDouble> > input (nDim);
-            Array<OneD, NekDouble>               output(expList->GetNcoeffs());
+            Array<OneD, Array<OneD, NekDouble>> input(nDim);
+            Array<OneD, NekDouble> output(expList->GetNcoeffs());
 
             for (int i = 0; i < nDim; ++i)
             {
@@ -175,7 +170,7 @@ int main(int argc, char *argv[])
         for (int N = 2; N < maxOrder; ++N)
         {
             expList = SetupExpList(N, session, graph, impType);
-            Array<OneD, NekDouble> input  (expList->GetNpoints());
+            Array<OneD, NekDouble> input(expList->GetNpoints());
             Array<OneD, NekDouble> output0(expList->GetNpoints());
             Array<OneD, NekDouble> output1(expList->GetNpoints());
             Array<OneD, NekDouble> output2(expList->GetNpoints());

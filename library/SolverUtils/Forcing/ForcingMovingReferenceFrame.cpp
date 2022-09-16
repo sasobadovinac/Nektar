@@ -43,10 +43,10 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <SolverUtils/Forcing/ForcingMovingReferenceFrame.h>
-#include <MultiRegions/ExpList.h>
 #include <LibUtilities/BasicUtils/Vmath.hpp>
+#include <MultiRegions/ExpList.h>
 #include <SolverUtils/Filters/FilterInterfaces.hpp>
+#include <SolverUtils/Forcing/ForcingMovingReferenceFrame.h>
 
 using namespace std;
 
@@ -55,14 +55,10 @@ namespace Nektar
 namespace SolverUtils
 {
 
-std::string ForcingMovingReferenceFrame::classNameBody = GetForcingFactory().
-        RegisterCreatorFunction("MovingReferenceFrame",
-                                ForcingMovingReferenceFrame::create,
-                                "Moving Frame");
-std::string ForcingMovingReferenceFrame::classNameField = GetForcingFactory().
-        RegisterCreatorFunction("Field",
-                                ForcingMovingReferenceFrame::create,
-                                "Field Forcing");
+std::string ForcingMovingReferenceFrame::classNameBody =
+    GetForcingFactory().RegisterCreatorFunction(
+        "MovingReferenceFrame", ForcingMovingReferenceFrame::create,
+        "Moving Frame");
 
 /**
  * @brief
@@ -70,12 +66,11 @@ std::string ForcingMovingReferenceFrame::classNameField = GetForcingFactory().
  * @param pEquation
  */
 ForcingMovingReferenceFrame::ForcingMovingReferenceFrame(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem> &pEquation)
-        : Forcing(pSession, pEquation)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<EquationSystem> &pEquation)
+    : Forcing(pSession, pEquation)
 {
 }
-
 
 /**
  * @brief Initialise the forcing module
@@ -193,7 +188,7 @@ void ForcingMovingReferenceFrame::v_InitObject(
 
         m_ProjMatZ(0, 0) = cs;
         m_ProjMatZ(0, 1) = sn;
-        m_ProjMatZ(1, 0) = -1.*sn;
+        m_ProjMatZ(1, 0) = -1. * sn;
         m_ProjMatZ(1, 1) = cs;
         m_ProjMatZ(2, 2) = 1.0;
     }
@@ -238,7 +233,7 @@ void ForcingMovingReferenceFrame::v_InitObject(
         // TODO: add the support for general rotation
         for (int i = 0; i < 2; ++i)
         {
-            ASSERTL0( !m_hasOmega[i] , "Currently only Omega_z is supported");
+            ASSERTL0(!m_hasOmega[i], "Currently only Omega_z is supported");
         }
 
         // Reading the pivot point coordinate for rotation
@@ -271,7 +266,8 @@ void ForcingMovingReferenceFrame::v_InitObject(
         // move the origin to the pivot point
         for (int i = 0; i < m_spacedim; ++i)
         {
-            Vmath::Sadd(npoints, -m_pivotPoint[i], m_coords[i], 1, m_coords[i], 1);
+            Vmath::Sadd(npoints, -m_pivotPoint[i], m_coords[i], 1, m_coords[i],
+                        1);
         }
 
         // account for the effect of rotation
@@ -298,19 +294,19 @@ void ForcingMovingReferenceFrame::v_InitObject(
  * @param pFields
  * @param time
  */
- void ForcingMovingReferenceFrame::Update(const NekDouble &time)
+void ForcingMovingReferenceFrame::Update(const NekDouble &time)
 {
     // compute the velociites whos functions are provided in inertial frame
-    for (auto it: m_velFunction)
+    for (auto it : m_velFunction)
     {
-        m_velXYZ[it.first]=it.second->Evaluate(0.,0.,0.,time);
+        m_velXYZ[it.first] = it.second->Evaluate(0., 0., 0., time);
     }
-    for (auto it: m_omegaFunction)
+    for (auto it : m_omegaFunction)
     {
-        m_omegaXYZ[it.first]=it.second->Evaluate(0.,0.,0.,time);
+        m_omegaXYZ[it.first] = it.second->Evaluate(0., 0., 0., time);
     }
     // include the effect of rotation
-    if(m_hasRotation)
+    if (m_hasRotation)
     {
         UpdateTheta(time);
 
@@ -330,9 +326,9 @@ void ForcingMovingReferenceFrame::v_InitObject(
         // transform the angular velocities to moving frame
         v0 = bn::ublas::zero_vector<NekDouble>(3);
         v1 = bn::ublas::zero_vector<NekDouble>(3);
-        for (auto it: m_omegaXYZ)
+        for (auto it : m_omegaXYZ)
         {
-            v0(it.first)=it.second;
+            v0(it.first) = it.second;
         }
         v1 = bn::ublas::prec_prod(m_ProjMatZ, v0);
         for (int i = 0; i < 3; ++i)
@@ -343,16 +339,15 @@ void ForcingMovingReferenceFrame::v_InitObject(
     else
     {
         // for translation only,
-        for(int i=0; i<m_spacedim; ++i)
+        for (int i = 0; i < m_spacedim; ++i)
         {
             m_velxyz[i] = m_velXYZ[i];
         }
-
     }
 
     // set the velocities and rotation matrix for enforcement of boundary
     // conditions in the Incompressible Naveri-Stokes
-    Array<OneD, NekDouble> vel(6,0.0);
+    Array<OneD, NekDouble> vel(6, 0.0);
     // save the linear and angular velocities to be used in enforcing bc
     for (int i = 0; i < 3; ++i)
     {
@@ -371,15 +366,14 @@ void ForcingMovingReferenceFrame::v_InitObject(
     // this angle is used to update the meta data,
     // on the other hand, for boundary conditions the projection matrix is used
     FluidEq->SetMovingFrameAngles(m_theta);
-
 }
 
-void ForcingMovingReferenceFrame::UpdateTheta(const NekDouble& time)
+void ForcingMovingReferenceFrame::UpdateTheta(const NekDouble &time)
 {
 
     NekDouble dt = m_session->GetParameter("TimeStep");
     NekDouble t1 = time + dt;
-    std::map<int,NekDouble> Omega;
+    std::map<int, NekDouble> Omega;
 
     // Calculate angular velocities at dt
     // TODO: Generalize to the case with a general 3D rotation support
@@ -393,7 +387,7 @@ void ForcingMovingReferenceFrame::UpdateTheta(const NekDouble& time)
     }
 
     // Using the Omega_z
-    m_theta[2] += (Omega[2]*dt);
+    m_theta[2] += (Omega[2] * dt);
 
     // update the rotation matrix
     {
@@ -401,11 +395,11 @@ void ForcingMovingReferenceFrame::UpdateTheta(const NekDouble& time)
         sn = sin(m_theta[2]);
         cs = cos(m_theta[2]);
 
-        m_ProjMatZ(0,0)=cs;
-        m_ProjMatZ(0,1)=sn;
-        m_ProjMatZ(1,0)=-sn;
-        m_ProjMatZ(1,1)=cs;
-        m_ProjMatZ(2,2)=1.0;
+        m_ProjMatZ(0, 0) = cs;
+        m_ProjMatZ(0, 1) = sn;
+        m_ProjMatZ(1, 0) = -sn;
+        m_ProjMatZ(1, 1) = cs;
+        m_ProjMatZ(2, 2) = 1.0;
     }
 }
 
@@ -416,11 +410,10 @@ void ForcingMovingReferenceFrame::UpdateTheta(const NekDouble& time)
  * @param outarray
  * @param time
  */
- void ForcingMovingReferenceFrame::v_Apply(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> > &inarray,
-              Array<OneD, Array<OneD, NekDouble> > &outarray,
-        const NekDouble &time)
+void ForcingMovingReferenceFrame::v_Apply(
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time)
 {
     boost::ignore_unused(time);
     // If there is no rotation, body force is zero,
@@ -429,8 +422,8 @@ void ForcingMovingReferenceFrame::UpdateTheta(const NekDouble& time)
     {
         return;
     }
-    //frame velocities are already updated in pre_Apply
-    int  npoints = fields[0]->GetNpoints();
+    // frame velocities are already updated in pre_Apply
+    int npoints = fields[0]->GetNpoints();
     boost::ignore_unused(npoints);
     addRotation(npoints, outarray, -1., inarray, outarray);
 }
@@ -499,15 +492,14 @@ void ForcingMovingReferenceFrame::v_PreApply(
     int npoints = fields[0]->GetNpoints();
     if (m_isH2d && fields[0]->GetWaveSpace())
     {
-        for (int i=0; i<m_spacedim; ++i)
+        for (int i = 0; i < m_spacedim; ++i)
         {
             if (m_hasVel[i])
             {
                 Array<OneD, NekDouble> tmpphys(npoints, -m_velxyz[i]);
                 Array<OneD, NekDouble> tmpcoef(npoints);
                 fields[0]->HomogeneousFwdTrans(tmpphys, tmpcoef);
-                Vmath::Vadd(npoints, tmpcoef, 1, inarray[i], 1,
-                outarray[i], 1);
+                Vmath::Vadd(npoints, tmpcoef, 1, inarray[i], 1, outarray[i], 1);
             }
             else if (&inarray != &outarray)
             {
@@ -520,20 +512,19 @@ void ForcingMovingReferenceFrame::v_PreApply(
         int npoints0 = npoints;
         if (m_isH1d && fields[0]->GetWaveSpace())
         {
-            npoints0 = m_hasPlane0 ? fields[0]->GetPlane(0)->GetNpoints()
-            : 0;
+            npoints0 = m_hasPlane0 ? fields[0]->GetPlane(0)->GetNpoints() : 0;
         }
-        for (int i=0; i<m_spacedim; ++i)
+        for (int i = 0; i < m_spacedim; ++i)
         {
             if (m_hasVel[i])
             {
-                Vmath::Sadd(npoints0, -m_velxyz[i], inarray[i], 1,
-                outarray[i], 1); if (&inarray != &outarray && npoints !=
-                npoints0)
+                Vmath::Sadd(npoints0, -m_velxyz[i], inarray[i], 1, outarray[i],
+                            1);
+                if (&inarray != &outarray && npoints != npoints0)
                 {
-                    Array<OneD, NekDouble> tmp = outarray[i]+npoints0;
-                    Vmath::Vcopy(npoints - npoints0, inarray[i] +
-                    npoints0, 1, tmp, 1);
+                    Array<OneD, NekDouble> tmp = outarray[i] + npoints0;
+                    Vmath::Vcopy(npoints - npoints0, inarray[i] + npoints0, 1,
+                                 tmp, 1);
                 }
             }
             else if (&inarray != &outarray)
@@ -555,9 +546,9 @@ void ForcingMovingReferenceFrame::CheckForRestartTheta(
     std::map<std::string, std::string> fieldMetaDataMap;
 
     // initialize theta to zero
-    for(auto &t: theta)
+    for (auto &t : theta)
     {
-        t=0.0;
+        t = 0.0;
     }
 
     if (m_session->DefinesFunction("InitialConditions"))
@@ -595,7 +586,7 @@ void ForcingMovingReferenceFrame::CheckForRestartTheta(
                     for (int j = 0; j < 3; ++j)
                     {
                         std::string sTheta = "Theta" + vSuffix[j];
-                        auto iter = fieldMetaDataMap.find(sTheta);
+                        auto iter          = fieldMetaDataMap.find(sTheta);
                         if (iter != fieldMetaDataMap.end())
                         {
                             theta[j] =
@@ -612,6 +603,5 @@ void ForcingMovingReferenceFrame::CheckForRestartTheta(
     }
 }
 
-
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

@@ -28,8 +28,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Euler Implicit equations in consƒervative variables without artificial
-// diffusion
+// Description: Euler Implicit equations in consƒervative variables without
+// artificial diffusion
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -39,30 +39,41 @@ using namespace std;
 
 namespace Nektar
 {
-    string EulerImplicitCFE::className = 
+string EulerImplicitCFE::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-        "EulerImplicitCFE", EulerImplicitCFE::create, 
+        "EulerImplicitCFE", EulerImplicitCFE::create,
         "Euler Implicit equations in conservative variables.");
 
-    EulerImplicitCFE::EulerImplicitCFE(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : UnsteadySystem(pSession, pGraph),
-          CompressibleFlowSystem(pSession, pGraph),
-          CFSImplicit(pSession, pGraph)
-    {
-    }
+EulerImplicitCFE::EulerImplicitCFE(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : UnsteadySystem(pSession, pGraph),
+      CompressibleFlowSystem(pSession, pGraph), CFSImplicit(pSession, pGraph)
+{
+}
 
-    void EulerImplicitCFE::v_InitObject()
-    {
-        CFSImplicit::v_InitObject();
-        m_viscousJacFlag = false;
-    }
+void EulerImplicitCFE::v_InitObject(bool DeclareFields)
+{
+    CFSImplicit::v_InitObject(DeclareFields);
+    m_viscousJacFlag = false;
+}
 
-    /**
-     * @brief Destructor for Euler Implicit CFE class.
-     */
-    EulerImplicitCFE::~EulerImplicitCFE()
+/**
+ * @brief Destructor for Euler Implicit CFE class.
+ */
+EulerImplicitCFE::~EulerImplicitCFE()
+{
+}
+
+bool EulerImplicitCFE::SupportsShockCaptType(const std::string type) const
+{
+    if (type == "Off")
     {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
+} // namespace Nektar

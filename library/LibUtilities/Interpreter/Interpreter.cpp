@@ -598,11 +598,8 @@ public:
                   const Array<OneD, const NekDouble> &t,
                   Array<OneD, NekDouble> &result)
     {
-        m_timer.Start();
         std::vector<Array<OneD, const NekDouble>> points = {x, y, z, t};
         Evaluate(id, points, result);
-        m_timer.Stop();
-        m_total_eval_time += m_timer.TimePerTest(1);
     }
 
     /**

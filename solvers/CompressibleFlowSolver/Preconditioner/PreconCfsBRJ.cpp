@@ -33,7 +33,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/Timer.h>
 #include <CompressibleFlowSolver/Preconditioner/PreconCfsBRJ.h>
 #include <LibUtilities/BasicUtils/Timer.h>
 
@@ -186,7 +185,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
                 m_TraceJacDerivSignSingle, m_TraceIPSymJacArraySingle);
             timer.Stop();
             timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs", 2);
-            
+
             timer.Start();
             PreconBlkDiag(pFields, outarray, outTmp);
             timer.Stop();
@@ -559,7 +558,7 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
     LibUtilities::Timer timer;
     for (int i = 0; i < nvariables; ++i)
     {
-        timer.Start(); 
+        timer.Start();
         pFields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
         timer.Stop();
         timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 10);
@@ -618,7 +617,6 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         }
     }
 
-     
     for (int i = 0; i < nvariables; ++i)
     {
         Vmath::Fill(nCoeffs, 0.0, outarray[i], 1);
@@ -628,7 +626,6 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         timer.Stop();
         timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 10);
     }
-    
 
     for (int i = 0; i < nvariables; ++i)
     {

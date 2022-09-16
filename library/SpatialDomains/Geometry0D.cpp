@@ -53,13 +53,12 @@ Geometry0D::~Geometry0D()
 
 int Geometry0D::v_GetShapeDim() const
 {
-	return 0;
+    return 0;
 }
 
 bool Geometry0D::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                               Array<OneD, NekDouble> &locCoord,
-                               NekDouble tol,
-                               NekDouble &dist)
+                                 Array<OneD, NekDouble> &locCoord,
+                                 NekDouble tol, NekDouble &dist)
 {
     boost::ignore_unused(gloCoord, locCoord, tol, dist);
     NEKERROR(ErrorUtil::efatal,
@@ -67,5 +66,5 @@ bool Geometry0D::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
     return false;
 }
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar

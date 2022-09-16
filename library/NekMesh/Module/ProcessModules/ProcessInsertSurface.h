@@ -69,7 +69,7 @@ public:
         return "ProcessInsertSurface";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

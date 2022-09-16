@@ -40,129 +40,117 @@ using namespace std;
 
 namespace Nektar
 {
-std::string ForcingQuasi1D::className = SolverUtils::GetForcingFactory().
-            RegisterCreatorFunction("Quasi1D",
-                                    ForcingQuasi1D::create,
-                                    "Quasi-1D nozzle Forcing");
+std::string ForcingQuasi1D::className =
+    SolverUtils::GetForcingFactory().RegisterCreatorFunction(
+        "Quasi1D", ForcingQuasi1D::create, "Quasi-1D nozzle Forcing");
 
 ForcingQuasi1D::ForcingQuasi1D(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
-        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<SolverUtils::EquationSystem> &pEquation)
     : Forcing(pSession, pEquation)
 {
 }
 
 void ForcingQuasi1D::v_InitObject(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-        const unsigned int& pNumForcingFields,
-        const TiXmlElement* pForce)
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
 {
     m_NumVariable = pNumForcingFields;
-    m_varConv     = MemoryManager<VariableConverter>::AllocateSharedPtr(
-                    m_session, 1);
+    m_varConv =
+        MemoryManager<VariableConverter>::AllocateSharedPtr(m_session, 1);
 
-    ASSERTL0( pFields[0]->GetGraph()->GetSpaceDimension() == 1,
-              "ForcingQuasi1D requires a 1D problem.");
+    ASSERTL0(pFields[0]->GetGraph()->GetSpaceDimension() == 1,
+             "ForcingQuasi1D requires a 1D problem.");
 
-    const TiXmlElement* funcNameElmt = pForce->FirstChildElement("AREAFCN");
-    if(!funcNameElmt)
+    const TiXmlElement *funcNameElmt = pForce->FirstChildElement("AREAFCN");
+    if (!funcNameElmt)
     {
-        ASSERTL0(funcNameElmt, "Requires AREAFCN tag "
+        ASSERTL0(funcNameElmt,
+                 "Requires AREAFCN tag "
                  "specifying function name which prescribes nozzle area.");
     }
 
-    string    funcName = funcNameElmt->GetText();
+    string funcName = funcNameElmt->GetText();
     ASSERTL0(m_session->DefinesFunction(funcName),
              "Function '" + funcName + "' not defined.");
 
     // Evaluate geometrical term -Ax/A for forcing
-    m_geomFactor = Array<OneD, NekDouble> (pFields[0]->GetTotPoints(), 0.0);
-    Array<OneD, NekDouble> tmp (pFields[0]->GetTotPoints(), 0.0);
+    m_geomFactor = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
+    Array<OneD, NekDouble> tmp(pFields[0]->GetTotPoints(), 0.0);
 
-    std::string  sFieldStr   = m_session->GetVariable(0);
+    std::string sFieldStr = m_session->GetVariable(0);
     ASSERTL0(m_session->DefinesFunction(funcName, sFieldStr),
              "Variable '" + sFieldStr + "' not defined.");
     GetFunction(pFields, m_session, funcName, true)
         ->Evaluate(sFieldStr, m_geomFactor, 0.0);
 
     // Check if DADXFCN is defined
-    const TiXmlElement* dAFuncNameElmt = pForce->FirstChildElement("DADXFCN");
-    if(dAFuncNameElmt)
+    const TiXmlElement *dAFuncNameElmt = pForce->FirstChildElement("DADXFCN");
+    if (dAFuncNameElmt)
     {
         funcName = dAFuncNameElmt->GetText();
         ASSERTL0(m_session->DefinesFunction(funcName),
-             "Function '" + funcName + "' not defined.");
+                 "Function '" + funcName + "' not defined.");
         ASSERTL0(m_session->DefinesFunction(funcName, sFieldStr),
-             "Variable '" + sFieldStr + "' not defined.");
+                 "Variable '" + sFieldStr + "' not defined.");
         GetFunction(pFields, m_session, funcName, true)
             ->Evaluate(sFieldStr, tmp, 0.0);
     }
     else
     {
         // Numerically evaluate dA/dX
-        pFields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0],
-                              m_geomFactor, tmp);
+        pFields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0], m_geomFactor,
+                              tmp);
     }
 
-    Vmath::Vdiv(pFields[0]->GetTotPoints(), tmp, 1,
-                                            m_geomFactor, 1,
-                                            m_geomFactor, 1);
+    Vmath::Vdiv(pFields[0]->GetTotPoints(), tmp, 1, m_geomFactor, 1,
+                m_geomFactor, 1);
     Vmath::Neg(pFields[0]->GetTotPoints(), m_geomFactor, 1);
 
     // Project m_geomFactor to solution space
-    Array<OneD, NekDouble> tmpCoeff (pFields[0]->GetNcoeffs(), 0.0);
-    pFields[0]->FwdTrans_IterPerExp(m_geomFactor, tmpCoeff);
+    Array<OneD, NekDouble> tmpCoeff(pFields[0]->GetNcoeffs(), 0.0);
+    pFields[0]->FwdTransLocalElmt(m_geomFactor, tmpCoeff);
     pFields[0]->BwdTrans(tmpCoeff, m_geomFactor);
 
-    m_Forcing = Array<OneD, Array<OneD, NekDouble> > (m_NumVariable);
+    m_Forcing = Array<OneD, Array<OneD, NekDouble>>(m_NumVariable);
     for (int i = 0; i < m_NumVariable; ++i)
     {
-        m_Forcing[i] = Array<OneD, NekDouble> (pFields[0]->GetTotPoints(), 0.0);
+        m_Forcing[i] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
     }
 }
 
 void ForcingQuasi1D::v_Apply(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&  pFields,
-        const Array<OneD, Array<OneD, NekDouble> >&         inarray,
-              Array<OneD, Array<OneD, NekDouble> >&         outarray,
-        const NekDouble&                                    time)
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time)
 {
     boost::ignore_unused(time);
 
     int nPoints = pFields[0]->GetTotPoints();
 
     // Get (E+p)
-    Array<OneD, NekDouble> tmp (nPoints, 0.0);
+    Array<OneD, NekDouble> tmp(nPoints, 0.0);
     m_varConv->GetPressure(inarray, tmp);
-    Vmath::Vadd(nPoints, tmp, 1,
-                    inarray[2], 1, tmp, 1);
+    Vmath::Vadd(nPoints, tmp, 1, inarray[2], 1, tmp, 1);
 
     // F-rho = -Ax/A *rhou
-    Vmath::Vmul(nPoints, m_geomFactor, 1,
-                         inarray[1], 1, m_Forcing[0], 1);
+    Vmath::Vmul(nPoints, m_geomFactor, 1, inarray[1], 1, m_Forcing[0], 1);
 
     // F-rhou = -Ax/A *rhou*u
-    Vmath::Vmul(nPoints, m_geomFactor, 1,
-                         inarray[1], 1, m_Forcing[1], 1);
-    Vmath::Vmul(nPoints, m_Forcing[1], 1,
-                         inarray[1], 1, m_Forcing[1], 1);
-    Vmath::Vdiv(nPoints, m_Forcing[1], 1,
-                         inarray[0], 1, m_Forcing[1], 1);
+    Vmath::Vmul(nPoints, m_geomFactor, 1, inarray[1], 1, m_Forcing[1], 1);
+    Vmath::Vmul(nPoints, m_Forcing[1], 1, inarray[1], 1, m_Forcing[1], 1);
+    Vmath::Vdiv(nPoints, m_Forcing[1], 1, inarray[0], 1, m_Forcing[1], 1);
 
     // F-E = -Ax/A *(E+p)*u
-    Vmath::Vmul(nPoints, m_geomFactor, 1,
-                         inarray[1], 1, m_Forcing[2], 1);
-    Vmath::Vmul(nPoints, m_Forcing[2], 1,
-                         tmp, 1, m_Forcing[2], 1);
-    Vmath::Vdiv(nPoints, m_Forcing[2], 1,
-                         inarray[0], 1, m_Forcing[2], 1);
+    Vmath::Vmul(nPoints, m_geomFactor, 1, inarray[1], 1, m_Forcing[2], 1);
+    Vmath::Vmul(nPoints, m_Forcing[2], 1, tmp, 1, m_Forcing[2], 1);
+    Vmath::Vdiv(nPoints, m_Forcing[2], 1, inarray[0], 1, m_Forcing[2], 1);
 
     // Apply forcing
     for (int i = 0; i < m_NumVariable; i++)
     {
-        Vmath::Vadd(nPoints, outarray[i], 1,
-                    m_Forcing[i], 1, outarray[i], 1);
+        Vmath::Vadd(nPoints, outarray[i], 1, m_Forcing[i], 1, outarray[i], 1);
     }
 }
 
-}
+} // namespace Nektar

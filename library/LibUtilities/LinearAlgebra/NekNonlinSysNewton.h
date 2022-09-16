@@ -57,8 +57,8 @@ public:
         const NekSysKey &pKey)
     {
         NekNonlinSysSharedPtr p =
-            MemoryManager<NekNonlinSysNewton>::AllocateSharedPtr(pSession,
-                vComm, nDimen, pKey);
+            MemoryManager<NekNonlinSysNewton>::AllocateSharedPtr(
+                pSession, vComm, nDimen, pKey);
         p->InitObject();
         return p;
     }
@@ -71,36 +71,29 @@ public:
     LIB_UTILITIES_EXPORT ~NekNonlinSysNewton();
 
 protected:
-
     NekDouble m_SysResNorm0;
     NekDouble m_SysResNorm;
 
     int m_InexactNewtonForcing = 0;
-    NekDouble   m_forcingGamma  = 1.0;
-    NekDouble   m_forcingAlpha = 0.5 * (1.0 + sqrt(5));
+    NekDouble m_forcingGamma   = 1.0;
+    NekDouble m_forcingAlpha   = 0.5 * (1.0 + sqrt(5));
 
     virtual void v_InitObject();
 
-    virtual int v_SolveSystem(
-        const int nGlobal,
-        const Array<OneD, const NekDouble> &pInput,
-        Array<OneD, NekDouble> &pOutput, const int nDir,
-        const NekDouble tol, const NekDouble factor);
+    virtual int v_SolveSystem(const int nGlobal,
+                              const Array<OneD, const NekDouble> &pInput,
+                              Array<OneD, NekDouble> &pOutput, const int nDir,
+                              const NekDouble tol, const NekDouble factor);
 
     virtual bool v_ConvergenceCheck(
         const int nIteration, const Array<OneD, const NekDouble> &Residual,
         const NekDouble tol);
-    void CalcInexactNewtonForcing(
-        const int       &k,
-        NekDouble       &resnormOld,
-        const NekDouble &resnorm,
-        NekDouble       &forcing);
+    void CalcInexactNewtonForcing(const int &k, NekDouble &resnormOld,
+                                  const NekDouble &resnorm, NekDouble &forcing);
 
     virtual void v_SetupNekNonlinSystem(
         const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-        const Array<OneD, const NekDouble> &pSource,
-        const int nDir);
-
+        const Array<OneD, const NekDouble> &pSource, const int nDir);
 
 private:
 };

@@ -32,86 +32,85 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef  NEKTARUNIVTYPEDEF_HPP
-#define  NEKTARUNIVTYPEDEF_HPP
+#ifndef NEKTARUNIVTYPEDEF_HPP
+#define NEKTARUNIVTYPEDEF_HPP
 
-#include <map>
 #include <cstdint>
+#include <map>
 
 namespace Nektar
 {
-    typedef double NekDouble;
-    typedef float  NekSingle;
+typedef double NekDouble;
+typedef float NekSingle;
 
-    typedef std::int32_t  NekInt;
-    typedef std::int32_t  NekInt32;
-    typedef std::int64_t  NekInt64;
-    typedef std::uint32_t NekUInt;
-    typedef std::uint32_t NekUInt32;
-    typedef std::uint64_t NekUInt64;
+typedef std::int32_t NekInt;
+typedef std::int32_t NekInt32;
+typedef std::int64_t NekInt64;
+typedef std::uint32_t NekUInt;
+typedef std::uint32_t NekUInt32;
+typedef std::uint64_t NekUInt64;
 
-    struct OneD
+struct OneD
+{
+    static const unsigned int Value = 1;
+};
+struct TwoD
+{
+    static const unsigned int Value = 2;
+};
+struct ThreeD
+{
+    static const unsigned int Value = 3;
+};
+
+struct FourD
+{
+    static const unsigned int Value = 4;
+};
+
+enum Direction
+{
+    xDir = 0,
+    yDir = 1,
+    zDir = 2
+};
+
+enum OutputFormat
+{
+    eTecplot,
+    eTecplotZones,
+    eTecplotSingleBlock,
+    eGmsh,
+    eGnuplot
+};
+
+/// Enumeration of flags for passing a list of options.
+enum FlagType
+{
+    eUseGlobal
+};
+
+/// String map for FlagType enumeration.
+const char *const FlagTypeMap[] = {"UseGlobal"};
+
+/// Defines a list of flags.
+class FlagList
+{
+public:
+    void set(const FlagType &key, bool value)
     {
-        static const unsigned int Value = 1;
-    };
-    struct TwoD
+        m_data[key] = value;
+    }
+    bool isSet(const FlagType &key) const
     {
-        static const unsigned int Value = 2;
-    };
-    struct ThreeD
-    {
-        static const unsigned int Value = 3;
-    };
+        auto x = m_data.find(key);
+        return x != m_data.end() && x->second;
+    }
 
-    struct FourD
-    {
-        static const unsigned int Value = 4;
-    };
+private:
+    std::map<FlagType, bool> m_data;
+};
 
-    enum Direction
-    {
-        xDir = 0,
-        yDir = 1,
-        zDir = 2
-    };
-
-    enum OutputFormat
-    {
-        eTecplot,
-        eTecplotZones,
-        eTecplotSingleBlock,
-        eGmsh,
-        eGnuplot
-    };
-
-    /// Enumeration of flags for passing a list of options.
-    enum FlagType
-    {
-        eUseGlobal
-    };
-
-    /// String map for FlagType enumeration.
-    const char* const FlagTypeMap[] = {
-        "UseGlobal"
-    };
-
-    /// Defines a list of flags.
-    class FlagList
-    {
-    public:
-        void set(const FlagType &key, bool value)
-        {
-            m_data[key] = value;
-        }
-        bool isSet(const FlagType &key) const
-        {
-            auto x = m_data.find(key);
-            return x != m_data.end() && x->second;
-        }
-    private:
-        std::map<FlagType, bool> m_data;
-    };
-
-} //end of namespace
+} // namespace Nektar
 
 #endif

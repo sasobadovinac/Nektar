@@ -69,7 +69,7 @@ private:
 
 typedef std::shared_ptr<CADElementCFI> CADElementCFISharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

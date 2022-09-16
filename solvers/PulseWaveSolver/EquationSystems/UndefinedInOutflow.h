@@ -51,35 +51,35 @@ typedef std::shared_ptr<UndefinedInOutflow> UndefinedInOutflowSharedPtr;
 // A global linear system.
 class UndefinedInOutflow : public PulseWaveBoundary
 {
-    public:
-        /// Creates an instance of this class
-        static PulseWaveBoundarySharedPtr
-        create(Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
-               const LibUtilities::SessionReaderSharedPtr &pSession,
-               PulseWavePressureAreaSharedPtr &pressureArea)
-        {
-            return MemoryManager<UndefinedInOutflow>::AllocateSharedPtr(
-              pVessel, pSession, pressureArea);
-        }
+public:
+    /// Creates an instance of this class
+    static PulseWaveBoundarySharedPtr create(
+        Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        PulseWavePressureAreaSharedPtr &pressureArea)
+    {
+        return MemoryManager<UndefinedInOutflow>::AllocateSharedPtr(
+            pVessel, pSession, pressureArea);
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        UndefinedInOutflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
-                           const LibUtilities::SessionReaderSharedPtr pSession,
-                          PulseWavePressureAreaSharedPtr pressureArea);
+    UndefinedInOutflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
+                       const LibUtilities::SessionReaderSharedPtr pSession,
+                       PulseWavePressureAreaSharedPtr pressureArea);
 
-        virtual ~UndefinedInOutflow();
+    virtual ~UndefinedInOutflow();
 
-    protected:
-        virtual void
-        v_DoBoundary(const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                     Array<OneD, Array<OneD, NekDouble> > &A_0,
-                     Array<OneD, Array<OneD, NekDouble> > &beta,
-                     Array<OneD, Array<OneD, NekDouble> > &alpha,
-                     const NekDouble time, int omega, int offset, int n);
+protected:
+    virtual void v_DoBoundary(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &A_0,
+        Array<OneD, Array<OneD, NekDouble>> &beta,
+        Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time,
+        int omega, int offset, int n);
 
-    private:
+private:
 };
 } // namespace Nektar
 

@@ -47,18 +47,19 @@ namespace NekMesh
 
 using namespace Nektar::NekMesh;
 
-ModuleKey InputCADfix::className =
-    GetModuleFactory().RegisterCreatorFunction(ModuleKey(eInputModule, "fbm"),
-                                               InputCADfix::create,
-                                               "Reads CADfix FBM file.");
+ModuleKey InputCADfix::className = GetModuleFactory().RegisterCreatorFunction(
+    ModuleKey(eInputModule, "fbm"), InputCADfix::create,
+    "Reads CADfix FBM file.");
 /**
  * @brief Set up InputCADfix object.
  */
 InputCADfix::InputCADfix(MeshSharedPtr m) : InputModule(m)
 {
-    m_config["order"] = ConfigOption(false, "1", "Polynomial order to elevate to");
+    m_config["order"] =
+        ConfigOption(false, "1", "Polynomial order to elevate to");
     m_config["surfopti"] = ConfigOption(true, "", "Optimise surface mesh");
-    m_config["idfile"] = ConfigOption(false, "", "File with correspondence between surface names and IDs");
+    m_config["idfile"]   = ConfigOption(
+        false, "", "File with correspondence between surface names and IDs");
 }
 
 InputCADfix::~InputCADfix()
@@ -140,11 +141,11 @@ void InputCADfix::Process()
                 c->loct(xyz, t);
                 n->SetCADCurve(c, t);
 
-                vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation>> ss =
-                    c->GetAdjSurf();
+                vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation>>
+                    ss = c->GetAdjSurf();
                 for (int j = 0; j < ss.size(); j++)
                 {
-		    Array<OneD, NekDouble> uv = ss[j].first.lock()->locuv(xyz);
+                    Array<OneD, NekDouble> uv = ss[j].first.lock()->locuv(xyz);
                     n->SetCADSurf(ss[j].first.lock(), uv);
                 }
             }
@@ -154,7 +155,7 @@ void InputCADfix::Process()
             auto f = m_nameToFaceId.find(p->getName());
             if (f != m_nameToFaceId.end())
             {
-                CADSurfSharedPtr s = m_mesh->m_cad->GetSurf(f->second);
+                CADSurfSharedPtr s        = m_mesh->m_cad->GetSurf(f->second);
                 Array<OneD, NekDouble> uv = s->locuv(xyz);
                 n->SetCADSurf(s, uv);
             }
@@ -165,17 +166,18 @@ void InputCADfix::Process()
             if (f != m_nameToVertId.end())
             {
                 CADVertSharedPtr v = m_mesh->m_cad->GetVert(f->second);
-                vector<weak_ptr<CADCurve> > cs = v->GetAdjCurves();
+                vector<weak_ptr<CADCurve>> cs = v->GetAdjCurves();
                 for (int i = 0; i < cs.size(); i++)
                 {
                     NekDouble t;
                     cs[i].lock()->loct(xyz, t);
                     n->SetCADCurve(cs[i].lock(), t);
                     vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation>>
-		        ss = cs[i].lock()->GetAdjSurf();
+                        ss = cs[i].lock()->GetAdjSurf();
                     for (int j = 0; j < ss.size(); j++)
                     {
-		        Array<OneD, NekDouble> uv = ss[j].first.lock()->locuv(xyz);
+                        Array<OneD, NekDouble> uv =
+                            ss[j].first.lock()->locuv(xyz);
                         n->SetCADSurf(ss[j].first.lock(), uv);
                     }
                 }
@@ -273,8 +275,8 @@ void InputCADfix::Process()
             LibUtilities::ePrism, conf, n, tags);
 
         // Create a CFI parent CAD object to store reference to CFI element.
-        std::shared_ptr<CADElementCFI> cfiParent = MemoryManager<
-            CADElementCFI>::AllocateSharedPtr(it.parent);
+        std::shared_ptr<CADElementCFI> cfiParent =
+            MemoryManager<CADElementCFI>::AllocateSharedPtr(it.parent);
         E->m_parentCAD = cfiParent;
 
         m_mesh->m_element[3].push_back(E);
@@ -300,8 +302,8 @@ void InputCADfix::Process()
             LibUtilities::eTetrahedron, conf, n, tags);
 
         // Create a CFI parent CAD object to store reference to CFI element.
-        std::shared_ptr<CADElementCFI> cfiParent = MemoryManager<
-            CADElementCFI>::AllocateSharedPtr(it.parent);
+        std::shared_ptr<CADElementCFI> cfiParent =
+            MemoryManager<CADElementCFI>::AllocateSharedPtr(it.parent);
         E->m_parentCAD = cfiParent;
 
         m_mesh->m_element[3].push_back(E);
@@ -327,8 +329,8 @@ void InputCADfix::Process()
             LibUtilities::eHexahedron, conf, n, tags);
 
         // Create a CFI parent CAD object to store reference to CFI element.
-        std::shared_ptr<CADElementCFI> cfiParent = MemoryManager<
-            CADElementCFI>::AllocateSharedPtr(it.parent);
+        std::shared_ptr<CADElementCFI> cfiParent =
+            MemoryManager<CADElementCFI>::AllocateSharedPtr(it.parent);
         E->m_parentCAD = cfiParent;
 
         m_mesh->m_element[3].push_back(E);
@@ -538,5 +540,5 @@ void InputCADfix::Process()
     }
     ProcessComposites();
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

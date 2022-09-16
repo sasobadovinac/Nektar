@@ -45,7 +45,7 @@ namespace NekMesh
 /// Dummy Output Module for no output file
 class OutputStdOut : public NekMesh::OutputModule
 {
-	
+
 public:
     /// Creates an instance of this class
     static std::shared_ptr<Module> create(NekMesh::MeshSharedPtr m)
@@ -65,7 +65,7 @@ public:
         return "OutputStdOut";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

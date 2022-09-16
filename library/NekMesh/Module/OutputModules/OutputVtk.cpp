@@ -32,16 +32,16 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Element.h>
 #include <LibUtilities/BasicUtils/VtkUtil.hpp>
-
-#include <vtkXMLUnstructuredGridWriter.h>
-#include <vtkUnstructuredGridWriter.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkPoints.h>
-#include <vtkCellType.h>
+#include <NekMesh/MeshElements/Element.h>
 
 #include "OutputVtk.h"
+#include <vtkCellType.h>
+#include <vtkPoints.h>
+#include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkUnstructuredGridWriter.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -57,7 +57,7 @@ ModuleKey OutputVtk::className = GetModuleFactory().RegisterCreatorFunction(
 OutputVtk::OutputVtk(MeshSharedPtr m) : OutputModule(m)
 {
     m_config["uncompress"] = ConfigOption(true, "0", "Uncompress xml sections");
-    m_config["legacy"]        = ConfigOption(true, "0", "Output in legacy format");
+    m_config["legacy"]     = ConfigOption(true, "0", "Output in legacy format");
 }
 
 OutputVtk::~OutputVtk()
@@ -103,18 +103,20 @@ int OutputVtk::GetVtkCellType(std::string pType)
 
 void OutputVtk::Process()
 {
-    m_log(VERBOSE) << "Writing VTK file '"
-                   << m_config["outfile"].as<string>() << "'." << endl;
+    m_log(VERBOSE) << "Writing VTK file '" << m_config["outfile"].as<string>()
+                   << "'." << endl;
 
-    vtkUnstructuredGrid *vtkMesh   = vtkUnstructuredGrid::New();
-    vtkPoints           *vtkPoints = vtkPoints::New();
+    vtkSmartPointer<vtkUnstructuredGrid> vtkMesh =
+        vtkSmartPointer<vtkUnstructuredGrid>::New();
+    vtkSmartPointer<vtkPoints> vtkMeshPoints =
+        vtkSmartPointer<vtkPoints>::New();
 
     std::set<NodeSharedPtr> tmp(m_mesh->m_vertexSet.begin(),
                                 m_mesh->m_vertexSet.end());
 
     for (auto &n : tmp)
     {
-        vtkPoints->InsertPoint(n->m_id, n->m_x, n->m_y, n->m_z);
+        vtkMeshPoints->InsertPoint(n->m_id, n->m_x, n->m_y, n->m_z);
     }
 
     vtkIdType p[8];
@@ -131,16 +133,17 @@ void OutputVtk::Process()
         {
             std::swap(p[2], p[4]);
         }
-        vtkMesh->InsertNextCell(GetVtkCellType(elmt[i]->GetTag()),
-                                vertexCount, &p[0]);
+        vtkMesh->InsertNextCell(GetVtkCellType(elmt[i]->GetTag()), vertexCount,
+                                &p[0]);
     }
 
-    vtkMesh->SetPoints(vtkPoints);
+    vtkMesh->SetPoints(vtkMeshPoints);
 
     // Write out the new mesh in XML or legacy format
     if (m_config["legacy"].beenSet)
     {
-        vtkUnstructuredGridWriter *vtkMeshWriter = vtkUnstructuredGridWriter::New();
+        vtkSmartPointer<vtkUnstructuredGridWriter> vtkMeshWriter =
+            vtkSmartPointer<vtkUnstructuredGridWriter>::New();
         vtkMeshWriter->SetFileName(m_config["outfile"].as<string>().c_str());
 
 #if VTK_MAJOR_VERSION <= 5
@@ -152,7 +155,9 @@ void OutputVtk::Process()
     }
     else // XML format
     {
-        vtkXMLUnstructuredGridWriter *vtkMeshWriter = vtkXMLUnstructuredGridWriter::New();
+
+        vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtkMeshWriter =
+            vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
         vtkMeshWriter->SetFileName(m_config["outfile"].as<string>().c_str());
 
 #if VTK_MAJOR_VERSION <= 5
@@ -167,5 +172,5 @@ void OutputVtk::Process()
         vtkMeshWriter->Update();
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

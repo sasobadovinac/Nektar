@@ -119,7 +119,7 @@ void VolumeMesh::Process()
                 vector<EdgeSharedPtr> es = els[i]->GetEdgeList();
                 for (int j = 0; j < es.size(); j++)
                 {
-                    vector<pair<weak_ptr<Element>, int> > lk = es[j]->m_elLink;
+                    vector<pair<weak_ptr<Element>, int>> lk = es[j]->m_elLink;
                     es[j]->m_elLink.clear();
                     for (int k = 0; k < lk.size(); k++)
                     {
@@ -147,7 +147,7 @@ void VolumeMesh::Process()
             }
 
             // find the curve nodes which are on this symsurf
-            map<int, vector<NodeSharedPtr> > curveNodeMap;
+            map<int, vector<NodeSharedPtr>> curveNodeMap;
             NodeSet::iterator it;
             for (it = m_mesh->m_vertexSet.begin();
                  it != m_mesh->m_vertexSet.end(); it++)
@@ -164,7 +164,7 @@ void VolumeMesh::Process()
             }
 
             // need to bubble sort the vectors
-            map<int, vector<NodeSharedPtr> >::iterator cit;
+            map<int, vector<NodeSharedPtr>>::iterator cit;
             for (cit = curveNodeMap.begin(); cit != curveNodeMap.end(); cit++)
             {
                 vector<NekDouble> ts;
@@ -299,8 +299,8 @@ void VolumeMesh::Process()
         m_log(VERBOSE) << "    - Boundary layer generation complete." << endl;
         m_log(VERBOSE) << "  Tetrahedral mesh generation:" << endl;
 
-        tet = MemoryManager<TetMesh>::AllocateSharedPtr(
-            m_mesh, prefix, m_log, tetsurface);
+        tet = MemoryManager<TetMesh>::AllocateSharedPtr(m_mesh, prefix, m_log,
+                                                        tetsurface);
     }
     else
     {
@@ -318,5 +318,5 @@ void VolumeMesh::Process()
     ProcessComposites();
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

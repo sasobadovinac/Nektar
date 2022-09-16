@@ -36,8 +36,8 @@
 #ifndef NEKTAR_LIBUTILITIES_INTERPRETER_INTERPRETER_H
 #define NEKTAR_LIBUTILITIES_INTERPRETER_INTERPRETER_H
 
-#include <string>
 #include <memory>
+#include <string>
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
@@ -126,7 +126,7 @@ public:
      *                   NekDouble value.
      */
     LIB_UTILITIES_EXPORT void AddConstants(
-        std::map<std::string, NekDouble> const& constants);
+        std::map<std::string, NekDouble> const &constants);
 
     /**
      * @brief Set constants to be evaluated.
@@ -139,8 +139,8 @@ public:
      *
      * @return Total number of constants after this one has been added.
      */
-    LIB_UTILITIES_EXPORT int AddConstant(
-        std::string const& name, NekDouble value);
+    LIB_UTILITIES_EXPORT int AddConstant(std::string const &name,
+                                         NekDouble value);
 
     /**
      * @brief Return the value of a constant.
@@ -151,7 +151,7 @@ public:
      *
      * @param name  Name of constant to return.
      */
-    LIB_UTILITIES_EXPORT NekDouble GetConstant(std::string const& name);
+    LIB_UTILITIES_EXPORT NekDouble GetConstant(std::string const &name);
 
     /**
      * @brief Set parameter values.
@@ -164,7 +164,7 @@ public:
      * only the ones in the map argument.
      */
     LIB_UTILITIES_EXPORT void SetParameters(
-        std::map<std::string, NekDouble> const& params);
+        std::map<std::string, NekDouble> const &params);
 
     /**
      * @brief Set parameter values.
@@ -178,8 +178,8 @@ public:
      * @param name   Name of the parameter to define.
      * @param value  The parameter's value.
      */
-    LIB_UTILITIES_EXPORT void SetParameter(
-        std::string const& name, NekDouble value);
+    LIB_UTILITIES_EXPORT void SetParameter(std::string const &name,
+                                           NekDouble value);
 
     /**
      * @brief Get the value of a parameter
@@ -190,7 +190,7 @@ public:
      *
      * @param name  Name of the parameter to query.
      */
-    LIB_UTILITIES_EXPORT NekDouble GetParameter(std::string const& name);
+    LIB_UTILITIES_EXPORT NekDouble GetParameter(std::string const &name);
 
     /**
      * @brief Returns the total walltime spent in evaluation procedures in
@@ -218,8 +218,8 @@ public:
      * @return  An integer denoting the unique ID of this function. This should
      *          be passed into #Evaluate functions for later evaluation.
      */
-    LIB_UTILITIES_EXPORT int DefineFunction(
-        const std::string& vlist, const std::string& expr);
+    LIB_UTILITIES_EXPORT int DefineFunction(const std::string &vlist,
+                                            const std::string &expr);
 
     /**
      * @brief Evaluate a function which depends only on constants and/or
@@ -241,9 +241,10 @@ public:
      * @param z   The value of variable 3 (typically \f$ z \f$).
      * @param t   The value of variable 4 (typically \f$ t \f$).
      */
-    LIB_UTILITIES_EXPORT NekDouble Evaluate(
-        const int id, const NekDouble x, const NekDouble y, const NekDouble z,
-        const NekDouble t);
+    LIB_UTILITIES_EXPORT NekDouble Evaluate(const int id, const NekDouble x,
+                                            const NekDouble y,
+                                            const NekDouble z,
+                                            const NekDouble t);
 
     /**
      * @brief Evaluate a function which depends on zero or more variables.
@@ -257,9 +258,8 @@ public:
      *               function to be evaluated.
      * @param point  A std::vector of points to be evaluated.
      */
-    LIB_UTILITIES_EXPORT NekDouble EvaluateAtPoint(
-        const int id,
-        std::vector<NekDouble> point);
+    LIB_UTILITIES_EXPORT NekDouble
+    EvaluateAtPoint(const int id, std::vector<NekDouble> point);
 
     /**
      * @brief Evaluate a function which depends on four variables: typically
@@ -283,13 +283,12 @@ public:
      * @param result An Array containing the evaluation of the function for each
      *               of the variable values.
      */
-    LIB_UTILITIES_EXPORT void Evaluate(
-        const int id,
-        const Array<OneD, const NekDouble> &x,
-        const Array<OneD, const NekDouble> &y,
-        const Array<OneD, const NekDouble> &z,
-        const Array<OneD, const NekDouble> &t,
-        Array<OneD, NekDouble>& result);
+    LIB_UTILITIES_EXPORT void Evaluate(const int id,
+                                       const Array<OneD, const NekDouble> &x,
+                                       const Array<OneD, const NekDouble> &y,
+                                       const Array<OneD, const NekDouble> &z,
+                                       const Array<OneD, const NekDouble> &t,
+                                       Array<OneD, NekDouble> &result);
 
     /**
      * @brief Evaluate a function which depends on zero or more variables.
@@ -312,8 +311,8 @@ public:
      */
     LIB_UTILITIES_EXPORT void Evaluate(
         const int expression_id,
-        const std::vector<Array<OneD, const NekDouble> > &points,
-        Array<OneD, NekDouble>& result);
+        const std::vector<Array<OneD, const NekDouble>> &points,
+        Array<OneD, NekDouble> &result);
 
 private:
     /// Forward declaration of evaluator to avoid boost::spirit includes.
@@ -324,7 +323,7 @@ private:
 
 typedef std::shared_ptr<Interpreter> InterpreterSharedPtr;
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

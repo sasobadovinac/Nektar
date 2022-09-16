@@ -33,14 +33,13 @@
 #define NEKTAR__LIB_UTILITIES_LIB_UTILITIES_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef LIB_UTILITIES_EXPORTS
-        #define LIB_UTILITIES_EXPORT _declspec(dllexport)
-    #else
-        #define LIB_UTILITIES_EXPORT _declspec(dllimport)
-    #endif
+#ifdef LIB_UTILITIES_EXPORTS
+#define LIB_UTILITIES_EXPORT _declspec(dllexport)
 #else
-    #define LIB_UTILITIES_EXPORT
+#define LIB_UTILITIES_EXPORT _declspec(dllimport)
+#endif
+#else
+#define LIB_UTILITIES_EXPORT
 #endif
 
-#endif //NEKTAR__LIB_UTILITIES_LIB_UTILITIES_DECLSPEC_H
-
+#endif // NEKTAR__LIB_UTILITIES_LIB_UTILITIES_DECLSPEC_H

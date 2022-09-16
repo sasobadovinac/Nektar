@@ -37,78 +37,74 @@
 
 #include <memory>
 
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/Foundations/FoundationsFwd.hpp>
+#include <LibUtilities/Foundations/ManagerAccess.h>
+#include <LibUtilities/Foundations/NodalUtil.h>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 
 namespace Nektar
 {
-    namespace LibUtilities
+namespace LibUtilities
+{
+class NodalTriEvenlySpaced : public Points<NekDouble>
+{
+public:
+    virtual ~NodalTriEvenlySpaced()
     {
-        class NodalTriEvenlySpaced: public Points<NekDouble>
-        {
-        public:
-            virtual ~NodalTriEvenlySpaced()
-            {
+    }
 
-            }
+    NodalTriEvenlySpaced(const PointsKey &key) : PointsBaseType(key)
+    {
+    }
 
-            NodalTriEvenlySpaced(const PointsKey &key) : PointsBaseType(key)
-            {
+    LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
+        const PointsKey &key);
 
-            }
+    const MatrixSharedPtrType GetI(const PointsKey &pkey)
+    {
+        ASSERTL0(pkey.GetPointsDim() == 2,
+                 "NodalTriEvenlySpaced Points can only interp to other "
+                 "2d point distributions");
+        Array<OneD, const NekDouble> x, y;
+        PointsManager()[pkey]->GetPoints(x, y);
+        return GetI(x, y);
+    }
 
-            LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType>
-                Create(const PointsKey &key);
+    const MatrixSharedPtrType GetI(const Array<OneD, const NekDouble> &x,
+                                   const Array<OneD, const NekDouble> &y)
+    {
+        size_t numpoints = x.size();
+        unsigned int np  = GetTotNumPoints();
 
-            const MatrixSharedPtrType GetI(const PointsKey &pkey)
-            {
-                ASSERTL0(pkey.GetPointsDim() == 2,
-                         "NodalTriEvenlySpaced Points can only interp to other "
-                         "2d point distributions");
-                Array<OneD, const NekDouble> x, y;
-                PointsManager()[pkey]->GetPoints(x, y);
-                return GetI(x, y);
-            }
+        Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
+        CalculateInterpMatrix(x, y, interp);
 
-            const MatrixSharedPtrType GetI(
-                const Array<OneD, const NekDouble> &x,
-                const Array<OneD, const NekDouble> &y)
-            {
-                size_t       numpoints = x.size();
-                unsigned int np        = GetTotNumPoints();
+        NekDouble *d = interp.data();
+        return MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints,
+                                                                      np, d);
+    }
 
-                Array<OneD, NekDouble> interp(GetTotNumPoints()*numpoints);
-                CalculateInterpMatrix(x, y, interp);
+private:
+    static bool initPointsManager[];
 
-                NekDouble* d = interp.data();
-                return MemoryManager<NekMatrix<NekDouble> >
-                    ::AllocateSharedPtr(numpoints, np, d);
-            }
+    std::shared_ptr<NodalUtilTriangle> m_util;
 
-        private:
-            static bool initPointsManager[];
+    /// Deafult constructor should not be called except by Create matrix
+    NodalTriEvenlySpaced() : PointsBaseType(NullPointsKey)
+    {
+    }
 
-            std::shared_ptr<NodalUtilTriangle> m_util;
+    void CalculatePoints();
+    void CalculateWeights();
+    void CalculateDerivMatrix();
+    void NodalPointReorder2d();
+    void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xi,
+                               const Array<OneD, const NekDouble> &yi,
+                               Array<OneD, NekDouble> &interp);
+}; // end of NodalTriEvenlySpaced
+} // namespace LibUtilities
+} // namespace Nektar
 
-            /// Deafult constructor should not be called except by Create matrix
-            NodalTriEvenlySpaced():PointsBaseType(NullPointsKey)
-            {
-            }
-
-            void CalculatePoints();
-            void CalculateWeights();
-            void CalculateDerivMatrix();
-            void NodalPointReorder2d();
-            void CalculateInterpMatrix(
-                const Array<OneD, const NekDouble> &xi,
-                const Array<OneD, const NekDouble> &yi,
-                      Array<OneD,       NekDouble> &interp);
-        }; // end of NodalTriEvenlySpaced
-   } // end of namespace
-} // end of namespace
-
-#endif //NODALTRIEVENLYSPACED_H
+#endif // NODALTRIEVENLYSPACED_H

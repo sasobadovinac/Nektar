@@ -35,16 +35,16 @@
 #ifndef NEKTAR_LIBUTILITIES_BASICUTILS_NEKFACTORY
 #define NEKTAR_LIBUTILITIES_BASICUTILS_NEKFACTORY
 
+#include <functional>
 #include <iostream>
 #include <map>
-#include <string>
-#include <sstream>
 #include <memory>
-#include <functional>
+#include <sstream>
+#include <string>
 
 #ifdef NEKTAR_USE_THREAD_SAFETY
-#include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/locks.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #endif
 
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
@@ -98,8 +98,8 @@ typedef boost::shared_lock<boost::shared_mutex> ReadLock;
  *              ::CreateInstance("[derivedclass]",Param1);
  * \endcode
  */
-template <typename tKey,        // reference tag (e.g. string, int)
-          typename tBase,       // base class
+template <typename tKey,  // reference tag (e.g. string, int)
+          typename tBase, // base class
           typename... tParam>
 class NekFactory
 {
@@ -116,8 +116,7 @@ public:
     struct ModuleEntry
     {
         ModuleEntry(CreatorFunction pFunc, const std::string pDesc)
-            : m_func(pFunc),
-              m_desc(pDesc)
+            : m_func(pFunc), m_desc(pDesc)
         {
         }
 
@@ -166,7 +165,7 @@ public:
                 {
                     return tmp->m_func(args...);
                 }
-                catch (const std::string& s)
+                catch (const std::string &s)
                 {
                     std::stringstream errstr;
                     errstr << "Unable to create module: " << idKey << "\n";
@@ -183,7 +182,6 @@ public:
         NEKERROR(ErrorUtil::efatal, errstr.str());
         return tBaseSharedPtr();
     }
-
 
     /**
      * @brief Register a class with the factory.
@@ -205,10 +203,9 @@ public:
 #endif
 
         ModuleEntry e(classCreator, pDesc);
-        getMapFactory()->insert(std::pair<tKey,ModuleEntry>(idKey, e));
+        getMapFactory()->insert(std::pair<tKey, ModuleEntry>(idKey, e));
         return idKey;
     }
-
 
     /**
      * @brief Checks if a particular module is available.
@@ -229,11 +226,10 @@ public:
         return false;
     }
 
-
     /**
      * @brief Prints the available classes to stdout.
      */
-    void PrintAvailableClasses(std::ostream& pOut = std::cout)
+    void PrintAvailableClasses(std::ostream &pOut = std::cout)
     {
 #ifdef NEKTAR_USE_THREAD_SAFETY
         ReadLock vReadLock(m_mutex);
@@ -245,8 +241,8 @@ public:
             pOut << "  " << it.first;
             if (it.second.m_desc != "")
             {
-                pOut << ":" << std::endl << "    "
-                     << it.second.m_desc << std::endl;
+                pOut << ":" << std::endl
+                     << "    " << it.second.m_desc << std::endl;
             }
             else
             {
@@ -254,7 +250,6 @@ public:
             }
         }
     }
-
 
     /**
      * @brief Retrieves a key, given a description
@@ -276,7 +271,6 @@ public:
         ASSERTL0(false, errstr);
     }
 
-
     /**
      * @brief Returns the description of a class
      */
@@ -291,7 +285,7 @@ public:
 
         std::stringstream errstr;
         errstr << "No such module: " << idKey << std::endl;
-        ASSERTL0 (it != getMapFactory()->end(), errstr.str());
+        ASSERTL0(it != getMapFactory()->end(), errstr.str());
         return it->second.m_desc;
     }
 
@@ -300,24 +294,23 @@ protected:
      * @brief Ensure the factory's map is created.
      * @returns                 The factory's map.
      */
-    TMapFactory* getMapFactory()
+    TMapFactory *getMapFactory()
     {
         return &mMapFactory;
     }
 
 private:
-    NekFactory(const NekFactory& rhs);
-    NekFactory& operator=(const NekFactory& rhs);
+    NekFactory(const NekFactory &rhs);
+    NekFactory &operator=(const NekFactory &rhs);
 
     TMapFactory mMapFactory;
 
 #ifdef NEKTAR_USE_THREAD_SAFETY
     boost::shared_mutex m_mutex;
 #endif
-
 };
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

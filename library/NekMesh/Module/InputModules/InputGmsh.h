@@ -75,13 +75,13 @@ public:
 
 private:
     int GetNnodes(unsigned int InputGmshEntity);
-    static std::vector<int> TriReordering  (NekMesh::ElmtConfig conf);
-    static std::vector<int> QuadReordering (NekMesh::ElmtConfig conf);
-    static std::vector<int> HexReordering  (NekMesh::ElmtConfig conf);
+    static std::vector<int> TriReordering(NekMesh::ElmtConfig conf);
+    static std::vector<int> QuadReordering(NekMesh::ElmtConfig conf);
+    static std::vector<int> HexReordering(NekMesh::ElmtConfig conf);
     static std::vector<int> PrismReordering(NekMesh::ElmtConfig conf,
                                             Logger &log);
-    static std::vector<int> TetReordering  (NekMesh::ElmtConfig conf);
-    static std::vector<int> LineReordering (NekMesh::ElmtConfig conf);
+    static std::vector<int> TetReordering(NekMesh::ElmtConfig conf);
+    static std::vector<int> LineReordering(NekMesh::ElmtConfig conf);
 
     // Gmsh file version
     NekDouble m_version;
@@ -101,7 +101,7 @@ private:
     void SaveNode(int id, NekDouble x = 0, NekDouble y = 0, NekDouble z = 0);
     void ReadNextElement(int tag = 0, int elm_type = 0);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

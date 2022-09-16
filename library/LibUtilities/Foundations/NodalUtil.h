@@ -39,20 +39,19 @@
 #include <tuple>
 
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
+#include <LibUtilities/Foundations/Points.h>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
 #include <LibUtilities/LinearAlgebra/NekVectorFwd.hpp>
-#include <LibUtilities/Foundations/Points.h>
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
-
 
 namespace Nektar
 {
 namespace LibUtilities
 {
 
-typedef std::shared_ptr<NekMatrix<NekDouble> > SharedMatrix;
+typedef std::shared_ptr<NekMatrix<NekDouble>> SharedMatrix;
 
 /**
  * @brief A class to assist in the construction of nodal simplex and hybrid
@@ -88,8 +87,8 @@ public:
     LIB_UTILITIES_EXPORT SharedMatrix GetVandermonde();
     LIB_UTILITIES_EXPORT SharedMatrix GetVandermondeForDeriv(int dir);
     LIB_UTILITIES_EXPORT SharedMatrix GetDerivMatrix(int dir);
-    LIB_UTILITIES_EXPORT SharedMatrix GetInterpolationMatrix(
-        Array<OneD, Array<OneD, NekDouble> > &xi);
+    LIB_UTILITIES_EXPORT SharedMatrix
+    GetInterpolationMatrix(Array<OneD, Array<OneD, NekDouble>> &xi);
 
 protected:
     /**
@@ -109,7 +108,7 @@ protected:
     /// Total number of nodal points
     int m_numPoints;
     /// Coordinates of the nodal points defining the basis
-    Array<OneD, Array<OneD, NekDouble> > m_xi;
+    Array<OneD, Array<OneD, NekDouble>> m_xi;
 
     /**
      * @brief Return the values of the orthogonal basis at the nodal points for
@@ -130,8 +129,8 @@ protected:
      * @param mode  Mode number, which is between 0 and NodalUtil::v_NumModes()
      *              - 1.
      */
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(
-        const int dir, const int mode) = 0;
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
+                                                   const int mode) = 0;
 
     /**
      * @brief Construct a NodalUtil object of the appropriate element type for a
@@ -145,7 +144,7 @@ protected:
      * @param xi  Distribution of nodal points to create utility with.
      */
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble> > &xi) = 0;
+        Array<OneD, Array<OneD, NekDouble>> &xi) = 0;
 
     /**
      * @brief Return the value of the integral of the zero-th mode for this
@@ -170,8 +169,7 @@ protected:
 class NodalUtilTriangle : public NodalUtil
 {
 public:
-    LIB_UTILITIES_EXPORT NodalUtilTriangle(int degree,
-                                           Array<OneD, NekDouble> r,
+    LIB_UTILITIES_EXPORT NodalUtilTriangle(int degree, Array<OneD, NekDouble> r,
                                            Array<OneD, NekDouble> s);
 
     LIB_UTILITIES_EXPORT virtual ~NodalUtilTriangle()
@@ -181,17 +179,17 @@ public:
 protected:
     /// Mapping from the \f$ (i,j) \f$ indexing of the basis to a continuous
     /// ordering.
-    std::vector<std::pair<int, int> > m_ordering;
+    std::vector<std::pair<int, int>> m_ordering;
 
     /// Collapsed coordinates \f$ (\eta_1, \eta_2) \f$ of the nodal points.
-    Array<OneD, Array<OneD, NekDouble> > m_eta;
+    Array<OneD, Array<OneD, NekDouble>> m_eta;
 
     virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(
-        const int dir, const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
+                                                   const int mode);
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble> > &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi)
     {
         return MemoryManager<NodalUtilTriangle>::AllocateSharedPtr(
             m_degree, xi[0], xi[1]);
@@ -233,14 +231,14 @@ protected:
 
     /// Collapsed coordinates \f$ (\eta_1, \eta_2, \eta_3) \f$ of the nodal
     /// points.
-    Array<OneD, Array<OneD, NekDouble> > m_eta;
+    Array<OneD, Array<OneD, NekDouble>> m_eta;
 
     virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(
-        const int dir, const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
+                                                   const int mode);
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble> > &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi)
     {
         return MemoryManager<NodalUtilTetrahedron>::AllocateSharedPtr(
             m_degree, xi[0], xi[1], xi[2]);
@@ -266,8 +264,7 @@ class NodalUtilPrism : public NodalUtil
     typedef std::tuple<int, int, int> Mode;
 
 public:
-    LIB_UTILITIES_EXPORT NodalUtilPrism(int degree,
-                                        Array<OneD, NekDouble> r,
+    LIB_UTILITIES_EXPORT NodalUtilPrism(int degree, Array<OneD, NekDouble> r,
                                         Array<OneD, NekDouble> s,
                                         Array<OneD, NekDouble> t);
 
@@ -282,17 +279,17 @@ protected:
 
     /// Collapsed coordinates \f$ (\eta_1, \eta_2, \eta_3) \f$ of the nodal
     /// points.
-    Array<OneD, Array<OneD, NekDouble> > m_eta;
+    Array<OneD, Array<OneD, NekDouble>> m_eta;
 
     virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(
-        const int dir, const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
+                                                   const int mode);
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble> > &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi)
     {
-        return MemoryManager<NodalUtilPrism>::AllocateSharedPtr(
-            m_degree, xi[0], xi[1], xi[2]);
+        return MemoryManager<NodalUtilPrism>::AllocateSharedPtr(m_degree, xi[0],
+                                                                xi[1], xi[2]);
     }
 
     virtual NekDouble v_ModeZeroIntegral()
@@ -312,8 +309,7 @@ protected:
 class NodalUtilQuad : public NodalUtil
 {
 public:
-    LIB_UTILITIES_EXPORT NodalUtilQuad(int degree,
-                                       Array<OneD, NekDouble> r,
+    LIB_UTILITIES_EXPORT NodalUtilQuad(int degree, Array<OneD, NekDouble> r,
                                        Array<OneD, NekDouble> s);
 
     LIB_UTILITIES_EXPORT virtual ~NodalUtilQuad()
@@ -323,17 +319,17 @@ public:
 protected:
     /// Mapping from the \f$ (i,j) \f$ indexing of the basis to a continuous
     /// ordering.
-    std::vector<std::pair<int, int> > m_ordering;
+    std::vector<std::pair<int, int>> m_ordering;
 
     virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(
-        const int dir, const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
+                                                   const int mode);
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble> > &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi)
     {
-        return MemoryManager<NodalUtilQuad>::AllocateSharedPtr(
-            m_degree, xi[0], xi[1]);
+        return MemoryManager<NodalUtilQuad>::AllocateSharedPtr(m_degree, xi[0],
+                                                               xi[1]);
     }
 
     virtual NekDouble v_ModeZeroIntegral()
@@ -355,8 +351,7 @@ class NodalUtilHex : public NodalUtil
     typedef std::tuple<int, int, int> Mode;
 
 public:
-    LIB_UTILITIES_EXPORT NodalUtilHex(int degree,
-                                      Array<OneD, NekDouble> r,
+    LIB_UTILITIES_EXPORT NodalUtilHex(int degree, Array<OneD, NekDouble> r,
                                       Array<OneD, NekDouble> s,
                                       Array<OneD, NekDouble> t);
 
@@ -370,14 +365,14 @@ protected:
     std::vector<Mode> m_ordering;
 
     virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
-    virtual NekVector<NekDouble> v_OrthoBasisDeriv(
-        const int dir, const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
+                                                   const int mode);
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble> > &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi)
     {
-        return MemoryManager<NodalUtilHex>::AllocateSharedPtr(
-            m_degree, xi[0], xi[1], xi[2]);
+        return MemoryManager<NodalUtilHex>::AllocateSharedPtr(m_degree, xi[0],
+                                                              xi[1], xi[2]);
     }
 
     virtual NekDouble v_ModeZeroIntegral()
@@ -391,8 +386,7 @@ protected:
     }
 };
 
+} // namespace LibUtilities
+} // namespace Nektar
 
-}
-}
-
-#endif //NODALUTIL_H
+#endif // NODALUTIL_H

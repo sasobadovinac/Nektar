@@ -35,13 +35,13 @@
 #ifndef NEKTAR_SOLVERUTILS_FILTERS_FILTERMODALENERGY_H
 #define NEKTAR_SOLVERUTILS_FILTERS_FILTERMODALENERGY_H
 
-#include <SolverUtils/Filters/Filter.h>
 #include <LibUtilities/BasicUtils/Equation.h>
 #include <MultiRegions/ContField.h>
 #include <MultiRegions/ContField3DHomogeneous1D.h>
 #include <MultiRegions/ContField3DHomogeneous2D.h>
+#include <SolverUtils/Filters/Filter.h>
 
-#include <MultiRegions/ExpList.h>  
+#include <MultiRegions/ExpList.h>
 #include <MultiRegions/ExpList3DHomogeneous1D.h>
 #include <MultiRegions/ExpList3DHomogeneous2D.h>
 
@@ -56,12 +56,11 @@ public:
 
     // Creates an instance of this class
     static FilterSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr  &pSession,
-        const std::weak_ptr<EquationSystem>       &pEquation,
-        const ParamMap                              &pParams)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
     {
-        FilterSharedPtr p = MemoryManager<FilterModalEnergy>::
-                                AllocateSharedPtr(pSession, pEquation, pParams);
+        FilterSharedPtr p = MemoryManager<FilterModalEnergy>::AllocateSharedPtr(
+            pSession, pEquation, pParams);
         return p;
     }
 
@@ -70,66 +69,63 @@ public:
 
     SOLVER_UTILS_EXPORT FilterModalEnergy(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const ParamMap                             &pParams);
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const ParamMap &pParams);
     SOLVER_UTILS_EXPORT virtual ~FilterModalEnergy();
 
 protected:
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble                           &time);
+        const NekDouble &time);
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble                           &time);
+        const NekDouble &time);
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble                           &time);
+        const NekDouble &time);
     virtual bool v_IsTimeDependent();
-    NekDouble L2Error (
+    NekDouble L2Error(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        unsigned int                              field,
-        const NekDouble                           &time);
-    void SetUpBaseFields(
-        SpatialDomains::MeshGraphSharedPtr        &mesh);
-    void ImportFldBase(
-        std::string                               pInfile);
+        unsigned int field, const NekDouble &time);
+    void SetUpBaseFields(SpatialDomains::MeshGraphSharedPtr &mesh);
+    void ImportFldBase(std::string pInfile);
 
 private:
-    enum MultiRegions::ProjectionType           m_projectionType;
+    enum MultiRegions::ProjectionType m_projectionType;
     Array<OneD, MultiRegions::ExpListSharedPtr> m_base;
-    LibUtilities::FieldIOSharedPtr              m_fld;
+    LibUtilities::FieldIOSharedPtr m_fld;
 
     // ID's of boundary regions where we want the forces
-    std::vector<unsigned int>    m_boundaryRegionsIdList;
+    std::vector<unsigned int> m_boundaryRegionsIdList;
     // Determines if a given Boundary Region is in
     // m_boundaryRegionsIdList
-    std::vector<bool>            m_boundaryRegionIsInList;
-    unsigned int                 m_index;
-    unsigned int                 m_outputFrequency;
+    std::vector<bool> m_boundaryRegionIsInList;
+    unsigned int m_index;
+    unsigned int m_outputFrequency;
     // plane to take history point from if using a homogeneous1D
     // expansion
-    unsigned int                 m_outputPlane;
-    bool                         m_isHomogeneous1D;
-    bool                         m_isHomogeneous2D;
-    bool                         m_PertEnergy;
-    int                          m_npointsZ;
-    int                          m_nproc;
-    std::string                  m_outputFile;
-    std::string                  m_EqTypeStr;
-    std::ofstream                m_outputStream;
+    unsigned int m_outputPlane;
+    bool m_isHomogeneous1D;
+    bool m_isHomogeneous2D;
+    bool m_PertEnergy;
+    int m_npointsZ;
+    int m_nproc;
+    std::string m_outputFile;
+    std::string m_EqTypeStr;
+    std::ofstream m_outputStream;
     LibUtilities::BasisSharedPtr m_homogeneousBasis;
-    std::string                  m_BoundaryString;
-    int                          m_nplanes;
-    int                          m_NumQuadPointsError;
-    bool                         m_SingleMode;
-    bool                         m_HalfMode;
-    bool                         m_MultipleModes;
-    bool                         m_useFFT;
-    NekDouble                    m_LhomZ;
-    bool                         m_homogen_dealiasing;
+    std::string m_BoundaryString;
+    int m_nplanes;
+    int m_NumQuadPointsError;
+    bool m_SingleMode;
+    bool m_HalfMode;
+    bool m_MultipleModes;
+    bool m_useFFT;
+    NekDouble m_LhomZ;
+    bool m_homogen_dealiasing;
 };
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

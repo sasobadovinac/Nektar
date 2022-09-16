@@ -37,10 +37,10 @@
 
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 
-#include <LibUtilities/LinearAlgebra/MatrixType.h>
-#include <LibUtilities/LinearAlgebra/MatrixStorageType.h>
-#include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
 #include <LibUtilities/LinearAlgebra/MatrixFuncs.h>
+#include <LibUtilities/LinearAlgebra/MatrixStorageType.h>
+#include <LibUtilities/LinearAlgebra/MatrixType.h>
+#include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
 
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 
@@ -49,107 +49,115 @@
 #endif
 
 namespace Nektar
-{    
-    template<typename DataType>
-    class ConstMatrix
+{
+template <typename DataType> class ConstMatrix
+{
+public:
+    LIB_UTILITIES_EXPORT virtual ~ConstMatrix();
+
+public:
+    LIB_UTILITIES_EXPORT typename boost::call_traits<DataType>::value_type
+    operator()(unsigned int row, unsigned int column) const;
+
+    LIB_UTILITIES_EXPORT unsigned int GetStorageSize() const;
+
+    LIB_UTILITIES_EXPORT inline MatrixStorage GetType() const
     {
-        public:
-            LIB_UTILITIES_EXPORT virtual ~ConstMatrix();
-            
-        public:
-            LIB_UTILITIES_EXPORT typename boost::call_traits<DataType>::value_type operator()(unsigned int row, unsigned int column) const;
-            
-            LIB_UTILITIES_EXPORT unsigned int GetStorageSize() const;
-            
-            LIB_UTILITIES_EXPORT inline MatrixStorage GetType() const
-            {
-                return m_storageType;
-            }
+        return m_storageType;
+    }
 
-            LIB_UTILITIES_EXPORT inline MatrixStorage GetStorageType() const
-            {
-                return m_storageType;
-            }
+    LIB_UTILITIES_EXPORT inline MatrixStorage GetStorageType() const
+    {
+        return m_storageType;
+    }
 
-            LIB_UTILITIES_EXPORT unsigned int GetRows() const;
+    LIB_UTILITIES_EXPORT unsigned int GetRows() const;
 
-            LIB_UTILITIES_EXPORT unsigned int GetTransposedRows(char transpose) const ;
-            
-            LIB_UTILITIES_EXPORT unsigned int GetColumns() const;
+    LIB_UTILITIES_EXPORT unsigned int GetTransposedRows(char transpose) const;
 
-            LIB_UTILITIES_EXPORT unsigned int GetTransposedColumns(char transpose) const ;
+    LIB_UTILITIES_EXPORT unsigned int GetColumns() const;
 
-            LIB_UTILITIES_EXPORT const unsigned int* GetSize() const;
-            
-            LIB_UTILITIES_EXPORT void Transpose() ;
+    LIB_UTILITIES_EXPORT unsigned int GetTransposedColumns(
+        char transpose) const;
 
-            LIB_UTILITIES_EXPORT char GetTransposeFlag() const;
-            
-            LIB_UTILITIES_EXPORT static unsigned int CalculateIndex(MatrixStorage type, 
-                unsigned int row, unsigned int col, 
-                unsigned int numRows, unsigned int numColumns, const char transpose =  'N',
-                unsigned int numSubDiags = 0, unsigned int numSuperDiags = 0) ;
-            
-            LIB_UTILITIES_EXPORT static unsigned int GetRequiredStorageSize(MatrixStorage type, unsigned int rows, 
-                unsigned int columns, unsigned int subDiags = 0, unsigned int superDiags = 0);
+    LIB_UTILITIES_EXPORT const unsigned int *GetSize() const;
 
-        protected:
-            
-            // All constructors are private to enforce the abstract nature of ConstMatrix without
-            // resorting to pure virtual functions.
-            LIB_UTILITIES_EXPORT ConstMatrix(unsigned int rows, unsigned int columns,
-                                             MatrixStorage policy = eFULL);
-            
-            LIB_UTILITIES_EXPORT ConstMatrix(const ConstMatrix<DataType>& rhs);
+    LIB_UTILITIES_EXPORT void Transpose();
 
-            LIB_UTILITIES_EXPORT ConstMatrix<DataType>& operator=(const ConstMatrix<DataType>& rhs);
-            
-            /// \brief Resets the rows and columns in the array.
-            /// This method does not update the data storage to match the new row and column counts.
-            LIB_UTILITIES_EXPORT void Resize(unsigned int rows, unsigned int columns);
+    LIB_UTILITIES_EXPORT char GetTransposeFlag() const;
 
-            LIB_UTILITIES_EXPORT void SetTransposeFlag(char newValue);
-            LIB_UTILITIES_EXPORT inline char GetRawTransposeFlag() const
-            {
-                return m_transpose;
-            }
+    LIB_UTILITIES_EXPORT static unsigned int CalculateIndex(
+        MatrixStorage type, unsigned int row, unsigned int col,
+        unsigned int numRows, unsigned int numColumns,
+        const char transpose = 'N', unsigned int numSubDiags = 0,
+        unsigned int numSuperDiags = 0);
 
-        private:
-            
-            virtual typename boost::call_traits<DataType>::value_type v_GetValue(unsigned int row, unsigned int column) const = 0;            
-            virtual unsigned int v_GetStorageSize() const = 0;            
-            LIB_UTILITIES_EXPORT virtual void v_Transpose();
-            LIB_UTILITIES_EXPORT virtual char v_GetTransposeFlag() const;
-            unsigned int m_size[2];
-            char m_transpose;
-            MatrixStorage m_storageType;
-    };
-    
-    template<typename DataType>
-    class Matrix : public ConstMatrix<DataType>
-    {  
-        public:
-            LIB_UTILITIES_EXPORT virtual ~Matrix();
-            
-            LIB_UTILITIES_EXPORT void SetValue(unsigned int row, unsigned int column, typename boost::call_traits<DataType>::const_reference d);
-            
-        protected:            
-            // All constructors are private to enforce the abstract nature of ConstMatrix without
-            // resorting to pure virtual functions.
-            LIB_UTILITIES_EXPORT Matrix(unsigned int rows, unsigned int columns,
-                                        MatrixStorage policy = eFULL);
-            
-            LIB_UTILITIES_EXPORT Matrix(const Matrix<DataType>& rhs);
+    LIB_UTILITIES_EXPORT static unsigned int GetRequiredStorageSize(
+        MatrixStorage type, unsigned int rows, unsigned int columns,
+        unsigned int subDiags = 0, unsigned int superDiags = 0);
 
-            LIB_UTILITIES_EXPORT Matrix<DataType>& operator=(const Matrix<DataType>& rhs);
-            
-            LIB_UTILITIES_EXPORT Matrix<DataType>& operator=(const ConstMatrix<DataType>& rhs);
-            
-        private:
-            LIB_UTILITIES_EXPORT virtual void v_SetValue(unsigned int row, unsigned int column, typename boost::call_traits<DataType>::const_reference d) = 0;
-    };
-    
-    
-}
+protected:
+    // All constructors are private to enforce the abstract nature of
+    // ConstMatrix without resorting to pure virtual functions.
+    LIB_UTILITIES_EXPORT ConstMatrix(unsigned int rows, unsigned int columns,
+                                     MatrixStorage policy = eFULL);
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_BASE_HPP
+    LIB_UTILITIES_EXPORT ConstMatrix(const ConstMatrix<DataType> &rhs);
+
+    LIB_UTILITIES_EXPORT ConstMatrix<DataType> &operator=(
+        const ConstMatrix<DataType> &rhs);
+
+    /// \brief Resets the rows and columns in the array.
+    /// This method does not update the data storage to match the new row and
+    /// column counts.
+    LIB_UTILITIES_EXPORT void Resize(unsigned int rows, unsigned int columns);
+
+    LIB_UTILITIES_EXPORT void SetTransposeFlag(char newValue);
+    LIB_UTILITIES_EXPORT inline char GetRawTransposeFlag() const
+    {
+        return m_transpose;
+    }
+
+private:
+    virtual typename boost::call_traits<DataType>::value_type v_GetValue(
+        unsigned int row, unsigned int column) const = 0;
+    virtual unsigned int v_GetStorageSize() const    = 0;
+    LIB_UTILITIES_EXPORT virtual void v_Transpose();
+    LIB_UTILITIES_EXPORT virtual char v_GetTransposeFlag() const;
+    unsigned int m_size[2];
+    char m_transpose;
+    MatrixStorage m_storageType;
+};
+
+template <typename DataType> class Matrix : public ConstMatrix<DataType>
+{
+public:
+    LIB_UTILITIES_EXPORT virtual ~Matrix();
+
+    LIB_UTILITIES_EXPORT void SetValue(
+        unsigned int row, unsigned int column,
+        typename boost::call_traits<DataType>::const_reference d);
+
+protected:
+    // All constructors are private to enforce the abstract nature of
+    // ConstMatrix without resorting to pure virtual functions.
+    LIB_UTILITIES_EXPORT Matrix(unsigned int rows, unsigned int columns,
+                                MatrixStorage policy = eFULL);
+
+    LIB_UTILITIES_EXPORT Matrix(const Matrix<DataType> &rhs);
+
+    LIB_UTILITIES_EXPORT Matrix<DataType> &operator=(
+        const Matrix<DataType> &rhs);
+
+    LIB_UTILITIES_EXPORT Matrix<DataType> &operator=(
+        const ConstMatrix<DataType> &rhs);
+
+private:
+    LIB_UTILITIES_EXPORT virtual void v_SetValue(
+        unsigned int row, unsigned int column,
+        typename boost::call_traits<DataType>::const_reference d) = 0;
+};
+
+} // namespace Nektar
+
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_BASE_HPP

@@ -36,8 +36,8 @@
 #include "OutputCADfix.h"
 
 #include <NekMesh/CADSystem/CFI/CADCurveCFI.h>
-#include <NekMesh/CADSystem/CFI/CADSurfCFI.h>
 #include <NekMesh/CADSystem/CFI/CADElementCFI.h>
+#include <NekMesh/CADSystem/CFI/CADSurfCFI.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -143,8 +143,8 @@ void OutputCADfix::Process()
             }
 
             // Default: volume parent
-            CADElementCFISharedPtr cadParent = std::dynamic_pointer_cast<
-                CADElementCFI>(el->m_parentCAD);
+            CADElementCFISharedPtr cadParent =
+                std::dynamic_pointer_cast<CADElementCFI>(el->m_parentCAD);
             ASSERTL1(cadParent, "Expected a CFI parent.");
             cfi::MeshableEntity *parent = cadParent->GetCfiPointer();
 
@@ -321,14 +321,14 @@ void OutputCADfix::Process()
             }
         }
 
-        CADElementCFISharedPtr cadParent = std::dynamic_pointer_cast<
-            CADElementCFI>(el->m_parentCAD);
+        CADElementCFISharedPtr cadParent =
+            std::dynamic_pointer_cast<CADElementCFI>(el->m_parentCAD);
         ASSERTL1(cadParent, "Expected a CFI parent.");
-        cadParent->GetCfiPointer()->createElement(
-            0, cfi::EntitySubtype(type), cfiNodes);
+        cadParent->GetCfiPointer()->createElement(0, cfi::EntitySubtype(type),
+                                                  cfiNodes);
     }
 
     m_model->saveCopy(m_config["outfile"].as<string>());
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

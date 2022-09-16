@@ -41,33 +41,29 @@ namespace Nektar
 {
 std::string RoeSolverSIMD::solverName =
     SolverUtils::GetRiemannSolverFactory().RegisterCreatorFunction(
-        "RoeOpt",
-        RoeSolverSIMD::create,
-        "Roe Riemann solver opt");
+        "RoeOpt", RoeSolverSIMD::create, "Roe Riemann solver opt");
 
-RoeSolverSIMD::RoeSolverSIMD(const LibUtilities::SessionReaderSharedPtr& pSession)
-    :
-    CompressibleSolver(pSession)
+RoeSolverSIMD::RoeSolverSIMD(
+    const LibUtilities::SessionReaderSharedPtr &pSession)
+    : CompressibleSolver(pSession)
 {
     m_requiresRotation = false;
 }
 
 /// programmatic ctor
-RoeSolverSIMD::RoeSolverSIMD():
-CompressibleSolver()
+RoeSolverSIMD::RoeSolverSIMD() : CompressibleSolver()
 {
     m_requiresRotation = false;
 }
 
 void RoeSolverSIMD::v_Solve(
-    const int                                        nDim,
-    const Array<OneD, const Array<OneD, NekDouble> > &fwd,
-    const Array<OneD, const Array<OneD, NekDouble> > &bwd,
-          Array<OneD,       Array<OneD, NekDouble> > &flux)
+    const int nDim, const Array<OneD, const Array<OneD, NekDouble>> &fwd,
+    const Array<OneD, const Array<OneD, NekDouble>> &bwd,
+    Array<OneD, Array<OneD, NekDouble>> &flux)
 {
-    static auto gamma = m_params["gamma"]();
-    static auto nVars = fwd.size();
-    static auto spaceDim = nVars-2;
+    static auto gamma    = m_params["gamma"]();
+    static auto nVars    = fwd.size();
+    static auto spaceDim = nVars - 2;
 
     // 3D case only so far
     ASSERTL0(spaceDim == 3, "SIMD Roe implemented only for 3D case...");
@@ -78,15 +74,14 @@ void RoeSolverSIMD::v_Solve(
 
     // get limit of vectorizable chunk
     size_t sizeScalar = fwd[0].size();
-    size_t sizeVec = (sizeScalar / vec_t::width) * vec_t::width;
+    size_t sizeVec    = (sizeScalar / vec_t::width) * vec_t::width;
 
     // get normal, vellocs
     ASSERTL1(CheckVectors("N"), "N not defined.");
     // ASSERTL1(CheckAuxVec("vecLocs"), "vecLocs not defined.");
-    const Array<OneD, const Array<OneD, NekDouble> > normals =
-        m_vectors["N"]();
+    const Array<OneD, const Array<OneD, NekDouble>> normals = m_vectors["N"]();
     // const Array<OneD, const Array<OneD, NekDouble> > vecLocs =
-        // m_auxVec["vecLocs"]();
+    // m_auxVec["vecLocs"]();
 
     // const unsigned int vx = (int)vecLocs[0][0];
     // const unsigned int vy = (int)vecLocs[0][1];
@@ -100,14 +95,14 @@ void RoeSolverSIMD::v_Solve(
 
     // SIMD loop
     size_t i = 0;
-    for (; i < sizeVec; i+=vec_t::width)
+    for (; i < sizeVec; i += vec_t::width)
     {
         // load scalars
         vec_t rhoL, rhoR, ER, EL;
         rhoL.load(&(fwd[0][i]), is_not_aligned);
         rhoR.load(&(bwd[0][i]), is_not_aligned);
-        ER.load(&(bwd[spaceDim+1][i]), is_not_aligned);
-        EL.load(&(fwd[spaceDim+1][i]), is_not_aligned);
+        ER.load(&(bwd[spaceDim + 1][i]), is_not_aligned);
+        EL.load(&(fwd[spaceDim + 1][i]), is_not_aligned);
 
         // load vectors left
         vec_t tmpIn[3], tmpOut[3];
@@ -143,18 +138,15 @@ void RoeSolverSIMD::v_Solve(
 
         // Roe kernel
         vec_t rhof{}, Ef{};
-        RoeKernel(
-            rhoL, rhouL, rhovL, rhowL, EL,
-            rhoR, rhouR, rhovR, rhowR, ER,
-            rhof, tmpIn[0], tmpIn[1], tmpIn[2], Ef,
-            gamma);
+        RoeKernel(rhoL, rhouL, rhovL, rhowL, EL, rhoR, rhouR, rhovR, rhowR, ER,
+                  rhof, tmpIn[0], tmpIn[1], tmpIn[2], Ef, gamma);
 
         // rotateFrom kernel
         rotateFromNormalKernel(tmpIn, rotMat, tmpOut);
 
         // store scalar
         rhof.store(&(flux[0][i]), is_not_aligned);
-        Ef.store(&(flux[nVars-1][i]), is_not_aligned);
+        Ef.store(&(flux[nVars - 1][i]), is_not_aligned);
 
         // store vector 3D only
         tmpOut[0].store(&(flux[1][i]), is_not_aligned);
@@ -168,8 +160,8 @@ void RoeSolverSIMD::v_Solve(
         // load scalars
         NekDouble rhoL = fwd[0][i];
         NekDouble rhoR = bwd[0][i];
-        NekDouble EL   = fwd[spaceDim+1][i];
-        NekDouble ER   = bwd[spaceDim+1][i];
+        NekDouble EL   = fwd[spaceDim + 1][i];
+        NekDouble ER   = bwd[spaceDim + 1][i];
 
         // 3D case only
         // load vectors left
@@ -206,24 +198,20 @@ void RoeSolverSIMD::v_Solve(
 
         // Roe kernel
         NekDouble rhof{}, Ef{};
-        RoeKernel(
-            rhoL, rhouL, rhovL, rhowL, EL,
-            rhoR, rhouR, rhovR, rhowR, ER,
-            rhof, tmpIn[0], tmpIn[1], tmpIn[2], Ef,
-            gamma);
+        RoeKernel(rhoL, rhouL, rhovL, rhowL, EL, rhoR, rhouR, rhovR, rhowR, ER,
+                  rhof, tmpIn[0], tmpIn[1], tmpIn[2], Ef, gamma);
 
         // rotateFrom kernel
         rotateFromNormalKernel(tmpIn, rotMat, tmpOut);
 
         // store scalar
-        flux[0][i] = rhof;
-        flux[nVars-1][i] = Ef;
+        flux[0][i]         = rhof;
+        flux[nVars - 1][i] = Ef;
 
         // store vector 3D only
         flux[1][i] = tmpOut[0];
         flux[2][i] = tmpOut[1];
         flux[3][i] = tmpOut[2];
-
     }
 }
 

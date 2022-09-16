@@ -39,8 +39,8 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <SpatialDomains/MeshPartition.h>
 #include <SpatialDomains/Geometry.h>
+#include <SpatialDomains/MeshPartition.h>
 
 #include <iomanip>
 #include <iostream>
@@ -49,10 +49,10 @@
 
 #include <tinyxml.h>
 
+#include <LibUtilities/BasicUtils/FieldIO.h>
 #include <LibUtilities/BasicUtils/FileSystem.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
-#include <LibUtilities/BasicUtils/FieldIO.h>
 
 #include <LibUtilities/Foundations/Foundations.hpp>
 
@@ -74,10 +74,9 @@ SPATIAL_DOMAINS_EXPORT MeshPartitionFactory &GetMeshPartitionFactory()
 }
 
 MeshPartition::MeshPartition(const LibUtilities::SessionReaderSharedPtr session,
-                             LibUtilities::CommSharedPtr                comm,
-                             int                                        meshDim,
-                             std::map<int, MeshEntity>                  element,
-                             CompositeDescriptor                        compMap)
+                             LibUtilities::CommSharedPtr comm, int meshDim,
+                             std::map<int, MeshEntity> element,
+                             CompositeDescriptor compMap)
     : m_session(session), m_comm(comm), m_dim(meshDim), m_numFields(0),
       m_elements(element), m_compMap(compMap), m_fieldNameToId(),
       m_weightingRequired(false), m_weightBnd(false), m_weightDofs(false),
@@ -92,7 +91,7 @@ MeshPartition::MeshPartition(const LibUtilities::SessionReaderSharedPtr session,
         if (elIt->second.ghost)
         {
             m_ghostElmts[elIt->first] = elIt->second;
-            elIt = m_elements.erase(elIt);
+            elIt                      = m_elements.erase(elIt);
         }
         else
         {
@@ -105,8 +104,8 @@ MeshPartition::~MeshPartition()
 {
 }
 
-void MeshPartition::PartitionMesh(
-    int nParts, bool shared, bool overlapping, int nLocal)
+void MeshPartition::PartitionMesh(int nParts, bool shared, bool overlapping,
+                                  int nLocal)
 {
     boost::ignore_unused(nLocal);
 
@@ -151,8 +150,8 @@ void MeshPartition::ReadExpansions()
             ASSERTL0(nModesStr,
                      "NUMMODES was not defined in EXPANSION section of input");
             std::string numModesStr = nModesStr;
-            bool valid = ParseUtils::GenerateVector(numModesStr.c_str(),
-                                                           nummodes);
+            bool valid =
+                ParseUtils::GenerateVector(numModesStr.c_str(), nummodes);
             ASSERTL0(valid, "Unable to correctly parse the number of modes.");
 
             if (nummodes.size() == 1)
@@ -169,8 +168,8 @@ void MeshPartition::ReadExpansions()
             if (fStr)
             {
                 std::string fieldStr = fStr;
-                bool valid           = ParseUtils::GenerateVector(
-                    fieldStr.c_str(), fieldName);
+                bool valid =
+                    ParseUtils::GenerateVector(fieldStr.c_str(), fieldName);
                 ASSERTL0(valid, "Unable to correctly parse the field string in "
                                 "ExpansionTypes.");
 
@@ -219,14 +218,14 @@ void MeshPartition::ReadExpansions()
             for (int i = 0; i < composite.size(); ++i)
             {
                 auto &shapeType = m_compMap[composite[i]].first;
-                auto &elmtIds = m_compMap[composite[i]].second;
+                auto &elmtIds   = m_compMap[composite[i]].second;
 
                 for (int j = 0; j < fieldName.size(); j++)
                 {
                     for (auto &elid : elmtIds)
                     {
                         m_expansions[elid][fieldName[j]] = nummodes;
-                        m_shape[elid] = shapeType;
+                        m_shape[elid]                    = shapeType;
                     }
                 }
             }
@@ -248,9 +247,11 @@ void MeshPartition::ReadExpansions()
         //    shared file system
         LibUtilities::CommSharedPtr comm =
             LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
-        std::string iofmt  = LibUtilities::FieldIO::GetFileType(filenameStr, comm);
-        LibUtilities::FieldIOSharedPtr f = LibUtilities::GetFieldIOFactory().CreateInstance(
-            iofmt, comm, m_session->GetSharedFilesystem());
+        std::string iofmt =
+            LibUtilities::FieldIO::GetFileType(filenameStr, comm);
+        LibUtilities::FieldIOSharedPtr f =
+            LibUtilities::GetFieldIOFactory().CreateInstance(
+                iofmt, comm, m_session->GetSharedFilesystem());
 
         // Load field definitions from file
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> fielddefs;
@@ -509,7 +510,7 @@ void MeshPartition::CreateGraph()
 {
     // Maps edge/face to first mesh element id.
     // On locating second mesh element id, graph edge is created instead.
-    std::unordered_map<int, int> vGraphEdges;
+    std::unordered_map<int, std::vector<int>> vGraphEdges;
     int vcnt = 0;
 
     for (auto &elmt : m_elements)
@@ -533,13 +534,18 @@ void MeshPartition::CreateGraph()
             auto edgeIt = vGraphEdges.find(eId);
             if (edgeIt != vGraphEdges.end())
             {
-                BoostEdge e =
-                    boost::add_edge(vcnt, edgeIt->second, m_graph).first;
-                m_graph[e].id = vcnt;
+                for (auto &iId : edgeIt->second)
+                {
+                    BoostEdge e   = boost::add_edge(vcnt, iId, m_graph).first;
+                    m_graph[e].id = vcnt;
+                }
+                vGraphEdges[eId].push_back(vcnt);
             }
             else
             {
-                vGraphEdges[eId] = vcnt;
+                std::vector<int> Id;
+                Id.push_back(vcnt);
+                vGraphEdges[eId] = Id;
             }
         }
 
@@ -550,8 +556,8 @@ void MeshPartition::CreateGraph()
     // Now process ghost elements.
     for (auto &ghost : m_ghostElmts)
     {
-        auto vert = boost::add_vertex(m_graph);
-        m_graph[vert].id = ghost.first;
+        auto vert               = boost::add_vertex(m_graph);
+        m_graph[vert].id        = ghost.first;
         m_graph[vert].partition = -1;
 
         for (auto &facet : ghost.second.list)
@@ -559,9 +565,12 @@ void MeshPartition::CreateGraph()
             auto edgeIt = vGraphEdges.find(facet);
             if (edgeIt != vGraphEdges.end())
             {
-                BoostEdge e =
-                    boost::add_edge(vcnt, edgeIt->second, m_graph).first;
-                m_graph[e].id = vcnt;
+                for (auto &iId : edgeIt->second)
+                {
+                    BoostEdge e   = boost::add_edge(vcnt, iId, m_graph).first;
+                    m_graph[e].id = vcnt;
+                }
+                vGraphEdges[facet].push_back(vcnt);
             }
         }
 
@@ -589,8 +598,8 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
 {
     int i;
     int nGraphVerts = boost::num_vertices(m_graph);
-    int nGhost = m_ghostElmts.size();
-    int nLocal = nGraphVerts - nGhost;
+    int nGhost      = m_ghostElmts.size();
+    int nLocal      = nGraphVerts - nGhost;
 
     int ncon = 1;
     if (m_weightDofs && m_weightBnd)
@@ -695,8 +704,7 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
         }
         catch (...)
         {
-            NEKERROR(ErrorUtil::efatal,
-                     "Error in calling graph partitioner.");
+            NEKERROR(ErrorUtil::efatal, "Error in calling graph partitioner.");
         }
     }
     else if (!m_parallel)
@@ -740,8 +748,8 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
         recvOffsetMap[0] = 0;
         for (int i = 1; i < nproc; ++i)
         {
-            sendOffsetMap[i] = sendOffsetMap[i-1] + numToSend[i-1];
-            recvOffsetMap[i] = recvOffsetMap[i-1] + numToRecv[i-1];
+            sendOffsetMap[i] = sendOffsetMap[i - 1] + numToSend[i - 1];
+            recvOffsetMap[i] = recvOffsetMap[i - 1] + numToRecv[i - 1];
         }
 
         // Build data to send
@@ -760,8 +768,8 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
         }
 
         // Send ID map to processors
-        m_comm->AlltoAllv(sendData, numToSend, sendOffsetMap,
-                          recvData, numToRecv, recvOffsetMap);
+        m_comm->AlltoAllv(sendData, numToSend, sendOffsetMap, recvData,
+                          numToRecv, recvOffsetMap);
 
         // Finally, populate m_localPartition for this processor. Could contain
         // duplicates so erase those first.
@@ -780,7 +788,7 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
     if (overlapping)
     {
         ASSERTL0(!m_parallel, "Overlapping partitioning not supported in "
-                 "parallel execution");
+                              "parallel execution");
 
         for (boost::tie(vertit, vertit_end) = boost::vertices(m_graph);
              vertit != vertit_end; ++vertit)
@@ -842,8 +850,8 @@ void MeshPartition::GetElementIDs(const int procid,
 }
 
 int MeshPartition::CalculateElementWeight(LibUtilities::ShapeType elmtType,
-                                          bool bndWeight,
-                                          int na, int nb, int nc)
+                                          bool bndWeight, int na, int nb,
+                                          int nc)
 {
     int weight = 0;
 
@@ -915,8 +923,8 @@ int MeshPartition::CalculateElementWeight(LibUtilities::ShapeType elmtType,
  *     Since we do not know exactly which face this refers to, assume
  *        the max order and quad face (for prisms) as arbitrary choices
  */
-int MeshPartition::CalculateEdgeWeight(LibUtilities::ShapeType elmtType,
-                                       int na, int nb, int nc)
+int MeshPartition::CalculateEdgeWeight(LibUtilities::ShapeType elmtType, int na,
+                                       int nb, int nc)
 {
     int weight = 0;
     int n      = std::max(na, std::max(nb, nc));
@@ -947,5 +955,5 @@ int MeshPartition::CalculateEdgeWeight(LibUtilities::ShapeType elmtType,
 
     return weight;
 }
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

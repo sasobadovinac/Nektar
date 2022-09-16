@@ -391,8 +391,10 @@ Under this section it is possible to set the solver information.
     \end{itemize}
   \item \inltt{ShockCaptureType} specifies the type of operator to be used for shock capturing:
     \begin{itemize}
-      \item \inltt{NonSmooth} add a Laplacian operator to apply artificial diffusion (see Sec.~\ref{subsec:non-smooth-AV}).
+      \item \inltt{NonSmooth} add a Laplacian operator to apply artificial diffusion (see Sec.~\ref{subsec:non-smooth-AV}). 
+        This option is only supported for explicit solvers (\inltt{EulerCFE} and \inltt{NavierStokesCFE}).
       \item \inltt{Physical} add artificial viscosity to the physical viscosity.
+        This option is only supported for Navier-Stokes solvers (\inltt{NavierStokesCFE} and \inltt{NavierStokesImplicitCFE}).
     \end{itemize}
   \item \inltt{ShockSensorType} specifies the sensor type of shock capturing to be used:
     \begin{itemize}

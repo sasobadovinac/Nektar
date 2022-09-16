@@ -54,12 +54,19 @@ CommMpi::CommMpi(int narg, char *arg[]) : Comm(narg, arg)
 {
     int init = 0;
     MPI_Initialized(&init);
-    ASSERTL0(!init, "MPI has already been initialised.");
 
-    int retval = MPI_Init(&narg, &arg);
-    if (retval != MPI_SUCCESS)
+    if (!init)
     {
-        ASSERTL0(false, "Failed to initialise MPI");
+        ASSERTL0(MPI_Init(&narg, &arg) == MPI_SUCCESS,
+                 "Failed to initialise MPI");
+        // store bool to indicate that Nektar++ is in charge of finalizing MPI.
+        m_controls_mpi = true;
+    }
+    else
+    {
+        // Another code is in charge of finalizing MPI and this is not the
+        // responsiblity of Nektar++
+        m_controls_mpi = false;
     }
 
     m_comm = MPI_COMM_WORLD;
@@ -116,7 +123,7 @@ void CommMpi::v_Finalise()
 #endif
     int flag;
     MPI_Finalized(&flag);
-    if (!flag)
+    if ((!flag) && m_controls_mpi)
     {
         MPI_Finalize();
     }
@@ -491,7 +498,7 @@ CommSharedPtr CommMpi::v_CommCreateIf(int flag)
     // color == MPI_UNDEF => not in the new communicator
     // key == 0 on all => use rank to order them. OpenMPI, at least,
     // implies this is faster than ordering them ourselves.
-    MPI_Comm_split(m_comm, flag ? 0 : MPI_UNDEFINED, 0, &newComm);
+    MPI_Comm_split(m_comm, flag ? flag : MPI_UNDEFINED, 0, &newComm);
 
     if (flag == 0)
     {
@@ -519,9 +526,9 @@ std::pair<CommSharedPtr, CommSharedPtr> CommMpi::v_SplitCommNode()
 
     // For rank 0 of the intra-node communicator, split the main
     // communicator. Everyone else will get a null communicator.
-    ret.first = std::shared_ptr<Comm>(new CommMpi(nodeComm));
+    ret.first  = std::shared_ptr<Comm>(new CommMpi(nodeComm));
     ret.second = CommMpi::v_CommCreateIf(ret.first->GetRank() == 0);
-    if(ret.first->GetRank() == 0)
+    if (ret.first->GetRank() == 0)
     {
         ret.second->SplitComm(1, ret.second->GetSize());
     }

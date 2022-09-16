@@ -37,14 +37,14 @@
 
 namespace Nektar
 {
-    /// \brief Tag for standard matrices.
-    class StandardMatrixTag;
+/// \brief Tag for standard matrices.
+class StandardMatrixTag;
 
-    /// \brief Tag for block matrices.
-    class BlockMatrixTag;
+/// \brief Tag for block matrices.
+class BlockMatrixTag;
 
-    /// \brief Tag for scaled matrices.
-    class ScaledMatrixTag;
-}
+/// \brief Tag for scaled matrices.
+class ScaledMatrixTag;
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_TYPE_H
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_TYPE_H

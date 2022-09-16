@@ -106,7 +106,152 @@ Note that the session file is also supported
 in its compressed format \inltt{test.xml.gz}.
 \end{tipbox}
 %
-%
+\subsection{Using the VTK library for output}
+While the basic VTK output detailed above (.vtu unstructured grid files) works
+without the third party VTK library, \nekpp can also optionally be linked with
+the VTK library. By enabling VTK  library support the creation of the VTK output
+files is offloaded to the VTK library rather than being manually written by \nekpp.
+
+If you want to build a version of \nekpp with integrated VTK library support, you
+need  to turn on the \inltt{NEKTAR\_USE\_VTK} switch in cmake. This will then
+look  for a compatible VTK library on the system, VTK version 8.0.0 or higher is
+recommended for full functionality because this is the minimum version which allows
+for high-order VTK output. Versions older than this are supported but the high-order
+VTK output will be disabled.
+
+Using the VTK library automatically enables file compression on the output .vtu file
+which can substantially reduce file sizes. This can be turned off with the
+command line option \inltt{uncompress} when using \inltt{FieldConvert}.
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert session.xml field.fld output.vtu:vtu:uncompress
+\end{lstlisting}
+
+If \nekpp has been compiled with \inltt{NEKTAR\_USE\_VTK} enabled then there are certain
+situations in which the legacy VTK output (manually writing rather than using the
+VTK library) must be used. The current VTK library output only supports 1D, 2D, 3D and
+3DH1D (Quasi-3D) simulations. Any simulations with expansions other than those mentioned,
+such as 2DH2D will need to be converted using the \inltt{legacy} option to invoke the
+manual \nekpp VTK output.
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert session.xml field.fld output.vtu:vtu:legacy
+\end{lstlisting}
+
+The VTK library also adds two new output types that can be specified by the command
+line when choosing to output a .vtu format file, these are detailed below.
+
+\subsubsection{High-order output}
+High-order output can be enabled using the option \inltt{highorder} which first
+runs the mesh through the \inltt{equispacedoutput} module to get a truly
+equispaced mesh and then constructs a .vtu file using arbitrary-order Lagrange
+polynomials. This gives a more precise representation of the curvature of
+elements and allows for polynomial refinement using non-linear subdivisions. This
+should result in smaller output files as refinement of the mesh geometry can be
+computed on the fly. This allows for faster postprocessing in software such as
+Paraview due to the reduced memory requirements. High-order output is currently only
+implemented for non-homogenous expansions and does not support pyramid elements.
+A minimum VTK version of 8.0.0 is required for the high-order output, any VTK versions
+older than this will result in the high-order output being disabled.
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert session.xml field.fld output.vtu:vtu:highorder
+\end{lstlisting}
+
+\subsubsection{Multi-block output}
+Multi-block output can be enabled using the option \inltt{multiblock} which splits
+the mesh in to separate blocks, one block for each domain, boundary, and any other
+composite. This allows each block to be toggled in the visualisation software
+independently.
+
+Multi-block output uses the composite/boundary/domain names defined in the session file
+to label each block, so the ID numbers above will be replaced by the name if
+specified. It is also necessary to include the \inltt{CONDITIONS} section in the
+session file supplied to \inltt{FieldConvert} because this is where the boundary
+definitions are stored. Multi-block output is currently only implemented for
+non-homogenous expansions i.e. 1D, 2D, and 3D.
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert session.xml conditions.xml field.fld output.vtu:vtu:multiblock
+\end{lstlisting}
+
+An example multi-block tree structure is shown in figure~\ref{fig:util:multi-block},
+with the default output on the left and the output with the optional defined names
+on the right.
+
+\begin{figure}
+\begin{minipage}{0.99\textwidth}
+\begin{center}
+\begin{multicols}{2}
+\begin{minipage}{0.99\textwidth}
+\dirtree{%
+    .1 Mesh.
+    .2 Domains.
+    .3 Domain ID 0.
+    .4 Composite ID 0.
+    .4 Composite ID 1.
+    .3 Domain ID 1.
+    .4 Composite ID 2.
+    .2 Boundaries.
+    .3 Boundary ID 0.
+    .4 Composite ID 3.
+    .4 Composite ID 4.
+    .4 Composite ID 5.
+    .3 Boundary ID 1.
+    .4 Composite ID 6.
+    .3 Boundary ID 2.
+    .4 Composite ID 7.
+    .2 Other composites.
+    .3 Composite ID 8.
+    .3 Composite ID 9.
+}
+\end{minipage}
+\columnbreak
+\begin{minipage}{0.99\textwidth}
+\vspace{\baselineskip}
+\dirtree{%
+    .1 Mesh.
+    .2 Domains.
+    .3 Domain ID 0.
+    .4 Left section unstructured.
+    .4 Right section unstructured.
+    .3 Domain ID 1.
+    .4 Cylinder structured.
+    .2 Boundaries.
+    .3 Walls.
+    .4 Top wall.
+    .4 Bottom wall.
+    .4 Cylinder wall.
+    .3 Inlet.
+    .4 Left wall.
+    .3 Outlet.
+    .4 Right wall.
+    .2 Other composites.
+    .3 Cylinder inner interface.
+    .3 Cylinder outer interface.
+}
+\end{minipage}
+\end{multicols}
+\end{center}
+\end{minipage}
+\caption{An example of the tree structure for a multi-block VTK output file.
+With the default IDs on the left and the optional names specified on the right.}
+\label{fig:util:multi-block}
+\end{figure}
+
+\subsubsection{Improved FieldConvert filter}
+An additional advantage of using the VTK library is that when a filter is set up
+with \inltt{FieldConvert} to output a .vtu file, the mesh is now cached inbetween
+timesteps and only the new expansion data is written each  filter call. This can
+provide significant speedups by keeping the geometry in memory. An example filter
+specifying a high-order and uncompressed .vtu output is shown below:
+
+\begin{lstlisting}[style=XMLStyle,gobble=2]
+  <FILTER TYPE="FieldConvert">
+      <PARAM NAME="OutputFile">MyFile.vtu:vtu:highorder:uncompress</PARAM>
+      <PARAM NAME="OutputFrequency">100</PARAM>
+  </FILTER>
+\end{lstlisting}
 %
 \section{Convert field files between XML and HDF5 format}
 %
@@ -500,7 +645,7 @@ FieldConvert -m equispacedouttput test.xml test.fld test.vtu
 
 \begin{notebox}
 Currently this option is only set up for triangles, quadrilaterals,
-tetrahedrons and prisms.
+hexahedrons, tetrahedrons and prisms.
 \end{notebox}
 
 \subsection{Extract a boundary region: \textit{extract} module}

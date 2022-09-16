@@ -39,96 +39,94 @@
 #include <LocalRegions/LocalRegionsDeclspec.h>
 #include <StdRegions/StdRegions.hpp>
 
-#include <ostream>
 #include <memory>
+#include <ostream>
 
 namespace Nektar
 {
-    namespace LocalRegions
+namespace LocalRegions
+{
+struct IndexValue
+{
+    unsigned short index;
+    short sign;
+};
+
+typedef Array<OneD, IndexValue> IndexMapValues;
+
+class IndexMapKey
+{
+public:
+    LOCAL_REGIONS_EXPORT IndexMapKey(
+        const IndexMapType indexmapType,
+        const LibUtilities::ShapeType shapeType, const unsigned short p,
+        const unsigned short q, const unsigned short r,
+        const unsigned short entityID             = 0,
+        const StdRegions::Orientation orientation = StdRegions::eNoOrientation);
+
+    LOCAL_REGIONS_EXPORT IndexMapKey(const IndexMapKey &rhs,
+                                     const IndexMapType indexmapType);
+
+    LOCAL_REGIONS_EXPORT IndexMapKey(const IndexMapKey &rhs);
+
+    virtual ~IndexMapKey()
     {
-        struct IndexValue
-        {
-            unsigned short index;
-            short sign;
-        };
-		
-        typedef Array<OneD, IndexValue> IndexMapValues;
-		
-        class IndexMapKey
-        {
-        public:
-            LOCAL_REGIONS_EXPORT IndexMapKey(const IndexMapType  indexmapType,
-                                             const LibUtilities::ShapeType   shapeType,
-                                             const unsigned short            p, 
-                                             const unsigned short            q,
-                                             const unsigned short            r,
-                                             const unsigned short            entityID    = 0,
-                const StdRegions::Orientation   orientation = StdRegions::eNoOrientation);
-            
-            LOCAL_REGIONS_EXPORT IndexMapKey(const IndexMapKey& rhs,
-                                             const IndexMapType indexmapType);
+    }
 
-            LOCAL_REGIONS_EXPORT IndexMapKey(const IndexMapKey& rhs);
+    // Used to lookup the create function in NekManager.
+    struct opLess
+    {
+        LOCAL_REGIONS_EXPORT bool operator()(const IndexMapKey &lhs,
+                                             const IndexMapKey &rhs) const;
+    };
 
-            virtual ~IndexMapKey()
-            {
-            }
+    // Used for finding value given the key in NekManager.
+    LOCAL_REGIONS_EXPORT friend bool operator<(const IndexMapKey &lhs,
+                                               const IndexMapKey &rhs);
+    LOCAL_REGIONS_EXPORT friend bool operator==(const IndexMapKey &lhs,
+                                                const IndexMapKey &rhs);
+    LOCAL_REGIONS_EXPORT friend bool opLess::operator()(
+        const IndexMapKey &lhs, const IndexMapKey &rhs) const;
 
-            // Used to lookup the create function in NekManager.
-            struct opLess
-            {
-                LOCAL_REGIONS_EXPORT bool operator()(const IndexMapKey &lhs,
-                                                     const IndexMapKey &rhs) const;
-            };
+    IndexMapType GetIndexMapType() const
+    {
+        return m_indexMapType;
+    }
 
-            // Used for finding value given the key in NekManager.
-            LOCAL_REGIONS_EXPORT friend bool operator<( const IndexMapKey &lhs,
-                                                        const IndexMapKey &rhs);
-            LOCAL_REGIONS_EXPORT friend bool operator==(const IndexMapKey &lhs,
-                                                        const IndexMapKey &rhs);
-            LOCAL_REGIONS_EXPORT friend bool opLess::operator()
-                (const IndexMapKey &lhs, const IndexMapKey &rhs) const;
+    StdRegions::Orientation GetIndexOrientation() const
+    {
+        return m_orientation;
+    }
 
-            IndexMapType GetIndexMapType() const
-            {
-                return m_indexMapType;
-            }
-			
-            StdRegions::Orientation GetIndexOrientation() const
-            {
-                return m_orientation;
-            }
-			
-            int GetIndexEntity() const
-            {
-                return m_entityID;
-            }
+    int GetIndexEntity() const
+    {
+        return m_entityID;
+    }
 
-        protected:
-			
-            IndexMapType  m_indexMapType;
-            
-            LibUtilities::ShapeType m_shapeType;
-			
-            unsigned short m_p;
-            unsigned short m_q;
-            unsigned short m_r;
-			
-            unsigned short m_entityID;
-			
-            StdRegions::Orientation m_orientation;
-			
-        private:
-			
-            IndexMapKey();
-        };
-        //==================================================================================
+protected:
+    IndexMapType m_indexMapType;
 
-        LOCAL_REGIONS_EXPORT std::ostream& operator<<(std::ostream& os, const IndexMapKey& rhs);
+    LibUtilities::ShapeType m_shapeType;
 
-        typedef  std::shared_ptr<IndexMapKey> IndexMapKeySharedPtr;
-        typedef  std::shared_ptr<IndexMapValues> IndexMapValuesSharedPtr;
-    } // end of namespace
-} // end of namespace
+    unsigned short m_p;
+    unsigned short m_q;
+    unsigned short m_r;
+
+    unsigned short m_entityID;
+
+    StdRegions::Orientation m_orientation;
+
+private:
+    IndexMapKey();
+};
+//==================================================================================
+
+LOCAL_REGIONS_EXPORT std::ostream &operator<<(std::ostream &os,
+                                              const IndexMapKey &rhs);
+
+typedef std::shared_ptr<IndexMapKey> IndexMapKeySharedPtr;
+typedef std::shared_ptr<IndexMapValues> IndexMapValuesSharedPtr;
+} // namespace LocalRegions
+} // namespace Nektar
 
 #endif

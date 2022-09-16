@@ -45,31 +45,30 @@ namespace SolverUtils
 {
 
 /// Base class for the development of solvers.
-class DriverArpack: public DriverArnoldi
+class DriverArpack : public DriverArnoldi
 {
 public:
     friend class MemoryManager<DriverArpack>;
 
     /// Creates an instance of this class
     static DriverSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-        DriverSharedPtr p = MemoryManager<DriverArpack>::AllocateSharedPtr(
-            pSession, pGraph);
+        DriverSharedPtr p =
+            MemoryManager<DriverArpack>::AllocateSharedPtr(pSession, pGraph);
         p->InitObject();
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
-
-
 protected:
-    int m_maxn;//Maximum size of the problem
-    int m_maxnev;//maximum number of eigenvalues requested
-    int m_maxncv;//Largest number of basis vector used in Implicitly Restarted Arnoldi
+    int m_maxn;   // Maximum size of the problem
+    int m_maxnev; // maximum number of eigenvalues requested
+    int m_maxncv; // Largest number of basis vector used in Implicitly Restarted
+                  // Arnoldi
 
     /// Constructor
     DriverArpack(const LibUtilities::SessionReaderSharedPtr pSession,
@@ -92,8 +91,7 @@ private:
     static std::string ArpackProblemTypeTrans[];
 };
 
-}
-} //end of namespace
+} // namespace SolverUtils
+} // namespace Nektar
 
-#endif //NEKTAR_SOLVERUTILS_DRIVERARPACK_H
-
+#endif // NEKTAR_SOLVERUTILS_DRIVERARPACK_H

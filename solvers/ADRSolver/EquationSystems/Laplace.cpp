@@ -38,52 +38,47 @@ using namespace std;
 
 namespace Nektar
 {
-    string Laplace::className = GetEquationSystemFactory().
-        RegisterCreatorFunction("Laplace", Laplace::create);
+string Laplace::className = GetEquationSystemFactory().RegisterCreatorFunction(
+    "Laplace", Laplace::create);
 
-    Laplace::Laplace(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : EquationSystem(pSession, pGraph),
-          m_factors()
+Laplace::Laplace(const LibUtilities::SessionReaderSharedPtr &pSession,
+                 const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : EquationSystem(pSession, pGraph), m_factors()
+{
+    m_factors[StdRegions::eFactorLambda] = 0.0;
+    m_factors[StdRegions::eFactorTau]    = 1.0;
+}
+
+void Laplace::v_InitObject(bool DeclareFields)
+{
+    EquationSystem::v_InitObject(DeclareFields);
+}
+
+Laplace::~Laplace()
+{
+}
+
+void Laplace::v_GenerateSummary(SolverUtils::SummaryList &s)
+{
+    EquationSystem::SessionSummary(s);
+    SolverUtils::AddSummaryItem(s, "Lambda",
+                                m_factors[StdRegions::eFactorLambda]);
+}
+
+void Laplace::v_DoSolve()
+{
+    for (int i = 0; i < m_fields.size(); ++i)
     {
-        m_factors[StdRegions::eFactorLambda] = 0.0;
-        m_factors[StdRegions::eFactorTau] = 1.0;
-    }
-
-    void Laplace::v_InitObject()
-    {
-        EquationSystem::v_InitObject();
-    }
-
-    Laplace::~Laplace()
-    {
-
-    }
-
-    void Laplace::v_GenerateSummary(SolverUtils::SummaryList& s)
-    {
-        EquationSystem::SessionSummary(s);
-        SolverUtils::AddSummaryItem(s, "Lambda",
-                                    m_factors[StdRegions::eFactorLambda]);
-    }
-
-    void Laplace::v_DoSolve()
-    {
-        for(int i = 0; i < m_fields.size(); ++i)
-        {
-            // Zero field so initial conditions are zero
-            Vmath::Zero(m_fields[i]->GetNcoeffs(),
-                        m_fields[i]->UpdateCoeffs(), 1);
-            m_fields[i]->HelmSolve(m_fields[i]->GetPhys(),
-                                   m_fields[i]->UpdateCoeffs(),
-                                   m_factors);
-            m_fields[i]->SetPhysState(false);
-        }
-    }
-
-    Array<OneD, bool> Laplace::v_GetSystemSingularChecks()
-    {
-        return Array<OneD, bool>(m_session->GetVariables().size(), true);
+        // Zero field so initial conditions are zero
+        Vmath::Zero(m_fields[i]->GetNcoeffs(), m_fields[i]->UpdateCoeffs(), 1);
+        m_fields[i]->HelmSolve(m_fields[i]->GetPhys(),
+                               m_fields[i]->UpdateCoeffs(), m_factors);
+        m_fields[i]->SetPhysState(false);
     }
 }
+
+Array<OneD, bool> Laplace::v_GetSystemSingularChecks()
+{
+    return Array<OneD, bool>(m_session->GetVariables().size(), true);
+}
+} // namespace Nektar
