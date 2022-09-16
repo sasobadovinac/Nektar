@@ -419,7 +419,7 @@ void Gathr(const I n, const T *x, const I *y, T *z)
 {
     using namespace tinysimd;
     using vec_t   = simd<T>;
-    using vec_t_i = simd<I>;
+    using vec_t_i = simd<I, vec_t::width>;
 
     I cnt = n;
     // Unroll 4x Vectorized loop
