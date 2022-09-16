@@ -380,8 +380,8 @@ void Generator2D::MakeBL(int faceid)
         if (it.second.size() != 1 && it.second.size() != 2)
         {
             m_log(FATAL) << "    Error with identifying nodes with edges: check"
-                         << " that your boundary layer surfaces are correctly "
-                         << "defined." << endl;
+                         << " that your boundary layer surfaces are correctly"
+                         << " defined." << endl;
         }
 
         // If node at the end of the BL open loop, the "normal node" isn't

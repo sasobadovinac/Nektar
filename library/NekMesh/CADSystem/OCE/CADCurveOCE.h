@@ -70,6 +70,7 @@ public:
     virtual NekDouble tAtArcLength(NekDouble s);
     virtual Array<OneD, NekDouble> GetMinMax();
     virtual NekDouble loct(Array<OneD, NekDouble> xyz, NekDouble &t);
+    virtual NekDouble GetMinDistance(Array<OneD, NekDouble> &xyz);
     virtual NekDouble Curvature(NekDouble t);
     virtual Array<OneD, NekDouble> N(NekDouble t);
 

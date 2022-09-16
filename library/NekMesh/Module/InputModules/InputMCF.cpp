@@ -144,6 +144,7 @@ void InputMCF::ParseFile(string nm)
     }
 
     set<string> refinement;
+    set<string> curve_refinement;
     if (pSession->DefinesElement("NEKTAR/MESHING/REFINEMENT"))
     {
         TiXmlElement *refine = mcf->FirstChildElement("REFINEMENT");
@@ -172,6 +173,22 @@ void InputMCF::ParseFile(string nm)
             refinement.insert(ss.str());
 
             L = L->NextSiblingElement("LINE");
+        }
+
+        TiXmlElement *C = refine->FirstChildElement("CURVE");
+        while (C)
+        {
+            stringstream ss;
+            TiXmlElement *T = C->FirstChildElement("ID");
+            ss << T->GetText() << ",";
+            T = C->FirstChildElement("R");
+            ss << T->GetText() << ",";
+            T = C->FirstChildElement("D");
+            ss << T->GetText();
+
+            curve_refinement.insert(ss.str());
+
+            C = C->NextSiblingElement("CURVE");
         }
     }
 
@@ -396,11 +413,24 @@ void InputMCF::ParseFile(string nm)
         stringstream ss;
         for (sit = refinement.begin(); sit != refinement.end(); sit++)
         {
-            ss << *sit;
-            ss << ":";
+            ss << *sit << ":";
         }
         m_refinement = ss.str();
         m_refinement.erase(m_refinement.end() - 1);
+    }
+
+    m_curverefine = curve_refinement.size() > 0;
+    if (m_curverefine)
+    {
+        stringstream ss;
+        for (sit = curve_refinement.begin(); sit != curve_refinement.end();
+             sit++)
+        {
+            ss << *sit;
+            ss << ":";
+        }
+        m_curverefinement = ss.str();
+        m_curverefinement.erase(m_curverefinement.end() - 1);
     }
 
     if (periodic.size() > 0)
@@ -457,6 +487,10 @@ void InputMCF::Process()
     if (m_refine)
     {
         module->RegisterConfig("refinement", m_refinement);
+    }
+    if (m_curverefine)
+    {
+        module->RegisterConfig("curve_refinement", m_curverefinement);
     }
     if (m_woct)
     {
