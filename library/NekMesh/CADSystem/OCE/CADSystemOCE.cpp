@@ -391,6 +391,7 @@ void CADSystemOCE::AddVert(int i, TopoDS_Shape in)
 {
     CADVertSharedPtr newVert = GetCADVertFactory().CreateInstance(key);
 
+    newVert->SetLogger(m_log);
     std::static_pointer_cast<CADVertOCE>(newVert)->Initialise(i, in);
 
     m_verts[i] = newVert;
@@ -399,6 +400,7 @@ void CADSystemOCE::AddVert(int i, TopoDS_Shape in)
 void CADSystemOCE::AddCurve(int i, TopoDS_Shape in)
 {
     CADCurveSharedPtr newCurve = GetCADCurveFactory().CreateInstance(key);
+    newCurve->SetLogger(m_log);
     std::static_pointer_cast<CADCurveOCE>(newCurve)->Initialise(i, in);
 
     TopoDS_Vertex fv = TopExp::FirstVertex(TopoDS::Edge(in));
@@ -415,6 +417,7 @@ void CADSystemOCE::AddCurve(int i, TopoDS_Shape in)
 void CADSystemOCE::AddSurf(int i, TopoDS_Shape in)
 {
     CADSurfSharedPtr newSurf = GetCADSurfFactory().CreateInstance(key);
+    newSurf->SetLogger(m_log);
     std::static_pointer_cast<CADSurfOCE>(newSurf)->Initialise(i, in);
 
     // do the exploration on forward oriented

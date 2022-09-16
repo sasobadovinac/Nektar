@@ -74,16 +74,29 @@ NekDouble CADCurveOCE::Length(NekDouble ti, NekDouble tf)
     return System.Mass() / 1000.0;
 }
 
+NekDouble CADCurveOCE::GetMinDistance(Array<OneD, NekDouble> &xyz)
+{
+    gp_Pnt loc(xyz[0] * 1000.0, xyz[1] * 1000.0, xyz[2] * 1000.0);
+    GeomAPI_ProjectPointOnCurve proj(loc, m_c, m_b[0], m_b[1]);
+    if (proj.NbPoints())
+    {
+        return proj.LowerDistance() / 1000.0;
+    }
+    else
+    {
+        return std::min(loc.Distance(m_c->Value(m_b[0])),
+                        loc.Distance(m_c->Value(m_b[1]))) /
+               1000.0;
+    }
+}
+
 NekDouble CADCurveOCE::loct(Array<OneD, NekDouble> xyz, NekDouble &t)
 {
     t = 0.0;
-
     gp_Pnt loc(xyz[0] * 1000.0, xyz[1] * 1000.0, xyz[2] * 1000.0);
-
     ShapeAnalysis_Curve sac;
     gp_Pnt p;
     sac.Project(m_c, loc, Precision::Confusion(), p, t);
-
     return p.Distance(loc) / 1000.0;
 }
 

@@ -99,9 +99,17 @@ NekDouble Octree::Query(Array<OneD, NekDouble> loc)
 
     for (int i = 0; i < m_lsources.size(); i++)
     {
-        if (m_lsources[i].withinRange(loc))
+        if (m_lsources[i].WithinRange(loc))
         {
             tmp = min(m_lsources[i].delta, tmp);
+        }
+    }
+
+    for (int i = 0; i < m_csources.size(); i++)
+    {
+        if (m_csources[i].WithinRange(loc))
+        {
+            tmp = min(m_csources[i].delta, tmp);
         }
     }
 
@@ -185,6 +193,11 @@ NekDouble Octree::GetMinDelta()
     for (int i = 0; i < m_lsources.size(); i++)
     {
         tmp = min(m_lsources[i].delta, tmp);
+    }
+
+    for (int i = 0; i < m_csources.size(); i++)
+    {
+        tmp = min(m_csources[i].delta, tmp);
     }
     return min(m_minDelta, tmp);
 }
@@ -278,8 +291,7 @@ void Octree::SubDivide()
         VerifyNeigbours();
 
         // neeed to create a divide list, in the first list will be m_octants
-        // which need to
-        // subdivide based on curvature,
+        // which need to subdivide based on curvature,
         // in the next list will be ocants which need to subdivide to make sure
         // level criteria is statisified for the previous list and so on
         // the list will keep building till no more lists are required.
@@ -293,7 +305,10 @@ void Octree::SubDivide()
             for (int i = 0; i < m_octants.size(); i++)
             {
                 if (m_octants[i]->NeedDivide() &&
-                    m_octants[i]->DX() / 4.0 > m_minDelta)
+                    m_octants[i]->DX() / 4.0 >
+                        (m_octants[i]->HasDelta()
+                             ? min(m_minDelta, m_octants[i]->GetDelta())
+                             : m_minDelta))
                 {
                     sublist.push_back(m_octants[i]);
                     inlist.insert(m_octants[i]->GetId());
@@ -816,15 +831,44 @@ int Octree::CountElemt()
 
 void Octree::CompileSourcePointList()
 {
+    // Get the information of any curves that contain refinement data
+    map<int, pair<NekDouble, NekDouble>> curve_refinement;
+    if (m_curverefinement.size() > 0)
+    {
+        m_log(VERBOSE) << "  - Modifying based on refinement curves" << endl;
+        vector<string> curves;
+        boost::split(curves, m_curverefinement, boost::is_any_of(":"));
+        for (int i = 0; i < curves.size(); i++)
+        {
+            vector<NekDouble> data;
+            ParseUtils::GenerateVector(curves[i], data);
+            // data[0] = curve ID; data[1]= radius(R); data[2] = delta(D).
+            curve_refinement[int(data[0])] = {data[1], data[2]};
+        }
+    }
+
     int totalEnt = 0;
     if (m_mesh->m_cad->Is2D())
     {
-        totalEnt += m_mesh->m_cad->GetNumCurve();
+        totalEnt = m_mesh->m_cad->GetNumCurve();
         for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
         {
             m_log(VERBOSE).Progress(i, totalEnt, "  - Compiling source points");
 
-            CADCurveSharedPtr curve    = m_mesh->m_cad->GetCurve(i);
+            CADCurveSharedPtr curve = m_mesh->m_cad->GetCurve(i);
+
+            // Check if curve i has refinement data
+            map<int, pair<NekDouble, NekDouble>>::iterator it;
+            it = curve_refinement.find(i);
+            // Add curve as a refinement source. This works akin to line sources
+            // and does not affect the octree.
+            if (it != curve_refinement.end())
+            {
+                // it->second.first = radius(R); it->second.second = delta(D).
+                m_csources.push_back(
+                    CurveSource(it->second.first, it->second.second, curve));
+            }
+
             Array<OneD, NekDouble> bds = curve->GetBounds();
             // this works assuming the curves are not distorted
             int samples  = ceil(curve->Length(bds[0], bds[1]) / m_minDelta) * 2;
@@ -855,11 +899,23 @@ void Octree::CompileSourcePointList()
                     {
                         del = m_minDelta;
                     }
+                    CPointSharedPtr newCPoint;
 
-                    CPointSharedPtr newCPoint =
-                        MemoryManager<CPoint>::AllocateSharedPtr(
+                    // Adds a curve source point with additional refinement
+                    // delta. This promotes the octree to continue refining the
+                    // octant containing the source point until the refinement
+                    // delta is reached. it->second.second = delta(D);
+                    if (it != curve_refinement.end())
+                    {
+                        newCPoint = MemoryManager<CPoint>::AllocateSharedPtr(
+                            ss[0].first.lock()->GetId(), uv, loc, del,
+                            it->second.second);
+                    }
+                    else
+                    {
+                        newCPoint = MemoryManager<CPoint>::AllocateSharedPtr(
                             ss[0].first.lock()->GetId(), uv, loc, del);
-
+                    }
                     m_SPList.push_back(newCPoint);
                 }
                 else
@@ -993,6 +1049,8 @@ void Octree::CompileSourcePointList()
                             del = m_minDelta;
                         }
 
+                        /// TODO Add refinement surface CPoints.
+
                         CPointSharedPtr newCPoint =
                             MemoryManager<CPoint>::AllocateSharedPtr(
                                 surf->GetId(), uv, surf->P(uv), del);
@@ -1037,31 +1095,31 @@ void Octree::CompileSourcePointList()
             x2[1] = data[4];
             x2[2] = data[5];
 
-            m_lsources.push_back(linesource(x1, x2, data[6], data[7]));
-        }
+            m_lsources.push_back(LineSource(x1, x2, data[6], data[7]));
 
-        // this takes any existing sourcepoints within the influence range
-        // and modifies them
-        /*for (int i = 0; i < m_SPList.size(); i++)
-        {
-            for (int j = 0; j < m_lsources.size(); j++)
+            // add non-boundary source points on the line to inform the octree
+            // of additional subdivisions
+            NekDouble dx     = x2[0] - x1[0];
+            NekDouble dy     = x2[1] - x1[1];
+            NekDouble dz     = x2[2] - x1[2];
+            NekDouble length = sqrt(dx * dx + dy * dy + dz * dz);
+            int num_points   = ceil(length / data[7]) * 2;
+            // update dx, dy & dz to now be the increment in each direction.
+            dx = dx / (num_points + 1);
+            dy = dy / (num_points + 1);
+            dz = dz / (num_points + 1);
+
+            for (size_t j = 0; j < num_points; j++)
             {
-                if (m_lsources[j].withinRange(m_SPList[i]->GetLoc()))
-                {
-                    if(m_SPList[i]->GetType() == ePBoundary)
-                    {
-                        BPointSharedPtr bp =
-                            std::dynamic_pointer_cast<BPoint>
-                                                            (m_SPList[i]);
-
-                        m_SPList[i] = bp->ChangeType();
-
-                    }
-                    m_SPList[i]->SetDelta(m_lsources[j].delta);
-                }
+                Array<OneD, NekDouble> loc(3);
+                loc[0] = x1[0] + dx * j;
+                loc[1] = x1[1] + dy * j;
+                loc[2] = x1[2] + dz * j;
+                SrcPointSharedPtr newSPoint =
+                    MemoryManager<SrcPoint>::AllocateSharedPtr(loc, data[7]);
+                m_SPList.push_back(newSPoint);
             }
-        }*/
-        /// TODO add extra source points from the line souce to the octree
+        }
     }
 }
 
