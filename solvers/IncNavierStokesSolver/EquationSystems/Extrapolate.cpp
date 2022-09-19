@@ -471,7 +471,7 @@ void Extrapolate::AddPressureToOutflowBCs(NekDouble kinvis)
             int nqb = m_PBndExp[n]->GetTotPoints();
             int ncb = m_PBndExp[n]->GetNcoeffs();
 
-            m_pressure->FillBndCondFromField(n);
+            m_pressure->FillBndCondFromField(n, m_pressure->GetCoeffs());
             Array<OneD, NekDouble> pbc(nqb);
 
             m_PBndExp[n]->BwdTrans(m_PBndExp[n]->GetCoeffs(), pbc);

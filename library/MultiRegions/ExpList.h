@@ -59,7 +59,7 @@ namespace Nektar
 namespace MultiRegions
 {
 
-#define EXPLISTDATA 0
+#define EXPLISTDATA 1
 
 // Forward declarations
 class ExpList;

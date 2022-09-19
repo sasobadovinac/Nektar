@@ -672,7 +672,8 @@ void ContField::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
     }
 }
 
-void ContField::v_FillBndCondFromField(const int nreg, const Array<OneD, NekDouble> coeffs)
+void ContField::v_FillBndCondFromField(const int nreg,
+                                       const Array<OneD, NekDouble> coeffs)
 {
     int bndcnt = 0;
 

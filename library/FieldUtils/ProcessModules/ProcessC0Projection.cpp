@@ -148,6 +148,7 @@ void ProcessC0Projection::Process(po::variables_map &vm)
 
     string fields = m_config["fields"].as<string>();
     vector<unsigned int> processFields;
+    Array<OneD, NekDouble> tmp; 
 
     if (fields.compare("All") == 0)
     {
@@ -189,11 +190,11 @@ void ProcessC0Projection::Process(po::variables_map &vm)
 #endif
             C0ProjectExp[processFields[i]]->LocalToGlobal(Coeffs,Coeffs);
             C0ProjectExp[processFields[i]]->GlobalToLocal(Coeffs,Coeffs);
+
 #if EXPLISTDATA
             Vmath::Vcopy(ncoeffs, Coeffs,1,
-                         m_f->m_exp[processFields[i]]->UpdateCoeffs(), 1);
+                   tmp = m_f->m_exp[processFields[i]]->UpdateCoeffs(), 1);
 #else
-            Array<OneD, NekDouble> tmp; 
             Vmath::Vcopy(ncoeffs, Coeffs,1,
                    tmp = m_f->m_fieldPhys->UpdateArray1D(processFields[i]), 1);
 #endif
@@ -230,7 +231,6 @@ void ProcessC0Projection::Process(po::variables_map &vm)
                     forcing, m_f->m_exp[processFields[i]]->UpdateCoeffs(),
                     factors);
 #else
-                Array<OneD, NekDouble> tmp; 
                 Vmath::Smul(npoints, -lambda,
                             tmp = m_f->m_fieldPhys->GetArray1D(processFields[i]), 1,
                             forcing,1);
@@ -267,7 +267,6 @@ void ProcessC0Projection::Process(po::variables_map &vm)
             m_f->m_exp[processFields[i]]->GetCoeffs(),
             tmp = m_f->m_exp[processFields[i]]->UpdatePhys());
 #else
-        Array<OneD, NekDouble> tmp; 
         C0ProjectExp[processFields[i]]->BwdTrans
             (m_f->m_fieldCoeffs->GetArray1D(processFields[i]),
              tmp = m_f->m_fieldPhys->UpdateArray1D(processFields[i]));

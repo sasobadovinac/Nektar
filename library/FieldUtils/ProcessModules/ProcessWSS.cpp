@@ -160,6 +160,7 @@ void ProcessWSS::Process(po::variables_map &vm)
             for (i = 0; i < nfields; i++)
             {
                 m_f->m_exp[i]->GetBndElmtExpansion(bnd, BndElmtExp[i]);
+                BndElmtPhys[i] = BndElmtExp[i]->UpdatePhys(); 
             }
 #else
             Array<OneD, NekDouble> tmp; 

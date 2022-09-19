@@ -107,7 +107,7 @@ ContField3DHomogeneous2D::ContField3DHomogeneous2D(
     {
 #if EXPLISTDATA
         m_lines[n] = MemoryManager<ContField>::AllocateSharedPtr
-            (pSession, graph1D, variable, false, false ImpType);
+            (pSession, graph1D, variable, false, false, ImpType);
 #else
         m_lines[n] = MemoryManager<ContField>::AllocateSharedPtr
             (pSession, graph1D, variable, true, false, ImpType);
