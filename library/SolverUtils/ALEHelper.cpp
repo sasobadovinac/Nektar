@@ -62,6 +62,9 @@ void ALEHelper::InitObject(int spaceDim,
             }
         }
     }
+
+    // Update grid velocity
+    UpdateGridVelocity(0);
 }
 
 void ALEHelper::UpdateGridVelocity(const NekDouble &time)
@@ -179,9 +182,7 @@ void ALEHelper::MoveMesh(const NekDouble &time,
             for (const auto &i : conEl[m_fieldsALE[0]->GetShapeDimension() -
                                        1]) // This only takes the trace elements
             {
-                m_fieldsALE[0]
-                    ->GetTrace()
-                    ->GetExpFromGeomId(i->GetGlobalID())
+                m_fieldsALE[0]->GetTrace()->GetExpFromGeomId(i->GetGlobalID())
                     ->Reset();
             }
         }
