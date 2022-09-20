@@ -47,9 +47,10 @@ namespace NekMesh
 
 enum SPType
 {
-    eCBoundary, // on a curved boundary
-    ePBoundary, // on a planar boundary (R=inf)
-    eSrcPoint   // source point
+    eCBoundary,  // on a curved boundary
+    eRCBoundary, // on a curved boundary with refinement
+    ePBoundary,  // on a planar boundary (R=inf)
+    eSrcPoint    // source point
 };
 
 /**
@@ -85,6 +86,11 @@ public:
         return 0.0;
     }
 
+    virtual NekDouble GetRDelta()
+    {
+        return 0.0;
+    }
+
     virtual void SetDelta(NekDouble i)
     {
         boost::ignore_unused(i);
@@ -98,7 +104,21 @@ public:
     bool HasDelta()
     {
         bool ret;
-        if (m_type == eCBoundary || m_type == eSrcPoint)
+        if (m_type == eCBoundary || m_type == eRCBoundary)
+        {
+            ret = true;
+        }
+        else
+        {
+            ret = false;
+        }
+        return ret;
+    }
+
+    bool HasRDelta()
+    {
+        bool ret;
+        if (m_type == eRCBoundary || m_type == eSrcPoint)
         {
             ret = true;
         }
@@ -112,7 +132,8 @@ public:
     bool Isboundary()
     {
         bool ret;
-        if (m_type == eCBoundary || m_type == ePBoundary)
+        if (m_type == eCBoundary || m_type == ePBoundary ||
+            m_type == eRCBoundary)
         {
             ret = true;
         }
@@ -150,6 +171,14 @@ public:
         m_type = eCBoundary;
     }
 
+    // Overloaded constructor with refined delta value
+    CPoint(int i, Array<OneD, NekDouble> uv, Array<OneD, NekDouble> l,
+           NekDouble d, NekDouble rd)
+        : SPBase(l), sid(i), m_uv(uv), m_delta(d), m_rdelta(rd)
+    {
+        m_type = eRCBoundary;
+    }
+
     ~CPoint(){};
 
     /**
@@ -161,12 +190,25 @@ public:
     }
 
     /**
+     * @brief get mesh refinement spacing paramter
+     */
+    NekDouble GetRDelta()
+    {
+        return m_rdelta;
+    }
+
+    /**
      * @brief gets the corresponding cad information for the point
      */
     void GetCAD(int &surf, Array<OneD, NekDouble> &uv)
     {
         surf = sid;
         uv   = m_uv;
+    }
+
+    void SetRDelta(NekDouble i)
+    {
+        m_rdelta = i;
     }
 
     void SetDelta(NekDouble i)
@@ -182,6 +224,8 @@ private:
     NekDouble m_ti;
     /// delta parameter
     NekDouble m_delta;
+    /// refinement delta parameter
+    NekDouble m_rdelta;
 };
 typedef std::shared_ptr<CPoint> CPointSharedPtr;
 
@@ -204,18 +248,6 @@ public:
 
     ~BPoint(){};
 
-    NekDouble GetDelta()
-    {
-        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
-        return 0.0;
-    }
-
-    void SetDelta(NekDouble i)
-    {
-        boost::ignore_unused(i);
-        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
-    }
-
     /**
      * @brief gets the corresponding cad information for the point
      */
@@ -225,11 +257,30 @@ public:
         uv   = m_uv;
     }
 
-    CPointSharedPtr ChangeType()
+    NekDouble GetDelta()
     {
-        CPointSharedPtr ret =
-            MemoryManager<CPoint>::AllocateSharedPtr(sid, m_uv, m_loc, -1.0);
-        return ret;
+        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
+        return 0.0;
+    }
+
+    void SetDelta(NekDouble i)
+    {
+        boost::ignore_unused(i);
+        NEKERROR(ErrorUtil::efatal,
+                 "Cannot assign refinement delta to this type");
+    }
+
+    NekDouble GetRDelta()
+    {
+        NEKERROR(ErrorUtil::efatal,
+                 "Cannot retrieve refinment delta from this type");
+        return 0.0;
+    }
+
+    void SetRDelta(NekDouble i)
+    {
+        boost::ignore_unused(i);
+        NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
     }
 
 private:
@@ -252,7 +303,7 @@ public:
     /**
      * @brief constructor for a boundary point without delta
      */
-    SrcPoint(Array<OneD, NekDouble> l, NekDouble d) : SPBase(l), m_delta(d)
+    SrcPoint(Array<OneD, NekDouble> l, NekDouble d) : SPBase(l), m_rdelta(d)
     {
         m_type = eSrcPoint;
     }
@@ -262,14 +313,26 @@ public:
     /**
      * @brief get mesh spacing paramter
      */
+    NekDouble GetRDelta()
+    {
+        return m_rdelta;
+    }
+
+    void SetRDelta(NekDouble i)
+    {
+        m_rdelta = i;
+    }
+
     NekDouble GetDelta()
     {
-        return m_delta;
+        NEKERROR(ErrorUtil::efatal, "Cannot retrieve delta from this type");
+        return 0.0;
     }
 
     void SetDelta(NekDouble i)
     {
-        m_delta = i;
+        boost::ignore_unused(i);
+        NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
     }
 
     void GetCAD(int &surf, Array<OneD, NekDouble> &uv)
@@ -279,7 +342,8 @@ public:
     }
 
 private:
-    NekDouble m_delta;
+    /// refinement delta parameter
+    NekDouble m_rdelta;
 };
 typedef std::shared_ptr<SrcPoint> SrcPointSharedPtr;
 

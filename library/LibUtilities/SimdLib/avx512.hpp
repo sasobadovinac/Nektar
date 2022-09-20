@@ -72,7 +72,7 @@ struct avx512Mask16;
 namespace abi
 {
 
-// mapping between abstract types and concrete types
+// mapping between abstract types and concrete floating point types
 template <> struct avx512<double>
 {
     using type = avx512Double8;
@@ -81,6 +81,8 @@ template <> struct avx512<float>
 {
     using type = avx512Float16;
 };
+// generic index mapping
+// assumes index type width same as floating point type
 template <> struct avx512<std::int64_t>
 {
     using type = avx512Long8<std::int64_t>;
@@ -89,6 +91,12 @@ template <> struct avx512<std::uint64_t>
 {
     using type = avx512Long8<std::uint64_t>;
 };
+#if defined(__APPLE__)
+template <> struct avx512<std::size_t>
+{
+    using type = avx512Long8<std::size_t>;
+};
+#endif
 template <> struct avx512<std::int32_t>
 {
     using type = avx512Int16<std::int32_t>;
@@ -97,6 +105,38 @@ template <> struct avx512<std::uint32_t>
 {
     using type = avx512Int16<std::uint32_t>;
 };
+// specialized index mapping
+template <> struct avx512<std::int64_t, 8>
+{
+    using type = avx512Long8<std::int64_t>;
+};
+template <> struct avx512<std::uint64_t, 8>
+{
+    using type = avx512Long8<std::uint64_t>;
+};
+#if defined(__APPLE__)
+template <> struct avx512<std::size_t, 8>
+{
+    using type = avx512Long8<std::size_t>;
+};
+#endif
+template <> struct avx512<std::int32_t, 8>
+{
+    using type = avx2Int8<std::int32_t>;
+};
+template <> struct avx512<std::uint32_t, 8>
+{
+    using type = avx2Int8<std::uint32_t>;
+};
+template <> struct avx512<std::int32_t, 16>
+{
+    using type = avx512Int16<std::int32_t>;
+};
+template <> struct avx512<std::uint32_t, 16>
+{
+    using type = avx512Int16<std::uint32_t>;
+};
+// bool mapping
 template <> struct avx512<bool, 8>
 {
     using type = avx512Mask8;
@@ -140,6 +180,9 @@ template <typename T> struct avx512Int16
     {
         _data = _mm512_load_epi32(rhs);
     }
+
+    // copy assignment
+    inline avx512Int16 &operator=(const avx512Int16 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -195,8 +238,6 @@ template <typename T> struct avx512Int16
     {
         _data = _mm512_set1_epi32(rhs);
     }
-
-    inline avx512Int16 &operator=(const avx512Int16 &) = default;
 
     // subscript
     // subscript operators are convienient but expensive
@@ -255,6 +296,9 @@ template <typename T> struct avx512Long8
         _data = _mm512_load_epi64(rhs);
     }
 
+    // copy assignment
+    inline avx512Long8 &operator=(const avx512Long8 &) = default;
+
     // store
     inline void store(scalarType *p) const
     {
@@ -310,8 +354,6 @@ template <typename T> struct avx512Long8
         _data = _mm512_set1_epi64(rhs);
     }
 
-    inline avx512Long8 &operator=(const avx512Long8 &) = default;
-
     // subscript
     // subscript operators are convienient but expensive
     // should not be used in optimized kernels
@@ -362,6 +404,9 @@ struct avx512Double8
     {
         _data = _mm512_set1_pd(rhs);
     }
+
+    // copy assignment
+    inline avx512Double8 &operator=(const avx512Double8 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -422,17 +467,17 @@ struct avx512Double8
     }
 
     // gather/scatter
-    // template <typename T>
-    // inline void gather(scalarType const* p, const avx2Int8<T>& indices)
-    // {
-    //     _data = _mm512_i32gather_pd(indices._data, p, 8);
-    // }
+    template <typename T>
+    inline void gather(scalarType const *p, const avx2Int8<T> &indices)
+    {
+        _data = _mm512_i32gather_pd(indices._data, p, 8);
+    }
 
-    // template <typename T>
-    // inline void scatter(scalarType* out, const avx2Int8<T>& indices) const
-    // {
-    //     _mm512_i32scatter_pd(out, indices._data, _data, 8);
-    // }
+    template <typename T>
+    inline void scatter(scalarType *out, const avx2Int8<T> &indices) const
+    {
+        _mm512_i32scatter_pd(out, indices._data, _data, 8);
+    }
 
     template <typename T>
     inline void gather(scalarType const *p, const avx512Long8<T> &indices)
@@ -462,9 +507,6 @@ struct avx512Double8
         store(tmp, is_aligned);
         return tmp[i];
     }
-
-    // unary ops
-    inline avx512Double8 &operator=(const avx512Double8 &) = default;
 
     inline void operator+=(avx512Double8 rhs)
     {
@@ -624,6 +666,9 @@ struct avx512Float16
         _data = _mm512_set1_ps(rhs);
     }
 
+    // copy assignment
+    inline avx512Float16 &operator=(const avx512Float16 &) = default;
+
     // store
     inline void store(scalarType *p) const
     {
@@ -717,9 +762,6 @@ struct avx512Float16
         scalarType *tmp = reinterpret_cast<scalarType *>(&_data);
         return tmp[i];
     }
-
-    // unary ops
-    inline avx512Float16 &operator=(const avx512Float16 &) = default;
 
     inline void operator+=(avx512Float16 rhs)
     {

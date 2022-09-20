@@ -25,6 +25,7 @@ IF(NEKTAR_USE_MESHGEN)
 
     ADD_NEKTAR_TEST(MeshGen/STEP/2d_bl_aerofoil)
     ADD_NEKTAR_TEST(MeshGen/STEP/2d_bl_t106)
+    ADD_NEKTAR_TEST(MeshGen/STEP/2d_circle_square)
     ADD_NEKTAR_TEST(MeshGen/STEP/3d_bl_cyl)
     ADD_NEKTAR_TEST(MeshGen/STEP/3d_bl_wing LENGTHY)
     ADD_NEKTAR_TEST(MeshGen/STEP/3d_sphere LENGTHY)

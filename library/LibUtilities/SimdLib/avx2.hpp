@@ -73,7 +73,7 @@ struct avx2Mask8;
 namespace abi
 {
 
-// mapping between abstract types and concrete types
+// mapping between abstract types and concrete floating point types
 template <> struct avx2<double>
 {
     using type = avx2Double4;
@@ -82,6 +82,8 @@ template <> struct avx2<float>
 {
     using type = avx2Float8;
 };
+// generic index mapping
+// assumes index type width same as floating point type
 template <> struct avx2<std::int64_t>
 {
     using type = avx2Long4<std::int64_t>;
@@ -90,6 +92,12 @@ template <> struct avx2<std::uint64_t>
 {
     using type = avx2Long4<std::uint64_t>;
 };
+#if defined(__APPLE__)
+template <> struct avx2<std::size_t>
+{
+    using type = avx2Long4<std::size_t>;
+};
+#endif
 template <> struct avx2<std::int32_t>
 {
     using type = avx2Int8<std::int32_t>;
@@ -98,6 +106,38 @@ template <> struct avx2<std::uint32_t>
 {
     using type = avx2Int8<std::uint32_t>;
 };
+// specialized index mapping
+template <> struct avx2<std::int64_t, 4>
+{
+    using type = avx2Long4<std::int64_t>;
+};
+template <> struct avx2<std::uint64_t, 4>
+{
+    using type = avx2Long4<std::uint64_t>;
+};
+#if defined(__APPLE__)
+template <> struct avx2<std::size_t, 4>
+{
+    using type = avx2Long4<std::size_t>;
+};
+#endif
+template <> struct avx2<std::int32_t, 4>
+{
+    using type = sse2Int4<std::int32_t>;
+};
+template <> struct avx2<std::uint32_t, 4>
+{
+    using type = sse2Int4<std::uint32_t>;
+};
+template <> struct avx2<std::int32_t, 8>
+{
+    using type = avx2Int8<std::int32_t>;
+};
+template <> struct avx2<std::uint32_t, 8>
+{
+    using type = avx2Int8<std::uint32_t>;
+};
+// bool mapping
 template <> struct avx2<bool, 4>
 {
     using type = avx2Mask4;
@@ -139,6 +179,9 @@ template <typename T> struct avx2Int8
     {
         _data = _mm256_load_si256(reinterpret_cast<vectorType *>(rhs));
     }
+
+    // copy assignment
+    inline avx2Int8 &operator=(const avx2Int8 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -189,8 +232,6 @@ template <typename T> struct avx2Int8
     {
         _data = _mm256_set1_epi32(rhs);
     }
-
-    inline avx2Int8 &operator=(const avx2Int8 &) = default;
 
     // subscript
     // subscriptsoperators are convienient but expensive
@@ -249,6 +290,9 @@ template <typename T> struct avx2Long4
         _data = _mm256_load_si256(reinterpret_cast<vectorType *>(rhs));
     }
 
+    // copy assignment
+    inline avx2Long4 &operator=(const avx2Long4 &) = default;
+
     // store
     inline void store(scalarType *p) const
     {
@@ -298,8 +342,6 @@ template <typename T> struct avx2Long4
     {
         _data = _mm256_set1_epi64x(rhs);
     }
-
-    inline avx2Long4 &operator=(const avx2Long4 &) = default;
 
     // subscript
     // subscript operators are convienient but expensive
@@ -351,6 +393,9 @@ struct avx2Double4
     {
         _data = _mm256_set1_pd(rhs);
     }
+
+    // copy assignment
+    inline avx2Double4 &operator=(const avx2Double4 &) = default;
 
     // store
     inline void store(scalarType *p) const
@@ -468,9 +513,6 @@ struct avx2Double4
         store(tmp, is_aligned);
         return tmp[i];
     }
-
-    // unary ops
-    inline avx2Double4 &operator=(const avx2Double4 &) = default;
 
     inline void operator+=(avx2Double4 rhs)
     {
@@ -621,6 +663,9 @@ struct avx2Float8
         _data = _mm256_set1_ps(rhs);
     }
 
+    // copy assignment
+    inline avx2Float8 &operator=(const avx2Float8 &) = default;
+
     // store
     inline void store(scalarType *p) const
     {
@@ -725,9 +770,6 @@ struct avx2Float8
         scalarType *tmp = reinterpret_cast<scalarType *>(&_data);
         return tmp[i];
     }
-
-    // unary ops
-    inline avx2Float8 &operator=(const avx2Float8 &) = default;
 
     inline void operator+=(avx2Float8 rhs)
     {
