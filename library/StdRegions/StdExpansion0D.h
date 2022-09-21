@@ -49,7 +49,10 @@ class StdExpansion0D : virtual public StdExpansion
 {
 
 public:
-    STD_REGIONS_EXPORT StdExpansion0D() = default;
+    STD_REGIONS_EXPORT StdExpansion0D() : StdExpansion()
+    {
+    }
+
     STD_REGIONS_EXPORT StdExpansion0D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba);
     STD_REGIONS_EXPORT StdExpansion0D(const StdExpansion0D &T);
