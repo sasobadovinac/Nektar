@@ -126,7 +126,8 @@ ExpList::ExpList(const ExpList &in, const bool DeclareCoeffPhysArrays)
       m_coll_coeff_offset(in.m_coll_coeff_offset),
       m_coll_phys_offset(in.m_coll_phys_offset),
       m_coeff_offset(in.m_coeff_offset), m_phys_offset(in.m_phys_offset),
-      m_blockMat(in.m_blockMat), m_WaveSpace(false)
+      m_blockMat(in.m_blockMat), m_WaveSpace(false),
+      m_elmtToExpId(in.m_elmtToExpId)
 {
 
     // Set up m_coeffs, m_phys and offset arrays.
