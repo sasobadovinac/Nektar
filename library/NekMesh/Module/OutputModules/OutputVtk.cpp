@@ -35,13 +35,13 @@
 #include <LibUtilities/BasicUtils/VtkUtil.hpp>
 #include <NekMesh/MeshElements/Element.h>
 
+#include "OutputVtk.h"
 #include <vtkCellType.h>
 #include <vtkPoints.h>
+#include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
-
-#include "OutputVtk.h"
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -106,15 +106,17 @@ void OutputVtk::Process()
     m_log(VERBOSE) << "Writing VTK file '" << m_config["outfile"].as<string>()
                    << "'." << endl;
 
-    vtkUnstructuredGrid *vtkMesh = vtkUnstructuredGrid::New();
-    vtkPoints *vtkPoints         = vtkPoints::New();
+    vtkSmartPointer<vtkUnstructuredGrid> vtkMesh =
+        vtkSmartPointer<vtkUnstructuredGrid>::New();
+    vtkSmartPointer<vtkPoints> vtkMeshPoints =
+        vtkSmartPointer<vtkPoints>::New();
 
     std::set<NodeSharedPtr> tmp(m_mesh->m_vertexSet.begin(),
                                 m_mesh->m_vertexSet.end());
 
     for (auto &n : tmp)
     {
-        vtkPoints->InsertPoint(n->m_id, n->m_x, n->m_y, n->m_z);
+        vtkMeshPoints->InsertPoint(n->m_id, n->m_x, n->m_y, n->m_z);
     }
 
     vtkIdType p[8];
@@ -135,13 +137,13 @@ void OutputVtk::Process()
                                 &p[0]);
     }
 
-    vtkMesh->SetPoints(vtkPoints);
+    vtkMesh->SetPoints(vtkMeshPoints);
 
     // Write out the new mesh in XML or legacy format
     if (m_config["legacy"].beenSet)
     {
-        vtkUnstructuredGridWriter *vtkMeshWriter =
-            vtkUnstructuredGridWriter::New();
+        vtkSmartPointer<vtkUnstructuredGridWriter> vtkMeshWriter =
+            vtkSmartPointer<vtkUnstructuredGridWriter>::New();
         vtkMeshWriter->SetFileName(m_config["outfile"].as<string>().c_str());
 
 #if VTK_MAJOR_VERSION <= 5
@@ -153,8 +155,9 @@ void OutputVtk::Process()
     }
     else // XML format
     {
-        vtkXMLUnstructuredGridWriter *vtkMeshWriter =
-            vtkXMLUnstructuredGridWriter::New();
+
+        vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtkMeshWriter =
+            vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
         vtkMeshWriter->SetFileName(m_config["outfile"].as<string>().c_str());
 
 #if VTK_MAJOR_VERSION <= 5

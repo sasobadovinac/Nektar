@@ -67,7 +67,20 @@ protected:
     EulerImplicitCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
                      const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
+
+    void v_DoDiffusion(
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override final
+    {
+        boost::ignore_unused(inarray, outarray, pFwd, pBwd);
+        NEKERROR(ErrorUtil::efatal,
+                 "v_DoDiffusion is not implemented for implicit solvers");
+    }
+
+    bool SupportsShockCaptType(const std::string type) const override final;
 };
 } // namespace Nektar
 #endif

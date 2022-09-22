@@ -167,7 +167,7 @@ void StandardExtrapolate::v_AccelerationBDF(
         Array<OneD, NekDouble> accelerationTerm(nPts, 0.0);
         if (m_pressureCalls > 2)
         {
-            int acc_order = min(m_pressureCalls - 2, m_intSteps);
+            int acc_order = std::min(m_pressureCalls - 2, m_intSteps);
             Vmath::Smul(nPts, DuDt_Coeffs[acc_order - 1][0], array[0], 1,
                         accelerationTerm, 1);
 

@@ -559,6 +559,8 @@ protected:
             nonZeroIndex[n_nonZero - i] = nConvectiveFields - i;
         }
     }
+
+    virtual bool SupportsShockCaptType(const std::string type) const override;
 };
 
 } // namespace Nektar

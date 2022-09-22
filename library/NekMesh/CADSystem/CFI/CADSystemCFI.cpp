@@ -282,7 +282,7 @@ bool CADSystemCFI::LoadCAD()
 void CADSystemCFI::AddVert(int i, cfi::Point *in)
 {
     CADVertSharedPtr newVert = GetCADVertFactory().CreateInstance(key);
-
+    newVert->SetLogger(m_log);
     static_pointer_cast<CADVertCFI>(newVert)->Initialise(i, in, m_scal);
 
     m_verts[i] = newVert;
@@ -292,6 +292,7 @@ void CADSystemCFI::AddVert(int i, cfi::Point *in)
 void CADSystemCFI::AddCurve(int i, cfi::Line *in)
 {
     CADCurveSharedPtr newCurve = GetCADCurveFactory().CreateInstance(key);
+    newCurve->SetLogger(m_log);
     static_pointer_cast<CADCurveCFI>(newCurve)->Initialise(i, in, m_scal);
 
     vector<cfi::Oriented<cfi::TopoEntity *>> *vertList = in->getChildList();
@@ -326,6 +327,7 @@ void CADSystemCFI::AddCurve(int i, cfi::Line *in)
 void CADSystemCFI::AddSurf(int i, cfi::Face *in)
 {
     CADSurfSharedPtr newSurf = GetCADSurfFactory().CreateInstance(key);
+    newSurf->SetLogger(m_log);
     static_pointer_cast<CADSurfCFI>(newSurf)->Initialise(i, in, m_scal);
 
     vector<cfi::Oriented<cfi::TopoEntity *>> *edgeList = in->getChildList();

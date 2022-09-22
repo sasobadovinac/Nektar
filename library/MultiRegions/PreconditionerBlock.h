@@ -75,6 +75,7 @@ public:
     }
 
 protected:
+    bool m_isFull;
     DNekBlkMatSharedPtr m_blkMat;
 
 private:

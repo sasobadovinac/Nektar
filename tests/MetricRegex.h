@@ -47,17 +47,19 @@ namespace Nektar
 struct MetricRegexFieldValue
 {
     MetricRegexFieldValue()
-        : m_value(""), m_useTolerance(false), m_tolerance(0.0),
-          m_useIntTolerance(false), m_intTolerance(0)
     {
     }
 
-    std::string m_value;
-    bool m_useTolerance;
-    double m_tolerance;
+    MetricRegexFieldValue(std::string value) : m_value(value)
+    {
+    }
 
-    bool m_useIntTolerance;
-    int m_intTolerance;
+    std::string m_value = "";
+    bool m_useTolerance = false;
+    double m_tolerance = 0.0;
+
+    bool m_useIntTolerance = false;
+    int m_intTolerance = 0;
 };
 
 class MetricRegex : public Metric
@@ -80,7 +82,9 @@ protected:
     /// Stores the multiple matches defined in each <MATCH> tag.
     std::vector<std::vector<MetricRegexFieldValue>> m_matches;
     /// If true, regex matches may be in any order in output
-    bool m_unordered;
+    bool m_unordered = false;
+    /// If true, use stderr for testing/generation instead of stdout.
+    bool m_useStderr = false;
 
     MetricRegex(TiXmlElement *metric, bool generate);
 
