@@ -39,48 +39,51 @@
 namespace Nektar
 {
 
-    // Converts Nektar++ dense matrix type enums to
-    // NIST Sparse Blas descriptors
-    static const int NistSpBlasDescra[5][9] =
+// Converts Nektar++ dense matrix type enums to
+// NIST Sparse Blas descriptors
+static const int NistSpBlasDescra[5][9] = {
+    // MatrixStorage::eFULL
     {
-        // MatrixStorage::eFULL
-        { 0,  // general matrix
-          0,  // neither lower- nor upper-triangular
-          0,  // non-unit diagonal
-          0,  // array base is C++-compatible
-          0, 0, 0, 0, 0 // not in use
-        },
-        // MatrixStorage::eDIAGONAL
-        { 5,  // diagonal
-          0,  // neither lower- nor upper-triangular
-          0,  // non-unit diagonal
-          0,  // array base is C++-compatible
-          0, 0, 0, 0, 0 // not in use
-        },
-        // MatrixStorage::eUPPER_TRIANGULAR
-        { 3,  // triangular
-          2,  // upper-triangular
-          0,  // non-unit diagonal
-          0,  // array base is C++-compatible
-          0, 0, 0, 0, 0 // not in use
-        },
-        // MatrixStorage::eLOWER_TRIANGULAR
-        { 3,  // triangular
-          1,  // lower-triangular
-          0,  // non-unit diagonal
-          0,  // array base is C++-compatible
-          0, 0, 0, 0, 0 // not in use
-        },
-        // MatrixStorage::eSYMMETRIC
-        { 1,  // symmetric
-          2,  // upper-triangular part to be stored
-          //1,  // lower-triangular part to be stored
-          0,  // non-unit diagonal
-          0,  // array base is C++-compatible
-          0, 0, 0, 0, 0 // not in use
-        }
-    };
+        0,            // general matrix
+        0,            // neither lower- nor upper-triangular
+        0,            // non-unit diagonal
+        0,            // array base is C++-compatible
+        0, 0, 0, 0, 0 // not in use
+    },
+    // MatrixStorage::eDIAGONAL
+    {
+        5,            // diagonal
+        0,            // neither lower- nor upper-triangular
+        0,            // non-unit diagonal
+        0,            // array base is C++-compatible
+        0, 0, 0, 0, 0 // not in use
+    },
+    // MatrixStorage::eUPPER_TRIANGULAR
+    {
+        3,            // triangular
+        2,            // upper-triangular
+        0,            // non-unit diagonal
+        0,            // array base is C++-compatible
+        0, 0, 0, 0, 0 // not in use
+    },
+    // MatrixStorage::eLOWER_TRIANGULAR
+    {
+        3,            // triangular
+        1,            // lower-triangular
+        0,            // non-unit diagonal
+        0,            // array base is C++-compatible
+        0, 0, 0, 0, 0 // not in use
+    },
+    // MatrixStorage::eSYMMETRIC
+    {
+        1,            // symmetric
+        2,            // upper-triangular part to be stored
+                      // 1,  // lower-triangular part to be stored
+        0,            // non-unit diagonal
+        0,            // array base is C++-compatible
+        0, 0, 0, 0, 0 // not in use
+    }};
 
-} // namespace
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NIST_SPARSE_DESCRIPTORS_HPP
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NIST_SPARSE_DESCRIPTORS_HPP

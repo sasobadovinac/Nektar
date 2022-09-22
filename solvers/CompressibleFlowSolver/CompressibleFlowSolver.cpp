@@ -32,9 +32,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <LibUtilities/BasicUtils/SessionReader.h>
 #include <SolverUtils/Driver.h>
 #include <SolverUtils/EquationSystem.h>
-#include <LibUtilities/BasicUtils/SessionReader.h>
 
 #include <LibUtilities/BasicUtils/Timer.h>
 
@@ -70,29 +70,25 @@ int main(int argc, char *argv[])
         timer.Stop();
         timer.AccumulateRegion("Execute");
 
-        // Print out timings if verbose
-        if (session->DefinesCmdLineArgument("verbose"))
-        {
-            int iolevel;
+        // Print out timings
+        int iolevel = 0;
 
-            session->LoadParameter("IO_Timer_Level",iolevel,1);
-            
-            LibUtilities::Timer::PrintElapsedRegions(session->GetComm(),
-                                                     std::cout, iolevel);
-        }
+        session->LoadParameter("IO_Timer_Level", iolevel, -1);
+
+        LibUtilities::Timer::PrintElapsedRegions(session->GetComm(), std::cout,
+                                                 iolevel);
 
         // Finalise communications
         session->Finalise();
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         return 1;
     }
-    catch (const std::string& eStr)
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }
 
     return 0;
-
 }

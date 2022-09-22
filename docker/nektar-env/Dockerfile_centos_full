@@ -9,4 +9,8 @@ RUN yum install -y epel-release && \
 	yum install -y $(cat packages.txt) \
 	&& yum clean all
 
+# Installation of the VTK packages also installs CMake 2.8, overriding the
+# previous symlink of cmake3 to cmake. Need to recreate this.
+RUN mv /usr/bin/cmake /usr/bin/cmake2 && mv /usr/bin/ctest /usr/bin/ctest2 && mv /usr/bin/cpack /usr/bin/cpack2 && ln -s /usr/bin/cmake3 /usr/bin/cmake && ln -s /usr/bin/ctest3 /usr/bin/ctest && ln -s /usr/bin/cpack3 /usr/bin/cpack
+
 USER nektar:nektar

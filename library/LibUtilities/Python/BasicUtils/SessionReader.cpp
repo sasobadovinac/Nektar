@@ -37,6 +37,11 @@
 
 using namespace Nektar::LibUtilities;
 
+#ifdef NEKTAR_USE_MPI
+#include <LibUtilities/Communication/CommMpi.h>
+CommSharedPtr MPICOMM = CommSharedPtr();
+#endif
+
 /**
  * @brief Thin wrapper around SessionReader to provide a nicer Pythonic
  * interface.
@@ -50,7 +55,7 @@ using namespace Nektar::LibUtilities;
 SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
 {
     int i, argc = py::len(ns), bufSize = 0;
-    char **argv = new char *[argc+1], *p;
+    char **argv = new char *[argc + 1], *p;
 
     // Create argc, argv to give to the session reader. Note that this needs to
     // be a contiguous block in memory, otherwise MPI (specifically OpenMPI)
@@ -67,19 +72,41 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
         std::string tmp = py::extract<std::string>(ns[i]);
         std::copy(tmp.begin(), tmp.end(), p);
         p[tmp.size()] = '\0';
-        argv[i] = p;
-        p += tmp.size()+1;
+        argv[i]       = p;
+        p += tmp.size() + 1;
     }
 
     // Also make sure we set argv[argc] = NULL otherwise OpenMPI will also
     // segfault.
     argv[argc] = NULL;
 
+#ifdef NEKTAR_USE_MPI
+    // In the case we're using MPI, it may already have been initialised. So to
+    // handle this, we'll construct our own CommMpi object and pass through to
+    // the SessionReader. This will persist indefinitely, or at least until the
+    // library is unloaded by Python.
+
+    if (!MPICOMM)
+    {
+        MPICOMM = GetCommFactory().CreateInstance("ParallelMPI", argc, argv);
+    }
+
+    std::vector<std::string> filenames(argc - 1);
+    for (i = 1; i < argc; ++i)
+    {
+        filenames[i - 1] = std::string(argv[i]);
+    }
+
+    // Create session reader.
+    SessionReaderSharedPtr sr =
+        SessionReader::CreateInstance(argc, argv, filenames, MPICOMM);
+#else
     // Create session reader.
     SessionReaderSharedPtr sr = SessionReader::CreateInstance(argc, argv);
+#endif
 
     // Clean up.
-    delete [] argv;
+    delete[] argv;
 
     return sr;
 }
@@ -94,10 +121,8 @@ SessionReaderSharedPtr SessionReader_CreateInstance(py::list &ns)
  */
 void export_SessionReader()
 {
-    py::class_<SessionReader,
-           std::shared_ptr<SessionReader>,
-           boost::noncopyable>(
-               "SessionReader", py::no_init)
+    py::class_<SessionReader, std::shared_ptr<SessionReader>,
+               boost::noncopyable>("SessionReader", py::no_init)
 
         .def("CreateInstance", SessionReader_CreateInstance)
         .staticmethod("CreateInstance")

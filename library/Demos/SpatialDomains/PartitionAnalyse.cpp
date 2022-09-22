@@ -46,8 +46,7 @@ using namespace Nektar::SpatialDomains;
 class FauxComm : public CommSerial
 {
 public:
-    FauxComm(int argc, char* argv[], int size)
-        : CommSerial(argc, argv)
+    FauxComm(int argc, char *argv[], int size) : CommSerial(argc, argv)
     {
         m_size = size;
         m_type = "Faux parallel";
@@ -57,7 +56,9 @@ public:
         m_size = size;
         m_type = "Faux parallel";
     }
-    virtual ~FauxComm() {}
+    virtual ~FauxComm()
+    {
+    }
     void v_SplitComm(int pRows, int pColumns)
     {
         m_commRow    = std::shared_ptr<FauxComm>(new FauxComm(pColumns));
@@ -76,22 +77,21 @@ int main(int argc, char *argv[])
 
     int nParts = atoi(argv[1]);
     vector<string> filenames(argv + 2, argv + argc);
-    
-    CommSharedPtr vComm = std::shared_ptr<FauxComm>(
-        new FauxComm(argc, argv, nParts));
 
-    char **new_argv = new char*[argc];
-    new_argv[0] = strdup("PartitionAnalyse");
-    new_argv[1] = strdup("--part-info");
-    for (int i = 0; i < argc-2; ++i)
+    CommSharedPtr vComm =
+        std::shared_ptr<FauxComm>(new FauxComm(argc, argv, nParts));
+
+    char **new_argv = new char *[argc];
+    new_argv[0]     = strdup("PartitionAnalyse");
+    new_argv[1]     = strdup("--part-info");
+    for (int i = 0; i < argc - 2; ++i)
     {
-        new_argv[i+2] = strdup(filenames[i].c_str());
+        new_argv[i + 2] = strdup(filenames[i].c_str());
     }
 
-    LibUtilities::SessionReaderSharedPtr vSession
-        = LibUtilities::SessionReader::CreateInstance(
-            argc, new_argv, filenames, vComm);
+    LibUtilities::SessionReaderSharedPtr vSession =
+        LibUtilities::SessionReader::CreateInstance(argc, new_argv, filenames,
+                                                    vComm);
 
     return 0;
 }
-

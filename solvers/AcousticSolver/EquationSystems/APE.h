@@ -69,7 +69,7 @@ protected:
     APE(const LibUtilities::SessionReaderSharedPtr &pSession,
         const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields = true);
 
     virtual void v_GetFluxVector(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,

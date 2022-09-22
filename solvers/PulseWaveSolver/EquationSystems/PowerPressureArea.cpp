@@ -49,7 +49,8 @@ PowerPressureArea::PowerPressureArea(
     const LibUtilities::SessionReaderSharedPtr pSession)
     : PulseWavePressureArea(pVessel, pSession)
 {
-    m_session->LoadParameter("P_Collapse", P_Collapse, -13.3322); // -10mmHg converted to kg / (cm s^2)
+    m_session->LoadParameter("P_Collapse", P_Collapse,
+                             -13.3322); // -10mmHg converted to kg / (cm s^2)
 }
 
 PowerPressureArea::~PowerPressureArea()
@@ -57,8 +58,10 @@ PowerPressureArea::~PowerPressureArea()
 }
 
 void PowerPressureArea::v_GetPressure(NekDouble &P, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &dAUdx,
-                                 const NekDouble &gamma, const NekDouble &alpha)
+                                      const NekDouble &A, const NekDouble &A0,
+                                      const NekDouble &dAUdx,
+                                      const NekDouble &gamma,
+                                      const NekDouble &alpha)
 {
     NekDouble c0 = 0.0;
     GetC0(c0, beta, A0);
@@ -66,12 +69,15 @@ void PowerPressureArea::v_GetPressure(NekDouble &P, const NekDouble &beta,
     NekDouble b = 0.0;
     GetB(b, c0);
 
-    P = m_PExt + (2 * m_rho * c0 * c0 / b) * (pow((A / A0), b / 2) - 1) // Power law by Smith/Canic/Mynard
-                                           - A0 * gamma * dAUdx / (A * sqrt(A)); // Viscoelasticity
+    P = m_PExt +
+        (2 * m_rho * c0 * c0 / b) *
+            (pow((A / A0), b / 2) - 1)        // Power law by Smith/Canic/Mynard
+        - A0 * gamma * dAUdx / (A * sqrt(A)); // Viscoelasticity
 }
 
 void PowerPressureArea::v_GetC(NekDouble &c, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &alpha)
+                               const NekDouble &A, const NekDouble &A0,
+                               const NekDouble &alpha)
 {
     NekDouble c0 = 0.0;
     GetC0(c0, beta, A0);
@@ -83,8 +89,8 @@ void PowerPressureArea::v_GetC(NekDouble &c, const NekDouble &beta,
 }
 
 void PowerPressureArea::v_GetW1(NekDouble &W1, const NekDouble &u,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                                const NekDouble &beta, const NekDouble &A,
+                                const NekDouble &A0, const NekDouble &alpha)
 {
     NekDouble I = 0.0;
     GetCharIntegral(I, beta, A, A0, alpha);
@@ -93,8 +99,8 @@ void PowerPressureArea::v_GetW1(NekDouble &W1, const NekDouble &u,
 }
 
 void PowerPressureArea::v_GetW2(NekDouble &W2, const NekDouble &u,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                                const NekDouble &beta, const NekDouble &A,
+                                const NekDouble &A0, const NekDouble &alpha)
 {
     NekDouble I = 0.0;
     GetCharIntegral(I, beta, A, A0, alpha);
@@ -103,8 +109,10 @@ void PowerPressureArea::v_GetW2(NekDouble &W2, const NekDouble &u,
 }
 
 void PowerPressureArea::v_GetAFromChars(NekDouble &A, const NekDouble &W1,
-                const NekDouble &W2, const NekDouble &beta, const NekDouble &A0,
-                                                         const NekDouble &alpha)
+                                        const NekDouble &W2,
+                                        const NekDouble &beta,
+                                        const NekDouble &A0,
+                                        const NekDouble &alpha)
 {
     NekDouble c0 = 0.0;
     GetC0(c0, beta, A0);
@@ -116,15 +124,17 @@ void PowerPressureArea::v_GetAFromChars(NekDouble &A, const NekDouble &W1,
 }
 
 void PowerPressureArea::v_GetUFromChars(NekDouble &u, const NekDouble &W1,
-                                                            const NekDouble &W2)
+                                        const NekDouble &W2)
 {
     u = (W1 + W2) / 2;
 }
 
 void PowerPressureArea::v_GetCharIntegral(NekDouble &I, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &alpha)
+                                          const NekDouble &A,
+                                          const NekDouble &A0,
+                                          const NekDouble &alpha)
 {
-    NekDouble c = 0.0;
+    NekDouble c  = 0.0;
     NekDouble c0 = 0.0;
 
     GetC0(c0, beta, A0);
@@ -136,10 +146,11 @@ void PowerPressureArea::v_GetCharIntegral(NekDouble &I, const NekDouble &beta,
     I = (4 / b) * (c - c0);
 }
 
-void PowerPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
-             const Array<OneD, NekDouble> &Au, const Array<OneD, NekDouble> &uu,
-           const Array<OneD, NekDouble> &beta, const Array<OneD, NekDouble> &A0,
-                   const Array<OneD, NekDouble> &alpha, const std::string &type)
+void PowerPressureArea::v_GetJacobianInverse(
+    NekMatrix<NekDouble> &invJ, const Array<OneD, NekDouble> &Au,
+    const Array<OneD, NekDouble> &uu, const Array<OneD, NekDouble> &beta,
+    const Array<OneD, NekDouble> &A0, const Array<OneD, NekDouble> &alpha,
+    const std::string &type)
 {
     // General formulation
     if (type == "Bifurcation")
@@ -173,24 +184,24 @@ void PowerPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(2, 4, 0);
         J.SetValue(2, 5, -c[2] / Au[2]);
 
-        J.SetValue(3, 0,  Au[0]);
+        J.SetValue(3, 0, Au[0]);
         J.SetValue(3, 1, -Au[1]);
         J.SetValue(3, 2, -Au[2]);
-        J.SetValue(3, 3,  uu[0]);
+        J.SetValue(3, 3, uu[0]);
         J.SetValue(3, 4, -uu[1]);
         J.SetValue(3, 5, -uu[2]);
 
-        J.SetValue(4, 0,  2 * uu[0]);
+        J.SetValue(4, 0, 2 * uu[0]);
         J.SetValue(4, 1, -2 * uu[1]);
         J.SetValue(4, 2, 0);
-        J.SetValue(4, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(4, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(4, 4, -2 * c[1] * c[1] / Au[1]);
         J.SetValue(4, 5, 0);
 
-        J.SetValue(5, 0,  2 * uu[0]);
+        J.SetValue(5, 0, 2 * uu[0]);
         J.SetValue(5, 1, 0);
         J.SetValue(5, 2, -2 * uu[2]);
-        J.SetValue(5, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(5, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(5, 4, 0);
         J.SetValue(5, 5, -2 * c[2] * c[2] / Au[2]);
 
@@ -228,31 +239,31 @@ void PowerPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(2, 4, 0);
         J.SetValue(2, 5, c[2] / Au[2]);
 
-        J.SetValue(3, 0,  Au[0]);
+        J.SetValue(3, 0, Au[0]);
         J.SetValue(3, 1, -Au[1]);
         J.SetValue(3, 2, -Au[2]);
-        J.SetValue(3, 3,  uu[0]);
+        J.SetValue(3, 3, uu[0]);
         J.SetValue(3, 4, -uu[1]);
         J.SetValue(3, 5, -uu[2]);
 
-        J.SetValue(4, 0,  2 * uu[0]);
+        J.SetValue(4, 0, 2 * uu[0]);
         J.SetValue(4, 1, -2 * uu[1]);
         J.SetValue(4, 2, 0);
-        J.SetValue(4, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(4, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(4, 4, -2 * c[1] * c[1] / Au[1]);
         J.SetValue(4, 5, 0);
 
-        J.SetValue(5, 0,  2 * uu[0]);
+        J.SetValue(5, 0, 2 * uu[0]);
         J.SetValue(5, 1, 0);
         J.SetValue(5, 2, -2 * uu[2]);
-        J.SetValue(5, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(5, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(5, 4, 0);
         J.SetValue(5, 5, -2 * c[2] * c[2] / Au[2]);
 
         invJ = J;
         invJ.Invert();
     }
-    else if (type == "Junction")
+    else if (type == "Interface")
     {
         NekMatrix<NekDouble> J(4, 4);
         Array<OneD, NekDouble> c(2);
@@ -272,14 +283,14 @@ void PowerPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(1, 2, 0);
         J.SetValue(1, 3, -c[1] / Au[1]);
 
-        J.SetValue(2, 0,  Au[0]);
+        J.SetValue(2, 0, Au[0]);
         J.SetValue(2, 1, -Au[1]);
-        J.SetValue(2, 2,  uu[0]);
+        J.SetValue(2, 2, uu[0]);
         J.SetValue(2, 3, -uu[1]);
 
-        J.SetValue(3, 0,  2 * uu[0]);
+        J.SetValue(3, 0, 2 * uu[0]);
         J.SetValue(3, 1, -2 * uu[1]);
-        J.SetValue(3, 2,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(3, 2, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(3, 3, -2 * c[1] * c[1] / Au[1]);
 
         invJ = J;
@@ -288,7 +299,7 @@ void PowerPressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
 }
 
 void PowerPressureArea::GetC0(NekDouble &c0, const NekDouble &beta,
-                                                            const NekDouble &A0)
+                              const NekDouble &A0)
 {
     // Reference c0 from the beta law
     c0 = sqrt(beta * sqrt(A0) / (2 * m_rho));

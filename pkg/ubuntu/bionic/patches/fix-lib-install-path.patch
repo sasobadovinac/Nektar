@@ -1,0 +1,16 @@
+Description: Fixes the lib install path for multi-arch support.
+Author: Chris Cantwell <c.cantwell@imperial.ac.uk>
+Origin: upstream
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -99,7 +99,7 @@
+ # Set library, binary, include, share and doc paths.
+ SET(LIB_DIR "lib")
+ IF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" AND NOT APPLE )
+-    SET(LIB_DIR "lib64")
++    SET(LIB_DIR "${CMAKE_INSTALL_LIBDIR}")
+ ENDIF()
+ IF (DEFINED NEKTAR_LIB_DIR)
+     SET(LIB_DIR ${NEKTAR_LIB_DIR})

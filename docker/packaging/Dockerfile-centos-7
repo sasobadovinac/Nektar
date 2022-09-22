@@ -1,0 +1,23 @@
+FROM centos:7
+
+# Set up to use EPEL release files.
+RUN yum install -y epel-release
+
+# Grab docker
+COPY docker/packaging/texlive.profile pkg/redhat/nektar-centos-7.spec /root/
+WORKDIR /root
+
+# Install build dependencies from specfile.
+RUN yum install -y yum-builddep ghostscript rpm-build wget perl-Digest-MD5 git && \
+    yum-builddep -y nektar-centos-7.spec && \
+    rm -f nektar-centos-7.spec
+
+# Install a reduced version of TeXLive for user/developer guide.
+RUN wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl.zip && \
+    unzip install-tl.zip && cd install-tl-* && \
+    ./install-tl -profile ../texlive.profile && \
+    PATH=/usr/local/texlive/2019/bin/x86_64-linux:$PATH \
+    tlmgr install lm babel microtype amsmath amsfonts mathtools psnfss graphics \
+        import tools xcolor listings lstaddons pgf environ bclogo hyperref memoir ec \
+        xkeyval trimspaces mdframed l3packages etoolbox footmisc caption standalone \
+        currfile filehook filemod epstopdf zref multirow jknapltx rsfs dirtree

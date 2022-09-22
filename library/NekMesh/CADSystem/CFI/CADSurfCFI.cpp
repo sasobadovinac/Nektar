@@ -64,8 +64,8 @@ Array<OneD, NekDouble> CADSurfCFI::GetBounds()
     return b;
 }
 
-void CADSurfCFI::GetBounds(NekDouble &umin, NekDouble &umax,
-                           NekDouble &vmin, NekDouble &vmax)
+void CADSurfCFI::GetBounds(NekDouble &umin, NekDouble &umax, NekDouble &vmin,
+                           NekDouble &vmax)
 {
     cfi::UVBox bx = m_cfiSurface->calcUVBox();
     umin          = bx.uLower;
@@ -118,7 +118,8 @@ Array<OneD, NekDouble> CADSurfCFI::P(Array<OneD, NekDouble> uv)
     return out;
 }
 
-void CADSurfCFI::P(Array<OneD, NekDouble> uv, NekDouble &x, NekDouble &y, NekDouble &z)
+void CADSurfCFI::P(Array<OneD, NekDouble> uv, NekDouble &x, NekDouble &y,
+                   NekDouble &z)
 {
     cfi::UVPosition uvp(uv[0], uv[1]);
     cfi::Position p = m_cfiSurface->calcXYZAtUV(uvp);
@@ -186,5 +187,5 @@ Array<OneD, NekDouble> CADSurfCFI::D2(Array<OneD, NekDouble> uv)
 
     return r;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

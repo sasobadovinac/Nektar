@@ -36,8 +36,8 @@
 #ifndef NEKTAR_SPATIALDOMAINS_GEOMETRY2D_H
 #define NEKTAR_SPATIALDOMAINS_GEOMETRY2D_H
 
-#include <StdRegions/StdRegions.hpp>
 #include <StdRegions/StdExpansion2D.h>
+#include <StdRegions/StdRegions.hpp>
 
 #include <SpatialDomains/Geometry.h>
 #include <SpatialDomains/SpatialDomainsDeclspec.h>
@@ -75,10 +75,10 @@ public:
     SPATIAL_DOMAINS_EXPORT static const int kDim = 2;
 
 protected:
-    PointGeomVector                      m_verts;
-    SegGeomVector                        m_edges;
+    PointGeomVector m_verts;
+    SegGeomVector m_edges;
     std::vector<StdRegions::Orientation> m_eorient;
-    CurveSharedPtr                       m_curve;
+    CurveSharedPtr m_curve;
 
     SPATIAL_DOMAINS_EXPORT virtual NekDouble v_GetLocCoords(
         const Array<OneD, const NekDouble> &coords,
@@ -102,7 +102,7 @@ private:
     virtual StdRegions::Orientation v_GetEorient(const int i) const;
 };
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_GEOMETRY2D_H

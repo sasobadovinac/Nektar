@@ -67,9 +67,8 @@ public:
     {
         return "Calculating displacement";
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

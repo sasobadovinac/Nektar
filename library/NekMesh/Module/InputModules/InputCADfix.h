@@ -68,14 +68,13 @@ public:
     }
 
 private:
-
     NekMesh::CADSystemCFISharedPtr m_cad;
     cfi::Model *m_model;
     std::map<std::string, int> m_nameToCurveId;
     std::map<std::string, int> m_nameToFaceId;
     std::map<std::string, int> m_nameToVertId;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

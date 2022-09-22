@@ -34,8 +34,8 @@
 
 #include <FieldUtils/Module.h>
 #include <LibUtilities/Python/NekPyConfig.hpp>
-#include <boost/python/raw_function.hpp>
 #include <boost/program_options.hpp>
+#include <boost/python/raw_function.hpp>
 
 using namespace Nektar;
 using namespace Nektar::FieldUtils;
@@ -174,13 +174,14 @@ ModuleSharedPtr Module_Create(py::tuple args, py::dict kwargs)
     }
     else if (modType != eProcessModule && py::len(args) < 2)
     {
-        throw NekError(ModuleTypeMap[modType] + "Module.Create() requires "
+        throw NekError(ModuleTypeMap[modType] +
+                       "Module.Create() requires "
                        "two arguments: module name and a Field object; "
                        "optionally a filename.");
     }
 
     std::string modName = py::extract<std::string>(args[0]);
-    ModuleKey modKey = std::make_pair(modType, modName);
+    ModuleKey modKey    = std::make_pair(modType, modName);
 
     if (!py::extract<FieldSharedPtr>(args[1]).check())
     {

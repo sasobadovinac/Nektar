@@ -32,26 +32,25 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <CardiacEPSolver/Filters/FilterElectrogram.h>
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <iomanip>
-#include <CardiacEPSolver/Filters/FilterElectrogram.h>
 
 using namespace std;
 
 namespace Nektar
 {
 std::string FilterElectrogram::className =
-        SolverUtils::GetFilterFactory().RegisterCreatorFunction(
-                "Electrogram",
-                FilterElectrogram::create);
+    SolverUtils::GetFilterFactory().RegisterCreatorFunction(
+        "Electrogram", FilterElectrogram::create);
 
 /**
  *
  */
 FilterElectrogram::FilterElectrogram(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
-        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-        const ParamMap &pParams)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+    const ParamMap &pParams)
     : Filter(pSession, pEquation)
 {
     // OutputFile
@@ -65,8 +64,8 @@ FilterElectrogram::FilterElectrogram(
         ASSERTL0(it->second.length() > 0, "Missing parameter 'OutputFile'.");
         m_outputFile = it->second;
     }
-    if (!(m_outputFile.length() >= 4
-          && m_outputFile.substr(m_outputFile.length() - 4) == ".ecg"))
+    if (!(m_outputFile.length() >= 4 &&
+          m_outputFile.substr(m_outputFile.length() - 4) == ".ecg"))
     {
         m_outputFile += ".ecg";
     }
@@ -90,44 +89,39 @@ FilterElectrogram::FilterElectrogram(
     m_index = 0;
 }
 
-
 /**
  *
  */
 FilterElectrogram::~FilterElectrogram()
 {
-
 }
-
 
 /**
  *
  */
 void FilterElectrogram::v_Initialise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
-    ASSERTL0(!m_electrogramStream.fail(),
-             "No history points in stream.");
+    ASSERTL0(!m_electrogramStream.fail(), "No history points in stream.");
 
     m_index = 0;
-    Array<OneD, NekDouble>  gloCoord(3,0.0);
+    Array<OneD, NekDouble> gloCoord(3, 0.0);
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
     // Read electrogram points
     // Always use dim = 3 to allow electrode to be above surface
     const int dim = 3;
-    int i = 0;
+    int i         = 0;
 
     while (!m_electrogramStream.fail())
     {
         m_electrogramStream >> gloCoord[0] >> gloCoord[1] >> gloCoord[2];
         if (!m_electrogramStream.fail())
         {
-            SpatialDomains::PointGeomSharedPtr vert
-                = MemoryManager<SpatialDomains::PointGeom>
-                ::AllocateSharedPtr(dim, i, gloCoord[0],
-                                    gloCoord[1], gloCoord[2]);
+            SpatialDomains::PointGeomSharedPtr vert =
+                MemoryManager<SpatialDomains::PointGeom>::AllocateSharedPtr(
+                    dim, i, gloCoord[0], gloCoord[1], gloCoord[2]);
 
             m_electrogramPoints.push_back(vert);
             ++i;
@@ -142,16 +136,15 @@ void FilterElectrogram::v_Initialise(
 
         for (i = 0; i < pFields.size(); ++i)
         {
-            m_outputStream << m_session->GetVariable(i) <<",";
+            m_outputStream << m_session->GetVariable(i) << ",";
         }
 
         m_outputStream << ") at points:" << endl;
 
         for (i = 0; i < m_electrogramPoints.size(); ++i)
         {
-            m_electrogramPoints[i]->GetCoords(  gloCoord[0],
-                                            gloCoord[1],
-                                            gloCoord[2]);
+            m_electrogramPoints[i]->GetCoords(gloCoord[0], gloCoord[1],
+                                              gloCoord[2]);
 
             m_outputStream << "# \t" << i;
             m_outputStream.width(8);
@@ -168,50 +161,49 @@ void FilterElectrogram::v_Initialise(
     const unsigned int nq   = pFields[0]->GetNpoints();
     const unsigned int npts = m_electrogramPoints.size();
     NekDouble px, py, pz;
-    m_grad_R_x = Array<OneD, Array<OneD, NekDouble> >(npts);
-    m_grad_R_y = Array<OneD, Array<OneD, NekDouble> >(npts);
-    m_grad_R_z = Array<OneD, Array<OneD, NekDouble> >(npts);
+    m_grad_R_x = Array<OneD, Array<OneD, NekDouble>>(npts);
+    m_grad_R_y = Array<OneD, Array<OneD, NekDouble>>(npts);
+    m_grad_R_z = Array<OneD, Array<OneD, NekDouble>>(npts);
 
-    Array<OneD, NekDouble> x(nq);
-    Array<OneD, NekDouble> y(nq);
-    Array<OneD, NekDouble> z(nq);
+    Array<OneD, NekDouble> oneOverR(nq, 0.0);
 
-    Array<OneD, NekDouble> oneOverR(nq);
     for (unsigned int i = 0; i < npts; ++i)
     {
-        m_grad_R_x[i] = Array<OneD, NekDouble>(nq);
-        m_grad_R_y[i] = Array<OneD, NekDouble>(nq);
-        m_grad_R_z[i] = Array<OneD, NekDouble>(nq);
+        m_grad_R_x[i] = Array<OneD, NekDouble>(nq, 0.0);
+        m_grad_R_y[i] = Array<OneD, NekDouble>(nq, 0.0);
+        m_grad_R_z[i] = Array<OneD, NekDouble>(nq, 0.0);
+
+        Array<OneD, NekDouble> x(nq, 0.0);
+        Array<OneD, NekDouble> y(nq, 0.0);
+        Array<OneD, NekDouble> z(nq, 0.0);
 
         // Compute 1/R
-        m_electrogramPoints[i]->GetCoords(px,py,pz);
+        m_electrogramPoints[i]->GetCoords(px, py, pz);
+        pFields[0]->GetCoords(x, y, z);
 
-        pFields[0]->GetCoords(x,y,z);
-
-        Vmath::Sadd   (nq, -px, x, 1, x, 1);
-        Vmath::Sadd   (nq, -py, y, 1, y, 1);
-        Vmath::Sadd   (nq, -pz, z, 1, z, 1);
+        Vmath::Sadd(nq, -px, x, 1, x, 1);
+        Vmath::Sadd(nq, -py, y, 1, y, 1);
+        Vmath::Sadd(nq, -pz, z, 1, z, 1);
         Vmath::Vvtvvtp(nq, x, 1, x, 1, y, 1, y, 1, oneOverR, 1);
-        Vmath::Vvtvp  (nq, z, 1, z, 1, oneOverR, 1, oneOverR, 1);
-        Vmath::Vsqrt  (nq, oneOverR, 1, oneOverR, 1);
-        Vmath::Sdiv   (nq, 1.0, oneOverR, 1, oneOverR, 1);
+        Vmath::Vvtvp(nq, z, 1, z, 1, oneOverR, 1, oneOverR, 1);
+        Vmath::Vsqrt(nq, oneOverR, 1, oneOverR, 1);
+        Vmath::Sdiv(nq, 1.0, oneOverR, 1, oneOverR, 1);
 
         // Compute grad 1/R
         pFields[0]->PhysDeriv(oneOverR, m_grad_R_x[i], m_grad_R_y[i],
-                                        m_grad_R_z[i]);
+                              m_grad_R_z[i]);
     }
 
     // Compute electrogram point for initial condition
     v_Update(pFields, time);
 }
 
-
 /**
  *
  */
 void FilterElectrogram::v_Update(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     // Only output every m_outputFrequency.
     if ((m_index++) % m_outputFrequency)
@@ -219,8 +211,8 @@ void FilterElectrogram::v_Update(
         return;
     }
 
-    const unsigned int nq = pFields[0]->GetNpoints();
-    const unsigned int npoints = m_electrogramPoints.size();
+    const unsigned int nq             = pFields[0]->GetNpoints();
+    const unsigned int npoints        = m_electrogramPoints.size();
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
     unsigned int i = 0;
@@ -228,17 +220,15 @@ void FilterElectrogram::v_Update(
 
     // Compute grad V
     Array<OneD, NekDouble> grad_V_x(nq), grad_V_y(nq), grad_V_z(nq);
-    pFields[0]->PhysDeriv(pFields[0]->GetPhys(),
-                          grad_V_x, grad_V_y, grad_V_z);
+    pFields[0]->PhysDeriv(pFields[0]->GetPhys(), grad_V_x, grad_V_y, grad_V_z);
 
     for (i = 0; i < npoints; ++i)
     {
         // Multiply together
         Array<OneD, NekDouble> output(nq);
         Vmath::Vvtvvtp(nq, m_grad_R_x[i], 1, grad_V_x, 1, m_grad_R_y[i], 1,
-                           grad_V_y,      1, output,   1);
-        Vmath::Vvtvp  (nq, m_grad_R_z[i], 1, grad_V_z, 1, output, 1,
-                           output,        1);
+                       grad_V_y, 1, output, 1);
+        Vmath::Vvtvp(nq, m_grad_R_z[i], 1, grad_V_z, 1, output, 1, output, 1);
 
         e[i] = pFields[0]->Integral(output);
     }
@@ -263,20 +253,18 @@ void FilterElectrogram::v_Update(
     }
 }
 
-
 /**
  *
  */
 void FilterElectrogram::v_Finalise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     if (pFields[0]->GetComm()->GetRank() == 0)
     {
         m_outputStream.close();
     }
 }
-
 
 /**
  *
@@ -285,4 +273,4 @@ bool FilterElectrogram::v_IsTimeDependent()
 {
     return true;
 }
-}
+} // namespace Nektar

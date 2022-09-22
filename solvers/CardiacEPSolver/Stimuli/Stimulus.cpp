@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tinyxml.h>
 #include <LibUtilities/BasicUtils/VmathArray.hpp>
+#include <tinyxml.h>
 
 #include <CardiacEPSolver/Stimuli/Stimulus.h>
 
@@ -41,73 +41,70 @@ using namespace std;
 
 namespace Nektar
 {
-    StimulusFactory& GetStimulusFactory()
-    {
-        static StimulusFactory instance;
-        return instance;
-    }
-
-    /**
-     * @class Stimulus
-     *
-     * The Stimulus class and derived classes implement a range of stimuli.
-     * The stimulus contains input stimuli that can be applied throughout the
-     * domain, on specified regions determined by the derived classes of
-     * Stimulus, at specified frequencies determined by the derived classes of
-     * Protocol.
-     *
-     */
-
-    /**
-     * Stimulus base class constructor.
-     */
-    Stimulus::Stimulus(const LibUtilities::SessionReaderSharedPtr& pSession,
-                       const MultiRegions::ExpListSharedPtr& pField,
-                       const TiXmlElement* pXml)
-    {
-        m_session = pSession;
-        m_field = pField;
-        m_nq = pField->GetTotPoints();
-
-        const TiXmlElement* vProtocol = pXml->FirstChildElement("PROTOCOL");
-        string vTypeP = vProtocol->Attribute("TYPE");
-
-        m_Protocol = GetProtocolFactory().CreateInstance(
-                                vTypeP, pSession, vProtocol);
-
-    }
-
-
-    /**
-     * Initialise the stimulus. Allocate workspace and variable storage.
-     */
-    void Stimulus::Initialise()
-    {
-    }
-
-
-    /**
-     *
-     */
-    vector<StimulusSharedPtr> Stimulus::LoadStimuli(
-                        const LibUtilities::SessionReaderSharedPtr& pSession,
-                        const MultiRegions::ExpListSharedPtr& pField)
-    {
-        vector<StimulusSharedPtr> vStimList;
-
-        TiXmlElement* vStimuli = pSession->GetElement("Nektar/Stimuli");
-        if (vStimuli)
-        {
-            TiXmlElement* vStimulus = vStimuli->FirstChildElement("STIMULUS");
-            while (vStimulus)
-            {
-                string vType = vStimulus->Attribute("TYPE");
-
-                vStimList.push_back(GetStimulusFactory().CreateInstance(
-                                        vType, pSession, pField, vStimulus));
-                vStimulus = vStimulus->NextSiblingElement("STIMULUS");
-            }
-        }
-        return vStimList;
-    }
+StimulusFactory &GetStimulusFactory()
+{
+    static StimulusFactory instance;
+    return instance;
 }
+
+/**
+ * @class Stimulus
+ *
+ * The Stimulus class and derived classes implement a range of stimuli.
+ * The stimulus contains input stimuli that can be applied throughout the
+ * domain, on specified regions determined by the derived classes of
+ * Stimulus, at specified frequencies determined by the derived classes of
+ * Protocol.
+ *
+ */
+
+/**
+ * Stimulus base class constructor.
+ */
+Stimulus::Stimulus(const LibUtilities::SessionReaderSharedPtr &pSession,
+                   const MultiRegions::ExpListSharedPtr &pField,
+                   const TiXmlElement *pXml)
+{
+    m_session = pSession;
+    m_field   = pField;
+    m_nq      = pField->GetTotPoints();
+
+    const TiXmlElement *vProtocol = pXml->FirstChildElement("PROTOCOL");
+    string vTypeP                 = vProtocol->Attribute("TYPE");
+
+    m_Protocol =
+        GetProtocolFactory().CreateInstance(vTypeP, pSession, vProtocol);
+}
+
+/**
+ * Initialise the stimulus. Allocate workspace and variable storage.
+ */
+void Stimulus::Initialise()
+{
+}
+
+/**
+ *
+ */
+vector<StimulusSharedPtr> Stimulus::LoadStimuli(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const MultiRegions::ExpListSharedPtr &pField)
+{
+    vector<StimulusSharedPtr> vStimList;
+
+    TiXmlElement *vStimuli = pSession->GetElement("Nektar/Stimuli");
+    if (vStimuli)
+    {
+        TiXmlElement *vStimulus = vStimuli->FirstChildElement("STIMULUS");
+        while (vStimulus)
+        {
+            string vType = vStimulus->Attribute("TYPE");
+
+            vStimList.push_back(GetStimulusFactory().CreateInstance(
+                vType, pSession, pField, vStimulus));
+            vStimulus = vStimulus->NextSiblingElement("STIMULUS");
+        }
+    }
+    return vStimList;
+}
+} // namespace Nektar

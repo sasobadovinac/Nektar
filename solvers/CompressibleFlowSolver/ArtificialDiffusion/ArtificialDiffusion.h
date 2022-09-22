@@ -53,13 +53,14 @@ class ArtificialDiffusion;
 typedef std::shared_ptr<ArtificialDiffusion> ArtificialDiffusionSharedPtr;
 
 /// Declaration of the artificial diffusion factory
-typedef LibUtilities::NekFactory<std::string, ArtificialDiffusion,
-        const LibUtilities::SessionReaderSharedPtr&,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&,
-        const int > ArtificialDiffusionFactory;
+typedef LibUtilities::NekFactory<
+    std::string, ArtificialDiffusion,
+    const LibUtilities::SessionReaderSharedPtr &,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &, const int>
+    ArtificialDiffusionFactory;
 
 /// Declaration of the artificial diffusion factory singleton
-ArtificialDiffusionFactory& GetArtificialDiffusionFactory();
+ArtificialDiffusionFactory &GetArtificialDiffusionFactory();
 
 /**
  * @class ArtificialDiffusion
@@ -67,67 +68,61 @@ ArtificialDiffusionFactory& GetArtificialDiffusionFactory();
  */
 class ArtificialDiffusion
 {
-    public:
-        virtual ~ArtificialDiffusion() {}
+public:
+    virtual ~ArtificialDiffusion()
+    {
+    }
 
-        /// Apply the artificial diffusion
-        void DoArtificialDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray);
-        
-        /// Apply the artificial diffusion the outarray is in coeff space
-        void DoArtificialDiffusionCoeff(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray);
+    /// Apply the artificial diffusion
+    void DoArtificialDiffusion(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-        /// Calculate the artificial viscosity
-        void GetArtificialViscosity(
-            const Array<OneD, Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble  >             &mu);
+    /// Apply the artificial diffusion the outarray is in coeff space
+    void DoArtificialDiffusionCoeff(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-        /// Set h/p scaling
-        void SetElmtHP(const Array<OneD, NekDouble> &hOverP);
+    /// Calculate the artificial viscosity
+    void GetArtificialViscosity(
+        const Array<OneD, Array<OneD, NekDouble>> &physfield,
+        Array<OneD, NekDouble> &mu);
 
-    protected:
-        /// Session reader
-        LibUtilities::SessionReaderSharedPtr        m_session;
-        /// Array of fields
-        Array<OneD, MultiRegions::ExpListSharedPtr> m_fields;
-        /// Auxiliary object to convert variables
-        VariableConverterSharedPtr                  m_varConv;
-        /// LDG Diffusion operator
-        SolverUtils::DiffusionSharedPtr             m_diffusion;
-        /// Constant scaling
-        NekDouble                                   m_mu0;
-        /// h/p scaling
-        Array<OneD, NekDouble>                      m_hOverP;
+protected:
+    /// Session reader
+    LibUtilities::SessionReaderSharedPtr m_session;
+    /// Array of fields
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_fields;
+    /// Auxiliary object to convert variables
+    VariableConverterSharedPtr m_varConv;
+    /// LDG Diffusion operator
+    SolverUtils::DiffusionSharedPtr m_diffusion;
+    /// Constant scaling
+    NekDouble m_mu0;
 
-        /// Constructor
-        ArtificialDiffusion(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const int spacedim);
+    /// Constructor
+    ArtificialDiffusion(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const int spacedim);
 
-        virtual void v_DoArtificialDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD,       Array<OneD, NekDouble> > &outarray);
-        
-        virtual void v_DoArtificialDiffusionCoeff(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-            Array<OneD, Array<OneD, NekDouble> >             &outarray);
+    virtual void v_DoArtificialDiffusion(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-        virtual void v_GetArtificialViscosity(
-            const Array<OneD, Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble  >             &mu)=0;
+    virtual void v_DoArtificialDiffusionCoeff(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> > &inarray,
-            const Array<OneD, Array<OneD, Array<OneD, NekDouble> > >&qfield,
-                Array<OneD, Array<OneD, Array<OneD, NekDouble> > >
-                &viscousTensor);
+    virtual void v_GetArtificialViscosity(
+        const Array<OneD, Array<OneD, NekDouble>> &physfield,
+        Array<OneD, NekDouble> &mu) = 0;
 
-
+    void GetFluxVector(
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        const Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &qfield,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &viscousTensor);
 };
-}
+} // namespace Nektar
 
 #endif

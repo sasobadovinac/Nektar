@@ -64,7 +64,7 @@ public:
         return "InputVtk";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -79,7 +79,7 @@ private:
     void TransferComposites(SpatialDomains::MeshGraphSharedPtr graph);
     void TransferDomain(SpatialDomains::MeshGraphSharedPtr graph);
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

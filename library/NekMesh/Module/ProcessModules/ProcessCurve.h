@@ -36,8 +36,8 @@
 #define UTILITIES_NEKMESH_PROCESSPROCESSCURVE
 
 #include "ProcessCurvedEdges.h"
-#include <LibUtilities/Interpreter/Interpreter.h>
 #include <LibUtilities/BasicUtils/PtsField.h>
+#include <LibUtilities/Interpreter/Interpreter.h>
 
 namespace Nektar
 {
@@ -61,19 +61,19 @@ public:
     {
         return "ProcessCurve";
     }
+
 protected:
     void v_GenerateEdgeNodes(NekMesh::EdgeSharedPtr edge);
 
 private:
     NekDouble EvaluateCoordinate(NekDouble xCoord);
 
-    bool                                        m_fromFile;
-    LibUtilities::Interpreter                   m_fEval;
-    int                                         m_fExprId;
-    LibUtilities::PtsFieldSharedPtr             m_fieldPts;
-
+    bool m_fromFile;
+    LibUtilities::Interpreter m_fEval;
+    int m_fExprId;
+    LibUtilities::PtsFieldSharedPtr m_fieldPts;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

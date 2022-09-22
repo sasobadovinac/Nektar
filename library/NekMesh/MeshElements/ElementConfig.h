@@ -35,6 +35,8 @@
 #ifndef NEKMESH_MESHELEMENTS_ELEMENTCONFIG
 #define NEKMESH_MESHELEMENTS_ELEMENTCONFIG
 
+#include <NekMesh/NekMeshDeclspec.h>
+
 namespace Nektar
 {
 namespace NekMesh
@@ -48,11 +50,8 @@ namespace NekMesh
  */
 struct ElmtConfig
 {
-    ElmtConfig(LibUtilities::ShapeType  pE,
-               unsigned int             pOrder,
-               bool                     pFn,
-               bool                     pVn,
-               bool                     pReorient = true,
+    ElmtConfig(LibUtilities::ShapeType pE, unsigned int pOrder, bool pFn,
+               bool pVn, bool pReorient = true,
                LibUtilities::PointsType pECt = LibUtilities::ePolyEvenlySpaced,
                LibUtilities::PointsType pFCt = LibUtilities::ePolyEvenlySpaced)
         : m_e(pE), m_faceNodes(pFn), m_volumeNodes(pVn), m_order(pOrder),
@@ -72,7 +71,7 @@ struct ElmtConfig
     {
     }
 
-    ElmtConfig& operator=(const ElmtConfig &) = default;
+    ElmtConfig &operator=(const ElmtConfig &) = default;
 
     /// Element type (e.g. triangle, quad, etc).
     LibUtilities::ShapeType m_e;
@@ -97,6 +96,6 @@ struct ElmtConfig
 
 NEKMESH_EXPORT bool operator==(ElmtConfig const &c1, ElmtConfig const &c2);
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 #endif

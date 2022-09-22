@@ -39,26 +39,26 @@
 
 namespace Nektar
 {
-    class HLLSolver : public CompressibleSolver
+class HLLSolver : public CompressibleSolver
+{
+public:
+    static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        static RiemannSolverSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            return RiemannSolverSharedPtr(
-                new HLLSolver(pSession));
-        }
-        
-        static std::string solverName;
-        
-    protected:
-        HLLSolver(const LibUtilities::SessionReaderSharedPtr& pSession);
-        
-        virtual void v_PointSolve(
-            double  rhoL, double  rhouL, double  rhovL, double  rhowL, double  EL,
-            double  rhoR, double  rhouR, double  rhovR, double  rhowR, double  ER,
-            double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef);
-    };
-}
+        return RiemannSolverSharedPtr(new HLLSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    HLLSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    virtual void v_PointSolve(double rhoL, double rhouL, double rhovL,
+                              double rhowL, double EL, double rhoR,
+                              double rhouR, double rhovR, double rhowR,
+                              double ER, double &rhof, double &rhouf,
+                              double &rhovf, double &rhowf, double &Ef);
+};
+} // namespace Nektar
 
 #endif

@@ -37,13 +37,13 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/Foundations/PointsType.h>
-#include <LibUtilities/BasicUtils/ShapeType.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/ShapeType.hpp>
+#include <LibUtilities/Foundations/PointsType.h>
 
-#include <NekMesh/NekMeshDeclspec.h>
-#include <NekMesh/MeshElements/Face.h>
 #include <NekMesh/MeshElements/ElementConfig.h>
+#include <NekMesh/MeshElements/Face.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -60,8 +60,8 @@ namespace NekMesh
 class Element
 {
 public:
-    NEKMESH_EXPORT Element(
-        ElmtConfig pConf, unsigned int pNumNodes, unsigned int pGotNodes);
+    NEKMESH_EXPORT Element(ElmtConfig pConf, unsigned int pNumNodes,
+                           unsigned int pGotNodes);
 
     NEKMESH_EXPORT virtual ~Element() = default;
 
@@ -85,7 +85,7 @@ public:
     {
         return m_conf;
     }
-    ///returns the shapetype
+    /// returns the shapetype
     LibUtilities::ShapeType GetShapeType() const
     {
         return m_conf.m_e;
@@ -186,8 +186,8 @@ public:
      * @param  descend  If true, we loop over edges and faces and replace the
      *                  corresponding vertices with @p pNew.
      */
-    NEKMESH_EXPORT void SetVertex(
-        unsigned int p, NodeSharedPtr pNew, bool descend = true);
+    NEKMESH_EXPORT void SetVertex(unsigned int p, NodeSharedPtr pNew,
+                                  bool descend = true);
     /**
      * @brief Replace an edge in the element.
      *
@@ -196,11 +196,11 @@ public:
      *
      * @param  p        Index of the edge to replace.
      * @param  pNew     New edge.
-     * @param  descend  If true, we loop over faces and replace the corresponding
-     *                  face edge with @p pNew.
+     * @param  descend  If true, we loop over faces and replace the
+     * corresponding face edge with @p pNew.
      */
-    NEKMESH_EXPORT void SetEdge(
-        unsigned int p, EdgeSharedPtr pNew, bool descend = true);
+    NEKMESH_EXPORT void SetEdge(unsigned int p, EdgeSharedPtr pNew,
+                                bool descend = true);
     /**
      * @brief Replace a face in the element.
      *
@@ -264,8 +264,7 @@ public:
     /// Generate a list of vertices (1D), edges (2D), or faces (3D).
     NEKMESH_EXPORT virtual std::string GetXmlString();
     /// get list of volume interior nodes
-    virtual void GetCurvedNodes(
-        std::vector<NodeSharedPtr> &nodeList) const
+    virtual void GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     {
         boost::ignore_unused(nodeList);
         NEKERROR(ErrorUtil::efatal,
@@ -276,8 +275,7 @@ public:
     /// associated with this element.
     NEKMESH_EXPORT std::string GetXmlCurveString();
     /// Generate a Nektar++ geometry object for this element.
-    virtual SpatialDomains::GeometrySharedPtr GetGeom(
-        int coordDim)
+    virtual SpatialDomains::GeometrySharedPtr GetGeom(int coordDim)
     {
         boost::ignore_unused(coordDim);
         NEKERROR(ErrorUtil::efatal,
@@ -327,13 +325,13 @@ public:
      */
     std::pair<Node, Node> GetBoundingBox()
     {
-#define SWAP_NODE(a)                                            \
-        lower.m_x = std::min(lower.m_x, a->m_x);                  \
-        lower.m_y = std::min(lower.m_y, a->m_y);                  \
-        lower.m_z = std::min(lower.m_z, a->m_z);                  \
-        upper.m_x = std::max(upper.m_x, a->m_x);                  \
-        upper.m_y = std::max(upper.m_y, a->m_y);                  \
-        upper.m_z = std::max(upper.m_z, a->m_z);
+#define SWAP_NODE(a)                                                           \
+    lower.m_x = std::min(lower.m_x, a->m_x);                                   \
+    lower.m_y = std::min(lower.m_y, a->m_y);                                   \
+    lower.m_z = std::min(lower.m_z, a->m_z);                                   \
+    upper.m_x = std::max(upper.m_x, a->m_x);                                   \
+    upper.m_y = std::max(upper.m_y, a->m_y);                                   \
+    upper.m_z = std::max(upper.m_z, a->m_z);
 
         Node lower(*m_vertex[0]), upper(*m_vertex[0]);
 
@@ -377,13 +375,9 @@ public:
      *                       elements, which just require copying of face or
      *                       edge interior nodes.
      */
-    virtual void MakeOrder(
-        int                                order,
-        SpatialDomains::GeometrySharedPtr  geom,
-        LibUtilities::PointsType           edgeType,
-        int                                coordDim,
-        int                               &id,
-        bool                               justConfig = false)
+    virtual void MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                           LibUtilities::PointsType edgeType, int coordDim,
+                           int &id, bool justConfig = false)
     {
         boost::ignore_unused(order, geom, edgeType, coordDim, id, justConfig);
         NEKERROR(ErrorUtil::efatal,
@@ -394,8 +388,8 @@ public:
      * @brief Get the edge orientation of @p edge with respect to the local
      * element, which lies at edge index @p edgeId.
      */
-    virtual StdRegions::Orientation GetEdgeOrient(
-        int edgeId, EdgeSharedPtr edge)
+    virtual StdRegions::Orientation GetEdgeOrient(int edgeId,
+                                                  EdgeSharedPtr edge)
     {
         boost::ignore_unused(edgeId, edge);
         NEKERROR(ErrorUtil::efatal,
@@ -414,8 +408,7 @@ public:
         return 0;
     }
 
-    template<class T>
-    void Print(T &out)
+    template <class T> void Print(T &out)
     {
         int i, j;
         for (i = 0; i < m_vertex.size(); ++i)
@@ -428,8 +421,7 @@ public:
             for (j = 0; j < m_edge[i]->m_edgeNodes.size(); ++j)
             {
                 NodeSharedPtr n = m_edge[i]->m_edgeNodes[j];
-                out << n->m_x << " " << n->m_y << " " << n->m_z
-                    << std::endl;
+                out << n->m_x << " " << n->m_y << " " << n->m_z << std::endl;
             }
         }
         for (i = 0; i < m_face.size(); ++i)
@@ -437,8 +429,7 @@ public:
             for (j = 0; j < m_face[i]->m_faceNodes.size(); ++j)
             {
                 NodeSharedPtr n = m_face[i]->m_faceNodes[j];
-                out << n->m_x << " " << n->m_y << " " << n->m_z
-                    << std::endl;
+                out << n->m_x << " " << n->m_y << " " << n->m_z << std::endl;
             }
         }
     }
@@ -458,32 +449,32 @@ public:
 
 protected:
     /// ID of the element.
-    unsigned int                      m_id;
+    unsigned int m_id;
     /// Dimension of the element.
-    unsigned int                      m_dim;
+    unsigned int m_dim;
     /// Contains configuration of the element.
-    ElmtConfig                        m_conf;
+    ElmtConfig m_conf;
     /// Tag character describing the element.
-    std::string                       m_tag;
+    std::string m_tag;
     /// List of integers specifying properties of the element.
-    std::vector<int>                  m_taglist;
+    std::vector<int> m_taglist;
     /// List of element vertex nodes.
-    std::vector<NodeSharedPtr>        m_vertex;
+    std::vector<NodeSharedPtr> m_vertex;
     /// List of element edges.
-    std::vector<EdgeSharedPtr>        m_edge;
+    std::vector<EdgeSharedPtr> m_edge;
     /// List of element faces.
-    std::vector<FaceSharedPtr>        m_face;
+    std::vector<FaceSharedPtr> m_face;
     /// List of element volume nodes.
-    std::vector<NodeSharedPtr>        m_volumeNodes;
+    std::vector<NodeSharedPtr> m_volumeNodes;
     /// Volume curve type
-    LibUtilities::PointsType          m_curveType;
+    LibUtilities::PointsType m_curveType;
     /// Pointer to the corresponding edge if element is a 2D boundary.
-    EdgeSharedPtr                     m_edgeLink;
+    EdgeSharedPtr m_edgeLink;
     /// Pointer to the corresponding face if element is a 3D boundary.
-    FaceSharedPtr                     m_faceLink;
+    FaceSharedPtr m_faceLink;
     /// Array mapping faces/edges to the location of the appropriate
     /// boundary elements in m->element.
-    std::map<int, int>                m_boundaryLinks;
+    std::map<int, int> m_boundaryLinks;
     /// Nektar++ geometry object for this element.
     SpatialDomains::GeometrySharedPtr m_geom;
 };
@@ -493,11 +484,9 @@ typedef std::shared_ptr<Element> ElementSharedPtr;
 /// vector of elements of that dimension.
 typedef std::array<std::vector<ElementSharedPtr>, 4> ElementMap;
 /// Element factory definition.
-typedef LibUtilities::NekFactory<LibUtilities::ShapeType,
-                                 Element,
-                                 ElmtConfig,
-                                 std::vector<NodeSharedPtr>,
-                                 std::vector<int> > ElementFactory;
+typedef LibUtilities::NekFactory<LibUtilities::ShapeType, Element, ElmtConfig,
+                                 std::vector<NodeSharedPtr>, std::vector<int>>
+    ElementFactory;
 
 NEKMESH_EXPORT ElementFactory &GetElementFactory();
 
@@ -527,7 +516,7 @@ struct element_id_less_than
         }
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -288,7 +288,7 @@ void BLMesh::GrowLayers()
                                       psElements[*iit][results[i].second]);
                         if (prox < delta * 2.5)
                         {
-                            hit = true;
+                            hit                  = true;
                             bit->second->stopped = true;
                             break;
                         }

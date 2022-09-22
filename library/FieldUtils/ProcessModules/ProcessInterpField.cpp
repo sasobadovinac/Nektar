@@ -56,8 +56,7 @@ namespace FieldUtils
 
 ModuleKey ProcessInterpField::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "interpfield"),
-        ProcessInterpField::create,
+        ModuleKey(eProcessModule, "interpfield"), ProcessInterpField::create,
         "Interpolates one field to another, requires fromxml, "
         "fromfld to be defined");
 
@@ -75,6 +74,8 @@ ProcessInterpField::ProcessInterpField(FieldSharedPtr f) : ProcessModule(f)
         ConfigOption(false, "10000000", "Upper bound for interpolation value");
     m_config["defaultvalue"] =
         ConfigOption(false, "0", "Default value if point is outside domain");
+    m_config["realmodetoimag"] =
+        ConfigOption(false, "NotSet", "Take fields as sin mode");
 }
 
 ProcessInterpField::~ProcessInterpField()
@@ -90,20 +91,20 @@ void ProcessInterpField::Process(po::variables_map &vm)
     std::vector<std::string> files;
 
     // set up session file for from field
-    char *argv[] = { const_cast<char *>("FieldConvert"), nullptr };
+    char *argv[] = {const_cast<char *>("FieldConvert"), nullptr};
     ParseUtils::GenerateVector(m_config["fromxml"].as<string>(), files);
-    fromField->m_session =
-        LibUtilities::SessionReader::CreateInstance(
-            1, argv, files,
-            LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0));
+    fromField->m_session = LibUtilities::SessionReader::CreateInstance(
+        1, argv, files,
+        LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0));
 
     // Set up range based on min and max of local parallel partition
     LibUtilities::DomainRangeShPtr rng =
         MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
 
-    int coordim = m_f->m_exp[0]->GetCoordim(0);
-    int npts    = m_f->m_exp[0]->GetTotPoints();
-    Array<OneD, Array<OneD, NekDouble> > coords(3);
+    int numHomoDir = m_f->m_numHomogeneousDir;
+    int coordim    = m_f->m_exp[0]->GetCoordim(0) + numHomoDir;
+    int npts       = m_f->m_exp[0]->GetTotPoints();
+    Array<OneD, Array<OneD, NekDouble>> coords(3);
 
     for (int i = 0; i < coordim; ++i)
     {
@@ -167,7 +168,21 @@ void ProcessInterpField::Process(po::variables_map &vm)
         fromfld, fromField->m_fielddef, fromField->m_data,
         LibUtilities::NullFieldMetaDataMap, ElementGIDs);
 
-    int NumHomogeneousDir = fromField->m_fielddef[0]->m_numHomogeneousDir;
+    int fromNumHomoDir = fromField->m_fielddef[0]->m_numHomogeneousDir;
+    for (i = 0; i < fromField->m_fielddef.size(); ++i)
+    {
+        int d1 = fromField->m_fielddef[i]->m_basis.size();
+        d1 -= 1;
+        if (d1 >= 0 && (fromField->m_fielddef[i]->m_basis[d1] ==
+                            LibUtilities::eFourierHalfModeRe ||
+                        fromField->m_fielddef[i]->m_basis[d1] ==
+                            LibUtilities::eFourierHalfModeIm))
+        {
+            fromField->m_fielddef[i]->m_homogeneousZIDs[0] += 2;
+            fromField->m_fielddef[i]->m_numModes[d1] = 4;
+            fromField->m_fielddef[i]->m_basis[d1]    = LibUtilities::eFourier;
+        }
+    }
 
     //----------------------------------------------
     // Set up Expansion information to use mode order from field
@@ -176,19 +191,30 @@ void ProcessInterpField::Process(po::variables_map &vm)
     int nfields = fromField->m_fielddef[0]->m_fields.size();
 
     fromField->m_exp.resize(nfields);
-    fromField->m_exp[0] =
-        fromField->SetUpFirstExpList(NumHomogeneousDir, true);
+    fromField->m_exp[0] = fromField->SetUpFirstExpList(fromNumHomoDir, true);
 
     m_f->m_exp.resize(nfields);
 
     // declare auxiliary fields.
     for (i = 1; i < nfields; ++i)
     {
-        m_f->m_exp[i]       = m_f->AppendExpList(NumHomogeneousDir);
-        fromField->m_exp[i] = fromField->AppendExpList(NumHomogeneousDir);
+        m_f->m_exp[i]       = m_f->AppendExpList(numHomoDir);
+        fromField->m_exp[i] = fromField->AppendExpList(fromNumHomoDir);
     }
 
     // load field into expansion in fromfield.
+    set<int> sinmode;
+    if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
+    {
+        vector<int> value;
+        ASSERTL0(ParseUtils::GenerateVector(
+                     m_config["realmodetoimag"].as<string>(), value),
+                 "Failed to interpret realmodetoimag string");
+        for (int j : value)
+        {
+            sinmode.insert(j);
+        }
+    }
     for (int j = 0; j < nfields; ++j)
     {
         for (i = 0; i < fromField->m_fielddef.size(); i++)
@@ -198,8 +224,22 @@ void ProcessInterpField::Process(po::variables_map &vm)
                 fromField->m_fielddef[0]->m_fields[j],
                 fromField->m_exp[j]->UpdateCoeffs());
         }
+        if (fromNumHomoDir == 1)
+        {
+            fromField->m_exp[j]->SetWaveSpace(true);
+            if (sinmode.count(j))
+            {
+                int Ncoeff = fromField->m_exp[j]->GetPlane(2)->GetNcoeffs();
+                Vmath::Smul(
+                    Ncoeff, -1., fromField->m_exp[j]->GetPlane(2)->GetCoeffs(),
+                    1, fromField->m_exp[j]->GetPlane(3)->UpdateCoeffs(), 1);
+                Vmath::Zero(Ncoeff,
+                            fromField->m_exp[j]->GetPlane(2)->UpdateCoeffs(),
+                            1);
+            }
+        }
         fromField->m_exp[j]->BwdTrans(fromField->m_exp[j]->GetCoeffs(),
-                                        fromField->m_exp[j]->UpdatePhys());
+                                      fromField->m_exp[j]->UpdatePhys());
     }
 
     int nq1 = m_f->m_exp[0]->GetTotPoints();
@@ -240,8 +280,8 @@ void ProcessInterpField::Process(po::variables_map &vm)
                 m_f->m_exp[i]->UpdatePhys()[j] = clamp_low;
             }
         }
-        m_f->m_exp[i]->FwdTrans_IterPerExp(
-                    m_f->m_exp[i]->GetPhys(), m_f->m_exp[i]->UpdateCoeffs());
+        m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
+                                         m_f->m_exp[i]->UpdateCoeffs());
     }
     // save field names
     m_f->m_variables = fromField->m_fielddef[0]->m_fields;
@@ -252,5 +292,5 @@ void ProcessInterpField::PrintProgressbar(const int position,
 {
     LibUtilities::PrintProgressbar(position, goal, "Interpolating");
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

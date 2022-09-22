@@ -32,12 +32,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/core/ignore_unused.hpp>
-#include <boost/algorithm/string.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/core/ignore_unused.hpp>
 
-#include <NekMesh/MeshElements/Element.h>
 #include "InputStar.h"
+#include <NekMesh/MeshElements/Element.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -49,15 +49,13 @@ namespace NekMesh
 {
 
 ModuleKey InputStar::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eInputModule, "ccm"),
-    InputStar::create,
+    ModuleKey(eInputModule, "ccm"), InputStar::create,
     "Reads mesh from Star CCM (.ccm).");
 
 InputStar::InputStar(MeshSharedPtr m) : InputModule(m)
 {
     m_config["writelabelsonly"] = ConfigOption(
-        true,
-        "0",
+        true, "0",
         "Just write out tags from star file for each surface/composite");
 }
 
@@ -111,14 +109,14 @@ void InputStar::SetupElements(void)
     ReadNodes(m_mesh->m_node);
 
     // Get list of faces nodes and adjacents elements.
-    unordered_map<int, vector<int> > FaceNodes;
-    Array<OneD, vector<int> > ElementFaces;
+    unordered_map<int, vector<int>> FaceNodes;
+    Array<OneD, vector<int>> ElementFaces;
 
     // Read interior faces and set up first part of Element
     // Faces and FaceNodes
     ReadInternalFaces(FaceNodes, ElementFaces);
 
-    vector<vector<int> > BndElementFaces;
+    vector<vector<int>> BndElementFaces;
     vector<string> Facelabels;
     ReadBoundaryFaces(BndElementFaces, FaceNodes, ElementFaces, Facelabels);
 
@@ -143,19 +141,36 @@ void InputStar::SetupElements(void)
 
     // create Prisms/Pyramids first
     int nelements = ElementFaces.size();
+    m_log(VERBOSE) << nelements << " Elements" << endl;
     m_log(VERBOSE) << "Generating 3D Zones: " << endl;
     int cnt = 0;
     for (i = 0; i < nelements; ++i)
     {
-        if (ElementFaces[i].size() > 4)
+        Array<OneD, int> Nodes =
+            SortFaceNodes(m_mesh->m_node, ElementFaces[i], FaceNodes);
+        if (ElementFaces[i].size() == 5 && Nodes.size() == 6)
         {
-            GenElement3D(
-                m_mesh->m_node, i, ElementFaces[i], FaceNodes, nComposite, true);
+            GenElement3D(m_mesh->m_node, i, ElementFaces[i], FaceNodes,
+                         nComposite, true);
             ++cnt;
         }
     }
     m_log(VERBOSE) << "  - # of prisms: " << cnt << endl;
 
+    nComposite++;
+
+    cnt = 0;
+    for (i = 0; i < nelements; ++i)
+    {
+        Array<OneD, int> Nodes =
+            SortFaceNodes(m_mesh->m_node, ElementFaces[i], FaceNodes);
+        if (ElementFaces[i].size() == 5 && Nodes.size() == 5)
+        {
+            GenElement3D(m_mesh->m_node, i, ElementFaces[i], FaceNodes,
+                         nComposite, true);
+            ++cnt;
+        }
+    }
     nComposite++;
 
     // create Tets second
@@ -164,8 +179,8 @@ void InputStar::SetupElements(void)
     {
         if (ElementFaces[i].size() == 4)
         {
-            GenElement3D(
-                m_mesh->m_node, i, ElementFaces[i], FaceNodes, nComposite, true);
+            GenElement3D(m_mesh->m_node, i, ElementFaces[i], FaceNodes,
+                         nComposite, true);
             ++cnt;
         }
     }
@@ -203,15 +218,14 @@ void InputStar::SetupElements(void)
     }
 }
 
-static void PrismLineFaces(int prismid,
-                           map<int, int> &facelist,
-                           vector<vector<int> > &FacesToPrisms,
-                           vector<vector<int> > &PrismsToFaces,
+static void PrismLineFaces(int prismid, map<int, int> &facelist,
+                           vector<vector<int>> &FacesToPrisms,
+                           vector<vector<int>> &PrismsToFaces,
                            vector<bool> &PrismDone);
 
 void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
-                           Array<OneD, vector<int> > &ElementFaces,
-                           unordered_map<int, vector<int> > &FaceNodes)
+                           Array<OneD, vector<int>> &ElementFaces,
+                           unordered_map<int, vector<int>> &FaceNodes)
 {
     int i, j;
     Array<OneD, int> NodeReordering(Vnodes.size(), -1);
@@ -221,8 +235,8 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
     map<int, bool> FacesRenumbered;
 
     // Determine Prism triangular face connectivity.
-    vector<vector<int> > FaceToPrisms(FaceNodes.size());
-    vector<vector<int> > PrismToFaces(ElementFaces.size());
+    vector<vector<int>> FaceToPrisms(FaceNodes.size());
+    vector<vector<int>> PrismToFaces(ElementFaces.size());
     map<int, int> Prisms;
 
     // generate map of prism-faces to prisms and prism to
@@ -252,6 +266,27 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
                 FaceToPrisms[ElementFaces[i][LocTriFaces[0]]].push_back(i);
                 FaceToPrisms[ElementFaces[i][LocTriFaces[1]]].push_back(i);
             }
+            else if (LocTriFaces.size() == 4)
+            {
+                continue; // do nothing
+                Prisms[i] = i;
+
+                PrismToFaces[i].push_back(ElementFaces[i][LocTriFaces[0]]);
+                PrismToFaces[i].push_back(ElementFaces[i][LocTriFaces[1]]);
+                PrismToFaces[i].push_back(ElementFaces[i][LocTriFaces[2]]);
+                PrismToFaces[i].push_back(ElementFaces[i][LocTriFaces[3]]);
+
+                FaceToPrisms[ElementFaces[i][LocTriFaces[0]]].push_back(i);
+                FaceToPrisms[ElementFaces[i][LocTriFaces[1]]].push_back(i);
+                FaceToPrisms[ElementFaces[i][LocTriFaces[2]]].push_back(i);
+                FaceToPrisms[ElementFaces[i][LocTriFaces[3]]].push_back(i);
+            }
+            else
+            {
+                ASSERTL0(
+                    false,
+                    "Not set up for elements which are not Prism or Pyramid");
+            }
         }
     }
 
@@ -260,7 +295,7 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
 
     // For every prism find the list of prismatic elements
     // that represent an aligned block of cells. Then renumber
-    // these blocks consecutativiesly
+    // these blocks consecutively
     for (auto &PrismIt : Prisms)
     {
         int elmtid = PrismIt.first;
@@ -273,117 +308,116 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
         else
         {
             // Generate list of faces in list
-            PrismLineFaces(
-                elmtid, facelist, FaceToPrisms, PrismToFaces, PrismDone);
+            PrismLineFaces(elmtid, facelist, FaceToPrisms, PrismToFaces,
+                           PrismDone);
+        }
+        // loop over faces and number vertices of associated prisms.
+        for (auto &faceIt : facelist)
+        {
+            int faceid = faceIt.second;
 
-            // loop over faces and number vertices of associated prisms.
-            for (auto &faceIt : facelist)
+            for (i = 0; i < FaceToPrisms[faceid].size(); ++i)
             {
-                int faceid = faceIt.second;
+                int prismid = FaceToPrisms[faceid][i];
 
-                for (i = 0; i < FaceToPrisms[faceid].size(); ++i)
+                if ((FacesDone[PrismToFaces[prismid][0]] == true) &&
+                    (FacesDone[PrismToFaces[prismid][1]] == true))
                 {
-                    int prismid = FaceToPrisms[faceid][i];
+                    continue;
+                }
+                // ISSUE ON PYRAMIDS
+                Array<OneD, int> Nodes =
+                    SortFaceNodes(Vnodes, ElementFaces[prismid], FaceNodes);
 
-                    if ((FacesDone[PrismToFaces[prismid][0]] == true) &&
-                        (FacesDone[PrismToFaces[prismid][1]] == true))
+                if (Nodes.size() == 5)
+                {
+                    continue;
+                }
+                if ((FacesDone[PrismToFaces[prismid][0]] == false) &&
+                    (FacesDone[PrismToFaces[prismid][1]] == false))
+                {
+                    // number all nodes consecutive since
+                    // already correctly re-arranged.
+                    for (i = 0; i < 3; ++i)
                     {
-                        continue;
+                        if (NodeReordering[Nodes[face1_map[i]]] == -1)
+                        {
+                            NodeReordering[Nodes[face1_map[i]]] = nodeid++;
+                        }
                     }
 
-                    Array<OneD, int> Nodes =
-                        SortFaceNodes(Vnodes, ElementFaces[prismid], FaceNodes);
-
-                    if ((FacesDone[PrismToFaces[prismid][0]] == false) &&
-                        (FacesDone[PrismToFaces[prismid][1]] == false))
+                    for (i = 0; i < 3; ++i)
                     {
-                        // number all nodes consecutive since
-                        // already correctly re-arranged.
-                        for (i = 0; i < 3; ++i)
+                        if (NodeReordering[Nodes[face3_map[i]]] == -1)
                         {
-                            if (NodeReordering[Nodes[face1_map[i]]] == -1)
-                            {
-                                NodeReordering[Nodes[face1_map[i]]] = nodeid++;
-                            }
-                        }
-
-                        for (i = 0; i < 3; ++i)
-                        {
-                            if (NodeReordering[Nodes[face3_map[i]]] == -1)
-                            {
-                                NodeReordering[Nodes[face3_map[i]]] = nodeid++;
-                            }
+                            NodeReordering[Nodes[face3_map[i]]] = nodeid++;
                         }
                     }
-                    else if ((FacesDone[PrismToFaces[prismid][0]] == false) &&
-                             (FacesDone[PrismToFaces[prismid][1]] == true))
+                }
+                else if ((FacesDone[PrismToFaces[prismid][0]] == false) &&
+                         (FacesDone[PrismToFaces[prismid][1]] == true))
+                {
+                    // find node of highest id
+                    int max_id1, max_id2;
+
+                    max_id1 = (NodeReordering[Nodes[face3_map[0]]] <
+                               NodeReordering[Nodes[face3_map[1]]])
+                                  ? 1
+                                  : 0;
+                    max_id2 = (NodeReordering[Nodes[face3_map[max_id1]]] <
+                               NodeReordering[Nodes[face3_map[2]]])
+                                  ? 2
+                                  : max_id1;
+
+                    // add numbering according to order of
+                    int id0 = (max_id1 == 1) ? 0 : 1;
+
+                    if (NodeReordering[Nodes[face1_map[id0]]] == -1)
                     {
-                        // find node of highest id
-                        int max_id1, max_id2;
-
-                        max_id1 = (NodeReordering[Nodes[face3_map[0]]] <
-                                   NodeReordering[Nodes[face3_map[1]]])
-                                      ? 1
-                                      : 0;
-                        max_id2 = (NodeReordering[Nodes[face3_map[max_id1]]] <
-                                   NodeReordering[Nodes[face3_map[2]]])
-                                      ? 2
-                                      : max_id1;
-
-                        // add numbering according to order of
-                        int id0 = (max_id1 == 1) ? 0 : 1;
-
-                        if (NodeReordering[Nodes[face1_map[id0]]] == -1)
-                        {
-                            NodeReordering[Nodes[face1_map[id0]]] = nodeid++;
-                        }
-
-                        if (NodeReordering[Nodes[face1_map[max_id1]]] == -1)
-                        {
-                            NodeReordering[Nodes[face1_map[max_id1]]] =
-                                nodeid++;
-                        }
-
-                        if (NodeReordering[Nodes[face1_map[max_id2]]] == -1)
-                        {
-                            NodeReordering[Nodes[face1_map[max_id2]]] =
-                                nodeid++;
-                        }
+                        NodeReordering[Nodes[face1_map[id0]]] = nodeid++;
                     }
-                    else if ((FacesDone[PrismToFaces[prismid][0]] == true) &&
-                             (FacesDone[PrismToFaces[prismid][1]] == false))
+
+                    if (NodeReordering[Nodes[face1_map[max_id1]]] == -1)
                     {
-                        // find node of highest id
-                        int max_id1, max_id2;
+                        NodeReordering[Nodes[face1_map[max_id1]]] = nodeid++;
+                    }
 
-                        max_id1 = (NodeReordering[Nodes[face1_map[0]]] <
-                                   NodeReordering[Nodes[face1_map[1]]])
-                                      ? 1
-                                      : 0;
-                        max_id2 = (NodeReordering[Nodes[face1_map[max_id1]]] <
-                                   NodeReordering[Nodes[face1_map[2]]])
-                                      ? 2
-                                      : max_id1;
+                    if (NodeReordering[Nodes[face1_map[max_id2]]] == -1)
+                    {
+                        NodeReordering[Nodes[face1_map[max_id2]]] = nodeid++;
+                    }
+                }
+                else if ((FacesDone[PrismToFaces[prismid][0]] == true) &&
+                         (FacesDone[PrismToFaces[prismid][1]] == false))
+                {
+                    // find node of highest id
+                    int max_id1, max_id2;
 
-                        // add numbering according to order of
-                        int id0 = (max_id1 == 1) ? 0 : 1;
+                    max_id1 = (NodeReordering[Nodes[face1_map[0]]] <
+                               NodeReordering[Nodes[face1_map[1]]])
+                                  ? 1
+                                  : 0;
+                    max_id2 = (NodeReordering[Nodes[face1_map[max_id1]]] <
+                               NodeReordering[Nodes[face1_map[2]]])
+                                  ? 2
+                                  : max_id1;
 
-                        if (NodeReordering[Nodes[face3_map[id0]]] == -1)
-                        {
-                            NodeReordering[Nodes[face3_map[id0]]] = nodeid++;
-                        }
+                    // add numbering according to order of
+                    int id0 = (max_id1 == 1) ? 0 : 1;
 
-                        if (NodeReordering[Nodes[face3_map[max_id1]]] == -1)
-                        {
-                            NodeReordering[Nodes[face3_map[max_id1]]] =
-                                nodeid++;
-                        }
+                    if (NodeReordering[Nodes[face3_map[id0]]] == -1)
+                    {
+                        NodeReordering[Nodes[face3_map[id0]]] = nodeid++;
+                    }
 
-                        if (NodeReordering[Nodes[face3_map[max_id2]]] == -1)
-                        {
-                            NodeReordering[Nodes[face3_map[max_id2]]] =
-                                nodeid++;
-                        }
+                    if (NodeReordering[Nodes[face3_map[max_id1]]] == -1)
+                    {
+                        NodeReordering[Nodes[face3_map[max_id1]]] = nodeid++;
+                    }
+
+                    if (NodeReordering[Nodes[face3_map[max_id2]]] == -1)
+                    {
+                        NodeReordering[Nodes[face3_map[max_id2]]] = nodeid++;
                     }
                 }
             }
@@ -399,8 +433,7 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
         }
     }
 
-    ASSERTL1(nodeid == NodeReordering.size(),
-             "Have not renumbered all nodes");
+    ASSERTL1(nodeid == NodeReordering.size(), "Have not renumbered all nodes");
 
     // Renumbering successfull so reset nodes and faceNodes;
     for (auto &it : FaceNodes)
@@ -419,10 +452,9 @@ void InputStar::ResetNodes(vector<NodeSharedPtr> &Vnodes,
     }
 }
 
-static void PrismLineFaces(int prismid,
-                           map<int, int> &facelist,
-                           vector<vector<int> > &FaceToPrisms,
-                           vector<vector<int> > &PrismToFaces,
+static void PrismLineFaces(int prismid, map<int, int> &facelist,
+                           vector<vector<int>> &FaceToPrisms,
+                           vector<vector<int>> &PrismToFaces,
                            vector<bool> &PrismDone)
 {
     if (PrismDone[prismid] == false)
@@ -434,11 +466,8 @@ static void PrismLineFaces(int prismid,
         facelist[face] = face;
         for (int i = 0; i < FaceToPrisms[face].size(); ++i)
         {
-            PrismLineFaces(FaceToPrisms[face][i],
-                           facelist,
-                           FaceToPrisms,
-                           PrismToFaces,
-                           PrismDone);
+            PrismLineFaces(FaceToPrisms[face][i], facelist, FaceToPrisms,
+                           PrismToFaces, PrismDone);
         }
 
         // Add faces1
@@ -446,19 +475,14 @@ static void PrismLineFaces(int prismid,
         facelist[face] = face;
         for (int i = 0; i < FaceToPrisms[face].size(); ++i)
         {
-            PrismLineFaces(FaceToPrisms[face][i],
-                           facelist,
-                           FaceToPrisms,
-                           PrismToFaces,
-                           PrismDone);
+            PrismLineFaces(FaceToPrisms[face][i], facelist, FaceToPrisms,
+                           PrismToFaces, PrismDone);
         }
     }
 }
 
-void InputStar::GenElement2D(vector<NodeSharedPtr> &VertNodes,
-                             int i,
-                             vector<int> &FaceNodes,
-                             int nComposite)
+void InputStar::GenElement2D(vector<NodeSharedPtr> &VertNodes, int i,
+                             vector<int> &FaceNodes, int nComposite)
 {
     boost::ignore_unused(i);
 
@@ -494,12 +518,10 @@ void InputStar::GenElement2D(vector<NodeSharedPtr> &VertNodes,
     m_mesh->m_element[E->GetDim()].push_back(E);
 }
 
-void InputStar::GenElement3D(vector<NodeSharedPtr> &VertNodes,
-                             int i,
+void InputStar::GenElement3D(vector<NodeSharedPtr> &VertNodes, int i,
                              vector<int> &ElementFaces,
-                             unordered_map<int, vector<int> > &FaceNodes,
-                             int nComposite,
-                             bool DoOrient)
+                             unordered_map<int, vector<int>> &FaceNodes,
+                             int nComposite, bool DoOrient)
 {
     boost::ignore_unused(i);
 
@@ -521,7 +543,6 @@ void InputStar::GenElement3D(vector<NodeSharedPtr> &VertNodes,
     }
     else if (nnodes != 4)
     {
-        elType = LibUtilities::eHexahedron;
         m_log(FATAL) << "Not set up for elements which are not tets or prisms"
                      << endl;
     }
@@ -537,20 +558,11 @@ void InputStar::GenElement3D(vector<NodeSharedPtr> &VertNodes,
         nodeList.push_back(VertNodes[Nodes[j]]);
     }
 
-    // Create element
-    if (elType != LibUtilities::ePyramid)
-    {
-        ElmtConfig conf(elType, 1, true, true, DoOrient);
-        ElementSharedPtr E =
-            GetElementFactory().CreateInstance(elType, conf, nodeList, tags);
+    ElmtConfig conf(elType, 1, true, true, DoOrient);
+    ElementSharedPtr E =
+        GetElementFactory().CreateInstance(elType, conf, nodeList, tags);
 
-        m_mesh->m_element[E->GetDim()].push_back(E);
-    }
-    else
-    {
-        m_log(WARNING) << "Pyramid detected: this element type is not yet"
-                       << " supported." << endl;
-    }
+    m_mesh->m_element[E->GetDim()].push_back(E);
 }
 
 Array<OneD, int> InputStar::SortEdgeNodes(vector<NodeSharedPtr> &Vnodes,
@@ -607,9 +619,9 @@ Array<OneD, int> InputStar::SortEdgeNodes(vector<NodeSharedPtr> &Vnodes,
     return returnval;
 }
 
-Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
-                                          vector<int> &ElementFaces,
-                                          unordered_map<int, vector<int> > &FaceNodes)
+Array<OneD, int> InputStar::SortFaceNodes(
+    vector<NodeSharedPtr> &Vnodes, vector<int> &ElementFaces,
+    unordered_map<int, vector<int>> &FaceNodes)
 {
 
     int i, j;
@@ -622,7 +634,7 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
 
         returnval = Array<OneD, int>(4);
 
-        auto it = FaceNodes.find(ElementFaces[0]);
+        auto it   = FaceNodes.find(ElementFaces[0]);
         int indx0 = it->second[0];
         int indx1 = it->second[1];
         int indx2 = it->second[2];
@@ -693,7 +705,7 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
                 else if (triface2 == -1)
                 {
                     triface2 = i;
-                    isPrism = false;
+                    isPrism  = false;
                 }
                 else if (triface3 == -1)
                 {
@@ -729,14 +741,12 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
         }
         else // Pyramid
         {
+            returnval = Array<OneD, int>(5);
             ASSERTL1(quadface0 != -1, "Quad face 0 not found");
             ASSERTL1(triface0 != -1, "Tri face 0 not found");
             ASSERTL1(triface1 != -1, "Tri face 1 not found");
             ASSERTL1(triface2 != -1, "Tri face 2 not found");
             ASSERTL1(triface3 != -1, "Tri face 3 not found");
-            m_log(FATAL) << "Meshes containing Pyramids are not supported."
-                         << endl;
-            returnval = Array<OneD, int>(5);
         }
 
         // find matching nodes between triface0 and triquad0
@@ -747,7 +757,7 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
         // triangular nodes If they do set these to indx0 and
         // indx1 and if not set it to indx2, indx3
 
-        auto &triface0_vec = FaceNodes.find(ElementFaces[triface0])->second;
+        auto &triface0_vec  = FaceNodes.find(ElementFaces[triface0])->second;
         auto &quadface0_vec = FaceNodes.find(ElementFaces[quadface0])->second;
         for (i = 0; i < 4; ++i)
         {
@@ -824,49 +834,51 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
         // check to see if two vertices are shared between one of the other
         // faces
         // to define which is indx2 and indx3
-
-        auto &quadface1_vec = FaceNodes.find(ElementFaces[quadface1])->second;
-        auto &quadface2_vec = FaceNodes.find(ElementFaces[quadface2])->second;
-        int cnt = 0;
-        for (int i = 0; i < 4; ++i)
+        if (isPrism == true)
         {
-            if (quadface1_vec[i] == returnval[1] || quadface1_vec[i] == indx2)
-            {
-                cnt++;
-            }
-        }
-
-        if (cnt == 2) // have two matching vertices
-        {
-            returnval[2] = indx2;
-            returnval[3] = indx3;
-        }
-        else
-        {
-            cnt = 0;
+            auto &quadface1_vec =
+                FaceNodes.find(ElementFaces[quadface1])->second;
+            auto &quadface2_vec =
+                FaceNodes.find(ElementFaces[quadface2])->second;
+            int cnt = 0;
             for (int i = 0; i < 4; ++i)
             {
-                if (quadface2_vec[i] == returnval[1] || quadface2_vec[i] == indx2)
+                if (quadface1_vec[i] == returnval[1] ||
+                    quadface1_vec[i] == indx2)
                 {
                     cnt++;
                 }
             }
 
-            if (cnt != 2) // neither of the other faces has two matching nodes
-                          // so reverse
-            {
-                returnval[2] = indx3;
-                returnval[3] = indx2;
-            }
-            else // have two matching vertices
+            if (cnt == 2) // have two matching vertices
             {
                 returnval[2] = indx2;
                 returnval[3] = indx3;
             }
-        }
+            else
+            {
+                cnt = 0;
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (quadface2_vec[i] == returnval[1] ||
+                        quadface2_vec[i] == indx2)
+                    {
+                        cnt++;
+                    }
+                }
 
-        if (isPrism == true)
-        {
+                if (cnt != 2) // neither of the other faces has two matching
+                              // nodes so reverse
+                {
+                    returnval[2] = indx3;
+                    returnval[3] = indx2;
+                }
+                else // have two matching vertices
+                {
+                    returnval[2] = indx2;
+                    returnval[3] = indx3;
+                }
+            }
             // finally need to find last vertex from second triangular face.
             auto &triface1_vec = FaceNodes.find(ElementFaces[triface1])->second;
             for (int i = 0; i < 3; ++i)
@@ -876,6 +888,39 @@ Array<OneD, int> InputStar::SortFaceNodes(vector<NodeSharedPtr> &Vnodes,
                     returnval[5] = triface1_vec[i];
                     break;
                 }
+            }
+        }
+        else
+        {
+            vector<int> trifaceid;
+            trifaceid.push_back(triface1);
+            trifaceid.push_back(triface2);
+            trifaceid.push_back(triface3);
+            int cnt = 0;
+            for (auto id : trifaceid)
+            {
+                auto &triface_vec = FaceNodes.find(ElementFaces[id])->second;
+                cnt               = 0;
+                for (int i = 0; i < 3; ++i)
+                {
+                    if (triface_vec[i] == returnval[1] ||
+                        triface_vec[i] == indx2)
+                    {
+                        cnt++;
+                    }
+                }
+
+                if (cnt == 2) // have two matching vertices
+                {
+                    returnval[2] = indx2;
+                    returnval[3] = indx3;
+                    break;
+                }
+            }
+            if (cnt != 2)
+            {
+                returnval[2] = indx3;
+                returnval[3] = indx2;
             }
         }
     }
@@ -934,8 +979,8 @@ void InputStar::ReadNodes(std::vector<NodeSharedPtr> &Nodes)
     CCMIOSize nVertices;
     int dims = 1;
 
-    CCMIOReadProcessor(
-        &m_ccmErr, m_ccmProcessor, &vertices, &m_ccmTopology, NULL, NULL);
+    CCMIOReadProcessor(&m_ccmErr, m_ccmProcessor, &vertices, &m_ccmTopology,
+                       NULL, NULL);
 
     if (m_ccmErr != kCCMIONoErr)
     {
@@ -955,25 +1000,19 @@ void InputStar::ReadNodes(std::vector<NodeSharedPtr> &Nodes)
     // appropriate scaling factor.  The offset is just to show you can read
     // any chunk.  Normally this would be in a for loop.
     float scale;
-    int nvert  = nVertices;
+    int nvert = nVertices;
     vector<int> mapData;
     mapData.resize(nvert);
     vector<float> verts;
-    verts.resize(3*nvert);
+    verts.resize(3 * nvert);
 
     for (int k = 0; k < nvert; ++k)
     {
         verts[3 * k] = verts[3 * k + 1] = verts[3 * k + 2] = 0.0;
-        mapData[k] = 0;
+        mapData[k]                                         = 0;
     }
 
-    CCMIOReadVerticesf(&m_ccmErr,
-                       vertices,
-                       &dims,
-                       &scale,
-                       &mapID,
-                       &verts[0],
-                       0,
+    CCMIOReadVerticesf(&m_ccmErr, vertices, &dims, &scale, &mapID, &verts[0], 0,
                        nVertices);
 
     if (m_ccmErr != kCCMIONoErr)
@@ -982,11 +1021,7 @@ void InputStar::ReadNodes(std::vector<NodeSharedPtr> &Nodes)
                      << endl;
     }
 
-    CCMIOReadMap(&m_ccmErr,
-                 mapID,
-                 &mapData[0],
-                 0,
-                 nVertices);
+    CCMIOReadMap(&m_ccmErr, mapID, &mapData[0], 0, nVertices);
 
     if (m_ccmErr != kCCMIONoErr)
     {
@@ -995,14 +1030,13 @@ void InputStar::ReadNodes(std::vector<NodeSharedPtr> &Nodes)
 
     for (int i = 0; i < nVertices; ++i)
     {
-        Nodes.push_back(
-            std::make_shared<Node>(
-                i, verts[3 * i], verts[3 * i + 1], verts[3 * i + 2]));
+        Nodes.push_back(std::make_shared<Node>(
+            i, verts[3 * i], verts[3 * i + 1], verts[3 * i + 2]));
     }
 }
 
-void InputStar::ReadInternalFaces(unordered_map<int, vector<int> > &FacesNodes,
-                                  Array<OneD, vector<int> > &ElementFaces)
+void InputStar::ReadInternalFaces(unordered_map<int, vector<int>> &FacesNodes,
+                                  Array<OneD, vector<int>> &ElementFaces)
 {
 
     CCMIOID mapID, id;
@@ -1017,34 +1051,14 @@ void InputStar::ReadInternalFaces(unordered_map<int, vector<int> > &FacesNodes,
     mapData.resize(nf);
     faceCells.resize(2 * nf);
 
-    CCMIOReadFaces(&m_ccmErr,
-                   id,
-                   kCCMIOInternalFaces,
-                   NULL,
-                   &size,
-                   NULL,
-                   kCCMIOStart,
-                   kCCMIOEnd);
+    CCMIOReadFaces(&m_ccmErr, id, kCCMIOInternalFaces, NULL, &size, NULL,
+                   kCCMIOStart, kCCMIOEnd);
     faces.resize((size_t)size);
-    CCMIOReadFaces(&m_ccmErr,
-                   id,
-                   kCCMIOInternalFaces,
-                   &mapID,
-                   NULL,
-                   &faces[0],
-                   kCCMIOStart,
-                   kCCMIOEnd);
-    CCMIOReadFaceCells(&m_ccmErr,
-                       id,
-                       kCCMIOInternalFaces,
-                       &faceCells[0],
-                       kCCMIOStart,
-                       kCCMIOEnd);
-    CCMIOReadMap(&m_ccmErr,
-                 mapID,
-                 &mapData[0],
-                 kCCMIOStart,
-                 kCCMIOEnd);
+    CCMIOReadFaces(&m_ccmErr, id, kCCMIOInternalFaces, &mapID, NULL, &faces[0],
+                   kCCMIOStart, kCCMIOEnd);
+    CCMIOReadFaceCells(&m_ccmErr, id, kCCMIOInternalFaces, &faceCells[0],
+                       kCCMIOStart, kCCMIOEnd);
+    CCMIOReadMap(&m_ccmErr, mapID, &mapData[0], kCCMIOStart, kCCMIOEnd);
 
     // Add face nodes
     int cnt = 0;
@@ -1080,7 +1094,7 @@ void InputStar::ReadInternalFaces(unordered_map<int, vector<int> > &FacesNodes,
         nelmt = max(nelmt, faceCells[i]);
     }
 
-    ElementFaces = Array<OneD, vector<int> >(nelmt);
+    ElementFaces = Array<OneD, vector<int>>(nelmt);
     for (int i = 0; i < nf; ++i)
     {
         // left element
@@ -1097,9 +1111,9 @@ void InputStar::ReadInternalFaces(unordered_map<int, vector<int> > &FacesNodes,
     }
 }
 
-void InputStar::ReadBoundaryFaces(vector<vector<int> > &BndElementFaces,
-                                  unordered_map<int, vector<int> > &FacesNodes,
-                                  Array<OneD, vector<int> > &ElementFaces,
+void InputStar::ReadBoundaryFaces(vector<vector<int>> &BndElementFaces,
+                                  unordered_map<int, vector<int>> &FacesNodes,
+                                  Array<OneD, vector<int>> &ElementFaces,
                                   vector<string> &Facelabels)
 {
     // Read the boundary faces.
@@ -1109,9 +1123,8 @@ void InputStar::ReadBoundaryFaces(vector<vector<int> > &BndElementFaces,
     vector<int> faces, faceCells, mapData;
     vector<string> facelabel;
 
-    while (CCMIONextEntity(
-               NULL, m_ccmTopology, kCCMIOBoundaryFaces, &index, &id) ==
-           kCCMIONoErr)
+    while (CCMIONextEntity(NULL, m_ccmTopology, kCCMIOBoundaryFaces, &index,
+                           &id) == kCCMIONoErr)
     {
         int boundaryVal;
 
@@ -1119,35 +1132,15 @@ void InputStar::ReadBoundaryFaces(vector<vector<int> > &BndElementFaces,
         CCMIOSize nf = nFaces;
         mapData.resize(nf);
         faceCells.resize(nf);
-        CCMIOReadFaces(&m_ccmErr,
-                       id,
-                       kCCMIOBoundaryFaces,
-                       NULL,
-                       &size,
-                       NULL,
-                       kCCMIOStart,
-                       kCCMIOEnd);
+        CCMIOReadFaces(&m_ccmErr, id, kCCMIOBoundaryFaces, NULL, &size, NULL,
+                       kCCMIOStart, kCCMIOEnd);
 
         faces.resize((size_t)size);
-        CCMIOReadFaces(&m_ccmErr,
-                       id,
-                       kCCMIOBoundaryFaces,
-                       &mapID,
-                       NULL,
-                       &faces[0],
-                       kCCMIOStart,
-                       kCCMIOEnd);
-        CCMIOReadFaceCells(&m_ccmErr,
-                           id,
-                           kCCMIOBoundaryFaces,
-                           &faceCells[0],
-                           kCCMIOStart,
-                           kCCMIOEnd);
-        CCMIOReadMap(&m_ccmErr,
-                     mapID,
-                     &mapData[0],
-                     kCCMIOStart,
-                     kCCMIOEnd);
+        CCMIOReadFaces(&m_ccmErr, id, kCCMIOBoundaryFaces, &mapID, NULL,
+                       &faces[0], kCCMIOStart, kCCMIOEnd);
+        CCMIOReadFaceCells(&m_ccmErr, id, kCCMIOBoundaryFaces, &faceCells[0],
+                           kCCMIOStart, kCCMIOEnd);
+        CCMIOReadMap(&m_ccmErr, mapID, &mapData[0], kCCMIOStart, kCCMIOEnd);
 
         CCMIOGetEntityIndex(&m_ccmErr, id, &boundaryVal);
 
@@ -1205,5 +1198,5 @@ void InputStar::ReadBoundaryFaces(vector<vector<int> > &BndElementFaces,
         BndElementFaces.push_back(BndFaces);
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

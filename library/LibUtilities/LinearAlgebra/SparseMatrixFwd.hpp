@@ -35,45 +35,41 @@
 #ifndef NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_MATRIX_FWD_HPP
 #define NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_MATRIX_FWD_HPP
 
-#include <map>
-#include <vector>
-#include <utility>
 #include <fstream>
+#include <map>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
-
 namespace Nektar
 {
-    typedef unsigned int    IndexType;
+typedef unsigned int IndexType;
 
-    typedef Array<OneD, IndexType>              IndexVector;
+typedef Array<OneD, IndexType> IndexVector;
 
-    // Elemental COO: each entry is a nonzero number
-    typedef std::pair<IndexType, IndexType>     CoordType;
-    typedef NekDouble                           COOEntryType;
-    typedef std::map<CoordType, NekDouble>      COOMatType;
-    typedef COOMatType::const_iterator          COOMatTypeConstIt;
-    typedef std::shared_ptr<COOMatType>         COOMatTypeSharedPtr;
-    typedef Array<OneD, COOMatType>             COOMatVector;
+// Elemental COO: each entry is a nonzero number
+typedef std::pair<IndexType, IndexType> CoordType;
+typedef NekDouble COOEntryType;
+typedef std::map<CoordType, NekDouble> COOMatType;
+typedef COOMatType::const_iterator COOMatTypeConstIt;
+typedef std::shared_ptr<COOMatType> COOMatTypeSharedPtr;
+typedef Array<OneD, COOMatType> COOMatVector;
 
-    // Block COO (BCO): each entry is a dense submatrix (of same size)
-    typedef Array<OneD, NekDouble>              BCOEntryType;
-    typedef std::map<CoordType, BCOEntryType >  BCOMatType;
-    typedef BCOMatType::const_iterator          BCOMatTypeConstIt;
-    typedef std::shared_ptr<BCOMatType>         BCOMatTypeSharedPtr;
-    typedef Array<OneD, BCOMatType>             BCOMatVector;
+// Block COO (BCO): each entry is a dense submatrix (of same size)
+typedef Array<OneD, NekDouble> BCOEntryType;
+typedef std::map<CoordType, BCOEntryType> BCOMatType;
+typedef BCOMatType::const_iterator BCOMatTypeConstIt;
+typedef std::shared_ptr<BCOMatType> BCOMatTypeSharedPtr;
+typedef Array<OneD, BCOMatType> BCOMatVector;
 
+template <typename DataType> class StorageSmvBsr;
 
-    template<typename DataType> class StorageSmvBsr;
+template <typename SparseStorageType> class NekSparseMatrix;
+template <typename SparseStorageType> class NekSparseDiagBlkMatrix;
 
-    template<typename SparseStorageType> class NekSparseMatrix;
-    template<typename SparseStorageType> class NekSparseDiagBlkMatrix;
+} // namespace Nektar
 
-    
-
-}
-
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_MATRIX_FWD_HPP
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_MATRIX_FWD_HPP

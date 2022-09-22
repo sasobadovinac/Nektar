@@ -37,51 +37,58 @@
 
 using namespace std;
 
-namespace Nektar {
-namespace Collections {
+namespace Nektar
+{
+namespace Collections
+{
 
 /**
  *
  */
-Collection::Collection(
-        vector<StdRegions::StdExpansionSharedPtr>    pCollExp,
-        OperatorImpMap                              &impTypes):
-    m_collExp(pCollExp), 
-    m_impTypes(impTypes)
+Collection::Collection(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                       OperatorImpMap &impTypes)
+    : m_collExp(pCollExp), m_impTypes(impTypes)
 {
     // Initialise geometry data.
     m_geomData = MemoryManager<CoalescedGeomData>::AllocateSharedPtr();
 }
 
-void Collection::Initialise(const OperatorType opType)
+void Collection::CheckFactors(const OperatorType opType,
+                              StdRegions::FactorMap factors,
+                              int coll_phys_offset)
 {
-    if(!HasOperator(opType))
+    m_ops[opType]->CheckFactors(factors, coll_phys_offset);
+}
+
+void Collection::Initialise(const OperatorType opType,
+                            StdRegions::FactorMap factors)
+{
+    if (!HasOperator(opType))
     {
         auto it = m_impTypes.find(opType);
-        
+
         if (it != m_impTypes.end())
         {
             ImplementationType impType = it->second;
             OperatorKey opKey(m_collExp[0]->DetShapeType(), opType, impType,
                               m_collExp[0]->IsNodalNonTensorialExp());
-            
+
             stringstream ss;
             ss << opKey;
             ASSERTL0(GetOperatorFactory().ModuleExists(opKey),
-                     "Requested unknown operator "+ss.str());
-            
+                     "Requested unknown operator " + ss.str());
+
             m_ops[opType] = GetOperatorFactory().CreateInstance(
-                                          opKey, m_collExp, m_geomData);
+                opKey, m_collExp, m_geomData, factors);
         }
         else
         {
-            NEKERROR(ErrorUtil::ewarning,
-                     "Failed to determine implmentation to initialise "
-                     "collection operator: " +
-                     std::string(Collections::OperatorTypeMap[opType]));
+            WARNINGL2(false,
+                      "Failed to determine implmentation to initialise "
+                      "collection operator: " +
+                          std::string(Collections::OperatorTypeMap[opType]));
         }
     }
 }
-}
-}
-
+} // namespace Collections
+} // namespace Nektar

@@ -45,9 +45,8 @@ namespace Nektar
 namespace LibUtilities
 {
 
-bool NodalPrismElec::initPointsManager[] = {
-    PointsManager().RegisterCreator(PointsKey(0, eNodalPrismElec),         NodalPrismElec::Create)
-};
+bool NodalPrismElec::initPointsManager[] = {PointsManager().RegisterCreator(
+    PointsKey(0, eNodalPrismElec), NodalPrismElec::Create)};
 
 namespace
 {
@@ -151,7 +150,7 @@ bool isFace(int t, int y, int npts)
            isFace_1254(t, y, npts) || isFace_325(t, y, npts) ||
            isFace_0354(t, y, npts);
 }
-}
+} // namespace
 
 // Calculate evenly spaced number of points
 void NodalPrismElec::CalculatePoints()
@@ -435,12 +434,12 @@ void NodalPrismElec::CalculateInterpMatrix(
     const Array<OneD, const NekDouble> &yia,
     const Array<OneD, const NekDouble> &zia, Array<OneD, NekDouble> &interp)
 {
-    Array<OneD, Array<OneD, NekDouble> > xi(3);
+    Array<OneD, Array<OneD, NekDouble>> xi(3);
     xi[0] = xia;
     xi[1] = yia;
     xi[1] = zia;
 
-    std::shared_ptr<NekMatrix<NekDouble> > mat =
+    std::shared_ptr<NekMatrix<NekDouble>> mat =
         m_util->GetInterpolationMatrix(xi);
     Vmath::Vcopy(mat->GetRows() * mat->GetColumns(), mat->GetRawPtr(), 1,
                  &interp[0], 1);
@@ -468,5 +467,5 @@ std::shared_ptr<PointsBaseType> NodalPrismElec::Create(const PointsKey &key)
     return returnval;
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

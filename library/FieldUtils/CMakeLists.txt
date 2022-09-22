@@ -12,7 +12,7 @@ SET(FieldUtilsHeaders
     OutputModules/OutputFileBase.h
     OutputModules/OutputInfo.h
     OutputModules/OutputTecplot.h
-    OutputModules/OutputVtk.h
+    OutputModules/OutputVtkBase.h
     OutputModules/OutputFld.h
     OutputModules/OutputStdOut.h
     OutputModules/OutputPts.h
@@ -21,6 +21,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessFieldFromString.h
     ProcessModules/ProcessAddFld.h
     ProcessModules/ProcessBoundaryExtract.h
+    ProcessModules/ProcessCFL.h
     ProcessModules/ProcessCombineAvg.h
     ProcessModules/ProcessConcatenateFld.h
     ProcessModules/ProcessCreateExp.h
@@ -74,7 +75,7 @@ SET(FieldUtilsSources
     OutputModules/OutputFileBase.cpp
     OutputModules/OutputInfo.cpp
     OutputModules/OutputTecplot.cpp
-    OutputModules/OutputVtk.cpp
+    OutputModules/OutputVtkBase.cpp
     OutputModules/OutputFld.cpp
     OutputModules/OutputStdOut.cpp
     OutputModules/OutputPts.cpp
@@ -83,6 +84,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessFieldFromString.cpp
     ProcessModules/ProcessAddFld.cpp
     ProcessModules/ProcessBoundaryExtract.cpp
+    ProcessModules/ProcessCFL.cpp
     ProcessModules/ProcessCombineAvg.cpp
     ProcessModules/ProcessConcatenateFld.cpp
     ProcessModules/ProcessCreateExp.cpp
@@ -123,6 +125,13 @@ SET(FieldUtilsSources
     ProcessModules/ProcessQualityMetric.cpp
 )
 
+IF (NEKTAR_USE_VTK)
+    SET(FieldUtilsSources ${FieldUtilsSources}
+            OutputModules/OutputVtk.cpp)
+    SET(FieldUtilsHeaders ${FieldUtilsHeaders}
+            OutputModules/OutputVtk.h)
+ENDIF()
+
 ADD_NEKTAR_LIBRARY(FieldUtils
     SUMMARY "Nektar++ FieldUtils library"
     DESCRIPTION "Collection of post-processing modules for the FieldConvert utility and filter"
@@ -131,6 +140,19 @@ ADD_NEKTAR_LIBRARY(FieldUtils
     DEPENDS GlobalMapping)
 
 ADD_DEFINITIONS(-DFIELD_UTILS_EXPORTS)
+
+IF (NEKTAR_USE_VTK)
+    IF (VTK_MAJOR_VERSION LESS 6)
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC vtkCommon vtkIO vtkGraphics vtkFiltersCore)
+    ELSEIF (VTK_MAJOR_VERSION  GREATER_EQUAL 9)
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML VTK::FiltersCore)
+        vtk_module_autoinit(
+                TARGETS FieldUtils
+                MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML VTK::FiltersCore)
+    ELSE ()
+        TARGET_LINK_LIBRARIES(FieldUtils LINK_PUBLIC vtkCommonCore vtkIOLegacy vtkIOXML vtkFiltersCore)
+    ENDIF ()
+ENDIF (NEKTAR_USE_VTK)
 
 IF (NEKTAR_BUILD_PYTHON)
     SUBDIRS(Python)

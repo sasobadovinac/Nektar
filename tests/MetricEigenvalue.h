@@ -35,29 +35,29 @@
 #ifndef NEKTAR_TESTS_METRICEIGENVALUE_H
 #define NEKTAR_TESTS_METRICEIGENVALUE_H
 
-#include <map>
 #include <MetricRegex.h>
+#include <map>
 
 namespace Nektar
 {
-    class MetricEigenvalue : public MetricRegex
+class MetricEigenvalue : public MetricRegex
+{
+public:
+    static MetricSharedPtr create(TiXmlElement *metric, bool generate)
     {
-    public:
-        static MetricSharedPtr create(TiXmlElement *metric, bool generate)
-        {
-            return MetricSharedPtr(new MetricEigenvalue(metric, generate));
-        }
+        return MetricSharedPtr(new MetricEigenvalue(metric, generate));
+    }
 
-        static std::string type;
-        static std::string defaultTolerance;
+    static std::string type;
+    static std::string defaultTolerance;
 
-    protected:
-        MetricEigenvalue(TiXmlElement *metric, bool generate);
+protected:
+    MetricEigenvalue(TiXmlElement *metric, bool generate);
 
-        std::string m_varTolerance;
+    std::string m_varTolerance;
 
-        virtual void v_Generate(std::istream& pStdout, std::istream& pStderr);
-    };
-}
+    virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
+};
+} // namespace Nektar
 
 #endif

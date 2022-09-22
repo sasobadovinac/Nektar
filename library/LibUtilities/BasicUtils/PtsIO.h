@@ -36,20 +36,19 @@
 #ifndef NEKTAR_LIB_UTILITIES_BASIC_UTILS_PTSIO_H
 #define NEKTAR_LIB_UTILITIES_BASIC_UTILS_PTSIO_H
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include <tinyxml.h>
 
 #include <LibUtilities/Communication/Comm.h>
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/BasicUtils/PtsField.h>
-#include <LibUtilities/BasicUtils/FieldIOXml.h>
 #include <LibUtilities/BasicUtils/DomainRange.h>
-
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <LibUtilities/BasicUtils/FieldIOXml.h>
+#include <LibUtilities/BasicUtils/PtsField.h>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 namespace Nektar
 {
@@ -70,24 +69,21 @@ public:
     }
 
     LIB_UTILITIES_EXPORT void Import(
-        const std::string &inFile,
-        PtsFieldSharedPtr &ptsField,
+        const std::string &inFile, PtsFieldSharedPtr &ptsField,
         FieldMetaDataMap &fieldmetadatamap = NullFieldMetaDataMap,
-        DomainRangeShPtr &Range = NullDomainRangeShPtr);
+        DomainRangeShPtr &Range            = NullDomainRangeShPtr);
 
     LIB_UTILITIES_EXPORT void Write(const std::string &outFile,
                                     const PtsFieldSharedPtr &ptsField,
                                     const bool backup = false);
 
-    LIB_UTILITIES_EXPORT void ImportFieldData(const std::string inFile,
-                                              PtsFieldSharedPtr &ptsField,
-                                              DomainRangeShPtr &Range = NullDomainRangeShPtr);
+    LIB_UTILITIES_EXPORT void ImportFieldData(
+        const std::string inFile, PtsFieldSharedPtr &ptsField,
+        DomainRangeShPtr &Range = NullDomainRangeShPtr);
 
 protected:
-
     LIB_UTILITIES_EXPORT virtual void v_ImportFieldData(
-        const std::string inFile,
-        PtsFieldSharedPtr &ptsField,
+        const std::string inFile, PtsFieldSharedPtr &ptsField,
         DomainRangeShPtr &Range = NullDomainRangeShPtr);
 
     LIB_UTILITIES_EXPORT void SetUpFieldMetaData(const std::string outname);
@@ -99,6 +95,6 @@ protected:
 };
 
 typedef std::shared_ptr<PtsIO> PtsIOSharedPtr;
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 #endif

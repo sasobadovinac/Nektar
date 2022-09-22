@@ -35,11 +35,11 @@
 #ifndef NEKTAR_SPATIALDOMAINS_MESHPARTITION_H
 #define NEKTAR_SPATIALDOMAINS_MESHPARTITION_H
 
-#include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
-#include <SpatialDomains/SpatialDomainsDeclspec.h>
+#include <LibUtilities/Communication/Comm.h>
 #include <SpatialDomains/MeshEntities.hpp>
+#include <SpatialDomains/SpatialDomainsDeclspec.h>
 #include <boost/graph/adjacency_list.hpp>
 
 class TiXmlElement;
@@ -51,14 +51,14 @@ namespace SpatialDomains
 class MeshPartition;
 
 typedef std::map<int, std::pair<LibUtilities::ShapeType, std::vector<int>>>
-CompositeDescriptor;
+    CompositeDescriptor;
 
 /// Datatype of the NekFactory used to instantiate classes derived from
 /// the EquationSystem class.
 typedef LibUtilities::NekFactory<std::string, MeshPartition,
                                  const LibUtilities::SessionReaderSharedPtr,
-                                 int, std::map<int, MeshEntity>,
-                                 CompositeDescriptor>
+                                 LibUtilities::CommSharedPtr, int,
+                                 std::map<int, MeshEntity>, CompositeDescriptor>
     MeshPartitionFactory;
 
 SPATIAL_DOMAINS_EXPORT MeshPartitionFactory &GetMeshPartitionFactory();
@@ -68,22 +68,19 @@ class MeshPartition
 
 public:
     MeshPartition(const LibUtilities::SessionReaderSharedPtr session,
-                  int                                        meshDim,
-                  std::map<int, MeshEntity>                  element,
-                  CompositeDescriptor                        compMap);
+                  LibUtilities::CommSharedPtr comm, int meshDim,
+                  std::map<int, MeshEntity> element,
+                  CompositeDescriptor compMap);
     virtual ~MeshPartition();
 
-    SPATIAL_DOMAINS_EXPORT void PartitionMesh(
-        int  nParts,
-        bool shared      = false,
-        bool overlapping = false,
-        int  nLocal      = 0);
+    SPATIAL_DOMAINS_EXPORT void PartitionMesh(int nParts, bool shared = false,
+                                              bool overlapping = false,
+                                              int nLocal       = 0);
 
     SPATIAL_DOMAINS_EXPORT void PrintPartInfo(std::ostream &out);
 
-    SPATIAL_DOMAINS_EXPORT void GetElementIDs(
-        const int                  procid,
-        std::vector<unsigned int> &tmp);
+    SPATIAL_DOMAINS_EXPORT void GetElementIDs(const int procid,
+                                              std::vector<unsigned int> &tmp);
 
 protected:
     typedef std::vector<unsigned int> MultiWeight;
@@ -91,7 +88,7 @@ protected:
     // Element in a mesh
     struct GraphVertexProperties
     {
-        int id = 0;         ///< Universal ID of the vertex
+        int id        = 0;  ///< Universal ID of the vertex
         int partition = 0;  ///< Index of the partition to which it belongs
         MultiWeight weight; ///< Weightings to this graph vertex
         MultiWeight bndWeight;
@@ -124,6 +121,7 @@ protected:
     typedef std::map<std::string, NumModes> NummodesPerField;
 
     LibUtilities::SessionReaderSharedPtr m_session;
+    LibUtilities::CommSharedPtr m_comm;
 
     int m_dim;
     int m_numFields;
@@ -145,9 +143,7 @@ protected:
     std::map<int, MultiWeight> m_edgeWeights;
 
     BoostGraph m_graph;
-    std::vector<std::vector<unsigned int>> m_localPartition;
-
-    LibUtilities::CommSharedPtr m_comm;
+    std::map<int, std::vector<unsigned int>> m_localPartition;
 
     bool m_weightingRequired;
     bool m_weightBnd;
@@ -173,12 +169,12 @@ protected:
     void CheckPartitions(int nParts, Array<OneD, int> &pPart);
     int CalculateElementWeight(LibUtilities::ShapeType elmtType, bool bndWeight,
                                int na, int nb, int nc);
-    int CalculateEdgeWeight(LibUtilities::ShapeType elmtType,
-                            int na, int nb, int nc);
+    int CalculateEdgeWeight(LibUtilities::ShapeType elmtType, int na, int nb,
+                            int nc);
 };
 
 typedef std::shared_ptr<MeshPartition> MeshPartitionSharedPtr;
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

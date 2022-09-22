@@ -246,6 +246,40 @@ int main(int argc, char *argv[])
 	    }
         }
 
+
+        // Copy opt file if exists to  to the temporary directory.
+        fs::path source_file("test.opt");
+        fs::path source = specPath / source_file;
+        bool HaveOptFile = false; 
+        if(fs::exists(source))
+        {
+            fs::path dest   = tmpDir   / source_file.filename();
+            if (verbose)
+            {
+                cerr << "  - " << source << " -> " << dest << endl;
+            }
+            
+            if (fs::is_directory(source))
+            {
+                fs::copy_directory(source, dest);
+                // If source is a directory, then only directory name is
+                // created, so call copy again to copy files.
+                for (const auto& dirEnt :
+                         fs::recursive_directory_iterator{source})
+                {
+                    fs::path newdest = dest / dirEnt.path().filename();
+                    fs::copy_file(dirEnt.path(), newdest);
+                }
+            }
+	    else
+            {
+                fs::copy_file(source, dest);
+	    }
+
+            HaveOptFile = true; 
+        }
+
+        
         // If we're Python, copy script too.
 
         // Construct test command to run. Output from stdout and stderr are
@@ -291,6 +325,7 @@ int main(int argc, char *argv[])
 
                 mpiAdded = true;
             }
+
         }
 
         // Parse commands.
@@ -328,6 +363,10 @@ int main(int argc, char *argv[])
             }
 
             command += PortablePath(execPath);
+            if(HaveOptFile)
+            {
+                command += " --useoptfile test.opt "; 
+            }
             command += " ";
             command += cmd.m_parameters;
             command += " 1>output.out 2>output.err";

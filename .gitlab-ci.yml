@@ -1,13 +1,34 @@
+workflow:
+  rules:
+    # Run pipeline on tags for the main project
+    - if: $CI_COMMIT_TAG && $CI_PROJECT_PATH == "nektar/nektar"
+    # Run pipeline on the default branch for the main project
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "nektar/nektar"
+    # DO NOT run pipeline if WIP
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^WIP:.*/
+      when: never
+    # DO NOT run pipeline if Draft
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^Draft:.*/ 
+      when: never
+    # Other merge requests trigger pipelines
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Manual runs
+    - if: $CI_PIPELINE_SOURCE == "web"
+
 stages:
   - build-env-default
   - build-env-full
   - build-and-test
-  - compiler-warnings
+  - quality-checks
   - package-env
   - package-build
   - package-build-dev
   - package-test
+  - package-deploy-dev
   - package-deploy
+
+include:
+  - local: .gitlab-ci/packaging.yml
 
 .execution-conditions: &execution-conditions
   only:
@@ -29,8 +50,6 @@ stages:
       - .gitmodules
       - .gitlab-ci.yml
       - CMakeLists.txt
-    variables:
-      - $CI_MERGE_REQUEST_TITLE !~ /^WIP:.*/
 
 .build-env-template: &build-env-template
   <<: *execution-conditions
@@ -48,7 +67,7 @@ stages:
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 1)
     - BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - export CCACHE_DIR=/cache/nektar/$OS_VERSION/
-    - export NUM_CPUS=4
+    - export NUM_CPUS=8
     - export CONTAINER_NAME=test-$CI_JOB_ID
     - export ENV_NAME=env-${OS_VERSION}-${BUILD_TYPE}
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -59,6 +78,7 @@ stages:
     - if [ ! -d $CCACHE_DIR ]; then mkdir -p $CCACHE_DIR && chown 1000:1000 $CCACHE_DIR; fi
     - docker run --name $CONTAINER_NAME -v ccache:/cache
       -e "BUILD_TYPE=$BUILD_TYPE"
+      -e "BUILD_SIMD=$BUILD_SIMD"
       -e "NUM_CPUS=$NUM_CPUS"
       -e "CCACHE_DIR=$CCACHE_DIR"
       $ENV_IMAGE
@@ -86,7 +106,7 @@ stages:
 .compiler-warning-template: &compiler-warning-template
   <<: *execution-conditions
   image: debian:10-slim
-  stage: compiler-warnings
+  stage: quality-checks
   variables:
     WARNING_REGEX: '.*warning[: ].*'
     GIT_STRATEGY: none
@@ -99,6 +119,23 @@ stages:
       grep --colour=always -A 1 -B 1 -0 "$WARNING_REGEX" $LOG_FILE;
         exit 1;
       fi
+  allow_failure: true
+  timeout: 15m
+
+.clang-format-template: &clang-format-template
+  <<: *execution-conditions
+  image: debian:11-slim
+  stage: quality-checks
+  variables:
+    CL_F_VER: 11
+    TARGETS: library
+  before_script:
+    - apt-get update && apt-get install -y clang-format-$CL_F_VER git-core
+  script:
+    - echo `which clang-format-$CL_F_VER`
+    - ln -s `which clang-format-$CL_F_VER` /usr/bin/clang-format
+    - cd "$CI_PROJECT_DIR"
+    - find $TARGETS -iname "*.cpp" -o -iname "*.h" -o -iname "*.hpp" | xargs clang-format-11 --dry-run -Werror
   allow_failure: true
   timeout: 15m
 
@@ -158,6 +195,22 @@ bullseye-full_py3-build-and-test:
   <<: *build-and-test-template
   needs: ["bullseye-full_py3-build-env"]
 
+bullseye-full_py3-avx2-build-and-test:
+  <<: *build-and-test-template
+  needs: ["bullseye-full_py3-build-env"]
+  variables:
+    BUILD_SIMD: avx2
+  tags:
+    - avx2
+
+bullseye-full_py3-avx512-build-and-test:
+  <<: *build-and-test-template
+  needs: ["bullseye-full_py3-build-env"]
+  variables:
+    BUILD_SIMD: avx512
+  tags:
+    - avx512
+
 buster-default-build-and-test:
   <<: *build-and-test-template
   needs: ["buster-default-build-env"]
@@ -187,6 +240,10 @@ bullseye-full_py3-warnings:
   <<: *compiler-warning-template
   needs: ["bullseye-full_py3-build-and-test"]
 
+bullseye-full_py3-avx2-warnings:
+  <<: *compiler-warning-template
+  needs: ["bullseye-full_py3-avx2-build-and-test"]
+
 buster-default-warnings:
   <<: *compiler-warning-template
   needs: ["buster-default-build-and-test"]
@@ -204,7 +261,14 @@ stretch-full-warnings:
   needs: ["stretch-full-build-and-test"]
 
 
-buster-documentation-build-env:
+# CODE FORMATTING
+bullseye-clang-format:
+  <<: *clang-format-template
+  needs: []
+
+
+# DOCUMENTATION
+bullseye-documentation-build-env:
   <<: *execution-conditions
   image: docker:19.03.6
   stage: build-env-full
@@ -215,12 +279,12 @@ buster-documentation-build-env:
     - docker pull $IMAGE || true
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
-  needs: ["buster-default-build-env"]
+  needs: ["bullseye-default-build-env"]
 
 .build-documentation-template: &build-documentation-template
   <<: *build-and-test-template
   image: $CI_REGISTRY_IMAGE:env-documentation
-  needs: ["buster-documentation-build-env"]
+  needs: ["bullseye-documentation-build-env"]
 
 user-guide-build:
   <<: *build-documentation-template
@@ -272,6 +336,13 @@ tutorials-build:
   <<: *build-env-ubuntu-template-default
   stage: build-env-full
 
+jammy-default-build-env:
+  <<: *build-env-ubuntu-template-default
+
+jammy-full_py3-build-env:
+  <<: *build-env-ubuntu-template-full
+  needs: ["jammy-default-build-env"]
+
 focal-default-build-env:
   <<: *build-env-ubuntu-template-default
 
@@ -285,6 +356,14 @@ bionic-default-build-env:
 bionic-full-build-env:
   <<: *build-env-ubuntu-template-full
   needs: ["bionic-default-build-env"]
+
+jammy-default-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-default-build-env"]
+
+jammy-full_py3-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full_py3-build-env"]
 
 focal-default-build-and-test:
   <<: *build-and-test-template
@@ -304,6 +383,14 @@ bionic-full-build-and-test:
 
 
 # COMPILER WARNINGS
+jammy-default-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-default-build-and-test"]
+
+jammy-full_py3-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full_py3-build-and-test"]
+
 focal-default-warnings:
   <<: *compiler-warning-template
   needs: ["focal-default-build-and-test"]
@@ -414,7 +501,7 @@ win10-default-build-and-test:
     - cmake.exe -G "Visual Studio 14 2015 Win64" --config Debug ..
     - cmake.exe --build . --target ALL_BUILD --config Debug
     - cmake.exe --build . --target INSTALL --config Debug
-    - ctest --output-on-failure -C Debug -j3
+    - ctest --output-on-failure -C Debug -j8
   after_script:
     - Remove-Item -Recurse -Force build
   needs: []
@@ -432,7 +519,7 @@ win10-mpi-default-build-and-test:
     - cmake.exe -G "Visual Studio 14 2015 Win64" -DNEKTAR_USE_MPI=ON --config Debug ..
     - cmake.exe --build . --target ALL_BUILD --config Debug
     - cmake.exe --build . --target INSTALL --config Debug
-    - ctest --output-on-failure -C Debug -j3
+    - ctest --output-on-failure -C Debug -j8
   after_script:
     - Remove-Item -Recurse -Force build
   needs: []
@@ -451,10 +538,7 @@ win10-mpi-default-build-and-test:
 # correct image version can be grabbed from the container registry.
 .dockerhub_build_template: &dockerhub_build_template
   image: docker:stable
-  only:
-    - master@nektar/nektar
-    - /^docker\/.*$/@nektar/nektar
-    - tags@nektar/nektar
+  <<: *execution-conditions
   script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - IMAGE=$CI_REGISTRY_IMAGE/${image_name}
@@ -469,11 +553,16 @@ win10-mpi-default-build-and-test:
 # registry on a particular SHA commit.
 .dockerhub-test-template: &dockerhub_test_template
   image: ${CI_REGISTRY_IMAGE}/${image_name}:$CI_COMMIT_SHORT_SHA
+  <<: *execution-conditions
   stage: package-test
-  only:
-    - master@nektar/nektar
-    - /^docker\/.*$/@nektar/nektar
-    - tags@nektar/nektar
+  script:
+    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
+    - test_output=`IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml | grep "L 2 error (variable u)" | awk '{print ($7 < 1e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel IncNavierStokesSolver run"; exit 1; fi
+    - cd $CI_PROJECT_DIR/library/Demos/Python/MultiRegions
+    - mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml
+    - test_output=`mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml | grep "L 2 error (variable nek)" | awk '{print ($7 < 1e-4)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel Python run"; exit 1; fi
 
 # Docker Hub deployment template. Only builds for master or tags on the main
 # Nektar repository. The strategy is to login to the container registry and pull
@@ -506,6 +595,7 @@ win10-mpi-default-build-and-test:
 dockerhub-build-env:
   <<: *dockerhub_build_template
   stage: package-env
+  needs: []
   variables:
     image_name: nektar-env
     dockerfile: docker/nektar-env/Dockerfile
@@ -540,14 +630,12 @@ dockerhub-build-dev:
     args: --build-arg ENV_IMAGE=$CI_REGISTRY_IMAGE/nektar-env:$CI_COMMIT_SHORT_SHA --build-arg NEKTAR_IMAGE=$CI_REGISTRY_IMAGE/nektar:$CI_COMMIT_SHORT_SHA
     dockerfile: docker/nektar-dev/Dockerfile
 
-# Test the dockerhub images
+# Test the dockerhub images: runs a quick solve and Python code.
 dockerhub-test-nektar:
   <<: *dockerhub_test_template
   needs: [ "dockerhub-build-nektar" ]
   variables:
     image_name: nektar
-  script:
-    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
 
 dockerhub-test-nektar-dev:
   <<: *dockerhub_test_template
@@ -556,22 +644,32 @@ dockerhub-test-nektar-dev:
     image_name: nektar-dev
   script:
     - cd $CI_PROJECT_DIR/templates/executable
-    - ./test.sh /usr/local/lib64/nektar++/cmake 3
+    - ./test.sh /usr/local/lib64/nektar++/cmake 3 /usr/bin/cmake
+
+dockerhub-test-workbook:
+  <<: *dockerhub_test_template
+  needs: [ "dockerhub-build-workbook" ]
+  variables:
+    image_name: nektar-workbook
 
 # Deployment
 dockerhub-deploy-nektar:
   <<: *dockerhub_deploy_template
+  needs: [ "dockerhub-test-nektar" ]
   variables:
     image_name: nektar
 dockerhub-deploy-nektar-env:
   <<: *dockerhub_deploy_template
+  needs: [ "dockerhub-build-env" ]
   variables:
     image_name: nektar-env
 dockerhub-deploy-nektar-dev:
   <<: *dockerhub_deploy_template
+  needs: [ "dockerhub-test-nektar-dev" ]
   variables:
     image_name: nektar-dev
 dockerhub-deploy-nektar-workbook:
   <<: *dockerhub_deploy_template
+  needs: [ "dockerhub-build-workbook" ]
   variables:
     image_name: nektar-workbook

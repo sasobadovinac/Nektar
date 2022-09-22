@@ -47,8 +47,7 @@ namespace FieldUtils
 
 ModuleKey ProcessMeanMode::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "meanmode"),
-        ProcessMeanMode::create,
+        ModuleKey(eProcessModule, "meanmode"), ProcessMeanMode::create,
         "Extract mean mode from 3DH1D.");
 
 ProcessMeanMode::ProcessMeanMode(FieldSharedPtr f) : ProcessHomogeneousPlane(f)
@@ -67,5 +66,5 @@ void ProcessMeanMode::Process(po::variables_map &vm)
 
     ProcessHomogeneousPlane::Process(vm);
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

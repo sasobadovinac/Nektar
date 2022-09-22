@@ -32,13 +32,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Element.h>
 #include <LibUtilities/BasicUtils/VtkUtil.hpp>
+#include <NekMesh/MeshElements/Element.h>
 
-#include <vtkPolyDataReader.h>
-#include <vtkPolyData.h>
-#include <vtkPoints.h>
 #include <vtkCellArray.h>
+#include <vtkPoints.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataReader.h>
 
 #include "InputVtk.h"
 
@@ -73,8 +73,8 @@ InputVtk::~InputVtk()
  */
 void InputVtk::Process()
 {
-    m_log(VERBOSE) << "Reading VTK file '"
-                   << m_config["infile"].as<string>() << "'" << endl;
+    m_log(VERBOSE) << "Reading VTK file '" << m_config["infile"].as<string>()
+                   << "'" << endl;
 
     vtkPolyDataReader *vtkMeshReader = vtkPolyDataReader::New();
     vtkMeshReader->SetFileName(m_config["infile"].as<string>().c_str());
@@ -98,7 +98,14 @@ void InputVtk::Process()
     vtkNumPoints[2] = 2;
 
     vtkIdType npts;
+
+#if VTK_MAJOR_VERSION >= 9 ||                                                  \
+    (VTK_MAJOR_VERSION >= 8 && VTK_MINOR_VERSION >= 90)
+    const vtkIdType *pts = 0;
+#else
     vtkIdType *pts = 0;
+#endif
+
     double p[3];
 
     for (int i = 0; i < vtkPoints->GetNumberOfPoints(); ++i)
@@ -162,5 +169,5 @@ void InputVtk::Process()
     ProcessElements();
     ProcessComposites();
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -106,7 +106,152 @@ Note that the session file is also supported
 in its compressed format \inltt{test.xml.gz}.
 \end{tipbox}
 %
-%
+\subsection{Using the VTK library for output}
+While the basic VTK output detailed above (.vtu unstructured grid files) works
+without the third party VTK library, \nekpp can also optionally be linked with
+the VTK library. By enabling VTK  library support the creation of the VTK output
+files is offloaded to the VTK library rather than being manually written by \nekpp.
+
+If you want to build a version of \nekpp with integrated VTK library support, you
+need  to turn on the \inltt{NEKTAR\_USE\_VTK} switch in cmake. This will then
+look  for a compatible VTK library on the system, VTK version 8.0.0 or higher is
+recommended for full functionality because this is the minimum version which allows
+for high-order VTK output. Versions older than this are supported but the high-order
+VTK output will be disabled.
+
+Using the VTK library automatically enables file compression on the output .vtu file
+which can substantially reduce file sizes. This can be turned off with the
+command line option \inltt{uncompress} when using \inltt{FieldConvert}.
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert session.xml field.fld output.vtu:vtu:uncompress
+\end{lstlisting}
+
+If \nekpp has been compiled with \inltt{NEKTAR\_USE\_VTK} enabled then there are certain
+situations in which the legacy VTK output (manually writing rather than using the
+VTK library) must be used. The current VTK library output only supports 1D, 2D, 3D and
+3DH1D (Quasi-3D) simulations. Any simulations with expansions other than those mentioned,
+such as 2DH2D will need to be converted using the \inltt{legacy} option to invoke the
+manual \nekpp VTK output.
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert session.xml field.fld output.vtu:vtu:legacy
+\end{lstlisting}
+
+The VTK library also adds two new output types that can be specified by the command
+line when choosing to output a .vtu format file, these are detailed below.
+
+\subsubsection{High-order output}
+High-order output can be enabled using the option \inltt{highorder} which first
+runs the mesh through the \inltt{equispacedoutput} module to get a truly
+equispaced mesh and then constructs a .vtu file using arbitrary-order Lagrange
+polynomials. This gives a more precise representation of the curvature of
+elements and allows for polynomial refinement using non-linear subdivisions. This
+should result in smaller output files as refinement of the mesh geometry can be
+computed on the fly. This allows for faster postprocessing in software such as
+Paraview due to the reduced memory requirements. High-order output is currently only
+implemented for non-homogenous expansions and does not support pyramid elements.
+A minimum VTK version of 8.0.0 is required for the high-order output, any VTK versions
+older than this will result in the high-order output being disabled.
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert session.xml field.fld output.vtu:vtu:highorder
+\end{lstlisting}
+
+\subsubsection{Multi-block output}
+Multi-block output can be enabled using the option \inltt{multiblock} which splits
+the mesh in to separate blocks, one block for each domain, boundary, and any other
+composite. This allows each block to be toggled in the visualisation software
+independently.
+
+Multi-block output uses the composite/boundary/domain names defined in the session file
+to label each block, so the ID numbers above will be replaced by the name if
+specified. It is also necessary to include the \inltt{CONDITIONS} section in the
+session file supplied to \inltt{FieldConvert} because this is where the boundary
+definitions are stored. Multi-block output is currently only implemented for
+non-homogenous expansions i.e. 1D, 2D, and 3D.
+
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert session.xml conditions.xml field.fld output.vtu:vtu:multiblock
+\end{lstlisting}
+
+An example multi-block tree structure is shown in figure~\ref{fig:util:multi-block},
+with the default output on the left and the output with the optional defined names
+on the right.
+
+\begin{figure}
+\begin{minipage}{0.99\textwidth}
+\begin{center}
+\begin{multicols}{2}
+\begin{minipage}{0.99\textwidth}
+\dirtree{%
+    .1 Mesh.
+    .2 Domains.
+    .3 Domain ID 0.
+    .4 Composite ID 0.
+    .4 Composite ID 1.
+    .3 Domain ID 1.
+    .4 Composite ID 2.
+    .2 Boundaries.
+    .3 Boundary ID 0.
+    .4 Composite ID 3.
+    .4 Composite ID 4.
+    .4 Composite ID 5.
+    .3 Boundary ID 1.
+    .4 Composite ID 6.
+    .3 Boundary ID 2.
+    .4 Composite ID 7.
+    .2 Other composites.
+    .3 Composite ID 8.
+    .3 Composite ID 9.
+}
+\end{minipage}
+\columnbreak
+\begin{minipage}{0.99\textwidth}
+\vspace{\baselineskip}
+\dirtree{%
+    .1 Mesh.
+    .2 Domains.
+    .3 Domain ID 0.
+    .4 Left section unstructured.
+    .4 Right section unstructured.
+    .3 Domain ID 1.
+    .4 Cylinder structured.
+    .2 Boundaries.
+    .3 Walls.
+    .4 Top wall.
+    .4 Bottom wall.
+    .4 Cylinder wall.
+    .3 Inlet.
+    .4 Left wall.
+    .3 Outlet.
+    .4 Right wall.
+    .2 Other composites.
+    .3 Cylinder inner interface.
+    .3 Cylinder outer interface.
+}
+\end{minipage}
+\end{multicols}
+\end{center}
+\end{minipage}
+\caption{An example of the tree structure for a multi-block VTK output file.
+With the default IDs on the left and the optional names specified on the right.}
+\label{fig:util:multi-block}
+\end{figure}
+
+\subsubsection{Improved FieldConvert filter}
+An additional advantage of using the VTK library is that when a filter is set up
+with \inltt{FieldConvert} to output a .vtu file, the mesh is now cached inbetween
+timesteps and only the new expansion data is written each  filter call. This can
+provide significant speedups by keeping the geometry in memory. An example filter
+specifying a high-order and uncompressed .vtu output is shown below:
+
+\begin{lstlisting}[style=XMLStyle,gobble=2]
+  <FILTER TYPE="FieldConvert">
+      <PARAM NAME="OutputFile">MyFile.vtu:vtu:highorder:uncompress</PARAM>
+      <PARAM NAME="OutputFrequency">100</PARAM>
+  </FILTER>
+\end{lstlisting}
 %
 \section{Convert field files between XML and HDF5 format}
 %
@@ -243,6 +388,7 @@ Specifically, FieldConvert has these additional functionalities
 %
 \begin{enumerate}
 \item \inltt{C0Projection}: Computes the C0 projection of a given output file;
+\item \inltt{CFL}: Computes the CFL number over the solution domain for Incompressible flow
 \item \inltt{QCriterion}: Computes the Q-Criterion for a given output file;
 \item \inltt{L2Criterion}: Computes the Lambda 2 Criterion for a given output file;
 \item \inltt{addcompositeid}: Adds the composite ID of an element as an additional field;
@@ -332,7 +478,26 @@ and so $L$ is the length scale below which the coefficients values are
 halved or more. Since this form of the Helmholtz operator is not
 possitive definite, currently a direct solver is necessary and so this
 smoother is mainly of use in two-dimensions.
+%
+%
+%
+\subsection{Calculate CFL number: \textit{CFL} module}
+This module calculates the CFL number over the domain. It currently only
+supports the solution results from the Incompressible flow simulaitons, i.e.
+the outputs of \inltt{IncNavierStokesSolver}. To Estimate the \textit{CFL} 
+number, the user can run
+%
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -m CFL test.xml test.fld test-cfl.fld
+\end{lstlisting}
 
+
+where the file \inltt{test-cfl.fld} can be processed in a similar
+way as described in section \ref{s:utilities:fieldconvert:sub:convert}
+to visualise the result either in Tecplot, Paraview or VisIt.
+%
+%
+%
 \subsection{Calculate Q-Criterion: \textit{QCriterion} module}
 To perform the Q-criterion calculation and obtain an output
 data containing the Q-criterion solution, the user can run
@@ -347,7 +512,6 @@ to visualise the result either in Tecplot, Paraview or VisIt.
 %
 %
 %
-
 \subsection{Calculate $\lambda_2$: \textit{L2Criterion} module}
 To perform the $\lambda_2$ vortex detection calculation and obtain an output
 data containing the values of the $\lambda_2$ eigenvalue, the user can run
@@ -481,7 +645,7 @@ FieldConvert -m equispacedouttput test.xml test.fld test.vtu
 
 \begin{notebox}
 Currently this option is only set up for triangles, quadrilaterals,
-tetrahedrons and prisms.
+hexahedrons, tetrahedrons and prisms.
 \end{notebox}
 
 \subsection{Extract a boundary region: \textit{extract} module}
@@ -537,8 +701,10 @@ to visualise the result either in Tecplot, Paraview or VisIt.
 
 To obtain full Fourier expansion form a \inltt{HalfMode} result, use the comand:
 \begin{lstlisting}[style=BashInputStyle]
-  FieldConvert -m halfmodetofourier file.xml half_mode_file.fld single_mode_file.fld
+  FieldConvert -m halfmodetofourier:realmodetoimag=value1,value2 file.xml half_mode_file.fld single_mode_file.fld
 \end{lstlisting}
+
+In linear stability analysis with halfmode expansion, the variable w, whose variable number is 2, is a imaginary mode but it is output as a real mode in the eigenvector field file. By setting option \inltt{realmodetoimag=2}, w can be transformed to a imaginary mode correctly.
 
 \subsection{Extract a plane from 3DH1D expansion: \textit{homplane} module}
 
@@ -639,6 +805,8 @@ The \inltt{fromxml} and \inltt{fromfld} must be specified in this module.
 In addition there are two optional arguments \inltt{clamptolowervalue}
 and \inltt{clamptouppervalue} which clamp the interpolation between
 these two values. Their default values are -10,000,000 and 10,000,000.
+
+If the fromfld is a 3DH1D field and uses HalfMode expansion, you can use \inltt{realmodetoimag=$n_1,n_2,...,n_m$} to transform the $n_1,n_2,...,n_m$th variables from real modes to imaginary modes. Variable index starts from 0.
 %
 \begin{tipbox}
 This module can run in parallel where the speed is increased not
@@ -786,9 +954,7 @@ where $p0$ is a reference pressure and $q$ is the free stream dynamics pressure.
 If the input does not contain a field ``p'' or a velocity field ``u,v,w'' then $cp$
 and $cp0$ are not evaluated accordingly.
 
-Interpolation of 3DH1D fields is performed only in the x-y
-spectral/\emph{hp} planes. At every x-y location, if the point lies outside a
-Fourier plane its z-coordinate is reset to the closest plane.
+If the fromfld is a 3DH1D field and uses HalfMode expansion, you can use \inltt{realmodetoimag=$n_1,n_2,...,n_m$} to transform the $n_1,n_2,...,n_m$th variables from real modes to imaginary modes. Variable index starts from 0.
 %
 \begin{notebox}
 This module  runs in parallel for the line, plane and box extraction of points.
@@ -1164,7 +1330,13 @@ to composites rather boundaries. If \inltt{bnd} is not provided, all boundaries
 are extracted to different fields. The \inltt{addnormals} is an optional command
 argument which, when turned on, outputs the normal vector of the extracted boundary
 region as well as the shear stress vector and magnitude. This option is off by default.
-To process the output file(s) you will need an xml file of the same region.
+To process the output file(s) you will need an xml file of the same region.\\
+The output fields are wall shear stress in streamwise direction (\inltt{Shear\_s}),
+normal direction (\inltt{Shear\_n}) and magnitude of the wall shear stress vector 
+(\inltt{Shear\_mag}) for 2D simulations. For 3D simulations, wall shear stress in
+the spanwise direction (\inltt{Shear\_z}) is also included in the output fileds.
+Note that the streamwise and normal directions are local at each point on the 
+corresponding boundary.
 %
 %
 %

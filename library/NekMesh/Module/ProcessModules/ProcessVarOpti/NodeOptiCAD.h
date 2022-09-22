@@ -132,7 +132,7 @@ private:
     CADCurveSharedPtr curve;
     Array<OneD, NekDouble> m_bd;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -69,7 +69,7 @@ public:
         return "ProcessJac";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

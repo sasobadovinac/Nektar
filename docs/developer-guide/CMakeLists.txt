@@ -14,40 +14,45 @@ MARK_AS_ADVANCED(HTLATEX)
 
 ADD_CUSTOM_TARGET(developer-guide-html
     TEXINPUTS=${DEVGUIDESRC}//:
-    ${HTLATEX} ${DEVGUIDESRC}/developers-guide.tex 
+    ${HTLATEX} ${DEVGUIDESRC}/developer-guide.tex 
     "${DEVGUIDESRC}/styling.cfg,html,3,next,NoFonts"
-    COMMAND BIBINPUTS=${DEVGUIDESRC} ${BIBTEX} developers-guide.aux
+    COMMAND BIBINPUTS=${DEVGUIDESRC} ${BIBTEX} developer-guide.aux
     COMMAND TEXINPUTS=${DEVGUIDESRC}//:
-    ${HTLATEX} ${DEVGUIDESRC}/developers-guide.tex 
+    ${HTLATEX} ${DEVGUIDESRC}/developer-guide.tex 
     "${DEVGUIDESRC}/styling.cfg,html,3,next,NoFonts"
     WORKING_DIRECTORY ${DEVGUIDE}/html
 )
 
 # If tex4ht successful, create img dir and copy images across
-FILE(GLOB_RECURSE imgfiles "${DEVGUIDESRC}/*.png" "${DEVGUIDESRC}/*.jpg")
-ADD_CUSTOM_COMMAND(TARGET developer-guide-html
-    POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${DEVGUIDE}/html/img)
+FILE(GLOB_RECURSE imgfiles RELATIVE ${DEVGUIDESRC}
+     "${DEVGUIDESRC}/*.png" "${DEVGUIDESRC}/*.jpg")
 FOREACH(img ${imgfiles})
-    ADD_CUSTOM_COMMAND(TARGET developer-guide-html
-        POST_BUILD COMMAND 
-            ${CMAKE_COMMAND} -E copy ${img} ${DEVGUIDE}/html/img)
+    GET_FILENAME_COMPONENT(DIRNAME ${img} DIRECTORY)
+    ADD_CUSTOM_COMMAND(TARGET developer-guide-html POST_BUILD
+        COMMENT "Copying ${img} to ${DEVGUIDE}/html/${img}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${DEVGUIDE}/html/${DIRNAME}
+        COMMAND ${CMAKE_COMMAND} -E copy ${img} ${DEVGUIDE}/html/${img}
+        WORKING_DIRECTORY ${DEVGUIDESRC})
 ENDFOREACH()
 
-FILE(GLOB_RECURSE pdffiles "${DEVGUIDESRC}/*.pdf")
+FILE(GLOB_RECURSE pdffiles RELATIVE ${DEVGUIDESRC} "*/img/*.pdf")
 FIND_PROGRAM(CONVERT convert)
 FOREACH(pdf ${pdffiles})
-    GET_FILENAME_COMPONENT(BASENAME ${pdf} NAME_WE)
-    ADD_CUSTOM_COMMAND(TARGET developer-guide-html
-        POST_BUILD COMMAND
-        ${CONVERT} ${pdf} ${DEVGUIDE}/html/img/${BASENAME}.png)
+    GET_FILENAME_COMPONENT(BASE ${pdf} NAME_WE)
+    GET_FILENAME_COMPONENT(DIR  ${pdf} DIRECTORY)
+    ADD_CUSTOM_COMMAND(TARGET developer-guide-html POST_BUILD
+        COMMENT "Converting ${pdf} to ${DEVGUIDE}/html/${DIR}/${BASE}.png"
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${DEVGUIDE}/html/${DIR}
+        COMMAND ${CONVERT} ${pdf} ${DEVGUIDE}/html/${DIR}/${BASE}.png
+        WORKING_DIRECTORY ${DEVGUIDESRC})
 ENDFOREACH()
 
 ADD_CUSTOM_TARGET(developer-guide-pdf
-    ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developers-guide.tex
-    COMMAND TEXMFOUTPUT=${DEVGUIDE} ${BIBTEX} ${DEVGUIDE}/developers-guide.aux
-    COMMAND TEXMFOUTPUT=${DEVGUIDE} ${MAKEINDEX} ${DEVGUIDE}/developers-guide.idx
-    COMMAND ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developers-guide.tex
-    COMMAND ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developers-guide.tex
+    ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developer-guide.tex
+    COMMAND TEXMFOUTPUT=${DEVGUIDE} ${BIBTEX} ${DEVGUIDE}/developer-guide.aux
+    COMMAND TEXMFOUTPUT=${DEVGUIDE} ${MAKEINDEX} ${DEVGUIDE}/developer-guide.idx
+    COMMAND ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developer-guide.tex
+    COMMAND ${PDFLATEX} --output-directory ${DEVGUIDE} ${DEVGUIDESRC}/developer-guide.tex
     WORKING_DIRECTORY ${DEVGUIDESRC}
 )
 
@@ -57,10 +62,10 @@ INSTALL(CODE "IF (EXISTS ${DEVGUIDE}/html)
     LIST(LENGTH DGHTML DGHTML_LEN)
     IF(DGHTML_LEN GREATER 0)
         FILE(INSTALL ${DEVGUIDE}/html
-             DESTINATION \${CMAKE_INSTALL_PREFIX}/${NEKTAR_DOC_DIR}/developers-guide)
+             DESTINATION \${CMAKE_INSTALL_PREFIX}/${NEKTAR_DOC_DIR}/developer-guide)
     ENDIF()
 ENDIF()
-IF (EXISTS ${DEVGUIDE}/developers-guide.pdf)
-    FILE(INSTALL ${DEVGUIDE}/developers-guide.pdf
-         DESTINATION \${CMAKE_INSTALL_PREFIX}/${NEKTAR_DOC_DIR}/developers-guide)
+IF (EXISTS ${DEVGUIDE}/developer-guide.pdf)
+    FILE(INSTALL ${DEVGUIDE}/developer-guide.pdf
+         DESTINATION \${CMAKE_INSTALL_PREFIX}/${NEKTAR_DOC_DIR}/developer-guide)
 ENDIF()")

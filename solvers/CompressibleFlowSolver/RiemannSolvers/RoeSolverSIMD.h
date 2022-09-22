@@ -44,10 +44,9 @@ class RoeSolverSIMD : public CompressibleSolver
 {
 public:
     static RiemannSolverSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession)
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-        return RiemannSolverSharedPtr(
-            new RoeSolverSIMD(pSession));
+        return RiemannSolverSharedPtr(new RoeSolverSIMD(pSession));
     }
 
     static std::string solverName;
@@ -56,19 +55,15 @@ public:
     RoeSolverSIMD();
 
 protected:
-    RoeSolverSIMD(const LibUtilities::SessionReaderSharedPtr& pSession);
+    RoeSolverSIMD(const LibUtilities::SessionReaderSharedPtr &pSession);
 
     using ND = NekDouble;
 
-    void v_Solve(
-        const int                                 nDim,
-        const Array<OneD, const Array<OneD, ND> > &Fwd,
-        const Array<OneD, const Array<OneD, ND> > &Bwd,
-              Array<OneD,       Array<OneD, ND> > &flux) final;
+    void v_Solve(const int nDim, const Array<OneD, const Array<OneD, ND>> &Fwd,
+                 const Array<OneD, const Array<OneD, ND>> &Bwd,
+                 Array<OneD, Array<OneD, ND>> &flux) final;
 };
 
-
-
-} // namespace
+} // namespace Nektar
 
 #endif

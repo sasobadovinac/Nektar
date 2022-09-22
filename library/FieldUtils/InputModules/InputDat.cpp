@@ -53,10 +53,8 @@ namespace FieldUtils
 
 ModuleKey InputDat::m_className[1] = {
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eInputModule, "dat"),
-        InputDat::create,
-        "Reads Tecplot dat file for FE block triangular format.")
-};
+        ModuleKey(eInputModule, "dat"), InputDat::create,
+        "Reads Tecplot dat file for FE block triangular format.")};
 
 /**
  * @brief Set up InputDat object.
@@ -110,8 +108,8 @@ void InputDat::Process(po::variables_map &vm)
 
             // note this expects a comma separated list but
             // does not work for white space separated lists!
-            bool valid = ParseUtils::GenerateVector(
-                line.substr(pos), fieldNames);
+            bool valid =
+                ParseUtils::GenerateVector(line.substr(pos), fieldNames);
             ASSERTL0(valid, "Unable to process list of field variable in "
                             " VARIABLES list:  " +
                                 line.substr(pos));
@@ -126,8 +124,8 @@ void InputDat::Process(po::variables_map &vm)
     // set up basic parameters
     int nfields = fieldNames.size();
     int totvars = dim + nfields;
-    Array<OneD, Array<OneD, NekDouble> > pts(totvars);
-    vector<Array<OneD, int> > ptsConn;
+    Array<OneD, Array<OneD, NekDouble>> pts(totvars);
+    vector<Array<OneD, int>> ptsConn;
 
     // read zones
     while (!datFile.eof())
@@ -155,10 +153,9 @@ void InputDat::Process(po::variables_map &vm)
 /**
  *
  */
-void InputDat::ReadTecplotFEBlockZone(std::ifstream &datFile,
-                                      string &line,
-                                      Array<OneD, Array<OneD, NekDouble> > &pts,
-                                      vector<Array<OneD, int> > &ptsConn)
+void InputDat::ReadTecplotFEBlockZone(std::ifstream &datFile, string &line,
+                                      Array<OneD, Array<OneD, NekDouble>> &pts,
+                                      vector<Array<OneD, int>> &ptsConn)
 {
     ASSERTL0(line.find("FEBlock") != string::npos,
              "Routine only set up for FEBLock format");
@@ -187,7 +184,7 @@ void InputDat::ReadTecplotFEBlockZone(std::ifstream &datFile,
     // set-up or extend m_pts array;
     int norigpts  = pts[0].size();
     int totfields = pts.size();
-    Array<OneD, Array<OneD, NekDouble> > origpts(totfields);
+    Array<OneD, Array<OneD, NekDouble>> origpts(totfields);
     for (int i = 0; i < totfields; ++i)
     {
         origpts[i] = pts[i];
@@ -222,5 +219,5 @@ void InputDat::ReadTecplotFEBlockZone(std::ifstream &datFile,
 
     getline(datFile, line);
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

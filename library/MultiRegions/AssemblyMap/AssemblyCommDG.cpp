@@ -1,36 +1,36 @@
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //
-// File AssemblyCommDG.cpp
+//  File: SurfaceMeshing.h
 //
-// For more information, please see: http://www.nektar.info
+//  For more information, please see: http://www.nektar.info/
 //
-// The MIT License
+//  The MIT License
 //
-// Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
-// Department of Aeronautics, Imperial College London (UK), and Scientific
-// Computing and Imaging Institute, University of Utah (USA).
+//  Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+//  Department of Aeronautics, Imperial College London (UK), and Scientific
+//  Computing and Imaging Institute, University of Utah (USA).
 //
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following conditions:
+//  Permission is hereby granted, free of charge, to any person obtaining a
+//  copy of this software and associated documentation files (the "Software"),
+//  to deal in the Software without restriction, including without limitation
+//  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//  and/or sell copies of the Software, and to permit persons to whom the
+//  Software is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE.
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//  DEALINGS IN THE SOFTWARE.
 //
-// Description: Parallel communication methods for DG with MPI
+//  Description: class containing all surfacemeshing routines and classes.
 //
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 #include <LocalRegions/Expansion2D.h>
 #include <MultiRegions/AssemblyMap/AssemblyCommDG.h>
@@ -183,6 +183,8 @@ Pairwise::Pairwise(const LibUtilities::CommSharedPtr &comm,
     int nNeighbours = rankSharedEdges.size();
     Array<OneD, int> sendCount(nNeighbours, -1);
 
+    // List of partition to trace map indices of the quad points to exchange
+    std::vector<std::pair<int, std::vector<int>>> vecPairPartitionTrace;
     for (const auto &rankEdgeSet : rankSharedEdges)
     {
         std::vector<int> edgeTraceIndex;
@@ -193,39 +195,49 @@ Pairwise::Pairwise(const LibUtilities::CommSharedPtr &comm,
                                   edgeIndex.end());
         }
 
-        m_vecPairPartitionTrace.emplace_back(
+        vecPairPartitionTrace.emplace_back(
             std::make_pair(rankEdgeSet.first, edgeTraceIndex));
 
         sendCount[cnt++] = edgeTraceIndex.size();
     }
 
-    m_sendDisp = Array<OneD, int>(nNeighbours, 0);
-
+    Array<OneD, int> sendDisp(nNeighbours, 0);
     for (size_t i = 1; i < nNeighbours; ++i)
     {
-        m_sendDisp[i] = m_sendDisp[i - 1] + sendCount[i - 1];
+        sendDisp[i] = sendDisp[i - 1] + sendCount[i - 1];
     }
 
     size_t totSends = std::accumulate(sendCount.begin(), sendCount.end(), 0);
 
-    m_recvBuff = Array<OneD, NekDouble>(totSends, -1);
-    m_sendBuff = Array<OneD, NekDouble>(totSends, -1);
+    m_recvBuff       = Array<OneD, NekDouble>(totSends, -1);
+    m_sendBuff       = Array<OneD, NekDouble>(totSends, -1);
+    m_edgeTraceIndex = Array<OneD, int>(totSends, -1);
 
-    m_recvRequest = m_comm->CreateRequest(m_vecPairPartitionTrace.size());
-    m_sendRequest = m_comm->CreateRequest(m_vecPairPartitionTrace.size());
+    // Set up m_edgeTraceIndex to reduce complexity when performing exchange
+    cnt = 0;
+    for (auto &i : vecPairPartitionTrace)
+    {
+        for (auto j : i.second)
+        {
+            m_edgeTraceIndex[cnt++] = j;
+        }
+    }
+
+    m_recvRequest = m_comm->CreateRequest(vecPairPartitionTrace.size());
+    m_sendRequest = m_comm->CreateRequest(vecPairPartitionTrace.size());
 
     // Construct persistent requests
-    for (size_t i = 0; i < m_vecPairPartitionTrace.size(); ++i)
+    for (size_t i = 0; i < vecPairPartitionTrace.size(); ++i)
     {
-        size_t len = m_vecPairPartitionTrace[i].second.size();
+        size_t len = vecPairPartitionTrace[i].second.size();
 
         // Initialise receive requests
-        m_comm->RecvInit(m_vecPairPartitionTrace[i].first,
-                         m_recvBuff[m_sendDisp[i]], len, m_recvRequest, i);
+        m_comm->RecvInit(vecPairPartitionTrace[i].first,
+                         m_recvBuff[sendDisp[i]], len, m_recvRequest, i);
 
         // Initialise send requests
-        m_comm->SendInit(m_vecPairPartitionTrace[i].first,
-                         m_sendBuff[m_sendDisp[i]], len, m_sendRequest, i);
+        m_comm->SendInit(vecPairPartitionTrace[i].first,
+                         m_sendBuff[sendDisp[i]], len, m_sendRequest, i);
     }
 }
 
@@ -305,14 +317,9 @@ void Pairwise::PerformExchange(const Array<OneD, NekDouble> &testFwd,
     m_comm->StartAll(m_recvRequest);
 
     // Fill send buffer from Fwd trace
-    for (size_t i = 0; i < m_vecPairPartitionTrace.size(); ++i)
+    for (size_t i = 0; i < m_edgeTraceIndex.size(); ++i)
     {
-        size_t len = m_vecPairPartitionTrace[i].second.size();
-        for (size_t j = 0; j < len; ++j)
-        {
-            m_sendBuff[m_sendDisp[i] + j] =
-                testFwd[m_vecPairPartitionTrace[i].second[j]];
-        }
+        m_sendBuff[i] = testFwd[m_edgeTraceIndex[i]];
     }
 
     // Perform send posts
@@ -323,14 +330,9 @@ void Pairwise::PerformExchange(const Array<OneD, NekDouble> &testFwd,
     m_comm->WaitAll(m_recvRequest);
 
     // Fill Bwd trace from recv buffer
-    for (size_t i = 0; i < m_vecPairPartitionTrace.size(); ++i)
+    for (size_t i = 0; i < m_edgeTraceIndex.size(); ++i)
     {
-        size_t len = m_vecPairPartitionTrace[i].second.size();
-        for (size_t j = 0; j < len; ++j)
-        {
-            testBwd[m_vecPairPartitionTrace[i].second[j]] =
-                m_recvBuff[m_sendDisp[i] + j];
-        }
+        testBwd[m_edgeTraceIndex[i]] = m_recvBuff[i];
     }
 }
 
@@ -342,7 +344,7 @@ AssemblyCommDG::AssemblyCommDG(
     const Array<OneD, const SpatialDomains::BoundaryConditionShPtr> &bndCond,
     const PeriodicMap &perMap)
 {
-    auto comm = locExp.GetSession()->GetComm()->GetRowComm();
+    auto comm = locExp.GetComm()->GetRowComm();
 
     // If serial then skip initialising graph structure and the MPI timing
     if (comm->IsSerial())
@@ -437,23 +439,21 @@ AssemblyCommDG::AssemblyCommDG(
  * that rank. This is filled by:
  *
  * - Create an edge to trace mapping, and realign periodic edges within this
- *   mapping so that they have the same data layout for ranks sharing periodic
- *   boundaries.
- * - Create a list of all local edge IDs and calculate the maximum number of
- *   quadrature points used locally, then perform an AllReduce to find the
- *   maximum number of quadrature points across all ranks (for the AllToAll
- *   method).
- * - Create a list of all boundary edge IDs except for those which are periodic
- * - Using the boundary ID list, and all local ID list we can construct a unique
- *   list of IDs which are on a partition boundary (e.g. if doesn't occur in the
- *   local list twice, and doesn't occur in the boundary list it is on a
- *   partition boundary). We also check, if it is a periodic edge, whether the
- *   other side is local, if not we add the minimum of the two periodic IDs to
- *   the unique list as we must have a consistent numbering scheme across ranks.
- * - We send the unique list to all other ranks/partitions. Each ranks unique
- *   list is then compared with the local unique edge ID list, if a match is
- *   found then the member variable #m_rankSharedEdges is filled with the
- *   matching rank and unique edge ID.
+ * mapping so that they have the same data layout for ranks sharing periodic
+ * boundaries.  - Create a list of all local edge IDs and calculate the maximum
+ * number of quadrature points used locally, then perform an AllReduce to find
+ * the maximum number of quadrature points across all ranks (for the AllToAll
+ * method).  - Create a list of all boundary edge IDs except for those which are
+ * periodic - Using the boundary ID list, and all local ID list we can construct
+ * a unique list of IDs which are on a partition boundary (e.g. if doesn't occur
+ * in the local list twice, and doesn't occur in the boundary list it is on a
+ * partition boundary). We also check, if it is a periodic edge, whether the
+ * other side is local, if not we add the minimum of thetwo periodic IDs to the
+ * unique list as we must have a consistent numbering scheme across ranks.  - We
+ * send the unique list to all other ranks/partitions. Each ranks unique list is
+ * then compared with the local unique edge ID list, if a match is found then
+ * the member variable #m_rankSharedEdges is filled with the matching rank and
+ * unique edge ID.
  */
 void AssemblyCommDG::InitialiseStructure(
     const ExpList &locExp, const ExpListSharedPtr &trace,
@@ -578,7 +578,7 @@ void AssemblyCommDG::InitialiseStructure(
             int id = elmtToTrace[eid][j]->GetGeom()->GetGlobalID();
             localEdgeIds.emplace_back(id);
         }
-        
+
         quad = locExpansion->GetTotPoints();
         if (quad > m_maxQuad)
         {
@@ -593,12 +593,17 @@ void AssemblyCommDG::InitialiseStructure(
     std::set<int> bndIdList;
     for (size_t i = 0; i < bndCond.size(); ++i)
     {
-        for (size_t j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
+        // Don't add if periodic boundary type
+        if ((bndCond[i]->GetBoundaryConditionType() ==
+             SpatialDomains::ePeriodic))
         {
-            eid = bndCondExp[i]->GetExp(j)->GetGeom()->GetGlobalID();
-            if (perMap.find(eid) ==
-                perMap.end()) // Don't add if periodic boundary
+            continue;
+        }
+        else
+        {
+            for (size_t j = 0; j < bndCondExp[i]->GetExpSize(); ++j)
             {
+                eid = bndCondExp[i]->GetExp(j)->GetGeom()->GetGlobalID();
                 bndIdList.insert(eid);
             }
         }
@@ -703,7 +708,7 @@ void AssemblyCommDG::InitialiseStructure(
  */
 std::tuple<NekDouble, NekDouble, NekDouble> AssemblyCommDG::Timing(
     const LibUtilities::CommSharedPtr &comm, const int &count, const int &num,
-    const ExchangeMethodSharedPtr& f)
+    const ExchangeMethodSharedPtr &f)
 {
     Array<OneD, NekDouble> testFwd(num, 1);
     Array<OneD, NekDouble> testBwd(num, -2);

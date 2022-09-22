@@ -25,6 +25,7 @@ SET(SOLVER_UTILS_SOURCES
   Filters/Filter.cpp
   Filters/FilterAeroForces.cpp
   Filters/FilterAverageFields.cpp
+  Filters/FilterMaxMinFields.cpp
   Filters/FilterCheckpoint.cpp
   Filters/FilterEnergy1D.cpp
   Filters/FilterEnergy.cpp
@@ -76,11 +77,13 @@ SET(SOLVER_UTILS_HEADERS
   Filters/Filter.h
   Filters/FilterAeroForces.h
   Filters/FilterAverageFields.h
+  Filters/FilterMaxMinFields.h
   Filters/FilterCheckpoint.h
   Filters/FilterEnergy1D.h
   Filters/FilterEnergy.h
   Filters/FilterError.h
   Filters/FilterHistoryPoints.h
+  Filters/FilterInterfaces.hpp
   Filters/FilterMean.h
   Filters/FilterModalEnergy.h
   Filters/FilterMovingAverage.h
@@ -124,3 +127,15 @@ ADD_NEKTAR_LIBRARY(SolverUtils
     SUMMARY "Nektar++ SolverUtils library"
     DESCRIPTION "This library provides support classes and routines for constructing complete spectral/hp element solvers.")
 
+IF (NEKTAR_USE_VTK)
+    IF (VTK_MAJOR_VERSION LESS 6)
+        TARGET_LINK_LIBRARIES(SolverUtils LINK_PUBLIC vtkCommon vtkIO vtkGraphics vtkFiltersCore)
+    ELSEIF (VTK_MAJOR_VERSION  GREATER_EQUAL 9)
+        TARGET_LINK_LIBRARIES(SolverUtils LINK_PUBLIC VTK::CommonCore VTK::IOLegacy VTK::IOXML VTK::FiltersCore)
+        vtk_module_autoinit(
+                TARGETS SolverUtils
+                MODULES VTK::CommonCore VTK::IOLegacy VTK::IOXML VTK::FiltersCore)
+    ELSE ()
+        TARGET_LINK_LIBRARIES(SolverUtils LINK_PUBLIC vtkCommonCore vtkIOLegacy vtkIOXML vtkFiltersCore)
+    ENDIF ()
+ENDIF (NEKTAR_USE_VTK)

@@ -65,7 +65,7 @@ public:
     CurveMesh(int id, MeshSharedPtr m, Logger log, std::string expr = "0.0")
         : m_id(id), m_mesh(m), m_log(log)
     {
-        m_blID = m_bl.DefineFunction("x y z", expr);
+        m_blID     = m_bl.DefineFunction("x y z", expr);
         m_cadcurve = m_mesh->m_cad->GetCurve(m_id);
         m_log.SetPrefix("CurveMesh");
     }
@@ -174,9 +174,9 @@ private:
     /// coords of the ends of the parametric curve
     Array<OneD, NekDouble> m_bounds;
     /// array of function ds evaluations
-    std::vector<std::vector<NekDouble> > m_dst;
+    std::vector<std::vector<NekDouble>> m_dst;
     /// array of function ps evaluations
-    std::vector<std::vector<NekDouble> > m_ps;
+    std::vector<std::vector<NekDouble>> m_ps;
     /// spacing function evaluation
     NekDouble Ae;
     /// ds
@@ -202,7 +202,7 @@ private:
     Logger m_log;
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

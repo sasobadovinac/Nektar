@@ -35,8 +35,8 @@
 #include <SpatialDomains/TetGeom.h>
 
 #include <SpatialDomains/Geometry1D.h>
-#include <StdRegions/StdTetExp.h>
 #include <SpatialDomains/SegGeom.h>
+#include <StdRegions/StdTetExp.h>
 
 using namespace std;
 
@@ -50,6 +50,8 @@ const unsigned int TetGeom::VertexFaceConnectivity[4][3] = {
     {0, 1, 3}, {0, 1, 2}, {0, 2, 3}, {1, 2, 3}};
 const unsigned int TetGeom::EdgeFaceConnectivity[6][2] = {
     {0, 1}, {0, 2}, {0, 3}, {1, 3}, {1, 2}, {2, 3}};
+const unsigned int TetGeom::EdgeNormalToFaceVert[4][3] = {
+    {3, 4, 5}, {1, 2, 5}, {0, 2, 3}, {0, 1, 4}};
 
 TetGeom::TetGeom()
 {
@@ -60,7 +62,7 @@ TetGeom::TetGeom(int id, const TriGeomSharedPtr faces[])
     : Geometry3D(faces[0]->GetEdge(0)->GetVertex(0)->GetCoordim())
 {
     m_shapeType = LibUtilities::eTetrahedron;
-    m_globalID = id;
+    m_globalID  = id;
 
     /// Copy the face shared pointers
     m_faces.insert(m_faces.begin(), faces, faces + TetGeom::kNfaces);
@@ -110,6 +112,11 @@ int TetGeom::v_GetEdgeFaceMap(const int i, const int j) const
     return EdgeFaceConnectivity[i][j];
 }
 
+int TetGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
+}
+
 void TetGeom::SetUpLocalEdges()
 {
 
@@ -140,8 +147,7 @@ void TetGeom::SetUpLocalEdges()
         {
             if ((m_faces[0])->GetEid(i) == (m_faces[faceConnected])->GetEid(0))
             {
-                edge = dynamic_pointer_cast<SegGeom>(
-                    (m_faces[0])->GetEdge(i));
+                edge = dynamic_pointer_cast<SegGeom>((m_faces[0])->GetEdge(i));
                 m_edges.push_back(edge);
                 check++;
             }
@@ -174,8 +180,7 @@ void TetGeom::SetUpLocalEdges()
         {
             if ((m_faces[1])->GetEid(i) == (m_faces[3])->GetEid(j))
             {
-                edge = dynamic_pointer_cast<SegGeom>(
-                    (m_faces[1])->GetEdge(i));
+                edge = dynamic_pointer_cast<SegGeom>((m_faces[1])->GetEdge(i));
                 m_edges.push_back(edge);
                 check++;
             }
@@ -319,8 +324,8 @@ void TetGeom::SetUpEdgeOrientation()
     // This 2D array holds the local id's of all the vertices
     // for every edge. For every edge, they are ordered to what we
     // define as being Forwards
-    const unsigned int edgeVerts[kNedges][2] = {
-        {0, 1}, {1, 2}, {0, 2}, {0, 3}, {1, 3}, {2, 3}};
+    const unsigned int edgeVerts[kNedges][2] = {{0, 1}, {1, 2}, {0, 2},
+                                                {0, 3}, {1, 3}, {2, 3}};
 
     int i;
     for (i = 0; i < kNedges; i++)
@@ -329,7 +334,8 @@ void TetGeom::SetUpEdgeOrientation()
         {
             m_eorient[i] = StdRegions::eForwards;
         }
-        else if (m_edges[i]->GetVid(0) == m_verts[edgeVerts[i][1]]->GetGlobalID())
+        else if (m_edges[i]->GetVid(0) ==
+                 m_verts[edgeVerts[i][1]]->GetGlobalID())
         {
             m_eorient[i] = StdRegions::eBackwards;
         }
@@ -390,8 +396,8 @@ void TetGeom::SetUpFaceOrientation()
         // initialisation
         elementAaxis_length = 0.0;
         elementBaxis_length = 0.0;
-        faceAaxis_length = 0.0;
-        faceBaxis_length = 0.0;
+        faceAaxis_length    = 0.0;
+        faceBaxis_length    = 0.0;
 
         dotproduct1 = 0.0;
         dotproduct2 = 0.0;
@@ -462,8 +468,8 @@ void TetGeom::SetUpFaceOrientation()
 
         elementAaxis_length = sqrt(elementAaxis_length);
         elementBaxis_length = sqrt(elementBaxis_length);
-        faceAaxis_length = sqrt(faceAaxis_length);
-        faceBaxis_length = sqrt(faceBaxis_length);
+        faceAaxis_length    = sqrt(faceAaxis_length);
+        faceBaxis_length    = sqrt(faceBaxis_length);
 
         // Calculate the inner product of both the A-axis
         // (i.e. Elemental A axis and face A axis)
@@ -472,7 +478,8 @@ void TetGeom::SetUpFaceOrientation()
             dotproduct1 += elementAaxis[i] * faceAaxis[i];
         }
 
-        NekDouble norm = fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
+        NekDouble norm =
+            fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
         orientation = 0;
 
         // if the innerproduct is equal to the (absolute value of the ) products
@@ -553,6 +560,15 @@ void TetGeom::SetUpFaceOrientation()
 
         orientation = orientation + 5;
 
+        ASSERTL0(orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+                 "Orientation of triangular face (id = " +
+                     boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
+                     ") is inconsistent with face " +
+                     boost::lexical_cast<string>(f) + " of tet element (id = " +
+                     boost::lexical_cast<string>(m_globalID) +
+                     ") since Dir2 is aligned with Dir1. Mesh setup "
+                     "needs investigation");
+
         // Fill the m_forient array
         m_forient[f] = (StdRegions::Orientation)orientation;
     }
@@ -570,7 +586,7 @@ void TetGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void TetGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 4; ++i)
         {
@@ -587,7 +603,7 @@ void TetGeom::v_Setup()
  */
 void TetGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         TetGeom::v_Setup();
     }
@@ -640,22 +656,18 @@ void TetGeom::SetUpXmap()
     int order2 = *max_element(tmp.begin(), tmp.end());
 
     const LibUtilities::BasisKey A(
-        LibUtilities::eModified_A,
-        order0,
-        LibUtilities::PointsKey(order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order0,
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey B(
-        LibUtilities::eModified_B,
-        order1,
-        LibUtilities::PointsKey(order1,
-                                LibUtilities::eGaussRadauMAlpha1Beta0));
+        LibUtilities::eModified_B, order1,
+        LibUtilities::PointsKey(order1, LibUtilities::eGaussRadauMAlpha1Beta0));
     const LibUtilities::BasisKey C(
-        LibUtilities::eModified_C,
-        order2,
-        LibUtilities::PointsKey(order2,
-                                LibUtilities::eGaussRadauMAlpha2Beta0));
+        LibUtilities::eModified_C, order2,
+        LibUtilities::PointsKey(order2, LibUtilities::eGaussRadauMAlpha2Beta0));
 
     m_xmap = MemoryManager<StdRegions::StdTetExp>::AllocateSharedPtr(A, B, C);
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

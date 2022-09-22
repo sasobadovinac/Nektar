@@ -108,6 +108,7 @@ public:
 protected:
     MPI_Comm m_comm;
     int m_rank{};
+    bool m_controls_mpi;
 
     explicit CommMpi(MPI_Comm pComm);
 
@@ -179,6 +180,8 @@ protected:
 
     virtual void v_SplitComm(int pRows, int pColumns) override;
     virtual CommSharedPtr v_CommCreateIf(int flag) final;
+
+    virtual std::pair<CommSharedPtr, CommSharedPtr> v_SplitCommNode() final;
 };
 } // namespace LibUtilities
 } // namespace Nektar

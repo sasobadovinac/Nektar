@@ -42,11 +42,11 @@ using namespace std;
 #include <boost/math/special_functions/fpclassify.hpp>
 
 #include <FieldUtils/Interpolator.h>
+#include <LibUtilities/BasicUtils/CsvIO.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/Progressbar.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/BasicUtils/PtsIO.h>
-#include <LibUtilities/BasicUtils/CsvIO.h>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include "ProcessInterpPoints.h"
 
@@ -60,8 +60,7 @@ namespace FieldUtils
 
 ModuleKey ProcessInterpPoints::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "interppoints"),
-        ProcessInterpPoints::create,
+        ModuleKey(eProcessModule, "interppoints"), ProcessInterpPoints::create,
         "Interpolates a field to a set of points. Requires fromfld, fromxml "
         "to be defined, and a topts, line, plane or block of target points  ");
 
@@ -73,18 +72,20 @@ ProcessInterpPoints::ProcessInterpPoints(FieldSharedPtr f) : ProcessModule(f)
     m_config["fromfld"] = ConfigOption(
         false, "NotSet", "Fld file from which to interpolate field");
 
-    m_config["topts"] = ConfigOption(
-        false, "NotSet", "Pts file to which interpolate field");
-    m_config["line"] =  ConfigOption(
-        false, "NotSet", "Specify a line of N points using "
-                         "line=N,x0,y0,z0,z1,y1,z1");
-    m_config["plane"] = ConfigOption(
-        false, "NotSet", "Specify a plane of N1 x N2 points using "
-                         "plane=N1,N2,x0,y0,z0,z1,y1,z1,x2,y2,z2,x3,y3,z3");
-    m_config["box"] = ConfigOption(
-        false, "NotSet", "Specify a rectangular box of N1 x N2 x N3 points "
-                         "using a box of points limited by box="
-                         "N1,N2,N3,xmin,xmax,ymin,ymax,zmin,zmax");
+    m_config["topts"] =
+        ConfigOption(false, "NotSet", "Pts file to which interpolate field");
+    m_config["line"] = ConfigOption(false, "NotSet",
+                                    "Specify a line of N points using "
+                                    "line=N,x0,y0,z0,z1,y1,z1");
+    m_config["plane"] =
+        ConfigOption(false, "NotSet",
+                     "Specify a plane of N1 x N2 points using "
+                     "plane=N1,N2,x0,y0,z0,z1,y1,z1,x2,y2,z2,x3,y3,z3");
+    m_config["box"] =
+        ConfigOption(false, "NotSet",
+                     "Specify a rectangular box of N1 x N2 x N3 points "
+                     "using a box of points limited by box="
+                     "N1,N2,N3,xmin,xmax,ymin,ymax,zmin,zmax");
 
     m_config["clamptolowervalue"] =
         ConfigOption(false, "-10000000", "Lower bound for interpolation value");
@@ -96,6 +97,8 @@ ProcessInterpPoints::ProcessInterpPoints(FieldSharedPtr f) : ProcessModule(f)
     m_config["cp"] =
         ConfigOption(false, "NotSet",
                      "Parameters p0 and q to determine pressure coefficients");
+    m_config["realmodetoimag"] =
+        ConfigOption(false, "NotSet", "Take fields as sin mode");
 }
 
 ProcessInterpPoints::~ProcessInterpPoints()
@@ -113,32 +116,31 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     ParseUtils::GenerateVector(m_config["fromxml"].as<string>(), files);
 
     // set up session file for from field
-    char *argv[] = { const_cast<char *>("FieldConvert"), nullptr };
-    fromField->m_session =
-        LibUtilities::SessionReader::CreateInstance(
-            1, argv, files,
-            LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0));
+    char *argv[]         = {const_cast<char *>("FieldConvert"), nullptr};
+    fromField->m_session = LibUtilities::SessionReader::CreateInstance(
+        1, argv, files,
+        LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0));
 
     // Set up range based on min and max of local parallel partition
     LibUtilities::DomainRangeShPtr rng =
         MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
-    
-    int coordim = m_f->m_fieldPts->GetDim();
-    int npts    = m_f->m_fieldPts->GetNpoints();
+
+    int coordim                         = m_f->m_fieldPts->GetDim();
+    int npts                            = m_f->m_fieldPts->GetNpoints();
     std::vector<std::string> fieldNames = m_f->m_fieldPts->GetFieldNames();
     for (auto &it : fieldNames)
     {
         m_f->m_fieldPts->RemoveField(it);
     }
 
-    Array<OneD, Array<OneD, NekDouble> > pts;
+    Array<OneD, Array<OneD, NekDouble>> pts;
     m_f->m_fieldPts->GetPts(pts);
 
     rng->m_checkShape = false;
     rng->m_zmin       = -1;
-    rng->m_zmax       =  1;
+    rng->m_zmax       = 1;
     rng->m_ymin       = -1;
-    rng->m_ymax       =  1;
+    rng->m_ymax       = 1;
     switch (coordim)
     {
         case 3:
@@ -188,6 +190,20 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
         fromfld, fromField->m_fielddef, fromField->m_data,
         LibUtilities::NullFieldMetaDataMap, ElementGIDs);
     int NumHomogeneousDir = fromField->m_fielddef[0]->m_numHomogeneousDir;
+    for (i = 0; i < fromField->m_fielddef.size(); ++i)
+    {
+        int d1 = fromField->m_fielddef[i]->m_basis.size();
+        d1 -= 1;
+        if (d1 >= 0 && (fromField->m_fielddef[i]->m_basis[d1] ==
+                            LibUtilities::eFourierHalfModeRe ||
+                        fromField->m_fielddef[i]->m_basis[d1] ==
+                            LibUtilities::eFourierHalfModeIm))
+        {
+            fromField->m_fielddef[i]->m_homogeneousZIDs[0] += 2;
+            fromField->m_fielddef[i]->m_numModes[d1] = 4;
+            fromField->m_fielddef[i]->m_basis[d1]    = LibUtilities::eFourier;
+        }
+    }
 
     //----------------------------------------------
     // Set up Expansion information to use mode order from field
@@ -203,6 +219,18 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
         fromField->m_exp[i] = fromField->AppendExpList(NumHomogeneousDir);
     }
     // load field into expansion in fromfield.
+    set<int> sinmode;
+    if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
+    {
+        vector<int> value;
+        ASSERTL0(ParseUtils::GenerateVector(
+                     m_config["realmodetoimag"].as<string>(), value),
+                 "Failed to interpret realmodetoimag string");
+        for (int j : value)
+        {
+            sinmode.insert(j);
+        }
+    }
     for (int j = 0; j < nfields; ++j)
     {
         for (i = 0; i < fromField->m_fielddef.size(); i++)
@@ -211,6 +239,20 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
                 fromField->m_fielddef[i], fromField->m_data[i],
                 fromField->m_fielddef[0]->m_fields[j],
                 fromField->m_exp[j]->UpdateCoeffs());
+        }
+        if (NumHomogeneousDir == 1)
+        {
+            fromField->m_exp[j]->SetWaveSpace(true);
+            if (sinmode.count(j))
+            {
+                int Ncoeff = fromField->m_exp[j]->GetPlane(2)->GetNcoeffs();
+                Vmath::Smul(
+                    Ncoeff, -1., fromField->m_exp[j]->GetPlane(2)->GetCoeffs(),
+                    1, fromField->m_exp[j]->GetPlane(3)->UpdateCoeffs(), 1);
+                Vmath::Zero(Ncoeff,
+                            fromField->m_exp[j]->GetPlane(2)->UpdateCoeffs(),
+                            1);
+            }
         }
         fromField->m_exp[j]->BwdTrans(fromField->m_exp[j]->GetCoeffs(),
                                       fromField->m_exp[j]->UpdatePhys());
@@ -223,46 +265,6 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     NekDouble clamp_low = m_config["clamptolowervalue"].as<NekDouble>();
     NekDouble clamp_up  = m_config["clamptouppervalue"].as<NekDouble>();
     NekDouble def_value = m_config["defaultvalue"].as<NekDouble>();
-
-    // If 3DH1D must ensure that z-coordinate of all points corresponds to a
-    // Fourier plane. Therefore we reset all points that lie outside
-    // of a plane to the nearest plane. This means care must be taken when
-    // analysing the points after interpolation. This should works after
-    // having set up rng as the bounding box doesn't seem to affect the 3rd
-    // direction in 3DH1D cases.
-    if (NumHomogeneousDir == 1 && coordim == 3)
-    {
-        int nPlanes = fromField->m_exp[0]->GetHomogeneousBasis()->GetZ().size();
-        NekDouble lHom = fromField->m_exp[0]->GetHomoLen();
-        for (int pt = 0; pt < npts; ++pt)
-        {
-            int targetPlane =
-                std::round((m_f->m_fieldPts->GetPts(2)[pt] * nPlanes) / lHom);
-            if (targetPlane == nPlanes) // Reset to plane 0
-            {
-                targetPlane = 0;
-            }
-            NekDouble targetZ = (fromField->m_exp[0]
-                                     ->GetHomogeneousBasis()
-                                     ->GetZ())[targetPlane];
-            targetZ           = (targetZ + 1) * lHom / 2;
-
-            // If point is out of plane, reset z-location to closest plane
-            if (fabs(m_f->m_fieldPts->GetPts(2)[pt] - targetZ) >
-                NekConstants::kVertexTheSameDouble)
-            {
-                cout << "Resetting point from (x,y,z) = ("
-                        << m_f->m_fieldPts->GetPts(0)[pt] << ", "
-                        << m_f->m_fieldPts->GetPts(1)[pt] << ", "
-                        << m_f->m_fieldPts->GetPts(2)[pt] << ") to (x,y,z) = ("
-                        << m_f->m_fieldPts->GetPts(0)[pt] << ", "
-                        << m_f->m_fieldPts->GetPts(1)[pt] << ", " << targetZ
-                        << ")" << endl;
-
-                m_f->m_fieldPts->GetPts(2)[pt] = targetZ;
-            }
-        }
-    }
 
     InterpolateFieldToPts(fromField->m_exp, m_f->m_fieldPts, clamp_low,
                           clamp_up, def_value);
@@ -305,18 +307,16 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
         {
             ASSERTL0(false, "unknown topts file type");
         }
-
     }
     else if (m_config["line"].as<string>().compare("NotSet") != 0)
     {
         vector<NekDouble> values;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     m_config["line"].as<string>(), values),
-                 "Failed to interpret line string");
+        ASSERTL0(
+            ParseUtils::GenerateVector(m_config["line"].as<string>(), values),
+            "Failed to interpret line string");
 
-        ASSERTL0(values.size() > 2,
-                 "line string should contain 2*Dim+1 values "
-                 "N,x0,y0,z0,x1,y1,z1");
+        ASSERTL0(values.size() > 2, "line string should contain 2*Dim+1 values "
+                                    "N,x0,y0,z0,x1,y1,z1");
 
         double tmp;
         ASSERTL0(std::modf(values[0], &tmp) == 0.0, "N is not an integer");
@@ -327,20 +327,18 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
 
         // Information for partitioning
         int ptsPerProc = npts / nprocs;
-        int extraPts   = (rank < nprocs - 1) ? 0: npts % nprocs;
+        int extraPts   = (rank < nprocs - 1) ? 0 : npts % nprocs;
         int locPts     = ptsPerProc + extraPts;
         int start      = rank * ptsPerProc;
         int end        = start + locPts;
 
-        Array<OneD, Array<OneD, NekDouble> > pts(dim);
-        Array<OneD, NekDouble>               delta(dim);
+        Array<OneD, Array<OneD, NekDouble>> pts(dim);
+        Array<OneD, NekDouble> delta(dim);
         for (int i = 0; i < dim; ++i)
         {
             pts[i]   = Array<OneD, NekDouble>(locPts);
-            delta[i] = (values[dim + i + 1] - values[ i + 1]) / (npts - 1);
+            delta[i] = (values[dim + i + 1] - values[i + 1]) / (npts - 1);
         }
-
-
 
         for (int i = 0, cntLoc = 0; i < npts; ++i)
         {
@@ -348,7 +346,7 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
             {
                 for (int n = 0; n < dim; ++n)
                 {
-                    pts[n][cntLoc] = values[n+1] + i * delta[n];
+                    pts[n][cntLoc] = values[n + 1] + i * delta[n];
                 }
                 ++cntLoc;
             }
@@ -357,17 +355,16 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
         vector<size_t> ppe;
         ppe.push_back(npts);
         m_f->m_fieldPts =
-            MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(dim,
-                                                                     pts);
+            MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(dim, pts);
         m_f->m_fieldPts->SetPtsType(LibUtilities::ePtsLine);
         m_f->m_fieldPts->SetPointsPerEdge(ppe);
     }
     else if (m_config["plane"].as<string>().compare("NotSet") != 0)
     {
         vector<NekDouble> values;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     m_config["plane"].as<string>(), values),
-                 "Failed to interpret plane string");
+        ASSERTL0(
+            ParseUtils::GenerateVector(m_config["plane"].as<string>(), values),
+            "Failed to interpret plane string");
 
         ASSERTL0(values.size() > 9,
                  "plane string should contain 4 Dim+2 values "
@@ -386,23 +383,25 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
         npts[0] = values[0];
         npts[1] = values[1];
 
-        int totpts  = npts[0] * npts[1];
+        int totpts = npts[0] * npts[1];
 
         // Information for partitioning
         int ptsPerProc = totpts / nprocs;
-        int extraPts   = (rank < nprocs - 1) ? 0: totpts % nprocs;
+        int extraPts   = (rank < nprocs - 1) ? 0 : totpts % nprocs;
         int locPts     = ptsPerProc + extraPts;
         int start      = rank * ptsPerProc;
         int end        = start + locPts;
 
-        Array<OneD, Array<OneD, NekDouble> > pts(dim);
-        Array<OneD, NekDouble>               delta1(dim);
-        Array<OneD, NekDouble>               delta2(dim);
+        Array<OneD, Array<OneD, NekDouble>> pts(dim);
+        Array<OneD, NekDouble> delta1(dim);
+        Array<OneD, NekDouble> delta2(dim);
         for (int i = 0; i < dim; ++i)
         {
             pts[i]    = Array<OneD, NekDouble>(locPts);
-            delta1[i] = (values[2+1*dim + i] - values[2+0*dim + i])/(npts[0]-1);
-            delta2[i] = (values[2+2*dim + i] - values[2+3*dim + i])/(npts[0]-1);
+            delta1[i] = (values[2 + 1 * dim + i] - values[2 + 0 * dim + i]) /
+                        (npts[0] - 1);
+            delta2[i] = (values[2 + 2 * dim + i] - values[2 + 3 * dim + i]) /
+                        (npts[0] - 1);
         }
 
         for (int j = 0, cnt = 0, cntLoc = 0; j < npts[1]; ++j)
@@ -414,10 +413,10 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
                     for (int n = 0; n < dim; ++n)
                     {
                         pts[n][cntLoc] =
-                            (values[2+n] + i * delta1[n]) *
-                                (1.0 - j / ((NekDouble)(npts[1]-1))) +
-                            (values[2 + 3*dim + n] + i * delta2[n]) *
-                                (      j / ((NekDouble)(npts[1]-1)));
+                            (values[2 + n] + i * delta1[n]) *
+                                (1.0 - j / ((NekDouble)(npts[1] - 1))) +
+                            (values[2 + 3 * dim + n] + i * delta2[n]) *
+                                (j / ((NekDouble)(npts[1] - 1)));
                     }
                     ++cntLoc;
                 }
@@ -428,21 +427,19 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
         ppe.push_back(npts[0]);
         ppe.push_back(npts[1]);
         m_f->m_fieldPts =
-            MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(dim,
-                                                                     pts);
+            MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(dim, pts);
         m_f->m_fieldPts->SetPtsType(LibUtilities::ePtsPlane);
         m_f->m_fieldPts->SetPointsPerEdge(ppe);
     }
     else if (m_config["box"].as<string>().compare("NotSet") != 0)
     {
         vector<NekDouble> values;
-        ASSERTL0(ParseUtils::GenerateVector(
-                     m_config["box"].as<string>(), values),
-                 "Failed to interpret box string");
+        ASSERTL0(
+            ParseUtils::GenerateVector(m_config["box"].as<string>(), values),
+            "Failed to interpret box string");
 
-        ASSERTL0(values.size() == 9,
-                 "box string should contain 9 values "
-                 "N1,N2,N3,xmin,xmax,ymin,ymax,zmin,zmax");
+        ASSERTL0(values.size() == 9, "box string should contain 9 values "
+                                     "N1,N2,N3,xmin,xmax,ymin,ymax,zmin,zmax");
 
         int dim = 3;
         Array<OneD, int> npts(3);
@@ -450,14 +447,14 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
         npts[1] = values[1];
         npts[2] = values[2];
 
-        int totpts  = npts[0]*npts[1]*npts[2];
+        int totpts = npts[0] * npts[1] * npts[2];
 
-        Array<OneD, Array<OneD, NekDouble> > pts(dim);
-        Array<OneD, NekDouble>               delta(dim);
+        Array<OneD, Array<OneD, NekDouble>> pts(dim);
+        Array<OneD, NekDouble> delta(dim);
 
         // Information for partitioning
         int ptsPerProc = totpts / nprocs;
-        int extraPts   = (rank < nprocs - 1) ? 0: totpts % nprocs;
+        int extraPts   = (rank < nprocs - 1) ? 0 : totpts % nprocs;
         int locPts     = ptsPerProc + extraPts;
         int start      = rank * ptsPerProc;
         int end        = start + locPts;
@@ -465,10 +462,8 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
         for (int i = 0; i < dim; ++i)
         {
             pts[i]   = Array<OneD, NekDouble>(locPts);
-            delta[i] = (values[4 + 2*i] - values[3 + 2*i]) / (npts[i] - 1);
+            delta[i] = (values[4 + 2 * i] - values[3 + 2 * i]) / (npts[i] - 1);
         }
-
-
 
         for (int k = 0, cnt = 0, cntLoc = 0; k < npts[2]; ++k)
         {
@@ -492,8 +487,7 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
         ppe.push_back(npts[1]);
         ppe.push_back(npts[2]);
         m_f->m_fieldPts =
-            MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(dim,
-                                                                     pts);
+            MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(dim, pts);
         m_f->m_fieldPts->SetPtsType(LibUtilities::ePtsBox);
         m_f->m_fieldPts->SetPointsPerEdge(ppe);
         vector<NekDouble> boxdim;
@@ -502,17 +496,14 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
     }
     else
     {
-        ASSERTL0(false,
-            "Missing target points for ProcessInterpPoints.");
+        ASSERTL0(false, "Missing target points for ProcessInterpPoints.");
     }
 }
 
 void ProcessInterpPoints::InterpolateFieldToPts(
     vector<MultiRegions::ExpListSharedPtr> &field0,
-    LibUtilities::PtsFieldSharedPtr &pts,
-    NekDouble clamp_low,
-    NekDouble clamp_up,
-    NekDouble def_value)
+    LibUtilities::PtsFieldSharedPtr &pts, NekDouble clamp_low,
+    NekDouble clamp_up, NekDouble def_value)
 {
     boost::ignore_unused(def_value);
 
@@ -551,83 +542,83 @@ void ProcessInterpPoints::InterpolateFieldToPts(
 void ProcessInterpPoints::calcCp0()
 {
     LibUtilities::PtsFieldSharedPtr pts = m_f->m_fieldPts;
-    int dim = pts->GetDim();
-    int nq1 = pts->GetNpoints();
+    int dim                             = pts->GetDim();
+    int nq1                             = pts->GetNpoints();
     int r, f;
     int pfield = -1;
-    NekDouble p0,qinv;
+    NekDouble p0, qinv;
     vector<int> velid;
 
     vector<NekDouble> values;
     ASSERTL0(ParseUtils::GenerateVector(m_config["cp"].as<string>(), values),
              "Failed to interpret cp string");
 
-    ASSERTL0(values.size() == 2,
-                "cp string should contain 2 values "
-                "p0 and q (=1/2 rho u^2)");
+    ASSERTL0(values.size() == 2, "cp string should contain 2 values "
+                                 "p0 and q (=1/2 rho u^2)");
 
-    p0  =  values[0];
-    qinv = 1.0/values[1];
+    p0   = values[0];
+    qinv = 1.0 / values[1];
 
-    for(int i = 0; i < pts->GetNFields(); ++i)
+    for (int i = 0; i < pts->GetNFields(); ++i)
     {
-        if(boost::iequals(pts->GetFieldName(i),"p"))
+        if (boost::iequals(pts->GetFieldName(i), "p"))
         {
             pfield = i;
         }
 
-        if(boost::iequals(pts->GetFieldName(i),"u")||
-            boost::iequals(pts->GetFieldName(i),"v")||
-            boost::iequals(pts->GetFieldName(i),"w"))
+        if (boost::iequals(pts->GetFieldName(i), "u") ||
+            boost::iequals(pts->GetFieldName(i), "v") ||
+            boost::iequals(pts->GetFieldName(i), "w"))
         {
             velid.push_back(i);
         }
     }
 
-    if(pfield != -1)
+    if (pfield != -1)
     {
-        if(!velid.size())
+        if (!velid.size())
         {
-            WARNINGL0(false,"Did not find velocity components for Cp0");
+            WARNINGL0(false, "Did not find velocity components for Cp0");
         }
     }
     else
     {
-        WARNINGL0(false,"Failed to find 'p' field to determine cp0");
+        WARNINGL0(false, "Failed to find 'p' field to determine cp0");
     }
 
     // Allocate data storage
-    Array<OneD, Array< OneD, NekDouble> > data(2);
+    Array<OneD, Array<OneD, NekDouble>> data(2);
 
     for (f = 0; f < 2; ++f)
     {
-        data[f] = Array< OneD, NekDouble>(nq1, 0.0);
+        data[f] = Array<OneD, NekDouble>(nq1, 0.0);
     }
 
     for (r = 0; r < nq1; r++)
     {
-        if(pfield != -1) // calculate cp
+        if (pfield != -1) // calculate cp
         {
-            data[0][r] = qinv*(pts->GetPointVal(dim + pfield, r) - p0);
+            data[0][r] = qinv * (pts->GetPointVal(dim + pfield, r) - p0);
 
-            if(velid.size()) // calculate cp0
+            if (velid.size()) // calculate cp0
             {
                 NekDouble q = 0;
-                for(int i = 0; i < velid.size(); ++i)
+                for (int i = 0; i < velid.size(); ++i)
                 {
-                    q += 0.5*pts->GetPointVal(dim + velid[i], r)*
-                             pts->GetPointVal(dim + velid[i], r);
+                    q += 0.5 * pts->GetPointVal(dim + velid[i], r) *
+                         pts->GetPointVal(dim + velid[i], r);
                 }
-                data[1][r] = qinv*(pts->GetPointVal(dim + pfield, r)+q - p0);
+                data[1][r] =
+                    qinv * (pts->GetPointVal(dim + pfield, r) + q - p0);
             }
         }
     }
 
-    if(pfield != -1)
+    if (pfield != -1)
     {
         pts->AddField(data[0], "Cp");
         m_f->m_variables.push_back("Cp");
-        if(velid.size())
+        if (velid.size())
         {
             pts->AddField(data[1], "Cp0");
             m_f->m_variables.push_back("Cp0");
@@ -640,5 +631,5 @@ void ProcessInterpPoints::PrintProgressbar(const int position,
 {
     LibUtilities::PrintProgressbar(position, goal, "Interpolating");
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

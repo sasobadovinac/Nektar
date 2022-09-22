@@ -339,6 +339,20 @@ public:
 
 }; // end class RungeKutta2TimeIntegrationScheme
 
+class RungeKutta4TimeIntegrationScheme
+    : public ClassicalRungeKutta4TimeIntegrationScheme
+{
+public:
+    RungeKutta4TimeIntegrationScheme(std::string variant, unsigned int order,
+                                     std::vector<NekDouble> freeParams)
+        : ClassicalRungeKutta4TimeIntegrationScheme(variant, order, freeParams)
+    {
+    }
+
+    static std::string className;
+
+}; // end class RungeKutta2TimeIntegrationScheme
+
 class RungeKutta5TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
 {
 public:

@@ -57,33 +57,33 @@ public:
     /// Creates an instance of this class
     static FilterSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const std::map<std::string, std::string>   &pParams)
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const std::map<std::string, std::string> &pParams)
     {
-        FilterSharedPtr p = MemoryManager<FilterEnergy1D>
-            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        FilterSharedPtr p = MemoryManager<FilterEnergy1D>::AllocateSharedPtr(
+            pSession, pEquation, pParams);
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
     SOLVER_UTILS_EXPORT FilterEnergy1D(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
+        const std::weak_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
     SOLVER_UTILS_EXPORT ~FilterEnergy1D();
 
 protected:
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble                                         &time);
+        const NekDouble &time);
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble                                         &time);
+        const NekDouble &time);
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble                                         &time);
+        const NekDouble &time);
     virtual bool v_IsTimeDependent();
 
 private:
@@ -94,7 +94,7 @@ private:
     /// Current index counter.
     unsigned int m_index;
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

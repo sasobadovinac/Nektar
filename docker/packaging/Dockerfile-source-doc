@@ -1,0 +1,27 @@
+# vim: syntax=dockerfile
+
+FROM debian:stable-slim
+
+LABEL maintainer="Nektar++ Development Team <nektar-users@imperial.ac.uk>"
+
+WORKDIR /root
+
+RUN apt-get update && \
+    apt-get install -y \
+        build-essential cmake rsync flex \
+        liblapack-dev \
+        texlive-base texlive-latex-extra texlive-science \
+            texlive-fonts-recommended texlive-pstricks \
+        doxygen graphviz imagemagick dvipng
+
+RUN groupadd nektar && useradd -m -g nektar nektar
+
+# Force update to always run when building image
+ARG INVALIDATE_CACHE
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y
+
+# Patch security policy to allow PDF conversion by ImageMagick
+RUN sed -i 's/rights="none" pattern="\(PDF\|PS\|EPS\)"/rights="read|write" pattern="\1"/g' /etc/ImageMagick-6/policy.xml
+
+USER nektar:nektar
+WORKDIR /home/nektar
