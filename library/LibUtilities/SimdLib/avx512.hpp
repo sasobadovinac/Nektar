@@ -639,7 +639,6 @@ inline void deinterleave_store(
         index0 = index0 + 1;
     }
 }
-
 ////////////////////////////////////////////////////////////////////////////////
 
 struct avx512Float16

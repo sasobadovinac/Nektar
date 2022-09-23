@@ -658,6 +658,7 @@ struct avx2Float8
     inline avx2Float8(const vectorType &rhs) : _data(rhs)
     {
     }
+
     inline avx2Float8(const scalarType rhs)
     {
         _data = _mm256_set1_ps(rhs);
@@ -689,7 +690,7 @@ struct avx2Float8
         _mm256_storeu_ps(p, _data);
     }
 
-    template <class flag, typename std::enable_if<is_streaming<flag>::value,
+template <class flag, typename std::enable_if<is_streaming<flag>::value,
                                                   bool>::type = 0>
     inline void store(scalarType *p, flag) const
     {

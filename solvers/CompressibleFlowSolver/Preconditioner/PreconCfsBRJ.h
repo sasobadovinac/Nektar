@@ -39,6 +39,8 @@
 
 namespace Nektar
 {
+#define SIMD 
+    using namespace tinysimd;
 /**
  * Block Relaxed(weighted) Jacobi iterative (BRJ) Preconditioner for CFS
  *
@@ -75,7 +77,15 @@ protected:
     int m_BRJRelaxParam;
 
     Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> m_PreconMatVarsSingle;
+#ifdef SIMD
+    unsigned int m_max_nblocks;
+    unsigned int m_max_nElmtDof;
+    std::vector<simd<NekSingle>, tinysimd::allocator<simd<NekSingle>>> m_sBlkDiagMat;
+    std::vector<int> m_inputIdx;
+
+#else
     SNekBlkMatSharedPtr m_PreconMatSingle;
+#endif
     Array<OneD, SNekBlkMatSharedPtr> m_TraceJacSingle;
     TensorOfArray4D<NekSingle> m_TraceJacArraySingle;
     Array<OneD, SNekBlkMatSharedPtr> m_TraceJacDerivSingle;
@@ -98,13 +108,11 @@ private:
         const Array<OneD, const Array<OneD, NekDouble>> &intmp,
         const NekDouble time, const NekDouble lambda);
 
-    template <typename DataType, typename TypeNekBlkMatSharedPtr>
     void PreconBlkDiag(
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &outarray,
-        const TypeNekBlkMatSharedPtr &PreconMatVars,
-        const DataType &tmpDataType);
-
+       const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+       const Array<OneD, NekDouble> &inarray,
+       Array<OneD, NekDouble> &outarray);
+    
     template <typename DataType>
     void MinusOffDiag2Rhs(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
@@ -127,6 +135,101 @@ private:
         Array<OneD, Array<OneD, TypeNekBlkMatSharedPtr>> &gmtxarray,
         const int &nscale = 1);
 
+#ifdef SIMD
+    inline void AllocateSIMDPreconBlkMatDiag(
+              const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields)
+    {
+        using vec_t = simd<NekSingle>;
+        
+        int TotMatLen = 0;
+        int TotLen = 0;
+        const auto nTotElmt = pFields[0]->GetNumElmts();
+        const auto nvariables = pFields.size();
+        const auto vecwidth = vec_t::width;
+        
+        m_max_nblocks  = 0;
+        m_max_nElmtDof = 0;
+        
+        for (int ne = 0; ne < nTotElmt; ne++)
+        {
+            const auto nElmtDof    = pFields[0]->GetNcoeffs(ne)*nvariables;
+            const auto nblocks     = nElmtDof/vecwidth;
+            unsigned int totblocks   = (nElmtDof%vecwidth)? nblocks+1: nblocks; 
+
+            m_max_nblocks  = (m_max_nblocks > totblocks)?
+                m_max_nblocks: totblocks; 
+            m_max_nElmtDof = (m_max_nElmtDof > nElmtDof) ?
+                m_max_nElmtDof: nElmtDof;
+
+            TotLen    += totblocks*vecwidth; 
+            TotMatLen += nElmtDof*totblocks;
+        }
+        
+        m_sBlkDiagMat.resize(TotMatLen);
+        m_inputIdx.resize(TotLen);
+
+        // generate a index list of vector width aware mapping from
+        // local coeff storage over all variables to elemental storage
+        // over variables
+        unsigned int ncoeffs  = pFields[0]->GetNcoeffs();
+        for (int ne = 0, cnt1 = 0; ne < nTotElmt; ne++)
+        {
+            const auto nElmtCoeff  = pFields[0]->GetNcoeffs(ne);
+            const auto nElmtDof    = nElmtCoeff*nvariables;
+            const auto nblocks     = nElmtDof/vecwidth;
+            const auto nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
+            int i  = 0;
+            int i0 = 0;
+            int inOffset,j; 
+            
+            for (int m = 0; m < nvariables; m++)
+            {
+                inOffset  = m*ncoeffs + nCoefOffset;
+                
+                if(m && (vecwidth-i0 < nElmtCoeff))
+                {
+                    // May need to add entries from later variables to
+                    // remainder of last variable if the vector width
+                    // was not exact multiple of number of elemental
+                    // coeffs
+                    for(i = 0; i0 < vecwidth; ++i, ++i0)
+                    {
+                        m_inputIdx[cnt1++]= inOffset + i;
+                    }
+                }
+            
+                // load up other vectors in varaible that fit into vector
+                // width
+                for (j = 0; (j+1)*vecwidth < nElmtCoeff-i; ++j)
+                {
+                    for(i0 = 0; i0 < vecwidth; ++i0)
+                    {
+                        m_inputIdx[cnt1++] = inOffset + i + j*vecwidth + i0;
+                    }
+                }
+                
+                // load up any residaul data for this varaible
+                for(i0 = 0, j = j*vecwidth; j < nElmtCoeff-i; ++j, ++i0)
+                {
+                    m_inputIdx[cnt1++] = inOffset + i + j; 
+                }
+            }
+
+            const auto endwidth = nElmtDof - nblocks*vecwidth; 
+            
+            // fill out rest of index to match vector width with last entry
+            if(endwidth)
+            {
+                for( ; i0 < vecwidth; ++i0)
+                {
+                    m_inputIdx[cnt1++] = inOffset + i + j - 1;
+                }
+            }
+            ASSERTL1(cnt1 <= TotLen, "m_inputIdx over extended");
+        }
+    }
+#endif
+    
     inline void AllocateNekBlkMatDig(SNekBlkMatSharedPtr &mat,
                                      const Array<OneD, unsigned int> nrow,
                                      const Array<OneD, unsigned int> ncol)

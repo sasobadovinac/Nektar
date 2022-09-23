@@ -29,6 +29,9 @@ elif [[ $BUILD_TYPE == "full" ]]; then
     elif [[ $BUILD_SIMD == "avx512" ]]; then
         BUILD_OPTS="$BUILD_OPTS -DNEKTAR_ENABLE_SIMD_AVX512:BOOL=ON"
     fi
+    if [[ $BUILD_SIMD == "avx2" ]]; then
+        BUILD_OPTS="$BUILD_OPTS -DNEKTAR_ENABLE_SIMD_AVX2"
+    fi
 fi
 
 # Custom compiler
