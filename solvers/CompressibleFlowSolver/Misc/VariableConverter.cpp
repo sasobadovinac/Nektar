@@ -89,9 +89,15 @@ VariableConverter::VariableConverter(
             m_flagCalcDivCurl = true;
         }
     }
-    // Load smoothing tipe
+    // Load smoothing type.
+    // We only allocate the smoother if a mesh-graph was passed to the
+    // constructor. This is done to prevent the smoother from being allocated
+    // in cases when it won't be used. Otherwise, any class in the code that
+    // allocates a VariableConverter object try to will allocate a smoother,
+    // even if no mesh graph was passed to the constructor.
+    // TODO: the smoother should be separated from the VariableConverter class.
     m_session->LoadSolverInfo("Smoothing", m_smoothing, "Off");
-    if (m_smoothing == "C0")
+    if (m_smoothing == "C0" && pGraph.get() != nullptr)
     {
         m_C0ProjectExp =
             MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
@@ -775,6 +781,14 @@ void VariableConverter::ApplyDucros(const Array<OneD, NekDouble> &div,
  */
 void VariableConverter::ApplyC0Smooth(Array<OneD, NekDouble> &field)
 {
+    // Make sure that the C0 projection operator has been allocated. Note that
+    // the VariableConverter object can be allocated without the C0 smoother.
+    // This is why this check is needed. Ideally, the C0 smoother is separated
+    // from the VariableConverter class.
+    ASSERTL0(m_C0ProjectExp.get() != nullptr,
+             "C0 projection operator not initialized in "
+             "VariableConverter::ApplyC0Smooth()");
+
     auto nCoeffs = m_C0ProjectExp->GetNcoeffs();
     Array<OneD, NekDouble> muFwd(nCoeffs);
     Array<OneD, NekDouble> weights(nCoeffs, 1.0);
