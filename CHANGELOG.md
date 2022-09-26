@@ -23,6 +23,7 @@ v5.3.0
 - Fixed Segmentation Fault when using C0 Smoother with Shock Capturing (!1394)
 - The Incomplete IP method was made the default method for the IP method (!1377).
 - Add additional parameters for the Isentropic Vortex equation system (!1323)
+- Improve performance of the perconditioner and diffusion operator (!1393)
 
 **NekMesh**
 - Multi domain input/output for Nekpp and HDF5 file formats (!1323)
