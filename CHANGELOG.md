@@ -15,9 +15,8 @@ v5.3.0
 **CompressibleFlowSolver**
 - Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (!1372)
 - Added Physical AV to the implicit Navier Stokes solver (!1372)
-
-**CompressibleFlowSolver**
 - The Incomplete IP method was made the default method for the IP method (!1377).
+- Improve performance of the perconditioner and diffusion operator (!1393)
 
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when

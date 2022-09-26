@@ -370,10 +370,11 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         Vmath::Zero(nTracePts, Fwdreslt, 1);
         for (int n = 0; n < nvariables; ++n)
         {
-            Vmath::Vvtvp(nTracePts, TraceJacArray[0][m][n], 1, Fwdarray[n], 1,
-                         Fwdreslt, 1, Fwdreslt, 1);
+            for (int p = 0; p < nTracePts; ++p)
+            {
+                Fwdreslt[p] += TraceJacArray[0][m][n][p] * Fwdarray[n][p];
+            }
         }
-
         for (int i = 0; i < nTracePts; ++i)
         {
             FwdFlux[m][i] = NekDouble(Fwdreslt[i]);
@@ -392,8 +393,10 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         Vmath::Zero(nTracePts, Fwdreslt, 1);
         for (int n = 0; n < nvariables; ++n)
         {
-            Vmath::Vvtvp(nTracePts, TraceJacArray[1][m][n], 1, Fwdarray[n], 1,
-                         Fwdreslt, 1, Fwdreslt, 1);
+            for (int p = 0; p < nTracePts; ++p)
+            {
+                Fwdreslt[p] += TraceJacArray[1][m][n][p] * Fwdarray[n][p];
+            }
         }
         for (int i = 0; i < nTracePts; ++i)
         {
@@ -413,8 +416,11 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
 
     for (int i = 0; i < nvariables; ++i)
     {
-        Vmath::Svtvp(nCoeffs, -m_DtLambdaPreconMat, outarray[i], 1, inarray[i],
-                     1, outarray[i], 1);
+        for (int p = 0; p < nCoeffs; ++p)
+        {
+            outarray[i][p] =
+                -m_DtLambdaPreconMat * outarray[i][p] + inarray[i][p];
+        }
     }
 }
 
