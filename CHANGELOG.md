@@ -4,18 +4,15 @@ Changelog
 v5.3.0
 ------
 **Library**
-- Fixed avx512 back-end for SimdLib (!1333)
+- Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
+- Added float and restore avx512 back-end for SimdLib (!1387)
+- Fix namespace pollution which causes boost 1.74+ errors (!1389)
+- Fix missing copy assignment operator warnings in clang 13+ (!1391)
 - Add an integral filter for the time-evolution of integrals on composites,
   supports dimension equal to or one lower than the mesh dimension (!1323)
 - Overload PhysEvaluate to give first derivatives using barycentric
   interpolation (!1323)
 - Non-conformal interface support (!1323)
-- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
-- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
-- Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
-- Added float and restore avx512 back-end for SimdLib (!1387)
-- Fix namespace pollution which causes boost 1.74+ errors (!1389)
-- Fix missing copy assignment operator warnings in clang 13+ (!1391)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -24,18 +21,11 @@ v5.3.0
 - Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (!1372)
 - Added Physical AV to the implicit Navier Stokes solver (!1372)
 - Fixed Segmentation Fault when using C0 Smoother with Shock Capturing (!1394)
-
-**CompressibleFlowSolver**
 - The Incomplete IP method was made the default method for the IP method (!1377).
-
-**CompressibleFlowSolver**
 - Add additional parameters for the Isentropic Vortex equation system (!1323)
 
 **NekMesh**
 - Multi domain input/output for Nekpp and HDF5 file formats (!1323)
-
-v5.2
-**NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
 - Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
