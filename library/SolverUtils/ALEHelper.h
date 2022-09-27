@@ -119,6 +119,7 @@ struct ALEPrescribe final : public ALEBase
 
 private:
     SpatialDomains::ZonePrescribeShPtr m_zone;
+    std::map<int,std::map<int, Array<OneD,NekDouble>>> m_coords;
 };
 
 typedef std::shared_ptr<ALEFixed> ALEFixedShPtr;

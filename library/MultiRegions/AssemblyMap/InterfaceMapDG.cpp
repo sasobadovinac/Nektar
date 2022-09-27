@@ -482,34 +482,19 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
     {
         ExchangeCoords();
     }
-
-    LibUtilities::Timer timer;
-    timer.Start();
-
     auto comm = m_trace->GetComm();
     // If no parallel exchange needed we only fill the local traces
     if (m_exchange.empty())
     {
-        LibUtilities::Timer timer2;
-        timer2.Start();
 
         // Fill local interface traces
         for (auto &m_localInterface : m_localInterfaces)
         {
             m_localInterface->FillLocalBwdTrace(Fwd, Bwd);
         }
-
-        timer2.Stop();
-        timer2.AccumulateRegion("InterfaceMapDG::ExchangeTrace local", 1);
     }
     else
     {
-        LibUtilities::Timer timer2;
-        timer2.Start();
-
-        LibUtilities::Timer timer3;
-        timer3.Start();
-
         auto requestSend = comm->CreateRequest(m_exchange.size());
         auto requestRecv = comm->CreateRequest(m_exchange.size());
         for (int i = 0; i < m_exchange.size(); ++i)
@@ -517,16 +502,11 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
             m_exchange[i]->SendFwdTrace(requestSend, requestRecv, i, Fwd);
         }
 
-        timer3.Start();
-
         // Fill local interface traces
         for (auto &m_localInterface : m_localInterfaces)
         {
             m_localInterface->FillLocalBwdTrace(Fwd, Bwd);
         }
-
-        timer3.Stop();
-        timer3.AccumulateRegion("InterfaceMapDG::ExchangeTrace local", 1);
 
         comm->WaitAll(requestSend);
         comm->WaitAll(requestRecv);
@@ -536,13 +516,7 @@ void InterfaceMapDG::ExchangeTrace(Array<OneD, NekDouble> &Fwd,
         {
             i->FillRankBwdTraceExchange(Bwd);
         }
-
-        timer2.Stop();
-        timer2.AccumulateRegion("InterfaceMapDG::ExchangeTrace parallel", 1);
     }
-
-    timer.Stop();
-    timer.AccumulateRegion("InterfaceMapDG::ExchangeTrace");
 }
 
 void InterfaceTrace::FillLocalBwdTrace(Array<OneD, NekDouble> &Fwd,
