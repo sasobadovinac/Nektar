@@ -338,13 +338,20 @@ bool ZonePrescribe::v_Move(NekDouble time)
         vert->GetCoords(coords);
 
         Array<OneD, NekDouble> newLoc(3, 0.0);
-        newLoc[0] =
+        /*newLoc[0] =
             m_xDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(0);
         newLoc[1] =
             m_yDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(1);
         newLoc[2] =
-            m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(2);
+            m_zDeform->Evaluate(coords[0], coords[1], coords[2], time) + pnt(2);*/
 
+        newLoc[0] = pnt(0) + 0.5 * sin(2 * M_PI * time / sqrt(50)) *
+                                   sin(2 * M_PI * coords[0] / 20) *
+                                   sin(2 * M_PI * coords[1] / 20);
+        newLoc[1] = pnt(1) + 0.5 * sin(2 * M_PI * time / sqrt(50)) *
+                                   sin(2 * M_PI * coords[0] / 20) *
+                                   sin(2 * M_PI * coords[1] / 20);
+        newLoc[2] = 0.0;
         vert->UpdatePosition(newLoc[0], newLoc[1], newLoc[2]);
     }
 
