@@ -126,6 +126,9 @@ template <typename T, typename> struct scalarT
     {
     }
 
+    // copy assignment
+    inline scalarT &operator=(const scalarT &) = default;
+
     // store
     inline void store(scalarType *p) const
     {

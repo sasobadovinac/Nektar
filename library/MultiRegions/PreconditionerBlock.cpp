@@ -70,9 +70,12 @@ PreconditionerBlock::PreconditionerBlock(
 
 void PreconditionerBlock::v_InitObject()
 {
-    GlobalSysSolnType solvertype = m_locToGloMap.lock()->GetGlobalSysSolnType();
-    ASSERTL0(solvertype == MultiRegions::eIterativeStaticCond ||
-                 solvertype == MultiRegions::ePETScStaticCond,
+    GlobalSysSolnType solverType = m_locToGloMap.lock()->GetGlobalSysSolnType();
+    m_isFull =
+        (solverType == eIterativeFull) || (solverType == ePETScFullMatrix);
+
+    ASSERTL0(solverType == MultiRegions::eIterativeStaticCond ||
+                 solverType == MultiRegions::ePETScStaticCond || m_isFull,
              "Solver type not valid");
 }
 
@@ -95,7 +98,7 @@ void PreconditionerBlock::v_BuildPreconditioner()
  * \brief Construct a block preconditioner from \f$\mathbf{S}_{1}\f$ for
  * the continuous Galerkin system.
  *
- * The preconditioner is defined as:
+ * The preconditioner for the statically-condensed system is defined as:
  *
  * \f[\mathbf{M}^{-1}=\left[\begin{array}{ccc}
  *  \mathrm{Diag}[(\mathbf{S_{1}})_{vv}] & & \\
@@ -104,8 +107,21 @@ void PreconditionerBlock::v_BuildPreconditioner()
  *
  * where \f$\mathbf{S}_{1}\f$ is the local Schur complement matrix for
  * each element and the subscript denotes the portion of the Schur
- * complement associated with the vertex, edge and face blocks
- * respectively.
+ * complement associated with the vertex (vv), edge (eb) and face
+ * blocks (fb) respectively.
+ *
+ * In case of the full system \f$\mathbf{A}\f$, the preconditioner
+ * includes the interior blocks as well. The full block preconditioner
+ * is defined as:
+ *
+ * \f[\mathbf{M}^{-1}=\left[\begin{array}{cccc}
+ *  \mathrm{Diag}[(\mathbf{A})_{vv}] & & & \\
+ *  & (\mathbf{A})_{eb} & & \\
+ *  & & (\mathbf{A})_{fb} & \\
+ *  & & & (\mathbf{A})_{int} \end{array}\right] \f]
+ *
+ *  where the interior portion is added at the end following the
+ *  ordering inside data structures.
  */
 void PreconditionerBlock::BlockPreconditionerCG()
 {
@@ -126,12 +142,15 @@ void PreconditionerBlock::BlockPreconditionerCG()
     PeriodicMap periodicVerts, periodicEdges, periodicFaces;
     expList->GetPeriodicEntities(periodicVerts, periodicEdges, periodicFaces);
 
-    // The vectors below are of size 3 to have separate storage for
+    // The vectors below are of size 3(+1) to have separate storage for
     // vertices, edges and faces.
+    // For the full matrix approach additional storage for the
+    // interior matrices is required
+    int nStorage = m_isFull ? 4 : 3;
 
     // Maps from geometry ID to the matrix representing the extracted
     // portion of S_1. For example idMats[2] folds the S_1 face blocks.
-    vector<map<int, vector<NekDouble>>> idMats(3);
+    vector<map<int, vector<NekDouble>>> idMats(nStorage);
 
     // Maps from the global ID, as obtained from AssemblyMapCG's
     // localToGlobalMap, to the geometry ID.
@@ -139,7 +158,7 @@ void PreconditionerBlock::BlockPreconditionerCG()
 
     // Maps from the global ID to the number of degrees of freedom for
     // this geometry object.
-    vector<map<int, int>> gidDofs(3);
+    vector<map<int, int>> gidDofs(nStorage);
 
     // Array containing maximum information needed for the universal
     // numbering later. For i = 0,1,2 for each geometry dimension:
@@ -155,9 +174,65 @@ void PreconditionerBlock::BlockPreconditionerCG()
     {
         exp = expList->GetExp(n);
 
-        // Grab reference to local Schur complement matrix.
-        DNekScalMatSharedPtr schurMat =
-            m_linsys.lock()->GetStaticCondBlock(n)->GetBlock(0, 0);
+        // Grab reference to
+        // StaticCond: Local Schur complement matrix
+        // Full:       Boundary and interior matrix
+        DNekScalMatSharedPtr schurMat;
+
+        if (m_isFull)
+        {
+            // Get local matrix
+            auto tmpMat = m_linsys.lock()->GetBlock(n);
+
+            // Get number of boundary dofs
+            int nBndDofs = exp->NumBndryCoeffs();
+            int nIntDofs = exp->GetNcoeffs() - nBndDofs;
+
+            // Get boundary & interior maps
+            Array<OneD, unsigned int> bndMap(nBndDofs), intMap(nIntDofs);
+            exp->GetBoundaryMap(bndMap);
+            exp->GetInteriorMap(intMap);
+
+            // Create temporary matrices
+            DNekMatSharedPtr bndryMat =
+                MemoryManager<DNekMat>::AllocateSharedPtr(nBndDofs, nBndDofs);
+
+            // Extract boundary and send to StaticCond (Schur)
+            // framework
+            for (int i = 0; i < nBndDofs; ++i)
+            {
+                for (int j = 0; j < nBndDofs; ++j)
+                {
+                    (*bndryMat)(i, j) = (*tmpMat)(bndMap[i], bndMap[j]);
+                }
+            }
+
+            schurMat =
+                MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0, bndryMat);
+
+            // Extract interior matrix and save for block matrix setting
+            vector<NekDouble> tmpStore(nIntDofs * nIntDofs);
+            for (int i = 0; i < nIntDofs; ++i)
+            {
+                for (int j = 0; j < nIntDofs; ++j)
+                {
+                    tmpStore[j + i * nIntDofs] =
+                        (*tmpMat)(intMap[i], intMap[j]);
+                }
+            }
+
+            // Save interior mats and nDofs
+            idMats[3][n]  = tmpStore;
+            gidDofs[3][n] = nIntDofs;
+            // then intMat gets added to a block diagonal matrix that
+            // handles the extra interior dofs no need to do any
+            // communication for that because all interior dofs are
+            // local to each element
+        }
+        else
+        {
+            schurMat = m_linsys.lock()->GetStaticCondBlock(n)->GetBlock(0, 0);
+        }
 
         // Process vertices to extract relevant portion of the Schur
         // complement matrix.
@@ -453,7 +528,12 @@ void PreconditionerBlock::BlockPreconditionerCG()
     Gs::Gather(storageData, Gs::gs_add, tmpGs);
 
     // Figure out what storage we need in the block matrix.
-    Array<OneD, unsigned int> n_blks(1 + idMats[1].size() + idMats[2].size());
+    int nblksSize = 1 + idMats[1].size() + idMats[2].size();
+    if (m_isFull)
+    {
+        nblksSize += idMats[3].size();
+    }
+    Array<OneD, unsigned int> n_blks(nblksSize);
 
     // Vertex block is a diagonal matrix.
     n_blks[0] = idMats[0].size();
@@ -461,7 +541,7 @@ void PreconditionerBlock::BlockPreconditionerCG()
     // Now extract number of rows in each edge and face block from the
     // gidDofs map.
     cnt = 1;
-    for (i = 1; i < 3; ++i)
+    for (i = 1; i < nStorage; ++i)
     {
         for (auto &gIt : idMats[i])
         {
@@ -496,7 +576,7 @@ void PreconditionerBlock::BlockPreconditionerCG()
     // Finally, grab the matrices from the block storage, invert them
     // and place them in the correct position inside the block matrix.
     int cnt2 = 1;
-    for (i = 1; i < 3; ++i)
+    for (i = 1; i < nStorage; ++i)
     {
         for (auto &gIt : idMats[i])
         {
@@ -509,7 +589,17 @@ void PreconditionerBlock::BlockPreconditionerCG()
             {
                 for (k = 0; k < nDofs; ++k)
                 {
-                    (*tmp)(j, k) = storageData[k + j * nDofs + cnt];
+                    // Interior matrices do not need mapping
+                    // and are stored in idMats[3]
+                    if (m_isFull && i == 3)
+                    {
+                        (*tmp)(j, k) = gIt.second[k + j * nDofs];
+                    }
+                    // Boundary matrices
+                    else
+                    {
+                        (*tmp)(j, k) = storageData[k + j * nDofs + cnt];
+                    }
                 }
             }
 
@@ -694,9 +784,16 @@ void PreconditionerBlock::BlockPreconditionerHDG()
 void PreconditionerBlock::v_DoPreconditioner(
     const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
 {
-    int nDir      = m_locToGloMap.lock()->GetNumGlobalDirBndCoeffs();
-    int nGlobal   = m_locToGloMap.lock()->GetNumGlobalBndCoeffs();
-    int nNonDir   = nGlobal - nDir;
+    // Get assembly map and solver type
+    auto asmMap = m_locToGloMap.lock();
+
+    // Determine matrix size
+    int nGlobal = m_isFull ? asmMap->GetNumGlobalCoeffs()
+                           : asmMap->GetNumGlobalBndCoeffs();
+    int nDir    = asmMap->GetNumGlobalDirBndCoeffs();
+    int nNonDir = nGlobal - nDir;
+
+    // Apply preconditioner
     DNekBlkMat &M = (*m_blkMat);
     NekVector<NekDouble> r(nNonDir, pInput, eWrapper);
     NekVector<NekDouble> z(nNonDir, pOutput, eWrapper);

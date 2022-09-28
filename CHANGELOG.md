@@ -4,7 +4,10 @@ Changelog
 v5.3.0
 ------
 **Library**
-- Fixed avx512 back-end for SimdLib (!1333)
+- Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
+- Added float and restore avx512 back-end for SimdLib (!1387)
+- Fix namespace pollution which causes boost 1.74+ errors (!1389)
+- Fix missing copy assignment operator warnings in clang 13+ (!1391)
 - Add an integral filter for the time-evolution of integrals on composites,
   supports dimension equal to or one lower than the mesh dimension (!1323)
 - Overload PhysEvaluate to give first derivatives using barycentric
@@ -25,17 +28,20 @@ v5.3.0
 **CompressibleFlowSolver**
 - Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (!1372)
 - Added Physical AV to the implicit Navier Stokes solver (!1372)
-
-**CompressibleFlowSolver**
+- Fixed Segmentation Fault when using C0 Smoother with Shock Capturing (!1394)
 - The Incomplete IP method was made the default method for the IP method (!1377).
-
-**CompressibleFlowSolver**
 - Add additional parameters for the Isentropic Vortex equation system (!1323)
+- Improve performance of the perconditioner and diffusion operator (!1393)
 
 **NekMesh**
 - Multi domain input/output for Nekpp and HDF5 file formats (!1323)
+- Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
+exporting in .vtu format (!1386)
+- Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
+- Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
+- Add option to refine curves in the same manner as the line refinement functionality (!1298)
+- Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
 
-v5.2
 v5.2.0
 ------
 **Library**
@@ -77,6 +83,7 @@ v5.2.0
 - Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
 - Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
 - Equation types are registered to the session reader (!1344)
+- Added Block-Preconditioner for Full Matrix solve (!1350)
 
 **ADRSolver:**
 - Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
@@ -110,6 +117,8 @@ v5.1.1
 **Library**
 - Fix a boost headers incompatibility with boost-1.77 (!1297) 
 - Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
+
+**Python**
 - Fix initialisation warning when using HDF5 (!1299)
 - Fix issue with implementation of Diffusion IP (!1303)
 - Split Helmholtz MatrixFree operator to improve compile times (!1292)

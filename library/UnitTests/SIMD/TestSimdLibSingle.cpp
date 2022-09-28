@@ -41,22 +41,29 @@
 
 // define types in use and number of lanes
 #define NUM_LANES_32BITS 1
+#define ALIGNMENT 4
 #define USING_SCALAR
 #if defined(__x86_64__)
 #if defined(__AVX512F__) && defined(NEKTAR_ENABLE_SIMD_AVX512)
 #define USING_AVX512
 #undef NUM_LANES_32BITS
 #define NUM_LANES_32BITS 16
+#undef ALIGNMENT
+#define ALIGNMENT 64
 #undef USING_SCALAR
 #elif defined(__AVX2__) && defined(NEKTAR_ENABLE_SIMD_AVX2)
 #define USING_AVX2
 #undef NUM_LANES_32BITS
 #define NUM_LANES_32BITS 8
+#undef ALIGNMENT
+#define ALIGNMENT 32
 #undef USING_SCALAR
 #elif defined(__SSE2__) && defined(NEKTAR_ENABLE_SIMD_SSE2)
 #define USING_SSE2
 #undef NUM_LANES_32BITS
 #define NUM_LANES_32BITS 4
+#undef ALIGNMENT
+#define ALIGNMENT 64
 #undef USING_SCALAR
 #endif
 #endif
@@ -72,60 +79,37 @@ namespace Nektar
 namespace SimdLibTests
 {
 using namespace tinysimd;
+using vec_t = simd<float>;
+
 BOOST_AUTO_TEST_CASE(SimdLibSingle_width_alignment)
 {
     std::size_t width, alignment;
 
 #if defined(USING_SCALAR)
     std::cout << "scalar float" << std::endl;
-    // std::int32_t aka (usually) int
-    width     = simd<std::int32_t>::width;
-    alignment = simd<std::int32_t>::alignment;
-    BOOST_CHECK_EQUAL(width, 1);
-    BOOST_CHECK_EQUAL(alignment, 4);
-    // float
-    width     = simd<float>::width;
-    alignment = simd<float>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-    BOOST_CHECK_EQUAL(alignment, 4);
 #endif
-
-#if defined(USING_SSE2) && !defined(USING_AVX2) && !defined(USING_AVX512)
-    std::cout << "sse2 float" << std::endl;
-    // std::int32_t
-    width     = simd<std::int32_t>::width;
-    alignment = simd<std::int32_t>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-    BOOST_CHECK_EQUAL(alignment, 16);
-#endif
-
-#if defined(USING_AVX2) && !defined(USING_AVX512)
+#if defined(USING_AVX2)
     std::cout << "avx2 float" << std::endl;
-    // std::int32_t aka (usually) int (sse2int4)
-    width     = simd<std::int32_t>::width;
-    alignment = simd<std::int32_t>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-    BOOST_CHECK_EQUAL(alignment, 32);
-    // float
-    width     = simd<float>::width;
-    alignment = simd<float>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-    BOOST_CHECK_EQUAL(alignment, 32);
 #endif
-
 #if defined(USING_AVX512)
     std::cout << "avx512 float" << std::endl;
-    // std::int32_t aka (usually) int (avx2int8)
-    width     = simd<std::int32_t>::width;
-    alignment = simd<std::int32_t>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-    BOOST_CHECK_EQUAL(alignment, 64);
+#endif
+
     // float
     width     = simd<float>::width;
     alignment = simd<float>::alignment;
     BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
-    BOOST_CHECK_EQUAL(alignment, 64);
-#endif
+    BOOST_CHECK_EQUAL(alignment, ALIGNMENT);
+    // std::int32_t index forcing # of lanes
+    width     = simd<std::int32_t, vec_t::width>::width;
+    alignment = simd<std::int32_t, vec_t::width>::alignment;
+    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
+    BOOST_CHECK_EQUAL(alignment, ALIGNMENT);
+    // std::int32_t default index
+    width     = simd<std::int32_t>::width;
+    alignment = simd<std::int32_t>::alignment;
+    BOOST_CHECK_EQUAL(width, NUM_LANES_32BITS);
+    BOOST_CHECK_EQUAL(alignment, ALIGNMENT);
 
 #if defined(USING_SVE)
     std::cout << "sve float" << std::endl;
@@ -151,8 +135,6 @@ BOOST_AUTO_TEST_CASE(SimdLibSingle_width_alignment)
     BOOST_CHECK_EQUAL(alignment, __ARM_FEATURE_SVE_BITS / sizeof(float));
 #endif
 }
-
-using vec_t = simd<float>;
 
 BOOST_AUTO_TEST_CASE(SimdLibFloat_type_traits)
 {

@@ -344,7 +344,9 @@ protected:
     inline virtual void v_SetBndCondBwdWeight(const int index,
                                               const NekDouble value);
 
-    void SetUpDG(const std::string = "DefaultVar");
+    void SetUpDG(const std::string = "DefaultVar",
+                 const Collections::ImplementationType ImpType =
+                     Collections::eNoImpType);
     bool IsLeftAdjacentTrace(const int n, const int e);
 
     /**

@@ -193,6 +193,14 @@ public:
     /**
      * @brief Get value of delta
      */
+    bool HasDelta()
+    {
+        return m_delta.first;
+    }
+
+    /**
+     * @brief Get value of delta
+     */
     NekDouble GetDelta()
     {
         ASSERTL0(m_delta.first, "Tried to acsess delta of octant"

@@ -2702,8 +2702,7 @@ void MeshGraphXml::WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
     geomTag->LinkEndChild(curveTag);
 }
 
-void MeshGraphXml::WriteComposites(TiXmlElement *geomTag,
-                                   CompositeMap &comps,
+void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps,
                                    std::map<int, std::string> &compLabels)
 {
     TiXmlElement *compTag = new TiXmlElement("COMPOSITE");
@@ -2717,7 +2716,7 @@ void MeshGraphXml::WriteComposites(TiXmlElement *geomTag,
 
         TiXmlElement *c = new TiXmlElement("C");
         c->SetAttribute("ID", cIt.first);
-        if(!m_compositesLabels[cIt.first].empty())
+        if (!m_compositesLabels[cIt.first].empty())
         {
             c->SetAttribute("NAME", compLabels[cIt.first]);
         }
@@ -3136,7 +3135,7 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
             if (comp->m_geomVec.size())
             {
                 localComp[j.first] = comp;
-                if(!m_compositesLabels[j.first].empty())
+                if (!m_compositesLabels[j.first].empty())
                 {
                     localCompLabels[j.first] = m_compositesLabels[j.first];
                 }

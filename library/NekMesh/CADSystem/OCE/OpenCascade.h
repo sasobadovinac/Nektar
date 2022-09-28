@@ -37,6 +37,8 @@
 
 /// This is a list of OpenCascade headers required for use with nektar
 
+#include <Standard_Version.hxx>
+
 /// IO classes
 #include <STEPCAFControl_Reader.hxx>
 #include <StepRepr_RepresentationItem.hxx>
@@ -60,13 +62,16 @@
 #include <BRep_Tool.hxx>
 #include <GCPnts_AbscissaPoint.hxx>
 #include <GProp_GProps.hxx>
-#include <GeomAdaptor_HSurface.hxx>
 #include <GeomLProp_CLProps.hxx>
 #include <GeomLProp_SLProps.hxx>
 #include <ShapeAnalysis_Curve.hxx>
 #include <ShapeAnalysis_Surface.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
+
+#if OCC_VERSION_MAJOR < 7 || (OCC_VERSION_MAJOR == 7 && OCC_VERSION_MINOR < 4)
+#include <GeomAdaptor_HSurface.hxx>
+#endif
 
 /// Shape fixing classes
 #include <ShapeFix_Face.hxx>
@@ -78,6 +83,7 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <GeomAPI_PointsToBSpline.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_TrimmedCurve.hxx>
 
