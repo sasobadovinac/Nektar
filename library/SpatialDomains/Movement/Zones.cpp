@@ -200,7 +200,15 @@ void ZoneBase::ClearBoundingBoxes()
 
 NekDouble ZoneRotate::GetAngularVel(NekDouble &time) const
 {
-    return m_angularVelEqn->Evaluate(0, 0, 0, time);
+    NekDouble rampTime = 1;
+    if (time < rampTime)
+    {
+        return m_angularVelEqn->Evaluate(0, 0, 0, time) * time/rampTime;
+    }
+    else
+    {
+        return m_angularVelEqn->Evaluate(0, 0, 0, time);
+    }
 }
 
 // Calculate new location of points using Rodrigues formula
