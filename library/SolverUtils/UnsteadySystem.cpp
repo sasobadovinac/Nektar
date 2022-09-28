@@ -79,7 +79,7 @@ UnsteadySystem::UnsteadySystem(
  */
 void UnsteadySystem::v_InitObject(bool DeclareField)
 {
-    EquationSystem::v_InitObject();
+    EquationSystem::v_InitObject(DeclareField);
     ALEHelper::InitObject(m_spacedim, m_fields);
 
     m_initialStep = 0;
