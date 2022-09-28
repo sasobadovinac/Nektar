@@ -214,13 +214,18 @@ NekDouble ZoneRotate::GetAngularVel(NekDouble &time) const
 // Calculate new location of points using Rodrigues formula
 bool ZoneRotate::v_Move(NekDouble time)
 {
-    // Currently only valid for constant angular velocity
-    NekDouble angle = GetAngularVel(time) * time;
-    // TODO: For none constant angular velocity this doesn't work ^^
-    // @TODO: I need to take into account the total angle, summing timesteps
-    // works here
-    // @TODO: but then it doesn't work for FieldConvert where only the
-    // checkpoint time is known
+    // This works for a linear ramp
+    NekDouble rampTime = 1;
+    NekDouble angle;
+    if (time < rampTime)
+    {
+        angle = GetAngularVel(time) * (time/rampTime) / 2;
+    }
+    else
+    {
+        angle = GetAngularVel(rampTime) * rampTime / 2 + GetAngularVel(time) * (time - rampTime);
+    }
+
     // TODO: I want to integrate m_angularVelEqn up to current time
 
     // Identity matrix
