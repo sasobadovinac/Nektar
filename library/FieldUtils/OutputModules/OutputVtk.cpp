@@ -1639,8 +1639,11 @@ void OutputVtk::OutputFromExp(po::variables_map &vm)
 
     // Save mesh state (if using filter this allows us to only ProcessEquispaced
     // if needed)
-    m_cachedMesh = m_vtkMesh;
-
+    if (!m_f->m_graph->GetMovement()->GetMoveFlag())
+    {
+        m_cachedMesh = m_vtkMesh;
+    }
+    
     if (m_config["highorder"].m_beenSet)
     {
         ASSERTL0(!m_config["multiblock"].m_beenSet,
