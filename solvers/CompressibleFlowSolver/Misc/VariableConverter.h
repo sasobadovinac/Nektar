@@ -51,9 +51,10 @@ typedef std::shared_ptr<VariableConverter> VariableConverterSharedPtr;
 class VariableConverter
 {
 public:
-    VariableConverter(const LibUtilities::SessionReaderSharedPtr &pSession,
-                      const int spaceDim,
-                      const SpatialDomains::MeshGraphSharedPtr &pGraph = 0);
+    VariableConverter(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const int spaceDim,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph = nullptr);
 
     ~VariableConverter();
 
@@ -216,7 +217,7 @@ protected:
     std::string m_shockSensorType;
     std::string m_ducrosSensor;
     std::string m_smoothing;
-    MultiRegions::ContFieldSharedPtr m_C0ProjectExp;
+    MultiRegions::ContFieldSharedPtr m_C0ProjectExp = nullptr;
 
     /// h/p scaling
     Array<OneD, NekDouble> m_hOverP;

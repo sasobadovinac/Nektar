@@ -114,7 +114,7 @@ DisContField::DisContField(const LibUtilities::SessionReaderSharedPtr &pSession,
 
     if (SetUpJustDG)
     {
-        SetUpDG(variable);
+        SetUpDG(variable, ImpType);
     }
     else
     {
@@ -160,7 +160,8 @@ DisContField::DisContField(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * @brief Set up all DG member variables and maps.
  */
-void DisContField::SetUpDG(const std::string variable)
+void DisContField::SetUpDG(const std::string variable,
+                           const Collections::ImplementationType ImpType)
 {
     // Check for multiple calls
     if (m_trace != NullExpListSharedPtr)
@@ -174,7 +175,7 @@ void DisContField::SetUpDG(const std::string variable)
     // Set up trace space
     m_trace = MemoryManager<ExpList>::AllocateSharedPtr(
         m_session, m_bndCondExpansions, m_bndConditions, *m_exp, m_graph,
-        m_comm);
+        m_comm, true, "DefaultVar", ImpType);
 
     PeriodicMap periodicTraces = (m_expType == e1D)   ? m_periodicVerts
                                  : (m_expType == e2D) ? m_periodicEdges

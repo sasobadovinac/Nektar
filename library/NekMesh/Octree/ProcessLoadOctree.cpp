@@ -48,10 +48,11 @@ ModuleKey ProcessLoadOctree::className =
 
 ProcessLoadOctree::ProcessLoadOctree(MeshSharedPtr m) : ProcessModule(m)
 {
-    m_config["mindel"]     = ConfigOption(false, "0", "mindelta.");
-    m_config["maxdel"]     = ConfigOption(false, "0", "mindelta.");
-    m_config["eps"]        = ConfigOption(false, "0", "mindelta.");
-    m_config["refinement"] = ConfigOption(false, "", "mindelta.");
+    m_config["mindel"]           = ConfigOption(false, "0", "mindelta.");
+    m_config["maxdel"]           = ConfigOption(false, "0", "mindelta.");
+    m_config["eps"]              = ConfigOption(false, "0", "mindelta.");
+    m_config["refinement"]       = ConfigOption(false, "", "mindelta.");
+    m_config["curve_refinement"] = ConfigOption(false, "", "mindelta.");
     m_config["writeoctree"] =
         ConfigOption(true, "0", "dump octree as xml mesh");
 }
@@ -82,6 +83,12 @@ void ProcessLoadOctree::Process()
     if (m_config["refinement"].beenSet)
     {
         m_mesh->m_octree->Refinement(m_config["refinement"].as<string>());
+    }
+
+    if (m_config["curve_refinement"].beenSet)
+    {
+        m_mesh->m_octree->CurveRefinement(
+            m_config["curve_refinement"].as<string>());
     }
 
     m_mesh->m_octree->Process();

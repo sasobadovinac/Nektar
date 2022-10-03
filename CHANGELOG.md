@@ -15,15 +15,19 @@ v5.3.0
 **CompressibleFlowSolver**
 - Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (!1372)
 - Added Physical AV to the implicit Navier Stokes solver (!1372)
+- Fixed Segmentation Fault when using C0 Smoother with Shock Capturing (!1394)
 
 **CompressibleFlowSolver**
 - The Incomplete IP method was made the default method for the IP method (!1377).
+- Improve performance of the perconditioner and diffusion operator (!1393)
 
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
 - Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
 - Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
+- Add option to refine curves in the same manner as the line refinement functionality (!1298)
+- Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
 
 v5.2.0
 ------
@@ -100,6 +104,8 @@ v5.1.1
 **Library**
 - Fix a boost headers incompatibility with boost-1.77 (!1297) 
 - Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
+
+**Python**
 - Fix initialisation warning when using HDF5 (!1299)
 - Fix issue with implementation of Diffusion IP (!1303)
 - Split Helmholtz MatrixFree operator to improve compile times (!1292)
