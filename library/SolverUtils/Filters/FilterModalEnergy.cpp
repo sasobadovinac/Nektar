@@ -45,17 +45,17 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-std::string FilterModalEnergy::className = GetFilterFactory().
-    RegisterCreatorFunction("ModalEnergy", FilterModalEnergy::create);
+std::string FilterModalEnergy::className =
+    GetFilterFactory().RegisterCreatorFunction("ModalEnergy",
+                                               FilterModalEnergy::create);
 
 /**
  *  Constructor.
  */
 FilterModalEnergy::FilterModalEnergy(
     const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>      &pEquation,
-    const ParamMap &pParams) :
-    Filter(pSession, pEquation)
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
+    : Filter(pSession, pEquation)
 {
     // OutputFile
     auto it = pParams.find("OutputFile");
@@ -68,8 +68,8 @@ FilterModalEnergy::FilterModalEnergy(
         ASSERTL0(it->second.length() > 0, "Missing parameter 'OutputFile'.");
         m_outputFile = it->second;
     }
-    if (!(m_outputFile.length() >= 4
-          && m_outputFile.substr(m_outputFile.length() - 4) == ".mdl"))
+    if (!(m_outputFile.length() >= 4 &&
+          m_outputFile.substr(m_outputFile.length() - 4) == ".mdl"))
     {
         m_outputFile += ".mdl";
     }
@@ -82,21 +82,19 @@ FilterModalEnergy::FilterModalEnergy(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_outputFrequency = round(equ.Evaluate());
     }
-
 
     m_session->MatchSolverInfo("Homogeneous", "1D", m_isHomogeneous1D, false);
     m_session->MatchSolverInfo("Homogeneous", "2D", m_isHomogeneous2D, false);
     m_session->MatchSolverInfo("CalculatePerturbationEnergy", "True",
                                m_PertEnergy, false);
-    m_session->LoadParameter  ("NumQuadPointsError", m_NumQuadPointsError, 0);
+    m_session->LoadParameter("NumQuadPointsError", m_NumQuadPointsError, 0);
     m_EqTypeStr = m_session->GetSolverInfo("EQTYPE");
 
     // OutputPlane
-    if(m_isHomogeneous1D || m_isHomogeneous2D)
+    if (m_isHomogeneous1D || m_isHomogeneous2D)
     {
         m_session->LoadParameter("LZ", m_LhomZ);
 
@@ -107,8 +105,7 @@ FilterModalEnergy::FilterModalEnergy(
         }
         else
         {
-            LibUtilities::Equation equ(
-                m_session->GetInterpreter(), it->second);
+            LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
             m_outputPlane = round(equ.Evaluate());
         }
     }
@@ -121,7 +118,6 @@ FilterModalEnergy::FilterModalEnergy(
  */
 FilterModalEnergy::~FilterModalEnergy()
 {
-
 }
 
 /**
@@ -137,8 +133,7 @@ void FilterModalEnergy::v_Initialise(
     {
         // Open output stream
         bool adaptive;
-        m_session->MatchSolverInfo("Driver", "Adaptive",
-                                    adaptive, false);
+        m_session->MatchSolverInfo("Driver", "Adaptive", adaptive, false);
         if (adaptive)
         {
             m_outputStream.open(m_outputFile.c_str(), ofstream::app);
@@ -147,7 +142,7 @@ void FilterModalEnergy::v_Initialise(
         {
             m_outputStream.open(m_outputFile.c_str());
         }
-        if(m_isHomogeneous1D)
+        if (m_isHomogeneous1D)
         {
             m_outputStream << "# Time,  Fourier Mode, Energy ";
             m_outputStream << endl;
@@ -157,13 +152,11 @@ void FilterModalEnergy::v_Initialise(
             m_outputStream << "# Time, Energy ";
             m_outputStream << endl;
         }
-
     }
 
     m_index = 0;
     v_Update(pFields, time);
 }
-
 
 /**
  *  Update the modal energy every m_outputFrequency.
@@ -186,9 +179,9 @@ void FilterModalEnergy::v_Update(
         int colrank = vComm->GetColumnComm()->GetRank();
         int nproc   = vComm->GetColumnComm()->GetSize();
         m_npointsZ  = (m_session->GetParameter("HomModesZ"));
-        int locsize = m_npointsZ/nproc/2;
+        int locsize = m_npointsZ / nproc / 2;
 
-        Array<OneD, NekDouble> energy    (locsize, 0.0);
+        Array<OneD, NekDouble> energy(locsize, 0.0);
         Array<OneD, NekDouble> energy_tmp(locsize, 0.0);
         Array<OneD, NekDouble> tmp;
 
@@ -197,14 +190,13 @@ void FilterModalEnergy::v_Update(
         if (m_PertEnergy)
         {
             // Compressible Flow Solver
-            if (m_EqTypeStr=="EulerCFE"   ||
-                m_EqTypeStr=="EulerADCFE" ||
-                m_EqTypeStr=="NavierStokesCFE")
+            if (m_EqTypeStr == "EulerCFE" || m_EqTypeStr == "EulerADCFE" ||
+                m_EqTypeStr == "NavierStokesCFE")
             {
                 ASSERTL0(false, "Stability analysis module not "
-                         "implemented for the Compressible Flow "
-                         "Solver. Please remove the function BaseFlow "
-                         "from your .xml file");
+                                "implemented for the Compressible Flow "
+                                "Solver. Please remove the function BaseFlow "
+                                "from your .xml file");
             }
             // Incompressible Navier-Stokes Solver
             else
@@ -212,20 +204,18 @@ void FilterModalEnergy::v_Update(
                 SpatialDomains::MeshGraphSharedPtr graphShrPtr =
                     SpatialDomains::MeshGraph::Read(m_session);
                 SetUpBaseFields(graphShrPtr);
-                string file = m_session->
-                    GetFunctionFilename("BaseFlow", 0);
+                string file = m_session->GetFunctionFilename("BaseFlow", 0);
                 ImportFldBase(file);
 
-                for (int i = 0; i < pFields.num_elements()-1; ++i)
+                for (int i = 0; i < pFields.size() - 1; ++i)
                 {
                     Vmath::Vsub(pFields[i]->GetNcoeffs(),
                                 pFields[i]->GetCoeffs(), 1,
-                                m_base [i]->GetCoeffs(), 1,
+                                m_base[i]->GetCoeffs(), 1,
                                 pFields[i]->UpdateCoeffs(), 1);
 
                     energy_tmp = pFields[i]->HomogeneousEnergy();
-                    Vmath::Vadd(locsize, energy_tmp, 1,
-                                energy, 1, energy, 1);
+                    Vmath::Vadd(locsize, energy_tmp, 1, energy, 1, energy, 1);
 
                     Vmath::Vadd(pFields[i]->GetNcoeffs(),
                                 pFields[i]->GetCoeffs(), 1,
@@ -238,27 +228,24 @@ void FilterModalEnergy::v_Update(
         else
         {
             // Compressible Flow Solver
-            if (m_EqTypeStr=="EulerCFE"   ||
-                m_EqTypeStr=="EulerADCFE" ||
-                m_EqTypeStr=="NavierStokesCFE")
+            if (m_EqTypeStr == "EulerCFE" || m_EqTypeStr == "EulerADCFE" ||
+                m_EqTypeStr == "NavierStokesCFE")
             {
                 // Extracting kinetic energy
-                for (int i = 1; i < pFields.num_elements()-1; ++i)
+                for (int i = 1; i < pFields.size() - 1; ++i)
                 {
                     energy_tmp = pFields[i]->HomogeneousEnergy();
-                    Vmath::Vadd(locsize, energy_tmp, 1,
-                                energy, 1, energy, 1);
+                    Vmath::Vadd(locsize, energy_tmp, 1, energy, 1, energy, 1);
                 }
             }
             // Incompressible Navier-Stokes Solver
             else
             {
                 // Extracting kinetic energy
-                for (int i = 0; i < pFields.num_elements()-1; ++i)
+                for (int i = 0; i < pFields.size() - 1; ++i)
                 {
                     energy_tmp = pFields[i]->HomogeneousEnergy();
-                    Vmath::Vadd(locsize, energy_tmp, 1,
-                                energy, 1, energy, 1);
+                    Vmath::Vadd(locsize, energy_tmp, 1, energy, 1, energy, 1);
                 }
             }
         }
@@ -268,21 +255,19 @@ void FilterModalEnergy::v_Update(
         {
             int j, m = 0;
 
-            for (j = 0; j < energy.num_elements(); ++j, ++m)
+            for (j = 0; j < energy.size(); ++j, ++m)
             {
-                m_outputStream << setw(10) << time
-                               << setw(5)  << m
-                               << setw(18) << energy[j] << endl;
+                m_outputStream << setw(10) << time << setw(5) << m << setw(18)
+                               << energy[j] << endl;
             }
 
             for (int i = 1; i < nproc; ++i)
             {
                 vComm->GetColumnComm()->Recv(i, energy);
 
-                for (j = 0; j < energy.num_elements(); ++j, ++m)
+                for (j = 0; j < energy.size(); ++j, ++m)
                 {
-                    m_outputStream << setw(10) << time
-                                   << setw(5)  << m
+                    m_outputStream << setw(10) << time << setw(5) << m
                                    << setw(18) << energy[j] << endl;
                 }
             }
@@ -296,19 +281,18 @@ void FilterModalEnergy::v_Update(
     else if (m_isHomogeneous2D)
     {
         ASSERTL0(false, "3D Homogeneous 2D energy "
-                 "dumping not implemented yet");
+                        "dumping not implemented yet");
     }
     // General implementation
     else
     {
         // Compressible Flow Solver
-        if (m_EqTypeStr=="EulerCFE"   ||
-            m_EqTypeStr=="EulerADCFE" ||
-            m_EqTypeStr=="NavierStokesCFE")
+        if (m_EqTypeStr == "EulerCFE" || m_EqTypeStr == "EulerADCFE" ||
+            m_EqTypeStr == "NavierStokesCFE")
         {
             // Total energy
             NekDouble energy = 0.0;
-            for (int i = 1; i < pFields.num_elements()-1; ++i)
+            for (int i = 1; i < pFields.size() - 1; ++i)
             {
                 pFields[i]->SetPhysState(true);
                 NekDouble norm = L2Error(pFields, i, time);
@@ -317,7 +301,7 @@ void FilterModalEnergy::v_Update(
 
             m_outputStream << setprecision(6) << time;
             m_outputStream.width(25);
-            m_outputStream << setprecision(8) << 0.5*energy;
+            m_outputStream << setprecision(8) << 0.5 * energy;
             m_outputStream << endl;
         }
         // Incompressible Navier-Stokes Solver
@@ -325,7 +309,7 @@ void FilterModalEnergy::v_Update(
         {
             // Kinetic energy
             NekDouble energy = 0.0;
-            for (int i = 0; i < pFields.num_elements()-1; ++i)
+            for (int i = 0; i < pFields.size() - 1; ++i)
             {
                 pFields[i]->SetPhysState(true);
                 NekDouble norm = L2Error(pFields, i, time);
@@ -333,7 +317,7 @@ void FilterModalEnergy::v_Update(
             }
             m_outputStream << setprecision(6) << time;
             m_outputStream.width(25);
-            m_outputStream << setprecision(8) << 0.5*energy;
+            m_outputStream << setprecision(8) << 0.5 * energy;
             m_outputStream << endl;
         }
     }
@@ -360,12 +344,11 @@ void FilterModalEnergy::v_Finalise(
  */
 NekDouble FilterModalEnergy::L2Error(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-    unsigned int field,
-    const NekDouble &time)
+    unsigned int field, const NekDouble &time)
 {
     boost::ignore_unused(time);
 
-    NekDouble L2error = -1.0;
+    NekDouble L2error                 = -1.0;
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
     if (m_NumQuadPointsError == 0)
@@ -388,17 +371,15 @@ void FilterModalEnergy::SetUpBaseFields(
     SpatialDomains::MeshGraphSharedPtr &graphShrPtr)
 {
     int i;
-    int m_expdim  = graphShrPtr->GetMeshDimension();
+    int m_expdim = graphShrPtr->GetMeshDimension();
 
-    //definition of the projection tipe:
-    if(m_session->DefinesSolverInfo("PROJECTION"))
+    // definition of the projection tipe:
+    if (m_session->DefinesSolverInfo("PROJECTION"))
     {
         std::string ProjectStr = m_session->GetSolverInfo("PROJECTION");
 
-        if ((ProjectStr == "Continuous") ||
-            (ProjectStr == "Galerkin")   ||
-            (ProjectStr == "CONTINUOUS") ||
-            (ProjectStr == "GALERKIN"))
+        if ((ProjectStr == "Continuous") || (ProjectStr == "Galerkin") ||
+            (ProjectStr == "CONTINUOUS") || (ProjectStr == "GALERKIN"))
         {
             m_projectionType = MultiRegions::eGalerkin;
         }
@@ -407,7 +388,7 @@ void FilterModalEnergy::SetUpBaseFields(
         {
             m_projectionType = MultiRegions::eMixed_CG_Discontinuous;
         }
-        else if(ProjectStr == "DisContinuous")
+        else if (ProjectStr == "DisContinuous")
         {
             m_projectionType = MultiRegions::eDiscontinuous;
         }
@@ -419,23 +400,23 @@ void FilterModalEnergy::SetUpBaseFields(
     else
     {
         cerr << "Projection type not specified in SOLVERINFO,"
-                        "defaulting to continuous Galerkin" << endl;
+                "defaulting to continuous Galerkin"
+             << endl;
         m_projectionType = MultiRegions::eGalerkin;
     }
 
     if (m_session->DefinesSolverInfo("ModeType"))
     {
-        m_session->MatchSolverInfo("ModeType", "SingleMode",
-                                   m_SingleMode, false);
-        m_session->MatchSolverInfo("ModeType", "HalfMode",
-                                   m_HalfMode, false);
-        m_session->MatchSolverInfo("ModeType", "MultipleModes",
-                                   m_MultipleModes, false);
+        m_session->MatchSolverInfo("ModeType", "SingleMode", m_SingleMode,
+                                   false);
+        m_session->MatchSolverInfo("ModeType", "HalfMode", m_HalfMode, false);
+        m_session->MatchSolverInfo("ModeType", "MultipleModes", m_MultipleModes,
+                                   false);
     }
 
-    m_session->MatchSolverInfo("USEFFT","FFTW", m_useFFT, false);
-    m_session->MatchSolverInfo("DEALIASING", "True",
-                               m_homogen_dealiasing, false);
+    m_session->MatchSolverInfo("USEFFT", "FFTW", m_useFFT, false);
+    m_session->MatchSolverInfo("DEALIASING", "True", m_homogen_dealiasing,
+                               false);
 
     // Stability Analysis flags
     if (m_session->DefinesSolverInfo("ModeType"))
@@ -469,11 +450,11 @@ void FilterModalEnergy::SetUpBaseFields(
         {
             case 1:
             {
-                for(i = 0; i < m_base.num_elements(); i++)
+                for (i = 0; i < m_base.size(); i++)
                 {
-                    m_base[i] = MemoryManager<MultiRegions::ContField1D>
-                        ::AllocateSharedPtr(m_session, graphShrPtr,
-                                            m_session->GetVariable(0));
+                    m_base[i] = MemoryManager<MultiRegions::ContField>::
+                        AllocateSharedPtr(m_session, graphShrPtr,
+                                          m_session->GetVariable(0));
                 }
             }
             break;
@@ -484,44 +465,39 @@ void FilterModalEnergy::SetUpBaseFields(
                     if (m_SingleMode)
                     {
                         const LibUtilities::PointsKey PkeyZ(
-                            m_npointsZ,
-                            LibUtilities::eFourierSingleModeSpaced);
-                        const LibUtilities::BasisKey  BkeyZ(
-                            LibUtilities::eFourier,
-                            m_npointsZ, PkeyZ);
+                            m_npointsZ, LibUtilities::eFourierSingleModeSpaced);
+                        const LibUtilities::BasisKey BkeyZ(
+                            LibUtilities::eFourier, m_npointsZ, PkeyZ);
 
-                        for (i = 0 ; i < m_base.num_elements(); i++)
+                        for (i = 0; i < m_base.size(); i++)
                         {
-                            m_base[i] = MemoryManager<MultiRegions::
-                                ContField3DHomogeneous1D>::
-                                    AllocateSharedPtr(
-                                        m_session, BkeyZ, m_LhomZ,
-                                        m_useFFT, m_homogen_dealiasing,
-                                        graphShrPtr,
-                                        m_session->GetVariable(i));
+                            m_base[i] = MemoryManager<
+                                MultiRegions::ContField3DHomogeneous1D>::
+                                AllocateSharedPtr(
+                                    m_session, BkeyZ, m_LhomZ, m_useFFT,
+                                    m_homogen_dealiasing, graphShrPtr,
+                                    m_session->GetVariable(i));
 
                             m_base[i]->SetWaveSpace(true);
                         }
                     }
                     else if (m_HalfMode)
                     {
-                        //1 plane field (half mode expansion)
+                        // 1 plane field (half mode expansion)
                         const LibUtilities::PointsKey PkeyZ(
-                            m_npointsZ,
-                            LibUtilities::eFourierSingleModeSpaced);
-                        const LibUtilities::BasisKey  BkeyZ(
-                            LibUtilities::eFourierHalfModeRe,
-                            m_npointsZ,PkeyZ);
+                            m_npointsZ, LibUtilities::eFourierSingleModeSpaced);
+                        const LibUtilities::BasisKey BkeyZ(
+                            LibUtilities::eFourierHalfModeRe, m_npointsZ,
+                            PkeyZ);
 
-                        for (i = 0 ; i < m_base.num_elements(); i++)
+                        for (i = 0; i < m_base.size(); i++)
                         {
-                            m_base[i] = MemoryManager<MultiRegions::
-                                ContField3DHomogeneous1D>::
-                                    AllocateSharedPtr(
-                                        m_session, BkeyZ, m_LhomZ,
-                                        m_useFFT, m_homogen_dealiasing,
-                                        graphShrPtr,
-                                        m_session->GetVariable(i));
+                            m_base[i] = MemoryManager<
+                                MultiRegions::ContField3DHomogeneous1D>::
+                                AllocateSharedPtr(
+                                    m_session, BkeyZ, m_LhomZ, m_useFFT,
+                                    m_homogen_dealiasing, graphShrPtr,
+                                    m_session->GetVariable(i));
 
                             m_base[i]->SetWaveSpace(true);
                         }
@@ -529,20 +505,18 @@ void FilterModalEnergy::SetUpBaseFields(
                     else
                     {
                         const LibUtilities::PointsKey PkeyZ(
-                            m_npointsZ,
-                            LibUtilities::eFourierEvenlySpaced);
-                        const LibUtilities::BasisKey  BkeyZ(
+                            m_npointsZ, LibUtilities::eFourierEvenlySpaced);
+                        const LibUtilities::BasisKey BkeyZ(
                             LibUtilities::eFourier, m_npointsZ, PkeyZ);
 
-                        for (i = 0 ; i < m_base.num_elements(); i++)
+                        for (i = 0; i < m_base.size(); i++)
                         {
-                            m_base[i] = MemoryManager<MultiRegions::
-                                ContField3DHomogeneous1D>::
-                                    AllocateSharedPtr(
-                                        m_session, BkeyZ, m_LhomZ,
-                                        m_useFFT, m_homogen_dealiasing,
-                                        graphShrPtr,
-                                        m_session->GetVariable(i));
+                            m_base[i] = MemoryManager<
+                                MultiRegions::ContField3DHomogeneous1D>::
+                                AllocateSharedPtr(
+                                    m_session, BkeyZ, m_LhomZ, m_useFFT,
+                                    m_homogen_dealiasing, graphShrPtr,
+                                    m_session->GetVariable(i));
 
                             m_base[i]->SetWaveSpace(false);
                         }
@@ -551,37 +525,33 @@ void FilterModalEnergy::SetUpBaseFields(
                 else
                 {
                     i = 0;
-                    MultiRegions::ContField2DSharedPtr firstbase =
-                        MemoryManager<MultiRegions::ContField2D>::
-                            AllocateSharedPtr(
-                                m_session,graphShrPtr,
-                                m_session->GetVariable(i));
+                    MultiRegions::ContFieldSharedPtr firstbase =
+                        MemoryManager<MultiRegions::ContField>::
+                            AllocateSharedPtr(m_session, graphShrPtr,
+                                              m_session->GetVariable(i));
 
                     m_base[0] = firstbase;
 
-                    for (i = 1 ; i < m_base.num_elements(); i++)
+                    for (i = 1; i < m_base.size(); i++)
                     {
-                        m_base[i] = MemoryManager<MultiRegions::
-                            ContField2D>::AllocateSharedPtr(
-                                *firstbase, graphShrPtr,
-                                m_session->GetVariable(i));
+                        m_base[i] = MemoryManager<MultiRegions::ContField>::
+                            AllocateSharedPtr(*firstbase, graphShrPtr,
+                                              m_session->GetVariable(i));
                     }
                 }
             }
             break;
             case 3:
             {
-                MultiRegions::ContField3DSharedPtr firstbase =
-                    MemoryManager<MultiRegions::ContField3D>::
-                        AllocateSharedPtr(m_session, graphShrPtr,
-                                          m_session->GetVariable(0));
+                MultiRegions::ContFieldSharedPtr firstbase =
+                    MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
+                        m_session, graphShrPtr, m_session->GetVariable(0));
                 m_base[0] = firstbase;
-                for (i = 1 ; i < m_base.num_elements(); i++)
+                for (i = 1; i < m_base.size(); i++)
                 {
-                    m_base[i] = MemoryManager<MultiRegions::
-                    ContField3D>::AllocateSharedPtr(
-                        *firstbase, graphShrPtr,
-                        m_session->GetVariable(0));
+                    m_base[i] = MemoryManager<MultiRegions::ContField>::
+                        AllocateSharedPtr(*firstbase, graphShrPtr,
+                                          m_session->GetVariable(0));
                 }
             }
             break;
@@ -599,23 +569,21 @@ void FilterModalEnergy::SetUpBaseFields(
             {
                 // need to use zero for variable as may be more base
                 // flows than variables
-                for (i = 0 ; i < m_base.num_elements(); i++)
+                for (i = 0; i < m_base.size(); i++)
                 {
-                    m_base[i] = MemoryManager<MultiRegions::
-                        DisContField1D>::AllocateSharedPtr(
-                            m_session, graphShrPtr,
-                            m_session->GetVariable(0));
+                    m_base[i] = MemoryManager<MultiRegions::DisContField>::
+                        AllocateSharedPtr(m_session, graphShrPtr,
+                                          m_session->GetVariable(0));
                 }
                 break;
             }
             case 2:
             {
-                for (i = 0 ; i < m_base.num_elements(); i++)
+                for (i = 0; i < m_base.size(); i++)
                 {
-                    m_base[i] = MemoryManager<MultiRegions::
-                        DisContField2D>::AllocateSharedPtr(
-                            m_session, graphShrPtr,
-                            m_session->GetVariable(0));
+                    m_base[i] = MemoryManager<MultiRegions::DisContField>::
+                        AllocateSharedPtr(m_session, graphShrPtr,
+                                          m_session->GetVariable(0));
                 }
                 break;
             }
@@ -633,17 +601,16 @@ void FilterModalEnergy::SetUpBaseFields(
 /**
  *  Import the base flow fld file.
  */
-void FilterModalEnergy::ImportFldBase(
-    std::string pInfile)
+void FilterModalEnergy::ImportFldBase(std::string pInfile)
 {
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef;
-    std::vector<std::vector<NekDouble> > FieldData;
+    std::vector<std::vector<NekDouble>> FieldData;
 
     // Get Homogeneous
-    m_fld->Import(pInfile,FieldDef,FieldData);
+    m_fld->Import(pInfile, FieldDef, FieldData);
 
     int nvar = m_session->GetVariables().size();
-    if(m_session->DefinesSolverInfo("HOMOGENEOUS"))
+    if (m_session->DefinesSolverInfo("HOMOGENEOUS"))
     {
         std::string HomoStr = m_session->GetSolverInfo("HOMOGENEOUS");
     }
@@ -652,12 +619,12 @@ void FilterModalEnergy::ImportFldBase(
     {
         for (int i = 0; i < FieldDef.size(); ++i)
         {
-            bool flag =
-                FieldDef[i]->m_fields[j] == m_session->GetVariable(j);
+            bool flag = FieldDef[i]->m_fields[j] == m_session->GetVariable(j);
 
-            ASSERTL0(flag, (std::string("Order of ") + pInfile
-                        + std::string(" data and that defined in "
-                            "m_boundaryconditions differs")).c_str());
+            ASSERTL0(flag, (std::string("Order of ") + pInfile +
+                            std::string(" data and that defined in "
+                                        "m_boundaryconditions differs"))
+                               .c_str());
 
             m_base[j]->ExtractDataToCoeffs(FieldDef[i], FieldData[i],
                                            FieldDef[i]->m_fields[j],
@@ -673,5 +640,5 @@ bool FilterModalEnergy::v_IsTimeDependent()
 {
     return true;
 }
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

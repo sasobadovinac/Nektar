@@ -34,14 +34,14 @@
 
 #include <boost/format.hpp>
 
-#include <LibUtilities/Foundations/Interp.h>
+#include <GlobalMapping/Deform.h>
 #include <LibUtilities/BasicUtils/FileSystem.h>
+#include <LibUtilities/Foundations/Interp.h>
+#include <LocalRegions/MatrixKey.h>
+#include <MultiRegions/ContField.h>
+#include <MultiRegions/GlobalLinSysDirectStaticCond.h>
 #include <StdRegions/StdQuadExp.h>
 #include <StdRegions/StdTriExp.h>
-#include <LocalRegions/MatrixKey.h>
-#include <MultiRegions/ContField2D.h>
-#include <MultiRegions/GlobalLinSysDirectStaticCond.h>
-#include <GlobalMapping/Deform.h>
 
 #include <LinearElasticSolver/EquationSystems/IterativeElasticSystem.h>
 
@@ -50,20 +50,20 @@ using namespace std;
 namespace Nektar
 {
 
-string IterativeElasticSystem::className = GetEquationSystemFactory().
-    RegisterCreatorFunction("IterativeElasticSystem",
-                            IterativeElasticSystem::create);
+string IterativeElasticSystem::className =
+    GetEquationSystemFactory().RegisterCreatorFunction(
+        "IterativeElasticSystem", IterativeElasticSystem::create);
 
 IterativeElasticSystem::IterativeElasticSystem(
-    const LibUtilities::SessionReaderSharedPtr& pSession,
+    const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : LinearElasticSystem(pSession, pGraph)
 {
 }
 
-void IterativeElasticSystem::v_InitObject()
+void IterativeElasticSystem::v_InitObject(bool DeclareFields)
 {
-    LinearElasticSystem::v_InitObject();
+    LinearElasticSystem::v_InitObject(DeclareFields);
 
     const int nVel = m_fields[0]->GetCoordim(0);
 
@@ -83,7 +83,7 @@ void IterativeElasticSystem::v_InitObject()
         const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
             &bndCond = m_fields[0]->GetBndConditions();
 
-        for (int i = 0; i < bndCond.num_elements(); ++i)
+        for (int i = 0; i < bndCond.size(); ++i)
         {
             if (boost::iequals(bndCond[i]->GetUserDefined(), "Wall"))
             {
@@ -94,14 +94,14 @@ void IterativeElasticSystem::v_InitObject()
         int numDeform = m_toDeform.size();
         m_comm->AllReduce(numDeform, LibUtilities::ReduceMax);
         ASSERTL0(numDeform > 0, "You must specify at least one WALL tag on"
-                 "a boundary condition");
+                                "a boundary condition");
 
-        m_savedBCs  = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(
-            m_toDeform.size());
+        m_savedBCs =
+            Array<OneD, Array<OneD, Array<OneD, NekDouble>>>(m_toDeform.size());
 
         for (int i = 0; i < m_toDeform.size(); ++i)
         {
-            m_savedBCs[i] = Array<OneD, Array<OneD, NekDouble> >(nVel);
+            m_savedBCs[i] = Array<OneD, Array<OneD, NekDouble>>(nVel);
             for (int j = 0; j < nVel; ++j)
             {
                 const int id = m_toDeform[i];
@@ -110,9 +110,8 @@ void IterativeElasticSystem::v_InitObject()
                 int nCoeffs = bndCondExp->GetNcoeffs();
 
                 m_savedBCs[i][j] = Array<OneD, NekDouble>(nCoeffs);
-                Vmath::Smul(nCoeffs, 1.0/m_numSteps,
-                            bndCondExp->GetCoeffs(),    1,
-                            bndCondExp->UpdateCoeffs(), 1);
+                Vmath::Smul(nCoeffs, 1.0 / m_numSteps, bndCondExp->GetCoeffs(),
+                            1, bndCondExp->UpdateCoeffs(), 1);
                 Vmath::Vcopy(nCoeffs, bndCondExp->GetCoeffs(), 1,
                              m_savedBCs[i][j], 1);
             }
@@ -120,7 +119,7 @@ void IterativeElasticSystem::v_InitObject()
     }
 }
 
-void IterativeElasticSystem::v_GenerateSummary(SolverUtils::SummaryList& s)
+void IterativeElasticSystem::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
     LinearElasticSystem::v_GenerateSummary(s);
 }
@@ -164,8 +163,10 @@ void IterativeElasticSystem::v_DoSolve()
             if (m_session->GetComm()->GetRank() == 0)
             {
                 cout << "- Detected negative Jacobian in element "
-                     << invalidElmtId << "; terminating at"
-                    " step: "<<i<< endl;
+                     << invalidElmtId
+                     << "; terminating at"
+                        " step: "
+                     << i << endl;
             }
 
             break;
@@ -179,7 +180,7 @@ void IterativeElasticSystem::v_DoSolve()
         // Update boundary conditions
         if (m_repeatBCs)
         {
-            for (j = 0; j < m_fields.num_elements(); ++j)
+            for (j = 0; j < m_fields.size(); ++j)
             {
                 string varName = m_session->GetVariable(j);
                 m_fields[j]->EvaluateBoundaryConditions(m_time, varName);
@@ -187,17 +188,16 @@ void IterativeElasticSystem::v_DoSolve()
         }
         else
         {
-            for (j = 0; j < m_fields.num_elements(); ++j)
+            for (j = 0; j < m_fields.size(); ++j)
             {
                 const Array<OneD, const MultiRegions::ExpListSharedPtr>
                     &bndCondExp = m_fields[j]->GetBndCondExpansions();
 
                 for (k = 0; k < m_toDeform.size(); ++k)
                 {
-                    const int id = m_toDeform[k];
+                    const int id      = m_toDeform[k];
                     const int nCoeffs = bndCondExp[id]->GetNcoeffs();
-                    Vmath::Vcopy(nCoeffs,
-                                 m_savedBCs[k][j],               1,
+                    Vmath::Vcopy(nCoeffs, m_savedBCs[k][j], 1,
                                  bndCondExp[id]->UpdateCoeffs(), 1);
                 }
             }
@@ -220,7 +220,7 @@ void IterativeElasticSystem::WriteGeometry(const int i)
         s << "_xml";
 
         string ss = s.str();
-        if(!fs::is_directory(ss))
+        if (!fs::is_directory(ss))
         {
             fs::create_directory(ss);
         }
@@ -239,4 +239,4 @@ void IterativeElasticSystem::WriteGeometry(const int i)
     m_fields[0]->GetGraph()->WriteGeometry(fname);
 }
 
-}
+} // namespace Nektar

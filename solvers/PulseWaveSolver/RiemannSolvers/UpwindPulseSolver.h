@@ -10,6 +10,7 @@
 // Department of Aeronautics, Imperial College London (UK), and Scientific
 // Computing and Imaging Institute, University of Utah (USA).
 //
+// License for the specific language governing rights and limitations under
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation
@@ -35,6 +36,8 @@
 #ifndef NEKTAR_SOLVERS_PULSEWAVESOLVER_RIEMANNSOLVER_UPWINDPULSE
 #define NEKTAR_SOLVERS_PULSEWAVESOLVER_RIEMANNSOLVER_UPWINDPULSE
 
+#include <PulseWaveSolver/EquationSystems/PulseWavePressureArea.h>
+#include <PulseWaveSolver/EquationSystems/PulseWaveSystem.h>
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 
 using namespace Nektar::SolverUtils;
@@ -45,7 +48,7 @@ class UpwindPulseSolver : public RiemannSolver
 {
 public:
     static RiemannSolverSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession)
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
         return RiemannSolverSharedPtr(new UpwindPulseSolver(pSession));
     }
@@ -53,7 +56,12 @@ public:
     static std::string solverName;
 
 protected:
-    UpwindPulseSolver(const LibUtilities::SessionReaderSharedPtr& pSession);
+    UpwindPulseSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    LibUtilities::SessionReaderSharedPtr m_session;
+    int m_nVariables;
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_vessels;
+    PulseWavePressureAreaSharedPtr m_pressureArea;
 
     virtual void v_Solve(const int nDim,
                          const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
@@ -62,8 +70,9 @@ protected:
 
     void RiemannSolverUpwind(NekDouble AL, NekDouble uL, NekDouble AR,
                              NekDouble uR, NekDouble &Aflux, NekDouble &uflux,
-                             NekDouble A_0, NekDouble beta, NekDouble n);
+                             NekDouble A0, NekDouble beta, NekDouble n,
+                             NekDouble alpha = 0.5);
 };
-}
+} // namespace Nektar
 
 #endif

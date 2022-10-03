@@ -40,133 +40,137 @@
 
 namespace Nektar
 {
-    namespace MultiRegions
-    {
+namespace MultiRegions
+{
 
-        /// Describes a matrix with ordering defined by a local to global map.
-        class GlobalMatrixKey
-        {
-        public:
-            MULTI_REGIONS_EXPORT GlobalMatrixKey(const StdRegions::MatrixType matrixType,
-                            const AssemblyMapSharedPtr &locToGloMap
-                                    = NullAssemblyMapSharedPtr,
-                            const StdRegions::ConstFactorMap &factors = StdRegions::NullConstFactorMap,
-                            const StdRegions::VarCoeffMap &varCoeffs = StdRegions::NullVarCoeffMap);
+/// Describes a matrix with ordering defined by a local to global map.
+class GlobalMatrixKey
+{
+public:
+    MULTI_REGIONS_EXPORT GlobalMatrixKey(
+        const StdRegions::MatrixType matrixType,
+        const AssemblyMapSharedPtr &locToGloMap = NullAssemblyMapSharedPtr,
+        const StdRegions::ConstFactorMap &factors =
+            StdRegions::NullConstFactorMap,
+        const StdRegions::VarCoeffMap &varCoeffs = StdRegions::NullVarCoeffMap);
 
-            /// Copy constructor with change in expansion type
-            GlobalMatrixKey(const GlobalMatrixKey &key,
-                            const LibUtilities::ShapeType shapeType);
-            /// Copy constructor.
-            MULTI_REGIONS_EXPORT GlobalMatrixKey(const GlobalMatrixKey &key);
+    /// Copy constructor with change in expansion type
+    GlobalMatrixKey(const GlobalMatrixKey &key,
+                    const LibUtilities::ShapeType shapeType);
+    /// Copy constructor.
+    MULTI_REGIONS_EXPORT GlobalMatrixKey(const GlobalMatrixKey &key);
 
-            /// Destructor
-            MULTI_REGIONS_EXPORT virtual ~GlobalMatrixKey();
+    /// Destructor
+    MULTI_REGIONS_EXPORT virtual ~GlobalMatrixKey();
 
-            /// Provides ordering of GlobalMatrixKey objects.
-            MULTI_REGIONS_EXPORT friend bool operator<(const GlobalMatrixKey &lhs,
-                                  const GlobalMatrixKey &rhs);
+    /// Provides ordering of GlobalMatrixKey objects.
+    MULTI_REGIONS_EXPORT friend bool operator<(const GlobalMatrixKey &lhs,
+                                               const GlobalMatrixKey &rhs);
 
-            /// Return the matrix type.
-            MULTI_REGIONS_EXPORT StdRegions::MatrixType GetMatrixType() const;
-            /// Return the expansion type associated with key
-            MULTI_REGIONS_EXPORT LibUtilities::ShapeType GetShapeType()  const;
-            /// Returns true if a local to global map is defined.
-            MULTI_REGIONS_EXPORT bool LocToGloMapIsDefined() const;
-            /// Returns the number of constants defined for this matrix.
-            MULTI_REGIONS_EXPORT int GetNConstFactors() const;
-            /// Returns the requested constant.
-            MULTI_REGIONS_EXPORT NekDouble GetConstFactor(const StdRegions::ConstFactorType & factor) const;
-            /// Returns all the constants.
-            MULTI_REGIONS_EXPORT const StdRegions::ConstFactorMap& GetConstFactors() const;
+    /// Return the matrix type.
+    MULTI_REGIONS_EXPORT StdRegions::MatrixType GetMatrixType() const;
+    /// Return the expansion type associated with key
+    MULTI_REGIONS_EXPORT LibUtilities::ShapeType GetShapeType() const;
+    /// Returns true if a local to global map is defined.
+    MULTI_REGIONS_EXPORT bool LocToGloMapIsDefined() const;
+    /// Returns the number of constants defined for this matrix.
+    MULTI_REGIONS_EXPORT int GetNConstFactors() const;
+    /// Returns the requested constant.
+    MULTI_REGIONS_EXPORT NekDouble
+    GetConstFactor(const StdRegions::ConstFactorType &factor) const;
+    /// Returns all the constants.
+    MULTI_REGIONS_EXPORT const StdRegions::ConstFactorMap &GetConstFactors()
+        const;
 
-            MULTI_REGIONS_EXPORT int GetNVarCoeffs() const;
+    MULTI_REGIONS_EXPORT int GetNVarCoeffs() const;
 
-            MULTI_REGIONS_EXPORT const Array<OneD, const NekDouble> & GetVarCoeff(const StdRegions::VarCoeffType& coeff) const;
-            MULTI_REGIONS_EXPORT const StdRegions::VarCoeffMap & GetVarCoeffs() const;
+    MULTI_REGIONS_EXPORT const Array<OneD, const NekDouble> &GetVarCoeff(
+        const StdRegions::VarCoeffType &coeff) const;
+    MULTI_REGIONS_EXPORT const StdRegions::VarCoeffMap &GetVarCoeffs() const;
 
-        protected:
-            /// Default constructor.
-            GlobalMatrixKey();
+protected:
+    /// Default constructor.
+    GlobalMatrixKey();
 
-            /// Stores the matrix type based on the enum StdRegions::MatrixType.
-            StdRegions::MatrixType m_matrixType;
-            
-            /// Stores the expansion/shape type that the matrix is to
-            /// be based on
-            LibUtilities::ShapeType     m_shapeType;
+    /// Stores the matrix type based on the enum StdRegions::MatrixType.
+    StdRegions::MatrixType m_matrixType;
 
-            StdRegions::ConstFactorMap  m_constFactors;
-            StdRegions::VarCoeffMap     m_varCoeffs;
+    /// Stores the expansion/shape type that the matrix is to
+    /// be based on
+    LibUtilities::ShapeType m_shapeType;
 
-            /// Pointer to the local to global mapping.
-            std::weak_ptr<AssemblyMap>  m_locToGloMap;
+    StdRegions::ConstFactorMap m_constFactors;
+    StdRegions::VarCoeffMap m_varCoeffs;
 
-        private:
+    /// Pointer to the local to global mapping.
+    std::weak_ptr<AssemblyMap> m_locToGloMap;
 
-        };
+private:
+};
 
-        /// Writes statistics about the matrix key to an output stream.
-        MULTI_REGIONS_EXPORT std::ostream& operator<<(std::ostream& os, const GlobalMatrixKey& rhs);
+/// Writes statistics about the matrix key to an output stream.
+MULTI_REGIONS_EXPORT std::ostream &operator<<(std::ostream &os,
+                                              const GlobalMatrixKey &rhs);
 
-        /// A pointer to a GlobalMatrixKey.
-        typedef std::shared_ptr<GlobalMatrixKey> GlobalMatrixKeySharedPtr;
+/// A pointer to a GlobalMatrixKey.
+typedef std::shared_ptr<GlobalMatrixKey> GlobalMatrixKeySharedPtr;
 
-        inline StdRegions::MatrixType
-                        GlobalMatrixKey::GetMatrixType() const
-        {
-            return m_matrixType;
-        }
-
-        inline LibUtilities::ShapeType
-                        GlobalMatrixKey::GetShapeType() const
-        {
-            return m_shapeType;
-        }
-
-        inline bool GlobalMatrixKey::LocToGloMapIsDefined(void) const
-        {
-            if( m_locToGloMap.lock().get() == 0) //NullAssemblyMapSharedPtr)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        inline int GlobalMatrixKey::GetNConstFactors() const
-        {
-            return m_constFactors.size();
-        }
-
-        /// @Todo error checking
-        inline NekDouble GlobalMatrixKey::GetConstFactor(const StdRegions::ConstFactorType &factor) const
-        {
-            auto found = m_constFactors.find(factor);
-            return (*found).second;
-        }
-
-        inline const StdRegions::ConstFactorMap&
-                        GlobalMatrixKey::GetConstFactors() const
-        {
-            return m_constFactors;
-        }
-
-        inline int GlobalMatrixKey::GetNVarCoeffs() const
-        {
-            return m_varCoeffs.size();
-        }
-
-        inline const Array<OneD, const NekDouble> & GlobalMatrixKey::GetVarCoeff(const StdRegions::VarCoeffType &coeff) const
-        {
-            auto found = m_varCoeffs.find(coeff);
-            return (*found).second;
-        }
-
-        inline const StdRegions::VarCoeffMap & GlobalMatrixKey::GetVarCoeffs() const
-        {
-            return m_varCoeffs;
-        }
-    }
+inline StdRegions::MatrixType GlobalMatrixKey::GetMatrixType() const
+{
+    return m_matrixType;
 }
+
+inline LibUtilities::ShapeType GlobalMatrixKey::GetShapeType() const
+{
+    return m_shapeType;
+}
+
+inline bool GlobalMatrixKey::LocToGloMapIsDefined(void) const
+{
+    if (m_locToGloMap.lock().get() == 0) // NullAssemblyMapSharedPtr)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+inline int GlobalMatrixKey::GetNConstFactors() const
+{
+    return m_constFactors.size();
+}
+
+/// @Todo error checking
+inline NekDouble GlobalMatrixKey::GetConstFactor(
+    const StdRegions::ConstFactorType &factor) const
+{
+    auto found = m_constFactors.find(factor);
+    return (*found).second;
+}
+
+inline const StdRegions::ConstFactorMap &GlobalMatrixKey::GetConstFactors()
+    const
+{
+    return m_constFactors;
+}
+
+inline int GlobalMatrixKey::GetNVarCoeffs() const
+{
+    return m_varCoeffs.size();
+}
+
+inline const Array<OneD, const NekDouble> &GlobalMatrixKey::GetVarCoeff(
+    const StdRegions::VarCoeffType &coeff) const
+{
+    auto found = m_varCoeffs.find(coeff);
+    return (*found).second;
+}
+
+inline const StdRegions::VarCoeffMap &GlobalMatrixKey::GetVarCoeffs() const
+{
+    return m_varCoeffs;
+}
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

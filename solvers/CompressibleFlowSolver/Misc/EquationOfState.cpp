@@ -49,17 +49,15 @@ EquationOfState::EquationOfState(
 {
     pSession->LoadParameter("Gamma", m_gamma, 1.4);
     pSession->LoadParameter("GasConstant", m_gasConstant, 287.058);
+
+    m_gammaMone          = m_gamma - 1.0;
+    m_gammaMoneOgasConst = m_gammaMone / m_gasConstant;
 }
 
-NekDouble EquationOfState::GetTemperature(const NekDouble &rho,
-                                          const NekDouble &e)
+EquationOfState::EquationOfState(const NekDouble &gamma,
+                                 const NekDouble &gasConstant)
+    : m_gamma{gamma}, m_gasConstant{gasConstant}
 {
-    return v_GetTemperature(rho, e);
-}
-
-NekDouble EquationOfState::GetPressure(const NekDouble &rho, const NekDouble &e)
-{
-    return v_GetPressure(rho, e);
 }
 
 NekDouble EquationOfState::GetSoundSpeed(const NekDouble &rho,
@@ -110,4 +108,5 @@ NekDouble EquationOfState::v_GetSoundSpeed(const NekDouble &rho,
 
     return sqrt(chi + kappa * enthalpy);
 }
-}
+
+} // namespace Nektar

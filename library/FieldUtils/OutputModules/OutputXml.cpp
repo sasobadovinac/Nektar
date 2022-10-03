@@ -58,7 +58,7 @@ OutputXml::~OutputXml()
 
 void OutputXml::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     if (!m_f->m_exp.size()) // do nothing if no expansion defined
     {
@@ -71,5 +71,5 @@ void OutputXml::Process(po::variables_map &vm)
     m_f->m_graph->WriteGeometry(filename);
     cout << "Written file: " << filename << endl;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

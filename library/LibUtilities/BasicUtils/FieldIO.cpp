@@ -34,6 +34,7 @@
 
 #include <boost/asio/ip/host_name.hpp>
 #include <boost/format.hpp>
+#include <boost/regex.hpp>
 
 #include <LibUtilities/BasicConst/GitRevision.h>
 #include <LibUtilities/BasicUtils/FieldIO.h>
@@ -41,9 +42,9 @@
 
 #include <chrono>
 #include <ctime>
-#include <ios>
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
+#include <ios>
 #include <set>
 
 #ifdef NEKTAR_USE_MPI
@@ -75,11 +76,11 @@ FieldIOFactory &GetFieldIOFactory()
 }
 
 /// Enumerator for auto-detection of FieldIO types.
-enum FieldIOType {
+enum FieldIOType
+{
     eXML,
     eHDF5
 };
-
 
 /**
  * @brief Determine file type of given input file.
@@ -97,8 +98,8 @@ const std::string FieldIO::GetFileType(const std::string &filename,
                                        CommSharedPtr comm)
 {
     FieldIOType ioType = eXML;
-    int size  = comm->GetSize();
-    bool root = comm->TreatAsRankZero();
+    int size           = comm->GetSize();
+    bool root          = comm->TreatAsRankZero();
 
     if (size == 1 || root)
     {
@@ -107,9 +108,30 @@ const std::string FieldIO::GetFileType(const std::string &filename,
         // If input is a directory, check for root processor file.
         if (fs::is_directory(filename))
         {
-            fs::path p0file("P0000000.fld");
-            fs::path fullpath = filename / p0file;
-            datafilename      = PortablePath(fullpath);
+            fs::path fullpath = filename;
+
+            fs::path d = fullpath;
+            boost::regex expr("P\\d{7}.fld");
+            boost::smatch what;
+
+            bool found = false;
+            for (auto &f : fs::directory_iterator(d))
+            {
+                if (boost::regex_match(f.path().filename().string(), what,
+                                       expr))
+                {
+                    found    = true;
+                    fullpath = f.path();
+                    break;
+                }
+            }
+
+            ASSERTL0(found, std::string("Failed to open a PXXXXXXX.fld file "
+                                        "in directory: " +
+                                        filename)
+                                .c_str());
+
+            datafilename = PortablePath(fullpath);
         }
         else
         {
@@ -119,8 +141,8 @@ const std::string FieldIO::GetFileType(const std::string &filename,
         // Read first 8 bytes. If they correspond with magic bytes below it's an
         // HDF5 file. XML is potentially a nightmare with all the different
         // encodings so we'll just assume it's OK if it's not HDF.
-        const unsigned char magic[8] = {
-            0x89, 0x48, 0x44, 0x46, 0x0d, 0x0a, 0x1a, 0x0a};
+        const unsigned char magic[8] = {0x89, 0x48, 0x44, 0x46,
+                                        0x0d, 0x0a, 0x1a, 0x0a};
 
         std::ifstream datafile(datafilename.c_str(), std::ios_base::binary);
         ASSERTL0(datafile.good(), "Unable to open file: " + filename);
@@ -187,10 +209,8 @@ FieldIOSharedPtr FieldIO::CreateDefault(
         iofmt = session->GetCmdLineArgument<std::string>("io-format");
     }
 
-    return GetFieldIOFactory().CreateInstance(
-        iofmt,
-        session->GetComm(),
-        session->GetSharedFilesystem());
+    return GetFieldIOFactory().CreateInstance(iofmt, session->GetComm(),
+                                              session->GetSharedFilesystem());
 }
 
 /**
@@ -210,10 +230,8 @@ FieldIOSharedPtr FieldIO::CreateForFile(
 {
     const std::string iofmt =
         FieldIO::GetFileType(filename, session->GetComm());
-    return GetFieldIOFactory().CreateInstance(
-        iofmt,
-        session->GetComm(),
-        session->GetSharedFilesystem());
+    return GetFieldIOFactory().CreateInstance(iofmt, session->GetComm(),
+                                              session->GetSharedFilesystem());
 }
 
 /**
@@ -229,9 +247,8 @@ FieldIOSharedPtr FieldIO::CreateForFile(
  */
 void Write(const std::string &outFile,
            std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-           std::vector<std::vector<NekDouble> > &fielddata,
-           const FieldMetaDataMap &fieldinfomap,
-           const bool backup)
+           std::vector<std::vector<NekDouble>> &fielddata,
+           const FieldMetaDataMap &fieldinfomap, const bool backup)
 {
 #ifdef NEKTAR_USE_MPI
     int size;
@@ -274,9 +291,8 @@ void Write(const std::string &outFile,
 LIB_UTILITIES_EXPORT void Import(
     const std::string &infilename,
     std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-    std::vector<std::vector<NekDouble> > &fielddata,
-    FieldMetaDataMap &fieldinfomap,
-    const Array<OneD, int> &ElementIDs)
+    std::vector<std::vector<NekDouble>> &fielddata,
+    FieldMetaDataMap &fieldinfomap, const Array<OneD, int> &ElementIDs)
 {
 #ifdef NEKTAR_USE_MPI
     int size;
@@ -296,7 +312,7 @@ LIB_UTILITIES_EXPORT void Import(
                  "instantiate a FieldIO object for parallel use.");
     }
 #endif
-    CommSharedPtr c    = GetCommFactory().CreateInstance("Serial", 0, 0);
+    CommSharedPtr c         = GetCommFactory().CreateInstance("Serial", 0, 0);
     const std::string iofmt = FieldIO::GetFileType(infilename, c);
     FieldIOSharedPtr f = GetFieldIOFactory().CreateInstance(iofmt, c, false);
     f->Import(infilename, fielddefs, fielddata, fieldinfomap, ElementIDs);
@@ -335,8 +351,8 @@ void FieldIO::AddInfoTag(TagWriterSharedPtr root,
     ProvenanceMap["NektarVersion"] = std::string(NEKTAR_VERSION);
 
     // Date/time stamp
-    auto now = std::chrono::system_clock::now();
-    auto now_t = std::chrono::system_clock::to_time_t(now);
+    auto now    = std::chrono::system_clock::now();
+    auto now_t  = std::chrono::system_clock::to_time_t(now);
     auto now_tm = *std::localtime(&now_t);
     char buffer[128];
     strftime(buffer, sizeof(buffer), "%d-%b-%Y %H:%M:%S", &now_tm);
@@ -388,9 +404,23 @@ void FieldIO::AddInfoTag(TagWriterSharedPtr root,
  *
  * @return Absolute path to resulting file.
  */
-std::string FieldIO::SetUpOutput(const std::string outname, bool perRank, bool backup)
+std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
+                                 bool backup)
 {
     ASSERTL0(!outname.empty(), "Empty path given to SetUpOutput()");
+
+    // Create a hash from the filename
+    std::size_t file_id = std::hash<std::string>{}(outname);
+
+    // Find the minimum and maximum hash for each process
+    std::size_t file_id_max{file_id};
+    std::size_t file_id_min{file_id};
+    m_comm->AllReduce(file_id_max, ReduceMax);
+    m_comm->AllReduce(file_id_min, ReduceMin);
+
+    // Check that each process has the same filename (hash)
+    ASSERTL0(file_id_min == file_id_max,
+             "All processes do not have the same filename.");
 
     int nprocs = m_comm->GetSize();
     bool root  = m_comm->TreatAsRankZero();
@@ -399,13 +429,15 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank, bool b
     // serial.
     fs::path specPath(outname), fulloutname;
 
-    // in case we are rank 0 or not on a shared filesystem, check if the specPath already exists
+    // in case we are rank 0 or not on a shared filesystem, check if the
+    // specPath already exists
     if (backup && (root || !m_sharedFilesystem) && fs::exists(specPath))
     {
         // rename. foo/bar_123.chk -> foo/bar_123.bak0.chk and in case
-        // foo/bar_123.bak0.chk already exists, foo/bar_123.chk -> foo/bar_123.bak1.chk
+        // foo/bar_123.bak0.chk already exists, foo/bar_123.chk ->
+        // foo/bar_123.bak1.chk
         fs::path bakPath = specPath;
-        int cnt = 0;
+        int cnt          = 0;
         while (fs::exists(bakPath))
         {
             bakPath = specPath.parent_path();
@@ -792,5 +824,5 @@ int FieldIO::CheckFieldDefinition(const FieldDefinitionsSharedPtr &fielddefs)
 
     return (int)datasize;
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

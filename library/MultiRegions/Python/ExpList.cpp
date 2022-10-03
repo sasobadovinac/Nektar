@@ -32,9 +32,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <MultiRegions/ExpList.h>
-#include <LocalRegions/MatrixKey.h>
 #include <LibUtilities/Python/NekPyConfig.hpp>
+#include <LocalRegions/MatrixKey.h>
+#include <MultiRegions/ExpList.h>
 
 #include <fstream>
 #include <sstream>
@@ -63,18 +63,16 @@ void ExpList_WriteVTK(ExpListSharedPtr exp, std::string filename)
     exp->WriteVtkFooter(out);
 }
 
-Array<OneD, NekDouble> ExpList_FwdTrans(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+Array<OneD, NekDouble> ExpList_FwdTrans(ExpListSharedPtr exp,
+                                        const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetNcoeffs());
     exp->FwdTrans(in, out);
     return out;
 }
 
-Array<OneD, NekDouble> ExpList_BwdTrans(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+Array<OneD, NekDouble> ExpList_BwdTrans(ExpListSharedPtr exp,
+                                        const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetNpoints());
     exp->BwdTrans(in, out);
@@ -82,8 +80,7 @@ Array<OneD, NekDouble> ExpList_BwdTrans(
 }
 
 Array<OneD, NekDouble> ExpList_IProductWRTBase(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+    ExpListSharedPtr exp, const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetNcoeffs());
     exp->IProductWRTBase(in, out);
@@ -91,24 +88,22 @@ Array<OneD, NekDouble> ExpList_IProductWRTBase(
 }
 
 Array<OneD, NekDouble> ExpList_MultiplyByInvMassMatrix(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+    ExpListSharedPtr exp, const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetNcoeffs(), 0.0);
-    exp->MultiplyByInvMassMatrix(in, out, eLocal);
+    exp->MultiplyByInvMassMatrix(in, out);
     return out;
 }
 
-Array<OneD, NekDouble> ExpList_HelmSolve(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in,
-    const py::object constFactorMap,
-    const py::object varCoeffMap)
+Array<OneD, NekDouble> ExpList_HelmSolve(ExpListSharedPtr exp,
+                                         const Array<OneD, const NekDouble> &in,
+                                         const py::object constFactorMap,
+                                         const py::object varCoeffMap)
 {
     Array<OneD, NekDouble> out(exp->GetNcoeffs(), 0.0);
 
     StdRegions::ConstFactorMap facMap = StdRegions::NullConstFactorMap;
-    StdRegions::VarCoeffMap coeffMap = StdRegions::NullVarCoeffMap;
+    StdRegions::VarCoeffMap coeffMap  = StdRegions::NullVarCoeffMap;
 
     if (!constFactorMap.is_none())
     {
@@ -119,48 +114,42 @@ Array<OneD, NekDouble> ExpList_HelmSolve(
         coeffMap = py::extract<StdRegions::VarCoeffMap>(varCoeffMap);
     }
 
-    FlagList notUsed;
-
-    exp->HelmSolve(in, out, notUsed, facMap, coeffMap);
+    exp->HelmSolve(in, out, facMap, coeffMap);
     return out;
 }
 
-NekDouble ExpList_L2(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+NekDouble ExpList_L2(ExpListSharedPtr exp,
+                     const Array<OneD, const NekDouble> &in)
 {
     return exp->L2(in);
 }
 
-NekDouble ExpList_L2_Error(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in,
-    const Array<OneD, const NekDouble> &err)
+NekDouble ExpList_L2_Error(ExpListSharedPtr exp,
+                           const Array<OneD, const NekDouble> &in,
+                           const Array<OneD, const NekDouble> &err)
 {
     return exp->L2(in, err);
 }
 
-NekDouble ExpList_Linf(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+NekDouble ExpList_Linf(ExpListSharedPtr exp,
+                       const Array<OneD, const NekDouble> &in)
 {
     return exp->Linf(in);
 }
 
-NekDouble ExpList_Linf_Error(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &in,
-    const Array<OneD, const NekDouble> &err)
+NekDouble ExpList_Linf_Error(ExpListSharedPtr exp,
+                             const Array<OneD, const NekDouble> &in,
+                             const Array<OneD, const NekDouble> &err)
 {
     return exp->Linf(in, err);
 }
 
 py::tuple ExpList_GetCoords(ExpListSharedPtr exp)
 {
-    int nPhys = exp->GetNpoints();
+    int nPhys   = exp->GetNpoints();
     int coordim = exp->GetCoordim(0);
 
-    std::vector<Array<OneD, NekDouble> > coords(coordim);
+    std::vector<Array<OneD, NekDouble>> coords(coordim);
     for (int i = 0; i < coordim; ++i)
     {
         coords[i] = Array<OneD, NekDouble>(nPhys);
@@ -185,16 +174,13 @@ py::tuple ExpList_GetCoords(ExpListSharedPtr exp)
     return py::tuple();
 }
 
-void ExpList_SetPhysArray(
-    ExpListSharedPtr exp,
-    Array<OneD, NekDouble> inarray)
+void ExpList_SetPhysArray(ExpListSharedPtr exp, Array<OneD, NekDouble> inarray)
 {
     exp->SetPhysArray(inarray);
 }
 
-void ExpList_SetPhys(
-    ExpListSharedPtr exp,
-    const Array<OneD, const NekDouble> &inarray)
+void ExpList_SetPhys(ExpListSharedPtr exp,
+                     const Array<OneD, const NekDouble> &inarray)
 {
     exp->SetPhys(inarray);
 }
@@ -204,43 +190,87 @@ const Array<OneD, const NekDouble> ExpList_GetPhys(ExpListSharedPtr exp)
     return exp->GetPhys();
 }
 
-NekDouble ExpList_PhysIntegral(ExpListSharedPtr exp)
+NekDouble ExpList_Integral(ExpListSharedPtr exp)
 {
-    return exp->PhysIntegral();
+    return exp->Integral();
 }
 
 std::string ExpList_GetPhysAddress(ExpListSharedPtr exp)
 {
     std::stringstream ss;
-    ss << static_cast<const void*>(&(exp->GetPhys()[0]));
+    ss << static_cast<const void *>(&(exp->GetPhys()[0]));
     return ss.str();
 }
 
 void ExpList_ResetManagers(ExpListSharedPtr exp)
 {
     exp->ClearGlobalLinSysManager();
-    LibUtilities::NekManager<
-        LocalRegions::MatrixKey, DNekScalMat,
-        LocalRegions::MatrixKey::opLess>::ClearManager();
-    LibUtilities::NekManager<
-        LocalRegions::MatrixKey, DNekScalBlkMat,
-        LocalRegions::MatrixKey::opLess>::ClearManager();
+    LibUtilities::NekManager<LocalRegions::MatrixKey, DNekScalMat,
+                             LocalRegions::MatrixKey::opLess>::ClearManager();
+    LibUtilities::NekManager<LocalRegions::MatrixKey, DNekScalBlkMat,
+                             LocalRegions::MatrixKey::opLess>::ClearManager();
+}
+
+void ExpList_LoadField(ExpListSharedPtr exp, std::string filename,
+                       std::string varName)
+{
+    int nExp = exp->GetExpSize();
+    Array<OneD, int> elementGIDs(nExp);
+
+    // Construct a map from element locations to global IDs
+    for (int i = 0; i < nExp; ++i)
+    {
+        elementGIDs[i] = exp->GetExp(i)->GetGeom()->GetGlobalID();
+    }
+
+    std::vector<LibUtilities::FieldDefinitionsSharedPtr> def;
+    std::vector<std::vector<NekDouble>> data;
+    LibUtilities::FieldIOSharedPtr fldIO =
+        LibUtilities::FieldIO::CreateForFile(exp->GetSession(), filename);
+    fldIO->Import(filename, def, data, LibUtilities::NullFieldMetaDataMap,
+                  elementGIDs);
+
+    int idx = -1;
+
+    Vmath::Zero(exp->GetNcoeffs(), exp->UpdateCoeffs(), 1);
+
+    // Loop over all the expansions
+    for (int i = 0; i < def.size(); ++i)
+    {
+        // Find the index of the required field in the expansion segment
+        for (int j = 0; j < def[i]->m_fields.size(); ++j)
+        {
+            if (def[i]->m_fields[j] == varName)
+            {
+                idx = j;
+            }
+        }
+
+        if (idx >= 0)
+        {
+            exp->ExtractDataToCoeffs(def[i], data[i], def[i]->m_fields[idx],
+                                     exp->UpdateCoeffs());
+        }
+        else
+        {
+            std::cout << "Field " + varName + " not found." << std::endl;
+        }
+    }
+
+    exp->BwdTrans(exp->GetCoeffs(), exp->UpdatePhys());
 }
 
 void export_ExpList()
 {
     int (ExpList::*GetNcoeffs)() const = &ExpList::GetNcoeffs;
 
-    py::class_<ExpList,
-               std::shared_ptr<ExpList>,
-               boost::noncopyable>(
-                   "ExpList", py::no_init)
-
-        // Expansions
-        .def("GetExp", ExpList_GetExp)
-        .def("GetExpSize", &ExpList::GetExpSize)
+    py::class_<ExpList, std::shared_ptr<ExpList>, boost::noncopyable>(
+        "ExpList", py::init<const LibUtilities::SessionReaderSharedPtr &,
+                            const SpatialDomains::MeshGraphSharedPtr &>())
 
         // Query points and offset information
+        .def("GetExp", &ExpList_GetExp)
+        .def("GetExpSize", &ExpList::GetExpSize)
         .def("GetNpoints", &ExpList::GetNpoints)
         .def("GetNcoeffs", GetNcoeffs)
         .def("GetCoords", &ExpList_GetCoords)
@@ -249,17 +279,16 @@ void export_ExpList()
 
         // Evaluations
         .def("PhysEvaluate", &ExpList::PhysEvaluate)
+        .def("LoadField", &ExpList_LoadField)
 
         // Operators
         .def("FwdTrans", &ExpList_FwdTrans)
         .def("BwdTrans", &ExpList_BwdTrans)
         .def("IProductWRTBase", &ExpList_IProductWRTBase)
         .def("MultiplyByInvMassMatrix", &ExpList_MultiplyByInvMassMatrix)
-        .def("HelmSolve", &ExpList_HelmSolve, (
-                 py::arg("in"),
-                 py::arg("constFactorMap") = py::object(),
-                 py::arg("varCoeffMap") = py::object()
-                 ))
+        .def("HelmSolve", &ExpList_HelmSolve,
+             (py::arg("in"), py::arg("constFactorMap") = py::object(),
+              py::arg("varCoeffMap") = py::object()))
 
         // Error norms
         .def("L2", &ExpList_L2)
@@ -273,11 +302,10 @@ void export_ExpList()
         .def("GetPhys", &ExpList_GetPhys)
         .def("SetPhysState", &ExpList::SetPhysState)
         .def("GetPhysState", &ExpList::GetPhysState)
-        .def("PhysIntegral", &ExpList_PhysIntegral)
+        .def("Integral", &ExpList_Integral)
         .def("GetPhysAddress", &ExpList_GetPhysAddress)
 
         // Misc functions
         .def("WriteVTK", &ExpList_WriteVTK)
-        .def("ResetManagers", &ExpList_ResetManagers)
-        ;
+        .def("ResetManagers", &ExpList_ResetManagers);
 }

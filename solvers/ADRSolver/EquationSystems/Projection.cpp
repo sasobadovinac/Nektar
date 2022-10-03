@@ -43,14 +43,14 @@ string Projection::className =
                                                        Projection::create);
 
 Projection::Projection(const LibUtilities::SessionReaderSharedPtr &pSession,
-                       const SpatialDomains::MeshGraphSharedPtr& pGraph)
+                       const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : EquationSystem(pSession, pGraph)
 {
 }
 
-void Projection::v_InitObject()
+void Projection::v_InitObject(bool DeclareFields)
 {
-    EquationSystem::v_InitObject();
+    EquationSystem::v_InitObject(DeclareFields);
 
     GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
 }
@@ -61,7 +61,7 @@ Projection::~Projection()
 
 void Projection::v_DoSolve()
 {
-    for (int i = 0; i < m_fields.num_elements(); ++i)
+    for (int i = 0; i < m_fields.size(); ++i)
     {
         // Zero field so initial conditions are zero
         Vmath::Zero(m_fields[i]->GetNcoeffs(), m_fields[i]->UpdateCoeffs(), 1);
@@ -74,7 +74,7 @@ void Projection::v_DoSolve()
 void Projection::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
     EquationSystem::SessionSummary(s);
-    for (int i = 0; i < m_fields.num_elements(); ++i)
+    for (int i = 0; i < m_fields.size(); ++i)
     {
         stringstream name;
         name << "Forcing func [" << i << "]";
@@ -83,4 +83,4 @@ void Projection::v_GenerateSummary(SolverUtils::SummaryList &s)
             m_session->GetFunction("Forcing", i)->GetExpression());
     }
 }
-}
+} // namespace Nektar

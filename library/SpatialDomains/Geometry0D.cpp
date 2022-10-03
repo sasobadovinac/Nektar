@@ -53,8 +53,18 @@ Geometry0D::~Geometry0D()
 
 int Geometry0D::v_GetShapeDim() const
 {
-	return 0;
+    return 0;
 }
 
-} // end of namespace
-} // end of namespace
+bool Geometry0D::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
+                                 Array<OneD, NekDouble> &locCoord,
+                                 NekDouble tol, NekDouble &dist)
+{
+    boost::ignore_unused(gloCoord, locCoord, tol, dist);
+    NEKERROR(ErrorUtil::efatal,
+             "This function has not been defined for 0D geometry");
+    return false;
+}
+
+} // namespace SpatialDomains
+} // namespace Nektar

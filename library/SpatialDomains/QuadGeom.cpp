@@ -33,13 +33,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/QuadGeom.h>
 #include <LibUtilities/Foundations/Interp.h>
+#include <SpatialDomains/QuadGeom.h>
 
-#include <StdRegions/StdQuadExp.h>
-#include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/Curve.hpp>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/SegGeom.h>
+#include <StdRegions/StdQuadExp.h>
 
 using namespace std;
 
@@ -53,15 +53,14 @@ QuadGeom::QuadGeom()
     m_shapeType = LibUtilities::eQuadrilateral;
 }
 
-QuadGeom::QuadGeom(const int id,
-                   const SegGeomSharedPtr edges[],
+QuadGeom::QuadGeom(const int id, const SegGeomSharedPtr edges[],
                    const CurveSharedPtr curve)
     : Geometry2D(edges[0]->GetVertex(0)->GetCoordim(), curve)
 {
     int j;
 
     m_shapeType = LibUtilities::eQuadrilateral;
-    m_globalID = id;
+    m_globalID  = id;
 
     /// Copy the edge shared pointers.
     m_edges.insert(m_edges.begin(), edges, edges + QuadGeom::kNedges);
@@ -77,20 +76,20 @@ QuadGeom::QuadGeom(const int id,
 
     for (j = 2; j < kNedges; ++j)
     {
-        m_eorient[j] = m_eorient[j] == StdRegions::eBackwards ?
-            StdRegions::eForwards : StdRegions::eBackwards;
+        m_eorient[j] = m_eorient[j] == StdRegions::eBackwards
+                           ? StdRegions::eForwards
+                           : StdRegions::eBackwards;
     }
 
     m_coordim = edges[0]->GetVertex(0)->GetCoordim();
     ASSERTL0(m_coordim > 1, "Cannot call function with dim == 1");
 }
 
-QuadGeom::QuadGeom(const QuadGeom &in)
-    : Geometry2D(in)
+QuadGeom::QuadGeom(const QuadGeom &in) : Geometry2D(in)
 {
     // From Geometry
     m_shapeType = in.m_shapeType;
-    m_globalID = in.m_globalID;
+    m_globalID  = in.m_globalID;
 
     // From QuadGeom
     m_verts = in.m_verts;
@@ -113,13 +112,13 @@ void QuadGeom::SetUpXmap()
                      m_edges[3]->GetXmap()->GetBasis(0)->GetNumModes());
 
     const LibUtilities::BasisKey B0(
-        LibUtilities::eModified_A,
-        order0,
-        LibUtilities::PointsKey(order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order0,
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey B1(
-        LibUtilities::eModified_A,
-        order1,
-        LibUtilities::PointsKey(order1+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order1,
+        LibUtilities::PointsKey(order1 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
 
     m_xmap = MemoryManager<StdRegions::StdQuadExp>::AllocateSharedPtr(B0, B1);
 }
@@ -137,10 +136,12 @@ NekDouble QuadGeom::v_GetCoord(const int i,
 
 StdRegions::Orientation QuadGeom::GetFaceOrientation(const QuadGeom &face1,
                                                      const QuadGeom &face2,
-            bool doRot, int dir, NekDouble angle, NekDouble tol)
+                                                     bool doRot, int dir,
+                                                     NekDouble angle,
+                                                     NekDouble tol)
 {
-    return GetFaceOrientation(face1.m_verts, face2.m_verts,
-                              doRot, dir, angle, tol);
+    return GetFaceOrientation(face1.m_verts, face2.m_verts, doRot, dir, angle,
+                              tol);
 }
 
 /**
@@ -148,15 +149,15 @@ StdRegions::Orientation QuadGeom::GetFaceOrientation(const QuadGeom &face1,
  * not face1 to face2!).
  */
 StdRegions::Orientation QuadGeom::GetFaceOrientation(
-            const PointGeomVector &face1, const PointGeomVector &face2,
-            bool doRot, int dir, NekDouble angle, NekDouble tol)
+    const PointGeomVector &face1, const PointGeomVector &face2, bool doRot,
+    int dir, NekDouble angle, NekDouble tol)
 {
     int i, j, vmap[4] = {-1, -1, -1, -1};
 
-    if(doRot)
+    if (doRot)
     {
         PointGeom rotPt;
-        
+
         for (i = 0; i < 4; ++i)
         {
             rotPt.Rotate((*face1[i]), dir, angle);
@@ -172,9 +173,9 @@ StdRegions::Orientation QuadGeom::GetFaceOrientation(
     }
     else
     {
-        
+
         NekDouble x, y, z, x1, y1, z1, cx = 0.0, cy = 0.0, cz = 0.0;
-        
+
         // For periodic faces, we calculate the vector between the centre
         // points of the two faces. (For connected faces this will be
         // zero). We can then use this to determine alignment later in the
@@ -260,7 +261,7 @@ StdRegions::Orientation QuadGeom::GetFaceOrientation(
  */
 void QuadGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         QuadGeom::v_Setup();
     }
@@ -345,7 +346,7 @@ void QuadGeom::v_FillGeom()
 
         if (m_curve)
         {
-            int npts = m_curve->m_points.size();
+            int npts     = m_curve->m_points.size();
             int nEdgePts = (int)sqrt(static_cast<NekDouble>(npts));
             Array<OneD, NekDouble> tmp(npts);
             Array<OneD, NekDouble> tmp2(m_xmap->GetTotPoints());
@@ -375,9 +376,7 @@ void QuadGeom::v_FillGeom()
                 }
 
                 // Interpolate m_curve points to GLL points
-                LibUtilities::Interp2D(curveKey,
-                                       curveKey,
-                                       tmp,
+                LibUtilities::Interp2D(curveKey, curveKey, tmp,
                                        m_xmap->GetBasis(0)->GetPointsKey(),
                                        m_xmap->GetBasis(1)->GetPointsKey(),
                                        tmp2);
@@ -394,7 +393,7 @@ void QuadGeom::v_FillGeom()
         for (i = 0; i < kNedges; i++)
         {
             m_edges[i]->FillGeom();
-            m_xmap->GetEdgeToElementMap(i, m_eorient[i], mapArray, signArray);
+            m_xmap->GetTraceToElementMap(i, mapArray, signArray, m_eorient[i]);
 
             nEdgeCoeffs = m_edges[i]->GetXmap()->GetNcoeffs();
 
@@ -412,100 +411,11 @@ void QuadGeom::v_FillGeom()
     }
 }
 
-/**
- *
- */
-NekDouble QuadGeom::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                   Array<OneD, NekDouble> &Lcoords)
+int QuadGeom::v_GetDir(const int i, const int j) const
 {
-    NekDouble resid = 0.0;
-    if (GetMetricInfo()->GetGtype() == eRegular)
-    {
-        NekDouble coords2 = (m_coordim == 3) ? coords[2] : 0.0;
-        PointGeom dv1, dv2, norm, orth1, orth2;
-        PointGeom xin(m_coordim, 0, coords[0], coords[1], coords2);
+    boost::ignore_unused(j); // required in 3D shapes
 
-        // Calculate edge vectors from 0-1 and 0-3 edges.
-        dv1.Sub(*m_verts[1], *m_verts[0]);
-        dv2.Sub(*m_verts[3], *m_verts[0]);
-
-        // Obtain normal to plane in which dv1 and dv2 lie
-        norm.Mult(dv1, dv2);
-
-        // Obtain vector which are normal to dv1 and dv2.
-        orth1.Mult(norm, dv1);
-        orth2.Mult(norm, dv2);
-
-        // Start with vector of desired points minus vertex_0
-        xin -= *m_verts[0];
-
-        // Calculate length using L/|dv1| = (x-v0).n1/(dv1.n1) for coordiante 1
-        // Then rescale to [-1,1].
-        Lcoords[0] = xin.dot(orth2) / dv1.dot(orth2);
-        Lcoords[0] = 2 * Lcoords[0] - 1;
-        Lcoords[1] = xin.dot(orth1) / dv2.dot(orth1);
-        Lcoords[1] = 2 * Lcoords[1] - 1;
-    }
-    else
-    {
-        QuadGeom::v_FillGeom();
-
-        // Determine nearest point of coords  to values in m_xmap
-        int npts = m_xmap->GetTotPoints();
-        Array<OneD, NekDouble> ptsx(npts), ptsy(npts);
-        Array<OneD, NekDouble> tmpx(npts), tmpy(npts);
-
-        m_xmap->BwdTrans(m_coeffs[0], ptsx);
-        m_xmap->BwdTrans(m_coeffs[1], ptsy);
-
-        const Array<OneD, const NekDouble> za = m_xmap->GetPoints(0);
-        const Array<OneD, const NekDouble> zb = m_xmap->GetPoints(1);
-
-        // guess the first local coords based on nearest point
-        Vmath::Sadd(npts, -coords[0], ptsx, 1, tmpx, 1);
-        Vmath::Sadd(npts, -coords[1], ptsy, 1, tmpy, 1);
-        Vmath::Vmul(npts, tmpx, 1, tmpx, 1, tmpx, 1);
-        Vmath::Vvtvp(npts, tmpy, 1, tmpy, 1, tmpx, 1, tmpx, 1);
-
-        int min_i = Vmath::Imin(npts, tmpx, 1);
-
-        Lcoords[0] = za[min_i % za.num_elements()];
-        Lcoords[1] = zb[min_i / za.num_elements()];
-
-        // Perform newton iteration to find local coordinates
-        NewtonIterationForLocCoord(coords, ptsx, ptsy, Lcoords, resid);
-    }
-    return resid;
-}
-
-bool QuadGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                               Array<OneD, NekDouble> &stdCoord,
-                               NekDouble tol,
-                               NekDouble &resid)
-{
-    //Rough check if within twice min/max point
-    if (GetMetricInfo()->GetGtype() != eRegular)
-    {
-        if (!MinMaxCheck(gloCoord))
-        {
-            return false;
-        }
-    }
-
-    // Convert to the local (eta) coordinates.
-    resid = GetLocCoords(gloCoord, stdCoord);
-
-    // Check local coordinate is within cartesian bounds.
-    if (stdCoord[0] >= -(1 + tol) && stdCoord[1] >= -(1 + tol) &&
-        stdCoord[0] <= (1 + tol) && stdCoord[1] <= (1 + tol))
-    {
-        return true;
-    }
-
-    //Clamp local coords
-    ClampLocCoords(stdCoord, tol);
-
-    return false;
+    return i % 2;
 }
 
 void QuadGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
@@ -529,7 +439,7 @@ void QuadGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void QuadGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 4; ++i)
         {
@@ -541,5 +451,5 @@ void QuadGeom::v_Setup()
     }
 }
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar

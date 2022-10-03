@@ -1,37 +1,32 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5.1)
 SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build,
 options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release
 RelWithDebInfo MinSizeRel.")
+# Toggleable build type
+SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel")
+
+# Find the modules included with Nektar
+SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+
+# Simd
+INCLUDE(NektarSIMD)
 
 PROJECT(Nektar++ C CXX)
 
 CMAKE_POLICY(SET CMP0022 NEW)
+# Resolves issue with checking string equality for string params that are also
+# variable names - this resolves an issue with checking for MSVC on Windows
+CMAKE_POLICY(SET CMP0054 NEW)
 
 # Defer to use _ROOT variables to avoid Zlib warning
 IF (POLICY CMP0074)
     CMAKE_POLICY(SET CMP0074 OLD)
 ENDIF()
 
-# Nektar++ requires C++11. Try to infer this for older CMake versions (less than
-# 3.1.0)
-IF ("${CMAKE_VERSION}" VERSION_LESS "3.1")
-    IF (NOT MSVC)
-        INCLUDE(CheckCXXCompilerFlag)
-        CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-
-        IF (COMPILER_SUPPORTS_CXX11)
-            SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-        ELSE()
-            MESSAGE(FATAL_ERROR "Nektar++ requires a compiler with C++11 support.")
-        ENDIF()
-    ELSEIF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18.0)
-        MESSAGE(FATAL_ERROR "Nektar++ requires full C++11 support: please upgrade to Visual Studio 2013 or later")
-    ENDIF()
-ELSE()
-    SET(CMAKE_CXX_STANDARD 11)
-    SET(CMAKE_CXX_STANDARD_REQUIRED ON)
-    SET(CMAKE_CXX_EXTENSIONS OFF)
-ENDIF()
+# Nektar++ requires C++14.
+SET(CMAKE_CXX_STANDARD 14 CACHE STRING "Default value for CXX_STANDARD property of targets")
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+SET(CMAKE_CXX_EXTENSIONS OFF)
 
 INCLUDE(CheckLanguage)
 
@@ -61,8 +56,6 @@ INCLUDE(CMakeParseArguments)
 # Enable CTest.
 ENABLE_TESTING()
 
-# Find the modules included with Nektar
-SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 # Set default install path if not provided on the command-line
 IF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -112,6 +105,9 @@ SET(LIB_DIR "lib")
 IF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" AND NOT APPLE )
     SET(LIB_DIR "lib64")
 ENDIF()
+IF (DEFINED NEKTAR_LIB_DIR)
+    SET(LIB_DIR ${NEKTAR_LIB_DIR})
+ENDIF()
 SET(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
 
 SET(NEKTAR_BIN_DIR bin)
@@ -121,12 +117,21 @@ SET(NEKTAR_SHARE_DIR share/nektar++)
 SET(NEKTAR_DOC_DIR share/doc/nektar++)
 SET(NEKTAR_CMAKE_DIR ${LIB_DIR}/nektar++/cmake)
 
-# Set ThirdParty locations.
+# Set ThirdParty locations for source files, building and collating outputs
 SET(TPSRC   ${CMAKE_SOURCE_DIR}/ThirdParty)
 SET(TPBUILD ${CMAKE_BINARY_DIR}/ThirdParty)
 SET(TPDIST  ${CMAKE_BINARY_DIR}/ThirdParty/dist)
-SET(TPINC   ${CMAKE_INSTALL_PREFIX}/include/ThirdParty)
-SET(TPLIB   ${CMAKE_INSTALL_PREFIX}/${NEKTAR_LIB_DIR}/nektar++/thirdparty)
+
+# INSTALLATION PATHS
+# Allow for overriding final include header directory (for Fedora/CentOS
+# packaging)
+IF (DEFINED NEKTAR_INCLUDE_ROOT)
+    SET(NEKTAR_INCLUDE_DIST_DIR ${NEKTAR_INCLUDE_ROOT}/nektar++)
+ELSE()
+    SET(NEKTAR_INCLUDE_DIST_DIR ${CMAKE_INSTALL_PREFIX}/${NEKTAR_INCLUDE_DIR})
+ENDIF()
+SET(TP_INCLUDE_DIR ${NEKTAR_INCLUDE_DIR})
+SET(TP_LIB_DIR     ${CMAKE_INSTALL_PREFIX}/${NEKTAR_LIB_DIR}/nektar++)
 
 # Create ThirdParty source directory if it doesn't exist already.
 IF (NOT EXISTS ${TPSRC})
@@ -138,13 +143,14 @@ SET(NEKTAR_LIBRARY_TYPE "SHARED")
 
 # Set up RPATH
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+SET(CMAKE_BUILD_RPATH "${TP_LIB_DIR}")
 LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
      "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" isSystemDir)
 IF("${isSystemDir}" STREQUAL "-1")
-    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" "${TPLIB}/")
+    SET(CMAKE_INSTALL_RPATH 
+        "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" "${TP_LIB_DIR}/")
 ELSE()
-    SET(CMAKE_INSTALL_RPATH "${TPLIB}")
+    SET(CMAKE_INSTALL_RPATH "${TP_LIB_DIR}")
 ENDIF()
 
 # Enable the use of @rpath in macOS install names so that we can use multiple
@@ -160,7 +166,6 @@ OPTION(NEKTAR_BUILD_SOLVERS    "Build example solvers."         ON)
 OPTION(NEKTAR_BUILD_UTILITIES  "Build utilities."               ON)
 OPTION(NEKTAR_BUILD_UNIT_TESTS "Build unit tests."              ON)
 OPTION(NEKTAR_BUILD_TESTS      "Build regression tests."        ON)
-OPTION(NEKTAR_BUILD_TIMINGS    "Build benchmark timing codes."  OFF)
 OPTION(NEKTAR_BUILD_PYTHON     "Build Nektar++ Python bindings" OFF)
 
 OPTION(NEKTAR_TEST_ALL "Include full set of regression tests to this build." OFF)
@@ -175,6 +180,10 @@ IF (NOT WIN32)
     OPTION(NEKTAR_USE_MESHGEN "Build mesh generation utilities." OFF)
 ENDIF()
 
+# Use likwid for timing
+OPTION(NEKTAR_USE_LIKWID "Enable Likwid." OFF)
+MARK_AS_ADVANCED(NEKTAR_USE_LIKWID)
+
 # Build options
 OPTION(NEKTAR_FULL_DEBUG "Enable Full Debugging." OFF)
 MARK_AS_ADVANCED(NEKTAR_FULL_DEBUG)
@@ -188,6 +197,12 @@ ENDIF (${CMAKE_COMPILER_IS_GNUCXX})
 OPTION(NEKTAR_USE_MEMORY_POOLS
     "Use memory pools to accelerate memory allocation." ON)
 MARK_AS_ADVANCED(NEKTAR_USE_MEMORY_POOLS)
+
+# Memory alignement
+CMAKE_DEPENDENT_OPTION(
+    NEKTAR_USE_ALIGNED_MEM "Force memory alignement to SIMD width" OFF
+    "NOT NEKTAR_USE_MEMORY_POOLS" OFF)
+MARK_AS_ADVANCED(NEKTAR_USE_ALIGNED_MEM)
 
 # Thread safety
 OPTION(NEKTAR_USE_THREAD_SAFETY
@@ -248,6 +263,7 @@ INCLUDE (ThirdPartyBlasLapack)
 INCLUDE (ThirdPartyCwipi)
 INCLUDE (ThirdPartyEigen)
 INCLUDE (FindCFI)
+INCLUDE (FindLikwid)
 
 INCLUDE (Doxygen)
 
@@ -260,6 +276,10 @@ IF( NEKTAR_USE_MEMORY_POOLS )
 ELSE( NEKTAR_USE_MEMORY_POOLS )
     REMOVE_DEFINITIONS(-DNEKTAR_MEMORY_POOL_ENABLED)
 ENDIF( NEKTAR_USE_MEMORY_POOLS )
+
+IF (NEKTAR_USE_ALIGNED_MEM)
+    ADD_DEFINITIONS(-DNEKTAR_USE_ALIGNED_MEM)
+ENDIF()
 
 INCLUDE (ThirdPartyPETSc)
 
@@ -279,8 +299,6 @@ IF (APPLE)
   SET(CMAKE_INCLUDE_SYSTEM_FLAG_C   "-isystem ")
   SET(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
 ENDIF (APPLE)
-
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 
 # Build active components. Add utilities and solvers directories first, because
 # that allows us to detect library dependencies automatically.
@@ -330,15 +348,29 @@ INSTALL(FILES ${CMAKE_BINARY_DIR}/Nektar++Config.cmake
     DESTINATION ${NEKTAR_CMAKE_DIR}
     COMPONENT dev)
 
+# THIRDPARTY SOFTWARE DISTRIBUTION
+# Install shared libraries
 INSTALL(CODE "FILE(GLOB tplibs ${TPDIST}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*)
     IF (NOT tplibs STREQUAL \"\")
-        FILE(INSTALL \${tplibs} DESTINATION ${TPLIB})
+        FILE(INSTALL \${tplibs} DESTINATION ${TP_LIB_DIR})
+    ENDIF()
+")
+
+# Install cmake configuration files
+IF (EXISTS ${TPDIST}/lib/cmake)
+    INSTALL(DIRECTORY ${TPDIST}/lib/cmake/
+            DESTINATION ${TP_LIB_DIR}/cmake
+            COMPONENT libutilities)
+ENDIF()
+INSTALL(CODE "FILE(GLOB tpcmake ${TPDIST}/lib/*/*.cmake)
+    IF (NOT tpcmake STREQUAL \"\")
+        FILE(INSTALL \${tpcmake} DESTINATION ${TP_LIB_DIR}/cmake)
     ENDIF()
 ")
 
 # Install ThirdParty headers to subdirectory of ${NEKTAR_INCLUDE_DIR}
 INSTALL(DIRECTORY ${TPDIST}/include/
-    DESTINATION ${NEKTAR_INCLUDE_DIR}/ThirdParty
+    DESTINATION ${TP_INCLUDE_DIR}
     COMPONENT dev
     OPTIONAL
     )

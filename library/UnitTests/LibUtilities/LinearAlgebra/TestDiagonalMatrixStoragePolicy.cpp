@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,56 +37,49 @@
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 #include <UnitTests/CountedObject.h>
 #include <UnitTests/util.h>
-#include <boost/test/auto_unit_test.hpp>
-#include <boost/test/test_case_template.hpp>
-#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
-
-#include <boost/test/auto_unit_test.hpp>
 
 namespace Nektar
 {
-    namespace DiagonalMatrixStoragePolicyUnitTests
+namespace DiagonalMatrixStoragePolicyUnitTests
+{
+typedef DiagonalMatrixFuncs Policy;
+
+BOOST_AUTO_TEST_CASE(TestAdvanceDiagonal)
+{
+    UnitTests::RedirectCerrIfNeeded();
+    typedef DiagonalMatrixFuncs Policy;
+
     {
-        typedef DiagonalMatrixFuncs Policy;
+        unsigned int curRow         = 0;
+        unsigned int curColumn      = 0;
+        std::tie(curRow, curColumn) = Policy::Advance(4, 4, curRow, curColumn);
+        BOOST_CHECK_EQUAL(1u, curRow);
+        BOOST_CHECK_EQUAL(1u, curColumn);
 
-                    
-        BOOST_AUTO_TEST_CASE(TestAdvanceDiagonal)
-        {
-            UnitTests::RedirectCerrIfNeeded();
-            typedef DiagonalMatrixFuncs Policy;
+        std::tie(curRow, curColumn) = Policy::Advance(4, 4, curRow, curColumn);
+        BOOST_CHECK_EQUAL(2u, curRow);
+        BOOST_CHECK_EQUAL(2u, curColumn);
 
-            {
-                unsigned int curRow = 0; 
-                unsigned int curColumn = 0;
-                std::tie(curRow, curColumn) = Policy::Advance(4, 4, curRow, curColumn);
-                BOOST_CHECK_EQUAL(1u, curRow);
-                BOOST_CHECK_EQUAL(1u, curColumn);
+        std::tie(curRow, curColumn) = Policy::Advance(4, 4, curRow, curColumn);
+        BOOST_CHECK_EQUAL(3u, curRow);
+        BOOST_CHECK_EQUAL(3u, curColumn);
 
-                std::tie(curRow, curColumn) = Policy::Advance(4, 4, curRow, curColumn);
-                BOOST_CHECK_EQUAL(2u, curRow);
-                BOOST_CHECK_EQUAL(2u, curColumn);
+        std::tie(curRow, curColumn) = Policy::Advance(2, 2, curRow, curColumn);
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
+    }
 
-                std::tie(curRow, curColumn) = Policy::Advance(4, 4, curRow, curColumn);
-                BOOST_CHECK_EQUAL(3u, curRow);
-                BOOST_CHECK_EQUAL(3u, curColumn);
+    {
 
-                std::tie(curRow, curColumn) = Policy::Advance(2, 2, curRow, curColumn);
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
-            }
-
-            {
-  
-                unsigned int curRow = 0; 
-                unsigned int curColumn = 0;
-                std::tie(curRow, curColumn) = Policy::Advance(1, 1, curRow, curColumn);
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
-                BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
-            }
-        }
-
+        unsigned int curRow         = 0;
+        unsigned int curColumn      = 0;
+        std::tie(curRow, curColumn) = Policy::Advance(1, 1, curRow, curColumn);
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curRow);
+        BOOST_CHECK_EQUAL(std::numeric_limits<unsigned int>::max(), curColumn);
     }
 }
 
-
+} // namespace DiagonalMatrixStoragePolicyUnitTests
+} // namespace Nektar

@@ -76,7 +76,7 @@ public:
         return eModifyExp;
     }
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

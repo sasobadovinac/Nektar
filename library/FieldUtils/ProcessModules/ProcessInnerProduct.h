@@ -78,11 +78,11 @@ public:
     }
 
 private:
-    NekDouble IProduct(vector<unsigned int> &processFields,
+    NekDouble IProduct(std::vector<unsigned int> &processFields,
                        FieldSharedPtr &fromField,
-                       Array<OneD, const Array<OneD, NekDouble> > &SaveFld);
+                       Array<OneD, const Array<OneD, NekDouble>> &SaveFld);
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

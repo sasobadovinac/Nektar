@@ -35,43 +35,35 @@
 #include <utility>
 #include <vector>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
 #include <SolverUtils/Core/Misc.h>
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
-using namespace std;
-
-namespace Nektar {
-namespace SolverUtils {
-    /**
-     * Adds an item to a SummaryList
-     */
-    void AddSummaryItem(
-            SummaryList& l,
-            const std::string& name,
-            const std::string& value)
-    {
-        l.push_back(std::make_pair(name, value));
-    }
-
-    /// Adds a summary item to the summary info list
-    void AddSummaryItem(
-            SummaryList& l,
-            const std::string& name,
-            const int& value)
-    {
-        l.push_back(std::make_pair(name, boost::lexical_cast<std::string>(value)));
-    }
-
-    /// Adds a summary item to the summary info list
-    void AddSummaryItem(
-            SummaryList& l,
-            const std::string& name,
-            const NekDouble& value)
-    {
-        l.push_back(std::make_pair(
-            name, str(boost::format("%g") % value)));
-    }
-
+namespace Nektar
+{
+namespace SolverUtils
+{
+/**
+ * Adds an item to a SummaryList
+ */
+void AddSummaryItem(SummaryList &l, const std::string &name,
+                    const std::string &value)
+{
+    l.push_back(std::make_pair(name, value));
 }
+
+/// Adds a summary item to the summary info list
+void AddSummaryItem(SummaryList &l, const std::string &name, const int &value)
+{
+    l.push_back(std::make_pair(name, boost::lexical_cast<std::string>(value)));
 }
+
+/// Adds a summary item to the summary info list
+void AddSummaryItem(SummaryList &l, const std::string &name,
+                    const NekDouble &value)
+{
+    l.push_back(std::make_pair(name, str(boost::format("%g") % value)));
+}
+
+} // end namespace SolverUtils
+} // end namespace Nektar

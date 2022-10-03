@@ -50,8 +50,7 @@ namespace FieldUtils
 
 ModuleKey ProcessInnerProduct::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "innerproduct"),
-        ProcessInnerProduct::create,
+        ModuleKey(eProcessModule, "innerproduct"), ProcessInnerProduct::create,
         "take inner product between two fields and return value.");
 
 ProcessInnerProduct::ProcessInnerProduct(FieldSharedPtr f) : ProcessModule(f)
@@ -60,12 +59,14 @@ ProcessInnerProduct::ProcessInnerProduct(FieldSharedPtr f) : ProcessModule(f)
         false, "NotSet", "Fld file form which to interpolate field");
     m_config["fields"] =
         ConfigOption(false, "All", "field id's to be used in inner product");
-    m_config["multifldids"] = ConfigOption(
-        false, "NotSet", "Take inner product of multiple field fields with "
-                         "ids given in string. i.e. file_0.chk file_1.chk ...");
+    m_config["multifldids"] =
+        ConfigOption(false, "NotSet",
+                     "Take inner product of multiple field fields with "
+                     "ids given in string. i.e. file_0.chk file_1.chk ...");
     m_config["allfromflds"] =
-        ConfigOption(true, "0", "Take inner product between all fromflds, "
-                                     "requires multifldids to be set");
+        ConfigOption(true, "0",
+                     "Take inner product between all fromflds, "
+                     "requires multifldids to be set");
 }
 
 ProcessInnerProduct::~ProcessInnerProduct()
@@ -74,7 +75,7 @@ ProcessInnerProduct::~ProcessInnerProduct()
 
 void ProcessInnerProduct::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -140,7 +141,7 @@ void ProcessInnerProduct::Process(po::variables_map &vm)
         }
     }
 
-    Array<OneD, Array<OneD, NekDouble> > SaveFld(processFields.size());
+    Array<OneD, Array<OneD, NekDouble>> SaveFld(processFields.size());
     for (int j = 0; j < processFields.size(); ++j)
     {
         int fid    = processFields[j];
@@ -153,9 +154,9 @@ void ProcessInnerProduct::Process(po::variables_map &vm)
 
         for (int f = 0; f < fromfiles.size(); ++f)
         {
-            m_f->FieldIOForFile(fromfiles[f])->Import(
-                fromfiles[f], fromField->m_fielddef, fromField->m_data,
-                LibUtilities::NullFieldMetaDataMap, ElementGIDs);
+            m_f->FieldIOForFile(fromfiles[f])
+                ->Import(fromfiles[f], fromField->m_fielddef, fromField->m_data,
+                         LibUtilities::NullFieldMetaDataMap, ElementGIDs);
 
             totiprod = IProduct(processFields, fromField, SaveFld);
 
@@ -176,10 +177,10 @@ void ProcessInnerProduct::Process(po::variables_map &vm)
         {
             allFromField[i] = std::shared_ptr<Field>(new Field());
 
-            m_f->FieldIOForFile(fromfiles[i])->Import(
-                fromfiles[i], allFromField[i]->m_fielddef,
-                allFromField[i]->m_data, LibUtilities::NullFieldMetaDataMap,
-                ElementGIDs);
+            m_f->FieldIOForFile(fromfiles[i])
+                ->Import(fromfiles[i], allFromField[i]->m_fielddef,
+                         allFromField[i]->m_data,
+                         LibUtilities::NullFieldMetaDataMap, ElementGIDs);
         }
 
         for (int g = 0; g < fromfiles.size(); ++g)
@@ -193,8 +194,7 @@ void ProcessInnerProduct::Process(po::variables_map &vm)
                 {
                     m_f->m_exp[fid]->ExtractDataToCoeffs(
                         allFromField[g]->m_fielddef[i],
-                        allFromField[g]->m_data[i],
-                        m_f->m_variables[fid],
+                        allFromField[g]->m_data[i], m_f->m_variables[fid],
                         m_f->m_exp[fid]->UpdateCoeffs());
                 }
 
@@ -218,9 +218,8 @@ void ProcessInnerProduct::Process(po::variables_map &vm)
 }
 
 NekDouble ProcessInnerProduct::IProduct(
-    vector<unsigned int> &processFields,
-    FieldSharedPtr &fromField,
-    Array<OneD, const Array<OneD, NekDouble> > &SaveFld)
+    vector<unsigned int> &processFields, FieldSharedPtr &fromField,
+    Array<OneD, const Array<OneD, NekDouble>> &SaveFld)
 {
     int nphys          = m_f->m_exp[0]->GetTotPoints();
     NekDouble totiprod = 0.0;
@@ -234,8 +233,7 @@ NekDouble ProcessInnerProduct::IProduct(
         {
             m_f->m_exp[fid]->ExtractDataToCoeffs(
                 fromField->m_fielddef[i], fromField->m_data[i],
-                m_f->m_variables[fid],
-                m_f->m_exp[fid]->UpdateCoeffs());
+                m_f->m_variables[fid], m_f->m_exp[fid]->UpdateCoeffs());
         }
 
         m_f->m_exp[fid]->BwdTrans(m_f->m_exp[fid]->GetCoeffs(),
@@ -245,14 +243,11 @@ NekDouble ProcessInnerProduct::IProduct(
                     m_f->m_exp[fid]->UpdatePhys(), 1);
 
         NekDouble iprod =
-            m_f->m_exp[fid]->PhysIntegral(m_f->m_exp[fid]->UpdatePhys());
-
-        // put in parallel summation
-        m_f->m_comm->AllReduce(iprod, Nektar::LibUtilities::ReduceSum);
+            m_f->m_exp[fid]->Integral(m_f->m_exp[fid]->UpdatePhys());
 
         totiprod += iprod;
     }
     return totiprod;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

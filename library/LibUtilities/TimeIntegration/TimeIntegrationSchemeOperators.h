@@ -32,15 +32,16 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#ifndef NEKTAR_LIB_UTILITIES_TIME_INTEGRATION_TIME_INTEGRATION_SCHEME_OPERATORS
+#define NEKTAR_LIB_UTILITIES_TIME_INTEGRATION_TIME_INTEGRATION_SCHEME_OPERATORS
 
 #include <string>
 
 #include <boost/core/ignore_unused.hpp>
 
+#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
-#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 
@@ -52,6 +53,12 @@ namespace Nektar
 {
 namespace LibUtilities
 {
+
+class TimeIntegrationSchemeOperators;
+
+typedef std::shared_ptr<TimeIntegrationSchemeOperators>
+    TimeIntegrationSchemeOperatorsSharedPtr;
+
 /**
  * @brief Binds a set of functions for use by time integration schemes.
  */
@@ -163,9 +170,9 @@ protected:
     FunctorType2Array m_functors2;
 
 private:
-
 };
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
+#endif

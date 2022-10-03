@@ -62,6 +62,8 @@ public:
     /// Write mesh to output file.
     virtual void Process(po::variables_map &vm);
 
+    void LoadFieldData(bool useSessionVariables = false);
+
     virtual std::string GetModuleName()
     {
         return "ProcessCreateExp";
@@ -79,7 +81,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

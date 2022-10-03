@@ -35,84 +35,76 @@
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSXXTSTATICCOND_H
 #define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSXXTSTATICCOND_H
 
-#include <MultiRegions/GlobalMatrix.h>
-#include <MultiRegions/GlobalLinSysKey.h>
-#include <MultiRegions/GlobalLinSysXxt.h>
-#include <MultiRegions/GlobalLinSysStaticCond.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
+#include <MultiRegions/GlobalLinSysKey.h>
+#include <MultiRegions/GlobalLinSysStaticCond.h>
+#include <MultiRegions/GlobalLinSysXxt.h>
+#include <MultiRegions/GlobalMatrix.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+// Forward declarations
+class AssemblyMapCG;
+class ExpList;
+class GlobalLinSysXxtStaticCond;
+
+typedef std::shared_ptr<GlobalLinSysXxtStaticCond>
+    GlobalLinSysXxtStaticCondSharedPtr;
+
+/// A global linear system.
+class GlobalLinSysXxtStaticCond : virtual public GlobalLinSysXxt,
+                                  virtual public GlobalLinSysStaticCond
+{
+public:
+    /// Creates an instance of this class
+    static GlobalLinSysSharedPtr create(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        // Forward declarations
-        class AssemblyMapCG;
-        class ExpList;
-        class GlobalLinSysXxtStaticCond;
-
-        typedef std::shared_ptr<GlobalLinSysXxtStaticCond>
-                                        GlobalLinSysXxtStaticCondSharedPtr;
-
-        /// A global linear system.
-        class GlobalLinSysXxtStaticCond : virtual public GlobalLinSysXxt,
-                                          virtual public GlobalLinSysStaticCond
-        {
-        public:
-            /// Creates an instance of this class
-            static GlobalLinSysSharedPtr create(
-                        const GlobalLinSysKey &pLinSysKey,
-                        const std::weak_ptr<ExpList> &pExpList,
-                        const std::shared_ptr<AssemblyMap>
-                                                               &pLocToGloMap)
-            {
-                GlobalLinSysSharedPtr p = MemoryManager<
-                    GlobalLinSysXxtStaticCond>::AllocateSharedPtr(
-                        pLinSysKey, pExpList, pLocToGloMap);
-                p->InitObject();
-                return p;
-            }
-
-            /// Name of class
-            static std::string className;
-            static std::string className2;
-
-            /// Constructor for full direct matrix solve.
-            GlobalLinSysXxtStaticCond(
-                        const GlobalLinSysKey &mkey,
-                        const std::weak_ptr<ExpList> &pExpList,
-                        const std::shared_ptr<AssemblyMap>
-                                                                &locToGloMap);
-
-            /// Constructor for full direct matrix solve.
-            GlobalLinSysXxtStaticCond(
-                        const GlobalLinSysKey &mkey,
-                        const std::weak_ptr<ExpList> &pExpList,
-                        const DNekScalBlkMatSharedPtr pSchurCompl,
-                        const DNekScalBlkMatSharedPtr pBinvD,
-                        const DNekScalBlkMatSharedPtr pC,
-                        const DNekScalBlkMatSharedPtr pInvD,
-                        const std::shared_ptr<AssemblyMap>
-                                                                &locToGloMap);
-
-            virtual ~GlobalLinSysXxtStaticCond();
-
-        protected:
-            void CreateMap(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
-
-            /// Assemble the Schur complement matrix.
-            virtual void v_AssembleSchurComplement(
-                    std::shared_ptr<AssemblyMap> locToGloMap);
-
-            virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
-                const GlobalLinSysKey                &mkey,
-                const std::weak_ptr<ExpList>         &pExpList,
-                const DNekScalBlkMatSharedPtr         pSchurCompl,
-                const DNekScalBlkMatSharedPtr         pBinvD,
-                const DNekScalBlkMatSharedPtr         pC,
-                const DNekScalBlkMatSharedPtr         pInvD,
-                const std::shared_ptr<AssemblyMap>   &locToGloMap);
-         };
+        GlobalLinSysSharedPtr p =
+            MemoryManager<GlobalLinSysXxtStaticCond>::AllocateSharedPtr(
+                pLinSysKey, pExpList, pLocToGloMap);
+        p->InitObject();
+        return p;
     }
-}
+
+    /// Name of class
+    static std::string className;
+    static std::string className2;
+
+    /// Constructor for full direct matrix solve.
+    MULTI_REGIONS_EXPORT GlobalLinSysXxtStaticCond(
+        const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &locToGloMap);
+
+    /// Constructor for full direct matrix solve.
+    MULTI_REGIONS_EXPORT GlobalLinSysXxtStaticCond(
+        const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
+        const DNekScalBlkMatSharedPtr pSchurCompl,
+        const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
+        const DNekScalBlkMatSharedPtr pInvD,
+        const std::shared_ptr<AssemblyMap> &locToGloMap);
+
+    MULTI_REGIONS_EXPORT virtual ~GlobalLinSysXxtStaticCond();
+
+protected:
+    void CreateMap(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+
+    /// Assemble the Schur complement matrix.
+    virtual void v_AssembleSchurComplement(
+        std::shared_ptr<AssemblyMap> locToGloMap);
+
+    virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
+        const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
+        const DNekScalBlkMatSharedPtr pSchurCompl,
+        const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
+        const DNekScalBlkMatSharedPtr pInvD,
+        const std::shared_ptr<AssemblyMap> &locToGloMap);
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

@@ -50,8 +50,7 @@ namespace FieldUtils
 
 ModuleKey ProcessC0Projection::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "C0Projection"),
-        ProcessC0Projection::create,
+        ModuleKey(eProcessModule, "C0Projection"), ProcessC0Projection::create,
         "Computes C0 projection.");
 
 ProcessC0Projection::ProcessC0Projection(FieldSharedPtr f) : ProcessModule(f)
@@ -59,12 +58,14 @@ ProcessC0Projection::ProcessC0Projection(FieldSharedPtr f) : ProcessModule(f)
     m_config["fields"] = ConfigOption(false, "All", "Start field to project");
     m_config["localtoglobalmap"] = ConfigOption(
         true, "0", "Just perform a local to global mapping and back");
-    m_config["usexmlbcs"] = ConfigOption(
-        true, "0", "Use boundary conditions given in xml file. Requires all "
-                   "projected fields to be defined in xml file");
-    m_config["helmsmoothing"] = ConfigOption(
-        false, "Not Set", "Use a Helmholtz smoother to remove high frequency "
-                          "components above specified L");
+    m_config["usexmlbcs"] =
+        ConfigOption(true, "0",
+                     "Use boundary conditions given in xml file. Requires all "
+                     "projected fields to be defined in xml file");
+    m_config["helmsmoothing"] =
+        ConfigOption(false, "Not Set",
+                     "Use a Helmholtz smoother to remove high frequency "
+                     "components above specified L");
 
     f->m_declareExpansionAsContField = true;
 }
@@ -75,7 +76,7 @@ ProcessC0Projection::~ProcessC0Projection()
 
 void ProcessC0Projection::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -135,8 +136,8 @@ void ProcessC0Projection::Process(po::variables_map &vm)
         bool savedef2                      = m_f->m_requireBoundaryExpansion;
         m_f->m_declareExpansionAsContField = true;
         m_f->m_requireBoundaryExpansion    = false;
-        C0ProjectExp[0]                    = m_f->AppendExpList(
-            m_f->m_numHomogeneousDir, "DefaultVar", true);
+        C0ProjectExp[0] =
+            m_f->AppendExpList(m_f->m_numHomogeneousDir, "DefaultVar", true);
         m_f->m_declareExpansionAsContField = savedef;
         m_f->m_requireBoundaryExpansion    = savedef2;
         for (int i = 1; i < nfields; ++i)
@@ -157,9 +158,8 @@ void ProcessC0Projection::Process(po::variables_map &vm)
     }
     else
     {
-        ASSERTL0(
-            ParseUtils::GenerateVector(fields, processFields),
-            "Failed to interpret field string in C0Projection");
+        ASSERTL0(ParseUtils::GenerateVector(fields, processFields),
+                 "Failed to interpret field string in C0Projection");
     }
 
     for (int i = 0; i < processFields.size(); ++i)
@@ -188,9 +188,9 @@ void ProcessC0Projection::Process(po::variables_map &vm)
         }
         else
         {
+            int ncoeffs = m_f->m_exp[0]->GetNcoeffs();
             if (HelmSmoother)
             {
-                int dim          = m_f->m_graph->GetSpaceDimension();
                 int npoints      = m_f->m_exp[0]->GetNpoints();
                 NekDouble lambda = m_config["helmsmoothing"].as<NekDouble>();
                 lambda           = 2 * M_PI / lambda;
@@ -204,41 +204,32 @@ void ProcessC0Projection::Process(po::variables_map &vm)
 
                 StdRegions::ConstFactorMap factors;
                 Array<OneD, NekDouble> forcing(npoints);
-                factors[StdRegions::eFactorLambda] = -lambda;
-
-                Array<OneD, Array<OneD, NekDouble> > Velocity(dim);
-                for (int j = 0; j < dim; ++j)
-                {
-                    Velocity[j] = Array<OneD, NekDouble>(npoints, 0.0);
-                }
+                factors[StdRegions::eFactorLambda] = lambda;
 
                 Vmath::Smul(npoints, -lambda,
                             m_f->m_exp[processFields[i]]->GetPhys(), 1, forcing,
                             1);
 
-                // Note we are using the
-                // LinearAdvectionDiffusionReaction solver here
-                // instead of HelmSolve since lambda is negative and
-                // so matrices are not positive definite. Ideally
-                // should allow for negative lambda coefficient in
-                // HelmSolve
-                C0ProjectExp[processFields[i]]
-                    ->LinearAdvectionDiffusionReactionSolve(
-                        Velocity, forcing,
-                        m_f->m_exp[processFields[i]]->UpdateCoeffs(), -lambda);
+                Vmath::Zero(ncoeffs,
+                            m_f->m_exp[processFields[i]]->UpdateCoeffs(), 1);
+
+                C0ProjectExp[processFields[i]]->HelmSolve(
+                    forcing, m_f->m_exp[processFields[i]]->UpdateCoeffs(),
+                    factors);
             }
             else
             {
+                Vmath::Zero(ncoeffs,
+                            m_f->m_exp[processFields[i]]->UpdateCoeffs(), 1);
                 C0ProjectExp[processFields[i]]->FwdTrans(
                     m_f->m_exp[processFields[i]]->GetPhys(),
                     m_f->m_exp[processFields[i]]->UpdateCoeffs());
             }
         }
         C0ProjectExp[processFields[i]]->BwdTrans(
-                    m_f->m_exp[processFields[i]]->GetCoeffs(),
-                    m_f->m_exp[processFields[i]]->UpdatePhys());
+            m_f->m_exp[processFields[i]]->GetCoeffs(),
+            m_f->m_exp[processFields[i]]->UpdatePhys());
     }
-
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

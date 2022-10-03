@@ -33,8 +33,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/geometry.hpp>
 #include <FieldUtils/Interpolator.h>
+#include <boost/geometry.hpp>
 
 using namespace std;
 
@@ -62,8 +62,7 @@ namespace FieldUtils
  */
 void Interpolator::Interpolate(
     const vector<MultiRegions::ExpListSharedPtr> expInField,
-    vector<MultiRegions::ExpListSharedPtr> &expOutField,
-    NekDouble def_value)
+    vector<MultiRegions::ExpListSharedPtr> &expOutField, NekDouble def_value)
 {
     ASSERTL0(expInField.size() == expOutField.size(),
              "number of fields does not match");
@@ -77,85 +76,56 @@ void Interpolator::Interpolate(
     m_expInField  = expInField;
     m_expOutField = expOutField;
 
-    int nInDim   = expInField[0]->GetCoordim(0);
-    int nOutPts  = m_expOutField[0]->GetTotPoints();
-    int nOutDim  = m_expOutField[0]->GetCoordim(0);
-    int lastProg = 0;
-
-    Array<OneD, NekDouble> Lcoords(nInDim, 0.0);
-    Array<OneD, NekDouble> Scoords(nOutDim, 0.0);
-    Array<OneD, Array<OneD, NekDouble> > coords(nOutDim);
-    for (int i = 0; i < nOutDim; ++i)
+    int nFields      = max((int)expInField.size(), (int)m_expOutField.size());
+    int nOutPts      = m_expOutField[0]->GetTotPoints();
+    int outNumHomDir = 0;
+    if (m_expOutField[0]->GetExpType() == MultiRegions::e3DH1D ||
+        m_expOutField[0]->GetExpType() == MultiRegions::e2DH1D)
     {
-        coords[i] = Array<OneD, NekDouble>(nOutPts);
+        outNumHomDir = 1;
     }
-    if (nOutDim == 1)
+    else if (m_expOutField[0]->GetExpType() == MultiRegions::e3DH2D)
     {
-        m_expOutField[0]->GetCoords(coords[0]);
+        outNumHomDir = 2;
     }
-    else if (nOutDim == 2)
+    int outDim = m_expOutField[0]->GetCoordim(0) + outNumHomDir;
+
+    // create intermediate Ptsfield that wraps the expOutField
+    Array<OneD, Array<OneD, NekDouble>> pts(outDim);
+    for (int i = 0; i < outDim; ++i)
     {
-        m_expOutField[0]->GetCoords(coords[0], coords[1]);
+        pts[i] = Array<OneD, NekDouble>(nOutPts);
     }
-    else if (nOutDim == 3)
+    if (outDim == 1)
     {
-        m_expOutField[0]->GetCoords(coords[0], coords[1], coords[2]);
+        m_expOutField[0]->GetCoords(pts[0]);
+    }
+    else if (outDim == 2)
+    {
+        m_expOutField[0]->GetCoords(pts[0], pts[1]);
+    }
+    else if (outDim == 3)
+    {
+        m_expOutField[0]->GetCoords(pts[0], pts[1], pts[2]);
     }
 
-    for (int i = 0; i < nOutPts; ++i)
+    LibUtilities::PtsFieldSharedPtr tmpPts =
+        MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(outDim, pts);
+    for (int f = 0; f < expOutField.size(); ++f)
     {
-        for (int j = 0; j < nOutDim; ++j)
+        tmpPts->AddField(m_expOutField[f]->GetPhys(), "DefaultVar");
+    }
+
+    // interpolate m_ptsInField to this intermediate field
+    Interpolate(m_expInField, tmpPts, def_value);
+
+    // write the intermediate fields data into our expOutField
+    for (int i = 0; i < nFields; i++)
+    {
+        int ptsi = outDim + i;
+        for (int j = 0; j < nOutPts; ++j)
         {
-            Scoords[j] = coords[j][i];
-        }
-
-        // Obtain Element and LocalCoordinate to interpolate
-        int elmtid = m_expInField[0]->GetExpIndex(Scoords, Lcoords,
-                                                  NekConstants::kGeomFactorsTol,
-                                                  true);
-
-        // we use kGeomFactorsTol as tolerance, while StdPhysEvaluate has
-        // kNekZeroTol hardcoded, so we need to limit Lcoords to not produce
-        // a ton of warnings
-        for(int j = 0; j < nInDim; ++j)
-        {
-            Lcoords[j] = std::max(Lcoords[j], -1.0);
-            Lcoords[j] = std::min(Lcoords[j], 1.0);
-        }
-
-        if (elmtid >= 0)
-        {
-            int offset = m_expInField[0]->GetPhys_Offset(elmtid);
-
-            for (int f = 0; f < m_expInField.size(); ++f)
-            {
-                NekDouble value =
-                    m_expInField[f]->GetExp(elmtid)->StdPhysEvaluate(
-                        Lcoords, m_expInField[f]->GetPhys() + offset);
-
-                if ((boost::math::isnan)(value))
-                {
-                    ASSERTL0(false, "new value is not a number");
-                }
-                else
-                {
-                    m_expOutField[f]->UpdatePhys()[i] = value;
-                }
-            }
-        }
-        else
-        {
-            for (int f = 0; f < m_expInField.size(); ++f)
-            {
-                m_expOutField[f]->UpdatePhys()[i] = def_value;
-            }
-        }
-
-        int progress = int(100 * i / nOutPts);
-        if (m_progressCallback && progress > lastProg)
-        {
-            m_progressCallback(i, nOutPts);
-            lastProg = progress;
+            m_expOutField[i]->UpdatePhys()[j] = tmpPts->GetPointVal(ptsi, j);
         }
     }
 }
@@ -173,19 +143,20 @@ void Interpolator::Interpolate(
  */
 void Interpolator::Interpolate(
     const vector<MultiRegions::ExpListSharedPtr> expInField,
-    LibUtilities::PtsFieldSharedPtr &ptsOutField,
-    NekDouble def_value)
+    LibUtilities::PtsFieldSharedPtr &ptsOutField, NekDouble def_value)
 {
     ASSERTL0(expInField.size() == ptsOutField->GetNFields(),
-        "number of fields does not match");
+             "number of fields does not match");
     ASSERTL0(expInField[0]->GetCoordim(0) <= GetDim(),
-        "too many dimesions in inField");
+             "too many dimesions in inField");
     ASSERTL0(ptsOutField->GetDim() <= GetDim(),
-        "too many dimesions in outField");
+             "too many dimesions in outField");
     ASSERTL0(ptsOutField->GetDim() >= expInField[0]->GetCoordim(0),
-        "too few dimesions in outField");
+             "too few dimesions in outField");
     ASSERTL0(GetInterpMethod() == LibUtilities::eNoMethod,
-        "only direct evaluation supported for this interpolation");
+             "only direct evaluation supported for this interpolation");
+    ASSERTL0(expInField[0]->GetExpType() != MultiRegions::e3DH2D,
+             "interpolation from 3DH2D expansion unsupported");
 
     m_expInField  = expInField;
     m_ptsOutField = ptsOutField;
@@ -194,23 +165,25 @@ void Interpolator::Interpolate(
     int nOutPts  = m_ptsOutField->GetNpoints();
     int lastProg = 0;
 
+    int elmtid = -1;
     for (int i = 0; i < nOutPts; ++i)
     {
         Array<OneD, NekDouble> Lcoords(nInDim, 0.0);
-        Array<OneD, NekDouble> coords(m_ptsOutField->GetDim(), 0.0);
+        Array<OneD, NekDouble> coords(3, 0.0);
         for (int j = 0; j < m_ptsOutField->GetDim(); ++j)
         {
             coords[j] = m_ptsOutField->GetPointVal(j, i);
         }
 
-        // Obtain Element and LocalCoordinate to interpolate
-        int elmtid = m_expInField[0]->GetExpIndex(coords, Lcoords,
-                                                  NekConstants::kGeomFactorsTol);
+        // Obtain Element and LocalCoordinate to interpolate.
+        elmtid = m_expInField[0]->GetExpIndex(
+            coords, Lcoords, NekConstants::kGeomFactorsTol, true, elmtid,
+            NekConstants::kGeomFactorsTol * 1e3);
 
         // we use kGeomFactorsTol as tolerance, while StdPhysEvaluate has
         // kNekZeroTol hardcoded, so we need to limit Lcoords to not produce
         // a ton of warnings
-        for(int j = 0; j < nInDim; ++j)
+        for (int j = 0; j < nInDim; ++j)
         {
             Lcoords[j] = std::max(Lcoords[j], -1.0);
             Lcoords[j] = std::min(Lcoords[j], 1.0);
@@ -222,9 +195,52 @@ void Interpolator::Interpolate(
 
             for (int f = 0; f < m_expInField.size(); ++f)
             {
-                NekDouble value =
-                    m_expInField[f]->GetExp(elmtid)->StdPhysEvaluate(
+                NekDouble value;
+                if (m_expInField[f]->GetExpType() == MultiRegions::e3DH1D ||
+                    m_expInField[f]->GetExpType() == MultiRegions::e2DH1D)
+                {
+                    ASSERTL0(m_expInField[f]->GetWaveSpace(),
+                             "interpolation from 3DH1D/2DH1D requires field in "
+                             "wavespace");
+                    NekDouble lHom = m_expInField[f]->GetHomoLen();
+                    NekDouble BetaT =
+                        2. * M_PI * fmod(coords[nInDim], lHom) / lHom;
+                    int nPlanes =
+                        m_expInField[f]->GetHomogeneousBasis()->GetZ().size();
+                    NekDouble coeff = 0.;
+                    Array<OneD, const unsigned int> planes =
+                        m_expInField[f]->GetZIDs();
+                    value = 0.;
+                    for (size_t n = 0; n < planes.size(); ++n)
+                    {
+                        auto planeExp = m_expInField[f]->GetPlane(planes[n]);
+                        coeff = planeExp->GetExp(elmtid)->StdPhysEvaluate(
+                            Lcoords, planeExp->GetPhys() + offset);
+                        if (planes[n] == 0)
+                        {
+                            value += coeff;
+                        }
+                        else if (planes[n] == 1)
+                        {
+                            value += cos(0.5 * nPlanes * BetaT) * coeff;
+                        }
+                        else if (planes[n] % 2 == 0)
+                        {
+                            NekDouble phase = (planes[n] >> 1) * BetaT;
+                            value += cos(phase) * coeff;
+                        }
+                        else
+                        {
+                            NekDouble phase = (planes[n] >> 1) * BetaT;
+                            value += -sin(phase) * coeff;
+                        }
+                    }
+                }
+                else
+                {
+                    value = m_expInField[f]->GetExp(elmtid)->StdPhysEvaluate(
                         Lcoords, m_expInField[f]->GetPhys() + offset);
+                }
 
                 if ((boost::math::isnan)(value))
                 {
@@ -278,10 +294,20 @@ void Interpolator::Interpolate(
 
     int nFields = max((int)ptsInField->GetNFields(), (int)m_expOutField.size());
     int nOutPts = m_expOutField[0]->GetTotPoints();
-    int outDim  = m_expOutField[0]->GetCoordim(0);
+    int outNumHomDir = 0;
+    if (m_expOutField[0]->GetExpType() == MultiRegions::e3DH1D ||
+        m_expOutField[0]->GetExpType() == MultiRegions::e2DH1D)
+    {
+        outNumHomDir = 1;
+    }
+    else if (m_expOutField[0]->GetExpType() == MultiRegions::e3DH2D)
+    {
+        outNumHomDir = 2;
+    }
+    int outDim = m_expOutField[0]->GetCoordim(0) + outNumHomDir;
 
     // create intermediate Ptsfield that wraps the expOutField
-    Array<OneD, Array<OneD, NekDouble> > pts(outDim);
+    Array<OneD, Array<OneD, NekDouble>> pts(outDim);
     for (int i = 0; i < outDim; ++i)
     {
         pts[i] = Array<OneD, NekDouble>(nOutPts);
@@ -303,7 +329,7 @@ void Interpolator::Interpolate(
         MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(outDim, pts);
     for (int f = 0; f < expOutField.size(); ++f)
     {
-        tmpPts->AddField(m_expOutField[f]->GetCoeffs(),
+        tmpPts->AddField(m_expOutField[f]->GetPhys(),
                          m_ptsInField->GetFieldName(f));
     }
 
@@ -313,20 +339,19 @@ void Interpolator::Interpolate(
     // write the intermediate fields data into our expOutField
     for (int i = 0; i < nFields; i++)
     {
+        int ptsi = outDim + i;
         for (int j = 0; j < nOutPts; ++j)
         {
-            m_expOutField[i]->UpdatePhys()[j] = tmpPts->GetPointVal(i, j);
+            m_expOutField[i]->UpdatePhys()[j] = tmpPts->GetPointVal(ptsi, j);
         }
     }
 }
 
-void Interpolator::Interpolate(
-    const LibUtilities::PtsFieldSharedPtr ptsInField,
-    LibUtilities::PtsFieldSharedPtr &ptsOutField)
+void Interpolator::Interpolate(const LibUtilities::PtsFieldSharedPtr ptsInField,
+                               LibUtilities::PtsFieldSharedPtr &ptsOutField)
 {
     LibUtilities::Interpolator::Interpolate(ptsInField, ptsOutField);
 }
 
-
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

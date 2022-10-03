@@ -41,7 +41,7 @@ namespace SolverUtils
 {
 
 MMFSystem::MMFSystem(const LibUtilities::SessionReaderSharedPtr &pSession,
-                     const SpatialDomains::MeshGraphSharedPtr& pGraph)
+                     const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph)
 {
 }
@@ -653,11 +653,13 @@ void MMFSystem::ComputeNtimesMF()
                         m_ntimes_ntimesMFBwd[j]);
     }
 
-    std::cout << "*** m_ntimesMFFwd = ( " << VectorAvgMagnitude(m_ntimesMFFwd[0])
-              << " , " << VectorAvgMagnitude(m_ntimesMFFwd[1]) << " , "
+    std::cout << "*** m_ntimesMFFwd = ( "
+              << VectorAvgMagnitude(m_ntimesMFFwd[0]) << " , "
+              << VectorAvgMagnitude(m_ntimesMFFwd[1]) << " , "
               << VectorAvgMagnitude(m_ntimesMFFwd[2]) << " ) " << std::endl;
-    std::cout << "*** m_ntimesMFBwd = ( " << VectorAvgMagnitude(m_ntimesMFBwd[0])
-              << " , " << VectorAvgMagnitude(m_ntimesMFBwd[1]) << " , "
+    std::cout << "*** m_ntimesMFBwd = ( "
+              << VectorAvgMagnitude(m_ntimesMFBwd[0]) << " , "
+              << VectorAvgMagnitude(m_ntimesMFBwd[1]) << " , "
               << VectorAvgMagnitude(m_ntimesMFBwd[2]) << " ) " << std::endl;
     std::cout << "*** m_ntimes_ntimesMFFwd = ( "
               << VectorAvgMagnitude(m_ntimes_ntimesMFFwd[0]) << " , "
@@ -676,8 +678,8 @@ void MMFSystem::VectorDotProd(
     const Array<OneD, const Array<OneD, NekDouble>> &v2,
     Array<OneD, NekDouble> &v3)
 {
-    int coordim = v1.num_elements();
-    int nq      = v1[0].num_elements();
+    int coordim = v1.size();
+    int nq      = v1[0].size();
 
     v3 = Array<OneD, NekDouble>(nq, 0.0);
     for (int i = 0; i < coordim; ++i)
@@ -699,12 +701,11 @@ void MMFSystem::VectorCrossProd(
     const Array<OneD, const Array<OneD, NekDouble>> &v2,
     Array<OneD, Array<OneD, NekDouble>> &v3)
 {
-    ASSERTL0(v1.num_elements() == 3, "Input 1 has dimension not equal to 3.");
-    ASSERTL0(v2.num_elements() == 3, "Input 2 has dimension not equal to 3.");
-    ASSERTL0(v3.num_elements() == 3,
-             "Output vector has dimension not equal to 3.");
+    ASSERTL0(v1.size() == 3, "Input 1 has dimension not equal to 3.");
+    ASSERTL0(v2.size() == 3, "Input 2 has dimension not equal to 3.");
+    ASSERTL0(v3.size() == 3, "Output vector has dimension not equal to 3.");
 
-    int nq = v1[0].num_elements();
+    int nq = v1[0].size();
     Array<OneD, NekDouble> temp(nq);
 
     Vmath::Vmul(nq, v1[2], 1, v2[1], 1, temp, 1);
@@ -721,10 +722,9 @@ void MMFSystem::VectorCrossProd(const Array<OneD, NekDouble> &v1,
                                 const Array<OneD, NekDouble> &v2,
                                 Array<OneD, NekDouble> &v3)
 {
-    ASSERTL0(v1.num_elements() == 3, "Input 1 has dimension not equal to 3.");
-    ASSERTL0(v2.num_elements() == 3, "Input 2 has dimension not equal to 3.");
-    ASSERTL0(v3.num_elements() == 3,
-             "Output vector has dimension not equal to 3.");
+    ASSERTL0(v1.size() == 3, "Input 1 has dimension not equal to 3.");
+    ASSERTL0(v2.size() == 3, "Input 2 has dimension not equal to 3.");
+    ASSERTL0(v3.size() == 3, "Output vector has dimension not equal to 3.");
 
     v3[0] = v1[1] * v2[2] - v1[2] * v2[1];
     v3[1] = v1[2] * v2[0] - v1[0] * v2[2];
@@ -736,7 +736,7 @@ void MMFSystem::ComputeCurl(
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 
 {
-    int nq = inarray[0].num_elements();
+    int nq = inarray[0].size();
 
     Array<OneD, NekDouble> tmpx, tmpy, tmpz;
     Array<OneD, NekDouble> Dtmpzdx, Dtmpydx, Dtmpxdy, Dtmpzdy, Dtmpxdz, Dtmpydz;
@@ -808,7 +808,7 @@ void MMFSystem::CartesianToSpherical(const NekDouble x0j, const NekDouble x1j,
     radius = sqrt(x0j * x0j / (m_Xscale * m_Xscale) +
                   x1j * x1j / (m_Yscale * m_Yscale) +
                   x2j * x2j / (m_Zscale * m_Zscale));
-    radxy = sqrt(x0j * x0j / (m_Xscale * m_Xscale) +
+    radxy  = sqrt(x0j * x0j / (m_Xscale * m_Xscale) +
                  x1j * x1j / (m_Yscale * m_Yscale));
 
     if (radxy > Tol)
@@ -835,16 +835,16 @@ void MMFSystem::CartesianToSpherical(const NekDouble x0j, const NekDouble x1j,
     cos_theta = radxy / radius;
 }
 
-void MMFSystem::CopyBoundaryTrace(
-    const Array<OneD, const NekDouble> &Fwd, Array<OneD, NekDouble> &Bwd,
-    const BoundaryCopyType BDCopyType, const int var,
-    const std::string BDtype)
+void MMFSystem::CopyBoundaryTrace(const Array<OneD, const NekDouble> &Fwd,
+                                  Array<OneD, NekDouble> &Bwd,
+                                  const BoundaryCopyType BDCopyType,
+                                  const int var, const std::string BDtype)
 {
     int id1, id2, npts, nptselem, cnt = 0, bdrycnt = 0;
     Array<OneD, NekDouble> Dirichlet, x0, x1, x2;
 
     // loop over Boundary Regions
-    for (int n = 0; n < m_fields[var]->GetBndConditions().num_elements(); ++n)
+    for (int n = 0; n < m_fields[var]->GetBndConditions().size(); ++n)
     {
         nptselem = m_fields[var]->GetBndCondExpansions()[n]->GetNpoints();
 
@@ -870,11 +870,12 @@ void MMFSystem::CopyBoundaryTrace(
                        ->GetNumPoints(0);
             id1 = m_fields[var]->GetBndCondExpansions()[n]->GetPhys_Offset(e);
             id2 = m_fields[var]->GetTrace()->GetPhys_Offset(
-                m_fields[var]->GetTraceMap()->GetBndCondTraceToGlobalTraceMap(
-                    cnt + e));
+                m_fields[var]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt +
+                                                                          e));
 
             if (m_fields[var]->GetBndConditions()[n]->GetUserDefined() ==
-                        BDtype || BDtype == "NoUserDefined")
+                    BDtype ||
+                BDtype == "NoUserDefined")
             {
                 switch (BDCopyType)
                 {
@@ -1483,12 +1484,10 @@ void MMFSystem::UpwindMaxwellFlux1D(
     }
 
     // E = 0 at the boundaries
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0,
-                      "PEC");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0, "PEC");
 
     // d H / d n = 0 at the boundaries
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1,
-                      "PEC");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1, "PEC");
 
     Array<OneD, NekDouble> dE(nTraceNumPoints);
     Array<OneD, NekDouble> dH(nTraceNumPoints);
@@ -1539,12 +1538,10 @@ void MMFSystem::LaxFriedrichMaxwellFlux1D(
     }
 
     // E = 0 at the boundaries
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0,
-                      "PEC");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0, "PEC");
 
     // d H / d n = 0 at the boundaries
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1,
-                      "PEC");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1, "PEC");
 
     Array<OneD, NekDouble> dE(nTraceNumPoints);
     Array<OneD, NekDouble> dH(nTraceNumPoints);
@@ -1594,12 +1591,10 @@ void MMFSystem::AverageMaxwellFlux1D(
     }
 
     // E = 0 at the boundaries
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0,
-                      "PEC");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0, "PEC");
 
     // d H / d n = 0 at the boundaries
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1,
-                      "PEC");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1, "PEC");
 
     for (i = 0; i < nTraceNumPoints; ++i)
     {
@@ -1668,7 +1663,7 @@ void MMFSystem::GetMaxwellFlux1D(
             Vmath::Zero(nq, flux[1], 1);
         }
         break;
-        //----------------------------------------------------
+            //----------------------------------------------------
 
         default:
             break;
@@ -1816,7 +1811,7 @@ void MMFSystem::NumericalMaxwellFluxTM(
 {
     int nq              = m_fields[0]->GetNpoints();
     int nTraceNumPoints = GetTraceTotPoints();
-    int nvar            = physfield.num_elements();
+    int nvar            = physfield.size();
 
     // get temporary arrays
     Array<OneD, Array<OneD, NekDouble>> Fwd(nvar);
@@ -1846,10 +1841,8 @@ void MMFSystem::NumericalMaxwellFluxTM(
     }
 
     // Total Field Formulation
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQBwd, 0,
-                      "PEC_Forces");
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1,
-                      "PEC_Forces");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQBwd, 0, "PEC_Forces");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1, "PEC_Forces");
     CopyBoundaryTrace(IncFieldFwd[2], Bwd[2], SolverUtils::eFwdEQNegBwd, 2,
                       "PEC_Forces");
 
@@ -1857,22 +1850,15 @@ void MMFSystem::NumericalMaxwellFluxTM(
                       "PMC_Forces");
     CopyBoundaryTrace(IncFieldFwd[1], Bwd[1], SolverUtils::eFwdEQNegBwd, 1,
                       "PMC_Forces");
-    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQBwd, 2,
-                      "PMC_Forces");
+    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQBwd, 2, "PMC_Forces");
 
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQBwd, 0,
-                      "PEC");
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1,
-                      "PEC");
-    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQNegBwd, 2,
-                      "PEC");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQBwd, 0, "PEC");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1, "PEC");
+    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQNegBwd, 2, "PEC");
 
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0,
-                      "PMC");
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQNegBwd, 1,
-                      "PMC");
-    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQBwd, 2,
-                      "PMC");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0, "PMC");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQNegBwd, 1, "PMC");
+    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQBwd, 2, "PMC");
 
     Array<OneD, NekDouble> e1Fwd_cdot_ncrossdH(nTraceNumPoints, 0.0);
     Array<OneD, NekDouble> e1Bwd_cdot_ncrossdH(nTraceNumPoints, 0.0);
@@ -1927,7 +1913,7 @@ void MMFSystem::NumericalMaxwellFluxTE(
 {
     int nq              = m_fields[0]->GetNpoints();
     int nTraceNumPoints = GetTraceTotPoints();
-    int nvar            = physfield.num_elements();
+    int nvar            = physfield.size();
 
     // Get temporary arrays
     Array<OneD, Array<OneD, NekDouble>> Fwd(nvar);
@@ -1960,29 +1946,20 @@ void MMFSystem::NumericalMaxwellFluxTE(
                       "PEC_Forces");
     CopyBoundaryTrace(IncFieldFwd[1], Bwd[1], SolverUtils::eFwdEQNegBwd, 1,
                       "PEC_Forces");
-    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQBwd, 2,
-                      "PEC_Forces");
+    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQBwd, 2, "PEC_Forces");
 
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQBwd, 0,
-                      "PMC_Forces");
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1,
-                      "PMC_Forces");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQBwd, 0, "PMC_Forces");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1, "PMC_Forces");
     CopyBoundaryTrace(IncFieldFwd[2], Bwd[2], SolverUtils::eFwdEQNegBwd, 2,
                       "PMC_Forces");
 
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0,
-                      "PEC");
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQNegBwd, 1,
-                      "PEC");
-    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQBwd, 2,
-                      "PEC");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQNegBwd, 0, "PEC");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQNegBwd, 1, "PEC");
+    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQBwd, 2, "PEC");
 
-    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQBwd, 0,
-                      "PMC");
-    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1,
-                      "PMC");
-    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQNegBwd, 2,
-                      "PMC");
+    CopyBoundaryTrace(Fwd[0], Bwd[0], SolverUtils::eFwdEQBwd, 0, "PMC");
+    CopyBoundaryTrace(Fwd[1], Bwd[1], SolverUtils::eFwdEQBwd, 1, "PMC");
+    CopyBoundaryTrace(Fwd[2], Bwd[2], SolverUtils::eFwdEQNegBwd, 2, "PMC");
 
     Array<OneD, NekDouble> e1Fwd_cdot_ncrossdE(nTraceNumPoints);
     Array<OneD, NekDouble> e1Bwd_cdot_ncrossdE(nTraceNumPoints);
@@ -2323,14 +2300,14 @@ NekDouble MMFSystem::AvgInt(const Array<OneD, const NekDouble> &inarray)
     int nq = m_fields[0]->GetNpoints();
     Array<OneD, NekDouble> Ones(nq, 1.0);
 
-    if (inarray.num_elements() != nq)
+    if (inarray.size() != nq)
     {
         ASSERTL0(false, "AvgInt Error: Vector size is not correct");
     }
 
-    NekDouble jac = m_fields[0]->PhysIntegral(Ones);
+    NekDouble jac = m_fields[0]->Integral(Ones);
 
-    return (m_fields[0]->PhysIntegral(inarray)) / jac;
+    return (m_fields[0]->Integral(inarray)) / jac;
 }
 
 NekDouble MMFSystem::AvgAbsInt(const Array<OneD, const NekDouble> &inarray)
@@ -2339,15 +2316,15 @@ NekDouble MMFSystem::AvgAbsInt(const Array<OneD, const NekDouble> &inarray)
     Array<OneD, NekDouble> Ones(nq, 1.0);
     Array<OneD, NekDouble> tmp(nq);
 
-    if (inarray.num_elements() != nq)
+    if (inarray.size() != nq)
     {
         ASSERTL0(false, "AvgAbsInt Error: Vector size is not correct");
     }
 
-    NekDouble jac = m_fields[0]->PhysIntegral(Ones);
+    NekDouble jac = m_fields[0]->Integral(Ones);
 
     Vmath::Vabs(nq, inarray, 1, tmp, 1);
-    return (m_fields[0]->PhysIntegral(tmp)) / jac;
+    return (m_fields[0]->Integral(tmp)) / jac;
 }
 
 NekDouble MMFSystem::AbsIntegral(const Array<OneD, const NekDouble> &inarray)
@@ -2355,18 +2332,18 @@ NekDouble MMFSystem::AbsIntegral(const Array<OneD, const NekDouble> &inarray)
     int nq = m_fields[0]->GetNpoints();
     Array<OneD, NekDouble> tmp(nq);
 
-    if (inarray.num_elements() != nq)
+    if (inarray.size() != nq)
     {
         ASSERTL0(false, "AbsIntegral Error: Vector size is not correct");
     }
 
     Vmath::Vabs(nq, inarray, 1, tmp, 1);
-    return m_fields[0]->PhysIntegral(tmp);
+    return m_fields[0]->Integral(tmp);
 }
 
 NekDouble MMFSystem::RootMeanSquare(const Array<OneD, const NekDouble> &inarray)
 {
-    int Ntot = inarray.num_elements();
+    int Ntot = inarray.size();
 
     NekDouble reval = 0.0;
     for (int i = 0; i < Ntot; ++i)
@@ -2381,7 +2358,7 @@ NekDouble MMFSystem::RootMeanSquare(const Array<OneD, const NekDouble> &inarray)
 NekDouble MMFSystem::VectorAvgMagnitude(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray)
 {
-    int nq = inarray[0].num_elements();
+    int nq = inarray[0].size();
 
     Array<OneD, NekDouble> tmp(nq, 0.0);
     for (int k = 0; k < m_spacedim; k++)
@@ -2397,7 +2374,7 @@ NekDouble MMFSystem::VectorAvgMagnitude(
 void MMFSystem::BubbleSort(Array<OneD, NekDouble> &refarray,
                            Array<OneD, NekDouble> &sortarray)
 {
-    int nq = refarray.num_elements();
+    int nq = refarray.size();
 
     bool swapped = true;
     int j        = 0;
@@ -2431,7 +2408,7 @@ void MMFSystem::GramSchumitz(
     Array<OneD, Array<OneD, NekDouble>> &outarray, bool KeepTheMagnitude)
 {
 
-    int nq = v1[0].num_elements();
+    int nq = v1[0].size();
     Array<OneD, NekDouble> tmp(nq, 0.0);
     Array<OneD, NekDouble> mag(nq, 0.0);
 
@@ -2516,7 +2493,7 @@ void MMFSystem::v_GenerateSummary(SummaryList &s)
         Vmath::Sadd(nq, -1.0, rad, 1, rad, 1);
         Vmath::Vabs(nq, rad, 1, rad, 1);
 
-        MeshError = m_fields[0]->PhysIntegral(rad);
+        MeshError = m_fields[0]->Integral(rad);
         SolverUtils::AddSummaryItem(s, "Mesh Error", MeshError);
     }
 
@@ -2542,5 +2519,5 @@ void MMFSystem::v_GenerateSummary(SummaryList &s)
         AddSummaryItem(s, "MMFCircCentreY", m_MMFfactors[3]);
     }
 }
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

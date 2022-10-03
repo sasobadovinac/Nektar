@@ -33,82 +33,76 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/BasicUtils/VDmathArray.hpp>
-#include <MultiRegions/PreconditionerLinearWithDiag.h>
-#include <MultiRegions/GlobalMatrixKey.h>
 #include <LocalRegions/MatrixKey.h>
-#include <math.h>
+#include <MultiRegions/GlobalMatrixKey.h>
+#include <MultiRegions/PreconditionerLinearWithDiag.h>
+#include <cmath>
 
 using namespace std;
 
 namespace Nektar
 {
-    namespace MultiRegions
-    {
-        /**
-         * Registers the class with the Factory.
-         */
+namespace MultiRegions
+{
+/**
+ * Registers the class with the Factory.
+ */
 
-        string PreconditionerLinearWithDiag::className
-                = GetPreconFactory().RegisterCreatorFunction(
-                    "FullLinearSpaceWithDiagonal",
-                    PreconditionerLinearWithDiag::create,
-                    "Full linear space and diagonal preconditioning");
- 
-       /**
-         * @class PreconditionerLinearWithDiag
-         *
-         * This class implements preconditioning for the conjugate 
-	 * gradient matrix solver.
-	 */
-        
-        PreconditionerLinearWithDiag::PreconditionerLinearWithDiag(
-            const std::shared_ptr<GlobalLinSys> &plinsys,
-            const AssemblyMapSharedPtr &pLocToGloMap)
-            : Preconditioner(plinsys, pLocToGloMap)
-        {
-        }
-       
-        /**
-         *
-         */ 
-        void PreconditionerLinearWithDiag::v_InitObject()
-        {
-            m_linSpacePrecon = GetPreconFactory().CreateInstance("FullLinearSpace",m_linsys.lock(),m_locToGloMap.lock());
-            m_diagonalPrecon = GetPreconFactory().CreateInstance("Diagonal",m_linsys.lock(),m_locToGloMap.lock());
-        }
+string PreconditionerLinearWithDiag::className =
+    GetPreconFactory().RegisterCreatorFunction(
+        "FullLinearSpaceWithDiagonal", PreconditionerLinearWithDiag::create,
+        "Full linear space and diagonal preconditioning");
 
-        /**
-         *
-         */
-        void PreconditionerLinearWithDiag::v_BuildPreconditioner()
-        {
-            m_linSpacePrecon->BuildPreconditioner();
-            m_diagonalPrecon->BuildPreconditioner();
-	}
+/**
+ * @class PreconditionerLinearWithDiag
+ *
+ * This class implements preconditioning for the conjugate
+ * gradient matrix solver.
+ */
 
-
-        /**
-         *
-         */
-        void PreconditionerLinearWithDiag::v_DoPreconditioner(
-                const Array<OneD, NekDouble>& pInput,
-                      Array<OneD, NekDouble>& pOutput)
-        {
-            
-            Array<OneD, NekDouble> OutputDiag(pOutput.num_elements());
-            m_diagonalPrecon->DoPreconditioner(pInput, OutputDiag);
-
-            // Since linear preconditioner just copies other entries
-            // this will only modify the linear space degrees of
-            // freedom
-            m_linSpacePrecon->DoPreconditionerWithNonVertOutput(pInput, pOutput,OutputDiag);
-        }
-
-    }
+PreconditionerLinearWithDiag::PreconditionerLinearWithDiag(
+    const std::shared_ptr<GlobalLinSys> &plinsys,
+    const AssemblyMapSharedPtr &pLocToGloMap)
+    : Preconditioner(plinsys, pLocToGloMap)
+{
 }
 
+/**
+ *
+ */
+void PreconditionerLinearWithDiag::v_InitObject()
+{
+    m_linSpacePrecon = GetPreconFactory().CreateInstance(
+        "FullLinearSpace", m_linsys.lock(), m_locToGloMap.lock());
+    m_diagonalPrecon = GetPreconFactory().CreateInstance(
+        "Diagonal", m_linsys.lock(), m_locToGloMap.lock());
+}
 
+/**
+ *
+ */
+void PreconditionerLinearWithDiag::v_BuildPreconditioner()
+{
+    m_linSpacePrecon->BuildPreconditioner();
+    m_diagonalPrecon->BuildPreconditioner();
+}
 
+/**
+ *
+ */
+void PreconditionerLinearWithDiag::v_DoPreconditioner(
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+{
 
+    Array<OneD, NekDouble> OutputDiag(pOutput.size());
+    m_diagonalPrecon->DoPreconditioner(pInput, OutputDiag);
 
+    // Since linear preconditioner just copies other entries
+    // this will only modify the linear space degrees of
+    // freedom
+    m_linSpacePrecon->DoPreconditionerWithNonVertOutput(pInput, pOutput,
+                                                        OutputDiag);
+}
 
+} // namespace MultiRegions
+} // namespace Nektar

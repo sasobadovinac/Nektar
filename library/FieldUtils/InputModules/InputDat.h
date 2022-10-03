@@ -74,11 +74,10 @@ public:
     }
 
 private:
-    void ReadTecplotFEBlockZone(std::ifstream &datFile,
-                                string &line,
-                                Array<OneD, Array<OneD, NekDouble> > &pts,
-                                vector<Array<OneD, int> > &ptsConn);
+    void ReadTecplotFEBlockZone(std::ifstream &datFile, std::string &line,
+                                Array<OneD, Array<OneD, NekDouble>> &pts,
+                                std::vector<Array<OneD, int>> &ptsConn);
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 #endif

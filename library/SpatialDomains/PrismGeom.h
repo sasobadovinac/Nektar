@@ -51,24 +51,19 @@ public:
     SPATIAL_DOMAINS_EXPORT PrismGeom(int id, const Geometry2DSharedPtr faces[]);
     SPATIAL_DOMAINS_EXPORT ~PrismGeom();
 
-    SPATIAL_DOMAINS_EXPORT static const int kNverts = 6;
-    SPATIAL_DOMAINS_EXPORT static const int kNedges = 9;
+    SPATIAL_DOMAINS_EXPORT static const int kNverts  = 6;
+    SPATIAL_DOMAINS_EXPORT static const int kNedges  = 9;
     SPATIAL_DOMAINS_EXPORT static const int kNqfaces = 3;
     SPATIAL_DOMAINS_EXPORT static const int kNtfaces = 2;
-    SPATIAL_DOMAINS_EXPORT static const int kNfaces = kNqfaces + kNtfaces;
+    SPATIAL_DOMAINS_EXPORT static const int kNfaces  = kNqfaces + kNtfaces;
     SPATIAL_DOMAINS_EXPORT static const std::string XMLElementType;
 
 protected:
     virtual void v_GenGeomFactors();
-    virtual NekDouble v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                     Array<OneD, NekDouble> &Lcoords);
-    virtual bool v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                                 Array<OneD, NekDouble> &locCoord,
-                                 NekDouble tol,
-                                 NekDouble &resid);
     virtual int v_GetVertexEdgeMap(const int i, const int j) const;
     virtual int v_GetVertexFaceMap(const int i, const int j) const;
     virtual int v_GetEdgeFaceMap(const int i, const int j) const;
+    virtual int v_GetEdgeNormalToFaceVert(const int i, const int j) const;
     virtual int v_GetDir(const int faceidx, const int facedir) const;
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
     virtual void v_Setup();
@@ -83,11 +78,12 @@ private:
     static const unsigned int VertexEdgeConnectivity[6][3];
     static const unsigned int VertexFaceConnectivity[6][3];
     static const unsigned int EdgeFaceConnectivity[9][2];
+    static const unsigned int EdgeNormalToFaceVert[5][4];
 };
 
 typedef std::shared_ptr<PrismGeom> PrismGeomSharedPtr;
 typedef std::map<int, PrismGeomSharedPtr> PrismGeomMap;
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_PRISMGEOM_H

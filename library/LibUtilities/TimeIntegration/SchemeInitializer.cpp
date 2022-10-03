@@ -48,6 +48,10 @@
 
 #include <LibUtilities/TimeIntegration/RungeKuttaTimeIntegrationSchemes.h>
 
+#include <LibUtilities/TimeIntegration/EulerExponentialTimeIntegrationSchemes.h>
+
+#include <LibUtilities/TimeIntegration/TimeIntegrationSchemeFIT.h>
+
 namespace Nektar
 {
 namespace LibUtilities
@@ -61,27 +65,50 @@ namespace LibUtilities
             #scheme, scheme##TimeIntegrationScheme::create)
 
 // AdamsBashforthTimeIntegrationSchemes.h
+REGISTER(AdamsBashforth);
+REGISTER(AdamsBashforthOrder1);
 REGISTER(AdamsBashforthOrder2);
 REGISTER(AdamsBashforthOrder3);
 REGISTER(AdamsBashforthOrder4);
+
+// AdamsMoultonTimeIntegrationSchemes.h
+REGISTER(AdamsMoulton);
 REGISTER(AdamsMoultonOrder1);
 REGISTER(AdamsMoultonOrder2);
+REGISTER(AdamsMoultonOrder3);
+REGISTER(AdamsMoultonOrder4);
 
 // BDFImplicitTimeIntegrationSchemes.h
+REGISTER(BDFImplicit);
 REGISTER(BDFImplicitOrder1);
 REGISTER(BDFImplicitOrder2);
 
 // EulerTimeIntegrationSchemes.h
+REGISTER(Euler);
 REGISTER(BackwardEuler);
 REGISTER(ForwardEuler);
 
+// FITTimeIntegrationSchemes.h
+REGISTER(EulerExponential);
+
+// TimeIntegrationSchemesFIT.h
+std::string FractionalInTimeIntegrationScheme::className =
+    GetTimeIntegrationSchemeFactory().RegisterCreatorFunction(
+        "FractionalInTime", FractionalInTimeIntegrationScheme::create);
+
+// CNABTimeIntegrationScheme.h
 REGISTER(CNAB);
 
 // DIRKTimeIntegrationSchemes.h
+REGISTER(DIRK);
 REGISTER(DIRKOrder2);
 REGISTER(DIRKOrder3);
+REGISTER(DIRKOrder3_ES5);
+REGISTER(DIRKOrder4_ES6);
 
 // IMEXdirkTimeIntegrationSchemes.h
+REGISTER(IMEXdirk);
+REGISTER(IMEXdirk_1_1_1);
 REGISTER(IMEXdirk_1_2_1);
 REGISTER(IMEXdirk_1_2_2);
 REGISTER(IMEXdirk_2_2_2);
@@ -90,23 +117,28 @@ REGISTER(IMEXdirk_2_3_3);
 REGISTER(IMEXdirk_3_4_3);
 REGISTER(IMEXdirk_4_4_3);
 
+// IMEXGearTimeIntegrationScheme.h
 REGISTER(IMEXGear);
 
 // IMEXTimeIntegrationSchemes.h
+REGISTER(IMEX);
 REGISTER(IMEXOrder1);
 REGISTER(IMEXOrder2);
 REGISTER(IMEXOrder3);
 REGISTER(IMEXOrder4);
 
+// MCNABTimeIntegrationScheme.h
 REGISTER(MCNAB);
 
 // RungeKuttaTimeIntegrationSchemes.h
-REGISTER(ClassicalRungeKutta4);
+REGISTER(RungeKutta);
 REGISTER(RungeKutta2);
 REGISTER(RungeKutta2_ImprovedEuler);
 REGISTER(RungeKutta2_SSP);
 REGISTER(RungeKutta3_SSP);
+REGISTER(ClassicalRungeKutta4);
+REGISTER(RungeKutta4);
 REGISTER(RungeKutta5);
 
 } // end namespace LibUtilities
-} // end namespace NekTar
+} // namespace Nektar

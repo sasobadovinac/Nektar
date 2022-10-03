@@ -60,6 +60,8 @@ OutputFileBase::~OutputFileBase()
 
 void OutputFileBase::Process(po::variables_map &vm)
 {
+    m_f->SetUpExp(vm);
+
     string filename = m_config["outfile"].as<string>();
 
     if (m_f->m_fieldPts != LibUtilities::NullPtsField)
@@ -83,7 +85,6 @@ void OutputFileBase::Process(po::variables_map &vm)
         {
             ConvertExpToEquispaced(vm);
         }
-
         if (m_f->m_writeBndFld)
         {
             if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
@@ -197,7 +198,7 @@ void OutputFileBase::Process(po::variables_map &vm)
                                 m_f->m_exp[nfields + j]->GetTotPoints(),
                                 NormPhys[j], 1,
                                 m_f->m_exp[nfields + j]->UpdatePhys(), 1);
-                            m_f->m_exp[nfields + j]->FwdTrans_IterPerExp(
+                            m_f->m_exp[nfields + j]->FwdTransLocalElmt(
                                 m_f->m_exp[nfields + j]->GetPhys(),
                                 m_f->m_exp[nfields + j]->UpdateCoeffs());
                         }
@@ -310,7 +311,7 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
     {
         nPointsNew = vm["output-points"].as<int>();
     }
-    m_f->m_graph->SetExpansionsToEvenlySpacedPoints(nPointsNew);
+    m_f->m_graph->SetExpansionInfoToEvenlySpacedPoints(nPointsNew);
 
     // Save original expansion
     vector<MultiRegions::ExpListSharedPtr> expOld = m_f->m_exp;
@@ -336,7 +337,7 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
         for (int i = 0; i < numFields; ++i)
         {
             BndExpOld = expOld[i]->GetBndCondExpansions();
-            for (int j = 0; j < BndExpOld.num_elements(); ++j)
+            for (int j = 0; j < BndExpOld.size(); ++j)
             {
                 BndExp = m_f->m_exp[i]->UpdateBndCondExpansion(j);
 
@@ -346,6 +347,7 @@ void OutputFileBase::ConvertExpToEquispaced(po::variables_map &vm)
             }
         }
     }
+    m_f->m_fielddef = std::vector<LibUtilities::FieldDefinitionsSharedPtr>();
 }
 
 void OutputFileBase::PrintErrorFromPts()
@@ -361,10 +363,10 @@ void OutputFileBase::PrintErrorFromPts()
     // We can just grab everything from points. This should be a
     // reference, not a copy.
     m_f->m_fieldPts->GetPts(fields);
-    for (int i = 0; i < fields.num_elements(); ++i)
+    for (int i = 0; i < fields.size(); ++i)
     {
         // calculate L2 and Linf value
-        int npts = fields[i].num_elements();
+        int npts = fields[i].size();
 
         NekDouble l2err   = 0.0;
         NekDouble linferr = 0.0;

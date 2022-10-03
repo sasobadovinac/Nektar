@@ -51,16 +51,15 @@ class CFSBndCond;
 typedef std::shared_ptr<CFSBndCond> CFSBndCondSharedPtr;
 
 /// Declaration of the boundary condition factory
-typedef LibUtilities::NekFactory<std::string, CFSBndCond,
-        const LibUtilities::SessionReaderSharedPtr&,
-        const Array<OneD, MultiRegions::ExpListSharedPtr>&,
-        const Array<OneD, Array<OneD, NekDouble> >&,
-        const int,
-        const int,
-        const int> CFSBndCondFactory;
+typedef LibUtilities::NekFactory<
+    std::string, CFSBndCond, const LibUtilities::SessionReaderSharedPtr &,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &,
+    const Array<OneD, Array<OneD, NekDouble>> &, const int, const int,
+    const int>
+    CFSBndCondFactory;
 
 /// Declaration of the boundary condition factory singleton
-CFSBndCondFactory& GetCFSBndCondFactory();
+CFSBndCondFactory &GetCFSBndCondFactory();
 
 /**
  * @class CFSBndCond
@@ -69,52 +68,60 @@ CFSBndCondFactory& GetCFSBndCondFactory();
  */
 class CFSBndCond
 {
-    public:
-        virtual ~CFSBndCond() {}
+public:
+    virtual ~CFSBndCond()
+    {
+    }
 
-        /// Apply the boundary condition
-        void Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time = 0);
+    /// Apply the boundary condition
+    void Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+               Array<OneD, Array<OneD, NekDouble>> &physarray,
+               const NekDouble &time = 0);
 
-    protected:
-        /// Session reader
-        LibUtilities::SessionReaderSharedPtr m_session;
-        /// Array of fields
-        Array<OneD, MultiRegions::ExpListSharedPtr> m_fields;
-        /// Trace normals
-        Array<OneD, Array<OneD, NekDouble> > m_traceNormals;
-        /// Space dimension
-        int m_spacedim;
-        /// Auxiliary object to convert variables
-        VariableConverterSharedPtr           m_varConv;
+    /// Apply the Weight of boundary condition
+    void ApplyBwdWeight()
+    {
+        v_ApplyBwdWeight();
+    }
 
-        /// Parameters of the flow
-        NekDouble m_gamma;
-        NekDouble m_rhoInf;
-        NekDouble m_pInf;
-        Array<OneD, NekDouble> m_velInf;
+protected:
+    /// Session reader
+    LibUtilities::SessionReaderSharedPtr m_session;
+    /// Array of fields
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_fields;
+    /// Trace normals
+    Array<OneD, Array<OneD, NekDouble>> m_traceNormals;
+    /// Space dimension
+    int m_spacedim;
+    /// Auxiliary object to convert variables
+    VariableConverterSharedPtr m_varConv;
+    /// Weight for average calculation of diffusion term
+    NekDouble m_diffusionAveWeight;
 
-        /// Id of the boundary region
-        int       m_bcRegion;
-        /// Offset
-        int       m_offset;
+    /// Parameters of the flow
+    NekDouble m_gamma;
+    NekDouble m_rhoInf;
+    NekDouble m_pInf;
+    NekDouble m_pOut;
+    Array<OneD, NekDouble> m_velInf;
 
-        /// Constructor
-        CFSBndCond(const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >&       pTraceNormals,
-                const int pSpaceDim,
-                const int bcRegion,
-                const int cnt);
+    /// Id of the boundary region
+    int m_bcRegion;
+    /// Offset
+    int m_offset;
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time)=0;
+    /// Constructor
+    CFSBndCond(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+               const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+               const int pSpaceDim, const int bcRegion, const int cnt);
 
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time) = 0;
+
+    virtual void v_ApplyBwdWeight();
 };
-}
+} // namespace Nektar
 
 #endif

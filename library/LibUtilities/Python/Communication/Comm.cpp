@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ShapeType.cpp
+//  File: Comm.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,19 +28,19 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Python wrapper for ShapeType.
+//  Description: Python wrapper for Comm.cpp
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <vector>
-#include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/Python/NekPyConfig.hpp>
+#include <vector>
 
 using namespace Nektar;
 using namespace Nektar::LibUtilities;
 
-template<typename T>
+template <typename T>
 T AllReduce(CommSharedPtr &comm, T toReduce, ReduceOperator oper)
 {
     comm->AllReduce(toReduce, oper);
@@ -55,8 +55,8 @@ void export_Comm()
     // Export ReduceOperator enum
     NEKPY_WRAP_ENUM(ReduceOperator, ReduceOperatorMap);
 
-    py::class_<Comm, std::shared_ptr<Comm>,
-               boost::noncopyable>("Comm", py::no_init)
+    py::class_<Comm, std::shared_ptr<Comm>, boost::noncopyable>("Comm",
+                                                                py::no_init)
         .def("GetSize", &Comm::GetSize)
         .def("GetRank", &Comm::GetRank)
         .def("GetType", &Comm::GetType,
@@ -64,6 +64,5 @@ void export_Comm()
         .def("AllReduce", &AllReduce<double>)
         .def("AllReduce", &AllReduce<int>)
         .def("AllReduce", &AllReduce<long>)
-        .def("AllReduce", &AllReduce<Array<OneD, NekDouble>>)
-        ;
+        .def("AllReduce", &AllReduce<Array<OneD, NekDouble>>);
 }

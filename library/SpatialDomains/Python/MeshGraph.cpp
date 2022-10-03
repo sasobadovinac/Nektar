@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/MeshGraph.h>
 #include <LibUtilities/Python/NekPyConfig.hpp>
+#include <SpatialDomains/MeshGraph.h>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 
 using namespace Nektar;
@@ -73,10 +73,8 @@ void export_MeshGraph()
     py::class_<CurveMap>("CurveMap")
         .def(py::map_indexing_suite<CurveMap, true>());
 
-    py::class_<MeshGraph,
-               std::shared_ptr<MeshGraph>,
-               boost::noncopyable>(
-                   "MeshGraph", py::no_init)
+    py::class_<MeshGraph, std::shared_ptr<MeshGraph>, boost::noncopyable>(
+        "MeshGraph", py::no_init)
 
         .def("Read", MeshGraph_Read)
         .staticmethod("Read")
@@ -88,26 +86,27 @@ void export_MeshGraph()
              py::return_internal_reference<>())
         .def("GetAllQuadGeoms", &MeshGraph::GetAllQuadGeoms,
              py::return_internal_reference<>())
-        .def("GetAllTriGeoms",  &MeshGraph::GetAllTriGeoms,
+        .def("GetAllTriGeoms", &MeshGraph::GetAllTriGeoms,
              py::return_internal_reference<>())
-        .def("GetAllTetGeoms",  &MeshGraph::GetAllTetGeoms,
+        .def("GetAllTetGeoms", &MeshGraph::GetAllTetGeoms,
              py::return_internal_reference<>())
-        .def("GetAllPrismGeoms",  &MeshGraph::GetAllPrismGeoms,
+        .def("GetAllPrismGeoms", &MeshGraph::GetAllPrismGeoms,
              py::return_internal_reference<>())
-        .def("GetAllPyrGeoms",  &MeshGraph::GetAllPyrGeoms,
+        .def("GetAllPyrGeoms", &MeshGraph::GetAllPyrGeoms,
              py::return_internal_reference<>())
-        .def("GetAllHexGeoms",  &MeshGraph::GetAllHexGeoms,
+        .def("GetAllHexGeoms", &MeshGraph::GetAllHexGeoms,
              py::return_internal_reference<>())
-        .def("GetCurvedEdges",  &MeshGraph::GetCurvedEdges,
+        .def("GetCurvedEdges", &MeshGraph::GetCurvedEdges,
              py::return_internal_reference<>())
-        .def("GetCurvedFaces",  &MeshGraph::GetCurvedFaces,
+        .def("GetCurvedFaces", &MeshGraph::GetCurvedFaces,
              py::return_internal_reference<>())
 
         .def("GetNumElements", &MeshGraph::GetNumElements)
 
-        .def("SetExpansionsToEvenlySpacedPoints",
-             &MeshGraph::SetExpansionsToEvenlySpacedPoints)
-        .def("SetExpansionsToPolyOrder", &MeshGraph::SetExpansionsToPolyOrder)
-        .def("SetExpansionsToPointOrder", &MeshGraph::SetExpansionsToPointOrder)
-        ;
+        .def("SetExpansionInfosToEvenlySpacedPoints",
+             &MeshGraph::SetExpansionInfoToEvenlySpacedPoints)
+        .def("SetExpansionInfosToPolyOrder",
+             &MeshGraph::SetExpansionInfoToNumModes)
+        .def("SetExpansionInfosToPointOrder",
+             &MeshGraph::SetExpansionInfoToPointOrder);
 }

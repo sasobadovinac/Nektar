@@ -57,7 +57,7 @@ void LEESolver::v_Solve(const int nDim,
                         const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
                         Array<OneD, Array<OneD, NekDouble>> &flux)
 {
-    int nTracePts = Fwd[0].num_elements();
+    int nTracePts = Fwd[0].size();
 
     Array<OneD, Array<OneD, NekDouble>> bfFwd(nDim + 3);
     Array<OneD, Array<OneD, NekDouble>> bfBwd(nDim + 3);
@@ -76,36 +76,35 @@ void LEESolver::v_Solve(const int nDim,
     {
         for (int i = 0; i < nTracePts; ++i)
         {
-            v_PointSolve(
-                  Fwd[0][i],   Fwd[1][i],   Fwd[2][i], 0.0,  0.0,
-                  Bwd[0][i],   Bwd[1][i],   Bwd[2][i], 0.0,  0.0,
-                bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], 0.0,  0.0,
-                bfBwd[0][i], bfBwd[1][i], bfBwd[2][i], 0.0,  0.0,
-                 flux[0][i],  flux[1][i],  flux[2][i],  vF,   wF);
+            v_PointSolve(Fwd[0][i], Fwd[1][i], Fwd[2][i], 0.0, 0.0, Bwd[0][i],
+                         Bwd[1][i], Bwd[2][i], 0.0, 0.0, bfFwd[0][i],
+                         bfFwd[1][i], bfFwd[2][i], 0.0, 0.0, bfBwd[0][i],
+                         bfBwd[1][i], bfBwd[2][i], 0.0, 0.0, flux[0][i],
+                         flux[1][i], flux[2][i], vF, wF);
         }
     }
     else if (expDim == 2)
     {
         for (int i = 0; i < nTracePts; ++i)
         {
-            v_PointSolve(
-                  Fwd[0][i],   Fwd[1][i],   Fwd[2][i],   Fwd[3][i],  0.0,
-                  Bwd[0][i],   Bwd[1][i],   Bwd[2][i],   Bwd[3][i],  0.0,
-                bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], bfFwd[3][i],  0.0,
-                bfBwd[0][i], bfBwd[1][i], bfBwd[2][i], bfBwd[3][i],  0.0,
-                 flux[0][i],  flux[1][i],  flux[2][i],  flux[3][i],   wF);
+            v_PointSolve(Fwd[0][i], Fwd[1][i], Fwd[2][i], Fwd[3][i], 0.0,
+                         Bwd[0][i], Bwd[1][i], Bwd[2][i], Bwd[3][i], 0.0,
+                         bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], bfFwd[3][i],
+                         0.0, bfBwd[0][i], bfBwd[1][i], bfBwd[2][i],
+                         bfBwd[3][i], 0.0, flux[0][i], flux[1][i], flux[2][i],
+                         flux[3][i], wF);
         }
     }
     else if (expDim == 3)
     {
         for (int i = 0; i < nTracePts; ++i)
         {
-            v_PointSolve(
-                  Fwd[0][i],   Fwd[1][i],   Fwd[2][i],   Fwd[3][i],   Fwd[4][i],
-                  Bwd[0][i],   Bwd[1][i],   Bwd[2][i],   Bwd[3][i],   Bwd[4][i],
-                bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], bfFwd[3][i], bfFwd[4][i],
-                bfBwd[0][i], bfBwd[1][i], bfBwd[2][i], bfBwd[3][i], bfBwd[4][i],
-                 flux[0][i],  flux[1][i],  flux[2][i],  flux[3][i],  flux[4][i]);
+            v_PointSolve(Fwd[0][i], Fwd[1][i], Fwd[2][i], Fwd[3][i], Fwd[4][i],
+                         Bwd[0][i], Bwd[1][i], Bwd[2][i], Bwd[3][i], Bwd[4][i],
+                         bfFwd[0][i], bfFwd[1][i], bfFwd[2][i], bfFwd[3][i],
+                         bfFwd[4][i], bfBwd[0][i], bfBwd[1][i], bfBwd[2][i],
+                         bfBwd[3][i], bfBwd[4][i], flux[0][i], flux[1][i],
+                         flux[2][i], flux[3][i], flux[4][i]);
         }
     }
 }

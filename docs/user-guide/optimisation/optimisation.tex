@@ -5,179 +5,95 @@ computation is: how do I make my simulation faster? Or, equivalently, why is my
 simulation running so slowly?
 
 The spectral element method is no exception to this rule. The purpose of this
-chapter is to highlight some of the easiest parameters that can be tuned to
+section is to highlight some of the easiest parameters that can be tuned to
 attain optimum performance for a given simulation.
 
 Details are kept as untechnical as possible, but some background information on
 the underlying numerical methods is necessary in order to understand the various
 options available and the implications that they can have on your simulation.
 
-\section{Operator evaluation strategies}
+In the current version of the library we now attempt to turn on some
+of these optimisations automatically and so you will likely observe a
+\inltt{session.opt} file appear in your directory which can be viewed to see
+what settings are being selected.
 
-When discretising a PDE using most variants of the spectral element method, the
-resulting problem is usually expressed as a matrix equation. In traditional
-linear finite element codes, the matrix is usually represented as a large sparse
-global matrix, which represents the action of a particular operator such as the
-Laplacian matrix across the whole domain.
-
-However, when we consider spectral element methods, in which the polynomial
-order representing the expansion can be far higher, this method becomes far less
-optimal. We can instead consider the action of an operator locally on each
-element, and then perform an assembly operation. This is mathematically
-equivalent to the global matrix approach and gives exactly the same answer, but
-at high polynomial orders it is far more efficient on modern CPU architectures.
-
-Furthermore, this local approach can be represented in one of two ways: either
-as a dense matrix for each element, which is typically more efficient at
-intermediate polynomial orders, or in the $hp$ element case as a tensor product
-of smaller dense matrices via an approach deemed \emph{sum-factorisation}, which
-is used at very high polynomial orders. Figure~?? gives an overview of these
-three different operator strategies.
-
-A goal of \nekpp is to support not only high order expansions, but \emph{all}
-orders from low (where element size $h$ is the dominant factor) to high (where
-$p$ dominates); a procedure we have dubbed ``from $h$ to $p$ efficiently''.
-
-\subsection{Selecting an operator strategy}
-
-An obvious question is: ``which strategy should I select?'' The most important
-factors in this decision are:
-
-\begin{enumerate}
-  \item what the operator is;
-  \item polynomial order $p$;
-  \item element type and dimension of the problem;
-  \item underlying hardware architecture;
-  \item the number of operator calls in the solver;
-  \item BLAS implementation speed.
-\end{enumerate}
-
-Generally you can use results from three publications
-\cite{VoShKi10,CaShKiKe11a,CaShKiKe11b} which outline results for two- and
-three-dimensional elements.
-
-In general, the best approach is to perform some preliminary timings by changing
-the appropriate variables in the session file, which is outlined below. As a
-very rough guide, for $1 \leq p \leq 2$ you should use the global approach; for
-$3\leq p\leq 7$ use the local approach; and for $p \geq 8$ use
-sum-factorisation. However, these guidelines will vary due to the parameters
-noted above. In future releases of \nekpp we hope to tune these variables
-automatically to make this decision easier to make.
-
-\subsection{XML syntax}
-
-Operator evaluation strategies can be configured in the
-\inltt{GLOBALOPTIMISATIONPARAMETERS} tag, which lies inside the root
-\inltt{NEKTAR} tag:
-
-\begin{lstlisting}[style=XMLStyle]
-<NEKTAR>
-  <GLOBALOPTIMIZATIONPARAMETERS>
-    <BwdTrans>
-      <DO_GLOBAL_MAT_OP VALUE="0" />
-      <DO_BLOCK_MAT_OP TRI="1" QUAD="1"  TET="1"
-                       PYR="1" PRISM="1" HEX="1" />
-    </BwdTrans>
-    <IProductWRTBase>
-      <DO_GLOBAL_MAT_OP VALUE="0" />
-      <DO_BLOCK_MAT_OP TRI="1" QUAD="1"  TET="1"
-                       PYR="1" PRISM="1" HEX="1" />
-    </IProductWRTBase>
-    <HelmholtzMatrixOp>
-      <DO_GLOBAL_MAT_OP VALUE="0" />
-      <DO_BLOCK_MAT_OP TRI="1" QUAD="1"  TET="1"
-                       PYR="1" PRISM="1" HEX="1" />
-    </HelmholtzMatrixOp>
-    <MassMatrixOp>
-      <DO_GLOBAL_MAT_OP VALUE="0" />
-      <DO_BLOCK_MAT_OP TRI="1" QUAD="1"  TET="1"
-                       PYR="1" PRISM="1" HEX="1" />
-    </MassMatrixOp>
-  </GLOBALOPTIMIZATIONPARAMETERS>
-</NEKTAR>
-\end{lstlisting}
-
-
-\subsection{Selecting different operator strategies}
-
-Operator evaluation is supported for four operators: backward transform, inner
-product, Helmholtz and mass operators. It is possible to specify the following
-optimisation flags for different operators:
-
-\begin{enumerate}
-  \item \inltt{DO\_GLOBAL\_MAT\_OP}: If \inltt{VALUE} is \inltt{1}, the globally
-  assembled system matrix will be used to evaluate the operator. If
-  \inltt{VALUE} is \inltt{0}, the operator will be evaluated elementally.
-  \item \inltt{DO\_BLOCK\_MAT\_OP}: If \inltt{VALUE} is \inltt{1}, the elemental
-  evaluation will be done using the elemental/local matrices (which are all
-  concatenated in a block matrix, hence the name). If \inltt{VALUE} is
-  \inltt{0}, the elemental evaluation will be done using the sum-factorisation
-  technique.
-
-  Each element type (triangle, quadrilateral, etc) has its own \texttt{VALUE},
-  since break-even points for sum-factorisation and the local matrix approach
-  will differ depending on element type. Note that due to a small shortcoming in
-  the code, all element types must be defined; so three-dimensional elements
-  must still be defined even if the simulation is two-dimensional.
-\end{enumerate}
-
-Note that global takes precendence over block, so if \inltt{VALUE} is set to
-\inltt{1} for both then the operator will be global.
-
-For very complex operators -- in particular \inltt{HelmholtzMatrixOp} -- always
-set \inltt{DO\_BLOCK\_MAT\_OP} to \inltt{1} as sum-factorisation for these
-operator types can be costly.
-
-\section{Collections}
-The Collections library adds optimisations to perform certain elemental
-operations collectively by applying an operator using a matrix-matrix operation,
-rather than a sequence of matrix-vector multiplications. Certain operators
-benefit more than other from this treatment, so the following implementations
-are available:
+\section{Collections and MatrixFree operations}
+The Collections and associated MatrixFree libraries adds optimisations
+to perform certain elemental operations collectively by applying an
+operator using either matrix-matrix or unrolled matrix free operations,
+rather than a sequence of matrix-vector multiplications. Certain
+operators benefit more than other from this treatment, so the
+following implementations are available:
 \begin{itemize}
-    \item StdMat: Perform operations using collated matrix-matrix type elemental
-        operation.
+    \item StdMat: Perform operations using collated matrix-matrix type
+      elemental operation.
     \item SumFac: Perform operation using collated matrix-matrix type sum
-        factorisation operations.
-    \item IterPerExp: Loop through elements, performing matrix-vector operation.
-    \item NoCollections: Use the original LocalRegions implementation to
-        perform the operation.
+        factorisation (i.e. direction by direction) /operations.
+    \item IterPerExp: Loop through elements, performing matrix-vector
+      operation utilising StdRegions building blocks.
+     \item MatrixFree: call matrix free implementations that can
+       utilise vectorisation by performing SIMD (single instruction
+       multiple data) operations over multiple elements concurrently.
+    \item NoCollections: Use the original LocalRegions implementation
+      to perform the operation which involves looping over the
+      elements which may subsequently call the StdRegions
+      implementations.
 \end{itemize}
 All configuration relating to Collections is given in the \inltt{COLLECTIONS}
-XML element within the \inltt{NEKTAR} XML element.
+Xml element within the \inltt{NEKTAR} XML element.
 
-\subsection{Default implementation}
-The default implementation for all operators may be chosen through setting the
-\inltt{DEFAULT} attribute of the \inltt{COLLECTIONS} XML element to one of
-\inltt{StdMat}, \inltt{SumFac}, \inltt{IterPerExp} or \inltt{NoCollection}. For
-example, the following uses the collated matrix-matrix type elemental operation
-for all operators and expansion orders:
+\subsection{Automatic tuning and the --writeoptfile command line option}
+By default we now try to select the optimal choice of implementation
+when you first run a solver. If you run the solver in verbose mode you
+will observe an output of the form:
 
 \begin{lstlisting}[style=XmlStyle]
-<COLLECTIONS DEFAULT="StdMat" />
+Collection Implementation for Tetrahedron ( 4 4 4 ) for ngeoms = 428
+	    Op.    :	opt. Impl.	 (IterLocExp,  IterStdExp,  StdMat,     SumFac,      MatrixFree)
+	 BwdTrans: 	MatFree   	 (0.000344303, 0.000336822, 0.000340444, 0.000185503, 6.80494e-05)
+	 Helmholtz: 	MatFree   	 (0.00227906, 0.00481378,      --    ,      --    , 0.000374155)
+	 IPWrtBase: 	MatFree   	 (0.000364424, 0.000318054, 0.000291705, 0.000138584, 8.37257e-05)
+	 IPWrtDBase: 	MatFree   	 (0.00378674, 0.00308545, 0.00100464, 0.000653242, 0.000283372)
+	 PhysDeriv : 	MatFree   	 (0.000881537, 0.000774604, 0.00407994, 0.000540257, 0.000185529)
+Collection Implemenation for Prism ( 4 4 4 ) for ngeoms = 136
+	    Op.    :	opt. Impl.	 (IterLocExp,  IterStdExp,  StdMat,     SumFac,      MatrixFree)
+	 BwdTrans: 	MatFree   	 (0.000131559, 0.000130099, 0.000237854, 8.40501e-05, 2.78436e-05)
+	 Helmholtz: 	MatFree   	 (0.000988519, 0.00133484,      --    ,      --    , 0.000166906)
+	 IPWrtBase: 	MatFree   	 (0.000113946, 0.000105544, 0.00022007, 5.74802e-05, 3.18842e-05)
+	 IPWrtDBase: 	MatFree   	 (0.00148209, 0.000717362, 0.000885148, 0.000257414, 0.00011241)
+	 PhysDeriv : 	MatFree   	 (0.000295485, 0.000247841, 0.00186362, 0.000219107, 7.38712e-05)
 \end{lstlisting}
 
-\subsection{Auto-tuning}
-The choice of implementation for each operator, for the given mesh and
-expansion orders, can be selected automatically through 
-auto-tuning. To enable this, add the following to the \nekpp session
-file:
 
-\begin{lstlisting}[style=XmlStyle]
-<COLLECTIONS DEFAULT="auto" />
-\end{lstlisting}
+This shows the selected collection operation, in this case
+\inltt{MatrixFree}, for the different operators implmentations and the
+various approaches. Note that IterLocExp is equivalent to NoCollection
+and IterStdExp is directly related to the IterPerExp option.
 
-This will collate elements from the given mesh and given expansion orders,
-run and time each implementation strategy in turn, and select the fastest
-performing case. Note that the selections will be mesh- and order- specific.
-The selections made via auto-tuning are output if the \inlsh{--verbose}
-command-line switch is given.
+This choice of optimisation is then written into a file called
+\inltt{Session.opt} where \inltt{Session} is name of the user defined
+xml file. We note that the optimal choice is currently based on the
+volumetric elements of the mesh (i.e. Tris and Quads in 2D and Tets,
+Pyramids, Prisms and Hexs in 3D) and not on the boundary
+conditions. In the case of a parallel run the root process will write
+the file based on the optimisation on this processor. In the case one
+type of element is not on the root processor the output form the
+highest rank process with this element shape will be outputted.  Once
+this file is present it will be read directly rather than re-running
+the auto-tuning. 
 
-\subsection{Manual selection}
-The choice of implementation for each operator may be set manually within the
-\inltt{COLLECTIONS} tag as shown in the following example. Different implementations may be chosen for different element shapes and expansion orders.
-Specifying \inltt{*} for \inltt{ORDER} sets the default implementation for any
-expansion orders not explicity defined.
+
+\subsection{Manually selecting the COLLECTIONS section} 
+
+The \inltt{COLLECTIONS} section can be set manually within the
+\inltt{COLLECTIONS} tag as shown in the following example. Note this
+section can be added in either the input \inltt{Session.xml} file or
+the \inltt{Session.opt} file that is auto-generated.
+
+Different implementations may be chosen for different element shapes and
+expansion orders.  Specifying \inltt{*} for \inltt{ORDER} sets the
+default implementation for any expansion orders not explicitly defined.
+
 \begin{lstlisting}[style=XmlStyle]
 <COLLECTIONS>
     <OPERATOR TYPE="BwdTrans">
@@ -190,13 +106,49 @@ expansion orders not explicity defined.
 </COLLECTIONS>
 \end{lstlisting}
 
-Manual selection is intended to document the optimal selections on a given
-hardware platform after extensive prior testing, to avoid the need to run the
-auto-tuning for each run.
+\subsubsection{Default implementation}
+The default implementation for all operators may be chosen through
+setting the \inltt{DEFAULT} attribute of the \inltt{COLLECTIONS} XML
+element to one of \inltt{StdMat}, \inltt{SumFac}, \inltt{IterPerExp},
+\inltt{NoCollection} or \inltt{Matrixfree}. The \inltt{StdMat} sets up
+a standard matrix for the element in the collection as the underlying
+operator. The following uses the collated matrix-matrix type elemental
+operation for all operators and expansion orders:
+
+\begin{lstlisting}[style=XmlStyle]
+<COLLECTIONS DEFAULT="StdMat" />
+\end{lstlisting}
+
+The \inltt{NoCollection} option iterates over each expansion
+in the local region calling the local operator which is implemented in
+a sum factorization method within the element. The \inltt{IterPerExp}
+holds a standard expansion and then also holds an expanded copy of the
+geometric factors within the collection operator. \inltt{SumFac} is a
+sum factorization implementation which undertakes each direction of
+the method over multiple elements in the collection. Finally
+\inltt{MatrixFree} implements a vectorisation suitable version of the
+sum factorisation which has minimal memory movement but requires some
+initial data re-orientation when vectorising over multiple elements. 
+
+\subsubsection{Auto-tuning}
+The choice of implementation for each operator, for the given mesh and
+expansion orders, can be selected selected automatically through an
+attribute in the \inltt{COLLECITON} section. To enable this, add the
+following to the \nekpp session file:
+
+\begin{lstlisting}[style=XmlStyle]
+<COLLECTIONS DEFAULT="auto" />
+\end{lstlisting}
+
+This will collate elements from the given mesh and given expansion orders,
+run and time each implementation strategy in turn, and select the fastest
+performing case. Note that the selections will be mesh- and order- specific.
+The selections made via auto-tuning are output if the \inltt{--verbose}
+command-line switch is given.
 
 \subsection{Collection size}
-The maximum number of elements within a single collection can be enforced using
-the \inltt{MAXSIZE} attribute.
+The maximum number of elements within a single collection can be
+enforced using the \inltt{MAXSIZE} attribute.
 
 %%% Local Variables:
 %%% mode: latex

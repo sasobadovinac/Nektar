@@ -37,146 +37,80 @@
 
 #include <LocalRegions/Expansion.h>
 #include <LocalRegions/LocalRegionsDeclspec.h>
-#include <StdRegions/StdExpansion1D.h>
 #include <SpatialDomains/Geometry1D.h>
+#include <StdRegions/StdExpansion1D.h>
 
 namespace Nektar
 {
-    namespace LocalRegions 
+namespace LocalRegions
+{
+class Expansion2D;
+typedef std::shared_ptr<Expansion2D> Expansion2DSharedPtr;
+typedef std::weak_ptr<Expansion2D> Expansion2DWeakPtr;
+
+class Expansion1D;
+typedef std::shared_ptr<Expansion1D> Expansion1DSharedPtr;
+typedef std::weak_ptr<Expansion1D> Expansion1DWeakPtr;
+typedef std::vector<Expansion1DSharedPtr> Expansion1DVector;
+
+class Expansion1D : virtual public Expansion,
+                    virtual public StdRegions::StdExpansion1D
+{
+public:
+    LOCAL_REGIONS_EXPORT Expansion1D(SpatialDomains::Geometry1DSharedPtr pGeom)
+        : Expansion(pGeom), StdExpansion1D()
     {
-        class Expansion2D;
-        typedef std::shared_ptr<Expansion2D>  Expansion2DSharedPtr;
-        typedef std::weak_ptr<Expansion2D>    Expansion2DWeakPtr;
-        
-        class Expansion1D;
-        typedef std::shared_ptr<Expansion1D>  Expansion1DSharedPtr;
-        typedef std::weak_ptr<Expansion1D>    Expansion1DWeakPtr;
-        typedef std::vector< Expansion1DSharedPtr > Expansion1DVector;
+    }
 
-        class Expansion1D: virtual public Expansion,
-            virtual public StdRegions::StdExpansion1D
-        {
-            public:
-                LOCAL_REGIONS_EXPORT Expansion1D(SpatialDomains::
-                                                 Geometry1DSharedPtr pGeom)
-                                                 : Expansion(pGeom),
-                                                   StdExpansion1D()
-                {
-                    m_elementEdgeLeft  = -1;
-                    m_elementEdgeRight = -1;
-                }
+    LOCAL_REGIONS_EXPORT virtual ~Expansion1D()
+    {
+    }
 
-                LOCAL_REGIONS_EXPORT virtual ~Expansion1D() {}
+    LOCAL_REGIONS_EXPORT void AddNormTraceInt(
+        const int dir, Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
 
-                LOCAL_REGIONS_EXPORT void AddNormTraceInt(
-                        const int dir,
-                        Array<OneD, const NekDouble> &inarray,
-                        Array<OneD,NekDouble> &outarray);
+    void AddHDGHelmholtzTraceTerms(const NekDouble tau,
+                                   const Array<OneD, const NekDouble> &inarray,
+                                   Array<OneD, NekDouble> &outarray);
 
-                inline Expansion2DSharedPtr GetLeftAdjacentElementExp() const;
+    inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
 
-                inline Expansion2DSharedPtr GetRightAdjacentElementExp() const;
+protected:
+    virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
 
-                inline int GetLeftAdjacentElementEdge() const;
+    virtual void v_AddRobinMassMatrix(
+        const int vert, const Array<OneD, const NekDouble> &primCoeffs,
+        DNekMatSharedPtr &inoutmat);
 
-                inline int GetRightAdjacentElementEdge() const;
+    virtual void v_AddRobinEdgeContribution(
+        const int vert, const Array<OneD, const NekDouble> &primCoeffs,
+        const Array<OneD, NekDouble> &incoeffs, Array<OneD, NekDouble> &coeffs);
 
-                inline void SetAdjacentElementExp(
-                    int                  edge,
-                    Expansion2DSharedPtr &e);
+    virtual NekDouble v_VectorFlux(
+        const Array<OneD, Array<OneD, NekDouble>> &vec);
 
-                void AddHDGHelmholtzTraceTerms(
-                    const NekDouble                      tau,
-                    const Array<OneD, const NekDouble>  &inarray,
-                          Array<OneD, NekDouble>        &outarray);
+    virtual void v_NormalTraceDerivFactors(
+        Array<OneD, Array<OneD, NekDouble>> &factors,
+        Array<OneD, Array<OneD, NekDouble>> &d0factors,
+        Array<OneD, Array<OneD, NekDouble>> &d1factors);
 
-                inline SpatialDomains::Geometry1DSharedPtr GetGeom1D() const;
+    virtual const NormalVector &v_GetTraceNormal(const int edge) const final;
 
-            protected:
-                std::map<int, bool>                     m_negatedNormals;
+    virtual void v_ReOrientTracePhysMap(const StdRegions::Orientation orient,
+                                        Array<OneD, int> &idmap, const int nq0,
+                                        const int nq1);
 
-                virtual DNekMatSharedPtr v_GenMatrix(
-                    const StdRegions::StdMatrixKey      &mkey);
+    virtual void v_TraceNormLen(const int traceid, NekDouble &h, NekDouble &p);
 
-                virtual void v_AddRobinMassMatrix(
-                    const int                            vert,
-                    const Array<OneD, const NekDouble > &primCoeffs,
-                    DNekMatSharedPtr                    &inoutmat);
+private:
+};
 
-                virtual void v_AddRobinEdgeContribution(
-                    const int                            vert,
-                    const Array<OneD, const NekDouble > &primCoeffs,
-                          Array<OneD, NekDouble>        &coeffs);
-
-                virtual NekDouble v_VectorFlux(
-                    const Array<OneD, Array<OneD, NekDouble> > &vec);
-
-                virtual void v_NegateVertexNormal (const int vertex);
-
-                virtual bool v_VertexNormalNegated(const int vertex);
-
-            private:
-                Expansion2DWeakPtr m_elementLeft;
-                Expansion2DWeakPtr m_elementRight;
-                int                m_elementEdgeLeft;
-                int                m_elementEdgeRight;
-
-        };
-        
-        inline Expansion2DSharedPtr Expansion1D::
-            GetLeftAdjacentElementExp() const
-        {
-            ASSERTL1(m_elementLeft.lock().get(),
-                     "Left adjacent element not set.");
-            return m_elementLeft.lock();
-        }
-
-        inline Expansion2DSharedPtr Expansion1D::
-            GetRightAdjacentElementExp() const
-        {
-            ASSERTL1(m_elementLeft.lock().get(),
-                     "Right adjacent element not set.");
-            
-            return m_elementRight.lock();
-        }
-
-        inline int Expansion1D::GetLeftAdjacentElementEdge() const
-        {
-            return m_elementEdgeLeft;
-        }
-
-        inline int Expansion1D::GetRightAdjacentElementEdge() const
-        {
-            return m_elementEdgeRight;
-        }
-
-        inline void Expansion1D::SetAdjacentElementExp(
-            int                  edge,
-            Expansion2DSharedPtr &e)
-        {
-            if (m_elementLeft.lock().get())
-            {
-                ASSERTL1(!m_elementRight.lock().get(),
-                         "Both adjacent elements already set.");
-                
-                m_elementRight     = e;
-                m_elementEdgeRight = edge;
-            }
-            else
-            {
-                m_elementLeft     = e;
-                m_elementEdgeLeft = edge;
-            }
-        }
-
-        inline SpatialDomains::Geometry1DSharedPtr Expansion1D
-            ::GetGeom1D() const
-        {
-            return std::dynamic_pointer_cast<SpatialDomains
-                ::Geometry1D>(m_geom);
-        }
-    } //end of namespace
-} //end of namespace
+inline SpatialDomains::Geometry1DSharedPtr Expansion1D ::GetGeom1D() const
+{
+    return std::dynamic_pointer_cast<SpatialDomains ::Geometry1D>(m_geom);
+}
+} // namespace LocalRegions
+} // namespace Nektar
 
 #endif
-

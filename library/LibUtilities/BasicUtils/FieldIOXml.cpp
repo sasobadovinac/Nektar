@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/BasicUtils/FieldIOXml.h>
 #include <LibUtilities/BasicUtils/CompressData.h>
+#include <LibUtilities/BasicUtils/FieldIOXml.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 
 #include <boost/format.hpp>
@@ -86,7 +86,7 @@ FieldIOXml::FieldIOXml(LibUtilities::CommSharedPtr pComm, bool sharedFilesystem)
  */
 void FieldIOXml::v_Write(const std::string &outFile,
                          std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-                         std::vector<std::vector<NekDouble> > &fielddata,
+                         std::vector<std::vector<NekDouble>> &fielddata,
                          const FieldMetaDataMap &fieldmetadatamap,
                          const bool backup)
 {
@@ -104,9 +104,8 @@ void FieldIOXml::v_Write(const std::string &outFile,
         ASSERTL1(fielddata[f].size() > 0,
                  "Fielddata vector must contain at least one value.");
 
-        ASSERTL1(fielddata[f].size() ==
-                     fielddefs[f]->m_fields.size() *
-                         CheckFieldDefinition(fielddefs[f]),
+        ASSERTL1(fielddata[f].size() == fielddefs[f]->m_fields.size() *
+                                            CheckFieldDefinition(fielddefs[f]),
                  "Invalid size of fielddata vector.");
     }
 
@@ -139,8 +138,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
             std::stringstream fieldsStringStream;
             bool first = true;
             for (std::vector<int>::size_type i = 0;
-                 i < fielddefs[f]->m_fields.size();
-                 i++)
+                 i < fielddefs[f]->m_fields.size(); i++)
             {
                 if (!first)
                 {
@@ -182,8 +180,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
             std::stringstream basisStringStream;
             bool first = true;
             for (std::vector<BasisType>::size_type i = 0;
-                 i < fielddefs[f]->m_basis.size();
-                 i++)
+                 i < fielddefs[f]->m_basis.size(); i++)
             {
                 if (!first)
                 {
@@ -297,8 +294,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
                 // Just dump single definition
                 bool first = true;
                 for (std::vector<int>::size_type i = 0;
-                     i < fielddefs[f]->m_basis.size();
-                     i++)
+                     i < fielddefs[f]->m_basis.size(); i++)
                 {
                     if (!first)
                     {
@@ -313,8 +309,7 @@ void FieldIOXml::v_Write(const std::string &outFile,
                 numModesStringStream << "MIXORDER:";
                 bool first = true;
                 for (std::vector<int>::size_type i = 0;
-                     i < fielddefs[f]->m_numModes.size();
-                     i++)
+                     i < fielddefs[f]->m_numModes.size(); i++)
                 {
                     if (!first)
                     {
@@ -335,7 +330,8 @@ void FieldIOXml::v_Write(const std::string &outFile,
         std::string idString;
         {
             std::stringstream idStringStream;
-            idString = ParseUtils::GenerateSeqString(fielddefs[f]->m_elementIDs);
+            idString =
+                ParseUtils::GenerateSeqString(fielddefs[f]->m_elementIDs);
         }
         elemTag->SetAttribute("ID", idString);
         elemTag->SetAttribute("COMPRESSED",
@@ -378,10 +374,9 @@ void FieldIOXml::v_Write(const std::string &outFile,
  * @param fieldmetadatamap   Field metadata map that is written into @p outFile.
  */
 void FieldIOXml::WriteMultiFldFileIDs(
-    const std::string                       &outFile,
-    const std::vector<std::string>           fileNames,
-    std::vector<std::vector<unsigned int> > &elementList,
-    const FieldMetaDataMap                  &fieldmetadatamap)
+    const std::string &outFile, const std::vector<std::string> fileNames,
+    std::vector<std::vector<unsigned int>> &elementList,
+    const FieldMetaDataMap &fieldmetadatamap)
 {
     TiXmlDocument doc;
     TiXmlDeclaration *decl = new TiXmlDeclaration("1.0", "utf-8", "");
@@ -426,10 +421,9 @@ void FieldIOXml::WriteMultiFldFileIDs(
  * @param fieldmetadatamap   Field metadata map that is read from @p inFile.
  */
 void FieldIOXml::ImportMultiFldFileIDs(
-    const std::string                       &inFile,
-    std::vector<std::string>                &fileNames,
-    std::vector<std::vector<unsigned int> > &elementList,
-    FieldMetaDataMap                        &fieldmetadatamap)
+    const std::string &inFile, std::vector<std::string> &fileNames,
+    std::vector<std::vector<unsigned int>> &elementList,
+    FieldMetaDataMap &fieldmetadatamap)
 {
     boost::ignore_unused(fieldmetadatamap);
 
@@ -462,17 +456,15 @@ void FieldIOXml::ImportMultiFldFileIDs(
         strPartition = "MultipleFldFiles";
         fldfileIDs   = master->FirstChildElement("MultipleFldFiles");
     }
-    ASSERTL0(fldfileIDs,
-             "Unable to find 'Partition' or 'MultipleFldFiles' tag "
-             "within nektar tag.");
+    ASSERTL0(fldfileIDs, "Unable to find 'Partition' or 'MultipleFldFiles' tag "
+                         "within nektar tag.");
 
     while (fldfileIDs)
     {
         // Read file name of partition file
         const char *attr = fldfileIDs->Attribute("FileName");
-        ASSERTL0(attr,
-                 "'FileName' not provided as an attribute of '" + strPartition +
-                     "' tag.");
+        ASSERTL0(attr, "'FileName' not provided as an attribute of '" +
+                           strPartition + "' tag.");
         fileNames.push_back(std::string(attr));
 
         const char *elementIDs = fldfileIDs->GetText();
@@ -503,7 +495,7 @@ void FieldIOXml::ImportMultiFldFileIDs(
  */
 void FieldIOXml::v_Import(const std::string &infilename,
                           std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-                          std::vector<std::vector<NekDouble> > &fielddata,
+                          std::vector<std::vector<NekDouble>> &fielddata,
                           FieldMetaDataMap &fieldinfomap,
                           const Array<OneD, int> &ElementIDs)
 {
@@ -520,10 +512,10 @@ void FieldIOXml::v_Import(const std::string &infilename,
         infile            = PortablePath(fullpath);
 
         std::vector<std::string> filenames;
-        std::vector<std::vector<unsigned int> > elementIDs_OnPartitions;
+        std::vector<std::vector<unsigned int>> elementIDs_OnPartitions;
 
-        ImportMultiFldFileIDs(
-            infile, filenames, elementIDs_OnPartitions, fieldinfomap);
+        ImportMultiFldFileIDs(infile, filenames, elementIDs_OnPartitions,
+                              fieldinfomap);
 
         // Load metadata
         ImportFieldMetaData(infile, fieldinfomap);
@@ -546,7 +538,7 @@ void FieldIOXml::v_Import(const std::string &infilename,
         else // only load relevant elements from partitions
         {
             int i, j;
-            std::map<int, std::vector<int> > FileIDs;
+            std::map<int, std::vector<int>> FileIDs;
             std::set<int> LoadFile;
 
             for (i = 0; i < elementIDs_OnPartitions.size(); ++i)
@@ -557,7 +549,7 @@ void FieldIOXml::v_Import(const std::string &infilename,
                 }
             }
 
-            for (i = 0; i < ElementIDs.num_elements(); ++i)
+            for (i = 0; i < ElementIDs.size(); ++i)
             {
                 auto it = FileIDs.find(ElementIDs[i]);
                 if (it != FileIDs.end())
@@ -709,13 +701,12 @@ void FieldIOXml::SetUpFieldMetaData(
     // Compute number of elements on this process and share with other
     // processes. Also construct list of elements on this process from
     // available vector of field definitions.
-    std::vector<size_t>       elmtnums(nprocs, 0);
+    std::vector<size_t> elmtnums(nprocs, 0);
     std::vector<unsigned int> idlist;
     for (size_t i = 0; i < fielddefs.size(); ++i)
     {
         elmtnums[rank] += fielddefs[i]->m_elementIDs.size();
-        idlist.insert(idlist.end(),
-                      fielddefs[i]->m_elementIDs.begin(),
+        idlist.insert(idlist.end(), fielddefs[i]->m_elementIDs.begin(),
                       fielddefs[i]->m_elementIDs.end());
     }
     m_comm->AllReduce(elmtnums, LibUtilities::ReduceMax);
@@ -724,15 +715,18 @@ void FieldIOXml::SetUpFieldMetaData(
     // the info file.
     if (rank == 0)
     {
-        std::vector<std::vector<unsigned int> > ElementIDs(nprocs);
+        std::vector<std::vector<unsigned int>> ElementIDs(nprocs);
 
         // Populate the list of element ID lists from all processes
         ElementIDs[0] = idlist;
         for (size_t i = 1; i < nprocs; ++i)
         {
-            std::vector<unsigned int> tmp(elmtnums[i]);
-            m_comm->Recv(i, tmp);
-            ElementIDs[i] = tmp;
+            if (elmtnums[i] > 0)
+            {
+                std::vector<unsigned int> tmp(elmtnums[i]);
+                m_comm->Recv(i, tmp);
+                ElementIDs[i] = tmp;
+            }
         }
 
         // Set up output names
@@ -753,7 +747,10 @@ void FieldIOXml::SetUpFieldMetaData(
     else
     {
         // Send this process's ID list to the root process
-        m_comm->Send(0, idlist);
+        if (elmtnums[rank] > 0)
+        {
+            m_comm->Send(0, idlist);
+        }
     }
 }
 
@@ -767,8 +764,7 @@ void FieldIOXml::SetUpFieldMetaData(
  */
 void FieldIOXml::ImportFieldDefs(
     DataSourceSharedPtr dataSource,
-    std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-    bool expChild)
+    std::vector<FieldDefinitionsSharedPtr> &fielddefs, bool expChild)
 {
     XmlDataSourceSharedPtr xml =
         std::static_pointer_cast<XmlDataSource>(dataSource);
@@ -866,8 +862,8 @@ void FieldIOXml::ImportFieldDefs(
                                              CompressData::GetCompressString()),
                               "Compressed formats do not "
                               "match. Expected: " +
-                              CompressData::GetCompressString() +
-                              " but got " + std::string(attr->Value()));
+                                  CompressData::GetCompressString() +
+                                  " but got " + std::string(attr->Value()));
                 }
                 else if (attrName == "BITSIZE")
                 {
@@ -922,7 +918,7 @@ void FieldIOXml::ImportFieldDefs(
 
             // Get the geometrical shape
             ShapeType shape = (ShapeType)0;
-            bool valid = false;
+            bool valid      = false;
             for (unsigned int j = 0; j < SIZE_ShapeType; j++)
             {
                 if (ShapeTypeMap[j] == shapeString)
@@ -944,8 +940,7 @@ void FieldIOXml::ImportFieldDefs(
             valid = ParseUtils::GenerateVector(basisString, basisStrings);
             ASSERTL0(valid, "Unable to correctly parse the basis types.");
             for (std::vector<std::string>::size_type i = 0;
-                 i < basisStrings.size();
-                 i++)
+                 i < basisStrings.size(); i++)
             {
                 valid = false;
                 for (unsigned int j = 0; j < SIZE_BasisType; j++)
@@ -968,8 +963,8 @@ void FieldIOXml::ImportFieldDefs(
             std::vector<NekDouble> homoLengths;
             if (numHomoDir)
             {
-                valid = ParseUtils::GenerateVector(homoLengthsString,
-                                                   homoLengths);
+                valid =
+                    ParseUtils::GenerateVector(homoLengthsString, homoLengths);
                 ASSERTL0(valid, "Unable to correctly parse the number of "
                                 "homogeneous lengths.");
             }
@@ -989,20 +984,17 @@ void FieldIOXml::ImportFieldDefs(
 
             if (numHomoDir == 1)
             {
-                valid = ParseUtils::GenerateSeqVector(homoZIDsString,
-                                                      homoZIDs);
+                valid = ParseUtils::GenerateSeqVector(homoZIDsString, homoZIDs);
                 ASSERTL0(valid,
                          "Unable to correctly parse homogeneous planes IDs.");
             }
 
             if (numHomoDir == 2)
             {
-                valid = ParseUtils::GenerateSeqVector(homoZIDsString,
-                                                      homoZIDs);
+                valid = ParseUtils::GenerateSeqVector(homoZIDsString, homoZIDs);
                 ASSERTL0(valid, "Unable to correctly parse homogeneous lines "
                                 "IDs in z-direction.");
-                valid = ParseUtils::GenerateSeqVector(homoYIDsString,
-                                                      homoYIDs);
+                valid = ParseUtils::GenerateSeqVector(homoYIDsString, homoYIDs);
                 ASSERTL0(valid, "Unable to correctly parse homogeneous lines "
                                 "IDs in y-direction.");
             }
@@ -1016,8 +1008,7 @@ void FieldIOXml::ImportFieldDefs(
                 valid = ParseUtils::GenerateVector(pointsString, pointsStrings);
                 ASSERTL0(valid, "Unable to correctly parse the points types.");
                 for (std::vector<std::string>::size_type i = 0;
-                     i < pointsStrings.size();
-                     i++)
+                     i < pointsStrings.size(); i++)
                 {
                     valid = false;
                     for (unsigned int j = 0; j < SIZE_PointsType; j++)
@@ -1047,8 +1038,8 @@ void FieldIOXml::ImportFieldDefs(
                 UniOrder = true;
             }
 
-            valid = ParseUtils::GenerateVector(
-                numModesString.substr(9), numModes);
+            valid =
+                ParseUtils::GenerateVector(numModesString.substr(9), numModes);
             ASSERTL0(valid, "Unable to correctly parse the number of modes.");
 
             // Get numPoints
@@ -1066,22 +1057,10 @@ void FieldIOXml::ImportFieldDefs(
             ASSERTL0(valid, "Unable to correctly parse the number of fields.");
 
             FieldDefinitionsSharedPtr fielddef =
-                MemoryManager<FieldDefinitions>::AllocateSharedPtr(shape,
-                                                                   elementIds,
-                                                                   basis,
-                                                                   UniOrder,
-                                                                   numModes,
-                                                                   Fields,
-                                                                   numHomoDir,
-                                                                   homoLengths,
-                                                                   strips,
-                                                                   homoSIDs,
-                                                                   homoZIDs,
-                                                                   homoYIDs,
-                                                                   points,
-                                                                   pointDef,
-                                                                   numPoints,
-                                                                   numPointDef);
+                MemoryManager<FieldDefinitions>::AllocateSharedPtr(
+                    shape, elementIds, basis, UniOrder, numModes, Fields,
+                    numHomoDir, homoLengths, strips, homoSIDs, homoZIDs,
+                    homoYIDs, points, pointDef, numPoints, numPointDef);
 
             fielddefs.push_back(fielddef);
 
@@ -1101,7 +1080,7 @@ void FieldIOXml::ImportFieldDefs(
 void FieldIOXml::ImportFieldData(
     DataSourceSharedPtr dataSource,
     const std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-    std::vector<std::vector<NekDouble> > &fielddata)
+    std::vector<std::vector<NekDouble>> &fielddata)
 {
     int cntdumps = 0;
     XmlDataSourceSharedPtr xml =
@@ -1144,8 +1123,8 @@ void FieldIOXml::ImportFieldData(
                                          CompressData::GetCompressString()),
                           "Compressed formats do not match. "
                           "Expected: " +
-                          CompressData::GetCompressString() +
-                          " but got " + std::string(CompressStr));
+                              CompressData::GetCompressString() + " but got " +
+                              std::string(CompressStr));
             }
 
             ASSERTL0(Z_OK == CompressData::ZlibDecodeFromBase64Str(
@@ -1166,5 +1145,5 @@ void FieldIOXml::ImportFieldData(
         master = master->NextSiblingElement("NEKTAR");
     }
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

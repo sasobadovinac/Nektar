@@ -30,44 +30,49 @@
 //
 // Description: Matrix Forward Declarations
 //
-// 
+//
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_MATRIX_FWD_HPP
 #define NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_MATRIX_FWD_HPP
 
-#include <LibUtilities/LinearAlgebra/MatrixType.h>
-#include <LibUtilities/LinearAlgebra/MatrixStorageType.h>
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
+#include <LibUtilities/LinearAlgebra/MatrixStorageType.h>
+#include <LibUtilities/LinearAlgebra/MatrixType.h>
 
 #include <memory>
 #include <type_traits>
 
 namespace Nektar
 {
-    template<typename DataType>
-    class ConstMatrix;
-    
-    template<typename DataType>
-    class Matrix;
-    
-    template<typename DataType, typename MatType = StandardMatrixTag>
-    class NekMatrix;
+template <typename DataType> class ConstMatrix;
 
-    template<typename DataType, typename InnerMatrixType>
-    class NekMatrix<NekMatrix<DataType, InnerMatrixType>, ScaledMatrixTag>;
-    
-    template<typename DataType, typename InnerMatrixType>
-    class NekMatrix<NekMatrix<DataType, InnerMatrixType>, BlockMatrixTag>;
-    
-    template<typename DataType>
-    class NekMatrix<DataType, StandardMatrixTag>;
-    
-    typedef std::shared_ptr<NekMatrix<NekDouble, StandardMatrixTag> > SharedNekMatrixPtr;
-    typedef NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, ScaledMatrixTag> DNekScalMat;
-    typedef std::shared_ptr<DNekScalMat> DNekScalMatSharedPtr;
-    
-}
-    
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_MATRIX_FWD_HPP
+template <typename DataType> class Matrix;
+
+template <typename DataType, typename MatType = StandardMatrixTag>
+class NekMatrix;
+
+template <typename DataType, typename InnerMatrixType>
+class NekMatrix<NekMatrix<DataType, InnerMatrixType>, ScaledMatrixTag>;
+
+template <typename DataType, typename InnerMatrixType>
+class NekMatrix<NekMatrix<DataType, InnerMatrixType>, BlockMatrixTag>;
+
+template <typename DataType> class NekMatrix<DataType, StandardMatrixTag>;
+
+typedef std::shared_ptr<NekMatrix<NekDouble, StandardMatrixTag>>
+    SharedNekMatrixPtr;
+typedef NekMatrix<NekMatrix<NekDouble, StandardMatrixTag>, ScaledMatrixTag>
+    DNekScalMat;
+typedef std::shared_ptr<DNekScalMat> DNekScalMatSharedPtr;
+
+typedef std::shared_ptr<NekMatrix<NekSingle, StandardMatrixTag>>
+    SharedSNekMatrixPtr;
+typedef NekMatrix<NekMatrix<NekSingle, StandardMatrixTag>, ScaledMatrixTag>
+    SNekScalMat;
+typedef std::shared_ptr<SNekScalMat> SNekScalMatSharedPtr;
+
+} // namespace Nektar
+
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_MATRIX_FWD_HPP

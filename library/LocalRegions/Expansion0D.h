@@ -36,105 +36,40 @@
 #define EXPANSION0D_H
 
 #include <LocalRegions/Expansion.h>
-#include <StdRegions/StdExpansion0D.h>
-#include <LocalRegions/LocalRegionsDeclspec.h>
 #include <LocalRegions/Expansion1D.h>
+#include <LocalRegions/LocalRegionsDeclspec.h>
 #include <SpatialDomains/Geometry0D.h>
+#include <StdRegions/StdExpansion0D.h>
 
 namespace Nektar
 {
-    namespace LocalRegions 
+namespace LocalRegions
+{
+class Expansion0D;
+typedef std::shared_ptr<Expansion0D> Expansion0DSharedPtr;
+typedef std::vector<Expansion0DSharedPtr> Expansion0DVector;
+
+class Expansion0D : virtual public Expansion,
+                    virtual public StdRegions::StdExpansion0D
+{
+public:
+    LOCAL_REGIONS_EXPORT Expansion0D(SpatialDomains::Geometry0DSharedPtr pGeom);
+
+    LOCAL_REGIONS_EXPORT virtual ~Expansion0D()
     {
-        class Expansion0D;
-        typedef std::shared_ptr<Expansion0D>      Expansion0DSharedPtr;
-        typedef std::vector< Expansion0DSharedPtr > Expansion0DVector;
+    }
 
-        class Expansion0D: virtual public Expansion,
-            virtual public StdRegions::StdExpansion0D
-        {
-        public:
-            LOCAL_REGIONS_EXPORT Expansion0D(
-                SpatialDomains::Geometry0DSharedPtr pGeom);
-            
-            LOCAL_REGIONS_EXPORT virtual ~Expansion0D() {}
-            
-            inline Expansion1DSharedPtr GetLeftAdjacentElementExp() const;
-            
-            inline Expansion1DSharedPtr GetRightAdjacentElementExp() const;
-            
-            inline int GetLeftAdjacentElementVertex() const;
-            
-            inline int GetRightAdjacentElementVertex() const;
-            
-            inline void SetAdjacentElementExp(
-                int                   vertex,
-                Expansion1DSharedPtr &v);
-            
-            inline SpatialDomains::Geometry0DSharedPtr GetGeom0D() const;
+    inline SpatialDomains::Geometry0DSharedPtr GetGeom0D() const;
 
-        protected:
-            
-        private:
-            Expansion1DWeakPtr m_elementLeft;
-            Expansion1DWeakPtr m_elementRight;
-            int                m_elementVertexLeft;
-            int                m_elementVertexRight;
-        };
-        
-        inline Expansion1DSharedPtr Expansion0D::
-            GetLeftAdjacentElementExp() const
-        {
-            ASSERTL1(m_elementLeft.lock().get(),
-                     "Left adjacent element not set.");
-            
-            return m_elementLeft.lock();
-        }
+protected:
+private:
+};
 
-        inline Expansion1DSharedPtr Expansion0D::
-            GetRightAdjacentElementExp() const
-        {
-            ASSERTL1(m_elementLeft.lock().get(),
-                     "Right adjacent element not set.");
-            
-            return m_elementRight.lock();
-        }
-
-        inline int Expansion0D::GetLeftAdjacentElementVertex() const
-        {
-            return m_elementVertexLeft;
-        }
-
-        inline int Expansion0D::GetRightAdjacentElementVertex() const
-        {
-            return m_elementVertexRight;
-        }
-
-        inline void Expansion0D::SetAdjacentElementExp(
-            int                   vertex,
-            Expansion1DSharedPtr &v)
-        {
-            if (m_elementLeft.lock().get())
-            {
-                //ASSERTL1(!m_elementRight.lock().get(),
-                //         "Both adjacent elements already set.");
-                m_elementRight       = v;
-                m_elementVertexRight = vertex;
-            }
-            else
-            {
-                m_elementLeft       = v;
-                m_elementVertexLeft = vertex;
-            }
-        }
-
-        inline SpatialDomains::Geometry0DSharedPtr
-            Expansion0D::GetGeom0D() const
-        {
-            return std::dynamic_pointer_cast<SpatialDomains::
-                Geometry0D>(m_geom);
-			
-        }
-    } //end of namespace
-} //end of namespace
+inline SpatialDomains::Geometry0DSharedPtr Expansion0D::GetGeom0D() const
+{
+    return std::dynamic_pointer_cast<SpatialDomains::Geometry0D>(m_geom);
+}
+} // namespace LocalRegions
+} // namespace Nektar
 
 #endif

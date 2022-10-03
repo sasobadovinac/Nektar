@@ -32,8 +32,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/Driver.h>
+#include <LibUtilities/BasicUtils/Likwid.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <LibUtilities/BasicUtils/Timer.h>
+#include <SolverUtils/Driver.h>
 
 using namespace std;
 using namespace Nektar;
@@ -51,6 +53,11 @@ int main(int argc, char *argv[])
         // Create session reader.
         session = LibUtilities::SessionReader::CreateInstance(argc, argv);
 
+        LIKWID_MARKER_INIT;
+        LIKWID_MARKER_THREADINIT;
+        LIKWID_MARKER_REGISTER("v_BwdTrans_IterPerExp");
+        LIKWID_MARKER_REGISTER("IProductWRTDerivBase_coll");
+
         // Create MeshGraph
         graph = SpatialDomains::MeshGraph::Read(session);
 
@@ -58,17 +65,31 @@ int main(int argc, char *argv[])
         session->LoadSolverInfo("Driver", vDriverModule, "Standard");
         drv = GetDriverFactory().CreateInstance(vDriverModule, session, graph);
 
+        LibUtilities::Timer timer;
+        timer.Start();
+
         // Execute driver
         drv->Execute();
+
+        timer.Stop();
+        timer.AccumulateRegion("Execute");
+
+        // Print out timings if verbose
+        if (session->DefinesCmdLineArgument("verbose"))
+        {
+            LibUtilities::Timer::PrintElapsedRegions(session->GetComm());
+        }
+
+        LIKWID_MARKER_CLOSE;
 
         // Finalise session
         session->Finalise();
     }
-    catch (const std::runtime_error& e)
+    catch (const std::runtime_error &e)
     {
         return 1;
     }
-    catch (const std::string& eStr)
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }

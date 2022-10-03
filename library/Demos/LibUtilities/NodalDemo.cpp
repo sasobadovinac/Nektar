@@ -35,12 +35,12 @@
 #include <iostream>
 #include <string>
 
-#include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
 
+#include <LibUtilities/Foundations/Foundations.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/Foundations.hpp>
 #include <LibUtilities/Foundations/Points.h>
 
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
@@ -54,6 +54,7 @@ namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
     po::options_description desc("Available options");
+    // clang-format off
     desc.add_options()
         ("help,h",         "Produce this help message.")
         ("integral,i",     "Evaluate the integral of a known function and "
@@ -67,15 +68,15 @@ int main(int argc, char *argv[])
         ("interp,p",       po::value<string>(),
                            "Interpolate function at a known point of the form"
                            "x,y,z and return error.");
+    // clang-format on
 
     po::variables_map vm;
     try
     {
-        po::store(po::command_line_parser(argc, argv).
-                  options(desc).run(), vm);
+        po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
         po::notify(vm);
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
         cerr << e.what() << endl;
         cerr << desc;
@@ -150,33 +151,35 @@ int main(int argc, char *argv[])
     {
         util = new NodalUtilPrism(order, r, s, t);
     }
-    else if(shape == eQuadrilateral)
+    else if (shape == eQuadrilateral)
     {
         util = new NodalUtilQuad(order, r, s);
     }
 
     ASSERTL1(util, "Unknown shape type!");
-    const int nPoints = r.num_elements();
-    const int dim = (shape == eTriangle || shape == eQuadrilateral) ? 2 : 3;
+    const int nPoints = r.size();
+    const int dim     = (shape == eTriangle || shape == eQuadrilateral) ? 2 : 3;
 
     if (vm.count("integral"))
     {
         NekVector<NekDouble> weights = util->GetWeights();
-        NekDouble integral = 0.0;
+        NekDouble integral           = 0.0;
 
         for (int i = 0; i < nPoints; ++i)
         {
-            NekDouble integrand = dim == 2 ?
-                exp(r[i]) * sin(s[i]) : exp(r[i] + s[i] + t[i]);
+            NekDouble integrand =
+                dim == 2 ? exp(r[i]) * sin(s[i]) : exp(r[i] + s[i] + t[i]);
             integral += weights[i] * integrand;
         }
 
         NekDouble exact = 0.0;
-        switch(shape)
+        switch (shape)
         {
             case eTriangle:
-                exact = -0.5 * (sin(1.0) + cos(1.0) + M_E * M_E *
-                                (sin(1.0) - cos(1.0))) / M_E;
+                exact =
+                    -0.5 *
+                    (sin(1.0) + cos(1.0) + M_E * M_E * (sin(1.0) - cos(1.0))) /
+                    M_E;
                 break;
             case eQuadrilateral:
                 exact = 2.0 * (M_E - 1.0 / M_E) * sin(1.0);
@@ -196,7 +199,7 @@ int main(int argc, char *argv[])
     }
     else if (vm.count("deriv"))
     {
-        Array<OneD, NekVector<NekDouble> > exact(dim);
+        Array<OneD, NekVector<NekDouble>> exact(dim);
         NekVector<NekDouble> input(nPoints), output(nPoints);
 
         for (int i = 0; i < dim; ++i)
@@ -230,9 +233,9 @@ int main(int argc, char *argv[])
 
         for (int i = 0; i < dim; ++i)
         {
-            std::shared_ptr<NekMatrix<NekDouble> > deriv =
+            std::shared_ptr<NekMatrix<NekDouble>> deriv =
                 util->GetDerivMatrix(i);
-            output = *deriv * input;
+            output                   = *deriv * input;
             NekVector<NekDouble> tmp = output - exact[i];
 
             cout << "L 2 error (variable " << vars[i] << ") : " << tmp.L2Norm()
@@ -252,7 +255,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        Array<OneD, Array<OneD, NekDouble> > tmp(dim);
+        Array<OneD, Array<OneD, NekDouble>> tmp(dim);
         for (int i = 0; i < dim; ++i)
         {
             tmp[i] = Array<OneD, NekDouble>(1);
@@ -260,7 +263,7 @@ int main(int argc, char *argv[])
             {
                 tmp[i][0] = boost::lexical_cast<NekDouble>(point[i]);
             }
-            catch(boost::bad_lexical_cast &)
+            catch (boost::bad_lexical_cast &)
             {
                 cerr << "Could not convert " << point[i] << " to a coordinate"
                      << endl;
@@ -271,16 +274,17 @@ int main(int argc, char *argv[])
         NekVector<NekDouble> input(nPoints);
         for (int i = 0; i < nPoints; ++i)
         {
-            input[i] = dim == 2 ? exp(r[i]) * exp(s[i]) :
-                exp(r[i]) * exp(s[i]) * exp(t[i]);
+            input[i] = dim == 2 ? exp(r[i]) * exp(s[i])
+                                : exp(r[i]) * exp(s[i]) * exp(t[i]);
         }
 
-        std::shared_ptr<NekMatrix<NekDouble> > interp =
+        std::shared_ptr<NekMatrix<NekDouble>> interp =
             util->GetInterpolationMatrix(tmp);
 
         NekVector<NekDouble> output = *interp * input;
-        NekDouble exact = dim == 2 ? exp(tmp[0][0]) * exp(tmp[1][0]) :
-            exp(tmp[0][0]) * exp(tmp[1][0]) * exp(tmp[2][0]);
+        NekDouble exact =
+            dim == 2 ? exp(tmp[0][0]) * exp(tmp[1][0])
+                     : exp(tmp[0][0]) * exp(tmp[1][0]) * exp(tmp[2][0]);
 
         cout << "L inf error : " << fabs(exact - output[0]) << endl;
     }

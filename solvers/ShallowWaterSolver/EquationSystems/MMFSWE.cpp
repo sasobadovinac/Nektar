@@ -35,10 +35,11 @@
 #include <iomanip>
 #include <iostream>
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <ShallowWaterSolver/EquationSystems/MMFSWE.h>
 
@@ -49,7 +50,7 @@ std::string MMFSWE::className =
         "MMFSWE", MMFSWE::create, "MMFSWE equation.");
 
 MMFSWE::MMFSWE(const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+               const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph), MMFSystem(pSession, pGraph)
 {
     m_planeNumber = 0;
@@ -58,10 +59,10 @@ MMFSWE::MMFSWE(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * @brief Initialisation object for the unsteady linear advection equation.
  */
-void MMFSWE::v_InitObject()
+void MMFSWE::v_InitObject(bool DeclareFields)
 {
     // Call to the initialisation object
-    UnsteadySystem::v_InitObject();
+    UnsteadySystem::v_InitObject(DeclareFields);
 
     int nq       = m_fields[0]->GetNpoints();
     int shapedim = m_fields[0]->GetShapeDimension();
@@ -189,9 +190,9 @@ void MMFSWE::v_InitObject()
             m_en   = exp(-4.0 / (m_theta1 - m_theta0) / (m_theta1 - m_theta0));
             m_hbar = 120.0 / rad_earth;
 
-            std::cout << "m_theta0 = " << m_theta0 << ", m_theta1 = " << m_theta1
-                      << ", m_en = " << m_en << ", m_hbar = " << m_hbar
-                      << std::endl;
+            std::cout << "m_theta0 = " << m_theta0
+                      << ", m_theta1 = " << m_theta1 << ", m_en = " << m_en
+                      << ", m_hbar = " << m_hbar << std::endl;
         }
         break;
 
@@ -251,7 +252,7 @@ void MMFSWE::v_DoSolve()
 
     int i, nchk = 1;
     int nvariables = 0;
-    int nfields    = m_fields.num_elements();
+    int nfields    = m_fields.size();
     int nq         = m_fields[0]->GetNpoints();
 
     if (m_intVariables.empty())
@@ -279,7 +280,7 @@ void MMFSWE::v_DoSolve()
     }
 
     // Initialise time integration scheme
-    m_intSoln = m_intScheme->InitializeScheme( m_timestep, fields, m_time, m_ode );
+    m_intScheme->InitializeScheme(m_timestep, fields, m_time, m_ode);
 
     // Check uniqueness of checkpoint output
     ASSERTL0((m_checktime == 0.0 && m_checksteps == 0) ||
@@ -306,7 +307,7 @@ void MMFSWE::v_DoSolve()
     while (step < m_steps || m_time < m_fintime - NekConstants::kNekZeroTol)
     {
         timer.Start();
-        fields = m_intScheme->TimeIntegrate(step, m_timestep, m_intSoln, m_ode);
+        fields = m_intScheme->TimeIntegrate(step, m_timestep, m_ode);
         timer.Stop();
 
         m_time += m_timestep;
@@ -317,7 +318,8 @@ void MMFSWE::v_DoSolve()
         // Write out status information
         if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
         {
-            std::cout << "Steps: " << std::setw(8) << std::left << step + 1 << " "
+            std::cout << "Steps: " << std::setw(8) << std::left << step + 1
+                      << " "
                       << "Time: " << std::setw(12) << std::left << m_time;
 
             std::stringstream ss;
@@ -330,8 +332,7 @@ void MMFSWE::v_DoSolve()
 
             // Vorticity zeta
             ComputeVorticity(fieldsprimitive[1], fieldsprimitive[2], zeta);
-            Vorticity =
-                std::abs(m_fields[0]->PhysIntegral(zeta) - m_Vorticity0);
+            Vorticity = std::abs(m_fields[0]->Integral(zeta) - m_Vorticity0);
 
             // Masss = h^*
             Mass = (ComputeMass(fieldsprimitive[0]) - m_Mass0) / m_Mass0;
@@ -369,7 +370,7 @@ void MMFSWE::v_DoSolve()
         for (i = 0; i < nvariables; ++i)
         {
             m_fields[m_intVariables[i]]->SetPhys(fields[i]);
-            m_fields[m_intVariables[i]]->FwdTrans_IterPerExp(
+            m_fields[m_intVariables[i]]->FwdTransLocalElmt(
                 fields[i], m_fields[m_intVariables[i]]->UpdateCoeffs());
             m_fields[m_intVariables[i]]->SetPhysState(false);
         }
@@ -394,7 +395,8 @@ void MMFSWE::v_DoSolve()
     {
         if (m_cflSafetyFactor > 0.0)
         {
-            std::cout << "CFL safety factor : " << m_cflSafetyFactor << std::endl
+            std::cout << "CFL safety factor : " << m_cflSafetyFactor
+                      << std::endl
                       << "CFL time-step     : " << m_timestep << std::endl;
         }
 
@@ -427,7 +429,7 @@ void MMFSWE::DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     boost::ignore_unused(time);
 
     int i;
-    int nvariables = inarray.num_elements();
+    int nvariables = inarray.size();
     int ncoeffs    = GetNcoeffs();
     int nq         = GetTotPoints();
 
@@ -484,7 +486,7 @@ void MMFSWE::WeakDGSWEDirDeriv(
     int nq              = GetNpoints();
     int ncoeffs         = GetNcoeffs();
     int nTracePointsTot = GetTraceNpoints();
-    int nvariables      = m_fields.num_elements();
+    int nvariables      = m_fields.size();
 
     Array<OneD, Array<OneD, NekDouble>> fluxvector(m_shapedim);
     Array<OneD, Array<OneD, NekDouble>> physfield(nvariables);
@@ -550,8 +552,8 @@ void MMFSWE::AddDivForGradient(Array<OneD, Array<OneD, NekDouble>> &physarray,
                                Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
     // routine works for both primitive and conservative formulations
-    int ncoeffs = outarray[0].num_elements();
-    int nq      = physarray[0].num_elements();
+    int ncoeffs = outarray[0].size();
+    int nq      = physarray[0].size();
 
     Array<OneD, NekDouble> h(nq);
     Array<OneD, NekDouble> tmp(nq);
@@ -1198,8 +1200,8 @@ void MMFSWE::ComputeMagAndDot(const int index, NekDouble &MageF1,
 void MMFSWE::AddCoriolis(Array<OneD, Array<OneD, NekDouble>> &physarray,
                          Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    int ncoeffs = outarray[0].num_elements();
-    int nq      = physarray[0].num_elements();
+    int ncoeffs = outarray[0].size();
+    int nq      = physarray[0].size();
 
     Array<OneD, NekDouble> h(nq);
     Array<OneD, NekDouble> tmp(nq);
@@ -1243,8 +1245,8 @@ void MMFSWE::AddCoriolis(Array<OneD, Array<OneD, NekDouble>> &physarray,
 void MMFSWE::AddElevationEffect(Array<OneD, Array<OneD, NekDouble>> &physarray,
                                 Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    int ncoeffs = outarray[0].num_elements();
-    int nq      = physarray[0].num_elements();
+    int ncoeffs = outarray[0].size();
+    int nq      = physarray[0].size();
 
     Array<OneD, NekDouble> h(nq);
     Array<OneD, NekDouble> tmp(nq);
@@ -1273,8 +1275,8 @@ void MMFSWE::AddRotation(Array<OneD, Array<OneD, NekDouble>> &physarray,
                          Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
     // routine works for both primitive and conservative formulations
-    int ncoeffs = outarray[0].num_elements();
-    int nq      = physarray[0].num_elements();
+    int ncoeffs = outarray[0].size();
+    int nq      = physarray[0].size();
 
     // Compute h
     Array<OneD, NekDouble> h(nq);
@@ -1375,11 +1377,11 @@ void MMFSWE::SetBoundaryConditions(Array<OneD, Array<OneD, NekDouble>> &inarray,
                                    NekDouble time)
 {
 
-    int nvariables = m_fields.num_elements();
+    int nvariables = m_fields.size();
     int cnt        = 0;
 
     // loop over Boundary Regions
-    for (int n = 0; n < m_fields[0]->GetBndConditions().num_elements(); ++n)
+    for (int n = 0; n < m_fields[0]->GetBndConditions().size(); ++n)
     {
 
         // Zonal Boundary Condition
@@ -1427,7 +1429,7 @@ void MMFSWE::WallBoundary2D(int bcRegion, int cnt,
 
     int i;
     int nTraceNumPoints = GetTraceTotPoints();
-    int nvariables      = physarray.num_elements();
+    int nvariables      = physarray.size();
 
     // get physical values of the forward trace
     Array<OneD, Array<OneD, NekDouble>> Fwd0(nvariables);
@@ -1457,8 +1459,7 @@ void MMFSWE::WallBoundary2D(int bcRegion, int cnt,
                    ->GetTotPoints();
         id1 = m_fields[0]->GetBndCondExpansions()[bcRegion]->GetPhys_Offset(e);
         id2 = m_fields[0]->GetTrace()->GetPhys_Offset(
-            m_fields[0]->GetTraceMap()->GetBndCondCoeffsToGlobalCoeffsMap(cnt +
-                                                                          e));
+            m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
 
         switch (m_expdim)
         {
@@ -1544,12 +1545,12 @@ void MMFSWE::v_DoInitialise()
     PrimitiveToConservative();
 
     // transfer the initial conditions to modal values
-    for(int i = 0; i < m_fields.num_elements(); ++i)
+    for (int i = 0; i < m_fields.size(); ++i)
     {
         m_fields[i]->SetPhysState(true);
-        m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),m_fields[i]->UpdateCoeffs());
+        m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
+                              m_fields[i]->UpdateCoeffs());
     }
-
 }
 
 void MMFSWE::EvaluateWaterDepth(void)
@@ -1807,7 +1808,7 @@ void MMFSWE::v_SetInitialConditions(const NekDouble initialtime,
             m_fields[2]->SetPhys(v0);
 
             // forward transform to fill the modal coeffs
-            for (int i = 0; i < m_fields.num_elements(); ++i)
+            for (int i = 0; i < m_fields.size(); ++i)
             {
                 m_fields[i]->SetPhysState(true);
                 m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
@@ -1833,14 +1834,14 @@ void MMFSWE::v_SetInitialConditions(const NekDouble initialtime,
             m_fields[2]->SetPhys(v0);
 
             // ComputeVorticity(u0, v0, zeta0);
-            m_Vorticity0 = m_fields[0]->PhysIntegral(zeta0);
+            m_Vorticity0 = m_fields[0]->Integral(zeta0);
 
             m_Mass0      = ComputeMass(eta0);
             m_Energy0    = ComputeEnergy(eta0, u0, v0);
             m_Enstrophy0 = ComputeEnstrophy(eta0, u0, v0);
 
             // forward transform to fill the modal coeffs
-            for (int i = 0; i < m_fields.num_elements(); ++i)
+            for (int i = 0; i < m_fields.size(); ++i)
             {
                 m_fields[i]->SetPhysState(true);
                 m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
@@ -1869,7 +1870,7 @@ void MMFSWE::v_SetInitialConditions(const NekDouble initialtime,
             m_Enstrophy0 = ComputeEnstrophy(eta0, u0, v0);
 
             // forward transform to fill the modal coeffs
-            for (int i = 0; i < m_fields.num_elements(); ++i)
+            for (int i = 0; i < m_fields.size(); ++i)
             {
                 m_fields[i]->SetPhysState(true);
                 m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
@@ -1898,7 +1899,7 @@ void MMFSWE::v_SetInitialConditions(const NekDouble initialtime,
             m_Enstrophy0 = ComputeEnstrophy(eta0, u0, v0);
 
             // forward transform to fill the modal coeffs
-            for (int i = 0; i < m_fields.num_elements(); ++i)
+            for (int i = 0; i < m_fields.size(); ++i)
             {
                 m_fields[i]->SetPhysState(true);
                 m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
@@ -1927,7 +1928,7 @@ void MMFSWE::v_SetInitialConditions(const NekDouble initialtime,
             m_Enstrophy0 = ComputeEnstrophy(eta0, u0, v0);
 
             // forward transform to fill the modal coeffs
-            for (int i = 0; i < m_fields.num_elements(); ++i)
+            for (int i = 0; i < m_fields.size(); ++i)
             {
                 m_fields[i]->SetPhysState(true);
                 m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
@@ -1956,7 +1957,7 @@ void MMFSWE::v_SetInitialConditions(const NekDouble initialtime,
             m_Enstrophy0 = ComputeEnstrophy(eta0, u0, v0);
 
             // forward transform to fill the modal coeffs
-            for (int i = 0; i < m_fields.num_elements(); ++i)
+            for (int i = 0; i < m_fields.size(); ++i)
             {
                 m_fields[i]->SetPhysState(true);
                 m_fields[i]->FwdTrans(m_fields[i]->GetPhys(),
@@ -2143,7 +2144,7 @@ NekDouble MMFSWE::ComputeMass(const Array<OneD, const NekDouble> &eta)
     Array<OneD, NekDouble> tmp(nq);
     Vmath::Vadd(nq, eta, 1, m_depth, 1, tmp, 1);
 
-    return m_fields[0]->PhysIntegral(tmp);
+    return m_fields[0]->Integral(tmp);
 }
 
 NekDouble MMFSWE::ComputeEnergy(const Array<OneD, const NekDouble> &eta,
@@ -2172,7 +2173,7 @@ NekDouble MMFSWE::ComputeEnergy(const Array<OneD, const NekDouble> &eta,
     Vmath::Vadd(nq, htmp, 1, tmp, 1, tmp, 1);
     Vmath::Smul(nq, 0.5, tmp, 1, tmp, 1);
 
-    return m_fields[0]->PhysIntegral(tmp);
+    return m_fields[0]->Integral(tmp);
 }
 
 NekDouble MMFSWE::ComputeEnstrophy(const Array<OneD, const NekDouble> &eta,
@@ -2201,7 +2202,7 @@ NekDouble MMFSWE::ComputeEnstrophy(const Array<OneD, const NekDouble> &eta,
     Vmath::Vdiv(nq, tmp, 1, hstartmp, 1, tmp, 1);
     Vmath::Smul(nq, 0.5, tmp, 1, tmp, 1);
 
-    return m_fields[0]->PhysIntegral(tmp);
+    return m_fields[0]->Integral(tmp);
 }
 
 // Vorticity = \nabla v \cdot e^1 + v \nabla \cdot e^1 - ( \nabla u \cdot e^2 +
@@ -2536,10 +2537,9 @@ void MMFSWE::UnstableJetFlow(unsigned int field, const NekDouble time,
         // Add perturbation
         if (m_PurturbedJet)
         {
-            eta[j] =
-                eta[j] +
-                m_hbar * cos_theta * exp(-9.0 * Tphi * Tphi) *
-                    exp(-225.0 * (m_pi / 4.0 - Ttheta) * (m_pi / 4.0 - Ttheta));
+            eta[j] = eta[j] + m_hbar * cos_theta * exp(-9.0 * Tphi * Tphi) *
+                                  exp(-225.0 * (m_pi / 4.0 - Ttheta) *
+                                      (m_pi / 4.0 - Ttheta));
         }
 
         uvec[0][j] = -1.0 * uhat * sin_varphi - vhat * sin_theta * cos_varphi;
@@ -2618,7 +2618,7 @@ void MMFSWE::RossbyWave(unsigned int field, Array<OneD, NekDouble> &outfield)
 
     // disturbancees of Rossby-Haurwitz Wave
     NekDouble x0d, y0d, z0d, phi0, theta0;
-    //NekDouble rad_earth = 6.37122 * 1000000;
+    // NekDouble rad_earth = 6.37122 * 1000000;
 
     phi0   = 40.0 * m_pi / 180.0;
     theta0 = 50.0 * m_pi / 180.0;
@@ -3061,13 +3061,13 @@ NekDouble MMFSWE::v_L2Error(unsigned int field,
                 v_EvaluateExactSolution(0, exactsolution, m_time);
 
                 // exactsoln = u - u_T so that L2 compute u_T
-                NekDouble L2exact = m_fields[0]->PhysIntegral(exactsolution);
+                NekDouble L2exact = m_fields[0]->Integral(exactsolution);
 
                 Vmath::Vsub(nq, &(m_fields[0]->GetPhys())[0], 1,
                             &exactsolution[0], 1, &exactsolution[0], 1);
                 Vmath::Vabs(nq, exactsolution, 1, exactsolution, 1);
 
-                L2error = (m_fields[0]->PhysIntegral(exactsolution)) / L2exact;
+                L2error = (m_fields[0]->Integral(exactsolution)) / L2exact;
             }
             break;
 
@@ -3087,7 +3087,7 @@ NekDouble MMFSWE::v_L2Error(unsigned int field,
                 Vmath::Vvtvp(nq, exactv, 1, exactv, 1, tmp, 1, tmp, 1);
                 Vmath::Vsqrt(nq, tmp, 1, tmp, 1);
 
-                L2exact = m_fields[1]->PhysIntegral(tmp);
+                L2exact = m_fields[1]->Integral(tmp);
 
                 // L2exact = \int
                 // (\sqrt{(u-exactu)*(u-exactu)+(v-exactv)*(v-exactv)})
@@ -3099,7 +3099,7 @@ NekDouble MMFSWE::v_L2Error(unsigned int field,
                 Vmath::Vvtvp(nq, exactv, 1, exactv, 1, tmp, 1, tmp, 1);
                 Vmath::Vsqrt(nq, tmp, 1, tmp, 1);
 
-                L2error = (m_fields[1]->PhysIntegral(tmp)) / L2exact;
+                L2error = (m_fields[1]->Integral(tmp)) / L2exact;
             }
             break;
 
@@ -3117,7 +3117,7 @@ NekDouble MMFSWE::v_L2Error(unsigned int field,
         {
             Array<OneD, NekDouble> one(m_fields[field]->GetNpoints(), 1.0);
 
-            NekDouble Vol = m_fields[field]->PhysIntegral(one);
+            NekDouble Vol = m_fields[field]->Integral(one);
             m_comm->AllReduce(Vol, LibUtilities::ReduceSum);
 
             L2error = sqrt(L2error * L2error / Vol);

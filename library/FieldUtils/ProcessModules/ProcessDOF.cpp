@@ -45,11 +45,9 @@ namespace Nektar
 namespace FieldUtils
 {
 
-ModuleKey ProcessDOF::className =
-    GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "dof"),
-        ProcessDOF::create,
-        "Computes number of DOF.");
+ModuleKey ProcessDOF::className = GetModuleFactory().RegisterCreatorFunction(
+    ModuleKey(eProcessModule, "dof"), ProcessDOF::create,
+    "Computes number of DOF.");
 
 ProcessDOF::ProcessDOF(FieldSharedPtr f) : ProcessModule(f)
 {
@@ -61,7 +59,7 @@ ProcessDOF::~ProcessDOF()
 
 void ProcessDOF::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     int nDOF = m_f->m_exp[0]->GetNcoeffs();
     m_f->m_comm->AllReduce(nDOF, LibUtilities::ReduceSum);
@@ -70,7 +68,6 @@ void ProcessDOF::Process(po::variables_map &vm)
     {
         cout << "Total number of DOF: " << nDOF << endl;
     }
-
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

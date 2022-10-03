@@ -48,12 +48,11 @@ public:
     /// Creates an instance of this class
     static MeshPartitionSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr session,
-        int                                        meshDim,
-        std::map<int, MeshEntity>                  element,
-        CompositeDescriptor                        compMap)
+        LibUtilities::CommSharedPtr comm, int meshDim,
+        std::map<int, MeshEntity> element, CompositeDescriptor compMap)
     {
         return MemoryManager<MeshPartitionPtScotch>::AllocateSharedPtr(
-            session, meshDim, element, compMap);
+            session, comm, meshDim, element, compMap);
     }
 
     /// Name of class
@@ -61,9 +60,9 @@ public:
     static std::string cmdSwitch;
 
     MeshPartitionPtScotch(const LibUtilities::SessionReaderSharedPtr session,
-                          int                                        meshDim,
-                          std::map<int, MeshEntity>                  element,
-                          CompositeDescriptor                        compMap);
+                          LibUtilities::CommSharedPtr comm, int meshDim,
+                          std::map<int, MeshEntity> element,
+                          CompositeDescriptor compMap);
     virtual ~MeshPartitionPtScotch();
 
 private:
@@ -76,7 +75,7 @@ private:
                                     int &nparts, int &volume,
                                     Nektar::Array<Nektar::OneD, int> &part);
 };
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

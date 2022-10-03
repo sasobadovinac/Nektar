@@ -35,12 +35,12 @@
 #ifndef NEKTAR_SPATIALDOMAINS_SEGGEOM_H
 #define NEKTAR_SPATIALDOMAINS_SEGGEOM_H
 
-#include <StdRegions/StdRegions.hpp>
 #include <LibUtilities/Foundations/Basis.h>
+#include <SpatialDomains/Curve.hpp>
 #include <SpatialDomains/Geometry1D.h>
 #include <SpatialDomains/PointGeom.h>
-#include <SpatialDomains/Curve.hpp>
 #include <SpatialDomains/SpatialDomainsDeclspec.h>
+#include <StdRegions/StdRegions.hpp>
 
 namespace Nektar
 {
@@ -56,9 +56,7 @@ class SegGeom : public Geometry1D
 public:
     SPATIAL_DOMAINS_EXPORT SegGeom();
     SPATIAL_DOMAINS_EXPORT SegGeom(
-        int id,
-        const int coordim,
-        const PointGeomSharedPtr vertex[],
+        int id, const int coordim, const PointGeomSharedPtr vertex[],
         const CurveSharedPtr curve = CurveSharedPtr());
 
     SPATIAL_DOMAINS_EXPORT SegGeom(const SegGeom &in);
@@ -76,7 +74,6 @@ public:
     }
 
     SPATIAL_DOMAINS_EXPORT static const int kNverts = 2;
-    SPATIAL_DOMAINS_EXPORT static const int kNedges = 1;
 
 protected:
     SpatialDomains::PointGeomSharedPtr m_verts[kNverts];
@@ -84,23 +81,14 @@ protected:
 
     virtual PointGeomSharedPtr v_GetVertex(const int i) const;
     virtual LibUtilities::ShapeType v_GetShapeType() const;
-    virtual NekDouble v_GetLocCoords(
-        const Array<OneD, const NekDouble> &coords,
-        Array<OneD, NekDouble> &Lcoords);
     virtual void v_GenGeomFactors();
     virtual void v_FillGeom();
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
     virtual void v_Setup();
 
-    virtual NekDouble v_GetCoord(
-        const int i, const Array<OneD, const NekDouble> &Lcoord);
+    virtual NekDouble v_GetCoord(const int i,
+                                 const Array<OneD, const NekDouble> &Lcoord);
     virtual int v_GetNumVerts() const;
-    virtual int v_GetNumEdges() const;
-    virtual bool v_ContainsPoint(
-        const Array<OneD, const NekDouble> &gloCoord,
-        Array<OneD, NekDouble> &locCoord,
-        NekDouble tol,
-        NekDouble &resid);
 
 private:
     /// Boolean indicating whether object owns the data
@@ -108,7 +96,7 @@ private:
 
     void SetUpXmap();
 };
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_SEGGEOM_H

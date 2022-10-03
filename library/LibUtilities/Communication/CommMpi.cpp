@@ -43,6 +43,7 @@ namespace Nektar
 {
 namespace LibUtilities
 {
+
 std::string CommMpi::className = GetCommFactory().RegisterCreatorFunction(
     "ParallelMPI", CommMpi::create, "Parallel communication using MPI.");
 
@@ -53,12 +54,19 @@ CommMpi::CommMpi(int narg, char *arg[]) : Comm(narg, arg)
 {
     int init = 0;
     MPI_Initialized(&init);
-    ASSERTL0(!init, "MPI has already been initialised.");
 
-    int retval = MPI_Init(&narg, &arg);
-    if (retval != MPI_SUCCESS)
+    if (!init)
     {
-        ASSERTL0(false, "Failed to initialise MPI");
+        ASSERTL0(MPI_Init(&narg, &arg) == MPI_SUCCESS,
+                 "Failed to initialise MPI");
+        // store bool to indicate that Nektar++ is in charge of finalizing MPI.
+        m_controls_mpi = true;
+    }
+    else
+    {
+        // Another code is in charge of finalizing MPI and this is not the
+        // responsiblity of Nektar++
+        m_controls_mpi = false;
     }
 
     m_comm = MPI_COMM_WORLD;
@@ -115,7 +123,7 @@ void CommMpi::v_Finalise()
 #endif
     int flag;
     MPI_Finalized(&flag);
-    if (!flag)
+    if ((!flag) && m_controls_mpi)
     {
         MPI_Finalize();
     }
@@ -132,32 +140,27 @@ int CommMpi::v_GetRank()
 /**
  *
  */
-bool CommMpi::v_TreatAsRankZero(void)
+bool CommMpi::v_TreatAsRankZero()
 {
-    if (m_rank == 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-    return true;
+    return m_rank == 0;
 }
 
 /**
  *
  */
-bool CommMpi::v_IsSerial(void)
+bool CommMpi::v_IsSerial()
 {
-    if(m_size == 1)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return m_size == 1;
+}
+
+std::tuple<int, int, int> CommMpi::v_GetVersion()
+{
+    int version, subversion;
+    int retval = MPI_Get_version(&version, &subversion);
+
+    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing GetVersion.");
+
+    return std::make_tuple(version, subversion, 0);
 }
 
 /**
@@ -217,8 +220,8 @@ void CommMpi::v_SendRecv(void *sendbuf, int sendcount, CommDataType sendtype,
 }
 
 /**
-*
-*/
+ *
+ */
 void CommMpi::v_SendRecvReplace(void *buf, int count, CommDataType dt,
                                 int pSendProc, int pRecvProc)
 {
@@ -327,8 +330,8 @@ void CommMpi::v_Exscan(Array<OneD, unsigned long long> &pData,
                        const enum ReduceOperator pOp,
                        Array<OneD, unsigned long long> &ans)
 {
-    int n = pData.num_elements();
-    ASSERTL0(n == ans.num_elements(), "Array sizes differ in Exscan");
+    int n = pData.size();
+    ASSERTL0(n == ans.size(), "Array sizes differ in Exscan");
 
     MPI_Op vOp;
     switch (pOp)
@@ -367,6 +370,93 @@ void CommMpi::v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
     int retval = MPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
                              recvtype, root, m_comm);
     ASSERTL0(retval == MPI_SUCCESS, "MPI error performing Scatter.");
+}
+
+void CommMpi::v_DistGraphCreateAdjacent(int indegree, const int sources[],
+                                        const int sourceweights[], int reorder)
+{
+#if MPI_VERSION < 3
+    boost::ignore_unused(indegree, sources, sourceweights, reorder);
+    ASSERTL0(false, "MPI_Dist_graph_create_adjacent is not supported in your "
+                    "installed MPI version.");
+#else
+    int retval = MPI_Dist_graph_create_adjacent(
+        m_comm, indegree, sources, sourceweights, indegree, sources,
+        sourceweights, MPI_INFO_NULL, reorder, &m_comm);
+
+    ASSERTL0(retval == MPI_SUCCESS,
+             "MPI error performing Dist_graph_create_adjacent.")
+#endif
+}
+
+void CommMpi::v_NeighborAlltoAllv(void *sendbuf, int sendcounts[],
+                                  int sdispls[], CommDataType sendtype,
+                                  void *recvbuf, int recvcounts[],
+                                  int rdispls[], CommDataType recvtype)
+{
+#if MPI_VERSION < 3
+    boost::ignore_unused(sendbuf, sendcounts, sdispls, sendtype, recvbuf,
+                         recvcounts, rdispls, recvtype);
+    ASSERTL0(false, "MPI_Neighbor_alltoallv is not supported in your "
+                    "installed MPI version.");
+#else
+    int retval =
+        MPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf,
+                               recvcounts, rdispls, recvtype, m_comm);
+
+    ASSERTL0(retval == MPI_SUCCESS, "MPI error performing NeighborAllToAllV.");
+#endif
+}
+
+void CommMpi::v_Irsend(void *buf, int count, CommDataType dt, int dest,
+                       CommRequestSharedPtr request, int loc)
+{
+    CommRequestMpiSharedPtr req =
+        std::static_pointer_cast<CommRequestMpi>(request);
+    MPI_Irsend(buf, count, dt, dest, 0, m_comm, req->GetRequest(loc));
+}
+
+void CommMpi::v_SendInit(void *buf, int count, CommDataType dt, int dest,
+                         CommRequestSharedPtr request, int loc)
+{
+    CommRequestMpiSharedPtr req =
+        std::static_pointer_cast<CommRequestMpi>(request);
+    MPI_Send_init(buf, count, dt, dest, 0, m_comm, req->GetRequest(loc));
+}
+
+void CommMpi::v_Irecv(void *buf, int count, CommDataType dt, int source,
+                      CommRequestSharedPtr request, int loc)
+{
+    CommRequestMpiSharedPtr req =
+        std::static_pointer_cast<CommRequestMpi>(request);
+    MPI_Irecv(buf, count, dt, source, 0, m_comm, req->GetRequest(loc));
+}
+
+void CommMpi::v_RecvInit(void *buf, int count, CommDataType dt, int source,
+                         CommRequestSharedPtr request, int loc)
+{
+    CommRequestMpiSharedPtr req =
+        std::static_pointer_cast<CommRequestMpi>(request);
+    MPI_Recv_init(buf, count, dt, source, 0, m_comm, req->GetRequest(loc));
+}
+
+void CommMpi::v_StartAll(CommRequestSharedPtr request)
+{
+    CommRequestMpiSharedPtr req =
+        std::static_pointer_cast<CommRequestMpi>(request);
+    MPI_Startall(req->GetNumRequest(), req->GetRequest(0));
+}
+
+void CommMpi::v_WaitAll(CommRequestSharedPtr request)
+{
+    CommRequestMpiSharedPtr req =
+        std::static_pointer_cast<CommRequestMpi>(request);
+    MPI_Waitall(req->GetNumRequest(), req->GetRequest(0), MPI_STATUSES_IGNORE);
+}
+
+CommRequestSharedPtr CommMpi::v_CreateRequest(int num)
+{
+    return std::shared_ptr<CommRequest>(new CommRequestMpi(num));
 }
 
 /**
@@ -408,7 +498,7 @@ CommSharedPtr CommMpi::v_CommCreateIf(int flag)
     // color == MPI_UNDEF => not in the new communicator
     // key == 0 on all => use rank to order them. OpenMPI, at least,
     // implies this is faster than ordering them ourselves.
-    MPI_Comm_split(m_comm, flag ? 0 : MPI_UNDEFINED, 0, &newComm);
+    MPI_Comm_split(m_comm, flag ? flag : MPI_UNDEFINED, 0, &newComm);
 
     if (flag == 0)
     {
@@ -421,5 +511,31 @@ CommSharedPtr CommMpi::v_CommCreateIf(int flag)
         return std::shared_ptr<Comm>(new CommMpi(newComm));
     }
 }
+
+std::pair<CommSharedPtr, CommSharedPtr> CommMpi::v_SplitCommNode()
+{
+    std::pair<CommSharedPtr, CommSharedPtr> ret;
+
+#if MPI_VERSION < 3
+    ASSERTL0(false, "Not implemented for non-MPI-3 versions.");
+#else
+    // Create an intra-node communicator.
+    MPI_Comm nodeComm;
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, m_rank,
+                        MPI_INFO_NULL, &nodeComm);
+
+    // For rank 0 of the intra-node communicator, split the main
+    // communicator. Everyone else will get a null communicator.
+    ret.first  = std::shared_ptr<Comm>(new CommMpi(nodeComm));
+    ret.second = CommMpi::v_CommCreateIf(ret.first->GetRank() == 0);
+    if (ret.first->GetRank() == 0)
+    {
+        ret.second->SplitComm(1, ret.second->GetSize());
+    }
+#endif
+
+    return ret;
 }
-}
+
+} // namespace LibUtilities
+} // namespace Nektar

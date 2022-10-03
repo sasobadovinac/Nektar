@@ -35,11 +35,11 @@
 #ifndef NEKTAR_SPATIALDOMAINS_TRIGEOM_H
 #define NEKTAR_SPATIALDOMAINS_TRIGEOM_H
 
-#include <StdRegions/StdRegions.hpp>
-#include <SpatialDomains/SpatialDomainsDeclspec.h>
 #include <SpatialDomains/Geometry2D.h>
 #include <SpatialDomains/PointGeom.h>
 #include <SpatialDomains/SegGeom.h>
+#include <SpatialDomains/SpatialDomainsDeclspec.h>
+#include <StdRegions/StdRegions.hpp>
 
 #include <SpatialDomains/GeomFactors.h>
 #include <StdRegions/StdTriExp.h>
@@ -64,8 +64,7 @@ public:
     SPATIAL_DOMAINS_EXPORT TriGeom();
     SPATIAL_DOMAINS_EXPORT TriGeom(const TriGeom &in);
     SPATIAL_DOMAINS_EXPORT TriGeom(
-        const int id,
-        const SegGeomSharedPtr edges[],
+        const int id, const SegGeomSharedPtr edges[],
         const CurveSharedPtr curve = CurveSharedPtr());
     SPATIAL_DOMAINS_EXPORT ~TriGeom();
 
@@ -74,12 +73,12 @@ public:
     SPATIAL_DOMAINS_EXPORT static const int kNverts = 3;
 
     SPATIAL_DOMAINS_EXPORT static StdRegions::Orientation GetFaceOrientation(
-                           const TriGeom &face1, const TriGeom &face2,
-                           bool doRot, int dir, NekDouble angle, NekDouble tol);
-    
+        const TriGeom &face1, const TriGeom &face2, bool doRot, int dir,
+        NekDouble angle, NekDouble tol);
+
     SPATIAL_DOMAINS_EXPORT static StdRegions::Orientation GetFaceOrientation(
-              const PointGeomVector &face1, const PointGeomVector &face2,
-              bool doRot, int dir, NekDouble angle, NekDouble tol);
+        const PointGeomVector &face1, const PointGeomVector &face2, bool doRot,
+        int dir, NekDouble angle, NekDouble tol);
 
 protected:
     SPATIAL_DOMAINS_EXPORT virtual NekDouble v_GetCoord(
@@ -87,14 +86,9 @@ protected:
 
     SPATIAL_DOMAINS_EXPORT virtual void v_GenGeomFactors();
     SPATIAL_DOMAINS_EXPORT virtual void v_FillGeom();
-    SPATIAL_DOMAINS_EXPORT virtual NekDouble v_GetLocCoords(
-        const Array<OneD, const NekDouble> &coords,
-        Array<OneD, NekDouble> &Lcoords);
-    SPATIAL_DOMAINS_EXPORT virtual bool v_ContainsPoint(
-        const Array<OneD, const NekDouble> &gloCoord,
-        Array<OneD, NekDouble> &locCoord,
-        NekDouble tol,
-        NekDouble &resid);
+    SPATIAL_DOMAINS_EXPORT virtual int v_GetDir(const int faceidx,
+                                                const int facedir) const;
+
     SPATIAL_DOMAINS_EXPORT virtual void v_Reset(CurveMap &curvedEdges,
                                                 CurveMap &curvedFaces);
     SPATIAL_DOMAINS_EXPORT virtual void v_Setup();
@@ -103,7 +97,7 @@ private:
     void SetUpXmap();
 };
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

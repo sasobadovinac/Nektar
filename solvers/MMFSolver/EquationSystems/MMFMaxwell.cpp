@@ -34,12 +34,14 @@
 
 #include <MMFSolver/EquationSystems/MMFMaxwell.h>
 
-#include <boost/core/ignore_unused.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <iomanip>
 #include <iostream>
 
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
 #include <SolverUtils/MMFSystem.h>
 
@@ -52,7 +54,7 @@ std::string MMFMaxwell::className =
         "MMFMaxwell", MMFMaxwell::create, "MMFMaxwell equation.");
 
 MMFMaxwell::MMFMaxwell(const LibUtilities::SessionReaderSharedPtr &pSession,
-                       const SpatialDomains::MeshGraphSharedPtr& pGraph)
+                       const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph), MMFSystem(pSession, pGraph)
 {
 }
@@ -60,10 +62,10 @@ MMFMaxwell::MMFMaxwell(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * @brief Initialisation object for the unsteady linear advection equation.
  */
-void MMFMaxwell::v_InitObject()
+void MMFMaxwell::v_InitObject(bool DeclareFields)
 {
     // Call to the initialisation object
-    UnsteadySystem::v_InitObject();
+    UnsteadySystem::v_InitObject(DeclareFields);
 
     int nq       = m_fields[0]->GetNpoints();
     int shapedim = m_fields[0]->GetShapeDimension();
@@ -451,7 +453,7 @@ void MMFMaxwell::v_DoSolve()
     int i, nchk = 1;
     int nq         = GetTotPoints();
     int nvariables = 0;
-    int nfields    = m_fields.num_elements();
+    int nfields    = m_fields.size();
 
     if (m_intVariables.empty())
     {
@@ -478,7 +480,7 @@ void MMFMaxwell::v_DoSolve()
     }
 
     // Initialise time integration scheme
-    m_intSoln = m_intScheme->InitializeScheme( m_timestep, fields, m_time, m_ode );
+    m_intScheme->InitializeScheme(m_timestep, fields, m_time, m_ode);
 
     // Check uniqueness of checkpoint output
     ASSERTL0((m_checktime == 0.0 && m_checksteps == 0) ||
@@ -554,7 +556,7 @@ void MMFMaxwell::v_DoSolve()
             }
 
             std::cout << "*** Area of Planar Source = "
-                      << m_fields[0]->PhysIntegral(m_SourceVector) << std::endl;
+                      << m_fields[0]->Integral(m_SourceVector) << std::endl;
         }
         break;
 
@@ -620,15 +622,8 @@ void MMFMaxwell::v_DoSolve()
     {
 
         timer.Start();
-        fields = m_intScheme->TimeIntegrate(step, m_timestep, m_intSoln, m_ode);
+        fields = m_intScheme->TimeIntegrate(step, m_timestep, m_ode);
         timer.Stop();
-
-        /*std::cout << typeid(m_intSoln->GetValue(0)).name() << std::endl;
-        for (int i=0; i< Ntot; ++i)
-        {
-            std::cout << "[" << i << "] = " << inarray[i] <<std::endl;
-            reval = reval + inarray[i]*inarray[i];
-        }*/
 
         m_time += m_timestep;
         elapsed = timer.TimePerTest(1);
@@ -638,7 +633,8 @@ void MMFMaxwell::v_DoSolve()
         // Write out status information
         if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
         {
-            std::cout << "Steps: " << std::setw(8) << std::left << step + 1 << " "
+            std::cout << "Steps: " << std::setw(8) << std::left << step + 1
+                      << " "
                       << "Time: " << std::setw(12) << std::left << m_time;
 
             std::stringstream ss;
@@ -687,7 +683,7 @@ void MMFMaxwell::v_DoSolve()
         for (i = 0; i < nvariables; ++i)
         {
             m_fields[m_intVariables[i]]->SetPhys(fields[i]);
-            m_fields[m_intVariables[i]]->FwdTrans_IterPerExp(
+            m_fields[m_intVariables[i]]->FwdTransLocalElmt(
                 fields[i], m_fields[m_intVariables[i]]->UpdateCoeffs());
             m_fields[m_intVariables[i]]->SetPhysState(false);
         }
@@ -721,7 +717,8 @@ void MMFMaxwell::v_DoSolve()
             {
                 std::cout << "|DBr|: D1 = " << RootMeanSquare(fields[3])
                           << ", D2 = " << RootMeanSquare(fields[4])
-                          << ", D3 = " << RootMeanSquare(fields[5]) << std::endl;
+                          << ", D3 = " << RootMeanSquare(fields[5])
+                          << std::endl;
 
                 int nTraceNumPoints = GetTraceNpoints();
                 int totbdryexp =
@@ -757,9 +754,8 @@ void MMFMaxwell::v_DoSolve()
                 for (int e = 0; e < totbdryexp; ++e)
                 {
                     id2 = m_fields[0]->GetTrace()->GetPhys_Offset(
-                        m_fields[0]
-                            ->GetTraceMap()
-                            ->GetBndCondCoeffsToGlobalCoeffsMap(cnt + e));
+                        m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(
+                            cnt + e));
 
                     Vmath::Vcopy(npts, &E1Fwd[id2], 1, &E1Fwdloc[0], 1);
                     Vmath::Vcopy(npts, &E2Fwd[id2], 1, &E2Fwdloc[0], 1);
@@ -893,7 +889,7 @@ void MMFMaxwell::DoOdeRhs(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     int i;
-    int nvar    = inarray.num_elements();
+    int nvar    = inarray.size();
     int ncoeffs = GetNcoeffs();
     int nq      = GetTotPoints();
 
@@ -1175,8 +1171,8 @@ void MMFMaxwell::AddGreenDerivCompensate(
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
     // routine works for both primitive and conservative formulations
-    int ncoeffs = outarray[0].num_elements();
-    int nq      = physarray[0].num_elements();
+    int ncoeffs = outarray[0].size();
+    int nq      = physarray[0].size();
 
     Array<OneD, NekDouble> tmp(nq);
     Array<OneD, NekDouble> tmpc(ncoeffs);
@@ -1325,7 +1321,7 @@ void MMFMaxwell::DoOdeProjection(
 {
     boost::ignore_unused(time);
 
-    int var = inarray.num_elements();
+    int var = inarray.size();
 
     // SetBoundaryConditions(time);
 
@@ -1343,7 +1339,7 @@ void MMFMaxwell::v_SetInitialConditions(const NekDouble initialtime,
     boost::ignore_unused(domain);
 
     int nq   = GetTotPoints();
-    int nvar = m_fields.num_elements();
+    int nvar = m_fields.size();
 
     switch (m_TestMaxwellType)
     {
@@ -1496,10 +1492,10 @@ Array<OneD, NekDouble> MMFMaxwell::TestMaxwell1D(const NekDouble time,
         NekDouble newomega, F, Fprime;
         for (int i = 0; i < 10000; ++i)
         {
-            F = m_n1 * tan(m_n2 * omega) + m_n2 * tan(m_n1 * omega);
-            Fprime =
-                m_n1 * m_n2 * (1.0 / cos(m_n2 * omega) / cos(m_n2 * omega) +
-                               1.0 / cos(m_n1 * omega) / cos(m_n1 * omega));
+            F      = m_n1 * tan(m_n2 * omega) + m_n2 * tan(m_n1 * omega);
+            Fprime = m_n1 * m_n2 *
+                     (1.0 / cos(m_n2 * omega) / cos(m_n2 * omega) +
+                      1.0 / cos(m_n1 * omega) / cos(m_n1 * omega));
 
             newomega = omega - F / Fprime;
 
@@ -1545,8 +1541,9 @@ Array<OneD, NekDouble> MMFMaxwell::TestMaxwell1D(const NekDouble time,
         Ec = (Ak * exp(im * nk * omega * x0[i]) -
               Bk * exp(-im * nk * omega * x0[i])) *
              exp(im * omega * time);
-        Hc = nk * (Ak * exp(im * nk * omega * x0[i]) +
-                   Bk * exp(-im * nk * omega * x0[i])) *
+        Hc = nk *
+             (Ak * exp(im * nk * omega * x0[i]) +
+              Bk * exp(-im * nk * omega * x0[i])) *
              exp(im * omega * time);
 
         E[i] = Ec.real();
@@ -1952,8 +1949,7 @@ void MMFMaxwell::Printout_SurfaceCurrent(
     for (int e = 0; e < totbdryexp; ++e)
     {
         id2 = m_fields[0]->GetTrace()->GetPhys_Offset(
-            m_fields[0]->GetTraceMap()->GetBndCondCoeffsToGlobalCoeffsMap(cnt +
-                                                                          e));
+            m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt + e));
 
         Vmath::Vcopy(npts, &phiFwd[id2], 1, &Jphi[e * npts], 1);
         Vmath::Vcopy(npts, &radFwd[id2], 1, &Jrad[e * npts], 1);
@@ -1965,7 +1961,7 @@ void MMFMaxwell::Printout_SurfaceCurrent(
     // Vmath::Vsqrt(totnpts, Jcurrent, 1, Jcurrent, 1);
 
     std::cout << "========================================================"
-             << std::endl;
+              << std::endl;
 
     std::cout << "phi = " << std::endl;
     for (int i = 0; i < totnpts; ++i)
@@ -2197,7 +2193,7 @@ NekDouble MMFMaxwell::ComputeEnergyDensity(
                      &tmp[0], 1);
     }
 
-    energy = 0.5 * (m_fields[0]->PhysIntegral(tmp));
+    energy = 0.5 * (m_fields[0]->Integral(tmp));
     return energy;
 }
 
@@ -2335,7 +2331,7 @@ void MMFMaxwell::ComputeMaterialOpticalCloak(
 
     m_fields[0]->GenerateElementVector(m_ElemtGroup1, 1.0, 0.0, Cloakregion);
 
-    ExactCloakArea = ExactCloakArea - (m_fields[0]->PhysIntegral(Cloakregion));
+    ExactCloakArea = ExactCloakArea - (m_fields[0]->Integral(Cloakregion));
     std::cout << "*** Error of Cloakregion area = " << ExactCloakArea
               << std::endl;
 
@@ -2394,7 +2390,7 @@ void MMFMaxwell::ComputeMaterialMicroWaveCloak(
         Vmath::Vsub(nq, Cloakregion, 1, Vacregion, 1, Cloakregion, 1);
     }
 
-    ExactCloakArea = ExactCloakArea - (m_fields[0]->PhysIntegral(Cloakregion));
+    ExactCloakArea = ExactCloakArea - (m_fields[0]->Integral(Cloakregion));
     std::cout << "*** Error of Cloakregion area = " << ExactCloakArea
               << std::endl;
 
@@ -2564,7 +2560,7 @@ void MMFMaxwell::Checkpoint_TotalFieldOutput(
     const int n, const NekDouble time,
     const Array<OneD, const Array<OneD, NekDouble>> &fieldphys)
 {
-    int nvar    = m_fields.num_elements();
+    int nvar    = m_fields.size();
     int nq      = m_fields[0]->GetTotPoints();
     int ncoeffs = m_fields[0]->GetNcoeffs();
 
@@ -2596,7 +2592,7 @@ void MMFMaxwell::Checkpoint_TotalFieldOutput(
 void MMFMaxwell::Checkpoint_PlotOutput(
     const int n, const Array<OneD, const Array<OneD, NekDouble>> &fieldphys)
 {
-    int nvar    = m_fields.num_elements();
+    int nvar    = m_fields.size();
     int nq      = m_fields[0]->GetTotPoints();
     int ncoeffs = m_fields[0]->GetNcoeffs();
 
@@ -2632,7 +2628,7 @@ void MMFMaxwell::Checkpoint_TotPlotOutput(
     const int n, const NekDouble time,
     const Array<OneD, const Array<OneD, NekDouble>> &fieldphys)
 {
-    int nvar    = m_fields.num_elements();
+    int nvar    = m_fields.size();
     int nq      = m_fields[0]->GetTotPoints();
     int ncoeffs = m_fields[0]->GetNcoeffs();
 
@@ -2688,7 +2684,7 @@ void MMFMaxwell::Checkpoint_EDFluxOutput(
 {
     boost::ignore_unused(time);
 
-    int nvar    = m_fields.num_elements();
+    int nvar    = m_fields.size();
     int nq      = m_fields[0]->GetTotPoints();
     int ncoeffs = m_fields[0]->GetNcoeffs();
 
@@ -2740,7 +2736,7 @@ void MMFMaxwell::Checkpoint_EnergyOutput(
 {
     boost::ignore_unused(time);
 
-    int nvar    = m_fields.num_elements();
+    int nvar    = m_fields.size();
     int nq      = m_fields[0]->GetTotPoints();
     int ncoeffs = m_fields[0]->GetNcoeffs();
 
@@ -2830,7 +2826,7 @@ Array<OneD, NekDouble> MMFMaxwell::GaussianPulse(const NekDouble time,
                                          (rad / Gaussianradius));
     }
 
-    m_fields[0]->FwdTrans_IterPerExp(outarray, tmpc);
+    m_fields[0]->FwdTransLocalElmt(outarray, tmpc);
     m_fields[0]->BwdTrans(tmpc, outarray);
 
     return outarray;
@@ -2870,7 +2866,7 @@ Array<OneD, NekDouble> MMFMaxwell::EvaluateCoriolis()
 void MMFMaxwell::AddCoriolis(Array<OneD, Array<OneD, NekDouble>> &physarray,
                              Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    int nq = physarray[0].num_elements();
+    int nq = physarray[0].size();
 
     Array<OneD, NekDouble> tmp(nq);
 
@@ -3034,9 +3030,8 @@ Array<OneD, NekDouble> MMFMaxwell::ComputeRadCloak(const int CloakNlayer)
             {
                 if ((Cloakregion[i] > 0) && (CloakNlayer > 0))
                 {
-                    radvec[i] =
-                        1.0 +
-                        (m_b - m_a) / CloakNlayer * (Cloakregion[i] - 0.5);
+                    radvec[i] = 1.0 + (m_b - m_a) / CloakNlayer *
+                                          (Cloakregion[i] - 0.5);
                 }
 
                 else
@@ -3139,7 +3134,7 @@ void MMFMaxwell::v_GenerateSummary(SolverUtils::SummaryList &s)
 }
 void MMFMaxwell::print_MMF(Array<OneD, Array<OneD, NekDouble>> &inarray)
 {
-    int Ntot = inarray.num_elements();
+    int Ntot = inarray.size();
 
     NekDouble reval = 0.0;
     for (int i = 0; i < Ntot; ++i)
@@ -3149,4 +3144,4 @@ void MMFMaxwell::print_MMF(Array<OneD, Array<OneD, NekDouble>> &inarray)
     }
     reval = sqrt(reval / Ntot);
 }
-}
+} // namespace Nektar

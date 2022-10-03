@@ -1,10 +1,297 @@
 Changelog
 =========
 
+v5.3.0
+------
+**Library**
+- Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
+- Added float and restore avx512 back-end for SimdLib (!1387)
+- Fix namespace pollution which causes boost 1.74+ errors (!1389)
+- Fix missing copy assignment operator warnings in clang 13+ (!1391)
+
+**Python**
+- Add wrappers for Interpreter and Equation classes (!1329)
+
+**CompressibleFlowSolver**
+- Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (!1372)
+- Added Physical AV to the implicit Navier Stokes solver (!1372)
+- Fixed Segmentation Fault when using C0 Smoother with Shock Capturing (!1394)
+
+**CompressibleFlowSolver**
+- The Incomplete IP method was made the default method for the IP method (!1377).
+- Improve performance of the perconditioner and diffusion operator (!1393)
+
+**NekMesh**
+- Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
+exporting in .vtu format (!1386)
+- Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
+- Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
+- Add option to refine curves in the same manner as the line refinement functionality (!1298)
+- Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
+
+v5.2.0
+------
+**Library**
+- Add Arm SVE backend to SIMD library (!1282)
+- Added support for manifold  MatrixFree operators (2D in 3D space) (!1304)
+- Put in place automatic selection of explicit operations using an opt file (!1304)
+- Fixed the moving reference frame rotation (Solver Utils) (!1305)
+- Revised FilterAeroForces to accout for the moving reference frame (!1305)
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Simplify the logic in the MPI pairwise trace exchange (!1307)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
+- Added a dummy output module OutputStdOut for NekMesh utilities that don't require an output file (!1318)
+- Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
+- Fix cmake SIMD enable/disable options based on architecture (!1320)
+- Restrucutred the communicators to reduce direct dependence on session file communicator (!1337)
+- Fixed SIMD mask test (!1324)
+- Fix memory leak in Timer.cpp (!1330)
+- Fix cmake CWIPI option to remove Fortran check (!1331)
+- Fix excessive verbose output in GetBndElmtExpansions method (!1341)
+- Timer class was updated with safety checks to avoid wrong measurements (!1347)
+- Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
+- Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
+- Reformat code with clang-format (!1359)
+- Remove unnecessary IterPerExp methods (!1366)
+- Fix erronous call to FwdTrans from MR 1366 (!1374)
+- Fixed avx512 back-end for SimdLib (!1333)
+- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
+- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
+- Fixed incorrect summary output for diffusion/reaction terms (!1383)
+
+**FieldConvert**
+- Add calculation of CFL number for the incompressilbe flow (!1332)
+- Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+- Fixed the output field names of WSS module of FieldConvert (!1352)
+- Add VTU output using VTK library (high-order & multi-block options) (!1343)
+
+**IncNavierStokesSolver**
+- Added Boundary conditions for moving reference frame (!1305)
+- Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
+- Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
+- Equation types are registered to the session reader (!1344)
+- Added Block-Preconditioner for Full Matrix solve (!1350)
+
+**ADRSolver:**
+- Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
+
+**PulseWaveSolver**
+- Parallelised solver (!1337)
+	
+**NekMesh**
+- Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
+- Small bug-fix for Python API for unused configuration options (!1348)
+- Fix bug in ProcessVarOpti/ElUtil for segfault on non-tri or tet meshes (!1381)
+
+**CompressibleFlowSolver**
+- Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
+- Added timers around important functions using the Timer class. Timers are available by specifying IO_Timer_Level > -1 (!1347)
+- Fixed bug in the calculation of the discontinuity penalty factor for the DiffusionIP implementation (!1368)
+
+**Documentation**
+- Fix images not being displayed in HTML documentation and tutorials (!1370)
+
+**CI**
+- Remove unused build options (!1360)
+- Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
+
+**Packaging**
+- Fix various issues with debian unstable and centos8 packaging (!1362)
+- Fix missing texlive package dependency for centos packaging (!1382)
+
+v5.1.1
+------
+**Library**
+- Fix a boost headers incompatibility with boost-1.77 (!1297) 
+- Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
+
+**Python**
+- Fix initialisation warning when using HDF5 (!1299)
+- Fix issue with implementation of Diffusion IP (!1303)
+- Split Helmholtz MatrixFree operator to improve compile times (!1292)
+- Fix Boost deprecated header warnings (!1302)
+- Add command lines to set starting time and starting checkpoint number of a time-dependent simulation (!1309)
+- Fix an index referencing error in the Collections PhysDeriv method for Hex (!1314)
+
+**Python**
+- Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
+
+**BuildSystem**
+- Updated third party Lapack version 3.7.1 (!1312)
+
+**CompressibleFlowSolver**
+- Fix non-dimensional Sutherland law (!1253)
+
 v5.1.0
 ------
 **Library**
-- Refactored time integration code using factory pattern (!1034)
+- Restructure library to use local coefficient storage down to the GlobalLinSys
+  level. Removed GlobalCoeffs functionality (!963, !1145)
+- Corrected the use of communicator in AssemblyMapDG and AssemblyCommDG which
+  was not using GetRowComm() (!1144)
+- Add interior penalty method to DG framework (!1101)
+- Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
+- Fix successiveRHS method (!1176)
+- Add cachedId in GetExpIndex and use in Fieldconvert (!1167)
+- Fix bug in PreconditionerLowEnergy (!1161)
+- Fix intel c compiler error in AeroFilters (!1198)
+- Fix compilation errors when CWIPI interface enabled (!1207)
+- Fix distance in ContainsPoint and GetLocCoords (!1200)
+- Fix compiler warning of maybe-uninitialized elType in InputStar (!1217)
+- Extend vectoisation to include all elements and initialise collections on first call (!1162)
+- Add vectorisation of most element on basix operations (!1158)
+- Add constant coefficients to matrix-free Helmholtz operator (!1284)
+- Limit MPI methods based on core count (!1208)
+- Split out IProduct.cpp and IProductWRTDerivBase.cpp in order to avoid long time compilations (!1228)
+- Refactored time integration code using factory pattern (!1034, !1103)
+- Fix WriteStream with empty Array/vector (!1233)
+- Add interpolation at arbitrary point in 3DH1 (!1233)
+- Fix to preprocessor logic for boost with Visual Studio >= 2015 (!1115)
+- Fix type consistency and real comparison in SharedArray.hpp, replaced
+  num_elements with size() (!1127, !1137, !1141)
+- Use base MPI functions instead of the GS library in the trace exchange
+  for parallel DG simulations (!1112)
+- Replace PhysIntegral with Integral (!1246)
+- Change the way periodic boundary conditions in parallel is setup to reduce excessive memory usage (!1235) (!1289)
+- Add exponential and fractional-in-time integration schemes (!1106, !1111, !1210)
+- Add nonlinear and linear system solvers (!1196)
+- Add ESDIRK3 and ESDIRK4 time integration schemes (!1196)
+- Add a filter to calculate mean value of solution fields (!1211)
+- Fix the time dependent absorption forcing (!1254)
+- Enable very high order (>100) quadrature use (!1262)
+- Add rotation and improve performance of MovingReferenceFrame forcing (!1185)
+- Fix BODYFORCE defined by a file (!1215, !1264)
+- Add multi-level partitioning strategy for HDF5 geometry (!1209)
+- Fix the URL of ccmio library (!1288)
+
+**FieldConvert**:
+- Add phifile module to compute shape functions for the SPM solver (!1065)
+- Fix mean and innerProduct modules in 3DH1D cases (!1157)
+- Add Python interface (!1081)
+- Fix wss module with nparts option and reading of parallel xml files when the root partition is missing(!1197)
+- Fix a segment error in the gradient module when the number of fields is smaller than space dimension(!1216)
+- Add output of wall normal data from a single point (!1237)
+- Add QCriterion for 2D flow (!1243)
+- Fix to interppointsdatatofld to allow for mpi processing of large files (!1191)
+- Fix the logic of C0Projection:helmsmoothing (!1220)
+- Fix extract module for boundaries with periodic boundary conditions (!1277)
+
+**IncNavierStokesSolver**:
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
+
+**CardiacEPSolver**
+- Added additional parameter sets to Fenton-Karma model (!1119)
+- Fix electrogram calculation in 1D/2D domains (!1285)
+
+**IncNavierStokesSolver**
+- Add Smoothed Profile Method (SPM) for the formulation of immersed boundaries
+  (!1065)
+- Add new filter AeroForcesSPM to compute aerodynamic forces in immersed
+  boundaries (!1065)
+- Add mask function and more baseflow parameters for the linear stability problem (!1201)
+- Fix dudt in high-order pressure boundary condition (!1190)
+- Add flow rate forcing with a scalar (!1026)
+
+**CompressibleFlowSolver**
+- Added the selective frequency damping support for the implicit solver (!!1267)
+- Added vectorisation of the Interior Penalty method (!!223)
+- Added a simplified implicit solver with naive preconditioner (!!1196)
+- Add BRJ preconditioner to the implicit solver (!!1212)
+- Fix implicit solver for Euler system (!!1252)
+- Updated WallAdiabatic/WallViscous BC to accept time-dependent perturbations on the ghost state (!1248)
+
+**PulseWaveSolver**
+- Added viscoelasticity (!1138)
+- Added empirical and power laws (!1138)
+- Code tidying (!1138)
+
+**Documentation**:
+- Updated Windows source build instructions in user guide (!1152)
+
+**Tester**
+- Added test metric to check if warnings appear in output and error stream (!1225)
+
+**NekMesh**
+- Improved boundary layer splitting and output to CADfix (!938)
+- Improve .geo reader and support 3D geometries with voids (!1031)
+- Added r-adaptation code (!1109)
+- Added Python bindings, change NekMeshUtils to NekMesh (!1149)
+- Added pyramid element for the Star-CCM mesh (!1229)
+- Added option to use absolute tolerance in peralign (!1225)
+
+**BuildSystem**
+- Toggle build type (!1135)
+- Updated minimum required CMake version to 3.5.1 (!1152)
+- Updated third party Boost version 1.71 (!1152)
+- Updated third party OCE version to 0.18.3 (!1234)
+
+v5.0.3
+------
+**CompressibleFlowSolver**
+- Fix repeated output of u,v,w for Euler system
+
+**FieldConvert**
+- Fix the Filters output files numbering (!1251, !1261)
+- Fix the Filters output files numbering (!1251)
+- Fix 2D surfDistance calculation (!1263)
+
+**NekMesh**
+- Fix VTK Output for 3D meshes and support XML format (!1258)
+
+**Documentation**
+- Fix documentation to note restrictions on use of coupled solver (!1268)
+**Library**
+- Add robustness to the read expansions (!1239)
+
+v5.0.2
+------
+**Library**
+- Fix bug in StdHexExp FillMode (!1192)
+
+**Documentation**
+- Updated Documentation to include HDF5 Mesh Output (!1230)
+- Removed Ubuntu Trusty (14.04) from CI and added Focal (20.04) (!1238)
+
+**CI**
+- Add Debian Bullseye to CI system (!1181)
+
+**BuildSystem**
+- Updated third party zlib version to 1.2.9 to resolve OCE source build issue (!1227)
+- Adding SolverUtils as a core library that is built by default (!1240)
+
+v5.0.1
+------
+**Library**
+- Fix incorrect coordinate dimension used in history point filter (!1118)
+- Fix compile errors with GCC 9.x (!1108)
+- Correct the Energy/Enstropy integral for the 3DH1 flow (!1132)
+- Added IsRealEqual method to compare real numbers with relative tolerance.
+  Started using it in SharedArray and in NekMesh to fix peralign-extrude tool
+  chain (!1134)
+- Fix performance of GetExp(coord) by using octree lookup (!1165)
+- Fix Collection unit tests (!1160)
+- Fix periodic boundary conditions with HDF5 input file (!1163)
+- Fix DESTDIR issues for MacPorts (!1179)
+- Fix Bodyforcing and history point filter bounds issue (!1184)
+
+**IncNavierStokesSolver**
+- Change the baseflow time in the Adjoint advection (!1133)
+
+**FieldConvert**
+- Fix OutputTecplot skipping final plane in 3DH1D (!1016)
+- Fix Interppoints in 3DH1D (!1140)
+
+**NekMesh**
+- Fix compile errors when using intel cc (!1114)
+
+**Documentation**
+- Fix error in compilation of developer guide (!1136)
+
+**CI**
+- Added checked conversion from double to int in SessionReader (!1113)
+- Switched to Gitlab CI (!1120, !1120, !1128, !1129, !1131, !1141)
+- Updated bullseye build to remove UCX components (!1203)
 
 v5.0.0
 ------

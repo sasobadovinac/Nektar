@@ -38,10 +38,10 @@
 #include <SpatialDomains/MeshGraphXml.h>
 #include <SpatialDomains/MeshPartition.h>
 
-#include <LibUtilities/Interpreter/Interpreter.h>
-#include <LibUtilities/BasicUtils/ParseUtils.h>
-#include <LibUtilities/BasicUtils/FileSystem.h>
 #include <LibUtilities/BasicUtils/FieldIOXml.h>
+#include <LibUtilities/BasicUtils/FileSystem.h>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
+#include <LibUtilities/Interpreter/Interpreter.h>
 
 #include <boost/format.hpp>
 
@@ -55,8 +55,8 @@ namespace SpatialDomains
 {
 
 std::string MeshGraphXml::className =
-    GetMeshGraphFactory().RegisterCreatorFunction(
-        "Xml", MeshGraphXml::create, "IO with Xml geometry");
+    GetMeshGraphFactory().RegisterCreatorFunction("Xml", MeshGraphXml::create,
+                                                  "IO with Xml geometry");
 
 void MeshGraphXml::PartitionMesh(
     const LibUtilities::SessionReaderSharedPtr session)
@@ -64,7 +64,7 @@ void MeshGraphXml::PartitionMesh(
     // Get row of comm, or the whole comm if not split
     LibUtilities::CommSharedPtr comm     = session->GetComm();
     LibUtilities::CommSharedPtr commMesh = comm->GetRowComm();
-    const bool                  isRoot   = comm->TreatAsRankZero();
+    const bool isRoot                    = comm->TreatAsRankZero();
 
     m_session = session;
 
@@ -81,7 +81,8 @@ void MeshGraphXml::PartitionMesh(
     {
         if (m_session->DefinesElement("Nektar/Geometry"))
         {
-            if (m_session->GetElement("Nektar/Geometry")->Attribute("PARTITION"))
+            if (m_session->GetElement("Nektar/Geometry")
+                    ->Attribute("PARTITION"))
             {
                 std::cout << "Using pre-partitioned mesh." << std::endl;
                 isPartitioned = 1;
@@ -120,7 +121,7 @@ void MeshGraphXml::PartitionMesh(
         // Mesh has not been partitioned so do partitioning if required.  Note
         // in the serial case nothing is done as we have already loaded the
         // mesh.
-        if (session->DefinesCmdLineArgument("part-only")||
+        if (session->DefinesCmdLineArgument("part-only") ||
             session->DefinesCmdLineArgument("part-only-overlapping"))
         {
             // Perform partitioning of the mesh only. For this we insist the
@@ -129,7 +130,7 @@ void MeshGraphXml::PartitionMesh(
                      "The 'part-only' option should be used in serial.");
 
             // Read 'lite' geometry information
-            ReadGeometry(NullDomainRangeShPtr, false);
+            ReadGeometry(LibUtilities::NullDomainRangeShPtr, false);
 
             // Number of partitions is specified by the parameter.
             int nParts;
@@ -137,8 +138,8 @@ void MeshGraphXml::PartitionMesh(
 
             MeshPartitionSharedPtr partitioner =
                 GetMeshPartitionFactory().CreateInstance(
-                    partitionerName, session, m_meshDimension,
-                    CreateMeshEntities(), comp);
+                    partitionerName, session, session->GetComm(),
+                    m_meshDimension, CreateMeshEntities(), comp);
 
             if (session->DefinesCmdLineArgument("part-only"))
             {
@@ -147,7 +148,8 @@ void MeshGraphXml::PartitionMesh(
             }
             else
             {
-                nParts = session->GetCmdLineArgument<int>("part-only-overlapping");
+                nParts =
+                    session->GetCmdLineArgument<int>("part-only-overlapping");
                 partitioner->PartitionMesh(nParts, true, true);
             }
 
@@ -186,17 +188,17 @@ void MeshGraphXml::PartitionMesh(
                 if (isRoot)
                 {
                     // Read 'lite' geometry information
-                    ReadGeometry(NullDomainRangeShPtr, false);
+                    ReadGeometry(LibUtilities::NullDomainRangeShPtr, false);
 
                     // Store composite ordering and boundary information.
                     m_compOrder = CreateCompositeOrdering();
-                    auto comp = CreateCompositeDescriptor();
+                    auto comp   = CreateCompositeDescriptor();
 
                     // Create mesh partitioner.
                     MeshPartitionSharedPtr partitioner =
                         GetMeshPartitionFactory().CreateInstance(
-                            partitionerName, session, m_meshDimension,
-                            CreateMeshEntities(), comp);
+                            partitionerName, session, session->GetComm(),
+                            m_meshDimension, CreateMeshEntities(), comp);
 
                     partitioner->PartitionMesh(nParts, true);
 
@@ -214,8 +216,8 @@ void MeshGraphXml::PartitionMesh(
 
                     // Call WriteGeometry to write out partition files. This
                     // will populate m_bndRegOrder.
-                    this->WriteXMLGeometry(
-                        m_session->GetSessionName(), elmtIDs, parts);
+                    this->WriteXMLGeometry(m_session->GetSessionName(), elmtIDs,
+                                           parts);
 
                     // Communicate orderings to the other processors.
 
@@ -234,7 +236,7 @@ void MeshGraphXml::PartitionMesh(
                     i = 0;
                     for (auto &cIt : m_compOrder)
                     {
-                        keys[i  ] = cIt.first;
+                        keys[i]   = cIt.first;
                         vals[i++] = cIt.second.size();
                     }
 
@@ -254,13 +256,19 @@ void MeshGraphXml::PartitionMesh(
                     i = 0;
                     for (auto &bIt : m_bndRegOrder)
                     {
-                        keys[i  ] = bIt.first;
+                        keys[i]   = bIt.first;
                         vals[i++] = bIt.second.size();
                     }
 
                     // Send across data.
-                    comm->Bcast(keys, 0);
-                    comm->Bcast(vals, 0);
+                    if (!keys.empty())
+                    {
+                        comm->Bcast(keys, 0);
+                    }
+                    if (!vals.empty())
+                    {
+                        comm->Bcast(vals, 0);
+                    }
                     for (auto &bIt : m_bndRegOrder)
                     {
                         comm->Bcast(bIt.second, 0);
@@ -293,9 +301,14 @@ void MeshGraphXml::PartitionMesh(
 
                     keys.resize(bndSize);
                     vals.resize(bndSize);
-                    comm->Bcast(keys, 0);
-                    comm->Bcast(vals, 0);
-
+                    if (!keys.empty())
+                    {
+                        comm->Bcast(keys, 0);
+                    }
+                    if (!vals.empty())
+                    {
+                        comm->Bcast(vals, 0);
+                    }
                     for (int i = 0; i < keys.size(); ++i)
                     {
                         vector<unsigned int> tmp(vals[i]);
@@ -307,18 +320,18 @@ void MeshGraphXml::PartitionMesh(
             else
             {
                 m_session->InitSession();
-                ReadGeometry(NullDomainRangeShPtr, false);
+                ReadGeometry(LibUtilities::NullDomainRangeShPtr, false);
 
                 m_compOrder = CreateCompositeOrdering();
-                auto comp = CreateCompositeDescriptor();
+                auto comp   = CreateCompositeDescriptor();
 
                 // Partitioner now operates in parallel. Each process receives
                 // partitioning over interconnect and writes its own session
                 // file to the working directory.
                 MeshPartitionSharedPtr partitioner =
                     GetMeshPartitionFactory().CreateInstance(
-                        partitionerName, session, m_meshDimension,
-                        CreateMeshEntities(), comp);
+                        partitionerName, session, session->GetComm(),
+                        m_meshDimension, CreateMeshEntities(), comp);
 
                 partitioner->PartitionMesh(nParts, false);
 
@@ -338,15 +351,15 @@ void MeshGraphXml::PartitionMesh(
             // Wait for all processors to finish their writing activities.
             comm->Block();
 
-            std::string  dirname = m_session->GetSessionName() + "_xml";
-            fs::path    pdirname(dirname);
+            std::string dirname = m_session->GetSessionName() + "_xml";
+            fs::path pdirname(dirname);
             boost::format pad("P%1$07d.xml");
             pad % comm->GetRowComm()->GetRank();
-            fs::path    pFilename(pad.str());
+            fs::path pFilename(pad.str());
             fs::path fullpath = pdirname / pFilename;
 
             std::vector<std::string> filenames = {
-                LibUtilities::PortablePath(fullpath) };
+                LibUtilities::PortablePath(fullpath)};
             m_session->InitSession(filenames);
         }
         else if (!isRoot)
@@ -359,9 +372,8 @@ void MeshGraphXml::PartitionMesh(
     }
 }
 
-void MeshGraphXml::ReadGeometry(
-    DomainRangeShPtr rng,
-    bool             fillGraph)
+void MeshGraphXml::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
+                                bool fillGraph)
 {
     // Reset member variables.
     m_vertSet.clear();
@@ -943,7 +955,6 @@ void MeshGraphXml::ReadDomain()
 
     if (multidomains)
     {
-        int nextDomainNumber = 0;
         while (multidomains)
         {
             int indx;
@@ -976,9 +987,9 @@ void MeshGraphXml::ReadDomain()
             // Parse the composites into a list.
             map<int, CompositeSharedPtr> unrollDomain;
             GetCompositeList(indxStr, unrollDomain);
-            m_domain.push_back(unrollDomain);
+            m_domain[indx] = unrollDomain;
 
-            ASSERTL0(!m_domain[nextDomainNumber++].empty(),
+            ASSERTL0(!m_domain[indx].empty(),
                      (std::string(
                           "Unable to obtain domain's referenced composite: ") +
                       indxStr)
@@ -1014,7 +1025,7 @@ void MeshGraphXml::ReadDomain()
         // Parse the composites into a list.
         map<int, CompositeSharedPtr> fullDomain;
         GetCompositeList(indxStr, fullDomain);
-        m_domain.push_back(fullDomain);
+        m_domain[0] = fullDomain;
 
         ASSERTL0(
             !m_domain[0].empty(),
@@ -1575,8 +1586,7 @@ void MeshGraphXml::ReadElements3D()
                     else if (face->GetShapeType() == LibUtilities::eTriangle)
                     {
                         ASSERTL0(Ntfaces < kNtfaces, errorstring.str().c_str());
-                        tfaces[Ntfaces++] =
-                            static_pointer_cast<TriGeom>(face);
+                        tfaces[Ntfaces++] = static_pointer_cast<TriGeom>(face);
                     }
                     else if (face->GetShapeType() ==
                              LibUtilities::eQuadrilateral)
@@ -1647,16 +1657,14 @@ void MeshGraphXml::ReadElements3D()
                     else if (face->GetShapeType() == LibUtilities::eTriangle)
                     {
                         ASSERTL0(Ntfaces < kNtfaces, errorstring.str().c_str());
-                        faces[Nfaces++] =
-                            static_pointer_cast<TriGeom>(face);
+                        faces[Nfaces++] = static_pointer_cast<TriGeom>(face);
                         Ntfaces++;
                     }
                     else if (face->GetShapeType() ==
                              LibUtilities::eQuadrilateral)
                     {
                         ASSERTL0(Nqfaces < kNqfaces, errorstring.str().c_str());
-                        faces[Nfaces++] =
-                            static_pointer_cast<QuadGeom>(face);
+                        faces[Nfaces++] = static_pointer_cast<QuadGeom>(face);
                         Nqfaces++;
                     }
                 }
@@ -1925,6 +1933,14 @@ void MeshGraphXml::ReadComposites()
                 (std::string("Unable to read COMPOSITE data for composite: ") +
                  compositeStr)
                     .c_str());
+        }
+
+        // Read optional name as string and save to m_compositeLabels if exists
+        std::string name;
+        err = node->QueryStringAttribute("NAME", &name);
+        if (err == TIXML_SUCCESS)
+        {
+            m_compositesLabels[indx] = name;
         }
 
         /// Keep looking for additional composite definitions.
@@ -2686,7 +2702,8 @@ void MeshGraphXml::WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
     geomTag->LinkEndChild(curveTag);
 }
 
-void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps)
+void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps,
+                                   std::map<int, std::string> &compLabels)
 {
     TiXmlElement *compTag = new TiXmlElement("COMPOSITE");
 
@@ -2699,6 +2716,10 @@ void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps)
 
         TiXmlElement *c = new TiXmlElement("C");
         c->SetAttribute("ID", cIt.first);
+        if (!m_compositesLabels[cIt.first].empty())
+        {
+            c->SetAttribute("NAME", compLabels[cIt.first]);
+        }
         c->LinkEndChild(new TiXmlText(GetCompositeString(cIt.second)));
         compTag->LinkEndChild(c);
     }
@@ -2707,20 +2728,31 @@ void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps)
 }
 
 void MeshGraphXml::WriteDomain(TiXmlElement *geomTag,
-                               vector<CompositeMap> &domain)
+                               map<int, CompositeMap> &domain)
 {
     TiXmlElement *domTag = new TiXmlElement("DOMAIN");
-    stringstream domString;
 
-    // @todo Fix this to accomodate multi domain output
-    vector<unsigned int> idxList;
-    for (auto cIt = domain[0].begin(); cIt != domain[0].end(); ++cIt)
+    for (auto &d : domain)
     {
-        idxList.push_back(cIt->first);
+        stringstream domString;
+        if (d.second.size())
+        {
+            domString.clear();
+            TiXmlElement *dtag = new TiXmlElement("D");
+            dtag->SetAttribute("ID", d.first);
+
+            vector<unsigned int> idxList;
+            for (auto cIt = d.second.begin(); cIt != d.second.end(); ++cIt)
+            {
+                idxList.push_back(cIt->first);
+            }
+            domString << " C[" << ParseUtils::GenerateSeqString(idxList)
+                      << "] ";
+            dtag->LinkEndChild(new TiXmlText(domString.str()));
+            domTag->LinkEndChild(dtag);
+        }
     }
 
-    domString << " C[" << ParseUtils::GenerateSeqString(idxList) << "] ";
-    domTag->LinkEndChild(new TiXmlText(domString.str()));
     geomTag->LinkEndChild(domTag);
 }
 
@@ -2750,10 +2782,8 @@ void MeshGraphXml::WriteDefaultExpansion(TiXmlElement *root)
  * @brief Write out an XML file containing the GEOMETRY block
  * representing this MeshGraph instance inside a NEKTAR tag.
  */
-void MeshGraphXml::WriteGeometry(
-    std::string                          &outfilename,
-    bool                                  defaultExp,
-    const LibUtilities::FieldMetaDataMap &metadata)
+void MeshGraphXml::WriteGeometry(std::string &outfilename, bool defaultExp,
+                                 const LibUtilities::FieldMetaDataMap &metadata)
 {
     // Create empty TinyXML document.
     TiXmlDocument doc;
@@ -2766,10 +2796,9 @@ void MeshGraphXml::WriteGeometry(
     root->LinkEndChild(geomTag);
 
     // Add provenance information using FieldIO library.
-    LibUtilities::FieldIO::AddInfoTag(
-        LibUtilities::XmlTagWriterSharedPtr(
-            new LibUtilities::XmlTagWriter(root)),
-        metadata);
+    LibUtilities::FieldIO::AddInfoTag(LibUtilities::XmlTagWriterSharedPtr(
+                                          new LibUtilities::XmlTagWriter(root)),
+                                      metadata);
 
     // Update attributes with dimensions.
     geomTag->SetAttribute("DIM", m_meshDimension);
@@ -2802,7 +2831,7 @@ void MeshGraphXml::WriteGeometry(
         geomTag->LinkEndChild(elmtTag);
     }
     WriteCurves(geomTag, m_curvedEdges, m_curvedFaces);
-    WriteComposites(geomTag, m_meshComposites);
+    WriteComposites(geomTag, m_meshComposites, m_compositesLabels);
     WriteDomain(geomTag, m_domain);
 
     if (defaultExp)
@@ -3083,6 +3112,7 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
         WriteCurves(geomTag, localCurveEdge, localCurveFace);
 
         CompositeMap localComp;
+        std::map<int, std::string> localCompLabels;
 
         for (auto &j : m_meshComposites)
         {
@@ -3100,21 +3130,28 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
             if (comp->m_geomVec.size())
             {
                 localComp[j.first] = comp;
+                if (!m_compositesLabels[j.first].empty())
+                {
+                    localCompLabels[j.first] = m_compositesLabels[j.first];
+                }
             }
         }
 
-        WriteComposites(geomTag, localComp);
+        WriteComposites(geomTag, localComp, localCompLabels);
 
-        vector<CompositeMap> domain;
-        CompositeMap domMap;
-        for (auto &j : localComp)
+        map<int, CompositeMap> domain;
+        for (auto &d : m_domain)
         {
-            if (j.second->m_geomVec[0]->GetShapeDim() == m_meshDimension)
+            CompositeMap domMap;
+            for (auto &j : localComp)
             {
-                domMap[j.first] = j.second;
+                if (d.second.count(j.first))
+                {
+                    domMap[j.first] = j.second;
+                }
             }
+            domain[d.first] = domMap;
         }
-        domain.push_back(domMap);
 
         WriteDomain(geomTag, domain);
 
@@ -3237,16 +3274,27 @@ CompositeOrdering MeshGraphXml::CreateCompositeOrdering()
 
     for (auto &c : m_meshComposites)
     {
-        std::vector<unsigned int> ids;
-        for (auto &elmt : c.second->m_geomVec)
+        bool fillComp = true;
+        for (auto &d : m_domain[0])
         {
-            ids.push_back(elmt->GetGlobalID());
+            if (c.second == d.second)
+            {
+                fillComp = false;
+            }
         }
-        ret[c.first] = ids;
+        if (fillComp)
+        {
+            std::vector<unsigned int> ids;
+            for (auto &elmt : c.second->m_geomVec)
+            {
+                ids.push_back(elmt->GetGlobalID());
+            }
+            ret[c.first] = ids;
+        }
     }
 
     return ret;
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

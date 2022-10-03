@@ -33,68 +33,75 @@
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEARWITHLOWENERGY_H
 #define NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEARWITHLOWENERGY_H
-#include <MultiRegions/GlobalLinSys.h>
-#include <MultiRegions/Preconditioner.h>
-#include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
+#include <MultiRegions/GlobalLinSys.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
+#include <MultiRegions/Preconditioner.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+class PreconditionerLinearWithLowEnergy;
+typedef std::shared_ptr<PreconditionerLinearWithLowEnergy>
+    PreconditionerLinearWithLowEnergySharedPtr;
+
+class PreconditionerLinearWithLowEnergy : public Preconditioner
+{
+public:
+    /// Creates an instance of this class
+    static PreconditionerSharedPtr create(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        class PreconditionerLinearWithLowEnergy;
-        typedef std::shared_ptr<PreconditionerLinearWithLowEnergy>  PreconditionerLinearWithLowEnergySharedPtr;
-
-        class PreconditionerLinearWithLowEnergy: public Preconditioner
-	{
-        public:
-            /// Creates an instance of this class
-            static PreconditionerSharedPtr create(
-                        const std::shared_ptr<GlobalLinSys> &plinsys,
-                        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
-            {
-	        PreconditionerSharedPtr p = MemoryManager<PreconditionerLinearWithLowEnergy>::AllocateSharedPtr(plinsys,pLocToGloMap);
-	        p->InitObject();
-	        return p;
-            }
-
-            /// Name of class
-            static std::string className;
-
-            MULTI_REGIONS_EXPORT PreconditionerLinearWithLowEnergy(
-                         const std::shared_ptr<GlobalLinSys> &plinsys,
-	                 const AssemblyMapSharedPtr &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT
-            virtual ~PreconditionerLinearWithLowEnergy() {}
-
-	protected:
-            PreconditionerSharedPtr m_linSpacePrecon;
-            PreconditionerSharedPtr m_lowEnergyPrecon;
-
-	private:
-
-            virtual void v_InitObject();
-
-            virtual void v_DoTransformToLowEnergy(
-                Array<OneD, NekDouble>& pInOut,
-                int offset);
-
-            virtual void v_DoTransformFromLowEnergy(
-                Array<OneD, NekDouble>& pInput);
-
-            virtual DNekScalMatSharedPtr
-                v_TransformedSchurCompl(int n, int offset,
-                                        const std::shared_ptr<DNekScalMat > &loc_mat);
-
-            virtual void v_DoPreconditioner(                
-                      const Array<OneD, NekDouble>& pInput,
-		      Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_BuildPreconditioner();
-
-        };
+        PreconditionerSharedPtr p =
+            MemoryManager<PreconditionerLinearWithLowEnergy>::AllocateSharedPtr(
+                plinsys, pLocToGloMap);
+        p->InitObject();
+        return p;
     }
-}
+
+    /// Name of class
+    static std::string className;
+
+    MULTI_REGIONS_EXPORT PreconditionerLinearWithLowEnergy(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const AssemblyMapSharedPtr &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT
+    virtual ~PreconditionerLinearWithLowEnergy()
+    {
+    }
+
+protected:
+    PreconditionerSharedPtr m_linSpacePrecon;
+    PreconditionerSharedPtr m_lowEnergyPrecon;
+
+    Array<OneD, NekDouble> m_invMultiplicity;
+
+private:
+    virtual void v_InitObject();
+
+    virtual void v_DoTransformBasisToLowEnergy(Array<OneD, NekDouble> &pInOut);
+
+    virtual void v_DoTransformCoeffsFromLowEnergy(
+        Array<OneD, NekDouble> &pInOut);
+
+    virtual void v_DoTransformCoeffsToLowEnergy(
+        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_DoTransformBasisFromLowEnergy(
+        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
+
+    virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
+        int n, int offset, const std::shared_ptr<DNekScalMat> &loc_mat);
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_BuildPreconditioner();
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

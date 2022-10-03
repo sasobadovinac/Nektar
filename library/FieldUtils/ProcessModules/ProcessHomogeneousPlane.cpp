@@ -49,8 +49,7 @@ namespace FieldUtils
 
 ModuleKey ProcessHomogeneousPlane::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "homplane"),
-        ProcessHomogeneousPlane::create,
+        ModuleKey(eProcessModule, "homplane"), ProcessHomogeneousPlane::create,
         "Extracts a plane from a 3DH1D expansion, requires planeid to be "
         "defined.");
 
@@ -68,10 +67,11 @@ ProcessHomogeneousPlane::~ProcessHomogeneousPlane()
 
 void ProcessHomogeneousPlane::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     ASSERTL0(m_f->m_numHomogeneousDir == 1,
              "ProcessHomogeneousPlane only works for Homogeneous1D.");
+
     m_f->m_numHomogeneousDir = 0;
 
     // Skip in case of empty partition
@@ -91,7 +91,7 @@ void ProcessHomogeneousPlane::Process(po::variables_map &vm)
 
     // Look for correct plane (because of parallel case)
     int plane = -1;
-    for (int i = 0; i < m_f->m_exp[0]->GetZIDs().num_elements(); ++i)
+    for (int i = 0; i < m_f->m_exp[0]->GetZIDs().size(); ++i)
     {
         if (m_f->m_exp[0]->GetZIDs()[i] == planeid)
         {
@@ -115,8 +115,9 @@ void ProcessHomogeneousPlane::Process(po::variables_map &vm)
                 }
                 else
                 {
-                    m_f->m_exp[n]->FwdTrans_IterPerExp(m_f->m_exp[n]->GetPhys(),
-                                            m_f->m_exp[n]->UpdateCoeffs());
+                    m_f->m_exp[n]->FwdTransLocalElmt(
+                        m_f->m_exp[n]->GetPhys(),
+                        m_f->m_exp[n]->UpdateCoeffs());
                 }
             }
         }
@@ -167,5 +168,5 @@ void ProcessHomogeneousPlane::Process(po::variables_map &vm)
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

@@ -43,31 +43,40 @@ namespace SolverUtils
 {
 
 /// Base class for the development of solvers.
-class DriverArnoldi: public Driver
+class DriverArnoldi : public Driver
 {
 public:
     friend class MemoryManager<DriverArnoldi>;
 
     SOLVER_UTILS_EXPORT void ArnoldiSummary(std::ostream &out);
 
+    SOLVER_UTILS_EXPORT inline const Array<OneD, const NekDouble>
+        &GetMaskCoeff() const;
+
+    SOLVER_UTILS_EXPORT inline const Array<OneD, const NekDouble> &GetMaskPhys()
+        const;
+
 protected:
-    int       m_kdim;  /// Dimension of Krylov subspace
-    int       m_nvec;  /// Number of vectors to test
-    int       m_nits;  /// Maxmum number of iterations
-    NekDouble m_evtol; /// Tolerance of iteratiosn
-    NekDouble m_period;/// Period of time stepping algorithm
-    bool      m_timeSteppingAlgorithm; /// underlying operator is time stepping
+    int m_kdim;                   /// Dimension of Krylov subspace
+    int m_nvec;                   /// Number of vectors to test
+    int m_nits;                   /// Maxmum number of iterations
+    NekDouble m_evtol;            /// Tolerance of iteratiosn
+    NekDouble m_period;           /// Period of time stepping algorithm
+    bool m_timeSteppingAlgorithm; /// underlying operator is time stepping
 
-    int       m_infosteps; /// interval to dump information if required.
+    int m_infosteps; /// interval to dump information if required.
 
-    int       m_nfields;
+    int m_nfields;
     NekDouble m_realShift;
     NekDouble m_imagShift;
-    int       m_negatedOp;   /// Operator in solve call is negated
+    int m_negatedOp; /// Operator in solve call is negated
 
     Array<OneD, NekDouble> m_real_evl;
     Array<OneD, NekDouble> m_imag_evl;
 
+    bool m_useMask;
+    Array<OneD, NekDouble> m_maskCoeffs;
+    Array<OneD, NekDouble> m_maskPhys;
 
     /// Constructor
     DriverArnoldi(const LibUtilities::SessionReaderSharedPtr pSession,
@@ -82,24 +91,29 @@ protected:
     /// Copy fields to Arnoldi storage.
     void CopyFieldToArnoldiArray(Array<OneD, NekDouble> &array);
 
-    /// Copy the  forward field to the adjoint system in transient growth 
+    /// Copy the  forward field to the adjoint system in transient growth
     /// calculations
     void CopyFwdToAdj();
 
     /// Write coefficients to file
-    void WriteFld(std::string file, 
-                  std::vector<Array<OneD, NekDouble> > coeffs);
+    void WriteFld(std::string file, std::vector<Array<OneD, NekDouble>> coeffs);
 
     void WriteFld(std::string file, Array<OneD, NekDouble> coeffs);
 
-    void WriteEvs(std::ostream &evlout, const int k,
-                  const NekDouble real, const NekDouble imag,
-                  NekDouble resid = NekConstants::kNekUnsetDouble,
+    void WriteEvs(std::ostream &evlout, const int k, const NekDouble real,
+                  const NekDouble imag,
+                  NekDouble resid  = NekConstants::kNekUnsetDouble,
                   bool DumpInverse = true);
+
+    /// init mask
+    void MaskInit();
+
+    void GetUnmaskFunction(
+        std::vector<std::vector<LibUtilities::EquationSharedPtr>> &unmaskfun);
 
     virtual void v_InitObject(std::ostream &out = std::cout);
 
-    virtual  Array<OneD, NekDouble> v_GetRealEvl(void)
+    virtual Array<OneD, NekDouble> v_GetRealEvl(void)
     {
         return m_real_evl;
     }
@@ -108,10 +122,18 @@ protected:
     {
         return m_imag_evl;
     }
-
 };
 
+inline const Array<OneD, const NekDouble> &DriverArnoldi::GetMaskCoeff() const
+{
+    return m_maskCoeffs;
 }
-} //end of namespace
 
-#endif //NEKTAR_SOLVERUTILS_DRIVERARNOLDI_H
+inline const Array<OneD, const NekDouble> &DriverArnoldi::GetMaskPhys() const
+{
+    return m_maskPhys;
+}
+} // namespace SolverUtils
+} // namespace Nektar
+
+#endif // NEKTAR_SOLVERUTILS_DRIVERARNOLDI_H

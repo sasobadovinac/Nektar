@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Geometry1D.h
+//  File: Geometry0D.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:  1D geometry information
+//  Description:  0D geometry information
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,10 +60,13 @@ public:
     SPATIAL_DOMAINS_EXPORT static const int kDim = 0;
 
 protected:
+    virtual bool v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
+                                 Array<OneD, NekDouble> &locCoord,
+                                 NekDouble tol, NekDouble &dist);
     virtual int v_GetShapeDim() const;
 };
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_GEOMETRY1D_H

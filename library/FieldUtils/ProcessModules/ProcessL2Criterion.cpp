@@ -129,7 +129,7 @@ void MatSymEVals(NekDouble d1, NekDouble d2, NekDouble d3, NekDouble a,
 
 void ProcessL2Criterion::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     auto nfields = m_f->m_variables.size();
     m_f->m_variables.push_back("L2");
@@ -233,10 +233,10 @@ void ProcessL2Criterion::Process(po::variables_map &vm)
 
         Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(npoints, outfield2, 1, Exp->UpdatePhys(), 1);
-        Exp->FwdTrans_IterPerExp(outfield2, Exp->UpdateCoeffs());
+        Exp->FwdTransLocalElmt(outfield2, Exp->UpdateCoeffs());
         auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
         m_f->m_exp.insert(it, Exp);
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

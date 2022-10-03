@@ -48,8 +48,7 @@ namespace FieldUtils
 {
 
 ModuleKey ProcessAddFld::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "addfld"),
-    ProcessAddFld::create,
+    ModuleKey(eProcessModule, "addfld"), ProcessAddFld::create,
     "add two fields together with optional scaling. Must specify fromfld and "
     "scaling is optionally specified with input option scale.");
 
@@ -60,7 +59,7 @@ ProcessAddFld::ProcessAddFld(FieldSharedPtr f) : ProcessModule(f)
     m_config["fromfld"] =
         ConfigOption(false, "NotSet", "Fld file form which to add field");
 
-    if(f->m_inputfiles.count("xml"))
+    if (f->m_inputfiles.count("xml"))
     {
         m_priority = eModifyExp;
     }
@@ -83,15 +82,15 @@ void ProcessAddFld::Process(po::variables_map &vm)
 
     ASSERTL0(m_config["fromfld"].as<string>().compare("NotSet") != 0,
              "Need to specify fromfld=file.fld ");
-    string fromfld           = m_config["fromfld"].as<string>();
+    string fromfld = m_config["fromfld"].as<string>();
 
     vector<LibUtilities::FieldDefinitionsSharedPtr> fromFieldDef;
-    vector<vector<double> >                         fromFieldData;
+    vector<vector<double>> fromFieldData;
 
     if (m_f->m_graph)
     {
-        const SpatialDomains::ExpansionMap &expansions =
-            m_f->m_graph->GetExpansions();
+        const SpatialDomains::ExpansionInfoMap &expansions =
+            m_f->m_graph->GetExpansionInfo();
 
         // if Range has been speficied it is possible to have a
         // partition which is empty so check this and return if
@@ -146,7 +145,7 @@ void ProcessAddFld::Process(po::variables_map &vm)
     if (m_priority == eModifyFieldData)
     {
         ASSERTL0(samelength == true,
-                "Input fields have partitions of different length and so xml "
+                 "Input fields have partitions of different length and so xml "
                  "file needs to be specified");
         for (int i = 0; i < m_f->m_data.size(); ++i)
         {
@@ -155,7 +154,6 @@ void ProcessAddFld::Process(po::variables_map &vm)
             Vmath::Vadd(datalen, &(m_f->m_data[i][0]), 1,
                         &(fromFieldData[i][0]), 1, &(m_f->m_data[i][0]), 1);
         }
-        
     }
     else
     {
@@ -174,29 +172,28 @@ void ProcessAddFld::Process(po::variables_map &vm)
             Vmath::Vcopy(ncoeffs, m_f->m_exp[j]->GetCoeffs(), 1, SaveFld, 1);
 
             // Check if new field has this variable
-            auto it = find (fromFieldDef[0]->m_fields.begin(),
-                            fromFieldDef[0]->m_fields.end(),
-                            m_f->m_variables[j]);
+            auto it =
+                find(fromFieldDef[0]->m_fields.begin(),
+                     fromFieldDef[0]->m_fields.end(), m_f->m_variables[j]);
 
             ASSERTL0(it != fromFieldDef[0]->m_fields.end(),
-              "Could not find field " + m_f->m_variables[j] + " in from field");
+                     "Could not find field " + m_f->m_variables[j] +
+                         " in from field");
 
             // load new field
             for (int i = 0; i < fromFieldData.size(); ++i)
             {
                 m_f->m_exp[j]->ExtractDataToCoeffs(
-                    fromFieldDef[i], fromFieldData[i],
-                    m_f->m_variables[j],
+                    fromFieldDef[i], fromFieldData[i], m_f->m_variables[j],
                     m_f->m_exp[j]->UpdateCoeffs());
             }
 
             Vmath::Vadd(ncoeffs, m_f->m_exp[j]->GetCoeffs(), 1, SaveFld, 1,
                         m_f->m_exp[j]->UpdateCoeffs(), 1);
-            m_f->m_exp[j]->BwdTrans(
-                        m_f->m_exp[j]->GetCoeffs(),
-                        m_f->m_exp[j]->UpdatePhys());
+            m_f->m_exp[j]->BwdTrans(m_f->m_exp[j]->GetCoeffs(),
+                                    m_f->m_exp[j]->UpdatePhys());
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

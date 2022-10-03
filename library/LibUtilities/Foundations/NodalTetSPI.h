@@ -35,12 +35,12 @@
 #ifndef NODALTETSPI_H
 #define NODALTETSPI_H
 
-#include <memory>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <memory>
 
 namespace Nektar
 {
@@ -73,7 +73,7 @@ private:
     void CalculateDerivMatrix();
 };
 
-} // end of namespace
-} // end of namespace
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // NODALTRIELEC_H

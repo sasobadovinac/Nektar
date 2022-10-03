@@ -70,7 +70,7 @@ ProcessHomogeneousStretch::~ProcessHomogeneousStretch()
 
 void ProcessHomogeneousStretch::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -86,7 +86,7 @@ void ProcessHomogeneousStretch::Process(po::variables_map &vm)
 
     int factor  = m_config["factor"].as<int>();
     int nfields = m_f->m_variables.size();
-    int nplanes = m_f->m_exp[0]->GetHomogeneousBasis()->GetZ().num_elements();
+    int nplanes = m_f->m_exp[0]->GetHomogeneousBasis()->GetZ().size();
 
     ASSERTL0(factor > 1, "Parameter factor must be an int greater than 1.");
 
@@ -115,9 +115,9 @@ void ProcessHomogeneousStretch::Process(po::variables_map &vm)
 
             m_f->m_exp[n]->BwdTrans(m_f->m_exp[n]->GetCoeffs(),
                                     m_f->m_exp[n]->UpdatePhys());
-            m_f->m_exp[n]->SetHomoLen(factor*m_f->m_exp[n]->GetHomoLen());
+            m_f->m_exp[n]->SetHomoLen(factor * m_f->m_exp[n]->GetHomoLen());
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

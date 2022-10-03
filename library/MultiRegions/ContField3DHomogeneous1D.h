@@ -36,78 +36,71 @@
 #ifndef NEKTAR_LIBS_MULTIREGIONS_CONTFIELD3DHOMO1D_H
 #define NEKTAR_LIBS_MULTIREGIONS_CONTFIELD3DHOMO1D_H
 
-#include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/DisContField3DHomogeneous1D.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
-    {
-        class ContField3DHomogeneous1D: public DisContField3DHomogeneous1D
-        {
-        public:
-            MULTI_REGIONS_EXPORT ContField3DHomogeneous1D();
+namespace MultiRegions
+{
+class ContField3DHomogeneous1D : public DisContField3DHomogeneous1D
+{
+public:
+    MULTI_REGIONS_EXPORT ContField3DHomogeneous1D();
 
-            MULTI_REGIONS_EXPORT ContField3DHomogeneous1D(
-                           const LibUtilities::SessionReaderSharedPtr &pSession,
-                           const LibUtilities::BasisKey &HomoBasis,
-                           const NekDouble lhom,
-                           const bool useFFT,
-                           const bool dealiasing,
-                           const SpatialDomains::MeshGraphSharedPtr &graph2D,
-                           const std::string &variable,
-                           const bool CheckIfSingularSystem = false,
-                           const Collections::ImplementationType ImpType
-                           = Collections::eNoImpType);
-            
-            /// Copy constructor.
-            MULTI_REGIONS_EXPORT ContField3DHomogeneous1D(const ContField3DHomogeneous1D &In);
+    MULTI_REGIONS_EXPORT ContField3DHomogeneous1D(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const LibUtilities::BasisKey &HomoBasis, const NekDouble lhom,
+        const bool useFFT, const bool dealiasing,
+        const SpatialDomains::MeshGraphSharedPtr &graph2D,
+        const std::string &variable, const bool CheckIfSingularSystem = false,
+        const Collections::ImplementationType ImpType =
+            Collections::eNoImpType);
 
-            MULTI_REGIONS_EXPORT ContField3DHomogeneous1D(
-                            const ContField3DHomogeneous1D &In,
-                            const SpatialDomains::MeshGraphSharedPtr &graph2D,
-                            const std::string                        &variable);
+    /// Copy constructor.
+    MULTI_REGIONS_EXPORT ContField3DHomogeneous1D(
+        const ContField3DHomogeneous1D &In);
 
-            /// Destructor.
-            MULTI_REGIONS_EXPORT virtual ~ContField3DHomogeneous1D();
+    MULTI_REGIONS_EXPORT ContField3DHomogeneous1D(
+        const ContField3DHomogeneous1D &In,
+        const SpatialDomains::MeshGraphSharedPtr &graph2D,
+        const std::string &variable);
 
-            MULTI_REGIONS_EXPORT virtual void v_SmoothField(
-                            Array<OneD,NekDouble> &field);
+    /// Destructor.
+    MULTI_REGIONS_EXPORT virtual ~ContField3DHomogeneous1D();
 
-        protected:
+    MULTI_REGIONS_EXPORT virtual void v_SmoothField(
+        Array<OneD, NekDouble> &field);
 
-        private:
+protected:
+private:
+    virtual void v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
 
-            virtual void v_ImposeDirichletConditions(Array<OneD,NekDouble>& outarray);
+    virtual void v_FillBndCondFromField();
+    virtual void v_FillBndCondFromField(const int nreg);
+    /// Template method virtual forwarded for LocalToGlobal()
+    virtual void v_LocalToGlobal(bool useComm);
 
-            virtual void v_FillBndCondFromField();
-            virtual void v_FillBndCondFromField(const int nreg);
-            /// Template method virtual forwarded for LocalToGlobal()
-            virtual void v_LocalToGlobal(bool useComm);
+    /// Template method virtual forwarded for GlobalToLocal()
+    virtual void v_GlobalToLocal(void);
 
-            /// Template method virtual forwarded for GlobalToLocal()
-            virtual void v_GlobalToLocal(void);
+    /// Solves the three-dimensional Helmholtz equation, subject to the
+    /// boundary conditions specified.
+    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
+                             Array<OneD, NekDouble> &outarray,
+                             const StdRegions::ConstFactorMap &factors,
+                             const StdRegions::VarCoeffMap &varcoeff,
+                             const MultiRegions::VarFactorsMap &varfactors,
+                             const Array<OneD, const NekDouble> &dirForcing,
+                             const bool PhysSpaceForcing);
 
-            /// Solves the three-dimensional Helmholtz equation, subject to the
-            /// boundary conditions specified.
-            virtual void v_HelmSolve(
-                    const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD,       NekDouble> &outarray,
-                    const FlagList &flags,
-                    const StdRegions::ConstFactorMap &factors,
-                    const StdRegions::VarCoeffMap &varcoeff,
-                    const MultiRegions::VarFactorsMap &varfactors,
-                    const Array<OneD, const NekDouble> &dirForcing,
-                    const bool PhysSpaceForcing);
-                    
-            
-            virtual void v_ClearGlobalLinSysManager(void);
-        };
+    virtual void v_ClearGlobalLinSysManager(void);
+};
 
-        typedef std::shared_ptr<ContField3DHomogeneous1D>  
-            ContField3DHomogeneous1DSharedPtr;
+typedef std::shared_ptr<ContField3DHomogeneous1D>
+    ContField3DHomogeneous1DSharedPtr;
 
-    } //end of namespace
-} //end of namespace
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif // MULTIERGIONS_CONTFIELD3DHOMO1D_H

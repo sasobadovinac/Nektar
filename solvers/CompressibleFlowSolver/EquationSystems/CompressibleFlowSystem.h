@@ -38,171 +38,174 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <CompressibleFlowSolver/ArtificialDiffusion/ArtificialDiffusion.h>
-#include <CompressibleFlowSolver/Misc/VariableConverter.h>
 #include <CompressibleFlowSolver/BoundaryConditions/CFSBndCond.h>
-#include <SolverUtils/UnsteadySystem.h>
-#include <SolverUtils/AdvectionSystem.h>
-#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
+#include <CompressibleFlowSolver/Misc/VariableConverter.h>
+#include <CompressibleFlowSolver/Preconditioner/PreconCfsOp.h>
+#include <LibUtilities/LinearAlgebra/NekNonlinSys.h>
+#include <LocalRegions/Expansion2D.h>
+#include <LocalRegions/Expansion3D.h>
+#include <MultiRegions/GlobalMatrixKey.h>
 #include <SolverUtils/AdvectionSystem.h>
 #include <SolverUtils/Diffusion/Diffusion.h>
-#include <SolverUtils/Forcing/Forcing.h>
 #include <SolverUtils/Filters/FilterInterfaces.hpp>
-#include <LocalRegions/Expansion3D.h>
-#include <LocalRegions/Expansion2D.h>
-
+#include <SolverUtils/Forcing/Forcing.h>
+#include <SolverUtils/RiemannSolvers/RiemannSolver.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 namespace Nektar
 {
-    /**
-     *
-     */
-    class CompressibleFlowSystem: public SolverUtils::AdvectionSystem,
-                                  public SolverUtils::FluidInterface
+/**
+ *
+ */
+class CompressibleFlowSystem : public SolverUtils::AdvectionSystem,
+                               public SolverUtils::FluidInterface
+{
+public:
+    friend class MemoryManager<CompressibleFlowSystem>;
+
+    virtual ~CompressibleFlowSystem();
+
+    /// Function to calculate the stability limit for DG/CG.
+    NekDouble GetStabilityLimit(int n);
+
+    /// Function to calculate the stability limit for DG/CG
+    /// (a vector of them).
+    Array<OneD, NekDouble> GetStabilityLimitVector(
+        const Array<OneD, int> &ExpOrder);
+
+    virtual void GetPressure(
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, NekDouble> &pressure);
+
+    virtual void GetDensity(
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, NekDouble> &density);
+
+    virtual bool HasConstantDensity()
     {
-    public:
+        return false;
+    }
 
-        friend class MemoryManager<CompressibleFlowSystem>;
+    virtual void GetVelocity(
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, NekDouble>> &velocity);
 
-        virtual ~CompressibleFlowSystem();
+protected:
+    SolverUtils::DiffusionSharedPtr m_diffusion;
+    ArtificialDiffusionSharedPtr m_artificialDiffusion;
+    Array<OneD, Array<OneD, NekDouble>> m_vecLocs;
+    NekDouble m_gamma;
+    std::string m_shockCaptureType;
 
-        /// Function to calculate the stability limit for DG/CG.
-        NekDouble GetStabilityLimit(int n);
+    // Parameters for exponential filtering
+    NekDouble m_filterAlpha;
+    NekDouble m_filterExponent;
+    NekDouble m_filterCutoff;
+    bool m_useFiltering;
 
-        /// Function to calculate the stability limit for DG/CG
-        /// (a vector of them).
-        Array<OneD, NekDouble> GetStabilityLimitVector(
-            const Array<OneD,int> &ExpOrder);
+    // Parameters for local time-stepping
+    bool m_useLocalTimeStep;
 
-        /// Function to get estimate of min h/p factor per element
-        Array<OneD, NekDouble>  GetElmtMinHP(void);
+    // Store physical artificial viscosity
+    Array<OneD, NekDouble> m_muav;
 
-        virtual void GetPressure(
-            const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble>                     &pressure);
+    // Store physical artificial viscosity
+    Array<OneD, NekDouble> m_muavTrace;
 
-        virtual void GetDensity(
-            const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, NekDouble>                     &density);
+    // Auxiliary object to convert variables
+    VariableConverterSharedPtr m_varConv;
 
-        virtual bool HasConstantDensity()
-        {
-            return false;
-        }
+    // User defined boundary conditions
+    std::vector<CFSBndCondSharedPtr> m_bndConds;
 
-        virtual void GetVelocity(
-            const Array<OneD, const Array<OneD, NekDouble> > &physfield,
-                  Array<OneD, Array<OneD, NekDouble> >       &velocity);
+    NekDouble m_bndEvaluateTime;
 
-    protected:
-        SolverUtils::DiffusionSharedPtr     m_diffusion;
-        ArtificialDiffusionSharedPtr        m_artificialDiffusion;
-        Array<OneD, Array<OneD, NekDouble> >m_vecLocs;
-        NekDouble                           m_gamma;
-        std::string                         m_shockCaptureType;
+    // Forcing term
+    std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
 
-        // Parameters for exponential filtering
-        NekDouble                           m_filterAlpha;
-        NekDouble                           m_filterExponent;
-        NekDouble                           m_filterCutoff;
-        bool                                m_useFiltering;
+    CompressibleFlowSystem(const LibUtilities::SessionReaderSharedPtr &pSession,
+                           const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        // Parameters for local time-stepping
-        bool                                m_useLocalTimeStep;
+    virtual void v_InitObject(bool DeclareFields = true);
 
-        // Auxiliary object to convert variables
-        VariableConverterSharedPtr          m_varConv;
+    void InitialiseParameters();
 
-        // User defined boundary conditions
-        std::vector<CFSBndCondSharedPtr>    m_bndConds;
+    void InitAdvection();
 
-        // Forcing term
-        std::vector<SolverUtils::ForcingSharedPtr> m_forcing;
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
+    void DoOdeProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        CompressibleFlowSystem(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    void DoAdvection(const Array<OneD, Array<OneD, NekDouble>> &inarray,
+                     Array<OneD, Array<OneD, NekDouble>> &outarray,
+                     const NekDouble time,
+                     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+                     const Array<OneD, Array<OneD, NekDouble>> &pBwd);
 
-        virtual void v_InitObject();
+    void DoDiffusion(const Array<OneD, Array<OneD, NekDouble>> &inarray,
+                     Array<OneD, Array<OneD, NekDouble>> &outarray,
+                     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+                     const Array<OneD, Array<OneD, NekDouble>> &pBwd);
 
-        void InitialiseParameters();
+    void GetFluxVector(
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        TensorOfArray3D<NekDouble> &flux);
+    void GetFluxVectorDeAlias(
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        TensorOfArray3D<NekDouble> &flux);
 
-        void InitAdvection();
+    void SetBoundaryConditions(Array<OneD, Array<OneD, NekDouble>> &physarray,
+                               NekDouble time);
 
-        void DoOdeRhs(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const NekDouble                                   time);
-        void DoOdeProjection(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const NekDouble                                   time);
+    void SetBoundaryConditionsBwdWeight();
 
-        void DoAdvection(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const NekDouble                                   time,
-            const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >       &pBwd);
+    void GetElmtTimeStep(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, NekDouble> &tstep);
 
-        void DoDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >       &pBwd);
+    virtual NekDouble v_GetTimeStep(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray);
 
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
-        void GetFluxVectorDeAlias(
-            const Array<OneD, Array<OneD, NekDouble> >         &physfield,
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+    virtual void v_SetInitialConditions(NekDouble initialtime      = 0.0,
+                                        bool dumpInitialConditions = true,
+                                        const int domain           = 0);
 
-        void SetBoundaryConditions(
-            Array<OneD, Array<OneD, NekDouble> >             &physarray,
-            NekDouble                                         time);
+    NekDouble GetGamma()
+    {
+        return m_gamma;
+    }
 
-        void GetElmtTimeStep(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                  Array<OneD, NekDouble> &tstep);
+    const Array<OneD, const Array<OneD, NekDouble>> &GetVecLocs()
+    {
+        return m_vecLocs;
+    }
 
-        virtual NekDouble v_GetTimeStep(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray);
-        virtual void v_SetInitialConditions(
-            NekDouble initialtime           = 0.0,
-            bool      dumpInitialConditions = true,
-            const int domain                = 0);
+    const Array<OneD, const Array<OneD, NekDouble>> &GetNormals()
+    {
+        return m_traceNormals;
+    }
 
-        NekDouble GetGamma()
-        {
-            return m_gamma;
-        }
+    virtual void v_ExtraFldOutput(
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
+        std::vector<std::string> &variables);
 
-        const Array<OneD, const Array<OneD, NekDouble> > &GetVecLocs()
-        {
-            return m_vecLocs;
-        }
+    virtual void v_DoDiffusion(
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) = 0;
 
-        const Array<OneD, const Array<OneD, NekDouble> > &GetNormals()
-        {
-            return m_traceNormals;
-        }
+    virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
+        const NekDouble SpeedSoundFactor);
 
-        virtual void v_ExtraFldOutput(
-            std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
-            std::vector<std::string>             &variables);
+    virtual void v_SteadyStateResidual(int step, Array<OneD, NekDouble> &L2);
 
-        virtual void v_DoDiffusion(
-            const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                  Array<OneD,       Array<OneD, NekDouble> > &outarray,
-            const Array<OneD, Array<OneD, NekDouble> >       &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >       &pBwd)
-        {
-            boost::ignore_unused(inarray, outarray, pFwd, pBwd);
-            // Do nothing by default
-        }
-
-        virtual Array<OneD, NekDouble> v_GetMaxStdVelocity();
-
-    };
-}
+    // Virtual function that returns true if derived class supports a given
+    // shock capturing method
+    virtual bool SupportsShockCaptType(const std::string type) const = 0;
+};
+} // namespace Nektar
 #endif

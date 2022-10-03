@@ -39,11 +39,11 @@
 
 #include <ptscotch.h>
 
-#define SCOTCH_CALL(scotchFunc, args)                                   \
-    {                                                                   \
-        ASSERTL0(scotchFunc args == 0,                                  \
-                 std::string("Error in Scotch calling function ")       \
-                 + std::string(#scotchFunc));                           \
+#define SCOTCH_CALL(scotchFunc, args)                                          \
+    {                                                                          \
+        ASSERTL0(scotchFunc args == 0,                                         \
+                 std::string("Error in Scotch calling function ") +            \
+                     std::string(#scotchFunc));                                \
     }
 
 namespace Nektar
@@ -62,10 +62,9 @@ std::string MeshPartitionPtScotch::cmdSwitch =
 
 MeshPartitionPtScotch::MeshPartitionPtScotch(
     const LibUtilities::SessionReaderSharedPtr session,
-    int                                        meshDim,
-    std::map<int, MeshEntity>                  element,
-    CompositeDescriptor                        compMap)
-    : MeshPartition(session, meshDim, element, compMap)
+    LibUtilities::CommSharedPtr comm, int meshDim,
+    std::map<int, MeshEntity> element, CompositeDescriptor compMap)
+    : MeshPartition(session, comm, meshDim, element, compMap)
 {
     m_parallel = true;
 }
@@ -75,17 +74,15 @@ MeshPartitionPtScotch::~MeshPartitionPtScotch()
 }
 
 void MeshPartitionPtScotch::PartitionGraphImpl(
-    int &nVerts, int &nVertConds, Nektar::Array<Nektar::OneD, int> &xadj,
-    Nektar::Array<Nektar::OneD, int> &adjcy,
-    Nektar::Array<Nektar::OneD, int> &vertWgt,
-    Nektar::Array<Nektar::OneD, int> &vertSize,
-    Nektar::Array<Nektar::OneD, int> &edgeWgt, int &nparts, int &volume,
-    Nektar::Array<Nektar::OneD, int> &part)
+    int &nVerts, int &nVertConds, Array<OneD, int> &xadj,
+    Array<OneD, int> &adjcy, Array<OneD, int> &vertWgt,
+    Array<OneD, int> &vertSize, Array<OneD, int> &edgeWgt, int &nparts,
+    int &volume, Array<OneD, int> &part)
 {
     boost::ignore_unused(nVertConds, vertSize, edgeWgt, volume);
 
-    LibUtilities::CommMpiSharedPtr mpiComm = std::dynamic_pointer_cast<
-        LibUtilities::CommMpi>(m_comm->GetRowComm());
+    LibUtilities::CommMpiSharedPtr mpiComm =
+        std::dynamic_pointer_cast<LibUtilities::CommMpi>(m_comm);
 
     ASSERTL0(mpiComm, "PtScotch not supported in serial execution.");
 
@@ -93,15 +90,16 @@ void MeshPartitionPtScotch::PartitionGraphImpl(
     SCOTCH_CALL(SCOTCH_dgraphInit, (&scGraph, mpiComm->GetComm()));
     SCOTCH_CALL(SCOTCH_dgraphBuild,
                 (&scGraph, 0, nVerts, nVerts, &xadj[0], &xadj[1], &vertWgt[0],
-                 NULL, adjcy.num_elements(), adjcy.num_elements(),
-                 &adjcy[0], NULL, NULL));
+                 NULL, adjcy.size(), adjcy.size(), &adjcy[0], NULL, NULL));
     SCOTCH_CALL(SCOTCH_dgraphCheck, (&scGraph));
 
     SCOTCH_Strat strat;
     SCOTCH_CALL(SCOTCH_stratInit, (&strat));
+    SCOTCH_CALL(SCOTCH_stratDgraphMapBuild,
+                (&strat, SCOTCH_STRATQUALITY, nparts, nparts, 0.05));
 
     SCOTCH_CALL(SCOTCH_dgraphPart, (&scGraph, nparts, &strat, &part[0]));
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

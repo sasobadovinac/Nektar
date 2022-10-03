@@ -41,22 +41,80 @@ This force type specifies the name of a body forcing function expressed in the \
 \end{lstlisting}
 
 \subsection{MovingReferenceFrame}
-This force type specifies the name of a moving frame function expressed in the \inltt{CONDITIONS} section.
+This force type allows the solution of incompressilbe Navier-Stokes in moving frame of reference. The moving frame is attached the to body and can have translational, rotational or both motions. Although the Navier-Stokes equations are solved in a moving reference frame, our formulation is based on the absolute velocity and pressure (in inertial frame). However, note that these absolute velocities and any other vector quantities are expressed using the coordinate basis of the moving frame. Further, note that if you are using the FilterAeroForces, the force vector $\left(F_x, F_y, F_z\right)$ is automatically converted and output in the inertial frame (ground reference frame).
+
+To use this formulation the user need to specify the force type inside the \inltt{FORCING} tag as follwos:
 
 \begin{lstlisting}[style=XMLStyle]
 <FORCE TYPE="MovingReferenceFrame">
-    <FRAMEVELOCITY> [FUNCTION NAME] <FRAMEVELOCITY/>
+    <LinearVelocity> [LinearVelocity FUNCTION NAME] <LinearVelocity/>
+    <AngularVelocity> [AngularVelocity FUNCTION NAME] <AngularVelocity/>
+    <PivotPoint> x0 y0 z0  <PivotPoint/>
 </FORCE>
 \end{lstlisting}
 
-The frame velocity functions defines the constant velocity of the reference frame.
+Here we are required to provide at least one function for this force type which can be a function that defines the linear velocity of the reference frame or a function that defines the angular velocity of reference frame or both. In the case of rotating frame, i.e. when we are prescribing the angular velocity of reference frame, we can provide a coordinate of \inltt{PivotPoint}, around which the frame is rotating. If no pivot point provided, the orgin of coordinates in the moving reference frame will be used as the pivot point. 
+Note that the frame velocities (both linear and angular velocities) must be defined in the inertial stationary frame of reference,i.e. ground reference frame (and expressed using the basis of inertial stationary frame), however, the Poivot point is in the moving reference frame.
+
+Examples of linear and angular velocity funcitons together with their usage in the Forcing is shown below:
 
 \begin{lstlisting}[style=XMLStyle]
-<FUNCTION NAME="MovingReferenceFrame">
-    <E VAR="u" VALUE="1" />
-    <E VAR="v" VALUE="0" />
+<CONDITIONS>
+
+<FUNCTION NAME="LinVel">
+    <E VAR="u" VALUE="2*sin(PI*t)" />
+    <E VAR="v" VALUE="0.1" />
+    <E VAR="w" VALUE="0" />
 </FUNCTION>
+
+<FUNCTION NAME="AngVel">
+    <E VAR="Omega_x" VALUE="0" />
+    <E VAR="Omega_y" VALUE="0" />
+    <E VAR="Omega_z" VALUE="0.3*cos(2*PI*t)" />
+</FUNCTION>
+
+</CONDITIONS>
+
+<FORCING>
+
+    <FORCE TYPE="MovingReferenceFrame">
+        <LinearVelocity> LinVel <LinearVelocity/>
+        <AngularVelocity> AngVel <AngularVelocity/>
+        <PivotPoint> 0.2 0.0 0.0  <PivotPoint/>
+    </FORCE>
+
+</FORCING>
 \end{lstlisting}
+
+
+The moving frame functions defines the velocity of the body frame observed in the inertial reference frame $$\mathbf{u}_{frame} = \mathbf{u}_0 + \mathbf{\Omega}\times (\mathbf{x}-\mathbf{x}_0)$$. This means that these functions (such as the \inltt{LinVel} and \inltt{AngVel} in the above example) are defined and expressed in the stationary inertial frame (ground frame).
+
+Here, $\mathbf{u}_0 = (\text{u, v, w})$ is the translational velocity, $\mathbf{\Omega}=(\text{Omega\_x, Omega\_y, Omega\_z})$ is the angular velocity.
+$\mathbf{x}_0=(0.2, 0.0, 0.0)$ is the rotation pivot and it is fixed in the body frame.
+Translational motion is allowed for all dimensions while rotational motion is currently restricted to z (omega\_z) for 2D, 3DH1D and full 3D simulaitons.
+
+Finally, note that when using \inltt{MovingReferenceFrame} force type, for any open part of the computational domain that the user specifies the velocity, such as inlet and free stream boundary conditions, the \inltt{USERDEFINEDTYPE="MovingFrameDomainVel"} tag should be used for all of velocity components. For example if boundary \inltt{ID=2} is the inlet with \inltt{Uinfx} and \inltt{Uinfy} the values of inlet velocities defined as parameters, the boundary condition for this boundary becomes:
+
+\begin{lstlisting}[style=XMLStyle]
+<REGION REF="2"> 
+   <D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
+   <D VAR="v" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfy" />
+   <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  
+</REGION>
+\end{lstlisting}
+
+for the wall boundary conditions on the surface of the body, we need to use \inltt{MovingFrameWall} tag as shown below:
+
+\begin{lstlisting}[style=XMLStyle]
+<REGION REF="0"> 
+    <D VAR="u" USERDEFINEDTYPE="MovingFrameWall" VALUE="Uinfx" />
+    <D VAR="v" USERDEFINEDTYPE="MovingFrameWall" VALUE="Uinfy" />
+    <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  
+</REGION>
+\end{lstlisting}
+
+The outlet and pressure boundary conditions are the same as before.
+
 
 \subsection{Programmatic}
 This force type allows a forcing function to be applied directly within the code, thus it has no associated function. 

@@ -32,12 +32,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/HexGeom.h>
-#include <SpatialDomains/Geometry1D.h>
-#include <StdRegions/StdHexExp.h>
-#include <SpatialDomains/SegGeom.h>
-#include <SpatialDomains/QuadGeom.h>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/Geometry1D.h>
+#include <SpatialDomains/HexGeom.h>
+#include <SpatialDomains/QuadGeom.h>
+#include <SpatialDomains/SegGeom.h>
+#include <StdRegions/StdHexExp.h>
 
 using namespace std;
 
@@ -47,7 +47,7 @@ namespace SpatialDomains
 {
 
 const unsigned int HexGeom::VertexEdgeConnectivity[8][3] = {
-    {0, 3, 4}, {0, 1, 5}, {1, 2, 6}, {2, 3, 7},
+    {0, 3, 4},  {0, 1, 5}, {1, 2, 6},  {2, 3, 7},
     {4, 8, 11}, {5, 8, 9}, {6, 9, 10}, {7, 10, 11}};
 const unsigned int HexGeom::VertexFaceConnectivity[8][3] = {
     {0, 1, 4}, {0, 1, 2}, {0, 2, 3}, {0, 3, 4},
@@ -55,6 +55,9 @@ const unsigned int HexGeom::VertexFaceConnectivity[8][3] = {
 const unsigned int HexGeom::EdgeFaceConnectivity[12][2] = {
     {0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 4}, {1, 2},
     {2, 3}, {3, 4}, {1, 5}, {2, 5}, {3, 5}, {4, 5}};
+const unsigned int HexGeom::EdgeNormalToFaceVert[6][4] = {
+    {4, 5, 6, 7},  {1, 3, 9, 11}, {0, 2, 8, 10},
+    {1, 3, 9, 11}, {0, 2, 8, 10}, {4, 5, 6, 7}};
 
 HexGeom::HexGeom()
 {
@@ -65,7 +68,7 @@ HexGeom::HexGeom(int id, const QuadGeomSharedPtr faces[])
     : Geometry3D(faces[0]->GetEdge(0)->GetVertex(0)->GetCoordim())
 {
     m_shapeType = LibUtilities::eHexahedron;
-    m_globalID = id;
+    m_globalID  = id;
 
     /// Copy the face shared pointers
     m_faces.insert(m_faces.begin(), faces, faces + HexGeom::kNfaces);
@@ -86,7 +89,7 @@ HexGeom::~HexGeom()
 
 void HexGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         HexGeom::v_Setup();
     }
@@ -113,12 +116,8 @@ void HexGeom::v_GenGeomFactors()
         if (Gtype == eRegular)
         {
             const unsigned int faceVerts[kNfaces][QuadGeom::kNverts] = {
-                {0, 1, 2, 3},
-                {0, 1, 5, 4},
-                {1, 2, 6, 5},
-                {3, 2, 6, 7},
-                {0, 3, 7, 4},
-                {4, 5, 6, 7}};
+                {0, 1, 2, 3}, {0, 1, 5, 4}, {1, 2, 6, 5},
+                {3, 2, 6, 7}, {0, 3, 7, 4}, {4, 5, 6, 7}};
 
             for (f = 0; f < kNfaces; f++)
             {
@@ -149,141 +148,6 @@ void HexGeom::v_GenGeomFactors()
     }
 }
 
-NekDouble HexGeom::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                  Array<OneD, NekDouble> &Lcoords)
-{
-    NekDouble ptdist = 1e6;
-    int i;
-
-    v_FillGeom();
-
-    // calculate local coordinate for coord
-    if (GetMetricInfo()->GetGtype() == eRegular)
-    {
-        NekDouble len0 = 0.0;
-        NekDouble len1 = 0.0;
-        NekDouble len2 = 0.0;
-        NekDouble xi0 = 0.0;
-        NekDouble xi1 = 0.0;
-        NekDouble xi2 = 0.0;
-        Array<OneD, NekDouble> pts(m_xmap->GetTotPoints());
-        int nq0, nq1, nq2;
-
-        // get points;
-        // find end points
-        for (i = 0; i < m_coordim; ++i)
-        {
-            nq0 = m_xmap->GetNumPoints(0);
-            nq1 = m_xmap->GetNumPoints(1);
-            nq2 = m_xmap->GetNumPoints(2);
-
-            m_xmap->BwdTrans(m_coeffs[i], pts);
-
-            // use projection to side 1 to determine xi_1 coordinate based on
-            // length
-            len0 += (pts[nq0 - 1] - pts[0]) * (pts[nq0 - 1] - pts[0]);
-            xi0 += (coords[i] - pts[0]) * (pts[nq0 - 1] - pts[0]);
-
-            // use projection to side 4 to determine xi_2 coordinate based on
-            // length
-            len1 += (pts[nq0 * (nq1 - 1)] - pts[0]) *
-                    (pts[nq0 * (nq1 - 1)] - pts[0]);
-            xi1 += (coords[i] - pts[0]) * (pts[nq0 * (nq1 - 1)] - pts[0]);
-
-            // use projection to side 4 to determine xi_3 coordinate based on
-            // length
-            len2 += (pts[nq0 * nq1 * (nq2 - 1)] - pts[0]) *
-                    (pts[nq0 * nq1 * (nq2 - 1)] - pts[0]);
-            xi2 += (coords[i] - pts[0]) * (pts[nq0 * nq1 * (nq2 - 1)] - pts[0]);
-        }
-
-        Lcoords[0] = 2 * xi0 / len0 - 1.0;
-        Lcoords[1] = 2 * xi1 / len1 - 1.0;
-        Lcoords[2] = 2 * xi2 / len2 - 1.0;
-
-        // Set ptdist to distance to nearest vertex
-        // Point inside tetrahedron
-        PointGeom r(m_coordim, 0, coords[0], coords[1], coords[2]);
-        for (int i = 0; i < 8; ++i)
-        {
-            ptdist = min(ptdist, r.dist(*m_verts[i]));
-        }
-    }
-    else
-    {
-        // Determine nearest point of coords  to values in m_xmap
-        int npts = m_xmap->GetTotPoints();
-        Array<OneD, NekDouble> ptsx(npts), ptsy(npts), ptsz(npts);
-        Array<OneD, NekDouble> tmp1(npts), tmp2(npts);
-
-        m_xmap->BwdTrans(m_coeffs[0], ptsx);
-        m_xmap->BwdTrans(m_coeffs[1], ptsy);
-        m_xmap->BwdTrans(m_coeffs[2], ptsz);
-
-        const Array<OneD, const NekDouble> za = m_xmap->GetPoints(0);
-        const Array<OneD, const NekDouble> zb = m_xmap->GetPoints(1);
-        const Array<OneD, const NekDouble> zc = m_xmap->GetPoints(2);
-
-        // guess the first local coords based on nearest point
-        Vmath::Sadd(npts, -coords[0], ptsx, 1, tmp1, 1);
-        Vmath::Vmul(npts, tmp1, 1, tmp1, 1, tmp1, 1);
-        Vmath::Sadd(npts, -coords[1], ptsy, 1, tmp2, 1);
-        Vmath::Vvtvp(npts, tmp2, 1, tmp2, 1, tmp1, 1, tmp1, 1);
-        Vmath::Sadd(npts, -coords[2], ptsz, 1, tmp2, 1);
-        Vmath::Vvtvp(npts, tmp2, 1, tmp2, 1, tmp1, 1, tmp1, 1);
-
-        int min_i = Vmath::Imin(npts, tmp1, 1);
-
-        // distance from coordinate to nearest point for return value.
-        ptdist = sqrt(tmp1[min_i]);
-
-        // Get Local coordinates
-        int qa = za.num_elements(), qb = zb.num_elements();
-        Lcoords[2] = zc[min_i / (qa * qb)];
-        min_i = min_i % (qa * qb);
-        Lcoords[1] = zb[min_i / qa];
-        Lcoords[0] = za[min_i % qa];
-
-        // Perform newton iteration to find local coordinates
-        NekDouble resid = 0.0;
-        NewtonIterationForLocCoord(coords, ptsx, ptsy, ptsz, Lcoords, resid);
-    }
-    return ptdist;
-}
-
-bool HexGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                              Array<OneD, NekDouble> &locCoord,
-                              NekDouble tol,
-                              NekDouble &resid)
-{
-    boost::ignore_unused(resid);
-    
-    //Rough check if within twice min/max point
-    if (GetMetricInfo()->GetGtype() != eRegular)
-    {
-        if (!MinMaxCheck(gloCoord))
-        {
-            return false;
-        }
-    }
-
-    // Convert to the local Cartesian coordinates.
-    resid = GetLocCoords(gloCoord, locCoord);
-
-    // Check local coordinate is within cartesian bounds.
-    if (locCoord[0] >= -(1 + tol) && locCoord[0] <= 1 + tol &&
-        locCoord[1] >= -(1 + tol) && locCoord[1] <= 1 + tol &&
-        locCoord[2] >= -(1 + tol) && locCoord[2] <= 1 + tol)
-    {
-        return true;
-    }
-
-    //Clamp local coords
-    ClampLocCoords(locCoord, tol);
-
-    return false;
-}
-
 int HexGeom::v_GetVertexEdgeMap(const int i, const int j) const
 {
     return VertexEdgeConnectivity[i][j];
@@ -297,6 +161,11 @@ int HexGeom::v_GetVertexFaceMap(const int i, const int j) const
 int HexGeom::v_GetEdgeFaceMap(const int i, const int j) const
 {
     return EdgeFaceConnectivity[i][j];
+}
+
+int HexGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
 }
 
 int HexGeom::v_GetDir(const int faceidx, const int facedir) const
@@ -589,12 +458,9 @@ void HexGeom::SetUpFaceOrientation()
     // for every face. For every face, they are ordered in such
     // a way that the implementation below allows a unified approach
     // for all faces.
-    const unsigned int faceVerts[kNfaces][QuadGeom::kNverts] = {{0, 1, 2, 3},
-                                                                {0, 1, 5, 4},
-                                                                {1, 2, 6, 5},
-                                                                {3, 2, 6, 7},
-                                                                {0, 3, 7, 4},
-                                                                {4, 5, 6, 7}};
+    const unsigned int faceVerts[kNfaces][QuadGeom::kNverts] = {
+        {0, 1, 2, 3}, {0, 1, 5, 4}, {1, 2, 6, 5},
+        {3, 2, 6, 7}, {0, 3, 7, 4}, {4, 5, 6, 7}};
 
     NekDouble dotproduct1 = 0.0;
     NekDouble dotproduct2 = 0.0;
@@ -607,8 +473,8 @@ void HexGeom::SetUpFaceOrientation()
         // initialisation
         elementAaxis_length = 0.0;
         elementBaxis_length = 0.0;
-        faceAaxis_length = 0.0;
-        faceBaxis_length = 0.0;
+        faceAaxis_length    = 0.0;
+        faceBaxis_length    = 0.0;
 
         dotproduct1 = 0.0;
         dotproduct2 = 0.0;
@@ -687,8 +553,8 @@ void HexGeom::SetUpFaceOrientation()
 
         elementAaxis_length = sqrt(elementAaxis_length);
         elementBaxis_length = sqrt(elementBaxis_length);
-        faceAaxis_length = sqrt(faceAaxis_length);
-        faceBaxis_length = sqrt(faceBaxis_length);
+        faceAaxis_length    = sqrt(faceAaxis_length);
+        faceBaxis_length    = sqrt(faceBaxis_length);
 
         // Calculate the inner product of both the A-axis
         // (i.e. Elemental A axis and face A axis)
@@ -697,7 +563,8 @@ void HexGeom::SetUpFaceOrientation()
             dotproduct1 += elementAaxis[i] * faceAaxis[i];
         }
 
-        NekDouble norm = fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
+        NekDouble norm =
+            fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
         orientation = 0;
 
         // if the innerproduct is equal to the (absolute value of the ) products
@@ -788,18 +655,9 @@ void HexGeom::SetUpEdgeOrientation()
     // This 2D array holds the local id's of all the vertices
     // for every edge. For every edge, they are ordered to what we
     // define as being Forwards
-    const unsigned int edgeVerts[kNedges][2] = {{0, 1},
-                                                {1, 2},
-                                                {2, 3},
-                                                {3, 0},
-                                                {0, 4},
-                                                {1, 5},
-                                                {2, 6},
-                                                {3, 7},
-                                                {4, 5},
-                                                {5, 6},
-                                                {6, 7},
-                                                {7, 4}};
+    const unsigned int edgeVerts[kNedges][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0},
+                                                {0, 4}, {1, 5}, {2, 6}, {3, 7},
+                                                {4, 5}, {5, 6}, {6, 7}, {7, 4}};
 
     int i;
     for (i = 0; i < kNedges; i++)
@@ -808,7 +666,8 @@ void HexGeom::SetUpEdgeOrientation()
         {
             m_eorient[i] = StdRegions::eForwards;
         }
-        else if (m_edges[i]->GetVid(0) == m_verts[edgeVerts[i][1]]->GetGlobalID())
+        else if (m_edges[i]->GetVid(0) ==
+                 m_verts[edgeVerts[i][1]]->GetGlobalID())
         {
             m_eorient[i] = StdRegions::eBackwards;
         }
@@ -834,7 +693,7 @@ void HexGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void HexGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 6; ++i)
         {
@@ -858,24 +717,24 @@ void HexGeom::SetUpXmap()
 
     if (m_forient[0] < 9)
     {
-        tmp1.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(0));
-        tmp1.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp1.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(0));
+        tmp1.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(2));
     }
     else
     {
-        tmp1.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(1));
-        tmp1.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(3));
+        tmp1.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(1));
+        tmp1.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(3));
     }
 
     if (m_forient[5] < 9)
     {
-        tmp1.push_back(m_faces[5]->GetXmap()->GetEdgeNcoeffs(0));
-        tmp1.push_back(m_faces[5]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp1.push_back(m_faces[5]->GetXmap()->GetTraceNcoeffs(0));
+        tmp1.push_back(m_faces[5]->GetXmap()->GetTraceNcoeffs(2));
     }
     else
     {
-        tmp1.push_back(m_faces[5]->GetXmap()->GetEdgeNcoeffs(1));
-        tmp1.push_back(m_faces[5]->GetXmap()->GetEdgeNcoeffs(3));
+        tmp1.push_back(m_faces[5]->GetXmap()->GetTraceNcoeffs(1));
+        tmp1.push_back(m_faces[5]->GetXmap()->GetTraceNcoeffs(3));
     }
 
     int order0 = *max_element(tmp1.begin(), tmp1.end());
@@ -884,24 +743,24 @@ void HexGeom::SetUpXmap()
 
     if (m_forient[0] < 9)
     {
-        tmp1.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(1));
-        tmp1.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(3));
+        tmp1.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(1));
+        tmp1.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(3));
     }
     else
     {
-        tmp1.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(0));
-        tmp1.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp1.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(0));
+        tmp1.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(2));
     }
 
     if (m_forient[5] < 9)
     {
-        tmp1.push_back(m_faces[5]->GetXmap()->GetEdgeNcoeffs(1));
-        tmp1.push_back(m_faces[5]->GetXmap()->GetEdgeNcoeffs(3));
+        tmp1.push_back(m_faces[5]->GetXmap()->GetTraceNcoeffs(1));
+        tmp1.push_back(m_faces[5]->GetXmap()->GetTraceNcoeffs(3));
     }
     else
     {
-        tmp1.push_back(m_faces[5]->GetXmap()->GetEdgeNcoeffs(0));
-        tmp1.push_back(m_faces[5]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp1.push_back(m_faces[5]->GetXmap()->GetTraceNcoeffs(0));
+        tmp1.push_back(m_faces[5]->GetXmap()->GetTraceNcoeffs(2));
     }
 
     int order1 = *max_element(tmp1.begin(), tmp1.end());
@@ -910,43 +769,43 @@ void HexGeom::SetUpXmap()
 
     if (m_forient[1] < 9)
     {
-        tmp1.push_back(m_faces[1]->GetXmap()->GetEdgeNcoeffs(1));
-        tmp1.push_back(m_faces[1]->GetXmap()->GetEdgeNcoeffs(3));
+        tmp1.push_back(m_faces[1]->GetXmap()->GetTraceNcoeffs(1));
+        tmp1.push_back(m_faces[1]->GetXmap()->GetTraceNcoeffs(3));
     }
     else
     {
-        tmp1.push_back(m_faces[1]->GetXmap()->GetEdgeNcoeffs(0));
-        tmp1.push_back(m_faces[1]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp1.push_back(m_faces[1]->GetXmap()->GetTraceNcoeffs(0));
+        tmp1.push_back(m_faces[1]->GetXmap()->GetTraceNcoeffs(2));
     }
 
     if (m_forient[3] < 9)
     {
-        tmp1.push_back(m_faces[3]->GetXmap()->GetEdgeNcoeffs(1));
-        tmp1.push_back(m_faces[3]->GetXmap()->GetEdgeNcoeffs(3));
+        tmp1.push_back(m_faces[3]->GetXmap()->GetTraceNcoeffs(1));
+        tmp1.push_back(m_faces[3]->GetXmap()->GetTraceNcoeffs(3));
     }
     else
     {
-        tmp1.push_back(m_faces[3]->GetXmap()->GetEdgeNcoeffs(0));
-        tmp1.push_back(m_faces[3]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp1.push_back(m_faces[3]->GetXmap()->GetTraceNcoeffs(0));
+        tmp1.push_back(m_faces[3]->GetXmap()->GetTraceNcoeffs(2));
     }
 
     int order2 = *max_element(tmp1.begin(), tmp1.end());
 
     const LibUtilities::BasisKey A(
-        LibUtilities::eModified_A,
-        order0,
-        LibUtilities::PointsKey(order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order0,
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey B(
-        LibUtilities::eModified_A,
-        order1,
-        LibUtilities::PointsKey(order1+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order1,
+        LibUtilities::PointsKey(order1 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey C(
-        LibUtilities::eModified_A,
-        order2,
-        LibUtilities::PointsKey(order2+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order2,
+        LibUtilities::PointsKey(order2 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
 
     m_xmap = MemoryManager<StdRegions::StdHexExp>::AllocateSharedPtr(A, B, C);
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

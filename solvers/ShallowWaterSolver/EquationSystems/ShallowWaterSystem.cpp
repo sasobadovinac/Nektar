@@ -40,171 +40,171 @@ using namespace std;
 
 namespace Nektar
 {
-    /**
-     * @class ShallowWaterSystem
-     *
-     * Provides the underlying timestepping framework for shallow water flow solvers
-     * including the general timestepping routines. This class is not intended
-     * to be directly instantiated, but rather is a base class on which to
-     * define shallow water solvers, e.g. SWE, Boussinesq, linear and nonlinear versions.
-     *
-     * For details on implementing unsteady solvers see
-     * \ref sectionADRSolverModuleImplementation 
-     */
+/**
+ * @class ShallowWaterSystem
+ *
+ * Provides the underlying timestepping framework for shallow water flow solvers
+ * including the general timestepping routines. This class is not intended
+ * to be directly instantiated, but rather is a base class on which to
+ * define shallow water solvers, e.g. SWE, Boussinesq, linear and nonlinear
+ * versions.
+ *
+ * For details on implementing unsteady solvers see
+ * \ref sectionADRSolverModuleImplementation
+ */
 
-    /**
-     * Processes SolverInfo parameters from the session file and sets up
-     * timestepping-specific code.
-     * @param   pSession        Session object to read parameters from.
-     */
+/**
+ * Processes SolverInfo parameters from the session file and sets up
+ * timestepping-specific code.
+ * @param   pSession        Session object to read parameters from.
+ */
 
-   string ShallowWaterSystem::className = 
-        SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-            "ShallowWaterSystem", 
-            ShallowWaterSystem::create, 
-            "Auxiliary functions for the shallow water system.");
-    
+string ShallowWaterSystem::className =
+    SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
+        "ShallowWaterSystem", ShallowWaterSystem::create,
+        "Auxiliary functions for the shallow water system.");
 
-    ShallowWaterSystem::ShallowWaterSystem(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : UnsteadySystem(pSession, pGraph)
+ShallowWaterSystem::ShallowWaterSystem(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : UnsteadySystem(pSession, pGraph)
+{
+}
+
+void ShallowWaterSystem::v_InitObject(bool DeclareFields)
+{
+    UnsteadySystem::v_InitObject(DeclareFields);
+
+    // if discontinuous Galerkin determine numerical flux to use
+    if (m_projectionType == MultiRegions::eDiscontinuous)
     {
+        ASSERTL0(m_session->DefinesSolverInfo("UPWINDTYPE"),
+                 "No UPWINDTYPE defined in session.");
     }
 
-    void ShallowWaterSystem::v_InitObject()
+    // Set up locations of velocity vector.
+    m_vecLocs    = Array<OneD, Array<OneD, NekDouble>>(1);
+    m_vecLocs[0] = Array<OneD, NekDouble>(m_spacedim);
+    for (int i = 0; i < m_spacedim; ++i)
     {
-        UnsteadySystem::v_InitObject();
-
-       	// if discontinuous Galerkin determine numerical flux to use
-	if (m_projectionType == MultiRegions::eDiscontinuous)
-	  {
-	    ASSERTL0(m_session->DefinesSolverInfo("UPWINDTYPE"),
-		     "No UPWINDTYPE defined in session.");
-	  }
-		   
-	 // Set up locations of velocity vector.
-	 m_vecLocs = Array<OneD, Array<OneD, NekDouble> >(1);
-	 m_vecLocs[0] = Array<OneD, NekDouble>(m_spacedim);
-	 for (int i = 0; i < m_spacedim; ++i)
-	 {
-			m_vecLocs[0][i] = 1 + i;
-	 }
-
- 	// Load generic input parameters
-        m_session->LoadParameter("IO_InfoSteps", m_infosteps, 0);
-
-	// Load acceleration of gravity
-	m_session->LoadParameter("Gravity", m_g, 9.81);
-
-	// input/output in primitive variables
-	m_primitive = true;
-
-       	EvaluateWaterDepth();
-	
-	m_constantDepth = true;
-	NekDouble depth = m_depth[0];
-	for (int i = 0; i < GetTotPoints(); ++i)
-	  {
-	    if (m_depth[i] != depth)
-	      {
-		m_constantDepth = false;
-		break;
-	      }
-	  }
-
-	// Compute the bottom slopes
-	int nq = GetTotPoints();
-	if (m_constantDepth != true)
-	  {
-	    m_bottomSlope = Array<OneD, Array<OneD, NekDouble> >(m_spacedim);
-	    for (int i = 0; i < m_spacedim; ++i)
-	      {
-		m_bottomSlope[i] = Array<OneD, NekDouble>(nq);
-		m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[i],m_depth,m_bottomSlope[i]);
-		Vmath::Neg(nq,m_bottomSlope[i],1);
-	      }
-	  }
-
-	EvaluateCoriolis();
-
+        m_vecLocs[0][i] = 1 + i;
     }
 
+    // Load generic input parameters
+    m_session->LoadParameter("IO_InfoSteps", m_infosteps, 0);
 
-    /**
-     *
-     */
-    ShallowWaterSystem::~ShallowWaterSystem()
+    // Load acceleration of gravity
+    m_session->LoadParameter("Gravity", m_g, 9.81);
+
+    // input/output in primitive variables
+    m_primitive = true;
+
+    EvaluateWaterDepth();
+
+    m_constantDepth = true;
+    NekDouble depth = m_depth[0];
+    for (int i = 0; i < GetTotPoints(); ++i)
     {
+        if (m_depth[i] != depth)
+        {
+            m_constantDepth = false;
+            break;
+        }
     }
 
-
-    void ShallowWaterSystem::v_GenerateSummary(SolverUtils::SummaryList& s)
+    // Compute the bottom slopes
+    int nq = GetTotPoints();
+    if (m_constantDepth != true)
     {
-        UnsteadySystem::v_GenerateSummary(s);
-	if (m_constantDepth == true)
-	  {
-	    SolverUtils::AddSummaryItem(s, "Depth", "constant");
-	  }
-	else
-	  {
-	    SolverUtils::AddSummaryItem(s, "Depth", "variable");
-	  }
-
-	
+        m_bottomSlope = Array<OneD, Array<OneD, NekDouble>>(m_spacedim);
+        for (int i = 0; i < m_spacedim; ++i)
+        {
+            m_bottomSlope[i] = Array<OneD, NekDouble>(nq);
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[i], m_depth,
+                                   m_bottomSlope[i]);
+            Vmath::Neg(nq, m_bottomSlope[i], 1);
+        }
     }
 
-   void ShallowWaterSystem::v_PrimitiveToConservative()
-  {
+    EvaluateCoriolis();
+}
+
+/**
+ *
+ */
+ShallowWaterSystem::~ShallowWaterSystem()
+{
+}
+
+void ShallowWaterSystem::v_GenerateSummary(SolverUtils::SummaryList &s)
+{
+    UnsteadySystem::v_GenerateSummary(s);
+    if (m_constantDepth == true)
+    {
+        SolverUtils::AddSummaryItem(s, "Depth", "constant");
+    }
+    else
+    {
+        SolverUtils::AddSummaryItem(s, "Depth", "variable");
+    }
+}
+
+void ShallowWaterSystem::v_PrimitiveToConservative()
+{
     ASSERTL0(false, "This function is not implemented for this equation.");
-  }
-  
-  void ShallowWaterSystem::v_ConservativeToPrimitive()
-  {
-    ASSERTL0(false, "This function is not implemented for this equation.");
-  }
+}
 
-  void ShallowWaterSystem::EvaluateWaterDepth(void)
-  {
+void ShallowWaterSystem::v_ConservativeToPrimitive()
+{
+    ASSERTL0(false, "This function is not implemented for this equation.");
+}
+
+void ShallowWaterSystem::EvaluateWaterDepth(void)
+{
     GetFunction("WaterDepth")->Evaluate("d", m_depth);
-  }
-  
-  
-  void ShallowWaterSystem::EvaluateCoriolis(void)
-  {
-    GetFunction("Coriolis")->Evaluate("f", m_coriolis);
-  }
+}
 
-  void ShallowWaterSystem::CopyBoundaryTrace(const Array<OneD, NekDouble>&Fwd, Array<OneD, NekDouble>&Bwd)
-  {
+void ShallowWaterSystem::EvaluateCoriolis(void)
+{
+    GetFunction("Coriolis")->Evaluate("f", m_coriolis);
+}
+
+void ShallowWaterSystem::CopyBoundaryTrace(const Array<OneD, NekDouble> &Fwd,
+                                           Array<OneD, NekDouble> &Bwd)
+{
 
     int cnt = 0;
     // loop over Boundary Regions
-    for(int bcRegion = 0; bcRegion < m_fields[0]->GetBndConditions().num_elements(); ++bcRegion)
-      {	
-        if (m_fields[0]->GetBndConditions()[bcRegion]->GetBoundaryConditionType()
-            == SpatialDomains::ePeriodic)
+    for (int bcRegion = 0; bcRegion < m_fields[0]->GetBndConditions().size();
+         ++bcRegion)
+    {
+        if (m_fields[0]
+                ->GetBndConditions()[bcRegion]
+                ->GetBoundaryConditionType() == SpatialDomains::ePeriodic)
         {
             continue;
         }
 
-	// Copy the forward trace of the field to the backward trace
+        // Copy the forward trace of the field to the backward trace
         int e, id2, npts;
-        
-        for (e = 0; e < m_fields[0]->GetBndCondExpansions()[bcRegion]
-                 ->GetExpSize(); ++e)
+
+        for (e = 0;
+             e < m_fields[0]->GetBndCondExpansions()[bcRegion]->GetExpSize();
+             ++e)
         {
-            npts = m_fields[0]->GetBndCondExpansions()[bcRegion]->
-                GetExp(e)->GetTotPoints();
-            id2  = m_fields[0]->GetTrace()->GetPhys_Offset(
-                        m_fields[0]->GetTraceMap()->
-                                    GetBndCondCoeffsToGlobalCoeffsMap(cnt+e));
-	
-	    Vmath::Vcopy(npts, &Fwd[id2], 1, &Bwd[id2], 1);
-	}
+            npts = m_fields[0]
+                       ->GetBndCondExpansions()[bcRegion]
+                       ->GetExp(e)
+                       ->GetTotPoints();
+            id2 = m_fields[0]->GetTrace()->GetPhys_Offset(
+                m_fields[0]->GetTraceMap()->GetBndCondIDToGlobalTraceID(cnt +
+                                                                        e));
 
-	cnt +=m_fields[0]->GetBndCondExpansions()[bcRegion]->GetExpSize();
-      }
-  }
+            Vmath::Vcopy(npts, &Fwd[id2], 1, &Bwd[id2], 1);
+        }
 
+        cnt += m_fields[0]->GetBndCondExpansions()[bcRegion]->GetExpSize();
+    }
 }
+
+} // namespace Nektar

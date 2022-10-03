@@ -39,30 +39,27 @@
 
 namespace Nektar
 {
-    class HLLCSolver : public CompressibleSolver
+class HLLCSolver : public CompressibleSolver
+{
+public:
+    static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        static RiemannSolverSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            return RiemannSolverSharedPtr(new HLLCSolver(pSession));
-        }
-        
-        static std::string solverName;
-        
-    protected:
-        HLLCSolver(const LibUtilities::SessionReaderSharedPtr& pSession);
-        
-        virtual void v_PointSolve(
-            NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL,
-            NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER,
-            NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef);
-        
-        virtual void v_PointSolveVisc(
-            NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL, NekDouble  EpsL,
-            NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER, NekDouble  EpsR,
-            NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef, NekDouble &Epsf);
-    };
-}
+        return RiemannSolverSharedPtr(new HLLCSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    HLLCSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    virtual void v_PointSolve(NekDouble rhoL, NekDouble rhouL, NekDouble rhovL,
+                              NekDouble rhowL, NekDouble EL, NekDouble rhoR,
+                              NekDouble rhouR, NekDouble rhovR, NekDouble rhowR,
+                              NekDouble ER, NekDouble &rhof, NekDouble &rhouf,
+                              NekDouble &rhovf, NekDouble &rhowf,
+                              NekDouble &Ef);
+};
+} // namespace Nektar
 
 #endif

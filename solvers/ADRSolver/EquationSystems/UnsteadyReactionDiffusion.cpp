@@ -32,24 +32,25 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 #include <boost/core/ignore_unused.hpp>
 
 #include <ADRSolver/EquationSystems/UnsteadyReactionDiffusion.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 
 using namespace std;
 
 namespace Nektar
 {
-string UnsteadyReactionDiffusion::className = GetEquationSystemFactory().
-    RegisterCreatorFunction("UnsteadyReactionDiffusion",
-                            UnsteadyReactionDiffusion::create);
+string UnsteadyReactionDiffusion::className =
+    GetEquationSystemFactory().RegisterCreatorFunction(
+        "UnsteadyReactionDiffusion", UnsteadyReactionDiffusion::create);
 
 UnsteadyReactionDiffusion::UnsteadyReactionDiffusion(
-    const LibUtilities::SessionReaderSharedPtr& pSession,
-    const SpatialDomains::MeshGraphSharedPtr& pGraph)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph)
 {
 }
@@ -57,9 +58,9 @@ UnsteadyReactionDiffusion::UnsteadyReactionDiffusion(
 /**
  * @brief Initialisation object for the unsteady reaction-diffusion problem.
  */
-void UnsteadyReactionDiffusion::v_InitObject()
+void UnsteadyReactionDiffusion::v_InitObject(bool DeclareFields)
 {
-    UnsteadySystem::v_InitObject();
+    UnsteadySystem::v_InitObject(DeclareFields);
 
     ASSERTL0(m_intScheme->GetIntegrationSchemeType() == LibUtilities::eIMEX,
              "Reaction-diffusion requires an implicit-explicit timestepping"
@@ -69,15 +70,16 @@ void UnsteadyReactionDiffusion::v_InitObject()
              "projection.");
 
     // Load diffusion parameter
-    m_session->LoadParameter("epsilon", m_epsilon,  0.0);
+    m_session->LoadParameter("epsilon", m_epsilon, 0.0);
 
     // Forcing terms
     m_forcing = SolverUtils::Forcing::Load(m_session, shared_from_this(),
-                                           m_fields, m_fields.num_elements());
+                                           m_fields, m_fields.size());
 
-    m_ode.DefineOdeRhs       (&UnsteadyReactionDiffusion::DoOdeRhs,        this);
-    m_ode.DefineProjection   (&UnsteadyReactionDiffusion::DoOdeProjection, this);
-    m_ode.DefineImplicitSolve(&UnsteadyReactionDiffusion::DoImplicitSolve, this);
+    m_ode.DefineOdeRhs(&UnsteadyReactionDiffusion::DoOdeRhs, this);
+    m_ode.DefineProjection(&UnsteadyReactionDiffusion::DoOdeProjection, this);
+    m_ode.DefineImplicitSolve(&UnsteadyReactionDiffusion::DoImplicitSolve,
+                              this);
 }
 
 /**
@@ -96,14 +98,13 @@ UnsteadyReactionDiffusion::~UnsteadyReactionDiffusion()
  * @param time       Time.
  */
 void UnsteadyReactionDiffusion::DoOdeRhs(
-    const Array<OneD, const  Array<OneD, NekDouble> > &inarray,
-          Array<OneD,        Array<OneD, NekDouble> > &outarray,
-    const NekDouble time)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     // RHS should be set to zero.
-    for (int i = 0; i < outarray.num_elements(); ++i)
+    for (int i = 0; i < outarray.size(); ++i)
     {
-        Vmath::Zero(outarray[i].num_elements(), &outarray[i][0], 1);
+        Vmath::Zero(outarray[i].size(), &outarray[i][0], 1);
     }
 
     // Add forcing terms for reaction.
@@ -122,20 +123,19 @@ void UnsteadyReactionDiffusion::DoOdeRhs(
  * @param time       Time.
  */
 void UnsteadyReactionDiffusion::DoOdeProjection(
-    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-          Array<OneD,       Array<OneD, NekDouble> > &outarray,
-    const NekDouble time)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     int i;
-    int nvariables = inarray.num_elements();
+    int nvariables = inarray.size();
     SetBoundaryConditions(time);
 
     Array<OneD, NekDouble> coeffs(m_fields[0]->GetNcoeffs());
 
-    for(i = 0; i < nvariables; ++i)
+    for (i = 0; i < nvariables; ++i)
     {
         m_fields[i]->FwdTrans(inarray[i], coeffs);
-        m_fields[i]->BwdTrans_IterPerExp(coeffs, outarray[i]);
+        m_fields[i]->BwdTrans(coeffs, outarray[i]);
     }
 }
 
@@ -143,17 +143,16 @@ void UnsteadyReactionDiffusion::DoOdeProjection(
  * @brief Implicit solution of the unsteady diffusion problem.
  */
 void UnsteadyReactionDiffusion::DoImplicitSolve(
-    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-          Array<OneD,       Array<OneD, NekDouble> > &outarray,
-    const NekDouble time,
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
     const NekDouble lambda)
 {
     boost::ignore_unused(time);
 
     StdRegions::ConstFactorMap factors;
 
-    int nvariables = inarray.num_elements();
-    int npoints    = m_fields[0]->GetNpoints();
+    int nvariables                     = inarray.size();
+    int npoints                        = m_fields[0]->GetNpoints();
     factors[StdRegions::eFactorLambda] = 1.0 / lambda / m_epsilon;
 
     // We solve ( \nabla^2 - HHlambda ) Y[i] = rhs [i] inarray = input:
@@ -162,15 +161,15 @@ void UnsteadyReactionDiffusion::DoImplicitSolve(
     for (int i = 0; i < nvariables; ++i)
     {
         // Multiply 1.0/timestep/lambda
-        Vmath::Smul(npoints, -factors[StdRegions::eFactorLambda],
-                    inarray[i], 1, outarray[i], 1);
+        Vmath::Smul(npoints, -factors[StdRegions::eFactorLambda], inarray[i], 1,
+                    outarray[i], 1);
 
         // Solve a system of equations with Helmholtz solver
-        m_fields[i]->HelmSolve(
-            outarray[i], m_fields[i]->UpdateCoeffs(), NullFlagList, factors);
+        m_fields[i]->HelmSolve(outarray[i], m_fields[i]->UpdateCoeffs(),
+                               factors);
         m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(), outarray[i]);
         m_fields[i]->SetPhysState(false);
     }
 }
 
-}
+} // namespace Nektar

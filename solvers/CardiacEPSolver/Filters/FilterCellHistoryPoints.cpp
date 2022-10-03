@@ -32,46 +32,43 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <CardiacEPSolver/Filters/FilterCellHistoryPoints.h>
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <iomanip>
-#include <CardiacEPSolver/Filters/FilterCellHistoryPoints.h>
 
 using namespace std;
 
 namespace Nektar
 {
 
-std::string FilterCellHistoryPoints::className
-    = SolverUtils::GetFilterFactory().RegisterCreatorFunction(
-            "CellHistoryPoints", FilterCellHistoryPoints::create);
+std::string FilterCellHistoryPoints::className =
+    SolverUtils::GetFilterFactory().RegisterCreatorFunction(
+        "CellHistoryPoints", FilterCellHistoryPoints::create);
 
 /**
  *
  */
 FilterCellHistoryPoints::FilterCellHistoryPoints(
-    const LibUtilities::SessionReaderSharedPtr         &pSession,
+    const LibUtilities::SessionReaderSharedPtr &pSession,
     const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-    const ParamMap &pParams) :
-    FilterHistoryPoints(pSession, pEquation, pParams)
+    const ParamMap &pParams)
+    : FilterHistoryPoints(pSession, pEquation, pParams)
 {
 }
-
 
 /**
  *
  */
 FilterCellHistoryPoints::~FilterCellHistoryPoints()
 {
-
 }
-
 
 /**
  *
  */
 void FilterCellHistoryPoints::v_Update(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     // Only output every m_outputFrequency.
     if ((m_index++) % m_outputFrequency)
@@ -79,12 +76,12 @@ void FilterCellHistoryPoints::v_Update(
         return;
     }
 
-    int j         = 0;
-    int k         = 0;
-    int numPoints = m_historyPoints.size();
-    int numFields = m_cell->GetNumCellVariables();
+    int j                             = 0;
+    int k                             = 0;
+    int numPoints                     = m_historyPoints.size();
+    int numFields                     = m_cell->GetNumCellVariables();
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
-    Array<OneD, NekDouble> data(numPoints*numFields, 0.0);
+    Array<OneD, NekDouble> data(numPoints * numFields, 0.0);
     Array<OneD, NekDouble> gloCoord(3, 0.0);
     Array<OneD, NekDouble> physvals;
     Array<OneD, NekDouble> locCoord;
@@ -95,7 +92,7 @@ void FilterCellHistoryPoints::v_Update(
     for (j = 0; j < numFields; ++j)
     {
         k = 0;
-        if(m_isHomogeneous1D)
+        if (m_isHomogeneous1D)
         {
             for (auto &x : m_historyList)
             {
@@ -103,13 +100,13 @@ void FilterCellHistoryPoints::v_Update(
                 expId    = x.first->GetVid();
                 nppp     = pFields[0]->GetPlane(0)->GetTotPoints();
 
-                physvals = m_cell->GetCellSolution(j) + m_outputPlane*nppp
-                            + pFields[j]->GetPhys_Offset(expId);
+                physvals = m_cell->GetCellSolution(j) + m_outputPlane * nppp +
+                           pFields[j]->GetPhys_Offset(expId);
 
                 // interpolate point can do with zero plane methods
-                data[m_historyLocalPointMap[k++]*numFields+j]
-                    = pFields[0]->GetExp(expId)->StdPhysEvaluate(
-                                                    locCoord,physvals);
+                data[m_historyLocalPointMap[k++] * numFields + j] =
+                    pFields[0]->GetExp(expId)->StdPhysEvaluate(locCoord,
+                                                               physvals);
             }
         }
         else
@@ -119,13 +116,13 @@ void FilterCellHistoryPoints::v_Update(
                 locCoord = x.second;
                 expId    = x.first->GetVid();
 
-                physvals = m_cell->GetCellSolution(j)
-                            + pFields[0]->GetPhys_Offset(expId);
+                physvals = m_cell->GetCellSolution(j) +
+                           pFields[0]->GetPhys_Offset(expId);
 
                 // interpolate point
-                data[m_historyLocalPointMap[k++]*numFields+j]
-                    = pFields[0]->GetExp(expId)->StdPhysEvaluate(
-                                                    locCoord,physvals);
+                data[m_historyLocalPointMap[k++] * numFields + j] =
+                    pFields[0]->GetExp(expId)->StdPhysEvaluate(locCoord,
+                                                               physvals);
             }
         }
     }
@@ -146,11 +143,11 @@ void FilterCellHistoryPoints::v_Update(
             for (int j = 0; j < numFields; ++j)
             {
                 m_outputStream.width(25);
-                m_outputStream << setprecision(16) << data[k*numFields+j];
+                m_outputStream << setprecision(16) << data[k * numFields + j];
             }
             m_outputStream << endl;
         }
     }
 }
 
-}
+} // namespace Nektar

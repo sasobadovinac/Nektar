@@ -50,8 +50,7 @@ namespace FieldUtils
 ModuleKey ProcessPrintFldNorms::className =
     GetModuleFactory().RegisterCreatorFunction(
         ModuleKey(eProcessModule, "printfldnorms"),
-        ProcessPrintFldNorms::create,
-        "Print L2 and LInf norms to stdout.");
+        ProcessPrintFldNorms::create, "Print L2 and LInf norms to stdout.");
 
 ProcessPrintFldNorms::ProcessPrintFldNorms(FieldSharedPtr f) : ProcessModule(f)
 {
@@ -63,7 +62,7 @@ ProcessPrintFldNorms::~ProcessPrintFldNorms()
 
 void ProcessPrintFldNorms::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -79,12 +78,12 @@ void ProcessPrintFldNorms::Process(po::variables_map &vm)
 
         if (m_f->m_comm->TreatAsRankZero())
         {
-            cout << "L 2 error (variable "   << m_f->m_variables[j]
+            cout << "L 2 error (variable " << m_f->m_variables[j]
                  << ") : " << L2 << endl;
             cout << "L inf error (variable " << m_f->m_variables[j]
                  << ") : " << LInf << endl;
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

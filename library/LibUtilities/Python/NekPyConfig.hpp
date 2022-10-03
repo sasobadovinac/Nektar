@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NekPyConfig.hpp
+// File: NekPyConfig.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,11 +28,24 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description: NekPy configuration to include boost headers and define
+// commonly-used macros.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef NEKTAR_LIBRARY_LIBUTILITIES_PYTHON_NEKPYCONFIG_HPP
+#define NEKTAR_LIBRARY_LIBUTILITIES_PYTHON_NEKPYCONFIG_HPP
+
 #include <boost/version.hpp>
+#include <memory>
+
+// Boost 1.62 and earlier don't have native support for std::shared_ptr. This
+// includes various patches that are pulled from the git changeset 97e4b34a15
+// from the main boost.python github repository, which is where fixes were
+// added to include std::shared_ptr support.
+#if BOOST_VERSION < 106300
+#include "ShPtrFixes.hpp"
+#endif
 
 #ifdef BOOST_HAS_NUMPY
 
@@ -44,8 +57,8 @@ namespace np = boost::python::numpy;
 
 #else
 
-#include <boost/python.hpp>
 #include <boost/numpy.hpp>
+#include <boost/python.hpp>
 
 namespace py = boost::python;
 namespace np = boost::numpy;
@@ -53,60 +66,50 @@ namespace np = boost::numpy;
 #endif
 
 #define SIZENAME(s) SIZE_##s
-#define NEKPY_WRAP_ENUM(ENUMNAME,MAPNAME)                          \
-    {                                                              \
-        py::enum_<ENUMNAME> tmp(#ENUMNAME);                        \
-        for (int a = 0; a < (int)SIZENAME(ENUMNAME); ++a)          \
-        {                                                          \
-            tmp.value(MAPNAME[a], (ENUMNAME)a);                    \
-        }                                                          \
-        tmp.export_values();                                       \
+#define NEKPY_WRAP_ENUM(ENUMNAME, MAPNAME)                                     \
+    {                                                                          \
+        py::enum_<ENUMNAME> tmp(#ENUMNAME);                                    \
+        for (int a = 0; a < (int)SIZENAME(ENUMNAME); ++a)                      \
+        {                                                                      \
+            tmp.value(MAPNAME[a], (ENUMNAME)a);                                \
+        }                                                                      \
+        tmp.export_values();                                                   \
     }
-#define NEKPY_WRAP_ENUM_STRING(ENUMNAME,MAPNAME)                   \
-    {                                                              \
-        py::enum_<ENUMNAME> tmp(#ENUMNAME);                        \
-        for (int a = 0; a < (int)SIZENAME(ENUMNAME); ++a)          \
-        {                                                          \
-            tmp.value(MAPNAME[a].c_str(), (ENUMNAME)a);            \
-        }                                                          \
-        tmp.export_values();                                       \
+#define NEKPY_WRAP_ENUM_STRING(ENUMNAME, MAPNAME)                              \
+    {                                                                          \
+        py::enum_<ENUMNAME> tmp(#ENUMNAME);                                    \
+        for (int a = 0; a < (int)SIZENAME(ENUMNAME); ++a)                      \
+        {                                                                      \
+            tmp.value(MAPNAME[a].c_str(), (ENUMNAME)a);                        \
+        }                                                                      \
+        tmp.export_values();                                                   \
     }
 #if PY_MAJOR_VERSION == 2
-#define NEKPY_WRAP_ENUM_STRING_DOCS(ENUMNAME,MAPNAME,DOCSTRING)    \
-    {                                                              \
-        py::enum_<ENUMNAME> tmp(#ENUMNAME);                        \
-        for (int a = 0; a < (int)SIZENAME(ENUMNAME); ++a)          \
-        {                                                          \
-            tmp.value(MAPNAME[a].c_str(), (ENUMNAME)a);            \
-        }                                                          \
-        tmp.export_values();                                       \
-        PyTypeObject * pto =                                       \
-            reinterpret_cast<PyTypeObject*>(tmp.ptr());            \
-        PyDict_SetItemString(pto->tp_dict, "__doc__",              \
-            PyString_FromString(DOCSTRING));                       \
+#define NEKPY_WRAP_ENUM_STRING_DOCS(ENUMNAME, MAPNAME, DOCSTRING)              \
+    {                                                                          \
+        py::enum_<ENUMNAME> tmp(#ENUMNAME);                                    \
+        for (int a = 0; a < (int)SIZENAME(ENUMNAME); ++a)                      \
+        {                                                                      \
+            tmp.value(MAPNAME[a].c_str(), (ENUMNAME)a);                        \
+        }                                                                      \
+        tmp.export_values();                                                   \
+        PyTypeObject *pto = reinterpret_cast<PyTypeObject *>(tmp.ptr());       \
+        PyDict_SetItemString(pto->tp_dict, "__doc__",                          \
+                             PyString_FromString(DOCSTRING));                  \
     }
 #else
-#define NEKPY_WRAP_ENUM_STRING_DOCS(ENUMNAME,MAPNAME,DOCSTRING)    \
-    {                                                              \
-        py::enum_<ENUMNAME> tmp(#ENUMNAME);                        \
-        for (int a = 0; a < (int)SIZENAME(ENUMNAME); ++a)          \
-        {                                                          \
-            tmp.value(MAPNAME[a].c_str(), (ENUMNAME)a);            \
-        }                                                          \
-        tmp.export_values();                                       \
-        PyTypeObject * pto =                                       \
-            reinterpret_cast<PyTypeObject*>(tmp.ptr());            \
-        PyDict_SetItemString(pto->tp_dict, "__doc__",              \
-                             PyUnicode_FromString(DOCSTRING));     \
+#define NEKPY_WRAP_ENUM_STRING_DOCS(ENUMNAME, MAPNAME, DOCSTRING)              \
+    {                                                                          \
+        py::enum_<ENUMNAME> tmp(#ENUMNAME);                                    \
+        for (int a = 0; a < (int)SIZENAME(ENUMNAME); ++a)                      \
+        {                                                                      \
+            tmp.value(MAPNAME[a].c_str(), (ENUMNAME)a);                        \
+        }                                                                      \
+        tmp.export_values();                                                   \
+        PyTypeObject *pto = reinterpret_cast<PyTypeObject *>(tmp.ptr());       \
+        PyDict_SetItemString(pto->tp_dict, "__doc__",                          \
+                             PyUnicode_FromString(DOCSTRING));                 \
     }
 #endif
 
-// Boost 1.62 and earlier don't have native support for std::shared_ptr.
-#if BOOST_VERSION < 106300
-#define NEKPY_SHPTR_FIX(SOURCE,TARGET)                             \
-    py::implicitly_convertible<std::shared_ptr<SOURCE>,            \
-                               std::shared_ptr<TARGET>>();
-#else
-#define NEKPY_SHPTR_FIX(SOURCE,TARGET)
 #endif
-

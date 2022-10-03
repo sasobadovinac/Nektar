@@ -49,15 +49,12 @@ namespace FieldUtils
 
 ModuleKey ProcessScaleInFld::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "scaleinputfld"),
-        ProcessScaleInFld::create,
+        ModuleKey(eProcessModule, "scaleinputfld"), ProcessScaleInFld::create,
         "rescale input field by a constant factor.");
 
 ProcessScaleInFld::ProcessScaleInFld(FieldSharedPtr f) : ProcessModule(f)
 {
     m_config["scale"] = ConfigOption(false, "NotSet", "scale factor");
-    ASSERTL0(m_config["scale"].as<string>().compare("NotSet") != 0,
-             "scaleinputfld: Need to specify a scale factor");
 }
 
 ProcessScaleInFld::~ProcessScaleInFld()
@@ -67,6 +64,9 @@ ProcessScaleInFld::~ProcessScaleInFld()
 void ProcessScaleInFld::Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
+
+    ASSERTL0(m_config["scale"].as<string>().compare("NotSet") != 0,
+             "scaleinputfld: Need to specify a scale factor");
 
     string scalestr = m_config["scale"].as<string>();
     NekDouble scale = boost::lexical_cast<NekDouble>(scalestr);
@@ -79,5 +79,5 @@ void ProcessScaleInFld::Process(po::variables_map &vm)
                     &(m_f->m_data[i][0]), 1);
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

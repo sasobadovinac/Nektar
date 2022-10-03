@@ -35,139 +35,115 @@
 #ifndef MULTIREGIONS_ASSEMBLY_MAP_DG_H
 #define MULTIREGIONS_ASSEMBLY_MAP_DG_H
 
-#include <MultiRegions/MultiRegionsDeclspec.h>
+#include <MultiRegions/AssemblyMap/AssemblyCommDG.h>
 #include <MultiRegions/AssemblyMap/AssemblyMap.h>
-#include <MultiRegions/ExpList2D.h>
-#include <MultiRegions/ExpList1D.h>
-#include <MultiRegions/ExpList0D.h>
+#include <MultiRegions/ExpList.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
-    {
-        class AssemblyMapDG;
-        typedef std::shared_ptr<AssemblyMapDG>  AssemblyMapDGSharedPtr;
+namespace MultiRegions
+{
+class AssemblyMapDG;
+typedef std::shared_ptr<AssemblyMapDG> AssemblyMapDGSharedPtr;
 
-        ///
-        class AssemblyMapDG: public AssemblyMap
-        {
-        public:
-            /// Default constructor.
-            MULTI_REGIONS_EXPORT AssemblyMapDG();
+///
+class AssemblyMapDG : public AssemblyMap
+{
+public:
+    /// Default constructor.
+    MULTI_REGIONS_EXPORT AssemblyMapDG();
 
-            /// Constructor for trace map for one-dimensional expansion.
-            MULTI_REGIONS_EXPORT AssemblyMapDG( 
-                const LibUtilities::SessionReaderSharedPtr &pSession,
-                const SpatialDomains::MeshGraphSharedPtr &graph1D,
-                const ExpListSharedPtr &trace,
-                const ExpList &locExp,
-                const Array<OneD, const MultiRegions::ExpListSharedPtr>
-                                                                &bndConstraint,
-                const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
-                                                                &bndCond,
-                const PeriodicMap &periodicTrace,
-                const std::string variable = "DefaultVar");
+    /// Constructor for trace map for one-dimensional expansion.
+    MULTI_REGIONS_EXPORT AssemblyMapDG(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &graph1D,
+        const ExpListSharedPtr &trace, const ExpList &locExp,
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &bndConstraint,
+        const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+            &bndCond,
+        const PeriodicMap &periodicTrace,
+        const std::string variable = "DefaultVar");
 
-            /// Destructor.
-            MULTI_REGIONS_EXPORT virtual ~AssemblyMapDG();
+    /// Destructor.
+    MULTI_REGIONS_EXPORT virtual ~AssemblyMapDG();
 
-            /// Return the number of boundary segments on which Dirichlet
-            /// boundary conditions are imposed.
-            MULTI_REGIONS_EXPORT int GetNumDirichletBndPhys();
+    /// Return the number of boundary segments on which Dirichlet
+    /// boundary conditions are imposed.
+    MULTI_REGIONS_EXPORT int GetNumDirichletBndPhys();
 
-            MULTI_REGIONS_EXPORT Array<OneD, LocalRegions::ExpansionSharedPtr>
-                &GetElmtToTrace(const int i);
+    MULTI_REGIONS_EXPORT Array<OneD, LocalRegions::ExpansionSharedPtr>
+        &GetElmtToTrace(const int i);
 
-            MULTI_REGIONS_EXPORT 
-                Array<OneD,Array<OneD,LocalRegions::ExpansionSharedPtr> >
-                &GetElmtToTrace();
+    MULTI_REGIONS_EXPORT
+    Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr>>
+        &GetElmtToTrace();
 
-            MULTI_REGIONS_EXPORT int GetTraceToUniversalMap(int i);
+    /**
+     * Changes toAlign quadrature point order, where the realignment is
+     * given by orient, which defines the mapping needed to go between
+     * the original ordering and the new desired ordering.
+     *
+     * @param[in,out] toAlign Data to reorder
+     * @param[in] orient The transformation to perform
+     * @param[in] nquad1 Quadrature points in direction 1
+     * @param[in] nquad2 Quadrature points in direction 2
+     */
+    MULTI_REGIONS_EXPORT static void RealignTraceElement(
+        Array<OneD, int> &toAlign, StdRegions::Orientation orient, int nquad1,
+        int nquad2 = 0);
 
-            MULTI_REGIONS_EXPORT int GetTraceToUniversalMapUnique(int i);
+    MULTI_REGIONS_EXPORT AssemblyCommDGSharedPtr GetAssemblyCommDG();
 
-            MULTI_REGIONS_EXPORT void UniversalTraceAssemble(
-                Array<OneD, NekDouble> &pGlobal) const;
+protected:
+    /// Number of physical dirichlet boundary values in trace
+    int m_numDirichletBndPhys;
 
-        protected:
-            Gs::gs_data * m_traceGsh;
-            
-            /// Number of physical dirichlet boundary values in trace
-            int m_numDirichletBndPhys;
+    AssemblyCommDGSharedPtr m_assemblyComm;
 
-            /// list of edge expansions for a given element
-            Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr> > m_elmtToTrace;
-            /// Integer map of process trace space quadrature points to
-            /// universal space.
-            Array<OneD,int> m_traceToUniversalMap;
-            /// Integer map of unique process trace space quadrature points to
-            /// universal space (signed).
-            Array<OneD,int> m_traceToUniversalMapUnique;
+    /// list of edge expansions for a given element
+    Array<OneD, Array<OneD, LocalRegions::ExpansionSharedPtr>> m_elmtToTrace;
 
-            void SetUpUniversalDGMap(const ExpList &locExp);
+    void SetUpUniversalDGMap(const ExpList &locExp);
 
-            void SetUpUniversalTraceMap(
-                const ExpList         &locExp,
-                const ExpListSharedPtr trace,
-                const PeriodicMap     &perMap = NullPeriodicMap);
+    virtual int v_GetLocalToGlobalMap(const int i) const;
 
-            virtual int v_GetLocalToGlobalMap(const int i) const;
+    virtual int v_GetGlobalToUniversalMap(const int i) const;
 
-            virtual int v_GetGlobalToUniversalMap(const int i) const;
+    virtual int v_GetGlobalToUniversalMapUnique(const int i) const;
 
-            virtual int v_GetGlobalToUniversalMapUnique(const int i) const;
+    virtual const Array<OneD, const int> &v_GetLocalToGlobalMap();
 
-            virtual const Array<OneD,const int>&  v_GetLocalToGlobalMap();
+    virtual const Array<OneD, const int> &v_GetGlobalToUniversalMap();
 
-            virtual const Array<OneD, const int>& v_GetGlobalToUniversalMap();
+    virtual const Array<OneD, const int> &v_GetGlobalToUniversalMapUnique();
 
-            virtual const Array<OneD, const int>& v_GetGlobalToUniversalMapUnique();
+    virtual NekDouble v_GetLocalToGlobalSign(const int i) const;
 
-            virtual NekDouble v_GetLocalToGlobalSign(const int i) const;
+    virtual void v_LocalToGlobal(const Array<OneD, const NekDouble> &loc,
+                                 Array<OneD, NekDouble> &global,
+                                 bool useComm = false) const;
 
-            virtual void v_LocalToGlobal(
-                    const Array<OneD, const NekDouble>& loc,
-                    Array<OneD,       NekDouble>& global,
-                    bool useComm) const;
+    virtual void v_GlobalToLocal(const Array<OneD, const NekDouble> &global,
+                                 Array<OneD, NekDouble> &loc) const;
 
-            virtual void v_LocalToGlobal(
-                    const NekVector<NekDouble>& loc,
-                    NekVector<      NekDouble>& global,
-                    bool useComm) const;
+    virtual void v_GlobalToLocal(const NekVector<NekDouble> &global,
+                                 NekVector<NekDouble> &loc) const;
 
-            virtual void v_GlobalToLocal(
-                    const Array<OneD, const NekDouble>& global,
-                          Array<OneD,       NekDouble>& loc) const;
+    virtual void v_Assemble(const Array<OneD, const NekDouble> &loc,
+                            Array<OneD, NekDouble> &global) const;
 
-            virtual void v_GlobalToLocal(
-                    const NekVector<NekDouble>& global,
-                          NekVector<      NekDouble>& loc) const;
+    virtual void v_Assemble(const NekVector<NekDouble> &loc,
+                            NekVector<NekDouble> &global) const;
 
-            virtual void v_Assemble(
-                    const Array<OneD, const NekDouble> &loc,
-                          Array<OneD,       NekDouble> &global) const;
+    virtual void v_UniversalAssemble(Array<OneD, NekDouble> &pGlobal) const;
 
-            virtual void v_Assemble(
-                    const NekVector<NekDouble>& loc,
-                          NekVector<      NekDouble>& global) const;
+    virtual void v_UniversalAssemble(NekVector<NekDouble> &pGlobal) const;
 
-            virtual void v_UniversalAssemble(
-                          Array<OneD,     NekDouble>& pGlobal) const;
+    virtual int v_GetFullSystemBandWidth() const;
+}; // class
 
-            virtual void v_UniversalAssemble(
-                          NekVector<      NekDouble>& pGlobal) const;
+} // namespace MultiRegions
+} // namespace Nektar
 
-            virtual int v_GetFullSystemBandWidth() const;
-
-            void RealignTraceElement(
-                Array<OneD, int>        &toAlign,
-                StdRegions::Orientation  orient,
-                int                      nquad1,
-                int                      nquad2 = 0);
-        }; // class
-
-
-    } // end of namespace
-} // end of namespace
-
-#endif //MULTIREGIONS_ASSEMBLY_MAP_DG_H
+#endif // MULTIREGIONS_ASSEMBLY_MAP_DG_H

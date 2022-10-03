@@ -41,8 +41,10 @@
 #include <map>
 #include <set>
 #include <string>
+#include <typeinfo>
 #include <vector>
 
+#include <FieldUtils/FieldConvertComm.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/Communication/CommSerial.h>
 #include <StdRegions/StdNodalTriExp.h>
@@ -69,7 +71,7 @@ enum ModuleType
     SIZE_ModuleType
 };
 
-const char *const ModuleTypeMap[] = {"Input", "Process", "Output"};
+const std::string ModuleTypeMap[] = {"Input", "Process", "Output"};
 
 enum ModulePriority
 {
@@ -87,11 +89,15 @@ enum ModulePriority
     SIZE_ModulePriority
 };
 
+const char *const ModulePriorityMap[] = {
+    "CreateGraph",     "CreateFieldData", "ModifyFieldData", "CreateExp",
+    "FillExp",         "ModifyExp",       "BndExtraction",   "CreatePts",
+    "ConvertExpToPts", "ModifyPts",       "Output"};
+
 /**
  * @brief Swap endian ordering of the input variable.
  */
-template <typename T>
-void swap_endian(T &u)
+template <typename T> void swap_endian(T &u)
 {
     union
     {
@@ -109,8 +115,7 @@ void swap_endian(T &u)
     u = dest.u;
 }
 
-template <typename T>
-void swap_endian(std::vector<T> &u)
+template <typename T> void swap_endian(std::vector<T> &u)
 {
     size_t vecSize = u.size();
     for (int i = 0; i < vecSize; ++i)
@@ -145,7 +150,7 @@ struct ConfigOption
      * @brief Re-interpret the value stored in #value as some type using
      * boost::lexical_cast.
      */
-    template <typename T> T as()
+    template <typename T> T as() const
     {
         try
         {
@@ -153,7 +158,9 @@ struct ConfigOption
         }
         catch (const std::exception &e)
         {
-            std::cerr << e.what() << std::endl;
+            std::cerr << "We are not able to cast m_value " << m_value << " to "
+                      << typeid(T).name() << std::endl
+                      << e.what() << std::endl;
             abort();
         }
     }
@@ -180,11 +187,12 @@ struct ConfigOption
 class Module
 {
 public:
-    FIELD_UTILS_EXPORT Module(FieldSharedPtr p_f)
-        : m_f(p_f)
+    FIELD_UTILS_EXPORT Module(FieldSharedPtr p_f) : m_f(p_f)
     {
     }
     virtual void Process(po::variables_map &vm) = 0;
+
+    virtual ~Module() = default;
 
     virtual std::string GetModuleName() = 0;
 
@@ -193,25 +201,36 @@ public:
         return " ";
     }
 
+    const ConfigOption &GetConfigOption(const std::string &key) const
+    {
+        auto it = m_config.find(key);
+        ASSERTL0(it != m_config.end(), "Configuration key not found!");
+        return it->second;
+    }
+
     virtual ModulePriority GetModulePriority() = 0;
 
     FIELD_UTILS_EXPORT void RegisterConfig(std::string key,
                                            std::string value = "");
     FIELD_UTILS_EXPORT void PrintConfig();
     FIELD_UTILS_EXPORT void SetDefaults();
+    FIELD_UTILS_EXPORT void AddFile(std::string fileType, std::string fileName);
 
     FIELD_UTILS_EXPORT void EvaluateTriFieldAtEquiSpacedPts(
         LocalRegions::ExpansionSharedPtr &exp,
         const Array<OneD, const NekDouble> &infield,
         Array<OneD, NekDouble> &outfield);
 
+    /// Field object
+    FieldSharedPtr m_f;
+
 protected:
     Module(){};
 
-    /// Field object
-    FieldSharedPtr m_f;
     /// List of configuration values.
     std::map<std::string, ConfigOption> m_config;
+    /// List of allowed file formats.
+    std::set<std::string> m_allowedFiles;
 };
 
 /**
@@ -227,13 +246,8 @@ class InputModule : public Module
 {
 public:
     InputModule(FieldSharedPtr p_m);
-    FIELD_UTILS_EXPORT void AddFile(std::string fileType, std::string fileName);
     FIELD_UTILS_EXPORT static std::string GuessFormat(std::string fileName);
-
-protected:
-    /// Print summary of elements.
     void PrintSummary();
-    std::set<std::string> m_allowedFiles;
 };
 
 typedef std::shared_ptr<InputModule> InputModuleSharedPtr;
@@ -269,8 +283,8 @@ protected:
 };
 
 typedef std::pair<ModuleType, std::string> ModuleKey;
-FIELD_UTILS_EXPORT std::ostream &operator<<(
-    std::ostream &os, const ModuleKey &rhs);
+FIELD_UTILS_EXPORT std::ostream &operator<<(std::ostream &os,
+                                            const ModuleKey &rhs);
 
 typedef std::shared_ptr<Module> ModuleSharedPtr;
 typedef LibUtilities::NekFactory<ModuleKey, Module, FieldSharedPtr>
@@ -278,59 +292,7 @@ typedef LibUtilities::NekFactory<ModuleKey, Module, FieldSharedPtr>
 
 FIELD_UTILS_EXPORT ModuleFactory &GetModuleFactory();
 
-class FieldConvertComm : public LibUtilities::CommSerial
-{
-public:
-    FieldConvertComm(int argc, char *argv[], int size, int rank)
-        : CommSerial(argc, argv)
-    {
-        m_size = size;
-        m_rank = rank;
-       m_type = "FieldConvert parallel";
-    }
-    FieldConvertComm(int size, int rank) : CommSerial(0, NULL)
-    {
-        m_size = size;
-        m_rank = rank;
-       m_type = "FieldConvert parallel";
-    }
-    virtual ~FieldConvertComm()
-    {
-    }
-    void v_SplitComm(int pRows, int pColumns)
-    {
-        // Compute row and column in grid.
-        m_commRow = std::shared_ptr<FieldConvertComm>(
-            new FieldConvertComm(pColumns, m_rank));
-        m_commColumn =
-            std::shared_ptr<FieldConvertComm>(new FieldConvertComm(pRows, 0));
-    }
-
-protected:
-    int v_GetRank(void)
-    {
-        return m_rank;
-    }
-
-    bool v_TreatAsRankZero(void)
-    {
-        return true;
-    }
-
-    bool v_IsSerial(void)
-    {
-        return true;
-    }
-
-    bool v_RemoveExistingFiles(void)
-    {
-        return false;
-    }
-
-private:
-    int m_rank;
-};
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

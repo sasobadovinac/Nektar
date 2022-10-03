@@ -43,9 +43,8 @@ namespace Nektar
 {
 namespace LibUtilities
 {
-bool NodalPrismSPI::initPointsManager[] = {
-    PointsManager().RegisterCreator(PointsKey(0, eNodalPrismSPI),          NodalPrismSPI::Create)
-};
+bool NodalPrismSPI::initPointsManager[] = {PointsManager().RegisterCreator(
+    PointsKey(0, eNodalPrismSPI), NodalPrismSPI::Create)};
 
 void NodalPrismSPI::CalculatePoints()
 {
@@ -59,7 +58,7 @@ void NodalPrismSPI::CalculatePoints()
     PointsKey t(numPoints, eNodalTriSPI);
     PointsManager()[t]->GetPoints(m_t0, m_t1);
     m_tw     = PointsManager()[t]->GetW();
-    m_numtri = m_tw.num_elements();
+    m_numtri = m_tw.size();
 
     for (int i = 0; i < 3; i++)
     {
@@ -105,5 +104,5 @@ std::shared_ptr<PointsBaseType> NodalPrismSPI::Create(const PointsKey &key)
     return returnval;
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

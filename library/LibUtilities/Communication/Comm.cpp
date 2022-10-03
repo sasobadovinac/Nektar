@@ -59,11 +59,15 @@ bool Comm::v_RemoveExistingFiles(void)
     return true;
 }
 
+std::pair<CommSharedPtr, CommSharedPtr> Comm::v_SplitCommNode()
+{
+    return std::make_pair(CommSharedPtr(), CommSharedPtr());
+}
 
 CommFactory &GetCommFactory()
 {
     static CommFactory instance;
     return instance;
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

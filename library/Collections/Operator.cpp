@@ -32,16 +32,28 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <Collections/Operator.h>
 #include <Collections/Collection.h>
+#include <Collections/Operator.h>
 
-namespace Nektar {
-namespace Collections {
+namespace Nektar
+{
+namespace Collections
+{
+
+Operator::Operator(std::vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                   std::shared_ptr<CoalescedGeomData> GeomData,
+                   StdRegions::FactorMap factors)
+    : m_isDeformed(GeomData->IsDeformed(pCollExp)),
+      m_stdExp(pCollExp[0]->GetStdExp()), m_numElmt(pCollExp.size()),
+      m_nqe(pCollExp[0]->GetTotPoints()), m_wspSize(0)
+{
+    boost::ignore_unused(factors);
+}
 
 /**
  *
  */
-bool operator< (OperatorKey const &p1, OperatorKey const &p2)
+bool operator<(OperatorKey const &p1, OperatorKey const &p2)
 {
     if (std::get<0>(p1) < std::get<0>(p2))
     {
@@ -80,19 +92,17 @@ bool operator< (OperatorKey const &p1, OperatorKey const &p2)
     return false;
 }
 
-
 /**
  *
  */
 std::ostream &operator<<(std::ostream &os, OperatorKey const &p)
 {
     os << LibUtilities::ShapeTypeMap[std::get<0>(p)] << ", "
-       << OperatorTypeMap           [std::get<1>(p)] << ", "
-       << ImplementationTypeMap     [std::get<2>(p)] << ", "
+       << OperatorTypeMap[std::get<1>(p)] << ", "
+       << ImplementationTypeMap[std::get<2>(p)] << ", "
        << (std::get<3>(p) ? "Nodal" : "Modal");
     return os;
 }
-
 
 /**
  *
@@ -101,24 +111,21 @@ Operator::~Operator()
 {
 }
 
-
 /**
  *
  */
-OperatorFactory& GetOperatorFactory()
+OperatorFactory &GetOperatorFactory()
 {
     static OperatorFactory instance;
     return instance;
 }
-
-
 
 // simple operator Map evaluation
 OperatorImpMap SetFixedImpType(ImplementationType defaultType)
 {
     OperatorImpMap opMap;
 
-    for(int i = 0; i < SIZE_OperatorType; ++i)
+    for (int i = 0; i < SIZE_OperatorType; ++i)
     {
         opMap[(OperatorType)i] = defaultType;
     }
@@ -126,5 +133,5 @@ OperatorImpMap SetFixedImpType(ImplementationType defaultType)
     return opMap;
 }
 
-}
-}
+} // namespace Collections
+} // namespace Nektar

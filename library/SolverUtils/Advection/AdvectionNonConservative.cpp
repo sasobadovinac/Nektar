@@ -38,115 +38,94 @@
 
 namespace Nektar
 {
-    namespace SolverUtils
+namespace SolverUtils
+{
+std::string AdvectionNonConservative::type =
+    GetAdvectionFactory().RegisterCreatorFunction(
+        "NonConservative", AdvectionNonConservative::create,
+        "Non Conservative");
+
+AdvectionNonConservative::AdvectionNonConservative()
+{
+}
+
+/**
+ * @brief Initialise AdvectionNonConservative objects and store them
+ * before starting the time-stepping.
+ *
+ * @param pSession  Pointer to session reader.
+ * @param pFields   Pointer to fields.
+ */
+void AdvectionNonConservative::v_InitObject(
+    LibUtilities::SessionReaderSharedPtr pSession,
+    Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
+{
+    Advection::v_InitObject(pSession, pFields);
+}
+
+void AdvectionNonConservative::v_Advect(
+    const int nConvectiveFields,
+    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+    const Array<OneD, Array<OneD, NekDouble>> &advVel,
+    const Array<OneD, Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+    const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+    const Array<OneD, Array<OneD, NekDouble>> &pBwd)
+{
+    boost::ignore_unused(time, pFwd, pBwd);
+
+    int nDim       = advVel.size();
+    int nPointsTot = fields[0]->GetNpoints();
+    Array<OneD, NekDouble> grad0, grad1, grad2;
+
+    grad0 = Array<OneD, NekDouble>(nPointsTot);
+
+    if (nDim > 1)
     {
-        std::string AdvectionNonConservative::type = GetAdvectionFactory().
-            RegisterCreatorFunction("NonConservative", 
-                                    AdvectionNonConservative::create);
+        grad1 = Array<OneD, NekDouble>(nPointsTot);
+    }
 
-        AdvectionNonConservative::AdvectionNonConservative()
+    if (nDim > 2)
+    {
+        grad2 = Array<OneD, NekDouble>(nPointsTot);
+    }
+
+    for (int i = 0; i < nConvectiveFields; ++i)
+    {
+        // Evaluate V \cdot Grad(u)
+        switch (nDim)
         {
-            
-        }
-        
-        /**
-         * @brief Initialise AdvectionNonConservative objects and store them
-         * before starting the time-stepping.
-         *
-         * @param pSession  Pointer to session reader.
-         * @param pFields   Pointer to fields.
-         */
-        void AdvectionNonConservative::v_InitObject(
-            LibUtilities::SessionReaderSharedPtr        pSession,
-            Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
-        {
-            Advection::v_InitObject(pSession, pFields);
-        }
+            case 1:
+                fields[0]->PhysDeriv(inarray[i], grad0);
 
-        void AdvectionNonConservative::v_Advect(
-            const int                                         nConvectiveFields,
-            const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-            const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-            const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                  Array<OneD, Array<OneD, NekDouble> >        &outarray,
-            const NekDouble                                   &time,
-            const Array<OneD, Array<OneD, NekDouble> >        &pFwd,
-            const Array<OneD, Array<OneD, NekDouble> >        &pBwd)
-        {
-            boost::ignore_unused(time, pFwd, pBwd);
+                Vmath::Vmul(nPointsTot, grad0, 1, advVel[0], 1, outarray[i], 1);
+                break;
+            case 2:
+                fields[0]->PhysDeriv(inarray[i], grad0, grad1);
 
-            int nDim       = advVel.num_elements();
-            int nPointsTot = fields[0]->GetNpoints();
-            Array<OneD, NekDouble> grad0,grad1,grad2;
+                // Calculate advection terms
+                Vmath::Vmul(nPointsTot, grad0, 1, advVel[0], 1, outarray[i], 1);
 
-            grad0 = Array<OneD, NekDouble> (nPointsTot);
-            
-            if (nDim > 1)
-            {
-                grad1 = Array<OneD,NekDouble>(nPointsTot);
-            }
-            
-            if (nDim > 2)
-            {
-                grad2 = Array<OneD,NekDouble>(nPointsTot);
-            }
+                Vmath::Vvtvp(nPointsTot, grad1, 1, advVel[1], 1, outarray[i], 1,
+                             outarray[i], 1);
 
+                break;
+            case 3:
+                fields[0]->PhysDeriv(inarray[i], grad0, grad1, grad2);
 
-            for (int i = 0; i < nConvectiveFields; ++i)
-            {
-                // Evaluate V \cdot Grad(u)
-                switch(nDim)
-                {
-                    case 1:
-                        fields[0]->PhysDeriv(inarray[i], grad0);
-                        
-                        Vmath::Vmul(nPointsTot, 
-                                    grad0,          1, 
-                                    advVel[0],      1, 
-                                    outarray[i],    1);
-                        break;
-                    case 2:
-                        fields[0]->PhysDeriv(inarray[i], grad0, grad1);
-                        
-                        
-                        // Calculate advection terms 
-                        Vmath::Vmul (nPointsTot, 
-                                     grad0, 1, 
-                                     advVel[0], 1, 
-                                     outarray[i], 1);
-                        
-                        Vmath::Vvtvp(nPointsTot, 
-                                     grad1, 1, 
-                                     advVel[1], 1, 
-                                     outarray[i], 1, 
-                                     outarray[i], 1);
-                        
-                        break;
-                      case 3:
-                        fields[0]->PhysDeriv(inarray[i], grad0, grad1, grad2);
-                        
-                        // Calculate advection terms 
-                        Vmath::Vmul (nPointsTot, 
-                                     grad0, 1, 
-                                     advVel[0], 1, 
-                                     outarray[i], 1);
-                        
-                        Vmath::Vvtvp(nPointsTot, 
-                                     grad1, 1, 
-                                     advVel[1], 1, 
-                                     outarray[i], 1, 
-                                     outarray[i], 1);
-                        
-                        Vmath::Vvtvp(nPointsTot, 
-                                     grad2, 1, 
-                                     advVel[2], 1, 
-                                     outarray[i], 1, 
-                                     outarray[i], 1);
-                        break;
-                    default:
-                        ASSERTL0(false,"dimension unknown");
-                }
-            }
+                // Calculate advection terms
+                Vmath::Vmul(nPointsTot, grad0, 1, advVel[0], 1, outarray[i], 1);
+
+                Vmath::Vvtvp(nPointsTot, grad1, 1, advVel[1], 1, outarray[i], 1,
+                             outarray[i], 1);
+
+                Vmath::Vvtvp(nPointsTot, grad2, 1, advVel[2], 1, outarray[i], 1,
+                             outarray[i], 1);
+                break;
+            default:
+                ASSERTL0(false, "dimension unknown");
         }
     }
 }
+} // namespace SolverUtils
+} // namespace Nektar

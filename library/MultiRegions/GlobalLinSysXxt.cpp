@@ -39,60 +39,56 @@
 
 namespace Nektar
 {
-    namespace MultiRegions
-    {
-        /**
-         * @class GlobalLinSysXxt
-         *
-         * Solves a linear system using direct methods.
-         */
+namespace MultiRegions
+{
+/**
+ * @class GlobalLinSysXxt
+ *
+ * Solves a linear system using direct methods.
+ */
 
-        /// Constructor for full direct matrix solve.
-        GlobalLinSysXxt::GlobalLinSysXxt(
-                const GlobalLinSysKey &pKey,
-                const std::weak_ptr<ExpList> &pExp,
-                const std::shared_ptr<AssemblyMap>
-                                                        &pLocToGloMap)
-                : GlobalLinSys(pKey, pExp, pLocToGloMap)
-        {
-            m_crsData = 0;
-        }
-
-        GlobalLinSysXxt::~GlobalLinSysXxt()
-        {
-            Xxt::Finalise(m_crsData);
-        }
-
-        /// Solve the linear system for given input and output vectors.
-        void GlobalLinSysXxt::v_SolveLinearSystem(
-                const int pNumRows,
-                const Array<OneD,const NekDouble> &pInput,
-                      Array<OneD,      NekDouble> &pOutput,
-                const AssemblyMapSharedPtr &pLocToGloMap,
-                const int pNumDir)
-        {
-            boost::ignore_unused(pNumRows, pLocToGloMap, pNumDir);
-
-            int nLocal = m_map.num_elements();
-            Array<OneD, NekDouble> vLocalIn(nLocal, 0.0);
-            Array<OneD, NekDouble> vLocalOut(nLocal, 0.0);
-            GlobalToLocalNoSign(pInput, vLocalIn);
-            Xxt::Solve(vLocalOut, m_crsData, vLocalIn);
-            LocalToGlobalNoSign(vLocalOut, pOutput);
-        }
-
-        void GlobalLinSysXxt::GlobalToLocalNoSign(const Array<OneD, const NekDouble> &global,
-                                       Array<OneD, NekDouble> &local)
-        {
-            Vmath::Gathr(m_map.num_elements(), m_locToGloSignMult.get(), global.get(), m_map.get(), local.get());
-        }
-
-        void GlobalLinSysXxt::LocalToGlobalNoSign(const Array<OneD, const NekDouble> &local,
-                                       Array<OneD, NekDouble> &global)
-        {
-            Vmath::Scatr(m_map.num_elements(), local.get(), m_map.get(), global.get());
-        }
-
-    }
+/// Constructor for full direct matrix solve.
+GlobalLinSysXxt::GlobalLinSysXxt(
+    const GlobalLinSysKey &pKey, const std::weak_ptr<ExpList> &pExp,
+    const std::shared_ptr<AssemblyMap> &pLocToGloMap)
+    : GlobalLinSys(pKey, pExp, pLocToGloMap)
+{
+    m_crsData = 0;
 }
 
+GlobalLinSysXxt::~GlobalLinSysXxt()
+{
+    Xxt::Finalise(m_crsData);
+}
+
+/// Solve the linear system for given input and output vectors.
+void GlobalLinSysXxt::v_SolveLinearSystem(
+    const int pNumRows, const Array<OneD, const NekDouble> &pInput,
+    Array<OneD, NekDouble> &pOutput, const AssemblyMapSharedPtr &pLocToGloMap,
+    const int pNumDir)
+{
+    boost::ignore_unused(pNumRows, pLocToGloMap, pNumDir);
+
+    int nLocal = m_map.size();
+    Array<OneD, NekDouble> vLocalIn(nLocal, 0.0);
+    Array<OneD, NekDouble> vLocalOut(nLocal, 0.0);
+    GlobalToLocalNoSign(pInput, vLocalIn);
+    Xxt::Solve(vLocalOut, m_crsData, vLocalIn);
+    LocalToGlobalNoSign(vLocalOut, pOutput);
+}
+
+void GlobalLinSysXxt::GlobalToLocalNoSign(
+    const Array<OneD, const NekDouble> &global, Array<OneD, NekDouble> &local)
+{
+    Vmath::Gathr(m_map.size(), m_locToGloSignMult.get(), global.get(),
+                 m_map.get(), local.get());
+}
+
+void GlobalLinSysXxt::LocalToGlobalNoSign(
+    const Array<OneD, const NekDouble> &local, Array<OneD, NekDouble> &global)
+{
+    Vmath::Scatr(m_map.size(), local.get(), m_map.get(), global.get());
+}
+
+} // namespace MultiRegions
+} // namespace Nektar

@@ -36,168 +36,153 @@
 #define EXPANSION3D_H
 
 #include <LocalRegions/Expansion.h>
-#include <StdRegions/StdExpansion3D.h>
 #include <LocalRegions/LocalRegionsDeclspec.h>
 #include <SpatialDomains/Geometry3D.h>
+#include <StdRegions/StdExpansion3D.h>
 
 namespace Nektar
 {
-    namespace LocalRegions 
+namespace LocalRegions
+{
+
+class Expansion2D;
+typedef std::shared_ptr<Expansion2D> Expansion2DSharedPtr;
+typedef std::weak_ptr<Expansion2D> Expansion2DWeakPtr;
+
+class Expansion3D;
+typedef std::shared_ptr<Expansion3D> Expansion3DSharedPtr;
+typedef std::weak_ptr<Expansion3D> Expansion3DWeakPtr;
+typedef std::vector<Expansion3DSharedPtr> Expansion3DVector;
+
+class Expansion3D : virtual public Expansion,
+                    virtual public StdRegions::StdExpansion3D
+{
+public:
+    LOCAL_REGIONS_EXPORT Expansion3D(SpatialDomains::Geometry3DSharedPtr pGeom)
+        : Expansion(pGeom), StdExpansion3D(), m_requireNeg()
     {
+    }
+    LOCAL_REGIONS_EXPORT virtual ~Expansion3D()
+    {
+    }
 
-        class Expansion2D;
-        typedef std::shared_ptr<Expansion2D> Expansion2DSharedPtr;
-        typedef std::weak_ptr<Expansion2D> Expansion2DWeakPtr;
+    LOCAL_REGIONS_EXPORT void SetTraceToGeomOrientation(
+        Array<OneD, NekDouble> &inout);
+    LOCAL_REGIONS_EXPORT void SetFaceToGeomOrientation(
+        const int face, Array<OneD, NekDouble> &inout);
+    inline void AddHDGHelmholtzFaceTerms(
+        const NekDouble tau, const int edge, Array<OneD, NekDouble> &facePhys,
+        const StdRegions::VarCoeffMap &dirForcing,
+        Array<OneD, NekDouble> &outarray);
 
-        class Expansion3D;
-        typedef std::shared_ptr<Expansion3D> Expansion3DSharedPtr;
-        typedef std::weak_ptr<Expansion3D> Expansion3DWeakPtr;
-        typedef std::vector< Expansion3DSharedPtr > Expansion3DVector;
+    inline void AddNormTraceInt(const int dir,
+                                Array<OneD, ExpansionSharedPtr> &FaceExp,
+                                Array<OneD, Array<OneD, NekDouble>> &faceCoeffs,
+                                Array<OneD, NekDouble> &outarray);
 
-        class Expansion3D: virtual public Expansion, 
-                           virtual public StdRegions::StdExpansion3D
-        {
-        public:
-            LOCAL_REGIONS_EXPORT Expansion3D(SpatialDomains::Geometry3DSharedPtr pGeom): Expansion(pGeom), StdExpansion3D(), m_requireNeg() {}
-            LOCAL_REGIONS_EXPORT virtual ~Expansion3D() {}
-            
-            LOCAL_REGIONS_EXPORT void SetFaceExp(const int face, Expansion2DSharedPtr &f);                
-            LOCAL_REGIONS_EXPORT Expansion2DSharedPtr GetFaceExp(const int face);            
-            LOCAL_REGIONS_EXPORT void SetTraceToGeomOrientation(Array<OneD, NekDouble> &inout);
-            LOCAL_REGIONS_EXPORT void SetFaceToGeomOrientation(const int face, Array<OneD, NekDouble> &inout);
-            inline void AddHDGHelmholtzFaceTerms(
-                const NekDouble                    tau,
-                const int                          edge,
-                Array<OneD, NekDouble>            &facePhys,
-                const StdRegions::VarCoeffMap     &dirForcing,
-                Array<OneD, NekDouble>            &outarray);
+    inline void AddNormTraceInt(const int dir,
+                                Array<OneD, const NekDouble> &inarray,
+                                Array<OneD, ExpansionSharedPtr> &FaceExp,
+                                Array<OneD, NekDouble> &outarray,
+                                const StdRegions::VarCoeffMap &varcoeffs);
 
-            inline void AddNormTraceInt(
-                const int                             dir,
-                Array<OneD, ExpansionSharedPtr>      &FaceExp,
-                Array<OneD, Array<OneD, NekDouble> > &faceCoeffs,
-                Array<OneD,NekDouble>                &outarray);
+    inline void AddFaceBoundaryInt(
+        const int face, ExpansionSharedPtr &FaceExp,
+        Array<OneD, NekDouble> &facePhys, Array<OneD, NekDouble> &outarray,
+        const StdRegions::VarCoeffMap &varcoeffs = StdRegions::NullVarCoeffMap);
 
-            inline void AddNormTraceInt(
-                const int                        dir,
-                Array<OneD, const NekDouble>    &inarray,
-                Array<OneD, ExpansionSharedPtr> &FaceExp,
-                Array<OneD,NekDouble>           &outarray,
-                const StdRegions::VarCoeffMap   &varcoeffs);
+    inline SpatialDomains::Geometry3DSharedPtr GetGeom3D() const;
 
-            inline void AddFaceBoundaryInt(
-                const int                      face,
-                ExpansionSharedPtr            &FaceExp,
-                Array<OneD, NekDouble>        &facePhys,
-                Array<OneD, NekDouble>        &outarray,
-                const StdRegions::VarCoeffMap &varcoeffs
-                        = StdRegions::NullVarCoeffMap);
+    LOCAL_REGIONS_EXPORT void v_ReOrientTracePhysMap(
+        const StdRegions::Orientation orient, Array<OneD, int> &idmap,
+        const int nq0, const int nq1);
 
-            inline SpatialDomains::Geometry3DSharedPtr GetGeom3D() const;
+    void v_NormVectorIProductWRTBase(
+        const Array<OneD, const Array<OneD, NekDouble>> &Fvec,
+        Array<OneD, NekDouble> &outarray);
 
-            LOCAL_REGIONS_EXPORT void ReOrientFacePhysMap(const int nvert,
-                                                          const StdRegions::Orientation orient,
-                                                          const int nq0,
-                                                          const int nq1,
-                                                          Array<OneD, int> &idmap);
-            void v_NormVectorIProductWRTBase(
-                const Array<OneD, const Array<OneD, NekDouble> > &Fvec,
-                      Array<OneD,       NekDouble>               &outarray);
+    LOCAL_REGIONS_EXPORT Array<OneD, unsigned int> GetEdgeInverseBoundaryMap(
+        int eid);
 
-        protected:
-            virtual void v_DGDeriv(
-                const int                            dir,
-                const Array<OneD, const NekDouble>  &incoeffs,
-                Array<OneD, ExpansionSharedPtr>      &FaceExp,
-                Array<OneD, Array<OneD, NekDouble> > &faceCoeffs,
-                Array<OneD, NekDouble>               &out_d);
-            virtual DNekMatSharedPtr v_GenMatrix(
-                const StdRegions::StdMatrixKey &mkey);
-            virtual void v_AddFaceNormBoundaryInt(
-                const int                            face,
-                const ExpansionSharedPtr            &FaceExp,
-                const Array<OneD, const NekDouble>  &Fn,
-                      Array<OneD,       NekDouble>  &outarray);
-            virtual void v_AddRobinMassMatrix(
-                const int                           face, 
-                const Array<OneD, const NekDouble> &primCoeffs, 
-                DNekMatSharedPtr                   &inoutmat);
-            virtual StdRegions::Orientation v_GetForient(int face);
+    LOCAL_REGIONS_EXPORT Array<OneD, unsigned int> GetTraceInverseBoundaryMap(
+        int fid,
+        StdRegions::Orientation faceOrient = StdRegions::eNoOrientation,
+        int P1 = -1, int P2 = -1);
 
-            virtual void v_GetTracePhysVals(
-                const int                                face,
-                const StdRegions::StdExpansionSharedPtr &FaceExp,
-                const Array<OneD, const NekDouble>      &inarray,
-                      Array<OneD,       NekDouble>      &outarray,
-                StdRegions::Orientation                  orient);
+    LOCAL_REGIONS_EXPORT void GetInverseBoundaryMaps(
+        Array<OneD, unsigned int> &vmap,
+        Array<OneD, Array<OneD, unsigned int>> &emap,
+        Array<OneD, Array<OneD, unsigned int>> &fmap);
 
-            virtual void v_GetFacePhysVals(
-                const int                                face,
-                const StdRegions::StdExpansionSharedPtr &FaceExp,
-                const Array<OneD, const NekDouble>      &inarray,
-                      Array<OneD,       NekDouble>      &outarray,
-                StdRegions::Orientation                  orient);
+    LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
+    CreateMatrix(const MatrixKey &mkey);
 
-            void GetPhysFaceVarCoeffsFromElement(
-                const int face,
-                ExpansionSharedPtr &FaceExp,
-                const Array<OneD, const NekDouble>  &varcoeff,
-                      Array<OneD,NekDouble> &outarray);
+protected:
+    std::map<int, NormalVector> m_faceNormals;
+    virtual void v_DGDeriv(const int dir,
+                           const Array<OneD, const NekDouble> &incoeffs,
+                           Array<OneD, ExpansionSharedPtr> &FaceExp,
+                           Array<OneD, Array<OneD, NekDouble>> &faceCoeffs,
+                           Array<OneD, NekDouble> &out_d);
+    virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
+    virtual void v_AddFaceNormBoundaryInt(
+        const int face, const ExpansionSharedPtr &FaceExp,
+        const Array<OneD, const NekDouble> &Fn,
+        Array<OneD, NekDouble> &outarray);
 
-            virtual Array<OneD, NekDouble> v_GetnFacecdotMF(
-                const int dir,
-                const int face,
-                ExpansionSharedPtr &FaceExp_f,
-                const Array<OneD, const Array<OneD, NekDouble> > &normals,
-                const StdRegions::VarCoeffMap   &varcoeffs);
+    virtual void v_AddRobinMassMatrix(
+        const int face, const Array<OneD, const NekDouble> &primCoeffs,
+        DNekMatSharedPtr &inoutmat);
 
-            //-----------------------------
-            // Low Energy Basis functions
-            //-----------------------------
+    virtual StdRegions::Orientation v_GetTraceOrient(int face);
 
-            LOCAL_REGIONS_EXPORT virtual Array<OneD, unsigned int> 
-                v_GetEdgeInverseBoundaryMap(int eid);
+    virtual void v_GetTracePhysVals(
+        const int face, const StdRegions::StdExpansionSharedPtr &FaceExp,
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray, StdRegions::Orientation orient);
 
-            LOCAL_REGIONS_EXPORT virtual Array<OneD, unsigned int>
-                v_GetFaceInverseBoundaryMap(int fid, StdRegions::Orientation faceOrient = StdRegions::eNoOrientation, int P1=-1, int P2=-1);
-            
-            LOCAL_REGIONS_EXPORT void v_GetInverseBoundaryMaps(
-                    Array<OneD, unsigned int> &vmap,
-                    Array<OneD, Array<OneD, unsigned int> > &emap,
-                    Array<OneD, Array<OneD, unsigned int> > &fmap );
-            
-            LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildTransformationMatrix(
-                const DNekScalMatSharedPtr &r_bnd, 
-                const StdRegions::MatrixType matrixType);
+    virtual void v_GenTraceExp(const int traceid, ExpansionSharedPtr &exp);
 
-            LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildInverseTransformationMatrix(
-                const DNekScalMatSharedPtr & transformationmatrix);
+    void GetPhysFaceVarCoeffsFromElement(
+        const int face, ExpansionSharedPtr &FaceExp,
+        const Array<OneD, const NekDouble> &varcoeff,
+        Array<OneD, NekDouble> &outarray);
 
-            LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildVertexMatrix(
-                const DNekScalMatSharedPtr &r_bnd); 
+    virtual Array<OneD, NekDouble> v_GetnFacecdotMF(
+        const int dir, const int face, ExpansionSharedPtr &FaceExp_f,
+        const Array<OneD, const Array<OneD, NekDouble>> &normals,
+        const StdRegions::VarCoeffMap &varcoeffs);
 
-            LOCAL_REGIONS_EXPORT void ReOrientTriFacePhysMap(const StdRegions::Orientation orient,
-                                                             const int nq0,
-                                                             const int nq1,
-                                                             Array<OneD, int> &idmap);
+    //-----------------------------
+    // Low Energy Basis functions
+    //-----------------------------
 
-            LOCAL_REGIONS_EXPORT void ReOrientQuadFacePhysMap(const StdRegions::Orientation orient,
-                                                              const int nq0,
-                                                              const int nq1,
-                                                              Array<OneD, int> &idmap);
-        private:
-            // Do not add members here since it may lead to conflicts.
-            // Only use this class for member functions
-            
-            std::vector<Expansion2DWeakPtr> m_faceExp;
-            std::vector<bool> m_requireNeg;
-        };
-        
-        inline SpatialDomains::Geometry3DSharedPtr Expansion3D::GetGeom3D() const
-        {
-            return std::dynamic_pointer_cast<SpatialDomains::Geometry3D>(m_geom);
-        }
-    } //end of namespace
-} //end of namespace
+    LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildTransformationMatrix(
+        const DNekScalMatSharedPtr &r_bnd,
+        const StdRegions::MatrixType matrixType);
+
+    LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildInverseTransformationMatrix(
+        const DNekScalMatSharedPtr &transformationmatrix);
+
+    LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildVertexMatrix(
+        const DNekScalMatSharedPtr &r_bnd);
+
+    LOCAL_REGIONS_EXPORT virtual void v_TraceNormLen(const int traceid,
+                                                     NekDouble &h,
+                                                     NekDouble &p);
+
+private:
+    // Do not add members here since it may lead to conflicts.
+    // Only use this class for member functions
+
+    std::vector<bool> m_requireNeg;
+};
+
+inline SpatialDomains::Geometry3DSharedPtr Expansion3D::GetGeom3D() const
+{
+    return std::dynamic_pointer_cast<SpatialDomains::Geometry3D>(m_geom);
+}
+} // namespace LocalRegions
+} // namespace Nektar
 
 #endif

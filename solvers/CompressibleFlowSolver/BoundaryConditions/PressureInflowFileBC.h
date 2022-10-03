@@ -37,7 +37,6 @@
 
 #include "CFSBndCond.h"
 
-
 namespace Nektar
 {
 
@@ -49,47 +48,43 @@ namespace Nektar
  */
 class PressureInflowFileBC : public CFSBndCond
 {
-    public:
+public:
+    friend class MemoryManager<PressureInflowFileBC>;
 
-        friend class MemoryManager<PressureInflowFileBC>;
+    /// Creates an instance of this class
+    static CFSBndCondSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const int pSpaceDim, const int bcRegion, const int cnt)
+    {
+        CFSBndCondSharedPtr p =
+            MemoryManager<PressureInflowFileBC>::AllocateSharedPtr(
+                pSession, pFields, pTraceNormals, pSpaceDim, bcRegion, cnt);
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static CFSBndCondSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-                const int pSpaceDim, const int bcRegion, const int cnt)
-        {
-            CFSBndCondSharedPtr p = MemoryManager<PressureInflowFileBC>::
-                                    AllocateSharedPtr(pSession, pFields,
-                                    pTraceNormals, pSpaceDim, bcRegion, cnt);
-            return p;
-        }
+    /// Name of the class
+    static std::string className;
 
-        ///Name of the class
-        static std::string className;
+protected:
+    virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                         Array<OneD, Array<OneD, NekDouble>> &physarray,
+                         const NekDouble &time);
 
-    protected:
+private:
+    PressureInflowFileBC(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const Array<OneD, Array<OneD, NekDouble>> &pTraceNormals,
+        const int pSpaceDim, const int bcRegion, const int cnt);
 
-        virtual void v_Apply(
-            Array<OneD, Array<OneD, NekDouble> >               &Fwd,
-            Array<OneD, Array<OneD, NekDouble> >               &physarray,
-            const NekDouble                                    &time);
+    virtual ~PressureInflowFileBC(void){};
 
-    private:
-        PressureInflowFileBC(const LibUtilities::SessionReaderSharedPtr& pSession,
-               const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-               const Array<OneD, Array<OneD, NekDouble> >& pTraceNormals,
-               const int pSpaceDim,
-               const int bcRegion,
-               const int cnt);
-        
-        virtual ~PressureInflowFileBC(void){};
-
-        // Field storage for PressureInflowFileBC
-        Array<OneD, Array<OneD, NekDouble> > m_fieldStorage;
+    // Field storage for PressureInflowFileBC
+    Array<OneD, Array<OneD, NekDouble>> m_fieldStorage;
 };
 
-}
+} // namespace Nektar
 
 #endif

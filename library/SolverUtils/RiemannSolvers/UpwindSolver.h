@@ -35,36 +35,33 @@
 #ifndef NEKTAR_SOLVERUTILS_UPWINDSOLVER
 #define NEKTAR_SOLVERUTILS_UPWINDSOLVER
 
-#include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
+#include <SolverUtils/SolverUtilsDeclspec.h>
 
 namespace Nektar
 {
-    namespace SolverUtils
+namespace SolverUtils
+{
+class UpwindSolver : public RiemannSolver
+{
+public:
+    SOLVER_UTILS_EXPORT static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-        class UpwindSolver : public RiemannSolver
-        {
-        public:
-            SOLVER_UTILS_EXPORT static RiemannSolverSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession)
-            {
-                return RiemannSolverSharedPtr(
-                    new UpwindSolver(pSession));
-            }
-            
-            static std::string solverName;
-            
-        protected:
-            UpwindSolver(
-                    const LibUtilities::SessionReaderSharedPtr& pSession);
-            
-            virtual void v_Solve(
-                const int                                         nDim,
-                const Array<OneD, const Array<OneD, NekDouble> > &Fwd,
-                const Array<OneD, const Array<OneD, NekDouble> > &Bwd,
-                      Array<OneD,       Array<OneD, NekDouble> > &flux);
-        }; 
+        return RiemannSolverSharedPtr(new UpwindSolver(pSession));
     }
-}
-    
+
+    static std::string solverName;
+
+protected:
+    UpwindSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    void v_Solve(const int nDim,
+                 const Array<OneD, const Array<OneD, NekDouble>> &Fwd,
+                 const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
+                 Array<OneD, Array<OneD, NekDouble>> &flux) final;
+};
+} // namespace SolverUtils
+} // namespace Nektar
+
 #endif

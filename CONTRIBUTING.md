@@ -10,7 +10,7 @@ split up into a number of sections:
 - [How to contribute](#how-to-contribute)
 - [Submission checklist](#submission-checklist)
 - [Git cheatsheet](#git-cheatsheet)
-- [Testing and Buildbot](#testing-and-buildbot)
+- [Testing and GitLab CI](#testing-and-gitlab)
 - [Documentation](#documentation)
 - [Formatting guidelines](#formatting-guidelines)
 
@@ -40,20 +40,84 @@ project. It's a pretty simple process:
    - `tidy/mybrillianttidying`: cosmetic fixes to bring existing files up to the
      Nektar++ code guidelines.
 3. Make sure you've gone through the checklist below.
-4. Submit a merge request to merge into `master`. If you just want to see the
-   diff and are not quite ready to merge, use the `[WIP]` tag in the title to
-   prevent your code from being accidentally merged.
-5. Put a comment in the MR saying that it's ready to be merged.
-6. If your branch is a minor fix that could appear in the next patch release,
-   then add the `Proposed patch` label to the merge request.
-7. Respond to any comments in the code review.
+4. Submit a request to merge into `master` (Merge Request). If you
+   just want to see the diff and are not quite ready to merge, use the
+   `Draft` tag in the title, for instance `Draft: Update
+   session reader`. This will prevent your code from being
+   accidentally merged.
+5. Respond to any comments in the code review.
+
+Reviewing Merge Requests can be a arduous and time-consuming process
+for reviewers. To allow for efficient code reviews, we ask that you
+take particular care of the following points:
+
+- Submit **small Merge Requests**. Whenever you can, split your work
+   into multiple self-contained, stacked Merge Requests. Say for
+   instance that you split your work into two branches `MR1`, and
+   `MR2`, that branches off `MR1`. Stacked Merge Requests would look
+   like this:
+
+   ```
+   master <- MR1 <- MR2
+   ```
+
+   In the above scenario, changes in `MR1` are first reviewed, before
+   changes in `MR2`. After code review, `MR2` is first merged into
+   `MR1`'s branch, which is then merged into `master`.
+- Provide a **detailed description** of your changes by filling the
+    Merge Request template. Please keep the structure of the template
+    as-is: fill the section with "Non applicable" if needed. Don't be
+    afraid of "stating the obvious": the more information you provide,
+    the easier (and quicker) the code review is.
+- Give your submission a **descriptive title**. Avoid generic titles like
+   "Update module X" or "Fix bug in module Y".
+
+An example of a Merge Request is available
+[here](https://gitlab.nektar.info/nektar/nektar/-/merge_requests/1322).
+
+## Keeping your branch up to date
+
+Regularly updating your branch with the latest changes on the base
+branch (usually `master`) is essential to avoid large conflicts when
+merging your work into the main development line. There are two ways
+of updating your branch:
+
+1. If you haven't pushed your branch to the upstream remote
+   (`nektar/nektar.git`), or if you are sure nobody based work on
+   your changes, rebase your changes on the latest `master`
+   ```shell
+   git checkout feature/mybranch
+   git pull --rebase master
+   ```
+  
+  This will rewrite the history of your local branch in order for your
+  changes to appear on top of the latest changes in master. This leads
+  to a clean, linear history. See [Git Branching - Rebasing](https://git-scm.com/book/en/v2/Git-Branching-Rebasing)
+2. If you pushed your changes and there is a high chance that somebody
+   based work on top of your -- yet unmerged -- changes, **don't
+   rebase**. Merge the latest `master` state into your branch instead:
+   ```
+   git checkout feature/mybranch
+   git fetch origin
+   git merge origin/master
+   ```
+   
+   This will create a merge commit joining your branch's history and
+   the `master` branch's history. The merge approach do not rewrite
+   your branch's history, at the expanse of making it more complex.
+   
+Provided that you merge your work as soon as possible, i.e. contribute
+small Merge Requests, most of the developement can happen in a local
+branch that you would rebase on top of master. This is the best case
+scenario. Merging becomes necessary if a branch is published and
+remains unmerged for more than a couple of days.
 
 ## Submission checklist
 - Did you add regression tests (for fixes) or unit tests and/or normal tests for
   new features?
-- Have you run your branch through buildbot and do all the tests pass?
+- Have you run your branch through GitLab CI and do all the tests pass?
 - Have you fixed any new compiler warnings your code has introduced into the
-  compilation step for all of the Linux buildbots?
+  compilation step for all of the Linux CI environments?
   - **unused parameters**: if these are genuinely needed (e.g. virtual functions
     in a derived class, please use `boost::ignore_unused()` to mark as such.
   - **switch case may fall-through**: for switch statements which
@@ -67,11 +131,6 @@ project. It's a pretty simple process:
   to keep test files as small as possible. If so you'll need to rebase or
   filter-branch to remove those from the commit history.
 - Is the code formatted correctly?
-  - **Note:** unfortunately, Nektar++ has pretty inconsistent code formatting at
-    the moment. To help in reviewing your submission, new files should be
-    formatted according to the guidelines (or use `clang-format` as described
-    below) -- otherwise, try to keep formatting consistent with the file you're
-    working on.
 
 ## Git cheatsheet
 Although Gitlab gives a nice interface to view the diff between a branch and
@@ -105,7 +164,7 @@ commit, you can additionally use the `git gui` command to bring up a simple
 interface. `git difftool` can also be used in combination with a GUI diff
 viewer, to graphically view the output of `git diff`.
 
-## Testing and Buildbot
+## Testing and GitLab CI
 Your new features or fixes should include tests that cover the code you've
 added. There are numerous examples within the various `Tests` directory lying
 within the source trees, and there is an example of writing `.tst` files for our
@@ -114,28 +173,14 @@ tests, add them to the `CMakeLists.txt` file for the relevant solver, or to the
 appropriate demos directory for library features in whatever directory you are
 working in.
 
-You should also test your branch on the
-[Nektar++ buildbot](http://buildbot.nektar.info/), which will compile and test
-the code against a number of Linux, Mac and Windows operating systems, both 32-
-and 64-bit. If your tests don't pass, we can't merge the code into master.
+You should also test your branch on the Nektar++ GitLab CI, which will compile
+and test the code against a number of Linux, Mac and Windows operating
+systems. If your tests don't pass, we can't merge the code into master.
 
-When you submit a merge request testing on buildbot will happen automatically,
+When you submit a merge request testing on GitLab CI will happen automatically,
 unless you have marked the merge request as a work-in-progress (WIP: prefix).
 Each time you push commits to a non-WIP merge request branch, it will also
 trigger a build.
-
-For WIP merge request branches, you can force a build on individual builders
-using the buildbot web interface:
-
-1. Go to the buildbot site and log in using the drop-down menu (top right).
-2. Go to the console display and select the builder from the column headings on
-   which you would like to force test.
-3. Select 'Force' from the top-right of the page.
-4. Enter the details as required. If you're working on a fork, then the *Fork*
-   box should be changed to `username/nektar`.
-5. Hit the *Start build* button.
-6. Return to the *console* display to see progress. You can click on the
-   flashing indicator for your active build to see progress and output.
 
 ## Documentation
 Nektar++ has a fairly comprehensive user guide and a developer guide that is
@@ -249,9 +294,15 @@ which accepts the name of the source branch as the sole argument.
 ## Formatting guidelines
 Nektar++ uses C++, a language notorious for being easy to make obtuse and
 difficult to follow code. To hopefully alleviate this problem, there are a
-number of fairly simple formatting guidelines you should follow. We are
-reasonably relaxed about code formatting, but if you can follow the guidelines
-below this would be fantastic.
+number of fairly simple formatting guidelines you should follow.
+
+To help with this, we now require the use of clang-format to ensure all code in
+the library is formatted consistently (see below). When adding new
+contributions, or making changes to existing code, please ensure you run
+clang-format on these files to ensure the formatting complies with our
+guidelines. There is a CI job which will verify that no further formatting
+changes are required before merging.
+
 
 ### Basic rules
 - All code should be wrapped to 80 characters.
@@ -261,7 +312,7 @@ below this would be fantastic.
   but don't use trailing inline comments to save the 80 character limit!
 - All code blocks (even one-line blocks) should use braces, and braces should be
   on new lines; for instance
-  
+
   ```c++
   if (someCondition)
   {
@@ -294,12 +345,10 @@ below this would be fantastic.
 
 ### Using `clang-format`
 Code formatting is reasonably boring, so Nektar++ comes with a `.clang-format`
-file to allow for automatic code formatting. As noted above, you can use this
-for new files, or cosmetic `tidy/*` branches, but try to stick to existing
-formatting elsewhere.
+file to allow for automatic code formatting.
 
-Installing it is straightforward on most package managers. Nektar++ relies on
-options that are used in version 3.7 or later.
+Installing it is straightforward on most package managers. Nektar++'s
+source code is formatted using **clang-format 11**.
 
 There are a number of instructions on how to use `clang-format` inside a number
 of text editors on the

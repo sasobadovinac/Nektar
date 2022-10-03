@@ -52,8 +52,9 @@ GeomFactorsVector Geometry::m_regGeomFactorsManager;
  * @brief Default constructor.
  */
 Geometry::Geometry()
-    : m_coordim(0), m_geomFactorsState(eNotFilled), m_state(eNotFilled), m_setupState(false),
-      m_shapeType(LibUtilities::eNoShapeType), m_globalID(-1)
+    : m_coordim(0), m_geomFactorsState(eNotFilled), m_state(eNotFilled),
+      m_setupState(false), m_shapeType(LibUtilities::eNoShapeType),
+      m_globalID(-1)
 {
 }
 
@@ -61,8 +62,9 @@ Geometry::Geometry()
  * @brief Constructor when supplied a coordinate dimension.
  */
 Geometry::Geometry(const int coordim)
-    : m_coordim(coordim), m_geomFactorsState(eNotFilled), m_state(eNotFilled), m_setupState(false),
-      m_shapeType(LibUtilities::eNoShapeType), m_globalID(-1)
+    : m_coordim(coordim), m_geomFactorsState(eNotFilled), m_state(eNotFilled),
+      m_setupState(false), m_shapeType(LibUtilities::eNoShapeType),
+      m_globalID(-1)
 {
 }
 
@@ -214,8 +216,6 @@ StdRegions::Orientation Geometry::v_GetForient(const int i) const
  */
 int Geometry::v_GetNumEdges() const
 {
-    NEKERROR(ErrorUtil::efatal,
-             "This function is only valid for shape type geometries");
     return 0;
 }
 
@@ -224,8 +224,6 @@ int Geometry::v_GetNumEdges() const
  */
 int Geometry::v_GetNumFaces() const
 {
-    NEKERROR(ErrorUtil::efatal,
-             "This function is only valid for shape type geometries");
     return 0;
 }
 
@@ -253,14 +251,26 @@ StdRegions::StdExpansionSharedPtr Geometry::v_GetXmap() const
  *     NekDouble, NekDouble&)
  */
 bool Geometry::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                               Array<OneD, NekDouble> &locCoord,
-                               NekDouble tol,
-                               NekDouble &resid)
+                               Array<OneD, NekDouble> &locCoord, NekDouble tol,
+                               NekDouble &dist)
 {
-    boost::ignore_unused(gloCoord, locCoord, tol, resid);
-    NEKERROR(ErrorUtil::efatal,
-             "This function has not been defined for this geometry");
-    return false;
+    // Convert to the local (xi) coordinates.
+    dist = GetLocCoords(gloCoord, locCoord);
+    if (dist <= tol + NekConstants::kNekMachineEpsilon)
+    {
+        return true;
+    }
+    Array<OneD, NekDouble> eta(GetShapeDim(), 0.);
+    m_xmap->LocCoordToLocCollapsed(locCoord, eta);
+    if (ClampLocCoords(eta, tol))
+    {
+        m_xmap->LocCollapsedToLocCoord(eta, locCoord);
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 /**
@@ -289,6 +299,28 @@ int Geometry::v_GetVertexFaceMap(const int i, const int j) const
  * @copydoc Geometry::GetEdgeFaceMap()
  */
 int Geometry::v_GetEdgeFaceMap(const int i, const int j) const
+{
+    boost::ignore_unused(i, j);
+    NEKERROR(ErrorUtil::efatal,
+             "This function has not been defined for this geometry");
+    return 0;
+}
+
+/**
+ * @copydoc Geometry::GetEdgeNormalToFaceVert()
+ */
+int Geometry::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    boost::ignore_unused(i, j);
+    NEKERROR(ErrorUtil::efatal,
+             "This function has not been defined for this geometry");
+    return 0;
+}
+
+/**
+ * @copydoc Geometry::GetDir()
+ */
+int Geometry::v_GetDir(const int i, const int j) const
 {
     boost::ignore_unused(i, j);
     NEKERROR(ErrorUtil::efatal,
@@ -337,7 +369,7 @@ void Geometry::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
     boost::ignore_unused(curvedEdges, curvedFaces);
 
     // Reset state
-    m_state = eNotFilled;
+    m_state            = eNotFilled;
     m_geomFactorsState = eNotFilled;
 
     // Junk geometric factors
@@ -350,7 +382,6 @@ void Geometry::v_Setup()
              "This function is only valid for expansion type geometries");
 }
 
-
 /**
  * @brief Generates the bounding box for the element.
  *
@@ -362,7 +393,12 @@ void Geometry::v_Setup()
  */
 std::array<NekDouble, 6> Geometry::GetBoundingBox()
 {
-    //NekDouble minx, miny, minz, maxx, maxy, maxz;
+    if (m_boundingBox.size() == 6)
+    {
+        return {{m_boundingBox[0], m_boundingBox[1], m_boundingBox[2],
+                 m_boundingBox[3], m_boundingBox[4], m_boundingBox[5]}};
+    }
+    // NekDouble minx, miny, minz, maxx, maxy, maxz;
     Array<OneD, NekDouble> min(3), max(3);
 
     // Always get vertexes min/max
@@ -404,28 +440,30 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
                 min[j] = (x[j][i] < min[j] ? x[j][i] : min[j]);
                 max[j] = (x[j][i] > max[j] ? x[j][i] : max[j]);
             }
-
-            // Add 10% margin to bounding box in case elements have
-            // convex boundaries.
-            const NekDouble len = max[j] - min[j];
-            max[j] += 0.1*len;
-            min[j] -= 0.1*len;
         }
     }
-    // Add geometric tolerance
+    // Add 10% margin to bounding box, in order to
+    // return the nearest element
     for (int j = 0; j < 3; ++j)
     {
         const NekDouble len = max[j] - min[j];
-        min[j] -= NekConstants::kGeomFactorsTol*len;
-        max[j] += NekConstants::kGeomFactorsTol*len;
+        min[j] -= (0.1 + NekConstants::kGeomFactorsTol) * len;
+        max[j] += (0.1 + NekConstants::kGeomFactorsTol) * len;
     }
 
+    // save bounding box
+    m_boundingBox = Array<OneD, NekDouble>(6);
+    for (int j = 0; j < 3; ++j)
+    {
+        m_boundingBox[j]     = min[j];
+        m_boundingBox[j + 3] = max[j];
+    }
     // Return bounding box
-    return {{ min[0], min[1], min[2], max[0], max[1], max[2] }};
+    return {{min[0], min[1], min[2], max[0], max[1], max[2]}};
 }
 
 /**
- * @brief Check if given global coord is within twice the min/max distance
+ * @brief Check if given global coord is within the BoundingBox
  * of the element.
  *
  * @param coords   Input Cartesian global coordinates
@@ -435,71 +473,58 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
 bool Geometry::MinMaxCheck(const Array<OneD, const NekDouble> &gloCoord)
 {
     // Validation checks
-    ASSERTL1(gloCoord.num_elements() >= m_coordim,
+    ASSERTL1(gloCoord.size() >= m_coordim,
              "Expects number of global coordinates supplied to be greater than "
              "or equal to the mesh dimension.");
 
-    int i;
-    Array<OneD, NekDouble> mincoord(m_coordim), maxcoord(m_coordim);
-    NekDouble diff = 0.0;
-
-    v_FillGeom();
-
-    const int npts = m_xmap->GetTotPoints();
-    Array<OneD, NekDouble> pts(npts);
-
-    for (i = 0; i < m_coordim; ++i)
+    std::array<NekDouble, 6> minMax = GetBoundingBox();
+    for (int i = 0; i < m_coordim; ++i)
     {
-        m_xmap->BwdTrans(m_coeffs[i], pts);
-        mincoord[i] = Vmath::Vmin(pts.num_elements(), pts, 1);
-        maxcoord[i] = Vmath::Vmax(pts.num_elements(), pts, 1);
-
-        diff = std::max(maxcoord[i] - mincoord[i], diff);
-    }
-
-    for (i = 0; i < m_coordim; ++i)
-    {
-        if ((gloCoord[i] < mincoord[i] - 0.2 * diff) ||
-            (gloCoord[i] > maxcoord[i] + 0.2 * diff))
+        if ((gloCoord[i] < minMax[i]) || (gloCoord[i] > minMax[i + 3]))
         {
             return false;
         }
     }
-
     return true;
 }
-
 
 /**
  * @brief Clamp local coords to be within standard regions [-1, 1]^dim.
  *
  * @param Lcoords  Corresponding local coordinates
  */
-void Geometry::ClampLocCoords(Array<OneD, NekDouble> &locCoord,
-                                  NekDouble tol)
+bool Geometry::ClampLocCoords(Array<OneD, NekDouble> &locCoord, NekDouble tol)
 {
     // Validation checks
-    ASSERTL1(locCoord.num_elements() == GetShapeDim(),
-             "Expects same number of local coordinates as shape dimension.");
+    ASSERTL1(locCoord.size() >= GetShapeDim(),
+             "Expects local coordinates to be same or "
+             "larger than shape dimension.");
 
     // If out of range clamp locCoord to be within [-1,1]^dim
     // since any larger value will be very oscillatory if
     // called by 'returnNearestElmt' option in
     // ExpList::GetExpIndex
+    bool clamp = false;
     for (int i = 0; i < GetShapeDim(); ++i)
     {
-        if (locCoord[i] < -(1 + tol))
+        if (!std::isfinite(locCoord[i]))
         {
-            locCoord[i] = -(1 + tol);
+            locCoord[i] = 0.;
+            clamp       = true;
         }
-
-        if (locCoord[i] > (1 + tol))
+        else if (locCoord[i] < -(1. + tol))
         {
-            locCoord[i] = 1 + tol;
+            locCoord[i] = -(1. + tol);
+            clamp       = true;
+        }
+        else if (locCoord[i] > (1. + tol))
+        {
+            locCoord[i] = 1. + tol;
+            clamp       = true;
         }
     }
+    return clamp;
 }
 
-
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

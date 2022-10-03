@@ -129,15 +129,16 @@ struct crs_data
     double *vl, *vc, *vx, *combuf;
 };
 
-extern "C" {
-struct crs_data *nektar_crs_setup(unsigned int n, const unsigned long *id,
-                                  unsigned int nz, const unsigned int *Ai,
-                                  const unsigned int *Aj, const double *A,
-                                  unsigned int null_space,
-                                  const struct comm *comm);
-void nektar_crs_solve(double *x, struct crs_data *data, double *b);
-void nektar_crs_stats(struct crs_data *data);
-void nektar_crs_free(struct crs_data *data);
+extern "C"
+{
+    struct crs_data *nektar_crs_setup(unsigned int n, const unsigned long *id,
+                                      unsigned int nz, const unsigned int *Ai,
+                                      const unsigned int *Aj, const double *A,
+                                      unsigned int null_space,
+                                      const struct comm *comm);
+    void nektar_crs_solve(double *x, struct crs_data *data, double *b);
+    void nektar_crs_stats(struct crs_data *data);
+    void nektar_crs_free(struct crs_data *data);
 }
 
 /**
@@ -165,7 +166,7 @@ static inline struct crs_data *Init(
     const LibUtilities::CommSharedPtr &pComm)
 {
 #ifdef NEKTAR_USE_MPI
-    unsigned int nz = pAr.num_elements();
+    unsigned int nz = pAr.size();
     LibUtilities::CommMpiSharedPtr vCommMpi =
         std::dynamic_pointer_cast<LibUtilities::CommMpi>(pComm);
     ASSERTL1(vCommMpi, "Failed to cast MPI Comm object.");
@@ -212,6 +213,6 @@ static inline void Finalise(crs_data *pCrs)
     }
 #endif
 }
-}
+} // namespace Xxt
 
 #endif

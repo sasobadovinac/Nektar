@@ -10,12 +10,17 @@ enabled:
 - `NEKTAR_USE_MESHGEN`
 - `NEKTAR_USE_PETSC`
 - `NEKTAR_USE_CCM`
+- `NEKTAR_USE_VTK`
 
 ## Building
 
-The image is built using `nektarpp/nektar-env` and requires as build context the
-path to the Nektar++ source tree. It supports three additional build arguments:
+The image is built using `nektarpp/nektar-env` or similar and requires as build
+context the path to the Nektar++ source tree. It supports several additional
+build arguments:
 
+- `ENV_IMAGE` is used to select the environment to build against. This is used
+  by the CI to e.g. consistently build against the correct commits. By default
+  this is set to `nektarpp/nektar-env:default`.
 - `BUILD_DEMOS` can be set to `ON` to build demos, which are disabled by
   default;
 - `BUILD_SOLVERS` can be set to `OFF` to disable build of solvers, which are

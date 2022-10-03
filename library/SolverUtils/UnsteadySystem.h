@@ -35,8 +35,8 @@
 #ifndef NEKTAR_SOLVERUTILS_UNSTEADYSYSTEM_H
 #define NEKTAR_SOLVERUTILS_UNSTEADYSYSTEM_H
 
-#include <LibUtilities/TimeIntegration/TimeIntegrationScheme.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeOperators.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationTypes.hpp>
 #include <SolverUtils/EquationSystem.h>
 #include <SolverUtils/Filters/Filter.h>
 
@@ -55,8 +55,21 @@ public:
     SOLVER_UTILS_EXPORT NekDouble
     GetTimeStep(const Array<OneD, const Array<OneD, NekDouble>> &inarray);
 
+    SOLVER_UTILS_EXPORT void SteadyStateResidual(int step,
+                                                 Array<OneD, NekDouble> &L2)
+    {
+        v_SteadyStateResidual(step, L2);
+    }
+
     /// CFL safety factor (comprise between 0 to 1).
     NekDouble m_cflSafetyFactor;
+    NekDouble m_cflNonAcoustic;
+    /// CFL growth rate
+    NekDouble m_CFLGrowth;
+    /// maximun cfl in cfl growth
+    NekDouble m_CFLEnd;
+    static std::string cmdSetStartTime;
+    static std::string cmdSetStartChkNum;
 
 protected:
     /// Number of time steps between outputting status information.
@@ -67,11 +80,9 @@ protected:
     int m_filtersInfosteps;
     int m_nanSteps;
     /// Wrapper to the time integration scheme
-    LibUtilities::TimeIntegrationSchemeSharedPtr    m_intScheme;
+    LibUtilities::TimeIntegrationSchemeSharedPtr m_intScheme;
     /// The time integration scheme operators to use.
-    LibUtilities::TimeIntegrationSchemeOperators    m_ode;
-    ///
-    LibUtilities::TimeIntegrationScheme::TimeIntegrationSolutionSharedPtr  m_intSoln;
+    LibUtilities::TimeIntegrationSchemeOperators m_ode;
     ///
     NekDouble m_epsilon;
     /// Indicates if explicit or implicit treatment of diffusion is used.
@@ -88,6 +99,9 @@ protected:
     NekDouble m_steadyStateTol;
     /// Check for steady state at step interval
     int m_steadyStateSteps;
+    NekDouble m_steadyStateRes  = 1.0;
+    NekDouble m_steadyStateRes0 = 1.0;
+
     /// Storage for previous solution for steady-state check
     Array<OneD, Array<OneD, NekDouble>> m_previousSolution;
     // Steady-state residual file
@@ -100,13 +114,44 @@ protected:
     /// Number of time steps between outputting status information.
     NekDouble m_filterTimeWarning;
 
+    /// coefff of spacial derivatives(rhs or m_F in GLM) in calculating the
+    /// residual of the whole equation(used in unsteady time integrations)
+    NekDouble m_TimeIntegLambda = 0.0;
+
+    bool m_flagImplicitItsStatistics;
+    bool m_flagImplicitSolver = false;
+
+    /// estimate the magnitude of each conserved varibles
+    Array<OneD, NekDouble> m_magnitdEstimat;
+
+    /// local time step(notice only for jfnk other see m_cflSafetyFactor)
+    Array<OneD, NekDouble> m_locTimeStep;
+
+    NekDouble m_inArrayNorm = -1.0;
+
+    int m_TotLinItePerStep = 0;
+    int m_StagesPerStep    = 1;
+
+    // flag to control the update of preconditioning matrix
+    // Currently used to avoid PreconMat from updating in one time step
+    bool m_flagUpdatePreconMat;
+
+    int m_maxLinItePerNewton;
+
+    int m_TotNewtonIts = 0;
+    int m_TotLinIts    = 0;
+    int m_TotImpStages = 0;
+
+    /// flag to update artificial viscosity
+    bool m_CalcPhysicalAV = true;
+
     /// Initialises UnsteadySystem class members.
     SOLVER_UTILS_EXPORT UnsteadySystem(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     /// Init object for UnsteadySystem class.
-    SOLVER_UTILS_EXPORT virtual void v_InitObject();
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareField = true);
 
     /// Get the maximum timestep estimator for cfl control.
     SOLVER_UTILS_EXPORT NekDouble MaxTimeStepEstimator();
@@ -135,6 +180,9 @@ protected:
         return true;
     }
 
+    SOLVER_UTILS_EXPORT virtual void v_SteadyStateResidual(
+        int step, Array<OneD, NekDouble> &L2);
+
     SOLVER_UTILS_EXPORT void CheckForRestartTime(NekDouble &time, int &nchk);
 
     /// \brief Evaluate the SVV diffusion coefficient
@@ -144,11 +192,19 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> vel,
         StdRegions::VarCoeffMap &varCoeffMap);
 
+    SOLVER_UTILS_EXPORT virtual bool UpdateTimeStepCheck();
+
 private:
     void InitializeSteadyState();
 
     bool CheckSteadyState(int step);
+    bool CheckSteadyState(int step, NekDouble totCPUTime);
 };
+
+inline bool UnsteadySystem::UpdateTimeStepCheck()
+{
+    return true;
+}
 
 } // namespace SolverUtils
 } // namespace Nektar

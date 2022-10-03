@@ -48,8 +48,7 @@ namespace Nektar
 namespace FieldUtils
 {
 ModuleKey ProcessDeform::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "deform"),
-    ProcessDeform::create,
+    ModuleKey(eProcessModule, "deform"), ProcessDeform::create,
     "Deform a mesh given an input field defining displacement");
 
 ProcessDeform::ProcessDeform(FieldSharedPtr f) : ProcessModule(f)
@@ -62,7 +61,7 @@ ProcessDeform::~ProcessDeform()
 
 void ProcessDeform::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -72,12 +71,12 @@ void ProcessDeform::Process(po::variables_map &vm)
 
     Array<OneD, MultiRegions::ExpListSharedPtr> exp(m_f->m_exp.size());
 
-    for (int i = 0; i < exp.num_elements(); ++i)
+    for (int i = 0; i < exp.size(); ++i)
     {
         exp[i] = m_f->m_exp[i];
     }
 
     GlobalMapping::UpdateGeometry(m_f->m_graph, exp, false);
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

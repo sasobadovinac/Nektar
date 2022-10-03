@@ -42,27 +42,26 @@ namespace SolverUtils
 {
 
 std::string Driver::evolutionOperatorLookupIds[6] = {
+    LibUtilities::SessionReader::RegisterEnumValue("EvolutionOperator",
+                                                   "Nonlinear", eNonlinear),
+    LibUtilities::SessionReader::RegisterEnumValue("EvolutionOperator",
+                                                   "Direct", eDirect),
+    LibUtilities::SessionReader::RegisterEnumValue("EvolutionOperator",
+                                                   "Adjoint", eAdjoint),
     LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","Nonlinear"      ,eNonlinear),
+        "EvolutionOperator", "TransientGrowth", eTransientGrowth),
     LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","Direct"         ,eDirect),
+        "EvolutionOperator", "SkewSymmetric", eSkewSymmetric),
     LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","Adjoint"        ,eAdjoint),
-    LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","TransientGrowth",eTransientGrowth),
-    LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","SkewSymmetric"  ,eSkewSymmetric),
-    LibUtilities::SessionReader::RegisterEnumValue(
-            "EvolutionOperator","AdaptiveSFD"    ,eAdaptiveSFD)
-};
+        "EvolutionOperator", "AdaptiveSFD", eAdaptiveSFD)};
 std::string Driver::evolutionOperatorDef =
-    LibUtilities::SessionReader::RegisterDefaultSolverInfo(
-            "EvolutionOperator","Nonlinear");
+    LibUtilities::SessionReader::RegisterDefaultSolverInfo("EvolutionOperator",
+                                                           "Nonlinear");
 std::string Driver::driverDefault =
-    LibUtilities::SessionReader::RegisterDefaultSolverInfo(
-            "Driver",           "Standard");
+    LibUtilities::SessionReader::RegisterDefaultSolverInfo("Driver",
+                                                           "Standard");
 
-DriverFactory& GetDriverFactory()
+DriverFactory &GetDriverFactory()
 {
     static DriverFactory instance;
     return instance;
@@ -73,9 +72,7 @@ DriverFactory& GetDriverFactory()
  */
 Driver::Driver(const LibUtilities::SessionReaderSharedPtr pSession,
                const SpatialDomains::MeshGraphSharedPtr pGraph)
-    : m_comm(pSession->GetComm()),
-      m_session(pSession),
-      m_graph(pGraph)
+    : m_comm(pSession->GetComm()), m_session(pSession), m_graph(pGraph)
 {
 }
 
@@ -101,18 +98,22 @@ void Driver::v_InitObject(ostream &out)
         }
 
         // Check such a module exists for this equation.
-        ASSERTL0(GetEquationSystemFactory().ModuleExists(vEquation),
-                 "EquationSystem '" + vEquation + "' is not defined.\n"
-                 "Ensure equation name is correct and module is compiled.\n");
+        ASSERTL0(
+            GetEquationSystemFactory().ModuleExists(vEquation),
+            "EquationSystem '" + vEquation +
+                "' is not defined.\n"
+                "Ensure equation name is correct and module is compiled.\n");
 
         // Retrieve the type of evolution operator to use
         /// @todo At the moment this is Navier-Stokes specific - generalise?
         m_EvolutionOperator =
             m_session->GetSolverInfoAsEnum<EvolutionOperatorType>(
-                    "EvolutionOperator");
+                "EvolutionOperator");
 
         m_nequ = ((m_EvolutionOperator == eTransientGrowth ||
-                   m_EvolutionOperator == eAdaptiveSFD) ? 2 : 1);
+                   m_EvolutionOperator == eAdaptiveSFD)
+                      ? 2
+                      : 1);
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
@@ -120,72 +121,78 @@ void Driver::v_InitObject(ostream &out)
         switch (m_EvolutionOperator)
         {
             case eNonlinear:
-                m_session->SetTag("AdvectiveType","Convective");
+                m_session->SetTag("AdvectiveType", "Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                    vEquation, m_session, m_graph);
                 break;
             case eDirect:
-                m_session->SetTag("AdvectiveType","Linearised");
+                m_session->SetTag("AdvectiveType", "Linearised");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                    vEquation, m_session, m_graph);
                 break;
             case eAdjoint:
-                m_session->SetTag("AdvectiveType","Adjoint");
+                m_session->SetTag("AdvectiveType", "Adjoint");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                    vEquation, m_session, m_graph);
                 break;
             case eTransientGrowth:
-                //forward timestepping
-                m_session->SetTag("AdvectiveType","Linearised");
+                // forward timestepping
+                m_session->SetTag("AdvectiveType", "Linearised");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                    vEquation, m_session, m_graph);
 
-                //backward timestepping
-                m_session->SetTag("AdvectiveType","Adjoint");
+                // backward timestepping
+                m_session->SetTag("AdvectiveType", "Adjoint");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                    vEquation, m_session, m_graph);
                 break;
             case eSkewSymmetric:
-                m_session->SetTag("AdvectiveType","SkewSymmetric");
+                m_session->SetTag("AdvectiveType", "SkewSymmetric");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                    vEquation, m_session, m_graph);
                 break;
             case eAdaptiveSFD:
             {
                 // Coupling SFD method and Arnoldi algorithm
                 // For having 2 equation systems defined into 2 different
                 // session files (with the mesh into a file named 'session'.gz)
-                string          meshfile;
-                string          LinNSCondFile;
-                vector<string>  LinNSFilename;
-                meshfile = m_session->GetFilenames()[0];
+                string LinNSCondFile;
+                vector<string> LinNSFilename;
+
+                // assume that the conditions file is the last
+                // filename on intiialisation and so copy all other
+                // files to new session. This will include the mesh
+                // file and possibly the optimsaiton file
+                for (int i = 0; i < m_session->GetFilenames().size() - 1; ++i)
+                {
+                    LinNSFilename.push_back(m_session->GetFilenames()[i]);
+                }
+
                 LinNSCondFile = m_session->GetSessionName();
                 LinNSCondFile += "_LinNS.xml";
-                LinNSFilename.push_back(meshfile);
                 LinNSFilename.push_back(LinNSCondFile);
 
-                char *argv[] = {
-                    const_cast<char*>("IncNavierStokesSolver"), nullptr };
+                char *argv[]  = {const_cast<char *>("IncNavierStokesSolver"),
+                                nullptr};
                 session_LinNS = LibUtilities::SessionReader::CreateInstance(
                     1, argv, LinNSFilename, m_session->GetComm());
 
                 SpatialDomains::MeshGraphSharedPtr graph_linns =
                     SpatialDomains::MeshGraph::Read(session_LinNS);
 
-                //For running stability analysis
-                session_LinNS->SetTag("AdvectiveType","Linearised");
+                // For running stability analysis
+                session_LinNS->SetTag("AdvectiveType", "Linearised");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, session_LinNS, graph_linns);
 
-                //For running the SFD method on the nonlinear problem
-                m_session->SetTag("AdvectiveType","Convective");
+                // For running the SFD method on the nonlinear problem
+                m_session->SetTag("AdvectiveType", "Convective");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
             }
-                break;
+            break;
             default:
                 ASSERTL0(false, "Unrecognised evolution operator.");
-
         }
     }
     catch (int e)
@@ -197,15 +204,15 @@ void Driver::v_InitObject(ostream &out)
 
 Array<OneD, NekDouble> Driver::v_GetRealEvl(void)
 {
-    ASSERTL0(false,"This routine is not valid in this class");
+    ASSERTL0(false, "This routine is not valid in this class");
     return NullNekDouble1DArray;
 }
 
 Array<OneD, NekDouble> Driver::v_GetImagEvl(void)
 {
-    ASSERTL0(false,"This routine is not valid in this class");
+    ASSERTL0(false, "This routine is not valid in this class");
     return NullNekDouble1DArray;
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

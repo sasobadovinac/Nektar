@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Extract location of critical layer from streak file 
+// Description: Extract location of critical layer from streak file
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +36,6 @@
 #include <cstdlib>
 
 #include <MultiRegions/ExpList.h>
-#include <MultiRegions/ExpList2D.h>
 
 using namespace std;
 using namespace Nektar;
@@ -47,67 +46,66 @@ int main(int argc, char *argv[])
 {
     int i;
     NekDouble cr = 0;
-    
-    if(argc !=3)
+
+    if (argc != 3)
     {
-        fprintf(stderr,"Usage: ./ExtractCriticalLayer  meshfile fieldfile  \n");
+        fprintf(stderr,
+                "Usage: ./ExtractCriticalLayer  meshfile fieldfile  \n");
         exit(1);
     }
-    
+
     //------------------------------------------------------------
-    // Create Session file. 
-    LibUtilities::SessionReaderSharedPtr vSession
-        = LibUtilities::SessionReader::CreateInstance(argc, argv);
+    // Create Session file.
+    LibUtilities::SessionReaderSharedPtr vSession =
+        LibUtilities::SessionReader::CreateInstance(argc, argv);
     //-----------------------------------------------------------
-    
+
     //-------------------------------------------------------------
     // Read in mesh from input file
-    SpatialDomains::MeshGraphSharedPtr graphShPt = SpatialDomains::MeshGraph::Read(vSession);
+    SpatialDomains::MeshGraphSharedPtr graphShPt =
+        SpatialDomains::MeshGraph::Read(vSession);
     //------------------------------------------------------------
-    
-    //-------------------------------------------------------------
-    // Define Streak Expansion   
-    MultiRegions::ExpListSharedPtr streak;   
 
-    streak = MemoryManager<MultiRegions::ExpList2D>
-        ::AllocateSharedPtr(vSession,graphShPt);
+    //-------------------------------------------------------------
+    // Define Streak Expansion
+    MultiRegions::ExpListSharedPtr streak;
+
+    streak = MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr(vSession,
+                                                                     graphShPt);
     //---------------------------------------------------------------
 
     //----------------------------------------------
     // Import field file.
-    string fieldfile(argv[argc-1]);
+    string fieldfile(argv[argc - 1]);
     vector<LibUtilities::FieldDefinitionsSharedPtr> fielddef;
-    vector<vector<NekDouble> > fielddata;
-    LibUtilities::Import(fieldfile,fielddef,fielddata);
+    vector<vector<NekDouble>> fielddata;
+    LibUtilities::Import(fieldfile, fielddef, fielddata);
     //----------------------------------------------
 
     //----------------------------------------------
     // Copy data from field file
-    string  streak_field("w");
-    for(unsigned int i = 0; i < fielddata.size(); ++i)
+    string streak_field("w");
+    for (unsigned int i = 0; i < fielddata.size(); ++i)
     {
-        streak->ExtractDataToCoeffs(fielddef [i],
-                                    fielddata[i],
-                                    streak_field,
+        streak->ExtractDataToCoeffs(fielddef[i], fielddata[i], streak_field,
                                     streak->UpdateCoeffs());
     }
     //----------------------------------------------
-    
-    int npts;
-    vSession->LoadParameter("NumCriticalLayerPts",npts,30);
-    Array<OneD, NekDouble> x_c(npts);
-    Array<OneD, NekDouble> y_c(npts);       
-    
-    NekDouble trans;
-    vSession->LoadParameter("WidthOfLayers",trans,0.1);
 
-    Computestreakpositions(streak,x_c, y_c,cr,trans);    
+    int npts;
+    vSession->LoadParameter("NumCriticalLayerPts", npts, 30);
+    Array<OneD, NekDouble> x_c(npts);
+    Array<OneD, NekDouble> y_c(npts);
+
+    NekDouble trans;
+    vSession->LoadParameter("WidthOfLayers", trans, 0.1);
+
+    Computestreakpositions(streak, x_c, y_c, cr, trans);
 
     cout << "# x_c y_c" << endl;
-    for(i = 0; i < npts; ++i)
+    for (i = 0; i < npts; ++i)
     {
-        fprintf(stdout,"%12.10lf %12.10lf \n",x_c[i],y_c[i]);
-        //cout << x_c[i] << " " << y_c[i] << endl;
+        fprintf(stdout, "%12.10lf %12.10lf \n", x_c[i], y_c[i]);
+        // cout << x_c[i] << " " << y_c[i] << endl;
     }
-    
 }

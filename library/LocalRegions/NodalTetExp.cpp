@@ -36,9 +36,8 @@
 
 namespace Nektar
 {
-  namespace LocalRegions 
-  {
+namespace LocalRegions
+{
 
-
-  }//end of namespace
-}//end of namespace
+} // namespace LocalRegions
+} // namespace Nektar

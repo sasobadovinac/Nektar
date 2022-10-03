@@ -40,69 +40,67 @@
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
-#include <SolverUtils/SolverUtilsDeclspec.h>
 #include <SolverUtils/Forcing/Forcing.h>
-
+#include <SolverUtils/SolverUtilsDeclspec.h>
 
 namespace Nektar
 {
 namespace SolverUtils
 {
-    class ForcingBody : public Forcing
+class ForcingBody : public Forcing
+{
+public:
+    friend class MemoryManager<ForcingBody>;
+
+    /// Creates an instance of this class
+    SOLVER_UTILS_EXPORT static ForcingSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
     {
-        public:
+        ForcingSharedPtr p =
+            MemoryManager<ForcingBody>::AllocateSharedPtr(pSession, pEquation);
+        p->InitObject(pFields, pNumForcingFields, pForce);
+        return p;
+    }
 
-            friend class MemoryManager<ForcingBody>;
+    /// Name of the class
+    static std::string classNameBody;
+    static std::string classNameField;
 
-            /// Creates an instance of this class
-            SOLVER_UTILS_EXPORT static ForcingSharedPtr create(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const std::weak_ptr<EquationSystem>      &pEquation,
-                    const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                    const unsigned int& pNumForcingFields,
-                    const TiXmlElement* pForce)
-            {
-                ForcingSharedPtr p = MemoryManager<ForcingBody>::
-                                        AllocateSharedPtr(pSession, pEquation);
-                p->InitObject(pFields, pNumForcingFields, pForce);
-                return p;
-            }
+protected:
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
 
-            ///Name of the class
-            static std::string classNameBody;
-            static std::string classNameField;
+    SOLVER_UTILS_EXPORT virtual void v_Apply(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
 
-        protected:
-            SOLVER_UTILS_EXPORT virtual void v_InitObject(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                    const unsigned int& pNumForcingFields,
-                    const TiXmlElement* pForce);
+    SOLVER_UTILS_EXPORT virtual void v_ApplyCoeff(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
 
-            SOLVER_UTILS_EXPORT virtual void v_Apply(
-                    const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                    const Array<OneD, Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    const NekDouble &time);
+private:
+    std::string m_funcName;
+    bool m_hasTimeFcnScaling;
+    LibUtilities::EquationSharedPtr m_timeFcnEqn;
+    bool m_transform;
 
-        private:
-            std::string                     m_funcName;
-            bool                            m_hasTimeFcnScaling;
-            LibUtilities::EquationSharedPtr m_timeFcnEqn;
-            bool                            m_transform;
+    ForcingBody(const LibUtilities::SessionReaderSharedPtr &pSession,
+                const std::weak_ptr<EquationSystem> &pEquation);
 
-            ForcingBody(
-                const LibUtilities::SessionReaderSharedPtr &pSession,
-                const std::weak_ptr<EquationSystem>      &pEquation);
+    virtual ~ForcingBody(void){};
 
-            virtual ~ForcingBody(void){};
-
-            void Update(
-                const Array<OneD, MultiRegions::ExpListSharedPtr>& pFields,
-                const Array<OneD, Array<OneD, NekDouble> > &inarray,
+    void Update(const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
+                const Array<OneD, Array<OneD, NekDouble>> &inarray,
                 const NekDouble &time);
-    };
+};
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

@@ -37,21 +37,22 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/BasicUtils/NekFactory.hpp>
-#include <StdRegions/StdExpansion.h>
-#include <SpatialDomains/Geometry.h>
 #include <Collections/CollectionsDeclspec.h>
+#include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <SpatialDomains/Geometry.h>
+#include <StdRegions/StdExpansion.h>
 
-#define OPERATOR_CREATE(cname)                                  \
-    static OperatorKey m_type;                                  \
-    static OperatorKey m_typeArr[];                             \
-    friend class MemoryManager<cname>;                          \
-    static OperatorSharedPtr create(                            \
-        std::vector<StdRegions::StdExpansionSharedPtr> pCollExp,\
-        std::shared_ptr<CoalescedGeomData> GeomData)            \
-    {                                                           \
-        return MemoryManager<cname>                             \
-            ::AllocateSharedPtr(pCollExp, GeomData);            \
+#define OPERATOR_CREATE(cname)                                                 \
+    static OperatorKey m_type;                                                 \
+    static OperatorKey m_typeArr[];                                            \
+    friend class MemoryManager<cname>;                                         \
+    static OperatorSharedPtr create(                                           \
+        std::vector<StdRegions::StdExpansionSharedPtr> pCollExp,               \
+        std::shared_ptr<CoalescedGeomData> GeomData,                           \
+        StdRegions::FactorMap factors)                                         \
+    {                                                                          \
+        return MemoryManager<cname>::AllocateSharedPtr(pCollExp, GeomData,     \
+                                                       factors);               \
     }
 
 namespace Nektar
@@ -60,24 +61,24 @@ namespace Collections
 {
 
 class CoalescedGeomData;
-typedef std::shared_ptr<CoalescedGeomData>   CoalescedGeomDataSharedPtr;
+typedef std::shared_ptr<CoalescedGeomData> CoalescedGeomDataSharedPtr;
 
 enum OperatorType
 {
     eBwdTrans,
+    eHelmholtz,
     eIProductWRTBase,
     eIProductWRTDerivBase,
     ePhysDeriv,
     SIZE_OperatorType
 };
 
-const char* const OperatorTypeMap[] =
-{
-    "BwdTrans",
-    "IProductWRTBase",
-    "IProductWRTDerivBase",
-    "PhysDeriv"
-};
+const char *const OperatorTypeMap[] = {"BwdTrans", "Helmholtz",
+                                       "IProductWRTBase",
+                                       "IProductWRTDerivBase", "PhysDeriv"};
+
+const char *const OperatorTypeMap1[] = {"BwdTrans", "Helmholtz", "IPWrtBase",
+                                        "IPWrtDBase", "PhysDeriv "};
 
 enum ImplementationType
 {
@@ -86,16 +87,24 @@ enum ImplementationType
     eIterPerExp,
     eStdMat,
     eSumFac,
+    eMatrixFree,
     SIZE_ImplementationType
 };
 
-const char* const ImplementationTypeMap[] =
-{
+const char *const ImplementationTypeMap[] = {"NoImplementationType",
+                                             "NoCollection",
+                                             "IterPerExp",
+                                             "StdMat",
+                                             "SumFac",
+                                             "MatrixFree"};
+
+const char *const ImplementationTypeMap1[] = {
     "NoImplementationType",
-    "NoCollection",
-    "IterPerExp",
-    "StdMat",
-    "SumFac"
+    "IterLocExp", // formerly "NoCollection"
+    "IterStdExp", // formerly "IterPerExp"
+    "StdMat    ",
+    "SumFac    ",
+    "MatFree   " // formerly "MatrixFree"
 };
 
 typedef bool ExpansionIsNodal;
@@ -108,74 +117,80 @@ OperatorImpMap SetFixedImpType(ImplementationType defaultType);
 /// Base class for operators on a collection of elements
 class Operator
 {
-    public:
-        /// Constructor
-        Operator(
-                std::vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                std::shared_ptr<CoalescedGeomData> GeomData)
-            : m_stdExp(pCollExp[0]->GetStdExp()),
-              m_numElmt(pCollExp.size()),
-              m_wspSize(0)
-        {
-            boost::ignore_unused(GeomData);
-        }
+public:
+    /// Constructor
+    Operator(std::vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+             std::shared_ptr<CoalescedGeomData> GeomData,
+             StdRegions::FactorMap factors);
 
-        /// Perform operation
-        COLLECTIONS_EXPORT virtual void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp
-                                                    = NullNekDouble1DArray) = 0;
+    /// Perform operation
 
-        COLLECTIONS_EXPORT virtual void operator()(
-                      int                           dir,
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output,
-                      Array<OneD,       NekDouble> &wsp
-                                                    = NullNekDouble1DArray) = 0;
+    COLLECTIONS_EXPORT virtual void operator()(
+        const Array<OneD, const NekDouble> &input,
+        Array<OneD, NekDouble> &output0, Array<OneD, NekDouble> &output1,
+        Array<OneD, NekDouble> &output2,
+        Array<OneD, NekDouble> &wsp = NullNekDouble1DArray) = 0;
 
-        COLLECTIONS_EXPORT virtual ~Operator();
+    COLLECTIONS_EXPORT virtual void operator()(
+        int dir, const Array<OneD, const NekDouble> &input,
+        Array<OneD, NekDouble> &output,
+        Array<OneD, NekDouble> &wsp = NullNekDouble1DArray) = 0;
 
-        /// Get the size of the required workspace
-        int GetWspSize()
-        {
-            return m_wspSize;
-        }
+    COLLECTIONS_EXPORT virtual ~Operator();
 
-    protected:
-        StdRegions::StdExpansionSharedPtr m_stdExp;
-        unsigned int m_numElmt;
-        unsigned int m_wspSize;
+    /// Check the validity of the supplied factor map
+    COLLECTIONS_EXPORT virtual void CheckFactors(StdRegions::FactorMap factors,
+                                                 int coll_phys_offset) = 0;
+
+    /// Get the size of the required workspace
+    unsigned int GetWspSize()
+    {
+        return m_wspSize;
+    }
+
+    /// Get expansion pointer
+    unsigned int GetNumElmt()
+    {
+        return m_numElmt;
+    }
+
+    /// Get expansion pointer
+    StdRegions::StdExpansionSharedPtr GetExpSharedPtr()
+    {
+        return m_stdExp;
+    }
+
+protected:
+    bool m_isDeformed;
+    StdRegions::StdExpansionSharedPtr m_stdExp;
+    unsigned int m_numElmt;
+    unsigned int m_nqe;
+    unsigned int m_wspSize;
 };
 
 /// Shared pointer to an Operator object
 typedef std::shared_ptr<Operator> OperatorSharedPtr;
 
 /// Key for describing an Operator
-typedef std::tuple<
-    LibUtilities::ShapeType,
-    OperatorType,
-    ImplementationType,
-    ExpansionIsNodal> OperatorKey;
+typedef std::tuple<LibUtilities::ShapeType, OperatorType, ImplementationType,
+                   ExpansionIsNodal>
+    OperatorKey;
 
 /// Less-than comparison operator for OperatorKey objects
-bool operator< (OperatorKey const &p1, OperatorKey const &p2);
+bool operator<(OperatorKey const &p1, OperatorKey const &p2);
 
 /// Stream output operator for OperatorKey objects
 std::ostream &operator<<(std::ostream &os, OperatorKey const &p);
 
 /// Operator factory definition
 typedef Nektar::LibUtilities::NekFactory<
-    OperatorKey,
-    Operator,
-    std::vector<StdRegions::StdExpansionSharedPtr>,
-    CoalescedGeomDataSharedPtr> OperatorFactory;
+    OperatorKey, Operator, std::vector<StdRegions::StdExpansionSharedPtr>,
+    CoalescedGeomDataSharedPtr, StdRegions::FactorMap>
+    OperatorFactory;
 
 /// Returns the singleton Operator factory object
-OperatorFactory& GetOperatorFactory();
+OperatorFactory &GetOperatorFactory();
 
-}
-}
+} // namespace Collections
+} // namespace Nektar
 #endif

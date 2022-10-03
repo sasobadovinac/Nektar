@@ -28,21 +28,27 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Header file of time integration scheme base class
+// Description: Header file of time integration scheme base class,
+// this class is the parent class for the TimeIntegrationSchemeGLM and
+// TimeIntegrationSchemeFIT classes.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#ifndef NEKTAR_LIB_UTILITIES_TIME_INTEGRATION_TIME_INTEGRATION_SCHEME
+#define NEKTAR_LIB_UTILITIES_TIME_INTEGRATION_TIME_INTEGRATION_SCHEME
 
 #include <string>
 
 #include <boost/core/ignore_unused.hpp>
 
+#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
-#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
+
+#include <LibUtilities/TimeIntegration/TimeIntegrationSchemeOperators.h>
+#include <LibUtilities/TimeIntegration/TimeIntegrationTypes.hpp>
 
 #define LUE LIB_UTILITIES_EXPORT
 
@@ -50,39 +56,19 @@ namespace Nektar
 {
 namespace LibUtilities
 {
-// Forward declaration of some of the classes in this file...
-class TimeIntegrationScheme;
-class TimeIntegrationSchemeData;
-class TimeIntegrationSolution;
-class TimeIntegrationSchemeOperators;
-
-typedef std::shared_ptr<TimeIntegrationScheme> TimeIntegrationSchemeSharedPtr;
 
 /// Datatype of the NekFactory used to instantiate classes derived from the
 /// EquationSystem class.
-typedef NekFactory<std::string, TimeIntegrationScheme>
+typedef NekFactory<std::string, TimeIntegrationScheme, std::string,
+                   unsigned int, std::vector<NekDouble>>
     TimeIntegrationSchemeFactory;
 
 // Allows a code to create a TimeIntegrator. Usually used like this:
 //
 //    LibUtilities::TimeIntegrationSchemeSharedPtr timeIntegrationScheme =
 //      LibUtilities::GetTimeIntegrationSchemeFactory().CreateInstance(
-//                  "IMEXOrder1" );
+//                  "IMEX", "dirk", 3, std::vector<unsigned int>{2,3} );
 LUE TimeIntegrationSchemeFactory &GetTimeIntegrationSchemeFactory();
-
-enum TimeIntegrationSchemeType
-{
-    eNoTimeIntegrationSchemeType,
-    eExplicit,           //!< Formally explicit scheme
-    eDiagonallyImplicit, //!< Diagonally implicit scheme (e.g. the DIRK schemes)
-    eIMEX,               //!< Implicit Explicit General Linear Method
-    eImplicit,           //!< Fully implicit scheme
-};
-
-const char *const TimeIntegrationSchemeTypeMap[] = {
-    "NoTimeIntegrationSchemeType", "Explicit", "DiagonallyImplicit", "IMEX",
-    "Implicit"};
-
 
 /**
  * @brief Base class for time integration schemes.
@@ -90,72 +76,34 @@ const char *const TimeIntegrationSchemeTypeMap[] = {
 class TimeIntegrationScheme
 {
 public:
-    // typedefs
-    typedef std::shared_ptr<TimeIntegrationSchemeData>
-        TimeIntegrationSchemeDataSharedPtr;
-    typedef std::vector<TimeIntegrationSchemeDataSharedPtr>
-        TimeIntegrationSchemeDataVector;
-    typedef std::vector<TimeIntegrationSchemeDataSharedPtr>::iterator
-        TimeIntegrationSchemeDataVectorIter;
+    // Access methods
+    LUE virtual std::string GetFullName() const;
+    LUE virtual std::string GetName() const                  = 0;
+    LUE virtual std::string GetVariant() const               = 0;
+    LUE virtual unsigned int GetOrder() const                = 0;
+    LUE virtual std::vector<NekDouble> GetFreeParams() const = 0;
 
-    typedef std::shared_ptr<TimeIntegrationSolution>
-        TimeIntegrationSolutionSharedPtr;
-    typedef std::vector<TimeIntegrationSolutionSharedPtr>
-        TimeIntegrationSolutionVector;
-    typedef std::vector<TimeIntegrationSolutionSharedPtr>::iterator
-        TimeIntegrationSolutionVectorIter;
+    LUE virtual TimeIntegrationSchemeType GetIntegrationSchemeType() const = 0;
 
-    typedef const Array<OneD, const Array<OneD, Array<OneD, NekDouble>>>
-        ConstTripleArray;
-    typedef Array<OneD, Array<OneD, Array<OneD, NekDouble>>> TripleArray;
-    typedef const Array<OneD, const Array<OneD, NekDouble>> ConstDoubleArray;
-    typedef Array<OneD, Array<OneD, NekDouble>> DoubleArray;
-    typedef const Array<OneD, const NekDouble> ConstSingleArray;
-    typedef Array<OneD, NekDouble> SingleArray;
-    typedef std::function<void(ConstDoubleArray &, DoubleArray &,
-                               const NekDouble)>
-        FunctorType1;
-    typedef std::function<void(ConstDoubleArray &, DoubleArray &,
-                               const NekDouble, const NekDouble)>
-        FunctorType2;
+    LUE virtual NekDouble GetTimeStability() const = 0;
 
-    unsigned int GetNumIntegrationPhases() const
-    {
-        return m_integration_phases.size();
-    }
+    LUE virtual unsigned int GetNumIntegrationPhases() const = 0;
 
-    LUE TimeIntegrationSolutionSharedPtr InitializeScheme(
-        const NekDouble deltaT, TimeIntegrationScheme::ConstDoubleArray &y_0,
-        const NekDouble time, const TimeIntegrationSchemeOperators &op);
-    LUE TimeIntegrationScheme::ConstDoubleArray &TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
-        TimeIntegrationSolutionSharedPtr &solvector,
-        const TimeIntegrationSchemeOperators &op);
+    /**
+     * \brief Gets the solution vector of the ODE
+     */
+    virtual const TripleArray &GetSolutionVector() const = 0;
 
-    virtual std::string GetName() const = 0;
-    virtual NekDouble   GetTimeStability() const = 0;
+    /**
+     * \brief Sets the solution vector of the ODE
+     */
+    virtual void SetSolutionVector(const int Offset, const DoubleArray &y) = 0;
 
-    LUE TimeIntegrationSchemeType GetIntegrationSchemeType() const;
-
-protected:
-
-    TimeIntegrationSchemeDataVector m_integration_phases;
-    bool m_firstStageEqualsOldSolution; //< Optimisation flag
-    bool m_lastStageEqualsNewSolution;  //< Optimisation flag
-
-    virtual ~TimeIntegrationScheme()
-    {
-    }
-
-    LUE friend std::ostream &operator<<(std::ostream &os,
-                                    const TimeIntegrationScheme &rhs);
-    LUE friend std::ostream &operator<<(std::ostream &os,
-                                    const TimeIntegrationSchemeSharedPtr &rhs);
-
+    // The worker methods
     /**
      * \brief Explicit integration of an ODE.
      *
-     * This function explicitely perfroms a signle integration step of the ODE
+     * This function explicitely perfroms a single integration step of the ODE
      * system:
      * \f[
      * \frac{d\boldsymbol{y}}{dt}=\boldsymbol{f}(t,\boldsymbol{y})
@@ -169,54 +117,60 @@ protected:
      * \param y on input: the vectors \f$\boldsymbol{y}^{[n-1]}\f$ and
      * \f$t^{[n-1]}\f$ (which corresponds to the
      *    solution at the old time level)
-     * \param y on output: the vectors \f$\boldsymbol{y}^{[n]}\f$ and
+     * \param y on output:  the vectors \f$\boldsymbol{y}^{[n]}\f$ and
      * \f$t^{[n]}\f$ (which corresponds to the
      *    solution at the old new level)
      * \return The actual solution \f$\boldsymbol{y}^{n}\f$ at the new time
      * level
      *    (which in fact is also embedded in the argument y).
      */
-    LUE ConstDoubleArray &TimeIntegrate(
-        const NekDouble timestep, TimeIntegrationSolutionSharedPtr &y,
-        const TimeIntegrationSchemeOperators &op);
+    LUE virtual void InitializeScheme(
+        const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
+        const TimeIntegrationSchemeOperators &op) = 0;
 
-    // This should never be used directly... only used by child classes...
-    LUE TimeIntegrationScheme()
+    LUE virtual ConstDoubleArray &TimeIntegrate(
+        const int timestep, const NekDouble delta_t,
+        const TimeIntegrationSchemeOperators &op) = 0;
+
+    LUE virtual void print(std::ostream &os) const     = 0;
+    LUE virtual void printFull(std::ostream &os) const = 0;
+
+    // Friend classes
+    LUE friend std::ostream &operator<<(std::ostream &os,
+                                        const TimeIntegrationScheme &rhs);
+    LUE friend std::ostream &operator<<(
+        std::ostream &os, const TimeIntegrationSchemeSharedPtr &rhs);
+
+protected:
+    // These methods should never be used directly, only used by child classes.
+    LUE TimeIntegrationScheme(std::string variant, unsigned int order,
+                              std::vector<NekDouble> freeParams)
     {
+        boost::ignore_unused(variant, order, freeParams);
     }
 
     LUE TimeIntegrationScheme(const TimeIntegrationScheme &in)
     {
         boost::ignore_unused(in);
+
         NEKERROR(ErrorUtil::efatal, "Copy Constructor for the "
                                     "TimeIntegrationScheme class should not be "
                                     "called");
     }
 
-    inline int GetFirstDim(ConstTripleArray &y) const
+    virtual ~TimeIntegrationScheme()
     {
-        return y[0].num_elements();
     }
-
-    inline int GetSecondDim(ConstTripleArray &y) const
-    {
-        return y[0][0].num_elements();
-    }
-
-    LUE bool CheckTimeIntegrateArguments(
-        const NekDouble timestep, ConstTripleArray &y_old,
-        ConstSingleArray &t_old, TripleArray &y_new, SingleArray &t_new,
-        const TimeIntegrationSchemeOperators &op) const;
-
-
 
 }; // end class TimeIntegrationScheme
 
 LUE std::ostream &operator<<(std::ostream &os,
                              const TimeIntegrationScheme &rhs);
+
 LUE std::ostream &operator<<(std::ostream &os,
                              const TimeIntegrationSchemeSharedPtr &rhs);
 
 } // end of namespace LibUtilities
 } // end of namespace Nektar
 
+#endif

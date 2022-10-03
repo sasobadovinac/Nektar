@@ -42,9 +42,9 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <LibUtilities/Memory/ThreadSpecificPool.hpp>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <LibUtilities/Memory/ThreadSpecificPool.hpp>
 
 #include <vector>
 
@@ -79,8 +79,7 @@ namespace Nektar
 /// @code
 /// std::shared_ptr<Obj> f = MemoryManager<Obj>::AllocateSharedPtr();
 /// @endcode
-template<typename DataType>
-class MemoryManager
+template <typename DataType> class MemoryManager
 {
 public:
     /// @brief Deallocate a pointer allocated by
@@ -96,13 +95,17 @@ public:
     /// CustObj* c = MemoryManager::Allocate<CustObj>();
     /// MemoryManager::Deallocate(c);
     /// @endcode
-    static void Deallocate(DataType*& data)
+    static void Deallocate(DataType *&data)
     {
 #ifdef NEKTAR_MEMORY_POOL_ENABLED
         data->~DataType();
         GetMemoryPool().Deallocate(data, sizeof(DataType));
 #else
+#ifdef NEKTAR_USE_ALIGNED_MEM
+        boost::alignment::aligned_free(data);
+#else
         delete data;
+#endif
 #endif
 
         data = NULL;
@@ -116,11 +119,10 @@ public:
     ///
     /// The allocated object must be returned to the memory pool
     /// via Deallocate.
-    template<typename... Args>
-    static DataType* Allocate(const Args &...args)
+    template <typename... Args> static DataType *Allocate(const Args &...args)
     {
-        DataType* result = static_cast<DataType*>(
-            GetMemoryPool().Allocate(sizeof(DataType)));
+        DataType *result =
+            static_cast<DataType *>(GetMemoryPool().Allocate(sizeof(DataType)));
 
         if (result)
         {
@@ -128,7 +130,7 @@ public:
             {
                 new (result) DataType(args...);
             }
-            catch(...)
+            catch (...)
             {
                 GetMemoryPool().Deallocate(result, sizeof(DataType));
                 throw;
@@ -138,41 +140,45 @@ public:
         return result;
     }
 
-#else //NEKTAR_MEMORY_POOL_ENABLED
+#else // NEKTAR_MEMORY_POOL_ENABLED
     /// @brief Allocates a single object from the memory pool.
     /// @throws unknown Any exception thrown by DataType's default
     /// constructor will propogate through this method.
     ///
     /// The allocated object must be returned to the memory pool
     /// via Deallocate.
-    template<typename... Args>
-    static DataType* Allocate(const Args &...args)
+    template <typename... Args> static DataType *Allocate(const Args &...args)
     {
+#ifdef NEKTAR_USE_ALIGNED_MEM
+        void *ptr = boost::alignment::aligned_alloc(
+            tinysimd::simd<NekDouble>::alignment, sizeof(DataType));
+        return new (ptr) DataType(args...);
+#else
         return new DataType(args...);
+#endif
     }
-#endif //NEKTAR_MEMORY_POOL_ENABLED
+#endif // NEKTAR_MEMORY_POOL_ENABLED
 
     /// @brief Allocate a shared pointer from the memory pool.
     ///
     /// The shared pointer does not need to be returned to the memory
     /// pool. When the reference count to this object reaches 0, the
     /// shared pointer will automatically return the memory.
-    template<typename... Args>
+    template <typename... Args>
     static std::shared_ptr<DataType> AllocateSharedPtr(const Args &...args)
     {
-        return AllocateSharedPtrD( [](DataType *){}, args...);
+        return AllocateSharedPtrD([](DataType *) {}, args...);
     }
 
-    template<typename DeallocatorType, typename... Args>
+    template <typename DeallocatorType, typename... Args>
     static std::shared_ptr<DataType> AllocateSharedPtrD(
-        const DeallocatorType& d, const Args &...args)
+        const DeallocatorType &d, const Args &...args)
     {
-        DataType* data = Allocate(args...);
-        return std::shared_ptr<DataType>(
-            data, [=](DataType *ptr){
-                d(ptr);
-                MemoryManager<DataType>::Deallocate(ptr);
-            });
+        DataType *data = Allocate(args...);
+        return std::shared_ptr<DataType>(data, [=](DataType *ptr) {
+            d(ptr);
+            MemoryManager<DataType>::Deallocate(ptr);
+        });
     }
 
     /// \brief Allocates a chunk of raw, uninitialized memory, capable of
@@ -185,29 +191,42 @@ public:
     /// instead.  Any memory allocated from this method must be returned to the
     /// memory pool via RawDeallocate.  Failure to do so will result in memory
     /// leaks and undefined behavior.
-    static DataType* RawAllocate(size_t NumberOfElements)
+    static DataType *RawAllocate(size_t NumberOfElements)
     {
 #ifdef NEKTAR_MEMORY_POOL_ENABLED
-        return static_cast<DataType*>(GetMemoryPool().Allocate(sizeof(DataType)*NumberOfElements));
-#else //NEKTAR_MEMORY_POOL_ENABLED
-        return static_cast<DataType*>(::operator new(NumberOfElements * sizeof(DataType)));
-#endif //NEKTAR_MEMORY_POOL_ENABLED
+        return static_cast<DataType *>(
+            GetMemoryPool().Allocate(NumberOfElements * sizeof(DataType)));
+#else // NEKTAR_MEMORY_POOL_ENABLED
+#ifdef NEKTAR_USE_ALIGNED_MEM
+        return static_cast<DataType *>(boost::alignment::aligned_alloc(
+            tinysimd::simd<NekDouble>::alignment,
+            NumberOfElements * sizeof(DataType)));
+#else
+        return static_cast<DataType *>(
+            ::operator new(NumberOfElements * sizeof(DataType)));
+#endif
+#endif // NEKTAR_MEMORY_POOL_ENABLED
     }
-
 
     /// \brief Deallocates memory allocated from RawAllocate.
     /// \param array A pointer to the memory returned from RawAllocate.
     /// \param NumberOfElements The number of object held in the array.
     ///
-    /// This method is not meant to be called by client code.  Use Array instead.
-    /// Only memory allocated via RawAllocate should be returned to the pool here.
-    static void RawDeallocate(DataType* array, size_t NumberOfElements)
+    /// This method is not meant to be called by client code.  Use Array
+    /// instead. Only memory allocated via RawAllocate should be returned to the
+    /// pool here.
+    static void RawDeallocate(DataType *array, size_t NumberOfElements)
     {
 #ifdef NEKTAR_MEMORY_POOL_ENABLED
-        GetMemoryPool().Deallocate(array, sizeof(DataType)*NumberOfElements);
-#else //NEKTAR_MEMORY_POOL_ENABLED
+        GetMemoryPool().Deallocate(array, sizeof(DataType) * NumberOfElements);
+#else // NEKTAR_MEMORY_POOL_ENABLED
+        boost::ignore_unused(NumberOfElements);
+#ifdef NEKTAR_USE_ALIGNED_MEM
+        boost::alignment::aligned_free(array);
+#else
         ::operator delete(array);
-#endif //NEKTAR_MEMORY_POOL_ENABLED
+#endif
+#endif // NEKTAR_MEMORY_POOL_ENABLED
     }
 
     /////////////////////////////////////////////////////////////////
@@ -219,23 +238,34 @@ public:
     typedef DataType value_type;
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
-    typedef DataType* pointer;
-    typedef const DataType* const_pointer;
-    typedef DataType& reference;
-    typedef const DataType& const_reference;
+    typedef DataType *pointer;
+    typedef const DataType *const_pointer;
+    typedef DataType &reference;
+    typedef const DataType &const_reference;
 
-    MemoryManager() {}
-    template<typename T>
-    MemoryManager(const MemoryManager<T>& rhs)
+    MemoryManager()
+    {
+    }
+    template <typename T> MemoryManager(const MemoryManager<T> &rhs)
     {
         boost::ignore_unused(rhs);
     }
-    ~MemoryManager() {}
+    ~MemoryManager()
+    {
+    }
 
-    pointer address(reference r) const { return &r; }
-    const_pointer address(const_reference r) const { return &r; }
+    pointer address(reference r) const
+    {
+        return &r;
+    }
+    const_pointer address(const_reference r) const
+    {
+        return &r;
+    }
 
-    pointer allocate(size_type n, std::allocator<void>::const_pointer hint = 0)//typename MemoryManager<void>::pointer hint = 0)
+    pointer allocate(size_type n,
+                     std::allocator<void>::const_pointer hint =
+                         0) // typename MemoryManager<void>::pointer hint = 0)
     {
         boost::ignore_unused(hint);
         return RawAllocate(n);
@@ -248,7 +278,7 @@ public:
 
     void construct(pointer p, const_reference val)
     {
-        new(p) DataType(val);
+        new (p) DataType(val);
     }
 
     void destroy(pointer p)
@@ -258,11 +288,10 @@ public:
 
     size_type max_size()
     {
-        return std::numeric_limits<size_type>::max()/sizeof(DataType);
+        return std::numeric_limits<size_type>::max() / sizeof(DataType);
     }
 
-    template<typename U>
-    struct rebind
+    template <typename U> struct rebind
     {
         typedef MemoryManager<U> other;
     };
@@ -272,24 +301,23 @@ public:
     /////////////////////////////////////////////////////////////////
 
 private:
-
 };
 
-template<typename DataType>
-bool operator==(const MemoryManager<DataType>& lhs, const MemoryManager<DataType>& rhs)
+template <typename DataType>
+bool operator==(const MemoryManager<DataType> &lhs,
+                const MemoryManager<DataType> &rhs)
 {
-    boost::ignore_unused(lhs,rhs);
+    boost::ignore_unused(lhs, rhs);
     return true;
 }
 
-template<typename DataType>
-bool operator!=(const MemoryManager<DataType>& lhs, const MemoryManager<DataType>& rhs)
+template <typename DataType>
+bool operator!=(const MemoryManager<DataType> &lhs,
+                const MemoryManager<DataType> &rhs)
 {
     return !(lhs == rhs);
 }
 
-}
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_NEK_MEMORY_MANAGER_H
-
-
+#endif // NEKTAR_LIB_UTILITIES_NEK_MEMORY_MANAGER_H

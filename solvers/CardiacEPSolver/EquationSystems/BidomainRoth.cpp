@@ -45,23 +45,19 @@ namespace Nektar
 /**
  * Registers the class with the Factory.
  */
-string BidomainRoth::className
-        = SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-            "BidomainRoth",
-            BidomainRoth::create,
-            "Bidomain Roth model of cardiac electrophysiology.");
-
+string BidomainRoth::className =
+    SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
+        "BidomainRoth", BidomainRoth::create,
+        "Bidomain Roth model of cardiac electrophysiology.");
 
 /**
  *
  */
-BidomainRoth::BidomainRoth(
-    const LibUtilities::SessionReaderSharedPtr& pSession,
-    const SpatialDomains::MeshGraphSharedPtr& pGraph)
+BidomainRoth::BidomainRoth(const LibUtilities::SessionReaderSharedPtr &pSession,
+                           const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : UnsteadySystem(pSession, pGraph)
 {
 }
-
 
 /**
  *
@@ -70,48 +66,44 @@ void BidomainRoth::v_InitObject()
 {
     UnsteadySystem::v_InitObject();
 
-    m_session->LoadParameter("Chi",        m_chi);
-    m_session->LoadParameter("Cm",         m_capMembrane);
+    m_session->LoadParameter("Chi", m_chi);
+    m_session->LoadParameter("Cm", m_capMembrane);
 
     std::string vCellModel;
     m_session->LoadSolverInfo("CELLMODEL", vCellModel, "");
 
     ASSERTL0(vCellModel != "", "Cell Model not specified.");
 
-    m_cell = GetCellModelFactory().CreateInstance(
-                                    vCellModel, m_session, m_fields[0]);
+    m_cell = GetCellModelFactory().CreateInstance(vCellModel, m_session,
+                                                  m_fields[0]);
 
     m_intVariables.push_back(0);
 
     // Load variable coefficients
     StdRegions::VarCoeffType varCoeffEnum[6] = {
-            StdRegions::eVarCoeffD00,
-            StdRegions::eVarCoeffD01,
-            StdRegions::eVarCoeffD11,
-            StdRegions::eVarCoeffD02,
-            StdRegions::eVarCoeffD12,
-            StdRegions::eVarCoeffD22
-    };
-    std::string varCoeffString[6] = {"xx","xy","yy","xz","yz","zz"};
-    std::string aniso_var[3] = {"fx", "fy", "fz"};
+        StdRegions::eVarCoeffD00, StdRegions::eVarCoeffD01,
+        StdRegions::eVarCoeffD11, StdRegions::eVarCoeffD02,
+        StdRegions::eVarCoeffD12, StdRegions::eVarCoeffD22};
+    std::string varCoeffString[6] = {"xx", "xy", "yy", "xz", "yz", "zz"};
+    std::string aniso_var[3]      = {"fx", "fy", "fz"};
 
-    const int nq            = m_fields[0]->GetNpoints();
+    const int nq = m_fields[0]->GetNpoints();
 
     // Allocate storage for variable coeffs and initialize to 1.
     for (int i = 0, k = 0; i < m_spacedim; ++i)
     {
-        for (int j = 0; j < i+1; ++j)
+        for (int j = 0; j < i + 1; ++j)
         {
             if (i == j)
             {
-                m_vardiffi[varCoeffEnum[k]] = Array<OneD, NekDouble>(nq, 1.0);
-                m_vardiffe[varCoeffEnum[k]] = Array<OneD, NekDouble>(nq, 1.0);
+                m_vardiffi[varCoeffEnum[k]]  = Array<OneD, NekDouble>(nq, 1.0);
+                m_vardiffe[varCoeffEnum[k]]  = Array<OneD, NekDouble>(nq, 1.0);
                 m_vardiffie[varCoeffEnum[k]] = Array<OneD, NekDouble>(nq, 1.0);
             }
             else
             {
-                m_vardiffi[varCoeffEnum[k]] = Array<OneD, NekDouble>(nq, 0.0);
-                m_vardiffe[varCoeffEnum[k]] = Array<OneD, NekDouble>(nq, 0.0);
+                m_vardiffi[varCoeffEnum[k]]  = Array<OneD, NekDouble>(nq, 0.0);
+                m_vardiffe[varCoeffEnum[k]]  = Array<OneD, NekDouble>(nq, 0.0);
                 m_vardiffie[varCoeffEnum[k]] = Array<OneD, NekDouble>(nq, 0.0);
             }
             ++k;
@@ -127,9 +119,9 @@ void BidomainRoth::v_InitObject()
             cout << "Loading Extracellular Anisotropic Fibre map." << endl;
         }
 
-        NekDouble   o_min        = m_session->GetParameter("o_min");
-        NekDouble   o_max        = m_session->GetParameter("o_max");
-        int         k            = 0;
+        NekDouble o_min = m_session->GetParameter("o_min");
+        NekDouble o_max = m_session->GetParameter("o_max");
+        int k           = 0;
 
         Array<OneD, NekDouble> vTemp_i;
         Array<OneD, NekDouble> vTemp_j;
@@ -154,38 +146,36 @@ void BidomainRoth::v_InitObject()
         for (int j = 0; j < m_spacedim; ++j)
         {
             ASSERTL0(m_session->DefinesFunction(
-                                        "ExtracellularAnisotropicConductivity",
-                                        aniso_var[j]),
+                         "ExtracellularAnisotropicConductivity", aniso_var[j]),
                      "Function 'AnisotropicConductivity' not correctly "
                      "defined.");
 
-            GetFunction("ExtracellularAnisotropicConductivity")->Evaluate(aniso_var[j], vTemp_j);
+            GetFunction("ExtracellularAnisotropicConductivity")
+                ->Evaluate(aniso_var[j], vTemp_j);
 
             // Loop through rows of D
             for (int i = 0; i < j + 1; ++i)
             {
-                ASSERTL0(m_session->DefinesFunction(
-                                    "ExtracellularAnisotropicConductivity",
-                                    aniso_var[i]),
-                         "Function 'ExtracellularAnisotropicConductivity' not "
-                         "correctly defined.");
+                ASSERTL0(
+                    m_session->DefinesFunction(
+                        "ExtracellularAnisotropicConductivity", aniso_var[i]),
+                    "Function 'ExtracellularAnisotropicConductivity' not "
+                    "correctly defined.");
 
-                GetFunction("ExtracellularAnisotropicConductivity")->Evaluate(aniso_var[i], vTemp_i);
+                GetFunction("ExtracellularAnisotropicConductivity")
+                    ->Evaluate(aniso_var[i], vTemp_i);
 
                 Vmath::Vmul(nq, vTemp_i, 1, vTemp_j, 1,
-                                m_vardiffe[varCoeffEnum[k]], 1);
+                            m_vardiffe[varCoeffEnum[k]], 1);
 
-                Vmath::Smul(nq, o_max-o_min,
-                                m_vardiffe[varCoeffEnum[k]], 1,
-                                m_vardiffe[varCoeffEnum[k]], 1);
+                Vmath::Smul(nq, o_max - o_min, m_vardiffe[varCoeffEnum[k]], 1,
+                            m_vardiffe[varCoeffEnum[k]], 1);
 
                 if (i == j)
                 {
-                    Vmath::Sadd(nq, o_min,
-                                    m_vardiffe[varCoeffEnum[k]], 1,
-                                    m_vardiffe[varCoeffEnum[k]], 1);
+                    Vmath::Sadd(nq, o_min, m_vardiffe[varCoeffEnum[k]], 1,
+                                m_vardiffe[varCoeffEnum[k]], 1);
                 }
-
             }
         }
     }
@@ -199,9 +189,9 @@ void BidomainRoth::v_InitObject()
             cout << "Loading Anisotropic Fibre map." << endl;
         }
 
-        NekDouble   o_min        = m_session->GetParameter("o_min");
-        NekDouble   o_max        = m_session->GetParameter("o_max");
-        int         k            = 0;
+        NekDouble o_min = m_session->GetParameter("o_min");
+        NekDouble o_max = m_session->GetParameter("o_max");
+        int k           = 0;
 
         Array<OneD, NekDouble> vTemp_i;
         Array<OneD, NekDouble> vTemp_j;
@@ -226,46 +216,44 @@ void BidomainRoth::v_InitObject()
         for (int j = 0; j < m_spacedim; ++j)
         {
             ASSERTL0(m_session->DefinesFunction(
-                                        "IntracellularAnisotropicConductivity",
-                                        aniso_var[j]),
+                         "IntracellularAnisotropicConductivity", aniso_var[j]),
                      "Function 'IntracellularAnisotropicConductivity' not "
                      "correctly defined.");
 
-            GetFunction("IntracellularAnisotropicConductivity")->Evaluate(aniso_var[j], vTemp_j);
+            GetFunction("IntracellularAnisotropicConductivity")
+                ->Evaluate(aniso_var[j], vTemp_j);
 
             // Loop through rows of D
             for (int i = 0; i < j + 1; ++i)
             {
-                ASSERTL0(m_session->DefinesFunction(
-                                    "IntracellularAnisotropicConductivity",
-                                    aniso_var[i]),
-                         "Function 'IntracellularAnisotropicConductivity' not "
-                         "correctly defined.");
-                GetFunction("IntracellularAnisotropicConductivity")->Evaluate(aniso_var[i], vTemp_i);
+                ASSERTL0(
+                    m_session->DefinesFunction(
+                        "IntracellularAnisotropicConductivity", aniso_var[i]),
+                    "Function 'IntracellularAnisotropicConductivity' not "
+                    "correctly defined.");
+                GetFunction("IntracellularAnisotropicConductivity")
+                    ->Evaluate(aniso_var[i], vTemp_i);
 
                 Vmath::Vmul(nq, vTemp_i, 1, vTemp_j, 1,
-                                m_vardiffi[varCoeffEnum[k]], 1);
+                            m_vardiffi[varCoeffEnum[k]], 1);
 
-                Vmath::Smul(nq, o_max-o_min,
-                                m_vardiffi[varCoeffEnum[k]], 1,
-                                m_vardiffi[varCoeffEnum[k]], 1);
+                Vmath::Smul(nq, o_max - o_min, m_vardiffi[varCoeffEnum[k]], 1,
+                            m_vardiffi[varCoeffEnum[k]], 1);
 
                 if (i == j)
                 {
-                    Vmath::Sadd(nq, o_min,
-                                    m_vardiffi[varCoeffEnum[k]], 1,
-                                    m_vardiffi[varCoeffEnum[k]], 1);
+                    Vmath::Sadd(nq, o_min, m_vardiffi[varCoeffEnum[k]], 1,
+                                m_vardiffi[varCoeffEnum[k]], 1);
                 }
 
                 Vmath::Vadd(nq, m_vardiffe[varCoeffEnum[k]], 1,
-                                m_vardiffi[varCoeffEnum[k]], 1,
-                                m_vardiffie[varCoeffEnum[k]], 1);
+                            m_vardiffi[varCoeffEnum[k]], 1,
+                            m_vardiffie[varCoeffEnum[k]], 1);
 
                 ++k;
             }
         }
     }
-
 
     // Write out conductivity values
     for (int j = 0, k = 0; j < m_spacedim; ++j)
@@ -274,15 +262,15 @@ void BidomainRoth::v_InitObject()
         for (int i = 0; i < j + 1; ++i)
         {
             // Transform variable coefficient and write out to file.
-            m_fields[0]->FwdTrans_IterPerExp(m_vardiffi[varCoeffEnum[k]],
-                                             m_fields[0]->UpdateCoeffs());
+            m_fields[0]->FwdTransLocalElmt(m_vardiffi[varCoeffEnum[k]],
+                                           m_fields[0]->UpdateCoeffs());
             std::stringstream filenamei;
             filenamei << "IConductivity_" << varCoeffString[k] << ".fld";
             WriteFld(filenamei.str());
 
             // Transform variable coefficient and write out to file.
-            m_fields[0]->FwdTrans_IterPerExp(m_vardiffe[varCoeffEnum[k]],
-                                             m_fields[0]->UpdateCoeffs());
+            m_fields[0]->FwdTransLocalElmt(m_vardiffe[varCoeffEnum[k]],
+                                           m_fields[0]->UpdateCoeffs());
             std::stringstream filenamee;
             filenamee << "EConductivity_" << varCoeffString[k] << ".fld";
             WriteFld(filenamee.str());
@@ -297,9 +285,8 @@ void BidomainRoth::v_InitObject()
     {
         if (x.first == "CheckpointCellModel")
         {
-            std::shared_ptr<FilterCheckpointCellModel> c
-                = std::dynamic_pointer_cast<FilterCheckpointCellModel>(
-                x.second);
+            std::shared_ptr<FilterCheckpointCellModel> c =
+                std::dynamic_pointer_cast<FilterCheckpointCellModel>(x.second);
             c->SetCellModel(m_cell);
         }
     }
@@ -308,20 +295,17 @@ void BidomainRoth::v_InitObject()
 
     if (!m_explicitDiffusion)
     {
-        m_ode.DefineImplicitSolve (&BidomainRoth::DoImplicitSolve, this);
+        m_ode.DefineImplicitSolve(&BidomainRoth::DoImplicitSolve, this);
     }
     m_ode.DefineOdeRhs(&BidomainRoth::DoOdeRhs, this);
 }
-
 
 /**
  *
  */
 BidomainRoth::~BidomainRoth()
 {
-
 }
-
 
 /**
  * @param   inarray         Input array.
@@ -330,50 +314,45 @@ BidomainRoth::~BidomainRoth()
  * @param   lambda          Timestep.
  */
 void BidomainRoth::DoImplicitSolve(
-        const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-              Array<OneD, Array<OneD, NekDouble> >&outarray,
-        const NekDouble time,
-        const NekDouble lambda)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
+    const NekDouble lambda)
 {
-    int nq          = m_fields[0]->GetNpoints();
+    int nq = m_fields[0]->GetNpoints();
 
     StdRegions::ConstFactorMap factorsHelmholtz;
     // lambda = \Delta t
-    factorsHelmholtz[StdRegions::eFactorLambda]
-                    = 1.0/lambda*m_chi*m_capMembrane;
+    factorsHelmholtz[StdRegions::eFactorLambda] =
+        1.0 / lambda * m_chi * m_capMembrane;
 
     // ------------------------------
     // Solve Helmholtz problem for Vm
     // ------------------------------
     // Multiply 1.0/timestep
-    //Vmath::Vadd(nq, inarray[0], 1, ggrad, 1, m_fields[0]->UpdatePhys(), 1);
+    // Vmath::Vadd(nq, inarray[0], 1, ggrad, 1, m_fields[0]->UpdatePhys(), 1);
     Vmath::Smul(nq, -factorsHelmholtz[StdRegions::eFactorLambda], inarray[0], 1,
-                                    m_fields[0]->UpdatePhys(), 1);
+                m_fields[0]->UpdatePhys(), 1);
 
     // Solve a system of equations with Helmholtz solver and transform
     // back into physical space.
-    m_fields[0]->HelmSolve(m_fields[0]->GetPhys(),
-                           m_fields[0]->UpdateCoeffs(), NullFlagList,
+    m_fields[0]->HelmSolve(m_fields[0]->GetPhys(), m_fields[0]->UpdateCoeffs(),
                            factorsHelmholtz, m_vardiffe);
 
-    m_fields[0]->BwdTrans( m_fields[0]->GetCoeffs(),
-                           m_fields[0]->UpdatePhys());
+    m_fields[0]->BwdTrans(m_fields[0]->GetCoeffs(), m_fields[0]->UpdatePhys());
     m_fields[0]->SetPhysState(true);
 
     // Copy the solution vector (required as m_fields must be set).
     outarray[0] = m_fields[0]->GetPhys();
 }
 
-
 /**
  *
  */
 void BidomainRoth::DoOdeRhs(
-        const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-              Array<OneD,        Array<OneD, NekDouble> >&outarray,
-        const NekDouble time)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
-    int nq          = m_fields[0]->GetNpoints();
+    int nq = m_fields[0]->GetNpoints();
 
     // Compute I_ion
     m_cell->TimeIntegrate(inarray, outarray, time);
@@ -398,12 +377,12 @@ void BidomainRoth::DoOdeRhs(
     if (m_session->DefinesFunction("IntracellularAnisotropicConductivity") &&
         m_session->DefinesFunction("ExtracellularAnisotropicConductivity"))
     {
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD00], 1, ggrad0,
-                1, ggrad0, 1);
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD11], 1, ggrad1,
-                1, ggrad1, 1);
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD22], 1, ggrad2,
-                1, ggrad2, 1);
+        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD00], 1, ggrad0, 1,
+                    ggrad0, 1);
+        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD11], 1, ggrad1, 1,
+                    ggrad1, 1);
+        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD22], 1, ggrad2, 1,
+                    ggrad2, 1);
     }
     // Add partial derivatives together
     Vmath::Vadd(nq, ggrad0, 1, ggrad1, 1, ggrad, 1);
@@ -414,11 +393,9 @@ void BidomainRoth::DoOdeRhs(
     // ----------------------------
     // Solve Poisson problem for Ve
     // ----------------------------
-    m_fields[1]->HelmSolve(m_fields[1]->GetPhys(),
-            m_fields[1]->UpdateCoeffs(), NullFlagList, factorsPoisson,
-            m_vardiffie);
-    m_fields[1]->BwdTrans(m_fields[1]->GetCoeffs(),
-            m_fields[1]->UpdatePhys());
+    m_fields[1]->HelmSolve(m_fields[1]->GetPhys(), m_fields[1]->UpdateCoeffs(),
+                           factorsPoisson, m_vardiffie);
+    m_fields[1]->BwdTrans(m_fields[1]->GetCoeffs(), m_fields[1]->UpdatePhys());
     m_fields[1]->SetPhysState(true);
 
     // ------------------------------
@@ -431,12 +408,12 @@ void BidomainRoth::DoOdeRhs(
     if (m_session->DefinesFunction("IntracellularAnisotropicConductivity") &&
         m_session->DefinesFunction("ExtracellularAnisotropicConductivity"))
     {
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD00], 1, ggrad0,
-                1, ggrad0, 1);
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD11], 1, ggrad1,
-                1, ggrad1, 1);
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD22], 1, ggrad2,
-                1, ggrad2, 1);
+        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD00], 1, ggrad0, 1,
+                    ggrad0, 1);
+        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD11], 1, ggrad1, 1,
+                    ggrad1, 1);
+        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD22], 1, ggrad2, 1,
+                    ggrad2, 1);
     }
     // Add partial derivatives together
     Vmath::Vadd(nq, ggrad0, 1, ggrad1, 1, ggrad, 1);
@@ -445,28 +422,25 @@ void BidomainRoth::DoOdeRhs(
     Vmath::Vadd(nq, ggrad, 1, outarray[0], 1, outarray[0], 1);
 }
 
-
 /**
  *
  */
 void BidomainRoth::v_SetInitialConditions(NekDouble initialtime,
-                    bool dumpInitialConditions,
-                    const int domain)
+                                          bool dumpInitialConditions,
+                                          const int domain)
 {
-    EquationSystem::v_SetInitialConditions(initialtime,
-                                           dumpInitialConditions,
+    EquationSystem::v_SetInitialConditions(initialtime, dumpInitialConditions,
                                            domain);
     m_cell->Initialise();
 }
 
-
 /**
  *
  */
-void BidomainRoth::v_GenerateSummary(SummaryList& s)
+void BidomainRoth::v_GenerateSummary(SummaryList &s)
 {
     UnsteadySystem::v_GenerateSummary(s);
     m_cell->GenerateSummary(s);
 }
 
-}
+} // namespace Nektar

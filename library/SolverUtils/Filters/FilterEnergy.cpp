@@ -45,17 +45,14 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-std::string FilterEnergy::className = SolverUtils::GetFilterFactory().
-    RegisterCreatorFunction("Energy", FilterEnergy::create);
+std::string FilterEnergy::className =
+    SolverUtils::GetFilterFactory().RegisterCreatorFunction(
+        "Energy", FilterEnergy::create);
 
-FilterEnergy::FilterEnergy(
-    const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>        &pEquation,
-    const ParamMap &pParams)
-    : Filter        (pSession, pEquation),
-      m_index       (-1),
-      m_homogeneous (false),
-      m_planes      ()
+FilterEnergy::FilterEnergy(const LibUtilities::SessionReaderSharedPtr &pSession,
+                           const std::weak_ptr<EquationSystem> &pEquation,
+                           const ParamMap &pParams)
+    : Filter(pSession, pEquation), m_index(-1), m_homogeneous(false), m_planes()
 {
     std::string outName;
 
@@ -79,11 +76,9 @@ FilterEnergy::FilterEnergy(
         ASSERTL0(m_outFile.good(), "Unable to open: '" + outName + "'");
         m_outFile.setf(ios::scientific, ios::floatfield);
         m_outFile << "# Time                Kinetic energy        "
-                  << "Enstrophy"
-                  << endl
+                  << "Enstrophy" << endl
                   << "# ---------------------------------------------"
-                  << "--------------"
-                  << endl;
+                  << "--------------" << endl;
     }
     pSession->LoadParameter("LZ", m_homogeneousLength, 0.0);
 
@@ -96,7 +91,6 @@ FilterEnergy::FilterEnergy(
 
 FilterEnergy::~FilterEnergy()
 {
-
 }
 
 void FilterEnergy::v_Initialise(
@@ -164,8 +158,8 @@ void FilterEnergy::v_Update(
     ASSERTL0(fluidEqu, "Energy filter is incompatible with this solver.");
 
     // Store physical values in an array
-    Array<OneD, Array<OneD, NekDouble> > physfields(pFields.num_elements());
-    for(i = 0; i < pFields.num_elements(); ++i)
+    Array<OneD, Array<OneD, NekDouble>> physfields(pFields.size());
+    for (i = 0; i < pFields.size(); ++i)
     {
         physfields[i] = pFields[i]->GetPhys();
     }
@@ -174,7 +168,7 @@ void FilterEnergy::v_Update(
     NekDouble Ek = 0.0;
     Array<OneD, NekDouble> tmp(nPoints, 0.0);
     Array<OneD, NekDouble> density;
-    Array<OneD, Array<OneD, NekDouble> > u(3);
+    Array<OneD, Array<OneD, NekDouble>> u(3);
     for (i = 0; i < 3; ++i)
     {
         u[i] = Array<OneD, NekDouble>(nPoints);
@@ -202,7 +196,7 @@ void FilterEnergy::v_Update(
     {
         Array<OneD, NekDouble> tmp2(nPoints, 0.0);
         pFields[0]->HomogeneousFwdTrans(tmp, tmp2);
-        Ek = pFields[0]->GetPlane(0)->Integral(tmp2) * 2.0 * M_PI;
+        Ek = pFields[0]->GetPlane(0)->Integral(tmp2) * m_homogeneousLength;
     }
     else
     {
@@ -213,15 +207,12 @@ void FilterEnergy::v_Update(
 
     if (m_comm->GetRank() == 0)
     {
-        m_outFile << setw(17) << setprecision(8) << time
-                  << setw(22) << setprecision(11) << Ek;
+        m_outFile << setw(17) << setprecision(8) << time << setw(22)
+                  << setprecision(11) << Ek;
     }
 
-    bool waveSpace[3] = {
-        pFields[0]->GetWaveSpace(),
-        pFields[1]->GetWaveSpace(),
-        pFields[2]->GetWaveSpace()
-    };
+    bool waveSpace[3] = {pFields[0]->GetWaveSpace(), pFields[1]->GetWaveSpace(),
+                         pFields[2]->GetWaveSpace()};
 
     if (m_homogeneous)
     {
@@ -236,11 +227,11 @@ void FilterEnergy::v_Update(
     Vmath::Zero(nPoints, tmp, 1);
     for (i = 0; i < 3; ++i)
     {
-        int f1 = (i+2) % 3, c2 = f1;
-        int c1 = (i+1) % 3, f2 = c1;
+        int f1 = (i + 2) % 3, c2 = f1;
+        int c1 = (i + 1) % 3, f2 = c1;
         pFields[f1]->PhysDeriv(c1, u[f1], tmp2);
         pFields[f2]->PhysDeriv(c2, u[f2], tmp3);
-        Vmath::Vsub (nPoints, tmp2, 1, tmp3, 1, tmp2, 1);
+        Vmath::Vsub(nPoints, tmp2, 1, tmp3, 1, tmp2, 1);
         Vmath::Vvtvp(nPoints, tmp2, 1, tmp2, 1, tmp, 1, tmp, 1);
     }
 
@@ -256,14 +247,14 @@ void FilterEnergy::v_Update(
             pFields[i]->SetWaveSpace(waveSpace[i]);
         }
         pFields[0]->HomogeneousFwdTrans(tmp, tmp);
-        Ek = pFields[0]->GetPlane(0)->Integral(tmp) * 2 * M_PI;
+        Ek = pFields[0]->GetPlane(0)->Integral(tmp) * m_homogeneousLength;
     }
     else
     {
         Ek = pFields[0]->Integral(tmp);
     }
 
-    Ek /= 2.0*m_area;
+    Ek /= 2.0 * m_area;
 
     if (m_comm->GetRank() == 0)
     {
@@ -284,5 +275,5 @@ bool FilterEnergy::v_IsTimeDependent()
     return true;
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

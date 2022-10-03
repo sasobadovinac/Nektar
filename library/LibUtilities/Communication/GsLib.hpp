@@ -49,9 +49,31 @@ namespace Gs
 {
 using namespace Nektar;
 
-typedef enum { gs_double, gs_float, gs_int, gs_long, gs_dom_n } gs_dom;
-typedef enum { gs_add, gs_mul, gs_min, gs_max, gs_bpr, gs_op_n } gs_op;
-typedef enum { mode_plain, mode_vec, mode_many, mode_dry_run } gs_mode;
+typedef enum
+{
+    gs_double,
+    gs_float,
+    gs_int,
+    gs_long,
+    gs_dom_n
+} gs_dom;
+typedef enum
+{
+    gs_add,
+    gs_mul,
+    gs_min,
+    gs_max,
+    gs_amax,
+    gs_bpr,
+    gs_op_n
+} gs_op;
+typedef enum
+{
+    mode_plain,
+    mode_vec,
+    mode_many,
+    mode_dry_run
+} gs_mode;
 
 typedef struct
 {
@@ -134,21 +156,24 @@ typedef struct
     unsigned int handle_size;
 } gs_data;
 
-typedef enum {
+typedef enum
+{
     gs_auto,
     gs_pairwise,
     gs_crystal_router,
     gs_all_reduce
 } gs_method;
 
-extern "C" {
-void nektar_gs(void *u, gs_dom dom, gs_op op, unsigned transpose, gs_data *gsh,
-               buffer *buf);
-gs_data *nektar_gs_setup(const long *id, unsigned int n,
-                         const struct comm *comm, int unique, gs_method method,
-                         int verbose);
-void nektar_gs_free(gs_data *gsh);
-void nektar_gs_unique(const long *id, unsigned int n, const struct comm *comm);
+extern "C"
+{
+    void nektar_gs(void *u, gs_dom dom, gs_op op, unsigned transpose,
+                   gs_data *gsh, buffer *buf);
+    gs_data *nektar_gs_setup(const long *id, unsigned int n,
+                             const struct comm *comm, int unique,
+                             gs_method method, int verbose);
+    void nektar_gs_free(gs_data *gsh);
+    void nektar_gs_unique(const long *id, unsigned int n,
+                          const struct comm *comm);
 }
 
 /**
@@ -180,8 +205,8 @@ static inline gs_data *Init(const Nektar::Array<OneD, long> pId,
     MPI_Comm_dup(vCommMpi->GetComm(), &vComm.c);
     vComm.id        = vCommMpi->GetRank();
     vComm.np        = vCommMpi->GetSize();
-    gs_data *result = nektar_gs_setup(pId.get(), pId.num_elements(), &vComm, 0,
-                                      gs_auto, (int)verbose);
+    gs_data *result = nektar_gs_setup(pId.get(), pId.size(), &vComm, 0, gs_auto,
+                                      (int)verbose);
     MPI_Comm_free(&vComm.c);
     return result;
 #else
@@ -214,7 +239,7 @@ static inline void Unique(const Nektar::Array<OneD, long> pId,
     vComm.c  = vCommMpi->GetComm();
     vComm.id = vCommMpi->GetRank();
     vComm.np = vCommMpi->GetSize();
-    nektar_gs_unique(pId.get(), pId.num_elements(), &vComm);
+    nektar_gs_unique(pId.get(), pId.size(), &vComm);
 #else
     boost::ignore_unused(pId, pComm);
 #endif
@@ -251,7 +276,7 @@ static inline void Gather(
     {
         return;
     }
-    if (pBuffer.num_elements() == 0)
+    if (pBuffer.size() == 0)
     {
         nektar_gs(pU.get(), gs_double, pOp, false, pGsh, 0);
     }
@@ -259,13 +284,13 @@ static inline void Gather(
     {
         array buf;
         buf.ptr = &pBuffer[0];
-        buf.n   = pBuffer.num_elements();
+        buf.n   = pBuffer.size();
         nektar_gs(pU.get(), gs_double, pOp, false, pGsh, &buf);
     }
 #else
     boost::ignore_unused(pU, pOp, pGsh, pBuffer);
 #endif
 }
-}
+} // namespace Gs
 
 #endif

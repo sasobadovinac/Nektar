@@ -35,16 +35,14 @@
 #include <algorithm>
 #include <iomanip>
 
+#include <LinearElasticSolver/EquationSystems/LinearElasticSystem.h>
 #include <LocalRegions/MatrixKey.h>
-#include <LocalRegions/SegExp.h>
 #include <LocalRegions/NodalTriExp.h>
-#include <MultiRegions/ContField2D.h>
-#include <MultiRegions/ContField3D.h>
+#include <LocalRegions/SegExp.h>
+#include <MultiRegions/ContField.h>
 #include <MultiRegions/GlobalLinSysDirectStaticCond.h>
 #include <MultiRegions/GlobalLinSysIterativeStaticCond.h>
 #include <MultiRegions/Preconditioner.h>
-#include <LinearElasticSolver/EquationSystems/LinearElasticSystem.h>
-#include <StdRegions/StdNodalTriExp.h>
 #include <StdRegions/StdNodalTriExp.h>
 
 #ifdef NEKTAR_USE_MPI
@@ -60,9 +58,9 @@ using namespace std;
 namespace Nektar
 {
 
-string LinearElasticSystem::className = GetEquationSystemFactory().
-    RegisterCreatorFunction("LinearElasticSystem",
-                            LinearElasticSystem::create);
+string LinearElasticSystem::className =
+    GetEquationSystemFactory().RegisterCreatorFunction(
+        "LinearElasticSystem", LinearElasticSystem::create);
 
 /*
  * @brief Generate mapping between a simplex and the reference element.
@@ -78,55 +76,65 @@ inline DNekMat MappingIdealToRef(SpatialDomains::GeometrySharedPtr geom)
 {
     int n = geom->GetNumVerts(), i, j;
 
-    DNekMat map   (n, n, 1.0, eFULL);
+    DNekMat map(n, n, 1.0, eFULL);
     DNekMat mapref(n, n, 1.0, eFULL);
 
     // Extract coordinate information.
     for (i = 0; i < n; ++i)
     {
-        for (j = 0; j < n-1; ++j)
+        for (j = 0; j < n - 1; ++j)
         {
-            map(j,i) = (*geom->GetVertex(i))[j];
+            map(j, i) = (*geom->GetVertex(i))[j];
         }
     }
 
     // Set up reference triangle or tetrahedron mapping.
     if (n == 3)
     {
-        mapref(0,0) = -1.0; mapref(1,0) = -1.0;
-        mapref(0,1) =  1.0; mapref(1,1) = -1.0;
-        mapref(0,2) = -1.0; mapref(1,2) =  1.0;
+        mapref(0, 0) = -1.0;
+        mapref(1, 0) = -1.0;
+        mapref(0, 1) = 1.0;
+        mapref(1, 1) = -1.0;
+        mapref(0, 2) = -1.0;
+        mapref(1, 2) = 1.0;
     }
     else if (n == 4)
     {
-        mapref(0,0) = -1.0; mapref(1,0) = -1.0; mapref(2,0) = -1.0;
-        mapref(0,1) =  1.0; mapref(1,1) = -1.0; mapref(2,1) = -1.0;
-        mapref(0,2) = -1.0; mapref(1,2) =  1.0; mapref(2,2) = -1.0;
-        mapref(0,3) = -1.0; mapref(1,3) = -1.0; mapref(2,3) =  1.0;
+        mapref(0, 0) = -1.0;
+        mapref(1, 0) = -1.0;
+        mapref(2, 0) = -1.0;
+        mapref(0, 1) = 1.0;
+        mapref(1, 1) = -1.0;
+        mapref(2, 1) = -1.0;
+        mapref(0, 2) = -1.0;
+        mapref(1, 2) = 1.0;
+        mapref(2, 2) = -1.0;
+        mapref(0, 3) = -1.0;
+        mapref(1, 3) = -1.0;
+        mapref(2, 3) = 1.0;
     }
 
     map.Invert();
 
     DNekMat newmap = mapref * map;
-    DNekMat mapred(n-1, n-1, 1.0, eFULL);
+    DNekMat mapred(n - 1, n - 1, 1.0, eFULL);
 
-    for (i = 0; i < n-1; ++i)
+    for (i = 0; i < n - 1; ++i)
     {
-        for (j = 0; j < n-1; ++j)
+        for (j = 0; j < n - 1; ++j)
         {
-            mapred(i,j) = newmap(i,j);
+            mapred(i, j) = newmap(i, j);
         }
     }
 
     return mapred;
 }
 
-
 /**
  * @brief Default constructor.
  */
 LinearElasticSystem::LinearElasticSystem(
-    const LibUtilities::SessionReaderSharedPtr& pSession,
+    const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : EquationSystem(pSession, pGraph)
 {
@@ -139,46 +147,28 @@ LinearElasticSystem::LinearElasticSystem(
  * coupled assembly map and creates containers for the statically condensed
  * block matrix system.
  */
-void LinearElasticSystem::v_InitObject()
+void LinearElasticSystem::v_InitObject(bool DeclareFields)
 {
-    EquationSystem::v_InitObject();
+    EquationSystem::v_InitObject(DeclareFields);
 
     const int nVel = m_fields[0]->GetCoordim(0);
     int n;
 
     ASSERTL0(nVel > 1, "Linear elastic solver not set up for"
-             " this dimension (only 2D/3D supported).");
+                       " this dimension (only 2D/3D supported).");
 
     // Make sure that we have Young's modulus and Poisson ratio set.
-    m_session->LoadParameter("E",    m_E,    1.00);
-    m_session->LoadParameter("nu",   m_nu,   0.25);
+    m_session->LoadParameter("E", m_E, 1.00);
+    m_session->LoadParameter("nu", m_nu, 0.25);
     m_session->LoadParameter("Beta", m_beta, 1.00);
 
     // Create a coupled assembly map which allows us to tie u, v and w
     // fields together.
-    if (nVel == 2)
-    {
-        MultiRegions::ContField2DSharedPtr u = std::dynamic_pointer_cast<
-            MultiRegions::ContField2D>(m_fields[0]);
-        m_assemblyMap = MemoryManager<CoupledAssemblyMap>
-            ::AllocateSharedPtr(m_session,
-                                m_graph,
-                                u->GetLocalToGlobalMap(),
-                                m_fields[0]->GetBndConditions(),
-                                m_fields);
-    }
-
-    if (nVel == 3)
-    {
-        MultiRegions::ContField3DSharedPtr u = std::dynamic_pointer_cast<
-            MultiRegions::ContField3D>(m_fields[0]);
-        m_assemblyMap = MemoryManager<CoupledAssemblyMap>
-            ::AllocateSharedPtr(m_session,
-                                m_graph,
-                                u->GetLocalToGlobalMap(),
-                                m_fields[0]->GetBndConditions(),
-                                m_fields);
-    }
+    MultiRegions::ContFieldSharedPtr u =
+        std::dynamic_pointer_cast<MultiRegions::ContField>(m_fields[0]);
+    m_assemblyMap = MemoryManager<CoupledAssemblyMap>::AllocateSharedPtr(
+        m_session, m_graph, u->GetLocalToGlobalMap(),
+        m_fields[0]->GetBndConditions(), m_fields);
 
     // Figure out size of our new matrix systems by looping over all expansions
     // and multiply number of coefficients by velocity components.
@@ -189,15 +179,15 @@ void LinearElasticSystem::v_InitObject()
     Array<OneD, unsigned int> sizeInt(nEl);
 
     // Allocate storage for boundary and interior map caches.
-    m_bmap = Array<OneD, Array<OneD, unsigned int> >(nEl);
-    m_imap = Array<OneD, Array<OneD, unsigned int> >(nEl);
+    m_bmap = Array<OneD, Array<OneD, unsigned int>>(nEl);
+    m_imap = Array<OneD, Array<OneD, unsigned int>>(nEl);
 
     // Cache interior and boundary maps to avoid recalculating
     // constantly. Should really be handled by manager in StdRegions but not
     // really working yet.
     for (n = 0; n < nEl; ++n)
     {
-        exp = m_fields[0]->GetExp(n);
+        exp        = m_fields[0]->GetExp(n);
         sizeBnd[n] = nVel * exp->NumBndryCoeffs();
         sizeInt[n] = nVel * exp->GetNcoeffs() - sizeBnd[n];
         exp->GetBoundaryMap(m_bmap[n]);
@@ -208,12 +198,12 @@ void LinearElasticSystem::v_InitObject()
     MatrixStorage blkmatStorage = eDIAGONAL;
     m_schurCompl = MemoryManager<DNekScalBlkMat>::AllocateSharedPtr(
         sizeBnd, sizeBnd, blkmatStorage);
-    m_BinvD      = MemoryManager<DNekScalBlkMat>::AllocateSharedPtr(
-        sizeBnd, sizeInt, blkmatStorage);
-    m_C          = MemoryManager<DNekScalBlkMat>::AllocateSharedPtr(
-        sizeInt, sizeBnd, blkmatStorage);
-    m_Dinv       = MemoryManager<DNekScalBlkMat>::AllocateSharedPtr(
-        sizeInt, sizeInt, blkmatStorage);
+    m_BinvD = MemoryManager<DNekScalBlkMat>::AllocateSharedPtr(sizeBnd, sizeInt,
+                                                               blkmatStorage);
+    m_C     = MemoryManager<DNekScalBlkMat>::AllocateSharedPtr(sizeInt, sizeBnd,
+                                                           blkmatStorage);
+    m_Dinv  = MemoryManager<DNekScalBlkMat>::AllocateSharedPtr(sizeInt, sizeInt,
+                                                              blkmatStorage);
 }
 
 /**
@@ -239,7 +229,7 @@ void LinearElasticSystem::v_InitObject()
  */
 void LinearElasticSystem::BuildMatrixSystem()
 {
-    const int nEl = m_fields[0]->GetExpSize();
+    const int nEl  = m_fields[0]->GetExpSize();
     const int nVel = m_fields[0]->GetCoordim(0);
 
     LocalRegions::ExpansionSharedPtr exp;
@@ -249,8 +239,8 @@ void LinearElasticSystem::BuildMatrixSystem()
     StdRegions::ConstFactorMap factors;
 
     // Calculate various constants
-    NekDouble mu     = m_E * 0.5  / (1.0 + m_nu);
-    NekDouble lambda = m_E * m_nu / (1.0 + m_nu) / (1.0 - 2.0*m_nu);
+    NekDouble mu     = m_E * 0.5 / (1.0 + m_nu);
+    NekDouble lambda = m_E * m_nu / (1.0 + m_nu) / (1.0 - 2.0 * m_nu);
 
     bool verbose = m_session->DefinesCmdLineArgument("verbose");
     bool root    = m_session->GetComm()->GetRank() == 0;
@@ -260,9 +250,9 @@ void LinearElasticSystem::BuildMatrixSystem()
     {
         for (n = 0; n < nEl; ++n)
         {
-            exp = m_fields[0]->GetExp(n);
+            exp             = m_fields[0]->GetExp(n);
             const int nPhys = exp->GetTotPoints();
-            Array<OneD, NekDouble> aArr(nPhys, lambda + 2*mu);
+            Array<OneD, NekDouble> aArr(nPhys, lambda + 2 * mu);
             Array<OneD, NekDouble> bArr(nPhys, mu);
 
             StdRegions::VarCoeffMap varcoeffA, varcoeffD;
@@ -272,19 +262,19 @@ void LinearElasticSystem::BuildMatrixSystem()
             varcoeffD[StdRegions::eVarCoeffD11] = aArr;
 
             LocalRegions::MatrixKey matkeyA(StdRegions::eLaplacian,
-                                            exp->DetShapeType(),
-                                            *exp, factors, varcoeffA);
+                                            exp->DetShapeType(), *exp, factors,
+                                            varcoeffA);
             LocalRegions::MatrixKey matkeyD(StdRegions::eLaplacian,
-                                            exp->DetShapeType(),
-                                            *exp, factors, varcoeffD);
+                                            exp->DetShapeType(), *exp, factors,
+                                            varcoeffD);
 
             /*
              * mat holds the linear operator [ A B ] acting on [ u ].
              *                               [ C D ]           [ v ]
              */
-            Array<TwoD, DNekMatSharedPtr> mat(2,2);
+            Array<TwoD, DNekMatSharedPtr> mat(2, 2);
             mat[0][0] = exp->GenMatrix(matkeyA);
-            mat[0][1] = BuildLaplacianIJMatrix(1, 0, mu+lambda, exp);
+            mat[0][1] = BuildLaplacianIJMatrix(1, 0, mu + lambda, exp);
             mat[1][0] = mat[0][1];
             mat[1][1] = exp->GenMatrix(matkeyD);
 
@@ -293,8 +283,8 @@ void LinearElasticSystem::BuildMatrixSystem()
 
             if (verbose && root)
             {
-                cout << "\rBuilding matrix system: "
-                     << (int)(100.0 * n / nEl) << "%" << flush;
+                cout << "\rBuilding matrix system: " << (int)(100.0 * n / nEl)
+                     << "%" << flush;
             }
         }
     }
@@ -302,9 +292,9 @@ void LinearElasticSystem::BuildMatrixSystem()
     {
         for (n = 0; n < nEl; ++n)
         {
-            exp = m_fields[0]->GetExp(n);
+            exp             = m_fields[0]->GetExp(n);
             const int nPhys = exp->GetTotPoints();
-            Array<OneD, NekDouble> aArr(nPhys, lambda + 2*mu);
+            Array<OneD, NekDouble> aArr(nPhys, lambda + 2 * mu);
             Array<OneD, NekDouble> bArr(nPhys, mu);
 
             StdRegions::VarCoeffMap varcoeffA, varcoeffE, varcoeffI;
@@ -319,21 +309,21 @@ void LinearElasticSystem::BuildMatrixSystem()
             varcoeffI[StdRegions::eVarCoeffD22] = aArr;
 
             LocalRegions::MatrixKey matkeyA(StdRegions::eLaplacian,
-                                            exp->DetShapeType(),
-                                            *exp, factors, varcoeffA);
+                                            exp->DetShapeType(), *exp, factors,
+                                            varcoeffA);
             LocalRegions::MatrixKey matkeyE(StdRegions::eLaplacian,
-                                            exp->DetShapeType(),
-                                            *exp, factors, varcoeffE);
+                                            exp->DetShapeType(), *exp, factors,
+                                            varcoeffE);
             LocalRegions::MatrixKey matkeyI(StdRegions::eLaplacian,
-                                            exp->DetShapeType(),
-                                            *exp, factors, varcoeffI);
+                                            exp->DetShapeType(), *exp, factors,
+                                            varcoeffI);
 
             /*
              * mat holds the linear operator [ A B C ] acting on [ u ].
              *                               [ D E F ]           [ v ]
              *                               [ G H I ]           [ w ]
              */
-            Array<TwoD, DNekMatSharedPtr> mat(3,3);
+            Array<TwoD, DNekMatSharedPtr> mat(3, 3);
             mat[0][0] = exp->GenMatrix(matkeyA);
             mat[0][1] = BuildLaplacianIJMatrix(1, 0, mu + lambda, exp);
             mat[0][2] = BuildLaplacianIJMatrix(2, 0, mu + lambda, exp);
@@ -351,8 +341,8 @@ void LinearElasticSystem::BuildMatrixSystem()
 
             if (verbose && root)
             {
-                cout << "\rBuilding matrix system: "
-                     << (int)(100.0 * n / nEl) << "%" << flush;
+                cout << "\rBuilding matrix system: " << (int)(100.0 * n / nEl)
+                     << "%" << flush;
             }
         }
     }
@@ -366,7 +356,7 @@ void LinearElasticSystem::BuildMatrixSystem()
 /**
  * @brief Generate summary at runtime.
  */
-void LinearElasticSystem::v_GenerateSummary(SolverUtils::SummaryList& s)
+void LinearElasticSystem::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
     EquationSystem::SessionSummary(s);
 
@@ -390,7 +380,6 @@ void LinearElasticSystem::v_GenerateSummary(SolverUtils::SummaryList& s)
  */
 void LinearElasticSystem::v_DoSolve()
 {
-
     int i, j, k, l, nv;
     const int nVel = m_fields[0]->GetCoordim(0);
 
@@ -400,59 +389,56 @@ void LinearElasticSystem::v_DoSolve()
     // Now we've got the matrix system set up, create a GlobalLinSys
     // object. We mask ourselves as LinearAdvectionReaction to create a full
     // matrix instead of symmetric storage.
-    MultiRegions::GlobalLinSysKey key(
-        StdRegions::eLinearAdvectionReaction, m_assemblyMap);
+    MultiRegions::GlobalLinSysKey key(StdRegions::eLinearAdvectionReaction,
+                                      m_assemblyMap);
     MultiRegions::GlobalLinSysSharedPtr linSys;
 
     // Currently either direct or iterative static condensation is
     // supported.
-    if (m_assemblyMap->GetGlobalSysSolnType() == MultiRegions::eDirectStaticCond)
+    if (m_assemblyMap->GetGlobalSysSolnType() ==
+        MultiRegions::eDirectStaticCond)
     {
-        linSys = MemoryManager<
-            MultiRegions::GlobalLinSysDirectStaticCond>::AllocateSharedPtr(
-                key, m_fields[0], m_schurCompl, m_BinvD, m_C, m_Dinv,
-                m_assemblyMap);
+        linSys = MemoryManager<MultiRegions::GlobalLinSysDirectStaticCond>::
+            AllocateSharedPtr(key, m_fields[0], m_schurCompl, m_BinvD, m_C,
+                              m_Dinv, m_assemblyMap);
     }
     else if (m_assemblyMap->GetGlobalSysSolnType() ==
              MultiRegions::eIterativeStaticCond)
     {
-        linSys = MemoryManager<
-            MultiRegions::GlobalLinSysIterativeStaticCond>::AllocateSharedPtr(
-                key, m_fields[0], m_schurCompl, m_BinvD, m_C, m_Dinv,
-                m_assemblyMap, MultiRegions::NullPreconditionerSharedPtr);
+        linSys = MemoryManager<MultiRegions::GlobalLinSysIterativeStaticCond>::
+            AllocateSharedPtr(key, m_fields[0], m_schurCompl, m_BinvD, m_C,
+                              m_Dinv, m_assemblyMap,
+                              MultiRegions::NullPreconditionerSharedPtr);
     }
 #ifdef NEKTAR_USE_PETSC
     else if (m_assemblyMap->GetGlobalSysSolnType() ==
              MultiRegions::ePETScStaticCond)
     {
-        linSys = MemoryManager<
-            MultiRegions::GlobalLinSysPETScStaticCond>::AllocateSharedPtr(
-                key, m_fields[0], m_schurCompl, m_BinvD, m_C, m_Dinv,
-                m_assemblyMap);
+        linSys = MemoryManager<MultiRegions::GlobalLinSysPETScStaticCond>::
+            AllocateSharedPtr(key, m_fields[0], m_schurCompl, m_BinvD, m_C,
+                              m_Dinv, m_assemblyMap);
     }
 #endif
 #ifdef NEKTAR_USE_MPI
     else if (m_assemblyMap->GetGlobalSysSolnType() ==
              MultiRegions::eXxtStaticCond)
     {
-        linSys = MemoryManager<
-            MultiRegions::GlobalLinSysXxtStaticCond>::AllocateSharedPtr(
-                key, m_fields[0], m_schurCompl, m_BinvD, m_C, m_Dinv,
-                m_assemblyMap);
+        linSys = MemoryManager<MultiRegions::GlobalLinSysXxtStaticCond>::
+            AllocateSharedPtr(key, m_fields[0], m_schurCompl, m_BinvD, m_C,
+                              m_Dinv, m_assemblyMap);
     }
 #endif
 
     linSys->Initialise(m_assemblyMap);
 
     const int nCoeffs = m_fields[0]->GetNcoeffs();
-    const int nGlobDofs = m_assemblyMap->GetNumGlobalCoeffs();
 
     //
     // -- Evaluate forcing functions
     //
 
     // Evaluate the forcing function from the XML file.
-    Array<OneD, Array<OneD, NekDouble> > forcing(nVel);
+    Array<OneD, Array<OneD, NekDouble>> forcing(nVel);
     GetFunction("Forcing")->Evaluate(forcing);
 
     // Add temperature term
@@ -462,23 +448,20 @@ void LinearElasticSystem::v_DoSolve()
     if (tempEval == "Jacobian")
     {
         // Allocate storage
-        m_temperature = Array<OneD, Array<OneD, NekDouble> >(nVel);
+        m_temperature = Array<OneD, Array<OneD, NekDouble>>(nVel);
 
         for (nv = 0; nv < nVel; ++nv)
         {
             Array<OneD, NekDouble> tmp;
-            m_temperature[nv] = Array<OneD, NekDouble>(
-                m_fields[nv]->GetNpoints());
+            m_temperature[nv] =
+                Array<OneD, NekDouble>(m_fields[nv]->GetNpoints());
 
             for (i = 0; i < m_fields[0]->GetExpSize(); ++i)
             {
                 // Calculate element area
-                LocalRegions::ExpansionSharedPtr exp =
-                    m_fields[0]->GetExp(i);
-                LibUtilities::PointsKeyVector pkey =
-                    exp->GetPointsKeys();
-                Array<OneD, NekDouble> jac =
-                    exp->GetMetricInfo()->GetJac(pkey);
+                LocalRegions::ExpansionSharedPtr exp = m_fields[0]->GetExp(i);
+                LibUtilities::PointsKeyVector pkey   = exp->GetPointsKeys();
+                Array<OneD, NekDouble> jac = exp->GetMetricInfo()->GetJac(pkey);
 
                 int offset = m_fields[0]->GetPhys_Offset(i);
 
@@ -490,7 +473,7 @@ void LinearElasticSystem::v_DoSolve()
                 }
                 else
                 {
-                    Vmath::Fill(exp->GetTotPoints(), m_beta*jac[0],
+                    Vmath::Fill(exp->GetTotPoints(), m_beta * jac[0],
                                 tmp = m_temperature[nv] + offset, 1);
                 }
             }
@@ -499,78 +482,77 @@ void LinearElasticSystem::v_DoSolve()
     }
     else if (tempEval == "Metric")
     {
-        ASSERTL0((m_fields[0]->GetCoordim(0)         == 2 &&
+        ASSERTL0((m_fields[0]->GetCoordim(0) == 2 &&
                   m_graph->GetAllQuadGeoms().size() == 0) ||
-                 (m_fields[0]->GetCoordim(0)         == 3 &&
-                  m_graph->GetAllPrismGeoms().size() == 0 &&
-                  m_graph->GetAllPyrGeoms  ().size() == 0 &&
-                  m_graph->GetAllHexGeoms  ().size() == 0),
+                     (m_fields[0]->GetCoordim(0) == 3 &&
+                      m_graph->GetAllPrismGeoms().size() == 0 &&
+                      m_graph->GetAllPyrGeoms().size() == 0 &&
+                      m_graph->GetAllHexGeoms().size() == 0),
                  "LinearIdealMetric temperature only implemented for "
                  "two-dimensional triangular meshes or three-dimensional "
                  "tetrahedral meshes.");
 
-        m_temperature = Array<OneD, Array<OneD, NekDouble> >(nVel);
-        m_stress = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(nVel);
+        m_temperature = Array<OneD, Array<OneD, NekDouble>>(nVel);
+        m_stress      = Array<OneD, Array<OneD, Array<OneD, NekDouble>>>(nVel);
 
         for (nv = 0; nv < nVel; ++nv)
         {
-            m_temperature[nv] = Array<OneD, NekDouble>(
-                m_fields[nv]->GetNpoints(), 0.0);
-            m_stress[nv] = Array<OneD, Array<OneD, NekDouble> >(nVel);
+            m_temperature[nv] =
+                Array<OneD, NekDouble>(m_fields[nv]->GetNpoints(), 0.0);
+            m_stress[nv] = Array<OneD, Array<OneD, NekDouble>>(nVel);
 
             for (i = 0; i < nVel; ++i)
             {
-                m_stress[nv][i] = Array<OneD, NekDouble>(
-                    m_fields[nv]->GetNpoints(), 0.0);
+                m_stress[nv][i] =
+                    Array<OneD, NekDouble>(m_fields[nv]->GetNpoints(), 0.0);
             }
         }
 
         for (i = 0; i < m_fields[0]->GetExpSize(); ++i)
         {
             // Calculate element area
-            LocalRegions::ExpansionSharedPtr exp =
-                m_fields[0]->GetExp(i);
-            LibUtilities::PointsKeyVector pkey = exp->GetPointsKeys();
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > deriv =
+            LocalRegions::ExpansionSharedPtr exp = m_fields[0]->GetExp(i);
+            LibUtilities::PointsKeyVector pkey   = exp->GetPointsKeys();
+            Array<OneD, Array<OneD, Array<OneD, NekDouble>>> deriv =
                 exp->GetMetricInfo()->GetDeriv(pkey);
             int offset = m_fields[0]->GetPhys_Offset(i);
 
             DNekMat i2rm = MappingIdealToRef(exp->GetGeom());
 
             // Compute metric tensor
-            DNekMat jac     (nVel, nVel, 0.0, eFULL);
+            DNekMat jac(nVel, nVel, 0.0, eFULL);
             DNekMat jacIdeal(nVel, nVel, 0.0, eFULL);
-            DNekMat metric  (nVel, nVel, 0.0, eFULL);
+            DNekMat metric(nVel, nVel, 0.0, eFULL);
 
-            for (j = 0; j < deriv[0][0].num_elements(); ++j)
+            for (j = 0; j < deriv[0][0].size(); ++j)
             {
                 for (k = 0; k < nVel; ++k)
                 {
                     for (l = 0; l < nVel; ++l)
                     {
-                        jac(l,k) = deriv[k][l][j];
+                        jac(l, k) = deriv[k][l][j];
                     }
                 }
 
                 jacIdeal = jac * i2rm;
-                metric = Transpose(jacIdeal) * jacIdeal;
+                metric   = Transpose(jacIdeal) * jacIdeal;
 
                 // Compute eigenvalues/eigenvectors of metric tensor using
                 // ideal mapping.
                 char jobvl = 'N', jobvr = 'V';
-                int worklen = 8*nVel, info;
+                int worklen = 8 * nVel, info;
 
-                DNekMat eval   (nVel, nVel, 0.0, eDIAGONAL);
-                DNekMat evec   (nVel, nVel, 0.0, eFULL);
+                DNekMat eval(nVel, nVel, 0.0, eDIAGONAL);
+                DNekMat evec(nVel, nVel, 0.0, eFULL);
                 DNekMat evecinv(nVel, nVel, 0.0, eFULL);
-                Array<OneD, NekDouble> vl  (nVel*nVel);
+                Array<OneD, NekDouble> vl(nVel * nVel);
                 Array<OneD, NekDouble> work(worklen);
-                Array<OneD, NekDouble> wi  (nVel);
+                Array<OneD, NekDouble> wi(nVel);
 
                 Lapack::Dgeev(jobvl, jobvr, nVel, metric.GetRawPtr(), nVel,
                               &(eval.GetPtr())[0], &wi[0], &vl[0], nVel,
-                              &(evec.GetPtr())[0], nVel,
-                              &work[0], worklen, info);
+                              &(evec.GetPtr())[0], nVel, &work[0], worklen,
+                              info);
 
                 evecinv = evec;
                 evecinv.Invert();
@@ -578,7 +560,7 @@ void LinearElasticSystem::v_DoSolve()
                 // rescaling of the eigenvalues
                 for (nv = 0; nv < nVel; ++nv)
                 {
-                    eval(nv,nv) = m_beta * (sqrt(eval(nv,nv)) - 1.0);
+                    eval(nv, nv) = m_beta * (sqrt(eval(nv, nv)) - 1.0);
                 }
 
                 DNekMat beta = evec * eval * evecinv;
@@ -587,21 +569,20 @@ void LinearElasticSystem::v_DoSolve()
                 {
                     for (l = 0; l < nVel; ++l)
                     {
-                        m_stress[k][l][offset+j] = beta(k,l);
+                        m_stress[k][l][offset + j] = beta(k, l);
                     }
                 }
             }
 
-            if (deriv[0][0].num_elements() != exp->GetTotPoints())
+            if (deriv[0][0].size() != exp->GetTotPoints())
             {
                 Array<OneD, NekDouble> tmp;
                 for (k = 0; k < nVel; ++k)
                 {
                     for (l = 0; l < nVel; ++l)
                     {
-                        Vmath::Fill(
-                            exp->GetTotPoints(), m_stress[k][l][offset],
-                            tmp = m_stress[k][l] + offset, 1);
+                        Vmath::Fill(exp->GetTotPoints(), m_stress[k][l][offset],
+                                    tmp = m_stress[k][l] + offset, 1);
                     }
                 }
             }
@@ -614,12 +595,12 @@ void LinearElasticSystem::v_DoSolve()
             for (j = 0; j < nVel; ++j)
             {
                 m_fields[i]->PhysDeriv(j, m_stress[i][j], tmpderiv);
-                Vmath::Vadd (m_fields[i]->GetNpoints(), tmpderiv, 1,
-                             m_temperature[i], 1, m_temperature[i], 1);
+                Vmath::Vadd(m_fields[i]->GetNpoints(), tmpderiv, 1,
+                            m_temperature[i], 1, m_temperature[i], 1);
             }
 
-            Vmath::Vcopy(m_fields[i]->GetNpoints(),
-                         m_temperature[i], 1, forcing[i], 1);
+            Vmath::Vcopy(m_fields[i]->GetNpoints(), m_temperature[i], 1,
+                         forcing[i], 1);
         }
     }
     else if (tempEval != "None")
@@ -634,98 +615,40 @@ void LinearElasticSystem::v_DoSolve()
     //   assembly map. We loop over each element, then the boundary degrees of
     //   freedom for u, boundary for v, followed by the interior for u and then
     //   interior for v.
-    // - rhs is the global assembly of forCoeffs.
-    // - inout holds the Dirichlet degrees of freedom in the global ordering,
-    //   which have been assembled from the boundary expansion.
+    // - inout holds the Dirichlet degrees of freedom in the local ordering,
+    //   which have the boundary conditions imposed
     Array<OneD, NekDouble> forCoeffs(nVel * nCoeffs, 0.0);
-    Array<OneD, NekDouble> inout    (nGlobDofs, 0.0);
-    Array<OneD, NekDouble> rhs      (nGlobDofs, 0.0);
+    Array<OneD, NekDouble> inout(nVel * nCoeffs, 0.0);
+    Array<OneD, NekDouble> tmp(nCoeffs);
 
     for (nv = 0; nv < nVel; ++nv)
     {
         // Take the inner product of the forcing function.
-        Array<OneD, NekDouble> tmp(nCoeffs);
-        m_fields[nv]->IProductWRTBase_IterPerExp(forcing[nv], tmp);
+        m_fields[nv]->IProductWRTBase(forcing[nv], tmp);
+
+        // Impose Dirichlet condition on field which should be initialised
+        Array<OneD, NekDouble> loc_inout = m_fields[nv]->UpdateCoeffs();
+        m_fields[nv]->ImposeDirichletConditions(loc_inout);
 
         // Scatter forcing into RHS vector according to the ordering dictated in
         // the comment above.
         for (i = 0; i < m_fields[nv]->GetExpSize(); ++i)
         {
-            int nBnd   = m_bmap[i].num_elements();
-            int nInt   = m_imap[i].num_elements();
+            int nBnd   = m_bmap[i].size();
+            int nInt   = m_imap[i].size();
             int offset = m_fields[nv]->GetCoeff_Offset(i);
 
             for (j = 0; j < nBnd; ++j)
             {
-                forCoeffs[nVel*offset + nv*nBnd + j] =
-                    tmp[offset+m_bmap[i][j]];
+                forCoeffs[nVel * offset + nv * nBnd + j] =
+                    -1.0 * tmp[offset + m_bmap[i][j]];
+                inout[nVel * offset + nv * nBnd + j] =
+                    loc_inout[offset + m_bmap[i][j]];
             }
             for (j = 0; j < nInt; ++j)
             {
-                forCoeffs[nVel*(offset + nBnd) + nv*nInt + j] =
-                    tmp[offset+m_imap[i][j]];
-            }
-        }
-    }
-
-    // -- Impose Dirichlet boundary conditions.
-
-    // First try to do parallel assembly: the intention here is that Dirichlet
-    // values at some edges/vertices need to be communicated to processes which
-    // don't contain the entire boundary region. See
-    // ContField2D::v_ImposeDirichletConditions for more detail.
-    map<int, vector<MultiRegions::ExtraDirDof> > &extraDirDofs =
-        m_assemblyMap->GetExtraDirDofs();
-
-    for (nv = 0; nv < nVel; ++nv)
-    {
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &bndCondExp
-            = m_fields[nv]->GetBndCondExpansions();
-
-        // First try to do parallel stuff
-        for (auto &it : extraDirDofs)
-        {
-            for (i = 0; i < it.second.size(); ++i)
-            {
-                inout[std::get<1>(it.second.at(i))*nVel + nv] =
-                    bndCondExp[it.first]->GetCoeffs()[
-                        std::get<0>(it.second.at(i))]*std::get<2>(it.second.at(i));
-            }
-        }
-    }
-
-    m_assemblyMap->UniversalAssemble(inout);
-
-    // Counter for the local Dirichlet boundary to global ordering.
-    int bndcnt = 0;
-
-    // Now assemble local boundary contributions.
-    for (nv = 0; nv < nVel; ++nv)
-    {
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &bndCondExp
-            = m_fields[nv]->GetBndCondExpansions();
-        const Array<OneD, const int> &bndMap
-            = m_assemblyMap->GetBndCondCoeffsToGlobalCoeffsMap();
-
-        for (i = 0; i < bndCondExp.num_elements(); ++i)
-        {
-            if (m_fields[nv]->GetBndConditions()[i]->GetBoundaryConditionType()
-                == SpatialDomains::eDirichlet)
-            {
-                const Array<OneD,const NekDouble> &bndCoeffs =
-                    bndCondExp[i]->GetCoeffs();
-
-                for (j = 0; j < bndCondExp[i]->GetNcoeffs(); ++j)
-                {
-                    NekDouble sign =
-                        m_assemblyMap->GetBndCondCoeffsToGlobalCoeffsSign(
-                            bndcnt);
-                    inout[bndMap[bndcnt++]] = sign * bndCoeffs[j];
-                }
-            }
-            else
-            {
-                bndcnt += bndCondExp[i]->GetNcoeffs();
+                forCoeffs[nVel * (offset + nBnd) + nv * nInt + j] =
+                    -1.0 * tmp[offset + m_imap[i][j]];
             }
         }
     }
@@ -733,19 +656,8 @@ void LinearElasticSystem::v_DoSolve()
     //
     // -- Perform solve
     //
-
-    // Assemble forcing into the RHS.
-    m_assemblyMap->Assemble(forCoeffs, rhs);
-
-    // Negate RHS to be consistent with matrix definition.
-    Vmath::Neg(rhs.num_elements(), rhs, 1);
-
     // Solve.
-    linSys->Solve(rhs, inout, m_assemblyMap);
-
-    // Scatter the global ordering back to the alternate local ordering.
-    Array<OneD, NekDouble> tmp(nVel * nCoeffs);
-    m_assemblyMap->GlobalToLocal(inout, tmp);
+    linSys->Solve(forCoeffs, inout, m_assemblyMap);
 
     //
     // -- Postprocess
@@ -756,19 +668,19 @@ void LinearElasticSystem::v_DoSolve()
     {
         for (i = 0; i < m_fields[nv]->GetExpSize(); ++i)
         {
-            int nBnd   = m_bmap[i].num_elements();
-            int nInt   = m_imap[i].num_elements();
+            int nBnd   = m_bmap[i].size();
+            int nInt   = m_imap[i].size();
             int offset = m_fields[nv]->GetCoeff_Offset(i);
 
             for (j = 0; j < nBnd; ++j)
             {
-                m_fields[nv]->UpdateCoeffs()[offset+m_bmap[i][j]] =
-                    tmp[nVel*offset + nv*nBnd + j];
+                m_fields[nv]->UpdateCoeffs()[offset + m_bmap[i][j]] =
+                    inout[nVel * offset + nv * nBnd + j];
             }
             for (j = 0; j < nInt; ++j)
             {
-                m_fields[nv]->UpdateCoeffs()[offset+m_imap[i][j]] =
-                    tmp[nVel*(offset + nBnd) + nv*nInt + j];
+                m_fields[nv]->UpdateCoeffs()[offset + m_imap[i][j]] =
+                    inout[nVel * (offset + nBnd) + nv * nInt + j];
             }
         }
         m_fields[nv]->BwdTrans(m_fields[nv]->GetCoeffs(),
@@ -789,16 +701,15 @@ void LinearElasticSystem::v_DoSolve()
  * @param mat  Block matrix containing matrix operator.
  */
 void LinearElasticSystem::SetStaticCondBlock(
-    const int                              n,
-    const LocalRegions::ExpansionSharedPtr exp,
-    Array<TwoD, DNekMatSharedPtr>         &mat)
+    const int n, const LocalRegions::ExpansionSharedPtr exp,
+    Array<TwoD, DNekMatSharedPtr> &mat)
 {
     int i, j, k, l;
-    const int nVel = mat.GetRows();
-    const int nB   = exp->NumBndryCoeffs();
-    const int nI   = exp->GetNcoeffs() - nB;
-    const int nBnd = exp->NumBndryCoeffs() * nVel;
-    const int nInt = exp->GetNcoeffs() * nVel - nBnd;
+    const int nVel        = mat.GetRows();
+    const int nB          = exp->NumBndryCoeffs();
+    const int nI          = exp->GetNcoeffs() - nB;
+    const int nBnd        = exp->NumBndryCoeffs() * nVel;
+    const int nInt        = exp->GetNcoeffs() * nVel - nBnd;
     const MatrixStorage s = eFULL; // Maybe look into doing symmetric
     // version of this?
 
@@ -820,13 +731,13 @@ void LinearElasticSystem::SetStaticCondBlock(
             {
                 for (l = 0; l < nB; ++l)
                 {
-                    (*A)(k + i*nB, l + j*nB) =
+                    (*A)(k + i * nB, l + j * nB) =
                         (*mat[i][j])(m_bmap[n][k], m_bmap[n][l]);
                 }
 
                 for (l = 0; l < nI; ++l)
                 {
-                    (*B)(k + i*nB, l + j*nI) =
+                    (*B)(k + i * nB, l + j * nI) =
                         (*mat[i][j])(m_bmap[n][k], m_imap[n][l]);
                 }
             }
@@ -836,13 +747,13 @@ void LinearElasticSystem::SetStaticCondBlock(
             {
                 for (l = 0; l < nB; ++l)
                 {
-                    (*C)(k + i*nI, l + j*nB) =
+                    (*C)(k + i * nI, l + j * nB) =
                         (*mat[i][j])(m_imap[n][k], m_bmap[n][l]);
                 }
 
                 for (l = 0; l < nI; ++l)
                 {
-                    (*D)(k + i*nI, l + j*nI) =
+                    (*D)(k + i * nI, l + j * nI) =
                         (*mat[i][j])(m_imap[n][k], m_imap[n][l]);
                 }
             }
@@ -851,22 +762,18 @@ void LinearElasticSystem::SetStaticCondBlock(
 
     // Construct static condensation matrices.
     D->Invert();
-    (*B) = (*B)*(*D);
-    (*A) = (*A) - (*B)*(*C);
+    (*B) = (*B) * (*D);
+    (*A) = (*A) - (*B) * (*C);
 
     DNekScalMatSharedPtr tmp_mat;
     m_schurCompl->SetBlock(
-        n, n, tmp_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(
-            1.0, A));
-    m_BinvD     ->SetBlock(
-        n, n, tmp_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(
-            1.0, B));
-    m_C         ->SetBlock(
-        n, n, tmp_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(
-            1.0, C));
-    m_Dinv      ->SetBlock(
-        n, n, tmp_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(
-            1.0, D));
+        n, n, tmp_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0, A));
+    m_BinvD->SetBlock(
+        n, n, tmp_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0, B));
+    m_C->SetBlock(
+        n, n, tmp_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0, C));
+    m_Dinv->SetBlock(
+        n, n, tmp_mat = MemoryManager<DNekScalMat>::AllocateSharedPtr(1.0, D));
 }
 
 /**
@@ -877,17 +784,15 @@ void LinearElasticSystem::SetStaticCondBlock(
  * \f[ \partial_{\tt k1} \phi_i \partial_{\tt k2} \phi_j \,dx  \f]
  */
 DNekMatSharedPtr LinearElasticSystem::BuildLaplacianIJMatrix(
-    const int                        k1,
-    const int                        k2,
-    const NekDouble                  scale,
+    const int k1, const int k2, const NekDouble scale,
     LocalRegions::ExpansionSharedPtr exp)
 {
     const int nCoeffs = exp->GetNcoeffs();
     const int nPhys   = exp->GetTotPoints();
     int i;
 
-    DNekMatSharedPtr ret = MemoryManager<DNekMat>::AllocateSharedPtr(
-        nCoeffs, nCoeffs, 0.0, eFULL);
+    DNekMatSharedPtr ret =
+        MemoryManager<DNekMat>::AllocateSharedPtr(nCoeffs, nCoeffs, 0.0, eFULL);
 
     Array<OneD, NekDouble> tmp2(nPhys);
     Array<OneD, NekDouble> tmp3(nPhys);
@@ -897,25 +802,25 @@ DNekMatSharedPtr LinearElasticSystem::BuildLaplacianIJMatrix(
         Array<OneD, NekDouble> tmp1(nCoeffs, 0.0);
         tmp1[i] = 1.0;
 
-        exp->BwdTrans            (    tmp1, tmp2);
-        exp->PhysDeriv           (k1, tmp2, tmp3);
+        exp->BwdTrans(tmp1, tmp2);
+        exp->PhysDeriv(k1, tmp2, tmp3);
         exp->IProductWRTDerivBase(k2, tmp3, tmp1);
 
-        Vmath::Smul(
-            nCoeffs, scale, &tmp1[0], 1, &(ret->GetPtr())[0]+i*nCoeffs, 1);
+        Vmath::Smul(nCoeffs, scale, &tmp1[0], 1,
+                    &(ret->GetPtr())[0] + i * nCoeffs, 1);
     }
 
     return ret;
 }
 
 void LinearElasticSystem::v_ExtraFldOutput(
-    std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
-    std::vector<std::string>             &variables)
+    std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
+    std::vector<std::string> &variables)
 {
     const int nVel    = m_fields[0]->GetCoordim(0);
     const int nCoeffs = m_fields[0]->GetNcoeffs();
 
-    if (m_temperature.num_elements() == 0)
+    if (m_temperature.size() == 0)
     {
         return;
     }
@@ -925,11 +830,11 @@ void LinearElasticSystem::v_ExtraFldOutput(
         Array<OneD, NekDouble> tFwd(nCoeffs);
         m_fields[i]->FwdTrans(m_temperature[i], tFwd);
         fieldcoeffs.push_back(tFwd);
-        variables.push_back(
-            "ThermStressDiv" + boost::lexical_cast<std::string>(i));
+        variables.push_back("ThermStressDiv" +
+                            boost::lexical_cast<std::string>(i));
     }
 
-    if (m_stress.num_elements() == 0)
+    if (m_stress.size() == 0)
     {
         return;
     }
@@ -941,12 +846,11 @@ void LinearElasticSystem::v_ExtraFldOutput(
             Array<OneD, NekDouble> tFwd(nCoeffs);
             m_fields[i]->FwdTrans(m_stress[i][j], tFwd);
             fieldcoeffs.push_back(tFwd);
-            variables.push_back(
-                "ThermStress"
-                + boost::lexical_cast<std::string>(i)
-                + boost::lexical_cast<std::string>(j));
+            variables.push_back("ThermStress" +
+                                boost::lexical_cast<std::string>(i) +
+                                boost::lexical_cast<std::string>(j));
         }
     }
 }
 
-}
+} // namespace Nektar

@@ -36,9 +36,9 @@
 
 #include <SpatialDomains/Geometry1D.h>
 #include <SpatialDomains/Geometry2D.h>
-#include <StdRegions/StdPyrExp.h>
 #include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/TriGeom.h>
+#include <StdRegions/StdPyrExp.h>
 
 using namespace std;
 
@@ -46,6 +46,8 @@ namespace Nektar
 {
 namespace SpatialDomains
 {
+const unsigned int PyrGeom::EdgeNormalToFaceVert[5][4] = {
+    {4, 5, 6, 7}, {1, 3, 6, 7}, {0, 2, 4, 7}, {1, 3, 4, 5}, {0, 2, 5, 6}};
 
 PyrGeom::PyrGeom()
 {
@@ -56,7 +58,7 @@ PyrGeom::PyrGeom(int id, const Geometry2DSharedPtr faces[])
     : Geometry3D(faces[0]->GetEdge(0)->GetVertex(0)->GetCoordim())
 {
     m_shapeType = LibUtilities::ePyramid;
-    m_globalID = id;
+    m_globalID  = id;
 
     /// Copy the face shared pointers
     m_faces.insert(m_faces.begin(), faces, faces + PyrGeom::kNfaces);
@@ -75,41 +77,9 @@ PyrGeom::~PyrGeom()
 {
 }
 
-
-bool PyrGeom::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                                Array<OneD, NekDouble> &locCoord,
-                                NekDouble tol,
-                                NekDouble &resid)
-{
-    //Rough check if within twice min/max point
-    if (GetMetricInfo()->GetGtype() != eRegular)
-    {
-        if (!MinMaxCheck(gloCoord))
-        {
-            return false;
-        }
-    }
-
-    // Convert to the local Cartesian coordinates.
-    resid = GetLocCoords(gloCoord, locCoord);
-
-    // Check local coordinate is within std region bounds.
-    if (locCoord[0] >= -(1 + tol) && locCoord[1] >= -(1 + tol) &&
-        locCoord[2] >= -(1 + tol) && locCoord[0] + locCoord[2] <= tol &&
-        locCoord[1] + locCoord[2] <= tol)
-    {
-        return true;
-    }
-
-    //Clamp local coords
-    ClampLocCoords(locCoord, tol);
-
-    return false;
-}
-
 void PyrGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         PyrGeom::v_Setup();
     }
@@ -154,105 +124,6 @@ void PyrGeom::v_GenGeomFactors()
     }
 }
 
-NekDouble PyrGeom::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                  Array<OneD, NekDouble> &Lcoords)
-{
-    NekDouble ptdist = 1e6;
-
-    v_FillGeom();
-
-    // calculate local coordinate for coord
-    if (GetMetricInfo()->GetGtype() == eRegular&&0)  // This method does not currently work and so is disabled
-    { // Based on Spen's book, page 99
-
-        // Point inside tetrahedron
-        PointGeom r(m_coordim, 0, coords[0], coords[1], coords[2]);
-
-        // Edges
-        PointGeom er0, e10, e30, e40;
-        er0.Sub(r, *m_verts[0]);
-        e10.Sub(*m_verts[1], *m_verts[0]);
-        e30.Sub(*m_verts[3], *m_verts[0]);
-        e40.Sub(*m_verts[4], *m_verts[0]);
-
-        // Cross products (Normal times area)
-        PointGeom cp1030, cp3040, cp4010;
-        cp1030.Mult(e10, e30);
-        cp3040.Mult(e30, e40);
-        cp4010.Mult(e40, e10);
-
-        // Barycentric coordinates (relative volume)
-        NekDouble V =
-            e40.dot(cp1030); // Pyramid Volume = {(e40)dot(e10)x(e30)}/4
-        NekDouble scaleFactor = 2.0 / 3.0;
-        NekDouble v1 = er0.dot(cp3040) / V; // volume1 = {(er0)dot(e30)x(e40)}/6
-        NekDouble v2 = er0.dot(cp4010) / V; // volume2 = {(er0)dot(e40)x(e10)}/6
-        NekDouble beta = v1 * scaleFactor;
-        NekDouble gamma = v2 * scaleFactor;
-        NekDouble delta =
-            er0.dot(cp1030) / V; // volume3 = {(er0)dot(e10)x(e30)}/4
-
-        // Make Pyramid bigger
-        Lcoords[0] = 2.0 * beta - 1.0;
-        Lcoords[1] = 2.0 * gamma - 1.0;
-        Lcoords[2] = 2.0 * delta - 1.0;
-
-        // Set ptdist to distance to nearest vertex
-        for (int i = 0; i < 5; ++i)
-        {
-            ptdist = min(ptdist, r.dist(*m_verts[i]));
-        }
-    }
-    else
-    {
-
-        v_FillGeom();
-
-        // Determine nearest point of coords  to values in m_xmap
-        int npts = m_xmap->GetTotPoints();
-        Array<OneD, NekDouble> ptsx(npts), ptsy(npts), ptsz(npts);
-        Array<OneD, NekDouble> tmp1(npts), tmp2(npts);
-
-        m_xmap->BwdTrans(m_coeffs[0], ptsx);
-        m_xmap->BwdTrans(m_coeffs[1], ptsy);
-        m_xmap->BwdTrans(m_coeffs[2], ptsz);
-
-        const Array<OneD, const NekDouble> za = m_xmap->GetPoints(0);
-        const Array<OneD, const NekDouble> zb = m_xmap->GetPoints(1);
-        const Array<OneD, const NekDouble> zc = m_xmap->GetPoints(2);
-
-        // guess the first local coords based on nearest point
-        Vmath::Sadd(npts, -coords[0], ptsx, 1, tmp1, 1);
-        Vmath::Vmul(npts, tmp1, 1, tmp1, 1, tmp1, 1);
-        Vmath::Sadd(npts, -coords[1], ptsy, 1, tmp2, 1);
-        Vmath::Vvtvp(npts, tmp2, 1, tmp2, 1, tmp1, 1, tmp1, 1);
-        Vmath::Sadd(npts, -coords[2], ptsz, 1, tmp2, 1);
-        Vmath::Vvtvp(npts, tmp2, 1, tmp2, 1, tmp1, 1, tmp1, 1);
-
-        int min_i = Vmath::Imin(npts, tmp1, 1);
-
-        // distance from coordinate to nearest point for return value.
-        ptdist = sqrt(tmp1[min_i]);
-
-        // Get collapsed coordinate
-        int qa = za.num_elements(), qb = zb.num_elements();
-        Lcoords[2] = zc[min_i / (qa * qb)];
-        min_i = min_i % (qa * qb);
-        Lcoords[1] = zb[min_i / qa];
-        Lcoords[0] = za[min_i % qa];
-
-        // recover cartesian coordinate from collapsed coordinate.
-        Lcoords[0] = (1.0 + Lcoords[0]) * (1.0 - Lcoords[2]) / 2 - 1.0;
-        Lcoords[1] = (1.0 + Lcoords[1]) * (1.0 - Lcoords[2]) / 2 - 1.0;
-
-        // Perform newton iteration to find local coordinates
-        NekDouble resid = 0.0;
-        NewtonIterationForLocCoord(coords, ptsx, ptsy, ptsz, Lcoords, resid);
-    }
-    
-    return ptdist;
-}
-
 int PyrGeom::v_GetDir(const int faceidx, const int facedir) const
 {
     if (faceidx == 0)
@@ -269,6 +140,11 @@ int PyrGeom::v_GetDir(const int faceidx, const int facedir) const
     }
 }
 
+int PyrGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
+}
+
 void PyrGeom::SetUpLocalEdges()
 {
     // find edge 0
@@ -282,15 +158,15 @@ void PyrGeom::SetUpLocalEdges()
     for (f = 1; f < 5; f++)
     {
         int nEdges = m_faces[f]->GetNumEdges();
-        check = 0;
+        check      = 0;
         for (i = 0; i < 4; i++)
         {
             for (j = 0; j < nEdges; j++)
             {
                 if (m_faces[0]->GetEid(i) == m_faces[f]->GetEid(j))
                 {
-                    edge = dynamic_pointer_cast<SegGeom>(
-                        (m_faces[0])->GetEdge(i));
+                    edge =
+                        dynamic_pointer_cast<SegGeom>((m_faces[0])->GetEdge(i));
                     m_edges.push_back(edge);
                     check++;
                 }
@@ -323,8 +199,7 @@ void PyrGeom::SetUpLocalEdges()
         {
             if ((m_faces[1])->GetEid(i) == (m_faces[4])->GetEid(j))
             {
-                edge = dynamic_pointer_cast<SegGeom>(
-                    (m_faces[1])->GetEdge(i));
+                edge = dynamic_pointer_cast<SegGeom>((m_faces[1])->GetEdge(i));
                 m_edges.push_back(edge);
                 check++;
             }
@@ -357,8 +232,8 @@ void PyrGeom::SetUpLocalEdges()
             {
                 if ((m_faces[f])->GetEid(i) == (m_faces[f + 1])->GetEid(j))
                 {
-                    edge = dynamic_pointer_cast<SegGeom>(
-                        (m_faces[f])->GetEdge(i));
+                    edge =
+                        dynamic_pointer_cast<SegGeom>((m_faces[f])->GetEdge(i));
                     m_edges.push_back(edge);
                     check++;
                 }
@@ -465,8 +340,8 @@ void PyrGeom::SetUpEdgeOrientation()
     // This 2D array holds the local id's of all the vertices for every
     // edge. For every edge, they are ordered to what we define as being
     // Forwards.
-    const unsigned int edgeVerts[kNedges][2] = {
-        {0, 1}, {1, 2}, {3, 2}, {0, 3}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
+    const unsigned int edgeVerts[kNedges][2] = {{0, 1}, {1, 2}, {3, 2}, {0, 3},
+                                                {0, 4}, {1, 4}, {2, 4}, {3, 4}};
 
     int i;
     for (i = 0; i < kNedges; i++)
@@ -475,7 +350,8 @@ void PyrGeom::SetUpEdgeOrientation()
         {
             m_eorient[i] = StdRegions::eForwards;
         }
-        else if (m_edges[i]->GetVid(0) == m_verts[edgeVerts[i][1]]->GetGlobalID())
+        else if (m_edges[i]->GetVid(0) ==
+                 m_verts[edgeVerts[i][1]]->GetGlobalID())
         {
             m_eorient[i] = StdRegions::eBackwards;
         }
@@ -536,8 +412,8 @@ void PyrGeom::SetUpFaceOrientation()
         // initialisation
         elementAaxis_length = 0.0;
         elementBaxis_length = 0.0;
-        faceAaxis_length = 0.0;
-        faceBaxis_length = 0.0;
+        faceAaxis_length    = 0.0;
+        faceBaxis_length    = 0.0;
 
         dotproduct1 = 0.0;
         dotproduct2 = 0.0;
@@ -656,8 +532,8 @@ void PyrGeom::SetUpFaceOrientation()
 
         elementAaxis_length = sqrt(elementAaxis_length);
         elementBaxis_length = sqrt(elementBaxis_length);
-        faceAaxis_length = sqrt(faceAaxis_length);
-        faceBaxis_length = sqrt(faceBaxis_length);
+        faceAaxis_length    = sqrt(faceAaxis_length);
+        faceBaxis_length    = sqrt(faceBaxis_length);
 
         // Calculate the inner product of both the A-axis
         // (i.e. Elemental A axis and face A axis)
@@ -666,7 +542,8 @@ void PyrGeom::SetUpFaceOrientation()
             dotproduct1 += elementAaxis[i] * faceAaxis[i];
         }
 
-        NekDouble norm = fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
+        NekDouble norm =
+            fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
         orientation = 0;
 
         // if the innerproduct is equal to the (absolute value of the ) products
@@ -745,6 +622,20 @@ void PyrGeom::SetUpFaceOrientation()
 
         orientation = orientation + 5;
 
+        if (f != 0) // check triangle orientation
+        {
+            ASSERTL0(
+                orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+                "Orientation of triangular face (id = " +
+                    boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
+                    ") is inconsistent with face " +
+                    boost::lexical_cast<string>(f) +
+                    " of pyramid element (id = " +
+                    boost::lexical_cast<string>(m_globalID) +
+                    ") since Dir2 is aligned with Dir1. Mesh setup "
+                    "needs investigation");
+        }
+
         // Fill the m_forient array
         m_forient[f] = (StdRegions::Orientation)orientation;
     }
@@ -765,7 +656,7 @@ void PyrGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void PyrGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 5; ++i)
         {
@@ -788,60 +679,57 @@ void PyrGeom::SetUpXmap()
 
     if (m_forient[0] < 9)
     {
-        tmp.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(0));
-        tmp.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(0));
+        tmp.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(2));
         order0 = *max_element(tmp.begin(), tmp.end());
     }
     else
     {
-        tmp.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(1));
-        tmp.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(3));
+        tmp.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(1));
+        tmp.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(3));
         order0 = *max_element(tmp.begin(), tmp.end());
     }
 
     if (m_forient[0] < 9)
     {
         tmp.clear();
-        tmp.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(1));
-        tmp.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(3));
-        tmp.push_back(m_faces[2]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(1));
+        tmp.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(3));
+        tmp.push_back(m_faces[2]->GetXmap()->GetTraceNcoeffs(2));
         order1 = *max_element(tmp.begin(), tmp.end());
     }
     else
     {
         tmp.clear();
-        tmp.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(0));
-        tmp.push_back(m_faces[0]->GetXmap()->GetEdgeNcoeffs(2));
-        tmp.push_back(m_faces[2]->GetXmap()->GetEdgeNcoeffs(2));
+        tmp.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(0));
+        tmp.push_back(m_faces[0]->GetXmap()->GetTraceNcoeffs(2));
+        tmp.push_back(m_faces[2]->GetXmap()->GetTraceNcoeffs(2));
         order1 = *max_element(tmp.begin(), tmp.end());
     }
 
     tmp.clear();
     tmp.push_back(order0);
     tmp.push_back(order1);
-    tmp.push_back(m_faces[1]->GetXmap()->GetEdgeNcoeffs(1));
-    tmp.push_back(m_faces[1]->GetXmap()->GetEdgeNcoeffs(2));
-    tmp.push_back(m_faces[3]->GetXmap()->GetEdgeNcoeffs(1));
-    tmp.push_back(m_faces[3]->GetXmap()->GetEdgeNcoeffs(2));
+    tmp.push_back(m_faces[1]->GetXmap()->GetTraceNcoeffs(1));
+    tmp.push_back(m_faces[1]->GetXmap()->GetTraceNcoeffs(2));
+    tmp.push_back(m_faces[3]->GetXmap()->GetTraceNcoeffs(1));
+    tmp.push_back(m_faces[3]->GetXmap()->GetTraceNcoeffs(2));
     int order2 = *max_element(tmp.begin(), tmp.end());
-
 
     const LibUtilities::BasisKey A1(
         LibUtilities::eModified_A, order0,
-        LibUtilities::PointsKey(
-            order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey A2(
         LibUtilities::eModified_A, order1,
-        LibUtilities::PointsKey(
-            order1+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::PointsKey(order1 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey C(
         LibUtilities::eModifiedPyr_C, order2,
-        LibUtilities::PointsKey(
-            order2, LibUtilities::eGaussRadauMAlpha2Beta0));
+        LibUtilities::PointsKey(order2, LibUtilities::eGaussRadauMAlpha2Beta0));
 
-    m_xmap = MemoryManager<StdRegions::StdPyrExp>::AllocateSharedPtr(
-        A1, A2, C);
+    m_xmap = MemoryManager<StdRegions::StdPyrExp>::AllocateSharedPtr(A1, A2, C);
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

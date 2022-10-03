@@ -32,20 +32,20 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <LibUtilities/Python/NekPyConfig.hpp>
+#include <SpatialDomains/HexGeom.h>
 #include <SpatialDomains/PointGeom.h>
-#include <SpatialDomains/SegGeom.h>
-#include <SpatialDomains/TriGeom.h>
-#include <SpatialDomains/QuadGeom.h>
-#include <SpatialDomains/TetGeom.h>
 #include <SpatialDomains/PrismGeom.h>
 #include <SpatialDomains/PyrGeom.h>
-#include <SpatialDomains/HexGeom.h>
-#include <LibUtilities/Python/NekPyConfig.hpp>
+#include <SpatialDomains/QuadGeom.h>
+#include <SpatialDomains/SegGeom.h>
+#include <SpatialDomains/TetGeom.h>
+#include <SpatialDomains/TriGeom.h>
 
 using namespace Nektar;
 using namespace Nektar::SpatialDomains;
 
-template<class T, class S>
+template <class T, class S>
 std::shared_ptr<T> Geometry_Init(int id, py::list &facets)
 {
     std::vector<std::shared_ptr<S>> geomVec;
@@ -58,16 +58,13 @@ std::shared_ptr<T> Geometry_Init(int id, py::list &facets)
     return std::make_shared<T>(id, &geomVec[0]);
 }
 
-template<class T, class S, class PARENT>
-void export_Geom(const char* name)
+template <class T, class S, class PARENT> void export_Geom(const char *name)
 {
-    py::class_<T, py::bases<PARENT>, std::shared_ptr<T> >(name, py::init<>())
-        .def("__init__", py::make_constructor(
-                 &Geometry_Init<T, S>, py::default_call_policies(), (
-                     py::arg("id"), py::arg("segments")=py::list())));
-
-    NEKPY_SHPTR_FIX(T, PARENT);
-    NEKPY_SHPTR_FIX(T, Geometry);
+    py::class_<T, py::bases<PARENT>, std::shared_ptr<T>>(name, py::init<>())
+        .def("__init__",
+             py::make_constructor(
+                 &Geometry_Init<T, S>, py::default_call_policies(),
+                 (py::arg("id"), py::arg("segments") = py::list())));
 }
 
 SegGeomSharedPtr SegGeom_Init(int id, int coordim, py::list &points,
@@ -95,28 +92,25 @@ void export_GeomElements()
 {
     // Geometry dimensioned base classes
     py::class_<Geometry1D, py::bases<Geometry>, std::shared_ptr<Geometry1D>,
-               boost::noncopyable>(
-                   "Geometry1D", py::no_init);
+               boost::noncopyable>("Geometry1D", py::no_init);
     py::class_<Geometry2D, py::bases<Geometry>, std::shared_ptr<Geometry2D>,
-               boost::noncopyable>(
-                   "Geometry2D", py::no_init);
+               boost::noncopyable>("Geometry2D", py::no_init);
     py::class_<Geometry3D, py::bases<Geometry>, std::shared_ptr<Geometry3D>,
-               boost::noncopyable>(
-                   "Geometry3D", py::no_init);
+               boost::noncopyable>("Geometry3D", py::no_init);
 
     // Point geometries
-    py::class_<PointGeom, py::bases<Geometry>, std::shared_ptr<PointGeom> >(
+    py::class_<PointGeom, py::bases<Geometry>, std::shared_ptr<PointGeom>>(
         "PointGeom", py::init<>())
         .def(py::init<int, int, NekDouble, NekDouble, NekDouble>());
 
     // Segment geometries
-    py::class_<SegGeom, py::bases<Geometry>, std::shared_ptr<SegGeom> >(
+    py::class_<SegGeom, py::bases<Geometry>, std::shared_ptr<SegGeom>>(
         "SegGeom", py::init<>())
-        .def("__init__", py::make_constructor(
-                 &SegGeom_Init, py::default_call_policies(), (
-                     py::arg("id"), py::arg("coordim"),
-                     py::arg("points")=py::list(),
-                     py::arg("curve")=py::object())))
+        .def("__init__",
+             py::make_constructor(&SegGeom_Init, py::default_call_policies(),
+                                  (py::arg("id"), py::arg("coordim"),
+                                   py::arg("points") = py::list(),
+                                   py::arg("curve")  = py::object())))
         .def("GetCurve", &SegGeom::GetCurve);
 
     export_Geom<TriGeom, SegGeom, Geometry2D>("TriGeom");
@@ -125,11 +119,4 @@ void export_GeomElements()
     export_Geom<PrismGeom, Geometry2D, Geometry3D>("PrismGeom");
     export_Geom<PyrGeom, Geometry2D, Geometry3D>("PyrGeom");
     export_Geom<HexGeom, QuadGeom, Geometry3D>("HexGeom");
-
-    NEKPY_SHPTR_FIX(Geometry1D, Geometry);
-    NEKPY_SHPTR_FIX(Geometry2D, Geometry);
-    NEKPY_SHPTR_FIX(Geometry3D, Geometry);
-    NEKPY_SHPTR_FIX(SegGeom, Geometry);
-    NEKPY_SHPTR_FIX(PointGeom, Geometry);
 }
-

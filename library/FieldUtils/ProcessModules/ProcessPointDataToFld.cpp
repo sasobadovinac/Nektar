@@ -72,11 +72,11 @@ ProcessPointDataToFld::~ProcessPointDataToFld()
 
 void ProcessPointDataToFld::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     int i, j;
     bool setnantovalue = false;
-    NekDouble defvalue=0.0;
+    NekDouble defvalue = 0.0;
 
     if (!boost::iequals(m_config["setnantovalue"].as<string>(), "NotSet"))
     {
@@ -87,13 +87,13 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     // Check for command line point specification if no .pts file specified
     // Load pts file
     LibUtilities::PtsFieldSharedPtr fieldPts;
-    ASSERTL0( m_config["frompts"].as<string>().compare("NotSet") != 0,
-            "ProcessInterpPointDataToFld requires frompts parameter");
+    ASSERTL0(m_config["frompts"].as<string>().compare("NotSet") != 0,
+             "ProcessInterpPointDataToFld requires frompts parameter");
     string inFile = m_config["frompts"].as<string>().c_str();
-    LibUtilities::CommSharedPtr  c     =
-            LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
+    LibUtilities::CommSharedPtr c =
+        LibUtilities::GetCommFactory().CreateInstance("Serial", 0, 0);
     LibUtilities::PtsIOSharedPtr ptsIO =
-            MemoryManager<LibUtilities::PtsIO>::AllocateSharedPtr(c);
+        MemoryManager<LibUtilities::PtsIO>::AllocateSharedPtr(c);
     ptsIO->Import(inFile, fieldPts);
 
     int nFields = fieldPts->GetNFields();
@@ -102,7 +102,8 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     int dim = fieldPts->GetDim();
 
     // assume one field is already defined from input file.
-    ASSERTL0(m_f->m_numHomogeneousDir == 0,
+    ASSERTL0(
+        m_f->m_numHomogeneousDir == 0,
         "ProcessInterpPointDataToFld does not support homogeneous expansion");
 
     m_f->m_exp.resize(nFields);
@@ -110,13 +111,13 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     {
         m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     }
-    Array<OneD, Array<OneD, NekDouble> > pts;
+    Array<OneD, Array<OneD, NekDouble>> pts;
     fieldPts->GetPts(pts);
 
     // set any nan values to default value if requested
     if (setnantovalue)
     {
-        for (int i = 0; i < pts[0].num_elements(); ++i)
+        for (int i = 0; i < pts[0].size(); ++i)
         {
             for (int j = 0; j < nFields; ++j)
             {
@@ -132,14 +133,14 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     {
         int totcoeffs = m_f->m_exp[0]->GetNcoeffs();
 
-        ASSERTL0(pts[0].num_elements() != totcoeffs,
+        ASSERTL0(pts[0].size() != totcoeffs,
                  "length of points in .pts file is different "
                  "to the number of coefficients in expansion ");
 
         for (int i = 0; i < nFields; ++i)
         {
             Array<OneD, NekDouble> coeffs = m_f->m_exp[i]->UpdateCoeffs(), tmp;
-            int cnt = 0;
+            int cnt                       = 0;
             for (int e = 0; e < m_f->m_exp[0]->GetNumElmts(); ++e)
             {
                 int ncoeffs = m_f->m_exp[i]->GetExp(e)->GetNcoeffs();
@@ -158,7 +159,7 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
     else
     {
         int totpoints = m_f->m_exp[0]->GetTotPoints();
-        Array<OneD, Array<OneD, NekDouble> > coords(3);
+        Array<OneD, Array<OneD, NekDouble>> coords(3);
 
         coords[0] = Array<OneD, NekDouble>(totpoints);
         coords[1] = Array<OneD, NekDouble>(totpoints);
@@ -166,14 +167,13 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
 
         m_f->m_exp[0]->GetCoords(coords[0], coords[1], coords[2]);
 
-        if (pts[0].num_elements() != totpoints)
+        if (pts[0].size() != totpoints)
         {
             WARNINGL0(false, "length of points in .pts file is different to "
                              "the number of quadrature points in xml file");
-            totpoints = min(totpoints, (int)pts[0].num_elements());
+            totpoints = min(totpoints, (int)pts[0].size());
         }
 
-        int mismatch = 0;
         for (i = 0; i < totpoints; ++i)
         {
             for (j = 0; j < dim; ++j)
@@ -188,7 +188,6 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
                             fabs(coords[j][i] - pts[j][i]));
                     ;
                     WARNINGL0(false, outstring);
-                    mismatch += 1;
                 }
             }
 
@@ -201,8 +200,8 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
         // forward transform fields
         for (i = 0; i < nFields; ++i)
         {
-            m_f->m_exp[i]->FwdTrans_IterPerExp(m_f->m_exp[i]->GetPhys(),
-                                               m_f->m_exp[i]->UpdateCoeffs());
+            m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
+                                             m_f->m_exp[i]->UpdateCoeffs());
         }
     }
 
@@ -212,5 +211,5 @@ void ProcessPointDataToFld::Process(po::variables_map &vm)
         m_f->m_variables.push_back(fieldPts->GetFieldName(j));
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

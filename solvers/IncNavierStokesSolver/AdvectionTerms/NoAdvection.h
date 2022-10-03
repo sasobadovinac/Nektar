@@ -40,13 +40,14 @@
 namespace Nektar
 {
 
-class NoAdvection: public SolverUtils::Advection
+class NoAdvection : public SolverUtils::Advection
 {
 public:
     friend class MemoryManager<NoAdvection>;
 
     /// Creates an instance of this class
-    static SolverUtils::AdvectionSharedPtr create(std::string) {
+    static SolverUtils::AdvectionSharedPtr create(std::string)
+    {
         return MemoryManager<NoAdvection>::AllocateSharedPtr();
     }
 
@@ -54,28 +55,26 @@ public:
     static std::string className;
 
 protected:
-
     NoAdvection();
-
 
     virtual ~NoAdvection();
 
     virtual void v_InitObject(
-        LibUtilities::SessionReaderSharedPtr        pSession,
+        LibUtilities::SessionReaderSharedPtr pSession,
         Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
 
     virtual void v_Advect(
         const int nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-              Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
-
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
 };
 
-} //end of namespace
+} // namespace Nektar
 
-#endif //NEKTAR_SOLVERS_INCNAVIERSTOKES_H
+#endif // NEKTAR_SOLVERS_INCNAVIERSTOKES_H

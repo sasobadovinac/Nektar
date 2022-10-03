@@ -33,8 +33,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/geometry.hpp>
 #include <LibUtilities/BasicUtils/Interpolator.h>
+#include <boost/geometry.hpp>
 
 using namespace std;
 
@@ -51,12 +51,15 @@ namespace LibUtilities
  *
  * @param ptsInField    input field
  * @param ptsOutField   output field
+ * @param reuseTree     if an r-tree has been constructed already, reuse it
+ *                      (e.g. for repeated calls over the same input points).
  *
  * In and output fields must have the same dimension.  The most suitable
  * algorithm is chosen automatically if it wasnt set explicitly.
  */
 void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
-                               LibUtilities::PtsFieldSharedPtr &ptsOutField)
+                               LibUtilities::PtsFieldSharedPtr &ptsOutField,
+                               bool reuseTree)
 {
     ASSERTL0(ptsInField->GetDim() <= m_dim, "too many dimesions in inField");
     ASSERTL0(ptsOutField->GetDim() <= m_dim, "too many dimesions in outField");
@@ -64,13 +67,17 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
     m_ptsInField  = ptsInField;
     m_ptsOutField = ptsOutField;
 
-    size_t nOutPts  = m_ptsOutField->GetNpoints();
-    int lastProg = 0;
+    size_t nOutPts = m_ptsOutField->GetNpoints();
+    int lastProg   = 0;
 
     // set a default method
     if (m_method == eNoMethod)
     {
-        if (m_ptsInField->GetDim() == 1 || m_coordId >= 0)
+        if (m_ptsInField->GetDim() == 3)
+        {
+            m_method = eNearestNeighbour;
+        }
+        else if (m_ptsInField->GetDim() == 1 || m_coordId >= 0)
         {
             m_method = eQuadratic;
         }
@@ -80,7 +87,7 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
         }
     }
 
-    if (m_method != eQuadratic)
+    if ((!m_rtree || !reuseTree) && m_method != eQuadratic)
     {
         SetupTree();
     }
@@ -89,8 +96,9 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
     {
         case eNearestNeighbour:
         {
-            m_weights   = Array<TwoD, NekDouble>(nOutPts, 1, 0.0);
-            m_neighInds = Array<TwoD, unsigned int>(nOutPts, 1, (unsigned int) 0);
+            m_weights = Array<TwoD, NekDouble>(nOutPts, 1, 0.0);
+            m_neighInds =
+                Array<TwoD, unsigned int>(nOutPts, 1, (unsigned int)0);
 
             for (size_t i = 0; i < nOutPts; ++i)
             {
@@ -119,8 +127,9 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
             ASSERTL0(m_ptsInField->GetDim() == 1 || m_coordId >= 0,
                      "not implemented");
 
-            m_weights   = Array<TwoD, NekDouble>(nOutPts, 3, 0.0);
-            m_neighInds = Array<TwoD, unsigned int>(nOutPts, 3, (unsigned int) 0);
+            m_weights = Array<TwoD, NekDouble>(nOutPts, 3, 0.0);
+            m_neighInds =
+                Array<TwoD, unsigned int>(nOutPts, 3, (unsigned int)0);
 
             for (size_t i = 0; i < nOutPts; ++i)
             {
@@ -154,11 +163,12 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
         case eShepard:
         {
             int numPts = m_ptsInField->GetDim();
-            numPts     = 2 << numPts; // 2 ^ numPts
+            numPts     = 1 << numPts; // 2 ^ numPts
             numPts     = min(numPts, int(m_ptsInField->GetNpoints() / 2));
 
-            m_weights   = Array<TwoD, NekDouble>(nOutPts, numPts, 0.0);
-            m_neighInds = Array<TwoD, unsigned int>(nOutPts, numPts, (unsigned int) 0);
+            m_weights = Array<TwoD, NekDouble>(nOutPts, numPts, 0.0);
+            m_neighInds =
+                Array<TwoD, unsigned int>(nOutPts, numPts, (unsigned int)0);
 
             for (size_t i = 0; i < nOutPts; ++i)
             {
@@ -191,8 +201,9 @@ void Interpolator::CalcWeights(const LibUtilities::PtsFieldSharedPtr ptsInField,
 
             m_maxPts = min(m_maxPts, int(m_ptsInField->GetNpoints() / 2));
 
-            m_weights   = Array<TwoD, NekDouble>(nOutPts, m_maxPts, 0.0);
-            m_neighInds = Array<TwoD, unsigned int>(nOutPts, m_maxPts, (unsigned int) 0);
+            m_weights = Array<TwoD, NekDouble>(nOutPts, m_maxPts, 0.0);
+            m_neighInds =
+                Array<TwoD, unsigned int>(nOutPts, m_maxPts, (unsigned int)0);
 
             for (size_t i = 0; i < nOutPts; ++i)
             {
@@ -319,7 +330,7 @@ void Interpolator::PrintStatistics()
         {
             if (m_neighInds[i][j] > 0)
             {
-                meanN +=1;
+                meanN += 1;
             }
         }
     }
@@ -342,8 +353,7 @@ void Interpolator::PrintStatistics()
  * The filter width should be half the FWHM (= 1.1774 sigma) and must be set in
  * the constructor of the Interpolator class.
  */
-void Interpolator::CalcW_Gauss(const PtsPoint &searchPt,
-                               const NekDouble sigma,
+void Interpolator::CalcW_Gauss(const PtsPoint &searchPt, const NekDouble sigma,
                                const int maxPts)
 {
     // find nearest neighbours
@@ -359,7 +369,7 @@ void Interpolator::CalcW_Gauss(const PtsPoint &searchPt,
     if (numPts == 1)
     {
         m_neighInds[searchPt.idx][0] = neighbourPts.front().idx;
-        m_weights[searchPt.idx][0] = 1.0;
+        m_weights[searchPt.idx][0]   = 1.0;
 
         return;
     }
@@ -445,24 +455,24 @@ void Interpolator::CalcW_NNeighbour(const PtsPoint &searchPt)
     FindNNeighbours(searchPt, neighbourPts, 1);
 
     m_neighInds[searchPt.idx][0] = neighbourPts[0].idx;
-    m_weights[searchPt.idx][0] = 1.0;
+    m_weights[searchPt.idx][0]   = 1.0;
 }
 
 /**
-* @brief Computes interpolation weights using linear interpolation
-*
-* @param searchPt    point for which the weights are computed
-* @param m_coordId   coordinate id along which the interpolation should be
-* performed
-*
-* The algorithm is based on Shepard, D. (1968). A two-dimensional interpolation
-* function for irregularly-spaced data. Proceedings of the 1968 23rd ACM
-* National Conference. pp. 517–524.
-*
-* In order to save memory, for n dimesnions, only 2^n points are considered.
-* Contrary to Shepard, we use a fixed number of points with fixed weighting
-* factors 1/d^n.
-*/
+ * @brief Computes interpolation weights using linear interpolation
+ *
+ * @param searchPt    point for which the weights are computed
+ * @param m_coordId   coordinate id along which the interpolation should be
+ * performed
+ *
+ * The algorithm is based on Shepard, D. (1968). A two-dimensional interpolation
+ * function for irregularly-spaced data. Proceedings of the 1968 23rd ACM
+ * National Conference. pp. 517–524.
+ *
+ * In order to save memory, for n dimesnions, only 2^n points are considered.
+ * Contrary to Shepard, we use a fixed number of points with fixed weighting
+ * factors 1/d^n.
+ */
 void Interpolator::CalcW_Shepard(const PtsPoint &searchPt, int numPts)
 {
     // find nearest neighbours
@@ -605,8 +615,7 @@ void Interpolator::SetupTree()
         // find nearest 2 points (2 because one of these might be the one we
         // are
         // checking)
-        m_rtree->query(bgi::nearest(it.first, 2),
-                       std::back_inserter(result));
+        m_rtree->query(bgi::nearest(it.first, 2), std::back_inserter(result));
 
         // in case any of these 2 points is too close, remove the current
         // point
@@ -711,5 +720,5 @@ void Interpolator::FindNeighbours(const PtsPoint &searchPt,
 
     sort(neighbourPts.begin(), neighbourPts.end());
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

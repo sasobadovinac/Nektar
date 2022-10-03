@@ -34,9 +34,9 @@
 
 #include <fstream>
 
-#include <StdRegions/StdRegions.hpp>
 #include <SpatialDomains/PointGeom.h>
 #include <SpatialDomains/SegGeom.h>
+#include <StdRegions/StdRegions.hpp>
 
 namespace Nektar
 {
@@ -45,28 +45,27 @@ namespace SpatialDomains
 PointGeom::PointGeom() : NekPoint<NekDouble>(0.0, 0.0, 0.0)
 {
     m_shapeType = LibUtilities::ePoint;
-    m_coordim = 0;
-    m_globalID = 0;
+    m_coordim   = 0;
+    m_globalID  = 0;
 }
 
-PointGeom::PointGeom(
-    const int coordim, const int vid, NekDouble x, NekDouble y, NekDouble z)
+PointGeom::PointGeom(const int coordim, const int vid, NekDouble x, NekDouble y,
+                     NekDouble z)
     : NekPoint<NekDouble>(x, y, z)
 {
     m_shapeType = LibUtilities::ePoint;
-    m_coordim = coordim;
-    m_globalID = vid;
+    m_coordim   = coordim;
+    m_globalID  = vid;
 }
 
 // copy constructor
 PointGeom::PointGeom(const PointGeom &T)
-    : Geometry0D(T),
-      NekPoint<NekDouble>(T),
+    : Geometry0D(T), NekPoint<NekDouble>(T),
       std::enable_shared_from_this<PointGeom>(T)
 {
     m_shapeType = T.m_shapeType;
-    m_globalID = T.m_globalID;
-    m_coordim = T.m_coordim;
+    m_globalID  = T.m_globalID;
+    m_coordim   = T.m_coordim;
 }
 
 PointGeom::~PointGeom()
@@ -118,7 +117,7 @@ void PointGeom::Add(PointGeom &a, PointGeom &b)
     (*this)(0) = a[0] + b[0];
     (*this)(1) = a[1] + b[1];
     (*this)(2) = a[2] + b[2];
-    m_coordim = std::max(a.GetCoordim(), b.GetCoordim());
+    m_coordim  = std::max(a.GetCoordim(), b.GetCoordim());
 }
 
 // _this = a + b
@@ -127,7 +126,7 @@ void PointGeom::Sub(PointGeom &a, PointGeom &b)
     (*this)(0) = a[0] - b[0];
     (*this)(1) = a[1] - b[1];
     (*this)(2) = a[2] - b[2];
-    m_coordim = std::max(a.GetCoordim(), b.GetCoordim());
+    m_coordim  = std::max(a.GetCoordim(), b.GetCoordim());
 }
 
 /// \brief _this = a x b
@@ -136,47 +135,47 @@ void PointGeom::Mult(PointGeom &a, PointGeom &b)
     (*this)(0) = a[1] * b[2] - a[2] * b[1];
     (*this)(1) = a[2] * b[0] - a[0] * b[2];
     (*this)(2) = a[0] * b[1] - a[1] * b[0];
-    m_coordim = 3;
+    m_coordim  = 3;
 }
 
 /// \brief _this  = rotation of a by angle 'angle' around axis dir
-void PointGeom::Rotate(PointGeom& a, int dir, NekDouble angle)
+void PointGeom::Rotate(PointGeom &a, int dir, NekDouble angle)
 {
-    switch(dir)
+    switch (dir)
     {
-    case 0:
+        case 0:
         {
-            NekDouble yrot = cos(angle)*a.y() - sin(angle)*a.z();
-            NekDouble zrot = sin(angle)*a.y() + cos(angle)*a.z();
-            
+            NekDouble yrot = cos(angle) * a.y() - sin(angle) * a.z();
+            NekDouble zrot = sin(angle) * a.y() + cos(angle) * a.z();
+
             (*this)(0) = a.x();
             (*this)(1) = yrot;
             (*this)(2) = zrot;
         }
         break;
-    case 1:
+        case 1:
         {
-            NekDouble zrot = cos(angle)*a.z() - sin(angle)*a.x();
-            NekDouble xrot = sin(angle)*a.z() + cos(angle)*a.x();
-            
+            NekDouble zrot = cos(angle) * a.z() - sin(angle) * a.x();
+            NekDouble xrot = sin(angle) * a.z() + cos(angle) * a.x();
+
             (*this)(0) = xrot;
-            (*this)(1) = a.y(); 
+            (*this)(1) = a.y();
             (*this)(2) = zrot;
         }
         break;
-    case 2:
+        case 2:
         {
-            NekDouble xrot = cos(angle)*a.x() - sin(angle)*a.y();
-            NekDouble yrot = sin(angle)*a.x() + cos(angle)*a.y();
-            
+            NekDouble xrot = cos(angle) * a.x() - sin(angle) * a.y();
+            NekDouble yrot = sin(angle) * a.x() + cos(angle) * a.y();
+
             (*this)(0) = xrot;
             (*this)(1) = yrot;
-            (*this)(2) = a.z(); 
+            (*this)(2) = a.z();
         }
         break;
     }
 }
-    
+
 ///  \brief return distance between this and input a
 NekDouble PointGeom::dist(PointGeom &a)
 {
@@ -184,7 +183,7 @@ NekDouble PointGeom::dist(PointGeom &a)
                 (z() - a.z()) * (z() - a.z()));
 }
 
-/// \brief retun the dot product between this and input a 
+/// \brief retun the dot product between this and input a
 NekDouble PointGeom::dot(PointGeom &a)
 {
     return (x() * a.x() + y() * a.y() + z() * a.z());
@@ -234,5 +233,5 @@ void PointGeom::v_GenGeomFactors()
 {
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

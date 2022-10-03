@@ -28,7 +28,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Skew-Symmetric non linear convective term for Navier-Stokes equations
+// Description: Skew-Symmetric non linear convective term for Navier-Stokes
+// equations
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,18 +38,18 @@
 
 #include <SolverUtils/Advection/Advection.h>
 
-
 namespace Nektar
 {
 
-class SkewSymmetricAdvection: public SolverUtils::Advection
+class SkewSymmetricAdvection : public SolverUtils::Advection
 
 {
 public:
     friend class MemoryManager<SkewSymmetricAdvection>;
 
     /// Creates an instance of this class
-    static SolverUtils::AdvectionSharedPtr create(std::string) {
+    static SolverUtils::AdvectionSharedPtr create(std::string)
+    {
         return MemoryManager<SkewSymmetricAdvection>::AllocateSharedPtr();
     }
 
@@ -57,33 +58,31 @@ public:
     static std::string className2;
 
 protected:
-
     SkewSymmetricAdvection();
 
     virtual ~SkewSymmetricAdvection();
 
     virtual void v_InitObject(
-              LibUtilities::SessionReaderSharedPtr         pSession,
-              Array<OneD, MultiRegions::ExpListSharedPtr>  pFields);
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
 
     virtual void v_Advect(
         const int nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-              Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayofArray,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayofArray);
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
 
 private:
-    MultiRegions::CoeffState m_CoeffState;
     bool m_homogen_dealiasing;
     bool m_SingleMode;
     bool m_HalfMode;
 };
 
+} // namespace Nektar
 
-} //end of namespace
-
-#endif //NEKTAR_SOLVERS_INCNAVIERSTOKES_H
+#endif // NEKTAR_SOLVERS_INCNAVIERSTOKES_H

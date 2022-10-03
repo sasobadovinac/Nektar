@@ -43,7 +43,8 @@ namespace Nektar
 namespace FieldUtils
 {
 
-enum TecplotZoneType{
+enum TecplotZoneType
+{
     eOrdered = 0,
     eFELineSeg,
     eFETriangle,
@@ -70,7 +71,6 @@ public:
     OutputTecplot(FieldSharedPtr f);
     virtual ~OutputTecplot();
 
-
     virtual void Process(po::variables_map &vm);
 
     virtual std::string GetModuleName()
@@ -88,36 +88,35 @@ protected:
     /// Write from data to output file.
     virtual void OutputFromData(po::variables_map &vm);
 
-    virtual fs::path GetPath(std::string &filename,
-                                    po::variables_map &vm);
+    virtual fs::path GetPath(std::string &filename, po::variables_map &vm);
 
     virtual fs::path GetFullOutName(std::string &filename,
                                     po::variables_map &vm);
 
     /// True if writing binary field output
-    bool            m_binary;
+    bool m_binary;
     /// True if writing a single output file
-    bool            m_oneOutputFile;
+    bool m_oneOutputFile;
     /// True if writing header
-    bool            m_writeHeader;
+    bool m_writeHeader;
     /// Tecplot zone type of output
     TecplotZoneType m_zoneType;
     /// Number of points per block in Tecplot file
-    vector<int>     m_numPoints;
+    std::vector<int> m_numPoints;
     /// Number of blocks in Tecplot file
-    int             m_numBlocks;
+    int m_numBlocks;
     /// Coordinate dimension of output
-    int             m_coordim;
+    int m_coordim;
     /// Total number of connectivity entries
-    int             m_totConn;
+    int m_totConn;
     /// Connectivty for each block: one per element
-    vector<Array<OneD, int> > m_conn;
+    std::vector<Array<OneD, int>> m_conn;
     /// Each rank's field sizes
     Array<OneD, int> m_rankFieldSizes;
     /// Each rank's connectivity sizes
     Array<OneD, int> m_rankConnSizes;
     /// Field data to output
-    Array<OneD, Array<OneD, NekDouble> > m_fields;
+    Array<OneD, Array<OneD, NekDouble>> m_fields;
 
     virtual void WriteTecplotHeader(std::ofstream &outfile,
                                     std::vector<std::string> &var);
@@ -128,7 +127,6 @@ protected:
 
     int GetNumTecplotBlocks();
     void CalculateConnectivity();
-
 };
 
 /**
@@ -154,7 +152,7 @@ public:
     }
 
 protected:
-    void WriteDoubleOrFloat(std::ofstream          &outfile,
+    void WriteDoubleOrFloat(std::ofstream &outfile,
                             Array<OneD, NekDouble> &data);
     virtual void WriteTecplotHeader(std::ofstream &outfile,
                                     std::vector<std::string> &var);
@@ -162,7 +160,7 @@ protected:
     virtual void WriteTecplotConnectivity(std::ofstream &outfile);
 };
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

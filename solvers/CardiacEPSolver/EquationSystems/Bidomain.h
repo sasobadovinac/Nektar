@@ -35,84 +35,81 @@
 #ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_BIDOMAIN_H
 #define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_BIDOMAIN_H
 
-#include <SolverUtils/UnsteadySystem.h>
 #include <CardiacEPSolver/CellModels/CellModel.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
 
+/// A model for cardiac conduction.
+class Bidomain : public UnsteadySystem
+{
+public:
+    friend class MemoryManager<Bidomain>;
 
-    /// A model for cardiac conduction.
-    class Bidomain : public UnsteadySystem
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<Bidomain>;
+        EquationSystemSharedPtr p =
+            MemoryManager<Bidomain>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            EquationSystemSharedPtr p = MemoryManager<Bidomain>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Desctructor
+    virtual ~Bidomain();
 
-        /// Desctructor
-        virtual ~Bidomain();
+protected:
+    /// Constructor
+    Bidomain(const LibUtilities::SessionReaderSharedPtr &pSession,
+             const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    protected:
-        /// Constructor
-        Bidomain(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    virtual void v_InitObject();
 
-        virtual void v_InitObject();
+    /// Solve for the diffusion term.
+    void DoImplicitSolve(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
+        NekDouble lambda);
 
-        /// Solve for the diffusion term.
-        void DoImplicitSolve(
-                const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-                      Array<OneD, Array<OneD, NekDouble> >&outarray,
-                      NekDouble time,
-                      NekDouble lambda);
+    /// Computes the reaction terms \f$f(u,v)\f$ and \f$g(u,v)\f$.
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
-        /// Computes the reaction terms \f$f(u,v)\f$ and \f$g(u,v)\f$.
-        void DoOdeRhs(
-                const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                      Array<OneD,        Array<OneD, NekDouble> >&outarray,
-                const NekDouble time);
+    /// Sets a custom initial condition.
+    virtual void v_SetInitialConditions(NekDouble initialtime,
+                                        bool dumpInitialConditions,
+                                        const int domain);
 
-        /// Sets a custom initial condition.
-        virtual void v_SetInitialConditions(NekDouble initialtime,
-                                bool dumpInitialConditions,
-                                const int domain);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
+private:
+    /// Cell model.
+    CellModelSharedPtr m_cell;
 
-    private:
-        /// Cell model.
-        CellModelSharedPtr m_cell;
+    NekDouble m_chi, m_capMembrane, m_sigmaix, m_sigmaiy, m_sigmaiz, m_sigmaex,
+        m_sigmaey, m_sigmaez;
 
-        NekDouble m_chi, m_capMembrane, m_sigmaix, m_sigmaiy, m_sigmaiz, m_sigmaex, m_sigmaey, m_sigmaez; 
+    StdRegions::VarCoeffMap m_vardiffi;
+    StdRegions::VarCoeffMap m_vardiffie;
 
-        StdRegions::VarCoeffMap m_vardiffi;
-       	StdRegions::VarCoeffMap m_vardiffie;
+    Array<OneD, Array<OneD, NekDouble>> tmp1;
+    Array<OneD, Array<OneD, NekDouble>> tmp2;
+    Array<OneD, Array<OneD, NekDouble>> tmp3;
 
-	Array<OneD, Array<OneD, NekDouble> > tmp1;
-	Array<OneD, Array<OneD, NekDouble> > tmp2;
-	Array<OneD, Array<OneD, NekDouble> > tmp3;
+    /// Stimulus current
+    NekDouble m_stimDuration;
+};
 
-        /// Stimulus current
-        NekDouble m_stimDuration;
-    };
-
-}
+} // namespace Nektar
 
 #endif

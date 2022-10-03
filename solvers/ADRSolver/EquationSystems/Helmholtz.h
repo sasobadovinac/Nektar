@@ -39,39 +39,38 @@
 
 namespace Nektar
 {
-    class Helmholtz : public Poisson
+class Helmholtz : public Poisson
+{
+public:
+    friend class MemoryManager<Helmholtz>;
+
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<Helmholtz>;
+        EquationSystemSharedPtr p =
+            MemoryManager<Helmholtz>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            EquationSystemSharedPtr p = MemoryManager<Helmholtz>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
+    /// Name of class
+    static std::string className1;
+    static std::string className2;
 
-        /// Name of class
-        static std::string className1;
-        static std::string className2;
+    virtual ~Helmholtz();
 
-        virtual ~Helmholtz();
+protected:
+    Helmholtz(const LibUtilities::SessionReaderSharedPtr &pSession,
+              const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    protected:
-        Helmholtz(const LibUtilities::SessionReaderSharedPtr& pSession,
-                  const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
 
-        virtual void v_InitObject();
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
-
-    private:
-        virtual Array<OneD, bool> v_GetSystemSingularChecks();
-
-    };
-}
+private:
+    virtual Array<OneD, bool> v_GetSystemSingularChecks();
+};
+} // namespace Nektar
 
 #endif

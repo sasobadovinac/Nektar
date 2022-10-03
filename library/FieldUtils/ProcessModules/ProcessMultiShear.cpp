@@ -51,8 +51,7 @@ namespace FieldUtils
 
 ModuleKey ProcessMultiShear::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "shear"),
-        ProcessMultiShear::create,
+        ModuleKey(eProcessModule, "shear"), ProcessMultiShear::create,
         "Computes shear stress metrics.");
 
 ProcessMultiShear::ProcessMultiShear(FieldSharedPtr f) : ProcessModule(f)
@@ -69,7 +68,7 @@ ProcessMultiShear::~ProcessMultiShear()
 
 void ProcessMultiShear::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -80,13 +79,13 @@ void ProcessMultiShear::Process(po::variables_map &vm)
     ASSERTL0(m_config["fromfld"].as<string>().compare("NotSet") != 0,
              "Need to specify fromfld=file.fld ");
 
-    int nstart, i, j, nfields=0;
+    int nstart, i, j, nfields = 0;
     bool wssg      = false;
     NekDouble nfld = m_config["N"].as<NekDouble>();
     string fromfld, basename, endname, nstartStr;
     stringstream filename;
     vector<string> infiles(nfld);
-    vector<std::shared_ptr<Field> > fromField(nfld);
+    vector<std::shared_ptr<Field>> fromField(nfld);
 
     // Set up list of input fld files.
     fromfld  = m_config["fromfld"].as<string>();
@@ -127,15 +126,17 @@ void ProcessMultiShear::Process(po::variables_map &vm)
                 ElementGIDs[j] =
                     m_f->m_exp[0]->GetExp(j)->GetGeom()->GetGlobalID();
             }
-            m_f->FieldIOForFile(infiles[i])->Import(
-                infiles[i], fromField[i]->m_fielddef, fromField[i]->m_data,
-                LibUtilities::NullFieldMetaDataMap, ElementGIDs);
+            m_f->FieldIOForFile(infiles[i])
+                ->Import(infiles[i], fromField[i]->m_fielddef,
+                         fromField[i]->m_data,
+                         LibUtilities::NullFieldMetaDataMap, ElementGIDs);
         }
         else
         {
-            m_f->FieldIOForFile(infiles[i])->Import(
-                infiles[i], fromField[i]->m_fielddef, fromField[i]->m_data,
-                LibUtilities::NullFieldMetaDataMap);
+            m_f->FieldIOForFile(infiles[i])
+                ->Import(infiles[i], fromField[i]->m_fielddef,
+                         fromField[i]->m_data,
+                         LibUtilities::NullFieldMetaDataMap);
         }
 
         nfields = fromField[i]->m_fielddef[0]->m_fields.size();
@@ -148,7 +149,7 @@ void ProcessMultiShear::Process(po::variables_map &vm)
         }
 
         // Set up Expansion information to use mode order from field
-        fromField[i]->m_graph->SetExpansions(fromField[i]->m_fielddef);
+        fromField[i]->m_graph->SetExpansionInfo(fromField[i]->m_fielddef);
 
         // Set up expansions, and extract data.
         fromField[i]->m_exp.resize(nfields);
@@ -189,7 +190,7 @@ void ProcessMultiShear::Process(po::variables_map &vm)
     }
 
     int npoints = fromField[0]->m_exp[0]->GetNpoints();
-    Array<OneD, Array<OneD, NekDouble> > normTemporalMeanVec(spacedim),
+    Array<OneD, Array<OneD, NekDouble>> normTemporalMeanVec(spacedim),
         normCrossDir(spacedim), outfield(nout), dtemp(spacedim);
     Array<OneD, NekDouble> TemporalMeanMag(npoints, 0.0),
         DotProduct(npoints, 0.0), temp(npoints, 0.0);
@@ -276,8 +277,8 @@ void ProcessMultiShear::Process(po::variables_map &vm)
         // transWSS
         Vmath::Vmul(npoints, DotProduct, 1, DotProduct, 1, temp, 1);
         Vmath::Vvtvm(npoints, fromField[i]->m_exp[spacedim]->GetPhys(), 1,
-                     fromField[i]->m_exp[spacedim]->GetPhys(), 1, temp, 1,
-                     temp, 1);
+                     fromField[i]->m_exp[spacedim]->GetPhys(), 1, temp, 1, temp,
+                     1);
 
         for (j = 0; j < npoints; ++j)
         {
@@ -309,7 +310,7 @@ void ProcessMultiShear::Process(po::variables_map &vm)
             Vmath::Zero(npoints, temp, 1);
 
             fromField[i]->m_exp[0]->PhysDeriv(DotProduct, dtemp[0], dtemp[1],
-                                                dtemp[2]);
+                                              dtemp[2]);
             for (j = 0; j < spacedim; j++)
             {
                 Vmath::Vvtvp(npoints, dtemp[j], 1, normTemporalMeanVec[j], 1,
@@ -326,7 +327,7 @@ void ProcessMultiShear::Process(po::variables_map &vm)
                              normCrossDir[j], 1, DotProduct, 1, DotProduct, 1);
             }
             fromField[i]->m_exp[0]->PhysDeriv(DotProduct, dtemp[0], dtemp[1],
-                                                dtemp[2]);
+                                              dtemp[2]);
             Vmath::Zero(npoints, DotProduct, 1);
 
             for (j = 0; j < spacedim; j++)
@@ -397,5 +398,5 @@ void ProcessMultiShear::Process(po::variables_map &vm)
                                 m_f->m_exp[i]->UpdatePhys());
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

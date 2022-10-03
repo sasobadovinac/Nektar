@@ -41,23 +41,20 @@ using namespace Nektar;
 using namespace Nektar::LibUtilities;
 
 #if PY_MAJOR_VERSION == 2
-template<typename T>
-void CapsuleDestructor(void *ptr)
+template <typename T> void CapsuleDestructor(void *ptr)
 {
     Array<OneD, T> *tmp = (Array<OneD, T> *)ptr;
     delete tmp;
 }
 #else
-template<typename T>
-void CapsuleDestructor(PyObject *ptr)
+template <typename T> void CapsuleDestructor(PyObject *ptr)
 {
     Array<OneD, T> *tmp = (Array<OneD, T> *)PyCapsule_GetPointer(ptr, 0);
     delete tmp;
 }
 #endif
 
-template<typename T>
-struct OneDArrayToPython
+template <typename T> struct OneDArrayToPython
 {
     static PyObject *convert(Array<OneD, T> const &arr)
     {
@@ -65,32 +62,29 @@ struct OneDArrayToPython
         // copy of arr. That way we guarantee Python will still have access to
         // the memory allocated inside arr even if arr is deallocated in C++.
 #if PY_MAJOR_VERSION == 2
-        py::object capsule(
-            py::handle<>(PyCObject_FromVoidPtr(
-                             new Array<OneD, T>(arr), CapsuleDestructor<T>)));
+        py::object capsule(py::handle<>(PyCObject_FromVoidPtr(
+            new Array<OneD, T>(arr), CapsuleDestructor<T>)));
 #else
-        py::object capsule(
-            py::handle<>(PyCapsule_New(
-                             new Array<OneD, T>(arr), 0,
-                             (PyCapsule_Destructor)&CapsuleDestructor<T>)));
+        py::object capsule(py::handle<>(
+            PyCapsule_New(new Array<OneD, T>(arr), 0,
+                          (PyCapsule_Destructor)&CapsuleDestructor<T>)));
 #endif
-        PyObject *tmp = py::incref(
-            np::from_data(
-                arr.data(), np::dtype::get_builtin<T>(),
-                py::make_tuple(arr.num_elements()), py::make_tuple(sizeof(T)),
-                capsule).ptr());
+        PyObject *tmp =
+            py::incref(np::from_data(arr.data(), np::dtype::get_builtin<T>(),
+                                     py::make_tuple(arr.size()),
+                                     py::make_tuple(sizeof(T)), capsule)
+                           .ptr());
 
         return tmp;
     }
 };
 
-template <typename T>
-struct PythonToOneDArray
+template <typename T> struct PythonToOneDArray
 {
     PythonToOneDArray()
     {
-        py::converter::registry::push_back(
-            &convertible, &construct, py::type_id<Array<OneD, T> >());
+        py::converter::registry::push_back(&convertible, &construct,
+                                           py::type_id<Array<OneD, T>>());
     }
     static void *convertible(PyObject *objPtr)
     {
@@ -100,8 +94,8 @@ struct PythonToOneDArray
             np::ndarray array = py::extract<np::ndarray>(obj);
 
             // Check data types match
-            np::dtype dtype = np::dtype::get_builtin<
-                typename boost::remove_const<T>::type>();
+            np::dtype dtype =
+                np::dtype::get_builtin<typename boost::remove_const<T>::type>();
             if (dtype != array.get_dtype())
             {
                 return 0;
@@ -113,7 +107,7 @@ struct PythonToOneDArray
                 return 0;
             }
         }
-        catch (boost::python::error_already_set&)
+        catch (boost::python::error_already_set &)
         {
             py::handle_exception();
             PyErr_Clear();
@@ -137,9 +131,8 @@ struct PythonToOneDArray
         py::decref((PyObject *)objPtr);
     }
 
-    static void construct(
-        PyObject *objPtr,
-        py::converter::rvalue_from_python_stage1_data* data)
+    static void construct(PyObject *objPtr,
+                          py::converter::rvalue_from_python_stage1_data *data)
     {
         // This has to be a _borrowed_ reference, otherwise at the end of this
         // scope it seems memory gets deallocated
@@ -149,7 +142,7 @@ struct PythonToOneDArray
         // If this array came from C++, extract the C++ array from PyCObject or
         // PyCapsule and ensure that we set up the C++ array to have a reference
         // to that object, so that it can be decremented as appropriate.
-        py::object base = array.get_base();
+        py::object base     = array.get_base();
         Array<OneD, T> *ptr = nullptr;
 
 #if PY_MAJOR_VERSION == 2
@@ -166,9 +159,9 @@ struct PythonToOneDArray
         }
 #endif
 
-        void *storage = (
-            (py::converter::rvalue_from_python_storage<Array<OneD, T> >*)
-            data)->storage.bytes;
+        void *storage =
+            ((py::converter::rvalue_from_python_storage<Array<OneD, T>> *)data)
+                ->storage.bytes;
         data->convertible = storage;
 
         // If array originated in C++, then we need to be careful to avoid
@@ -196,20 +189,19 @@ struct PythonToOneDArray
         {
             // Otherwise, construct OneD array from numpy array
             using nonconst_t = typename std::remove_const<T>::type;
-            new (storage) Array<OneD, T>(
-                array.shape(0), (nonconst_t *)array.get_data(),
-                (void *)objPtr, &decrement);
+            new (storage)
+                Array<OneD, T>(array.shape(0), (nonconst_t *)array.get_data(),
+                               (void *)objPtr, &decrement);
         }
 
         py::incref(objPtr);
     }
 };
 
-template<typename T>
-void export_SharedArray()
+template <typename T> void export_SharedArray()
 {
-    py::to_python_converter<Array<OneD, const T>, OneDArrayToPython<const T> >();
-    py::to_python_converter<Array<OneD, T>, OneDArrayToPython<T> >();
+    py::to_python_converter<Array<OneD, const T>, OneDArrayToPython<const T>>();
+    py::to_python_converter<Array<OneD, T>, OneDArrayToPython<T>>();
 
     PythonToOneDArray<const T>();
     PythonToOneDArray<T>();

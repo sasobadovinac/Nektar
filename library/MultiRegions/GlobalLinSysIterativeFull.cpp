@@ -32,231 +32,222 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <map>
-#include <MultiRegions/GlobalLinSysIterativeFull.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
+#include <MultiRegions/GlobalLinSysIterativeFull.h>
+#include <map>
 
 using namespace std;
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+/**
+ * @class GlobalLinSysIterativeCG
+ *
+ * This class implements a conjugate gradient matrix solver.
+ * Preconditioning is implemented using a Jacobi (diagonal)
+ * preconditioner.
+ */
+
+/**
+ * Registers the class with the Factory.
+ */
+string GlobalLinSysIterativeFull::className =
+    GetGlobalLinSysFactory().RegisterCreatorFunction(
+        "IterativeFull", GlobalLinSysIterativeFull::create,
+        "Iterative solver for full matrix system.");
+
+/**
+ * Constructor for full direct matrix solve.
+ * @param   pKey        Key specifying matrix to solve.
+ * @param   pExp        Shared pointer to expansion list for applying
+ *                      matrix evaluations.
+ * @param   pLocToGloMap Local to global mapping.
+ */
+GlobalLinSysIterativeFull::GlobalLinSysIterativeFull(
+    const GlobalLinSysKey &pKey, const std::weak_ptr<ExpList> &pExp,
+    const std::shared_ptr<AssemblyMap> &pLocToGloMap)
+    : GlobalLinSys(pKey, pExp, pLocToGloMap),
+      GlobalLinSysIterative(pKey, pExp, pLocToGloMap)
+{
+    ASSERTL1(m_linSysKey.GetGlobalSysSolnType() == eIterativeFull,
+             "This routine should only be used when using an Iterative "
+             "conjugate gradient matrix solve.");
+}
+
+/**
+ *
+ */
+GlobalLinSysIterativeFull::~GlobalLinSysIterativeFull()
+{
+}
+
+/**
+ * Solve a global linear system with Dirichlet forcing using a
+ * conjugate gradient method. This routine performs handling of the
+ * Dirichlet forcing terms and wraps the underlying iterative solver
+ * used for the remaining degrees of freedom.
+ *
+ * Consider solving for \f$x\f$, the matrix system \f$Ax=b\f$, where
+ * \f$b\f$ is known. To enforce the Dirichlet terms we instead solve
+ * \f[A(x-x_0) = b - Ax_0 \f]
+ * where \f$x_0\f$ is the Dirichlet forcing.
+ *
+ * @param           pInput      RHS of linear system, \f$b\f$.
+ * @param           pOutput     On input, values of dirichlet degrees
+ *                              of freedom with initial guess on other values.
+ *                              On output, the solution \f$x\f$.
+ * @param           pLocToGloMap    Local to global mapping.
+ * @param           pDirForcing Precalculated Dirichlet forcing.
+ */
+void GlobalLinSysIterativeFull::v_Solve(
+    const Array<OneD, const NekDouble> &pLocInput,
+    Array<OneD, NekDouble> &pLocOutput,
+    const AssemblyMapSharedPtr &pLocToGloMap,
+    const Array<OneD, const NekDouble> &pDirForcing)
+{
+    std::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
+    bool vCG                                       = false;
+    m_locToGloMap                                  = pLocToGloMap;
+
+    if (std::dynamic_pointer_cast<AssemblyMapCG>(pLocToGloMap))
     {
-        /**
-         * @class GlobalLinSysIterativeCG
-         *
-         * This class implements a conjugate gradient matrix solver.
-         * Preconditioning is implemented using a Jacobi (diagonal)
-         * preconditioner.
-         */
+        vCG = true;
+    }
+    else if (std::dynamic_pointer_cast<AssemblyMapDG>(pLocToGloMap))
+    {
+        vCG = false;
+    }
+    else
+    {
+        NEKERROR(ErrorUtil::efatal, "Unknown map type");
+    }
 
-        /**
-         * Registers the class with the Factory.
-         */
-        string GlobalLinSysIterativeFull::className
-                = GetGlobalLinSysFactory().RegisterCreatorFunction(
-                    "IterativeFull",
-                    GlobalLinSysIterativeFull::create,
-                    "Iterative solver for full matrix system.");
+    bool dirForcCalculated = (bool)pDirForcing.size();
+    int nDirDofs           = pLocToGloMap->GetNumGlobalDirBndCoeffs();
+    int nGlobDofs          = pLocToGloMap->GetNumGlobalCoeffs();
+    int nLocDofs           = pLocToGloMap->GetNumLocalCoeffs();
 
+    int nDirTotal = nDirDofs;
+    expList->GetComm()->GetRowComm()->AllReduce(nDirTotal,
+                                                LibUtilities::ReduceSum);
 
-        /**
-         * Constructor for full direct matrix solve.
-         * @param   pKey        Key specifying matrix to solve.
-         * @param   pExp        Shared pointer to expansion list for applying
-         *                      matrix evaluations.
-         * @param   pLocToGloMap Local to global mapping.
-         */
-        GlobalLinSysIterativeFull::GlobalLinSysIterativeFull(
-                    const GlobalLinSysKey &pKey,
-                    const std::weak_ptr<ExpList> &pExp,
-                    const std::shared_ptr<AssemblyMap> &pLocToGloMap)
-            : GlobalLinSys         (pKey, pExp, pLocToGloMap),
-              GlobalLinSysIterative(pKey, pExp, pLocToGloMap)
+    Array<OneD, NekDouble> tmp(nLocDofs);
+    Array<OneD, NekDouble> tmp1(nLocDofs);
+
+    Array<OneD, NekDouble> global(nGlobDofs, 0.0);
+
+    if (nDirTotal)
+    {
+        // calculate the Dirichlet forcing
+        if (dirForcCalculated)
         {
-            ASSERTL1(m_linSysKey.GetGlobalSysSolnType()==eIterativeFull,
-                     "This routine should only be used when using an Iterative "
-                     "conjugate gradient matrix solve.");
+            Vmath::Vsub(nLocDofs, pLocInput, 1, pDirForcing, 1, tmp1, 1);
         }
-
-
-        /**
-         *
-         */
-        GlobalLinSysIterativeFull::~GlobalLinSysIterativeFull()
+        else
         {
+            // Calculate the dirichlet forcing B_b (== X_b) and
+            // substract it from the rhs
+            expList->GeneralMatrixOp(m_linSysKey, pLocOutput, tmp);
 
-        }
-
-
-        /**
-         * Solve a global linear system with Dirichlet forcing using a
-         * conjugate gradient method. This routine performs handling of the
-         * Dirichlet forcing terms and wraps the underlying iterative solver
-         * used for the remaining degrees of freedom.
-         *
-         * Consider solving for \f$x\f$, the matrix system \f$Ax=b\f$, where
-         * \f$b\f$ is known. To enforce the Dirichlet terms we instead solve
-         * \f[A(x-x_0) = b - Ax_0 \f]
-         * where \f$x_0\f$ is the Dirichlet forcing.
-         *
-         * @param           pInput      RHS of linear system, \f$b\f$.
-         * @param           pOutput     On input, values of dirichlet degrees
-         *                              of freedom with initial guess on other values.
-         *                              On output, the solution \f$x\f$.
-         * @param           pLocToGloMap    Local to global mapping.
-         * @param           pDirForcing Precalculated Dirichlet forcing.
-         */
-        void GlobalLinSysIterativeFull::v_Solve(
-                    const Array<OneD, const NekDouble>  &pInput,
-                          Array<OneD,       NekDouble>  &pOutput,
-                    const AssemblyMapSharedPtr &pLocToGloMap,
-                    const Array<OneD, const NekDouble>  &pDirForcing)
-        {
-            std::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
-            bool vCG = false;
-            m_locToGloMap = pLocToGloMap;
-
-            if (std::dynamic_pointer_cast<AssemblyMapCG>(pLocToGloMap))
+            // Iterate over all the elements computing Robin BCs where
+            // necessary
+            for (auto &r : m_robinBCInfo) // add robin mass matrix
             {
-                vCG = true;
-            }
-            else if (std::dynamic_pointer_cast<AssemblyMapDG>(pLocToGloMap))
-            {
-                vCG = false;
-            }
-            else
-            {
-                NEKERROR(ErrorUtil::efatal, "Unknown map type");
-            }
+                RobinBCInfoSharedPtr rBC;
+                Array<OneD, NekDouble> tmploc;
 
-            bool dirForcCalculated = (bool) pDirForcing.num_elements();
-            int nDirDofs  = pLocToGloMap->GetNumGlobalDirBndCoeffs();
-            int nGlobDofs = pLocToGloMap->GetNumGlobalCoeffs();
-            int nDirTotal = nDirDofs;
-            
-            expList->GetComm()->GetRowComm()
-                   ->AllReduce(nDirTotal, LibUtilities::ReduceSum);
-            
-            Array<OneD, NekDouble> tmp(nGlobDofs), tmp2;
+                int n      = r.first;
+                int offset = expList->GetCoeff_Offset(n);
 
-            if(nDirTotal)
-            {
-                // calculate the Dirichlet forcing
-                if(dirForcCalculated)
+                LocalRegions::ExpansionSharedPtr vExp = expList->GetExp(n);
+                // add local matrix contribution
+                for (rBC = r.second; rBC; rBC = rBC->next)
                 {
-                    Vmath::Vsub(nGlobDofs, pInput.get(), 1,
-                                pDirForcing.get(), 1,
-                                tmp.get(), 1);
-                }
-                else
-                {
-                    // Calculate the dirichlet forcing B_b (== X_b) and
-                    // substract it from the rhs
-                    expList->GeneralMatrixOp(
-                        m_linSysKey, pOutput, tmp, eGlobal);
-
-                    Vmath::Vsub(nGlobDofs, pInput.get(), 1,
-                                           tmp.get(),    1,
-                                           tmp.get(),    1);
-                }
-                if (vCG)
-                {
-                    Array<OneD, NekDouble> out(nGlobDofs,0.0);
-
-                    // solve for perturbation from intiial guess in pOutput
-                    SolveLinearSystem(
-                        nGlobDofs, tmp, out, pLocToGloMap, nDirDofs);
-                    Vmath::Vadd(nGlobDofs-nDirDofs,    &out    [nDirDofs], 1,
-                                &pOutput[nDirDofs], 1, &pOutput[nDirDofs], 1);
-                }
-                else
-                {
-                    ASSERTL0(false, "Need DG solve if using Dir BCs");
+                    vExp->AddRobinTraceContribution(
+                        rBC->m_robinID, rBC->m_robinPrimitiveCoeffs,
+                        pLocOutput + offset, tmploc = tmp + offset);
                 }
             }
-            else
-            {
-                Vmath::Vcopy(nGlobDofs, pInput, 1, tmp, 1);
-                SolveLinearSystem(nGlobDofs, tmp, pOutput, pLocToGloMap);
-            }
+
+            Vmath::Vsub(nLocDofs, pLocInput, 1, tmp, 1, tmp1, 1);
         }
-
-
-        /**
-         *
-         */
-        void GlobalLinSysIterativeFull::v_DoMatrixMultiply(
-                const Array<OneD, NekDouble>& pInput,
-                      Array<OneD, NekDouble>& pOutput)
+        if (vCG)
         {
-            std::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
-            // Perform matrix-vector operation A*d_i
-            expList->GeneralMatrixOp(m_linSysKey,
-                                     pInput, pOutput, eGlobal);
+            pLocToGloMap->Assemble(tmp1, tmp);
 
-            AssemblyMapSharedPtr asmMap = m_locToGloMap.lock();
+            // solve for perturbation from initial guess in pOutput
+            SolveLinearSystem(nGlobDofs, tmp, global, pLocToGloMap, nDirDofs);
 
-            // Apply robin boundary conditions to the solution.
-            if(m_robinBCInfo.size() > 0)
-            {
-                ASSERTL0(false,
-                        "Robin boundaries not set up in IterativeFull solver.");
-                int nGlobal = asmMap->GetNumGlobalCoeffs();
-                int nLocal  = asmMap->GetNumLocalCoeffs();
-                int nDir    = asmMap->GetNumGlobalDirBndCoeffs();
-                int nNonDir = nGlobal - nDir;
-                Array<OneD, NekDouble> robin_A(nGlobal, 0.0);
-                Array<OneD, NekDouble> robin_l(nLocal,  0.0);
-                Array<OneD, NekDouble> tmp;
-                NekVector<NekDouble> robin(nNonDir,
-                                           tmp = robin_A + nDir, eWrapper);
+            pLocToGloMap->GlobalToLocal(global, tmp);
 
-                // Operation: p_A = A * d_A
-                // First map d_A to local solution
-                asmMap->GlobalToLocal(pInput, robin_l);
-
-                // Iterate over all the elements computing Robin BCs where
-                // necessary
-                for (int n = 0; n < expList->GetNumElmts(); ++n)
-                {
-                    int nel = n;
-                    int offset = expList->GetCoeff_Offset(n);
-                    int ncoeffs = expList->GetExp(nel)->GetNcoeffs();
-
-                    if(m_robinBCInfo.count(nel) != 0) // add robin mass matrix
-                    {
-                        RobinBCInfoSharedPtr rBC;
-                        Array<OneD, NekDouble> tmp;
-                        LocalRegions::ExpansionSharedPtr vExp = expList->GetExp(nel);
-
-                        // add local matrix contribution
-                        for(rBC = m_robinBCInfo.find(nel)->second;rBC; rBC = rBC->next)
-                        {
-                            vExp->AddRobinEdgeContribution(rBC->m_robinID,rBC->m_robinPrimitiveCoeffs, tmp = robin_l + offset);
-                        }
-                    }
-                    else
-                    {
-                        Vmath::Zero(ncoeffs, &robin_l[offset], 1);
-                    }
-                }
-
-                // Map local Robin contribution back to global coefficients
-                asmMap->LocalToGlobal(robin_l, robin_A);
-                // Add them to the output of the GeneralMatrixOp
-                Vmath::Vadd(nGlobal, pOutput, 1, robin_A, 1, pOutput, 1);
-            }
-
+            // Add back initial condition
+            Vmath::Vadd(nLocDofs, tmp, 1, pLocOutput, 1, pLocOutput, 1);
         }
-
-        /**
-         *
-         */
-        void GlobalLinSysIterativeFull::v_UniqueMap()
+        else
         {
-            m_map = m_locToGloMap.lock()->GetGlobalToUniversalMapUnique();
+            ASSERTL0(false, "Need DG solve if using Dir BCs");
         }
-
+    }
+    else
+    {
+        pLocToGloMap->Assemble(pLocInput, tmp);
+        SolveLinearSystem(nGlobDofs, tmp, global, pLocToGloMap, nDirDofs);
+        pLocToGloMap->GlobalToLocal(global, pLocOutput);
     }
 }
+
+/**
+ *
+ */
+void GlobalLinSysIterativeFull::v_DoMatrixMultiply(
+    const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput)
+{
+    std::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
+
+    AssemblyMapSharedPtr asmMap = m_locToGloMap.lock();
+
+    int ncoeffs = expList->GetNcoeffs();
+
+    Array<OneD, NekDouble> InputLoc(ncoeffs);
+    Array<OneD, NekDouble> OutputLoc(ncoeffs);
+    asmMap->GlobalToLocal(pInput, InputLoc);
+
+    // Perform matrix-vector operation A*d_i
+    expList->GeneralMatrixOp(m_linSysKey, InputLoc, OutputLoc);
+
+    // Apply robin boundary conditions to the solution.
+    for (auto &r : m_robinBCInfo) // add robin mass matrix
+    {
+        RobinBCInfoSharedPtr rBC;
+        Array<OneD, NekDouble> tmp;
+
+        int n = r.first;
+
+        int offset                            = expList->GetCoeff_Offset(n);
+        LocalRegions::ExpansionSharedPtr vExp = expList->GetExp(n);
+
+        // add local matrix contribution
+        for (rBC = r.second; rBC; rBC = rBC->next)
+        {
+            vExp->AddRobinTraceContribution(
+                rBC->m_robinID, rBC->m_robinPrimitiveCoeffs, InputLoc + offset,
+                tmp = OutputLoc + offset);
+        }
+    }
+
+    // put back in global coeffs
+    asmMap->Assemble(OutputLoc, pOutput);
+}
+
+/**
+ *
+ */
+void GlobalLinSysIterativeFull::v_UniqueMap()
+{
+    m_map = m_locToGloMap.lock()->GetGlobalToUniversalMapUnique();
+}
+
+} // namespace MultiRegions
+} // namespace Nektar

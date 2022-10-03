@@ -49,8 +49,7 @@ namespace FieldUtils
 
 ModuleKey ProcessCombineAvg::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "combineAvg"),
-        ProcessCombineAvg::create,
+        ModuleKey(eProcessModule, "combineAvg"), ProcessCombineAvg::create,
         "combine two fields containing averages (and possibly Reynolds "
         "stresses). Must specify fromfld.");
 
@@ -66,7 +65,7 @@ ProcessCombineAvg::~ProcessCombineAvg()
 
 void ProcessCombineAvg::Process(po::variables_map &vm)
 {
-    boost::ignore_unused(vm);
+    m_f->SetUpExp(vm);
 
     // Skip in case of empty partition
     if (m_f->m_exp[0]->GetNumElmts() == 0)
@@ -87,8 +86,8 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
     }
 
     // Allocate storage for new field and correction (for Reynolds stress)
-    Array<OneD, Array<OneD, NekDouble> > fromPhys(nfields);
-    Array<OneD, Array<OneD, NekDouble> > correction(nfields);
+    Array<OneD, Array<OneD, NekDouble>> fromPhys(nfields);
+    Array<OneD, Array<OneD, NekDouble>> correction(nfields);
     for (int j = 0; j < nfields; ++j)
     {
         fromPhys[j]   = Array<OneD, NekDouble>(nq, 0.0);
@@ -106,16 +105,15 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
         ElementGIDs[i] = m_f->m_exp[0]->GetExp(i)->GetGeom()->GetGlobalID();
     }
     // Import fromfld file
-    m_f->FieldIOForFile(fromfld)->Import(
-        fromfld, fromField->m_fielddef, fromField->m_data, fromFieldMetaDataMap,
-        ElementGIDs);
+    m_f->FieldIOForFile(fromfld)->Import(fromfld, fromField->m_fielddef,
+                                         fromField->m_data,
+                                         fromFieldMetaDataMap, ElementGIDs);
     ASSERTL0(fromField->m_fielddef[0]->m_fields.size() == nfields,
              "Mismatch in number of fields");
     // Extract data to fromPhys
     for (int j = 0; j < nfields; ++j)
     {
-        ASSERTL0(fromField->m_fielddef[0]->m_fields[j] ==
-                     m_f->m_variables[j],
+        ASSERTL0(fromField->m_fielddef[0]->m_fields[j] == m_f->m_variables[j],
                  "Field names do not match.");
 
         // load new field (overwrite m_f->m_exp coeffs for now)
@@ -123,8 +121,7 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
         {
             m_f->m_exp[j]->ExtractDataToCoeffs(
                 fromField->m_fielddef[i], fromField->m_data[i],
-                m_f->m_variables[j],
-                m_f->m_exp[j]->UpdateCoeffs());
+                m_f->m_variables[j], m_f->m_exp[j]->UpdateCoeffs());
         }
         m_f->m_exp[j]->BwdTrans(m_f->m_exp[j]->GetCoeffs(), fromPhys[j]);
     }
@@ -187,8 +184,8 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
         Vmath::Smul(nq, 1.0 / (na + nb), m_f->m_exp[j]->GetPhys(), 1,
                     m_f->m_exp[j]->UpdatePhys(), 1);
 
-        m_f->m_exp[j]->FwdTrans_IterPerExp(m_f->m_exp[j]->GetPhys(),
-                                           m_f->m_exp[j]->UpdateCoeffs());
+        m_f->m_exp[j]->FwdTransLocalElmt(m_f->m_exp[j]->GetPhys(),
+                                         m_f->m_exp[j]->UpdateCoeffs());
     }
 
     // Update metadata
@@ -241,7 +238,6 @@ void ProcessCombineAvg::Process(po::variables_map &vm)
         m_f->m_fieldMetaDataMap["FinalTime"] =
             boost::lexical_cast<std::string>(finTime);
     }
-
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

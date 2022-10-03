@@ -53,24 +53,19 @@ public:
     SPATIAL_DOMAINS_EXPORT HexGeom(int id, const QuadGeomSharedPtr faces[]);
     SPATIAL_DOMAINS_EXPORT ~HexGeom();
 
-    SPATIAL_DOMAINS_EXPORT static const int kNverts = 8;
-    SPATIAL_DOMAINS_EXPORT static const int kNedges = 12;
+    SPATIAL_DOMAINS_EXPORT static const int kNverts  = 8;
+    SPATIAL_DOMAINS_EXPORT static const int kNedges  = 12;
     SPATIAL_DOMAINS_EXPORT static const int kNqfaces = 6;
     SPATIAL_DOMAINS_EXPORT static const int kNtfaces = 0;
-    SPATIAL_DOMAINS_EXPORT static const int kNfaces = kNqfaces + kNtfaces;
+    SPATIAL_DOMAINS_EXPORT static const int kNfaces  = kNqfaces + kNtfaces;
     SPATIAL_DOMAINS_EXPORT static const std::string XMLElementType;
 
 protected:
     virtual void v_GenGeomFactors();
-    virtual NekDouble v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                     Array<OneD, NekDouble> &Lcoords);
-    virtual bool v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                                 Array<OneD, NekDouble> &locCoord,
-                                 NekDouble tol,
-                                 NekDouble &resid);
     virtual int v_GetVertexEdgeMap(const int i, const int j) const;
     virtual int v_GetVertexFaceMap(const int i, const int j) const;
     virtual int v_GetEdgeFaceMap(const int i, const int j) const;
+    virtual int v_GetEdgeNormalToFaceVert(const int i, const int j) const;
     virtual int v_GetDir(const int faceidx, const int facedir) const;
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
     virtual void v_Setup();
@@ -85,11 +80,12 @@ private:
     static const unsigned int VertexEdgeConnectivity[8][3];
     static const unsigned int VertexFaceConnectivity[8][3];
     static const unsigned int EdgeFaceConnectivity[12][2];
+    static const unsigned int EdgeNormalToFaceVert[6][4];
 };
 
 typedef std::shared_ptr<HexGeom> HexGeomSharedPtr;
 typedef std::map<int, HexGeomSharedPtr> HexGeomMap;
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

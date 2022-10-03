@@ -1,7 +1,9 @@
 \section{Expansions}
 This section defines the polynomial expansions used on each of the defined
-geometric composites. Expansion entries specify the number of modes, the basis
-type. The short-hand version has the following form
+geometric composites and variables. Expansion entries specify the number of
+modes and the expansion type, or a full list of data of basis type, number of
+modes, points type and number of points. The short-hand version has the
+following form
 
 \begin{lstlisting}[style=XMLStyle]
 <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="u" TYPE="MODIFIED" />
@@ -37,3 +39,18 @@ and for prism elements:
    FIELDS="u" />
 \end{lstlisting}
 
+The expansions can be defined with a list of \inltt{<E>} elements (e.g., to
+represent different polynomial orders for different variables or to address
+different composites). The user can define a default expansion field by entering
+\inltt{<E>} tags without the \inltt{FIELDS} attribute. The default expansion is
+used to define any variables not explicitly listed in the \inltt{<E>} entries.
+In the following example, the default expansion is used to define the expansions
+for the composites C[0], C[1] and C[2]:
+
+\begin{lstlisting}[style=XMLStyle]
+<E COMPOSITE="C[0-2]" NUMMODES="5" TYPE="MODIFIED" />
+<E COMPOSITE="C[3]"   NUMMODES="4" TYPE="MODIFIED" FIELDS="u,v"/>
+<E COMPOSITE="C[3]"   NUMMODES="3" TYPE="MODIFIED" FIELDS="p"/>
+\end{lstlisting}
+
+The expansions of each field should be defined only once for each composite.

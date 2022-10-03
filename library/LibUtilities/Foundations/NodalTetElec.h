@@ -27,89 +27,85 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-// 
-// Description: Header file of 2D Nodal Triangle Fekete Points 
+//
+// Description: Header file of 2D Nodal Triangle Fekete Points
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NODALTETELEC_H
 #define NODALTETELEC_H
 
-#include <memory>
-#include <LibUtilities/Foundations/NodalUtil.h>
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
+#include <LibUtilities/Foundations/ManagerAccess.h>
+#include <LibUtilities/Foundations/NodalUtil.h>
 #include <LibUtilities/Foundations/Points.h>
 #include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
-#include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <memory>
 
 namespace Nektar
 {
-    namespace LibUtilities 
+namespace LibUtilities
+{
+
+class NodalTetElec : public Points<NekDouble>
+{
+public:
+    virtual ~NodalTetElec()
     {
- 
-        class NodalTetElec: public Points<NekDouble>
-        {
-        public:
-            virtual ~NodalTetElec()
-            {
-            }
+    }
 
-            LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> 
-                Create(const PointsKey &key);
+    LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
+        const PointsKey &key);
 
-            const MatrixSharedPtrType GetI(const PointsKey &pkey)
-            {
-                ASSERTL0(pkey.GetPointsDim() == 3, 
-                         "NodalTetElec Points can only interp to other 3d "
-                         "point distributions");
-                Array<OneD, const NekDouble> x, y, z;
-                PointsManager()[pkey]->GetPoints(x, y, z);
-                return GetI(x, y, z);
-            }
+    const MatrixSharedPtrType GetI(const PointsKey &pkey)
+    {
+        ASSERTL0(pkey.GetPointsDim() == 3,
+                 "NodalTetElec Points can only interp to other 3d "
+                 "point distributions");
+        Array<OneD, const NekDouble> x, y, z;
+        PointsManager()[pkey]->GetPoints(x, y, z);
+        return GetI(x, y, z);
+    }
 
-           const MatrixSharedPtrType GetI(
-               const Array<OneD, const NekDouble>& x,
-               const Array<OneD, const NekDouble>& y,
-               const Array<OneD, const NekDouble>& z)
-           {
-                size_t       numpoints = x.num_elements();
-                unsigned int np        = GetTotNumPoints();
-                
-                Array<OneD, NekDouble> interp(np*numpoints);
-                CalculateInterpMatrix(x, y, z, interp);
-                
-                NekDouble* d = interp.data();
-                return MemoryManager<NekMatrix<NekDouble> >
-                    ::AllocateSharedPtr(numpoints, np, d);
-            }
+    const MatrixSharedPtrType GetI(const Array<OneD, const NekDouble> &x,
+                                   const Array<OneD, const NekDouble> &y,
+                                   const Array<OneD, const NekDouble> &z)
+    {
+        size_t numpoints = x.size();
+        unsigned int np  = GetTotNumPoints();
 
-            NodalTetElec(const PointsKey &key) : PointsBaseType(key)
-            {
-                
-            }
+        Array<OneD, NekDouble> interp(np * numpoints);
+        CalculateInterpMatrix(x, y, z, interp);
 
-        private:
-            static bool initPointsManager[];
+        NekDouble *d = interp.data();
+        return MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints,
+                                                                      np, d);
+    }
 
-            std::shared_ptr<NodalUtilTetrahedron> m_util;
+    NodalTetElec(const PointsKey &key) : PointsBaseType(key)
+    {
+    }
 
-            NodalTetElec():PointsBaseType(NullPointsKey)
-            {
-              
-            }
+private:
+    static bool initPointsManager[];
 
-            void CalculatePoints();
-            void CalculateWeights();
-            void CalculateDerivMatrix();
-            void NodalPointReorder3d();
-            void CalculateInterpMatrix(
-                const Array<OneD, const NekDouble> &xia,
-                const Array<OneD, const NekDouble> &yia,
-                const Array<OneD, const NekDouble> &zia,
-                      Array<OneD, NekDouble>       &interp);
-        };
-   } // end of namespace
-} // end of namespace 
+    std::shared_ptr<NodalUtilTetrahedron> m_util;
 
-#endif //NODALTETELEC_H
+    NodalTetElec() : PointsBaseType(NullPointsKey)
+    {
+    }
+
+    void CalculatePoints();
+    void CalculateWeights();
+    void CalculateDerivMatrix();
+    void NodalPointReorder3d();
+    void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xia,
+                               const Array<OneD, const NekDouble> &yia,
+                               const Array<OneD, const NekDouble> &zia,
+                               Array<OneD, NekDouble> &interp);
+};
+} // namespace LibUtilities
+} // namespace Nektar
+
+#endif // NODALTETELEC_H

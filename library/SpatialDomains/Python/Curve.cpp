@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/Curve.hpp>
 #include <LibUtilities/Python/NekPyConfig.hpp>
+#include <SpatialDomains/Curve.hpp>
 
 using namespace Nektar;
 using namespace Nektar::SpatialDomains;
@@ -65,7 +65,5 @@ void export_Curve()
 
         .def_readwrite("curveID", &Curve::m_curveID)
         .def_readwrite("ptype", &Curve::m_ptype)
-        .add_property("points", &Curve_GetPoints, &Curve_SetPoints)
-        ;
+        .add_property("points", &Curve_GetPoints, &Curve_SetPoints);
 }
-

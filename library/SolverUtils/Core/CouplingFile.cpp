@@ -47,8 +47,8 @@ namespace SolverUtils
 using namespace std;
 
 std::string CouplingFile::className =
-    GetCouplingFactory().RegisterCreatorFunction(
-        "File", CouplingFile::create, "File Coupling");
+    GetCouplingFactory().RegisterCreatorFunction("File", CouplingFile::create,
+                                                 "File Coupling");
 
 CouplingFile::CouplingFile(MultiRegions::ExpListSharedPtr field)
     : Coupling(field), m_lastSend(-1E6), m_lastReceive(-1E6)
@@ -68,17 +68,14 @@ void CouplingFile::v_Init()
     if (m_nRecvVars > 0 && m_recvSteps > 0)
     {
         m_inputFunction = MemoryManager<SessionFunction>::AllocateSharedPtr(
-            m_evalField->GetSession(),
-            m_evalField,
-            m_config["RECEIVEFUNCTION"],
+            m_evalField->GetSession(), m_evalField, m_config["RECEIVEFUNCTION"],
             true);
     }
 }
 
 void CouplingFile::v_Send(
-    const int step,
-    const NekDouble time,
-    const Array<OneD, const Array<OneD, NekDouble> > &field,
+    const int step, const NekDouble time,
+    const Array<OneD, const Array<OneD, NekDouble>> &field,
     vector<string> &varNames)
 {
     if (m_nSendVars < 1 || m_sendSteps < 1)
@@ -101,7 +98,7 @@ void CouplingFile::v_Send(
     vector<int> sendVarsToVars =
         GenerateVariableMapping(varNames, m_sendFieldNames);
 
-#ifdef _WIN32
+#if (defined _WIN32 && _MSC_VER < 1900)
     // We need this to make sure boost::format has always
     // two digits in the exponents of Scientific notation.
     unsigned int old_exponent_format;
@@ -114,7 +111,7 @@ void CouplingFile::v_Send(
         boost::str(boost::format(m_config["SENDFILENAME"]) % time);
 #endif
 
-    Array<OneD, Array<OneD, NekDouble> > pts(m_nSendVars + 3);
+    Array<OneD, Array<OneD, NekDouble>> pts(m_nSendVars + 3);
     for (int i = 0; i < 3; ++i)
     {
         pts[i] = Array<OneD, NekDouble>(m_evalField->GetTotPoints(), 0.0);
@@ -137,9 +134,8 @@ void CouplingFile::v_Send(
     fs::rename(tmpFn, filename);
 }
 
-void CouplingFile::v_Receive(const int step,
-                             const NekDouble time,
-                             Array<OneD, Array<OneD, NekDouble> > &field,
+void CouplingFile::v_Receive(const int step, const NekDouble time,
+                             Array<OneD, Array<OneD, NekDouble>> &field,
                              vector<string> &varNames)
 {
     if (m_nRecvVars < 1 || m_recvSteps < 1)
@@ -162,7 +158,7 @@ void CouplingFile::v_Receive(const int step,
     string filename = m_evalField->GetSession()->GetFunctionFilename(
         m_config["RECEIVEFUNCTION"], m_recvFieldNames[0]);
 
-#ifdef _WIN32
+#if (defined _WIN32 && _MSC_VER < 1900)
     // We need this to make sure boost::format has always
     // two digits in the exponents of Scientific notation.
     unsigned int old_exponent_format;
@@ -180,7 +176,7 @@ void CouplingFile::v_Receive(const int step,
         m_evalField->GetComm()->AllReduce(exists, LibUtilities::ReduceMin);
     }
 
-    Array<OneD, Array<OneD, NekDouble> > recvFields(m_nRecvVars);
+    Array<OneD, Array<OneD, NekDouble>> recvFields(m_nRecvVars);
     m_inputFunction->Evaluate(m_recvFieldNames, recvFields, time);
 
     vector<int> recvVarsToVars =
@@ -188,12 +184,9 @@ void CouplingFile::v_Receive(const int step,
     ASSERTL1(m_nRecvVars == recvVarsToVars.size(), "field size mismatch");
     for (int i = 0; i < recvVarsToVars.size(); ++i)
     {
-        Vmath::Vcopy(recvFields[i].num_elements(),
-                     recvFields[i],
-                     1,
-                     field[recvVarsToVars[i]],
-                     1);
+        Vmath::Vcopy(recvFields[i].size(), recvFields[i], 1,
+                     field[recvVarsToVars[i]], 1);
     }
 }
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

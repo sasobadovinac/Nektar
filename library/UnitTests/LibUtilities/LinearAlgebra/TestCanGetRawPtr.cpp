@@ -28,31 +28,27 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
-
 
 #include <boost/test/unit_test.hpp>
 
 #include <LibUtilities/LinearAlgebra/CanGetRawPtr.hpp>
 
-#include <boost/test/auto_unit_test.hpp>
-#include <boost/test/test_case_template.hpp>
-#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
-
-#include <boost/test/auto_unit_test.hpp>
 
 namespace Nektar
 {
-    BOOST_AUTO_TEST_CASE(TestCanGetRawPtr)
-    {
-        static_assert(CanGetRawPtr<NekMatrix<double> >::value,
-                      "Should be true");
-        static_assert(CanGetRawPtr<NekMatrix<NekMatrix<double>, ScaledMatrixTag> >::value,
-                      "Should be true");
-        static_assert(!CanGetRawPtr<NekMatrix<NekMatrix<double>, BlockMatrixTag> >::value,
-                      "Should be false");
-    }
+BOOST_AUTO_TEST_CASE(TestCanGetRawPtr)
+{
+    static_assert(CanGetRawPtr<NekMatrix<double>>::value, "Should be true");
+    static_assert(
+        CanGetRawPtr<NekMatrix<NekMatrix<double>, ScaledMatrixTag>>::value,
+        "Should be true");
+    static_assert(
+        !CanGetRawPtr<NekMatrix<NekMatrix<double>, BlockMatrixTag>>::value,
+        "Should be false");
 }
+} // namespace Nektar

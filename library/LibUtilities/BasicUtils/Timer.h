@@ -32,14 +32,16 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
 #ifndef NEKTAR_LIB_UTILITIES_BASIC_UTILS_TIMER_H
 #define NEKTAR_LIB_UTILITIES_BASIC_UTILS_TIMER_H
 
 #include <chrono>
+#include <iostream>
+#include <unordered_map>
 
-#include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
+#include <LibUtilities/Communication/Comm.h>
+#include <LibUtilities/LibUtilitiesDeclspec.h>
 
 namespace Nektar
 {
@@ -48,32 +50,47 @@ namespace LibUtilities
 
 class Timer
 {
-    public:
-        using Clock       = std::chrono::steady_clock;
-        using CounterType = Clock::time_point;
-        using Seconds     = std::chrono::duration<NekDouble>;
+public:
+    using Clock       = std::chrono::steady_clock;
+    using CounterType = Clock::time_point;
+    using Seconds     = std::chrono::duration<NekDouble>;
 
-    public:
-        LIB_UTILITIES_EXPORT Timer()  = default;
-        LIB_UTILITIES_EXPORT ~Timer() = default;
+public:
+    LIB_UTILITIES_EXPORT Timer()  = default;
+    LIB_UTILITIES_EXPORT ~Timer() = default;
 
-        Timer(const Timer& rhs)            = delete;
-        Timer& operator=(const Timer& rhs) = delete;
+    Timer(const Timer &rhs) = delete;
+    Timer &operator=(const Timer &rhs) = delete;
 
-        LIB_UTILITIES_EXPORT void Start();
-        LIB_UTILITIES_EXPORT void Stop();
-        LIB_UTILITIES_EXPORT Seconds Elapsed();
+    LIB_UTILITIES_EXPORT void Start();
+    LIB_UTILITIES_EXPORT void Stop();
+    LIB_UTILITIES_EXPORT Seconds Elapsed();
 
-        /// \brief Returns amount of seconds per iteration in
-        ///        a test with n iterations.
-        LIB_UTILITIES_EXPORT NekDouble TimePerTest(unsigned int n);
+    /// \brief Accumulate elapsed time for a region
+    LIB_UTILITIES_EXPORT void AccumulateRegion(std::string, int iolevel = 0);
+    /// \brief Print elapsed time and call count for each region
+    /// with default serial communicator
+    LIB_UTILITIES_EXPORT static void PrintElapsedRegions();
 
-    private:
-        CounterType m_start;
-        CounterType m_end;
+    /// \brief Print elapsed time and call count for each region
+    LIB_UTILITIES_EXPORT static void PrintElapsedRegions(
+        LibUtilities::CommSharedPtr comm, std::ostream &o = std::cout,
+        int iolevel = 0);
+
+    /// \brief Returns amount of seconds per iteration in
+    ///        a test with n iterations.
+    LIB_UTILITIES_EXPORT NekDouble TimePerTest(unsigned int n);
+
+private:
+    // Initialize start and end to 0
+    CounterType m_start = CounterType();
+    CounterType m_end   = CounterType();
+    bool m_isactive     = false;
+    static std::map<std::string, std::tuple<Seconds, size_t, int>>
+        m_elapsedRegion;
 };
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_BASIC_UTILS_TIMER_H
+#endif // NEKTAR_LIB_UTILITIES_BASIC_UTILS_TIMER_H

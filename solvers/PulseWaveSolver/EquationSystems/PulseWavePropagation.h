@@ -10,6 +10,7 @@
 // Department of Aeronautics, Imperial College London (UK), and Scientific
 // Computing and Imaging Institute, University of Utah (USA).
 //
+// License for the specific language governing rights and limitations under
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation
@@ -35,9 +36,9 @@
 #ifndef NEKTAR_SOLVERS_PULSEWAVESOLVER_EQUATIONSYSTEMS_PULSEWAVEPROPAGATION_H
 #define NEKTAR_SOLVERS_PULSEWAVESOLVER_EQUATIONSYSTEMS_PULSEWAVEPROPAGATION_H
 
-#include <PulseWaveSolver/EquationSystems/PulseWaveSystem.h>
 #include <PulseWaveSolver/EquationSystems/PulseWaveBoundary.h>
 #include <PulseWaveSolver/EquationSystems/PulseWavePressureArea.h>
+#include <PulseWaveSolver/EquationSystems/PulseWaveSystem.h>
 #include <SolverUtils/Advection/Advection.h>
 #include <SolverUtils/RiemannSolvers/RiemannSolver.h>
 
@@ -45,64 +46,67 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-    class PulseWavePropagation : public PulseWaveSystem
+
+class PulseWavePropagation : public PulseWaveSystem
+{
+public:
+    friend class MemoryManager<PulseWavePropagation>;
+
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<PulseWavePropagation>;
+        EquationSystemSharedPtr p =
+            MemoryManager<PulseWavePropagation>::AllocateSharedPtr(pSession,
+                                                                   pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            EquationSystemSharedPtr p = MemoryManager<PulseWavePropagation>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-	
-        /// Name of class
-        static std::string className;
-        
-        virtual ~PulseWavePropagation();
-	
-        // Functions for Riemann solver
-        Array<OneD, NekDouble> &GetA0();
-        Array<OneD, NekDouble> &GetBeta();
-        Array<OneD, NekDouble> &GetN();
-        NekDouble               GetRho();
-        NekDouble               GetPext();
-    protected:
-        PulseWavePropagation(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    /// Name of class
+    static std::string className;
 
-        void DoOdeRhs(const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                      Array<OneD,  Array<OneD, NekDouble> > &outarray,
-                      const NekDouble time);
-        
-        void DoOdeProjection(const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-                             Array<OneD,  Array<OneD, NekDouble> > &outarray,
-                             const NekDouble time);
-        
-        void SetPulseWaveBoundaryConditions(const Array<OneD,const Array<OneD, NekDouble> >&inarray,
-                                            Array<OneD, Array<OneD, NekDouble> >&outarray, 
-                                            const NekDouble time);
-        virtual void v_InitObject();
+    virtual ~PulseWavePropagation();
 
-        /// DG Pulse Wave Propagation routines:
-        void GetFluxVector(
-            const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-                  Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+    // Functions for Riemann solver
+    Array<OneD, NekDouble> &GetA0();
+    Array<OneD, NekDouble> &GetBeta();
+    Array<OneD, NekDouble> &GetAlpha();
+    Array<OneD, NekDouble> &GetN();
+    NekDouble GetRho();
+    NekDouble GetDomains();
 
-        SolverUtils::RiemannSolverSharedPtr     m_riemannSolver;
-        SolverUtils::AdvectionSharedPtr         m_advObject;
+protected:
+    PulseWavePropagation(const LibUtilities::SessionReaderSharedPtr &pSession,
+                         const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-        Array<OneD, PulseWaveBoundarySharedPtr> m_Boundary;
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
-        PulseWavePressureAreaSharedPtr m_pressureArea;
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
-    };
-}
+    void DoOdeProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
+
+    void SetPulseWaveBoundaryConditions(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
+
+    virtual void v_InitObject(bool DeclareField = false);
+
+    /// DG Pulse Wave Propagation routines:
+    void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
+                       Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
+
+    SolverUtils::RiemannSolverSharedPtr m_riemannSolver;
+    SolverUtils::AdvectionSharedPtr m_advObject;
+
+    Array<OneD, PulseWaveBoundarySharedPtr> m_Boundary;
+
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+};
+
+} // namespace Nektar
 
 #endif

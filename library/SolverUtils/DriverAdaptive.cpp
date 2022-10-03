@@ -34,15 +34,15 @@
 
 #include <iomanip>
 
-#include <SolverUtils/DriverAdaptive.h>
-#include <StdRegions/StdQuadExp.h>
-#include <StdRegions/StdTriExp.h>
-#include <StdRegions/StdTetExp.h>
-#include <StdRegions/StdPrismExp.h>
-#include <StdRegions/StdPyrExp.h>
-#include <StdRegions/StdHexExp.h>
 #include <GlobalMapping/Mapping.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
+#include <SolverUtils/DriverAdaptive.h>
+#include <StdRegions/StdHexExp.h>
+#include <StdRegions/StdPrismExp.h>
+#include <StdRegions/StdPyrExp.h>
+#include <StdRegions/StdQuadExp.h>
+#include <StdRegions/StdTetExp.h>
+#include <StdRegions/StdTriExp.h>
 
 using namespace std;
 
@@ -100,12 +100,12 @@ void DriverAdaptive::v_Execute(ostream &out)
     bool isHomogeneous1D;
     int nRuns, minP, maxP, sensorVar;
     NekDouble lowerTol, upperTol;
-    m_session->LoadParameter  ("NumRuns",                nRuns,     1);
-    m_session->LoadParameter  ("AdaptiveMinModes",       minP,      4);
-    m_session->LoadParameter  ("AdaptiveMaxModes",       maxP,      12);
-    m_session->LoadParameter  ("AdaptiveLowerTolerance", lowerTol,  1e-8);
-    m_session->LoadParameter  ("AdaptiveUpperTolerance", upperTol,  1e-6);
-    m_session->LoadParameter  ("AdaptiveSensorVariable", sensorVar, 0);
+    m_session->LoadParameter("NumRuns", nRuns, 1);
+    m_session->LoadParameter("AdaptiveMinModes", minP, 4);
+    m_session->LoadParameter("AdaptiveMaxModes", maxP, 12);
+    m_session->LoadParameter("AdaptiveLowerTolerance", lowerTol, 1e-8);
+    m_session->LoadParameter("AdaptiveUpperTolerance", upperTol, 1e-6);
+    m_session->LoadParameter("AdaptiveSensorVariable", sensorVar, 0);
     m_session->MatchSolverInfo("Homogeneous", "1D", isHomogeneous1D, false);
 
     // Get number of elements and planes
@@ -113,25 +113,24 @@ void DriverAdaptive::v_Execute(ostream &out)
     if (isHomogeneous1D)
     {
         nExp    = m_equ[0]->UpdateFields()[0]->GetPlane(0)->GetExpSize();
-        nPlanes = m_equ[0]->UpdateFields()[0]->GetZIDs().num_elements();
+        nPlanes = m_equ[0]->UpdateFields()[0]->GetZIDs().size();
     }
     else
     {
         nExp    = m_equ[0]->UpdateFields()[0]->GetExpSize();
         nPlanes = 1;
     }
-    int  expdim   = m_equ[0]->UpdateFields()[0]->GetGraph()->GetMeshDimension();
+    int expdim = m_equ[0]->UpdateFields()[0]->GetGraph()->GetMeshDimension();
 
-    int       nFields  = m_equ[0]->UpdateFields().num_elements();
-    int       numSteps = m_session->GetParameter("NumSteps");
-    NekDouble period   = m_session->GetParameter("TimeStep") * numSteps;
+    int nFields      = m_equ[0]->UpdateFields().size();
+    int numSteps     = m_session->GetParameter("NumSteps");
+    NekDouble period = m_session->GetParameter("TimeStep") * numSteps;
 
     Array<OneD, NekDouble> coeffs, phys, physReduced, tmpArray;
 
     // Get mapping
     GlobalMapping::MappingSharedPtr mapping;
-    mapping = GlobalMapping::Mapping::Load(m_session,
-                                           m_equ[0]->UpdateFields());
+    mapping = GlobalMapping::Mapping::Load(m_session, m_equ[0]->UpdateFields());
 
     // Adaptive loop
     Array<OneD, int> P(expdim);
@@ -152,12 +151,12 @@ void DriverAdaptive::v_Execute(ostream &out)
             offset = fields[sensorVar]->GetPhys_Offset(n);
             Exp    = fields[sensorVar]->GetExp(n);
 
-            for( int k = 0; k < expdim; ++k)
+            for (int k = 0; k < expdim; ++k)
             {
                 P[k]         = Exp->GetBasis(k)->GetNumModes();
                 numPoints[k] = Exp->GetBasis(k)->GetNumPoints();
-                ptsKey[k]    = LibUtilities::PointsKey (numPoints[k],
-                               Exp->GetBasis(k)->GetPointsType());
+                ptsKey[k]    = LibUtilities::PointsKey(
+                    numPoints[k], Exp->GetBasis(k)->GetPointsType());
             }
 
             // Declare orthogonal basis.
@@ -219,9 +218,8 @@ void DriverAdaptive::v_Execute(ostream &out)
                                               ptsKey[1]);
                     LibUtilities::BasisKey Bc(LibUtilities::eOrtho_B, P[2] - 1,
                                               ptsKey[2]);
-                    OrthoExp =
-                        MemoryManager<StdRegions::StdPrismExp>::AllocateSharedPtr(
-                            Ba, Bb, Bc);
+                    OrthoExp = MemoryManager<
+                        StdRegions::StdPrismExp>::AllocateSharedPtr(Ba, Bb, Bc);
                     break;
                 }
                 case LibUtilities::eHexahedron:
@@ -270,8 +268,8 @@ void DriverAdaptive::v_Execute(ostream &out)
                 OrthoExp->BwdTrans(coeffs, physReduced);
 
                 // Calculate error =||phys-physReduced||^2 / ||phys||^2
-                Vmath::Vsub(nq, phys,     1, physReduced, 1, tmpArray, 1);
-                Vmath::Vmul(nq, tmpArray, 1, tmpArray,    1, tmpArray, 1);
+                Vmath::Vsub(nq, phys, 1, physReduced, 1, tmpArray, 1);
+                Vmath::Vmul(nq, tmpArray, 1, tmpArray, 1, tmpArray, 1);
                 tmp = Exp->Integral(tmpArray);
 
                 Vmath::Vmul(nq, phys, 1, phys, 1, tmpArray, 1);
@@ -349,7 +347,7 @@ void DriverAdaptive::v_Execute(ostream &out)
 
         // Write new expansion section to the session reader and re-read graph.
         ReplaceExpansion(fields, deltaP);
-        m_graph->ReadExpansions();
+        m_graph->ReadExpansionInfo();
 
         // Reset GlobalLinSys Manager to avoid using too much memory
         //
@@ -391,7 +389,7 @@ void DriverAdaptive::v_Execute(ostream &out)
             m_equ[0]->UpdateFields()[n]->ExtractCoeffsToCoeffs(
                 fields[n], fields[n]->GetCoeffs(),
                 m_equ[0]->UpdateFields()[n]->UpdateCoeffs());
-            m_equ[0]->UpdateFields()[n]->BwdTrans_IterPerExp(
+            m_equ[0]->UpdateFields()[n]->BwdTrans(
                 m_equ[0]->UpdateFields()[n]->GetCoeffs(),
                 m_equ[0]->UpdateFields()[n]->UpdatePhys());
         }
@@ -424,7 +422,7 @@ void DriverAdaptive::v_Execute(ostream &out)
         // Evaluate "ExactSolution" function, or zero array
         m_equ[0]->EvaluateExactSolution(i, exactsoln, m_equ[0]->GetFinalTime());
 
-        NekDouble vL2Error   = m_equ[0]->L2Error  (i, exactsoln);
+        NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln);
         NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln);
 
         if (m_comm->GetRank() == 0)
@@ -445,11 +443,10 @@ void DriverAdaptive::v_Execute(ostream &out)
  * @param deltaP  Map of polynomial order expansions
  */
 void DriverAdaptive::ReplaceExpansion(
-    Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    map<int, int>                                deltaP)
+    Array<OneD, MultiRegions::ExpListSharedPtr> &fields, map<int, int> deltaP)
 {
     int nExp, nDim;
-    int  expdim   = m_equ[0]->UpdateFields()[0]->GetGraph()->GetMeshDimension();
+    int expdim = m_equ[0]->UpdateFields()[0]->GetGraph()->GetMeshDimension();
 
     // Get field definitions
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> fielddefs =
@@ -457,7 +454,7 @@ void DriverAdaptive::ReplaceExpansion(
 
     if (fielddefs[0]->m_numHomogeneousDir == 1)
     {
-        nDim = expdim+1;
+        nDim = expdim + 1;
     }
     else
     {
@@ -467,7 +464,7 @@ void DriverAdaptive::ReplaceExpansion(
     // Add variables to field definition
     for (int i = 0; i < fielddefs.size(); ++i)
     {
-        for (int j = 0; j < fields.num_elements(); ++j)
+        for (int j = 0; j < fields.size(); ++j)
         {
             fielddefs[i]->m_fields.push_back(m_session->GetVariable(j));
         }
@@ -666,5 +663,5 @@ void DriverAdaptive::ReplaceExpansion(
     }
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
