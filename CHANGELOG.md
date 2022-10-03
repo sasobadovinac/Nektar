@@ -20,6 +20,7 @@ v5.3.0
 **CompressibleFlowSolver**
 - The Incomplete IP method was made the default method for the IP method (!1377).
 - Improve performance of the perconditioner and diffusion operator (!1393)
+- Re-add the SFD test with an updated restart file (!1399)
 
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
