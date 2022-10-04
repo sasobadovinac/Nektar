@@ -378,7 +378,6 @@ void PreconCfsBRJ::PreconBlkDiag(
         timer1.AccumulateRegion("PreconCfsBRJ: Mult");       
 #endif
         
-#if 1
 #ifdef NTIME1 // inner timing test
         timer1.Start(); 
          // get block aligned index for this expansion
@@ -409,39 +408,6 @@ void PreconCfsBRJ::PreconBlkDiag(
         timer1.AccumulateRegion("PreconCfsBRJ: Unpack");
 #endif
         icnt1 += nblocks*vecwidth;
-
-#else
-
-#ifdef NTIME1 // inner timing test
-        timer1.Start(); 
-        for(int t = 0; t < NTIME1; ++t) // timing loop
-        {
-#endif
-        // sum vector and unpack data
-        NekSingle val; 
-        const auto nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
-        for (int m = 0, cnt1 = 0; m < nvariables; m++)
-        {
-            int inOffset = m*ncoeffs + nCoefOffset;
-
-            for (int i = 0; i < nElmtCoef; ++i)
-            {
-                Soutarray[cnt1++].store(tmp.data());
-                
-                val = tmp[0];
-                for(int j = 1; j < vecwidth; ++j)
-                {
-                    val += tmp[j]; 
-                }
-                outarray[inOffset + i] = NekDouble(val); 
-            }
-        }
-#ifdef NTIME1 // inner timing test
-        }
-        timer1.Stop();
-        timer1.AccumulateRegion("PreconCfsBRJ: Unpack");
-#endif
-#endif
     }
     
 }
