@@ -69,19 +69,7 @@ PreconCfsBRJ::PreconCfsBRJ(
     }
     AllocatePreconBlkDiagCoeff(pFields, m_PreconMatVarsSingle);
 
-#ifdef SIMD
     AllocateSIMDPreconBlkMatDiag(pFields);
-#else
-    int nelmts = pFields[0]->GetNumElmts();
-    int nelmtcoef;
-    Array<OneD, unsigned int> nelmtmatdim(nelmts);
-    for (int i = 0; i < nelmts; i++)
-    {
-        nelmtcoef      = pFields[0]->GetExp(i)->GetNcoeffs();
-        nelmtmatdim[i] = nelmtcoef * nvariables;
-    }
-    AllocateNekBlkMatDig(m_PreconMatSingle, nelmtmatdim, nelmtmatdim);
-#endif
 }
 
 void PreconCfsBRJ::v_InitObject()
@@ -204,7 +192,6 @@ void PreconCfsBRJ::v_BuildPreconCfs(
     if (0 < m_PreconItsStep)
     {
         SNekBlkMatSharedPtr PreconMatSingle;
-#ifdef SIMD
         using vec_t = simd<NekSingle>;
         int nvariables = pFields.size();
         int nelmts = pFields[0]->GetNumElmts();
@@ -214,10 +201,8 @@ void PreconCfsBRJ::v_BuildPreconCfs(
             matdim[i] = pFields[0]->GetExp(i)->GetNcoeffs() * nvariables;
         }
         AllocateNekBlkMatDig(PreconMatSingle, matdim, matdim);
-#else
-        PreconMatSingle = m_PreconMatSingle;
-#endif
-        m_operator.DoCalcPreconMatBRJCoeff(
+        
+	m_operator.DoCalcPreconMatBRJCoeff(
             intmp, m_PreconMatVarsSingle, PreconMatSingle, m_TraceJacSingle,
             m_TraceJacDerivSingle, m_TraceJacDerivSignSingle,
             m_TraceJacArraySingle, m_TraceJacDerivArraySingle,
@@ -228,7 +213,7 @@ void PreconCfsBRJ::v_BuildPreconCfs(
             cout << "     ## CalcuPreconMat " << endl;
         }
 
-#ifdef SIMD // copy matrix to simd layout
+        // copy matrix to simd layout
         // load matrix 
         int cnt  = 0;
         int cnt1 = 0;
@@ -277,7 +262,6 @@ void PreconCfsBRJ::v_BuildPreconCfs(
                 }
             }
         }
-#endif
     }
 
     m_BndEvaluateTime   = time;
@@ -320,18 +304,14 @@ void PreconCfsBRJ::PreconBlkDiag(
                                                           
     unsigned int ncoeffs    = pFields[0]->GetNcoeffs();
 
-#define NTIME  1
-    //#define NTIME1 1
+#define NTIME1 1
 
     LibUtilities::Timer  timer1;
 
-#ifdef SIMD
     using vec_t = simd<NekSingle>;
     const auto vecwidth = vec_t::width;
 
     // vectorized matrix multiply 
-    for(int t = 0; t < NTIME; ++t) // timing loop
-    {
     std::vector<vec_t, tinysimd::allocator<vec_t>> Sinarray (m_max_nblocks); 
     std::vector<vec_t, tinysimd::allocator<vec_t>> Soutarray(m_max_nElmtDof);
     //std::vector<vec_t, tinysimd::allocator<vec_t>> tmp;
@@ -463,53 +443,7 @@ void PreconCfsBRJ::PreconBlkDiag(
 #endif
 #endif
     }
-    }
-#else // master implementation 
-
-    for(int t = 0; t < NTIME; ++t)
-    {
-    unsigned int ncoeffsVar = nvariables * ncoeffs;
-    Array<OneD, NekSingle> Sinarray(ncoeffsVar);
-    Array<OneD, NekSingle> Soutarray(ncoeffsVar);
-
-
-    NekVector<NekSingle> tmpVect(ncoeffsVar, Sinarray, eWrapper);
-    NekVector<NekSingle> outVect(ncoeffsVar, Soutarray, eWrapper);
-    for (int m = 0; m < nvariables; m++)
-    {
-        int nVarOffset = m * ncoeffs;
-        for (int ne = 0; ne < nTotElmt; ne++)
-        {
-            int nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
-            int nElmtCoef   = pFields[0]->GetNcoeffs(ne);
-            int inOffset    = nVarOffset + nCoefOffset;
-            int outOffset   = nCoefOffset * nvariables + m * nElmtCoef;
-            for (int i = 0; i < nElmtCoef; i++)
-            {
-                Sinarray[outOffset + i] = NekSingle(inarray[inOffset + i]);
-            }
-        }
-    }
-
-    outVect = (*m_PreconMatSingle) * tmpVect;
-
-    for (int m = 0; m < nvariables; m++)
-    {
-        int nVarOffset = m * ncoeffs;
-        for (int ne = 0; ne < nTotElmt; ne++)
-        {
-            int nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
-            int nElmtCoef   = pFields[0]->GetNcoeffs(ne);
-            int inOffset    = nVarOffset + nCoefOffset;
-            int outOffset   = nCoefOffset * nvariables + m * nElmtCoef;
-            for (int i = 0; i < nElmtCoef; i++)
-            {
-                outarray[inOffset + i] = NekDouble(Soutarray[outOffset + i]);
-            }
-        }
-    }
-    }
-#endif
+    
 }
 
 template <typename DataType>

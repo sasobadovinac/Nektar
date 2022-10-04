@@ -39,8 +39,9 @@
 
 namespace Nektar
 {
-#define SIMD 
-    using namespace tinysimd;
+    
+using namespace tinysimd;
+
 /**
  * Block Relaxed(weighted) Jacobi iterative (BRJ) Preconditioner for CFS
  *
@@ -77,15 +78,12 @@ protected:
     int m_BRJRelaxParam;
 
     Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> m_PreconMatVarsSingle;
-#ifdef SIMD
+    
     unsigned int m_max_nblocks;
     unsigned int m_max_nElmtDof;
     std::vector<simd<NekSingle>, tinysimd::allocator<simd<NekSingle>>> m_sBlkDiagMat;
     std::vector<int> m_inputIdx;
 
-#else
-    SNekBlkMatSharedPtr m_PreconMatSingle;
-#endif
     Array<OneD, SNekBlkMatSharedPtr> m_TraceJacSingle;
     TensorOfArray4D<NekSingle> m_TraceJacArraySingle;
     Array<OneD, SNekBlkMatSharedPtr> m_TraceJacDerivSingle;
@@ -135,7 +133,6 @@ private:
         Array<OneD, Array<OneD, TypeNekBlkMatSharedPtr>> &gmtxarray,
         const int &nscale = 1);
 
-#ifdef SIMD
     inline void AllocateSIMDPreconBlkMatDiag(
               const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields)
     {
@@ -228,7 +225,6 @@ private:
             ASSERTL1(cnt1 <= TotLen, "m_inputIdx over extended");
         }
     }
-#endif
     
     inline void AllocateNekBlkMatDig(SNekBlkMatSharedPtr &mat,
                                      const Array<OneD, unsigned int> nrow,
