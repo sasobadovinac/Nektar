@@ -346,7 +346,7 @@ void PreconCfsBRJ::PreconBlkDiag(
 #ifdef NTIME1 // inner timing test
         }
         timer1.Stop();
-        timer1.AccumulateRegion("PreconCfsBRJ: Load");
+        timer1.AccumulateRegion("PreconCfsBRJ: Load", 10);
         
 
         timer1.Start(); 
@@ -375,7 +375,7 @@ void PreconCfsBRJ::PreconBlkDiag(
 #ifdef NTIME1 // inner timing test
         }
         timer1.Stop();
-        timer1.AccumulateRegion("PreconCfsBRJ: Mult");       
+        timer1.AccumulateRegion("PreconCfsBRJ: Mult", 10);       
 #endif
         
 #ifdef NTIME1 // inner timing test
@@ -405,7 +405,7 @@ void PreconCfsBRJ::PreconBlkDiag(
 #ifdef NTIME1 // inner timing test
         }
         timer1.Stop();
-        timer1.AccumulateRegion("PreconCfsBRJ: Unpack");
+        timer1.AccumulateRegion("PreconCfsBRJ: Unpack", 10);
 #endif
         icnt1 += nblocks*vecwidth;
     }
