@@ -304,8 +304,6 @@ void PreconCfsBRJ::PreconBlkDiag(
                                                           
     unsigned int ncoeffs    = pFields[0]->GetNcoeffs();
 
-#define NTIME1 1
-
     LibUtilities::Timer  timer1;
 
     using vec_t = simd<NekSingle>;
@@ -325,13 +323,7 @@ void PreconCfsBRJ::PreconBlkDiag(
         const auto nblocks     = (nElmtDof%vecwidth)?
                 nElmtDof/vecwidth + 1:  nElmtDof/vecwidth;
 
-#ifdef NTIME1 // inner timing test
-        timer1.Start(); 
-        int icnt_sav = icnt; 
-        for(int t = 0; t < NTIME1; ++t) // timing loop
-        {
-        icnt  = icnt_sav; 
-#endif
+  	timer1.Start(); 
         // gather data into blocks - could probably be done with a
         // gather call? can be replaced with a gather op when working
         for (int j = 0; j < nblocks; ++j, icnt += vecwidth)
@@ -343,18 +335,10 @@ void PreconCfsBRJ::PreconBlkDiag(
             
             Sinarray[j].load(tmp.data());
         }
-#ifdef NTIME1 // inner timing test
-        }
         timer1.Stop();
         timer1.AccumulateRegion("PreconCfsBRJ: Load", 10);
         
-
         timer1.Start(); 
-        int cnt_sav = cnt; 
-        for(int t = 0; t < NTIME1; ++t) // timing loop
-        {
-            cnt  = cnt_sav; 
-#endif
         // Do matrix multiply
         // first block just needs multiplying
         vec_t in = Sinarray[0];
@@ -372,25 +356,15 @@ void PreconCfsBRJ::PreconBlkDiag(
                 Soutarray[i].fma(m_sBlkDiagMat[cnt++],in);
             }
         }
-#ifdef NTIME1 // inner timing test
-        }
         timer1.Stop();
         timer1.AccumulateRegion("PreconCfsBRJ: Mult", 10);       
-#endif
         
-#ifdef NTIME1 // inner timing test
         timer1.Start(); 
          // get block aligned index for this expansion
-
-        int icnt1_sav = icnt1; 
-        for(int t = 0; t < NTIME1; ++t) // timing loop
-        {
-        icnt1 = icnt1_sav; 
-#endif
         NekSingle val; 
         for (int i = 0; i < nElmtDof; ++i)
         {
-             // Get hold of datak
+             // Get hold of data
             Soutarray[i].store(tmp.data());
             
             // Sum vector width
@@ -402,11 +376,9 @@ void PreconCfsBRJ::PreconBlkDiag(
             // put data into outarray 
             outarray[m_inputIdx[icnt1+i]] = NekDouble(val); 
         }
-#ifdef NTIME1 // inner timing test
-        }
         timer1.Stop();
         timer1.AccumulateRegion("PreconCfsBRJ: Unpack", 10);
-#endif
+
         icnt1 += nblocks*vecwidth;
     }
     
