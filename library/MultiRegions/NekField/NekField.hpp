@@ -256,12 +256,7 @@ public:
                                        &m_storage[varid*m_varSize],true);
     }
 
-    std::vector<std::shared_ptr<MultiRegions::ExpList>> GetExpList() const
-    {
-        return m_expIF[0]->GetExpList();
-    }
-
-    std::shared_ptr<MultiRegions::ExpList> GetExpList(int varid) const
+    std::shared_ptr<MultiRegions::ExpList> GetExpList(int varid = 0) const
     {
         return m_expIF[varid]->GetExpList();
     }
