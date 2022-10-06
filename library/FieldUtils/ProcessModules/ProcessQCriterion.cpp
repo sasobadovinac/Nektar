@@ -101,44 +101,12 @@ void ProcessQCriterion::Process(po::variables_map &vm)
 
     MultiRegions::ExpListSharedPtr Exp;
 
-#if EXPLISTDATA
     for (s = 0; s < nstrips; ++s) // homogeneous strip varient
     {
-        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        Exp     = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
         m_f->m_exp.insert(it, Exp);
     }
-#else
-    std::vector<MultiRegions::ExpListSharedPtr> varExp;
-    
-    for (s = 0; s < nstrips; ++s) // homogeneous strip varient
-    {
-        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
-        m_f->m_exp.insert(it, Exp);
-        varExp.push_back(Exp);
-    }
-    // add variable - bit clumsy but should work for now
-    m_f->m_fieldPhys->AddVariable(varExp);
-    m_f->m_fieldCoeffs->AddVariable(varExp);
-
-    Array<OneD, NekDouble> tmp; 
-    // Need to reshuffle data for strip case before filling new variables.
-    for (s = nstrips-1; s > 0; --s) // homogeneous strip varient
-    {    
-        int ncoeffs = m_f->m_exp[0]->GetNcoeffs();
-        for(int n = nfields; n > 0; --n)
-        {
-            int fid  = s*(nfields)+n;
-            int fid1 = s*(nfields+1)+n;
-            Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
-                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
-            Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
-                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
-        }
-
-    }
-#endif
 
     NekDouble fac = 0.5;
     if (spacedim == 2)
@@ -147,15 +115,9 @@ void ProcessQCriterion::Process(po::variables_map &vm)
         {
             for (i = 0; i < spacedim; ++i)
             {
-#if EXPLISTDATA
                 m_f->m_exp[s * nfields + i]->PhysDeriv(
                     m_f->m_exp[s * nfields + i]->GetPhys(), grad[i * spacedim],
                     grad[i * spacedim + 1]);
-#else
-                m_f->m_exp[s * nfields + i]->PhysDeriv
-                    (m_f->m_fieldPhys->GetArray1D(s * nfields + i), grad[i * spacedim],
-                    grad[i * spacedim + 1]);
-#endif
             }
 
             // W_z = Vx - Uy
@@ -180,17 +142,10 @@ void ProcessQCriterion::Process(po::variables_map &vm)
             Vmath::Svtvm(npoints, fac, omega, 1, S, 1, outfield, 1);
             Vmath::Smul(npoints, fac, outfield, 1, outfield, 1);
 
-            int fid = s*(nfields+1)+nfields;
-#if EXPLISTDATA
-            Vmath::Vcopy(npoints, outfield, 1, m_f->m_exp[fid]->UpdatePhys(), 1);
+            int fid = s * (nfields + 1) + nfields;
+            Vmath::Vcopy(npoints, outfield, 1, m_f->m_exp[fid]->UpdatePhys(),
+                         1);
             Exp->FwdTransLocalElmt(outfield, m_f->m_exp[fid]->UpdateCoeffs());
-#else
-            Array<OneD, NekDouble> tmp; 
-            Vmath::Vcopy(npoints, outfield, 1,
-                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid), 1);
-            Exp->FwdTransLocalElmt(outfield,
-                                   tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid));
-#endif
         }
     }
     else if (spacedim == 3)
@@ -202,15 +157,9 @@ void ProcessQCriterion::Process(po::variables_map &vm)
         {
             for (i = 0; i < spacedim; ++i)
             {
-#if EXPLISTDATA
                 m_f->m_exp[s * nfields + i]->PhysDeriv(
                     m_f->m_exp[s * nfields + i]->GetPhys(), grad[i * spacedim],
                     grad[i * spacedim + 1], grad[i * spacedim + 2]);
-#else
-                m_f->m_exp[s * nfields + i]->PhysDeriv
-                    (m_f->m_fieldPhys->GetArray1D(s * nfields + i), grad[i * spacedim],
-                    grad[i * spacedim + 1], grad[i * spacedim + 2]);
-#endif
             }
 
             // W_x = Wy - Vz
@@ -275,16 +224,10 @@ void ProcessQCriterion::Process(po::variables_map &vm)
 
             Vmath::Smul(npoints, fac, outfield, 1, outfield, 1);
 
-            int fid = s*(nfields+1)+nfields;
-#if EXPLISTDATA
-            Vmath::Vcopy(npoints, outfield, 1, m_f->m_exp[fid]->UpdatePhys(), 1);
+            int fid = s * (nfields + 1) + nfields;
+            Vmath::Vcopy(npoints, outfield, 1, m_f->m_exp[fid]->UpdatePhys(),
+                         1);
             Exp->FwdTransLocalElmt(outfield, m_f->m_exp[fid]->UpdateCoeffs());
-#else
-            Vmath::Vcopy(npoints, outfield, 1,
-                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid), 1);
-            Exp->FwdTransLocalElmt(outfield,
-                                 tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid));
-#endif
         }
     }
 }

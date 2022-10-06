@@ -85,10 +85,7 @@ private:
 
     void InterpolateFieldToPts(
         std::vector<MultiRegions::ExpListSharedPtr> &field0,
-#if EXPLISTDATA
-#else
-        NekFieldPhysSharedPtr &field0Phys,
-#endif
+
         LibUtilities::PtsFieldSharedPtr &pts, NekDouble clamp_low,
         NekDouble clamp_up, NekDouble def_value);
 

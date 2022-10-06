@@ -200,10 +200,11 @@ protected:
     MULTI_REGIONS_EXPORT virtual void v_ImposeDirichletConditions(
         Array<OneD, NekDouble> &outarray);
 
-    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs);
+    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(
+        const Array<OneD, NekDouble> coeffs);
 
-    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(const int nreg,
-                                                             const Array<OneD, NekDouble> coeffs);
+    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(
+        const int nreg, const Array<OneD, NekDouble> coeffs);
 
     /// Gathers the global coefficients \f$\boldsymbol{\hat{u}}_g\f$
     /// from the local coefficients \f$\boldsymbol{\hat{u}}_l\f$.
@@ -211,10 +212,8 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool useComm);
 
-#if EXPLISTDATA
     MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(bool useComm);
-#endif
-    
+
     /// Scatters from the global coefficients
     /// \f$\boldsymbol{\hat{u}}_g\f$ to the local coefficients
     /// \f$\boldsymbol{\hat{u}}_l\f$.
@@ -222,9 +221,7 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-#if EXPLISTDATA
     MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(void);
-#endif
 
     // /// Template method virtual forwarder for FwdTrans().
     // MULTI_REGIONS_EXPORT virtual void v_BwdTrans(
@@ -256,14 +253,14 @@ protected:
         const Array<OneD, const NekDouble> &dirForcing,
         const bool PhysSpaceForcing);
 
-    // Solve the linear advection problem 
+    // Solve the linear advection problem
     MULTI_REGIONS_EXPORT virtual void v_LinearAdvectionDiffusionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
         const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
 
-    // Solve the linear advection problem 
+    // Solve the linear advection problem
     MULTI_REGIONS_EXPORT void v_LinearAdvectionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
@@ -279,7 +276,6 @@ protected:
 
 typedef std::shared_ptr<ContField> ContFieldSharedPtr;
 
-#if EXPLISTDATA
 /**
  * This operation is evaluated as:
  * \f{tabbing}
@@ -309,8 +305,7 @@ inline void ContField::Assemble()
 {
     m_locToGloMap->Assemble(m_coeffs, m_coeffs);
 }
-#endif
-    
+
 /**
  * This operation is evaluated as:
  * \f{tabbing}

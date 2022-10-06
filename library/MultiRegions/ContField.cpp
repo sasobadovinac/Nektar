@@ -367,13 +367,8 @@ void ContField::LaplaceSolve(
                 SpatialDomains::eRobin)
         {
 
-#if EXPLISTDATA
             const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
-#else 
-            const Array<OneD, const NekDouble> bndcoeff =
-                m_bndCondFieldCoeff[i]->GetArray1D();
-#endif
 
             if (m_locToGloMap->GetSignChange())
             {
@@ -586,13 +581,8 @@ void ContField::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
             SpatialDomains::eDirichlet)
         {
 
-#if EXPLISTDATA
             const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
-#else 
-            const Array<OneD, const NekDouble> bndcoeff =
-                m_bndCondFieldCoeff[i]->GetArray1D();
-#endif
 
             if (m_locToGloMap->GetSignChange())
             {
@@ -646,12 +636,8 @@ void ContField::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 
     for (int i = 0; i < m_bndCondExpansions.size(); ++i)
     {
-#if EXPLISTDATA
-        Array<OneD, NekDouble> &bcoeffs = m_bndCondExpansions[i]->UpdateCoeffs();
-
-#else 
-        Array<OneD, NekDouble> bcoeffs = m_bndCondFieldCoeff[i]->UpdateArray1D();
-#endif
+        Array<OneD, NekDouble> &bcoeffs =
+            m_bndCondExpansions[i]->UpdateCoeffs();
 
         if (m_locToGloMap->GetSignChange())
         {
@@ -687,11 +673,7 @@ void ContField::v_FillBndCondFromField(const int nreg,
         m_locToGloMap->GetBndCondCoeffsToLocalCoeffsMap();
 
     // Now fill in all other Dirichlet coefficients.
-#if EXPLISTDATA
     Array<OneD, NekDouble> &bcoeffs = m_bndCondExpansions[nreg]->UpdateCoeffs();
-#else 
-    Array<OneD, NekDouble> bcoeffs = m_bndCondFieldCoeff[nreg]->UpdateArray1D();
-#endif
 
     for (int j = 0; j < nreg; ++j)
     {
@@ -740,12 +722,10 @@ void ContField::v_GlobalToLocal(const Array<OneD, const NekDouble> &inarray,
     m_locToGloMap->GlobalToLocal(inarray, outarray);
 }
 
-#if EXPLISTDATA
 void ContField::v_GlobalToLocal(void)
 {
     m_locToGloMap->GlobalToLocal(m_coeffs, m_coeffs);
 }
-#endif
 
 /**
  * This operation is evaluated as:
@@ -774,13 +754,11 @@ void ContField::v_LocalToGlobal(const Array<OneD, const NekDouble> &inarray,
     m_locToGloMap->LocalToGlobal(inarray, outarray, useComm);
 }
 
-#if EXPLISTDATA
 void ContField::v_LocalToGlobal(bool useComm)
 
 {
     m_locToGloMap->LocalToGlobal(m_coeffs, m_coeffs, useComm);
 }
-#endif
 
 /**
  *
@@ -804,7 +782,7 @@ void ContField::v_MultiplyByInvMassMatrix(
  * \f$\boldsymbol{L}\f$ and \f$\boldsymbol{M}\f$ are the Laplacian and
  * mass matrix respectively. This function solves the system above for
  * the global coefficients \f$\boldsymbol{\hat{u}}\f$ by a call to the
- * function #GlobalSolve. 
+ * function #GlobalSolve.
  *
  * @param inarray An Array<OneD, NekDouble> , containing the discrete
  *                      evaluation of the forcing function
@@ -855,13 +833,8 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
                 SpatialDomains::eRobin)
         {
 
-#if EXPLISTDATA
             const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
-#else 
-            const Array<OneD, const NekDouble> bndcoeff =
-                m_bndCondFieldCoeff[i]->GetArray1D();
-#endif
 
             if (m_locToGloMap->GetSignChange())
             {
@@ -959,13 +932,8 @@ void ContField::v_LinearAdvectionDiffusionReactionSolve(
                 SpatialDomains::eRobin)
         {
 
-#if EXPLISTDATA
             const Array<OneD, const NekDouble> bndcoeff =
                 (m_bndCondExpansions[i])->GetCoeffs();
-#else 
-            const Array<OneD, const NekDouble> bndcoeff =
-                m_bndCondFieldCoeff[i]->GetArray1D();
-#endif
 
             if (m_locToGloMap->GetSignChange())
             {

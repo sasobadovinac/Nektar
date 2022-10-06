@@ -50,11 +50,6 @@ namespace Nektar
 namespace MultiRegions
 {
 
-#if EXPLISTDATA
-#else            
-class DisContField3DHomogeneous1D;
-#endif
-    
 /// This class is the abstractio  n of a global discontinuous two-
 /// dimensional spectral/hp element expansion which approximates the
 /// solution of a set of partial differential equations.
@@ -118,28 +113,12 @@ public:
     // is negated with respect to the segment normal
     MULTI_REGIONS_EXPORT std::vector<bool> &GetNegatedFluxNormal(void);
 
-
-#if EXPLISTDATA
     MULTI_REGIONS_EXPORT NekDouble
     L2_DGDeriv(const int dir, const Array<OneD, const NekDouble> &coeffs,
                const Array<OneD, const NekDouble> &soln);
-
     MULTI_REGIONS_EXPORT void EvaluateHDGPostProcessing(
         const Array<OneD, const NekDouble> &coeffs,
         Array<OneD, NekDouble> &outarray);
-#else
-    inline Array<OneD, NekFieldCoeffSharedPtr>
-                           &UpdateBndCondFieldCoeff(void)
-    {
-        return m_bndCondFieldCoeff; 
-    }
-
-    inline Array<OneD, NekFieldPhysSharedPtr>
-                           &UpdateBndCondFieldPhys(void)
-    {
-        return m_bndCondFieldPhys; 
-    }
-#endif
 
     MULTI_REGIONS_EXPORT void GetLocTraceToTraceMap(
         LocTraceToTraceMapSharedPtr &LocTraceToTraceMap)
@@ -169,21 +148,6 @@ protected:
      */
     Array<OneD, MultiRegions::ExpListSharedPtr> m_bndCondExpansions;
 
-#if EXPLISTDATA
-#else
-    /**
-     * A NekField sharedpoints containing the coefficient space
-     * boundary condition information
-     */ 
-    Array<OneD, NekFieldCoeffSharedPtr> m_bndCondFieldCoeff; 
-
-    /**
-     * A NekField sharedpoints containing the physical space
-     * boundary condition information
-     */ 
-    Array<OneD, NekFieldPhysSharedPtr> m_bndCondFieldPhys; 
-#endif
-    
     Array<OneD, NekDouble> m_bndCondBndWeight;
 
     /// Global boundary matrix.
@@ -282,67 +246,53 @@ protected:
     virtual void v_AddTraceQuadPhysToField(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &field);
-#if EXPLISTDATA
     virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray);
 #endif
     virtual void v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray);
-
     virtual void v_GetLocTraceFromTracePts(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd,
         Array<OneD, NekDouble> &locTraceFwd,
         Array<OneD, NekDouble> &locTraceBwd);
-
 #if 0
-            /// Populates the list of boundary condition expansions in multidomain case.
-            void SetMultiDomainBoundaryConditionExpansion(
-                const SpatialDomains::MeshGraphSharedPtr &graph1D,
-                const SpatialDomains::BoundaryConditions &bcs,
-                const std::string variable,
-                Array<OneD, MultiRegions::ExpListSharedPtr>
-                    &bndCondExpansions,
-                Array<OneD, SpatialDomains
-                    ::BoundaryConditionShPtr> &bndConditions,
-                int subdomain);
+/// Populates the list of boundary condition expansions in multidomain case.
+void SetMultiDomainBoundaryConditionExpansion(
+const SpatialDomains::MeshGraphSharedPtr &graph1D,
+const SpatialDomains::BoundaryConditions &bcs,
+const std::string variable,
+Array<OneD, MultiRegions::ExpListSharedPtr>
+&bndCondExpansions,
+Array<OneD, SpatialDomains
+::BoundaryConditionShPtr> &bndConditions,
+int subdomain);
 #endif
-
     void GenerateFieldBnd1D(SpatialDomains::BoundaryConditions &bcs,
                             const std::string variable);
-
     virtual std::map<int, RobinBCInfoSharedPtr> v_GetRobinBCInfo();
-
     virtual const Array<OneD, const MultiRegions::ExpListSharedPtr>
         &v_GetBndCondExpansions()
     {
         return m_bndCondExpansions;
     }
-
     virtual const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
         &v_GetBndConditions()
     {
         return m_bndConditions;
     }
-
     virtual MultiRegions::ExpListSharedPtr &v_UpdateBndCondExpansion(int i)
     {
         return m_bndCondExpansions[i];
     }
-
     virtual Array<OneD, SpatialDomains::BoundaryConditionShPtr>
         &v_UpdateBndConditions()
     {
         return m_bndConditions;
     }
-
     virtual void v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                         Array<OneD, int> &TraceID);
-#if EXPLISTDATA
     virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                        const bool DeclareCoeffPhysArrays);
-#else
-    virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result);
-#endif
 
     virtual void v_Reset();
 
@@ -367,11 +317,8 @@ protected:
     virtual void v_FillBwdWithBwdWeight(Array<OneD, NekDouble> &weightave,
                                         Array<OneD, NekDouble> &weightjmp);
 
-#if EXPLISTDATA
     inline virtual void v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
                                              Array<OneD, NekDouble> &Bwd);
-#endif
-    
     virtual void v_GetFwdBwdTracePhys(const Array<OneD, const NekDouble> &field,
                                       Array<OneD, NekDouble> &Fwd,
                                       Array<OneD, NekDouble> &Bwd,
@@ -381,15 +328,11 @@ protected:
     virtual void v_FillBwdWithBoundCond(const Array<OneD, NekDouble> &Fwd,
                                         Array<OneD, NekDouble> &Bwd,
                                         bool PutFwdInBwdOnBCs);
-
     inline virtual const Array<OneD, const NekDouble> &v_GetBndCondBwdWeight();
-
     inline virtual void v_SetBndCondBwdWeight(const int index,
                                               const NekDouble value);
-
     void SetUpDG(const std::string = "DefaultVar");
     bool IsLeftAdjacentTrace(const int n, const int e);
-
     /**
      * @brief Obtain a copy of the periodic edges and vertices for this
      * field.
@@ -404,11 +347,6 @@ protected:
     }
 
 private:
-#if EXPLISTDATA
-#else            
-    friend class DisContField3DHomogeneous2D;
-#endif
-    
     std::vector<bool> m_negatedFluxNormal;
 
     SpatialDomains::BoundaryConditionsSharedPtr GetDomainBCs(
@@ -428,7 +366,6 @@ inline std::vector<bool> &DisContField::v_GetLeftAdjacentTraces(void)
     return m_leftAdjacentTraces;
 }
 
-#if EXPLISTDATA
 /**
  * Generate the forward or backward state for each trace point.
  * @param   Fwd     Forward state.
@@ -439,7 +376,6 @@ void DisContField::v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
 {
     v_GetFwdBwdTracePhys(m_phys, Fwd, Bwd);
 }
-#endif
 
 const Array<OneD, const NekDouble> &DisContField::v_GetBndCondBwdWeight()
 {
@@ -461,6 +397,4 @@ void DisContField::v_PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
 }
 
 } // namespace MultiRegions
-} // namespace Nektar
-
-#endif // MULTIERGIONS_DISCONTFIELD1D_H
+} // namespace Nektar // MULTIERGIONS_DISCONTFIELD1D_H

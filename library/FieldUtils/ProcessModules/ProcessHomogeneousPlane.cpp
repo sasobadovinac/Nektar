@@ -110,28 +110,14 @@ void ProcessHomogeneousPlane::Process(po::variables_map &vm)
 
                 if (m_config["wavespace"].as<bool>())
                 {
-#if EXPLISTDATA
                     m_f->m_exp[n]->BwdTrans(m_f->m_exp[n]->GetCoeffs(),
                                             m_f->m_exp[n]->UpdatePhys());
-#else
-                    Array<OneD, NekDouble> tmp; 
-                    m_f->m_exp[n]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(n),
-                                      tmp = m_f->m_fieldPhys->UpdateArray1D(n));
-#endif
                 }
                 else
                 {
-#if EXPLISTDATA
                     m_f->m_exp[n]->FwdTransLocalElmt(
                         m_f->m_exp[n]->GetPhys(),
                         m_f->m_exp[n]->UpdateCoeffs());
-#else
-                    Array<OneD, NekDouble> tmp; 
-                    m_f->m_exp[n]->FwdTransLocalElmt
-                        (m_f->m_fieldPhys->GetArray1D(n),
-                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(n));
-                         
-#endif
                 }
             }
         }

@@ -157,8 +157,7 @@ ExpListHomogeneous1D::~ExpListHomogeneous1D()
 }
 
 void ExpListHomogeneous1D::v_HomogeneousFwdTrans(
-    const int npts, 
-    const Array<OneD, const NekDouble> &inarray,
+    const int npts, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
     // Forwards trans
@@ -166,8 +165,7 @@ void ExpListHomogeneous1D::v_HomogeneousFwdTrans(
 }
 
 void ExpListHomogeneous1D::v_HomogeneousBwdTrans(
-    const int npts, 
-    const Array<OneD, const NekDouble> &inarray,
+    const int npts, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
 {
     // Backwards trans
@@ -182,12 +180,11 @@ void ExpListHomogeneous1D::v_HomogeneousBwdTrans(
  * @param outarray  Dealiased product
  */
 void ExpListHomogeneous1D::v_DealiasedProd(
-    const int num_dofs, 
-    const Array<OneD, NekDouble> &inarray1,
+    const int num_dofs, const Array<OneD, NekDouble> &inarray1,
     const Array<OneD, NekDouble> &inarray2, Array<OneD, NekDouble> &outarray)
 {
-    //int num_dofs = inarray1.size();
-    int N        = m_homogeneousBasis->GetNumPoints();
+    // int num_dofs = inarray1.size();
+    int N = m_homogeneousBasis->GetNumPoints();
 
     Array<OneD, NekDouble> V1(num_dofs);
     Array<OneD, NekDouble> V2(num_dofs);
@@ -229,8 +226,10 @@ void ExpListHomogeneous1D::v_DealiasedProd(
     Array<OneD, NekDouble> ShufV1V2_PAD_coef(m_padsize, 0.0);
     Array<OneD, NekDouble> ShufV1V2_PAD_phys(m_padsize, 0.0);
 
-    m_transposition->Transpose(num_dofs, V1, ShufV1, false, LibUtilities::eXYtoZ);
-    m_transposition->Transpose(num_dofs, V2, ShufV2, false, LibUtilities::eXYtoZ);
+    m_transposition->Transpose(num_dofs, V1, ShufV1, false,
+                               LibUtilities::eXYtoZ);
+    m_transposition->Transpose(num_dofs, V2, ShufV2, false,
+                               LibUtilities::eXYtoZ);
 
     // Looping on the pencils
     for (int i = 0; i < num_dfts_per_proc; i++)
@@ -252,7 +251,7 @@ void ExpListHomogeneous1D::v_DealiasedProd(
         // Moving back the result (V1*V2)_phys in Fourier space, padded
         // system
         m_FFT_deal->FFTFwdTrans(ShufV1V2_PAD_phys, ShufV1V2_PAD_coef);
-        
+
         // Copying the first half of the padded pencil in the full
         // vector (Fourier space)
         Vmath::Vcopy(N, &(ShufV1V2_PAD_coef[0]), 1, &(ShufV1V2[i * N]), 1);
@@ -282,8 +281,7 @@ void ExpListHomogeneous1D::v_DealiasedProd(
  * @param outarray  Dealiased product with dimension nvec
  */
 void ExpListHomogeneous1D::v_DealiasedDotProd(
-    const int num_dofs, 
-    const Array<OneD, Array<OneD, NekDouble>> &inarray1,
+    const int num_dofs, const Array<OneD, Array<OneD, NekDouble>> &inarray1,
     const Array<OneD, Array<OneD, NekDouble>> &inarray2,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
@@ -292,8 +290,8 @@ void ExpListHomogeneous1D::v_DealiasedDotProd(
              "Wrong dimensions for DealiasedDotProd.");
     int nvec = inarray2.size() / ndim;
 
-    //int num_dofs = inarray1[0].size();
-    int N        = m_homogeneousBasis->GetNumPoints();
+    // int num_dofs = inarray1[0].size();
+    int N = m_homogeneousBasis->GetNumPoints();
 
     int num_points_per_plane = num_dofs / m_planes.size();
     int num_proc;
@@ -327,12 +325,12 @@ void ExpListHomogeneous1D::v_DealiasedDotProd(
         for (int i = 0; i < ndim; i++)
         {
             V1[i] = Array<OneD, NekDouble>(num_dofs);
-            HomogeneousFwdTrans(num_dofs,inarray1[i], V1[i]);
+            HomogeneousFwdTrans(num_dofs, inarray1[i], V1[i]);
         }
         for (int i = 0; i < ndim * nvec; i++)
         {
             V2[i] = Array<OneD, NekDouble>(num_dofs);
-            HomogeneousFwdTrans(num_dofs,inarray2[i], V2[i]);
+            HomogeneousFwdTrans(num_dofs, inarray2[i], V2[i]);
         }
     }
 
@@ -362,7 +360,6 @@ void ExpListHomogeneous1D::v_DealiasedDotProd(
     {
         ShufV1V2[i] = Array<OneD, NekDouble>(num_dfts_per_proc * N, 0.0);
     }
-
 
     for (int i = 0; i < ndim; i++)
     {
@@ -418,8 +415,8 @@ void ExpListHomogeneous1D::v_DealiasedDotProd(
     {
         for (int j = 0; j < nvec; j++)
         {
-            m_transposition->Transpose(num_dofs, ShufV1V2[j],
-                                       outarray[j], false, LibUtilities::eZtoXY);
+            m_transposition->Transpose(num_dofs, ShufV1V2[j], outarray[j],
+                                       false, LibUtilities::eZtoXY);
         }
     }
     else
@@ -453,7 +450,7 @@ void ExpListHomogeneous1D::v_FwdTrans(
     }
     if (!m_WaveSpace)
     {
-        HomogeneousFwdTrans(cnt1,outarray, outarray);
+        HomogeneousFwdTrans(cnt1, outarray, outarray);
     }
 }
 
@@ -477,7 +474,7 @@ void ExpListHomogeneous1D::v_FwdTransLocalElmt(
     }
     if (!m_WaveSpace)
     {
-        HomogeneousFwdTrans(cnt1,outarray, outarray);
+        HomogeneousFwdTrans(cnt1, outarray, outarray);
     }
 }
 
@@ -501,7 +498,7 @@ void ExpListHomogeneous1D::v_FwdTransBndConstrained(
     }
     if (!m_WaveSpace)
     {
-        HomogeneousFwdTrans(cnt1,outarray, outarray);
+        HomogeneousFwdTrans(cnt1, outarray, outarray);
     }
 }
 
@@ -534,7 +531,8 @@ void ExpListHomogeneous1D::v_IProductWRTBase(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    ASSERTL1(inarray.size() >= m_npoints,"Inarray is not of sufficient length");
+    ASSERTL1(inarray.size() >= m_npoints,
+             "Inarray is not of sufficient length");
     int cnt = 0, cnt1 = 0;
     Array<OneD, NekDouble> tmparray, tmpIn;
 
@@ -561,8 +559,7 @@ void ExpListHomogeneous1D::v_IProductWRTBase(
  * Homogeneous transform Bwd/Fwd (MVM and FFT)
  */
 void ExpListHomogeneous1D::Homogeneous1DTrans(
-    const int num_dofs,
-    const Array<OneD, const NekDouble> &inarray,
+    const int num_dofs, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool IsForwards, bool Shuff, bool UnShuff)
 {
 
@@ -683,9 +680,8 @@ void ExpListHomogeneous1D::Homogeneous1DTrans(
 
         if (UnShuff)
         {
-            m_transposition->Transpose(nrows, sortedoutarray,
-                                       outarray, IsForwards,
-                                       LibUtilities::eZtoXY);
+            m_transposition->Transpose(nrows, sortedoutarray, outarray,
+                                       IsForwards, LibUtilities::eZtoXY);
         }
         else
         {
@@ -921,15 +917,12 @@ void ExpListHomogeneous1D::v_AppendFieldData(
     }
 }
 
-
-#if EXPLISTDATA
 void ExpListHomogeneous1D::v_AppendFieldData(
     LibUtilities::FieldDefinitionsSharedPtr &fielddef,
     std::vector<NekDouble> &fielddata)
 {
     v_AppendFieldData(fielddef, fielddata, m_coeffs);
 }
-#endif
 
 // Extract the data in fielddata into the m_coeff list
 void ExpListHomogeneous1D::v_ExtractDataToCoeffs(
@@ -1080,24 +1073,13 @@ void ExpListHomogeneous1D::v_ExtractCoeffsToCoeffs(
     }
 }
 
-#if EXPLISTDATA
 void ExpListHomogeneous1D::v_WriteVtkPieceData(std::ostream &outfile,
                                                int expansion, std::string var)
-#else
-void ExpListHomogeneous1D::v_WriteVtkPieceData(std::ostream &outfile,
-                                               int expansion,
-                                  const Array<OneD, const NekDouble> &physIn,
-                                              std::string var)
-#endif
 {
     // If there is only one plane (e.g. HalfMode), we write a 2D plane.
     if (m_planes.size() == 1)
     {
-#if EXPLISTDATA
         m_planes[0]->WriteVtkPieceData(outfile, expansion, var);
-#else
-        m_planes[0]->WriteVtkPieceData(outfile, expansion, physIn, var);
-#endif
         return;
     }
 
@@ -1116,11 +1098,7 @@ void ExpListHomogeneous1D::v_WriteVtkPieceData(std::ostream &outfile,
         // Get extra plane data
         if (m_StripZcomm->GetSize() == 1)
         {
-#if EXPLISTDATA
             extraPlane = m_phys + m_phys_offset[expansion];
-#else
-            extraPlane = physIn + m_phys_offset[expansion];
-#endif
         }
         else
         {
@@ -1131,12 +1109,8 @@ void ExpListHomogeneous1D::v_WriteVtkPieceData(std::ostream &outfile,
             int toRank   = (rank == 0) ? size - 1 : rank - 1;
             // Communicate using SendRecv
             extraPlane = Array<OneD, NekDouble>(nq);
-#if EXPLISTDATA
             Array<OneD, NekDouble> send(nq, m_phys + m_phys_offset[expansion]);
-#else
-            Array<OneD, NekDouble> send(nq, physIn + m_phys_offset[expansion]);
-#endif
-            
+
             m_StripZcomm->SendRecv(toRank, send, fromRank, extraPlane);
         }
     }
@@ -1147,13 +1121,8 @@ void ExpListHomogeneous1D::v_WriteVtkPieceData(std::ostream &outfile,
     outfile << "          ";
     for (int n = 0; n < m_planes.size(); ++n)
     {
-#if EXPLISTDATA
         const Array<OneD, NekDouble> phys =
             m_phys + m_phys_offset[expansion] + n * npoints_per_plane;
-#else
-        const Array<OneD, NekDouble> phys =
-            physIn + m_phys_offset[expansion] + n * npoints_per_plane;
-#endif
 
         for (i = 0; i < nq; ++i)
         {
@@ -1216,8 +1185,9 @@ void ExpListHomogeneous1D::v_PhysDeriv(
     const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_d0,
     Array<OneD, NekDouble> &out_d1, Array<OneD, NekDouble> &out_d2)
 {
-    int nT_pts = m_npoints; //inarray.size(); // number of total points = n. of Fourier
-                                 // points * n. of points per plane (nT_pts)
+    int nT_pts =
+        m_npoints; // inarray.size(); // number of total points = n. of Fourier
+                   // points * n. of points per plane (nT_pts)
     int nP_pts =
         nT_pts / m_planes.size(); // number of points per plane = n of
                                   // Fourier transform required (nP_pts)
@@ -1321,8 +1291,7 @@ void ExpListHomogeneous1D::v_PhysDeriv(
             {
                 StdRegions::StdSegExp StdSeg(m_homogeneousBasis->GetBasisKey());
 
-                m_transposition->Transpose(nT_pts, inarray,
-                                           temparray, false,
+                m_transposition->Transpose(nT_pts, inarray, temparray, false,
                                            LibUtilities::eXYtoZ);
 
                 for (int i = 0; i < nP_pts; i++)
@@ -1450,8 +1419,8 @@ void ExpListHomogeneous1D::v_PhysDeriv(
             {
                 StdRegions::StdSegExp StdSeg(m_homogeneousBasis->GetBasisKey());
 
-                m_transposition->Transpose(nT_pts, inarray, temparray,
-                                           false, LibUtilities::eXYtoZ);
+                m_transposition->Transpose(nT_pts, inarray, temparray, false,
+                                           LibUtilities::eXYtoZ);
 
                 for (int i = 0; i < nP_pts; i++)
                 {
@@ -1459,8 +1428,8 @@ void ExpListHomogeneous1D::v_PhysDeriv(
                                      tmp2 = outarray + i * m_planes.size());
                 }
 
-                m_transposition->Transpose(nT_pts, outarray, out_d,
-                                           false, LibUtilities::eZtoXY);
+                m_transposition->Transpose(nT_pts, outarray, out_d, false,
+                                           LibUtilities::eZtoXY);
 
                 Vmath::Smul(nT_pts, 2.0 / m_lhom, out_d, 1, out_d, 1);
             }

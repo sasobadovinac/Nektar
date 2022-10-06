@@ -79,7 +79,6 @@ public:
         const LibUtilities::BasisKey &HomoBasis, const NekDouble lhom,
         SpatialDomains::BoundaryConditions &bcs, const std::string variable);
 
-
     inline const Array<OneD, const MultiRegions::ExpListSharedPtr>
         &GetBndCondExpansions();
 
@@ -96,12 +95,8 @@ public:
     MULTI_REGIONS_EXPORT void GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                                    Array<OneD, int> &EdgeID);
 
-#if EXPLISTDATA
     virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                        const bool DeclareCoeffPhysArrays);
-#else
-    virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result);
-#endif
 
     /// This funtion extract form a vector containing a full
     /// 3D-homogenous-1D field the value associated with a
@@ -145,29 +140,6 @@ protected:
      */
 
     Array<OneD, MultiRegions::ExpListSharedPtr> m_bndCondExpansions;
-
-#if EXPLISTDATA
-#else
-    /**
-     * An array of NekField sharedpointers containing the coefficient
-     * space boundary condition information
-     */ 
-    Array<OneD, NekFieldCoeffSharedPtr> m_bndCondFieldCoeff; 
-
-    /**
-     * An array of NekField sharedpointers containing the physical
-     * space boundary condition information
-     */ 
-    Array<OneD, NekFieldPhysSharedPtr> m_bndCondFieldPhys;
-
-    
-    /**
-     * An array the array of NekFields of the coefficient on each plane
-     */
-    Array<OneD, Array<OneD, NekFieldCoeffSharedPtr> > m_planesBndCondFieldCoeff; 
-
-    inline void CopyCoeffBCsToPlanes(int varid = 0);
-#endif
 
     Array<OneD, NekDouble> m_bndCondBndWeight;
 
@@ -239,10 +211,8 @@ protected:
     virtual void v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray);
 
-#if EXPLISTDATA
     virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray);
 #endif
-    
     virtual void v_GetBoundaryNormals(
         int i, Array<OneD, Array<OneD, NekDouble>> &normals);
 
@@ -255,7 +225,6 @@ private:
                              const MultiRegions::VarFactorsMap &varfactors,
                              const Array<OneD, const NekDouble> &dirForcing,
                              const bool PhysSpaceForcing);
-
     /**
      * \brief This function evaluates the boundary conditions
      * at a certaintime-level.
@@ -292,12 +261,9 @@ private:
         const NekDouble time = 0.0, const std::string varName = "",
         const NekDouble x2_in = NekConstants::kNekUnsetDouble,
         const NekDouble x3_in = NekConstants::kNekUnsetDouble);
-
     virtual std::shared_ptr<ExpList> &v_UpdateBndCondExpansion(int i);
-
     virtual Array<OneD, SpatialDomains::BoundaryConditionShPtr>
         &v_UpdateBndConditions();
-
     virtual const Array<OneD, const int> &v_GetTraceBndMap()
     {
         return m_traceBndMap;
@@ -305,28 +271,23 @@ private:
     inline virtual void v_SetBndCondBwdWeight(const int index,
                                               const NekDouble value);
 };
-
 typedef std::shared_ptr<DisContField3DHomogeneous1D>
     DisContField3DHomogeneous1DSharedPtr;
-
 inline const Array<OneD, const MultiRegions::ExpListSharedPtr>
     &DisContField3DHomogeneous1D::GetBndCondExpansions()
 {
     return m_bndCondExpansions;
 }
-
 inline const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
     &DisContField3DHomogeneous1D::GetBndConditions()
 {
     return m_bndConditions;
 }
-
 inline MultiRegions::ExpListSharedPtr &DisContField3DHomogeneous1D::
     UpdateBndCondExpansion(int i)
 {
     return m_bndCondExpansions[i];
 }
-
 inline Array<OneD, SpatialDomains::BoundaryConditionShPtr>
     &DisContField3DHomogeneous1D::UpdateBndConditions()
 {
@@ -337,35 +298,5 @@ inline void DisContField3DHomogeneous1D::v_SetBndCondBwdWeight(
 {
     m_bndCondBndWeight[index] = value;
 }
-
-
-#if EXPLISTDATA
-#else            
-inline void DisContField3DHomogeneous1D::CopyCoeffBCsToPlanes(int varid)
-{
-
-    int nplanes = m_planes.size();
-
-    for (int i = 0; i < m_bndCondExpansions.size(); ++i)
-    {
-        const Array<OneD, const NekDouble> bc = m_bndCondFieldCoeff[i]->
-            GetArray1D(varid); 
-            
-        int bnd_ncoeffs = m_planesBndCondFieldCoeff[0][i]->GetVarSize();
-        int offset = 0; 
-        Array<OneD, NekDouble> tmp; 
-        for (int n = 0; n < nplanes; ++n)
-        {
-            Vmath::Vcopy(bnd_ncoeffs,bc + offset,1,
-                         tmp = m_planesBndCondFieldCoeff[n][i]->
-                         UpdateArray1D(varid),1);
-            offset += bnd_ncoeffs;
-        }
-    }
-}
-#endif
-    
 } // namespace MultiRegions
-} // namespace Nektar
-
-#endif // MULTIERGIONS_DISCONTFIELD3DHOMO1D_H
+} // namespace Nektar // MULTIERGIONS_DISCONTFIELD3DHOMO1D_H

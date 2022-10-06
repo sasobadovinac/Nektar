@@ -114,13 +114,8 @@ ContField3DHomogeneous1D::ContField3DHomogeneous1D(
 
     // Plane zero (k=0 - cos) - singularaty check required for Poisson
     // problems
-#if EXPLISTDATA
     plane_zero = MemoryManager<ContField>::AllocateSharedPtr(
         pSession, graph2D, variable, false, CheckIfSingularSystem, ImpType);
-#else
-    plane_zero = MemoryManager<ContField>::AllocateSharedPtr(
-        pSession, graph2D, variable, true, CheckIfSingularSystem, ImpType);
-#endif
 
     plane_two = MemoryManager<ContField>::AllocateSharedPtr(
         pSession, graph2D, variable, false, false, ImpType);
@@ -129,7 +124,6 @@ ContField3DHomogeneous1D::ContField3DHomogeneous1D(
 
     for (n = 0; n < m_planes.size(); ++n)
     {
-#if EXPLISTDATA
         // Plane zero and one (k=0 - cos and sin) - singularaty check
         // required for Poisson problems
         if (m_transposition->GetK(n) == 0)
@@ -146,24 +140,6 @@ ContField3DHomogeneous1D::ContField3DHomogeneous1D(
             m_planes[n] = MemoryManager<ContField>::AllocateSharedPtr(
                 *plane_two, graph2D, variable, false, false);
         }
-#else
-        // Plane zero and one (k=0 - cos and sin) - singularaty check
-        // required for Poisson problems
-        if (m_transposition->GetK(n) == 0)
-        {
-            m_planes[n] = MemoryManager<ContField>::AllocateSharedPtr(
-                *plane_zero, graph2D, variable, true, CheckIfSingularSystem);
-        }
-        else
-        {
-            // For k > 0 singularty check not required anymore -
-            // creating another ContField to avoid Assembly Map copy
-            // TODO: We may want to deal with it in a more efficient
-            // way in the future.
-            m_planes[n] = MemoryManager<ContField>::AllocateSharedPtr(
-                *plane_two, graph2D, variable, true, false);
-        }
-#endif
 
         nel = m_planes[n]->GetExpSize();
 
@@ -196,22 +172,24 @@ void ContField3DHomogeneous1D::v_ImposeDirichletConditions(
     }
 }
 
-void ContField3DHomogeneous1D::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
+void ContField3DHomogeneous1D::v_FillBndCondFromField(
+    const Array<OneD, NekDouble> coeffs)
 {
-    int numcoeffs_per_plane = m_planes[0]->GetNcoeffs(); 
+    int numcoeffs_per_plane = m_planes[0]->GetNcoeffs();
     for (int n = 0; n < m_planes.size(); ++n)
     {
         m_planes[n]->FillBndCondFromField(coeffs + n * numcoeffs_per_plane);
     }
 }
 
-void ContField3DHomogeneous1D::v_FillBndCondFromField(const int nreg,
-                                                      const Array<OneD, NekDouble> coeffs)
+void ContField3DHomogeneous1D::v_FillBndCondFromField(
+    const int nreg, const Array<OneD, NekDouble> coeffs)
 {
-    int numcoeffs_per_plane = m_planes[0]->GetNcoeffs(); 
+    int numcoeffs_per_plane = m_planes[0]->GetNcoeffs();
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FillBndCondFromField(nreg, coeffs + n * numcoeffs_per_plane);
+        m_planes[n]->FillBndCondFromField(nreg,
+                                          coeffs + n * numcoeffs_per_plane);
     }
 }
 
@@ -266,7 +244,7 @@ void ContField3DHomogeneous1D::v_HelmSolve(
     NekDouble beta;
     StdRegions::ConstFactorMap new_factors;
 
-    int npts_fce = PhysSpaceForcing? m_npoints: m_ncoeffs; 
+    int npts_fce = PhysSpaceForcing ? m_npoints : m_ncoeffs;
     Array<OneD, NekDouble> e_out;
     Array<OneD, NekDouble> fce(npts_fce);
     Array<OneD, const NekDouble> wfce;
@@ -280,12 +258,6 @@ void ContField3DHomogeneous1D::v_HelmSolve(
     {
         HomogeneousFwdTrans(npts_fce, inarray, fce);
     }
-
-#if EXPLISTDATA
-#else
-    // setup coeff bcs. Might also need Phys for DG
-    CopyCoeffBCsToPlanes();
-#endif
 
     bool smode = false;
 

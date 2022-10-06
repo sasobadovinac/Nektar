@@ -196,10 +196,8 @@ void ExpList3DHomogeneous1D::SetCoeffPhys(void)
     m_ncoeffs = ncoeffs_per_plane * nzplanes;
     m_npoints = npoints_per_plane * nzplanes;
 
-#if EXPLISTDATA
     m_coeffs = Array<OneD, NekDouble>(m_ncoeffs, 0.0);
     m_phys   = Array<OneD, NekDouble>(m_npoints, 0.0);
-#endif
 
     int nel        = m_planes[0]->GetExpSize();
     m_coeff_offset = Array<OneD, int>(nel * nzplanes);
@@ -208,11 +206,9 @@ void ExpList3DHomogeneous1D::SetCoeffPhys(void)
 
     for (cnt = n = 0; n < nzplanes; ++n)
     {
-#if EXPLISTDATA
         m_planes[n]->SetCoeffsArray(tmparray =
                                         m_coeffs + ncoeffs_per_plane * n);
         m_planes[n]->SetPhysArray(tmparray = m_phys + npoints_per_plane * n);
-#endif
 
         for (i = 0; i < nel; ++i)
         {
@@ -314,7 +310,6 @@ void ExpList3DHomogeneous1D::v_GetCoords(Array<OneD, NekDouble> &xc0,
     }
 }
 
-#if EXPLISTDATA
 void ExpList3DHomogeneous1D::v_WriteTecplotConnectivity(std::ostream &outfile,
                                                         int expansion)
 {
@@ -356,7 +351,6 @@ void ExpList3DHomogeneous1D::v_WriteTecplotConnectivity(std::ostream &outfile,
         cnt += np0 * np1;
     }
 }
-#endif
 
 void ExpList3DHomogeneous1D::v_WriteVtkPieceHeader(std::ostream &outfile,
                                                    int expansion, int istrip)
@@ -508,8 +502,6 @@ NekDouble ExpList3DHomogeneous1D::v_L2(
     return sqrt(err);
 }
 
-
-#if EXPLISTDATA
 Array<OneD, const NekDouble> ExpList3DHomogeneous1D::v_HomogeneousEnergy(void)
 {
     Array<OneD, NekDouble> energy(m_planes.size() / 2);
@@ -556,53 +548,5 @@ Array<OneD, const NekDouble> ExpList3DHomogeneous1D::v_HomogeneousEnergy(void)
 
     return energy;
 }
-#else
-Array<OneD, const NekDouble> ExpList3DHomogeneous1D::v_HomogeneousEnergy(
-                                   const Array<OneD, const NekDouble> &coeffs)
-{
-    Array<OneD, NekDouble> energy(m_planes.size() / 2);
-    NekDouble area = 0.0;
-
-    // Calculate total area of elements.
-    for (int n = 0; n < m_planes[0]->GetExpSize(); ++n)
-    {
-        Array<OneD, NekDouble> inarray(m_planes[0]->GetExp(n)->GetTotPoints(),
-                                       1.0);
-        area += m_planes[0]->GetExp(n)->Integral(inarray);
-    }
-
-    m_comm->GetRowComm()->AllReduce(area, LibUtilities::ReduceSum);
-
-    int ncoeffs_per_plane = m_planes[0]->GetNcoeffs();
-    
-    // Calculate L2 norm of real/imaginary planes.
-    for (int n = 0; n < m_planes.size(); n += 2)
-    {
-        NekDouble err;
-        energy[n/2] = 0;
-
-        for (int i = 0; i < m_planes[n]->GetExpSize(); ++i)
-        {
-            LocalRegions::ExpansionSharedPtr exp = m_planes[n]->GetExp(i);
-            Array<OneD, NekDouble> phys(exp->GetTotPoints());
-            exp->BwdTrans(coeffs + n*ncoeffs_per_plane + 
-                          m_planes[n]->GetCoeff_Offset(i), phys);
-            err = exp->L2(phys);
-            energy[n / 2] += err * err;
-
-            exp = m_planes[n + 1]->GetExp(i);
-            exp->BwdTrans(coeffs + (n+1)*ncoeffs_per_plane + 
-                          m_planes[n + 1]->GetCoeff_Offset(i), phys);
-            err = exp->L2(phys);
-            energy[n / 2] += err * err;
-        }
-
-        m_comm->GetRowComm()->AllReduce(energy[n / 2], LibUtilities::ReduceSum);
-        energy[n / 2] /= 2.0 * area;
-    }
-
-    return energy;
-}
-#endif
 } // namespace MultiRegions
 } // namespace Nektar

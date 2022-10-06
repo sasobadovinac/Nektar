@@ -114,11 +114,7 @@ void OutputPts::OutputFromExp(po::variables_map &vm)
 
     for (int i = 0; i < m_f->m_variables.size(); ++i)
     {
-#if EXPLISTDATA
         tmp[i + m_f->m_exp[0]->GetCoordim(0)] = m_f->m_exp[i]->GetPhys();
-#else
-        tmp[i + m_f->m_exp[0]->GetCoordim(0)] = m_f->m_fieldPhys->GetArray1D(i); 
-#endif
     }
     m_f->m_fieldPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
         m_f->m_exp[0]->GetCoordim(0), m_f->m_variables, tmp);

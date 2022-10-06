@@ -1154,24 +1154,12 @@ void Mapping::v_UpdateBCs(const NekDouble time)
         {
             BndConds = m_fields[i]->GetBndConditions();
             BndExp   = m_fields[i]->GetBndCondExpansions();
-#if EXPLISTDATA
-#else
-            Array<OneD, NekFieldPhysSharedPtr>  BndCondFieldPhys
-                = std::dynamic_pointer_cast<MultiRegions::DisContField>
-                  (m_fields[i])->UpdateBndCondFieldPhys();
-#endif
-            
+
             if (BndConds[n]->GetUserDefined() == "" ||
                 BndConds[n]->GetUserDefined() == "MovingBody")
             {
-#if EXPLISTDATA
                 m_fields[i]->ExtractPhysToBnd(n, values[i],
                                               BndExp[n]->UpdatePhys());
-#else
-                Array<OneD, NekDouble> tmp; 
-                m_fields[i]->ExtractPhysToBnd(n, values[i],
-                                tmp = BndCondFieldPhys[n]->UpdateArray1D());
-#endif
 
                 // Apply MovingBody correction
                 if ((i < nvel) && BndConds[n]->GetUserDefined() == "MovingBody")
@@ -1181,18 +1169,10 @@ void Mapping::v_UpdateBCs(const NekDouble time)
                         BndExp[n]->GetTotPoints());
                     m_fields[i]->ExtractPhysToBnd(n, coordVel[i], coordVelBnd);
 
-#if EXPLISTDATA
                     // Apply correction
                     Vmath::Vadd(BndExp[n]->GetTotPoints(), coordVelBnd, 1,
                                 BndExp[n]->UpdatePhys(), 1,
                                 BndExp[n]->UpdatePhys(), 1);
-#else
-                    // Apply correction
-                    Array<OneD, NekDouble> tmp; 
-                    Vmath::Vadd(BndExp[n]->GetTotPoints(), coordVelBnd, 1,
-                                tmp = BndCondFieldPhys[n]->UpdateArray1D(), 1,
-                                tmp = BndCondFieldPhys[n]->UpdateArray1D(), 1);
-#endif
                 }
             }
         }
@@ -1205,16 +1185,6 @@ void Mapping::v_UpdateBCs(const NekDouble time)
         BndConds = m_fields[i]->GetBndConditions();
         BndExp   = m_fields[i]->GetBndCondExpansions();
 
-
-#if EXPLISTDATA
-#else
-        Array<OneD, NekFieldCoeffSharedPtr> BndCondFieldCoeff 
-            = std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_fields[i])->UpdateBndCondFieldCoeff();
-        Array<OneD, NekFieldPhysSharedPtr>  BndCondFieldPhys
-            = std::dynamic_pointer_cast<MultiRegions::DisContField>
-                  (m_fields[i])->UpdateBndCondFieldPhys();
-#endif
         for (int n = 0; n < BndConds.size(); ++n)
         {
             if (BndConds[n]->GetBoundaryConditionType() ==
@@ -1228,15 +1198,8 @@ void Mapping::v_UpdateBCs(const NekDouble time)
                         BndExp[n]->SetWaveSpace(false);
                     }
 
-#if EXPLISTDATA
                     BndExp[n]->FwdTransBndConstrained(
                         BndExp[n]->GetPhys(), BndExp[n]->UpdateCoeffs());
-#else
-                    Array<OneD, NekDouble> tmp; 
-                    BndExp[n]->FwdTransBndConstrained(
-                              tmp = BndCondFieldPhys[n]->UpdateArray1D(),
-                              tmp = BndCondFieldCoeff[n]->UpdateArray1D());
-#endif
                 }
             }
         }

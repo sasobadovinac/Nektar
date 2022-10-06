@@ -73,13 +73,8 @@ void ProcessPrintFldNorms::Process(po::variables_map &vm)
     // Evaluate norms and print
     for (int j = 0; j < m_f->m_exp.size(); ++j)
     {
-#if EXPLISTDATA
         NekDouble L2   = m_f->m_exp[j]->L2(m_f->m_exp[j]->GetPhys());
         NekDouble LInf = m_f->m_exp[j]->Linf(m_f->m_exp[j]->GetPhys());
-#else
-        NekDouble L2   = m_f->m_exp[j]->L2(m_f->m_fieldPhys->GetArray1D(j));
-        NekDouble LInf = m_f->m_exp[j]->Linf(m_f->m_fieldPhys->GetArray1D(j));
-#endif
 
         if (m_f->m_comm->TreatAsRankZero())
         {

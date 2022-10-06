@@ -126,24 +126,15 @@ protected:
                              Array<OneD, NekDouble> &coord_1,
                              Array<OneD, NekDouble> &coord_2);
 
-#if EXPLISTDATA
     virtual void v_WriteTecplotConnectivity(std::ostream &outfile,
                                             int expansion);
 #endif
-
     virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                                        int istrip);
-
     virtual NekDouble v_L2(
         const Array<OneD, const NekDouble> &inarray,
         const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
-
-#if EXPLISTDATA
     virtual Array<OneD, const NekDouble> v_HomogeneousEnergy(void);
-#else
-    virtual Array<OneD, const NekDouble> v_HomogeneousEnergy(
-                                   const Array<OneD, const NekDouble> &coeffs);
-#endif
 
     virtual void v_GetPeriodicEntities(PeriodicMap &periodicVerts,
                                        PeriodicMap &periodicEdges,
@@ -167,6 +158,4 @@ inline void ExpList3DHomogeneous1D::GetCoords(Array<OneD, NekDouble> &coord_0,
     v_GetCoords(coord_0, coord_1, coord_2);
 }
 } // namespace MultiRegions
-} // namespace Nektar
-
-#endif // EXPLIST3DHOMO1D_H
+} // namespace Nektar // EXPLIST3DHOMO1D_H

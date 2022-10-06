@@ -232,46 +232,13 @@ void ProcessPhiFromFile::GetPhifromSession()
     // Add new variable
     m_f->m_variables.push_back("phi");
 
-#if EXPLISTDATA
     for (int s = 0; s < nStrips; ++s) // homogeneous strip varient
     {
-        MultiRegions::ExpListSharedPtr Exp 
-         = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        MultiRegions::ExpListSharedPtr Exp =
+            m_f->AppendExpList(m_f->m_numHomogeneousDir);
         auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
         m_f->m_exp.insert(it, Exp);
     }
-#else
-    std::vector<MultiRegions::ExpListSharedPtr> varExp;
-    Array<OneD, NekDouble> tmp; 
-    
-    for (int s = 0; s < nStrips; ++s) // homogeneous strip varient
-    {
-        MultiRegions::ExpListSharedPtr Exp 
-         = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
-        m_f->m_exp.insert(it, Exp);
-    }
-    // add variable - bit clumsy but should work for now
-    m_f->m_fieldPhys->AddVariable(varExp);
-    m_f->m_fieldCoeffs->AddVariable(varExp);
-
-    // Need to reshuffle data for strip case before filling new variables.
-    int ncoeffs = m_f->m_exp[0]->GetNcoeffs();
-    int npoints = m_f->m_exp[0]->GetTotPoints();
-    for (int s = nStrips-1; s > 0; --s) // homogeneous strip varient
-    {    
-        for(int n = nVars; n > 0; --n)
-        {
-            int fid  = s*(nVars)+n;
-            int fid1 = s*(nVars+1)+n;
-            Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
-                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
-            Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
-                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
-        }
-
-    }
-#endif
 
     for (int s = 0; s < nStrips; ++s)
     {
@@ -286,17 +253,10 @@ void ProcessPhiFromFile::GetPhifromSession()
         // Append Phi expansion to 'm_f'
         int fid = s * (nVars + 1) + nVars;
 
-#if EXPLISTDATA
         phiFunction->Evaluate(coords[0], coords[1], coords[2],
                               m_f->m_exp[fid]->UpdatePhys());
         m_f->m_exp[fid]->FwdTrans(m_f->m_exp[fid]->GetPhys(),
                                   m_f->m_exp[fid]->UpdateCoeffs());
-#else
-        phiFunction->Evaluate(coords[0], coords[1], coords[2],
-                              tmp = m_f->m_fieldPhys->UpdateArray1D(fid));
-        m_f->m_exp[fid]->FwdTrans(m_f->m_fieldPhys->GetArray1D(fid),
-                              tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid));
-#endif
     }
 }
 
@@ -360,57 +320,20 @@ void ProcessPhiFromFile::GetPhifromSTL(
     // Initialise octree
     m_tree = Octree(centroids, 10, bounds);
 
-#if EXPLISTDATA
     for (int s = 0; s < nStrips; ++s) // homogeneous strip varient
     {
-        MultiRegions::ExpListSharedPtr Exp 
-         = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        MultiRegions::ExpListSharedPtr Exp =
+            m_f->AppendExpList(m_f->m_numHomogeneousDir);
         auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
         m_f->m_exp.insert(it, Exp);
     }
-#else
-    std::vector<MultiRegions::ExpListSharedPtr> varExp;
-    Array<OneD, NekDouble> tmp; 
-    
-    for (int s = 0; s < nStrips; ++s) // homogeneous strip varient
-    {
-        MultiRegions::ExpListSharedPtr Exp 
-         = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        auto it = m_f->m_exp.begin() + s * (nVars + 1) + nVars;
-        m_f->m_exp.insert(it, Exp);
-    }
-    // add variable - bit clumsy but should work for now
-    m_f->m_fieldPhys->AddVariable(varExp);
-    m_f->m_fieldCoeffs->AddVariable(varExp);
-
-    // Need to reshuffle data for strip case before filling new variables.
-    int ncoeffs = m_f->m_exp[0]->GetNcoeffs();
-    int npoints = m_f->m_exp[0]->GetTotPoints();
-    for (int s = nStrips-1; s > 0; --s) // homogeneous strip varient
-    {    
-        for(int n = nVars; n > 0; --n)
-        {
-            int fid  = s*(nVars)+n;
-            int fid1 = s*(nVars+1)+n;
-            Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
-                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
-            Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
-                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid-1),1);
-        }
-
-    }
-#endif
 
     // For each strip...
     for (int s = 0; s < nStrips; ++s)
     {
-        int fid = s*(nVars+1) + nVars;
+        int fid = s * (nVars + 1) + nVars;
 
-#if EXPLISTDATA
         Array<OneD, NekDouble> phys = m_f->m_exp[fid]->UpdatePhys();
-#else
-        Array<OneD, NekDouble> phys = m_f->m_fieldPhys->UpdateArray1D(fid);
-#endif
 
         // Parallelisation is highly recommended here
         for (int i = 0; i < nPts; ++i)
@@ -421,22 +344,16 @@ void ProcessPhiFromFile::GetPhifromSTL(
             tmpCoords[1] = coords[1][i];
             tmpCoords[0] = coords[0][i];
 
-            // Find the shortest distance to the body(ies) 
-           double dist;
+            // Find the shortest distance to the body(ies)
+            double dist;
             FindShortestDist(file, tmpCoords, dist);
 
             // Get corresponding value of Phi
             phys[i] = PhiFunction(dist, m_config["scale"].as<double>());
         }
 
-#if EXPLISTDATA
         // Update vector of expansions
         m_f->m_exp[fid]->FwdTrans(phys, m_f->m_exp[fid]->UpdateCoeffs());
-#else
-        // Update vector of expansions
-        m_f->m_exp[fid]->FwdTrans(phys,
-                                  tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid));
-#endif
     }
 }
 

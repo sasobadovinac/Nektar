@@ -181,10 +181,8 @@ void ExpList3DHomogeneous2D::SetCoeffPhys(void)
     m_ncoeffs = ncoeffs_per_line * nyzlines;
     m_npoints = npoints_per_line * nyzlines;
 
-#if EXPLISTDATA
     m_coeffs = Array<OneD, NekDouble>(m_ncoeffs, 0.0);
     m_phys   = Array<OneD, NekDouble>(m_npoints, 0.0);
-#endif
 
     int nel        = m_lines[0]->GetExpSize();
     m_coeff_offset = Array<OneD, int>(nel * nyzlines);
@@ -193,10 +191,8 @@ void ExpList3DHomogeneous2D::SetCoeffPhys(void)
 
     for (cnt = n = 0; n < nyzlines; ++n)
     {
-#if EXPLISTDATA
         m_lines[n]->SetCoeffsArray(tmparray = m_coeffs + ncoeffs_per_line * n);
         m_lines[n]->SetPhysArray(tmparray = m_phys + npoints_per_line * n);
-#endif
 
         for (i = 0; i < nel; ++i)
         {
@@ -325,7 +321,6 @@ void ExpList3DHomogeneous2D::v_GetCoords(Array<OneD, NekDouble> &xc0,
     }
 }
 
-#if EXPLISTDATA
 /**
  * Write Tecplot Files Zone
  * @param   outfile    Output file name.
@@ -360,7 +355,6 @@ void ExpList3DHomogeneous2D::v_WriteTecplotZone(std::ostream &outfile,
         outfile << std::endl;
     }
 }
-#endif
 
 void ExpList3DHomogeneous2D::v_WriteVtkPieceHeader(std::ostream &outfile,
                                                    int expansion, int)

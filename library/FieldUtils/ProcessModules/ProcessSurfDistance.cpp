@@ -85,12 +85,6 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
         exp = m_f->AppendExpList(NumHomogeneousDir);
 
         m_f->m_exp[nfields] = exp;
-        
-#if EXPLISTDATA
-#else
-        m_f->m_fieldCoeffs->AddVariable(exp);
-        m_f->m_fieldPhys  ->AddVariable(exp);
-#endif
     }
     else
     {
@@ -100,20 +94,10 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
     // Grab boundary expansions.
     Array<OneD, MultiRegions::ExpListSharedPtr> BndExp =
         exp->GetBndCondExpansions();
-    
+
     // Get map that takes us from boundary element to element.
     Array<OneD, int> BoundarytoElmtID, BoundarytoTraceID;
     exp->GetBoundaryToElmtMap(BoundarytoElmtID, BoundarytoTraceID);
-
-#if EXPLISTDATA
-#else
-    Array<OneD, NekFieldPhysSharedPtr>  BndExpCondFieldPhys  =
-        std::dynamic_pointer_cast
-        <MultiRegions::DisContField>(exp)->UpdateBndCondFieldPhys();
-    Array<OneD, NekFieldCoeffSharedPtr> BndExpCondFieldCoeff  =
-        std::dynamic_pointer_cast
-        <MultiRegions::DisContField>(exp)->UpdateBndCondFieldCoeff();
-#endif
 
     ASSERTL0(!(m_f->m_numHomogeneousDir),
              "Homogeneous expansions not supported");
@@ -204,14 +188,8 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
             elmt->GetCoords(x[0], x[1], x[2]);
 
             Array<OneD, NekDouble> face1(nqBnd), face2(nqBnd);
-#if EXPLISTDATA
             Array<OneD, NekDouble> dist =
                 BndExp[i]->UpdatePhys() + BndExp[i]->GetPhys_Offset(j);
-#else
-            Array<OneD, NekDouble> dist =
-                BndExpCondFieldPhys[i]->UpdateArray1D() 
-                + BndExp[i]->GetPhys_Offset(j);
-#endif
 
             // Zero existing value.
             Vmath::Zero(nqBnd, dist, 1);
@@ -248,20 +226,14 @@ void ProcessSurfDistance::Process(po::variables_map &vm)
                     default:
                         ASSERTL0(false, "Expansion not supported");
                 }
-                Vmath::Vsub(nqBnd,  face1, 1, face2, 1, face1, 1);
-                Vmath::Vvtvp(nqBnd, face1, 1, face1, 1, dist,  1, dist, 1);
+                Vmath::Vsub(nqBnd, face1, 1, face2, 1, face1, 1);
+                Vmath::Vvtvp(nqBnd, face1, 1, face1, 1, dist, 1, dist, 1);
             }
             Vmath::Vsqrt(nqBnd, dist, 1, dist, 1);
         }
 
-#if EXPLISTDATA
         BndExp[i]->FwdTransLocalElmt(BndExp[i]->GetPhys(),
                                      BndExp[i]->UpdateCoeffs());
-#else
-        Array<OneD, NekDouble> tmp; 
-        BndExp[i]->FwdTransLocalElmt(BndExpCondFieldPhys[i]->GetArray1D(),
-                         tmp = BndExpCondFieldCoeff[i]->UpdateArray1D());
-#endif
     }
 }
 } // namespace FieldUtils

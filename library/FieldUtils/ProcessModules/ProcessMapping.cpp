@@ -67,7 +67,7 @@ void ProcessMapping::Process(po::variables_map &vm)
     int npoints  = m_f->m_exp[0]->GetNpoints();
     int expdim   = m_f->m_graph->GetMeshDimension();
     int spacedim = expdim;
-    Array<OneD, NekDouble> tmp; 
+    Array<OneD, NekDouble> tmp;
     if ((m_f->m_numHomogeneousDir) == 1 || (m_f->m_numHomogeneousDir) == 2)
     {
         spacedim = 3;
@@ -106,24 +106,13 @@ void ProcessMapping::Process(po::variables_map &vm)
                 vel[i] = Array<OneD, NekDouble>(npoints);
                 if (m_f->m_exp[0]->GetWaveSpace())
                 {
-#if EXPLISTDATA
-                    m_f->m_exp[0]->HomogeneousBwdTrans(npoints, m_f->m_exp[i]->GetPhys(),
-                                                       vel[i]);
-#else
-                    m_f->m_exp[0]->HomogeneousBwdTrans(npoints, m_f->m_fieldPhys->
-                                                       GetArray1D(i),vel[i]);
-#endif
-                    
+                    m_f->m_exp[0]->HomogeneousBwdTrans(
+                        npoints, m_f->m_exp[i]->GetPhys(), vel[i]);
                 }
                 else
                 {
-#if EXPLISTDATA
                     Vmath::Vcopy(npoints, m_f->m_exp[i]->GetPhys(), 1, vel[i],
                                  1);
-#else
-                    Vmath::Vcopy(npoints, m_f->m_fieldPhys->GetArray1D(i), 1,
-                                 vel[i], 1);
-#endif
                 }
             }
             // Convert velocity to cartesian system
@@ -133,31 +122,16 @@ void ProcessMapping::Process(po::variables_map &vm)
             {
                 if (m_f->m_exp[0]->GetWaveSpace())
                 {
-#if EXPLISTDATA
-                    m_f->m_exp[0]->HomogeneousFwdTrans(npoints, 
-                        vel[i], m_f->m_exp[i]->UpdatePhys());
-#else
-                    m_f->m_exp[0]->HomogeneousFwdTrans(npoints, 
-                        vel[i], tmp = m_f->m_fieldPhys->UpdateArray1D(i));
-#endif
+                    m_f->m_exp[0]->HomogeneousFwdTrans(
+                        npoints, vel[i], m_f->m_exp[i]->UpdatePhys());
                 }
                 else
                 {
-#if EXPLISTDATA
                     Vmath::Vcopy(npoints, vel[i], 1,
                                  m_f->m_exp[i]->UpdatePhys(), 1);
-#else
-                    Vmath::Vcopy(npoints, vel[i], 1,
-                                 tmp = m_f->m_fieldPhys->UpdateArray1D(i), 1);
-#endif
                 }
-#if EXPLISTDATA
                 m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
                                                  m_f->m_exp[i]->UpdateCoeffs());
-#else
-                m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_fieldPhys->GetArray1D(i),
-                                    tmp = m_f->m_fieldCoeffs->UpdateArray1D(i));
-#endif
             }
         }
     }
@@ -167,7 +141,6 @@ void ProcessMapping::Process(po::variables_map &vm)
     mapping->GetCartesianCoordinates(coords[0], coords[1], coords[2]);
 
     // Add new information to m_f
-#if EXPLISTDATA
     for (int i = 0; i < addfields; ++i)
     {
         m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
@@ -176,19 +149,6 @@ void ProcessMapping::Process(po::variables_map &vm)
         m_f->m_exp[nfields + i]->FwdTransLocalElmt(
             coords[i], m_f->m_exp[nfields + i]->UpdateCoeffs());
     }
-#else
-    for (int i = 0; i < addfields; ++i)
-    {
-        m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        m_f->m_fieldPhys->AddVariable(m_f->m_exp[nfields+i]);
-        m_f->m_fieldCoeffs->AddVariable(m_f->m_exp[nfields+i]);
-
-        Vmath::Vcopy(npoints, coords[i], 1,
-                     tmp = m_f->m_fieldPhys->UpdateArray1D(nfields + i), 1);
-        m_f->m_exp[nfields + i]->FwdTransLocalElmt(coords[i],
-                     tmp = m_f->m_fieldCoeffs->UpdateArray1D(nfields + i));
-    }
-#endif
 }
 
 GlobalMapping::MappingSharedPtr ProcessMapping::GetMapping(FieldSharedPtr f)

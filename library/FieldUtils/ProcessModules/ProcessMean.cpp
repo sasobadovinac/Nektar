@@ -78,12 +78,8 @@ void ProcessMean::Process(po::variables_map &vm)
     // Calculate integral and mean of each field
     for (int i = 0; i < nfields; ++i)
     {
-#if EXPLISTDATA
         NekDouble integral = m_f->m_exp[0]->Integral(m_f->m_exp[i]->GetPhys());
-#else
-        NekDouble integral = m_f->m_exp[0]->Integral(m_f->m_fieldPhys->GetArray1D(i));
-#endif
-        
+
         if (m_f->m_comm->GetRank() == 0)
         {
             cout << "Integral (variable " << m_f->m_variables[i]

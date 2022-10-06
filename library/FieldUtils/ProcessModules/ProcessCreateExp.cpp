@@ -229,7 +229,7 @@ void ProcessCreateExp::LoadFieldData(bool useSessionVariables)
         }
     }
 
-    Array<OneD, NekDouble> tmp; 
+    Array<OneD, NekDouble> tmp;
     // Extract data to coeffs and bwd transform
     for (int s = 0; s < nstrips; ++s) // homogeneous strip varient
     {
@@ -247,22 +247,12 @@ void ProcessCreateExp::LoadFieldData(bool useSessionVariables)
                 {
                     m_f->m_exp[s * nfields + j]->ExtractDataToCoeffs(
                         m_f->m_fielddef[n], m_f->m_data[n], m_f->m_variables[j],
-#if EXPLISTDATA
                         m_f->m_exp[s * nfields + j]->UpdateCoeffs());
-#else
-                    tmp = m_f->m_fieldCoeffs->UpdateArray1D(s * nfields + j));
-#endif
                 }
             }
-#if EXPLISTDATA
             m_f->m_exp[s * nfields + j]->BwdTrans(
                 m_f->m_exp[s * nfields + j]->GetCoeffs(),
                 m_f->m_exp[s * nfields + j]->UpdatePhys());
-#else
-            m_f->m_exp[s * nfields + j]->BwdTrans(
-                m_f->m_fieldCoeffs->GetArray1D(s * nfields + j),
-                tmp = m_f->m_fieldPhys->UpdateArray1D(s * nfields + j));
-#endif
         }
     }
     // Clear fielddef and data (they should not be used after running this

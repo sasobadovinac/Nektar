@@ -70,15 +70,11 @@ void ProcessDeform::Process(po::variables_map &vm)
     }
 
     Array<OneD, MultiRegions::ExpListSharedPtr> exp(m_f->m_exp.size());
-    Array<OneD, Array<OneD, NekDouble> > phys(m_f->m_exp.size());
+    Array<OneD, Array<OneD, NekDouble>> phys(m_f->m_exp.size());
     for (int i = 0; i < exp.size(); ++i)
     {
-        exp[i] = m_f->m_exp[i];
-#if EXPLISTDATA
-        phys[i]= m_f->m_exp[i]->UpdatePhys(); 
-#else
-        phys[i]= m_f->m_fieldPhys->UpdateArray1D(i);
-#endif
+        exp[i]  = m_f->m_exp[i];
+        phys[i] = m_f->m_exp[i]->UpdatePhys();
     }
 
     GlobalMapping::UpdateGeometry(m_f->m_graph, exp, phys, false);

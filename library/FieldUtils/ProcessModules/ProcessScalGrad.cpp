@@ -105,26 +105,14 @@ void ProcessScalGrad::Process(po::variables_map &vm)
     Array<OneD, int> BoundarytoElmtID, BoundarytoTraceID;
     Array<OneD, Array<OneD, MultiRegions::ExpListSharedPtr>> BndExp(nfields);
 
-#if EXPLISTDATA
-#else
-    Array<OneD, Array<OneD, NekFieldCoeffSharedPtr>> BndExpCoeffs(nfields);
-#endif
-    
     m_f->m_exp[0]->GetBoundaryToElmtMap(BoundarytoElmtID, BoundarytoTraceID);
 
     for (i = 0; i < nfields; i++)
     {
         BndExp[i]   = m_f->m_exp[i]->GetBndCondExpansions();
         outfield[i] = Array<OneD, NekDouble>(npoints);
-
-#if EXPLISTDATA
-#else
-        BndExpCoeffs[i] = std::dynamic_pointer_cast
-            <MultiRegions::DisContField>(m_f->m_exp[i])
-            ->UpdateBndCondFieldCoeff();
-#endif
     }
-    
+
     // loop over the types of boundary conditions
     for (cnt = n = 0; n < BndExp[0].size(); ++n)
     {
@@ -160,13 +148,8 @@ void ProcessScalGrad::Process(po::variables_map &vm)
                     {
                         for (j = 0; j < nfields; j++)
                         {
-#if EXPLISTDATA
                             outfield[j] = BndExp[j][n]->UpdateCoeffs() +
                                           BndExp[j][n]->GetCoeff_Offset(i);
-#else
-                            outfield[j] = BndExpCoeffs[j][n]->UpdateArray1D() + 
-                                          BndExp[j][n]->GetCoeff_Offset(i);
-#endif
                         }
 
                         // Get face 2D expansion from element expansion
@@ -200,11 +183,7 @@ void ProcessScalGrad::Process(po::variables_map &vm)
                         {
                             Vmath::Zero(nfq, gradnorm, 1);
 
-#if EXPLISTDATA
                             scalar = m_f->m_exp[k]->GetPhys() + offset;
-#else
-                            scalar = m_f->m_fieldPhys->GetArray1D(k) + offset;
-#endif
                             elmt->PhysDeriv(scalar, grad[0], grad[1], grad[2]);
 
                             for (j = 0; j < ngrad; ++j)

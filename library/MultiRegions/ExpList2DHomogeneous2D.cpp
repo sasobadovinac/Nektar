@@ -106,10 +106,8 @@ void ExpList2DHomogeneous2D::SetCoeffPhys(void)
     m_ncoeffs = ncoeffs_per_line * nyzlines;
     m_npoints = npoints_per_line * nyzlines;
 
-#if EXPLISTDATA
     m_coeffs = Array<OneD, NekDouble>{size_t(m_ncoeffs), 0.0};
     m_phys   = Array<OneD, NekDouble>{size_t(m_npoints), 0.0};
-#endif
 
     int nel        = m_lines[0]->GetExpSize();
     m_coeff_offset = Array<OneD, int>(nel * nyzlines);
@@ -118,10 +116,8 @@ void ExpList2DHomogeneous2D::SetCoeffPhys(void)
 
     for (cnt = n = 0; n < nyzlines; ++n)
     {
-#if EXPLISTDATA
         m_lines[n]->SetCoeffsArray(tmparray = m_coeffs + ncoeffs_per_line * n);
         m_lines[n]->SetPhysArray(tmparray = m_phys + npoints_per_line * n);
-#endif
 
         for (i = 0; i < nel; ++i)
         {
@@ -190,7 +186,7 @@ void ExpList2DHomogeneous2D::v_FwdTrans(
     Array<OneD, NekDouble> &outarray)
 {
     // just have a point expansion so copy inarray to outarray
-    Vmath::Vcopy(m_npoints,inarray,1,outarray,1);
+    Vmath::Vcopy(m_npoints, inarray, 1, outarray, 1);
 
     if (!m_WaveSpace)
     {
@@ -266,8 +262,6 @@ void ExpList2DHomogeneous2D::v_GetCoords(Array<OneD, NekDouble> &xc0,
     }
 }
 
-#if EXPLISTDATA
-
 /**
  * Write Tecplot Files Zone
  * @param   outfile    Output file name.
@@ -302,7 +296,6 @@ void ExpList2DHomogeneous2D::v_WriteTecplotZone(std::ostream &outfile,
         outfile << std::endl;
     }
 }
-#endif
 
 void ExpList2DHomogeneous2D::v_WriteVtkPieceHeader(std::ostream &outfile,
                                                    int expansion, int istrip)
@@ -374,7 +367,6 @@ void ExpList2DHomogeneous2D::v_WriteVtkPieceHeader(std::ostream &outfile,
     outfile << "      </Cells>" << endl;
     outfile << "      <PointData>" << endl;
 }
-
 
 } // namespace MultiRegions
 } // namespace Nektar

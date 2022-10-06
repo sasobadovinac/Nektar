@@ -219,13 +219,6 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
         fromField->m_exp[i] = fromField->AppendExpList(NumHomogeneousDir);
     }
 
-#if EXPLISTDATA
-#else
-    fromField->m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(fromField->m_exp);
-    fromField->m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(fromField->m_exp);
-    Array<OneD, NekDouble> tmp; 
-#endif
-
     // load field into expansion in fromfield.
     set<int> sinmode;
     if (m_config["realmodetoimag"].as<string>().compare("NotSet"))
@@ -246,11 +239,7 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
             fromField->m_exp[j]->ExtractDataToCoeffs(
                 fromField->m_fielddef[i], fromField->m_data[i],
                 fromField->m_fielddef[0]->m_fields[j],
-#if EXPLISTDATA
                 fromField->m_exp[j]->UpdateCoeffs());
-#else
-                tmp = fromField->m_fieldCoeffs->UpdateArray1D(j));
-#endif
         }
         if (NumHomogeneousDir == 1)
         {
@@ -258,32 +247,16 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
             if (sinmode.count(j))
             {
                 int Ncoeff = fromField->m_exp[j]->GetPlane(2)->GetNcoeffs();
-#if EXPLISTDATA
                 Vmath::Smul(
                     Ncoeff, -1., fromField->m_exp[j]->GetPlane(2)->GetCoeffs(),
                     1, fromField->m_exp[j]->GetPlane(3)->UpdateCoeffs(), 1);
                 Vmath::Zero(Ncoeff,
                             fromField->m_exp[j]->GetPlane(2)->UpdateCoeffs(),
                             1);
-#else
-                Array<OneD, NekDouble> tmp;
-                Vmath::Smul(Ncoeff, -1., fromField->m_fieldCoeffs->GetArray1D(j)
-                            + 2*Ncoeff, 1,
-                            tmp = fromField->m_fieldCoeffs->UpdateArray1D(j)
-                            + 3*Ncoeff, 1);
-                Vmath::Zero(Ncoeff,tmp = fromField->m_fieldCoeffs->
-                            UpdateArray1D(j) + 2*Ncoeff, 1);
-#endif
             }
         }
-#if EXPLISTDATA
         fromField->m_exp[j]->BwdTrans(fromField->m_exp[j]->GetCoeffs(),
                                       fromField->m_exp[j]->UpdatePhys());
-#else
-        Array<OneD, NekDouble> tmp;
-        fromField->m_exp[j]->BwdTrans(fromField->m_fieldCoeffs->GetArray1D(j),
-                              tmp = fromField->m_fieldPhys->UpdateArray1D(j));
-#endif
 
         Array<OneD, NekDouble> newPts(m_f->m_fieldPts->GetNpoints());
         m_f->m_fieldPts->AddField(newPts,
@@ -295,13 +268,8 @@ void ProcessInterpPoints::Process(po::variables_map &vm)
     NekDouble clamp_up  = m_config["clamptouppervalue"].as<NekDouble>();
     NekDouble def_value = m_config["defaultvalue"].as<NekDouble>();
 
-#if EXPLISTDATA
     InterpolateFieldToPts(fromField->m_exp, m_f->m_fieldPts, clamp_low,
                           clamp_up, def_value);
-#else
-    InterpolateFieldToPts(fromField->m_exp, fromField->m_fieldPhys, m_f->m_fieldPts,
-                          clamp_low, clamp_up, def_value);
-#endif
 
     if (!boost::iequals(m_config["cp"].as<string>(), "NotSet"))
     {
@@ -536,10 +504,7 @@ void ProcessInterpPoints::CreateFieldPts(po::variables_map &vm)
 
 void ProcessInterpPoints::InterpolateFieldToPts(
     vector<MultiRegions::ExpListSharedPtr> &field0,
-#if EXPLISTDATA
-#else
-    NekFieldPhysSharedPtr &field0Phys,
-#endif
+
     LibUtilities::PtsFieldSharedPtr &pts, NekDouble clamp_low,
     NekDouble clamp_up, NekDouble def_value)
 {
@@ -555,12 +520,8 @@ void ProcessInterpPoints::InterpolateFieldToPts(
         interp.SetProgressCallback(&ProcessInterpPoints::PrintProgressbar,
                                    this);
     }
-#if EXPLISTDATA
     interp.Interpolate(field0, pts);
-#else
-    interp.Interpolate(field0, field0Phys, pts);
-#endif
-    
+
     if (m_f->m_comm->GetRank() == 0)
     {
         cout << endl;

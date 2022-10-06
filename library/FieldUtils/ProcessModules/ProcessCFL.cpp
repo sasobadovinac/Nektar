@@ -67,10 +67,10 @@ void ProcessCFL::Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
-    int expdim    = m_f->m_graph->GetMeshDimension();
-    int nelmt     = m_f->m_exp[0]->GetExpSize();
-    int nfields   = m_f->m_variables.size();
-    m_spacedim    = expdim;
+    int expdim  = m_f->m_graph->GetMeshDimension();
+    int nelmt   = m_f->m_exp[0]->GetExpSize();
+    int nfields = m_f->m_variables.size();
+    m_spacedim  = expdim;
 
     NekDouble timeStep = m_f->m_session->GetParameter("TimeStep");
     NekDouble cLambda  = 0.2; // Spencer's book
@@ -98,47 +98,14 @@ void ProcessCFL::Process(po::variables_map &vm)
     m_f->m_session->LoadParameter("Strip_Z", nstrips, 1);
 
     MultiRegions::ExpListSharedPtr Exp;
-#if EXPLISTDATA
-    //add in new fields 
+    // add in new fields
     for (int s = 0; s < nstrips; ++s)
     {
         Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        m_f->m_exp.insert(m_f->m_exp.begin() + s*(nfields + 1) + nfields, Exp);
-    }
-#else
-    std::vector<MultiRegions::ExpListSharedPtr> varExp;
-    Array<OneD, NekDouble> tmp; 
-    // add in new fields 
-    for (int s = 0; s < nstrips; ++s)
-    {
-        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-            
-        m_f->m_exp.insert(m_f->m_exp.begin() + s*(nfields + 1)+ nfields, Exp);
-            varExp.push_back(Exp);
+        m_f->m_exp.insert(m_f->m_exp.begin() + s * (nfields + 1) + nfields,
+                          Exp);
     }
 
-    m_f->m_fieldPhys  ->AddVariable(varExp);
-    m_f->m_fieldCoeffs->AddVariable(varExp);
-
-    // Reshuffle data for strip case before filling new variables.
-    for (int s = nstrips-1; s > 0; --s) // homogeneous strip varient
-    {    
-        int ncoeffs = m_f->m_exp[0]->GetNcoeffs();
-        for(int n = nfields; n > 0; --n)
-        {
-            int fid  = s*(nfields)+n;
-            int fid1 = s*(nfields+1)+n;
-
-            Vmath::Vcopy(ncoeffs,m_f->m_fieldCoeffs->GetArray1D(fid-1),1,
-                         tmp = m_f->m_fieldCoeffs->UpdateArray1D(fid1-1),1);
-
-            Vmath::Vcopy(npoints,m_f->m_fieldPhys->GetArray1D(fid-1),1,
-                         tmp = m_f->m_fieldPhys->UpdateArray1D(fid1-1),1);
-        }
-    }
-#endif
-    
-    
     for (int s = 0; s < nstrips; ++s) // homogeneous strip varient
     {
         Array<OneD, Array<OneD, NekDouble>> velocityField(expdim);
@@ -171,20 +138,10 @@ void ProcessCFL::Process(po::variables_map &vm)
         }
 
         // temporary store the CFL number field for each strip
-#if EXPLISTDATA
-        Vmath::Vcopy(npoints, outfield, 1, m_f->m_exp[s*(nfields+1) + nfields]->
-                     UpdatePhys(), 1);
-        m_f->m_exp[0]->FwdTransLocalElmt(outfield,
-                       m_f->m_exp[s*(nfields+1) + nfields]->UpdateCoeffs());
-#else
-        Array<OneD, NekDouble> tmp; 
-        Vmath::Vcopy(npoints, outfield, 1, tmp = m_f->m_fieldPhys->UpdateArray1D
-                     (s*(nfields+1) + nfields), 1); 
-        
-        m_f->m_exp[0]->FwdTransLocalElmt(outfield,
-                      tmp = m_f->m_fieldCoeffs->UpdateArray1D(s*(nfields+1)
-                                                              + nfields));
-#endif
+        Vmath::Vcopy(npoints, outfield, 1,
+                     m_f->m_exp[s * (nfields + 1) + nfields]->UpdatePhys(), 1);
+        m_f->m_exp[0]->FwdTransLocalElmt(
+            outfield, m_f->m_exp[s * (nfields + 1) + nfields]->UpdateCoeffs());
     }
 }
 
@@ -202,13 +159,8 @@ void ProcessCFL::GetVelocity(Array<OneD, Array<OneD, NekDouble>> &vel,
         for (int i = 0; i < expdim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-#if EXPLISTDATA
             Vmath::Vcopy(npoints, m_f->m_exp[strip * nfields + i]->GetPhys(), 1,
                          vel[i], 1);
-#else
-            Vmath::Vcopy(npoints, m_f->m_fieldPhys->GetArray1D
-                         (strip * nfields + i), 1, vel[i], 1);
-#endif
         }
     }
     else if (boost::iequals(m_f->m_variables[0], "rho") &&

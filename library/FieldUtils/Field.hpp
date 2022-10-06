@@ -80,12 +80,7 @@ struct Field
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> m_fielddef;
     std::vector<std::vector<double>> m_data;
     std::vector<MultiRegions::ExpListSharedPtr> m_exp;
-#if EXPLISTDATA
-#else
-    NekFieldCoeffSharedPtr m_fieldCoeffs;
-    NekFieldPhysSharedPtr  m_fieldPhys;
-#endif
-    
+
     std::vector<std::string> m_variables;
 
     int m_numHomogeneousDir;
@@ -200,11 +195,7 @@ struct Field
             {
                 m_exp[0] =
                     MemoryManager<MultiRegions::ExpList>::AllocateSharedPtr();
-#if EXPLISTDATA
-#else
-                m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(m_exp);
-                m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(m_exp);
-#endif
+
                 return;
             }
 
@@ -253,11 +244,6 @@ struct Field
                               << std::endl;
                 }
             }
-#if EXPLISTDATA
-#else
-            m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(m_exp);
-            m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(m_exp);
-#endif
         }
 
         if (fldfilegiven)
@@ -303,14 +289,6 @@ struct Field
                 }
             }
 
-#if EXPLISTDATA
-#else
-            m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(m_exp);
-            m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(m_exp);
-            Array<OneD, NekDouble> tmp; 
-#endif
-
-            
             // Extract data to coeffs and bwd transform
             for (int s = 0; s < nstrips; ++s) // homogeneous strip varient
             {
@@ -328,21 +306,12 @@ struct Field
                         {
                             m_exp[s * nfields + j]->ExtractDataToCoeffs(
                                 m_fielddef[n], m_data[n], m_variables[j],
-#if EXPLISTDATA
                                 m_exp[s * nfields + j]->UpdateCoeffs());
-#else
-                                tmp = m_fieldCoeffs->UpdateArray1D(s * nfields + j));
-#endif
                         }
                     }
                     m_exp[s * nfields + j]->BwdTrans(
-#if EXPLISTDATA
                         m_exp[s * nfields + j]->GetCoeffs(),
                         m_exp[s * nfields + j]->UpdatePhys());
-#else
-                        m_fieldCoeffs->GetArray1D(s * nfields + j),
-                        tmp = m_fieldPhys ->UpdateArray1D(s * nfields + j));
-#endif
                 }
             }
             // Clear fielddef and data

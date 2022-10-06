@@ -96,12 +96,8 @@ public:
     MULTI_REGIONS_EXPORT void GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                                    Array<OneD, int> &EdgeID);
 
-#if EXPLISTDATA
     virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                        const bool DeclareCoeffPhysArrays);
-#else
-    virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result);
-#endif
 
     /// Storage space for the boundary to element and boundary to trace map.
     /// This member variable is really allocated just in case a boundary
@@ -117,22 +113,6 @@ protected:
     Array<OneD, NekDouble> m_bndCondBndWeight;
 
     Array<OneD, SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
-
-
-#if EXPLISTDATA
-#else
-    /**
-     * A NekField sharedpoints containing the coefficient space
-     * boundary condition information
-     */ 
-    Array<OneD, NekFieldCoeffSharedPtr> m_bndCondFieldCoeff; 
-
-    /**
-     * A NekField sharedpoints containing the physical space
-     * boundary condition information
-     */ 
-    Array<OneD, NekFieldPhysSharedPtr> m_bndCondFieldPhys; 
-#endif
 
     virtual void v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
                                         Array<OneD, int> &EdgeID)

@@ -156,13 +156,6 @@ void ProcessMultiShear::Process(po::variables_map &vm)
         fromField[i]->m_exp[0] =
             fromField[i]->SetUpFirstExpList(NumHomogeneousDir, true);
 
-#if EXPLISTDATA
-#else
-        fromField[i]->m_fieldCoeffs = std::make_shared<NekField<NekDouble,eCoeff>>(fromField[i]->m_exp);
-        fromField[i]->m_fieldPhys   = std::make_shared<NekField<NekDouble,ePhys >>(fromField[i]->m_exp);
-        Array<OneD, NekDouble> tmp; 
-#endif
-
         for (j = 1; j < nfields; ++j)
         {
             fromField[i]->m_exp[j] = m_f->AppendExpList(NumHomogeneousDir);
@@ -172,27 +165,14 @@ void ProcessMultiShear::Process(po::variables_map &vm)
         {
             for (int k = 0; k < fromField[i]->m_data.size(); ++k)
             {
-#if EXPLISTDATA
                 fromField[i]->m_exp[j]->ExtractDataToCoeffs(
-                                                            fromField[i]->m_fielddef[k], fromField[i]->m_data[k],
-                                                            fromField[i]->m_fielddef[k]->m_fields[j],
-                                                            fromField[i]->m_exp[j]->UpdateCoeffs());
-#else
-                fromField[i]->m_exp[j]->ExtractDataToCoeffs(
-                                                            fromField[i]->m_fielddef[k], fromField[i]->m_data[k],
-                                                            fromField[i]->m_fielddef[k]->m_fields[j],
-                                                            tmp = fromField[i]->m_fieldCoeffs->UpdateArray1D(j));
-#endif
+                    fromField[i]->m_fielddef[k], fromField[i]->m_data[k],
+                    fromField[i]->m_fielddef[k]->m_fields[j],
+                    fromField[i]->m_exp[j]->UpdateCoeffs());
             }
-#if EXPLISTDATA
             fromField[i]->m_exp[j]->BwdTrans(
-                                             fromField[i]->m_exp[j]->GetCoeffs(),
-                                             fromField[i]->m_exp[j]->UpdatePhys());
-#else
-            fromField[i]->m_exp[j]->BwdTrans(
-                                             fromField[i]->m_fieldCoeffs->GetArray1D(j),
-                                             tmp = fromField[i]->m_fieldPhys->UpdateArray1D(j));
-#endif
+                fromField[i]->m_exp[j]->GetCoeffs(),
+                fromField[i]->m_exp[j]->UpdatePhys());
         }
     }
 
@@ -236,13 +216,8 @@ void ProcessMultiShear::Process(po::variables_map &vm)
     {
         for (j = 0; j < spacedim; ++j)
         {
-#if EXPLISTDATA
             Vmath::Vadd(npoints, fromField[i]->m_exp[j]->GetPhys(), 1,
                         normTemporalMeanVec[j], 1, normTemporalMeanVec[j], 1);
-#else
-            Vmath::Vadd(npoints, fromField[i]->m_fieldPhys->GetArray1D(j), 1,
-                        normTemporalMeanVec[j], 1, normTemporalMeanVec[j], 1);
-#endif
         }
     }
 
@@ -266,83 +241,40 @@ void ProcessMultiShear::Process(po::variables_map &vm)
     if (wssg) // cross product with normals to obtain direction parallel to
               // temporal mean vector.
     {
-#if EXPLISTDATA
         Vmath::Vmul(npoints, fromField[0]->m_exp[nfields - 1]->GetPhys(), 1,
                     normTemporalMeanVec[1], 1, normCrossDir[0], 1);
         Vmath::Vvtvm(npoints, fromField[0]->m_exp[nfields - 2]->GetPhys(), 1,
                      normTemporalMeanVec[2], 1, normCrossDir[0], 1,
                      normCrossDir[0], 1);
-
         Vmath::Vmul(npoints, fromField[0]->m_exp[nfields - 3]->GetPhys(), 1,
                     normTemporalMeanVec[2], 1, normCrossDir[1], 1);
         Vmath::Vvtvm(npoints, fromField[0]->m_exp[nfields - 1]->GetPhys(), 1,
                      normTemporalMeanVec[0], 1, normCrossDir[1], 1,
                      normCrossDir[1], 1);
-
         Vmath::Vmul(npoints, fromField[0]->m_exp[nfields - 2]->GetPhys(), 1,
                     normTemporalMeanVec[0], 1, normCrossDir[2], 1);
         Vmath::Vvtvm(npoints, fromField[0]->m_exp[nfields - 3]->GetPhys(), 1,
                      normTemporalMeanVec[1], 1, normCrossDir[2], 1,
                      normCrossDir[2], 1);
-#else
-        Vmath::Vmul(npoints,  fromField[0]->m_fieldPhys->GetArray1D(nfields - 1), 1,
-                    normTemporalMeanVec[1], 1, normCrossDir[0], 1);
-        Vmath::Vvtvm(npoints, fromField[0]->m_fieldPhys->GetArray1D(nfields - 2), 1,
-                     normTemporalMeanVec[2], 1, normCrossDir[0], 1,
-                     normCrossDir[0], 1);
-
-        Vmath::Vmul(npoints,  fromField[0]->m_fieldPhys->GetArray1D(nfields - 3), 1,
-                    normTemporalMeanVec[2], 1, normCrossDir[1], 1);
-        Vmath::Vvtvm(npoints, fromField[0]->m_fieldPhys->GetArray1D(nfields - 1), 1,
-                     normTemporalMeanVec[0], 1, normCrossDir[1], 1,
-                     normCrossDir[1], 1);
-
-        Vmath::Vmul(npoints, fromField[0]->m_fieldPhys->GetArray1D(nfields - 2), 1,
-                    normTemporalMeanVec[0], 1, normCrossDir[2], 1);
-        Vmath::Vvtvm(npoints, fromField[0]->m_fieldPhys->GetArray1D(nfields - 3), 1,
-                     normTemporalMeanVec[1], 1, normCrossDir[2], 1,
-                     normCrossDir[2], 1);
-#endif
     }
 
     // Compute tawss, trs,  osi, taafi, tacfi, WSSG.
     for (i = 0; i < nfld; ++i)
     {
-#if EXPLISTDATA
         for (j = 0; j < spacedim; ++j)
         {
             Vmath::Vvtvp(npoints, fromField[i]->m_exp[j]->GetPhys(), 1,
                          normTemporalMeanVec[j], 1, DotProduct, 1, DotProduct,
                          1);
         }
-
         // TAWSS
         Vmath::Vadd(npoints, fromField[i]->m_exp[spacedim]->GetPhys(), 1,
                     outfield[0], 1, outfield[0], 1);
-
         // transWSS
         Vmath::Vmul(npoints, DotProduct, 1, DotProduct, 1, temp, 1);
         Vmath::Vvtvm(npoints, fromField[i]->m_exp[spacedim]->GetPhys(), 1,
                      fromField[i]->m_exp[spacedim]->GetPhys(), 1, temp, 1, temp,
                      1);
-#else
-        for (j = 0; j < spacedim; ++j)
-        {
-            Vmath::Vvtvp(npoints, fromField[i]->m_fieldPhys->GetArray1D(j), 1,
-                         normTemporalMeanVec[j], 1, DotProduct, 1, DotProduct,
-                         1);
-        }
-
-        // TAWSS
-        Vmath::Vadd(npoints, fromField[i]->m_fieldPhys->GetArray1D(spacedim), 1,
-                    outfield[0], 1, outfield[0], 1);
-
-        // transWSS
-        Vmath::Vmul(npoints, DotProduct, 1, DotProduct, 1, temp, 1);
-        Vmath::Vvtvm(npoints, fromField[i]->m_fieldPhys->GetArray1D(spacedim), 1,
-                     fromField[i]->m_fieldPhys->GetArray1D(spacedim), 1, temp, 1, temp,
-                     1);
-#endif
 
         for (j = 0; j < npoints; ++j)
         {
@@ -353,15 +285,9 @@ void ProcessMultiShear::Process(po::variables_map &vm)
         }
 
         // TAAFI
-#if EXPLISTDATA
         Vmath::Vdiv(npoints, DotProduct, 1,
                     fromField[i]->m_exp[spacedim]->GetPhys(), 1, temp, 1);
         Vmath::Vadd(npoints, temp, 1, outfield[3], 1, outfield[3], 1);
-#else
-        Vmath::Vdiv(npoints, DotProduct, 1,
-                    fromField[i]->m_fieldPhys->GetArray1D(spacedim), 1, temp, 1);
-        Vmath::Vadd(npoints, temp, 1, outfield[3], 1, outfield[3], 1);
-#endif
 
         // TACFI
         for (j = 0; j < npoints; ++j)
@@ -393,14 +319,8 @@ void ProcessMultiShear::Process(po::variables_map &vm)
 
             for (j = 0; j < spacedim; ++j)
             {
-#if EXPLISTDATA
                 Vmath::Vvtvp(npoints, fromField[i]->m_exp[j]->GetPhys(), 1,
                              normCrossDir[j], 1, DotProduct, 1, DotProduct, 1);
-#else
-                Vmath::Vvtvp(npoints, fromField[i]->m_fieldPhys->GetArray1D(j), 1,
-                             normCrossDir[j], 1, DotProduct, 1, DotProduct, 1);
-#endif
-
             }
             fromField[i]->m_exp[0]->PhysDeriv(DotProduct, dtemp[0], dtemp[1],
                                               dtemp[2]);
@@ -469,18 +389,9 @@ void ProcessMultiShear::Process(po::variables_map &vm)
 
     for (i = 0; i < nout; ++i)
     {
-#if EXPLISTDATA
         m_f->m_exp[i]->FwdTrans(outfield[i], m_f->m_exp[i]->UpdateCoeffs());
         m_f->m_exp[i]->BwdTrans(m_f->m_exp[i]->GetCoeffs(),
                                 m_f->m_exp[i]->UpdatePhys());
-
-#else
-        Array<OneD, NekDouble> tmp; 
-        m_f->m_exp[i]->FwdTrans(outfield[i],tmp =
-                                m_f->m_fieldCoeffs->UpdateArray1D(i));
-        m_f->m_exp[i]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(i), 
-                                tmp = m_f->m_fieldPhys->UpdateArray1D(i));
-#endif
     }
 }
 } // namespace FieldUtils

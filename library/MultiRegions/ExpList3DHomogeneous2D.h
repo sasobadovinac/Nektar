@@ -118,9 +118,7 @@ protected:
                              Array<OneD, NekDouble> &coord_1,
                              Array<OneD, NekDouble> &coord_2);
 
-#if EXPLISTDATA
     virtual void v_WriteTecplotZone(std::ostream &outfile, int expansion);
-#endif
 
     virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                                        int istrip);

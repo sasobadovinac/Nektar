@@ -150,22 +150,7 @@ void ProcessDisplacement::Process(po::variables_map &vm)
             m_f->m_exp[0]->GetBndCondExpansions()[bndCondId];
         MultiRegions::ExpListSharedPtr bndCondExpV =
             m_f->m_exp[1]->GetBndCondExpansions()[bndCondId];
-#if EXPLISTDATA        
-#else
-        NekFieldCoeffSharedPtr bndCondFieldCoeffU = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[0])->UpdateBndCondFieldCoeff()[bndCondId]; 
-        NekFieldPhysSharedPtr  bndCondFieldPhysU  = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[0])->UpdateBndCondFieldPhys()[bndCondId]; 
-        NekFieldCoeffSharedPtr bndCondFieldCoeffV = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[1])->UpdateBndCondFieldCoeff()[bndCondId]; 
-        NekFieldPhysSharedPtr  bndCondFieldPhysV = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[1])->UpdateBndCondFieldPhys()[bndCondId];  
-#endif
-        
+
         map<int, int> bndCondIds;
         for (int i = 0; i < bndCondExpU->GetExpSize(); ++i)
         {
@@ -205,32 +190,17 @@ void ProcessDisplacement::Process(po::variables_map &vm)
             bndCondExpU->GetExp(e)->GetCoords(xC, yC);
             toSeg->GetCoords(xL, yL);
 
-#if EXPLISTDATA
             Vmath::Vsub(nq, xL, 1, xC, 1,
                         tmp = bndCondExpU->UpdatePhys() + offset, 1);
             Vmath::Vsub(nq, yL, 1, yC, 1,
                         tmp = bndCondExpV->UpdatePhys() + offset, 1);
-#else
-            Vmath::Vsub(nq, xL, 1, xC, 1,
-                        tmp = bndCondFieldPhysU->UpdateArray1D() + offset, 1);
-            Vmath::Vsub(nq, yL, 1, yC, 1,
-                        tmp = bndCondFieldPhysV->UpdateArray1D() + offset, 1);
-#endif
         }
 
         // bndconstrained?
-#if EXPLISTDATA
         bndCondExpU->FwdTransBndConstrained(bndCondExpU->GetPhys(),
                                             bndCondExpU->UpdateCoeffs());
         bndCondExpV->FwdTransBndConstrained(bndCondExpV->GetPhys(),
                                             bndCondExpV->UpdateCoeffs());
-#else
-        Array<OneD, NekDouble> tmp1; 
-        bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysU->GetArray1D(),
-                                   tmp1 = bndCondFieldCoeffU->UpdateArray1D());
-        bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysV->GetArray1D(),
-                                   tmp1 = bndCondFieldCoeffV->UpdateArray1D());
-#endif
     }
     else if (bndGraph->GetMeshDimension() == 2)
     {
@@ -245,27 +215,6 @@ void ProcessDisplacement::Process(po::variables_map &vm)
             m_f->m_exp[1]->GetBndCondExpansions()[bndCondId];
         MultiRegions::ExpListSharedPtr bndCondExpW =
             m_f->m_exp[2]->GetBndCondExpansions()[bndCondId];
-#if EXPLISTDATA
-#else
-        NekFieldCoeffSharedPtr bndCondFieldCoeffU = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[0])->UpdateBndCondFieldCoeff()[bndCondId]; 
-        NekFieldPhysSharedPtr  bndCondFieldPhysU  = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[0])->UpdateBndCondFieldPhys()[bndCondId]; 
-        NekFieldCoeffSharedPtr bndCondFieldCoeffV = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[1])->UpdateBndCondFieldCoeff()[bndCondId]; 
-        NekFieldPhysSharedPtr  bndCondFieldPhysV = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[1])->UpdateBndCondFieldPhys()[bndCondId];  
-        NekFieldCoeffSharedPtr bndCondFieldCoeffW = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[2])->UpdateBndCondFieldCoeff()[bndCondId]; 
-        NekFieldPhysSharedPtr  bndCondFieldPhysW = 
-            std::dynamic_pointer_cast<MultiRegions::DisContField>
-            (m_f->m_exp[2])->UpdateBndCondFieldPhys()[bndCondId];  
-#endif
 
         map<int, int> bndCondIds;
         for (int i = 0; i < bndCondExpU->GetExpSize(); ++i)
@@ -335,24 +284,14 @@ void ProcessDisplacement::Process(po::variables_map &vm)
             bndCondExpU->GetExp(e)->GetCoords(xC, yC, zC);
             toSeg->GetCoords(xL, yL, zL);
 
-#if EXPLISTDATA
             Vmath::Vsub(nq, xL, 1, xC, 1,
                         tmp = bndCondExpU->UpdatePhys() + offset, 1);
             Vmath::Vsub(nq, yL, 1, yC, 1,
                         tmp = bndCondExpV->UpdatePhys() + offset, 1);
             Vmath::Vsub(nq, zL, 1, zC, 1,
                         tmp = bndCondExpW->UpdatePhys() + offset, 1);
-#else
-            Vmath::Vsub(nq, xL, 1, xC, 1,
-                        tmp = bndCondFieldPhysU->UpdateArray1D() + offset, 1);
-            Vmath::Vsub(nq, yL, 1, yC, 1,
-                        tmp = bndCondFieldPhysV->UpdateArray1D() + offset, 1);
-            Vmath::Vsub(nq, yL, 1, yC, 1,
-                        tmp = bndCondFieldPhysW->UpdateArray1D() + offset, 1);
-#endif
         }
 
-#if EXPLISTDATA
         // bndconstrained?
         bndCondExpU->FwdTransBndConstrained(bndCondExpU->GetPhys(),
                                             bndCondExpU->UpdateCoeffs());
@@ -360,16 +299,6 @@ void ProcessDisplacement::Process(po::variables_map &vm)
                                             bndCondExpV->UpdateCoeffs());
         bndCondExpW->FwdTransBndConstrained(bndCondExpW->GetPhys(),
                                             bndCondExpW->UpdateCoeffs());
-#else
-        Array<OneD, NekDouble> tmp1; 
-       // bndconstrained?
-        bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysU->GetArray1D(),
-                                        tmp1 = bndCondFieldCoeffU->UpdateArray1D());
-        bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysV->GetArray1D(),
-                                        tmp1 = bndCondFieldCoeffV->UpdateArray1D());
-        bndCondExpU->FwdTransBndConstrained(bndCondFieldPhysW->GetArray1D(),
-                                        tmp1 = bndCondFieldCoeffW->UpdateArray1D());
-#endif
     }
 }
 } // namespace FieldUtils

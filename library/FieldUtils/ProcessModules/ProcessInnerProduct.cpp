@@ -146,12 +146,7 @@ void ProcessInnerProduct::Process(po::variables_map &vm)
     {
         int fid    = processFields[j];
         SaveFld[j] = Array<OneD, NekDouble>(nphys);
-#if EXPLISTDATA
         m_f->m_exp[fid]->BwdTrans(m_f->m_exp[fid]->GetCoeffs(), SaveFld[j]);
-#else
-        m_f->m_exp[fid]->BwdTrans(m_f->m_fieldCoeffs->GetArray1D(fid),
-                                  SaveFld[j]);
-#endif
     }
 
     if (allfromflds == false)
@@ -238,14 +233,14 @@ NekDouble ProcessInnerProduct::IProduct(
         // load new field
         for (int i = 0; i < fromField->m_data.size(); ++i)
         {
-            m_f->m_exp[fid]->ExtractDataToCoeffs(
-                fromField->m_fielddef[i], fromField->m_data[i],
-                m_f->m_variables[fid], coeffs);
+            m_f->m_exp[fid]->ExtractDataToCoeffs(fromField->m_fielddef[i],
+                                                 fromField->m_data[i],
+                                                 m_f->m_variables[fid], coeffs);
         }
 
         m_f->m_exp[fid]->BwdTrans(coeffs, phys);
 
-        Vmath::Vmul(nphys, SaveFld[j], 1, phys, 1, phys,1);
+        Vmath::Vmul(nphys, SaveFld[j], 1, phys, 1, phys, 1);
 
         NekDouble iprod = m_f->m_exp[fid]->Integral(phys);
 
