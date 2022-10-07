@@ -72,6 +72,8 @@
 #define USING_SVE
 #undef NUM_LANES_64BITS
 #define NUM_LANES_64BITS __ARM_FEATURE_SVE_BITS / 64
+#undef ALIGNMENT
+#define ALIGNMENT __ARM_FEATURE_SVE_BITS / 8
 #undef USING_SCALAR
 #endif
 
@@ -95,6 +97,9 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_width_alignment)
 #if defined(USING_AVX512)
     std::cout << "avx512 double" << std::endl;
 #endif
+#if defined(USING_SVE)
+    std::cout << "sve double" << std::endl;
+#endif
 
     // double
     width     = simd<double>::width;
@@ -105,7 +110,6 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_width_alignment)
     width     = simd<std::int32_t, vec_t::width>::width;
     alignment = simd<std::int32_t, vec_t::width>::alignment;
     BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
-    BOOST_CHECK_EQUAL(alignment, ALIGNMENT / 2);
     // std::int64_t index forcing # of lanes
     width     = simd<std::int64_t, vec_t::width>::width;
     alignment = simd<std::int64_t, vec_t::width>::alignment;
@@ -116,30 +120,6 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_width_alignment)
     alignment = simd<std::int64_t>::alignment;
     BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
     BOOST_CHECK_EQUAL(alignment, ALIGNMENT);
-
-#if defined(USING_SVE)
-    std::cout << "sve double" << std::endl;
-    //
-    // these are going to be machine/compilation dependent
-    // we are forcing VLA -> VLST
-    // so we can still check consistency with __ARM_FEATURE_SVE_BITS
-    //
-    // // int 32 bit on number of lanes for int 64 bit
-    // width = simd<int>::width;
-    // alignment = simd<int>::alignment;
-    // BOOST_CHECK_EQUAL(width, __ARM_FEATURE_SVE_BITS/sizeof(std::int32_t));
-    // BOOST_CHECK_EQUAL(alignment, 32);
-    // long
-    width     = simd<long>::width;
-    alignment = simd<long>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
-    BOOST_CHECK_EQUAL(alignment, __ARM_FEATURE_SVE_BITS / sizeof(std::int64_t));
-    // double
-    width     = simd<double>::width;
-    alignment = simd<double>::alignment;
-    BOOST_CHECK_EQUAL(width, NUM_LANES_64BITS);
-    BOOST_CHECK_EQUAL(alignment, __ARM_FEATURE_SVE_BITS / sizeof(double));
-#endif
 }
 
 BOOST_AUTO_TEST_CASE(SimdLibDouble_type_traits)
@@ -225,6 +205,54 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_load_unaligned)
     avec.load(ascalararr.data(), is_not_aligned);
 }
 
+BOOST_AUTO_TEST_CASE(SimdLibInt64_load)
+{
+    alignas(vec_t::alignment) std::array<std::uint64_t, vec_t::width>
+        ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+    simd<std::uint64_t, vec_t::width> aindex;
+    aindex.load(ascalararr.data());
+}
+
+BOOST_AUTO_TEST_CASE(SimdLibInt64_load_aligned)
+{
+    alignas(vec_t::alignment) std::array<std::uint64_t, vec_t::width>
+        ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+    simd<std::uint64_t, vec_t::width> aindex;
+    aindex.load(ascalararr.data(), is_aligned);
+}
+
+BOOST_AUTO_TEST_CASE(SimdLibInt64_load_unaligned)
+{
+    std::array<std::uint64_t, vec_t::width> ascalararr{
+        {}}; // double brace to deal with gcc 4.8.5 ...
+    simd<std::uint64_t, vec_t::width> aindex;
+    aindex.load(ascalararr.data(), is_not_aligned);
+}
+
+BOOST_AUTO_TEST_CASE(SimdLibInt32_load)
+{
+    alignas(vec_t::alignment) std::array<std::uint32_t, vec_t::width>
+        ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+    simd<std::uint32_t, vec_t::width> aindex;
+    aindex.load(ascalararr.data());
+}
+
+BOOST_AUTO_TEST_CASE(SimdLibInt32_load_aligned)
+{
+    alignas(vec_t::alignment) std::array<std::uint32_t, vec_t::width>
+        ascalararr{{}}; // double brace to deal with gcc 4.8.5 ...
+    simd<std::uint32_t, vec_t::width> aindex;
+    aindex.load(ascalararr.data(), is_aligned);
+}
+
+BOOST_AUTO_TEST_CASE(SimdLibInt32_load_unaligned)
+{
+    std::array<std::uint32_t, vec_t::width> ascalararr{
+        {}}; // double brace to deal with gcc 4.8.5 ...
+    simd<std::uint32_t, vec_t::width> aindex;
+    aindex.load(ascalararr.data(), is_not_aligned);
+}
+
 BOOST_AUTO_TEST_CASE(SimdLibDouble_store)
 {
     double val = 4.0;
@@ -299,7 +327,10 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_subscript_assign_read)
         ascalararr[i] = i;
     }
 
-    avec.load(ascalararr.data());
+    for (size_t i = 0; i < vec_t::width; ++i)
+    {
+        avec[i] = ascalararr[i];
+    }
 
     for (size_t i = 0; i < vec_t::width; ++i)
     {
@@ -315,6 +346,49 @@ BOOST_AUTO_TEST_CASE(SimdLibDouble_gather64)
 
     // create and fill index
     std::array<size_t, vec_t::width> aindex;
+    aindex[0] = 0;
+    if (vec_t::width > 2)
+    {
+        aindex[1] = 3;
+        aindex[2] = 5;
+        aindex[3] = 6;
+    }
+    if (vec_t::width > 4)
+    {
+        aindex[4] = 8;
+        aindex[5] = 15;
+        aindex[6] = 16;
+        aindex[7] = 20;
+    }
+
+    // load index
+    aindexvec.load(aindex.data(), is_not_aligned);
+
+    // create and fill scalar array
+    constexpr size_t scalarArraySize = 32;
+    std::array<double, scalarArraySize> ascalararr;
+    for (size_t i = 0; i < scalarArraySize; ++i)
+    {
+        ascalararr[i] = i;
+    }
+
+    avec.gather(ascalararr.data(), aindexvec);
+
+    // check
+    for (size_t i = 0; i < vec_t::width; ++i)
+    {
+        BOOST_CHECK_EQUAL(ascalararr[aindex[i]], avec[i]);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(SimdLibDouble_gather32)
+{
+    vec_t avec;
+    using index_t = simd<std::uint32_t, vec_t::width>;
+    index_t aindexvec;
+
+    // create and fill index
+    std::array<std::uint32_t, vec_t::width> aindex;
     aindex[0] = 0;
     if (vec_t::width > 2)
     {

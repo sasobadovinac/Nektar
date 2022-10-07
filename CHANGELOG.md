@@ -4,6 +4,7 @@ Changelog
 v5.3.0
 ------
 **Library**
+- Added float and restored SVE back-end for SimdLib (!1373)
 - Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
 - Added float and restore avx512 back-end for SimdLib (!1387)
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
