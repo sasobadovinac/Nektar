@@ -247,7 +247,7 @@ protected:
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &field);
     virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray);
-#endif
+
     virtual void v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray);
     virtual void v_GetLocTraceFromTracePts(
@@ -398,3 +398,5 @@ void DisContField::v_PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
 
 } // namespace MultiRegions
 } // namespace Nektar // MULTIERGIONS_DISCONTFIELD1D_H
+
+#endif // NEKTAR_LIBS_MULTIREGIONS_DISCONTFIELD1D_H

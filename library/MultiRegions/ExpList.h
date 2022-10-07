@@ -246,7 +246,7 @@ public:
     /// \f$\boldsymbol{u}_l\f$ (implemented as #m_phys) is filled or
     /// not.
     inline bool GetPhysState(void) const;
-#endif
+
     /// multiply the metric jacobi and quadrature weights
     MULTI_REGIONS_EXPORT void MultiplyByQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,
@@ -431,7 +431,7 @@ public:
     MULTI_REGIONS_EXPORT void WriteVtkPieceFooter(std::ostream &outfile,
                                                   int expansion);
     void WriteVtkPieceData(std::ostream &outfile, int expansion,
-                           td::string var = "v")
+                           std::string var = "v")
     {
         v_WriteVtkPieceData(outfile, expansion, var);
     }
@@ -560,7 +560,7 @@ public:
        const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
     /// Calculates the \f$H^1\f$ error of the global spectral/hp
     /// element approximation.
-    //MULTI_REGIONS_EXPORT NekDouble
+    MULTI_REGIONS_EXPORT NekDouble
     H1(const NekField<NekDouble, ePhys> &in,
        const NekField<NekDouble, ePhys> &sol = ZeroNekFieldPhys,
        const int varid                       = 0)
@@ -958,7 +958,7 @@ public:
     /// Append the element data listed in elements
     /// fielddef->m_ElementIDs onto fielddata
     void AppendFieldData(LibUtilities::FieldDefinitionsSharedPtr &fielddef,
-                         td::vector<NekDouble> &fielddata)
+                         std::vector<NekDouble> &fielddata)
     {
         v_AppendFieldData(fielddef, fielddata);
     }
@@ -1373,7 +1373,7 @@ protected:
 
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
-        td::vector<NekDouble> &fielddata);
+        std::vector<NekDouble> &fielddata);
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, Array<OneD, NekDouble> &coeffs);
@@ -1386,13 +1386,13 @@ protected:
         const Array<OneD, const NekDouble> &fromCoeffs,
         Array<OneD, NekDouble> &toCoeffs);
     virtual void v_WriteTecplotHeader(std::ostream &outfile,
-                                      td::string var = "");
+                                      std::string var = "");
     virtual void v_WriteTecplotZone(std::ostream &outfile, int expansion);
     virtual void v_WriteTecplotField(std::ostream &outfile, int expansion);
     virtual void v_WriteTecplotConnectivity(std::ostream &outfile,
                                             int expansion);
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
-                                     td::string var);
+                                     std::string var);
     virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                                        int istrip);
 
@@ -1482,8 +1482,8 @@ private:
 };
 
 /// An empty ExpList object.
-tatic ExpList NullExpList;
-tatic ExpListSharedPtr NullExpListSharedPtr;
+static ExpList NullExpList;
+static ExpListSharedPtr NullExpListSharedPtr;
 
 // Inline routines follow.
 
@@ -2310,7 +2310,7 @@ inline void ExpList::GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
 {
     v_GetBoundaryToElmtMap(ElmtID, EdgeID);
 }
-inline void ExpList::GetBndElmtExpansion(int i, td::shared_ptr<ExpList> &result,
+inline void ExpList::GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                          const bool DeclareCoeffPhysArrays)
 {
     v_GetBndElmtExpansion(i, result, DeclareCoeffPhysArrays);
@@ -2369,3 +2369,5 @@ const static Array<OneD, ExpListSharedPtr> NullExpListSharedPtrArray;
 
 } // namespace MultiRegions
 } // namespace Nektar // EXPLIST_H
+
+#endif // EXPLIST_H

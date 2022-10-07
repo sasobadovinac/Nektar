@@ -128,7 +128,7 @@ protected:
 
     virtual void v_WriteTecplotConnectivity(std::ostream &outfile,
                                             int expansion);
-#endif
+
     virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
                                        int istrip);
     virtual NekDouble v_L2(
@@ -158,4 +158,6 @@ inline void ExpList3DHomogeneous1D::GetCoords(Array<OneD, NekDouble> &coord_0,
     v_GetCoords(coord_0, coord_1, coord_2);
 }
 } // namespace MultiRegions
-} // namespace Nektar // EXPLIST3DHOMO1D_H
+} // namespace Nektar
+
+#endif // EXPLIST3DHOMO1D_H

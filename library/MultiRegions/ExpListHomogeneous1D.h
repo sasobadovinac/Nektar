@@ -212,7 +212,7 @@ protected:
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata);
-#endif
+
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, Array<OneD, NekDouble> &coeffs);
@@ -225,7 +225,7 @@ protected:
         const Array<OneD, const NekDouble> &fromCoeffs,
         Array<OneD, NekDouble> &toCoeffs);
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
-                                     td::string var);
+                                     std::string var);
 
     virtual void v_PhysInterp1DScaled(const NekDouble scale,
                                       const Array<OneD, NekDouble> &inarray,
@@ -304,3 +304,5 @@ inline void ExpListHomogeneous1D::HomogeneousBwdTrans(
 
 } // namespace MultiRegions
 } // namespace Nektar // EXPLISTHOMO1D_H
+
+#endif // EXPLISTHOMO1D_H

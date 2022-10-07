@@ -3037,7 +3037,6 @@ void DisContField::v_ExtractTracePhys(Array<OneD, NekDouble> &outarray)
     ASSERTL1(m_physState == true, "local physical space is not true ");
     v_ExtractTracePhys(m_phys, outarray);
 }
-#endif
 /**
  * @brief This method extracts the trace (verts in 1D) from
  * the field @a inarray and puts the values in @a outarray.
@@ -3872,7 +3871,7 @@ void DisContField::v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
     TraceID = m_BCtoTraceMap;
 }
 
-void DisContField::v_GetBndElmtExpansion(int i, td::shared_ptr<ExpList> &result,
+void DisContField::v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
                                          const bool DeclareCoeffPhysArrays)
 {
     int n, cnt;
