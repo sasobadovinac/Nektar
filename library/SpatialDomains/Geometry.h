@@ -96,7 +96,6 @@ public:
     SPATIAL_DOMAINS_EXPORT inline GeomFactorsSharedPtr GetGeomFactors();
     SPATIAL_DOMAINS_EXPORT GeomFactorsSharedPtr GetRefGeomFactors(
         const Array<OneD, const LibUtilities::BasisSharedPtr> &tbasis);
-    SPATIAL_DOMAINS_EXPORT inline GeomFactorsSharedPtr GetMetricInfo();
     SPATIAL_DOMAINS_EXPORT LibUtilities::ShapeType GetShapeType(void);
 
     //---------------------------------------
@@ -290,14 +289,6 @@ inline GeomFactorsSharedPtr Geometry::GetGeomFactors()
 {
     GenGeomFactors();
     return ValidateRegGeomFactor(m_geomFactors);
-}
-
-/**
- * @brief Get the geometric factors for this object.
- */
-inline GeomFactorsSharedPtr Geometry::GetMetricInfo()
-{
-    return m_geomFactors;
 }
 
 /**

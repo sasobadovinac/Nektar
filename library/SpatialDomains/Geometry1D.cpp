@@ -63,7 +63,7 @@ NekDouble Geometry1D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
     v_FillGeom();
 
     // calculate local coordinate for coord
-    if (GetMetricInfo()->GetGtype() == eRegular)
+    if (GetGeomFactors()->GetGtype() == eRegular)
     {
         NekDouble len = 0.0;
         NekDouble xi  = 0.0;

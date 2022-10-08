@@ -202,7 +202,7 @@ NekDouble Geometry2D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
                                      Array<OneD, NekDouble> &Lcoords)
 {
     NekDouble dist = 0.;
-    if (GetMetricInfo()->GetGtype() == eRegular)
+    if (GetGeomFactors()->GetGtype() == eRegular)
     {
         int v2;
         if (m_shapeType == LibUtilities::eTriangle)

@@ -107,8 +107,8 @@ void ProcessJacobianEnergy::Process(po::variables_map &vm)
         int nquad       = Elmt->GetTotPoints();
         int coeffoffset = exp->GetCoeff_Offset(i);
         Array<OneD, const NekDouble> Jac =
-            lep->GetMetricInfo()->GetJac(Elmt->GetPointsKeys());
-        if (lep->GetMetricInfo()->GetGtype() == SpatialDomains::eRegular)
+            lep->GetGeomFactors()->GetJac(Elmt->GetPointsKeys());
+        if (lep->GetGeomFactors()->GetGtype() == SpatialDomains::eRegular)
         {
             Vmath::Fill(nquad, Jac[0], phys, 1);
         }
@@ -117,7 +117,7 @@ void ProcessJacobianEnergy::Process(po::variables_map &vm)
             Vmath::Vcopy(nquad, Jac, 1, phys, 1);
         }
 
-        if (lep->GetMetricInfo()->GetGtype() == SpatialDomains::eDeformed)
+        if (lep->GetGeomFactors()->GetGtype() == SpatialDomains::eDeformed)
         {
             NekDouble jacmax = Vmath::Vmax(nquad, Jac, 1);
             NekDouble jacmin = Vmath::Vmin(nquad, Jac, 1);

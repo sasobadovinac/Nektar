@@ -461,11 +461,11 @@ void LinearElasticSystem::v_DoSolve()
                 // Calculate element area
                 LocalRegions::ExpansionSharedPtr exp = m_fields[0]->GetExp(i);
                 LibUtilities::PointsKeyVector pkey   = exp->GetPointsKeys();
-                Array<OneD, NekDouble> jac = exp->GetMetricInfo()->GetJac(pkey);
+                Array<OneD, NekDouble> jac = exp->GetGeomFactors()->GetJac(pkey);
 
                 int offset = m_fields[0]->GetPhys_Offset(i);
 
-                if (exp->GetMetricInfo()->GetGtype() ==
+                if (exp->GetGeomFactors()->GetGtype() ==
                     SpatialDomains::eDeformed)
                 {
                     Vmath::Smul(exp->GetTotPoints(), m_beta, jac, 1,
@@ -514,7 +514,7 @@ void LinearElasticSystem::v_DoSolve()
             LocalRegions::ExpansionSharedPtr exp = m_fields[0]->GetExp(i);
             LibUtilities::PointsKeyVector pkey   = exp->GetPointsKeys();
             Array<OneD, Array<OneD, Array<OneD, NekDouble>>> deriv =
-                exp->GetMetricInfo()->GetDeriv(pkey);
+                exp->GetGeomFactors()->GetDeriv(pkey);
             int offset = m_fields[0]->GetPhys_Offset(i);
 
             DNekMat i2rm = MappingIdealToRef(exp->GetGeom());

@@ -96,12 +96,12 @@ NekDouble NodalTriExp::Integral(const Array<OneD, const NekDouble> &inarray)
 {
     int nquad0                       = m_base[0]->GetNumPoints();
     int nquad1                       = m_base[1]->GetNumPoints();
-    Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
+    Array<OneD, const NekDouble> jac = m_geomFactors->GetJac(GetPointsKeys());
     NekDouble ival;
     Array<OneD, NekDouble> tmp(nquad0 * nquad1);
 
     // multiply inarray with Jacobian
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vmul(nquad0 * nquad1, jac, 1, inarray, 1, tmp, 1);
     }
@@ -203,7 +203,7 @@ void NodalTriExp::v_AlignVectorToCollapsedDir(
     int wspsize = max(nqtot, m_ncoeffs);
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Array<OneD, NekDouble> tmp0(4 * wspsize);
     Array<OneD, NekDouble> tmp3(tmp0 + wspsize);
@@ -238,7 +238,7 @@ void NodalTriExp::v_AlignVectorToCollapsedDir(
                     &tmp1[0] + i * nquad0, 1);
     }
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vmul(nqtot, &df[2 * dir][0], 1, &tmp0[0], 1, &tmp0[0], 1);
         Vmath::Vmul(nqtot, &df[2 * dir + 1][0], 1, &tmp1[0], 1, &tmp1[0], 1);
@@ -308,14 +308,14 @@ void NodalTriExp::PhysDeriv(const Array<OneD, const NekDouble> &inarray,
     int nquad1 = m_base[1]->GetNumPoints();
     int nqtot  = nquad0 * nquad1;
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Array<OneD, NekDouble> diff0(2 * nqtot);
     Array<OneD, NekDouble> diff1(diff0 + nqtot);
 
     StdNodalTriExp::v_PhysDeriv(inarray, diff0, diff1);
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         if (out_d0.size())
         {
@@ -506,7 +506,7 @@ void NodalTriExp::v_ComputeTraceNormal(const int edge)
 {
     int i;
     const SpatialDomains::GeomFactorsSharedPtr &geomFactors =
-        GetGeom()->GetMetricInfo();
+        GetGeom()->GetGeomFactors();
     const SpatialDomains::GeomType type = geomFactors->GetGtype();
 
     LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();

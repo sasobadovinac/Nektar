@@ -3712,7 +3712,7 @@ void ExpList::v_GetMovingFrames(const SpatialDomains::GeomMMF MMFdir,
         }
 
         // MF from LOCALREGIONS
-        (*m_exp)[i]->GetMetricInfo()->GetMovingFrames(
+        (*m_exp)[i]->GetGeomFactors()->GetMovingFrames(
             (*m_exp)[i]->GetPointsKeys(), MMFdir, CircCentre, MFloc);
 
         // Get the physical data offset for this expansion.
@@ -5165,7 +5165,7 @@ void ExpList::CreateCollections(Collections::ImplementationType ImpType)
             int prevnCoeff = it.second[0].first->GetNcoeffs();
             int prevnPhys  = it.second[0].first->GetTotPoints();
             bool prevDeformed =
-                it.second[0].first->GetMetricInfo()->GetGtype() ==
+                it.second[0].first->GetGeomFactors()->GetGtype() ==
                 SpatialDomains::eDeformed;
             collcnt = 1;
 
@@ -5174,7 +5174,7 @@ void ExpList::CreateCollections(Collections::ImplementationType ImpType)
                 int nCoeffs = it.second[i].first->GetNcoeffs();
                 int nPhys   = it.second[i].first->GetTotPoints();
                 bool Deformed =
-                    it.second[i].first->GetMetricInfo()->GetGtype() ==
+                    it.second[i].first->GetGeomFactors()->GetGtype() ==
                     SpatialDomains::eDeformed;
                 int coeffOffset = m_coeff_offset[it.second[i].second];
                 int physOffset  = m_phys_offset[it.second[i].second];

@@ -80,12 +80,12 @@ NekDouble TriExp::v_Integral(const Array<OneD, const NekDouble> &inarray)
 {
     int nquad0                       = m_base[0]->GetNumPoints();
     int nquad1                       = m_base[1]->GetNumPoints();
-    Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
+    Array<OneD, const NekDouble> jac = m_geomFactors->GetJac(GetPointsKeys());
     NekDouble ival;
     Array<OneD, NekDouble> tmp(nquad0 * nquad1);
 
     // multiply inarray with Jacobian
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vmul(nquad0 * nquad1, jac, 1, inarray, 1, tmp, 1);
     }
@@ -108,14 +108,14 @@ void TriExp::v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
     int nquad1 = m_base[1]->GetNumPoints();
     int nqtot  = nquad0 * nquad1;
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Array<OneD, NekDouble> diff0(2 * nqtot);
     Array<OneD, NekDouble> diff1(diff0 + nqtot);
 
     StdTriExp::v_PhysDeriv(inarray, diff0, diff1);
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         if (out_d0.size())
         {
@@ -203,7 +203,7 @@ void TriExp::v_PhysDirectionalDeriv(
     int nqtot  = nquad0 * nquad1;
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Array<OneD, NekDouble> diff0(2 * nqtot);
     Array<OneD, NekDouble> diff1(diff0 + nqtot);
@@ -211,7 +211,7 @@ void TriExp::v_PhysDirectionalDeriv(
     // diff0 = du/d_xi, diff1 = du/d_eta
     StdTriExp::v_PhysDeriv(inarray, diff0, diff1);
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Array<OneD, Array<OneD, NekDouble>> tangmat(2);
 
@@ -496,7 +496,7 @@ void TriExp::v_AlignVectorToCollapsedDir(
     int wspsize = max(max(nqtot, m_ncoeffs), nquad1 * nmodes0);
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Array<OneD, NekDouble> tmp0(wspsize);
     Array<OneD, NekDouble> tmp3(wspsize);
@@ -531,7 +531,7 @@ void TriExp::v_AlignVectorToCollapsedDir(
                     &tmp1[0] + i * nquad0, 1);
     }
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vmul(nqtot, &df[2 * dir][0], 1, &tmp0[0], 1, &tmp0[0], 1);
         Vmath::Vmul(nqtot, &df[2 * dir + 1][0], 1, &tmp1[0], 1, &tmp1[0], 1);
@@ -611,7 +611,7 @@ void TriExp::v_IProductWRTDirectionalDerivBase_SumFac(
     int wspsize  = max(max(nqtot, m_ncoeffs), nquad1 * nmodes0);
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Array<OneD, NekDouble> tmp0(6 * wspsize);
     Array<OneD, NekDouble> tmp1(tmp0 + wspsize);
@@ -675,7 +675,7 @@ void TriExp::v_NormVectorIProductWRTBase(const Array<OneD, const NekDouble> &Fx,
         GetLeftAdjacentElementExp()->GetTraceNormal(
             GetLeftAdjacentElementTrace());
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vvtvvtp(nq, &normals[0][0], 1, &Fx[0], 1, &normals[1][0], 1,
                        &Fy[0], 1, &Fn[0], 1);
@@ -877,7 +877,7 @@ void TriExp::v_ComputeTraceNormal(const int edge)
 {
     int i;
     const SpatialDomains::GeomFactorsSharedPtr &geomFactors =
-        GetGeom()->GetMetricInfo();
+        GetGeom()->GetGeomFactors();
 
     LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
     for (i = 0; i < ptsKeys.size(); ++i)
@@ -1305,7 +1305,7 @@ void TriExp::v_ComputeLaplacianMetric()
     }
 
     unsigned int i, j;
-    const SpatialDomains::GeomType type = m_metricinfo->GetGtype();
+    const SpatialDomains::GeomType type = m_geomFactors->GetGtype();
     const unsigned int nqtot            = GetTotPoints();
     const unsigned int dim              = 2;
     const MetricType m[3][3]            = {
@@ -1329,7 +1329,7 @@ void TriExp::v_ComputeLaplacianMetric()
     const unsigned int nquad0              = m_base[0]->GetNumPoints();
     const unsigned int nquad1              = m_base[1]->GetNumPoints();
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     for (i = 0; i < nquad1; i++)
     {
@@ -1515,9 +1515,9 @@ void TriExp::v_SVVLaplacianFilter(Array<OneD, NekDouble> &array,
     int nq = GetTotPoints();
 
     // Calculate sqrt of the Jacobian
-    Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
+    Array<OneD, const NekDouble> jac = m_geomFactors->GetJac(GetPointsKeys());
     Array<OneD, NekDouble> sqrt_jac(nq);
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vsqrt(nq, jac, 1, sqrt_jac, 1);
     }
@@ -1551,7 +1551,7 @@ void TriExp::v_NormalTraceDerivFactors(
     int nquad1 = GetNumPoints(1);
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     if (d0factors.size() != 3)
     {
@@ -1583,7 +1583,7 @@ void TriExp::v_NormalTraceDerivFactors(
 
     int ncoords = normal_0.size();
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
 
         // d xi_2/dx n_x

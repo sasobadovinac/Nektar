@@ -112,13 +112,13 @@ NekDouble HexExp::v_Integral(const Array<OneD, const NekDouble> &inarray)
     int nquad0                       = m_base[0]->GetNumPoints();
     int nquad1                       = m_base[1]->GetNumPoints();
     int nquad2                       = m_base[2]->GetNumPoints();
-    Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
+    Array<OneD, const NekDouble> jac = m_geomFactors->GetJac(GetPointsKeys());
     NekDouble returnVal;
     Array<OneD, NekDouble> tmp(nquad0 * nquad1 * nquad2);
 
     // multiply inarray with Jacobian
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vmul(nquad0 * nquad1 * nquad2, &jac[0], 1,
                     (NekDouble *)&inarray[0], 1, &tmp[0], 1);
@@ -159,14 +159,14 @@ void HexExp::v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
     int ntot   = nquad0 * nquad1 * nquad2;
 
     Array<TwoD, const NekDouble> df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
     Array<OneD, NekDouble> Diff0 = Array<OneD, NekDouble>(ntot);
     Array<OneD, NekDouble> Diff1 = Array<OneD, NekDouble>(ntot);
     Array<OneD, NekDouble> Diff2 = Array<OneD, NekDouble>(ntot);
 
     StdHexExp::v_PhysDeriv(inarray, Diff0, Diff1, Diff2);
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         if (out_d0.size())
         {
@@ -274,7 +274,7 @@ void HexExp::v_PhysDirectionalDeriv(
     int ntot     = nquad0 * nquad1 * nquad2;
 
     Array<TwoD, const NekDouble> df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
     Array<OneD, NekDouble> Diff0 = Array<OneD, NekDouble>(ntot);
     Array<OneD, NekDouble> Diff1 = Array<OneD, NekDouble>(ntot);
     Array<OneD, NekDouble> Diff2 = Array<OneD, NekDouble>(ntot);
@@ -490,7 +490,7 @@ void HexExp::v_AlignVectorToCollapsedDir(
     const int nq  = nq0 * nq1 * nq2;
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Array<OneD, NekDouble> tmp1(nq); // Quad metric
 
@@ -500,7 +500,7 @@ void HexExp::v_AlignVectorToCollapsedDir(
 
     Vmath::Vcopy(nq, inarray, 1, tmp1, 1); // Dir3 metric
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vmul(nq, &df[3 * dir][0], 1, tmp1.get(), 1, tmp2.get(), 1);
         Vmath::Vmul(nq, &df[3 * dir + 1][0], 1, tmp1.get(), 1, tmp3.get(), 1);
@@ -573,7 +573,7 @@ void HexExp::IProductWRTDirectionalDerivBase_SumFac(
     const int nm1 = m_base[1]->GetNumModes();
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Array<OneD, NekDouble> alloc(4 * nq + m_ncoeffs + nm0 * nq2 * (nq1 + nm1));
     Array<OneD, NekDouble> tmp1(alloc);           // Quad metric
@@ -929,7 +929,7 @@ void HexExp::v_ComputeTraceNormal(const int face)
 {
     int i;
     const SpatialDomains::GeomFactorsSharedPtr &geomFactors =
-        GetGeom()->GetMetricInfo();
+        GetGeom()->GetGeomFactors();
     SpatialDomains::GeomType type = geomFactors->GetGtype();
 
     LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
@@ -1372,9 +1372,9 @@ void HexExp::v_SVVLaplacianFilter(Array<OneD, NekDouble> &array,
     int nq = GetTotPoints();
 
     // Calculate sqrt of the Jacobian
-    Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
+    Array<OneD, const NekDouble> jac = m_geomFactors->GetJac(GetPointsKeys());
     Array<OneD, NekDouble> sqrt_jac(nq);
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vsqrt(nq, jac, 1, sqrt_jac, 1);
     }
@@ -1525,7 +1525,7 @@ void HexExp::v_ComputeLaplacianMetric()
         ComputeQuadratureMetric();
     }
 
-    const SpatialDomains::GeomType type = m_metricinfo->GetGtype();
+    const SpatialDomains::GeomType type = m_geomFactors->GetGtype();
     const unsigned int nqtot            = GetTotPoints();
     const unsigned int dim              = 3;
     const MetricType m[3][3]            = {
@@ -1539,7 +1539,7 @@ void HexExp::v_ComputeLaplacianMetric()
         {
             m_metrics[m[i][j]] = Array<OneD, NekDouble>(nqtot);
             const Array<TwoD, const NekDouble> &gmat =
-                m_metricinfo->GetGmat(GetPointsKeys());
+                m_geomFactors->GetGmat(GetPointsKeys());
             if (type == SpatialDomains::eDeformed)
             {
                 Vmath::Vcopy(nqtot, &gmat[i * dim + j][0], 1,
@@ -1570,7 +1570,7 @@ void HexExp::v_NormalTraceDerivFactors(
     int nquad2 = GetNumPoints(2);
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     if (d0factors.size() != 6)
     {
@@ -1625,7 +1625,7 @@ void HexExp::v_NormalTraceDerivFactors(
 
     int ncoords = normal_0.size();
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         // faces 0 and 5
         for (int i = 0; i < nquad0 * nquad1; ++i)

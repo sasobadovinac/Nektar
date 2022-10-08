@@ -171,7 +171,7 @@ protected:
     // Helper functions
     //---------------------------------------
     LOCAL_REGIONS_EXPORT virtual const SpatialDomains::GeomFactorsSharedPtr &
-    v_GetMetricInfo() const;
+    v_GetGeomFactors() const;
     LOCAL_REGIONS_EXPORT virtual int v_GetCoordim();
     LOCAL_REGIONS_EXPORT virtual void v_ExtractDataToCoeffs(
         const NekDouble *data, const std::vector<unsigned int> &nummodes,

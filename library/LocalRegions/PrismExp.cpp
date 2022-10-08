@@ -106,11 +106,11 @@ NekDouble PrismExp::v_Integral(const Array<OneD, const NekDouble> &inarray)
     int nquad0                       = m_base[0]->GetNumPoints();
     int nquad1                       = m_base[1]->GetNumPoints();
     int nquad2                       = m_base[2]->GetNumPoints();
-    Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
+    Array<OneD, const NekDouble> jac = m_geomFactors->GetJac(GetPointsKeys());
     Array<OneD, NekDouble> tmp(nquad0 * nquad1 * nquad2);
 
     // Multiply inarray with Jacobian
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vmul(nquad0 * nquad1 * nquad2, &jac[0], 1,
                     (NekDouble *)&inarray[0], 1, &tmp[0], 1);
@@ -136,14 +136,14 @@ void PrismExp::v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
     int nqtot = GetTotPoints();
 
     Array<TwoD, const NekDouble> df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
     Array<OneD, NekDouble> diff0(nqtot);
     Array<OneD, NekDouble> diff1(nqtot);
     Array<OneD, NekDouble> diff2(nqtot);
 
     StdPrismExp::v_PhysDeriv(inarray, diff0, diff1, diff2);
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         if (out_d0.size())
         {
@@ -409,11 +409,11 @@ void PrismExp::v_AlignVectorToCollapsedDir(
     Array<OneD, NekDouble> tmp4 = outarray[2];
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     Vmath::Vcopy(nqtot, inarray, 1, tmp1, 1); // Dir3 metric
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vmul(nqtot, &df[3 * dir][0], 1, tmp1.get(), 1, tmp2.get(), 1);
         Vmath::Vmul(nqtot, &df[3 * dir + 1][0], 1, tmp1.get(), 1, tmp3.get(),
@@ -708,7 +708,7 @@ void PrismExp::v_GetTracePhysMap(const int face, Array<OneD, int> &outarray)
 void PrismExp::v_ComputeTraceNormal(const int face)
 {
     const SpatialDomains::GeomFactorsSharedPtr &geomFactors =
-        GetGeom()->GetMetricInfo();
+        GetGeom()->GetGeomFactors();
 
     LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
     for (int i = 0; i < ptsKeys.size(); ++i)
@@ -1045,9 +1045,9 @@ void PrismExp::v_SVVLaplacianFilter(Array<OneD, NekDouble> &array,
     int nq = GetTotPoints();
 
     // Calculate sqrt of the Jacobian
-    Array<OneD, const NekDouble> jac = m_metricinfo->GetJac(GetPointsKeys());
+    Array<OneD, const NekDouble> jac = m_geomFactors->GetJac(GetPointsKeys());
     Array<OneD, NekDouble> sqrt_jac(nq);
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         Vmath::Vsqrt(nq, jac, 1, sqrt_jac, 1);
     }
@@ -1183,7 +1183,7 @@ void PrismExp::v_LaplacianMatrixOp_MatFree_Kernel(
     StdExpansion3D::PhysTensorDeriv(inarray, wsp1, wsp2, wsp3);
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
     const Array<OneD, const NekDouble> &z0 = m_base[0]->GetZ();
     const Array<OneD, const NekDouble> &z2 = m_base[2]->GetZ();
 
@@ -1204,7 +1204,7 @@ void PrismExp::v_LaplacianMatrixOp_MatFree_Kernel(
     // Step 3. Construct combined metric terms for physical space to
     // collapsed coordinate system.  Order of construction optimised
     // to minimise temporary storage
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         // wsp4 = d eta_1/d x_1
         Vmath::Vvtvvtp(nqtot, &df[0][0], 1, &h0[0], 1, &df[2][0], 1, &h1[0], 1,
@@ -1581,7 +1581,7 @@ void PrismExp::v_NormalTraceDerivFactors(
     int nquad2 = GetNumPoints(2);
 
     const Array<TwoD, const NekDouble> &df =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     if (d0factors.size() != 5)
     {
@@ -1632,7 +1632,7 @@ void PrismExp::v_NormalTraceDerivFactors(
     int ncoords = normal_0.size();
 
     // first gather together standard cartesian inner products
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         // face 0
         for (int i = 0; i < nquad0 * nquad1; ++i)

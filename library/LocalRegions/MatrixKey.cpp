@@ -47,15 +47,15 @@ MatrixKey::MatrixKey(const StdRegions::MatrixType matrixType,
                      LibUtilities::PointsType nodalType)
     : StdMatrixKey(matrixType, shapeType, stdExpansion, factorMap, varCoeffMap,
                    nodalType),
-      m_metricinfo(
-          (dynamic_cast<const Expansion &>(stdExpansion)).GetMetricInfo())
+      m_geomFactors(
+          (dynamic_cast<const Expansion &>(stdExpansion)).GetGeomFactors())
 {
 }
 
 MatrixKey::MatrixKey(const MatrixKey &mkey,
                      const StdRegions::MatrixType matrixType)
     : StdRegions::StdMatrixKey(mkey, matrixType),
-      m_metricinfo(mkey.m_metricinfo)
+      m_geomFactors(mkey.m_geomFactors)
 {
 }
 
@@ -74,12 +74,12 @@ bool MatrixKey::opLess::operator()(const MatrixKey &lhs,
 
 bool operator<(const MatrixKey &lhs, const MatrixKey &rhs)
 {
-    if (lhs.m_metricinfo.get() < rhs.m_metricinfo.get())
+    if (lhs.m_geomFactors.get() < rhs.m_geomFactors.get())
     {
         return true;
     }
 
-    if (lhs.m_metricinfo.get() > rhs.m_metricinfo.get())
+    if (lhs.m_geomFactors.get() > rhs.m_geomFactors.get())
     {
         return false;
     }

@@ -79,15 +79,15 @@ public:
     LOCAL_REGIONS_EXPORT friend bool opLess::operator()(
         const MatrixKey &lhs, const MatrixKey &rhs) const;
 
-    SpatialDomains::GeomFactorsSharedPtr GetMetricInfo() const
+    SpatialDomains::GeomFactorsSharedPtr GetGeomFactors() const
     {
-        return m_metricinfo;
+        return m_geomFactors;
     }
 
 protected:
     MatrixKey();
 
-    SpatialDomains::GeomFactorsSharedPtr m_metricinfo;
+    SpatialDomains::GeomFactorsSharedPtr m_geomFactors;
 
 private:
 };

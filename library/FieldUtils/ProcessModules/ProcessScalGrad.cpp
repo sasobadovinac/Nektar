@@ -167,7 +167,7 @@ void ProcessScalGrad::Process(po::variables_map &vm)
 
                         // Get face normals
                         const SpatialDomains::GeomFactorsSharedPtr
-                            m_metricinfo = lep->GetMetricInfo();
+                            m_geomFactors = lep->GetGeomFactors();
 
                         const Array<OneD, const Array<OneD, NekDouble>>
                             normals = elmt->GetTraceNormal(boundary);
@@ -193,7 +193,7 @@ void ProcessScalGrad::Process(po::variables_map &vm)
                             }
 
                             // surface curved
-                            if (m_metricinfo->GetGtype() ==
+                            if (m_geomFactors->GetGtype() ==
                                 SpatialDomains::eDeformed)
                             {
                                 for (j = 0; j < ngrad; j++)

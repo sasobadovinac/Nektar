@@ -253,7 +253,7 @@ void DiffusionLFRNS::v_SetupMetrics(
                           ->GetExp(n)
                           ->as<LocalRegions::Expansion1D>()
                           ->GetGeom1D()
-                          ->GetMetricInfo()
+                          ->GetGeomFactors()
                           ->GetJac(ptsKeys);
                 for (i = 0; i < nLocalSolutionPts; ++i)
                 {
@@ -304,20 +304,20 @@ void DiffusionLFRNS::v_SetupMetrics(
                           ->GetExp(n)
                           ->as<LocalRegions::Expansion2D>()
                           ->GetGeom2D()
-                          ->GetMetricInfo()
+                          ->GetGeomFactors()
                           ->GetJac(ptsKeys);
                 gmat = pFields[0]
                            ->GetExp(n)
                            ->as<LocalRegions::Expansion2D>()
                            ->GetGeom2D()
-                           ->GetMetricInfo()
+                           ->GetGeomFactors()
                            ->GetDerivFactors(ptsKeys);
 
                 if (pFields[0]
                         ->GetExp(n)
                         ->as<LocalRegions::Expansion2D>()
                         ->GetGeom2D()
-                        ->GetMetricInfo()
+                        ->GetGeomFactors()
                         ->GetGtype() == SpatialDomains::eDeformed)
                 {
                     for (i = 0; i < nLocalSolutionPts; ++i)
@@ -1727,7 +1727,7 @@ void DiffusionLFRNS::v_DerCFlux_1D(
                   ->GetExp(n)
                   ->as<LocalRegions::Expansion1D>()
                   ->GetGeom1D()
-                  ->GetMetricInfo()
+                  ->GetGeomFactors()
                   ->GetJac(ptsKeys);
 
         JumpL[n] = JumpL[n] * jac[0];
@@ -1798,7 +1798,7 @@ void DiffusionLFRNS::v_DerCFlux_2D(
                   ->GetExp(n)
                   ->as<LocalRegions::Expansion2D>()
                   ->GetGeom2D()
-                  ->GetMetricInfo()
+                  ->GetGeomFactors()
                   ->GetJac(ptsKeys);
 
         base   = fields[0]->GetExp(n)->GetBase();
@@ -1857,7 +1857,7 @@ void DiffusionLFRNS::v_DerCFlux_2D(
                     ->GetExp(n)
                     ->as<LocalRegions::Expansion2D>()
                     ->GetGeom2D()
-                    ->GetMetricInfo()
+                    ->GetGeomFactors()
                     ->GetGtype() == SpatialDomains::eDeformed)
             {
                 // Extract the Jacobians along edge 'e'

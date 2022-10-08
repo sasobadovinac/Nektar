@@ -101,7 +101,7 @@ public:
     LOCAL_REGIONS_EXPORT DNekScalBlkMatSharedPtr
     CreateStaticCondMatrix(const MatrixKey &mkey);
 
-    LOCAL_REGIONS_EXPORT const SpatialDomains::GeomFactorsSharedPtr &GetMetricInfo()
+    LOCAL_REGIONS_EXPORT const SpatialDomains::GeomFactorsSharedPtr &GetGeomFactors()
         const;
 
     LOCAL_REGIONS_EXPORT DNekMatSharedPtr
@@ -270,7 +270,7 @@ protected:
 
     std::map<int, ExpansionWeakPtr> m_traceExp;
     SpatialDomains::GeometrySharedPtr m_geom;
-    SpatialDomains::GeomFactorsSharedPtr m_metricinfo;
+    SpatialDomains::GeomFactorsSharedPtr m_geomFactors;
     MetricMap m_metrics;
     std::map<int, NormalVector> m_traceNormals;
     ExpansionWeakPtr m_elementLeft;
@@ -280,7 +280,7 @@ protected:
 
     /// the element length in each element boundary(Vertex, edge
     /// or face) normal direction calculated based on the local
-    /// m_metricinfo times the standard element length (which is
+    /// m_geomFactors times the standard element length (which is
     /// 2.0)
     std::map<int, Array<OneD, NekDouble>> m_elmtBndNormDirElmtLen;
 

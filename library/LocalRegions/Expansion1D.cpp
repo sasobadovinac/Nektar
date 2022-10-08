@@ -474,7 +474,7 @@ void Expansion1D::v_NormalTraceDerivFactors(
     boost::ignore_unused(d0factors, d1factors); // for 2D&3D shapes
     int nquad = GetNumPoints(0);
     Array<TwoD, const NekDouble> gmat =
-        m_metricinfo->GetDerivFactors(GetPointsKeys());
+        m_geomFactors->GetDerivFactors(GetPointsKeys());
 
     if (factors.size() <= 2)
     {
@@ -489,7 +489,7 @@ void Expansion1D::v_NormalTraceDerivFactors(
     const Array<OneD, const Array<OneD, NekDouble>> &normal_1 =
         GetTraceNormal(1);
 
-    if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+    if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
     {
         factors[0][0] = gmat[0][nquad - 1] * normal_0[0][0];
         factors[1][0] = gmat[0][0] * normal_1[0][0];

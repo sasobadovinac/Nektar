@@ -891,10 +891,10 @@ Array<OneD, NekDouble> Extrapolate::GetMaxStdVelocity(
         Array<TwoD, const NekDouble> gmat = m_fields[0]
                                                 ->GetExp(el)
                                                 ->GetGeom()
-                                                ->GetMetricInfo()
+                                                ->GetGeomFactors()
                                                 ->GetDerivFactors(ptsKeys);
 
-        if (m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->GetGtype() ==
+        if (m_fields[0]->GetExp(el)->GetGeom()->GetGeomFactors()->GetGtype() ==
             SpatialDomains::eDeformed)
         {
             for (int j = 0; j < nvel; ++j)

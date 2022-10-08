@@ -702,12 +702,12 @@ Array<OneD, NekDouble> CompressibleFlowSystem::v_GetMaxStdVelocity(
         int nq  = m_fields[0]->GetExp(el)->GetTotPoints();
 
         const SpatialDomains::GeomFactorsSharedPtr metricInfo =
-            m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo();
+            m_fields[0]->GetExp(el)->GetGeom()->GetGeomFactors();
         const Array<TwoD, const NekDouble> &gmat =
             m_fields[0]
                 ->GetExp(el)
                 ->GetGeom()
-                ->GetMetricInfo()
+                ->GetGeomFactors()
                 ->GetDerivFactors(ptsKeys);
 
         // Convert to standard element

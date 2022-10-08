@@ -428,14 +428,14 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
     DNekScalMatSharedPtr returnval;
     LibUtilities::PointsKeyVector ptsKeys = GetPointsKeys();
 
-    ASSERTL2(m_metricinfo->GetGtype() != SpatialDomains::eNoGeomType,
+    ASSERTL2(m_geomFactors->GetGtype() != SpatialDomains::eNoGeomType,
              "Geometric information is not set up");
 
     switch (mkey.GetMatrixType())
     {
         case StdRegions::eMass:
         {
-            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
+            if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed ||
                 mkey.GetNVarCoeff())
             {
                 NekDouble one        = 1.0;
@@ -445,7 +445,7 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
             }
             else
             {
-                NekDouble jac        = (m_metricinfo->GetJac(ptsKeys))[0];
+                NekDouble jac        = (m_geomFactors->GetJac(ptsKeys))[0];
                 DNekMatSharedPtr mat = GetStdMatrix(mkey);
                 returnval =
                     MemoryManager<DNekScalMat>::AllocateSharedPtr(jac, mat);
@@ -454,7 +454,7 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
         break;
         case StdRegions::eInvMass:
         {
-            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
             {
                 NekDouble one = 1.0;
                 StdRegions::StdMatrixKey masskey(StdRegions::eMass,
@@ -466,7 +466,7 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
             }
             else
             {
-                NekDouble fac        = 1.0 / (m_metricinfo->GetJac(ptsKeys))[0];
+                NekDouble fac        = 1.0 / (m_geomFactors->GetJac(ptsKeys))[0];
                 DNekMatSharedPtr mat = GetStdMatrix(mkey);
                 returnval =
                     MemoryManager<DNekScalMat>::AllocateSharedPtr(fac, mat);
@@ -477,7 +477,7 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
         case StdRegions::eWeakDeriv1:
         case StdRegions::eWeakDeriv2:
         {
-            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
+            if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed ||
                 mkey.GetNVarCoeff())
             {
                 NekDouble one        = 1.0;
@@ -488,9 +488,9 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
             }
             else
             {
-                NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
+                NekDouble jac = (m_geomFactors->GetJac(ptsKeys))[0];
                 Array<TwoD, const NekDouble> df =
-                    m_metricinfo->GetDerivFactors(ptsKeys);
+                    m_geomFactors->GetDerivFactors(ptsKeys);
                 int dir = 0;
                 if (mkey.GetMatrixType() == StdRegions::eWeakDeriv0)
                     dir = 0;
@@ -526,7 +526,7 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
         break;
         case StdRegions::eLaplacian:
         {
-            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed ||
+            if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed ||
                 (mkey.GetNVarCoeff() > 0) ||
                 (mkey.ConstFactorExists(StdRegions::eFactorSVVCutoffRatio)))
             {
@@ -558,9 +558,9 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
                 DNekMat &lap12 = *GetStdMatrix(lap12key);
                 DNekMat &lap22 = *GetStdMatrix(lap22key);
 
-                NekDouble jac = (m_metricinfo->GetJac(ptsKeys))[0];
+                NekDouble jac = (m_geomFactors->GetJac(ptsKeys))[0];
                 Array<TwoD, const NekDouble> gmat =
-                    m_metricinfo->GetGmat(ptsKeys);
+                    m_geomFactors->GetGmat(ptsKeys);
 
                 int rows = lap00.GetRows();
                 int cols = lap00.GetColumns();
@@ -629,7 +629,7 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
         break;
         case StdRegions::eIProductWRTBase:
         {
-            if (m_metricinfo->GetGtype() == SpatialDomains::eDeformed)
+            if (m_geomFactors->GetGtype() == SpatialDomains::eDeformed)
             {
                 NekDouble one        = 1.0;
                 DNekMatSharedPtr mat = GenMatrix(mkey);
@@ -638,7 +638,7 @@ DNekScalMatSharedPtr Expansion3D::CreateMatrix(const MatrixKey &mkey)
             }
             else
             {
-                NekDouble jac        = (m_metricinfo->GetJac(ptsKeys))[0];
+                NekDouble jac        = (m_geomFactors->GetJac(ptsKeys))[0];
                 DNekMatSharedPtr mat = GetStdMatrix(mkey);
                 returnval =
                     MemoryManager<DNekScalMat>::AllocateSharedPtr(jac, mat);

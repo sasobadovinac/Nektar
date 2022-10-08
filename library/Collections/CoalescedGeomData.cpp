@@ -82,7 +82,7 @@ const Array<OneD, const NekDouble> &CoalescedGeomData::GetJac(
                     dynamic_cast<const LocalRegions::Expansion *>(sep);
 
                 const Array<OneD, const NekDouble> jac =
-                    lep->GetMetricInfo()->GetJac(ptsKeys);
+                    lep->GetGeomFactors()->GetJac(ptsKeys);
 
                 Vmath::Vcopy(npts, &jac[0], 1, &newjac[cnt], 1);
 
@@ -102,7 +102,7 @@ const Array<OneD, const NekDouble> &CoalescedGeomData::GetJac(
                     dynamic_cast<const LocalRegions::Expansion *>(sep);
 
                 const Array<OneD, const NekDouble> jac =
-                    lep->GetMetricInfo()->GetJac(ptsKeys);
+                    lep->GetGeomFactors()->GetJac(ptsKeys);
 
                 newjac[i] = jac[0];
             }
@@ -223,9 +223,9 @@ const Array<OneD, const NekDouble> &CoalescedGeomData::GetJacWithStdWeights(
                 dynamic_cast<const LocalRegions::Expansion *>(sep);
 
             const Array<OneD, const NekDouble> jac =
-                lep->GetMetricInfo()->GetJac(ptsKeys);
+                lep->GetGeomFactors()->GetJac(ptsKeys);
 
-            if (lep->GetMetricInfo()->GetGtype() == SpatialDomains::eDeformed)
+            if (lep->GetGeomFactors()->GetGtype() == SpatialDomains::eDeformed)
             {
                 Vmath::Vcopy(npts, &jac[0], 1, &newjac[cnt], 1);
             }
@@ -283,7 +283,7 @@ const Array<TwoD, const NekDouble> &CoalescedGeomData::GetDerivFactors(
                 dynamic_cast<const LocalRegions::Expansion *>(sep);
 
             const Array<TwoD, const NekDouble> Dfac =
-                lep->GetMetricInfo()->GetDerivFactors(ptsKeys);
+                lep->GetGeomFactors()->GetDerivFactors(ptsKeys);
 
             if (IsDeformed(pCollExp))
             {
@@ -408,10 +408,10 @@ bool CoalescedGeomData::IsDeformed(
             dynamic_cast<const LocalRegions::Expansion *>(sep);
 
         const Array<OneD, const NekDouble> jac =
-            lep->GetMetricInfo()->GetJac(ptsKeys);
+            lep->GetGeomFactors()->GetJac(ptsKeys);
 
         m_deformed =
-            lep->GetMetricInfo()->GetGtype() == SpatialDomains::eDeformed;
+            lep->GetGeomFactors()->GetGtype() == SpatialDomains::eDeformed;
     }
 
     return m_deformed;

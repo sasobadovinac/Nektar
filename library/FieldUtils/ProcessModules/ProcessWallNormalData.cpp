@@ -648,7 +648,7 @@ bool ProcessWallNormalData::NewtonIterForLocCoordOnBndElmt(
     StdRegions::StdExpansionSharedPtr bndXmap = bndGeom->GetXmap();
 
     Array<OneD, const NekDouble> Jac =
-        bndGeom->GetMetricInfo()->GetJac(bndXmap->GetPointsKeys());
+        bndGeom->GetGeomFactors()->GetJac(bndXmap->GetPointsKeys());
     NekDouble scaledTol =
         Vmath::Vsum(Jac.size(), Jac, 1) / ((NekDouble)Jac.size());
     scaledTol *= iterTol;

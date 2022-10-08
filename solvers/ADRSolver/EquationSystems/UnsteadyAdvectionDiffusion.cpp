@@ -765,13 +765,13 @@ Array<OneD, NekDouble> UnsteadyAdvectionDiffusion::GetMaxStdVelocity(
             Array<TwoD, const NekDouble> gmat = m_fields[0]
                                                     ->GetExp(el)
                                                     ->GetGeom()
-                                                    ->GetMetricInfo()
+                                                    ->GetGeomFactors()
                                                     ->GetDerivFactors(ptsKeys);
 
             if (m_fields[0]
                     ->GetExp(el)
                     ->GetGeom()
-                    ->GetMetricInfo()
+                    ->GetGeomFactors()
                     ->GetGtype() == SpatialDomains::eDeformed)
             {
                 for (int i = 0; i < n_points; i++)
@@ -832,13 +832,13 @@ Array<OneD, NekDouble> UnsteadyAdvectionDiffusion::GetMaxStdVelocity(
             Array<TwoD, const NekDouble> gmat = m_fields[0]
                                                     ->GetExp(el)
                                                     ->GetGeom()
-                                                    ->GetMetricInfo()
+                                                    ->GetGeomFactors()
                                                     ->GetDerivFactors(ptsKeys);
 
             if (m_fields[0]
                     ->GetExp(el)
                     ->GetGeom()
-                    ->GetMetricInfo()
+                    ->GetGeomFactors()
                     ->GetGtype() == SpatialDomains::eDeformed)
             {
                 for (int i = 0; i < n_points; i++)
