@@ -31,6 +31,9 @@ exporting in .vtu format (!1386)
 - Add option to refine curves in the same manner as the line refinement functionality (!1298)
 - Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
 
+**Miscellaneous**
+- Updated gitignore to be friendly with CLion IDE (!1405)
+
 v5.2.0
 ------
 **Library**
