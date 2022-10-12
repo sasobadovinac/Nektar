@@ -43,8 +43,10 @@
 
 #include <boost/geometry/geometries/box.hpp>
 #include <boost/geometry/geometries/point.hpp>
+#if BOOST_VERSION == 107700
+#include <boost/geometry/strategies/strategies.hpp>
+#endif
 #include <boost/geometry/index/rtree.hpp>
-#include <boost/geometry/strategies/strategies.hpp> // required with boost 1.77
 
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicUtils/PtsField.h>
