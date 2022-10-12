@@ -8,6 +8,7 @@ v5.3.0
 - Added float and restore avx512 back-end for SimdLib (!1387)
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
 - Fix missing copy assignment operator warnings in clang 13+ (!1391)
+- Fix boost 1.77 compatibility errors (!1420)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
