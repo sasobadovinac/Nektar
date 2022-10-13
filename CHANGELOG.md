@@ -9,6 +9,7 @@ v5.3.0
 - Added float and restore avx512 back-end for SimdLib (!1387)
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
 - Fix missing copy assignment operator warnings in clang 13+ (!1391)
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -23,6 +24,12 @@ v5.3.0
 - Improve performance of the perconditioner and diffusion operator (!1393)
 - Re-add the SFD test with an updated restart file (!1399)
 
+**IncNavierStokesSolver**
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
+
+**VortexWaveInteractionSolver**
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
+
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
@@ -33,6 +40,7 @@ exporting in .vtu format (!1386)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
+
 
 v5.2.0
 ------
