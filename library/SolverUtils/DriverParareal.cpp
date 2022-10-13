@@ -150,9 +150,23 @@ void DriverParareal::v_Execute(ostream &out)
     m_numChunks = m_session->GetComm()->GetTimeComm()->GetSize();
     m_chunkRank = m_session->GetComm()->GetTimeComm()->GetRank();
     // Maximum number of parareal iteration
-    m_pararealIterMax = m_session->GetParameter("PararealIterMax");
+    if (m_session->DefinesParameter("PararealIterMax"))
+    {
+        m_pararealIterMax = m_session->GetParameter("PararealIterMax");
+    }
+    else
+    {
+        m_pararealIterMax = m_numChunks;
+    }
     // Coarse solver time factor
-    m_coarseSolveFactor = m_session->GetParameter("CoarseSolveFactor");
+    if (m_session->DefinesParameter("CoarseSolveFactor"))
+    {
+        m_coarseSolveFactor = m_session->GetParameter("CoarseSolveFactor");
+    }
+    else
+    {
+        m_coarseSolveFactor = 100.0;
+    }
 
     // Set parameters from original session file.
     m_timestep  = m_equ[0]->GetTimeStep();
