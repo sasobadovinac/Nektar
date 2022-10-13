@@ -681,18 +681,15 @@ void LinearisedAdvection::DFT(
              "Since N_slices is specified, the filename provided for function "
              "'BaseFlow' must include exactly one instance of the format "
              "specifier '%d', to index the time-slices.");
-    char *buffer = new char[file.length() + 8];
-    int nstart   = m_start;
+    int nstart = m_start;
     for (int i = nstart; i < nstart + m_slices * m_skip; i += m_skip)
     {
-        sprintf(buffer, file.c_str(), i);
-        ImportFldBase(buffer, pFields, (i - nstart) / m_skip);
+        ImportFldBase(file + std::to_string(i), pFields, (i - nstart) / m_skip);
         if (m_session->GetComm()->GetRank() == 0)
         {
-            cout << "read base flow file " << buffer << endl;
+            cout << "read base flow file " << file + std::to_string(i) << endl;
         }
     }
-    delete[] buffer;
     if (!m_isperiodic)
     {
         return;

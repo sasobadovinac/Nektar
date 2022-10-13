@@ -2011,9 +2011,8 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
              (type == 'S' && prevType == 'S'));
 
         ASSERTL0(validSequence,
-                 (std::string("Invalid combination of composite items: ") +
-                  type + " and " + prevType + ".")
-                     .c_str());
+                 std::string("Invalid combination of composite items: ") +
+                     type + " and " + prevType + ".");
 
         switch (type)
         {
@@ -2023,12 +2022,9 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
                 {
                     if (m_vertSet.find(*iter) == m_vertSet.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *iter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown vertex index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown vertex index: " +
+                                     std::to_string(*iter));
                     }
                     else
                     {
@@ -2043,12 +2039,9 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
                 {
                     if (m_segGeoms.find(*iter) == m_segGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *iter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown segment index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown segment index: " +
+                                     std::to_string(*iter));
                     }
                     else
                     {
@@ -2059,15 +2052,13 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
 
             default:
                 NEKERROR(ErrorUtil::efatal,
-                         (std::string("Unrecognized composite token: ") + token)
-                             .c_str());
+                         "Unrecognized composite token: " + token);
         }
     }
     catch (...)
     {
         NEKERROR(ErrorUtil::efatal,
-                 (std::string("Problem processing composite token: ") + token)
-                     .c_str());
+                 "Problem processing composite token: " + token);
     }
 
     return;
@@ -2115,9 +2106,8 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
               (prevType == 'T' || prevType == 'Q')));
 
         ASSERTL0(validSequence,
-                 (std::string("Invalid combination of composite items: ") +
-                  type + " and " + prevType + ".")
-                     .c_str());
+                 std::string("Invalid combination of composite items: ") +
+                     type + " and " + prevType + ".");
 
         switch (type)
         {
@@ -2127,11 +2117,9 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                 {
                     if (m_segGeoms.find(*seqIter) == m_segGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown edge index: ") + errStr)
-                                     .c_str());
+                                 "Unknown edge index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2147,12 +2135,9 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                 {
                     if (m_triGeoms.count(*seqIter) == 0)
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown triangle index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown triangle index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2173,12 +2158,10 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                 {
                     if (m_quadGeoms.count(*seqIter) == 0)
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown quad index: ") + errStr +
-                                  std::string(" in Composite section"))
-                                     .c_str());
+                        NEKERROR(
+                            ErrorUtil::ewarning,
+                            "Unknown quad index: " + std::to_string(*seqIter) +
+                                " in Composite section");
                     }
                     else
                     {
@@ -2198,12 +2181,9 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                 {
                     if (*seqIter >= m_vertSet.size())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown vertex index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown vertex index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2214,15 +2194,13 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
 
             default:
                 NEKERROR(ErrorUtil::efatal,
-                         (std::string("Unrecognized composite token: ") + token)
-                             .c_str());
+                         "Unrecognized composite token: " + token);
         }
     }
     catch (...)
     {
         NEKERROR(ErrorUtil::efatal,
-                 (std::string("Problem processing composite token: ") + token)
-                     .c_str());
+                 "Problem processing composite token: " + token);
     }
 
     return;
@@ -2245,9 +2223,8 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
         std::string::size_type indxBeg = token.find_first_of('[') + 1;
         std::string::size_type indxEnd = token.find_last_of(']') - 1;
 
-        ASSERTL0(
-            indxBeg <= indxEnd,
-            (std::string("Error reading index definition:") + token).c_str());
+        ASSERTL0(indxBeg <= indxEnd,
+                 "Error reading index definition: " + token);
 
         std::string indxStr = token.substr(indxBeg, indxEnd - indxBeg + 1);
 
@@ -2256,9 +2233,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
 
         bool err = ParseUtils::GenerateSeqVector(indxStr.c_str(), seqVector);
 
-        ASSERTL0(err,
-                 (std::string("Error reading composite elements: ") + indxStr)
-                     .c_str());
+        ASSERTL0(err, "Error reading composite elements: " + indxStr);
 
         prevTokenStream >> prevType;
 
@@ -2279,9 +2254,8 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
             (prevToken.empty() || (typeMap[type] == typeMap[prevType]));
 
         ASSERTL0(validSequence,
-                 (std::string("Invalid combination of composite items: ") +
-                  type + " and " + prevType + ".")
-                     .c_str());
+                 std::string("Invalid combination of composite items: ") +
+                     type + " and " + prevType + ".");
 
         switch (type)
         {
@@ -2291,12 +2265,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_vertSet.find(*seqIter) == m_vertSet.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown vertex index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown vertex index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2311,11 +2282,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_segGeoms.find(*seqIter) == m_segGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown edge index: ") + errStr)
-                                     .c_str());
+                                 "Unknown edge index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2331,11 +2300,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     Geometry2DSharedPtr face = GetGeometry2D(*seqIter);
                     if (face == Geometry2DSharedPtr())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown face index: ") + errStr)
-                                     .c_str());
+                                 "Unknown face index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2353,12 +2320,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_triGeoms.find(*seqIter) == m_triGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown triangle index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown triangle index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2377,11 +2341,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_quadGeoms.find(*seqIter) == m_quadGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown quad index: ") + errStr)
-                                     .c_str());
+                                 "Unknown quad index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2401,11 +2363,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_tetGeoms.find(*seqIter) == m_tetGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown tet index: ") + errStr)
-                                     .c_str());
+                                 "Unknown tet index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2425,12 +2385,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_pyrGeoms.find(*seqIter) == m_pyrGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown pyramid index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown pyramid index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2450,11 +2407,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_prismGeoms.find(*seqIter) == m_prismGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown prism index: ") + errStr)
-                                     .c_str());
+                                 "Unknown prism index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2474,11 +2429,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_hexGeoms.find(*seqIter) == m_hexGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown hex index: ") + errStr)
-                                     .c_str());
+                                 "Unknown hex index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2493,15 +2446,13 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
 
             default:
                 NEKERROR(ErrorUtil::efatal,
-                         (std::string("Unrecognized composite token: ") + token)
-                             .c_str());
+                         "Unrecognized composite token: " + token);
         }
     }
     catch (...)
     {
         NEKERROR(ErrorUtil::efatal,
-                 (std::string("Problem processing composite token: ") + token)
-                     .c_str());
+                 "Problem processing composite token: " + token);
     }
 
     return;

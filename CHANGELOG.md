@@ -10,6 +10,7 @@ v5.3.0
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
 - Fix missing copy assignment operator warnings in clang 13+ (!1391)
 - Fix boost 1.77 compatibility errors (!1420)
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -23,6 +24,12 @@ v5.3.0
 - Re-add the SFD test with an updated restart file (!1399)
 - ExtractSurface2DCSF utility is updated to use the boost program option (!1407)
 
+**IncNavierStokesSolver**
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
+
+**VortexWaveInteractionSolver**
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
+
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
@@ -33,6 +40,7 @@ exporting in .vtu format (!1386)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
+
 
 v5.2.0
 ------
