@@ -89,23 +89,23 @@ void DriverParareal::RunCoarseSolve(const NekDouble                     time,
              "number of coarse steps should divide number of total steps");
 
     // Set to coarse timestep.
-    m_equ[0]->SetTime(time);
-    m_equ[0]->SetTimeStep(coarseDt);
-    m_equ[0]->SetSteps(nCoarseSteps);
+    m_equ[m_nequ-1]->SetTime(time);
+    m_equ[m_nequ-1]->SetTimeStep(coarseDt);
+    m_equ[m_nequ-1]->SetSteps(nCoarseSteps);
 
     // Copy initial condition from input.
-    for(int i = 0; i < m_equ[0]->GetNvariables(); ++i)
+    for(int i = 0; i < m_equ[m_nequ-1]->GetNvariables(); ++i)
     {
-        m_equ[0]->CopyToPhysField(i, input[i]);
+        m_equ[m_nequ-1]->CopyToPhysField(i, input[i]);
     }
 
     // Solve equations.
-    m_equ[0]->DoSolve();
+    m_equ[m_nequ-1]->DoSolve();
 
     // Copy solution to output.
-    for(int i = 0; i < m_equ[0]->GetNvariables(); ++i)
+    for(int i = 0; i < m_equ[m_nequ-1]->GetNvariables(); ++i)
     {
-        m_equ[0]->CopyFromPhysField(i, output[i]);
+        m_equ[m_nequ-1]->CopyFromPhysField(i, output[i]);
     }
 }
 
@@ -163,12 +163,8 @@ void DriverParareal::v_Execute(ostream &out)
     {
         m_coarseSolveFactor = m_session->GetParameter("CoarseSolveFactor");
     }
-    else
-    {
-        m_coarseSolveFactor = 100.0;
-    }
 
-    // Set parameters from original session file.
+    // Set parameters from session file.
     m_timestep  = m_equ[0]->GetTimeStep();
     m_steps     = m_equ[0]->GetSteps();
     m_totalTime = m_timestep * m_steps;
@@ -177,7 +173,26 @@ void DriverParareal::v_Execute(ostream &out)
     ASSERTL0(m_steps % m_numChunks == 0,
              "Total step size should be divisible by number of chunks.");
 
+    // Fine solver summary
+    if (m_comm->GetRank() == 0)
+    {
+        std::cout << "=======================================================================" << std::endl << std::flush;
+        std::cout << "========================= FINE PROPAGATOR INFO ========================" << std::endl << std::flush;
+    }
     m_equ[0]->PrintSummary(out);
+
+    std::cout << std::endl << std::flush;
+
+    // Coarse solver summary
+    if (m_nequ-1)
+    {
+        if (m_comm->GetRank() == 0)
+        {
+            std::cout << "=======================================================================" << std::endl << std::flush;
+            std::cout << "======================== COARSE PROPAGATOR INFO =======================" << std::endl << std::flush;
+        }
+        m_equ[m_nequ-1]->PrintSummary(out);
+    }
 
     time(&starttime);
 
@@ -200,9 +215,16 @@ void DriverParareal::v_Execute(ostream &out)
 	    exactsoln[i]       = Array<OneD, NekDouble>(nPts, 0.0);
     }
 
-    // Grab initial condition
+    // Initialize fine solver
     m_equ[0]->DoInitialise();
 
+    // Initialize coarse solver
+    if (m_nequ-1)
+    {
+        m_equ[m_nequ-1]->DoInitialise();
+    }
+
+    // Get initial conditions
     if (m_chunkRank == 0) 
     {
         for(int i = 0; i < nVar; ++i)
@@ -347,9 +369,9 @@ void DriverParareal::v_Execute(ostream &out)
     if (m_comm->GetRank() == 0)
     {
         CPUtime = difftime(endtime, starttime);
-        cout << "-------------------------------------------" << endl;
-        cout << "Total Computation Time = " << CPUtime << "s" << endl;
-        cout << "-------------------------------------------" << endl;
+        std::cout << "-------------------------------------------" << std::endl << std::flush;
+        std::cout << "Total Computation Time = " << CPUtime << "s" << std::endl << std::flush;
+        std::cout << "-------------------------------------------" << std::endl << std::flush;
     }
 
 }

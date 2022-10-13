@@ -114,6 +114,16 @@ void Driver::v_InitObject(ostream &out)
         m_nequ = ((m_EvolutionOperator == eTransientGrowth ||
                    m_EvolutionOperator == eAdaptiveSFD) ? 2 : 1);
 
+        // Determine if "two-level" parareal solver is used
+        std::string DriverType = m_session->GetSolverInfo("Driver");
+        std::string SolverType = m_session->GetSolverInfo("SolverType");
+        bool PararealTwoLevel = (DriverType == "Parareal" && SolverType != "CoupledLinearisedNS");
+        if (PararealTwoLevel) 
+        {
+            // For some reason "two-level" parareal is not working with "CoupledLinearisedNS"
+            m_nequ*=2;
+        }
+
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
         // Set the AdvectiveType tag and create EquationSystem objects.
@@ -121,18 +131,57 @@ void Driver::v_InitObject(ostream &out)
         {
             case eNonlinear:
                 m_session->SetTag("AdvectiveType","Convective");
-                m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                if (PararealTwoLevel) 
+                {
+                    // Set fine parareal solver
+                    m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+
+                    // Set coarse parareal solver
+                    m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                }
+                else
+                {
+                    m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                }
                 break;
             case eDirect:
                 m_session->SetTag("AdvectiveType","Linearised");
-                m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                if (PararealTwoLevel) 
+                {
+                    // Set fine parareal solver
+                    m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+
+                    // Set coarse parareal solver
+                    m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                }
+                else
+                {
+                    m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                }
                 break;
             case eAdjoint:
                 m_session->SetTag("AdvectiveType","Adjoint");
-                m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                if (PararealTwoLevel) 
+                {
+                    // Set fine parareal solver
+                    m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+
+                    // Set coarse parareal solver
+                    m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                }
+                else
+                {
+                    m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                }
                 break;
             case eTransientGrowth:
                 //forward timestepping
@@ -147,8 +196,20 @@ void Driver::v_InitObject(ostream &out)
                 break;
             case eSkewSymmetric:
                 m_session->SetTag("AdvectiveType","SkewSymmetric");
-                m_equ[0] = GetEquationSystemFactory().CreateInstance(
-                                    vEquation, m_session, m_graph);
+                if (PararealTwoLevel) 
+                {
+                    // Set fine parareal solver
+                    m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                    // Set coarse parareal solver
+                    m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                }
+                else
+                {
+                    m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                                        vEquation, m_session, m_graph);
+                }
                 break;
             case eAdaptiveSFD:
             {
