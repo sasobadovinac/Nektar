@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AdvectionTerm.h
+// File DriverParareal.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Driver class for the stability solver
+// Description: Driver class for the parareal solver
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -82,9 +82,6 @@ protected:
     /// Maximum number of parareal iteration
     int m_pararealIterMax = 0;
 
-    /// Coarse solve factor
-    NekDouble m_coarseSolveFactor = 100.0;
-
     /// Time for chunks
     NekDouble m_chunkTime;
 
@@ -102,12 +99,12 @@ protected:
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
 
-    void RunCoarseSolve(const NekDouble                     time,
+    void RunCoarseSolve(const NekDouble time,
                         const Array<OneD, const Array<OneD, NekDouble>> &input,
-                              Array<OneD,       Array<OneD, NekDouble>> &output);
-    void RunFineSolve  (const NekDouble                     time,
-                        const Array<OneD, const Array<OneD, NekDouble>> &input,
-                              Array<OneD,       Array<OneD, NekDouble>> &output);
+                        Array<OneD, Array<OneD, NekDouble>> &output);
+    void RunFineSolve(const NekDouble time,
+                      const Array<OneD, const Array<OneD, NekDouble>> &input,
+                      Array<OneD, Array<OneD, NekDouble>> &output);
 
     static std::string driverLookupId;
 };

@@ -618,14 +618,21 @@ namespace Nektar
                 std::vector<std::pair<std::string, std::string> > vSummary;
                 v_GenerateSummary(vSummary);
 
-                out << "=======================================================================" << std::endl;
+                out << "======================================================="
+                       "================"
+                    << std::endl
+                    << std::flush;
                 for (auto &x : vSummary)
                 {
-                    out << "\t";
+                    out << "\t" << std::flush;
                     out.width(20);
-                    out << x.first << ": " << x.second << std::endl;
+                    out << x.first << ": " << x.second << std::endl
+                        << std::flush;
                 }
-                out << "=======================================================================" << std::endl;
+                out << "======================================================="
+                       "================"
+                    << std::endl
+                    << std::flush;
             }
         }
 

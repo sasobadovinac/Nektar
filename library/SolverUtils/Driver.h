@@ -97,10 +97,10 @@ protected:
     /// Equation system to solve
     Array<OneD, EquationSystemSharedPtr>        m_equ;
 
-    ///number of equations
+    /// number of equations
     int m_nequ;
 
-    ///Evolution Operator
+    /// Evolution Operator
     enum EvolutionOperatorType m_EvolutionOperator;
 
     /// Initialises EquationSystem class members.
@@ -121,6 +121,18 @@ protected:
     static std::string evolutionOperatorDef;
     static std::string driverDefault;
 
+    // <------------ For Parareal Driver ------------- > //
+
+    /// Function to set parameter and solver info for the fine parareal solver
+    void SetFinePararealSolver(void);
+
+    /// Function to set parameter and solver info for the coarse parareal solver
+    void SetCoarsePararealSolver(void);
+
+    /// Coarse solver time factor
+    NekDouble m_coarseSolveFactor = 100.0;
+
+    // <------------ For Parareal Driver ------------- > //
 };
 
 inline void Driver::InitObject(std::ostream &out)

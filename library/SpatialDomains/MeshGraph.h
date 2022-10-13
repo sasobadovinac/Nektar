@@ -497,7 +497,8 @@ SPATIAL_DOMAINS_EXPORT MeshGraphFactory &GetMeshGraphFactory();
 void MeshGraph::SetExpansionInfo(const std::string variable,
                               ExpansionInfoMapShPtr &exp)
 {
-    if (m_expansionMapShPtrMap.count(variable) != 0)
+    int parareal = (m_session->GetSolverInfo("Driver") == "Parareal");
+    if (m_expansionMapShPtrMap.count(variable) > parareal)
     {
         ASSERTL0(false,
                  (std::string("ExpansionInfo field is already set for variable ") +
