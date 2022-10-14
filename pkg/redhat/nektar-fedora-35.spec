@@ -195,7 +195,7 @@ BuildRequires:  ImageMagick
 BuildRequires:  graphviz
 BuildRequires:  texlive texlive-import texlive-lstaddons texlive-bclogo
 BuildRequires:  texlive-mdframed texlive-standalone texlive-environ
-BuildRequires:  texlive-multirow
+BuildRequires:  texlive-multirow texlive-dirtree
 %description doc
 Documentation for Nektar++
 
