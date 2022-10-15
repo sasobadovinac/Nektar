@@ -219,6 +219,7 @@ private:
             // fill out rest of index to match vector width with last entry
             if (endwidth)
             {
+                ++i0; // increment i0 by 1 to set it to length of previous copies
                 for (; i0 < vecwidth; ++i0)
                 {
                     m_inputIdx[cnt1++] = inOffset + i + j - 1;
