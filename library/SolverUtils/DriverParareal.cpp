@@ -150,15 +150,9 @@ void DriverParareal::v_Execute(ostream &out)
 
     m_numChunks = m_session->GetComm()->GetTimeComm()->GetSize();
     m_chunkRank = m_session->GetComm()->GetTimeComm()->GetRank();
-    // Maximum number of parareal iteration
-    if (m_session->DefinesParameter("PararealIterMax"))
-    {
-        m_pararealIterMax = m_session->GetParameter("PararealIterMax");
-    }
-    else
-    {
-        m_pararealIterMax = m_numChunks;
-    }
+    m_pararealIterMax = m_session->DefinesParameter("PararealIterMax")
+                            ? m_session->GetParameter("PararealIterMax")
+                            : m_numChunks;
 
     // Set parameters from session file.
     m_timestep  = m_equ[0]->GetTimeStep();
@@ -262,6 +256,13 @@ void DriverParareal::v_Execute(ostream &out)
             tc->Recv(recvProc, ic[i]);
         }
     }
+
+    if (m_chunkRank == 0 && m_comm->GetRank() == 0)
+    {
+        std::cout << "** ITERATION " << 0 << " **" << std::endl
+                  << std::flush;
+    }
+
     RunCoarseSolve(m_chunkRank * m_chunkTime, ic, solution);
     if (m_chunkRank < m_numChunks - 1)
     {
@@ -300,7 +301,7 @@ void DriverParareal::v_Execute(ostream &out)
     {
         if (m_chunkRank == 0 && m_comm->GetRank() == 0)
         {
-            std::cout << "** ITERATION " << k << " **" << std::endl
+            std::cout << "** ITERATION " << k + 1 << " **" << std::endl
                       << std::flush;
         }
 
