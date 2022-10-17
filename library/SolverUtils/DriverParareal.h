@@ -70,6 +70,15 @@ protected:
     /// Original total time integration interval.
     NekDouble m_totalTime;
 
+    /// Coarse solver time factor
+    NekDouble m_coarseSolveFactor = 100.0;
+
+    /// Parareal (coarse solver) session reader object
+    LibUtilities::SessionReaderSharedPtr        m_session_coarse;
+
+    /// Parareal (coarse solver) MeshGraph object
+    SpatialDomains::MeshGraphSharedPtr          m_graph_coarse;
+
     /// Original number of steps for time integration.
     int m_steps;
 
@@ -99,9 +108,13 @@ protected:
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
 
+    /// Set the Parareal (coarse solver) session file
+    void SetPararealSessionFile(void);
+
     void RunCoarseSolve(const NekDouble time,
                         const Array<OneD, const Array<OneD, NekDouble>> &input,
                         Array<OneD, Array<OneD, NekDouble>> &output);
+
     void RunFineSolve(const NekDouble time,
                       const Array<OneD, const Array<OneD, NekDouble>> &input,
                       Array<OneD, Array<OneD, NekDouble>> &output);

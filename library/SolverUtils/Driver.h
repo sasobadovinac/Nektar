@@ -103,22 +103,6 @@ protected:
     /// Evolution Operator
     enum EvolutionOperatorType m_EvolutionOperator;
 
-    // <------------ For Parareal Driver ------------- > //
-
-    /// Parareal (coarse solver) session reader object
-    LibUtilities::SessionReaderSharedPtr        m_session_coarse;
-
-    /// Parareal (coarse solver) MeshGraph object
-    SpatialDomains::MeshGraphSharedPtr          m_graph_coarse;
-
-    /// Coarse solver time factor
-    NekDouble m_coarseSolveFactor = 100.0;
-
-    /// Set the Parareal (coarse solver) session file
-    void setPararealSessionFile(void);
-
-    // <------------ For Parareal Driver ------------- > //
-
     /// Initialises EquationSystem class members.
     Driver(const LibUtilities::SessionReaderSharedPtr pSession,
            const SpatialDomains::MeshGraphSharedPtr   pGraph);

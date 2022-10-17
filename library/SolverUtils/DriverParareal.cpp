@@ -67,7 +67,183 @@ DriverParareal:: ~DriverParareal()
  */
 void DriverParareal::v_InitObject(ostream &out)
 {
-    Driver::v_InitObject(out);
+    try
+    {
+        // Retrieve the equation system to solve.
+        ASSERTL0(m_session->DefinesSolverInfo("EqType"),
+                 "EqType SolverInfo tag must be defined.");
+        std::string vEquation = m_session->GetSolverInfo("EqType");
+        if (m_session->DefinesSolverInfo("SolverType"))
+        {
+            vEquation = m_session->GetSolverInfo("SolverType");
+        }
+
+        // Check such a module exists for this equation.
+        ASSERTL0(GetEquationSystemFactory().ModuleExists(vEquation),
+                 "EquationSystem '" + vEquation + "' is not defined.\n"
+                 "Ensure equation name is correct and module is compiled.\n");
+
+        // Retrieve the type of evolution operator to use
+        /// @todo At the moment this is Navier-Stokes specific - generalise?
+        m_EvolutionOperator =
+            m_session->GetSolverInfoAsEnum<EvolutionOperatorType>(
+                    "EvolutionOperator");
+
+        m_nequ = 2; 
+
+        m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
+
+        // Set the AdvectiveType tag and create EquationSystem objects.
+        switch (m_EvolutionOperator)
+        {
+            case eNonlinear:
+                // Set coarse parareal session file
+                SetPararealSessionFile();
+
+                // Set fine parareal solver
+                m_session->SetTag("AdvectiveType","Convective");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session, m_graph);
+
+                // Set coarse parareal solver
+                m_session_coarse->SetTag("AdvectiveType","Convective");
+                m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session_coarse, m_graph_coarse);
+                break;
+            case eDirect:
+                // Set coarse parareal session file
+                SetPararealSessionFile();
+
+                // Set fine parareal solver
+                m_session->SetTag("AdvectiveType","Linearised");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session, m_graph);
+
+                // Set coarse parareal solver
+                m_session_coarse->SetTag("AdvectiveType","Linearised");
+                m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session_coarse, m_graph_coarse);
+                break;
+            case eAdjoint:
+                // Set coarse parareal session file
+                SetPararealSessionFile();
+
+                // Set fine parareal solver
+                m_session->SetTag("AdvectiveType","Adjoint");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session, m_graph);
+
+                // Set coarse parareal solver
+                m_session_coarse->SetTag("AdvectiveType","Adjoint");
+                m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session_coarse, m_graph_coarse);
+                break;
+            case eSkewSymmetric:
+                // Set coarse parareal session file
+                SetPararealSessionFile();
+
+                // Set fine parareal solver
+                m_session->SetTag("AdvectiveType","SkewSymmetric");
+                m_equ[0] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session, m_graph);
+
+                // Set coarse parareal solver
+                m_session_coarse->SetTag("AdvectiveType","SkewSymmetric");
+                m_equ[1] = GetEquationSystemFactory().CreateInstance(
+                    vEquation, m_session_coarse, m_graph_coarse);
+                break;
+            default:
+                ASSERTL0(false, "Unrecognised evolution operator.");
+
+        }
+    }
+    catch (int e)
+    {
+        ASSERTL0(e == -1, "No such class class defined.");
+        out << "An error occurred during driver initialisation." << endl;
+    }
+}
+
+/// Set the Parareal (coarse solver) session file
+void DriverParareal::SetPararealSessionFile(void)
+{
+    // Get the coarse solver session file
+    string meshFile;
+    string coarseSolverFile;
+    vector<string> coarseSolverFilenames;
+    meshFile         = m_session->GetFilenames()[0];
+    coarseSolverFile = m_session->GetFilenames().size()>1 ? 
+          m_session->GetFilenames()[1] : 
+          m_session->GetFilenames()[0];
+    coarseSolverFile = coarseSolverFile.substr(0, coarseSolverFile.size() - 4);
+    coarseSolverFile += "_coarseSolver.xml";
+    std::ifstream f(coarseSolverFile);
+    if (f.good())
+    {
+        if (m_session->GetFilenames().size()>1)
+        {    
+            coarseSolverFilenames.push_back(meshFile);
+        }
+        coarseSolverFilenames.push_back(coarseSolverFile);
+    }
+    else
+    {
+        // if _coarseSolver.xml does not exit, use original session file
+        coarseSolverFilenames.push_back(m_session->GetFilenames()[0]);
+        if (m_session->GetFilenames().size()>1)
+        {    
+            coarseSolverFilenames.push_back(m_session->GetFilenames()[1]);
+        }
+    }
+
+    // Define argument for the coarse parareal solver
+    int npx = m_session->DefinesCmdLineArgument("npx")
+                  ? m_session->GetCmdLineArgument<int>("npx")
+                  : 1;
+    int npy = m_session->DefinesCmdLineArgument("npy")
+                  ? m_session->GetCmdLineArgument<int>("npy")
+                  : 1;
+    int npz = m_session->DefinesCmdLineArgument("npz")
+                  ? m_session->GetCmdLineArgument<int>("npz")
+                  : 1;
+    int nsz = m_session->DefinesCmdLineArgument("nsz")
+                  ? m_session->GetCmdLineArgument<int>("nsz")
+                  : 1;
+    int npt = m_session->DefinesCmdLineArgument("npt")
+                  ? m_session->GetCmdLineArgument<int>("npt")
+                  : 1;
+
+    char *argv[] = {const_cast<char *>("Solver"), // this is just a place holder
+                    const_cast<char *>("--npx"),
+                    const_cast<char *>(std::to_string(npx).c_str()),
+                    const_cast<char *>("--npy"),
+                    const_cast<char *>(std::to_string(npy).c_str()),
+                    const_cast<char *>("--npz"),
+                    const_cast<char *>(std::to_string(npz).c_str()),
+                    const_cast<char *>("--nsz"),
+                    const_cast<char *>(std::to_string(nsz).c_str()),
+                    const_cast<char *>("--npt"),
+                    const_cast<char *>(std::to_string(npt).c_str()),
+                    nullptr};
+
+    // Set session for coarse solver
+    m_session_coarse = LibUtilities::SessionReader::CreateInstance(
+        11, argv, coarseSolverFilenames, m_session->GetComm());
+
+    // Set graph for coarse solver
+    m_graph_coarse = SpatialDomains::MeshGraph::Read(m_session_coarse);
+
+    // If a coarse solver session file is not specified, use
+    // m_coarseSolveFactor to determine the timestep of the coarse solver
+    if (!f.good())
+    {
+        double TimeStep =
+            m_session->GetParameter("TimeStep") * m_coarseSolveFactor;
+        int NumSteps =
+            m_session->GetParameter("NumSteps") / m_coarseSolveFactor;
+        m_session_coarse->SetParameter("TimeStep", TimeStep);
+        m_session_coarse->SetParameter("NumSteps", NumSteps);
+    }
 }
 
 void DriverParareal::RunCoarseSolve(
