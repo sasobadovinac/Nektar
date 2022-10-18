@@ -425,8 +425,8 @@ void CouplingCwipi::SetupSendInterpolation()
     {
         method = LibUtilities::eShepard;
     }
-    m_sendInterpolator =
-        MemoryManager<FieldUtils::Interpolator>::AllocateSharedPtr(method);
+    m_sendInterpolator = MemoryManager<FieldUtils::Interpolator<std::vector<
+        MultiRegions::ExpListSharedPtr>>>::AllocateSharedPtr(method);
     m_sendInterpolator->CalcWeights(locatPts, distPts);
     m_sendInterpolator->PrintStatistics();
 }
@@ -1023,9 +1023,9 @@ void CouplingCwipi::ExtrapolateFields(
         // located rVals
         if (!m_extrapInterpolator)
         {
-            m_extrapInterpolator =
-                MemoryManager<FieldUtils::Interpolator>::AllocateSharedPtr(
-                    LibUtilities::eNearestNeighbour);
+            m_extrapInterpolator = MemoryManager<FieldUtils::Interpolator<
+                std::vector<MultiRegions::ExpListSharedPtr>>>::
+                AllocateSharedPtr(LibUtilities::eNearestNeighbour);
             m_extrapInterpolator->CalcWeights(locatedPts, notlocPts);
             m_extrapInterpolator->PrintStatistics();
         }

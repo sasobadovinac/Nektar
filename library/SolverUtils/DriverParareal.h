@@ -35,6 +35,7 @@
 #ifndef NEKTAR_SOLVERUTILS_DRIVERPARAREAL_H
 #define NEKTAR_SOLVERUTILS_DRIVERPARAREAL_H
 
+#include <FieldUtils/Interpolator.h>
 #include <SolverUtils/Driver.h>
 
 namespace Nektar
@@ -64,23 +65,36 @@ public:
 
 protected:
 
-    /// Original timestep.
-    NekDouble m_timestep;
+    // Interpolator
+    FieldUtils::Interpolator<Array<OneD, MultiRegions::ExpListSharedPtr>>
+        m_interp;
 
-    /// Original total time integration interval.
+    /// Parareal (coarse solver) session reader object
+    LibUtilities::SessionReaderSharedPtr        m_sessionCoarse;
+
+    /// Parareal (coarse solver) MeshGraph object
+    SpatialDomains::MeshGraphSharedPtr          m_graphCoarse;
+
+    /// Timestep for fine solver.
+    NekDouble m_fineTimeStep;
+
+    /// Timestep for coarse solver.
+    NekDouble m_coarseTimeStep;
+
+    /// Total time integration interval.
     NekDouble m_totalTime;
+
+    /// Time for chunks
+    NekDouble m_chunkTime;
 
     /// Coarse solver time factor
     NekDouble m_coarseSolveFactor = 100.0;
 
-    /// Parareal (coarse solver) session reader object
-    LibUtilities::SessionReaderSharedPtr        m_session_coarse;
+    /// Number of steps for the fine solver
+    int m_fineSteps = 1;
 
-    /// Parareal (coarse solver) MeshGraph object
-    SpatialDomains::MeshGraphSharedPtr          m_graph_coarse;
-
-    /// Original number of steps for time integration.
-    int m_steps;
+    /// Number of steps for the coarse solver
+    int m_coarseSteps = 1;
 
     /// Number of time chunks
     int m_numChunks = 1;
@@ -90,9 +104,6 @@ protected:
 
     /// Maximum number of parareal iteration
     int m_pararealIterMax = 0;
-
-    /// Time for chunks
-    NekDouble m_chunkTime;
 
     /// Constructor
     SOLVER_UTILS_EXPORT DriverParareal(

@@ -361,7 +361,7 @@ void ProcessWallNormalData::Process(po::variables_map &vm)
     m_f->m_fieldPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
         m_spacedim, m_f->m_variables, ptsH, LibUtilities::NullPtsInfoMap);
 
-    Interpolator interp;
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp;
     interp.Interpolate(m_f->m_exp, m_f->m_fieldPts, NekConstants::kNekUnsetDouble);
 }
 

@@ -47,6 +47,7 @@ namespace FieldUtils
 
 /// A class that contains algorithms for interpolation between pts fields,
 /// expansions and different meshes
+template <typename ArrayExpListSharedPtr>
 class Interpolator : public LibUtilities::Interpolator
 {
 public:
@@ -77,21 +78,20 @@ public:
     }
 
     /// Interpolate from an expansion to an expansion
-    FIELD_UTILS_EXPORT void Interpolate(
-        const std::vector<MultiRegions::ExpListSharedPtr> expInField,
-        std::vector<MultiRegions::ExpListSharedPtr> &expOutField,
-        NekDouble def_value = 0.0);
+    FIELD_UTILS_EXPORT void Interpolate(const ArrayExpListSharedPtr expInField,
+                                        ArrayExpListSharedPtr &expOutField,
+                                        NekDouble def_value = 0.0);
 
     /// Interpolate from an expansion to a pts field
     FIELD_UTILS_EXPORT void Interpolate(
-        const std::vector<MultiRegions::ExpListSharedPtr> expInField,
+        const ArrayExpListSharedPtr expInField,
         LibUtilities::PtsFieldSharedPtr &ptsOutField,
         NekDouble def_value = 0.0);
 
     /// Interpolate from a pts field to an expansion
     FIELD_UTILS_EXPORT void Interpolate(
         const LibUtilities::PtsFieldSharedPtr ptsInField,
-        std::vector<MultiRegions::ExpListSharedPtr> &expOutField);
+        ArrayExpListSharedPtr &expOutField);
 
     /// Interpolate from a pts field to a pts field
     FIELD_UTILS_EXPORT void Interpolate(
@@ -100,13 +100,17 @@ public:
 
 protected:
     /// input field
-    std::vector<MultiRegions::ExpListSharedPtr> m_expInField;
+    ArrayExpListSharedPtr m_expInField;
     /// output field
-    std::vector<MultiRegions::ExpListSharedPtr> m_expOutField;
+    ArrayExpListSharedPtr m_expOutField;
 };
 
-typedef std::shared_ptr<Interpolator> InterpolatorSharedPtr;
+typedef std::shared_ptr<
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>>
+    InterpolatorSharedPtr;
 
+template class Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>;
+template class Interpolator<Array<OneD, MultiRegions::ExpListSharedPtr>>;
 }
 }
 

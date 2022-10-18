@@ -522,7 +522,7 @@ void ProcessInterpPoints::InterpolateFieldToPts(
 
     int nfields = field0.size();
 
-    Interpolator interp;
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp;
     if (m_f->m_comm->GetRank() == 0)
     {
         interp.SetProgressCallback(&ProcessInterpPoints::PrintProgressbar,

@@ -470,14 +470,17 @@ void SessionFunction::EvaluatePts(string pFieldName,
     outPts = MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
                  inPts->GetDim(), inPts->GetFieldNames(), pts);
 
-    FieldUtils::Interpolator interp;
+    FieldUtils::Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>
+        interp;
     if (m_interpolators.find(funcFilename) != m_interpolators.end())
     {
         interp = m_interpolators[funcFilename];
     }
     else
     {
-        interp = FieldUtils::Interpolator(LibUtilities::eShepard);
+        interp = FieldUtils::Interpolator<
+            std::vector<MultiRegions::ExpListSharedPtr>>(
+            LibUtilities::eShepard);
         if (m_session->GetComm()->GetRank() == 0)
         {
             interp.SetProgressCallback(&SessionFunction::PrintProgressbar,

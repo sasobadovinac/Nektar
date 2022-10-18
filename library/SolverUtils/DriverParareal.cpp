@@ -106,9 +106,9 @@ void DriverParareal::v_InitObject(ostream &out)
                     vEquation, m_session, m_graph);
 
                 // Set coarse parareal solver
-                m_session_coarse->SetTag("AdvectiveType","Convective");
+                m_sessionCoarse->SetTag("AdvectiveType", "Convective");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, m_session_coarse, m_graph_coarse);
+                    vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
             case eDirect:
                 // Set coarse parareal session file
@@ -120,9 +120,9 @@ void DriverParareal::v_InitObject(ostream &out)
                     vEquation, m_session, m_graph);
 
                 // Set coarse parareal solver
-                m_session_coarse->SetTag("AdvectiveType","Linearised");
+                m_sessionCoarse->SetTag("AdvectiveType", "Linearised");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, m_session_coarse, m_graph_coarse);
+                    vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
             case eAdjoint:
                 // Set coarse parareal session file
@@ -134,9 +134,9 @@ void DriverParareal::v_InitObject(ostream &out)
                     vEquation, m_session, m_graph);
 
                 // Set coarse parareal solver
-                m_session_coarse->SetTag("AdvectiveType","Adjoint");
+                m_sessionCoarse->SetTag("AdvectiveType", "Adjoint");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, m_session_coarse, m_graph_coarse);
+                    vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
             case eSkewSymmetric:
                 // Set coarse parareal session file
@@ -148,9 +148,9 @@ void DriverParareal::v_InitObject(ostream &out)
                     vEquation, m_session, m_graph);
 
                 // Set coarse parareal solver
-                m_session_coarse->SetTag("AdvectiveType","SkewSymmetric");
+                m_sessionCoarse->SetTag("AdvectiveType", "SkewSymmetric");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
-                    vEquation, m_session_coarse, m_graph_coarse);
+                    vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
             default:
                 ASSERTL0(false, "Unrecognised evolution operator.");
@@ -180,6 +180,7 @@ void DriverParareal::SetPararealSessionFile(void)
     std::ifstream f(coarseSolverFile);
     if (f.good())
     {
+        // if _coarseSolver.xml exit, read session file
         if (m_session->GetFilenames().size()>1)
         {    
             coarseSolverFilenames.push_back(meshFile);
@@ -227,22 +228,23 @@ void DriverParareal::SetPararealSessionFile(void)
                     nullptr};
 
     // Set session for coarse solver
-    m_session_coarse = LibUtilities::SessionReader::CreateInstance(
+    m_sessionCoarse = LibUtilities::SessionReader::CreateInstance(
         11, argv, coarseSolverFilenames, m_session->GetComm());
 
     // Set graph for coarse solver
-    m_graph_coarse = SpatialDomains::MeshGraph::Read(m_session_coarse);
+    m_graphCoarse = SpatialDomains::MeshGraph::Read(m_sessionCoarse);
 
     // If a coarse solver session file is not specified, use
     // m_coarseSolveFactor to determine the timestep of the coarse solver
+    // (default value is 100.0)
     if (!f.good())
     {
         double TimeStep =
             m_session->GetParameter("TimeStep") * m_coarseSolveFactor;
         int NumSteps =
             m_session->GetParameter("NumSteps") / m_coarseSolveFactor;
-        m_session_coarse->SetParameter("TimeStep", TimeStep);
-        m_session_coarse->SetParameter("NumSteps", NumSteps);
+        m_sessionCoarse->SetParameter("TimeStep", TimeStep);
+        m_sessionCoarse->SetParameter("NumSteps", NumSteps);
     }
 }
 
@@ -252,36 +254,58 @@ void DriverParareal::RunCoarseSolve(
     Array<OneD, Array<OneD, NekDouble>> &output)
 {
     // Output coarse timestep.
-    NekDouble coarseDt = m_equ[1]->GetTimeStep();
-    int nCoarseSteps = std::max((int)round(m_chunkTime / coarseDt), 1);
-
     if (m_comm->GetRank() == 0)
     {
-        std::cout << "RUNNING COARSE SOLVE: dt = " << coarseDt
-                  << " nsteps = " << nCoarseSteps << std::endl
+        std::cout << "RUNNING COARSE SOLVE: dt = " << m_coarseTimeStep
+                  << " nsteps = " << m_coarseSteps / m_numChunks << std::endl
                   << std::flush;
     }
 
-    ASSERTL0(m_steps % nCoarseSteps == 0,
-             "number of coarse steps should divide number of total steps");
-
     // Set to coarse timestep.
     m_equ[1]->SetTime(time);
-    m_equ[1]->SetSteps(nCoarseSteps);
+    m_equ[1]->SetSteps(m_coarseSteps / m_numChunks);
 
     // Copy initial condition from input.
-    for (int i = 0; i < m_equ[1]->GetNvariables(); ++i)
+    if (m_equ[0]->GetNpoints() == m_equ[1]->GetNpoints())
     {
-        m_equ[1]->CopyToPhysField(i, input[i]);
+        // Interpolation not necessary, directly copy data
+        for (int i = 0; i < m_equ[1]->GetNvariables(); ++i)
+        {
+            m_equ[1]->CopyToPhysField(i, input[i]);
+        }
+    }
+    else
+    {
+        // Copy data to fine solver and interpolate from fine to coarse (WIP)
+        for (int i = 0; i < m_equ[0]->GetNvariables(); ++i)
+        {
+            m_equ[0]->CopyToPhysField(i, input[i]);
+        }
+        m_interp.Interpolate(m_equ[0]->UpdateFields(),
+                             m_equ[1]->UpdateFields());
     }
 
     // Solve equations.
     m_equ[1]->DoSolve();
 
     // Copy solution to output.
-    for (int i = 0; i < m_equ[1]->GetNvariables(); ++i)
+    if (m_equ[0]->GetNpoints() == m_equ[1]->GetNpoints())
     {
-        m_equ[1]->CopyFromPhysField(i, output[i]);
+        // Interpolation not necessary, directly copy data
+        for (int i = 0; i < m_equ[1]->GetNvariables(); ++i)
+        {
+            m_equ[1]->CopyFromPhysField(i, output[i]);
+        }
+    }
+    else
+    {
+        // Copy data from coarse solver and interpolate coarse to fine (WIP)
+        m_interp.Interpolate(m_equ[1]->UpdateFields(),
+                             m_equ[0]->UpdateFields());
+        for (int i = 0; i < m_equ[1]->GetNvariables(); ++i)
+        {
+            m_equ[0]->CopyFromPhysField(i, output[i]);
+        }
     }
 }
 
@@ -290,18 +314,17 @@ void DriverParareal::RunFineSolve(
     const Array<OneD, const Array<OneD, NekDouble>> &input,
     Array<OneD, Array<OneD, NekDouble>> &output)
 {
-
     // Output fine timestep.
     if (m_comm->GetRank() == 0)
     {
-        std::cout << "RUNNING FINE SOLVE: dt = " << m_timestep
-                  << " nsteps = " << m_steps / m_numChunks << std::endl
+        std::cout << "RUNNING FINE SOLVE: dt = " << m_fineTimeStep
+                  << " nsteps = " << m_fineSteps / m_numChunks << std::endl
                   << std::flush;
     }
 
     // Set to fine timestep.
     m_equ[0]->SetTime(time);
-    m_equ[0]->SetSteps(m_steps / m_numChunks);
+    m_equ[0]->SetSteps(m_fineSteps / m_numChunks);
 
     // Copy initial condition from input.
     for (int i = 0; i < m_equ[0]->GetNvariables(); ++i)
@@ -326,18 +349,23 @@ void DriverParareal::v_Execute(ostream &out)
 
     m_numChunks = m_session->GetComm()->GetTimeComm()->GetSize();
     m_chunkRank = m_session->GetComm()->GetTimeComm()->GetRank();
-    m_pararealIterMax = m_session->DefinesParameter("PararealIterMax")
-                            ? m_session->GetParameter("PararealIterMax")
-                            : m_numChunks;
 
     // Set parameters from session file.
-    m_timestep  = m_equ[0]->GetTimeStep();
-    m_steps     = m_equ[0]->GetSteps();
-    m_totalTime = m_timestep * m_steps;
-    m_chunkTime = m_totalTime / m_numChunks;
+    m_pararealIterMax= m_session->DefinesParameter("PararealIterMax")
+                            ? m_session->GetParameter("PararealIterMax")
+                            : m_numChunks;
+    m_fineTimeStep   = m_session->GetParameter("TimeStep");
+    m_coarseTimeStep = m_sessionCoarse->GetParameter("TimeStep");
+    m_fineSteps      = m_session->GetParameter("NumSteps");
+    m_coarseSteps    = m_sessionCoarse->GetParameter("NumSteps");
+    m_totalTime      = m_fineTimeStep * m_fineSteps;
+    m_chunkTime      = m_totalTime / m_numChunks;
 
-    ASSERTL0(m_steps % m_numChunks == 0,
+    ASSERTL0(m_fineSteps % m_numChunks == 0,
              "Total step size should be divisible by number of chunks.");
+
+    ASSERTL0(m_fineSteps % m_coarseSteps == 0,
+             "number of coarse steps should divide number of total steps");
 
     // Fine solver summary
     if (m_comm->GetRank() == 0)

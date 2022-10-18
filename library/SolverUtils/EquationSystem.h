@@ -53,6 +53,7 @@
 namespace Nektar
 {
     namespace FieldUtils {
+        template <typename ArrayExpListSharedPtr>
         class Interpolator;
     }
     namespace SolverUtils

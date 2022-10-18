@@ -371,7 +371,7 @@ void ProcessInterpPtsToPts::InterpolatePtsToPts(
 
     int nfields = fromPts->GetNFields();
 
-    Interpolator interp;
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp;
     if (m_f->m_comm->GetRank() == 0)
     {
         interp.SetProgressCallback(&ProcessInterpPtsToPts::PrintProgressbar,

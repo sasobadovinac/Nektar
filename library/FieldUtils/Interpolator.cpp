@@ -60,9 +60,10 @@ namespace FieldUtils
  * If both expansions use the same mesh, use LibUtilities/Foundations/Interp.h
  * instead.
  */
-void Interpolator::Interpolate(
-    const vector<MultiRegions::ExpListSharedPtr> expInField,
-    vector<MultiRegions::ExpListSharedPtr> &expOutField,
+template <typename ArrayExpListSharedPtr>
+void Interpolator<ArrayExpListSharedPtr>::Interpolate(
+    const ArrayExpListSharedPtr expInField,
+    ArrayExpListSharedPtr &expOutField,
     NekDouble def_value)
 {
     ASSERTL0(expInField.size() == expOutField.size(),
@@ -142,8 +143,9 @@ void Interpolator::Interpolate(
  * The interpolation is performed by evaluating the expInField at the points
  * of ptsOutField, so only eNoMethod is supported.
  */
-void Interpolator::Interpolate(
-    const vector<MultiRegions::ExpListSharedPtr> expInField,
+template <typename ArrayExpListSharedPtr>
+void Interpolator<ArrayExpListSharedPtr>::Interpolate(
+    const ArrayExpListSharedPtr expInField,
     LibUtilities::PtsFieldSharedPtr &ptsOutField,
     NekDouble def_value)
 {
@@ -278,9 +280,10 @@ void Interpolator::Interpolate(
  *
  * In and output fields must have the same dimension and number of fields.
  */
-void Interpolator::Interpolate(
+template <typename ArrayExpListSharedPtr>
+void Interpolator<ArrayExpListSharedPtr>::Interpolate(
     const LibUtilities::PtsFieldSharedPtr ptsInField,
-    vector<MultiRegions::ExpListSharedPtr> &expOutField)
+    ArrayExpListSharedPtr &expOutField)
 {
     ASSERTL0(expOutField.size() == ptsInField->GetNFields(),
              "number of fields does not match");
@@ -346,7 +349,8 @@ void Interpolator::Interpolate(
     }
 }
 
-void Interpolator::Interpolate(
+template <typename ArrayExpListSharedPtr>
+void Interpolator<ArrayExpListSharedPtr>::Interpolate(
     const LibUtilities::PtsFieldSharedPtr ptsInField,
     LibUtilities::PtsFieldSharedPtr &ptsOutField)
 {
