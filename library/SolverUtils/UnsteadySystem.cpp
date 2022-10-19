@@ -284,6 +284,8 @@ void UnsteadySystem::v_DoSolve()
         // Flag to update AV
         m_CalcPhysicalAV = true;
         // Frozen preconditioner checks
+        if (m_session->GetSolverInfo("Driver") != "Parareal")
+        {
         if (UpdateTimeStepCheck())
         {
             m_cflSafetyFactor = tmp_cflSafetyFactor;
@@ -302,70 +304,11 @@ void UnsteadySystem::v_DoSolve()
             else if (m_checktime &&
                      m_time + m_timestep - m_lastCheckTime >= m_checktime)
             {
-/* FOR PARAREAL
-                restartStep++;
-                
-                if(m_CFLGrowth > 1.0&&m_cflSafetyFactor<m_CFLEnd)
-                {
-                    tmp_cflSafetyFactor = 
-                        min(m_CFLEnd,m_CFLGrowth*tmp_cflSafetyFactor);
-                }
-
-                m_flagUpdatePreconMat = true;
-
-                // Flag to update AV
-                m_CalcPhysicalAV = true;
-
-                // Frozen preconditioner checks
-                // if (UpdateTimeStepCheck())
-                // {
-                //     m_cflSafetyFactor = tmp_cflSafetyFactor;
-
-                //     if (m_cflSafetyFactor)
-                //     {
-                //         m_timestep = GetTimeStep(fields);
-                //     }
-
-                //     // Ensure that the final timestep finishes at the final
-                //     // time, or at a prescribed IO_CheckTime.
-                //     if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
-                //     {
-                //         m_timestep = m_fintime - m_time;
-                //     }
-                //     else if (m_checktime &&
-                //         m_time + m_timestep - m_lastCheckTime >= m_checktime)
-                //     {
-                //         m_lastCheckTime += m_checktime;
-                //         m_timestep     = m_lastCheckTime - m_time;
-                //         doCheckTime    = true;
-                //     }
-                // }
-
-                if (m_TimeIncrementFactor > 1.0)
-                {
-                    NekDouble timeincrementFactor = m_TimeIncrementFactor;
-                    m_timestep  *=  timeincrementFactor;
-
-                    if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
-                    {
-                        m_timestep = m_fintime - m_time;
-                    }
-                }
-
-                // Perform any solver-specific pre-integration steps
-                timer.Start();
-                if (v_PreIntegrate(step))
-                {
-                    break;
-                }
-
-                m_StagesPerStep = 0;
-                m_TotLinItePerStep = 0;
-*/
                 m_lastCheckTime += m_checktime;
                 m_timestep  = m_lastCheckTime - m_time;
                 doCheckTime = true;
             }
+        }
         }
 
         if (m_TimeIncrementFactor > 1.0)
@@ -386,15 +329,6 @@ void UnsteadySystem::v_DoSolve()
             break;
         }
 
-/* FOR PARAREAL
-                // Write out status information
-                if (//m_session->GetComm()->GetRank() == 0 &&
-                    !((step+1) % m_infosteps))
-                {
-                    cout << "RANK " << m_session->GetComm()->GetRank()
-                         << " Steps: " << setw(8)  << left << step+1 << " "
-                         << "Time: "  << setw(12) << left << m_time;
-*/
         m_StagesPerStep    = 0;
         m_TotLinItePerStep = 0;
 
@@ -409,10 +343,20 @@ void UnsteadySystem::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
+        if ((m_session->GetComm()->GetRank() == 0 || m_session->GetSolverInfo("Driver") == "Parareal") && 
+             !((step + 1) % m_infosteps))
         {
-            cout << "Steps: " << setw(8) << left << step + 1 << " "
-                 << "Time: " << setw(12) << left << m_time;
+            if (m_session->GetSolverInfo("Driver") == "Parareal")
+            {
+                cout << "RANK " << m_session->GetComm()->GetRank()
+                     << " Steps: " << setw(8)  << left << step+1 << " "
+                     << "Time: "  << setw(12) << left << m_time;
+            }
+            else
+            {
+                cout << "Steps: " << setw(8) << left << step + 1 << " "
+                     << "Time: " << setw(12) << left << m_time;
+            }
 
             if (m_cflSafetyFactor)
             {

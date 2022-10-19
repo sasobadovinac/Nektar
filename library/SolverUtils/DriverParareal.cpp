@@ -171,17 +171,17 @@ void DriverParareal::SetPararealSessionFile(void)
     string meshFile;
     string coarseSolverFile;
     vector<string> coarseSolverFilenames;
-    meshFile         = m_session->GetFilenames()[0];
-    coarseSolverFile = m_session->GetFilenames().size()>1 ? 
-          m_session->GetFilenames()[1] : 
-          m_session->GetFilenames()[0];
+    meshFile         = m_session->GetFilenames()[1];
+    coarseSolverFile = m_session->GetFilenames().size()>2 ? 
+          m_session->GetFilenames()[2] : 
+          m_session->GetFilenames()[1];
     coarseSolverFile = coarseSolverFile.substr(0, coarseSolverFile.size() - 4);
     coarseSolverFile += "_coarseSolver.xml";
     std::ifstream f(coarseSolverFile);
     if (f.good())
     {
         // if _coarseSolver.xml exit, read session file
-        if (m_session->GetFilenames().size()>1)
+        if (m_session->GetFilenames().size()>2)
         {    
             coarseSolverFilenames.push_back(meshFile);
         }
@@ -190,10 +190,10 @@ void DriverParareal::SetPararealSessionFile(void)
     else
     {
         // if _coarseSolver.xml does not exit, use original session file
-        coarseSolverFilenames.push_back(m_session->GetFilenames()[0]);
-        if (m_session->GetFilenames().size()>1)
+        coarseSolverFilenames.push_back(m_session->GetFilenames()[1]);
+        if (m_session->GetFilenames().size()>2)
         {    
-            coarseSolverFilenames.push_back(m_session->GetFilenames()[1]);
+            coarseSolverFilenames.push_back(m_session->GetFilenames()[2]);
         }
     }
 
