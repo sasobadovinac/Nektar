@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: allocator.cpp
+// File: allocator.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,15 +36,16 @@
 #ifndef NEKTAR_LIB_LIBUTILITES_SIMDLIB_ALLOCATOR_H
 #define NEKTAR_LIB_LIBUTILITES_SIMDLIB_ALLOCATOR_H
 
-#include <type_traits>
-#include <boost/align/aligned_allocator.hpp>
 #include "traits.hpp"
+#include <boost/align/aligned_allocator.hpp>
+#include <type_traits>
 
 namespace tinysimd
 {
 
 // should be enabled only for vector types
-template <typename T, typename = typename std::enable_if<is_vector<T>::value>::type>
+template <typename T,
+          typename = typename std::enable_if<is_vector<T>::value>::type>
 using allocator = boost::alignment::aligned_allocator<T, T::alignment>;
 
 } // namespace tinysimd

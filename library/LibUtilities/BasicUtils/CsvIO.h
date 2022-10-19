@@ -36,15 +36,15 @@
 #ifndef NEKTAR_LIB_UTILITIES_BASIC_UTILS_CSVIO_H
 #define NEKTAR_LIB_UTILITIES_BASIC_UTILS_CSVIO_H
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include <LibUtilities/Communication/Comm.h>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/BasicUtils/PtsField.h>
 #include <LibUtilities/BasicUtils/PtsIO.h>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/Communication/Comm.h>
 
 namespace Nektar
 {
@@ -65,18 +65,14 @@ public:
                                     const PtsFieldSharedPtr &ptsField,
                                     const bool backup = false);
 
-
-
 protected:
     LIB_UTILITIES_EXPORT virtual void v_ImportFieldData(
-        const std::string inFile,
-        PtsFieldSharedPtr &ptsField,
+        const std::string inFile, PtsFieldSharedPtr &ptsField,
         DomainRangeShPtr &Range);
 
     // LIB_UTILITIES_EXPORT virtual void v_ImportFieldData(
     //     const std::string inFile,
     //     PtsFieldSharedPtr &ptsField);
-
 
     LIB_UTILITIES_EXPORT virtual std::string GetFileEnding() const
     {
@@ -85,6 +81,6 @@ protected:
 };
 
 typedef std::shared_ptr<CsvIO> CsvIOSharedPtr;
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 #endif

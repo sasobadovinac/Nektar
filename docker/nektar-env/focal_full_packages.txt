@@ -9,6 +9,7 @@ liboce-ocaf-dev
 libptscotch-dev
 libtet1.5-dev
 libtriangle-dev
+libvtk7-dev
 mpi-default-dev
 petsc-dev
 python3-dev

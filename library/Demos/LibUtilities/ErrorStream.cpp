@@ -59,8 +59,8 @@ int main(int argc, char *argv[])
     // with missing file.
     try
     {
-        char *fake_argv[3] = {
-            (char *)"ErrorStream", (char *)"missing.xml", NULL };
+        char *fake_argv[3] = {(char *)"ErrorStream", (char *)"missing.xml",
+                              NULL};
         LibUtilities::SessionReaderSharedPtr session =
             LibUtilities::SessionReader::CreateInstance(2, fake_argv);
         session->InitSession();
@@ -83,8 +83,10 @@ int main(int argc, char *argv[])
     }
 
     std::cout << "Difference between exception message and stringstream."
-              << std::endl << "Stringstream contains:" << std::endl
-              << ss.str() << std::endl << std::endl
+              << std::endl
+              << "Stringstream contains:" << std::endl
+              << ss.str() << std::endl
+              << std::endl
               << "Exception contains:" << std::endl
               << output << std::endl;
     return 1;

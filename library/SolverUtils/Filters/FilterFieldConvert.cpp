@@ -34,24 +34,23 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <SolverUtils/Filters/FilterFieldConvert.h>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/core/ignore_unused.hpp>
 #include <boost/program_options.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 
 namespace Nektar
 {
 namespace SolverUtils
 {
 std::string FilterFieldConvert::className =
-        GetFilterFactory().RegisterCreatorFunction(
-                "FieldConvert", FilterFieldConvert::create);
+    GetFilterFactory().RegisterCreatorFunction("FieldConvert",
+                                               FilterFieldConvert::create);
 
 FilterFieldConvert::FilterFieldConvert(
     const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>      &pEquation,
-    const ParamMap &pParams)
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
     : Filter(pSession, pEquation)
 {
     m_dt = m_session->GetParameter("TimeStep");
@@ -67,7 +66,7 @@ FilterFieldConvert::FilterFieldConvert(
     else
     {
         ASSERTL0(it->second.length() > 0, "Missing parameter 'OutputFile'.");
-        if ( it->second.find_last_of('.') != std::string::npos)
+        if (it->second.find_last_of('.') != std::string::npos)
         {
             m_outputFile = it->second;
         }
@@ -88,7 +87,7 @@ FilterFieldConvert::FilterFieldConvert(
     else
     {
         ASSERTL0(it->second.length() > 0, "Missing parameter 'RestartFile'.");
-        if ( it->second.find_last_of('.') != std::string::npos)
+        if (it->second.find_last_of('.') != std::string::npos)
         {
             m_restartFile = it->second;
         }
@@ -108,8 +107,7 @@ FilterFieldConvert::FilterFieldConvert(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_outputFrequency = round(equ.Evaluate());
     }
 
@@ -126,26 +124,27 @@ FilterFieldConvert::FilterFieldConvert(
     else
     {
         std::string sOption = it->second.c_str();
-        m_phaseSample = (boost::iequals(sOption, "true")) ||
-                   (boost::iequals(sOption, "yes"));
+        m_phaseSample       = (boost::iequals(sOption, "true")) ||
+                        (boost::iequals(sOption, "yes"));
     }
 
-    if(m_phaseSample)
+    if (m_phaseSample)
     {
         auto itPeriod = pParams.find("PhaseAveragePeriod");
-        auto itPhase = pParams.find("PhaseAveragePhase");
+        auto itPhase  = pParams.find("PhaseAveragePhase");
 
         // Error if only one of the required params for PhaseAverage is present
-        ASSERTL0((itPeriod != pParams.end() && itPhase != pParams.end()),
+        ASSERTL0(
+            (itPeriod != pParams.end() && itPhase != pParams.end()),
             "The phase sampling feature requires both 'PhaseAveragePeriod' and "
             "'PhaseAveragePhase' to be set.");
 
-        LibUtilities::Equation equPeriod(
-            m_session->GetInterpreter(), itPeriod->second);
+        LibUtilities::Equation equPeriod(m_session->GetInterpreter(),
+                                         itPeriod->second);
         m_phaseSamplePeriod = equPeriod.Evaluate();
 
-        LibUtilities::Equation equPhase(
-            m_session->GetInterpreter(), itPhase->second);
+        LibUtilities::Equation equPhase(m_session->GetInterpreter(),
+                                        itPhase->second);
         m_phaseSamplePhase = equPhase.Evaluate();
 
         // Check that phase and period are within required limits
@@ -162,14 +161,12 @@ FilterFieldConvert::FilterFieldConvert(
         }
         else
         {
-            LibUtilities::Equation equ(
-                m_session->GetInterpreter(), it->second);
+            LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
             m_sampleFrequency = round(equ.Evaluate());
         }
 
         // Compute tolerance within which sampling occurs.
-        m_phaseTolerance = m_dt * m_sampleFrequency /
-            (m_phaseSamplePeriod * 2);
+        m_phaseTolerance = m_dt * m_sampleFrequency / (m_phaseSamplePeriod * 2);
 
         // Display worst case scenario sampling tolerance for exact phase, if
         // verbose option is active
@@ -218,6 +215,114 @@ FilterFieldConvert::FilterFieldConvert(
     std::vector<std::string> tmp;
     boost::split(tmp, m_outputFile, boost::is_any_of(":"));
     m_outputFile = tmp[0];
+
+    // Prevent checking before overwriting
+    it = pParams.find("options");
+    if (it != pParams.end())
+    {
+        int argc = 0;
+        std::string strargv;
+        std::vector<char *> argv;
+
+        strargv = "dummy " + it->second;
+        strargv.push_back((char)0);
+        bool flag = true;
+        for (size_t i = 0; strargv[i]; ++i)
+        {
+            if (strargv[i] != ' ' && flag)
+            {
+                argv.push_back(&strargv[i]);
+                ++argc;
+                flag = false;
+            }
+            if (strargv[i] == ' ')
+            {
+                flag       = true;
+                strargv[i] = 0;
+            }
+        }
+
+        po::options_description desc("Available options");
+
+        // clang-format off
+        desc.add_options()
+            ("help,h",
+                "Produce this help message.")
+            ("modules-list,l",
+                "Print the list of available modules.")
+            ("output-points,n", po::value<int>(),
+                "Output at n equipspaced points along the "
+                "collapsed coordinates (for .dat, .vtu).")
+            ("output-points-hom-z", po::value<int>(),
+                "Number of planes in the z-direction for output of "
+                "Homogeneous 1D expansion(for .dat, .vtu).")
+            ("error,e",
+                "Write error of fields for regression checking")
+            ("forceoutput,f",
+                "Force the output to be written without any checks")
+            ("range,r", po::value<std::string>(),
+                "Define output range i.e. (-r xmin,xmax,ymin,ymax,zmin,zmax) "
+                "in which any vertex is contained.")
+            ("noequispaced",
+                "Do not use equispaced output.")
+            ("nparts", po::value<int>(),
+                "Define nparts if running serial problem to mimic "
+                "parallel run with many partitions.")
+            ("npz", po::value<int>(),
+                "Used to define number of partitions in z for Homogeneous1D "
+                "expansions for parallel runs.")
+            ("onlyshape", po::value<std::string>(),
+                "Only use element with defined shape type i.e. -onlyshape "
+                " Tetrahedron")
+            ("part-only", po::value<int>(),
+                "Partition into specified npart partitions and exit")
+            ("part-only-overlapping", po::value<int>(),
+                "Partition into specified npart overlapping partitions and     exit")
+            ("modules-opt,p", po::value<std::string>(),
+                "Print options for a module.")
+            ("module,m", po::value<std::vector<std::string> >(),
+                "Specify modules which are to be used.")
+            ("useSessionVariables",
+                "Use variables defined in session for output")
+            ("useSessionExpansion",
+                "Use expansion defined in session.")
+            ("verbose,v",
+                "Enable verbose mode.");
+        // clang-format on
+
+        po::options_description hidden("Hidden options");
+
+        // clang-format off
+        hidden.add_options()
+            ("input-file",   po::value<std::vector<std::string> >(),
+                             "Input  filename");
+        // clang-format on
+
+        po::options_description cmdline_options;
+        cmdline_options.add(hidden).add(desc);
+
+        po::options_description visible("Allowed options");
+        visible.add(desc);
+
+        po::positional_options_description p;
+        p.add("input-file", -1);
+
+        try
+        {
+            po::store(po::command_line_parser(argc, &(argv[0]))
+                          .options(cmdline_options)
+                          .positional(p)
+                          .run(),
+                      m_vm);
+            po::notify(m_vm);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << std::endl;
+            std::cerr << desc;
+        }
+    }
+    m_vm.insert(std::make_pair("forceoutput", po::variable_value()));
 }
 
 FilterFieldConvert::~FilterFieldConvert()
@@ -237,10 +342,10 @@ void FilterFieldConvert::v_Initialise(
     for (int n = 0; n < m_variables.size(); ++n)
     {
         // if n >= pFields.size() assum we have used n=0 field
-        nfield = (n < pFields.size())? n: 0;
+        nfield = (n < pFields.size()) ? n : 0;
 
         m_outFields[n] =
-                Array<OneD, NekDouble>(pFields[nfield]->GetNcoeffs(), 0.0);
+            Array<OneD, NekDouble>(pFields[nfield]->GetNcoeffs(), 0.0);
     }
 
     m_fieldMetaData["InitialTime"] = boost::lexical_cast<std::string>(time);
@@ -250,7 +355,7 @@ void FilterFieldConvert::v_Initialise(
     {
         // Load file
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;
-        std::vector<std::vector<NekDouble> > fieldData;
+        std::vector<std::vector<NekDouble>> fieldData;
         LibUtilities::FieldMetaDataMap fieldMetaData;
         LibUtilities::FieldIOSharedPtr fld =
             LibUtilities::FieldIO::CreateForFile(m_session, m_restartFile);
@@ -262,16 +367,15 @@ void FilterFieldConvert::v_Initialise(
         {
             // see if m_variables is part of pFields definition and if
             // so use that field for extract
-            for(k = 0; k < pFields.size(); ++k)
+            for (k = 0; k < pFields.size(); ++k)
             {
-                if(pFields[k]->GetSession()->GetVariable(k)
-                   == m_variables[j])
+                if (pFields[k]->GetSession()->GetVariable(k) == m_variables[j])
                 {
                     nfield = k;
                     break;
                 }
             }
-            if(nfield == -1)
+            if (nfield == -1)
             {
                 nfield = 0;
             }
@@ -279,10 +383,7 @@ void FilterFieldConvert::v_Initialise(
             for (int i = 0; i < fieldData.size(); ++i)
             {
                 pFields[nfield]->ExtractDataToCoeffs(
-                    fieldDef[i],
-                    fieldData[i],
-                    m_variables[j],
-                    m_outFields[j]);
+                    fieldDef[i], fieldData[i], m_variables[j], m_outFields[j]);
             }
         }
 
@@ -296,7 +397,7 @@ void FilterFieldConvert::v_Initialise(
             m_numSamples = 1;
         }
 
-        if(fieldMetaData.count("InitialTime"))
+        if (fieldMetaData.count("InitialTime"))
         {
             m_fieldMetaData["InitialTime"] = fieldMetaData["InitialTime"];
         }
@@ -311,12 +412,8 @@ void FilterFieldConvert::v_Initialise(
         NekDouble scale = v_GetScale();
         for (int n = 0; n < m_outFields.size(); ++n)
         {
-            Vmath::Smul(m_outFields[n].size(),
-                        1.0/scale,
-                        m_outFields[n],
-                        1,
-                        m_outFields[n],
-                        1);
+            Vmath::Smul(m_outFields[n].size(), 1.0 / scale, m_outFields[n], 1,
+                        m_outFields[n], 1);
         }
     }
 }
@@ -332,7 +429,7 @@ void FilterFieldConvert::v_FillVariablesName(
     }
 
     // Need to create a dummy coeffs vector to get extra variables names...
-    std::vector<Array<OneD, NekDouble> > coeffs(nfield);
+    std::vector<Array<OneD, NekDouble>> coeffs(nfield);
     for (int n = 0; n < nfield; ++n)
     {
         coeffs[n] = pFields[n]->GetCoeffs();
@@ -355,17 +452,17 @@ void FilterFieldConvert::v_Update(
 
     // Append extra fields
     int nfield = pFields.size();
-    std::vector<Array<OneD, NekDouble> > coeffs(nfield);
+    std::vector<Array<OneD, NekDouble>> coeffs(nfield);
     for (int n = 0; n < nfield; ++n)
     {
         coeffs[n] = pFields[n]->GetCoeffs();
     }
     std::vector<std::string> variables = m_variables;
-    auto equ = m_equ.lock();
+    auto equ                           = m_equ.lock();
     ASSERTL0(equ, "Weak pointer expired");
     equ->ExtraFldOutput(coeffs, variables);
 
-    if(m_phaseSample)
+    if (m_phaseSample)
     {
         // The sample is added to the filter only if the current time
         // corresponds to the correct phase. Introducing M as number of
@@ -381,7 +478,7 @@ void FilterFieldConvert::v_Update(
         // Care must be taken to handle the cases at phase 0 as the sample might
         // have to be taken at the very end of the previous cycle instead.
         if (relativePhase < m_phaseTolerance ||
-            fabs(relativePhase-1) < m_phaseTolerance)
+            fabs(relativePhase - 1) < m_phaseTolerance)
         {
             m_numSamples++;
             v_ProcessSample(pFields, coeffs, time);
@@ -405,7 +502,7 @@ void FilterFieldConvert::v_Update(
         m_fieldMetaData["FinalTime"] = boost::lexical_cast<std::string>(time);
         v_PrepareOutput(pFields, time);
         m_fieldMetaData["FilterFileNum"] =
-               boost::lexical_cast<std::string>(++m_outputIndex);
+            boost::lexical_cast<std::string>(++m_outputIndex);
         OutputField(pFields, m_outputIndex);
     }
 }
@@ -421,18 +518,14 @@ void FilterFieldConvert::v_Finalise(
 
 void FilterFieldConvert::v_ProcessSample(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-          std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
-    const NekDouble &time)
+    std::vector<Array<OneD, NekDouble>> &fieldcoeffs, const NekDouble &time)
 {
     boost::ignore_unused(pFields, time);
 
-    for(int n = 0; n < m_outFields.size(); ++n)
+    for (int n = 0; n < m_outFields.size(); ++n)
     {
-        Vmath::Vcopy(m_outFields[n].size(),
-                    fieldcoeffs[n],
-                    1,
-                    m_outFields[n],
-                    1);
+        Vmath::Vcopy(m_outFields[n].size(), fieldcoeffs[n], 1, m_outFields[n],
+                     1);
     }
 }
 
@@ -442,19 +535,15 @@ void FilterFieldConvert::OutputField(
     NekDouble scale = v_GetScale();
     for (int n = 0; n < m_outFields.size(); ++n)
     {
-        Vmath::Smul(m_outFields[n].size(),
-                    scale,
-                    m_outFields[n],
-                    1,
-                    m_outFields[n],
-                    1);
+        Vmath::Smul(m_outFields[n].size(), scale, m_outFields[n], 1,
+                    m_outFields[n], 1);
     }
 
     CreateFields(pFields);
 
     // Determine new file name
     std::stringstream outname;
-    int         dot    = m_outputFile.find_last_of('.');
+    int dot            = m_outputFile.find_last_of('.');
     std::string name   = m_outputFile.substr(0, dot);
     std::string ext    = m_outputFile.substr(dot, m_outputFile.length() - dot);
     std::string suffix = v_GetFileSuffix();
@@ -466,15 +555,7 @@ void FilterFieldConvert::OutputField(
     {
         outname << name << "_" << dump << suffix << ext;
     }
-    m_modules[m_modules.size()-1]->RegisterConfig("outfile", outname.str());
-
-    // Prevent checking before overwriting
-    po::options_description desc("Available options");
-        desc.add_options()
-            ("forceoutput,f",
-                "Force the output to be written without any checks");
-    po::variables_map vm;
-    vm.insert(std::make_pair("forceoutput", po::variable_value()));
+    m_modules[m_modules.size() - 1]->RegisterConfig("outfile", outname.str());
 
     // Run field process.
     for (int n = 0; n < SIZE_ModulePriority; ++n)
@@ -482,9 +563,9 @@ void FilterFieldConvert::OutputField(
         ModulePriority priority = static_cast<ModulePriority>(n);
         for (int i = 0; i < m_modules.size(); ++i)
         {
-            if(m_modules[i]->GetModulePriority() == priority)
+            if (m_modules[i]->GetModulePriority() == priority)
             {
-                m_modules[i]->Process(vm);
+                m_modules[i]->Process(m_vm);
             }
         }
     }
@@ -496,12 +577,8 @@ void FilterFieldConvert::OutputField(
     {
         for (int n = 0; n < m_outFields.size(); ++n)
         {
-            Vmath::Smul(m_outFields[n].size(),
-                        1.0 / scale,
-                        m_outFields[n],
-                        1,
-                        m_outFields[n],
-                        1);
+            Vmath::Smul(m_outFields[n].size(), 1.0 / scale, m_outFields[n], 1,
+                        m_outFields[n], 1);
         }
     }
 }
@@ -535,10 +612,9 @@ void FilterFieldConvert::CreateModules(std::vector<std::string> &modcmds)
             // filename.xml:vtk:opt1=arg1:opt2=arg2
             if (tmp1.size() == 1)
             {
-                int         dot = tmp1[0].find_last_of('.') + 1;
+                int dot         = tmp1[0].find_last_of('.') + 1;
                 std::string ext = tmp1[0].substr(dot, tmp1[0].length() - dot);
-
-                module.second = ext;
+                module.second   = ext;
                 tmp1.push_back(std::string("outfile=") + tmp1[0]);
             }
             else
@@ -586,21 +662,20 @@ void FilterFieldConvert::CreateModules(std::vector<std::string> &modcmds)
     }
 
     // Include equispaced output if needed
-    Array< OneD, int>  modulesCount(SIZE_ModulePriority,0);
+    Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < m_modules.size(); ++i)
     {
         ++modulesCount[m_modules[i]->GetModulePriority()];
     }
-    if( modulesCount[eModifyPts] != 0 &&
-        modulesCount[eCreatePts] == 0 &&
+    if (modulesCount[eModifyPts] != 0 && modulesCount[eCreatePts] == 0 &&
         modulesCount[eConvertExpToPts] == 0)
     {
-        ModuleKey               module;
-        ModuleSharedPtr         mod;
+        ModuleKey module;
+        ModuleSharedPtr mod;
         module.first  = eProcessModule;
         module.second = std::string("equispacedoutput");
-        mod = GetModuleFactory().CreateInstance(module, m_f);
-        m_modules.insert(m_modules.end()-1, mod);
+        mod           = GetModuleFactory().CreateInstance(module, m_f);
+        m_modules.insert(m_modules.end() - 1, mod);
         mod->SetDefaults();
     }
 
@@ -609,14 +684,14 @@ void FilterFieldConvert::CreateModules(std::vector<std::string> &modcmds)
 }
 
 void FilterFieldConvert::CreateFields(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
 {
     // Fill some parameters of m_f
-    m_f->m_session = m_session;
-    m_f->m_graph = pFields[0]->GetGraph();
-    m_f->m_comm = m_f->m_session->GetComm();
+    m_f->m_session          = m_session;
+    m_f->m_graph            = pFields[0]->GetGraph();
+    m_f->m_comm             = m_f->m_session->GetComm();
     m_f->m_fieldMetaDataMap = m_fieldMetaData;
-    m_f->m_fieldPts = LibUtilities::NullPtsField;
+    m_f->m_fieldPts         = LibUtilities::NullPtsField;
     // Create m_f->m_exp
     m_f->m_numHomogeneousDir = 0;
     if (pFields[0]->GetExpType() == MultiRegions::e3DH1D)
@@ -634,10 +709,10 @@ void FilterFieldConvert::CreateFields(
     for (int n = 0; n < m_variables.size(); ++n)
     {
         // if n >= pFields.size() assume we have used n=0 field
-        nfield = (n < pFields.size())? n: 0;
+        nfield = (n < pFields.size()) ? n : 0;
 
-        m_f->m_exp[n] = m_f->AppendExpList(
-                            m_f->m_numHomogeneousDir, m_variables[0]);
+        m_f->m_exp[n] =
+            m_f->AppendExpList(m_f->m_numHomogeneousDir, m_variables[0]);
         m_f->m_exp[n]->SetWaveSpace(false);
 
         ASSERTL1(pFields[nfield]->GetNcoeffs() == m_outFields[n].size(),
@@ -647,17 +722,17 @@ void FilterFieldConvert::CreateFields(
         m_f->m_exp[n]->ExtractCoeffsToCoeffs(pFields[nfield], m_outFields[n],
                                              m_f->m_exp[n]->UpdateCoeffs());
 
-        m_f->m_exp[n]->BwdTrans( m_f->m_exp[n]->GetCoeffs(),
-                                 m_f->m_exp[n]->UpdatePhys());
+        m_f->m_exp[n]->BwdTrans(m_f->m_exp[n]->GetCoeffs(),
+                                m_f->m_exp[n]->UpdatePhys());
     }
-    m_f->m_variables= m_variables;
+    m_f->m_variables = m_variables;
 }
 
 // This function checks validity conditions for the list of modules provided
 void FilterFieldConvert::CheckModules(std::vector<ModuleSharedPtr> &modules)
 {
     // Count number of modules by priority
-    Array< OneD, int>  modulesCount(SIZE_ModulePriority,0);
+    Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
     {
         ++modulesCount[modules[i]->GetModulePriority()];
@@ -665,25 +740,23 @@ void FilterFieldConvert::CheckModules(std::vector<ModuleSharedPtr> &modules)
 
     // FilterFieldConvert already starts with m_exp, so anything before
     //    eModifyExp is not valid, and also eCreatePts
-    if( modulesCount[eCreateGraph] != 0     ||
+    if (modulesCount[eCreateGraph] != 0 ||
         modulesCount[eCreateFieldData] != 0 ||
-        modulesCount[eModifyFieldData] != 0 ||
-        modulesCount[eCreateExp] != 0       ||
-        modulesCount[eFillExp] != 0         ||
-        modulesCount[eCreatePts] != 0)
+        modulesCount[eModifyFieldData] != 0 || modulesCount[eCreateExp] != 0 ||
+        modulesCount[eFillExp] != 0 || modulesCount[eCreatePts] != 0)
     {
         std::stringstream ss;
         ss << "Module(s): ";
         for (int i = 0; i < modules.size(); ++i)
         {
-            if(modules[i]->GetModulePriority() == eCreateGraph     ||
-               modules[i]->GetModulePriority() == eCreateFieldData ||
-               modules[i]->GetModulePriority() == eModifyFieldData ||
-               modules[i]->GetModulePriority() == eCreateExp       ||
-               modules[i]->GetModulePriority() == eFillExp         ||
-               modules[i]->GetModulePriority() == eCreatePts)
+            if (modules[i]->GetModulePriority() == eCreateGraph ||
+                modules[i]->GetModulePriority() == eCreateFieldData ||
+                modules[i]->GetModulePriority() == eModifyFieldData ||
+                modules[i]->GetModulePriority() == eCreateExp ||
+                modules[i]->GetModulePriority() == eFillExp ||
+                modules[i]->GetModulePriority() == eCreatePts)
             {
-                ss << modules[i]->GetModuleName()<<" ";
+                ss << modules[i]->GetModuleName() << " ";
             }
         }
         ss << "not compatible with FilterFieldConvert.";
@@ -691,31 +764,30 @@ void FilterFieldConvert::CheckModules(std::vector<ModuleSharedPtr> &modules)
     }
 
     // Modules of type eConvertExpToPts are not compatible with eBndExtraction
-    if( modulesCount[eConvertExpToPts] != 0 &&
-        modulesCount[eBndExtraction]   != 0)
+    if (modulesCount[eConvertExpToPts] != 0 &&
+        modulesCount[eBndExtraction] != 0)
     {
         std::stringstream ss;
         ss << "Module(s): ";
         for (int i = 0; i < modules.size(); ++i)
         {
-            if(modules[i]->GetModulePriority() == eBndExtraction)
+            if (modules[i]->GetModulePriority() == eBndExtraction)
             {
-                ss << modules[i]->GetModuleName()<<" ";
+                ss << modules[i]->GetModuleName() << " ";
             }
         }
         ss << "is not compatible with module(s): ";
         for (int i = 0; i < modules.size(); ++i)
         {
-            if(modules[i]->GetModulePriority() == eConvertExpToPts)
+            if (modules[i]->GetModulePriority() == eConvertExpToPts)
             {
-                ss << modules[i]->GetModuleName()<<" ";
+                ss << modules[i]->GetModuleName() << " ";
             }
         }
         ss << ".";
         ASSERTL0(false, ss.str());
     }
-
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

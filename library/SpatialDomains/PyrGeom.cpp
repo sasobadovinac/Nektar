@@ -36,9 +36,9 @@
 
 #include <SpatialDomains/Geometry1D.h>
 #include <SpatialDomains/Geometry2D.h>
-#include <StdRegions/StdPyrExp.h>
 #include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/TriGeom.h>
+#include <StdRegions/StdPyrExp.h>
 
 using namespace std;
 
@@ -46,6 +46,8 @@ namespace Nektar
 {
 namespace SpatialDomains
 {
+const unsigned int PyrGeom::EdgeNormalToFaceVert[5][4] = {
+    {4, 5, 6, 7}, {1, 3, 6, 7}, {0, 2, 4, 7}, {1, 3, 4, 5}, {0, 2, 5, 6}};
 
 PyrGeom::PyrGeom()
 {
@@ -56,7 +58,7 @@ PyrGeom::PyrGeom(int id, const Geometry2DSharedPtr faces[])
     : Geometry3D(faces[0]->GetEdge(0)->GetVertex(0)->GetCoordim())
 {
     m_shapeType = LibUtilities::ePyramid;
-    m_globalID = id;
+    m_globalID  = id;
 
     /// Copy the face shared pointers
     m_faces.insert(m_faces.begin(), faces, faces + PyrGeom::kNfaces);
@@ -77,7 +79,7 @@ PyrGeom::~PyrGeom()
 
 void PyrGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         PyrGeom::v_Setup();
     }
@@ -138,6 +140,11 @@ int PyrGeom::v_GetDir(const int faceidx, const int facedir) const
     }
 }
 
+int PyrGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
+}
+
 void PyrGeom::SetUpLocalEdges()
 {
     // find edge 0
@@ -151,15 +158,15 @@ void PyrGeom::SetUpLocalEdges()
     for (f = 1; f < 5; f++)
     {
         int nEdges = m_faces[f]->GetNumEdges();
-        check = 0;
+        check      = 0;
         for (i = 0; i < 4; i++)
         {
             for (j = 0; j < nEdges; j++)
             {
                 if (m_faces[0]->GetEid(i) == m_faces[f]->GetEid(j))
                 {
-                    edge = dynamic_pointer_cast<SegGeom>(
-                        (m_faces[0])->GetEdge(i));
+                    edge =
+                        dynamic_pointer_cast<SegGeom>((m_faces[0])->GetEdge(i));
                     m_edges.push_back(edge);
                     check++;
                 }
@@ -192,8 +199,7 @@ void PyrGeom::SetUpLocalEdges()
         {
             if ((m_faces[1])->GetEid(i) == (m_faces[4])->GetEid(j))
             {
-                edge = dynamic_pointer_cast<SegGeom>(
-                    (m_faces[1])->GetEdge(i));
+                edge = dynamic_pointer_cast<SegGeom>((m_faces[1])->GetEdge(i));
                 m_edges.push_back(edge);
                 check++;
             }
@@ -226,8 +232,8 @@ void PyrGeom::SetUpLocalEdges()
             {
                 if ((m_faces[f])->GetEid(i) == (m_faces[f + 1])->GetEid(j))
                 {
-                    edge = dynamic_pointer_cast<SegGeom>(
-                        (m_faces[f])->GetEdge(i));
+                    edge =
+                        dynamic_pointer_cast<SegGeom>((m_faces[f])->GetEdge(i));
                     m_edges.push_back(edge);
                     check++;
                 }
@@ -334,8 +340,8 @@ void PyrGeom::SetUpEdgeOrientation()
     // This 2D array holds the local id's of all the vertices for every
     // edge. For every edge, they are ordered to what we define as being
     // Forwards.
-    const unsigned int edgeVerts[kNedges][2] = {
-        {0, 1}, {1, 2}, {3, 2}, {0, 3}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
+    const unsigned int edgeVerts[kNedges][2] = {{0, 1}, {1, 2}, {3, 2}, {0, 3},
+                                                {0, 4}, {1, 4}, {2, 4}, {3, 4}};
 
     int i;
     for (i = 0; i < kNedges; i++)
@@ -344,7 +350,8 @@ void PyrGeom::SetUpEdgeOrientation()
         {
             m_eorient[i] = StdRegions::eForwards;
         }
-        else if (m_edges[i]->GetVid(0) == m_verts[edgeVerts[i][1]]->GetGlobalID())
+        else if (m_edges[i]->GetVid(0) ==
+                 m_verts[edgeVerts[i][1]]->GetGlobalID())
         {
             m_eorient[i] = StdRegions::eBackwards;
         }
@@ -405,8 +412,8 @@ void PyrGeom::SetUpFaceOrientation()
         // initialisation
         elementAaxis_length = 0.0;
         elementBaxis_length = 0.0;
-        faceAaxis_length = 0.0;
-        faceBaxis_length = 0.0;
+        faceAaxis_length    = 0.0;
+        faceBaxis_length    = 0.0;
 
         dotproduct1 = 0.0;
         dotproduct2 = 0.0;
@@ -525,8 +532,8 @@ void PyrGeom::SetUpFaceOrientation()
 
         elementAaxis_length = sqrt(elementAaxis_length);
         elementBaxis_length = sqrt(elementBaxis_length);
-        faceAaxis_length = sqrt(faceAaxis_length);
-        faceBaxis_length = sqrt(faceBaxis_length);
+        faceAaxis_length    = sqrt(faceAaxis_length);
+        faceBaxis_length    = sqrt(faceBaxis_length);
 
         // Calculate the inner product of both the A-axis
         // (i.e. Elemental A axis and face A axis)
@@ -535,7 +542,8 @@ void PyrGeom::SetUpFaceOrientation()
             dotproduct1 += elementAaxis[i] * faceAaxis[i];
         }
 
-        NekDouble norm = fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
+        NekDouble norm =
+            fabs(dotproduct1) / elementAaxis_length / faceAaxis_length;
         orientation = 0;
 
         // if the innerproduct is equal to the (absolute value of the ) products
@@ -614,19 +622,20 @@ void PyrGeom::SetUpFaceOrientation()
 
         orientation = orientation + 5;
 
-        if(f != 0) // check triangle orientation 
+        if (f != 0) // check triangle orientation
         {
-            ASSERTL0(orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
-                     "Orientation of triangular face (id = " +
-                     boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
-                     ") is inconsistent with face "+
-                     boost::lexical_cast<string>(f) +
-                     " of pyramid element (id = "+
-                     boost::lexical_cast<string>(m_globalID) +
-                     ") since Dir2 is aligned with Dir1. Mesh setup "
-                     "needs investigation");
+            ASSERTL0(
+                orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+                "Orientation of triangular face (id = " +
+                    boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
+                    ") is inconsistent with face " +
+                    boost::lexical_cast<string>(f) +
+                    " of pyramid element (id = " +
+                    boost::lexical_cast<string>(m_globalID) +
+                    ") since Dir2 is aligned with Dir1. Mesh setup "
+                    "needs investigation");
         }
-        
+
         // Fill the m_forient array
         m_forient[f] = (StdRegions::Orientation)orientation;
     }
@@ -647,7 +656,7 @@ void PyrGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void PyrGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 5; ++i)
         {
@@ -707,23 +716,20 @@ void PyrGeom::SetUpXmap()
     tmp.push_back(m_faces[3]->GetXmap()->GetTraceNcoeffs(2));
     int order2 = *max_element(tmp.begin(), tmp.end());
 
-
     const LibUtilities::BasisKey A1(
         LibUtilities::eModified_A, order0,
-        LibUtilities::PointsKey(
-            order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey A2(
         LibUtilities::eModified_A, order1,
-        LibUtilities::PointsKey(
-            order1+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::PointsKey(order1 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey C(
         LibUtilities::eModifiedPyr_C, order2,
-        LibUtilities::PointsKey(
-            order2, LibUtilities::eGaussRadauMAlpha2Beta0));
+        LibUtilities::PointsKey(order2, LibUtilities::eGaussRadauMAlpha2Beta0));
 
-    m_xmap = MemoryManager<StdRegions::StdPyrExp>::AllocateSharedPtr(
-        A1, A2, C);
+    m_xmap = MemoryManager<StdRegions::StdPyrExp>::AllocateSharedPtr(A1, A2, C);
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

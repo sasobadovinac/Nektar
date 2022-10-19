@@ -70,16 +70,16 @@ public:
     {
     }
 
-
     /// Calculate the temperature
-    virtual NekDouble GetTemperature(const NekDouble& rho, const NekDouble& e) = 0;
+    virtual NekDouble GetTemperature(const NekDouble &rho,
+                                     const NekDouble &e) = 0;
 
-    virtual vec_t GetTemperature(const vec_t& rho, const vec_t& e) = 0;
+    virtual vec_t GetTemperature(const vec_t &rho, const vec_t &e) = 0;
 
     /// Calculate the pressure
-    virtual NekDouble GetPressure(const NekDouble& rho, const NekDouble& e) = 0;
+    virtual NekDouble GetPressure(const NekDouble &rho, const NekDouble &e) = 0;
 
-    virtual vec_t GetPressure(const vec_t& rho, const vec_t& e) = 0;
+    virtual vec_t GetPressure(const vec_t &rho, const vec_t &e) = 0;
 
     /// Calculate the sound speed
     NekDouble GetSoundSpeed(const NekDouble &rho, const NekDouble &e);
@@ -127,8 +127,7 @@ protected:
 
     virtual NekDouble v_GetRhoFromPT(const NekDouble &rho,
                                      const NekDouble &p) = 0;
-
 };
-}
+} // namespace Nektar
 
 #endif

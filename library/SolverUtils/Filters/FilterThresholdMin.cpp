@@ -44,45 +44,40 @@ namespace SolverUtils
 {
 
 std::string FilterThresholdMin::className =
-        GetFilterFactory().RegisterCreatorFunction(
-                "ThresholdMin", FilterThresholdMin::create);
-
+    GetFilterFactory().RegisterCreatorFunction("ThresholdMin",
+                                               FilterThresholdMin::create);
 
 /**
  *
  */
 FilterThresholdMin::FilterThresholdMin(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const ParamMap &pParams)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
     : Filter(pSession, pEquation)
 {
     // ThresholdValue
     auto it = pParams.find("ThresholdValue");
     ASSERTL0(it != pParams.end(), "Missing parameter 'ThresholdValue'.");
-    LibUtilities::Equation equ1(
-        m_session->GetInterpreter(), it->second);
+    LibUtilities::Equation equ1(m_session->GetInterpreter(), it->second);
     m_thresholdValue = equ1.Evaluate();
 
     // InitialValue
     it = pParams.find("InitialValue");
     ASSERTL0(it != pParams.end(), "Missing parameter 'InitialValue'.");
-    LibUtilities::Equation equ2(
-        m_session->GetInterpreter(), it->second);
+    LibUtilities::Equation equ2(m_session->GetInterpreter(), it->second);
     m_initialValue = equ2.Evaluate();
 
     // StartTime
-    it = pParams.find("StartTime");
+    it          = pParams.find("StartTime");
     m_startTime = 0.0;
     if (it != pParams.end())
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_startTime = equ.Evaluate();
     }
 
     // OutputFile
-    it = pParams.find("OutputFile");
+    it           = pParams.find("OutputFile");
     m_outputFile = pSession->GetSessionName() + "_max.fld";
     if (it != pParams.end())
     {
@@ -90,52 +85,48 @@ FilterThresholdMin::FilterThresholdMin(
     }
 
     // ThresholdVar
-    it = pParams.find("ThresholdVar");
+    it             = pParams.find("ThresholdVar");
     m_thresholdVar = 0;
     if (it != pParams.end())
     {
-        std::string var = it->second.c_str();
+        std::string var             = it->second.c_str();
         std::vector<string> varlist = pSession->GetVariables();
         auto x = std::find(varlist.begin(), varlist.end(), var);
         ASSERTL0(x != varlist.end(),
                  "Specified variable " + var +
-                 " in ThresholdMin filter is not available.");
+                     " in ThresholdMin filter is not available.");
         m_thresholdVar = x - varlist.begin();
     }
 
     m_fld = LibUtilities::FieldIO::CreateDefault(pSession);
 }
 
-
 /**
  *
  */
 FilterThresholdMin::~FilterThresholdMin()
 {
-
 }
-
 
 /**
  *
  */
 void FilterThresholdMin::v_Initialise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     boost::ignore_unused(time);
 
-    m_threshold = Array<OneD, NekDouble> (
-            pFields[m_thresholdVar]->GetNpoints(), m_initialValue);
+    m_threshold = Array<OneD, NekDouble>(pFields[m_thresholdVar]->GetNpoints(),
+                                         m_initialValue);
 }
-
 
 /**
  *
  */
 void FilterThresholdMin::v_Update(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     if (time < m_startTime)
     {
@@ -143,7 +134,8 @@ void FilterThresholdMin::v_Update(
     }
 
     int i;
-    NekDouble timestep = pFields[m_thresholdVar]->GetSession()->GetParameter("TimeStep");
+    NekDouble timestep =
+        pFields[m_thresholdVar]->GetSession()->GetParameter("TimeStep");
 
     for (i = 0; i < pFields[m_thresholdVar]->GetNpoints(); ++i)
     {
@@ -155,37 +147,35 @@ void FilterThresholdMin::v_Update(
     }
 }
 
-
 /**
  *
  */
 void FilterThresholdMin::v_Finalise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     boost::ignore_unused(time);
 
     std::stringstream vOutputFilename;
     vOutputFilename << m_outputFile << ".fld";
 
-    std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef
-        = pFields[0]->GetFieldDefinitions();
-    std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
+    std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
+        pFields[0]->GetFieldDefinitions();
+    std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
 
     Array<OneD, NekDouble> vCoeffs(pFields[0]->GetNcoeffs());
-    pFields[0]->FwdTrans_IterPerExp(m_threshold, vCoeffs);
+    pFields[0]->FwdTransLocalElmt(m_threshold, vCoeffs);
 
     // copy Data into FieldData and set variable
-    for(int i = 0; i < FieldDef.size(); ++i)
+    for (int i = 0; i < FieldDef.size(); ++i)
     {
         // Could do a search here to find correct variable
         FieldDef[i]->m_fields.push_back("m");
         pFields[0]->AppendFieldData(FieldDef[i], FieldData[i], vCoeffs);
     }
 
-    m_fld->Write(vOutputFilename.str(),FieldDef,FieldData);
+    m_fld->Write(vOutputFilename.str(), FieldDef, FieldData);
 }
-
 
 /**
  *
@@ -195,5 +185,5 @@ bool FilterThresholdMin::v_IsTimeDependent()
     return true;
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

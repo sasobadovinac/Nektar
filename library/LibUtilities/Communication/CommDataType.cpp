@@ -59,9 +59,9 @@ int CommDataTypeGetSize(CommDataType dt)
     return size;
 #elif NEKTAR_USING_PETSC
     if (dt == MPI_CHAR)
-       return sizeof(char);
+        return sizeof(char);
     else if (dt == MPI_INT)
-       return sizeof(int);
+        return sizeof(int);
     else if (dt == MPI_UNSIGNED)
         return sizeof(unsigned);
     else if (dt == MPI_LONG)
@@ -109,65 +109,65 @@ int CommDataTypeGetSize(CommDataType dt)
 #endif
 }
 
-template<> CommDataType &CommDataTypeTraits<char>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<char>::GetDataType()
 {
     static CommDataType type = MPI_CHAR;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<int>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<int>::GetDataType()
 {
     static CommDataType type = MPI_INT;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<unsigned>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<unsigned>::GetDataType()
 {
     static CommDataType type = MPI_UNSIGNED;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<long>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<long>::GetDataType()
 {
     static CommDataType type = MPI_LONG;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<unsigned long>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<unsigned long>::GetDataType()
 {
     static CommDataType type = MPI_UNSIGNED_LONG;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<long long>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<long long>::GetDataType()
 {
     static CommDataType type = MPI_LONG_LONG;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<unsigned long long>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<unsigned long long>::GetDataType()
 {
     static CommDataType type = MPI_UNSIGNED_LONG_LONG;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<float>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<float>::GetDataType()
 {
     static CommDataType type = MPI_FLOAT;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<double>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<double>::GetDataType()
 {
     static CommDataType type = MPI_DOUBLE;
     return type;
 }
 
-template<> CommDataType &CommDataTypeTraits<long double>::GetDataType()
+template <> CommDataType &CommDataTypeTraits<long double>::GetDataType()
 {
     static CommDataType type = MPI_LONG_DOUBLE;
     return type;
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

@@ -38,11 +38,11 @@
 #define NEKTAR_SPATIALDOMAINS_GEOMETRY_H
 
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
-#include <SpatialDomains/SpatialDomainsDeclspec.h>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/SpatialDomainsDeclspec.h>
 
-#include <unordered_map>
 #include <array>
+#include <unordered_map>
 
 namespace Nektar
 {
@@ -72,12 +72,10 @@ static CurveMap NullCurveMap;
 /// \brief Less than operator to sort Geometry objects by global id when sorting
 /// STL containers.
 SPATIAL_DOMAINS_EXPORT bool SortByGlobalId(
-    const std::shared_ptr<Geometry> &lhs,
-    const std::shared_ptr<Geometry> &rhs);
+    const std::shared_ptr<Geometry> &lhs, const std::shared_ptr<Geometry> &rhs);
 
 SPATIAL_DOMAINS_EXPORT bool GlobalIdEquality(
-    const std::shared_ptr<Geometry> &lhs,
-    const std::shared_ptr<Geometry> &rhs);
+    const std::shared_ptr<Geometry> &lhs, const std::shared_ptr<Geometry> &rhs);
 
 /// Base class for shape geometry information
 class Geometry
@@ -129,10 +127,10 @@ public:
     //---------------------------------------
     // \chi mapping access
     //---------------------------------------
-    SPATIAL_DOMAINS_EXPORT inline
-        StdRegions::StdExpansionSharedPtr GetXmap() const;
-    SPATIAL_DOMAINS_EXPORT inline const
-        Array<OneD, const NekDouble> &GetCoeffs(const int i) const;
+    SPATIAL_DOMAINS_EXPORT inline StdRegions::StdExpansionSharedPtr GetXmap()
+        const;
+    SPATIAL_DOMAINS_EXPORT inline const Array<OneD, const NekDouble> &GetCoeffs(
+        const int i) const;
     SPATIAL_DOMAINS_EXPORT inline void FillGeom();
 
     //---------------------------------------
@@ -141,17 +139,13 @@ public:
     SPATIAL_DOMAINS_EXPORT std::array<NekDouble, 6> GetBoundingBox();
 
     SPATIAL_DOMAINS_EXPORT inline bool ContainsPoint(
-        const Array<OneD, const NekDouble> &gloCoord,
-        NekDouble tol = 0.0);
+        const Array<OneD, const NekDouble> &gloCoord, NekDouble tol = 0.0);
     SPATIAL_DOMAINS_EXPORT inline bool ContainsPoint(
         const Array<OneD, const NekDouble> &gloCoord,
-        Array<OneD, NekDouble> &locCoord,
-        NekDouble tol);
+        Array<OneD, NekDouble> &locCoord, NekDouble tol);
     SPATIAL_DOMAINS_EXPORT inline bool ContainsPoint(
         const Array<OneD, const NekDouble> &gloCoord,
-        Array<OneD, NekDouble> &locCoord,
-        NekDouble tol,
-        NekDouble &dist);
+        Array<OneD, NekDouble> &locCoord, NekDouble tol, NekDouble &dist);
     SPATIAL_DOMAINS_EXPORT inline NekDouble GetLocCoords(
         const Array<OneD, const NekDouble> &coords,
         Array<OneD, NekDouble> &Lcoords);
@@ -159,9 +153,8 @@ public:
         const int i, const Array<OneD, const NekDouble> &Lcoord);
     SPATIAL_DOMAINS_EXPORT bool MinMaxCheck(
         const Array<OneD, const NekDouble> &gloCoord);
-    SPATIAL_DOMAINS_EXPORT bool ClampLocCoords(
-        Array<OneD, NekDouble> &locCoord,
-        NekDouble tol);
+    SPATIAL_DOMAINS_EXPORT bool ClampLocCoords(Array<OneD, NekDouble> &locCoord,
+                                               NekDouble tol);
 
     //---------------------------------------
     // Misc. helper functions
@@ -169,9 +162,11 @@ public:
     SPATIAL_DOMAINS_EXPORT inline int GetVertexEdgeMap(int i, int j) const;
     SPATIAL_DOMAINS_EXPORT inline int GetVertexFaceMap(int i, int j) const;
     SPATIAL_DOMAINS_EXPORT inline int GetEdgeFaceMap(int i, int j) const;
-    SPATIAL_DOMAINS_EXPORT inline int GetDir(const int i, const int j = 0) const;
+    SPATIAL_DOMAINS_EXPORT inline int GetEdgeNormalToFaceVert(int i,
+                                                              int j) const;
+    SPATIAL_DOMAINS_EXPORT inline int GetDir(const int i,
+                                             const int j = 0) const;
 
-    
     SPATIAL_DOMAINS_EXPORT inline void Reset(CurveMap &curvedEdges,
                                              CurveMap &curvedFaces);
     SPATIAL_DOMAINS_EXPORT inline void Setup();
@@ -182,30 +177,30 @@ protected:
     static GeomFactorsVector m_regGeomFactorsManager;
 
     /// Coordinate dimension of this geometry object.
-    int                               m_coordim;
+    int m_coordim;
     /// Geometric factors.
-    GeomFactorsSharedPtr              m_geomFactors;
+    GeomFactorsSharedPtr m_geomFactors;
     /// State of the geometric factors
-    GeomState                         m_geomFactorsState;
+    GeomState m_geomFactorsState;
     /// \f$\chi\f$ mapping containing isoparametric transformation.
     StdRegions::StdExpansionSharedPtr m_xmap;
     /// Enumeration to dictate whether coefficients are filled.
-    GeomState                         m_state;
+    GeomState m_state;
     /// Wether or not the setup routines have been run
-    bool                              m_setupState;
+    bool m_setupState;
     /// Type of geometry.
-    GeomType                          m_geomType;
+    GeomType m_geomType;
     /// Type of shape.
-    LibUtilities::ShapeType           m_shapeType;
+    LibUtilities::ShapeType m_shapeType;
     /// Global ID
-    int                               m_globalID;
+    int m_globalID;
     /// Array containing expansion coefficients of @p m_xmap
-    Array<OneD, Array<OneD, NekDouble> > m_coeffs;
+    Array<OneD, Array<OneD, NekDouble>> m_coeffs;
     /// Array containing bounding box
     Array<OneD, NekDouble> m_boundingBox;
 
     /// Handles generation of geometry factors.
-    void                              GenGeomFactors();
+    void GenGeomFactors();
 
     //---------------------------------------
     // Helper functions
@@ -225,8 +220,7 @@ protected:
 
     virtual bool v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                                  Array<OneD, NekDouble> &locCoord,
-                                 NekDouble tol,
-                                 NekDouble &dist);
+                                 NekDouble tol, NekDouble &dist);
 
     virtual NekDouble v_GetCoord(const int i,
                                  const Array<OneD, const NekDouble> &Lcoord);
@@ -236,6 +230,7 @@ protected:
     virtual int v_GetVertexEdgeMap(int i, int j) const;
     virtual int v_GetVertexFaceMap(int i, int j) const;
     virtual int v_GetEdgeFaceMap(int i, int j) const;
+    virtual int v_GetEdgeNormalToFaceVert(const int i, const int j) const;
     virtual int v_GetDir(const int faceidx, const int facedir) const;
 
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
@@ -251,11 +246,11 @@ protected:
  */
 struct GeometryHash : std::unary_function<GeometrySharedPtr, std::size_t>
 {
-    std::size_t operator()(GeometrySharedPtr const& p) const
+    std::size_t operator()(GeometrySharedPtr const &p) const
     {
         int i;
-        size_t seed  = 0;
-        int nVert = p->GetNumVerts();
+        size_t seed = 0;
+        int nVert   = p->GetNumVerts();
         std::vector<unsigned int> ids(nVert);
 
         for (i = 0; i < nVert; ++i)
@@ -338,8 +333,10 @@ inline void Geometry::SetGlobalID(int globalid)
 inline int Geometry::GetTid(int i) const
 {
     const int nDim = GetShapeDim();
-    return nDim == 1 ? GetVid(i) : nDim == 2 ? GetEid(i) :
-           nDim == 3 ? GetFid(i) : 0;
+    return nDim == 1   ? GetVid(i)
+           : nDim == 2 ? GetEid(i)
+           : nDim == 3 ? GetFid(i)
+                       : 0;
 }
 
 /**
@@ -456,10 +453,9 @@ inline void Geometry::FillGeom()
  * @see Geometry::ContainsPoint
  */
 inline bool Geometry::ContainsPoint(
-    const Array<OneD, const NekDouble> &gloCoord,
-    NekDouble tol)
+    const Array<OneD, const NekDouble> &gloCoord, NekDouble tol)
 {
-    Array<OneD,NekDouble> locCoord(GetCoordim(), 0.0);
+    Array<OneD, NekDouble> locCoord(GetCoordim(), 0.0);
     NekDouble dist;
     return v_ContainsPoint(gloCoord, locCoord, tol, dist);
 }
@@ -472,8 +468,7 @@ inline bool Geometry::ContainsPoint(
  */
 inline bool Geometry::ContainsPoint(
     const Array<OneD, const NekDouble> &gloCoord,
-    Array<OneD, NekDouble> &locCoord,
-    NekDouble tol)
+    Array<OneD, NekDouble> &locCoord, NekDouble tol)
 {
     NekDouble dist;
     return v_ContainsPoint(gloCoord, locCoord, tol, dist);
@@ -509,9 +504,7 @@ inline bool Geometry::ContainsPoint(
  */
 inline bool Geometry::ContainsPoint(
     const Array<OneD, const NekDouble> &gloCoord,
-    Array<OneD, NekDouble> &locCoord,
-    NekDouble tol,
-    NekDouble &dist)
+    Array<OneD, NekDouble> &locCoord, NekDouble tol, NekDouble &dist)
 {
     return v_ContainsPoint(gloCoord, locCoord, tol, dist);
 }
@@ -537,8 +530,7 @@ inline bool Geometry::ContainsPoint(
  * @return Distance between obtained coordinates and provided ones.
  */
 inline NekDouble Geometry::GetLocCoords(
-    const Array<OneD, const NekDouble> &coords,
-    Array<OneD, NekDouble> &Lcoords)
+    const Array<OneD, const NekDouble> &coords, Array<OneD, NekDouble> &Lcoords)
 {
     return v_GetLocCoords(coords, Lcoords);
 }
@@ -618,6 +610,27 @@ inline int Geometry::GetEdgeFaceMap(int i, int j) const
     return v_GetEdgeFaceMap(i, j);
 }
 
+/**
+ * @brief Returns the standard lement edge IDs that are normal to a given face
+ * vertex.
+ *
+ * For example, on a hexahedron, on face 0 at vertices 0,1,2,3 the
+ * edges normal to that face are 4,5,6,7, ; so
+ * `GetEdgeNormalToFaceVert(0,j)` would therefore return the values 4,
+ * 5, 6 and 7 respectively. We assume that @p j runs between 0 and 3
+ * inclusive on a quadrilateral face and between 0 and 2 inclusive on
+ * a triangular face.
+ *
+ * This is used to help set up a length scale normal to an face
+ *
+ * @param i  The face to query for the normal edge
+ * @param j  The local vertex index between 0 and nverts on this face
+ *
+ */
+inline int Geometry::GetEdgeNormalToFaceVert(int i, int j) const
+{
+    return v_GetEdgeNormalToFaceVert(i, j);
+}
 
 /**
  * @brief Returns the element coordinate direction corresponding to a given face
@@ -657,7 +670,7 @@ inline void Geometry::GenGeomFactors()
  */
 inline void Geometry::SetUpCoeffs(const int nCoeffs)
 {
-    m_coeffs = Array<OneD, Array<OneD, NekDouble> >(m_coordim);
+    m_coeffs = Array<OneD, Array<OneD, NekDouble>>(m_coordim);
 
     for (int i = 0; i < m_coordim; ++i)
     {
@@ -665,7 +678,7 @@ inline void Geometry::SetUpCoeffs(const int nCoeffs)
     }
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_GEOMETRY_H

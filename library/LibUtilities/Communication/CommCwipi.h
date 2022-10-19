@@ -72,7 +72,7 @@ public:
 protected:
     virtual void v_Finalise();
 };
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

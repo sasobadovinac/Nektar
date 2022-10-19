@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: scalar.cpp
+// File: scalar.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,13 +36,12 @@
 #ifndef NEKTAR_LIB_LIBUTILITES_SIMDLIB_SCALAR_H
 #define NEKTAR_LIB_LIBUTILITES_SIMDLIB_SCALAR_H
 
-#include <vector>
+#include "allocator.hpp"
+#include "traits.hpp"
 #include <cmath>
 #include <cstdint>
 #include <type_traits>
-#include <cstdint>
-#include "allocator.hpp"
-#include "traits.hpp"
+#include <vector>
 
 namespace tinysimd
 {
@@ -50,8 +49,7 @@ namespace tinysimd
 namespace abi
 {
 
-template <typename scalarType>
-struct scalar
+template <typename scalarType> struct scalar
 {
     using type = void;
 };
@@ -60,69 +58,95 @@ struct scalar
 
 // forward declaration of concrete types
 // makes default type available for all arithmetic types
-template<typename T, typename = typename std::enable_if<
-    std::is_arithmetic<T>::value>::type>
+template <typename T,
+          typename =
+              typename std::enable_if<std::is_arithmetic<T>::value>::type>
 struct scalarT;
 struct scalarMask;
 
 namespace abi
 {
 
-    // mapping between abstract types and concrete types
-    template <> struct scalar<double>{ using type = scalarT<double>; };
-    template <> struct scalar<float> { using type = scalarT<float>; };
-    template <> struct scalar<std::int64_t>{ using type = scalarT<std::int64_t>; };
-    template <> struct scalar<std::uint64_t>{ using type = scalarT<std::uint64_t>; };
-    template <> struct scalar<std::int32_t>{ using type = scalarT<std::int32_t>; };
-    template <> struct scalar<std::uint32_t>{ using type = scalarT<std::uint32_t>; };
-    template <> struct scalar<bool>{ using type = scalarMask; };
+// mapping between abstract types and concrete types
+template <> struct scalar<double>
+{
+    using type = scalarT<double>;
+};
+template <> struct scalar<float>
+{
+    using type = scalarT<float>;
+};
+template <> struct scalar<std::int64_t>
+{
+    using type = scalarT<std::int64_t>;
+};
+template <> struct scalar<std::uint64_t>
+{
+    using type = scalarT<std::uint64_t>;
+};
+template <> struct scalar<std::int32_t>
+{
+    using type = scalarT<std::int32_t>;
+};
+template <> struct scalar<std::uint32_t>
+{
+    using type = scalarT<std::uint32_t>;
+};
+template <> struct scalar<bool>
+{
+    using type = scalarMask;
+};
 
-
-#ifdef __APPLE__  // for apple size_t is recognised as uint64_t 
-    template <> struct scalar<size_t>{ using type = scalarT<size_t>; };
+#ifdef __APPLE__ // for apple size_t is recognised as uint64_t
+template <> struct scalar<size_t>
+{
+    using type = scalarT<size_t>;
+};
 #endif
 
 } // namespace abi
 
 // concrete types
-template<typename T, typename>
-struct scalarT
+template <typename T, typename> struct scalarT
 {
-    static constexpr unsigned int width = 1;
+    static constexpr unsigned int width     = 1;
     static constexpr unsigned int alignment = sizeof(T);
 
-    using scalarType = T;
-    using vectorType = scalarType;
+    using scalarType  = T;
+    using vectorType  = scalarType;
     using scalarArray = scalarType[width];
 
     // storage
-    vectorType _data;
+    vectorType _data{0};
 
     // ctors
-    inline scalarT() = default;
-    inline scalarT(const scalarT& rhs) = default;
-    inline scalarT(const vectorType& rhs) : _data(rhs){}
+    inline scalarT()                   = default;
+    inline scalarT(const scalarT &rhs) = default;
+    inline scalarT(const vectorType &rhs) : _data(rhs)
+    {
+    }
+
+    // copy assignment
+    inline scalarT &operator=(const scalarT &) = default;
 
     // store
-    inline void store(scalarType* p) const
+    inline void store(scalarType *p) const
     {
         *p = _data;
     }
 
-    template<class flag>
-    inline void store(scalarType* p, flag) const
+    template <class flag> inline void store(scalarType *p, flag) const
     {
         *p = _data;
     }
 
     // load
-    inline void load(const scalarType* p)
+    inline void load(const scalarType *p)
     {
         _data = *p;
     }
 
-    template<class flag>
-    inline void load(const scalarType* p, flag)
+    template <class flag> inline void load(const scalarType *p, flag)
     {
         _data = *p;
     }
@@ -132,16 +156,16 @@ struct scalarT
         _data = rhs;
     }
 
-    template<typename U, typename = typename std::enable_if<
-        std::is_integral<U>::value>::type>
-    inline void gather(const scalarType* p, const scalarT<U>& indices)
+    template <typename U, typename = typename std::enable_if<
+                              std::is_integral<U>::value>::type>
+    inline void gather(const scalarType *p, const scalarT<U> &indices)
     {
         _data = *(p + indices._data);
     }
 
-    template<typename U, typename = typename std::enable_if<
-        std::is_integral<U>::value>::type>
-    inline void scatter(scalarType* p, const scalarT<U>& indices) const
+    template <typename U, typename = typename std::enable_if<
+                              std::is_integral<U>::value>::type>
+    inline void scatter(scalarType *p, const scalarT<U> &indices) const
     {
         p += indices._data;
         *p = _data;
@@ -149,7 +173,7 @@ struct scalarT
 
     // fma
     // this = this + a * b
-    inline void fma(const scalarT<T>& a, const scalarT<T>& b)
+    inline void fma(const scalarT<T> &a, const scalarT<T> &b)
     {
         _data += a._data * b._data;
     }
@@ -160,7 +184,7 @@ struct scalarT
         return _data;
     }
 
-    inline scalarType& operator[](size_t)
+    inline scalarType &operator[](size_t)
     {
         return _data;
     }
@@ -185,106 +209,105 @@ struct scalarT
     {
         _data /= rhs._data;
     }
-
 };
 
-template<typename T>
+template <typename T>
 inline scalarT<T> operator+(scalarT<T> lhs, scalarT<T> rhs)
 {
     return lhs._data + rhs._data;
 }
-template<typename T, typename U, typename = typename std::enable_if<
-    std::is_arithmetic<U>::value>::type>
+template <
+    typename T, typename U,
+    typename = typename std::enable_if<std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator+(U lhs, scalarT<T> rhs)
 {
     return lhs + rhs._data;
 }
-template<typename T, typename U, typename = typename std::enable_if<
-    std::is_arithmetic<U>::value>::type>
+template <
+    typename T, typename U,
+    typename = typename std::enable_if<std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator+(scalarT<T> lhs, U rhs)
 {
     return lhs._data + rhs;
 }
 
-
-template<typename T>
+template <typename T>
 inline scalarT<T> operator-(scalarT<T> lhs, scalarT<T> rhs)
 {
     return lhs._data - rhs._data;
 }
-template<typename T, typename U, typename = typename std::enable_if<
-    std::is_arithmetic<U>::value>::type>
+template <
+    typename T, typename U,
+    typename = typename std::enable_if<std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator-(U lhs, scalarT<T> rhs)
 {
     return lhs - rhs._data;
 }
-template<typename T, typename U, typename = typename std::enable_if<
-    std::is_arithmetic<U>::value>::type>
+template <
+    typename T, typename U,
+    typename = typename std::enable_if<std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator-(scalarT<T> lhs, U rhs)
 {
     return lhs._data - rhs;
 }
 
-
-template<typename T>
+template <typename T>
 inline scalarT<T> operator*(scalarT<T> lhs, scalarT<T> rhs)
 {
     return lhs._data * rhs._data;
 }
-template<typename T, typename U, typename = typename std::enable_if<
-    std::is_arithmetic<U>::value>::type>
+template <
+    typename T, typename U,
+    typename = typename std::enable_if<std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator*(U lhs, scalarT<T> rhs)
 {
     return lhs * rhs._data;
 }
-template<typename T, typename U, typename = typename std::enable_if<
-    std::is_arithmetic<U>::value>::type>
+template <
+    typename T, typename U,
+    typename = typename std::enable_if<std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator*(scalarT<T> lhs, U rhs)
 {
     return lhs._data * rhs;
 }
 
-
-template<typename T>
+template <typename T>
 inline scalarT<T> operator/(scalarT<T> lhs, scalarT<T> rhs)
 {
     return lhs._data / rhs._data;
 }
-template<typename T, typename U, typename = typename std::enable_if<
-    std::is_arithmetic<U>::value>::type>
+template <
+    typename T, typename U,
+    typename = typename std::enable_if<std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator/(U lhs, scalarT<T> rhs)
 {
     return lhs / rhs._data;
 }
-template<typename T, typename U, typename = typename std::enable_if<
-    std::is_arithmetic<U>::value>::type>
+template <
+    typename T, typename U,
+    typename = typename std::enable_if<std::is_arithmetic<U>::value>::type>
 inline scalarT<T> operator/(scalarT<T> lhs, U rhs)
 {
     return lhs._data / rhs;
 }
 
-template<typename T>
-inline scalarT<T> sqrt(scalarT<T> in)
+template <typename T> inline scalarT<T> sqrt(scalarT<T> in)
 {
     return std::sqrt(in._data);
 }
-template<typename T>
-inline scalarT<T> abs(scalarT<T> in)
+template <typename T> inline scalarT<T> abs(scalarT<T> in)
 {
     return std::abs(in._data);
 }
 
-template<typename T>
-inline scalarT<T> log(scalarT<T> in)
+template <typename T> inline scalarT<T> log(scalarT<T> in)
 {
     return std::log(in._data);
 }
 
-template<typename T>
-inline void load_interleave(
-    const T* in,
-    size_t dataLen,
-    std::vector<scalarT<T>, allocator<scalarT<T>>> &out)
+template <typename T>
+inline void load_interleave(const T *in, size_t dataLen,
+                            std::vector<scalarT<T>, allocator<scalarT<T>>> &out)
 {
     for (size_t i = 0; i < dataLen; ++i)
     {
@@ -292,10 +315,9 @@ inline void load_interleave(
     }
 }
 
-template<typename T>
+template <typename T>
 inline void deinterleave_store(
-    const std::vector<scalarT<T>, allocator<scalarT<T>>> &in,
-    size_t dataLen,
+    const std::vector<scalarT<T>, allocator<scalarT<T>>> &in, size_t dataLen,
     T *out)
 {
     for (size_t i = 0; i < dataLen; ++i)
@@ -311,18 +333,43 @@ inline void deinterleave_store(
 //
 // VERY LIMITED SUPPORT...just enough to make cubic eos work...
 //
-struct scalarMask : scalarT<std::uint64_t>
+struct scalarMask : public scalarT<std::uint64_t>
 {
     // bring in ctors
     using scalarT::scalarT;
 
-    static constexpr scalarType true_v = true;
+    static constexpr scalarType true_v  = true;
     static constexpr scalarType false_v = false;
+
+    // needs to be able to work with std::uint32_t
+    // for single precision overload
+    // usually using 32 or 64 bits would result in a different number of lanes
+    // this is not the case for a scalar
+
+    // store
+    inline void store(std::uint32_t *p) const
+    {
+        *p = static_cast<std::uint32_t>(_data);
+    }
+
+    // load
+    inline void load(const std::uint32_t *p)
+    {
+        _data = static_cast<std::uint32_t>(*p);
+    }
+
+    // make base implementations visible
+    using scalarT<std::uint64_t>::store;
+    using scalarT<std::uint64_t>::load;
 };
 
 inline scalarMask operator>(scalarT<double> lhs, scalarT<double> rhs)
 {
+    return lhs._data > rhs._data;
+}
 
+inline scalarMask operator>(scalarT<float> lhs, scalarT<float> rhs)
+{
     return lhs._data > rhs._data;
 }
 

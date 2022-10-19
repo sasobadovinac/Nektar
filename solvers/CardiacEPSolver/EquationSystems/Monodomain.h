@@ -35,86 +35,82 @@
 #ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_MONODOMAIN_H
 #define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_MONODOMAIN_H
 
-#include <SolverUtils/UnsteadySystem.h>
 #include <CardiacEPSolver/CellModels/CellModel.h>
 #include <CardiacEPSolver/Stimuli/Stimulus.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
 
+/// A model for cardiac conduction.
+class Monodomain : public UnsteadySystem
+{
+public:
+    friend class MemoryManager<Monodomain>;
 
-    /// A model for cardiac conduction.
-    class Monodomain : public UnsteadySystem
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<Monodomain>;
+        EquationSystemSharedPtr p =
+            MemoryManager<Monodomain>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            EquationSystemSharedPtr p = MemoryManager<Monodomain>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Desctructor
+    virtual ~Monodomain();
 
-        /// Desctructor
-        virtual ~Monodomain();
+protected:
+    /// Constructor
+    Monodomain(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    protected:
-        /// Constructor
-        Monodomain(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    virtual void v_InitObject();
 
-        virtual void v_InitObject();
+    /// Solve for the diffusion term.
+    void DoImplicitSolve(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
+        NekDouble lambda);
 
-        /// Solve for the diffusion term.
-        void DoImplicitSolve(
-                const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-                      Array<OneD, Array<OneD, NekDouble> >&outarray,
-                      NekDouble time,
-                      NekDouble lambda);
+    /// Computes the reaction terms \f$f(u,v)\f$ and \f$g(u,v)\f$.
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
-        /// Computes the reaction terms \f$f(u,v)\f$ and \f$g(u,v)\f$.
-        void DoOdeRhs(
-                const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                      Array<OneD,        Array<OneD, NekDouble> >&outarray,
-                const NekDouble time);
+    /// Sets a custom initial condition.
+    virtual void v_SetInitialConditions(NekDouble initialtime,
+                                        bool dumpInitialConditions,
+                                        const int domain);
 
-        /// Sets a custom initial condition.
-        virtual void v_SetInitialConditions(NekDouble initialtime,
-                                bool dumpInitialConditions,
-                                const int domain);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
+private:
+    /// Cell model.
+    CellModelSharedPtr m_cell;
 
-    private:
-        /// Cell model.
-        CellModelSharedPtr m_cell;
+    std::vector<StimulusSharedPtr> m_stimulus;
 
-        std::vector<StimulusSharedPtr> m_stimulus;
+    /// Variable diffusivity
+    StdRegions::VarCoeffMap m_vardiff;
 
-        /// Variable diffusivity
-        StdRegions::VarCoeffMap m_vardiff;
+    NekDouble m_chi;
+    NekDouble m_capMembrane;
 
-        NekDouble m_chi;
-        NekDouble m_capMembrane;
+    /// Stimulus current
+    NekDouble m_stimDuration;
 
-        /// Stimulus current
-        NekDouble m_stimDuration;
+    void LoadStimuli();
+};
 
-        void LoadStimuli();
-    };
-
-}
+} // namespace Nektar
 
 #endif

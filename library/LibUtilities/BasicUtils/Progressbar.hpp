@@ -33,11 +33,11 @@
 #ifndef NEKTAR_LIBUTILITIES_PROGRESSBAR_HPP
 #define NEKTAR_LIBUTILITIES_PROGRESSBAR_HPP
 
-#include <stdio.h>
-#include <iostream>
-#include <iomanip>
-#include <string>
 #include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <stdio.h>
+#include <string>
 
 #ifdef _WIN32
 #include <io.h>
@@ -64,16 +64,15 @@ namespace LibUtilities
  * calling this routine. Ideally, this should be called only when the
  * percentage is increased by an integer.
  */
-inline int PrintProgressbar(
-    const int position, const int goal, const std::string message,
-    int lastprogress = -1)
+inline int PrintProgressbar(const int position, const int goal,
+                            const std::string message, int lastprogress = -1)
 {
-    std::cout.unsetf ( std::ios::floatfield );
+    std::cout.unsetf(std::ios::floatfield);
     if (ISTTY)
     {
         float progress = position / float(goal);
-        int  numeq = static_cast<int>(ceil(progress *49));
-        if(lastprogress == numeq)
+        int numeq      = static_cast<int>(ceil(progress * 49));
+        if (lastprogress == numeq)
         {
             return numeq;
         }
@@ -100,15 +99,15 @@ inline int PrintProgressbar(
     else
     {
         // print only every 2 percent
-        if (int(ceil(double(100 * position / goal))) % 2 ==  0)
+        if (int(ceil(double(100 * position / goal))) % 2 == 0)
         {
-            std::cout << "." <<  std::flush;
+            std::cout << "." << std::flush;
         }
         return -1;
     }
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // NEKTAR_LIBUTILITIES_PROGRESSBAR_HPP

@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/Optimisation/BGFS-B.h>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <NekMesh/Optimisation/BGFS-B.h>
 
 #include <limits>
 #include <set>
@@ -250,5 +250,5 @@ bool BGFSUpdate(OptiObjSharedPtr opti, DNekMat &J, DNekMat &B, DNekMat &H)
 
     return true;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

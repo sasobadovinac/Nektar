@@ -35,8 +35,8 @@
 #ifndef NekMesh_MESHELEMENTS_QUAD
 #define NekMesh_MESHELEMENTS_QUAD
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Element.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -74,17 +74,14 @@ public:
     NEKMESH_EXPORT virtual StdRegions::Orientation GetEdgeOrient(
         int edgeId, EdgeSharedPtr edge);
     NEKMESH_EXPORT virtual void MakeOrder(
-        int                                order,
-        SpatialDomains::GeometrySharedPtr  geom,
-        LibUtilities::PointsType           pType,
-        int                                coordDim,
-        int                               &id,
-        bool                               justConfig = false);
+        int order, SpatialDomains::GeometrySharedPtr geom,
+        LibUtilities::PointsType pType, int coordDim, int &id,
+        bool justConfig = false);
 
     NEKMESH_EXPORT static unsigned int GetNumNodes(ElmtConfig pConf);
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

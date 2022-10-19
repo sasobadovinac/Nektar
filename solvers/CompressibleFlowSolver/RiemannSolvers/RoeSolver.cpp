@@ -40,18 +40,16 @@ namespace Nektar
 {
 std::string RoeSolver::solverName =
     SolverUtils::GetRiemannSolverFactory().RegisterCreatorFunction(
-        "Roe",
-        RoeSolver::create,
-        "Roe Riemann solver");
+        "Roe", RoeSolver::create, "Roe Riemann solver");
 
-RoeSolver::RoeSolver(const LibUtilities::SessionReaderSharedPtr& pSession)
+RoeSolver::RoeSolver(const LibUtilities::SessionReaderSharedPtr &pSession)
     : CompressibleSolver(pSession)
 {
     // m_pointSolve = false;
 }
 
 /// programmatic ctor
-RoeSolver::RoeSolver(): CompressibleSolver()
+RoeSolver::RoeSolver() : CompressibleSolver()
 {
     // m_pointSolve = false;
 }
@@ -82,40 +80,37 @@ RoeSolver::RoeSolver(): CompressibleSolver()
  * @param rhowf     Computed Riemann flux for z-momentum component
  * @param Ef        Computed Riemann flux for energy.
  */
-void RoeSolver::v_PointSolve(
-    double rhoL, double  rhouL, double  rhovL, double  rhowL, double  EL,
-    double rhoR, double  rhouR, double  rhovR, double  rhowR, double  ER,
-    double &rhof, double &rhouf, double &rhovf, double &rhowf, double &Ef)
+void RoeSolver::v_PointSolve(double rhoL, double rhouL, double rhovL,
+                             double rhowL, double EL, double rhoR, double rhouR,
+                             double rhovR, double rhowR, double ER,
+                             double &rhof, double &rhouf, double &rhovf,
+                             double &rhowf, double &Ef)
 {
     static NekDouble gamma = m_params["gamma"]();
 
-    RoeKernel(
-        rhoL, rhouL, rhovL, rhowL, EL,
-        rhoR, rhouR, rhovR, rhowR, ER,
-        rhof, rhouf, rhovf, rhowf, Ef,
-        gamma);
+    RoeKernel(rhoL, rhouL, rhovL, rhowL, EL, rhoR, rhouR, rhovR, rhowR, ER,
+              rhof, rhouf, rhovf, rhowf, Ef, gamma);
 }
 
-
 void RoeSolver::v_ArraySolve(
-    const Array<OneD, const Array<OneD, NekDouble> > &fwd,
-    const Array<OneD, const Array<OneD, NekDouble> > &bwd,
-          Array<OneD,       Array<OneD, NekDouble> > &flux)
+    const Array<OneD, const Array<OneD, NekDouble>> &fwd,
+    const Array<OneD, const Array<OneD, NekDouble>> &bwd,
+    Array<OneD, Array<OneD, NekDouble>> &flux)
 {
-    static auto gamma = m_params["gamma"]();
-    static auto nVars = fwd.size();
-    static auto spaceDim = nVars-2;
+    static auto gamma    = m_params["gamma"]();
+    static auto nVars    = fwd.size();
+    static auto spaceDim = nVars - 2;
 
     using namespace tinysimd;
     using vec_t = simd<NekDouble>;
 
     // get limit of vectorizable chunk
     size_t sizeScalar = fwd[0].size();
-    size_t sizeVec = (sizeScalar / vec_t::width) * vec_t::width;
+    size_t sizeVec    = (sizeScalar / vec_t::width) * vec_t::width;
 
     // SIMD loop
     size_t i = 0;
-    for (; i < sizeVec; i+=vec_t::width)
+    for (; i < sizeVec; i += vec_t::width)
     {
         vec_t rhoL{}, rhouL{}, rhovL{}, rhowL{}, EL{};
         vec_t rhoR{}, rhouR{}, rhovR{}, rhowR{}, ER{};
@@ -123,10 +118,10 @@ void RoeSolver::v_ArraySolve(
         // load
         rhoL.load(&(fwd[0][i]), is_not_aligned);
         rhouL.load(&(fwd[1][i]), is_not_aligned);
-        EL.load(&(fwd[spaceDim+1][i]), is_not_aligned);
+        EL.load(&(fwd[spaceDim + 1][i]), is_not_aligned);
         rhoR.load(&(bwd[0][i]), is_not_aligned);
         rhouR.load(&(bwd[1][i]), is_not_aligned);
-        ER.load(&(bwd[spaceDim+1][i]), is_not_aligned);
+        ER.load(&(bwd[spaceDim + 1][i]), is_not_aligned);
 
         if (spaceDim == 2)
         {
@@ -143,16 +138,13 @@ void RoeSolver::v_ArraySolve(
 
         vec_t rhof{}, rhouf{}, rhovf{}, rhowf{}, Ef{};
 
-        RoeKernel(
-            rhoL, rhouL, rhovL, rhowL, EL,
-            rhoR, rhouR, rhovR, rhowR, ER,
-            rhof, rhouf, rhovf, rhowf, Ef,
-            gamma);
+        RoeKernel(rhoL, rhouL, rhovL, rhowL, EL, rhoR, rhouR, rhovR, rhowR, ER,
+                  rhof, rhouf, rhovf, rhowf, Ef, gamma);
 
         // store
         rhof.store(&(flux[0][i]), is_not_aligned);
         rhouf.store(&(flux[1][i]), is_not_aligned);
-        Ef.store(&(flux[nVars-1][i]), is_not_aligned);
+        Ef.store(&(flux[nVars - 1][i]), is_not_aligned);
         if (spaceDim == 2)
         {
             rhovf.store(&(flux[2][i]), is_not_aligned);
@@ -165,7 +157,6 @@ void RoeSolver::v_ArraySolve(
 
     } // avx loop
 
-
     // spillover loop
     for (; i < sizeScalar; ++i)
     {
@@ -175,10 +166,10 @@ void RoeSolver::v_ArraySolve(
         // load
         rhoL  = fwd[0][i];
         rhouL = fwd[1][i];
-        EL    = fwd[spaceDim+1][i];
+        EL    = fwd[spaceDim + 1][i];
         rhoR  = bwd[0][i];
         rhouR = bwd[1][i];
-        ER    = bwd[spaceDim+1][i];
+        ER    = bwd[spaceDim + 1][i];
 
         if (spaceDim == 2)
         {
@@ -195,16 +186,13 @@ void RoeSolver::v_ArraySolve(
 
         NekDouble rhof{}, rhouf{}, rhovf{}, rhowf{}, Ef{};
 
-        RoeKernel(
-            rhoL, rhouL, rhovL, rhowL, EL,
-            rhoR, rhouR, rhovR, rhowR, ER,
-            rhof, rhouf, rhovf, rhowf, Ef,
-            gamma);
+        RoeKernel(rhoL, rhouL, rhovL, rhowL, EL, rhoR, rhouR, rhovR, rhowR, ER,
+                  rhof, rhouf, rhovf, rhowf, Ef, gamma);
 
         // store
-        flux[0][i] = rhof;
-        flux[1][i] = rhouf;
-        flux[nVars-1][i] = Ef;
+        flux[0][i]         = rhof;
+        flux[1][i]         = rhouf;
+        flux[nVars - 1][i] = Ef;
         if (spaceDim == 2)
         {
             flux[2][i] = rhovf;
@@ -216,7 +204,6 @@ void RoeSolver::v_ArraySolve(
         }
 
     } // loop
-
 }
 
 } // namespace Nektar

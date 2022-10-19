@@ -1,33 +1,32 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/Communication/Comm.h>
+#include <LibUtilities/Memory/NekMemoryManager.hpp>
 #include <MultiRegions/ContField.h>
 #include <SpatialDomains/MeshGraph.h>
 
 using namespace std;
 using namespace Nektar;
 
-int NoCaseStringCompare(const string & s1, const string& s2);
-
+int NoCaseStringCompare(const string &s1, const string &s2);
 
 int main(int argc, char *argv[])
 {
-    LibUtilities::SessionReaderSharedPtr vSession
-            = LibUtilities::SessionReader::CreateInstance(argc, argv);
+    LibUtilities::SessionReaderSharedPtr vSession =
+        LibUtilities::SessionReader::CreateInstance(argc, argv);
 
     LibUtilities::CommSharedPtr vComm = vSession->GetComm();
-    MultiRegions::ContFieldSharedPtr Exp,Fce;
-    int     i, nq,  coordim;
-    Array<OneD,NekDouble>  fce;
-    Array<OneD,NekDouble>  xc0,xc1,xc2;
+    MultiRegions::ContFieldSharedPtr Exp, Fce;
+    int i, nq, coordim;
+    Array<OneD, NekDouble> fce;
+    Array<OneD, NekDouble> xc0, xc1, xc2;
     StdRegions::ConstFactorMap factors;
 
-    if( (argc != 2) && (argc != 3) && (argc != 4))
+    if (argc < 2)
     {
-        fprintf(stderr,"Usage: Helmholtz1D  meshfile \n");
+        fprintf(stderr, "Usage: Helmholtz1D  meshfile \n");
         exit(1);
     }
 
@@ -45,23 +44,27 @@ int main(int argc, char *argv[])
         //----------------------------------------------
         // Print summary of solution details
         factors[StdRegions::eFactorLambda] = vSession->GetParameter("Lambda");
-        const SpatialDomains::ExpansionInfoMap &expansions = graph1D->GetExpansionInfo();
-        LibUtilities::BasisKey bkey0 = expansions.begin()->second->m_basisKeyVector[0];
+        const SpatialDomains::ExpansionInfoMap &expansions =
+            graph1D->GetExpansionInfo();
+        LibUtilities::BasisKey bkey0 =
+            expansions.begin()->second->m_basisKeyVector[0];
 
-        if (vComm->GetRank() ==0)
+        if (vComm->GetRank() == 0)
         {
-            cout << "Solving 1D Helmholtz: "  << endl;
+            cout << "Solving 1D Helmholtz: " << endl;
             cout << "       Communication: " << vComm->GetType() << endl;
-            cout << "       Solver type  : " << vSession->GetSolverInfo("GlobalSysSoln") << endl;
-            cout << "       Lambda       : " << factors[StdRegions::eFactorLambda] << endl;
+            cout << "       Solver type  : "
+                 << vSession->GetSolverInfo("GlobalSysSoln") << endl;
+            cout << "       Lambda       : "
+                 << factors[StdRegions::eFactorLambda] << endl;
             cout << "       No. modes    : " << bkey0.GetNumModes() << endl;
         }
         //----------------------------------------------
 
         //----------------------------------------------
         // Define Expansion
-        Exp = MemoryManager<MultiRegions::ContField>::
-            AllocateSharedPtr(vSession,graph1D,vSession->GetVariable(0));
+        Exp = MemoryManager<MultiRegions::ContField>::AllocateSharedPtr(
+            vSession, graph1D, vSession->GetVariable(0));
         //----------------------------------------------
 
         //----------------------------------------------
@@ -69,34 +72,34 @@ int main(int argc, char *argv[])
         coordim = Exp->GetCoordim(0);
         nq      = Exp->GetTotPoints();
 
-        xc0 = Array<OneD,NekDouble>(nq);
-        xc1 = Array<OneD,NekDouble>(nq);
-        xc2 = Array<OneD,NekDouble>(nq);
+        xc0 = Array<OneD, NekDouble>(nq);
+        xc1 = Array<OneD, NekDouble>(nq);
+        xc2 = Array<OneD, NekDouble>(nq);
 
-        switch(coordim)
+        switch (coordim)
         {
-        case 1:
-            Exp->GetCoords(xc0);
-            Vmath::Zero(nq,&xc1[0],1);
-            Vmath::Zero(nq,&xc2[0],1);
-            break;
-        case 2:
-            Exp->GetCoords(xc0,xc1);
-            Vmath::Zero(nq,&xc2[0],1);
-            break;
-        case 3:
-            Exp->GetCoords(xc0,xc1,xc2);
-            break;
+            case 1:
+                Exp->GetCoords(xc0);
+                Vmath::Zero(nq, &xc1[0], 1);
+                Vmath::Zero(nq, &xc2[0], 1);
+                break;
+            case 2:
+                Exp->GetCoords(xc0, xc1);
+                Vmath::Zero(nq, &xc2[0], 1);
+                break;
+            case 3:
+                Exp->GetCoords(xc0, xc1, xc2);
+                break;
         }
         //----------------------------------------------
 
         //----------------------------------------------
         // Define forcing function for first variable defined in file
-        fce = Array<OneD,NekDouble>(nq);
-        LibUtilities::EquationSharedPtr ffunc
-                                        = vSession->GetFunction("Forcing", 0);
+        fce = Array<OneD, NekDouble>(nq);
+        LibUtilities::EquationSharedPtr ffunc =
+            vSession->GetFunction("Forcing", 0);
 
-        ffunc->Evaluate(xc0,xc1,xc2, fce);
+        ffunc->Evaluate(xc0, xc1, xc2, fce);
 
         //----------------------------------------------
 
@@ -107,9 +110,9 @@ int main(int argc, char *argv[])
         //----------------------------------------------
 
         //----------------------------------------------
-        //Helmholtz solution taking physical forcing after setting
-        //initial condition to zero
-        Vmath::Zero(Exp->GetNcoeffs(),Exp->UpdateCoeffs(),1);
+        // Helmholtz solution taking physical forcing after setting
+        // initial condition to zero
+        Vmath::Zero(Exp->GetNcoeffs(), Exp->UpdateCoeffs(), 1);
         Exp->HelmSolve(Fce->GetPhys(), Exp->UpdateCoeffs(), factors);
         //----------------------------------------------
 
@@ -120,13 +123,13 @@ int main(int argc, char *argv[])
 
         //----------------------------------------------
         // Write solution
-        string   out(strtok(argv[1],"."));
-        string   endfile(".fld");
+        string out(strtok(argv[1], "."));
+        string endfile(".fld");
         out += endfile;
-        std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef
-            = Exp->GetFieldDefinitions();
-        std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
-        for(i = 0; i < FieldDef.size(); ++i)
+        std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
+            Exp->GetFieldDefinitions();
+        std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
+        for (i = 0; i < FieldDef.size(); ++i)
         {
             FieldDef[i]->m_fields.push_back("u");
             Exp->AppendFieldData(FieldDef[i], FieldData[i]);
@@ -137,16 +140,15 @@ int main(int argc, char *argv[])
         //----------------------------------------------
         // See if there is an exact solution, if so
         // evaluate and plot errors
-        LibUtilities::EquationSharedPtr ex_sol
-                                = vSession->GetFunction("ExactSolution", 0);
+        LibUtilities::EquationSharedPtr ex_sol =
+            vSession->GetFunction("ExactSolution", 0);
 
-
-        if(ex_sol)
+        if (ex_sol)
         {
             //----------------------------------------------
             // evaluate exact solution
 
-            ex_sol->Evaluate(xc0,xc1,xc2, fce);
+            ex_sol->Evaluate(xc0, xc1, xc2, fce);
 
             Fce->SetPhys(fce);
             //----------------------------------------------
@@ -166,7 +168,7 @@ int main(int argc, char *argv[])
         }
         //----------------------------------------------
     }
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         cerr << "Caught exception." << endl;
         return 1;
@@ -176,7 +178,6 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
 
 /**
  * Performs a case-insensitive string comparison (from web).

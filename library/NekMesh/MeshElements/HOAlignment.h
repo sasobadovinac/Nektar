@@ -35,6 +35,8 @@
 #ifndef NEKMESH_MESHELEMENTS_ALIGNMENT
 #define NEKMESH_MESHELEMENTS_ALIGNMENT
 
+#include <NekMesh/MeshElements/Node.h>
+
 namespace Nektar
 {
 namespace NekMesh
@@ -197,7 +199,7 @@ struct HOSurfHash : std::unary_function<HOSurfSharedPtr, std::size_t>
 };
 
 NEKMESH_EXPORT bool operator==(HOSurfSharedPtr const &p1,
-                                    HOSurfSharedPtr const &p2);
+                               HOSurfSharedPtr const &p2);
 
 typedef std::unordered_set<HOSurfSharedPtr, HOSurfHash> HOSurfSet;
 
@@ -228,9 +230,9 @@ template <typename T> struct HOQuadrilateral
         int np = (int)(sqrt((NekDouble)surfVerts.size()) + 0.5);
         for (int i = 0; i < np; ++i)
         {
-            for (int j = 0; j < np/2; ++j)
+            for (int j = 0; j < np / 2; ++j)
             {
-                swap(surfVerts[i*np + j], surfVerts[i*np + np-j-1]);
+                swap(surfVerts[i * np + j], surfVerts[i * np + np - j - 1]);
             }
         }
     }
@@ -241,9 +243,9 @@ template <typename T> struct HOQuadrilateral
         // Reverse y direction
         for (int j = 0; j < np; ++j)
         {
-            for (int i = 0; i < np/2; ++i)
+            for (int i = 0; i < np / 2; ++i)
             {
-                swap(surfVerts[i*np + j], surfVerts[(np-i-1)*np + j]);
+                swap(surfVerts[i * np + j], surfVerts[(np - i - 1) * np + j]);
             }
         }
     }
@@ -257,7 +259,7 @@ template <typename T> struct HOQuadrilateral
         {
             for (int j = 0; j < np; ++j)
             {
-                tmp[i*np+j] = surfVerts[j*np+i];
+                tmp[i * np + j] = surfVerts[j * np + i];
             }
         }
 
@@ -290,7 +292,7 @@ template <typename T> struct HOQuadrilateral
 
         StdRegions::Orientation orient = StdRegions::eNoOrientation;
 
-        if (vmap[1] == (vmap[0]+1) % 4)
+        if (vmap[1] == (vmap[0] + 1) % 4)
         {
             switch (vmap[0])
             {
@@ -353,6 +355,6 @@ template <typename T> struct HOQuadrilateral
     }
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 #endif

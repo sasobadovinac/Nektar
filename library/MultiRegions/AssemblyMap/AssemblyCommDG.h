@@ -214,10 +214,8 @@ public:
 private:
     /// Communicator
     LibUtilities::CommSharedPtr m_comm;
-    /// List of partition to trace map indices of the quad points to exchange
-    std::vector<std::pair<int, std::vector<int>>> m_vecPairPartitionTrace;
-    /// List of displacements
-    Array<OneD, int> m_sendDisp;
+    /// List of trace index locations in recv/send buff
+    Array<OneD, int> m_edgeTraceIndex;
     /// Receive buffer for exchange
     Array<OneD, NekDouble> m_recvBuff;
     /// Send buffer for exchange
@@ -298,7 +296,7 @@ private:
     /// Timing of the MPI exchange method.
     static std::tuple<NekDouble, NekDouble, NekDouble> Timing(
         const LibUtilities::CommSharedPtr &comm, const int &count,
-        const int &num, const ExchangeMethodSharedPtr& f);
+        const int &num, const ExchangeMethodSharedPtr &f);
 };
 
 typedef std::shared_ptr<AssemblyCommDG> AssemblyCommDGSharedPtr;

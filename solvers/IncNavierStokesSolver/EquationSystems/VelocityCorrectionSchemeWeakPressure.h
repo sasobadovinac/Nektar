@@ -39,68 +39,61 @@
 
 namespace Nektar
 {
-    class VCSWeakPressure: public VelocityCorrectionScheme
+class VCSWeakPressure : public VelocityCorrectionScheme
+{
+public:
+    /// Creates an instance of this class
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<VCSWeakPressure>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    /// Name of class
+    static std::string className;
+
+    /// Constructor.
+    VCSWeakPressure(const LibUtilities::SessionReaderSharedPtr &pSession,
+                    const SpatialDomains::MeshGraphSharedPtr &pGraph);
+
+    virtual ~VCSWeakPressure();
+
+protected:
+    // Virtual functions
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+
+    virtual void v_SetUpPressureForcing(
+        const Array<OneD, const Array<OneD, NekDouble>> &fields,
+        Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt);
+
+    virtual void v_SolvePressure(const Array<OneD, NekDouble> &Forcing);
+
+    virtual std::string v_GetExtrapolateStr(void)
+    {
+        return "WeakPressure";
+    }
+
+    virtual std::string v_GetSubSteppingExtrapolateStr(const std::string &instr)
+    {
+        if (boost::iequals(instr, "SubStepping"))
         {
-            SolverUtils::EquationSystemSharedPtr p =
-                MemoryManager<VCSWeakPressure>::AllocateSharedPtr(
-                    pSession, pGraph);
-            p->InitObject();
-            return p;
+            return "SubSteppingWeakPressure";
         }
-
-        /// Name of class
-        static std::string className;
-
-
-        /// Constructor.
-        VCSWeakPressure(const LibUtilities::SessionReaderSharedPtr& pSession,
-                        const SpatialDomains::MeshGraphSharedPtr &pGraph);
-
-        virtual ~VCSWeakPressure();
-
-    protected:
-        // Virtual functions
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
-
-        virtual void v_SetUpPressureForcing(
-                    const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    const NekDouble aii_Dt);
-        
-        virtual void v_SolvePressure( const Array<OneD, NekDouble>  &Forcing);
-        
-        virtual std::string v_GetExtrapolateStr(void)
+        else
         {
-            return "WeakPressure";
+            return instr;
         }
-        
-        virtual std::string v_GetSubSteppingExtrapolateStr(const std::string &instr)
-        {
-            if(boost::iequals(instr,"SubStepping"))
-            {
-                return  "SubSteppingWeakPressure";
-            }
-            else
-            {
-                return instr;
-            }
-        }
+    }
 
-    private:
-        
-    };
+private:
+};
 
-    typedef std::shared_ptr<VCSWeakPressure>
-                VCSWeakPressureSharedPtr;
+typedef std::shared_ptr<VCSWeakPressure> VCSWeakPressureSharedPtr;
 
-} //end of namespace
+} // namespace Nektar
 
-
-#endif //VELOCITY_CORRECTION_SCHEME_H
+#endif // VELOCITY_CORRECTION_SCHEME_H

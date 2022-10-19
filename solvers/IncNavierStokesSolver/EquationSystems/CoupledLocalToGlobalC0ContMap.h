@@ -41,27 +41,28 @@
 
 namespace Nektar
 {
-    class CoupledLocalToGlobalC0ContMap: public MultiRegions::AssemblyMapCG
-    {
-    public:
-        CoupledLocalToGlobalC0ContMap(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
-            const SpatialDomains::MeshGraphSharedPtr &graph,
-            const SpatialDomains::BoundaryConditionsSharedPtr &boundaryConditions,
-            const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-            const MultiRegions::ExpListSharedPtr &pressure,
-            const int nz_loc,
-            const bool CheeckForSingularSys=true);
+class CoupledLocalToGlobalC0ContMap : public MultiRegions::AssemblyMapCG
+{
+public:
+    CoupledLocalToGlobalC0ContMap(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &graph,
+        const SpatialDomains::BoundaryConditionsSharedPtr &boundaryConditions,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const MultiRegions::ExpListSharedPtr &pressure, const int nz_loc,
+        const bool CheeckForSingularSys = true);
 
-        void FindEdgeIdToAddMeanPressure(
-            std::vector<std::map<int,int> > &ReorderedGraphVertId,
-            int &nel, const LocalRegions::ExpansionVector &locExpVector,
-            int &edgeId, int &vertId, int &firstNonDirGraphVertId, std::map<int,int> &IsDirEdgeDof,
-            MultiRegions::BottomUpSubStructuredGraphSharedPtr &bottomUpGraph,
-            Array<OneD, int> &AddMeanPressureToEdgeId);
-    };
+    void FindEdgeIdToAddMeanPressure(
+        std::vector<std::map<int, int>> &ReorderedGraphVertId, int &nel,
+        const LocalRegions::ExpansionVector &locExpVector, int &edgeId,
+        int &vertId, int &firstNonDirGraphVertId,
+        std::map<int, int> &IsDirEdgeDof,
+        MultiRegions::BottomUpSubStructuredGraphSharedPtr &bottomUpGraph,
+        Array<OneD, int> &AddMeanPressureToEdgeId);
+};
 
-    typedef std::shared_ptr<CoupledLocalToGlobalC0ContMap> CoupledLocalToGlobalC0ContMapSharedPtr;
-}
+typedef std::shared_ptr<CoupledLocalToGlobalC0ContMap>
+    CoupledLocalToGlobalC0ContMapSharedPtr;
+} // namespace Nektar
 
 #endif

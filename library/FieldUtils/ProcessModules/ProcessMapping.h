@@ -79,9 +79,8 @@ public:
     }
 
     static GlobalMapping::MappingSharedPtr GetMapping(FieldSharedPtr f);
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

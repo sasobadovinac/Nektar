@@ -65,8 +65,9 @@ Generator2D::Generator2D(MeshSharedPtr m) : ProcessModule(m)
     m_config["adjustblteverywhere"] =
         ConfigOption(true, "0", "Adjust thickness everywhere");
     m_config["smoothbl"] =
-        ConfigOption(true, "0", "Smooth the BL normal directions to avoid "
-                                "(nearly) intersecting normals");
+        ConfigOption(true, "0",
+                     "Smooth the BL normal directions to avoid "
+                     "(nearly) intersecting normals");
     m_config["spaceoutbl"] = ConfigOption(
         false, "0.5", "Threshold to space out BL according to Delta");
     m_config["nospaceoutsurf"] =
@@ -346,13 +347,13 @@ void Generator2D::MakeBL(int faceid)
             n[0] /= mag;
             n[1] /= mag;
             Array<OneD, NekDouble> np(2);
-            np[0] = p1[0] + n[0];
-            np[1] = p1[1] + n[1];
+            np[0]                       = p1[0] + n[0];
+            np[1]                       = p1[1] + n[1];
             Array<OneD, NekDouble> loc  = ie->m_n1->GetLoc();
             Array<OneD, NekDouble> locp = m_mesh->m_cad->GetSurf(faceid)->P(np);
-            n[0] = locp[0] - loc[0];
-            n[1] = locp[1] - loc[1];
-            mag  = sqrt(n[0] * n[0] + n[1] * n[1]);
+            n[0]                        = locp[0] - loc[0];
+            n[1]                        = locp[1] - loc[1];
+            mag                         = sqrt(n[0] * n[0] + n[1] * n[1]);
             n[0] /= mag;
             n[1] /= mag;
             edgeNormals[ie->m_id] = n;
@@ -379,8 +380,8 @@ void Generator2D::MakeBL(int faceid)
         if (it.second.size() != 1 && it.second.size() != 2)
         {
             m_log(FATAL) << "    Error with identifying nodes with edges: check"
-                         << " that your boundary layer surfaces are correctly "
-                         << "defined." << endl;
+                         << " that your boundary layer surfaces are correctly"
+                         << " defined." << endl;
         }
 
         // If node at the end of the BL open loop, the "normal node" isn't
@@ -407,9 +408,9 @@ void Generator2D::MakeBL(int faceid)
         Array<OneD, NekDouble> n(3, 0.0);
         Array<OneD, NekDouble> n1 = edgeNormals[it.second[0]->m_id];
         Array<OneD, NekDouble> n2 = edgeNormals[it.second[1]->m_id];
-        n[0]          = (n1[0] + n2[0]) / 2.0;
-        n[1]          = (n1[1] + n2[1]) / 2.0;
-        NekDouble mag = sqrt(n[0] * n[0] + n[1] * n[1]);
+        n[0]                      = (n1[0] + n2[0]) / 2.0;
+        n[1]                      = (n1[1] + n2[1]) / 2.0;
+        NekDouble mag             = sqrt(n[0] * n[0] + n[1] * n[1]);
         n[0] /= mag;
         n[1] /= mag;
         NekDouble t = m_thickness.Evaluate(m_thickness_ID, it.first->m_x,
@@ -429,7 +430,7 @@ void Generator2D::MakeBL(int faceid)
         n[1]             = n[1] * t + it.first->m_y;
         NodeSharedPtr nn = std::shared_ptr<Node>(
             new Node(m_mesh->m_numNodes++, n[0], n[1], 0.0));
-        CADSurfSharedPtr s = m_mesh->m_cad->GetSurf(faceid);
+        CADSurfSharedPtr s        = m_mesh->m_cad->GetSurf(faceid);
         Array<OneD, NekDouble> uv = s->locuv(n);
         nn->SetCADSurf(s, uv);
         nodeNormals[it.first] = nn;
@@ -785,8 +786,8 @@ void Generator2D::MakeBL(int faceid)
 
         if (count < 50)
         {
-            m_log(VERBOSE) << "    BL spaced out in " << count
-                           << " iterations." << endl;
+            m_log(VERBOSE) << "    BL spaced out in " << count << " iterations."
+                           << endl;
         }
         else
         {
@@ -898,8 +899,8 @@ void Generator2D::MakePeriodic()
 
     for (auto &it : m_periodicPairs)
     {
-        m_log(VERBOSE) << "    - Curves " << it.first << " => "
-                       << it.second << endl;
+        m_log(VERBOSE) << "    - Curves " << it.first << " => " << it.second
+                       << endl;
     }
 
     m_log(VERBOSE) << endl;
@@ -918,5 +919,5 @@ void Generator2D::Report()
     m_log(VERBOSE) << "  - Triangles     : " << ts << endl;
     m_log(VERBOSE) << "  - Euler-Poincaré: " << ep << endl;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

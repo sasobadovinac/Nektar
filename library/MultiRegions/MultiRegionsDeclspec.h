@@ -33,14 +33,13 @@
 #define NEKTAR_MULTI_REGIONS_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef MULTI_REGIONS_EXPORTS
-        #define MULTI_REGIONS_EXPORT _declspec(dllexport)
-    #else
-        #define MULTI_REGIONS_EXPORT _declspec(dllimport)
-    #endif
+#ifdef MULTI_REGIONS_EXPORTS
+#define MULTI_REGIONS_EXPORT _declspec(dllexport)
 #else
-    #define MULTI_REGIONS_EXPORT
+#define MULTI_REGIONS_EXPORT _declspec(dllimport)
+#endif
+#else
+#define MULTI_REGIONS_EXPORT
 #endif
 
-#endif //NEKTAR_MULTI_REGIONS_DECLSPEC_H
-
+#endif // NEKTAR_MULTI_REGIONS_DECLSPEC_H

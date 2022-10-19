@@ -32,12 +32,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/PrismGeom.h>
+#include <SpatialDomains/GeomFactors.h>
 #include <SpatialDomains/Geometry1D.h>
 #include <SpatialDomains/Geometry2D.h>
-#include <StdRegions/StdPrismExp.h>
+#include <SpatialDomains/PrismGeom.h>
 #include <SpatialDomains/SegGeom.h>
-#include <SpatialDomains/GeomFactors.h>
+#include <StdRegions/StdPrismExp.h>
 
 using namespace std;
 
@@ -52,6 +52,8 @@ const unsigned int PrismGeom::VertexFaceConnectivity[6][3] = {
     {0, 1, 4}, {0, 1, 2}, {0, 2, 3}, {0, 3, 4}, {1, 2, 4}, {2, 3, 4}};
 const unsigned int PrismGeom::EdgeFaceConnectivity[9][2] = {
     {0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 4}, {1, 2}, {2, 3}, {3, 4}, {2, 4}};
+const unsigned int PrismGeom::EdgeNormalToFaceVert[5][4] = {
+    {4, 5, 6, 7}, {1, 3, 8, -1}, {0, 2, 4, 7}, {1, 3, 8, -1}, {0, 2, 5, 6}};
 
 PrismGeom::PrismGeom()
 {
@@ -62,7 +64,7 @@ PrismGeom::PrismGeom(int id, const Geometry2DSharedPtr faces[])
     : Geometry3D(faces[0]->GetEdge(0)->GetVertex(0)->GetCoordim())
 {
     m_shapeType = LibUtilities::ePrism;
-    m_globalID = id;
+    m_globalID  = id;
 
     /// Copy the face shared pointers.
     m_faces.insert(m_faces.begin(), faces, faces + PrismGeom::kNfaces);
@@ -100,7 +102,7 @@ int PrismGeom::v_GetDir(const int faceidx, const int facedir) const
 
 void PrismGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         PrismGeom::v_Setup();
     }
@@ -174,6 +176,11 @@ int PrismGeom::v_GetEdgeFaceMap(const int i, const int j) const
     return EdgeFaceConnectivity[i][j];
 }
 
+int PrismGeom::v_GetEdgeNormalToFaceVert(const int i, const int j) const
+{
+    return EdgeNormalToFaceVert[i][j];
+}
+
 void PrismGeom::SetUpLocalEdges()
 {
     // find edge 0
@@ -187,15 +194,15 @@ void PrismGeom::SetUpLocalEdges()
     for (f = 1; f < 5; f++)
     {
         int nEdges = m_faces[f]->GetNumEdges();
-        check = 0;
+        check      = 0;
         for (i = 0; i < 4; i++)
         {
             for (j = 0; j < nEdges; j++)
             {
                 if (m_faces[0]->GetEid(i) == m_faces[f]->GetEid(j))
                 {
-                    edge = dynamic_pointer_cast<SegGeom>(
-                        (m_faces[0])->GetEdge(i));
+                    edge =
+                        dynamic_pointer_cast<SegGeom>((m_faces[0])->GetEdge(i));
                     m_edges.push_back(edge);
                     check++;
                 }
@@ -228,8 +235,7 @@ void PrismGeom::SetUpLocalEdges()
         {
             if ((m_faces[1])->GetEid(i) == (m_faces[4])->GetEid(j))
             {
-                edge = dynamic_pointer_cast<SegGeom>(
-                    (m_faces[1])->GetEdge(i));
+                edge = dynamic_pointer_cast<SegGeom>((m_faces[1])->GetEdge(i));
                 m_edges.push_back(edge);
                 check++;
             }
@@ -261,8 +267,8 @@ void PrismGeom::SetUpLocalEdges()
             {
                 if ((m_faces[f])->GetEid(i) == (m_faces[f + 1])->GetEid(j))
                 {
-                    edge = dynamic_pointer_cast<SegGeom>(
-                        (m_faces[f])->GetEdge(i));
+                    edge =
+                        dynamic_pointer_cast<SegGeom>((m_faces[f])->GetEdge(i));
                     m_edges.push_back(edge);
                     check++;
                 }
@@ -295,8 +301,7 @@ void PrismGeom::SetUpLocalEdges()
         {
             if ((m_faces[2])->GetEid(i) == (m_faces[4])->GetEid(j))
             {
-                edge = dynamic_pointer_cast<SegGeom>(
-                    (m_faces[2])->GetEdge(i));
+                edge = dynamic_pointer_cast<SegGeom>((m_faces[2])->GetEdge(i));
                 m_edges.push_back(edge);
                 check++;
             }
@@ -406,7 +411,8 @@ void PrismGeom::SetUpEdgeOrientation()
         {
             m_eorient[i] = StdRegions::eForwards;
         }
-        else if (m_edges[i]->GetVid(0) == m_verts[edgeVerts[i][1]]->GetGlobalID())
+        else if (m_edges[i]->GetVid(0) ==
+                 m_verts[edgeVerts[i][1]]->GetGlobalID())
         {
             m_eorient[i] = StdRegions::eBackwards;
         }
@@ -471,8 +477,8 @@ void PrismGeom::SetUpFaceOrientation()
         // initialisation
         elementAaxis_length = 0.0;
         elementBaxis_length = 0.0;
-        faceAaxis_length = 0.0;
-        faceBaxis_length = 0.0;
+        faceAaxis_length    = 0.0;
+        faceBaxis_length    = 0.0;
 
         dotproduct1 = 0.0;
         dotproduct2 = 0.0;
@@ -498,9 +504,9 @@ void PrismGeom::SetUpFaceOrientation()
                 for (i = 0; i < m_coordim; i++)
                 {
                     elementAaxis[i] = (*m_verts[faceVerts[f][1]])[i] -
-                        (*m_verts[faceVerts[f][0]])[i];
+                                      (*m_verts[faceVerts[f][0]])[i];
                     elementBaxis[i] = (*m_verts[faceVerts[f][2]])[i] -
-                        (*m_verts[faceVerts[f][0]])[i];
+                                      (*m_verts[faceVerts[f][0]])[i];
                 }
             }
             else if (baseVertex == m_verts[faceVerts[f][1]]->GetVid())
@@ -508,9 +514,9 @@ void PrismGeom::SetUpFaceOrientation()
                 for (i = 0; i < m_coordim; i++)
                 {
                     elementAaxis[i] = (*m_verts[faceVerts[f][1]])[i] -
-                        (*m_verts[faceVerts[f][0]])[i];
+                                      (*m_verts[faceVerts[f][0]])[i];
                     elementBaxis[i] = (*m_verts[faceVerts[f][2]])[i] -
-                        (*m_verts[faceVerts[f][1]])[i];
+                                      (*m_verts[faceVerts[f][1]])[i];
                 }
             }
             else if (baseVertex == m_verts[faceVerts[f][2]]->GetVid())
@@ -518,9 +524,9 @@ void PrismGeom::SetUpFaceOrientation()
                 for (i = 0; i < m_coordim; i++)
                 {
                     elementAaxis[i] = (*m_verts[faceVerts[f][1]])[i] -
-                        (*m_verts[faceVerts[f][2]])[i];
+                                      (*m_verts[faceVerts[f][2]])[i];
                     elementBaxis[i] = (*m_verts[faceVerts[f][2]])[i] -
-                        (*m_verts[faceVerts[f][0]])[i];
+                                      (*m_verts[faceVerts[f][0]])[i];
                 }
             }
             else
@@ -593,8 +599,8 @@ void PrismGeom::SetUpFaceOrientation()
 
         elementAaxis_length = sqrt(elementAaxis_length);
         elementBaxis_length = sqrt(elementBaxis_length);
-        faceAaxis_length = sqrt(faceAaxis_length);
-        faceBaxis_length = sqrt(faceBaxis_length);
+        faceAaxis_length    = sqrt(faceAaxis_length);
+        faceBaxis_length    = sqrt(faceBaxis_length);
 
         // Calculate the inner product of both the A-axis
         // (i.e. Elemental A axis and face A axis)
@@ -624,10 +630,10 @@ void PrismGeom::SetUpFaceOrientation()
                 dotproduct2 += elementBaxis[i] * faceBaxis[i];
             }
 
-            ASSERTL1(
-                fabs(fabs(dotproduct2 / elementBaxis_length / faceBaxis_length)
-                     - 1.0) < NekConstants::kNekZeroTol,
-                "These vectors should be parallel");
+            ASSERTL1(fabs(fabs(dotproduct2 / elementBaxis_length /
+                               faceBaxis_length) -
+                          1.0) < NekConstants::kNekZeroTol,
+                     "These vectors should be parallel");
 
             // if the inner product is negative, both B-axis point
             // in reverse direction
@@ -650,10 +656,10 @@ void PrismGeom::SetUpFaceOrientation()
             }
 
             // check that both these axis are indeed parallel
-            ASSERTL1(
-                fabs(fabs(dotproduct1) / elementAaxis_length / faceBaxis_length
-                     - 1.0) < NekConstants::kNekZeroTol,
-                "These vectors should be parallel");
+            ASSERTL1(fabs(fabs(dotproduct1) / elementAaxis_length /
+                              faceBaxis_length -
+                          1.0) < NekConstants::kNekZeroTol,
+                     "These vectors should be parallel");
 
             // if the result is negative, both axis point in reverse
             // directions
@@ -669,10 +675,10 @@ void PrismGeom::SetUpFaceOrientation()
                 dotproduct2 += elementBaxis[i] * faceAaxis[i];
             }
 
-            ASSERTL1(
-                fabs(fabs(dotproduct2) / elementBaxis_length / faceAaxis_length
-                     - 1.0) < NekConstants::kNekZeroTol,
-                "These vectors should be parallel");
+            ASSERTL1(fabs(fabs(dotproduct2) / elementBaxis_length /
+                              faceAaxis_length -
+                          1.0) < NekConstants::kNekZeroTol,
+                     "These vectors should be parallel");
 
             if (dotproduct2 < 0.0)
             {
@@ -682,17 +688,18 @@ void PrismGeom::SetUpFaceOrientation()
 
         orientation = orientation + 5;
 
-        if((f == 1)||(f == 3)) // check triange orientation
+        if ((f == 1) || (f == 3)) // check triange orientation
         {
-            ASSERTL0(orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
-                     "Orientation of triangular face (id = " +
-                     boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
-                     ") is inconsistent with face "+
-                     boost::lexical_cast<string>(f) +
-                     " of prism element (id = "+
-                     boost::lexical_cast<string>(m_globalID) +
-                     ") since Dir2 is aligned with Dir1. Mesh setup "
-                     "needs investigation");
+            ASSERTL0(
+                orientation < StdRegions::eDir1FwdDir2_Dir2FwdDir1,
+                "Orientation of triangular face (id = " +
+                    boost::lexical_cast<string>(m_faces[f]->GetGlobalID()) +
+                    ") is inconsistent with face " +
+                    boost::lexical_cast<string>(f) +
+                    " of prism element (id = " +
+                    boost::lexical_cast<string>(m_globalID) +
+                    ") since Dir2 is aligned with Dir1. Mesh setup "
+                    "needs investigation");
         }
 
         // Fill the m_forient array
@@ -712,7 +719,7 @@ void PrismGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void PrismGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         for (int i = 0; i < 5; ++i)
         {
@@ -773,21 +780,19 @@ void PrismGeom::SetUpXmap()
     int order2 = *max_element(tmp.begin(), tmp.end());
 
     const LibUtilities::BasisKey A(
-        LibUtilities::eModified_A,
-        order0,
-        LibUtilities::PointsKey(order0+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order0,
+        LibUtilities::PointsKey(order0 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey B(
-        LibUtilities::eModified_A,
-        order1,
-        LibUtilities::PointsKey(order1+1, LibUtilities::eGaussLobattoLegendre));
+        LibUtilities::eModified_A, order1,
+        LibUtilities::PointsKey(order1 + 1,
+                                LibUtilities::eGaussLobattoLegendre));
     const LibUtilities::BasisKey C(
-        LibUtilities::eModified_B,
-        order2,
-        LibUtilities::PointsKey(order2,
-                                LibUtilities::eGaussRadauMAlpha1Beta0));
+        LibUtilities::eModified_B, order2,
+        LibUtilities::PointsKey(order2, LibUtilities::eGaussRadauMAlpha1Beta0));
 
     m_xmap = MemoryManager<StdRegions::StdPrismExp>::AllocateSharedPtr(A, B, C);
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

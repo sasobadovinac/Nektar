@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <LibUtilities/BasicUtils/Timer.h>
+#include <iostream>
 
 #include "StdDemoSupport.hpp"
 
@@ -48,9 +48,9 @@ Array<OneD, NekDouble> EvalPoly(Array<OneD, Array<OneD, NekDouble>> &pts)
     // polynomial = x^2 + y^2 - 3x - 4
     for (int i = 0; i < pts[0].size(); i++)
     {
-        ret[i] = pow(pts[0][i],2) - 3*pts[0][i] - 4.0
-            + (dim >= 2 ? pow(pts[1][i], 2) : 0.0)
-            + (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
+        ret[i] = pow(pts[0][i], 2) - 3 * pts[0][i] - 4.0 +
+                 (dim >= 2 ? pow(pts[1][i], 2) : 0.0) +
+                 (dim >= 3 ? pow(pts[2][i], 2) : 0.0);
     }
     return ret;
 }
@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
     demo.ParseArguments(argc, argv);
     StdExpansion *E = demo.CreateStdExpansion();
 
-    const auto totPoints = (unsigned) E->GetTotPoints();
-    const auto dimension = (unsigned) E->GetShapeDimension();
+    const auto totPoints = (unsigned)E->GetTotPoints();
+    const auto dimension = (unsigned)E->GetShapeDimension();
 
     // Create a new element but with the evenly-spaced points type, so that we
     // perform a PhysEvaluate at a different set of nodal points
@@ -94,9 +94,9 @@ int main(int argc, char *argv[])
 
     sol = EvalPoly(coordsF);
 
-    cout << "L infinity error : " << scientific << E->Linf(physOut, sol) << endl;
-    cout << "L 2 error        : " << scientific << E->L2  (physOut, sol) << endl;
+    cout << "L infinity error : " << scientific << E->Linf(physOut, sol)
+         << endl;
+    cout << "L 2 error        : " << scientific << E->L2(physOut, sol) << endl;
 
     return 0;
 }
-

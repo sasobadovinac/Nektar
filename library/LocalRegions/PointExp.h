@@ -28,109 +28,115 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Definition of a Point expansion 
+// Description: Definition of a Point expansion
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef POINTEXP_H
 #define POINTEXP_H
 
-#include <StdRegions/StdPointExp.h>
-#include <SpatialDomains/PointGeom.h>
-#include <LocalRegions/LocalRegionsDeclspec.h>
 #include <LocalRegions/Expansion0D.h>
+#include <LocalRegions/LocalRegionsDeclspec.h>
+#include <SpatialDomains/PointGeom.h>
+#include <StdRegions/StdPointExp.h>
 
 namespace Nektar
 {
-    namespace LocalRegions
+namespace LocalRegions
+{
+class PointExp : virtual public StdRegions::StdPointExp,
+                 virtual public Expansion0D
+{
+public:
+    LOCAL_REGIONS_EXPORT PointExp(
+        const SpatialDomains::PointGeomSharedPtr &m_geom);
+    LOCAL_REGIONS_EXPORT ~PointExp(void);
+
+    inline const Array<OneD, const NekDouble> &GetCoeffs(void) const
     {
-        class PointExp: virtual public StdRegions::StdPointExp, virtual public Expansion0D
-        {
-        public:
-            LOCAL_REGIONS_EXPORT PointExp(const SpatialDomains::PointGeomSharedPtr &m_geom);
-            LOCAL_REGIONS_EXPORT ~PointExp(void);
+        return m_coeffs;
+    }
 
-            inline const Array<OneD, const NekDouble>& GetCoeffs(void) const
-            {
-                return m_coeffs;
-            }
+    inline NekDouble GetCoeffs(int i) const
+    {
+        ASSERTL1(i == 0, "index out of range");
 
-            inline NekDouble  GetCoeffs(int i) const
-            {
-                ASSERTL1(i == 0,"index out of range");
+        return m_coeffs[i];
+    }
 
-                return m_coeffs[i];
-            }
-		
-            inline NekDouble  GetPhys(int i) const
-            {
-                ASSERTL1(i == 0,"index out of range");
-		
-                return m_phys[i];
-            }
-            
-            inline NekDouble  GetCoeff(int i) const
-            {
-                ASSERTL1(i == 0,"index out of range");
+    inline NekDouble GetPhys(int i) const
+    {
+        ASSERTL1(i == 0, "index out of range");
 
-                return m_coeffs[i];
-            }
+        return m_phys[i];
+    }
 
-            inline Array<OneD, NekDouble>& UpdateCoeffs(void)
-            {
-                return(m_coeffs);
-            }
+    inline NekDouble GetCoeff(int i) const
+    {
+        ASSERTL1(i == 0, "index out of range");
 
-            inline void  SetCoeff(const NekDouble value)
-            {
-                m_coeffs[0] = value;
-            }
+        return m_coeffs[i];
+    }
 
-            inline const Array<OneD, const NekDouble>& GetPhys(void) const
-            {
-                return m_phys;
-            }
-  
-            inline Array<OneD, NekDouble>& UpdatePhys(void) 
-            {
-                return(m_phys);
-            }
+    inline Array<OneD, NekDouble> &UpdateCoeffs(void)
+    {
+        return (m_coeffs);
+    }
 
-            inline void  SetPhys(const NekDouble value)
-            {
-                m_phys[0] = value;
-            }
+    inline void SetCoeff(const NekDouble value)
+    {
+        m_coeffs[0] = value;
+    }
 
-            inline void GetCoords(NekDouble &x, NekDouble &y, NekDouble &z)
-            {
-                SpatialDomains::PointGeomSharedPtr v = std::dynamic_pointer_cast<SpatialDomains::PointGeom>(m_geom);
-                v->GetCoords(x,y,z);
-            }
+    inline const Array<OneD, const NekDouble> &GetPhys(void) const
+    {
+        return m_phys;
+    }
 
-            inline const SpatialDomains::PointGeomSharedPtr GetGeom() const
-            {
-                return std::dynamic_pointer_cast<SpatialDomains::PointGeom>(m_geom);
-            }
+    inline Array<OneD, NekDouble> &UpdatePhys(void)
+    {
+        return (m_phys);
+    }
 
-        protected:
-            Array<OneD, NekDouble > m_coeffs; //!< Array containing expansion coefficients
-            Array<OneD, NekDouble > m_phys; //!< Array containing physical point which is likely to be the same as the coefficient but is defined for consistency (It is also used in Robin boundary conditions) 
+    inline void SetPhys(const NekDouble value)
+    {
+        m_phys[0] = value;
+    }
 
-            virtual void v_GetCoords(
-                Array<OneD, NekDouble> &coords_0,
-                Array<OneD, NekDouble> &coords_1,
-                Array<OneD, NekDouble> &coords_2);
-            
-            virtual void v_NormVectorIProductWRTBase(
-                    const Array<OneD, const NekDouble> &Fx,
-                          Array<OneD, NekDouble> &outarray);
-        };
-        
-        typedef std::shared_ptr<PointExp> PointExpSharedPtr;
-        typedef std::vector<PointExpSharedPtr> PointExpVector;
-        
-        const static Array<OneD, PointExpSharedPtr> NullPointExpSharedPtrArray;
-    } //end of namespace
-} //end of namespace
+    inline void GetCoords(NekDouble &x, NekDouble &y, NekDouble &z)
+    {
+        SpatialDomains::PointGeomSharedPtr v =
+            std::dynamic_pointer_cast<SpatialDomains::PointGeom>(m_geom);
+        v->GetCoords(x, y, z);
+    }
+
+    inline const SpatialDomains::PointGeomSharedPtr GetGeom() const
+    {
+        return std::dynamic_pointer_cast<SpatialDomains::PointGeom>(m_geom);
+    }
+
+protected:
+    Array<OneD, NekDouble>
+        m_coeffs; //!< Array containing expansion coefficients
+    Array<OneD, NekDouble>
+        m_phys; //!< Array containing physical point which is likely to be the
+                //!< same as the coefficient but is defined for consistency (It
+                //!< is also used in Robin boundary conditions)
+
+    virtual void v_GetCoords(Array<OneD, NekDouble> &coords_0,
+                             Array<OneD, NekDouble> &coords_1,
+                             Array<OneD, NekDouble> &coords_2);
+
+    virtual void v_NormVectorIProductWRTBase(
+        const Array<OneD, const NekDouble> &Fx,
+        Array<OneD, NekDouble> &outarray);
+};
+
+typedef std::shared_ptr<PointExp> PointExpSharedPtr;
+typedef std::vector<PointExpSharedPtr> PointExpVector;
+
+const static Array<OneD, PointExpSharedPtr> NullPointExpSharedPtrArray;
+} // namespace LocalRegions
+} // namespace Nektar
 
 #endif // POINTEXP_H

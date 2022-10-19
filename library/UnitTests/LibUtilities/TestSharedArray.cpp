@@ -35,49 +35,45 @@
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include <boost/core/ignore_unused.hpp>
-#include <boost/test/auto_unit_test.hpp>
-#include <boost/test/test_case_template.hpp>
-#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
-
-#include <boost/test/auto_unit_test.hpp>
 
 namespace Nektar
 {
-    namespace SharedArrayUnitTests
-    {
-        BOOST_AUTO_TEST_CASE(TestArrayConstructionFromConstantArray)
-        {
-            Array<OneD, const double> const_array_1(10, 7.0);
-            Array<OneD, const double> const_array_2(10, 3.0);
+namespace SharedArrayUnitTests
+{
+BOOST_AUTO_TEST_CASE(TestArrayConstructionFromConstantArray)
+{
+    Array<OneD, const double> const_array_1(10, 7.0);
+    Array<OneD, const double> const_array_2(10, 3.0);
 
-            Array<OneD, double> array_1(const_array_1);
-            Array<OneD, double> array_2(5, const_array_2);
+    Array<OneD, double> array_1(const_array_1);
+    Array<OneD, double> array_2(5, const_array_2);
 
-            BOOST_CHECK_EQUAL(array_1.size(), const_array_1.size());
-            BOOST_CHECK_EQUAL(array_2.size(), 5);
+    BOOST_CHECK_EQUAL(array_1.size(), const_array_1.size());
+    BOOST_CHECK_EQUAL(array_2.size(), 5);
 
-            array_1[2] = -1.0;
-            array_2[2] = -1.0;
+    array_1[2] = -1.0;
+    array_2[2] = -1.0;
 
-            BOOST_CHECK_EQUAL(array_1[2], -1.0);
-            BOOST_CHECK_EQUAL(array_2[2], -1.0);
+    BOOST_CHECK_EQUAL(array_1[2], -1.0);
+    BOOST_CHECK_EQUAL(array_2[2], -1.0);
 
-            BOOST_CHECK_EQUAL(const_array_1[2], 7.0);
-            BOOST_CHECK_EQUAL(const_array_2[2], 3.0);
-        }
-
-        void CheckAddresses(Array<TwoD, double>::reference d, double* expectedAddress)
-        {
-            BOOST_CHECK_EQUAL(d.size(), 7);
-            BOOST_CHECK_EQUAL(d.origin(), expectedAddress);
-        }
-
-        BOOST_AUTO_TEST_CASE(TestRowPointers)
-        {
-            Array<TwoD, double> array_1(10, 7, 0.0);
-            CheckAddresses(array_1[0], array_1.data());
-            CheckAddresses(array_1[1], array_1.data()+7);
-        }
-    }
+    BOOST_CHECK_EQUAL(const_array_1[2], 7.0);
+    BOOST_CHECK_EQUAL(const_array_2[2], 3.0);
 }
+
+void CheckAddresses(Array<TwoD, double>::reference d, double *expectedAddress)
+{
+    BOOST_CHECK_EQUAL(d.size(), 7);
+    BOOST_CHECK_EQUAL(d.origin(), expectedAddress);
+}
+
+BOOST_AUTO_TEST_CASE(TestRowPointers)
+{
+    Array<TwoD, double> array_1(10, 7, 0.0);
+    CheckAddresses(array_1[0], array_1.data());
+    CheckAddresses(array_1[1], array_1.data() + 7);
+}
+} // namespace SharedArrayUnitTests
+} // namespace Nektar

@@ -36,13 +36,13 @@
 #ifndef NEKTAR_SOLVERUTILS_SESSIONFUNCTION_H
 #define NEKTAR_SOLVERUTILS_SESSIONFUNCTION_H
 
+#include <LibUtilities/BasicUtils/CsvIO.h>
 #include <LibUtilities/BasicUtils/FieldIO.h>
 #include <LibUtilities/BasicUtils/FileSystem.h>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/Progressbar.hpp>
 #include <LibUtilities/BasicUtils/PtsField.h>
 #include <LibUtilities/BasicUtils/PtsIO.h>
-#include <LibUtilities/BasicUtils/CsvIO.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
 #include <SolverUtils/SolverUtilsDeclspec.h>
@@ -63,31 +63,31 @@ public:
     /// Representation of a FUNCTION defined in the session xml file.
     SOLVER_UTILS_EXPORT SessionFunction(
         const LibUtilities::SessionReaderSharedPtr &session,
-        const MultiRegions::ExpListSharedPtr &field,
-        std::string functionName,
+        const MultiRegions::ExpListSharedPtr &field, std::string functionName,
         bool toCache = false);
 
-    /// Evaluates a function defined in the xml session file at each quadrature point.
+    /// Evaluates a function defined in the xml session file at each quadrature
+    /// point.
     SOLVER_UTILS_EXPORT void Evaluate(
-        Array<OneD, Array<OneD, NekDouble> > &pArray,
-        const NekDouble pTime = 0.0,
-        const int domain      = 0);
+        Array<OneD, Array<OneD, NekDouble>> &pArray,
+        const NekDouble pTime = 0.0, const int domain = 0);
 
-    /// Evaluates a function defined in the xml session file at each quadrature point.
+    /// Evaluates a function defined in the xml session file at each quadrature
+    /// point.
     SOLVER_UTILS_EXPORT void Evaluate(
         std::vector<std::string> pFieldNames,
-        Array<OneD, Array<OneD, NekDouble> > &pArray,
-        const NekDouble &pTime = 0.0,
-        const int domain       = 0);
+        Array<OneD, Array<OneD, NekDouble>> &pArray,
+        const NekDouble &pTime = 0.0, const int domain = 0);
 
-    /// Evaluates a function defined in the xml session file at each quadrature point.
+    /// Evaluates a function defined in the xml session file at each quadrature
+    /// point.
     SOLVER_UTILS_EXPORT void Evaluate(
         std::vector<std::string> pFieldNames,
         Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &pTime = 0.0,
-        const int domain       = 0);
+        const NekDouble &pTime = 0.0, const int domain = 0);
 
-    // Evaluates a function defined in the xml session file at each quadrature point.
+    // Evaluates a function defined in the xml session file at each quadrature
+    // point.
     SOLVER_UTILS_EXPORT void Evaluate(std::string pFieldName,
                                       Array<OneD, NekDouble> &pArray,
                                       const NekDouble &pTime = 0.0,
@@ -97,12 +97,12 @@ public:
     SOLVER_UTILS_EXPORT std::string Describe(std::string pFieldName,
                                              const int domain = 0);
 
-    SOLVER_UTILS_EXPORT const LibUtilities::SessionReaderSharedPtr & GetSession()
+    SOLVER_UTILS_EXPORT const LibUtilities::SessionReaderSharedPtr &GetSession()
     {
         return m_session;
     }
 
-    SOLVER_UTILS_EXPORT const MultiRegions::ExpListSharedPtr & GetExpansion()
+    SOLVER_UTILS_EXPORT const MultiRegions::ExpListSharedPtr &GetExpansion()
     {
         return m_field;
     }
@@ -123,7 +123,7 @@ private:
                               std::vector<MultiRegions::ExpListSharedPtr>>>
         m_interpolators;
     /// Cached result arrays
-    std::map<std::pair<std::string, int>, Array<OneD, NekDouble> > m_arrays;
+    std::map<std::pair<std::string, int>, Array<OneD, NekDouble>> m_arrays;
 
     // Evaluates a function from expression
     SOLVER_UTILS_EXPORT void EvaluateExp(std::string pFieldName,
@@ -152,7 +152,7 @@ private:
 
 typedef std::shared_ptr<SessionFunction> SessionFunctionSharedPtr;
 static SessionFunctionSharedPtr NullSessionFunction;
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

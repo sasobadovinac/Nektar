@@ -38,8 +38,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 
-#include <vector>
 #include <fstream>
+#include <vector>
 
 #include <boost/format.hpp>
 
@@ -48,14 +48,13 @@
 #endif
 
 #include "ErrorUtil.hpp"
-#include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/FileSystem.h>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
 
 namespace Nektar
 {
 namespace LibUtilities
 {
-
 
 CsvIO::CsvIO(CommSharedPtr pComm, bool sharedFilesystem)
     : PtsIO(pComm, sharedFilesystem)
@@ -73,7 +72,7 @@ void CsvIO::Write(const std::string &outFile,
                   const bool backup)
 {
     size_t nTotvars = ptsField->GetNFields() + ptsField->GetDim();
-    size_t np = ptsField->GetNpoints();
+    size_t np       = ptsField->GetNpoints();
 
     std::string filename = SetUpOutput(outFile, true, backup);
     SetUpFieldMetaData(outFile);
@@ -93,7 +92,7 @@ void CsvIO::Write(const std::string &outFile,
     ptsFile << fn;
     ptsFile << std::endl;
 
-    Array<OneD, Array<OneD, NekDouble> > pts;
+    Array<OneD, Array<OneD, NekDouble>> pts;
     ptsField->GetPts(pts);
     for (size_t i = 0; i < np; ++i)
     {
@@ -108,8 +107,9 @@ void CsvIO::Write(const std::string &outFile,
     ptsFile.close();
 }
 
-
-void CsvIO::v_ImportFieldData(const std::string inFile, PtsFieldSharedPtr& ptsField, DomainRangeShPtr &Range)
+void CsvIO::v_ImportFieldData(const std::string inFile,
+                              PtsFieldSharedPtr &ptsField,
+                              DomainRangeShPtr &Range)
 {
     std::stringstream errstr;
     errstr << "Unable to load file: " << inFile << std::endl;
@@ -133,10 +133,11 @@ void CsvIO::v_ImportFieldData(const std::string inFile, PtsFieldSharedPtr& ptsFi
         }
     }
 
-    ASSERTL0(dim,"Failed to find a paramater labelled \"x\",\"y\" or \"z\"  "
-             "in file" + inFile + ". Is the coordinated labelled something else?");
-    
-    size_t totvars = fieldNames.size();
+    ASSERTL0(dim, "Failed to find a paramater labelled \"x\",\"y\" or \"z\"  "
+                  "in file" +
+                      inFile + ". Is the coordinated labelled something else?");
+
+    size_t totvars                    = fieldNames.size();
     std::vector<std::string> dimNames = {"x", "y", "z"};
     Array<OneD, int> loc_coord(dim);
     for (int i = 0; i < dim; ++i)
@@ -146,57 +147,61 @@ void CsvIO::v_ImportFieldData(const std::string inFile, PtsFieldSharedPtr& ptsFi
         {
             auto j = std::distance(fieldNames.begin(), p);
 
-            loc_coord[i] = j;    
+            loc_coord[i] = j;
         }
     }
-            
+
     std::vector<NekDouble> ptsSerial;
-    typedef boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer;
+    typedef boost::tokenizer<boost::escaped_list_separator<char>> Tokenizer;
     Tokenizer tok(line);
     while (getline(in, line))
     {
         tok.assign(line);
 
         ASSERTL0(std::distance(tok.begin(), tok.end()) ==
-                    std::iterator_traits<Tokenizer::iterator>::difference_type(totvars),
+                     std::iterator_traits<Tokenizer::iterator>::difference_type(
+                         totvars),
                  "wrong number of columns in line: " + line);
 
-        bool ReadValue = true; 
+        bool ReadValue = true;
 
-        if(Range != NullDomainRangeShPtr)
+        if (Range != NullDomainRangeShPtr)
         {
-            int cnt = 0; 
+            int cnt = 0;
             for (auto &it : tok)
             {
-                for(int j = 0; j < dim; ++j)
+                for (int j = 0; j < dim; ++j)
                 {
-                    if(cnt == loc_coord[j])
+                    if (cnt == loc_coord[j])
                     {
                         NekDouble CoordVal = boost::lexical_cast<NekDouble>(
-                                             boost::trim_copy(std::string(it)));
-                        switch(j)
+                            boost::trim_copy(std::string(it)));
+                        switch (j)
                         {
-                        case 0:
+                            case 0:
                             {
-                                if((CoordVal < Range->m_xmin) || (CoordVal > Range->m_xmax))
+                                if ((CoordVal < Range->m_xmin) ||
+                                    (CoordVal > Range->m_xmax))
                                 {
-                                    ReadValue = false; 
+                                    ReadValue = false;
                                 }
                             }
                             break;
-                        case 1:
+                            case 1:
                             {
-                                if((CoordVal < Range->m_ymin) || (CoordVal > Range->m_ymax))
+                                if ((CoordVal < Range->m_ymin) ||
+                                    (CoordVal > Range->m_ymax))
                                 {
-                                    ReadValue = false; 
+                                    ReadValue = false;
                                 }
                             }
                             break;
-                        case 2:
+                            case 2:
                             {
-                                if((CoordVal < Range->m_zmin) || (CoordVal > Range->m_zmax))
+                                if ((CoordVal < Range->m_zmin) ||
+                                    (CoordVal > Range->m_zmax))
                                 {
-                                    ReadValue = false; 
+                                    ReadValue = false;
                                 }
                             }
                         }
@@ -205,19 +210,19 @@ void CsvIO::v_ImportFieldData(const std::string inFile, PtsFieldSharedPtr& ptsFi
                 cnt++;
             }
         }
-        if(ReadValue)
+        if (ReadValue)
         {
             for (auto &it : tok)
             {
                 try
                 {
-                    ptsSerial.push_back(
-                                        boost::lexical_cast<NekDouble>(
-                                        boost::trim_copy(std::string(it))));
+                    ptsSerial.push_back(boost::lexical_cast<NekDouble>(
+                        boost::trim_copy(std::string(it))));
                 }
-                catch(const boost::bad_lexical_cast &)
+                catch (const boost::bad_lexical_cast &)
                 {
-                    NEKERROR(ErrorUtil::efatal, "could not convert line: " + line);
+                    NEKERROR(ErrorUtil::efatal,
+                             "could not convert line: " + line);
                 }
             }
         }
@@ -225,7 +230,7 @@ void CsvIO::v_ImportFieldData(const std::string inFile, PtsFieldSharedPtr& ptsFi
 
     size_t npts = ptsSerial.size() / totvars;
 
-    Array<OneD, Array<OneD, NekDouble> > pts(totvars);
+    Array<OneD, Array<OneD, NekDouble>> pts(totvars);
     for (size_t i = 0; i < totvars; ++i)
     {
         pts[i] = Array<OneD, NekDouble>(npts);
@@ -253,12 +258,12 @@ void CsvIO::v_ImportFieldData(const std::string inFile, PtsFieldSharedPtr& ptsFi
             }
 
             Array<OneD, NekDouble> tmp = pts[i];
-            pts[i] = pts[j];
-            pts[j] = tmp;
+            pts[i]                     = pts[j];
+            pts[j]                     = tmp;
 
             std::string tmp2 = fieldNames[i];
-            fieldNames[i] = fieldNames[j];
-            fieldNames[j] = tmp2;
+            fieldNames[i]    = fieldNames[j];
+            fieldNames[j]    = tmp2;
         }
     }
     fieldNames.erase(fieldNames.begin(), fieldNames.begin() + dim);
@@ -266,5 +271,5 @@ void CsvIO::v_ImportFieldData(const std::string inFile, PtsFieldSharedPtr& ptsFi
     ptsField = MemoryManager<PtsField>::AllocateSharedPtr(dim, fieldNames, pts);
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

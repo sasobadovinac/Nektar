@@ -41,10 +41,10 @@ using namespace std;
 #include <boost/math/special_functions/fpclassify.hpp>
 
 #include <FieldUtils/Interpolator.h>
-#include <LibUtilities/BasicUtils/PtsField.h>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/BasicUtils/PtsIO.h>
 #include <LibUtilities/BasicUtils/CsvIO.h>
+#include <LibUtilities/BasicUtils/PtsField.h>
+#include <LibUtilities/BasicUtils/PtsIO.h>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include "ProcessInterpPointDataToFld.h"
 
@@ -84,14 +84,13 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
     int i, j;
     LibUtilities::PtsFieldSharedPtr fieldPts;
     // Load pts file
-    ASSERTL0( m_config["frompts"].as<string>().compare("NotSet") != 0,
-            "ProcessInterpPointDataToFld requires frompts parameter");
+    ASSERTL0(m_config["frompts"].as<string>().compare("NotSet") != 0,
+             "ProcessInterpPointDataToFld requires frompts parameter");
     string inFile = m_config["frompts"].as<string>().c_str();
 
     int totpoints = m_f->m_exp[0]->GetTotPoints();
 
-
-    Array<OneD, Array<OneD, NekDouble> > intFields(3);
+    Array<OneD, Array<OneD, NekDouble>> intFields(3);
     for (int i = 0; i < 3; ++i)
     {
         intFields[i] = Array<OneD, NekDouble>(totpoints, 0.);
@@ -110,26 +109,27 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
         LibUtilities::CsvIOSharedPtr csvIO =
             MemoryManager<LibUtilities::CsvIO>::AllocateSharedPtr(m_f->m_comm);
 
-        LibUtilities::DomainRangeShPtr Range = MemoryManager<LibUtilities::DomainRange>::
-            AllocateSharedPtr();
-        
+        LibUtilities::DomainRangeShPtr Range =
+            MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
+
         NekDouble vmax, vmin, margin = 0.1;
-        vmax = intFields[0][Vmath::Imax(totpoints, intFields[0],1)];
-        vmin = intFields[0][Vmath::Imin(totpoints, intFields[0],1)];
-        Range->m_xmax = (vmax - vmin)*margin + vmax;
-        Range->m_xmin =-(vmax - vmin)*margin + vmin;
+        vmax          = intFields[0][Vmath::Imax(totpoints, intFields[0], 1)];
+        vmin          = intFields[0][Vmath::Imin(totpoints, intFields[0], 1)];
+        Range->m_xmax = (vmax - vmin) * margin + vmax;
+        Range->m_xmin = -(vmax - vmin) * margin + vmin;
 
-        vmax = intFields[1][Vmath::Imax(totpoints, intFields[1],1)];
-        vmin = intFields[1][Vmath::Imin(totpoints, intFields[1],1)];
-        Range->m_ymax = (vmax - vmin)*margin + vmax;
-        Range->m_ymin =-(vmax - vmin)*margin + vmin;
+        vmax          = intFields[1][Vmath::Imax(totpoints, intFields[1], 1)];
+        vmin          = intFields[1][Vmath::Imin(totpoints, intFields[1], 1)];
+        Range->m_ymax = (vmax - vmin) * margin + vmax;
+        Range->m_ymin = -(vmax - vmin) * margin + vmin;
 
-        vmax = intFields[2][Vmath::Imax(totpoints, intFields[2],1)];
-        vmin = intFields[2][Vmath::Imin(totpoints, intFields[2],1)];
-        Range->m_zmax = (vmax - vmin)*margin + vmax;
-        Range->m_zmin =-(vmax - vmin)*margin + vmin;
-        
-        csvIO->Import(inFile, fieldPts, LibUtilities::NullFieldMetaDataMap, Range);
+        vmax          = intFields[2][Vmath::Imax(totpoints, intFields[2], 1)];
+        vmin          = intFields[2][Vmath::Imin(totpoints, intFields[2], 1)];
+        Range->m_zmax = (vmax - vmin) * margin + vmax;
+        Range->m_zmin = -(vmax - vmin) * margin + vmin;
+
+        csvIO->Import(inFile, fieldPts, LibUtilities::NullFieldMetaDataMap,
+                      Range);
     }
     else
     {
@@ -140,7 +140,8 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
     ASSERTL0(nFields > 0, "No field values provided in input");
 
     // Define new expansions.
-    ASSERTL0(m_f->m_numHomogeneousDir == 0,
+    ASSERTL0(
+        m_f->m_numHomogeneousDir == 0,
         "ProcessInterpPointDataToFld does not support homogeneous expansion");
 
     m_f->m_exp.resize(nFields);
@@ -149,7 +150,7 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
         m_f->m_exp[i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
     }
 
-    Array<OneD, Array<OneD, NekDouble> > intFields1(3+nFields);
+    Array<OneD, Array<OneD, NekDouble>> intFields1(3 + nFields);
 
     for (int i = 0; i < 3; ++i)
     {
@@ -194,8 +195,8 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
     // forward transform fields
     for (i = 0; i < nFields; ++i)
     {
-        m_f->m_exp[i]->FwdTrans_IterPerExp(m_f->m_exp[i]->GetPhys(),
-                                           m_f->m_exp[i]->UpdateCoeffs());
+        m_f->m_exp[i]->FwdTransLocalElmt(m_f->m_exp[i]->GetPhys(),
+                                         m_f->m_exp[i]->UpdateCoeffs());
     }
 
     // save field names
@@ -204,5 +205,5 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
         m_f->m_variables.push_back(fieldPts->GetFieldName(j));
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

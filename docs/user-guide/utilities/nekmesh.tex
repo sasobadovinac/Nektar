@@ -35,6 +35,7 @@ mesh-generator \gmsh to the XML file format.
     \nm file.msh newfile.xml:xml:uncompress}
 \end{notebox}
 
+
 \section{Exporting a mesh from \gmsh}
 
 To demonstrate how \nm works, we will define a simple channel-like 3D geometry.
@@ -383,6 +384,18 @@ Note that you can override the module used on the command line. For example,
 NekMesh pipe-3d:sem pipe-3d.xml
 \end{lstlisting}
 
+The NekMesh input module also has an option to re-process all
+composites. By default only composites are reprocessed. However when
+extracting a smaller mesh from a larger mesh definition by redefining
+the composite of volumetric elements you can force the edges and/or
+faces to be reprocessed removing the definition of any edges and/or
+faces not required in the smaller mesh. This option is called
+\inltt{processall} and has the syntax
+
+\begin{lstlisting}[style=BashInputStyle]
+NekMesh input.xml:xml:processall output.xml 
+\end{lstlisting}
+
 Typically, mesh generators allow physical surfaces and volumes to contain many
 element types; for example a cube could be constructed from a mixture of hexes
 and prisms. In \nekpp, a composite can only contain a single element
@@ -398,8 +411,27 @@ Multiple elements in composite detected; remapped:
 \end{lstlisting}
 
 The resulting file therefore has two composites of IDs \inltt{150} and
-\inltt{151} respectively, containing the triangular and quadrilateral elements
-of the original mesh.
+\inltt{151} respectively, containing the triangular and quadrilateral
+elements of the original mesh. We note there is one exception to this
+convention in three-dimensional meshes where a face composite can
+contain both triangular and quadrilateral elements.
+
+Typically a NekMesh call requires both an input and output module to be
+called, however, by specifying the output file name or file extension
+as \inltt{stdout} no output file will be created. This option is typically
+used for mesh statistics processing or inspecting composite values etc.
+An example call would be:
+
+\begin{lstlisting}[style=BashInputStyle]
+  NekMesh input.xml stdout
+\end{lstlisting}
+
+or 
+
+\begin{lstlisting}[style=BashInputStyle]
+  NekMesh input.xml name.stdout
+\end{lstlisting}
+
 
 \subsection{Output modules}
 
@@ -454,6 +486,25 @@ NekMesh Mesh.msh output.msh:msh:order=7
 %
 will generate an order 7 Gmsh mesh. In the rest of these subsections, we discuss
 the various processing modules available within \nm.
+
+
+It is possible to use FieldConvert to extract a smaller region of a mesh
+from a larger mesh using the ``-r xmin,xmax,ymin,ymax,zmin'' range
+option, e.g.
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -r xmin,xmax,ymin,ymax,zmin,zmax bigMesh.xml smallMesh.xml
+\end{lstlisting}
+However this will not provide a composite of he faces on the
+boundary if they were not part of the original boundary composites of
+the original \inltt{bigMesh.xml}. These can however be recovered by an
+output module option \inltt{chkbndcomp} in \nm. To do this one should
+specify
+\begin{lstlisting}[style=BashInputStyle]
+NekMesh smallMesh.xml newSmallMesh.xml:xml:chkbndcomp 
+\end{lstlisting}
+this will then add a composite for any face that is on the boundary
+and not part of an existing boundary condition and put it into a
+composite with \inltt{id=9999}. This capability is currently only set up for 3D meshes
 
 \subsubsection{HDF5 format}
 

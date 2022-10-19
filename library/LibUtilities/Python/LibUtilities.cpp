@@ -32,35 +32,35 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/Python/NekPyConfig.hpp>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <LibUtilities/Python/NekPyConfig.hpp>
 #include <sstream>
 
 void export_Basis();
 void export_Comm();
+void export_Interpreter();
+void export_Equation();
 void export_Points();
 void export_SessionReader();
 void export_ShapeType();
 void export_Comm();
 
-template<typename T>
-void export_SharedArray();
+template <typename T> void export_SharedArray();
 
-template<typename T>
-void export_NekMatrix();
+template <typename T> void export_NekMatrix();
 
 PyObject *NekErrorType = nullptr;
 std::stringstream errorStream;
 
 using NekError = Nektar::ErrorUtil::NekError;
 
-PyObject* CreateExceptionClass(const char* name,
-                               PyObject* baseTypeObj = PyExc_Exception)
+PyObject *CreateExceptionClass(const char *name,
+                               PyObject *baseTypeObj = PyExc_Exception)
 {
     std::string qualifiedName0 = std::string("NekPy.LibUtilities.") + name;
 
-    PyObject* typeObj = PyErr_NewException(
-        const_cast<char*>(qualifiedName0.c_str()), baseTypeObj, 0);
+    PyObject *typeObj = PyErr_NewException(
+        const_cast<char *>(qualifiedName0.c_str()), baseTypeObj, 0);
 
     if (!typeObj)
     {
@@ -76,7 +76,6 @@ void TranslateNekError(NekError const &e)
     PyErr_SetString(NekErrorType, e.what());
 }
 
-
 BOOST_PYTHON_MODULE(_LibUtilities)
 {
     np::initialize();
@@ -89,6 +88,8 @@ BOOST_PYTHON_MODULE(_LibUtilities)
     Nektar::ErrorUtil::SetErrorStream(errorStream);
 
     export_Basis();
+    export_Interpreter();
+    export_Equation();
     export_Points();
     export_SessionReader();
     export_ShapeType();

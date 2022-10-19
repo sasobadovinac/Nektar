@@ -28,45 +28,43 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <boost/test/auto_unit_test.hpp>
-#include <boost/test/test_case_template.hpp>
-#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <LibUtilities/LinearAlgebra/NekLinAlgAlgorithms.hpp>
-#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <LibUtilities/LinearAlgebra/NekVector.hpp>
 #include <vector>
 
 namespace Nektar
 {
-    namespace NekLinAlgTests
-    {
-        BOOST_AUTO_TEST_CASE(TestGramSchmidtOrthogonalizationBookExample)
-        {
-            double buf_0[] = {1.0, 0.0, 2.0};
-            double buf_1[] = {2.0, 3.0, 0.0};
-            
-            std::vector<NekVector<double> > x;
-            x.push_back(NekVector<double>(3, buf_0));
-            x.push_back(NekVector<double>(3, buf_1));
-            
-            std::vector<NekVector<double> > q = GramSchmidtOrthogonalization(x);
-            
-            BOOST_CHECK_EQUAL(q.size(), 2);
-            
-            double epsilon = 1e-1;
-            BOOST_CHECK_CLOSE(q[0][0], .4472, epsilon);
-            BOOST_CHECK_CLOSE(q[0][1], .0, epsilon);
-            BOOST_CHECK_CLOSE(q[0][2], .8942, epsilon);
-            
-            BOOST_CHECK_CLOSE(q[1][0], .45811, epsilon);
-            BOOST_CHECK_CLOSE(q[1][1], .85890, epsilon);
-            BOOST_CHECK_CLOSE(q[1][2], -.22890, epsilon);
-        }
-    }
+namespace NekLinAlgTests
+{
+BOOST_AUTO_TEST_CASE(TestGramSchmidtOrthogonalizationBookExample)
+{
+    double buf_0[] = {1.0, 0.0, 2.0};
+    double buf_1[] = {2.0, 3.0, 0.0};
+
+    std::vector<NekVector<double>> x;
+    x.push_back(NekVector<double>(3, buf_0));
+    x.push_back(NekVector<double>(3, buf_1));
+
+    std::vector<NekVector<double>> q = GramSchmidtOrthogonalization(x);
+
+    BOOST_CHECK_EQUAL(q.size(), 2);
+
+    double epsilon = 1e-1;
+    BOOST_CHECK_CLOSE(q[0][0], .4472, epsilon);
+    BOOST_CHECK_CLOSE(q[0][1], .0, epsilon);
+    BOOST_CHECK_CLOSE(q[0][2], .8942, epsilon);
+
+    BOOST_CHECK_CLOSE(q[1][0], .45811, epsilon);
+    BOOST_CHECK_CLOSE(q[1][1], .85890, epsilon);
+    BOOST_CHECK_CLOSE(q[1][2], -.22890, epsilon);
 }
+} // namespace NekLinAlgTests
+} // namespace Nektar

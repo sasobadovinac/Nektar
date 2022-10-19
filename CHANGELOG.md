@@ -1,15 +1,140 @@
 Changelog
 =========
 
+v5.3.0
+------
+**Library**
+- Added float and restored SVE back-end for SimdLib (!1373)
+- Fix VmathSIMD by adding optional mapping with # of lanes (!1388)
+- Added float and restore avx512 back-end for SimdLib (!1387)
+- Fix namespace pollution which causes boost 1.74+ errors (!1389)
+- Fix missing copy assignment operator warnings in clang 13+ (!1391)
+- Fix boost 1.77 compatibility errors (!1420)
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
+- Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)
+
+**Python**
+- Add wrappers for Interpreter and Equation classes (!1329)
+
+**CompressibleFlowSolver**
+- Added Laplacian (NonSmooth) AV to the explicit Navier Stokes solver (!1372)
+- Added Physical AV to the implicit Navier Stokes solver (!1372)
+- Fixed Segmentation Fault when using C0 Smoother with Shock Capturing (!1394)
+- The Incomplete IP method was made the default method for the IP method (!1377).
+- Improve performance of the perconditioner and diffusion operator (!1393)
+- Re-add the SFD test with an updated restart file (!1399)
+- ExtractSurface2DCSF utility is updated to use the boost program option (!1407)
+
+**IncNavierStokesSolver**
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
+
+**VortexWaveInteractionSolver**
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
+
+**NekMesh**
+- Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
+exporting in .vtu format (!1386)
+- Preserve CAD face labels and save in to session file as a "NAME=" tag on the composites (!1396)
+- Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
+- Add option to refine curves in the same manner as the line refinement functionality (!1298)
+- Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
+
+**Miscellaneous**
+- Updated gitignore to be friendly with CLion IDE (!1405)
+
+
+v5.2.0
+------
+**Library**
+- Add Arm SVE backend to SIMD library (!1282)
+- Added support for manifold  MatrixFree operators (2D in 3D space) (!1304)
+- Put in place automatic selection of explicit operations using an opt file (!1304)
+- Fixed the moving reference frame rotation (Solver Utils) (!1305)
+- Revised FilterAeroForces to accout for the moving reference frame (!1305)
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Simplify the logic in the MPI pairwise trace exchange (!1307)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
+- Added a dummy output module OutputStdOut for NekMesh utilities that don't require an output file (!1318)
+- Fix compiler errors on ARCHER2 using PrgEnv-cray (!1315)
+- Fix cmake SIMD enable/disable options based on architecture (!1320)
+- Restrucutred the communicators to reduce direct dependence on session file communicator (!1337)
+- Fixed SIMD mask test (!1324)
+- Fix memory leak in Timer.cpp (!1330)
+- Fix cmake CWIPI option to remove Fortran check (!1331)
+- Fix excessive verbose output in GetBndElmtExpansions method (!1341)
+- Timer class was updated with safety checks to avoid wrong measurements (!1347)
+- Fix to adjust for warnings/errors from Monterey updated compiler (!1355)
+- Update `nektar` and `nektar-env` packages to Debian Bullseye (!1356)
+- Reformat code with clang-format (!1359)
+- Remove unnecessary IterPerExp methods (!1366)
+- Fix erronous call to FwdTrans from MR 1366 (!1374)
+- Fixed avx512 back-end for SimdLib (!1333)
+- Added float to scalar and avx2 back-end, disable avx512, sse2, sve (!1255)
+- Change MPI initialisation to allow MPI_Init call outside Nektar++ (!1376)
+- Fixed incorrect summary output for diffusion/reaction terms (!1383)
+
+**FieldConvert**
+- Add calculation of CFL number for the incompressilbe flow (!1332)
+- Added conditional to select the eNearestNeighbour method for 3D interpolation (!1335)
+- Fixed the output field names of WSS module of FieldConvert (!1352)
+- Add VTU output using VTK library (high-order & multi-block options) (!1343)
+
+**IncNavierStokesSolver**
+- Added Boundary conditions for moving reference frame (!1305)
+- Added the virtual functions overwriting the FluidInterface for moving reference frame (!1305)
+- Add Gradient Jump Penalty (GJP) Stabilisation into the solver (!1290)
+- Equation types are registered to the session reader (!1344)
+- Added Block-Preconditioner for Full Matrix solve (!1350)
+
+**ADRSolver:**
+- Add Gradient Jump Penalty (GJP) Stabilisation into the Unsteady Advection and Unsteady Advection Diffusion solvers (!1290)
+
+**PulseWaveSolver**
+- Parallelised solver (!1337)
+	
+**NekMesh**
+- Allow for one or more blank lines between sections in Tecplot ascii (.dat) files (!1322)
+- Small bug-fix for Python API for unused configuration options (!1348)
+- Fix bug in ProcessVarOpti/ElUtil for segfault on non-tri or tet meshes (!1381)
+
+**CompressibleFlowSolver**
+- Added physical AV, dilatation sensor, Ducros's and smoothing (!1180)
+- Added timers around important functions using the Timer class. Timers are available by specifying IO_Timer_Level > -1 (!1347)
+- Fixed bug in the calculation of the discontinuity penalty factor for the DiffusionIP implementation (!1368)
+
+**Documentation**
+- Fix images not being displayed in HTML documentation and tutorials (!1370)
+
+**CI**
+- Remove unused build options (!1360)
+- Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
+
+**Packaging**
+- Fix various issues with debian unstable and centos8 packaging (!1362)
+- Fix missing texlive package dependency for centos packaging (!1382)
+
 v5.1.1
 ------
 **Library**
 - Fix a boost headers incompatibility with boost-1.77 (!1297) 
 - Add RungeKutta4 as an alternate name for ClassicalRungeKutta4 for time integration method (!1294)
+
+**Python**
 - Fix initialisation warning when using HDF5 (!1299)
+- Fix issue with implementation of Diffusion IP (!1303)
+- Split Helmholtz MatrixFree operator to improve compile times (!1292)
+- Fix Boost deprecated header warnings (!1302)
+- Add command lines to set starting time and starting checkpoint number of a time-dependent simulation (!1309)
+- Fix an index referencing error in the Collections PhysDeriv method for Hex (!1314)
 
 **Python**
 - Updates to workbook, fix bugs in StdExpansion and SessionReader with MPI communication being recreated. (!1296)
+
+**BuildSystem**
+- Updated third party Lapack version 3.7.1 (!1312)
+
+**CompressibleFlowSolver**
+- Fix non-dimensional Sutherland law (!1253)
 
 v5.1.0
 ------
@@ -64,6 +189,10 @@ v5.1.0
 - Fix to interppointsdatatofld to allow for mpi processing of large files (!1191)
 - Fix the logic of C0Projection:helmsmoothing (!1220)
 - Fix extract module for boundaries with periodic boundary conditions (!1277)
+
+**IncNavierStokesSolver**:
+- Add MaxMinFields filter to record the max/min at each quadrature point and output the max/min fields. (!1256)
+- Fix imaginary mode in HalfModeToFourier module (!1247)
 
 **CardiacEPSolver**
 - Added additional parameter sets to Fenton-Karma model (!1119)

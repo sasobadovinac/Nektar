@@ -32,9 +32,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "ProcessDetectSurf.h"
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <NekMesh/MeshElements/Element.h>
-#include "ProcessDetectSurf.h"
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -46,8 +46,7 @@ namespace NekMesh
 
 ModuleKey ProcessDetectSurf::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "detect"),
-        ProcessDetectSurf::create,
+        ModuleKey(eProcessModule, "detect"), ProcessDetectSurf::create,
         "Process elements to detect a surface.");
 
 ProcessDetectSurf::ProcessDetectSurf(MeshSharedPtr m) : ProcessModule(m)
@@ -112,11 +111,8 @@ void ProcessDetectSurf::Process()
             vector<int> inter, tags = el[i]->GetTagList();
 
             sort(tags.begin(), tags.end());
-            set_intersection(surfs.begin(),
-                             surfs.end(),
-                             tags.begin(),
-                             tags.end(),
-                             back_inserter(inter));
+            set_intersection(surfs.begin(), surfs.end(), tags.begin(),
+                             tags.end(), back_inserter(inter));
 
             // It doesn't continue to next element.
             if (inter.size() != 1)
@@ -237,5 +233,5 @@ void ProcessDetectSurf::FindContiguousSurface(ElementSharedPtr start,
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -12,8 +12,8 @@
             <value variable="x"       tolerance="1e-6">0.23206</value>
             <value variable="y"       tolerance="1e-6">0</value>
             <value variable="z"       tolerance="1e-7">0.023206</value>
-            <value variable="Shear_x" tolerance="1e-9">0.00380052</value>
-            <value variable="Shear_y" tolerance="1e-9">0.00152021</value>
+            <value variable="Shear_s" tolerance="1e-9">0.00380052</value>
+            <value variable="Shear_n" tolerance="1e-9">0.00152021</value>
         </metric>
     </metrics>
 </test>

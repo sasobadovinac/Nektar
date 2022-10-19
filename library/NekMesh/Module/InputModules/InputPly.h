@@ -70,7 +70,7 @@ private:
 };
 
 typedef std::shared_ptr<InputPly> InputPlySharedPtr;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

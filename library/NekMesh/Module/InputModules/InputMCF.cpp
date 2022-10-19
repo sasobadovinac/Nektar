@@ -35,8 +35,8 @@
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <NekMesh/CADSystem/CADCurve.h>
 
-#include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/thread.hpp>
 
 #include <tinyxml.h>
 
@@ -70,7 +70,7 @@ void InputMCF::ParseFile(string nm)
     vector<string> filename;
     filename.push_back(nm);
 
-    char *prgname = (char*)"NekMesh";
+    char *prgname = (char *)"NekMesh";
     LibUtilities::SessionReaderSharedPtr pSession =
         LibUtilities::SessionReader::CreateInstance(1, &prgname, filename);
     pSession->InitSession();
@@ -144,6 +144,7 @@ void InputMCF::ParseFile(string nm)
     }
 
     set<string> refinement;
+    set<string> curve_refinement;
     if (pSession->DefinesElement("NEKTAR/MESHING/REFINEMENT"))
     {
         TiXmlElement *refine = mcf->FirstChildElement("REFINEMENT");
@@ -173,6 +174,22 @@ void InputMCF::ParseFile(string nm)
 
             L = L->NextSiblingElement("LINE");
         }
+
+        TiXmlElement *C = refine->FirstChildElement("CURVE");
+        while (C)
+        {
+            stringstream ss;
+            TiXmlElement *T = C->FirstChildElement("ID");
+            ss << T->GetText() << ",";
+            T = C->FirstChildElement("R");
+            ss << T->GetText() << ",";
+            T = C->FirstChildElement("D");
+            ss << T->GetText();
+
+            curve_refinement.insert(ss.str());
+
+            C = C->NextSiblingElement("CURVE");
+        }
     }
 
     set<string> periodic;
@@ -193,7 +210,7 @@ void InputMCF::ParseFile(string nm)
     if (pSession->DefinesElement("NEKTAR/MESHING/VOIDPOINTS"))
     {
         TiXmlElement *vpts = mcf->FirstChildElement("VOIDPOINTS");
-        TiXmlElement *v = vpts->FirstChildElement("V");
+        TiXmlElement *v    = vpts->FirstChildElement("V");
         stringstream ss;
         while (v)
         {
@@ -396,11 +413,24 @@ void InputMCF::ParseFile(string nm)
         stringstream ss;
         for (sit = refinement.begin(); sit != refinement.end(); sit++)
         {
-            ss << *sit;
-            ss << ":";
+            ss << *sit << ":";
         }
         m_refinement = ss.str();
         m_refinement.erase(m_refinement.end() - 1);
+    }
+
+    m_curverefine = curve_refinement.size() > 0;
+    if (m_curverefine)
+    {
+        stringstream ss;
+        for (sit = curve_refinement.begin(); sit != curve_refinement.end();
+             sit++)
+        {
+            ss << *sit;
+            ss << ":";
+        }
+        m_curverefinement = ss.str();
+        m_curverefinement.erase(m_curverefinement.end() - 1);
     }
 
     if (periodic.size() > 0)
@@ -457,6 +487,10 @@ void InputMCF::Process()
     if (m_refine)
     {
         module->RegisterConfig("refinement", m_refinement);
+    }
+    if (m_curverefine)
+    {
+        module->RegisterConfig("curve_refinement", m_curverefinement);
     }
     if (m_woct)
     {
@@ -518,7 +552,7 @@ void InputMCF::Process()
             m_log(WARNING) << "2D linear mesh generator failed with message:"
                            << endl;
             m_log(WARNING) << e.what() << endl;
-            m_log(FATAL)   << "No mesh file has been created." << endl;
+            m_log(FATAL) << "No mesh file has been created." << endl;
         }
     }
     else
@@ -539,8 +573,7 @@ void InputMCF::Process()
                            << endl;
             m_log(WARNING) << e.what() << endl;
             m_log(WARNING) << "Any surfaces which were successfully meshed will"
-                           << " be written as a manifold mesh."
-                           << endl;
+                           << " be written as a manifold mesh." << endl;
 
             m_mesh->m_expDim = 2;
 
@@ -580,12 +613,11 @@ void InputMCF::Process()
             }
             catch (runtime_error &e)
             {
-                m_log(WARNING) << "Volume meshing has failed with message:"
-                               << endl;
+                m_log(WARNING)
+                    << "Volume meshing has failed with message:" << endl;
                 m_log(WARNING) << e.what() << endl;
                 m_log(WARNING) << "The linear surface mesh be written as a "
-                               << "manifold mesh"
-                               << endl;
+                               << "manifold mesh" << endl;
 
                 m_mesh->m_expDim = 2;
                 m_mesh->m_element[3].clear();
@@ -623,8 +655,7 @@ void InputMCF::Process()
                        << endl;
         m_log(WARNING) << e.what() << endl;
         m_log(WARNING) << "The mesh will be written as normal but the "
-                       << "incomplete surface will remain faceted"
-                       << endl;
+                       << "incomplete surface will remain faceted" << endl;
         return;
     }
 
@@ -729,5 +760,5 @@ void InputMCF::Process()
 
     m_log(VERBOSE) << "Input mesh generation complete." << endl;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

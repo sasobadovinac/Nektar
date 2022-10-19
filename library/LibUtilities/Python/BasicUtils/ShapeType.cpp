@@ -32,9 +32,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <vector>
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
 #include <LibUtilities/Python/NekPyConfig.hpp>
+#include <vector>
 
 using namespace Nektar::LibUtilities;
 

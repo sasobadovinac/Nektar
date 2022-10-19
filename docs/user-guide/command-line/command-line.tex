@@ -68,3 +68,11 @@ METIS support, the default is to use METIS.
 \lstinline[style=BashInputStyle]{--use-hdf5-node-comm}\\
 \hangindent=1.5cm
 Partition the \inlsh{Hdf5}-format mesh in parallel to avoid one single thread runs out of memory in serial partitioning.
+
+\lstinline[style=BashInputStyle]{--set-start-time [float]}\\
+\hangindent=1.5cm
+Set the starting time of the simulation. This overwrites the time in the file-type initial condition.
+
+\lstinline[style=BashInputStyle]{--set-start-chknumber [int]}\\
+\hangindent=1.5cm
+Set the starting number of the checkpoint file. This overwrites the checkpoint number in the file-type initial condition.

@@ -33,65 +33,63 @@
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALMATRIX_H
 #define NEKTAR_LIB_MULTIREGIONS_GLOBALMATRIX_H
-#include <MultiRegions/MultiRegionsDeclspec.h>
-#include <MultiRegions/GlobalMatrixKey.h>
 #include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
+#include <MultiRegions/GlobalMatrixKey.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+
+/// Represents a matrix of all degrees of freedom.
+class GlobalMatrix
+{
+public:
+    typedef NekSparseMatrix<StorageSmvBsr<NekDouble>> DNekSmvBsrMat;
+    typedef std::shared_ptr<DNekSmvBsrMat> DNekSmvBsrMatSharedPtr;
+
+    /// Construct a new matrix.
+    MULTI_REGIONS_EXPORT GlobalMatrix(
+        const LibUtilities::SessionReaderSharedPtr &pSession, unsigned int rows,
+        unsigned int columns, const COOMatType &cooMat,
+        const MatrixStorage &matStorage = eFULL);
+
+    MULTI_REGIONS_EXPORT ~GlobalMatrix()
     {
-        
-        /// Represents a matrix of all degrees of freedom.
-        class GlobalMatrix
-        {
-        public:
-            typedef NekSparseMatrix<StorageSmvBsr<NekDouble> > DNekSmvBsrMat;
-            typedef std::shared_ptr<DNekSmvBsrMat> DNekSmvBsrMatSharedPtr;
-            
-            /// Construct a new matrix.
-            MULTI_REGIONS_EXPORT GlobalMatrix(
-                         const LibUtilities::SessionReaderSharedPtr& pSession,
-                         unsigned int rows,
-                         unsigned int columns,
-                         const COOMatType &cooMat,
-                         const MatrixStorage& matStorage = eFULL);
+    }
 
-            MULTI_REGIONS_EXPORT ~GlobalMatrix() {}
-            
-            
-            /// Perform a matrix-vector multiply.
-            MULTI_REGIONS_EXPORT void Multiply(
-                                               const Array<OneD,const NekDouble> &in,
-                                               Array<OneD,      NekDouble> &out);
+    /// Perform a matrix-vector multiply.
+    MULTI_REGIONS_EXPORT void Multiply(const Array<OneD, const NekDouble> &in,
+                                       Array<OneD, NekDouble> &out);
 
-            MULTI_REGIONS_EXPORT unsigned long GetMulCallsCounter() const;
-            MULTI_REGIONS_EXPORT unsigned int  GetNumNonZeroEntries() const;
-            
-        private:
-            /// Pointer to a double-precision Nektar++ sparse matrix.
-            DNekSmvBsrMatSharedPtr       m_smvbsrmatrix;
-            
-            unsigned int                 m_rows;
-            Array<OneD, NekDouble>       m_tmpin;
-            Array<OneD, NekDouble>       m_tmpout;
-            
-            unsigned long                m_mulCallsCounter;
-            
-            bool                         m_copyOp;
+    MULTI_REGIONS_EXPORT unsigned long GetMulCallsCounter() const;
+    MULTI_REGIONS_EXPORT unsigned int GetNumNonZeroEntries() const;
 
-            static std::string           def;
-            static std::string           lookupIds[];
-        };
+private:
+    /// Pointer to a double-precision Nektar++ sparse matrix.
+    DNekSmvBsrMatSharedPtr m_smvbsrmatrix;
 
-        /// Shared pointer to a GlobalMatrix object.
-        typedef std::shared_ptr<GlobalMatrix> GlobalMatrixSharedPtr;
-        /// Mapping from global matrix keys to global matrices.
-        typedef std::map<GlobalMatrixKey,GlobalMatrixSharedPtr> GlobalMatrixMap;
-        /// Shared pointer to a global matrix map.
-        typedef std::shared_ptr<GlobalMatrixMap> GlobalMatrixMapShPtr;
-    
-    } //end of namespace
-} //end of namespace
+    unsigned int m_rows;
+    Array<OneD, NekDouble> m_tmpin;
+    Array<OneD, NekDouble> m_tmpout;
+
+    unsigned long m_mulCallsCounter;
+
+    bool m_copyOp;
+
+    static std::string def;
+    static std::string lookupIds[];
+};
+
+/// Shared pointer to a GlobalMatrix object.
+typedef std::shared_ptr<GlobalMatrix> GlobalMatrixSharedPtr;
+/// Mapping from global matrix keys to global matrices.
+typedef std::map<GlobalMatrixKey, GlobalMatrixSharedPtr> GlobalMatrixMap;
+/// Shared pointer to a global matrix map.
+typedef std::shared_ptr<GlobalMatrixMap> GlobalMatrixMapShPtr;
+
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

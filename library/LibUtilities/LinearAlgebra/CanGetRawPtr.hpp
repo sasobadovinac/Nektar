@@ -28,33 +28,40 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_CAN_GET_RAW_PTR_HPP
 #define NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_CAN_GET_RAW_PTR_HPP
 
-#include <type_traits>
 #include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
+#include <type_traits>
 
 namespace Nektar
 {
-    template<typename MatrixType>
-    struct CanGetRawPtr : public std::false_type {};
-    
-    template<typename T>
-    struct CanGetRawPtr<NekMatrix<T, StandardMatrixTag> > : public std::true_type {};
-    
-    template<typename T, typename R>
-    struct CanGetRawPtr<NekMatrix<NekMatrix<T, R>, ScaledMatrixTag> > : public std::true_type {};
-    
-    template<typename T, typename M>
-    struct CanGetRawPtr<NekMatrix<T, M> > : std::conditional<
-        !std::is_same<BlockMatrixTag, M>::value && CanGetRawPtr<T>::value,
-        std::true_type, std::false_type>::type
-    {};
-}
+template <typename MatrixType> struct CanGetRawPtr : public std::false_type
+{
+};
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_CAN_GET_RAW_PTR_HPP
+template <typename T>
+struct CanGetRawPtr<NekMatrix<T, StandardMatrixTag>> : public std::true_type
+{
+};
 
+template <typename T, typename R>
+struct CanGetRawPtr<NekMatrix<NekMatrix<T, R>, ScaledMatrixTag>>
+    : public std::true_type
+{
+};
+
+template <typename T, typename M>
+struct CanGetRawPtr<NekMatrix<T, M>>
+    : std::conditional<!std::is_same<BlockMatrixTag, M>::value &&
+                           CanGetRawPtr<T>::value,
+                       std::true_type, std::false_type>::type
+{
+};
+} // namespace Nektar
+
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_CAN_GET_RAW_PTR_HPP

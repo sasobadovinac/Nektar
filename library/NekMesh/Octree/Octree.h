@@ -35,8 +35,8 @@
 #ifndef NEKTAR_MESHUTILS_OCTREE_OCTREE
 #define NEKTAR_MESHUTILS_OCTREE_OCTREE
 
-#include "SourcePoint.hpp"
 #include "Octant.h"
+#include "SourcePoint.hpp"
 #include <NekMesh/MeshElements/Mesh.h>
 #include <NekMesh/Module/Log.hpp>
 
@@ -47,20 +47,75 @@ namespace Nektar
 namespace NekMesh
 {
 
-//struct to assist in the creation of linesources in the code
-struct linesource
+/**
+ * @brief This struct defines a CAD curve object to be used for defining spatial
+ * refinment where a fixed element edge length is set to any element on or
+ * within a specified distance from it.
+ */
+struct CurveSource
 {
-    Array<OneD, NekDouble> x1, x2;
-    NekDouble R, delta;
-    linesource(Array<OneD, NekDouble> p1,
-               Array<OneD, NekDouble> p2,
-               NekDouble r,
-               NekDouble d)
+    /// The distance from the CAD curve where a fixed element edge length is to
+    /// be applied.
+    NekDouble R;
+    /// The fixed element edge length.
+    NekDouble delta;
+    /// Curve on which source points are lying
+    CADCurveSharedPtr curve;
+
+    CurveSource(NekDouble r, NekDouble d, CADCurveSharedPtr c)
+        : R(r), delta(d), curve(c)
+    {
+    }
+
+    /**
+     * @brief Tests if a point is within a specified range #R from the CAD curve
+     * given by #curve.
+     *
+     * @param p  Array with the \f$ (x,y,z) \f$ position of the point to be
+     *           tested.
+     *
+     * @return True if @p p is within the specified distance and false if not.
+     */
+    bool WithinRange(Array<OneD, NekDouble> p)
+    {
+        return curve->GetMinDistance(p) <= R;
+    }
+};
+
+/**
+ * @brief This struct defines two points that create a line to be used for
+ * defining spatial refinment where a fixed element edge length is set to any
+ * element on or within a specified distance from it.
+ */
+struct LineSource
+{
+    /// Array containing \f$ (x,y,z) \f$ Cartesian coordinates of the first line
+    /// segment endpoint.
+    Array<OneD, NekDouble> x1;
+    /// Array containing \f$ (x,y,z) \f$ Cartesian coordinates of the second
+    /// line segment endpoint.
+    Array<OneD, NekDouble> x2;
+    /// The distance from the line where a fixed element edge length is to be
+    /// applied.
+    NekDouble R;
+    /// The fixed element edge length.
+    NekDouble delta;
+
+    LineSource(Array<OneD, NekDouble> p1, Array<OneD, NekDouble> p2,
+               NekDouble r, NekDouble d)
         : x1(p1), x2(p2), R(r), delta(d)
     {
     }
 
-    bool withinRange(Array<OneD, NekDouble> p)
+    /**
+     * @brief Tests if a point is within a specified range #R from the line
+     * joining the points #x1 and #x2.
+     *
+     * @param p  Array with the \f$ (x,y,z) \f$ position of the point to be
+     *           tested.
+     * @return True if @p p is within the specified distance and false if not.
+     */
+    bool WithinRange(Array<OneD, NekDouble> p)
     {
         Array<OneD, NekDouble> Le(3), Re(3), s(3);
         for (int i = 0; i < 3; i++)
@@ -69,16 +124,32 @@ struct linesource
             Re[i] = p[i] - x2[i];
             s[i]  = x2[i] - x1[i];
         }
+
+        // check distances to endpoints
+        if (Le[0] * Le[0] + Le[1] * Le[1] + Le[2] * Le[2] < R * R)
+        {
+            return true;
+        }
+        if (Re[0] * Re[0] + Re[1] * Re[1] + Re[2] * Re[2] < R * R)
+        {
+            return true;
+        }
+
+        // Do an orthogonal projection of p onto the line segment
         Array<OneD, NekDouble> dev(3);
+        // (p-x1) \times (p-x2)
         dev[0] = Le[1] * Re[2] - Re[1] * Le[2];
         dev[1] = Le[2] * Re[0] - Re[2] * Le[0];
         dev[2] = Le[0] * Re[1] - Re[0] * Le[1];
 
         NekDouble dist =
-            sqrt(dev[0] * dev[0] + dev[1] * dev[1] + dev[2] * dev[2]) / Length();
+            sqrt(dev[0] * dev[0] + dev[1] * dev[1] + dev[2] * dev[2]) /
+            Length();
 
-        NekDouble t = -1.0 * ((x1[0] - p[0]) * s[0] + (x1[1] - p[1]) * s[1] +
-                              (x1[2] - p[2]) * s[2]) / Length() / Length();
+        NekDouble t = -1.0 *
+                      ((x1[0] - p[0]) * s[0] + (x1[1] - p[1]) * s[1] +
+                       (x1[2] - p[2]) * s[2]) /
+                      Length() / Length();
 
         if (dist < R && !(t > 1) && !(t < 0))
         {
@@ -90,6 +161,9 @@ struct linesource
         }
     }
 
+    /**
+     * @brief Returns the length of the line defining the line source.
+     */
     NekDouble Length()
     {
         return sqrt((x1[0] - x2[0]) * (x1[0] - x2[0]) +
@@ -107,7 +181,6 @@ struct linesource
 class Octree
 {
 public:
-
     Octree(MeshSharedPtr m, Logger log) : m_mesh(m), m_log(log)
     {
         m_log.SetPrefix("Octree");
@@ -146,7 +219,7 @@ public:
     {
         m_minDelta = min;
         m_maxDelta = max;
-        m_eps = ep;
+        m_eps      = ep;
     }
 
     /**
@@ -157,7 +230,7 @@ public:
     void WriteOctree(std::string nm);
 
     /**
-     * @brief informs the octree there is a user defined spacing file
+     * @brief informs the octree there is a user defined line spacing file
      *
      * @param nm name of the user defined spacing file
      */
@@ -166,8 +239,17 @@ public:
         m_refinement = nm;
     }
 
-private:
+    /**
+     * @brief informs the octree there is a user defined curve spacing file
+     *
+     * @param nm name of the user defined spacing file
+     */
+    void CurveRefinement(std::string nm)
+    {
+        m_curverefinement = nm;
+    }
 
+private:
     /**
      * @brief Smooths specification over all octants to a gradation criteria
      */
@@ -239,11 +321,13 @@ private:
     Logger m_log;
 
     std::string m_refinement;
-    std::vector<linesource> m_lsources;
+    std::string m_curverefinement;
+    std::vector<LineSource> m_lsources;
+    std::vector<CurveSource> m_csources;
 };
 typedef std::shared_ptr<Octree> OctreeSharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

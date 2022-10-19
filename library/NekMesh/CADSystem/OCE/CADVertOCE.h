@@ -46,7 +46,6 @@ namespace NekMesh
 class CADVertOCE : public CADVert
 {
 public:
-
     static CADVertSharedPtr create()
     {
         return MemoryManager<CADVertOCE>::AllocateSharedPtr();
@@ -66,10 +65,10 @@ public:
     }
 
     void Initialise(int i, TopoDS_Shape in);
-    
+
     NekDouble DistanceTo(Array<OneD, NekDouble> l)
     {
-        gp_Pnt lp(l[0],l[1],l[2]);
+        gp_Pnt lp(l[0], l[1], l[2]);
         return m_occVert.Distance(lp);
     }
 
@@ -78,7 +77,7 @@ private:
     gp_Pnt m_occVert;
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -147,7 +147,8 @@ void InputXml::Process(po::variables_map &vm)
                 rng->m_xmax     = values[1];
                 break;
             default:
-                NEKERROR(ErrorUtil::efatal, "too many values specfied in range");
+                NEKERROR(ErrorUtil::efatal,
+                         "too many values specfied in range");
         }
     }
 
@@ -156,8 +157,7 @@ void InputXml::Process(po::variables_map &vm)
     {
         if (rng == LibUtilities::NullDomainRangeShPtr)
         {
-            rng =
-                MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
+            rng = MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
             rng->m_doXrange = false;
             rng->m_doYrange = false;
             rng->m_doZrange = false;
@@ -224,7 +224,7 @@ void InputXml::Process(po::variables_map &vm)
     if (vm.count("nparts"))
     {
         // make sure have pre-partitioned mesh for nparts option
-        ASSERTL0(boost::icontains(files[0],"_xml"),
+        ASSERTL0(boost::icontains(files[0], "_xml"),
                  "Expect the mesh to have been pre-partitioned when "
                  " using the\"--nparts\" option. Please use \"--part-only\" "
                  "option to prepartition xml file.");
@@ -265,5 +265,5 @@ void InputXml::Process(po::variables_map &vm)
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

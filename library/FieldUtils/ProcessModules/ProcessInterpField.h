@@ -77,9 +77,8 @@ public:
     {
         return eFillExp;
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif
