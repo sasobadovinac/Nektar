@@ -360,5 +360,7 @@ void Interpolator<ArrayExpListSharedPtr>::Interpolate(
     LibUtilities::Interpolator::Interpolate(ptsInField, ptsOutField);
 }
 
+template class Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>;
+template class Interpolator<Array<OneD, MultiRegions::ExpListSharedPtr>>;
 } // namespace FieldUtils
 } // namespace Nektar
