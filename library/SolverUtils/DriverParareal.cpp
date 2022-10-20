@@ -42,8 +42,11 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-string DriverParareal::className = GetDriverFactory().RegisterCreatorFunction("Parareal", DriverParareal::create);
-string DriverParareal::driverLookupId = LibUtilities::SessionReader::RegisterEnumValue("Driver","Parareal",0);
+string DriverParareal::className = 
+    GetDriverFactory().RegisterCreatorFunction("Parareal", 
+                                               DriverParareal::create);
+string DriverParareal::driverLookupId = 
+    LibUtilities::SessionReader::RegisterEnumValue("Driver", "Parareal", 0);
 
 /**
  *
@@ -101,7 +104,7 @@ void DriverParareal::v_InitObject(ostream &out)
                 SetPararealSessionFile();
 
                 // Set fine parareal solver
-                m_session->SetTag("AdvectiveType","Convective");
+                m_session->SetTag("AdvectiveType", "Convective");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
@@ -115,7 +118,7 @@ void DriverParareal::v_InitObject(ostream &out)
                 SetPararealSessionFile();
 
                 // Set fine parareal solver
-                m_session->SetTag("AdvectiveType","Linearised");
+                m_session->SetTag("AdvectiveType", "Linearised");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
@@ -129,7 +132,7 @@ void DriverParareal::v_InitObject(ostream &out)
                 SetPararealSessionFile();
 
                 // Set fine parareal solver
-                m_session->SetTag("AdvectiveType","Adjoint");
+                m_session->SetTag("AdvectiveType", "Adjoint");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
@@ -143,7 +146,7 @@ void DriverParareal::v_InitObject(ostream &out)
                 SetPararealSessionFile();
 
                 // Set fine parareal solver
-                m_session->SetTag("AdvectiveType","SkewSymmetric");
+                m_session->SetTag("AdvectiveType", "SkewSymmetric");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
@@ -353,15 +356,15 @@ void DriverParareal::v_Execute(ostream &out)
     m_chunkRank = m_session->GetComm()->GetTimeComm()->GetRank();
 
     // Set parameters from session file.
-    m_pararealIterMax= m_session->DefinesParameter("PararealIterMax")
-                            ? m_session->GetParameter("PararealIterMax")
-                            : m_numChunks;
-    m_fineTimeStep   = m_session->GetParameter("TimeStep");
-    m_coarseTimeStep = m_sessionCoarse->GetParameter("TimeStep");
-    m_fineSteps      = m_session->GetParameter("NumSteps");
-    m_coarseSteps    = m_sessionCoarse->GetParameter("NumSteps");
-    m_totalTime      = m_fineTimeStep * m_fineSteps;
-    m_chunkTime      = m_totalTime / m_numChunks;
+    m_pararealIterMax = m_session->DefinesParameter("PararealIterMax")
+                             ? m_session->GetParameter("PararealIterMax")
+                             : m_numChunks;
+    m_fineTimeStep    = m_session->GetParameter("TimeStep");
+    m_coarseTimeStep  = m_sessionCoarse->GetParameter("TimeStep");
+    m_fineSteps       = m_session->GetParameter("NumSteps");
+    m_coarseSteps     = m_sessionCoarse->GetParameter("NumSteps");
+    m_totalTime       = m_fineTimeStep * m_fineSteps;
+    m_chunkTime       = m_totalTime / m_numChunks;
 
     ASSERTL0(m_fineSteps % m_numChunks == 0,
              "Total step size should be divisible by number of chunks.");

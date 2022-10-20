@@ -1615,12 +1615,13 @@ void SessionReader::PartitionComm()
         {
             nStripZ = GetCmdLineArgument<int>("nsz");
         }
-        if (DefinesCmdLineArgument("npt")) {
+        if (DefinesCmdLineArgument("npt"))
+        {
             nTime = GetCmdLineArgument<int>("npt");
         }
         ASSERTL0(m_comm->GetSize() % nTime == 0,
                  "Cannot exactly partition time using npt value.");
-        ASSERTL0((m_comm->GetSize() / nTime) % (nProcZ*nProcY*nProcX) == 0,
+        ASSERTL0((m_comm->GetSize() / nTime) % (nProcZ * nProcY * nProcX) == 0,
                  "Cannot exactly partition using PROC_Z value.");
         ASSERTL0(nProcZ % nProcY == 0,
                  "Cannot exactly partition using PROC_Y value.");

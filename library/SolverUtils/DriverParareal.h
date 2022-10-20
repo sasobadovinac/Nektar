@@ -60,7 +60,7 @@ public:
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
 protected:
@@ -134,7 +134,7 @@ protected:
 };
 
 }
-} //end of namespace
+} // end of namespace
 
-#endif //NEKTAR_SOLVERUTILS_DRIVERSTANDARD_H
+#endif // NEKTAR_SOLVERUTILS_DRIVERSTANDARD_H
 

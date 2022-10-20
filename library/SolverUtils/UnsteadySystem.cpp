@@ -343,14 +343,15 @@ void UnsteadySystem::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if ((m_session->GetComm()->GetRank() == 0 || m_session->GetSolverInfo("Driver") == "Parareal") && 
+        if ((m_session->GetComm()->GetRank() == 0 || 
+             m_session->GetSolverInfo("Driver") == "Parareal") && 
              !((step + 1) % m_infosteps))
         {
             if (m_session->GetSolverInfo("Driver") == "Parareal")
             {
                 cout << "RANK " << m_session->GetComm()->GetRank()
-                     << " Steps: " << setw(8)  << left << step+1 << " "
-                     << "Time: "  << setw(12) << left << m_time;
+                     << " Steps: " << setw(8) << left << step + 1 << " "
+                     << "Time: " << setw(12) << left << m_time;
             }
             else
             {
