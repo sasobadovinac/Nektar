@@ -60,11 +60,9 @@ namespace FieldUtils
  * If both expansions use the same mesh, use LibUtilities/Foundations/Interp.h
  * instead.
  */
-template <typename ArrayExpListSharedPtr>
-void Interpolator<ArrayExpListSharedPtr>::Interpolate(
-    const ArrayExpListSharedPtr expInField,
-    ArrayExpListSharedPtr &expOutField,
-    NekDouble def_value)
+template <typename T>
+void Interpolator<T>::Interpolate(const T expInField, T &expOutField,
+                                  NekDouble def_value)
 {
     ASSERTL0(expInField.size() == expOutField.size(),
              "number of fields does not match");
@@ -143,11 +141,10 @@ void Interpolator<ArrayExpListSharedPtr>::Interpolate(
  * The interpolation is performed by evaluating the expInField at the points
  * of ptsOutField, so only eNoMethod is supported.
  */
-template <typename ArrayExpListSharedPtr>
-void Interpolator<ArrayExpListSharedPtr>::Interpolate(
-    const ArrayExpListSharedPtr expInField,
-    LibUtilities::PtsFieldSharedPtr &ptsOutField,
-    NekDouble def_value)
+template <typename T>
+void Interpolator<T>::Interpolate(const T expInField,
+                                  LibUtilities::PtsFieldSharedPtr &ptsOutField,
+                                  NekDouble def_value)
 {
     ASSERTL0(expInField.size() == ptsOutField->GetNFields(),
              "number of fields does not match");
@@ -283,10 +280,9 @@ void Interpolator<ArrayExpListSharedPtr>::Interpolate(
  *
  * In and output fields must have the same dimension and number of fields.
  */
-template <typename ArrayExpListSharedPtr>
-void Interpolator<ArrayExpListSharedPtr>::Interpolate(
-    const LibUtilities::PtsFieldSharedPtr ptsInField,
-    ArrayExpListSharedPtr &expOutField)
+template <typename T>
+void Interpolator<T>::Interpolate(
+    const LibUtilities::PtsFieldSharedPtr ptsInField, T &expOutField)
 {
     ASSERTL0(expOutField.size() == ptsInField->GetNFields(),
              "number of fields does not match");
@@ -352,8 +348,8 @@ void Interpolator<ArrayExpListSharedPtr>::Interpolate(
     }
 }
 
-template <typename ArrayExpListSharedPtr>
-void Interpolator<ArrayExpListSharedPtr>::Interpolate(
+template <typename T>
+void Interpolator<T>::Interpolate(
     const LibUtilities::PtsFieldSharedPtr ptsInField,
     LibUtilities::PtsFieldSharedPtr &ptsOutField)
 {

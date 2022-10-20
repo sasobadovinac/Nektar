@@ -47,8 +47,7 @@ namespace FieldUtils
 
 /// A class that contains algorithms for interpolation between pts fields,
 /// expansions and different meshes
-template <typename ArrayExpListSharedPtr>
-class Interpolator : public LibUtilities::Interpolator
+template <typename T> class Interpolator : public LibUtilities::Interpolator
 {
 public:
     /**
@@ -77,20 +76,17 @@ public:
     }
 
     /// Interpolate from an expansion to an expansion
-    FIELD_UTILS_EXPORT void Interpolate(const ArrayExpListSharedPtr expInField,
-                                        ArrayExpListSharedPtr &expOutField,
+    FIELD_UTILS_EXPORT void Interpolate(const T expInField, T &expOutField,
                                         NekDouble def_value = 0.0);
 
     /// Interpolate from an expansion to a pts field
     FIELD_UTILS_EXPORT void Interpolate(
-        const ArrayExpListSharedPtr expInField,
-        LibUtilities::PtsFieldSharedPtr &ptsOutField,
+        const T expInField, LibUtilities::PtsFieldSharedPtr &ptsOutField,
         NekDouble def_value = 0.0);
 
     /// Interpolate from a pts field to an expansion
     FIELD_UTILS_EXPORT void Interpolate(
-        const LibUtilities::PtsFieldSharedPtr ptsInField,
-        ArrayExpListSharedPtr &expOutField);
+        const LibUtilities::PtsFieldSharedPtr ptsInField, T &expOutField);
 
     /// Interpolate from a pts field to a pts field
     FIELD_UTILS_EXPORT void Interpolate(
@@ -99,9 +95,9 @@ public:
 
 protected:
     /// input field
-    ArrayExpListSharedPtr m_expInField;
+    T m_expInField;
     /// output field
-    ArrayExpListSharedPtr m_expOutField;
+    T m_expOutField;
 };
 
 typedef std::shared_ptr<
