@@ -44,18 +44,18 @@ namespace SolverUtils
 {
 
 /// Base class for the development of solvers.
-class DriverParareal: public Driver
+class DriverParareal : public Driver
 {
 public:
     friend class MemoryManager<DriverParareal>;
 
     /// Creates an instance of this class
     static DriverSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-        DriverSharedPtr p = MemoryManager<DriverParareal>
-            ::AllocateSharedPtr(pSession, pGraph);
+        DriverSharedPtr p =
+            MemoryManager<DriverParareal>::AllocateSharedPtr(pSession, pGraph);
         p->InitObject();
         return p;
     }
@@ -64,16 +64,15 @@ public:
     static std::string className;
 
 protected:
-
     // Interpolator
     FieldUtils::Interpolator<Array<OneD, MultiRegions::ExpListSharedPtr>>
         m_interp;
 
     /// Parareal (coarse solver) session reader object
-    LibUtilities::SessionReaderSharedPtr        m_sessionCoarse;
+    LibUtilities::SessionReaderSharedPtr m_sessionCoarse;
 
     /// Parareal (coarse solver) MeshGraph object
-    SpatialDomains::MeshGraphSharedPtr          m_graphCoarse;
+    SpatialDomains::MeshGraphSharedPtr m_graphCoarse;
 
     /// Timestep for fine solver.
     NekDouble m_fineTimeStep;
@@ -114,7 +113,8 @@ protected:
     SOLVER_UTILS_EXPORT virtual ~DriverParareal();
 
     /// Second-stage initialisation
-    SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        std::ostream &out = std::cout);
 
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
@@ -133,8 +133,7 @@ protected:
     static std::string driverLookupId;
 };
 
-}
-} // end of namespace
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif // NEKTAR_SOLVERUTILS_DRIVERSTANDARD_H
-

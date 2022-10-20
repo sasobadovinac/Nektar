@@ -620,7 +620,7 @@ inline void EquationSystem::PrintSummary(std::ostream &out)
 
         out << "==============================================================="
                "========"
-            << std::endl 
+            << std::endl
             << std::flush;
         for (auto &x : vSummary)
         {
@@ -630,7 +630,7 @@ inline void EquationSystem::PrintSummary(std::ostream &out)
         }
         out << "==============================================================="
                "========"
-            << std::endl 
+            << std::endl
             << std::flush;
     }
 }
@@ -760,8 +760,8 @@ inline void EquationSystem::CopyFromPhysField(const int i,
     Vmath::Vcopy(output.size(), m_fields[i]->GetPhys(), 1, output, 1);
 }
 
-inline void EquationSystem::CopyToPhysField(const int i,
-                                            const Array<OneD, const NekDouble> &input)
+inline void EquationSystem::CopyToPhysField(
+    const int i, const Array<OneD, const NekDouble> &input)
 {
     Vmath::Vcopy(input.size(), input, 1, m_fields[i]->UpdatePhys(), 1);
 }

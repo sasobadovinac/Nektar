@@ -343,9 +343,9 @@ void UnsteadySystem::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if ((m_session->GetComm()->GetRank() == 0 || 
-             m_session->GetSolverInfo("Driver") == "Parareal") && 
-             !((step + 1) % m_infosteps))
+        if ((m_session->GetComm()->GetRank() == 0 ||
+             m_session->GetSolverInfo("Driver") == "Parareal") &&
+            !((step + 1) % m_infosteps))
         {
             if (m_session->GetSolverInfo("Driver") == "Parareal")
             {

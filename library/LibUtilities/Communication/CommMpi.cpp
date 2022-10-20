@@ -472,27 +472,27 @@ void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
 
     MPI_Comm newComm;
     MPI_Comm gridComm;
-/*
-    // Compute row and column in grid.
-    int myCol = m_rank % pColumns;
-    int myRow = (m_rank - myCol) / pColumns;
+    /*
+        // Compute row and column in grid.
+        int myCol = m_rank % pColumns;
+        int myRow = (m_rank - myCol) / pColumns;
 
-    // Split Comm into rows - all processes with same myRow are put in
-    // the same communicator. The rank within this communicator is the
-    // column index.
-    MPI_Comm_split(m_comm, myRow, myCol, &newComm);
-    m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
+        // Split Comm into rows - all processes with same myRow are put in
+        // the same communicator. The rank within this communicator is the
+        // column index.
+        MPI_Comm_split(m_comm, myRow, myCol, &newComm);
+        m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
 
-    // Split Comm into columns - all processes with same myCol are put
-    // in the same communicator. The rank within this communicator is
-    // the row index.
-    MPI_Comm_split(m_comm, myCol, myRow, &newComm);
-    m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
-*/
-    constexpr int dims          = 3;
-    const     int sizes[dims]   = {pRows, pColumns, pTime};
-    const     int periods[dims] = {0, 0, 0};
-    constexpr int reorder       = 1;
+        // Split Comm into columns - all processes with same myCol are put
+        // in the same communicator. The rank within this communicator is
+        // the row index.
+        MPI_Comm_split(m_comm, myCol, myRow, &newComm);
+        m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
+    */
+    constexpr int dims      = 3;
+    const int sizes[dims]   = {pRows, pColumns, pTime};
+    const int periods[dims] = {0, 0, 0};
+    constexpr int reorder   = 1;
 
     MPI_Cart_create(m_comm, dims, sizes, periods, reorder, &gridComm);
 

@@ -159,7 +159,8 @@ public:
 
     LIB_UTILITIES_EXPORT inline CommSharedPtr CommCreateIf(int flag);
 
-    LIB_UTILITIES_EXPORT inline void SplitComm(int pRows, int pColumns, int pTime = 1);
+    LIB_UTILITIES_EXPORT inline void SplitComm(int pRows, int pColumns,
+                                               int pTime = 1);
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetRowComm();
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetColumnComm();
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetTimeComm();
@@ -247,10 +248,10 @@ protected:
     virtual void v_WaitAll(CommRequestSharedPtr request)           = 0;
     virtual CommRequestSharedPtr v_CreateRequest(int num)          = 0;
 
-    virtual void v_SplitComm(int pRows, int pColumns, int pTime)   = 0;
-    virtual bool v_TreatAsRankZero()                               = 0;
-    virtual bool v_IsSerial()                                      = 0;
-    virtual std::tuple<int, int, int> v_GetVersion()               = 0;
+    virtual void v_SplitComm(int pRows, int pColumns, int pTime) = 0;
+    virtual bool v_TreatAsRankZero()                             = 0;
+    virtual bool v_IsSerial()                                    = 0;
+    virtual std::tuple<int, int, int> v_GetVersion()             = 0;
 
     LIB_UTILITIES_EXPORT virtual bool v_RemoveExistingFiles();
     LIB_UTILITIES_EXPORT virtual std::pair<CommSharedPtr, CommSharedPtr>
@@ -749,7 +750,6 @@ inline CommSharedPtr Comm::GetTimeComm()
         return m_commTime;
     }
 }
-
 
 inline bool Comm::TreatAsRankZero()
 {

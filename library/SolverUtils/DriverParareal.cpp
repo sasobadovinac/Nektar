@@ -42,10 +42,9 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-string DriverParareal::className = 
-    GetDriverFactory().RegisterCreatorFunction("Parareal", 
-                                               DriverParareal::create);
-string DriverParareal::driverLookupId = 
+string DriverParareal::className = GetDriverFactory().RegisterCreatorFunction(
+    "Parareal", DriverParareal::create);
+string DriverParareal::driverLookupId =
     LibUtilities::SessionReader::RegisterEnumValue("Driver", "Parareal", 0);
 
 /**
@@ -61,7 +60,7 @@ DriverParareal::DriverParareal(
 /**
  *
  */
-DriverParareal:: ~DriverParareal()
+DriverParareal::~DriverParareal()
 {
 }
 
@@ -82,17 +81,19 @@ void DriverParareal::v_InitObject(ostream &out)
         }
 
         // Check such a module exists for this equation.
-        ASSERTL0(GetEquationSystemFactory().ModuleExists(vEquation),
-                 "EquationSystem '" + vEquation + "' is not defined.\n"
-                 "Ensure equation name is correct and module is compiled.\n");
+        ASSERTL0(
+            GetEquationSystemFactory().ModuleExists(vEquation),
+            "EquationSystem '" + vEquation +
+                "' is not defined.\n"
+                "Ensure equation name is correct and module is compiled.\n");
 
         // Retrieve the type of evolution operator to use
         /// @todo At the moment this is Navier-Stokes specific - generalise?
         m_EvolutionOperator =
             m_session->GetSolverInfoAsEnum<EvolutionOperatorType>(
-                    "EvolutionOperator");
+                "EvolutionOperator");
 
-        m_nequ = 2; 
+        m_nequ = 2;
 
         m_equ = Array<OneD, EquationSystemSharedPtr>(m_nequ);
 
@@ -157,7 +158,6 @@ void DriverParareal::v_InitObject(ostream &out)
                 break;
             default:
                 ASSERTL0(false, "Unrecognised evolution operator.");
-
         }
     }
     catch (int e)
@@ -187,7 +187,7 @@ void DriverParareal::SetPararealSessionFile(void)
     {
         // if _coarseSolver.xml exit, read session file
         if (m_session->GetFilenames().size() > 1 + opt)
-        {    
+        {
             coarseSolverFilenames.push_back(meshFile);
         }
         coarseSolverFilenames.push_back(coarseSolverFile);
@@ -357,8 +357,8 @@ void DriverParareal::v_Execute(ostream &out)
 
     // Set parameters from session file.
     m_pararealIterMax = m_session->DefinesParameter("PararealIterMax")
-                             ? m_session->GetParameter("PararealIterMax")
-                             : m_numChunks;
+                            ? m_session->GetParameter("PararealIterMax")
+                            : m_numChunks;
     m_fineTimeStep    = m_session->GetParameter("TimeStep");
     m_coarseTimeStep  = m_sessionCoarse->GetParameter("TimeStep");
     m_fineSteps       = m_session->GetParameter("NumSteps");
@@ -453,8 +453,8 @@ void DriverParareal::v_Execute(ostream &out)
         std::cout << "** INITIAL CONDITION **" << std::endl << std::flush;
     }
     LibUtilities::CommSharedPtr tc = m_session->GetComm()->GetTimeComm();
-    int recvProc = m_chunkRank - 1;
-    int sendProc = m_chunkRank + 1;
+    int recvProc                   = m_chunkRank - 1;
+    int sendProc                   = m_chunkRank + 1;
 
     // Calculate the initial coarse solve approximation
     // This provides each time-slice with its initial condition.
@@ -468,8 +468,7 @@ void DriverParareal::v_Execute(ostream &out)
 
     if (m_chunkRank == 0 && m_comm->GetRank() == 0)
     {
-        std::cout << "** ITERATION " << 0 << " **" << std::endl
-                  << std::flush;
+        std::cout << "** ITERATION " << 0 << " **" << std::endl << std::flush;
     }
 
     RunCoarseSolve(m_chunkRank * m_chunkTime, ic, solution);
@@ -524,11 +523,12 @@ void DriverParareal::v_Execute(ostream &out)
         RunFineSolve(m_chunkRank * m_chunkTime, ic, solutionFine);
 
         // Calculate coarse solve correction G(y_j^{k+1})
-        // These are dependent on the previous time slice, so need to compute serially.
+        // These are dependent on the previous time slice, so need to compute
+        // serially.
         if (m_chunkRank > 0)
         {
-            // All time slices, apart from the first, receive their initial state from
-            // the previous time slice.
+            // All time slices, apart from the first, receive their initial
+            // state from the previous time slice.
             for (int i = 0; i < nVar; ++i)
             {
                 tc->Recv(recvProc, ic[i]);
@@ -549,8 +549,9 @@ void DriverParareal::v_Execute(ostream &out)
             }
         }
 
-        // All but the last time slice should communicate the solution to the next time slice.
-        // This will become the initial condition for the next slice.
+        // All but the last time slice should communicate the solution to the
+        // next time slice. This will become the initial condition for the next
+        // slice.
         if (m_chunkRank < m_numChunks - 1)
         {
             for (int i = 0; i < nVar; ++i)
@@ -559,7 +560,8 @@ void DriverParareal::v_Execute(ostream &out)
             }
         }
 
-        // On the last time-slice, we calculate the L2 error of our latest approximation
+        // On the last time-slice, we calculate the L2 error of our latest
+        // approximation
         if (m_chunkRank == m_numChunks - 1)
         {
             for (int i = 0; i < nVar; ++i)
@@ -595,8 +597,6 @@ void DriverParareal::v_Execute(ostream &out)
         std::cout << "-------------------------------------------" << std::endl
                   << std::flush;
     }
-
 }
-}
-}
-
+} // namespace SolverUtils
+} // namespace Nektar
