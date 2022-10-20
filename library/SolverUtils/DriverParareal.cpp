@@ -219,17 +219,24 @@ void DriverParareal::SetPararealSessionFile(void)
                   ? m_session->GetCmdLineArgument<int>("npt")
                   : 1;
 
+    // Convert into string
+    std::string npx_string = std::to_string(npx);
+    std::string npy_string = std::to_string(npy);
+    std::string npz_string = std::to_string(npz);
+    std::string nsz_string = std::to_string(nsz);
+    std::string npt_string = std::to_string(npt);
+
     char *argv[] = {const_cast<char *>("Solver"), // this is just a place holder
                     const_cast<char *>("--npx"),
-                    const_cast<char *>(std::to_string(npx).c_str()),
+                    const_cast<char *>(npx_string.c_str()),
                     const_cast<char *>("--npy"),
-                    const_cast<char *>(std::to_string(npy).c_str()),
+                    const_cast<char *>(npy_string.c_str()),
                     const_cast<char *>("--npz"),
-                    const_cast<char *>(std::to_string(npz).c_str()),
+                    const_cast<char *>(npz_string.c_str()),
                     const_cast<char *>("--nsz"),
-                    const_cast<char *>(std::to_string(nsz).c_str()),
+                    const_cast<char *>(nsz_string.c_str()),
                     const_cast<char *>("--npt"),
-                    const_cast<char *>(std::to_string(npt).c_str()),
+                    const_cast<char *>(npt_string.c_str()),
                     nullptr};
 
     // Set session for coarse solver
