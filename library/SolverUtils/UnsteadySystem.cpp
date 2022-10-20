@@ -286,29 +286,29 @@ void UnsteadySystem::v_DoSolve()
         // Frozen preconditioner checks
         if (m_session->GetSolverInfo("Driver") != "Parareal")
         {
-        if (UpdateTimeStepCheck())
-        {
-            m_cflSafetyFactor = tmp_cflSafetyFactor;
+            if (UpdateTimeStepCheck())
+            {
+                m_cflSafetyFactor = tmp_cflSafetyFactor;
 
-            if (m_cflSafetyFactor)
-            {
-                m_timestep = GetTimeStep(fields);
-            }
+                if (m_cflSafetyFactor)
+                {
+                    m_timestep = GetTimeStep(fields);
+                }
 
-            // Ensure that the final timestep finishes at the final
-            // time, or at a prescribed IO_CheckTime.
-            if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
-            {
-                m_timestep = m_fintime - m_time;
+                // Ensure that the final timestep finishes at the final
+                // time, or at a prescribed IO_CheckTime.
+                if (m_time + m_timestep > m_fintime && m_fintime > 0.0)
+                {
+                    m_timestep = m_fintime - m_time;
+                }
+                else if (m_checktime &&
+                         m_time + m_timestep - m_lastCheckTime >= m_checktime)
+                {
+                    m_lastCheckTime += m_checktime;
+                    m_timestep  = m_lastCheckTime - m_time;
+                    doCheckTime = true;
+                }
             }
-            else if (m_checktime &&
-                     m_time + m_timestep - m_lastCheckTime >= m_checktime)
-            {
-                m_lastCheckTime += m_checktime;
-                m_timestep  = m_lastCheckTime - m_time;
-                doCheckTime = true;
-            }
-        }
         }
 
         if (m_TimeIncrementFactor > 1.0)
