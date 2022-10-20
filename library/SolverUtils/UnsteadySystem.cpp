@@ -436,8 +436,11 @@ void UnsteadySystem::v_DoSolve()
                 }
             }
 
-            m_session->GetComm()->AllReduce(abortFlags,
-                                            LibUtilities::ReduceMax);
+            if (m_session->GetSolverInfo("Driver") != "Parareal")
+            {
+                m_session->GetComm()->AllReduce(abortFlags,
+                                                LibUtilities::ReduceMax);
+            }
 
             ASSERTL0(!abortFlags[0], "NaN found during time integration.");
         }
