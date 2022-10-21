@@ -41,6 +41,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/core/ignore_unused.hpp>
+#include <boost/thread.hpp>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -67,7 +68,11 @@ ModuleKey ProcessProjectCAD::className =
 ProcessProjectCAD::ProcessProjectCAD(MeshSharedPtr m) : ProcessModule(m)
 {
     m_config["file"]  = ConfigOption(false, "", "CAD file");
-    m_config["order"] = ConfigOption(false, "4", "CAD file");
+    m_config["order"] = ConfigOption(false, "4", "Enforce a polynomial order");
+    m_config["surfopti"] = ConfigOption(false, "0", "Run HO-Surface Module");
+    m_config["varopti"] = ConfigOption(false, "0", "Run the Variational Optmiser");
+
+
 }
 
 ProcessProjectCAD::~ProcessProjectCAD()
@@ -273,6 +278,7 @@ void ProcessProjectCAD::Process()
         for (int j = 0; j < ns.size(); j++)
         {
             surfNodes.insert(ns[j]);
+//            m_log(VERBOSE) << ns[j]->m_id << endl ; 
         }
     }
 
@@ -421,7 +427,7 @@ void ProcessProjectCAD::Process()
                 }
                 if (m_mesh->m_cad->GetSurf(distId[j])->IsPlanar())
                 {
-                    continue;
+                    //continue;
                 }
 
                 shift = distList[j];
@@ -475,6 +481,7 @@ void ProcessProjectCAD::Process()
                 Array<OneD, NekDouble> loc = (*i)->GetLoc();
                 uv                         = s->locuv(loc, dist);
                 (*i)->SetCADSurf(s, uv);
+                cout << " Surface Vertex (*i)->m_id= " << (*i)->m_id  << "  (*i)->GetNumCADSurf()  " << (*i)->GetNumCADSurf() << endl ; 
             }
             maxNodeCor = max(maxNodeCor, shift);
         }
@@ -551,6 +558,10 @@ void ProcessProjectCAD::Process()
         eds[cmn.size()].push_back(0);
 
         (*i)->m_curveType = LibUtilities::eGaussLobattoLegendre;
+   
+        m_log(VERBOSE)<< " (*i)->m_n1->GetNumCadSurf() = "  <<  (*i)->m_n1->GetNumCADSurf() << endl ; 
+        m_log(VERBOSE)<< " (*i)->m_n2->GetNumCadSurf() = "  << (*i)->m_n2->GetNumCADSurf() << endl ; 
+
 
         if (cmn.size() == 1 || cmn.size() == 2)
         {
@@ -559,11 +570,25 @@ void ProcessProjectCAD::Process()
                 if (m_mesh->m_cad->GetSurf(cmn[j])->IsPlanar())
                 {
                     // if its planar dont care
-                    continue;
+                    //continue;
                 }
 
                 Array<OneD, NekDouble> uvb = (*i)->m_n1->GetCADSurfInfo(cmn[j]);
                 Array<OneD, NekDouble> uve = (*i)->m_n2->GetCADSurfInfo(cmn[j]);
+            
+
+                //if((*i)->m_n1->GetNumCADSurf()==1 && (*i)->m_n2->GetNumCADSurf()==1)
+                if(cmn.size()==1)
+                { 
+                    // CASE 1 Fully internal to the NURBS edge with not vertices on the end of the NURBS
+                    (*i)->m_parentCAD = m_mesh->m_cad->GetSurf(cmn[j]) ;  // Associate the boundary edge with 1 NURBS
+                    m_log(VERBOSE) <<" (*i)->m_parentCAD->GetId() = " << (*i)->m_parentCAD->GetId() << " (*i)->m_elLink.size()  " <<  (*i)->m_elLink.size() << endl ; 
+
+                    (*i)->m_elLink[0].first.lock()->m_parentCAD = (*i)->m_parentCAD ; // Associate the 2D Boundary Element with 1 NURBS
+                    (*i)->m_elLink[1].first.lock()->m_parentCAD = (*i)->m_parentCAD ; 
+
+
+                }
 
                 // can compare the loction of the projection to the
                 // corresponding position of the straight sided edge
@@ -601,7 +626,7 @@ void ProcessProjectCAD::Process()
                     NodeSharedPtr nn = std::shared_ptr<Node>(
                         new Node(0, loc[0], loc[1], loc[2]));
 
-                    (*i)->m_edgeNodes.push_back(nn);
+                    //(*i)->m_edgeNodes.push_back(nn);
                 }
 
                 if ((*i)->m_edgeNodes.size() != 0)
@@ -649,6 +674,124 @@ void ProcessProjectCAD::Process()
             }
         }
     }
+
+    // Clear m_CAD for elements that have edgesCASE 2 (cmn.size=0) edges 
+    for (auto i = surfEdges.begin(); i != surfEdges.end(); i++)
+    {
+        cout << " id = " << (*i)->m_n1->m_id << " " << (*i)->m_n1->GetCADSurfs().size() << endl ; 
+        cout << " id getnum = " << (*i)->m_n1->m_id << " " << (*i)->m_n1->GetNumCADSurf() << endl ; 
+        cout << " id = " << (*i)->m_n2->m_id << " " << (*i)->m_n2->GetCADSurfs().size() << endl ; 
+    
+        if (lockedNodes.count((*i)->m_n1) || lockedNodes.count((*i)->m_n2))
+        {
+            continue;
+        }
+        vector<CADSurfSharedPtr> v1 = (*i)->m_n1->GetCADSurfs();
+        vector<CADSurfSharedPtr> v2 = (*i)->m_n2->GetCADSurfs();
+
+        vector<int> vi1, vi2;
+        for (size_t j = 0; j < v1.size(); ++j)
+        {
+            vi1.push_back(v1[j]->GetId());
+        }
+        for (size_t j = 0; j < v2.size(); ++j)
+        {
+            vi2.push_back(v2[j]->GetId());
+        }
+
+        sort(vi1.begin(), vi1.end());
+        sort(vi2.begin(), vi2.end());
+
+        vector<int> cmn;
+        set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
+                         back_inserter(cmn));
+        eds[cmn.size()].push_back(0);
+        
+        if(cmn.size() == 0)
+        {
+            //(*i)->m_elLink[0].first.lock()->m_parentCAD=NULL; 
+            //(*i)->m_elLink[1].first.lock()->m_parentCAD=NULL ; 
+        }
+    }
+
+
+    
+
+
+
+    ////**** HOSurface ****////
+    int m_surfopti = m_config["surfopti"].as<int>();
+
+    module = GetModuleFactory().CreateInstance(
+        ModuleKey(eProcessModule, "hosurface"), m_mesh);
+
+    module->SetLogger(m_log);
+
+    if (m_surfopti==1)
+    {
+        module->RegisterConfig("opti", "");
+
+        try
+        {
+            module->SetDefaults();
+            module->Process();
+        }
+        catch (runtime_error &e)
+        {
+            m_log(WARNING) << "High-order surface meshing has failed with message:"
+                        << endl;
+            m_log(WARNING) << e.what() << endl;
+            m_log(WARNING) << "The mesh will be written as normal but the "
+                        << "incomplete surface will remain faceted"
+                        << endl;
+            return;
+        }
+    }
+
+    // Extra Quality Modules applied 
+    ProcessVertices();
+    ProcessEdges();
+    ProcessFaces();
+    ProcessElements();
+    ProcessComposites();
+
+    ////**** VarOpti ****////
+    int m_varopti = m_config["varopti"].as<int>();
+
+    if (m_varopti==1)
+    {
+        unsigned int np = boost::thread::physical_concurrency();
+
+        m_log(VERBOSE) << "Detecting " << np << " cores, will attempt to run "
+                       << "in parallel" << endl;
+
+        module = GetModuleFactory().CreateInstance(
+            ModuleKey(eProcessModule, "varopti"), m_mesh);
+
+        module->SetLogger(m_log);
+        module->RegisterConfig("hyperelastic", "");
+        module->RegisterConfig("maxiter", "100");
+        module->RegisterConfig("numthreads", boost::lexical_cast<string>(np));
+
+        try
+        {
+            module->SetDefaults();
+            module->Process();
+        }
+        catch (runtime_error &e)
+        {
+            m_log(WARNING) << "Variational optimisation has failed with "
+                           << "message:" << endl;
+            m_log(WARNING) << e.what() << endl;
+            m_log(WARNING) << "The mesh will be written as is, it may be "
+                           << "invalid" << endl;
+            return;
+        }
+    
+    }
+    
+
+
 }
 } // namespace NekMesh
 } // namespace Nektar

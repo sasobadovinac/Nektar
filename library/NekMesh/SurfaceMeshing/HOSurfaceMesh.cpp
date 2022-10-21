@@ -106,16 +106,23 @@ void HOSurfaceMesh::Process()
             surfaceEdges.insert(es[j]);
     }
 
+// Open every face do HOsurface on every one  
     for (int i = 0; i < m_mesh->m_element[2].size(); i++)
     {
         m_log(VERBOSE).Progress(i, m_mesh->m_element[2].size(),
                                 "    Surface elements");
-
+        
+        // Avoid the elements with no parentCAD
         if (!m_mesh->m_element[2][i]->m_parentCAD)
         {
             // no parent cad
+            cout << "m_element[2][i]->m_parentCAD  - Not Set " << endl; 
             continue;
         }
+
+
+        cout << "Element parent CAD found " << endl ; 
+        
 
         CADObjectSharedPtr o = m_mesh->m_element[2][i]->m_parentCAD;
         CADSurfSharedPtr s   = std::dynamic_pointer_cast<CADSurf>(o);
@@ -138,11 +145,55 @@ void HOSurfaceMesh::Process()
                 LibUtilities::ePolyEvenlySpaced));
 
             dumFace = true;
+            cout << "!f" << endl ; 
         }
 
         f->m_parentCAD = s;
 
         vector<EdgeSharedPtr> edges = f->m_edgeList;
+        // // Check for edges vertices with no common m_CAD objects - > CASE 2 (2-Bsplines)
+        // map<int, vector<int>> eds;
+        // int ToBreak ; 
+        // for(auto edge : edges)
+        // {
+        //     vector<CADSurfSharedPtr> v1 = edge->m_n1->GetCADSurfs();
+        //     vector<CADSurfSharedPtr> v2 = edge->m_n2->GetCADSurfs();
+
+        //     vector<int> vi1, vi2;
+        //     for (size_t j = 0; j < v1.size(); ++j)
+        //     {
+        //         vi1.push_back(v1[j]->GetId());
+        //     }
+        //     for (size_t j = 0; j < v2.size(); ++j)
+        //     {
+        //         vi2.push_back(v2[j]->GetId());
+        //     }
+
+        //     sort(vi1.begin(), vi1.end());
+        //     sort(vi2.begin(), vi2.end());
+
+        //     vector<int> cmn;
+        //     set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
+        //                     back_inserter(cmn));
+        //     eds[cmn.size()].push_back(0);
+            
+        //     if(cmn.size() == 0)
+        //     {
+        //         ToBreak = 1; 
+        //     }
+        //     else
+        //     {
+        //         ToBreak = 0 ; 
+        //     }
+        // }
+
+        // if(ToBreak == 1 )
+        // {
+        //     continue ; 
+        // }
+        int ToBreak = 0 ; 
+
+        // Project As HOSurface Module
         for (int j = 0; j < edges.size(); j++)
         {
             EdgeSharedPtr e = edges[j];
@@ -175,6 +226,7 @@ void HOSurfaceMesh::Process()
             }
             else
             {
+                // we need to exclude the elements that have edges crossing two surfaces 
                 e->m_parentCAD = s;
             }
 
@@ -289,8 +341,20 @@ void HOSurfaceMesh::Process()
             {
                 // edge is on surface and needs 2d optimisation
                 Array<OneD, NekDouble> uvb, uve;
+                cout << "surf = " <<  surf << endl ;
+                cout << "e->m_n1 " << e->m_n1->m_id << " " << e->m_n1->GetLoc()[0] << " " <<  e->m_n1->GetLoc()[1] << " " <<  e->m_n1->GetLoc()[2]    << endl ; 
+                cout << "e->m_n1 " << e->m_n2->m_id <<" " << e->m_n2->GetLoc()[0] << " " <<  e->m_n2->GetLoc()[1] << " " <<  e->m_n2->GetLoc()[2]    << endl ; 
+                cout << e->m_n1->GetNumCADSurf() << " " << e->m_n2->GetNumCADSurf() << endl ; 
+                if(e->m_n1->GetNumCADSurf() == 0  || e->m_n2->GetNumCADSurf() == 0  )
+                {
+                    cout << "skip the edge" << endl ; 
+                    ToBreak=1 ; 
+                    break ; 
+                }
                 uvb = e->m_n1->GetCADSurfInfo(surf);
                 uve = e->m_n2->GetCADSurfInfo(surf);
+    
+
 
                 Array<OneD, NekDouble> l1 = e->m_n1->GetLoc();
                 Array<OneD, NekDouble> l2 = e->m_n2->GetLoc();
@@ -419,9 +483,15 @@ void HOSurfaceMesh::Process()
                 }
             }
 
+            cout << "before inserting nodes " << endl; 
             e->m_edgeNodes = honodes;
             e->m_curveType = LibUtilities::eGaussLobattoLegendre;
             completedEdges.insert(e);
+        }
+
+        if(ToBreak==1)
+        {
+            continue; 
         }
 
         // just add the face interior nodes through interp and project
