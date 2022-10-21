@@ -24,6 +24,18 @@ IF( NEKTAR_SOLVER_ADR )
         ./EquationSystems/UnsteadyViscousBurgers.cpp
         ./EquationSystems/EigenValuesAdvection.cpp)
 
+    # Parareal solver
+    IF (NEKTAR_USE_MPI)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter1)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter2)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter3)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter4)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter1)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter2)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter3)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter4)
+    ENDIF()
+
     #MMF advection
     ADD_NEKTAR_TEST        (TestMMFAdvPlane)
     ADD_NEKTAR_TEST        (TestMMFAdvCube)
