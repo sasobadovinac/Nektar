@@ -201,7 +201,7 @@ private:
 
 /// A hash functor for geometric factors. Utilises
 /// GeomFactors::GetHash.
-struct GeomFactorsHash : std::unary_function<GeomFactorsSharedPtr, std::size_t>
+struct GeomFactorsHash
 {
     std::size_t operator()(GeomFactorsSharedPtr const &p) const
     {
