@@ -26,10 +26,12 @@ IF( NEKTAR_SOLVER_ADR )
 
     # Parareal solver
     IF (NEKTAR_USE_MPI)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter0)
         ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter1)
         ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter2)
         ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter3)
         ADD_NEKTAR_TEST(PararealDriverImDiffusion_m6_iter4)
+        ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter0)
         ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter1)
         ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter2)
         ADD_NEKTAR_TEST(PararealDriverImDiffusion_m12_iter3)

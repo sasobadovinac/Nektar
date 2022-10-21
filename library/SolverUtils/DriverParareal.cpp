@@ -498,10 +498,10 @@ void DriverParareal::v_Execute(ostream &out)
             NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
             NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
 
-            std::cout << "L 2 error (variable " << m_equ[0]->GetVariable(i)
+            std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
                       << ") : " << vL2Error << std::endl
                       << std::flush;
-            std::cout << "L inf error (variable " << m_equ[0]->GetVariable(i)
+            std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
                       << ") : " << vLinfError << std::endl
                       << std::flush;
         }
@@ -579,12 +579,11 @@ void DriverParareal::v_Execute(ostream &out)
                 NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
                 NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
 
-                std::cout << "L 2 error (variable " << m_equ[0]->GetVariable(i)
+                std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
                           << ") : " << vL2Error << std::endl
                           << std::flush;
-                std::cout << "L inf error (variable "
-                          << m_equ[0]->GetVariable(i) << ") : " << vLinfError
-                          << std::endl
+                std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
+                          << ") : " << vLinfError << std::endl
                           << std::flush;
             }
         }
@@ -603,6 +602,18 @@ void DriverParareal::v_Execute(ostream &out)
                   << std::flush;
         std::cout << "-------------------------------------------" << std::endl
                   << std::flush;
+        for (int i = 0; i < nVar; ++i)
+        {
+            NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
+            NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
+
+            std::cout << "L 2 error (variable " << m_equ[0]->GetVariable(i)
+                      << ") : " << vL2Error << std::endl
+                      << std::flush;
+            std::cout << "L inf error (variable " << m_equ[0]->GetVariable(i)
+                      << ") : " << vLinfError << std::endl
+                      << std::flush;
+        }
     }
 }
 } // namespace SolverUtils
