@@ -251,12 +251,12 @@ void DriverParareal::SetPararealSessionFile(void)
     // (default value is 100.0)
     if (!f.good())
     {
-        double TimeStep =
+        double timeStep =
             m_session->GetParameter("TimeStep") * m_coarseSolveFactor;
-        int NumSteps =
+        int numSteps =
             m_session->GetParameter("NumSteps") / m_coarseSolveFactor;
-        m_sessionCoarse->SetParameter("TimeStep", TimeStep);
-        m_sessionCoarse->SetParameter("NumSteps", NumSteps);
+        m_sessionCoarse->SetParameter("TimeStep", timeStep);
+        m_sessionCoarse->SetParameter("NumSteps", numSteps);
     }
 }
 
