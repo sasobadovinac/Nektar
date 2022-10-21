@@ -43,7 +43,7 @@ namespace FieldUtils
 {
 
 /**
- * @brief This processing module calculates the vorticity and adds it
+ * @brief This processing module calculates the gradient and adds it
  * as an extra-field to the output file.
  */
 class ProcessGrad : public ProcessModule
