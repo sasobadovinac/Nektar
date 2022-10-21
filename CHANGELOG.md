@@ -12,6 +12,7 @@ v5.3.0
 - Fix boost 1.77 compatibility errors (!1420)
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)
+- Maintenance for C++-17 compatibility: removed std::unaray_function base class due to removal from the std (!1419)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

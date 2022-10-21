@@ -153,7 +153,7 @@ NEKMESH_EXPORT bool operator==(FaceSharedPtr const &p1,
                                FaceSharedPtr const &p2);
 NEKMESH_EXPORT bool operator<(FaceSharedPtr const &p1, FaceSharedPtr const &p2);
 
-struct FaceHash : std::unary_function<FaceSharedPtr, std::size_t>
+struct FaceHash
 {
     std::size_t operator()(FaceSharedPtr const &p) const
     {

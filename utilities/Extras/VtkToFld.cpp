@@ -66,7 +66,7 @@ bool operator==(const VertexSharedPtr &v1, const VertexSharedPtr &v2)
 /**
  * @brief Hash function for the Vertex struct used for defining sets.
  */
-struct VertexHash : std::unary_function<VertexSharedPtr, std::size_t>
+struct VertexHash
 {
     std::size_t operator()(VertexSharedPtr const &p) const
     {

@@ -184,7 +184,7 @@ typedef std::shared_ptr<HOSurf> HOSurfSharedPtr;
 /**
  * Hash class for high-order surfaces.
  */
-struct HOSurfHash : std::unary_function<HOSurfSharedPtr, std::size_t>
+struct HOSurfHash
 {
     /**
      * Calculate hash of a given high-order surface p by taking
