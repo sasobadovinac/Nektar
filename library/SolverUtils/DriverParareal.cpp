@@ -593,7 +593,7 @@ void DriverParareal::v_Execute(ostream &out)
 
     m_equ[0]->Output();
 
-    if (m_comm->GetRank() == 0)
+    if (m_chunkRank == m_numChunks - 1)
     {
         CPUtime = difftime(endtime, starttime);
         std::cout << "-------------------------------------------" << std::endl
@@ -602,8 +602,12 @@ void DriverParareal::v_Execute(ostream &out)
                   << std::flush;
         std::cout << "-------------------------------------------" << std::endl
                   << std::flush;
+
         for (int i = 0; i < nVar; ++i)
         {
+            // Copy the new approximation back
+            m_equ[0]->CopyToPhysField(i, solution[i]);
+
             NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
             NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
 
