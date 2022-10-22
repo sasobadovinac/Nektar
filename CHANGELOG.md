@@ -43,6 +43,9 @@ exporting in .vtu format (!1386)
 - Updated gitignore to be friendly with CLion IDE (!1405)
 
 
+**FieldConvert**
+- Fix range option so that it also works with hdf5 (!1414)
+
 v5.2.0
 ------
 **Library**

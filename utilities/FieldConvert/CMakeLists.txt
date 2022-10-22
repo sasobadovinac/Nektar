@@ -74,6 +74,7 @@ ENDIF (NEKTAR_USE_MPI)
 
 IF (NEKTAR_USE_HDF5)
     ADD_NEKTAR_TEST(interpfield_hdf5)
+    ADD_NEKTAR_TEST(bfs_vtk_rng_hdf5)
 ENDIF()
 
 IF (NEKTAR_USE_VTK)

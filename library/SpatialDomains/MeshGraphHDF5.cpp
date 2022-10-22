@@ -68,7 +68,7 @@ std::string MeshGraphHDF5::className =
 
 void MeshGraphHDF5::ReadGeometry(DomainRangeShPtr rng, bool fillGraph)
 {
-    boost::ignore_unused(rng);
+    m_domainRange = rng;
 
     ReadComposites();
     ReadDomain();
@@ -1140,7 +1140,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_quadGeoms.find(i);
                     if (it != m_quadGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1150,7 +1153,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_triGeoms.find(i);
                     if (it != m_triGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1160,13 +1166,18 @@ void MeshGraphHDF5::ReadComposites()
                     auto it1 = m_quadGeoms.find(i);
                     if (it1 != m_quadGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it1->second);
-                        continue;
+                        if (CheckRange(*it1->second))
+                        {
+                            comp->m_geomVec.push_back(it1->second);
+                        }
                     }
                     auto it2 = m_triGeoms.find(i);
                     if (it2 != m_triGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it2->second);
+                        if (CheckRange(*it2->second))
+                        {
+                            comp->m_geomVec.push_back(it2->second);
+                        }
                     }
                 }
                 break;
@@ -1176,7 +1187,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_tetGeoms.find(i);
                     if (it != m_tetGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1186,7 +1200,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_pyrGeoms.find(i);
                     if (it != m_pyrGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1196,7 +1213,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_prismGeoms.find(i);
                     if (it != m_prismGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
@@ -1206,7 +1226,10 @@ void MeshGraphHDF5::ReadComposites()
                     auto it = m_hexGeoms.find(i);
                     if (it != m_hexGeoms.end())
                     {
-                        comp->m_geomVec.push_back(it->second);
+                        if (CheckRange(*it->second))
+                        {
+                            comp->m_geomVec.push_back(it->second);
+                        }
                     }
                 }
                 break;
