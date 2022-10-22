@@ -358,7 +358,7 @@ void Vvtvm(int n, const Array<OneD, const T> &w, const int incw,
 #endif
 }
 
-/// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + y*z
+/// \brief vvtvvtp (vector times vector plus vector times vector): z = v*w + x*y
 template <class T>
 void Vvtvvtp(int n, const Array<OneD, const T> &v, int incv,
              const Array<OneD, const T> &w, int incw,
@@ -381,6 +381,33 @@ void Vvtvvtp(int n, const Array<OneD, const T> &v, int incv,
     SIMD::Vvtvvtp(n, &v[0], &w[0], &x[0], &y[0], &z[0]);
 #else
     Vvtvvtp(n, &v[0], incv, &w[0], incw, &x[0], incx, &y[0], incy, &z[0], incz);
+#endif
+}
+
+/// \brief vvtvvtm (vector times vector minus vector times vector): z = v*w -
+/// x*y
+template <class T>
+void Vvtvvtm(int n, const Array<OneD, const T> &v, int incv,
+             const Array<OneD, const T> &w, int incw,
+             const Array<OneD, const T> &x, int incx,
+             const Array<OneD, const T> &y, int incy, Array<OneD, T> &z,
+             int incz)
+{
+    ASSERTL1(n * incv <= v.size() + v.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incw <= w.size() + w.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incx <= x.size() + x.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incy <= y.size() + y.GetOffset(), "Array out of bounds");
+    ASSERTL1(n * incz <= z.size() + z.GetOffset(), "Array out of bounds");
+
+#ifdef NEKTAR_ENABLE_SIMD_VMATH
+    boost::ignore_unused(incv, incw, incx, incy, incz);
+    ASSERTL1(incw == 1, "Simd vmath requires inc = 1");
+    ASSERTL1(incx == 1, "Simd vmath requires inc = 1");
+    ASSERTL1(incy == 1, "Simd vmath requires inc = 1");
+    ASSERTL1(incz == 1, "Simd vmath requires inc = 1");
+    SIMD::Vvtvvtm(n, &v[0], &w[0], &x[0], &y[0], &z[0]);
+#else
+    Vvtvvtm(n, &v[0], incv, &w[0], incw, &x[0], incx, &y[0], incy, &z[0], incz);
 #endif
 }
 
