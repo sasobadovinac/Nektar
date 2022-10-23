@@ -9,6 +9,7 @@ v5.3.0
 - Added float and restore avx512 back-end for SimdLib (!1387)
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
 - Fix missing copy assignment operator warnings in clang 13+ (!1391)
+- Added checkpoint file writing start time in the checkpoint filter (!1401)
 - Fix boost 1.77 compatibility errors (!1420)
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)

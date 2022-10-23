@@ -83,6 +83,8 @@ private:
     unsigned int m_outputIndex;
     unsigned int m_outputFrequency;
     std::string m_outputFile;
+    // Time when we start writing checkfiles
+    NekDouble m_outputStartTime;
     LibUtilities::FieldIOSharedPtr m_fld;
 };
 } // namespace SolverUtils

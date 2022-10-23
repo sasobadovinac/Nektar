@@ -32,38 +32,35 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_TESTS_METRICFILE_H
-#define NEKTAR_TESTS_METRICFILE_H
+#ifndef NEKTAR_TESTS_METRICFILEEXISTS_H
+#define NEKTAR_TESTS_METRICFILEEXISTS_H
 
 #include <Metric.h>
 #include <map>
 
 namespace Nektar
 {
-class MetricFile : public Metric
+class MetricFileExists : public Metric
 {
 public:
-    virtual ~MetricFile()
+    virtual ~MetricFileExists()
     {
     }
 
     static MetricSharedPtr create(TiXmlElement *metric, bool generate)
     {
-        return MetricSharedPtr(new MetricFile(metric, generate));
+        return MetricSharedPtr(new MetricFileExists(metric, generate));
     }
 
     static std::string type;
 
 protected:
-    MetricFile(TiXmlElement *metric, bool generate);
+    std::map<std::string, int> m_fileCounts; // Patterns and file counts.
 
-    std::string CalculateHash(std::string filename);
+    MetricFileExists(TiXmlElement *metric, bool generate);
 
     virtual bool v_Test(std::istream &pStdout, std::istream &pStderr);
     virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
-
-    /// Stores filenames to perform hash on.
-    std::map<std::string, std::string> m_filehash;
 };
 } // namespace Nektar
 
