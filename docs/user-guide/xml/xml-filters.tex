@@ -294,6 +294,8 @@ The following parameters are supported:
     Prefix of the output filename to which the checkpoints are written.\\
     \inltt{OutputFrequency} & \cmark   & - &
     Number of timesteps after which output is written.\\
+    \inltt{OutputStartTime} & \xmark & 0 &
+    Specifies the simulation time at which to start writing checkpoint files.\\
     \bottomrule
   \end{tabularx}
 \end{center}
@@ -304,7 +306,15 @@ For example, to output the fields every 100 timesteps we can specify:
   <FILTER TYPE="Checkpoint">
       <PARAM NAME="OutputFile">IntermediateFields</PARAM>
       <PARAM NAME="OutputFrequency">100</PARAM>
+      <PARAM NAME="OutputStartTime"> 50.0 </PARAM>
   </FILTER>
+\end{lstlisting}
+
+It is also possible to specify the \inltt{OutputStartTime} option based on
+the simulation time step. For example, if checkpoint files should only be
+written after 500 time steps, one can write
+\begin{lstlisting}[style=XMLStyle,gobble=2]
+      <PARAM NAME="OutputStartTime"> TimeStep * 500 </PARAM>
 \end{lstlisting}
 
 \subsection{Electrogram}\label{filters:Electrogram}
