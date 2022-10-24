@@ -327,18 +327,18 @@ ENDIF (NEKTAR_BUILD_TESTS)
 
 # Compile list of definitions for Nektar++Config.cmake input file. We exclude
 # vtk definitions which should not be required for external builds.
+# We also exclude generator expressions that relate to the RelWithDebugInfo
+# config that are added from OCC on fedora 35.
 SET(NEKTAR_DEFINITIONS "")
 GET_DIRECTORY_PROPERTY(
     NEKTAR_DEFINITIONS_LIST DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
 FOREACH(def ${NEKTAR_DEFINITIONS_LIST})
-    IF (NOT def MATCHES "^vtk")
+    add_definitions(-D${def})
+    IF ((NOT def MATCHES "^vtk") AND (NOT def MATCHES "^\\$<\\$<CONFIG:RelWithDebInfo.+"))
+        MESSAGE(DEBUG "Adding to Nektar definitions: ${def}")
         SET(NEKTAR_DEFINITIONS "${NEKTAR_DEFINITIONS} -D${def}")
     ENDIF()
 ENDFOREACH()
-
-# Write out Nektar++ build configuration
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/Nektar++Config.cmake.in
-               ${CMAKE_BINARY_DIR}/Nektar++Config.cmake @ONLY)
 
 # Install Nektar++ CMake configuration file
 INSTALL(FILES ${CMAKE_BINARY_DIR}/Nektar++Config.cmake
