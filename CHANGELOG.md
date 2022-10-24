@@ -15,6 +15,7 @@ v5.3.0
 - Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)
 - Maintenance for C++-17 compatibility: removed std::unaray_function base class due to removal from the std (!1419)
 - Fixed the comment of function Vvtvvtp in VmathArray (!1408)
+- Add a FieldConvert utility to compute the divergence of the velocity (!1413)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
