@@ -52,6 +52,7 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessScaleInFld.h
     ProcessModules/ProcessStreamFunction.h
     ProcessModules/ProcessSurfDistance.h
+    ProcessModules/ProcessVelocityDivergence.h
     ProcessModules/ProcessVorticity.h
     ProcessModules/ProcessScalGrad.h
     ProcessModules/ProcessMultiShear.h
@@ -113,6 +114,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessPrintFldNorms.cpp
     ProcessModules/ProcessRemoveField.cpp    
     ProcessModules/ProcessScaleInFld.cpp
+    ProcessModules/ProcessVelocityDivergence.cpp
     ProcessModules/ProcessVorticity.cpp
     ProcessModules/ProcessScalGrad.cpp
     ProcessModules/ProcessStreamFunction.cpp

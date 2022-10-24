@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessNumModes.h
+//  File: ProcessVelocityDivergence.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,12 +28,12 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Writes the number of modes in each direction.
+//  Description: Computes the divergence of the velocity field.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef FIELDUTILS_PROCESSNUMMODES
-#define FIELDUTILS_PROCESSNUMMODES
+#ifndef FIELDUTILS_PROCESSVELOCITYDIVERGENCE
+#define FIELDUTILS_PROCESSVELOCITYDIVERGENCE
 
 #include "../Module.h"
 
@@ -42,39 +42,45 @@ namespace Nektar
 namespace FieldUtils
 {
 /**
- * @brief This processing module determine the number of modes and adds it
- * as an extra-field to the output file.
+ * @brief This processing module calculates the divergence of the velocity
+ * field and adds it as an extra-field to the output file.
  */
-class ProcessNumModes : public ProcessModule
+class ProcessVelocityDivergence : public ProcessModule
 {
 public:
     /// Creates an instance of this class
     static std::shared_ptr<Module> create(FieldSharedPtr f)
     {
-        return MemoryManager<ProcessNumModes>::AllocateSharedPtr(f);
+        return MemoryManager<ProcessVelocityDivergence>::AllocateSharedPtr(f);
     }
     static ModuleKey className;
 
-    ProcessNumModes(FieldSharedPtr f);
-    virtual ~ProcessNumModes();
+    ProcessVelocityDivergence(FieldSharedPtr f);
+    virtual ~ProcessVelocityDivergence();
 
     /// Write mesh to output file.
     virtual void Process(po::variables_map &vm);
 
     virtual std::string GetModuleName()
     {
-        return "ProcessNumModes";
+        return "ProcessVelocityDivergence";
     }
 
     virtual std::string GetModuleDescription()
     {
-        return "Calculating number of modes";
+        return "Calculating velocity divergence";
     }
 
     virtual ModulePriority GetModulePriority()
     {
         return eModifyExp;
     }
+
+protected:
+    void GetVelocity(Array<OneD, Array<OneD, NekDouble>> &vel, int strip = 0);
+
+private:
+    int m_spacedim;
 };
 } // namespace FieldUtils
 } // namespace Nektar
