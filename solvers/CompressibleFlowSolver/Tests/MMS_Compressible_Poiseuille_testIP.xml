@@ -316,7 +316,7 @@
         </Provenance>
         <NekMeshCommandLine>MMS.msh MMS_8_8.xml:xml:uncompress </NekMeshCommandLine>
     </Metadata>
-    
+
   <EXPANSIONS>
         <E COMPOSITE="C[5]" NUMMODES="3" TYPE="MODIFIED" FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
@@ -339,7 +339,7 @@
       <P> uInf                  = Ma*cInf                   </P>
       <P> vInf                  = 0.0                       </P>
       <P> mu                    = Re/(rhoInf*uInf*L)        </P>
-      <P> Pr                    = 0.72                      </P> 
+      <P> Pr                    = 0.72                      </P>
 
       <P> rho0                   = rhoInf                   </P>
       <P> u0                     = uInf                     </P>
@@ -347,7 +347,7 @@
       <P> p0                     = pInf                     </P>
       <P> px                     = -8*mu*u0                 </P>
       <P> cadd                   = 0.1                </P>
-      
+
     </PARAMETERS>
 
      <SOLVERINFO>
@@ -376,7 +376,7 @@
     </BOUNDARYREGIONS>
 
     <BOUNDARYCONDITIONS>
-    <!--    Dirichlet -->  
+    <!--    Dirichlet -->
       <REGION REF="0">
         <D VAR="rho"  VALUE=" rho0 " />
         <D VAR="rhou" VALUE=" -(px*rho0*(y*(L - y) - cadd*y^2*(L - y)^2))/(2*mu) " />
@@ -414,21 +414,21 @@
         <E VAR="rhov" VALUE=" rho0*v0 "/>
         <E VAR="E"    VALUE=" rho0*((p0 + px*x)/(rho0*(Gamma - 1)) + (px^2*(y*(L - y) - cadd*y^2*(L - y)^2)^2)/(8*mu^2)) " />
     </FUNCTION>
-    
+
     <FUNCTION NAME="ExactSolution">
         <E VAR="rho"  VALUE=" rho0 " />
         <E VAR="rhou" VALUE=" -(px*rho0*(y*(L - y) - cadd*y^2*(L - y)^2))/(2*mu) " />
         <E VAR="rhov" VALUE=" rho0*v0 "/>
         <E VAR="E"    VALUE=" rho0*((p0 + px*x)/(rho0*(Gamma - 1)) + (px^2*(y*(L - y) - cadd*y^2*(L - y)^2)^2)/(8*mu^2)) " />
     </FUNCTION>
-    
+
     <FUNCTION NAME="BodyForce">
         <E VAR="rho"  VALUE=" 0 " />
         <E VAR="rhou" VALUE=" -cadd*px*(L^2 - 6*L*y + 6*y^2) " />
         <E VAR="rhov" VALUE=" 0 " />
-        <E VAR="E"    VALUE=" (px^2*y*(L - y)*(cadd*y^2 - L*cadd*y + 1)*(2*cadd*y^2 - 2*L*cadd*y + 1))/(2*mu) 
+        <E VAR="E"    VALUE=" (px^2*y*(L - y)*(cadd*y^2 - L*cadd*y + 1)*(2*cadd*y^2 - 2*L*cadd*y + 1))/(2*mu)
                             - (px^2*y*(L - y)*(cadd*y^2 - L*cadd*y + 1))/(2*mu) - (px^2*y*(L - y)*(cadd*y^2 - L*cadd*y + 1))
-                            /(2*mu*(Gamma - 1)) - (px^2*(L - 2*y)^2*(2*cadd*y^2 - 2*L*cadd*y + 1)^2)/(4*mu) + 
+                            /(2*mu*(Gamma - 1)) - (px^2*(L - 2*y)^2*(2*cadd*y^2 - 2*L*cadd*y + 1)^2)/(4*mu) +
                             (cadd*px^2*y*(L - y)*(L - 2*y)^2*(cadd*y^2 - L*cadd*y + 1))/(2*mu)" />
     </FUNCTION>
 

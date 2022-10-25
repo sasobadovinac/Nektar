@@ -109,12 +109,12 @@
       <P> advx           = 1       </P>
       <P> advy           = 1       </P>
     </PARAMETERS>
-    
+
     <SOLVERINFO>
         <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
         <I PROPERTY="Projection"            VALUE="DisContinuous"       />
         <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
-        <I PROPERTY="UpwindType"            VALUE="Upwind"              /> 
+        <I PROPERTY="UpwindType"            VALUE="Upwind"              />
         <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
     </SOLVERINFO>
 

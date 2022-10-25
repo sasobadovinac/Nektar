@@ -41,17 +41,17 @@
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
     </EXPANSIONS>
-  
+
     <CONDITIONS>
         <PARAMETERS>
             <P> Lambda = 1 </P>
         </PARAMETERS>
-    
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE" VALUE="Helmholtz" />
             <I PROPERTY="Projection" VALUE="Continuous" />
         </SOLVERINFO>
-    
+
         <GLOBALSYSSOLNINFO>
             <V VAR="u">
                 <I PROPERTY="GlobalSysSoln"       VALUE="IterativeStaticCond" />
@@ -61,7 +61,7 @@
         </GLOBALSYSSOLNINFO>
 
         <VARIABLES>
-            <V ID="0"> u </V> 
+            <V ID="0"> u </V>
         </VARIABLES>
 
         <BOUNDARYREGIONS>
@@ -81,10 +81,10 @@
                 <D VAR="u" VALUE="(x^2+y^2)+z" />
             </REGION>
             <REGION REF="3">
-	        <D VAR="u" VALUE="(x^2+y^2)+z" />
+                <D VAR="u" VALUE="(x^2+y^2)+z" />
             </REGION>
             <REGION REF="4">
-	        <D VAR="u" VALUE="(x^2+y^2)+z" />
+                <D VAR="u" VALUE="(x^2+y^2)+z" />
             </REGION>
             <REGION REF="5">
                 <P VAR="u" USERDEFINEDTYPE="Rotated:z:PI/2:1e-8" VALUE="[6]" />

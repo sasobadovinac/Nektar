@@ -26,7 +26,7 @@
       <E ID="10"> 6 7 </E>
       <E ID="11"> 7 4 </E>
     </EDGE>
-    
+
     <!-- Can include Q - quads, T - triangles -->
     <FACE>
       <Q ID="0"> 0 1 2 3 </Q>
@@ -63,12 +63,12 @@
       <P> advy           = 1        </P>
       <P> advz           = 1        </P>
     </PARAMETERS>
-    
+
     <SOLVERINFO>
         <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
         <I PROPERTY="Projection"            VALUE="DisContinuous"       />
         <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
-        <I PROPERTY="UpwindType"            VALUE="Upwind"              />       
+        <I PROPERTY="UpwindType"            VALUE="Upwind"              />
         <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
     </SOLVERINFO>
 
@@ -84,7 +84,7 @@
       <B ID="4"> C[5] </B>
       <B ID="5"> C[6] </B>
     </BOUNDARYREGIONS>
-    
+
     <BOUNDARYCONDITIONS>
       <REGION REF="0">
         <P VAR="u" VALUE="[5]" />

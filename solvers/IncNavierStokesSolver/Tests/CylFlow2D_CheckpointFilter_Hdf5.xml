@@ -81,13 +81,13 @@
             <E VAR="v" VALUE="0.0" />
             <E VAR="p" VALUE="0.0"/>
         </FUNCTION>
-    </CONDITIONS> 
-    
+    </CONDITIONS>
+
     <FILTERS>
       <FILTER TYPE="Checkpoint">
-	<PARAM NAME="OutputFile">IntermediateFields</PARAM>
-	<PARAM NAME="OutputFrequency">5</PARAM>
-	<PARAM NAME="OutputStartTime"> TimeStep * NumSteps * 0.5 </PARAM>
+        <PARAM NAME="OutputFile">IntermediateFields</PARAM>
+        <PARAM NAME="OutputFrequency">5</PARAM>
+        <PARAM NAME="OutputStartTime"> TimeStep * NumSteps * 0.5 </PARAM>
       </FILTER>
     </FILTERS>
 </NEKTAR>

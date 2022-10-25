@@ -154,7 +154,7 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" 
+        <E COMPOSITE="C[0]"
            BASISTYPE="Modified_A,Modified_A,Modified_A"
            NUMMODES="4,6,8"
            POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre,GaussLobattoLegendre"

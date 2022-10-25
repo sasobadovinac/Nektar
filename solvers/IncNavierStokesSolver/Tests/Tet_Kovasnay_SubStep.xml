@@ -327,7 +327,7 @@
           <--!I PROPERTY="CollectionOptions" VALUE="AutoTuning" /-->
           <I PROPERTY="GlobalSysSoln" VALUE="IterativeStaticCond" />
         </SOLVERINFO>
-        
+
         <PARAMETERS>
           <P> TimeStep      = 0.005        </P>
           <P> NumSteps      = 10 </P>
@@ -336,14 +336,14 @@
           <P> Kinvis        = 0.025        </P>
           <P> MinSubSteps   = 4       </P>
         </PARAMETERS>
-        
+
         <VARIABLES>
           <V ID="0"> u </V>
           <V ID="1"> v </V>
           <V ID="2"> w </V>
           <V ID="3"> p </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
           <B ID="0"> C[1] </B>  <!-- Inlet -->
           <B ID="1"> C[6] </B>    <!-- Outlet -->
@@ -352,7 +352,7 @@
           <B ID="4"> C[4] </B>    <!-- Wall -->
           <B ID="5"> C[5] </B>    <!-- Wall right -->
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
           <REGION REF="0">
             <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
@@ -391,7 +391,7 @@
             <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
           </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="ExactSolution">
           <E VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
           <E VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />

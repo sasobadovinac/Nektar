@@ -41,7 +41,7 @@
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
-    
+
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="11" FIELDS="rho,rhou,rhov,E" TYPE="GLL_LAGRANGE_SEM" />
     </EXPANSIONS>
@@ -83,7 +83,7 @@
             <B ID="2"> C[300] </B>
             <B ID="3"> C[400] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <P VAR="rho"       VALUE="[2]"/>
@@ -91,21 +91,21 @@
                 <P VAR="rhov"      VALUE="[2]"/>
                 <P VAR="E"         VALUE="[2]"/>
             </REGION>
-            
+
             <REGION REF="1">
                 <P VAR="rho"       VALUE="[3]"/>
                 <P VAR="rhou"      VALUE="[3]"/>
                 <P VAR="rhov"      VALUE="[3]"/>
                 <P VAR="E"         VALUE="[3]"/>
             </REGION>
-            
+
             <REGION REF="2">
                 <P VAR="rho"       VALUE="[0]"/>
                 <P VAR="rhou"      VALUE="[0]"/>
                 <P VAR="rhov"      VALUE="[0]"/>
                 <P VAR="E"         VALUE="[0]"/>
             </REGION>
-            
+
             <REGION REF="3">
                 <P VAR="rho"       VALUE="[1]"/>
                 <P VAR="rhou"      VALUE="[1]"/>
@@ -113,8 +113,8 @@
                 <P VAR="E"         VALUE="[1]"/>
             </REGION>
          </BOUNDARYCONDITIONS>
-        
-        <!-- Initial conditions not necessary 
+
+        <!-- Initial conditions not necessary
         since they are imposed analitically -->
         <!--FUNCTION NAME="InitialConditions">
             <E VAR="rho"    VALUE="1"/>
@@ -122,6 +122,6 @@
             <E VAR="rhov"   VALUE="1"/>
             <E VAR="E"      VALUE="1"/>
         </FUNCTION-->
-        
+
     </CONDITIONS>
 </NEKTAR>

@@ -89,7 +89,7 @@
         </FUNCTION>
     </CONDITIONS>
 
-    
+
     <FILTERS>
       <FILTER TYPE="HistoryPoints">
         <PARAM NAME="OutputFile">Pyr_channel_m3.his</PARAM>

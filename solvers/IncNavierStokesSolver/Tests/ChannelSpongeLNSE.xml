@@ -251,13 +251,13 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep      = 0.002 			</P>
-            <P> NumSteps      = 100	    		</P>
-            <P> IO_CheckSteps = 1000  			</P>
-            <P> IO_InfoSteps  = 20    			</P>
-            <P> Re            = 1000     		</P>
-            <P> Kinvis        = 1.0/Re     	        </P>
-            <P> kdim          = 20       	        </P>
+            <P> TimeStep      = 0.002    </P>
+            <P> NumSteps      = 100      </P>
+            <P> IO_CheckSteps = 1000     </P>
+            <P> IO_InfoSteps  = 20       </P>
+            <P> Re            = 1000     </P>
+            <P> Kinvis        = 1.0/Re   </P>
+            <P> kdim          = 20       </P>
         </PARAMETERS>
 
         <VARIABLES>

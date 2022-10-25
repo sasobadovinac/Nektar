@@ -4,166 +4,166 @@
         <VERTEX>
             <V ID="0"> 0.000e+00 100.000e+00 0.000e+00</V> <!-- 1 -->
             <V ID="1"> 4.000e+00 100.000e+00 0.000e+00</V>
-            
+
             <V ID="2"> 4.000e+00 5.000e+00 0.000e+00</V> <!-- 2 -->
             <V ID="3"> 6.000e+00 5.000e+00 0.000e+00</V>
-            
+
             <V ID="4"> 4.000e+00 -5.000e+00 0.000e+00</V> <!-- 3 -->
             <V ID="5"> 7.400e+00 -5.000e+00 0.000e+00</V>
-            
+
             <V ID="6"> 7.400e+00 -3.000e+00 0.000e+00</V> <!-- 4 -->
             <V ID="7"> 10.800e+00 -3.000e+00 0.000e+00</V>
-            
+
             <V ID="8"> 7.400e+00 -7.000e+00 0.000e+00</V> <!-- 5 -->
             <V ID="9"> 25.100e+00 -7.000e+00 0.000e+00</V>
-            
+
             <V ID="10"> 10.800e+00 -2.000e+00 0.000e+00</V> <!-- 6 -->
             <V ID="11"> 25.600e+00 -2.000e+00 0.000e+00</V>
-            
+
             <V ID="12"> 10.800e+00 -4.000e+00 0.000e+00</V> <!-- 7 -->
             <V ID="13"> 53.000e+00 -4.000e+00 0.000e+00</V>
-            
+
             <V ID="14"> 53.000e+00 -3.000e+00 0.000e+00</V> <!-- 8 -->
             <V ID="15"> 76.500e+00 -3.000e+00 0.000e+00</V>
-            
+
             <V ID="16"> 53.000e+00 -5.000e+00 0.000e+00</V> <!-- 9 -->
             <V ID="17"> 59.700e+00 -5.000e+00 0.000e+00</V>
-            
+
             <V ID="18"> 59.700e+00 -4.000e+00 0.000e+00</V> <!-- 10 -->
             <V ID="19"> 67.600e+00 -4.000e+00 0.000e+00</V>
-            
+
             <V ID="20"> 59.700e+00 -6.000e+00 0.000e+00</V> <!-- 11 -->
             <V ID="21"> 76.800e+00 -6.000e+00 0.000e+00</V>
-            
+
             <V ID="22"> 25.100e+00 -6.000e+00 0.000e+00</V> <!-- 12 -->
             <V ID="23"> 42.700e+00 -6.000e+00 0.000e+00</V>
-            
+
             <V ID="24"> 25.100e+00 -8.000e+00 0.000e+00</V> <!-- 13 -->
             <V ID="25"> 42.800e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="26"> 6.000e+00 -8.000e+00 0.000e+00</V> <!-- 14 -->
             <V ID="27"> 9.900e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="28"> 6.000e+00 -8.000e+00 0.000e+00</V> <!-- 15 -->
             <V ID="29"> 26.800e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="30"> 26.800e+00 -8.000e+00 0.000e+00</V> <!-- 16 -->
             <V ID="31"> 44.400e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="32"> 26.800e+00 -8.000e+00 0.000e+00</V> <!-- 17 -->
             <V ID="33"> 44.500e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="34"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 18 -->
             <V ID="35"> 5.2000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="36"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 19 -->
             <V ID="37"> 3.4000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="38"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 20 -->
             <V ID="39"> 14.800e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="40"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 21 -->
             <V ID="41"> 42.400e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="42"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 22 -->
             <V ID="43"> 23.500e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="44"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 23 -->
             <V ID="45"> 6.7000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="46"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 24 -->
             <V ID="47"> 7.9000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="48"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 25 -->
             <V ID="49"> 17.1000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="50"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 26 -->
             <V ID="51"> 8.0000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="52"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 27 -->
             <V ID="53"> 10.4000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="54"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 28 -->
             <V ID="55"> 5.3000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="56"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 29 -->
             <V ID="57"> 2.0000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="58"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 30 -->
             <V ID="59"> 1.0000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="60"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 31 -->
             <V ID="61"> 6.6000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="62"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 32 -->
             <V ID="63"> 7.1000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="64"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 33 -->
             <V ID="65"> 6.3000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="66"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 34 -->
             <V ID="67"> 5.9000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="68"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 35 -->
             <V ID="69"> 1.0000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="70"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 36 -->
             <V ID="71"> 3.2000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="72"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 37 -->
             <V ID="73"> 1.0000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="74"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 38 -->
             <V ID="75"> 3.2000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="76"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 39 -->
             <V ID="77"> 10.600e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="78"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 40 -->
             <V ID="79"> 5.0000e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="80"> 0.0000e+00 41.000e+00 0.000e+00</V> <!-- 41 -->
             <V ID="81"> 1.0000e+00 41.000e+00 0.000e+00</V>
-            
+
             <V ID="82"> 0.0000e+00 42.000e+00 0.000e+00</V> <!-- 42 -->
             <V ID="83"> 5.9000e+00 42.000e+00 0.000e+00</V>
-            
+
             <V ID="84"> 0.0000e+00 43.000e+00 0.000e+00</V> <!-- 43 -->
             <V ID="85"> 5.8000e+00 43.000e+00 0.000e+00</V>
-            
+
             <V ID="86"> 0.0000e+00 44.000e+00 0.000e+00</V> <!-- 44 -->
             <V ID="87"> 14.400e+00 44.000e+00 0.000e+00</V>
-            
+
             <V ID="88"> 0.0000e+00 45.000e+00 0.000e+00</V> <!-- 45 -->
             <V ID="89"> 5.0000e+00 45.000e+00 0.000e+00</V>
-            
+
             <V ID="90"> 0.0000e+00 -18.000e+00 0.000e+00</V> <!-- 46 -->
             <V ID="91"> 44.300e+00 -18.000e+00 0.000e+00</V>
-            
+
             <V ID="92"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 47 -->
             <V ID="93"> 12.600e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="94"> 0.0000e+00 -8.000e+00 0.000e+00</V> <!-- 48 -->
             <V ID="95"> 32.100e+00 -8.000e+00 0.000e+00</V>
-            
+
             <V ID="96"> 0.0000e+00 -18.000e+00 0.000e+00</V> <!-- 49 -->
             <V ID="97"> 34.300e+00 -18.000e+00 0.000e+00</V>
-            
+
             <V ID="98"> 0.0000e+00 50.000e+00 0.000e+00</V> <!-- 50 -->
             <V ID="99"> 14.500e+00 50.000e+00 0.000e+00</V>
-            
+
             <V ID="100"> 0.0000e+00 51.000e+00 0.000e+00</V> <!-- 51 -->
             <V ID="101"> 5.1000e+00 51.000e+00 0.000e+00</V>
-            
+
             <V ID="102"> 0.0000e+00 -18.000e+00 0.000e+00</V> <!-- 52 -->
             <V ID="103"> 44.400e+00 -18.000e+00 0.000e+00</V>
-            
+
             <V ID="104"> 0.0000e+00 -18.000e+00 0.000e+00</V> <!-- 53 -->
             <V ID="105"> 12.700e+00 -18.000e+00 0.000e+00</V>
-            
+
             <V ID="106"> 0.0000e+00 -18.000e+00 0.000e+00</V> <!-- 54 -->
             <V ID="107"> 32.200e+00 -18.000e+00 0.000e+00</V>
-            
+
             <V ID="108"> 0.0000e+00 -18.000e+00 0.000e+00</V> <!-- 55 -->
             <V ID="109"> 34.400e+00 -18.000e+00 0.000e+00</V>
 
@@ -229,219 +229,219 @@
             <C ID="0"> S[0] </C> <!-- 1 -->
             <C ID="1"> V[0] </C>
             <C ID="2"> V[1] </C>
-            
+
             <C ID="3"> S[1] </C> <!-- 2 -->
             <C ID="4"> V[2] </C>
             <C ID="5"> V[3] </C>
-            
+
             <C ID="6"> S[2] </C> <!-- 3 -->
             <C ID="7"> V[4] </C>
             <C ID="8"> V[5] </C>
-            
+
             <C ID="9"> S[3] </C> <!-- 4 -->
             <C ID="10"> V[6] </C>
             <C ID="11"> V[7] </C>
-            
+
             <C ID="12"> S[4] </C> <!-- 5 -->
             <C ID="13"> V[8] </C>
             <C ID="14"> V[9] </C>
-            
+
             <C ID="15"> S[5] </C> <!-- 6 -->
             <C ID="16"> V[10] </C>
             <C ID="17"> V[11] </C>
-            
+
             <C ID="18"> S[6] </C> <!-- 7 -->
             <C ID="19"> V[12] </C>
             <C ID="20"> V[13] </C>
-            
+
             <C ID="21"> S[7] </C> <!-- 8 -->
             <C ID="22"> V[14] </C>
             <C ID="23"> V[15] </C>
-            
+
             <C ID="24"> S[8] </C> <!-- 9 -->
             <C ID="25"> V[16] </C>
             <C ID="26"> V[17] </C>
-            
+
             <C ID="27"> S[9] </C> <!-- 10 -->
             <C ID="28"> V[18] </C>
             <C ID="29"> V[19] </C>
-            
+
             <C ID="30"> S[10] </C> <!-- 11 -->
             <C ID="31"> V[20] </C>
             <C ID="32"> V[21] </C>
-            
+
             <C ID="33"> S[11] </C> <!-- 12 -->
             <C ID="34"> V[22] </C>
             <C ID="35"> V[23] </C>
-            
+
             <C ID="36"> S[12] </C> <!-- 13 -->
             <C ID="37"> V[24] </C>
             <C ID="38"> V[25] </C>
-            
+
             <C ID="39"> S[13] </C> <!-- 14 -->
             <C ID="40"> V[26] </C>
             <C ID="41"> V[27] </C>
-            
+
             <C ID="42"> S[14] </C> <!-- 15 -->
             <C ID="43"> V[28] </C>
             <C ID="44"> V[29] </C>
-            
+
             <C ID="45"> S[15] </C> <!-- 16 -->
             <C ID="46"> V[30] </C>
             <C ID="47"> V[31] </C>
-            
+
             <C ID="48"> S[16] </C> <!-- 17 -->
             <C ID="49"> V[32] </C>
             <C ID="50"> V[33] </C>
-            
+
             <C ID="51"> S[17] </C> <!-- 18 -->
             <C ID="52"> V[34] </C>
             <C ID="53"> V[35] </C>
-            
+
             <C ID="54"> S[18] </C> <!-- 19 -->
             <C ID="55"> V[36] </C>
             <C ID="56"> V[37] </C>
-            
+
             <C ID="57"> S[19] </C> <!-- 20 -->
             <C ID="58"> V[38] </C>
             <C ID="59"> V[39] </C>
-            
+
             <C ID="60"> S[20] </C> <!-- 21 -->
             <C ID="61"> V[40] </C>
             <C ID="62"> V[41] </C>
-            
+
             <C ID="63"> S[21] </C> <!-- 22 -->
             <C ID="64"> V[42] </C>
             <C ID="65"> V[43] </C>
-            
+
             <C ID="66"> S[22] </C> <!-- 23 -->
             <C ID="67"> V[44] </C>
             <C ID="68"> V[45] </C>
-            
+
             <C ID="69"> S[23] </C> <!-- 24 -->
             <C ID="70"> V[46] </C>
             <C ID="71"> V[47] </C>
-            
+
             <C ID="72"> S[24] </C> <!-- 25 -->
             <C ID="73"> V[48] </C>
             <C ID="74"> V[49] </C>
-            
+
             <C ID="75"> S[25] </C> <!-- 26 -->
             <C ID="76"> V[50] </C>
             <C ID="77"> V[51] </C>
-            
+
             <C ID="78"> S[26] </C> <!-- 27 -->
             <C ID="79"> V[52] </C>
             <C ID="80"> V[53] </C>
-            
+
             <C ID="81"> S[27] </C> <!-- 28 -->
             <C ID="82"> V[54] </C>
             <C ID="83"> V[55] </C>
-            
+
             <C ID="84"> S[28] </C> <!-- 29 -->
             <C ID="85"> V[56] </C>
             <C ID="86"> V[57] </C>
-            
+
             <C ID="87"> S[29] </C> <!-- 30 -->
             <C ID="88"> V[58] </C>
             <C ID="89"> V[59] </C>
-            
+
             <C ID="90"> S[30] </C> <!-- 31 -->
             <C ID="91"> V[60] </C>
             <C ID="92"> V[61] </C>
-            
+
             <C ID="93"> S[31] </C> <!-- 32 -->
             <C ID="94"> V[62] </C>
             <C ID="95"> V[63] </C>
-            
+
             <C ID="96"> S[32] </C> <!-- 33 -->
             <C ID="97"> V[64] </C>
             <C ID="98"> V[65] </C>
-            
+
             <C ID="99"> S[33] </C> <!-- 34 -->
             <C ID="100"> V[66] </C>
             <C ID="101"> V[67] </C>
-            
+
             <C ID="102"> S[34] </C> <!-- 35 -->
             <C ID="103"> V[68] </C>
             <C ID="104"> V[69] </C>
-            
+
             <C ID="105"> S[35] </C> <!-- 36 -->
             <C ID="106"> V[70] </C>
             <C ID="107"> V[71] </C>
-            
+
             <C ID="108"> S[36] </C> <!-- 37 -->
             <C ID="109"> V[72] </C>
             <C ID="110"> V[73] </C>
-            
+
             <C ID="111"> S[37] </C> <!-- 38 -->
             <C ID="112"> V[74] </C>
             <C ID="113"> V[75] </C>
-            
+
             <C ID="114"> S[38] </C> <!-- 39 -->
             <C ID="115"> V[76] </C>
             <C ID="116"> V[77] </C>
-            
+
             <C ID="117"> S[39] </C> <!-- 40 -->
             <C ID="118"> V[78] </C>
             <C ID="119"> V[79] </C>
-            
+
             <C ID="120"> S[40] </C> <!-- 41 -->
             <C ID="121"> V[80] </C>
             <C ID="122"> V[81] </C>
-            
+
             <C ID="123"> S[41] </C> <!-- 42 -->
             <C ID="124"> V[82] </C>
             <C ID="125"> V[83] </C>
-            
+
             <C ID="126"> S[42] </C> <!-- 43 -->
             <C ID="127"> V[84] </C>
             <C ID="128"> V[85] </C>
-            
+
             <C ID="129"> S[43] </C> <!-- 44 -->
             <C ID="130"> V[86] </C>
             <C ID="131"> V[87] </C>
-            
+
             <C ID="132"> S[44] </C> <!-- 45 -->
             <C ID="133"> V[88] </C>
             <C ID="134"> V[89] </C>
-            
+
             <C ID="135"> S[45] </C> <!-- 46 -->
             <C ID="136"> V[90] </C>
             <C ID="137"> V[91] </C>
-            
+
             <C ID="138"> S[46] </C> <!-- 47 -->
             <C ID="139"> V[92] </C>
             <C ID="140"> V[93] </C>
-            
+
             <C ID="141"> S[47] </C> <!-- 48 -->
             <C ID="142"> V[94] </C>
             <C ID="143"> V[95] </C>
-            
+
             <C ID="144"> S[48] </C> <!-- 49 -->
             <C ID="145"> V[96] </C>
             <C ID="146"> V[97] </C>
-            
+
             <C ID="147"> S[49] </C> <!-- 50 -->
             <C ID="148"> V[98] </C>
             <C ID="149"> V[99] </C>
-            
+
             <C ID="150"> S[50] </C> <!-- 51 -->
             <C ID="151"> V[100] </C>
             <C ID="152"> V[101] </C>
-            
+
             <C ID="153"> S[51] </C> <!-- 52 -->
             <C ID="154"> V[102] </C>
             <C ID="155"> V[103] </C>
-            
+
             <C ID="156"> S[52] </C> <!-- 53 -->
             <C ID="157"> V[104] </C>
             <C ID="158"> V[105] </C>
-            
+
             <C ID="159"> S[53] </C> <!-- 54 -->
             <C ID="160"> V[106] </C>
             <C ID="161"> V[107] </C>
-            
+
             <C ID="162"> S[54] </C> <!-- 55 -->
             <C ID="163"> V[108] </C>
             <C ID="164"> V[109] </C>
@@ -487,7 +487,7 @@
         <E COMPOSITE="C[99]" NUMMODES="5" FIELDS="A,u" TYPE="MODIFIED" />
         <E COMPOSITE="C[102]" NUMMODES="5" FIELDS="A,u" TYPE="MODIFIED" />
         <E COMPOSITE="C[105]" NUMMODES="5" FIELDS="A,u" TYPE="MODIFIED" />
-        <E COMPOSITE="C[108]" NUMMODES="5" FIELDS="A,u" TYPE="MODIFIED" />        
+        <E COMPOSITE="C[108]" NUMMODES="5" FIELDS="A,u" TYPE="MODIFIED" />
         <E COMPOSITE="C[111]" NUMMODES="5" FIELDS="A,u" TYPE="MODIFIED" />
         <E COMPOSITE="C[114]" NUMMODES="5" FIELDS="A,u" TYPE="MODIFIED" />
         <E COMPOSITE="C[117]" NUMMODES="5" FIELDS="A,u" TYPE="MODIFIED" />
@@ -511,19 +511,19 @@
     <CONDITIONS>
 
         <PARAMETERS>
-	  <P> TimeStep       = 1e-4               </P> 
-          <P> FinTime        = 0.025                </P>
+            <P> TimeStep       = 1e-4               </P>
+            <P> FinTime        = 0.025              </P>
             <P> NumSteps       = FinTime/TimeStep   </P>
             <P> IO_CheckSteps  = NumSteps*50        </P>
             <P> IO_InfoSteps   = 500                </P>
             <P> T              = 1.0                </P>
             <P> omega          = 2*PI/T             </P>
             <P> rho            = 1.021E-03          </P>
-            <P> pext           = 0.0                </P> 
+            <P> pext           = 0.0                </P>
 
-            <P> A1             = 5.983              </P> 
-            <P> A2             = 5.147              </P> 
-            <P> A3             = 1.219              </P> 
+            <P> A1             = 5.983              </P>
+            <P> A2             = 5.147              </P>
+            <P> A3             = 1.219              </P>
             <P> A4             = 0.562              </P>
             <P> A5             = 0.432              </P>
             <P> A6             = 0.123              </P>
@@ -577,13 +577,13 @@
             <P> A54            = 0.110              </P>
             <P> A55            = 0.060              </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="PulseWavePropagation"/>
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-            <I PROPERTY="UpwindTypePulse"       VALUE="UpwindPulse"         /> 
+            <I PROPERTY="UpwindTypePulse"       VALUE="UpwindPulse"         />
         </SOLVERINFO>
 
         <VARIABLES>
@@ -594,166 +594,166 @@
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B>
             <B ID="1"> C[2] </B>
-            
+
             <B ID="2"> C[4] </B>
             <B ID="3"> C[5] </B>
-            
+
             <B ID="4"> C[7] </B>
             <B ID="5"> C[8] </B>
-            
+
             <B ID="6"> C[10] </B>
             <B ID="7"> C[11] </B>
-            
+
             <B ID="8"> C[13] </B>
             <B ID="9"> C[14] </B>
-            
+
             <B ID="10"> C[16] </B>
             <B ID="11"> C[17] </B>
-            
+
             <B ID="12"> C[19] </B>
             <B ID="13"> C[20] </B>
-            
+
             <B ID="14"> C[22] </B>
             <B ID="15"> C[23] </B>
-            
+
             <B ID="16"> C[25] </B>
             <B ID="17"> C[26] </B>
-            
+
             <B ID="18"> C[28] </B>
             <B ID="19"> C[29] </B>
-            
+
             <B ID="20"> C[31] </B>
             <B ID="21"> C[32] </B>
-            
+
             <B ID="22"> C[34] </B>
             <B ID="23"> C[35] </B>
-            
+
             <B ID="24"> C[37] </B>
             <B ID="25"> C[38] </B>
-            
+
             <B ID="26"> C[40] </B>
             <B ID="27"> C[41] </B>
-            
+
             <B ID="28"> C[43] </B>
             <B ID="29"> C[44] </B>
-            
+
             <B ID="30"> C[46] </B>
             <B ID="31"> C[47] </B>
-            
+
             <B ID="32"> C[49] </B>
             <B ID="33"> C[50] </B>
-            
+
             <B ID="34"> C[52] </B>
             <B ID="35"> C[53] </B>
-            
+
             <B ID="36"> C[55] </B>
             <B ID="37"> C[56] </B>
-            
+
             <B ID="38"> C[58] </B>
             <B ID="39"> C[59] </B>
-            
+
             <B ID="40"> C[61] </B>
             <B ID="41"> C[62] </B>
-            
+
             <B ID="42"> C[64] </B>
             <B ID="43"> C[65] </B>
-            
+
             <B ID="44"> C[67] </B>
             <B ID="45"> C[68] </B>
-            
+
             <B ID="46"> C[70] </B>
             <B ID="47"> C[71] </B>
-            
+
             <B ID="48"> C[73] </B>
             <B ID="49"> C[74] </B>
-            
+
             <B ID="50"> C[76] </B>
             <B ID="51"> C[77] </B>
-            
+
             <B ID="52"> C[79] </B>
             <B ID="53"> C[80] </B>
-            
+
             <B ID="54"> C[82] </B>
             <B ID="55"> C[83] </B>
-            
+
             <B ID="56"> C[85] </B>
             <B ID="57"> C[86] </B>
-            
+
             <B ID="58"> C[88] </B>
             <B ID="59"> C[89] </B>
-            
+
             <B ID="60"> C[91] </B>
             <B ID="61"> C[92] </B>
-            
+
             <B ID="62"> C[94] </B>
             <B ID="63"> C[95] </B>
-            
+
             <B ID="64"> C[97] </B>
             <B ID="65"> C[98] </B>
-            
+
             <B ID="66"> C[100] </B>
             <B ID="67"> C[101] </B>
-            
+
             <B ID="68"> C[103] </B>
             <B ID="69"> C[104] </B>
-            
+
             <B ID="70"> C[106] </B>
             <B ID="71"> C[107] </B>
-            
+
             <B ID="72"> C[109] </B>
             <B ID="73"> C[110] </B>
-            
+
             <B ID="74"> C[112] </B>
             <B ID="75"> C[113] </B>
-            
+
             <B ID="76"> C[115] </B>
             <B ID="77"> C[116] </B>
-            
+
             <B ID="78"> C[118] </B>
             <B ID="79"> C[119] </B>
-            
+
             <B ID="80"> C[121] </B>
             <B ID="81"> C[122] </B>
-            
+
             <B ID="82"> C[124] </B>
             <B ID="83"> C[125] </B>
-            
+
             <B ID="84"> C[127] </B>
             <B ID="85"> C[128] </B>
-            
+
             <B ID="86"> C[130] </B>
             <B ID="87"> C[131] </B>
-            
+
             <B ID="88"> C[133] </B>
             <B ID="89"> C[134] </B>
-            
+
             <B ID="90"> C[136] </B>
             <B ID="91"> C[137] </B>
-            
+
             <B ID="92"> C[139] </B>
             <B ID="93"> C[140] </B>
-            
+
             <B ID="94"> C[142] </B>
             <B ID="95"> C[143] </B>
-            
+
             <B ID="96"> C[145] </B>
             <B ID="97"> C[146] </B>
-            
+
             <B ID="98"> C[148] </B>
             <B ID="99"> C[149] </B>
-            
+
             <B ID="100"> C[151] </B>
             <B ID="101"> C[152] </B>
-            
+
             <B ID="102"> C[154] </B>
             <B ID="103"> C[155] </B>
-            
+
             <B ID="104"> C[157] </B>
             <B ID="105"> C[158] </B>
-            
+
             <B ID="106"> C[160] </B>
             <B ID="107"> C[161] </B>
-            
+
             <B ID="108"> C[163] </B>
             <B ID="109"> C[164] </B>
         </BOUNDARYREGIONS>
@@ -767,7 +767,7 @@
                 <BIFURCATION VAR="A"  P="0" D1="1" D2="2" />
                 <BIFURCATION VAR="u"  P="0" D1="1" D2="2" />
             </REGION>
-            
+
             <REGION REF="2">  <!-- 2 --> <!-- Bifurcation Rhs 1--2--3 -->
                 <BIFURCATION VAR="A"  P="0" D1="1" D2="2" />
                 <BIFURCATION VAR="u"  P="0" D1="1" D2="2" />
@@ -776,7 +776,7 @@
                 <BIFURCATION VAR="A"  P="1" D1="13" D2="14" />
                 <BIFURCATION VAR="u"  P="1" D1="13" D2="14" />
             </REGION>
-            
+
             <REGION REF="4"> <!-- 3 -->   <!-- Bifurcation Rhs 1--2--3 -->
                 <BIFURCATION VAR="A"  P="0" D1="1" D2="2" />
                 <BIFURCATION VAR="u"  P="0" D1="1" D2="2" />
@@ -785,7 +785,7 @@
                 <BIFURCATION VAR="A"  P="2" D1="3" D2="4" />
                 <BIFURCATION VAR="u"  P="2" D1="3" D2="4" />
             </REGION>
-            
+
             <REGION REF="6"> <!-- 4 -->   <!-- Bifurcation Rhs 3--4--5 -->
                 <BIFURCATION VAR="A"  P="2" D1="3" D2="4" />
                 <BIFURCATION VAR="u"  P="2" D1="3" D2="4" />
@@ -794,7 +794,7 @@
                 <BIFURCATION VAR="A"  P="3" D1="5" D2="6" />
                 <BIFURCATION VAR="u"  P="3" D1="5" D2="6" />
             </REGION>
-            
+
             <REGION REF="8"> <!-- 5 -->   <!-- Bifurcation Rhs 3--4--5 -->
                 <BIFURCATION VAR="A"  P="2" D1="3" D2="4" />
                 <BIFURCATION VAR="u"  P="2" D1="3" D2="4" />
@@ -803,16 +803,16 @@
                 <BIFURCATION VAR="A"  P="4" D1="11" D2="12" />
                 <BIFURCATION VAR="u"  P="4" D1="11" D2="12" />
             </REGION>
-            
+
             <REGION REF="10"> <!-- 6 -->   <!-- Bifurcation Rhs 4--6--7 -->
                 <BIFURCATION VAR="A"  P="3" D1="5" D2="6" />
                 <BIFURCATION VAR="u"  P="3" D1="5" D2="6" />
             </REGION>
-            <REGION REF="11">    
+            <REGION REF="11">
                 <D VAR="A" VALUE="A6" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="12"> <!-- 7 -->   <!-- Bifurcation Rhs 4--6--7 -->
                 <BIFURCATION VAR="A"  P="3" D1="5" D2="6" />
                 <BIFURCATION VAR="u"  P="3" D1="5" D2="6" />
@@ -821,61 +821,61 @@
                 <BIFURCATION VAR="A"  P="6" D1="7" D2="8" />
                 <BIFURCATION VAR="u"  P="6" D1="7" D2="8" />
             </REGION>
-            
+
             <REGION REF="14"> <!-- 8 -->   <!-- Bifurcation Rhs 7--8--9 -->
                 <BIFURCATION VAR="A"  P="6" D1="7" D2="8" />
                 <BIFURCATION VAR="u"  P="6" D1="7" D2="8" />
             </REGION>
-            <REGION REF="15">    
+            <REGION REF="15">
                 <D VAR="A" VALUE="A8" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="16"> <!-- 9 -->   <!-- Bifurcation Rhs 7--8--9 -->
                 <BIFURCATION VAR="A"  P="6" D1="7" D2="8" />
                 <BIFURCATION VAR="u"  P="6" D1="7" D2="8" />
             </REGION>
-            <REGION REF="17">  <!-- Bifurcation Rhs 9--10--11 -->  
+            <REGION REF="17">  <!-- Bifurcation Rhs 9--10--11 -->
                 <BIFURCATION VAR="A"  P="8" D1="9" D2="10" />
                 <BIFURCATION VAR="u"  P="8" D1="9" D2="10" />
             </REGION>
-            
+
             <REGION REF="18"> <!-- 10 -->   <!-- Bifurcation Rhs 9--10--11 -->
                 <BIFURCATION VAR="A"  P="8" D1="9" D2="10" />
                 <BIFURCATION VAR="u"  P="8" D1="9" D2="10" />
             </REGION>
-            <REGION REF="19">    
+            <REGION REF="19">
                 <D VAR="A" VALUE="A10" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="20"> <!-- 11 -->   <!-- Bifurcation Rhs 9--10--11 -->
                 <BIFURCATION VAR="A"  P="8" D1="9" D2="10" />
                 <BIFURCATION VAR="u"  P="8" D1="9" D2="10" />
             </REGION>
-            <REGION REF="21">    
+            <REGION REF="21">
                 <D VAR="A" VALUE="A11" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="22"> <!-- 12 -->   <!-- Bifurcation Rhs 5--12--13 -->
                 <BIFURCATION VAR="A"  P="4" D1="11" D2="12" />
                 <BIFURCATION VAR="u"  P="4" D1="11" D2="12" />
             </REGION>
-            <REGION REF="23">    
+            <REGION REF="23">
                 <D VAR="A" VALUE="A12" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="24"> <!-- 13 -->   <!-- Bifurcation Rhs 5--12--13 -->
                 <BIFURCATION VAR="A"  P="4" D1="11" D2="12" />
                 <BIFURCATION VAR="u"  P="4" D1="11" D2="12" />
             </REGION>
-            <REGION REF="25">    
+            <REGION REF="25">
                 <D VAR="A" VALUE="A13" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="26"> <!-- 14 -->   <!-- Bifurcation Rhs 2--14--15 -->
                 <BIFURCATION VAR="A"  P="1" D1="13" D2="14" />
                 <BIFURCATION VAR="u"  P="1" D1="13" D2="14" />
@@ -884,7 +884,7 @@
                 <BIFURCATION VAR="A"  P="13" D1="17" D2="18" />
                 <BIFURCATION VAR="u"  P="13" D1="17" D2="18" />
             </REGION>
-            
+
             <REGION REF="28"> <!-- 15 -->   <!-- Bifurcation Rhs 2--14--15 -->
                 <BIFURCATION VAR="A"  P="1" D1="13" D2="14" />
                 <BIFURCATION VAR="u"  P="1" D1="13" D2="14" />
@@ -893,25 +893,25 @@
                 <BIFURCATION VAR="A"  P="14" D1="15" D2="16" />
                 <BIFURCATION VAR="u"  P="14" D1="15" D2="16" />
             </REGION>
-            
+
             <REGION REF="30"> <!-- 16 -->   <!-- Bifurcation Rhs 15--16--17 -->
                 <BIFURCATION VAR="A"  P="14" D1="15" D2="16" />
                 <BIFURCATION VAR="u"  P="14" D1="15" D2="16" />
             </REGION>
-            <REGION REF="31">    
+            <REGION REF="31">
                 <D VAR="A" VALUE="A16" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="32"> <!-- 17 -->   <!-- Bifurcation Rhs 15--16--17 -->
                 <BIFURCATION VAR="A"  P="14" D1="15" D2="16" />
                 <BIFURCATION VAR="u"  P="14" D1="15" D2="16" />
             </REGION>
-            <REGION REF="33">    
+            <REGION REF="33">
                 <D VAR="A" VALUE="A17" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="34"> <!-- 18 -->   <!-- Bifurcation Rhs 14--18--19 -->
                 <BIFURCATION VAR="A"  P="13" D1="17" D2="18" />
                 <BIFURCATION VAR="u"  P="13" D1="17" D2="18" />
@@ -920,7 +920,7 @@
                 <BIFURCATION VAR="A"  P="17" D1="25" D2="26" />
                 <BIFURCATION VAR="u"  P="17" D1="25" D2="26" />
             </REGION>
-            
+
             <REGION REF="36"> <!-- 19 -->   <!-- Bifurcation Rhs 14--18--19 -->
                 <BIFURCATION VAR="A"  P="13" D1="17" D2="18" />
                 <BIFURCATION VAR="u"  P="13" D1="17" D2="18" />
@@ -929,16 +929,16 @@
                 <BIFURCATION VAR="A"  P="18" D1="19" D2="20" />
                 <BIFURCATION VAR="u"  P="18" D1="19" D2="20" />
             </REGION>
-            
+
             <REGION REF="38"> <!-- 20 -->   <!-- Bifurcation Rhs 19--20--21 -->
                 <BIFURCATION VAR="A"  P="18" D1="19" D2="20" />
                 <BIFURCATION VAR="u"  P="18" D1="19" D2="20" />
             </REGION>
-            <REGION REF="39">    
+            <REGION REF="39">
                 <D VAR="A" VALUE="A20" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="40"> <!-- 21 -->   <!-- Bifurcation Rhs 19--20--21 -->
                 <BIFURCATION VAR="A"  P="18" D1="19" D2="20" />
                 <BIFURCATION VAR="u"  P="18" D1="19" D2="20" />
@@ -947,16 +947,16 @@
                 <BIFURCATION VAR="A"  P="20" D1="21" D2="22" />
                 <BIFURCATION VAR="u"  P="20" D1="21" D2="22" />
             </REGION>
-            
+
             <REGION REF="42"> <!-- 22 -->   <!-- Bifurcation Rhs 21--22--23 -->
                 <BIFURCATION VAR="A"  P="20" D1="21" D2="22" />
                 <BIFURCATION VAR="u"  P="20" D1="21" D2="22" />
             </REGION>
-            <REGION REF="43">    
+            <REGION REF="43">
                 <D VAR="A" VALUE="A22" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="44"> <!-- 23 -->   <!-- Bifurcation Rhs 21--22--23 -->
                 <BIFURCATION VAR="A"  P="20" D1="21" D2="22" />
                 <BIFURCATION VAR="u"  P="20" D1="21" D2="22" />
@@ -965,34 +965,34 @@
                 <BIFURCATION VAR="A"  P="22" D1="23" D2="24" />
                 <BIFURCATION VAR="u"  P="22" D1="23" D2="24" />
             </REGION>
-            
+
             <REGION REF="46"> <!-- 24 -->   <!-- Bifurcation Rhs 23--24--25 -->
                 <BIFURCATION VAR="A"  P="22" D1="23" D2="24" />
                 <BIFURCATION VAR="u"  P="22" D1="23" D2="24" />
             </REGION>
-            <REGION REF="47">    
+            <REGION REF="47">
                 <D VAR="A" VALUE="A24" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="48"> <!-- 25 -->   <!-- Bifurcation Rhs 23--24--25 -->
                 <BIFURCATION VAR="A"  P="22" D1="23" D2="24" />
                 <BIFURCATION VAR="u"  P="22" D1="23" D2="24" />
             </REGION>
-            <REGION REF="49">    
+            <REGION REF="49">
                 <D VAR="A" VALUE="A25" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="50"> <!-- 26 -->   <!-- Bifurcation Rhs 18--26--27 -->
                 <BIFURCATION VAR="A"  P="17" D1="25" D2="26" />
                 <BIFURCATION VAR="u"  P="17" D1="25" D2="26" />
             </REGION>
-            <REGION REF="51">    
+            <REGION REF="51">
                 <D VAR="A" VALUE="A26" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="52"> <!-- 27 -->   <!-- Bifurcation Rhs 18--26--27 -->
                 <BIFURCATION VAR="A"  P="17" D1="25" D2="26" />
                 <BIFURCATION VAR="u"  P="17" D1="25" D2="26" />
@@ -1001,7 +1001,7 @@
                 <BIFURCATION VAR="A"  P="26" D1="27" D2="28" />
                 <BIFURCATION VAR="u"  P="26" D1="27" D2="28" />
             </REGION>
-            
+
             <REGION REF="54"> <!-- 28 -->   <!-- Bifurcation Rhs 27--28--29 -->
                 <BIFURCATION VAR="A"  P="26" D1="27" D2="28" />
                 <BIFURCATION VAR="u"  P="26" D1="27" D2="28" />
@@ -1010,7 +1010,7 @@
                 <BIFURCATION VAR="A"  P="27" D1="33" D2="34" />
                 <BIFURCATION VAR="u"  P="27" D1="33" D2="34" />
             </REGION>
-            
+
             <REGION REF="56"> <!-- 29 -->   <!-- Bifurcation Rhs 27--28--29 -->
                 <BIFURCATION VAR="A"  P="26" D1="27" D2="28" />
                 <BIFURCATION VAR="u"  P="26" D1="27" D2="28" />
@@ -1019,7 +1019,7 @@
                 <BIFURCATION VAR="A"  P="28" D1="29" D2="30" />
                 <BIFURCATION VAR="u"  P="28" D1="29" D2="30" />
             </REGION>
-            
+
             <REGION REF="58"> <!-- 30 -->   <!-- Bifurcation Rhs 29--30--31 -->
                 <BIFURCATION VAR="A"  P="28" D1="29" D2="30" />
                 <BIFURCATION VAR="u"  P="28" D1="29" D2="30" />
@@ -1028,43 +1028,43 @@
                 <BIFURCATION VAR="A"  P="29" D1="31" D2="32" />
                 <BIFURCATION VAR="u"  P="29" D1="31" D2="32" />
             </REGION>
-            
+
             <REGION REF="60"> <!-- 31 -->   <!-- Bifurcation Rhs 29--30--31 -->
                 <BIFURCATION VAR="A"  P="28" D1="29" D2="30" />
                 <BIFURCATION VAR="u"  P="28" D1="29" D2="30" />
             </REGION>
-            <REGION REF="61">    
+            <REGION REF="61">
                 <D VAR="A" VALUE="A31" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="62"> <!-- 32 -->   <!-- Bifurcation Rhs 30--32--33 -->
                 <BIFURCATION VAR="A"  P="29" D1="31" D2="32" />
                 <BIFURCATION VAR="u"  P="29" D1="31" D2="32" />
             </REGION>
-            <REGION REF="63">    
+            <REGION REF="63">
                 <D VAR="A" VALUE="A32" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="64"> <!-- 33 -->   <!-- Bifurcation Rhs 30--32--33 -->
                 <BIFURCATION VAR="A"  P="29" D1="31" D2="32" />
                 <BIFURCATION VAR="u"  P="29" D1="31" D2="32" />
             </REGION>
-            <REGION REF="65">    
+            <REGION REF="65">
                 <D VAR="A" VALUE="A33" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="66"> <!-- 34 -->   <!-- Bifurcation Rhs 28--34--35 -->
                 <BIFURCATION VAR="A"  P="27" D1="33" D2="34" />
                 <BIFURCATION VAR="u"  P="27" D1="33" D2="34" />
             </REGION>
-            <REGION REF="67">    
+            <REGION REF="67">
                 <D VAR="A" VALUE="A34" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="68"> <!-- 35 -->   <!-- Bifurcation Rhs 28--34--35 -->
                 <BIFURCATION VAR="A"  P="27" D1="33" D2="34" />
                 <BIFURCATION VAR="u"  P="27" D1="33" D2="34" />
@@ -1073,34 +1073,34 @@
                 <BIFURCATION VAR="A"  P="34" D1="35" D2="36" />
                 <BIFURCATION VAR="u"  P="34" D1="35" D2="36" />
             </REGION>
-            
+
             <REGION REF="70"> <!-- 36 -->   <!-- Bifurcation Rhs 35--36--37 -->
                 <BIFURCATION VAR="A"  P="34" D1="35" D2="36" />
                 <BIFURCATION VAR="u"  P="34" D1="35" D2="36" />
             </REGION>
-            <REGION REF="71">    
+            <REGION REF="71">
                 <D VAR="A" VALUE="A36" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="72"> <!-- 37 -->   <!-- Bifurcation Rhs 35--36--37 -->
                 <BIFURCATION VAR="A"  P="34" D1="35" D2="36" />
                 <BIFURCATION VAR="u"  P="34" D1="35" D2="36" />
             </REGION>
-            <REGION REF="73">   <!-- Bifurcation Rhs 37--38--39 --> 
+            <REGION REF="73">   <!-- Bifurcation Rhs 37--38--39 -->
                 <BIFURCATION VAR="A"  P="36" D1="37" D2="38" />
                 <BIFURCATION VAR="u"  P="36" D1="37" D2="38" />
             </REGION>
-            
+
             <REGION REF="74"> <!-- 38 -->   <!-- Bifurcation Rhs 37--38--39 -->
                 <BIFURCATION VAR="A"  P="36" D1="37" D2="38" />
                 <BIFURCATION VAR="u"  P="36" D1="37" D2="38" />
             </REGION>
-            <REGION REF="75">    
+            <REGION REF="75">
                 <D VAR="A" VALUE="A38" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="76"> <!-- 39 -->   <!-- Bifurcation Rhs 37--38--39 -->
                 <BIFURCATION VAR="A"  P="36" D1="37" D2="38" />
                 <BIFURCATION VAR="u"  P="36" D1="37" D2="38" />
@@ -1109,16 +1109,16 @@
                 <BIFURCATION VAR="A"  P="38" D1="39" D2="40" />
                 <BIFURCATION VAR="u"  P="38" D1="39" D2="40" />
             </REGION>
-            
+
             <REGION REF="78"> <!-- 40 -->   <!-- Bifurcation Rhs 39--40--41 -->
                 <BIFURCATION VAR="A"  P="38" D1="39" D2="40" />
                 <BIFURCATION VAR="u"  P="38" D1="39" D2="40" />
             </REGION>
-            <REGION REF="79">    
+            <REGION REF="79">
                 <D VAR="A" VALUE="A40" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="80"> <!-- 41 -->   <!-- Bifurcation Rhs 39--40--41 -->
                 <BIFURCATION VAR="A"  P="38" D1="39" D2="40" />
                 <BIFURCATION VAR="u"  P="38" D1="39" D2="40" />
@@ -1127,7 +1127,7 @@
                 <BIFURCATION VAR="A"  P="40" D1="41" D2="42" />
                 <BIFURCATION VAR="u"  P="40" D1="41" D2="42" />
             </REGION>
-            
+
             <REGION REF="82"> <!-- 42 -->   <!-- Bifurcation Rhs 41--42--43 -->
                 <BIFURCATION VAR="A"  P="40" D1="41" D2="42" />
                 <BIFURCATION VAR="u"  P="40" D1="41" D2="42" />
@@ -1136,7 +1136,7 @@
                 <BIFURCATION VAR="A"  P="41" D1="43" D2="44" />
                 <BIFURCATION VAR="u"  P="41" D1="43" D2="44" />
             </REGION>
-            
+
             <REGION REF="84"> <!-- 43 -->   <!-- Bifurcation Rhs 41--42--43 -->
                 <BIFURCATION VAR="A"  P="40" D1="41" D2="42" />
                 <BIFURCATION VAR="u"  P="40" D1="41" D2="42" />
@@ -1145,7 +1145,7 @@
                 <BIFURCATION VAR="A"  P="42" D1="49" D2="50" />
                 <BIFURCATION VAR="u"  P="42" D1="49" D2="50" />
             </REGION>
-            
+
             <REGION REF="86"> <!-- 44 -->   <!-- Bifurcation Rhs 42--44--45 -->
                 <BIFURCATION VAR="A"  P="41" D1="43" D2="44" />
                 <BIFURCATION VAR="u"  P="41" D1="43" D2="44" />
@@ -1154,16 +1154,16 @@
                 <BIFURCATION VAR="A"  P="43" D1="45" D2="46" />
                 <BIFURCATION VAR="u"  P="43" D1="45" D2="46" />
             </REGION>
-            
+
             <REGION REF="88"> <!-- 45 -->   <!-- Bifurcation Rhs 42--44--45 -->
                 <BIFURCATION VAR="A"  P="41" D1="43" D2="44" />
                 <BIFURCATION VAR="u"  P="41" D1="43" D2="44" />
             </REGION>
-            <REGION REF="89">    
+            <REGION REF="89">
                 <D VAR="A" VALUE="A45" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="90"> <!-- 46 -->   <!-- Bifurcation Rhs 44--46--47 -->
                 <BIFURCATION VAR="A"  P="43" D1="45" D2="46" />
                 <BIFURCATION VAR="u"  P="43" D1="45" D2="46" />
@@ -1172,34 +1172,34 @@
                 <BIFURCATION VAR="A"  P="45" D1="47" D2="48" />
                 <BIFURCATION VAR="u"  P="45" D1="47" D2="48" />
             </REGION>
-            
+
             <REGION REF="92"> <!-- 47 -->   <!-- Bifurcation Rhs 44--46--47 -->
                 <BIFURCATION VAR="A"  P="43" D1="45" D2="46" />
                 <BIFURCATION VAR="u"  P="43" D1="45" D2="46" />
             </REGION>
-            <REGION REF="93">    
+            <REGION REF="93">
                 <D VAR="A" VALUE="A47" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="94"> <!-- 48 -->   <!-- Bifurcation Rhs 46--48--49 -->
                 <BIFURCATION VAR="A"  P="45" D1="47" D2="48" />
                 <BIFURCATION VAR="u"  P="45" D1="47" D2="48" />
             </REGION>
-            <REGION REF="95">    
+            <REGION REF="95">
                 <D VAR="A" VALUE="A48" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="96"> <!-- 49 -->   <!-- Bifurcation Rhs 46--48--49 -->
                 <BIFURCATION VAR="A"  P="45" D1="47" D2="48" />
                 <BIFURCATION VAR="u"  P="45" D1="47" D2="48" />
             </REGION>
-            <REGION REF="97">    
+            <REGION REF="97">
                 <D VAR="A" VALUE="A49" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="98"> <!-- 50 -->   <!-- Bifurcation Rhs 43--50--51 -->
                 <BIFURCATION VAR="A"  P="42" D1="49" D2="50" />
                 <BIFURCATION VAR="u"  P="42" D1="49" D2="50" />
@@ -1208,16 +1208,16 @@
                 <BIFURCATION VAR="A"  P="49" D1="51" D2="52" />
                 <BIFURCATION VAR="u"  P="49" D1="51" D2="52" />
             </REGION>
-            
+
             <REGION REF="100"> <!-- 51 -->   <!-- Bifurcation Rhs 43--50--51 -->
                 <BIFURCATION VAR="A"  P="42" D1="49" D2="50" />
                 <BIFURCATION VAR="u"  P="42" D1="49" D2="50" />
             </REGION>
-            <REGION REF="101">    
+            <REGION REF="101">
                 <D VAR="A" VALUE="A51" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="102"> <!-- 52 -->   <!-- Bifurcation Rhs 50--52--53 -->
                 <BIFURCATION VAR="A"  P="49" D1="51" D2="52" />
                 <BIFURCATION VAR="u"  P="49" D1="51" D2="52" />
@@ -1226,30 +1226,30 @@
                 <BIFURCATION VAR="A"  P="51" D1="53" D2="54" />
                 <BIFURCATION VAR="u"  P="51" D1="53" D2="54" />
             </REGION>
-            
+
             <REGION REF="104"> <!-- 53 -->   <!-- Bifurcation Rhs 50--52--53 -->
                 <BIFURCATION VAR="A"  P="49" D1="51" D2="52" />
                 <BIFURCATION VAR="u"  P="49" D1="51" D2="52" />
             </REGION>
-            <REGION REF="105">    
+            <REGION REF="105">
                 <D VAR="A" VALUE="A53" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="106"> <!-- 54 -->   <!-- Bifurcation Rhs 52--54--55 -->
                 <BIFURCATION VAR="A"  P="51" D1="53" D2="54" />
                 <BIFURCATION VAR="u"  P="51" D1="53" D2="54" />
             </REGION>
-            <REGION REF="107">    
+            <REGION REF="107">
                 <D VAR="A" VALUE="A54" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
-            
+
             <REGION REF="108"> <!-- 55 -->   <!-- Bifurcation Rhs 52--54--55 -->
                 <BIFURCATION VAR="A"  P="51" D1="53" D2="54" />
                 <BIFURCATION VAR="u"  P="51" D1="53" D2="54" />
             </REGION>
-            <REGION REF="109">    
+            <REGION REF="109">
                 <D VAR="A" VALUE="A55" />
                 <D VAR="u" VALUE="0.0" />
             </REGION>
@@ -1475,8 +1475,8 @@
             <E VAR="A" VALUE="A55" />
             <E VAR="u" VALUE="0.0" />
         </FUNCTION>
-        
-        
+
+
         <FUNCTION NAME="A_0">
             <E VAR="A_0[0]" VALUE="A1" />
             <E VAR="A_0[1]" VALUE="A2" />
@@ -1534,8 +1534,8 @@
             <E VAR="A_0[53]" VALUE="A54" />
             <E VAR="A_0[54]" VALUE="A55" />
         </FUNCTION>
-        
-        <FUNCTION NAME="MaterialProperties"> 
+
+        <FUNCTION NAME="MaterialProperties">
             <E VAR="beta[0]" VALUE="97" />
             <E VAR="beta[1]" VALUE="87" />
             <E VAR="beta[2]" VALUE="233" />
@@ -1544,7 +1544,7 @@
             <E VAR="beta[5]" VALUE="2590" />
             <E VAR="beta[6]" VALUE="466" />
             <E VAR="beta[7]" VALUE="2866" />
-            <E VAR="beta[8]" VALUE="2246" />     	
+            <E VAR="beta[8]" VALUE="2246" />
             <E VAR="beta[9]" VALUE="12894" />
             <E VAR="beta[10]" VALUE="2446" />
             <E VAR="beta[11]" VALUE="2644" />

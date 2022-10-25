@@ -19,34 +19,34 @@
     <COMPOSITE>
       <C ID="0"> S[0] </C>
       <C ID="1"> V[0] </C>
-      
+
       <C ID="3"> S[1] </C>
       <C ID="4"> S[2] </C>
        <C ID="5"> S[3] </C>
       <C ID="6"> V[4] </C>
-      
+
     </COMPOSITE>
 
-    <DOMAIN> 
+    <DOMAIN>
       <D ID="0"> C[0] </D>
       <D ID="1"> C[3] </D>
       <D ID="2"> C[4] </D>
       <D ID="3"> C[5] </D>
 
     </DOMAIN>
-  </GEOMETRY>  
-  
+  </GEOMETRY>
+
   <EXPANSIONS>
     <E COMPOSITE="C[0]" NUMMODES="7" FIELDS="A,u" TYPE="MODIFIED" />
     <E COMPOSITE="C[3]" NUMMODES="7" FIELDS="A,u" TYPE="MODIFIED" />
     <E COMPOSITE="C[4]" NUMMODES="7" FIELDS="A,u" TYPE="MODIFIED" />
     <E COMPOSITE="C[5]" NUMMODES="7" FIELDS="A,u" TYPE="MODIFIED" />
   </EXPANSIONS>
-  
+
   <CONDITIONS>
-    
+
     <PARAMETERS>
-      <P> TimeStep       = 1e-3            </P> 
+      <P> TimeStep       = 1e-3            </P>
       <P> NumSteps       = 2             </P>
       <P> IO_CheckSteps  = NumSteps        </P>
       <P> IO_InfoSteps   = 100                </P>
@@ -56,21 +56,21 @@
       <P> k1             = 200                </P>
       <P> rho            = 0.5                </P>
       <P> nue            = 0.5                </P>
-      <P> pext           = 0.0                </P> 
+      <P> pext           = 0.0                </P>
     </PARAMETERS>
-    
+
     <SOLVERINFO>
       <I PROPERTY="EQTYPE" VALUE="PulseWavePropagation" />
       <I PROPERTY="Projection" VALUE="DisContinuous" />
       <I PROPERTY="TimeIntegrationMethod" VALUE="RungeKutta2_ImprovedEuler" />
-      <I PROPERTY="UpwindTypePulse"  VALUE="UpwindPulse"/> 
+      <I PROPERTY="UpwindTypePulse"  VALUE="UpwindPulse"/>
     </SOLVERINFO>
-    
+
     <VARIABLES>
       <V ID="0"> A </V>
       <V ID="1"> u </V>
     </VARIABLES>
-    
+
     <BOUNDARYREGIONS>
       <B ID="0"> C[1] </B>
       <B ID="1"> C[6] </B>
@@ -89,13 +89,13 @@
 
     <FUNCTION NAME="InitialConditions">
       <E VAR="A" DOMAIN="0" VALUE="5.983" />
-      <E VAR="u" DOMAIN="0" VALUE="0.0" />            
+      <E VAR="u" DOMAIN="0" VALUE="0.0" />
       <E VAR="A" DOMAIN="1" VALUE="5.147" />
-      <E VAR="u" DOMAIN="1" VALUE="0.0" />   
+      <E VAR="u" DOMAIN="1" VALUE="0.0" />
       <E VAR="A" DOMAIN="2" VALUE="5.983" />
-      <E VAR="u" DOMAIN="2" VALUE="0.0" />       
+      <E VAR="u" DOMAIN="2" VALUE="0.0" />
       <E VAR="A" DOMAIN="3" VALUE="5.147" />
-      <E VAR="u" DOMAIN="3" VALUE="0.0" />  
+      <E VAR="u" DOMAIN="3" VALUE="0.0" />
     </FUNCTION>
 
     <FUNCTION NAME="A_0">
@@ -104,12 +104,12 @@
       <E VAR="A_0" DOMAIN="2" VALUE="5.147" />
       <E VAR="A_0" DOMAIN="3" VALUE="5.983" />
     </FUNCTION>
-    
-    <FUNCTION NAME="MaterialProperties"> 
-      <E VAR="beta" DOMAIN="0" VALUE="97" />     	
+
+    <FUNCTION NAME="MaterialProperties">
+      <E VAR="beta" DOMAIN="0" VALUE="97" />
       <E VAR="beta" DOMAIN="1" VALUE="87" />
-      <E VAR="beta" DOMAIN="2" VALUE="87" />   
-      <E VAR="beta" DOMAIN="3" VALUE="97" />      	
+      <E VAR="beta" DOMAIN="2" VALUE="87" />
+      <E VAR="beta" DOMAIN="3" VALUE="97" />
     </FUNCTION>
 
     <FUNCTION NAME="ExactSolution">

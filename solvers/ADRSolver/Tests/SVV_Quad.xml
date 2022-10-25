@@ -115,19 +115,19 @@
             <P> SVVCutoffRatio  = 0.4                      </P>
             <P> SVVDiffCoeff    = 0.3                       </P>
         </PARAMETERS>
-        
+
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[100] </B>    <!-- Bottom    -->
             <B ID="1"> C[200] </B>    <!-- Out      -->
             <B ID="2"> C[400] </B>    <!-- In   -->
             <B ID="3"> C[300] </B>    <!-- Top  -->
         </BOUNDARYREGIONS>
-        
-        
+
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <P VAR="u" VALUE="[3]" />
@@ -140,12 +140,12 @@
             <REGION REF="2">
                 <P VAR="u" VALUE="[1]" />
             </REGION>
-            
+
             <REGION REF="3">
                 <P VAR="u" VALUE="[0]" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                     VALUE="UnsteadyDiffusion" />
             <I PROPERTY="Projection"                 VALUE="Continuous" />
@@ -153,7 +153,7 @@
             <I PROPERTY="TimeIntegrationMethod"      VALUE="DIRKOrder3" />
             <I PROPERTY="SpectralVanishingViscosity" VALUE="True" />
         </SOLVERINFO>
-        
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="sin(wavefreq*x)*sin(wavefreq*y)" />
         </FUNCTION>
@@ -161,7 +161,7 @@
             <E VAR="u"
             VALUE="exp(-epsilon*2*wavefreq*wavefreq*FinTime)*sin(wavefreq*x)*sin(wavefreq*y)" />
         </FUNCTION>
-        
-        
+
+
     </CONDITIONS>
 </NEKTAR>

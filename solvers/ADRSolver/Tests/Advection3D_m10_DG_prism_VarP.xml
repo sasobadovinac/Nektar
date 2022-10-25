@@ -518,7 +518,7 @@
       <P> advy           = 1.5                 </P>
       <P> advz           = 2                 </P>
     </PARAMETERS>
-    
+
     <SOLVERINFO>
         <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
         <I PROPERTY="Projection"            VALUE="DisContinuous"       />

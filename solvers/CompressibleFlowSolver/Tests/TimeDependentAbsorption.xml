@@ -43,7 +43,6 @@
             <P> uInf           = 1              </P>
             <P> vInf           = 0              </P>
             <P> k              = 1              </P>
-			
             <P> ls             = 9              </P>
             <!--sigma is the value of sponge coefficient-->
             <P> sigma          = -1.5           </P>
@@ -63,7 +62,7 @@
             <I PROPERTY="DiffusionType"                 VALUE="InteriorPenalty"     />
             <I PROPERTY="UpwindType"                    VALUE="Roe"                 />
         </SOLVERINFO>
-		
+
         <VARIABLES>
             <V ID="0"> rho </V>
             <V ID="1"> rhou </V>
@@ -74,7 +73,7 @@
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B> <!--inlet-->
             <B ID="1"> C[3] </B> <!--down-->
-		    <B ID="2"> C[2] </B> <!--up-->
+            <B ID="2"> C[2] </B> <!--up-->
             <B ID="3"> C[4] </B> <!--outlet-->
         </BOUNDARYREGIONS>
 
@@ -94,8 +93,8 @@
                 <D VAR="rhov" USERDEFINEDTYPE="TimeDependent" VALUE="rhoInf*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
                 <D VAR="E" USERDEFINEDTYPE="TimeDependent" VALUE="pInf/(Gamma-1)+0.5*rhoInf*uInf*(1-0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)*uInf*(1-0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)+0.5*rhoInf*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
             </REGION>
-			
-			<REGION REF="2">
+
+            <REGION REF="2">
                 <D VAR="rho" USERDEFINEDTYPE="TimeDependent" VALUE="rhoInf" />
                 <D VAR="rhou" USERDEFINEDTYPE="TimeDependent" VALUE="rhoInf*uInf*(1-0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
                 <D VAR="rhov" USERDEFINEDTYPE="TimeDependent" VALUE="rhoInf*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
@@ -109,7 +108,7 @@
                 <D VAR="rhov" USERDEFINEDTYPE="TimeDependent" VALUE="rhoInf*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
                 <D VAR="E" USERDEFINEDTYPE="TimeDependent" VALUE="pInf/(Gamma-1)+0.5*rhoInf*uInf*(1-0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)*uInf*(1-0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)+0.5*rhoInf*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
             </REGION>
-			
+
          </BOUNDARYCONDITIONS>
 
         <FUNCTION NAME="InitialConditions">
@@ -171,18 +170,18 @@
                         0.5*sigma*(1+cos(PI*((xmax-x)/ls)))*(x<=xmax)*(x>xmax-ls)*(ymin+ls<y)*(y<=ymax-ls)+
                         0.5*sigma*(1+cos(PI*((xmax-x)/ls)*((ymax-y)/ls)))*(x<=xmax)*(x>xmax-ls)*(y>ymax-ls)*(y<=ymax)
                         "/>
-		</FUNCTION>
-		
+        </FUNCTION>
+
         <FUNCTION NAME="referencefields">
            <E VAR="rho" USERDEFINEDTYPE="TimeDependent" VALUE="rhoInf" />
            <E VAR="rhou" USERDEFINEDTYPE="TimeDependent" VALUE="rhoInf*uInf*(1-0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
            <E VAR="rhov" USERDEFINEDTYPE="TimeDependent" VALUE="rhoInf*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
            <E VAR="E" USERDEFINEDTYPE="TimeDependent" VALUE="pInf/(Gamma-1)+0.5*rhoInf*uInf*(1-0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)*uInf*(1-0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)+0.5*rhoInf*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)*uInf*(0.02*cos(k*x+k*y-k*uInf*t)*sqrt(2)/2)" />
          </FUNCTION>
-		
+
     </CONDITIONS>
 
-	<FORCING>
+    <FORCING>
         <FORCE TYPE="Absorption">
             <COEFF> SpongeCoefficient </COEFF>
             <REFFLOWTIME> referencefields </REFFLOWTIME>

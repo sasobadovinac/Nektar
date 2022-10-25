@@ -116,7 +116,7 @@
     </FUNCTION>
     
     <FUNCTION NAME="MaterialProperties"> 
-      <E VAR="beta" DOMAIN="0" VALUE="4.51e+6" />     	
+      <E VAR="beta" DOMAIN="0" VALUE="4.51e+6" /> 
     </FUNCTION>
 
     <FUNCTION NAME="ExactSolution">

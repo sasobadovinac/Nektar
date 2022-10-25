@@ -16,7 +16,7 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2" />
             <I PROPERTY="HOMOGENEOUS" VALUE="1D"/>
             <I PROPERTY="USEFFT" VALUE="FFTW"/>
-	    <I PROPERTY="DEALIASING" VALUE="True"/>
+            <I PROPERTY="DEALIASING" VALUE="True"/>
         </SOLVERINFO>
 
         <PARAMETERS>
@@ -64,24 +64,24 @@
             <N VAR="w" VALUE="0" />
             <N VAR="p" VALUE="0" />
           </REGION>
-        </BOUNDARYCONDITIONS>        
-        
+        </BOUNDARYCONDITIONS>
+
         <FUNCTION NAME="InitialConditions">
           <E VAR="u" VALUE="(1-exp(KovLam*x)*cos(2*PI*z))" />
           <E VAR="v" VALUE="0" />
           <E VAR="w" VALUE="(KovLam/(2*PI))*exp(KovLam*x)*sin(2*PI*z)" />
           <E VAR="p" VALUE="0.5*(1-exp(2*KovLam*x))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
           <E VAR="u" VALUE="(1-exp(KovLam*x)*cos(2*PI*z))" />
           <E VAR="v" VALUE="0" />
-		  <E VAR="w" VALUE="(KovLam/(2*PI))*exp(KovLam*x)*sin(2*PI*z)" />
+          <E VAR="w" VALUE="(KovLam/(2*PI))*exp(KovLam*x)*sin(2*PI*z)" />
           <E VAR="p" VALUE="0.5*(1-exp(2*KovLam*x))" />
         </FUNCTION>
-        
+
     </CONDITIONS>
-    
+
     <GEOMETRY DIM="2" SPACE="2">
 
       <VERTEX>
@@ -168,4 +168,4 @@
     </GEOMETRY>
 
 </NEKTAR>
-    
+

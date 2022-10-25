@@ -6,7 +6,7 @@
     <COUPLING NAME="coupling1" TYPE="File">
         <I PROPERTY="ReceiveSteps" VALUE="3" />
         <I PROPERTY="ReceiveVariables" VALUE="u1R,v1R" />
-	<I PROPERTY="ReceiveFunction" VALUE="CouplingIn" />
+        <I PROPERTY="ReceiveFunction" VALUE="CouplingIn" />
         <I PROPERTY="SendSteps" VALUE="3" />
         <I PROPERTY="SendVariables" VALUE="u1S,v1S" />
         <I PROPERTY="SendFileName" VALUE="Dummy1out_%14.8E.pts" />

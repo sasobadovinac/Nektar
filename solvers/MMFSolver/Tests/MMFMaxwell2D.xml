@@ -581,20 +581,20 @@
             <E ID="189" EDGEID="62" NUMPOINTS="3" TYPE="PolyEvenlySpaced">     -7.13524658e-01  1.91188356e-01  0.00000000e+00          -8.56762329e-01  -4.40582210e-03  0.00000000e+00          -1.00000000e+00  -2.00000000e-01  0.00000000e+00</E>
         </CURVED>
         <COMPOSITE>
-	  <C ID="0"> T[0-31] </C>
+             <C ID="0"> T[0-31] </C>
             <C ID="1"> T[32-119] </C>
             <C ID="2"> E[176,157,66,151,189,187,162,73,147,170,173,154,68,148,185,179,163,70,142,183] </C>
         </COMPOSITE>
         <DOMAIN> C[0,1] </DOMAIN>
 
       </GEOMETRY>
-      
+
       <EXPANSIONS>
         <E COMPOSITE="C[0-1]" NUMMODES="5" FIELDS="F1,F2,F3" TYPE="MODIFIED"/>
       </EXPANSIONS>
-      
+
       <CONDITIONS>
-	
+
         <SOLVERINFO>
             <I PROPERTY="EQType" VALUE="MMFMaxwell" />
             <I PROPERTY="Projection" VALUE="DisContinuous" />
@@ -604,35 +604,35 @@
             <I PROPERTY="PolType" VALUE="TransElectric" />  <!-- TransElectric, TransMagnetic-->
             <I PROPERTY="MMFDir" VALUE="LOCAL" /> <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
         </SOLVERINFO>
-	
+
         <PARAMETERS>
-	  <P> TimeStep       = 0.001             </P>
-	  <P> NumSteps       = 100                </P>
-	  <P> FinTime        = TimeStep*NumSteps </P>
-	  <P> IO_CheckSteps  = 20               </P>
-	  <P> IO_InfoSteps   = 20              </P>
-	  <P> ElemtGroup1 =  31             </P>
-	  <P> Alpha = 1.0   </P>
-	  <P> varepsilon1        = 1.0             </P>
-	  <P> varepsilon2        = 1.0              </P>
-	  <P> varepsilon3        = 1.0              </P>
-	  <P> mu1        = 1.0                 </P>
-	  <P> mu2        = 1.0                    </P>
-	  <P> mu3        = 1.0                   </P>
-	  <P> MMFCircCentreX  = -2.0   </P>
-	  <P> MMFCircCentreY  = -2.0   </P>
+          <P> TimeStep       = 0.001             </P>
+          <P> NumSteps       = 100               </P>
+          <P> FinTime        = TimeStep*NumSteps </P>
+          <P> IO_CheckSteps  = 20                </P>
+          <P> IO_InfoSteps   = 20                </P>
+          <P> ElemtGroup1    = 31                </P>
+          <P> Alpha          = 1.0               </P>
+          <P> varepsilon1    = 1.0               </P>
+          <P> varepsilon2    = 1.0               </P>
+          <P> varepsilon3    = 1.0               </P>
+          <P> mu1            = 1.0               </P>
+          <P> mu2            = 1.0               </P>
+          <P> mu3            = 1.0               </P>
+          <P> MMFCircCentreX = -2.0              </P>
+          <P> MMFCircCentreY = -2.0              </P>
         </PARAMETERS>
-	
+
         <VARIABLES>
-	  <V ID="0"> F1 </V>
-	  <V ID="1"> F2 </V>
-	  <V ID="2"> F3 </V>
+          <V ID="0"> F1 </V>
+          <V ID="1"> F2 </V>
+          <V ID="2"> F3 </V>
         </VARIABLES>
-	
+
     <BOUNDARYREGIONS>
         <B ID="0"> C[2]  </B>
     </BOUNDARYREGIONS>
-    
+
     <BOUNDARYCONDITIONS>
         <REGION REF="0">
             <D VAR="F1" USERDEFINEDTYPE="PEC" VALUE="0" />
@@ -640,7 +640,7 @@
             <D VAR="F3" USERDEFINEDTYPE="PEC" VALUE="0" />
         </REGION>
     </BOUNDARYCONDITIONS>
-	
+
       </CONDITIONS>
-      
+
     </NEKTAR>

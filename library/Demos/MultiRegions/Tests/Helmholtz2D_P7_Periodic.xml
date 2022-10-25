@@ -104,22 +104,22 @@
     <PARAMETERS>
       <P> Lambda    = 1 </P>
     </PARAMETERS>
-    
+
     <SOLVERINFO>
       <I PROPERTY="GlobalSysSoln" VALUE="IterativeStaticCond" />
     </SOLVERINFO>
-    
+
     <VARIABLES>
       <V ID="0"> u </V>
     </VARIABLES>
-    
+
     <BOUNDARYREGIONS>
       <B ID="0"> C[1] </B>
       <B ID="1"> C[2] </B>
       <B ID="2"> C[3] </B>
       <B ID="3"> C[4] </B>
     </BOUNDARYREGIONS>
-    
+
     <BOUNDARYCONDITIONS>
       <REGION REF="0">
         <P VAR="u" VALUE="[2]" />
@@ -134,11 +134,11 @@
         <D VAR="u" VALUE="sin(4*PI*x/3+PI/2)*sin(4*PI*y/3+PI/2)" />
       </REGION>
     </BOUNDARYCONDITIONS>
-    
+
     <FUNCTION NAME="Forcing">
       <E VAR="u" VALUE="-(Lambda+2*16/9*PI*PI)*sin(4*PI*x/3+PI/2)*sin(4*PI*y/3+PI/2)" />
     </FUNCTION>
-    
+
     <FUNCTION NAME="ExactSolution">
       <E VAR="u" VALUE="sin(4*PI*x/3+PI/2)*sin(4*PI*y/3+PI/2)" />
     </FUNCTION>

@@ -326,10 +326,10 @@
         </ELEMENT>
 
         <COMPOSITE>
-            <C ID="0"> T[0-95] 
-	    </C>
-            <C ID="1"> E[2-3,6,9,12,17-18,23,104-110,112,122,125-126,129,132-133,139,141-142,144,147-148] 
-	    </C>
+            <C ID="0"> T[0-95]
+            </C>
+            <C ID="1"> E[2-3,6,9,12,17-18,23,104-110,112,122,125-126,129,132-133,139,141-142,144,147-148]
+            </C>
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
 
@@ -346,28 +346,28 @@
             <I PROPERTY="Projection" VALUE="DisContinuous" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
             <I PROPERTY="UpwindType" VALUE="LaxFriedrich" />
-	    <I PROPERTY="SurfaceType" VALUE="Plane" />
-	    <I PROPERTY="TestType" VALUE="TestPlane" />
-	    <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->   
-	    <I PROPERTY="MMFDir" VALUE="LOCAL" />
+            <I PROPERTY="SurfaceType" VALUE="Plane" />
+            <I PROPERTY="TestType" VALUE="TestPlane" />
+            <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
+            <I PROPERTY="MMFDir" VALUE="LOCAL" />
         </SOLVERINFO>
 
 
         <PARAMETERS>
             <P> TimeStep       = 0.001             </P>
-            <P> NumSteps       = 100             </P>
+            <P> NumSteps       = 100               </P>
             <P> FinTime        = TimeStep*NumSteps </P>
-            <P> IO_CheckSteps  = 20               </P>
-            <P> IO_InfoSteps   = 20              </P>
+            <P> IO_CheckSteps  = 20                </P>
+            <P> IO_InfoSteps   = 20                </P>
             <P> Gravity        = 1.0               </P>
-	    <P> MMFCircCentreX  = -30.0   </P>
-	    <P> MMFCircCentreY  = -30.0   </P>
+            <P> MMFCircCentreX  = -30.0            </P>
+            <P> MMFCircCentreY  = -30.0            </P>
         </PARAMETERS>
 
         <VARIABLES>
             <V ID="0"> eta  </V>
-            <V ID="1"> u </V>
-            <V ID="2"> v </V>
+            <V ID="1"> u    </V>
+            <V ID="2"> v    </V>
         </VARIABLES>
 
         <BOUNDARYREGIONS>

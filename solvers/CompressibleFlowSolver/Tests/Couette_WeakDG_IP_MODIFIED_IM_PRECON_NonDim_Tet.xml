@@ -116,7 +116,7 @@
 </EXPANSIONS>
 <CONDITIONS>
     <PARAMETERS>
-      <!-- 
+      <!--
       Couette flow with constant viscosity:
         - Velocity of upper wall is denoted uInf
         - Velocity of lower wall is 0
@@ -124,7 +124,7 @@
         - Temperature of lower wall is denoted T0 = 0.9*TInf
         - Density of solution at upper wall is denoted rhoInf = pInf/(GasConstant*TInf)
         - Distance between plates is denoted L
-        - Reynolds number is based on velocity of upper wall, 
+        - Reynolds number is based on velocity of upper wall,
           distance between plates, and density at upper wall
         - Solution is made non-dimensional by rhoInf, cInf = sqrt(Gamma*GasConstant*TInf), and L
         - Solver is initialized from analytical solution. It has been checked that the solution is constant
@@ -144,11 +144,11 @@
       <P> IO_InfoSteps          = 1                             </P>
       <P> Gamma                 = 1.4                           </P>
       <P> GasConstant           = 1/1.4                         </P>
-      <P> cInf                  = 1                             </P>  
+      <P> cInf                  = 1                             </P>
       <P> rhoInf                = 1                             </P>
       <P> Mach                  = 0.5                           </P>
       <P> Re                    = 100                           </P>
-      <P> Pr                    = 0.72                          </P>     
+      <P> Pr                    = 0.72                          </P>
       <P> L                     = 1                             </P>
       <!-- Tighter tolerances should not change the results; this has already been checked -->
       <P> NonlinIterTolRelativeL2   = 1.0E-4                    </P>
@@ -164,7 +164,7 @@
       <P> uInf                  = Mach*cInf                     </P>
       <P> vInf                  = 0.0                           </P>
       <P> mu                    = Mach / Re                     </P>
-      <P> IPSymmFluxCoeff       = 0.0                           </P>   
+      <P> IPSymmFluxCoeff       = 0.0                           </P>
     </PARAMETERS>
 
     <SOLVERINFO>
@@ -246,9 +246,9 @@
         <E VAR="rhou" VALUE="pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant))) * y/L * uInf" />
         <E VAR="rhov" VALUE="0.0" />
         <E VAR="rhow" VALUE="0.0" />
-        <E VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant))) * (y/L * uInf)^2 " />  
+        <E VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant))) * (y/L * uInf)^2 " />
     </FUNCTION>
-    
+
     <FUNCTION NAME="ExactSolution">
         <E VAR="rho"  VALUE="pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant)))" />
         <E VAR="rhou" VALUE="pInf / (GasConstant * (T0 + y/L * (TInf - T0) + y/L * (1.0 - y/L) * Pr * uInf * uInf * (Gamma-1) / (2.0 * Gamma * GasConstant))) * y/L * uInf" />

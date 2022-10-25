@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <NEKTAR>
-  
+
   <EXPANSIONS>
     <E COMPOSITE="C[11]" NUMMODES="3" TYPE="MODIFIED" FIELDS="u,v,teta,p" />
   </EXPANSIONS>
-  
+
   <CONDITIONS>
     <SOLVERINFO>
-      <I PROPERTY="SolverType"             VALUE="VelocityCorrectionScheme"/> 
+      <I PROPERTY="SolverType"             VALUE="VelocityCorrectionScheme"/>
       <I PROPERTY="EQTYPE"                 VALUE="UnsteadyNavierStokes"    />
       <I PROPERTY="EvolutionOperator"      VALUE="Nonlinear"   />
       <I PROPERTY="Projection"             VALUE="Galerkin"    />
@@ -17,51 +17,51 @@
       <I PROPERTY="Driver"                        VALUE="Standard"  />
       <I PROPERTY="SPECTRALHPDEALIASING"          VALUE="True"      />
     </SOLVERINFO>
-    
+
     <PARAMETERS>
       <!-- Need to pick Delta t strategically, dont want CFL number to be too large! -->
       <P> TimeStep       = 1e-2                </P>
       <!--  Final time -->
-      <P> T              = 1e-4             </P>
-      <P> NumSteps       = 20                </P>
+      <P> T              = 1e-4                </P>
+      <P> NumSteps       = 20                  </P>
       <P> IO_CheckSteps  = NumSteps/1          </P>
       <P> IO_InfoSteps   = 1                   </P>
-      <P> IO_CFLSteps    = 1	             </P>
-      <P> IO_FlowSteps   = 1                  </P>
+      <P> IO_CFLSteps    = 1                   </P>
+      <P> IO_FlowSteps   = 1                   </P>
       <!-- Reynolds number -->
-      <P> Re             = 1                  </P>
+      <P> Re             = 1                   </P>
       <P> Kinvis         = 1/Re                </P>
-      <P> Flowrate      =  2.0/3.0            </P>
+      <P> Flowrate       = 2.0/3.0             </P>
       <!-- Heating parameters  -->
-      <P> alpha         = 3               </P>
-      <P> Ra_uni           = 100              </P>
-      <P> Pr            =0.71              </P> 
+      <P> alpha         = 3                    </P>
+      <P> Ra_uni        = 100                  </P>
+      <P> Pr            = 0.71                 </P>
       <!-- SVV parameters -->
       <P> SVVCutoffRatio = 0.5                 </P>
-      <P> SVVDiffCoeff   = 1                 </P>
+      <P> SVVDiffCoeff   = 1                   </P>
     </PARAMETERS>
-    
-    
+
+
     <VARIABLES>
       <V ID="0">u</V>
       <V ID="1">v</V>
       <V ID="2">teta</V>
       <V ID="3">p</V>
     </VARIABLES>
-    
+
     <BOUNDARYREGIONS>
       <B ID="0"> C[7]   </B>   <!-- Top    -->
       <B ID="1"> C[8]   </B>   <!-- Bottom    -->
       <B ID="2"> C[9]   </B>   <!-- Inlet    -->
       <B ID="3"> C[10]   </B>   <!-- Outflow    -->
     </BOUNDARYREGIONS>
-    
+
     <BOUNDARYCONDITIONS>
       <REGION REF="0">
         <D VAR="u"    VALUE="0" />
         <D VAR="v"    VALUE="0" />
         <D VAR="teta" VALUE="0" />
-	<N VAR="p"    VALUE="0" USERDEFINEDTYPE="H" />
+        <N VAR="p"    VALUE="0" USERDEFINEDTYPE="H" />
       </REGION>
       <REGION REF="1">
         <D VAR="u"    VALUE="0" />
@@ -73,7 +73,7 @@
         <P VAR="u"    VALUE="[3]" />
         <P VAR="v"    VALUE="[3]" />
         <P VAR="teta" VALUE="[3]" />
-	<P VAR="p"    VALUE="[3]" />
+        <P VAR="p"    VALUE="[3]" />
       </REGION>
       <REGION REF="3">
         <P VAR="u" USERDEFINEDTYPE="Flowrate" VALUE="[2]" />
@@ -82,27 +82,27 @@
         <P VAR="p"    VALUE="[2]" />
       </REGION>
     </BOUNDARYCONDITIONS>
-        
+
     <FUNCTION NAME="DiffusionCoefficient" >
       <E VAR="teta" VALUE="Kinvis/Pr" />
     </FUNCTION>
-    
+
     <FUNCTION NAME="FlowrateForce" >
       <E VAR="ForceX" VALUE="1" />
       <E VAR="ForceY" VALUE="0" />
     </FUNCTION>
-    
+
     <FUNCTION NAME="BodyForce">
       <E VAR="u" VALUE="0"  EVARS="u v teta p" />
       <E VAR="v" VALUE="teta*Ra_uni/Pr" EVARS="u v teta p" />
       <E VAR="teta" VALUE="0" EVARS="u v teta p"/>
     </FUNCTION>
-    
+
     <FUNCTION NAME="InitialConditions">
       <E VAR="u" VALUE="(1-y^2)" />
       <E VAR="v" VALUE="0.0" />
       <E VAR="teta" VALUE ="0.5*(1-y)" />
-      <E VAR="p"    VALUE="0" />  
+      <E VAR="p"    VALUE="0" />
     </FUNCTION>
 
     <FUNCTION NAME="ExactSolution">

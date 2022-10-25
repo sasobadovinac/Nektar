@@ -38,7 +38,7 @@
             <P> Pr             = 0.72               </P>
             <P> mu             = rhoIn*vIn*2 / Re   </P>
        </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE" VALUE="NavierStokesCFEAxisym" />
             <I PROPERTY="Projection" VALUE="DisContinuous" />

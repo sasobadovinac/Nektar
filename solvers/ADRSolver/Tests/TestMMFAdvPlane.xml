@@ -306,31 +306,31 @@
       <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
       <I PROPERTY="SurfaceType" VALUE="Plane" />
       <I PROPERTY="TestType" VALUE="TestPlane" />
-      <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->   
+      <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
       <I PROPERTY="MMFDir" VALUE="LOCAL" />
-    </SOLVERINFO>  
+    </SOLVERINFO>
 
     <VARIABLES>
-      <V ID="0"> u </V> 
+      <V ID="0"> u </V>
     </VARIABLES>
-    
+
     <BOUNDARYREGIONS>
       <B ID="0"> C[2-3] </B>
     </BOUNDARYREGIONS>
-    
+
     <BOUNDARYCONDITIONS>
       <REGION REF="0">
-	<N VAR="u" VALUE="0.0" />
-      </REGION> 
+        <N VAR="u" VALUE="0.0" />
+      </REGION>
     </BOUNDARYCONDITIONS>
-    
+
     <FUNCTION NAME="AdvectionVelocity">
       <E VAR="Vx" VALUE="1.0" />
       <E VAR="Vy" VALUE="1.0" />
       <E VAR="Vz" VALUE="0.0" />
     </FUNCTION>
-    
+
   </CONDITIONS>
-  
+
 </NEKTAR>
 

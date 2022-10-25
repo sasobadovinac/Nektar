@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <NEKTAR>
      <EXPANSIONS>
-	    <E COMPOSITE="C[100,101]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u,v" />
-	    <E COMPOSITE="C[100,101]" NUMMODES="3" TYPE="MODIFIEDQUADPLUS1" FIELDS="p" />
+        <E COMPOSITE="C[100,101]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u,v" />
+        <E COMPOSITE="C[100,101]" NUMMODES="3" TYPE="MODIFIEDQUADPLUS1" FIELDS="p" />
      </EXPANSIONS>
-    
+
      <CONDITIONS>
          <SOLVERINFO>
             <I PROPERTY="SolverType"                           VALUE="VelocityCorrectionScheme"/>
             <I PROPERTY="EQTYPE"                               VALUE="UnsteadyNavierStokes"    />
-	    <I PROPERTY="AdvectionForm" 		       VALUE="Convective"	       />
+            <I PROPERTY="AdvectionForm"                        VALUE="Convective"              />
             <I PROPERTY="Projection"                           VALUE="Continuous"              />
-	    <I PROPERTY="GlobalSysSoln"                        VALUE="IterativeStaticCond"     />
-	    <I PROPERTY="SuccessiveRHS"  		       VALUE="-8"		       />
-	    <I PROPERTY="WeightPartitions"                     VALUE="Boundary"                />
+            <I PROPERTY="GlobalSysSoln"                        VALUE="IterativeStaticCond"     />
+            <I PROPERTY="SuccessiveRHS"                        VALUE="-8"                      />
+            <I PROPERTY="WeightPartitions"                     VALUE="Boundary"                />
             <I PROPERTY="TimeIntegrationMethod"                VALUE="IMEXOrder2"              />
-   	 </SOLVERINFO>
+        </SOLVERINFO>
 
         <PARAMETERS>
             <P> TimeStep              = 5e-5                  </P>
@@ -23,56 +23,56 @@
             <P> NumSteps              = T/TimeStep            </P>
             <P> IO_CheckSteps         = NumSteps/50           </P>
             <P> IO_InfoSteps          = 10                    </P>
-            <P> IO_CFLSteps           = 10	              </P>
-	    <P> Re                    = 6e5                 </P>
-	    <P> Kinvis                = 1/Re                  </P>
-	</PARAMETERS>
+            <P> IO_CFLSteps           = 10                    </P>
+            <P> Re                    = 6e5                   </P>
+            <P> Kinvis                = 1/Re                  </P>
+        </PARAMETERS>
 
         <VARIABLES>
             <V ID="0"> u </V>
             <V ID="1"> v </V>
             <V ID="2"> p </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[2]            </B>   <!-- Lower moving wall -->
             <B ID="1"> C[1]            </B>   <!-- Inlet -->
             <B ID="2"> C[3]            </B>   <!-- Outlet -->
-	    <B ID="3"> C[4]            </B>   <!-- Upper wall -->
-	    <B ID="4"> C[5,6]	       </B>   <!-- Aerofoil -->
+            <B ID="3"> C[4]            </B>   <!-- Upper wall -->
+            <B ID="4"> C[5,6]          </B>   <!-- Aerofoil -->
         </BOUNDARYREGIONS>
 
-	<BOUNDARYCONDITIONS>
+        <BOUNDARYCONDITIONS>
             <REGION REF="0">
-	        <D VAR="u" VALUE="1" />
+                <D VAR="u" VALUE="1" />
                 <D VAR="v" VALUE="0" />
-		<N VAR="p" USERDEFINEDTYPE="H" VALUE="0"    />
-	    </REGION>
-	    <REGION REF="1">
-	        <D VAR="u" VALUE="1"	            />
-	        <D VAR="v" VALUE="0"	                    />
-		<N VAR="p" USERDEFINEDTYPE="H" VALUE="0"    />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"    />
             </REGION>
-	    <REGION REF="2">
-		<N VAR="u" USERDEFINEDTYPE="HOutflow" VALUE="0" />
-		<N VAR="v" USERDEFINEDTYPE="HOutflow" VALUE="0" />
-	 	<D VAR="p" USERDEFINEDTYPE="HOutflow" VALUE="0" />
-	    </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="1"            />
+                <D VAR="v" VALUE="0"                    />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"    />
+            </REGION>
+            <REGION REF="2">
+                <N VAR="u" USERDEFINEDTYPE="HOutflow" VALUE="0" />
+                <N VAR="v" USERDEFINEDTYPE="HOutflow" VALUE="0" />
+                <D VAR="p" USERDEFINEDTYPE="HOutflow" VALUE="0" />
+            </REGION>
             <REGION REF="3">
-		<N VAR="u" VALUE="0"/>
-		<D VAR="v" VALUE="0"/>
-		<N VAR="p" USERDEFINEDTYPE="H" VALUE="0"/>
-	    </REGION> 
-	    <REGION REF="4">
-		<D VAR="u" VALUE="0" />
-		<D VAR="v" VALUE="0" />
-		<N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-	    </REGION>
-    	</BOUNDARYCONDITIONS>
+                <N VAR="u" VALUE="0"/>
+                <D VAR="v" VALUE="0"/>
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"/>
+            </REGION>
+            <REGION REF="4">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
 
-	<FUNCTION NAME="InitialConditions">
-		<E VAR="v,w,p" VALUE="0" />
-		<E VAR="u"     VALUE="1" />
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="v,w,p" VALUE="0" />
+            <E VAR="u"     VALUE="1" />
         </FUNCTION>
     </CONDITIONS>
 

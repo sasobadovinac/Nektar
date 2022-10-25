@@ -25,12 +25,12 @@
         </Provenance>
         <NekMeshCommandLine>2_2.msh 2_2.xml </NekMeshCommandLine>
     </Metadata>
-    
+
    <EXPANSIONS>
         <E COMPOSITE="C[11]" NUMMODES="10" TYPE="MODIFIED" FIELDS="rho,rhou,rhov,E" />
     </EXPANSIONS>
 <CONDITIONS>
-    <PARAMETERS> 
+    <PARAMETERS>
       <P> TimeStep              = 0.00001                          </P>
       <P> FinTime               = 0.01                           </P>
       <P> IO_CheckSteps         = 500000                        </P>
@@ -40,7 +40,7 @@
       <P> pInf                  = 101325                        </P>
       <P> rhoInf                = 1.225                         </P>
        <P> Mach                 = 0.1                           </P>
-     <P> cInf                   = sqrt(Gamma * pInf / rhoInf)   </P>  
+     <P> cInf                   = sqrt(Gamma * pInf / rhoInf)   </P>
       <P> uInf                  = Mach*cInf                     </P>
       <P> vInf                  = 0.0                           </P>
       <P> Twall                 = 300.15                        </P>
@@ -48,9 +48,9 @@
       <P> T1                    = 0.85*Twall                    </P>
       <P> Re                    = 100                           </P>
       <P> L                     = 1                             </P>
-      <P> mu                    = rhoInf * L * uInf / Re        </P>     
-      <P> Pr                    = 0.72                          </P>     
-      <P> Cv                    = GasConstant/(Gamma-1)         </P> 
+      <P> mu                    = rhoInf * L * uInf / Re        </P>
+      <P> Pr                    = 0.72                          </P>
+      <P> Cv                    = GasConstant/(Gamma-1)         </P>
       <P> Cp                    = (Gamma*GasConstant)/(Gamma-1) </P>
 
     </PARAMETERS>
@@ -116,7 +116,7 @@
         <E VAR="rhov" VALUE="0.0" />
         <E VAR="E"    VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))*(Cv*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp))+0.5*y/L*uInf*y/L*uInf)" />
     </FUNCTION>
-    
+
     <FUNCTION NAME="ExactSolution">
         <E VAR="rho"  VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))" />
         <E VAR="rhou" VALUE="pInf/(GasConstant*(T0+y/L*(T1-T0)+y/L*(1.0-y/L)*Pr*uInf*uInf/(2.0*Cp)))*y/L*uInf" />

@@ -153,7 +153,7 @@
             <I PROPERTY="SolverType" VALUE="VelocityCorrectionScheme" />
             <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes" />
             <I PROPERTY="AdvectionForm" VALUE="Convective" />
-            <I PROPERTY="Projection" VALUE="Mixed_CG_Discontinuous" />  
+            <I PROPERTY="Projection" VALUE="Mixed_CG_Discontinuous" />
             <I PROPERTY="SubSteppingScheme"     VALUE="True" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler" />
             <I PROPERTY="Extrapolation" VALUE="SubStepping" />
@@ -176,12 +176,12 @@
         </VARIABLES>
 
         <BOUNDARYREGIONS>
-            <B ID="0"> C[1] </B>  
-            <B ID="1"> C[6] </B>  
-            <B ID="2"> C[2] </B>  
-            <B ID="3"> C[3] </B>  
-            <B ID="4"> C[4] </B>  
-            <B ID="5"> C[5] </B>  
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[6] </B>
+            <B ID="2"> C[2] </B>
+            <B ID="3"> C[3] </B>
+            <B ID="4"> C[4] </B>
+            <B ID="5"> C[5] </B>
         </BOUNDARYREGIONS>
 
         <BOUNDARYCONDITIONS>
@@ -222,7 +222,7 @@
             <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
           </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
             <E VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />

@@ -887,7 +887,7 @@
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
-    
+
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="5" TYPE="MODIFIED" FIELDS="rho,rhou,rhov,rhow,E" />
     </EXPANSIONS>

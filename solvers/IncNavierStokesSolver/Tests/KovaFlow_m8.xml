@@ -89,6 +89,6 @@
         <PARAM NAME="OutputFrequency">100</PARAM>
         <PARAM NAME="SampleFrequency"> 10 </PARAM>
       </FILTER>
-    </FILTERS>    
+    </FILTERS>
 
 </NEKTAR>

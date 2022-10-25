@@ -189,25 +189,25 @@
     <PARAMETERS>
       <P> Lambda    = 1 </P>
     </PARAMETERS>
-    
+
     <VARIABLES>
       <V ID="0"> u </V>
     </VARIABLES>
-    
+
     <BOUNDARYREGIONS>
       <B ID="0"> C[1] </B>
     </BOUNDARYREGIONS>
-    
+
     <BOUNDARYCONDITIONS>
       <REGION REF="0">
         <D VAR="u" VALUE="sin(PI/2*x)*sin(PI/2*y)*sin(PI/2*z)" />
       </REGION>
     </BOUNDARYCONDITIONS>
-    
+
     <FUNCTION NAME="Forcing">
       <E VAR="u" VALUE="-(Lambda+3*PI*PI/4)*sin(PI/2*x)*sin(PI/2*y)*sin(PI/2*z)" />
     </FUNCTION>
-    
+
     <FUNCTION NAME="ExactSolution">
       <E VAR="u" VALUE="sin(PI/2*x)*sin(PI/2*y)*sin(PI/2*z)" />
     </FUNCTION>

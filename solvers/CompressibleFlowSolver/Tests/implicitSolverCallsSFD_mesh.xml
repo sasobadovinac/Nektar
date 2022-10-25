@@ -47,7 +47,7 @@
                     <P PARAM="BndLayerProgression" VALUE="1.5" />
                 </PARAMETERS>
                 <!--
-        <REFINEMENT>      
+        <REFINEMENT>
           <LINE>
             <X1> 0     </X1>
             <Y1> 0.02    </Y1>
@@ -78,7 +78,7 @@
             <R>  0.015  </R>
             <D>  0.005  </D>
           </LINE>
-          
+
           <LINE>
             <X1> 0     </X1>
             <Y1> -0.03    </Y1>

@@ -4121,14 +4121,14 @@
         <D VAR="rho"  USERDEFINEDTYPE="WallViscous" VALUE="0" />
         <D VAR="rhou" USERDEFINEDTYPE="WallViscous" VALUE="0" />
         <D VAR="rhov" USERDEFINEDTYPE="WallViscous" VALUE="0" />
-        <D VAR="rhow" USERDEFINEDTYPE="WallViscous" VALUE="0" />  
+        <D VAR="rhow" USERDEFINEDTYPE="WallViscous" VALUE="0" />
         <D VAR="E"    USERDEFINEDTYPE="WallViscous" VALUE="0" />
       </REGION>
         <REGION REF="1">
         <D VAR="rho"  VALUE="rhoInf" />
         <D VAR="rhou" VALUE="rhoInf * uInf" />
         <D VAR="rhov" VALUE="rhoInf * vInf" />
-        <D VAR="rhow" VALUE="rhoInf * wInf" />    
+        <D VAR="rhow" VALUE="rhoInf * wInf" />
         <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
       </REGION>
       <!-- Inflow -->
@@ -4136,7 +4136,7 @@
         <D VAR="rho"  VALUE="rhoInf" />
         <D VAR="rhou" VALUE="rhoInf * uInf" />
         <D VAR="rhov" VALUE="rhoInf * vInf" />
-        <D VAR="rhow" VALUE="rhoInf * wInf" />  
+        <D VAR="rhow" VALUE="rhoInf * wInf" />
         <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
       </REGION>
       <!-- Outflow -->
@@ -4144,7 +4144,7 @@
         <D VAR="rho"  VALUE="rhoInf" />
         <D VAR="rhou" VALUE="rhoInf * uInf" />
         <D VAR="rhov" VALUE="rhoInf * vInf" />
-        <D VAR="rhow" VALUE="rhoInf * wInf" />   
+        <D VAR="rhow" VALUE="rhoInf * wInf" />
         <D VAR="E"    VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)" />
       </REGION>
     </BOUNDARYCONDITIONS>
@@ -4154,9 +4154,9 @@
         <E VAR="rhou"   VALUE="rhoInf * uInf" />
         <E VAR="rhov"   VALUE="rhoInf * vInf" />
         <E VAR="rhow"   VALUE="rhoInf * wInf" />
-        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>       
+        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>
     </FUNCTION>
-        
+
     <FUNCTION NAME="ExactSolution">
         <E VAR="rho"  VALUE="1" />
         <E VAR="rhou" VALUE="1" />
@@ -4164,6 +4164,6 @@
         <E VAR="rhow" VALUE="1" />
         <E VAR="E"    VALUE="1" />
     </FUNCTION>
-    
+
   </CONDITIONS>
 </NEKTAR>

@@ -111,17 +111,17 @@
         </CURVED>
         <COMPOSITE>
             <C ID="0"> T[0] </C>
-	    <C ID="1"> T[1] </C>
-	    <C ID="2"> T[2] </C>
-	    <C ID="3"> T[3] </C>
-	    <C ID="4"> T[4] </C>
+            <C ID="1"> T[1] </C>
+            <C ID="2"> T[2] </C>
+            <C ID="3"> T[3] </C>
+            <C ID="4"> T[4] </C>
             <C ID="5"> T[5] </C>
-       	    <C ID="6"> T[6] </C>
+            <C ID="6"> T[6] </C>
             <C ID="7"> T[7] </C>
             <C ID="8"> T[8] </C>
             <C ID="9"> T[9] </C>
-	    <C ID="10"> T[10] </C>
-	    <C ID="11"> T[11] </C>
+            <C ID="10"> T[10] </C>
+            <C ID="11"> T[11] </C>
             <C ID="12"> T[12] </C>
             <C ID="13"> T[13] </C>
             <C ID="14"> T[14] </C>
@@ -137,23 +137,23 @@
     </GEOMETRY>
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="13" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[1]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[2]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[3]" NUMMODES="13" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[4]" NUMMODES="7" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[5]" NUMMODES="18" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[6]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[7]" NUMMODES="25" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[8]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[9]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[10]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[11]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[12]" NUMMODES="23" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[13]" NUMMODES="11" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[14]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[15]" NUMMODES="20" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[16]" NUMMODES="9" TYPE="MODIFIED" FIELDS="u" />
-	<E COMPOSITE="C[17]" NUMMODES="15" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[1]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[2]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[3]" NUMMODES="13" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[4]" NUMMODES="7" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[5]" NUMMODES="18" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[6]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[7]" NUMMODES="25" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[8]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[9]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[10]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[11]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[12]" NUMMODES="23" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[13]" NUMMODES="11" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[14]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[15]" NUMMODES="20" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[16]" NUMMODES="9" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[17]" NUMMODES="15" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
      <CONDITIONS>
         <PARAMETERS>
@@ -172,31 +172,31 @@
             <I PROPERTY="UpwindType"            VALUE="Upwind"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>
-        
+
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[100,200,300,400] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
                 VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE="1" />
             <E VAR="Vy" VALUE="1.5" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="u" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
             <!--<F VAR="u" FILE="cube_HO_225.chk"/>-->
             <E VAR="u" VALUE="sin(PI*x)*sin(PI*y)" />

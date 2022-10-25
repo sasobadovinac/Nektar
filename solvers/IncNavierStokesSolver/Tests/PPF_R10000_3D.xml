@@ -50,7 +50,7 @@
       <V ID="43">	0.75 1 0.0  </V>
       <V ID="44">	1 1 0.0  </V>
     </VERTEX>
-    
+
     <EDGE>
       <E ID="0">	0  1  </E>
       <E ID="1">	1  2  </E>
@@ -129,7 +129,7 @@
       <E ID="74">	42  43  </E>
       <E ID="75">	43  44  </E>
     </EDGE>
-    
+
     <ELEMENT>
       <Q ID="0">	0  5   9  4  </Q>
       <Q ID="1">	1  6   10  5  </Q>
@@ -164,7 +164,7 @@
       <Q ID="30">	65  70   74  69  </Q>
       <Q ID="31">	66  71   75  70  </Q>
     </ELEMENT>
-    
+
     <COMPOSITE>
       <C ID="0"> Q[0-31] </C>
       <C ID="1"> E[0,1,2,3] </C>                  // south border
@@ -178,7 +178,7 @@
   <EXPANSIONS>
     <E COMPOSITE="C[0]" NUMMODES="11" FIELDS="u,v,w" TYPE="MODIFIED" />
   </EXPANSIONS>
-  
+
   <CONDITIONS>
     <SOLVERINFO>
       <I PROPERTY="SolverType" VALUE="CoupledLinearisedNS" />
@@ -190,7 +190,7 @@
       <I PROPERTY="Driver"            VALUE="ModifiedArnoldi" />
       <I PROPERTY="BetaZero"          VALUE="True" />
     </SOLVERINFO>
-    
+
     <PARAMETERS>
       <P> IO_CheckSteps = 1000   </P>
       <P> IO_InfoSteps  = 20     </P>
@@ -204,20 +204,20 @@
       <P> nvec          = 2    </P>
       <P> LZ            = 1    </P>
     </PARAMETERS>
-    
+
     <VARIABLES>
       <V ID="0"> u </V>
       <V ID="1"> v </V>
       <V ID="2"> w </V>
     </VARIABLES>
-    
+
     <BOUNDARYREGIONS>
       <B ID="0"> C[1] </B>
       <B ID="1"> C[2] </B>
       <B ID="2"> C[3] </B>
       <B ID="3"> C[4] </B>
     </BOUNDARYREGIONS>
-    
+
     <BOUNDARYCONDITIONS>
       <REGION REF="0">
         <D VAR="u" VALUE="0" />
@@ -240,17 +240,17 @@
         <P VAR="w" VALUE="[1]" />
       </REGION>
     </BOUNDARYCONDITIONS>
-    
+
     <FUNCTION NAME="AdvectionVelocity">
       <E VAR="u" VALUE="1-y*y" />
       <E VAR="v" VALUE="0" />
       <E VAR="w" VALUE="0" />
     </FUNCTION>
   </CONDITIONS>
-  
+
   <FORCING>
     <FORCE TYPE="StabilityCoupledLNS">
     </FORCE>
-  </FORCING>  
-  
+  </FORCING>
+
 </NEKTAR>

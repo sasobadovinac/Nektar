@@ -293,8 +293,8 @@
       <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXdirk_3_4_3" />
       <I PROPERTY="TestType" VALUE="TestPlane" />
       <I PROPERTY="SurfaceType" VALUE="Plane" />
-      <I PROPERTY="MMFDir" VALUE="LOCAL" />      <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->   
-    </SOLVERINFO>  
+      <I PROPERTY="MMFDir" VALUE="LOCAL" />      <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
+    </SOLVERINFO>
 
     <PARAMETERS>
       <P> TimeStep       = 0.001             </P>
@@ -307,16 +307,16 @@
       <P> MMFCircCentreX  = -2.0   </P>
       <P> MMFCircCentreY  = -2.0   </P>
     </PARAMETERS>
-    
+
     <VARIABLES>
-      <V ID="0"> u </V> 
+      <V ID="0"> u </V>
     </VARIABLES>
-    
+
     <BOUNDARYREGIONS>
       <B ID="0"> C[2]  </B>
       <B ID="1"> C[3]  </B>
     </BOUNDARYREGIONS>
-    
+
     <BOUNDARYCONDITIONS>
       <REGION REF="0">
         <D VAR="u" VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)*cos(PI*y)" />
@@ -325,7 +325,7 @@
         <N VAR="u" VALUE="0" />
       </REGION>
     </BOUNDARYCONDITIONS>
-    
+
     </CONDITIONS>
-    
+
   </NEKTAR>

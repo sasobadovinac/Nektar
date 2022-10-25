@@ -107,7 +107,7 @@
     <V ID="96">  0.302905   -0.673887   -0.673887  </V>
     <V ID="97">  0.302905   0.673887   -0.673887  </V>
   </VERTEX>
-  
+
   <EDGE>
     <!--Edges are vertex pairs -->
     <E ID="0">    0  93   </E>
@@ -399,7 +399,7 @@
     <E ID="286">    97  44   </E>
     <E ID="287">    36  97   </E>
   </EDGE>
-  
+
   <ELEMENT>
     <T ID="0">    56     185     98 </T>
     <T ID="1">    9     224     12 </T>
@@ -594,7 +594,7 @@
     <T ID="190">    285     287     104 </T>
     <T ID="191">    128     286     285 </T>
   </ELEMENT>
-  
+
   <CURVED>
     <E ID="0" EDGEID="0" TYPE="PolyEvenlySpaced" NUMPOINTS="4">
     -0.577350 -0.577350 -0.577350
@@ -2618,9 +2618,9 @@
     <C ID="0"> T[0-191]
     </C>
   </COMPOSITE>
-  
+
   <DOMAIN> C[0] </DOMAIN>
-  
+
 </GEOMETRY>
 
 <EXPANSIONS>
@@ -2634,18 +2634,18 @@
             <I PROPERTY="Projection" VALUE="DisContinuous" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
             <I PROPERTY="UpwindType" VALUE="LaxFriedrich" />
-	    <I PROPERTY="SurfaceType" VALUE="Sphere" />
-	    <I PROPERTY="TestType" VALUE="TestUnsteadyZonal" /> <!-- TestSteadyZonal, TestUnSteadyZonal-->
-	    <I PROPERTY="MMFDir" VALUE="LOCAL" /> <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->   
+            <I PROPERTY="SurfaceType" VALUE="Sphere" />
+            <I PROPERTY="TestType" VALUE="TestUnsteadyZonal" /> <!-- TestSteadyZonal, TestUnSteadyZonal-->
+            <I PROPERTY="MMFDir" VALUE="LOCAL" /> <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
         </SOLVERINFO>
 
         <PARAMETERS>
             <P> TimeStep       = 0.001             </P>
-            <P> NumSteps       = 100             </P>
+            <P> NumSteps       = 100               </P>
             <P> FinTime        = TimeStep*NumSteps </P>
-            <P> IO_CheckSteps  = 20               </P>
-            <P> IO_InfoSteps   = 20             </P>
-	    <P> RotationAngle  = 0.25*PI     </P>
+            <P> IO_CheckSteps  = 20                </P>
+            <P> IO_InfoSteps   = 20                </P>
+            <P> RotationAngle  = 0.25*PI           </P>
         </PARAMETERS>
 
         <VARIABLES>
@@ -2655,5 +2655,5 @@
         </VARIABLES>
 
     </CONDITIONS>
-    
+
 </NEKTAR>

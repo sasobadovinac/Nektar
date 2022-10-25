@@ -13,7 +13,7 @@
         <P> offset         = 0.25       </P>
         <P> epsilon         = 0.000001               </P>
       </PARAMETERS>
-      
+
       <SOLVERINFO>
         <I PROPERTY="EQTYPE" VALUE="UnsteadyAdvectionDiffusion"  />
         <I PROPERTY="Projection"  VALUE="Continuous" />
@@ -38,26 +38,26 @@
           <D VAR="u" USERDEFINEDTYPE="TimeDependent"
              VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
                     exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                    exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
+                    exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
         </REGION>
       </BOUNDARYCONDITIONS>
-      
+
       <FUNCTION NAME="AdvectionVelocity">
         <E VAR="Vx" VALUE="1" />
         <E VAR="Vy" VALUE="1" />
         <E VAR="Vz" VALUE="1" />
       </FUNCTION>
-      
+
       <FUNCTION NAME="ExactSolution">
         <E VAR="u" VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
                           exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
+                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
       </FUNCTION>
-      
+
       <FUNCTION NAME="InitialConditions">
         <E VAR="u" VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
                           exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
+                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
       </FUNCTION>
     </CONDITIONS>
 

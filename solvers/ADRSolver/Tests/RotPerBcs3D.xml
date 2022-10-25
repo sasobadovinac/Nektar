@@ -4,17 +4,17 @@
     <E COMPOSITE="C[1]" NUMMODES="4" FIELDS="u" TYPE="MODIFIED" />
     <E COMPOSITE="C[2]" NUMMODES="4" FIELDS="u" TYPE="MODIFIED" />
   </EXPANSIONS>
-  
+
   <CONDITIONS>
     <PARAMETERS>
       <P> Lambda = 1 </P>
     </PARAMETERS>
-    
+
     <SOLVERINFO>
       <I PROPERTY="EQTYPE" VALUE="Helmholtz" />
       <I PROPERTY="Projection" VALUE="Continuous" />
     </SOLVERINFO>
-    
+
     <GLOBALSYSSOLNINFO>
       <V VAR="u">
         <I PROPERTY="GlobalSysSoln"       VALUE="IterativeStaticCond" />
@@ -24,7 +24,7 @@
     </GLOBALSYSSOLNINFO>
 
     <VARIABLES>
-      <V ID="0"> u </V> 
+      <V ID="0"> u </V>
     </VARIABLES>
     <BOUNDARYREGIONS>
       <B ID="1"> C[3]  </B> <!--casing      -->
@@ -45,16 +45,16 @@
         <D VAR="u" VALUE="(z^2+y^2)" />
       </REGION>
       <REGION REF="3">
-	<D VAR="u" VALUE="(z^2+y^2)" />
+        <D VAR="u" VALUE="(z^2+y^2)" />
       </REGION>
       <REGION REF="4">
-	<D VAR="u" VALUE="(z^2+y^2)" />
+        <D VAR="u" VALUE="(z^2+y^2)" />
       </REGION>
       <REGION REF="5">
-	<D VAR="u" VALUE="(z^2+y^2)" />
+        <D VAR="u" VALUE="(z^2+y^2)" />
       </REGION>
       <REGION REF="6">
-	<D VAR="u" VALUE="(z^2+y^2)" />
+        <D VAR="u" VALUE="(z^2+y^2)" />
       </REGION>
       <REGION REF="7">
         <P VAR="u" USERDEFINEDTYPE="Rotated:x:-PI/6:1e-6" VALUE="[8]" />

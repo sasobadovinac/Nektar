@@ -84,14 +84,14 @@
         </CURVED>
         <COMPOSITE>
             <C ID="0"> Q[0] </C>
-	    <C ID="1"> Q[1] </C>
-	    <C ID="2"> Q[2] </C>
-	    <C ID="3"> Q[3] </C>
-	    <C ID="4"> Q[4] </C>
-	    <C ID="5"> Q[5] </C>
-	    <C ID="6"> Q[6] </C>
-	    <C ID="7"> Q[7] </C>
-	    <C ID="8"> Q[8] </C>
+            <C ID="1"> Q[1] </C>
+            <C ID="2"> Q[2] </C>
+            <C ID="3"> Q[3] </C>
+            <C ID="4"> Q[4] </C>
+            <C ID="5"> Q[5] </C>
+            <C ID="6"> Q[6] </C>
+            <C ID="7"> Q[7] </C>
+            <C ID="8"> Q[8] </C>
             <C ID="100"> E[0,10,17] </C>
             <C ID="200"> E[18,20,22] </C>
             <C ID="300"> E[23,16,8] </C>
@@ -101,14 +101,14 @@
     </GEOMETRY>
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="10" TYPE="MODIFIED" FIELDS="u" />
-	 <E COMPOSITE="C[1]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
-	  <E COMPOSITE="C[2]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
-	   <E COMPOSITE="C[3]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u" />
-	    <E COMPOSITE="C[4]" NUMMODES="20" TYPE="MODIFIED" FIELDS="u" />
-	     <E COMPOSITE="C[5]" NUMMODES="17" TYPE="MODIFIED" FIELDS="u" />
-	      <E COMPOSITE="C[6]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />
-	       <E COMPOSITE="C[7]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
-	        <E COMPOSITE="C[8]" NUMMODES="9" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[1]" NUMMODES="8" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[2]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[3]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[4]" NUMMODES="20" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[5]" NUMMODES="17" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[6]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[7]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[8]" NUMMODES="9" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
        <CONDITIONS>
         <PARAMETERS>
@@ -127,31 +127,31 @@
             <I PROPERTY="UpwindType"            VALUE="Upwind"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>
-        
+
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[100,200,300,400] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
                 VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE="1" />
             <E VAR="Vy" VALUE="1.5" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="u" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
             <!--<F VAR="u" FILE="cube_HO_225.chk"/>-->
             <E VAR="u" VALUE="sin(PI*x)*sin(PI*y)" />

@@ -27,10 +27,10 @@
     </COMPOSITE>
     <DOMAIN> C[101] </DOMAIN>
   </GEOMETRY>
-  
-  
+
+
   <EXPANSIONS>
-    <E COMPOSITE="C[101]" NUMMODES="4" FIELDS="rho,rhou,rhov,E" TYPE="MODIFIED" />       
+    <E COMPOSITE="C[101]" NUMMODES="4" FIELDS="rho,rhou,rhov,E" TYPE="MODIFIED" />
   </EXPANSIONS>
 
   <CONDITIONS>
@@ -48,41 +48,41 @@
     </SOLVERINFO>
     <PARAMETERS>
       <!--Computational parameters-->
-      <P> TimeStep            = 0.002  		                </P>  
-      <P> NumSteps            = 1       			</P>
-      <P> IO_CheckSteps       = 4000         			</P> 
-      <P> IO_InfoSteps        = 200            		        </P>
-      <P> IO_CFLSteps         = 200            		        </P>
+      <P> TimeStep            = 0.002                         </P>
+      <P> NumSteps            = 1                             </P>
+      <P> IO_CheckSteps       = 4000                          </P>
+      <P> IO_InfoSteps        = 200                           </P>
+      <P> IO_CFLSteps         = 200                           </P>
       <!-- Fluid properties -->
-      <P> Gamma               = 1.4          			</P>
-      <P> Pr                  = 0.72         			</P>
-      <P> Mach                = 0.3         			</P> <!-- 0.6 -->
-      <P> Re                  = 200.0      			</P>
-      <P> GasConstant         = 1.0/(Gamma*Mach*Mach)		</P>
-      <P> mu                  = 1.0/Re     			</P>
+      <P> Gamma               = 1.4                           </P>
+      <P> Pr                  = 0.72                          </P>
+      <P> Mach                = 0.3                           </P> <!-- 0.6 -->
+      <P> Re                  = 200.0                         </P>
+      <P> GasConstant         = 1.0/(Gamma*Mach*Mach)         </P>
+      <P> mu                  = 1.0/Re                        </P>
       <!-- Boundary condition parameters-->
-      <P> rhoInf              = 1.0            			</P>
-      <P> TInf                = 1.0            			</P>
-      <P> pInf                = rhoInf*GasConstant*TInf	        </P>
-      <P> cInf                = sqrt(Gamma*GasConstant*TInf)    </P>
-      <P> uInf	              = Mach*cInf	       		</P>
-      <P> vInf	              = 0.0	       		        </P>
+      <P> rhoInf              = 1.0                           </P>
+      <P> TInf                = 1.0                           </P>
+      <P> pInf                = rhoInf*GasConstant*TInf       </P>
+      <P> cInf                = sqrt(Gamma*GasConstant*TInf)  </P>
+      <P> uInf                = Mach*cInf                     </P>
+      <P> vInf                = 0.0                           </P>
     </PARAMETERS>
 
     <VARIABLES>
       <V ID="0"> rho  </V>
       <V ID="1"> rhou </V>
       <V ID="2"> rhov </V>
-      <V ID="3"> E    </V>     
+      <V ID="3"> E    </V>
     </VARIABLES>
 
     <BOUNDARYREGIONS>
       <!-- 1-inflow (left), 2-symmetry (bottom), 3-outflow (right), 4-symmetry (top), 5,6,7,8-wall (cylinder) -->
-      <B ID="0"> C[8] </B>    
+      <B ID="0"> C[8] </B>
     </BOUNDARYREGIONS>
 
     <BOUNDARYCONDITIONS>
-      <!-- Wall -->    
+      <!-- Wall -->
       <REGION REF="0">
         <D VAR="rho"  USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
         <D VAR="rhou" USERDEFINEDTYPE="WallAdiabatic" VALUE="0" />
@@ -93,21 +93,21 @@
 
     <FUNCTION NAME="InitialConditions">
       <E VAR="rho" VALUE="1.0" />
-      <E VAR="rhou"  VALUE="((3.057e15*(sqrt(x*x+y*y)-0.5)^6 
-                          - 6.734e13*(sqrt(x*x+y*y)-0.5)^5 
-                          + 5.53e11*(sqrt(x*x+y*y)-0.5)^4 
-                          - 1.958e9*(sqrt(x*x+y*y)-0.5)^3 
-                          + 1.873e6*(sqrt(x*x+y*y)-0.5)^2 
-                          + 4836*(sqrt(x*x+y*y)-0.5))*((sqrt(x*x+y*y)-0.5)<0.0041) 
-                          + 9.18*((sqrt(x*x+y*y)-0.5)>=0.0041))/9.18 " />	                
-      <E VAR="rhov" VALUE="1.0" />	        
+      <E VAR="rhou"  VALUE="((3.057e15*(sqrt(x*x+y*y)-0.5)^6
+                          - 6.734e13*(sqrt(x*x+y*y)-0.5)^5
+                          + 5.53e11*(sqrt(x*x+y*y)-0.5)^4
+                          - 1.958e9*(sqrt(x*x+y*y)-0.5)^3
+                          + 1.873e6*(sqrt(x*x+y*y)-0.5)^2
+                          + 4836*(sqrt(x*x+y*y)-0.5))*((sqrt(x*x+y*y)-0.5)<0.0041)
+                          + 9.18*((sqrt(x*x+y*y)-0.5)>=0.0041))/9.18 " />
+      <E VAR="rhov" VALUE="1.0" />
       <E VAR="E"    VALUE="1.0" />
-      
+
       <!--
       <D VAR="u" VALUE="(3.057e15*y^6 - 6.734e13*y^5 + 5.53e11*y^4 - 1.958e9*y^3 + 1.873e6*y^2 + 4836*y + 0.03797)*(y<0.0041) + Uinf*(y>=0.0041)" />
       <F VAR="rho,rhou,rhov,E" FILE="0_cyl2D.fld" />
-      --> 
-    </FUNCTION> 
-    
+      -->
+    </FUNCTION>
+
   </CONDITIONS>
 </NEKTAR>

@@ -38,14 +38,14 @@
         <I PROPERTY="Projection" VALUE="Galerkin" />
         <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1" />
       </SOLVERINFO>
-      
+
       <PARAMETERS>
-        <P> TimeStep      = 0.001    		</P>
-        <P> NumSteps      = 100     		</P>
-        <P> IO_CheckSteps = 1000 		</P>
-        <P> IO_InfoSteps  = 50    		</P>
-        <P> Re            = 200      		</P>
-        <P> Kinvis        = 1.0/Re     	        </P>
+        <P> TimeStep      = 0.001    </P>
+        <P> NumSteps      = 100      </P>
+        <P> IO_CheckSteps = 1000     </P>
+        <P> IO_InfoSteps  = 50       </P>
+        <P> Re            = 200      </P>
+        <P> Kinvis        = 1.0/Re   </P>
       </PARAMETERS>
 
         <VARIABLES>
@@ -81,7 +81,7 @@
         <FUNCTION NAME="InitialConditions">
           <F VAR="u,v,p" FILE="TriQuadChannelHdf5.rst" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
           <E VAR="u" VALUE="1-y*y" />
           <E VAR="v" VALUE="0" />

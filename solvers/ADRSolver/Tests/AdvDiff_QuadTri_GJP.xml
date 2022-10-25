@@ -32,15 +32,15 @@
     <CONDITIONS>
 
         <PARAMETERS>
-          <P> TimeStep       = 2.5e-4    	 </P>
+          <P> TimeStep       = 2.5e-4     </P>
           <P> NumSteps       = 20         </P>
-          <P> IO_CheckSteps  = 1000    </P>
-          <P> IO_InfoSteps   = 1             </P>
-          <P> IO_FiltersInfoSteps   = 100    </P>
-          <P> advx           = 1                 </P>
-          <P> advy           = 0                 </P>
-          <P> epsilon         = 0.000001               </P>
-          <P> GJPJumpScale  = 1            	   </P>
+          <P> IO_CheckSteps  = 1000       </P>
+          <P> IO_InfoSteps   = 1          </P>
+          <P> IO_FiltersInfoSteps   = 100 </P>
+          <P> advx           = 1          </P>
+          <P> advy           = 0          </P>
+          <P> epsilon        = 0.000001   </P>
+          <P> GJPJumpScale   = 1          </P>
         </PARAMETERS>
 
         <SOLVERINFO>
@@ -71,47 +71,47 @@
         </BOUNDARYREGIONS>
 
         <BOUNDARYCONDITIONS>
-          <REGION REF="0"> 
+          <REGION REF="0">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="1"> 
+          <REGION REF="1">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="2"> 
+          <REGION REF="2">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="3"> 
+          <REGION REF="3">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="4"> 
-            <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
-            <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
-          </REGION> 
-          <REGION REF="5"> 
+          <REGION REF="4">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="6"> 
+          <REGION REF="5">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="7"> 
+          <REGION REF="6">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="8"> 
+          <REGION REF="7">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="9"> 
+          <REGION REF="8">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>
-          <REGION REF="10"> 
+          <REGION REF="9">
+            <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
+            <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
+          </REGION>
+          <REGION REF="10">
             <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
             <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(PI*(x-advx*t))*sin(PI*(y-advy*t))"/>
           </REGION>

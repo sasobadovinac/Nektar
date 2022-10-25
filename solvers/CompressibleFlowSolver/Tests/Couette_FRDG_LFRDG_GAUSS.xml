@@ -129,7 +129,7 @@
         <D VAR="rhou" VALUE="rhoInf * uInf" />
         <D VAR="rhov" VALUE="rhoInf * vInf" />
         <D VAR="E"    VALUE="1.05 * Twall * rhoInf * GasConstant / (Gamma - 1)" />
-      </REGION>      
+      </REGION>
       <REGION REF="3">
         <P VAR="rho"  VALUE="[1]" />
         <P VAR="rhou" VALUE="[1]" />
@@ -142,15 +142,15 @@
         <E VAR="rho"    VALUE="rhoInf"/>
         <E VAR="rhou"   VALUE="rhoInf * uInf"   />
         <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>       
+        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>
     </FUNCTION>
-    
+
     <FUNCTION NAME="ExactSolution">
         <E VAR="rho"  VALUE="rhoInf" />
         <E VAR="rhou" VALUE="rhoInf * uInf * y" />
         <E VAR="rhov" VALUE="rhoInf * vInf" />
         <E VAR="E"    VALUE="109100 * ((1 / (Gamma - 1)) + (uInf * uInf * y * y / (2 * GasConstant)) / (Twall + 0.05 * y * Twall + 0.72 * uInf * uInf * y * (1 - y) / (2 * 1004.7)))" />
     </FUNCTION>
-    
+
   </CONDITIONS>
 </NEKTAR>

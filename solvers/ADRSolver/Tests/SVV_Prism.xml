@@ -500,7 +500,7 @@
             <I PROPERTY="TimeIntegrationMethod"      VALUE="BackwardEuler" />
             <I PROPERTY="SpectralVanishingViscosity" VALUE="True" />
         </SOLVERINFO>
-        
+
         <PARAMETERS>
             <P> TimeStep        = 0.01                    </P>
             <P> NumSteps        = 100                       </P>
@@ -514,11 +514,11 @@
             <P> SVVCutoffRatio  = 0.2                       </P>
             <P> SVVDiffCoeff    = 1.0                       </P>
         </PARAMETERS>
-        
+
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B>    <!-- Inlet -->
             <B ID="1"> C[6] </B>    <!-- Outlet -->
@@ -527,7 +527,7 @@
             <B ID="4"> C[4] </B>    <!-- Wall -->
             <B ID="5"> C[5] </B>    <!-- Wall right -->
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" VALUE="0" />
@@ -548,12 +548,12 @@
                 <D VAR="u" VALUE="0" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
-        
+
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="sin(wavefreq*x)*sin(wavefreq*y)*sin(wavefreq*z)" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
           <E VAR="u" VALUE="exp(-epsilon*3*wavefreq*wavefreq*FinTime)*sin(wavefreq*x)*sin(wavefreq*y)*sin(wavefreq*z)" />
         </FUNCTION>

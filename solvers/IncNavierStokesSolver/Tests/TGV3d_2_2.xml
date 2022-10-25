@@ -32,7 +32,7 @@
      <!--   <I PROPERTY="UseFFT"                VALUE="FFTW"                       /> -->
      <!--   <I PROPERTY="GlobalSysSoln"         VALUE="DirectMultiLevelStaticCond" /> -->
             <I PROPERTY="GlobalSysSoln"         VALUE="IterativeStaticCond" />
-            <I PROPERTY="SpectralHPDealiasing" 	VALUE="True" />
+            <I PROPERTY="SpectralHPDealiasing"  VALUE="True" />
             <I PROPERTY="SpectralVanishingViscosity"         VALUE="DGKernel" /> 
       <!--  <I PROPERTY="SpectralVanishingViscosity"         VALUE="True" />  --> 
         </SOLVERINFO>
@@ -52,19 +52,19 @@
      <!--   <P> HomModesZ      = 64       </P> -->
             <P> SVVCutoffRatio = 1      </P>  
             <P> SVVDiffCoeff   = 1       </P>  
-	</PARAMETERS>
-	<GLOBALSYSSOLNINFO>
-	     <V VAR="u,v,w">
-	       <I PROPERTY="GlobalSysSoln"       VALUE="IterativeStaticCond" />
-	       <I PROPERTY="Preconditioner"       VALUE="LowEnergyBlock"/>
-	       <I PROPERTY="IterativeSolverTolerance"    VALUE="1e-9"/>
-	    </V>
-	    <V VAR="p">
-	       <I PROPERTY="GlobalSysSoln"         VALUE="IterativeStaticCond" />
-	       <I PROPERTY="Preconditioner"        VALUE="FullLinearSpaceWithLowEnergyBlock"/>
-	       <I PROPERTY="IterativeSolverTolerance"    VALUE="1e-9"/>
-	   </V>
-	</GLOBALSYSSOLNINFO>
+        </PARAMETERS>
+        <GLOBALSYSSOLNINFO>
+          <V VAR="u,v,w">
+            <I PROPERTY="GlobalSysSoln"            VALUE="IterativeStaticCond" />
+            <I PROPERTY="Preconditioner"           VALUE="LowEnergyBlock"/>
+            <I PROPERTY="IterativeSolverTolerance" VALUE="1e-9"/>
+          </V>
+          <V VAR="p">
+            <I PROPERTY="GlobalSysSoln"            VALUE="IterativeStaticCond" />
+            <I PROPERTY="Preconditioner"           VALUE="FullLinearSpaceWithLowEnergyBlock"/>
+            <I PROPERTY="IterativeSolverTolerance" VALUE="1e-9"/>
+          </V>
+        </GLOBALSYSSOLNINFO>
         <VARIABLES>
             <V ID="0"> u </V>
             <V ID="1"> v </V>

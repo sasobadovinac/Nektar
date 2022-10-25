@@ -61,7 +61,7 @@
           <E VAR="v" VALUE="0" />
           <E VAR="p" VALUE="(-2*Kinvis*(x-1))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
           <E VAR="u" VALUE="y*(1-y)" />
           <E VAR="v" VALUE="0" />

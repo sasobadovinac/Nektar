@@ -43,8 +43,8 @@
     <CONDITIONS>
 
         <PARAMETERS>
-			<P> TimeStep       = 5e-4             </P> 
-            <P> FinTime        = 0.25              </P>
+            <P> TimeStep       = 5e-4               </P>
+            <P> FinTime        = 0.25               </P>
             <P> NumSteps       = FinTime/TimeStep   </P>
             <P> IO_CheckSteps  = NumSteps/50        </P>
             <P> IO_InfoSteps   = 100                </P>
@@ -53,15 +53,15 @@
             <P> h0             = 1.0                </P>
             <P> rho            = 0.5                </P>
             <P> nue            = 0.5                </P>
-            <P> pext           = 0.0                </P> 
+            <P> pext           = 0.0                </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="PulseWavePropagation"/>
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-            <I PROPERTY="UpwindTypePulse"       VALUE="UpwindPulse"         /> 
+            <I PROPERTY="UpwindTypePulse"       VALUE="UpwindPulse"         />
         </SOLVERINFO>
 
         <VARIABLES>
@@ -93,9 +93,9 @@
         <FUNCTION NAME="A_0">
             <E VAR="A_0[0]" VALUE="1.0" />
         </FUNCTION>
-        
-        <FUNCTION NAME="MaterialProperties"> 
-            <E VAR="beta[0]" VALUE="100" />     	
+
+        <FUNCTION NAME="MaterialProperties">
+            <E VAR="beta[0]" VALUE="100" />
         </FUNCTION>
 
         <FUNCTION NAME="ExactSolution">

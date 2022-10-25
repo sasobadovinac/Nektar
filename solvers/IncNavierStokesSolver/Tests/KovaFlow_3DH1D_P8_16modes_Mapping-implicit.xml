@@ -29,11 +29,11 @@
             <P> Kinvis = 1/Re        </P>
             <P> HomModesZ = 16          </P>
             <P> LZ = 2.0        </P>
-            
+
             <P> wavyAmplitude     = 1*0.10  </P>
             <P> wavyLambda     =    1.0   </P>
             <P> K               =  0.5*Re-sqrt(0.25*Re*Re+4*PI*PI) </P>
-            
+
             <P> MappingPressureTolerance    = 1e-8  </P>  <!-- Default = 1e-12  -->
             <P> MappingViscousTolerance     = 1e-8  </P>  <!-- Default = 1e-12  -->
             <P> MappingPressureRelaxation   = 0.9   </P>  <!-- Default = 1.0    -->
@@ -87,17 +87,16 @@
             <E VAR="w" VALUE="(K/(2*PI))*exp(K*(x - (tanh(1-x)/tanh(1))*wavyAmplitude/2*cos(2*PI*z/wavyLambda)))*sin(2*PI*z)" />
             <E VAR="p" VALUE="0.5*(1-exp(2*K*(x - (tanh(1-x)/tanh(1))*wavyAmplitude/2*cos(2*PI*z/wavyLambda))))" />
         </FUNCTION>
-        
-		<FUNCTION NAME="Mapping">
-			<E VAR="x" VALUE="(x - (tanh(1-x)/tanh(1))*wavyAmplitude/2*cos(2*PI*z/wavyLambda))" />
-		</FUNCTION>
-		
+
+        <FUNCTION NAME="Mapping">
+            <E VAR="x" VALUE="(x - (tanh(1-x)/tanh(1))*wavyAmplitude/2*cos(2*PI*z/wavyLambda))" />
+        </FUNCTION>
+
     </CONDITIONS>
-    
+
     <MAPPING TYPE="XofXZ">
         <COORDS>Mapping</COORDS>
-	</MAPPING>
-
+    </MAPPING>
 
     <GEOMETRY DIM="2" SPACE="2">
 

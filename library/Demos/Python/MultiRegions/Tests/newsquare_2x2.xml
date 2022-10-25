@@ -60,7 +60,7 @@
     </EXPANSIONS>
 
     <CONDITIONS>
-	<!-- Tol = 1e-09-->
+        <!-- Tol = 1e-09-->
         <PARAMETERS>
             <P> TimeStep       = 0.01           </P>
             <P> NumSteps       = 1000              </P>
@@ -76,43 +76,41 @@
             <I PROPERTY="Projection" VALUE="Galerkin" />
             <I PROPERTY="DiffusionAdvancement" VALUE="Implicit" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="BACKWARDEuler" />
-	</SOLVERINFO>
+        </SOLVERINFO>
 
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
 
         <BOUNDARYREGIONS>
-	   <B ID="0"> C[1] </B>
-	   <B ID="1"> C[2] </B>
-	   <B ID="2"> C[3] </B>
-	   <B ID="3"> C[4] </B>
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[2] </B>
+            <B ID="2"> C[3] </B>
+            <B ID="3"> C[4] </B>
 
         </BOUNDARYREGIONS>
 
         <BOUNDARYCONDITIONS>
-	   <REGION REF="0">
-		<N VAR="u" VALUE = "-2.0" />
-	   </REGION>
+            <REGION REF="0">
+                <N VAR="u" VALUE = "-2.0" />
+            </REGION>
 
-	   <REGION REF="1">
-		<N VAR="u" VALUE= "-2.0" />
-	   </REGION>
-		
-	   <REGION REF="2">
-		<N VAR="u" VALUE= "5.0" />
-	   </REGION> 
+            <REGION REF="1">
+                <N VAR="u" VALUE= "-2.0" />
+            </REGION>
 
-	   <REGION REF="3">
-		<N VAR="u" VALUE= "5.0" />
-	   </REGION>
-        </BOUNDARYCONDITIONS> 
-	
+            <REGION REF="2">
+                <N VAR="u" VALUE= "5.0" />
+            </REGION>
+
+            <REGION REF="3">
+                <N VAR="u" VALUE= "5.0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
 
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="10.0" />
         </FUNCTION>
-
 
     </CONDITIONS>
 </NEKTAR>

@@ -42,7 +42,7 @@
             <P> IO_InfoSteps  = NumSteps  </P>
             <P> Re            = 200               </P>
             <P> Kinvis        = 1/Re              </P>
-            <P> AdaptiveMaxModes = 7               </P> 
+            <P> AdaptiveMaxModes = 7               </P>
             <P> AdaptiveMinModes = 4               </P>
         </PARAMETERS>
         <VARIABLES>
@@ -84,5 +84,5 @@
             <E VAR="v" VALUE="0.1" />
             <E VAR="p" VALUE="0.0"/>
         </FUNCTION>
-    </CONDITIONS> 
+    </CONDITIONS>
 </NEKTAR>

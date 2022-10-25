@@ -83,7 +83,7 @@
     <V ID="72">  0.382683   0.000000   0.923880  </V>
     <V ID="73">  0.923880   0.000000   0.382683  </V>
   </VERTEX>
-  
+
   <EDGE>
     <!--Edges are vertex pairs -->
     <E ID="0">    0  20   </E>
@@ -303,7 +303,7 @@
     <E ID="214">    73  38   </E>
     <E ID="215">    39  73   </E>
   </EDGE>
-  
+
   <ELEMENT>
     <T ID="0">    56     185     98 </T>
     <T ID="1">    12     9     74 </T>
@@ -450,7 +450,7 @@
     <T ID="142">    213     215     25 </T>
     <T ID="143">    24     214     213 </T>
   </ELEMENT>
-  
+
   <CURVED>
     <E ID="0" EDGEID="0" TYPE="PolyEvenlySpaced" NUMPOINTS="4">
     -0.577350 -0.577350 -0.577350
@@ -1972,7 +1972,7 @@
   </COMPOSITE>
 
     <DOMAIN> C[0] </DOMAIN>
-  
+
 </GEOMETRY>
 
 <EXPANSIONS>
@@ -1980,7 +1980,7 @@
 </EXPANSIONS>
 
 <CONDITIONS>
-    
+
     <PARAMETERS>
         <P> TimeStep       = 0.001            </P>
         <P> NumSteps       = 100              </P>
@@ -1991,7 +1991,7 @@
         <P> MMFCircCentreX  = -2.0   </P>
         <P> MMFCircCentreY  = -2.0   </P>
     </PARAMETERS>
-    
+
     <SOLVERINFO>
         <I PROPERTY="EQTYPE" VALUE="MMFAdvection" />
         <I PROPERTY="Projection" VALUE="DisContinuous"/>
@@ -2001,12 +2001,12 @@
         <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
         <I PROPERTY="MMFDir" VALUE="LOCAL" />
     </SOLVERINFO>
-    
+
     <VARIABLES>
         <V ID="0"> u </V>
-    </VARIABLES>  
-    
+    </VARIABLES>
+
 </CONDITIONS>
-  
+
 </NEKTAR>
 

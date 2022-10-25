@@ -12,7 +12,7 @@
             <I PROPERTY="SolverType"            VALUE="VCSWeakPressure" />
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes" />
             <I PROPERTY="AdvectionForm"         VALUE="Convective" />
-            <I PROPERTY="Projection"            VALUE="Mixed_CG_Discontinuous" />  
+            <I PROPERTY="Projection"            VALUE="Mixed_CG_Discontinuous" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="BDFImplicitOrder2" />
             <I PROPERTY="Extrapolation"         VALUE="SubStepping" />
         </SOLVERINFO>
@@ -24,7 +24,7 @@
           <P> IO_InfoSteps  = 10     </P>
           <P> Kinvis        = 0.025   </P>
           <P> IO_HistorySteps = 10         </P>
-          <P> SubStepCFL    = 0.5      </P> 
+          <P> SubStepCFL    = 0.5      </P>
           <P> MinSubSteps   = 4        </P>
         </PARAMETERS>
 

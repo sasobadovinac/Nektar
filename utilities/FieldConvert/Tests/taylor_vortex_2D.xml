@@ -34,7 +34,7 @@
     </EXPANSIONS>
 
     <CONDITIONS>
-    
+
         <SOLVERINFO>
             <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />

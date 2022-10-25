@@ -4088,7 +4088,7 @@
         <I PROPERTY="Projection"            VALUE="DisContinuous"       />
         <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
         <I PROPERTY="DiffusionType"         VALUE="InteriorPenalty"     />
-	      <I PROPERTY="AdvectionAdvancement"  VALUE="Implicit"            />
+        <I PROPERTY="AdvectionAdvancement"  VALUE="Implicit"            />
         <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"            />
         <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"       />
         <I PROPERTY="UpwindType"            VALUE="Roe"                 />
@@ -4145,15 +4145,15 @@
         <E VAR="rho"    VALUE="rhoInf"/>
         <E VAR="rhou"   VALUE="rhoInf * uInf"   />
         <E VAR="rhov"   VALUE="rhoInf * vInf"   />
-        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>       
+        <E VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/>
     </FUNCTION>
-        
+
     <FUNCTION NAME="ExactSolution">
         <E VAR="rho"  VALUE="1" />
         <E VAR="rhou" VALUE="1" />
         <E VAR="rhov" VALUE="1" />
         <E VAR="E"    VALUE="1" />
     </FUNCTION>
-    
+
   </CONDITIONS>
 </NEKTAR>

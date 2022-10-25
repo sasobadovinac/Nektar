@@ -9,7 +9,7 @@
     </EXPANSIONS>
 
     <CONDITIONS>
-      
+
     <PARAMETERS>
       <P> FinTime        = 1.0               </P>
       <P> TimeStep       = 0.001            </P>
@@ -21,7 +21,7 @@
       <P> advz           = 0.0                </P>
       <P> offset         = 0.5                </P>
     </PARAMETERS>
-    
+
     <SOLVERINFO>
       <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
       <I PROPERTY="Projection"            VALUE="Continuous"          />
@@ -30,7 +30,7 @@
       <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"        />
       <I PROPERTY="GJPStabilisation"      VALUE="SemiImplicit"        />
     </SOLVERINFO>
-    
+
     <VARIABLES>
       <V ID="0"> u </V>
     </VARIABLES>
@@ -69,16 +69,16 @@
       <E VAR="Vx" VALUE="1" />
       <E VAR="Vy" VALUE="1" />
       <E VAR="Vz" VALUE="1" />
-    </FUNCTION>   
-    
-    <FUNCTION NAME="InitialConditions"> 
-      <E VAR="u" VALUE="exp(-20.0*(x-offset)*(x-offset))*exp(-20.0*(y-offset)*(y-offset))*exp(-20.0*(z-offset)*(z-offset))" /> 
-   </FUNCTION>
-    
-    <FUNCTION NAME="ExactSolution">
-      <E VAR="u" VALUE="exp(-20.0*(x-offset)*(x-offset))*exp(-20.0*(y-offset)*(y-offset))*exp(-20.0*(z-offset)*(z-offset))" /> 
     </FUNCTION>
-    
+
+    <FUNCTION NAME="InitialConditions">
+      <E VAR="u" VALUE="exp(-20.0*(x-offset)*(x-offset))*exp(-20.0*(y-offset)*(y-offset))*exp(-20.0*(z-offset)*(z-offset))" />
+   </FUNCTION>
+
+    <FUNCTION NAME="ExactSolution">
+      <E VAR="u" VALUE="exp(-20.0*(x-offset)*(x-offset))*exp(-20.0*(y-offset)*(y-offset))*exp(-20.0*(z-offset)*(z-offset))" />
+    </FUNCTION>
+
   </CONDITIONS>
 
     <GEOMETRY DIM="3" SPACE="3" >
@@ -239,4 +239,4 @@
       <NekMeshCommandLine>-m peralign:surf1=5:surf2=6:dir=z:orient TGV3d_aligned_oriented.xml TGV3d_aligned_oriented.xml </NekMeshCommandLine>
     </Metadata>
   </NEKTAR>
-  
+

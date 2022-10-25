@@ -12,7 +12,7 @@
         <P> advz           = 1          </P>
         <P> offset         = 0.25       </P>
       </PARAMETERS>
-      
+
       <SOLVERINFO>
         <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
         <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
@@ -35,26 +35,26 @@
           <D VAR="u" USERDEFINEDTYPE="TimeDependent"
              VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
                     exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                    exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
+                    exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
         </REGION>
       </BOUNDARYCONDITIONS>
-      
+
       <FUNCTION NAME="AdvectionVelocity">
         <E VAR="Vx" VALUE="1" />
         <E VAR="Vy" VALUE="1" />
         <E VAR="Vz" VALUE="1" />
       </FUNCTION>
-      
+
       <FUNCTION NAME="ExactSolution">
         <E VAR="u" VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
                           exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
+                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
       </FUNCTION>
-      
+
       <FUNCTION NAME="InitialConditions">
         <E VAR="u" VALUE="exp(-15.0*(x-offset-advx*t)*(x-offset-advx*t))*
                           exp(-15.0*(y-offset-advy*t)*(y-offset-advy*t))*
-                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" /> 
+                          exp(-15.0*(z-offset-advz*t)*(z-offset-advz*t))" />
       </FUNCTION>
     </CONDITIONS>
 

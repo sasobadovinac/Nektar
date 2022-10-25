@@ -76,17 +76,17 @@
         </ELEMENT>
         <COMPOSITE>
             <C ID="0"> T[0] </C>
-	    <C ID="1"> T[1] </C>
-	    <C ID="2"> T[2] </C>
-	    <C ID="3"> T[3] </C>
-	    <C ID="4"> T[4] </C>
+            <C ID="1"> T[1] </C>
+            <C ID="2"> T[2] </C>
+            <C ID="3"> T[3] </C>
+            <C ID="4"> T[4] </C>
             <C ID="5"> T[5] </C>
-       	    <C ID="6"> T[6] </C>
+            <C ID="6"> T[6] </C>
             <C ID="7"> T[7] </C>
             <C ID="8"> T[8] </C>
             <C ID="9"> T[9] </C>
-	    <C ID="10"> T[10] </C>
-	    <C ID="11"> T[11] </C>
+            <C ID="10"> T[10] </C>
+            <C ID="11"> T[11] </C>
             <C ID="12"> T[12] </C>
             <C ID="13"> T[13] </C>
             <C ID="14"> T[14] </C>
@@ -119,18 +119,18 @@
             <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>
-        
+
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[100] </B>
             <B ID="1"> C[200] </B>
             <B ID="2"> C[300] </B>
             <B ID="3"> C[400] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
               <P VAR="u" VALUE="[2]" />
@@ -145,18 +145,18 @@
               <P VAR="u" VALUE="[1]" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE="advx" />
             <E VAR="Vy" VALUE="advy" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
           <E VAR="u" VALUE="exp(-20.0*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)))"/>
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
-          <E VAR="u" VALUE="exp(-20.0*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)))" /> 
+          <E VAR="u" VALUE="exp(-20.0*((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)))" />
         </FUNCTION>
 
     </CONDITIONS>

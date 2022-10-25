@@ -55,10 +55,10 @@
         </PARAMETERS>
 
         <VARIABLES>
-            <V ID="0"> u </V> 
+            <V ID="0"> u </V>
             <V ID="1"> v </V>
-            <V ID="2"> w </V>  
-            <V ID="3"> p </V> 
+            <V ID="2"> w </V>
+            <V ID="3"> p </V>
         </VARIABLES>
 
         <BOUNDARYREGIONS>
@@ -71,7 +71,7 @@
               <D VAR="u" VALUE="0" />
               <D VAR="v" VALUE="0" />
               <D VAR="w" VALUE="0" />
-              <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"/>            
+              <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"/>
             </REGION>
             <REGION REF="1">
                <D VAR="u" VALUE="0" />

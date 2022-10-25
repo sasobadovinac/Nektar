@@ -779,7 +779,7 @@
                 <D VAR="rhou"   VALUE="rhoInf * uInf"   />
                 <D VAR="rhov"   VALUE="rhoInf * vInf"   />
                 <!-- Temporary value for E-->
-                <D VAR="E"      VALUE="0.0149875"       /> 
+                <D VAR="E"      VALUE="0.0149875"       />
                 <!-- Proper equation to compute E -->
                 <!--D VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/-->
             </REGION>
@@ -788,7 +788,7 @@
                 <D VAR="rhou"   VALUE="rhoInf * uInf"   />
                 <D VAR="rhov"   VALUE="rhoInf * vInf"   />
                 <!-- Temporary value for E-->
-                <D VAR="E"      VALUE="0.0149875"       /> 
+                <D VAR="E"      VALUE="0.0149875"       />
                 <!-- Proper equation to compute E -->
                 <!--D VAR="E"      VALUE="pInf / (Gamma - 1) + 0.5 * rhoInf * (uInf * uInf + vInf * vInf)"/-->
             </REGION>

@@ -261,7 +261,7 @@
             <I PROPERTY="EQType" VALUE="NonlinearSWE" />
             <I PROPERTY="Projection" VALUE="Continuous" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
-	</SOLVERINFO>
+        </SOLVERINFO>
 
 
         <PARAMETERS>

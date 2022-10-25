@@ -1898,8 +1898,6 @@
         <COORDS>Mapping</COORDS>
         <VEL>MappingVel</VEL>
         <TIMEDEPENDENT>True</TIMEDEPENDENT>
-	</MAPPING>
-    
-
+    </MAPPING>
 
 </NEKTAR>
