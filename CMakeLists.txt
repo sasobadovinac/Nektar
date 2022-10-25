@@ -340,6 +340,10 @@ FOREACH(def ${NEKTAR_DEFINITIONS_LIST})
     ENDIF()
 ENDFOREACH()
 
+# Write out Nektar++ build configuration
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/Nektar++Config.cmake.in
+               ${CMAKE_BINARY_DIR}/Nektar++Config.cmake @ONLY)
+
 # Install Nektar++ CMake configuration file
 INSTALL(FILES ${CMAKE_BINARY_DIR}/Nektar++Config.cmake
     DESTINATION ${NEKTAR_CMAKE_DIR}
