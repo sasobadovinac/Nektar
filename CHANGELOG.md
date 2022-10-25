@@ -46,6 +46,8 @@ exporting in .vtu format (!1386)
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
 
+**CI**
+- Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
 
 **FieldConvert**
 - Fix range option so that it also works with hdf5 (!1414)
@@ -142,7 +144,6 @@ v5.1.1
 
 **CompressibleFlowSolver**
 - Fix non-dimensional Sutherland law (!1253)
-- Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1313)
 
 v5.1.0
 ------
