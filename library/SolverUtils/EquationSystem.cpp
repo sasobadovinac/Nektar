@@ -97,7 +97,8 @@ EquationSystem::EquationSystem(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : m_comm(pSession->GetComm()), m_session(pSession), m_graph(pGraph),
-      m_lambda(0), m_fieldMetaDataMap(LibUtilities::NullFieldMetaDataMap)
+      m_lambda(0), m_infosteps(10), 
+      m_fieldMetaDataMap(LibUtilities::NullFieldMetaDataMap)
 {
     // set up session names in fieldMetaDataMap
     const vector<std::string> filenames = m_session->GetFilenames();

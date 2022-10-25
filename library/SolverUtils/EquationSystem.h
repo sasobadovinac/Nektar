@@ -298,6 +298,16 @@ public:
         m_checksteps = num;
     }
 
+    SOLVER_UTILS_EXPORT int GetInfoSteps()
+    {
+        return m_infosteps;
+    }
+
+    SOLVER_UTILS_EXPORT void SetInfoSteps(int num)
+    {
+        m_infosteps = num;
+    }
+
     SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble>> GetTraceNormals()
     {
         return m_traceNormals;
@@ -369,6 +379,8 @@ protected:
     int m_steps;
     /// Number of steps between checkpoints.
     int m_checksteps;
+    /// Number of time steps between outputting status information.
+    int m_infosteps;
     /// Spatial dimension (>= expansion dim).
     int m_spacedim;
     /// Expansion dimension.

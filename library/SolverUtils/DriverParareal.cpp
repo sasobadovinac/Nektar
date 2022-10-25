@@ -373,11 +373,33 @@ void DriverParareal::v_Execute(ostream &out)
     m_totalTime       = m_fineTimeStep * m_fineSteps;
     m_chunkTime       = m_totalTime / m_numChunks;
 
+    // Turnoff I/O for coarse solver
+    m_equ[1]->SetInfoSteps(0);
+    m_equ[1]->SetCheckpointSteps(0);
+
+    // Check time step inputs
     ASSERTL0(m_fineSteps % m_numChunks == 0,
              "Total step size should be divisible by number of chunks.");
 
     ASSERTL0(m_fineSteps % m_coarseSteps == 0,
-             "number of coarse steps should divide number of total steps");
+             "number of coarse steps should divide number of fine steps");
+
+    if (m_session->GetParameter("IO_InfoSteps"))
+    {
+        ASSERTL0(m_fineSteps % int(m_session->GetParameter("IO_InfoSteps") *
+                                m_numChunks) ==
+                     0,
+                 "number of IO_InfoSteps should divide number of fine steps "
+                 "per time chunk");
+    }
+    if (m_session->GetParameter("IO_CheckSteps"))
+    {
+        ASSERTL0(m_fineSteps % int(m_session->GetParameter("IO_CheckSteps") *
+                                m_numChunks) ==
+                     0,
+                 "number of IO_CheckSteps should divide number of fine steps "
+                 "per time chunk");
+    }
 
     // Fine solver summary
     if (m_comm->GetRank() == 0)

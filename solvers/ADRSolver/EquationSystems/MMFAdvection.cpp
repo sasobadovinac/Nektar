@@ -278,7 +278,8 @@ void MMFAdvection::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
+        if (m_infosteps && !((step + 1) % m_infosteps) &&
+            m_session->GetComm()->GetRank() == 0)
         {
             std::cout << "Steps: " << std::setw(8) << std::left << step + 1
                       << " "
