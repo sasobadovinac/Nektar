@@ -62,7 +62,7 @@
     <CONDITIONS>
         <!-- Tol = 1e-09-->
         <PARAMETERS>
-            <P> TimeStep       = 0.01           </P>
+            <P> TimeStep       = 0.01              </P>
             <P> NumSteps       = 1000              </P>
             <P> FinTime        = TimeStep*NumSteps </P>
             <P> IO_CheckSteps  = 1000              </P>

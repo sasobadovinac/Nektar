@@ -149,7 +149,7 @@
 
         <PARAMETERS>
             <P> TimeStep        = 0.000001          </P>
-            <P> NumSteps        = 100             </P>
+            <P> NumSteps        = 100               </P>
             <P> FinTime         = TimeStep*NumSteps </P>
             <P> IO_CheckSteps   = 100000            </P>
             <P> IO_InfoSteps    = 100000            </P>
@@ -158,7 +158,7 @@
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyDiffusion"   />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
-            <I PROPERTY="DiffusionType"         VALUE="LDG"               />
+            <I PROPERTY="DiffusionType"         VALUE="LDG"                 />
             <I PROPERTY="DiffusionAdvancement"  VALUE="Explicit"            />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>
