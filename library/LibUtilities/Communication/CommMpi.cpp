@@ -472,7 +472,8 @@ void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
 
     MPI_Comm newComm;
     MPI_Comm gridComm;
-    /*
+    if (m_size == 1)
+    {
         // Compute row and column in grid.
         int myCol = m_rank % pColumns;
         int myRow = (m_rank - myCol) / pColumns;
@@ -488,25 +489,28 @@ void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
         // the row index.
         MPI_Comm_split(m_comm, myCol, myRow, &newComm);
         m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
-    */
-    constexpr int dims      = 3;
-    const int sizes[dims]   = {pRows, pColumns, pTime};
-    const int periods[dims] = {0, 0, 0};
-    constexpr int reorder   = 1;
+    }
+    else
+    {
+        constexpr int dims      = 3;
+        const int sizes[dims]   = {pRows, pColumns, pTime};
+        const int periods[dims] = {0, 0, 0};
+        constexpr int reorder   = 1;
 
-    MPI_Cart_create(m_comm, dims, sizes, periods, reorder, &gridComm);
+        MPI_Cart_create(m_comm, dims, sizes, periods, reorder, &gridComm);
 
-    constexpr int keepRow[dims] = {0, 1, 0};
-    MPI_Cart_sub(gridComm, keepRow, &newComm);
-    m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
+        constexpr int keepRow[dims] = {0, 1, 0};
+        MPI_Cart_sub(gridComm, keepRow, &newComm);
+        m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
 
-    constexpr int keepCol[dims] = {1, 0, 0};
-    MPI_Cart_sub(gridComm, keepCol, &newComm);
-    m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
+        constexpr int keepCol[dims] = {1, 0, 0};
+        MPI_Cart_sub(gridComm, keepCol, &newComm);
+        m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
 
-    constexpr int keepTime[dims] = {0, 0, 1};
-    MPI_Cart_sub(gridComm, keepTime, &newComm);
-    m_commTime = std::shared_ptr<Comm>(new CommMpi(newComm));
+        constexpr int keepTime[dims] = {0, 0, 1};
+        MPI_Cart_sub(gridComm, keepTime, &newComm);
+        m_commTime = std::shared_ptr<Comm>(new CommMpi(newComm));
+    }
 }
 
 /**
