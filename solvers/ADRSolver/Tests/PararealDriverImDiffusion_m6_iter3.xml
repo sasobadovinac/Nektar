@@ -36,8 +36,8 @@
             <P> TimeStep        = 0.0001 </P> <!-- Time step -->
 	        <P> NumSteps        = 3200   </P> <!-- Number of time step -->
             <P> epsilon         = 0.05   </P> <!-- Diffusion coefficent   -->
-            <P> IO_InfoSteps    = 3200   </P> <!-- Frequency of printing information for the user -->
-            <P> IO_CheckSteps   = 3200   </P> <!-- Frequency of writing the checkpoints, the results -->
+            <P> IO_InfoSteps    = 0      </P> <!-- Frequency of printing information for the user -->
+            <P> IO_CheckSteps   = 0      </P> <!-- Frequency of writing the checkpoints, the results -->
             <P> PararealIterMax = 3      </P> <!-- Max number of Parareal iteration -->
 	    </PARAMETERS>
 

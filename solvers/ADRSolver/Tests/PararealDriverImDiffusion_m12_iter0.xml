@@ -70,8 +70,8 @@
         <PARAMETERS>
             <P> TimeStep        = 0.0001           </P>
             <P> NumSteps        = 2000             </P>
-            <P> IO_CheckSteps   = 2000             </P>
-            <P> IO_InfoSteps    = 2000             </P>
+            <P> IO_CheckSteps   = 0                </P>
+            <P> IO_InfoSteps    = 0                </P>
             <P> wavefreq        = PI               </P>
             <P> epsilon         = 1.0              </P>
             <P> PararealIterMax = 0                </P> 

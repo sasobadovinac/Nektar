@@ -472,7 +472,7 @@ void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
 
     MPI_Comm newComm;
     MPI_Comm gridComm;
-    if (m_size == 1)
+    if (pTime == 1)
     {
         // Compute row and column in grid.
         int myCol = m_rank % pColumns;
