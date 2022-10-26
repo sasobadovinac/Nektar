@@ -513,7 +513,7 @@ void HOSurfaceMesh::Process()
         xmap->BwdTrans(coeffs2, zc);
 
         if (vertices.size() == 3)
-        {
+        {    
             // build an array of all uvs
             vector<Array<OneD, NekDouble>> uvi;
             for (int j = np - ni; j < np; j++)

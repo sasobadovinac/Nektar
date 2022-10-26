@@ -284,7 +284,7 @@ void ProcessProjectCAD::Process()
 
     map<NodeSharedPtr, vector<ElementSharedPtr>> surfNodeToEl;
 
-    // link surface nodes to their 3D element
+    // link surface nodes to their 3D element - do we need this at all ??? 
     for (int i = 0; i < m_mesh->m_element[3].size(); i++)
     {
         if (m_mesh->m_element[3][i]->HasBoundaryLinks())
@@ -472,7 +472,7 @@ void ProcessProjectCAD::Process()
                 }
                 if (m_mesh->m_cad->GetSurf(distId[j])->IsPlanar())
                 {
-                    continue;
+                    //continue;
                 }
 
                 CADSurfSharedPtr s = m_mesh->m_cad->GetSurf(distId[j]);
@@ -529,193 +529,108 @@ void ProcessProjectCAD::Process()
     Array<OneD, NekDouble> gll;
     LibUtilities::PointsManager()[ekey]->GetPoints(gll);
 
-    // make surface edges high-order
-    for (auto i = surfEdges.begin(); i != surfEdges.end(); i++)
-    {
-        if (lockedNodes.count((*i)->m_n1) || lockedNodes.count((*i)->m_n2))
+    // Identify CAD object for every boundary element based on the common CADobjects of the member vertices
+    for(auto el : m_mesh->m_element[2]) 
+    {  
+        cout << "New Element ID = "  << endl ; 
+        // .1 Identify the common CADs
+        vector<int> commonSurfaces ;
+        vector<int> CADObjectIDs0, CADObjectIDs1  ; 
+        for(auto CADObject : el->GetVertex(0)->GetCADSurfs())
         {
-            continue;
-        }
-        vector<CADSurfSharedPtr> v1 = (*i)->m_n1->GetCADSurfs();
-        vector<CADSurfSharedPtr> v2 = (*i)->m_n2->GetCADSurfs();
-
-        vector<int> vi1, vi2;
-        for (size_t j = 0; j < v1.size(); ++j)
-        {
-            vi1.push_back(v1[j]->GetId());
-        }
-        for (size_t j = 0; j < v2.size(); ++j)
-        {
-            vi2.push_back(v2[j]->GetId());
-        }
-
-        sort(vi1.begin(), vi1.end());
-        sort(vi2.begin(), vi2.end());
-
-        vector<int> cmn;
-        set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
-                         back_inserter(cmn));
-        eds[cmn.size()].push_back(0);
-
-        (*i)->m_curveType = LibUtilities::eGaussLobattoLegendre;
-   
-        m_log(VERBOSE)<< " (*i)->m_n1->GetNumCadSurf() = "  <<  (*i)->m_n1->GetNumCADSurf() << endl ; 
-        m_log(VERBOSE)<< " (*i)->m_n2->GetNumCadSurf() = "  << (*i)->m_n2->GetNumCADSurf() << endl ; 
-
-
-        if (cmn.size() == 1 || cmn.size() == 2)
-        {
-            for (int j = 0; j < cmn.size(); j++)
-            {
-                if (m_mesh->m_cad->GetSurf(cmn[j])->IsPlanar())
-                {
-                    // if its planar dont care
-                    //continue;
-                }
-
-                Array<OneD, NekDouble> uvb = (*i)->m_n1->GetCADSurfInfo(cmn[j]);
-                Array<OneD, NekDouble> uve = (*i)->m_n2->GetCADSurfInfo(cmn[j]);
-            
-
-                //if((*i)->m_n1->GetNumCADSurf()==1 && (*i)->m_n2->GetNumCADSurf()==1)
-                if(cmn.size()==1)
-                { 
-                    // CASE 1 Fully internal to the NURBS edge with not vertices on the end of the NURBS
-                    (*i)->m_parentCAD = m_mesh->m_cad->GetSurf(cmn[j]) ;  // Associate the boundary edge with 1 NURBS
-                    m_log(VERBOSE) <<" (*i)->m_parentCAD->GetId() = " << (*i)->m_parentCAD->GetId() << " (*i)->m_elLink.size()  " <<  (*i)->m_elLink.size() << endl ; 
-
-                    (*i)->m_elLink[0].first.lock()->m_parentCAD = (*i)->m_parentCAD ; // Associate the 2D Boundary Element with 1 NURBS
-                    (*i)->m_elLink[1].first.lock()->m_parentCAD = (*i)->m_parentCAD ; 
-
-
-                }
-
-                // can compare the loction of the projection to the
-                // corresponding position of the straight sided edge
-                // if the two differ by more than the length of the edge
-                // something has gone wrong
-                NekDouble len = (*i)->m_n1->Distance((*i)->m_n2);
-
-                for (int k = 1; k < order + 1 - 1; k++)
-                {
-                    Array<OneD, NekDouble> uv(2);
-                    uv[0] = uvb[0] * (1.0 - gll[k]) / 2.0 +
-                            uve[0] * (1.0 + gll[k]) / 2.0;
-                    uv[1] = uvb[1] * (1.0 - gll[k]) / 2.0 +
-                            uve[1] * (1.0 + gll[k]) / 2.0;
-                    Array<OneD, NekDouble> loc;
-                    loc = m_mesh->m_cad->GetSurf(cmn[j])->P(uv);
-                    Array<OneD, NekDouble> locT(3);
-                    locT[0] = (*i)->m_n1->m_x * (1.0 - gll[k]) / 2.0 +
-                              (*i)->m_n2->m_x * (1.0 + gll[k]) / 2.0;
-                    locT[1] = (*i)->m_n1->m_y * (1.0 - gll[k]) / 2.0 +
-                              (*i)->m_n2->m_y * (1.0 + gll[k]) / 2.0;
-                    locT[2] = (*i)->m_n1->m_z * (1.0 - gll[k]) / 2.0 +
-                              (*i)->m_n2->m_z * (1.0 + gll[k]) / 2.0;
-
-                    NekDouble d = sqrt((locT[0] - loc[0]) * (locT[0] - loc[0]) +
-                                       (locT[1] - loc[1]) * (locT[1] - loc[1]) +
-                                       (locT[2] - loc[2]) * (locT[2] - loc[2]));
-
-                    if (d > len)
-                    {
-                        (*i)->m_edgeNodes.clear();
-                        break;
-                    }
-
-                    NodeSharedPtr nn = std::shared_ptr<Node>(
-                        new Node(0, loc[0], loc[1], loc[2]));
-
-                    //(*i)->m_edgeNodes.push_back(nn);
-                }
-
-                if ((*i)->m_edgeNodes.size() != 0)
-                {
-                    // it suceeded on this surface so skip the other possibility
-                    break;
-                }
-            }
-        }
-        else if (cmn.size() == 0)
-        {
-            // projection, if the projection requires more than two surfaces
-            // including the edge nodes, then,  in theory projection shouldnt be
-            // used
-
-            set<int> sused;
-            for (int k = 1; k < order + 1 - 1; k++)
-            {
-                Array<OneD, NekDouble> locT(3);
-                locT[0] = (*i)->m_n1->m_x * (1.0 - gll[k]) / 2.0 +
-                          (*i)->m_n2->m_x * (1.0 + gll[k]) / 2.0;
-                locT[1] = (*i)->m_n1->m_y * (1.0 - gll[k]) / 2.0 +
-                          (*i)->m_n2->m_y * (1.0 + gll[k]) / 2.0;
-                locT[2] = (*i)->m_n1->m_z * (1.0 - gll[k]) / 2.0 +
-                          (*i)->m_n2->m_z * (1.0 + gll[k]) / 2.0;
-
-                int s;
-                if (!findAndProject(rtree, locT, s))
-                {
-                    (*i)->m_edgeNodes.clear();
-                    break;
-                }
-                sused.insert(s);
-
-                if (sused.size() > 2)
-                {
-                    (*i)->m_edgeNodes.clear();
-                    break;
-                }
-
-                NodeSharedPtr nn = std::shared_ptr<Node>(
-                    new Node(0, locT[0], locT[1], locT[2]));
-
-                (*i)->m_edgeNodes.push_back(nn);
-            }
-        }
-    }
-
-    // Clear m_CAD for elements that have edgesCASE 2 (cmn.size=0) edges 
-    for (auto i = surfEdges.begin(); i != surfEdges.end(); i++)
-    {
-        cout << " id = " << (*i)->m_n1->m_id << " " << (*i)->m_n1->GetCADSurfs().size() << endl ; 
-        cout << " id getnum = " << (*i)->m_n1->m_id << " " << (*i)->m_n1->GetNumCADSurf() << endl ; 
-        cout << " id = " << (*i)->m_n2->m_id << " " << (*i)->m_n2->GetCADSurfs().size() << endl ; 
-    
-        if (lockedNodes.count((*i)->m_n1) || lockedNodes.count((*i)->m_n2))
-        {
-            continue;
-        }
-        vector<CADSurfSharedPtr> v1 = (*i)->m_n1->GetCADSurfs();
-        vector<CADSurfSharedPtr> v2 = (*i)->m_n2->GetCADSurfs();
-
-        vector<int> vi1, vi2;
-        for (size_t j = 0; j < v1.size(); ++j)
-        {
-            vi1.push_back(v1[j]->GetId());
-        }
-        for (size_t j = 0; j < v2.size(); ++j)
-        {
-            vi2.push_back(v2[j]->GetId());
-        }
-
-        sort(vi1.begin(), vi1.end());
-        sort(vi2.begin(), vi2.end());
-
-        vector<int> cmn;
-        set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
-                         back_inserter(cmn));
-        eds[cmn.size()].push_back(0);
+            CADObjectIDs0.push_back( CADObject->GetId() ) ; 
+            //cout << "CAD0 =" << CADObject->GetId() << endl ; 
+        } 
         
-        if(cmn.size() == 0)
+        for(auto CADObject : el->GetVertex(1)->GetCADSurfs())
         {
-            //(*i)->m_elLink[0].first.lock()->m_parentCAD=NULL; 
-            //(*i)->m_elLink[1].first.lock()->m_parentCAD=NULL ; 
+            CADObjectIDs1.push_back( CADObject->GetId() ) ; 
+            //cout << "CAD1 =" << CADObject->GetId() << endl ; 
+
+        } 
+        
+        sort(CADObjectIDs0.begin(), CADObjectIDs0.end());
+        sort(CADObjectIDs1.begin(), CADObjectIDs1.end());
+        
+        set_intersection(CADObjectIDs0.begin(), CADObjectIDs0.end(), CADObjectIDs1.begin(), CADObjectIDs1.end(),
+                         back_inserter(commonSurfaces));
+        //for(auto surf : commonSurfaces)
+        //{
+        //    cout<< "commonSurfaces = " << surf << endl ;   
+        //}
+        //cout << "commonSurfaces.size()=  " << commonSurfaces.size() << endl; 
+        // UnitTest passed 
+        
+        //1.2 Intersect with the next objects 
+        for(int i = 2 ; i < el->GetVertexCount() ; i++ )
+        {
+            vector<int> VertexCADSurfIDs ;
+            for(auto CADSurf_i : el->GetVertex(i)->GetCADSurfs())
+            {
+                VertexCADSurfIDs.push_back(CADSurf_i->GetId());
+                //cout << "CADi =" << CADSurf_i->GetId() << endl ; 
+            }            
+            
+            sort(VertexCADSurfIDs.begin(), VertexCADSurfIDs.end());
+            sort(commonSurfaces.begin(), commonSurfaces.end());            
+            
+            vector<int> cmn;
+            set_intersection(VertexCADSurfIDs.begin(), VertexCADSurfIDs.end(), commonSurfaces.begin(), commonSurfaces.end(),
+                            back_inserter(cmn));
+            commonSurfaces = cmn ; 
+            //m_log(VERBOSE) << " commonSurfaces.size =  " << commonSurfaces.size() << endl ; 
+        
         }
+
+        m_log(WARNING) << " commonSurfaces.size() = " <<  commonSurfaces.size() << endl ; 
+        
+        
+        // .2 Are there common CAD objects (if not ProjectCAD legacy)
+        if(commonSurfaces.size()==1)
+        {
+            el->m_parentCAD=m_mesh->m_cad->GetSurf(commonSurfaces[0]); 
+
+        }
+   
+   
+   
     }
+//          if (lockedNodes.count((*i)->m_n1) || lockedNodes.count((*i)->m_n2))
+//         {
+//             continue;
+//         }
+//         vector<CADSurfSharedPtr> v1 = (*i)->m_n1->GetCADSurfs();
+//         vector<CADSurfSharedPtr> v2 = (*i)->m_n2->GetCADSurfs();
+
+//         vector<int> vi1, vi2;
+//         for (size_t j = 0; j < v1.size(); ++j)
+//         {
+//             vi1.push_back(v1[j]->GetId());
+//         }
+//         for (size_t j = 0; j < v2.size(); ++j)
+//         {
+//             vi2.push_back(v2[j]->GetId());
+//         }
+
+//         sort(vi1.begin(), vi1.end());
+//         sort(vi2.begin(), vi2.end());
+
+//         vector<int> cmn;
+//         set_intersection(vi1.begin(), vi1.end(), vi2.begin(), vi2.end(),
+//                          back_inserter(cmn));
+//         eds[cmn.size()].push_back(0);
+
+//         (*i)->m_curveType = LibUtilities::eGaussLobattoLegendre;
+   
+//         m_log(VERBOSE)<< " (*i)->m_n1->GetNumCadSurf() = "  <<  (*i)->m_n1->GetNumCADSurf() << endl ; 
+//         m_log(VERBOSE)<< " (*i)->m_n2->GetNumCadSurf() = "  << (*i)->m_n2->GetNumCADSurf() << endl ; 
 
 
-    
+//         if (cmn.size() == 1 || cmn.size() == 2){}
+
+
+
+
 
 
 
@@ -749,11 +664,11 @@ void ProcessProjectCAD::Process()
     }
 
     // Extra Quality Modules applied 
-    ProcessVertices();
-    ProcessEdges();
-    ProcessFaces();
-    ProcessElements();
-    ProcessComposites();
+    // ProcessVertices();
+    // ProcessEdges();
+    // ProcessFaces();
+    // ProcessElements();
+    // ProcessComposites();
 
     ////**** VarOpti ****////
     int m_varopti = m_config["varopti"].as<int>();
@@ -790,8 +705,8 @@ void ProcessProjectCAD::Process()
     
     }
     
-
-
+    m_log(VERBOSE) << " locked surface nodes N = " << lockedNodes.size() << endl ; 
+ 
 }
 } // namespace NekMesh
 } // namespace Nektar
