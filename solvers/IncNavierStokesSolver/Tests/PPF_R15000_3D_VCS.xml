@@ -193,17 +193,17 @@
     </SOLVERINFO>
 
     <PARAMETERS>
-      <P> TimeStep      = 0.001  </P>
-      <P> NumSteps      = 1000    </P>
-      <P> IO_CheckSteps = 1000   </P>
-      <P> IO_InfoSteps  = 20     </P>
-      <P> Re            = 15000  </P>
-      <P> Kinvis        = 1.0/Re </P>
-      <P> kdim          = 16     </P>
-      <P> HomModesZ     = 2      </P>
-      <P> evtol         = 1e-5   </P>
-      <P> nvec          = 4      </P>
-      <P> nits          = 5000   </P>
+      <P> TimeStep      = 0.001        </P>
+      <P> NumSteps      = 1000         </P>
+      <P> IO_CheckSteps = 1000         </P>
+      <P> IO_InfoSteps  = 20           </P>
+      <P> Re            = 15000        </P>
+      <P> Kinvis        = 1.0/Re       </P>
+      <P> kdim          = 16           </P>
+      <P> HomModesZ     = 2            </P>
+      <P> evtol         = 1e-5         </P>
+      <P> nvec          = 4            </P>
+      <P> nits          = 5000         </P>
       <P> LZ            = 6*PI/sqrt(5) </P>
     </PARAMETERS>
 

@@ -18,15 +18,15 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep = 0.1     </P>
-            <P> NumSteps = 10       </P>
-            <P> IO_CheckSteps = 1000       </P>
-            <P> IO_InfoSteps = 1       </P>
-            <P> Kinvis = 1         </P>
-            <P> U = PHI       </P>
-            <P> a = GAMMA       </P>
-            <P> a2 = E       </P>
-            <P> g = PI       </P>
+            <P> TimeStep      = 0.1       </P>
+            <P> NumSteps      = 10        </P>
+            <P> IO_CheckSteps = 1000      </P>
+            <P> IO_InfoSteps  = 1         </P>
+            <P> Kinvis        = 1         </P>
+            <P> U             = PHI       </P>
+            <P> a             = GAMMA     </P>
+            <P> a2            = E         </P>
+            <P> g             = PI        </P>
         </PARAMETERS>
 
         <VARIABLES>

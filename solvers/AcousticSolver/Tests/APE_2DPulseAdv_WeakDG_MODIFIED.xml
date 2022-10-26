@@ -315,7 +315,7 @@
       <I PROPERTY="UpwindType" VALUE="LaxFriedrichs"/>
     </SOLVERINFO>
     <PARAMETERS>
-      <P> TimeStep       = 1e-05            </P>
+      <P> TimeStep       = 1e-05              </P>
       <P> NumSteps       = 10                 </P>
       <P> FinTime        = TimeStep*NumSteps  </P>
       <P> IO_CheckSteps  = 10                 </P>

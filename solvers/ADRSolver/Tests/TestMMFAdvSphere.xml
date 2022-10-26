@@ -1982,14 +1982,14 @@
 <CONDITIONS>
 
     <PARAMETERS>
-        <P> TimeStep       = 0.001            </P>
-        <P> NumSteps       = 100              </P>
-        <P> FinTime        = TimeStep*NumSteps </P>
-        <P> IO_CheckSteps  = 2000              </P>
-        <P> IO_InfoSteps   = 2000              </P>
-        <P> Angular Frequency = PI/5          </P>
-        <P> MMFCircCentreX  = -2.0   </P>
-        <P> MMFCircCentreY  = -2.0   </P>
+        <P> TimeStep          = 0.001             </P>
+        <P> NumSteps          = 100               </P>
+        <P> FinTime           = TimeStep*NumSteps </P>
+        <P> IO_CheckSteps     = 2000              </P>
+        <P> IO_InfoSteps      = 2000              </P>
+        <P> Angular Frequency = PI/5              </P>
+        <P> MMFCircCentreX    = -2.0              </P>
+        <P> MMFCircCentreY    = -2.0              </P>
     </PARAMETERS>
 
     <SOLVERINFO>

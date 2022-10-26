@@ -1994,13 +1994,13 @@
 
     <PARAMETERS>
       <P> TimeStep       = 0.001             </P>
-      <P> NumSteps       = 1000                </P>
+      <P> NumSteps       = 1000              </P>
       <P> FinTime        = TimeStep*NumSteps </P>
       <P> IO_CheckSteps  = 200               </P>
-      <P> IO_InfoSteps   = 200             </P>
-      <P> Frequency  = PI                </P>
-      <P> MMFCircCentreX  = -2.0   </P>
-      <P> MMFCircCentreY  = -2.0   </P>
+      <P> IO_InfoSteps   = 200               </P>
+      <P> Frequency      = PI                </P>
+      <P> MMFCircCentreX = -2.0              </P>
+      <P> MMFCircCentreY = -2.0              </P>
     </PARAMETERS>
 
     <VARIABLES>

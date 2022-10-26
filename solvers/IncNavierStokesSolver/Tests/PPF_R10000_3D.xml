@@ -196,13 +196,13 @@
       <P> IO_InfoSteps  = 20     </P>
       <P> Re            = 10000  </P>
       <P> Kinvis        = 1.0/Re </P>
-      <P> kdim          = 64    </P>
+      <P> kdim          = 64     </P>
       <P> realShift     = 0.003  </P>
       <P> imagShift     = 0.2    </P>
       <P> HomModesZ     = 2      </P>
       <P> evtol         = 1e-6   </P>
-      <P> nvec          = 2    </P>
-      <P> LZ            = 1    </P>
+      <P> nvec          = 2      </P>
+      <P> LZ            = 1      </P>
     </PARAMETERS>
 
     <VARIABLES>

@@ -18,19 +18,19 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep = 0.001        </P>
-            <P> NumSteps = 10</P>
-            <P> IO_CheckSteps = NumSteps       </P>
-            <P> IO_CFLSteps = 100       </P>
-            <P> IO_InfoSteps = 100       </P>
-            <P> Re = 40.0        </P>
-            <P> Kinvis = 1/Re        </P>
-            <P> HomModesZ = 16          </P>
-            <P> LZ = 2.0        </P>
+            <P> TimeStep      = 0.001        </P>
+            <P> NumSteps      = 10           </P>
+            <P> IO_CheckSteps = NumSteps     </P>
+            <P> IO_CFLSteps   = 100          </P>
+            <P> IO_InfoSteps  = 100          </P>
+            <P> Re            = 40.0         </P>
+            <P> Kinvis        = 1/Re         </P>
+            <P> HomModesZ     = 16           </P>
+            <P> LZ            = 2.0          </P>
 
-            <P> wavyAmplitude     = 1*0.10  </P>
-            <P> wavyLambda     =    1.0   </P>
-            <P> K               =  0.5*Re-sqrt(0.25*Re*Re+4*PI*PI) </P>
+            <P> wavyAmplitude = 1*0.10       </P>
+            <P> wavyLambda    = 1.0          </P>
+            <P> K             = 0.5*Re-sqrt(0.25*Re*Re+4*PI*PI) </P>
         </PARAMETERS>
 
         <VARIABLES>

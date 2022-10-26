@@ -2830,11 +2830,11 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> TimeStep        = 0.00001     </P>
+            <P> TimeStep        = 0.00001   </P>
             <P> FinTime         = 0.0       </P>
-            <P> NumSteps        = 25         </P>
-            <P> IO_CheckSteps   = 10000       </P>
-            <P> IO_InfoSteps    = 10000        </P>
+            <P> NumSteps        = 25        </P>
+            <P> IO_CheckSteps   = 10000     </P>
+            <P> IO_InfoSteps    = 10000     </P>
             <P> Gamma           = 1.4       </P>
             <P> pInf            = 101325    </P>
             <P> rhoInf          = 1.225     </P>

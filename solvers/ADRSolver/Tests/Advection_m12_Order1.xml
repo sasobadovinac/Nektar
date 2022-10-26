@@ -62,13 +62,13 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> FinTime = 0.75              </P>
-            <P> NumSteps = 500              </P>
-            <P> TimeStep = FinTime/NumSteps </P>
-            <P> IO_CheckSteps = NumSteps    </P>
-            <P> IO_InfoSteps = 1000         </P>
-            <P> advx = 1                    </P>
-            <P> advy = 1                    </P>
+            <P> FinTime       = 0.75                 </P>
+            <P> NumSteps      = 500                  </P>
+            <P> TimeStep      = FinTime/NumSteps     </P>
+            <P> IO_CheckSteps = NumSteps             </P>
+            <P> IO_InfoSteps  = 1000                 </P>
+            <P> advx          = 1                    </P>
+            <P> advy          = 1                    </P>
         </PARAMETERS>
 
         <SOLVERINFO>

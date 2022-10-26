@@ -9,13 +9,13 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> FinTime         = 1.0              </P>
-            <P> TimeStep        = 0.01             </P>
+            <P> FinTime         = 1.0               </P>
+            <P> TimeStep        = 0.01              </P>
             <P> NumSteps        = FinTime/TimeStep  </P>
             <P> IO_CheckSteps   = 100000            </P>
             <P> IO_InfoSteps    = 100000            </P>
-            <P> advx            = 1.2                 </P>
-            <P> advy            = 1.2                 </P>
+            <P> advx            = 1.2               </P>
+            <P> advy            = 1.2               </P>
         </PARAMETERS>
 
         <SOLVERINFO>

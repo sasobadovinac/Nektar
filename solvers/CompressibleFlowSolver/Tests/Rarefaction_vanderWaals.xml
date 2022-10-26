@@ -15,37 +15,37 @@
             <!-- Simulation parameters -->
             <P> TimeStep       = 5e-6           </P>
             <P> NumSteps       = 5              </P>
-            <P> IO_InfoSteps   = 10            </P>
+            <P> IO_InfoSteps   = 10             </P>
             <P> IO_CheckSteps  = 0              </P>
             <P> SteadyStateTol = 1e-8           </P>
             <!-- Fluid Properties -->
             <P> Gamma          = 1.018          </P>
             <P> GasConstant    = 35.152         </P>
             <P> Tcrit          = 564.09         </P>
-            <P> Pcrit          = 1415000       </P>
+            <P> Pcrit          = 1415000        </P>
             <P> rhocrit        = 256.82         </P>
 
             <!-- Parameters for boundary conditions -->
-            <P> pIn           = 1.06*Pcrit      </P>
-            <P> TIn           = 1.01*Tcrit      </P>
+            <P> pIn            = 1.06*Pcrit     </P>
+            <P> TIn            = 1.01*Tcrit     </P>
             
-            <P> MachIn        = 1.70            </P>
+            <P> MachIn         = 1.70           </P>
 
-            <P> rhoIn         = 0.79*256.82     </P>
-            <P> eIn           = 1088837.403     </P>
-            <P> cIn           = 38.70           </P>
-            <P> uIn           = MachIn*cIn      </P>
+            <P> rhoIn          = 0.79*256.82    </P>
+            <P> eIn            = 1088837.403    </P>
+            <P> cIn            = 38.70          </P>
+            <P> uIn            = MachIn*cIn     </P>
 
             <!-- Reference state -->
-            <P> rhoInf         = 1.225      </P>
-            <P> pInf           = pIn       </P>
-            <P> vInf           = 1      </P>
-            <P> uInf           = 0      </P>
+            <P> rhoInf         = 1.225          </P>
+            <P> pInf           = pIn            </P>
+            <P> vInf           = 1              </P>
+            <P> uInf           = 0              </P>
 
             <!-- Filter parameters -->
-            <P> FilterAlpha    = 36      </P>
-            <P> FilterCutoff   = 0.0      </P>
-            <P> FilterExponent = 16      </P>
+            <P> FilterAlpha    = 36             </P>
+            <P> FilterCutoff   = 0.0            </P>
+            <P> FilterExponent = 16             </P>
        </PARAMETERS>
         
         <SOLVERINFO>

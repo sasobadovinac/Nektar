@@ -4066,11 +4066,11 @@
   <CONDITIONS>
     <!-- M = 0.2, Re = 200, Pr = 0.72 -->
     <PARAMETERS>
-      <P> TimeStep              = 0.01       </P>
-      <P> NumSteps              = 10          </P>
+      <P> TimeStep              = 0.01          </P>
+      <P> NumSteps              = 10            </P>
       <P> FinTime               = 0             </P>
       <P> IO_CheckSteps         = 500000        </P>
-      <P> IO_InfoSteps          = 1        </P>
+      <P> IO_InfoSteps          = 1             </P>
       <P> GasConstant           = 287.058       </P>
       <P> Gamma                 = 1.4           </P>
       <P> pInf                  = 101325        </P>
@@ -4078,22 +4078,22 @@
       <P> uInf                  = 68.0588       </P>
       <P> vInf                  = 0.0           </P>
       <P> Twall                 = 300.15        </P>
-      <P> Tref                  = 1300.15        </P>
+      <P> Tref                  = 1300.15       </P>
       <P> mu                    = 0.4169        </P>
       <P> thermalConductivity   = 581.6936      </P>
     </PARAMETERS>
 
     <SOLVERINFO>
         <I PROPERTY="EQType"                VALUE="NavierStokesImplicitCFE" />
-        <I PROPERTY="Projection"            VALUE="DisContinuous"       />
-        <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
-        <I PROPERTY="DiffusionType"         VALUE="InteriorPenalty"     />
-        <I PROPERTY="AdvectionAdvancement"  VALUE="Implicit"            />
-        <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"            />
-        <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"       />
-        <I PROPERTY="UpwindType"            VALUE="Roe"                 />
-        <I PROPERTY="ProblemType"           VALUE="General"             />
-        <I PROPERTY="ViscosityType"         VALUE="Variable"            />
+        <I PROPERTY="Projection"            VALUE="DisContinuous"           />
+        <I PROPERTY="AdvectionType"         VALUE="WeakDG"                  />
+        <I PROPERTY="DiffusionType"         VALUE="InteriorPenalty"         />
+        <I PROPERTY="AdvectionAdvancement"  VALUE="Implicit"                />
+        <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"                />
+        <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"           />
+        <I PROPERTY="UpwindType"            VALUE="Roe"                     />
+        <I PROPERTY="ProblemType"           VALUE="General"                 />
+        <I PROPERTY="ViscosityType"         VALUE="Variable"                />
     </SOLVERINFO>
 
     <VARIABLES>

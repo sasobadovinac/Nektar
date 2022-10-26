@@ -35,9 +35,9 @@
   <CONDITIONS>
 
     <PARAMETERS>
-      <P> TimeStep       = 1e-3            </P>
-      <P> NumSteps       = 2             </P>
-      <P> IO_CheckSteps  = NumSteps        </P>
+      <P> TimeStep       = 1e-3               </P>
+      <P> NumSteps       = 2                  </P>
+      <P> IO_CheckSteps  = NumSteps           </P>
       <P> IO_InfoSteps   = 100                </P>
       <P> T              = 10                 </P>
       <P> omega          = 2*PI/T             </P>

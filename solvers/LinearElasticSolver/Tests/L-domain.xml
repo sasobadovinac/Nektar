@@ -11,14 +11,14 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> nu     = 0.3 </P>
-            <P> E      = 100000.0 </P>
-            <P> mu     = 0.5 * E / (1+nu)               </P> <!-- lame constant -->
-            <P> lambda = E * nu / ((1+nu)*(1-2*nu)) </P> <!-- lame constant -->
-            <P> omega  = 3*PI/4 </P>
-            <P> alpha  = 0.544483737 </P> <!-- magic constant -->
+            <P> nu     = 0.3                                        </P>
+            <P> E      = 100000.0                                   </P>
+            <P> mu     = 0.5 * E / (1+nu)                           </P> <!-- lame constant -->
+            <P> lambda = E * nu / ((1+nu)*(1-2*nu))                 </P> <!-- lame constant -->
+            <P> omega  = 3*PI/4                                     </P>
+            <P> alpha  = 0.544483737                                </P> <!-- magic constant -->
             <P> C1     = -cos((alpha+1)*omega)/cos((alpha-1)*omega) </P>
-            <P> C2     = 2*(lambda + 2*mu) / (lambda + mu) </P>
+            <P> C2     = 2*(lambda + 2*mu) / (lambda + mu)          </P>
         </PARAMETERS>
 
         <VARIABLES>

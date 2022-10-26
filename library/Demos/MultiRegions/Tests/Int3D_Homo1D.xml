@@ -37,8 +37,8 @@
 
         <PARAMETERS>
             <P> HomModesZ = 16      </P>
-            <P> LZ        = 3   </P>
-            <P> USEFFT    = 0      </P>
+            <P> LZ        = 3       </P>
+            <P> USEFFT    = 0       </P>
         </PARAMETERS>
 
         <VARIABLES>

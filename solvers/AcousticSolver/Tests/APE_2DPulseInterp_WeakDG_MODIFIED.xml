@@ -318,7 +318,7 @@
     </SOLVERINFO>
     <PARAMETERS>
       <P> TimeStep       = 0.00001            </P>
-      <P> NumSteps       = 2                 </P>
+      <P> NumSteps       = 2                  </P>
       <P> FinTime        = TimeStep*NumSteps  </P>
       <P> IO_CheckSteps  = 10                 </P>
       <P> IO_InfoSteps   = 10                 </P>

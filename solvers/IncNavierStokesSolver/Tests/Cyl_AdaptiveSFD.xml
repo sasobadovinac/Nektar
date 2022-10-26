@@ -13,18 +13,18 @@
             <I PROPERTY="EvolutionOperator" VALUE="AdaptiveSFD"/>
         </SOLVERINFO>
         <PARAMETERS>
-            <P> TimeStep = 0.01   </P>
-            <P> NumSteps = 0.5/TimeStep    </P>
-            <P> IO_CheckSteps = 25.0/TimeStep  </P>
-            <P> IO_InfoSteps  = 0.5/TimeStep   </P>
-            <P> IO_CFLSteps   = IO_InfoSteps </P>
-            <P> Re = 100.0         </P>
-            <P> Kinvis = 1.0/Re         </P>
-            <P> TOL = 0.000279         </P>
-            <P> kdim = 16 </P>
-            <P> nvec = 2 </P>
-            <P> evtol = 1e-1 </P>
-            <P> nits = 1000 </P>
+            <P> TimeStep      = 0.01            </P>
+            <P> NumSteps      = 0.5/TimeStep    </P>
+            <P> IO_CheckSteps = 25.0/TimeStep   </P>
+            <P> IO_InfoSteps  = 0.5/TimeStep    </P>
+            <P> IO_CFLSteps   = IO_InfoSteps    </P>
+            <P> Re            = 100.0           </P>
+            <P> Kinvis        = 1.0/Re          </P>
+            <P> TOL           = 0.000279        </P>
+            <P> kdim          = 16              </P>
+            <P> nvec          = 2               </P>
+            <P> evtol         = 1e-1            </P>
+            <P> nits          = 1000            </P>
         </PARAMETERS>
         <VARIABLES>
             <V ID="0"> u </V>

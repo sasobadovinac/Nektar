@@ -131,12 +131,12 @@
   <CONDITIONS>
     <PARAMETERS>
       <P> NumSteps       = 20              </P>
-      <P> TimeStep       = 0.0015     </P>
-      <P> IO_CheckSteps  = 200         </P>
-      <P> IO_InfoSteps   = 1                </P>
-      <P> advx           = 1                 </P>
-      <P> advy           = 1.5                 </P>
-      <P> advz           = 2                 </P>
+      <P> TimeStep       = 0.0015          </P>
+      <P> IO_CheckSteps  = 200             </P>
+      <P> IO_InfoSteps   = 1               </P>
+      <P> advx           = 1               </P>
+      <P> advy           = 1.5             </P>
+      <P> advz           = 2               </P>
     </PARAMETERS>
 
     <SOLVERINFO>

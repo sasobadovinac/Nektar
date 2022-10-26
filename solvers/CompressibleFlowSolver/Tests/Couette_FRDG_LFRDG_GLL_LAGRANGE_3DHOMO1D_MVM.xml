@@ -68,7 +68,7 @@
 
         <PARAMETERS>
 
-            <P> TimeStep              = 0.000001       </P>
+            <P> TimeStep              = 0.000001      </P>
             <P> NumSteps              = 10            </P>
             <P> FinTime               = 0             </P>
             <P> IO_CheckSteps         = 500000        </P>
@@ -99,7 +99,7 @@
             <I PROPERTY="UpwindType"            VALUE="HLLC"                    />
             <I PROPERTY="ProblemType"           VALUE="General"                 />
             <I PROPERTY="ViscosityType"         VALUE="Constant"                />
-            <I PROPERTY="USEFFT"                VALUE="MVM"                    />
+            <I PROPERTY="USEFFT"                VALUE="MVM"                     />
         </SOLVERINFO>
 
         <VARIABLES>

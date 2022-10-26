@@ -68,7 +68,7 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep      = 0.00001        </P>
+            <P> TimeStep      = 0.00001      </P>
             <P> NumSteps      = 200          </P>
             <P> IO_CheckSteps = 200          </P>
             <P> IO_InfoSteps  = 10           </P>

@@ -20,9 +20,9 @@
 
         <PARAMETERS>
             <P> TimeStep      = 0.001        </P>
-            <P> NumSteps      = 100       </P>
-            <P> IO_CheckSteps = 100       </P>
-            <P> IO_InfoSteps  = 100       </P>
+            <P> NumSteps      = 100          </P>
+            <P> IO_CheckSteps = 100          </P>
+            <P> IO_InfoSteps  = 100          </P>
             <P> Kinvis        = 0.025        </P>
         </PARAMETERS>
 

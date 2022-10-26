@@ -34,19 +34,19 @@
         </SOLVERINFO>
         <PARAMETERS>
             <!-- Need to pick Delta t strategically, dont want CFL number to be too large! -->
-            <P>TimeStep = 1e-5</P>
+            <P> TimeStep       = 1e-5           </P>
             <!--  Final time -->
-            <P>T = 4.00e+0</P>
-            <P>NumSteps = T/TimeStep</P>
-            <P>IO_CheckSteps = NumSteps/100</P>
-            <P>IO_InfoSteps = 1</P>
-            <P>IO_CFLSteps = 10</P>
+            <P> T              = 4.00e+0        </P>
+            <P> NumSteps       = T/TimeStep     </P>
+            <P> IO_CheckSteps  = NumSteps/100   </P>
+            <P> IO_InfoSteps   = 1              </P>
+            <P> IO_CFLSteps    = 10             </P>
             <!-- Reynolds number -->
-            <P>Re = 135000</P>
-            <P>Kinvis = 1/Re</P>
+            <P> Re             = 135000         </P>
+            <P> Kinvis         = 1/Re           </P>
             <!-- SVV parameters -->
-            <P>SVVCutoffRatio = 0.5</P>
-            <P>SVVDiffCoeff = 1.0</P>
+            <P> SVVCutoffRatio = 0.5            </P>
+            <P> SVVDiffCoeff   = 1.0            </P>
         </PARAMETERS>
         <VARIABLES>
             <V ID="0">u</V>

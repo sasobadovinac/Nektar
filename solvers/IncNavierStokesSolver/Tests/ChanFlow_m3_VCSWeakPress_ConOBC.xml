@@ -17,12 +17,12 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep = 0.004      </P>
-            <P> NumSteps = 1000       </P>
+            <P> TimeStep      = 0.004 </P>
+            <P> NumSteps      = 1000  </P>
             <P> IO_CheckSteps = 1000  </P>
             <P> IO_InfoSteps  = 1000  </P>
-            <P> D0 = 0.1                </P>
-            <P> Kinvis = 0.1          </P>
+            <P> D0            = 0.1   </P>
+            <P> Kinvis        = 0.1   </P>
         </PARAMETERS>
 
         <VARIABLES>

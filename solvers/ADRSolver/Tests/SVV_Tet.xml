@@ -916,13 +916,13 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep        = 0.01                    </P>
+            <P> TimeStep        = 0.01                      </P>
             <P> NumSteps        = 100                       </P>
             <P> FinTime         = TimeStep*NumSteps         </P>
-            <P> IO_CheckSteps   = 100                        </P>
-            <P> IO_InfoSteps    = 100                        </P>
+            <P> IO_CheckSteps   = 100                       </P>
+            <P> IO_InfoSteps    = 100                       </P>
             <P> wavefreq        = PI                        </P>
-            <P> epsilon         = 1e-5                       </P>
+            <P> epsilon         = 1e-5                      </P>
             <P> a               = 0.01                      </P>
             <P> x0              = 0.2                       </P>
             <P> SVVCutoffRatio  = 0.5                       </P>

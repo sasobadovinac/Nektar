@@ -21,13 +21,13 @@
 
         <PARAMETERS>
           <P> TimeStep      = 0.001   </P>
-          <P> NumSteps      = 10     </P>
+          <P> NumSteps      = 10      </P>
           <P> IO_CheckSteps = 10      </P>
           <P> IO_CFLSteps   = 100     </P>
           <P> IO_InfoSteps  = 1       </P>
           <P> Kinvis        = 0.025   </P>
           <P> KovLam        = 0.5/Kinvis-sqrt(0.25/(Kinvis*Kinvis)+4*PI*PI) </P>
-          <P> HomModesZ     = 32       </P>
+          <P> HomModesZ     = 32      </P>
           <P> LZ            = 1       </P>
           <P> PROC_Z        = 1       </P>
         </PARAMETERS>

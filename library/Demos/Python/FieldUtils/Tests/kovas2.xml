@@ -20,8 +20,8 @@
             <I PROPERTY="HOMOGENEOUS" VALUE="1D" />
         </SOLVERINFO>
         <PARAMETERS>
-            <P> HomModesZ = 4 </P>
-            <P> LZ = 2*PI </P>
+            <P> HomModesZ = 4    </P>
+            <P> LZ        = 2*PI </P>
         </PARAMETERS>
         <VARIABLES>
             <V ID="0">u</V>

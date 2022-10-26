@@ -13,22 +13,22 @@
       <I PROPERTY="EvolutionOperator" VALUE="Direct"/>
       <I PROPERTY="Projection"        VALUE="Galerkin"/>
       <I PROPERTY="Driver"            VALUE= "Standard" />
-      <I PROPERTY="ModeType"        VALUE= "HalfMode" />
+      <I PROPERTY="ModeType"          VALUE= "HalfMode" />
       <I PROPERTY="HOMOGENEOUS"       VALUE="1D"/>
       <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1" />
-        </SOLVERINFO>
+    </SOLVERINFO>
 
     <PARAMETERS>
-      <P> TimeStep      = 0.001 </P>
-      <P> NumSteps      = 300</P>
-      <P> IO_CheckSteps = 1000  </P>
-      <P> IO_InfoSteps  = 1    </P>
-      <P> Kinvis        = 1     </P>
+      <P> TimeStep      = 0.001     </P>
+      <P> NumSteps      = 300       </P>
+      <P> IO_CheckSteps = 1000      </P>
+      <P> IO_InfoSteps  = 1         </P>
+      <P> Kinvis        = 1         </P>
       <P> LZ            = 1.0       </P>
-      <P> kdim            = 1       </P>
-      <P> HomModesZ     = 12       </P>
+      <P> kdim          = 1         </P>
+      <P> HomModesZ     = 12        </P>
 
-      <P> nits            = 0       </P>
+      <P> nits          = 0         </P>
     </PARAMETERS>
 
     <VARIABLES>

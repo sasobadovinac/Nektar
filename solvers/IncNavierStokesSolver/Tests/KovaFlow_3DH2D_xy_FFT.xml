@@ -18,16 +18,16 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep = 0.001       </P>
-            <P> NumSteps = 10          </P>
-            <P> IO_CheckSteps = 10     </P>
-            <P> IO_InfoSteps = 10      </P>
-            <P> Kinvis = 0.025         </P>
+            <P> TimeStep      = 0.001      </P>
+            <P> NumSteps      = 10         </P>
+            <P> IO_CheckSteps = 10         </P>
+            <P> IO_InfoSteps  = 10         </P>
+            <P> Kinvis        = 0.025      </P>
 
-            <P> HomModesY = 8          </P>
-            <P> LY        = 2.0        </P>
-            <P> HomModesZ = 4          </P>
-            <P> LZ        = 1.0        </P>
+            <P> HomModesY     = 8          </P>
+            <P> LY            = 2.0        </P>
+            <P> HomModesZ     = 4          </P>
+            <P> LZ            = 1.0        </P>
         </PARAMETERS>
 
         <VARIABLES>

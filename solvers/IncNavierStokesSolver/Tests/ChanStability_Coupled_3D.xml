@@ -18,17 +18,17 @@
     </SOLVERINFO>
 
     <PARAMETERS>
-      <P> TimeStep      = 0.002  </P>
-      <P> NumSteps      = 5000     </P>
-      <P> IO_CheckSteps = 5000   </P>
-      <P> IO_InfoSteps  = 20     </P>
-      <P> Re            = 15000   </P>
-      <P> Kinvis        = 1.0/Re </P>
-      <P> kdim          = 50      </P> 
-      <P> nvec          = 6     </P> 
-      <P> evtol         = 1e-4      </P> 
-      <P> HomModesZ     = 2       </P>
-      <P> LZ            = 6*PI/sqrt(5)      </P>
+      <P> TimeStep      = 0.002        </P>
+      <P> NumSteps      = 5000         </P>
+      <P> IO_CheckSteps = 5000         </P>
+      <P> IO_InfoSteps  = 20           </P>
+      <P> Re            = 15000        </P>
+      <P> Kinvis        = 1.0/Re       </P>
+      <P> kdim          = 50           </P> 
+      <P> nvec          = 6            </P> 
+      <P> evtol         = 1e-4         </P> 
+      <P> HomModesZ     = 2            </P>
+      <P> LZ            = 6*PI/sqrt(5) </P>
     </PARAMETERS>
 
     <VARIABLES>

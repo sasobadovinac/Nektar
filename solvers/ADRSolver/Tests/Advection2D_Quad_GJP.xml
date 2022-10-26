@@ -85,7 +85,7 @@
 
     <CONDITIONS>
         <PARAMETERS>
-            <P> FinTime         = 2.0                    </P>
+            <P> FinTime         = 2.0                   </P>
             <P> TimeStep        = 0.01                  </P>
             <P> NumSteps        = FinTime/TimeStep      </P>
             <P> IO_CheckSteps   = 100000                </P>
@@ -97,7 +97,7 @@
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
             <I PROPERTY="Projection"            VALUE="Continuous"          />
-            <I PROPERTY="GJPStabilisation"      VALUE="Explicit"     />
+            <I PROPERTY="GJPStabilisation"      VALUE="Explicit"            />
             <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>

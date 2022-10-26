@@ -62,12 +62,12 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> TimeStep        = 0.0001           </P>
-            <P> NumSteps        = 200              </P>
+            <P> TimeStep        = 0.0001            </P>
+            <P> NumSteps        = 200               </P>
             <P> FinTime         = TimeStep*NumSteps </P>
-            <P> IO_CheckSteps   = 200         </P>
-            <P> IO_InfoSteps    = 200          </P>
-            <P> wavefreq        = PI               </P>
+            <P> IO_CheckSteps   = 200               </P>
+            <P> IO_InfoSteps    = 200               </P>
+            <P> wavefreq        = PI                </P>
             <P> epsilon         = 1.0               </P>
         </PARAMETERS>
 
@@ -76,7 +76,7 @@
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
             <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"            />
-            <I PROPERTY="TimeIntegrationMethod" VALUE="DIRKOrder3_ES5"          />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="DIRKOrder3_ES5"      />
         </SOLVERINFO>
 
         <VARIABLES>

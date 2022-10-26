@@ -35,13 +35,13 @@
             <I PROPERTY="Driver" VALUE="Adaptive"                />
         </SOLVERINFO>
         <PARAMETERS>
-            <P> TimeStep      = 0.002             </P>
-            <P> NumSteps      = 5                </P>
-            <P> NumRuns       = 15 </P>
-            <P> IO_CheckSteps = 0                </P>
-            <P> IO_InfoSteps  = NumSteps  </P>
-            <P> Re            = 200               </P>
-            <P> Kinvis        = 1/Re              </P>
+            <P> TimeStep         = 0.002           </P>
+            <P> NumSteps         = 5               </P>
+            <P> NumRuns          = 15              </P>
+            <P> IO_CheckSteps    = 0               </P>
+            <P> IO_InfoSteps     = NumSteps        </P>
+            <P> Re               = 200             </P>
+            <P> Kinvis           = 1/Re            </P>
             <P> AdaptiveMaxModes = 7               </P>
             <P> AdaptiveMinModes = 4               </P>
         </PARAMETERS>

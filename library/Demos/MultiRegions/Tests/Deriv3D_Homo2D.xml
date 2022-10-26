@@ -27,9 +27,9 @@
 
         <PARAMETERS>
             <P> HomModesY = 6      </P>
-            <P> LY        = 2*PI       </P>
+            <P> LY        = 2*PI   </P>
             <P> HomModesZ = 8      </P>
-            <P> LZ        = 4*PI       </P>
+            <P> LZ        = 4*PI   </P>
             <P> USEFFT    = 0      </P>
         </PARAMETERS>
 

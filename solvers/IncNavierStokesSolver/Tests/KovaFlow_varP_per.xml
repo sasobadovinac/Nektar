@@ -21,11 +21,11 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep      = 0.001        </P>
-            <P> NumSteps      = 1000       </P>
-            <P> IO_CheckSteps = 1000       </P>
-            <P> IO_InfoSteps  = 1000       </P>
-            <P> Kinvis        = 0.025        </P>
+            <P> TimeStep      = 0.001       </P>
+            <P> NumSteps      = 1000        </P>
+            <P> IO_CheckSteps = 1000        </P>
+            <P> IO_InfoSteps  = 1000        </P>
+            <P> Kinvis        = 0.025       </P>
         </PARAMETERS>
 
         <VARIABLES>

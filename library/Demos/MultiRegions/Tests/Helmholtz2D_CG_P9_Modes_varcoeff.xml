@@ -240,9 +240,9 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> Lambda    = 1 </P>
+            <P> Lambda    = 1          </P>
             <P> a         = 1.41421356 </P>
-            <P> b         = 0.5  </P>
+            <P> b         = 0.5        </P>
         </PARAMETERS>
 
         <VARIABLES>

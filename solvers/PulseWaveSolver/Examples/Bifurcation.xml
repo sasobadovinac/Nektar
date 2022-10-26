@@ -72,8 +72,8 @@
   <CONDITIONS>
 
     <PARAMETERS>
-      <P> TimeStep       = 1E-4             </P>
-      <P> NumSteps       = 5E4               </P>
+      <P> TimeStep       = 1E-4               </P>
+      <P> NumSteps       = 5E4                </P>
       <P> IO_CheckSteps  = NumSteps/50        </P>
       <P> IO_InfoSteps   = 100                </P>
       <P> T              = 10                 </P>

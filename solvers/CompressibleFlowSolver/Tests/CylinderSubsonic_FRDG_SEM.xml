@@ -2830,7 +2830,7 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> TimeStep        = 0.00001     </P>
+            <P> TimeStep        = 0.00001   </P>
             <P> FinTime         = 0.0       </P>
             <P> NumSteps        = 5         </P>
             <P> IO_CheckSteps   = 100       </P>
@@ -2847,7 +2847,7 @@
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="AdvectionType"         VALUE="FRDG"                />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-            <I PROPERTY="UpwindType"            VALUE="ExactToro"               />
+            <I PROPERTY="UpwindType"            VALUE="ExactToro"           />
             <I PROPERTY="ProblemType"           VALUE="General"             />
         </SOLVERINFO>
 

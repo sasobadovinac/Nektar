@@ -49,8 +49,8 @@
 
         <PARAMETERS>
             <P> Lambda    = 1.0 </P>
-            <P> HomModesZ = 4 </P>
-            <P> LZ        = 5 </P>
+            <P> HomModesZ = 4   </P>
+            <P> LZ        = 5   </P>
         </PARAMETERS>
 
         <VARIABLES>

@@ -755,18 +755,18 @@
      <CONDITIONS>
 
     <PARAMETERS>
-      <P> TimeStep = 0.001                </P>
-      <P> NumSteps = 100              </P>
-      <P> FinTime = NumSteps*TimeStep      </P>
-      <P> IO_CheckSteps = 20         </P>
-      <P> IO_InfoSteps = 20              </P>
-      <P> advx = 1.0                 </P>
-      <P> advy = 1.0                 </P>
-      <P> advz = 1.0                 </P>
-      <P> MMFCircCentreX  = -2.0   </P>
-      <P> MMFCircCentreY  = -2.0   </P>
-      <P> MF1 length = 1.0        </P>
-      <P> MF2 length = 1.0           </P>
+      <P> TimeStep       = 0.001                </P>
+      <P> NumSteps       = 100                  </P>
+      <P> FinTime        = NumSteps*TimeStep    </P>
+      <P> IO_CheckSteps  = 20                   </P>
+      <P> IO_InfoSteps   = 20                   </P>
+      <P> advx           = 1.0                  </P>
+      <P> advy           = 1.0                  </P>
+      <P> advz           = 1.0                  </P>
+      <P> MMFCircCentreX = -2.0                 </P>
+      <P> MMFCircCentreY = -2.0                 </P>
+      <P> MF1 length     = 1.0                  </P>
+      <P> MF2 length     = 1.0                  </P>
     </PARAMETERS>
 
     <SOLVERINFO>

@@ -240,7 +240,7 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> Lambda    = 1 </P>
+            <P> Lambda      = 1 </P>
             <P> Advection_x = 1 </P>
             <P> Advection_y = 1 </P>
         </PARAMETERS>

@@ -240,8 +240,8 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> Lambda    = 1        </P>
-            <P> HomModesZ     = 8   </P>
+            <P> Lambda        = 1    </P>
+            <P> HomModesZ     = 8    </P>
             <P> LZ            = 1    </P>
         </PARAMETERS>
 

@@ -1982,15 +1982,15 @@
 <CONDITIONS>
 
     <PARAMETERS>
-        <P> TimeStep       = 0.001            </P>
-        <P> NumSteps       = 100            </P>
+        <P> TimeStep       = 0.001             </P>
+        <P> NumSteps       = 100               </P>
         <P> FinTime        = TimeStep*NumSteps </P>
-        <P> IO_CheckSteps  = 20              </P>
-        <P> IO_InfoSteps   = 20              </P>
-        <P> epsu0 = 0.001                 </P>
-        <P> epsu1 = 0.002                 </P>
-        <P> MMFCircCentreX  = -2.0   </P>
-        <P> MMFCircCentreY  = -2.0   </P>
+        <P> IO_CheckSteps  = 20                </P>
+        <P> IO_InfoSteps   = 20                </P>
+        <P> epsu0          = 0.001             </P>
+        <P> epsu1          = 0.002             </P>
+        <P> MMFCircCentreX = -2.0              </P>
+        <P> MMFCircCentreY = -2.0              </P>
     </PARAMETERS>
 
     <SOLVERINFO>

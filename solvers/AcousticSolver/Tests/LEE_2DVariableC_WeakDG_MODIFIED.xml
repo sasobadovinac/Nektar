@@ -86,14 +86,14 @@
       <I PROPERTY="EQType"                VALUE="LEE"                 />
       <I PROPERTY="Projection"            VALUE="DisContinuous"       />
       <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
-      <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"/>
+      <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"        />
       <I PROPERTY="UpwindType"            VALUE="Upwind"              />
     </SOLVERINFO>
     <PARAMETERS>
       <P> TimeStep      = 0.00002           </P>
       <P> NumSteps      = 500               </P>
       <P> FinTime       = TimeStep*NumSteps </P>
-      <P> IO_CheckSteps = 500             </P>
+      <P> IO_CheckSteps = 500               </P>
       <P> IO_InfoSteps  = 100               </P>
       <P> Gravity       = 1.0               </P> <!-- Not used for LEE -->
       <P> Rho0          = 1.204             </P> <!-- Incompressible density -->

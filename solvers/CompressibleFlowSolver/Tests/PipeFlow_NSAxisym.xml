@@ -9,34 +9,34 @@
    <CONDITIONS>
         <PARAMETERS>
             <!-- Simulation parameters -->
-            <P> CFL            = 0.1                </P>
-            <P> NumSteps       = 1000               </P>
-            <P> IO_InfoSteps   = 1000               </P>
-            <P> IO_CheckSteps  = 0                  </P>
-            <P> SteadyStateTol = 1e-8               </P>
+            <P> CFL            = 0.1                   </P>
+            <P> NumSteps       = 1000                  </P>
+            <P> IO_InfoSteps   = 1000                  </P>
+            <P> IO_CheckSteps  = 0                     </P>
+            <P> SteadyStateTol = 1e-8                  </P>
             <!-- Fluid Properties -->
-            <P> Gamma          = 1.4                </P>
-            <P> GasConstant    = 287.058            </P>
+            <P> Gamma          = 1.4                   </P>
+            <P> GasConstant    = 287.058               </P>
 
             <!-- Parameters for boundary conditions -->
-            <P> pIn            = 1e5                </P>
-            <P> TIn            = 288                </P>
-            <P> MachIn         = 0.01                </P>
+            <P> pIn            = 1e5                   </P>
+            <P> TIn            = 288                   </P>
+            <P> MachIn         = 0.01                  </P>
 
-            <P> rhoIn         = pIn/(GasConstant*TIn) </P>
-            <P> cIn           = sqrt(Gamma*pIn/rhoIn) </P>
-            <P> vIn           = MachIn*cIn            </P>
+            <P> rhoIn          = pIn/(GasConstant*TIn) </P>
+            <P> cIn            = sqrt(Gamma*pIn/rhoIn) </P>
+            <P> vIn            = MachIn*cIn            </P>
 
             <!-- Reference state -->
-            <P> rhoInf         = rhoIn              </P>
-            <P> pInf           = pIn                </P>
-            <P> vInf           = vIn                </P>
-            <P> uInf           = 0                  </P>
+            <P> rhoInf         = rhoIn                 </P>
+            <P> pInf           = pIn                   </P>
+            <P> vInf           = vIn                   </P>
+            <P> uInf           = 0                     </P>
 
             <!-- Viscous parameters -->
-            <P> Re             = 1e2                </P>
-            <P> Pr             = 0.72               </P>
-            <P> mu             = rhoIn*vIn*2 / Re   </P>
+            <P> Re             = 1e2                   </P>
+            <P> Pr             = 0.72                  </P>
+            <P> mu             = rhoIn*vIn*2 / Re      </P>
        </PARAMETERS>
 
         <SOLVERINFO>

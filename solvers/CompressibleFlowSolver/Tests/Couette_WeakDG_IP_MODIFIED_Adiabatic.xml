@@ -31,16 +31,16 @@
     </EXPANSIONS>
 <CONDITIONS>
     <PARAMETERS>
-      <P> TimeStep              = 0.00001                          </P>
-      <P> FinTime               = 0.01                           </P>
+      <P> TimeStep              = 0.00001                       </P>
+      <P> FinTime               = 0.01                          </P>
       <P> IO_CheckSteps         = 500000                        </P>
-      <P> IO_InfoSteps          = 100                             </P>
+      <P> IO_InfoSteps          = 100                           </P>
       <P> GasConstant           = 287.058                       </P>
       <P> Gamma                 = 1.4                           </P>
       <P> pInf                  = 101325                        </P>
       <P> rhoInf                = 1.225                         </P>
-       <P> Mach                 = 0.1                           </P>
-     <P> cInf                   = sqrt(Gamma * pInf / rhoInf)   </P>
+      <P> Mach                  = 0.1                           </P>
+      <P> cInf                  = sqrt(Gamma * pInf / rhoInf)   </P>
       <P> uInf                  = Mach*cInf                     </P>
       <P> vInf                  = 0.0                           </P>
       <P> Twall                 = 300.15                        </P>

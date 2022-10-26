@@ -44,12 +44,12 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep = 0.0004       </P>
-            <P> NumSteps = 16000        </P>
-            <P> IO_CheckSteps = 16000   </P>
-            <P> IO_InfoSteps = 16000    </P>
-            <P> Re = 100                </P>
-            <P> Kinvis = 1/Re           </P>
+            <P> TimeStep      = 0.0004   </P>
+            <P> NumSteps      = 16000    </P>
+            <P> IO_CheckSteps = 16000    </P>
+            <P> IO_InfoSteps  = 16000    </P>
+            <P> Re            = 100      </P>
+            <P> Kinvis        = 1/Re     </P>
         </PARAMETERS>
 
         <VARIABLES>

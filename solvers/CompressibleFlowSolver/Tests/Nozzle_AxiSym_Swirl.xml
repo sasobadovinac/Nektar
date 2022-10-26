@@ -33,44 +33,44 @@
    <CONDITIONS>
         <PARAMETERS>
             <!-- Simulation parameters -->
-            <P> CFL            = 0.2               </P>
-            <P> TimeStep       = 0.0               </P>
-            <P> NumSteps       = 100  </P>
-            <P> IO_InfoSteps   = 100                </P>
-            <P> IO_CheckSteps  = 0                </P>
-            <P> SteadyStateTol = 1e-7                </P>
+            <P> CFL            = 0.2                   </P>
+            <P> TimeStep       = 0.0                   </P>
+            <P> NumSteps       = 100                   </P>
+            <P> IO_InfoSteps   = 100                   </P>
+            <P> IO_CheckSteps  = 0                     </P>
+            <P> SteadyStateTol = 1e-7                  </P>
             <!-- Fluid Properties -->
-            <P> Gamma          = 1.4      </P>
-            <P> GasConstant    = 287.058      </P>
+            <P> Gamma          = 1.4                   </P>
+            <P> GasConstant    = 287.058               </P>
 
             <!-- Parameters for boundary conditions -->
-            <P> pIn           = 1e5           </P>
-            <P> pOut          = 0.83049*pIn   </P>
-            <P> TIn           = 288           </P>
-            <P> MachIn        = 0.239543      </P>
+            <P> pIn            = 1e5                   </P>
+            <P> pOut           = 0.83049*pIn           </P>
+            <P> TIn            = 288                   </P>
+            <P> MachIn         = 0.239543              </P>
 
-            <P> rhoIn         = pIn/(GasConstant*TIn) </P>
-            <P> cIn           = sqrt(Gamma*pIn/rhoIn) </P>
-            <P> vIn           = MachIn*cIn            </P>
-            <P> pStagIn   = pIn * (1 + (Gamma-1)/2 * MachIn^2)^(Gamma/(Gamma-1)) </P>
-            <P> rhoStagIn = rhoIn * (pStagIn/pIn)^(1/Gamma) </P>
+            <P> rhoIn          = pIn/(GasConstant*TIn) </P>
+            <P> cIn            = sqrt(Gamma*pIn/rhoIn) </P>
+            <P> vIn            = MachIn*cIn            </P>
+            <P> pStagIn        = pIn * (1 + (Gamma-1)/2 * MachIn^2)^(Gamma/(Gamma-1)) </P>
+            <P> rhoStagIn      = rhoIn * (pStagIn/pIn)^(1/Gamma) </P>
             <!-- Reference state -->
-            <P> rhoInf         = 1.225      </P>
-            <P> pInf           = pIn       </P>
-            <P> vInf           = 1      </P>
-            <P> uInf           = 0      </P>
-            <P> wInf           = 0      </P>
+            <P> rhoInf         = 1.225                 </P>
+            <P> pInf           = pIn                   </P>
+            <P> vInf           = 1                     </P>
+            <P> uInf           = 0                     </P>
+            <P> wInf           = 0                     </P>
 
             <!-- Parameters for artificial diffusion -->
-            <P> Skappa           = -4.5      </P>
-            <P> Kappa            = 1.5      </P>
-            <P> mu0            = 2      </P>
-            <P> SensorOffset   = 2      </P>
+            <P> Skappa         = -4.5                  </P>
+            <P> Kappa          = 1.5                   </P>
+            <P> mu0            = 2                     </P>
+            <P> SensorOffset   = 2                     </P>
 
             <!-- Parameters for explicit filter -->
-            <P> FilterAlpha    = 36      </P>
-            <P> FilterCutoff   = 0.0      </P>
-            <P> FilterExponent = 16      </P>
+            <P> FilterAlpha    = 36                    </P>
+            <P> FilterCutoff   = 0.0                   </P>
+            <P> FilterExponent = 16                    </P>
        </PARAMETERS>
 
         <SOLVERINFO>

@@ -192,17 +192,17 @@
     </SOLVERINFO>
 
     <PARAMETERS>
-      <P> IO_CheckSteps = 1000   </P>
-      <P> IO_InfoSteps  = 20     </P>
-      <P> Re            = 15000  </P>
-      <P> Kinvis        = 1.0/Re </P>
-      <P> kdim          = 64    </P>
-      <P> realShift     = 0.003  </P>
+      <P> IO_CheckSteps = 1000         </P>
+      <P> IO_InfoSteps  = 20           </P>
+      <P> Re            = 15000        </P>
+      <P> Kinvis        = 1.0/Re       </P>
+      <P> kdim          = 64           </P>
+      <P> realShift     = 0.003        </P>
       <P> realShift     = 0.002        </P>
       <P> imagShift     = 0.2          </P>
       <P> HomModesZ     = 2            </P>
-      <P> evtol         = 1e-6   </P>
-      <P> nvec          = 4    </P>
+      <P> evtol         = 1e-6         </P>
+      <P> nvec          = 4            </P>
       <P> LZ            = 6*PI/sqrt(5) </P>
     </PARAMETERS>
 

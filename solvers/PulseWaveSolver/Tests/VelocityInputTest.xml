@@ -46,8 +46,8 @@
     <CONDITIONS>
 
         <PARAMETERS>
-            <P> TimeStep       = 5e-4             </P>
-            <P> FinTime        = 0.25              </P>
+            <P> TimeStep       = 5e-4               </P>
+            <P> FinTime        = 0.25               </P>
             <P> NumSteps       = FinTime/TimeStep   </P>
             <P> IO_CheckSteps  = NumSteps/50        </P>
             <P> IO_InfoSteps   = 100                </P>

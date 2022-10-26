@@ -20,12 +20,12 @@
 
     <PARAMETERS>
       <P> TimeStep      = 0.001 </P>
-      <P> NumSteps      = 100  </P>
+      <P> NumSteps      = 100   </P>
       <P> IO_CheckSteps = 1000  </P>
-      <P> IO_InfoSteps  = 1    </P>
+      <P> IO_InfoSteps  = 1     </P>
       <P> Kinvis        = 1     </P>
-      <P> LZ            = 1.0       </P>
-      <P> HomModesZ            = 4       </P>
+      <P> LZ            = 1.0   </P>
+      <P> HomModesZ     = 4     </P>
     </PARAMETERS>
 
     <VARIABLES>

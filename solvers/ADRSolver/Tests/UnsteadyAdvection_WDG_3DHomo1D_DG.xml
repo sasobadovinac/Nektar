@@ -92,17 +92,17 @@
             <P> IO_InfoSteps    = 100000                </P>
             <P> advx            = 1                     </P>
             <P> advy            = 0                     </P>
-            <P> HomModesZ     = 8            </P>
-            <P> LZ            = 1.0          </P>
+            <P> HomModesZ       = 8                     </P>
+            <P> LZ              = 1.0                   </P>
         </PARAMETERS>
 
         <SOLVERINFO>
-            <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection" />
-            <I PROPERTY="Projection"            VALUE="DisContinuous"     />
-            <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                />
-            <I PROPERTY="AdvectionType"         VALUE="WeakDG3DHomogeneous1D" />
-            <I PROPERTY="UpwindType"            VALUE="Upwind"              />
-            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
+            <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"    />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"        />
+            <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                   />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG3DHomogeneous1D"/>
+            <I PROPERTY="UpwindType"            VALUE="Upwind"               />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
         </SOLVERINFO>
 
         <VARIABLES>

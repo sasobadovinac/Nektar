@@ -4067,7 +4067,7 @@
     <!-- M = 0.2, Re = 200, Pr = 0.72 -->
     <PARAMETERS>
       <P> TimeStep              = 0.00001       </P>
-      <P> NumSteps              = 1            </P>
+      <P> NumSteps              = 1             </P>
       <P> FinTime               = 0             </P>
       <P> IO_CheckSteps         = 500000        </P>
       <P> IO_InfoSteps          = 500000        </P>
@@ -4091,9 +4091,9 @@
         <I PROPERTY="EQType"                VALUE="NavierStokesCFE"         />
         <I PROPERTY="Projection"            VALUE="DisContinuous"           />
         <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                      />
-        <I PROPERTY="AdvectionType"         VALUE="FRSD3DHomogeneous1D"   />
-        <I PROPERTY="DiffusionType"         VALUE="LFRSDNS3DHomogeneous1D"    />
-        <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"    />
+        <I PROPERTY="AdvectionType"         VALUE="FRSD3DHomogeneous1D"     />
+        <I PROPERTY="DiffusionType"         VALUE="LFRSDNS3DHomogeneous1D"  />
+        <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"            />
         <I PROPERTY="UpwindType"            VALUE="HLLC"                    />
         <I PROPERTY="ProblemType"           VALUE="General"                 />
         <I PROPERTY="ViscosityType"         VALUE="Constant"                />

@@ -11844,7 +11844,7 @@
             <P> TimeStep            = 0.000003                          </P>
             <P> NumSteps            = 1                                 </P>
             <P> IO_CheckSteps       = 10                                </P>
-            <P> IO_InfoSteps        = 10                                 </P>
+            <P> IO_InfoSteps        = 10                                </P>
             <P> GasConstant         = 287.058                           </P>
             <P> Gamma               = 1.4                               </P>
             <P> pInf                = 22600                             </P>

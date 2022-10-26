@@ -96,12 +96,12 @@
             <P> rho            = 1.0                </P>
             <P> nue            = 0.5                </P>
             <P> pext           = 0.0                </P>
-            <P> a1             = 10.0              </P>
-            <P> a2             = 20.0                </P>
+            <P> a1             = 10.0               </P>
+            <P> a2             = 20.0               </P>
             <P> kappa          = 100.0              </P>
             <P> Y0             = 1.9099e+5          </P>
             <P> k              = 2                  </P>
-            <P> k1             = 200                  </P>
+            <P> k1             = 200                </P>
         </PARAMETERS>
 
         <SOLVERINFO>

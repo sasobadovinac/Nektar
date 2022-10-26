@@ -33,11 +33,11 @@
         </SOLVERINFO>
         <PARAMETERS>
           <P> TimeStep      = 0.005        </P>
-          <P> NumSteps      = 10 </P>
-          <P> IO_CheckSteps = 10    </P>
-          <P> IO_InfoSteps  = 1    </P>
+          <P> NumSteps      = 10           </P>
+          <P> IO_CheckSteps = 10           </P>
+          <P> IO_InfoSteps  = 1            </P>
           <P> Kinvis        = 0.025        </P>
-          <P> MinSubSteps  = 1        </P>
+          <P> MinSubSteps   = 1            </P>
           <P> KovLam        = 0.5/Kinvis-sqrt(0.25/(Kinvis*Kinvis)+4*PI*PI) </P>
         </PARAMETERS>
 

@@ -28,11 +28,11 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep = 0.01     </P>
-            <P> NumSteps = 100       </P>
+            <P> TimeStep      = 0.01       </P>
+            <P> NumSteps      = 100        </P>
             <P> IO_CheckSteps = 1000       </P>
-            <P> IO_InfoSteps = 1000       </P>
-            <P> Kinvis = 1         </P>
+            <P> IO_InfoSteps  = 1000       </P>
+            <P> Kinvis        = 1          </P>
         </PARAMETERS>
 
         <VARIABLES>

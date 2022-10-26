@@ -126,7 +126,7 @@
             <P> NumSteps      = 50                 </P>
             <P> IO_CheckSteps = 50                 </P>
             <P> IO_InfoSteps  = 50                 </P>
-            <P> Kinvis        = 1                </P>
+            <P> Kinvis        = 1                  </P>
         </PARAMETERS>
 
         <VARIABLES>

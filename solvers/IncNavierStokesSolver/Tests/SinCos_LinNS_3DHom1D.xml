@@ -23,9 +23,9 @@
       <P> Kinvis        = 1          </P>
       <P> HomModesZ     = 4          </P>
       <P> LZ            = 2          </P>
-      <P> Uvel          = 1         </P>
-      <P> Vvel          = 2         </P>
-      <P> Wvel          = 3         </P>
+      <P> Uvel          = 1          </P>
+      <P> Vvel          = 2          </P>
+      <P> Wvel          = 3          </P>
     </PARAMETERS>
 
     <VARIABLES>

@@ -3,15 +3,15 @@
     <CONDITIONS>
 
       <PARAMETERS>
-        <P> NumSteps       = 100         </P>
-        <P> TimeStep       = 0.001     </P>
+        <P> NumSteps       = 100        </P>
+        <P> TimeStep       = 0.001      </P>
         <P> IO_CheckSteps  = 100        </P>
-        <P> IO_InfoSteps   = 50          </P>
+        <P> IO_InfoSteps   = 50         </P>
         <P> advx           = 1          </P>
         <P> advy           = 1          </P>
         <P> advz           = 1          </P>
         <P> offset         = 0.25       </P>
-        <P> epsilon         = 0.000001               </P>
+        <P> epsilon        = 0.000001   </P>
       </PARAMETERS>
 
       <SOLVERINFO>

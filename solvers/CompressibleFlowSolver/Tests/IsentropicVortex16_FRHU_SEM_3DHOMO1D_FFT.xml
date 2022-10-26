@@ -1120,7 +1120,7 @@
 
         <PARAMETERS>
             <P> TimeStep        = 0.0001        </P>
-            <P> NumSteps        = 5            </P>
+            <P> NumSteps        = 5             </P>
             <P> IO_CheckSteps   = 1000          </P>
             <P> IO_InfoSteps    = 100           </P>
             <P> Gamma           = 1.4           </P>
@@ -1134,10 +1134,10 @@
         </PARAMETERS>
 
         <SOLVERINFO>
-            <I PROPERTY="EQType"                VALUE="IsentropicVortex"                    />
+            <I PROPERTY="EQType"                VALUE="IsentropicVortex"            />
             <I PROPERTY="Projection"            VALUE="DisContinuous"               />
             <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                          />
-            <I PROPERTY="AdvectionType"         VALUE="FRHU3DHomogeneous1D"       />
+            <I PROPERTY="AdvectionType"         VALUE="FRHU3DHomogeneous1D"         />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"        />
             <I PROPERTY="UpwindType"            VALUE="ExactToro"                   />
             <I PROPERTY="USEFFT"                VALUE="FFTW"                        />

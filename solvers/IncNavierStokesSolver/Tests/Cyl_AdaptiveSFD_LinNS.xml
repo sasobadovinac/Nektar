@@ -13,13 +13,13 @@
             <I PROPERTY="EvolutionOperator" VALUE="AdaptiveSFD"/>
         </SOLVERINFO>
         <PARAMETERS>
-            <P> TimeStep = 0.01   </P>
-            <P> NumSteps = 1.0/TimeStep    </P>
-            <P> IO_CheckSteps = 1.0/TimeStep  </P>
+            <P> TimeStep      = 0.01            </P>
+            <P> NumSteps      = 1.0/TimeStep    </P>
+            <P> IO_CheckSteps = 1.0/TimeStep    </P>
             <P> IO_InfoSteps  = 0.25/TimeStep   </P>
-            <P> IO_CFLSteps   = 100 </P>
-            <P> Re = 100.0         </P>
-            <P> Kinvis = 1.0/Re         </P>
+            <P> IO_CFLSteps   = 100             </P>
+            <P> Re            = 100.0           </P>
+            <P> Kinvis        = 1.0/Re          </P>
         </PARAMETERS>
         <VARIABLES>
             <V ID="0"> u </V>

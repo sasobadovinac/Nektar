@@ -242,11 +242,11 @@
             <I PROPERTY="GlobalSysSoln" VALUE="IterativeStaticCond" />
         </SOLVERINFO>
         <PARAMETERS>
-            <P> Lambda    = 1 </P>
-            <P> Advection_x = 1 </P>
-            <P> Advection_y = 1 </P>
+            <P> Lambda                   = 1    </P>
+            <P> Advection_x              = 1    </P>
+            <P> Advection_y              = 1    </P>
             <P> IterativeSolverTolerance = 1e-9 </P>
-            <P> LinSysMaxStorage = 100 </P>
+            <P> LinSysMaxStorage         = 100  </P>
 
         </PARAMETERS>
 

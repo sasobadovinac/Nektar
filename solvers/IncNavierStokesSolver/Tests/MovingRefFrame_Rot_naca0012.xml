@@ -22,7 +22,7 @@
             <P> NumSteps      = 10                 </P>
             <P> IO_CheckSteps = 10                 </P>
             <P> IO_InfoSteps  = 10                 </P>
-            <P> IO_CFLSteps  =  10                 </P>
+            <P> IO_CFLSteps   = 10                 </P>
             <P> C             = 1.0                </P>
             <P> D0            = 1.0                </P>
             <P> Uinf          = 1.                 </P>

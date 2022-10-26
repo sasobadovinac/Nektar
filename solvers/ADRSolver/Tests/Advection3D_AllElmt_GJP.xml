@@ -3,10 +3,10 @@
     <CONDITIONS>
 
       <PARAMETERS>
-        <P> NumSteps       = 100         </P>
-        <P> TimeStep       = 0.001     </P>
+        <P> NumSteps       = 100        </P>
+        <P> TimeStep       = 0.001      </P>
         <P> IO_CheckSteps  = 100        </P>
-        <P> IO_InfoSteps   = 50          </P>
+        <P> IO_InfoSteps   = 50         </P>
         <P> advx           = 1          </P>
         <P> advy           = 1          </P>
         <P> advz           = 1          </P>
@@ -16,9 +16,9 @@
       <SOLVERINFO>
         <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
         <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
-        <I PROPERTY="GJPStabilisation"      VALUE="Explicit"     />
+        <I PROPERTY="GJPStabilisation"      VALUE="Explicit"            />
         <I PROPERTY="Projection"            VALUE="Galerkin"            />
-        <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"/>
+        <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"        />
       </SOLVERINFO>
 
 

@@ -62,12 +62,12 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep = 0.0001               </P>
-            <P> NumSteps = 1000                 </P>
+            <P> TimeStep      = 0.0001          </P>
+            <P> NumSteps      = 1000            </P>
             <P> IO_CheckSteps = 1000            </P>
-            <P> IO_InfoSteps = 1000             </P>
-            <P> wavefreq = PI                   </P>
-            <P> epsilon = 1.0                   </P>
+            <P> IO_InfoSteps  = 1000            </P>
+            <P> wavefreq      = PI              </P>
+            <P> epsilon       = 1.0             </P>
         </PARAMETERS>
 
         <VARIABLES>

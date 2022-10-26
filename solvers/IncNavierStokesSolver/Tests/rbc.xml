@@ -23,16 +23,16 @@
         </VARIABLES>
 
         <PARAMETERS>
-            <P> TimeStep      = 0.001   </P>
-            <P> T_Final = 10</P>
-            <P> NumSteps      = 100     </P>
-            <P> IO_TimeStep = 5</P>
-            <P> IO_CheckSteps = IO_TimeStep/TimeStep     </P>
-            <P> Energy_TimeStep = 0.01 </P>
-            <P> IO_InfoSteps  = 100       </P>
-            <P> Ra            = 5000      </P>
-            <P> Pr            = 0.71      </P>
-            <P> Kinvis        = Pr    </P>
+            <P> TimeStep        = 0.001                    </P>
+            <P> T_Final         = 10                       </P>
+            <P> NumSteps        = 100                      </P>
+            <P> IO_TimeStep     = 5                        </P>
+            <P> IO_CheckSteps   = IO_TimeStep/TimeStep     </P>
+            <P> Energy_TimeStep = 0.01                     </P>
+            <P> IO_InfoSteps    = 100                      </P>
+            <P> Ra              = 5000                     </P>
+            <P> Pr              = 0.71                     </P>
+            <P> Kinvis          = Pr                       </P>
         </PARAMETERS>
 
 

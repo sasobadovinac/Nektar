@@ -30,24 +30,24 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2" />
         </SOLVERINFO>
         <PARAMETERS>
-            <P>OutputEvery = 1000</P>
-            <P>TimeStep = 1.00e-5</P>
-            <P>NumSteps = 500001</P>
+            <P> OutputEvery    = 1000            </P>
+            <P> TimeStep       = 1.00e-5         </P>
+            <P> NumSteps       = 500001          </P>
             <!--   0.6/TimeStep  -->
-            <P>IO_CheckSteps = OutputEvery</P>
-            <P>IO_InfoSteps = 100</P>
-            <P>IO_CFLSteps = 100</P>
-            <P>Linf = 0.24</P>
-            <P>Ufstr = 1.00</P>
-            <P>Uinf = 1.0</P>
-            <P>Winf = 0.0</P>
-            <P>Re = 5.0e4</P>
+            <P> IO_CheckSteps  = OutputEvery     </P>
+            <P> IO_InfoSteps   = 100             </P>
+            <P> IO_CFLSteps    = 100             </P>
+            <P> Linf           = 0.24            </P>
+            <P> Ufstr          = 1.00            </P>
+            <P> Uinf           = 1.0             </P>
+            <P> Winf           = 0.0             </P>
+            <P> Re             = 5.0e4           </P>
             <!-- 0.33*Re_exp -->
-            <P>Kinvis = Ufstr*Linf/Re</P>
+            <P> Kinvis         = Ufstr*Linf/Re   </P>
             <!-- C_MP=0.24[m] and Re_c|MP_EXP = 5.75e5 -->
-            <P>IterativeSolverTolerance = 1e-8</P>
-            <P>SVVDiffCoeff = 2.5</P>
-            <P>SVVCutoffRatio = 0.4</P>
+            <P> IterativeSolverTolerance = 1e-8  </P>
+            <P> SVVDiffCoeff   = 2.5             </P>
+            <P> SVVCutoffRatio = 0.4             </P>
         </PARAMETERS>
         <GLOBALSYSSOLNINFO>
             <V VAR="u,w">

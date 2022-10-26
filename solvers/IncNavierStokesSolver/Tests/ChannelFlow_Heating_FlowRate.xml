@@ -33,9 +33,9 @@
       <P> Kinvis         = 1/Re                </P>
       <P> Flowrate       = 2.0/3.0             </P>
       <!-- Heating parameters  -->
-      <P> alpha         = 3                    </P>
-      <P> Ra_uni        = 100                  </P>
-      <P> Pr            = 0.71                 </P>
+      <P> alpha          = 3                   </P>
+      <P> Ra_uni         = 100                 </P>
+      <P> Pr             = 0.71                </P>
       <!-- SVV parameters -->
       <P> SVVCutoffRatio = 0.5                 </P>
       <P> SVVDiffCoeff   = 1                   </P>

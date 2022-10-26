@@ -61,14 +61,14 @@
             <I PROPERTY="AdvectionType"         VALUE="FRSD3DHomogeneous1D"         />
             <I PROPERTY="AdvectionAdvancement"  VALUE="Explicit"                    />
             <I PROPERTY="DiffusionType"         VALUE="LFRSD3DHomogeneous1D"        />
-            <I PROPERTY="DiffusionnAdvancement"  VALUE="Explicit"                   />
+            <I PROPERTY="DiffusionnAdvancement" VALUE="Explicit"                    />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"        />
             <I PROPERTY="UpwindType"            VALUE="Upwind"                      />
             <I PROPERTY="USEFFT"                VALUE="FFTW"                        />
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep      = 0.00001        </P>
+            <P> TimeStep      = 0.00001      </P>
             <P> NumSteps      = 200          </P>
             <P> IO_CheckSteps = 200          </P>
             <P> IO_InfoSteps  = 10           </P>

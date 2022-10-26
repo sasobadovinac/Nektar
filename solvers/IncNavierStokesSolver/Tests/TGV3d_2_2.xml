@@ -37,21 +37,21 @@
       <!--  <I PROPERTY="SpectralVanishingViscosity"         VALUE="True" />  --> 
         </SOLVERINFO>
         <PARAMETERS>
-            <P> TimeStep       = 0.002    </P>
-            <P> FinalTime      = 20.0     </P>
-            <P> NumSteps       = 10 </P>
-            <P> IO_CheckSteps  = NumSteps/4     </P>
-            <P> IO_InfoSteps   = 1       </P>
-            <P> IO_CFLSteps    = 1       </P>
-     <!--   <P> IO_CFDWriteFld = 100      </P> -->
-            <P> Re             = 1600     </P>
-            <P> Kinvis         = 1/Re     </P>
-            <P> V0             = 1        </P>
-            <P> L              = 1        </P> 
-     <!--   <P> LZ             = 2*PI     </P> -->
-     <!--   <P> HomModesZ      = 64       </P> -->
-            <P> SVVCutoffRatio = 1      </P>  
-            <P> SVVDiffCoeff   = 1       </P>  
+            <P> TimeStep       = 0.002       </P>
+            <P> FinalTime      = 20.0        </P>
+            <P> NumSteps       = 10          </P>
+            <P> IO_CheckSteps  = NumSteps/4  </P>
+            <P> IO_InfoSteps   = 1           </P>
+            <P> IO_CFLSteps    = 1           </P>
+     <!--   <P> IO_CFDWriteFld = 100         </P> -->
+            <P> Re             = 1600        </P>
+            <P> Kinvis         = 1/Re        </P>
+            <P> V0             = 1           </P>
+            <P> L              = 1           </P> 
+     <!--   <P> LZ             = 2*PI        </P> -->
+     <!--   <P> HomModesZ      = 64          </P> -->
+            <P> SVVCutoffRatio = 1           </P>  
+            <P> SVVDiffCoeff   = 1           </P>  
         </PARAMETERS>
         <GLOBALSYSSOLNINFO>
           <V VAR="u,v,w">

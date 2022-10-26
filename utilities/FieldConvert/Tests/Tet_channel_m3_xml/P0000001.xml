@@ -192,11 +192,11 @@
             <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1" />
         </SOLVERINFO>
         <PARAMETERS>
-            <P>TimeStep = 0.001</P>
-            <P>NumSteps = 10</P>
-            <P>IO_CheckSteps = 10</P>
-            <P>IO_InfoSteps = 10</P>
-            <P>Kinvis = 1</P>
+            <P> TimeStep      = 0.001 </P>
+            <P> NumSteps      = 10    </P>
+            <P> IO_CheckSteps = 10    </P>
+            <P> IO_InfoSteps  = 10    </P>
+            <P> Kinvis        = 1     </P>
         </PARAMETERS>
         <VARIABLES>
             <V ID="0">u</V>

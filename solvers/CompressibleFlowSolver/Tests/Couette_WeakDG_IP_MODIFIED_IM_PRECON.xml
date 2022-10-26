@@ -31,8 +31,8 @@
     </EXPANSIONS>
 <CONDITIONS>
     <PARAMETERS>
- <P> TimeStep              = 0.05                          </P>
-      <P> NumSteps              = 30                           </P>
+      <P> TimeStep              = 0.05                          </P>
+      <P> NumSteps              = 30                            </P>
       <P> IO_CheckSteps         = 0                             </P>
       <P> IO_InfoSteps          = 1                             </P>
       <P> Gamma                 = 1.4                           </P>
@@ -57,7 +57,7 @@
       <P> vInf                  = 0.0                           </P>
       <P> mu                    = Mach / Re                     </P>
       <P> IPSymmFluxCoeff       = 0.0                           </P>
-      <P> PreconItsStep = 7                     </P>
+      <P> PreconItsStep         = 7                             </P>
     </PARAMETERS>
 
         <SOLVERINFO>

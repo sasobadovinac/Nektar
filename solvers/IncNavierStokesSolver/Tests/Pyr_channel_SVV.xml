@@ -14,12 +14,12 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-            <P> TimeStep      = 0.001 </P>
-            <P> NumSteps      = 50 </P>
-            <P> IO_InfoSteps  = 100    </P>
-            <P> Kinvis        = 1   </P>
-            <P> SVVCutOffRatio  = 0.0   </P>
-            <P> SVVDiffCoeff  = 1   </P>
+            <P> TimeStep        = 0.001  </P>
+            <P> NumSteps        = 50     </P>
+            <P> IO_InfoSteps    = 100    </P>
+            <P> Kinvis          = 1      </P>
+            <P> SVVCutOffRatio  = 0.0    </P>
+            <P> SVVDiffCoeff    = 1      </P>
         </PARAMETERS>
 
         <VARIABLES>
@@ -30,7 +30,7 @@
         </VARIABLES>
 
         <BOUNDARYREGIONS>
-            <B ID="0"> C[1] </B>  <!-- Inlet -->
+            <B ID="0"> C[1] </B>    <!-- Inlet -->
             <B ID="1"> C[6] </B>    <!-- Outlet -->
             <B ID="2"> C[2] </B>    <!-- Wall -->
             <B ID="3"> C[3] </B>    <!-- Wall left -->

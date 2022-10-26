@@ -1,10 +1,10 @@
 <NEKTAR>
     <CONDITIONS>
         <PARAMETERS>
-            <P> TimeStep = 0.02 </P>
-            <P> FinTime  = 15000 </P>
+            <P> TimeStep = 0.02             </P>
+            <P> FinTime  = 15000            </P>
             <P> NumSteps = FinTime/TimeStep </P>
-            <P> SubSteps = 1 </P>
+            <P> SubSteps = 1                </P>
         </PARAMETERS>
 
         <SOLVERINFO>

@@ -360,8 +360,8 @@
             <P> IO_CheckSteps  = 20                </P>
             <P> IO_InfoSteps   = 20                </P>
             <P> Gravity        = 1.0               </P>
-            <P> MMFCircCentreX  = -30.0            </P>
-            <P> MMFCircCentreY  = -30.0            </P>
+            <P> MMFCircCentreX = -30.0             </P>
+            <P> MMFCircCentreY = -30.0             </P>
         </PARAMETERS>
 
         <VARIABLES>
