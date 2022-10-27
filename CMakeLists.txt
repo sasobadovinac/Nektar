@@ -339,7 +339,7 @@ FOREACH(def ${NEKTAR_DEFINITIONS_LIST})
         # expression is used to reject blank ${def} entries since these can themselves
         # be generator expressions which may evaluate to empty string, in which case
         # we'd end up with blank "-D" entries in the definition list.
-        SET(NEKTAR_DEFINITIONS ${NEKTAR_DEFINITIONS};$<IF:$<BOOL:${def}>,-D${def},>)
+        SET(NEKTAR_DEFINITIONS ${NEKTAR_DEFINITIONS};$<$<BOOL:${def}>:-D${def}>)
     ENDIF()
 ENDFOREACH()
 # Now we convert our defintions from a CMake list (; separated) and convert to
