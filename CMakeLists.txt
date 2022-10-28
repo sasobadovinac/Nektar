@@ -333,15 +333,13 @@ SET(NEKTAR_DEFINITIONS "")
 GET_DIRECTORY_PROPERTY(
     NEKTAR_DEFINITIONS_LIST DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
 FOREACH(def ${NEKTAR_DEFINITIONS_LIST})
-    add_definitions(-D${def})
-    IF (NOT def MATCHES "^vtk")
-        # Build NEKTAR_DEFINITIONS as a list (items separated with ;). The generator
-        # expression is used to reject blank ${def} entries since these can themselves
-        # be generator expressions which may evaluate to empty string, in which case
-        # we'd end up with blank "-D" entries in the definition list.
-        SET(NEKTAR_DEFINITIONS ${NEKTAR_DEFINITIONS};$<$<BOOL:${def}>:-D${def}>)
-    ENDIF()
+    # Build NEKTAR_DEFINITIONS as a list (items separated with ;). The generator
+    # expression is used to reject blank ${def} entries since these can themselves
+    # be generator expressions which may evaluate to empty string, in which case
+    # we'd end up with blank "-D" entries in the definition list.
+    SET(NEKTAR_DEFINITIONS ${NEKTAR_DEFINITIONS};$<$<BOOL:${def}>:-D${def}>)
 ENDFOREACH()
+
 # Now we convert our defintions from a CMake list (; separated) and convert to
 # a space-separated string.
 SET(NEKTAR_DEFINITIONS $<JOIN:${NEKTAR_DEFINITIONS},\ >)
