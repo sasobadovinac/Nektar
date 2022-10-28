@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdNodalPrismExp.cpp
+// File: StdNodalPrismExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

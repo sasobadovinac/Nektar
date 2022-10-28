@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterHistoryPoints.h
+// File: FilterHistoryPoints.h
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationSchemeFIT.cpp
+// File: TimeIntegrationSchemeFIT.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

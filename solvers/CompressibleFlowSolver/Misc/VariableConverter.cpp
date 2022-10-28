@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VariableConverter.cpp
+// File: VariableConverter.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

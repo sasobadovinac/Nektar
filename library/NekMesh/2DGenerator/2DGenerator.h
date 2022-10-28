@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: SurfaceMeshing.h
+//  File: 2DGenerator.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: class containing all surfacemeshing routines and classes.
+//  Description: 2D generator object header.
 //
 ////////////////////////////////////////////////////////////////////////////////
 

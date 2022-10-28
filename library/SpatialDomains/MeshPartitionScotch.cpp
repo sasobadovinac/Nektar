@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MeshPartitionScotch.cpp
+// File: MeshPartitionScotch.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NavierStokesImplicitCFE.h
+// File: NavierStokesImplicitCFE.h
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -45,6 +45,7 @@ exporting in .vtu format (!1386)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
+- Correct header section of .cpp, .hpp, and .h files (!1426)
 
 
 **FieldConvert**

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekNonlinSysNewton.h
+// File: NekNonlinSysNewton.h
 //
 // For more information, please see: http://www.nektar.info
 //

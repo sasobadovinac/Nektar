@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SkewSymmetricAdvection.h
+// File: SkewSymmetricAdvection.h
 //
 // For more information, please see: http://www.nektar.info
 //

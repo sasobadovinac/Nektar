@@ -1,7 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File $Source:
-// /usr/sci/projects/Nektar/cvs/Nektar++/library/LocalRegions/PointExp.cpp,v $
+// File: StdPointExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

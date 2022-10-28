@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterCheckpoint.cpp
+// File: FilterCheckpointCellModel.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

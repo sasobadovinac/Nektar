@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CFSImplicit.cpp
+// File: CompressibleFlowSystemImplicit.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

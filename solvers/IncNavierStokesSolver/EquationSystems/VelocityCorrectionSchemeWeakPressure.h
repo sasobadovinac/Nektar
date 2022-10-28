@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VelocityCorrectionSchemeWeakPressure.h
+// File: VelocityCorrectionSchemeWeakPressure.h
 //
 // For more information, please see: http://www.nektar.info
 //

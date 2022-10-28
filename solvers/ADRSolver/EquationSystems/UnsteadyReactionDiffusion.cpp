@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyReactionDiffusion.cpp
+// File: UnsteadyReactionDiffusion.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

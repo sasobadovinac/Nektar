@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SchemeInitializor.cpp
+// File: SchemeInitializer.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTriEvenlySpaced.cpp
+// File: NodalTriEvenlySpaced.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

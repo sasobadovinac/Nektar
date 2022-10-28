@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterCellHistoryPoints.cpp
+// File: FilterCellHistoryPoints.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

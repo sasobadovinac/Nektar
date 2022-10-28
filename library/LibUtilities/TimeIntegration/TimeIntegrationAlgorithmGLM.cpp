@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationAlgorithmGLM.cpp
+// File: TimeIntegrationAlgorithmGLM.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

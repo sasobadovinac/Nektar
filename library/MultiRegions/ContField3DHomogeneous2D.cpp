@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// File ContField3DHomogeneous2D.cpp
+// File: ContField3DHomogeneous2D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
