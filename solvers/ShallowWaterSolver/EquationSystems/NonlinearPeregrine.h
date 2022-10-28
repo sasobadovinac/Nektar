@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NonlinearPeregrine.h
+// File: NonlinearPeregrine.h
 //
 // For more information, please see: http://www.nektar.info
 //

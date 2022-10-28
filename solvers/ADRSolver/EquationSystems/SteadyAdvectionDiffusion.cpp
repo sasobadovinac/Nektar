@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-// File SteadAdvectionDiffusion.cpp
+// File: SteadyAdvectionDiffusion.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterMovingBody.cpp
+// File: FilterMovingBody.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

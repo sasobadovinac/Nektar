@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Geometry.h
+//  File: MeshGraphXml.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -29,7 +29,7 @@
 //  DEALINGS IN THE SOFTWARE.
 //
 //  Description:  This file contains the base class specification for the
-//                Geometry class.
+//                MeshGraphXml class.
 //
 //
 ////////////////////////////////////////////////////////////////////////////////

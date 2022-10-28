@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VelocityCorrectionScheme.h
+// File: VelocityCorrectionScheme.h
 //
 // For more information, please see: http://www.nektar.info
 //

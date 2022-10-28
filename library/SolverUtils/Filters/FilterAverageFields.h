@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAverageFields.h
+// File: FilterAverageFields.h
 //
 // For more information, please see: http://www.nektar.info
 //

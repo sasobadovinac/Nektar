@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LinearElasticSystem.h
+// File: LinearElasticSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //

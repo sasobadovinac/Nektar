@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterReynoldsStresses.cpp
+// File: FilterReynoldsStresses.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

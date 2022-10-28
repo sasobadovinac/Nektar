@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Geometry.h
+//  File: MeshGraphXmlCompressed.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,9 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:  This file contains the base class specification for the
-//                Geometry class.
-//
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_SPATIALDOMAINS_MGXMLCOM_H

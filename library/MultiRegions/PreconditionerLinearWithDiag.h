@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PreconditionerLinearWithDiag.h
+// File: PreconditionerLinearWithDiag.h
 //
 // For more information, please see: http://www.nektar.info
 //

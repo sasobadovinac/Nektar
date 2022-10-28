@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EmpiricalPressureArea.h
+// File: EmpiricalPressureArea.h
 //
 // For more information, please see: http://www.nektar.info
 //

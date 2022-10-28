@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: SubSteppingWrapper.h
+// File: StandardExtrapolate.h
 //
 // For more information, please see: http://www.nektar.info
 //

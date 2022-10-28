@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAverageField.cpp
+// File: FilterAverageFields.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

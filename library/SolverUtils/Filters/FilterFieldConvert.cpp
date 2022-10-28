@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterFieldConvert.cpp
+// File: FilterFieldConvert.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

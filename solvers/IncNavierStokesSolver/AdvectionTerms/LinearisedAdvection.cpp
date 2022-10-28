@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LinearisedAdvection.cpp
+// File: LinearisedAdvection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

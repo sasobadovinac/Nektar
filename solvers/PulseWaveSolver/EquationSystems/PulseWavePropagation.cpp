@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWavePropagation.cpp
+// File: PulseWavePropagation.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

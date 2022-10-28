@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PanditGilesDemir03.h
+// File: PanditGilesDemir03.h
 //
 // For more information, please see: http://www.nektar.info
 //

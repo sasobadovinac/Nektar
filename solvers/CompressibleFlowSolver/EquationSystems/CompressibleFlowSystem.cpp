@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CompressibleFlowSystem.cpp
+// File: CompressibleFlowSystem.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

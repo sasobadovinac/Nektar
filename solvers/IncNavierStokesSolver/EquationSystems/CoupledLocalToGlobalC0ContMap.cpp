@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CoupledLcoalToGlobalC0ContMap.cpp
+// File: CoupledLocalToGlobalC0ContMap.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -31,6 +31,7 @@
 // Description: Wrapper class around the library
 // LocalToGlobalC0ContMap class for use in the Couplied Linearised NS
 // solver.
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <IncNavierStokesSolver/EquationSystems/CoupledLocalToGlobalC0ContMap.h>

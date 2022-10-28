@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CompressibleFlowSolver.cpp
+// File: CompressibleFlowSolver.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

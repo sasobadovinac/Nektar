@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalPrismEvenlySpaced.h
+// File: NodalPrismEvenlySpaced.h
 //
 // For more information, please see: http://www.nektar.info
 //

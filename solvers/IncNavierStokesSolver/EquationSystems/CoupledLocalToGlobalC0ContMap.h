@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CoupledLcoalToGlobalC0ContMap.h
+// File: CoupledLocalToGlobalC0ContMap.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -31,6 +31,7 @@
 // Description: Wrapper class around the library
 // LocalToGlobalC0ContMap class for use in the Couplied Linearised NS
 // solver.
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_SOLVERS_COUPLEDLOCALTOGLOBALC0CONTMAP_H

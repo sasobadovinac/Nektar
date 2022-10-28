@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterThresholdMax.cpp
+// File: FilterThresholdMax.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

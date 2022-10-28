@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: testNekSharedArray.h
+// File: testNekSharedArray.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

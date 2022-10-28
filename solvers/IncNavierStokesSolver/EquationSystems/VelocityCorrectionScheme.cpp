@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VelocityCorrection.cpp
+// File: VelocityCorrectionScheme.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -30,6 +30,7 @@
 //
 // Description: Velocity Correction Scheme for the Incompressible
 // Navier Stokes equations
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>

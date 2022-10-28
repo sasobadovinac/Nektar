@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWaveSystemOutput.h
+// File: PulseWaveSystemOutput.h
 //
 // For more information, please see: http://www.nektar.info
 //
