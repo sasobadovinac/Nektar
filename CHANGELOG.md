@@ -39,6 +39,7 @@ exporting in .vtu format (!1386)
 - Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
 - Add option to refine curves in the same manner as the line refinement functionality (!1298)
 - Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
+- Fix a segmentation fault with WriteOctree due to missing 'order' parameter (!1418)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
