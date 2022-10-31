@@ -266,7 +266,7 @@ void DriverParareal::RunCoarseSolve(
     Array<OneD, Array<OneD, NekDouble>> &output)
 {
     // Output coarse timestep.
-    if (m_comm->GetRank() == 0)
+    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
     {
         std::cout << "RUNNING COARSE SOLVE: dt = " << m_coarseTimeStep
                   << " nsteps = " << m_coarseSteps / m_numChunks << std::endl
@@ -327,7 +327,7 @@ void DriverParareal::RunFineSolve(
     Array<OneD, Array<OneD, NekDouble>> &output)
 {
     // Output fine timestep.
-    if (m_comm->GetRank() == 0)
+    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
     {
         std::cout << "RUNNING FINE SOLVE: dt = " << m_fineTimeStep
                   << " nsteps = " << m_fineSteps / m_numChunks << std::endl
@@ -402,7 +402,7 @@ void DriverParareal::v_Execute(ostream &out)
     }
 
     // Fine solver summary
-    if (m_comm->GetRank() == 0)
+    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
     {
         std::cout << "========================================================="
                      "=============="
@@ -413,12 +413,13 @@ void DriverParareal::v_Execute(ostream &out)
                   << std::endl
                   << std::flush;
         m_equ[0]->PrintSummary(out);
+
+        std::cout << std::endl << std::flush;
     }
 
-    std::cout << std::endl << std::flush;
 
     // Coarse solver summary
-    if (m_comm->GetRank() == 0)
+    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
     {
         std::cout << "========================================================="
                      "=============="
@@ -477,7 +478,7 @@ void DriverParareal::v_Execute(ostream &out)
     }
 
     // Run coarse solution, G(y_j^k) to get initial conditions
-    if (m_chunkRank == 0 && m_comm->GetRank() == 0)
+    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
     {
         std::cout << "** INITIAL CONDITION **" << std::endl << std::flush;
     }
@@ -495,7 +496,7 @@ void DriverParareal::v_Execute(ostream &out)
         }
     }
 
-    if (m_chunkRank == 0 && m_comm->GetRank() == 0)
+    if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
     {
         std::cout << "** ITERATION " << 0 << " **" << std::endl << std::flush;
     }
@@ -520,12 +521,15 @@ void DriverParareal::v_Execute(ostream &out)
             NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
             NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
 
-            std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
-                      << ") : " << vL2Error << std::endl
-                      << std::flush;
-            std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
-                      << ") : " << vLinfError << std::endl
-                      << std::flush;
+            if (m_comm->GetRank() == m_chunkRank)
+            {
+                std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
+                          << ") : " << vL2Error << std::endl
+                          << std::flush;
+                std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
+                          << ") : " << vLinfError << std::endl
+                          << std::flush;
+            }
         }
     }
 
@@ -536,7 +540,7 @@ void DriverParareal::v_Execute(ostream &out)
     // the 'solution' array.
     for (int k = 0; k < m_pararealIterMax; ++k)
     {
-        if (m_chunkRank == 0 && m_comm->GetRank() == 0)
+        if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
         {
             std::cout << "** ITERATION " << k + 1 << " **" << std::endl
                       << std::flush;
@@ -601,12 +605,15 @@ void DriverParareal::v_Execute(ostream &out)
                 NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
                 NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
 
-                std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
-                          << ") : " << vL2Error << std::endl
-                          << std::flush;
-                std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
-                          << ") : " << vLinfError << std::endl
-                          << std::flush;
+                if (m_comm->GetRank() == m_chunkRank)
+                {
+                    std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
+                              << ") : " << vL2Error << std::endl
+                              << std::flush;
+                    std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
+                              << ") : " << vLinfError << std::endl
+                              << std::flush;
+                }
             }
         }
     }
@@ -618,12 +625,15 @@ void DriverParareal::v_Execute(ostream &out)
     if (m_chunkRank == m_numChunks - 1)
     {
         CPUtime = difftime(endtime, starttime);
-        std::cout << "-------------------------------------------" << std::endl
-                  << std::flush;
-        std::cout << "Total Computation Time = " << CPUtime << "s" << std::endl
-                  << std::flush;
-        std::cout << "-------------------------------------------" << std::endl
-                  << std::flush;
+        if (m_comm->GetRank() == m_chunkRank)
+        {
+            std::cout << "-------------------------------------------" << std::endl
+                      << std::flush;
+            std::cout << "Total Computation Time = " << CPUtime << "s" << std::endl
+                      << std::flush;
+            std::cout << "-------------------------------------------" << std::endl
+                      << std::flush;
+        }
 
         for (int i = 0; i < nVar; ++i)
         {
@@ -633,12 +643,15 @@ void DriverParareal::v_Execute(ostream &out)
             NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln[i]);
             NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln[i]);
 
-            std::cout << "L 2 error (variable " << m_equ[0]->GetVariable(i)
-                      << ") : " << vL2Error << std::endl
-                      << std::flush;
-            std::cout << "L inf error (variable " << m_equ[0]->GetVariable(i)
-                      << ") : " << vLinfError << std::endl
-                      << std::flush;
+            if (m_comm->GetRank() == m_chunkRank)
+            {
+                std::cout << "L 2 error (variable " << m_equ[0]->GetVariable(i)
+                          << ") : " << vL2Error << std::endl
+                          << std::flush;
+                std::cout << "L inf error (variable " << m_equ[0]->GetVariable(i)
+                          << ") : " << vLinfError << std::endl
+                          << std::flush;
+            }
         }
     }
 }
