@@ -96,6 +96,7 @@ public:
 
     /// Returns number of processes
     LIB_UTILITIES_EXPORT inline int GetSize() const;
+    LIB_UTILITIES_EXPORT inline int GetSizeSpaceOnly();
     LIB_UTILITIES_EXPORT inline int GetRank();
     LIB_UTILITIES_EXPORT inline const std::string &GetType() const;
 
@@ -272,6 +273,22 @@ inline void Comm::Finalise()
 inline int Comm::GetSize() const
 {
     return m_size;
+}
+
+
+/**
+ *
+ */
+inline int Comm::GetSizeSpaceOnly()
+{
+    if (!m_commTime.get())
+    {
+        return m_size;
+    }
+    else
+    {
+        return m_size/GetTimeComm()->GetSize();
+    }
 }
 
 /**

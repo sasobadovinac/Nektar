@@ -308,6 +308,16 @@ public:
         m_infosteps = num;
     }
 
+    SOLVER_UTILS_EXPORT int GetPararealIterationNumber()
+    {
+        return m_pararealIter;
+    }
+
+    SOLVER_UTILS_EXPORT void SetPararealIterationNumber(int num)
+    {
+        m_pararealIter = num;
+    }
+
     SOLVER_UTILS_EXPORT Array<OneD, const Array<OneD, NekDouble>> GetTraceNormals()
     {
         return m_traceNormals;
@@ -381,6 +391,8 @@ protected:
     int m_checksteps;
     /// Number of time steps between outputting status information.
     int m_infosteps;
+    /// Number of parareal time iteration.
+    int m_pararealIter;
     /// Spatial dimension (>= expansion dim).
     int m_spacedim;
     /// Expansion dimension.

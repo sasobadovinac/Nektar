@@ -334,9 +334,18 @@ void DriverParareal::RunFineSolve(
                   << std::flush;
     }
 
+    // Parareal iteration number.
+    int  nIter = m_equ[0]->GetPararealIterationNumber();
+
     // Set to fine timestep.
     m_equ[0]->SetTime(time);
     m_equ[0]->SetSteps(m_fineSteps / m_numChunks);
+
+    // Reinitialize check point number for each parareal iteration.
+    m_equ[0]->SetCheckpointNumber(0);
+
+    // Update parareal iteration number.
+    m_equ[0]->SetPararealIterationNumber(++nIter);
 
     // Copy initial condition from input.
     for (int i = 0; i < m_equ[0]->GetNvariables(); ++i)
@@ -384,6 +393,7 @@ void DriverParareal::v_Execute(ostream &out)
     ASSERTL0(m_fineSteps % m_coarseSteps == 0,
              "number of coarse steps should divide number of fine steps");
 
+    // Check I/O inputs
     if (m_session->GetParameter("IO_InfoSteps"))
     {
         ASSERTL0(m_fineSteps % int(m_session->GetParameter("IO_InfoSteps") *

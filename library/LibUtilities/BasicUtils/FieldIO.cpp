@@ -441,6 +441,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
         while (fs::exists(bakPath))
         {
             bakPath = specPath.parent_path();
+            bakPath += fs::path(bakPath.extension() == ".pit" ? "/" : "");
             bakPath += specPath.stem();
             bakPath += fs::path(".bak" + std::to_string(cnt++));
             bakPath += specPath.extension();

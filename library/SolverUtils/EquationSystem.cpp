@@ -666,6 +666,7 @@ void EquationSystem::v_InitObject(bool DeclareFields)
     m_session->LoadParameter("TimeIncrementFactor", m_TimeIncrementFactor, 1.0);
 
     m_nchk = 0;
+    m_pararealIter = 0;
 }
 
 /**
@@ -982,7 +983,8 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
         }
     }
 
-    if (dumpInitialConditions && m_checksteps && m_nchk == 0)
+    if (dumpInitialConditions && m_checksteps && m_nchk == 0 && 
+        m_comm->GetSize() == m_comm->GetSizeSpaceOnly())
     {
         Checkpoint_Output(m_nchk);
     }
@@ -1086,9 +1088,28 @@ void EquationSystem::FwdTransFields(void)
  */
 void EquationSystem::Checkpoint_Output(const int n)
 {
-    std::string outname =
-        m_sessionName + "_" + boost::lexical_cast<std::string>(n);
-    WriteFld(outname + ".chk");
+    if (m_comm->GetSize() == m_comm->GetSizeSpaceOnly())
+    {
+        // Serial-in-time
+        std::string outname =
+           m_sessionName + "_" + boost::lexical_cast<std::string>(n);
+        WriteFld(outname + ".chk");
+    }
+    else
+    {
+        // Parareal-in-time
+        //std::string paradir = "parareal_iteration_" + 
+        //    boost::lexical_cast<std::string>(m_pararealIter);
+        std::string paradir = m_sessionName + "_" + 
+            boost::lexical_cast<std::string>(m_pararealIter) + ".pit";
+        if (!fs::is_directory(paradir))
+        {
+            fs::create_directory(paradir);
+        }
+        std::string outname = paradir
+            + "/" + m_sessionName + "_" + boost::lexical_cast<std::string>(n);
+        WriteFld(outname + ".chk");
+    }
 }
 
 /**
@@ -1100,9 +1121,28 @@ void EquationSystem::Checkpoint_Output(
     std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
     std::vector<std::string> &variables)
 {
-    std::string outname =
-        m_sessionName + "_" + boost::lexical_cast<std::string>(n);
-    WriteFld(outname, field, fieldcoeffs, variables);
+    if (m_comm->GetSize() == m_comm->GetSizeSpaceOnly())
+    {
+        // Serial-in-time
+        std::string outname =
+           m_sessionName + "_" + boost::lexical_cast<std::string>(n);
+        WriteFld(outname, field, fieldcoeffs, variables);
+    }
+    else
+    {
+        // Parareal-in-time
+        //std::string paradir = "parareal_iteration_" + 
+        //    boost::lexical_cast<std::string>(m_pararealIter);
+        std::string paradir = m_sessionName + "_" + 
+            boost::lexical_cast<std::string>(m_pararealIter) + ".pit";
+        if (!fs::is_directory(paradir))
+        {
+            fs::create_directory(paradir);
+        }
+        std::string outname = paradir
+            + "/" + m_sessionName + "_" + boost::lexical_cast<std::string>(n);
+        WriteFld(outname, field, fieldcoeffs, variables);
+    }
 }
 
 /**
