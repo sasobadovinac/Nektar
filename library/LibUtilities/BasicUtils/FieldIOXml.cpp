@@ -693,8 +693,10 @@ void FieldIOXml::SetUpFieldMetaData(
 {
     ASSERTL0(!outname.empty(), "Empty path given to SetUpFieldMetaData()");
 
-    unsigned int nprocs = m_comm->GetSize();
-    unsigned int rank   = m_comm->GetRank();
+    unsigned int nprocs = m_comm->GetSizeSpaceOnly();
+    unsigned int rank   = m_comm->GetSize() == m_comm->GetSizeSpaceOnly()
+            ? m_comm->GetRank()
+            : m_comm->GetRank() / m_comm->GetTimeComm()->GetSize();
 
     fs::path specPath(outname);
 
@@ -724,7 +726,16 @@ void FieldIOXml::SetUpFieldMetaData(
             if (elmtnums[i] > 0)
             {
                 std::vector<unsigned int> tmp(elmtnums[i]);
-                m_comm->Recv(i, tmp);
+                if (m_comm->GetSize() == m_comm->GetSizeSpaceOnly())
+                {
+                    // Serial-in-time
+                    m_comm->Recv(i, tmp);
+                }
+                else
+                {
+                    // Parallel-in-time
+                    m_comm->Recv(m_comm->GetTimeComm()->GetRank() + i*m_comm->GetTimeComm()->GetSize(), tmp);
+                }
                 ElementIDs[i] = tmp;
             }
         }
@@ -749,7 +760,17 @@ void FieldIOXml::SetUpFieldMetaData(
         // Send this process's ID list to the root process
         if (elmtnums[rank] > 0)
         {
-            m_comm->Send(0, idlist);
+            if (m_comm->GetSize() == m_comm->GetSizeSpaceOnly())
+            {
+                // Serial-in-time
+                m_comm->Send(0, idlist);
+            }
+            else
+            {
+                // Parallel-in-time
+                m_comm->Send(m_comm->GetTimeComm()->GetRank(), idlist);
+            }
+
         }
     }
 }

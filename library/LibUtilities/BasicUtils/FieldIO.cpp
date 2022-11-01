@@ -98,8 +98,10 @@ const std::string FieldIO::GetFileType(const std::string &filename,
                                        CommSharedPtr comm)
 {
     FieldIOType ioType = eXML;
-    int size           = comm->GetSize();
-    bool root          = comm->TreatAsRankZero();
+    int size           = comm->GetSizeSpaceOnly();
+    bool root          = comm->GetSize() == comm->GetSizeSpaceOnly() 
+                            ? comm->TreatAsRankZero()
+                            : comm->GetRank() == comm->GetTimeComm()->GetRank();
 
     if (size == 1 || root)
     {
@@ -419,11 +421,16 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     m_comm->AllReduce(file_id_min, ReduceMin);
 
     // Check that each process has the same filename (hash)
-    ASSERTL0(file_id_min == file_id_max,
-             "All processes do not have the same filename.");
+    if (m_comm->GetSize() == m_comm->GetSizeSpaceOnly())
+    {
+        ASSERTL0(file_id_min == file_id_max,
+                 "All processes do not have the same filename.");
+    }
 
-    int nprocs = m_comm->GetSize();
-    bool root  = m_comm->TreatAsRankZero();
+    int nprocs = m_comm->GetSizeSpaceOnly();
+    bool root  = m_comm->GetSize() == m_comm->GetSizeSpaceOnly()
+                    ? m_comm->TreatAsRankZero()
+                    : m_comm->GetRank() == m_comm->GetTimeComm()->GetRank();
 
     // Path to output: will be directory if parallel, normal file if
     // serial.
@@ -479,7 +486,10 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     {
         // Guess at filename that might belong to this process.
         boost::format pad("P%1$07d.%2$s");
-        pad % m_comm->GetRank() % GetFileEnding();
+        int rank = m_comm->GetSize() == m_comm->GetSizeSpaceOnly() 
+            ? m_comm->GetRank() 
+            : m_comm->GetRank() / m_comm->GetTimeComm()->GetSize();
+        pad % rank % GetFileEnding();
 
         // Generate full path name
         fs::path poutfile(pad.str());
@@ -534,7 +544,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
 
     if (root)
     {
-        std::cout << "Writing: " << specPath;
+        std::cout << "Writing: " << specPath << std::endl;
     }
 
     // serial processing just add ending.

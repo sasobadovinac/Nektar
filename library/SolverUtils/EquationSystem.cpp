@@ -1055,7 +1055,20 @@ void EquationSystem::v_GenerateSummary(SummaryList &l)
  */
 void EquationSystem::v_Output(void)
 {
-    WriteFld(m_sessionName + ".fld");
+    if (m_comm->GetSize() == m_comm->GetSizeSpaceOnly())
+    {
+        WriteFld(m_sessionName + ".fld");
+    }
+    else if (!m_checksteps)
+    {
+        std::string newdir = m_sessionName + ".fld";
+        if (!fs::is_directory(newdir))
+        {
+            fs::create_directory(newdir);
+        }
+        WriteFld(newdir + "/" + m_sessionName + "_" + 
+             boost::lexical_cast<std::string>(m_comm->GetTimeComm()->GetRank()));
+    }
 }
 
 /**

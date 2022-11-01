@@ -334,6 +334,10 @@ void DriverParareal::RunFineSolve(
                   << std::flush;
     }
 
+    // Number of checkpoint by chunk.
+    int nChkPts = m_session->GetParameter("IO_CheckSteps") ? 
+       m_fineSteps / int(m_session->GetParameter("IO_CheckSteps") * m_numChunks) : 1;
+
     // Parareal iteration number.
     int  nIter = m_equ[0]->GetPararealIterationNumber();
 
@@ -342,7 +346,7 @@ void DriverParareal::RunFineSolve(
     m_equ[0]->SetSteps(m_fineSteps / m_numChunks);
 
     // Reinitialize check point number for each parareal iteration.
-    m_equ[0]->SetCheckpointNumber(0);
+    m_equ[0]->SetCheckpointNumber(m_chunkRank*nChkPts);
 
     // Update parareal iteration number.
     m_equ[0]->SetPararealIterationNumber(++nIter);
