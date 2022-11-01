@@ -106,11 +106,13 @@ void DriverParareal::v_InitObject(ostream &out)
 
                 // Set fine parareal solver
                 m_session->SetTag("AdvectiveType", "Convective");
+                m_session->SetTag("PararealSolver", "FineSolver");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
                 // Set coarse parareal solver
                 m_sessionCoarse->SetTag("AdvectiveType", "Convective");
+                m_sessionCoarse->SetTag("PararealSolver", "CoarseSolver");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
@@ -120,11 +122,13 @@ void DriverParareal::v_InitObject(ostream &out)
 
                 // Set fine parareal solver
                 m_session->SetTag("AdvectiveType", "Linearised");
+                m_session->SetTag("PararealSolver", "FineSolver");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
                 // Set coarse parareal solver
                 m_sessionCoarse->SetTag("AdvectiveType", "Linearised");
+                m_sessionCoarse->SetTag("PararealSolver", "CoarseSolver");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
@@ -134,11 +138,13 @@ void DriverParareal::v_InitObject(ostream &out)
 
                 // Set fine parareal solver
                 m_session->SetTag("AdvectiveType", "Adjoint");
+                m_session->SetTag("PararealSolver", "FineSolver");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
                 // Set coarse parareal solver
                 m_sessionCoarse->SetTag("AdvectiveType", "Adjoint");
+                m_sessionCoarse->SetTag("PararealSolver", "CoarseSolver");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
@@ -148,11 +154,13 @@ void DriverParareal::v_InitObject(ostream &out)
 
                 // Set fine parareal solver
                 m_session->SetTag("AdvectiveType", "SkewSymmetric");
+                m_session->SetTag("PararealSolver", "FineSolver");
                 m_equ[0] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_session, m_graph);
 
                 // Set coarse parareal solver
                 m_sessionCoarse->SetTag("AdvectiveType", "SkewSymmetric");
+                m_sessionCoarse->SetTag("PararealSolver", "CoarseSolver");
                 m_equ[1] = GetEquationSystemFactory().CreateInstance(
                     vEquation, m_sessionCoarse, m_graphCoarse);
                 break;
@@ -335,18 +343,21 @@ void DriverParareal::RunFineSolve(
     }
 
     // Number of checkpoint by chunk.
-    int nChkPts = m_session->GetParameter("IO_CheckSteps") ? 
-       m_fineSteps / int(m_session->GetParameter("IO_CheckSteps") * m_numChunks) : 1;
+    int nChkPts =
+        m_session->GetParameter("IO_CheckSteps")
+            ? m_fineSteps /
+                  int(m_session->GetParameter("IO_CheckSteps") * m_numChunks)
+            : 1;
 
     // Parareal iteration number.
-    int  nIter = m_equ[0]->GetPararealIterationNumber();
+    int nIter = m_equ[0]->GetPararealIterationNumber();
 
     // Set to fine timestep.
     m_equ[0]->SetTime(time);
     m_equ[0]->SetSteps(m_fineSteps / m_numChunks);
 
     // Reinitialize check point number for each parareal iteration.
-    m_equ[0]->SetCheckpointNumber(m_chunkRank*nChkPts);
+    m_equ[0]->SetCheckpointNumber(m_chunkRank * nChkPts);
 
     // Update parareal iteration number.
     m_equ[0]->SetPararealIterationNumber(++nIter);
@@ -401,7 +412,7 @@ void DriverParareal::v_Execute(ostream &out)
     if (m_session->GetParameter("IO_InfoSteps"))
     {
         ASSERTL0(m_fineSteps % int(m_session->GetParameter("IO_InfoSteps") *
-                                m_numChunks) ==
+                                   m_numChunks) ==
                      0,
                  "number of IO_InfoSteps should divide number of fine steps "
                  "per time chunk");
@@ -409,7 +420,7 @@ void DriverParareal::v_Execute(ostream &out)
     if (m_session->GetParameter("IO_CheckSteps"))
     {
         ASSERTL0(m_fineSteps % int(m_session->GetParameter("IO_CheckSteps") *
-                                m_numChunks) ==
+                                   m_numChunks) ==
                      0,
                  "number of IO_CheckSteps should divide number of fine steps "
                  "per time chunk");
@@ -430,7 +441,6 @@ void DriverParareal::v_Execute(ostream &out)
 
         std::cout << std::endl << std::flush;
     }
-
 
     // Coarse solver summary
     if (m_chunkRank == 0 && m_comm->GetRank() == m_chunkRank)
@@ -621,10 +631,12 @@ void DriverParareal::v_Execute(ostream &out)
 
                 if (m_comm->GetRank() == m_chunkRank)
                 {
-                    std::cout << "L2 error (variable " << m_equ[0]->GetVariable(i)
-                              << ") : " << vL2Error << std::endl
+                    std::cout << "L2 error (variable "
+                              << m_equ[0]->GetVariable(i) << ") : " << vL2Error
+                              << std::endl
                               << std::flush;
-                    std::cout << "Linf error (variable " << m_equ[0]->GetVariable(i)
+                    std::cout << "Linf error (variable "
+                              << m_equ[0]->GetVariable(i)
                               << ") : " << vLinfError << std::endl
                               << std::flush;
                 }
@@ -641,11 +653,14 @@ void DriverParareal::v_Execute(ostream &out)
         CPUtime = difftime(endtime, starttime);
         if (m_comm->GetRank() == m_chunkRank)
         {
-            std::cout << "-------------------------------------------" << std::endl
+            std::cout << "-------------------------------------------"
+                      << std::endl
                       << std::flush;
-            std::cout << "Total Computation Time = " << CPUtime << "s" << std::endl
+            std::cout << "Total Computation Time = " << CPUtime << "s"
+                      << std::endl
                       << std::flush;
-            std::cout << "-------------------------------------------" << std::endl
+            std::cout << "-------------------------------------------"
+                      << std::endl
                       << std::flush;
         }
 
@@ -662,8 +677,9 @@ void DriverParareal::v_Execute(ostream &out)
                 std::cout << "L 2 error (variable " << m_equ[0]->GetVariable(i)
                           << ") : " << vL2Error << std::endl
                           << std::flush;
-                std::cout << "L inf error (variable " << m_equ[0]->GetVariable(i)
-                          << ") : " << vLinfError << std::endl
+                std::cout << "L inf error (variable "
+                          << m_equ[0]->GetVariable(i) << ") : " << vLinfError
+                          << std::endl
                           << std::flush;
             }
         }

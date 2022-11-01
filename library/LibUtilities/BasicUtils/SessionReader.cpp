@@ -1441,7 +1441,7 @@ void SessionReader::LoadDoc(const std::string &pFilename,
     {
         fs::path pdirname(pFilename);
         boost::format pad("P%1$07d.xml");
-        pad % m_comm->GetRank();
+        pad % m_comm->GetRankPIT();
         fs::path pRankFilename(pad.str());
         fs::path fullpath = pdirname / pRankFilename;
 

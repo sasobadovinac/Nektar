@@ -148,6 +148,21 @@ bool CommMpi::v_TreatAsRankZero()
 /**
  *
  */
+bool CommMpi::v_TreatAsRankZeroPIT()
+{
+    if (!m_commTime.get())
+    {
+        return m_rank == 0;
+    }
+    else
+    {
+        return GetRank() == GetTimeComm()->GetRank();
+    }
+}
+
+/**
+ *
+ */
 bool CommMpi::v_IsSerial()
 {
     return m_size == 1;

@@ -117,6 +117,7 @@ protected:
     virtual void v_Block() final;
     virtual double v_Wtime() final;
     virtual bool v_TreatAsRankZero() final;
+    virtual bool v_TreatAsRankZeroPIT() final;
     virtual bool v_IsSerial() final;
     virtual std::tuple<int, int, int> v_GetVersion() final;
     virtual void v_Send(void *buf, int count, CommDataType dt, int dest) final;
