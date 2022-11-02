@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSys.h
+// File: GlobalLinSysDirectFull.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -34,57 +34,57 @@
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSDIRECTFULL_H
 #define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSDIRECTFULL_H
 
-#include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/GlobalLinSysDirect.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+// Forward declarations
+
+// class AssemblyMapDG;
+class ExpList;
+
+/// A global linear system.
+class GlobalLinSysDirectFull : public GlobalLinSysDirect
+{
+public:
+    /// Creates an instance of this class
+    static GlobalLinSysSharedPtr create(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        // Forward declarations
-
-        //class AssemblyMapDG;
-        class ExpList;
-
-        /// A global linear system.
-        class GlobalLinSysDirectFull : public GlobalLinSysDirect
-        {
-        public:
-
-            /// Creates an instance of this class
-            static GlobalLinSysSharedPtr create(const GlobalLinSysKey &pLinSysKey,
-                    const std::weak_ptr<ExpList> &pExpList,
-                    const std::shared_ptr<AssemblyMap>
-                                                           &pLocToGloMap)
-            {
-                return MemoryManager<GlobalLinSysDirectFull>::AllocateSharedPtr(pLinSysKey, pExpList, pLocToGloMap);
-            }
-
-            /// Name of class
-            MULTI_REGIONS_EXPORT static std::string className;
-
-            /// Constructor for full direct matrix solve.
-            MULTI_REGIONS_EXPORT GlobalLinSysDirectFull(
-                         const GlobalLinSysKey &pLinSysKey,
-                         const std::weak_ptr<ExpList> &pExpList,
-                         const std::shared_ptr<AssemblyMap>
-                         &pLocToGloMap);
-            
-            MULTI_REGIONS_EXPORT virtual ~GlobalLinSysDirectFull();
-
-        private:
-            /// Solve the linear system for given input and output vectors
-            /// using a specified local to global map.
-            virtual void v_Solve( const Array<OneD, const NekDouble> &pLocInput,
-                              Array<OneD,       NekDouble> &pLocalOutput,
-                        const AssemblyMapSharedPtr &locToGloMap,
-                        const Array<OneD, const NekDouble> &dirForcing
-                                                        = NullNekDouble1DArray);
-
-            void AssembleFullMatrix(const std::shared_ptr<AssemblyMap>& locToGloMap);
-            //void AssembleFullMatrixDG(const std::shared_ptr<AssemblyMapDG>& locToGloMap);
-        };
+        return MemoryManager<GlobalLinSysDirectFull>::AllocateSharedPtr(
+            pLinSysKey, pExpList, pLocToGloMap);
     }
-}
+
+    /// Name of class
+    MULTI_REGIONS_EXPORT static std::string className;
+
+    /// Constructor for full direct matrix solve.
+    MULTI_REGIONS_EXPORT GlobalLinSysDirectFull(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT virtual ~GlobalLinSysDirectFull();
+
+private:
+    /// Solve the linear system for given input and output vectors
+    /// using a specified local to global map.
+    virtual void v_Solve(
+        const Array<OneD, const NekDouble> &pLocInput,
+        Array<OneD, NekDouble> &pLocalOutput,
+        const AssemblyMapSharedPtr &locToGloMap,
+        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+
+    void AssembleFullMatrix(const std::shared_ptr<AssemblyMap> &locToGloMap);
+    // void AssembleFullMatrixDG(const std::shared_ptr<AssemblyMapDG>&
+    // locToGloMap);
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

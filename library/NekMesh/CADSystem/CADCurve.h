@@ -82,8 +82,7 @@ public:
     /**
      * @brief Returns the minimum and maximum parametric coords t of the curve.
      */
-    NEKMESH_EXPORT virtual void GetBounds(
-        NekDouble &tmin, NekDouble &tmax) = 0;
+    NEKMESH_EXPORT virtual void GetBounds(NekDouble &tmin, NekDouble &tmax) = 0;
 
     /**
      * @brief Calculates the arclength between the two paremetric points \p ti
@@ -93,8 +92,7 @@ public:
      * @param tf Second parametric coordinate.
      * @return Arc length between \p ti and \p tf.
      */
-    NEKMESH_EXPORT virtual NekDouble Length(
-        NekDouble ti, NekDouble tf) = 0;
+    NEKMESH_EXPORT virtual NekDouble Length(NekDouble ti, NekDouble tf) = 0;
 
     /**
      * @brief Gets the location (x,y,z) in an array out of the curve at
@@ -111,8 +109,8 @@ public:
      *
      * @param t Parametric coordinate
      */
-    NEKMESH_EXPORT virtual void P(
-        NekDouble t, NekDouble &x, NekDouble &y, NekDouble &z) = 0;
+    NEKMESH_EXPORT virtual void P(NekDouble t, NekDouble &x, NekDouble &y,
+                                  NekDouble &z) = 0;
 
     /**
      * @brief Gets the second derivatives at t
@@ -189,8 +187,15 @@ public:
      * @brief locates a point in the parametric space. returns the
      * distance to the point and passes t by reference and updates it
      */
-    NEKMESH_EXPORT virtual NekDouble loct(
-        Array<OneD, NekDouble> xyz, NekDouble &t) = 0;
+    NEKMESH_EXPORT virtual NekDouble loct(Array<OneD, NekDouble> xyz,
+                                          NekDouble &t) = 0;
+
+    /**
+     * @brief Locates a point @p xyz in the parametric space. returns the
+     * distance to the point and passes t by reference and updates it.
+     */
+    NEKMESH_EXPORT virtual NekDouble GetMinDistance(
+        Array<OneD, NekDouble> &xyz) = 0;
 
     /*
      * @brief locates a point in the parametric space. returns the
@@ -232,7 +237,7 @@ typedef std::shared_ptr<CADCurve> CADCurveSharedPtr;
 typedef LibUtilities::NekFactory<std::string, CADCurve> CADCurveFactory;
 
 CADCurveFactory &GetCADCurveFactory();
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

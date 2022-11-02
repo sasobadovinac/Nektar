@@ -37,21 +37,22 @@
 
 #include <string>
 
-#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
-#include <SpatialDomains/MeshGraph.h>
-#include <MultiRegions/ExpList.h>
 #include <GlobalMapping/GlobalMappingDeclspec.h>
+#include <LibUtilities/BasicConst/NektarUnivTypeDefs.hpp>
+#include <MultiRegions/ExpList.h>
+#include <SpatialDomains/MeshGraph.h>
 
-namespace Nektar {
-namespace GlobalMapping {
+namespace Nektar
+{
+namespace GlobalMapping
+{
 
-    /// Adds a summary item to the summary info list
-    GLOBAL_MAPPING_EXPORT void UpdateGeometry(
-        SpatialDomains::MeshGraphSharedPtr           graph,
-        Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        bool modal = true);
+/// Adds a summary item to the summary info list
+GLOBAL_MAPPING_EXPORT void UpdateGeometry(
+    SpatialDomains::MeshGraphSharedPtr graph,
+    Array<OneD, MultiRegions::ExpListSharedPtr> &fields, bool modal = true);
 
-}
-}
+} // namespace GlobalMapping
+} // namespace Nektar
 
 #endif

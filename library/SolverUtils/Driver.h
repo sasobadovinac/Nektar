@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Driver.h
+// File: Driver.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,13 +35,13 @@
 #ifndef SOLVERUTILS_DRIVER_H
 #define SOLVERUTILS_DRIVER_H
 
-#include <LibUtilities/Communication/Comm.h>
-#include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
+#include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <LibUtilities/Communication/Comm.h>
 
-#include <SolverUtils/SolverUtils.hpp>
 #include <SolverUtils/EquationSystem.h>
+#include <SolverUtils/SolverUtils.hpp>
 
 namespace Nektar
 {
@@ -55,12 +55,12 @@ typedef std::shared_ptr<Driver> DriverSharedPtr;
 
 /// Datatype of the NekFactory used to instantiate classes derived from
 /// the Driver class.
-typedef LibUtilities::NekFactory<
-    std::string, Driver,
-    const LibUtilities::SessionReaderSharedPtr &,
-    const SpatialDomains::MeshGraphSharedPtr &> DriverFactory;
+typedef LibUtilities::NekFactory<std::string, Driver,
+                                 const LibUtilities::SessionReaderSharedPtr &,
+                                 const SpatialDomains::MeshGraphSharedPtr &>
+    DriverFactory;
 
-SOLVER_UTILS_EXPORT DriverFactory& GetDriverFactory();
+SOLVER_UTILS_EXPORT DriverFactory &GetDriverFactory();
 
 /// Base class for the development of solvers.
 class Driver
@@ -80,47 +80,45 @@ public:
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetRealEvl(void);
     SOLVER_UTILS_EXPORT Array<OneD, NekDouble> GetImagEvl(void);
 
-
 protected:
     /// Communication object
-    LibUtilities::CommSharedPtr                 m_comm;
+    LibUtilities::CommSharedPtr m_comm;
 
     /// Session reader object
-    LibUtilities::SessionReaderSharedPtr        m_session;
+    LibUtilities::SessionReaderSharedPtr m_session;
 
     /// I the Coupling between SFD and arnoldi
-    LibUtilities::SessionReaderSharedPtr        session_LinNS;
+    LibUtilities::SessionReaderSharedPtr session_LinNS;
 
     /// MeshGraph object
-    SpatialDomains::MeshGraphSharedPtr          m_graph;
+    SpatialDomains::MeshGraphSharedPtr m_graph;
 
     /// Equation system to solve
-    Array<OneD, EquationSystemSharedPtr>        m_equ;
+    Array<OneD, EquationSystemSharedPtr> m_equ;
 
-    ///number of equations
+    /// number of equations
     int m_nequ;
 
-    ///Evolution Operator
+    /// Evolution Operator
     enum EvolutionOperatorType m_EvolutionOperator;
 
     /// Initialises EquationSystem class members.
     Driver(const LibUtilities::SessionReaderSharedPtr pSession,
-           const SpatialDomains::MeshGraphSharedPtr   pGraph);
+           const SpatialDomains::MeshGraphSharedPtr pGraph);
 
-    SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        std::ostream &out = std::cout);
 
     /// Virtual function for solve implementation.
-    SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout) = 0;
-
+    SOLVER_UTILS_EXPORT virtual void v_Execute(
+        std::ostream &out = std::cout) = 0;
 
     SOLVER_UTILS_EXPORT virtual Array<OneD, NekDouble> v_GetRealEvl(void);
     SOLVER_UTILS_EXPORT virtual Array<OneD, NekDouble> v_GetImagEvl(void);
 
-
     static std::string evolutionOperatorLookupIds[];
     static std::string evolutionOperatorDef;
     static std::string driverDefault;
-
 };
 
 inline void Driver::InitObject(std::ostream &out)
@@ -148,8 +146,7 @@ inline Array<OneD, NekDouble> Driver::GetImagEvl()
     return v_GetImagEvl();
 }
 
-}
-} //end of namespace
+} // namespace SolverUtils
+} // namespace Nektar
 
-#endif //NEKTAR_SOLVERS_AUXILIARY_ADRBASE_H
-
+#endif // NEKTAR_SOLVERS_AUXILIARY_ADRBASE_H

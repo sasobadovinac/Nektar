@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Geometry1D.cpp
+//  File: Geometry0D.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:  1D geometry information
+//  Description:  0D geometry information
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,13 +53,12 @@ Geometry0D::~Geometry0D()
 
 int Geometry0D::v_GetShapeDim() const
 {
-	return 0;
+    return 0;
 }
 
 bool Geometry0D::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
-                               Array<OneD, NekDouble> &locCoord,
-                               NekDouble tol,
-                               NekDouble &dist)
+                                 Array<OneD, NekDouble> &locCoord,
+                                 NekDouble tol, NekDouble &dist)
 {
     boost::ignore_unused(gloCoord, locCoord, tol, dist);
     NEKERROR(ErrorUtil::efatal,
@@ -67,5 +66,5 @@ bool Geometry0D::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
     return false;
 }
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar

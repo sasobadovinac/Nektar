@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSysDirectXxt.h
+// File: GlobalLinSysXxtFull.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,66 +28,62 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: GlobalLinSysDirectXxt header
+// Description: GlobalLinSysXxtFull header
 //
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSDIRECTXXT_H
 #define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSDIRECTXXT_H
-#include <MultiRegions/MultiRegionsDeclspec.h>
-#include <MultiRegions/GlobalLinSysXxt.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
+#include <MultiRegions/GlobalLinSysXxt.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+// Forward declarations
+
+// class AssemblyMapDG;
+class ExpList;
+
+/// A global linear system.
+class GlobalLinSysXxtFull : public GlobalLinSysXxt
+{
+public:
+    /// Creates an instance of this class
+    static GlobalLinSysSharedPtr create(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        // Forward declarations
-
-        //class AssemblyMapDG;
-        class ExpList;
-
-        /// A global linear system.
-        class GlobalLinSysXxtFull : public GlobalLinSysXxt
-        {
-        public:
-
-            /// Creates an instance of this class
-            static GlobalLinSysSharedPtr create(const GlobalLinSysKey &pLinSysKey,
-                    const std::weak_ptr<ExpList> &pExpList,
-                    const std::shared_ptr<AssemblyMap>
-                                                           &pLocToGloMap)
-            {
-                return MemoryManager<GlobalLinSysXxtFull>::AllocateSharedPtr(pLinSysKey, pExpList, pLocToGloMap);
-            }
-
-            /// Name of class
-            MULTI_REGIONS_EXPORT static std::string className;
-
-            /// Constructor for full direct matrix solve.
-            MULTI_REGIONS_EXPORT GlobalLinSysXxtFull(const GlobalLinSysKey &pLinSysKey,
-                         const std::weak_ptr<ExpList> &pExpList,
-                         const std::shared_ptr<AssemblyMap>
-                                                                &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT virtual ~GlobalLinSysXxtFull();
-
-        private:
-
-            /// Solve the linear system for given input and output vectors
-            /// using a specified local to global map.
-            virtual void v_Solve( const Array<OneD, const NekDouble> &in,
-                              Array<OneD,       NekDouble> &out,
-                        const AssemblyMapSharedPtr &locToGloMap,
-                        const Array<OneD, const NekDouble> &dirForcing
-                                                        = NullNekDouble1DArray);
-
-            void CreateMap(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
-
-            void AssembleMatrixArrays(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
-
-
-        };
+        return MemoryManager<GlobalLinSysXxtFull>::AllocateSharedPtr(
+            pLinSysKey, pExpList, pLocToGloMap);
     }
-}
+
+    /// Name of class
+    MULTI_REGIONS_EXPORT static std::string className;
+
+    /// Constructor for full direct matrix solve.
+    MULTI_REGIONS_EXPORT GlobalLinSysXxtFull(
+        const GlobalLinSysKey &pLinSysKey,
+        const std::weak_ptr<ExpList> &pExpList,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT virtual ~GlobalLinSysXxtFull();
+
+private:
+    /// Solve the linear system for given input and output vectors
+    /// using a specified local to global map.
+    virtual void v_Solve(
+        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
+        const AssemblyMapSharedPtr &locToGloMap,
+        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+
+    void CreateMap(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+
+    void AssembleMatrixArrays(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

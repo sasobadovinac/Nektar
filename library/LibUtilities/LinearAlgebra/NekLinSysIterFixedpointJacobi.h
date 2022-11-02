@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekLinSysIterFixedpointJacobi.h
+// File: NekLinSysIterFixedpointJacobi.h
 //
 // For more information, please see: http://www.nektar.info
 //

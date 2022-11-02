@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MeshPartitionMetis.h
+// File: MeshPartitionMetis.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -49,10 +49,8 @@ public:
     /// Creates an instance of this class
     static MeshPartitionSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr session,
-        LibUtilities::CommSharedPtr                comm,
-        int                                        meshDim,
-        std::map<int, MeshEntity>                  element,
-        CompositeDescriptor                        compMap)
+        LibUtilities::CommSharedPtr comm, int meshDim,
+        std::map<int, MeshEntity> element, CompositeDescriptor compMap)
     {
         return MemoryManager<MeshPartitionMetis>::AllocateSharedPtr(
             session, comm, meshDim, element, compMap);
@@ -63,10 +61,9 @@ public:
     static std::string cmdSwitch;
 
     MeshPartitionMetis(const LibUtilities::SessionReaderSharedPtr session,
-                       LibUtilities::CommSharedPtr                comm,
-                       int                                        meshDim,
-                       std::map<int, MeshEntity>                  element,
-                       CompositeDescriptor                        compMap);
+                       LibUtilities::CommSharedPtr comm, int meshDim,
+                       std::map<int, MeshEntity> element,
+                       CompositeDescriptor compMap);
     virtual ~MeshPartitionMetis();
 
 private:
@@ -79,7 +76,7 @@ private:
                                     int &nparts, int &volume,
                                     Nektar::Array<Nektar::OneD, int> &part);
 };
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif

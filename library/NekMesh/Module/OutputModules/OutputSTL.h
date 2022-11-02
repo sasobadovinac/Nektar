@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Outputstl.h
+//  File: OutputSTL.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -65,7 +65,7 @@ public:
 
 private:
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

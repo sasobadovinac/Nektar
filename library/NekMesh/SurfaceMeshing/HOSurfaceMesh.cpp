@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: SurfaceMeshing.cpp
+//  File: HOSurfaceMesh.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -127,11 +127,11 @@ void HOSurfaceMesh::Process()
 
         if (!f)
         {
-            //This uses a fake face to build the high-order info
-            //in the case of 2D and manifold geometries without having to
-            //rewrite the 3D code
-            //important to note that face nodes need to be inserted into the
-            //volume nodes of the surface element or they will be forgotton
+            // This uses a fake face to build the high-order info
+            // in the case of 2D and manifold geometries without having to
+            // rewrite the 3D code
+            // important to note that face nodes need to be inserted into the
+            // volume nodes of the surface element or they will be forgotton
             f = std::shared_ptr<Face>(new Face(
                 m_mesh->m_element[2][i]->GetVertexList(),
                 vector<NodeSharedPtr>(), m_mesh->m_element[2][i]->GetEdgeList(),
@@ -271,7 +271,7 @@ void HOSurfaceMesh::Process()
                 for (int k = 1; k < m_mesh->m_nummode - 1; k++)
                 {
                     Array<OneD, NekDouble> loc = c->P(ti[k]);
-                    NodeSharedPtr nn = std::shared_ptr<Node>(
+                    NodeSharedPtr nn           = std::shared_ptr<Node>(
                         new Node(0, loc[0], loc[1], loc[2]));
 
                     nn->SetCADCurve(c, ti[k]);
@@ -289,8 +289,8 @@ void HOSurfaceMesh::Process()
             {
                 // edge is on surface and needs 2d optimisation
                 Array<OneD, NekDouble> uvb, uve;
-                uvb            = e->m_n1->GetCADSurfInfo(surf);
-                uve            = e->m_n2->GetCADSurfInfo(surf);
+                uvb = e->m_n1->GetCADSurfInfo(surf);
+                uve = e->m_n2->GetCADSurfInfo(surf);
 
                 Array<OneD, NekDouble> l1 = e->m_n1->GetLoc();
                 Array<OneD, NekDouble> l2 = e->m_n2->GetLoc();
@@ -393,8 +393,8 @@ void HOSurfaceMesh::Process()
                         {
                             m_log(VERBOSE).Newline();
                             m_log(VERBOSE)
-                                << "BFGS reported no update, edge on "
-                                << surf << endl;
+                                << "BFGS reported no update, edge on " << surf
+                                << endl;
                             break;
                         }
                     }
@@ -412,7 +412,7 @@ void HOSurfaceMesh::Process()
                 for (int k = 1; k < nq - 1; k++)
                 {
                     Array<OneD, NekDouble> loc = s->P(uvi[k]);
-                    NodeSharedPtr nn = std::shared_ptr<Node>(
+                    NodeSharedPtr nn           = std::shared_ptr<Node>(
                         new Node(0, loc[0], loc[1], loc[2]));
                     nn->SetCADSurf(s, uvi[k]);
                     honodes[k - 1] = nn;
@@ -430,23 +430,23 @@ void HOSurfaceMesh::Process()
         SpatialDomains::GeometrySharedPtr geom = f->GetGeom(3);
         geom->FillGeom();
         StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
-        Array<OneD, NekDouble> coeffs0 = geom->GetCoeffs(0);
-        Array<OneD, NekDouble> coeffs1 = geom->GetCoeffs(1);
-        Array<OneD, NekDouble> coeffs2 = geom->GetCoeffs(2);
+        Array<OneD, NekDouble> coeffs0         = geom->GetCoeffs(0);
+        Array<OneD, NekDouble> coeffs1         = geom->GetCoeffs(1);
+        Array<OneD, NekDouble> coeffs2         = geom->GetCoeffs(2);
 
         Array<OneD, NekDouble> xc(xmap->GetTotPoints());
         Array<OneD, NekDouble> yc(xmap->GetTotPoints());
         Array<OneD, NekDouble> zc(xmap->GetTotPoints());
 
-        xmap->BwdTrans(coeffs0,xc);
-        xmap->BwdTrans(coeffs1,yc);
-        xmap->BwdTrans(coeffs2,zc);
+        xmap->BwdTrans(coeffs0, xc);
+        xmap->BwdTrans(coeffs1, yc);
+        xmap->BwdTrans(coeffs2, zc);
 
-        if(vertices.size() == 3)
+        if (vertices.size() == 3)
         {
-            //build an array of all uvs
-            vector<Array<OneD, NekDouble> > uvi;
-            for(int j = np-ni; j < np; j++)
+            // build an array of all uvs
+            vector<Array<OneD, NekDouble>> uvi;
+            for (int j = np - ni; j < np; j++)
             {
                 Array<OneD, NekDouble> xp(2);
                 xp[0] = u[j];
@@ -462,12 +462,12 @@ void HOSurfaceMesh::Process()
             }
 
             vector<NodeSharedPtr> honodes;
-            for(int j = 0; j < ni; j++)
+            for (int j = 0; j < ni; j++)
             {
                 Array<OneD, NekDouble> loc;
                 loc = s->P(uvi[j]);
-                NodeSharedPtr nn = std::shared_ptr<Node>(new
-                                                Node(0,loc[0],loc[1],loc[2]));
+                NodeSharedPtr nn =
+                    std::shared_ptr<Node>(new Node(0, loc[0], loc[1], loc[2]));
                 nn->SetCADSurf(s, uvi[j]);
                 honodes.push_back(nn);
             }
@@ -475,13 +475,13 @@ void HOSurfaceMesh::Process()
             f->m_faceNodes = honodes;
             f->m_curveType = LibUtilities::eNodalTriElec;
         }
-        else if(vertices.size() == 4)
+        else if (vertices.size() == 4)
         {
-            //build an array of all uvs
-            vector<Array<OneD, NekDouble> > uvi;
-            for(int i = 1; i < nq - 1; i++)
+            // build an array of all uvs
+            vector<Array<OneD, NekDouble>> uvi;
+            for (int i = 1; i < nq - 1; i++)
             {
-                for(int j = 1; j < nq - 1; j++)
+                for (int j = 1; j < nq - 1; j++)
                 {
                     Array<OneD, NekDouble> xp(2);
                     xp[0] = gll[j];
@@ -498,12 +498,12 @@ void HOSurfaceMesh::Process()
             }
 
             vector<NodeSharedPtr> honodes;
-            for(int j = 0; j < niq; j++)
+            for (int j = 0; j < niq; j++)
             {
                 Array<OneD, NekDouble> loc;
                 loc = s->P(uvi[j]);
-                NodeSharedPtr nn = std::shared_ptr<Node>(new
-                                                Node(0,loc[0],loc[1],loc[2]));
+                NodeSharedPtr nn =
+                    std::shared_ptr<Node>(new Node(0, loc[0], loc[1], loc[2]));
                 nn->SetCADSurf(s, uvi[j]);
                 honodes.push_back(nn);
             }
@@ -512,7 +512,7 @@ void HOSurfaceMesh::Process()
             f->m_curveType = LibUtilities::eGaussLobattoLegendre;
         }
 
-        if(dumFace)
+        if (dumFace)
         {
             m_mesh->m_element[2][i]->SetVolumeNodes(f->m_faceNodes);
             m_mesh->m_element[2][i]->SetCurveType(f->m_curveType);
@@ -521,5 +521,5 @@ void HOSurfaceMesh::Process()
 
     m_log(VERBOSE).Newline();
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

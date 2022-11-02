@@ -35,97 +35,95 @@
 #ifndef NEKTAR_TESTS_METRIC_H
 #define NEKTAR_TESTS_METRIC_H
 
-#include <tinyxml.h>
+#include <boost/filesystem.hpp>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
-#include <boost/filesystem.hpp>
+#include <tinyxml.h>
 
 #include <TestException.hpp>
 
 namespace fs = boost::filesystem;
 
-std::string PortablePath(const boost::filesystem::path& path);
+std::string PortablePath(const boost::filesystem::path &path);
 
 namespace Nektar
 {
-    /**
-     * @brief Check to see whether the given string @p s is empty (or null).
-     */
-    inline bool EmptyString(const char *s)
+/**
+ * @brief Check to see whether the given string @p s is empty (or null).
+ */
+inline bool EmptyString(const char *s)
+{
+    if (!s)
     {
-        if (!s)
-        {
-            return true;
-        }
-        return std::string(s) == "";
+        return true;
+    }
+    return std::string(s) == "";
+}
+
+class Metric
+{
+public:
+    Metric(TiXmlElement *metric, bool generate);
+
+    virtual ~Metric() = default;
+
+    /// Perform the test, given the standard output and error streams
+    bool Test(std::istream &pStdout, std::istream &pStderr);
+    /// Perform the test, given the standard output and error streams
+    void Generate(std::istream &pStdout, std::istream &pStderr);
+    /// Return metric type
+    std::string GetType()
+    {
+        return m_type;
+    }
+    /// Return metric ID
+    int GetID()
+    {
+        return m_id;
     }
 
-    class Metric
+protected:
+    /// Stores the ID of this metric.
+    int m_id;
+    /// Stores the type of this metric (uppercase).
+    std::string m_type;
+    /// Determines whether to generate this metric or not.
+    bool m_generate;
+    /// Pointer to XML structure containing metric definition.
+    TiXmlElement *m_metric;
+
+    virtual bool v_Test(std::istream &pStdout, std::istream &pStderr)     = 0;
+    virtual void v_Generate(std::istream &pStdout, std::istream &pSrderr) = 0;
+};
+
+/// A shared pointer to an EquationSystem object
+typedef std::shared_ptr<Metric> MetricSharedPtr;
+
+/// Datatype of the NekFactory used to instantiate classes derived from the
+/// Advection class.
+class MetricFactory
+{
+public:
+    typedef MetricSharedPtr (*CreatorFunction)(TiXmlElement *, bool);
+
+    std::string RegisterCreatorFunction(std::string key, CreatorFunction func)
     {
-    public:
-        Metric(TiXmlElement *metric, bool generate);
+        m_map[key] = func;
+        return key;
+    }
 
-        virtual ~Metric() = default;
-
-        /// Perform the test, given the standard output and error streams
-        bool Test     (std::istream& pStdout, std::istream& pStderr);
-        /// Perform the test, given the standard output and error streams
-        void Generate (std::istream& pStdout, std::istream& pStderr);
-        /// Return metric type
-        std::string GetType()
-        {
-            return m_type;
-        }
-        /// Return metric ID
-        int GetID()
-        {
-            return m_id;
-        }
-
-    protected:
-        /// Stores the ID of this metric.
-        int m_id;
-        /// Stores the type of this metric (uppercase).
-        std::string m_type;
-        /// Determines whether to generate this metric or not.
-        bool m_generate;
-        /// Pointer to XML structure containing metric definition.
-        TiXmlElement *m_metric;
-
-        virtual bool v_Test     (std::istream& pStdout,
-                                 std::istream& pStderr) = 0;
-        virtual void v_Generate (std::istream& pStdout,
-                                 std::istream& pSrderr) = 0;
-    };
-
-    /// A shared pointer to an EquationSystem object
-    typedef std::shared_ptr<Metric> MetricSharedPtr;
-
-    /// Datatype of the NekFactory used to instantiate classes derived from the
-    /// Advection class.
-    class MetricFactory
+    MetricSharedPtr CreateInstance(std::string key, TiXmlElement *elmt,
+                                   bool generate)
     {
-    public:
-        typedef MetricSharedPtr (*CreatorFunction)(TiXmlElement *, bool);
+        return m_map[key](elmt, generate);
+    }
 
-        std::string RegisterCreatorFunction(std::string key, CreatorFunction func)
-        {
-            m_map[key] = func;
-            return key;
-        }
+private:
+    std::map<std::string, CreatorFunction> m_map;
+};
 
-        MetricSharedPtr CreateInstance(
-            std::string key, TiXmlElement *elmt, bool generate)
-        {
-            return m_map[key](elmt, generate);
-        }
-
-    private:
-        std::map<std::string, CreatorFunction> m_map;
-    };
-
-    MetricFactory& GetMetricFactory();
-}
+MetricFactory &GetMetricFactory();
+} // namespace Nektar
 
 #endif

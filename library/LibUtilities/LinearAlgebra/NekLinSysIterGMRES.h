@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekLinSysIterGMRES.h
+// File: NekLinSysIterGMRES.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -56,8 +56,8 @@ public:
         const NekSysKey &pKey)
     {
         NekLinSysIterSharedPtr p =
-            MemoryManager<NekLinSysIterGMRES>::AllocateSharedPtr(pSession,
-                vComm, nDimen, pKey);
+            MemoryManager<NekLinSysIterGMRES>::AllocateSharedPtr(
+                pSession, vComm, nDimen, pKey);
         p->InitObject();
         return p;
     }
@@ -77,7 +77,7 @@ public:
 protected:
     // This is maximum gmres restart iteration
     int m_maxrestart;
-    
+
     // This is maximum bandwidth of Hessenburg matrix
     // if use truncted Gmres(m)
     int m_KrylovMaxHessMatBand;

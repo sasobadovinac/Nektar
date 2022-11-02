@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAverageField.cpp
+// File: FilterAverageFields.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -41,13 +41,12 @@ namespace Nektar
 namespace SolverUtils
 {
 std::string FilterAverageFields::className =
-        GetFilterFactory().RegisterCreatorFunction(
-                "AverageFields", FilterAverageFields::create);
+    GetFilterFactory().RegisterCreatorFunction("AverageFields",
+                                               FilterAverageFields::create);
 
 FilterAverageFields::FilterAverageFields(
     const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>      &pEquation,
-    const ParamMap &pParams)
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
     : FilterFieldConvert(pSession, pEquation, pParams)
 {
     // Load sampling frequency
@@ -58,8 +57,7 @@ FilterAverageFields::FilterAverageFields(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_sampleFrequency = round(equ.Evaluate());
     }
 }
@@ -70,20 +68,14 @@ FilterAverageFields::~FilterAverageFields()
 
 void FilterAverageFields::v_ProcessSample(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-          std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
-    const NekDouble &time)
+    std::vector<Array<OneD, NekDouble>> &fieldcoeffs, const NekDouble &time)
 {
     boost::ignore_unused(pFields, time);
 
-    for(int n = 0; n < m_outFields.size(); ++n)
+    for (int n = 0; n < m_outFields.size(); ++n)
     {
-        Vmath::Vadd(m_outFields[n].size(),
-                    fieldcoeffs[n],
-                    1,
-                    m_outFields[n],
-                    1,
-                    m_outFields[n],
-                    1);
+        Vmath::Vadd(m_outFields[n].size(), fieldcoeffs[n], 1, m_outFields[n], 1,
+                    m_outFields[n], 1);
     }
 }
 
@@ -102,5 +94,5 @@ NekDouble FilterAverageFields::v_GetScale()
     return 1.0 / m_numSamples;
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

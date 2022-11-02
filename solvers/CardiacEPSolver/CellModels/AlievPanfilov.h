@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AlievPanfilov.h
+// File: AlievPanfilov.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -39,56 +39,58 @@
 
 namespace Nektar
 {
-    /// Aliev Panfilov model.
-    class CellModelAlievPanfilov : public CellModel
+/// Aliev Panfilov model.
+class CellModelAlievPanfilov : public CellModel
+{
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField)
     {
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField)
-        {
-            return MemoryManager<CellModelAlievPanfilov>::AllocateSharedPtr(pSession, pField);
-        }
+        return MemoryManager<CellModelAlievPanfilov>::AllocateSharedPtr(
+            pSession, pField);
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        CellModelAlievPanfilov(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField);
+    CellModelAlievPanfilov(const LibUtilities::SessionReaderSharedPtr &pSession,
+                           const MultiRegions::ExpListSharedPtr &pField);
 
-        virtual ~CellModelAlievPanfilov() {}
+    virtual ~CellModelAlievPanfilov()
+    {
+    }
 
-    protected:
-        virtual void v_Update(
-                const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                      Array<OneD,        Array<OneD, NekDouble> >&outarray,
-                const NekDouble time);
+protected:
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        virtual void v_GenerateSummary(SummaryList& s);
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        virtual void v_SetInitialConditions();
+    virtual void v_SetInitialConditions();
 
-    private:
-        /// Trigger parameter a.
-        NekDouble m_a;
-        /// Scaling parameter k.
-        NekDouble m_k;
-        /// Restitution parameter \f$\mu_1\f$.
-        NekDouble m_mu1;
-        /// Restitution parameter \f$\mu_2\f$.
-        NekDouble m_mu2;
-        /// Restitution parameter \f$\epsilon\f$.
-        NekDouble m_eps;
+private:
+    /// Trigger parameter a.
+    NekDouble m_a;
+    /// Scaling parameter k.
+    NekDouble m_k;
+    /// Restitution parameter \f$\mu_1\f$.
+    NekDouble m_mu1;
+    /// Restitution parameter \f$\mu_2\f$.
+    NekDouble m_mu2;
+    /// Restitution parameter \f$\epsilon\f$.
+    NekDouble m_eps;
 
-        /// Temporary space for storing \f$u^2\f$ when computing reaction term.
-        Array<OneD, NekDouble> m_uu;
-        /// Temporary space for storing \f$u^3\f$ when computing reaction term.
-        Array<OneD, NekDouble> m_uuu;
-        /// Workspace for computing reaction term.
-        Array<OneD, NekDouble> m_tmp1;
-        /// Workspace for computing reaction term.
-        Array<OneD, NekDouble> m_tmp2;
-    };
-}
+    /// Temporary space for storing \f$u^2\f$ when computing reaction term.
+    Array<OneD, NekDouble> m_uu;
+    /// Temporary space for storing \f$u^3\f$ when computing reaction term.
+    Array<OneD, NekDouble> m_uuu;
+    /// Workspace for computing reaction term.
+    Array<OneD, NekDouble> m_tmp1;
+    /// Workspace for computing reaction term.
+    Array<OneD, NekDouble> m_tmp2;
+};
+} // namespace Nektar
 #endif /* ALIEVPANFILOV_H_ */

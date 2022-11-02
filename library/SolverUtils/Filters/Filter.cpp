@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Filter.cpp
+// File: Filter.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -38,17 +38,15 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-FilterFactory& GetFilterFactory()
+FilterFactory &GetFilterFactory()
 {
     static FilterFactory instance;
     return instance;
 }
 
-
 Filter::Filter(const LibUtilities::SessionReaderSharedPtr &pSession,
-               const std::weak_ptr<EquationSystem>      &pEquation) :
-    m_session(pSession),
-    m_equ(pEquation)
+               const std::weak_ptr<EquationSystem> &pEquation)
+    : m_session(pSession), m_equ(pEquation)
 {
 }
 
@@ -56,5 +54,5 @@ Filter::~Filter()
 {
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

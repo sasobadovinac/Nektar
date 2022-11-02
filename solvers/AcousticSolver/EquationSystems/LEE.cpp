@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LEE.cpp
+// File: LEE.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -58,9 +58,9 @@ LEE::LEE(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * @brief Initialization object for the LEE class.
  */
-void LEE::v_InitObject()
+void LEE::v_InitObject(bool DeclareFields)
 {
-    AcousticSystem::v_InitObject();
+    AcousticSystem::v_InitObject(DeclareFields);
 
     m_bfNames.push_back("gamma");
 

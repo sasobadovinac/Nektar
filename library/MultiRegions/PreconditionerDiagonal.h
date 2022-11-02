@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Preconditioner.h
+// File: PreconditionerDiagonal.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,112 +28,113 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Preconditioner header
+// Description: PreconditionerDiagonal header
 //
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERDIAGONAL_H
 #define NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERDIAGONAL_H
-#include <MultiRegions/GlobalLinSys.h>
-#include <MultiRegions/Preconditioner.h>
-#include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
-
+#include <MultiRegions/GlobalLinSys.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
+#include <MultiRegions/Preconditioner.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+class PreconditionerDiagonal;
+typedef std::shared_ptr<PreconditionerDiagonal> PreconditionerDiagonalSharedPtr;
+
+class PreconditionerDiagonal : public Preconditioner
+{
+public:
+    /// Creates an instance of this class
+    static PreconditionerSharedPtr create(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        class PreconditionerDiagonal;
-        typedef std::shared_ptr<PreconditionerDiagonal>  PreconditionerDiagonalSharedPtr;
-
-        class PreconditionerDiagonal: public Preconditioner
-	{
-        public:
-            /// Creates an instance of this class
-            static PreconditionerSharedPtr create(
-                        const std::shared_ptr<GlobalLinSys> &plinsys,
-                        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
-            {
-	        PreconditionerSharedPtr p = MemoryManager<PreconditionerDiagonal>::AllocateSharedPtr(plinsys,pLocToGloMap);
-	        p->InitObject();
-	        return p;
-            }
-
-            /// Name of class
-            static std::string className;
-            //static std::string className1;
-
-            MULTI_REGIONS_EXPORT PreconditionerDiagonal(
-                         const std::shared_ptr<GlobalLinSys> &plinsys,
-	                 const AssemblyMapSharedPtr &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT
-            virtual ~PreconditionerDiagonal() {}
-
-	protected:
-
-            Array<OneD, NekDouble>                      m_diagonals;
-
-	private:
-
-            void DiagonalPreconditionerSum(void);
-
-	    void StaticCondDiagonalPreconditionerSum(void);
-
-            virtual void v_InitObject();
-
-            virtual void v_DoPreconditioner(                
-                      const Array<OneD, NekDouble>& pInput,
-		      Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_BuildPreconditioner();
-
-            static std::string lookupIds[];
-            static std::string def;
-	};
-
-        class PreconditionerNull;
-        typedef std::shared_ptr<PreconditionerNull>  PreconditionerNullSharedPtr;
-
-        class PreconditionerNull: public Preconditioner
-	{
-        public:
-            /// Creates an instance of this class
-            static PreconditionerSharedPtr create(
-                const std::shared_ptr<GlobalLinSys> &plinsys,
-                const std::shared_ptr<AssemblyMap>
-                &pLocToGloMap)
-            {
-	        PreconditionerSharedPtr p = MemoryManager<PreconditionerNull>::AllocateSharedPtr(plinsys,pLocToGloMap);
-	        p->InitObject();
-	        return p;
-            }
-
-            /// Name of class
-            static std::string className;
-
-            MULTI_REGIONS_EXPORT PreconditionerNull(
-                const std::shared_ptr<GlobalLinSys> &plinsys,
-                const AssemblyMapSharedPtr &pLocToGloMap);
-            
-            MULTI_REGIONS_EXPORT
-            virtual ~PreconditionerNull() {}
-
-	private:
-
-            virtual void v_InitObject();
-
-            virtual void v_DoPreconditioner(                
-                      const Array<OneD, NekDouble>& pInput,
-		      Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_BuildPreconditioner();
-
-            static std::string lookupIds[];
-            static std::string def;
-	};
-
+        PreconditionerSharedPtr p =
+            MemoryManager<PreconditionerDiagonal>::AllocateSharedPtr(
+                plinsys, pLocToGloMap);
+        p->InitObject();
+        return p;
     }
-}
+
+    /// Name of class
+    static std::string className;
+    // static std::string className1;
+
+    MULTI_REGIONS_EXPORT PreconditionerDiagonal(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const AssemblyMapSharedPtr &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT
+    virtual ~PreconditionerDiagonal()
+    {
+    }
+
+protected:
+    Array<OneD, NekDouble> m_diagonals;
+
+private:
+    void DiagonalPreconditionerSum(void);
+
+    void StaticCondDiagonalPreconditionerSum(void);
+
+    virtual void v_InitObject();
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_BuildPreconditioner();
+
+    static std::string lookupIds[];
+    static std::string def;
+};
+
+class PreconditionerNull;
+typedef std::shared_ptr<PreconditionerNull> PreconditionerNullSharedPtr;
+
+class PreconditionerNull : public Preconditioner
+{
+public:
+    /// Creates an instance of this class
+    static PreconditionerSharedPtr create(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
+    {
+        PreconditionerSharedPtr p =
+            MemoryManager<PreconditionerNull>::AllocateSharedPtr(plinsys,
+                                                                 pLocToGloMap);
+        p->InitObject();
+        return p;
+    }
+
+    /// Name of class
+    static std::string className;
+
+    MULTI_REGIONS_EXPORT PreconditionerNull(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const AssemblyMapSharedPtr &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT
+    virtual ~PreconditionerNull()
+    {
+    }
+
+private:
+    virtual void v_InitObject();
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_BuildPreconditioner();
+
+    static std::string lookupIds[];
+    static std::string def;
+};
+
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

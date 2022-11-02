@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterMean.cpp
+// File: FilterMean.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,8 +36,8 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <SolverUtils/Filters/FilterMean.h>
 #include <SolverUtils/Filters/FilterInterfaces.hpp>
+#include <SolverUtils/Filters/FilterMean.h>
 
 using namespace std;
 
@@ -45,17 +45,14 @@ namespace Nektar
 {
 namespace SolverUtils
 {
-std::string FilterMean::className = SolverUtils::GetFilterFactory().
-    RegisterCreatorFunction("Mean", FilterMean::create);
+std::string FilterMean::className =
+    SolverUtils::GetFilterFactory().RegisterCreatorFunction("Mean",
+                                                            FilterMean::create);
 
-FilterMean::FilterMean(
-    const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>        &pEquation,
-    const ParamMap &pParams)
-    : Filter        (pSession, pEquation),
-      m_index       (-1),
-      m_homogeneous (false),
-      m_planes      ()
+FilterMean::FilterMean(const LibUtilities::SessionReaderSharedPtr &pSession,
+                       const std::weak_ptr<EquationSystem> &pEquation,
+                       const ParamMap &pParams)
+    : Filter(pSession, pEquation), m_index(-1), m_homogeneous(false), m_planes()
 {
     // OutputFile
     auto it = pParams.find("OutputFile");
@@ -70,20 +67,17 @@ FilterMean::FilterMean(
     }
     m_outputFile += ".avg";
 
-    
-
     // OutputFrequency
     it = pParams.find("OutputFrequency");
     ASSERTL0(it != pParams.end(), "Missing parameter 'OutputFrequency'.");
     LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
     m_outputFrequency = round(equ.Evaluate());
-    
+
     pSession->LoadParameter("LZ", m_homogeneousLength, 0.0);
 }
 
 FilterMean::~FilterMean()
 {
-
 }
 
 void FilterMean::v_Initialise(
@@ -98,18 +92,18 @@ void FilterMean::v_Initialise(
 
     ASSERTL0(pFields[0]->GetExpType() != MultiRegions::e3DH2D,
              "Homogeneous 2D expansion not supported for mean filter");
-    
+
     // Lock equation system pointer
     auto equ = m_equ.lock();
     ASSERTL0(equ, "Weak pointer expired");
 
     auto fluidEqu = std::dynamic_pointer_cast<FluidInterface>(equ);
     ASSERTL0(fluidEqu, "Mean filter is incompatible with this solver.");
-    
+
     if (pFields[0]->GetExpType() == MultiRegions::e3DH1D)
     {
         m_homogeneous = true;
-        spacedim = 3;
+        spacedim      = 3;
     }
 
     // Calculate area/volume of domain.
@@ -132,15 +126,16 @@ void FilterMean::v_Initialise(
     }
 
     // Open OutputFile
-    std::string volname[3] = {"length", "area", "volume"};
+    std::string volname[3]            = {"length", "area", "volume"};
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
     if (vComm->GetRank() == 0)
     {
         m_outputStream.open(m_outputFile.c_str());
-        ASSERTL0(m_outputStream.good(), "Unable to open: '" + m_outputFile + "'");
+        ASSERTL0(m_outputStream.good(),
+                 "Unable to open: '" + m_outputFile + "'");
         m_outputStream.setf(ios::scientific, ios::floatfield);
         m_outputStream << "# Time";
-        for(int i=0; i<pFields.size(); ++i)
+        for (int i = 0; i < pFields.size(); ++i)
             m_outputStream << setw(22) << equ->GetVariable(i);
         m_outputStream << setw(22) << volname[spacedim - 1] << " " << m_area;
         m_outputStream << endl;
@@ -160,7 +155,7 @@ void FilterMean::v_Update(
     {
         return;
     }
-    
+
     int i;
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
@@ -170,25 +165,26 @@ void FilterMean::v_Update(
     {
         avg[i] = 0.0;
     }
-    
+
     if (m_homogeneous)
     {
         for (i = 0; i < pFields.size(); ++i)
-            avg[i] = pFields[0]->GetPlane(0)->Integral(pFields[i]->GetPhys()) * m_homogeneousLength;
+            avg[i] = pFields[0]->GetPlane(0)->Integral(pFields[i]->GetPhys()) *
+                     m_homogeneousLength;
     }
     else
     {
         for (i = 0; i < pFields.size(); ++i)
             avg[i] = pFields[0]->Integral(pFields[i]->GetPhys());
     }
-    
+
     for (i = 0; i < pFields.size(); ++i)
         avg[i] /= m_area;
 
     if (vComm->GetRank() == 0)
     {
         m_outputStream << setw(17) << setprecision(8) << time;
-        for(int i=0; i<pFields.size(); ++i)
+        for (int i = 0; i < pFields.size(); ++i)
             m_outputStream << setw(22) << setprecision(11) << avg[i];
         m_outputStream << endl;
     }
@@ -211,5 +207,5 @@ bool FilterMean::v_IsTimeDependent()
     return true;
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

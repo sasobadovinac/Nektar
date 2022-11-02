@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWavePressureArea.cpp
+// File: PulseWavePressureArea.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -50,7 +50,6 @@ PulseWavePressureArea::PulseWavePressureArea(
 PulseWavePressureArea::~PulseWavePressureArea()
 {
 }
-
 
 PressureAreaFactory &GetPressureAreaFactory()
 {

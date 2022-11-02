@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Opencascade.h
+//  File: OpenCascade.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -37,73 +37,80 @@
 
 /// This is a list of OpenCascade headers required for use with nektar
 
+#include <Standard_Version.hxx>
+
 /// IO classes
 #include <STEPCAFControl_Reader.hxx>
 #include <StepRepr_RepresentationItem.hxx>
-#include <TDocStd_Document.hxx>
-#include <XSControl_WorkSession.hxx>
-#include <XSControl_TransferReader.hxx>
-#include <XCAFDoc_DocumentTool.hxx>
 #include <Storage.hxx>
+#include <TDocStd_Document.hxx>
+#include <XCAFDoc_DocumentTool.hxx>
+#include <XSControl_TransferReader.hxx>
+#include <XSControl_WorkSession.hxx>
 
 /// STL classes
 #include <BRepMesh_IncrementalMesh.hxx>
 
-
 /// Shape Analysis / exploration classes
-#include <BRepTopAdaptor_FClass2d.hxx>
-#include <ShapeAnalysis_Surface.hxx>
-#include <BRepTools_WireExplorer.hxx>
-#include <TopExp.hxx>
-#include <BRepTools.hxx>
-#include <BRep_Tool.hxx>
-#include <TopExp_Explorer.hxx>
-#include <GeomAdaptor_HSurface.hxx>
 #include <BRepAdaptor_Curve.hxx>
-#include <GProp_GProps.hxx>
+#include <BRepBndLib.hxx>
+#include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepGProp.hxx>
+#include <BRepTools.hxx>
+#include <BRepTools_WireExplorer.hxx>
+#include <BRepTopAdaptor_FClass2d.hxx>
+#include <BRep_Tool.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
+#include <GProp_GProps.hxx>
 #include <GeomLProp_CLProps.hxx>
 #include <GeomLProp_SLProps.hxx>
 #include <ShapeAnalysis_Curve.hxx>
-#include <BRepBndLib.hxx>
-#include <BRepExtrema_DistShapeShape.hxx>
-#include <GCPnts_AbscissaPoint.hxx>
+#include <ShapeAnalysis_Surface.hxx>
+#include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
+
+#if OCC_VERSION_MAJOR < 7 || (OCC_VERSION_MAJOR == 7 && OCC_VERSION_MINOR < 4)
+#include <GeomAdaptor_HSurface.hxx>
+#endif
 
 /// Shape fixing classes
 #include <ShapeFix_Face.hxx>
 
 /// Shape Building classes
 #include <BRepBuilderAPI_MakeEdge.hxx>
-#include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <GeomAPI_PointsToBSpline.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
+#include <GeomAPI_PointsToBSpline.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
+#include <Geom_BSplineCurve.hxx>
 #include <Geom_TrimmedCurve.hxx>
 
 /// Data structure classes
-#include <TopTools_IndexedMapOfShape.hxx>
-#include <TopTools_DataMapOfShapeShape.hxx>
-#include <TColgp_Array1OfPnt.hxx>
-#include <Transfer_Binder.hxx>
-#include <TransferBRep.hxx>
-#include <Transfer_TransientProcess.hxx>
 #include <Interface_InterfaceModel.hxx>
+#include <TColgp_Array1OfPnt.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <TopTools_DataMapOfShapeShape.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
+#include <TransferBRep.hxx>
+#include <Transfer_Binder.hxx>
+#include <Transfer_TransientProcess.hxx>
 
 /// CORE SHAPE classes
+#include <TopoDS.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Shell.hxx>
-#include <TopoDS_Face.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopoDS_Edge.hxx>
-#include <TopoDS.hxx>
 
 /// GP clasases
-#include <gp_Pnt.hxx>
 #include <gp_Ax1.hxx>
+#include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_Trsf.hxx>
 

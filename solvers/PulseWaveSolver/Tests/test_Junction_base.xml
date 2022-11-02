@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+  <GEOMETRY DIM="1" SPACE="2">
+    <VERTEX>
+      <V ID="0">-2.000e+01 0.000e+00 0.000e+00</V>
+      <V ID="1"> 0.000e+00 0.000e+00 0.000e+00</V>
+      <V ID="2"> 0.000e+01 1.000e+00 0.000e+00</V>
+    </VERTEX>
+
+    <ELEMENT>
+      <S ID="0">    0     1 </S>
+      <S ID="1">    1     2 </S>
+    </ELEMENT>
+
+    <COMPOSITE>
+      <C ID="0"> S[0] </C>
+      <C ID="1"> V[0] </C>
+      
+      <C ID="3"> S[1] </C>
+      <C ID="4"> V[2] </C>
+      
+    </COMPOSITE>
+
+    <DOMAIN> 
+      <D ID="0"> C[0] </D>
+      <D ID="1"> C[3] </D>
+    </DOMAIN>
+  </GEOMETRY>  
+  
+  <EXPANSIONS>
+    <E COMPOSITE="C[0]" NUMMODES="7" FIELDS="A,u" TYPE="MODIFIED" />
+    <E COMPOSITE="C[3]" NUMMODES="7" FIELDS="A,u" TYPE="MODIFIED" />
+  </EXPANSIONS>
+  
+  <CONDITIONS>
+    
+    <PARAMETERS>
+      <P> TimeStep       = 1e-3            </P> 
+      <P> NumSteps       = 2             </P>
+      <P> IO_CheckSteps  = NumSteps        </P>
+      <P> IO_InfoSteps   = 100                </P>
+      <P> T              = 10                 </P>
+      <P> omega          = 2*PI/T             </P>
+      <P> h0             = 1.0                </P>
+      <P> k1             = 200                </P>
+      <P> rho            = 0.5                </P>
+      <P> nue            = 0.5                </P>
+      <P> pext           = 0.0                </P> 
+    </PARAMETERS>
+    
+    <SOLVERINFO>
+      <I PROPERTY="EQTYPE" VALUE="PulseWavePropagation" />
+      <I PROPERTY="Projection" VALUE="DisContinuous" />
+      <I PROPERTY="TimeIntegrationMethod" VALUE="RungeKutta2_ImprovedEuler" />
+      <I PROPERTY="UpwindTypePulse"  VALUE="UpwindPulse"/> 
+    </SOLVERINFO>
+    
+    <VARIABLES>
+      <V ID="0"> A </V>
+      <V ID="1"> u </V>
+    </VARIABLES>
+    
+    <BOUNDARYREGIONS>
+      <B ID="0"> C[1] </B>
+      <B ID="1"> C[4] </B>
+    </BOUNDARYREGIONS>
+
+    <BOUNDARYCONDITIONS>
+      <REGION REF="0">    <!-- Inflow condition -->
+        <D VAR="A" USERDEFINEDTYPE="TimeDependent" VALUE="5.983" />
+        <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="0.01*sin(2*PI*t/T)*1./(1+exp(-2*k1*(T/2-t)))" />
+      </REGION>
+      <REGION REF="1">
+        <D VAR="A" USERDEFINEDTYPE="TimeDependent" VALUE="5.147" />
+        <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="0.0" />
+      </REGION>
+    </BOUNDARYCONDITIONS>
+
+    <FUNCTION NAME="InitialConditions">
+      <E VAR="A" DOMAIN="0" VALUE="5.983" />
+      <E VAR="u" DOMAIN="0" VALUE="0.0" />            
+      <E VAR="A" DOMAIN="1" VALUE="5.147" />
+      <E VAR="u" DOMAIN="1" VALUE="0.0" />            
+    </FUNCTION>
+
+    <FUNCTION NAME="A_0">
+      <E VAR="A_0" DOMAIN="0" VALUE="5.983" />
+      <E VAR="A_0" DOMAIN="1" VALUE="5.147" />
+    </FUNCTION>
+    
+    <FUNCTION NAME="MaterialProperties"> 
+      <E VAR="beta" DOMAIN="0" VALUE="97" />     	
+      <E VAR="beta" DOMAIN="1" VALUE="87" />       	
+    </FUNCTION>
+
+    <FUNCTION NAME="ExactSolution">
+      <E VAR="A" DOMAIN="0,1" VALUE="0" />
+      <E VAR="u" DOMAIN="0,1" VALUE="0" />
+    </FUNCTION>
+
+    </CONDITIONS>
+
+</NEKTAR>
+
+

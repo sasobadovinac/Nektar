@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StimulusPoint.cpp
+// File: StimulusPoint.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -31,81 +31,74 @@
 // Description: Rectangular stimulus class
 //
 ///////////////////////////////////////////////////////////////////////////////
+#include <LibUtilities/BasicUtils/VmathArray.hpp>
 #include <iostream>
 #include <tinyxml.h>
-#include <LibUtilities/BasicUtils/VmathArray.hpp>
 
 #include <CardiacEPSolver/Stimuli/StimulusPoint.h>
 
 namespace Nektar
 {
-    std::string StimulusPoint::className
-          = GetStimulusFactory().RegisterCreatorFunction(
-                    "StimulusPoint",
-                    StimulusPoint::create,
-                     "Point stimulus.");
+std::string StimulusPoint::className =
+    GetStimulusFactory().RegisterCreatorFunction(
+        "StimulusPoint", StimulusPoint::create, "Point stimulus.");
 
-    /**
-     * @class StimulusPoint
-     *
-     * The Stimulus class and derived classes implement a range of stimuli.
-     * The stimulus contains input stimuli that can be applied throughout the
-     * domain, on specified regions determined by the derived classes of
-     * Stimulus, at specified frequencies determined by the derived classes of
-     * Protocol.
-     */
+/**
+ * @class StimulusPoint
+ *
+ * The Stimulus class and derived classes implement a range of stimuli.
+ * The stimulus contains input stimuli that can be applied throughout the
+ * domain, on specified regions determined by the derived classes of
+ * Stimulus, at specified frequencies determined by the derived classes of
+ * Protocol.
+ */
 
-    /**
-     * Stimulus base class constructor.
-     */
-    StimulusPoint::StimulusPoint(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const MultiRegions::ExpListSharedPtr& pField,
-            const TiXmlElement* pXml)
-            : Stimulus(pSession, pField, pXml)
+/**
+ * Stimulus base class constructor.
+ */
+StimulusPoint::StimulusPoint(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const MultiRegions::ExpListSharedPtr &pField, const TiXmlElement *pXml)
+    : Stimulus(pSession, pField, pXml)
+{
+    m_session = pSession;
+    m_field   = pField;
+    m_nq      = pField->GetTotPoints();
+
+    if (!pXml)
     {
-        m_session = pSession;
-        m_field = pField;
-        m_nq = pField->GetTotPoints();
-
-        if (!pXml)
-        {
-            return;
-        }
-
-        const TiXmlElement *pXmlparameter;
-
-        pXmlparameter = pXml->FirstChildElement("p_strength");
-        m_strength = atof(pXmlparameter->GetText());
+        return;
     }
 
+    const TiXmlElement *pXmlparameter;
 
-    /**
-     * Initialise the stimulus. Allocate workspace and variable storage.
-     */
-    void StimulusPoint::Initialise()
-    {
-    }
-
-
-    /**
-     *
-     */
-    void StimulusPoint::v_Update(
-            Array<OneD, Array<OneD, NekDouble> >&outarray,
-            const NekDouble time)
-    {
-        // Get the protocol amplitude
-        NekDouble v_amp = m_Protocol->GetAmplitude(time) * m_strength;
-
-        outarray[0][0] += v_amp;
-    }
-
-
-    /**
-     *
-     */
-    void StimulusPoint::v_GenerateSummary(SolverUtils::SummaryList& s)
-    {
-    }
+    pXmlparameter = pXml->FirstChildElement("p_strength");
+    m_strength    = atof(pXmlparameter->GetText());
 }
+
+/**
+ * Initialise the stimulus. Allocate workspace and variable storage.
+ */
+void StimulusPoint::Initialise()
+{
+}
+
+/**
+ *
+ */
+void StimulusPoint::v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
+                             const NekDouble time)
+{
+    // Get the protocol amplitude
+    NekDouble v_amp = m_Protocol->GetAmplitude(time) * m_strength;
+
+    outarray[0][0] += v_amp;
+}
+
+/**
+ *
+ */
+void StimulusPoint::v_GenerateSummary(SolverUtils::SummaryList &s)
+{
+}
+} // namespace Nektar

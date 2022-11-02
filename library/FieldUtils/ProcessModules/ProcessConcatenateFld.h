@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessConcatenate.h
+//  File: ProcessConcatenateFld.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Process Boundary field extraction
+//  Description: Concatenate parallel field
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -74,9 +74,8 @@ public:
     {
         return eModifyFieldData;
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

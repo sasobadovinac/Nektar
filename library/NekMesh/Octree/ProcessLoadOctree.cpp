@@ -41,23 +41,18 @@ namespace Nektar
 namespace NekMesh
 {
 
-ModuleKey ProcessLoadOctree::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "loadoctree"),
-    ProcessLoadOctree::create,
-    "Loads octree into m_mesh");
+ModuleKey ProcessLoadOctree::className =
+    GetModuleFactory().RegisterCreatorFunction(
+        ModuleKey(eProcessModule, "loadoctree"), ProcessLoadOctree::create,
+        "Loads octree into m_mesh");
 
 ProcessLoadOctree::ProcessLoadOctree(MeshSharedPtr m) : ProcessModule(m)
 {
-    m_config["mindel"] =
-        ConfigOption(false, "0", "mindelta.");
-    m_config["maxdel"] =
-        ConfigOption(false, "0", "mindelta.");
-    m_config["eps"] =
-        ConfigOption(false, "0", "mindelta.");
-    m_config["refinement"] =
-        ConfigOption(false, "", "mindelta.");
-    m_config["curve_refinement"] =
-        ConfigOption(false, "", "mindelta.");
+    m_config["mindel"]           = ConfigOption(false, "0", "mindelta.");
+    m_config["maxdel"]           = ConfigOption(false, "0", "mindelta.");
+    m_config["eps"]              = ConfigOption(false, "0", "mindelta.");
+    m_config["refinement"]       = ConfigOption(false, "", "mindelta.");
+    m_config["curve_refinement"] = ConfigOption(false, "", "mindelta.");
     m_config["writeoctree"] =
         ConfigOption(true, "0", "dump octree as xml mesh");
 }
@@ -72,7 +67,7 @@ void ProcessLoadOctree::Process()
 
     minDelta = m_config["mindel"].as<NekDouble>();
     maxDelta = m_config["maxdel"].as<NekDouble>();
-    eps = m_config["eps"].as<NekDouble>();
+    eps      = m_config["eps"].as<NekDouble>();
 
     m_log(VERBOSE) << "Loading Octree with parameters:" << endl;
     m_log(VERBOSE) << "  - min delta: " << minDelta << endl;
@@ -85,22 +80,23 @@ void ProcessLoadOctree::Process()
 
     m_mesh->m_octree->SetParameters(minDelta, maxDelta, eps);
 
-    if(m_config["refinement"].beenSet)
+    if (m_config["refinement"].beenSet)
     {
         m_mesh->m_octree->Refinement(m_config["refinement"].as<string>());
     }
 
-    if(m_config["curve_refinement"].beenSet)
+    if (m_config["curve_refinement"].beenSet)
     {
-        m_mesh->m_octree->CurveRefinement(m_config["curve_refinement"].as<string>());
+        m_mesh->m_octree->CurveRefinement(
+            m_config["curve_refinement"].as<string>());
     }
 
     m_mesh->m_octree->Process();
 
-    if(m_config["writeoctree"].beenSet)
+    if (m_config["writeoctree"].beenSet)
     {
         m_mesh->m_octree->WriteOctree(m_config["writeoctree"].as<string>());
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: MatrixFreeDeclspec.h
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -26,6 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -33,14 +36,13 @@
 #define NEKTAR_MATRIXFREE_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef MATRIXFREE_EXPORTS
-        #define MATRIXFREE_EXPORT _declspec(dllexport)
-    #else
-        #define MATRIXFREE_EXPORT _declspec(dllimport)
-    #endif
+#ifdef MATRIXFREE_EXPORTS
+#define MATRIXFREE_EXPORT _declspec(dllexport)
 #else
-    #define MATRIXFREE_EXPORT
+#define MATRIXFREE_EXPORT _declspec(dllimport)
+#endif
+#else
+#define MATRIXFREE_EXPORT
 #endif
 
-#endif //NEKTAR_MATRIXFREE_DECLSPEC_H
-
+#endif // NEKTAR_MATRIXFREE_DECLSPEC_H

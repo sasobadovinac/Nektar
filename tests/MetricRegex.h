@@ -41,50 +41,56 @@
 
 namespace Nektar
 {
-    /**
-     * @brief Data structure for a Regex value to match.
-     */
-    struct MetricRegexFieldValue
+/**
+ * @brief Data structure for a Regex value to match.
+ */
+struct MetricRegexFieldValue
+{
+    MetricRegexFieldValue()
     {
-        MetricRegexFieldValue()
-            : m_value(""), m_useTolerance(false), m_tolerance(0.0),
-              m_useIntTolerance(false), m_intTolerance(0)
-        {
-        }
+    }
 
-        std::string m_value;
-        bool m_useTolerance;
-        double m_tolerance;
-
-        bool m_useIntTolerance;
-        int m_intTolerance;
-    };
-
-    class MetricRegex : public Metric
+    MetricRegexFieldValue(std::string value) : m_value(value)
     {
-    public:
-        virtual ~MetricRegex() {}
+    }
 
-        static MetricSharedPtr create(TiXmlElement *metric, bool generate)
-        {
-            return MetricSharedPtr(new MetricRegex(metric, generate));
-        }
+    std::string m_value = "";
+    bool m_useTolerance = false;
+    double m_tolerance  = 0.0;
 
-        static std::string type;
+    bool m_useIntTolerance = false;
+    int m_intTolerance     = 0;
+};
 
-    protected:
-        /// Storage for the boost regex.
-        boost::regex                                     m_regex;
-        /// Stores the multiple matches defined in each <MATCH> tag.
-        std::vector<std::vector<MetricRegexFieldValue> > m_matches;
-        /// If true, regex matches may be in any order in output
-        bool m_unordered;
+class MetricRegex : public Metric
+{
+public:
+    virtual ~MetricRegex()
+    {
+    }
 
-        MetricRegex(TiXmlElement *metric, bool generate);
+    static MetricSharedPtr create(TiXmlElement *metric, bool generate)
+    {
+        return MetricSharedPtr(new MetricRegex(metric, generate));
+    }
 
-        virtual bool v_Test    (std::istream& pStdout, std::istream& pStderr);
-        virtual void v_Generate(std::istream& pStdout, std::istream& pStderr);
-    };
-}
+    static std::string type;
+
+protected:
+    /// Storage for the boost regex.
+    boost::regex m_regex;
+    /// Stores the multiple matches defined in each <MATCH> tag.
+    std::vector<std::vector<MetricRegexFieldValue>> m_matches;
+    /// If true, regex matches may be in any order in output
+    bool m_unordered = false;
+    /// If true, use stderr for testing/generation instead of stdout.
+    bool m_useStderr = false;
+
+    MetricRegex(TiXmlElement *metric, bool generate);
+
+    virtual bool v_Test(std::istream &pStdout, std::istream &pStderr);
+    virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
+};
+} // namespace Nektar
 
 #endif

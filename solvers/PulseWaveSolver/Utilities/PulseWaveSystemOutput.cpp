@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWaveSystemOutput.cpp
+// File: PulseWaveSystemOutput.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -41,47 +41,52 @@ using namespace std;
 
 namespace Nektar
 {
-    
-    string PulseWaveSystemOutput::className = GetEquationSystemFactory().RegisterCreatorFunction("PulseWaveSystemOutput", PulseWaveSystemOutput::create, "Pulse Wave Propagation output.");
 
-    /**
-     *  @class PulseWaveSystemOutput
-     *
-     *  Initialises the arterial subdomains in m_vessels and sets up
-     *  all domain-linking conditions (bifurcations, junctions,
-     *  merging flows). Detects the network structure and assigns
-     *  boundary conditons. Also provides the underlying timestepping
-     *  framework for pulse wave solvers including the general
-     *  timestepping routines.
-     */
-    
-    /**
-     *  Processes SolverInfo parameters from the session file and sets
-     *  up timestepping-specific code.
-     *
-     *  @param   m_Session        Session object to read parameters from.
-     */
-    PulseWaveSystemOutput::PulseWaveSystemOutput(const LibUtilities::SessionReaderSharedPtr& m_session)
-        : PulseWaveSystem(m_session)
-    {
-    }
-    
-    /**
-     *  Destructor
-     */
-    PulseWaveSystemOutput::~PulseWaveSystemOutput()
-    {
-    }
-    
-    /** o
-     *
-     * Duplicates PulseWaveSystem InitObject but does not set 
-     * 
-     */
-    void PulseWaveSystemOutput::v_InitObject()
-    {       
-        m_session->RegisterCmdLineArgument("SetToOneSpaceDimension","False","Redefine mesh to be aligned to x-axis");
-        
-        PulseWaveSystem::v_InitObject();
-    }
+string PulseWaveSystemOutput::className =
+    GetEquationSystemFactory().RegisterCreatorFunction(
+        "PulseWaveSystemOutput", PulseWaveSystemOutput::create,
+        "Pulse Wave Propagation output.");
+
+/**
+ *  @class PulseWaveSystemOutput
+ *
+ *  Initialises the arterial subdomains in m_vessels and sets up
+ *  all domain-linking conditions (bifurcations, junctions,
+ *  merging flows). Detects the network structure and assigns
+ *  boundary conditons. Also provides the underlying timestepping
+ *  framework for pulse wave solvers including the general
+ *  timestepping routines.
+ */
+
+/**
+ *  Processes SolverInfo parameters from the session file and sets
+ *  up timestepping-specific code.
+ *
+ *  @param   m_Session        Session object to read parameters from.
+ */
+PulseWaveSystemOutput::PulseWaveSystemOutput(
+    const LibUtilities::SessionReaderSharedPtr &m_session)
+    : PulseWaveSystem(m_session)
+{
 }
+
+/**
+ *  Destructor
+ */
+PulseWaveSystemOutput::~PulseWaveSystemOutput()
+{
+}
+
+/** o
+ *
+ * Duplicates PulseWaveSystem InitObject but does not set
+ *
+ */
+void PulseWaveSystemOutput::v_InitObject()
+{
+    m_session->RegisterCmdLineArgument("SetToOneSpaceDimension", "False",
+                                       "Redefine mesh to be aligned to x-axis");
+
+    PulseWaveSystem::v_InitObject();
+}
+} // namespace Nektar

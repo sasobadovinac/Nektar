@@ -32,9 +32,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <StdRegions/StdNodalTriExp.h>
 #include <LocalRegions/TriExp.h>
 #include <NekMesh/MeshElements/Triangle.h>
+#include <StdRegions/StdNodalTriExp.h>
 
 #include <LibUtilities/Foundations/ManagerAccess.h>
 
@@ -46,14 +46,13 @@ namespace NekMesh
 {
 
 LibUtilities::ShapeType Triangle::m_type =
-    GetElementFactory().RegisterCreatorFunction(
-        LibUtilities::eTriangle, Triangle::create, "Triangle");
+    GetElementFactory().RegisterCreatorFunction(LibUtilities::eTriangle,
+                                                Triangle::create, "Triangle");
 
 /**
  * @brief Create a triangle element.
  */
-Triangle::Triangle(ElmtConfig pConf,
-                   vector<NodeSharedPtr> pNodeList,
+Triangle::Triangle(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
                    vector<int> pTagList)
     : Element(pConf, GetNumNodes(pConf), pNodeList.size())
 {
@@ -94,10 +93,9 @@ Triangle::Triangle(ElmtConfig pConf,
                 edgeNodes.push_back(pNodeList[j - 1]);
             }
         }
-        m_edge.push_back(EdgeSharedPtr(new Edge(pNodeList[it->first.first - 1],
-                                                pNodeList[it->first.second - 1],
-                                                edgeNodes,
-                                                m_conf.m_edgeCurveType)));
+        m_edge.push_back(EdgeSharedPtr(new Edge(
+            pNodeList[it->first.first - 1], pNodeList[it->first.second - 1],
+            edgeNodes, m_conf.m_edgeCurveType)));
     }
 
     if (pConf.m_reorient)
@@ -127,8 +125,8 @@ SpatialDomains::GeometrySharedPtr Triangle::GetGeom(int coordDim)
         edges[i] = m_edge[i]->GetGeom(coordDim);
     }
 
-    ret = MemoryManager<SpatialDomains::TriGeom>::AllocateSharedPtr(
-        m_id, edges);
+    ret =
+        MemoryManager<SpatialDomains::TriGeom>::AllocateSharedPtr(m_id, edges);
     ret->Setup();
 
     return ret;
@@ -174,8 +172,7 @@ void Triangle::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     std::copy(m_vertex.begin(), m_vertex.end(), nodeList.begin());
     for (int i = 0; i < 3; ++i)
     {
-        std::copy(m_edge[i]->m_edgeNodes.begin(),
-                  m_edge[i]->m_edgeNodes.end(),
+        std::copy(m_edge[i]->m_edgeNodes.begin(), m_edge[i]->m_edgeNodes.end(),
                   nodeList.begin() + 3 + i * (n - 2));
         if (m_edge[i]->m_n1 != m_vertex[i])
         {
@@ -187,17 +184,13 @@ void Triangle::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     }
 
     // Copy volume nodes.
-    std::copy(m_volumeNodes.begin(),
-              m_volumeNodes.end(),
+    std::copy(m_volumeNodes.begin(), m_volumeNodes.end(),
               nodeList.begin() + 3 * (n - 1));
 }
 
-void Triangle::MakeOrder(int                                order,
-                         SpatialDomains::GeometrySharedPtr  geom,
-                         LibUtilities::PointsType           pType,
-                         int                                coordDim,
-                         int                               &id,
-                         bool                               justConfig)
+void Triangle::MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                         LibUtilities::PointsType pType, int coordDim, int &id,
+                         bool justConfig)
 
 {
     m_conf.m_order       = order;
@@ -219,7 +212,7 @@ void Triangle::MakeOrder(int                                order,
         return;
     }
 
-    int nPoints = order + 1;
+    int nPoints                            = order + 1;
     StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
 
     Array<OneD, NekDouble> px, py;
@@ -227,7 +220,7 @@ void Triangle::MakeOrder(int                                order,
     ASSERTL1(pKey.GetPointsDim() == 2, "Points distribution must be 2D");
     LibUtilities::PointsManager()[pKey]->GetPoints(px, py);
 
-    Array<OneD, Array<OneD, NekDouble> > phys(coordDim);
+    Array<OneD, Array<OneD, NekDouble>> phys(coordDim);
 
     for (int i = 0; i < coordDim; ++i)
     {
@@ -235,11 +228,11 @@ void Triangle::MakeOrder(int                                order,
         xmap->BwdTrans(geom->GetCoeffs(i), phys[i]);
     }
 
-    const int nTriPts = nPoints * (nPoints + 1) / 2;
+    const int nTriPts    = nPoints * (nPoints + 1) / 2;
     const int nTriIntPts = (nPoints - 3) * (nPoints - 2) / 2;
     m_volumeNodes.resize(nTriIntPts);
 
-    for (int i = 3 + 3*(nPoints-2), cnt = 0; i < nTriPts; ++i, ++cnt)
+    for (int i = 3 + 3 * (nPoints - 2), cnt = 0; i < nTriPts; ++i, ++cnt)
     {
         Array<OneD, NekDouble> xp(2);
         xp[0] = px[i];
@@ -251,8 +244,8 @@ void Triangle::MakeOrder(int                                order,
             x[j] = xmap->PhysEvaluate(xp, phys[j]);
         }
 
-        m_volumeNodes[cnt] = std::shared_ptr<Node>(
-            new Node(id++, x[0], x[1], x[2]));
+        m_volumeNodes[cnt] =
+            std::shared_ptr<Node>(new Node(id++, x[0], x[1], x[2]));
     }
 
     m_conf.m_order       = order;
@@ -262,14 +255,20 @@ void Triangle::MakeOrder(int                                order,
 
 Array<OneD, NekDouble> Triangle::Normal(bool inward)
 {
-    Array<OneD, NekDouble> ret(3,0.0);
+    Array<OneD, NekDouble> ret(3, 0.0);
 
-    ret[0] = (m_vertex[1]->m_y - m_vertex[0]->m_y) * (m_vertex[2]->m_z - m_vertex[0]->m_z) -
-             (m_vertex[1]->m_z - m_vertex[0]->m_z) * (m_vertex[2]->m_y - m_vertex[0]->m_y);
-    ret[1] = (m_vertex[1]->m_z - m_vertex[0]->m_z) * (m_vertex[2]->m_x - m_vertex[0]->m_x) -
-             (m_vertex[1]->m_x - m_vertex[0]->m_x) * (m_vertex[2]->m_z - m_vertex[0]->m_z);
-    ret[2] = (m_vertex[1]->m_x - m_vertex[0]->m_x) * (m_vertex[2]->m_y - m_vertex[0]->m_y) -
-             (m_vertex[1]->m_y - m_vertex[0]->m_y) * (m_vertex[2]->m_x - m_vertex[0]->m_x);
+    ret[0] = (m_vertex[1]->m_y - m_vertex[0]->m_y) *
+                 (m_vertex[2]->m_z - m_vertex[0]->m_z) -
+             (m_vertex[1]->m_z - m_vertex[0]->m_z) *
+                 (m_vertex[2]->m_y - m_vertex[0]->m_y);
+    ret[1] = (m_vertex[1]->m_z - m_vertex[0]->m_z) *
+                 (m_vertex[2]->m_x - m_vertex[0]->m_x) -
+             (m_vertex[1]->m_x - m_vertex[0]->m_x) *
+                 (m_vertex[2]->m_z - m_vertex[0]->m_z);
+    ret[2] = (m_vertex[1]->m_x - m_vertex[0]->m_x) *
+                 (m_vertex[2]->m_y - m_vertex[0]->m_y) -
+             (m_vertex[1]->m_y - m_vertex[0]->m_y) *
+                 (m_vertex[2]->m_x - m_vertex[0]->m_x);
 
     NekDouble mt = ret[0] * ret[0] + ret[1] * ret[1] + ret[2] * ret[2];
     mt           = sqrt(mt);
@@ -278,18 +277,18 @@ Array<OneD, NekDouble> Triangle::Normal(bool inward)
     ret[1] /= mt;
     ret[2] /= mt;
 
-    if(m_parentCAD)
+    if (m_parentCAD)
     {
-        //has cad so can orientate based on that
-        if(m_parentCAD->Orientation() == CADOrientation::eBackwards)
+        // has cad so can orientate based on that
+        if (m_parentCAD->Orientation() == CADOrientation::eBackwards)
         {
             ret[0] *= -1.0;
             ret[1] *= -1.0;
             ret[2] *= -1.0;
         }
 
-        //by default normals point outwards so if we want inward for BLs
-        if(inward)
+        // by default normals point outwards so if we want inward for BLs
+        if (inward)
         {
             ret[0] *= -1.0;
             ret[1] *= -1.0;
@@ -299,5 +298,5 @@ Array<OneD, NekDouble> Triangle::Normal(bool inward)
     return ret;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

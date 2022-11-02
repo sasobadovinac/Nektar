@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Foundations.hpp
+// File: Foundations.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -41,70 +41,51 @@
 
 namespace Nektar
 {
-    namespace LibUtilities
-    {
-        const char* const BasisTypeMap[] =
-        {
-            "NoBasisType",
-            "Ortho_A",
-            "Ortho_B",
-            "Ortho_C",
-            "Modified_A",
-            "Modified_B",
-            "Modified_C",
-            "OrthoPyr_C",
-            "ModifiedPyr_C",
-            "Fourier",
-            "GLL_Lagrange",
-            "Gauss_Lagrange",
-            "Legendre",
-            "Chebyshev",
-            "Monomial",
-            "FourierSingleMode",
-            "FourierHalfModeRe",
-            "FourierHalfModeIm"
-        };
+namespace LibUtilities
+{
+const char *const BasisTypeMap[] = {
+    "NoBasisType",       "Ortho_A",           "Ortho_B",
+    "Ortho_C",           "Modified_A",        "Modified_B",
+    "Modified_C",        "OrthoPyr_C",        "ModifiedPyr_C",
+    "Fourier",           "GLL_Lagrange",      "Gauss_Lagrange",
+    "Legendre",          "Chebyshev",         "Monomial",
+    "FourierSingleMode", "FourierHalfModeRe", "FourierHalfModeIm"};
 
+const std::string kPointsTypeStr[] = {"NoPointsType",
+                                      "GaussGaussLegendre",
+                                      "GaussRadauMLegendre",
+                                      "GaussRadauPLegendre",
+                                      "GaussLobattoLegendre",
+                                      "GaussGaussChebyshev",
+                                      "GaussRadauMChebyshev",
+                                      "GaussRadauPChebyshev",
+                                      "GaussLobattoChebyshev",
+                                      "GaussRadauMAlpha0Beta1",
+                                      "GaussRadauMAlpha0Beta2",
+                                      "GaussRadauMAlpha1Beta0",
+                                      "GaussRadauMAlpha2Beta0",
+                                      "GaussKronrodLegendre",
+                                      "GaussRadauKronrodMLegendre",
+                                      "GaussRadauKronrodMAlpha1Beta0",
+                                      "GaussLobattoKronrodLegendre",
+                                      "PolyEvenlySpaced",
+                                      "FourierEvenlySpaced",
+                                      "FourierSingleModeSpaced",
+                                      "BoundaryLayerPoints",
+                                      "BoundaryLayerPointsRev",
+                                      "NodalTriElec",
+                                      "NodalTriFekete",
+                                      "NodalTriEvenlySpaced",
+                                      "NodalTetEvenlySpaced",
+                                      "NodalTetElec",
+                                      "NodalPrismEvenlySpaced",
+                                      "NodalPrismElec",
+                                      "NodalTriSPI",
+                                      "NodalTetSPI",
+                                      "NodalPrismSPI",
+                                      "NodalQuadElec",
+                                      "NodalHexElec"};
+} // namespace LibUtilities
+} // namespace Nektar
 
-
-        const std::string kPointsTypeStr[] =
-        {
-            "NoPointsType",
-            "GaussGaussLegendre",
-            "GaussRadauMLegendre",
-            "GaussRadauPLegendre",
-            "GaussLobattoLegendre",
-            "GaussGaussChebyshev",
-            "GaussRadauMChebyshev",
-            "GaussRadauPChebyshev",
-            "GaussLobattoChebyshev",
-            "GaussRadauMAlpha0Beta1",
-            "GaussRadauMAlpha0Beta2",
-            "GaussRadauMAlpha1Beta0",
-            "GaussRadauMAlpha2Beta0",
-            "GaussKronrodLegendre",
-            "GaussRadauKronrodMLegendre",
-            "GaussRadauKronrodMAlpha1Beta0",
-            "GaussLobattoKronrodLegendre",
-            "PolyEvenlySpaced",
-            "FourierEvenlySpaced",
-            "FourierSingleModeSpaced",
-            "BoundaryLayerPoints",
-            "BoundaryLayerPointsRev",
-            "NodalTriElec",
-            "NodalTriFekete",
-            "NodalTriEvenlySpaced",
-            "NodalTetEvenlySpaced",
-            "NodalTetElec",
-            "NodalPrismEvenlySpaced",
-            "NodalPrismElec",
-            "NodalTriSPI",
-            "NodalTetSPI",
-            "NodalPrismSPI",
-            "NodalQuadElec",
-            "NodalHexElec"
-        };
-    } // end of namespace
-} // end of namespace
-
-#endif //FOUNDATIONS_H
+#endif // FOUNDATIONS_H

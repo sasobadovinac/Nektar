@@ -50,8 +50,7 @@ namespace FieldUtils
 
 ModuleKey ProcessNumModes::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "nummodes"),
-        ProcessNumModes::create,
+        ModuleKey(eProcessModule, "nummodes"), ProcessNumModes::create,
         "Computes number of modes in each direction for each element.");
 
 ProcessNumModes::ProcessNumModes(FieldSharedPtr f) : ProcessModule(f)
@@ -87,8 +86,8 @@ void ProcessNumModes::Process(po::variables_map &vm)
         return;
     }
 
-    int npoints   = m_f->m_exp[0]->GetNpoints();
-    Array<OneD, Array<OneD, NekDouble> > outfield(addfields);
+    int npoints = m_f->m_exp[0]->GetNpoints();
+    Array<OneD, Array<OneD, NekDouble>> outfield(addfields);
     int nstrips;
 
     m_f->m_session->LoadParameter("Strip_Z", nstrips, 1);
@@ -122,14 +121,13 @@ void ProcessNumModes::Process(po::variables_map &vm)
         {
             Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
             Vmath::Vcopy(npoints, outfield[i], 1, Exp->UpdatePhys(), 1);
-            Exp->FwdTrans_IterPerExp(outfield[i], Exp->UpdateCoeffs());
+            Exp->FwdTransLocalElmt(outfield[i], Exp->UpdateCoeffs());
 
             auto it =
                 m_f->m_exp.begin() + s * (nfields + addfields) + nfields + i;
             m_f->m_exp.insert(it, Exp);
         }
     }
-
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AdvectionTerm.h
+// File: DriverSteadyState.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,79 +28,69 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Driver class for the stability solver
+// Description: Driver class for the steady-state solver
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_SOLVERUTILS_DRIVERSTEADYSTATE_H
 #define NEKTAR_SOLVERUTILS_DRIVERSTEADYSTATE_H
 
+#include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/Driver.h>
 #include <SolverUtils/DriverArnoldi.h>
 #include <SolverUtils/DriverModifiedArnoldi.h>
-#include <LibUtilities/BasicUtils/Timer.h>
 
 namespace Nektar
 {
 namespace SolverUtils
 {
 
-class DriverSteadyState: public DriverModifiedArnoldi
+class DriverSteadyState : public DriverModifiedArnoldi
 {
 public:
     friend class MemoryManager<DriverSteadyState>;
 
     /// Creates an instance of this class
     static DriverSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-        DriverSharedPtr p = MemoryManager<DriverSteadyState>
-            ::AllocateSharedPtr(pSession, pGraph);
+        DriverSharedPtr p = MemoryManager<DriverSteadyState>::AllocateSharedPtr(
+            pSession, pGraph);
         p->InitObject();
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
     void PrintSummarySFD();
 
     void ConvergenceHistory(
-            const Array<OneD, const Array<OneD, NekDouble> > &qBar1,
-            const Array<OneD, const Array<OneD, NekDouble> > &q0,
-                  NekDouble &MaxNormDiff_q_qBar,
-                  NekDouble &MaxNormDiff_q1_q0);
+        const Array<OneD, const Array<OneD, NekDouble>> &qBar1,
+        const Array<OneD, const Array<OneD, NekDouble>> &q0,
+        NekDouble &MaxNormDiff_q_qBar, NekDouble &MaxNormDiff_q1_q0);
 
-    void ComputeSFD(
-            const int i,
-            const Array<OneD, const Array<OneD, NekDouble> > &q0,
-            const Array<OneD, const Array<OneD, NekDouble> > &qBar0,
-                  Array<OneD, Array<OneD, NekDouble> > &q1,
-                  Array<OneD, Array<OneD, NekDouble> > &qBar1);
+    void ComputeSFD(const int i,
+                    const Array<OneD, const Array<OneD, NekDouble>> &q0,
+                    const Array<OneD, const Array<OneD, NekDouble>> &qBar0,
+                    Array<OneD, Array<OneD, NekDouble>> &q1,
+                    Array<OneD, Array<OneD, NekDouble>> &qBar1);
 
-    void EvalEV_ScalarSFD(
-            const NekDouble &X_input,
-            const NekDouble &Delta_input,
-            const std::complex<NekDouble> &alpha,
-                  NekDouble &MaxEV);
+    void EvalEV_ScalarSFD(const NekDouble &X_input,
+                          const NekDouble &Delta_input,
+                          const std::complex<NekDouble> &alpha,
+                          NekDouble &MaxEV);
 
-    void GradientDescentMethod(
-            const std::complex<NekDouble> &alpha,
-                  NekDouble &X_output,
-                  NekDouble &Delta_output);
+    void GradientDescentMethod(const std::complex<NekDouble> &alpha,
+                               NekDouble &X_output, NekDouble &Delta_output);
 
-    void ReadEVfile(
-                  int &KrylovSubspaceDim,
-                  NekDouble &growthEV,
-                  NekDouble &frequencyEV);
+    void ReadEVfile(int &KrylovSubspaceDim, NekDouble &growthEV,
+                    NekDouble &frequencyEV);
 
     void ComputeOptimization();
 
-    void SetSFDOperator(
-            const NekDouble X_input,
-            const NekDouble Delta_input);
-
+    void SetSFDOperator(const NekDouble X_input, const NekDouble Delta_input);
 
 protected:
     /// Constructor
@@ -112,7 +102,8 @@ protected:
     SOLVER_UTILS_EXPORT virtual ~DriverSteadyState();
 
     /// Second-stage initialisation
-    SOLVER_UTILS_EXPORT virtual void v_InitObject(std::ostream &out = std::cout);
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        std::ostream &out = std::cout);
 
     /// Virtual function for solve implementation.
     SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
@@ -128,18 +119,18 @@ private:
     int m_checksteps;
     int NumVar_SFD;
 
-    LibUtilities::Timer     timer;
+    LibUtilities::Timer timer;
     NekDouble cpuTime;
     NekDouble totalTime;
     NekDouble elapsed;
     std::ofstream m_file;
 
-    ///Definition of the SFD parameters:
+    /// Definition of the SFD parameters:
     NekDouble m_Delta;
     NekDouble m_X;
     NekDouble m_dt;
 
-    ///Definition of the SFD operator
+    /// Definition of the SFD operator
     NekDouble M11;
     NekDouble M12;
     NekDouble M21;
@@ -148,7 +139,7 @@ private:
     NekDouble Diff_q_qBar;
     NekDouble Diff_q1_q0;
 
-    ///For adaptive SFD method
+    /// For adaptive SFD method
     bool FlowPartiallyConverged;
     NekDouble AdaptiveTOL;
     NekDouble AdaptiveTime;
@@ -157,9 +148,7 @@ private:
     NekDouble FrequencyEV;
 };
 
-}
-} //end of namespace
+} // namespace SolverUtils
+} // namespace Nektar
 
-
-#endif //NEKTAR_SOLVERUTILS_DRIVERSTEADYSTATE_H
-
+#endif // NEKTAR_SOLVERUTILS_DRIVERSTEADYSTATE_H

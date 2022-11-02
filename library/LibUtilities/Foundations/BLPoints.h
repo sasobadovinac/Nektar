@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File BLPoints.h
+// File: BLPoints.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -27,7 +27,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-// 
+//
 // Description: Header file of 1D boundary layer points
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,101 +41,97 @@
 
 namespace Nektar
 {
-    namespace LibUtilities 
+namespace LibUtilities
+{
+class BLPoints : public Points<NekDouble>
+{
+public:
+    virtual ~BLPoints()
     {
-        class BLPoints: public Points<NekDouble>
-        {
-        public:
-            virtual ~BLPoints()
-            {
-            }            
+    }
 
-            LIB_UTILITIES_EXPORT static std::shared_ptr< PointsBaseType > 
-                Create(const PointsKey &key);
-            LIB_UTILITIES_EXPORT std::shared_ptr< NekMatrix<NekDouble> > 
-                CreateMatrix(const PointsKey &pkey);
+    LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
+        const PointsKey &key);
+    LIB_UTILITIES_EXPORT std::shared_ptr<NekMatrix<NekDouble>> CreateMatrix(
+        const PointsKey &pkey);
 
-            LIB_UTILITIES_EXPORT const MatrixSharedPtrType 
-                GetI(const PointsKey &pkey);
-            LIB_UTILITIES_EXPORT const MatrixSharedPtrType 
-                GetI(const Array<OneD, const NekDouble>& x);
-            LIB_UTILITIES_EXPORT const MatrixSharedPtrType 
-                GetI(unsigned int numpoints, 
-                     const Array<OneD, const NekDouble>& x);
+    LIB_UTILITIES_EXPORT const MatrixSharedPtrType GetI(const PointsKey &pkey);
+    LIB_UTILITIES_EXPORT const MatrixSharedPtrType
+    GetI(const Array<OneD, const NekDouble> &x);
+    LIB_UTILITIES_EXPORT const MatrixSharedPtrType
+    GetI(unsigned int numpoints, const Array<OneD, const NekDouble> &x);
 
-            BLPoints(const PointsKey &key):PointsBaseType(key)
-            {
-                namespace pl = std::placeholders;
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussGaussLegendre),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussRadauMLegendre),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussRadauPLegendre),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussLobattoLegendre),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussGaussChebyshev),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussRadauMChebyshev),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussRadauPChebyshev),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussLobattoChebyshev),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussRadauMAlpha0Beta1),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussRadauMAlpha0Beta2),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussRadauMAlpha1Beta0),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eGaussRadauMAlpha2Beta0),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, ePolyEvenlySpaced),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eFourierEvenlySpaced),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eBoundaryLayerPoints),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-                m_InterpManager.RegisterCreator(
-                    PointsKey(0, eBoundaryLayerPointsRev),
-                    std::bind(&BLPoints::CreateMatrix, this, pl::_1));
-            }
+    BLPoints(const PointsKey &key) : PointsBaseType(key)
+    {
+        namespace pl = std::placeholders;
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussGaussLegendre),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMLegendre),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauPLegendre),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussLobattoLegendre),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussGaussChebyshev),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMChebyshev),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauPChebyshev),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussLobattoChebyshev),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMAlpha0Beta1),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMAlpha0Beta2),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMAlpha1Beta0),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eGaussRadauMAlpha2Beta0),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, ePolyEvenlySpaced),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eFourierEvenlySpaced),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eBoundaryLayerPoints),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+        m_InterpManager.RegisterCreator(
+            PointsKey(0, eBoundaryLayerPointsRev),
+            std::bind(&BLPoints::CreateMatrix, this, pl::_1));
+    }
 
-        private:
-            static bool initPointsManager[];
+private:
+    static bool initPointsManager[];
 
-            /// Default constructor should not be called except by Create
-            /// method.
-            BLPoints();
+    /// Default constructor should not be called except by Create
+    /// method.
+    BLPoints();
 
-            /// Copy constructor should not be called.
-            BLPoints(const BLPoints &points);
+    /// Copy constructor should not be called.
+    BLPoints(const BLPoints &points);
 
-            void CalculatePoints();
-            void CalculateWeights();
-            void CalculateDerivMatrix();
-            void CalculateInterpMatrix(
-                unsigned int                        npts, 
-                const Array<OneD, const NekDouble>& xpoints, 
-                      Array<OneD,       NekDouble>& interp);
-        }; // class BLPoints
-    } // end of namespace
-} // end of namespace 
+    void CalculatePoints();
+    void CalculateWeights();
+    void CalculateDerivMatrix();
+    void CalculateInterpMatrix(unsigned int npts,
+                               const Array<OneD, const NekDouble> &xpoints,
+                               Array<OneD, NekDouble> &interp);
+}; // class BLPoints
+} // namespace LibUtilities
+} // namespace Nektar
 
-
-#endif //BLPoints_H
+#endif // BLPoints_H

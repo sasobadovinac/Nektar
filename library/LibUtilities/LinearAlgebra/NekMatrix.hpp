@@ -30,81 +30,82 @@
 //
 // Description: Generic Matrix
 //
-// 
+//
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_LIB_UTILITIES_NEK_MATRIX_HPP
 #define NEKTAR_LIB_UTILITIES_NEK_MATRIX_HPP
 
-#include <LibUtilities/LinearAlgebra/MatrixBase.hpp>
 #include <LibUtilities/LinearAlgebra/BlockMatrix.hpp>
+#include <LibUtilities/LinearAlgebra/MatrixBase.hpp>
+#include <LibUtilities/LinearAlgebra/MatrixOperations.hpp>
 #include <LibUtilities/LinearAlgebra/ScaledMatrix.hpp>
 #include <LibUtilities/LinearAlgebra/StandardMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/MatrixOperations.hpp>
 
 namespace Nektar
 {
-    template<typename DataType, typename FormType>
-    std::ostream& operator<<(std::ostream& os, const NekMatrix<DataType, FormType>& rhs)
-    {
-        int oswidth = 9;
-        int osprecision = 6;
+template <typename DataType, typename FormType>
+std::ostream &operator<<(std::ostream &os,
+                         const NekMatrix<DataType, FormType> &rhs)
+{
+    int oswidth     = 9;
+    int osprecision = 6;
 
-        for(unsigned int i = 0; i < rhs.GetRows(); ++i)
+    for (unsigned int i = 0; i < rhs.GetRows(); ++i)
+    {
+        os << "[";
+        for (unsigned int j = 0; j < rhs.GetColumns(); ++j)
         {
-            os << "[";
-            for(unsigned int j = 0; j < rhs.GetColumns(); ++j)
+            os.width(oswidth);
+            os.precision(osprecision);
+            os << rhs(i, j);
+            if (j != rhs.GetColumns() - 1)
             {
-                os.width(oswidth);
-                os.precision(osprecision);
-                os << rhs(i,j);
-                if( j != rhs.GetColumns() - 1 )
-                {
-                    os << ", ";
-                }
-            }
-            os << "]";
-            if( i != rhs.GetRows()-1 )
-            {
-                os << std::endl;
+                os << ", ";
             }
         }
-        return os;
-    }
-
-    template<typename DataType, typename FormType>
-    std::ostream& operator>>(std::ostream& os, const NekMatrix<DataType, FormType>& rhs)
-    {
-        NekDouble tol = 1e-12;
-        os <<  "[" << std::endl;
-
-        for(unsigned int i = 0; i < rhs.GetRows(); ++i)
+        os << "]";
+        if (i != rhs.GetRows() - 1)
         {
-            for(unsigned int j = 0; j < rhs.GetColumns(); ++j)
-            {
-                if((NekDouble)rhs(i,j) > tol)
-                {
-                    os << '+';
-                }
-                else if((NekDouble)rhs(i,j) < -tol)
-                {
-                    os << '*';
-                }
-                else
-                {
-                    os << '-';
-                }
-            }
-            if( i != rhs.GetRows()-1 )
-            {
-                os << std::endl;
-            }
+            os << std::endl;
         }
-        os <<  "]" << std::endl;
-        return os;
     }
+    return os;
 }
 
-#endif //NEKTAR_LIB_UTILITIES_NEK_MATRIX_HPP
+template <typename DataType, typename FormType>
+std::ostream &operator>>(std::ostream &os,
+                         const NekMatrix<DataType, FormType> &rhs)
+{
+    NekDouble tol = 1e-12;
+    os << "[" << std::endl;
 
+    for (unsigned int i = 0; i < rhs.GetRows(); ++i)
+    {
+        for (unsigned int j = 0; j < rhs.GetColumns(); ++j)
+        {
+            if ((NekDouble)rhs(i, j) > tol)
+            {
+                os << '+';
+            }
+            else if ((NekDouble)rhs(i, j) < -tol)
+            {
+                os << '*';
+            }
+            else
+            {
+                os << '-';
+            }
+        }
+        if (i != rhs.GetRows() - 1)
+        {
+            os << std::endl;
+        }
+    }
+    os << "]" << std::endl;
+    return os;
+}
+} // namespace Nektar
+
+#endif // NEKTAR_LIB_UTILITIES_NEK_MATRIX_HPP

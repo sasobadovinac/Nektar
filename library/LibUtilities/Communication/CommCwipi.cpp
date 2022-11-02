@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommCwipi.cpp
+// File: CommCwipi.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -94,5 +94,5 @@ void CommCwipi::v_Finalise()
     cwipi_finalize();
     CommMpi::v_Finalise();
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

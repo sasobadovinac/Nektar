@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SchemeInitializor.cpp
+// File: SchemeInitializer.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -141,4 +141,4 @@ REGISTER(RungeKutta4);
 REGISTER(RungeKutta5);
 
 } // end namespace LibUtilities
-} // end namespace NekTar
+} // namespace Nektar

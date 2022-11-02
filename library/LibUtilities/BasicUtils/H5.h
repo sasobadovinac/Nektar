@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File H5.h
+// File: H5.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,8 +36,8 @@
 #define NEKTAR_LIB_UTILITIES_BASIC_UTILS_H5_H
 
 #include <exception>
-#include <memory>
 #include <hdf5.h>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -57,24 +57,17 @@ namespace H5
     {                                                                          \
         hid_t ret = func args;                                                 \
         if (ret < 0)                                                           \
-            ErrorUtil::Error(ErrorUtil::efatal,                                \
-                             __FILE__,                                         \
-                             __LINE__,                                         \
-                             "HDF5 error in API function " #func,              \
-                             0);                                               \
+            ErrorUtil::Error(ErrorUtil::efatal, __FILE__, __LINE__,            \
+                             "HDF5 error in API function " #func, 0);          \
         ans = ret;                                                             \
     }
 #define H5_CALL(func, args)                                                    \
     {                                                                          \
         herr_t ret = func args;                                                \
         if (ret < 0)                                                           \
-            ErrorUtil::Error(ErrorUtil::efatal,                                \
-                             __FILE__,                                         \
-                             __LINE__,                                         \
-                             "HDF5 error in API function " #func,              \
-                             0);                                               \
+            ErrorUtil::Error(ErrorUtil::efatal, __FILE__, __LINE__,            \
+                             "HDF5 error in API function " #func, 0);          \
     }
-
 
 class Error : public std::exception
 {
@@ -199,16 +192,14 @@ public:
             return m_idx;
         }
 
-        inline std::string GetName()  const
+        inline std::string GetName() const
         {
             return m_currentName;
         }
 
     private:
-        static herr_t helper(hid_t g_id,
-                             const char *name,
-                             const H5L_info_t *info,
-                             void *op_data);
+        static herr_t helper(hid_t g_id, const char *name,
+                             const H5L_info_t *info, void *op_data);
         CanHaveGroupsDataSetsSharedPtr m_grp;
         hsize_t m_idx;
         hsize_t m_next;
@@ -234,8 +225,7 @@ public:
     // The createPL can be omitted to use the defaults
     template <class T>
     DataSetSharedPtr CreateWriteDataSet(
-        const std::string &name,
-        const std::vector<T> &data,
+        const std::string &name, const std::vector<T> &data,
         PListSharedPtr createPL = PList::Default(),
         PListSharedPtr accessPL = PList::Default());
 
@@ -248,7 +238,7 @@ public:
     // The accessPL can be omitted to use the defaults
     DataSetSharedPtr OpenDataSet(
         const std::string &name,
-        PListSharedPtr accessPL      = PList::Default()) const;
+        PListSharedPtr accessPL = PList::Default()) const;
 
     bool ContainsDataSet(std::string nm);
 
@@ -280,10 +270,8 @@ public:
         }
 
     private:
-        static herr_t helper(hid_t g_id,
-                             const char *name,
-                             const H5A_info_t *info,
-                             void *op_data);
+        static herr_t helper(hid_t g_id, const char *name,
+                             const H5A_info_t *info, void *op_data);
         CanHaveAttributesSharedPtr m_obj;
         hsize_t m_idx;
         hsize_t m_next;
@@ -421,11 +409,12 @@ public:
     }
     void AddString(std::string name, size_t offset, size_t size)
     {
-        hid_t strtype = H5Tcopy (H5T_C_S1);
-        H5Tset_size (strtype, size);
+        hid_t strtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(strtype, size);
         H5Tinsert(m_Id, name.c_str(), offset, strtype);
     }
     void Close();
+
 private:
     CompoundDataType(hid_t);
 };
@@ -454,8 +443,7 @@ private:
     Attribute(hid_t id) : Object(id)
     {
     }
-    static AttributeSharedPtr Create(hid_t parent,
-                                     const std::string &name,
+    static AttributeSharedPtr Create(hid_t parent, const std::string &name,
                                      DataTypeSharedPtr type,
                                      DataSpaceSharedPtr space);
     static AttributeSharedPtr Open(hid_t parent, const std::string &name);
@@ -466,12 +454,10 @@ private:
 class File : public CanHaveGroupsDataSets
 {
 public:
-    static FileSharedPtr Create(const std::string &filename,
-                                unsigned mode,
+    static FileSharedPtr Create(const std::string &filename, unsigned mode,
                                 PListSharedPtr createPL = PList::Default(),
                                 PListSharedPtr accessPL = PList::Default());
-    static FileSharedPtr Open(const std::string &filename,
-                              unsigned mode,
+    static FileSharedPtr Open(const std::string &filename, unsigned mode,
                               PListSharedPtr accessPL = PList::Default());
     ~File();
     void Close();
@@ -507,60 +493,50 @@ public:
     template <class T> void Write(const std::vector<T> &data)
     {
         DataTypeSharedPtr mem_t = DataTypeTraits<T>::GetType();
-        H5_CALL(
-            H5Dwrite,
-            (m_Id, mem_t->GetId(), H5S_ALL, H5S_ALL, H5P_DEFAULT, &data[0]));
+        H5_CALL(H5Dwrite, (m_Id, mem_t->GetId(), H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                           &data[0]));
     }
     template <class T>
-    void Write(const std::vector<T> &data,
-               DataSpaceSharedPtr filespace,
+    void Write(const std::vector<T> &data, DataSpaceSharedPtr filespace,
                PListSharedPtr dxpl = PList::Default())
     {
         DataTypeSharedPtr mem_t     = DataTypeTraits<T>::GetType();
         DataSpaceSharedPtr memspace = DataSpace::OneD(data.size());
 
-        H5_CALL(H5Dwrite,
-                (m_Id, mem_t->GetId(), memspace->GetId(), filespace->GetId(),
-                 dxpl->GetId(), &data[0]) );
+        H5_CALL(H5Dwrite, (m_Id, mem_t->GetId(), memspace->GetId(),
+                           filespace->GetId(), dxpl->GetId(), &data[0]));
     }
 
     template <class T>
-    void Write(const std::vector<T> &data,
-               DataSpaceSharedPtr filespace,
-               DataTypeSharedPtr dt,
-               PListSharedPtr dxpl = PList::Default())
+    void Write(const std::vector<T> &data, DataSpaceSharedPtr filespace,
+               DataTypeSharedPtr dt, PListSharedPtr dxpl = PList::Default())
     {
         DataSpaceSharedPtr memspace = DataSpace::OneD(data.size());
 
-        H5Dwrite(m_Id,
-                 dt->GetId(),
-                 memspace->GetId(),
-                 filespace->GetId(),
-                 dxpl->GetId(),
-                 &data[0]);
+        H5Dwrite(m_Id, dt->GetId(), memspace->GetId(), filespace->GetId(),
+                 dxpl->GetId(), &data[0]);
     }
 
-    void WriteString(std::string s,
-                     DataSpaceSharedPtr filespace,
+    void WriteString(std::string s, DataSpaceSharedPtr filespace,
                      DataTypeSharedPtr type,
                      PListSharedPtr dxpl = PList::Default())
     {
-        H5_CALL(
-            H5Dwrite,
-            (m_Id, type->GetId(), H5S_ALL, filespace->GetId(), dxpl->GetId(), s.c_str()));
+        H5_CALL(H5Dwrite, (m_Id, type->GetId(), H5S_ALL, filespace->GetId(),
+                           dxpl->GetId(), s.c_str()));
     }
 
     void WriteVectorString(std::vector<std::string> s,
-                     DataSpaceSharedPtr filespace,
-                     DataTypeSharedPtr type,
-                     PListSharedPtr dxpl = PList::Default())
+                           DataSpaceSharedPtr filespace, DataTypeSharedPtr type,
+                           PListSharedPtr dxpl = PList::Default())
     {
-        const char** ret;
-        ret = new const char*[s.size()];
-        for (size_t i = 0; i < s.size(); ++i) {
+        const char **ret;
+        ret = new const char *[s.size()];
+        for (size_t i = 0; i < s.size(); ++i)
+        {
             ret[i] = s[i].c_str();
         }
-        H5Dwrite(m_Id, type->GetId(), H5S_ALL, filespace->GetId(), dxpl->GetId(), ret);
+        H5Dwrite(m_Id, type->GetId(), H5S_ALL, filespace->GetId(),
+                 dxpl->GetId(), ret);
     }
 
     template <class T> void Read(std::vector<T> &data)
@@ -574,13 +550,11 @@ public:
 
         data.resize(len);
 
-        H5_CALL(
-            H5Dread,
-            (m_Id, mem_t->GetId(), H5S_ALL, H5S_ALL, H5P_DEFAULT, &data[0]));
+        H5_CALL(H5Dread, (m_Id, mem_t->GetId(), H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                          &data[0]));
     }
     template <class T>
-    void Read(std::vector<T> &data,
-              DataSpaceSharedPtr filespace,
+    void Read(std::vector<T> &data, DataSpaceSharedPtr filespace,
               PListSharedPtr dxpl = PList::Default())
     {
         DataTypeSharedPtr mem_t = DataTypeTraits<T>::GetType();
@@ -594,9 +568,8 @@ public:
                           filespace->GetId(), dxpl->GetId(), &data[0]));
     }
     template <class T>
-    void Read(std::vector<T> &data,
-              DataSpaceSharedPtr filespace,
-              std::vector<std::vector<int> > &coords,
+    void Read(std::vector<T> &data, DataSpaceSharedPtr filespace,
+              std::vector<std::vector<int>> &coords,
               PListSharedPtr dxpl = PList::Default())
     {
         DataTypeSharedPtr mem_t = DataTypeTraits<T>::GetType();
@@ -605,22 +578,20 @@ public:
         int w = coords[0].size();
 
         hsize_t *cds = new hsize_t[coords.size() * w];
-        for(int i = 0; i < coords.size(); i++)
+        for (int i = 0; i < coords.size(); i++)
         {
-            for(int j = 0; j < coords[i].size(); j++)
+            for (int j = 0; j < coords[i].size(); j++)
             {
                 cds[i * w + j] = hsize_t(coords[i][j]);
             }
         }
 
-        H5Sselect_elements(filespace->GetId(),
-                           H5S_SELECT_SET,
-                           coords.size(),
+        H5Sselect_elements(filespace->GetId(), H5S_SELECT_SET, coords.size(),
                            cds);
 
         delete[] cds;
 
-        len = H5Sget_select_npoints(filespace->GetId());
+        len                         = H5Sget_select_npoints(filespace->GetId());
         DataSpaceSharedPtr memspace = DataSpace::OneD(len);
 
         data.resize(len);
@@ -636,13 +607,14 @@ public:
                           PListSharedPtr dxpl = PList::Default())
     {
         char **rdata;
-        DataTypeSharedPtr tp = DataType::String();
+        DataTypeSharedPtr tp      = DataType::String();
         std::vector<hsize_t> dims = filespace->GetDims();
-        rdata = (char **) malloc (dims[0] * sizeof(char *));
+        rdata                     = (char **)malloc(dims[0] * sizeof(char *));
 
-        H5_CALL(H5Dread, (m_Id, tp->GetId(), H5S_ALL, filespace->GetId(), dxpl->GetId(), rdata));
+        H5_CALL(H5Dread, (m_Id, tp->GetId(), H5S_ALL, filespace->GetId(),
+                          dxpl->GetId(), rdata));
 
-        for(int i = 0; i < dims[0]; i++)
+        for (int i = 0; i < dims[0]; i++)
         {
             data.push_back(std::string(rdata[i]));
         }
@@ -733,9 +705,8 @@ void CanHaveAttributes::SetAttribute(const std::string &name, const T &value)
 
     typename DataTypeTraits<T>::ConvertedType conv =
         DataTypeTraits<T>::Convert(value);
-    H5_CALL(
-        H5Awrite,
-        (attr->GetId(), type->GetId(), DataTypeTraits<T>::GetAddress(conv)));
+    H5_CALL(H5Awrite, (attr->GetId(), type->GetId(),
+                       DataTypeTraits<T>::GetAddress(conv)));
 }
 
 template <typename T>
@@ -777,9 +748,8 @@ void CanHaveAttributes::GetAttribute(const std::string &name, T &value)
 
     typename DataTypeTraits<T>::ConvertedType conv;
 
-    H5_CALL(
-        H5Aread,
-        (attr->GetId(), type->GetId(), DataTypeTraits<T>::GetAddress(conv)));
+    H5_CALL(H5Aread, (attr->GetId(), type->GetId(),
+                      DataTypeTraits<T>::GetAddress(conv)));
     value = DataTypeTraits<T>::Deconvert(conv);
 }
 
@@ -827,10 +797,8 @@ void CanHaveAttributes::GetAttribute(const std::string &name,
 
 template <class T>
 DataSetSharedPtr CanHaveGroupsDataSets::CreateWriteDataSet(
-    const std::string &name,
-    const std::vector<T> &data,
-    PListSharedPtr createPL,
-    PListSharedPtr accessPL)
+    const std::string &name, const std::vector<T> &data,
+    PListSharedPtr createPL, PListSharedPtr accessPL)
 {
     DataTypeSharedPtr type   = DataTypeTraits<T>::GetType();
     DataSpaceSharedPtr space = DataSpace::OneD(data.size());
@@ -839,8 +807,8 @@ DataSetSharedPtr CanHaveGroupsDataSets::CreateWriteDataSet(
     dataset->Write(data);
     return dataset;
 }
-}
-}
-}
+} // namespace H5
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

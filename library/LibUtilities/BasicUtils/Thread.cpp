@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Thread.cpp
+// File: Thread.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -43,11 +43,10 @@ namespace Nektar
 namespace Thread
 {
 
-
 /**
  *
  */
-ThreadManagerFactory& GetThreadManagerFactory()
+ThreadManagerFactory &GetThreadManagerFactory()
 {
     static ThreadManagerFactory instance;
     return instance;
@@ -61,7 +60,6 @@ ThreadJob::ThreadJob()
     // empty
 }
 
-
 /**
  *
  */
@@ -69,7 +67,6 @@ ThreadJob::~ThreadJob()
 {
     // empty
 }
-
 
 /**
  * Part of the thread interface.  Do not use unless you're
@@ -81,7 +78,6 @@ void ThreadJob::SetWorkerNum(unsigned int num)
     m_workerNum = num;
 }
 
-
 /**
  *
  */
@@ -89,7 +85,6 @@ unsigned int ThreadJob::GetWorkerNum()
 {
     return m_workerNum;
 }
-
 
 /**
  * Implementations should not override this function, since they
@@ -102,7 +97,6 @@ bool ThreadManager::IsInitialised()
     return true;
 }
 
-
 /**
  * Should stop worker threads and clean up.
  * This shouldn't be called until the program is exiting
@@ -114,16 +108,14 @@ ThreadManager::~ThreadManager()
     // empty
 }
 
-
 /**
  * ThreadMaster implementation
  */
-ThreadMaster::ThreadMaster() : m_threadManagers(THREADMANAGER_MAX),
-    m_mutex(), m_threadingType()
+ThreadMaster::ThreadMaster()
+    : m_threadManagers(THREADMANAGER_MAX), m_mutex(), m_threadingType()
 {
     // empty
 }
-
 
 /**
  * Will clear the list of ThreadManagers, destructing them.
@@ -134,16 +126,14 @@ ThreadMaster::~ThreadMaster()
     m_threadManagers.clear();
 }
 
-
 /**
  *
  */
-ThreadMaster& GetThreadMaster()
+ThreadMaster &GetThreadMaster()
 {
     static ThreadMaster instance;
     return instance;
 }
-
 
 /**
  * @param p_type String to be passed to the ThreadManagerFactory
@@ -161,7 +151,6 @@ void ThreadMaster::SetThreadingType(const std::string &p_type)
     m_threadingType = p_type;
 }
 
-
 /**
  * @returns a shared pointer to /em either a ThreadStartupManager
  * or whatever ThreadManager has been created for the string s
@@ -175,17 +164,16 @@ void ThreadMaster::SetThreadingType(const std::string &p_type)
  * @warning Static initialisation may want to access a ThreadManager.
  * Such code must be able to cope with the temporary ThreadStartupManager.
  */
-ThreadManagerSharedPtr& ThreadMaster::GetInstance(const ThreadManagerName t)
+ThreadManagerSharedPtr &ThreadMaster::GetInstance(const ThreadManagerName t)
 {
-    if ( !m_threadManagers[t] )
+    if (!m_threadManagers[t])
     {
-        m_threadManagers[t] = ThreadManagerSharedPtr(
-                                            new ThreadStartupManager());
+        m_threadManagers[t] =
+            ThreadManagerSharedPtr(new ThreadStartupManager());
         return m_threadManagers[t];
     }
     return m_threadManagers[t];
 }
-
 
 /**
  * @return Shared pointer to the created ThreadManager.
@@ -193,14 +181,14 @@ ThreadManagerSharedPtr& ThreadMaster::GetInstance(const ThreadManagerName t)
  * An error occurs if this is called before SetThreadingType.
  */
 ThreadManagerSharedPtr ThreadMaster::CreateInstance(const ThreadManagerName t,
-    unsigned int nThr)
+                                                    unsigned int nThr)
 {
     ASSERTL0(!m_threadingType.empty(),
              "Trying to create a ThreadManager before SetThreadingType called");
     return m_threadManagers[t] =
-        Thread::GetThreadManagerFactory().CreateInstance(m_threadingType, nThr);
+               Thread::GetThreadManagerFactory().CreateInstance(m_threadingType,
+                                                                nThr);
 }
-
 
 /**
  * @brief ThreadDefaultManager
@@ -210,7 +198,6 @@ ThreadStartupManager::ThreadStartupManager() : m_type("Threading starting up")
     // empty
 }
 
-
 /**
  *
  */
@@ -219,28 +206,25 @@ ThreadStartupManager::~ThreadStartupManager()
     // empty
 }
 
-
 /**
  *
  */
-void ThreadStartupManager::QueueJobs(std::vector<ThreadJob*>& joblist)
+void ThreadStartupManager::QueueJobs(std::vector<ThreadJob *> &joblist)
 {
     boost::ignore_unused(joblist);
     NEKERROR(ErrorUtil::efatal,
              "Attempted to QueueJobs in ThreadDefaultManager");
 }
 
-
 /**
  *
  */
-void ThreadStartupManager::QueueJob(ThreadJob* job)
+void ThreadStartupManager::QueueJob(ThreadJob *job)
 {
     boost::ignore_unused(job);
     NEKERROR(ErrorUtil::efatal,
              "Attempted to QueueJob in ThreadDefaultManager");
 }
-
 
 /**
  *
@@ -250,7 +234,6 @@ unsigned int ThreadStartupManager::GetNumWorkers()
     return 1;
 }
 
-
 /**
  *
  */
@@ -259,16 +242,14 @@ unsigned int ThreadStartupManager::GetWorkerNum()
     return 0;
 }
 
-
 /**
  *
  */
 void ThreadStartupManager::SetNumWorkers(const unsigned int num)
 {
-    ASSERTL0(num==1,
+    ASSERTL0(num == 1,
              "Attempted to SetNumWorkers to != 1 in ThreadDefaultManager");
 }
-
 
 /**
  *
@@ -278,7 +259,6 @@ void ThreadStartupManager::SetNumWorkers()
     return;
 }
 
-
 /**
  *
  */
@@ -287,7 +267,6 @@ unsigned int ThreadStartupManager::GetMaxNumWorkers()
     return 1;
 }
 
-
 /**
  *
  */
@@ -295,7 +274,6 @@ void ThreadStartupManager::Wait()
 {
     return;
 }
-
 
 /**
  *
@@ -307,7 +285,6 @@ void ThreadStartupManager::SetChunkSize(unsigned int chnk)
              "Attempted to SetChunkSize in ThreadDefaultManager");
 }
 
-
 /**
  *
  */
@@ -318,7 +295,6 @@ void ThreadStartupManager::SetSchedType(SchedType s)
              "Attempted to SetSchedType in ThreadDefaultManager");
 }
 
-
 /**
  *
  */
@@ -326,7 +302,6 @@ bool ThreadStartupManager::InThread()
 {
     return false;
 }
-
 
 /**
  *
@@ -336,7 +311,6 @@ void ThreadStartupManager::Hold()
     return;
 }
 
-
 /**
  *
  */
@@ -345,25 +319,23 @@ bool ThreadStartupManager::IsInitialised()
     return false;
 }
 
-
 /**
  *
  */
-const std::string& ThreadStartupManager::GetType() const
+const std::string &ThreadStartupManager::GetType() const
 {
     return m_type;
 }
 
-
 /**
  * @brief ThreadDefaultManager copy constructor
  */
-ThreadStartupManager& ThreadStartupManager::operator=(
-        const ThreadStartupManager& src)
+ThreadStartupManager &ThreadStartupManager::operator=(
+    const ThreadStartupManager &src)
 {
     boost::ignore_unused(src);
     return *this;
 }
 
-} // Thread
+} // namespace Thread
 } /* namespace Nektar */

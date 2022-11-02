@@ -50,20 +50,21 @@ class TimeIntegrationSolutionGLM
 {
 public:
     // Constructor for single step methods
-    LUE TimeIntegrationSolutionGLM(const TimeIntegrationAlgorithmGLM *schemeAlgorithm,
-                                   const DoubleArray &y, const NekDouble time,
-                                   const NekDouble timestep);
+    LUE TimeIntegrationSolutionGLM(
+        const TimeIntegrationAlgorithmGLM *schemeAlgorithm,
+        const DoubleArray &y, const NekDouble time, const NekDouble timestep);
 
     // Constructor for multi-step methods
-    LUE TimeIntegrationSolutionGLM(const TimeIntegrationAlgorithmGLM *schemeAlgorithm,
-                                   const TripleArray &y,
-                                   const Array<OneD, NekDouble> &t);
+    LUE TimeIntegrationSolutionGLM(
+        const TimeIntegrationAlgorithmGLM *schemeAlgorithm,
+        const TripleArray &y, const Array<OneD, NekDouble> &t);
 
-    LUE TimeIntegrationSolutionGLM(const TimeIntegrationAlgorithmGLM *schemeAlgorithm,
-                                   const unsigned int nvar,
-                                   const unsigned int npoints);
+    LUE TimeIntegrationSolutionGLM(
+        const TimeIntegrationAlgorithmGLM *schemeAlgorithm,
+        const unsigned int nvar, const unsigned int npoints);
 
-    LUE TimeIntegrationSolutionGLM(const TimeIntegrationAlgorithmGLM *schemeAlgorithm);
+    LUE TimeIntegrationSolutionGLM(
+        const TimeIntegrationAlgorithmGLM *schemeAlgorithm);
 
     inline const TimeIntegrationAlgorithmGLM *GetIntegrationSchemeData() const
     {
@@ -189,7 +190,7 @@ public:
     {
         int nMultiStepVals = m_schemeAlgorithm->GetNmultiStepValues();
         const Array<OneD, const unsigned int> &offsetvec =
-             m_schemeAlgorithm->GetTimeLevelOffset();
+            m_schemeAlgorithm->GetTimeLevelOffset();
 
         for (int i = 0; i < nMultiStepVals; i++)
         {

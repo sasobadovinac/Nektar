@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MMFSystem.h
+// File: MMFSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -68,7 +68,10 @@ enum BoundaryCopyType
 };
 
 const char *const BoundaryCopyTypeMap[] = {
-    "Dirichlet", "Neumann", "FwdEQBwd", "FwdEQNegBwd",
+    "Dirichlet",
+    "Neumann",
+    "FwdEQBwd",
+    "FwdEQNegBwd",
 };
 
 enum UpwindType
@@ -121,7 +124,8 @@ enum PolType
 };
 
 const char *const PolTypeMap[] = {
-    "TransMagnetic", "TransElectric",
+    "TransMagnetic",
+    "TransElectric",
 };
 
 enum IncType
@@ -133,7 +137,9 @@ enum IncType
 };
 
 const char *const IncTypeMap[] = {
-    "PlaneWave", "PlaneWaveImag", "CylindricalWave",
+    "PlaneWave",
+    "PlaneWaveImag",
+    "CylindricalWave",
 };
 
 /// A base class for PDEs which include an advection component
@@ -155,7 +161,7 @@ public:
 
     SOLVER_UTILS_EXPORT MMFSystem(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph);
+        const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     SOLVER_UTILS_EXPORT virtual ~MMFSystem();
 
@@ -378,7 +384,7 @@ protected:
 
 // Shared pointer to an MMFSystem class
 typedef std::shared_ptr<MMFSystem> MMFSystemSharedPtr;
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

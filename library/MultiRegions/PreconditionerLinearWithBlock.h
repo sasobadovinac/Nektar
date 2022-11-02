@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Preconditioner.h
+// File: PreconditionerLinearWithBlock.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,63 +28,64 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Preconditioner header
+// Description: PreconditionerLinearWithBlock header
 //
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEARWITHBLOCK_H
 #define NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLINEARWITHBLOCK_H
-#include <MultiRegions/GlobalLinSys.h>
-#include <MultiRegions/Preconditioner.h>
-#include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/AssemblyMap/AssemblyMapCG.h>
+#include <MultiRegions/GlobalLinSys.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
+#include <MultiRegions/Preconditioner.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+class PreconditionerLinearWithBlock;
+typedef std::shared_ptr<PreconditionerLinearWithBlock>
+    PreconditionerLinearWithBlockSharedPtr;
+
+class PreconditionerLinearWithBlock : public Preconditioner
+{
+public:
+    /// Creates an instance of this class
+    static PreconditionerSharedPtr create(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
     {
-        class PreconditionerLinearWithBlock;
-        typedef std::shared_ptr<PreconditionerLinearWithBlock>  PreconditionerLinearWithBlockSharedPtr;
-
-        class PreconditionerLinearWithBlock: public Preconditioner
-	{
-        public:
-            /// Creates an instance of this class
-            static PreconditionerSharedPtr create(
-                        const std::shared_ptr<GlobalLinSys> &plinsys,
-                        const std::shared_ptr<AssemblyMap> &pLocToGloMap)
-            {
-	        PreconditionerSharedPtr p = MemoryManager<PreconditionerLinearWithBlock>::AllocateSharedPtr(plinsys,pLocToGloMap);
-	        p->InitObject();
-	        return p;
-            }
-
-            /// Name of class
-            static std::string className;
-
-            MULTI_REGIONS_EXPORT PreconditionerLinearWithBlock(
-                         const std::shared_ptr<GlobalLinSys> &plinsys,
-	                 const AssemblyMapSharedPtr &pLocToGloMap);
-
-            MULTI_REGIONS_EXPORT
-            virtual ~PreconditionerLinearWithBlock() {}
-
-	protected:
-
-            PreconditionerSharedPtr m_linSpacePrecon;
-            PreconditionerSharedPtr m_blockPrecon;
-
-	private:
-
-            virtual void v_InitObject();
-
-            virtual void v_DoPreconditioner(                
-                      const Array<OneD, NekDouble>& pInput,
-		      Array<OneD, NekDouble>& pOutput);
-
-            virtual void v_BuildPreconditioner();
-
-        };
+        PreconditionerSharedPtr p =
+            MemoryManager<PreconditionerLinearWithBlock>::AllocateSharedPtr(
+                plinsys, pLocToGloMap);
+        p->InitObject();
+        return p;
     }
-}
+
+    /// Name of class
+    static std::string className;
+
+    MULTI_REGIONS_EXPORT PreconditionerLinearWithBlock(
+        const std::shared_ptr<GlobalLinSys> &plinsys,
+        const AssemblyMapSharedPtr &pLocToGloMap);
+
+    MULTI_REGIONS_EXPORT
+    virtual ~PreconditionerLinearWithBlock()
+    {
+    }
+
+protected:
+    PreconditionerSharedPtr m_linSpacePrecon;
+    PreconditionerSharedPtr m_blockPrecon;
+
+private:
+    virtual void v_InitObject();
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput);
+
+    virtual void v_BuildPreconditioner();
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

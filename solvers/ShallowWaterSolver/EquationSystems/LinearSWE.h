@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LinearSWE.h
+// File: LinearSWE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -38,101 +38,102 @@
 #include <ShallowWaterSolver/EquationSystems/ShallowWaterSystem.h>
 
 namespace Nektar
-{     
-  
+{
 
-  /**
-   * 
-   * 
-   **/
- 
-  class LinearSWE : public ShallowWaterSystem
-  {
-  public:
-      friend class MemoryManager<LinearSWE>;
+/**
+ *
+ *
+ **/
+
+class LinearSWE : public ShallowWaterSystem
+{
+public:
+    friend class MemoryManager<LinearSWE>;
 
     /// Creates an instance of this class
-      static SolverUtils::EquationSystemSharedPtr create(
-          const LibUtilities::SessionReaderSharedPtr& pSession,
-          const SpatialDomains::MeshGraphSharedPtr& pGraph)
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-      SolverUtils::EquationSystemSharedPtr p = MemoryManager<LinearSWE>
-          ::AllocateSharedPtr(pSession, pGraph);
-      p->InitObject();
-      return p;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<LinearSWE>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
     }
     /// Name of class
     static std::string className;
-    
+
     virtual ~LinearSWE();
 
-  protected:
+protected:
+    LinearSWE(const LibUtilities::SessionReaderSharedPtr &pSession,
+              const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    LinearSWE(const LibUtilities::SessionReaderSharedPtr& pSession,
-              const SpatialDomains::MeshGraphSharedPtr& pGraph);
-
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields = true);
 
     /// Still water depth traces
-    Array<OneD, NekDouble>                          m_dFwd;
-    Array<OneD, NekDouble>                          m_dBwd;
-	
-    void DoOdeRhs(const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-		  Array<OneD,  Array<OneD, NekDouble> > &outarray,
-		  const NekDouble time);
-    
-    void DoOdeProjection(const Array<OneD,  const  Array<OneD, NekDouble> > &inarray,
-			 Array<OneD,  Array<OneD, NekDouble> > &outarray,
-			 const NekDouble time);
+    Array<OneD, NekDouble> m_dFwd;
+    Array<OneD, NekDouble> m_dBwd;
+
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
+
+    void DoOdeProjection(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
     void GetFluxVector(
-     const Array<OneD, const Array<OneD, NekDouble> > &physfield, 
-     Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
+        const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
-    
-    virtual void v_PrimitiveToConservative( );
-    
-    virtual void v_ConservativeToPrimitive( );
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+
+    virtual void v_PrimitiveToConservative();
+
+    virtual void v_ConservativeToPrimitive();
 
     const Array<OneD, NekDouble> &GetDepthFwd()
-        {
-            return m_dFwd;
-        }
+    {
+        return m_dFwd;
+    }
     const Array<OneD, NekDouble> &GetDepthBwd()
-        {
-            return m_dBwd;
-        }
-  
-    private:
+    {
+        return m_dBwd;
+    }
 
-	void NumericalFlux1D(Array<OneD, Array<OneD, NekDouble> > &physfield, 
-			     Array<OneD, Array<OneD, NekDouble> > &numfluxX);
-	
-	void NumericalFlux2D(Array<OneD, Array<OneD, NekDouble> > &physfield, 
-			     Array<OneD, Array<OneD, NekDouble> > &numfluxX, 
-			     Array<OneD, Array<OneD, NekDouble> > &numfluxY);
+private:
+    void NumericalFlux1D(Array<OneD, Array<OneD, NekDouble>> &physfield,
+                         Array<OneD, Array<OneD, NekDouble>> &numfluxX);
 
+    void NumericalFlux2D(Array<OneD, Array<OneD, NekDouble>> &physfield,
+                         Array<OneD, Array<OneD, NekDouble>> &numfluxX,
+                         Array<OneD, Array<OneD, NekDouble>> &numfluxY);
 
-	void SetBoundaryConditions(Array<OneD, Array<OneD, NekDouble> > &physarray, NekDouble time);
+    void SetBoundaryConditions(Array<OneD, Array<OneD, NekDouble>> &physarray,
+                               NekDouble time);
 
-	void WallBoundary2D(int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble> > &Fwd, Array<OneD, Array<OneD, NekDouble> > &physarray);
-	void WallBoundary(int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble> > &Fwd, Array<OneD, Array<OneD, NekDouble> > &physarray);
+    void WallBoundary2D(int bcRegion, int cnt,
+                        Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                        Array<OneD, Array<OneD, NekDouble>> &physarray);
+    void WallBoundary(int bcRegion, int cnt,
+                      Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                      Array<OneD, Array<OneD, NekDouble>> &physarray);
 
-	void AddCoriolis( const Array<OneD,  const Array<OneD, NekDouble> > &physarray,
-			       Array<OneD,       Array<OneD, NekDouble> > &outarray);
-	
-	void ConservativeToPrimitive(const Array<OneD, const Array<OneD, NekDouble> >&physin,
-				     Array<OneD,       Array<OneD, NekDouble> >&physout);
-	void PrimitiveToConservative(const Array<OneD, const Array<OneD, NekDouble> >&physin,
-				     Array<OneD,       Array<OneD, NekDouble> >&physout);
+    void AddCoriolis(const Array<OneD, const Array<OneD, NekDouble>> &physarray,
+                     Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-	void GetVelocityVector(
-			       const Array<OneD, Array<OneD, NekDouble> > &physfield,
-			       Array<OneD, Array<OneD, NekDouble> > &velocity);
-  };
- 
-}
+    void ConservativeToPrimitive(
+        const Array<OneD, const Array<OneD, NekDouble>> &physin,
+        Array<OneD, Array<OneD, NekDouble>> &physout);
+    void PrimitiveToConservative(
+        const Array<OneD, const Array<OneD, NekDouble>> &physin,
+        Array<OneD, Array<OneD, NekDouble>> &physout);
 
-#endif 
+    void GetVelocityVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
+                           Array<OneD, Array<OneD, NekDouble>> &velocity);
+};
 
+} // namespace Nektar
+
+#endif

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: TetMesh.cpp
+//  File: BLMesh.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: tet meshing methods
+//  Description: BL meshing methods
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -288,7 +288,7 @@ void BLMesh::GrowLayers()
                                       psElements[*iit][results[i].second]);
                         if (prox < delta * 2.5)
                         {
-                            hit = true;
+                            hit                  = true;
                             bit->second->stopped = true;
                             break;
                         }

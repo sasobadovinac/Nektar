@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: Metric.h
+// File: TestException.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Definition of the metric base class.
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -50,9 +50,12 @@ struct TesterException : public std::runtime_error
     }
 };
 
-#define ASSERTL0(condition, msg) \
-    if (!(condition)) { throw TesterException(msg); }
+#define ASSERTL0(condition, msg)                                               \
+    if (!(condition))                                                          \
+    {                                                                          \
+        throw TesterException(msg);                                            \
+    }
 
-}
+} // namespace Nektar
 
 #endif

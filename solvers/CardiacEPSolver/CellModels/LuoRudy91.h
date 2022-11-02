@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LuoRudy91.h
+// File: LuoRudy91.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -38,41 +38,42 @@
 #include <CardiacEPSolver/CellModels/CellModel.h>
 namespace Nektar
 {
-    class LuoRudy91 : public CellModel
+class LuoRudy91 : public CellModel
+{
+
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField)
     {
+        return MemoryManager<LuoRudy91>::AllocateSharedPtr(pSession, pField);
+    }
 
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField)
-        {
-            return MemoryManager<LuoRudy91>::AllocateSharedPtr(pSession, pField);
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Constructor
+    LuoRudy91(const LibUtilities::SessionReaderSharedPtr &pSession,
+              const MultiRegions::ExpListSharedPtr &pField);
 
-        /// Constructor
-        LuoRudy91(const LibUtilities::SessionReaderSharedPtr& pSession,
-                  const MultiRegions::ExpListSharedPtr& pField);
+    /// Destructor
+    virtual ~LuoRudy91()
+    {
+    }
 
-        /// Destructor
-        virtual ~LuoRudy91() {}
+protected:
+    /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    protected:
-        /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
-        virtual void v_Update(
-                const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                      Array<OneD,        Array<OneD, NekDouble> >&outarray,
-                const NekDouble time);
+    /// Prints a summary of the model parameters.
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        /// Prints a summary of the model parameters.
-        virtual void v_GenerateSummary(SummaryList& s);
-
-        /// Set initial conditions for the cell model
-        virtual void v_SetInitialConditions();
-    };
-}
+    /// Set initial conditions for the cell model
+    virtual void v_SetInitialConditions();
+};
+} // namespace Nektar
 
 #endif

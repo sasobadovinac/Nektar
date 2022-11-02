@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWaveSolver.cpp
+// File: PulseWaveSolver.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -33,8 +33,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/Driver.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <LibUtilities/BasicUtils/Timer.h>
+#include <SolverUtils/Driver.h>
 
 using namespace std;
 using namespace Nektar;
@@ -62,14 +63,16 @@ int main(int argc, char *argv[])
         // Execute driver
         drv->Execute();
 
+        // Print out timings
+        LibUtilities::Timer::PrintElapsedRegions(session->GetComm());
         // Finalise session
         session->Finalise();
     }
-    catch (const std::runtime_error& e)
+    catch (const std::runtime_error &e)
     {
         return 1;
     }
-    catch (const std::string& eStr)
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }

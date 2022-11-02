@@ -1,4 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
+//
+// File: main.cpp
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -31,5 +34,5 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_MODULE CollectionsUnitTests test
-#include <boost/test/unit_test.hpp>
 #include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>

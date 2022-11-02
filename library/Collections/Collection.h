@@ -37,78 +37,74 @@
 
 #include <vector>
 
-#include <LibUtilities/BasicUtils/HashUtils.hpp>
-#include <StdRegions/StdExpansion.h>
-#include <SpatialDomains/Geometry.h>
+#include <Collections/CoalescedGeomData.h>
 #include <Collections/CollectionsDeclspec.h>
 #include <Collections/Operator.h>
-#include <Collections/CoalescedGeomData.h>
+#include <LibUtilities/BasicUtils/HashUtils.hpp>
+#include <SpatialDomains/Geometry.h>
+#include <StdRegions/StdExpansion.h>
 
-namespace Nektar {
-namespace Collections {
+namespace Nektar
+{
+namespace Collections
+{
 
 /**
  * @brief Collection
  */
 class Collection
 {
-    public:
+public:
+    COLLECTIONS_EXPORT Collection(
+        std::vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+        OperatorImpMap &impTypes);
 
-        COLLECTIONS_EXPORT Collection(
-                std::vector<StdRegions::StdExpansionSharedPtr>  pCollExp,
-                OperatorImpMap                                 &impTypes);
+    COLLECTIONS_EXPORT void CheckFactors(const OperatorType opType,
+                                         StdRegions::FactorMap factors,
+                                         int coll_phys_offset = 0);
 
-        COLLECTIONS_EXPORT void CheckFactors(const OperatorType opType,
-                                StdRegions::FactorMap factors,
-                                int coll_phys_offset = 0);
+    COLLECTIONS_EXPORT void Initialise(
+        const OperatorType opType,
+        StdRegions::FactorMap factors = StdRegions::NullFactorMap);
 
-        COLLECTIONS_EXPORT void Initialise(const OperatorType opType,
-                              StdRegions::FactorMap factors =
-                              StdRegions::NullFactorMap);
+    inline void ApplyOperator(const OperatorType &op,
+                              const Array<OneD, const NekDouble> &inarray,
+                              Array<OneD, NekDouble> &output);
 
-        inline void ApplyOperator(
-                const OperatorType                           &op,
-                const Array<OneD, const NekDouble>           &inarray,
-                      Array<OneD,       NekDouble>           &output);
-    
-        inline void ApplyOperator(
-                const OperatorType                           &op,
-                const Array<OneD, const NekDouble>           &inarray,
-                      Array<OneD,       NekDouble>           &output0,
-                      Array<OneD,       NekDouble>           &output1);
+    inline void ApplyOperator(const OperatorType &op,
+                              const Array<OneD, const NekDouble> &inarray,
+                              Array<OneD, NekDouble> &output0,
+                              Array<OneD, NekDouble> &output1);
 
-        inline void ApplyOperator(
-                const OperatorType                           &op,
-                const Array<OneD, const NekDouble>           &inarray,
-                      Array<OneD,       NekDouble>           &output0,
-                      Array<OneD,       NekDouble>           &output1,
-                      Array<OneD,       NekDouble>           &output2);
+    inline void ApplyOperator(const OperatorType &op,
+                              const Array<OneD, const NekDouble> &inarray,
+                              Array<OneD, NekDouble> &output0,
+                              Array<OneD, NekDouble> &output1,
+                              Array<OneD, NekDouble> &output2);
 
-        inline void ApplyOperator(
-                const OperatorType                           &op,
-                      int                                     dir,
-                const Array<OneD, const NekDouble>           &inarray,
-                      Array<OneD,       NekDouble>           &output);
+    inline void ApplyOperator(const OperatorType &op, int dir,
+                              const Array<OneD, const NekDouble> &inarray,
+                              Array<OneD, NekDouble> &output);
 
-        inline bool HasOperator(const OperatorType &op);
+    inline bool HasOperator(const OperatorType &op);
 
-        inline OperatorSharedPtr GetOpSharedPtr(const OperatorType &op)
-        {
-            return m_ops[op];
-        }
+    inline OperatorSharedPtr GetOpSharedPtr(const OperatorType &op)
+    {
+        return m_ops[op];
+    }
 
-        inline CoalescedGeomDataSharedPtr GetGeomSharedPtr()
-        {
-            return m_geomData;
-        }
+    inline CoalescedGeomDataSharedPtr GetGeomSharedPtr()
+    {
+        return m_geomData;
+    }
 
-    
-    protected:
+protected:
     std::unordered_map<OperatorType, OperatorSharedPtr, EnumHash> m_ops;
-    CoalescedGeomDataSharedPtr                                    m_geomData;
-    // store details for initialisation on call rather than default initialisation
-    std::vector<StdRegions::StdExpansionSharedPtr>                m_collExp; 
-    OperatorImpMap                                                m_impTypes;
+    CoalescedGeomDataSharedPtr m_geomData;
+    // store details for initialisation on call rather than default
+    // initialisation
+    std::vector<StdRegions::StdExpansionSharedPtr> m_collExp;
+    OperatorImpMap m_impTypes;
 };
 
 typedef std::vector<Collection> CollectionVector;
@@ -118,39 +114,32 @@ typedef std::shared_ptr<CollectionVector> CollectionVectorSharedPtr;
  *
  */
 inline void Collection::ApplyOperator(
-        const OperatorType                 &op,
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD,       NekDouble>       &output)
+    const OperatorType &op, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &output)
 {
     Array<OneD, NekDouble> wsp(m_ops[op]->GetWspSize());
-    (*m_ops[op])(inarray, output, NullNekDouble1DArray,
-                 NullNekDouble1DArray, wsp);
+    (*m_ops[op])(inarray, output, NullNekDouble1DArray, NullNekDouble1DArray,
+                 wsp);
 }
-
 
 /**
  *
  */
 inline void Collection::ApplyOperator(
-        const OperatorType                 &op,
-        const Array<OneD, const NekDouble> &inarray,
-              Array<OneD,       NekDouble> &output0,
-              Array<OneD,       NekDouble> &output1)
+    const OperatorType &op, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &output0, Array<OneD, NekDouble> &output1)
 {
     Array<OneD, NekDouble> wsp(m_ops[op]->GetWspSize());
     (*m_ops[op])(inarray, output0, output1, NullNekDouble1DArray, wsp);
 }
 
-
 /**
  *
  */
 inline void Collection::ApplyOperator(
-        const OperatorType                 &op,
-        const Array<OneD, const NekDouble> &inarray,
-              Array<OneD,       NekDouble> &output0,
-              Array<OneD,       NekDouble> &output1,
-              Array<OneD,       NekDouble> &output2)
+    const OperatorType &op, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &output0, Array<OneD, NekDouble> &output1,
+    Array<OneD, NekDouble> &output2)
 {
     Array<OneD, NekDouble> wsp(m_ops[op]->GetWspSize());
     (*m_ops[op])(inarray, output0, output1, output2, wsp);
@@ -160,10 +149,8 @@ inline void Collection::ApplyOperator(
  *
  */
 inline void Collection::ApplyOperator(
-        const OperatorType                 &op,
-              int                           dir,
-        const Array<OneD, const NekDouble> &inarray,
-              Array<OneD,       NekDouble> &output)
+    const OperatorType &op, int dir,
+    const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &output)
 {
     Array<OneD, NekDouble> wsp(m_ops[op]->GetWspSize());
     (*m_ops[op])(dir, inarray, output, wsp);
@@ -174,8 +161,7 @@ inline bool Collection::HasOperator(const OperatorType &op)
     return (m_ops.find(op) != m_ops.end());
 }
 
-
-}
-}
+} // namespace Collections
+} // namespace Nektar
 
 #endif

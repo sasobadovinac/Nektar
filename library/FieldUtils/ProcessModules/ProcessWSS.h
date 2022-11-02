@@ -74,16 +74,15 @@ public:
 
 protected:
     void GetViscosity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
-                      Array<OneD, NekDouble > &mu, NekDouble &lambda);
+                      Array<OneD, NekDouble> &mu, NekDouble &lambda);
 
     void GetVelocity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
-                     Array<OneD, Array<OneD, NekDouble> > &vel);
+                     Array<OneD, Array<OneD, NekDouble>> &vel);
 
 private:
     int m_spacedim;
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

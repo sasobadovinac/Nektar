@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TemplatePressureArea.cpp
+// File: TemplatePressureArea.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -41,14 +41,14 @@ namespace Nektar
 {
 
 std::string TemplatePressureArea::className =
-   GetPressureAreaFactory().RegisterCreatorFunction(
-       "Template", TemplatePressureArea::create,
-       "Template to add a new Pressure-Area relation");
+    GetPressureAreaFactory().RegisterCreatorFunction(
+        "Template", TemplatePressureArea::create,
+        "Template to add a new Pressure-Area relation");
 
 TemplatePressureArea::TemplatePressureArea(
-   Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
-   const LibUtilities::SessionReaderSharedPtr pSession)
-   : PulseWavePressureArea(pVessel, pSession)
+    Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
+    const LibUtilities::SessionReaderSharedPtr pSession)
+    : PulseWavePressureArea(pVessel, pSession)
 {
 }
 
@@ -57,8 +57,11 @@ TemplatePressureArea::~TemplatePressureArea()
 }
 
 void TemplatePressureArea::v_GetPressure(NekDouble &P, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &dAUdx,
-                                 const NekDouble &gamma, const NekDouble &alpha)
+                                         const NekDouble &A,
+                                         const NekDouble &A0,
+                                         const NekDouble &dAUdx,
+                                         const NekDouble &gamma,
+                                         const NekDouble &alpha)
 {
     // Relation here
 
@@ -69,14 +72,15 @@ void TemplatePressureArea::v_GetPressure(NekDouble &P, const NekDouble &beta,
 }
 
 void TemplatePressureArea::v_GetC(NekDouble &c, const NekDouble beta,
-                   const NekDouble A, const NekDouble A0, const NekDouble alpha)
+                                  const NekDouble A, const NekDouble A0,
+                                  const NekDouble alpha)
 {
     // PWV here
 }
 
 void TemplatePressureArea::v_GetW1(NekDouble &W1, const NekDouble u,
-                   const NekDouble beta, const NekDouble A, const NekDouble A0,
-                                                          const NekDouble alpha)
+                                   const NekDouble beta, const NekDouble A,
+                                   const NekDouble A0, const NekDouble alpha)
 {
     NekDouble I = 0.0;
     GetCharIntegral(I, beta, A, A0);
@@ -85,8 +89,8 @@ void TemplatePressureArea::v_GetW1(NekDouble &W1, const NekDouble u,
 }
 
 void TemplatePressureArea::v_GetW2(NekDouble &W2, const NekDouble u,
-                   const NekDouble beta, const NekDouble A, const NekDouble A0,
-                                                          const NekDouble alpha)
+                                   const NekDouble beta, const NekDouble A,
+                                   const NekDouble A0, const NekDouble alpha)
 {
     NekDouble I = 0.0;
     GetCharIntegral(I, beta, A, A0);
@@ -95,8 +99,10 @@ void TemplatePressureArea::v_GetW2(NekDouble &W2, const NekDouble u,
 }
 
 void TemplatePressureArea::v_GetAFromChars(NekDouble &A, const NekDouble W1,
-                   const NekDouble W2, const NekDouble beta, const NekDouble A0,
-                                                          const NekDouble alpha)
+                                           const NekDouble W2,
+                                           const NekDouble beta,
+                                           const NekDouble A0,
+                                           const NekDouble alpha)
 {
     /*
     If an anayltical formula exists for this, then it should be used here. If
@@ -133,17 +139,18 @@ void TemplatePressureArea::v_GetAFromChars(NekDouble &A, const NekDouble W1,
             proceed = 0;
         }
     }
-
 }
 
 void TemplatePressureArea::v_GetUFromChars(NekDouble &u, const NekDouble W1,
-                                                            const NekDouble W2)
+                                           const NekDouble W2)
 {
     u = (W1 + W2) / 2; // Necessarily the case for all tube laws
 }
 
 void TemplatePressureArea::v_GetCharIntegral(NekDouble &I, const NekDouble beta,
-                   const NekDouble A, const NekDouble A0, const NekDouble alpha)
+                                             const NekDouble A,
+                                             const NekDouble A0,
+                                             const NekDouble alpha)
 {
     /*
     If an anayltical formula exists for this, then it should be used here. If
@@ -174,10 +181,11 @@ void TemplatePressureArea::v_GetCharIntegral(NekDouble &I, const NekDouble beta,
     I *= h;
 }
 
-void TemplatePressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
-               const Array<OneD, NekDouble> Au, const Array<OneD, NekDouble> uu,
-             const Array<OneD, NekDouble> beta, const Array<OneD, NekDouble> A0,
-                     const Array<OneD, NekDouble> alpha, const std::string type)
+void TemplatePressureArea::v_GetJacobianInverse(
+    NekMatrix<NekDouble> &invJ, const Array<OneD, NekDouble> Au,
+    const Array<OneD, NekDouble> uu, const Array<OneD, NekDouble> beta,
+    const Array<OneD, NekDouble> A0, const Array<OneD, NekDouble> alpha,
+    const std::string type)
 {
     /*
     This is a general method that will work for all tube laws. Simulations will
@@ -217,24 +225,24 @@ void TemplatePressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(2, 4, 0);
         J.SetValue(2, 5, -c[2] / Au[2]);
 
-        J.SetValue(3, 0,  Au[0]);
+        J.SetValue(3, 0, Au[0]);
         J.SetValue(3, 1, -Au[1]);
         J.SetValue(3, 2, -Au[2]);
-        J.SetValue(3, 3,  uu[0]);
+        J.SetValue(3, 3, uu[0]);
         J.SetValue(3, 4, -uu[1]);
         J.SetValue(3, 5, -uu[2]);
 
-        J.SetValue(4, 0,  2 * uu[0]);
+        J.SetValue(4, 0, 2 * uu[0]);
         J.SetValue(4, 1, -2 * uu[1]);
         J.SetValue(4, 2, 0);
-        J.SetValue(4, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(4, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(4, 4, -2 * c[1] * c[1] / Au[1]);
         J.SetValue(4, 5, 0);
 
-        J.SetValue(5, 0,  2 * uu[0]);
+        J.SetValue(5, 0, 2 * uu[0]);
         J.SetValue(5, 1, 0);
         J.SetValue(5, 2, -2 * uu[2]);
-        J.SetValue(5, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(5, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(5, 4, 0);
         J.SetValue(5, 5, -2 * c[2] * c[2] / Au[2]);
 
@@ -272,31 +280,31 @@ void TemplatePressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(2, 4, 0);
         J.SetValue(2, 5, c[2] / Au[2]);
 
-        J.SetValue(3, 0,  Au[0]);
+        J.SetValue(3, 0, Au[0]);
         J.SetValue(3, 1, -Au[1]);
         J.SetValue(3, 2, -Au[2]);
-        J.SetValue(3, 3,  uu[0]);
+        J.SetValue(3, 3, uu[0]);
         J.SetValue(3, 4, -uu[1]);
         J.SetValue(3, 5, -uu[2]);
 
-        J.SetValue(4, 0,  2 * uu[0]);
+        J.SetValue(4, 0, 2 * uu[0]);
         J.SetValue(4, 1, -2 * uu[1]);
         J.SetValue(4, 2, 0);
-        J.SetValue(4, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(4, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(4, 4, -2 * c[1] * c[1] / Au[1]);
         J.SetValue(4, 5, 0);
 
-        J.SetValue(5, 0,  2 * uu[0]);
+        J.SetValue(5, 0, 2 * uu[0]);
         J.SetValue(5, 1, 0);
         J.SetValue(5, 2, -2 * uu[2]);
-        J.SetValue(5, 3,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(5, 3, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(5, 4, 0);
         J.SetValue(5, 5, -2 * c[2] * c[2] / Au[2]);
 
         invJ = J;
         invJ.Invert();
     }
-    else if (type == "Junction")
+    else if (type == "Interface")
     {
         NekMatrix<NekDouble> J(4, 4);
         Array<OneD, NekDouble> c(2);
@@ -316,14 +324,14 @@ void TemplatePressureArea::v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
         J.SetValue(1, 2, 0);
         J.SetValue(1, 3, -c[1] / Au[1]);
 
-        J.SetValue(2, 0,  Au[0]);
+        J.SetValue(2, 0, Au[0]);
         J.SetValue(2, 1, -Au[1]);
-        J.SetValue(2, 2,  uu[0]);
+        J.SetValue(2, 2, uu[0]);
         J.SetValue(2, 3, -uu[1]);
 
-        J.SetValue(3, 0,  2 * uu[0]);
+        J.SetValue(3, 0, 2 * uu[0]);
         J.SetValue(3, 1, -2 * uu[1]);
-        J.SetValue(3, 2,  2 * c[0] * c[0] / Au[0]);
+        J.SetValue(3, 2, 2 * c[0] * c[0] / Au[0]);
         J.SetValue(3, 3, -2 * c[1] * c[1] / Au[1]);
 
         invJ = J;

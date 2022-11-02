@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Stimulus.h
+// File: Stimulus.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,77 +36,77 @@
 #ifndef NEKTAR_SOLVERS_CARDIACEPSOLVER_STIMULI_STIMULUS
 #define NEKTAR_SOLVERS_CARDIACEPSOLVER_STIMULI_STIMULUS
 
+#include <CardiacEPSolver/Stimuli/Protocol.h>
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <MultiRegions/ExpList.h>
-#include <CardiacEPSolver/Stimuli/Protocol.h>
 #include <SolverUtils/Core/Misc.h>
 
 namespace Nektar
 {
-    // Forward declaration
-    class Stimulus;
+// Forward declaration
+class Stimulus;
 
-    /// A shared pointer to an EquationSystem object
-    typedef std::shared_ptr<Stimulus> StimulusSharedPtr;
+/// A shared pointer to an EquationSystem object
+typedef std::shared_ptr<Stimulus> StimulusSharedPtr;
 
-    /// Datatype of the NekFactory used to instantiate classes derived from
-    /// the EquationSystem class.
-    typedef LibUtilities::NekFactory< std::string, Stimulus,
-                const LibUtilities::SessionReaderSharedPtr&,
-                const MultiRegions::ExpListSharedPtr&,
-                const TiXmlElement*> StimulusFactory;
+/// Datatype of the NekFactory used to instantiate classes derived from
+/// the EquationSystem class.
+typedef LibUtilities::NekFactory<
+    std::string, Stimulus, const LibUtilities::SessionReaderSharedPtr &,
+    const MultiRegions::ExpListSharedPtr &, const TiXmlElement *>
+    StimulusFactory;
 
-    StimulusFactory& GetStimulusFactory();
+StimulusFactory &GetStimulusFactory();
 
-
-    /// Stimulus base class.
-    class Stimulus
+/// Stimulus base class.
+class Stimulus
+{
+public:
+    virtual ~Stimulus()
     {
-    public:
-        virtual ~Stimulus() {}
+    }
 
-        /// Initialise the stimulus storage and set initial conditions
-        void Initialise();
+    /// Initialise the stimulus storage and set initial conditions
+    void Initialise();
 
-        /// Updates RHS of outarray by adding a stimulus to it
-        void Update(Array<OneD, Array<OneD, NekDouble> >&outarray,
-                    const NekDouble time)
-        {
-            v_Update(outarray, time);
-        }
+    /// Updates RHS of outarray by adding a stimulus to it
+    void Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
+                const NekDouble time)
+    {
+        v_Update(outarray, time);
+    }
 
-        /// Print a summary of the outarray
-        void GenerateSummary(SolverUtils::SummaryList& s)
-        {
-            v_GenerateSummary(s);
-        }
+    /// Print a summary of the outarray
+    void GenerateSummary(SolverUtils::SummaryList &s)
+    {
+        v_GenerateSummary(s);
+    }
 
-        static std::vector<StimulusSharedPtr> LoadStimuli(
-                    const LibUtilities::SessionReaderSharedPtr& pSession,
-                    const MultiRegions::ExpListSharedPtr& pField);
+    static std::vector<StimulusSharedPtr> LoadStimuli(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField);
 
-    protected:
-        /// Session
-        LibUtilities::SessionReaderSharedPtr m_session;
-        /// Transmembrane potential field from PDE system
-        MultiRegions::ExpListSharedPtr m_field;
-        /// Number of physical points.
-        int m_nq;
-        /// Stimulus protocol to apply
-        ProtocolSharedPtr m_Protocol;
+protected:
+    /// Session
+    LibUtilities::SessionReaderSharedPtr m_session;
+    /// Transmembrane potential field from PDE system
+    MultiRegions::ExpListSharedPtr m_field;
+    /// Number of physical points.
+    int m_nq;
+    /// Stimulus protocol to apply
+    ProtocolSharedPtr m_Protocol;
 
-        Stimulus(const LibUtilities::SessionReaderSharedPtr& pSession,
-                  const MultiRegions::ExpListSharedPtr& pField,
-                  const TiXmlElement* pXml);
+    Stimulus(const LibUtilities::SessionReaderSharedPtr &pSession,
+             const MultiRegions::ExpListSharedPtr &pField,
+             const TiXmlElement *pXml);
 
-        virtual void v_Update(Array<OneD, Array<OneD, NekDouble> >&outarray,
-                              const NekDouble time) = 0;
+    virtual void v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
+                          const NekDouble time) = 0;
 
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s) = 0;
-
-    };
-}
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) = 0;
+};
+} // namespace Nektar
 
 #endif

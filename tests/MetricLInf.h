@@ -39,24 +39,24 @@
 
 namespace Nektar
 {
-    class MetricLInf : public MetricRegex
+class MetricLInf : public MetricRegex
+{
+public:
+    static MetricSharedPtr create(TiXmlElement *metric, bool generate)
     {
-    public:
-        static MetricSharedPtr create(TiXmlElement *metric, bool generate)
-        {
-            return MetricSharedPtr(new MetricLInf(metric, generate));
-        }
+        return MetricSharedPtr(new MetricLInf(metric, generate));
+    }
 
-        static std::string type;
-        static std::string defaultTolerance;
+    static std::string type;
+    static std::string defaultTolerance;
 
-    protected:
-        MetricLInf(TiXmlElement *metric, bool generate);
-        
-        std::map<std::string, std::string> m_varTolerance;
+protected:
+    MetricLInf(TiXmlElement *metric, bool generate);
 
-        virtual void v_Generate(std::istream& pStdout, std::istream& pStderr);
-    };
-}
+    std::map<std::string, std::string> m_varTolerance;
+
+    virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
+};
+} // namespace Nektar
 
 #endif

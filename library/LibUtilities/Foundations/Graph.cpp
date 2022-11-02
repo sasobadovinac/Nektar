@@ -1,13 +1,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Graph.cpp
+//  File: Graph.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
 //  The MIT License
 //
 //  Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
-//  Department of Aeronautics, Imperial College London (UK), and Scientific 
+//  Department of Aeronautics, Imperial College London (UK), and Scientific
 //  Computing and Imaging Institute, University of Utah (USA).
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:  
+//  Description:
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -37,32 +37,31 @@
 
 namespace Nektar
 {
-    namespace LibUtilities
-    {
+namespace LibUtilities
+{
 
-        int GraphVertexObject::m_nextid = 0;
+int GraphVertexObject::m_nextid = 0;
 
-        GraphVertexObject::~GraphVertexObject()
-        {
-        }
+GraphVertexObject::~GraphVertexObject()
+{
+}
 
-        Graph::Graph()
-        {
-        }
+Graph::Graph()
+{
+}
 
-        Graph::~Graph()
-        {
-        }
+Graph::~Graph()
+{
+}
 
-        bool operator  == (const GraphVertexObject &x, const GraphVertexObject &y)
-        {
-            return (x.m_id == y.m_id);
-        }
+bool operator==(const GraphVertexObject &x, const GraphVertexObject &y)
+{
+    return (x.m_id == y.m_id);
+}
 
-        bool operator != (const GraphVertexObject &x, const GraphVertexObject &y)
-        {
-            return (x.m_id != y.m_id);
-        }
-    } // end of namespace 
-} // end of namespace 
-
+bool operator!=(const GraphVertexObject &x, const GraphVertexObject &y)
+{
+    return (x.m_id != y.m_id);
+}
+} // namespace LibUtilities
+} // namespace Nektar

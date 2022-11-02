@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MultiRegsions.hpp
+// File: MultiRegions.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,197 +35,182 @@
 #ifndef MULTIREGIONS_H
 #define MULTIREGIONS_H
 
-#include <vector>
 #include <SpatialDomains/Conditions.h>
+#include <vector>
 
 namespace Nektar
 {
-    namespace MultiRegions
+namespace MultiRegions
+{
+
+// Orientation of adjacent edge for use with boundary
+// constraints
+enum AdjacentTraceOrientation
+{
+    eAdjacentEdgeIsForwards,
+    eAdjacentEdgeIsBackwards
+};
+
+// Orientation of adjacent face for use with boundary
+// constraints
+enum AdjacentFaceOrientation
+{
+    eAdjacentFaceDir1FwdDir1_Dir2FwdDir2,
+    eAdjacentFaceDir1FwdDir1_Dir2BwdDir2,
+    eAdjacentFaceDir1BwdDir1_Dir2FwdDir2,
+    eAdjacentFaceDir1BwdDir1_Dir2BwdDir2,
+    eAdjacentFaceDir1FwdDir2_Dir2FwdDir1,
+    eAdjacentFaceDir1FwdDir2_Dir2BwdDir1,
+    eAdjacentFaceDir1BwdDir2_Dir2FwdDir1,
+    eAdjacentFaceDir1BwdDir2_Dir2BwdDir1
+};
+
+enum GlobalSysSolnType
+{
+    eNoSolnType, ///< No Solution type specified
+    eDirectFullMatrix,
+    eDirectStaticCond,
+    eDirectMultiLevelStaticCond,
+    eIterativeFull,
+    eIterativeStaticCond,
+    eIterativeMultiLevelStaticCond,
+    eXxtFullMatrix,
+    eXxtStaticCond,
+    eXxtMultiLevelStaticCond,
+    ePETScFullMatrix,
+    ePETScStaticCond,
+    ePETScMultiLevelStaticCond,
+    eSIZE_GlobalSysSolnType
+};
+
+const char *const GlobalSysSolnTypeMap[] = {"No Solution Type",
+                                            "DirectFull",
+                                            "DirectStaticCond",
+                                            "DirectMultiLevelStaticCond",
+                                            "IterativeFull",
+                                            "IterativeStaticCond",
+                                            "IterativeMultiLevelStaticCond",
+                                            "XxtFull",
+                                            "XxtStaticCond",
+                                            "XxtMultiLevelStaticCond",
+                                            "PETScFull",
+                                            "PETScStaticCond",
+                                            "PETScMultiLevelStaticCond"};
+
+/// Type of Galerkin projection.
+enum ProjectionType
+{
+    eGalerkin,
+    eDiscontinuous,
+    eMixed_CG_Discontinuous
+};
+
+enum PreconditionerType
+{
+    eNull, ///< No Solution type specified
+    eDiagonal,
+    eLinearWithDiagonal,
+    eLinear,
+    eLowEnergy,
+    eLinearWithLowEnergy,
+    eBlock,
+    eLinearWithBlock
+};
+
+const char *const PreconditionerTypeMap[] = {
+    "Null",
+    "Diagonal",
+    "FullLinearSpaceWithDiagonal",
+    "FullLinearSpace",
+    "LowEnergyBlock",
+    "FullLinearSpaceWithLowEnergyBlock",
+    "Block",
+    "FullLinearSpaceWithBlock"};
+
+enum LinSysIterSolver
+{
+    eNoLinSysIterSolver, ///< No Solution type specified
+    eConjugateGradient,
+    eGMRES
+};
+
+const char *const LinSysIterSolverMap[] = {"NoLinSysIterSolver",
+                                           "ConjugateGradient", "GMRES"};
+
+// let's keep this for linking to external
+// sparse libraries
+enum MatrixStorageType
+{
+    eSmvBSR
+};
+
+const char *const MatrixStorageTypeMap[] = {"SmvBSR"};
+
+typedef std::vector<SpatialDomains::BoundaryConditionType> BndTypesVector;
+typedef std::vector<SpatialDomains::BoundaryConditionType>::iterator
+    BndTypesVectorIter;
+
+// structure to hold information about robin boundary conditions
+
+struct RobinBCInfo
+{
+    RobinBCInfo(const int id, const Array<OneD, const NekDouble> &primCoeffs)
+        : m_robinID(id), m_robinPrimitiveCoeffs(primCoeffs)
     {
+    }
 
-        // Orientation of adjacent edge for use with boundary
-        // constraints
-        enum AdjacentTraceOrientation
-        {
-            eAdjacentEdgeIsForwards,
-            eAdjacentEdgeIsBackwards
-        };
+    virtual ~RobinBCInfo(){};
 
-        // Orientation of adjacent face for use with boundary
-        // constraints
-        enum AdjacentFaceOrientation
-        {
-            eAdjacentFaceDir1FwdDir1_Dir2FwdDir2,
-            eAdjacentFaceDir1FwdDir1_Dir2BwdDir2,
-            eAdjacentFaceDir1BwdDir1_Dir2FwdDir2,
-            eAdjacentFaceDir1BwdDir1_Dir2BwdDir2,
-            eAdjacentFaceDir1FwdDir2_Dir2FwdDir1,
-            eAdjacentFaceDir1FwdDir2_Dir2BwdDir1,
-            eAdjacentFaceDir1BwdDir2_Dir2FwdDir1,
-            eAdjacentFaceDir1BwdDir2_Dir2BwdDir1
-        };
+    int m_robinID; /// id of which edge/face is robin condition
+    Array<OneD, const NekDouble> m_robinPrimitiveCoeffs;
+    std::shared_ptr<RobinBCInfo> next;
+};
 
-        enum GlobalSysSolnType
-        {
-            eNoSolnType,    ///< No Solution type specified
-            eDirectFullMatrix,
-            eDirectStaticCond,
-            eDirectMultiLevelStaticCond,
-            eIterativeFull,
-            eIterativeStaticCond,
-            eIterativeMultiLevelStaticCond,
-            eXxtFullMatrix,
-            eXxtStaticCond,
-            eXxtMultiLevelStaticCond,
-            ePETScFullMatrix,
-            ePETScStaticCond,
-            ePETScMultiLevelStaticCond,
-            eSIZE_GlobalSysSolnType
-        };
+typedef std::shared_ptr<RobinBCInfo> RobinBCInfoSharedPtr;
 
+struct PeriodicEntity
+{
+    PeriodicEntity(const int id, const StdRegions::Orientation orient,
+                   const bool isLocal)
+        : id(id), orient(orient), isLocal(isLocal)
+    {
+    }
 
-        const char* const GlobalSysSolnTypeMap[] =
-            {
-            "No Solution Type",
-            "DirectFull",
-            "DirectStaticCond",
-            "DirectMultiLevelStaticCond",
-            "IterativeFull",
-            "IterativeStaticCond",
-            "IterativeMultiLevelStaticCond",
-            "XxtFull",
-            "XxtStaticCond",
-            "XxtMultiLevelStaticCond",
-            "PETScFull",
-            "PETScStaticCond",
-            "PETScMultiLevelStaticCond"
-        };
+    PeriodicEntity()
+    {
+    }
 
-        /// Type of Galerkin projection.
-        enum ProjectionType
-        {
-            eGalerkin,
-            eDiscontinuous,
-            eMixed_CG_Discontinuous
-        };
+    /// Geometry ID of entity.
+    int id;
+    /// Orientation of entity within higher dimensional entity.
+    StdRegions::Orientation orient;
+    /// Flag specifying if this entity is local to this partition.
+    bool isLocal;
+};
 
-        enum PreconditionerType
-        {
-            eNull,    ///< No Solution type specified
-            eDiagonal,
-            eLinearWithDiagonal,
-            eLinear,
-            eLowEnergy,
-            eLinearWithLowEnergy,
-            eBlock,
-            eLinearWithBlock
-        };
+typedef std::map<int, std::vector<PeriodicEntity>> PeriodicMap;
+static PeriodicMap NullPeriodicMap;
 
-        const char* const PreconditionerTypeMap[] =
-        {
-            "Null",
-            "Diagonal",
-            "FullLinearSpaceWithDiagonal",
-            "FullLinearSpace",
-            "LowEnergyBlock",
-            "FullLinearSpaceWithLowEnergyBlock",
-            "Block",
-            "FullLinearSpaceWithBlock"
-        };
+struct RotPeriodicInfo
+{
+    RotPeriodicInfo(const int dir, const NekDouble angle, const NekDouble tol)
+        : m_dir(dir), m_angle(angle), m_tol(tol)
+    {
+    }
 
+    RotPeriodicInfo()
+    {
+    }
 
-        enum LinSysIterSolver
-        {
-            eNoLinSysIterSolver,///< No Solution type specified
-            eConjugateGradient,
-            eGMRES
-        };
+    /// Axis of rotation. 0 = 'x', 1 = 'y', 2 = 'z'
+    int m_dir;
+    /// Angle of rotation in radians
+    NekDouble m_angle;
+    /// Tolerance to rotation is considered identical
+    NekDouble m_tol;
+};
 
-        const char* const LinSysIterSolverMap[] =
-        {
-            "NoLinSysIterSolver",
-            "ConjugateGradient",
-            "GMRES"
-        };
-
-
-        // let's keep this for linking to external
-        // sparse libraries
-        enum MatrixStorageType
-        {
-            eSmvBSR
-        };
-
-        const char* const MatrixStorageTypeMap[] =
-        {
-            "SmvBSR"
-        };
-
-
-        typedef std::vector<SpatialDomains::BoundaryConditionType>  BndTypesVector;
-        typedef std::vector<SpatialDomains::BoundaryConditionType>::iterator BndTypesVectorIter;
-
-
-        // structure to hold information about robin boundary conditions
-
-        struct RobinBCInfo
-        {
-            RobinBCInfo(const int id, const Array<OneD, const NekDouble > &primCoeffs):
-                m_robinID(id),
-                m_robinPrimitiveCoeffs(primCoeffs)
-            {
-            }
-
-            virtual ~RobinBCInfo()
-            {};
-
-            int m_robinID; /// id of which edge/face is robin condition
-            Array< OneD, const NekDouble > m_robinPrimitiveCoeffs;
-            std::shared_ptr<RobinBCInfo> next;
-        };
-
-        typedef std::shared_ptr<RobinBCInfo> RobinBCInfoSharedPtr;
-
-        struct PeriodicEntity
-        {
-            PeriodicEntity(
-                const int                     id,
-                const StdRegions::Orientation orient,
-                const bool                    isLocal) :
-                id(id), orient(orient), isLocal(isLocal) {}
-
-            PeriodicEntity() {}
-            
-            /// Geometry ID of entity.
-            int id;
-            /// Orientation of entity within higher dimensional entity.
-            StdRegions::Orientation orient;
-            /// Flag specifying if this entity is local to this partition.
-            bool isLocal;
-        };
-
-        typedef std::map<int, std::vector<PeriodicEntity> > PeriodicMap;
-        static PeriodicMap NullPeriodicMap;
-
-        struct RotPeriodicInfo
-        {
-            RotPeriodicInfo(
-                             const int       dir,
-                             const NekDouble angle,
-                             const NekDouble tol) :
-                m_dir(dir), m_angle(angle), m_tol(tol) {}
-
-            RotPeriodicInfo() {}
-            
-            /// Axis of rotation. 0 = 'x', 1 = 'y', 2 = 'z'
-            int m_dir; 
-            /// Angle of rotation in radians
-            NekDouble m_angle;
-            /// Tolerance to rotation is considered identical
-            NekDouble m_tol;
-        }; 
-
-    }// end of namespace
-}// end of namespace
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

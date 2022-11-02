@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.h
+//  File: PreProcessing.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Calculate jacobians of elements.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -88,7 +88,7 @@ map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
         const int pDim  = pkey1.GetPointsDim();
         const int order = m_mesh->m_nummode - 1;
 
-        Array<OneD, Array<OneD, NekDouble> > u1(pDim), u2(pDim);
+        Array<OneD, Array<OneD, NekDouble>> u1(pDim), u2(pDim);
 
         switch (pDim)
         {
@@ -167,14 +167,13 @@ map<LibUtilities::ShapeType, DerivUtilSharedPtr> ProcessVarOpti::BuildDerivUtil(
     return ret;
 }
 
-
-
 struct NodeComparator
 {
-    const vector<int> & value_vector;
+    const vector<int> &value_vector;
 
-    NodeComparator(const vector<int> & val_vec):
-        value_vector(val_vec) {}
+    NodeComparator(const vector<int> &val_vec) : value_vector(val_vec)
+    {
+    }
 
     bool operator()(int i1, int i2)
     {
@@ -182,13 +181,12 @@ struct NodeComparator
     }
 };
 
-
-
-vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
+vector<vector<NodeSharedPtr>> ProcessVarOpti::GetColouredNodes(
     vector<ElUtilSharedPtr> elLock)
 {
 
-    // create set of nodes to be ignored and hence not included in the coloursets
+    // create set of nodes to be ignored and hence not included in the
+    // coloursets
     NodeSet ignoredNodes;
     for (int i = 0; i < elLock.size(); i++)
     {
@@ -208,16 +206,16 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
     {
         case 2:
         {
-            for(auto &edge : m_mesh->m_edgeSet)
+            for (auto &edge : m_mesh->m_edgeSet)
             {
-                if(edge->m_elLink.size() == 2)
+                if (edge->m_elLink.size() == 2)
                 {
                     continue;
                 }
 
                 boundaryNodes.insert(edge->m_n1);
                 boundaryNodes.insert(edge->m_n2);
-                for(int i = 0; i < edge->m_edgeNodes.size(); i++)
+                for (int i = 0; i < edge->m_edgeNodes.size(); i++)
                 {
                     boundaryNodes.insert(edge->m_edgeNodes[i]);
                 }
@@ -226,7 +224,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
         }
         case 3:
         {
-            if(!m_mesh->m_cad)
+            if (!m_mesh->m_cad)
             {
                 for (auto &face : m_mesh->m_faceSet)
                 {
@@ -262,7 +260,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
                 // vertices only
                 for (auto &node : m_mesh->m_vertexSet)
                 {
-                    if(node->GetNumCadCurve() > 1)
+                    if (node->GetNumCadCurve() > 1)
                     {
                         boundaryNodes.insert(node);
                     }
@@ -271,7 +269,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
             break;
         }
         default:
-            ASSERTL0(false,"space dim issue");
+            ASSERTL0(false, "space dim issue");
     }
 
     // Create vector of free nodes which "remain", hence will be included in the
@@ -372,23 +370,23 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
     }
 
     // size of all free nodes to be included in the coloursets
-    m_res->n = remainEdgeVertex.size()
-                + remainFace.size() + remainVolume.size();
+    m_res->n =
+        remainEdgeVertex.size() + remainFace.size() + remainVolume.size();
 
     // data structure for coloursets, that will ultimately contain all free
     // nodes
-    vector<vector<NodeSharedPtr> > ret;
-    vector<vector<NodeSharedPtr> > retPart;
+    vector<vector<NodeSharedPtr>> ret;
+    vector<vector<NodeSharedPtr>> retPart;
 
     // edge and vertex nodes
     // create vector num_el of number of associated elements of each node
     vector<int> num_el(remainEdgeVertex.size());
     for (int i = 0; i < remainEdgeVertex.size(); i++)
     {
-        //try to find node within all elements
+        // try to find node within all elements
         auto it = m_nodeElMap.find(remainEdgeVertex[i]->m_id);
         vector<ElUtilSharedPtr> &elUtils = it->second;
-        num_el[i] = elUtils.size();
+        num_el[i]                        = elUtils.size();
     }
     // finding the permutation according to num_el
     vector<int> permNode(remainEdgeVertex.size());
@@ -401,7 +399,7 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
     vector<NodeSharedPtr> remainEdgeVertexSort(remainEdgeVertex.size());
     for (int i = 0; i < remainEdgeVertex.size(); ++i)
     {
-        int j = permNode[i];
+        int j                   = permNode[i];
         remainEdgeVertexSort[i] = remainEdgeVertex[j];
     }
 
@@ -439,10 +437,10 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::GetColouredNodes(
     return ret;
 }
 
-vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
-         vector<NodeSharedPtr> remain)
+vector<vector<NodeSharedPtr>> ProcessVarOpti::CreateColoursets(
+    vector<NodeSharedPtr> remain)
 {
-    vector<vector<NodeSharedPtr> > retPart;
+    vector<vector<NodeSharedPtr>> retPart;
 
     // loop until all free nodes have been sorted
     while (remain.size() > 0)
@@ -504,13 +502,12 @@ vector<vector<NodeSharedPtr> > ProcessVarOpti::CreateColoursets(
         retPart.push_back(layer);
 
         // print out progress
-        m_log(VERBOSE).Progress(
-            m_res->n - remain.size(), m_res->n, "Node Coloring");
+        m_log(VERBOSE).Progress(m_res->n - remain.size(), m_res->n,
+                                "Node Coloring");
     }
 
     return retPart;
 }
-
 
 void ProcessVarOpti::GetElementMap(
     int o, map<LibUtilities::ShapeType, DerivUtilSharedPtr> derMap)
@@ -537,9 +534,8 @@ void ProcessVarOpti::GetElementMap(
 
     if (m_config["scalingfile"].beenSet)
     {
-        LibUtilities::Interpolator interp =
-            GetScalingFieldFromFile(
-                m_config["scalingfile"].as<string>().c_str());
+        LibUtilities::Interpolator interp = GetScalingFieldFromFile(
+            m_config["scalingfile"].as<string>().c_str());
 
         for (int i = 0; i < m_dataSet.size(); ++i)
         {
@@ -628,8 +624,8 @@ vector<ElUtilSharedPtr> ProcessVarOpti::GetLockedElements(NekDouble thres)
                         continue;
                     }
 
-                    auto t = inmesh.insert(
-                        f[k]->m_elLink[l].first.lock()->GetId());
+                    auto t =
+                        inmesh.insert(f[k]->m_elLink[l].first.lock()->GetId());
                     if (t.second)
                     {
                         totest.push_back(
@@ -655,9 +651,9 @@ vector<ElUtilSharedPtr> ProcessVarOpti::GetLockedElements(NekDouble thres)
 
 void ProcessVarOpti::RemoveLinearCurvature()
 {
-    for(int i = 0; i < m_dataSet.size(); i++)
+    for (int i = 0; i < m_dataSet.size(); i++)
     {
-        if(m_dataSet[i]->GetScaledJac() > 0.999)
+        if (m_dataSet[i]->GetScaledJac() > 0.999)
         {
             ElementSharedPtr el = m_dataSet[i]->GetEl();
             vector<NodeSharedPtr> ns;
@@ -665,46 +661,46 @@ void ProcessVarOpti::RemoveLinearCurvature()
         }
     }
 
-    map<int, vector<FaceSharedPtr> > edgeToFace;
+    map<int, vector<FaceSharedPtr>> edgeToFace;
 
-    for(auto &face : m_mesh->m_faceSet)
+    for (auto &face : m_mesh->m_faceSet)
     {
         bool rm = true;
-        for(int i = 0; i < face->m_elLink.size(); i++)
+        for (int i = 0; i < face->m_elLink.size(); i++)
         {
             int id = face->m_elLink[i].first.lock()->GetId();
-            if(m_dataSet[id]->GetScaledJac() <= 0.999)
+            if (m_dataSet[id]->GetScaledJac() <= 0.999)
             {
                 rm = false;
                 break;
             }
         }
-        if(rm)
+        if (rm)
         {
             face->m_faceNodes.clear();
         }
 
         vector<EdgeSharedPtr> es = face->m_edgeList;
-        for(int i = 0; i < es.size(); i++)
+        for (int i = 0; i < es.size(); i++)
         {
             edgeToFace[es[i]->m_id].push_back(face);
         }
     }
 
-    for(auto &edge : m_mesh->m_edgeSet)
+    for (auto &edge : m_mesh->m_edgeSet)
     {
         auto it = edgeToFace.find(edge->m_id);
-        ASSERTL0(it != edgeToFace.end(),"not found");
+        ASSERTL0(it != edgeToFace.end(), "not found");
         bool rm = true;
-        for(int i = 0; i < it->second.size(); i++)
+        for (int i = 0; i < it->second.size(); i++)
         {
-            if(it->second[i]->m_faceNodes.size() > 0)
+            if (it->second[i]->m_faceNodes.size() > 0)
             {
                 rm = false;
                 break;
             }
         }
-        if(rm)
+        if (rm)
         {
             edge->m_edgeNodes.clear();
         }
@@ -713,7 +709,7 @@ void ProcessVarOpti::RemoveLinearCurvature()
 
 LibUtilities::Interpolator ProcessVarOpti::GetScalingFieldFromFile(string file)
 {
-    vector<vector<NekDouble> > data;
+    vector<vector<NekDouble>> data;
 
     ifstream f;
     f.open(file);
@@ -756,7 +752,7 @@ LibUtilities::Interpolator ProcessVarOpti::GetScalingFieldFromFile(string file)
 
     int dim = m_mesh->m_expDim;
 
-    Array<OneD, Array<OneD, NekDouble> > inPts(dim + 1);
+    Array<OneD, Array<OneD, NekDouble>> inPts(dim + 1);
     for (int i = 0; i < dim + 1; ++i)
     {
         inPts[i] = Array<OneD, NekDouble>(data.size());
@@ -771,7 +767,7 @@ LibUtilities::Interpolator ProcessVarOpti::GetScalingFieldFromFile(string file)
 }
 
 LibUtilities::Interpolator ProcessVarOpti::GetField(
-    Array<OneD, Array<OneD, NekDouble> > inPts)
+    Array<OneD, Array<OneD, NekDouble>> inPts)
 {
     int dim = m_mesh->m_expDim;
 
@@ -780,22 +776,24 @@ LibUtilities::Interpolator ProcessVarOpti::GetField(
 
     map<LibUtilities::PtsInfo, int> ptsInfo = LibUtilities::NullPtsInfoMap;
 
-    PtsFieldSharedPtr inField = MemoryManager<LibUtilities::PtsField>
-        ::AllocateSharedPtr(dim, fieldNames, inPts, ptsInfo);
+    PtsFieldSharedPtr inField =
+        MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
+            dim, fieldNames, inPts, ptsInfo);
 
-    Array<OneD, Array<OneD, NekDouble> > dummyPts(dim + 1);
+    Array<OneD, Array<OneD, NekDouble>> dummyPts(dim + 1);
     for (int i = 0; i < dim + 1; ++i)
     {
         dummyPts[i] = Array<OneD, NekDouble>(0);
     }
 
-    PtsFieldSharedPtr dummyField = MemoryManager<LibUtilities::PtsField>
-        ::AllocateSharedPtr(dim, fieldNames, dummyPts, ptsInfo);
+    PtsFieldSharedPtr dummyField =
+        MemoryManager<LibUtilities::PtsField>::AllocateSharedPtr(
+            dim, fieldNames, dummyPts, ptsInfo);
 
     LibUtilities::Interpolator ret;
     ret.Interpolate(inField, dummyField);
 
     return ret;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

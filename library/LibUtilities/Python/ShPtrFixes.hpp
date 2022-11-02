@@ -52,69 +52,96 @@
 // From <boost/python/detail/is_shared_ptr.hpp>
 //
 
+// clang-format off
 #define IS_SHARED_PTR_DWA2003224_HPP
 
 #include <boost/python/detail/is_xxx.hpp>
 #include <boost/shared_ptr.hpp>
+// clang-format on
 
-namespace boost { namespace python { namespace detail {
+namespace boost
+{
+namespace python
+{
+namespace detail
+{
 
 BOOST_PYTHON_IS_XXX_DEF(shared_ptr, shared_ptr, 1)
-template <typename T>
-struct is_shared_ptr<std::shared_ptr<T> > : std::true_type {};
+template <typename T> struct is_shared_ptr<std::shared_ptr<T>> : std::true_type
+{
+};
 
-}}} // namespace boost::python::detail
+} // namespace detail
+} // namespace python
+} // namespace boost
 
 //
 // From <boost/python/converter/registered.hpp>
 //
 
+// clang-format off
 #include <boost/python/type_id.hpp>
 #include <boost/python/converter/registry.hpp>
 #include <boost/python/converter/registrations.hpp>
 #include <boost/type_traits/transform_traits.hpp>
+
 #include <boost/type_traits/cv_traits.hpp>
 #include <boost/type_traits/is_void.hpp>
 #include <boost/detail/workaround.hpp>
 #include <boost/type.hpp>
 #include <memory>
+// clang-format on
 
-namespace boost { namespace python { namespace converter { namespace detail {
-
-template <class T>
-inline void
-register_shared_ptr0(std::shared_ptr<T>*)
+namespace boost
 {
-    registry::lookup_shared_ptr(type_id<std::shared_ptr<T> >());
+namespace python
+{
+namespace converter
+{
+namespace detail
+{
+
+template <class T> inline void register_shared_ptr0(std::shared_ptr<T> *)
+{
+    registry::lookup_shared_ptr(type_id<std::shared_ptr<T>>());
 }
 
-}}}}
+} // namespace detail
+} // namespace converter
+} // namespace python
+} // namespace boost
 
 // From <boost/python/detail/value_is_shared_ptr.hpp>
 
+// clang-format off
 #define VALUE_IS_SHARED_PTR_DWA2003224_HPP
 #include <boost/python/detail/value_is_xxx.hpp>
 #include <boost/python/detail/is_shared_ptr.hpp>
+// clang-format on
 
-namespace boost { namespace python { namespace detail {
-
-template <class X_>
-struct value_is_shared_ptr
+namespace boost
 {
-  static bool const value = is_shared_ptr<typename remove_cv<
-                                            typename remove_reference<X_>
-                                              ::type>
-                                            ::type>
-    ::value;
-  typedef mpl::bool_<value> type;
+namespace python
+{
+namespace detail
+{
+
+template <class X_> struct value_is_shared_ptr
+{
+    static bool const value = is_shared_ptr<
+        typename remove_cv<typename remove_reference<X_>::type>::type>::value;
+    typedef mpl::bool_<value> type;
 };
 
-}}} // namespace boost::python::detail
+} // namespace detail
+} // namespace python
+} // namespace boost
 
 //
 // From <boost/python/converter/shared_ptr_from_python.hpp>
 //
 
+// clang-format off
 #define SHARED_PTR_FROM_PYTHON_DWA20021130_HPP
 
 #include <boost/python/handle.hpp>
@@ -123,92 +150,110 @@ struct value_is_shared_ptr
 #include <boost/python/converter/rvalue_from_python_data.hpp>
 #include <boost/python/converter/registered.hpp>
 #ifndef BOOST_PYTHON_NO_PY_SIGNATURES
-# include <boost/python/converter/pytype_function.hpp>
+#include <boost/python/converter/pytype_function.hpp>
 #endif
 #include <boost/shared_ptr.hpp>
+// clang-format on
 
-namespace boost { namespace python { namespace converter {
+namespace boost
+{
+namespace python
+{
+namespace converter
+{
 
 template <class T, template <typename> class SP>
 struct shared_ptr_from_python_new
 {
-  shared_ptr_from_python_new()
-  {
-    converter::registry::insert(&convertible, &construct, type_id<SP<T> >()
-#ifndef BOOST_PYTHON_NO_PY_SIGNATURES
-                                , &converter::expected_from_python_type_direct<T>::get_pytype
-#endif
-                                );
-  }
-
- private:
-  static void* convertible(PyObject* p)
-  {
-    if (p == Py_None)
-      return p;
-
-    return converter::get_lvalue_from_python(p, registered<T>::converters);
-  }
-
-  static void construct(PyObject* source, rvalue_from_python_stage1_data* data)
-  {
-    void* const storage = ((converter::rvalue_from_python_storage<SP<T> >*)data)->storage.bytes;
-    // Deal with the "None" case.
-    if (data->convertible == source)
-      new (storage) SP<T>();
-    else
+    shared_ptr_from_python_new()
     {
-      SP<void> hold_convertible_ref_count(
-         (void*)0, shared_ptr_deleter(handle<>(borrowed(source))) );
-      // use aliasing constructor
-      new (storage) SP<T>(hold_convertible_ref_count,
-                          static_cast<T*>(data->convertible));
+        converter::registry::insert(
+            &convertible, &construct, type_id<SP<T>>()
+#ifndef BOOST_PYTHON_NO_PY_SIGNATURES
+                                          ,
+            &converter::expected_from_python_type_direct<T>::get_pytype
+#endif
+        );
     }
 
-    data->convertible = storage;
-  }
+private:
+    static void *convertible(PyObject *p)
+    {
+        if (p == Py_None)
+            return p;
+
+        return converter::get_lvalue_from_python(p, registered<T>::converters);
+    }
+
+    static void construct(PyObject *source,
+                          rvalue_from_python_stage1_data *data)
+    {
+        void *const storage =
+            ((converter::rvalue_from_python_storage<SP<T>> *)data)
+                ->storage.bytes;
+        // Deal with the "None" case.
+        if (data->convertible == source)
+            new (storage) SP<T>();
+        else
+        {
+            SP<void> hold_convertible_ref_count(
+                (void *)0, shared_ptr_deleter(handle<>(borrowed(source))));
+            // use aliasing constructor
+            new (storage) SP<T>(hold_convertible_ref_count,
+                                static_cast<T *>(data->convertible));
+        }
+
+        data->convertible = storage;
+    }
 };
 
 // DM: Define original shared_ptr_from_python struct so that we can
 // avoid changes to class_metadata.hpp.
-template <class T>
-struct shared_ptr_from_python
+template <class T> struct shared_ptr_from_python
 {
-  shared_ptr_from_python()
-  {
-    shared_ptr_from_python_new<T, boost::shared_ptr>();
-    shared_ptr_from_python_new<T, std::shared_ptr>();
-  }
+    shared_ptr_from_python()
+    {
+        shared_ptr_from_python_new<T, boost::shared_ptr>();
+        shared_ptr_from_python_new<T, std::shared_ptr>();
+    }
 };
 
-
-
-}}} // namespace boost::python::converter
-
+} // namespace converter
+} // namespace python
+} // namespace boost
 
 //
 // From <boost/python/converter/shared_ptr_to_python.hpp>
 //
 
+// clang-format off
 #include <boost/python/refcount.hpp>
 #include <boost/python/converter/shared_ptr_deleter.hpp>
 #include <boost/python/detail/none.hpp>
 #include <boost/get_pointer.hpp>
+// clang-format on
 
-namespace boost { namespace python { namespace converter {
-
-template <class T>
-PyObject* shared_ptr_to_python(std::shared_ptr<T> const& x)
+namespace boost
 {
-  if (!x)
-    return python::detail::none();
-  else if (shared_ptr_deleter* d = std::get_deleter<shared_ptr_deleter>(x))
-    return incref(get_pointer(d->owner));
-  else
-    return converter::registered<std::shared_ptr<T> const&>::converters.to_python(&x);
+namespace python
+{
+namespace converter
+{
+
+template <class T> PyObject *shared_ptr_to_python(std::shared_ptr<T> const &x)
+{
+    if (!x)
+        return python::detail::none();
+    else if (shared_ptr_deleter *d = std::get_deleter<shared_ptr_deleter>(x))
+        return incref(get_pointer(d->owner));
+    else
+        return converter::registered<std::shared_ptr<T> const &>::converters
+            .to_python(&x);
 }
 
-}}} // namespace boost::python::converter
+} // namespace converter
+} // namespace python
+} // namespace boost
 
 //
 // From <boost/python/to_python_value.hpp>: this is a pretty big hack, but
@@ -216,6 +261,7 @@ PyObject* shared_ptr_to_python(std::shared_ptr<T> const& x)
 // variables.
 //
 
+// clang-format off
 #define TO_PYTHON_VALUE_DWA200221_HPP
 #include <boost/python/detail/prefix.hpp>
 
@@ -237,153 +283,167 @@ PyObject* shared_ptr_to_python(std::shared_ptr<T> const& x)
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/or.hpp>
 #include <boost/type_traits/is_const.hpp>
+// clang-format on
 
-namespace boost { namespace python { 
+namespace boost
+{
+namespace python
+{
 
 namespace detail
 {
 #ifndef BOOST_PYTHON_NO_PY_SIGNATURES
 
-template <bool is_const_ref>
-struct object_manager_get_pytype
+template <bool is_const_ref> struct object_manager_get_pytype
 {
-   template <class U>
-   static PyTypeObject const* get( U& (*)() =0)
-   {
-      return converter::object_manager_traits<U>::get_pytype();
-   }
+    template <class U> static PyTypeObject const *get(U &(*)() = 0)
+    {
+        return converter::object_manager_traits<U>::get_pytype();
+    }
 };
 
-template <>
-struct object_manager_get_pytype<true>
+template <> struct object_manager_get_pytype<true>
 {
-   template <class U>
-   static PyTypeObject const* get( U const& (*)() =0)
-   {
-      return converter::object_manager_traits<U>::get_pytype();
-   }
+    template <class U> static PyTypeObject const *get(U const &(*)() = 0)
+    {
+        return converter::object_manager_traits<U>::get_pytype();
+    }
 };
 
 #endif
 
-  template <class T>
-  struct object_manager_to_python_value
-  {
-      typedef typename value_arg<T>::type argument_type;
-    
-      PyObject* operator()(argument_type) const;
+template <class T> struct object_manager_to_python_value
+{
+    typedef typename value_arg<T>::type argument_type;
+
+    PyObject *operator()(argument_type) const;
 #ifndef BOOST_PYTHON_NO_PY_SIGNATURES
-      typedef boost::mpl::bool_<is_handle<T>::value> is_t_handle;
-      typedef boost::detail::indirect_traits::is_reference_to_const<T> is_t_const;
-      PyTypeObject const* get_pytype() const {
-          return get_pytype_aux((is_t_handle*)0);
-      }
+    typedef boost::mpl::bool_<is_handle<T>::value> is_t_handle;
+    typedef boost::detail::indirect_traits::is_reference_to_const<T> is_t_const;
+    PyTypeObject const *get_pytype() const
+    {
+        return get_pytype_aux((is_t_handle *)0);
+    }
 
-      inline static PyTypeObject const* get_pytype_aux(mpl::true_*) {return converter::object_manager_traits<T>::get_pytype();}
-      
-      inline static PyTypeObject const* get_pytype_aux(mpl::false_* ) 
-      {
-          return object_manager_get_pytype<is_t_const::value>::get((T(*)())0);
-      }
-      
-#endif 
+    inline static PyTypeObject const *get_pytype_aux(mpl::true_ *)
+    {
+        return converter::object_manager_traits<T>::get_pytype();
+    }
 
-      // This information helps make_getter() decide whether to try to
-      // return an internal reference or not. I don't like it much,
-      // but it will have to serve for now.
-      BOOST_STATIC_CONSTANT(bool, uses_registry = false);
-  };
+    inline static PyTypeObject const *get_pytype_aux(mpl::false_ *)
+    {
+        return object_manager_get_pytype<is_t_const::value>::get((T(*)())0);
+    }
 
-  
-  template <class T>
-  struct registry_to_python_value
-  {
-      typedef typename value_arg<T>::type argument_type;
-    
-      PyObject* operator()(argument_type) const;
-#ifndef BOOST_PYTHON_NO_PY_SIGNATURES
-      PyTypeObject const* get_pytype() const {return converter::registered<T>::converters.to_python_target_type();}
 #endif
 
-      // This information helps make_getter() decide whether to try to
-      // return an internal reference or not. I don't like it much,
-      // but it will have to serve for now.
-      BOOST_STATIC_CONSTANT(bool, uses_registry = true);
-  };
+    // This information helps make_getter() decide whether to try to
+    // return an internal reference or not. I don't like it much,
+    // but it will have to serve for now.
+    BOOST_STATIC_CONSTANT(bool, uses_registry = false);
+};
 
-  template <class T>
-  struct shared_ptr_to_python_value
-  {
-      typedef typename value_arg<T>::type argument_type;
-    
-      PyObject* operator()(argument_type) const;
+template <class T> struct registry_to_python_value
+{
+    typedef typename value_arg<T>::type argument_type;
+
+    PyObject *operator()(argument_type) const;
 #ifndef BOOST_PYTHON_NO_PY_SIGNATURES
-      PyTypeObject const* get_pytype() const {return get_pytype((boost::type<argument_type>*)0);}
-#endif 
-      // This information helps make_getter() decide whether to try to
-      // return an internal reference or not. I don't like it much,
-      // but it will have to serve for now.
-      BOOST_STATIC_CONSTANT(bool, uses_registry = false);
-  private:
-#ifndef BOOST_PYTHON_NO_PY_SIGNATURES
-    template <class U>
-    PyTypeObject const* get_pytype(boost::type<shared_ptr<U> &> *) const {return converter::registered<U>::converters.to_python_target_type();}
-    template <class U>
-    PyTypeObject const* get_pytype(boost::type<const shared_ptr<U> &> *) const {return converter::registered<U>::converters.to_python_target_type();}
-# if __cplusplus >= 201103L
-    template <class U>
-    PyTypeObject const* get_pytype(boost::type<std::shared_ptr<U> &> *) const {return converter::registered<U>::converters.to_python_target_type();}
-    template <class U>
-    PyTypeObject const* get_pytype(boost::type<const std::shared_ptr<U> &> *) const {return converter::registered<U>::converters.to_python_target_type();}
-# endif
+    PyTypeObject const *get_pytype() const
+    {
+        return converter::registered<T>::converters.to_python_target_type();
+    }
 #endif
-  };
-}
+
+    // This information helps make_getter() decide whether to try to
+    // return an internal reference or not. I don't like it much,
+    // but it will have to serve for now.
+    BOOST_STATIC_CONSTANT(bool, uses_registry = true);
+};
+
+template <class T> struct shared_ptr_to_python_value
+{
+    typedef typename value_arg<T>::type argument_type;
+
+    PyObject *operator()(argument_type) const;
+#ifndef BOOST_PYTHON_NO_PY_SIGNATURES
+    PyTypeObject const *get_pytype() const
+    {
+        return get_pytype((boost::type<argument_type> *)0);
+    }
+#endif
+    // This information helps make_getter() decide whether to try to
+    // return an internal reference or not. I don't like it much,
+    // but it will have to serve for now.
+    BOOST_STATIC_CONSTANT(bool, uses_registry = false);
+
+private:
+#ifndef BOOST_PYTHON_NO_PY_SIGNATURES
+    template <class U>
+    PyTypeObject const *get_pytype(boost::type<shared_ptr<U> &> *) const
+    {
+        return converter::registered<U>::converters.to_python_target_type();
+    }
+    template <class U>
+    PyTypeObject const *get_pytype(boost::type<const shared_ptr<U> &> *) const
+    {
+        return converter::registered<U>::converters.to_python_target_type();
+    }
+#if __cplusplus >= 201103L
+    template <class U>
+    PyTypeObject const *get_pytype(boost::type<std::shared_ptr<U> &> *) const
+    {
+        return converter::registered<U>::converters.to_python_target_type();
+    }
+    template <class U>
+    PyTypeObject const *get_pytype(
+        boost::type<const std::shared_ptr<U> &> *) const
+    {
+        return converter::registered<U>::converters.to_python_target_type();
+    }
+#endif
+#endif
+};
+} // namespace detail
 
 template <class T>
 struct to_python_value
-    : mpl::if_<
-          detail::value_is_shared_ptr<T>
-        , detail::shared_ptr_to_python_value<T>
-        , typename mpl::if_<
-              mpl::or_<
-                  converter::is_object_manager<T>
-                , converter::is_reference_to_object_manager<T>
-              >
-            , detail::object_manager_to_python_value<T>
-            , detail::registry_to_python_value<T>
-          >::type
-      >::type
+    : mpl::if_<detail::value_is_shared_ptr<T>,
+               detail::shared_ptr_to_python_value<T>,
+               typename mpl::if_<
+                   mpl::or_<converter::is_object_manager<T>,
+                            converter::is_reference_to_object_manager<T>>,
+                   detail::object_manager_to_python_value<T>,
+                   detail::registry_to_python_value<T>>::type>::type
 {
 };
 
 //
-// implementation 
+// implementation
 //
 namespace detail
 {
-  template <class T>
-  inline PyObject* registry_to_python_value<T>::operator()(argument_type x) const
-  {
-      return converter::registered<argument_type>::converters.to_python(&x);
-  }
-
-  template <class T>
-  inline PyObject* object_manager_to_python_value<T>::operator()(argument_type x) const
-  {
-      return python::upcast<PyObject>(
-          python::xincref(
-              get_managed_object(x, tag))
-          );
-  }
-
-  template <class T>
-  inline PyObject* shared_ptr_to_python_value<T>::operator()(argument_type x) const
-  {
-      return converter::shared_ptr_to_python(x);
-  }
+template <class T>
+inline PyObject *registry_to_python_value<T>::operator()(argument_type x) const
+{
+    return converter::registered<argument_type>::converters.to_python(&x);
 }
 
-}} // namespace boost::python
+template <class T>
+inline PyObject *object_manager_to_python_value<T>::operator()(
+    argument_type x) const
+{
+    return python::upcast<PyObject>(
+        python::xincref(get_managed_object(x, tag)));
+}
 
+template <class T>
+inline PyObject *shared_ptr_to_python_value<T>::operator()(
+    argument_type x) const
+{
+    return converter::shared_ptr_to_python(x);
+}
+} // namespace detail
 
+} // namespace python
+} // namespace boost

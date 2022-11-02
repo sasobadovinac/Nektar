@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Geometry3D.cpp
+//  File: Geometry3D.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -34,9 +34,9 @@
 
 #include <iomanip>
 
-#include <SpatialDomains/Geometry3D.h>
-#include <SpatialDomains/Geometry2D.h>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/Geometry2D.h>
+#include <SpatialDomains/Geometry3D.h>
 #include <SpatialDomains/PointGeom.h>
 #include <SpatialDomains/SegGeom.h>
 #include <iomanip>
@@ -73,8 +73,7 @@ void Geometry3D::NewtonIterationForLocCoord(
     const Array<OneD, const NekDouble> &coords,
     const Array<OneD, const NekDouble> &ptsx,
     const Array<OneD, const NekDouble> &ptsy,
-    const Array<OneD, const NekDouble> &ptsz,
-    Array<OneD, NekDouble> &Lcoords,
+    const Array<OneD, const NekDouble> &ptsz, Array<OneD, NekDouble> &Lcoords,
     NekDouble &dist)
 {
     // maximum iterations for convergence
@@ -87,8 +86,8 @@ void Geometry3D::NewtonIterationForLocCoord(
     Array<OneD, const NekDouble> Jac =
         m_geomFactors->GetJac(m_xmap->GetPointsKeys());
 
-    NekDouble ScaledTol = Vmath::Vsum(Jac.size(), Jac, 1) /
-                          ((NekDouble)Jac.size());
+    NekDouble ScaledTol =
+        Vmath::Vsum(Jac.size(), Jac, 1) / ((NekDouble)Jac.size());
     ScaledTol *= Tol;
 
     NekDouble xmap, ymap, zmap, F1, F2, F3;
@@ -181,8 +180,8 @@ void Geometry3D::NewtonIterationForLocCoord(
              (derx_1 * dery_2 - derx_2 * dery_1) * (coords[2] - zmap)) /
                 jac;
 
-        if( !(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1]) &&
-              std::isfinite(Lcoords[2])) )
+        if (!(std::isfinite(Lcoords[0]) && std::isfinite(Lcoords[1]) &&
+              std::isfinite(Lcoords[2])))
         {
             dist = 1e16;
             std::ostringstream ss;
@@ -199,7 +198,7 @@ void Geometry3D::NewtonIterationForLocCoord(
     }
 
     m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
-    if(ClampLocCoords(eta, 0.))
+    if (ClampLocCoords(eta, 0.))
     {
         I[0] = m_xmap->GetBasis(0)->GetI(eta);
         I[1] = m_xmap->GetBasis(1)->GetI(eta + 1);
@@ -208,9 +207,9 @@ void Geometry3D::NewtonIterationForLocCoord(
         xmap = m_xmap->PhysEvaluate(I, ptsx);
         ymap = m_xmap->PhysEvaluate(I, ptsy);
         zmap = m_xmap->PhysEvaluate(I, ptsz);
-        F1 = coords[0] - xmap;
-        F2 = coords[1] - ymap;
-        F3 = coords[2] - zmap;
+        F1   = coords[0] - xmap;
+        F2   = coords[1] - ymap;
+        F3   = coords[2] - zmap;
         dist = sqrt(F1 * F1 + F2 * F2 + F3 * F3);
     }
     else
@@ -244,21 +243,21 @@ void Geometry3D::NewtonIterationForLocCoord(
 }
 
 NekDouble Geometry3D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                  Array<OneD, NekDouble> &Lcoords)
+                                     Array<OneD, NekDouble> &Lcoords)
 {
     NekDouble dist = 0.;
     if (GetMetricInfo()->GetGtype() == eRegular)
     {
         int v1, v2, v3;
-        if(m_shapeType == LibUtilities::eHexahedron ||
-           m_shapeType == LibUtilities::ePrism      ||
-           m_shapeType == LibUtilities::ePyramid)
+        if (m_shapeType == LibUtilities::eHexahedron ||
+            m_shapeType == LibUtilities::ePrism ||
+            m_shapeType == LibUtilities::ePyramid)
         {
             v1 = 1;
             v2 = 3;
             v3 = 4;
         }
-        else if(m_shapeType == LibUtilities::eTetrahedron)
+        else if (m_shapeType == LibUtilities::eTetrahedron)
         {
             v1 = 1;
             v2 = 2;
@@ -288,7 +287,8 @@ NekDouble Geometry3D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
         cp3010.Mult(e30, e10);
 
         // Barycentric coordinates (relative volume)
-        NekDouble iV = 2. / e30.dot(cp1020); // Hex Volume = {(e30)dot(e10)x(e20)}
+        NekDouble iV =
+            2. / e30.dot(cp1020); // Hex Volume = {(e30)dot(e10)x(e20)}
         Lcoords[0] = er0.dot(cp2030) * iV - 1.0;
         Lcoords[1] = er0.dot(cp3010) * iV - 1.0;
         Lcoords[2] = er0.dot(cp1020) * iV - 1.0;
@@ -296,17 +296,17 @@ NekDouble Geometry3D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
         // Set distance
         Array<OneD, NekDouble> eta(3, 0.);
         m_xmap->LocCoordToLocCollapsed(Lcoords, eta);
-        if(ClampLocCoords(eta, 0.))
+        if (ClampLocCoords(eta, 0.))
         {
             Array<OneD, NekDouble> xi(3, 0.);
             m_xmap->LocCollapsedToLocCoord(eta, xi);
-            xi[0] = (xi[0] + 1.) * 0.5; //re-scaled to ratio [0, 1]
+            xi[0] = (xi[0] + 1.) * 0.5; // re-scaled to ratio [0, 1]
             xi[1] = (xi[1] + 1.) * 0.5;
             xi[2] = (xi[2] + 1.) * 0.5;
             for (int i = 0; i < m_coordim; ++i)
             {
-                NekDouble tmp = xi[0]*e10[i] + xi[1]*e20[i]
-                            + xi[2]*e30[i] - er0[i];
+                NekDouble tmp =
+                    xi[0] * e10[i] + xi[1] * e20[i] + xi[2] * e30[i] - er0[i];
                 dist += tmp * tmp;
             }
             dist = sqrt(dist);
@@ -343,7 +343,7 @@ NekDouble Geometry3D::v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
 
         Array<OneD, NekDouble> eta(3, 0.);
         eta[2] = zc[min_i / (qa * qb)];
-        min_i = min_i % (qa * qb);
+        min_i  = min_i % (qa * qb);
         eta[1] = zb[min_i / qa];
         eta[0] = za[min_i % qa];
         m_xmap->LocCollapsedToLocCoord(eta, Lcoords);
@@ -383,20 +383,14 @@ void Geometry3D::v_FillGeom()
         if (m_forient[i] < 9)
         {
             m_xmap->GetTraceToElementMap(
-                i,
-                mapArray,
-                signArray,
-                m_forient[i],
+                i, mapArray, signArray, m_forient[i],
                 m_faces[i]->GetXmap()->GetTraceNcoeffs(0),
                 m_faces[i]->GetXmap()->GetTraceNcoeffs(1));
         }
         else
         {
             m_xmap->GetTraceToElementMap(
-                i,
-                mapArray,
-                signArray,
-                m_forient[i],
+                i, mapArray, signArray, m_forient[i],
                 m_faces[i]->GetXmap()->GetTraceNcoeffs(1),
                 m_faces[i]->GetXmap()->GetTraceNcoeffs(0));
         }
@@ -408,7 +402,7 @@ void Geometry3D::v_FillGeom()
 
             for (k = 0; k < nFaceCoeffs; k++)
             {
-                NekDouble v = signArray[k] * coeffs[k];
+                NekDouble v              = signArray[k] * coeffs[k];
                 m_coeffs[j][mapArray[k]] = v;
             }
         }
@@ -418,9 +412,9 @@ void Geometry3D::v_FillGeom()
 }
 
 /**
-* @brief Given local collapsed coordinate Lcoord return the value of
-* physical coordinate in direction i.
-*/
+ * @brief Given local collapsed coordinate Lcoord return the value of
+ * physical coordinate in direction i.
+ */
 NekDouble Geometry3D::v_GetCoord(const int i,
                                  const Array<OneD, const NekDouble> &Lcoord)
 {
@@ -491,5 +485,5 @@ StdRegions::Orientation Geometry3D::v_GetForient(const int i) const
     return m_forient[i];
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

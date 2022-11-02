@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Metis.hpp
+// File: Metis.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -42,39 +42,36 @@
 
 namespace Metis
 {
-    inline static void PartGraphVKway(
-            int&                              nVerts,
-            int&                              nVertConds,
-            Nektar::Array<Nektar::OneD, int>& xadj,
-            Nektar::Array<Nektar::OneD, int>& adjcy,
-            Nektar::Array<Nektar::OneD, int>& vertWgt,
-            Nektar::Array<Nektar::OneD, int>& vertSize,
-            Nektar::Array<Nektar::OneD, int>& edgeWgt,
-            int&                              nparts,
-            int&                              volume,
-            Nektar::Array<Nektar::OneD, int>& part)
+inline static void PartGraphVKway(int &nVerts, int &nVertConds,
+                                  Nektar::Array<Nektar::OneD, int> &xadj,
+                                  Nektar::Array<Nektar::OneD, int> &adjcy,
+                                  Nektar::Array<Nektar::OneD, int> &vertWgt,
+                                  Nektar::Array<Nektar::OneD, int> &vertSize,
+                                  Nektar::Array<Nektar::OneD, int> &edgeWgt,
+                                  int &nparts, int &volume,
+                                  Nektar::Array<Nektar::OneD, int> &part)
+{
+    int *vwgt   = 0;
+    int *vsize  = 0;
+    int *adjwgt = 0;
+    if (vertWgt.size() > 0)
     {
-        int *vwgt   = 0;
-        int *vsize  = 0;
-        int *adjwgt = 0;
-        if (vertWgt.size() > 0)
-        {
-            vwgt = &vertWgt[0];
-        }
-        if (vertSize.size() > 0)
-        {
-            vsize = &vertSize[0];
-        }
-        if (edgeWgt.size() > 0)
-        {
-            adjwgt = &edgeWgt[0];
-        }
-        // number of balancing conditions (size of vertex multi-weight)
-        int ncon = nVertConds;
-        int options[METIS_NOPTIONS];
-        METIS_SetDefaultOptions(options);
-        METIS_PartGraphKway(&nVerts, &ncon, &xadj[0], &adjcy[0], vwgt, vsize,
-                            adjwgt, &nparts, 0, 0, options, &volume, &part[0]);
+        vwgt = &vertWgt[0];
     }
+    if (vertSize.size() > 0)
+    {
+        vsize = &vertSize[0];
+    }
+    if (edgeWgt.size() > 0)
+    {
+        adjwgt = &edgeWgt[0];
+    }
+    // number of balancing conditions (size of vertex multi-weight)
+    int ncon = nVertConds;
+    int options[METIS_NOPTIONS];
+    METIS_SetDefaultOptions(options);
+    METIS_PartGraphKway(&nVerts, &ncon, &xadj[0], &adjcy[0], vwgt, vsize,
+                        adjwgt, &nparts, 0, 0, options, &volume, &part[0]);
 }
-#endif //NEKTAR_LIB_UTILITIES_BASICUTILS_METIS_HPP
+} // namespace Metis
+#endif // NEKTAR_LIB_UTILITIES_BASICUTILS_METIS_HPP

@@ -32,14 +32,14 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 using namespace std;
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <LibUtilities/BasicUtils/CompressData.h>
 
@@ -53,8 +53,7 @@ namespace FieldUtils
 ModuleKey InputSemtex::m_className[1] = {
     GetModuleFactory().RegisterCreatorFunction(
         ModuleKey(eInputModule, "fldsem"), InputSemtex::create,
-        "Reads Semtex field file.")
-};
+        "Reads Semtex field file.")};
 
 /**
  * @brief Set up InputSemtex object.
@@ -142,7 +141,7 @@ void InputSemtex::Process(po::variables_map &vm)
     getline(file, line);
 
     // Endian-ness
-    LibUtilities::EndianType systemEndian =  LibUtilities::Endianness();
+    LibUtilities::EndianType systemEndian = LibUtilities::Endianness();
     std::string endianSearch;
     if (systemEndian == LibUtilities::eEndianBig)
     {
@@ -158,7 +157,7 @@ void InputSemtex::Process(po::variables_map &vm)
     }
 
     file.read(buf, 25);
-    endian = string(buf, 25);
+    endian        = string(buf, 25);
     bool byteSwap = endian.find(endianSearch) == string::npos;
     getline(file, line);
 
@@ -167,19 +166,19 @@ void InputSemtex::Process(po::variables_map &vm)
     {
         cout << "Found header information:" << endl;
         cout << " -- From session         : " << sessionName << endl;
-        cout << " -- File generated       : " << date        << endl;
-        cout << " -- Polynomial order     : " << nr-1        << endl;
-        cout << " -- Number of planes     : " << nz          << endl;
-        cout << " -- Number of elements   : " << nelmt       << endl;
-        cout << " -- Simulation time      : " << time        << endl;
-        cout << " -- Timestep             : " << dt          << endl;
-        cout << " -- Viscosity            : " << kinvis      << endl;
-        cout << " -- Fields               : " << fields
-             << " (" << fields.size() << " total)" << endl;
+        cout << " -- File generated       : " << date << endl;
+        cout << " -- Polynomial order     : " << nr - 1 << endl;
+        cout << " -- Number of planes     : " << nz << endl;
+        cout << " -- Number of elements   : " << nelmt << endl;
+        cout << " -- Simulation time      : " << time << endl;
+        cout << " -- Timestep             : " << dt << endl;
+        cout << " -- Viscosity            : " << kinvis << endl;
+        cout << " -- Fields               : " << fields << " (" << fields.size()
+             << " total)" << endl;
 
         if (nz > 1)
         {
-            cout << " -- Homogeneous length   : " << 2*M_PI/beta << endl;
+            cout << " -- Homogeneous length   : " << 2 * M_PI / beta << endl;
         }
 
         cout << " -- " << (byteSwap ? "" : "do not ") << "need to swap endian"
@@ -189,13 +188,13 @@ void InputSemtex::Process(po::variables_map &vm)
     ASSERTL0(nr == ns, "Semtex reader assumes values of nr and ns are equal");
 
     // Set up a field definition
-    LibUtilities::FieldDefinitionsSharedPtr fielddef = MemoryManager<
-        LibUtilities::FieldDefinitions>::AllocateSharedPtr();
-    fielddef->m_shapeType         = LibUtilities::eQuadrilateral;
-    fielddef->m_homoStrips        = false;
-    fielddef->m_pointsDef         = false;
-    fielddef->m_uniOrder          = true;
-    fielddef->m_numPointsDef      = false;
+    LibUtilities::FieldDefinitionsSharedPtr fielddef =
+        MemoryManager<LibUtilities::FieldDefinitions>::AllocateSharedPtr();
+    fielddef->m_shapeType    = LibUtilities::eQuadrilateral;
+    fielddef->m_homoStrips   = false;
+    fielddef->m_pointsDef    = false;
+    fielddef->m_uniOrder     = true;
+    fielddef->m_numPointsDef = false;
 
     // Set up basis
     fielddef->m_basis.push_back(LibUtilities::eGLL_Lagrange);
@@ -237,7 +236,7 @@ void InputSemtex::Process(po::variables_map &vm)
     size_t elmtSize  = nr * ns;
     size_t planeSize = elmtSize * nelmt;
     size_t fieldSize = planeSize * nz;
-    size_t dataSize = fieldSize * fields.size();
+    size_t dataSize  = fieldSize * fields.size();
 
     // Allocate our storage.
     m_f->m_data.resize(1);
@@ -262,12 +261,11 @@ void InputSemtex::Process(po::variables_map &vm)
                 swap_endian(tmp);
             }
 
-            double* x = &tmp[0];
+            double *x = &tmp[0];
             for (int k = 0; k < nelmt; ++k)
             {
                 std::copy(x, x + elmtSize, data + k * offset + elSizeJ);
                 x += elmtSize;
-
             }
         }
     }
@@ -278,5 +276,5 @@ void InputSemtex::Process(po::variables_map &vm)
     m_f->m_variables = m_f->m_fielddef[0]->m_fields;
 }
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

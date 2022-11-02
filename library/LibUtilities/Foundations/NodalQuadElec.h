@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalQuadElec.h
+// File: NodalQuadElec.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,12 +35,12 @@
 #ifndef NODALQUADELEC_H
 #define NODALQUADELEC_H
 
-#include <memory>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
+#include <memory>
 
 namespace Nektar
 {
@@ -77,7 +77,7 @@ private:
     void CalculateWeights();
     void CalculateDerivMatrix();
 };
-} // end of namespace
-} // end of namespace
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // NodalQuadElec

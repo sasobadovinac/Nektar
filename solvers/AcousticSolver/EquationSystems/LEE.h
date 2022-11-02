@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LEE.h
+// File: LEE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -73,7 +73,7 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareFields = true);
 
     virtual void v_GetFluxVector(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,

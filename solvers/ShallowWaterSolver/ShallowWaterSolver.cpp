@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ShallowWaterSolver.cpp
+// File: ShallowWaterSolver.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SolverUtils/EquationSystem.h>
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <SolverUtils/EquationSystem.h>
 
 using namespace std;
 using namespace Nektar;
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
     // Record end time.
     time(&endtime);
-    CPUtime = (1.0/60.0/60.0)*difftime(endtime,starttime);
+    CPUtime = (1.0 / 60.0 / 60.0) * difftime(endtime, starttime);
 
     // Write output to .fld file
     equ->Output();
@@ -87,11 +87,12 @@ int main(int argc, char *argv[])
     cout << "-------------------------------------------" << endl;
     cout << "Total Computation Time = " << CPUtime << " hr." << endl;
 
-    
-    for(int i = 0; i < equ->GetNvariables(); ++i)
+    for (int i = 0; i < equ->GetNvariables(); ++i)
     {
-        cout << "L 2 error (variable " << equ->GetVariable(i)  << "): " << equ->L2Error(i,true) << endl;
-        cout << "L inf error (variable " << equ->GetVariable(i)  << "): " << equ->LinfError(i) << endl;
+        cout << "L 2 error (variable " << equ->GetVariable(i)
+             << "): " << equ->L2Error(i, true) << endl;
+        cout << "L inf error (variable " << equ->GetVariable(i)
+             << "): " << equ->LinfError(i) << endl;
     }
 
     session->Finalise();

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAeroForcesSPM.cpp
+// File: FilterAeroForcesSPM.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -40,17 +40,17 @@ using namespace std;
 namespace Nektar
 {
 std::string FilterAeroForcesSPM::className =
-        SolverUtils::GetFilterFactory().RegisterCreatorFunction(
-                "AeroForcesSPM", FilterAeroForcesSPM::create);
+    SolverUtils::GetFilterFactory().RegisterCreatorFunction(
+        "AeroForcesSPM", FilterAeroForcesSPM::create);
 
 /**
  *
  */
 FilterAeroForcesSPM::FilterAeroForcesSPM(
-    const LibUtilities::SessionReaderSharedPtr       &pSession,
+    const LibUtilities::SessionReaderSharedPtr &pSession,
     const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-    const ParamMap &pParams) :
-    Filter(pSession, pEquation)
+    const ParamMap &pParams)
+    : Filter(pSession, pEquation)
 {
     // OutputFile
     auto it = pParams.find("OutputFile");
@@ -63,8 +63,8 @@ FilterAeroForcesSPM::FilterAeroForcesSPM(
         ASSERTL0(it->second.length() > 0, "Missing parameter 'OutputFile'.");
         m_outputFile = it->second;
     }
-    if (!(m_outputFile.length() >= 4
-          && m_outputFile.substr(m_outputFile.length() - 4) == ".fce"))
+    if (!(m_outputFile.length() >= 4 &&
+          m_outputFile.substr(m_outputFile.length() - 4) == ".fce"))
     {
         m_outputFile += ".fce";
     }
@@ -77,8 +77,7 @@ FilterAeroForcesSPM::FilterAeroForcesSPM(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_outputFrequency = round(equ.Evaluate());
     }
 
@@ -90,19 +89,16 @@ FilterAeroForcesSPM::FilterAeroForcesSPM(
     }
     else
     {
-        LibUtilities::Equation equ(
-            m_session->GetInterpreter(), it->second);
+        LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
         m_startTime = equ.Evaluate();
     }
 }
-
 
 /**
  *
  */
 FilterAeroForcesSPM::~FilterAeroForcesSPM()
 {
-
 }
 
 /**
@@ -135,8 +131,7 @@ void FilterAeroForcesSPM::v_Initialise(
     {
         // Open output stream
         bool adaptive;
-        m_session->MatchSolverInfo("Driver", "Adaptive",
-                                    adaptive, false);
+        m_session->MatchSolverInfo("Driver", "Adaptive", adaptive, false);
         if (adaptive)
         {
             m_outputStream.open(m_outputFile.c_str(), ofstream::app);
@@ -152,7 +147,7 @@ void FilterAeroForcesSPM::v_Initialise(
         for (int i = 0; i < m_spaceDim; ++i)
         {
             m_outputStream.width(14);
-            m_outputStream <<  "F_" << m_dirNames[i];
+            m_outputStream << "F_" << m_dirNames[i];
         }
 
         m_outputStream << endl;
@@ -169,7 +164,7 @@ void FilterAeroForcesSPM::v_Update(
     const NekDouble &time)
 {
     // Only output every m_outputFrequency.
-    if ((m_index++) % m_outputFrequency  || (time < m_startTime))
+    if ((m_index++) % m_outputFrequency || (time < m_startTime))
     {
         return;
     }
@@ -177,7 +172,7 @@ void FilterAeroForcesSPM::v_Update(
     // Communicators to exchange results
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
-    //Write Results
+    // Write Results
     if (vComm->GetRank() == 0)
     {
         // Write time
@@ -187,14 +182,12 @@ void FilterAeroForcesSPM::v_Update(
         for (int i = 0; i < m_spaceDim; ++i)
         {
             m_outputStream.width(15);
-            m_outputStream << setprecision(8)
-                           << m_Forces[i];
+            m_outputStream << setprecision(8) << m_Forces[i];
         }
         m_outputStream.width(10);
         m_outputStream << endl;
     }
 }
-
 
 /**
  *
@@ -208,7 +201,6 @@ void FilterAeroForcesSPM::v_Finalise(
         m_outputStream.close();
     }
 }
-
 
 /**
  *
@@ -232,14 +224,12 @@ bool FilterAeroForcesSPM::v_IsTimeDependent()
  * @param dt
  */
 void FilterAeroForcesSPM::CalculateForces(
-        const Array<OneD, Array<OneD, NekDouble> > &pIntVel,
-        const Array<OneD, Array<OneD, NekDouble> > &pUpPrev,
-        const MultiRegions::ExpListSharedPtr &pPhi,
-        NekDouble time,
-        NekDouble dt)
+    const Array<OneD, Array<OneD, NekDouble>> &pIntVel,
+    const Array<OneD, Array<OneD, NekDouble>> &pUpPrev,
+    const MultiRegions::ExpListSharedPtr &pPhi, NekDouble time, NekDouble dt)
 {
     // Only output every m_outputFrequency.
-    if ((m_index % m_outputFrequency)  || (time < m_startTime))
+    if ((m_index % m_outputFrequency) || (time < m_startTime))
     {
         return;
     }
@@ -253,8 +243,7 @@ void FilterAeroForcesSPM::CalculateForces(
     for (int i = 0; i < m_spaceDim; ++i)
     {
         // "Scalar" field to be integrated
-        Vmath::Vsub(nq, pIntVel[i], 1, pUpPrev[i], 1,
-                    tmp, 1);
+        Vmath::Vsub(nq, pIntVel[i], 1, pUpPrev[i], 1, tmp, 1);
         Vmath::Vmul(nq, pPhi->GetPhys(), 1, tmp, 1, tmp, 1);
 
         // Integration of force throughout the domain
@@ -262,4 +251,4 @@ void FilterAeroForcesSPM::CalculateForces(
     }
 }
 
-}
+} // namespace Nektar

@@ -69,7 +69,7 @@ public:
     Array<OneD, NekDouble> GetBounds();
 
     void GetBounds(NekDouble &umin, NekDouble &umax, NekDouble &vmin,
-                           NekDouble &vmax);
+                   NekDouble &vmax);
 
     Array<OneD, NekDouble> N(Array<OneD, NekDouble> uv);
 
@@ -112,7 +112,7 @@ private:
     cfi::Face *m_cfiSurface;
     NekDouble m_scal;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

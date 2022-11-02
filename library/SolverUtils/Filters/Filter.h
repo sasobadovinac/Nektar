@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Filter.h
+// File: Filter.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -48,73 +48,72 @@ namespace SolverUtils
 {
 class Filter;
 class EquationSystem;
-    
+
 /// A shared pointer to a Driver object
 typedef std::shared_ptr<Filter> FilterSharedPtr;
 
 /// Datatype of the NekFactory used to instantiate classes derived from
 /// the Driver class.
-typedef LibUtilities::NekFactory<
-    std::string, Filter,
-    const LibUtilities::SessionReaderSharedPtr&,
-    const std::weak_ptr<EquationSystem>&,
-    const std::map<std::string, std::string>&
-    > FilterFactory;
-SOLVER_UTILS_EXPORT FilterFactory& GetFilterFactory();
+typedef LibUtilities::NekFactory<std::string, Filter,
+                                 const LibUtilities::SessionReaderSharedPtr &,
+                                 const std::weak_ptr<EquationSystem> &,
+                                 const std::map<std::string, std::string> &>
+    FilterFactory;
+SOLVER_UTILS_EXPORT FilterFactory &GetFilterFactory();
 
 class Filter
 {
 public:
     typedef std::map<std::string, std::string> ParamMap;
     SOLVER_UTILS_EXPORT Filter(
-            const LibUtilities::SessionReaderSharedPtr &pSession,
-            const std::weak_ptr<EquationSystem>      &pEquation);
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const std::weak_ptr<EquationSystem> &pEquation);
     SOLVER_UTILS_EXPORT virtual ~Filter();
 
     SOLVER_UTILS_EXPORT inline void Initialise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     SOLVER_UTILS_EXPORT inline void Update(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     SOLVER_UTILS_EXPORT inline void Finalise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
     SOLVER_UTILS_EXPORT inline bool IsTimeDependent();
 
 protected:
-    LibUtilities::SessionReaderSharedPtr  m_session;
+    LibUtilities::SessionReaderSharedPtr m_session;
     const std::weak_ptr<EquationSystem> m_equ;
 
     virtual void v_Initialise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time) = 0;
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time) = 0;
     virtual void v_Update(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time) = 0;
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time) = 0;
     virtual void v_Finalise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time) = 0;
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time)       = 0;
     virtual bool v_IsTimeDependent() = 0;
 };
 
 inline void Filter::Initialise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     v_Initialise(pFields, time);
 }
 
 inline void Filter::Update(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     v_Update(pFields, time);
 }
 
 inline void Filter::Finalise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     v_Finalise(pFields, time);
 }
@@ -123,6 +122,6 @@ inline bool Filter::IsTimeDependent()
 {
     return v_IsTimeDependent();
 }
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 #endif /* NEKTAR_SOLVERUTILS_FILTER_FILTER_H */

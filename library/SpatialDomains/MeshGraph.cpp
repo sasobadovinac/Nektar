@@ -32,14 +32,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/MeshGraph.h>
 #include <LibUtilities/BasicUtils/CompressData.h>
-#include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/Equation.h>
 #include <LibUtilities/BasicUtils/FieldIOXml.h>
-#include <StdRegions/StdTriExp.h>
-#include <StdRegions/StdTetExp.h>
-#include <StdRegions/StdPyrExp.h>
+#include <LibUtilities/BasicUtils/ParseUtils.h>
+#include <SpatialDomains/MeshGraph.h>
 #include <StdRegions/StdPrismExp.h>
 #include <StdRegions/StdPyrExp.h>
 #include <StdRegions/StdTetExp.h>
@@ -85,7 +82,7 @@ struct MeshGraph::GeomRTree
     typedef bg::model::box<BgPoint> BgBox;
     typedef std::pair<BgBox, int> BgRtreeValue;
 
-    bg::index::rtree< BgRtreeValue, bg::index::rstar<16, 4> > m_bgTree;
+    bg::index::rtree<BgRtreeValue, bg::index::rstar<16, 4>> m_bgTree;
 
     void InsertGeom(GeometrySharedPtr const &geom)
     {
@@ -99,8 +96,8 @@ struct MeshGraph::GeomRTree
 
 MeshGraph::MeshGraph()
 {
-    m_boundingBoxTree = std::unique_ptr<MeshGraph::GeomRTree>(
-        new MeshGraph::GeomRTree());
+    m_boundingBoxTree =
+        std::unique_ptr<MeshGraph::GeomRTree>(new MeshGraph::GeomRTree());
 }
 
 /**
@@ -112,8 +109,7 @@ MeshGraph::~MeshGraph()
 
 MeshGraphSharedPtr MeshGraph::Read(
     const LibUtilities::SessionReaderSharedPtr session,
-    LibUtilities::DomainRangeShPtr             rng,
-    bool                                       fillGraph)
+    LibUtilities::DomainRangeShPtr rng, bool fillGraph)
 {
     LibUtilities::CommSharedPtr comm = session->GetComm();
     ASSERTL0(comm.get(), "Communication not initialised.");
@@ -148,7 +144,7 @@ MeshGraphSharedPtr MeshGraph::Read(
         std::vector<char> v(length);
         comm->Bcast(v, 0);
 
-        geomType = std::string(v.begin(),v.end());
+        geomType = std::string(v.begin(), v.end());
     }
 
     // Every process then creates a mesh. Partitioning logic takes place inside
@@ -257,8 +253,7 @@ void MeshGraph::FillBoundingBoxTree()
     }
 }
 
-std::vector<int> MeshGraph::GetElementsContainingPoint(
-    PointGeomSharedPtr p)
+std::vector<int> MeshGraph::GetElementsContainingPoint(PointGeomSharedPtr p)
 {
     if (m_boundingBoxTree->m_bgTree.empty())
     {
@@ -287,7 +282,6 @@ std::vector<int> MeshGraph::GetElementsContainingPoint(
 
     return vals;
 }
-
 
 int MeshGraph::GetNumElements()
 {
@@ -573,9 +567,8 @@ void MeshGraph::GetCompositeList(const std::string &compositeStr,
         (std::string("Unable to read composite index range: ") + compositeStr)
             .c_str());
 
-    vector<unsigned int>
-        addedVector; // Vector of those composites already added to
-                     // compositeVector;
+    vector<unsigned int> addedVector; // Vector of those composites already
+                                      // added to compositeVector;
     for (auto iter = seqVector.begin(); iter != seqVector.end(); ++iter)
     {
         // Only add a new one if it does not already exist in vector.
@@ -604,10 +597,8 @@ void MeshGraph::GetCompositeList(const std::string &compositeStr,
             }
             else
             {
-                char str[64];
-                ::sprintf(str, "%d", *iter);
                 NEKERROR(ErrorUtil::ewarning,
-                         (std::string("Undefined composite: ") + str).c_str());
+                         ("Undefined composite: " + std::to_string(*iter)));
             }
         }
     }
@@ -653,7 +644,7 @@ const ExpansionInfoMap &MeshGraph::GetExpansionInfo(const std::string variable)
  *
  */
 ExpansionInfoShPtr MeshGraph::GetExpansionInfo(GeometrySharedPtr geom,
-                                       const std::string variable)
+                                               const std::string variable)
 {
     ExpansionInfoMapShPtr expansionMap =
         m_expansionMapShPtrMap.find(variable)->second;
@@ -1214,9 +1205,8 @@ void MeshGraph::SetExpansionInfo(
                 }
                 break;
                 default:
-                    ASSERTL0(
-                        false,
-                        "Need to set up for pyramid and prism 3D ExpansionInfo");
+                    ASSERTL0(false, "Need to set up for pyramid and prism 3D "
+                                    "ExpansionInfo");
                     break;
             }
 
@@ -1436,9 +1426,8 @@ void MeshGraph::SetExpansionInfo(
                 }
                 break;
                 default:
-                    ASSERTL0(
-                        false,
-                        "Need to set up for pyramid and prism 3D ExpansionInfo");
+                    ASSERTL0(false, "Need to set up for pyramid and prism 3D "
+                                    "ExpansionInfo");
                     break;
             }
 
@@ -1575,13 +1564,14 @@ void MeshGraph::SetExpansionInfoToPointOrder(int npts)
 void MeshGraph::SetBasisKey(LibUtilities::ShapeType shape,
                             LibUtilities::BasisKeyVector &keys, std::string var)
 {
-    ExpansionInfoMapShPtr expansionMap = m_expansionMapShPtrMap.find(var)->second;
+    ExpansionInfoMapShPtr expansionMap =
+        m_expansionMapShPtrMap.find(var)->second;
     ResetExpansionInfoToBasisKey(expansionMap, shape, keys);
 }
 
-void MeshGraph::ResetExpansionInfoToBasisKey(ExpansionInfoMapShPtr &expansionMap,
-                                             LibUtilities::ShapeType shape,
-                                             LibUtilities::BasisKeyVector &keys)
+void MeshGraph::ResetExpansionInfoToBasisKey(
+    ExpansionInfoMapShPtr &expansionMap, LibUtilities::ShapeType shape,
+    LibUtilities::BasisKeyVector &keys)
 {
     for (auto elemIter = expansionMap->begin(); elemIter != expansionMap->end();
          ++elemIter)
@@ -2550,20 +2540,22 @@ ExpansionInfoMapShPtr MeshGraph::SetUpExpansionInfoMap(void)
     ExpansionInfoMapShPtr returnval;
     returnval = MemoryManager<ExpansionInfoMap>::AllocateSharedPtr();
 
-    for (int d = 0; d < m_domain.size(); ++d)
+    for (auto &d : m_domain)
     {
-        for (auto compIter = m_domain[d].begin(); compIter != m_domain[d].end();
+        for (auto compIter = d.second.begin(); compIter != d.second.end();
              ++compIter)
         {
             // regular elements first
             for (auto x = compIter->second->m_geomVec.begin();
                  x != compIter->second->m_geomVec.end(); ++x)
             {
-                if((*x)->GetGeomFactors()->GetGtype() != SpatialDomains::eDeformed)
+                if ((*x)->GetGeomFactors()->GetGtype() !=
+                    SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x, def);
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x,
+                                                                        def);
                     int id           = (*x)->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
@@ -2572,11 +2564,13 @@ ExpansionInfoMapShPtr MeshGraph::SetUpExpansionInfoMap(void)
             for (auto x = compIter->second->m_geomVec.begin();
                  x != compIter->second->m_geomVec.end(); ++x)
             {
-                if((*x)->GetGeomFactors()->GetGtype() == SpatialDomains::eDeformed)
+                if ((*x)->GetGeomFactors()->GetGtype() ==
+                    SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x, def);
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x,
+                                                                        def);
                     int id           = (*x)->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
@@ -2586,8 +2580,6 @@ ExpansionInfoMapShPtr MeshGraph::SetUpExpansionInfoMap(void)
 
     return returnval;
 }
-
-
 
 /**
  * @brief Returns a string representation of a composite.
@@ -2616,14 +2608,13 @@ std::string MeshGraph::GetCompositeString(CompositeSharedPtr comp)
     GeometrySharedPtr firstGeom = comp->m_geomVec[0];
     int shapeDim                = firstGeom->GetShapeDim();
     string tag                  = (shapeDim < m_meshDimension)
-        ? compMap[firstGeom->GetShapeType()].second
-        : compMap[firstGeom->GetShapeType()].first;
+                                      ? compMap[firstGeom->GetShapeType()].second
+                                      : compMap[firstGeom->GetShapeType()].first;
 
     std::vector<unsigned int> idxList;
-    std::transform(
-        comp->m_geomVec.begin(), comp->m_geomVec.end(),
-        std::back_inserter(idxList),
-        [] (GeometrySharedPtr geom) { return geom->GetGlobalID(); });
+    std::transform(comp->m_geomVec.begin(), comp->m_geomVec.end(),
+                   std::back_inserter(idxList),
+                   [](GeometrySharedPtr geom) { return geom->GetGlobalID(); });
 
     s << " " << tag << "[" << ParseUtils::GenerateSeqString(idxList) << "] ";
     return s.str();
@@ -2641,8 +2632,8 @@ void MeshGraph::ReadExpansionInfo()
         TiXmlElement *expansion = expansionTypes->FirstChildElement();
         ASSERTL0(expansion, "Unable to find entries in EXPANSIONS tag in "
                             "file.");
-        std::string expType     = expansion->Value();
-        std::vector<std::string> vars  = m_session->GetVariables();
+        std::string expType           = expansion->Value();
+        std::vector<std::string> vars = m_session->GetVariables();
 
         if (expType == "E")
         {
@@ -2664,11 +2655,11 @@ void MeshGraph::ReadExpansionInfo()
             // Collect all composites of the domain to control which
             // composites are defined for each variable.
             map<int, bool> domainCompList;
-            for (int d = 0; d < m_domain.size(); ++d)
+            for (auto &d : m_domain)
             {
-                for (auto c = m_domain[d].begin(); c != m_domain[d].end(); ++c)
+                for (auto &c : d.second)
                 {
-                    domainCompList[c->first] = false;
+                    domainCompList[c.first] = false;
                 }
             }
             map<std::string, map<int, bool>> fieldDomainCompList;
@@ -2694,13 +2685,13 @@ void MeshGraph::ReadExpansionInfo()
                 if (fStr) // extract fields.
                 {
                     std::string fieldStr = fStr;
-                    bool valid = ParseUtils::GenerateVector(
-                                            fieldStr.c_str(), fieldStrings);
+                    bool valid = ParseUtils::GenerateVector(fieldStr.c_str(),
+                                                            fieldStrings);
                     ASSERTL0(valid, "Unable to correctly parse the field "
                                     "string in ExpansionTypes.");
 
                     // see if field exists
-                    if(m_expansionMapShPtrMap.count(fieldStrings[0]))
+                    if (m_expansionMapShPtrMap.count(fieldStrings[0]))
                     {
                         expansionMap =
                             m_expansionMapShPtrMap.find(fieldStrings[0])
@@ -2716,52 +2707,56 @@ void MeshGraph::ReadExpansionInfo()
                     for (i = 0; i < fieldStrings.size(); ++i)
                     {
                         if (vars.size() && std::count(vars.begin(), vars.end(),
-                                       fieldStrings[i]) == 0)
+                                                      fieldStrings[i]) == 0)
                         {
                             ASSERTL0(false, "Variable '" + fieldStrings[i] +
-                                            "' defined in EXPANSIONS is not"
-                                            " defined in VARIABLES.");
-                        }  
-                        
+                                                "' defined in EXPANSIONS is not"
+                                                " defined in VARIABLES.");
+                        }
+
                         if (m_expansionMapShPtrMap.count(fieldStrings[i]) == 0)
                         {
-                                m_expansionMapShPtrMap[fieldStrings[i]] =
-                                    expansionMap;
+                            m_expansionMapShPtrMap[fieldStrings[i]] =
+                                expansionMap;
 
                             // set true to the composites where expansion is
                             // defined
-                                fieldDomainCompList[fieldStrings[i]] =
+                            fieldDomainCompList[fieldStrings[i]] =
                                 domainCompList;
-                            for (auto c = compositeVector.begin(); c != 
-                                     compositeVector.end(); ++c)
+                            for (auto c = compositeVector.begin();
+                                 c != compositeVector.end(); ++c)
                             {
                                 fieldDomainCompList.find(fieldStrings[i])
                                     ->second.find(c->first)
-                                               ->second = true;
+                                    ->second = true;
                             }
                         }
                         else
                         {
-                            for (auto c = compositeVector.begin(); c != 
-                                 compositeVector.end(); ++c)
+                            for (auto c = compositeVector.begin();
+                                 c != compositeVector.end(); ++c)
                             {
                                 if (fieldDomainCompList.find(fieldStrings[i])
-                                        ->second.find(c->first)->second ==false)
+                                        ->second.find(c->first)
+                                        ->second == false)
                                 {
                                     fieldDomainCompList.find(fieldStrings[i])
-                                        ->second.find(c->first)->second = true;
+                                        ->second.find(c->first)
+                                        ->second = true;
                                 }
                                 else
                                 {
-                                    ASSERTL0(false, "Expansion vector for " 
-                                                    "variable '"+fieldStrings[i]
-                                                    +"' is already setup for C["
-                                                    +to_string(c->first) +"].");
+                                    ASSERTL0(false,
+                                             "Expansion vector for "
+                                             "variable '" +
+                                                 fieldStrings[i] +
+                                                 "' is already setup for C[" +
+                                                 to_string(c->first) + "].");
                                 }
                             }
                             expansionMap =
                                 m_expansionMapShPtrMap.find(fieldStrings[i])
-                                        ->second;
+                                    ->second;
                         }
                     }
                 }
@@ -2771,36 +2766,38 @@ void MeshGraph::ReadExpansionInfo()
                     {
                         expansionMap = SetUpExpansionInfoMap();
                         m_expansionMapShPtrMap["DefaultVar"] = expansionMap;
-                            
+
                         fieldDomainCompList["DefaultVar"] = domainCompList;
-                        for (auto c = compositeVector.begin(); c != 
-                                 compositeVector.end(); ++c)
+                        for (auto c = compositeVector.begin();
+                             c != compositeVector.end(); ++c)
                         {
                             fieldDomainCompList.find("DefaultVar")
-                                ->second.find(c->first)->second = true;
+                                ->second.find(c->first)
+                                ->second = true;
                         }
                     }
                     else
                     {
-                        for (auto c = compositeVector.begin(); c != 
-                             compositeVector.end(); ++c)
+                        for (auto c = compositeVector.begin();
+                             c != compositeVector.end(); ++c)
                         {
                             if (fieldDomainCompList.find("DefaultVar")
-                                    ->second.find(c->first)->second ==false) 
+                                    ->second.find(c->first)
+                                    ->second == false)
                             {
-                                    fieldDomainCompList.find("DefaultVar")
-                                    ->second.find(c->first)->second = true;
+                                fieldDomainCompList.find("DefaultVar")
+                                    ->second.find(c->first)
+                                    ->second = true;
                             }
                             else
                             {
                                 ASSERTL0(false, "Default expansion already "
-                                                "defined for C[" + 
-                                                to_string(c->first) + "].");
+                                                "defined for C[" +
+                                                    to_string(c->first) + "].");
                             }
                         }
                         expansionMap =
-                            m_expansionMapShPtrMap.find("DefaultVar")
-                                    ->second;
+                            m_expansionMapShPtrMap.find("DefaultVar")->second;
                     }
                 }
 
@@ -2845,7 +2842,8 @@ void MeshGraph::ReadExpansionInfo()
                     // nummodes ");
                     if (m_session)
                     {
-                        LibUtilities::Equation nummodesEqn(m_session->GetInterpreter(), nummodesStr);
+                        LibUtilities::Equation nummodesEqn(
+                            m_session->GetInterpreter(), nummodesStr);
                         num_modes = (int)nummodesEqn.Evaluate();
                     }
                     else
@@ -2898,8 +2896,8 @@ void MeshGraph::ReadExpansionInfo()
 
                     std::string numModesStr = nModesStr;
                     std::vector<unsigned int> numModes;
-                    valid = ParseUtils::GenerateVector(
-                        numModesStr.c_str(), numModes);
+                    valid = ParseUtils::GenerateVector(numModesStr.c_str(),
+                                                       numModes);
                     ASSERTL0(valid,
                              "Unable to correctly parse the number of modes.");
                     ASSERTL0(numModes.size() == basis.size(),
@@ -2913,8 +2911,8 @@ void MeshGraph::ReadExpansionInfo()
                     // interpret the points type string.
                     std::vector<std::string> pointsStrings;
                     std::vector<LibUtilities::PointsType> points;
-                    valid = ParseUtils::GenerateVector(
-                        pointsTypeStr.c_str(), pointsStrings);
+                    valid = ParseUtils::GenerateVector(pointsTypeStr.c_str(),
+                                                       pointsStrings);
                     ASSERTL0(valid,
                              "Unable to correctly parse the points types.");
                     for (vector<std::string>::size_type i = 0;
@@ -2945,8 +2943,8 @@ void MeshGraph::ReadExpansionInfo()
                                          "EXPANSION section of input");
                     std::string numPointsStr = nPointsStr;
                     std::vector<unsigned int> numPoints;
-                    valid = ParseUtils::GenerateVector(
-                        numPointsStr.c_str(), numPoints);
+                    valid = ParseUtils::GenerateVector(numPointsStr.c_str(),
+                                                       numPoints);
                     ASSERTL0(valid,
                              "Unable to correctly parse the number of points.");
                     ASSERTL0(numPoints.size() == numPoints.size(),
@@ -3002,47 +3000,57 @@ void MeshGraph::ReadExpansionInfo()
             // Check if all the domain has been defined for the existing fields
             // excluding DefaultVar. Fill the absent composites of a field if
             // the DefaultVar is defined for that composite
-            for (auto f = fieldDomainCompList.begin(); f !=
-                 fieldDomainCompList.end(); ++f)
+            for (auto f = fieldDomainCompList.begin();
+                 f != fieldDomainCompList.end(); ++f)
             {
-                    if (f->first != "DefaultVar")
+                if (f->first != "DefaultVar")
                 {
                     for (auto c = f->second.begin(); c != f->second.end(); ++c)
                     {
-                        if (c->second == false && 
-                            fieldDomainCompList.find("DefaultVar")->second
-                            .find(c->first)->second == true)
+                        if (c->second == false &&
+                            fieldDomainCompList.find("DefaultVar")
+                                    ->second.find(c->first)
+                                    ->second == true)
                         {
                             // Copy DefaultVar into the missing composite
                             // by cycling through the element list.
-                                for (auto geomVecIter = m_meshComposites.find(c->
-                                     first)->second->m_geomVec.begin();
-                                 geomVecIter != m_meshComposites.find(c->first)->
-                                     second->m_geomVec.end();
+                            for (auto geomVecIter =
+                                     m_meshComposites.find(c->first)
+                                         ->second->m_geomVec.begin();
+                                 geomVecIter != m_meshComposites.find(c->first)
+                                                    ->second->m_geomVec.end();
                                  ++geomVecIter)
-                                 {
+                            {
                                 auto xDefaultVar =
-                                               m_expansionMapShPtrMap.find("DefaultVar")->
-                                    second->find((*geomVecIter)->GetGlobalID());
+                                    m_expansionMapShPtrMap.find("DefaultVar")
+                                        ->second->find(
+                                            (*geomVecIter)->GetGlobalID());
 
                                 auto xField =
-                                               m_expansionMapShPtrMap.find(f->first)->
-                                    second->find((*geomVecIter)->GetGlobalID());
+                                    m_expansionMapShPtrMap.find(f->first)
+                                        ->second->find(
+                                            (*geomVecIter)->GetGlobalID());
 
-                                (xField->second)->m_basisKeyVector = 
-                                        (xDefaultVar->second)->m_basisKeyVector;
-                                }
+                                (xField->second)->m_basisKeyVector =
+                                    (xDefaultVar->second)->m_basisKeyVector;
+                            }
                             c->second = true;
-                            NEKERROR(ErrorUtil::ewarning,
+                            NEKERROR(
+                                ErrorUtil::ewarning,
                                 (std::string(
-                                    "Using Default expansion definition for "
-                                    "field '") + f->first + "' in composite "
-                                    "C[" + to_string(c->first) + "].").c_str());
+                                     "Using Default expansion definition for "
+                                     "field '") +
+                                 f->first +
+                                 "' in composite "
+                                 "C[" +
+                                 to_string(c->first) + "].")
+                                    .c_str());
                         }
                         ASSERTL0(c->second, "There is no expansion defined for "
-                                                 "variable '" + f->first + "' in C["+
-                                                 to_string(c->first) + "].");
-                        }
+                                            "variable '" +
+                                                f->first + "' in C[" +
+                                                to_string(c->first) + "].");
+                    }
                 }
             }
             // Ensure m_expansionMapShPtrMap has an entry for all variables
@@ -3053,33 +3061,39 @@ void MeshGraph::ReadExpansionInfo()
                 {
                     if (m_expansionMapShPtrMap.count("DefaultVar"))
                     {
-                        expansionMap = m_expansionMapShPtrMap.find("DefaultVar")
-                                           ->second;
+                        expansionMap =
+                            m_expansionMapShPtrMap.find("DefaultVar")->second;
                         m_expansionMapShPtrMap[vars[i]] = expansionMap;
 
-                        NEKERROR(ErrorUtil::ewarning,
+                        NEKERROR(
+                            ErrorUtil::ewarning,
                             (std::string(
                                  "Using Default expansion definition for field "
-                                 "'") + vars[i] + "'.").c_str());
+                                 "'") +
+                             vars[i] + "'.")
+                                .c_str());
                     }
                     else
                     {
-                               ASSERTL0(false,        "Variable '" + vars[i] + "' is missing"
+                        ASSERTL0(false, "Variable '" + vars[i] +
+                                            "' is missing"
                                             " in FIELDS attribute of EXPANSIONS"
-                                        " tag.");
+                                            " tag.");
                     }
                 }
             }
-                // Define "DefaultVar" if not set by user.
+            // Define "DefaultVar" if not set by user.
             if (m_expansionMapShPtrMap.count("DefaultVar") == 0)
             {
-                // Originally assignment was using m_expansionMapShPtrMap["DefaultVar"] =
-                // m_expansionMapShPtrMap.begin()->second; but on certain macOS versions,
-                // this was causing a seg fault so switched to storing addr first - see #271
+                // Originally assignment was using
+                // m_expansionMapShPtrMap["DefaultVar"] =
+                // m_expansionMapShPtrMap.begin()->second; but on certain macOS
+                // versions, this was causing a seg fault so switched to storing
+                // addr first - see #271
                 ExpansionInfoMapShPtr firstEntryAddr =
-                        m_expansionMapShPtrMap.begin()->second;
-                       m_expansionMapShPtrMap["DefaultVar"] = firstEntryAddr;
-                }
+                    m_expansionMapShPtrMap.begin()->second;
+                m_expansionMapShPtrMap["DefaultVar"] = firstEntryAddr;
+            }
         }
         else if (expType == "H")
         {
@@ -3090,11 +3104,11 @@ void MeshGraph::ReadExpansionInfo()
             // Collect all composites of the domain to control which
             // composites are defined for each variable.
             map<int, bool> domainCompList;
-                for (int d = 0; d < m_domain.size(); ++d)
+            for (auto &d : m_domain)
             {
-                for (auto c = m_domain[d].begin(); c != m_domain[d].end(); ++c)
+                for (auto &c : d.second)
                 {
-                    domainCompList[c->first] = false;
+                    domainCompList[c.first] = false;
                 }
             }
             map<std::string, map<int, bool>> fieldDomainCompList;
@@ -3120,13 +3134,13 @@ void MeshGraph::ReadExpansionInfo()
                 if (fStr) // extract fields.
                 {
                     std::string fieldStr = fStr;
-                    bool valid = ParseUtils::GenerateVector(
-                                            fieldStr.c_str(), fieldStrings);
+                    bool valid = ParseUtils::GenerateVector(fieldStr.c_str(),
+                                                            fieldStrings);
                     ASSERTL0(valid, "Unable to correctly parse the field "
                                     "string in ExpansionTypes.");
 
                     // see if field exists
-                    if(m_expansionMapShPtrMap.count(fieldStrings[0]))
+                    if (m_expansionMapShPtrMap.count(fieldStrings[0]))
                     {
                         expansionMap =
                             m_expansionMapShPtrMap.find(fieldStrings[0])
@@ -3142,52 +3156,56 @@ void MeshGraph::ReadExpansionInfo()
                     for (i = 0; i < fieldStrings.size(); ++i)
                     {
                         if (vars.size() && std::count(vars.begin(), vars.end(),
-                                       fieldStrings[i]) == 0)
+                                                      fieldStrings[i]) == 0)
                         {
                             ASSERTL0(false, "Variable '" + fieldStrings[i] +
-                                            "' defined in EXPANSIONS is not"
-                                            " defined in VARIABLES.");
+                                                "' defined in EXPANSIONS is not"
+                                                " defined in VARIABLES.");
                         }
 
                         if (m_expansionMapShPtrMap.count(fieldStrings[i]) == 0)
                         {
                             m_expansionMapShPtrMap[fieldStrings[i]] =
-                                    expansionMap;
+                                expansionMap;
 
                             // set true to the composites where expansion is
                             // defined
-                                fieldDomainCompList[fieldStrings[i]] =
+                            fieldDomainCompList[fieldStrings[i]] =
                                 domainCompList;
-                            for (auto c = compositeVector.begin(); c != 
-                                     compositeVector.end(); ++c)
-                                {
+                            for (auto c = compositeVector.begin();
+                                 c != compositeVector.end(); ++c)
+                            {
                                 fieldDomainCompList.find(fieldStrings[i])
                                     ->second.find(c->first)
-                                               ->second = true;
+                                    ->second = true;
                             }
                         }
                         else
                         {
-                            for (auto c = compositeVector.begin(); c != 
-                                 compositeVector.end(); ++c)
+                            for (auto c = compositeVector.begin();
+                                 c != compositeVector.end(); ++c)
                             {
                                 if (fieldDomainCompList.find(fieldStrings[i])
-                                        ->second.find(c->first)->second ==false)
+                                        ->second.find(c->first)
+                                        ->second == false)
                                 {
                                     fieldDomainCompList.find(fieldStrings[i])
-                                        ->second.find(c->first)->second = true;
+                                        ->second.find(c->first)
+                                        ->second = true;
                                 }
                                 else
                                 {
-                                    ASSERTL0(false, "Expansion vector for " 
-                                                    "variable '"+fieldStrings[i]
-                                                    +"' is already setup for C["
-                                                    +to_string(c->first) +"].");
+                                    ASSERTL0(false,
+                                             "Expansion vector for "
+                                             "variable '" +
+                                                 fieldStrings[i] +
+                                                 "' is already setup for C[" +
+                                                 to_string(c->first) + "].");
                                 }
                             }
                             expansionMap =
-                                    m_expansionMapShPtrMap.find(fieldStrings[i])
-                                        ->second;
+                                m_expansionMapShPtrMap.find(fieldStrings[i])
+                                    ->second;
                         }
                     }
                 }
@@ -3199,34 +3217,36 @@ void MeshGraph::ReadExpansionInfo()
                         m_expansionMapShPtrMap["DefaultVar"] = expansionMap;
 
                         fieldDomainCompList["DefaultVar"] = domainCompList;
-                        for (auto c = compositeVector.begin(); c != 
-                                 compositeVector.end(); ++c)
+                        for (auto c = compositeVector.begin();
+                             c != compositeVector.end(); ++c)
                         {
                             fieldDomainCompList.find("DefaultVar")
-                                ->second.find(c->first)->second = true;
+                                ->second.find(c->first)
+                                ->second = true;
                         }
                     }
                     else
                     {
-                        for (auto c = compositeVector.begin(); c != 
-                             compositeVector.end(); ++c)
+                        for (auto c = compositeVector.begin();
+                             c != compositeVector.end(); ++c)
                         {
                             if (fieldDomainCompList.find("DefaultVar")
-                                    ->second.find(c->first)->second ==false) 
+                                    ->second.find(c->first)
+                                    ->second == false)
                             {
                                 fieldDomainCompList.find("DefaultVar")
-                                    ->second.find(c->first)->second = true;
+                                    ->second.find(c->first)
+                                    ->second = true;
                             }
                             else
                             {
                                 ASSERTL0(false, "Default expansion already "
-                                                "defined for C[" + 
-                                                to_string(c->first) + "].");
+                                                "defined for C[" +
+                                                    to_string(c->first) + "].");
                             }
                         }
                         expansionMap =
-                            m_expansionMapShPtrMap.find("DefaultVar")
-                                    ->second;
+                            m_expansionMapShPtrMap.find("DefaultVar")->second;
                     }
                 }
 
@@ -3264,7 +3284,8 @@ void MeshGraph::ReadExpansionInfo()
 
                     if (m_session)
                     {
-                        LibUtilities::Equation nummodesEqn(m_session->GetInterpreter(), nummodesStr);
+                        LibUtilities::Equation nummodesEqn(
+                            m_session->GetInterpreter(), nummodesStr);
                         num_modes_x = (int)nummodesEqn.Evaluate();
                     }
                     else
@@ -3296,7 +3317,8 @@ void MeshGraph::ReadExpansionInfo()
                     // nummodes ");
                     if (m_session)
                     {
-                        LibUtilities::Equation nummodesEqn(m_session->GetInterpreter(), nummodesStr);
+                        LibUtilities::Equation nummodesEqn(
+                            m_session->GetInterpreter(), nummodesStr);
                         num_modes_y = (int)nummodesEqn.Evaluate();
                     }
                     else
@@ -3328,7 +3350,8 @@ void MeshGraph::ReadExpansionInfo()
                     // nummodes ");
                     if (m_session)
                     {
-                        LibUtilities::Equation nummodesEqn(m_session->GetInterpreter(), nummodesStr);
+                        LibUtilities::Equation nummodesEqn(
+                            m_session->GetInterpreter(), nummodesStr);
                         num_modes_z = (int)nummodesEqn.Evaluate();
                     }
                     else
@@ -3360,50 +3383,60 @@ void MeshGraph::ReadExpansionInfo()
 
                 expansion = expansion->NextSiblingElement("H");
             }
-            
+
             // Check if all the domain has been defined for the existing fields
             // excluding DefaultVar. Fill the absent composites of a field if
             // the DefaultVar is defined for that composite
-            for (auto f = fieldDomainCompList.begin(); f !=
-                 fieldDomainCompList.end(); ++f)
+            for (auto f = fieldDomainCompList.begin();
+                 f != fieldDomainCompList.end(); ++f)
             {
-                    if (f->first != "DefaultVar")
+                if (f->first != "DefaultVar")
                 {
                     for (auto c = f->second.begin(); c != f->second.end(); ++c)
                     {
-                        if (c->second == false && 
-                            fieldDomainCompList.find("DefaultVar")->second
-                            .find(c->first)->second == true)
+                        if (c->second == false &&
+                            fieldDomainCompList.find("DefaultVar")
+                                    ->second.find(c->first)
+                                    ->second == true)
                         {
                             // Copy DefaultVar into the missing composite
                             // by cycling through the element list.
-                            for (auto geomVecIter = m_meshComposites.find(c->
-                                 first)->second->m_geomVec.begin();
-                                 geomVecIter != m_meshComposites.find(c->first)->
-                                 second->m_geomVec.end();
+                            for (auto geomVecIter =
+                                     m_meshComposites.find(c->first)
+                                         ->second->m_geomVec.begin();
+                                 geomVecIter != m_meshComposites.find(c->first)
+                                                    ->second->m_geomVec.end();
                                  ++geomVecIter)
                             {
                                 auto xDefaultVar =
-                                    m_expansionMapShPtrMap.find("DefaultVar")->
-                                    second->find((*geomVecIter)->GetGlobalID());
+                                    m_expansionMapShPtrMap.find("DefaultVar")
+                                        ->second->find(
+                                            (*geomVecIter)->GetGlobalID());
 
                                 auto xField =
-                                    m_expansionMapShPtrMap.find(f->first)->
-                                    second->find((*geomVecIter)->GetGlobalID());
+                                    m_expansionMapShPtrMap.find(f->first)
+                                        ->second->find(
+                                            (*geomVecIter)->GetGlobalID());
 
-                                (xField->second)->m_basisKeyVector = 
-                                        (xDefaultVar->second)->m_basisKeyVector;
+                                (xField->second)->m_basisKeyVector =
+                                    (xDefaultVar->second)->m_basisKeyVector;
                             }
                             c->second = true;
-                            NEKERROR(ErrorUtil::ewarning,
+                            NEKERROR(
+                                ErrorUtil::ewarning,
                                 (std::string(
-                                    "Using Default expansion definition for "
-                                    "field '") + f->first + "' in composite "
-                                    "C[" + to_string(c->first) + "].").c_str());
+                                     "Using Default expansion definition for "
+                                     "field '") +
+                                 f->first +
+                                 "' in composite "
+                                 "C[" +
+                                 to_string(c->first) + "].")
+                                    .c_str());
                         }
                         ASSERTL0(c->second, "There is no expansion defined for "
-                                            "variable '" + f->first + "' in C["+
-                                            to_string(c->first) + "].");
+                                            "variable '" +
+                                                f->first + "' in C[" +
+                                                to_string(c->first) + "].");
                     }
                 }
             }
@@ -3415,34 +3448,38 @@ void MeshGraph::ReadExpansionInfo()
                 {
                     if (m_expansionMapShPtrMap.count("DefaultVar"))
                     {
-                        expansionMap = m_expansionMapShPtrMap.find("DefaultVar")
-                                           ->second;
+                        expansionMap =
+                            m_expansionMapShPtrMap.find("DefaultVar")->second;
                         m_expansionMapShPtrMap[vars[i]] = expansionMap;
 
-                        NEKERROR(ErrorUtil::ewarning,
+                        NEKERROR(
+                            ErrorUtil::ewarning,
                             (std::string(
                                  "Using Default expansion definition for field "
-                                 "'") + vars[i] + "'.").c_str());
+                                 "'") +
+                             vars[i] + "'.")
+                                .c_str());
                     }
                     else
                     {
-                        ASSERTL0(false, "Variable '" + vars[i] + "' is missing"
-                                        " in FIELDS attribute of EXPANSIONS"
-                                        " tag.");
+                        ASSERTL0(false, "Variable '" + vars[i] +
+                                            "' is missing"
+                                            " in FIELDS attribute of EXPANSIONS"
+                                            " tag.");
                     }
                 }
             }
-                // Define "DefaultVar" if not set by user.
+            // Define "DefaultVar" if not set by user.
             if (m_expansionMapShPtrMap.count("DefaultVar") == 0)
             {
-                // Originally assignment was using 
+                // Originally assignment was using
                 // m_expansionMapShPtrMap["DefaultVar"] =
                 // m_expansionMapShPtrMap.begin()->second; but on certain macOS
                 // versions, This was causing a seg fault so switched to
                 // storing addr first - see #271
                 ExpansionInfoMapShPtr firstEntryAddr =
-                        m_expansionMapShPtrMap.begin()->second;
-                       m_expansionMapShPtrMap["DefaultVar"] = firstEntryAddr;
+                    m_expansionMapShPtrMap.begin()->second;
+                m_expansionMapShPtrMap["DefaultVar"] = firstEntryAddr;
             }
         }
         else if (expType ==
@@ -3453,9 +3490,11 @@ void MeshGraph::ReadExpansionInfo()
             // This has to use the XML reader since we are treating the already
             // parsed XML as a standard FLD file.
             std::shared_ptr<LibUtilities::FieldIOXml> f =
-                make_shared<LibUtilities::FieldIOXml>(m_session->GetComm(), false);
-            f->ImportFieldDefs(LibUtilities::XmlDataSource::create(m_session->GetDocument()),
-                               fielddefs, true);
+                make_shared<LibUtilities::FieldIOXml>(m_session->GetComm(),
+                                                      false);
+            f->ImportFieldDefs(
+                LibUtilities::XmlDataSource::create(m_session->GetDocument()),
+                fielddefs, true);
             cout << "    Number of elements: " << fielddefs.size() << endl;
             SetExpansionInfo(fielddefs);
         }
@@ -3493,9 +3532,9 @@ GeometryLinkSharedPtr MeshGraph::GetElementsFromEdge(Geometry1DSharedPtr edge)
     TriGeomSharedPtr triGeomShPtr;
     QuadGeomSharedPtr quadGeomShPtr;
 
-    for (int d = 0; d < m_domain.size(); ++d)
+    for (auto &d : m_domain)
     {
-        for (auto compIter = m_domain[d].begin(); compIter != m_domain[d].end();
+        for (auto compIter = d.second.begin(); compIter != d.second.end();
              ++compIter)
         {
             for (auto &geomIter : compIter->second->m_geomVec)
@@ -3545,9 +3584,9 @@ LibUtilities::BasisKey MeshGraph::GetEdgeBasisKey(SegGeomSharedPtr edge,
     // in case elements->size!=1, all elements to which
     // the edge belongs have the same type and order of
     // expansion such that no confusion can arise.
-    GeometrySharedPtr geom   = elmts->at(0).first;
+    GeometrySharedPtr geom       = elmts->at(0).first;
     ExpansionInfoShPtr expansion = GetExpansionInfo(geom, variable);
-    int edge_id              = elmts->at(0).second;
+    int edge_id                  = elmts->at(0).second;
     if (geom->GetShapeType() == LibUtilities::eTriangle)
     {
         edge_id = (edge_id) ? 1 : 0;
@@ -3593,35 +3632,32 @@ LibUtilities::BasisKey MeshGraph::GetEdgeBasisKey(SegGeomSharedPtr edge,
             break;
             case LibUtilities::eOrtho_B: // Assume this is called from nodal
                                          // triangular basis
+            {
+                switch (expansion->m_basisKeyVector[edge_id].GetPointsType())
                 {
-                    switch (
-                        expansion->m_basisKeyVector[edge_id].GetPointsType())
+                    case LibUtilities::eGaussRadauMAlpha1Beta0:
                     {
-                        case LibUtilities::eGaussRadauMAlpha1Beta0:
-                        {
-                            const LibUtilities::PointsKey pkey(
-                                numpoints + 1,
-                                LibUtilities::eGaussLobattoLegendre);
-                            return LibUtilities::BasisKey(
-                                LibUtilities::eGLL_Lagrange, nummodes, pkey);
-                        }
-                        break;
-                        default:
-                            ASSERTL0(false, "Unexpected points distribution");
-                            // It doesn't matter what we return
-                            // here since the ASSERT will stop
-                            // execution.  Just return something
-                            // to prevent warnings messages.
-                            const LibUtilities::PointsKey pkey(
-                                numpoints + 1,
-                                LibUtilities::eGaussLobattoLegendre);
-                            return LibUtilities::BasisKey(
-                                expansion->m_basisKeyVector[0].GetBasisType(),
-                                nummodes, pkey);
-                            break;
+                        const LibUtilities::PointsKey pkey(
+                            numpoints + 1, LibUtilities::eGaussLobattoLegendre);
+                        return LibUtilities::BasisKey(
+                            LibUtilities::eGLL_Lagrange, nummodes, pkey);
                     }
+                    break;
+                    default:
+                        ASSERTL0(false, "Unexpected points distribution");
+                        // It doesn't matter what we return
+                        // here since the ASSERT will stop
+                        // execution.  Just return something
+                        // to prevent warnings messages.
+                        const LibUtilities::PointsKey pkey(
+                            numpoints + 1, LibUtilities::eGaussLobattoLegendre);
+                        return LibUtilities::BasisKey(
+                            expansion->m_basisKeyVector[0].GetBasisType(),
+                            nummodes, pkey);
+                        break;
                 }
-                break;
+            }
+            break;
             case LibUtilities::eModified_B:
             {
                 switch (expansion->m_basisKeyVector[edge_id].GetPointsType())
@@ -3732,7 +3768,7 @@ LibUtilities::BasisKey MeshGraph::GetFaceBasisKey(Geometry2DSharedPtr face,
     // arise.
     // Get the Expansion structure detailing the basis keys used for
     // this element.
-    GeometrySharedPtr geom   = elements->at(0).first;
+    GeometrySharedPtr geom       = elements->at(0).first;
     ExpansionInfoShPtr expansion = GetExpansionInfo(geom, variable);
     ASSERTL0(expansion, "Could not find expansion connected to face " +
                             boost::lexical_cast<string>(face->GetGlobalID()));
@@ -3744,7 +3780,7 @@ LibUtilities::BasisKey MeshGraph::GetFaceBasisKey(Geometry2DSharedPtr face,
     // direction of the element which corresponds to the requested
     // coordinate direction of the given face.
     int dir = geom3d->GetDir(elements->at(0).second, facedir);
-        
+
     if (face->GetNumVerts() == 3)
     {
         return StdRegions::EvaluateTriFaceBasisKey(
@@ -3754,16 +3790,16 @@ LibUtilities::BasisKey MeshGraph::GetFaceBasisKey(Geometry2DSharedPtr face,
     }
     else
     {
-     
-        // Check face orientationa to see if it should be transposed 
+
+        // Check face orientationa to see if it should be transposed
         StdRegions::Orientation orient =
             geom3d->GetForient(elements->at(0).second);
         // revese direction if face rotated so dir1 aligned to dir2
-        if(orient >= StdRegions::eDir1FwdDir2_Dir2FwdDir1)
+        if (orient >= StdRegions::eDir1FwdDir2_Dir2FwdDir1)
         {
-            dir = (dir == 0)? 1: 0;
+            dir = (dir == 0) ? 1 : 0;
         }
-        
+
         return StdRegions::EvaluateQuadFaceBasisKey(
             facedir, expansion->m_basisKeyVector[dir].GetBasisType(),
             expansion->m_basisKeyVector[dir].GetNumPoints(),
@@ -3836,7 +3872,7 @@ std::map<int, MeshEntity> MeshGraph::CreateMeshEntities()
                 e.id = e.origId = i.first;
                 e.list.push_back(i.second->GetVertex(0)->GetGlobalID());
                 e.list.push_back(i.second->GetVertex(1)->GetGlobalID());
-                e.ghost = false;
+                e.ghost        = false;
                 elements[e.id] = e;
             }
         }
@@ -3850,7 +3886,7 @@ std::map<int, MeshEntity> MeshGraph::CreateMeshEntities()
                 e.list.push_back(i.second->GetEdge(0)->GetGlobalID());
                 e.list.push_back(i.second->GetEdge(1)->GetGlobalID());
                 e.list.push_back(i.second->GetEdge(2)->GetGlobalID());
-                e.ghost = false;
+                e.ghost        = false;
                 elements[e.id] = e;
             }
             for (auto &i : m_quadGeoms)
@@ -3861,7 +3897,7 @@ std::map<int, MeshEntity> MeshGraph::CreateMeshEntities()
                 e.list.push_back(i.second->GetEdge(1)->GetGlobalID());
                 e.list.push_back(i.second->GetEdge(2)->GetGlobalID());
                 e.list.push_back(i.second->GetEdge(3)->GetGlobalID());
-                e.ghost = false;
+                e.ghost        = false;
                 elements[e.id] = e;
             }
         }
@@ -3876,7 +3912,7 @@ std::map<int, MeshEntity> MeshGraph::CreateMeshEntities()
                 e.list.push_back(i.second->GetFace(1)->GetGlobalID());
                 e.list.push_back(i.second->GetFace(2)->GetGlobalID());
                 e.list.push_back(i.second->GetFace(3)->GetGlobalID());
-                e.ghost = false;
+                e.ghost        = false;
                 elements[e.id] = e;
             }
             for (auto &i : m_pyrGeoms)
@@ -3888,7 +3924,7 @@ std::map<int, MeshEntity> MeshGraph::CreateMeshEntities()
                 e.list.push_back(i.second->GetFace(2)->GetGlobalID());
                 e.list.push_back(i.second->GetFace(3)->GetGlobalID());
                 e.list.push_back(i.second->GetFace(4)->GetGlobalID());
-                e.ghost = false;
+                e.ghost        = false;
                 elements[e.id] = e;
             }
             for (auto &i : m_prismGeoms)
@@ -3900,7 +3936,7 @@ std::map<int, MeshEntity> MeshGraph::CreateMeshEntities()
                 e.list.push_back(i.second->GetFace(2)->GetGlobalID());
                 e.list.push_back(i.second->GetFace(3)->GetGlobalID());
                 e.list.push_back(i.second->GetFace(4)->GetGlobalID());
-                e.ghost = false;
+                e.ghost        = false;
                 elements[e.id] = e;
             }
             for (auto &i : m_hexGeoms)
@@ -3913,7 +3949,7 @@ std::map<int, MeshEntity> MeshGraph::CreateMeshEntities()
                 e.list.push_back(i.second->GetFace(3)->GetGlobalID());
                 e.list.push_back(i.second->GetFace(4)->GetGlobalID());
                 e.list.push_back(i.second->GetFace(5)->GetGlobalID());
-                e.ghost = false;
+                e.ghost        = false;
                 elements[e.id] = e;
             }
         }
@@ -3944,15 +3980,15 @@ CompositeDescriptor MeshGraph::CreateCompositeDescriptor()
     return ret;
 }
 
-
 void MeshGraph::SetDomainRange(NekDouble xmin, NekDouble xmax, NekDouble ymin,
-                        NekDouble ymax, NekDouble zmin, NekDouble zmax)
+                               NekDouble ymax, NekDouble zmin, NekDouble zmax)
 {
     m_domainRange->m_checkShape = false;
 
     if (m_domainRange == LibUtilities::NullDomainRangeShPtr)
     {
-        m_domainRange = MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
+        m_domainRange =
+            MemoryManager<LibUtilities::DomainRange>::AllocateSharedPtr();
         m_domainRange->m_doXrange = true;
     }
 
@@ -3982,5 +4018,5 @@ void MeshGraph::SetDomainRange(NekDouble xmin, NekDouble xmax, NekDouble ymin,
     }
 }
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar

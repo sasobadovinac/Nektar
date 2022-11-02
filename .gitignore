@@ -19,3 +19,5 @@ ThirdParty
 # Sublime project files
 *.sublime-project
 *.sublime-workspace
+# CLion build directories
+cmake-build-*

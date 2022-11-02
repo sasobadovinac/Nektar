@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.cpp
+//  File: ProcessOptiExtract.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,14 +28,14 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Calculate Jacobians of elements.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <boost/algorithm/string.hpp>
 
-#include <NekMesh/MeshElements/Element.h>
 #include "ProcessOptiExtract.h"
+#include <NekMesh/MeshElements/Element.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -47,8 +47,7 @@ namespace NekMesh
 
 ModuleKey ProcessOptiExtract::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "opti"),
-        ProcessOptiExtract::create,
+        ModuleKey(eProcessModule, "opti"), ProcessOptiExtract::create,
         "Pulls out blobs for linear elastic solver.");
 
 ProcessOptiExtract::ProcessOptiExtract(MeshSharedPtr m) : ProcessModule(m)
@@ -146,7 +145,8 @@ void ProcessOptiExtract::Process()
                             continue;
                         }
 
-                        auto t = inmesh.insert(f[k]->m_elLink[l].first.lock()->GetId());
+                        auto t = inmesh.insert(
+                            f[k]->m_elLink[l].first.lock()->GetId());
                         if (t.second)
                         {
                             m_mesh->m_element[m_mesh->m_expDim].push_back(
@@ -207,9 +207,7 @@ void ProcessOptiExtract::Process()
                     vector<int> tags;
                     tags.push_back(1);
                     ElementSharedPtr E = GetElementFactory().CreateInstance(
-                        LibUtilities::eTriangle,
-                        conf,
-                        f[j]->m_vertexList,
+                        LibUtilities::eTriangle, conf, f[j]->m_vertexList,
                         tags);
                     m_mesh->m_element[m_mesh->m_expDim - 1].push_back(E);
                 }
@@ -296,7 +294,7 @@ void ProcessOptiExtract::Process()
     {
         // insert other mesh
         MeshSharedPtr inp_mesh = std::shared_ptr<Mesh>(new Mesh());
-        ModuleSharedPtr mod = GetModuleFactory().CreateInstance(
+        ModuleSharedPtr mod    = GetModuleFactory().CreateInstance(
             ModuleKey(eInputModule, "xml"), inp_mesh);
         mod->RegisterConfig("infile", ins);
         mod->Process();
@@ -317,9 +315,9 @@ void ProcessOptiExtract::Process()
             {
                 auto s          = nmap.find(node->m_id);
                 NodeSharedPtr n = s->second;
-                node->m_x = n->m_x;
-                node->m_y = n->m_y;
-                node->m_z = n->m_z;
+                node->m_x       = n->m_x;
+                node->m_y       = n->m_y;
+                node->m_z       = n->m_z;
             }
         }
 
@@ -344,5 +342,5 @@ void ProcessOptiExtract::Process()
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

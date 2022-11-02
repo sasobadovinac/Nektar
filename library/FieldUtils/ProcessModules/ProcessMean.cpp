@@ -47,10 +47,9 @@ namespace Nektar
 namespace FieldUtils
 {
 
-ModuleKey ProcessMean::className =
-    GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "mean"), ProcessMean::create,
-        "compute the mean of each field over the domain.");
+ModuleKey ProcessMean::className = GetModuleFactory().RegisterCreatorFunction(
+    ModuleKey(eProcessModule, "mean"), ProcessMean::create,
+    "compute the mean of each field over the domain.");
 
 ProcessMean::ProcessMean(FieldSharedPtr f) : ProcessModule(f)
 {
@@ -89,5 +88,5 @@ void ProcessMean::Process(po::variables_map &vm)
         }
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

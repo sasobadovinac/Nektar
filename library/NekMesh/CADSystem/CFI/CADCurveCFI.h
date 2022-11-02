@@ -98,7 +98,7 @@ private:
     cfi::Line *m_cfiEdge;
     NekDouble m_scal;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

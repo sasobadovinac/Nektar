@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EulerCFE.h
+// File: EulerCFE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Euler equations in conservative variables without artificial diffusion
+// Description: Euler equations in conservative variables without artificial
+// diffusion
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -40,32 +41,39 @@
 namespace Nektar
 {
 
-    class EulerCFE : public CompressibleFlowSystem
+class EulerCFE : public CompressibleFlowSystem
+{
+public:
+    friend class MemoryManager<EulerCFE>;
+
+    /// Creates an instance of this class.
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<EulerCFE>;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<EulerCFE>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
+    /// Name of class.
+    static std::string className, className2;
 
-        /// Creates an instance of this class.
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            SolverUtils::EquationSystemSharedPtr p = MemoryManager<EulerCFE>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
-        /// Name of class.
-        static std::string className, className2;
+    virtual ~EulerCFE();
 
-        virtual ~EulerCFE();
+protected:
+    EulerCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
+             const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    protected:
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
-        EulerCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
-                 const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    void v_DoDiffusion(
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override final;
 
-        virtual void v_InitObject();
-    };
-}
+    virtual bool SupportsShockCaptType(const std::string type) const override;
+};
+} // namespace Nektar
 #endif

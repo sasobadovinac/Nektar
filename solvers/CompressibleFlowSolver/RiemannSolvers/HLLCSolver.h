@@ -39,26 +39,27 @@
 
 namespace Nektar
 {
-    class HLLCSolver : public CompressibleSolver
+class HLLCSolver : public CompressibleSolver
+{
+public:
+    static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        static RiemannSolverSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            return RiemannSolverSharedPtr(new HLLCSolver(pSession));
-        }
+        return RiemannSolverSharedPtr(new HLLCSolver(pSession));
+    }
 
-        static std::string solverName;
+    static std::string solverName;
 
-    protected:
-        HLLCSolver(const LibUtilities::SessionReaderSharedPtr& pSession);
+protected:
+    HLLCSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
 
-        virtual void v_PointSolve(
-            NekDouble  rhoL, NekDouble  rhouL, NekDouble  rhovL, NekDouble  rhowL, NekDouble  EL,
-            NekDouble  rhoR, NekDouble  rhouR, NekDouble  rhovR, NekDouble  rhowR, NekDouble  ER,
-            NekDouble &rhof, NekDouble &rhouf, NekDouble &rhovf, NekDouble &rhowf, NekDouble &Ef);
-
-    };
-}
+    virtual void v_PointSolve(NekDouble rhoL, NekDouble rhouL, NekDouble rhovL,
+                              NekDouble rhowL, NekDouble EL, NekDouble rhoR,
+                              NekDouble rhouR, NekDouble rhovR, NekDouble rhowR,
+                              NekDouble ER, NekDouble &rhof, NekDouble &rhouf,
+                              NekDouble &rhovf, NekDouble &rhowf,
+                              NekDouble &Ef);
+};
+} // namespace Nektar
 
 #endif

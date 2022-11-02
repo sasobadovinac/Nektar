@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ProtocolS1.cpp
+// File: ProtocolS1.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,101 +32,94 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tinyxml.h>
 #include <CardiacEPSolver/Stimuli/ProtocolS1.h>
+#include <tinyxml.h>
 
 namespace Nektar
 {
-    std::string ProtocolS1::className
-            = GetProtocolFactory().RegisterCreatorFunction(
-                                                   "ProtocolS1",
-                                                   ProtocolS1::create,
-                                                   "S1 stimulus protocol.");
+std::string ProtocolS1::className =
+    GetProtocolFactory().RegisterCreatorFunction(
+        "ProtocolS1", ProtocolS1::create, "S1 stimulus protocol.");
 
-    /**
-     * @class ProtocolS1
-     *
-     * The Stimuli class and derived classes implement a range of stimuli.
-     * The stimulus contains input stimuli that can be applied throughout the
-     * domain, on specified regions determined by the derived classes of
-     * Stimulus, at specified frequencies determined by the derived classes of
-     * Protocol.
-     */
+/**
+ * @class ProtocolS1
+ *
+ * The Stimuli class and derived classes implement a range of stimuli.
+ * The stimulus contains input stimuli that can be applied throughout the
+ * domain, on specified regions determined by the derived classes of
+ * Stimulus, at specified frequencies determined by the derived classes of
+ * Protocol.
+ */
 
-    /**
-     * Protocol base class constructor.
-     */
-    ProtocolS1::ProtocolS1(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const TiXmlElement* pXml)
-        : Protocol(pSession, pXml)
+/**
+ * Protocol base class constructor.
+ */
+ProtocolS1::ProtocolS1(const LibUtilities::SessionReaderSharedPtr &pSession,
+                       const TiXmlElement *pXml)
+    : Protocol(pSession, pXml)
+{
+    m_session = pSession;
+
+    if (!pXml)
     {
-        m_session = pSession;
-
-        if (!pXml)
-        {
-            return;
-        }
-
-        // Declare temporary XML element pointer
-        const TiXmlElement *pXmlparameter;
-
-        // Read each variable, extract text and convert to floating-point
-        pXmlparameter = pXml->FirstChildElement("START");
-        m_start = atof(pXmlparameter->GetText());
-
-        pXmlparameter = pXml->FirstChildElement("DURATION");
-        m_dur = atof(pXmlparameter->GetText());
-
-        pXmlparameter = pXml->FirstChildElement("S1CYCLELENGTH");
-        m_s1cyclelength = atof(pXmlparameter->GetText());
-
-        pXmlparameter = pXml->FirstChildElement("NUM_S1");
-        m_num_s1 = atof(pXmlparameter->GetText());
+        return;
     }
 
+    // Declare temporary XML element pointer
+    const TiXmlElement *pXmlparameter;
 
-    /**
-     * Initialise the protocol. Allocate workspace and variable storage.
-     */
-    void ProtocolS1::Initialise()
-    {
-    }
+    // Read each variable, extract text and convert to floating-point
+    pXmlparameter = pXml->FirstChildElement("START");
+    m_start       = atof(pXmlparameter->GetText());
 
+    pXmlparameter = pXml->FirstChildElement("DURATION");
+    m_dur         = atof(pXmlparameter->GetText());
 
-    /**
-     *
-     */
-    NekDouble ProtocolS1::v_GetAmplitude(const NekDouble time)
-    {
-        // Number of complete S1 intervals
-        NekDouble a = floor((time-m_start)/m_s1cyclelength);
+    pXmlparameter   = pXml->FirstChildElement("S1CYCLELENGTH");
+    m_s1cyclelength = atof(pXmlparameter->GetText());
 
-        // Time since start of most recent S1 interval
-        NekDouble time1 = time - a * m_s1cyclelength - m_start;
-
-        if( (time1 > 0) && (a < m_num_s1) && (time1 < m_dur) )
-        {
-            return 1.0;
-        }
-
-        return 0.0;
-    }
-
-
-    /**
-     *
-     */
-    void ProtocolS1::v_GenerateSummary(SolverUtils::SummaryList& s)
-    {
-    }
-
-
-    /**
-     *
-     */
-    void ProtocolS1::v_SetInitialConditions()
-    {
-    }
-
+    pXmlparameter = pXml->FirstChildElement("NUM_S1");
+    m_num_s1      = atof(pXmlparameter->GetText());
 }
+
+/**
+ * Initialise the protocol. Allocate workspace and variable storage.
+ */
+void ProtocolS1::Initialise()
+{
+}
+
+/**
+ *
+ */
+NekDouble ProtocolS1::v_GetAmplitude(const NekDouble time)
+{
+    // Number of complete S1 intervals
+    NekDouble a = floor((time - m_start) / m_s1cyclelength);
+
+    // Time since start of most recent S1 interval
+    NekDouble time1 = time - a * m_s1cyclelength - m_start;
+
+    if ((time1 > 0) && (a < m_num_s1) && (time1 < m_dur))
+    {
+        return 1.0;
+    }
+
+    return 0.0;
+}
+
+/**
+ *
+ */
+void ProtocolS1::v_GenerateSummary(SolverUtils::SummaryList &s)
+{
+}
+
+/**
+ *
+ */
+void ProtocolS1::v_SetInitialConditions()
+{
+}
+
+} // namespace Nektar

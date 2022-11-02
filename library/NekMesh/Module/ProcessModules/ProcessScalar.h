@@ -69,7 +69,7 @@ public:
         return "ProcessScalar";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

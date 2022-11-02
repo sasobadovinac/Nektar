@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: LocalRegionsDeclspec.h
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -33,14 +35,13 @@
 #define NEKTAR_LOCAL_REGIONS_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef LOCAL_REGIONS_EXPORTS
-        #define LOCAL_REGIONS_EXPORT _declspec(dllexport)
-    #else
-        #define LOCAL_REGIONS_EXPORT _declspec(dllimport)
-    #endif
+#ifdef LOCAL_REGIONS_EXPORTS
+#define LOCAL_REGIONS_EXPORT _declspec(dllexport)
 #else
-    #define LOCAL_REGIONS_EXPORT
+#define LOCAL_REGIONS_EXPORT _declspec(dllimport)
+#endif
+#else
+#define LOCAL_REGIONS_EXPORT
 #endif
 
-#endif //NEKTAR_STD_REGIONS_DECLSPEC_H
-
+#endif // NEKTAR_STD_REGIONS_DECLSPEC_H

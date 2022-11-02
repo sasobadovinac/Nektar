@@ -34,6 +34,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <CompressibleFlowSolver/Preconditioner/PreconCfsBRJ.h>
+#include <LibUtilities/BasicUtils/Timer.h>
 
 using namespace std;
 
@@ -163,20 +164,31 @@ void PreconCfsBRJ::v_DoPreconCfs(
             wspTraceDataType[m] = Array<OneD, NekSingle>(nTracePts);
         }
 
+        LibUtilities::Timer timer;
+        timer.Start();
         PreconBlkDiag(pFields, rhs, outarray, m_PreconMatSingle, tmpSingle);
+        timer.Stop();
+        timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
 
         for (int nrelax = 0; nrelax < nBRJIterTot - 1; nrelax++)
         {
             Vmath::Smul(ntotpnt, OmBRJParam, outarray, 1, outN, 1);
 
+            timer.Start();
             MinusOffDiag2Rhs(
                 pFields, nvariables, npoints, rhs2d, out_2d, flagUpdateDervFlux,
                 FwdFluxDeriv, BwdFluxDeriv, qfield, tmpTrace, wspTraceDataType,
                 m_TraceJacArraySingle, m_TraceJacDerivArraySingle,
                 m_TraceJacDerivSignSingle, m_TraceIPSymJacArraySingle);
+            timer.Stop();
+            timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs", 2);
 
+            timer.Start();
             PreconBlkDiag(pFields, outarray, outTmp, m_PreconMatSingle,
                           tmpSingle);
+            timer.Stop();
+            timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
+
             Vmath::Svtvp(ntotpnt, BRJParam, outTmp, 1, outN, 1, outarray, 1);
         }
     }
@@ -327,9 +339,13 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
     FwdFlux           = wspTrace[indexwspTrace], indexwspTrace++;
     BwdFlux           = wspTrace[indexwspTrace], indexwspTrace++;
 
+    LibUtilities::Timer timer;
     for (int i = 0; i < nvariables; ++i)
     {
+        timer.Start();
         pFields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
+        timer.Stop();
+        timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 10);
     }
 
     int indexwspTraceDataType = 0;
@@ -354,10 +370,11 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         Vmath::Zero(nTracePts, Fwdreslt, 1);
         for (int n = 0; n < nvariables; ++n)
         {
-            Vmath::Vvtvp(nTracePts, TraceJacArray[0][m][n], 1, Fwdarray[n], 1,
-                         Fwdreslt, 1, Fwdreslt, 1);
+            for (int p = 0; p < nTracePts; ++p)
+            {
+                Fwdreslt[p] += TraceJacArray[0][m][n][p] * Fwdarray[n][p];
+            }
         }
-
         for (int i = 0; i < nTracePts; ++i)
         {
             FwdFlux[m][i] = NekDouble(Fwdreslt[i]);
@@ -376,8 +393,10 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         Vmath::Zero(nTracePts, Fwdreslt, 1);
         for (int n = 0; n < nvariables; ++n)
         {
-            Vmath::Vvtvp(nTracePts, TraceJacArray[1][m][n], 1, Fwdarray[n], 1,
-                         Fwdreslt, 1, Fwdreslt, 1);
+            for (int p = 0; p < nTracePts; ++p)
+            {
+                Fwdreslt[p] += TraceJacArray[1][m][n][p] * Fwdarray[n][p];
+            }
         }
         for (int i = 0; i < nTracePts; ++i)
         {
@@ -388,14 +407,20 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
     for (int i = 0; i < nvariables; ++i)
     {
         Vmath::Fill(nCoeffs, 0.0, outarray[i], 1);
+        timer.Start();
         pFields[i]->AddTraceIntegralToOffDiag(FwdFlux[i], BwdFlux[i],
                                               outarray[i]);
+        timer.Stop();
+        timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 10);
     }
 
     for (int i = 0; i < nvariables; ++i)
     {
-        Vmath::Svtvp(nCoeffs, -m_DtLambdaPreconMat, outarray[i], 1, inarray[i],
-                     1, outarray[i], 1);
+        for (int p = 0; p < nCoeffs; ++p)
+        {
+            outarray[i][p] =
+                -m_DtLambdaPreconMat * outarray[i][p] + inarray[i][p];
+        }
     }
 }
 

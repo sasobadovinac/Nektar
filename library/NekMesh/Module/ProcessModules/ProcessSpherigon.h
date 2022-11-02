@@ -35,9 +35,8 @@
 #ifndef UTILITIES_NEKMESH_PROCESSJAC
 #define UTILITIES_NEKMESH_PROCESSJAC
 
-
-#include <NekMesh/Module/Module.h>
 #include "../InputModules/InputPly.h"
+#include <NekMesh/Module/Module.h>
 
 namespace Nektar
 {
@@ -64,23 +63,22 @@ public:
     {
         return "ProcessSpherigon";
     }
+
 protected:
+    void GenerateNormals(std::vector<NekMesh::ElementSharedPtr> &el,
+                         NekMesh::MeshSharedPtr &mesh);
+    NekDouble CrossProdMag(NekMesh::Node &a, NekMesh::Node &b);
+    void UnitCrossProd(NekMesh::Node &a, NekMesh::Node &b, NekMesh::Node &c);
+    NekDouble Blend(NekDouble r);
+    void SuperBlend(std::vector<NekDouble> &r, std::vector<NekMesh::Node> &Q,
+                    NekMesh::Node &P, std::vector<NekDouble> &blend);
 
-    void  GenerateNormals(std::vector<NekMesh::ElementSharedPtr> &el,
-                            NekMesh::MeshSharedPtr &mesh);
-    NekDouble CrossProdMag (NekMesh::Node &a, NekMesh::Node &b);
-    void   UnitCrossProd   (NekMesh::Node &a, NekMesh::Node &b, NekMesh::Node &c);
-    NekDouble Blend        (NekDouble r);
-    void   SuperBlend      (std::vector<NekDouble> &r,
-                            std::vector<NekMesh::Node>   &Q,
-                            NekMesh::Node           &P,
-                            std::vector<NekDouble> &blend);
-
-    void  FindNormalFromPlyFile(NekMesh::MeshSharedPtr &plymesh,
-                                std::map<int,NekMesh::NodeSharedPtr> &surfverts);
+    void FindNormalFromPlyFile(
+        NekMesh::MeshSharedPtr &plymesh,
+        std::map<int, NekMesh::NodeSharedPtr> &surfverts);
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -48,8 +48,7 @@ namespace FieldUtils
 
 ModuleKey OutputStdOut::m_className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eOutputModule, "stdout"),
-        OutputStdOut::create,
+        ModuleKey(eOutputModule, "stdout"), OutputStdOut::create,
         "Writes to stdout");
 
 OutputStdOut::OutputStdOut(FieldSharedPtr f) : OutputModule(f)
@@ -65,5 +64,5 @@ void OutputStdOut::Process(po::variables_map &vm)
     boost::ignore_unused(vm);
 }
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

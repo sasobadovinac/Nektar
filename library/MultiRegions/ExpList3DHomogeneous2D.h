@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpList3DHomogeneous2D.h
+// File: ExpList3DHomogeneous2D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,117 +36,108 @@
 #ifndef EXPLIST3DHOMO2D_H
 #define EXPLIST3DHOMO2D_H
 
+#include <MultiRegions/ExpListHomogeneous2D.h>
 #include <MultiRegions/MultiRegionsDeclspec.h>
 #include <vector>
-#include <MultiRegions/ExpListHomogeneous2D.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
-    {
+namespace MultiRegions
+{
 
-        // Forward declaration for typedefs
-        class ExpList3DHomogeneous2D;
+// Forward declaration for typedefs
+class ExpList3DHomogeneous2D;
 
-        /// Shared pointer to an ExpList3DHomogeneous2D object.
-        typedef std::shared_ptr<ExpList3DHomogeneous2D>      ExpList3DHomogeneous2DSharedPtr;
-        /// Vector of pointers to ExpList3DHomogeneous2D objects.
-        typedef std::vector< ExpList3DHomogeneous2DSharedPtr > ExpList3DHomogeneous2DVector;
+/// Shared pointer to an ExpList3DHomogeneous2D object.
+typedef std::shared_ptr<ExpList3DHomogeneous2D> ExpList3DHomogeneous2DSharedPtr;
+/// Vector of pointers to ExpList3DHomogeneous2D objects.
+typedef std::vector<ExpList3DHomogeneous2DSharedPtr>
+    ExpList3DHomogeneous2DVector;
 
-        /// Abstraction of a one-dimensional multi-elemental expansion which
-        /// is merely a collection of local expansions.
-        class ExpList3DHomogeneous2D: public ExpListHomogeneous2D
-        {
-        public:
-            /// Default constructor.
-            MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D();
+/// Abstraction of a one-dimensional multi-elemental expansion which
+/// is merely a collection of local expansions.
+class ExpList3DHomogeneous2D : public ExpListHomogeneous2D
+{
+public:
+    /// Default constructor.
+    MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D();
 
-            MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const LibUtilities::BasisKey &HomoBasis_y,
-                    const LibUtilities::BasisKey &HomoBasis_z,
-                    const NekDouble lhom_y,
-                    const NekDouble lhom_z,
-                    const bool useFFT,
-                    const bool dealiasing,
-                    const Collections::ImplementationType ImpType
-                    = Collections::eNoImpType);
+    MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const LibUtilities::BasisKey &HomoBasis_y,
+        const LibUtilities::BasisKey &HomoBasis_z, const NekDouble lhom_y,
+        const NekDouble lhom_z, const bool useFFT, const bool dealiasing,
+        const Collections::ImplementationType ImpType =
+            Collections::eNoImpType);
 
-            /// Sets up a list of local expansions based on an input mesh.
-            MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D(
-                    const LibUtilities::SessionReaderSharedPtr &pSession,
-                    const LibUtilities::BasisKey &HomoBasis_y,
-                    const LibUtilities::BasisKey &HomoBasis_z,
-                    const NekDouble lhom_y,
-                    const NekDouble lhom_z,
-                    const bool useFFT,
-                    const bool dealiasing,
-                    const SpatialDomains::MeshGraphSharedPtr &graph1D,
-                    const Collections::ImplementationType ImpType
-                    = Collections::eNoImpType);
-                    
-            
-            /// Copy constructor.
-            MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D(
-                                  const ExpList3DHomogeneous2D &In,
-                                  const bool DeclareLinesSetCoeffPhys = true);
-            
-            /// 
-            MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D(
-                                  const ExpList3DHomogeneous2D &In,
-                                  const std::vector<unsigned int> &eIDs,
-                                  const bool DeclareLinesSetCoeffPhys = true,
-                                  const Collections::ImplementationType ImpType
-                                  = Collections::eNoImpType);
+    /// Sets up a list of local expansions based on an input mesh.
+    MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const LibUtilities::BasisKey &HomoBasis_y,
+        const LibUtilities::BasisKey &HomoBasis_z, const NekDouble lhom_y,
+        const NekDouble lhom_z, const bool useFFT, const bool dealiasing,
+        const SpatialDomains::MeshGraphSharedPtr &graph1D,
+        const Collections::ImplementationType ImpType =
+            Collections::eNoImpType);
 
-            /// Destructor.
-            MULTI_REGIONS_EXPORT virtual ~ExpList3DHomogeneous2D();
+    /// Copy constructor.
+    MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D(
+        const ExpList3DHomogeneous2D &In,
+        const bool DeclareLinesSetCoeffPhys = true);
 
-            /// This function calculates the coordinates of all the elemental
-            /// quadrature points \f$\boldsymbol{x}_i\f$.
-            inline void GetCoords(Array<OneD, NekDouble> &coord_0,
-                                  Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
-                                  Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
+    ///
+    MULTI_REGIONS_EXPORT ExpList3DHomogeneous2D(
+        const ExpList3DHomogeneous2D &In, const std::vector<unsigned int> &eIDs,
+        const bool DeclareLinesSetCoeffPhys = true,
+        const Collections::ImplementationType ImpType =
+            Collections::eNoImpType);
 
-            MULTI_REGIONS_EXPORT void GetCoords(const int eid,
-                           Array<OneD, NekDouble> &xc0,
-                           Array<OneD, NekDouble> &xc1,
-                           Array<OneD, NekDouble> &xc2);
-			
-        protected:
+    /// Destructor.
+    MULTI_REGIONS_EXPORT virtual ~ExpList3DHomogeneous2D();
 
-            /// Definition of the total number of degrees of freedom and
-            /// quadrature points. Sets up the storage for \a m_coeff and \a
-            ///  m_phys.
-            void             SetCoeffPhys(void);
+    /// This function calculates the coordinates of all the elemental
+    /// quadrature points \f$\boldsymbol{x}_i\f$.
+    inline void GetCoords(
+        Array<OneD, NekDouble> &coord_0,
+        Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
+        Array<OneD, NekDouble> &coord_2 = NullNekDouble1DArray);
 
-            //  virtual functions
-            virtual void v_GetCoords(Array<OneD, NekDouble> &coord_0,
-                                     Array<OneD, NekDouble> &coord_1,
-                                     Array<OneD, NekDouble> &coord_2);
+    MULTI_REGIONS_EXPORT void GetCoords(const int eid,
+                                        Array<OneD, NekDouble> &xc0,
+                                        Array<OneD, NekDouble> &xc1,
+                                        Array<OneD, NekDouble> &xc2);
 
-            virtual void v_WriteTecplotZone(std::ostream &outfile,
-                                            int expansion);
+protected:
+    /// Definition of the total number of degrees of freedom and
+    /// quadrature points. Sets up the storage for \a m_coeff and \a
+    ///  m_phys.
+    void SetCoeffPhys(void);
 
+    //  virtual functions
+    virtual void v_GetCoords(Array<OneD, NekDouble> &coord_0,
+                             Array<OneD, NekDouble> &coord_1,
+                             Array<OneD, NekDouble> &coord_2);
 
-            virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion, int istrip);
+    virtual void v_WriteTecplotZone(std::ostream &outfile, int expansion);
 
-            virtual NekDouble v_L2(
-                const Array<OneD, const NekDouble> &inarray,
-                const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
+    virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
+                                       int istrip);
 
-        private:
-        };
+    virtual NekDouble v_L2(
+        const Array<OneD, const NekDouble> &inarray,
+        const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
 
-        inline void ExpList3DHomogeneous2D::GetCoords(Array<OneD, NekDouble> &coord_0,
-                                                      Array<OneD, NekDouble> &coord_1,
-                                                      Array<OneD, NekDouble> &coord_2)
+private:
+};
 
-        {
-            v_GetCoords(coord_0,coord_1,coord_2);
-        }
-    } //end of namespace
-} //end of namespace
+inline void ExpList3DHomogeneous2D::GetCoords(Array<OneD, NekDouble> &coord_0,
+                                              Array<OneD, NekDouble> &coord_1,
+                                              Array<OneD, NekDouble> &coord_2)
 
-#endif//EXPLIST3DHOMO2D_H
+{
+    v_GetCoords(coord_0, coord_1, coord_2);
+}
+} // namespace MultiRegions
+} // namespace Nektar
 
+#endif // EXPLIST3DHOMO2D_H

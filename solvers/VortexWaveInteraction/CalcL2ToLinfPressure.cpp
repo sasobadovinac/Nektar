@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CalcL2ToLinfPressure.cpp
+// File: CalcL2ToLinfPressure.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -38,29 +38,25 @@
 
 using namespace std;
 using namespace Nektar;
-//using namespace Nektar::SolverUtils;
-
-
+// using namespace Nektar::SolverUtils;
 
 int main(int argc, char *argv[])
 {
     try
-    { 
-        VortexWaveInteraction vwi(argc,argv);
-        
+    {
+        VortexWaveInteraction vwi(argc, argv);
+
         vwi.CalcL2ToLinfPressure();
         return 1;
     }
 
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         return 1;
     }
-    
-    catch (const std::string& eStr)
+
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }
 }
-        
-

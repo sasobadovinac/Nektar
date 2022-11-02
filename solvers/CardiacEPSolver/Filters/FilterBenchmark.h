@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterBenchmark.h
+// File: FilterBenchmark.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -48,13 +48,13 @@ public:
 
     /// Creates an instance of this class
     static SolverUtils::FilterSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
         const ParamMap &pParams)
     {
         SolverUtils::FilterSharedPtr p =
-            MemoryManager<FilterBenchmark>::AllocateSharedPtr(pSession,
-                                                        pEquation, pParams);
+            MemoryManager<FilterBenchmark>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
@@ -62,10 +62,9 @@ public:
     static std::string className;
 
     /// Construct the benchmark filter.
-    FilterBenchmark(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
-        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-        const ParamMap &pParams);
+    FilterBenchmark(const LibUtilities::SessionReaderSharedPtr &pSession,
+                    const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+                    const ParamMap &pParams);
 
     /// Destructor for the benchmark filter.
     virtual ~FilterBenchmark();
@@ -88,23 +87,23 @@ protected:
 
 private:
     /// Storage for activation and repolarisation times.
-    std::vector<Array<OneD, NekDouble> > m_threshold;
+    std::vector<Array<OneD, NekDouble>> m_threshold;
     /// Number of activations and repolarisations detected for each point.
-    Array<OneD, int>                     m_idx;
+    Array<OneD, int> m_idx;
     /// Indicates if the previous event was an activation or repolarisation.
-    Array<OneD, int>                     m_polarity;
+    Array<OneD, int> m_polarity;
     /// Time at which to start detecting activations and repolarisations.
-    NekDouble                            m_startTime;
+    NekDouble m_startTime;
     /// Value at which tissue is considered active.
-    NekDouble                            m_thresholdValue;
+    NekDouble m_thresholdValue;
     /// Initial time to use in storage array.
-    NekDouble                            m_initialValue;
+    NekDouble m_initialValue;
     /// Filename of output files.
-    std::string                          m_outputFile;
+    std::string m_outputFile;
     /// FieldIO object used for writing output files.
-    LibUtilities::FieldIOSharedPtr       m_fld;
+    LibUtilities::FieldIOSharedPtr m_fld;
 };
 
-}
+} // namespace Nektar
 
 #endif /* FILTERTHRESHOLDMAX_H_ */

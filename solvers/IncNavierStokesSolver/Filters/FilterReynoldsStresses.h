@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterReynoldsStresses.h
+// File: FilterReynoldsStresses.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -48,13 +48,13 @@ public:
 
     /// Creates an instance of this class
     static FilterSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
         const std::map<std::string, std::string> &pParams)
     {
         FilterSharedPtr p =
-            MemoryManager<FilterReynoldsStresses>::AllocateSharedPtr(pSession,
-                                                        pEquation, pParams);
+            MemoryManager<FilterReynoldsStresses>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
@@ -63,7 +63,7 @@ public:
 
     SOLVER_UTILS_EXPORT
     FilterReynoldsStresses(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
         const std::map<std::string, std::string> &pParams);
     SOLVER_UTILS_EXPORT ~FilterReynoldsStresses();
@@ -76,7 +76,7 @@ protected:
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields);
     virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
         const NekDouble &time);
     virtual void v_PrepareOutput(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -87,12 +87,12 @@ protected:
         return "_stress";
     }
 
-    std::vector<Array<OneD, NekDouble> > m_fields;
-    std::vector<Array<OneD, NekDouble> > m_delta;
+    std::vector<Array<OneD, NekDouble>> m_fields;
+    std::vector<Array<OneD, NekDouble>> m_delta;
     NekDouble m_alpha;
     bool m_movAvg;
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERREYNOLDSSTRESES_H */

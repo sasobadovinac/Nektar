@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: GlobalMappingDeclspec.h
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -33,14 +35,13 @@
 #define NEKTAR_GLOBAL_MAPPING_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef GLOBAL_MAPPING_EXPORTS
-        #define GLOBAL_MAPPING_EXPORT _declspec(dllexport)
-    #else
-        #define GLOBAL_MAPPING_EXPORT _declspec(dllimport)
-    #endif
+#ifdef GLOBAL_MAPPING_EXPORTS
+#define GLOBAL_MAPPING_EXPORT _declspec(dllexport)
 #else
-    #define GLOBAL_MAPPING_EXPORT
+#define GLOBAL_MAPPING_EXPORT _declspec(dllimport)
+#endif
+#else
+#define GLOBAL_MAPPING_EXPORT
 #endif
 
-#endif //NEKTAR_GLOBAL_MAPPING_DECLSPEC_H
-
+#endif // NEKTAR_GLOBAL_MAPPING_DECLSPEC_H

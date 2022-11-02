@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Outputstl.cpp
+//  File: OutputSTL.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -150,5 +150,5 @@ void OutputSTL::Process()
         m_mshFile << "endsolid" << endl;
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

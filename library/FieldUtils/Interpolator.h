@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Interpolator.h
+// File: Interpolator.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,9 +36,9 @@
 #ifndef FIELDUTILS_INTERPOLATOR_H
 #define FIELDUTILS_INTERPOLATOR_H
 
+#include <FieldUtils/FieldUtilsDeclspec.h>
 #include <LibUtilities/BasicUtils/Interpolator.h>
 #include <MultiRegions/ExpList.h>
-#include <FieldUtils/FieldUtilsDeclspec.h>
 
 namespace Nektar
 {
@@ -51,27 +51,26 @@ class Interpolator : public LibUtilities::Interpolator
 {
 public:
     /**
-    * @brief Constructor of the Interpolator class
-    *
-    * @param method    interpolation method, defaults to a sensible value if not
-    * set
-    * @param coordId   coordinate id along which the interpolation should be
-    * performed
-    * @param filtWidth filter width, required by some algorithms such as eGauss
-    * @param maxPts    limit number of considered points
-    *
-    * if method is not specified, the best algorithm is chosen autpomatically.
-    *
-    * If coordId is not specified, a full 1D/2D/3D interpolation is performed
-    * without
-    * collapsing any coordinate.
-    *
-    * filtWidth must be specified for the eGauss algorithm only.
-    */
-    Interpolator(LibUtilities::InterpMethod method    = LibUtilities::eNoMethod,
-                 short int                  coordId   = -1,
-                 NekDouble                  filtWidth = 0.0,
-                 int                        maxPts    = 1000)
+     * @brief Constructor of the Interpolator class
+     *
+     * @param method    interpolation method, defaults to a sensible value if
+     * not set
+     * @param coordId   coordinate id along which the interpolation should be
+     * performed
+     * @param filtWidth filter width, required by some algorithms such as eGauss
+     * @param maxPts    limit number of considered points
+     *
+     * if method is not specified, the best algorithm is chosen autpomatically.
+     *
+     * If coordId is not specified, a full 1D/2D/3D interpolation is performed
+     * without
+     * collapsing any coordinate.
+     *
+     * filtWidth must be specified for the eGauss algorithm only.
+     */
+    Interpolator(LibUtilities::InterpMethod method = LibUtilities::eNoMethod,
+                 short int coordId = -1, NekDouble filtWidth = 0.0,
+                 int maxPts = 1000)
         : LibUtilities::Interpolator(method, coordId, filtWidth, maxPts)
     {
     }
@@ -107,7 +106,7 @@ protected:
 
 typedef std::shared_ptr<Interpolator> InterpolatorSharedPtr;
 
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

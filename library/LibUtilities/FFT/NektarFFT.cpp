@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NektarFFT.cpp
+// File: NektarFFT.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -38,66 +38,70 @@
 
 namespace Nektar
 {
-	namespace LibUtilities
-	{
-		/**
-		 * @class NektarFFT
-		 *
-		 * This class is a base class for all FFT implementation. It provides
-		 * the underlying generic functionality and interface for perform a Fourier transform.
-		 *
-		 * To perform the FFT with a differebt algorithm, create a derived class from this class
-		 * and reimplement the virtual functions to provide custom implementation
-		 * of the algorithm.
-		 *
-		 */
-		
-		/**
-		 * This constructor is protected as the objects of this class are never
-		 * instantiated directly.
-		 */
-		NektarFFT::NektarFFT(int N)
-		{
-			m_N = N;
-		}
-		
-		NektarFFT::~NektarFFT()
-		{
-			
-		}
-		
-		NektarFFTFactory& GetNektarFFTFactory()
-		{
-                    static NektarFFTFactory instance;
-                    return instance;
-		}
+namespace LibUtilities
+{
+/**
+ * @class NektarFFT
+ *
+ * This class is a base class for all FFT implementation. It provides
+ * the underlying generic functionality and interface for perform a Fourier
+ * transform.
+ *
+ * To perform the FFT with a differebt algorithm, create a derived class from
+ * this class and reimplement the virtual functions to provide custom
+ * implementation of the algorithm.
+ *
+ */
 
-		/**
-		 * This allows initialisation of the class which cannot be completed
-		 * during object construction (such as setting of initial conditions).
-		 *
-		 * Public interface routine to virtual function implementation.
-		 */
-		
-		void NektarFFT::FFTFwdTrans(Array<OneD,NekDouble> &phys, Array<OneD,NekDouble> &coef)
-		{
-			v_FFTFwdTrans(phys,coef);
-		}
-		
-		void NektarFFT::FFTBwdTrans(Array<OneD,NekDouble> &coef, Array<OneD,NekDouble> &phys)
-		{
-			v_FFTBwdTrans(coef,phys);
-		}
-		
-		void NektarFFT::v_FFTFwdTrans(Array<OneD,NekDouble> &phys, Array<OneD,NekDouble> &coef)
-		{
-            boost::ignore_unused(phys, coef);
-		}
-		
-		void NektarFFT::v_FFTBwdTrans(Array<OneD,NekDouble> &coef, Array<OneD,NekDouble> &phys)
-		{
-            boost::ignore_unused(coef, phys);
-		}
-		
-	}//end namespace LibUtilities
-}//end of namespace Nektar
+/**
+ * This constructor is protected as the objects of this class are never
+ * instantiated directly.
+ */
+NektarFFT::NektarFFT(int N)
+{
+    m_N = N;
+}
+
+NektarFFT::~NektarFFT()
+{
+}
+
+NektarFFTFactory &GetNektarFFTFactory()
+{
+    static NektarFFTFactory instance;
+    return instance;
+}
+
+/**
+ * This allows initialisation of the class which cannot be completed
+ * during object construction (such as setting of initial conditions).
+ *
+ * Public interface routine to virtual function implementation.
+ */
+
+void NektarFFT::FFTFwdTrans(Array<OneD, NekDouble> &phys,
+                            Array<OneD, NekDouble> &coef)
+{
+    v_FFTFwdTrans(phys, coef);
+}
+
+void NektarFFT::FFTBwdTrans(Array<OneD, NekDouble> &coef,
+                            Array<OneD, NekDouble> &phys)
+{
+    v_FFTBwdTrans(coef, phys);
+}
+
+void NektarFFT::v_FFTFwdTrans(Array<OneD, NekDouble> &phys,
+                              Array<OneD, NekDouble> &coef)
+{
+    boost::ignore_unused(phys, coef);
+}
+
+void NektarFFT::v_FFTBwdTrans(Array<OneD, NekDouble> &coef,
+                              Array<OneD, NekDouble> &phys)
+{
+    boost::ignore_unused(coef, phys);
+}
+
+} // end namespace LibUtilities
+} // end of namespace Nektar

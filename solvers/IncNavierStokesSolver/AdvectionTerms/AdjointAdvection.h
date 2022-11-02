@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AdjointAdvection.h
+// File: AdjointAdvection.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -40,9 +40,8 @@
 namespace Nektar
 {
 
-
 /// Advection for the adjoint form of the linearised Navier-Stokes equations
-class AdjointAdvection: public LinearisedAdvection
+class AdjointAdvection : public LinearisedAdvection
 {
 public:
     friend class MemoryManager<AdjointAdvection>;
@@ -64,16 +63,15 @@ protected:
     virtual void v_Advect(
         const int nConvectiveFields,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-        const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-              Array<OneD, Array<OneD, NekDouble> >        &outarray,
-        const NekDouble                                   &time,
-        const Array<OneD, Array<OneD, NekDouble> > &pFwd =
-                                            NullNekDoubleArrayOfArray,
-        const Array<OneD, Array<OneD, NekDouble> > &pBwd =
-                                            NullNekDoubleArrayOfArray);
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
 };
 
-}
+} // namespace Nektar
 
-#endif //NEKTAR_SOLVERS_INCNAVIERSTOKES_H
+#endif // NEKTAR_SOLVERS_INCNAVIERSTOKES_H

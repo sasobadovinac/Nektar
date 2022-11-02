@@ -43,8 +43,7 @@ void KeyError()
     PyErr_SetString(PyExc_KeyError, "Key not found");
 }
 
-template<class T>
-struct unordered_set_item
+template <class T> struct unordered_set_item
 {
     using K = typename T::key_type;
     static bool contains(T const &x, K const &k)
@@ -59,10 +58,8 @@ struct unordered_set_item
 
 void export_Node()
 {
-    py::class_<Node,
-               std::shared_ptr<Node>,
-               boost::noncopyable>(
-                   "Node", py::init<int, NekDouble, NekDouble, NekDouble>())
+    py::class_<Node, std::shared_ptr<Node>, boost::noncopyable>(
+        "Node", py::init<int, NekDouble, NekDouble, NekDouble>())
         .def("GetID", &Node::GetID)
         .def("SetID", &Node::SetID)
         .def("Distance", &Node::Distance)
@@ -71,8 +68,7 @@ void export_Node()
         .def_readwrite("x", &Node::m_x)
         .def_readwrite("y", &Node::m_y)
         .def_readwrite("z", &Node::m_z)
-        .def_readwrite("id", &Node::m_id)
-        ;
+        .def_readwrite("id", &Node::m_id);
 
     // Create converter for NodeSet
     py::class_<NodeSet>("NodeSet")
@@ -81,6 +77,5 @@ void export_Node()
         .def("__iter__", py::iterator<NodeSet>())
         .def("__contains__", &unordered_set_item<NodeSet>::contains)
         .def("add", &unordered_set_item<NodeSet>::add,
-             py::with_custodian_and_ward<1,2>())
-        ;
+             py::with_custodian_and_ward<1, 2>());
 }

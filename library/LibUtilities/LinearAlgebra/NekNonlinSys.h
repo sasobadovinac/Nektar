@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekNonlinSys.h
+// File: NekNonlinSys.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,8 +36,8 @@
 #ifndef NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_NONLINSYS_H
 #define NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_NONLINSYS_H
 
-#include <LibUtilities/LinearAlgebra/NekSys.h>
 #include <LibUtilities/LinearAlgebra/NekLinSysIter.h>
+#include <LibUtilities/LinearAlgebra/NekSys.h>
 
 namespace Nektar
 {
@@ -47,10 +47,9 @@ class NekNonlinSys;
 
 typedef std::shared_ptr<NekNonlinSys> NekNonlinSysSharedPtr;
 
-typedef LibUtilities::NekFactory<std::string, NekNonlinSys,
-                                 const LibUtilities::SessionReaderSharedPtr &,
-                                 const LibUtilities::CommSharedPtr &, const int,
-                                 const NekSysKey &>
+typedef LibUtilities::NekFactory<
+    std::string, NekNonlinSys, const LibUtilities::SessionReaderSharedPtr &,
+    const LibUtilities::CommSharedPtr &, const int, const NekSysKey &>
     NekNonlinSysFactory;
 LIB_UTILITIES_EXPORT NekNonlinSysFactory &GetNekNonlinSysFactory();
 
@@ -76,8 +75,7 @@ public:
 
     LIB_UTILITIES_EXPORT virtual void v_SetupNekNonlinSystem(
         const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-        const Array<OneD, const NekDouble> &pSource,
-        const int nDir);
+        const Array<OneD, const NekDouble> &pSource, const int nDir);
 
     LIB_UTILITIES_EXPORT const Array<OneD, const NekDouble> &GetRefSolution()
         const
@@ -100,10 +98,10 @@ public:
     LIB_UTILITIES_EXPORT void SetRefResidual(
         const Array<OneD, const NekDouble> &in)
     {
-        ASSERTL0(in.size() == m_SysDimen, 
-            "SetRefResidual dimension not correct");
+        ASSERTL0(in.size() == m_SysDimen,
+                 "SetRefResidual dimension not correct");
         Vmath::Vcopy(m_SysDimen, in, 1, m_Residual, 1);
-        
+
         m_ResidualUpdated = true;
     }
 
@@ -118,8 +116,7 @@ public:
         m_maxiter = in;
     }
 
-    LIB_UTILITIES_EXPORT const NekLinSysIterSharedPtr &
-        GetLinSys()
+    LIB_UTILITIES_EXPORT const NekLinSysIterSharedPtr &GetLinSys()
     {
         return m_linsol;
     }
@@ -133,7 +130,7 @@ public:
     {
         m_LinSysRelativeTolInNonlin = in;
     }
-    
+
     LIB_UTILITIES_EXPORT int GetNtotLinSysIts()
     {
         return m_NtotLinSysIts;
@@ -148,8 +145,7 @@ protected:
     std::string m_LinSysIterSolverType;
 
     int m_totalIterations = 0;
-    int m_NtotLinSysIts = 0;
-
+    int m_NtotLinSysIts   = 0;
 
     Array<OneD, NekDouble> m_Solution;
     Array<OneD, NekDouble> m_Residual;

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File BidomainRoth.h
+// File: BidomainRoth.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,13 +35,12 @@
 #ifndef NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_BIDOMAINROTH_H
 #define NEKTAR_SOLVERS_ADRSOLVER_EQUATIONSYSTEMS_BIDOMAINROTH_H
 
-#include <SolverUtils/UnsteadySystem.h>
 #include <CardiacEPSolver/CellModels/CellModel.h>
 #include <CardiacEPSolver/Stimuli/Stimulus.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 namespace Nektar
 {
-
 
 /// A model for cardiac conduction.
 class BidomainRoth : public SolverUtils::UnsteadySystem
@@ -51,8 +50,8 @@ public:
 
     /// Creates an instance of this class
     static SolverUtils::EquationSystemSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
         SolverUtils::EquationSystemSharedPtr p =
             MemoryManager<BidomainRoth>::AllocateSharedPtr(pSession, pGraph);
@@ -68,32 +67,29 @@ public:
 
 protected:
     /// Constructor
-    BidomainRoth(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    BidomainRoth(const LibUtilities::SessionReaderSharedPtr &pSession,
+                 const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     virtual void v_InitObject();
 
     /// Solve for the diffusion term.
     void DoImplicitSolve(
-            const Array<OneD, const Array<OneD, NekDouble> >&inarray,
-                  Array<OneD, Array<OneD, NekDouble> >&outarray,
-                  NekDouble time,
-                  NekDouble lambda);
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, NekDouble time,
+        NekDouble lambda);
 
     /// Computes the reaction terms \f$f(u,v)\f$ and \f$g(u,v)\f$.
-    void DoOdeRhs(
-            const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                  Array<OneD,        Array<OneD, NekDouble> >&outarray,
-            const NekDouble time);
+    void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+                  Array<OneD, Array<OneD, NekDouble>> &outarray,
+                  const NekDouble time);
 
     /// Sets a custom initial condition.
     virtual void v_SetInitialConditions(NekDouble initialtime,
-                            bool dumpInitialConditions,
-                            const int domain);
+                                        bool dumpInitialConditions,
+                                        const int domain);
 
     /// Prints a summary of the model parameters.
-    virtual void v_GenerateSummary(SummaryList& s);
+    virtual void v_GenerateSummary(SummaryList &s);
 
 private:
     /// Cell model.
@@ -114,6 +110,6 @@ private:
     void LoadStimuli();
 };
 
-}
+} // namespace Nektar
 
 #endif

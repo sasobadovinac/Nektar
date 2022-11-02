@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CalcVWIPlusPressure.cpp
+// File: CalcVWIplusPressure.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,8 +36,7 @@
 //#include <SolverUtils/Driver.h>
 //#include <LibUtilities/BasicUtils/SessionReader.h>
 
-
-#include<VortexWaveInteraction/VortexWaveInteraction.h>
+#include <VortexWaveInteraction/VortexWaveInteraction.h>
 
 using namespace std;
 using namespace Nektar;
@@ -45,23 +44,21 @@ using namespace Nektar;
 int main(int argc, char *argv[])
 {
     try
-    { 
-        VortexWaveInteraction vwi(argc,argv);
+    {
+        VortexWaveInteraction vwi(argc, argv);
 
         vwi.ExecuteWave();
         vwi.CalcNonLinearWaveForce();
         return 1;
     }
 
-    catch (const std::runtime_error&)
+    catch (const std::runtime_error &)
     {
         return 1;
     }
-    
-    catch (const std::string& eStr)
+
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }
 }
-        
-

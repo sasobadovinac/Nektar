@@ -84,14 +84,13 @@ private:
     void CreateFieldPts(po::variables_map &vm);
 
     void InterpolatePtsToPts(LibUtilities::PtsFieldSharedPtr &fromPts,
-                               LibUtilities::PtsFieldSharedPtr &toPts,
-                               NekDouble clamp_low,
-                               NekDouble clamp_up,
-                               NekDouble def_value);
+                             LibUtilities::PtsFieldSharedPtr &toPts,
+                             NekDouble clamp_low, NekDouble clamp_up,
+                             NekDouble def_value);
 
     void calcCp0();
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

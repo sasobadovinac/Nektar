@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File:  NekSys.cpp
+// File: NekSys.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,7 +29,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description:  NekSys definition
+// Description: NekSys definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -93,15 +93,14 @@ bool NekSys::v_ConvergenceCheck(const int nIteration,
 
 /**
  * Natural guess
-**/
-void NekSys::v_NekSysInitialGuess(
-        const Array<OneD, const NekDouble> &pInput,
-        Array<OneD, NekDouble> &pguess)
+ **/
+void NekSys::v_NekSysInitialGuess(const Array<OneD, const NekDouble> &pInput,
+                                  Array<OneD, NekDouble> &pguess)
 {
     size_t ndim = pInput.size();
-    if(pguess.size() != ndim)
+    if (pguess.size() != ndim)
     {
-        pguess = Array<OneD, NekDouble> {ndim};
+        pguess = Array<OneD, NekDouble>{ndim};
     }
 
     Vmath::Vcopy(ndim, pInput, 1, pguess, 1);

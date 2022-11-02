@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ProtocolSingle.cpp
+// File: ProtocolSingle.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,90 +32,84 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <tinyxml.h>
 #include <CardiacEPSolver/Stimuli/ProtocolSingle.h>
+#include <tinyxml.h>
 
 namespace Nektar
 {
-    std::string ProtocolSingle::className
-            = GetProtocolFactory().RegisterCreatorFunction(
-                            "ProtocolSingle",
-                            ProtocolSingle::create,
-                            "Single stimulus protocol.");
+std::string ProtocolSingle::className =
+    GetProtocolFactory().RegisterCreatorFunction(
+        "ProtocolSingle", ProtocolSingle::create, "Single stimulus protocol.");
 
-    /**
-     * @class Protocol
-     *
-     * The Stimuli class and derived classes implement a range of stimuli.
-     * The stimulus contains input stimuli that can be applied throughout the
-     * domain, on specified regions determined by the derived classes of
-     * Stimulus, at specified frequencies determined by the derived classes of
-     * Protocol.
-     *
-     */
+/**
+ * @class Protocol
+ *
+ * The Stimuli class and derived classes implement a range of stimuli.
+ * The stimulus contains input stimuli that can be applied throughout the
+ * domain, on specified regions determined by the derived classes of
+ * Stimulus, at specified frequencies determined by the derived classes of
+ * Protocol.
+ *
+ */
 
-    /**
-     * Protocol base class constructor.
-     */
-    ProtocolSingle::ProtocolSingle(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const TiXmlElement* pXml)
-            : Protocol(pSession, pXml)
+/**
+ * Protocol base class constructor.
+ */
+ProtocolSingle::ProtocolSingle(
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const TiXmlElement *pXml)
+    : Protocol(pSession, pXml)
+{
+    m_session = pSession;
+
+    if (!pXml)
     {
-        m_session = pSession;
-
-        if (!pXml)
-        {
-            return;
-        }
-
-        const TiXmlElement *pXmlparameter;
-
-        pXmlparameter = pXml->FirstChildElement("START");
-        m_start = atof(pXmlparameter->GetText());
-
-        pXmlparameter = pXml->FirstChildElement("DURATION");
-        m_dur = atof(pXmlparameter->GetText());
+        return;
     }
 
+    const TiXmlElement *pXmlparameter;
 
-    /**
-     * Initialise the protocol. Allocate workspace and variable storage.
-     */
-    void ProtocolSingle::Initialise()
-    {
-    }
+    pXmlparameter = pXml->FirstChildElement("START");
+    m_start       = atof(pXmlparameter->GetText());
 
-
-    /**
-     *
-     */
-    NekDouble ProtocolSingle::v_GetAmplitude(const NekDouble time)
-    {
-        if(time > m_start && time < (m_start+m_dur))
-        {
-            return 1.0;
-        }
-        else
-        {
-            return 0.0;
-        }
-    }
-
-
-    /**
-     *
-     */
-    void ProtocolSingle::v_GenerateSummary(SolverUtils::SummaryList& s)
-    {
-    }
-
-
-    /**
-     *
-     */
-    void ProtocolSingle::v_SetInitialConditions()
-    {
-    }
-
+    pXmlparameter = pXml->FirstChildElement("DURATION");
+    m_dur         = atof(pXmlparameter->GetText());
 }
+
+/**
+ * Initialise the protocol. Allocate workspace and variable storage.
+ */
+void ProtocolSingle::Initialise()
+{
+}
+
+/**
+ *
+ */
+NekDouble ProtocolSingle::v_GetAmplitude(const NekDouble time)
+{
+    if (time > m_start && time < (m_start + m_dur))
+    {
+        return 1.0;
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+/**
+ *
+ */
+void ProtocolSingle::v_GenerateSummary(SolverUtils::SummaryList &s)
+{
+}
+
+/**
+ *
+ */
+void ProtocolSingle::v_SetInitialConditions()
+{
+}
+
+} // namespace Nektar

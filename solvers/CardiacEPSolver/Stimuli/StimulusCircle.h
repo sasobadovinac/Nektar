@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StimulusCircle.h
+// File: StimulusCircle.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -40,59 +40,60 @@
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 //#include <SpatialDomains/SpatialData.h>
-#include <MultiRegions/ExpList.h>
-#include <StdRegions/StdNodalTriExp.h>
-#include <StdRegions/StdNodalTetExp.h>
 #include <CardiacEPSolver/Stimuli/Stimulus.h>
+#include <MultiRegions/ExpList.h>
+#include <StdRegions/StdNodalTetExp.h>
+#include <StdRegions/StdNodalTriExp.h>
 
 namespace Nektar
 {
 
-    /// Protocol base class.
-    class StimulusCirc: public Stimulus
+/// Protocol base class.
+class StimulusCirc : public Stimulus
+{
+public:
+    /// Creates an instance of this class
+    static StimulusSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField, const TiXmlElement *pXml)
     {
-    public:
-        /// Creates an instance of this class
-        static StimulusSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField,
-                const TiXmlElement* pXml)
-        {
-            return MemoryManager<StimulusCirc>
-                ::AllocateSharedPtr(pSession, pField, pXml);
-        }
+        return MemoryManager<StimulusCirc>::AllocateSharedPtr(pSession, pField,
+                                                              pXml);
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        friend class MemoryManager<StimulusCirc>;
+    friend class MemoryManager<StimulusCirc>;
 
-        virtual ~StimulusCirc() {}
+    virtual ~StimulusCirc()
+    {
+    }
 
-        /// Initialise the protocol storage and set initial conditions
-        void Initialise();
+    /// Initialise the protocol storage and set initial conditions
+    void Initialise();
 
-    protected:
-        NekDouble m_px1;
-        NekDouble m_py1;
-        NekDouble m_pz1;
-        NekDouble m_pr1;
-        NekDouble m_pis;
-        NekDouble m_strength;
-        NekDouble v_amp;
-        NekDouble m_chiCapMembrane;
+protected:
+    NekDouble m_px1;
+    NekDouble m_py1;
+    NekDouble m_pz1;
+    NekDouble m_pr1;
+    NekDouble m_pis;
+    NekDouble m_strength;
+    NekDouble v_amp;
+    NekDouble m_chiCapMembrane;
 
-        virtual void v_Update(Array<OneD, Array<OneD, NekDouble> >&outarray,
-                              const NekDouble time);
+    virtual void v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
+                          const NekDouble time);
 
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
 
-    private:
-        StimulusCirc(const LibUtilities::SessionReaderSharedPtr& pSession,
-                     const MultiRegions::ExpListSharedPtr& pField,
-                     const TiXmlElement* pXml);
-    };
+private:
+    StimulusCirc(const LibUtilities::SessionReaderSharedPtr &pSession,
+                 const MultiRegions::ExpListSharedPtr &pField,
+                 const TiXmlElement *pXml);
+};
 
-}
+} // namespace Nektar
 
 #endif

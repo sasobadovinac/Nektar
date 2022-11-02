@@ -104,18 +104,18 @@ private:
 
     cfi::Cfi m_cfiHandle;
     cfi::Model *m_model = nullptr;
-    std::vector<cfi::Body* > m_bodies;
+    std::vector<cfi::Body *> m_bodies;
     std::map<std::string, int> m_nameToVertId;
     std::map<std::string, int> m_nameToCurveId;
     std::map<std::string, int> m_nameToFaceId;
-    std::map<std::string, std::vector<std::string> > m_mapVertToListEdge;
+    std::map<std::string, std::vector<std::string>> m_mapVertToListEdge;
 
     NekDouble m_scal;
     bool m_useCFIMesh = false;
 };
 
 typedef std::shared_ptr<CADSystemCFI> CADSystemCFISharedPtr;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

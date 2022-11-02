@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: StandardExtrapolate.cpp
+// File: MappingExtrapolate.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Abstract base class for StandardExtrapolate.
+// Description: Abstract base class for MappingExtrapolate.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -47,8 +47,7 @@ std::string MappingExtrapolate::className =
 MappingExtrapolate::MappingExtrapolate(
     const LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields,
-    MultiRegions::ExpListSharedPtr pPressure,
-    const Array<OneD, int> pVel,
+    MultiRegions::ExpListSharedPtr pPressure, const Array<OneD, int> pVel,
     const SolverUtils::AdvectionSharedPtr advObject)
     : StandardExtrapolate(pSession, pFields, pPressure, pVel, advObject)
 {
@@ -56,14 +55,14 @@ MappingExtrapolate::MappingExtrapolate(
 
     // Load solve parameters related to the mapping
     // Flags determining if pressure/viscous terms should be treated implicitly
-    m_session->MatchSolverInfo(
-        "MappingImplicitPressure", "True", m_implicitPressure, false);
-    m_session->MatchSolverInfo(
-        "MappingImplicitViscous", "True", m_implicitViscous, false);
+    m_session->MatchSolverInfo("MappingImplicitPressure", "True",
+                               m_implicitPressure, false);
+    m_session->MatchSolverInfo("MappingImplicitViscous", "True",
+                               m_implicitViscous, false);
 
     // Relaxation parameter for pressure system
-    m_session->LoadParameter(
-        "MappingPressureRelaxation", m_pressureRelaxation, 1.0);
+    m_session->LoadParameter("MappingPressureRelaxation", m_pressureRelaxation,
+                             1.0);
 }
 
 MappingExtrapolate::~MappingExtrapolate()
@@ -89,13 +88,9 @@ void MappingExtrapolate::v_CorrectPressureBCs(
             if (m_PBndConds[n]->GetUserDefined() == "H")
             {
                 int nq = m_PBndExp[n]->GetNcoeffs();
-                Vmath::Vsub(nq,
-                            &(m_PBndExp[n]->GetCoeffs()[0]),
-                            1,
-                            &(m_bcCorrection[cnt]),
-                            1,
-                            &(m_PBndExp[n]->UpdateCoeffs()[0]),
-                            1);
+                Vmath::Vsub(nq, &(m_PBndExp[n]->GetCoeffs()[0]), 1,
+                            &(m_bcCorrection[cnt]), 1,
+                            &(m_PBndExp[n]->UpdateCoeffs()[0]), 1);
                 cnt += nq;
             }
         }
@@ -104,10 +99,10 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         Array<OneD, NekDouble> Jac(physTot, 0.0);
         m_mapping->GetJacobian(Jac);
 
-        Array<OneD, Array<OneD, NekDouble> > correction(nvel);
-        Array<OneD, Array<OneD, NekDouble> > gradP(nvel);
-        Array<OneD, Array<OneD, NekDouble> > wk(nvel);
-        Array<OneD, Array<OneD, NekDouble> > wk2(nvel);
+        Array<OneD, Array<OneD, NekDouble>> correction(nvel);
+        Array<OneD, Array<OneD, NekDouble>> gradP(nvel);
+        Array<OneD, Array<OneD, NekDouble>> wk(nvel);
+        Array<OneD, Array<OneD, NekDouble>> wk2(nvel);
         for (int i = 0; i < nvel; i++)
         {
             wk[i]         = Array<OneD, NekDouble>(physTot, 0.0);
@@ -118,8 +113,8 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         // Calculate G(p)
         for (int i = 0; i < nvel; ++i)
         {
-            m_fields[0]->PhysDeriv(
-                MultiRegions::DirCartesianMap[i], pressure, gradP[i]);
+            m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[i], pressure,
+                                   gradP[i]);
             if (m_fields[0]->GetWaveSpace())
             {
                 m_fields[0]->HomogeneousBwdTrans(gradP[i], wk[i]);
@@ -136,18 +131,14 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         {
             for (int i = 0; i < nvel; ++i)
             {
-                Vmath::Vmul(
-                    physTot, correction[i], 1, Jac, 1, correction[i], 1);
+                Vmath::Vmul(physTot, correction[i], 1, Jac, 1, correction[i],
+                            1);
             }
         }
         for (int i = 0; i < nvel; ++i)
         {
-            Vmath::Smul(physTot,
-                        m_pressureRelaxation,
-                        correction[i],
-                        1,
-                        correction[i],
-                        1);
+            Vmath::Smul(physTot, m_pressureRelaxation, correction[i], 1,
+                        correction[i], 1);
         }
 
         if (m_pressure->GetWaveSpace())
@@ -160,13 +151,13 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         // p_i - alpha*J*div(G(p))
         for (int i = 0; i < nvel; ++i)
         {
-            Vmath::Vsub(
-                physTot, gradP[i], 1, correction[i], 1, correction[i], 1);
+            Vmath::Vsub(physTot, gradP[i], 1, correction[i], 1, correction[i],
+                        1);
         }
 
         // Get value at boundary and calculate Inner product
-        Array<OneD, Array<OneD, NekDouble> > correctionElmt(m_bnd_dim);
-        Array<OneD, Array<OneD, NekDouble> > BndValues(m_bnd_dim);
+        Array<OneD, Array<OneD, NekDouble>> correctionElmt(m_bnd_dim);
+        Array<OneD, Array<OneD, NekDouble>> BndValues(m_bnd_dim);
         MultiRegions::ExpListSharedPtr BndElmtExp;
         for (n = cnt = 0; n < m_PBndConds.size(); ++n)
         {
@@ -178,16 +169,16 @@ void MappingExtrapolate::v_CorrectPressureBCs(
                 // Obtaining fields on BndElmtExp
                 for (int i = 0; i < m_bnd_dim; i++)
                 {
-                    m_fields[0]->ExtractPhysToBndElmt(
-                        n, correction[i], correctionElmt[i]);
+                    m_fields[0]->ExtractPhysToBndElmt(n, correction[i],
+                                                      correctionElmt[i]);
                 }
 
                 Vals = m_bcCorrection + cnt;
                 // Getting values on the edge and filling the correction
                 for (int i = 0; i < m_bnd_dim; i++)
                 {
-                    m_fields[0]->ExtractElmtToBndPhys(
-                        n, correctionElmt[i], BndValues[i]);
+                    m_fields[0]->ExtractElmtToBndPhys(n, correctionElmt[i],
+                                                      BndValues[i]);
                 }
                 m_PBndExp[n]->NormVectorIProductWRTBase(BndValues, Vals);
 
@@ -202,13 +193,9 @@ void MappingExtrapolate::v_CorrectPressureBCs(
             if (m_PBndConds[n]->GetUserDefined() == "H")
             {
                 int nq = m_PBndExp[n]->GetNcoeffs();
-                Vmath::Vadd(nq,
-                            &(m_PBndExp[n]->GetCoeffs()[0]),
-                            1,
-                            &(m_bcCorrection[cnt]),
-                            1,
-                            &(m_PBndExp[n]->UpdateCoeffs()[0]),
-                            1);
+                Vmath::Vadd(nq, &(m_PBndExp[n]->GetCoeffs()[0]), 1,
+                            &(m_bcCorrection[cnt]), 1,
+                            &(m_PBndExp[n]->UpdateCoeffs()[0]), 1);
                 cnt += nq;
             }
         }
@@ -216,9 +203,8 @@ void MappingExtrapolate::v_CorrectPressureBCs(
 }
 
 void MappingExtrapolate::v_CalcNeumannPressureBCs(
-    const Array<OneD, const Array<OneD, NekDouble> > &fields,
-    const Array<OneD, const Array<OneD, NekDouble> > &N,
-    NekDouble kinvis)
+    const Array<OneD, const Array<OneD, NekDouble>> &fields,
+    const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis)
 {
     if (m_mapping->HasConstantJacobian() && !m_implicitViscous)
     {
@@ -233,17 +219,17 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
         Array<OneD, NekDouble> Pvals;
         Array<OneD, NekDouble> Uvals;
 
-        Array<OneD, Array<OneD, NekDouble> > Velocity(m_bnd_dim);
-        Array<OneD, Array<OneD, NekDouble> > Advection(m_bnd_dim);
+        Array<OneD, Array<OneD, NekDouble>> Velocity(m_bnd_dim);
+        Array<OneD, Array<OneD, NekDouble>> Advection(m_bnd_dim);
         // Get transformation Jacobian
         Array<OneD, NekDouble> Jac(physTot, 0.0);
         m_mapping->GetJacobian(Jac);
         // Declare variables
-        Array<OneD, Array<OneD, NekDouble> > BndValues(m_bnd_dim);
-        Array<OneD, Array<OneD, NekDouble> > Q(m_bnd_dim);
-        Array<OneD, Array<OneD, NekDouble> > Q_field(nvel);
-        Array<OneD, Array<OneD, NekDouble> > fields_new(nvel);
-        Array<OneD, Array<OneD, NekDouble> > N_new(m_bnd_dim);
+        Array<OneD, Array<OneD, NekDouble>> BndValues(m_bnd_dim);
+        Array<OneD, Array<OneD, NekDouble>> Q(m_bnd_dim);
+        Array<OneD, Array<OneD, NekDouble>> Q_field(nvel);
+        Array<OneD, Array<OneD, NekDouble>> fields_new(nvel);
+        Array<OneD, Array<OneD, NekDouble>> N_new(m_bnd_dim);
         // Temporary variables
         Array<OneD, NekDouble> tmp(physTot, 0.0);
         Array<OneD, NekDouble> tmp2(physTot, 0.0);
@@ -302,8 +288,8 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
             m_fields[0]->SetWaveSpace(false);
             for (int i = 0; i < m_bnd_dim; i++)
             {
-                m_fields[0]->PhysDeriv(
-                    MultiRegions::DirCartesianMap[i], tmp, tmp2);
+                m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[i], tmp,
+                                       tmp2);
                 Vmath::Vadd(physTot, Q_field[i], 1, tmp2, 1, Q_field[i], 1);
             }
             m_fields[0]->SetWaveSpace(wavespace);
@@ -333,10 +319,10 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
                 // Obtaining fields on BndElmtExp
                 for (int i = 0; i < m_bnd_dim; i++)
                 {
-                    m_fields[0]->ExtractPhysToBndElmt(
-                        n, fields_new[i], Velocity[i]);
-                    m_fields[0]->ExtractPhysToBndElmt(
-                        n, N_new[i], Advection[i]);
+                    m_fields[0]->ExtractPhysToBndElmt(n, fields_new[i],
+                                                      Velocity[i]);
+                    m_fields[0]->ExtractPhysToBndElmt(n, N_new[i],
+                                                      Advection[i]);
                     m_fields[0]->ExtractPhysToBndElmt(n, Q_field[i], Q[i]);
                 }
 
@@ -360,8 +346,8 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
 
                 for (int i = 0; i < m_bnd_dim; i++)
                 {
-                    m_fields[0]->ExtractElmtToBndPhys(
-                        n, Velocity[i], BndValues[i]);
+                    m_fields[0]->ExtractElmtToBndPhys(n, Velocity[i],
+                                                      BndValues[i]);
                 }
                 m_PBndExp[n]->NormVectorIProductWRTBase(BndValues, Uvals);
 
@@ -374,13 +360,10 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
     //     by the relaxation parameter, and zero the correction term
     if (m_implicitPressure)
     {
-        Vmath::Smul(m_numHBCDof,
-                    m_pressureRelaxation,
-                    m_pressureHBCs[m_intSteps - 1],
-                    1,
-                    m_pressureHBCs[m_intSteps - 1],
-                    1);
+        Vmath::Smul(m_numHBCDof, m_pressureRelaxation,
+                    m_pressureHBCs[m_intSteps - 1], 1,
+                    m_pressureHBCs[m_intSteps - 1], 1);
     }
     m_bcCorrection = Array<OneD, NekDouble>(m_numHBCDof, 0.0);
 }
-}
+} // namespace Nektar

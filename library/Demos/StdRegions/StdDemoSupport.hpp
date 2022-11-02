@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: StdDemoSupport.cpp
+// File: StdDemoSupport.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -38,20 +38,20 @@
 #include <string>
 #include <vector>
 
-#include <StdRegions/StdPointExp.h>
-#include <StdRegions/StdSegExp.h>
-#include <StdRegions/StdTriExp.h>
-#include <StdRegions/StdNodalTriExp.h>
-#include <StdRegions/StdQuadExp.h>
 #include <StdRegions/StdHexExp.h>
-#include <StdRegions/StdPrismExp.h>
 #include <StdRegions/StdNodalPrismExp.h>
-#include <StdRegions/StdPyrExp.h>
-#include <StdRegions/StdTetExp.h>
 #include <StdRegions/StdNodalTetExp.h>
+#include <StdRegions/StdNodalTriExp.h>
+#include <StdRegions/StdPointExp.h>
+#include <StdRegions/StdPrismExp.h>
+#include <StdRegions/StdPyrExp.h>
+#include <StdRegions/StdQuadExp.h>
+#include <StdRegions/StdSegExp.h>
+#include <StdRegions/StdTetExp.h>
+#include <StdRegions/StdTriExp.h>
 
-#include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace Nektar;
@@ -64,6 +64,7 @@ class DemoSupport
 public:
     DemoSupport() : m_desc("Available options")
     {
+        // clang-format off
         m_desc.add_options()
             ("help,h",
              "Produce this help message and list basis and shape types.")
@@ -86,6 +87,7 @@ public:
             ("pointstype,P",
              po::value<vector<string>>(&m_pointstype)->multitoken(),
              "Optional points type, separate by spaces for higher dimensions.");
+        // clang-format on
     }
 
     void ParseArguments(int argc, char *argv[])
@@ -111,8 +113,8 @@ public:
                 {
                     cout << BasisTypeMap[i] << endl;
                 };
-                cout << endl << "All points types, -P [ --pointstype ], are:"
-                     << endl;
+                cout << endl
+                     << "All points types, -P [ --pointstype ], are:" << endl;
                 for (int i = 1; i < SIZE_PointsType; ++i)
                 {
                     cout << kPointsTypeStr[i] << endl;
@@ -155,7 +157,7 @@ public:
 
         // Convert string input argument to nodal type
         PointsType nodaltype = eNoPointsType;
-        ShapeType stype = eNoShapeType;
+        ShapeType stype      = eNoShapeType;
         vector<BasisType> btype(3, eNoBasisType);
         if (m_vm.count("nodal"))
         {
@@ -177,12 +179,12 @@ public:
                 case eNodalTriEvenlySpaced:
                     btype[0] = eOrtho_A;
                     btype[1] = eOrtho_B;
-                    stype = eTriangle;
+                    stype    = eTriangle;
                     break;
                 case eNodalQuadElec:
                     btype[0] = eOrtho_A;
                     btype[1] = eOrtho_B;
-                    stype = eQuadrilateral;
+                    stype    = eQuadrilateral;
                     break;
                 case eNodalTetElec:
                 case eNodalTetSPI:
@@ -190,7 +192,7 @@ public:
                     btype[0] = eOrtho_A;
                     btype[1] = eOrtho_B;
                     btype[2] = eOrtho_C;
-                    stype = eTetrahedron;
+                    stype    = eTetrahedron;
                     break;
                 case eNodalPrismElec:
                 case eNodalPrismSPI:
@@ -198,13 +200,13 @@ public:
                     btype[0] = eOrtho_A;
                     btype[1] = eOrtho_A;
                     btype[2] = eOrtho_B;
-                    stype = ePrism;
+                    stype    = ePrism;
                     break;
                 case eNodalHexElec:
                     btype[0] = eOrtho_A;
                     btype[1] = eOrtho_A;
                     btype[2] = eOrtho_A;
-                    stype = eHexahedron;
+                    stype    = eHexahedron;
                     break;
                 default:
                     ASSERTL0(!nodaltype, ("The nodal type '" + m_ntype +
@@ -213,7 +215,7 @@ public:
             }
         }
 
-        //Convert string input argument to shape type
+        // Convert string input argument to shape type
         if (stype == eNoShapeType)
         {
             for (int i = 1; i < SIZE_ShapeType; ++i)
@@ -259,49 +261,42 @@ public:
             }
         }
 
-        //check basis selection is permitted for chosen shape
+        // check basis selection is permitted for chosen shape
         map<ShapeType, vector<vector<BasisType>>> allowableBasis;
-        allowableBasis[ePoint] = {
-            {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
-             eLegendre, eChebyshev, eMonomial, eFourierSingleMode,
-             eFourierHalfModeRe, eFourierHalfModeIm}
-        };
-        allowableBasis[eSegment] = { allowableBasis[ePoint][0] };
+        allowableBasis[ePoint]    = {{eOrtho_A, eModified_A, eFourier,
+                                   eGLL_Lagrange, eGauss_Lagrange, eLegendre,
+                                   eChebyshev, eMonomial, eFourierSingleMode,
+                                   eFourierHalfModeRe, eFourierHalfModeIm}};
+        allowableBasis[eSegment]  = {allowableBasis[ePoint][0]};
         allowableBasis[eTriangle] = {
             {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
-            {eOrtho_B, eModified_B, eGLL_Lagrange, eGauss_Lagrange}
-        };
-        allowableBasis[eQuadrilateral] = {
-            allowableBasis[eSegment][0], allowableBasis[eSegment][0]
-        };
-        allowableBasis[eTetrahedron] = {
+            {eOrtho_B, eModified_B, eGLL_Lagrange, eGauss_Lagrange}};
+        allowableBasis[eQuadrilateral] = {allowableBasis[eSegment][0],
+                                          allowableBasis[eSegment][0]};
+        allowableBasis[eTetrahedron]   = {
             {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
             {eOrtho_B, eModified_B, eGLL_Lagrange, eGauss_Lagrange},
-            {eOrtho_C, eModified_C, eGLL_Lagrange, eGauss_Lagrange}
-        };
+            {eOrtho_C, eModified_C, eGLL_Lagrange, eGauss_Lagrange}};
         allowableBasis[ePyramid] = {
-            {eOrtho_A,    eModified_A,    eGLL_Lagrange, eGauss_Lagrange},
-            {eOrtho_A,    eModified_A,    eGLL_Lagrange, eGauss_Lagrange},
-            {eOrthoPyr_C, eModifiedPyr_C, eGLL_Lagrange, eGauss_Lagrange}
-        };
+            {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
+            {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
+            {eOrthoPyr_C, eModifiedPyr_C, eGLL_Lagrange, eGauss_Lagrange}};
         allowableBasis[ePrism] = {
             {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
             {eOrtho_A, eModified_A, eGLL_Lagrange, eGauss_Lagrange},
-            {eOrtho_B, eModified_B, eGLL_Lagrange, eGauss_Lagrange}
-        };
+            {eOrtho_B, eModified_B, eGLL_Lagrange, eGauss_Lagrange}};
         allowableBasis[eHexahedron] = {
             {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
              eLegendre, eChebyshev, eMonomial},
             {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
              eLegendre, eChebyshev, eMonomial},
             {eOrtho_A, eModified_A, eFourier, eGLL_Lagrange, eGauss_Lagrange,
-             eLegendre, eChebyshev, eMonomial}
-        };
-
+             eLegendre, eChebyshev, eMonomial}};
 
         for (int i = 0; i < dimension; ++i)
         {
-            const unsigned int basisListLength = allowableBasis[stype][i].size();
+            const unsigned int basisListLength =
+                allowableBasis[stype][i].size();
             for (int j = 0; j < basisListLength; ++j)
             {
                 if (allowableBasis[stype][i][j] == btype[i])
@@ -311,12 +306,13 @@ public:
                 ASSERTL0(j != basisListLength - 1,
                          ("The basis type '" +
                           static_cast<string>(BasisTypeMap[btype[i]]) +
-                          "' is invalid for basis argument " + to_string(i + 1) +
-                          " for shape '" + ShapeTypeMap[stype] + "'."))
-                    }
+                          "' is invalid for basis argument " +
+                          to_string(i + 1) + " for shape '" +
+                          ShapeTypeMap[stype] + "'."))
+            }
         }
 
-        //Declaration of other variables needed
+        // Declaration of other variables needed
         StdExpansion *E = nullptr;
 
         // Assign points type according to basis type selection, if not already
@@ -342,7 +338,8 @@ public:
                     {
                         ptype[i] = eGaussRadauMAlpha1Beta0;
                     }
-                    else if (i == 2 && (stype == eTetrahedron || stype == ePyramid))
+                    else if (i == 2 &&
+                             (stype == eTetrahedron || stype == ePyramid))
                     {
                         ptype[i] = eGaussRadauMAlpha2Beta0;
                     }
@@ -380,10 +377,9 @@ public:
             }
             case eTriangle:
             {
-                E = nodaltype != eNoPointsType ? new StdNodalTriExp(bkey[0],
-                                                                    bkey[1],
-                                                                    nodaltype)
-                    : new StdTriExp(bkey[0], bkey[1]);
+                E = nodaltype != eNoPointsType
+                        ? new StdNodalTriExp(bkey[0], bkey[1], nodaltype)
+                        : new StdTriExp(bkey[0], bkey[1]);
                 break;
             }
             case eQuadrilateral:
@@ -393,12 +389,10 @@ public:
             }
             case eTetrahedron:
             {
-                E = nodaltype != eNoPointsType ? new StdNodalTetExp(bkey[0],
-                                                                    bkey[1],
-                                                                    bkey[2],
-                                                                    nodaltype)
-                    : new StdTetExp(bkey[0], bkey[1],
-                                    bkey[2]);
+                E = nodaltype != eNoPointsType
+                        ? new StdNodalTetExp(bkey[0], bkey[1], bkey[2],
+                                             nodaltype)
+                        : new StdTetExp(bkey[0], bkey[1], bkey[2]);
                 break;
             }
             case ePyramid:
@@ -408,12 +402,10 @@ public:
             }
             case ePrism:
             {
-                E = nodaltype != eNoPointsType ? new StdNodalPrismExp(bkey[0],
-                                                                      bkey[1],
-                                                                      bkey[2],
-                                                                      nodaltype)
-                    : new StdPrismExp(bkey[0], bkey[1],
-                                      bkey[2]);
+                E = nodaltype != eNoPointsType
+                        ? new StdNodalPrismExp(bkey[0], bkey[1], bkey[2],
+                                               nodaltype)
+                        : new StdPrismExp(bkey[0], bkey[1], bkey[2]);
                 break;
             }
             case eHexahedron:
@@ -445,8 +437,8 @@ public:
 
     Array<OneD, Array<OneD, NekDouble>> GetCoords(StdExpansion *E)
     {
-        int dimension = E->GetShapeDimension();
-        const auto totPoints = (unsigned) E->GetTotPoints();
+        int dimension        = E->GetShapeDimension();
+        const auto totPoints = (unsigned)E->GetTotPoints();
 
         Array<OneD, NekDouble> x(totPoints), y(totPoints), z(totPoints);
         Array<OneD, Array<OneD, NekDouble>> coords(dimension);
@@ -487,12 +479,12 @@ protected:
     po::options_description m_desc;
     po::variables_map m_vm;
 
-    std::string    m_shape;
-    std::string    m_ntype;
+    std::string m_shape;
+    std::string m_ntype;
     vector<string> m_basis{3, "NoBasisType"};
     vector<string> m_pointstype{3, "NoPointsType"};
-    vector<int>    m_order;
-    vector<int>    m_points;
+    vector<int> m_order;
+    vector<int> m_points;
 };
 
 #endif

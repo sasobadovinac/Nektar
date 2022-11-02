@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterBenchmark.cpp
+// File: FilterBenchmark.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -37,9 +37,8 @@
 namespace Nektar
 {
 std::string FilterBenchmark::className =
-        SolverUtils::GetFilterFactory().RegisterCreatorFunction(
-                "Benchmark",
-                FilterBenchmark::create);
+    SolverUtils::GetFilterFactory().RegisterCreatorFunction(
+        "Benchmark", FilterBenchmark::create);
 
 /**
  * @class FilterBenchmark
@@ -58,23 +57,21 @@ std::string FilterBenchmark::className =
  * @param       pParams     Parameters of filter
  */
 FilterBenchmark::FilterBenchmark(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
-        const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-        const ParamMap &pParams)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
+    const ParamMap &pParams)
     : Filter(pSession, pEquation)
 {
     // ThresholdValue
     auto it = pParams.find("ThresholdValue");
     ASSERTL0(it != pParams.end(), "Missing parameter 'ThresholdValue'.");
-    LibUtilities::Equation equ1(
-        m_session->GetInterpreter(), it->second);
+    LibUtilities::Equation equ1(m_session->GetInterpreter(), it->second);
     m_thresholdValue = floor(equ1.Evaluate());
 
     // InitialValue
     it = pParams.find("InitialValue");
     ASSERTL0(it != pParams.end(), "Missing parameter 'InitialValue'.");
-    LibUtilities::Equation equ2(
-        m_session->GetInterpreter(), it->second);
+    LibUtilities::Equation equ2(m_session->GetInterpreter(), it->second);
     m_initialValue = floor(equ2.Evaluate());
 
     // OutputFile
@@ -84,7 +81,7 @@ FilterBenchmark::FilterBenchmark(
 
     // StartTime
     m_startTime = 0.0;
-    it = pParams.find("StartTime");
+    it          = pParams.find("StartTime");
     if (it != pParams.end())
     {
         LibUtilities::Equation equ(m_session->GetInterpreter(), it->second);
@@ -92,18 +89,14 @@ FilterBenchmark::FilterBenchmark(
     }
 
     m_fld = LibUtilities::FieldIO::CreateDefault(pSession);
-
 }
-
 
 /**
  *
  */
 FilterBenchmark::~FilterBenchmark()
 {
-
 }
-
 
 /*
  * Initialises the storage.
@@ -111,16 +104,15 @@ FilterBenchmark::~FilterBenchmark()
  * @param       time        Current time
  */
 void FilterBenchmark::v_Initialise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
-    m_threshold.push_back(Array<OneD, NekDouble>(
-                            pFields[0]->GetNpoints(), m_initialValue));
+    m_threshold.push_back(
+        Array<OneD, NekDouble>(pFields[0]->GetNpoints(), m_initialValue));
 
-    m_idx      = Array<OneD, int> (pFields[0]->GetNpoints(),  0);
-    m_polarity = Array<OneD, int> (pFields[0]->GetNpoints(), -1);
+    m_idx      = Array<OneD, int>(pFields[0]->GetNpoints(), 0);
+    m_polarity = Array<OneD, int>(pFields[0]->GetNpoints(), -1);
 }
-
 
 /**
  * Checks each point in the domain to determine if it has crossed the threshold.
@@ -130,8 +122,8 @@ void FilterBenchmark::v_Initialise(
  * @param       time        Current time
  */
 void FilterBenchmark::v_Update(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     // Only proceed if the start time has passed
     if (time < m_startTime)
@@ -143,13 +135,11 @@ void FilterBenchmark::v_Update(
     for (int i = 0; i < pFields[0]->GetNpoints(); ++i)
     {
         if ((m_polarity[i] == -1 &&
-                pFields[0]->GetPhys()[i] > m_thresholdValue) ||
-            (m_polarity[i] == 1 &&
-                pFields[0]->GetPhys()[i] < m_thresholdValue))
+             pFields[0]->GetPhys()[i] > m_thresholdValue) ||
+            (m_polarity[i] == 1 && pFields[0]->GetPhys()[i] < m_thresholdValue))
         {
             // If APD less than 50ms, remove last activation
-            if (m_polarity[i] == 1 &&
-                time - m_threshold[m_idx[i]][i] < 50)
+            if (m_polarity[i] == 1 && time - m_threshold[m_idx[i]][i] < 50)
             {
                 m_idx[i]--;
                 m_threshold[m_idx[i]][i] = m_initialValue;
@@ -168,15 +158,13 @@ void FilterBenchmark::v_Update(
     // current storage permits.
     int max_idx = Vmath::Vmax(pFields[0]->GetNpoints(), m_idx, 1);
     pFields[0]->GetSession()->GetComm()->AllReduce(max_idx,
-                            LibUtilities::ReduceMax);
+                                                   LibUtilities::ReduceMax);
     if (m_threshold.size() == max_idx)
     {
-        m_threshold.push_back(Array<OneD, NekDouble>(
-                            pFields[0]->GetNpoints(), m_initialValue));
+        m_threshold.push_back(
+            Array<OneD, NekDouble>(pFields[0]->GetNpoints(), m_initialValue));
     }
-
 }
-
 
 /**
  * Writes out the crossings to file.
@@ -184,33 +172,32 @@ void FilterBenchmark::v_Update(
  * @param       time        Current time.
  */
 void FilterBenchmark::v_Finalise(
-        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+    const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+    const NekDouble &time)
 {
     for (int i = 0; i < m_threshold.size() - 1; ++i)
     {
         std::stringstream vOutputFilename;
         vOutputFilename << m_outputFile << "_" << i << ".fld";
 
-        std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef
-            = pFields[0]->GetFieldDefinitions();
-        std::vector<std::vector<NekDouble> > FieldData(FieldDef.size());
+        std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
+            pFields[0]->GetFieldDefinitions();
+        std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
 
         Array<OneD, NekDouble> vCoeffs(pFields[0]->GetNcoeffs());
-        pFields[0]->FwdTrans_IterPerExp(m_threshold[i], vCoeffs);
+        pFields[0]->FwdTransLocalElmt(m_threshold[i], vCoeffs);
 
         // copy Data into FieldData and set variable
-        for(int i = 0; i < FieldDef.size(); ++i)
+        for (int i = 0; i < FieldDef.size(); ++i)
         {
             // Could do a search here to find correct variable
             FieldDef[i]->m_fields.push_back("m");
             pFields[0]->AppendFieldData(FieldDef[i], FieldData[i], vCoeffs);
         }
 
-        m_fld->Write(vOutputFilename.str(),FieldDef,FieldData);
+        m_fld->Write(vOutputFilename.str(), FieldDef, FieldData);
     }
 }
-
 
 /**
  * @return This filter is time dependent.
@@ -220,4 +207,4 @@ bool FilterBenchmark::v_IsTimeDependent()
     return true;
 }
 
-}
+} // namespace Nektar

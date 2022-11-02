@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ErrorUtil.cpp
+// File: ErrorUtil.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,13 +32,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <iostream>
 
-namespace Nektar {
+namespace Nektar
+{
 
 // Defines default outstream in library.
 std::ostream *ErrorUtil::m_outStream = &std::cerr;
-bool          ErrorUtil::m_printBacktrace = true;
+bool ErrorUtil::m_printBacktrace     = true;
 
-}
+} // namespace Nektar

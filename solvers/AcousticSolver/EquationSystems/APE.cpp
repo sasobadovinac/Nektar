@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File APE.cpp
+// File: APE.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -58,9 +58,9 @@ APE::APE(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * @brief Initialization object for the APE class.
  */
-void APE::v_InitObject()
+void APE::v_InitObject(bool DeclareFields)
 {
-    AcousticSystem::v_InitObject();
+    AcousticSystem::v_InitObject(DeclareFields);
 
     // Initialize basefield again
     m_bf = Array<OneD, Array<OneD, NekDouble>>(m_bfNames.size());

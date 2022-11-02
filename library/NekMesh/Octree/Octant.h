@@ -90,11 +90,7 @@ public:
     /**
      * @brief constructor for master octant
      */
-    Octant(int i,
-           NekDouble x,
-           NekDouble y,
-           NekDouble z,
-           NekDouble dx,
+    Octant(int i, NekDouble x, NekDouble y, NekDouble z, NekDouble dx,
            const std::vector<SPBaseSharedPtr> &splist);
 
     /**
@@ -155,17 +151,17 @@ public:
     {
         SPBaseSharedPtr ret;
         bool found = false;
-        for(int i = 0; i < m_localSPList.size(); i++)
+        for (int i = 0; i < m_localSPList.size(); i++)
         {
-            if(m_localSPList[i]->GetType() == eCBoundary ||
-               m_localSPList[i]->GetType() == ePBoundary)
+            if (m_localSPList[i]->GetType() == eCBoundary ||
+                m_localSPList[i]->GetType() == ePBoundary)
             {
-                ret = m_localSPList[i];
+                ret   = m_localSPList[i];
                 found = true;
                 break;
             }
         }
-        ASSERTL0(found,"failed to find point");
+        ASSERTL0(found, "failed to find point");
         return ret;
     }
 
@@ -207,9 +203,8 @@ public:
      */
     NekDouble GetDelta()
     {
-        ASSERTL0(m_delta.first,
-                 "Tried to acsess delta of octant"
-                 "which has not been set");
+        ASSERTL0(m_delta.first, "Tried to acsess delta of octant"
+                                "which has not been set");
 
         return m_delta.second;
     }
@@ -272,7 +267,7 @@ public:
     /**
      * @brief Get the map of neigbours
      */
-    std::map<OctantFace, std::vector<OctantSharedPtr> > GetNeigbours()
+    std::map<OctantFace, std::vector<OctantSharedPtr>> GetNeigbours()
     {
         return m_neigbours;
     }
@@ -359,11 +354,11 @@ private:
     /// idenify if delta has ben set
     OctantLocation m_location;
     /// list of neighbours
-    std::map<OctantFace, std::vector<OctantSharedPtr> > m_neigbours;
+    std::map<OctantFace, std::vector<OctantSharedPtr>> m_neigbours;
 };
 
 bool operator==(OctantSharedPtr const &p1, OctantSharedPtr const &p2);
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

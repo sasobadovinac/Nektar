@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.h
+//  File: VolumeMesh.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -61,9 +61,8 @@ public:
     {
         return "VolumeMesh";
     }
-
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

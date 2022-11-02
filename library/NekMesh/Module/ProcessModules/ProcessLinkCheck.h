@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.h
+//  File: ProcessLinkCheck.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Calculate jacobians of elements.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -69,7 +69,7 @@ public:
         return "ProcessLinkCheck";
     }
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

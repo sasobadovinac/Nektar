@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: SurfaceMesh.h
+//  File: FaceMesh.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,15 +28,15 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: class for indivdual surface meshes
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef NekMesh_SURFACEMESHING_FACEMESH
 #define NekMesh_SURFACEMESHING_FACEMESH
 
-#include <NekMesh/MeshElements/Mesh.h>
 #include <NekMesh/CADSystem/CADSurf.h>
+#include <NekMesh/MeshElements/Mesh.h>
 #include <NekMesh/SurfaceMeshing/CurveMesh.h>
 
 namespace Nektar
@@ -56,14 +56,12 @@ public:
     /**
      * @brief Default constructor
      */
-    FaceMesh(const int                                id,
-             MeshSharedPtr                            m,
-             const std::map<int, CurveMeshSharedPtr> &cmeshes,
-             const int                                comp,
-             Logger                                   l)
+    FaceMesh(const int id, MeshSharedPtr m,
+             const std::map<int, CurveMeshSharedPtr> &cmeshes, const int comp,
+             Logger l)
         : m_mesh(m), m_curvemeshes(cmeshes), m_id(id), m_compId(comp), m_log(l)
     {
-        m_cadsurf = m_mesh->m_cad->GetSurf(m_id);
+        m_cadsurf   = m_mesh->m_cad->GetSurf(m_id);
         m_edgeloops = m_cadsurf->GetEdges();
         m_log.SetPrefix("FaceMesh");
     };
@@ -84,7 +82,6 @@ public:
     void ValidateLoops();
 
 private:
-
     /**
      * @brief Get the boundries of the surface and extracts the nodes from
      * the curve meshes in the correct order
@@ -144,20 +141,21 @@ private:
     /// id of the surface mesh
     int m_id;
     /// list of boundary nodes in their order loops
-    std::vector<std::vector<NodeSharedPtr> > orderedLoops;
+    std::vector<std::vector<NodeSharedPtr>> orderedLoops;
     /// list of stiener points in the triangulation
     std::vector<NodeSharedPtr> m_stienerpoints;
     /// pplane stretching
     NekDouble m_str;
     /// triangle connectiviities
-    std::vector<std::vector<NodeSharedPtr> > m_connec;
+    std::vector<std::vector<NodeSharedPtr>> m_connec;
     /// local set of nodes
     NodeSet m_localNodes;
     /// local set of edges
     EdgeSet m_localEdges;
     /// local list of elements
     std::vector<ElementSharedPtr> m_localElements;
-    /// set of nodes which are in the boundary (easier to identify conflicts with)
+    /// set of nodes which are in the boundary (easier to identify conflicts
+    /// with)
     NodeSet m_inBoundary;
     /// identity to put into element tags
     int m_compId;
@@ -166,7 +164,7 @@ private:
 };
 
 typedef std::shared_ptr<FaceMesh> FaceMeshSharedPtr;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: CADSystem.cpp
+//  File: CADSystemOCE.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -50,16 +50,16 @@
 #include <gce_MakeCirc.hxx>
 #include <gce_MakePln.hxx>
 
-#include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepBuilderAPI_MakeShell.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
+#include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
+#include <GC_MakeArcOfCircle.hxx>
 #include <ShapeFix_Shell.hxx>
 #include <ShapeFix_Solid.hxx>
-#include <GC_MakeArcOfCircle.hxx>
 #include <StlAPI_Writer.hxx>
 #include <TopoDS_Solid.hxx>
-#include <BRepClass3d_SolidClassifier.hxx>
 
 #include <Geom2d_Line.hxx>
 
@@ -114,7 +114,7 @@ gp_Pnt FindInteriorPoint(TopoDS_Shell &shell)
     for (ex.Init(shell, TopAbs_FACE); ex.More(); ex.Next())
     {
         // Get bounds for the face and grab a handle to a Geom_Surface.
-        TopoDS_Face face = TopoDS::Face(ex.Current());
+        TopoDS_Face face       = TopoDS::Face(ex.Current());
         Handle(Geom_Surface) s = BRep_Tool::Surface(face);
 
         NekDouble umin, umax, vmin, vmax;
@@ -141,7 +141,7 @@ gp_Pnt FindInteriorPoint(TopoDS_Shell &shell)
 
         // Follow the inwards normal direction and backtrack. Use the classifier
         // to figure out if we're inside the volume (or not).
-        gp_XYZ n = d.Normal().XYZ() * sqrt(faceProp.Mass());
+        gp_XYZ n        = d.Normal().XYZ() * sqrt(faceProp.Mass());
         NekDouble alpha = 1.0;
 
         for (int i = 0; i < 2; ++i)
@@ -231,7 +231,7 @@ bool CADSystemOCE::LoadCAD()
 
     TopTools_DataMapOfShapeShape modShape;
 
-    if(!m_2d)
+    if (!m_2d)
     {
         const NekDouble sewTolerance = 0.1;
         BRepBuilderAPI_Sewing sew(sewTolerance);
@@ -391,6 +391,7 @@ void CADSystemOCE::AddVert(int i, TopoDS_Shape in)
 {
     CADVertSharedPtr newVert = GetCADVertFactory().CreateInstance(key);
 
+    newVert->SetLogger(m_log);
     std::static_pointer_cast<CADVertOCE>(newVert)->Initialise(i, in);
 
     m_verts[i] = newVert;
@@ -399,6 +400,7 @@ void CADSystemOCE::AddVert(int i, TopoDS_Shape in)
 void CADSystemOCE::AddCurve(int i, TopoDS_Shape in)
 {
     CADCurveSharedPtr newCurve = GetCADCurveFactory().CreateInstance(key);
+    newCurve->SetLogger(m_log);
     std::static_pointer_cast<CADCurveOCE>(newCurve)->Initialise(i, in);
 
     TopoDS_Vertex fv = TopExp::FirstVertex(TopoDS::Edge(in));
@@ -415,6 +417,7 @@ void CADSystemOCE::AddCurve(int i, TopoDS_Shape in)
 void CADSystemOCE::AddSurf(int i, TopoDS_Shape in)
 {
     CADSurfSharedPtr newSurf = GetCADSurfFactory().CreateInstance(key);
+    newSurf->SetLogger(m_log);
     std::static_pointer_cast<CADSurfOCE>(newSurf)->Initialise(i, in);
 
     // do the exploration on forward oriented
@@ -486,7 +489,7 @@ Array<OneD, NekDouble> CADSystemOCE::GetBoundingBox()
 
     for (int i = 1; i <= m_curves.size(); i++)
     {
-        CADCurveSharedPtr c = GetCurve(i);
+        CADCurveSharedPtr c         = GetCurve(i);
         Array<OneD, NekDouble> ends = c->GetMinMax();
 
         bound[0] = min(bound[0], min(ends[0], ends[3]));
@@ -544,10 +547,10 @@ TopoDS_Shape CADSystemOCE::BuildNACA(string naca)
     Array<OneD, NekDouble> yt(np);
     for (int i = 0; i < np; i++)
     {
-        yt[i] =
-            T / 0.2 * (0.2969 * sqrt(xc[i]) - 0.1260 * xc[i] -
-                       0.3516 * xc[i] * xc[i] + 0.2843 * xc[i] * xc[i] * xc[i] -
-                       0.1015 * xc[i] * xc[i] * xc[i] * xc[i]);
+        yt[i] = T / 0.2 *
+                (0.2969 * sqrt(xc[i]) - 0.1260 * xc[i] -
+                 0.3516 * xc[i] * xc[i] + 0.2843 * xc[i] * xc[i] * xc[i] -
+                 0.1015 * xc[i] * xc[i] * xc[i] * xc[i]);
     }
 
     Array<OneD, NekDouble> x(2 * np - 1), y(2 * np - 1);
@@ -628,11 +631,9 @@ TopoDS_Shape CADSystemOCE::BuildNACA(string naca)
 /**
  * @brief Helper function for Gmsh file construction.
  */
-template<typename T>
-inline bool ContainsIDs(std::string                name,
-                        unsigned int               id,
-                        std::string                contName,
-                        std::vector<int>          &facetids,
+template <typename T>
+inline bool ContainsIDs(std::string name, unsigned int id, std::string contName,
+                        std::vector<int> &facetids,
                         std::map<unsigned int, T> &toSearch)
 {
     bool valid = true;
@@ -640,9 +641,11 @@ inline bool ContainsIDs(std::string                name,
     {
         if (toSearch.find(fid) == toSearch.end())
         {
-            NEKERROR(ErrorUtil::ewarning,
-                     name + " ID " + std::to_string(id) + " refers to "
-                     "unknown " + contName + " ID " + std::to_string(fid));
+            NEKERROR(ErrorUtil::ewarning, name + " ID " + std::to_string(id) +
+                                              " refers to "
+                                              "unknown " +
+                                              contName + " ID " +
+                                              std::to_string(fid));
         }
     }
 
@@ -652,16 +655,15 @@ inline bool ContainsIDs(std::string                name,
 /**
  * @brief Helper function for Gmsh file construction.
  */
-template<typename T>
-inline void CheckWarning(std::string                name,
-                         unsigned int               id,
+template <typename T>
+inline void CheckWarning(std::string name, unsigned int id,
                          std::map<unsigned int, T> &toSearch)
 {
     if (toSearch.find(id) != toSearch.end())
     {
-        NEKERROR(ErrorUtil::ewarning,
-                 "Duplicate .geo " + name + " " + std::to_string(id) +
-                 " found, will be overwritten.");
+        NEKERROR(ErrorUtil::ewarning, "Duplicate .geo " + name + " " +
+                                          std::to_string(id) +
+                                          " found, will be overwritten.");
     }
 }
 
@@ -699,18 +701,17 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
 
     // Run parser.
     std::string::const_iterator iter = str.begin();
-    std::string::const_iterator end = str.end();
+    std::string::const_iterator end  = str.end();
     bool r = qi::phrase_parse(iter, end, geoParser, skip, geoFile);
 
     // If parsing failed, output an error.
     if (!r)
     {
-        std::string::const_iterator some = iter+30;
-        std::string context(iter, (some>end)?end:some);
+        std::string::const_iterator some = iter + 30;
+        std::string context(iter, (some > end) ? end : some);
 
         m_log(FATAL) << "Parsing of geo file failed, "
-                     << "stopped at: \": " << context << "...\""
-                     << endl;
+                     << "stopped at: \": " << context << "...\"" << endl;
     }
 
     // Build points.
@@ -734,8 +735,9 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     {
         if (line.ids.size() != 2)
         {
-            NEKERROR(ErrorUtil::ewarning, "Line " + std::to_string(line.id) +
-                     " contains more than two points, ignoring.");
+            NEKERROR(ErrorUtil::ewarning,
+                     "Line " + std::to_string(line.id) +
+                         " contains more than two points, ignoring.");
             continue;
         }
 
@@ -746,8 +748,8 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
         }
 
         BRepBuilderAPI_MakeEdge em(cPoints[line.ids[0]], cPoints[line.ids[1]]);
-        cEdges[line.id] = em.Edge();
-        edgeMap[line.id] = line;
+        cEdges[line.id]     = em.Edge();
+        edgeMap[line.id]    = line;
         cEdgeTypes[line.id] = "line";
     }
 
@@ -756,8 +758,9 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     {
         if (spline.ids.size() < 2)
         {
-            NEKERROR(ErrorUtil::ewarning, "Spline " + std::to_string(spline.id)
-                     + " does not contain enough points, ignoring.");
+            NEKERROR(ErrorUtil::ewarning,
+                     "Spline " + std::to_string(spline.id) +
+                         " does not contain enough points, ignoring.");
             continue;
         }
 
@@ -777,8 +780,8 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
         Handle(Geom_BSplineCurve) curve = oceSpline.Curve();
 
         BRepBuilderAPI_MakeEdge em(curve);
-        cEdges[spline.id] = em.Edge();
-        edgeMap[spline.id] = spline;
+        cEdges[spline.id]     = em.Edge();
+        edgeMap[spline.id]    = spline;
         cEdgeTypes[spline.id] = "spline";
     }
 
@@ -788,8 +791,9 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
         if (bspline.ids.size() < 2)
         {
             NEKERROR(ErrorUtil::ewarning,
-                     "BSpline " + std::to_string(bspline.id) + " does not "
-                     "contain enough points, ignoring.");
+                     "BSpline " + std::to_string(bspline.id) +
+                         " does not "
+                         "contain enough points, ignoring.");
             continue;
         }
 
@@ -808,8 +812,8 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
         Handle(Geom_BezierCurve) curve = new Geom_BezierCurve(pointArray);
 
         BRepBuilderAPI_MakeEdge em(curve);
-        cEdges[bspline.id] = em.Edge();
-        edgeMap[bspline.id] = bspline;
+        cEdges[bspline.id]     = em.Edge();
+        edgeMap[bspline.id]    = bspline;
         cEdgeTypes[bspline.id] = "bspline";
     }
 
@@ -818,8 +822,9 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     {
         if (circle.ids.size() != 3)
         {
-            NEKERROR(ErrorUtil::ewarning, "Circle " + std::to_string(circle.id)
-                     + " should contain only three points.");
+            NEKERROR(ErrorUtil::ewarning,
+                     "Circle " + std::to_string(circle.id) +
+                         " should contain only three points.");
             continue;
         }
 
@@ -834,10 +839,10 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
         gp_Pnt end    = cPoints[circle.ids[2]];
 
         Standard_Real radius = start.Distance(centre);
-        gce_MakeCirc mkArc(
-            centre, gce_MakePln(start, centre, end).Value(), radius);
+        gce_MakeCirc mkArc(centre, gce_MakePln(start, centre, end).Value(),
+                           radius);
 
-        const gp_Circ &circ = mkArc.Value();
+        const gp_Circ &circ   = mkArc.Value();
         Handle(Geom_Circle) c = new Geom_Circle(circ);
 
         Standard_Real alpha1 = ElCLib::Parameter(circ, start);
@@ -847,13 +852,13 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
             std::swap(alpha1, alpha2);
         }
 
-        Handle(Geom_TrimmedCurve) tc = new Geom_TrimmedCurve(
-            c, alpha1, alpha2, false);
+        Handle(Geom_TrimmedCurve) tc =
+            new Geom_TrimmedCurve(c, alpha1, alpha2, false);
 
         BRepBuilderAPI_MakeEdge em(tc);
         em.Build();
-        cEdges[circle.id] = em.Edge();
-        edgeMap[circle.id] = circle;
+        cEdges[circle.id]     = em.Edge();
+        edgeMap[circle.id]    = circle;
         cEdgeTypes[circle.id] = "circle";
     }
 
@@ -862,9 +867,10 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     {
         if (ellipse.ids.size() != 4)
         {
-            NEKERROR(ErrorUtil::ewarning,
-                     "Ellipse " + std::to_string(ellipse.id) + " should contain"
-                     " only four points.");
+            NEKERROR(ErrorUtil::ewarning, "Ellipse " +
+                                              std::to_string(ellipse.id) +
+                                              " should contain"
+                                              " only four points.");
             continue;
         }
 
@@ -894,8 +900,8 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
         }
 
         v2.Rotate(gp_Ax1(), angle);
-        NekDouble minor = fabs(
-            v2.Y() / sqrt(1.0 - v2.X() * v2.X() / (major * major)));
+        NekDouble minor =
+            fabs(v2.Y() / sqrt(1.0 - v2.X() * v2.X() / (major * major)));
 
         gp_Elips e;
         e.SetLocation(centre);
@@ -919,8 +925,8 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
 
         BRepBuilderAPI_MakeEdge em(tc);
         em.Build();
-        cEdges[ellipse.id] = em.Edge();
-        edgeMap[ellipse.id] = ellipse;
+        cEdges[ellipse.id]     = em.Edge();
+        edgeMap[ellipse.id]    = ellipse;
         cEdgeTypes[ellipse.id] = "ellipse";
     }
 
@@ -949,7 +955,7 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
         {
             wm.Add(cEdges[edgeId]);
         }
-        cWires[loop.id] = wm.Wire();
+        cWires[loop.id]  = wm.Wire();
         loopMap[loop.id] = loop;
     }
 
@@ -973,7 +979,7 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
         ShapeFix_Face sf(face.Face());
         sf.FixOrientation();
 
-        cFaces[planeSurf.id] = sf.Face();
+        cFaces[planeSurf.id]  = sf.Face();
         faceMap[planeSurf.id] = planeSurf;
     }
 
@@ -1006,15 +1012,17 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     for (auto &surf : geoFile.ruledSurfs)
     {
         CheckWarning("surface", surf.id, cFaces);
-        if (!ContainsIDs("Ruled Surface", surf.id, "line loop", surf.ids, cWires))
+        if (!ContainsIDs("Ruled Surface", surf.id, "line loop", surf.ids,
+                         cWires))
         {
             continue;
         }
         if (surf.ids.size() != 1)
         {
             NEKERROR(ErrorUtil::ewarning,
-                     "Surface " + std::to_string(surf.id) + " should only "
-                     "contain a single line loop, ignoring.");
+                     "Surface " + std::to_string(surf.id) +
+                         " should only "
+                         "contain a single line loop, ignoring.");
             continue;
         }
 
@@ -1059,7 +1067,8 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
             gp_Pnt origin = cPoints[edgeMap[loop.ids[0]].ids[1]];
             gp_Sphere sph;
             sph.SetLocation(origin);
-            sph.SetRadius(origin.Distance(cPoints[edgeMap[loop.ids[0]].ids[0]]));
+            sph.SetRadius(
+                origin.Distance(cPoints[edgeMap[loop.ids[0]].ids[0]]));
             BRepBuilderAPI_MakeFace makeFace(sph, cWires[surf.ids[0]]);
 
             ShapeFix_Face sf(makeFace.Face());
@@ -1084,20 +1093,20 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
             //   same direction of curve[i].
             // - verts[i] are the coordinate points of the vertex given by
             //   vertIds[i].
-            std::vector<Handle(Geom_Curve)>   edges    (nEdges);
-            std::vector<pair<double, double>> clims    (nEdges);
-            std::vector<int>                  vertIds  (nEdges);
-            std::vector<bool>                 fwd      (nEdges);
-            std::vector<gp_Pnt>               verts    (nEdges);
+            std::vector<Handle(Geom_Curve)> edges(nEdges);
+            std::vector<pair<double, double>> clims(nEdges);
+            std::vector<int> vertIds(nEdges);
+            std::vector<bool> fwd(nEdges);
+            std::vector<gp_Pnt> verts(nEdges);
 
             for (int i = 0; i < nEdges; ++i)
             {
-                auto edge = edgeMap[loop.ids[i]];
+                auto edge     = edgeMap[loop.ids[i]];
                 auto nextEdge = edgeMap[loop.ids[(i + 1) % nEdges]];
 
                 std::pair<double, double> clim;
-                edges[i] = BRep_Tool::Curve(
-                    cEdges[loop.ids[i]], clim.first, clim.second);
+                edges[i] = BRep_Tool::Curve(cEdges[loop.ids[i]], clim.first,
+                                            clim.second);
                 clims[i] = clim;
 
                 // Determine orientation.
@@ -1113,13 +1122,13 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
                     ASSERTL0(false, "connectivity issue");
                 }
 
-                verts[i] = fwd[i] ? cPoints[edge.ids[0]] :
-                    cPoints[edge.ids.back()];
+                verts[i] =
+                    fwd[i] ? cPoints[edge.ids[0]] : cPoints[edge.ids.back()];
             }
 
             // Create new transfinite surface.
-            Handle(Geom_TransfiniteSurface) tf = new Geom_TransfiniteSurface(
-                edges, fwd, clims, verts);
+            Handle(Geom_TransfiniteSurface) tf =
+                new Geom_TransfiniteSurface(edges, fwd, clims, verts);
 
             BRepBuilderAPI_MakeFace mkFace(tf, cWires[surf.ids[0]]);
             TopoDS_Face face = mkFace.Face();
@@ -1136,10 +1145,10 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
                 TopLoc_Location L;
                 BRep_Tool::Surface(face, L);
                 Handle(Geom2d_Line) e0, e1, e2, e3;
-                e0 = new Geom2d_Line(gp_Pnt2d(0, 0), gp_Dir2d( 1,  0));
-                e1 = new Geom2d_Line(gp_Pnt2d(1, 0), gp_Dir2d( 0,  1));
-                e2 = new Geom2d_Line(gp_Pnt2d(0, 1), gp_Dir2d( 1,  0));
-                e3 = new Geom2d_Line(gp_Pnt2d(0, 0), gp_Dir2d( 0,  1));
+                e0 = new Geom2d_Line(gp_Pnt2d(0, 0), gp_Dir2d(1, 0));
+                e1 = new Geom2d_Line(gp_Pnt2d(1, 0), gp_Dir2d(0, 1));
+                e2 = new Geom2d_Line(gp_Pnt2d(0, 1), gp_Dir2d(1, 0));
+                e3 = new Geom2d_Line(gp_Pnt2d(0, 0), gp_Dir2d(0, 1));
 
                 B.UpdateEdge(cEdges[loop.ids[0]], e0, tf, L, 0.);
                 B.UpdateEdge(cEdges[loop.ids[1]], e1, tf, L, 0.);
@@ -1178,7 +1187,8 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     for (auto &sloop : geoFile.surfLoops)
     {
         CheckWarning("surface loop", sloop.id, cShells);
-        if (!ContainsIDs("Surface Loop", sloop.id, "surface", sloop.ids, cFaces))
+        if (!ContainsIDs("Surface Loop", sloop.id, "surface", sloop.ids,
+                         cFaces))
         {
             continue;
         }
@@ -1224,5 +1234,5 @@ TopoDS_Shape CADSystemOCE::BuildGeo(string geo)
     return cVolumes.begin()->second;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

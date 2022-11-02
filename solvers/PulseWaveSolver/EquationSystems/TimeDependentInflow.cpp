@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommMpi.cpp
+// File: TimeDependentInflow.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -58,11 +58,11 @@ TimeDependentInflow::~TimeDependentInflow()
 }
 
 void TimeDependentInflow::v_DoBoundary(
-    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-    Array<OneD, Array<OneD, NekDouble> > &A_0,
-    Array<OneD, Array<OneD, NekDouble> > &beta,
-    Array<OneD, Array<OneD, NekDouble> > &alpha,
-    const NekDouble time, int omega, int offset, int n)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &A_0,
+    Array<OneD, Array<OneD, NekDouble>> &beta,
+    Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
+    int offset, int n)
 {
     Array<OneD, MultiRegions::ExpListSharedPtr> vessel(2);
 
@@ -77,7 +77,6 @@ void TimeDependentInflow::v_DoBoundary(
     {
         vessel[i]->EvaluateBoundaryConditions(time);
     }
-
 }
 
 } // namespace Nektar

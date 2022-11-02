@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalHexElec.h
+// File: NodalHexElec.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -78,7 +78,7 @@ private:
     void CalculateWeights();
     void CalculateDerivMatrix();
 };
-} // end of namespace
-} // end of namespace
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // NODALHEXELEC_H

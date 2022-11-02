@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// File Likwid.hpp
+// File: Likwid.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -50,4 +50,3 @@
 #endif
 
 #endif // NEKTAR_LIB_UTILITIES_BASIC_UTILS_LIKWID
-

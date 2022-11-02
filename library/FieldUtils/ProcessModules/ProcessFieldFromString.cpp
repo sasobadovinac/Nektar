@@ -28,7 +28,8 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Modify an existing or add a new field from a string based on existing variable
+//  Description: Modify an existing or add a new field from a string based on
+//  existing variable
 //
 ///////////////////////////////////////////////////////////////////////////////
 #include <iostream>
@@ -58,12 +59,10 @@ ModuleKey ProcessFieldFromString::className =
 ProcessFieldFromString::ProcessFieldFromString(FieldSharedPtr f)
     : ProcessModule(f)
 {
-    m_config["fieldstr"] = ConfigOption(
-        false, "NotSet", "Analytic expression");
-    m_config["fieldname"] =
-        ConfigOption(false,
-                     "newfield",
-                     "name for modified new field, default is \"newfield\" (optional)");
+    m_config["fieldstr"] = ConfigOption(false, "NotSet", "Analytic expression");
+    m_config["fieldname"] = ConfigOption(
+        false, "newfield",
+        "name for modified new field, default is \"newfield\" (optional)");
 }
 
 ProcessFieldFromString::~ProcessFieldFromString(void)
@@ -91,7 +90,7 @@ void ProcessFieldFromString::Process(po::variables_map &vm)
     if (it != m_f->m_variables.end())
     {
         addField = false;
-        fieldID = std::distance(m_f->m_variables.begin(), it);
+        fieldID  = std::distance(m_f->m_variables.begin(), it);
     }
     else
     {
@@ -121,7 +120,7 @@ void ProcessFieldFromString::Process(po::variables_map &vm)
 
     // Variables for storing names and values for evaluating the function
     string varstr;
-    vector<Array<OneD, const NekDouble> > interpfields;
+    vector<Array<OneD, const NekDouble>> interpfields;
 
     // Add the coordinate values
     varstr += "x y z";
@@ -151,8 +150,8 @@ void ProcessFieldFromString::Process(po::variables_map &vm)
     strEval.Evaluate(exprId, interpfields, m_f->m_exp[fieldID]->UpdatePhys());
 
     // Update coeffs
-    m_f->m_exp[fieldID]->FwdTrans_IterPerExp(
-        m_f->m_exp[fieldID]->GetPhys(), m_f->m_exp[fieldID]->UpdateCoeffs());
+    m_f->m_exp[fieldID]->FwdTransLocalElmt(m_f->m_exp[fieldID]->GetPhys(),
+                                           m_f->m_exp[fieldID]->UpdateCoeffs());
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

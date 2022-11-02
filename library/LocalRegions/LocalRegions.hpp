@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LocalRegions.hpp
+// File: LocalRegions.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: General header for localregions containing enum and constants 
+// Description: General header for localregions containing enum and constants
 //
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef LOCALREGIONS_H
@@ -37,69 +37,61 @@
 #include <string>
 
 namespace Nektar
-{    
-    namespace LocalRegions
+{
+namespace LocalRegions
+{
+enum GeomState
+{
+    eNotFilled,
+    ePtsFilled,
+};
+
+// Defines a "fast find"
+// Assumes that first/last define the beginning/ending of
+// a continuous range of classes, and that start is
+// an iterator between first and last
+
+template <class InputIterator, class EqualityComparable>
+InputIterator find(InputIterator first, InputIterator last,
+                   InputIterator startingpoint, const EqualityComparable &value)
+{
+
+    InputIterator val;
+
+    if (startingpoint == first)
     {
-        enum GeomState
+        val = find(first, last, value);
+    }
+    else
+    {
+        val = find(startingpoint, last, value);
+        if (val == last)
         {
-            eNotFilled,
-            ePtsFilled,
-        };
-
-        // Defines a "fast find"
-        // Assumes that first/last define the beginning/ending of
-        // a continuous range of classes, and that start is
-        // an iterator between first and last
-
-        template<class InputIterator, class EqualityComparable>
-        InputIterator find(InputIterator first, InputIterator last,
-            InputIterator startingpoint,
-            const EqualityComparable& value)
-        {
-
-            InputIterator val;
-
-            if(startingpoint == first)
+            val = find(first, startingpoint, value);
+            if (val == startingpoint)
             {
-                val = find(first,last,value);
+                val = last;
             }
-            else
-            {
-                val = find(startingpoint,last,value);
-                if(val == last)
-                {
-                    val = find(first,startingpoint,value);
-                    if(val == startingpoint)
-                    {
-                        val = last;
-                    }
-                }
-            }
-            return val;
         }
+    }
+    return val;
+}
 
-        enum IndexMapType
-            {
-                eEdgeToElement,
-                eFaceToElement,
-                eEdgeInterior,
-                eFaceInterior,
-                eBoundary,
-                eVertex
-		};
-        
-        const char* const IndexMapTypeMap[] =
-            {
-                "EdgeToElement",
-                "FaceToElement",
-                "EdgeInterior",
-                "FaceInterior",
-                "Boundary",
-                "Vertex"
-            };
+enum IndexMapType
+{
+    eEdgeToElement,
+    eFaceToElement,
+    eEdgeInterior,
+    eFaceInterior,
+    eBoundary,
+    eVertex
+};
 
-    } // end of namespace
-} // end of namespace
+const char *const IndexMapTypeMap[] = {"EdgeToElement", "FaceToElement",
+                                       "EdgeInterior",  "FaceInterior",
+                                       "Boundary",      "Vertex"};
 
-#endif //LOCALREGIONS_H
+} // namespace LocalRegions
+} // namespace Nektar
 
+#endif // LOCALREGIONS_H

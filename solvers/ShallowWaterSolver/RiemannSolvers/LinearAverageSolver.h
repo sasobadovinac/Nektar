@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Simple mean value solver for the Linear Shallow Water 
+// Description: Simple mean value solver for the Linear Shallow Water
 //              Equations.
 //
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,27 +40,25 @@
 
 namespace Nektar
 {
-    class LinearAverageSolver : public LinearSWESolver
+class LinearAverageSolver : public LinearSWESolver
+{
+public:
+    static RiemannSolverSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        static RiemannSolverSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            return RiemannSolverSharedPtr(
-                new LinearAverageSolver(pSession));
-        }
-        
-        static std::string solverName;
-        
-    protected:
-        LinearAverageSolver(
-                const LibUtilities::SessionReaderSharedPtr& pSession);
-        
-        virtual void v_PointSolve(
-            NekDouble  etaL, NekDouble  uL, NekDouble  vL, NekDouble dL,
-            NekDouble  etaR, NekDouble  uR, NekDouble  vR, NekDouble dR,
-            NekDouble &etaf, NekDouble &uf, NekDouble &vf);
-    };
-}
+        return RiemannSolverSharedPtr(new LinearAverageSolver(pSession));
+    }
+
+    static std::string solverName;
+
+protected:
+    LinearAverageSolver(const LibUtilities::SessionReaderSharedPtr &pSession);
+
+    virtual void v_PointSolve(NekDouble etaL, NekDouble uL, NekDouble vL,
+                              NekDouble dL, NekDouble etaR, NekDouble uR,
+                              NekDouble vR, NekDouble dR, NekDouble &etaf,
+                              NekDouble &uf, NekDouble &vf);
+};
+} // namespace Nektar
 
 #endif

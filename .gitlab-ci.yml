@@ -12,12 +12,14 @@ workflow:
       when: never
     # Other merge requests trigger pipelines
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Manual runs
+    - if: $CI_PIPELINE_SOURCE == "web"
 
 stages:
   - build-env-default
   - build-env-full
   - build-and-test
-  - compiler-warnings
+  - quality-checks
   - package-env
   - package-build
   - package-build-dev
@@ -76,6 +78,10 @@ include:
     - if [ ! -d $CCACHE_DIR ]; then mkdir -p $CCACHE_DIR && chown 1000:1000 $CCACHE_DIR; fi
     - docker run --name $CONTAINER_NAME -v ccache:/cache
       -e "BUILD_TYPE=$BUILD_TYPE"
+      -e "BUILD_SIMD=$BUILD_SIMD"
+      -e "BUILD_CC=$BUILD_CC"
+      -e "BUILD_CXX=$BUILD_CXX"
+      -e "BUILD_FC=$BUILD_FC"
       -e "NUM_CPUS=$NUM_CPUS"
       -e "CCACHE_DIR=$CCACHE_DIR"
       $ENV_IMAGE
@@ -103,7 +109,7 @@ include:
 .compiler-warning-template: &compiler-warning-template
   <<: *execution-conditions
   image: debian:10-slim
-  stage: compiler-warnings
+  stage: quality-checks
   variables:
     WARNING_REGEX: '.*warning[: ].*'
     GIT_STRATEGY: none
@@ -116,6 +122,23 @@ include:
       grep --colour=always -A 1 -B 1 -0 "$WARNING_REGEX" $LOG_FILE;
         exit 1;
       fi
+  allow_failure: true
+  timeout: 15m
+
+.clang-format-template: &clang-format-template
+  <<: *execution-conditions
+  image: debian:11-slim
+  stage: quality-checks
+  variables:
+    CL_F_VER: 11
+    TARGETS: library
+  before_script:
+    - apt-get update && apt-get install -y clang-format-$CL_F_VER git-core
+  script:
+    - echo `which clang-format-$CL_F_VER`
+    - ln -s `which clang-format-$CL_F_VER` /usr/bin/clang-format
+    - cd "$CI_PROJECT_DIR"
+    - find $TARGETS -iname "*.cpp" -o -iname "*.h" -o -iname "*.hpp" | xargs clang-format-11 --dry-run -Werror
   allow_failure: true
   timeout: 15m
 
@@ -146,7 +169,7 @@ include:
 bullseye-default-build-env:
   <<: *build-env-debian-template-default
 
-bullseye-full_py3-build-env:
+bullseye-full-build-env:
   <<: *build-env-debian-template-full
   variables:
     OS_DISTRO: debian
@@ -171,9 +194,25 @@ bullseye-default-build-and-test:
   <<: *build-and-test-template
   needs: ["bullseye-default-build-env"]
 
-bullseye-full_py3-build-and-test:
+bullseye-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["bullseye-full_py3-build-env"]
+  needs: ["bullseye-full-build-env"]
+
+bullseye-full-avx2-build-and-test:
+  <<: *build-and-test-template
+  needs: ["bullseye-full-build-env"]
+  variables:
+    BUILD_SIMD: avx2
+  tags:
+    - avx2
+
+bullseye-full-avx512-build-and-test:
+  <<: *build-and-test-template
+  needs: ["bullseye-full-build-env"]
+  variables:
+    BUILD_SIMD: avx512
+  tags:
+    - avx512
 
 buster-default-build-and-test:
   <<: *build-and-test-template
@@ -200,9 +239,13 @@ bullseye-default-warnings:
   <<: *compiler-warning-template
   needs: ["bullseye-default-build-and-test"]
 
-bullseye-full_py3-warnings:
+bullseye-full-warnings:
   <<: *compiler-warning-template
-  needs: ["bullseye-full_py3-build-and-test"]
+  needs: ["bullseye-full-build-and-test"]
+
+bullseye-full-avx2-warnings:
+  <<: *compiler-warning-template
+  needs: ["bullseye-full-avx2-build-and-test"]
 
 buster-default-warnings:
   <<: *compiler-warning-template
@@ -221,7 +264,14 @@ stretch-full-warnings:
   needs: ["stretch-full-build-and-test"]
 
 
-buster-documentation-build-env:
+# CODE FORMATTING
+bullseye-clang-format:
+  <<: *clang-format-template
+  needs: []
+
+
+# DOCUMENTATION
+bullseye-documentation-build-env:
   <<: *execution-conditions
   image: docker:19.03.6
   stage: build-env-full
@@ -232,12 +282,12 @@ buster-documentation-build-env:
     - docker pull $IMAGE || true
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
-  needs: ["buster-default-build-env"]
+  needs: ["bullseye-default-build-env"]
 
 .build-documentation-template: &build-documentation-template
   <<: *build-and-test-template
   image: $CI_REGISTRY_IMAGE:env-documentation
-  needs: ["buster-documentation-build-env"]
+  needs: ["bullseye-documentation-build-env"]
 
 user-guide-build:
   <<: *build-documentation-template
@@ -289,10 +339,17 @@ tutorials-build:
   <<: *build-env-ubuntu-template-default
   stage: build-env-full
 
+jammy-default-build-env:
+  <<: *build-env-ubuntu-template-default
+
+jammy-full-build-env:
+  <<: *build-env-ubuntu-template-full
+  needs: ["jammy-default-build-env"]
+
 focal-default-build-env:
   <<: *build-env-ubuntu-template-default
 
-focal-full_py3-build-env:
+focal-full-build-env:
   <<: *build-env-ubuntu-template-full
   needs: ["focal-default-build-env"]
 
@@ -303,13 +360,48 @@ bionic-full-build-env:
   <<: *build-env-ubuntu-template-full
   needs: ["bionic-default-build-env"]
 
+jammy-default-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-default-build-env"]
+
+jammy-full-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full-build-env"]
+
+jammy-full-clang14-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full-build-env"]
+  variables:
+    BUILD_CC: clang-14
+    BUILD_CXX: clang++-14
+
+jammy-full-clang14-avx2-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full-build-env"]
+  variables:
+    BUILD_CC: clang-14
+    BUILD_CXX: clang++-14
+    BUILD_SIMD: avx2
+  tags:
+    - avx2
+
+jammy-full-clang14-avx512-build-and-test:
+  <<: *build-and-test-template
+  needs: ["jammy-full-build-env"]
+  variables:
+    BUILD_CC: clang-14
+    BUILD_CXX: clang++-14
+    BUILD_SIMD: avx512
+  tags:
+    - avx512
+
 focal-default-build-and-test:
   <<: *build-and-test-template
   needs: ["focal-default-build-env"]
 
-focal-full_py3-build-and-test:
+focal-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["focal-full_py3-build-env"]
+  needs: ["focal-full-build-env"]
 
 bionic-default-build-and-test:
   <<: *build-and-test-template
@@ -321,13 +413,33 @@ bionic-full-build-and-test:
 
 
 # COMPILER WARNINGS
+jammy-default-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-default-build-and-test"]
+
+jammy-full-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full-build-and-test"]
+
+jammy-full-clang14-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full-clang14-build-and-test"]
+
+jammy-full-clang14-avx2-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full-clang14-avx2-build-and-test"]
+
+jammy-full-clang14-avx512-warnings:
+  <<: *compiler-warning-template
+  needs: ["jammy-full-clang14-avx512-build-and-test"]
+
 focal-default-warnings:
   <<: *compiler-warning-template
   needs: ["focal-default-build-and-test"]
 
-focal-full_py3-warnings:
+focal-full-warnings:
   <<: *compiler-warning-template
-  needs: ["focal-full_py3-build-and-test"]
+  needs: ["focal-full-build-and-test"]
 
 bionic-default-warnings:
   <<: *compiler-warning-template
@@ -485,6 +597,14 @@ win10-mpi-default-build-and-test:
   image: ${CI_REGISTRY_IMAGE}/${image_name}:$CI_COMMIT_SHORT_SHA
   <<: *execution-conditions
   stage: package-test
+  script:
+    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
+    - test_output=`IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml | grep "L 2 error (variable u)" | awk '{print ($7 < 1e-7)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel IncNavierStokesSolver run"; exit 1; fi
+    - cd $CI_PROJECT_DIR/library/Demos/Python/MultiRegions
+    - mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml
+    - test_output=`mpirun -n 2 python3 Helmholtz2D.py ../../MultiRegions/Tests/Helmholtz2D_P7.xml | grep "L 2 error (variable nek)" | awk '{print ($7 < 1e-4)}'`
+    - if [ "$test_output" -eq 0 ]; then echo "Tolerance test failed on parallel Python run"; exit 1; fi
 
 # Docker Hub deployment template. Only builds for master or tags on the main
 # Nektar repository. The strategy is to login to the container registry and pull
@@ -494,6 +614,7 @@ win10-mpi-default-build-and-test:
 # runners can be difficult if they are tagged multiple times, so we also perform
 # a quick rmi to make sure we only keep the images from the registry.
 .dockerhub-deploy-template: &dockerhub_deploy_template
+  <<: *execution-conditions
   image: docker:stable
   stage: package-deploy
   only:
@@ -552,14 +673,12 @@ dockerhub-build-dev:
     args: --build-arg ENV_IMAGE=$CI_REGISTRY_IMAGE/nektar-env:$CI_COMMIT_SHORT_SHA --build-arg NEKTAR_IMAGE=$CI_REGISTRY_IMAGE/nektar:$CI_COMMIT_SHORT_SHA
     dockerfile: docker/nektar-dev/Dockerfile
 
-# Test the dockerhub images
+# Test the dockerhub images: runs a quick solve and Python code.
 dockerhub-test-nektar:
   <<: *dockerhub_test_template
   needs: [ "dockerhub-build-nektar" ]
   variables:
     image_name: nektar
-  script:
-    - mpirun -n 3 IncNavierStokesSolver $CI_PROJECT_DIR/solvers/IncNavierStokesSolver/Tests/ChanFlow_m3_par.xml
 
 dockerhub-test-nektar-dev:
   <<: *dockerhub_test_template
@@ -569,6 +688,12 @@ dockerhub-test-nektar-dev:
   script:
     - cd $CI_PROJECT_DIR/templates/executable
     - ./test.sh /usr/local/lib64/nektar++/cmake 3 /usr/bin/cmake
+
+dockerhub-test-workbook:
+  <<: *dockerhub_test_template
+  needs: [ "dockerhub-build-workbook" ]
+  variables:
+    image_name: nektar-workbook
 
 # Deployment
 dockerhub-deploy-nektar:

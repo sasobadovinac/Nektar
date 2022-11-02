@@ -50,8 +50,7 @@ namespace FieldUtils
 {
 
 ModuleKey ProcessGrad::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "gradient"),
-    ProcessGrad::create,
+    ModuleKey(eProcessModule, "gradient"), ProcessGrad::create,
     "Computes gradient of fields.");
 
 ProcessGrad::ProcessGrad(FieldSharedPtr f) : ProcessModule(f)
@@ -98,7 +97,7 @@ void ProcessGrad::Process(po::variables_map &vm)
     }
 
     int npoints = m_f->m_exp[0]->GetNpoints();
-    Array<OneD, Array<OneD, NekDouble> > grad(addfields);
+    Array<OneD, Array<OneD, NekDouble>> grad(addfields);
     m_f->m_exp.resize(nfields + addfields);
 
     for (i = 0; i < addfields; ++i)
@@ -106,7 +105,7 @@ void ProcessGrad::Process(po::variables_map &vm)
         grad[i] = Array<OneD, NekDouble>(npoints);
     }
 
-    Array<OneD, Array<OneD, NekDouble> > tmp(spacedim);
+    Array<OneD, Array<OneD, NekDouble>> tmp(spacedim);
     for (int i = 0; i < spacedim; i++)
     {
         tmp[i] = Array<OneD, NekDouble>(npoints);
@@ -117,7 +116,7 @@ void ProcessGrad::Process(po::variables_map &vm)
 
     // Get velocity and convert to Cartesian system,
     //      if it is still in transformed system
-    Array<OneD, Array<OneD, NekDouble> > vel(spacedim);
+    Array<OneD, Array<OneD, NekDouble>> vel(spacedim);
     if (m_f->m_fieldMetaDataMap.count("MappingCartesianVel"))
     {
         if (m_f->m_fieldMetaDataMap["MappingCartesianVel"] == "False")
@@ -191,13 +190,12 @@ void ProcessGrad::Process(po::variables_map &vm)
 
     for (i = 0; i < addfields; ++i)
     {
-        m_f->m_exp[nfields + i] =
-            m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
         Vmath::Vcopy(npoints, grad[i], 1, m_f->m_exp[nfields + i]->UpdatePhys(),
                      1);
-        m_f->m_exp[nfields + i]->FwdTrans_IterPerExp(
+        m_f->m_exp[nfields + i]->FwdTransLocalElmt(
             grad[i], m_f->m_exp[nfields + i]->UpdateCoeffs());
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

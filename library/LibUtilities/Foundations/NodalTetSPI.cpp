@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTetSPI.cpp
+// File: NodalTetSPI.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -45,9 +45,8 @@ namespace Nektar
 namespace LibUtilities
 {
 
-bool NodalTetSPI::initPointsManager[] = {
-    PointsManager().RegisterCreator(PointsKey(0, eNodalTetSPI),          NodalTetSPI::Create)
-};
+bool NodalTetSPI::initPointsManager[] = {PointsManager().RegisterCreator(
+    PointsKey(0, eNodalTetSPI), NodalTetSPI::Create)};
 
 void NodalTetSPI::CalculatePoints()
 {
@@ -109,5 +108,5 @@ std::shared_ptr<PointsBaseType> NodalTetSPI::Create(const PointsKey &key)
     return returnval;
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

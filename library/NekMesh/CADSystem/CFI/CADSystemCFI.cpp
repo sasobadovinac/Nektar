@@ -121,8 +121,7 @@ bool CADSystemCFI::LoadCAD()
     m_scal = 1.0;
     if (m_model->getUnits() == cfi::UNIT_INCHES)
     {
-        m_log(VERBOSE) << "  - Model is in inches, scaling accordingly"
-                       << endl;
+        m_log(VERBOSE) << "  - Model is in inches, scaling accordingly" << endl;
         m_scal = 0.0254;
     }
     else if (m_model->getUnits() == cfi::UNIT_MILLIMETERS ||
@@ -203,7 +202,8 @@ bool CADSystemCFI::LoadCAD()
 
                 delete edgeList;
 
-                for (it2 = fullEdgeList.begin(); it2 != fullEdgeList.end(); it2++)
+                for (it2 = fullEdgeList.begin(); it2 != fullEdgeList.end();
+                     it2++)
                 {
                     cfi::Oriented<cfi::TopoEntity *> orientatedEdge = *it2;
                     cfi::Line *edge =
@@ -282,7 +282,7 @@ bool CADSystemCFI::LoadCAD()
 void CADSystemCFI::AddVert(int i, cfi::Point *in)
 {
     CADVertSharedPtr newVert = GetCADVertFactory().CreateInstance(key);
-
+    newVert->SetLogger(m_log);
     static_pointer_cast<CADVertCFI>(newVert)->Initialise(i, in, m_scal);
 
     m_verts[i] = newVert;
@@ -292,6 +292,7 @@ void CADSystemCFI::AddVert(int i, cfi::Point *in)
 void CADSystemCFI::AddCurve(int i, cfi::Line *in)
 {
     CADCurveSharedPtr newCurve = GetCADCurveFactory().CreateInstance(key);
+    newCurve->SetLogger(m_log);
     static_pointer_cast<CADCurveCFI>(newCurve)->Initialise(i, in, m_scal);
 
     vector<cfi::Oriented<cfi::TopoEntity *>> *vertList = in->getChildList();
@@ -326,6 +327,7 @@ void CADSystemCFI::AddCurve(int i, cfi::Line *in)
 void CADSystemCFI::AddSurf(int i, cfi::Face *in)
 {
     CADSurfSharedPtr newSurf = GetCADSurfFactory().CreateInstance(key);
+    newSurf->SetLogger(m_log);
     static_pointer_cast<CADSurfCFI>(newSurf)->Initialise(i, in, m_scal);
 
     vector<cfi::Oriented<cfi::TopoEntity *>> *edgeList = in->getChildList();
@@ -409,8 +411,8 @@ void CADSystemCFI::AddSurf(int i, cfi::Face *in)
             delete vertList;
 
             edgeloop->edges.push_back(
-                m_curves[m_nameToCurveId[
-                        fullEdgeList.at(done).entity->getName()]]);
+                m_curves
+                    [m_nameToCurveId[fullEdgeList.at(done).entity->getName()]]);
 
             if (end)
             {
@@ -462,5 +464,5 @@ Array<OneD, NekDouble> CADSystemCFI::GetBoundingBox()
 
     return ret;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

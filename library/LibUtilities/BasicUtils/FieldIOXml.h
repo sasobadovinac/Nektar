@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FieldIOXml.h
+// File: FieldIOXml.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -52,12 +52,14 @@ class XmlDataSource : public DataSource
 {
 public:
     /// Default constructor.
-    XmlDataSource(TiXmlDocument &doc) : m_doc(&doc), m_needsFree(false) { }
+    XmlDataSource(TiXmlDocument &doc) : m_doc(&doc), m_needsFree(false)
+    {
+    }
 
     /// Constructor based on filename.
     XmlDataSource(const std::string &fn) : m_needsFree(true)
     {
-        m_doc = new TiXmlDocument(fn);
+        m_doc         = new TiXmlDocument(fn);
         bool loadOkay = m_doc->LoadFile();
         std::stringstream errstr;
         errstr << "Unable to load file: " << fn << std::endl;
@@ -115,7 +117,9 @@ class XmlTagWriter : public TagWriter
 {
 public:
     /// Default constructor.
-    XmlTagWriter(TiXmlElement *elem) : m_El(elem) {}
+    XmlTagWriter(TiXmlElement *elem) : m_El(elem)
+    {
+    }
 
     /// Add a child node.
     virtual TagWriterSharedPtr AddChild(const std::string &name)
@@ -132,7 +136,7 @@ public:
         {
             // Auto-expand XML parameters.
             std::string elmtName = key.substr(4);
-            TiXmlElement *child = new TiXmlElement(elmtName.c_str());
+            TiXmlElement *child  = new TiXmlElement(elmtName.c_str());
 
             // Parse string we're given
             TiXmlDocument doc;
@@ -212,9 +216,8 @@ public:
     /// Name of class
     LIB_UTILITIES_EXPORT static std::string className;
 
-    LIB_UTILITIES_EXPORT FieldIOXml(
-        LibUtilities::CommSharedPtr pComm,
-        bool sharedFilesystem);
+    LIB_UTILITIES_EXPORT FieldIOXml(LibUtilities::CommSharedPtr pComm,
+                                    bool sharedFilesystem);
 
     LIB_UTILITIES_EXPORT virtual ~FieldIOXml()
     {
@@ -222,18 +225,16 @@ public:
 
     LIB_UTILITIES_EXPORT void ImportFieldDefs(
         DataSourceSharedPtr dataSource,
-        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        bool expChild);
+        std::vector<FieldDefinitionsSharedPtr> &fielddefs, bool expChild);
 
     LIB_UTILITIES_EXPORT void ImportFieldData(
         DataSourceSharedPtr dataSource,
         const std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble> > &fielddata);
+        std::vector<std::vector<NekDouble>> &fielddata);
 
     LIB_UTILITIES_EXPORT void WriteMultiFldFileIDs(
-        const std::string &outfile,
-        const std::vector<std::string> fileNames,
-        std::vector<std::vector<unsigned int> > &elementList,
+        const std::string &outfile, const std::vector<std::string> fileNames,
+        std::vector<std::vector<unsigned int>> &elementList,
         const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap);
 
     LIB_UTILITIES_EXPORT void SetUpFieldMetaData(
@@ -242,17 +243,16 @@ public:
         const FieldMetaDataMap &fieldmetadatamap);
 
     LIB_UTILITIES_EXPORT void ImportMultiFldFileIDs(
-        const std::string &inFile,
-        std::vector<std::string> &fileNames,
-        std::vector<std::vector<unsigned int> > &elementList,
+        const std::string &inFile, std::vector<std::string> &fileNames,
+        std::vector<std::vector<unsigned int>> &elementList,
         FieldMetaDataMap &fieldmetadatamap);
 
     LIB_UTILITIES_EXPORT void v_Import(
         const std::string &infilename,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble> > &fielddata =
+        std::vector<std::vector<NekDouble>> &fielddata =
             NullVectorNekDoubleVector,
-        FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
+        FieldMetaDataMap &fieldinfomap     = NullFieldMetaDataMap,
         const Array<OneD, int> &ElementIDs = NullInt1DArray);
 
     /// Returns the class name.
@@ -265,14 +265,14 @@ private:
     LIB_UTILITIES_EXPORT virtual void v_Write(
         const std::string &outFile,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble> > &fielddata,
+        std::vector<std::vector<NekDouble>> &fielddata,
         const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
-        const bool backup = false);
+        const bool backup                    = false);
 
     LIB_UTILITIES_EXPORT virtual DataSourceSharedPtr v_ImportFieldMetaData(
         const std::string &filename, FieldMetaDataMap &fieldmetadatamap);
 };
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 #endif

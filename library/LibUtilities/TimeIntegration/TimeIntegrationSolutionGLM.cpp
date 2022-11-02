@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationSolutionGLM.cpp
+// File: TimeIntegrationSolutionGLM.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -44,9 +44,9 @@ namespace LibUtilities
 TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
     const TimeIntegrationAlgorithmGLM *schemeAlgorithm, const DoubleArray &y,
     const NekDouble time, const NekDouble timestep)
-    : m_schemeAlgorithm( schemeAlgorithm ),
-      m_solVector( m_schemeAlgorithm->m_numsteps ),
-      m_t( m_schemeAlgorithm->m_numsteps )
+    : m_schemeAlgorithm(schemeAlgorithm),
+      m_solVector(m_schemeAlgorithm->m_numsteps),
+      m_t(m_schemeAlgorithm->m_numsteps)
 {
     m_solVector[0] = y;
     m_t[0]         = time;
@@ -91,8 +91,7 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
     const TimeIntegrationAlgorithmGLM *schemeAlgorithm, const unsigned int nvar,
     const unsigned int npoints)
     : m_schemeAlgorithm(schemeAlgorithm),
-      m_solVector(schemeAlgorithm->m_numsteps),
-      m_t(schemeAlgorithm->m_numsteps)
+      m_solVector(schemeAlgorithm->m_numsteps), m_t(schemeAlgorithm->m_numsteps)
 {
     for (int i = 0; i < m_schemeAlgorithm->m_numsteps; i++)
     {
@@ -106,10 +105,11 @@ TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
 
 TimeIntegrationSolutionGLM::TimeIntegrationSolutionGLM(
     const TimeIntegrationAlgorithmGLM *schemeAlgorithm)
-    : m_schemeAlgorithm(schemeAlgorithm), m_solVector(m_schemeAlgorithm->m_numsteps),
+    : m_schemeAlgorithm(schemeAlgorithm),
+      m_solVector(m_schemeAlgorithm->m_numsteps),
       m_t(m_schemeAlgorithm->m_numsteps)
 {
 }
 
 } // end namespace LibUtilities
-} // end namespace NekTar
+} // namespace Nektar

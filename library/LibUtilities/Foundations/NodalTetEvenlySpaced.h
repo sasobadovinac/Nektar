@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTetEvenlySpaced.h
+// File: NodalTetEvenlySpaced.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -37,82 +37,77 @@
 
 #include <memory>
 
-#include <LibUtilities/Foundations/NodalUtil.h>
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
+#include <LibUtilities/Foundations/ManagerAccess.h>
+#include <LibUtilities/Foundations/NodalUtil.h>
 #include <LibUtilities/LinearAlgebra/NekMatrixFwd.hpp>
 #include <LibUtilities/LinearAlgebra/NekVectorFwd.hpp>
-#include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 
 namespace Nektar
 {
-    namespace LibUtilities
+namespace LibUtilities
+{
+class NodalTetEvenlySpaced : public Points<NekDouble>
+{
+public:
+    virtual ~NodalTetEvenlySpaced()
     {
-        class NodalTetEvenlySpaced: public Points<NekDouble>
-        {
-        public:
+    }
 
-            virtual ~NodalTetEvenlySpaced()
-            {
+    NodalTetEvenlySpaced(const PointsKey &key) : PointsBaseType(key)
+    {
+    }
 
-            }
+    LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
+        const PointsKey &key);
 
-            NodalTetEvenlySpaced(const PointsKey &key):PointsBaseType(key)
-            {
+    const MatrixSharedPtrType GetI(const PointsKey &pkey)
+    {
+        ASSERTL0(pkey.GetPointsDim() == 3,
+                 "NodalTetEvenlySpaced Points can only interp to other "
+                 "3d point distributions");
+        Array<OneD, const NekDouble> x, y, z;
+        PointsManager()[pkey]->GetPoints(x, y, z);
+        return GetI(x, y, z);
+    }
 
-            }
+    const MatrixSharedPtrType GetI(const Array<OneD, const NekDouble> &x,
+                                   const Array<OneD, const NekDouble> &y,
+                                   const Array<OneD, const NekDouble> &z)
+    {
+        size_t numpoints = x.size();
+        unsigned int np  = GetTotNumPoints();
 
-            LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType>
-                Create(const PointsKey &key);
+        Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
+        CalculateInterpMatrix(x, y, z, interp);
 
-            const MatrixSharedPtrType GetI(const PointsKey &pkey)
-            {
-                ASSERTL0(pkey.GetPointsDim() == 3,
-                         "NodalTetEvenlySpaced Points can only interp to other "
-                         "3d point distributions");
-                Array<OneD, const NekDouble> x, y, z;
-                PointsManager()[pkey]->GetPoints(x, y, z);
-                return GetI(x, y, z);
-            }
+        NekDouble *d = interp.data();
+        return MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints,
+                                                                      np, d);
+    }
 
-            const MatrixSharedPtrType GetI(
-                const Array<OneD, const NekDouble> &x,
-                const Array<OneD, const NekDouble> &y,
-                const Array<OneD, const NekDouble> &z)
-            {
-                size_t       numpoints = x.size();
-                unsigned int np        = GetTotNumPoints();
+private:
+    static bool initPointsManager[];
 
-                Array<OneD, NekDouble> interp(GetTotNumPoints()*numpoints);
-                CalculateInterpMatrix(x, y, z, interp);
+    std::shared_ptr<NodalUtilTetrahedron> m_util;
 
-                NekDouble* d = interp.data();
-                return MemoryManager<NekMatrix<NekDouble> >
-                    ::AllocateSharedPtr(numpoints, np, d);
-            }
+    /// Default constructor should not be called except by Create matrix
+    NodalTetEvenlySpaced() : PointsBaseType(NullPointsKey)
+    {
+    }
 
-        private:
-            static bool initPointsManager[];
+    void CalculatePoints();
+    void CalculateWeights();
+    void CalculateDerivMatrix();
+    void NodalPointReorder3d();
+    void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xi,
+                               const Array<OneD, const NekDouble> &yi,
+                               const Array<OneD, const NekDouble> &zi,
+                               Array<OneD, NekDouble> &interp);
+}; // end of NodalTetEvenlySpaced
+} // namespace LibUtilities
+} // namespace Nektar
 
-            std::shared_ptr<NodalUtilTetrahedron> m_util;
-
-            /// Default constructor should not be called except by Create matrix
-            NodalTetEvenlySpaced():PointsBaseType(NullPointsKey)
-            {
-            }
-
-            void CalculatePoints();
-            void CalculateWeights();
-            void CalculateDerivMatrix();
-            void NodalPointReorder3d();
-            void CalculateInterpMatrix(
-                const Array<OneD, const NekDouble> &xi,
-                const Array<OneD, const NekDouble> &yi,
-                const Array<OneD, const NekDouble> &zi,
-                      Array<OneD,       NekDouble> &interp);
-        }; // end of NodalTetEvenlySpaced
-   } // end of namespace
-} // end of namespace
-
-#endif //NODALTETEVENLYSPACED_H
+#endif // NODALTETEVENLYSPACED_H

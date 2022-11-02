@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterFieldConvert.h
+// File: FilterFieldConvert.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -38,8 +38,8 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <SolverUtils/Filters/Filter.h>
 #include <FieldUtils/Module.h>
+#include <SolverUtils/Filters/Filter.h>
 
 using namespace Nektar::FieldUtils;
 
@@ -55,20 +55,21 @@ public:
     /// Creates an instance of this class
     static FilterSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
+        const std::weak_ptr<EquationSystem> &pEquation,
         const std::map<std::string, std::string> &pParams)
     {
-        FilterSharedPtr p = MemoryManager<FilterFieldConvert>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        FilterSharedPtr p =
+            MemoryManager<FilterFieldConvert>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
-    
+
     SOLVER_UTILS_EXPORT FilterFieldConvert(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
+        const std::weak_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
     SOLVER_UTILS_EXPORT virtual ~FilterFieldConvert();
 
@@ -86,7 +87,7 @@ protected:
         const NekDouble &time);
     SOLVER_UTILS_EXPORT virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
         const NekDouble &time);
     SOLVER_UTILS_EXPORT virtual void v_PrepareOutput(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -109,7 +110,7 @@ protected:
         int dump = -1);
 
     SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
-    
+
     void CreateModules(std::vector<std::string> &modcmds);
 
     void CreateFields(
@@ -120,26 +121,26 @@ protected:
     unsigned int m_numSamples;
     unsigned int m_outputFrequency;
     unsigned int m_sampleFrequency;
-    std::string  m_outputFile;
-    std::string  m_restartFile;
+    std::string m_outputFile;
+    std::string m_restartFile;
     unsigned int m_index;
     unsigned int m_outputIndex;
 
     // Phase sample parameters
-    bool         m_phaseSample;
-    NekDouble    m_phaseSamplePeriod;
-    NekDouble    m_phaseSamplePhase;
-    NekDouble    m_phaseTolerance;
-    NekDouble    m_dt;
+    bool m_phaseSample;
+    NekDouble m_phaseSamplePeriod;
+    NekDouble m_phaseSamplePhase;
+    NekDouble m_phaseTolerance;
+    NekDouble m_dt;
 
     std::vector<ModuleSharedPtr> m_modules;
     LibUtilities::FieldMetaDataMap m_fieldMetaData;
-    std::vector<Array<OneD, NekDouble> > m_outFields;
+    std::vector<Array<OneD, NekDouble>> m_outFields;
     std::vector<std::string> m_variables;
     FieldSharedPtr m_f;
     po::variables_map m_vm;
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERFIELDCONVERT_H */

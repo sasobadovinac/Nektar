@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -39,17 +39,17 @@
 
 namespace Nektar
 {
-    // \param DataType The type of data held by each element of the vector.
-    template<typename DataType>
-    class NekVector;
-    
-    
-    template<typename T>
-    struct IsVector : public std::false_type {};
-    
-    template<typename DataType>
-    struct IsVector<NekVector<DataType> > : public std::true_type {}; 
-}
+// \param DataType The type of data held by each element of the vector.
+template <typename DataType> class NekVector;
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_VECTOR_FWD_HPP
+template <typename T> struct IsVector : public std::false_type
+{
+};
 
+template <typename DataType>
+struct IsVector<NekVector<DataType>> : public std::true_type
+{
+};
+} // namespace Nektar
+
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_NEK_VECTOR_FWD_HPP
