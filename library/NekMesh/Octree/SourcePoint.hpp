@@ -283,32 +283,6 @@ public:
         NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
     }
 
-    void SetDelta(NekDouble i)
-    {
-        boost::ignore_unused(i);
-        NEKERROR(ErrorUtil::efatal, "Cannot assign refinement delta to this type");
-    }
-
-    NekDouble GetRDelta()
-    {
-        NEKERROR(ErrorUtil::efatal, "Cannot retrieve refinment delta from this type");
-        return 0.0;
-    }
-
-    void SetRDelta(NekDouble i)
-    {
-        boost::ignore_unused(i);
-        NEKERROR(ErrorUtil::efatal, "Cannot assign delta to this type");
-    }
-
-    // Leaving for posterity -- this function is not needed as far as I can tell.
-    // CPointSharedPtr ChangeType()
-    // {
-    //     CPointSharedPtr ret = MemoryManager<CPoint>::
-    //         AllocateSharedPtr(sid, m_uv, m_loc, -1.0);
-    //     return ret;
-    // }
-
 private:
     /// surf id
     int sid;

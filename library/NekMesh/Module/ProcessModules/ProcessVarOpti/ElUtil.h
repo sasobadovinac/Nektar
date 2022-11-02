@@ -62,8 +62,9 @@ class ElUtilJob;
 class ElUtil : public std::enable_shared_from_this<ElUtil>
 {
 public:
+    // TODO find a better way to pass the curve information than in the ElUtil constructor
     ElUtil(ElementSharedPtr e, DerivUtilSharedPtr d, ResidualSharedPtr, int n,
-           int o);
+           int o, std::vector<CADCurveSharedPtr> curves);
 
     ElUtilJob *GetJob(bool update = false);
 
