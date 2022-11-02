@@ -1298,7 +1298,8 @@ void PulseWaveSystem::v_DoSolve()
         // IntegrationTime += timer.TimePerTest(1);
 
         // Write out status information.
-        if (m_session->GetComm()->GetRank() == 0 && !((n + 1) % m_infosteps))
+        if (m_infosteps && !((n + 1) % m_infosteps) &&
+            m_session->GetComm()->GetRank() == 0)
         {
             cout << "Steps: " << n + 1 << "\t Time: " << m_time
                  << "\t Time-step: " << m_timestep << "\t" << endl;

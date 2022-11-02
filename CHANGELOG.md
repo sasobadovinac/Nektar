@@ -16,6 +16,7 @@ v5.3.0
 - Maintenance for C++-17 compatibility: removed std::unaray_function base class due to removal from the std (!1419)
 - Fixed the comment of function Vvtvvtp in VmathArray (!1408)
 - Add a FieldConvert utility to compute the divergence of the velocity (!1413)
+- Fix a I/O issue related to the IO_InfoSteps parameter (!1422)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
