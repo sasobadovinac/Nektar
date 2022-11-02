@@ -18,6 +18,7 @@ v5.3.0
 - Add a FieldConvert utility to compute the divergence of the velocity (!1413)
 - Added new filter to calculate variables integral on composite mesh (!1409)
 - Fix a I/O issue related to the IO_InfoSteps parameter (!1422)
+- Fix a I/O issue related to the IO_CheckSteps parameter (!1423)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
