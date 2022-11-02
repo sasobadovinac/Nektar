@@ -38,8 +38,8 @@
 #include <LibUtilities/BasicUtils/HashUtils.hpp>
 #include <SpatialDomains/SegGeom.h>
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Node.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -59,17 +59,19 @@ class Edge
 {
 public:
     /// Creates a new edge.
-    NEKMESH_EXPORT Edge(NodeSharedPtr              pVertex1,
-                        NodeSharedPtr              pVertex2,
+    NEKMESH_EXPORT Edge(NodeSharedPtr pVertex1, NodeSharedPtr pVertex2,
                         std::vector<NodeSharedPtr> pEdgeNodes,
-                        LibUtilities::PointsType   pCurveType)
+                        LibUtilities::PointsType pCurveType)
         : m_n1(pVertex1), m_n2(pVertex2), m_edgeNodes(pEdgeNodes),
-          m_curveType(pCurveType), m_geom(){}
+          m_curveType(pCurveType), m_geom()
+    {
+    }
 
     /// Creates a new linear edge.
     NEKMESH_EXPORT Edge(NodeSharedPtr pVertex1, NodeSharedPtr pVertex2)
         : m_n1(pVertex1), m_n2(pVertex2), m_edgeNodes(), m_curveType(), m_geom()
-    {}
+    {
+    }
 
     /// Copies an existing edge.
     NEKMESH_EXPORT Edge(const Edge &pSrc)
@@ -108,11 +110,8 @@ public:
     NEKMESH_EXPORT SpatialDomains::SegGeomSharedPtr GetGeom(int coordDim);
 
     /// Make this edge an order @p order edge. @see Element::MakeOrder.
-    void MakeOrder(int                                order,
-                   SpatialDomains::GeometrySharedPtr  geom,
-                   LibUtilities::PointsType           edgeType,
-                   int                                coordDim,
-                   int                               &id);
+    void MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                   LibUtilities::PointsType edgeType, int coordDim, int &id);
 
     /// ID of edge.
     unsigned int m_id;
@@ -125,7 +124,7 @@ public:
     /// Distributions of points along edge.
     LibUtilities::PointsType m_curveType;
     /// Element(s) which are linked to this edge.
-    std::vector<std::pair<std::weak_ptr<Element>, int> > m_elLink;
+    std::vector<std::pair<std::weak_ptr<Element>, int>> m_elLink;
 
     CADObjectSharedPtr m_parentCAD;
 
@@ -137,8 +136,7 @@ typedef std::shared_ptr<Edge> EdgeSharedPtr;
 
 NEKMESH_EXPORT bool operator==(EdgeSharedPtr const &p1,
                                EdgeSharedPtr const &p2);
-NEKMESH_EXPORT bool operator<(EdgeSharedPtr const &p1,
-                              EdgeSharedPtr const &p2);
+NEKMESH_EXPORT bool operator<(EdgeSharedPtr const &p1, EdgeSharedPtr const &p2);
 
 /**
  * @brief Defines a hash function for edges.
@@ -147,7 +145,7 @@ NEKMESH_EXPORT bool operator<(EdgeSharedPtr const &p1,
  * define it. First the minimum ID is hashed, then the maximum
  * ID, which takes the two possible orientations into account.
  */
-struct EdgeHash : std::unary_function<EdgeSharedPtr, std::size_t>
+struct EdgeHash
 {
     std::size_t operator()(EdgeSharedPtr const &p) const
     {
@@ -157,7 +155,7 @@ struct EdgeHash : std::unary_function<EdgeSharedPtr, std::size_t>
     }
 };
 typedef std::unordered_set<EdgeSharedPtr, EdgeHash> EdgeSet;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

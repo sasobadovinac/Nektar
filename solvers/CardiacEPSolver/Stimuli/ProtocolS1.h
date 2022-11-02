@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ProtocolS1.h
+// File: ProtocolS1.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -39,48 +39,50 @@
 
 namespace Nektar
 {
-    // Forward declaration
-    class ProtocolS1;
+// Forward declaration
+class ProtocolS1;
 
-    /// Protocol base class.
-    class ProtocolS1 : public Protocol
+/// Protocol base class.
+class ProtocolS1 : public Protocol
+{
+public:
+    /// Creates an instance of this class
+    static ProtocolSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const TiXmlElement *pXml)
     {
-    public:
-        /// Creates an instance of this class
-        static ProtocolSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const TiXmlElement* pXml)
-        {
-            return MemoryManager<ProtocolS1>::AllocateSharedPtr(pSession, pXml);
-        }
+        return MemoryManager<ProtocolS1>::AllocateSharedPtr(pSession, pXml);
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        friend class MemoryManager<ProtocolS1>;
+    friend class MemoryManager<ProtocolS1>;
 
-        virtual ~ProtocolS1() {}
+    virtual ~ProtocolS1()
+    {
+    }
 
-        /// Initialise the protocol storage and set initial conditions
-        void Initialise();
+    /// Initialise the protocol storage and set initial conditions
+    void Initialise();
 
-    protected:
-        NekDouble m_start;
-        NekDouble m_dur;
-        NekDouble m_num_s1;
-        NekDouble m_s1cyclelength;
+protected:
+    NekDouble m_start;
+    NekDouble m_dur;
+    NekDouble m_num_s1;
+    NekDouble m_s1cyclelength;
 
-        virtual NekDouble v_GetAmplitude(const NekDouble time);
+    virtual NekDouble v_GetAmplitude(const NekDouble time);
 
-        virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
 
-        virtual void v_SetInitialConditions();
+    virtual void v_SetInitialConditions();
 
-    private:
-        ProtocolS1(const LibUtilities::SessionReaderSharedPtr& pSession,
-                   const TiXmlElement* pXml);
-    };
+private:
+    ProtocolS1(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const TiXmlElement *pXml);
+};
 
-}
+} // namespace Nektar
 
 #endif /* ProtocolS1_H_ */

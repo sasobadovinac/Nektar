@@ -33,25 +33,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 #define NOMINMAX
 
-#include <LibUtilities/BasicUtils/CompressData.h>
 #include <LibUtilities/BasicConst/GitRevision.h>
+#include <LibUtilities/BasicUtils/CompressData.h>
 
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
+#include <boost/assign/list_of.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/assign/list_of.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <set>
 #include <cstdint>
+#include <set>
 
 #ifdef NEKTAR_USE_MPI
 #include <mpi.h>
 #endif
-
 
 #ifndef NEKTAR_VERSION
 #define NEKTAR_VERSION "Unknown"
@@ -62,89 +61,97 @@ namespace Nektar
 namespace LibUtilities
 {
 
-    /**
-     * run time determination of endianness, returning an EndianType
-     */
-    EndianType Endianness(void)
+/**
+ * run time determination of endianness, returning an EndianType
+ */
+EndianType Endianness(void)
+{
+    union
     {
-        union
-        {
-            std::uint32_t value;
-            std::uint8_t  data[sizeof(std::uint32_t)];
-        } number;
+        std::uint32_t value;
+        std::uint8_t data[sizeof(std::uint32_t)];
+    } number;
 
-        number.data[0] = 0x00;
-        number.data[1] = 0x01;
-        number.data[2] = 0x02;
-        number.data[3] = 0x03;
+    number.data[0] = 0x00;
+    number.data[1] = 0x01;
+    number.data[2] = 0x02;
+    number.data[3] = 0x03;
 
-        switch (number.value)
-        {
-        case UINT32_C(0x00010203): return eEndianBig;
-        case UINT32_C(0x03020100): return eEndianLittle;
-        case UINT32_C(0x02030001): return eEndianBigWord;
-        case UINT32_C(0x01000302): return eEndianLittleWord;
-        default:                   return eEndianUnknown;
-        }
-    }
-
-    namespace CompressData
+    switch (number.value)
     {
-
-        /**
-         * Return a string describing this compression and endianness
-         */
-        std::string GetCompressString(void)
-        {
-            return  "B64Z-"+ EndianTypeMap[Endianness()];
-        }
-
-        std::string GetBitSizeStr(void)
-        {
-            return boost::lexical_cast<std::string>(sizeof(void*)*8);
-        }
-
-        /**
-         * Convert a binary string to Base 64 string
-         */
-        void BinaryStrToBase64Str(std::string &compressedDataString,
-                                  std::string &base64string)
-        {
-            // If the string length is not divisible by 3,
-            // pad it. There is a bug in transform_width
-            // that will make it reference past the end
-            // and crash.
-            switch (compressedDataString.length() % 3)
-            {
-            case 1:
-                compressedDataString += '\0';
-                /* Falls through. */
-            case 2:
-                compressedDataString += '\0';
-                break;
-            }
-
-            // Convert from binary to base64.
-            typedef boost::archive::iterators::base64_from_binary<
-                boost::archive::iterators::transform_width<
-                    std::string::const_iterator, 6, 8> > base64_t;
-            base64string = std::string(base64_t(compressedDataString.begin()),
-                                       base64_t(compressedDataString.end()));
-        }
-
-        /**
-         * Convert a Base 64 string into a binary string
-         */
-        void Base64StrToBinaryStr(std::string &base64string,
-                                  std::string &compressedDataString)
-        {
-            // Convert from base64 to binary.
-            typedef boost::archive::iterators::transform_width<
-                boost::archive::iterators::binary_from_base64<
-                    std::string::const_iterator>, 8, 6 > binary_t;
-            compressedDataString = std::string(binary_t(base64string.begin()),
-                                               binary_t(base64string.end()));
-        }
+        case UINT32_C(0x00010203):
+            return eEndianBig;
+        case UINT32_C(0x03020100):
+            return eEndianLittle;
+        case UINT32_C(0x02030001):
+            return eEndianBigWord;
+        case UINT32_C(0x01000302):
+            return eEndianLittleWord;
+        default:
+            return eEndianUnknown;
     }
 }
+
+namespace CompressData
+{
+
+/**
+ * Return a string describing this compression and endianness
+ */
+std::string GetCompressString(void)
+{
+    return "B64Z-" + EndianTypeMap[Endianness()];
 }
+
+std::string GetBitSizeStr(void)
+{
+    return boost::lexical_cast<std::string>(sizeof(void *) * 8);
+}
+
+/**
+ * Convert a binary string to Base 64 string
+ */
+void BinaryStrToBase64Str(std::string &compressedDataString,
+                          std::string &base64string)
+{
+    // If the string length is not divisible by 3,
+    // pad it. There is a bug in transform_width
+    // that will make it reference past the end
+    // and crash.
+    switch (compressedDataString.length() % 3)
+    {
+        case 1:
+            compressedDataString += '\0';
+            /* Falls through. */
+        case 2:
+            compressedDataString += '\0';
+            break;
+    }
+
+    // Convert from binary to base64.
+    typedef boost::archive::iterators::base64_from_binary<
+        boost::archive::iterators::transform_width<std::string::const_iterator,
+                                                   6, 8>>
+        base64_t;
+    base64string = std::string(base64_t(compressedDataString.begin()),
+                               base64_t(compressedDataString.end()));
+}
+
+/**
+ * Convert a Base 64 string into a binary string
+ */
+void Base64StrToBinaryStr(std::string &base64string,
+                          std::string &compressedDataString)
+{
+    // Convert from base64 to binary.
+    typedef boost::archive::iterators::transform_width<
+        boost::archive::iterators::binary_from_base64<
+            std::string::const_iterator>,
+        8, 6>
+        binary_t;
+    compressedDataString = std::string(binary_t(base64string.begin()),
+                                       binary_t(base64string.end()));
+}
+} // namespace CompressData
+} // namespace LibUtilities
+} // namespace Nektar

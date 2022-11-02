@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekLinSysIterCG.h
+// File: NekLinSysIterCG.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -59,7 +59,7 @@ public:
     {
         NekLinSysIterCGSharedPtr p =
             MemoryManager<NekLinSysIterCG>::AllocateSharedPtr(pSession, vComm,
-                nDimen, pKey);
+                                                              nDimen, pKey);
         p->InitObject();
         return p;
     }

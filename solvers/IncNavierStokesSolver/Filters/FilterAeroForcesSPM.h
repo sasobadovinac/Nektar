@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAeroForcesSPM.h
+// File: FilterAeroForcesSPM.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -45,32 +45,31 @@ class FilterAeroForcesSPM : public SolverUtils::Filter
 public:
     /// Creates an instance of this class
     static SolverUtils::FilterSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr       &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-        const std::map<std::string, std::string>         &pParams)
+        const std::map<std::string, std::string> &pParams)
     {
-        SolverUtils::FilterSharedPtr p = MemoryManager<FilterAeroForcesSPM>::
-                            AllocateSharedPtr(pSession, pEquation, pParams);
+        SolverUtils::FilterSharedPtr p =
+            MemoryManager<FilterAeroForcesSPM>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
     FilterAeroForcesSPM(
-        const LibUtilities::SessionReaderSharedPtr       &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
-        const std::map<std::string, std::string>         &pParams);
+        const std::map<std::string, std::string> &pParams);
 
     virtual ~FilterAeroForcesSPM();
 
     // Calculates the forces and fills the array 'm_Forces' up
-    void CalculateForces(
-        const Array<OneD, Array<OneD, NekDouble> > &pIntVel,
-        const Array<OneD, Array<OneD, NekDouble> > &pUpPrev,
-        const MultiRegions::ExpListSharedPtr &pPhi,
-        NekDouble time,
-        NekDouble dt);
+    void CalculateForces(const Array<OneD, Array<OneD, NekDouble>> &pIntVel,
+                         const Array<OneD, Array<OneD, NekDouble>> &pUpPrev,
+                         const MultiRegions::ExpListSharedPtr &pPhi,
+                         NekDouble time, NekDouble dt);
 
 protected:
     unsigned int m_index;
@@ -87,16 +86,16 @@ protected:
     Array<OneD, NekDouble> m_Forces;
 
     virtual void v_Initialise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
 
     virtual void v_Update(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
 
     virtual void v_Finalise(
-            const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-            const NekDouble &time);
+        const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
+        const NekDouble &time);
 
     virtual bool v_IsTimeDependent();
 
@@ -104,6 +103,6 @@ private:
 };
 
 typedef std::shared_ptr<FilterAeroForcesSPM> FilterAeroForcesSPMSharedPtr;
-}
+} // namespace Nektar
 
 #endif /* NEKTAR_INCNAVIERSTOKES_FILTERS_FILTERAEROFORCESSPM_H */

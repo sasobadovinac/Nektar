@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Projection.cpp
+// File: Projection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -43,14 +43,14 @@ string Projection::className =
                                                        Projection::create);
 
 Projection::Projection(const LibUtilities::SessionReaderSharedPtr &pSession,
-                       const SpatialDomains::MeshGraphSharedPtr& pGraph)
+                       const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : EquationSystem(pSession, pGraph)
 {
 }
 
-void Projection::v_InitObject()
+void Projection::v_InitObject(bool DeclareFields)
 {
-    EquationSystem::v_InitObject();
+    EquationSystem::v_InitObject(DeclareFields);
 
     GetFunction("Forcing")->Evaluate(m_session->GetVariables(), m_fields);
 }
@@ -83,4 +83,4 @@ void Projection::v_GenerateSummary(SolverUtils::SummaryList &s)
             m_session->GetFunction("Forcing", i)->GetExpression());
     }
 }
-}
+} // namespace Nektar

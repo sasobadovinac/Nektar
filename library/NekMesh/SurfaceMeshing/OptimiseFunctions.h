@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Curvemesh.h
+//  File: OptimiseFunctions.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: object for individual curve meshes.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -50,8 +50,7 @@ class OptiEdge : public OptiObj
 public:
     friend class MemoryManager<OptiEdge>;
 
-    OptiEdge(Array<OneD, NekDouble> a,
-             Array<OneD, NekDouble> dis,
+    OptiEdge(Array<OneD, NekDouble> a, Array<OneD, NekDouble> dis,
              CADObjectSharedPtr ob)
     {
         all = a;
@@ -80,6 +79,6 @@ private:
 };
 typedef std::shared_ptr<OptiEdge> OptiEdgeSharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 #endif

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MeshPartitionMetis.cpp
+// File: MeshPartitionMetis.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,8 +32,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/MeshPartitionMetis.h>
 #include <LibUtilities/BasicUtils/Metis.hpp>
+#include <SpatialDomains/MeshPartitionMetis.h>
 
 namespace Nektar
 {
@@ -51,10 +51,8 @@ std::string MeshPartitionMetis::cmdSwitch =
 
 MeshPartitionMetis::MeshPartitionMetis(
     const LibUtilities::SessionReaderSharedPtr session,
-    LibUtilities::CommSharedPtr                comm,
-    int                                        meshDim,
-    std::map<int, MeshEntity>                  element,
-    CompositeDescriptor                        compMap)
+    LibUtilities::CommSharedPtr comm, int meshDim,
+    std::map<int, MeshEntity> element, CompositeDescriptor compMap)
     : MeshPartition(session, comm, meshDim, element, compMap)
 {
 }
@@ -74,5 +72,5 @@ void MeshPartitionMetis::PartitionGraphImpl(
     Metis::PartGraphVKway(nVerts, nVertConds, xadj, adjcy, vertWgt, vertSize,
                           edgeWgt, nparts, volume, part);
 }
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

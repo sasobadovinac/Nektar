@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File IterativeElasticSystem.h
+// File: IterativeElasticSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,8 +35,8 @@
 #ifndef NEKTAR_SOLVERS_LINEARELASTICSOLVER_EQUATIONSYSTEMS_ITERELASSYSTEM_H
 #define NEKTAR_SOLVERS_LINEARELASTICSOLVER_EQUATIONSYSTEMS_ITERELASSYSTEM_H
 
-#include <SolverUtils/EquationSystem.h>
 #include <LinearElasticSolver/EquationSystems/LinearElasticSystem.h>
+#include <SolverUtils/EquationSystem.h>
 
 namespace Nektar
 {
@@ -55,11 +55,12 @@ public:
 
     /// Creates an instance of this class
     static EquationSystemSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-        EquationSystemSharedPtr p = MemoryManager<
-            IterativeElasticSystem>::AllocateSharedPtr(pSession, pGraph);
+        EquationSystemSharedPtr p =
+            MemoryManager<IterativeElasticSystem>::AllocateSharedPtr(pSession,
+                                                                     pGraph);
         p->InitObject();
         return p;
     }
@@ -73,21 +74,20 @@ protected:
     /// Flag determining whether to repeat boundary conditions.
     bool m_repeatBCs;
     /// Storage for boundary conditions.
-    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_savedBCs;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_savedBCs;
     /// Vector of boundary regions to deform.
     std::vector<int> m_toDeform;
 
-    IterativeElasticSystem(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr &pGraph);
+    IterativeElasticSystem(const LibUtilities::SessionReaderSharedPtr &pSession,
+                           const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject();
-    virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
     virtual void v_DoSolve();
 
     void WriteGeometry(const int i);
 };
 
-}
+} // namespace Nektar
 
 #endif

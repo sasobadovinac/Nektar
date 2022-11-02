@@ -14,6 +14,8 @@ ADD_NEKTAR_EXECUTABLE(NonlinSysIterDemo
 IF(NEKTAR_USE_MPI)
     ADD_NEKTAR_EXECUTABLE(FieldIOBenchmarker
         COMPONENT demos DEPENDS LibUtilities SOURCES FieldIOBenchmarker.cpp)
+    ADD_NEKTAR_EXECUTABLE(MPIInit
+        COMPONENT demos DEPENDS LibUtilities SOURCES MPIInit.cpp)
 ENDIF()
 
 ADD_NEKTAR_TEST(NodalDemo_Tri_Deriv_P8)
@@ -72,3 +74,7 @@ ADD_NEKTAR_TEST(ErrorStream)
 ADD_NEKTAR_TEST(LinSysIterDemo_LinearSys_Jacobi)
 ADD_NEKTAR_TEST(LinSysIterDemo_LinearSys_GMRES)
 ADD_NEKTAR_TEST(NonlinSysIterDemo_LinearSys_Newton)
+
+IF(NEKTAR_USE_MPI)
+    ADD_NEKTAR_TEST(MPIInit)
+ENDIF()

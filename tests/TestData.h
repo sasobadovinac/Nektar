@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: Tester.cpp
+// File: TestData.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,8 +35,8 @@
 #ifndef NEKTAR_TESTER_TESTDATA
 #define NEKTAR_TESTER_TESTDATA
 
-#include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 #include <string>
 #include <vector>
@@ -48,51 +48,51 @@ namespace po = boost::program_options;
 
 namespace Nektar
 {
-    struct DependentFile
-    {
-        std::string m_description;
-        std::string m_filename;
-    };
+struct DependentFile
+{
+    std::string m_description;
+    std::string m_filename;
+};
 
-    struct Command
-    {
-        fs::path     m_executable;
-        std::string  m_parameters;
-        unsigned int m_processes;
-        bool         m_pythonTest;
-    };
+struct Command
+{
+    fs::path m_executable;
+    std::string m_parameters;
+    unsigned int m_processes;
+    bool m_pythonTest;
+};
 
-    class TestData
-    {
-    public:
-        TestData(const fs::path& pFilename, po::variables_map& pVm);
-        TestData(const TestData& pSrc);
+class TestData
+{
+public:
+    TestData(const fs::path &pFilename, po::variables_map &pVm);
+    TestData(const TestData &pSrc);
 
-        const std::string& GetDescription() const;
-        const Command &GetCommand(unsigned int pId) const;
-        unsigned int GetNumCommands() const;
+    const std::string &GetDescription() const;
+    const Command &GetCommand(unsigned int pId) const;
+    unsigned int GetNumCommands() const;
 
-        std::string GetMetricType(unsigned int pId) const;
-        unsigned int GetNumMetrics() const;
-        TiXmlElement* GetMetric(unsigned int pId);
-        unsigned int GetMetricId(unsigned int pId);
+    std::string GetMetricType(unsigned int pId) const;
+    unsigned int GetNumMetrics() const;
+    TiXmlElement *GetMetric(unsigned int pId);
+    unsigned int GetMetricId(unsigned int pId);
 
-        DependentFile GetDependentFile(unsigned int pId) const;
-        unsigned int GetNumDependentFiles() const;
+    DependentFile GetDependentFile(unsigned int pId) const;
+    unsigned int GetNumDependentFiles() const;
 
-        void SaveFile();
+    void SaveFile();
 
-    private:
-        po::variables_map               m_cmdoptions;
-        std::string                     m_description;
-        std::vector<Command>            m_commands;
-        TiXmlDocument*                  m_doc;
-        std::vector<TiXmlElement*>      m_metrics;
-        std::vector<DependentFile>      m_files;
+private:
+    po::variables_map m_cmdoptions;
+    std::string m_description;
+    std::vector<Command> m_commands;
+    TiXmlDocument *m_doc;
+    std::vector<TiXmlElement *> m_metrics;
+    std::vector<DependentFile> m_files;
 
-        void Parse(TiXmlDocument* pDoc);
-        Command ParseCommand(TiXmlElement *pElmt) const;
-    };
-}
+    void Parse(TiXmlDocument *pDoc);
+    Command ParseCommand(TiXmlElement *pElmt) const;
+};
+} // namespace Nektar
 
 #endif

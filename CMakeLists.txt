@@ -144,7 +144,6 @@ SET(NEKTAR_LIBRARY_TYPE "SHARED")
 # Set up RPATH
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 SET(CMAKE_BUILD_RPATH "${TP_LIB_DIR}")
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
      "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" isSystemDir)
 IF("${isSystemDir}" STREQUAL "-1")
@@ -328,18 +327,31 @@ ENDIF (NEKTAR_BUILD_TESTS)
 
 # Compile list of definitions for Nektar++Config.cmake input file. We exclude
 # vtk definitions which should not be required for external builds.
+# We also exclude generator expressions that relate to the RelWithDebugInfo
+# config that are added from OCC on fedora 35.
 SET(NEKTAR_DEFINITIONS "")
 GET_DIRECTORY_PROPERTY(
     NEKTAR_DEFINITIONS_LIST DIRECTORY ${CMAKE_SOURCE_DIR} COMPILE_DEFINITIONS)
 FOREACH(def ${NEKTAR_DEFINITIONS_LIST})
-    IF (NOT def MATCHES "^vtk")
-        SET(NEKTAR_DEFINITIONS "${NEKTAR_DEFINITIONS} -D${def}")
-    ENDIF()
+    # Build NEKTAR_DEFINITIONS as a list (items separated with ;). The generator
+    # expression is used to reject blank ${def} entries since these can themselves
+    # be generator expressions which may evaluate to empty string, in which case
+    # we'd end up with blank "-D" entries in the definition list.
+    SET(NEKTAR_DEFINITIONS ${NEKTAR_DEFINITIONS};$<$<BOOL:${def}>:-D${def}>)
 ENDFOREACH()
+
+# Now we convert our defintions from a CMake list (; separated) and convert to
+# a space-separated string.
+SET(NEKTAR_DEFINITIONS $<JOIN:${NEKTAR_DEFINITIONS},\ >)
 
 # Write out Nektar++ build configuration
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/Nektar++Config.cmake.in
                ${CMAKE_BINARY_DIR}/Nektar++Config.cmake @ONLY)
+
+# At this point, our written out config file may still contain generator
+# expressions so we process them to generate the final config file.
+FILE(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/Nektar++Config.cmake
+              INPUT ${CMAKE_BINARY_DIR}/Nektar++Config.cmake)
 
 # Install Nektar++ CMake configuration file
 INSTALL(FILES ${CMAKE_BINARY_DIR}/Nektar++Config.cmake

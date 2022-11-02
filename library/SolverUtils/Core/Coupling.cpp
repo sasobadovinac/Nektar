@@ -99,10 +99,9 @@ void Coupling::v_Init()
                  "XML element: \n\t'" +
                      tagcontent.str() + "'");
         std::string value = element->Attribute("VALUE");
-        ASSERTL0(!value.empty(),
-                 "VALUE attribute must be non-empty in XML "
-                 "element: \n\t'" +
-                     tagcontent.str() + "'");
+        ASSERTL0(!value.empty(), "VALUE attribute must be non-empty in XML "
+                                 "element: \n\t'" +
+                                     tagcontent.str() + "'");
 
         // Set Variable
         m_config[propertyUpper] = value;
@@ -136,7 +135,7 @@ vector<int> Coupling::GenerateVariableMapping(vector<string> &vars,
                                               vector<string> &transVars)
 {
     vector<int> transToVars;
-    Array<OneD, Array<OneD, NekDouble> > sendField(transVars.size());
+    Array<OneD, Array<OneD, NekDouble>> sendField(transVars.size());
     for (int i = 0; i < transVars.size(); ++i)
     {
         auto it2 = find(vars.begin(), vars.end(), transVars[i]);
@@ -149,5 +148,5 @@ vector<int> Coupling::GenerateVariableMapping(vector<string> &vars,
 
     return transToVars;
 }
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

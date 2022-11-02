@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Xxt.hpp
+// File: Xxt.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -129,15 +129,16 @@ struct crs_data
     double *vl, *vc, *vx, *combuf;
 };
 
-extern "C" {
-struct crs_data *nektar_crs_setup(unsigned int n, const unsigned long *id,
-                                  unsigned int nz, const unsigned int *Ai,
-                                  const unsigned int *Aj, const double *A,
-                                  unsigned int null_space,
-                                  const struct comm *comm);
-void nektar_crs_solve(double *x, struct crs_data *data, double *b);
-void nektar_crs_stats(struct crs_data *data);
-void nektar_crs_free(struct crs_data *data);
+extern "C"
+{
+    struct crs_data *nektar_crs_setup(unsigned int n, const unsigned long *id,
+                                      unsigned int nz, const unsigned int *Ai,
+                                      const unsigned int *Aj, const double *A,
+                                      unsigned int null_space,
+                                      const struct comm *comm);
+    void nektar_crs_solve(double *x, struct crs_data *data, double *b);
+    void nektar_crs_stats(struct crs_data *data);
+    void nektar_crs_free(struct crs_data *data);
 }
 
 /**
@@ -212,6 +213,6 @@ static inline void Finalise(crs_data *pCrs)
     }
 #endif
 }
-}
+} // namespace Xxt
 
 #endif

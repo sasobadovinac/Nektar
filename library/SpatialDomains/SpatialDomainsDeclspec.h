@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: SpatialDomainsDeclspec.h
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -26,6 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -33,14 +36,13 @@
 #define NEKTAR_SPATIAL_DOMAINS_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef SPATIAL_DOMAINS_EXPORTS
-        #define SPATIAL_DOMAINS_EXPORT _declspec(dllexport)
-    #else
-        #define SPATIAL_DOMAINS_EXPORT _declspec(dllimport)
-    #endif
+#ifdef SPATIAL_DOMAINS_EXPORTS
+#define SPATIAL_DOMAINS_EXPORT _declspec(dllexport)
 #else
-    #define SPATIAL_DOMAINS_EXPORT
+#define SPATIAL_DOMAINS_EXPORT _declspec(dllimport)
+#endif
+#else
+#define SPATIAL_DOMAINS_EXPORT
 #endif
 
-#endif //NEKTAR_SPATIAL_DOMAINS_DECLSPEC_H
-
+#endif // NEKTAR_SPATIAL_DOMAINS_DECLSPEC_H

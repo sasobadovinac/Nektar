@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Curvemesh.h
+//  File: BGFS-B.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: object for individual curve meshes.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -42,8 +42,7 @@ namespace Nektar
 {
 namespace NekMesh
 {
-    bool BGFSUpdate(OptiObjSharedPtr opti,
-                    DNekMat &J, DNekMat &B, DNekMat &H);
+bool BGFSUpdate(OptiObjSharedPtr opti, DNekMat &J, DNekMat &B, DNekMat &H);
 }
-}
+} // namespace Nektar
 #endif

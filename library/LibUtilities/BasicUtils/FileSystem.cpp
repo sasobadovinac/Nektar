@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: FileSystem.cpp
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -26,23 +28,25 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
+// Description:
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "LibUtilities/BasicUtils/FileSystem.h"
 
 namespace Nektar
 {
-    namespace LibUtilities
-    {
-        /** 
-         * \brief create portable path on different platforms for 
-         *        boost::filesystem path 
-         */
-        std::string PortablePath(const boost::filesystem::path& path)
-        {
-            fs::path temp = path;
-            temp.make_preferred();
-            return temp.string();
-        }
-    }
+namespace LibUtilities
+{
+/**
+ * \brief create portable path on different platforms for
+ *        boost::filesystem path
+ */
+std::string PortablePath(const boost::filesystem::path &path)
+{
+    fs::path temp = path;
+    temp.make_preferred();
+    return temp.string();
 }
+} // namespace LibUtilities
+} // namespace Nektar

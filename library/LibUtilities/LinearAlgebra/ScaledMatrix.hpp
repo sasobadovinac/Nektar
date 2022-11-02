@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -42,124 +42,127 @@
 
 namespace Nektar
 {
-    template<typename DataType, typename InnerMatrixType>
-    class NekMatrix<NekMatrix<DataType, InnerMatrixType>, ScaledMatrixTag> : public ConstMatrix<DataType>
+template <typename DataType, typename InnerMatrixType>
+class NekMatrix<NekMatrix<DataType, InnerMatrixType>, ScaledMatrixTag>
+    : public ConstMatrix<DataType>
+{
+public:
+    typedef ConstMatrix<DataType> BaseType;
+    typedef NekMatrix<DataType, InnerMatrixType> InnerType;
+    typedef NekMatrix<InnerType, ScaledMatrixTag> ThisType;
+    typedef typename std::remove_const<typename InnerType::NumberType>::type
+        NumberType;
+
+    typedef NumberType GetValueType;
+    typedef NumberType ConstGetValueType;
+
+public:
+    /// \internal
+    /// \brief Iterator through elements of the matrix.
+    /// Not quite a real iterator in the C++ sense.
+    class const_iterator
     {
-        public:
-            typedef ConstMatrix<DataType> BaseType;
-            typedef NekMatrix<DataType, InnerMatrixType> InnerType;
-            typedef NekMatrix<InnerType, ScaledMatrixTag> ThisType;
-            typedef typename std::remove_const<typename InnerType::NumberType>::type NumberType;
-            
-            typedef NumberType GetValueType;
-            typedef NumberType ConstGetValueType;
-            
-        public:
-            /// \internal
-            /// \brief Iterator through elements of the matrix.
-            /// Not quite a real iterator in the C++ sense.
-            class const_iterator
-            {
-                public:
-                    const_iterator(typename InnerType::const_iterator iter,
-                                   const NumberType& scale) :
-                        m_iter(iter),
-                        m_scale(scale)
-                    {
-                    }
+    public:
+        const_iterator(typename InnerType::const_iterator iter,
+                       const NumberType &scale)
+            : m_iter(iter), m_scale(scale)
+        {
+        }
 
-                    const_iterator operator++(int)
-                    {
-                        const_iterator out = *this;
-                        ++m_iter;
-                        return out;
-                    }
+        const_iterator operator++(int)
+        {
+            const_iterator out = *this;
+            ++m_iter;
+            return out;
+        }
 
-                    const_iterator& operator++()
-                    {
-                        ++m_iter;
-                        return *this;
-                    }
+        const_iterator &operator++()
+        {
+            ++m_iter;
+            return *this;
+        }
 
-                    NumberType operator*()
-                    {
-                        return m_scale*(*m_iter);
-                    }
+        NumberType operator*()
+        {
+            return m_scale * (*m_iter);
+        }
 
-                    bool operator==(const const_iterator& rhs)
-                    {
-                        return m_iter == rhs.m_iter;
-                    }
+        bool operator==(const const_iterator &rhs)
+        {
+            return m_iter == rhs.m_iter;
+        }
 
-                    bool operator!=(const const_iterator& rhs)
-                    {
-                        return !(*this == rhs);
-                    }
+        bool operator!=(const const_iterator &rhs)
+        {
+            return !(*this == rhs);
+        }
 
-                private:
-                    typename InnerType::const_iterator m_iter;
-                    NumberType m_scale;
-            };
-            
-            
-            
-        public:
-            LIB_UTILITIES_EXPORT NekMatrix() ;
-            
-            LIB_UTILITIES_EXPORT NekMatrix(typename boost::call_traits<NumberType>::const_reference scale,
-                      std::shared_ptr<const InnerType> m);
-            
-            LIB_UTILITIES_EXPORT NekMatrix(const ThisType& rhs);
-
-
-            LIB_UTILITIES_EXPORT NekMatrix(typename boost::call_traits<NumberType>::const_reference scale, const ThisType& rhs);
-           
-
-            LIB_UTILITIES_EXPORT ThisType& operator=(const ThisType&) = default;
-
-            LIB_UTILITIES_EXPORT ConstGetValueType operator()(unsigned int row, unsigned int col) const;
-
-            LIB_UTILITIES_EXPORT unsigned int GetStorageSize() const ;
-                                    
-            LIB_UTILITIES_EXPORT NumberType Scale() const;
-            LIB_UTILITIES_EXPORT void SetScale(const NumberType&);
-            
-            LIB_UTILITIES_EXPORT const NumberType* GetRawPtr() const;
-            
-            LIB_UTILITIES_EXPORT std::shared_ptr<const InnerType> GetOwnedMatrix() const;
-            
-            LIB_UTILITIES_EXPORT unsigned int GetNumberOfSubDiagonals() const;
-            LIB_UTILITIES_EXPORT unsigned int GetNumberOfSuperDiagonals() const;
-            
-            LIB_UTILITIES_EXPORT const_iterator begin() const;
-            LIB_UTILITIES_EXPORT const_iterator end() const;
-            
-            LIB_UTILITIES_EXPORT static ThisType CreateWrapper(const ThisType& rhs);
-            
-            LIB_UTILITIES_EXPORT static std::shared_ptr<ThisType> CreateWrapper(const std::shared_ptr<ThisType>& rhs);
-            
-        public:
-        
-        private:
-            LIB_UTILITIES_EXPORT virtual typename boost::call_traits<NumberType>::value_type
-            v_GetValue(unsigned int row, unsigned int column) const;
-            
-            LIB_UTILITIES_EXPORT virtual unsigned int v_GetStorageSize() const ;
-            
-            LIB_UTILITIES_EXPORT virtual char v_GetTransposeFlag() const;
-
-            std::shared_ptr<const InnerType> m_matrix;
-            NumberType m_scale;
+    private:
+        typename InnerType::const_iterator m_iter;
+        NumberType m_scale;
     };
 
-    template<typename DataType>
-    LIB_UTILITIES_EXPORT void NegateInPlace(NekMatrix<DataType, ScaledMatrixTag>& v);
-    
-    template<typename DataType>
-    LIB_UTILITIES_EXPORT NekMatrix<DataType, ScaledMatrixTag>
-    Transpose(NekMatrix<DataType, ScaledMatrixTag>& rhs);
+public:
+    LIB_UTILITIES_EXPORT NekMatrix();
 
-}
+    LIB_UTILITIES_EXPORT NekMatrix(
+        typename boost::call_traits<NumberType>::const_reference scale,
+        std::shared_ptr<const InnerType> m);
 
+    LIB_UTILITIES_EXPORT NekMatrix(const ThisType &rhs);
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SCALED_MATRIX_HPP
+    LIB_UTILITIES_EXPORT NekMatrix(
+        typename boost::call_traits<NumberType>::const_reference scale,
+        const ThisType &rhs);
+
+    LIB_UTILITIES_EXPORT ThisType &operator=(const ThisType &) = default;
+
+    LIB_UTILITIES_EXPORT ConstGetValueType operator()(unsigned int row,
+                                                      unsigned int col) const;
+
+    LIB_UTILITIES_EXPORT unsigned int GetStorageSize() const;
+
+    LIB_UTILITIES_EXPORT NumberType Scale() const;
+    LIB_UTILITIES_EXPORT void SetScale(const NumberType &);
+
+    LIB_UTILITIES_EXPORT const NumberType *GetRawPtr() const;
+
+    LIB_UTILITIES_EXPORT std::shared_ptr<const InnerType> GetOwnedMatrix()
+        const;
+
+    LIB_UTILITIES_EXPORT unsigned int GetNumberOfSubDiagonals() const;
+    LIB_UTILITIES_EXPORT unsigned int GetNumberOfSuperDiagonals() const;
+
+    LIB_UTILITIES_EXPORT const_iterator begin() const;
+    LIB_UTILITIES_EXPORT const_iterator end() const;
+
+    LIB_UTILITIES_EXPORT static ThisType CreateWrapper(const ThisType &rhs);
+
+    LIB_UTILITIES_EXPORT static std::shared_ptr<ThisType> CreateWrapper(
+        const std::shared_ptr<ThisType> &rhs);
+
+public:
+private:
+    LIB_UTILITIES_EXPORT virtual
+        typename boost::call_traits<NumberType>::value_type
+        v_GetValue(unsigned int row, unsigned int column) const;
+
+    LIB_UTILITIES_EXPORT virtual unsigned int v_GetStorageSize() const;
+
+    LIB_UTILITIES_EXPORT virtual char v_GetTransposeFlag() const;
+
+    std::shared_ptr<const InnerType> m_matrix;
+    NumberType m_scale;
+};
+
+template <typename DataType>
+LIB_UTILITIES_EXPORT void NegateInPlace(
+    NekMatrix<DataType, ScaledMatrixTag> &v);
+
+template <typename DataType>
+LIB_UTILITIES_EXPORT NekMatrix<DataType, ScaledMatrixTag> Transpose(
+    NekMatrix<DataType, ScaledMatrixTag> &rhs);
+
+} // namespace Nektar
+
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SCALED_MATRIX_HPP

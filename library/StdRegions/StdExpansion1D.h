@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdExpansion1D.h
+// File: StdExpansion1D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -34,7 +34,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-
 #ifndef STDEXP1D_H
 #define STDEXP1D_H
 
@@ -43,56 +42,55 @@
 
 namespace Nektar
 {
-    namespace StdRegions
+namespace StdRegions
+{
+
+class StdExpansion1D : virtual public StdExpansion
+{
+
+public:
+    STD_REGIONS_EXPORT StdExpansion1D();
+    STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs,
+                                      const LibUtilities::BasisKey &Ba);
+    STD_REGIONS_EXPORT StdExpansion1D(const StdExpansion1D &T);
+    STD_REGIONS_EXPORT virtual ~StdExpansion1D();
+
+    /** \brief Evaluate the derivative \f$ d/d{\xi_1} \f$ at the
+     *  physical quadrature points given by \a inarray and return in
+     *  \a outarray.
+     *
+     *  \param inarray array of a function evaluated at the quadrature
+     *  points
+     *  \param outarray the resulting array of the derivative \f$
+     *  du/d_{\xi_1}|_{\xi_{1i}} \f$ will be stored in the array
+     *  \a outarray as output of the function
+     */
+    STD_REGIONS_EXPORT void PhysTensorDeriv(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
+
+protected:
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, const NekDouble> &coords,
+        const Array<OneD, const NekDouble> &physvals) override;
+
+private:
+    // Virtual Functions ----------------------------------------
+
+    virtual int v_GetCoordim(void) override
     {
+        return 1;
+    }
 
-        class StdExpansion1D: virtual public StdExpansion
-        {
+    virtual int v_GetShapeDimension() const final
+    {
+        return 1;
+    }
+};
 
-        public:
+typedef std::shared_ptr<StdExpansion1D> StdExpansion1DSharedPtr;
 
-            STD_REGIONS_EXPORT StdExpansion1D();
-            STD_REGIONS_EXPORT StdExpansion1D(int numcoeffs, const LibUtilities::BasisKey &Ba);
-            STD_REGIONS_EXPORT StdExpansion1D(const StdExpansion1D &T);
-            STD_REGIONS_EXPORT virtual ~StdExpansion1D();
+} // namespace StdRegions
+} // namespace Nektar
 
-            /** \brief Evaluate the derivative \f$ d/d{\xi_1} \f$ at the
-            *  physical quadrature points given by \a inarray and return in
-            *  \a outarray.
-            *
-            *  \param inarray array of a function evaluated at the quadrature
-            *  points
-            *  \param outarray the resulting array of the derivative \f$
-            *  du/d_{\xi_1}|_{\xi_{1i}} \f$ will be stored in the array
-            *  \a outarray as output of the function
-            */
-            STD_REGIONS_EXPORT void PhysTensorDeriv(
-                    const Array<OneD, const NekDouble>& inarray,
-                          Array<OneD,       NekDouble>& outarray);
-
-        protected:
-            STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
-                    const Array<OneD, const NekDouble>& coords,
-                    const Array<OneD, const NekDouble>& physvals) override;
-
-        private:
-
-            // Virtual Functions ----------------------------------------
-
-            virtual int v_GetCoordim(void) override
-            {
-                return 1;
-            }
-
-            virtual int v_GetShapeDimension() const final
-            {
-                return 1;
-            }
-        };
-
-        typedef std::shared_ptr<StdExpansion1D> StdExpansion1DSharedPtr;
-
-    } //end of namespace
-} //end of namespace
-
-#endif //STDEXP1D_H
+#endif // STDEXP1D_H

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Octree.h
+// File: Octree.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -33,9 +33,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
-#include <vector>
-#include <memory>
 #include <limits>
+#include <memory>
+#include <vector>
 
 namespace Nektar
 {
@@ -52,32 +52,44 @@ public:
     // Empty constructor
     Octree();
     // Constructor with bounds
-    Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts,
+    Octree(const Array<OneD, Array<OneD, NekDouble>> &pts, int maxPts,
            const Array<OneD, NekDouble> &bounds);
     // Constructor without bounds
-    Octree(const Array<OneD, Array<OneD, NekDouble> > &pts, int maxPts);
+    Octree(const Array<OneD, Array<OneD, NekDouble>> &pts, int maxPts);
 
     // Returns the ID of the leaf node that contains 'coords'
     int QueryNode(const Array<OneD, NekDouble> &coords,
-                  int depth=std::numeric_limits<int>::max());
+                  int depth = std::numeric_limits<int>::max());
     // Returns the ID of the point in 'pts' closest to 'coords'
-    int QueryClosest(const Array<OneD, Array<OneD, NekDouble> > &pts,
+    int QueryClosest(const Array<OneD, Array<OneD, NekDouble>> &pts,
                      const Array<OneD, NekDouble> &coords, double &distance,
-                     int pointInd=-1);
+                     int pointInd = -1);
 
     // Returns the ID of the points inside the node 'nodeID'
     std::vector<int> QueryPoints(int nodeID);
     // Returns the IDs of the leaf nodes neighbouring 'nodeID'
     std::vector<int> QueryNeighbours(int nodeID);
 
-    int QueryNpoints(int nodeID) { return m_nodes[nodeID]->GetNpoints(); }
-    int QueryLocation(int nodeID) { return m_nodes[nodeID]->GetLoc(); }
-    int QueryDepth(int nodeID) { return m_nodes[nodeID]->GetDepth(); }
-    int QueryDelta(int nodeID) { return m_nodes[nodeID]->GetDelta(); }
+    int QueryNpoints(int nodeID)
+    {
+        return m_nodes[nodeID]->GetNpoints();
+    }
+    int QueryLocation(int nodeID)
+    {
+        return m_nodes[nodeID]->GetLoc();
+    }
+    int QueryDepth(int nodeID)
+    {
+        return m_nodes[nodeID]->GetDepth();
+    }
+    int QueryDelta(int nodeID)
+    {
+        return m_nodes[nodeID]->GetDelta();
+    }
 
     // Get some statistics about the octree
-    void GetStats(int &maxPts, int &nPts, int &nNodes,
-                  int &nLeaves, int &depth);
+    void GetStats(int &maxPts, int &nPts, int &nNodes, int &nLeaves,
+                  int &depth);
 
 private:
     class Octant : public std::enable_shared_from_this<Octant>
@@ -86,32 +98,68 @@ private:
         // Empty constructor
         Octant();
         // Constructor
-        Octant(int loc, int depth, int id, const Array<OneD,
-               NekDouble> &bounds);
+        Octant(int loc, int depth, int id,
+               const Array<OneD, NekDouble> &bounds);
         // Copy constructor
         Octant(int loc, Octant &parent);
 
-        int GetNpoints() const { return m_nPts; }
-        int GetLoc() const { return m_loc; }
-        int GetDepth() const { return m_depth; }
-        double GetDelta() const { return m_delta; }
-        int GetID() const { return m_id; }
-        bool IsLeaf() const { return m_isLeaf; }
-        Array<OneD, NekDouble>& GetCentre() { return m_centre; }
-        Array<OneD, NekDouble>& GetBounds() { return m_bounds; }
-        std::vector<int>& GetIndices() { return m_pointInd; }
-        Array<OneD, OctantSharedPtr>& GetChildren() { return m_children; }
-        std::vector<OctantWeakPtr>& GetNeighbours() { return m_neighbours; }
+        int GetNpoints() const
+        {
+            return m_nPts;
+        }
+        int GetLoc() const
+        {
+            return m_loc;
+        }
+        int GetDepth() const
+        {
+            return m_depth;
+        }
+        double GetDelta() const
+        {
+            return m_delta;
+        }
+        int GetID() const
+        {
+            return m_id;
+        }
+        bool IsLeaf() const
+        {
+            return m_isLeaf;
+        }
+        Array<OneD, NekDouble> &GetCentre()
+        {
+            return m_centre;
+        }
+        Array<OneD, NekDouble> &GetBounds()
+        {
+            return m_bounds;
+        }
+        std::vector<int> &GetIndices()
+        {
+            return m_pointInd;
+        }
+        Array<OneD, OctantSharedPtr> &GetChildren()
+        {
+            return m_children;
+        }
+        std::vector<OctantWeakPtr> &GetNeighbours()
+        {
+            return m_neighbours;
+        }
 
-        void SetID(int id) { m_id = id; }
+        void SetID(int id)
+        {
+            m_id = id;
+        }
 
-        void GetLeaves(std::vector<OctantSharedPtr>& leaves);
+        void GetLeaves(std::vector<OctantSharedPtr> &leaves);
         void SetIndices(const std::vector<int> &indices);
         void AddNeighbours(const std::vector<OctantSharedPtr> &neighbours);
-        void AddPoints(const Array<OneD, Array<OneD, NekDouble> > &pts,
+        void AddPoints(const Array<OneD, Array<OneD, NekDouble>> &pts,
                        const std::vector<int> &indices);
         void Subdivide(int maxPts,
-                       const Array<OneD, Array<OneD, NekDouble> > &pts,
+                       const Array<OneD, Array<OneD, NekDouble>> &pts,
                        std::vector<OctantSharedPtr> &nodes);
         int GetLocInNode(const Array<OneD, NekDouble> &coords);
 
@@ -160,5 +208,5 @@ private:
     void AdvanceToStats(int nodeID);
     void SetNeighbours(int nodeID);
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

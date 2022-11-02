@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Element.h>
 #include "ProcessJac.h"
+#include <NekMesh/MeshElements/Element.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -44,8 +44,7 @@ namespace NekMesh
 {
 
 ModuleKey ProcessJac::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "jac"),
-    ProcessJac::create,
+    ModuleKey(eProcessModule, "jac"), ProcessJac::create,
     "Process elements based on values of Jacobian.");
 
 ProcessJac::ProcessJac(MeshSharedPtr m) : ProcessModule(m)
@@ -64,8 +63,8 @@ void ProcessJac::Process()
 {
     m_log(VERBOSE) << "Calculating elemental Jacobians" << endl;
 
-    bool extract   = m_config["extract"].beenSet;
-    bool printList = m_config["list"].beenSet;
+    bool extract    = m_config["extract"].beenSet;
+    bool printList  = m_config["list"].beenSet;
     NekDouble thres = m_config["extract"].as<NekDouble>();
 
     vector<ElementSharedPtr> el = m_mesh->m_element[m_mesh->m_expDim];
@@ -94,10 +93,10 @@ void ProcessJac::Process()
         // Generate geometric factors.
         SpatialDomains::GeomFactorsSharedPtr gfac = geom->GetGeomFactors();
 
-        LibUtilities::PointsKeyVector p = geom->GetXmap()->GetPointsKeys();
+        LibUtilities::PointsKeyVector p    = geom->GetXmap()->GetPointsKeys();
         SpatialDomains::DerivStorage deriv = gfac->GetDeriv(p);
-        const int pts = deriv[0][0].size();
-        Array<OneD,NekDouble> jc(pts);
+        const int pts                      = deriv[0][0].size();
+        Array<OneD, NekDouble> jc(pts);
         for (int k = 0; k < pts; ++k)
         {
             DNekMat jac(m_mesh->m_expDim, m_mesh->m_expDim, 0.0, eFULL);
@@ -106,24 +105,27 @@ void ProcessJac::Process()
             {
                 for (int j = 0; j < m_mesh->m_expDim; ++j)
                 {
-                    jac(j,l) = deriv[l][j][k];
+                    jac(j, l) = deriv[l][j][k];
                 }
             }
 
-            if(m_mesh->m_expDim == 2)
+            if (m_mesh->m_expDim == 2)
             {
-                jc[k] = jac(0,0) * jac(1,1) - jac(0,1)*jac(1,0);
+                jc[k] = jac(0, 0) * jac(1, 1) - jac(0, 1) * jac(1, 0);
             }
-            else if(m_mesh->m_expDim == 3)
+            else if (m_mesh->m_expDim == 3)
             {
-                jc[k] =  jac(0,0) * (jac(1,1)*jac(2,2) - jac(2,1)*jac(1,2)) -
-                         jac(0,1) * (jac(1,0)*jac(2,2) - jac(2,0)*jac(1,2)) +
-                         jac(0,2) * (jac(1,0)*jac(2,1) - jac(2,0)*jac(1,1));
+                jc[k] =
+                    jac(0, 0) *
+                        (jac(1, 1) * jac(2, 2) - jac(2, 1) * jac(1, 2)) -
+                    jac(0, 1) *
+                        (jac(1, 0) * jac(2, 2) - jac(2, 0) * jac(1, 2)) +
+                    jac(0, 2) * (jac(1, 0) * jac(2, 1) - jac(2, 0) * jac(1, 1));
             }
         }
 
-        NekDouble scaledJac = Vmath::Vmin(jc.size(),jc,1) /
-                              Vmath::Vmax(jc.size(),jc,1);
+        NekDouble scaledJac =
+            Vmath::Vmin(jc.size(), jc, 1) / Vmath::Vmax(jc.size(), jc, 1);
 
         bool valid = gfac->IsValid();
 
@@ -142,8 +144,7 @@ void ProcessJac::Process()
             {
                 m_log << "  - " << el[i]->GetId() << " ("
                       << LibUtilities::ShapeTypeMap[el[i]->GetConf().m_e] << ")"
-                      << "  " << scaledJac
-                      << endl;
+                      << "  " << scaledJac << endl;
             }
         }
     }
@@ -168,5 +169,5 @@ void ProcessJac::Process()
                        << endl;
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

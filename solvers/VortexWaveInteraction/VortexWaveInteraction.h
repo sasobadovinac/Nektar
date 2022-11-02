@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VortexWaveInteraction.h
+// File: VortexWaveInteraction.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,9 +36,9 @@
 #define NEKTAR_SOLVERS_VORTEXWAVEINTERACTION_H
 
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <MultiRegions/ExpList.h>
 #include <SolverUtils/EquationSystem.h>
 #include <SolverUtils/Forcing/ForcingProgrammatic.h>
-#include <MultiRegions/ExpList.h>
 #include <string>
 
 using namespace Nektar::SolverUtils;
@@ -48,235 +48,225 @@ using namespace Nektar::SolverUtils;
 #endif
 
 namespace Nektar
-{     
+{
 
-    
-    enum VWIIterationType
+enum VWIIterationType
+{
+    eFixedAlpha,
+    eFixedWaveForcing,
+    eFixedAlphaWaveForcing,
+    eFixedWaveForcingWithSubIterationOnAlpha,
+    eVWIIterationTypeSize
+};
+
+const std::string VWIIterationTypeMap[] = {
+    "FixedAlpha", "FixedWaveForcing", "FixedAlphaWaveForcing",
+    "FixedWaveForcingWithSubIterationOnAlpha"};
+
+class VortexWaveInteraction
+{
+public:
+    VortexWaveInteraction(int argc, char *argv[]);
+
+    ~VortexWaveInteraction(void);
+
+    void ExecuteRoll(void);
+    void ExecuteStreak(void);
+    void ExecuteWave(void);
+
+    void ExecuteLoop(bool CalcWaveForce = true);
+    void SaveLoopDetails(std::string dir, int i);
+
+    void CalcNonLinearWaveForce(void);
+    void CalcL2ToLinfPressure(void);
+
+    void SaveFile(std::string fileend, std::string dir, int n);
+    void MoveFile(std::string fileend, std::string dir, int n);
+    void CopyFile(std::string file1end, std::string file2end);
+
+    bool CheckEigIsStationary(bool reset = false);
+    bool CheckIfAtNeutralPoint(void);
+    void UpdateAlpha(int n);
+    void UpdateWaveForceMag(int n);
+    void UpdateDAlphaDWaveForceMag(NekDouble alphainit);
+
+    void AppendEvlToFile(std::string file, int n);
+    void AppendEvlToFile(std::string file, NekDouble WaveForceMag);
+
+    int GetIterStart()
     {
-        eFixedAlpha,
-        eFixedWaveForcing,
-        eFixedAlphaWaveForcing,
-        eFixedWaveForcingWithSubIterationOnAlpha,
-        eVWIIterationTypeSize
-    };
+        return m_iterStart;
+    }
 
-    const std::string VWIIterationTypeMap[] = 
+    int GetIterEnd()
     {
-        "FixedAlpha",
-        "FixedWaveForcing",
-        "FixedAlphaWaveForcing",
-        "FixedWaveForcingWithSubIterationOnAlpha"
-    };
+        return m_iterEnd;
+    }
 
-    class VortexWaveInteraction
+    VWIIterationType GetVWIIterationType(void)
     {
-    public:
-        VortexWaveInteraction(int argc, char *argv[]);
+        return m_VWIIterationType;
+    }
 
-        ~VortexWaveInteraction(void);
-        
-        void ExecuteRoll(void);
-        void ExecuteStreak(void);
-        void ExecuteWave(void);
+    int GetNOuterIterations(void)
+    {
+        return m_nOuterIterations;
+    }
 
-        void ExecuteLoop(bool CalcWaveForce = true);
-        void SaveLoopDetails(std::string dir, int i);
+    int GetMaxOuterIterations(void)
+    {
+        return m_maxOuterIterations;
+    }
 
-        void CalcNonLinearWaveForce(void);
-        void CalcL2ToLinfPressure  (void);
-        
-        void SaveFile(std::string fileend, std::string dir, int n);
-        void MoveFile(std::string fileend, std::string dir, int n);
-        void CopyFile(std::string file1end, std::string file2end);
+    NekDouble GetAlpha(void)
+    {
+        return m_alpha[0];
+    }
 
+    NekDouble GetAlphaStep(void)
+    {
+        return m_alphaStep;
+    }
 
-        bool CheckEigIsStationary(bool reset = false);
-        bool CheckIfAtNeutralPoint(void);
-        void UpdateAlpha(int n);
-        void UpdateWaveForceMag(int n);
-        void UpdateDAlphaDWaveForceMag(NekDouble alphainit);
-        
+    NekDouble GetWaveForceMag(void)
+    {
+        return m_waveForceMag[0];
+    }
 
+    NekDouble GetWaveForceMagStep(void)
+    {
+        return m_waveForceMagStep;
+    }
 
-        void AppendEvlToFile(std::string file, int n);
-        void AppendEvlToFile(std::string file, NekDouble WaveForceMag);
+    NekDouble GetDAlphaDWaveForceMag(void)
+    {
+        return m_dAlphaDWaveForceMag;
+    }
 
-        int GetIterStart()
-        {
-            return m_iterStart;
-        }
+    int GetMaxWaveForceMagIter(void)
+    {
+        return m_maxWaveForceMagIter;
+    }
 
-        int GetIterEnd()
-        {
-            return m_iterEnd;
-        }
+    NekDouble GetEigRelTol(void)
 
-        VWIIterationType GetVWIIterationType(void)
-        {
-            return m_VWIIterationType;
-        }
-        
-        int GetNOuterIterations(void)
-        {
-            return m_nOuterIterations;
-        }
+    {
+        return m_eigRelTol;
+    }
 
-        int GetMaxOuterIterations(void)
-        {
-            return m_maxOuterIterations;
-        }
+    int GetMinInnerIterations(void)
+    {
+        return m_minInnerIterations;
+    }
 
-        NekDouble GetAlpha(void)
-        {
-            return m_alpha[0];
-        }
-            
+    NekDouble GetPrevAlpha(void)
+    {
+        return m_prevAlpha;
+    }
 
-        NekDouble GetAlphaStep(void)
-        {
-            return m_alphaStep;
-        }
+    void SetAlpha(NekDouble alpha)
+    {
+        m_alpha[0] = alpha;
+    }
 
-        NekDouble GetWaveForceMag(void)
-        {
-            return m_waveForceMag[0];
-        }
+    void SetWaveForceMag(NekDouble mag)
+    {
+        m_waveForceMag[0] = mag;
+    }
 
-        NekDouble GetWaveForceMagStep(void)
-        {
-            return m_waveForceMagStep;
-        }
+    void SetEigRelTol(NekDouble tol)
+    {
+        m_eigRelTol = tol;
+    }
 
-        NekDouble GetDAlphaDWaveForceMag(void)
-        {
-            return m_dAlphaDWaveForceMag; 
-        }
+    void SetAlphaStep(NekDouble step)
+    {
+        m_alphaStep = step;
+    }
 
-        int GetMaxWaveForceMagIter(void)
-        {
-            return m_maxWaveForceMagIter;
-        }
-        
-        
-	NekDouble GetEigRelTol(void)
-            
-	{
-            return m_eigRelTol;
-	}
-	
-	int GetMinInnerIterations(void)
-	{
-            return  m_minInnerIterations;
-	}
+    void SetMinInnerIterations(int niter)
+    {
+        m_minInnerIterations = niter;
+    }
 
-        NekDouble GetPrevAlpha(void)
-        {
-            return m_prevAlpha;
-        }
+    void SetPrevAlpha(NekDouble alpha)
+    {
+        m_prevAlpha = alpha;
+    }
 
-        void SetAlpha(NekDouble alpha)
-        {
-            m_alpha[0] = alpha; 
-        }
+    bool IfIterInterface(void)
+    {
+        return m_iterinterface;
+    }
 
+    Array<OneD, int> GetReflectionIndex(void);
 
-        void SetWaveForceMag(NekDouble mag)
-        {
-            m_waveForceMag[0] = mag; 
-        }
+    void FileRelaxation(int reg);
 
-	void SetEigRelTol(NekDouble tol)
-	{
-	    m_eigRelTol = tol;
-	}
+protected:
+private:
+    int m_iterStart; // Start iterations of inner loop
+    int m_iterEnd;   // End iterations of inner loop
 
-        void  SetAlphaStep(NekDouble step)
-        {
-	    m_alphaStep = step;
-        }
+    int m_nOuterIterations;
+    int m_maxOuterIterations; // Maximum number of outer iterations
+    int m_minInnerIterations; // Minimum number of iterations in inner loop -
+                              // based on relaxation factor
+    int m_maxWaveForceMagIter;
 
-	void  SetMinInnerIterations(int niter)
-	{
-	  m_minInnerIterations = niter;
-	}
+    bool m_deltaFcnApprox; // Activate delta function approximation around wave
+    bool m_useLinfPressureNorm; // Activate if use Pressure Linf Normalisation
 
-        void SetPrevAlpha(NekDouble alpha)
-        {
-            m_prevAlpha = alpha; 
-        }
+    bool m_moveMeshToCriticalLayer; // move mesh to critical layer
 
-        bool IfIterInterface(void)
-        {
-            return m_iterinterface;
-        }
+    NekDouble m_deltaFcnDecay; // Delta function decay level
 
-        Array<OneD, int> GetReflectionIndex(void);
+    Array<OneD, NekDouble> m_waveForceMag;
+    NekDouble m_waveForceMagStep;
 
-        void FileRelaxation( int reg);
+    NekDouble m_rollForceScale;
 
-    protected:
+    Array<OneD, NekDouble> m_leading_real_evl; /// < Leading real eigenvalue
+    Array<OneD, NekDouble>
+        m_leading_imag_evl; /// < Leading imaginary eigenvalue
 
-    private:
-        int m_iterStart; // Start iterations of inner loop
-        int m_iterEnd;   // End iterations of inner loop
-        
-        int m_nOuterIterations; 
-        int m_maxOuterIterations; // Maximum number of outer iterations        
-        int m_minInnerIterations; // Minimum number of iterations in inner loop - based on relaxation factor
-        int m_maxWaveForceMagIter; 
+    Array<OneD, NekDouble> m_alpha;
 
-        bool m_deltaFcnApprox;  // Activate delta function approximation around wave 
-        bool m_useLinfPressureNorm; // Activate if use Pressure Linf Normalisation
+    NekDouble m_alphaStep;
+    NekDouble m_neutralPointTol;
+    NekDouble m_eigRelTol;
+    NekDouble m_vwiRelaxation;
+    NekDouble m_dAlphaDWaveForceMag;
+    NekDouble m_prevAlpha;
 
-        bool m_moveMeshToCriticalLayer; // move mesh to critical layer 
+    bool m_iterinterface;
 
-        NekDouble m_deltaFcnDecay;   // Delta function decay level 
+    VWIIterationType m_VWIIterationType;
 
-        Array<OneD, NekDouble>  m_waveForceMag;
-        NekDouble m_waveForceMagStep;
-        
-        NekDouble m_rollForceScale; 
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_waveVelocities;
+    MultiRegions::ExpListSharedPtr m_wavePressure;
 
-        Array<OneD, NekDouble> m_leading_real_evl;   /// < Leading real eigenvalue 
-        Array<OneD, NekDouble> m_leading_imag_evl;   /// < Leading imaginary eigenvalue
+    Array<OneD, Array<OneD, NekDouble>> m_vwiForcing;
+    SolverUtils::ForcingProgrammaticSharedPtr m_vwiForcingObj;
 
-        Array<OneD, NekDouble> m_alpha; 
+    Array<OneD, Array<OneD, NekDouble>> m_bcsForcing;
 
-        NekDouble m_alphaStep;
-        NekDouble m_neutralPointTol; 
-        NekDouble m_eigRelTol; 
-        NekDouble m_vwiRelaxation; 
-        NekDouble m_dAlphaDWaveForceMag;
-        NekDouble m_prevAlpha;
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_streakField;
 
-        bool m_iterinterface;
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_rollField;
 
-        VWIIterationType m_VWIIterationType;
+    std::string m_sessionName;
+    LibUtilities::SessionReaderSharedPtr m_sessionVWI;
 
-        Array<OneD, MultiRegions::ExpListSharedPtr> m_waveVelocities;
-        MultiRegions::ExpListSharedPtr              m_wavePressure;
-        
-        Array<OneD, Array<OneD, NekDouble > >  m_vwiForcing; 
-        SolverUtils::ForcingProgrammaticSharedPtr m_vwiForcingObj;
+    LibUtilities::SessionReaderSharedPtr m_sessionRoll;
+    SpatialDomains::MeshGraphSharedPtr m_graphRoll;
+    EquationSystemSharedPtr m_solverRoll;
 
-        Array<OneD, Array<OneD, NekDouble > >  m_bcsForcing;
-        
-        Array<OneD, MultiRegions::ExpListSharedPtr> m_streakField; 
-
-        Array<OneD, MultiRegions::ExpListSharedPtr> m_rollField; 
-        
-        std::string m_sessionName;
-        LibUtilities::SessionReaderSharedPtr m_sessionVWI; 
-
-        LibUtilities::SessionReaderSharedPtr m_sessionRoll;
-        SpatialDomains::MeshGraphSharedPtr m_graphRoll;
-        EquationSystemSharedPtr m_solverRoll;
-
-        LibUtilities::SessionReaderSharedPtr m_sessionStreak;
-        SpatialDomains::MeshGraphSharedPtr m_graphStreak;
-        LibUtilities::SessionReaderSharedPtr m_sessionWave;
-        SpatialDomains::MeshGraphSharedPtr m_graphWave;
-    };
-}
+    LibUtilities::SessionReaderSharedPtr m_sessionStreak;
+    SpatialDomains::MeshGraphSharedPtr m_graphStreak;
+    LibUtilities::SessionReaderSharedPtr m_sessionWave;
+    SpatialDomains::MeshGraphSharedPtr m_graphWave;
+};
+} // namespace Nektar
 
 #endif

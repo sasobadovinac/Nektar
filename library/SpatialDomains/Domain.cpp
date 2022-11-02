@@ -31,8 +31,8 @@
 //  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
-#include <string>
 #include <sstream>
+#include <string>
 
 #include <SpatialDomains/Domain.h>
 
@@ -45,187 +45,214 @@
 
 namespace Nektar
 {
-    namespace SpatialDomains
+namespace SpatialDomains
+{
+Domain::Domain(MeshGraph *meshGraph) : m_meshGraph(meshGraph)
+{
+}
+
+Domain::~Domain()
+{
+}
+
+void Domain::Read(std::string &infilename)
+{
+    SetFileName(infilename);
+    TiXmlDocument doc(infilename);
+    bool loadOkay = doc.LoadFile();
+
+    ASSERTL0(loadOkay,
+             (std::string("Unable to load file: ") + infilename).c_str());
+
+    Read(doc);
+}
+
+// \brief Read will read the meshgraph vertices given a TiXmlDocument.
+void Domain::Read(TiXmlDocument &doc)
+{
+    TiXmlElement *master =
+        NULL; // Master tag within which all data is contained.
+    TiXmlElement *domain   = NULL;
+    TiXmlElement *boundary = NULL;
+
+    master = doc.FirstChildElement("NEKTAR");
+    ASSERTL0(master, "Unable to find NEKTAR tag in file");
+
+    domain = master->FirstChildElement("DOMAIN");
+
+    ASSERTL0(domain, "Unable to find DOMAIN tag in file.");
+
+    TiXmlNode *node = domain->FirstChild();
+    std::string components(node->ValueStr());
+    std::istringstream domainStrm(components);
+    std::string entry;
+
+    // May have multiple composites defined.
+    if (domainStrm)
     {
-        Domain::Domain(MeshGraph *meshGraph):
-            m_meshGraph(meshGraph)
+        domainStrm >> entry;
+
+        if (entry.length())
         {
-        }
+            ASSERTL0(
+                entry[0] == 'C',
+                "Only composites are allowed in a definition of a domain.");
 
-        Domain::~Domain()
-        {
-        }
+            // Determine the index associated with the C.  Allow range syntax.
 
-         void Domain::Read(std::string &infilename)
-        {
-            SetFileName(infilename);
-            TiXmlDocument doc(infilename);
-            bool loadOkay = doc.LoadFile();
+            std::string::size_type indxBeg = entry.find_first_of('[') + 1;
+            std::string::size_type indxEnd = entry.find_last_of(']') - 1;
 
-            ASSERTL0(loadOkay, (std::string("Unable to load file: ") + infilename).c_str());
+            ASSERTL0(indxBeg <= indxEnd,
+                     (std::string("Error reading DOMAIN definition:") + entry)
+                         .c_str());
 
-            Read(doc);
-        }
+            std::string indxStr = entry.substr(indxBeg, indxEnd - indxBeg + 1);
 
-        // \brief Read will read the meshgraph vertices given a TiXmlDocument.
-        void Domain::Read(TiXmlDocument &doc)
-        {
-            TiXmlElement* master = NULL;    // Master tag within which all data is contained.
-            TiXmlElement* domain = NULL;
-            TiXmlElement* boundary = NULL;
-
-            master = doc.FirstChildElement("NEKTAR");
-            ASSERTL0(master, "Unable to find NEKTAR tag in file");
-
-            domain = master->FirstChildElement("DOMAIN");
-
-            ASSERTL0(domain, "Unable to find DOMAIN tag in file.");
-
-            TiXmlNode *node = domain->FirstChild();
-            std::string components(node->ValueStr());
-            std::istringstream domainStrm(components);
-            std::string entry;
-
-            // May have multiple composites defined.
-            if(domainStrm)
+            std::istringstream indexStrm(indxStr);
+            int indx1 = -1, indx2 = -1;
+            if (indexStrm)
             {
-                domainStrm >> entry;
+                // Should read either [a] where a is a nonnegative integer, or
+                // [a-b] where a and b are nonnegative integers, b>a.
+                // Easiest way to know is if a '-' is present we have the latter
+                // case.
 
-                if (entry.length())
+                indexStrm >> indx1;
+                ASSERTL0(
+                    indx1 >= 0,
+                    (std::string("Error reading collection range: ") + indxStr)
+                        .c_str());
+                indx2 = indx1;
+
+                std::string::size_type dashLoc = indxStr.find('-');
+                if (dashLoc != std::string::npos)
                 {
-                    ASSERTL0(entry[0] == 'C', "Only composites are allowed in a definition of a domain.");
+                    // Skip up to and including the '-' character, then read
+                    // the other index.  We are safe in doing this because we
+                    // already know it is there...somewhere.
+                    indexStrm.seekg(dashLoc + 1);
+                    indexStrm >> indx2;
 
-                    // Determine the index associated with the C.  Allow range syntax.
-
-                    std::string::size_type indxBeg = entry.find_first_of('[') + 1;
-                    std::string::size_type indxEnd = entry.find_last_of(']') - 1;
-
-                    ASSERTL0(indxBeg <= indxEnd, (std::string("Error reading DOMAIN definition:") + entry).c_str());
-
-                    std::string indxStr = entry.substr(indxBeg, indxEnd - indxBeg + 1);
-
-                    std::istringstream indexStrm(indxStr);
-                    int indx1=-1, indx2=-1;
-                    if (indexStrm)
-                    {
-                        // Should read either [a] where a is a nonnegative integer, or
-                        // [a-b] where a and b are nonnegative integers, b>a.
-                        // Easiest way to know is if a '-' is present we have the latter
-                        // case.
-
-                        indexStrm >> indx1;
-                        ASSERTL0(indx1 >= 0, (std::string("Error reading collection range: ") + indxStr).c_str());
-                        indx2 = indx1;
-
-                        std::string::size_type dashLoc=indxStr.find('-');
-                        if (dashLoc != std::string::npos)
-                        {
-                            // Skip up to and including the '-' character, then read
-                            // the other index.  We are safe in doing this because we
-                            // already know it is there...somewhere.
-                            indexStrm.seekg(dashLoc+1);
-                            indexStrm >> indx2;
-
-                            ASSERTL0(indx1 < indx2 && indx2 >= 0,
-                                (std::string("Error reading collection range: ") + indxStr).c_str());
-                        }
-
-                        for (int i=indx1; i<=indx2; ++i)
-                        {
-                            Composite composite = m_meshGraph->GetComposite(i);
-                            m_domain.push_back(composite);
-                        }
-                    }
-                }
-            }
-
-            boundary = master->FirstChildElement("BOUNDARY");
-            ASSERTL0(boundary, "Unable to find BOUNDARY tag in file.");
-
-            TiXmlElement *bc = boundary->FirstChildElement();
-
-            // Boundary will have type and composite list.
-            while(bc)
-            {
-                std::string bcType(bc->ValueStr());
-
-                TiXmlNode *node = bc->FirstChild();
-                std::string components(node->ValueStr());
-                std::istringstream boundaryStrm(components);
-                std::string entry;
-
-                // Index of the tag letter into the type enum.
-                const char *beginName = BoundaryTypeNameMap;
-                // std::find needs the end to be one past the last element.
-                const char *endName = BoundaryTypeNameMap+eBoundaryTypeLastElement + 1;
-                const char* indx = std::find(beginName, endName, bcType[0]);
-
-                // Not found if the index (ptr) is past the last element.
-                ASSERTL0(indx != endName, (std::string("Unable to read boundary type tag: ") + bcType).c_str());
-
-                BoundarySharedPtr boundary(new BoundaryEntry);
-                boundary->m_BoundaryType = BoundaryType(indx - BoundaryTypeNameMap);
-                m_boundaries.push_back(boundary);
-
-                // May have multiple composites defined.
-                if(boundaryStrm)
-                {
-                    domainStrm >> entry;
-
-                    if (entry.length())
-                    {
-                        ASSERTL0(entry[0] == 'C', "Only composites are allowed in a definition of a boundary condition.");
-
-                        // Determine the index associated with the C.  Allow range syntax.
-
-                        std::string::size_type indxBeg = entry.find_first_of('[') + 1;
-                        std::string::size_type indxEnd = entry.find_last_of(']') - 1;
-
-                        ASSERTL0(indxBeg <= indxEnd, (std::string("Error reading BOUNDARY definition:") + entry).c_str());
-
-                        // Read between the brackets.
-                        std::string indxStr = entry.substr(indxBeg, indxEnd - indxBeg + 1);
-
-                        std::istringstream indexStrm(indxStr);
-                        int indx1=-1, indx2=-1;
-                        if(indexStrm)
-                        {
-                            // Should read either [a] where a is a nonnegative integer, or
-                            // [a-b] where a and b are nonnegative integers, b>a.
-                            // Easiest way to know is if a '-' is present we have the latter
-                            // case.
-
-                            indexStrm >> indx1;
-                            ASSERTL0(indx1 >= 0, (std::string("Error reading collection range: ") + indxStr).c_str());
-
-                            std::string::size_type dashLoc=indxStr.find('-');
-                            if (dashLoc != std::string::npos)
-                            {
-                                // Skip up to and including the '-' character, then read
-                                // the other index.  We are safe in doing this because we
-                                // already know it is there...somewhere.
-                                while(indexStrm.get() != '-');
-                                indexStrm >> indx2;
-
-                                ASSERTL0(indx1 < indx2 && indx2 >= 0,
-                                    (std::string("Error reading collection range: ") + indxStr).c_str());
-                            }
-
-                            for (int i=indx1; i<=indx2; ++i)
-                            {
-                                Composite composite = m_meshGraph->GetComposite(i);
-                                boundary->m_BoundaryComposites.push_back(composite);
-                            }
-                        }
-                    }
+                    ASSERTL0(indx1 < indx2 && indx2 >= 0,
+                             (std::string("Error reading collection range: ") +
+                              indxStr)
+                                 .c_str());
                 }
 
-                bc = bc->NextSiblingElement();
+                for (int i = indx1; i <= indx2; ++i)
+                {
+                    Composite composite = m_meshGraph->GetComposite(i);
+                    m_domain.push_back(composite);
+                }
             }
-        }
-
-        void Domain::Write(std::string &outfilename)
-        {
         }
     }
-};
+
+    boundary = master->FirstChildElement("BOUNDARY");
+    ASSERTL0(boundary, "Unable to find BOUNDARY tag in file.");
+
+    TiXmlElement *bc = boundary->FirstChildElement();
+
+    // Boundary will have type and composite list.
+    while (bc)
+    {
+        std::string bcType(bc->ValueStr());
+
+        TiXmlNode *node = bc->FirstChild();
+        std::string components(node->ValueStr());
+        std::istringstream boundaryStrm(components);
+        std::string entry;
+
+        // Index of the tag letter into the type enum.
+        const char *beginName = BoundaryTypeNameMap;
+        // std::find needs the end to be one past the last element.
+        const char *endName =
+            BoundaryTypeNameMap + eBoundaryTypeLastElement + 1;
+        const char *indx = std::find(beginName, endName, bcType[0]);
+
+        // Not found if the index (ptr) is past the last element.
+        ASSERTL0(indx != endName,
+                 (std::string("Unable to read boundary type tag: ") + bcType)
+                     .c_str());
+
+        BoundarySharedPtr boundary(new BoundaryEntry);
+        boundary->m_BoundaryType = BoundaryType(indx - BoundaryTypeNameMap);
+        m_boundaries.push_back(boundary);
+
+        // May have multiple composites defined.
+        if (boundaryStrm)
+        {
+            domainStrm >> entry;
+
+            if (entry.length())
+            {
+                ASSERTL0(entry[0] == 'C',
+                         "Only composites are allowed in a definition of a "
+                         "boundary condition.");
+
+                // Determine the index associated with the C.  Allow range
+                // syntax.
+
+                std::string::size_type indxBeg = entry.find_first_of('[') + 1;
+                std::string::size_type indxEnd = entry.find_last_of(']') - 1;
+
+                ASSERTL0(
+                    indxBeg <= indxEnd,
+                    (std::string("Error reading BOUNDARY definition:") + entry)
+                        .c_str());
+
+                // Read between the brackets.
+                std::string indxStr =
+                    entry.substr(indxBeg, indxEnd - indxBeg + 1);
+
+                std::istringstream indexStrm(indxStr);
+                int indx1 = -1, indx2 = -1;
+                if (indexStrm)
+                {
+                    // Should read either [a] where a is a nonnegative integer,
+                    // or [a-b] where a and b are nonnegative integers, b>a.
+                    // Easiest way to know is if a '-' is present we have the
+                    // latter case.
+
+                    indexStrm >> indx1;
+                    ASSERTL0(indx1 >= 0,
+                             (std::string("Error reading collection range: ") +
+                              indxStr)
+                                 .c_str());
+
+                    std::string::size_type dashLoc = indxStr.find('-');
+                    if (dashLoc != std::string::npos)
+                    {
+                        // Skip up to and including the '-' character, then read
+                        // the other index.  We are safe in doing this because
+                        // we already know it is there...somewhere.
+                        while (indexStrm.get() != '-')
+                            ;
+                        indexStrm >> indx2;
+
+                        ASSERTL0(
+                            indx1 < indx2 && indx2 >= 0,
+                            (std::string("Error reading collection range: ") +
+                             indxStr)
+                                .c_str());
+                    }
+
+                    for (int i = indx1; i <= indx2; ++i)
+                    {
+                        Composite composite = m_meshGraph->GetComposite(i);
+                        boundary->m_BoundaryComposites.push_back(composite);
+                    }
+                }
+            }
+        }
+
+        bc = bc->NextSiblingElement();
+    }
+}
+
+void Domain::Write(std::string &outfilename)
+{
+}
+} // namespace SpatialDomains
+}; // namespace Nektar

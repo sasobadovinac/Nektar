@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: CADObj.h
+//  File: CADObject.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -36,8 +36,8 @@
 #define NEKMESH_CADSYSTEM_CADOBJ
 
 #include <LibUtilities/Memory/NekMemoryManager.hpp>
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/Module/Log.hpp>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -157,7 +157,7 @@ protected:
 };
 
 typedef std::shared_ptr<CADObject> CADObjectSharedPtr;
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

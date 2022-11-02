@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: CADCurve.h
+//  File: CADCurveOCE.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -84,7 +84,7 @@ private:
     /// store the parametric bounds of the curve
     Array<OneD, NekDouble> m_b;
 };
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

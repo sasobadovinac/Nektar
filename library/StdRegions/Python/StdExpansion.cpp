@@ -39,8 +39,7 @@ using namespace Nektar;
 using namespace Nektar::StdRegions;
 
 Array<OneD, NekDouble> StdExpansion_FwdTrans(
-    StdExpansionSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+    StdExpansionSharedPtr exp, const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetNcoeffs());
     exp->FwdTrans(in, out);
@@ -48,8 +47,7 @@ Array<OneD, NekDouble> StdExpansion_FwdTrans(
 }
 
 Array<OneD, NekDouble> StdExpansion_BwdTrans(
-    StdExpansionSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+    StdExpansionSharedPtr exp, const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetTotPoints());
     exp->BwdTrans(in, out);
@@ -57,8 +55,7 @@ Array<OneD, NekDouble> StdExpansion_BwdTrans(
 }
 
 Array<OneD, NekDouble> StdExpansion_IProductWRTBase(
-    StdExpansionSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+    StdExpansionSharedPtr exp, const Array<OneD, const NekDouble> &in)
 {
     Array<OneD, NekDouble> out(exp->GetNcoeffs());
     exp->IProductWRTBase(in, out);
@@ -66,34 +63,31 @@ Array<OneD, NekDouble> StdExpansion_IProductWRTBase(
 }
 
 NekDouble StdExpansion_PhysEvaluate(
-    StdExpansionSharedPtr exp,
-    const Array<OneD, const NekDouble> &coords,
+    StdExpansionSharedPtr exp, const Array<OneD, const NekDouble> &coords,
     const Array<OneD, const NekDouble> &physvals)
 {
     return exp->PhysEvaluate(coords, physvals);
 }
 
-NekDouble StdExpansion_L2(
-    StdExpansionSharedPtr exp,
-    const Array<OneD, const NekDouble> &in)
+NekDouble StdExpansion_L2(StdExpansionSharedPtr exp,
+                          const Array<OneD, const NekDouble> &in)
 {
     return exp->L2(in);
 }
 
-NekDouble StdExpansion_L2_Error(
-    StdExpansionSharedPtr exp,
-    const Array<OneD, const NekDouble> &in,
-    const Array<OneD, const NekDouble> &err)
+NekDouble StdExpansion_L2_Error(StdExpansionSharedPtr exp,
+                                const Array<OneD, const NekDouble> &in,
+                                const Array<OneD, const NekDouble> &err)
 {
     return exp->L2(in, err);
 }
 
 py::tuple StdExpansion_GetCoords(StdExpansionSharedPtr exp)
 {
-    int nPhys = exp->GetTotPoints();
+    int nPhys   = exp->GetTotPoints();
     int coordim = exp->GetCoordim();
 
-    std::vector<Array<OneD, NekDouble> > coords(coordim);
+    std::vector<Array<OneD, NekDouble>> coords(coordim);
     for (int i = 0; i < coordim; ++i)
     {
         coords[i] = Array<OneD, NekDouble>(nPhys);
@@ -121,10 +115,10 @@ py::tuple StdExpansion_GetCoords(StdExpansionSharedPtr exp)
 py::tuple StdExpansion_PhysDeriv(StdExpansionSharedPtr exp,
                                  const Array<OneD, const NekDouble> &inarray)
 {
-    int nPhys = exp->GetTotPoints();
+    int nPhys   = exp->GetTotPoints();
     int coordim = exp->GetCoordim();
 
-    std::vector<Array<OneD, NekDouble> > derivs(coordim);
+    std::vector<Array<OneD, NekDouble>> derivs(coordim);
     for (int i = 0; i < coordim; ++i)
     {
         derivs[i] = Array<OneD, NekDouble>(nPhys);
@@ -151,10 +145,8 @@ py::tuple StdExpansion_PhysDeriv(StdExpansionSharedPtr exp,
 
 void export_StdExpansion()
 {
-    py::class_<StdExpansion,
-               std::shared_ptr<StdExpansion>,
-               boost::noncopyable>(
-                   "StdExpansion", py::no_init)
+    py::class_<StdExpansion, std::shared_ptr<StdExpansion>, boost::noncopyable>(
+        "StdExpansion", py::no_init)
 
         .def("GetNcoeffs", &StdExpansion::GetNcoeffs)
         .def("GetTotPoints", &StdExpansion::GetTotPoints)
@@ -182,6 +174,5 @@ void export_StdExpansion()
 
         .def("GetCoords", &StdExpansion_GetCoords)
 
-        .def("PhysDeriv", &StdExpansion_PhysDeriv)
-        ;
+        .def("PhysDeriv", &StdExpansion_PhysDeriv);
 }

@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <boost/iostreams/filter/gzip.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 #include "Module.h"
 
@@ -48,7 +48,7 @@ namespace NekMesh
 /**
  * Returns an instance of the module factory, held as a singleton.
  */
-ModuleFactory& GetModuleFactory()
+ModuleFactory &GetModuleFactory()
 {
     static ModuleFactory instance;
     return instance;
@@ -57,7 +57,7 @@ ModuleFactory& GetModuleFactory()
 /**
  * Prints a given module key to a stream.
  */
-std::ostream& operator<<(std::ostream& os, const ModuleKey& rhs)
+std::ostream &operator<<(std::ostream &os, const ModuleKey &rhs)
 {
     return os << ModuleTypeMap[rhs.first] << ": " << rhs.second;
 }
@@ -152,7 +152,7 @@ void Module::ProcessVertices()
     {
         for (int j = 0; j < elmt[i]->GetVertexCount(); ++j)
         {
-            pair<NodeSet::iterator,bool> testIns =
+            pair<NodeSet::iterator, bool> testIns =
                 m_mesh->m_vertexSet.insert(elmt[i]->GetVertex(j));
 
             if (testIns.second)
@@ -161,7 +161,7 @@ void Module::ProcessVertices()
             }
             else
             {
-                elmt[i]->SetVertex(j,*testIns.first);
+                elmt[i]->SetVertex(j, *testIns.first);
             }
         }
     }
@@ -184,9 +184,10 @@ void Module::ProcessVertices()
  */
 void Module::ProcessEdges(bool ReprocessEdges)
 {
-    if (m_mesh->m_expDim < 2) return;
+    if (m_mesh->m_expDim < 2)
+        return;
 
-    if(ReprocessEdges)
+    if (ReprocessEdges)
     {
         vector<ElementSharedPtr> &elmt = m_mesh->m_element[m_mesh->m_expDim];
 
@@ -199,16 +200,16 @@ void Module::ProcessEdges(bool ReprocessEdges)
         {
             for (int j = 0; j < elmt[i]->GetEdgeCount(); ++j)
             {
-                pair<EdgeSet::iterator,bool> testIns;
+                pair<EdgeSet::iterator, bool> testIns;
                 EdgeSharedPtr ed = elmt[i]->GetEdge(j);
-                testIns = m_mesh->m_edgeSet.insert(ed);
+                testIns          = m_mesh->m_edgeSet.insert(ed);
 
                 if (testIns.second)
                 {
                     EdgeSharedPtr ed2 = *testIns.first;
-                    ed2->m_id = eid++;
+                    ed2->m_id         = eid++;
                     ed2->m_elLink.push_back(
-                        pair<ElementSharedPtr,int>(elmt[i],j));
+                        pair<ElementSharedPtr, int>(elmt[i], j));
                 }
                 else
                 {
@@ -235,7 +236,7 @@ void Module::ProcessEdges(bool ReprocessEdges)
 
                     // Update edge to element map.
                     e2->m_elLink.push_back(
-                        pair<ElementSharedPtr,int>(elmt[i],j));
+                        pair<ElementSharedPtr, int>(elmt[i], j));
                 }
             }
         }
@@ -245,8 +246,8 @@ void Module::ProcessEdges(bool ReprocessEdges)
     for (int i = 0; i < m_mesh->m_element[1].size(); ++i)
     {
         ElementSharedPtr elmt = m_mesh->m_element[1][i];
-        NodeSharedPtr v0 = elmt->GetVertex(0);
-        NodeSharedPtr v1 = elmt->GetVertex(1);
+        NodeSharedPtr v0      = elmt->GetVertex(0);
+        NodeSharedPtr v1      = elmt->GetVertex(1);
         vector<NodeSharedPtr> edgeNodes;
         EdgeSharedPtr E = std::shared_ptr<Edge>(
             new Edge(v0, v1, edgeNodes, elmt->GetConf().m_edgeCurveType));
@@ -287,7 +288,6 @@ void Module::ProcessEdges(bool ReprocessEdges)
     }
 }
 
-
 /**
  * @brief Create a unique set of mesh faces from elements stored in
  * Mesh::element.
@@ -305,9 +305,10 @@ void Module::ProcessEdges(bool ReprocessEdges)
  */
 void Module::ProcessFaces(bool ReprocessFaces)
 {
-    if (m_mesh->m_expDim < 3) return;
+    if (m_mesh->m_expDim < 3)
+        return;
 
-    if(ReprocessFaces)
+    if (ReprocessFaces)
     {
         vector<ElementSharedPtr> &elmt = m_mesh->m_element[m_mesh->m_expDim];
 
@@ -318,47 +319,52 @@ void Module::ProcessFaces(bool ReprocessFaces)
         {
             for (int j = 0; j < elmt[i]->GetFaceCount(); ++j)
             {
-                pair<FaceSet::iterator,bool> testIns;
+                pair<FaceSet::iterator, bool> testIns;
                 testIns = m_mesh->m_faceSet.insert(elmt[i]->GetFace(j));
 
                 if (testIns.second)
                 {
                     (*(testIns.first))->m_id = fid++;
                     // Update face to element map.
-                    (*(testIns.first))->m_elLink.push_back(
-                        pair<ElementSharedPtr,int>(elmt[i],j));
+                    (*(testIns.first))
+                        ->m_elLink.push_back(
+                            pair<ElementSharedPtr, int>(elmt[i], j));
                 }
                 else
                 {
-                    elmt[i]->SetFace(j,*testIns.first);
+                    elmt[i]->SetFace(j, *testIns.first);
                     // Update face to element map.
-                    (*(testIns.first))->m_elLink.push_back(
-                        pair<ElementSharedPtr,int>(elmt[i],j));
+                    (*(testIns.first))
+                        ->m_elLink.push_back(
+                            pair<ElementSharedPtr, int>(elmt[i], j));
                 }
             }
         }
     }
 
-    // m_mesh->m_faceSet : list of faces 
+    // m_mesh->m_faceSet : list of faces
     // m_mesh->m_element[2] : boundary elements
     // Create links for 2D elements
     for (int i = 0; i < m_mesh->m_element[2].size(); ++i)
     {
-        ElementSharedPtr elmt = m_mesh->m_element[2][i];
+        ElementSharedPtr elmt          = m_mesh->m_element[2][i];
         vector<NodeSharedPtr> vertices = elmt->GetVertexList();
         vector<NodeSharedPtr> faceNodes;
         vector<EdgeSharedPtr> edgeList = elmt->GetEdgeList();
-        FaceSharedPtr F = std::shared_ptr<Face>(
-            new Face(vertices, faceNodes, edgeList,
-                     elmt->GetConf().m_faceCurveType));
+        FaceSharedPtr F                = std::shared_ptr<Face>(new Face(
+            vertices, faceNodes, edgeList, elmt->GetConf().m_faceCurveType));
 
         FaceSet::iterator it = m_mesh->m_faceSet.find(F);
-        //No face on elements found
+        // No face on elements found
         if (it == m_mesh->m_faceSet.end())
         {
-            m_log(VERBOSE) << "Cannot find corresponding element face for 2D element " << i << endl; 
-            m_log(VERBOSE) << "This element has " << elmt -> GetVertexList().size() << " vertex" << endl;
-            m_log(VERBOSE) << "This element has " << elmt -> GetEdgeList().size() << " edges" << endl;
+            m_log(VERBOSE)
+                << "Cannot find corresponding element face for 2D element " << i
+                << endl;
+            m_log(VERBOSE) << "This element has "
+                           << elmt->GetVertexList().size() << " vertex" << endl;
+            m_log(VERBOSE) << "This element has " << elmt->GetEdgeList().size()
+                           << " edges" << endl;
             break;
         }
 
@@ -371,13 +377,13 @@ void Module::ProcessFaces(bool ReprocessFaces)
             elmt->SetEdge(j, (*it)->m_edgeList[j], false);
         }
 
-        EdgeSet tmp(edgeList.begin(),edgeList.end());
+        EdgeSet tmp(edgeList.begin(), edgeList.end());
 
         for (int j = 0; j < elmt->GetEdgeCount(); ++j)
         {
-            EdgeSharedPtr e = elmt->GetEdge(j);
+            EdgeSharedPtr e     = elmt->GetEdge(j);
             EdgeSet::iterator f = tmp.find(e);
-            if(f != tmp.end())
+            if (f != tmp.end())
             {
                 if ((*f)->m_parentCAD)
                 {
@@ -448,19 +454,19 @@ void Module::ProcessComposites()
 
             if (it == m_mesh->m_composite.end())
             {
-                CompositeSharedPtr tmp = std::shared_ptr<Composite>(
-                                                    new Composite());
+                CompositeSharedPtr tmp =
+                    std::shared_ptr<Composite>(new Composite());
                 pair<CompositeMap::iterator, bool> testIns;
                 tmp->m_id  = tagid;
                 tmp->m_tag = elmt[i]->GetTag();
-                if(m_mesh->m_faceLabels.count(tmp->m_id) != 0)
+                if (m_mesh->m_faceLabels.count(tmp->m_id) != 0)
                 {
-                    tmp->m_label =  m_mesh->m_faceLabels[tmp->m_id];
+                    tmp->m_label = m_mesh->m_faceLabels[tmp->m_id];
                 }
 
-                testIns  = m_mesh->m_composite.insert(
-                    pair<unsigned int, CompositeSharedPtr>(tagid,tmp));
-                it       = testIns.first;
+                testIns = m_mesh->m_composite.insert(
+                    pair<unsigned int, CompositeSharedPtr>(tagid, tmp));
+                it = testIns.first;
             }
 
             if (elmt[i]->GetTag() != it->second->m_tag)
@@ -478,20 +484,21 @@ void Module::ProcessComposites()
 }
 
 /**
- * clear all element link information from mesh entities to be able to reprocess new mesh
+ * clear all element link information from mesh entities to be able to reprocess
+ * new mesh
  */
 void Module::ClearElementLinks()
 {
     EdgeSet::iterator eit;
 
-    for(eit = m_mesh->m_edgeSet.begin(); eit != m_mesh->m_edgeSet.end(); eit++)
+    for (eit = m_mesh->m_edgeSet.begin(); eit != m_mesh->m_edgeSet.end(); eit++)
     {
         (*eit)->m_elLink.clear();
     }
 
     FaceSet::iterator fit;
 
-    for(fit = m_mesh->m_faceSet.begin(); fit != m_mesh->m_faceSet.end(); fit++)
+    for (fit = m_mesh->m_faceSet.begin(); fit != m_mesh->m_faceSet.end(); fit++)
     {
         (*fit)->m_elLink.clear();
     }
@@ -533,8 +540,8 @@ void Module::ReorderPrisms(PerMap &perFaces)
         return;
     }
 
-    map<int, int>    lines;
-    set<int>         prismsDone, tetsDone;
+    map<int, int> lines;
+    set<int> prismsDone, tetsDone;
     PerMap::iterator pIt;
 
     // Compile list of prisms and tets.
@@ -554,14 +561,15 @@ void Module::ReorderPrisms(PerMap &perFaces)
 
     // Destroy existing node numbering.
     NodeSet::iterator it;
-    for (it = m_mesh->m_vertexSet.begin(); it != m_mesh->m_vertexSet.end(); ++it)
+    for (it = m_mesh->m_vertexSet.begin(); it != m_mesh->m_vertexSet.end();
+         ++it)
     {
         (*it)->m_id = -1;
     }
 
     // Counter for new node IDs.
-    int nodeId = 0;
-    int prismTris[2][3] = {{0,1,4}, {3,2,5}};
+    int nodeId          = 0;
+    int prismTris[2][3] = {{0, 1, 4}, {3, 2, 5}};
 
     // Warning flag for high-order curvature information.
     bool warnCurvature = false;
@@ -585,14 +593,12 @@ void Module::ReorderPrisms(PerMap &perFaces)
         for (i = 0; i < line.size(); ++i)
         {
             // Copy tags and nodes from existing element.
-            vector<int>           tags  = line[i]->GetTagList();
+            vector<int> tags            = line[i]->GetTagList();
             vector<NodeSharedPtr> nodes = line[i]->GetVertexList();
 
             // See if either face of this prism has been renumbered
             // already.
-            FaceSharedPtr f[2] = {
-                line[i]->GetFace(1), line[i]->GetFace(3)
-            };
+            FaceSharedPtr f[2] = {line[i]->GetFace(1), line[i]->GetFace(3)};
 
             fIt[0] = facesDone.find(f[0]->m_id);
             fIt[1] = facesDone.find(f[1]->m_id);
@@ -610,22 +616,19 @@ void Module::ReorderPrisms(PerMap &perFaces)
 
                 fIt2 = facesDone.find(pIt->second.first->m_id);
 
-                if (fIt[j] == facesDone.end() &&
-                    fIt2   != facesDone.end())
+                if (fIt[j] == facesDone.end() && fIt2 != facesDone.end())
                 {
                     fIt[j] = fIt2;
                 }
             }
 
-            if (fIt[0] != facesDone.end() &&
-                fIt[1] != facesDone.end())
+            if (fIt[0] != facesDone.end() && fIt[1] != facesDone.end())
             {
                 // Should not be the case that both faces have already
                 // been renumbered.
                 ASSERTL0(false, "Renumbering error!");
             }
-            else if (fIt[0] == facesDone.end() &&
-                     fIt[1] == facesDone.end())
+            else if (fIt[0] == facesDone.end() && fIt[1] == facesDone.end())
             {
                 // Renumber both faces.
                 for (j = 0; j < 2; ++j)
@@ -648,18 +651,16 @@ void Module::ReorderPrisms(PerMap &perFaces)
                 // Renumber face. t identifies the face not yet
                 // numbered, o identifies the other face.
                 int t = fIt[0] == facesDone.end() ? 0 : 1;
-                int o = (t+1) % 2;
-                ASSERTL1(fIt[o] != facesDone.end(),"Renumbering error");
+                int o = (t + 1) % 2;
+                ASSERTL1(fIt[o] != facesDone.end(), "Renumbering error");
 
                 // Determine which of the three vertices on the 'other'
                 // face corresponds to the highest ID - this signifies
                 // the singular point of the line of prisms.
-                int tmp1[3] = {
-                    nodes[prismTris[o][0]]->m_id,
-                    nodes[prismTris[o][1]]->m_id,
-                    nodes[prismTris[o][2]]->m_id
-                };
-                int tmp2[3] = {0,1,2};
+                int tmp1[3] = {nodes[prismTris[o][0]]->m_id,
+                               nodes[prismTris[o][1]]->m_id,
+                               nodes[prismTris[o][2]]->m_id};
+                int tmp2[3] = {0, 1, 2};
 
                 if (tmp1[0] > tmp1[1])
                 {
@@ -751,10 +752,10 @@ void Module::ReorderPrisms(PerMap &perFaces)
     // Loop over periodic faces, enumerate vertices.
     for (pIt = perFaces.begin(); pIt != perFaces.end(); ++pIt)
     {
-        FaceSharedPtr f2       = pIt->second.first;
-        FaceSharedPtr f1       = perFaces[f2->m_id].first;
-        vector<int>   perVerts = pIt->second.second;
-        int           nVerts   = perVerts.size();
+        FaceSharedPtr f2     = pIt->second.first;
+        FaceSharedPtr f1     = perFaces[f2->m_id].first;
+        vector<int> perVerts = pIt->second.second;
+        int nVerts           = perVerts.size();
 
         // Number periodic vertices first.
         for (j = 0; j < nVerts; ++j)
@@ -782,9 +783,9 @@ void Module::ReorderPrisms(PerMap &perFaces)
     set<int>::iterator it2;
     for (it2 = tetsDone.begin(); it2 != tetsDone.end(); ++it2)
     {
-        ElementSharedPtr el = m_mesh->m_element[3][*it2];
+        ElementSharedPtr el         = m_mesh->m_element[3][*it2];
         vector<NodeSharedPtr> nodes = el->GetVertexList();
-        vector<int> tags = el->GetTagList();
+        vector<int> tags            = el->GetTagList();
 
         for (i = 0; i < 4; ++i)
         {
@@ -801,7 +802,8 @@ void Module::ReorderPrisms(PerMap &perFaces)
     }
 
     // Enumerate rest of vertices.
-    for (it = m_mesh->m_vertexSet.begin(); it != m_mesh->m_vertexSet.end(); ++it)
+    for (it = m_mesh->m_vertexSet.begin(); it != m_mesh->m_vertexSet.end();
+         ++it)
     {
         if ((*it)->m_id == -1)
         {
@@ -809,19 +811,17 @@ void Module::ReorderPrisms(PerMap &perFaces)
         }
     }
 
-    ProcessEdges   ();
-    ProcessFaces   ();
+    ProcessEdges();
+    ProcessFaces();
     ProcessElements();
 }
 
-void Module::PrismLines(int                       prism,
-                        PerMap                   &perFaces,
-                        set<int>                 &prismsDone,
+void Module::PrismLines(int prism, PerMap &perFaces, set<int> &prismsDone,
                         vector<ElementSharedPtr> &line)
 {
-    int                i;
+    int i;
     set<int>::iterator it = prismsDone.find(prism);
-    PerMap::iterator   it2;
+    PerMap::iterator it2;
 
     if (it == prismsDone.end())
     {
@@ -887,7 +887,7 @@ void Module::RegisterConfig(string key, string val)
     }
     else
     {
-        if(val.size() == 0)
+        if (val.size() == 0)
         {
             it->second.value = it->second.defValue;
         }
@@ -913,8 +913,7 @@ void Module::PrintConfig()
 
     for (it = m_config.begin(); it != m_config.end(); ++it)
     {
-        m_log << setw(10) << it->first << ": " << it->second.desc
-              << endl;
+        m_log << setw(10) << it->first << ": " << it->second.desc << endl;
     }
 }
 
@@ -949,11 +948,11 @@ void InputModule::PrintSummary()
                    << endl;
     m_log(VERBOSE) << " - No. of nodes             : "
                    << m_mesh->m_vertexSet.size() << endl;
-    m_log(VERBOSE) << " - No. of " << m_mesh->m_expDim << "D elements       : "
-                   << m_mesh->GetNumElements() << endl;
+    m_log(VERBOSE) << " - No. of " << m_mesh->m_expDim
+                   << "D elements       : " << m_mesh->GetNumElements() << endl;
     m_log(VERBOSE) << " - No. of boundary elements : "
                    << m_mesh->GetNumBndryElements() << endl;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

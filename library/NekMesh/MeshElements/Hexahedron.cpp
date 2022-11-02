@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/HexGeom.h>
 #include <NekMesh/MeshElements/Hexahedron.h>
+#include <SpatialDomains/HexGeom.h>
 
 #include <LibUtilities/Foundations/ManagerAccess.h>
 
@@ -49,13 +49,10 @@ LibUtilities::ShapeType Hexahedron::m_type =
         LibUtilities::eHexahedron, Hexahedron::create, "Hexahedron");
 
 /// Vertex IDs that make up hexahedron faces.
-int Hexahedron::m_faceIds[6][4] = {
-    {0, 1, 2, 3}, {0, 1, 5, 4}, {1, 2, 6, 5},
-    {3, 2, 6, 7}, {0, 3, 7, 4}, {4, 5, 6, 7}
-};
+int Hexahedron::m_faceIds[6][4] = {{0, 1, 2, 3}, {0, 1, 5, 4}, {1, 2, 6, 5},
+                                   {3, 2, 6, 7}, {0, 3, 7, 4}, {4, 5, 6, 7}};
 
-Hexahedron::Hexahedron(ElmtConfig pConf,
-                       vector<NodeSharedPtr> pNodeList,
+Hexahedron::Hexahedron(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
                        vector<int> pTagList)
     : Element(pConf, GetNumNodes(pConf), pNodeList.size())
 {
@@ -98,10 +95,9 @@ Hexahedron::Hexahedron(ElmtConfig pConf,
                 edgeNodes.push_back(pNodeList[j - 1]);
             }
         }
-        m_edge.push_back(EdgeSharedPtr(new Edge(pNodeList[it->first.first - 1],
-                                                pNodeList[it->first.second - 1],
-                                                edgeNodes,
-                                                m_conf.m_edgeCurveType)));
+        m_edge.push_back(EdgeSharedPtr(new Edge(
+            pNodeList[it->first.first - 1], pNodeList[it->first.second - 1],
+            edgeNodes, m_conf.m_edgeCurveType)));
     }
 
     // Create faces
@@ -169,18 +165,19 @@ SpatialDomains::GeometrySharedPtr Hexahedron::GetGeom(int coordDim)
             m_face[i]->GetGeom(coordDim));
     }
 
-    ret = MemoryManager<SpatialDomains::HexGeom>::AllocateSharedPtr(
-        m_id, faces);
+    ret =
+        MemoryManager<SpatialDomains::HexGeom>::AllocateSharedPtr(m_id, faces);
 
     ret->Setup();
     return ret;
 }
 
-StdRegions::Orientation Hexahedron::GetEdgeOrient(
-    int edgeId, EdgeSharedPtr edge)
+StdRegions::Orientation Hexahedron::GetEdgeOrient(int edgeId,
+                                                  EdgeSharedPtr edge)
 {
-    static int edgeVerts[12][2] = { {0,1}, {1,2}, {2,3}, {3,0}, {0,4}, {1,5},
-                                    {2,6}, {3,7}, {4,5}, {5,6}, {6,7}, {7,4} };
+    static int edgeVerts[12][2] = {{0, 1}, {1, 2}, {2, 3}, {3, 0},
+                                   {0, 4}, {1, 5}, {2, 6}, {3, 7},
+                                   {4, 5}, {5, 6}, {6, 7}, {7, 4}};
 
     if (edge->m_n1 == m_vertex[edgeVerts[edgeId][0]])
     {
@@ -198,12 +195,9 @@ StdRegions::Orientation Hexahedron::GetEdgeOrient(
     return StdRegions::eNoOrientation;
 }
 
-void Hexahedron::MakeOrder(int                                order,
-                           SpatialDomains::GeometrySharedPtr  geom,
-                           LibUtilities::PointsType           pType,
-                           int                                coordDim,
-                           int                               &id,
-                           bool                               justConfig)
+void Hexahedron::MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                           LibUtilities::PointsType pType, int coordDim,
+                           int &id, bool justConfig)
 {
     m_curveType    = pType;
     m_conf.m_order = order;
@@ -223,7 +217,7 @@ void Hexahedron::MakeOrder(int                                order,
         return;
     }
 
-    int nPoints = order + 1;
+    int nPoints                            = order + 1;
     StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
 
     Array<OneD, NekDouble> px;
@@ -231,7 +225,7 @@ void Hexahedron::MakeOrder(int                                order,
     ASSERTL1(pKey.GetPointsDim() == 1, "Points distribution must be 1D");
     LibUtilities::PointsManager()[pKey]->GetPoints(px);
 
-    Array<OneD, Array<OneD, NekDouble> > phys(coordDim);
+    Array<OneD, Array<OneD, NekDouble>> phys(coordDim);
 
     for (int i = 0; i < coordDim; ++i)
     {
@@ -242,11 +236,11 @@ void Hexahedron::MakeOrder(int                                order,
     int nHexIntPts = (nPoints - 2) * (nPoints - 2) * (nPoints - 2);
     m_volumeNodes.resize(nHexIntPts);
 
-    for (int i = 1, cnt = 0; i < nPoints-1; ++i)
+    for (int i = 1, cnt = 0; i < nPoints - 1; ++i)
     {
-        for (int j = 1; j < nPoints-1; ++j)
+        for (int j = 1; j < nPoints - 1; ++j)
         {
-            for (int k = 1; k < nPoints-1; ++k, ++cnt)
+            for (int k = 1; k < nPoints - 1; ++k, ++cnt)
             {
                 Array<OneD, NekDouble> xp(3);
                 xp[0] = px[k];
@@ -259,8 +253,8 @@ void Hexahedron::MakeOrder(int                                order,
                     x[k] = xmap->PhysEvaluate(xp, phys[k]);
                 }
 
-                m_volumeNodes[cnt] = std::shared_ptr<Node>(
-                    new Node(id++, x[0], x[1], x[2]));
+                m_volumeNodes[cnt] =
+                    std::shared_ptr<Node>(new Node(id++, x[0], x[1], x[2]));
             }
         }
     }
@@ -279,5 +273,5 @@ unsigned int Hexahedron::GetNumNodes(ElmtConfig pConf)
     else
         return 12 * (n + 1) - 16;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

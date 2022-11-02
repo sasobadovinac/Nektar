@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: CADCurve.cpp
+//  File: CADCurveOCE.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -78,13 +78,15 @@ NekDouble CADCurveOCE::GetMinDistance(Array<OneD, NekDouble> &xyz)
 {
     gp_Pnt loc(xyz[0] * 1000.0, xyz[1] * 1000.0, xyz[2] * 1000.0);
     GeomAPI_ProjectPointOnCurve proj(loc, m_c, m_b[0], m_b[1]);
-    if(proj.NbPoints())
+    if (proj.NbPoints())
     {
         return proj.LowerDistance() / 1000.0;
     }
     else
     {
-        return std::min(loc.Distance(m_c->Value(m_b[0])),loc.Distance(m_c->Value(m_b[1]))) / 1000.0;
+        return std::min(loc.Distance(m_c->Value(m_b[0])),
+                        loc.Distance(m_c->Value(m_b[1]))) /
+               1000.0;
     }
 }
 
@@ -198,5 +200,5 @@ Array<OneD, NekDouble> CADCurveOCE::GetMinMax()
 
     return locs;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

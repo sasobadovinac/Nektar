@@ -1,3 +1,36 @@
+###############################################################################
+##
+## File: test_nekmesh_module.py
+##
+## For more information, please see: http://www.nektar.info
+##
+## The MIT License
+##
+## Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
+## Department of Aeronautics, Imperial College London (UK), and Scientific
+## Computing and Imaging Institute, University of Utah (USA).
+##
+## Permission is hereby granted, free of charge, to any person obtaining a
+## copy of this software and associated documentation files (the "Software"),
+## to deal in the Software without restriction, including without limitation
+## the rights to use, copy, modify, merge, publish, distribute, sublicense,
+## and/or sell copies of the Software, and to permit persons to whom the
+## Software is furnished to do so, subject to the following conditions:
+##
+## The above copyright notice and this permission notice shall be included
+## in all copies or substantial portions of the Software.
+##
+## THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+## OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+## FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+## THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+## LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+## FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+## DEALINGS IN THE SOFTWARE.
+##
+## Description: Unit tests for the Module class.
+##
+###############################################################################
 
 from NekPy.LibUtilities import ShapeType
 from NekPy.NekMesh import Node, Element, ElmtConfig, NodeSet, Mesh, \
@@ -48,12 +81,7 @@ class InheritFromOutputModuleTest(OutputModule):
         self.ProcessComposites()
 
 
-
 class TestModule(unittest.TestCase):
-
-    def getCN(self):
-        return self.__class__.__name__
-
     def _initialize_static_values(self):
         self.coord_1x   = 0.0
         self.coord_1y   = 1.0
@@ -113,97 +141,44 @@ class TestModule(unittest.TestCase):
         self._setUpMesh()
 
     def testModuleProcessRuntimeError(self):
-        msg = self.getCN() + "::testModuleProcessRuntimeError: "
         mod = ProcessModule(self.mesh)
         try:
             mod.Process()
-            msg += "FAIL"
-            print(msg)
         except RuntimeError:
-            msg += "PASS"
-            print(msg)
-        except:
-            msg += "FAIL"
-            print(msg)
-            raise
+            pass
 
     def testInheritFromInputModuleTest(self):
-        msg = self.getCN() + "::testInheritFromInputModuleTest: "
         mod = InheritFromInputModuleTest(self.mesh)
-        try:
-            mod.Process()
-            # OutputModule.Create("xml", self.mesh, outfile=sys.stdout).Process()
-            msg += "PASS"
-            print(msg)
-        except:
-            msg += "FAIL"
-            print(msg)
-            raise
+        mod.Process()
 
     def testInheritFromProcessModuleTest(self):
-        msg = self.getCN() + "::testInheritFromProcessModuleTest: "
         mod = InheritFromProcessModuleTest(self.mesh)
-        try:
-            mod.Process()
-            # OutputModule.Create("xml", self.mesh, outfile=sys.stdout).Process()
-            msg += "PASS"
-            print(msg)
-        except:
-            msg += "FAIL"
-            print(msg)
-            raise
+        mod.Process()
 
     def testInheritFromOutputModuleTest(self):
-        msg = self.getCN() + "::testInheritFromOutputModuleTest: "
         mod = InheritFromOutputModuleTest(self.mesh)
-        try:
-            mod.Process()
-            # OutputModule.Create("xml", self.mesh, outfile=sys.stdout).Process()
-            msg += "PASS"
-            print(msg)
-        except:
-            msg += "FAIL"
-            print(msg)
-            raise
+        mod.Process()
+
+    def testCreateModuleUnknownParameter(self):
+        mod1 = ProcessModule.Create("jac", self.mesh, unknown_parameter=False).Process()
 
     def testCreateExceptionUnknownModule(self):
-        msg = self.getCN() + "::testCreateExceptionUnknownModule: "
         try:
             mod1 = ProcessModule.Create("unknown_module", self.mesh)
         except NekMeshError:
-            msg += "PASS"
-            print(msg)
-            return
-
-        msg += "FAIL"
-        print(msg)
-        raise
+            pass
 
     def testCreateExceptionWrongArgs(self):
-        msg = self.getCN() + "::testCatereExceptionWrongArgs: "
         try:
             mod1 = InputModule.Create("xml", self.mesh)
         except NekMeshError:
-            msg += "PASS"
-            print(msg)
-            return
-
-        msg += "FAIL"
-        print(msg)
-        raise
+            pass
 
     def testExceptionNoMesh(self):
-        msg = self.getCN() + "::testExceptionNoMesh: "
         try:
             mod1 = ProcessModule.Create("jac", "wrong_argument")
         except NekMeshError:
-            msg += "PASS"
-            print(msg)
-            return
-
-        msg += "FAIL"
-        print(msg)
-        raise
+            pass
 
 if __name__ == '__main__':
     unittest.main()

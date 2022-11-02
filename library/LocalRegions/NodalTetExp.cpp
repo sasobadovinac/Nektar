@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTetExp.cpp
+// File: NodalTetExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,9 +36,8 @@
 
 namespace Nektar
 {
-  namespace LocalRegions 
-  {
+namespace LocalRegions
+{
 
-
-  }//end of namespace
-}//end of namespace
+} // namespace LocalRegions
+} // namespace Nektar

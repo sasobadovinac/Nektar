@@ -38,12 +38,12 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <LibUtilities/BasicUtils/HashUtils.hpp>
-#include <SpatialDomains/TriGeom.h>
 #include <SpatialDomains/QuadGeom.h>
+#include <SpatialDomains/TriGeom.h>
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Edge.h>
 #include <NekMesh/MeshElements/Node.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -65,11 +65,11 @@ class Face
 public:
     /// Create a new face.
     NEKMESH_EXPORT Face(std::vector<NodeSharedPtr> pVertexList,
-                             std::vector<NodeSharedPtr> pFaceNodes,
-                             std::vector<EdgeSharedPtr> pEdgeList,
-                              LibUtilities::PointsType pCurveType)
-                : m_vertexList(pVertexList), m_edgeList(pEdgeList),
-                  m_faceNodes(pFaceNodes), m_curveType(pCurveType), m_geom()
+                        std::vector<NodeSharedPtr> pFaceNodes,
+                        std::vector<EdgeSharedPtr> pEdgeList,
+                        LibUtilities::PointsType pCurveType)
+        : m_vertexList(pVertexList), m_edgeList(pEdgeList),
+          m_faceNodes(pFaceNodes), m_curveType(pCurveType), m_geom()
     {
     }
 
@@ -92,8 +92,7 @@ public:
         std::vector<NodeSharedPtr>::iterator it1;
         for (it1 = m_vertexList.begin(); it1 != m_vertexList.end(); ++it1)
         {
-            if (find(pSrc.m_vertexList.begin(),
-                     pSrc.m_vertexList.end(),
+            if (find(pSrc.m_vertexList.begin(), pSrc.m_vertexList.end(),
                      *it1) == pSrc.m_vertexList.end())
             {
                 return false;
@@ -116,38 +115,34 @@ public:
     }
 
     /// Assemble a list of nodes on curved face
-    NEKMESH_EXPORT void GetCurvedNodes(
-        std::vector<NodeSharedPtr> &nodeList);
+    NEKMESH_EXPORT void GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList);
 
     /// Generates a string listing the coordinates of all nodes
     /// associated with this face.
     NEKMESH_EXPORT std::string GetXmlCurveString();
 
     /// Make this face an order @p order face. @see Element::MakeOrder.
-    void MakeOrder(int                                order,
-                   SpatialDomains::GeometrySharedPtr  geom,
-                   LibUtilities::PointsType           pType,
-                   int                                coordDim,
-                   int                               &id);
+    void MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                   LibUtilities::PointsType pType, int coordDim, int &id);
 
     /// Generate either SpatialDomains::TriGeom or
     /// SpatialDomains::QuadGeom for this element.
     NEKMESH_EXPORT SpatialDomains::Geometry2DSharedPtr GetGeom(int coordDim);
 
     /// ID of the face.
-    unsigned int                         m_id;
+    unsigned int m_id;
     /// List of vertex nodes.
-    std::vector<NodeSharedPtr>           m_vertexList;
+    std::vector<NodeSharedPtr> m_vertexList;
     /// List of corresponding edges.
-    std::vector<EdgeSharedPtr>           m_edgeList;
+    std::vector<EdgeSharedPtr> m_edgeList;
     /// List of face-interior nodes defining the shape of the face.
-    std::vector<NodeSharedPtr>           m_faceNodes;
+    std::vector<NodeSharedPtr> m_faceNodes;
     /// Distribution of points in this face.
-    LibUtilities::PointsType             m_curveType;
+    LibUtilities::PointsType m_curveType;
     /// Element(s) which are linked to this face.
-    std::vector<std::pair<std::weak_ptr<Element>, int> > m_elLink;
+    std::vector<std::pair<std::weak_ptr<Element>, int>> m_elLink;
     /// Nektar++ representation of geometry
-    SpatialDomains::Geometry2DSharedPtr  m_geom;
+    SpatialDomains::Geometry2DSharedPtr m_geom;
 
     CADObjectSharedPtr m_parentCAD;
 };
@@ -155,16 +150,15 @@ public:
 typedef std::shared_ptr<Face> FaceSharedPtr;
 
 NEKMESH_EXPORT bool operator==(FaceSharedPtr const &p1,
-                                    FaceSharedPtr const &p2);
-NEKMESH_EXPORT bool operator<(FaceSharedPtr const &p1,
-                                   FaceSharedPtr const &p2);
+                               FaceSharedPtr const &p2);
+NEKMESH_EXPORT bool operator<(FaceSharedPtr const &p1, FaceSharedPtr const &p2);
 
-struct FaceHash : std::unary_function<FaceSharedPtr, std::size_t>
+struct FaceHash
 {
     std::size_t operator()(FaceSharedPtr const &p) const
     {
         unsigned int nVert = p->m_vertexList.size();
-        std::size_t seed = 0;
+        std::size_t seed   = 0;
         std::vector<unsigned int> ids(nVert);
 
         for (int i = 0; i < nVert; ++i)
@@ -180,7 +174,7 @@ struct FaceHash : std::unary_function<FaceSharedPtr, std::size_t>
 };
 typedef std::unordered_set<FaceSharedPtr, FaceHash> FaceSet;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

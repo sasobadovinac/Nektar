@@ -35,64 +35,64 @@
 #ifndef NEKTAR_SOLVERUTILS_ADVECTION3DHOMOGENEOUS1D
 #define NEKTAR_SOLVERUTILS_ADVECTION3DHOMOGENEOUS1D
 
-#include <SolverUtils/Advection/Advection.h>
-#include <SolverUtils/Advection/HomogeneousRSScalar.hpp>
 #include <LibUtilities/BasicUtils/SessionReader.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <SolverUtils/Advection/Advection.h>
+#include <SolverUtils/Advection/HomogeneousRSScalar.hpp>
 
 namespace Nektar
 {
-    namespace SolverUtils
+namespace SolverUtils
+{
+class Advection3DHomogeneous1D : public Advection
+{
+public:
+    static AdvectionSharedPtr create(std::string advType)
     {
-        class Advection3DHomogeneous1D : public Advection
-        {
-        public:
-            static AdvectionSharedPtr create(std::string advType)
-            {
-                return AdvectionSharedPtr(
-                    new Advection3DHomogeneous1D(advType));
-            }
-            static std::string type[];
-
-        protected:
-            Advection3DHomogeneous1D(std::string advType);
-
-            std::string                                        m_advType;
-            SolverUtils::AdvectionSharedPtr                    m_planeAdv;
-            int                                                m_numPoints;
-            int                                                m_numPointsPlane;
-            int                                                m_numPlanes;
-            int                                                m_planeCounter;
-            Array<OneD, unsigned int>                          m_planes;
-            Array<OneD, unsigned int>                          m_planePos;
-            Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_fluxVecStore;
-            Array<OneD, Array<OneD, NekDouble> >               m_inarrayPlane;
-            Array<OneD, Array<OneD, NekDouble> >               m_outarrayPlane;
-            Array<OneD, MultiRegions::ExpListSharedPtr>        m_fieldsPlane;
-            Array<OneD, Array<OneD, NekDouble> >               m_advVelPlane;
-            Array<OneD, Array<OneD, Array<OneD, Array<OneD, NekDouble> > > >
-                                                               m_fluxVecPlane;
-
-            virtual void v_InitObject(
-                LibUtilities::SessionReaderSharedPtr               pSession,
-                Array<OneD, MultiRegions::ExpListSharedPtr>        pFields);
-
-            virtual void v_Advect(
-                const int                                          nConvField,
-                const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-                const Array<OneD, Array<OneD, NekDouble> >        &advVel,
-                const Array<OneD, Array<OneD, NekDouble> >        &inarray,
-                      Array<OneD, Array<OneD, NekDouble> >        &outarray,
-                const NekDouble                                   &time,
-                const Array<OneD, Array<OneD, NekDouble> > &pFwd = NullNekDoubleArrayOfArray,
-                const Array<OneD, Array<OneD, NekDouble> > &pBwd = NullNekDoubleArrayOfArray);
-
-        private:
-            void ModifiedFluxVector(
-                const Array<OneD, Array<OneD, NekDouble> >         &physfield,
-                Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux);
-        };
+        return AdvectionSharedPtr(new Advection3DHomogeneous1D(advType));
     }
-}
+    static std::string type[];
+
+protected:
+    Advection3DHomogeneous1D(std::string advType);
+
+    std::string m_advType;
+    SolverUtils::AdvectionSharedPtr m_planeAdv;
+    int m_numPoints;
+    int m_numPointsPlane;
+    int m_numPlanes;
+    int m_planeCounter;
+    Array<OneD, unsigned int> m_planes;
+    Array<OneD, unsigned int> m_planePos;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_fluxVecStore;
+    Array<OneD, Array<OneD, NekDouble>> m_inarrayPlane;
+    Array<OneD, Array<OneD, NekDouble>> m_outarrayPlane;
+    Array<OneD, MultiRegions::ExpListSharedPtr> m_fieldsPlane;
+    Array<OneD, Array<OneD, NekDouble>> m_advVelPlane;
+    Array<OneD, Array<OneD, Array<OneD, Array<OneD, NekDouble>>>>
+        m_fluxVecPlane;
+
+    virtual void v_InitObject(
+        LibUtilities::SessionReaderSharedPtr pSession,
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+
+    virtual void v_Advect(
+        const int nConvField,
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, Array<OneD, NekDouble>> &advVel,
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd =
+            NullNekDoubleArrayOfArray,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd =
+            NullNekDoubleArrayOfArray);
+
+private:
+    void ModifiedFluxVector(
+        const Array<OneD, Array<OneD, NekDouble>> &physfield,
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
+};
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalVecLinSys.cpp
+// File: GlobalLinSysBlockDiagonal.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,48 +36,41 @@
 
 #include <MultiRegions/GlobalVecLinSysBlockDiagonal.h>
 
-
 namespace Nektar
 {
-    namespace MultiRegions
-    {
+namespace MultiRegions
+{
 
-        /**
-         * Registers the class with the Factory.
-         */
-        string GlobalVecLinSysDirectFull::className
-                = GetGlobalVecLinSysFactory().RegisterCreatorFunction(
-                    "BlockDiagonal",
-                    GlobalLinSysDirectFull::create,
-                    "BlockDiagonal.");
-        
-        /**
-         * Given a block matrix, construct a global matrix system according to
-         * a local to global mapping. #m_linSys is constructed by
-         * AssembleFullMatrix().
-         * @param   pkey        Associated linear system key.
-         * @param   locToGloMap Local to global mapping.
-         */
-        GlobalVecLinSys::GlobalVecLinSys(const GlobalLinSysKey &pKey,
-                const std::weak_ptr<VecExpList> &pExpList,
-                const std::shared_ptr<AssemblyMap>
-                                   &pLocToGloMap):
-            m_linSysKey(pKey),
-            m_expList(pExpList),
-            m_verbose(true)
-        {
-            boost::ignore_unused(pLocToGloMap);
-        }
+/**
+ * Registers the class with the Factory.
+ */
+string GlobalVecLinSysDirectFull::className =
+    GetGlobalVecLinSysFactory().RegisterCreatorFunction(
+        "BlockDiagonal", GlobalLinSysDirectFull::create, "BlockDiagonal.");
 
-        /**
-         *
-         */
-        GlobalVecLinSysFactory& GetGlobalVecLinSysFactory()
-        {
-            static GlobalVecLinSysFactory instance;
-            return instance;
-        }
+/**
+ * Given a block matrix, construct a global matrix system according to
+ * a local to global mapping. #m_linSys is constructed by
+ * AssembleFullMatrix().
+ * @param   pkey        Associated linear system key.
+ * @param   locToGloMap Local to global mapping.
+ */
+GlobalVecLinSys::GlobalVecLinSys(
+    const GlobalLinSysKey &pKey, const std::weak_ptr<VecExpList> &pExpList,
+    const std::shared_ptr<AssemblyMap> &pLocToGloMap)
+    : m_linSysKey(pKey), m_expList(pExpList), m_verbose(true)
+{
+    boost::ignore_unused(pLocToGloMap);
+}
 
-    } //end of namespace
-} //end of namespace
+/**
+ *
+ */
+GlobalVecLinSysFactory &GetGlobalVecLinSysFactory()
+{
+    static GlobalVecLinSysFactory instance;
+    return instance;
+}
 
+} // namespace MultiRegions
+} // namespace Nektar

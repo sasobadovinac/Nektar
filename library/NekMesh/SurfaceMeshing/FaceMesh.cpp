@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: SurfaceMesh.cpp
+//  File: FaceMesh.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: surfacemesh object methods.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -113,9 +113,8 @@ bool FaceMesh::ValidateCurves()
 
                         m_log(VERBOSE).Newline();
                         m_log(WARNING)
-                            << "Curve mesh error at " << loc[0] << " "
-                            << loc[1] << " " << loc[2] << " on face " << m_id
-                            << endl;
+                            << "Curve mesh error at " << loc[0] << " " << loc[1]
+                            << " " << loc[2] << " on face " << m_id << endl;
                         error = true;
                     }
                 }
@@ -132,10 +131,10 @@ void FaceMesh::ValidateLoops()
     for (int i = 0; i < orderedLoops.size(); i++)
     {
         int numPoints = orderedLoops[i].size();
-        if(numPoints == 2)
+        if (numPoints == 2)
         {
-            //force a remesh of the curves
-            for(int j = 0; j < m_edgeloops[i]->edges.size(); j++)
+            // force a remesh of the curves
+            for (int j = 0; j < m_edgeloops[i]->edges.size(); j++)
             {
                 int cid = m_edgeloops[i]->edges[j]->GetId();
                 m_curvemeshes[cid]->ReMesh();
@@ -177,7 +176,7 @@ void FaceMesh::Mesh()
     TriangleInterfaceSharedPtr pplanemesh =
         MemoryManager<TriangleInterface>::AllocateSharedPtr();
 
-    vector<Array<OneD, NekDouble> > centers;
+    vector<Array<OneD, NekDouble>> centers;
     for (int i = 0; i < m_edgeloops.size(); i++)
     {
         centers.push_back(m_edgeloops[i]->center);
@@ -255,9 +254,9 @@ void FaceMesh::Smoothing()
 
     Array<OneD, NekDouble> bounds = m_cadsurf->GetBounds();
 
-    map<int, vector<EdgeSharedPtr> > connectingedges;
+    map<int, vector<EdgeSharedPtr>> connectingedges;
 
-    map<int, vector<ElementSharedPtr> > connectingelements;
+    map<int, vector<ElementSharedPtr>> connectingelements;
 
     for (eit = m_localEdges.begin(); eit != m_localEdges.end(); eit++)
     {
@@ -362,7 +361,7 @@ void FaceMesh::Smoothing()
                     ud[0] = uj[0] + lambda[0] * (ui[0] - uj[0]);
                     ud[1] = uj[1] + lambda[0] * (ui[1] - uj[1]);
                     Array<OneD, NekDouble> locd = m_cadsurf->P(ud);
-                    NodeSharedPtr dn = std::shared_ptr<Node>(
+                    NodeSharedPtr dn            = std::shared_ptr<Node>(
                         new Node(0, locd[0], locd[1], locd[2]));
                     dn->SetCADSurf(m_cadsurf, ud);
 
@@ -503,7 +502,7 @@ void FaceMesh::DiagonalSwap()
 {
     map<int, int> idealConnec;
     map<int, int> actualConnec;
-    map<int, vector<EdgeSharedPtr> > nodetoedge;
+    map<int, vector<EdgeSharedPtr>> nodetoedge;
     // figure out ideal node count and actual node count
     EdgeSet::iterator eit;
     for (eit = m_localEdges.begin(); eit != m_localEdges.end(); eit++)
@@ -741,7 +740,7 @@ void FaceMesh::DiagonalSwap()
                 }
 
                 // now sort out links for the 4 edges surrounding the patch
-                vector<pair<weak_ptr<Element>, int> > links;
+                vector<pair<weak_ptr<Element>, int>> links;
 
                 links = CA->m_elLink;
                 CA->m_elLink.clear();
@@ -951,7 +950,7 @@ void FaceMesh::BuildLocalMesh()
 void FaceMesh::Stretching()
 {
     // define a sampling and calculate the aspect ratio of the paramter plane
-    m_str = 0.0;
+    m_str                       = 0.0;
     Array<OneD, NekDouble> bnds = m_cadsurf->GetBounds();
 
     NekDouble dxu = int(bnds[1] - bnds[0] < bnds[3] - bnds[2]
@@ -1012,7 +1011,7 @@ bool FaceMesh::Validate()
     {
         Array<OneD, NekDouble> r(3), a(3);
 
-        vector<Array<OneD, NekDouble> > info;
+        vector<Array<OneD, NekDouble>> info;
 
         for (int j = 0; j < 3; j++)
         {
@@ -1042,7 +1041,7 @@ bool FaceMesh::Validate()
         uvc[1] = (info[0][1] + info[1][1] + info[2][1]) / 3.0;
 
         Array<OneD, NekDouble> locc = m_cadsurf->P(uvc);
-        NekDouble d4 = m_mesh->m_octree->Query(locc);
+        NekDouble d4                = m_mesh->m_octree->Query(locc);
 
         NekDouble d = (d1 + d2 + d3 + d4) / 4.0;
 
@@ -1117,7 +1116,7 @@ void FaceMesh::AddNewPoint(Array<OneD, NekDouble> uv)
 {
     // adds a new point but checks that there are no other points nearby first
     Array<OneD, NekDouble> np = m_cadsurf->P(uv);
-    NekDouble npDelta = m_mesh->m_octree->Query(np);
+    NekDouble npDelta         = m_mesh->m_octree->Query(np);
 
     NodeSharedPtr n = std::shared_ptr<Node>(
         new Node(m_mesh->m_numNodes++, np[0], np[1], np[2]));
@@ -1194,5 +1193,5 @@ void FaceMesh::OrientateCurves()
         orderedLoops.push_back(cE);
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

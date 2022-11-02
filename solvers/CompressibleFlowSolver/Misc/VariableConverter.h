@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VariableConverter.h
+// File: VariableConverter.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -37,8 +37,8 @@
 #define NEKTAR_SOLVERS_COMPRESSIBLEFLOWSOLVER_MISC_VARCONVERT_H
 
 #include "EquationOfState.h"
-#include <SolverUtils/UnsteadySystem.h>
 #include <MultiRegions/ContField.h>
+#include <SolverUtils/UnsteadySystem.h>
 
 namespace Nektar
 {
@@ -51,9 +51,10 @@ typedef std::shared_ptr<VariableConverter> VariableConverterSharedPtr;
 class VariableConverter
 {
 public:
-    VariableConverter(const LibUtilities::SessionReaderSharedPtr& pSession,
-                      const int spaceDim,
-                      const SpatialDomains::MeshGraphSharedPtr& pGraph = 0);
+    VariableConverter(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const int spaceDim,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph = nullptr);
 
     ~VariableConverter();
 
@@ -64,20 +65,17 @@ public:
     void GetInternalEnergy(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         Array<OneD, NekDouble> &energy);
-    template <class T, typename = typename std::enable_if
-    <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T GetInternalEnergy(T* physfield)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T GetInternalEnergy(T *physfield)
     {
         // get dynamic energy
         T oneOrho = 1.0 / physfield[0];
         T dynEne{};
         for (size_t d = 1; d < m_spacedim + 1; ++d)
         {
-            T tmp = physfield[d]; //load 1x
+            T tmp = physfield[d]; // load 1x
             dynEne += tmp * tmp;
         }
         dynEne = 0.5 * dynEne * oneOrho;
@@ -89,19 +87,16 @@ public:
     void GetEnthalpy(const Array<OneD, const Array<OneD, NekDouble>> &physfield,
                      Array<OneD, NekDouble> &enthalpy);
     void GetVelocityVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
-              Array<OneD, Array<OneD, NekDouble>> &velocity);
+                           Array<OneD, Array<OneD, NekDouble>> &velocity);
     void GetMach(Array<OneD, Array<OneD, NekDouble>> &physfield,
                  Array<OneD, NekDouble> &soundspeed,
                  Array<OneD, NekDouble> &mach);
     void GetDynamicViscosity(const Array<OneD, const NekDouble> &temperature,
                              Array<OneD, NekDouble> &mu);
 
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
     inline T GetDynamicViscosity(T &temperature)
     {
         const NekDouble onePlusC = 1.0 + m_TRatioSutherland;
@@ -110,7 +105,7 @@ public:
 
         T ratio = temperature * m_oneOverT_star;
         return mu_star * ratio * sqrt(ratio) * onePlusC /
-                (ratio + m_TRatioSutherland);
+               (ratio + m_TRatioSutherland);
     }
 
     void GetAbsoluteVelocity(
@@ -121,13 +116,10 @@ public:
     void GetTemperature(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         Array<OneD, NekDouble> &temperature);
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T GetTemperature(T* physfield)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T GetTemperature(T *physfield)
     {
         T energy = GetInternalEnergy(physfield);
         return m_eos->GetTemperature(physfield[0], energy);
@@ -135,13 +127,10 @@ public:
     //
     void GetPressure(const Array<OneD, const Array<OneD, NekDouble>> &physfield,
                      Array<OneD, NekDouble> &pressure);
-    template <class T, typename = typename std::enable_if
-        <
-            std::is_floating_point<T>::value ||
-            tinysimd::is_vector_floating_point<T>::value
-        >::type
-    >
-    inline T GetPressure(T* physfield)
+    template <class T, typename = typename std::enable_if<
+                           std::is_floating_point<T>::value ||
+                           tinysimd::is_vector_floating_point<T>::value>::type>
+    inline T GetPressure(T *physfield)
     {
         T energy = GetInternalEnergy(physfield);
         return m_eos->GetPressure(physfield[0], energy);
@@ -158,10 +147,9 @@ public:
     void GetRhoFromPT(const Array<OneD, NekDouble> &pressure,
                       const Array<OneD, NekDouble> &temperature,
                       Array<OneD, NekDouble> &rho);
-    void GetDmuDT(
-        const Array<OneD, const NekDouble>  &temperature,
-        const Array<OneD, const NekDouble>  &mu,
-              Array<OneD, NekDouble>        &DmuDT);
+    void GetDmuDT(const Array<OneD, const NekDouble> &temperature,
+                  const Array<OneD, const NekDouble> &mu,
+                  Array<OneD, NekDouble> &DmuDT);
 
     const EquationOfStateSharedPtr Geteos()
     {
@@ -169,43 +157,45 @@ public:
     }
 
     // Shock sensor methods
-    void SetAv(const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-               const Array<OneD, const Array<OneD, NekDouble>>& consVar,
-               const Array<OneD, NekDouble>& div,
-               const Array<OneD, NekDouble>& curlSquared);
+    void SetAv(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+        const Array<OneD, const Array<OneD, NekDouble>> &consVar,
+        const Array<OneD, NekDouble> &div         = NullNekDouble1DArray,
+        const Array<OneD, NekDouble> &curlSquared = NullNekDouble1DArray);
 
+    Array<OneD, NekDouble> &GetAv();
 
-    Array<OneD, NekDouble>& GetAv();
+    Array<OneD, NekDouble> &GetAvTrace();
 
-    Array<OneD, NekDouble>& GetAvTrace();
+    bool GetFlagCalcDivCurl(void) const
+    {
+        return m_flagCalcDivCurl;
+    }
 
+    void SetElmtMinHP(
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
 
-    void SetElmtMinHP(const Array<OneD, MultiRegions::ExpListSharedPtr>& fields);
-
-    Array<OneD, NekDouble>&  GetElmtMinHP();
+    Array<OneD, NekDouble> &GetElmtMinHP();
 
     void GetSensor(const MultiRegions::ExpListSharedPtr &field,
                    const Array<OneD, const Array<OneD, NekDouble>> &physarray,
                    Array<OneD, NekDouble> &Sensor,
                    Array<OneD, NekDouble> &SensorKappa, int offset = 1);
 
-    void GetMuAv(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-        const Array<OneD, const Array<OneD, NekDouble>>& physfield,
-              Array<OneD, NekDouble>& muAv);
+    void GetMuAv(const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                 const Array<OneD, const Array<OneD, NekDouble>> &physfield,
+                 Array<OneD, NekDouble> &muAv);
 
-    void GetMuAv(
-        const Array<OneD, MultiRegions::ExpListSharedPtr>& fields,
-        const Array<OneD, const Array<OneD, NekDouble>>& consVar,
-        const Array<OneD, NekDouble>& div,
-              Array<OneD, NekDouble>& muAv);
+    void GetMuAv(const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
+                 const Array<OneD, const Array<OneD, NekDouble>> &consVar,
+                 const Array<OneD, NekDouble> &div,
+                 Array<OneD, NekDouble> &muAv);
 
-    void ApplyDucros(
-        const Array<OneD, NekDouble>&                      div,
-        const Array<OneD, NekDouble>&                      curlSquare,
-              Array<OneD, NekDouble>&                      muAv);
+    void ApplyDucros(const Array<OneD, NekDouble> &div,
+                     const Array<OneD, NekDouble> &curlSquare,
+                     Array<OneD, NekDouble> &muAv);
 
-    void ApplyC0Smooth(Array<OneD, NekDouble>& field);
+    void ApplyC0Smooth(Array<OneD, NekDouble> &field);
 
 protected:
     LibUtilities::SessionReaderSharedPtr m_session;
@@ -222,19 +212,19 @@ protected:
     NekDouble m_TRatioSutherland;
 
     /// Shock sensor
-    NekDouble                           m_mu0;
-    std::string                         m_shockCaptureType;
-    std::string                         m_shockSensorType;
-    std::string                         m_ducrosSensor;
-    std::string                         m_smoothing;
-    MultiRegions::ContFieldSharedPtr    m_C0ProjectExp;
+    NekDouble m_mu0;
+    std::string m_shockCaptureType;
+    std::string m_shockSensorType;
+    std::string m_ducrosSensor;
+    std::string m_smoothing;
+    MultiRegions::ContFieldSharedPtr m_C0ProjectExp = nullptr;
 
     /// h/p scaling
-    Array<OneD, NekDouble>              m_hOverP;
+    Array<OneD, NekDouble> m_hOverP;
     /// storage
-    Array<OneD, NekDouble>              m_muAv;
-    Array<OneD, NekDouble>              m_muAvTrace;
-
+    Array<OneD, NekDouble> m_muAv;
+    Array<OneD, NekDouble> m_muAvTrace;
+    bool m_flagCalcDivCurl = false;
 };
 
 } // namespace Nektar

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.cpp
+//  File: ProcessVarOpti.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Calculate Jacobians of elements.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -179,8 +179,8 @@ void ProcessVarOpti::Process()
     // Safety feature: limit over-integration order for high-order triangles
     // over order 5.
     int intOrder = m_config["overint"].as<int>();
-    intOrder = m_mesh->m_nummode + intOrder <= 11 ?
-        intOrder : 11 - m_mesh->m_nummode;
+    intOrder =
+        m_mesh->m_nummode + intOrder <= 11 ? intOrder : 11 - m_mesh->m_nummode;
 
     m_log(VERBOSE) << "  - Identified mesh order as: " << m_mesh->m_nummode - 1
                    << endl;
@@ -194,8 +194,7 @@ void ProcessVarOpti::Process()
     m_res      = std::shared_ptr<Residual>(new Residual);
     m_res->val = 1.0;
     m_mesh->MakeOrder(m_mesh->m_nummode - 1,
-                      LibUtilities::eGaussLobattoLegendre,
-                      m_log);
+                      LibUtilities::eGaussLobattoLegendre, m_log);
 
     if (m_config["analytics"].beenSet)
     {
@@ -224,8 +223,8 @@ void ProcessVarOpti::Process()
         elLock = GetLockedElements(m_config["region"].as<NekDouble>());
     }
 
-    vector<vector<NodeSharedPtr> > freenodes = GetColouredNodes(elLock);
-    vector<vector<NodeOptiSharedPtr> > optiNodes;
+    vector<vector<NodeSharedPtr>> freenodes = GetColouredNodes(elLock);
+    vector<vector<NodeOptiSharedPtr>> optiNodes;
 
     // turn the free nodes into optimisable objects with all required data
     set<int> check;
@@ -309,15 +308,17 @@ void ProcessVarOpti::Process()
                    << m_mesh->m_element[m_mesh->m_expDim].size() - elLock.size()
                    << endl;
     m_log(VERBOSE) << "  - # invalid elements : " << m_res->startInv << endl;
-    m_log(VERBOSE) << "  - Worst Jacobian     : " << scientific << m_res->worstJac
-                   << endl;
+    m_log(VERBOSE) << "  - Worst Jacobian     : " << scientific
+                   << m_res->worstJac << endl;
     m_log(VERBOSE) << "  - # free nodes       : " << m_res->n << endl;
     m_log(VERBOSE) << "  - # DoF              : " << m_res->nDoF << endl;
     m_log(VERBOSE) << "  - # color sets       : " << nset << endl;
-    m_log(VERBOSE) << "  - Avg set colors     : " << scientific << p/nset << endl;
+    m_log(VERBOSE) << "  - Avg set colors     : " << scientific << p / nset
+                   << endl;
     m_log(VERBOSE) << "  - Min set            : " << mn << endl;
     m_log(VERBOSE) << "  - Max set            : " << mx << endl;
-    m_log(VERBOSE) << "  - Residual tolerance : " << scientific << restol << endl;
+    m_log(VERBOSE) << "  - Residual tolerance : " << scientific << restol
+                   << endl;
 
     int nThreads = m_config["numthreads"].as<int>();
 
@@ -383,8 +384,8 @@ void ProcessVarOpti::Process()
         m_res->startInv = 0;
         m_res->worstJac = numeric_limits<double>::max();
 
-        bool update =
-            ((m_config["scalingfile"].beenSet || m_config["radaptscale"].beenSet) && (ctr % subIter) == 0);
+        bool update = m_config["scalingfile"].beenSet && (ctr % subIter) == 0;
+
         vector<Thread::ThreadJob *> elJobs(m_dataSet.size());
         for (int i = 0; i < m_dataSet.size(); i++)
         {
@@ -410,7 +411,7 @@ void ProcessVarOpti::Process()
                        << m_res->nReset[1] << "/" << m_res->nReset[2]
                        << "\tFunctional: " << m_res->func << endl;
 
-        if(ctr >= maxIter)
+        if (ctr >= maxIter)
         {
             break;
         }
@@ -440,7 +441,7 @@ void ProcessVarOpti::Process()
 
     t.Stop();
 
-    //RemoveLinearCurvature();
+    // RemoveLinearCurvature();
 
     m_log(VERBOSE) << "Optimisation complete!" << endl;
     m_log(VERBOSE) << "  - Time to compute: " << t.TimePerTest(1) << endl;
@@ -486,7 +487,7 @@ protected:
     }
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble> > &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi)
     {
         return MemoryManager<NodalUtilTriMonomial>::AllocateSharedPtr(
             m_degree, xi[0], xi[1]);
@@ -515,7 +516,8 @@ void ProcessVarOpti::Analytics()
 
     m_log(VERBOSE) << "# overint = " << overInt << endl;
     m_log(VERBOSE) << "# Columns: x, y, over-integration orders (0 -> "
-                   << overInt - 1 << "), " << " min(scaledJac)" << endl;
+                   << overInt - 1 << "), "
+                   << " min(scaledJac)" << endl;
 
     // Loop over square defined by (originX, originY), length
     for (int k = 0; k < nPoints; ++k)
@@ -565,5 +567,5 @@ void ProcessVarOpti::Analytics()
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

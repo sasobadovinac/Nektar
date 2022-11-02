@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: SurfaceMeshing.cpp
+//  File: SurfaceMesh.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -43,13 +43,11 @@ namespace NekMesh
 {
 
 ModuleKey SurfaceMesh::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "surfacemesh"),
-    SurfaceMesh::create,
+    ModuleKey(eProcessModule, "surfacemesh"), SurfaceMesh::create,
     "Generates a surface mesh");
 
 SurfaceMesh::SurfaceMesh(MeshSharedPtr m) : ProcessModule(m)
 {
-
 }
 
 SurfaceMesh::~SurfaceMesh()
@@ -58,7 +56,7 @@ SurfaceMesh::~SurfaceMesh()
 
 void SurfaceMesh::Process()
 {
-    m_mesh->m_expDim--; //just to make it easier to surface mesh for now
+    m_mesh->m_expDim--; // just to make it easier to surface mesh for now
 
     m_log(VERBOSE) << "Surface meshing" << endl;
     m_log(VERBOSE) << "  Curve meshing:" << endl;
@@ -71,8 +69,8 @@ void SurfaceMesh::Process()
         m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumCurve(),
                                 "Curve progress");
 
-        m_curvemeshes[i] = MemoryManager<CurveMesh>::AllocateSharedPtr(
-            i, m_mesh, m_log);
+        m_curvemeshes[i] =
+            MemoryManager<CurveMesh>::AllocateSharedPtr(i, m_mesh, m_log);
         m_curvemeshes[i]->Mesh();
     }
 
@@ -84,9 +82,8 @@ void SurfaceMesh::Process()
         m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumSurf(),
                                 "    - Validating curve meshes");
 
-        FaceMeshSharedPtr face =
-            MemoryManager<FaceMesh>::AllocateSharedPtr(
-                i, m_mesh, m_curvemeshes, i, m_log);
+        FaceMeshSharedPtr face = MemoryManager<FaceMesh>::AllocateSharedPtr(
+            i, m_mesh, m_curvemeshes, i, m_log);
 
         validError = validError ? true : face->ValidateCurves();
 
@@ -105,9 +102,8 @@ void SurfaceMesh::Process()
     {
         m_log(VERBOSE).Progress(i, m_mesh->m_cad->GetNumSurf(),
                                 "Face progress");
-        m_facemeshes[i] =
-            MemoryManager<FaceMesh>::AllocateSharedPtr(
-                i, m_mesh, m_curvemeshes, i, m_log);
+        m_facemeshes[i] = MemoryManager<FaceMesh>::AllocateSharedPtr(
+            i, m_mesh, m_curvemeshes, i, m_log);
 
         m_facemeshes[i]->Mesh();
     }
@@ -121,15 +117,15 @@ void SurfaceMesh::Process()
     Report();
 
     EdgeSet::iterator it;
-    for(it = m_mesh->m_edgeSet.begin(); it != m_mesh->m_edgeSet.end(); it++)
+    for (it = m_mesh->m_edgeSet.begin(); it != m_mesh->m_edgeSet.end(); it++)
     {
-        if((*it)->m_elLink.size() != 2)
+        if ((*it)->m_elLink.size() != 2)
         {
-            ASSERTL0(false,"surface mesh connectivity error");
+            ASSERTL0(false, "surface mesh connectivity error");
         }
     }
 
-    m_mesh->m_expDim++; //revert dim
+    m_mesh->m_expDim++; // revert dim
 }
 void SurfaceMesh::Report()
 {
@@ -145,5 +141,5 @@ void SurfaceMesh::Report()
     m_log(VERBOSE) << "  - Euler-Poincaré: " << ep << endl;
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

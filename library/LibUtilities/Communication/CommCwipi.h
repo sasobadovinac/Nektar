@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommCwipi.h
+// File: CommCwipi.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -72,7 +72,7 @@ public:
 protected:
     virtual void v_Finalise();
 };
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

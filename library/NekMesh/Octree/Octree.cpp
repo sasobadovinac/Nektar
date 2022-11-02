@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: octree.h
+//  File: Octree.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: cad object methods.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -99,7 +99,7 @@ NekDouble Octree::Query(Array<OneD, NekDouble> loc)
 
     for (int i = 0; i < m_lsources.size(); i++)
     {
-        if (m_lsources[i].withinRange(loc))
+        if (m_lsources[i].WithinRange(loc))
         {
             tmp = min(m_lsources[i].delta, tmp);
         }
@@ -107,14 +107,14 @@ NekDouble Octree::Query(Array<OneD, NekDouble> loc)
 
     for (int i = 0; i < m_csources.size(); i++)
     {
-        if (m_csources[i].withinRange(loc))
+        if (m_csources[i].WithinRange(loc))
         {
             tmp = min(m_csources[i].delta, tmp);
         }
     }
 
     OctantSharedPtr n = m_masteroct;
-    int quad = 0;
+    int quad          = 0;
 
     bool found = false;
 
@@ -211,11 +211,6 @@ void Octree::WriteOctree(string nm)
 
     for (int i = 0; i < m_octants.size(); i++)
     {
-        /*if(m_octants[i]->GetLocation() != eOnBoundary)
-        {
-            continue;
-        }*/
-
         vector<NodeSharedPtr> ns(8);
 
         ns[0] = std::shared_ptr<Node>(new Node(0, m_octants[i]->FX(eBack),
@@ -260,7 +255,8 @@ void Octree::WriteOctree(string nm)
 
     ModuleSharedPtr mod =
         GetModuleFactory().CreateInstance(ModuleKey(eOutputModule, "xml"), oct);
-    mod->RegisterConfig("outfile", nm);
+    mod->RegisterConfig("outfile", "octree.xml");
+    mod->RegisterConfig("order", nm);
     mod->ProcessVertices();
     mod->ProcessEdges();
     mod->ProcessFaces();
@@ -306,8 +302,9 @@ void Octree::SubDivide()
             {
                 if (m_octants[i]->NeedDivide() &&
                     m_octants[i]->DX() / 4.0 >
-                    (m_octants[i]->HasDelta()?
-                     min(m_minDelta,m_octants[i]->GetDelta()) : m_minDelta))
+                        (m_octants[i]->HasDelta()
+                             ? min(m_minDelta, m_octants[i]->GetDelta())
+                             : m_minDelta))
                 {
                     sublist.push_back(m_octants[i]);
                     inlist.insert(m_octants[i]->GetId());
@@ -356,7 +353,7 @@ void Octree::SubDivide()
             }
         }
 
-        vector<vector<OctantSharedPtr> >::reverse_iterator rit;
+        vector<vector<OctantSharedPtr>>::reverse_iterator rit;
         for (rit = dividelist.rbegin(); rit != dividelist.rend(); rit++)
         {
             vector<OctantSharedPtr> currentlist = *rit;
@@ -380,9 +377,9 @@ bool Octree::VerifyNeigbours()
     for (int i = 0; i < m_octants.size(); i++)
     {
         bool valid = true;
-        map<OctantFace, vector<OctantSharedPtr> > nlist =
+        map<OctantFace, vector<OctantSharedPtr>> nlist =
             m_octants[i]->GetNeigbours();
-        map<OctantFace, vector<OctantSharedPtr> >::iterator it;
+        map<OctantFace, vector<OctantSharedPtr>>::iterator it;
         for (it = nlist.begin(); it != nlist.end(); it++)
         {
             if (it->second.size() == 0)
@@ -413,9 +410,9 @@ bool Octree::VerifyNeigbours()
                 {
                     valid = false;
                     m_log(WARNING) << "wall neigbour error" << endl;
-                    m_log(WARNING) << expectedfx << " "
-                                   << m_octants[i]->FX(it->first)
-                                   << " " << it->first << endl;
+                    m_log(WARNING)
+                        << expectedfx << " " << m_octants[i]->FX(it->first)
+                        << " " << it->first << endl;
                 }
             }
             else if (it->second.size() == 1)
@@ -466,9 +463,9 @@ void Octree::SmoothSurfaceOctants()
             if (oct->IsDeltaKnown())
             {
                 vector<OctantSharedPtr> check;
-                map<OctantFace, vector<OctantSharedPtr> > nList =
+                map<OctantFace, vector<OctantSharedPtr>> nList =
                     oct->GetNeigbours();
-                map<OctantFace, vector<OctantSharedPtr> >::iterator it;
+                map<OctantFace, vector<OctantSharedPtr>>::iterator it;
 
                 for (it = nList.begin(); it != nList.end(); it++)
                 {
@@ -524,9 +521,9 @@ void Octree::PropagateDomain()
             if (!oct->IsDeltaKnown())
             { // if delta has not been asigned
                 vector<OctantSharedPtr> known;
-                map<OctantFace, vector<OctantSharedPtr> > nList =
+                map<OctantFace, vector<OctantSharedPtr>> nList =
                     oct->GetNeigbours();
-                map<OctantFace, vector<OctantSharedPtr> >::iterator it;
+                map<OctantFace, vector<OctantSharedPtr>>::iterator it;
 
                 for (it = nList.begin(); it != nList.end(); it++)
                 {
@@ -574,9 +571,9 @@ void Octree::PropagateDomain()
             if (oct->GetLocation() == eUnknown)
             { // if the node does not know its location
                 vector<OctantSharedPtr> known;
-                map<OctantFace, vector<OctantSharedPtr> > nList =
+                map<OctantFace, vector<OctantSharedPtr>> nList =
                     oct->GetNeigbours();
-                map<OctantFace, vector<OctantSharedPtr> >::iterator it;
+                map<OctantFace, vector<OctantSharedPtr>>::iterator it;
 
                 for (it = nList.begin(); it != nList.end(); it++)
                 {
@@ -680,9 +677,9 @@ void Octree::SmoothAllOctants()
             OctantSharedPtr oct = m_octants[i];
 
             vector<OctantSharedPtr> check;
-            map<OctantFace, vector<OctantSharedPtr> > nList =
+            map<OctantFace, vector<OctantSharedPtr>> nList =
                 oct->GetNeigbours();
-            map<OctantFace, vector<OctantSharedPtr> >::iterator it;
+            map<OctantFace, vector<OctantSharedPtr>>::iterator it;
             for (it = nList.begin(); it != nList.end(); it++)
             {
                 for (int j = 0; j < it->second.size(); j++)
@@ -819,8 +816,9 @@ int Octree::CountElemt()
             {
                 vol *= 0.0;
             }
-            total += vol / 2.0 / (oct->GetDelta() * oct->GetDelta() *
-                                  oct->GetDelta() / 6.0 / sqrt(2));
+            total += vol / 2.0 /
+                     (oct->GetDelta() * oct->GetDelta() * oct->GetDelta() /
+                      6.0 / sqrt(2));
         }
     }
 
@@ -830,7 +828,7 @@ int Octree::CountElemt()
 void Octree::CompileSourcePointList()
 {
     // Get the information of any curves that contain refinement data
-    map<int,pair<NekDouble,NekDouble>> curve_refinement;
+    map<int, pair<NekDouble, NekDouble>> curve_refinement;
     if (m_curverefinement.size() > 0)
     {
         m_log(VERBOSE) << "  - Modifying based on refinement curves" << endl;
@@ -841,12 +839,12 @@ void Octree::CompileSourcePointList()
             vector<NekDouble> data;
             ParseUtils::GenerateVector(curves[i], data);
             // data[0] = curve ID; data[1]= radius(R); data[2] = delta(D).
-            curve_refinement[int(data[0])] = {data[1],data[2]};
+            curve_refinement[int(data[0])] = {data[1], data[2]};
         }
     }
 
     int totalEnt = 0;
-    if(m_mesh->m_cad->Is2D())
+    if (m_mesh->m_cad->Is2D())
     {
         totalEnt = m_mesh->m_cad->GetNumCurve();
         for (int i = 1; i <= m_mesh->m_cad->GetNumCurve(); i++)
@@ -856,35 +854,38 @@ void Octree::CompileSourcePointList()
             CADCurveSharedPtr curve = m_mesh->m_cad->GetCurve(i);
 
             // Check if curve i has refinement data
-            map<int,pair<NekDouble,NekDouble>>::iterator it;
+            map<int, pair<NekDouble, NekDouble>>::iterator it;
             it = curve_refinement.find(i);
             // Add curve as a refinement source. This works akin to line sources
             // and does not affect the octree.
-            if(it != curve_refinement.end())
+            if (it != curve_refinement.end())
             {
                 // it->second.first = radius(R); it->second.second = delta(D).
-                m_csources.push_back(curvesource(curve,it->second.first,it->second.second));
+                m_csources.push_back(
+                    CurveSource(it->second.first, it->second.second, curve));
             }
 
             Array<OneD, NekDouble> bds = curve->GetBounds();
             // this works assuming the curves are not distorted
-            int samples  = ceil(curve->Length(bds[0],bds[1]) / m_minDelta) * 2;
-            samples = max(40, samples);
+            int samples  = ceil(curve->Length(bds[0], bds[1]) / m_minDelta) * 2;
+            samples      = max(40, samples);
             NekDouble dt = (bds[1] - bds[0]) / (samples + 1);
-            for (int j = 1; j < samples - 1; j++) // dont want first and last point
+            for (int j = 1; j < samples - 1;
+                 j++) // dont want first and last point
             {
                 NekDouble t = bds[0] + dt * j;
                 NekDouble C = curve->Curvature(t);
 
                 Array<OneD, NekDouble> loc = curve->P(t);
 
-                vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation> > ss =
-                    curve->GetAdjSurf();
+                vector<pair<weak_ptr<CADSurf>, CADOrientation::Orientation>>
+                    ss                    = curve->GetAdjSurf();
                 Array<OneD, NekDouble> uv = ss[0].first.lock()->locuv(loc);
 
                 if (C != 0.0)
                 {
-                    NekDouble del = 2.0 * (1.0 / C) * sqrt(m_eps * (2.0 - m_eps));
+                    NekDouble del =
+                        2.0 * (1.0 / C) * sqrt(m_eps * (2.0 - m_eps));
 
                     if (del > m_maxDelta)
                     {
@@ -900,17 +901,16 @@ void Octree::CompileSourcePointList()
                     // delta. This promotes the octree to continue refining the
                     // octant containing the source point until the refinement
                     // delta is reached. it->second.second = delta(D);
-                    if(it != curve_refinement.end())
+                    if (it != curve_refinement.end())
                     {
-                        newCPoint =
-                            MemoryManager<CPoint>::AllocateSharedPtr(
-                                ss[0].first.lock()->GetId(), uv, loc, del, it->second.second);
+                        newCPoint = MemoryManager<CPoint>::AllocateSharedPtr(
+                            ss[0].first.lock()->GetId(), uv, loc, del,
+                            it->second.second);
                     }
                     else
                     {
-                        newCPoint =
-                            MemoryManager<CPoint>::AllocateSharedPtr(
-                                ss[0].first.lock()->GetId(), uv, loc, del);
+                        newCPoint = MemoryManager<CPoint>::AllocateSharedPtr(
+                            ss[0].first.lock()->GetId(), uv, loc, del);
                     }
                     m_SPList.push_back(newCPoint);
                 }
@@ -932,7 +932,7 @@ void Octree::CompileSourcePointList()
         {
             m_log(VERBOSE).Progress(i, totalEnt, "  - Compiling source points");
 
-            CADSurfSharedPtr surf = m_mesh->m_cad->GetSurf(i);
+            CADSurfSharedPtr surf         = m_mesh->m_cad->GetSurf(i);
             Array<OneD, NekDouble> bounds = surf->GetBounds();
 
             // to figure out the amount of curvature sampling to be conducted on
@@ -951,7 +951,7 @@ void Octree::CompileSourcePointList()
             NekDouble DeltaU = 0.0;
             NekDouble DeltaV = 0.0;
 
-            Array<TwoD, Array<OneD, NekDouble> > samplepoints(40, 40);
+            Array<TwoD, Array<OneD, NekDouble>> samplepoints(40, 40);
 
             for (int j = 0; j < 40; j++)
             {
@@ -963,7 +963,7 @@ void Octree::CompileSourcePointList()
                     if (j == 40 - 1)
                         uv[1] = bounds[3];
                     if (k == 40 - 1)
-                        uv[0]          = bounds[1];
+                        uv[0] = bounds[1];
                     samplepoints[k][j] = surf->P(uv);
                 }
             }
@@ -974,18 +974,24 @@ void Octree::CompileSourcePointList()
                 {
                     NekDouble deltau = sqrt(
                         (samplepoints[k][j][0] - samplepoints[k + 1][j][0]) *
-                        (samplepoints[k][j][0] - samplepoints[k + 1][j][0]) +
+                            (samplepoints[k][j][0] -
+                             samplepoints[k + 1][j][0]) +
                         (samplepoints[k][j][1] - samplepoints[k + 1][j][1]) *
-                        (samplepoints[k][j][1] - samplepoints[k + 1][j][1]) +
+                            (samplepoints[k][j][1] -
+                             samplepoints[k + 1][j][1]) +
                         (samplepoints[k][j][2] - samplepoints[k + 1][j][2]) *
-                        (samplepoints[k][j][2] - samplepoints[k + 1][j][2]));
+                            (samplepoints[k][j][2] -
+                             samplepoints[k + 1][j][2]));
                     NekDouble deltav = sqrt(
                         (samplepoints[k][j][0] - samplepoints[k][j + 1][0]) *
-                        (samplepoints[k][j][0] - samplepoints[k][j + 1][0]) +
+                            (samplepoints[k][j][0] -
+                             samplepoints[k][j + 1][0]) +
                         (samplepoints[k][j][1] - samplepoints[k][j + 1][1]) *
-                        (samplepoints[k][j][1] - samplepoints[k][j + 1][1]) +
+                            (samplepoints[k][j][1] -
+                             samplepoints[k][j + 1][1]) +
                         (samplepoints[k][j][2] - samplepoints[k][j + 1][2]) *
-                        (samplepoints[k][j][2] - samplepoints[k][j + 1][2]));
+                            (samplepoints[k][j][2] -
+                             samplepoints[k][j + 1][2]));
 
                     if (deltau > DeltaU)
                         DeltaU = deltau;
@@ -998,8 +1004,8 @@ void Octree::CompileSourcePointList()
             // direction
             int nu = ceil(DeltaU * 40 / m_minDelta) * 2;
             int nv = ceil(DeltaV * 40 / m_minDelta) * 2;
-            nu = max(40, nu);
-            nv = max(40, nv);
+            nu     = max(40, nu);
+            nv     = max(40, nv);
 
             for (int j = 0; j < nu; j++)
             {
@@ -1085,27 +1091,28 @@ void Octree::CompileSourcePointList()
             x2[1] = data[4];
             x2[2] = data[5];
 
-            m_lsources.push_back(linesource(x1, x2, data[6], data[7]));
+            m_lsources.push_back(LineSource(x1, x2, data[6], data[7]));
 
-            // add non-boundary source points on the line to inform the octree of
-            // additional subdivisions
-            NekDouble dx = x2[0]-x1[0];
-            NekDouble dy = x2[1]-x1[1];
-            NekDouble dz = x2[2]-x1[2];
-            NekDouble length = sqrt(dx*dx+dy*dy+dz*dz);
-            int num_points = ceil(length / data[7])*2;
+            // add non-boundary source points on the line to inform the octree
+            // of additional subdivisions
+            NekDouble dx     = x2[0] - x1[0];
+            NekDouble dy     = x2[1] - x1[1];
+            NekDouble dz     = x2[2] - x1[2];
+            NekDouble length = sqrt(dx * dx + dy * dy + dz * dz);
+            int num_points   = ceil(length / data[7]) * 2;
             // update dx, dy & dz to now be the increment in each direction.
             dx = dx / (num_points + 1);
             dy = dy / (num_points + 1);
             dz = dz / (num_points + 1);
 
-            for(size_t j = 0; j < num_points; j++)
+            for (size_t j = 0; j < num_points; j++)
             {
                 Array<OneD, NekDouble> loc(3);
-                loc[0] = x1[0]+dx*j;
-                loc[1] = x1[1]+dy*j;
-                loc[2] = x1[2]+dz*j;
-                SrcPointSharedPtr newSPoint = MemoryManager<SrcPoint>::AllocateSharedPtr(loc,data[7]);
+                loc[0] = x1[0] + dx * j;
+                loc[1] = x1[1] + dy * j;
+                loc[2] = x1[2] + dz * j;
+                SrcPointSharedPtr newSPoint =
+                    MemoryManager<SrcPoint>::AllocateSharedPtr(loc, data[7]);
                 m_SPList.push_back(newSPoint);
             }
         }
@@ -1116,5 +1123,5 @@ NekDouble Octree::ddx(OctantSharedPtr i, OctantSharedPtr j)
 {
     return fabs(i->GetDelta() - j->GetDelta()) / i->Distance(j);
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

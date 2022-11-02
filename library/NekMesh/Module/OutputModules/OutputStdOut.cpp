@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Element.h>
 #include "OutputStdOut.h"
+#include <NekMesh/MeshElements/Element.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -44,7 +44,7 @@ namespace NekMesh
 {
 
 ModuleKey OutputStdOut::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eOutputModule, "stdout" ), OutputStdOut::create, "No output file");
+    ModuleKey(eOutputModule, "stdout"), OutputStdOut::create, "No output file");
 
 OutputStdOut::OutputStdOut(MeshSharedPtr m) : OutputModule(m)
 {
@@ -58,5 +58,5 @@ void OutputStdOut::Process()
 {
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalPrismElec.h
+// File: NodalPrismElec.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,14 +35,14 @@
 #ifndef NODALPRISMELEC_H
 #define NODALPRISMELEC_H
 
-#include <memory>
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <LibUtilities/Foundations/FoundationsFwd.hpp>
 #include <LibUtilities/Foundations/ManagerAccess.h>
 #include <LibUtilities/Foundations/NodalUtil.h>
 #include <LibUtilities/Foundations/Points.h>
 #include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp>
+#include <memory>
 
 namespace Nektar
 {
@@ -76,15 +76,15 @@ public:
                                    const Array<OneD, const NekDouble> &y,
                                    const Array<OneD, const NekDouble> &z)
     {
-        size_t       numpoints   = x.size();
-        unsigned int np          = GetTotNumPoints();
+        size_t numpoints = x.size();
+        unsigned int np  = GetTotNumPoints();
 
         Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
         CalculateInterpMatrix(x, y, z, interp);
 
         NekDouble *d = interp.data();
-        return MemoryManager<NekMatrix<NekDouble> >::AllocateSharedPtr(
-            numpoints, np, d);
+        return MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints,
+                                                                      np, d);
     }
 
 private:
@@ -107,7 +107,7 @@ private:
                                Array<OneD, NekDouble> &interp);
 };
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // NODALPRISMELEC_H

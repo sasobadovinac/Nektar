@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File RealComparison.hpp
+// File: RealComparison.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,37 +35,28 @@
 #ifndef NEKTAR_LIB_UTILITIES_REALCOMPARISON_H
 #define NEKTAR_LIB_UTILITIES_REALCOMPARISON_H
 
-#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
 #include <LibUtilities/BasicConst/NektarUnivConsts.hpp>
+#include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <boost/math/special_functions/relative_difference.hpp>
 #include <limits>
 #include <type_traits>
-#include <boost/math/special_functions/relative_difference.hpp>
 
 namespace Nektar
 {
 namespace LibUtilities
 {
 /// compare reals of same type with relative tolerance
-template
-<
+template <
     class T1, class T2,
-    class = typename std::enable_if
-    <
-        std::is_floating_point
-        <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type
-        >::value &&
-        std::is_same
-        <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type,
-            typename std::remove_cv<
-                typename std::remove_reference<T2>::type>::type
-        >::value
-    >::type
->
-inline bool IsRealEqual(T1&& lhs, T2&& rhs,
+    class = typename std::enable_if<
+        std::is_floating_point<typename std::remove_cv<
+            typename std::remove_reference<T1>::type>::type>::value &&
+        std::is_same<typename std::remove_cv<
+                         typename std::remove_reference<T1>::type>::type,
+                     typename std::remove_cv<typename std::remove_reference<
+                         T2>::type>::type>::value>::type>
+inline bool IsRealEqual(
+    T1 &&lhs, T2 &&rhs,
     const unsigned int factor = NekConstants::kNekFloatCompFact)
 {
     // Check precondition in debug mode
@@ -75,35 +66,25 @@ inline bool IsRealEqual(T1&& lhs, T2&& rhs,
 }
 
 /// compare reals of same type with absolute tolerance
-template
-<
+template <
     class T1, class T2,
-    class = typename std::enable_if
-    <
-        std::is_floating_point
-        <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type
-        >::value &&
-        std::is_same
-        <
-            typename std::remove_cv<
-                typename std::remove_reference<T1>::type>::type,
-            typename std::remove_cv<
-                typename std::remove_reference<T2>::type>::type
-        >::value
-    >::type
->
-inline bool IsRealClose(T1&& lhs, T2&& rhs, 
-    const NekDouble tol = NekConstants::kNekMachineEpsilon)
+    class = typename std::enable_if<
+        std::is_floating_point<typename std::remove_cv<
+            typename std::remove_reference<T1>::type>::type>::value &&
+        std::is_same<typename std::remove_cv<
+                         typename std::remove_reference<T1>::type>::type,
+                     typename std::remove_cv<typename std::remove_reference<
+                         T2>::type>::type>::value>::type>
+inline bool IsRealClose(T1 &&lhs, T2 &&rhs,
+                        const NekDouble tol = NekConstants::kNekMachineEpsilon)
 {
     // Check if tolerance is positive
     ASSERTL1(tol >= 0, "real comparison tolerance needs to be >= 0");
     // Check if distance is within tolerance
-    return std::abs(lhs-rhs) < tol;
+    return std::abs(lhs - rhs) < tol;
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif

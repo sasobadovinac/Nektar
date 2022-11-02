@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CouplingCwipi.h
+// File: CouplingCwipi.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -68,18 +68,14 @@ public:
     SOLVER_UTILS_EXPORT virtual ~CouplingCwipi();
 
     SOLVER_UTILS_EXPORT void SendCallback(
-        Array<OneD, Array<OneD, NekDouble> > &interpField,
-        Array<OneD, Array<OneD, NekDouble> > &distCoords);
+        Array<OneD, Array<OneD, NekDouble>> &interpField,
+        Array<OneD, Array<OneD, NekDouble>> &distCoords);
 
     SOLVER_UTILS_EXPORT static void InterpCallback(
-        const int entities_dim,
-        const int n_local_vertex,
-        const int n_local_element,
-        const int n_local_polhyedra,
-        const int n_distant_point,
-        const double local_coordinates[],
-        const int local_connectivity_index[],
-        const int local_connectivity[],
+        const int entities_dim, const int n_local_vertex,
+        const int n_local_element, const int n_local_polhyedra,
+        const int n_distant_point, const double local_coordinates[],
+        const int local_connectivity_index[], const int local_connectivity[],
         const int local_polyhedra_face_index[],
         const int local_polyhedra_cell_to_face_connectivity[],
         const int local_polyhedra_face_connectivity_index[],
@@ -88,21 +84,19 @@ public:
         const int distant_points_location[],
         const float distant_points_distance[],
         const int distant_points_barycentric_coordinates_index[],
-        const double distant_points_barycentric_coordinates[],
-        const int stride,
-        const cwipi_solver_type_t solver_type,
-        const void *local_field,
+        const double distant_points_barycentric_coordinates[], const int stride,
+        const cwipi_solver_type_t solver_type, const void *local_field,
         void *distant_field);
 
 protected:
     NekDouble m_filtWidth;
 
-    Array<OneD, Array<OneD, NekDouble> > m_sendField;
+    Array<OneD, Array<OneD, NekDouble>> m_sendField;
 
     MultiRegions::ExpListSharedPtr m_recvField;
 
-    Array<OneD, Array<OneD, NekDouble> > m_oldFields;
-    Array<OneD, Array<OneD, NekDouble> > m_newFields;
+    Array<OneD, Array<OneD, NekDouble>> m_oldFields;
+    Array<OneD, Array<OneD, NekDouble>> m_newFields;
 
     int m_sendHandle;
     int m_recvHandle;
@@ -131,21 +125,18 @@ protected:
     SOLVER_UTILS_EXPORT virtual void v_Init();
 
     SOLVER_UTILS_EXPORT virtual void v_Send(
-        const int step,
-        const NekDouble time,
-        const Array<OneD, const Array<OneD, NekDouble> > &field,
+        const int step, const NekDouble time,
+        const Array<OneD, const Array<OneD, NekDouble>> &field,
         std::vector<std::string> &varNames);
 
     SOLVER_UTILS_EXPORT virtual void v_Receive(
-        const int step,
-        const NekDouble time,
-        Array<OneD, Array<OneD, NekDouble> > &field,
+        const int step, const NekDouble time,
+        Array<OneD, Array<OneD, NekDouble>> &field,
         std::vector<std::string> &varNames);
 
     SOLVER_UTILS_EXPORT virtual void v_Finalize();
 
-    SOLVER_UTILS_EXPORT NekDouble GetSendField(const int i,
-                                               const int j) const
+    SOLVER_UTILS_EXPORT NekDouble GetSendField(const int i, const int j) const
     {
         return m_sendField[i][j];
     }
@@ -161,36 +152,33 @@ private:
 
     void ReceiveStart();
 
-    void ReceiveCwipi(const int step,
-                      const NekDouble time,
-                      Array<OneD, Array<OneD, NekDouble> > &field);
+    void ReceiveCwipi(const int step, const NekDouble time,
+                      Array<OneD, Array<OneD, NekDouble>> &field);
 
-    void EvaluateFields(Array<OneD, Array<OneD, NekDouble> > interpField,
-                        Array<OneD, Array<OneD, NekDouble> > distCoords);
+    void EvaluateFields(Array<OneD, Array<OneD, NekDouble>> interpField,
+                        Array<OneD, Array<OneD, NekDouble>> distCoords);
 
     void SetupSendInterpolation();
 
     void AnnounceMesh();
 
     void DumpRawFields(const NekDouble time,
-                       Array<OneD, Array<OneD, NekDouble> > rVals);
+                       Array<OneD, Array<OneD, NekDouble>> rVals);
 
-    void ExtrapolateFields(Array<OneD, Array<OneD, NekDouble> > &rVals,
+    void ExtrapolateFields(Array<OneD, Array<OneD, NekDouble>> &rVals,
                            Array<OneD, int> &notLoc);
 
     template <typename T>
-    void AddElementsToMesh(T geom,
-                           int &coordsPos,
-                           int &connecPos,
+    void AddElementsToMesh(T geom, int &coordsPos, int &connecPos,
                            int &conidxPos);
 };
 
-typedef std::function<void(Array<OneD, Array<OneD, NekDouble> > &interpField,
-                           Array<OneD, Array<OneD, NekDouble> > &distCoords)>
+typedef std::function<void(Array<OneD, Array<OneD, NekDouble>> &interpField,
+                           Array<OneD, Array<OneD, NekDouble>> &distCoords)>
     SendCallbackType;
 
 static std::map<std::string, SendCallbackType> SendCallbackMap;
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

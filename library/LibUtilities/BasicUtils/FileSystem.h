@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: FileSystem.h
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -26,22 +28,25 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
+// Description:
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_LIB_UTILITIES_FILESYSTEM_HPP
 #define NEKTAR_LIB_UTILITIES_FILESYSTEM_HPP
 
 #include <LibUtilities/LibUtilitiesDeclspec.h>
-#include <string>
 #include <boost/filesystem.hpp>
+#include <string>
 
 namespace fs = boost::filesystem;
 
 namespace Nektar
 {
-    namespace LibUtilities
-    {
-        LIB_UTILITIES_EXPORT std::string PortablePath(const boost::filesystem::path& path);
-    }
+namespace LibUtilities
+{
+LIB_UTILITIES_EXPORT std::string PortablePath(
+    const boost::filesystem::path &path);
 }
+} // namespace Nektar
 #endif

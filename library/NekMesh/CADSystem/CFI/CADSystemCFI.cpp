@@ -121,8 +121,7 @@ bool CADSystemCFI::LoadCAD()
     m_scal = 1.0;
     if (m_model->getUnits() == cfi::UNIT_INCHES)
     {
-        m_log(VERBOSE) << "  - Model is in inches, scaling accordingly"
-                       << endl;
+        m_log(VERBOSE) << "  - Model is in inches, scaling accordingly" << endl;
         m_scal = 0.0254;
     }
     else if (m_model->getUnits() == cfi::UNIT_MILLIMETERS ||
@@ -203,7 +202,8 @@ bool CADSystemCFI::LoadCAD()
 
                 delete edgeList;
 
-                for (it2 = fullEdgeList.begin(); it2 != fullEdgeList.end(); it2++)
+                for (it2 = fullEdgeList.begin(); it2 != fullEdgeList.end();
+                     it2++)
                 {
                     cfi::Oriented<cfi::TopoEntity *> orientatedEdge = *it2;
                     cfi::Line *edge =
@@ -411,8 +411,8 @@ void CADSystemCFI::AddSurf(int i, cfi::Face *in)
             delete vertList;
 
             edgeloop->edges.push_back(
-                m_curves[m_nameToCurveId[
-                        fullEdgeList.at(done).entity->getName()]]);
+                m_curves
+                    [m_nameToCurveId[fullEdgeList.at(done).entity->getName()]]);
 
             if (end)
             {
@@ -464,5 +464,5 @@ Array<OneD, NekDouble> CADSystemCFI::GetBoundingBox()
 
     return ret;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

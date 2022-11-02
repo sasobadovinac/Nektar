@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: NodalDemo.cpp
+// File: StdProject.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -41,7 +41,7 @@ namespace po = boost::program_options;
 NekDouble Shape_sol(NekDouble x, NekDouble y, NekDouble z, vector<int> order,
                     vector<BasisType> btype, ShapeType stype, bool diff);
 
-//Modification to deal with exact solution for diff. Return 1 if integer < 0.
+// Modification to deal with exact solution for diff. Return 1 if integer < 0.
 static double pow_loc(const double val, const int i)
 {
     return (i < 0) ? 1.0 : pow(val, i);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     po::variables_map vm = demo.GetVariableMap();
 
     StdExpansion *E = demo.CreateStdExpansion();
-    int dimension = E->GetShapeDimension();
+    int dimension   = E->GetShapeDimension();
 
     if (E == nullptr)
     {
@@ -80,15 +80,14 @@ int main(int argc, char *argv[])
                  "It is not possible to run the diff version for shape: point");
     }
 
-    const auto totPoints = (unsigned) E->GetTotPoints();
-    Array<OneD, NekDouble> x = Array<OneD, NekDouble>(totPoints);
-    Array<OneD, NekDouble> y = Array<OneD, NekDouble>(totPoints);
-    Array<OneD, NekDouble> z = Array<OneD, NekDouble>(totPoints);
-    Array<OneD, NekDouble> dx = Array<OneD, NekDouble>(totPoints);
-    Array<OneD, NekDouble> dy = Array<OneD, NekDouble>(totPoints);
-    Array<OneD, NekDouble> dz = Array<OneD, NekDouble>(totPoints);
+    const auto totPoints       = (unsigned)E->GetTotPoints();
+    Array<OneD, NekDouble> x   = Array<OneD, NekDouble>(totPoints);
+    Array<OneD, NekDouble> y   = Array<OneD, NekDouble>(totPoints);
+    Array<OneD, NekDouble> z   = Array<OneD, NekDouble>(totPoints);
+    Array<OneD, NekDouble> dx  = Array<OneD, NekDouble>(totPoints);
+    Array<OneD, NekDouble> dy  = Array<OneD, NekDouble>(totPoints);
+    Array<OneD, NekDouble> dz  = Array<OneD, NekDouble>(totPoints);
     Array<OneD, NekDouble> sol = Array<OneD, NekDouble>(totPoints);
-
 
     switch (dimension)
     {
@@ -113,14 +112,14 @@ int main(int argc, char *argv[])
             break;
     }
 
-    //get solution array
+    // get solution array
     for (int i = 0; i < totPoints; ++i)
     {
         sol[i] = Shape_sol(x[i], y[i], z[i], order, btype, stype, false);
     }
 
     Array<OneD, NekDouble> phys(totPoints);
-    Array<OneD, NekDouble> coeffs((unsigned) E->GetNcoeffs());
+    Array<OneD, NekDouble> coeffs((unsigned)E->GetNcoeffs());
 
     if (vm.count("diff"))
     {
@@ -147,10 +146,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    //Project onto expansion
+    // Project onto expansion
     E->FwdTrans(sol, coeffs);
 
-    //Backward transform solution to get projected values
+    // Backward transform solution to get projected values
     E->BwdTrans(coeffs, phys);
 
     if (vm.count("diff"))
@@ -161,7 +160,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    //Calculate L_inf & L_2 error
+    // Calculate L_inf & L_2 error
     cout << "L infinity error: \t" << E->Linf(phys, sol) << endl;
     if (stype != ePoint)
     {
@@ -170,11 +169,11 @@ int main(int argc, char *argv[])
 
     if (!vm.count("diff") && stype != ePoint)
     {
-        //Evaluate solution at x = y = 0 and print error
+        // Evaluate solution at x = y = 0 and print error
         Array<OneD, NekDouble> t = Array<OneD, NekDouble>(3);
-        t[0] = -0.5;
-        t[1] = -0.25;
-        t[2] = -0.3;
+        t[0]                     = -0.5;
+        t[1]                     = -0.25;
+        t[2]                     = -0.3;
         sol[0] = Shape_sol(t[0], t[1], t[2], order, btype, stype, false);
 
         NekDouble nsol = E->PhysEvaluate(t, phys);
@@ -191,19 +190,21 @@ int main(int argc, char *argv[])
     // distributions on each element.
     for (int i = 0; i < totPoints; ++i)
     {
-        sol[i] = dimension == 1 ? exp(x[i]) : dimension == 2 ?
-            exp(x[i]) * sin(y[i]) : exp(x[i] + y[i] + z[i]);
+        sol[i] = dimension == 1   ? exp(x[i])
+                 : dimension == 2 ? exp(x[i]) * sin(y[i])
+                                  : exp(x[i] + y[i] + z[i]);
     }
 
     NekDouble exact = 0.0;
-    switch(stype)
+    switch (stype)
     {
         case eSegment:
             exact = M_E - 1.0 / M_E;
             break;
         case eTriangle:
-            exact = -0.5 * (sin(1.0) + cos(1.0) + M_E * M_E *
-                            (sin(1.0) - cos(1.0))) / M_E;
+            exact = -0.5 *
+                    (sin(1.0) + cos(1.0) + M_E * M_E * (sin(1.0) - cos(1.0))) /
+                    M_E;
             break;
         case eQuadrilateral:
             exact = 2.0 * (M_E - 1.0 / M_E) * sin(1.0);
@@ -215,7 +216,7 @@ int main(int argc, char *argv[])
             exact = M_E - 1.0 / M_E / M_E / M_E;
             break;
         case ePyramid:
-            exact = - 1.0 / M_E / M_E / M_E - 4.0 / M_E + M_E;
+            exact = -1.0 / M_E / M_E / M_E - 4.0 / M_E + M_E;
             break;
         case eHexahedron:
             exact = pow((M_E * M_E - 1.0) / M_E, 3.0);
@@ -234,41 +235,50 @@ NekDouble Shape_sol(NekDouble x, NekDouble y, NekDouble z, vector<int> order,
                     vector<BasisType> btype, ShapeType stype, bool diff)
 {
     map<ShapeType, function<int(int, const vector<int> &)>> shapeConstraint2;
-    shapeConstraint2[ePoint] =
-            [](int,   const vector<int> &     ) { return 1; };
-    shapeConstraint2[eSegment] =
-            [](int,   const vector<int> &     ) { return 1; };
-    shapeConstraint2[eTriangle] =
-            [](int k, const vector<int> &order) { return order[1] - k; };
-    shapeConstraint2[eQuadrilateral] =
-            [](int,   const vector<int> &order) { return order[1]; };
-    shapeConstraint2[eTetrahedron] =
-            [](int k, const vector<int> &order) { return order[1] - k; };
-    shapeConstraint2[ePyramid] =
-            [](int k, const vector<int> &order) { return order[1] - k; };
-    shapeConstraint2[ePrism] =
-            [](int,   const vector<int> &order) { return order[1]; };
-    shapeConstraint2[eHexahedron] =
-            [](int,   const vector<int> &order) { return order[1]; };
+    shapeConstraint2[ePoint]    = [](int, const vector<int> &) { return 1; };
+    shapeConstraint2[eSegment]  = [](int, const vector<int> &) { return 1; };
+    shapeConstraint2[eTriangle] = [](int k, const vector<int> &order) {
+        return order[1] - k;
+    };
+    shapeConstraint2[eQuadrilateral] = [](int, const vector<int> &order) {
+        return order[1];
+    };
+    shapeConstraint2[eTetrahedron] = [](int k, const vector<int> &order) {
+        return order[1] - k;
+    };
+    shapeConstraint2[ePyramid] = [](int k, const vector<int> &order) {
+        return order[1] - k;
+    };
+    shapeConstraint2[ePrism] = [](int, const vector<int> &order) {
+        return order[1];
+    };
+    shapeConstraint2[eHexahedron] = [](int, const vector<int> &order) {
+        return order[1];
+    };
 
     map<ShapeType, function<int(int, int, const vector<int> &order)>>
-            shapeConstraint3;
-    shapeConstraint3[ePoint] =
-            [](int,   int,   const vector<int> &     ) { return 1; };
-    shapeConstraint3[eSegment] =
-            [](int,   int,   const vector<int> &     ) { return 1; };
-    shapeConstraint3[eTriangle] =
-            [](int,   int,   const vector<int> &     ) { return 1; };
-    shapeConstraint3[eQuadrilateral] =
-            [](int,   int,   const vector<int> &     ) { return 1; };
+        shapeConstraint3;
+    shapeConstraint3[ePoint] = [](int, int, const vector<int> &) { return 1; };
+    shapeConstraint3[eSegment] = [](int, int, const vector<int> &) {
+        return 1;
+    };
+    shapeConstraint3[eTriangle] = [](int, int, const vector<int> &) {
+        return 1;
+    };
+    shapeConstraint3[eQuadrilateral] = [](int, int, const vector<int> &) {
+        return 1;
+    };
     shapeConstraint3[eTetrahedron] =
-            [](int k, int l, const vector<int> &order) { return order[2] - k - l; };
-    shapeConstraint3[ePyramid] =
-            [](int k, int l, const vector<int> &order) { return order[2] - k - l; };
-    shapeConstraint3[ePrism] =
-            [](int k, int,   const vector<int> &order) { return order[2] - k; };
-    shapeConstraint3[eHexahedron] =
-            [](int,   int,   const vector<int> &order) { return order[2]; };
+        [](int k, int l, const vector<int> &order) { return order[2] - k - l; };
+    shapeConstraint3[ePyramid] = [](int k, int l, const vector<int> &order) {
+        return order[2] - k - l;
+    };
+    shapeConstraint3[ePrism] = [](int k, int, const vector<int> &order) {
+        return order[2] - k;
+    };
+    shapeConstraint3[eHexahedron] = [](int, int, const vector<int> &order) {
+        return order[2];
+    };
 
     NekDouble sol = 0.0;
     if (!diff)
@@ -332,7 +342,6 @@ NekDouble Shape_sol(NekDouble x, NekDouble y, NekDouble z, vector<int> order,
                            cos(M_PI * x) * sin(l * M_PI * y) +
                            cos(M_PI * x) * cos(l * M_PI * y);
                 }
-
             }
             else if (btype[1] == eFourierSingleMode)
             {
@@ -371,13 +380,13 @@ NekDouble Shape_sol(NekDouble x, NekDouble y, NekDouble z, vector<int> order,
         }
         else
         {
-            for (int k = 0;
-                 k < order[0]; ++k) //ShapeConstraint 1 is always < order1
+            for (int k = 0; k < order[0];
+                 ++k) // ShapeConstraint 1 is always < order1
             {
                 for (int l = 0; l < shapeConstraint2[stype](k, order); ++l)
                 {
-                    for (int m = 0;
-                         m < shapeConstraint3[stype](k, l, order); ++m)
+                    for (int m = 0; m < shapeConstraint3[stype](k, l, order);
+                         ++m)
                     {
                         sol += pow_loc(x, k) * pow_loc(y, l) * pow_loc(z, m);
                     }
@@ -401,10 +410,10 @@ NekDouble Shape_sol(NekDouble x, NekDouble y, NekDouble z, vector<int> order,
             {
                 for (int l = 0; l < order[1] / 2; ++l)
                 {
-                    sol += k * pow_loc(x, k - 1) * sin(M_PI * l * y)
-                           + M_PI * l * pow_loc(x, k) * cos(M_PI * l * y) +
-                           +k * pow_loc(x, k - 1) * cos(M_PI * l * y)
-                           - M_PI * l * pow_loc(x, k) * sin(M_PI * l * y);
+                    sol += k * pow_loc(x, k - 1) * sin(M_PI * l * y) +
+                           M_PI * l * pow_loc(x, k) * cos(M_PI * l * y) +
+                           +k * pow_loc(x, k - 1) * cos(M_PI * l * y) -
+                           M_PI * l * pow_loc(x, k) * sin(M_PI * l * y);
                 }
             }
         }
@@ -415,10 +424,10 @@ NekDouble Shape_sol(NekDouble x, NekDouble y, NekDouble z, vector<int> order,
             {
                 for (int l = 0; l < order[1]; ++l)
                 {
-                    sol += M_PI * k * cos(M_PI * k * x) * pow_loc(y, l)
-                           + l * sin(M_PI * k * x) * pow_loc(y, l - 1) +
-                           -M_PI * k * sin(M_PI * k * x) * pow_loc(y, l)
-                           + l * sin(M_PI * k * x) * pow_loc(y, l - 1);
+                    sol += M_PI * k * cos(M_PI * k * x) * pow_loc(y, l) +
+                           l * sin(M_PI * k * x) * pow_loc(y, l - 1) +
+                           -M_PI * k * sin(M_PI * k * x) * pow_loc(y, l) +
+                           l * sin(M_PI * k * x) * pow_loc(y, l - 1);
                 }
             }
         }
@@ -429,27 +438,27 @@ NekDouble Shape_sol(NekDouble x, NekDouble y, NekDouble z, vector<int> order,
             {
                 for (int l = 0; l < order[1] / 2; ++l)
                 {
-                    sol += M_PI * k * cos(M_PI * k * x) * sin(M_PI * l * y)
-                           + M_PI * l * sin(M_PI * k * x) * cos(M_PI * l * y)
-                           + M_PI * k * cos(M_PI * k * x) * cos(M_PI * l * y)
-                           - M_PI * l * sin(M_PI * k * x) * sin(M_PI * l * y)
-                           - M_PI * k * sin(M_PI * k * x) * sin(M_PI * l * y)
-                           + M_PI * l * cos(M_PI * k * x) * cos(M_PI * l * y)
-                           - M_PI * k * sin(M_PI * k * x) * cos(M_PI * l * y)
-                           - M_PI * l * cos(M_PI * k * x) * sin(M_PI * l * y);
+                    sol += M_PI * k * cos(M_PI * k * x) * sin(M_PI * l * y) +
+                           M_PI * l * sin(M_PI * k * x) * cos(M_PI * l * y) +
+                           M_PI * k * cos(M_PI * k * x) * cos(M_PI * l * y) -
+                           M_PI * l * sin(M_PI * k * x) * sin(M_PI * l * y) -
+                           M_PI * k * sin(M_PI * k * x) * sin(M_PI * l * y) +
+                           M_PI * l * cos(M_PI * k * x) * cos(M_PI * l * y) -
+                           M_PI * k * sin(M_PI * k * x) * cos(M_PI * l * y) -
+                           M_PI * l * cos(M_PI * k * x) * sin(M_PI * l * y);
                 }
             }
         }
         else
         {
             NekDouble a;
-            for (int k = 0;
-                 k < order[0]; ++k) //ShapeConstraint 1 is always < order1
+            for (int k = 0; k < order[0];
+                 ++k) // ShapeConstraint 1 is always < order1
             {
                 for (int l = 0; l < shapeConstraint2[stype](k, order); ++l)
                 {
-                    for (int m = 0;
-                         m < shapeConstraint3[stype](k, l, order); ++m)
+                    for (int m = 0; m < shapeConstraint3[stype](k, l, order);
+                         ++m)
                     {
                         a = k * pow_loc(x, k - 1) * pow_loc(y, l) *
                             pow_loc(z, m);

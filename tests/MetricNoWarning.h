@@ -41,36 +41,32 @@
 
 namespace Nektar
 {
-    class MetricNoWarning : public Metric
+class MetricNoWarning : public Metric
+{
+public:
+    virtual ~MetricNoWarning(){};
+
+    static MetricSharedPtr create(TiXmlElement *metric, bool generate)
     {
-    public:
-        virtual ~MetricNoWarning(){};
+        return MetricSharedPtr(new MetricNoWarning(metric, generate));
+    }
 
-        static MetricSharedPtr create(TiXmlElement *metric, bool generate)
-        {
-            return MetricSharedPtr(new MetricNoWarning(metric, generate));
-        }
+    static std::string type;
 
-        static std::string type;
+protected:
+    // Regex expression that should match warning message
+    boost::regex m_regexWarning{".*WARNING.*"};
 
-    protected:
+    // Vector of (optional) groups
+    std::vector<std::vector<std::string>> m_matches;
 
-        // Regex expression that should match warning message
-        boost::regex m_regexWarning{".*WARNING.*"};
+    // Constructor
+    MetricNoWarning(TiXmlElement *metric, bool generate);
 
-        // Vector of (optional) groups
-        std::vector<std::vector<std::string>> m_matches;
+    virtual bool v_Test(std::istream &pStdout, std::istream &pStderr);
+    virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
+};
 
-        // Constructor
-        MetricNoWarning(TiXmlElement *metric, bool generate);
-
-        virtual bool v_Test    (std::istream& pStdout, std::istream& pStderr);
-        virtual void v_Generate(std::istream& pStdout, std::istream& pStderr);
-
-    };
-
-}
-
-
+} // namespace Nektar
 
 #endif

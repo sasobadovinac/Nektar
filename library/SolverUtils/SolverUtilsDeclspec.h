@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: SolverUtilsDeclspec.h
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -26,6 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -33,14 +36,13 @@
 #define NEKTAR_SOLVER_UTILS_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef SOLVER_UTILS_EXPORTS
-        #define SOLVER_UTILS_EXPORT _declspec(dllexport)
-    #else
-        #define SOLVER_UTILS_EXPORT _declspec(dllimport)
-    #endif
+#ifdef SOLVER_UTILS_EXPORTS
+#define SOLVER_UTILS_EXPORT _declspec(dllexport)
 #else
-    #define SOLVER_UTILS_EXPORT
+#define SOLVER_UTILS_EXPORT _declspec(dllimport)
+#endif
+#else
+#define SOLVER_UTILS_EXPORT
 #endif
 
-#endif //NEKTAR_SOLVER_UTILS_DECLSPEC_H
-
+#endif // NEKTAR_SOLVER_UTILS_DECLSPEC_H

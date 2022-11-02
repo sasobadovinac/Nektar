@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: CADSystem.h
+//  File: CADSystemOCE.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -46,7 +46,6 @@ namespace NekMesh
 class CADSystemOCE : public CADSystem
 {
 public:
-
     static CADSystemSharedPtr create(std::string name)
     {
         return MemoryManager<CADSystemOCE>::AllocateSharedPtr(name);
@@ -57,7 +56,9 @@ public:
     /**
      * @brief Default constructor.
      */
-    CADSystemOCE(std::string name) : CADSystem(name, "oce") {}
+    CADSystemOCE(std::string name) : CADSystem(name, "oce")
+    {
+    }
     ~CADSystemOCE(){};
 
     bool LoadCAD();
@@ -86,8 +87,7 @@ private:
 
 typedef std::shared_ptr<CADSystemOCE> CADSystemOCESharedPtr;
 
-
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSys.h
+// File: GlobalLinSysDirect.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -34,39 +34,37 @@
 #ifndef NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSDIRECT_H
 #define NEKTAR_LIB_MULTIREGIONS_GLOBALLINSYSDIRECT_H
 
-#include <MultiRegions/MultiRegionsDeclspec.h>
 #include <MultiRegions/GlobalLinSys.h>
+#include <MultiRegions/MultiRegionsDeclspec.h>
 
 namespace Nektar
 {
-    namespace MultiRegions
-    {
-        // Forward declarations
-        class ExpList;
+namespace MultiRegions
+{
+// Forward declarations
+class ExpList;
 
-        /// A global linear system.
-        class GlobalLinSysDirect : virtual public GlobalLinSys
-        {
-        public:
-            MULTI_REGIONS_EXPORT GlobalLinSysDirect(
-                const GlobalLinSysKey &pKey,
-                const std::weak_ptr<ExpList> &pExp,
-                const std::shared_ptr<AssemblyMap> &pLocToGloMap);
-                
-                MULTI_REGIONS_EXPORT virtual ~GlobalLinSysDirect();
+/// A global linear system.
+class GlobalLinSysDirect : virtual public GlobalLinSys
+{
+public:
+    MULTI_REGIONS_EXPORT GlobalLinSysDirect(
+        const GlobalLinSysKey &pKey, const std::weak_ptr<ExpList> &pExp,
+        const std::shared_ptr<AssemblyMap> &pLocToGloMap);
 
-        protected:
-            /// Basic linear system object.
-            DNekLinSysSharedPtr m_linSys;
-            /// Solve the linear system for given input and output vectors.
-            virtual void v_SolveLinearSystem(
-                const int pNumRows,
-                const Array<OneD,const NekDouble> &pInput,
-                      Array<OneD,      NekDouble> &pOutput,
-                const AssemblyMapSharedPtr &locToGloMap,
-                const int pNumDir);
-        };
-    }
-}
+    MULTI_REGIONS_EXPORT virtual ~GlobalLinSysDirect();
+
+protected:
+    /// Basic linear system object.
+    DNekLinSysSharedPtr m_linSys;
+    /// Solve the linear system for given input and output vectors.
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir);
+};
+} // namespace MultiRegions
+} // namespace Nektar
 
 #endif

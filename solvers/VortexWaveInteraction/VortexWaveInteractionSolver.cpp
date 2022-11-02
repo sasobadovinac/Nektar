@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VortexWaveInteractionSolver.cpp
+// File: VortexWaveInteractionSolver.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,7 +32,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include<VortexWaveInteraction/VortexWaveInteraction.h>
+#include <VortexWaveInteraction/VortexWaveInteraction.h>
 
 using namespace std;
 using namespace Nektar;
@@ -48,42 +48,46 @@ void Mvdir(string dir, NekDouble dir_ending);
 int main(int argc, char *argv[])
 {
     try
-    { 
-        VortexWaveInteraction vwi(argc,argv);
+    {
+        VortexWaveInteraction vwi(argc, argv);
 
-        for(int i = 0; i < vwi.GetMaxWaveForceMagIter(); ++i)
+        for (int i = 0; i < vwi.GetMaxWaveForceMagIter(); ++i)
         {
             DoFixedForcingIteration(vwi);
-            
+
             NekDouble WaveForce = vwi.GetWaveForceMag();
-            
-            vwi.AppendEvlToFile("ConvergedSolns",WaveForce);            
+
+            vwi.AppendEvlToFile("ConvergedSolns", WaveForce);
 
             vwi.SetWaveForceMag(WaveForce + vwi.GetWaveForceMagStep());
             vwi.SetPrevAlpha(vwi.GetAlpha());
-            //vwi.SetAlpha(vwi.GetAlpha() + vwi.GetDAlphaDWaveForceMag()*vwi.GetWaveForceMagStep());
-            vwi.SetAlpha(vwi.GetAlpha() + (vwi.GetWaveForceMagStep() > 0?vwi.GetAlphaStep():(-vwi.GetAlphaStep())));
-            
-            // Save data directories. 
-            if(vwi.GetVWIIterationType() == eFixedAlphaWaveForcing)
+            // vwi.SetAlpha(vwi.GetAlpha() +
+            // vwi.GetDAlphaDWaveForceMag()*vwi.GetWaveForceMagStep());
+            vwi.SetAlpha(vwi.GetAlpha() + (vwi.GetWaveForceMagStep() > 0
+                                               ? vwi.GetAlphaStep()
+                                               : (-vwi.GetAlphaStep())));
+
+            // Save data directories.
+            if (vwi.GetVWIIterationType() == eFixedAlphaWaveForcing)
             {
-                Mvdir("Save",WaveForce);
+                Mvdir("Save", WaveForce);
             }
             else
             {
-                Mvdir("Save_Outer",WaveForce);
-                // Execute Another loop so that not same initial conditions as last iteration
+                Mvdir("Save_Outer", WaveForce);
+                // Execute Another loop so that not same initial conditions as
+                // last iteration
                 vwi.ExecuteLoop();
             }
         }
     }
-    
-    catch (const std::runtime_error&)
+
+    catch (const std::runtime_error &)
     {
         return 1;
     }
-    
-    catch (const std::string& eStr)
+
+    catch (const std::string &eStr)
     {
         cout << "Error: " << eStr << endl;
     }
@@ -92,21 +96,21 @@ int main(int argc, char *argv[])
 void Mvdir(string dir, NekDouble dir_ending)
 {
     // save OuterIter.his if exists
-    string saveOuterIter = "mv -f OuterIter.his "+ dir;
-    if(system(saveOuterIter.c_str()))
+    string saveOuterIter = "mv -f OuterIter.his " + dir;
+    if (system(saveOuterIter.c_str()))
     {
-        ASSERTL0(false,saveOuterIter.c_str());
+        ASSERTL0(false, saveOuterIter.c_str());
     }
-    
+
     // Mv directory
     string newdir  = dir + boost::lexical_cast<std::string>(dir_ending);
     string syscall = "mv -f " + dir + " " + newdir;
 
-    if(system(syscall.c_str()))
+    if (system(syscall.c_str()))
     {
-        ASSERTL0(false,syscall.c_str());
+        ASSERTL0(false, syscall.c_str());
     }
-    
+
     // make new directory
     syscall = "mkdir " + dir;
     ASSERTL0(system(syscall.c_str()) == 0,
@@ -116,172 +120,174 @@ void Mvdir(string dir, NekDouble dir_ending)
 void DoFixedForcingIteration(VortexWaveInteraction &vwi)
 {
 
-    // Reset eigenvalue checker in case used in previous iterations 
+    // Reset eigenvalue checker in case used in previous iterations
     vwi.CheckEigIsStationary(true);
 
-    switch(vwi.GetVWIIterationType())
+    switch (vwi.GetVWIIterationType())
     {
-    case eFixedAlpha:
+        case eFixedAlpha:
         {
             int i;
-            int nouter_iter = vwi.GetNOuterIterations();
+            int nouter_iter     = vwi.GetNOuterIterations();
             bool exit_iteration = false;
-            
-            while(exit_iteration == false)
+
+            while (exit_iteration == false)
             {
-                // Reset eigenvalue checker in case used in previous iterations 
+                // Reset eigenvalue checker in case used in previous iterations
                 vwi.CheckEigIsStationary(true);
 
-                for(i = vwi.GetIterStart(); i < vwi.GetIterEnd(); ++i)
+                for (i = vwi.GetIterStart(); i < vwi.GetIterEnd(); ++i)
                 {
                     vwi.ExecuteLoop();
                     vwi.SaveLoopDetails("Save", i);
-                    vwi.AppendEvlToFile("conv.his",i);            
-                        
-                    if(vwi.CheckEigIsStationary())
+                    vwi.AppendEvlToFile("conv.his", i);
+
+                    if (vwi.CheckEigIsStationary())
                     {
                         vwi.SaveLoopDetails("Save_Outer", nouter_iter);
                         break;
                     }
                 }
-                
-                // check to see if growth was converged. 
-                if(i == vwi.GetIterEnd())
+
+                // check to see if growth was converged.
+                if (i == vwi.GetIterEnd())
                 {
-                    cout << "Failed to converge growth rate in" << 
-                        " inner iteration after " << vwi.GetIterEnd() 
+                    cout << "Failed to converge growth rate in"
+                         << " inner iteration after " << vwi.GetIterEnd()
                          << " loops" << endl;
                     exit(1);
                 }
-                
-                vwi.AppendEvlToFile("OuterIter.his",nouter_iter++);            
+
+                vwi.AppendEvlToFile("OuterIter.his", nouter_iter++);
                 exit_iteration = vwi.CheckIfAtNeutralPoint();
-                if(exit_iteration == false)
+                if (exit_iteration == false)
                 {
                     vwi.UpdateWaveForceMag(nouter_iter);
                 }
-                
-                if(nouter_iter >= vwi.GetMaxOuterIterations())
+
+                if (nouter_iter >= vwi.GetMaxOuterIterations())
                 {
-                    cerr << "Failed to converge after "<< vwi.GetMaxOuterIterations() << " outer iterations" << endl;
+                    cerr << "Failed to converge after "
+                         << vwi.GetMaxOuterIterations() << " outer iterations"
+                         << endl;
                     exit_iteration = true;
                 }
             }
         }
         break;
-    case eFixedWaveForcing:
+        case eFixedWaveForcing:
         {
             int i;
-            int nouter_iter = vwi.GetNOuterIterations();
-            bool exit_iteration = false;
-	    NekDouble saveEigRelTol = vwi.GetEigRelTol();
-	    int saveMinIters = vwi.GetMinInnerIterations();
-	    int init_search = 0;
-            
-            
-            if(init_search)
+            int nouter_iter         = vwi.GetNOuterIterations();
+            bool exit_iteration     = false;
+            NekDouble saveEigRelTol = vwi.GetEigRelTol();
+            int saveMinIters        = vwi.GetMinInnerIterations();
+            int init_search         = 0;
+
+            if (init_search)
             {
-                // initial set m_eigelTol to 1e-1 and inner iterations to 1 for 
-                // quick search 
+                // initial set m_eigelTol to 1e-1 and inner iterations to 1 for
+                // quick search
                 vwi.SetEigRelTol(1e-1);
                 vwi.SetMinInnerIterations(2);
             }
 
-            while(exit_iteration == false)
+            while (exit_iteration == false)
             {
-                // Reset eigenvalue checker in case used in previous iterations 
+                // Reset eigenvalue checker in case used in previous iterations
                 vwi.CheckEigIsStationary(true);
 
-                for(i = vwi.GetIterStart(); i < vwi.GetIterEnd(); ++i)
+                for (i = vwi.GetIterStart(); i < vwi.GetIterEnd(); ++i)
                 {
                     vwi.ExecuteLoop();
                     vwi.SaveLoopDetails("Save", i);
-                    vwi.AppendEvlToFile("conv.his",i);                    
+                    vwi.AppendEvlToFile("conv.his", i);
 
-		    if(vwi.CheckEigIsStationary())
+                    if (vwi.CheckEigIsStationary())
                     {
                         vwi.SaveLoopDetails("Save_Outer", nouter_iter);
                         break;
                     }
                 }
-                
-                // check to see if growth was converged. 
-                if(i == vwi.GetIterEnd() )
+
+                // check to see if growth was converged.
+                if (i == vwi.GetIterEnd())
                 {
-                    cout << "Failed to converge growth rate in" << 
-                        " inner iteration after " << vwi.GetIterEnd() 
+                    cout << "Failed to converge growth rate in"
+                         << " inner iteration after " << vwi.GetIterEnd()
                          << " loops" << endl;
                     exit(1);
                 }
-                
-                vwi.AppendEvlToFile("OuterIter.his",nouter_iter++);            
-                
-		exit_iteration = vwi.CheckIfAtNeutralPoint();
+
+                vwi.AppendEvlToFile("OuterIter.his", nouter_iter++);
+
+                exit_iteration = vwi.CheckIfAtNeutralPoint();
 
                 cout << "m_alpha[0] is " << vwi.GetAlpha() << endl;
 
-                if(exit_iteration == false)
+                if (exit_iteration == false)
                 {
                     vwi.UpdateAlpha(nouter_iter);
-                    if(vwi.IfIterInterface()==true)
+                    if (vwi.IfIterInterface() == true)
                     {
-                          vwi.CalcNonLinearWaveForce();
+                        vwi.CalcNonLinearWaveForce();
                     }
                 }
 
-		// Redo iteration if at first coarse search 
-		if((exit_iteration == true) && (init_search == 1))
-		{
-		  init_search = 0;
-		  vwi.SetEigRelTol(saveEigRelTol);
-		  vwi.SetMinInnerIterations(saveMinIters);
-		  nouter_iter = 1;
-		  exit_iteration = false;
-		}
-                
-                if(nouter_iter >= vwi.GetMaxOuterIterations())
+                // Redo iteration if at first coarse search
+                if ((exit_iteration == true) && (init_search == 1))
                 {
-                    cerr << "Failed to converge after "<< vwi.GetMaxOuterIterations() << " outer iterations" << endl;
-		    exit_iteration = true;
+                    init_search = 0;
+                    vwi.SetEigRelTol(saveEigRelTol);
+                    vwi.SetMinInnerIterations(saveMinIters);
+                    nouter_iter    = 1;
+                    exit_iteration = false;
+                }
+
+                if (nouter_iter >= vwi.GetMaxOuterIterations())
+                {
+                    cerr << "Failed to converge after "
+                         << vwi.GetMaxOuterIterations() << " outer iterations"
+                         << endl;
+                    exit_iteration = true;
                 }
             }
-            
-            vwi.UpdateDAlphaDWaveForceMag(vwi.GetPrevAlpha());
 
+            vwi.UpdateDAlphaDWaveForceMag(vwi.GetPrevAlpha());
         }
         break;
-    case eFixedAlphaWaveForcing:
-        
-        for(int i = vwi.GetIterStart(); i < vwi.GetIterEnd(); ++i)
-        {
-            vwi.ExecuteLoop();
-            vwi.SaveLoopDetails("Save",i);
-            vwi.AppendEvlToFile("conv.his",i);            
-        }
-        break;
-    case eFixedWaveForcingWithSubIterationOnAlpha:
+        case eFixedAlphaWaveForcing:
+
+            for (int i = vwi.GetIterStart(); i < vwi.GetIterEnd(); ++i)
+            {
+                vwi.ExecuteLoop();
+                vwi.SaveLoopDetails("Save", i);
+                vwi.AppendEvlToFile("conv.his", i);
+            }
+            break;
+        case eFixedWaveForcingWithSubIterationOnAlpha:
         {
             int i;
-            int nouter_iter = vwi.GetNOuterIterations();
+            int nouter_iter     = vwi.GetNOuterIterations();
             bool exit_iteration = false;
-            
-            while(exit_iteration == false)
+
+            while (exit_iteration == false)
             {
                 bool exit_alphaIter = false;
-                
+
                 vwi.ExecuteLoop(false);
 
                 // Sub iterate Alpha
-                for(i = 0; i < vwi.GetIterEnd(); ++i)
+                for (i = 0; i < vwi.GetIterEnd(); ++i)
                 {
                     vwi.SaveLoopDetails("Save", i);
-                    
-                    vwi.AppendEvlToFile("AlphaIter.his",i);            
-                    
+
+                    vwi.AppendEvlToFile("AlphaIter.his", i);
+
                     exit_alphaIter = vwi.CheckIfAtNeutralPoint();
-                    if(exit_alphaIter == false)
+                    if (exit_alphaIter == false)
                     {
-                        vwi.UpdateAlpha(i+1);
+                        vwi.UpdateAlpha(i + 1);
                         vwi.ExecuteWave();
                     }
                     else
@@ -290,41 +296,39 @@ void DoFixedForcingIteration(VortexWaveInteraction &vwi)
                         break;
                     }
                 }
-                
-                // check to see if growth was converged. 
-                if(i == vwi.GetIterEnd())
+
+                // check to see if growth was converged.
+                if (i == vwi.GetIterEnd())
                 {
-                    cout << "Failed to converge growth rate in" << 
-                        " inner iteration after " << vwi.GetIterEnd() 
+                    cout << "Failed to converge growth rate in"
+                         << " inner iteration after " << vwi.GetIterEnd()
                          << " loops" << endl;
                     exit(1);
                 }
-                
-                vwi.MoveFile("AlphaIter.his","Save_Outer", nouter_iter);
+
+                vwi.MoveFile("AlphaIter.his", "Save_Outer", nouter_iter);
                 vwi.SaveLoopDetails("Save_Outer", nouter_iter);
-                vwi.AppendEvlToFile("OuterIter.his",nouter_iter++);            
-                
+                vwi.AppendEvlToFile("OuterIter.his", nouter_iter++);
+
                 // assume that if only previous inner loop has
                 // only done one iteration then we are at neutral
                 // point
-                if (i == 0  && vwi.IfIterInterface()==false)
+                if (i == 0 && vwi.IfIterInterface() == false)
                 {
                     exit_iteration = true;
                 }
-                
-                
-                if(nouter_iter >= vwi.GetMaxOuterIterations())
+
+                if (nouter_iter >= vwi.GetMaxOuterIterations())
                 {
-                    cerr << "Failed to converge after "<< vwi.GetMaxOuterIterations() << " outer iterations" << endl;
+                    cerr << "Failed to converge after "
+                         << vwi.GetMaxOuterIterations() << " outer iterations"
+                         << endl;
                     exit_iteration = true;
                 }
             }
         }
         break;
-    default:
-        ASSERTL0(false,"Unknown iteration type");
+        default:
+            ASSERTL0(false, "Unknown iteration type");
     }
-    
 }
-
-

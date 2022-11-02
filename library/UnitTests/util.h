@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File util.h
+// File: util.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -37,10 +37,10 @@
 
 namespace Nektar
 {
-    namespace UnitTests
-    {
-        void RedirectCerrIfNeeded();
-    }
+namespace UnitTests
+{
+void RedirectCerrIfNeeded();
 }
+} // namespace Nektar
 
-#endif //NEKTAR_UNIT_TESTS_UTIL_H
+#endif // NEKTAR_UNIT_TESTS_UTIL_H

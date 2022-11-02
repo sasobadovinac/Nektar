@@ -60,7 +60,7 @@ struct TriFaceIDs
     int c;
 };
 
-struct TriFaceHash : std::unary_function<TriFaceIDs, std::size_t>
+struct TriFaceHash
 {
     std::size_t operator()(TriFaceIDs const &p) const
     {
@@ -96,8 +96,7 @@ typedef std::unordered_map<TriFaceIDs, int, TriFaceHash> TriFaceMap;
 
 ModuleKey ProcessDisplacement::className =
     GetModuleFactory().RegisterCreatorFunction(
-        ModuleKey(eProcessModule, "displacement"),
-        ProcessDisplacement::create,
+        ModuleKey(eProcessModule, "displacement"), ProcessDisplacement::create,
         "Deform a mesh given an input field defining displacement");
 
 ProcessDisplacement::ProcessDisplacement(FieldSharedPtr f)
@@ -117,8 +116,8 @@ ProcessDisplacement::~ProcessDisplacement()
 void ProcessDisplacement::Process(po::variables_map &vm)
 {
     ProcessBoundaryExtract::Process(vm);
-    ASSERTL0( !boost::iequals(m_config["bnd"].as<string>(), "All"),
-        "ProcessDisplacement needs bnd parameter with a single id.");
+    ASSERTL0(!boost::iequals(m_config["bnd"].as<string>(), "All"),
+             "ProcessDisplacement needs bnd parameter with a single id.");
 
     string toFile = m_config["to"].as<string>();
 
@@ -198,10 +197,10 @@ void ProcessDisplacement::Process(po::variables_map &vm)
         }
 
         // bndconstrained?
-        bndCondExpU->FwdTrans_BndConstrained(bndCondExpU->GetPhys(),
-                                             bndCondExpU->UpdateCoeffs());
-        bndCondExpV->FwdTrans_BndConstrained(bndCondExpV->GetPhys(),
-                                             bndCondExpV->UpdateCoeffs());
+        bndCondExpU->FwdTransBndConstrained(bndCondExpU->GetPhys(),
+                                            bndCondExpU->UpdateCoeffs());
+        bndCondExpV->FwdTransBndConstrained(bndCondExpV->GetPhys(),
+                                            bndCondExpV->UpdateCoeffs());
     }
     else if (bndGraph->GetMeshDimension() == 2)
     {
@@ -250,12 +249,12 @@ void ProcessDisplacement::Process(po::variables_map &vm)
                              sIt.second->GetVid(2));
 
                 auto tIt = vertexFaceMap.find(t);
-                e = tIt == vertexFaceMap.end() ? -1 : tIt->second;
+                e        = tIt == vertexFaceMap.end() ? -1 : tIt->second;
             }
             else
             {
                 auto mIt = bndCondIds.find(sIt.first);
-                e = mIt == bndCondIds.end() ? -1 : mIt->second;
+                e        = mIt == bndCondIds.end() ? -1 : mIt->second;
             }
 
             if (e == -1)
@@ -294,13 +293,13 @@ void ProcessDisplacement::Process(po::variables_map &vm)
         }
 
         // bndconstrained?
-        bndCondExpU->FwdTrans_BndConstrained(bndCondExpU->GetPhys(),
-                                             bndCondExpU->UpdateCoeffs());
-        bndCondExpV->FwdTrans_BndConstrained(bndCondExpV->GetPhys(),
-                                             bndCondExpV->UpdateCoeffs());
-        bndCondExpW->FwdTrans_BndConstrained(bndCondExpW->GetPhys(),
-                                             bndCondExpW->UpdateCoeffs());
+        bndCondExpU->FwdTransBndConstrained(bndCondExpU->GetPhys(),
+                                            bndCondExpU->UpdateCoeffs());
+        bndCondExpV->FwdTransBndConstrained(bndCondExpV->GetPhys(),
+                                            bndCondExpV->UpdateCoeffs());
+        bndCondExpW->FwdTransBndConstrained(bndCondExpW->GetPhys(),
+                                            bndCondExpW->UpdateCoeffs());
     }
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

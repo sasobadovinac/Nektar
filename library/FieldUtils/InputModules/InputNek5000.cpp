@@ -32,14 +32,14 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 using namespace std;
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include "InputNek5000.h"
 
@@ -51,8 +51,7 @@ namespace FieldUtils
 ModuleKey InputNek5000::m_className[1] = {
     GetModuleFactory().RegisterCreatorFunction(
         ModuleKey(eInputModule, "fld5000"), InputNek5000::create,
-        "Reads Nek5000 field file.")
-};
+        "Reads Nek5000 field file.")};
 
 /**
  * @brief Set up InputNek5000 object.
@@ -123,8 +122,8 @@ void InputNek5000::Process(po::variables_map &vm)
 
     // Read header information (this is written as ASCII)
     string remain;
-    ss >> nBytes >> nBlocksXYZ[0] >> nBlocksXYZ[1] >> nBlocksXYZ[2]
-       >> nBlocks >> nTotBlocks >> time >> nCycle >> dir >> nDirs >> remain;
+    ss >> nBytes >> nBlocksXYZ[0] >> nBlocksXYZ[1] >> nBlocksXYZ[2] >>
+        nBlocks >> nTotBlocks >> time >> nCycle >> dir >> nDirs >> remain;
     boost::trim(remain);
 
     nDim = nBlocksXYZ[2] == 1 ? 2 : 3;
@@ -156,8 +155,8 @@ void InputNek5000::Process(po::variables_map &vm)
     ASSERTL0(nBytes == 8, "Data file must contain double-precision data");
 
     // Set up a field definition
-    LibUtilities::FieldDefinitionsSharedPtr fielddef = MemoryManager<
-        LibUtilities::FieldDefinitions>::AllocateSharedPtr();
+    LibUtilities::FieldDefinitionsSharedPtr fielddef =
+        MemoryManager<LibUtilities::FieldDefinitions>::AllocateSharedPtr();
     fielddef->m_shapeType         = LibUtilities::eHexahedron;
     fielddef->m_numHomogeneousDir = 0;
     fielddef->m_homoStrips        = false;
@@ -181,7 +180,7 @@ void InputNek5000::Process(po::variables_map &vm)
         {
             swap_endian(blockNum);
         }
-        fielddef->m_elementIDs.push_back(blockNum-1);
+        fielddef->m_elementIDs.push_back(blockNum - 1);
 
         maxID = maxID > blockNum ? maxID : blockNum;
         minID = minID < blockNum ? minID : blockNum;
@@ -189,7 +188,7 @@ void InputNek5000::Process(po::variables_map &vm)
 
     // Determine how many fields we have to extract
     size_t blockSize = nBlocksXYZ[0] * nBlocksXYZ[1] * nBlocksXYZ[2];
-    size_t dataSize = blockSize * nBlocks;
+    size_t dataSize  = blockSize * nBlocks;
 
     for (string::size_type i = 0; i < remain.size(); ++i)
     {
@@ -217,8 +216,8 @@ void InputNek5000::Process(po::variables_map &vm)
             case ' ':
                 continue;
             default:
-                cerr << "Field contains unknown variable: "
-                     << remain[i] << endl;
+                cerr << "Field contains unknown variable: " << remain[i]
+                     << endl;
                 abort();
         }
     }
@@ -233,17 +232,14 @@ void InputNek5000::Process(po::variables_map &vm)
         {
             case 'U':
             {
-                size_t cntVel[3] = {
-                    cnt, cnt + dataSize, cnt + 2*dataSize
-                };
+                size_t cntVel[3] = {cnt, cnt + dataSize, cnt + 2 * dataSize};
 
                 for (size_t j = 0; j < nBlocks; ++j)
                 {
                     for (size_t k = 0; k < nDim; ++k)
                     {
-                        file.read(
-                            (char *)&m_f->m_data[0][cntVel[k]],
-                            blockSize * sizeof(NekDouble));
+                        file.read((char *)&m_f->m_data[0][cntVel[k]],
+                                  blockSize * sizeof(NekDouble));
                         cntVel[k] += blockSize;
                     }
                 }
@@ -253,9 +249,8 @@ void InputNek5000::Process(po::variables_map &vm)
             }
             case 'P':
             {
-                file.read(
-                    (char *)&m_f->m_data[0][cnt],
-                    dataSize * sizeof(NekDouble));
+                file.read((char *)&m_f->m_data[0][cnt],
+                          dataSize * sizeof(NekDouble));
                 cnt += dataSize;
                 break;
             }
@@ -263,9 +258,8 @@ void InputNek5000::Process(po::variables_map &vm)
             case '2':
             case '3':
             {
-                file.read(
-                    (char *)&m_f->m_data[0][cnt],
-                    dataSize * sizeof(NekDouble));
+                file.read((char *)&m_f->m_data[0][cnt],
+                          dataSize * sizeof(NekDouble));
                 cnt += dataSize;
                 break;
             }
@@ -279,5 +273,5 @@ void InputNek5000::Process(po::variables_map &vm)
     // save field names
     m_f->m_variables = m_f->m_fielddef[0]->m_fields;
 }
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar

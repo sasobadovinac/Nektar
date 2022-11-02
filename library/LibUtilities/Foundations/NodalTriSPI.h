@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTriSPI.h
+// File: NodalTriSPI.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -74,7 +74,7 @@ private:
     void CalculateDerivMatrix();
 };
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 
 #endif // NODALTRIELEC_H

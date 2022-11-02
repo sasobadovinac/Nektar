@@ -35,9 +35,9 @@
 #ifndef NEKMESH_MESHELEMENTS_TRIANGLE
 #define NEKMESH_MESHELEMENTS_TRIANGLE
 
-#include <NekMesh/NekMeshDeclspec.h>
 #include <NekMesh/MeshElements/Element.h>
 #include <NekMesh/MeshElements/HOAlignment.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -75,18 +75,15 @@ public:
     NEKMESH_EXPORT virtual StdRegions::Orientation GetEdgeOrient(
         int edgeId, EdgeSharedPtr edge);
     NEKMESH_EXPORT virtual void MakeOrder(
-        int                                order,
-        SpatialDomains::GeometrySharedPtr  geom,
-        LibUtilities::PointsType           pType,
-        int                                coordDim,
-        int                               &id,
-        bool                               justConfig = false);
+        int order, SpatialDomains::GeometrySharedPtr geom,
+        LibUtilities::PointsType pType, int coordDim, int &id,
+        bool justConfig = false);
 
     NEKMESH_EXPORT static unsigned int GetNumNodes(ElmtConfig pConf);
     NEKMESH_EXPORT Array<OneD, NekDouble> Normal(bool inward = false);
 };
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

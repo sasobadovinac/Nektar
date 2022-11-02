@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Thread.h
+// File: Thread.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,13 +35,13 @@
 #ifndef NEKTAR_LIB_UTILITIES_THREAD_H_
 #define NEKTAR_LIB_UTILITIES_THREAD_H_
 
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/thread.hpp>
+#include <memory>
 #include <queue>
 #include <vector>
-#include <memory>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/thread/condition_variable.hpp>
-#include <boost/thread/thread.hpp>
 
 #include <LibUtilities/BasicUtils/NekFactory.hpp>
 
@@ -68,12 +68,11 @@ enum SchedType
     e_dynamic
 };
 
-
 class ThreadManager;
 typedef std::shared_ptr<ThreadManager> ThreadManagerSharedPtr;
 typedef LibUtilities::NekFactory<std::string, ThreadManager, unsigned int>
     ThreadManagerFactory;
-LIB_UTILITIES_EXPORT ThreadManagerFactory& GetThreadManagerFactory();
+LIB_UTILITIES_EXPORT ThreadManagerFactory &GetThreadManagerFactory();
 
 /**
  * @brief Base class for tasks to be sent to the ThreadManager to run.
@@ -96,35 +95,33 @@ LIB_UTILITIES_EXPORT ThreadManagerFactory& GetThreadManagerFactory();
  */
 class ThreadJob
 {
-    public:
-        /// Base constructor
-        LIB_UTILITIES_EXPORT ThreadJob();
-        /// Base destructor.
-        LIB_UTILITIES_EXPORT virtual ~ThreadJob();
+public:
+    /// Base constructor
+    LIB_UTILITIES_EXPORT ThreadJob();
+    /// Base destructor.
+    LIB_UTILITIES_EXPORT virtual ~ThreadJob();
 
-        /**
-         * This method will be called when the task is loaded
-         * onto a worker thread and is ready to run.  When Run
-         * has finished this instance will be destructed.
-         */
-        LIB_UTILITIES_EXPORT virtual void Run() = 0;
+    /**
+     * This method will be called when the task is loaded
+     * onto a worker thread and is ready to run.  When Run
+     * has finished this instance will be destructed.
+     */
+    LIB_UTILITIES_EXPORT virtual void Run() = 0;
 
-        /// Set number of worker threads.
-        LIB_UTILITIES_EXPORT void SetWorkerNum(unsigned int num);
+    /// Set number of worker threads.
+    LIB_UTILITIES_EXPORT void SetWorkerNum(unsigned int num);
 
-    protected:
-        /**
-         * Returns an integer identifying the worker thread the
-         * job is running on.  Value will be 0...N, where N is
-         * the number of active worker threads.
-         */
-        unsigned int GetWorkerNum();
+protected:
+    /**
+     * Returns an integer identifying the worker thread the
+     * job is running on.  Value will be 0...N, where N is
+     * the number of active worker threads.
+     */
+    unsigned int GetWorkerNum();
 
-    private:
-        unsigned int m_workerNum;
+private:
+    unsigned int m_workerNum;
 };
-
-
 
 /**
  * @brief The interface class for the controller for worker threads and jobs.
@@ -164,159 +161,160 @@ class ThreadJob
  */
 class ThreadManager : public std::enable_shared_from_this<ThreadManager>
 {
-    public:
-        /// Destructor.
-        LIB_UTILITIES_EXPORT virtual ~ThreadManager();
-        /**
-         * @brief Pass a list of tasklets to the master queue.
-         * @param joblist Vector of ThreadJob pointers.
-         *
-         * The list of jobs is copied into the master queue.  Jobs may be
-         * available for running *immediately*, even before the list has been
-         * fully copied.  This can have consequences for the scheduling.  If
-         * this is an issue then suspend the workers with SetNumWorkers(0) until
-         * the jobs are queued.
-         *
-         * @see SchedType
-         */
-        LIB_UTILITIES_EXPORT virtual void QueueJobs(std::vector<ThreadJob*>& joblist) = 0;
-        /**
-         * @brief Pass a single job to the master queue.
-         * @param job A pointer to a ThreadJob subclass.
-         *
-         * The job may become available for running immediately.  If this is an
-         * issue then suspend the workers with SetNumWorkers(0) until the jobs
-         * are queued.
-         */
-        LIB_UTILITIES_EXPORT virtual void QueueJob(ThreadJob* job) = 0;
-        /**
-         * @brief Return the number of active workers.
-         *
-         * Active workers are threads that are either running jobs
-         * or are waiting for jobs to be queued.
-         */
-        LIB_UTILITIES_EXPORT virtual unsigned int GetNumWorkers() = 0;
-        /**
-         * @brief Returns the worker number of the executing thread.
-         *
-         * Returns an unsigned int between 0 and N-1 where N is the number of
-         * active worker threads.  Repeated calls from within this thread will
-         * always return the same value and the value will be the same as
-         * returned from ThreadJob.GetWorkerNum().  The same thread will run a
-         * job until it finishes.
-         *
-         * Although if there are active threads then thread 0 is always one of
-         * them, it is possible that thread 0 does not run for a given set of
-         * jobs.  For example, if there are 4 active threads and 3 jobs are
-         * submitted with a e_static scheduling strategy and a chunksize of 1,
-         * then it is possible that threads 1,2, and 3 pick up the jobs and
-         * thread 0 remains idle.
-         *
-         * Returns 0 if called by non-thread.
-         */
-        LIB_UTILITIES_EXPORT virtual unsigned int GetWorkerNum() = 0;
-        /**
-         * @brief Sets the number of active workers.
-         * @param num The number of active workers.
-         *
-         * Active workers are threads that are either running jobs or are
-         * waiting for jobs to be queued.
-         *
-         * If num is greater than the maximum allowed number of active workers,
-         * then the maximum value will be used instead.
-         */
-        LIB_UTILITIES_EXPORT virtual void SetNumWorkers(const unsigned int num) = 0;
-        /**
-         * @brief Sets the number of active workers to the maximum.
-         *
-         * Sets the number of active workers to the maximum available.
-         */
-        LIB_UTILITIES_EXPORT virtual void SetNumWorkers() = 0;
-        /**
-         * @brief Gets the maximum available number of threads.
-         * @return The maximum number of workers.
-         */
-        LIB_UTILITIES_EXPORT virtual unsigned int GetMaxNumWorkers() = 0;
-        /**
-         * @brief Waits until all queued jobs are finished.
-         *
-         * If there are no jobs running or queued this method returns
-         * immediately.  Otherwise it blocks until the queue is empty and the
-         * worker threads are idle.
-         *
-         * Implementations *must* ensure that trivial deadlocks are not possible
-         * from this method, that is, that this code:
-         * @code
-         *  // assume ThreadManager* tm
-         *  // assume SomeJob is subclass of ThreadJob
-         *  // assume SomeJob job
-         *
-         *  tm->SetNumWorkers(0);
-         *  tm->QueueJob(job);
-         *  tm->Wait();
-         * @endcode
-         * does not wait forever.  Since the master thread is counted in the
-         * number of worker threads, implementations should increase the number
-         * of active workers by 1 on entering Wait().
-         */
-        LIB_UTILITIES_EXPORT virtual void Wait() = 0;
-        /**
-         * @brief Controls how many jobs are sent to each worker at a time.
-         *
-         * The exact meaning of this parameter depends on the current scheduling
-         * algorithm.
-         *
-         * @see SchedType
-         * @see SetSchedType()
-         */
-        LIB_UTILITIES_EXPORT virtual void SetChunkSize(unsigned int chnk) = 0;
-        /**
-         * @brief Sets the current scheduling algorithm.
-         * @see SetChunkSize()
-         */
-        LIB_UTILITIES_EXPORT virtual void SetSchedType(SchedType s) = 0;
-        /**
-         * @brief Indicates whether the code is in a worker thread or not.
-         * @return True if the caller is in a worker thread.
-         */
-        LIB_UTILITIES_EXPORT virtual bool InThread() = 0;
-        /**
-         * @brief A calling threads holds until all active threads call this
-         * method.
-         *
-         * When called, the calling thread will sleep until all active workers
-         * have called this method.  Once all have done so all threads awake and
-         * continue execution.
-         *
-         * @note Behaviour is likely undefined if the number of active workers
-         * is altered after a thread has called this method.  It is only safe to
-         * call SetNumWorkers() when no threads are holding.
-         */
-        LIB_UTILITIES_EXPORT virtual void Hold() = 0;
-        /**
-         * @brief Returns a description of the type of threading.
-         *
-         * E.g. "Threading with Boost"
-         */
-        LIB_UTILITIES_EXPORT virtual const std::string& GetType() const = 0;
+public:
+    /// Destructor.
+    LIB_UTILITIES_EXPORT virtual ~ThreadManager();
+    /**
+     * @brief Pass a list of tasklets to the master queue.
+     * @param joblist Vector of ThreadJob pointers.
+     *
+     * The list of jobs is copied into the master queue.  Jobs may be
+     * available for running *immediately*, even before the list has been
+     * fully copied.  This can have consequences for the scheduling.  If
+     * this is an issue then suspend the workers with SetNumWorkers(0) until
+     * the jobs are queued.
+     *
+     * @see SchedType
+     */
+    LIB_UTILITIES_EXPORT virtual void QueueJobs(
+        std::vector<ThreadJob *> &joblist) = 0;
+    /**
+     * @brief Pass a single job to the master queue.
+     * @param job A pointer to a ThreadJob subclass.
+     *
+     * The job may become available for running immediately.  If this is an
+     * issue then suspend the workers with SetNumWorkers(0) until the jobs
+     * are queued.
+     */
+    LIB_UTILITIES_EXPORT virtual void QueueJob(ThreadJob *job) = 0;
+    /**
+     * @brief Return the number of active workers.
+     *
+     * Active workers are threads that are either running jobs
+     * or are waiting for jobs to be queued.
+     */
+    LIB_UTILITIES_EXPORT virtual unsigned int GetNumWorkers() = 0;
+    /**
+     * @brief Returns the worker number of the executing thread.
+     *
+     * Returns an unsigned int between 0 and N-1 where N is the number of
+     * active worker threads.  Repeated calls from within this thread will
+     * always return the same value and the value will be the same as
+     * returned from ThreadJob.GetWorkerNum().  The same thread will run a
+     * job until it finishes.
+     *
+     * Although if there are active threads then thread 0 is always one of
+     * them, it is possible that thread 0 does not run for a given set of
+     * jobs.  For example, if there are 4 active threads and 3 jobs are
+     * submitted with a e_static scheduling strategy and a chunksize of 1,
+     * then it is possible that threads 1,2, and 3 pick up the jobs and
+     * thread 0 remains idle.
+     *
+     * Returns 0 if called by non-thread.
+     */
+    LIB_UTILITIES_EXPORT virtual unsigned int GetWorkerNum() = 0;
+    /**
+     * @brief Sets the number of active workers.
+     * @param num The number of active workers.
+     *
+     * Active workers are threads that are either running jobs or are
+     * waiting for jobs to be queued.
+     *
+     * If num is greater than the maximum allowed number of active workers,
+     * then the maximum value will be used instead.
+     */
+    LIB_UTILITIES_EXPORT virtual void SetNumWorkers(const unsigned int num) = 0;
+    /**
+     * @brief Sets the number of active workers to the maximum.
+     *
+     * Sets the number of active workers to the maximum available.
+     */
+    LIB_UTILITIES_EXPORT virtual void SetNumWorkers() = 0;
+    /**
+     * @brief Gets the maximum available number of threads.
+     * @return The maximum number of workers.
+     */
+    LIB_UTILITIES_EXPORT virtual unsigned int GetMaxNumWorkers() = 0;
+    /**
+     * @brief Waits until all queued jobs are finished.
+     *
+     * If there are no jobs running or queued this method returns
+     * immediately.  Otherwise it blocks until the queue is empty and the
+     * worker threads are idle.
+     *
+     * Implementations *must* ensure that trivial deadlocks are not possible
+     * from this method, that is, that this code:
+     * @code
+     *  // assume ThreadManager* tm
+     *  // assume SomeJob is subclass of ThreadJob
+     *  // assume SomeJob job
+     *
+     *  tm->SetNumWorkers(0);
+     *  tm->QueueJob(job);
+     *  tm->Wait();
+     * @endcode
+     * does not wait forever.  Since the master thread is counted in the
+     * number of worker threads, implementations should increase the number
+     * of active workers by 1 on entering Wait().
+     */
+    LIB_UTILITIES_EXPORT virtual void Wait() = 0;
+    /**
+     * @brief Controls how many jobs are sent to each worker at a time.
+     *
+     * The exact meaning of this parameter depends on the current scheduling
+     * algorithm.
+     *
+     * @see SchedType
+     * @see SetSchedType()
+     */
+    LIB_UTILITIES_EXPORT virtual void SetChunkSize(unsigned int chnk) = 0;
+    /**
+     * @brief Sets the current scheduling algorithm.
+     * @see SetChunkSize()
+     */
+    LIB_UTILITIES_EXPORT virtual void SetSchedType(SchedType s) = 0;
+    /**
+     * @brief Indicates whether the code is in a worker thread or not.
+     * @return True if the caller is in a worker thread.
+     */
+    LIB_UTILITIES_EXPORT virtual bool InThread() = 0;
+    /**
+     * @brief A calling threads holds until all active threads call this
+     * method.
+     *
+     * When called, the calling thread will sleep until all active workers
+     * have called this method.  Once all have done so all threads awake and
+     * continue execution.
+     *
+     * @note Behaviour is likely undefined if the number of active workers
+     * is altered after a thread has called this method.  It is only safe to
+     * call SetNumWorkers() when no threads are holding.
+     */
+    LIB_UTILITIES_EXPORT virtual void Hold() = 0;
+    /**
+     * @brief Returns a description of the type of threading.
+     *
+     * E.g. "Threading with Boost"
+     */
+    LIB_UTILITIES_EXPORT virtual const std::string &GetType() const = 0;
 
-        /// ThreadManager implementation.
-        LIB_UTILITIES_EXPORT virtual bool IsInitialised();
+    /// ThreadManager implementation.
+    LIB_UTILITIES_EXPORT virtual bool IsInitialised();
 
-        inline int GetThrFromPartition(int pPartition)
-        {
-            return pPartition % GetMaxNumWorkers();
-        }
+    inline int GetThrFromPartition(int pPartition)
+    {
+        return pPartition % GetMaxNumWorkers();
+    }
 
-        inline int GetRankFromPartition(int pPartition)
-        {
-            return pPartition / GetMaxNumWorkers();
-        }
+    inline int GetRankFromPartition(int pPartition)
+    {
+        return pPartition / GetMaxNumWorkers();
+    }
 
-        inline int GetPartitionFromRankThr(int pRank, unsigned int pThr)
-        {
-            return pRank * GetMaxNumWorkers() + pThr;
-        }
+    inline int GetPartitionFromRankThr(int pRank, unsigned int pThr)
+    {
+        return pRank * GetMaxNumWorkers() + pThr;
+    }
 };
 
 typedef boost::unique_lock<boost::shared_mutex> WriteLock;
@@ -341,33 +339,33 @@ typedef boost::shared_lock<boost::shared_mutex> ReadLock;
  */
 class ThreadMaster
 {
-    private:
-        std::vector<ThreadManagerSharedPtr> m_threadManagers;
-        boost::shared_mutex m_mutex;
-        std::string m_threadingType;
+private:
+    std::vector<ThreadManagerSharedPtr> m_threadManagers;
+    boost::shared_mutex m_mutex;
+    std::string m_threadingType;
 
-    public:
-        enum ThreadManagerName {
-                                SessionJob,
-                                THREADMANAGER_MAX
-                                };
-        /// Constructor
-        LIB_UTILITIES_EXPORT ThreadMaster();
-        /// Destructor
-        LIB_UTILITIES_EXPORT ~ThreadMaster();
-        /// Sets what ThreadManagers will be created in CreateInstance.
-        LIB_UTILITIES_EXPORT void SetThreadingType(const std::string &p_type);
-        /// Gets the ThreadManager associated with string s.
-        LIB_UTILITIES_EXPORT ThreadManagerSharedPtr& GetInstance(const ThreadManagerName t);
-        /// Creates an instance of a ThreadManager (which one is determined by
-        /// a previous call to SetThreadingType) and associates it with
-        /// the string s.
-        LIB_UTILITIES_EXPORT ThreadManagerSharedPtr CreateInstance(const ThreadManagerName t,
-            unsigned int nThr);
-
+public:
+    enum ThreadManagerName
+    {
+        SessionJob,
+        THREADMANAGER_MAX
+    };
+    /// Constructor
+    LIB_UTILITIES_EXPORT ThreadMaster();
+    /// Destructor
+    LIB_UTILITIES_EXPORT ~ThreadMaster();
+    /// Sets what ThreadManagers will be created in CreateInstance.
+    LIB_UTILITIES_EXPORT void SetThreadingType(const std::string &p_type);
+    /// Gets the ThreadManager associated with string s.
+    LIB_UTILITIES_EXPORT ThreadManagerSharedPtr &GetInstance(
+        const ThreadManagerName t);
+    /// Creates an instance of a ThreadManager (which one is determined by
+    /// a previous call to SetThreadingType) and associates it with
+    /// the string s.
+    LIB_UTILITIES_EXPORT ThreadManagerSharedPtr
+    CreateInstance(const ThreadManagerName t, unsigned int nThr);
 };
-LIB_UTILITIES_EXPORT ThreadMaster& GetThreadMaster();
-
+LIB_UTILITIES_EXPORT ThreadMaster &GetThreadMaster();
 
 /**
  * @brief A default ThreadManager.
@@ -378,34 +376,35 @@ LIB_UTILITIES_EXPORT ThreadMaster& GetThreadMaster();
  * This manager pretends to be a ThreadManager with 1 thread.  It will
  * cause an error if anything more than trivial functions are called.
  */
-class ThreadStartupManager: public ThreadManager
+class ThreadStartupManager : public ThreadManager
 {
-    public:
-        ThreadStartupManager();
-        ThreadStartupManager(const ThreadStartupManager& src) = default;
-        virtual ~ThreadStartupManager();
-        virtual void QueueJobs(std::vector<ThreadJob*>& joblist);
-        virtual void QueueJob(ThreadJob* job);
-        virtual unsigned int GetNumWorkers();
-        virtual unsigned int GetWorkerNum();
-        virtual void SetNumWorkers(const unsigned int num);
-        virtual void SetNumWorkers();
-        virtual unsigned int GetMaxNumWorkers();
-        virtual void Wait();
-        virtual void SetChunkSize(unsigned int chnk);
-        virtual void SetSchedType(SchedType s);
-        virtual bool InThread();
-        virtual void Hold();
-        virtual bool IsInitialised();
-        virtual const std::string& GetType() const;
-    private:
-        // Do not allow assignment as m_type is const
-        ThreadStartupManager& operator=(const ThreadStartupManager& src);
+public:
+    ThreadStartupManager();
+    ThreadStartupManager(const ThreadStartupManager &src) = default;
+    virtual ~ThreadStartupManager();
+    virtual void QueueJobs(std::vector<ThreadJob *> &joblist);
+    virtual void QueueJob(ThreadJob *job);
+    virtual unsigned int GetNumWorkers();
+    virtual unsigned int GetWorkerNum();
+    virtual void SetNumWorkers(const unsigned int num);
+    virtual void SetNumWorkers();
+    virtual unsigned int GetMaxNumWorkers();
+    virtual void Wait();
+    virtual void SetChunkSize(unsigned int chnk);
+    virtual void SetSchedType(SchedType s);
+    virtual bool InThread();
+    virtual void Hold();
+    virtual bool IsInitialised();
+    virtual const std::string &GetType() const;
 
-        const std::string m_type;
+private:
+    // Do not allow assignment as m_type is const
+    ThreadStartupManager &operator=(const ThreadStartupManager &src);
+
+    const std::string m_type;
 };
 
-}
+} // namespace Thread
 
-}
+} // namespace Nektar
 #endif /* THREAD_H_ */

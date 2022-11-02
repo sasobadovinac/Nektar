@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Expansion0D.cpp
+// File: Expansion0D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -36,11 +36,11 @@
 
 namespace Nektar
 {
-    namespace LocalRegions 
-    {
-        Expansion0D::Expansion0D(SpatialDomains::Geometry0DSharedPtr pGeom) :
-            StdExpansion(), Expansion(pGeom), StdExpansion0D()
-        {
-        }
-    } //end of namespace
-} //end of namespace
+namespace LocalRegions
+{
+Expansion0D::Expansion0D(SpatialDomains::Geometry0DSharedPtr pGeom)
+    : StdExpansion(), Expansion(pGeom), StdExpansion0D()
+{
+}
+} // namespace LocalRegions
+} // namespace Nektar

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterEnergy.h
+// File: FilterEnergy.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -46,22 +46,23 @@ class FilterEnergy : public Filter
 public:
     /// Creates an instance of this class
     static SolverUtils::FilterSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr         &pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const std::weak_ptr<SolverUtils::EquationSystem> &pEquation,
         const ParamMap &pParams)
     {
-        SolverUtils::FilterSharedPtr p = MemoryManager<FilterEnergy>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        SolverUtils::FilterSharedPtr p =
+            MemoryManager<FilterEnergy>::AllocateSharedPtr(pSession, pEquation,
+                                                           pParams);
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
     SOLVER_UTILS_EXPORT FilterEnergy(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const ParamMap                             &pParams);
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const ParamMap &pParams);
     SOLVER_UTILS_EXPORT ~FilterEnergy();
 
 protected:
@@ -77,16 +78,16 @@ protected:
     SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
 
 private:
-    unsigned int                m_index;
-    unsigned int                m_outputFrequency;
-    std::ofstream               m_outFile;
-    bool                        m_homogeneous;
-    NekDouble                   m_homogeneousLength;
-    NekDouble                   m_area;
+    unsigned int m_index;
+    unsigned int m_outputFrequency;
+    std::ofstream m_outFile;
+    bool m_homogeneous;
+    NekDouble m_homogeneousLength;
+    NekDouble m_area;
     LibUtilities::CommSharedPtr m_comm;
-    Array<OneD, unsigned int>   m_planes;
+    Array<OneD, unsigned int> m_planes;
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif

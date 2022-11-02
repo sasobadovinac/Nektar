@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File:  NekLinSysIter.cpp
+// File: NekLinSysIter.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,7 +29,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description:  NekLinSysIter definition
+// Description: NekLinSysIter definition
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -72,18 +72,19 @@ NekLinSysIter::NekLinSysIter(
     else
     {
         pSession->LoadParameter("NekLinSysTolerance", m_tolerance,
-            pKey.m_NekLinSysTolerance);
+                                pKey.m_NekLinSysTolerance);
     }
 
     if (pSession->DefinesGlobalSysSolnInfo(variable, "NekLinSysMaxIterations"))
     {
         m_maxiter = boost::lexical_cast<int>(
-            pSession->GetGlobalSysSolnInfo(variable, "NekLinSysMaxIterations").c_str());
+            pSession->GetGlobalSysSolnInfo(variable, "NekLinSysMaxIterations")
+                .c_str());
     }
     else
     {
-        pSession->LoadParameter("NekLinSysMaxIterations", m_maxiter, 
-            pKey.m_NekLinSysMaxIterations);
+        pSession->LoadParameter("NekLinSysMaxIterations", m_maxiter,
+                                pKey.m_NekLinSysMaxIterations);
     }
 
     if (pSession->DefinesGlobalSysSolnInfo(variable, "LinSysMaxStorage"))
@@ -94,10 +95,9 @@ NekLinSysIter::NekLinSysIter(
     }
     else
     {
-        pSession->LoadParameter("LinSysMaxStorage", m_LinSysMaxStorage, 
-            pKey.m_LinSysMaxStorage);
+        pSession->LoadParameter("LinSysMaxStorage", m_LinSysMaxStorage,
+                                pKey.m_LinSysMaxStorage);
     }
-    
 }
 
 void NekLinSysIter::v_InitObject()

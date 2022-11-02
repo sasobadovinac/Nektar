@@ -32,12 +32,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <StdRegions/StdNodalPrismExp.h>
 #include <LocalRegions/PrismExp.h>
 #include <SpatialDomains/PrismGeom.h>
+#include <StdRegions/StdNodalPrismExp.h>
 
-#include <NekMesh/MeshElements/Prism.h>
 #include <NekMesh/MeshElements/HOAlignment.h>
+#include <NekMesh/MeshElements/Prism.h>
 
 #include <LibUtilities/Foundations/ManagerAccess.h>
 
@@ -49,19 +49,17 @@ namespace NekMesh
 {
 
 LibUtilities::ShapeType Prism::m_type =
-    GetElementFactory().RegisterCreatorFunction(
-        LibUtilities::ePrism, Prism::create, "Prism");
+    GetElementFactory().RegisterCreatorFunction(LibUtilities::ePrism,
+                                                Prism::create, "Prism");
 
 /// Vertex IDs that make up prism faces.
 int Prism::m_faceIds[5][4] = {
-    {0, 1, 2, 3}, {0, 1, 4, -1}, {1, 2, 5, 4}, {3, 2, 5, -1}, {0, 3, 5, 4}
-};
+    {0, 1, 2, 3}, {0, 1, 4, -1}, {1, 2, 5, 4}, {3, 2, 5, -1}, {0, 3, 5, 4}};
 
 /**
  * @brief Create a prism element.
  */
-Prism::Prism(ElmtConfig pConf,
-             vector<NodeSharedPtr> pNodeList,
+Prism::Prism(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
              vector<int> pTagList)
     : Element(pConf, GetNumNodes(pConf), pNodeList.size())
 {
@@ -105,10 +103,9 @@ Prism::Prism(ElmtConfig pConf,
                 edgeNodes.push_back(pNodeList[j - 1]);
             }
         }
-        m_edge.push_back(EdgeSharedPtr(new Edge(pNodeList[it->first.first - 1],
-                                                pNodeList[it->first.second - 1],
-                                                edgeNodes,
-                                                m_conf.m_edgeCurveType)));
+        m_edge.push_back(EdgeSharedPtr(new Edge(
+            pNodeList[it->first.first - 1], pNodeList[it->first.second - 1],
+            edgeNodes, m_conf.m_edgeCurveType)));
         m_edge.back()->m_id = eid++;
     }
 
@@ -252,19 +249,17 @@ SpatialDomains::GeometrySharedPtr Prism::GetGeom(int coordDim)
         faces[i] = m_face[i]->GetGeom(coordDim);
     }
 
-    ret = MemoryManager<SpatialDomains::PrismGeom>::AllocateSharedPtr(
-        m_id, faces);
+    ret = MemoryManager<SpatialDomains::PrismGeom>::AllocateSharedPtr(m_id,
+                                                                      faces);
 
     ret->Setup();
     return ret;
 }
 
-StdRegions::Orientation Prism::GetEdgeOrient(
-    int edgeId, EdgeSharedPtr edge)
+StdRegions::Orientation Prism::GetEdgeOrient(int edgeId, EdgeSharedPtr edge)
 {
-    static int edgeVerts[9][2] = {
-        {0,1}, {1,2}, {3,2}, {0,3}, {0,4}, {1,4}, {2,5}, {3,5}, {4,5}
-    };
+    static int edgeVerts[9][2] = {{0, 1}, {1, 2}, {3, 2}, {0, 3}, {0, 4},
+                                  {1, 4}, {2, 5}, {3, 5}, {4, 5}};
 
     if (edge->m_n1 == m_vertex[edgeVerts[edgeId][0]])
     {
@@ -282,15 +277,12 @@ StdRegions::Orientation Prism::GetEdgeOrient(
     return StdRegions::eNoOrientation;
 }
 
-void Prism::MakeOrder(int                                order,
-                      SpatialDomains::GeometrySharedPtr  geom,
-                      LibUtilities::PointsType           pType,
-                      int                                coordDim,
-                      int                               &id,
-                      bool                               justConfig)
+void Prism::MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                      LibUtilities::PointsType pType, int coordDim, int &id,
+                      bool justConfig)
 {
     m_conf.m_order = order;
-    m_curveType = pType;
+    m_curveType    = pType;
     m_volumeNodes.clear();
 
     if (order == 1)
@@ -313,7 +305,7 @@ void Prism::MakeOrder(int                                order,
         return;
     }
 
-    int nPoints = order + 1;
+    int nPoints                            = order + 1;
     StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
 
     Array<OneD, NekDouble> px, py, pz;
@@ -321,7 +313,7 @@ void Prism::MakeOrder(int                                order,
     ASSERTL1(pKey.GetPointsDim() == 3, "Points distribution must be 3D");
     LibUtilities::PointsManager()[pKey]->GetPoints(px, py, pz);
 
-    Array<OneD, Array<OneD, NekDouble> > phys(coordDim);
+    Array<OneD, Array<OneD, NekDouble>> phys(coordDim);
 
     for (int i = 0; i < coordDim; ++i)
     {
@@ -329,7 +321,7 @@ void Prism::MakeOrder(int                                order,
         xmap->BwdTrans(geom->GetCoeffs(i), phys[i]);
     }
 
-    const int nPrismPts  = nPoints * nPoints * (nPoints + 1) / 2;
+    const int nPrismPts    = nPoints * nPoints * (nPoints + 1) / 2;
     const int nPrismIntPts = (nPoints - 2) * (nPoints - 3) * (nPoints - 2) / 2;
     m_volumeNodes.resize(nPrismIntPts);
 
@@ -346,15 +338,15 @@ void Prism::MakeOrder(int                                order,
             x[j] = xmap->PhysEvaluate(xp, phys[j]);
         }
 
-        m_volumeNodes[cnt] = std::shared_ptr<Node>(
-            new Node(id++, x[0], x[1], x[2]));
+        m_volumeNodes[cnt] =
+            std::shared_ptr<Node>(new Node(id++, x[0], x[1], x[2]));
     }
 }
 
 void Prism::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
 {
     int n = m_edge[0]->GetNodeCount();
-    nodeList.resize(n*n*(n+1)/2);
+    nodeList.resize(n * n * (n + 1) / 2);
 
     nodeList[0] = m_vertex[0];
     nodeList[1] = m_vertex[1];
@@ -362,40 +354,40 @@ void Prism::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     nodeList[3] = m_vertex[3];
     nodeList[4] = m_vertex[4];
     nodeList[5] = m_vertex[5];
-    int k = 6;
+    int k       = 6;
 
-    for(int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
         bool reverseEdge = m_edge[i]->m_n1 == m_vertex[i];
         if (reverseEdge)
         {
-            for(int j = 0; j < n-2; j++)
+            for (int j = 0; j < n - 2; j++)
             {
                 nodeList[k++] = m_edge[i]->m_edgeNodes[j];
             }
         }
         else
         {
-            for(int j = n-3; j >= 0; j--)
+            for (int j = n - 3; j >= 0; j--)
             {
                 nodeList[k++] = m_edge[i]->m_edgeNodes[j];
             }
         }
     }
 
-    for(int i = 4; i < 8; i++)
+    for (int i = 4; i < 8; i++)
     {
-        bool reverseEdge = m_edge[i]->m_n1 == m_vertex[i-4];
+        bool reverseEdge = m_edge[i]->m_n1 == m_vertex[i - 4];
         if (reverseEdge)
         {
-            for(int j = 0; j < n-2; j++)
+            for (int j = 0; j < n - 2; j++)
             {
                 nodeList[k++] = m_edge[i]->m_edgeNodes[j];
             }
         }
         else
         {
-            for(int j = n-3; j >= 0; j--)
+            for (int j = n - 3; j >= 0; j--)
             {
                 nodeList[k++] = m_edge[i]->m_edgeNodes[j];
             }
@@ -404,20 +396,20 @@ void Prism::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     bool reverseEdge = m_edge[8]->m_n1 == m_vertex[4];
     if (reverseEdge)
     {
-        for(int j = 0; j < n-2; j++)
+        for (int j = 0; j < n - 2; j++)
         {
             nodeList[k++] = m_edge[8]->m_edgeNodes[j];
         }
     }
     else
     {
-        for(int j = n-3; j >= 0; j--)
+        for (int j = n - 3; j >= 0; j--)
         {
             nodeList[k++] = m_edge[8]->m_edgeNodes[j];
         }
     }
 
-    vector<vector<int> > ts;
+    vector<vector<int>> ts;
     {
         vector<int> t(4);
         t[0] = m_vertex[0]->m_id;
@@ -457,9 +449,9 @@ void Prism::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
         ts.push_back(t);
     }
 
-    for(int i = 0; i < ts.size(); i++)
+    for (int i = 0; i < ts.size(); i++)
     {
-        if(ts[i].size() == 3)
+        if (ts[i].size() == 3)
         {
             vector<int> fcid;
             fcid.push_back(m_face[i]->m_vertexList[0]->m_id);
@@ -470,10 +462,9 @@ void Prism::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
 
             hot.Align(ts[i]);
 
-            std::copy(hot.surfVerts.begin(),
-                      hot.surfVerts.end(),
+            std::copy(hot.surfVerts.begin(), hot.surfVerts.end(),
                       nodeList.begin() + k);
-            k+= hot.surfVerts.size();
+            k += hot.surfVerts.size();
         }
         else
         {
@@ -487,16 +478,13 @@ void Prism::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
 
             hoq.Align(ts[i]);
 
-            std::copy(hoq.surfVerts.begin(),
-                      hoq.surfVerts.end(),
+            std::copy(hoq.surfVerts.begin(), hoq.surfVerts.end(),
                       nodeList.begin() + k);
-            k+= hoq.surfVerts.size();
+            k += hoq.surfVerts.size();
         }
     }
 
-    std::copy(m_volumeNodes.begin(),
-              m_volumeNodes.end(),
-              nodeList.begin() + k);
+    std::copy(m_volumeNodes.begin(), m_volumeNodes.end(), nodeList.begin() + k);
 }
 
 /**
@@ -579,5 +567,5 @@ void Prism::OrientPrism()
         cerr << "Warning: possible prism orientation problem." << endl;
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

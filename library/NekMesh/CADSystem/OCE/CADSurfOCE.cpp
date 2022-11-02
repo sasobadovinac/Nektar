@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: CADSurf.cpp
+//  File: CADSurfOCE.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -32,9 +32,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <NekMesh/CADSystem/OCE/CADSurfOCE.h>
 #include <NekMesh/CADSystem/OCE/TransfiniteSurface.h>
-#include <GeomAPI_ProjectPointOnSurf.hxx>
 
 using namespace std;
 
@@ -52,8 +52,8 @@ void CADSurfOCE::Initialise(int i, TopoDS_Shape in)
 
     // Test to see if this surface is a transfinite surface, since some OCC
     // functions will not work on our custom type.
-    Handle(Geom_TransfiniteSurface) tf = Handle(Geom_TransfiniteSurface)::
-        DownCast(m_s);
+    Handle(Geom_TransfiniteSurface) tf =
+        Handle(Geom_TransfiniteSurface)::DownCast(m_s);
     m_isTransfiniteSurf = !tf.IsNull();
 
     if (in.Orientation() == TopAbs_REVERSED)
@@ -341,7 +341,6 @@ void CADSurfOCE::Test(Array<OneD, NekDouble> uv)
     WARNINGL1(passed, "Warning: " + error.str());
     (void)passed; // suppress warning
 }
-
 
 } // namespace NekMesh
 } // namespace Nektar

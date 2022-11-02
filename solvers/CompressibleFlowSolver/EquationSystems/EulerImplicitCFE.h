@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EulerImplicitCFE.h
+// File: EulerImplicitCFE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: EulerImplicit equations in conservative variables without artificial diffusion
+// Description: EulerImplicit equations in conservative variables without
+// artificial diffusion
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -40,33 +41,46 @@
 namespace Nektar
 {
 
-    class EulerImplicitCFE : public CFSImplicit
+class EulerImplicitCFE : public CFSImplicit
+{
+public:
+    friend class MemoryManager<EulerImplicitCFE>;
+
+    /// Creates an instance of this class.
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
-        friend class MemoryManager<EulerImplicitCFE>;
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<EulerImplicitCFE>::AllocateSharedPtr(pSession,
+                                                               pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class.
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        {
-            SolverUtils::EquationSystemSharedPtr p = MemoryManager<EulerImplicitCFE>
-                ::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
+    /// Name of class.
+    static std::string className;
 
-        /// Name of class.
-        static std::string className;
+    virtual ~EulerImplicitCFE();
 
-        virtual ~EulerImplicitCFE();
+protected:
+    EulerImplicitCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
+                     const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    protected:
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
-        EulerImplicitCFE(const LibUtilities::SessionReaderSharedPtr& pSession,
-                 const SpatialDomains::MeshGraphSharedPtr& pGraph);
+    void v_DoDiffusion(
+        const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+        const Array<OneD, Array<OneD, NekDouble>> &pBwd) override final
+    {
+        boost::ignore_unused(inarray, outarray, pFwd, pBwd);
+        NEKERROR(ErrorUtil::efatal,
+                 "v_DoDiffusion is not implemented for implicit solvers");
+    }
 
-        virtual void v_InitObject();
-    };
-}
+    bool SupportsShockCaptType(const std::string type) const override final;
+};
+} // namespace Nektar
 #endif

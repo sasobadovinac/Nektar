@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EulerCFE.cpp
+// File: EulerCFE.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -39,34 +39,60 @@ using namespace std;
 
 namespace Nektar
 {
-    string EulerCFE::className = 
+string EulerCFE::className =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
-        "EulerCFE", EulerCFE::create, 
+        "EulerCFE", EulerCFE::create,
         "Euler equations in conservative variables.");
 
-    string EulerCFE::className2 =
+string EulerCFE::className2 =
     SolverUtils::GetEquationSystemFactory().RegisterCreatorFunction(
         "EulerADCFE", EulerCFE::create,
         "Euler equations in conservative variables with "
         "artificial diffusion (deprecated).");
 
-    EulerCFE::EulerCFE(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr& pGraph)
-        : UnsteadySystem(pSession, pGraph),
-          CompressibleFlowSystem(pSession, pGraph)
-    {
-    }
+EulerCFE::EulerCFE(const LibUtilities::SessionReaderSharedPtr &pSession,
+                   const SpatialDomains::MeshGraphSharedPtr &pGraph)
+    : UnsteadySystem(pSession, pGraph), CompressibleFlowSystem(pSession, pGraph)
+{
+}
 
-    void EulerCFE::v_InitObject()
-    {
-        CompressibleFlowSystem::v_InitObject();
-    }
+void EulerCFE::v_InitObject(bool DeclareFields)
+{
+    CompressibleFlowSystem::v_InitObject(DeclareFields);
+}
 
-    /**
-     * @brief Destructor for EulerCFE class.
-     */
-    EulerCFE::~EulerCFE()
+/**
+ * @brief Destructor for EulerCFE class.
+ */
+EulerCFE::~EulerCFE()
+{
+}
+
+/**
+ * @brief Apply artificial diffusion (Laplacian operator)
+ */
+void EulerCFE::v_DoDiffusion(const Array<OneD, Array<OneD, NekDouble>> &inarray,
+                             Array<OneD, Array<OneD, NekDouble>> &outarray,
+                             const Array<OneD, Array<OneD, NekDouble>> &pFwd,
+                             const Array<OneD, Array<OneD, NekDouble>> &pBwd)
+{
+    boost::ignore_unused(pFwd, pBwd);
+    if (m_artificialDiffusion)
     {
+        m_artificialDiffusion->DoArtificialDiffusion(inarray, outarray);
     }
 }
+
+bool EulerCFE::SupportsShockCaptType(const std::string type) const
+{
+    if (type == "NonSmooth" || type == "Off")
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+} // namespace Nektar

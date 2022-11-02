@@ -42,7 +42,7 @@ namespace Nektar
 namespace FieldUtils
 {
 /**
- * @brief This processing module calculates the vorticity and adds it
+ * @brief This processing module determine the number of modes and adds it
  * as an extra-field to the output file.
  */
 class ProcessNumModes : public ProcessModule
@@ -75,9 +75,8 @@ public:
     {
         return eModifyExp;
     }
-
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

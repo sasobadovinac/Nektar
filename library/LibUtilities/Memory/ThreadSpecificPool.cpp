@@ -1,5 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
+//  File: hreadSpecificPool.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -27,15 +28,17 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
+//  Description:
+//
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/Memory/ThreadSpecificPool.hpp>
 
 namespace Nektar
 {
-    MemPool& GetMemoryPool()
-    {
-        static MemPool instance;
-        return instance;
-    }
+MemPool &GetMemoryPool()
+{
+    static MemPool instance;
+    return instance;
 }
+} // namespace Nektar

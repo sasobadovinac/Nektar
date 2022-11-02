@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAverageFields.h
+// File: FilterAverageFields.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -49,27 +49,28 @@ public:
     /// Creates an instance of this class
     static FilterSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const std::map<std::string, std::string>   &pParams)
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const std::map<std::string, std::string> &pParams)
     {
-        FilterSharedPtr p = MemoryManager<FilterAverageFields>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        FilterSharedPtr p =
+            MemoryManager<FilterAverageFields>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
     SOLVER_UTILS_EXPORT FilterAverageFields(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
+        const std::weak_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
     SOLVER_UTILS_EXPORT virtual ~FilterAverageFields();
 
 protected:
     virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
         const NekDouble &time);
     virtual void v_PrepareOutput(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -85,7 +86,7 @@ protected:
         FilterFieldConvert::v_FillVariablesName(pFields);
     }
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERCHECKPOINT_H */

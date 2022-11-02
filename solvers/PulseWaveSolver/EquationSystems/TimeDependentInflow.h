@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeDependentInflow.h
+// File: TimeDependentInflow.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -51,35 +51,35 @@ typedef std::shared_ptr<TimeDependentInflow> TimeDependentInflowSharedPtr;
 // A global linear system.
 class TimeDependentInflow : public PulseWaveBoundary
 {
-    public:
-        // Creates an instance of this class
-        static PulseWaveBoundarySharedPtr
-        create(Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
-               const LibUtilities::SessionReaderSharedPtr &pSession,
-               PulseWavePressureAreaSharedPtr &pressureArea)
-        {
-            return MemoryManager<TimeDependentInflow>::AllocateSharedPtr(
-                                              pVessel, pSession, pressureArea);
-        }
+public:
+    // Creates an instance of this class
+    static PulseWaveBoundarySharedPtr create(
+        Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        PulseWavePressureAreaSharedPtr &pressureArea)
+    {
+        return MemoryManager<TimeDependentInflow>::AllocateSharedPtr(
+            pVessel, pSession, pressureArea);
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        TimeDependentInflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
-                            const LibUtilities::SessionReaderSharedPtr pSession,
-                            PulseWavePressureAreaSharedPtr pressureArea);
+    TimeDependentInflow(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
+                        const LibUtilities::SessionReaderSharedPtr pSession,
+                        PulseWavePressureAreaSharedPtr pressureArea);
 
-        virtual ~TimeDependentInflow();
+    virtual ~TimeDependentInflow();
 
-    protected:
-        virtual void
-        v_DoBoundary(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-                     Array<OneD, Array<OneD, NekDouble>> &A_0,
-                     Array<OneD, Array<OneD, NekDouble>> &beta,
-                     Array<OneD, Array<OneD, NekDouble> > &alpha,
-                     const NekDouble time, int omega, int offset, int n);
+protected:
+    virtual void v_DoBoundary(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &A_0,
+        Array<OneD, Array<OneD, NekDouble>> &beta,
+        Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time,
+        int omega, int offset, int n);
 
-    private:
+private:
 };
 
 } // namespace Nektar

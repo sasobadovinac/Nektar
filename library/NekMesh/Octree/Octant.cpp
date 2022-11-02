@@ -85,7 +85,7 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
     // pull information from parent
     Array<OneD, NekDouble> parentloc = m_parent->GetLoc();
     m_hd                             = m_parent->DX() / 2.0;
-    m_loc = Array<OneD, NekDouble>(3);
+    m_loc                            = Array<OneD, NekDouble>(3);
     if (dir[0] == eForward)
     {
         m_loc[0] = parentloc[0] + m_hd;
@@ -142,7 +142,7 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
 
             if (SourcePointList[i]->HasRDelta())
             {
-                if(SourcePointList[i]->GetRDelta() < minDif)
+                if (SourcePointList[i]->GetRDelta() < minDif)
                 {
                     minDif = SourcePointList[i]->GetRDelta();
                 }
@@ -166,7 +166,7 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
 
         SetDelta(minDif);
 
-        //encourage subdivision to keep spec smooth
+        // encourage subdivision to keep spec smooth
         if (GetDelta() < 5.0 * DX())
         {
             m_needToDivide = true;
@@ -180,11 +180,7 @@ Octant::Octant(int i, OctantSharedPtr p, Array<OneD, OctantFace> dir)
 }
 
 // constructor for the master octant
-Octant::Octant(int i,
-               NekDouble x,
-               NekDouble y,
-               NekDouble z,
-               NekDouble dx,
+Octant::Octant(int i, NekDouble x, NekDouble y, NekDouble z, NekDouble dx,
                const vector<SPBaseSharedPtr> &splist)
     : m_id(i), m_hd(dx)
 {
@@ -504,5 +500,5 @@ bool operator==(OctantSharedPtr const &p1, OctantSharedPtr const &p2)
 
     return false;
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

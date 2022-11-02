@@ -39,9 +39,9 @@
 
 #include <LibUtilities/BasicUtils/FieldIO.h>
 
-#include <NekMesh/NekMeshDeclspec.h>
-#include <NekMesh/MeshElements/Element.h>
 #include <NekMesh/MeshElements/Composite.h>
+#include <NekMesh/MeshElements/Element.h>
+#include <NekMesh/NekMeshDeclspec.h>
 
 namespace Nektar
 {
@@ -86,7 +86,7 @@ typedef std::shared_ptr<Condition> ConditionSharedPtr;
 typedef std::map<int, ConditionSharedPtr> ConditionMap;
 
 NEKMESH_EXPORT bool operator==(ConditionSharedPtr const &c1,
-                                    ConditionSharedPtr const &c2);
+                               ConditionSharedPtr const &c2);
 
 class Mesh
 {
@@ -96,45 +96,45 @@ public:
     }
 
     /// Dimension of the expansion.
-    unsigned int                    m_expDim;
+    unsigned int m_expDim;
     /// Dimension of the space in which the mesh is defined.
-    unsigned int                    m_spaceDim;
+    unsigned int m_spaceDim;
     /// a order tag to aid output, a bit of a hack
-    unsigned int                    m_nummode;
+    unsigned int m_nummode;
     /// List of mesh nodes.
-    std::vector<NodeSharedPtr>      m_node;
+    std::vector<NodeSharedPtr> m_node;
     /// Set of element vertices.
-    NodeSet                         m_vertexSet;
+    NodeSet m_vertexSet;
     /// used for meshing purposes to keep trac of ids
-    int                             m_numNodes;
+    int m_numNodes;
     /// Set of element edges.
-    EdgeSet                         m_edgeSet;
+    EdgeSet m_edgeSet;
     /// Set of element faces.
-    FaceSet                         m_faceSet;
+    FaceSet m_faceSet;
     /// Map for elements.
-    ElementMap                      m_element;
+    ElementMap m_element;
     /// Map for composites.
-    CompositeMap                    m_composite;
+    CompositeMap m_composite;
     /// Boundary conditions maps tag to condition.
-    ConditionMap                    m_condition;
+    ConditionMap m_condition;
     /// List of fields names.
-    std::vector<std::string>        m_fields;
+    std::vector<std::string> m_fields;
     /// Map of vertex normals.
-    std::unordered_map<int, Node>   m_vertexNormals;
+    std::unordered_map<int, Node> m_vertexNormals;
     /// Set of all pairs of element ID and edge/face number on which to
     /// apply spherigon surface smoothing.
-    std::set<std::pair<int, int> >  m_spherigonSurfs;
+    std::set<std::pair<int, int>> m_spherigonSurfs;
     /// List of face labels for composite annotation
-    std::map<int, std::string>      m_faceLabels;
+    std::map<int, std::string> m_faceLabels;
     /// CAD system pointer, if there is no cad its empty
-    CADSystemSharedPtr              m_cad;
+    CADSystemSharedPtr m_cad;
     /// Octree system pointer, if there is no octree its empty
-    OctreeSharedPtr                 m_octree;
+    OctreeSharedPtr m_octree;
     /// Metadata map for storing any mesh generation parameters
-    LibUtilities::FieldMetaDataMap  m_metadata;
+    LibUtilities::FieldMetaDataMap m_metadata;
     /// MPI communicator in case we end up using MPI multiple times from
     /// Nektar++ SessionReader object.
-    LibUtilities::CommSharedPtr     m_comm;
+    LibUtilities::CommSharedPtr m_comm;
 
     /// Returns the total number of elements in the mesh with
     /// dimension expDim.
@@ -145,9 +145,8 @@ public:
     /// Returns the total number of entities in the mesh.
     NEKMESH_EXPORT unsigned int GetNumEntities();
 
-    NEKMESH_EXPORT void MakeOrder(int                       order,
-                                  LibUtilities::PointsType  distType,
-                                  Logger                   &log);
+    NEKMESH_EXPORT void MakeOrder(int order, LibUtilities::PointsType distType,
+                                  Logger &log);
 
     NEKMESH_EXPORT void PrintStats(Logger &out);
 };
@@ -155,7 +154,7 @@ public:
 /// Shared pointer to a mesh.
 typedef std::shared_ptr<Mesh> MeshSharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

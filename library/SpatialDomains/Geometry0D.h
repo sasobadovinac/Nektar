@@ -62,12 +62,11 @@ public:
 protected:
     virtual bool v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
                                  Array<OneD, NekDouble> &locCoord,
-                                 NekDouble tol,
-                                 NekDouble &dist);
+                                 NekDouble tol, NekDouble &dist);
     virtual int v_GetShapeDim() const;
 };
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_GEOMETRY1D_H

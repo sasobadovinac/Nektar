@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterMaxMinFields.cpp
+// File: FilterMaxMinFields.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -34,21 +34,20 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <SolverUtils/Filters/FilterMaxMinFields.h>
 #include <CompressibleFlowSolver/Misc/VariableConverter.h>
+#include <SolverUtils/Filters/FilterMaxMinFields.h>
 
 namespace Nektar
 {
 namespace SolverUtils
 {
 std::string FilterMaxMinFields::className =
-        GetFilterFactory().RegisterCreatorFunction(
-                "MaxMinFields", FilterMaxMinFields::create);
+    GetFilterFactory().RegisterCreatorFunction("MaxMinFields",
+                                               FilterMaxMinFields::create);
 
 FilterMaxMinFields::FilterMaxMinFields(
     const LibUtilities::SessionReaderSharedPtr &pSession,
-    const std::weak_ptr<EquationSystem>      &pEquation,
-    const ParamMap &pParams)
+    const std::weak_ptr<EquationSystem> &pEquation, const ParamMap &pParams)
     : FilterFieldConvert(pSession, pEquation, pParams)
 {
     // Load sampling frequency
@@ -64,15 +63,14 @@ FilterMaxMinFields::FilterMaxMinFields(
     }
 
     // Load flag for max or min
-    it = pParams.find("MaxOrMin");
+    it                  = pParams.find("MaxOrMin");
     std::string sOption = it->second.c_str();
-    if ( boost::iequals(sOption, "maximum") ||
-         boost::iequals(sOption, "max") )
+    if (boost::iequals(sOption, "maximum") || boost::iequals(sOption, "max"))
     {
         m_isMax = true;
     }
-    else if ( boost::iequals(sOption, "minimum") ||
-              boost::iequals(sOption, "min") )
+    else if (boost::iequals(sOption, "minimum") ||
+             boost::iequals(sOption, "min"))
     {
         m_isMax = false;
     }
@@ -90,7 +88,6 @@ FilterMaxMinFields::~FilterMaxMinFields()
 {
 }
 
-
 void FilterMaxMinFields::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
@@ -104,11 +101,11 @@ void FilterMaxMinFields::v_Initialise(
     m_outFieldsPhys.resize(m_variables.size());
     for (int n = 0; n < m_variables.size(); ++n)
     {
-        nf = (n < pFields.size())? n: 0;
-        m_curFieldsPhys[n] = Array<OneD, NekDouble>(
-            pFields[nf]->GetTotPoints(), 0.0);
-        m_outFieldsPhys[n] = Array<OneD, NekDouble>(
-            pFields[nf]->GetTotPoints(), 0.0);
+        nf = (n < pFields.size()) ? n : 0;
+        m_curFieldsPhys[n] =
+            Array<OneD, NekDouble>(pFields[nf]->GetTotPoints(), 0.0);
+        m_outFieldsPhys[n] =
+            Array<OneD, NekDouble>(pFields[nf]->GetTotPoints(), 0.0);
     }
 
     // Check type of problem
@@ -126,21 +123,20 @@ void FilterMaxMinFields::v_Initialise(
         m_problemType = eOthers;
     }
 
-    if(m_initialized)
+    if (m_initialized)
     {
         for (int n = 0; n < m_variables.size(); ++n)
         {
-            int nf = (n < pFields.size())? n: 0;
+            int nf = (n < pFields.size()) ? n : 0;
             pFields[nf]->BwdTrans(m_outFields[n], m_outFieldsPhys[n]);
             if (pFields[nf]->GetWaveSpace())
             {
-                pFields[nf]->HomogeneousBwdTrans(m_outFieldsPhys[n], m_outFieldsPhys[n]);
+                pFields[nf]->HomogeneousBwdTrans(m_outFieldsPhys[n],
+                                                 m_outFieldsPhys[n]);
             }
         }
     }
-
 }
-
 
 // For compressible flows, also compute max/min for extra variabless, which can
 // include (u, v, w, p, T. s, a, Mach, sensor, ArtificialVisc), but not sure
@@ -148,7 +144,7 @@ void FilterMaxMinFields::v_Initialise(
 // turned on. Now presume Ducros sensor is turned off.
 // For other cases, including incompressible flows, only compute max/min for
 // variables in pFields.
-// 
+//
 // curFieldsCoeffs is the coeffs     at current time step, size=[*][m_ncoeffs]
 // m_curFieldsPhys is the phys value at current time step, size=[*][m_npoints]
 // m_outFields     is the coeffs     for output fld
@@ -159,35 +155,34 @@ void FilterMaxMinFields::v_Initialise(
 
 void FilterMaxMinFields::v_ProcessSample(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-          std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
-    const NekDouble &time)
+    std::vector<Array<OneD, NekDouble>> &fieldcoeffs, const NekDouble &time)
 {
     boost::ignore_unused(time);
- 
+
     for (int n = 0; n < m_variables.size(); ++n)
     {
-        int nf = (n < pFields.size())? n: 0;
+        int nf = (n < pFields.size()) ? n : 0;
         pFields[nf]->BwdTrans(fieldcoeffs[n], m_curFieldsPhys[n]);
         if (pFields[nf]->GetWaveSpace())
         {
-            pFields[nf]->HomogeneousBwdTrans(m_curFieldsPhys[n], m_curFieldsPhys[n]);
+            pFields[nf]->HomogeneousBwdTrans(m_curFieldsPhys[n],
+                                             m_curFieldsPhys[n]);
         }
     }
 
     // Get max/min for each field
     if (!m_initialized)
     {
-        for(int n = 0; n < m_variables.size(); ++n)
+        for (int n = 0; n < m_variables.size(); ++n)
         {
             int length = m_outFieldsPhys[n].size();
-            Vmath::Vcopy(length, m_curFieldsPhys[n], 1,
-                                 m_outFieldsPhys[n], 1);
+            Vmath::Vcopy(length, m_curFieldsPhys[n], 1, m_outFieldsPhys[n], 1);
         }
         m_initialized = true;
     }
     else
     {
-        for(int n = 0; n < m_variables.size(); ++n)
+        for (int n = 0; n < m_variables.size(); ++n)
         {
             int length = m_outFieldsPhys[n].size();
             if (m_isMax)
@@ -218,8 +213,8 @@ void FilterMaxMinFields::v_ProcessSample(
     // Forward transform and put into m_outFields
     for (int n = 0; n < m_variables.size(); ++n)
     {
-        int nf = (n < pFields.size())? n: 0;
-        pFields[nf]->FwdTrans_IterPerExp(m_outFieldsPhys[n], m_outFields[n]);
+        int nf = (n < pFields.size()) ? n : 0;
+        pFields[nf]->FwdTransLocalElmt(m_outFieldsPhys[n], m_outFields[n]);
     }
 }
 
@@ -238,5 +233,5 @@ NekDouble FilterMaxMinFields::v_GetScale()
     return 1.0;
 }
 
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar

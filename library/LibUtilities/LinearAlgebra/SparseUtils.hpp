@@ -37,19 +37,21 @@
 
 #include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 
-namespace Nektar{
+namespace Nektar
+{
 
-    LIB_UTILITIES_EXPORT void convertCooToBco(
-                    const unsigned int  blkDim,
-                    const COOMatType&   cooMat,
-                          BCOMatType&   bcoMat);
+LIB_UTILITIES_EXPORT void convertCooToBco(const unsigned int blkDim,
+                                          const COOMatType &cooMat,
+                                          BCOMatType &bcoMat);
 
-    template<class SparseStorageType>
-    std::ostream& operator<<(std::ostream& os, const NekSparseMatrix<SparseStorageType>& rhs);
+template <class SparseStorageType>
+std::ostream &operator<<(std::ostream &os,
+                         const NekSparseMatrix<SparseStorageType> &rhs);
 
-    template<class SparseStorageType>
-    std::ostream& operator<<(std::ostream& os, const NekSparseDiagBlkMatrix<SparseStorageType>& rhs);
+template <class SparseStorageType>
+std::ostream &operator<<(std::ostream &os,
+                         const NekSparseDiagBlkMatrix<SparseStorageType> &rhs);
 
-} // namespace
+} // namespace Nektar
 
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_UTILS_HPP
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_SPARSE_UTILS_HPP

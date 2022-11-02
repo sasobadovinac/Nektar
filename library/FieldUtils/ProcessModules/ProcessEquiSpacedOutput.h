@@ -79,13 +79,12 @@ public:
 protected:
     void SetHomogeneousConnectivity(void);
 
-    void GenOrthoModes(int n,
-                       const Array<OneD, const NekDouble> &phys,
+    void GenOrthoModes(int n, const Array<OneD, const NekDouble> &phys,
                        Array<OneD, NekDouble> &coeffs);
 
 private:
 };
-}
-}
+} // namespace FieldUtils
+} // namespace Nektar
 
 #endif

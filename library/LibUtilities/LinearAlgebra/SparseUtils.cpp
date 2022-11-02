@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: SparseUtils.hpp
+// File: SparseUtils.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -32,113 +32,116 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <utility>
 #include <map>
+#include <utility>
 
 #include <boost/core/ignore_unused.hpp>
 
+#include <LibUtilities/LinearAlgebra/SparseDiagBlkMatrix.hpp>
+#include <LibUtilities/LinearAlgebra/SparseMatrix.hpp>
 #include <LibUtilities/LinearAlgebra/SparseMatrixFwd.hpp>
 #include <LibUtilities/LinearAlgebra/SparseUtils.hpp>
-#include <LibUtilities/LinearAlgebra/SparseMatrix.hpp>
-#include <LibUtilities/LinearAlgebra/SparseDiagBlkMatrix.hpp>
 #include <LibUtilities/LinearAlgebra/StorageSmvBsr.hpp>
 
+namespace Nektar
+{
 
-namespace Nektar{
+void convertCooToBco(const unsigned int blkDim, const COOMatType &cooMat,
+                     BCOMatType &bcoMat)
+{
+    COOMatTypeConstIt entry;
+    BCOMatTypeConstIt blk;
+    int rowcoord, localRow, blkRowCoord;
+    int colcoord, localCol, blkColCoord;
 
-    void convertCooToBco(
-                    const unsigned int  blkDim,
-                    const COOMatType&   cooMat,
-                          BCOMatType&   bcoMat)
+    for (entry = cooMat.begin(); entry != cooMat.end(); entry++)
     {
-        COOMatTypeConstIt  entry;
-        BCOMatTypeConstIt  blk;
-        int rowcoord, localRow, blkRowCoord;
-        int colcoord, localCol, blkColCoord;
+        rowcoord = (entry->first).first;
+        colcoord = (entry->first).second;
 
-        for(entry = cooMat.begin(); entry != cooMat.end(); entry++)
+        blkRowCoord = rowcoord / blkDim;
+        blkColCoord = colcoord / blkDim;
+
+        CoordType blkCoords = std::make_pair(blkRowCoord, blkColCoord);
+        blk                 = bcoMat.find(blkCoords);
+        if (blk == bcoMat.end())
         {
-            rowcoord = (entry->first).first;
-            colcoord = (entry->first).second;
-
-            blkRowCoord = rowcoord / blkDim;
-            blkColCoord = colcoord / blkDim;
-
-            CoordType blkCoords = std::make_pair(blkRowCoord,blkColCoord);
-            blk = bcoMat.find(blkCoords);
-            if (blk == bcoMat.end())
-            {
-                BCOEntryType b(blkDim*blkDim, 0.0);
-                bcoMat[blkCoords] = b;
-            }
-
-            localRow    = rowcoord % blkDim;
-            localCol    = colcoord % blkDim;
-
-            // transpose it: NIST SpBLAS expects Fortran ordering
-            // of dense subblocks
-            const unsigned int localoffset = localRow + localCol*blkDim;
-            (bcoMat[blkCoords])[localoffset] = entry->second;
+            BCOEntryType b(blkDim * blkDim, 0.0);
+            bcoMat[blkCoords] = b;
         }
+
+        localRow = rowcoord % blkDim;
+        localCol = colcoord % blkDim;
+
+        // transpose it: NIST SpBLAS expects Fortran ordering
+        // of dense subblocks
+        const unsigned int localoffset   = localRow + localCol * blkDim;
+        (bcoMat[blkCoords])[localoffset] = entry->second;
     }
+}
 
-    template<typename SparseStorageType>
-    std::ostream& operator<<(std::ostream& os, const NekSparseMatrix<SparseStorageType>& rhs)
+template <typename SparseStorageType>
+std::ostream &operator<<(std::ostream &os,
+                         const NekSparseMatrix<SparseStorageType> &rhs)
+{
+    int oswidth     = 9;
+    int osprecision = 6;
+
+    for (unsigned int i = 0; i < rhs.GetRows(); ++i)
     {
-        int oswidth = 9;
-        int osprecision = 6;
-
-        for(unsigned int i = 0; i < rhs.GetRows(); ++i)
+        os << "[";
+        for (unsigned int j = 0; j < rhs.GetColumns(); ++j)
         {
-            os << "[";
-            for(unsigned int j = 0; j < rhs.GetColumns(); ++j)
+            os.width(oswidth);
+            os.precision(osprecision);
+            os << rhs(i, j);
+            if (j != rhs.GetColumns() - 1)
             {
-                os.width(oswidth);
-                os.precision(osprecision);
-                os << rhs(i,j);
-                if( j != rhs.GetColumns() - 1 )
-                {
-                    os << ", ";
-                }
-            }
-            os << "]";
-            if( i != rhs.GetRows()-1 )
-            {
-                os << std::endl;
+                os << ", ";
             }
         }
-        return os;
-    }
-
-    template<typename SparseStorageType>
-    std::ostream& operator<<(std::ostream& os, const NekSparseDiagBlkMatrix<SparseStorageType>& rhs)
-    {
-        int oswidth = 9;
-        int osprecision = 6;
-
-        for(unsigned int i = 0; i < rhs.GetRows(); ++i)
+        os << "]";
+        if (i != rhs.GetRows() - 1)
         {
-            os << "[";
-            for(unsigned int j = 0; j < rhs.GetColumns(); ++j)
+            os << std::endl;
+        }
+    }
+    return os;
+}
+
+template <typename SparseStorageType>
+std::ostream &operator<<(std::ostream &os,
+                         const NekSparseDiagBlkMatrix<SparseStorageType> &rhs)
+{
+    int oswidth     = 9;
+    int osprecision = 6;
+
+    for (unsigned int i = 0; i < rhs.GetRows(); ++i)
+    {
+        os << "[";
+        for (unsigned int j = 0; j < rhs.GetColumns(); ++j)
+        {
+            os.width(oswidth);
+            os.precision(osprecision);
+            os << rhs(i, j);
+            if (j != rhs.GetColumns() - 1)
             {
-                os.width(oswidth);
-                os.precision(osprecision);
-                os << rhs(i,j);
-                if( j != rhs.GetColumns() - 1 )
-                {
-                    os << ", ";
-                }
-            }
-            os << "]";
-            if( i != rhs.GetRows()-1 )
-            {
-                os << std::endl;
+                os << ", ";
             }
         }
-        return os;
+        os << "]";
+        if (i != rhs.GetRows() - 1)
+        {
+            os << std::endl;
+        }
     }
+    return os;
+}
 
-    template std::ostream& operator<<(std::ostream& os, const NekSparseMatrix<StorageSmvBsr<NekDouble> >& rhs);
-    template std::ostream& operator<<(std::ostream& os, const NekSparseDiagBlkMatrix<StorageSmvBsr<NekDouble> >& rhs);
+template std::ostream &operator<<(
+    std::ostream &os, const NekSparseMatrix<StorageSmvBsr<NekDouble>> &rhs);
+template std::ostream &operator<<(
+    std::ostream &os,
+    const NekSparseDiagBlkMatrix<StorageSmvBsr<NekDouble>> &rhs);
 
-} // namespace
+} // namespace Nektar

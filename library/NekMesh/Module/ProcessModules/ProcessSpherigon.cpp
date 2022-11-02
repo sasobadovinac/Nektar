@@ -33,17 +33,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/index/rtree.hpp>
 
 #include <LibUtilities/BasicUtils/ParseUtils.h>
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
-#include <LocalRegions/SegExp.h>
-#include <LocalRegions/QuadExp.h>
-#include <LocalRegions/TriExp.h>
 #include <LocalRegions/NodalTriExp.h>
+#include <LocalRegions/QuadExp.h>
+#include <LocalRegions/SegExp.h>
+#include <LocalRegions/TriExp.h>
 
 #include <NekMesh/MeshElements/Element.h>
 
@@ -107,8 +107,7 @@ ProcessSpherigon::ProcessSpherigon(MeshSharedPtr m) : ProcessModule(m)
     m_config["scalefile"] = ConfigOption(
         false, "1.0", "Apply scaling factor to coordinates in file ");
     m_config["normalnoise"] =
-        ConfigOption(false,
-                     "NotSpecified",
+        ConfigOption(false, "NotSpecified",
                      "Add randowm noise to normals of amplitude AMP "
                      "in specified region. input string is "
                      "Amp,xmin,xmax,ymin,ymax,zmin,zmax");
@@ -176,9 +175,7 @@ double ProcessSpherigon::Blend(double r)
  * @param P      Point in the triangle to apply blending to.
  * @param blend  The resulting blending components for each vertex.
  */
-void ProcessSpherigon::SuperBlend(vector<double> &r,
-                                  vector<Node> &Q,
-                                  Node &P,
+void ProcessSpherigon::SuperBlend(vector<double> &r, vector<Node> &Q, Node &P,
                                   vector<double> &blend)
 {
     vector<double> tmp(r.size());
@@ -198,9 +195,9 @@ void ProcessSpherigon::SuperBlend(vector<double> &r,
 
         if (r[i] > TOL_BLEND && r[i] < (1 - TOL_BLEND))
         {
-            blend[i] =
-                r[i] * r[i] * (r[im] * r[im] * tmp[im] / (tmp[im] + tmp[i]) +
-                               r[ip] * r[ip] * tmp[ip] / (tmp[ip] + tmp[i]));
+            blend[i] = r[i] * r[i] *
+                       (r[im] * r[im] * tmp[im] / (tmp[im] + tmp[i]) +
+                        r[ip] * r[ip] * tmp[ip] / (tmp[ip] + tmp[i]));
             totBlend += blend[i];
         }
     }
@@ -220,20 +217,20 @@ void ProcessSpherigon::SuperBlend(vector<double> &r,
 }
 
 void ProcessSpherigon::FindNormalFromPlyFile(MeshSharedPtr &plymesh,
-                                             map<int,NodeSharedPtr> &surfverts)
+                                             map<int, NodeSharedPtr> &surfverts)
 {
-    int      cnt = 0;
-    int      j = 0;
-    int      prog=0,cntmin;
+    int cnt  = 0;
+    int j    = 0;
+    int prog = 0, cntmin;
 
     typedef bg::model::point<NekDouble, 3, bg::cs::cartesian> Point;
     typedef pair<Point, unsigned int> PointI;
 
     int n_neighbs = 1;
 
-    map<int,int>  TreeidtoPlyid;
+    map<int, int> TreeidtoPlyid;
 
-    //Fill vertex array into tree format
+    // Fill vertex array into tree format
     vector<PointI> dataPts;
     for (auto &it : plymesh->m_vertexSet)
     {
@@ -241,11 +238,11 @@ void ProcessSpherigon::FindNormalFromPlyFile(MeshSharedPtr &plymesh,
         TreeidtoPlyid[j++] = it->m_id;
     }
 
-    //Build tree
-    bgi::rtree<PointI, bgi::rstar<16> > rtree;
+    // Build tree
+    bgi::rtree<PointI, bgi::rstar<16>> rtree;
     rtree.insert(dataPts.begin(), dataPts.end());
 
-    //Find neipghbours
+    // Find neipghbours
     for (auto &vIt : surfverts)
     {
         m_log(VERBOSE).Progress(cnt, surfverts.size(), "Nearest ply verts",
@@ -261,8 +258,7 @@ void ProcessSpherigon::FindNormalFromPlyFile(MeshSharedPtr &plymesh,
         ASSERTL1(cntmin < plymesh->m_vertexNormals.size(),
                  "cntmin is out of range");
 
-        m_mesh->m_vertexNormals[vIt.first] =
-            plymesh->m_vertexNormals[cntmin];
+        m_mesh->m_vertexNormals[vIt.first] = plymesh->m_vertexNormals[cntmin];
         ++cnt;
     }
 
@@ -319,7 +315,7 @@ void ProcessSpherigon::GenerateNormals(std::vector<ElementSharedPtr> &el,
         else
         {
             // Calculate gradient vector and invert.
-            Node dx = *(node[1]) - *(node[0]);
+            Node dx        = *(node[1]) - *(node[0]);
             NekDouble diff = dx.abs2();
             dx /= sqrt(diff);
             n.m_x = -dx.m_y;
@@ -349,7 +345,6 @@ void ProcessSpherigon::GenerateNormals(std::vector<ElementSharedPtr> &el,
         Node &n = nIt.second;
         n /= sqrt(n.abs2());
     }
-
 }
 
 /**
@@ -361,8 +356,7 @@ void ProcessSpherigon::Process()
 
     if (m_mesh->m_spaceDim != 3 && m_mesh->m_spaceDim != 2)
     {
-        m_log(FATAL) << "Spherigon implementation only valid in 2D/3D."
-                     << endl;
+        m_log(FATAL) << "Spherigon implementation only valid in 2D/3D." << endl;
     }
 
     std::unordered_set<int> visitedEdges;
@@ -379,7 +373,7 @@ void ProcessSpherigon::Process()
     {
         // Full 2D or 3D case - iterate over stored edges/faces and
         // create segments/triangles representing those edges/faces.
-        set<pair<int, int> >::iterator it;
+        set<pair<int, int>>::iterator it;
         vector<int> t;
         t.push_back(0);
 
@@ -397,8 +391,8 @@ void ProcessSpherigon::Process()
             for (int i = 0; i < m_mesh->m_element[m_mesh->m_expDim].size(); ++i)
             {
                 ElementSharedPtr el = m_mesh->m_element[m_mesh->m_expDim][i];
-                int nSurf = m_mesh->m_expDim == 3 ? el->GetFaceCount()
-                                                  : el->GetEdgeCount();
+                int nSurf           = m_mesh->m_expDim == 3 ? el->GetFaceCount()
+                                                            : el->GetEdgeCount();
 
                 for (int j = 0; j < nSurf; ++j)
                 {
@@ -414,11 +408,8 @@ void ProcessSpherigon::Process()
                     vector<int> inter;
 
                     sort(tags.begin(), tags.end());
-                    set_intersection(surfs.begin(),
-                                     surfs.end(),
-                                     tags.begin(),
-                                     tags.end(),
-                                     back_inserter(inter));
+                    set_intersection(surfs.begin(), surfs.end(), tags.begin(),
+                                     tags.end(), back_inserter(inter));
 
                     if (inter.size() == 1)
                     {
@@ -449,8 +440,7 @@ void ProcessSpherigon::Process()
         if (m_mesh->m_expDim == 3)
         {
             for (it = m_mesh->m_spherigonSurfs.begin();
-                 it != m_mesh->m_spherigonSurfs.end();
-                 ++it)
+                 it != m_mesh->m_spherigonSurfs.end(); ++it)
             {
                 FaceSharedPtr f =
                     m_mesh->m_element[m_mesh->m_expDim][it->first]->GetFace(
@@ -480,8 +470,7 @@ void ProcessSpherigon::Process()
         else
         {
             for (it = m_mesh->m_spherigonSurfs.begin();
-                 it != m_mesh->m_spherigonSurfs.end();
-                 ++it)
+                 it != m_mesh->m_spherigonSurfs.end(); ++it)
             {
                 EdgeSharedPtr edge =
                     m_mesh->m_element[m_mesh->m_expDim][it->first]->GetEdge(
@@ -501,9 +490,8 @@ void ProcessSpherigon::Process()
                 elmt->SetVertex(0, nodes[0]);
                 elmt->SetVertex(1, nodes[1]);
                 elmt->SetEdge(
-                    0,
-                    m_mesh->m_element[m_mesh->m_expDim][it->first]->GetEdge(
-                        it->second));
+                    0, m_mesh->m_element[m_mesh->m_expDim][it->first]->GetEdge(
+                           it->second));
                 el.push_back(elmt);
             }
         }
@@ -540,7 +528,7 @@ void ProcessSpherigon::Process()
         inply.push(inplyTmp);
 
         MeshSharedPtr m = std::shared_ptr<Mesh>(new Mesh());
-        plyfile = std::shared_ptr<InputPly>(new InputPly(m));
+        plyfile         = std::shared_ptr<InputPly>(new InputPly(m));
         plyfile->ReadPly(inply, scale);
         plyfile->ProcessVertices();
 
@@ -559,7 +547,7 @@ void ProcessSpherigon::Process()
         for (int i = 0; i < el.size(); ++i)
         {
             ElementSharedPtr e = el[i];
-            int nV = e->GetVertexCount();
+            int nV             = e->GetVertexCount();
             for (int j = 0; j < nV; ++j)
             {
                 int id        = e->GetVertex(j)->m_id;
@@ -571,7 +559,7 @@ void ProcessSpherigon::Process()
 
         // loop over all element in ply mesh and determine
         // and set normal to nearest point in ply mesh
-        FindNormalFromPlyFile(plymesh,surfverts);
+        FindNormalFromPlyFile(plymesh, surfverts);
 
         normalsGenerated = true;
     }
@@ -588,8 +576,7 @@ void ProcessSpherigon::Process()
         vector<NekDouble> values;
         if (!ParseUtils::GenerateVector(normalnoise, values))
         {
-            m_log(FATAL) << "Failed to interpret normal noise string"
-                         << endl;
+            m_log(FATAL) << "Failed to interpret normal noise string" << endl;
         }
 
         int nvalues   = values.size() / 2;
@@ -611,7 +598,7 @@ void ProcessSpherigon::Process()
         for (int i = 0; i < el.size(); ++i)
         {
             ElementSharedPtr e = el[i];
-            int nV = e->GetVertexCount();
+            int nV             = e->GetVertexCount();
             for (int j = 0; j < nV; ++j)
             {
                 int id        = e->GetVertex(j)->m_id;
@@ -699,12 +686,10 @@ void ProcessSpherigon::Process()
     }
 
     LibUtilities::BasisKey B0(
-        LibUtilities::eOrtho_A,
-        nq,
+        LibUtilities::eOrtho_A, nq,
         LibUtilities::PointsKey(nq, LibUtilities::eGaussLobattoLegendre));
     LibUtilities::BasisKey B1(
-        LibUtilities::eOrtho_B,
-        nq,
+        LibUtilities::eOrtho_B, nq,
         LibUtilities::PointsKey(nq, LibUtilities::eGaussRadauMAlpha1Beta0));
     StdRegions::StdNodalTriExpSharedPtr stdtri =
         MemoryManager<StdRegions::StdNodalTriExp>::AllocateSharedPtr(
@@ -733,8 +718,7 @@ void ProcessSpherigon::Process()
         ElementSharedPtr e = el[i];
 
         LibUtilities::BasisKey B2(
-            LibUtilities::eModified_A,
-            nq,
+            LibUtilities::eModified_A, nq,
             LibUtilities::PointsKey(nq, LibUtilities::eGaussLobattoLegendre));
 
         if (e->GetConf().m_e == LibUtilities::eSegment)
@@ -788,8 +772,8 @@ void ProcessSpherigon::Process()
                 std::dynamic_pointer_cast<SpatialDomains::QuadGeom>(
                     e->GetGeom(3));
             LocalRegions::QuadExpSharedPtr quad =
-                MemoryManager<LocalRegions::QuadExp>::AllocateSharedPtr(
-                    B2, B2, geom);
+                MemoryManager<LocalRegions::QuadExp>::AllocateSharedPtr(B2, B2,
+                                                                        geom);
             quad->GetCoords(x, y, z);
             nquad = nq * nq;
         }
@@ -1014,5 +998,5 @@ void ProcessSpherigon::Process()
         m_mesh->m_vertexNormals.clear();
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

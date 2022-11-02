@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationScheme.cpp
+// File: TimeIntegrationScheme.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -50,7 +50,7 @@ TimeIntegrationSchemeFactory &GetTimeIntegrationSchemeFactory()
 }
 
 // Access Methods
-std::string TimeIntegrationScheme::GetFullName () const
+std::string TimeIntegrationScheme::GetFullName() const
 {
     return GetName() + GetVariant() + "Order" + std::to_string(GetOrder());
 }
@@ -72,4 +72,4 @@ std::ostream &operator<<(std::ostream &os,
 }
 
 } // end namespace LibUtilities
-} // end namespace NekTar
+} // namespace Nektar

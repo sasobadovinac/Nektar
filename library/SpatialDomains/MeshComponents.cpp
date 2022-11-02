@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  MeshComponents.cpp
+//  File: MeshComponents.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -37,9 +37,8 @@
 
 namespace Nektar
 {
-    namespace SpatialDomains
-    {
+namespace SpatialDomains
+{
 
-    }; //end of namespace
-}; //end of namespace
-
+}; // namespace SpatialDomains
+}; // namespace Nektar

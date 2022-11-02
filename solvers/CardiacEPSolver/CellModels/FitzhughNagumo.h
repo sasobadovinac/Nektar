@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FitzhughNagumo.h
+// File: FitzhughNagumo.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -39,43 +39,45 @@
 
 namespace Nektar
 {
-    /// FitzHugh-Nagumo model.
-    class CellModelFitzHughNagumo : public CellModel
+/// FitzHugh-Nagumo model.
+class CellModelFitzHughNagumo : public CellModel
+{
+public:
+    /// Creates an instance of this class
+    static CellModelSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField)
     {
-    public:
-        /// Creates an instance of this class
-        static CellModelSharedPtr create(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField)
-        {
-            return MemoryManager<CellModelFitzHughNagumo>::AllocateSharedPtr(pSession, pField);
-        }
+        return MemoryManager<CellModelFitzHughNagumo>::AllocateSharedPtr(
+            pSession, pField);
+    }
 
-        /// Name of class
-        static std::string className;
+    /// Name of class
+    static std::string className;
 
-        CellModelFitzHughNagumo(
-                const LibUtilities::SessionReaderSharedPtr& pSession,
-                const MultiRegions::ExpListSharedPtr& pField);
+    CellModelFitzHughNagumo(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const MultiRegions::ExpListSharedPtr &pField);
 
-        virtual ~CellModelFitzHughNagumo() {}
+    virtual ~CellModelFitzHughNagumo()
+    {
+    }
 
-    protected:
-        virtual void v_Update(
-                const Array<OneD, const  Array<OneD, NekDouble> >&inarray,
-                      Array<OneD,        Array<OneD, NekDouble> >&outarray,
-                const NekDouble time);
+protected:
+    virtual void v_Update(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-        virtual void v_GenerateSummary(SummaryList& s);
+    virtual void v_GenerateSummary(SummaryList &s);
 
-        virtual void v_SetInitialConditions();
+    virtual void v_SetInitialConditions();
 
-    private:
-        NekDouble              m_beta;
-        NekDouble              m_epsilon;
+private:
+    NekDouble m_beta;
+    NekDouble m_epsilon;
 
-        /// Temporary space for storing \f$u^3\f$ when computing reaction term.
-        Array<OneD, NekDouble> m_uuu;
-    };
-}
+    /// Temporary space for storing \f$u^3\f$ when computing reaction term.
+    Array<OneD, NekDouble> m_uuu;
+};
+} // namespace Nektar
 #endif /* FITZHUGHNAGUMO_H_ */

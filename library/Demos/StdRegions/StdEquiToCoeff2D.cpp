@@ -1,8 +1,8 @@
-#include <cstdio>
-#include <cstdlib>
 #include <StdRegions/StdExpansion.h>
 #include <StdRegions/StdQuadExp.h>
 #include <StdRegions/StdTriExp.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include <StdRegions/StdRegions.hpp>
 

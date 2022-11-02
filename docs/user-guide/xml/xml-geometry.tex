@@ -156,6 +156,13 @@ Composites define collections of elements, faces or edges. Each has a unique com
 <C ID="1"> E[61-67,69,70,72-74] </C>
 \end{lstlisting}
 
+The composites can also optionally contain a name which is then used in the
+multi-block VTK output to label the block descriptively rather than by ID, for
+example
+\begin{lstlisting}[style=XMLStyle]
+<C NAME="Main domain" ID="0"> T[0-862] </C>
+<C NAME="Walls" ID="1"> E[61-67,69,70,72-74] </C>
+\end{lstlisting}
 
 \subsection{Domain}
 This tag specifies composites which describe the entire problem domain. It has the form of

@@ -67,7 +67,9 @@ public:
         m_loc = l;
     }
 
-    virtual ~SPBase(){}
+    virtual ~SPBase()
+    {
+    }
 
     SPType GetType()
     {
@@ -102,7 +104,7 @@ public:
     bool HasDelta()
     {
         bool ret;
-        if(m_type == eCBoundary || m_type == eRCBoundary)
+        if (m_type == eCBoundary || m_type == eRCBoundary)
         {
             ret = true;
         }
@@ -116,7 +118,7 @@ public:
     bool HasRDelta()
     {
         bool ret;
-        if(m_type == eRCBoundary || m_type == eSrcPoint )
+        if (m_type == eRCBoundary || m_type == eSrcPoint)
         {
             ret = true;
         }
@@ -130,7 +132,8 @@ public:
     bool Isboundary()
     {
         bool ret;
-        if(m_type == eCBoundary || m_type == ePBoundary || m_type == eRCBoundary)
+        if (m_type == eCBoundary || m_type == ePBoundary ||
+            m_type == eRCBoundary)
         {
             ret = true;
         }
@@ -263,12 +266,14 @@ public:
     void SetDelta(NekDouble i)
     {
         boost::ignore_unused(i);
-        NEKERROR(ErrorUtil::efatal, "Cannot assign refinement delta to this type");
+        NEKERROR(ErrorUtil::efatal,
+                 "Cannot assign refinement delta to this type");
     }
 
     NekDouble GetRDelta()
     {
-        NEKERROR(ErrorUtil::efatal, "Cannot retrieve refinment delta from this type");
+        NEKERROR(ErrorUtil::efatal,
+                 "Cannot retrieve refinment delta from this type");
         return 0.0;
     }
 
@@ -288,7 +293,7 @@ private:
 typedef std::shared_ptr<BPoint> BPointSharedPtr;
 
 /**
- * @brief class for a general source point 
+ * @brief class for a general source point
  */
 class SrcPoint : public SPBase
 {
@@ -298,8 +303,7 @@ public:
     /**
      * @brief constructor for a boundary point without delta
      */
-    SrcPoint(Array<OneD, NekDouble> l, NekDouble d)
-            : SPBase(l), m_rdelta(d)
+    SrcPoint(Array<OneD, NekDouble> l, NekDouble d) : SPBase(l), m_rdelta(d)
     {
         m_type = eSrcPoint;
     }
@@ -343,7 +347,7 @@ private:
 };
 typedef std::shared_ptr<SrcPoint> SrcPointSharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

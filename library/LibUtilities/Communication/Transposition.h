@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Transposition.h
+// File: Transposition.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -45,7 +45,7 @@ namespace LibUtilities
 {
 class BasisKey;
 }
-}
+} // namespace Nektar
 
 namespace Nektar
 {
@@ -163,6 +163,6 @@ private:
 };
 
 typedef std::shared_ptr<Transposition> TranspositionSharedPtr;
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar
 #endif

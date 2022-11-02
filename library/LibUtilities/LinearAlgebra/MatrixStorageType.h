@@ -28,8 +28,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Defines the classes used in the NekMatrix template parameter list
-// to define different storage types for matrices.
+// Description: Defines the classes used in the NekMatrix template parameter
+// list to define different storage types for matrices.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -38,21 +38,21 @@
 
 namespace Nektar
 {
-    enum MatrixStorage 
-    {
-        eFULL, 
-        eDIAGONAL,
-        eUPPER_TRIANGULAR,
-        eLOWER_TRIANGULAR,
-        eSYMMETRIC,
-        ePOSITIVE_DEFINITE_SYMMETRIC,
-        eBANDED,
-        eSYMMETRIC_BANDED,
-        ePOSITIVE_DEFINITE_SYMMETRIC_BANDED,
-        eUPPER_TRIANGULAR_BANDED,
-        eLOWER_TRIANGULAR_BANDED
-    };
-              
- }   
-    
-#endif //NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_STORAGE_TYPE_H
+enum MatrixStorage
+{
+    eFULL,
+    eDIAGONAL,
+    eUPPER_TRIANGULAR,
+    eLOWER_TRIANGULAR,
+    eSYMMETRIC,
+    ePOSITIVE_DEFINITE_SYMMETRIC,
+    eBANDED,
+    eSYMMETRIC_BANDED,
+    ePOSITIVE_DEFINITE_SYMMETRIC_BANDED,
+    eUPPER_TRIANGULAR_BANDED,
+    eLOWER_TRIANGULAR_BANDED
+};
+
+}
+
+#endif // NEKTAR_LIB_UTILITIES_LINEAR_ALGEBRA_MATRIX_STORAGE_TYPE_H

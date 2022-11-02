@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: 
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,56 +37,49 @@
 #include <boost/test/tools/floating_point_comparison.hpp>
 #include <boost/test/unit_test.hpp>
 
-
 namespace Nektar
 {
-    namespace UpperTriangularMatrixUnitTests
+namespace UpperTriangularMatrixUnitTests
+{
+typedef UpperTriangularMatrixFuncs Policy;
+
+BOOST_AUTO_TEST_CASE(TestMatrixVectorMultiplyUpper)
+{
     {
-        typedef UpperTriangularMatrixFuncs Policy;
+        double matrix_buf[] = {1, 2, 3};
+        NekMatrix<double> matrix(2, 2, matrix_buf, eUPPER_TRIANGULAR);
 
-        BOOST_AUTO_TEST_CASE(TestMatrixVectorMultiplyUpper)
-        {
-            {
-                double matrix_buf[] = {1, 2,
-                                          3};
-                NekMatrix<double> matrix(2,2,matrix_buf,eUPPER_TRIANGULAR);
+        double vector_buf[] = {10, 11};
+        NekVector<double> vector(2, vector_buf);
 
-                double vector_buf[] = {10, 11};
-                NekVector<double> vector(2, vector_buf);
+        NekVector<double> result = matrix * vector;
 
-                NekVector<double> result = matrix*vector;
+        double expected_buf[] = {32, 33};
+        NekVector<double> expected_result(2, expected_buf);
 
-                double expected_buf[] = {32, 33};
-                NekVector<double> expected_result(2, expected_buf);
-
-                BOOST_CHECK_EQUAL(expected_result, result);
-            }
-        }
-
-        BOOST_AUTO_TEST_CASE(Test3x3MatrixVectorMultiplyUpper)
-        {
-            {
-                //double matrix_buf[] = {1, 2, 3,
-                //                          4, 5,
-                //                             6};
-                double matrix_buf[] = {1,
-                                       2, 4,
-                                       3, 5, 6};
-                NekMatrix<double> matrix(3,3,matrix_buf,eUPPER_TRIANGULAR);
-
-                double vector_buf[] = {10, 11, 12};
-                NekVector<double> vector(3, vector_buf);
-
-                NekVector<double> result = matrix*vector;
-
-                double expected_buf[] = {68, 104, 72};
-                NekVector<double> expected_result(3, expected_buf);
-
-                BOOST_CHECK_EQUAL(expected_result, result);
-            }
-
-        }
+        BOOST_CHECK_EQUAL(expected_result, result);
     }
 }
 
+BOOST_AUTO_TEST_CASE(Test3x3MatrixVectorMultiplyUpper)
+{
+    {
+        // double matrix_buf[] = {1, 2, 3,
+        //                          4, 5,
+        //                             6};
+        double matrix_buf[] = {1, 2, 4, 3, 5, 6};
+        NekMatrix<double> matrix(3, 3, matrix_buf, eUPPER_TRIANGULAR);
 
+        double vector_buf[] = {10, 11, 12};
+        NekVector<double> vector(3, vector_buf);
+
+        NekVector<double> result = matrix * vector;
+
+        double expected_buf[] = {68, 104, 72};
+        NekVector<double> expected_result(3, expected_buf);
+
+        BOOST_CHECK_EQUAL(expected_result, result);
+    }
+}
+} // namespace UpperTriangularMatrixUnitTests
+} // namespace Nektar

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UInflow.h
+// File: UInflow.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -73,10 +73,10 @@ public:
 protected:
     virtual void v_DoBoundary(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble> > &A_0,
-        Array<OneD, Array<OneD, NekDouble> > &beta,
-        Array<OneD, Array<OneD, NekDouble> > &alpha,
-        const NekDouble time, int omega, int offset, int n);
+        Array<OneD, Array<OneD, NekDouble>> &A_0,
+        Array<OneD, Array<OneD, NekDouble>> &beta,
+        Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time,
+        int omega, int offset, int n);
 };
 } // namespace Nektar
 

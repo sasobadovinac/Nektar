@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWaveSystemOutput.h
+// File: PulseWaveSystemOutput.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -42,39 +42,40 @@ using namespace Nektar::SolverUtils;
 
 namespace Nektar
 {
-  
-	
-    /// Base class for unsteady solvers.
-    class PulseWaveSystemOutput : public PulseWaveSystem
+
+/// Base class for unsteady solvers.
+class PulseWaveSystemOutput : public PulseWaveSystem
+{
+public:
+    friend class MemoryManager<PulseWaveSystemOutput>;
+
+    /// Creates an instance of this class
+    static EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession)
     {
-    public:
-        friend class MemoryManager<PulseWaveSystemOutput>;
+        EquationSystemSharedPtr p =
+            MemoryManager<PulseWaveSystemOutput>::AllocateSharedPtr(pSession);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static EquationSystemSharedPtr create(const LibUtilities::SessionReaderSharedPtr& pSession)
-        {
-            EquationSystemSharedPtr p = MemoryManager<PulseWaveSystemOutput>::AllocateSharedPtr(pSession);
-            p->InitObject();
-            return p;
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Destructor
+    virtual ~PulseWaveSystemOutput();
 
-        /// Destructor
-        virtual ~PulseWaveSystemOutput();
-		
-    protected:
-        // Constructor 
-        PulseWaveSystemOutput(const LibUtilities::SessionReaderSharedPtr& m_session);
-        
-        virtual void v_InitObject();
-	
-    private:
-        
-    };
-        
-    typedef std::shared_ptr<PulseWaveSystemOutput> PulseWaveSystemOutputSharedPtr;
-}
+protected:
+    // Constructor
+    PulseWaveSystemOutput(
+        const LibUtilities::SessionReaderSharedPtr &m_session);
+
+    virtual void v_InitObject();
+
+private:
+};
+
+typedef std::shared_ptr<PulseWaveSystemOutput> PulseWaveSystemOutputSharedPtr;
+} // namespace Nektar
 
 #endif

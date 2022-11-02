@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekSys.h
+// File: NekSys.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -140,7 +140,7 @@ public:
     }
 
     inline void DoNekSysPrecon(InArrayType &inarray, OutArrayType &outarray,
-                                const bool &flag = false) const
+                               const bool &flag = false) const
     {
         if (m_functors1[2])
         {
@@ -163,8 +163,8 @@ public:
 protected:
     /* Defines three operators
         DoNekSysResEval   :
-            evaluations the residual of the Nonlinear/Linear system 
-            ie. the residual b-Ax and N(x) for linear and 
+            evaluations the residual of the Nonlinear/Linear system
+            ie. the residual b-Ax and N(x) for linear and
             nonlinear systems, respectively
             May not be used for linear system.
         DoNekSysLhsEval   :
@@ -192,25 +192,24 @@ public:
     }
 
     ~NekSysKey()
-    {}
+    {
+    }
 
-    NekDouble   m_Tolerance                    = 
-                                                NekConstants::kNekIterativeTol;
-    int         m_NekNonlinSysMaxIterations    = 100;
-    int         m_NekLinSysMaxIterations       = 5000;
-    NekDouble   m_NekNonlinSysTolerance        = m_Tolerance;
-    NekDouble   m_NekLinSysTolerance           = m_Tolerance;
-    NekDouble   m_NonlinIterTolRelativeL2      = 1.0E-6;
-    NekDouble   m_LinSysRelativeTolInNonlin    = 1.0E-2;
-    int         m_LinSysMaxStorage             = 100;
-    int         m_KrylovMaxHessMatBand         = 100;
-    bool        m_NekLinSysLeftPrecon         = false;
-    bool        m_NekLinSysRightPrecon        = true;
-    bool        m_DifferenceFlag0              = false;
-    bool        m_DifferenceFlag1              = false;
-    bool        m_useProjection                = false;
+    NekDouble m_Tolerance                      = NekConstants::kNekIterativeTol;
+    int m_NekNonlinSysMaxIterations            = 100;
+    int m_NekLinSysMaxIterations               = 5000;
+    NekDouble m_NekNonlinSysTolerance          = m_Tolerance;
+    NekDouble m_NekLinSysTolerance             = m_Tolerance;
+    NekDouble m_NonlinIterTolRelativeL2        = 1.0E-6;
+    NekDouble m_LinSysRelativeTolInNonlin      = 1.0E-2;
+    int m_LinSysMaxStorage                     = 100;
+    int m_KrylovMaxHessMatBand                 = 100;
+    bool m_NekLinSysLeftPrecon                 = false;
+    bool m_NekLinSysRightPrecon                = true;
+    bool m_DifferenceFlag0                     = false;
+    bool m_DifferenceFlag1                     = false;
+    bool m_useProjection                       = false;
     std::string m_LinSysIterSolverTypeInNonlin = "GMRES";
-    
 };
 
 class NekSys;
@@ -225,11 +224,11 @@ public:
 
     LIB_UTILITIES_EXPORT static NekSysSharedPtr CreateInstance(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const LibUtilities::CommSharedPtr &vComm, const int nDimen, 
+        const LibUtilities::CommSharedPtr &vComm, const int nDimen,
         const NekSysKey &pKey)
     {
-        NekSysSharedPtr p = MemoryManager<NekSys>::
-            AllocateSharedPtr(pSession, vComm, nDimen, pKey);
+        NekSysSharedPtr p = MemoryManager<NekSys>::AllocateSharedPtr(
+            pSession, vComm, nDimen, pKey);
         return p;
     }
     LIB_UTILITIES_EXPORT NekSys(
@@ -271,7 +270,7 @@ public:
         const Array<OneD, const NekDouble> &pInput,
         Array<OneD, NekDouble> &pguess);
 
-    LIB_UTILITIES_EXPORT void SetFlagWarnings( bool in)
+    LIB_UTILITIES_EXPORT void SetFlagWarnings(bool in)
     {
         m_FlagWarnings = in;
     }

@@ -755,8 +755,7 @@ void ElUtil::InitialMinJac()
 void ElUtil::UpdateMapping()
 {
     NekDouble scaling = 1.0;
-    // r-adaption file found
-    if (m_interp.GetInField())
+    if (m_interp.GetInField()) // r-adaption file found
     {
         if (!m_interpField)
         {

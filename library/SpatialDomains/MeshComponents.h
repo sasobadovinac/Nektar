@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  MeshComponents.h
+//  File: MeshComponents.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -35,81 +35,77 @@
 #ifndef NEKTAR_SPATIALDOMAINS_MESHCOMPONENTS_H
 #define NEKTAR_SPATIALDOMAINS_MESHCOMPONENTS_H
 
-#include <SpatialDomains/Geometry0D.h>
+#include <LibUtilities/Foundations/Graph.h>
 #include <LibUtilities/LinearAlgebra/NekPoint.hpp>
+#include <SpatialDomains/Geometry0D.h>
 #include <SpatialDomains/SpatialDomainsDeclspec.h>
 #include <set>
-#include <LibUtilities/Foundations/Graph.h>
 
 namespace Nektar
 {
-      namespace SpatialDomains
-      {
-        // ------------------------------------------------------------------------
-        /// Structure holding graphvertexobject id and local element facet id
-        class CompToElmt
-        {
-        public:
+namespace SpatialDomains
+{
+// ------------------------------------------------------------------------
+/// Structure holding graphvertexobject id and local element facet id
+class CompToElmt
+{
+public:
+    CompToElmt(int id, int locid) : m_id(id), m_locId(locid)
+    {
+        m_id    = id;
+        m_locId = locid;
+    }
 
-            CompToElmt(int id, int locid):
-              m_id(id),
-                  m_locId(locid)
-              {
-                  m_id = id;
-                  m_locId = locid;
-              }
+    ~CompToElmt()
+    {
+        m_id    = -1;
+        m_locId = -1;
+    }
 
-              ~CompToElmt()
-              {
-                  m_id = -1;
-                  m_locId = -1;
-              }
+    inline int GetId()
+    {
+        return m_id;
+    }
 
-              inline int GetId()
-              {
-                  return m_id;
-              }
+    SPATIAL_DOMAINS_EXPORT friend bool operator==(const CompToElmt &x,
+                                                  const CompToElmt &y);
+    SPATIAL_DOMAINS_EXPORT friend bool operator!=(const CompToElmt &x,
+                                                  const CompToElmt &y);
 
-              SPATIAL_DOMAINS_EXPORT friend bool operator  == (const CompToElmt &x, const CompToElmt &y);
-              SPATIAL_DOMAINS_EXPORT friend bool operator  != (const CompToElmt &x, const CompToElmt &y);
+protected:
+    int m_id;
+    int m_locId;
 
-        protected:
-            int m_id;
-            int m_locId;
+private:
+};
 
-        private:
+// -----------------------------------------------------------------------
+// WireFrame
 
-        };
+class WireframeEdgeComponent : public LibUtilities::GraphEdgeObject
+{
+public:
+    WireframeEdgeComponent(int gvoid1, int gvoid2)
+    {
+        m_gvoid1 = gvoid1;
+        m_gvoid2 = gvoid2;
+    }
 
+    ~WireframeEdgeComponent()
+    {
+    }
 
-        // -----------------------------------------------------------------------
-        // WireFrame
+    void GetConnectivity(int &gvoid1, int &gvoid2) const
+    {
+        gvoid1 = m_gvoid1;
+        gvoid2 = m_gvoid2;
+    }
 
-        class WireframeEdgeComponent: public LibUtilities::GraphEdgeObject
-        {
-        public:
-            WireframeEdgeComponent(int gvoid1, int gvoid2)
-            {
-                m_gvoid1 = gvoid1;
-                m_gvoid2 = gvoid2;
-            }
+protected:
+private:
+};
 
-            ~WireframeEdgeComponent()
-            {
-            }
+} // namespace SpatialDomains
+} // namespace Nektar
 
-            void GetConnectivity(int &gvoid1, int &gvoid2) const
-            {
-                gvoid1 = m_gvoid1;
-                gvoid2 = m_gvoid2;
-            }
-
-        protected:
-        private:
-        };
-
-    } //end of namespace
-} //end of namespace
-
-#endif //NEKTAR_SPATIALDOMAINS_MESHCOMPONENTS_H
-
+#endif // NEKTAR_SPATIALDOMAINS_MESHCOMPONENTS_H

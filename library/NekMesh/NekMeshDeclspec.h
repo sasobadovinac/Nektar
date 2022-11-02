@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: NekMeshDeclspec.h
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -26,6 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -33,13 +36,13 @@
 #define NEKTAR_NEKMESH_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef NEKMESH_EXPORTS
-        #define NEKMESH_EXPORT _declspec(dllexport)
-    #else
-        #define NEKMESH_EXPORT _declspec(dllimport)
-    #endif
+#ifdef NEKMESH_EXPORTS
+#define NEKMESH_EXPORT _declspec(dllexport)
 #else
-    #define NEKMESH_EXPORT
+#define NEKMESH_EXPORT _declspec(dllimport)
+#endif
+#else
+#define NEKMESH_EXPORT
 #endif
 
-#endif //NEKTAR_SOLVER_UTILS_DECLSPEC_H
+#endif // NEKTAR_SOLVER_UTILS_DECLSPEC_H

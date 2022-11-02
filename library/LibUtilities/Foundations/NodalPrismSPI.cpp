@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalPrismSPI.cpp
+// File: NodalPrismSPI.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -43,9 +43,8 @@ namespace Nektar
 {
 namespace LibUtilities
 {
-bool NodalPrismSPI::initPointsManager[] = {
-    PointsManager().RegisterCreator(PointsKey(0, eNodalPrismSPI),          NodalPrismSPI::Create)
-};
+bool NodalPrismSPI::initPointsManager[] = {PointsManager().RegisterCreator(
+    PointsKey(0, eNodalPrismSPI), NodalPrismSPI::Create)};
 
 void NodalPrismSPI::CalculatePoints()
 {
@@ -105,5 +104,5 @@ std::shared_ptr<PointsBaseType> NodalPrismSPI::Create(const PointsKey &key)
     return returnval;
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

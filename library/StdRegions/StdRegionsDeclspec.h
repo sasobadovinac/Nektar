@@ -1,5 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
+// File: StdRegionsDeclspec.h
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -26,6 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
+// Description:
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -33,14 +36,13 @@
 #define NEKTAR_STD_REGIONS_DECLSPEC_H
 
 #if defined(_MSC_VER)
-    #ifdef STD_REGIONS_EXPORTS
-        #define STD_REGIONS_EXPORT _declspec(dllexport)
-    #else
-        #define STD_REGIONS_EXPORT _declspec(dllimport)
-    #endif
+#ifdef STD_REGIONS_EXPORTS
+#define STD_REGIONS_EXPORT _declspec(dllexport)
 #else
-    #define STD_REGIONS_EXPORT
+#define STD_REGIONS_EXPORT _declspec(dllimport)
+#endif
+#else
+#define STD_REGIONS_EXPORT
 #endif
 
-#endif //NEKTAR_STD_REGIONS_DECLSPEC_H
-
+#endif // NEKTAR_STD_REGIONS_DECLSPEC_H

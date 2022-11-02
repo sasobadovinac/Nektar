@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LinearElasticSystem.h
+// File: LinearElasticSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,8 +35,8 @@
 #ifndef NEKTAR_SOLVERS_LINEARELASTICSOLVER_EQUATIONSYSTEMS_LINELASSYSTEM_H
 #define NEKTAR_SOLVERS_LINEARELASTICSOLVER_EQUATIONSYSTEMS_LINELASSYSTEM_H
 
-#include <SolverUtils/EquationSystem.h>
 #include <LinearElasticSolver/EquationSystems/CoupledAssemblyMap.h>
+#include <SolverUtils/EquationSystem.h>
 
 using namespace Nektar::SolverUtils;
 
@@ -54,11 +54,12 @@ public:
 
     /// Creates an instance of this class
     static EquationSystemSharedPtr create(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
+        const LibUtilities::SessionReaderSharedPtr &pSession,
         const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-        EquationSystemSharedPtr p = MemoryManager<
-            LinearElasticSystem>::AllocateSharedPtr(pSession, pGraph);
+        EquationSystemSharedPtr p =
+            MemoryManager<LinearElasticSystem>::AllocateSharedPtr(pSession,
+                                                                  pGraph);
         p->InitObject();
         return p;
     }
@@ -68,21 +69,17 @@ public:
 
     void BuildMatrixSystem();
 
-    void SetStaticCondBlock(
-        const int                              n,
-        const LocalRegions::ExpansionSharedPtr exp,
-        Array<TwoD, DNekMatSharedPtr>         &mat);
+    void SetStaticCondBlock(const int n,
+                            const LocalRegions::ExpansionSharedPtr exp,
+                            Array<TwoD, DNekMatSharedPtr> &mat);
 
     DNekMatSharedPtr BuildLaplacianIJMatrix(
-        const int                        k1,
-        const int                        k2,
-        const NekDouble                  scale,
+        const int k1, const int k2, const NekDouble scale,
         LocalRegions::ExpansionSharedPtr exp);
 
 protected:
-    LinearElasticSystem(
-        const LibUtilities::SessionReaderSharedPtr& pSession,
-        const SpatialDomains::MeshGraphSharedPtr &pGraph);
+    LinearElasticSystem(const LibUtilities::SessionReaderSharedPtr &pSession,
+                        const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     /// Poisson ratio.
     NekDouble m_nu;
@@ -101,22 +98,22 @@ protected:
     /// Matrix of elemental \f$ D^{-1} \f$ components
     DNekScalBlkMatSharedPtr m_Dinv;
     /// Boundary maps for each of the fields.
-    Array<OneD, Array<OneD, unsigned int> > m_bmap;
+    Array<OneD, Array<OneD, unsigned int>> m_bmap;
     /// Interior maps for each of the fields.
-    Array<OneD, Array<OneD, unsigned int> > m_imap;
+    Array<OneD, Array<OneD, unsigned int>> m_imap;
     /// Storage for the temperature terms.
-    Array<OneD, Array<OneD, NekDouble> > m_temperature;
+    Array<OneD, Array<OneD, NekDouble>> m_temperature;
     /// Storage for the thermal stress terms.
-    Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_stress;
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> m_stress;
 
-    virtual void v_InitObject();
-    virtual void v_GenerateSummary(SolverUtils::SummaryList& s);
+    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
     virtual void v_DoSolve();
     virtual void v_ExtraFldOutput(
-        std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
-        std::vector<std::string>             &variables);
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
+        std::vector<std::string> &variables);
 };
 
-}
+} // namespace Nektar
 
 #endif

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: OptimseFunctions.cpp
+//  File: OptimiseFunctions.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/SurfaceMeshing/OptimiseFunctions.h>
 #include <NekMesh/CADSystem/CADCurve.h>
+#include <NekMesh/SurfaceMeshing/OptimiseFunctions.h>
 
 using namespace std;
 namespace Nektar
@@ -217,7 +217,7 @@ NekDouble OptiEdge::F(Array<OneD, NekDouble> xitst)
     {
         CADSurfSharedPtr s = std::dynamic_pointer_cast<CADSurf>(o);
         // need to organise the val array
-        Array<OneD, Array<OneD, NekDouble> > uv(val.size() / 2);
+        Array<OneD, Array<OneD, NekDouble>> uv(val.size() / 2);
         for (int i = 0; i < val.size() / 2; i++)
         {
             uv[i]    = Array<OneD, NekDouble>(2);
@@ -265,8 +265,8 @@ DNekMat OptiEdge::dF(Array<OneD, NekDouble> xitst)
     if (o->GetType() == CADType::eCurve)
     {
         CADCurveSharedPtr c = std::dynamic_pointer_cast<CADCurve>(o);
-        vector<Array<OneD, NekDouble> > r;
-        vector<Array<OneD, NekDouble> > dr;
+        vector<Array<OneD, NekDouble>> r;
+        vector<Array<OneD, NekDouble>> dr;
 
         for (int i = 0; i < all.size(); i++)
         {
@@ -296,7 +296,7 @@ DNekMat OptiEdge::dF(Array<OneD, NekDouble> xitst)
     {
         CADSurfSharedPtr s = std::dynamic_pointer_cast<CADSurf>(o);
         // need to organise the all array
-        Array<OneD, Array<OneD, NekDouble> > uv(val.size() / 2);
+        Array<OneD, Array<OneD, NekDouble>> uv(val.size() / 2);
         for (int i = 0; i < val.size() / 2; i++)
         {
             uv[i]    = Array<OneD, NekDouble>(2);
@@ -304,8 +304,8 @@ DNekMat OptiEdge::dF(Array<OneD, NekDouble> xitst)
             uv[i][1] = val[i * 2 + 1];
         }
 
-        vector<Array<OneD, NekDouble> > r;
-        vector<Array<OneD, NekDouble> > dru, drv;
+        vector<Array<OneD, NekDouble>> r;
+        vector<Array<OneD, NekDouble>> dru, drv;
         for (int i = 0; i < uv.size(); i++)
         {
             Array<OneD, NekDouble> ri(3), drui(3), drvi(3);
@@ -358,5 +358,5 @@ void OptiEdge::Update(Array<OneD, NekDouble> xinew)
         }
     }
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

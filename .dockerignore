@@ -10,7 +10,7 @@ builds
 
 # Make sure Dockerfiles aren't included in build context to
 # improve caching.
-pkg/docker/nektar/Dockerfile
-pkg/docker/nektar-workbook/Dockerfile
-pkg/docker/nektar-env/Dockerfile
-
+docker/nektar/Dockerfile
+docker/nektar-dev/Dockerfile
+docker/nektar-workbook/Dockerfile
+docker/nektar-env/Dockerfile

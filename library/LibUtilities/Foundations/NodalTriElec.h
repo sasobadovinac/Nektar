@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTriElec.h
+// File: NodalTriElec.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -37,77 +37,74 @@
 
 #include <memory>
 
-#include <LibUtilities/Foundations/FoundationsFwd.hpp>
-#include <LibUtilities/Foundations/NodalUtil.h>
-#include <LibUtilities/Foundations/ManagerAccess.h>
-#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 #include <LibUtilities/BasicUtils/ErrorUtil.hpp>
+#include <LibUtilities/Foundations/FoundationsFwd.hpp>
+#include <LibUtilities/Foundations/ManagerAccess.h>
+#include <LibUtilities/Foundations/NodalUtil.h>
 #include <LibUtilities/LibUtilitiesDeclspec.h>
+#include <LibUtilities/LinearAlgebra/NekMatrix.hpp>
 
 namespace Nektar
 {
-    namespace LibUtilities
+namespace LibUtilities
+{
+
+class NodalTriElec : public Points<NekDouble>
+{
+public:
+    virtual ~NodalTriElec()
     {
+    }
 
-        class NodalTriElec: public Points<NekDouble>
-        {
-        public:
+    LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
+        const PointsKey &key);
 
-            virtual ~NodalTriElec()
-            {
-            }
+    const MatrixSharedPtrType GetI(const PointsKey &pkey)
+    {
+        ASSERTL0(pkey.GetPointsDim() == 2,
+                 "NodalTriElec Points can only interpolate to other 2d "
+                 "point distributions");
+        Array<OneD, const NekDouble> x, y;
+        PointsManager()[pkey]->GetPoints(x, y);
+        return GetI(x, y);
+    }
 
-            LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType>
-                Create(const PointsKey &key);
+    const MatrixSharedPtrType GetI(const Array<OneD, const NekDouble> &x,
+                                   const Array<OneD, const NekDouble> &y)
+    {
+        size_t numpoints = x.size();
+        Array<OneD, NekDouble> interp(GetTotNumPoints() * numpoints);
+        CalculateInterpMatrix(x, y, interp);
 
-            const MatrixSharedPtrType GetI(const PointsKey &pkey)
-            {
-                ASSERTL0(pkey.GetPointsDim()==2,
-                         "NodalTriElec Points can only interpolate to other 2d "
-                         "point distributions");
-                Array<OneD, const NekDouble> x, y;
-                PointsManager()[pkey]->GetPoints(x, y);
-                return GetI(x, y);
-            }
+        unsigned int np = GetTotNumPoints();
+        NekDouble *d    = interp.data();
+        return MemoryManager<NekMatrix<NekDouble>>::AllocateSharedPtr(numpoints,
+                                                                      np, d);
+    }
 
-            const MatrixSharedPtrType GetI(
-                const Array<OneD, const NekDouble>& x,
-                const Array<OneD, const NekDouble>& y)
-            {
-                size_t numpoints = x.size();
-                Array<OneD, NekDouble> interp(GetTotNumPoints()*numpoints);
-                CalculateInterpMatrix(x, y, interp);
+    NodalTriElec(const PointsKey &key) : PointsBaseType(key)
+    {
+    }
 
-                unsigned int np = GetTotNumPoints();
-                NekDouble* d = interp.data();
-                return MemoryManager<NekMatrix<NekDouble> >
-                    ::AllocateSharedPtr(numpoints, np, d);
-            }
+private:
+    static bool initPointsManager[];
 
-            NodalTriElec(const PointsKey &key):PointsBaseType(key)
-            {
-            }
+    std::shared_ptr<NodalUtilTriangle> m_util;
 
-        private:
-            static bool initPointsManager[];
+    NodalTriElec() : PointsBaseType(NullPointsKey)
+    {
+    }
 
-            std::shared_ptr<NodalUtilTriangle> m_util;
+    void CalculatePoints();
+    void CalculateWeights();
+    void CalculateDerivMatrix();
+    void NodalPointReorder2d();
 
-            NodalTriElec():PointsBaseType(NullPointsKey)
-            {
-            }
+    void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xia,
+                               const Array<OneD, const NekDouble> &yia,
+                               Array<OneD, NekDouble> &interp);
+};
+} // namespace LibUtilities
+} // namespace Nektar
 
-            void CalculatePoints();
-            void CalculateWeights();
-            void CalculateDerivMatrix();
-            void NodalPointReorder2d();
-
-            void CalculateInterpMatrix(
-                const Array<OneD, const NekDouble> &xia,
-                const Array<OneD, const NekDouble> &yia,
-                      Array<OneD, NekDouble> &interp);
-        };
-   } // end of namespace
-} // end of namespace
-
-#endif //NODALTRIELEC_H
+#endif // NODALTRIELEC_H

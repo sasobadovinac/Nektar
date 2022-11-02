@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  SegGeom.cpp
+//  File: SegGeom.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -33,12 +33,12 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <SpatialDomains/SegGeom.h>
 #include <SpatialDomains/GeomFactors.h>
+#include <SpatialDomains/SegGeom.h>
 
+#include <LibUtilities/Foundations/ManagerAccess.h> // for PointsManager, etc
 #include <StdRegions/StdRegions.hpp>
 #include <StdRegions/StdSegExp.h>
-#include <LibUtilities/Foundations/ManagerAccess.h> // for PointsManager, etc
 
 namespace Nektar
 {
@@ -49,34 +49,31 @@ SegGeom::SegGeom()
     m_shapeType = LibUtilities::eSegment;
 }
 
-SegGeom::SegGeom(int id,
-                 const int coordim,
-                 const PointGeomSharedPtr vertex[],
+SegGeom::SegGeom(int id, const int coordim, const PointGeomSharedPtr vertex[],
                  const CurveSharedPtr curve)
     : Geometry1D(coordim)
 {
     m_shapeType = LibUtilities::eSegment;
-    m_globalID = id;
-    m_state = eNotFilled;
-    m_curve = curve;
+    m_globalID  = id;
+    m_state     = eNotFilled;
+    m_curve     = curve;
 
     m_verts[0] = vertex[0];
     m_verts[1] = vertex[1];
 }
 
-SegGeom::SegGeom(const SegGeom &in)
-    : Geometry1D(in)
+SegGeom::SegGeom(const SegGeom &in) : Geometry1D(in)
 {
     // From Geometry class
     m_shapeType = in.m_shapeType;
 
     // info from EdgeComponent class
     m_globalID = in.m_globalID;
-    m_xmap = in.m_xmap;
+    m_xmap     = in.m_xmap;
     SetUpCoeffs(m_xmap->GetNcoeffs());
 
     // info from SegGeom class
-    m_coordim = in.m_coordim;
+    m_coordim  = in.m_coordim;
     m_verts[0] = in.m_verts[0];
     m_verts[1] = in.m_verts[1];
 
@@ -96,8 +93,7 @@ void SegGeom::SetUpXmap()
     else
     {
         const LibUtilities::BasisKey B(
-            LibUtilities::eModified_A,
-            2,
+            LibUtilities::eModified_A, 2,
             LibUtilities::PointsKey(2, LibUtilities::eGaussLobattoLegendre));
         m_xmap = MemoryManager<StdRegions::StdSegExp>::AllocateSharedPtr(B);
     }
@@ -116,8 +112,8 @@ SegGeomSharedPtr SegGeom::GenerateOneSpaceDimGeom(void)
     returnval->m_globalID = m_globalID;
 
     // geometric information.
-    returnval->m_coordim = 1;
-    NekDouble x0 = (*m_verts[0])[0];
+    returnval->m_coordim     = 1;
+    NekDouble x0             = (*m_verts[0])[0];
     PointGeomSharedPtr vert0 = MemoryManager<PointGeom>::AllocateSharedPtr(
         1, m_verts[0]->GetGlobalID(), x0, 0.0, 0.0);
     vert0->SetGlobalID(vert0->GetGlobalID());
@@ -140,7 +136,7 @@ SegGeomSharedPtr SegGeom::GenerateOneSpaceDimGeom(void)
     else
     {
         Array<OneD, const NekDouble> w0 = base[0]->GetW();
-        len = 0.0;
+        len                             = 0.0;
 
         for (int i = 0; i < jac.size(); ++i)
         {
@@ -223,7 +219,7 @@ StdRegions::Orientation SegGeom::GetEdgeOrientation(const SegGeom &edge1,
 
 void SegGeom::v_GenGeomFactors()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         SegGeom::v_Setup();
     }
@@ -328,7 +324,7 @@ void SegGeom::v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces)
 
 void SegGeom::v_Setup()
 {
-    if(!m_setupState)
+    if (!m_setupState)
     {
         SetUpXmap();
         SetUpCoeffs(m_xmap->GetNcoeffs());
@@ -353,5 +349,5 @@ int SegGeom::v_GetNumVerts() const
     return kNverts;
 }
 
-}
-}
+} // namespace SpatialDomains
+} // namespace Nektar

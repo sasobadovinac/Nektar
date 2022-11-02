@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWavePropagation.cpp
+// File: PulseWavePropagation.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,12 +29,14 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Pulse Wave Propagation solve routines based on the weak formulation (1):
+// Description: Pulse Wave Propagation solve routines based on the weak
+// formulation (1):
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <iostream>
 
+#include <LibUtilities/BasicUtils/Timer.h>
 #include <PulseWaveSolver/EquationSystems/PulseWavePropagation.h>
 
 using namespace std;
@@ -43,8 +45,9 @@ namespace Nektar
 {
 
 string PulseWavePropagation::className =
-    GetEquationSystemFactory().RegisterCreatorFunction("PulseWavePropagation",
-        PulseWavePropagation::create, "Pulse Wave Propagation equation.");
+    GetEquationSystemFactory().RegisterCreatorFunction(
+        "PulseWavePropagation", PulseWavePropagation::create,
+        "Pulse Wave Propagation equation.");
 /**
  *  @class PulseWavePropagation
  *
@@ -52,37 +55,44 @@ string PulseWavePropagation::className =
  *  "Computational Modelling of 1D blood flow with variable
  *  mechanical properties" by S. J. Sherwin et al. The weak
  *  formulation (1) reads:
- *  \f$ \sum_{e=1}^{N_{el}} \left[ \left( \frac{\partial \mathbf{U}^{\delta} }{\partial t} ,
- *    \mathbf{\psi}^{\delta} \right)_{\Omega_e} - \left( \frac{\partial \mathbf{F(\mathbf{U})}^{\delta} }
- *    {\partial x}, \mathbf{\psi}^{\delta}  \right)_{\Omega_e} + \left[ \mathbf{\psi}^{\delta}
- *    \cdot \{ \mathbf{F}^u - \mathbf{F}(\mathbf{U}^{\delta}) \} \right]_{x_e^l}^{x_eû} \right] = 0 \f$
+ *  \f$ \sum_{e=1}^{N_{el}} \left[ \left( \frac{\partial \mathbf{U}^{\delta}
+ * }{\partial t} , \mathbf{\psi}^{\delta} \right)_{\Omega_e} - \left(
+ * \frac{\partial \mathbf{F(\mathbf{U})}^{\delta} }
+ *    {\partial x}, \mathbf{\psi}^{\delta}  \right)_{\Omega_e} + \left[
+ * \mathbf{\psi}^{\delta} \cdot \{ \mathbf{F}^u -
+ * \mathbf{F}(\mathbf{U}^{\delta}) \} \right]_{x_e^l}^{x_eû} \right] = 0 \f$
  */
 PulseWavePropagation::PulseWavePropagation(
-    const LibUtilities::SessionReaderSharedPtr& pSession,
-    const SpatialDomains::MeshGraphSharedPtr& pGraph)
+    const LibUtilities::SessionReaderSharedPtr &pSession,
+    const SpatialDomains::MeshGraphSharedPtr &pGraph)
     : PulseWaveSystem(pSession, pGraph)
 {
 }
 
-void PulseWavePropagation::v_InitObject()
+void PulseWavePropagation::v_InitObject(bool DeclareField)
 {
-    PulseWaveSystem::v_InitObject();
+    // Will set up an array of vessels/fields in PulseWaveSystem::v_InitObject
+    // so set DeclareField to false so that the fields are not set up in
+    // EquationSystem unnecessarily. Note the number of fields in Equation
+    // system is related to the number of variables. The number of vessels is
+    // therefore held in PulwWaveSystem.
+    PulseWaveSystem::v_InitObject(false);
 
     if (m_session->DefinesSolverInfo("PressureArea"))
     {
         m_pressureArea = GetPressureAreaFactory().CreateInstance(
-                m_session->GetSolverInfo("PressureArea"), m_vessels, m_session);
+            m_session->GetSolverInfo("PressureArea"), m_vessels, m_session);
     }
     else
     {
-        m_pressureArea = GetPressureAreaFactory().CreateInstance("Beta",
-                                                          m_vessels, m_session);
+        m_pressureArea = GetPressureAreaFactory().CreateInstance(
+            "Beta", m_vessels, m_session);
     }
 
     if (m_explicitAdvection)
     {
-        m_ode.DefineOdeRhs       (&PulseWavePropagation::DoOdeRhs, this);
-        m_ode.DefineProjection   (&PulseWavePropagation::DoOdeProjection, this);
+        m_ode.DefineOdeRhs(&PulseWavePropagation::DoOdeRhs, this);
+        m_ode.DefineProjection(&PulseWavePropagation::DoOdeProjection, this);
     }
     else
     {
@@ -92,38 +102,32 @@ void PulseWavePropagation::v_InitObject()
     // Create advection object
     string advName;
     string riemName;
-    switch(m_upwindTypePulse)
+    switch (m_upwindTypePulse)
     {
-    case eUpwindPulse:
+        case eUpwindPulse:
         {
             advName  = "WeakDG";
             riemName = "UpwindPulse";
         }
         break;
-    default:
+        default:
         {
             ASSERTL0(false, "populate switch statement for upwind flux");
         }
         break;
     }
-    m_advObject = SolverUtils::
-        GetAdvectionFactory().CreateInstance(advName, advName);
-    m_advObject->SetFluxVector(
-        &PulseWavePropagation::GetFluxVector, this);
-    m_riemannSolver = SolverUtils::
-        GetRiemannSolverFactory().CreateInstance(riemName, m_session);
-    m_riemannSolver->SetScalar(
-        "A0", &PulseWavePropagation::GetA0, this);
-    m_riemannSolver->SetScalar(
-        "beta", &PulseWavePropagation::GetBeta, this);
-    m_riemannSolver->SetScalar(
-        "alpha", &PulseWavePropagation::GetAlpha, this);
-    m_riemannSolver->SetScalar(
-        "N", &PulseWavePropagation::GetN, this);
-    m_riemannSolver->SetParam(
-        "rho", &PulseWavePropagation::GetRho, this);
-    m_riemannSolver->SetParam(
-        "domains", &PulseWavePropagation::GetDomains, this);
+    m_advObject =
+        SolverUtils::GetAdvectionFactory().CreateInstance(advName, advName);
+    m_advObject->SetFluxVector(&PulseWavePropagation::GetFluxVector, this);
+    m_riemannSolver = SolverUtils::GetRiemannSolverFactory().CreateInstance(
+        riemName, m_session);
+    m_riemannSolver->SetScalar("A0", &PulseWavePropagation::GetA0, this);
+    m_riemannSolver->SetScalar("beta", &PulseWavePropagation::GetBeta, this);
+    m_riemannSolver->SetScalar("alpha", &PulseWavePropagation::GetAlpha, this);
+    m_riemannSolver->SetScalar("N", &PulseWavePropagation::GetN, this);
+    m_riemannSolver->SetParam("rho", &PulseWavePropagation::GetRho, this);
+    m_riemannSolver->SetParam("domains", &PulseWavePropagation::GetDomains,
+                              this);
 
     m_advObject->SetRiemannSolver(m_riemannSolver);
     m_advObject->InitObject(m_session, m_fields);
@@ -141,20 +145,19 @@ PulseWavePropagation::~PulseWavePropagation()
  *  will be called
  *
  */
-void PulseWavePropagation::DoOdeRhs(const Array<OneD,
-                                    const  Array<OneD, NekDouble> >&inarray,
-                                    Array<OneD,  Array<OneD, NekDouble> >&outarray,
-                                    const NekDouble time)
+void PulseWavePropagation::DoOdeRhs(
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     int i;
 
-    Array<OneD, Array<OneD, NekDouble> > physarray(m_nVariables);
+    Array<OneD, Array<OneD, NekDouble>> physarray(m_nVariables);
 
     // Dummy array for WeakDG advection
-    Array<OneD, Array<OneD, NekDouble> > advVel(m_spacedim);
+    Array<OneD, Array<OneD, NekDouble>> advVel(m_spacedim);
 
     // Output array for advection
-    Array<OneD, Array<OneD, NekDouble> > out(m_nVariables);
+    Array<OneD, Array<OneD, NekDouble>> out(m_nVariables);
 
     int cnt = 0;
 
@@ -167,9 +170,11 @@ void PulseWavePropagation::DoOdeRhs(const Array<OneD,
     // do advection evaluation in all domains
     for (int omega = 0; omega < m_nDomains; ++omega)
     {
+        LibUtilities::Timer timer;
         m_currentDomain = omega;
-        int nq = m_vessels[omega * m_nVariables]->GetTotPoints();
+        int nq          = m_vessels[omega * m_nVariables]->GetTotPoints();
 
+        timer.Start();
         for (i = 0; i < m_nVariables; ++i)
         {
             physarray[i] = inarray[i] + cnt;
@@ -181,21 +186,21 @@ void PulseWavePropagation::DoOdeRhs(const Array<OneD,
             m_fields[i] = m_vessels[omega * m_nVariables + i];
         }
 
-        m_advObject->Advect(m_nVariables, m_fields, advVel, physarray,
-                            out, time);
+        m_advObject->Advect(m_nVariables, m_fields, advVel, physarray, out,
+                            time);
         for (i = 0; i < m_nVariables; ++i)
         {
             Vmath::Neg(nq, out[i], 1);
         }
-
+        timer.Stop();
+        timer.AccumulateRegion("PulseWavePropagation:_DoOdeRHS", 1);
         cnt += nq;
     }
 }
 
-void PulseWavePropagation::DoOdeProjection(const Array<OneD,
-                                           const Array<OneD, NekDouble> >&inarray,
-                                           Array<OneD, Array<OneD, NekDouble> >&outarray,
-                                           const NekDouble time)
+void PulseWavePropagation::DoOdeProjection(
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
     // Just copy over array
     for (int i = 0; i < m_nVariables; ++i)
@@ -204,28 +209,26 @@ void PulseWavePropagation::DoOdeProjection(const Array<OneD,
     }
 }
 
-
-
 /**
- *	Does the projection between ... space and the ... space. Also checks for Q-inflow boundary
- *  conditions at the inflow of the current arterial segment and applies the Q-inflow if specified
+ *	Does the projection between ... space and the ... space. Also checks for
+ *Q-inflow boundary conditions at the inflow of the current arterial segment and
+ *applies the Q-inflow if specified
  */
 void PulseWavePropagation::SetPulseWaveBoundaryConditions(
-    const Array<OneD,const Array<OneD, NekDouble> >&inarray,
-    Array<OneD, Array<OneD, NekDouble> >&outarray,
-    const NekDouble time)
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 
 {
     int omega;
 
-    Array<OneD, MultiRegions::ExpListSharedPtr>     vessel(2);
+    Array<OneD, MultiRegions::ExpListSharedPtr> vessel(2);
 
     int offset = 0;
 
-// This will be moved to the RCR boundary condition once factory is setup
+    // This will be moved to the RCR boundary condition once factory is setup
     if (time == 0)
     {
-        m_Boundary = Array<OneD,PulseWaveBoundarySharedPtr>(2 * m_nDomains);
+        m_Boundary = Array<OneD, PulseWaveBoundarySharedPtr>(2 * m_nDomains);
 
         for (omega = 0; omega < m_nDomains; ++omega)
         {
@@ -234,15 +237,21 @@ void PulseWavePropagation::SetPulseWaveBoundaryConditions(
 
             for (int j = 0; j < 2; ++j)
             {
-                std::string BCType = vessel[0]->GetBndConditions()[j]->GetUserDefined();
-                if (BCType.empty()) // if not condition given define it to be NoUserDefined
+                std::string BCType;
+
+                if (j < vessel[0]->GetBndConditions().size())
+                {
+                    BCType = vessel[0]->GetBndConditions()[j]->GetUserDefined();
+                }
+
+                // if no condition given define it to be NoUserDefined
+                if (BCType.empty() || BCType == "Interface")
                 {
                     BCType = "NoUserDefined";
                 }
 
-                m_Boundary[2 * omega + j] =
-                        GetBoundaryFactory().CreateInstance(BCType, m_vessels,
-                                                    m_session, m_pressureArea);
+                m_Boundary[2 * omega + j] = GetBoundaryFactory().CreateInstance(
+                    BCType, m_vessels, m_session, m_pressureArea);
 
                 // turn on time dependent BCs
                 if (BCType == "Q-inflow")
@@ -263,46 +272,54 @@ void PulseWavePropagation::SetPulseWaveBoundaryConditions(
                 }
             }
         }
-
     }
 
     SetBoundaryConditions(time);
 
     // Loop over all vessels and set boundary conditions
+    LibUtilities::Timer timer;
     for (omega = 0; omega < m_nDomains; ++omega)
     {
+        timer.Start();
         for (int n = 0; n < 2; ++n)
         {
-            m_Boundary[2 * omega + n]->DoBoundary(inarray, m_A_0, m_beta, m_alpha,
-                                                       time, omega, offset, n);
+            m_Boundary[2 * omega + n]->DoBoundary(
+                inarray, m_A_0, m_beta, m_alpha, time, omega, offset, n);
         }
 
         offset += m_vessels[2 * omega]->GetTotPoints();
+        timer.Stop();
+        timer.AccumulateRegion("PulseWavePropagation:_SetBCs", 1);
     }
 }
 
 /**
-*  Calculates the second term of the weak form (1): \f$
-*  \left( \frac{\partial \mathbf{F(\mathbf{U})}^{\delta}
-*  }{\partial x}, \mathbf{\psi}^{\delta} \right)_{\Omega_e}
-*  \f$
-*  The variables of the system are $\mathbf{U} = [A,u]^T$
-*  physfield[0] = A        physfield[1] = u
-*  flux[0] = F[0] = A*u    flux[1] = F[1] = u^2/2 + p/rho
-*/
+ *  Calculates the second term of the weak form (1): \f$
+ *  \left( \frac{\partial \mathbf{F(\mathbf{U})}^{\delta}
+ *  }{\partial x}, \mathbf{\psi}^{\delta} \right)_{\Omega_e}
+ *  \f$
+ *  The variables of the system are $\mathbf{U} = [A,u]^T$
+ *  physfield[0] = A        physfield[1] = u
+ *  flux[0] = F[0] = A*u    flux[1] = F[1] = u^2/2 + p/rho
+ */
 void PulseWavePropagation::GetFluxVector(
-        const Array<OneD, Array<OneD, NekDouble> >               &physfield,
-              Array<OneD, Array<OneD, Array<OneD, NekDouble> > > &flux)
+    const Array<OneD, Array<OneD, NekDouble>> &physfield,
+    Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux)
 {
-    int nq             = m_vessels[m_currentDomain * m_nVariables]->GetTotPoints();
+    int nq = m_vessels[m_currentDomain * m_nVariables]->GetTotPoints();
     NekDouble domain   = m_currentDomain;
     m_pressure[domain] = Array<OneD, NekDouble>(nq);
     Array<OneD, NekDouble> dAUdx(nq);
     NekDouble viscoelasticGradient = 0.0;
 
+    LibUtilities::Timer timer;
+
     for (int j = 0; j < nq; ++j)
     {
+        timer.Start();
         flux[0][0][j] = physfield[0][j] * physfield[1][j];
+        timer.Stop();
+        timer.AccumulateRegion("PulseWavePropagation:GetFluxVector-flux", 3);
     }
 
     // d/dx of AU, for the viscoelastic tube law and extra fields
@@ -319,12 +336,13 @@ void PulseWavePropagation::GetFluxVector(
             viscoelasticGradient = (dAUdx[j] + dAUdx[j + 1]) / 2;
         }
 
-        m_pressureArea->GetPressure(m_pressure[domain][j],
-                       m_beta[domain][j], physfield[0][j], m_A_0[domain][j],
-                  viscoelasticGradient, m_gamma[domain][j], m_alpha[domain][j]);
+        m_pressureArea->GetPressure(m_pressure[domain][j], m_beta[domain][j],
+                                    physfield[0][j], m_A_0[domain][j],
+                                    viscoelasticGradient, m_gamma[domain][j],
+                                    m_alpha[domain][j]);
 
         flux[1][0][j] = physfield[1][j] * physfield[1][j] / 2 +
-                                                  m_pressure[domain][j] / m_rho;
+                        m_pressure[domain][j] / m_rho;
     }
 
     m_session->MatchSolverInfo("OutputExtraFields", "True", extraFields, true);
@@ -339,20 +357,21 @@ void PulseWavePropagation::GetFluxVector(
         */
         int counter = 0;
 
-        m_PWV[domain]  = Array<OneD, NekDouble>(nq);
-        m_W1[domain]   = Array<OneD, NekDouble>(nq);
-        m_W2[domain]   = Array<OneD, NekDouble>(nq);
+        m_PWV[domain] = Array<OneD, NekDouble>(nq);
+        m_W1[domain]  = Array<OneD, NekDouble>(nq);
+        m_W2[domain]  = Array<OneD, NekDouble>(nq);
 
         for (int j = 0; j < nq; ++j)
         {
             m_pressureArea->GetC(m_PWV[domain][j], m_beta[domain][j],
-               physfield[0][counter + j], m_A_0[domain][j], m_alpha[domain][j]);
+                                 physfield[0][counter + j], m_A_0[domain][j],
+                                 m_alpha[domain][j]);
             m_pressureArea->GetW1(m_W1[domain][j], physfield[1][counter + j],
-                 m_beta[domain][j], physfield[0][counter + j], m_A_0[domain][j],
-                                                            m_alpha[domain][j]);
+                                  m_beta[domain][j], physfield[0][counter + j],
+                                  m_A_0[domain][j], m_alpha[domain][j]);
             m_pressureArea->GetW2(m_W2[domain][j], physfield[1][counter + j],
-                 m_beta[domain][j], physfield[0][counter + j], m_A_0[domain][j],
-                                                            m_alpha[domain][j]);
+                                  m_beta[domain][j], physfield[0][counter + j],
+                                  m_A_0[domain][j], m_alpha[domain][j]);
         }
 
         counter += nq;
@@ -393,9 +412,9 @@ NekDouble PulseWavePropagation::GetDomains()
  *  Print summary routine, calls virtual routine reimplemented in
  *  UnsteadySystem
  */
-void PulseWavePropagation::v_GenerateSummary(SolverUtils::SummaryList& s)
+void PulseWavePropagation::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
     PulseWaveSystem::v_GenerateSummary(s);
 }
 
-} // Nektar
+} // namespace Nektar

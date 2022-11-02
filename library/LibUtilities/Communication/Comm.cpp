@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Comm.cpp
+// File: Comm.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,5 +69,5 @@ CommFactory &GetCommFactory()
     static CommFactory instance;
     return instance;
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

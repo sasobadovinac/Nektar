@@ -51,8 +51,7 @@ LibUtilities::ShapeType Quadrilateral::m_type =
 /**
  * @brief Create a quadrilateral element.
  */
-Quadrilateral::Quadrilateral(ElmtConfig pConf,
-                             vector<NodeSharedPtr> pNodeList,
+Quadrilateral::Quadrilateral(ElmtConfig pConf, vector<NodeSharedPtr> pNodeList,
                              vector<int> pTagList)
     : Element(pConf, GetNumNodes(pConf), pNodeList.size())
 {
@@ -93,10 +92,9 @@ Quadrilateral::Quadrilateral(ElmtConfig pConf,
                 edgeNodes.push_back(pNodeList[j - 1]);
             }
         }
-        m_edge.push_back(EdgeSharedPtr(new Edge(pNodeList[it->first.first - 1],
-                                                pNodeList[it->first.second - 1],
-                                                edgeNodes,
-                                                m_conf.m_edgeCurveType)));
+        m_edge.push_back(EdgeSharedPtr(new Edge(
+            pNodeList[it->first.first - 1], pNodeList[it->first.second - 1],
+            edgeNodes, m_conf.m_edgeCurveType)));
     }
 
     if (pConf.m_reorient)
@@ -116,8 +114,8 @@ Quadrilateral::Quadrilateral(ElmtConfig pConf,
     }
 }
 
-StdRegions::Orientation Quadrilateral::GetEdgeOrient(
-    int edgeId, EdgeSharedPtr edge)
+StdRegions::Orientation Quadrilateral::GetEdgeOrient(int edgeId,
+                                                     EdgeSharedPtr edge)
 {
     int locVert = edgeId;
     if (edge->m_n1 == m_vertex[locVert])
@@ -136,12 +134,9 @@ StdRegions::Orientation Quadrilateral::GetEdgeOrient(
     return StdRegions::eNoOrientation;
 }
 
-void Quadrilateral::MakeOrder(int                                order,
-                              SpatialDomains::GeometrySharedPtr  geom,
-                              LibUtilities::PointsType           pType,
-                              int                                coordDim,
-                              int                               &id,
-                              bool                               justConfig)
+void Quadrilateral::MakeOrder(int order, SpatialDomains::GeometrySharedPtr geom,
+                              LibUtilities::PointsType pType, int coordDim,
+                              int &id, bool justConfig)
 {
     m_conf.m_order       = order;
     m_curveType          = pType;
@@ -162,7 +157,7 @@ void Quadrilateral::MakeOrder(int                                order,
         return;
     }
 
-    int nPoints = order + 1;
+    int nPoints                            = order + 1;
     StdRegions::StdExpansionSharedPtr xmap = geom->GetXmap();
 
     Array<OneD, NekDouble> px;
@@ -170,7 +165,7 @@ void Quadrilateral::MakeOrder(int                                order,
     ASSERTL1(pKey.GetPointsDim() == 1, "Points distribution must be 1D");
     LibUtilities::PointsManager()[pKey]->GetPoints(px);
 
-    Array<OneD, Array<OneD, NekDouble> > phys(coordDim);
+    Array<OneD, Array<OneD, NekDouble>> phys(coordDim);
 
     for (int i = 0; i < coordDim; ++i)
     {
@@ -181,9 +176,9 @@ void Quadrilateral::MakeOrder(int                                order,
     int nQuadIntPts = (nPoints - 2) * (nPoints - 2);
     m_volumeNodes.resize(nQuadIntPts);
 
-    for (int i = 1, cnt = 0; i < nPoints-1; ++i)
+    for (int i = 1, cnt = 0; i < nPoints - 1; ++i)
     {
-        for (int j = 1; j < nPoints-1; ++j, ++cnt)
+        for (int j = 1; j < nPoints - 1; ++j, ++cnt)
         {
             Array<OneD, NekDouble> xp(2);
             xp[0] = px[j];
@@ -195,8 +190,8 @@ void Quadrilateral::MakeOrder(int                                order,
                 x[k] = xmap->PhysEvaluate(xp, phys[k]);
             }
 
-            m_volumeNodes[cnt] = std::shared_ptr<Node>(
-                new Node(id++, x[0], x[1], x[2]));
+            m_volumeNodes[cnt] =
+                std::shared_ptr<Node>(new Node(id++, x[0], x[1], x[2]));
         }
     }
 }
@@ -211,8 +206,8 @@ SpatialDomains::GeometrySharedPtr Quadrilateral::GetGeom(int coordDim)
         edges[i] = m_edge[i]->GetGeom(coordDim);
     }
 
-    ret = MemoryManager<SpatialDomains::QuadGeom>::AllocateSharedPtr(
-        m_id, edges);
+    ret =
+        MemoryManager<SpatialDomains::QuadGeom>::AllocateSharedPtr(m_id, edges);
 
     ret->Setup();
     return ret;
@@ -224,14 +219,13 @@ void Quadrilateral::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     nodeList.resize(n * n);
 
     // Write vertices
-    nodeList[0]         = m_vertex[0];
-    nodeList[n - 1]     = m_vertex[1];
-    nodeList[n * n - 1] = m_vertex[2];
+    nodeList[0]           = m_vertex[0];
+    nodeList[n - 1]       = m_vertex[1];
+    nodeList[n * n - 1]   = m_vertex[2];
     nodeList[n * (n - 1)] = m_vertex[3];
 
     // Write edge-interior
-    int skips[4][2] = {
-        {0, 1}, {n - 1, n}, {n * n - 1, -1}, {n * (n - 1), -n}};
+    int skips[4][2] = {{0, 1}, {n - 1, n}, {n * n - 1, -1}, {n * (n - 1), -n}};
     for (int i = 0; i < 4; ++i)
     {
         bool reverseEdge = m_edge[i]->m_n1 == m_vertex[i];
@@ -259,12 +253,10 @@ void Quadrilateral::GetCurvedNodes(std::vector<NodeSharedPtr> &nodeList) const
     {
         for (int j = 1; j < n - 1; ++j)
         {
-            nodeList[i * n + j] =
-                m_volumeNodes[(i - 1) * (n - 2) + (j - 1)];
+            nodeList[i * n + j] = m_volumeNodes[(i - 1) * (n - 2) + (j - 1)];
         }
     }
 }
-
 
 /**
  * @brief Return the number of nodes defining a quadrilateral.
@@ -277,5 +269,5 @@ unsigned int Quadrilateral::GetNumNodes(ElmtConfig pConf)
     else
         return (n + 1) * (n + 1);
 }
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

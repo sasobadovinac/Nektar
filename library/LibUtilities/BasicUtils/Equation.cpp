@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Equation.cpp
+//  File: Equation.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:  Wrapper to Interpreter class
+//  Description: Wrapper to Interpreter class
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -42,13 +42,9 @@ namespace Nektar
 namespace LibUtilities
 {
 
-Equation::Equation(InterpreterSharedPtr evaluator,
-                   const std::string& expr,
-                   const std::string& vlist):
-    m_vlist     (vlist),
-    m_expr      (expr),
-    m_expr_id   (-1),
-    m_evaluator (evaluator)
+Equation::Equation(InterpreterSharedPtr evaluator, const std::string &expr,
+                   const std::string &vlist)
+    : m_vlist(vlist), m_expr(expr), m_expr_id(-1), m_evaluator(evaluator)
 {
     boost::algorithm::trim(m_expr);
     boost::algorithm::trim(m_vlist);
@@ -65,25 +61,29 @@ Equation::Equation(InterpreterSharedPtr evaluator,
             m_expr_id = m_evaluator->DefineFunction(m_vlist, m_expr);
         }
     }
-    catch (const std::runtime_error& e)
+    catch (const std::runtime_error &e)
     {
         m_expr_id = -1;
-        std::string msg(std::string("Equation::Equation() fails on expression [") + m_expr + std::string("]\n"));
+        std::string msg(
+            std::string("Equation::Equation() fails on expression [") + m_expr +
+            std::string("]\n"));
         NEKERROR(ErrorUtil::efatal, msg);
         throw e;
         return;
     }
-    catch (const std::string& e)
+    catch (const std::string &e)
     {
         m_expr_id = -1;
-        std::string msg(std::string("Equation::Equation() fails on expression [") + m_expr + std::string("]\n"));
+        std::string msg(
+            std::string("Equation::Equation() fails on expression [") + m_expr +
+            std::string("]\n"));
         NEKERROR(ErrorUtil::efatal, msg);
         throw e;
         return;
     }
 }
 
-Equation& Equation::operator=(const Equation &src)
+Equation &Equation::operator=(const Equation &src)
 {
     m_vlist     = src.m_vlist;
     m_expr      = src.m_expr;
@@ -101,36 +101,40 @@ NekDouble Equation::Evaluate() const
             return m_evaluator->Evaluate(m_expr_id);
         }
     }
-    catch (const std::runtime_error& e)
+    catch (const std::runtime_error &e)
     {
-        std::string msg(std::string("Equation::Evaluate fails on expression [") + m_expr + std::string("]\n"));
+        std::string msg(
+            std::string("Equation::Evaluate fails on expression [") + m_expr +
+            std::string("]\n"));
         NEKERROR(ErrorUtil::efatal, msg + std::string("ERROR: ") + e.what());
     }
-    catch (const std::string& e)
+    catch (const std::string &e)
     {
-        std::string msg(std::string("Equation::Evaluate fails on expression [") + m_expr + std::string("]\n"));
+        std::string msg(
+            std::string("Equation::Evaluate fails on expression [") + m_expr +
+            std::string("]\n"));
         NEKERROR(ErrorUtil::efatal, msg + std::string("ERROR: ") + e);
     }
     return 0;
 }
 
-NekDouble Equation::Evaluate(
-    NekDouble x, NekDouble y, NekDouble z, NekDouble t) const
+NekDouble Equation::Evaluate(NekDouble x, NekDouble y, NekDouble z,
+                             NekDouble t) const
 {
     try
     {
         if (m_expr_id != -1)
         {
-            return m_evaluator->Evaluate(m_expr_id, x,y,z,t);
+            return m_evaluator->Evaluate(m_expr_id, x, y, z, t);
         }
     }
-    catch (const std::runtime_error& e)
+    catch (const std::runtime_error &e)
     {
         std::string msg =
             "Equation::Evaluate fails on expression [" + m_expr + "]\n";
         NEKERROR(ErrorUtil::efatal, msg + std::string("ERROR: ") + e.what());
     }
-    catch (const std::string& e)
+    catch (const std::string &e)
     {
         std::string msg =
             "Equation::Evaluate fails on expression [" + m_expr + "]\n";
@@ -140,36 +144,31 @@ NekDouble Equation::Evaluate(
     return 0;
 }
 
-void Equation::Evaluate(
-    const Array<OneD, const NekDouble>& x,
-    const Array<OneD, const NekDouble>& y,
-    const Array<OneD, const NekDouble>& z,
-    Array<OneD, NekDouble>& result) const
+void Equation::Evaluate(const Array<OneD, const NekDouble> &x,
+                        const Array<OneD, const NekDouble> &y,
+                        const Array<OneD, const NekDouble> &z,
+                        Array<OneD, NekDouble> &result) const
 {
-    Array<OneD, NekDouble>  zero(x.size(), 0.0);
-    Evaluate(x,y,z,zero, result);
+    Array<OneD, NekDouble> zero(x.size(), 0.0);
+    Evaluate(x, y, z, zero, result);
 }
 
-void Equation::Evaluate(
-    const Array<OneD, const NekDouble>& x,
-    const Array<OneD, const NekDouble>& y,
-    const Array<OneD, const NekDouble>& z,
-    const NekDouble t,
-    Array<OneD, NekDouble>& result) const
+void Equation::Evaluate(const Array<OneD, const NekDouble> &x,
+                        const Array<OneD, const NekDouble> &y,
+                        const Array<OneD, const NekDouble> &z,
+                        const NekDouble t, Array<OneD, NekDouble> &result) const
 {
-    Array<OneD, NekDouble>  time(x.size(), t);
-    Evaluate(x,y,z,time, result);
+    Array<OneD, NekDouble> time(x.size(), t);
+    Evaluate(x, y, z, time, result);
 }
 
-
-void Equation::Evaluate(
-    const Array<OneD, const NekDouble>& x,
-    const Array<OneD, const NekDouble>& y,
-    const Array<OneD, const NekDouble>& z,
-    const Array<OneD, const NekDouble>& t,
-    Array<OneD, NekDouble>& result) const
+void Equation::Evaluate(const Array<OneD, const NekDouble> &x,
+                        const Array<OneD, const NekDouble> &y,
+                        const Array<OneD, const NekDouble> &z,
+                        const Array<OneD, const NekDouble> &t,
+                        Array<OneD, NekDouble> &result) const
 {
-    std::vector<Array<OneD, const NekDouble> > points;
+    std::vector<Array<OneD, const NekDouble>> points;
     points.push_back(x);
     points.push_back(y);
     points.push_back(z);
@@ -177,9 +176,8 @@ void Equation::Evaluate(
     Evaluate(points, result);
 }
 
-void Equation::Evaluate(
-    const std::vector<Array<OneD, const NekDouble> > points,
-    Array<OneD, NekDouble>& result) const
+void Equation::Evaluate(const std::vector<Array<OneD, const NekDouble>> points,
+                        Array<OneD, NekDouble> &result) const
 {
     try
     {
@@ -188,14 +186,14 @@ void Equation::Evaluate(
             m_evaluator->Evaluate(m_expr_id, points, result);
         }
     }
-    catch (const std::runtime_error& e)
+    catch (const std::runtime_error &e)
     {
         std::string msg =
             "Equation::Evaluate fails on expression [" + m_expr + "]\n";
         NEKERROR(ErrorUtil::efatal, msg + std::string("ERROR: ") + e.what());
         return;
     }
-    catch (const std::string& e)
+    catch (const std::string &e)
     {
         std::string msg =
             "Equation::Evaluate fails on expression [" + m_expr + "]\n";
@@ -204,7 +202,7 @@ void Equation::Evaluate(
     }
 }
 
-void Equation::SetParameter(const std::string& name, NekDouble value)
+void Equation::SetParameter(const std::string &name, NekDouble value)
 {
     m_evaluator->SetParameter(name, value);
 }
@@ -231,5 +229,5 @@ NekDouble Equation::GetTime() const
     return m_evaluator->GetTime();
 }
 
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

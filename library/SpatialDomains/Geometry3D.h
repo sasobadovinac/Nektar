@@ -35,8 +35,8 @@
 #ifndef NEKTAR_SPATIALDOMAINS_GEOMETRY3D_H
 #define NEKTAR_SPATIALDOMAINS_GEOMETRY3D_H
 
-#include <StdRegions/StdRegions.hpp>
 #include <StdRegions/StdExpansion3D.h>
+#include <StdRegions/StdRegions.hpp>
 
 #include <SpatialDomains/Geometry.h>
 #include <SpatialDomains/Geometry1D.h>
@@ -77,13 +77,13 @@ public:
     SPATIAL_DOMAINS_EXPORT static const int kDim = 3;
 
 protected:
-    PointGeomVector                      m_verts;
-    SegGeomVector                        m_edges;
-    Geometry2DVector                     m_faces;
+    PointGeomVector m_verts;
+    SegGeomVector m_edges;
+    Geometry2DVector m_faces;
     std::vector<StdRegions::Orientation> m_eorient;
     std::vector<StdRegions::Orientation> m_forient;
-    int                                  m_eid;
-    bool                                 m_ownverts;
+    int m_eid;
+    bool m_ownverts;
 
     //---------------------------------------
     // 3D Geometry Methods
@@ -118,7 +118,7 @@ protected:
     virtual StdRegions::Orientation v_GetForient(const int i) const;
 };
 
-} // end of namespace
-} // end of namespace
+} // namespace SpatialDomains
+} // namespace Nektar
 
 #endif // NEKTAR_SPATIALDOMAINS_GEOMETRY3D_H

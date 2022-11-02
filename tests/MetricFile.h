@@ -28,41 +28,43 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Definition of the LInf metric.
+// Description: Definition of the File metric.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_TESTS_METRICLINF_H
-#define NEKTAR_TESTS_METRICLINF_H
+#ifndef NEKTAR_TESTS_METRICFILE_H
+#define NEKTAR_TESTS_METRICFILE_H
 
 #include <Metric.h>
 #include <map>
 
 namespace Nektar
 {
-    class MetricFile : public Metric
+class MetricFile : public Metric
+{
+public:
+    virtual ~MetricFile()
     {
-    public:
-        virtual ~MetricFile() {}
+    }
 
-        static MetricSharedPtr create(TiXmlElement *metric, bool generate)
-        {
-            return MetricSharedPtr(new MetricFile(metric, generate));
-        }
+    static MetricSharedPtr create(TiXmlElement *metric, bool generate)
+    {
+        return MetricSharedPtr(new MetricFile(metric, generate));
+    }
 
-        static std::string type;
+    static std::string type;
 
-    protected:
-        MetricFile(TiXmlElement *metric, bool generate);
+protected:
+    MetricFile(TiXmlElement *metric, bool generate);
 
-        std::string CalculateHash(std::string filename);
-        
-        virtual bool v_Test    (std::istream& pStdout, std::istream& pStderr);
-        virtual void v_Generate(std::istream& pStdout, std::istream& pStderr);
-        
-        /// Stores filenames to perform hash on.
-        std::map<std::string, std::string> m_filehash;
-    };
-}
+    std::string CalculateHash(std::string filename);
+
+    virtual bool v_Test(std::istream &pStdout, std::istream &pStderr);
+    virtual void v_Generate(std::istream &pStdout, std::istream &pStderr);
+
+    /// Stores filenames to perform hash on.
+    std::map<std::string, std::string> m_filehash;
+};
+} // namespace Nektar
 
 #endif

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekLinSysIter.h
+// File: NekLinSysIter.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -47,10 +47,9 @@ class NekLinSysIter;
 
 typedef std::shared_ptr<NekLinSysIter> NekLinSysIterSharedPtr;
 
-typedef LibUtilities::NekFactory<std::string, NekLinSysIter,
-                                 const LibUtilities::SessionReaderSharedPtr &,
-                                 const LibUtilities::CommSharedPtr &, const int,
-                                 const NekSysKey &>
+typedef LibUtilities::NekFactory<
+    std::string, NekLinSysIter, const LibUtilities::SessionReaderSharedPtr &,
+    const LibUtilities::CommSharedPtr &, const int, const NekSysKey &>
     NekLinSysIterFactory;
 LIB_UTILITIES_EXPORT NekLinSysIterFactory &GetNekLinSysIterFactory();
 
@@ -67,12 +66,12 @@ public:
     {
         NekLinSysIterSharedPtr p =
             MemoryManager<NekLinSysIter>::AllocateSharedPtr(pSession, vComm,
-                nDimen, pKey);
+                                                            nDimen, pKey);
         return p;
     }
     LIB_UTILITIES_EXPORT NekLinSysIter(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const LibUtilities::CommSharedPtr &vComm, const int nDimen, 
+        const LibUtilities::CommSharedPtr &vComm, const int nDimen,
         const NekSysKey &pKey);
     LIB_UTILITIES_EXPORT virtual ~NekLinSysIter();
 
@@ -109,7 +108,7 @@ protected:
     NekDouble m_prec_factor = 1.0;
 
     // This is the maximum number of solution vectors that can be stored
-    // For example, in gmres, it is the max number of Krylov space 
+    // For example, in gmres, it is the max number of Krylov space
     // search directions can be stored
     // It determines the max storage usage
     int m_LinSysMaxStorage;

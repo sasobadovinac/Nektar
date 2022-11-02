@@ -36,259 +36,249 @@
 
 #include <MatrixFreeOps/Operator.hpp>
 
-#include <Collections/Operator.h>
-#include <Collections/MatrixFreeBase.h>
 #include <Collections/Collection.h>
+#include <Collections/MatrixFreeBase.h>
+#include <Collections/Operator.h>
 
 using namespace std;
 
-namespace Nektar {
-namespace Collections {
+namespace Nektar
+{
+namespace Collections
+{
 
-using LibUtilities::eSegment;
-using LibUtilities::eQuadrilateral;
-using LibUtilities::eTriangle;
 using LibUtilities::eHexahedron;
-using LibUtilities::eTetrahedron;
 using LibUtilities::ePrism;
 using LibUtilities::ePyramid;
+using LibUtilities::eQuadrilateral;
+using LibUtilities::eSegment;
+using LibUtilities::eTetrahedron;
+using LibUtilities::eTriangle;
 
 /**
  * @brief Phys deriv operator using standard matrix approach
  */
 class PhysDeriv_StdMat final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_StdMat)
+public:
+    OPERATOR_CREATE(PhysDeriv_StdMat)
 
-        ~PhysDeriv_StdMat() final
+    ~PhysDeriv_StdMat() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+        Array<OneD, Array<OneD, NekDouble>> out(3);
+        out[0] = output0;
+        out[1] = output1;
+        out[2] = output2;
+
+        for (int i = 0; i < m_dim; ++i)
         {
+            Diff[i] = wsp + i * ntot;
         }
 
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
+        // calculate local derivatives
+        for (int i = 0; i < m_dim; ++i)
         {
+            Blas::Dgemm('N', 'N', m_derivMat[i]->GetRows(), m_numElmt,
+                        m_derivMat[i]->GetColumns(), 1.0,
+                        m_derivMat[i]->GetRawPtr(), m_derivMat[i]->GetRows(),
+                        input.get(), nPhys, 0.0, &Diff[i][0], nPhys);
+        }
 
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-            Array<OneD, Array<OneD, NekDouble> > out(3);
-            out[0] = output0;  out[1] = output1;    out[2] = output2;
-
-            for(int i = 0; i < m_dim; ++i)
+        // calculate full derivative
+        if (m_isDeformed)
+        {
+            for (int i = 0; i < m_coordim; ++i)
             {
-                Diff[i] = wsp + i*ntot;
-            }
-
-            // calculate local derivatives
-            for(int i = 0; i < m_dim; ++i)
-            {
-                Blas::Dgemm('N', 'N', m_derivMat[i]->GetRows(), m_numElmt,
-                            m_derivMat[i]->GetColumns(), 1.0,
-                            m_derivMat[i]->GetRawPtr(),
-                            m_derivMat[i]->GetRows(), input.get(), nPhys,
-                            0.0, &Diff[i][0],nPhys);
-            }
-
-            // calculate full derivative
-            if(m_isDeformed)
-            {
-                for(int i = 0; i < m_coordim; ++i)
+                Vmath::Zero(ntot, out[i], 1);
+                for (int j = 0; j < m_dim; ++j)
                 {
-                    Vmath::Zero(ntot,out[i],1);
-                    for(int j = 0; j < m_dim; ++j)
-                    {
-                        Vmath::Vvtvp (ntot, m_derivFac[i*m_dim+j], 1,
-                                      Diff[j],  1,
-                                      out[i],   1,
-                                      out[i],   1);
-                    }
+                    Vmath::Vvtvp(ntot, m_derivFac[i * m_dim + j], 1, Diff[j], 1,
+                                 out[i], 1, out[i], 1);
                 }
             }
-            else
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int i = 0; i < m_coordim; ++i)
             {
-                Array<OneD, NekDouble> t;
-                for(int i = 0; i < m_coordim; ++i)
+                Vmath::Zero(ntot, out[i], 1);
+                for (int e = 0; e < m_numElmt; ++e)
                 {
-                    Vmath::Zero(ntot,out[i],1);
-                    for(int e = 0; e < m_numElmt; ++e)
+                    for (int j = 0; j < m_dim; ++j)
                     {
-                        for(int j = 0; j < m_dim; ++j)
-                        {
-                            Vmath::Svtvp (m_nqe, m_derivFac[i*m_dim+j][e],
-                                          Diff[j] + e*m_nqe,     1,
-                                          out[i]  + e*m_nqe,     1,
-                                          t = out[i]  + e*m_nqe, 1);
-                        }
+                        Vmath::Svtvp(m_nqe, m_derivFac[i * m_dim + j][e],
+                                     Diff[j] + e * m_nqe, 1, out[i] + e * m_nqe,
+                                     1, t = out[i] + e * m_nqe, 1);
                     }
                 }
             }
         }
+    }
 
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD, NekDouble> &wsp) final
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+
+        for (int i = 0; i < m_dim; ++i)
         {
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
+            Diff[i] = wsp + i * ntot;
+        }
 
-            for(int i = 0; i < m_dim; ++i)
+        // calculate local derivatives
+        for (int i = 0; i < m_dim; ++i)
+        {
+            Blas::Dgemm('N', 'N', m_derivMat[i]->GetRows(), m_numElmt,
+                        m_derivMat[i]->GetColumns(), 1.0,
+                        m_derivMat[i]->GetRawPtr(), m_derivMat[i]->GetRows(),
+                        input.get(), nPhys, 0.0, &Diff[i][0], nPhys);
+        }
+
+        // calculate full derivative
+        Vmath::Zero(ntot, output, 1);
+        if (m_isDeformed)
+        {
+            for (int j = 0; j < m_dim; ++j)
             {
-                Diff[i] = wsp + i*ntot;
+                Vmath::Vvtvp(ntot, m_derivFac[dir * m_dim + j], 1, Diff[j], 1,
+                             output, 1, output, 1);
             }
-
-            // calculate local derivatives
-            for(int i = 0; i < m_dim; ++i)
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
             {
-                Blas::Dgemm('N', 'N', m_derivMat[i]->GetRows(), m_numElmt,
-                            m_derivMat[i]->GetColumns(), 1.0,
-                            m_derivMat[i]->GetRawPtr(),
-                            m_derivMat[i]->GetRows(), input.get(), nPhys,
-                            0.0, &Diff[i][0],nPhys);
-            }
-
-            // calculate full derivative
-            Vmath::Zero(ntot,output,1);
-            if(m_isDeformed)
-            {
-                for(int j = 0; j < m_dim; ++j)
+                for (int j = 0; j < m_dim; ++j)
                 {
-                    Vmath::Vvtvp (ntot, m_derivFac[dir*m_dim+j], 1,
-                                  Diff[j],  1,
-                                  output,   1,
-                                  output,   1);
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    for(int j = 0; j < m_dim; ++j)
-                    {
-                        Vmath::Svtvp (m_nqe, m_derivFac[dir*m_dim+j][e],
-                                      Diff[j] + e*m_nqe,     1,
-                                      output  + e*m_nqe,     1,
-                                      t = output  + e*m_nqe, 1);
-                    }
+                    Vmath::Svtvp(m_nqe, m_derivFac[dir * m_dim + j][e],
+                                 Diff[j] + e * m_nqe, 1, output + e * m_nqe, 1,
+                                 t = output + e * m_nqe, 1);
                 }
             }
         }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
+    }
+
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    Array<OneD, DNekMatSharedPtr> m_derivMat;
+    Array<TwoD, const NekDouble> m_derivFac;
+    int m_dim;
+    int m_coordim;
+
+private:
+    PhysDeriv_StdMat(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                     CoalescedGeomDataSharedPtr pGeomData,
+                     StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors)
+    {
+        int nqtot                            = 1;
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+        m_dim                                = PtsKey.size();
+        m_coordim                            = pCollExp[0]->GetCoordim();
+
+        for (int i = 0; i < m_dim; ++i)
         {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
+            nqtot *= PtsKey[i].GetNumPoints();
         }
-
-    protected:
-        Array<OneD, DNekMatSharedPtr>   m_derivMat;
-        Array<TwoD, const NekDouble>    m_derivFac;
-        int                             m_dim;
-        int                             m_coordim;
-
-    private:
-        PhysDeriv_StdMat(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors)
+        // set up a PhysDeriv StdMat.
+        m_derivMat = Array<OneD, DNekMatSharedPtr>(m_dim);
+        for (int i = 0; i < m_dim; ++i)
         {
-            int nqtot = 1;
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
-            m_dim = PtsKey.size();
-            m_coordim = pCollExp[0]->GetCoordim();
-
-            for(int i = 0; i < m_dim; ++i)
+            Array<OneD, NekDouble> tmp(nqtot), tmp1(nqtot);
+            m_derivMat[i] =
+                MemoryManager<DNekMat>::AllocateSharedPtr(nqtot, nqtot);
+            for (int j = 0; j < nqtot; ++j)
             {
-                nqtot *= PtsKey[i].GetNumPoints();
+                Vmath::Zero(nqtot, tmp, 1);
+                tmp[j] = 1.0;
+                m_stdExp->PhysDeriv(i, tmp, tmp1);
+                Vmath::Vcopy(nqtot, &tmp1[0], 1,
+                             &(m_derivMat[i]->GetPtr())[0] + j * nqtot, 1);
             }
-            // set up a PhysDeriv StdMat.
-            m_derivMat = Array<OneD, DNekMatSharedPtr>(m_dim);
-            for(int i = 0; i < m_dim; ++i)
-            {
-                Array<OneD, NekDouble> tmp(nqtot),tmp1(nqtot);
-                m_derivMat[i] = MemoryManager<DNekMat>
-                                            ::AllocateSharedPtr(nqtot,nqtot);
-                for(int j = 0; j < nqtot; ++j)
-                {
-                    Vmath::Zero(nqtot,tmp,1);
-                    tmp[j] = 1.0;
-                    m_stdExp->PhysDeriv(i,tmp,tmp1);
-                    Vmath::Vcopy(nqtot, &tmp1[0], 1,
-                                 &(m_derivMat[i]->GetPtr())[0] + j*nqtot, 1);
-                }
-            }
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
-            m_wspSize = 3*nqtot*m_numElmt;
         }
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+        m_wspSize  = 3 * nqtot * m_numElmt;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_StdMat operators
-OperatorKey PhysDeriv_StdMat::m_typeArr[] =
-{
+OperatorKey PhysDeriv_StdMat::m_typeArr[] = {
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eSegment,       ePhysDeriv, eStdMat, false),
+        OperatorKey(eSegment, ePhysDeriv, eStdMat, false),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_Seg"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTriangle,      ePhysDeriv, eStdMat, false),
+        OperatorKey(eTriangle, ePhysDeriv, eStdMat, false),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_Tri"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTriangle,      ePhysDeriv, eStdMat, true),
+        OperatorKey(eTriangle, ePhysDeriv, eStdMat, true),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_NodalTri"),
     GetOperatorFactory().RegisterCreatorFunction(
         OperatorKey(eQuadrilateral, ePhysDeriv, eStdMat, false),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_Quad"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTetrahedron,   ePhysDeriv, eStdMat, false),
+        OperatorKey(eTetrahedron, ePhysDeriv, eStdMat, false),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_Tet"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTetrahedron,   ePhysDeriv, eStdMat, true),
+        OperatorKey(eTetrahedron, ePhysDeriv, eStdMat, true),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_NodalTet"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePyramid,       ePhysDeriv, eStdMat, false),
+        OperatorKey(ePyramid, ePhysDeriv, eStdMat, false),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_Pyr"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePrism,         ePhysDeriv, eStdMat, false),
+        OperatorKey(ePrism, ePhysDeriv, eStdMat, false),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_Prism"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePrism,         ePhysDeriv, eStdMat, true),
+        OperatorKey(ePrism, ePhysDeriv, eStdMat, true),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_NodalPrism"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eHexahedron,    ePhysDeriv, eStdMat, false),
+        OperatorKey(eHexahedron, ePhysDeriv, eStdMat, false),
         PhysDeriv_StdMat::create, "PhysDeriv_StdMat_Hex"),
     GetOperatorFactory().RegisterCreatorFunction(
         OperatorKey(ePyramid, ePhysDeriv, eSumFac, false),
-        PhysDeriv_StdMat::create, "PhysDeriv_SumFac_Pyr")
-};
+        PhysDeriv_StdMat::create, "PhysDeriv_SumFac_Pyr")};
 
 /**
  * @brief Phys deriv operator using matrix free operators.
  */
 class PhysDeriv_MatrixFree final : public Operator, MatrixFreeOneInMultiOut
 {
-    public:
+public:
     OPERATOR_CREATE(PhysDeriv_MatrixFree)
 
     ~PhysDeriv_MatrixFree() final
     {
     }
 
-    void operator()(
-             const Array<OneD, const NekDouble> &input,
-                   Array<OneD,       NekDouble> &output0,
-                   Array<OneD,       NekDouble> &output1,
-                   Array<OneD,       NekDouble> &output2,
-                   Array<OneD,       NekDouble> &wsp) final
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
     {
         boost::ignore_unused(wsp);
 
@@ -306,29 +296,27 @@ class PhysDeriv_MatrixFree final : public Operator, MatrixFreeOneInMultiOut
         // currently using temporary local temporary space for output
         // to allow for other operator call below which is
         // directionally dependent
-        switch(m_coordim)
+        switch (m_coordim)
         {
-        case 1:
-            Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
-            break;
-        case 2:
-            Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
-            Vmath::Vcopy(m_nOut, m_output[1], 1, output1, 1);
-            break;
-        case 3:
-            Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
-            Vmath::Vcopy(m_nOut, m_output[1], 1, output1, 1);
-            Vmath::Vcopy(m_nOut, m_output[2], 1, output2, 1);
-            break;
-        default:
-            NEKERROR(ErrorUtil::efatal,
-                     "Unknown coordinate dimension");
-            break;
+            case 1:
+                Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
+                break;
+            case 2:
+                Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
+                Vmath::Vcopy(m_nOut, m_output[1], 1, output1, 1);
+                break;
+            case 3:
+                Vmath::Vcopy(m_nOut, m_output[0], 1, output0, 1);
+                Vmath::Vcopy(m_nOut, m_output[1], 1, output1, 1);
+                Vmath::Vcopy(m_nOut, m_output[2], 1, output2, 1);
+                break;
+            default:
+                NEKERROR(ErrorUtil::efatal, "Unknown coordinate dimension");
+                break;
         }
     }
 
-    void operator()(int dir,
-                    const Array<OneD, const NekDouble> &input,
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
                     Array<OneD, NekDouble> &output,
                     Array<OneD, NekDouble> &wsp) final
     {
@@ -345,7 +333,7 @@ class PhysDeriv_MatrixFree final : public Operator, MatrixFreeOneInMultiOut
         }
         Vmath::Vcopy(m_nOut, m_output[dir], 1, output, 1);
     }
-    
+
     virtual void CheckFactors(StdRegions::FactorMap factors,
                               int coll_phys_offset)
     {
@@ -355,11 +343,10 @@ class PhysDeriv_MatrixFree final : public Operator, MatrixFreeOneInMultiOut
 
 private:
     std::shared_ptr<MatrixFree::PhysDeriv> m_oper;
-    
-    PhysDeriv_MatrixFree(
-                    vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                    CoalescedGeomDataSharedPtr                pGeomData,
-                    StdRegions::FactorMap                     factors)
+
+    PhysDeriv_MatrixFree(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                         CoalescedGeomDataSharedPtr pGeomData,
+                         StdRegions::FactorMap factors)
         : Operator(pCollExp, pGeomData, factors),
           MatrixFreeOneInMultiOut(pCollExp[0]->GetCoordim(),
                                   pCollExp[0]->GetStdExp()->GetTotPoints(),
@@ -369,13 +356,13 @@ private:
         // Check if deformed
         bool deformed{pGeomData->IsDeformed(pCollExp)};
         const auto dim = pCollExp[0]->GetStdExp()->GetShapeDimension();
-        
-        if(m_isPadded == false) // declare local space non-padded case
+
+        if (m_isPadded == false) // declare local space non-padded case
         {
-            int nOut = pCollExp[0]->GetStdExp()->GetTotPoints();
-            m_output = Array<OneD, Array<OneD, NekDouble>> (m_coordim);
+            int nOut    = pCollExp[0]->GetStdExp()->GetTotPoints();
+            m_output    = Array<OneD, Array<OneD, NekDouble>>(m_coordim);
             m_output[0] = Array<OneD, NekDouble>{nOut * m_nElmtPad, 0.0};
-            if(m_coordim == 2)
+            if (m_coordim == 2)
             {
                 m_output[1] = Array<OneD, NekDouble>{nOut * m_nElmtPad, 0.0};
             }
@@ -392,52 +379,49 @@ private:
         {
             basis[i] = pCollExp[0]->GetBasis(i);
         }
-        
+
         // Get shape type
         auto shapeType = pCollExp[0]->GetStdExp()->DetShapeType();
-        
+
         // Generate operator string and create operator.
         std::string op_string = "PhysDeriv";
         op_string += MatrixFree::GetOpstring(shapeType, deformed);
-        auto oper = MatrixFree::GetOperatorFactory().
-            CreateInstance(op_string, basis, m_nElmtPad);
-        
+        auto oper = MatrixFree::GetOperatorFactory().CreateInstance(
+            op_string, basis, m_nElmtPad);
+
         // Set derivative factors
-        oper->SetDF(pGeomData->GetDerivFactorsInterLeave
-                    (pCollExp,m_nElmtPad));
-        
+        oper->SetDF(pGeomData->GetDerivFactorsInterLeave(pCollExp, m_nElmtPad));
+
         m_oper = std::dynamic_pointer_cast<MatrixFree::PhysDeriv>(oper);
         ASSERTL0(m_oper, "Failed to cast pointer.");
-        
     }
 };
 
 /// Factory initialisation for the PhysDeriv_MatrixFree operators
-OperatorKey PhysDeriv_MatrixFree::m_typeArr[] =
-    {
-     GetOperatorFactory().RegisterCreatorFunction(
-                    OperatorKey(eSegment, ePhysDeriv, eMatrixFree, false),
-                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Seg"),
-     GetOperatorFactory().RegisterCreatorFunction(
-                    OperatorKey(eTriangle, ePhysDeriv, eMatrixFree, false),
-                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Tri"),
-     GetOperatorFactory().RegisterCreatorFunction(
-                    OperatorKey(eQuadrilateral, ePhysDeriv, eMatrixFree, false),
-                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Quad"),
-     GetOperatorFactory().RegisterCreatorFunction(
-                    OperatorKey(eHexahedron, ePhysDeriv, eMatrixFree, false),
-                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Hex"),
-     GetOperatorFactory().RegisterCreatorFunction(
-                    OperatorKey(ePrism, ePhysDeriv, eMatrixFree, false),
-                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Prism"),
-     GetOperatorFactory().RegisterCreatorFunction(
-                    OperatorKey(ePyramid, ePhysDeriv, eMatrixFree, false),
-                    PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Pyr"),
-     GetOperatorFactory().RegisterCreatorFunction(
-                     OperatorKey(eTetrahedron, ePhysDeriv, eMatrixFree, false),
-                     PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Tet")
+OperatorKey PhysDeriv_MatrixFree::m_typeArr[] = {
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eSegment, ePhysDeriv, eMatrixFree, false),
+        PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Seg"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eTriangle, ePhysDeriv, eMatrixFree, false),
+        PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Tri"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eQuadrilateral, ePhysDeriv, eMatrixFree, false),
+        PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Quad"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eHexahedron, ePhysDeriv, eMatrixFree, false),
+        PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Hex"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(ePrism, ePhysDeriv, eMatrixFree, false),
+        PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Prism"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(ePyramid, ePhysDeriv, eMatrixFree, false),
+        PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Pyr"),
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eTetrahedron, ePhysDeriv, eMatrixFree, false),
+        PhysDeriv_MatrixFree::create, "PhysDeriv_MatrixFree_Tet")
 
-    };
+};
 
 /**
  * @brief Phys deriv operator using element-wise operation
@@ -451,1963 +435,1845 @@ public:
     {
     }
 
-    void operator()( const Array<OneD, const NekDouble> &input,
-                            Array<OneD,       NekDouble> &output0,
-                            Array<OneD,       NekDouble> &output1,
-                            Array<OneD,       NekDouble> &output2,
-                            Array<OneD,       NekDouble> &wsp) final
-        {      
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
 
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-            Array<OneD, Array<OneD, NekDouble> > out(3);
-            out[0] = output0;  out[1] = output1;  out[2] = output2;
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+        Array<OneD, Array<OneD, NekDouble>> out(3);
+        out[0] = output0;
+        out[1] = output1;
+        out[2] = output2;
 
-            for(int i = 0; i < m_dim; ++i)
-            {
-                Diff[i] = wsp + i*ntot;
-            }
-
-            // calculate local derivatives
-            for (int i = 0; i < m_numElmt; ++i)
-            {
-                m_stdExp->PhysDeriv(input + i*nPhys,
-                                    tmp0 = Diff[0] + i*nPhys,
-                                    tmp1 = Diff[1] + i*nPhys,
-                                    tmp2 = Diff[2] + i*nPhys);
-            }
-
-            // calculate full derivative
-            if(m_isDeformed)
-            {
-                for(int i = 0; i < m_coordim; ++i)
-                {
-                    Vmath::Vmul(ntot,m_derivFac[i*m_dim],1,Diff[0],1,out[i],1);
-                    for(int j = 1; j < m_dim; ++j)
-                    {
-                        Vmath::Vvtvp (ntot, m_derivFac[i*m_dim+j], 1,
-                                      Diff[j],               1,
-                                      out[i],                1,
-                                      out[i],                1);
-                    }
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    for(int i = 0; i < m_coordim; ++i)
-                    {
-                        Vmath::Smul(m_nqe,m_derivFac[i*m_dim][e],
-                                    Diff[0] + e*m_nqe,1,
-                                    t = out[i] + e*m_nqe,1);
-                        for(int j = 1; j < m_dim; ++j)
-                        {
-                            Vmath::Svtvp (m_nqe, m_derivFac[i*m_dim+j][e],
-                                          Diff[j] + e*m_nqe,     1,
-                                          out[i]  + e*m_nqe,     1,
-                                          t = out[i]  + e*m_nqe, 1);
-                        }
-                    }
-                }
-            }
-        }
-
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD,NekDouble> &wsp) final
+        for (int i = 0; i < m_dim; ++i)
         {
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
+            Diff[i] = wsp + i * ntot;
+        }
 
-            for(int i = 0; i < m_dim; ++i)
-            {
-                Diff[i] = wsp + i*ntot;
-            }
+        // calculate local derivatives
+        for (int i = 0; i < m_numElmt; ++i)
+        {
+            m_stdExp->PhysDeriv(input + i * nPhys, tmp0 = Diff[0] + i * nPhys,
+                                tmp1 = Diff[1] + i * nPhys,
+                                tmp2 = Diff[2] + i * nPhys);
+        }
 
-            // calculate local derivatives
-            for (int i = 0; i < m_numElmt; ++i)
+        // calculate full derivative
+        if (m_isDeformed)
+        {
+            for (int i = 0; i < m_coordim; ++i)
             {
-                m_stdExp->PhysDeriv(input + i*nPhys,
-                                    tmp0 = Diff[0] + i*nPhys,
-                                    tmp1 = Diff[1] + i*nPhys,
-                                    tmp2 = Diff[2] + i*nPhys);
-            }
-
-            Vmath::Zero(ntot,output,1);
-            if(m_isDeformed)
-            {
-                for(int j = 0; j < m_dim; ++j)
+                Vmath::Vmul(ntot, m_derivFac[i * m_dim], 1, Diff[0], 1, out[i],
+                            1);
+                for (int j = 1; j < m_dim; ++j)
                 {
-                    Vmath::Vvtvp (ntot, m_derivFac[dir*m_dim+j], 1,
-                                  Diff[j],               1,
-                                  output,                1,
-                                  output,                1);
+                    Vmath::Vvtvp(ntot, m_derivFac[i * m_dim + j], 1, Diff[j], 1,
+                                 out[i], 1, out[i], 1);
                 }
             }
-            else
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
             {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
+                for (int i = 0; i < m_coordim; ++i)
                 {
-                    for(int j = 0; j < m_dim; ++j)
+                    Vmath::Smul(m_nqe, m_derivFac[i * m_dim][e],
+                                Diff[0] + e * m_nqe, 1, t = out[i] + e * m_nqe,
+                                1);
+                    for (int j = 1; j < m_dim; ++j)
                     {
-                        Vmath::Svtvp (m_nqe, m_derivFac[dir*m_dim+j][e],
-                                      Diff[j] + e*m_nqe,     1,
-                                      output  + e*m_nqe,     1,
-                                      t = output  + e*m_nqe, 1);
+                        Vmath::Svtvp(m_nqe, m_derivFac[i * m_dim + j][e],
+                                     Diff[j] + e * m_nqe, 1, out[i] + e * m_nqe,
+                                     1, t = out[i] + e * m_nqe, 1);
                     }
                 }
             }
         }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
+    }
+
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+
+        for (int i = 0; i < m_dim; ++i)
         {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
+            Diff[i] = wsp + i * ntot;
         }
 
-    protected:
-        Array<TwoD, const NekDouble>    m_derivFac;
-        int                             m_dim;
-        int                             m_coordim;
+        // calculate local derivatives
+        for (int i = 0; i < m_numElmt; ++i)
+        {
+            m_stdExp->PhysDeriv(input + i * nPhys, tmp0 = Diff[0] + i * nPhys,
+                                tmp1 = Diff[1] + i * nPhys,
+                                tmp2 = Diff[2] + i * nPhys);
+        }
 
-    private:
-        PhysDeriv_IterPerExp(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
+        Vmath::Zero(ntot, output, 1);
+        if (m_isDeformed)
+        {
+            for (int j = 0; j < m_dim; ++j)
+            {
+                Vmath::Vvtvp(ntot, m_derivFac[dir * m_dim + j], 1, Diff[j], 1,
+                             output, 1, output, 1);
+            }
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                for (int j = 0; j < m_dim; ++j)
+                {
+                    Vmath::Svtvp(m_nqe, m_derivFac[dir * m_dim + j][e],
+                                 Diff[j] + e * m_nqe, 1, output + e * m_nqe, 1,
+                                 t = output + e * m_nqe, 1);
+                }
+            }
+        }
+    }
+
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    Array<TwoD, const NekDouble> m_derivFac;
+    int m_dim;
+    int m_coordim;
+
+private:
+    PhysDeriv_IterPerExp(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                         CoalescedGeomDataSharedPtr pGeomData,
+                         StdRegions::FactorMap factors)
         : Operator(pCollExp, pGeomData, factors)
-        {
-            int nqtot = 1;
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
-            m_dim = PtsKey.size();
-            m_coordim = pCollExp[0]->GetCoordim();
+    {
+        int nqtot                            = 1;
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+        m_dim                                = PtsKey.size();
+        m_coordim                            = pCollExp[0]->GetCoordim();
 
-            for(int i = 0; i < m_dim; ++i)
-            {
-                nqtot *= PtsKey[i].GetNumPoints();
-            }
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
-            m_wspSize = 3*nqtot*m_numElmt;
+        for (int i = 0; i < m_dim; ++i)
+        {
+            nqtot *= PtsKey[i].GetNumPoints();
         }
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+        m_wspSize  = 3 * nqtot * m_numElmt;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_IterPerExp operators
-OperatorKey PhysDeriv_IterPerExp::m_typeArr[] =
-{
+OperatorKey PhysDeriv_IterPerExp::m_typeArr[] = {
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eSegment,       ePhysDeriv, eIterPerExp,false),
+        OperatorKey(eSegment, ePhysDeriv, eIterPerExp, false),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_Seg"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTriangle,      ePhysDeriv, eIterPerExp,false),
+        OperatorKey(eTriangle, ePhysDeriv, eIterPerExp, false),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_Tri"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTriangle,      ePhysDeriv, eIterPerExp,true),
+        OperatorKey(eTriangle, ePhysDeriv, eIterPerExp, true),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_NodalTri"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eQuadrilateral, ePhysDeriv, eIterPerExp,false),
+        OperatorKey(eQuadrilateral, ePhysDeriv, eIterPerExp, false),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_Quad"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTetrahedron,   ePhysDeriv, eIterPerExp,false),
+        OperatorKey(eTetrahedron, ePhysDeriv, eIterPerExp, false),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_Tet"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTetrahedron,   ePhysDeriv, eIterPerExp,true),
+        OperatorKey(eTetrahedron, ePhysDeriv, eIterPerExp, true),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_NodalTet"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePyramid,       ePhysDeriv, eIterPerExp,false),
+        OperatorKey(ePyramid, ePhysDeriv, eIterPerExp, false),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_Pyr"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePrism,         ePhysDeriv, eIterPerExp,false),
+        OperatorKey(ePrism, ePhysDeriv, eIterPerExp, false),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_Prism"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePrism,         ePhysDeriv, eIterPerExp,true),
+        OperatorKey(ePrism, ePhysDeriv, eIterPerExp, true),
         PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_NodalPrism"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eHexahedron,    ePhysDeriv, eIterPerExp,false),
-        PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_Hex")
-};
-
+        OperatorKey(eHexahedron, ePhysDeriv, eIterPerExp, false),
+        PhysDeriv_IterPerExp::create, "PhysDeriv_IterPerExp_Hex")};
 
 /**
  * @brief Phys deriv operator using original LocalRegions implementation.
  */
 class PhysDeriv_NoCollection final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_NoCollection)
+public:
+    OPERATOR_CREATE(PhysDeriv_NoCollection)
 
-        ~PhysDeriv_NoCollection() final
+    ~PhysDeriv_NoCollection() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        boost::ignore_unused(wsp);
+
+        const int nPhys = m_expList[0]->GetTotPoints();
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+
+        // calculate local derivatives
+        switch (m_expList[0]->GetShapeDimension())
         {
-        }
-
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
-        {
-            boost::ignore_unused(wsp);
-
-            const int nPhys   = m_expList[0]->GetTotPoints();
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-
-            // calculate local derivatives
-            switch (m_expList[0]->GetShapeDimension())
+            case 1:
             {
-                case 1:
+                for (int i = 0; i < m_numElmt; ++i)
                 {
-                    for (int i = 0; i < m_numElmt; ++i)
-                    {
-                        m_expList[i]->PhysDeriv(input + i*nPhys,
-                                        tmp0 = output0 + i*nPhys);
-                    }
-                    break;
+                    m_expList[i]->PhysDeriv(input + i * nPhys,
+                                            tmp0 = output0 + i * nPhys);
                 }
-                case 2:
-                {
-                    for (int i = 0; i < m_numElmt; ++i)
-                    {
-                        m_expList[i]->PhysDeriv(input + i*nPhys,
-                                        tmp0 = output0 + i*nPhys,
-                                        tmp1 = output1 + i*nPhys);
-                    }
-                    break;
-                }
-                case 3:
-                {
-                    for (int i = 0; i < m_numElmt; ++i)
-                    {
-                        m_expList[i]->PhysDeriv(input + i*nPhys,
-                                        tmp0 = output0 + i*nPhys,
-                                        tmp1 = output1 + i*nPhys,
-                                        tmp2 = output2 + i*nPhys);
-                    }
-                    break;
-                }
-                default:
-                    ASSERTL0(false, "Unknown dimension.");
+                break;
             }
-        }
-
-        void operator()(int dir,
-                       const Array<OneD, const NekDouble> &input,
-                       Array<OneD, NekDouble> &output,
-                       Array<OneD, NekDouble> &wsp) final
-        {
-            boost::ignore_unused(wsp);
-
-            const int nPhys   = m_expList[0]->GetTotPoints();
-            Array<OneD, NekDouble> tmp;
-
-            // calculate local derivatives
-            for (int i = 0; i < m_numElmt; ++i)
+            case 2:
             {
-                m_expList[i]->PhysDeriv(dir, input + i*nPhys,
-                                             tmp = output + i*nPhys);
+                for (int i = 0; i < m_numElmt; ++i)
+                {
+                    m_expList[i]->PhysDeriv(input + i * nPhys,
+                                            tmp0 = output0 + i * nPhys,
+                                            tmp1 = output1 + i * nPhys);
+                }
+                break;
             }
+            case 3:
+            {
+                for (int i = 0; i < m_numElmt; ++i)
+                {
+                    m_expList[i]->PhysDeriv(
+                        input + i * nPhys, tmp0 = output0 + i * nPhys,
+                        tmp1 = output1 + i * nPhys, tmp2 = output2 + i * nPhys);
+                }
+                break;
+            }
+            default:
+                ASSERTL0(false, "Unknown dimension.");
         }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
-        {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
-        }
+    }
 
-    protected:
-        vector<StdRegions::StdExpansionSharedPtr> m_expList;
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        boost::ignore_unused(wsp);
 
-    private:
-        PhysDeriv_NoCollection(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors)
+        const int nPhys = m_expList[0]->GetTotPoints();
+        Array<OneD, NekDouble> tmp;
+
+        // calculate local derivatives
+        for (int i = 0; i < m_numElmt; ++i)
         {
-            m_expList = pCollExp;
+            m_expList[i]->PhysDeriv(dir, input + i * nPhys,
+                                    tmp = output + i * nPhys);
         }
+    }
+
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    vector<StdRegions::StdExpansionSharedPtr> m_expList;
+
+private:
+    PhysDeriv_NoCollection(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                           CoalescedGeomDataSharedPtr pGeomData,
+                           StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors)
+    {
+        m_expList = pCollExp;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_NoCollection operators
-OperatorKey PhysDeriv_NoCollection::m_typeArr[] =
-{
+OperatorKey PhysDeriv_NoCollection::m_typeArr[] = {
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eSegment,       ePhysDeriv, eNoCollection,false),
+        OperatorKey(eSegment, ePhysDeriv, eNoCollection, false),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_Seg"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTriangle,      ePhysDeriv, eNoCollection,false),
+        OperatorKey(eTriangle, ePhysDeriv, eNoCollection, false),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_Tri"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTriangle,      ePhysDeriv, eNoCollection,true),
+        OperatorKey(eTriangle, ePhysDeriv, eNoCollection, true),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_NodalTri"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eQuadrilateral, ePhysDeriv, eNoCollection,false),
+        OperatorKey(eQuadrilateral, ePhysDeriv, eNoCollection, false),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_Quad"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTetrahedron,   ePhysDeriv, eNoCollection,false),
+        OperatorKey(eTetrahedron, ePhysDeriv, eNoCollection, false),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_Tet"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTetrahedron,   ePhysDeriv, eNoCollection,true),
+        OperatorKey(eTetrahedron, ePhysDeriv, eNoCollection, true),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_NodalTet"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePyramid,       ePhysDeriv, eNoCollection,false),
+        OperatorKey(ePyramid, ePhysDeriv, eNoCollection, false),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_Pyr"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePrism,         ePhysDeriv, eNoCollection,false),
+        OperatorKey(ePrism, ePhysDeriv, eNoCollection, false),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_Prism"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(ePrism,         ePhysDeriv, eNoCollection,true),
+        OperatorKey(ePrism, ePhysDeriv, eNoCollection, true),
         PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_NodalPrism"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eHexahedron,    ePhysDeriv, eNoCollection,false),
-        PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_Hex")
-};
-
+        OperatorKey(eHexahedron, ePhysDeriv, eNoCollection, false),
+        PhysDeriv_NoCollection::create, "PhysDeriv_NoCollection_Hex")};
 
 /**
  * @brief Phys deriv operator using sum-factorisation (Segment)
  */
 class PhysDeriv_SumFac_Seg final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_SumFac_Seg)
+public:
+    OPERATOR_CREATE(PhysDeriv_SumFac_Seg)
 
-        ~PhysDeriv_SumFac_Seg() final
+    ~PhysDeriv_SumFac_Seg() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+
+        const int nqcol = m_nquad0 * m_numElmt;
+
+        ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
+        ASSERTL1(input.size() >= nqcol, "Incorrect input size");
+
+        Array<OneD, NekDouble> diff0(nqcol, wsp);
+
+        Blas::Dgemm('N', 'N', m_nquad0, m_numElmt, m_nquad0, 1.0, m_Deriv0,
+                    m_nquad0, input.get(), m_nquad0, 0.0, diff0.get(),
+                    m_nquad0);
+
+        if (m_isDeformed)
         {
-        }
+            Vmath::Vmul(nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
 
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
-        {
-
-            const int nqcol   = m_nquad0*m_numElmt;
-
-            ASSERTL1(wsp.size() == m_wspSize,
-                     "Incorrect workspace size");
-            ASSERTL1(input.size() >= nqcol,
-                     "Incorrect input size");
-
-            Array<OneD, NekDouble> diff0(nqcol, wsp);
-
-            Blas::Dgemm('N', 'N', m_nquad0, m_numElmt,
-                        m_nquad0, 1.0, m_Deriv0, m_nquad0,
-                        input.get(), m_nquad0, 0.0,
-                        diff0.get(), m_nquad0);
-
-            if(m_isDeformed)
+            if (m_coordim == 2)
             {
-                Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
-                
-                if (m_coordim == 2)
-                {
-                    Vmath::Vmul  (nqcol, m_derivFac[1], 1, diff0, 1, output1, 1);
-                }
-                else if (m_coordim == 3)
-                {
-                    Vmath::Vmul  (nqcol, m_derivFac[1], 1, diff0, 1, output1, 1);
-                    Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output2, 1);
-                }
+                Vmath::Vmul(nqcol, m_derivFac[1], 1, diff0, 1, output1, 1);
             }
-            else
+            else if (m_coordim == 3)
             {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul  (m_nqe, m_derivFac[0][e], diff0 + e*m_nqe, 1,
-                                  t = output0 + e*m_nqe, 1);
-                }
-                
-                if (m_coordim == 2)
-                {
-                    for(int e = 0; e < m_numElmt; ++e)
-                    {
-                        Vmath::Smul  (m_nqe, m_derivFac[1][e], diff0 + e*m_nqe, 1,
-                                      t = output1 + e*m_nqe, 1);
-                    }
-                }
-                else if (m_coordim == 3)
-                {
-                    for(int e = 0; e < m_numElmt; ++e)
-                    {
-                        Vmath::Smul  (m_nqe, m_derivFac[1][e], diff0 + e*m_nqe, 1,
-                                      t = output1 + e*m_nqe, 1);
-                        Vmath::Smul  (m_nqe, m_derivFac[2][e], diff0 + e*m_nqe, 1,
-                                      t = output2 + e*m_nqe, 1);}
-                }
-
+                Vmath::Vmul(nqcol, m_derivFac[1], 1, diff0, 1, output1, 1);
+                Vmath::Vmul(nqcol, m_derivFac[2], 1, diff0, 1, output2, 1);
             }
         }
-
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD, NekDouble> &wsp) final
+        else
         {
-            const int nqcol   = m_nquad0*m_numElmt;
-
-            ASSERTL1(wsp.size() == m_wspSize,
-                     "Incorrect workspace size");
-            ASSERTL1(input.size() >= nqcol,
-                     "Incorrect input size");
-
-            Array<OneD, NekDouble> diff0(nqcol, wsp);
-
-            Blas::Dgemm('N', 'N', m_nquad0, m_numElmt,
-                        m_nquad0, 1.0, m_Deriv0, m_nquad0,
-                        input.get(), m_nquad0, 0.0,
-                        diff0.get(), m_nquad0);
-
-            if(m_isDeformed)
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
             {
-                Vmath::Vmul(nqcol, m_derivFac[dir], 1, diff0, 1, output, 1);
+                Vmath::Smul(m_nqe, m_derivFac[0][e], diff0 + e * m_nqe, 1,
+                            t = output0 + e * m_nqe, 1);
             }
-            else
+
+            if (m_coordim == 2)
             {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
+                for (int e = 0; e < m_numElmt; ++e)
                 {
-                    Vmath::Smul  (m_nqe, m_derivFac[0][e], diff0 + e*m_nqe, 1,
-                                  t = output + e*m_nqe, 1);
+                    Vmath::Smul(m_nqe, m_derivFac[1][e], diff0 + e * m_nqe, 1,
+                                t = output1 + e * m_nqe, 1);
+                }
+            }
+            else if (m_coordim == 3)
+            {
+                for (int e = 0; e < m_numElmt; ++e)
+                {
+                    Vmath::Smul(m_nqe, m_derivFac[1][e], diff0 + e * m_nqe, 1,
+                                t = output1 + e * m_nqe, 1);
+                    Vmath::Smul(m_nqe, m_derivFac[2][e], diff0 + e * m_nqe, 1,
+                                t = output2 + e * m_nqe, 1);
                 }
             }
         }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
+    }
+
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        const int nqcol = m_nquad0 * m_numElmt;
+
+        ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
+        ASSERTL1(input.size() >= nqcol, "Incorrect input size");
+
+        Array<OneD, NekDouble> diff0(nqcol, wsp);
+
+        Blas::Dgemm('N', 'N', m_nquad0, m_numElmt, m_nquad0, 1.0, m_Deriv0,
+                    m_nquad0, input.get(), m_nquad0, 0.0, diff0.get(),
+                    m_nquad0);
+
+        if (m_isDeformed)
         {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
+            Vmath::Vmul(nqcol, m_derivFac[dir], 1, diff0, 1, output, 1);
         }
-
-    protected:
-        int                             m_coordim;
-        const int                       m_nquad0;
-        Array<TwoD, const NekDouble>    m_derivFac;
-        NekDouble                      *m_Deriv0;
-
-    private:
-        PhysDeriv_SumFac_Seg(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors),
-              m_nquad0 (m_stdExp->GetNumPoints(0))
+        else
         {
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
-            m_coordim = pCollExp[0]->GetCoordim();
-
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
-
-            m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
-            m_wspSize = m_nquad0*m_numElmt;
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                Vmath::Smul(m_nqe, m_derivFac[0][e], diff0 + e * m_nqe, 1,
+                            t = output + e * m_nqe, 1);
+            }
         }
+    }
 
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    int m_coordim;
+    const int m_nquad0;
+    Array<TwoD, const NekDouble> m_derivFac;
+    NekDouble *m_Deriv0;
+
+private:
+    PhysDeriv_SumFac_Seg(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                         CoalescedGeomDataSharedPtr pGeomData,
+                         StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors),
+          m_nquad0(m_stdExp->GetNumPoints(0))
+    {
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+        m_coordim                            = pCollExp[0]->GetCoordim();
+
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+
+        m_Deriv0  = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
+        m_wspSize = m_nquad0 * m_numElmt;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_SumFac_Seg operators
-OperatorKey PhysDeriv_SumFac_Seg::m_type = GetOperatorFactory().
-    RegisterCreatorFunction(
-        OperatorKey(eSegment, ePhysDeriv, eSumFac,false),
+OperatorKey PhysDeriv_SumFac_Seg::m_type =
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eSegment, ePhysDeriv, eSumFac, false),
         PhysDeriv_SumFac_Seg::create, "PhysDeriv_SumFac_Seg");
-
-
 
 /**
  * @brief Phys deriv operator using sum-factorisation (Quad)
  */
 class PhysDeriv_SumFac_Quad final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_SumFac_Quad)
+public:
+    OPERATOR_CREATE(PhysDeriv_SumFac_Quad)
 
-        ~PhysDeriv_SumFac_Quad() final
+    ~PhysDeriv_SumFac_Quad() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+
+        const int nqtot = m_nquad0 * m_nquad1;
+        const int nqcol = nqtot * m_numElmt;
+
+        ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
+        ASSERTL1(input.size() >= nqcol, "Incorrect input size");
+
+        Array<OneD, NekDouble> diff0(nqcol, wsp);
+        Array<OneD, NekDouble> diff1(nqcol, wsp + nqcol);
+
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_numElmt, m_nquad0, 1.0,
+                    m_Deriv0, m_nquad0, input.get(), m_nquad0, 0.0, diff0.get(),
+                    m_nquad0);
+
+        int cnt = 0;
+        for (int i = 0; i < m_numElmt; ++i, cnt += nqtot)
         {
+            Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                        input.get() + cnt, m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                        diff1.get() + cnt, m_nquad0);
         }
 
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
+        if (m_isDeformed)
         {
+            Vmath::Vmul(nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
+            Vmath::Vvtvp(nqcol, m_derivFac[1], 1, diff1, 1, output0, 1, output0,
+                         1);
+            Vmath::Vmul(nqcol, m_derivFac[2], 1, diff0, 1, output1, 1);
+            Vmath::Vvtvp(nqcol, m_derivFac[3], 1, diff1, 1, output1, 1, output1,
+                         1);
 
-            const int nqtot   = m_nquad0 * m_nquad1;
-            const int nqcol   = nqtot*m_numElmt;
-
-            ASSERTL1(wsp.size() == m_wspSize,
-                     "Incorrect workspace size");
-            ASSERTL1(input.size() >= nqcol,
-                     "Incorrect input size");
-
-            Array<OneD, NekDouble> diff0(nqcol, wsp             );
-            Array<OneD, NekDouble> diff1(nqcol, wsp    +   nqcol);
-
-            Blas::Dgemm('N', 'N', m_nquad0, m_nquad1*m_numElmt,
-                        m_nquad0, 1.0, m_Deriv0, m_nquad0,
-                        input.get(), m_nquad0, 0.0,
-                        diff0.get(), m_nquad0);
-
-            int cnt = 0;
-            for (int i = 0; i < m_numElmt; ++i, cnt += nqtot)
+            if (m_coordim == 3)
             {
-                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
-                            input.get() + cnt, m_nquad0,
-                            m_Deriv1, m_nquad1, 0.0,
-                            diff1.get() + cnt, m_nquad0);
+                Vmath::Vmul(nqcol, m_derivFac[4], 1, diff0, 1, output2, 1);
+                Vmath::Vvtvp(nqcol, m_derivFac[5], 1, diff1, 1, output2, 1,
+                             output2, 1);
+            }
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                Vmath::Smul(m_nqe, m_derivFac[0][e], diff0 + e * m_nqe, 1,
+                            t = output0 + e * m_nqe, 1);
+                Vmath::Svtvp(m_nqe, m_derivFac[1][e], diff1 + e * m_nqe, 1,
+                             output0 + e * m_nqe, 1, t = output0 + e * m_nqe,
+                             1);
+
+                Vmath::Smul(m_nqe, m_derivFac[2][e], diff0 + e * m_nqe, 1,
+                            t = output1 + e * m_nqe, 1);
+                Vmath::Svtvp(m_nqe, m_derivFac[3][e], diff1 + e * m_nqe, 1,
+                             output1 + e * m_nqe, 1, t = output1 + e * m_nqe,
+                             1);
             }
 
-            if(m_isDeformed)
+            if (m_coordim == 3)
             {
-                Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
-                Vmath::Vvtvp (nqcol, m_derivFac[1], 1, diff1, 1, output0, 1,
-                              output0, 1);
-                Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output1, 1);
-                Vmath::Vvtvp (nqcol, m_derivFac[3], 1, diff1, 1, output1, 1,
-                              output1, 1);
-                
-                if (m_coordim == 3)
+                for (int e = 0; e < m_numElmt; ++e)
                 {
-                    Vmath::Vmul  (nqcol, m_derivFac[4], 1, diff0, 1, output2, 1);
-                    Vmath::Vvtvp (nqcol, m_derivFac[5], 1, diff1, 1, output2, 1,
-                                  output2, 1);
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul  (m_nqe, m_derivFac[0][e], diff0 + e*m_nqe, 1,
-                                  t = output0 + e*m_nqe, 1);
-                    Vmath::Svtvp (m_nqe, m_derivFac[1][e], diff1 + e*m_nqe, 1,
-                                  output0 + e*m_nqe, 1, t = output0 + e*m_nqe, 1);
-
-                    Vmath::Smul  (m_nqe, m_derivFac[2][e], diff0 + e*m_nqe, 1,
-                                  t = output1 + e*m_nqe, 1);
-                    Vmath::Svtvp (m_nqe, m_derivFac[3][e], diff1 + e*m_nqe, 1,
-                                  output1 + e*m_nqe, 1, t = output1 + e*m_nqe, 1);
-                }
-
-                if (m_coordim == 3)
-                {
-                    for(int e = 0; e < m_numElmt; ++e)
-                    {
-                        Vmath::Smul  (m_nqe, m_derivFac[4][e], diff0 + e*m_nqe, 1,
-                                      t = output2 + e*m_nqe, 1);
-                        Vmath::Svtvp (m_nqe, m_derivFac[5][e], diff1 + e*m_nqe, 1,
-                                      output2 + e*m_nqe, 1, t = output2 + e*m_nqe, 1);
-                    }
+                    Vmath::Smul(m_nqe, m_derivFac[4][e], diff0 + e * m_nqe, 1,
+                                t = output2 + e * m_nqe, 1);
+                    Vmath::Svtvp(m_nqe, m_derivFac[5][e], diff1 + e * m_nqe, 1,
+                                 output2 + e * m_nqe, 1,
+                                 t = output2 + e * m_nqe, 1);
                 }
             }
         }
+    }
 
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD, NekDouble> &wsp) final
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        const int nqtot = m_nquad0 * m_nquad1;
+        const int nqcol = nqtot * m_numElmt;
+
+        ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
+        ASSERTL1(input.size() >= nqcol, "Incorrect input size");
+
+        Array<OneD, NekDouble> diff0(nqcol, wsp);
+        Array<OneD, NekDouble> diff1(nqcol, wsp + nqcol);
+
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_numElmt, m_nquad0, 1.0,
+                    m_Deriv0, m_nquad0, input.get(), m_nquad0, 0.0, diff0.get(),
+                    m_nquad0);
+
+        int cnt = 0;
+        for (int i = 0; i < m_numElmt; ++i, cnt += nqtot)
         {
-            const int nqtot   = m_nquad0 * m_nquad1;
-            const int nqcol   = nqtot*m_numElmt;
-
-            ASSERTL1(wsp.size() == m_wspSize,
-                     "Incorrect workspace size");
-            ASSERTL1(input.size() >= nqcol,
-                     "Incorrect input size");
-
-            Array<OneD, NekDouble> diff0(nqcol, wsp             );
-            Array<OneD, NekDouble> diff1(nqcol, wsp    +   nqcol);
-
-            Blas::Dgemm('N', 'N', m_nquad0, m_nquad1*m_numElmt,
-                        m_nquad0, 1.0, m_Deriv0, m_nquad0,
-                        input.get(), m_nquad0, 0.0,
-                        diff0.get(), m_nquad0);
-
-            int cnt = 0;
-            for (int i = 0; i < m_numElmt; ++i, cnt += nqtot)
-            {
-                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
-                            input.get() + cnt, m_nquad0,
-                            m_Deriv1, m_nquad1, 0.0,
-                            diff1.get() + cnt, m_nquad0);
-            }
-
-            if(m_isDeformed)
-            {
-                Vmath::Vmul  (nqcol, m_derivFac[2*dir]  , 1, diff0, 1, output, 1);
-                Vmath::Vvtvp (nqcol, m_derivFac[2*dir+1], 1, diff1, 1, output, 1,
-                              output, 1);
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul  (m_nqe, m_derivFac[2*dir][e], diff0 + e*m_nqe, 1,
-                                  t = output + e*m_nqe, 1);
-                    Vmath::Svtvp (m_nqe, m_derivFac[2*dir+1][e], diff1 + e*m_nqe, 1,
-                                  output + e*m_nqe, 1, t = output + e*m_nqe, 1);
-                }
-            }
-        }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
-        {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
+            Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                        input.get() + cnt, m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                        diff1.get() + cnt, m_nquad0);
         }
 
-    protected:
-        int                             m_coordim;
-        const int                       m_nquad0;
-        const int                       m_nquad1;
-        Array<TwoD, const NekDouble>    m_derivFac;
-        NekDouble                      *m_Deriv0;
-        NekDouble                      *m_Deriv1;
-
-    private:
-        PhysDeriv_SumFac_Quad(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors),
-              m_nquad0 (m_stdExp->GetNumPoints(0)),
-              m_nquad1 (m_stdExp->GetNumPoints(1))
+        if (m_isDeformed)
         {
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
-            m_coordim = pCollExp[0]->GetCoordim();
-
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
-
-            m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
-            m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
-            m_wspSize = 2 * m_nquad0*m_nquad1*m_numElmt;
+            Vmath::Vmul(nqcol, m_derivFac[2 * dir], 1, diff0, 1, output, 1);
+            Vmath::Vvtvp(nqcol, m_derivFac[2 * dir + 1], 1, diff1, 1, output, 1,
+                         output, 1);
         }
-        
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                Vmath::Smul(m_nqe, m_derivFac[2 * dir][e], diff0 + e * m_nqe, 1,
+                            t = output + e * m_nqe, 1);
+                Vmath::Svtvp(m_nqe, m_derivFac[2 * dir + 1][e],
+                             diff1 + e * m_nqe, 1, output + e * m_nqe, 1,
+                             t = output + e * m_nqe, 1);
+            }
+        }
+    }
+
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    int m_coordim;
+    const int m_nquad0;
+    const int m_nquad1;
+    Array<TwoD, const NekDouble> m_derivFac;
+    NekDouble *m_Deriv0;
+    NekDouble *m_Deriv1;
+
+private:
+    PhysDeriv_SumFac_Quad(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                          CoalescedGeomDataSharedPtr pGeomData,
+                          StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors),
+          m_nquad0(m_stdExp->GetNumPoints(0)),
+          m_nquad1(m_stdExp->GetNumPoints(1))
+    {
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+        m_coordim                            = pCollExp[0]->GetCoordim();
+
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+
+        m_Deriv0  = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
+        m_Deriv1  = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
+        m_wspSize = 2 * m_nquad0 * m_nquad1 * m_numElmt;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_SumFac_Quad operators
-OperatorKey PhysDeriv_SumFac_Quad::m_type = GetOperatorFactory().
-    RegisterCreatorFunction(
-                            OperatorKey(eQuadrilateral, ePhysDeriv, eSumFac, false),
+OperatorKey PhysDeriv_SumFac_Quad::m_type =
+    GetOperatorFactory().RegisterCreatorFunction(
+        OperatorKey(eQuadrilateral, ePhysDeriv, eSumFac, false),
         PhysDeriv_SumFac_Quad::create, "PhysDeriv_SumFac_Quad");
-
 
 /**
  * @brief Phys deriv operator using sum-factorisation (Tri)
  */
 class PhysDeriv_SumFac_Tri final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_SumFac_Tri)
+public:
+    OPERATOR_CREATE(PhysDeriv_SumFac_Tri)
 
-        ~PhysDeriv_SumFac_Tri() final
+    ~PhysDeriv_SumFac_Tri() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+
+        const int nqtot = m_nquad0 * m_nquad1;
+        const int nqcol = nqtot * m_numElmt;
+
+        ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
+        ASSERTL1(input.size() >= nqcol, "Incorrect input size");
+
+        Array<OneD, NekDouble> diff0(nqcol, wsp);
+        Array<OneD, NekDouble> diff1(nqcol, wsp + nqcol);
+
+        // Tensor Product Derivative
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_numElmt, m_nquad0, 1.0,
+                    m_Deriv0, m_nquad0, input.get(), m_nquad0, 0.0, diff0.get(),
+                    m_nquad0);
+
+        int cnt = 0;
+        for (int i = 0; i < m_numElmt; ++i, cnt += nqtot)
         {
+            // scale diff0 by geometric factor: 2/(1-z1)
+            Vmath::Vmul(nqtot, &m_fac1[0], 1, diff0.get() + cnt, 1,
+                        diff0.get() + cnt, 1);
+
+            Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                        input.get() + cnt, m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                        diff1.get() + cnt, m_nquad0);
+
+            // add to diff1 by diff0 scaled by: (1_z0)/(1-z1)
+            Vmath::Vvtvp(nqtot, m_fac0.get(), 1, diff0.get() + cnt, 1,
+                         diff1.get() + cnt, 1, diff1.get() + cnt, 1);
         }
 
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
+        if (m_isDeformed)
         {
+            Vmath::Vmul(nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
+            Vmath::Vvtvp(nqcol, m_derivFac[1], 1, diff1, 1, output0, 1, output0,
+                         1);
+            Vmath::Vmul(nqcol, m_derivFac[2], 1, diff0, 1, output1, 1);
+            Vmath::Vvtvp(nqcol, m_derivFac[3], 1, diff1, 1, output1, 1, output1,
+                         1);
 
-            const int nqtot   = m_nquad0 * m_nquad1;
-            const int nqcol   = nqtot*m_numElmt;
-
-            ASSERTL1(wsp.size() == m_wspSize,
-                     "Incorrect workspace size");
-            ASSERTL1(input.size() >= nqcol,
-                     "Incorrect input size");
-
-            Array<OneD, NekDouble> diff0(nqcol, wsp             );
-            Array<OneD, NekDouble> diff1(nqcol, wsp    +   nqcol);
-
-            // Tensor Product Derivative
-            Blas::Dgemm('N', 'N', m_nquad0, m_nquad1*m_numElmt,
-                        m_nquad0, 1.0, m_Deriv0, m_nquad0,
-                        input.get(), m_nquad0, 0.0,
-                        diff0.get(), m_nquad0);
-
-            int cnt = 0;
-            for (int i = 0; i < m_numElmt; ++i, cnt += nqtot)
+            if (m_coordim == 3)
             {
-                // scale diff0 by geometric factor: 2/(1-z1)
-                Vmath::Vmul(nqtot,&m_fac1[0],1,diff0.get()+cnt,1,
-                            diff0.get()+cnt,1);
+                Vmath::Vmul(nqcol, m_derivFac[4], 1, diff0, 1, output2, 1);
+                Vmath::Vvtvp(nqcol, m_derivFac[5], 1, diff1, 1, output2, 1,
+                             output2, 1);
+            }
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                Vmath::Smul(m_nqe, m_derivFac[0][e], diff0 + e * m_nqe, 1,
+                            t = output0 + e * m_nqe, 1);
+                Vmath::Svtvp(m_nqe, m_derivFac[1][e], diff1 + e * m_nqe, 1,
+                             output0 + e * m_nqe, 1, t = output0 + e * m_nqe,
+                             1);
 
-                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
-                            input.get() + cnt, m_nquad0,
-                            m_Deriv1, m_nquad1, 0.0,
-                            diff1.get() + cnt, m_nquad0);
-
-                // add to diff1 by diff0 scaled by: (1_z0)/(1-z1)
-                Vmath::Vvtvp(nqtot,m_fac0.get(),1,diff0.get()+cnt,1,
-                             diff1.get()+cnt,1,diff1.get()+cnt,1);
+                Vmath::Smul(m_nqe, m_derivFac[2][e], diff0 + e * m_nqe, 1,
+                            t = output1 + e * m_nqe, 1);
+                Vmath::Svtvp(m_nqe, m_derivFac[3][e], diff1 + e * m_nqe, 1,
+                             output1 + e * m_nqe, 1, t = output1 + e * m_nqe,
+                             1);
             }
 
-            if(m_isDeformed)
+            if (m_coordim == 3)
             {
-                Vmath::Vmul  (nqcol, m_derivFac[0], 1, diff0, 1, output0, 1);
-                Vmath::Vvtvp (nqcol, m_derivFac[1], 1, diff1, 1, output0, 1,
-                              output0, 1);
-                Vmath::Vmul  (nqcol, m_derivFac[2], 1, diff0, 1, output1, 1);
-                Vmath::Vvtvp (nqcol, m_derivFac[3], 1, diff1, 1, output1, 1,
-                              output1, 1);
-                
-                if (m_coordim == 3)
+                for (int e = 0; e < m_numElmt; ++e)
                 {
-                    Vmath::Vmul  (nqcol, m_derivFac[4], 1, diff0, 1, output2, 1);
-                    Vmath::Vvtvp (nqcol, m_derivFac[5], 1, diff1, 1, output2, 1,
-                                  output2, 1);
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul  (m_nqe, m_derivFac[0][e], diff0 + e*m_nqe, 1,
-                                  t = output0 + e*m_nqe, 1);
-                    Vmath::Svtvp (m_nqe, m_derivFac[1][e], diff1 + e*m_nqe, 1,
-                                  output0 + e*m_nqe, 1, t = output0 + e*m_nqe, 1);
-
-                    Vmath::Smul  (m_nqe, m_derivFac[2][e], diff0 + e*m_nqe, 1,
-                                  t = output1 + e*m_nqe, 1);
-                    Vmath::Svtvp (m_nqe, m_derivFac[3][e], diff1 + e*m_nqe, 1,
-                                  output1 + e*m_nqe, 1, t = output1 + e*m_nqe, 1);
-                }
-
-                if (m_coordim == 3)
-                {
-                    for(int e = 0; e < m_numElmt; ++e)
-                    {
-                        Vmath::Smul  (m_nqe, m_derivFac[4][e], diff0 + e*m_nqe, 1,
-                                      t = output2 + e*m_nqe, 1);
-                        Vmath::Svtvp (m_nqe, m_derivFac[5][e], diff1 + e*m_nqe, 1,
-                                      output2 + e*m_nqe, 1, t = output2 + e*m_nqe, 1);
-                    }
+                    Vmath::Smul(m_nqe, m_derivFac[4][e], diff0 + e * m_nqe, 1,
+                                t = output2 + e * m_nqe, 1);
+                    Vmath::Svtvp(m_nqe, m_derivFac[5][e], diff1 + e * m_nqe, 1,
+                                 output2 + e * m_nqe, 1,
+                                 t = output2 + e * m_nqe, 1);
                 }
             }
         }
+    }
 
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD, NekDouble> &wsp) final
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        const int nqtot = m_nquad0 * m_nquad1;
+        const int nqcol = nqtot * m_numElmt;
+
+        ASSERTL1(wsp.size() == m_wspSize, "Incorrect workspace size");
+        ASSERTL1(input.size() >= nqcol, "Incorrect input size");
+
+        Array<OneD, NekDouble> diff0(nqcol, wsp);
+        Array<OneD, NekDouble> diff1(nqcol, wsp + nqcol);
+
+        // Tensor Product Derivative
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_numElmt, m_nquad0, 1.0,
+                    m_Deriv0, m_nquad0, input.get(), m_nquad0, 0.0, diff0.get(),
+                    m_nquad0);
+
+        int cnt = 0;
+        for (int i = 0; i < m_numElmt; ++i, cnt += nqtot)
         {
-            const int nqtot   = m_nquad0 * m_nquad1;
-            const int nqcol   = nqtot*m_numElmt;
+            // scale diff0 by geometric factor: 2/(1-z1)
+            Vmath::Vmul(nqtot, &m_fac1[0], 1, diff0.get() + cnt, 1,
+                        diff0.get() + cnt, 1);
 
-            ASSERTL1(wsp.size() == m_wspSize,
-                     "Incorrect workspace size");
-            ASSERTL1(input.size() >= nqcol,
-                     "Incorrect input size");
+            Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                        input.get() + cnt, m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                        diff1.get() + cnt, m_nquad0);
 
-            Array<OneD, NekDouble> diff0(nqcol, wsp             );
-            Array<OneD, NekDouble> diff1(nqcol, wsp    +   nqcol);
-
-            // Tensor Product Derivative
-            Blas::Dgemm('N', 'N', m_nquad0, m_nquad1*m_numElmt,
-                        m_nquad0, 1.0, m_Deriv0, m_nquad0,
-                        input.get(), m_nquad0, 0.0,
-                        diff0.get(), m_nquad0);
-
-            int cnt = 0;
-            for (int i = 0; i < m_numElmt; ++i, cnt += nqtot)
-            {
-                // scale diff0 by geometric factor: 2/(1-z1)
-                Vmath::Vmul(nqtot,&m_fac1[0],1,diff0.get()+cnt,1,
-                            diff0.get()+cnt,1);
-
-                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
-                            input.get() + cnt, m_nquad0,
-                            m_Deriv1, m_nquad1, 0.0,
-                            diff1.get() + cnt, m_nquad0);
-
-                // add to diff1 by diff0 scaled by: (1_z0)/(1-z1)
-                Vmath::Vvtvp(nqtot,m_fac0.get(),1,diff0.get()+cnt,1,
-                             diff1.get()+cnt,1,diff1.get()+cnt,1);
-            }
-
-            if(m_isDeformed)
-            {
-                Vmath::Vmul  (nqcol, m_derivFac[2*dir]  , 1, diff0, 1, output, 1);
-                Vmath::Vvtvp (nqcol, m_derivFac[2*dir+1], 1, diff1, 1, output, 1,
-                              output, 1);
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul  (m_nqe, m_derivFac[2*dir][e], diff0 + e*m_nqe, 1,
-                                  t = output + e*m_nqe, 1);
-                    Vmath::Svtvp (m_nqe, m_derivFac[2*dir+1][e], diff1 + e*m_nqe, 1,
-                                  output + e*m_nqe, 1, t = output + e*m_nqe, 1);
-                }
-            }
-        }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
-        {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
+            // add to diff1 by diff0 scaled by: (1_z0)/(1-z1)
+            Vmath::Vvtvp(nqtot, m_fac0.get(), 1, diff0.get() + cnt, 1,
+                         diff1.get() + cnt, 1, diff1.get() + cnt, 1);
         }
 
-    protected:
-        int                             m_coordim;
-        const int                       m_nquad0;
-        const int                       m_nquad1;
-        Array<TwoD, const NekDouble>    m_derivFac;
-        NekDouble                      *m_Deriv0;
-        NekDouble                      *m_Deriv1;
-        Array<OneD, NekDouble>          m_fac0;
-        Array<OneD, NekDouble>          m_fac1;
-
-    private:
-        PhysDeriv_SumFac_Tri(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors),
-              m_nquad0 (m_stdExp->GetNumPoints(0)),
-              m_nquad1 (m_stdExp->GetNumPoints(1))
+        if (m_isDeformed)
         {
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
-            m_coordim = pCollExp[0]->GetCoordim();
-
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
-
-            const Array<OneD, const NekDouble>& z0
-                                            = m_stdExp->GetBasis(0)->GetZ();
-            const Array<OneD, const NekDouble>& z1
-                                            = m_stdExp->GetBasis(1)->GetZ();
-            m_fac0 = Array<OneD, NekDouble>(m_nquad0*m_nquad1);
-            // set up geometric factor: 0.5*(1+z0)
-            for (int i = 0; i < m_nquad0; ++i)
-            {
-                for(int j = 0; j < m_nquad1; ++j)
-                {
-                    m_fac0[i+j*m_nquad0] = 0.5*(1+z0[i]);
-                }
-            }
-
-            m_fac1 = Array<OneD, NekDouble>(m_nquad0*m_nquad1);
-            // set up geometric factor: 2/(1-z1)
-            for (int i = 0; i < m_nquad0; ++i)
-            {
-                for(int j = 0; j < m_nquad1; ++j)
-                {
-                    m_fac1[i+j*m_nquad0] = 2.0/(1-z1[j]);
-                }
-            }
-
-
-            m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
-            m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
-            m_wspSize = 2 * m_nquad0*m_nquad1*m_numElmt;
+            Vmath::Vmul(nqcol, m_derivFac[2 * dir], 1, diff0, 1, output, 1);
+            Vmath::Vvtvp(nqcol, m_derivFac[2 * dir + 1], 1, diff1, 1, output, 1,
+                         output, 1);
         }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                Vmath::Smul(m_nqe, m_derivFac[2 * dir][e], diff0 + e * m_nqe, 1,
+                            t = output + e * m_nqe, 1);
+                Vmath::Svtvp(m_nqe, m_derivFac[2 * dir + 1][e],
+                             diff1 + e * m_nqe, 1, output + e * m_nqe, 1,
+                             t = output + e * m_nqe, 1);
+            }
+        }
+    }
+
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    int m_coordim;
+    const int m_nquad0;
+    const int m_nquad1;
+    Array<TwoD, const NekDouble> m_derivFac;
+    NekDouble *m_Deriv0;
+    NekDouble *m_Deriv1;
+    Array<OneD, NekDouble> m_fac0;
+    Array<OneD, NekDouble> m_fac1;
+
+private:
+    PhysDeriv_SumFac_Tri(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                         CoalescedGeomDataSharedPtr pGeomData,
+                         StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors),
+          m_nquad0(m_stdExp->GetNumPoints(0)),
+          m_nquad1(m_stdExp->GetNumPoints(1))
+    {
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+        m_coordim                            = pCollExp[0]->GetCoordim();
+
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+
+        const Array<OneD, const NekDouble> &z0 = m_stdExp->GetBasis(0)->GetZ();
+        const Array<OneD, const NekDouble> &z1 = m_stdExp->GetBasis(1)->GetZ();
+        m_fac0 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1);
+        // set up geometric factor: 0.5*(1+z0)
+        for (int i = 0; i < m_nquad0; ++i)
+        {
+            for (int j = 0; j < m_nquad1; ++j)
+            {
+                m_fac0[i + j * m_nquad0] = 0.5 * (1 + z0[i]);
+            }
+        }
+
+        m_fac1 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1);
+        // set up geometric factor: 2/(1-z1)
+        for (int i = 0; i < m_nquad0; ++i)
+        {
+            for (int j = 0; j < m_nquad1; ++j)
+            {
+                m_fac1[i + j * m_nquad0] = 2.0 / (1 - z1[j]);
+            }
+        }
+
+        m_Deriv0  = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
+        m_Deriv1  = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
+        m_wspSize = 2 * m_nquad0 * m_nquad1 * m_numElmt;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_SumFac_Tri operators
-OperatorKey PhysDeriv_SumFac_Tri::m_typeArr[] =
-{
+OperatorKey PhysDeriv_SumFac_Tri::m_typeArr[] = {
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTriangle, ePhysDeriv, eSumFac,false),
+        OperatorKey(eTriangle, ePhysDeriv, eSumFac, false),
         PhysDeriv_SumFac_Tri::create, "PhysDeriv_SumFac_Tri"),
     GetOperatorFactory().RegisterCreatorFunction(
-        OperatorKey(eTriangle, ePhysDeriv, eSumFac,true),
-        PhysDeriv_SumFac_Tri::create, "PhysDeriv_SumFac_NodalTri")
-};
-
+        OperatorKey(eTriangle, ePhysDeriv, eSumFac, true),
+        PhysDeriv_SumFac_Tri::create, "PhysDeriv_SumFac_NodalTri")};
 
 /**
  * @brief Phys deriv operator using sum-factorisation (Hex)
  */
 class PhysDeriv_SumFac_Hex final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_SumFac_Hex)
+public:
+    OPERATOR_CREATE(PhysDeriv_SumFac_Hex)
 
-        ~PhysDeriv_SumFac_Hex() final
+    ~PhysDeriv_SumFac_Hex() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+        Array<OneD, Array<OneD, NekDouble>> out(3);
+        out[0] = output0;
+        out[1] = output1;
+        out[2] = output2;
+
+        for (int i = 0; i < 3; ++i)
         {
+            Diff[i] = wsp + i * ntot;
         }
 
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_nquad2 * m_numElmt,
+                    m_nquad0, 1.0, m_Deriv0, m_nquad0, &input[0], m_nquad0, 0.0,
+                    &Diff[0][0], m_nquad0);
+
+        for (int i = 0; i < m_numElmt; ++i)
         {
-
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-            Array<OneD, Array<OneD, NekDouble> > out(3);
-            out[0] = output0;  out[1] = output1;    out[2] = output2;
-
-            for(int i = 0; i < 3; ++i)
+            for (int j = 0; j < m_nquad2; ++j)
             {
-                Diff[i] = wsp + i*ntot;
+                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                            &input[i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                            &Diff[1][i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0);
             }
 
-            Blas::Dgemm('N','N', m_nquad0,m_nquad1*m_nquad2*m_numElmt,
-                        m_nquad0,1.0, m_Deriv0,m_nquad0,&input[0],
-                        m_nquad0,0.0,&Diff[0][0],m_nquad0);
+            Blas::Dgemm('N', 'T', m_nquad0 * m_nquad1, m_nquad2, m_nquad2, 1.0,
+                        &input[i * nPhys], m_nquad0 * m_nquad1, m_Deriv2,
+                        m_nquad2, 0.0, &Diff[2][i * nPhys],
+                        m_nquad0 * m_nquad1);
+        }
 
-            for(int  i = 0; i < m_numElmt; ++i)
+        // calculate full derivative
+        if (m_isDeformed)
+        {
+            for (int i = 0; i < m_coordim; ++i)
             {
-                for (int j = 0; j < m_nquad2; ++j)
+                Vmath::Vmul(ntot, m_derivFac[i * 3], 1, Diff[0], 1, out[i], 1);
+                for (int j = 1; j < 3; ++j)
                 {
-                    Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1,
-                                1.0, &input[i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0, m_Deriv1, m_nquad1, 0.0,
-                                &Diff[1][i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0);
+                    Vmath::Vvtvp(ntot, m_derivFac[i * 3 + j], 1, Diff[j], 1,
+                                 out[i], 1, out[i], 1);
                 }
+            }
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                for (int i = 0; i < m_coordim; ++i)
+                {
 
-                Blas::Dgemm('N','T',m_nquad0*m_nquad1,m_nquad2,m_nquad2,
-                            1.0, &input[i*nPhys],m_nquad0*m_nquad1,
-                            m_Deriv2,m_nquad2, 0.0,&Diff[2][i*nPhys],
-                            m_nquad0*m_nquad1);
+                    Vmath::Smul(m_nqe, m_derivFac[i * 3][e],
+                                Diff[0] + e * m_nqe, 1, t = out[i] + e * m_nqe,
+                                1);
+
+                    for (int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Svtvp(m_nqe, m_derivFac[i * 3 + j][e],
+                                     Diff[j] + e * m_nqe, 1, out[i] + e * m_nqe,
+                                     1, t = out[i] + e * m_nqe, 1);
+                    }
+                }
+            }
+        }
+    }
+
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+
+        for (int i = 0; i < 3; ++i)
+        {
+            Diff[i] = wsp + i * ntot;
+        }
+
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_nquad2 * m_numElmt,
+                    m_nquad0, 1.0, m_Deriv0, m_nquad0, &input[0], m_nquad0, 0.0,
+                    &Diff[0][0], m_nquad0);
+
+        for (int i = 0; i < m_numElmt; ++i)
+        {
+            for (int j = 0; j < m_nquad2; ++j)
+            {
+                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                            &input[i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                            &Diff[1][i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0);
             }
 
+            Blas::Dgemm('N', 'T', m_nquad0 * m_nquad1, m_nquad2, m_nquad2, 1.0,
+                        &input[i * nPhys], m_nquad0 * m_nquad1, m_Deriv2,
+                        m_nquad2, 0.0, &Diff[2][i * nPhys],
+                        m_nquad0 * m_nquad1);
+        }
+
+        // calculate full derivative
+        if (m_isDeformed)
+        {
             // calculate full derivative
-            if(m_isDeformed)
+            Vmath::Vmul(ntot, m_derivFac[dir * 3], 1, Diff[0], 1, output, 1);
+            for (int j = 1; j < 3; ++j)
             {
-                for(int i = 0; i < m_coordim; ++i)
-                {
-                    Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
-                    for(int j = 1; j < 3; ++j)
-                    {
-                        Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
-                                      Diff[j],               1,
-                                      out[i],                1,
-                                      out[i],                1);
-                    }
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    for(int i = 0; i < m_coordim; ++i)
-                    {
-
-                        Vmath::Smul(m_nqe,m_derivFac[i*3][e],
-                                    Diff[0] + e*m_nqe, 1,
-                                    t = out[i] + e*m_nqe,1);
-
-                        for(int j = 1; j < 3; ++j)
-                        {
-                            Vmath::Svtvp (m_nqe, m_derivFac[i*3+j][e],
-                                          Diff[j] + e*m_nqe,     1,
-                                          out[i]  + e*m_nqe,     1,
-                                          t = out[i]  + e*m_nqe, 1);
-                        }
-                    }
-                }
+                Vmath::Vvtvp(ntot, m_derivFac[dir * 3 + j], 1, Diff[j], 1,
+                             output, 1, output, 1);
             }
         }
-
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD, NekDouble> &wsp) final
+        else
         {
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-
-            for(int i = 0; i < 3; ++i)
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
             {
-                Diff[i] = wsp + i*ntot;
-            }
+                Vmath::Smul(m_nqe, m_derivFac[dir * 3][e], Diff[0] + e * m_nqe,
+                            1, t = output + e * m_nqe, 1);
 
-            Blas::Dgemm('N','N', m_nquad0,m_nquad1*m_nquad2*m_numElmt,
-                        m_nquad0,1.0, m_Deriv0,m_nquad0,&input[0],
-                        m_nquad0,0.0,&Diff[0][0],m_nquad0);
-
-            for(int  i = 0; i < m_numElmt; ++i)
-            {
-                for (int j = 0; j < m_nquad2; ++j)
+                for (int j = 1; j < 3; ++j)
                 {
-                    Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1,
-                                1.0, &input[i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0, m_Deriv1, m_nquad1, 0.0,
-                                &Diff[1][i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0);
-                }
-
-                Blas::Dgemm('N','T',m_nquad0*m_nquad1,m_nquad2,m_nquad2,
-                            1.0, &input[i*nPhys],m_nquad0*m_nquad1,
-                            m_Deriv2,m_nquad2, 0.0,&Diff[2][i*nPhys],
-                            m_nquad0*m_nquad1);
-            }
-
-            // calculate full derivative
-            if(m_isDeformed)
-            {
-                // calculate full derivative
-                Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
-                for(int j = 1; j < 3; ++j)
-                {
-                    Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
-                                  Diff[j],               1,
-                                  output,                1,
-                                  output,                1);
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul(m_nqe,m_derivFac[dir*3][e],
-                                    Diff[0] + e*m_nqe, 1,
-                                    t = output + e*m_nqe,1);
-
-                    for(int j = 1; j < 3; ++j)
-                    {
-                        Vmath::Svtvp (m_nqe, m_derivFac[dir*3+j][e],
-                                      Diff[j] + e*m_nqe,     1,
-                                      output  + e*m_nqe,     1,
-                                      t = output  + e*m_nqe, 1);
-                    }
+                    Vmath::Svtvp(m_nqe, m_derivFac[dir * 3 + j][e],
+                                 Diff[j] + e * m_nqe, 1, output + e * m_nqe, 1,
+                                 t = output + e * m_nqe, 1);
                 }
             }
         }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
-        {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
-        }
+    }
 
-    protected:
-        Array<TwoD, const NekDouble>    m_derivFac;
-        int                             m_coordim;
-        const int                       m_nquad0;
-        const int                       m_nquad1;
-        const int                       m_nquad2;
-        NekDouble                      *m_Deriv0;
-        NekDouble                      *m_Deriv1;
-        NekDouble                      *m_Deriv2;
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
 
-    private:
-        PhysDeriv_SumFac_Hex(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors),
-              m_nquad0  (m_stdExp->GetNumPoints(0)),
-              m_nquad1  (m_stdExp->GetNumPoints(1)),
-              m_nquad2  (m_stdExp->GetNumPoints(2))
-        {
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+protected:
+    Array<TwoD, const NekDouble> m_derivFac;
+    int m_coordim;
+    const int m_nquad0;
+    const int m_nquad1;
+    const int m_nquad2;
+    NekDouble *m_Deriv0;
+    NekDouble *m_Deriv1;
+    NekDouble *m_Deriv2;
 
-            m_coordim = pCollExp[0]->GetCoordim();
+private:
+    PhysDeriv_SumFac_Hex(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                         CoalescedGeomDataSharedPtr pGeomData,
+                         StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors),
+          m_nquad0(m_stdExp->GetNumPoints(0)),
+          m_nquad1(m_stdExp->GetNumPoints(1)),
+          m_nquad2(m_stdExp->GetNumPoints(2))
+    {
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
 
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+        m_coordim = pCollExp[0]->GetCoordim();
 
-            m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
-            m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
-            m_Deriv2 = &((m_stdExp->GetBasis(2)->GetD())->GetPtr())[0];
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
 
-            m_wspSize = 3*m_nquad0*m_nquad1*m_nquad2*m_numElmt;
-        }
+        m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
+        m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
+        m_Deriv2 = &((m_stdExp->GetBasis(2)->GetD())->GetPtr())[0];
+
+        m_wspSize = 3 * m_nquad0 * m_nquad1 * m_nquad2 * m_numElmt;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_SumFac_Hex operators
-OperatorKey PhysDeriv_SumFac_Hex::m_typeArr[] =
-{
+OperatorKey PhysDeriv_SumFac_Hex::m_typeArr[] = {
     GetOperatorFactory().RegisterCreatorFunction(
         OperatorKey(eHexahedron, ePhysDeriv, eSumFac, false),
-        PhysDeriv_SumFac_Hex::create, "PhysDeriv_SumFac_Hex")
-};
-
+        PhysDeriv_SumFac_Hex::create, "PhysDeriv_SumFac_Hex")};
 
 /**
  * @brief Phys deriv operator using sum-factorisation (Tet)
  */
 class PhysDeriv_SumFac_Tet final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_SumFac_Tet)
+public:
+    OPERATOR_CREATE(PhysDeriv_SumFac_Tet)
 
-        ~PhysDeriv_SumFac_Tet() final
+    ~PhysDeriv_SumFac_Tet() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+        Array<OneD, Array<OneD, NekDouble>> out(3);
+        out[0] = output0;
+        out[1] = output1;
+        out[2] = output2;
+
+        for (int i = 0; i < 3; ++i)
         {
+            Diff[i] = wsp + i * ntot;
         }
 
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
+        // dEta0
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_nquad2 * m_numElmt,
+                    m_nquad0, 1.0, m_Deriv0, m_nquad0, &input[0], m_nquad0, 0.0,
+                    &Diff[0][0], m_nquad0);
+
+        // dEta2
+        for (int i = 0; i < m_numElmt; ++i)
+        {
+            Blas::Dgemm('N', 'T', m_nquad0 * m_nquad1, m_nquad2, m_nquad2, 1.0,
+                        &input[i * nPhys], m_nquad0 * m_nquad1, m_Deriv2,
+                        m_nquad2, 0.0, &Diff[2][i * nPhys],
+                        m_nquad0 * m_nquad1);
+        }
+
+        for (int i = 0; i < m_numElmt; ++i)
         {
 
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-            Array<OneD, Array<OneD, NekDouble> > out(3);
-            out[0] = output0;  out[1] = output1;    out[2] = output2;
-
-            for(int i = 0; i < 3; ++i)
+            // dEta1
+            for (int j = 0; j < m_nquad2; ++j)
             {
-                Diff[i] = wsp + i*ntot;
+                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                            &input[i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                            &Diff[1][i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0);
             }
 
-            // dEta0
-            Blas::Dgemm('N','N', m_nquad0,m_nquad1*m_nquad2*m_numElmt,
-                        m_nquad0,1.0, m_Deriv0,m_nquad0,&input[0],
-                        m_nquad0,0.0,&Diff[0][0],m_nquad0);
+            // dxi2 = (1 + eta_1)/(1 -eta_2)*dEta1 + dEta2
+            Vmath::Vvtvp(nPhys, m_fac3.get(), 1, Diff[1].get() + i * nPhys, 1,
+                         Diff[2].get() + i * nPhys, 1,
+                         Diff[2].get() + i * nPhys, 1);
 
-            // dEta2
-            for(int  i = 0; i < m_numElmt; ++i)
+            // dxi1 =  2/(1 - eta_2) dEta1
+            Vmath::Vmul(nPhys, m_fac2.get(), 1, Diff[1].get() + i * nPhys, 1,
+                        Diff[1].get() + i * nPhys, 1);
+
+            // dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) dEta0 + dxi1
+            Vmath::Vvtvp(nPhys, m_fac1.get(), 1, Diff[0].get() + i * nPhys, 1,
+                         Diff[1].get() + i * nPhys, 1,
+                         Diff[1].get() + i * nPhys, 1);
+
+            // dxi2 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) dEta0 + dxi2
+            Vmath::Vvtvp(nPhys, m_fac1.get(), 1, Diff[0].get() + i * nPhys, 1,
+                         Diff[2].get() + i * nPhys, 1,
+                         Diff[2].get() + i * nPhys, 1);
+
+            // dxi0 = 4.0/((1-eta_1)(1-eta_2)) dEta0
+            Vmath::Vmul(nPhys, m_fac0.get(), 1, Diff[0].get() + i * nPhys, 1,
+                        Diff[0].get() + i * nPhys, 1);
+        }
+
+        // calculate full derivative
+        if (m_isDeformed)
+        {
+            for (int i = 0; i < m_coordim; ++i)
             {
-                Blas::Dgemm('N','T',m_nquad0*m_nquad1,m_nquad2,m_nquad2,
-                            1.0, &input[i*nPhys],m_nquad0*m_nquad1,
-                            m_Deriv2,m_nquad2, 0.0,&Diff[2][i*nPhys],
-                            m_nquad0*m_nquad1);
-            }
-
-            for(int  i = 0; i < m_numElmt; ++i)
-            {
-
-                // dEta1
-                for (int j = 0; j < m_nquad2; ++j)
+                Vmath::Vmul(ntot, m_derivFac[i * 3], 1, Diff[0], 1, out[i], 1);
+                for (int j = 1; j < 3; ++j)
                 {
-                    Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1,
-                                1.0, &input[i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0, m_Deriv1, m_nquad1, 0.0,
-                                &Diff[1][i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0);
+                    Vmath::Vvtvp(ntot, m_derivFac[i * 3 + j], 1, Diff[j], 1,
+                                 out[i], 1, out[i], 1);
                 }
+            }
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                for (int i = 0; i < m_coordim; ++i)
+                {
+                    Vmath::Smul(m_nqe, m_derivFac[i * 3][e],
+                                Diff[0] + e * m_nqe, 1, t = out[i] + e * m_nqe,
+                                1);
 
-                // dxi2 = (1 + eta_1)/(1 -eta_2)*dEta1 + dEta2
-                Vmath::Vvtvp(nPhys, m_fac3.get(),            1,
-                                    Diff[1].get() + i*nPhys, 1,
-                                    Diff[2].get() + i*nPhys, 1,
-                                    Diff[2].get() + i*nPhys, 1);
+                    for (int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Svtvp(m_nqe, m_derivFac[i * 3 + j][e],
+                                     Diff[j] + e * m_nqe, 1, out[i] + e * m_nqe,
+                                     1, t = out[i] + e * m_nqe, 1);
+                    }
+                }
+            }
+        }
+    }
 
-                // dxi1 =  2/(1 - eta_2) dEta1
-                Vmath::Vmul(nPhys,  m_fac2.get(),            1,
-                                    Diff[1].get() + i*nPhys, 1,
-                                    Diff[1].get() + i*nPhys, 1);
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
 
-                // dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) dEta0 + dxi1
-                Vmath::Vvtvp(nPhys, m_fac1.get(),            1,
-                                    Diff[0].get() + i*nPhys, 1,
-                                    Diff[1].get() + i*nPhys, 1,
-                                    Diff[1].get() + i*nPhys, 1);
+        for (int i = 0; i < 3; ++i)
+        {
+            Diff[i] = wsp + i * ntot;
+        }
 
-                // dxi2 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) dEta0 + dxi2
-                Vmath::Vvtvp(nPhys, m_fac1.get(),            1,
-                                    Diff[0].get() + i*nPhys, 1,
-                                    Diff[2].get() + i*nPhys, 1,
-                                    Diff[2].get() + i*nPhys, 1);
+        // dEta0
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_nquad2 * m_numElmt,
+                    m_nquad0, 1.0, m_Deriv0, m_nquad0, &input[0], m_nquad0, 0.0,
+                    &Diff[0][0], m_nquad0);
 
-                // dxi0 = 4.0/((1-eta_1)(1-eta_2)) dEta0
-                Vmath::Vmul(nPhys,  m_fac0.get(),            1,
-                                    Diff[0].get() + i*nPhys, 1,
-                                    Diff[0].get() + i*nPhys, 1);
+        // dEta2
+        for (int i = 0; i < m_numElmt; ++i)
+        {
+            Blas::Dgemm('N', 'T', m_nquad0 * m_nquad1, m_nquad2, m_nquad2, 1.0,
+                        &input[i * nPhys], m_nquad0 * m_nquad1, m_Deriv2,
+                        m_nquad2, 0.0, &Diff[2][i * nPhys],
+                        m_nquad0 * m_nquad1);
+        }
 
+        for (int i = 0; i < m_numElmt; ++i)
+        {
+
+            // dEta1
+            for (int j = 0; j < m_nquad2; ++j)
+            {
+                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                            &input[i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                            &Diff[1][i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0);
             }
 
+            // dxi2 = (1 + eta_1)/(1 -eta_2)*dEta1 + dEta2
+            Vmath::Vvtvp(nPhys, m_fac3.get(), 1, Diff[1].get() + i * nPhys, 1,
+                         Diff[2].get() + i * nPhys, 1,
+                         Diff[2].get() + i * nPhys, 1);
+
+            // dxi1 =  2/(1 - eta_2) dEta1
+            Vmath::Vmul(nPhys, m_fac2.get(), 1, Diff[1].get() + i * nPhys, 1,
+                        Diff[1].get() + i * nPhys, 1);
+
+            // dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) dEta0 + dxi1
+            Vmath::Vvtvp(nPhys, m_fac1.get(), 1, Diff[0].get() + i * nPhys, 1,
+                         Diff[1].get() + i * nPhys, 1,
+                         Diff[1].get() + i * nPhys, 1);
+
+            // dxi2 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) dEta0 + dxi2
+            Vmath::Vvtvp(nPhys, m_fac1.get(), 1, Diff[0].get() + i * nPhys, 1,
+                         Diff[2].get() + i * nPhys, 1,
+                         Diff[2].get() + i * nPhys, 1);
+
+            // dxi0 = 4.0/((1-eta_1)(1-eta_2)) dEta0
+            Vmath::Vmul(nPhys, m_fac0.get(), 1, Diff[0].get() + i * nPhys, 1,
+                        Diff[0].get() + i * nPhys, 1);
+        }
+
+        // calculate full derivative
+        if (m_isDeformed)
+        {
             // calculate full derivative
-            if(m_isDeformed)
+            Vmath::Vmul(ntot, m_derivFac[dir * 3], 1, Diff[0], 1, output, 1);
+            for (int j = 1; j < 3; ++j)
             {
-                for(int i = 0; i < m_coordim; ++i)
-                {
-                    Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
-                    for(int j = 1; j < 3; ++j)
-                    {
-                        Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
-                                      Diff[j],               1,
-                                      out[i],                1,
-                                      out[i],                1);
-                    }
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    for(int i = 0; i < m_coordim; ++i)
-                    {
-                        Vmath::Smul(m_nqe,m_derivFac[i*3][e],
-                                    Diff[0] + e*m_nqe, 1,
-                                    t = out[i] + e*m_nqe,1);
-
-                        for(int j = 1; j < 3; ++j)
-                        {
-                            Vmath::Svtvp (m_nqe, m_derivFac[i*3+j][e],
-                                          Diff[j] + e*m_nqe,     1,
-                                          out[i]  + e*m_nqe,     1,
-                                          t = out[i]  + e*m_nqe, 1);
-                        }
-                    }
-                }
+                Vmath::Vvtvp(ntot, m_derivFac[dir * 3 + j], 1, Diff[j], 1,
+                             output, 1, output, 1);
             }
         }
-
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD, NekDouble> &wsp) final
+        else
         {
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-
-            for(int i = 0; i < 3; ++i)
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
             {
-                Diff[i] = wsp + i*ntot;
-            }
+                Vmath::Smul(m_nqe, m_derivFac[dir * 3][e], Diff[0] + e * m_nqe,
+                            1, t = output + e * m_nqe, 1);
 
-            // dEta0
-            Blas::Dgemm('N','N', m_nquad0,m_nquad1*m_nquad2*m_numElmt,
-                        m_nquad0,1.0, m_Deriv0,m_nquad0,&input[0],
-                        m_nquad0,0.0,&Diff[0][0],m_nquad0);
-
-            // dEta2
-            for(int  i = 0; i < m_numElmt; ++i)
-            {
-                Blas::Dgemm('N','T',m_nquad0*m_nquad1,m_nquad2,m_nquad2,
-                            1.0, &input[i*nPhys],m_nquad0*m_nquad1,
-                            m_Deriv2,m_nquad2, 0.0,&Diff[2][i*nPhys],
-                            m_nquad0*m_nquad1);
-            }
-
-            for(int  i = 0; i < m_numElmt; ++i)
-            {
-
-                // dEta1
-                for (int j = 0; j < m_nquad2; ++j)
+                for (int j = 1; j < 3; ++j)
                 {
-                    Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1,
-                                1.0, &input[i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0, m_Deriv1, m_nquad1, 0.0,
-                                &Diff[1][i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0);
-                }
-
-                // dxi2 = (1 + eta_1)/(1 -eta_2)*dEta1 + dEta2
-                Vmath::Vvtvp(nPhys, m_fac3.get(),            1,
-                                    Diff[1].get() + i*nPhys, 1,
-                                    Diff[2].get() + i*nPhys, 1,
-                                    Diff[2].get() + i*nPhys, 1);
-
-                // dxi1 =  2/(1 - eta_2) dEta1
-                Vmath::Vmul(nPhys,  m_fac2.get(),            1,
-                                    Diff[1].get() + i*nPhys, 1,
-                                    Diff[1].get() + i*nPhys, 1);
-
-                // dxi1 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) dEta0 + dxi1
-                Vmath::Vvtvp(nPhys, m_fac1.get(),            1,
-                                    Diff[0].get() + i*nPhys, 1,
-                                    Diff[1].get() + i*nPhys, 1,
-                                    Diff[1].get() + i*nPhys, 1);
-
-                // dxi2 = 2.0(1+eta_0)/((1-eta_1)(1-eta_2)) dEta0 + dxi2
-                Vmath::Vvtvp(nPhys, m_fac1.get(),            1,
-                                    Diff[0].get() + i*nPhys, 1,
-                                    Diff[2].get() + i*nPhys, 1,
-                                    Diff[2].get() + i*nPhys, 1);
-
-                // dxi0 = 4.0/((1-eta_1)(1-eta_2)) dEta0
-                Vmath::Vmul(nPhys,  m_fac0.get(),            1,
-                                    Diff[0].get() + i*nPhys, 1,
-                                    Diff[0].get() + i*nPhys, 1);
-
-            }
-
-            // calculate full derivative
-            if(m_isDeformed)
-            {
-                // calculate full derivative
-                Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
-                for(int j = 1; j < 3; ++j)
-                {
-                    Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
-                                  Diff[j],               1,
-                                  output,                1,
-                                  output,                1);
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul(m_nqe,m_derivFac[dir*3][e],
-                                    Diff[0] + e*m_nqe, 1,
-                                    t = output + e*m_nqe,1);
-
-                    for(int j = 1; j < 3; ++j)
-                    {
-                        Vmath::Svtvp (m_nqe, m_derivFac[dir*3+j][e],
-                                      Diff[j] + e*m_nqe,     1,
-                                      output  + e*m_nqe,     1,
-                                      t = output  + e*m_nqe, 1);
-                    }
+                    Vmath::Svtvp(m_nqe, m_derivFac[dir * 3 + j][e],
+                                 Diff[j] + e * m_nqe, 1, output + e * m_nqe, 1,
+                                 t = output + e * m_nqe, 1);
                 }
             }
         }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
+    }
+
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    Array<TwoD, const NekDouble> m_derivFac;
+    int m_coordim;
+    const int m_nquad0;
+    const int m_nquad1;
+    const int m_nquad2;
+    NekDouble *m_Deriv0;
+    NekDouble *m_Deriv1;
+    NekDouble *m_Deriv2;
+    Array<OneD, NekDouble> m_fac0;
+    Array<OneD, NekDouble> m_fac1;
+    Array<OneD, NekDouble> m_fac2;
+    Array<OneD, NekDouble> m_fac3;
+
+private:
+    PhysDeriv_SumFac_Tet(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                         CoalescedGeomDataSharedPtr pGeomData,
+                         StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors),
+          m_nquad0(m_stdExp->GetNumPoints(0)),
+          m_nquad1(m_stdExp->GetNumPoints(1)),
+          m_nquad2(m_stdExp->GetNumPoints(2))
+    {
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+
+        m_coordim = pCollExp[0]->GetCoordim();
+
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+
+        m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
+        m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
+        m_Deriv2 = &((m_stdExp->GetBasis(2)->GetD())->GetPtr())[0];
+
+        m_wspSize = 3 * m_nquad0 * m_nquad1 * m_nquad2 * m_numElmt;
+
+        const Array<OneD, const NekDouble> &z0 = m_stdExp->GetBasis(0)->GetZ();
+        const Array<OneD, const NekDouble> &z1 = m_stdExp->GetBasis(1)->GetZ();
+        const Array<OneD, const NekDouble> &z2 = m_stdExp->GetBasis(2)->GetZ();
+
+        m_fac0 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+        m_fac1 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+        m_fac2 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+        m_fac3 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+        // calculate 2.0/((1-eta_1)(1-eta_2))
+        for (int i = 0; i < m_nquad0; ++i)
         {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
-        }
-
-    protected:
-        Array<TwoD, const NekDouble>    m_derivFac;
-        int                             m_coordim;
-        const int                       m_nquad0;
-        const int                       m_nquad1;
-        const int                       m_nquad2;
-        NekDouble                      *m_Deriv0;
-        NekDouble                      *m_Deriv1;
-        NekDouble                      *m_Deriv2;
-        Array<OneD, NekDouble>          m_fac0;
-        Array<OneD, NekDouble>          m_fac1;
-        Array<OneD, NekDouble>          m_fac2;
-        Array<OneD, NekDouble>          m_fac3;
-
-    private:
-        PhysDeriv_SumFac_Tet(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors),
-              m_nquad0  (m_stdExp->GetNumPoints(0)),
-              m_nquad1  (m_stdExp->GetNumPoints(1)),
-              m_nquad2  (m_stdExp->GetNumPoints(2))
-        {
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
-
-            m_coordim = pCollExp[0]->GetCoordim();
-
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
-
-            m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
-            m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
-            m_Deriv2 = &((m_stdExp->GetBasis(2)->GetD())->GetPtr())[0];
-
-            m_wspSize = 3*m_nquad0*m_nquad1*m_nquad2*m_numElmt;
-
-            const Array<OneD, const NekDouble>& z0
-                                            = m_stdExp->GetBasis(0)->GetZ();
-            const Array<OneD, const NekDouble>& z1
-                                            = m_stdExp->GetBasis(1)->GetZ();
-            const Array<OneD, const NekDouble>& z2
-                                            = m_stdExp->GetBasis(2)->GetZ();
-
-            m_fac0 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-            m_fac1 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-            m_fac2 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-            m_fac3 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-            // calculate 2.0/((1-eta_1)(1-eta_2))
-            for (int i = 0; i < m_nquad0; ++i)
+            for (int j = 0; j < m_nquad1; ++j)
             {
-                for(int j = 0; j < m_nquad1; ++j)
+                for (int k = 0; k < m_nquad2; ++k)
                 {
-                    for(int k = 0; k < m_nquad2; ++k)
-                    {
 
-                        m_fac0[i + j*m_nquad0 + k*m_nquad0*m_nquad1]
-                               = 4.0/((1-z1[j])*(1-z2[k]));
-                        m_fac1[i + j*m_nquad0 + k*m_nquad0*m_nquad1]
-                               = 2.0*(1+z0[i])/((1-z1[j])*(1-z2[k]));
-                        m_fac2[i + j*m_nquad0 + k*m_nquad0*m_nquad1]
-                               = 2.0/(1-z2[k]);
-                        m_fac3[i + j*m_nquad0 + k*m_nquad0*m_nquad1]
-                               = (1+z1[j])/(1-z2[k]);
-                    }
+                    m_fac0[i + j * m_nquad0 + k * m_nquad0 * m_nquad1] =
+                        4.0 / ((1 - z1[j]) * (1 - z2[k]));
+                    m_fac1[i + j * m_nquad0 + k * m_nquad0 * m_nquad1] =
+                        2.0 * (1 + z0[i]) / ((1 - z1[j]) * (1 - z2[k]));
+                    m_fac2[i + j * m_nquad0 + k * m_nquad0 * m_nquad1] =
+                        2.0 / (1 - z2[k]);
+                    m_fac3[i + j * m_nquad0 + k * m_nquad0 * m_nquad1] =
+                        (1 + z1[j]) / (1 - z2[k]);
                 }
             }
-
         }
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_SumFac_Tet operators
-OperatorKey PhysDeriv_SumFac_Tet::m_typeArr[] =
-{
+OperatorKey PhysDeriv_SumFac_Tet::m_typeArr[] = {
     GetOperatorFactory().RegisterCreatorFunction(
         OperatorKey(eTetrahedron, ePhysDeriv, eSumFac, false),
-        PhysDeriv_SumFac_Tet::create, "PhysDeriv_SumFac_Tet")
-};
-
+        PhysDeriv_SumFac_Tet::create, "PhysDeriv_SumFac_Tet")};
 
 /**
  * @brief Phys deriv operator using sum-factorisation (Prism)
  */
 class PhysDeriv_SumFac_Prism final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_SumFac_Prism)
+public:
+    OPERATOR_CREATE(PhysDeriv_SumFac_Prism)
 
-        ~PhysDeriv_SumFac_Prism() final
+    ~PhysDeriv_SumFac_Prism() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+        Array<OneD, Array<OneD, NekDouble>> out(3);
+        out[0] = output0;
+        out[1] = output1;
+        out[2] = output2;
+
+        for (int i = 0; i < 3; ++i)
         {
+            Diff[i] = wsp + i * ntot;
         }
 
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
+        // dEta0
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_nquad2 * m_numElmt,
+                    m_nquad0, 1.0, m_Deriv0, m_nquad0, &input[0], m_nquad0, 0.0,
+                    &Diff[0][0], m_nquad0);
+
+        int cnt = 0;
+        for (int i = 0; i < m_numElmt; ++i)
         {
 
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-            Array<OneD, Array<OneD, NekDouble> > out(3);
-            out[0] = output0; out[1] = output1; out[2] = output2;
-
-            for(int i = 0; i < 3; ++i)
+            // dEta 1
+            for (int j = 0; j < m_nquad2; ++j)
             {
-                Diff[i] = wsp + i*ntot;
+                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                            &input[i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                            &Diff[1][i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0);
             }
 
-            // dEta0
-            Blas::Dgemm('N','N', m_nquad0,m_nquad1*m_nquad2*m_numElmt,
-                        m_nquad0,1.0, m_Deriv0,m_nquad0,&input[0],
-                        m_nquad0,0.0,&Diff[0][0],m_nquad0);
+            // dEta 2
+            Blas::Dgemm('N', 'T', m_nquad0 * m_nquad1, m_nquad2, m_nquad2, 1.0,
+                        &input[i * nPhys], m_nquad0 * m_nquad1, m_Deriv2,
+                        m_nquad2, 0.0, &Diff[2][i * nPhys],
+                        m_nquad0 * m_nquad1);
 
-            int cnt = 0;
-            for(int  i = 0; i < m_numElmt; ++i)
+            // dxi0 = 2/(1-eta_2) d Eta_0
+            Vmath::Vmul(nPhys, &m_fac0[0], 1, Diff[0].get() + cnt, 1,
+                        Diff[0].get() + cnt, 1);
+
+            // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
+            Vmath::Vvtvp(nPhys, &m_fac1[0], 1, Diff[0].get() + cnt, 1,
+                         Diff[2].get() + cnt, 1, Diff[2].get() + cnt, 1);
+            cnt += nPhys;
+        }
+
+        // calculate full derivative
+        if (m_isDeformed)
+        {
+            for (int i = 0; i < m_coordim; ++i)
             {
-
-                // dEta 1
-                for (int j = 0; j < m_nquad2; ++j)
+                Vmath::Vmul(ntot, m_derivFac[i * 3], 1, Diff[0], 1, out[i], 1);
+                for (int j = 1; j < 3; ++j)
                 {
-                    Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1,
-                                1.0, &input[i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0, m_Deriv1, m_nquad1, 0.0,
-                                &Diff[1][i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0);
+                    Vmath::Vvtvp(ntot, m_derivFac[i * 3 + j], 1, Diff[j], 1,
+                                 out[i], 1, out[i], 1);
                 }
+            }
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                for (int i = 0; i < m_coordim; ++i)
+                {
+                    Vmath::Smul(m_nqe, m_derivFac[i * 3][e],
+                                Diff[0] + e * m_nqe, 1, t = out[i] + e * m_nqe,
+                                1);
 
-                // dEta 2
-                Blas::Dgemm('N','T',m_nquad0*m_nquad1,m_nquad2,m_nquad2,
-                            1.0, &input[i*nPhys],m_nquad0*m_nquad1,
-                            m_Deriv2,m_nquad2, 0.0,&Diff[2][i*nPhys],
-                            m_nquad0*m_nquad1);
+                    for (int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Svtvp(m_nqe, m_derivFac[i * 3 + j][e],
+                                     Diff[j] + e * m_nqe, 1, out[i] + e * m_nqe,
+                                     1, t = out[i] + e * m_nqe, 1);
+                    }
+                }
+            }
+        }
+    }
 
-                // dxi0 = 2/(1-eta_2) d Eta_0
-                Vmath::Vmul(nPhys,&m_fac0[0],1,Diff[0].get()+cnt,1,
-                            Diff[0].get()+cnt,1);
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
 
-                // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
-                Vmath::Vvtvp(nPhys,&m_fac1[0],1,Diff[0].get()+cnt,1,
-                             Diff[2].get()+cnt,1,Diff[2].get()+cnt,1);
-                cnt += nPhys;
+        for (int i = 0; i < 3; ++i)
+        {
+            Diff[i] = wsp + i * ntot;
+        }
+
+        // dEta0
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_nquad2 * m_numElmt,
+                    m_nquad0, 1.0, m_Deriv0, m_nquad0, &input[0], m_nquad0, 0.0,
+                    &Diff[0][0], m_nquad0);
+
+        int cnt = 0;
+        for (int i = 0; i < m_numElmt; ++i)
+        {
+
+            // dEta 1
+            for (int j = 0; j < m_nquad2; ++j)
+            {
+                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                            &input[i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                            &Diff[1][i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0);
             }
 
+            // dEta 2
+            Blas::Dgemm('N', 'T', m_nquad0 * m_nquad1, m_nquad2, m_nquad2, 1.0,
+                        &input[i * nPhys], m_nquad0 * m_nquad1, m_Deriv2,
+                        m_nquad2, 0.0, &Diff[2][i * nPhys],
+                        m_nquad0 * m_nquad1);
+
+            // dxi0 = 2/(1-eta_2) d Eta_0
+            Vmath::Vmul(nPhys, &m_fac0[0], 1, Diff[0].get() + cnt, 1,
+                        Diff[0].get() + cnt, 1);
+
+            // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
+            Vmath::Vvtvp(nPhys, &m_fac1[0], 1, Diff[0].get() + cnt, 1,
+                         Diff[2].get() + cnt, 1, Diff[2].get() + cnt, 1);
+            cnt += nPhys;
+        }
+
+        // calculate full derivative
+        if (m_isDeformed)
+        {
             // calculate full derivative
-            if(m_isDeformed)
+            Vmath::Vmul(ntot, m_derivFac[dir * 3], 1, Diff[0], 1, output, 1);
+            for (int j = 1; j < 3; ++j)
             {
-                for(int i = 0; i < m_coordim; ++i)
-                {
-                    Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
-                    for(int j = 1; j < 3; ++j)
-                    {
-                        Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
-                                      Diff[j],               1,
-                                      out[i],                1,
-                                      out[i],                1);
-                    }
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    for(int i = 0; i < m_coordim; ++i)
-                    {
-                        Vmath::Smul(m_nqe,m_derivFac[i*3][e],
-                                    Diff[0] + e*m_nqe, 1,
-                                    t = out[i] + e*m_nqe,1);
-
-                        for(int j = 1; j < 3; ++j)
-                        {
-                            Vmath::Svtvp (m_nqe, m_derivFac[i*3+j][e],
-                                          Diff[j] + e*m_nqe,     1,
-                                          out[i]  + e*m_nqe,     1,
-                                          t = out[i]  + e*m_nqe, 1);
-                        }
-                    }
-                }
+                Vmath::Vvtvp(ntot, m_derivFac[dir * 3 + j], 1, Diff[j], 1,
+                             output, 1, output, 1);
             }
         }
-
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD, NekDouble> &wsp) final
+        else
         {
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-
-            for(int i = 0; i < 3; ++i)
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
             {
-                Diff[i] = wsp + i*ntot;
-            }
+                Vmath::Smul(m_nqe, m_derivFac[dir * 3][e], Diff[0] + e * m_nqe,
+                            1, t = output + e * m_nqe, 1);
 
-            // dEta0
-            Blas::Dgemm('N','N', m_nquad0,m_nquad1*m_nquad2*m_numElmt,
-                        m_nquad0,1.0, m_Deriv0,m_nquad0,&input[0],
-                        m_nquad0,0.0,&Diff[0][0],m_nquad0);
-
-            int cnt = 0;
-            for(int  i = 0; i < m_numElmt; ++i)
-            {
-
-                // dEta 1
-                for (int j = 0; j < m_nquad2; ++j)
+                for (int j = 1; j < 3; ++j)
                 {
-                    Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1,
-                                1.0, &input[i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0, m_Deriv1, m_nquad1, 0.0,
-                                &Diff[1][i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0);
-                }
-
-                // dEta 2
-                Blas::Dgemm('N','T',m_nquad0*m_nquad1,m_nquad2,m_nquad2,
-                            1.0, &input[i*nPhys],m_nquad0*m_nquad1,
-                            m_Deriv2,m_nquad2, 0.0,&Diff[2][i*nPhys],
-                            m_nquad0*m_nquad1);
-
-                // dxi0 = 2/(1-eta_2) d Eta_0
-                Vmath::Vmul(nPhys,&m_fac0[0],1,Diff[0].get()+cnt,1,
-                            Diff[0].get()+cnt,1);
-
-                // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
-                Vmath::Vvtvp(nPhys,&m_fac1[0],1,Diff[0].get()+cnt,1,
-                             Diff[2].get()+cnt,1,Diff[2].get()+cnt,1);
-                cnt += nPhys;
-            }
-
-            // calculate full derivative
-            if(m_isDeformed)
-            {
-                // calculate full derivative
-                Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
-                for(int j = 1; j < 3; ++j)
-                {
-                    Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
-                                  Diff[j],               1,
-                                  output,                1,
-                                  output,                1);
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul(m_nqe,m_derivFac[dir*3][e],
-                                    Diff[0] + e*m_nqe, 1,
-                                    t = output + e*m_nqe,1);
-
-                    for(int j = 1; j < 3; ++j)
-                    {
-                        Vmath::Svtvp (m_nqe, m_derivFac[dir*3+j][e],
-                                      Diff[j] + e*m_nqe,     1,
-                                      output  + e*m_nqe,     1,
-                                      t = output  + e*m_nqe, 1);
-                    }
+                    Vmath::Svtvp(m_nqe, m_derivFac[dir * 3 + j][e],
+                                 Diff[j] + e * m_nqe, 1, output + e * m_nqe, 1,
+                                 t = output + e * m_nqe, 1);
                 }
             }
         }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
+    }
+
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    Array<TwoD, const NekDouble> m_derivFac;
+    int m_coordim;
+    const int m_nquad0;
+    const int m_nquad1;
+    const int m_nquad2;
+    NekDouble *m_Deriv0;
+    NekDouble *m_Deriv1;
+    NekDouble *m_Deriv2;
+    Array<OneD, NekDouble> m_fac0;
+    Array<OneD, NekDouble> m_fac1;
+
+private:
+    PhysDeriv_SumFac_Prism(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                           CoalescedGeomDataSharedPtr pGeomData,
+                           StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors),
+          m_nquad0(m_stdExp->GetNumPoints(0)),
+          m_nquad1(m_stdExp->GetNumPoints(1)),
+          m_nquad2(m_stdExp->GetNumPoints(2))
+    {
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+
+        m_coordim = pCollExp[0]->GetCoordim();
+
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+
+        const Array<OneD, const NekDouble> &z0 = m_stdExp->GetBasis(0)->GetZ();
+        const Array<OneD, const NekDouble> &z2 = m_stdExp->GetBasis(2)->GetZ();
+        m_fac0 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+        m_fac1 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+        for (int i = 0; i < m_nquad0; ++i)
         {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
-        }
-
-    protected:
-        Array<TwoD, const NekDouble>    m_derivFac;
-        int                             m_coordim;
-        const int                       m_nquad0;
-        const int                       m_nquad1;
-        const int                       m_nquad2;
-        NekDouble                      *m_Deriv0;
-        NekDouble                      *m_Deriv1;
-        NekDouble                      *m_Deriv2;
-        Array<OneD, NekDouble>          m_fac0;
-        Array<OneD, NekDouble>          m_fac1;
-
-    private:
-        PhysDeriv_SumFac_Prism(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors),
-              m_nquad0  (m_stdExp->GetNumPoints(0)),
-              m_nquad1  (m_stdExp->GetNumPoints(1)),
-              m_nquad2  (m_stdExp->GetNumPoints(2))
-        {
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
-
-            m_coordim = pCollExp[0]->GetCoordim();
-
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
-
-            const Array<OneD, const NekDouble>& z0
-                                            = m_stdExp->GetBasis(0)->GetZ();
-            const Array<OneD, const NekDouble>& z2
-                                            = m_stdExp->GetBasis(2)->GetZ();
-            m_fac0 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-            m_fac1 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-            for (int i = 0; i < m_nquad0; ++i)
+            for (int j = 0; j < m_nquad1; ++j)
             {
-                for(int j = 0; j < m_nquad1; ++j)
+                for (int k = 0; k < m_nquad2; ++k)
                 {
-                    for(int k = 0; k < m_nquad2; ++k)
-                    {
-                        m_fac0[i+j*m_nquad0 + k*m_nquad0*m_nquad1] =
-                            2.0/(1-z2[k]);
-                        m_fac1[i+j*m_nquad0 + k*m_nquad0*m_nquad1] =
-                            0.5*(1+z0[i]);
-                    }
+                    m_fac0[i + j * m_nquad0 + k * m_nquad0 * m_nquad1] =
+                        2.0 / (1 - z2[k]);
+                    m_fac1[i + j * m_nquad0 + k * m_nquad0 * m_nquad1] =
+                        0.5 * (1 + z0[i]);
                 }
             }
-
-
-
-            m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
-            m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
-            m_Deriv2 = &((m_stdExp->GetBasis(2)->GetD())->GetPtr())[0];
-
-            m_wspSize = 3*m_nquad0*m_nquad1*m_nquad2*m_numElmt;
         }
+
+        m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
+        m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
+        m_Deriv2 = &((m_stdExp->GetBasis(2)->GetD())->GetPtr())[0];
+
+        m_wspSize = 3 * m_nquad0 * m_nquad1 * m_nquad2 * m_numElmt;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_SumFac_Prism operators
 OperatorKey PhysDeriv_SumFac_Prism::m_typeArr[] = {
     GetOperatorFactory().RegisterCreatorFunction(
         OperatorKey(ePrism, ePhysDeriv, eSumFac, false),
-        PhysDeriv_SumFac_Prism::create, "PhysDeriv_SumFac_Prism")
-};
-
+        PhysDeriv_SumFac_Prism::create, "PhysDeriv_SumFac_Prism")};
 
 /**
  * @brief Phys deriv operator using sum-factorisation (Pyramid)
  */
 class PhysDeriv_SumFac_Pyr final : public Operator
 {
-    public:
-        OPERATOR_CREATE(PhysDeriv_SumFac_Pyr)
+public:
+    OPERATOR_CREATE(PhysDeriv_SumFac_Pyr)
 
-        ~PhysDeriv_SumFac_Pyr() final
+    ~PhysDeriv_SumFac_Pyr() final
+    {
+    }
+
+    void operator()(const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output0,
+                    Array<OneD, NekDouble> &output1,
+                    Array<OneD, NekDouble> &output2,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
+        Array<OneD, Array<OneD, NekDouble>> out(3);
+        out[0] = output0;
+        out[1] = output1;
+        out[2] = output2;
+
+        for (int i = 0; i < 3; ++i)
         {
+            Diff[i] = wsp + i * ntot;
         }
 
-        void operator()(
-                const Array<OneD, const NekDouble> &input,
-                      Array<OneD,       NekDouble> &output0,
-                      Array<OneD,       NekDouble> &output1,
-                      Array<OneD,       NekDouble> &output2,
-                      Array<OneD,       NekDouble> &wsp) final
+        // dEta0
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_nquad2 * m_numElmt,
+                    m_nquad0, 1.0, m_Deriv0, m_nquad0, &input[0], m_nquad0, 0.0,
+                    &Diff[0][0], m_nquad0);
+
+        int cnt = 0;
+        for (int i = 0; i < m_numElmt; ++i)
         {
 
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-            Array<OneD, Array<OneD, NekDouble> > out(3);
-            out[0] = output0; out[1] = output1; out[2] = output2;
-
-            for(int i = 0; i < 3; ++i)
+            // dEta 1
+            for (int j = 0; j < m_nquad2; ++j)
             {
-                Diff[i] = wsp + i*ntot;
+                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                            &input[i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                            &Diff[1][i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0);
             }
 
-            // dEta0
-            Blas::Dgemm('N','N', m_nquad0,m_nquad1*m_nquad2*m_numElmt,
-                        m_nquad0,1.0, m_Deriv0,m_nquad0,&input[0],
-                        m_nquad0,0.0,&Diff[0][0],m_nquad0);
+            // dEta 2
+            Blas::Dgemm('N', 'T', m_nquad0 * m_nquad1, m_nquad2, m_nquad2, 1.0,
+                        &input[i * nPhys], m_nquad0 * m_nquad1, m_Deriv2,
+                        m_nquad2, 0.0, &Diff[2][i * nPhys],
+                        m_nquad0 * m_nquad1);
 
-            int cnt = 0;
-            for(int  i = 0; i < m_numElmt; ++i)
+            // dxi0 = 2/(1-eta_2) d Eta_0
+            Vmath::Vmul(nPhys, &m_fac0[0], 1, Diff[0].get() + cnt, 1,
+                        Diff[0].get() + cnt, 1);
+
+            // dxi1 = 2/(1-eta_2) d Eta_1
+            Vmath::Vmul(nPhys, &m_fac0[0], 1, Diff[1].get() + cnt, 1,
+                        Diff[1].get() + cnt, 1);
+
+            // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
+            Vmath::Vvtvp(nPhys, &m_fac1[0], 1, Diff[0].get() + cnt, 1,
+                         Diff[2].get() + cnt, 1, Diff[2].get() + cnt, 1);
+
+            // dxi2 += (1+eta1)/(1-eta_2) d Eta_1
+            Vmath::Vvtvp(nPhys, &m_fac2[0], 1, Diff[1].get() + cnt, 1,
+                         Diff[2].get() + cnt, 1, Diff[2].get() + cnt, 1);
+            cnt += nPhys;
+        }
+
+        // calculate full derivative
+        if (m_isDeformed)
+        {
+            for (int i = 0; i < m_coordim; ++i)
             {
-
-                // dEta 1
-                for (int j = 0; j < m_nquad2; ++j)
+                Vmath::Vmul(ntot, m_derivFac[i * 3], 1, Diff[0], 1, out[i], 1);
+                for (int j = 1; j < 3; ++j)
                 {
-                    Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1,
-                                1.0, &input[i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0, m_Deriv1, m_nquad1, 0.0,
-                                &Diff[1][i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0);
+                    Vmath::Vvtvp(ntot, m_derivFac[i * 3 + j], 1, Diff[j], 1,
+                                 out[i], 1, out[i], 1);
                 }
+            }
+        }
+        else
+        {
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
+            {
+                for (int i = 0; i < m_coordim; ++i)
+                {
+                    Vmath::Smul(m_nqe, m_derivFac[i * 3][e],
+                                Diff[0] + e * m_nqe, 1, t = out[i] + e * m_nqe,
+                                1);
 
-                // dEta 2
-                Blas::Dgemm('N','T',m_nquad0*m_nquad1,m_nquad2,m_nquad2,
-                            1.0, &input[i*nPhys],m_nquad0*m_nquad1,
-                            m_Deriv2,m_nquad2, 0.0,&Diff[2][i*nPhys],
-                            m_nquad0*m_nquad1);
+                    for (int j = 1; j < 3; ++j)
+                    {
+                        Vmath::Svtvp(m_nqe, m_derivFac[i * 3 + j][e],
+                                     Diff[j] + e * m_nqe, 1, out[i] + e * m_nqe,
+                                     1, t = out[i] + e * m_nqe, 1);
+                    }
+                }
+            }
+        }
+    }
 
-                // dxi0 = 2/(1-eta_2) d Eta_0
-                Vmath::Vmul(nPhys,&m_fac0[0],1,Diff[0].get()+cnt,1,
-                            Diff[0].get()+cnt,1);
+    void operator()(int dir, const Array<OneD, const NekDouble> &input,
+                    Array<OneD, NekDouble> &output,
+                    Array<OneD, NekDouble> &wsp) final
+    {
+        int nPhys = m_stdExp->GetTotPoints();
+        int ntot  = m_numElmt * nPhys;
+        Array<OneD, NekDouble> tmp0, tmp1, tmp2;
+        Array<OneD, Array<OneD, NekDouble>> Diff(3);
 
-                // dxi1 = 2/(1-eta_2) d Eta_1
-                Vmath::Vmul(nPhys,&m_fac0[0],1,Diff[1].get()+cnt,1,
-                            Diff[1].get()+cnt,1);
+        for (int i = 0; i < 3; ++i)
+        {
+            Diff[i] = wsp + i * ntot;
+        }
 
-                // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
-                Vmath::Vvtvp(nPhys,&m_fac1[0],1,Diff[0].get()+cnt,1,
-                             Diff[2].get()+cnt,1,Diff[2].get()+cnt,1);
+        // dEta0
+        Blas::Dgemm('N', 'N', m_nquad0, m_nquad1 * m_nquad2 * m_numElmt,
+                    m_nquad0, 1.0, m_Deriv0, m_nquad0, &input[0], m_nquad0, 0.0,
+                    &Diff[0][0], m_nquad0);
 
-                // dxi2 += (1+eta1)/(1-eta_2) d Eta_1
-                Vmath::Vvtvp(nPhys,&m_fac2[0],1,Diff[1].get()+cnt,1,
-                             Diff[2].get()+cnt,1,Diff[2].get()+cnt,1);
-                cnt += nPhys;
+        int cnt = 0;
+        for (int i = 0; i < m_numElmt; ++i)
+        {
+            // dEta 1
+            for (int j = 0; j < m_nquad2; ++j)
+            {
+                Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1, 1.0,
+                            &input[i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0, m_Deriv1, m_nquad1, 0.0,
+                            &Diff[1][i * nPhys + j * m_nquad0 * m_nquad1],
+                            m_nquad0);
             }
 
+            // dEta 2
+            Blas::Dgemm('N', 'T', m_nquad0 * m_nquad1, m_nquad2, m_nquad2, 1.0,
+                        &input[i * nPhys], m_nquad0 * m_nquad1, m_Deriv2,
+                        m_nquad2, 0.0, &Diff[2][i * nPhys],
+                        m_nquad0 * m_nquad1);
+
+            // dxi0 = 2/(1-eta_2) d Eta_0
+            Vmath::Vmul(nPhys, &m_fac0[0], 1, Diff[0].get() + cnt, 1,
+                        Diff[0].get() + cnt, 1);
+
+            // dxi1 = 2/(1-eta_2) d Eta_1
+            Vmath::Vmul(nPhys, &m_fac0[0], 1, Diff[1].get() + cnt, 1,
+                        Diff[1].get() + cnt, 1);
+
+            // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
+            Vmath::Vvtvp(nPhys, &m_fac1[0], 1, Diff[0].get() + cnt, 1,
+                         Diff[2].get() + cnt, 1, Diff[2].get() + cnt, 1);
+            // dxi2 = (1+eta1)/(1-eta_2) d Eta_1 + d/dEta2;
+            Vmath::Vvtvp(nPhys, &m_fac2[0], 1, Diff[1].get() + cnt, 1,
+                         Diff[2].get() + cnt, 1, Diff[2].get() + cnt, 1);
+            cnt += nPhys;
+        }
+
+        // calculate full derivative
+        if (m_isDeformed)
+        {
             // calculate full derivative
-            if(m_isDeformed)
+            Vmath::Vmul(ntot, m_derivFac[dir * 3], 1, Diff[0], 1, output, 1);
+            for (int j = 1; j < 3; ++j)
             {
-                for(int i = 0; i < m_coordim; ++i)
-                {
-                    Vmath::Vmul(ntot,m_derivFac[i*3],1,Diff[0],1,out[i],1);
-                    for(int j = 1; j < 3; ++j)
-                    {
-                        Vmath::Vvtvp (ntot, m_derivFac[i*3+j], 1,
-                                      Diff[j],               1,
-                                      out[i],                1,
-                                      out[i],                1);
-                    }
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    for(int i = 0; i < m_coordim; ++i)
-                    {
-                        Vmath::Smul(m_nqe,m_derivFac[i*3][e],
-                                    Diff[0] + e*m_nqe, 1,
-                                    t = out[i] + e*m_nqe,1);
-
-                        for(int j = 1; j < 3; ++j)
-                        {
-                            Vmath::Svtvp (m_nqe, m_derivFac[i*3+j][e],
-                                          Diff[j] + e*m_nqe,     1,
-                                          out[i]  + e*m_nqe,     1,
-                                          t = out[i]  + e*m_nqe, 1);
-                        }
-                    }
-                }
+                Vmath::Vvtvp(ntot, m_derivFac[dir * 3 + j], 1, Diff[j], 1,
+                             output, 1, output, 1);
             }
         }
-
-        void operator()(int dir,
-                        const Array<OneD, const NekDouble> &input,
-                        Array<OneD, NekDouble> &output,
-                        Array<OneD, NekDouble> &wsp) final
+        else
         {
-            int nPhys = m_stdExp->GetTotPoints();
-            int ntot = m_numElmt*nPhys;
-            Array<OneD, NekDouble> tmp0,tmp1,tmp2;
-            Array<OneD, Array<OneD, NekDouble> > Diff(3);
-
-            for(int i = 0; i < 3; ++i)
+            Array<OneD, NekDouble> t;
+            for (int e = 0; e < m_numElmt; ++e)
             {
-                Diff[i] = wsp + i*ntot;
-            }
+                Vmath::Smul(m_nqe, m_derivFac[dir * 3][e], Diff[0] + e * m_nqe,
+                            1, t = output + e * m_nqe, 1);
 
-            // dEta0
-            Blas::Dgemm('N','N', m_nquad0,m_nquad1*m_nquad2*m_numElmt,
-                        m_nquad0,1.0, m_Deriv0,m_nquad0,&input[0],
-                        m_nquad0,0.0,&Diff[0][0],m_nquad0);
-
-            int cnt = 0;
-            for(int  i = 0; i < m_numElmt; ++i)
-            {
-                // dEta 1
-                for (int j = 0; j < m_nquad2; ++j)
+                for (int j = 1; j < 3; ++j)
                 {
-                    Blas::Dgemm('N', 'T', m_nquad0, m_nquad1, m_nquad1,
-                                1.0, &input[i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0, m_Deriv1, m_nquad1, 0.0,
-                                &Diff[1][i*nPhys+j*m_nquad0*m_nquad1],
-                                m_nquad0);
-                }
-
-                // dEta 2
-                Blas::Dgemm('N','T',m_nquad0*m_nquad1,m_nquad2,m_nquad2,
-                            1.0, &input[i*nPhys],m_nquad0*m_nquad1,
-                            m_Deriv2,m_nquad2, 0.0,&Diff[2][i*nPhys],
-                            m_nquad0*m_nquad1);
-
-                // dxi0 = 2/(1-eta_2) d Eta_0
-                Vmath::Vmul(nPhys,&m_fac0[0],1,Diff[0].get()+cnt,1,
-                            Diff[0].get()+cnt,1);
-
-                // dxi1 = 2/(1-eta_2) d Eta_1
-                Vmath::Vmul(nPhys,&m_fac0[0],1,Diff[1].get()+cnt,1,
-                            Diff[1].get()+cnt,1);
-
-                // dxi2 = (1+eta0)/(1-eta_2) d Eta_0 + d/dEta2;
-                Vmath::Vvtvp(nPhys,&m_fac1[0],1,Diff[0].get()+cnt,1,
-                             Diff[2].get()+cnt,1,Diff[2].get()+cnt,1);
-                // dxi2 = (1+eta1)/(1-eta_2) d Eta_1 + d/dEta2;
-                Vmath::Vvtvp(nPhys,&m_fac2[0],1,Diff[1].get()+cnt,1,
-                             Diff[2].get()+cnt,1,Diff[2].get()+cnt,1);
-                cnt += nPhys;
-            }
-
-            // calculate full derivative
-            if(m_isDeformed)
-            {
-                // calculate full derivative
-                Vmath::Vmul(ntot,m_derivFac[dir*3],1,Diff[0],1,output,1);
-                for(int j = 1; j < 3; ++j)
-                {
-                    Vmath::Vvtvp (ntot, m_derivFac[dir*3+j], 1,
-                                  Diff[j],               1,
-                                  output,                1,
-                                  output,                1);
-                }
-            }
-            else
-            {
-                Array<OneD, NekDouble> t;
-                for(int e = 0; e < m_numElmt; ++e)
-                {
-                    Vmath::Smul(m_nqe,m_derivFac[dir*3][e],
-                                    Diff[0] + e*m_nqe, 1,
-                                    t = output + e*m_nqe,1);
-
-                    for(int j = 1; j < 3; ++j)
-                    {
-                        Vmath::Svtvp (m_nqe, m_derivFac[dir*3+j][e],
-                                      Diff[j] + e*m_nqe,     1,
-                                      output  + e*m_nqe,     1,
-                                      t = output  + e*m_nqe, 1);
-                    }
+                    Vmath::Svtvp(m_nqe, m_derivFac[dir * 3 + j][e],
+                                 Diff[j] + e * m_nqe, 1, output + e * m_nqe, 1,
+                                 t = output + e * m_nqe, 1);
                 }
             }
         }
-    
-        virtual void CheckFactors(StdRegions::FactorMap factors,
-                                  int coll_phys_offset)
+    }
+
+    virtual void CheckFactors(StdRegions::FactorMap factors,
+                              int coll_phys_offset)
+    {
+        boost::ignore_unused(factors, coll_phys_offset);
+        ASSERTL0(false, "Not valid for this operator.");
+    }
+
+protected:
+    Array<TwoD, const NekDouble> m_derivFac;
+    int m_coordim;
+    const int m_nquad0;
+    const int m_nquad1;
+    const int m_nquad2;
+    NekDouble *m_Deriv0;
+    NekDouble *m_Deriv1;
+    NekDouble *m_Deriv2;
+    Array<OneD, NekDouble> m_fac0;
+    Array<OneD, NekDouble> m_fac1;
+    Array<OneD, NekDouble> m_fac2;
+
+private:
+    PhysDeriv_SumFac_Pyr(vector<StdRegions::StdExpansionSharedPtr> pCollExp,
+                         CoalescedGeomDataSharedPtr pGeomData,
+                         StdRegions::FactorMap factors)
+        : Operator(pCollExp, pGeomData, factors),
+          m_nquad0(m_stdExp->GetNumPoints(0)),
+          m_nquad1(m_stdExp->GetNumPoints(1)),
+          m_nquad2(m_stdExp->GetNumPoints(2))
+    {
+        LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
+
+        m_coordim = pCollExp[0]->GetCoordim();
+
+        m_derivFac = pGeomData->GetDerivFactors(pCollExp);
+
+        const Array<OneD, const NekDouble> &z0 = m_stdExp->GetBasis(0)->GetZ();
+        const Array<OneD, const NekDouble> &z1 = m_stdExp->GetBasis(1)->GetZ();
+        const Array<OneD, const NekDouble> &z2 = m_stdExp->GetBasis(2)->GetZ();
+        m_fac0 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+        m_fac1 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+        m_fac2 = Array<OneD, NekDouble>(m_nquad0 * m_nquad1 * m_nquad2);
+
+        int nq0_nq1 = m_nquad0 * m_nquad1;
+        for (int i = 0; i < m_nquad0; ++i)
         {
-            boost::ignore_unused(factors, coll_phys_offset);
-            ASSERTL0(false, "Not valid for this operator.");
-        }
-
-    protected:
-        Array<TwoD, const NekDouble>    m_derivFac;
-        int                             m_coordim;
-        const int                       m_nquad0;
-        const int                       m_nquad1;
-        const int                       m_nquad2;
-        NekDouble                      *m_Deriv0;
-        NekDouble                      *m_Deriv1;
-        NekDouble                      *m_Deriv2;
-        Array<OneD, NekDouble>          m_fac0;
-        Array<OneD, NekDouble>          m_fac1;
-        Array<OneD, NekDouble>          m_fac2;
-
-    private:
-        PhysDeriv_SumFac_Pyr(
-                vector<StdRegions::StdExpansionSharedPtr> pCollExp,
-                CoalescedGeomDataSharedPtr                pGeomData,
-                StdRegions::FactorMap                     factors)
-            : Operator(pCollExp, pGeomData, factors),
-              m_nquad0  (m_stdExp->GetNumPoints(0)),
-              m_nquad1  (m_stdExp->GetNumPoints(1)),
-              m_nquad2  (m_stdExp->GetNumPoints(2))
-        {
-            LibUtilities::PointsKeyVector PtsKey = m_stdExp->GetPointsKeys();
-
-            m_coordim = pCollExp[0]->GetCoordim();
-
-            m_derivFac = pGeomData->GetDerivFactors(pCollExp);
-
-            const Array<OneD, const NekDouble>& z0
-                                            = m_stdExp->GetBasis(0)->GetZ();
-            const Array<OneD, const NekDouble>& z1
-                                            = m_stdExp->GetBasis(1)->GetZ();
-            const Array<OneD, const NekDouble>& z2
-                                            = m_stdExp->GetBasis(2)->GetZ();
-            m_fac0 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-            m_fac1 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-            m_fac2 = Array<OneD, NekDouble>(m_nquad0*m_nquad1*m_nquad2);
-
-            int nq0_nq1 = m_nquad0*m_nquad1;
-            for (int i = 0; i < m_nquad0; ++i)
+            for (int j = 0; j < m_nquad1; ++j)
             {
-                for(int j = 0; j < m_nquad1; ++j)
+                int ifac = i + j * m_nquad0;
+                for (int k = 0; k < m_nquad2; ++k)
                 {
-                    int ifac = i+j*m_nquad0;
-                    for(int k = 0; k < m_nquad2; ++k)
-                    {
-                        m_fac0[ifac + k*nq0_nq1] =
-                            2.0/(1-z2[k]);
-                        m_fac1[ifac + k*nq0_nq1] =
-                            0.5*(1+z0[i]);
-                        m_fac2[ifac + k*nq0_nq1] =
-                            0.5*(1+z1[j]);
-                    }
+                    m_fac0[ifac + k * nq0_nq1] = 2.0 / (1 - z2[k]);
+                    m_fac1[ifac + k * nq0_nq1] = 0.5 * (1 + z0[i]);
+                    m_fac2[ifac + k * nq0_nq1] = 0.5 * (1 + z1[j]);
                 }
             }
-
-            m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
-            m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
-            m_Deriv2 = &((m_stdExp->GetBasis(2)->GetD())->GetPtr())[0];
-
-            m_wspSize = 3*m_nquad0*m_nquad1*m_nquad2*m_numElmt;
         }
+
+        m_Deriv0 = &((m_stdExp->GetBasis(0)->GetD())->GetPtr())[0];
+        m_Deriv1 = &((m_stdExp->GetBasis(1)->GetD())->GetPtr())[0];
+        m_Deriv2 = &((m_stdExp->GetBasis(2)->GetD())->GetPtr())[0];
+
+        m_wspSize = 3 * m_nquad0 * m_nquad1 * m_nquad2 * m_numElmt;
+    }
 };
 
 /// Factory initialisation for the PhysDeriv_SumFac_Pyr operators
 OperatorKey PhysDeriv_SumFac_Pyr::m_typeArr[] = {
     GetOperatorFactory().RegisterCreatorFunction(
         OperatorKey(ePyramid, ePhysDeriv, eSumFac, false),
-        PhysDeriv_SumFac_Pyr::create, "PhysDeriv_SumFac_Pyr")
-};
+        PhysDeriv_SumFac_Pyr::create, "PhysDeriv_SumFac_Pyr")};
 
-}
-}
+} // namespace Collections
+} // namespace Nektar

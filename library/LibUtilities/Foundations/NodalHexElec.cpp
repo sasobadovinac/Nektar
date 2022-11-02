@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalHexElec.cpp
+// File: NodalHexElec.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -43,9 +43,8 @@ namespace Nektar
 {
 namespace LibUtilities
 {
-bool NodalHexElec::initPointsManager[] = {
-    PointsManager().RegisterCreator(PointsKey(0, eNodalHexElec),         NodalHexElec::Create)
-};
+bool NodalHexElec::initPointsManager[] = {PointsManager().RegisterCreator(
+    PointsKey(0, eNodalHexElec), NodalHexElec::Create)};
 
 void NodalHexElec::CalculatePoints()
 {
@@ -104,5 +103,5 @@ std::shared_ptr<PointsBaseType> NodalHexElec::Create(const PointsKey &key)
     returnval->Initialize();
     return returnval;
 }
-}
-}
+} // namespace LibUtilities
+} // namespace Nektar

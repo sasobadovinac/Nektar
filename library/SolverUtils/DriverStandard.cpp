@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File DriverStandard.cpp
+// File: DriverStandard.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Incompressible Navier Stokes solver
+// Description: Driver class for the standard solver
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -40,88 +40,85 @@ using namespace std;
 
 namespace Nektar
 {
-    namespace SolverUtils
+namespace SolverUtils
+{
+string DriverStandard::className = GetDriverFactory().RegisterCreatorFunction(
+    "Standard", DriverStandard::create);
+string DriverStandard::driverLookupId =
+    LibUtilities::SessionReader::RegisterEnumValue("Driver", "Standard", 0);
+
+/**
+ *
+ */
+DriverStandard::DriverStandard(
+    const LibUtilities::SessionReaderSharedPtr pSession,
+    const SpatialDomains::MeshGraphSharedPtr pGraph)
+    : Driver(pSession, pGraph)
+{
+}
+
+/**
+ *
+ */
+DriverStandard::~DriverStandard()
+{
+}
+
+/**
+ *
+ */
+void DriverStandard::v_InitObject(ostream &out)
+{
+    Driver::v_InitObject(out);
+}
+
+void DriverStandard::v_Execute(ostream &out)
+
+{
+    time_t starttime, endtime;
+    NekDouble CPUtime;
+
+    m_equ[0]->PrintSummary(out);
+
+    time(&starttime);
+
+    m_equ[0]->DoInitialise();
+    m_equ[0]->DoSolve();
+
+    time(&endtime);
+
+    m_equ[0]->Output();
+
+    if (m_comm->GetRank() == 0)
     {
-        string DriverStandard::className = GetDriverFactory().RegisterCreatorFunction("Standard", DriverStandard::create);
-        string DriverStandard::driverLookupId = LibUtilities::SessionReader::RegisterEnumValue("Driver","Standard",0);
+        CPUtime = difftime(endtime, starttime);
+        cout << "-------------------------------------------" << endl;
+        cout << "Total Computation Time = " << CPUtime << "s" << endl;
+        cout << "-------------------------------------------" << endl;
+    }
 
-        /**
-	 *
-         */
-        DriverStandard::DriverStandard(
-            const LibUtilities::SessionReaderSharedPtr pSession,
-            const SpatialDomains::MeshGraphSharedPtr pGraph)
-            : Driver(pSession, pGraph)
+    // Evaluate and output computation time and solution accuracy.
+    // The specific format of the error output is essential for the
+    // regression tests to work.
+    // Evaluate L2 Error
+    for (int i = 0; i < m_equ[0]->GetNvariables(); ++i)
+    {
+        Array<OneD, NekDouble> exactsoln(m_equ[0]->GetTotPoints(), 0.0);
+
+        // Evaluate "ExactSolution" function, or zero array
+        m_equ[0]->EvaluateExactSolution(i, exactsoln, m_equ[0]->GetFinalTime());
+
+        NekDouble vL2Error   = m_equ[0]->L2Error(i, exactsoln);
+        NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln);
+
+        if (m_comm->GetRank() == 0)
         {
-        }
-    
-    
-        /**
-         *
-         */
-        DriverStandard:: ~DriverStandard()
-        {
-        }
-    
-    
-        /**
-         *
-         */
-        void DriverStandard::v_InitObject(ostream &out)
-        {
-            Driver::v_InitObject(out);
-        }
-    
-    
-        void DriverStandard::v_Execute(ostream &out)
-        
-        {
-            time_t starttime, endtime;
-            NekDouble CPUtime;
-
-            m_equ[0]->PrintSummary(out);
-
-            time(&starttime);
-
-            m_equ[0]->DoInitialise();
-            m_equ[0]->DoSolve();
-
-            time(&endtime);
-
-            m_equ[0]->Output();
-        
-            if (m_comm->GetRank() == 0)
-            {
-                CPUtime = difftime(endtime, starttime);
-                cout << "-------------------------------------------" << endl;
-                cout << "Total Computation Time = " << CPUtime << "s" << endl;
-                cout << "-------------------------------------------" << endl;
-            }
-
-            // Evaluate and output computation time and solution accuracy.
-            // The specific format of the error output is essential for the
-            // regression tests to work.
-            // Evaluate L2 Error
-            for(int i = 0; i < m_equ[0]->GetNvariables(); ++i)
-            {
-                Array<OneD, NekDouble> exactsoln(m_equ[0]->GetTotPoints(), 0.0);
-
-                // Evaluate "ExactSolution" function, or zero array
-                m_equ[0]->EvaluateExactSolution(i, exactsoln, 
-                                                    m_equ[0]->GetFinalTime());
-
-                NekDouble vL2Error   = m_equ[0]->L2Error  (i, exactsoln);
-                NekDouble vLinfError = m_equ[0]->LinfError(i, exactsoln);
-
-                if (m_comm->GetRank() == 0)
-                {
-                    out << "L 2 error (variable " << m_equ[0]->GetVariable(i) 
-                        << ") : " << vL2Error << endl;
-                    out << "L inf error (variable " << m_equ[0]->GetVariable(i) 
-                        << ") : " << vLinfError << endl;
-                }
-            }
+            out << "L 2 error (variable " << m_equ[0]->GetVariable(i)
+                << ") : " << vL2Error << endl;
+            out << "L inf error (variable " << m_equ[0]->GetVariable(i)
+                << ") : " << vLinfError << endl;
         }
     }
 }
-
+} // namespace SolverUtils
+} // namespace Nektar

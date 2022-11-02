@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterMaxMinFields.h
+// File: FilterMaxMinFields.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -42,14 +42,12 @@ namespace Nektar
 namespace SolverUtils
 {
 
-
 enum ProblemType
 {
     eCompressible,
     eIncompressible,
     eOthers
 };
-
 
 class FilterMaxMinFields : public FilterFieldConvert
 {
@@ -59,28 +57,29 @@ public:
     /// Creates an instance of this class
     static FilterSharedPtr create(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
-        const std::map<std::string, std::string>   &pParams)
+        const std::weak_ptr<EquationSystem> &pEquation,
+        const std::map<std::string, std::string> &pParams)
     {
-        FilterSharedPtr p = MemoryManager<FilterMaxMinFields>
-                            ::AllocateSharedPtr(pSession, pEquation, pParams);
+        FilterSharedPtr p =
+            MemoryManager<FilterMaxMinFields>::AllocateSharedPtr(
+                pSession, pEquation, pParams);
         return p;
     }
 
-    ///Name of the class
+    /// Name of the class
     static std::string className;
 
     SOLVER_UTILS_EXPORT FilterMaxMinFields(
         const LibUtilities::SessionReaderSharedPtr &pSession,
-        const std::weak_ptr<EquationSystem>      &pEquation,
+        const std::weak_ptr<EquationSystem> &pEquation,
         const ParamMap &pParams);
     SOLVER_UTILS_EXPORT virtual ~FilterMaxMinFields();
 
 protected:
     bool m_isMax;
     ProblemType m_problemType;
-    std::vector<Array<OneD, NekDouble> > m_curFieldsPhys;
-    std::vector<Array<OneD, NekDouble> > m_outFieldsPhys;
+    std::vector<Array<OneD, NekDouble>> m_curFieldsPhys;
+    std::vector<Array<OneD, NekDouble>> m_outFieldsPhys;
 
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -92,7 +91,7 @@ protected:
     }
     virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-              std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
+        std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
         const NekDouble &time);
     virtual void v_PrepareOutput(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
@@ -108,11 +107,12 @@ protected:
         {
             return "_min";
         }
-    } 
+    }
+
 private:
     bool m_initialized;
 };
-}
-}
+} // namespace SolverUtils
+} // namespace Nektar
 
 #endif /* NEKTAR_SOLVERUTILS_FILTERS_FILTERCHECKPOINT_H */

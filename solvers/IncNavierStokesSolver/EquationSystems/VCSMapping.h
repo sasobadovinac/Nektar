@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VCSMapping.h
+// File: VCSMapping.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,136 +28,126 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Velocity Correction Scheme with coordinate transformation header 
+// Description: Velocity Correction Scheme with coordinate transformation header
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef NEKTAR_SOLVERS_VCSMAPPING_H
 #define NEKTAR_SOLVERS_VCSMAPPING_H
 
-#include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 #include <GlobalMapping/Mapping.h>
+#include <IncNavierStokesSolver/EquationSystems/VelocityCorrectionScheme.h>
 
 namespace Nektar
 {
-    class VCSMapping: public VelocityCorrectionScheme
+class VCSMapping : public VelocityCorrectionScheme
+{
+public:
+    /// Creates an instance of this class
+    static SolverUtils::EquationSystemSharedPtr create(
+        const LibUtilities::SessionReaderSharedPtr &pSession,
+        const SpatialDomains::MeshGraphSharedPtr &pGraph)
     {
-    public:
+        SolverUtils::EquationSystemSharedPtr p =
+            MemoryManager<VCSMapping>::AllocateSharedPtr(pSession, pGraph);
+        p->InitObject();
+        return p;
+    }
 
-        /// Creates an instance of this class
-        static SolverUtils::EquationSystemSharedPtr create(
-            const LibUtilities::SessionReaderSharedPtr& pSession,
-            const SpatialDomains::MeshGraphSharedPtr &pGraph)
-        {
-            SolverUtils::EquationSystemSharedPtr p =
-                MemoryManager<VCSMapping>::AllocateSharedPtr(pSession, pGraph);
-            p->InitObject();
-            return p;
-        }
+    /// Name of class
+    static std::string className;
 
-        /// Name of class
-        static std::string className;
+    /// Constructor.
+    VCSMapping(const LibUtilities::SessionReaderSharedPtr &pSession,
+               const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
+    //
+    void ApplyIncNSMappingForcing(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-        /// Constructor.
-        VCSMapping(const LibUtilities::SessionReaderSharedPtr& pSession,
-                   const SpatialDomains::MeshGraphSharedPtr &pGraph);
+    virtual ~VCSMapping();
 
-        // 
-        void ApplyIncNSMappingForcing (
-                const Array<OneD, const Array<OneD, NekDouble> >  &inarray,
-                Array<OneD, Array<OneD, NekDouble> >              &outarray);
+    virtual void v_InitObject(bool DeclareField = true);
 
-        virtual ~VCSMapping();
+protected:
+    // Mapping object
+    GlobalMapping::MappingSharedPtr m_mapping;
 
-        virtual void v_InitObject();
+    bool m_verbose;
 
-    protected:
-        // Mapping object
-        GlobalMapping::MappingSharedPtr             m_mapping;
-        
-        bool                                        m_verbose;
-        
-        // Flags defining how pressure and viscous mapping terms 
-        //should be treated
-        bool                                        m_implicitPressure;
-        bool                                        m_implicitViscous;
-        bool                                        m_neglectViscous;
-        // Tolerance and relaxation parameters for pressure and viscous
-        //       systems (when solved iteratively)
-        NekDouble                                   m_pressureTolerance;
-        NekDouble                                   m_viscousTolerance;
-        NekDouble                                   m_pressureRelaxation;
-        NekDouble                                   m_viscousRelaxation;
-        
-        // Pressure gradient (to avoid duplicate calculations)
-        Array<OneD, Array<OneD, NekDouble> >        m_gradP;
+    // Flags defining how pressure and viscous mapping terms
+    // should be treated
+    bool m_implicitPressure;
+    bool m_implicitViscous;
+    bool m_neglectViscous;
+    // Tolerance and relaxation parameters for pressure and viscous
+    //       systems (when solved iteratively)
+    NekDouble m_pressureTolerance;
+    NekDouble m_viscousTolerance;
+    NekDouble m_pressureRelaxation;
+    NekDouble m_viscousRelaxation;
 
-        // Virtual functions     
-        virtual void v_DoInitialise(void);
-        
-        
-        virtual void v_SetUpPressureForcing(
-                    const Array<OneD, const Array<OneD, NekDouble> > &fields,
-                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    const NekDouble aii_Dt);
-        
-        virtual void v_SetUpViscousForcing(
-                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &Forcing,
-                    const NekDouble aii_Dt);
-        
-        virtual void v_SolvePressure( const Array<OneD, NekDouble>  &Forcing);
-        
-        virtual void v_SolveViscous( 
-                    const Array<OneD, const Array<OneD, NekDouble> > &Forcing,
-                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    const NekDouble aii_Dt);
-        
-        virtual void v_EvaluateAdvection_SetPressureBCs(
-                    const Array<OneD, const Array<OneD, NekDouble> > &inarray,
-                    Array<OneD, Array<OneD, NekDouble> > &outarray,
-                    const NekDouble time);
-    
-    private:        
-        Array<OneD, Array<OneD, NekDouble> >    m_presForcingCorrection;
-        
-        // Correction needed for convective terms = N(u) - ( -(u \nabla) u)
-        //     velPhys is the velocity field (transformed for physical space)
-        void MappingAdvectionCorrection(
-            const Array<OneD, const Array<OneD, NekDouble> >  &velPhys,
-            Array<OneD, Array<OneD, NekDouble> >              &outarray);
+    // Pressure gradient (to avoid duplicate calculations)
+    Array<OneD, Array<OneD, NekDouble>> m_gradP;
 
-        // Correction needed for time-derivative terms 
-        //     = U_coord^j u^i_,j - u^j U_coord^i_,j
-        //     vel     is the velocity field (can be in wavespace)
-        //     velPhys is the velocity field (transformed for physical space)
-        void MappingAccelerationCorrection(
-            const Array<OneD, const Array<OneD, NekDouble> >  &vel,
-            const Array<OneD, const Array<OneD, NekDouble> >  &velPhys,
-            Array<OneD, Array<OneD, NekDouble> >              &outarray);
+    // Virtual functions
+    virtual void v_DoInitialise(void);
 
-        // Correction needed for pressure terms   
-        //     = -g^(ij)p_j + (\nabla p)/J for variable Jacobian
-        //     = -g^(ij)p_j + (\nabla p)   for constant Jacobian
-        //         the pressure field can be in wavespace
-        void MappingPressureCorrection(
-            Array<OneD, Array<OneD, NekDouble> >              &outarray);
+    virtual void v_SetUpPressureForcing(
+        const Array<OneD, const Array<OneD, NekDouble>> &fields,
+        Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt);
 
-        // Correction needed for viscous terms = g^jk u^i_{,jk}-(\nabla^2 u)
-        //     vel     is the velocity field (can be in wavespace)
-        //     velPhys is the velocity field (transformed for physical space)
-        void MappingViscousCorrection(
-            const Array<OneD, const Array<OneD, NekDouble> >  &velPhys,
-            Array<OneD, Array<OneD, NekDouble> >              &outarray);
-        
-    };
+    virtual void v_SetUpViscousForcing(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt);
 
-    typedef std::shared_ptr<VCSMapping>
-                VCSMappingSharedPtr;
+    virtual void v_SolvePressure(const Array<OneD, NekDouble> &Forcing);
 
-} //end of namespace
+    virtual void v_SolveViscous(
+        const Array<OneD, const Array<OneD, NekDouble>> &Forcing,
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble aii_Dt);
 
+    virtual void v_EvaluateAdvection_SetPressureBCs(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-#endif //VELOCITY_CORRECTION_SCHEME_H
+private:
+    Array<OneD, Array<OneD, NekDouble>> m_presForcingCorrection;
+
+    // Correction needed for convective terms = N(u) - ( -(u \nabla) u)
+    //     velPhys is the velocity field (transformed for physical space)
+    void MappingAdvectionCorrection(
+        const Array<OneD, const Array<OneD, NekDouble>> &velPhys,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
+
+    // Correction needed for time-derivative terms
+    //     = U_coord^j u^i_,j - u^j U_coord^i_,j
+    //     vel     is the velocity field (can be in wavespace)
+    //     velPhys is the velocity field (transformed for physical space)
+    void MappingAccelerationCorrection(
+        const Array<OneD, const Array<OneD, NekDouble>> &vel,
+        const Array<OneD, const Array<OneD, NekDouble>> &velPhys,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
+
+    // Correction needed for pressure terms
+    //     = -g^(ij)p_j + (\nabla p)/J for variable Jacobian
+    //     = -g^(ij)p_j + (\nabla p)   for constant Jacobian
+    //         the pressure field can be in wavespace
+    void MappingPressureCorrection(
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
+
+    // Correction needed for viscous terms = g^jk u^i_{,jk}-(\nabla^2 u)
+    //     vel     is the velocity field (can be in wavespace)
+    //     velPhys is the velocity field (transformed for physical space)
+    void MappingViscousCorrection(
+        const Array<OneD, const Array<OneD, NekDouble>> &velPhys,
+        Array<OneD, Array<OneD, NekDouble>> &outarray);
+};
+
+typedef std::shared_ptr<VCSMapping> VCSMappingSharedPtr;
+
+} // namespace Nektar
+
+#endif // VELOCITY_CORRECTION_SCHEME_H

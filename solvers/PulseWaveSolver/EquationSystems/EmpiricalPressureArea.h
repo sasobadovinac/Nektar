@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EmpiricalPressureArea.h
+// File: EmpiricalPressureArea.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -51,59 +51,66 @@ typedef std::shared_ptr<EmpiricalPressureArea> EmpiricalPressureAreaSharedPtr;
 // A global linear system.
 class EmpiricalPressureArea : public PulseWavePressureArea
 {
-    public:
-        // Creates an instance of this class
-        static PulseWavePressureAreaSharedPtr
-        create(Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
-               const LibUtilities::SessionReaderSharedPtr &pSession)
-        {
-            return MemoryManager<EmpiricalPressureArea>::AllocateSharedPtr(
-                                                             pVessel, pSession);
-        }
+public:
+    // Creates an instance of this class
+    static PulseWavePressureAreaSharedPtr create(
+        Array<OneD, MultiRegions::ExpListSharedPtr> &pVessel,
+        const LibUtilities::SessionReaderSharedPtr &pSession)
+    {
+        return MemoryManager<EmpiricalPressureArea>::AllocateSharedPtr(
+            pVessel, pSession);
+    }
 
-        // Name of class
-        static std::string className;
+    // Name of class
+    static std::string className;
 
-        EmpiricalPressureArea(Array<OneD, MultiRegions::ExpListSharedPtr>
-                  pVessel, const LibUtilities::SessionReaderSharedPtr pSession);
+    EmpiricalPressureArea(Array<OneD, MultiRegions::ExpListSharedPtr> pVessel,
+                          const LibUtilities::SessionReaderSharedPtr pSession);
 
-        virtual ~EmpiricalPressureArea();
+    virtual ~EmpiricalPressureArea();
 
-    protected:
-        virtual void v_GetPressure(NekDouble &P, const NekDouble &beta,
-                const NekDouble &A, const NekDouble &A0, const NekDouble &dAUdx,
-                      const NekDouble &gamma = 0, const NekDouble &alpha = 0.5);
+protected:
+    virtual void v_GetPressure(NekDouble &P, const NekDouble &beta,
+                               const NekDouble &A, const NekDouble &A0,
+                               const NekDouble &dAUdx,
+                               const NekDouble &gamma = 0,
+                               const NekDouble &alpha = 0.5);
 
-        virtual void v_GetC(NekDouble &c, const NekDouble &beta,
-         const NekDouble &A, const NekDouble &A0, const NekDouble &alpha = 0.5);
+    virtual void v_GetC(NekDouble &c, const NekDouble &beta, const NekDouble &A,
+                        const NekDouble &A0, const NekDouble &alpha = 0.5);
 
-        virtual void v_GetW1(NekDouble &W1, const NekDouble &u,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                  const NekDouble &alpha = 0.5);
+    virtual void v_GetW1(NekDouble &W1, const NekDouble &u,
+                         const NekDouble &beta, const NekDouble &A,
+                         const NekDouble &A0, const NekDouble &alpha = 0.5);
 
-        virtual void v_GetW2(NekDouble &W2, const NekDouble &u,
-                 const NekDouble &beta, const NekDouble &A, const NekDouble &A0,
-                                                  const NekDouble &alpha = 0.5);
+    virtual void v_GetW2(NekDouble &W2, const NekDouble &u,
+                         const NekDouble &beta, const NekDouble &A,
+                         const NekDouble &A0, const NekDouble &alpha = 0.5);
 
-        virtual void v_GetAFromChars(NekDouble &A, const NekDouble &W1,
-                const NekDouble &W2, const NekDouble &beta, const NekDouble &A0,
-                                                  const NekDouble &alpha = 0.5);
+    virtual void v_GetAFromChars(NekDouble &A, const NekDouble &W1,
+                                 const NekDouble &W2, const NekDouble &beta,
+                                 const NekDouble &A0,
+                                 const NekDouble &alpha = 0.5);
 
-        virtual void v_GetUFromChars(NekDouble &u, const NekDouble &W1,
-                                                           const NekDouble &W2);
+    virtual void v_GetUFromChars(NekDouble &u, const NekDouble &W1,
+                                 const NekDouble &W2);
 
-        virtual void v_GetCharIntegral(NekDouble &I, const NekDouble &beta,
-         const NekDouble &A, const NekDouble &A0, const NekDouble &alpha = 0.5);
+    virtual void v_GetCharIntegral(NekDouble &I, const NekDouble &beta,
+                                   const NekDouble &A, const NekDouble &A0,
+                                   const NekDouble &alpha = 0.5);
 
-        virtual void v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
-             const Array<OneD, NekDouble> &Au, const Array<OneD, NekDouble> &uu,
-           const Array<OneD, NekDouble> &beta, const Array<OneD, NekDouble> &A0,
-                  const Array<OneD, NekDouble> &alpha, const std::string &type);
+    virtual void v_GetJacobianInverse(NekMatrix<NekDouble> &invJ,
+                                      const Array<OneD, NekDouble> &Au,
+                                      const Array<OneD, NekDouble> &uu,
+                                      const Array<OneD, NekDouble> &beta,
+                                      const Array<OneD, NekDouble> &A0,
+                                      const Array<OneD, NekDouble> &alpha,
+                                      const std::string &type);
 
-        void GetKappa(NekDouble &kappa, const NekDouble &A, const NekDouble &A0,
-                                                  const NekDouble &alpha = 0.5);
+    void GetKappa(NekDouble &kappa, const NekDouble &A, const NekDouble &A0,
+                  const NekDouble &alpha = 0.5);
 
-    private:
+private:
 };
 
 } // namespace Nektar

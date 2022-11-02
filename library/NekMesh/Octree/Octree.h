@@ -35,8 +35,8 @@
 #ifndef NEKTAR_MESHUTILS_OCTREE_OCTREE
 #define NEKTAR_MESHUTILS_OCTREE_OCTREE
 
-#include "SourcePoint.hpp"
 #include "Octant.h"
+#include "SourcePoint.hpp"
 #include <NekMesh/MeshElements/Mesh.h>
 #include <NekMesh/Module/Log.hpp>
 
@@ -48,75 +48,74 @@ namespace NekMesh
 {
 
 /**
- * @brief this struct defines a CAD curve object to be used for defining spatial
+ * @brief This struct defines a CAD curve object to be used for defining spatial
  * refinment where a fixed element edge length is set to any element on or
  * within a specified distance from it.
- *
- * @param curve the CAD curve object - currently only supported using the OCE /
- * OpenCASCADE backend engine.
- * @param R the distance from the CAD curve where a fixed element edge length is
- * to be applied.
- * @param delta the fixed elementedge length.
  */
-struct curvesource
+struct CurveSource
 {
+    /// The distance from the CAD curve where a fixed element edge length is to
+    /// be applied.
+    NekDouble R;
+    /// The fixed element edge length.
+    NekDouble delta;
+    /// Curve on which source points are lying
     CADCurveSharedPtr curve;
-    NekDouble R, delta;
-    curvesource(CADCurveSharedPtr c,
-               NekDouble r,
-               NekDouble d)
-        : curve(c), R(r), delta(d)
+
+    CurveSource(NekDouble r, NekDouble d, CADCurveSharedPtr c)
+        : R(r), delta(d), curve(c)
     {
     }
 
     /**
-     * @brief tests if a point is within a specified range, R, from the CAD
-     * curve.
+     * @brief Tests if a point is within a specified range #R from the CAD curve
+     * given by #curve.
      *
-     * @param p array with the x,y,z position of the point to be tested.
-     * @return true is within the specified distance and false if not.
+     * @param p  Array with the \f$ (x,y,z) \f$ position of the point to be
+     *           tested.
+     *
+     * @return True if @p p is within the specified distance and false if not.
      */
-    bool withinRange(Array<OneD, NekDouble> p)
+    bool WithinRange(Array<OneD, NekDouble> p)
     {
-        if(curve->GetMinDistance(p) <= R)
-        {
-            return true;
-        }
-        else
-            return false;
+        return curve->GetMinDistance(p) <= R;
     }
 };
 
 /**
- * @brief this struct defines two points that create a line to be used for defining
- * spatial refinment where a fixed element edge length is set to any element on
- * or within a specified distance from it.
- *
- * @param x1, x2 arrays containing the x,y,z positions of the two points used to
- * define the line.
- * @param R the distance from the line where a fixed element edge length is to
- * be applied.
- * @param delta the fixed elementedge length.
+ * @brief This struct defines two points that create a line to be used for
+ * defining spatial refinment where a fixed element edge length is set to any
+ * element on or within a specified distance from it.
  */
-struct linesource
+struct LineSource
 {
-    Array<OneD, NekDouble> x1, x2;
-    NekDouble R, delta;
-    linesource(Array<OneD, NekDouble> p1,
-               Array<OneD, NekDouble> p2,
-               NekDouble r,
-               NekDouble d)
+    /// Array containing \f$ (x,y,z) \f$ Cartesian coordinates of the first line
+    /// segment endpoint.
+    Array<OneD, NekDouble> x1;
+    /// Array containing \f$ (x,y,z) \f$ Cartesian coordinates of the second
+    /// line segment endpoint.
+    Array<OneD, NekDouble> x2;
+    /// The distance from the line where a fixed element edge length is to be
+    /// applied.
+    NekDouble R;
+    /// The fixed element edge length.
+    NekDouble delta;
+
+    LineSource(Array<OneD, NekDouble> p1, Array<OneD, NekDouble> p2,
+               NekDouble r, NekDouble d)
         : x1(p1), x2(p2), R(r), delta(d)
     {
     }
 
     /**
-     * @brief tests if a point is within a specified range, R, from the line
+     * @brief Tests if a point is within a specified range #R from the line
+     * joining the points #x1 and #x2.
      *
-     * @param p array with the x,y,z position of the point to be tested.
-     * @return true is within the specified distance and false if not.
+     * @param p  Array with the \f$ (x,y,z) \f$ position of the point to be
+     *           tested.
+     * @return True if @p p is within the specified distance and false if not.
      */
-    bool withinRange(Array<OneD, NekDouble> p)
+    bool WithinRange(Array<OneD, NekDouble> p)
     {
         Array<OneD, NekDouble> Le(3), Re(3), s(3);
         for (int i = 0; i < 3; i++)
@@ -127,11 +126,11 @@ struct linesource
         }
 
         // check distances to endpoints
-        if (Le[0]*Le[0] + Le[1]*Le[1] + Le[2]*Le[2] < R * R)
+        if (Le[0] * Le[0] + Le[1] * Le[1] + Le[2] * Le[2] < R * R)
         {
             return true;
         }
-        if (Re[0]*Re[0] + Re[1]*Re[1] + Re[2]*Re[2] < R * R)
+        if (Re[0] * Re[0] + Re[1] * Re[1] + Re[2] * Re[2] < R * R)
         {
             return true;
         }
@@ -144,10 +143,13 @@ struct linesource
         dev[2] = Le[0] * Re[1] - Re[0] * Le[1];
 
         NekDouble dist =
-            sqrt(dev[0] * dev[0] + dev[1] * dev[1] + dev[2] * dev[2]) / Length();
+            sqrt(dev[0] * dev[0] + dev[1] * dev[1] + dev[2] * dev[2]) /
+            Length();
 
-        NekDouble t = -1.0 * ((x1[0] - p[0]) * s[0] + (x1[1] - p[1]) * s[1] +
-                              (x1[2] - p[2]) * s[2]) / Length() / Length();
+        NekDouble t = -1.0 *
+                      ((x1[0] - p[0]) * s[0] + (x1[1] - p[1]) * s[1] +
+                       (x1[2] - p[2]) * s[2]) /
+                      Length() / Length();
 
         if (dist < R && !(t > 1) && !(t < 0))
         {
@@ -160,7 +162,7 @@ struct linesource
     }
 
     /**
-     * @brief returns the length of the line defining the linesource
+     * @brief Returns the length of the line defining the line source.
      */
     NekDouble Length()
     {
@@ -179,7 +181,6 @@ struct linesource
 class Octree
 {
 public:
-
     Octree(MeshSharedPtr m, Logger log) : m_mesh(m), m_log(log)
     {
         m_log.SetPrefix("Octree");
@@ -218,7 +219,7 @@ public:
     {
         m_minDelta = min;
         m_maxDelta = max;
-        m_eps = ep;
+        m_eps      = ep;
     }
 
     /**
@@ -249,7 +250,6 @@ public:
     }
 
 private:
-
     /**
      * @brief Smooths specification over all octants to a gradation criteria
      */
@@ -322,12 +322,12 @@ private:
 
     std::string m_refinement;
     std::string m_curverefinement;
-    std::vector<linesource> m_lsources;
-    std::vector<curvesource> m_csources;
+    std::vector<LineSource> m_lsources;
+    std::vector<CurveSource> m_csources;
 };
 typedef std::shared_ptr<Octree> OctreeSharedPtr;
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar
 
 #endif

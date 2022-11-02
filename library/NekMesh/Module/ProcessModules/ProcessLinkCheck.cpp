@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.cpp
+//  File: ProcessLinkCheck.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -32,8 +32,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <NekMesh/MeshElements/Element.h>
 #include "ProcessLinkCheck.h"
+#include <NekMesh/MeshElements/Element.h>
 
 using namespace std;
 using namespace Nektar::NekMesh;
@@ -43,14 +43,13 @@ namespace Nektar
 namespace NekMesh
 {
 
-ModuleKey ProcessLinkCheck::className = GetModuleFactory().RegisterCreatorFunction(
-    ModuleKey(eProcessModule, "linkcheck"),
-    ProcessLinkCheck::create,
-    "Checks elemental links within elements.");
+ModuleKey ProcessLinkCheck::className =
+    GetModuleFactory().RegisterCreatorFunction(
+        ModuleKey(eProcessModule, "linkcheck"), ProcessLinkCheck::create,
+        "Checks elemental links within elements.");
 
 ProcessLinkCheck::ProcessLinkCheck(MeshSharedPtr m) : ProcessModule(m)
 {
-
 }
 
 ProcessLinkCheck::~ProcessLinkCheck()
@@ -71,11 +70,11 @@ void ProcessLinkCheck::Process()
 
     int count = 0;
 
-    if(m_mesh->m_expDim == 2)
+    if (m_mesh->m_expDim == 2)
     {
-        for(auto &edge : m_mesh->m_edgeSet)
+        for (auto &edge : m_mesh->m_edgeSet)
         {
-            if(edge->m_elLink.size() != 2)
+            if (edge->m_elLink.size() != 2)
             {
                 count++;
             }
@@ -83,23 +82,23 @@ void ProcessLinkCheck::Process()
     }
     else
     {
-        for(auto &face : m_mesh->m_faceSet)
+        for (auto &face : m_mesh->m_faceSet)
         {
-            if(face->m_elLink.size() != 2)
+            if (face->m_elLink.size() != 2)
             {
                 count++;
             }
         }
     }
 
-    if (count - m_mesh->m_element[m_mesh->m_expDim-1].size() != 0)
+    if (count - m_mesh->m_element[m_mesh->m_expDim - 1].size() != 0)
     {
         m_log(FATAL) << "Link Check Error: mesh contains incorrectly connected"
                      << " entities and is not valid: "
-                     << count - m_mesh->m_element[m_mesh->m_expDim-1].size()
+                     << count - m_mesh->m_element[m_mesh->m_expDim - 1].size()
                      << endl;
     }
 }
 
-}
-}
+} // namespace NekMesh
+} // namespace Nektar

@@ -14,3 +14,4 @@ IndentCaseLabels: true
 Standard: Cpp11
 AccessModifierOffset: -4
 BinPackParameters: true
+NamespaceIndentation: None

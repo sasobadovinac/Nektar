@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTriSPI.cpp
+// File: NodalTriSPI.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -45,9 +45,8 @@ namespace Nektar
 namespace LibUtilities
 {
 
-bool NodalTriSPI::initPointsManager[] = {
-    PointsManager().RegisterCreator(PointsKey(0, eNodalTriSPI),          NodalTriSPI::Create)
-};
+bool NodalTriSPI::initPointsManager[] = {PointsManager().RegisterCreator(
+    PointsKey(0, eNodalTriSPI), NodalTriSPI::Create)};
 
 void NodalTriSPI::CalculatePoints()
 {
@@ -108,5 +107,5 @@ std::shared_ptr<PointsBaseType> NodalTriSPI::Create(const PointsKey &key)
     return returnval;
 }
 
-} // end of namespace stdregion
-} // end of namespace stdregion
+} // namespace LibUtilities
+} // namespace Nektar
