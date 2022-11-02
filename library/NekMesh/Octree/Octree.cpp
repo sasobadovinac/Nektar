@@ -260,7 +260,8 @@ void Octree::WriteOctree(string nm)
 
     ModuleSharedPtr mod =
         GetModuleFactory().CreateInstance(ModuleKey(eOutputModule, "xml"), oct);
-    mod->RegisterConfig("outfile", nm);
+    mod->RegisterConfig("outfile", "octree.xml");
+    mod->RegisterConfig("order", nm);
     mod->ProcessVertices();
     mod->ProcessEdges();
     mod->ProcessFaces();
