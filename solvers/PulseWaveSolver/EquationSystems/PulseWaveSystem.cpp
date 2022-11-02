@@ -1305,7 +1305,7 @@ void PulseWaveSystem::v_DoSolve()
         }
 
         // Transform data if needed
-        if (!((n + 1) % m_checksteps))
+        if (m_checksteps && !((n + 1) % m_checksteps))
         {
             for (i = 0; i < m_nVariables; ++i)
             {
