@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <NEKTAR>
-	<EXPANSIONS>
+    <EXPANSIONS>
         <E COMPOSITE="C[1]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u,v,p" />
     </EXPANSIONS>
 
     <CONDITIONS>
-    	<SOLVERINFO>
+        <SOLVERINFO>
             <I PROPERTY="SolverType"                VALUE="VelocityCorrectionScheme"/>
             <I PROPERTY="EQTYPE"                    VALUE="UnsteadyNavierStokes"    />
             <I PROPERTY="EvolutionOperator"         VALUE="Nonlinear"               />
@@ -13,9 +13,9 @@
             <I PROPERTY="GlobalSysSoln"				VALUE="DirectStaticCond" 		/>
             <I PROPERTY="TimeIntegrationMethod"     VALUE="IMEXOrder2"              />
             <I PROPERTY="Driver"                    VALUE="Standard"                />
-       </SOLVERINFO>
+        </SOLVERINFO>
 
-       <PARAMETERS>
+        <PARAMETERS>
             <P> TimeStep       = 1e-2		</P>
             <P> NumSteps       = 100		</P>
             <P> IO_CheckSteps  = 1000		</P>
@@ -28,13 +28,13 @@
             <V ID="0">u</V>
             <V ID="1">v</V>
             <V ID="2">p</V>
-		</VARIABLES>
+        </VARIABLES>
 
         <BOUNDARYREGIONS>
-        	<B ID="0"> C[2]   </B>   <!-- Inflow    -->
-        	<B ID="1"> C[3]   </B>   <!-- Outflow    -->
-        	<B ID="2"> C[4]   </B>   <!-- Top    -->
-        	<B ID="3"> C[5]   </B>   <!-- Bottom    -->
+            <B ID="0"> C[2]   </B>   <!-- Inflow    -->
+            <B ID="1"> C[3]   </B>   <!-- Outflow    -->
+            <B ID="2"> C[4]   </B>   <!-- Top    -->
+            <B ID="3"> C[5]   </B>   <!-- Bottom    -->
         </BOUNDARYREGIONS>
 
         <BOUNDARYCONDITIONS>
@@ -61,21 +61,21 @@
         </BOUNDARYCONDITIONS>
 
         <FUNCTION NAME="InitialConditions">
-        	<E VAR="u" VALUE="1" />
-        	<E VAR="v,p" VALUE="0" />
-		</FUNCTION>
+            <E VAR="u" VALUE="1" />
+            <E VAR="v,p" VALUE="0" />
+        </FUNCTION>
     </CONDITIONS>
 
-	<FILTERS>
-    	<FILTER TYPE="AverageFields">
-      		<PARAM NAME="OutputFile">Phase</PARAM>
-			<PARAM NAME="OutputFrequency">10000</PARAM>
-			<PARAM NAME="SampleFrequency"> 1 </PARAM>
-			<PARAM NAME="PhaseAverage"> True </PARAM>
-			<PARAM NAME="PhaseAveragePeriod"> 1 </PARAM>
-			<PARAM NAME="PhaseAveragePhase"> 0.584 </PARAM>
-		</FILTER>
-	</FILTERS>
+    <FILTERS>
+        <FILTER TYPE="AverageFields">
+            <PARAM NAME="OutputFile">Phase</PARAM>
+            <PARAM NAME="OutputFrequency">10000</PARAM>
+            <PARAM NAME="SampleFrequency"> 1 </PARAM>
+            <PARAM NAME="PhaseAverage"> True </PARAM>
+            <PARAM NAME="PhaseAveragePeriod"> 1 </PARAM>
+            <PARAM NAME="PhaseAveragePhase"> 0.584 </PARAM>
+        </FILTER>
+    </FILTERS>
 
     <GEOMETRY DIM="2" SPACE="2">
         <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxt1blPFGEAxuERQV0VRUQR8cITFLzwAA9YBRXPVQTvW1HBC49YGCOVFv4htia0xMLGWku6jYkFsUEqiTGajTObzPO53e6Td3bm+22yUfT/1+C3rrLXQ1E0JX6ffd/U0v0x366X4M87Ont+1Y22Jz6V6+qlqf14cP0y3P202PNvCp9PBvvpuPsZqetHWfcZ3P3M2CtqWz+9+1Ea7Gfh7men7i8T7Mtx93NiH57Ifc11lwf7ubj7itTzVQT7ebj7ytjr+5qHXo5WBvv5uPuq1PlUBfsFuPuFsf/83Fb+JVMd7Ktx94tS51sT7Gtw94tT55Nvb80WfKzotVH6pS9J7ceD/dLU908Gviy1j7L68tT5lQa+InX9TOB1sSe/H30lvw99Ff311fTV19BPX0sffR19XjUW7mOi6PX00Rvoo6+nj76BPnojffQm+ugb6aNvoo++mT76FvroW+mjN9NH30aft83/zjHx7fTRd9BH30kfvYU+eit99F300XfTR99DH30vffQ2+ujJH2LSR8/SR99Hn3x/b8OLgT9F308fvYM+eid99AP00Q/SRz9EH72LPvph+uhH6KMfpY9+jD76cfroJ+jzIVe4j5Js4jn66Cfpo5+ij95NH/00ffQe+ui99NHP0Ec/Sx/9HH308/TRL9BHv0if3PeRsZHfZUW/RB/9Mn30K/TRr9JHv0Yf/Tp99Bv00W/SR79FH72PPvpt+uh36KPfpU/ynIn300cfoI9+jz76ffroD+ijP+S+9Ef00Qfpoz+mj/6EPvpT+ujP6KP/BaSxOfsA</VERTEX>
@@ -92,5 +92,4 @@
         </COMPOSITE>
         <DOMAIN> C[1] </DOMAIN>
     </GEOMETRY>
-    <Metadata>   
 </NEKTAR>

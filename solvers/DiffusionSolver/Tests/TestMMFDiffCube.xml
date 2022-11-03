@@ -745,63 +745,63 @@
             <C ID="3"> F[0,21,38,55,72,89,102,115,128,145,158,171,184,201,214,227,20,37,54,71,88,101,114,127,144,157,170,183,200,213,226,239] </C>
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
-	
-      </GEOMETRY>
-      
+
+    </GEOMETRY>
+
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="5" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
 
     <CONDITIONS>
 
-    <SOLVERINFO>
-      <I PROPERTY="EQTYPE" VALUE="MMFDiffusion" />
-      <I PROPERTY="Projection" VALUE="DisContinuous"/>
-      <I PROPERTY="DiffusionAdvancement" VALUE="Implicit" />
-      <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXdirk_3_4_3" />
-      <I PROPERTY="TestType" VALUE="TestCube" />
-      <I PROPERTY="SurfaceType" VALUE="Plane" />
-      <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->   
-      <I PROPERTY="MMFDir" VALUE="LOCAL" />
-    </SOLVERINFO>  
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE" VALUE="MMFDiffusion" />
+            <I PROPERTY="Projection" VALUE="DisContinuous"/>
+            <I PROPERTY="DiffusionAdvancement" VALUE="Implicit" />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXdirk_3_4_3" />
+            <I PROPERTY="TestType" VALUE="TestCube" />
+            <I PROPERTY="SurfaceType" VALUE="Plane" />
+            <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
+            <I PROPERTY="MMFDir" VALUE="LOCAL" />
+        </SOLVERINFO>
 
-    <PARAMETERS>
-      <P> TimeStep       = 0.002             </P>
-      <P> NumSteps       = 5            </P>
-      <P> FinTime        = TimeStep*NumSteps </P>
-      <P> IO_CheckSteps  = 20               </P>
-      <P> IO_InfoSteps   = 20              </P>
-      <P> epsilon0 = 2.0             </P>
-      <P> epsilon1 = 2.0             </P>
-      <P> epsilon2 = 2.0             </P>
-      <P> MMFCircCentreX  = -2.0   </P>
-      <P> MMFCircCentreY  = -2.0   </P>
-    </PARAMETERS>
-    
-    <VARIABLES>
-      <V ID="0"> u </V> 
-    </VARIABLES>
-    
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[1]  </B>
-      <B ID="1"> C[2]  </B>
-      <B ID="2"> C[3]  </B>
-    </BOUNDARYREGIONS>
+        <PARAMETERS>
+            <P> TimeStep       = 0.002             </P>
+            <P> NumSteps       = 5            </P>
+            <P> FinTime        = TimeStep*NumSteps </P>
+            <P> IO_CheckSteps  = 20               </P>
+            <P> IO_InfoSteps   = 20              </P>
+            <P> epsilon0 = 2.0             </P>
+            <P> epsilon1 = 2.0             </P>
+            <P> epsilon2 = 2.0             </P>
+            <P> MMFCircCentreX  = -2.0   </P>
+            <P> MMFCircCentreY  = -2.0   </P>
+        </PARAMETERS>
 
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-        <D VAR="u" VALUE="exp(-PI*PI*t)*sin(PI*x)*sin(PI*y)*sin(PI*z)" />
-      </REGION>
-      <REGION REF="1">
-        <D VAR="u" VALUE="exp(-PI*PI*t)*sin(PI*x)*sin(PI*y)*sin(PI*z)" />
-      </REGION>
-      <REGION REF="2">
-        <D VAR="u" VALUE="exp(-PI*PI*t)*sin(PI*x)*sin(PI*y)*sin(PI*z)" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
-    
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1]  </B>
+            <B ID="1"> C[2]  </B>
+            <B ID="2"> C[3]  </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="exp(-PI*PI*t)*sin(PI*x)*sin(PI*y)*sin(PI*z)" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="exp(-PI*PI*t)*sin(PI*x)*sin(PI*y)*sin(PI*z)" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="exp(-PI*PI*t)*sin(PI*x)*sin(PI*y)*sin(PI*z)" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
     </CONDITIONS>
-    
-  </NEKTAR>
 
-    
+</NEKTAR>
+
+

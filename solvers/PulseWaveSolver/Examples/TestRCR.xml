@@ -4,25 +4,25 @@
         <VERTEX>
             <V ID="0"> 0.000e+00 0.000e+00 0.000e+00</V>
             <V ID="1"> 0.020e+00 0.000e+00 0.000e+00</V>
-            <V ID="2"> 0.040e+00 0.000e+00 0.000e+00</V>           
-	    <V ID="3"> 0.060e+00 0.000e+00 0.000e+00</V>        
-	    <V ID="4"> 0.080e+00 0.000e+00 0.000e+00</V>          
-	    <V ID="5"> 0.100e+00 0.000e+00 0.000e+00</V>
-            <V ID="6"> 0.120e+00 0.000e+00 0.000e+00</V>         
-	    <V ID="7"> 0.140e+00 0.000e+00 0.000e+00</V>        
-	    <V ID="8"> 0.160e+00 0.000e+00 0.000e+00</V>       
-	    <V ID="9"> 0.180e+00 0.000e+00 0.000e+00</V>
+            <V ID="2"> 0.040e+00 0.000e+00 0.000e+00</V>
+            <V ID="3"> 0.060e+00 0.000e+00 0.000e+00</V>
+            <V ID="4"> 0.080e+00 0.000e+00 0.000e+00</V>
+            <V ID="5"> 0.100e+00 0.000e+00 0.000e+00</V>
+            <V ID="6"> 0.120e+00 0.000e+00 0.000e+00</V>
+            <V ID="7"> 0.140e+00 0.000e+00 0.000e+00</V>
+            <V ID="8"> 0.160e+00 0.000e+00 0.000e+00</V>
+            <V ID="9"> 0.180e+00 0.000e+00 0.000e+00</V>
             <V ID="10"> 0.200e+00 0.000e+00 0.000e+00</V>
             <V ID="11"> 0.220e+00 0.000e+00 0.000e+00</V>
             <V ID="12"> 0.240e+00 0.000e+00 0.000e+00</V>
-            <V ID="13"> 0.260e+00 0.000e+00 0.000e+00</V>           
-	    <V ID="14"> 0.280e+00 0.000e+00 0.000e+00</V>        
-	    <V ID="15"> 0.300e+00 0.000e+00 0.000e+00</V>          
-	    <V ID="16"> 0.320e+00 0.000e+00 0.000e+00</V>
-            <V ID="17"> 0.340e+00 0.000e+00 0.000e+00</V>         
-	    <V ID="18"> 0.360e+00 0.000e+00 0.000e+00</V>        
-	    <V ID="19"> 0.380e+00 0.000e+00 0.000e+00</V>       
-	    <V ID="20"> 0.400e+00 0.000e+00 0.000e+00</V>
+            <V ID="13"> 0.260e+00 0.000e+00 0.000e+00</V>
+            <V ID="14"> 0.280e+00 0.000e+00 0.000e+00</V>
+            <V ID="15"> 0.300e+00 0.000e+00 0.000e+00</V>
+            <V ID="16"> 0.320e+00 0.000e+00 0.000e+00</V>
+            <V ID="17"> 0.340e+00 0.000e+00 0.000e+00</V>
+            <V ID="18"> 0.360e+00 0.000e+00 0.000e+00</V>
+            <V ID="19"> 0.380e+00 0.000e+00 0.000e+00</V>
+            <V ID="20"> 0.400e+00 0.000e+00 0.000e+00</V>
         </VERTEX>
         <ELEMENT>
             <S ID="0">    0     1 </S>
@@ -44,7 +44,7 @@
             <S ID="16">    16     17 </S>
             <S ID="17">    17     18 </S>
             <S ID="18">    18     19 </S>
-           <S ID="19">    19     20 </S>
+            <S ID="19">    19     20 </S>
         </ELEMENT>
         <COMPOSITE>
             <C ID="0"> S[0-19] </C>
@@ -53,9 +53,9 @@
 
         </COMPOSITE>
 
-        <DOMAIN> 
-      	    <D ID="0"> C[0] </D>
-	</DOMAIN>
+        <DOMAIN>
+            <D ID="0"> C[0] </D>
+        </DOMAIN>
     </GEOMETRY>
 
     <EXPANSIONS>
@@ -65,7 +65,7 @@
     <CONDITIONS>
 
         <PARAMETERS>
-	    <P> TimeStep       = 1e-5               </P> 
+            <P> TimeStep       = 1e-5               </P>
             <P> FinTime        = 1.00              </P>
             <P> NumSteps       = FinTime/TimeStep   </P>
             <P> IO_CheckSteps  = NumSteps/50        </P>
@@ -73,17 +73,17 @@
             <P> T              = 0.25               </P>
             <P> h0             = 0.0015             </P>
             <P> rho            = 1.050e+03          </P>
-            <P> pext           = 0.0                </P> 
-	    <P> Rt             = 1.89e+08           </P>
-	    <P> C              = 6.31e-09           </P>
-	    <P> pout           = 1333               </P>
+            <P> pext           = 0.0                </P>
+            <P> Rt             = 1.89e+08           </P>
+            <P> C              = 6.31e-09           </P>
+            <P> pout           = 1333               </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE" VALUE="PulseWavePropagation" />
             <I PROPERTY="Projection" VALUE="DisContinuous" />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler" />
-            <I PROPERTY="UpwindTypePulse"  VALUE="UpwindPulse"/> 
+            <I PROPERTY="UpwindTypePulse"  VALUE="UpwindPulse"/>
         </SOLVERINFO>
 
         <VARIABLES>
@@ -111,13 +111,13 @@
             <E VAR="A" DOMAIN="0" VALUE="3.14159e-04" />
             <E VAR="u" DOMAIN="0" VALUE="0.0" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="A_0">
             <E VAR="A_0" DOMAIN="0" VALUE="3.14159e-04" />
         </FUNCTION>
-        
-        <FUNCTION NAME="MaterialProperties"> 
-            <E VAR="beta" DOMAIN="0" VALUE="4.51e+6" />     	
+
+        <FUNCTION NAME="MaterialProperties">
+            <E VAR="beta" DOMAIN="0" VALUE="4.51e+6" />
         </FUNCTION>
 
         <FUNCTION NAME="ExactSolution">
