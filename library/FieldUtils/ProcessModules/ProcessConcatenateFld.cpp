@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: Concatenate field
+//  File: ProcessConcatenateFld.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //

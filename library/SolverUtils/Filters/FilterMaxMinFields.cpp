@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterMaxMinFields.cpp
+// File: FilterMaxMinFields.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

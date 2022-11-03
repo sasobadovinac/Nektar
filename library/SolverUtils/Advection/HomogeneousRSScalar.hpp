@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: Advection3DHomogeneous1D.h
+// File: HomogeneousRSScalar.hpp
 //
 // For more information, please see: http://www.nektar.info
 //

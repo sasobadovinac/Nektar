@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAeroForcesSPM.cpp
+// File: FilterAeroForcesSPM.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

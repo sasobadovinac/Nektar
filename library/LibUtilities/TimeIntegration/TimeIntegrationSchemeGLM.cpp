@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationSchemeGLM.cpp
+// File: TimeIntegrationSchemeGLM.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

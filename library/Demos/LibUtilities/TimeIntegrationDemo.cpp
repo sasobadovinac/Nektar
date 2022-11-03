@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationDemo.cpp
+// File: TimeIntegrationDemo.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

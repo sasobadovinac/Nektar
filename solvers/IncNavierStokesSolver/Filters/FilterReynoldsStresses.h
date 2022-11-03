@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterReynoldsStresses.h
+// File: FilterReynoldsStresses.h
 //
 // For more information, please see: http://www.nektar.info
 //

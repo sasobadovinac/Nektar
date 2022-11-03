@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TimeIntegrationTypes.hpp
+// File: TimeIntegrationTypes.hpp
 //
 // For more information, please see: http://www.nektar.info
 //

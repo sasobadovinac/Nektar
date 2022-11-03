@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpListHomogeneous2D.h
+// File: ExpListHomogeneous2D.h
 //
 // For more information, please see: http://www.nektar.info
 //

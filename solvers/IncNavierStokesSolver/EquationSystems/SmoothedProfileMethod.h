@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SmoothedProfileMethod.h
+// File: SmoothedProfileMethod.h
 //
 // For more information, please see: http://www.nektar.info
 //

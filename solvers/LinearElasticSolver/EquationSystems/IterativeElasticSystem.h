@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File IterativeElasticSystem.h
+// File: IterativeElasticSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NavierStokesAdvection.cpp
+// File: NavierStokesAdvection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

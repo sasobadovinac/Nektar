@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LymphaticPressureArea.h
+// File: TemplatePressureArea.h
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -28,12 +28,12 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Definition of the LInf metric.
+// Description: Definition of the File metric.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef NEKTAR_TESTS_METRICLINF_H
-#define NEKTAR_TESTS_METRICLINF_H
+#ifndef NEKTAR_TESTS_METRICFILE_H
+#define NEKTAR_TESTS_METRICFILE_H
 
 #include <Metric.h>
 #include <map>

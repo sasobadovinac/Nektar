@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File DisContField3DHomogeneous1D.h
+// File: DisContField3DHomogeneous1D.h
 //
 // For more information, please see: http://www.nektar.info
 //

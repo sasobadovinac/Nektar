@@ -60,7 +60,7 @@ struct TriFaceIDs
     int c;
 };
 
-struct TriFaceHash : std::unary_function<TriFaceIDs, std::size_t>
+struct TriFaceHash
 {
     std::size_t operator()(TriFaceIDs const &p) const
     {

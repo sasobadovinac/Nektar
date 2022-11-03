@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSys.h
+// File: GlobalLinSysDirectStaticCond.h
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File DiffusionTestTI.cpp
+// File: DiffusionSolverTimeInt.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

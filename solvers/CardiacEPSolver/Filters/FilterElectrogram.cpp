@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterElectrogram.cpp
+// File: FilterElectrogram.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

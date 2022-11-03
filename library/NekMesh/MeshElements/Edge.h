@@ -145,7 +145,7 @@ NEKMESH_EXPORT bool operator<(EdgeSharedPtr const &p1, EdgeSharedPtr const &p2);
  * define it. First the minimum ID is hashed, then the maximum
  * ID, which takes the two possible orientations into account.
  */
-struct EdgeHash : std::unary_function<EdgeSharedPtr, std::size_t>
+struct EdgeHash
 {
     std::size_t operator()(EdgeSharedPtr const &p) const
     {

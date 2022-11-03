@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpList3DHomogeneous2D.cpp
+// File: ExpList3DHomogeneous2D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

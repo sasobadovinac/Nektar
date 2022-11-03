@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: BoundaryConditions.cpp
+//  File: MeshGraphXmlCompressed.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //

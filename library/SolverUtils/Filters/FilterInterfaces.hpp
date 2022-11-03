@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterInterfaces.hpp
+// File: FilterInterfaces.hpp
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -450,7 +450,7 @@ NEKMESH_EXPORT bool IsNodeClose(
  * The hash of a node is straight-forward; a combination of the x, y,
  * and z co-ordinates in this order.
  */
-struct NodeHash : std::unary_function<NodeSharedPtr, std::size_t>
+struct NodeHash
 {
     std::size_t operator()(NodeSharedPtr const &p) const
     {

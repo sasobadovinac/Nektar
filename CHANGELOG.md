@@ -9,10 +9,17 @@ v5.3.0
 - Added float and restore avx512 back-end for SimdLib (!1387)
 - Fix namespace pollution which causes boost 1.74+ errors (!1389)
 - Fix missing copy assignment operator warnings in clang 13+ (!1391)
+- Added checkpoint file writing start time in the checkpoint filter (!1401)
 - Fix boost 1.77 compatibility errors (!1420)
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)
 - Add Parareal Driver module (!1317)
+- Maintenance for C++-17 compatibility: removed std::unaray_function base class due to removal from the std (!1419)
+- Fixed the comment of function Vvtvvtp in VmathArray (!1408)
+- Add a FieldConvert utility to compute the divergence of the velocity (!1413)
+- Added new filter to calculate variables integral on composite mesh (!1409)
+- Fix a I/O issue related to the IO_InfoSteps parameter (!1422)
+- Fix a I/O issue related to the IO_CheckSteps parameter (!1423)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -39,10 +46,17 @@ exporting in .vtu format (!1386)
 - Fix a header include which caused compilation errors on OCC versions newer than v7.4 (!1395)
 - Add option to refine curves in the same manner as the line refinement functionality (!1298)
 - Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
+- Fix a segmentation fault with WriteOctree due to missing 'order' parameter (!1418)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
+- Correct header section of .cpp, .hpp, and .h files (!1426)
 
+**CI**
+- Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
+
+**FieldConvert**
+- Fix range option so that it also works with hdf5 (!1414)
 
 v5.2.0
 ------

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MeshPartitionMetis.h
+// File: MeshPartitionMetis.h
 //
 // For more information, please see: http://www.nektar.info
 //

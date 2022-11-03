@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyReactionDiffusion.h
+// File: UnsteadyReactionDiffusion.h
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// File MMFMaxwell.cpp
+// File: MMFMaxwell.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -489,10 +489,10 @@ void MMFMaxwell::v_DoSolve()
              "Only one of IO_CheckTime and IO_CheckSteps "
              "should be set!");
 
-    int Ntot = m_steps / m_checksteps + 1;
+    int Ntot = m_checksteps ? m_steps / m_checksteps + 1 : 0;
 
-    Array<OneD, NekDouble> TimeSeries(Ntot);
-    Array<OneD, NekDouble> Energy(Ntot);
+    Array<OneD, NekDouble> TimeSeries(Ntot ? Ntot : 1);
+    Array<OneD, NekDouble> Energy(Ntot ? Ntot : 1);
 
     LibUtilities::Timer timer;
     bool doCheckTime  = false;
@@ -509,7 +509,8 @@ void MMFMaxwell::v_DoSolve()
     {
         case ePointSource:
         {
-            Ezantipod = Array<OneD, NekDouble>(m_steps / m_checksteps);
+            Ezantipod = Array<OneD, NekDouble>(
+                m_checksteps ? m_steps / m_checksteps : 1);
 
             Array<OneD, NekDouble> x(nq);
             Array<OneD, NekDouble> y(nq);
@@ -571,9 +572,9 @@ void MMFMaxwell::v_DoSolve()
     Array<OneD, NekDouble> P3;
     if (m_TestPML)
     {
-        P1 = Array<OneD, NekDouble>(m_steps / m_checksteps);
-        P2 = Array<OneD, NekDouble>(m_steps / m_checksteps);
-        P3 = Array<OneD, NekDouble>(m_steps / m_checksteps);
+        P1 = Array<OneD, NekDouble>(m_checksteps ? m_steps / m_checksteps : 1);
+        P2 = Array<OneD, NekDouble>(m_checksteps ? m_steps / m_checksteps : 1);
+        P3 = Array<OneD, NekDouble>(m_checksteps ? m_steps / m_checksteps : 1);
 
         Array<OneD, NekDouble> x(nq);
         Array<OneD, NekDouble> y(nq);
@@ -807,7 +808,7 @@ void MMFMaxwell::v_DoSolve()
     }
 
     // Print out summary statistics
-    if (m_session->GetComm()->GetRank() == 0)
+    if (m_checksteps && m_session->GetComm()->GetRank() == 0)
     {
         std::cout << "Time-integration  : " << intTime << "s" << std::endl;
 

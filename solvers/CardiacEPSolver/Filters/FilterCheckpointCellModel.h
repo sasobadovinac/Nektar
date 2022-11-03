@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterCheckpoint.h
+// File: FilterCheckpointCellModel.h
 //
 // For more information, please see: http://www.nektar.info
 //
