@@ -7,12 +7,12 @@
 
     <CONDITIONS>
         <SOLVERINFO>
-          <I PROPERTY="SOLVERTYPE"              VALUE="VelocityCorrectionScheme"/>
-          <I PROPERTY="EQTYPE"                  VALUE="UnsteadyNavierStokes"    />
-          <I PROPERTY="Projection"              VALUE="Continuous"              />
-          <I PROPERTY="EvolutionOperator"       VALUE="Nonlinear"               />
-          <I PROPERTY="TimeIntegrationMethod"   VALUE="IMEXOrder3"              />
-          <I PROPERTY="Driver"                  VALUE="Standard"                />
+            <I PROPERTY="SOLVERTYPE"              VALUE="VelocityCorrectionScheme"/>
+            <I PROPERTY="EQTYPE"                  VALUE="UnsteadyNavierStokes"    />
+            <I PROPERTY="Projection"              VALUE="Continuous"              />
+            <I PROPERTY="EvolutionOperator"       VALUE="Nonlinear"               />
+            <I PROPERTY="TimeIntegrationMethod"   VALUE="IMEXOrder3"              />
+            <I PROPERTY="Driver"                  VALUE="Standard"                />
         </SOLVERINFO>
 
         <VARIABLES>

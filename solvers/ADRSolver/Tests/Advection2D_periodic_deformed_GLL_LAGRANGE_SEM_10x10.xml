@@ -3,9 +3,9 @@
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="7" TYPE="GLL_LAGRANGE_SEM" FIELDS="u" />
     </EXPANSIONS>
-    
+
     <CONDITIONS>
-        
+
         <PARAMETERS>
             <P> FinTime         = 0.4              </P>
             <P> TimeStep        = 0.004             </P>
@@ -15,7 +15,7 @@
             <P> advx            = 1.2                 </P>
             <P> advy            = 1.2                 </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
@@ -23,18 +23,18 @@
             <I PROPERTY="UpwindType"            VALUE="Upwind"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
         </SOLVERINFO>
-        
+
         <VARIABLES>
             <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[100] </B>
             <B ID="1"> C[200] </B>
             <B ID="2"> C[300] </B>
             <B ID="3"> C[400] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="1">
                 <P VAR="u" VALUE="-[3]" />
@@ -49,22 +49,22 @@
                 <P VAR="u" VALUE="-[0]" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE="1.2" />
             <E VAR="Vy" VALUE="1.2" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="exp(-40.0*(x^2 + y^2))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="u" VALUE="exp(-40.0*((x - advx*t)^2 + (y - advy*t)^2))" />
         </FUNCTION>
-        
+
     </CONDITIONS>
-    
+
     <GEOMETRY DIM="2" SPACE="2">
         <VERTEX>
             <V ID="0">     -1.00   -1.00    0.00</V>

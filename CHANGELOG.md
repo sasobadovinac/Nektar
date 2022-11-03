@@ -54,6 +54,7 @@ exporting in .vtu format (!1386)
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
 - Enable packaging for Fedora 36. (!1429)
+- Fix XML files indentation (!1428)
 
 **FieldConvert**
 - Fix range option so that it also works with hdf5 (!1414)

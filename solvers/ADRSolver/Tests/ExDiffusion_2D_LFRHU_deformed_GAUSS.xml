@@ -81,7 +81,7 @@
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)*sin(PI*y)" />
+                    VALUE="exp(-2.0*PI*PI*t)*sin(PI*x)*sin(PI*y)" />
             </REGION>
         </BOUNDARYCONDITIONS>
 

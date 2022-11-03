@@ -146,94 +146,94 @@
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
 
-  <EXPANSIONS>
-    <E COMPOSITE="C[0]" NUMMODES="4" FIELDS="u,v,w,p" TYPE="MODIFIED" />
-  </EXPANSIONS>
+    <EXPANSIONS>
+        <E COMPOSITE="C[0]" NUMMODES="4" FIELDS="u,v,w,p" TYPE="MODIFIED" />
+    </EXPANSIONS>
 
-  <CONDITIONS>
-    <SOLVERINFO>
-      <I PROPERTY="SolverType"  VALUE="VelocityCorrectionScheme"/>
-      <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes"/>
-      <I PROPERTY="AdvectionForm" VALUE="Convective"/>
-      <I PROPERTY="Projection" VALUE="Galerkin"/>
-      <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2"/>
-    </SOLVERINFO>
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="SolverType"  VALUE="VelocityCorrectionScheme"/>
+            <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes"/>
+            <I PROPERTY="AdvectionForm" VALUE="Convective"/>
+            <I PROPERTY="Projection" VALUE="Galerkin"/>
+            <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder2"/>
+        </SOLVERINFO>
 
-    <PARAMETERS>
-      <P> TimeStep      = 0.001     </P>
-      <P> NumSteps      = 1000       </P>
-      <P> IO_CheckSteps = 1000       </P>
-      <P> IO_InfoSteps  = 1000       </P>
-      <P> Kinvis        = 1         </P>
-    </PARAMETERS>
+        <PARAMETERS>
+            <P> TimeStep      = 0.001     </P>
+            <P> NumSteps      = 1000       </P>
+            <P> IO_CheckSteps = 1000       </P>
+            <P> IO_InfoSteps  = 1000       </P>
+            <P> Kinvis        = 1         </P>
+        </PARAMETERS>
 
-    <VARIABLES>
-      <V ID="0"> u </V> 
-      <V ID="1"> v </V>
-      <V ID="2"> w </V>  
-      <V ID="3"> p </V> 
-    </VARIABLES>
+        <VARIABLES>
+            <V ID="0"> u </V>
+            <V ID="1"> v </V>
+            <V ID="2"> w </V>
+            <V ID="3"> p </V>
+        </VARIABLES>
 
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[1] </B> <!-- z min /-->
-      <B ID="1"> C[6] </B> <!-- z max /-->
-      <B ID="2"> C[3] </B> <!-- x max /-->
-      <B ID="3"> C[5] </B> <!-- x min /-->
-      <B ID="4"> C[4] </B> <!-- y max /-->
-      <B ID="5"> C[2] </B> <!-- y min /-->
-    </BOUNDARYREGIONS>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B> <!-- z min /-->
+            <B ID="1"> C[6] </B> <!-- z max /-->
+            <B ID="2"> C[3] </B> <!-- x max /-->
+            <B ID="3"> C[5] </B> <!-- x min /-->
+            <B ID="4"> C[4] </B> <!-- y max /-->
+            <B ID="5"> C[2] </B> <!-- y min /-->
+        </BOUNDARYREGIONS>
 
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-        <D VAR="u" VALUE="0" />
-        <D VAR="v" VALUE="0" />
-        <D VAR="w" VALUE="0" />
-        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-      </REGION>
-      <REGION REF="1">
-        <D VAR="u" VALUE="0" />
-        <D VAR="v" VALUE="0" />
-        <D VAR="w" VALUE="0" />
-        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-      </REGION>
-      <REGION REF="2">
-        <P VAR="u" VALUE="[3]" />
-        <P VAR="v" VALUE="[3]" />
-        <P VAR="w" VALUE="[3]" />
-        <P VAR="p" VALUE="[3]" />
-      </REGION>
-      <REGION REF="3">
-        <P VAR="u" VALUE="[2]" />
-        <P VAR="v" VALUE="[2]" />
-        <P VAR="w" VALUE="[2]" />
-        <P VAR="p" VALUE="[2]" />
-      </REGION>
-      <REGION REF="4">
-        <D VAR="u" VALUE="0" />
-        <D VAR="v" VALUE="0" />
-        <D VAR="w" VALUE="0" />
-        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-      </REGION>
-      <REGION REF="5">
-        <D VAR="u" VALUE="0" />
-        <D VAR="v" VALUE="0" />
-        <D VAR="w" VALUE="0" />
-        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="2">
+                <P VAR="u" VALUE="[3]" />
+                <P VAR="v" VALUE="[3]" />
+                <P VAR="w" VALUE="[3]" />
+                <P VAR="p" VALUE="[3]" />
+            </REGION>
+            <REGION REF="3">
+                <P VAR="u" VALUE="[2]" />
+                <P VAR="v" VALUE="[2]" />
+                <P VAR="w" VALUE="[2]" />
+                <P VAR="p" VALUE="[2]" />
+            </REGION>
+            <REGION REF="4">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="5">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
 
-   <FUNCTION NAME="InitialConditions">
-     <E VAR="u" VALUE="sin(x*PI)*sin(2.1*y)*cos(z)" />
-     <E VAR="v" VALUE="sin(x*PI)*cos(y)*sin(3*z)" />
-     <E VAR="w" VALUE="cos(x*PI)*sin(3*y)*sin(5*z)" />
-     <E VAR="p" VALUE="sin(x*PI)*y*z" />
-   </FUNCTION>
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="sin(x*PI)*sin(2.1*y)*cos(z)" />
+            <E VAR="v" VALUE="sin(x*PI)*cos(y)*sin(3*z)" />
+            <E VAR="w" VALUE="cos(x*PI)*sin(3*y)*sin(5*z)" />
+            <E VAR="p" VALUE="sin(x*PI)*y*z" />
+        </FUNCTION>
 
-    <FUNCTION NAME="ExactSolution">
-      <E VAR="u" VALUE="sin(x*PI)*sin(2.1*y)*cos(z)" />
-      <E VAR="v" VALUE="sin(x*PI)*cos(y)*sin(3*z)" />
-      <E VAR="w" VALUE="cos(x*PI)*sin(3*y)*sin(5*z)" />
-      <E VAR="p" VALUE="sin(x*PI)*y*z" />
-    </FUNCTION>
-  </CONDITIONS>
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="sin(x*PI)*sin(2.1*y)*cos(z)" />
+            <E VAR="v" VALUE="sin(x*PI)*cos(y)*sin(3*z)" />
+            <E VAR="w" VALUE="cos(x*PI)*sin(3*y)*sin(5*z)" />
+            <E VAR="p" VALUE="sin(x*PI)*y*z" />
+        </FUNCTION>
+    </CONDITIONS>
 </NEKTAR>

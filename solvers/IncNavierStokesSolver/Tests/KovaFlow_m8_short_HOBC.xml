@@ -17,62 +17,62 @@
         </SOLVERINFO>
 
         <PARAMETERS>
-          <P> TimeStep      = 0.001   </P>
-          <P> NumSteps      = 10  </P>
-          <P> IO_CheckSteps = 10      </P>
-          <P> IO_CFLSteps   = 100      </P>
-          <P> IO_InfoSteps  = 1       </P>
-          <P> Kinvis        = 0.025   </P>
-          <P> KovLam        = 0.5/Kinvis-sqrt(0.25/(Kinvis*Kinvis)+4*PI*PI) </P>
+            <P> TimeStep      = 0.001   </P>
+            <P> NumSteps      = 10  </P>
+            <P> IO_CheckSteps = 10      </P>
+            <P> IO_CFLSteps   = 100      </P>
+            <P> IO_InfoSteps  = 1       </P>
+            <P> Kinvis        = 0.025   </P>
+            <P> KovLam        = 0.5/Kinvis-sqrt(0.25/(Kinvis*Kinvis)+4*PI*PI) </P>
         </PARAMETERS>
 
         <VARIABLES>
-          <V ID="0"> u </V>
-          <V ID="1"> v </V>
-          <V ID="2"> p </V>
+            <V ID="0"> u </V>
+            <V ID="1"> v </V>
+            <V ID="2"> p </V>
         </VARIABLES>
 
         <BOUNDARYREGIONS>
-          <B ID="0"> C[1] </B>
-          <B ID="1"> C[2] </B>
-          <B ID="2"> C[3] </B>
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[2] </B>
+            <B ID="2"> C[3] </B>
         </BOUNDARYREGIONS>
 
         <BOUNDARYCONDITIONS>
-          <REGION REF="0">
-            <D VAR="u" VALUE="(1-exp(KovLam*x)*cos(2*PI*y))" />
-            <D VAR="v" VALUE="KovLam/(2*PI)*exp(KovLam*x)*sin(2*PI*y)" />
-            <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"          />
-          </REGION>
-          <REGION REF="1">
-            <N VAR="u" USERDEFINEDTYPE="HOutflow" VALUE="Kinvis*KovLam*exp(KovLam*x)*cos(2*PI*y) + 0.5*(1-exp(2*KovLam*x))+0.5*(((1-exp(KovLam*x)*cos(2*PI*y))*(1-exp(KovLam*x)*cos(2*PI*y))+(KovLam/(2*PI)*exp(KovLam*x)*sin(2*PI*y))*(KovLam/(2*PI)*exp(KovLam*x)*sin(2*PI*y))))*(0.5*(1.0-tanh((1-exp(KovLam*x)*cos(2*PI*y))*20)))" />
-            <N VAR="v" USERDEFINEDTYPE="HOutflow" VALUE="-Kinvis*KovLam*KovLam/(2*PI)*exp(KovLam*x)*sin(2*PI*y)" />
-            <D VAR="p" USERDEFINEDTYPE="HOutflow"  VALUE="0" />
-          </REGION>
-          <REGION REF="2">
-            <N VAR="u" VALUE="0" />
-            <D VAR="v" VALUE="0" />
-            <N VAR="p" VALUE="0" />
-          </REGION>
-        </BOUNDARYCONDITIONS>        
-        
+            <REGION REF="0">
+                <D VAR="u" VALUE="(1-exp(KovLam*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="KovLam/(2*PI)*exp(KovLam*x)*sin(2*PI*y)" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"          />
+            </REGION>
+            <REGION REF="1">
+                <N VAR="u" USERDEFINEDTYPE="HOutflow" VALUE="Kinvis*KovLam*exp(KovLam*x)*cos(2*PI*y) + 0.5*(1-exp(2*KovLam*x))+0.5*(((1-exp(KovLam*x)*cos(2*PI*y))*(1-exp(KovLam*x)*cos(2*PI*y))+(KovLam/(2*PI)*exp(KovLam*x)*sin(2*PI*y))*(KovLam/(2*PI)*exp(KovLam*x)*sin(2*PI*y))))*(0.5*(1.0-tanh((1-exp(KovLam*x)*cos(2*PI*y))*20)))" />
+                <N VAR="v" USERDEFINEDTYPE="HOutflow" VALUE="-Kinvis*KovLam*KovLam/(2*PI)*exp(KovLam*x)*sin(2*PI*y)" />
+                <D VAR="p" USERDEFINEDTYPE="HOutflow"  VALUE="0" />
+            </REGION>
+            <REGION REF="2">
+                <N VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="p" VALUE="0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
         <FUNCTION NAME="InitialConditions">
-          <E VAR="u" VALUE="(1-exp(KovLam*x)*cos(2*PI*y))" />
-          <E VAR="v" VALUE="(KovLam/(2*PI))*exp(KovLam*x)*sin(2*PI*y)" />
-          <E VAR="p" VALUE="0.5*(1-exp(2*KovLam*x))" />
+            <E VAR="u" VALUE="(1-exp(KovLam*x)*cos(2*PI*y))" />
+            <E VAR="v" VALUE="(KovLam/(2*PI))*exp(KovLam*x)*sin(2*PI*y)" />
+            <E VAR="p" VALUE="0.5*(1-exp(2*KovLam*x))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
-          <E VAR="u" VALUE="(1-exp(KovLam*x)*cos(2*PI*y))" />
-          <E VAR="v" VALUE="(KovLam/(2*PI))*exp(KovLam*x)*sin(2*PI*y)" />
-          <E VAR="p" VALUE="0.5*(1-exp(2*KovLam*x))" />
+            <E VAR="u" VALUE="(1-exp(KovLam*x)*cos(2*PI*y))" />
+            <E VAR="v" VALUE="(KovLam/(2*PI))*exp(KovLam*x)*sin(2*PI*y)" />
+            <E VAR="p" VALUE="0.5*(1-exp(2*KovLam*x))" />
         </FUNCTION>
-        
+
     </CONDITIONS>
-    
+
     <GEOMETRY DIM="2" SPACE="2">
 
-      <VERTEX>
+        <VERTEX>
             <V ID="0">-5.000e-01  -5.000e-01 0.000e+00</V>
             <V ID="1">-5.000e-01   5.000e-01 0.000e+00</V>
             <V ID="2">-1.000e-01   5.000e-01 0.000e+00</V>
@@ -156,4 +156,4 @@
     </GEOMETRY>
 
 </NEKTAR>
-    
+

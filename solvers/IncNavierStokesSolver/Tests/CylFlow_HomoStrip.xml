@@ -1916,12 +1916,12 @@
             <E VAR="y" VALUE="-1.0*omega*omega*A*cos(omega*t)*cos(2*PI*z/LC)" />
         </FUNCTION>
     </CONDITIONS>
-    
+
     <MAPPING TYPE="XYofZ">
         <COORDS>Mapping</COORDS>
         <VEL>MappingVel</VEL>
-	</MAPPING>    
-	
+    </MAPPING>
+
     <FORCING>
         <FORCE TYPE="MovingBody">
             <DISPLACEMENTS> displacements </DISPLACEMENTS>

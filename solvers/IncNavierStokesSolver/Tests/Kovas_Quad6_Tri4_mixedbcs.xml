@@ -126,7 +126,7 @@
 
         <COMPOSITE>
             <C ID="0"> T[6-9]       </C>    <!-- Domain -->
-            <C ID="1"> Q[0-5]       </C>    <!-- Domain -->    
+            <C ID="1"> Q[0-5]       </C>    <!-- Domain -->
             <C ID="2"> E[2,7,12,17] </C>    <!-- Inflow -->
             <C ID="3"> E[4,9,14,19] </C>    <!-- Outflow -->
             <C ID="4"> E[0,1,20,21] </C>    <!-- Top & Bottom -->
