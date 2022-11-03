@@ -638,9 +638,9 @@
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
-  <EXPANSIONS>
+    <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="5" FIELDS="u,v,w,p" TYPE="MODIFIED" />
-  </EXPANSIONS>
+    </EXPANSIONS>
     <CONDITIONS>
         <SOLVERINFO>
             <I PROPERTY="SolverType" VALUE="VelocityCorrectionScheme" />

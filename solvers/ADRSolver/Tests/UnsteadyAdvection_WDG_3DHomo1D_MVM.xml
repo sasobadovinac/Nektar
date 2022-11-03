@@ -86,7 +86,7 @@
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                VALUE="sin(wavefreq*(x-t))*sin(wavefreq*(y-t))*sin(2*wavefreq/LZ*(z-t))" />
+                    VALUE="sin(wavefreq*(x-t))*sin(wavefreq*(y-t))*sin(2*wavefreq/LZ*(z-t))" />
             </REGION>
         </BOUNDARYCONDITIONS>
 

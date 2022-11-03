@@ -44,7 +44,7 @@
             <P> IO_CheckSteps   = 100000                </P>
             <P> IO_InfoSteps    = 100000                </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyInviscidBurger"  />
             <I PROPERTY="Projection"            VALUE="DisContinuous"           />

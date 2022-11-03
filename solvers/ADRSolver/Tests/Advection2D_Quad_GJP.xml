@@ -82,7 +82,7 @@
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="4" FIELDS="u" TYPE="MODIFIED" />
     </EXPANSIONS>
-    
+
     <CONDITIONS>
         <PARAMETERS>
             <P> FinTime         = 2.0                    </P>
@@ -93,54 +93,54 @@
             <P> advx            = 1                     </P>
             <P> advy            = 0                     </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
             <I PROPERTY="Projection"            VALUE="Continuous"          />
             <I PROPERTY="GJPStabilisation"      VALUE="Explicit"     />
             <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-        </SOLVERINFO> 
-        
+        </SOLVERINFO>
+
         <VARIABLES>
-            <V ID="0"> u </V> 
+            <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
-             <B ID="0"> C[1] </B>
-             <B ID="1"> C[2] </B>
-             <B ID="2"> C[3] </B>
-             <B ID="3"> C[4] </B>
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[2] </B>
+            <B ID="2"> C[3] </B>
+            <B ID="3"> C[4] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
-              <P VAR="u" VALUE="[2]" />
+                <P VAR="u" VALUE="[2]" />
             </REGION>
             <REGION REF="1">
-              <P VAR="u" VALUE="[3]" />
+                <P VAR="u" VALUE="[3]" />
             </REGION>
             <REGION REF="2">
-              <P VAR="u" VALUE="[0]" />
+                <P VAR="u" VALUE="[0]" />
             </REGION>
             <REGION REF="3">
-              <P VAR="u" VALUE="[1]" />
+                <P VAR="u" VALUE="[1]" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE="1"  />
             <E VAR="Vy" VALUE="0" />
-        </FUNCTION>   
-        
+        </FUNCTION>
+
         <FUNCTION NAME="ExactSolution">
-            <E VAR="u" VALUE="exp(-20.0*(x^2))" /> 
+            <E VAR="u" VALUE="exp(-20.0*(x^2))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
-            <E VAR="u" VALUE="exp(-20.0*(x^2))" /> 
+            <E VAR="u" VALUE="exp(-20.0*(x^2))" />
         </FUNCTION>
-        
+
     </CONDITIONS>
 
 </NEKTAR>

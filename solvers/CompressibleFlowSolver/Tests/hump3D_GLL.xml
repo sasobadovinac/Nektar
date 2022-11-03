@@ -27,10 +27,10 @@
         </COMPOSITE>
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
- <EXPANSIONS>
+    <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="3" TYPE="GLL_LAGRANGE" FIELDS="rho,rhou,rhov,rhow, E" />
     </EXPANSIONS>
- <CONDITIONS>
+    <CONDITIONS>
 
         <!-- Airbus Test Case -->
         <!-- M = M-straight * cos(Lambda),-->
@@ -87,7 +87,7 @@
             <B ID="4">  C[5]  </B>
             <B ID="5">  C[6]  </B>
         </BOUNDARYREGIONS>
-         <BOUNDARYCONDITIONS>
+        <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="rho"  USERDEFINEDTYPE="WallViscous" VALUE="0" />
                 <D VAR="rhou" USERDEFINEDTYPE="WallViscous" VALUE="0" />

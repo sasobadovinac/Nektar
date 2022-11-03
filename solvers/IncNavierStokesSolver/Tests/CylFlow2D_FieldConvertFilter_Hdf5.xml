@@ -81,8 +81,8 @@
             <E VAR="v" VALUE="0.0" />
             <E VAR="p" VALUE="0.0"/>
         </FUNCTION>
-    </CONDITIONS> 
-    
+    </CONDITIONS>
+
     <FILTERS>
         <FILTER TYPE="FieldConvert">
             <PARAM NAME="OutputFile">wss.chk</PARAM>

@@ -739,3 +739,37 @@ package-fedora-35-deploy:
   dependencies:
     - package-fedora-35-build
 
+##
+## Fedora 36
+##
+package-fedora-36-env:
+  <<: *package-env-build
+
+package-fedora-36-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-36-env"]
+  variables:
+    image_name: pkg/fedora-36
+    version_file: fedora-36.json
+
+package-fedora-36-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-36-build"]
+  dependencies:
+    - package-fedora-36-build
+  variables:
+    image_name: fedora:36
+    cmake_exe: cmake
+
+package-fedora-36-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-36-build", "package-fedora-36-test"]
+  dependencies:
+    - package-fedora-36-build
+
+package-fedora-36-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-36-build", "package-fedora-36-deploy-dev"]
+  dependencies:
+    - package-fedora-36-build
+

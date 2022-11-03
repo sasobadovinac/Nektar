@@ -34,7 +34,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include <string>
-using namespace std;
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/geometry.hpp>
@@ -47,6 +46,8 @@ using namespace std;
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include "ProcessInterpPointDataToFld.h"
+
+using namespace std;
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;

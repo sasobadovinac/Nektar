@@ -30,12 +30,12 @@
             <P> Uinfx         = Uinf*cos(AoA)         	   </P>
             <P> Uinfy         = Uinf*sin(AoA)          	   </P>
             <P> Re            = 200.                        </P>
-	    <P> Kinvis        = Uinf*C/Re          	   </P>
+            <P> Kinvis        = Uinf*C/Re          	   </P>
             <P> t0            = 0.0                        </P>
             <P> freq          = 2.                         </P>
-	    <P> amp           = 10.*PI/180.              </P>
-	    <P> omega         = 2.*PI*freq                 </P>
-        </PARAMETERS> 
+            <P> amp           = 10.*PI/180.              </P>
+            <P> omega         = 2.*PI*freq                 </P>
+        </PARAMETERS>
 
         <VARIABLES>
             <V ID="0"> u </V>
@@ -49,60 +49,60 @@
             <B ID="3"> C[4] </B>      <!-- Far Field -->
         </BOUNDARYREGIONS>
         <BOUNDARYCONDITIONS>
-            <REGION REF="0"> 
-       		<D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
+            <REGION REF="0">
+                <D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
                 <D VAR="v" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfy" />
-	        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
             </REGION>
-            <REGION REF="1"> 
+            <REGION REF="1">
                 <N VAR="u" USERDEFINEDTYPE="HOutflow" VALUE="0" />
-	        <N VAR="v" USERDEFINEDTYPE="HOutflow" VALUE="0" />
-	        <D VAR="p" USERDEFINEDTYPE="HOutflow" VALUE="0" />
+                <N VAR="v" USERDEFINEDTYPE="HOutflow" VALUE="0" />
+                <D VAR="p" USERDEFINEDTYPE="HOutflow" VALUE="0" />
             </REGION>
-           <REGION REF="2"> 
-       		<D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
+            <REGION REF="2">
+                <D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
                 <D VAR="v" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfy" />
-	        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
             </REGION>
             <REGION REF="3">
-       		<D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
+                <D VAR="u" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfx" />
                 <D VAR="v" USERDEFINEDTYPE="MovingFrameDomainVel" VALUE="Uinfy" />
-	        <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
             </REGION>
 
-       </BOUNDARYCONDITIONS>
+        </BOUNDARYCONDITIONS>
         <FUNCTION NAME="InitialConditions">
-        <F VAR="u,v,p" FILE="MovingRefFrame_Rot_SimpleDomain.rst" />
+            <F VAR="u,v,p" FILE="MovingRefFrame_Rot_SimpleDomain.rst" />
         </FUNCTION>
-       
+
         <FUNCTION NAME="VelMRF">
-		<E VAR="u" VALUE="0.0" />
-		<E VAR="v" VALUE="0" />
+            <E VAR="u" VALUE="0.0" />
+            <E VAR="v" VALUE="0" />
         </FUNCTION>
 
         <FUNCTION NAME="OmegaMRF">
-		<E VAR="Omega_z" VALUE="amp*omega*cos(omega*(t-t0))"/>
+            <E VAR="Omega_z" VALUE="amp*omega*cos(omega*(t-t0))"/>
         </FUNCTION>
-	
+
     </CONDITIONS>
-     <FORCING>
+    <FORCING>
         <FORCE TYPE="MovingReferenceFrame">
             <LinearVelocity> VelMRF </LinearVelocity>
             <AngularVelocity> OmegaMRF </AngularVelocity>
             <!--
-            <PivotPoint> 0.0 0.0 0.0 </PivotPoint>
+                <PivotPoint> 0.0 0.0 0.0 </PivotPoint>
             -->
         </FORCE>
     </FORCING>
- 
-   <FILTERS> 
-      <FILTER TYPE="AeroForces">
-           <PARAM NAME="OutputFile">dragLift</PARAM>
-           <PARAM NAME="OutputFrequency">10</PARAM>
-           <PARAM NAME="Boundary"> B[0] </PARAM>
-           <PARAM NAME="MomentPoint">0.25 0.0 0. </PARAM>
-      </FILTER>
-   </FILTERS>
+
+    <FILTERS>
+        <FILTER TYPE="AeroForces">
+            <PARAM NAME="OutputFile">dragLift</PARAM>
+            <PARAM NAME="OutputFrequency">10</PARAM>
+            <PARAM NAME="Boundary"> B[0] </PARAM>
+            <PARAM NAME="MomentPoint">0.25 0.0 0. </PARAM>
+        </FILTER>
+    </FILTERS>
 
 
     <GEOMETRY DIM="2" SPACE="2">
