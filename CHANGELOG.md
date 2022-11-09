@@ -20,6 +20,10 @@ v5.3.0
 - Added new filter to calculate variables integral on composite mesh (!1409)
 - Fix a I/O issue related to the IO_InfoSteps parameter (!1422)
 - Fix a I/O issue related to the IO_CheckSteps parameter (!1423)
+- Fix boost 1.77 compatibility errors (!1402)
+- Replaced depricated "sprintf" with "std::to_string" (!1406)
+- Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)
+- Templating FieldUtils::Interpolator class (!1420)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -51,6 +55,7 @@ exporting in .vtu format (!1386)
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
 - Correct header section of .cpp, .hpp, and .h files (!1426)
+- Linux format .cpp, .hpp, and .h files (!1432)
 
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
