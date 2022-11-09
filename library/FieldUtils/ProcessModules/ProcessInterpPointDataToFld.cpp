@@ -171,7 +171,8 @@ void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
     ASSERTL0(coord_id <= static_cast<int>(outPts->GetDim()) - 1,
              "interpcoord is bigger than the Pts files dimension");
 
-    Interpolator interp(LibUtilities::eNoMethod, coord_id);
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp(
+        LibUtilities::eNoMethod, coord_id);
 
     if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
     {

@@ -118,9 +118,13 @@ protected:
 
     std::map<int, int> m_vertMap;
 
-    FieldUtils::InterpolatorSharedPtr m_sendInterpolator;
+    std::shared_ptr<
+        FieldUtils::Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>>
+        m_sendInterpolator;
 
-    FieldUtils::InterpolatorSharedPtr m_extrapInterpolator;
+    std::shared_ptr<
+        FieldUtils::Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>>
+        m_extrapInterpolator;
 
     SOLVER_UTILS_EXPORT virtual void v_Init();
 
