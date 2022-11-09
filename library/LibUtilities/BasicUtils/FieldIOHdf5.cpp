@@ -264,7 +264,6 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
     // of each field on the hash of the field definition.
     for (int f = 0; f < nFields; ++f)
     {
-
         ASSERTL1(fielddata[f].size() > 0,
                  prfx.str() +
                      "fielddata vector must contain at least one value.");
@@ -772,10 +771,12 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         parallelProps = H5::PList::FileAccess();
         if (m_comm->GetSize() == m_comm->GetSizePIT())
         {
+            // Serial-in-Time
             parallelProps->SetMpio(m_comm);
         }
         else
         {
+            // Parallel-in-Time // FIXME: May not work with 3DH1D cases
             parallelProps->SetMpio(m_comm->GetRowComm());
         }
         // Use collective IO
