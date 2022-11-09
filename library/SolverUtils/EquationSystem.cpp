@@ -996,7 +996,18 @@ void EquationSystem::v_SetInitialConditions(NekDouble initialtime,
             {
                 fs::create_directory(newdir);
             }
-            WriteFld(newdir + "/" + m_sessionName + "_0" + ".fld");
+            WriteFld(newdir + "/" + m_sessionName + "_" +
+                     boost::lexical_cast<std::string>(
+                         m_comm->GetTimeComm()->GetRank()) +
+                     ".fld");
+            // Remove duplicated IC files
+            if (m_comm->GetTimeComm()->GetRank() != 0)
+            {
+                fs::remove_all(newdir + "/" + m_sessionName + "_" +
+                               boost::lexical_cast<std::string>(
+                                   m_comm->GetTimeComm()->GetRank()) +
+                               ".fld");
+            }
         }
     }
     ++m_nchk;
