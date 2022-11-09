@@ -256,7 +256,7 @@ void ProcessInterpField::Process(po::variables_map &vm)
         }
     }
 
-    Interpolator interp;
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp;
     if (m_f->m_verbose && m_f->m_comm->TreatAsRankZero())
     {
         interp.SetProgressCallback(&ProcessInterpField::PrintProgressbar, this);

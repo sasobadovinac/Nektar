@@ -55,7 +55,7 @@ namespace Nektar
 {
 namespace FieldUtils
 {
-class Interpolator;
+template <typename T> class Interpolator;
 }
 namespace SolverUtils
 {
