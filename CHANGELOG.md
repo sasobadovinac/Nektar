@@ -129,6 +129,7 @@ v5.2.0
 **CI**
 - Remove unused build options (!1360)
 - Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
+- Add XML linting and checking in CI pipeline (!1433)
 
 **Packaging**
 - Fix various issues with debian unstable and centos8 packaging (!1362)
