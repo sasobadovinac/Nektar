@@ -142,6 +142,18 @@ include:
   allow_failure: true
   timeout: 15m
 
+.xml-format-template: &xml-format-template
+  <<: *execution-conditions
+  image: debian:11-slim
+  stage: quality-checks
+  before_script:
+    - apt-get update && apt-get install -y dos2unix
+  script:
+    - cd "$CI_PROJECT_DIR"
+    - .gitlab-ci/checkformatXMLfile.sh
+  allow_failure: true
+  timeout: 15m
+
 ################################################
 ###################  DEBIAN  ###################
 ################################################
@@ -267,6 +279,10 @@ stretch-full-warnings:
 # CODE FORMATTING
 bullseye-clang-format:
   <<: *clang-format-template
+  needs: []
+
+bullseye-xml-format:
+  <<: *xml-format-template
   needs: []
 
 
