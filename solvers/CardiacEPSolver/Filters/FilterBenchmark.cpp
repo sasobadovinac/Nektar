@@ -175,17 +175,17 @@ void FilterBenchmark::v_Finalise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
-    for (int i = 0; i < m_threshold.size() - 1; ++i)
+    for (int j = 0; j < m_threshold.size() - 1; ++j)
     {
         std::stringstream vOutputFilename;
-        vOutputFilename << m_outputFile << "_" << i << ".fld";
+        vOutputFilename << m_outputFile << "_" << j << ".fld";
 
         std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef =
             pFields[0]->GetFieldDefinitions();
         std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
 
         Array<OneD, NekDouble> vCoeffs(pFields[0]->GetNcoeffs());
-        pFields[0]->FwdTransLocalElmt(m_threshold[i], vCoeffs);
+        pFields[0]->FwdTransLocalElmt(m_threshold[j], vCoeffs);
 
         // copy Data into FieldData and set variable
         for (int i = 0; i < FieldDef.size(); ++i)
