@@ -36,6 +36,9 @@ v5.3.0
 - Re-add the SFD test with an updated restart file (!1399)
 - ExtractSurface2DCSF utility is updated to use the boost program option (!1407)
 
+**CardiacEPSolver**
+- Fix a shadowed loop counter variable in the benchmark filter (!1436)
+
 **IncNavierStokesSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 
