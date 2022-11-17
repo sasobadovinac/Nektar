@@ -71,9 +71,9 @@ Bidomain::Bidomain(const LibUtilities::SessionReaderSharedPtr &pSession,
 {
 }
 
-void Bidomain::v_InitObject()
+void Bidomain::v_InitObject(bool DeclareField)
 {
-    UnsteadySystem::v_InitObject();
+    UnsteadySystem::v_InitObject(DeclareField);
     m_session->LoadParameter("Chi", m_chi);
     m_session->LoadParameter("Cm", m_capMembrane);
 
