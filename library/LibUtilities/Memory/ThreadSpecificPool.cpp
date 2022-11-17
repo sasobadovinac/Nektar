@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: hreadSpecificPool.cpp
+//  File: ThreadSpecificPool.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
