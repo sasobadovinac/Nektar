@@ -146,7 +146,7 @@ void FilterReynoldsStresses::v_Initialise(
     const NekDouble &time)
 {
     int dim          = pFields.size() - 1;
-    int nExtraFields = dim == 2 ? 3 : 6;
+    int nExtraFields = (dim + 1) * dim / 2;
     int origFields   = pFields.size();
 
     // Allocate storage
@@ -190,24 +190,14 @@ void FilterReynoldsStresses::v_FillVariablesName(
     {
         m_variables.push_back(pFields[n]->GetSession()->GetVariable(n));
     }
-    if (dim == 2)
+    for (int i = 0; i < dim; ++i)
     {
-        m_variables.push_back("uu");
-        m_variables.push_back("uv");
-        m_variables.push_back("vv");
-    }
-    else if (dim == 3)
-    {
-        m_variables.push_back("uu");
-        m_variables.push_back("uv");
-        m_variables.push_back("uw");
-        m_variables.push_back("vv");
-        m_variables.push_back("vw");
-        m_variables.push_back("ww");
-    }
-    else
-    {
-        ASSERTL0(false, "Unsupported dimension");
+        for (int j = i; j < dim; ++j)
+        {
+            std::string var = pFields[i]->GetSession()->GetVariable(i) +
+                              pFields[j]->GetSession()->GetVariable(j);
+            m_variables.push_back(var);
+        }
     }
 }
 
