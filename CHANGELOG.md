@@ -54,6 +54,9 @@ exporting in .vtu format (!1386)
 - Add option to refine curves in the same manner as the line refinement functionality (!1298)
 - Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
 - Fix a segmentation fault with WriteOctree due to missing 'order' parameter (!1418)
+- Fix CADSurfOCE curvature bug where negative curvature values could be returned causing incorrect mesh spacing (!1442)
+- Fix ProjectCAD bug with findAndProject where the projection was missing and variable was passed without reference (!1442)
+- Fix 3d_bl_wing test case for STEP files where the wrong surfaces were selected for the BL (!1442)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
