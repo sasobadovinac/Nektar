@@ -59,6 +59,9 @@ exporting in .vtu format (!1386)
 - Fix ProjectCAD bug with findAndProject where the projection was missing and variable was passed without reference (!1442)
 - Fix 3d_bl_wing test case for STEP files where the wrong surfaces were selected for the BL (!1442)
 
+**FieldConvert**
+- Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
+
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
 - Correct header section of .cpp, .hpp, and .h files (!1426)
