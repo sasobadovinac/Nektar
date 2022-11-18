@@ -120,6 +120,15 @@
         </FORCE>
     </FORCING>
 
+  <FILTERS>
+        <FILTER TYPE="ReynoldsStresses">
+            <PARAM NAME="OutputFile">Avg_field</PARAM>
+            <PARAM NAME="OutputFrequency">40</PARAM>
+            <PARAM NAME="SampleFrequency">1</PARAM>
+            <PARAM NAME="options">-e</PARAM>
+        </FILTER>
+    </FILTERS>
+
     <GEOMETRY DIM="2" SPACE="2">
         <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxt1UlsTHEAx/Gx77UWRe371tbY2zG1U/vaam1Fa9/XhMRBokIi4kSvriTODkScJBwc3SRODqKJhEgkNTP+/9F+xjs0Mp/85s37vmcmkfjf0Za++/X96wE3E4kuyJhnjzPHl7x3Da/XNGVff5vWu+G+f/fgqYasf0yXsu+Bu+8Z/Hr7vGQy+bng/L1w972D1277u3PfB3ffN/jPJ+2Z41vBvh/uvn/w4qLMx0t+L9gPwN0XBX9Y05w5fhTsB+LuBwXv25Ld/SrYD8bdDwl+6827zPG7YD8Udz8s0emodl+Mux/e2ROV9cncfY4+Irwen7+l+Mjg8flyXxL8Rnh+9FHB4/NRhY/m/utjuL96KfdPH8v98frG0T+Fj6ev1zeBvk+LWnOdok+k73N8En3dTw4e/3/qU4LXhb761OA/Ql99Gn316fTVZ9BXn0lffRZ99dn0ffGhNdcx+hz6vsTn0td9WfD4/Lovp6/7iuDx+XU/j77uk/TV59NXXxC8JfT1/Avp634RfXO/ZxV3UtEX0zf777byf76Evtn9pw6+NHjH35fxHd6/Mnj8fvD8VcHj85v9O7CDp+jrfhl9PX+avn7+6uDx+fX9l9NXX0HflsZH2Y6voq+kr76Kvvpq+upr6HsPX0tf9+voq6+nr15DX31D7BL66hvpq2+i74PJuU5530zf+/gW+j7Et9JX30ZffTt9/Xw76KvvpK++i776bvp6/bX0dV9H3/L+ud+/vO+hr15P3wq8gb7u99LX/b7g8fvX/X766gfoqx+kbxneGDx+P/j5DtHX9z9M35G3c9eZ9yP01ZvoqzfTtwQ/Sl/3x+irH6fvCPwEfd2fpK9+ir76afrqZxL/O9ryfpa++jn66ufpq1+gr36Rvvol+uqX6atfoa9+lb76NfrqfwDCFw4V</VERTEX>
         <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1llO3XEEUBm9s2xPb9sS2PbFt27Zt27bt5M/kpeshtda5L73qW+f2nJnavXcnJf3/lyxiTR6xpohY+Uup5+FUEZxazH5p9DzPpRXzXDox+6WP+P8MYv4/Y8R+mfQ8+2YWs28WMftl1fN8XjYxn5ddzH459DzvkVPMe+QSs19uPc/75RHzfnnF7JdPz/Pe+cW8dwEx+xXU83yfQmK+T2Ex+xUJK/XM94yJ+Z5FxdRvMeV8/+Ji6rSEcn6XkmLqsZRyfq/SYuqujHJ+x7Ji6quccn7f8mLqqIJyfveKYuqlknJ8VBZTF1WU46mqGP/VlMfCWl1MXdQIK37xWlOM11piPNdWju86YjzXVU4d1BPjub5y6qOBGM8NlVM3jcR4bqyceoqL8dxEOXXWVIznZsqpv+ZiPLdQTl22FOO5lXLqtbU4FtY2YcUvddxWTB23E+O5vXLqu4MYzx2VU/edxHjurJzz0EWM567KOSfdxHjurpzz00OM557KOVe9xHjurZzz1keM577KOYf9xHjur5zzOUCM/4FhxS/ndpCYc5sQ43mwcs7zEDGehyrnnA8T43m4cs7/CDGeRyqnL4wS43m0cvrFGDGexyqnj4wT43m8cvrLBDGeJyqPh3WSGM+TldOPpojxPzWs+KVPTRPTp6aL8TxDOf1rphjPs5TT12aL8TxHOf1urhjP85TTB+eL8bxAOf1xoRjPi5TTNxeL8bxEOf10qRjPy5TTZ5eL42FdoZz+u1KM/1VhxS99ebWYvrxGjOe1yunX68R4Xq+cPr5BjOeNyunvm8R43qycvr9FjOetypkH28R43q6cObFDjOedypkfu8R43q2cubJHjOe9ypk3+8T43x9W/DKHDoiZQwfFeD6knPl0WIznI8qZW0fFeD6mnHl2XIznE8qZcyfFeD6lnPl3WoznM8qZi2fFeD6nPBHW82I8X1DOHL0oxvMl5czXy2L8Xwkrfpm7V8XM3WtiPF9Xzjy+IcbzTeXM6VtiPN9Wzvy+I8bzXeXM9XtiPN9Xzrx/IMbzQ+XcAx6J8fxYOfeDJ+JEWJ8q597wTIzn58q5T7wQ4/9lWPHLPeOVmHvGazGe3yjn/vFWjOd3yrmXvBfj+YNy7isfxXj+pJx7zGcxnr8o537zVYznb8q593wX4/mHcu5DP8V4/qWce9JvMZ7/KOf+9FeM/3/uUMT6</EDGE>
