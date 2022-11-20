@@ -929,8 +929,6 @@ void IncNavierStokes::SetMRFWallBCs(const NekDouble &time)
     }
 
     int npoints;
-    int fldid = m_velocity[0];
-
     Array<OneD, NekDouble> Bphys, Bcoeffs;
 
     // loop over the boundary regions
@@ -1051,8 +1049,6 @@ void IncNavierStokes::SetMRFDomainVelBCs(const NekDouble &time)
     }
 
     int npoints;
-    int fldid = m_velocity[0];
-
     Array<OneD, NekDouble> Bphys, Bcoeffs;
 
     // loop over the boundary regions
@@ -1351,8 +1347,6 @@ void IncNavierStokes::GetPivotPoint(Array<OneD, NekDouble> &vPivotPoint)
     {
         return;
     }
-
-    TiXmlElement *vMRFForcing;
 
     TiXmlElement *vForcing = m_session->GetElement("Nektar/Forcing");
     if (vForcing)

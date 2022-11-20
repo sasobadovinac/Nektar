@@ -585,7 +585,6 @@ void PulseWaveSystem::GetCommArray(
             }
 
             // have we found all comms on all processors.
-            int foundallcomms = 0;
             int i;
             for (i = 0; i < nprocs; ++i)
             {
@@ -1031,7 +1030,6 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
         int vid = m_mergingJcts[n][0]->m_vid;
         for (int i = 0; i < 3; ++i)
         {
-            int offset        = m_mergingJcts[n][i]->m_riemannOrd;
             tmp1[3 * cnt + i] = (NekDouble)(3 * vid + i + 1);
         }
     }
@@ -1270,7 +1268,7 @@ void PulseWaveSystem::v_DoInitialise()
  */
 void PulseWaveSystem::v_DoSolve()
 {
-    NekDouble IntegrationTime = 0.0;
+    // NekDouble IntegrationTime = 0.0;
     int i;
     int n;
     int nchk = 1;
