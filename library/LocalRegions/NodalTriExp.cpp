@@ -68,10 +68,6 @@ NodalTriExp::NodalTriExp(const NodalTriExp &T)
 {
 }
 
-NodalTriExp::~NodalTriExp()
-{
-}
-
 //----------------------------
 // Integration Methods
 //----------------------------

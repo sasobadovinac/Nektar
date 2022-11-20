@@ -377,7 +377,7 @@ public:
         return v_DetShapeType();
     }
 
-    std::shared_ptr<StdExpansion> GetStdExp(void) const
+    std::shared_ptr<StdExpansion> GetStdExp() const
     {
         return v_GetStdExp();
     }
@@ -392,7 +392,7 @@ public:
         return v_GetShapeDimension();
     }
 
-    bool IsBoundaryInteriorExpansion()
+    bool IsBoundaryInteriorExpansion() const
     {
         return v_IsBoundaryInteriorExpansion();
     }
@@ -1172,10 +1172,6 @@ protected:
     STD_REGIONS_EXPORT DNekBlkMatSharedPtr
     CreateStdStaticCondMatrix(const StdMatrixKey &mkey);
 
-    STD_REGIONS_EXPORT void BwdTrans_MatOp(
-        const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
-
     void BwdTrans_SumFac(const Array<OneD, const NekDouble> &inarray,
                          Array<OneD, NekDouble> &outarray)
     {
@@ -1363,16 +1359,15 @@ protected:
 
 private:
     // Virtual functions
-    STD_REGIONS_EXPORT virtual int v_GetNverts() const = 0;
-    STD_REGIONS_EXPORT virtual int v_GetNtraces() const;
+    STD_REGIONS_EXPORT virtual int v_GetNverts() const  = 0;
+    STD_REGIONS_EXPORT virtual int v_GetNtraces() const = 0;
 
-    STD_REGIONS_EXPORT virtual int v_NumBndryCoeffs() const;
-    STD_REGIONS_EXPORT virtual int v_NumDGBndryCoeffs() const;
+    STD_REGIONS_EXPORT virtual int v_NumBndryCoeffs() const   = 0;
+    STD_REGIONS_EXPORT virtual int v_NumDGBndryCoeffs() const = 0;
 
-    STD_REGIONS_EXPORT virtual int v_GetTraceNcoeffs(const int i) const;
-    STD_REGIONS_EXPORT virtual int v_GetTotalTraceIntNcoeffs() const;
-    STD_REGIONS_EXPORT virtual int v_GetTraceIntNcoeffs(const int i) const;
-    STD_REGIONS_EXPORT virtual int v_GetTraceNumPoints(const int i) const;
+    STD_REGIONS_EXPORT virtual int v_GetTraceNcoeffs(const int i) const    = 0;
+    STD_REGIONS_EXPORT virtual int v_GetTraceIntNcoeffs(const int i) const = 0;
+    STD_REGIONS_EXPORT virtual int v_GetTraceNumPoints(const int i) const  = 0;
 
     STD_REGIONS_EXPORT virtual const LibUtilities::BasisKey v_GetTraceBasisKey(
         const int i, const int k) const;
@@ -1383,17 +1378,18 @@ private:
     STD_REGIONS_EXPORT virtual const LibUtilities::PointsKey v_GetNodalPointsKey()
         const;
 
-    STD_REGIONS_EXPORT virtual LibUtilities::ShapeType v_DetShapeType() const;
+    STD_REGIONS_EXPORT virtual LibUtilities::ShapeType v_DetShapeType()
+        const = 0;
 
-    STD_REGIONS_EXPORT virtual std::shared_ptr<StdExpansion> v_GetStdExp(
-        void) const;
+    STD_REGIONS_EXPORT virtual std::shared_ptr<StdExpansion> v_GetStdExp()
+        const;
 
     STD_REGIONS_EXPORT virtual std::shared_ptr<StdExpansion> v_GetLinStdExp(
         void) const;
 
-    STD_REGIONS_EXPORT virtual int v_GetShapeDimension() const;
+    STD_REGIONS_EXPORT virtual int v_GetShapeDimension() const = 0;
 
-    STD_REGIONS_EXPORT virtual bool v_IsBoundaryInteriorExpansion();
+    STD_REGIONS_EXPORT virtual bool v_IsBoundaryInteriorExpansion() const;
 
     STD_REGIONS_EXPORT virtual bool v_IsNodalNonTensorialExp();
 
@@ -1509,7 +1505,7 @@ private:
         const Array<OneD, const NekDouble> &Lcoord,
         Array<OneD, NekDouble> &coord);
 
-    STD_REGIONS_EXPORT virtual int v_GetCoordim(void);
+    STD_REGIONS_EXPORT virtual int v_GetCoordim() const;
 
     STD_REGIONS_EXPORT virtual void v_GetBoundaryMap(
         Array<OneD, unsigned int> &outarray);

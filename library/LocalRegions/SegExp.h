@@ -58,7 +58,7 @@ public:
 
     LOCAL_REGIONS_EXPORT SegExp(const SegExp &S);
 
-    LOCAL_REGIONS_EXPORT ~SegExp();
+    LOCAL_REGIONS_EXPORT virtual ~SegExp() override = default;
 
 protected:
     //----------------------------
@@ -147,10 +147,6 @@ protected:
         const int vertex, const Array<OneD, const NekDouble> &inarray,
         NekDouble &outarray) override;
 
-    LOCAL_REGIONS_EXPORT virtual void v_AddVertexPhysVals(
-        const int vertex, const NekDouble &inarray,
-        Array<OneD, NekDouble> &outarray);
-
     LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysVals(
         const int edge, const StdRegions::StdExpansionSharedPtr &EdgeExp,
         const Array<OneD, const NekDouble> &inarray,
@@ -168,18 +164,9 @@ protected:
     LOCAL_REGIONS_EXPORT virtual StdRegions::StdExpansionSharedPtr v_GetLinStdExp(
         void) const override;
 
-    LOCAL_REGIONS_EXPORT virtual int v_GetCoordim() override;
-
     LOCAL_REGIONS_EXPORT virtual void v_SetCoeffsToOrientation(
         StdRegions::Orientation dir, Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
-
-    LOCAL_REGIONS_EXPORT virtual int v_GetNumPoints(const int dir) const;
-
-    LOCAL_REGIONS_EXPORT virtual int v_GetNcoeffs(void) const;
-
-    LOCAL_REGIONS_EXPORT virtual const LibUtilities::BasisSharedPtr &v_GetBasis(
-        int dir) const;
 
     LOCAL_REGIONS_EXPORT virtual int v_NumBndryCoeffs() const override;
 
@@ -187,8 +174,6 @@ protected:
 
     LOCAL_REGIONS_EXPORT virtual void v_ComputeTraceNormal(
         const int vertex) override;
-
-    LOCAL_REGIONS_EXPORT virtual SpatialDomains::GeomType v_MetricInfoType();
 
     LOCAL_REGIONS_EXPORT virtual void v_ExtractDataToCoeffs(
         const NekDouble *data, const std::vector<unsigned int> &nummodes,

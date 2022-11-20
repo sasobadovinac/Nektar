@@ -43,13 +43,6 @@ namespace Nektar
 {
 namespace LocalRegions
 {
-const NormalVector &Expansion1D::v_GetTraceNormal(const int vert) const
-{
-    std::map<int, NormalVector>::const_iterator x;
-    x = m_traceNormals.find(vert);
-    ASSERTL1(x != m_traceNormals.end(), "Vertex normal not computed.");
-    return x->second;
-}
 
 DNekMatSharedPtr Expansion1D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
 {
@@ -435,7 +428,7 @@ void Expansion1D::v_AddRobinMassMatrix(
  * - multiplies the edge vector by the edge mass matrix
  * - maps the edge coefficients back onto the elemental coefficients
  */
-void Expansion1D::v_AddRobinEdgeContribution(
+void Expansion1D::v_AddRobinTraceContribution(
     const int vert, const Array<OneD, const NekDouble> &primCoeffs,
     const Array<OneD, NekDouble> &incoeffs, Array<OneD, NekDouble> &coeffs)
 {

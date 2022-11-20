@@ -53,7 +53,7 @@ public:
                                       const LibUtilities::BasisKey &Ba,
                                       const LibUtilities::BasisKey &Bb);
     STD_REGIONS_EXPORT StdExpansion2D(const StdExpansion2D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion2D();
+    STD_REGIONS_EXPORT virtual ~StdExpansion2D() override;
 
     // Generic operations in different element
 
@@ -138,11 +138,11 @@ protected:
      */
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coords,
-        const Array<OneD, const NekDouble> &physvals);
+        const Array<OneD, const NekDouble> &physvals) override;
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, DNekMatSharedPtr> &I,
-        const Array<OneD, const NekDouble> &physvals);
+        const Array<OneD, const NekDouble> &physvals) override;
 
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,
@@ -160,34 +160,33 @@ protected:
 
     STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey);
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override;
     STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey);
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override;
 
     STD_REGIONS_EXPORT virtual void v_GetTraceCoeffMap(
-        const unsigned int traceid, Array<OneD, unsigned int> &maparray);
+        const unsigned int traceid,
+        Array<OneD, unsigned int> &maparray) override;
 
     STD_REGIONS_EXPORT virtual void v_GetElmtTraceToTraceMap(
         const unsigned int eid, Array<OneD, unsigned int> &maparray,
-        Array<OneD, int> &signarray, Orientation edgeOrient, int P, int Q);
+        Array<OneD, int> &signarray, Orientation edgeOrient, int P,
+        int Q) override;
 
     STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
         const int eid, Array<OneD, unsigned int> &maparray,
         Array<OneD, int> &signarray, Orientation edgeOrient = eForwards,
-        int P = -1, int Q = -1);
+        int P = -1, int Q = -1) override;
 
-    STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(const int dir,
-                                                        DNekMatSharedPtr &mat);
+    STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
+        const int dir, DNekMatSharedPtr &mat) override;
 
 private:
     // Virtual Functions ----------------------------------------
-    virtual int v_GetShapeDimension() const
-    {
-        return 2;
-    }
-
-    virtual int v_GetCoordim(void)
+    virtual int v_GetShapeDimension() const override
     {
         return 2;
     }
