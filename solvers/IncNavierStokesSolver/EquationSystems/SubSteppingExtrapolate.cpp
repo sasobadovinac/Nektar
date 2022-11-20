@@ -78,6 +78,7 @@ void SubSteppingExtrapolate::v_EvaluatePressureBCs(
     const Array<OneD, const Array<OneD, NekDouble>> &fields,
     const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis)
 {
+    boost::ignore_unused(fields, N, kinvis);
     ASSERTL0(false, "This method should not be called by Substepping routine");
 }
 
@@ -215,6 +216,7 @@ void SubSteppingExtrapolate::SubStepProjection(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
+    boost::ignore_unused(time);
     ASSERTL1(inarray.size() == outarray.size(),
              "Inarray and outarray of different sizes ");
 
@@ -231,6 +233,8 @@ void SubSteppingExtrapolate::v_SubStepSetPressureBCs(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     const NekDouble Aii_Dt, NekDouble kinvis)
 {
+    boost::ignore_unused(Aii_Dt);
+
     // int nConvectiveFields =m_fields.size()-1;
     Array<OneD, Array<OneD, NekDouble>> nullvelfields;
 
@@ -506,6 +510,8 @@ void SubSteppingExtrapolate::v_MountHOPBCs(
     int HBCdata, NekDouble kinvis, Array<OneD, NekDouble> &Q,
     Array<OneD, const NekDouble> &Advection)
 {
+    boost::ignore_unused(Advection);
+
     Vmath::Smul(HBCdata, -kinvis, Q, 1, Q, 1);
 }
 

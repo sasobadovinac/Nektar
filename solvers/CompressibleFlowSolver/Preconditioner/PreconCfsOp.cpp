@@ -63,6 +63,7 @@ void PreconCfsOp::v_DoPreconCfs(
     const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
     const bool &flag)
 {
+    boost::ignore_unused(pFields, pInput, pOutput, flag);
     NEKERROR(ErrorUtil::efatal, "v_DoPreconCfs not defined");
 }
 
@@ -71,6 +72,7 @@ void PreconCfsOp::v_BuildPreconCfs(
     const Array<OneD, const Array<OneD, NekDouble>> &intmp,
     const NekDouble time, const NekDouble lambda)
 {
+    boost::ignore_unused(pFields, intmp, time, lambda);
     NEKERROR(ErrorUtil::efatal, "v_BuildPreconCfs not defined");
 }
 

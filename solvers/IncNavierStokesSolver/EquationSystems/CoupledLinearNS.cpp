@@ -1525,6 +1525,8 @@ void CoupledLinearNS::SolveUnsteadyStokesSystem(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
     const NekDouble aii_Dt)
 {
+    boost::ignore_unused(time);
+
     int i;
     Array<OneD, Array<OneD, NekDouble>> F(m_nConvectiveFields);
     NekDouble lambda = 1.0 / aii_Dt;

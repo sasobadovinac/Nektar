@@ -61,6 +61,8 @@ void RoeSolverSIMD::v_Solve(
     const Array<OneD, const Array<OneD, NekDouble>> &bwd,
     Array<OneD, Array<OneD, NekDouble>> &flux)
 {
+    boost::ignore_unused(nDim);
+
     static auto gamma    = m_params["gamma"]();
     static auto nVars    = fwd.size();
     static auto spaceDim = nVars - 2;

@@ -729,6 +729,8 @@ void VelocityCorrectionScheme::SolveUnsteadyStokesSystem(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
     const NekDouble aii_Dt)
 {
+    boost::ignore_unused(time);
+
     // Set up flowrate if we're starting for the first time or the value of
     // aii_Dt has changed.
     if (m_flowrate > 0.0 && (aii_Dt != m_flowrateAiidt))

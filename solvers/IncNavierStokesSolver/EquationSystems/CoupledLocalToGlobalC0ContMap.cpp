@@ -59,6 +59,8 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
     const bool CheckforSingularSys)
     : AssemblyMapCG(pSession, fields[0]->GetComm())
 {
+    boost::ignore_unused(graph, boundaryConditions);
+
     int i, j, k, n;
     int cnt = 0, offset = 0;
     int meshVertId;
@@ -898,6 +900,7 @@ void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
     MultiRegions::BottomUpSubStructuredGraphSharedPtr &bottomUpGraph,
     Array<OneD, int> &AddMeanPressureToEdgeId)
 {
+    boost::ignore_unused(vertId);
 
     int i, j, k;
 

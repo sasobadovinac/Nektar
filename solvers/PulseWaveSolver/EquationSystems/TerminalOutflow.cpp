@@ -64,6 +64,8 @@ void TerminalOutflow::v_DoBoundary(
     Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
     int offset, int n)
 {
+    boost::ignore_unused(time);
+
     NekDouble A_r;
     NekDouble A_l;
     NekDouble u_r;

@@ -161,6 +161,7 @@ void CourtemancheRamirezNattel98::v_Update(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
+    boost::ignore_unused(time);
     ASSERTL0(inarray.get() != outarray.get(),
              "Must have different arrays for input and output.");
 

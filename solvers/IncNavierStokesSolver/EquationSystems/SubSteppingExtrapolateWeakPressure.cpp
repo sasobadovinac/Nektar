@@ -65,6 +65,8 @@ void SubSteppingExtrapolateWeakPressure::v_SubStepSetPressureBCs(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     const NekDouble Aii_Dt, NekDouble kinvis)
 {
+    boost::ignore_unused(Aii_Dt);
+
     Array<OneD, Array<OneD, NekDouble>> nullvelfields;
 
     m_pressureCalls++;

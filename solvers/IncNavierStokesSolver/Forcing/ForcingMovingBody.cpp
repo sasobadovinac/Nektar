@@ -56,6 +56,8 @@ void ForcingMovingBody::v_InitObject(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
 {
+    boost::ignore_unused(pNumForcingFields);
+
     // Just 3D homogenous 1D problems can use this techinque
     ASSERTL0(pFields[0]->GetExpType() == MultiRegions::e3DH1D,
              "Moving body implemented just for 3D Homogenous 1D expansions.");
@@ -104,6 +106,8 @@ void ForcingMovingBody::v_Apply(
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time)
 {
+    boost::ignore_unused(inarray, outarray);
+
     // Update the forces from the calculation of fluid field, which is
     // implemented in the movingbody filter
     Array<OneD, NekDouble> Hydroforces(2 * m_np, 0.0);
@@ -226,6 +230,8 @@ void ForcingMovingBody::EvaluateStructDynModel(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     Array<OneD, NekDouble> &Hydroforces, NekDouble time)
 {
+    boost::ignore_unused(time);
+
     LibUtilities::CommSharedPtr vcomm = pFields[0]->GetComm();
     int colrank                       = vcomm->GetColumnComm()->GetRank();
     int nproc                         = vcomm->GetColumnComm()->GetSize();
@@ -550,6 +556,8 @@ void ForcingMovingBody::Newmark_betaSolver(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     Array<OneD, NekDouble> &HydroForces, Array<OneD, NekDouble> &BodyMotions)
 {
+    boost::ignore_unused(pFields);
+
     std::string supptype = m_session->GetSolverInfo("SupportType");
 
     int npts = HydroForces.size();
@@ -678,6 +686,8 @@ void ForcingMovingBody::InitialiseCableModel(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields)
 {
+    boost::ignore_unused(pSession, pFields);
+
     m_movingBodyCalls = 0;
     m_session->LoadParameter("Kinvis", m_kinvis);
     m_session->LoadParameter("TimeStep", m_timestep, 0.01);
@@ -940,6 +950,8 @@ void ForcingMovingBody::InitialiseCableModel(
 void ForcingMovingBody::SetDynEqCoeffMatrix(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields)
 {
+    boost::ignore_unused(pFields);
+
     int nplanes;
 
     bool homostrip;

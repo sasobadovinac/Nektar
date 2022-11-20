@@ -199,6 +199,8 @@ void PreconCfsBRJ::v_BuildPreconCfs(
     const Array<OneD, const Array<OneD, NekDouble>> &intmp,
     const NekDouble time, const NekDouble lambda)
 {
+    boost::ignore_unused(pFields);
+
     if (0 < m_PreconItsStep)
     {
         m_operator.DoCalcPreconMatBRJCoeff(

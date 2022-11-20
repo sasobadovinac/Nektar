@@ -83,6 +83,8 @@ void SkewSymmetricAdvection::v_Advect(
     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
     const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
+    boost::ignore_unused(time, pFwd, pBwd);
+
     // use dimension of Velocity vector to dictate dimension of operation
     int ndim  = advVel.size();
     int nqtot = fields[0]->GetTotPoints();

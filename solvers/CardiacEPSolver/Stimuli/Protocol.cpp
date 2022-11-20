@@ -59,6 +59,7 @@ Protocol::Protocol(const LibUtilities::SessionReaderSharedPtr &pSession,
                    const TiXmlElement *pXml)
     : m_session(pSession)
 {
+    boost::ignore_unused(pXml);
 }
 
 /**

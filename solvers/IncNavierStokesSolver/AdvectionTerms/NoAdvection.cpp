@@ -65,6 +65,7 @@ void NoAdvection::v_InitObject(
     LibUtilities::SessionReaderSharedPtr pSession,
     Array<OneD, MultiRegions::ExpListSharedPtr> pFields)
 {
+    boost::ignore_unused(pSession, pFields);
 }
 
 /**
@@ -79,6 +80,8 @@ void NoAdvection::v_Advect(
     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
     const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
+    boost::ignore_unused(nConvectiveFields, advVel, time, pFwd, pBwd);
+
     int nPointsTot = fields[0]->GetNpoints();
     for (int i = 0; i < inarray.size(); ++i)
     {
