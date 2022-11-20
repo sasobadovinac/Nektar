@@ -46,10 +46,6 @@ PointExp::PointExp(const SpatialDomains::PointGeomSharedPtr &geom)
     m_ncoeffs = 1;
 }
 
-PointExp::~PointExp(void)
-{
-}
-
 void PointExp::v_GetCoords(Array<OneD, NekDouble> &coords_0,
                            Array<OneD, NekDouble> &coords_1,
                            Array<OneD, NekDouble> &coords_2)

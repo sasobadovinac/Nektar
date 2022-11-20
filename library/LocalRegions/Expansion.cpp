@@ -624,7 +624,7 @@ void Expansion::ComputeGmatcdotMF(const Array<TwoD, const NekDouble> &df,
 }
 
 // Get Moving frames
-Array<OneD, NekDouble> Expansion::v_GetMF(
+Array<OneD, NekDouble> Expansion::GetMF(
     const int dir, const int shapedim, const StdRegions::VarCoeffMap &varcoeffs)
 {
     int coordim = GetCoordim();
@@ -677,7 +677,7 @@ Array<OneD, NekDouble> Expansion::v_GetMF(
 }
 
 // Get magnitude of MF
-Array<OneD, NekDouble> Expansion::v_GetMFDiv(
+Array<OneD, NekDouble> Expansion::GetMFDiv(
     const int dir, const StdRegions::VarCoeffMap &varcoeffs)
 {
     int indxDiv = 3;
@@ -700,7 +700,7 @@ Array<OneD, NekDouble> Expansion::v_GetMFDiv(
 }
 
 // Get magnitude of MF
-Array<OneD, NekDouble> Expansion::v_GetMFMag(
+Array<OneD, NekDouble> Expansion::GetMFMag(
     const int dir, const StdRegions::VarCoeffMap &varcoeffs)
 {
     int indxMag = 4;

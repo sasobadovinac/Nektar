@@ -50,7 +50,7 @@ class PointExp : virtual public StdRegions::StdPointExp,
 public:
     LOCAL_REGIONS_EXPORT PointExp(
         const SpatialDomains::PointGeomSharedPtr &m_geom);
-    LOCAL_REGIONS_EXPORT ~PointExp(void);
+    LOCAL_REGIONS_EXPORT virtual ~PointExp() override = default;
 
     inline const Array<OneD, const NekDouble> &GetCoeffs(void) const
     {
@@ -125,11 +125,11 @@ protected:
 
     virtual void v_GetCoords(Array<OneD, NekDouble> &coords_0,
                              Array<OneD, NekDouble> &coords_1,
-                             Array<OneD, NekDouble> &coords_2);
+                             Array<OneD, NekDouble> &coords_2) override;
 
     virtual void v_NormVectorIProductWRTBase(
         const Array<OneD, const NekDouble> &Fx,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 };
 
 typedef std::shared_ptr<PointExp> PointExpSharedPtr;
