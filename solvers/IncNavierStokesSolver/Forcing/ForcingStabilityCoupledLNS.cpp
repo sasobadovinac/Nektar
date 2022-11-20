@@ -54,6 +54,7 @@ void ForcingStabilityCoupledLNS::v_InitObject(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
     const unsigned int &pNumForcingFields, const TiXmlElement *pForce)
 {
+    boost::ignore_unused(pFields, pNumForcingFields, pForce);
 }
 
 void ForcingStabilityCoupledLNS::v_Apply(
@@ -61,6 +62,8 @@ void ForcingStabilityCoupledLNS::v_Apply(
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time)
 {
+    boost::ignore_unused(inarray, time);
+
     int npts = fields[0]->GetTotPoints();
 
     ASSERTL1(fields.size() == outarray.size(),

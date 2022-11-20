@@ -61,6 +61,7 @@ struct ModuleWrap : public MODTYPE, public py::wrapper<MODTYPE>
      */
     void Process(po::variables_map &vm) override
     {
+        boost::ignore_unused(vm);
         this->get_override("Process")();
     }
 

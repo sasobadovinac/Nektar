@@ -275,6 +275,7 @@ void LinearisedAdvection::v_Advect(
     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
     const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
+    boost::ignore_unused(pFwd, pBwd);
     ASSERTL1(nConvectiveFields == inarray.size(),
              "Number of convective fields and Inarray are not compatible");
 
@@ -623,6 +624,8 @@ void LinearisedAdvection::UpdateGradBase(
 DNekBlkMatSharedPtr LinearisedAdvection::GetFloquetBlockMatrix(
     FloquetMatType mattype, bool UseContCoeffs) const
 {
+    boost::ignore_unused(mattype, UseContCoeffs);
+
     DNekMatSharedPtr loc_mat;
     DNekBlkMatSharedPtr BlkMatrix;
     int n_exp = 0;

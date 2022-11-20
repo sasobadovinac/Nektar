@@ -119,6 +119,8 @@ void FilterMovingBody::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
+    boost::ignore_unused(time);
+
     m_index_f      = 0;
     m_index_m      = 0;
     m_outputStream = Array<OneD, std::ofstream>(2);
@@ -687,6 +689,8 @@ void FilterMovingBody::UpdateMotion(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     Array<OneD, NekDouble> &MotionVars, const NekDouble &time)
 {
+    boost::ignore_unused(pFields);
+
     // Only output every m_outputFrequency.
     if ((m_index_m++) % m_outputFrequency)
     {
@@ -739,6 +743,8 @@ void FilterMovingBody::v_Finalise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
+    boost::ignore_unused(time);
+
     if (pFields[0]->GetComm()->GetRank() == 0)
     {
         m_outputStream[0].close();

@@ -913,6 +913,8 @@ void IncNavierStokes::SetMovingReferenceFrameBCs(const NekDouble &time)
  */
 void IncNavierStokes::SetMRFWallBCs(const NekDouble &time)
 {
+    boost::ignore_unused(time);
+
     // for the wall we need to calculate:
     // [V_wall]_xyz = [V_frame]_xyz + [Omega X r]_xyz
     // Note all vectors must be in moving frame coordinates xyz

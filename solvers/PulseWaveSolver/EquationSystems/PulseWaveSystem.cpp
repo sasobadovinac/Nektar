@@ -1951,6 +1951,8 @@ NekDouble PulseWaveSystem::v_L2Error(unsigned int field,
                                      const Array<OneD, NekDouble> &exact,
                                      bool Normalised)
 {
+    boost::ignore_unused(exact);
+
     NekDouble L2error = 0.0;
     NekDouble L2error_dom;
     NekDouble Vol = 0.0;
@@ -2047,6 +2049,8 @@ NekDouble PulseWaveSystem::v_L2Error(unsigned int field,
 NekDouble PulseWaveSystem::v_LinfError(unsigned int field,
                                        const Array<OneD, NekDouble> &exact)
 {
+    boost::ignore_unused(exact);
+
     NekDouble LinferrorDom, Linferror = -1.0;
 
     for (int omega = 0; omega < m_nDomains; ++omega)

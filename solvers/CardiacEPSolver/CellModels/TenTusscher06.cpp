@@ -145,6 +145,8 @@ void TenTusscher06::v_Update(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
+    boost::ignore_unused(time);
+
     for (unsigned int i = 0; i < m_nq; ++i)
     {
         // Inputs:

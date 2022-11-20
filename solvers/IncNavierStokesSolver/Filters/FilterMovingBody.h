@@ -80,6 +80,7 @@ public:
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         const NekDouble &time)
     {
+        boost::ignore_unused(pFields, time);
     }
 
     void UpdateForce(

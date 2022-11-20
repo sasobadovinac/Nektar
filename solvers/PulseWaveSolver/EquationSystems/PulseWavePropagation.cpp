@@ -71,6 +71,8 @@ PulseWavePropagation::PulseWavePropagation(
 
 void PulseWavePropagation::v_InitObject(bool DeclareField)
 {
+    boost::ignore_unused(DeclareField);
+
     // Will set up an array of vessels/fields in PulseWaveSystem::v_InitObject
     // so set DeclareField to false so that the fields are not set up in
     // EquationSystem unnecessarily. Note the number of fields in Equation
@@ -202,6 +204,8 @@ void PulseWavePropagation::DoOdeProjection(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
+    boost::ignore_unused(time);
+
     // Just copy over array
     for (int i = 0; i < m_nVariables; ++i)
     {
@@ -219,6 +223,8 @@ void PulseWavePropagation::SetPulseWaveBoundaryConditions(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 
 {
+    boost::ignore_unused(outarray);
+
     int omega;
 
     Array<OneD, MultiRegions::ExpListSharedPtr> vessel(2);

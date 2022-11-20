@@ -77,6 +77,7 @@ void FilterCheckpointCellModel::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
+    boost::ignore_unused(time);
     ASSERTL0(m_cell.get(),
              "Cell model has not been set by EquationSystem "
              "class. Use SetCellModel on this filter to achieve this.");
@@ -134,6 +135,7 @@ void FilterCheckpointCellModel::v_Finalise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
+    boost::ignore_unused(pFields, time);
 }
 
 bool FilterCheckpointCellModel::v_IsTimeDependent()

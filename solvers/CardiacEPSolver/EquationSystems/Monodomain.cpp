@@ -311,6 +311,8 @@ void Monodomain::DoImplicitSolve(
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time,
     const NekDouble lambda)
 {
+    boost::ignore_unused(time);
+
     int nvariables = inarray.size();
     int nq         = m_fields[0]->GetNpoints();
     StdRegions::ConstFactorMap factors;

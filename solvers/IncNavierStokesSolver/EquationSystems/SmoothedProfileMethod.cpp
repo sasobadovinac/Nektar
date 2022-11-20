@@ -298,6 +298,8 @@ void SmoothedProfileMethod::SetUpCorrectionPressure(
     const Array<OneD, const Array<OneD, NekDouble>> &fields,
     Array<OneD, Array<OneD, NekDouble>> &Forcing)
 {
+    boost::ignore_unused(fields);
+
     int physTot = m_fs[0]->GetNpoints();
     int nvel    = m_velocity.size();
 

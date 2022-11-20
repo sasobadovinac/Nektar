@@ -102,6 +102,7 @@ void PreconCfs::v_BuildPreconCfs(
 bool PreconCfs::UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
                                      const NekDouble dtLambda)
 {
+    boost::ignore_unused(res, dtLambda);
     NEKERROR(ErrorUtil::efatal, "UpdatePreconMatCheck not defined");
     return false;
 }
