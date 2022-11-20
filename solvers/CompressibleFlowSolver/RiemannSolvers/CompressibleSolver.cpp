@@ -65,9 +65,7 @@ void CompressibleSolver::v_Solve(
 {
     if (m_pointSolve)
     {
-        int expDim     = nDim;
-        int nvariables = Fwd.size();
-
+        int expDim = nDim;
         NekDouble rhouf{}, rhovf{};
 
         if (expDim == 1)
