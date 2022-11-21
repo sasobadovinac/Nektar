@@ -635,12 +635,16 @@ void SmoothedProfileMethod::ReadPhi()
         m_timeDependentUp = GetVarTimeDependence("ShapeFunction", "Up");
         switch (m_velocity.size())
         {
-            case 3:
-                m_timeDependentUp |=
-                    GetVarTimeDependence("ShapeFunction", "Wp");
             case 2:
                 m_timeDependentUp |=
                     GetVarTimeDependence("ShapeFunction", "Vp");
+                break;
+            case 3:
+                m_timeDependentUp |=
+                    GetVarTimeDependence("ShapeFunction", "Vp");
+                m_timeDependentUp |=
+                    GetVarTimeDependence("ShapeFunction", "Wp");
+                break;
         }
     }
 }
