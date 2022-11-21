@@ -235,7 +235,8 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
              prfx.str() + "invalid root rank.");
 
     std::vector<uint64_t> decomps(nMaxFields * MAX_DCMPS, 0);
-    std::vector<uint64_t> all_hashes(nMaxFields * m_comm->GetSpaceComm()->GetSize(), 0);
+    std::vector<uint64_t> all_hashes(
+        nMaxFields * m_comm->GetSpaceComm()->GetSize(), 0);
     std::vector<uint64_t> cnts(MAX_CNTS, 0);
     std::vector<std::string> fieldNames(nFields);
     std::vector<std::string> shapeStrings(nFields);
@@ -421,8 +422,9 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
         std::stringstream fieldNameStream;
         uint64_t fieldDefHash = string_hasher(hashStream.str());
 
-        decomps[f * MAX_DCMPS + HASH_DCMP_IDX]            = fieldDefHash;
-        all_hashes[m_comm->GetSpaceComm()->GetRank() * nMaxFields + f] = fieldDefHash;
+        decomps[f * MAX_DCMPS + HASH_DCMP_IDX] = fieldDefHash;
+        all_hashes[m_comm->GetSpaceComm()->GetRank() * nMaxFields + f] =
+            fieldDefHash;
 
         fieldNameStream << fieldDefHash;
         fieldNames[f] = fieldNameStream.str();
@@ -681,7 +683,9 @@ void FieldIOHdf5::v_Write(const std::string &outFile,
                 for (int f = 0; f < nFields; ++f)
                 {
                     if (sIt.second[i] !=
-                            all_hashes[m_comm->GetSpaceComm()->GetRank() * nMaxFields + f] ||
+                            all_hashes[m_comm->GetSpaceComm()->GetRank() *
+                                           nMaxFields +
+                                       f] ||
                         hashToProc.find(sIt.second[i]) != hashToProc.end())
                     {
                         continue;
