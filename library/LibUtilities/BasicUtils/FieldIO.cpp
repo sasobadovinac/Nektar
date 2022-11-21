@@ -98,8 +98,8 @@ const std::string FieldIO::GetFileType(const std::string &filename,
                                        CommSharedPtr comm)
 {
     FieldIOType ioType = eXML;
-    int size           = comm->GetSizePIT();
-    bool root          = comm->TreatAsRankZeroPIT();
+    int size           = comm->GetSpaceComm()->GetSize();
+    bool root          = comm->GetSpaceComm()->TreatAsRankZero();
 
     if (size == 1 || root)
     {
@@ -419,14 +419,14 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     m_comm->AllReduce(file_id_min, ReduceMin);
 
     // Check that each process has the same filename (hash)
-    if (m_comm->GetSize() == m_comm->GetSizePIT())
+    if (m_comm->GetSize() == m_comm->GetSpaceComm()->GetSize())
     {
         ASSERTL0(file_id_min == file_id_max,
                  "All processes do not have the same filename.");
     }
 
-    int nprocs = m_comm->GetSizePIT();
-    bool root  = m_comm->TreatAsRankZeroPIT();
+    int nprocs = m_comm->GetSpaceComm()->GetSize();
+    bool root  = m_comm->GetSpaceComm()->TreatAsRankZero();
 
     // Path to output: will be directory if parallel, normal file if
     // serial.
@@ -482,7 +482,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     {
         // Guess at filename that might belong to this process.
         boost::format pad("P%1$07d.%2$s");
-        pad % m_comm->GetRankPIT() % GetFileEnding();
+        pad % m_comm->GetSpaceComm()->GetRank() % GetFileEnding();
 
         // Generate full path name
         fs::path poutfile(pad.str());

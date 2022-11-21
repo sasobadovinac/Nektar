@@ -83,11 +83,6 @@ protected:
         return true;
     }
 
-    bool v_TreatAsRankZeroPIT(void)
-    {
-        return true;
-    }
-
     bool v_IsSerial(void)
     {
         return true;

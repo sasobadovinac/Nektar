@@ -542,7 +542,7 @@ OperatorImpMap CollectionOptimisation::SetWithTimings(
 void CollectionOptimisation::UpdateOptFile(std::string sessName,
                                            LibUtilities::CommSharedPtr &comm)
 {
-    if (comm->GetSize() != comm->GetSizePIT())
+    if (comm->GetSize() != comm->GetSpaceComm()->GetSize())
     {
         return; // FIXME: Parareal
     }

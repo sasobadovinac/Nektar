@@ -87,14 +87,6 @@ bool CommSerial::v_TreatAsRankZero()
 /**
  *
  */
-bool CommSerial::v_TreatAsRankZeroPIT()
-{
-    return true;
-}
-
-/**
- *
- */
 bool CommSerial::v_IsSerial()
 {
     return true;

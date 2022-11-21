@@ -693,8 +693,8 @@ void FieldIOXml::SetUpFieldMetaData(
 {
     ASSERTL0(!outname.empty(), "Empty path given to SetUpFieldMetaData()");
 
-    unsigned int nprocs = m_comm->GetSizePIT();
-    unsigned int rank   = m_comm->GetRankPIT();
+    unsigned int nprocs = m_comm->GetSpaceComm()->GetSize();
+    unsigned int rank   = m_comm->GetSpaceComm()->GetRank();
 
     fs::path specPath(outname);
 
@@ -724,7 +724,7 @@ void FieldIOXml::SetUpFieldMetaData(
             if (elmtnums[i] > 0)
             {
                 std::vector<unsigned int> tmp(elmtnums[i]);
-                if (m_comm->GetSize() == m_comm->GetSizePIT())
+                if (m_comm->GetSize() == m_comm->GetSpaceComm()->GetSize())
                 {
                     // Serial-in-time
                     m_comm->Recv(i, tmp);
@@ -760,7 +760,7 @@ void FieldIOXml::SetUpFieldMetaData(
         // Send this process's ID list to the root process
         if (elmtnums[rank] > 0)
         {
-            if (m_comm->GetSize() == m_comm->GetSizePIT())
+            if (m_comm->GetSize() == m_comm->GetSpaceComm()->GetSize())
             {
                 // Serial-in-time
                 m_comm->Send(0, idlist);

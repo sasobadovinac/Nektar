@@ -96,9 +96,7 @@ public:
 
     /// Returns number of processes
     LIB_UTILITIES_EXPORT inline int GetSize() const;
-    LIB_UTILITIES_EXPORT inline int GetSizePIT();
     LIB_UTILITIES_EXPORT inline int GetRank();
-    LIB_UTILITIES_EXPORT inline int GetRankPIT();
     LIB_UTILITIES_EXPORT inline const std::string &GetType() const;
 
     /// Block execution until all processes reach this point
@@ -166,9 +164,9 @@ public:
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetRowComm();
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetColumnComm();
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetTimeComm();
+    LIB_UTILITIES_EXPORT inline CommSharedPtr GetSpaceComm();
 
     LIB_UTILITIES_EXPORT inline bool TreatAsRankZero();
-    LIB_UTILITIES_EXPORT inline bool TreatAsRankZeroPIT();
     LIB_UTILITIES_EXPORT inline bool IsSerial();
     LIB_UTILITIES_EXPORT inline std::tuple<int, int, int> GetVersion();
     LIB_UTILITIES_EXPORT inline bool RemoveExistingFiles();
@@ -182,6 +180,7 @@ protected:
     CommSharedPtr m_commRow;    ///< Row communicator
     CommSharedPtr m_commColumn; ///< Column communicator
     CommSharedPtr m_commTime;
+    CommSharedPtr m_commSpace;
 
     Comm();
 
@@ -253,7 +252,6 @@ protected:
 
     virtual void v_SplitComm(int pRows, int pColumns, int pTime) = 0;
     virtual bool v_TreatAsRankZero()                             = 0;
-    virtual bool v_TreatAsRankZeroPIT()                          = 0;
     virtual bool v_IsSerial()                                    = 0;
     virtual std::tuple<int, int, int> v_GetVersion()             = 0;
 
@@ -281,39 +279,9 @@ inline int Comm::GetSize() const
 /**
  *
  */
-inline int Comm::GetSizePIT()
-{
-    if (!m_commTime.get())
-    {
-        return m_size;
-    }
-    else
-    {
-        return m_size / GetTimeComm()->GetSize();
-    }
-}
-
-/**
- *
- */
 inline int Comm::GetRank()
 {
     return v_GetRank();
-}
-
-/**
- *
- */
-inline int Comm::GetRankPIT()
-{
-    if (!m_commTime.get())
-    {
-        return GetRank();
-    }
-    else
-    {
-        return GetRank() / GetTimeComm()->GetSize();
-    }
 }
 
 /**
@@ -785,14 +753,25 @@ inline CommSharedPtr Comm::GetTimeComm()
     }
 }
 
+/**
+ * @brief Retrieve the space communicator to which this process
+ * belongs.
+ */
+inline CommSharedPtr Comm::GetSpaceComm()
+{
+    if (!m_commSpace.get())
+    {
+        return shared_from_this();
+    }
+    else
+    {
+        return m_commSpace;
+    }
+}
+
 inline bool Comm::TreatAsRankZero()
 {
     return v_TreatAsRankZero();
-}
-
-inline bool Comm::TreatAsRankZeroPIT()
-{
-    return v_TreatAsRankZeroPIT();
 }
 
 inline bool Comm::IsSerial()

@@ -148,21 +148,6 @@ bool CommMpi::v_TreatAsRankZero()
 /**
  *
  */
-bool CommMpi::v_TreatAsRankZeroPIT()
-{
-    if (!m_commTime.get())
-    {
-        return m_rank == 0;
-    }
-    else
-    {
-        return GetRank() == GetTimeComm()->GetRank();
-    }
-}
-
-/**
- *
- */
 bool CommMpi::v_IsSerial()
 {
     return m_size == 1;
@@ -525,6 +510,10 @@ void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
         constexpr int keepTime[dims] = {0, 0, 1};
         MPI_Cart_sub(gridComm, keepTime, &newComm);
         m_commTime = std::shared_ptr<Comm>(new CommMpi(newComm));
+
+        constexpr int keepSpace[dims] = {1, 1, 0};
+        MPI_Cart_sub(gridComm, keepSpace, &newComm);
+        m_commSpace = std::shared_ptr<Comm>(new CommMpi(newComm));
     }
 }
 

@@ -70,7 +70,6 @@ protected:
     LIB_UTILITIES_EXPORT virtual void v_Finalise() final;
     LIB_UTILITIES_EXPORT virtual int v_GetRank() override;
     LIB_UTILITIES_EXPORT virtual bool v_TreatAsRankZero() override;
-    LIB_UTILITIES_EXPORT virtual bool v_TreatAsRankZeroPIT() override;
     LIB_UTILITIES_EXPORT virtual bool v_IsSerial() override;
     LIB_UTILITIES_EXPORT virtual std::tuple<int, int, int> v_GetVersion() final;
 
