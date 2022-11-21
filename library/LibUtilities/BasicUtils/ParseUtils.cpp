@@ -57,10 +57,6 @@ template <typename T> struct PushBackFunctor
     {
     }
 
-    PushBackFunctor(const PushBackFunctor &in) : m_vec(in.m_vec)
-    {
-    }
-
     /**
      * @brief Pushes back values onto #m_vec as given by @p num.
      */
