@@ -1394,6 +1394,7 @@ void CoupledLinearNS::v_DoInitialise(void)
             // Set initial condition using time t=0
 
             SetInitialConditions(0.0);
+            break;
         }
         case eSteadyStokes:
             SetUpCoupledMatrix(0.0);

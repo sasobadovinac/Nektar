@@ -71,6 +71,7 @@ exporting in .vtu format (!1386)
 - Fix some Wunused-variable (!1438)
 - Fix unused parameter warnings in virtual functions (!1441)  
 - Fix a Wreorder warning (!1445)
+- Fix some Wimplicit-fallthrough warnings (!1446)
 
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
