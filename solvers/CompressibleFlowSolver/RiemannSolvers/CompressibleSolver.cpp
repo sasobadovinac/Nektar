@@ -53,7 +53,7 @@ CompressibleSolver::CompressibleSolver(
 }
 
 CompressibleSolver::CompressibleSolver()
-    : RiemannSolver(), m_idealGas(true), m_pointSolve(true)
+    : RiemannSolver(), m_pointSolve(true), m_idealGas(true)
 {
     m_requiresRotation = true;
 }
