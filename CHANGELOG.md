@@ -23,6 +23,7 @@ v5.3.0
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)
 - Templating FieldUtils::Interpolator class (!1420)
+- Disable -Werror by default (!1443)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
