@@ -157,7 +157,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
         bool flagUpdateDervFlux = false;
 
         const int nwspTraceDataType = nvariables + 1;
-        NekSingle tmpSingle;
+        NekSingle tmpSingle = 0;
         Array<OneD, Array<OneD, NekSingle>> wspTraceDataType(nwspTraceDataType);
         for (int m = 0; m < nwspTraceDataType; m++)
         {
