@@ -64,7 +64,7 @@ public:
 
     virtual ~VelocityCorrectionScheme();
 
-    virtual void v_InitObject(bool DeclareField = true);
+    virtual void v_InitObject(bool DeclareField = true) override;
 
     void SetUpPressureForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
@@ -165,19 +165,19 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &inarray);
 
     // Virtual functions
-    virtual bool v_PostIntegrate(int step);
+    virtual bool v_PostIntegrate(int step) override;
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
-    virtual void v_TransCoeffToPhys(void);
+    virtual void v_TransCoeffToPhys(void) override;
 
-    virtual void v_TransPhysToCoeff(void);
+    virtual void v_TransPhysToCoeff(void) override;
 
-    virtual void v_DoInitialise(void);
+    virtual void v_DoInitialise(void) override;
 
-    virtual Array<OneD, bool> v_GetSystemSingularChecks();
+    virtual Array<OneD, bool> v_GetSystemSingularChecks() override;
 
-    virtual int v_GetForceDimension();
+    virtual int v_GetForceDimension() override;
 
     virtual void v_SetUpPressureForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
@@ -198,7 +198,7 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
 
-    virtual bool v_RequireFwdTrans()
+    virtual bool v_RequireFwdTrans() override
     {
         return false;
     }

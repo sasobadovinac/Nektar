@@ -120,7 +120,7 @@
         </FORCE>
     </FORCING>
 
-  <FILTERS>
+    <FILTERS>
         <FILTER TYPE="ReynoldsStresses">
             <PARAM NAME="OutputFile">Avg_field</PARAM>
             <PARAM NAME="OutputFrequency">40</PARAM>

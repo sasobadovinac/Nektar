@@ -107,7 +107,7 @@ protected:
 
     InitWaveType m_InitWaveType;
 
-    virtual void v_InitObject(bool DeclareField = true);
+    virtual void v_InitObject(bool DeclareField = true) override;
 
     /// Solve for the diffusion term.
     void DoImplicitSolve(
@@ -134,14 +134,14 @@ protected:
     /// Sets a custom initial condition.
     virtual void v_SetInitialConditions(NekDouble initialtime,
                                         bool dumpInitialConditions,
-                                        const int domain);
+                                        const int domain) override;
 
     /// Prints a summary of the model parameters.
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     virtual void v_EvaluateExactSolution(unsigned int field,
                                          Array<OneD, NekDouble> &outfield,
-                                         const NekDouble time);
+                                         const NekDouble time) override;
 
     NekDouble m_InitPtx, m_InitPty, m_InitPtz;
 

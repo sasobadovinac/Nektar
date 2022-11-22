@@ -64,20 +64,23 @@ public:
 
 protected:
     // Virtual functions
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     virtual void v_SetUpPressureForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
-        Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt);
+        Array<OneD, Array<OneD, NekDouble>> &Forcing,
+        const NekDouble aii_Dt) override;
 
-    virtual void v_SolvePressure(const Array<OneD, NekDouble> &Forcing);
+    virtual void v_SolvePressure(
+        const Array<OneD, NekDouble> &Forcing) override;
 
-    virtual std::string v_GetExtrapolateStr(void)
+    virtual std::string v_GetExtrapolateStr(void) override
     {
         return "WeakPressure";
     }
 
-    virtual std::string v_GetSubSteppingExtrapolateStr(const std::string &instr)
+    virtual std::string v_GetSubSteppingExtrapolateStr(
+        const std::string &instr) override
     {
         if (boost::iequals(instr, "SubStepping"))
         {

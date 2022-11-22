@@ -76,9 +76,9 @@ protected:
     /// Get the normal velocity
     Array<OneD, NekDouble> &GetNormalVelocity();
 
-    virtual void v_InitObject(bool DeclareFields = true);
-    virtual void v_DoInitialise();
-    virtual void v_DoSolve();
+    virtual void v_InitObject(bool DeclareFields = true) override;
+    virtual void v_DoInitialise() override;
+    virtual void v_DoSolve() override;
 
     // DG Advection routines
     void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,

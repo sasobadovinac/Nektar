@@ -70,7 +70,7 @@ protected:
     PulseWaveSystemOutput(
         const LibUtilities::SessionReaderSharedPtr &m_session);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareField = true) override;
 
 private:
 };

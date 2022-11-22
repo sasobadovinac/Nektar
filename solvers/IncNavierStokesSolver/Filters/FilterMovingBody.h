@@ -74,11 +74,11 @@ public:
 
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
 
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+        const NekDouble &time) override
     {
         boost::ignore_unused(pFields, time);
     }
@@ -95,9 +95,9 @@ public:
 
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
 
-    virtual bool v_IsTimeDependent();
+    virtual bool v_IsTimeDependent() override;
 
 private:
     /// ID's of boundary regions where we want the forces

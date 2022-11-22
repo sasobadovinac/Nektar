@@ -68,7 +68,7 @@ public:
 
     virtual ~VCSMapping();
 
-    virtual void v_InitObject(bool DeclareField = true);
+    virtual void v_InitObject(bool DeclareField = true) override;
 
 protected:
     // Mapping object
@@ -92,26 +92,31 @@ protected:
     Array<OneD, Array<OneD, NekDouble>> m_gradP;
 
     // Virtual functions
-    virtual void v_DoInitialise(void);
+    virtual void v_DoInitialise(void) override;
 
     virtual void v_SetUpPressureForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
-        Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt);
+        Array<OneD, Array<OneD, NekDouble>> &Forcing,
+        const NekDouble aii_Dt) override;
 
     virtual void v_SetUpViscousForcing(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt);
+        Array<OneD, Array<OneD, NekDouble>> &Forcing,
+        const NekDouble aii_Dt) override;
 
-    virtual void v_SolvePressure(const Array<OneD, NekDouble> &Forcing);
+    virtual void v_SolvePressure(
+        const Array<OneD, NekDouble> &Forcing) override;
 
     virtual void v_SolveViscous(
         const Array<OneD, const Array<OneD, NekDouble>> &Forcing,
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble aii_Dt);
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble aii_Dt) override;
 
     virtual void v_EvaluateAdvection_SetPressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble time) override;
 
 private:
     Array<OneD, Array<OneD, NekDouble>> m_presForcingCorrection;

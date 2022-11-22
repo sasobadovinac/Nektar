@@ -110,7 +110,7 @@ protected:
 
     virtual void v_InitObject(
         LibUtilities::SessionReaderSharedPtr pSession,
-        Array<OneD, MultiRegions::ExpListSharedPtr> pFields);
+        Array<OneD, MultiRegions::ExpListSharedPtr> pFields) override;
 
     virtual void v_Advect(
         const int nConvectiveFields,
@@ -121,11 +121,11 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray) override;
 
     virtual void v_SetBaseFlow(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields);
+        const Array<OneD, MultiRegions::ExpListSharedPtr> &fields) override;
 
     void UpdateBase(const NekDouble m_slices,
                     const Array<OneD, const NekDouble> &inarray,

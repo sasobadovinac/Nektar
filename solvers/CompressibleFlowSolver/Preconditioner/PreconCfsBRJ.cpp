@@ -222,8 +222,8 @@ void PreconCfsBRJ::v_BuildPreconCfs(
     m_PreconTimesCounter = 1;
 }
 
-bool PreconCfsBRJ::UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
-                                        const NekDouble dtLambda)
+bool PreconCfsBRJ::v_UpdatePreconMatCheck(
+    const Array<OneD, const NekDouble> &res, const NekDouble dtLambda)
 {
     boost::ignore_unused(res);
 

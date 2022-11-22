@@ -55,23 +55,24 @@ RedlichKwongEoS::RedlichKwongEoS(
     m_b = 0.08664 * m_gasConstant * m_Tc / m_Pc;
 }
 
-NekDouble RedlichKwongEoS::GetTemperature(const NekDouble &rho,
-                                          const NekDouble &e)
+NekDouble RedlichKwongEoS::v_GetTemperature(const NekDouble &rho,
+                                            const NekDouble &e)
 {
     return GetTemperatureKernel(rho, e);
 }
 
-vec_t RedlichKwongEoS::GetTemperature(const vec_t &rho, const vec_t &e)
+vec_t RedlichKwongEoS::v_GetTemperature(const vec_t &rho, const vec_t &e)
 {
     return GetTemperatureKernel(rho, e);
 }
 
-NekDouble RedlichKwongEoS::GetPressure(const NekDouble &rho, const NekDouble &e)
+NekDouble RedlichKwongEoS::v_GetPressure(const NekDouble &rho,
+                                         const NekDouble &e)
 {
     return GetPressureKernel(rho, e);
 }
 
-vec_t RedlichKwongEoS::GetPressure(const vec_t &rho, const vec_t &e)
+vec_t RedlichKwongEoS::v_GetPressure(const vec_t &rho, const vec_t &e)
 {
     return GetPressureKernel(rho, e);
 }

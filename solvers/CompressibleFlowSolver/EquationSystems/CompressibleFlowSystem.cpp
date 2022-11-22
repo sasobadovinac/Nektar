@@ -144,7 +144,7 @@ void CompressibleFlowSystem::InitialiseParameters()
     // Check if the shock capture type is supported
     std::string err_msg = "Warning, ShockCaptureType = " + m_shockCaptureType +
                           " is not supported by this solver";
-    ASSERTL0(SupportsShockCaptType(m_shockCaptureType), err_msg);
+    ASSERTL0(v_SupportsShockCaptType(m_shockCaptureType), err_msg);
 
     // Load parameters for exponential filtering
     m_session->MatchSolverInfo("ExponentialFiltering", "True", m_useFiltering,
@@ -921,7 +921,7 @@ void CompressibleFlowSystem::v_ExtraFldOutput(
 /**
  *
  */
-void CompressibleFlowSystem::GetPressure(
+void CompressibleFlowSystem::v_GetPressure(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, NekDouble> &pressure)
 {
@@ -931,7 +931,7 @@ void CompressibleFlowSystem::GetPressure(
 /**
  *
  */
-void CompressibleFlowSystem::GetDensity(
+void CompressibleFlowSystem::v_GetDensity(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, NekDouble> &density)
 {
@@ -941,7 +941,7 @@ void CompressibleFlowSystem::GetDensity(
 /**
  *
  */
-void CompressibleFlowSystem::GetVelocity(
+void CompressibleFlowSystem::v_GetVelocity(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, Array<OneD, NekDouble>> &velocity)
 {

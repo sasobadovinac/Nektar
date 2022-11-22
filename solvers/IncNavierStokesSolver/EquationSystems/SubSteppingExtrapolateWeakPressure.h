@@ -81,10 +81,11 @@ public:
 protected:
     virtual void v_SubStepSetPressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        NekDouble Aii_Dt, NekDouble kinvis);
+        NekDouble Aii_Dt, NekDouble kinvis) override;
 
-    virtual void v_AddNormVelOnOBC(const int nbcoeffs, const int nreg,
-                                   Array<OneD, Array<OneD, NekDouble>> &u);
+    virtual void v_AddNormVelOnOBC(
+        const int nbcoeffs, const int nreg,
+        Array<OneD, Array<OneD, NekDouble>> &u) override;
 };
 } // namespace Nektar
 #endif

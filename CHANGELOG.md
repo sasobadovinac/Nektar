@@ -67,6 +67,8 @@ exporting in .vtu format (!1386)
 - Updated gitignore to be friendly with CLion IDE (!1405)
 - Correct header section of .cpp, .hpp, and .h files (!1426)
 - Linux format .cpp, .hpp, and .h files (!1432)
+- Fix some Woverloaded-virtual warning (!1439)
+- Add missing override keyword to virtual functions in solvers (!1440)
 - Fix some Wunused-variable (!1438)
 - Fix unused parameter warnings in virtual functions (!1441)  
 

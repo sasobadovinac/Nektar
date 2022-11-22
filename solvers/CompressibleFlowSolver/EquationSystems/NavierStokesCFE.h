@@ -560,7 +560,7 @@ protected:
         }
     }
 
-    virtual bool SupportsShockCaptType(const std::string type) const override;
+    virtual bool v_SupportsShockCaptType(const std::string type) const override;
 };
 
 } // namespace Nektar

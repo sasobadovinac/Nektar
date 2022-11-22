@@ -67,13 +67,14 @@ protected:
     /// Computes the reaction terms $f(u,v)$ and $g(u,v)$.
     virtual void v_Update(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time);
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble time) override;
 
     /// Prints a summary of the model parameters.
-    virtual void v_GenerateSummary(SummaryList &s);
+    virtual void v_GenerateSummary(SummaryList &s) override;
 
     /// Set initial conditions for cell model
-    virtual void v_SetInitialConditions();
+    virtual void v_SetInitialConditions() override;
 };
 } // namespace Nektar
 
