@@ -65,7 +65,7 @@ EulerImplicitCFE::~EulerImplicitCFE()
 {
 }
 
-bool EulerImplicitCFE::SupportsShockCaptType(const std::string type) const
+bool EulerImplicitCFE::v_SupportsShockCaptType(const std::string type) const
 {
     if (type == "Off")
     {

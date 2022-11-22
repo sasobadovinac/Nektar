@@ -108,10 +108,10 @@ protected:
     Array<OneD, NekDouble> &GetNormalVelocity();
 
     /// Initialise the object
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     /// Print Summary
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
 private:
     NekDouble m_waveFreq;

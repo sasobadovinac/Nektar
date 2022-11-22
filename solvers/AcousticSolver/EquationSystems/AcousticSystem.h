@@ -83,7 +83,7 @@ protected:
     AcousticSystem(const LibUtilities::SessionReaderSharedPtr &pSession,
                    const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     void DoOdeRhs(const Array<OneD, const Array<OneD, NekDouble>> &inarray,
                   Array<OneD, Array<OneD, NekDouble>> &outarray,
@@ -104,16 +104,16 @@ protected:
         boost::ignore_unused(inarray, outarray);
     }
 
-    virtual bool v_PreIntegrate(int step);
+    virtual bool v_PreIntegrate(int step) override;
 
-    virtual void v_Output();
+    virtual void v_Output() override;
 
     virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
-        const NekDouble SpeedSoundFactor);
+        const NekDouble SpeedSoundFactor) override;
 
     virtual void v_ExtraFldOutput(
         std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
-        std::vector<std::string> &variables);
+        std::vector<std::string> &variables) override;
 
     const Array<OneD, const Array<OneD, NekDouble>> &GetNormals();
 
@@ -131,19 +131,18 @@ private:
     void SetBoundaryConditions(Array<OneD, Array<OneD, NekDouble>> &physarray,
                                NekDouble time);
 
-    virtual void v_WallBC(int bcRegion, int cnt,
-                          Array<OneD, Array<OneD, NekDouble>> &Fwd,
-                          Array<OneD, Array<OneD, NekDouble>> &physarray);
+    void WallBC(int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                Array<OneD, Array<OneD, NekDouble>> &physarray);
 
     virtual void v_RiemannInvariantBC(
         int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
         Array<OneD, Array<OneD, NekDouble>> &BfFwd,
         Array<OneD, Array<OneD, NekDouble>> &physarray) = 0;
 
-    virtual void v_WhiteNoiseBC(int bcRegion, int cnt,
-                                Array<OneD, Array<OneD, NekDouble>> &Fwd,
-                                Array<OneD, Array<OneD, NekDouble>> &BfFwd,
-                                Array<OneD, Array<OneD, NekDouble>> &physarray);
+    void WhiteNoiseBC(int bcRegion, int cnt,
+                      Array<OneD, Array<OneD, NekDouble>> &Fwd,
+                      Array<OneD, Array<OneD, NekDouble>> &BfFwd,
+                      Array<OneD, Array<OneD, NekDouble>> &physarray);
 
     void CopyBoundaryTrace(const Array<OneD, NekDouble> &Fwd,
                            Array<OneD, NekDouble> &Bwd);

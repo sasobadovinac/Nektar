@@ -284,7 +284,7 @@ void UnsteadySystem::v_DoSolve()
         // Flag to update AV
         m_CalcPhysicalAV = true;
         // Frozen preconditioner checks
-        if (UpdateTimeStepCheck())
+        if (v_UpdateTimeStepCheck())
         {
             m_cflSafetyFactor = tmp_cflSafetyFactor;
 

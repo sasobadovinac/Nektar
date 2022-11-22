@@ -1172,7 +1172,7 @@ Array<OneD, NekDouble> IncNavierStokes::v_GetMaxStdVelocity(
 /**
  *
  */
-void IncNavierStokes::GetPressure(
+void IncNavierStokes::v_GetPressure(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, NekDouble> &pressure)
 {
@@ -1182,7 +1182,7 @@ void IncNavierStokes::GetPressure(
 /**
  *
  */
-void IncNavierStokes::GetDensity(
+void IncNavierStokes::v_GetDensity(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, NekDouble> &density)
 {
@@ -1193,7 +1193,7 @@ void IncNavierStokes::GetDensity(
 /**
  *
  */
-void IncNavierStokes::GetVelocity(
+void IncNavierStokes::v_GetVelocity(
     const Array<OneD, const Array<OneD, NekDouble>> &physfield,
     Array<OneD, Array<OneD, NekDouble>> &velocity)
 {
@@ -1209,7 +1209,7 @@ void IncNavierStokes::GetVelocity(
  * to be later used in enforcing the boundary condition in IncNavierStokes
  * class
  */
-void IncNavierStokes::SetMovingFrameVelocities(
+void IncNavierStokes::v_SetMovingFrameVelocities(
     const Array<OneD, NekDouble> &vFrameVels)
 {
     ASSERTL0(vFrameVels.size() == m_movingFrameVelsxyz.size(),
@@ -1218,7 +1218,7 @@ void IncNavierStokes::SetMovingFrameVelocities(
     Vmath::Vcopy(vFrameVels.size(), vFrameVels, 1, m_movingFrameVelsxyz, 1);
 }
 
-void IncNavierStokes::GetMovingFrameVelocities(
+void IncNavierStokes::v_GetMovingFrameVelocities(
     Array<OneD, NekDouble> &vFrameVels)
 {
     ASSERTL0(vFrameVels.size() == m_movingFrameVelsxyz.size(),
@@ -1234,7 +1234,7 @@ void IncNavierStokes::GetMovingFrameVelocities(
  * matrix to be used later in IncNavierStokes calss for enforcing the
  * boundary conditions
  */
-void IncNavierStokes::SetMovingFrameProjectionMat(
+void IncNavierStokes::v_SetMovingFrameProjectionMat(
     const bnu::matrix<NekDouble> &vProjMat)
 {
     ASSERTL0(vProjMat.size1() == m_movingFrameProjMat.size1(),
@@ -1252,7 +1252,7 @@ void IncNavierStokes::SetMovingFrameProjectionMat(
     }
 }
 
-void IncNavierStokes::GetMovingFrameProjectionMat(
+void IncNavierStokes::v_GetMovingFrameProjectionMat(
     bnu::matrix<NekDouble> &vProjMat)
 {
     ASSERTL0(vProjMat.size1() == m_movingFrameProjMat.size1(),
@@ -1275,7 +1275,7 @@ void IncNavierStokes::GetMovingFrameProjectionMat(
  * Function to set the angles between the moving frame of reference and
  * stationary inertial reference frame
  **/
-void IncNavierStokes::SetMovingFrameAngles(
+void IncNavierStokes::v_SetMovingFrameAngles(
     const Array<OneD, NekDouble> &vFrameTheta)
 {
     ASSERTL0(vFrameTheta.size() == m_movingFrameTheta.size(),
@@ -1290,7 +1290,8 @@ void IncNavierStokes::SetMovingFrameAngles(
  * Function to get the angles between the moving frame of reference and
  * stationary inertial reference frame
  **/
-void IncNavierStokes::GetMovingFrameAngles(Array<OneD, NekDouble> &vFrameTheta)
+void IncNavierStokes::v_GetMovingFrameAngles(
+    Array<OneD, NekDouble> &vFrameTheta)
 {
     ASSERTL0(vFrameTheta.size() == m_movingFrameTheta.size(),
              "Arrays have different size, cannot get moving frame angles");

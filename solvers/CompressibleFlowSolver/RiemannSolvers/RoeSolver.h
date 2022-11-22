@@ -58,13 +58,15 @@ protected:
 
     using ND = NekDouble;
 
-    void v_PointSolve(ND rhoL, ND rhouL, ND rhovL, ND rhowL, ND EL, ND rhoR,
-                      ND rhouR, ND rhovR, ND rhowR, ND ER, ND &rhof, ND &rhouf,
-                      ND &rhovf, ND &rhowf, ND &Ef) final;
+    virtual void v_PointSolve(ND rhoL, ND rhouL, ND rhovL, ND rhowL, ND EL,
+                              ND rhoR, ND rhouR, ND rhovR, ND rhowR, ND ER,
+                              ND &rhof, ND &rhouf, ND &rhovf, ND &rhowf,
+                              ND &Ef) override final;
 
-    void v_ArraySolve(const Array<OneD, const Array<OneD, ND>> &Fwd,
-                      const Array<OneD, const Array<OneD, ND>> &Bwd,
-                      Array<OneD, Array<OneD, ND>> &flux) final;
+    virtual void v_ArraySolve(
+        const Array<OneD, const Array<OneD, ND>> &Fwd,
+        const Array<OneD, const Array<OneD, ND>> &Bwd,
+        Array<OneD, Array<OneD, ND>> &flux) override final;
 };
 
 template <class T, typename = typename std::enable_if<

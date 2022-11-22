@@ -963,7 +963,7 @@ void NavierStokesCFE::v_ExtraFldOutput(
     }
 }
 
-bool NavierStokesCFE::SupportsShockCaptType(const std::string type) const
+bool NavierStokesCFE::v_SupportsShockCaptType(const std::string type) const
 {
     if (type == "NonSmooth" || type == "Physical" || type == "Off")
     {

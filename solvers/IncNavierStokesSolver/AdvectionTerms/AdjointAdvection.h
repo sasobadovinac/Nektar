@@ -69,7 +69,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &pFwd =
             NullNekDoubleArrayOfArray,
         const Array<OneD, Array<OneD, NekDouble>> &pBwd =
-            NullNekDoubleArrayOfArray);
+            NullNekDoubleArrayOfArray) override;
 };
 
 } // namespace Nektar
