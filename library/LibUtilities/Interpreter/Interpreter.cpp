@@ -120,7 +120,7 @@ struct func
 };
 
 /** This struct creates a parser that matches the function definitions from
-    math.h. All of the functions accept one of more NekDoubles as arguments and
+    math.h. All of the functions accept one or more NekDoubles as arguments and
     returns a NekDouble. **/
 static struct functions : bsp::symbols<func>
 {
@@ -139,14 +139,16 @@ static struct functions : bsp::symbols<func>
             ("exp", exp)     // exponential
             ("fabs", fabs)   // absolute value
             ("floor", floor) // floor
-            ("log", log)     // natural log
-            ("log10", log10) // log base 10
-            ("rad", rad)     // radians
-            ("sin", sin)     // sine
-            ("sinh", sinh)   // hyperbolic sine
-            ("sqrt", sqrt)   // square root
-            ("tan", tan)     // tangent
-            ("tanh", tanh)   // hyperbolic tangent
+            ("fmod", static_cast<double (*)(double, double)>(
+                         &fmod)) // floating-point remainder
+            ("log", log)         // natural log
+            ("log10", log10)     // log base 10
+            ("rad", rad)         // radians
+            ("sin", sin)         // sine
+            ("sinh", sinh)       // hyperbolic sine
+            ("sqrt", sqrt)       // square root
+            ("tan", tan)         // tangent
+            ("tanh", tanh)       // hyperbolic tangent
             // and few more custom functions
             ("sign", sign) // sign
             ("awgn", awgn) // white noise
@@ -225,6 +227,7 @@ public:
         m_functionMapNameToInstanceType["exp"]    = E_EXP;
         m_functionMapNameToInstanceType["fabs"]   = E_FABS;
         m_functionMapNameToInstanceType["floor"]  = E_FLOOR;
+        m_functionMapNameToInstanceType["fmod"]   = E_FMOD;
         m_functionMapNameToInstanceType["log"]    = E_LOG;
         m_functionMapNameToInstanceType["log10"]  = E_LOG10;
         m_functionMapNameToInstanceType["rad"]    = E_RAD;
@@ -258,6 +261,7 @@ public:
         m_function2[E_ANG]    = ang;
         m_function2[E_RAD]    = rad;
         m_function2[E_BESSEL] = boost::math::cyl_bessel_j;
+        m_function2[E_FMOD]   = static_cast<double (*)(double, double)>(&fmod);
 
         // Note that there is no entry in m_function that corresponds to the
         // awgn function. This is intentional as this function need not be
@@ -860,6 +864,10 @@ public:
                     stack.push_back(
                         makeStep<EvalFloor>(stateIndex, stateIndex));
                     return std::make_pair(false, 0);
+                case E_FMOD:
+                    stack.push_back(makeStep<EvalFmod>(stateIndex, stateIndex,
+                                                       stateIndex + 1));
+                    return std::make_pair(false, 0);
                 case E_LOG:
                     stack.push_back(makeStep<EvalLog>(stateIndex, stateIndex));
                     return std::make_pair(false, 0);
@@ -940,6 +948,9 @@ public:
                         return std::make_pair(true, left.second * right.second);
                     case '/':
                         return std::make_pair(true, left.second / right.second);
+                    case '%':
+                        return std::make_pair(
+                            true, std::fmod(left.second, right.second));
                     case '^':
                         return std::make_pair(
                             true, std::pow(left.second, right.second));
@@ -1013,6 +1024,10 @@ public:
                     return std::make_pair(false, 0);
                 case '/':
                     stack.push_back(makeStep<EvalDiv>(stateIndex, stateIndex,
+                                                      stateIndex + 1));
+                    return std::make_pair(false, 0);
+                case '%':
+                    stack.push_back(makeStep<EvalMod>(stateIndex, stateIndex,
                                                       stateIndex + 1));
                     return std::make_pair(false, 0);
                 case '^':
@@ -1151,11 +1166,13 @@ public:
                     negate >> *((bsp::root_node_d[bsp::ch_p('+')] >> negate) |
                                 (bsp::root_node_d[bsp::ch_p('-')] >> negate));
 
-                negate = !(bsp::root_node_d[bsp::ch_p('-')]) >> mult_div;
+                negate = !(bsp::root_node_d[bsp::ch_p('-')]) >> mult_div_mod;
 
-                mult_div = exponential >>
-                           *((bsp::root_node_d[bsp::ch_p('*')] >> exponential) |
-                             (bsp::root_node_d[bsp::ch_p('/')] >> exponential));
+                mult_div_mod =
+                    exponential >>
+                    *((bsp::root_node_d[bsp::ch_p('*')] >> exponential) |
+                      (bsp::root_node_d[bsp::ch_p('/')] >> exponential) |
+                      (bsp::root_node_d[bsp::ch_p('%')] >> exponential));
 
                 exponential =
                     base >> !(bsp::root_node_d[bsp::ch_p('^')] >> exponential);
@@ -1185,8 +1202,8 @@ public:
                     bsp::leaf_node_d[bsp::lexeme_d[*self.constants_p]] >> op;
 
                 op = bsp::eps_p(bsp::end_p | "||" | "&&" | "==" | "<=" | ">=" |
-                                '<' | '>' | '+' | '-' | '*' | '/' | '^' | ')' |
-                                ',');
+                                '<' | '>' | '+' | '-' | '*' | '/' | '%' | '^' |
+                                ')' | ',');
             }
 
             /** This holds the NekDouble value that is parsed by spirit so it
@@ -1206,7 +1223,7 @@ public:
             bsp_rule<operatorID> base;
             bsp_rule<operatorID> exponent;
             bsp_rule<operatorID> exponential;
-            bsp_rule<operatorID> mult_div;
+            bsp_rule<operatorID> mult_div_mod;
             bsp_rule<operatorID> add_sub;
             bsp_rule<operatorID> lt_gt;
             bsp_rule<operatorID> equality;
@@ -1324,6 +1341,7 @@ private:
         E_EXP,
         E_FABS,
         E_FLOOR,
+        E_FMOD,
         E_LOG,
         E_LOG10,
         E_POW,
@@ -1619,6 +1637,23 @@ private:
             state[storeIdx] = (state[argIdx1] > state[argIdx2]);
         }
     };
+    struct EvalMod : public EvaluationStep
+    {
+        EvalMod(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r)
+            : EvaluationStep(rn, i, l, r, s, c, p, v)
+        {
+        }
+        virtual void run_many(ci n)
+        {
+            for (int i = 0; i < n; i++)
+                state[storeIdx * n + i] =
+                    std::fmod(state[argIdx1 * n + i], state[argIdx2 * n + i]);
+        }
+        virtual void run_once()
+        {
+            state[storeIdx] = std::fmod(state[argIdx1], state[argIdx2]);
+        }
+    };
     struct EvalAbs : public EvaluationStep
     {
         EvalAbs(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r)
@@ -1846,6 +1881,23 @@ private:
         virtual void run_once()
         {
             state[storeIdx] = std::floor(state[argIdx1]);
+        }
+    };
+    struct EvalFmod : public EvaluationStep
+    {
+        EvalFmod(rgt rn, vr s, cvr c, cvr p, cvr v, ci i, ci l, ci r)
+            : EvaluationStep(rn, i, l, r, s, c, p, v)
+        {
+        }
+        virtual void run_many(ci n)
+        {
+            for (int i = 0; i < n; i++)
+                state[storeIdx * n + i] =
+                    fmod(state[argIdx1 * n + i], state[argIdx2 * n + i]);
+        }
+        virtual void run_once()
+        {
+            state[storeIdx] = fmod(state[argIdx1], state[argIdx2]);
         }
     };
     struct EvalLog : public EvaluationStep
