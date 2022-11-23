@@ -25,6 +25,7 @@ v5.3.0
 - Templating FieldUtils::Interpolator class (!1420)
 - Fix virtual function overrides in StdRegions and LocalRegions classes (!1435)
 - Disable -Werror by default (!1443)
+- Add fmod and modulus operator to interpreter (!1089)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

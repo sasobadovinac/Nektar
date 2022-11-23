@@ -72,5 +72,20 @@ BOOST_AUTO_TEST_CASE(TestPowOperator)
     BOOST_CHECK_EQUAL(out[0], 65536);
 }
 
+BOOST_AUTO_TEST_CASE(TestFmodOperator)
+{
+    LibUtilities::Interpreter interp;
+    int func1 = interp.DefineFunction("x", "x % 3.2");
+    int func2 = interp.DefineFunction("x", "fmod(x,3.2)");
+    Array<OneD, NekDouble> in(1, 5.2), out(1);
+
+    NekDouble epsilon = std::numeric_limits<NekDouble>::epsilon();
+
+    interp.Evaluate(func1, {in}, out);
+    BOOST_CHECK_CLOSE(out[0], 2.0, epsilon);
+    interp.Evaluate(func2, {in}, out);
+    BOOST_CHECK_CLOSE(out[0], 2.0, epsilon);
+}
+
 } // namespace InterpreterUnitTests
 } // namespace Nektar
