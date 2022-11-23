@@ -81,6 +81,7 @@ exporting in .vtu format (!1386)
 - Add header checking for *.cpp, *.hpp and *.h files to the CI (!1431)
 - Enable packaging for Fedora 36. (!1429)
 - Fix XML files indentation (!1428)
+- Update solvers CMakeList.txt to fix some warnings detection issue (!1447)
 
 **FieldConvert**
 - Fix range option so that it also works with hdf5 (!1414)
