@@ -344,6 +344,12 @@ public:
     /// Virtual function to identify if operator is negated in DoSolve
     SOLVER_UTILS_EXPORT virtual bool v_NegatedOp();
 
+    /// Check if solver use Parallel-in-Time
+    SOLVER_UTILS_EXPORT bool ParallelInTime()
+    {
+        return m_comm->GetSize() != m_comm->GetSpaceComm()->GetSize();
+    }
+
 protected:
     /// Communicator
     LibUtilities::CommSharedPtr m_comm;

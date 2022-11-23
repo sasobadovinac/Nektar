@@ -415,15 +415,12 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     // Find the minimum and maximum hash for each process
     std::size_t file_id_max{file_id};
     std::size_t file_id_min{file_id};
-    m_comm->AllReduce(file_id_max, ReduceMax);
-    m_comm->AllReduce(file_id_min, ReduceMin);
+    m_comm->GetSpaceComm()->AllReduce(file_id_max, ReduceMax);
+    m_comm->GetSpaceComm()->AllReduce(file_id_min, ReduceMin);
 
     // Check that each process has the same filename (hash)
-    if (m_comm->GetSize() == m_comm->GetSpaceComm()->GetSize())
-    {
-        ASSERTL0(file_id_min == file_id_max,
-                 "All processes do not have the same filename.");
-    }
+    ASSERTL0(file_id_min == file_id_max,
+             "All processes do not have the same filename.");
 
     int nprocs = m_comm->GetSpaceComm()->GetSize();
     bool root  = m_comm->GetSpaceComm()->TreatAsRankZero();
@@ -465,12 +462,12 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     // have propagated through the filesystem
     if (backup)
     {
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
         int exists = 1;
         while (exists && perRank)
         {
             exists = fs::exists(specPath);
-            m_comm->AllReduce(exists, ReduceMax);
+            m_comm->GetSpaceComm()->AllReduce(exists, ReduceMax);
         }
     }
 
@@ -490,7 +487,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     }
 
     // Remove any existing file which is in the way
-    if (m_comm->RemoveExistingFiles() && !backup)
+    if (m_comm->GetSpaceComm()->RemoveExistingFiles() && !backup)
     {
         if (m_sharedFilesystem)
         {
@@ -508,7 +505,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
             }
         }
 
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
 
         // Now get rank 0 processor to tidy everything else up.
         if (root || !m_sharedFilesystem)
@@ -526,12 +523,12 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
 
         // wait until rank 0 has removed specPath and the changes
         // have propagated through the filesystem
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
         int exists = 1;
         while (exists && perRank)
         {
             exists = fs::exists(specPath);
-            m_comm->AllReduce(exists, ReduceMax);
+            m_comm->GetSpaceComm()->AllReduce(exists, ReduceMax);
         }
     }
 
@@ -562,14 +559,14 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
                      "Filesystem error: " + std::string(e.what()));
         }
 
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
 
         // Sit in a loop and make sure target directory has been created
         int created = 0;
         while (!created)
         {
             created = fs::is_directory(specPath);
-            m_comm->AllReduce(created, ReduceMin);
+            m_comm->GetSpaceComm()->AllReduce(created, ReduceMin);
         }
     }
     else

@@ -284,7 +284,7 @@ void UnsteadySystem::v_DoSolve()
         // Flag to update AV
         m_CalcPhysicalAV = true;
         // Frozen preconditioner checks
-        if (m_session->GetSolverInfo("Driver") != "Parareal")
+        if (!ParallelInTime())
         {
             if (UpdateTimeStepCheck())
             {
@@ -344,11 +344,10 @@ void UnsteadySystem::v_DoSolve()
 
         // Write out status information
         if (m_infosteps &&
-            (m_session->GetComm()->GetRank() == 0 ||
-             m_session->GetSolverInfo("Driver") == "Parareal") &&
+            (m_session->GetComm()->GetRank() == 0 || ParallelInTime()) &&
             !((step + 1) % m_infosteps))
         {
-            if (m_session->GetSolverInfo("Driver") == "Parareal")
+            if (ParallelInTime())
             {
                 cout << "RANK " << m_session->GetComm()->GetRank()
                      << " Steps: " << setw(8) << left << step + 1 << " "
@@ -427,7 +426,7 @@ void UnsteadySystem::v_DoSolve()
                 }
             }
 
-            // rank zero looks for abort file and deltes it
+            // rank zero looks for abort file and deletes it
             // if it exists. The communicates the abort
             if (m_session->GetComm()->GetRank() == 0)
             {
@@ -438,7 +437,7 @@ void UnsteadySystem::v_DoSolve()
                 }
             }
 
-            if (m_session->GetSolverInfo("Driver") != "Parareal")
+            if (!ParallelInTime())
             {
                 m_session->GetComm()->AllReduce(abortFlags,
                                                 LibUtilities::ReduceMax);
