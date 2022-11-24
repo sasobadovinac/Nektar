@@ -174,7 +174,7 @@ protected:
         m_specVanVisc = visc;
     }
 
-    virtual int v_GetNumElmts(void)
+    virtual size_t v_GetNumElmts(void)
     {
         return m_planes[0]->GetExpSize();
     }

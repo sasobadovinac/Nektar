@@ -120,7 +120,7 @@ void Extrapolate::v_CalcNeumannPressureBCs(
     const Array<OneD, const Array<OneD, NekDouble>> &fields,
     const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis)
 {
-    int n, cnt;
+    size_t n, cnt;
 
     Array<OneD, NekDouble> Pvals;
 
@@ -214,14 +214,14 @@ void Extrapolate::CalcOutflowBCs(
     Array<OneD, Array<OneD, NekDouble>> Velocity(m_curl_dim);
 
     MultiRegions::ExpListSharedPtr BndElmtExp;
-    int cnt = 0;
+    size_t cnt = 0;
 
     // Evaluate robin primitive coefficient here so they can be
     // updated whem m_int > 1 Currently not using this update
     // since we only using u^n at outflow instead of BDF rule.
     UpdateRobinPrimCoeff();
 
-    for (int n = 0; n < m_PBndConds.size(); ++n)
+    for (size_t n = 0; n < m_PBndConds.size(); ++n)
     {
         if ((m_hbcType[n] == eOBC) || (m_hbcType[n] == eConvectiveOBC))
         {
@@ -466,7 +466,7 @@ void Extrapolate::AddPressureToOutflowBCs(NekDouble kinvis)
         return;
     }
 
-    for (int n = 0; n < m_PBndConds.size(); ++n)
+    for (size_t n = 0; n < m_PBndConds.size(); ++n)
     {
         if (m_hbcType[n] == eConvectiveOBC)
         {
@@ -515,7 +515,8 @@ void Extrapolate::IProductNormVelocityOnHBC(
     const Array<OneD, const Array<OneD, NekDouble>> &Vel,
     Array<OneD, NekDouble> &IProdVn)
 {
-    int i, n, cnt;
+    int i;
+    size_t n, cnt;
     Array<OneD, NekDouble> IProdVnTmp;
     Array<OneD, Array<OneD, NekDouble>> velbc(m_bnd_dim);
 
@@ -546,7 +547,8 @@ void Extrapolate::IProductNormVelocityBCOnHBC(Array<OneD, NekDouble> &IProdVn)
     {
         return;
     }
-    int i, n, cnt;
+    int i;
+    size_t n, cnt;
     Array<OneD, NekDouble> IProdVnTmp;
     Array<OneD, Array<OneD, NekDouble>> velbc(m_bnd_dim);
     Array<OneD, Array<OneD, MultiRegions::ExpListSharedPtr>> VelBndExp(
@@ -613,7 +615,7 @@ void Extrapolate::GenerateHOPBCMap(
     m_PBndConds = m_pressure->GetBndConditions();
     m_PBndExp   = m_pressure->GetBndCondExpansions();
 
-    int cnt, n;
+    size_t cnt, n;
 
     // Storage array for high order pressure BCs
     m_pressureHBCs = Array<OneD, Array<OneD, NekDouble>>(m_intSteps);
@@ -658,7 +660,7 @@ void Extrapolate::GenerateHOPBCMap(
     }
 
     m_iprodnormvel[0] = Array<OneD, NekDouble>(m_numHBCDof, 0.0);
-    for (n = 0; n < m_intSteps; ++n)
+    for (int n = 0; n < m_intSteps; ++n)
     {
         m_pressureHBCs[n]     = Array<OneD, NekDouble>(m_numHBCDof, 0.0);
         m_iprodnormvel[n + 1] = Array<OneD, NekDouble>(m_numHBCDof, 0.0);
@@ -809,7 +811,7 @@ void Extrapolate::UpdateRobinPrimCoeff(void)
         return;
     }
 
-    for (int n = 0; n < m_PBndConds.size(); ++n)
+    for (size_t n = 0; n < m_PBndConds.size(); ++n)
     {
         // Get expansion with element on this boundary
         if (m_hbcType[n] == eConvectiveOBC)
@@ -849,10 +851,10 @@ Array<OneD, NekDouble> Extrapolate::GetMaxStdVelocity(
     // Checking if the problem is 2D
     ASSERTL0(m_curl_dim >= 2, "Method not implemented for 1D");
 
-    int n_points_0 = m_fields[0]->GetExp(0)->GetTotPoints();
-    int n_element  = m_fields[0]->GetExpSize();
-    int nvel       = inarray.size();
-    int cnt;
+    size_t n_points_0 = m_fields[0]->GetExp(0)->GetTotPoints();
+    size_t n_element  = m_fields[0]->GetExpSize();
+    size_t nvel       = inarray.size();
+    size_t cnt;
 
     NekDouble pntVelocity;
 
@@ -862,21 +864,21 @@ Array<OneD, NekDouble> Extrapolate::GetMaxStdVelocity(
     Array<OneD, NekDouble> maxV(n_element, 0.0);
     LibUtilities::PointsKeyVector ptsKeys;
 
-    for (int i = 0; i < nvel; ++i)
+    for (size_t i = 0; i < nvel; ++i)
     {
         stdVelocity[i] = Array<OneD, NekDouble>(n_points_0);
     }
 
     cnt = 0.0;
-    for (int el = 0; el < n_element; ++el)
+    for (size_t el = 0; el < n_element; ++el)
     {
-        int n_points = m_fields[0]->GetExp(el)->GetTotPoints();
-        ptsKeys      = m_fields[0]->GetExp(el)->GetPointsKeys();
+        size_t n_points = m_fields[0]->GetExp(el)->GetTotPoints();
+        ptsKeys         = m_fields[0]->GetExp(el)->GetPointsKeys();
 
         // reset local space
         if (n_points != n_points_0)
         {
-            for (int j = 0; j < nvel; ++j)
+            for (size_t j = 0; j < nvel; ++j)
             {
                 stdVelocity[j] = Array<OneD, NekDouble>(n_points, 0.0);
             }
@@ -884,7 +886,7 @@ Array<OneD, NekDouble> Extrapolate::GetMaxStdVelocity(
         }
         else
         {
-            for (int j = 0; j < nvel; ++j)
+            for (size_t j = 0; j < nvel; ++j)
             {
                 Vmath::Zero(n_points, stdVelocity[j], 1);
             }
@@ -899,9 +901,9 @@ Array<OneD, NekDouble> Extrapolate::GetMaxStdVelocity(
         if (m_fields[0]->GetExp(el)->GetGeom()->GetMetricInfo()->GetGtype() ==
             SpatialDomains::eDeformed)
         {
-            for (int j = 0; j < nvel; ++j)
+            for (size_t j = 0; j < nvel; ++j)
             {
-                for (int k = 0; k < nvel; ++k)
+                for (size_t k = 0; k < nvel; ++k)
                 {
                     Vmath::Vvtvp(n_points, gmat[k * nvel + j], 1,
                                  tmp = inarray[k] + cnt, 1, stdVelocity[j], 1,
@@ -911,9 +913,9 @@ Array<OneD, NekDouble> Extrapolate::GetMaxStdVelocity(
         }
         else
         {
-            for (int j = 0; j < nvel; ++j)
+            for (size_t j = 0; j < nvel; ++j)
             {
-                for (int k = 0; k < nvel; ++k)
+                for (size_t k = 0; k < nvel; ++k)
                 {
                     Vmath::Svtvp(n_points, gmat[k * nvel + j][0],
                                  tmp = inarray[k] + cnt, 1, stdVelocity[j], 1,
@@ -926,7 +928,7 @@ Array<OneD, NekDouble> Extrapolate::GetMaxStdVelocity(
         // Calculate total velocity in stdVelocity[0]
         Vmath::Vmul(n_points, stdVelocity[0], 1, stdVelocity[0], 1,
                     stdVelocity[0], 1);
-        for (int k = 1; k < nvel; ++k)
+        for (size_t k = 1; k < nvel; ++k)
         {
             Vmath::Vvtvp(n_points, stdVelocity[k], 1, stdVelocity[k], 1,
                          stdVelocity[0], 1, stdVelocity[0], 1);
@@ -1032,7 +1034,7 @@ void Extrapolate::v_AccelerationBDF(Array<OneD, Array<OneD, NekDouble>> &array)
 
 void Extrapolate::CopyPressureHBCsToPbndExp(void)
 {
-    int n, cnt;
+    size_t n, cnt;
     for (cnt = n = 0; n < m_PBndConds.size(); ++n)
     {
         if ((m_hbcType[n] == eHBCNeumann) || (m_hbcType[n] == eConvectiveOBC))

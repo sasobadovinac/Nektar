@@ -785,6 +785,38 @@ void SessionReader::LoadParameter(const std::string &pName, int &pVar,
 /**
  *
  */
+void SessionReader::LoadParameter(const std::string &pName, size_t &pVar) const
+{
+    std::string vName = boost::to_upper_copy(pName);
+    auto paramIter    = m_parameters.find(vName);
+    ASSERTL0(paramIter != m_parameters.end(),
+             "Required parameter '" + pName + "' not specified in session.");
+    NekDouble param = round(paramIter->second);
+    pVar            = checked_cast<int>(param);
+}
+
+/**
+ *
+ */
+void SessionReader::LoadParameter(const std::string &pName, size_t &pVar,
+                                  const size_t &pDefault) const
+{
+    std::string vName = boost::to_upper_copy(pName);
+    auto paramIter    = m_parameters.find(vName);
+    if (paramIter != m_parameters.end())
+    {
+        NekDouble param = round(paramIter->second);
+        pVar            = checked_cast<int>(param);
+    }
+    else
+    {
+        pVar = pDefault;
+    }
+}
+
+/**
+ *
+ */
 void SessionReader::LoadParameter(const std::string &pName,
                                   NekDouble &pVar) const
 {
@@ -817,6 +849,15 @@ void SessionReader::LoadParameter(const std::string &pName, NekDouble &pVar,
  *
  */
 void SessionReader::SetParameter(const std::string &pName, int &pVar)
+{
+    std::string vName   = boost::to_upper_copy(pName);
+    m_parameters[vName] = pVar;
+}
+
+/**
+ *
+ */
+void SessionReader::SetParameter(const std::string &pName, size_t &pVar)
 {
     std::string vName   = boost::to_upper_copy(pName);
     m_parameters[vName] = pVar;

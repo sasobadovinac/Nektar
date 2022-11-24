@@ -59,20 +59,20 @@ PreconCfsBRJ::PreconCfsBRJ(
     pSession->LoadParameter("PreconItsStep", m_PreconItsStep, 7);
     pSession->LoadParameter("BRJRelaxParam", m_BRJRelaxParam, 1.0);
 
-    int nvariables     = pFields.size();
+    size_t nvariables  = pFields.size();
     m_PreconMatStorage = eDiagonal;
 
     m_PreconMatVarsSingle = TensorOfArray2D<SNekBlkMatSharedPtr>(nvariables);
-    for (int i = 0; i < nvariables; i++)
+    for (size_t i = 0; i < nvariables; i++)
     {
         m_PreconMatVarsSingle[i] = Array<OneD, SNekBlkMatSharedPtr>(nvariables);
     }
     AllocatePreconBlkDiagCoeff(pFields, m_PreconMatVarsSingle);
 
-    int nelmts = pFields[0]->GetNumElmts();
-    int nelmtcoef;
+    size_t nelmts = pFields[0]->GetNumElmts();
+    size_t nelmtcoef;
     Array<OneD, unsigned int> nelmtmatdim(nelmts);
-    for (int i = 0; i < nelmts; i++)
+    for (size_t i = 0; i < nelmts; i++)
     {
         nelmtcoef      = pFields[0]->GetExp(i)->GetNcoeffs();
         nelmtmatdim[i] = nelmtcoef * nvariables;
@@ -92,7 +92,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
 {
     boost::ignore_unused(flag);
 
-    int nBRJIterTot = m_PreconItsStep;
+    size_t nBRJIterTot = m_PreconItsStep;
     if (0 == nBRJIterTot)
     {
         DoNullPrecon(inarray, outarray, flag);
@@ -102,9 +102,9 @@ void PreconCfsBRJ::v_DoPreconCfs(
         const NekDouble BRJParam   = m_BRJRelaxParam;
         const NekDouble OmBRJParam = 1.0 - BRJParam;
 
-        unsigned int nvariables = pFields.size();
-        unsigned int npoints    = pFields[0]->GetNcoeffs();
-        unsigned int ntotpnt    = inarray.size();
+        size_t nvariables = pFields.size();
+        size_t npoints    = pFields[0]->GetNcoeffs();
+        size_t ntotpnt    = inarray.size();
 
         ASSERTL0(nvariables * npoints == ntotpnt,
                  "nvariables*npoints!=ntotpnt in PreconCoeff");
@@ -116,39 +116,39 @@ void PreconCfsBRJ::v_DoPreconCfs(
         Array<OneD, Array<OneD, NekDouble>> rhs2d(nvariables);
         Array<OneD, Array<OneD, NekDouble>> out_2d(nvariables);
         Array<OneD, Array<OneD, NekDouble>> outTmp_2d(nvariables);
-        for (int m = 0; m < nvariables; m++)
+        for (size_t m = 0; m < nvariables; m++)
         {
-            int moffset  = m * npoints;
-            rhs2d[m]     = rhs + moffset;
-            out_2d[m]    = outarray + moffset;
-            outTmp_2d[m] = outTmp + moffset;
+            size_t moffset = m * npoints;
+            rhs2d[m]       = rhs + moffset;
+            out_2d[m]      = outarray + moffset;
+            outTmp_2d[m]   = outTmp + moffset;
             pFields[m]->MultiplyByMassMatrix(inarray + moffset, rhs2d[m]);
         }
 
-        int nphysic   = pFields[0]->GetNpoints();
-        int nTracePts = pFields[0]->GetTrace()->GetNpoints();
+        size_t nphysic   = pFields[0]->GetNpoints();
+        size_t nTracePts = pFields[0]->GetTrace()->GetNpoints();
         TensorOfArray3D<NekDouble> qfield(m_spacedim);
         for (int i = 0; i < m_spacedim; i++)
         {
             qfield[i] = Array<OneD, Array<OneD, NekDouble>>(nvariables);
-            for (int j = 0; j < nvariables; j++)
+            for (size_t j = 0; j < nvariables; j++)
             {
                 qfield[i][j] = Array<OneD, NekDouble>(nphysic);
             }
         }
-        int ntmpTrace = 4 + 2 * m_spacedim;
+        size_t ntmpTrace = 4 + 2 * m_spacedim;
         TensorOfArray3D<NekDouble> tmpTrace(ntmpTrace);
-        for (int i = 0; i < ntmpTrace; i++)
+        for (size_t i = 0; i < ntmpTrace; i++)
         {
             tmpTrace[i] = Array<OneD, Array<OneD, NekDouble>>(nvariables);
-            for (int j = 0; j < nvariables; j++)
+            for (size_t j = 0; j < nvariables; j++)
             {
                 tmpTrace[i][j] = Array<OneD, NekDouble>(nTracePts);
             }
         }
         Array<OneD, Array<OneD, NekDouble>> FwdFluxDeriv(nvariables);
         Array<OneD, Array<OneD, NekDouble>> BwdFluxDeriv(nvariables);
-        for (int j = 0; j < nvariables; j++)
+        for (size_t j = 0; j < nvariables; j++)
         {
             FwdFluxDeriv[j] = Array<OneD, NekDouble>(nTracePts);
             BwdFluxDeriv[j] = Array<OneD, NekDouble>(nTracePts);
@@ -156,10 +156,10 @@ void PreconCfsBRJ::v_DoPreconCfs(
 
         bool flagUpdateDervFlux = false;
 
-        const int nwspTraceDataType = nvariables + 1;
+        const size_t nwspTraceDataType = nvariables + 1;
         NekSingle tmpSingle = 0;
         Array<OneD, Array<OneD, NekSingle>> wspTraceDataType(nwspTraceDataType);
-        for (int m = 0; m < nwspTraceDataType; m++)
+        for (size_t m = 0; m < nwspTraceDataType; m++)
         {
             wspTraceDataType[m] = Array<OneD, NekSingle>(nTracePts);
         }
@@ -170,7 +170,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
         timer.Stop();
         timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
 
-        for (int nrelax = 0; nrelax < nBRJIterTot - 1; nrelax++)
+        for (size_t nrelax = 0; nrelax < nBRJIterTot - 1; nrelax++)
         {
             Vmath::Smul(ntotpnt, OmBRJParam, outarray, 1, outN, 1);
 
@@ -251,9 +251,9 @@ void PreconCfsBRJ::PreconBlkDiag(
 {
     boost::ignore_unused(tmpDataType);
 
-    unsigned int nvariables = pFields.size();
-    unsigned int npoints    = pFields[0]->GetNcoeffs();
-    unsigned int npointsVar = nvariables * npoints;
+    size_t nvariables = pFields.size();
+    size_t npoints    = pFields[0]->GetNcoeffs();
+    size_t npointsVar = nvariables * npoints;
     Array<OneD, DataType> Sinarray(npointsVar);
     Array<OneD, DataType> Soutarray(npointsVar);
     NekVector<DataType> tmpVect(npointsVar, Sinarray, eWrapper);
@@ -261,18 +261,18 @@ void PreconCfsBRJ::PreconBlkDiag(
 
     std::shared_ptr<LocalRegions::ExpansionVector> expvect =
         pFields[0]->GetExp();
-    int nTotElmt = (*expvect).size();
+    size_t nTotElmt = (*expvect).size();
 
-    for (int m = 0; m < nvariables; m++)
+    for (size_t m = 0; m < nvariables; m++)
     {
-        int nVarOffset = m * npoints;
-        for (int ne = 0; ne < nTotElmt; ne++)
+        size_t nVarOffset = m * npoints;
+        for (size_t ne = 0; ne < nTotElmt; ne++)
         {
-            int nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
-            int nElmtCoef   = pFields[0]->GetNcoeffs(ne);
-            int inOffset    = nVarOffset + nCoefOffset;
-            int outOffset   = nCoefOffset * nvariables + m * nElmtCoef;
-            for (int i = 0; i < nElmtCoef; i++)
+            size_t nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
+            size_t nElmtCoef   = pFields[0]->GetNcoeffs(ne);
+            size_t inOffset    = nVarOffset + nCoefOffset;
+            size_t outOffset   = nCoefOffset * nvariables + m * nElmtCoef;
+            for (size_t i = 0; i < nElmtCoef; i++)
             {
                 Sinarray[outOffset + i] = DataType(inarray[inOffset + i]);
             }
@@ -281,16 +281,16 @@ void PreconCfsBRJ::PreconBlkDiag(
 
     outVect = (*PreconMatVars) * tmpVect;
 
-    for (int m = 0; m < nvariables; m++)
+    for (size_t m = 0; m < nvariables; m++)
     {
-        int nVarOffset = m * npoints;
-        for (int ne = 0; ne < nTotElmt; ne++)
+        size_t nVarOffset = m * npoints;
+        for (size_t ne = 0; ne < nTotElmt; ne++)
         {
-            int nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
-            int nElmtCoef   = pFields[0]->GetNcoeffs(ne);
-            int inOffset    = nVarOffset + nCoefOffset;
-            int outOffset   = nCoefOffset * nvariables + m * nElmtCoef;
-            for (int i = 0; i < nElmtCoef; i++)
+            size_t nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
+            size_t nElmtCoef   = pFields[0]->GetNcoeffs(ne);
+            size_t inOffset    = nVarOffset + nCoefOffset;
+            size_t outOffset   = nCoefOffset * nvariables + m * nElmtCoef;
+            for (size_t i = 0; i < nElmtCoef; i++)
             {
                 outarray[inOffset + i] = NekDouble(Soutarray[outOffset + i]);
             }
@@ -301,7 +301,7 @@ void PreconCfsBRJ::PreconBlkDiag(
 template <typename DataType>
 void PreconCfsBRJ::MinusOffDiag2Rhs(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-    const int nvariables, const int nCoeffs,
+    const size_t nvariables, const size_t nCoeffs,
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, bool flagUpdateDervFlux,
     Array<OneD, Array<OneD, NekDouble>> &FwdFluxDeriv,
@@ -317,12 +317,12 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
                          TraceJacDerivSign, FwdFluxDeriv, BwdFluxDeriv,
                          TraceIPSymJacArray);
 
-    int nTracePts = pFields[0]->GetTrace()->GetNpoints();
-    int npoints   = pFields[0]->GetNpoints();
-    int nDim      = m_spacedim;
+    size_t nTracePts = pFields[0]->GetTrace()->GetNpoints();
+    size_t npoints   = pFields[0]->GetNpoints();
+    size_t nDim      = m_spacedim;
 
     Array<OneD, Array<OneD, NekDouble>> outpnts(nvariables);
-    for (int i = 0; i < nvariables; i++)
+    for (size_t i = 0; i < nvariables; i++)
     {
         outpnts[i] = Array<OneD, NekDouble>(npoints, 0.0);
         pFields[i]->BwdTrans(outarray[i], outpnts[i]);
@@ -335,14 +335,14 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
     Array<OneD, Array<OneD, NekDouble>> BwdFlux;
     TensorOfArray3D<NekDouble> numDerivBwd(nDim);
     TensorOfArray3D<NekDouble> numDerivFwd(nDim);
-    int indexwspTrace = 0;
-    Fwd               = wspTrace[indexwspTrace], indexwspTrace++;
-    Bwd               = wspTrace[indexwspTrace], indexwspTrace++;
-    FwdFlux           = wspTrace[indexwspTrace], indexwspTrace++;
-    BwdFlux           = wspTrace[indexwspTrace], indexwspTrace++;
+    size_t indexwspTrace = 0;
+    Fwd                  = wspTrace[indexwspTrace], indexwspTrace++;
+    Bwd                  = wspTrace[indexwspTrace], indexwspTrace++;
+    FwdFlux              = wspTrace[indexwspTrace], indexwspTrace++;
+    BwdFlux              = wspTrace[indexwspTrace], indexwspTrace++;
 
     LibUtilities::Timer timer;
-    for (int i = 0; i < nvariables; ++i)
+    for (size_t i = 0; i < nvariables; ++i)
     {
         timer.Start();
         pFields[i]->GetFwdBwdTracePhys(outpnts[i], Fwd[i], Bwd[i]);
@@ -350,9 +350,9 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         timer.AccumulateRegion("ExpList::GetFwdBwdTracePhys", 10);
     }
 
-    int indexwspTraceDataType = 0;
+    size_t indexwspTraceDataType = 0;
     Array<OneD, Array<OneD, DataType>> Fwdarray(nvariables);
-    for (int m = 0; m < nvariables; ++m)
+    for (size_t m = 0; m < nvariables; ++m)
     {
         Fwdarray[m] = wspTraceDataType[indexwspTraceDataType],
         indexwspTraceDataType++;
@@ -360,53 +360,53 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
     Array<OneD, DataType> Fwdreslt;
     Fwdreslt = wspTraceDataType[indexwspTraceDataType], indexwspTraceDataType++;
 
-    for (int m = 0; m < nvariables; ++m)
+    for (size_t m = 0; m < nvariables; ++m)
     {
-        for (int i = 0; i < nTracePts; ++i)
+        for (size_t i = 0; i < nTracePts; ++i)
         {
             Fwdarray[m][i] = DataType(Fwd[m][i]);
         }
     }
-    for (int m = 0; m < nvariables; ++m)
+    for (size_t m = 0; m < nvariables; ++m)
     {
         Vmath::Zero(nTracePts, Fwdreslt, 1);
-        for (int n = 0; n < nvariables; ++n)
+        for (size_t n = 0; n < nvariables; ++n)
         {
-            for (int p = 0; p < nTracePts; ++p)
+            for (size_t p = 0; p < nTracePts; ++p)
             {
                 Fwdreslt[p] += TraceJacArray[0][m][n][p] * Fwdarray[n][p];
             }
         }
-        for (int i = 0; i < nTracePts; ++i)
+        for (size_t i = 0; i < nTracePts; ++i)
         {
             FwdFlux[m][i] = NekDouble(Fwdreslt[i]);
         }
     }
 
-    for (int m = 0; m < nvariables; ++m)
+    for (size_t m = 0; m < nvariables; ++m)
     {
-        for (int i = 0; i < nTracePts; ++i)
+        for (size_t i = 0; i < nTracePts; ++i)
         {
             Fwdarray[m][i] = DataType(Bwd[m][i]);
         }
     }
-    for (int m = 0; m < nvariables; ++m)
+    for (size_t m = 0; m < nvariables; ++m)
     {
         Vmath::Zero(nTracePts, Fwdreslt, 1);
-        for (int n = 0; n < nvariables; ++n)
+        for (size_t n = 0; n < nvariables; ++n)
         {
-            for (int p = 0; p < nTracePts; ++p)
+            for (size_t p = 0; p < nTracePts; ++p)
             {
                 Fwdreslt[p] += TraceJacArray[1][m][n][p] * Fwdarray[n][p];
             }
         }
-        for (int i = 0; i < nTracePts; ++i)
+        for (size_t i = 0; i < nTracePts; ++i)
         {
             BwdFlux[m][i] = NekDouble(Fwdreslt[i]);
         }
     }
 
-    for (int i = 0; i < nvariables; ++i)
+    for (size_t i = 0; i < nvariables; ++i)
     {
         Vmath::Fill(nCoeffs, 0.0, outarray[i], 1);
         timer.Start();
@@ -416,9 +416,9 @@ void PreconCfsBRJ::MinusOffDiag2Rhs(
         timer.AccumulateRegion("ExpList::AddTraceIntegralToOffDiag", 10);
     }
 
-    for (int i = 0; i < nvariables; ++i)
+    for (size_t i = 0; i < nvariables; ++i)
     {
-        for (int p = 0; p < nCoeffs; ++p)
+        for (size_t p = 0; p < nCoeffs; ++p)
         {
             outarray[i][p] =
                 -m_DtLambdaPreconMat * outarray[i][p] + inarray[i][p];
@@ -433,19 +433,19 @@ void PreconCfsBRJ::AllocatePreconBlkDiagCoeff(
     const int &nscale)
 {
 
-    int nvars  = pFields.size();
-    int nelmts = pFields[0]->GetNumElmts();
-    int nelmtcoef;
+    size_t nvars  = pFields.size();
+    size_t nelmts = pFields[0]->GetNumElmts();
+    size_t nelmtcoef;
     Array<OneD, unsigned int> nelmtmatdim(nelmts);
-    for (int i = 0; i < nelmts; i++)
+    for (size_t i = 0; i < nelmts; i++)
     {
         nelmtcoef      = pFields[0]->GetExp(i)->GetNcoeffs();
         nelmtmatdim[i] = nelmtcoef * nscale;
     }
 
-    for (int i = 0; i < nvars; i++)
+    for (size_t i = 0; i < nvars; i++)
     {
-        for (int j = 0; j < nvars; j++)
+        for (size_t j = 0; j < nvars; j++)
         {
             AllocateNekBlkMatDig(gmtxarray[i][j], nelmtmatdim, nelmtmatdim);
         }

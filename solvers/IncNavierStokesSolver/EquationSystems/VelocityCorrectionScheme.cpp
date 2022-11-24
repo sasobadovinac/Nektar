@@ -262,7 +262,7 @@ void VelocityCorrectionScheme::SetupFlowrate(NekDouble aii_dt)
     }
 
     // Find the boundary condition that is tagged as the flowrate boundary.
-    for (int i = 0; i < bcs.size(); ++i)
+    for (size_t i = 0; i < bcs.size(); ++i)
     {
         if (boost::iequals(bcs[i]->GetUserDefined(), "Flowrate"))
         {
@@ -290,7 +290,7 @@ void VelocityCorrectionScheme::SetupFlowrate(NekDouble aii_dt)
         Array<OneD, unsigned int> zIDs = m_fields[0]->GetZIDs();
         int tmpId                      = -1;
 
-        for (int i = 0; i < zIDs.size(); ++i)
+        for (size_t i = 0; i < zIDs.size(); ++i)
         {
             if (zIDs[i] == 0)
             {
@@ -331,7 +331,7 @@ void VelocityCorrectionScheme::SetupFlowrate(NekDouble aii_dt)
         Array<OneD, unsigned int> zIDs = m_fields[0]->GetZIDs();
         m_planeID                      = -1;
 
-        for (int i = 0; i < zIDs.size(); ++i)
+        for (size_t i = 0; i < zIDs.size(); ++i)
         {
             if (zIDs[i] == 0)
             {
@@ -382,7 +382,7 @@ void VelocityCorrectionScheme::SetupFlowrate(NekDouble aii_dt)
         m_pressure->GetBndConditions();
     Array<OneD, MultiRegions::ExpListSharedPtr> PBndExp =
         m_pressure->GetBndCondExpansions();
-    for (int n = 0; n < PBndConds.size(); ++n)
+    for (size_t n = 0; n < PBndConds.size(); ++n)
     {
         if (PBndConds[n]->GetBoundaryConditionType() ==
             SpatialDomains::eNeumann)
@@ -628,7 +628,7 @@ void VelocityCorrectionScheme::v_DoInitialise(void)
     SetBoundaryConditions(m_time);
 
     // Ensure the initial conditions have correct BCs
-    for (int i = 0; i < m_fields.size(); ++i)
+    for (size_t i = 0; i < m_fields.size(); ++i)
     {
         m_fields[i]->ImposeDirichletConditions(m_fields[i]->UpdateCoeffs());
         m_fields[i]->LocalToGlobal();
@@ -643,8 +643,8 @@ void VelocityCorrectionScheme::v_DoInitialise(void)
  */
 void VelocityCorrectionScheme::v_TransCoeffToPhys(void)
 {
-    int nfields = m_fields.size() - 1;
-    for (int k = 0; k < nfields; ++k)
+    size_t nfields = m_fields.size() - 1;
+    for (size_t k = 0; k < nfields; ++k)
     {
         // Backward Transformation in physical space for time evolution
         m_fields[k]->BwdTrans(m_fields[k]->GetCoeffs(),
@@ -658,8 +658,8 @@ void VelocityCorrectionScheme::v_TransCoeffToPhys(void)
 void VelocityCorrectionScheme::v_TransPhysToCoeff(void)
 {
 
-    int nfields = m_fields.size() - 1;
-    for (int k = 0; k < nfields; ++k)
+    size_t nfields = m_fields.size() - 1;
+    for (size_t k = 0; k < nfields; ++k)
     {
         // Forward Transformation in physical space for time evolution
         m_fields[k]->FwdTransLocalElmt(m_fields[k]->GetPhys(),
@@ -738,7 +738,7 @@ void VelocityCorrectionScheme::SolveUnsteadyStokesSystem(
         SetupFlowrate(aii_Dt);
     }
 
-    int physTot = m_fields[0]->GetTotPoints();
+    size_t physTot = m_fields[0]->GetTotPoints();
 
     // Substep the pressure boundary condition if using substepping
     m_extrapolation->SubStepSetPressureBCs(inarray, aii_Dt, m_kinvis);
@@ -796,9 +796,9 @@ void VelocityCorrectionScheme::v_SetUpPressureForcing(
     const Array<OneD, const Array<OneD, NekDouble>> &fields,
     Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt)
 {
-    int i;
-    int physTot = m_fields[0]->GetTotPoints();
-    int nvel    = m_velocity.size();
+    size_t i;
+    size_t physTot = m_fields[0]->GetTotPoints();
+    size_t nvel    = m_velocity.size();
 
     m_fields[0]->PhysDeriv(eX, fields[0], Forcing[0]);
 
@@ -820,7 +820,7 @@ void VelocityCorrectionScheme::v_SetUpViscousForcing(
     Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt)
 {
     NekDouble aii_dtinv = 1.0 / aii_Dt;
-    int phystot         = m_fields[0]->GetTotPoints();
+    size_t phystot      = m_fields[0]->GetTotPoints();
 
     // Grad p
     m_pressure->BwdTrans(m_pressure->GetCoeffs(), m_pressure->UpdatePhys());
@@ -982,11 +982,11 @@ void VelocityCorrectionScheme::SetUpSVV(void)
                         "SVVVelocityMagnitude section in session file"
                      << endl;
             }
-            int nvel     = m_velocity.size();
-            int phystot  = m_fields[0]->GetTotPoints();
-            SVVVelFields = Array<OneD, Array<OneD, NekDouble>>(nvel);
+            size_t nvel    = m_velocity.size();
+            size_t phystot = m_fields[0]->GetTotPoints();
+            SVVVelFields   = Array<OneD, Array<OneD, NekDouble>>(nvel);
             vector<string> vars;
-            for (int i = 0; i < nvel; ++i)
+            for (size_t i = 0; i < nvel; ++i)
             {
                 SVVVelFields[i] = Array<OneD, NekDouble>(phystot);
                 vars.push_back(m_session->GetVariable(m_velocity[i]));
@@ -1061,15 +1061,15 @@ void VelocityCorrectionScheme::SetUpSVV(void)
             Array<OneD, unsigned int> planes;
             planes = m_fields[0]->GetZIDs();
 
-            int num_planes = planes.size();
+            size_t num_planes = planes.size();
             Array<OneD, NekDouble> SVV(num_planes, 0.0);
             NekDouble fac;
-            int kmodes = m_fields[0]->GetHomogeneousBasis()->GetNumModes();
-            int pstart;
+            size_t kmodes = m_fields[0]->GetHomogeneousBasis()->GetNumModes();
+            size_t pstart;
 
             pstart = m_sVVCutoffRatioHomo1D * kmodes;
 
-            for (int n = 0; n < num_planes; ++n)
+            for (size_t n = 0; n < num_planes; ++n)
             {
                 if (planes[n] > pstart)
                 {
@@ -1081,7 +1081,7 @@ void VelocityCorrectionScheme::SetUpSVV(void)
                 }
             }
 
-            for (int i = 0; i < m_velocity.size(); ++i)
+            for (size_t i = 0; i < m_velocity.size(); ++i)
             {
                 m_fields[m_velocity[i]]->SetHomo1DSpecVanVisc(SVV);
             }
@@ -1093,9 +1093,9 @@ void VelocityCorrectionScheme::SVVVarDiffCoeff(
     const NekDouble velmag, Array<OneD, NekDouble> &diffcoeff,
     const Array<OneD, Array<OneD, NekDouble>> &vel)
 {
-    int phystot = m_fields[0]->GetTotPoints();
-    int nel     = m_fields[0]->GetNumElmts();
-    int nvel, cnt;
+    size_t phystot = m_fields[0]->GetTotPoints();
+    size_t nel     = m_fields[0]->GetNumElmts();
+    size_t nvel, cnt;
 
     Array<OneD, NekDouble> tmp;
 
@@ -1107,7 +1107,7 @@ void VelocityCorrectionScheme::SVVVarDiffCoeff(
         nvel = vel.size();
         // calculate magnitude of v
         Vmath::Vmul(phystot, vel[0], 1, vel[0], 1, Velmag, 1);
-        for (int n = 1; n < nvel; ++n)
+        for (size_t n = 1; n < nvel; ++n)
         {
             Vmath::Vvtvp(phystot, vel[n], 1, vel[n], 1, Velmag, 1, Velmag, 1);
         }
@@ -1116,9 +1116,9 @@ void VelocityCorrectionScheme::SVVVarDiffCoeff(
         cnt = 0;
         Array<OneD, NekDouble> tmp;
         // calculate mean value of vel mag.
-        for (int i = 0; i < nel; ++i)
+        for (size_t i = 0; i < nel; ++i)
         {
-            int nq       = m_fields[0]->GetExp(i)->GetTotPoints();
+            size_t nq    = m_fields[0]->GetExp(i)->GetTotPoints();
             tmp          = Velmag + cnt;
             diffcoeff[i] = m_fields[0]->GetExp(i)->Integral(tmp);
             Vmath::Fill(nq, 1.0, tmp, 1);
@@ -1132,13 +1132,14 @@ void VelocityCorrectionScheme::SVVVarDiffCoeff(
         nvel = m_expdim;
     }
 
-    for (int e = 0; e < nel; e++)
+    for (size_t e = 0; e < nel; e++)
     {
         LocalRegions::ExpansionSharedPtr exp = m_fields[0]->GetExp(e);
         NekDouble h                          = 0;
 
         // Find maximum length of edge.
-        for (int i = 0; i < exp->GetGeom()->GetNumEdges(); ++i)
+        size_t nEdge = exp->GetGeom()->GetNumEdges();
+        for (size_t i = 0; i < nEdge; ++i)
         {
             h = max(h, exp->GetGeom()->GetEdge(i)->GetVertex(0)->dist(
                            *(exp->GetGeom()->GetEdge(i)->GetVertex(1))));

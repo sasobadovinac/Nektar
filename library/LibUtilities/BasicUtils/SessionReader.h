@@ -199,9 +199,16 @@ public:
     /// Load an integer parameter
     LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name,
                                             int &var) const;
+    /// Load an size_t parameter
+    LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name,
+                                            size_t &var) const;
     /// Check for and load an integer parameter.
     LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name, int &var,
                                             const int &def) const;
+    /// Check for and load an size_t parameter.
+    LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name,
+                                            size_t &var,
+                                            const size_t &def) const;
     /// Load a double precision parameter
     LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name,
                                             NekDouble &var) const;
@@ -211,6 +218,9 @@ public:
                                             const NekDouble &def) const;
     /// Set an integer parameter
     LIB_UTILITIES_EXPORT void SetParameter(const std::string &name, int &var);
+    /// Set an size_t parameter
+    LIB_UTILITIES_EXPORT void SetParameter(const std::string &name,
+                                           size_t &var);
     /// Set a double precision parameter
     LIB_UTILITIES_EXPORT void SetParameter(const std::string &name,
                                            NekDouble &var);

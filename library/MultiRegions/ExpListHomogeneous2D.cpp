@@ -273,17 +273,17 @@ void ExpListHomogeneous2D::v_DealiasedDotProd(
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
     // TODO Proper implementation of this
-    int ndim = inarray1.size();
+    size_t ndim = inarray1.size();
     ASSERTL1(inarray2.size() % ndim == 0,
              "Wrong dimensions for DealiasedDotProd.");
-    int nvec = inarray2.size() % ndim;
-    int npts = inarray1[0].size();
+    size_t nvec = inarray2.size() % ndim;
+    size_t npts = inarray1[0].size();
 
     Array<OneD, NekDouble> out(npts);
-    for (int i = 0; i < nvec; i++)
+    for (size_t i = 0; i < nvec; i++)
     {
         Vmath::Zero(npts, outarray[i], 1);
-        for (int j = 0; j < ndim; j++)
+        for (size_t j = 0; j < ndim; j++)
         {
             DealiasedProd(inarray1[j], inarray2[i * ndim + j], out);
             Vmath::Vadd(npts, outarray[i], 1, out, 1, outarray[i], 1);
@@ -295,11 +295,11 @@ void ExpListHomogeneous2D::v_FwdTrans(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    int cnt = 0, cnt1 = 0;
+    size_t cnt = 0, cnt1 = 0;
     Array<OneD, NekDouble> tmparray;
-    int nlines = m_lines.size();
+    size_t nlines = m_lines.size();
 
-    for (int n = 0; n < nlines; ++n)
+    for (size_t n = 0; n < nlines; ++n)
     {
         m_lines[n]->FwdTrans(inarray + cnt, tmparray = outarray + cnt1);
         cnt += m_lines[n]->GetTotPoints();
@@ -315,11 +315,11 @@ void ExpListHomogeneous2D::v_FwdTransLocalElmt(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    int cnt = 0, cnt1 = 0;
+    size_t cnt = 0, cnt1 = 0;
     Array<OneD, NekDouble> tmparray;
-    int nlines = m_lines.size();
+    size_t nlines = m_lines.size();
 
-    for (int n = 0; n < nlines; ++n)
+    for (size_t n = 0; n < nlines; ++n)
     {
         m_lines[n]->FwdTransLocalElmt(inarray + cnt,
                                       tmparray = outarray + cnt1);
@@ -337,11 +337,11 @@ void ExpListHomogeneous2D::v_BwdTrans(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    int cnt = 0, cnt1 = 0;
+    size_t cnt = 0, cnt1 = 0;
     Array<OneD, NekDouble> tmparray;
-    int nlines = m_lines.size();
+    size_t nlines = m_lines.size();
 
-    for (int n = 0; n < nlines; ++n)
+    for (size_t n = 0; n < nlines; ++n)
     {
         m_lines[n]->BwdTrans(inarray + cnt, tmparray = outarray + cnt1);
         cnt += m_lines[n]->GetNcoeffs();
@@ -357,11 +357,11 @@ void ExpListHomogeneous2D::v_IProductWRTBase(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
 {
-    int cnt = 0, cnt1 = 0;
+    size_t cnt = 0, cnt1 = 0;
     Array<OneD, NekDouble> tmparray;
-    int nlines = m_lines.size();
+    size_t nlines = m_lines.size();
 
-    for (int n = 0; n < nlines; ++n)
+    for (size_t n = 0; n < nlines; ++n)
     {
         m_lines[n]->IProductWRTBase(inarray + cnt, tmparray = outarray + cnt1);
 

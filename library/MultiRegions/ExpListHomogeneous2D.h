@@ -159,7 +159,7 @@ protected:
         Homogeneous2DMatType mattype) const;
 
     //  virtual functions
-    virtual int v_GetNumElmts(void)
+    virtual size_t v_GetNumElmts(void)
     {
         return m_lines[0]->GetExpSize();
     }

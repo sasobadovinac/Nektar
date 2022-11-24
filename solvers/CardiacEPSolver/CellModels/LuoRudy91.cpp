@@ -80,7 +80,7 @@ void LuoRudy91::v_Update(
 {
     boost::ignore_unused(time);
 
-    for (unsigned int i = 0; i < m_nq; ++i)
+    for (size_t i = 0; i < m_nq; ++i)
     {
         // Inputs:
         // Time units: millisecond

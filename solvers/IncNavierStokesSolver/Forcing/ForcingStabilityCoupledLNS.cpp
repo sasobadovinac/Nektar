@@ -64,13 +64,13 @@ void ForcingStabilityCoupledLNS::v_Apply(
 {
     boost::ignore_unused(inarray, time);
 
-    int npts = fields[0]->GetTotPoints();
+    size_t npts = fields[0]->GetTotPoints();
 
     ASSERTL1(fields.size() == outarray.size(),
              "Fields and outarray are of different size");
 
     // Apply m_forcing terms
-    for (int i = 0; i < fields.size(); i++)
+    for (size_t i = 0; i < fields.size(); i++)
     {
         Vmath::Vadd(npts, fields[i]->GetPhys(), 1, outarray[i], 1, outarray[i],
                     1);

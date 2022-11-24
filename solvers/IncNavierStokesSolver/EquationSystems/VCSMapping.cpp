@@ -74,8 +74,8 @@ void VCSMapping::v_InitObject(bool DeclareField)
     m_extrapolation->GenerateHOPBCMap(m_session);
 
     // Storage to extrapolate pressure forcing
-    int physTot  = m_fields[0]->GetTotPoints();
-    int intSteps = 1;
+    size_t physTot  = m_fields[0]->GetTotPoints();
+    size_t intSteps = 1;
 
     if (m_intScheme->GetName() == "IMEX" ||
         m_intScheme->GetName() == "IMEXGear")
@@ -90,7 +90,7 @@ void VCSMapping::v_InitObject(bool DeclareField)
     }
 
     m_presForcingCorrection = Array<OneD, Array<OneD, NekDouble>>(intSteps);
-    for (int i = 0; i < m_presForcingCorrection.size(); i++)
+    for (size_t i = 0; i < m_presForcingCorrection.size(); i++)
     {
         m_presForcingCorrection[i] = Array<OneD, NekDouble>(physTot, 0.0);
     }
@@ -150,8 +150,8 @@ void VCSMapping::v_DoInitialise(void)
     }
 
     // Initialise m_gradP
-    int physTot = m_fields[0]->GetTotPoints();
-    m_gradP     = Array<OneD, Array<OneD, NekDouble>>(m_nConvectiveFields);
+    size_t physTot = m_fields[0]->GetTotPoints();
+    m_gradP        = Array<OneD, Array<OneD, NekDouble>>(m_nConvectiveFields);
     for (int i = 0; i < m_nConvectiveFields; ++i)
     {
         m_gradP[i] = Array<OneD, NekDouble>(physTot, 0.0);
@@ -221,8 +221,8 @@ void VCSMapping::v_SetUpPressureForcing(
     }
     else
     {
-        int physTot = m_fields[0]->GetTotPoints();
-        int nvel    = m_nConvectiveFields;
+        size_t physTot = m_fields[0]->GetTotPoints();
+        size_t nvel    = m_nConvectiveFields;
         Array<OneD, NekDouble> wk(physTot, 0.0);
 
         Array<OneD, NekDouble> Jac(physTot, 0.0);
@@ -230,7 +230,7 @@ void VCSMapping::v_SetUpPressureForcing(
 
         // Calculate div(J*u/Dt)
         Vmath::Zero(physTot, Forcing[0], 1);
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             if (m_fields[i]->GetWaveSpace())
             {
@@ -262,7 +262,7 @@ void VCSMapping::v_SetUpPressureForcing(
             //  Part 1: div(J*grad(U/J . grad(J)))
             Array<OneD, Array<OneD, NekDouble>> tmp(nvel);
             Array<OneD, Array<OneD, NekDouble>> velocity(nvel);
-            for (int i = 0; i < tmp.size(); i++)
+            for (size_t i = 0; i < tmp.size(); i++)
             {
                 tmp[i]      = Array<OneD, NekDouble>(physTot, 0.0);
                 velocity[i] = Array<OneD, NekDouble>(physTot, 0.0);
@@ -282,7 +282,7 @@ void VCSMapping::v_SetUpPressureForcing(
             // Calculate wk = (U.grad(J))/J
             Vmath::Vdiv(physTot, wk, 1, Jac, 1, wk, 1);
             // J*grad[(U.grad(J))/J]
-            for (int i = 0; i < nvel; ++i)
+            for (size_t i = 0; i < nvel; ++i)
             {
                 m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[i], wk,
                                        tmp[i]);
@@ -290,7 +290,7 @@ void VCSMapping::v_SetUpPressureForcing(
             }
             // div(J*grad[(U.grad(J))/J])
             Vmath::Zero(physTot, wk, 1);
-            for (int i = 0; i < nvel; ++i)
+            for (size_t i = 0; i < nvel; ++i)
             {
                 m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[i], tmp[i],
                                        tmp[i]);
@@ -306,7 +306,7 @@ void VCSMapping::v_SetUpPressureForcing(
             Vmath::Vadd(physTot, velocity[0], 1, wk, 1, wk, 1);
 
             // Multiply by kinvis and prepare to extrapolate
-            int nlevels = m_presForcingCorrection.size();
+            size_t nlevels = m_presForcingCorrection.size();
             Vmath::Smul(physTot, m_kinvis, wk, 1,
                         m_presForcingCorrection[nlevels - 1], 1);
 
@@ -340,12 +340,12 @@ void VCSMapping::v_SetUpViscousForcing(
     Array<OneD, Array<OneD, NekDouble>> &Forcing, const NekDouble aii_Dt)
 {
     NekDouble aii_dtinv = 1.0 / aii_Dt;
-    int physTot         = m_fields[0]->GetTotPoints();
+    size_t physTot      = m_fields[0]->GetTotPoints();
 
     // Grad p
     m_pressure->BwdTrans(m_pressure->GetCoeffs(), m_pressure->UpdatePhys());
 
-    int nvel = m_velocity.size();
+    size_t nvel = m_velocity.size();
     if (nvel == 2)
     {
         m_pressure->PhysDeriv(m_pressure->GetPhys(), Forcing[0], Forcing[1]);
@@ -359,14 +359,14 @@ void VCSMapping::v_SetUpViscousForcing(
     // Copy grad p in physical space to m_gradP to reuse later
     if (m_pressure->GetWaveSpace())
     {
-        for (int i = 0; i < nvel; i++)
+        for (size_t i = 0; i < nvel; i++)
         {
             m_pressure->HomogeneousBwdTrans(Forcing[i], m_gradP[i]);
         }
     }
     else
     {
-        for (int i = 0; i < nvel; i++)
+        for (size_t i = 0; i < nvel; i++)
         {
             Vmath::Vcopy(physTot, Forcing[i], 1, m_gradP[i], 1);
         }
@@ -384,7 +384,7 @@ void VCSMapping::v_SetUpViscousForcing(
         {
             Array<OneD, NekDouble> Jac(physTot, 0.0);
             m_mapping->GetJacobian(Jac);
-            for (int i = 0; i < nvel; i++)
+            for (size_t i = 0; i < nvel; i++)
             {
                 Vmath::Vdiv(physTot, m_gradP[i], 1, Jac, 1, Forcing[i], 1);
             }
@@ -392,7 +392,7 @@ void VCSMapping::v_SetUpViscousForcing(
         // Transform back to wavespace
         if (m_pressure->GetWaveSpace())
         {
-            for (int i = 0; i < nvel; i++)
+            for (size_t i = 0; i < nvel; i++)
             {
                 m_pressure->HomogeneousFwdTrans(Forcing[i], Forcing[i]);
             }
@@ -401,7 +401,7 @@ void VCSMapping::v_SetUpViscousForcing(
 
     // Subtract inarray/(aii_dt) and divide by kinvis. Kinvis will
     // need to be updated for the convected fields.
-    for (int i = 0; i < nvel; ++i)
+    for (size_t i = 0; i < nvel; ++i)
     {
         Blas::Daxpy(physTot, -aii_dtinv, inarray[i], 1, Forcing[i], 1);
         Blas::Dscal(physTot, 1.0 / m_kinvis, &(Forcing[i])[0], 1);
@@ -419,14 +419,14 @@ void VCSMapping::v_SolvePressure(const Array<OneD, NekDouble> &Forcing)
     }
     else
     {
-        int physTot    = m_fields[0]->GetTotPoints();
-        int nvel       = m_nConvectiveFields;
+        size_t physTot = m_fields[0]->GetTotPoints();
+        size_t nvel    = m_nConvectiveFields;
         bool converged = false;     // flag to mark if system converged
-        int s          = 0;         // iteration counter
+        size_t s       = 0;         // iteration counter
         NekDouble error;            // L2 error at current iteration
         NekDouble forcing_L2 = 0.0; // L2 norm of F
 
-        int maxIter;
+        size_t maxIter;
         m_session->LoadParameter("MappingMaxIter", maxIter, 5000);
 
         // rhs of the equation at current iteration
@@ -437,7 +437,7 @@ void VCSMapping::v_SolvePressure(const Array<OneD, NekDouble> &Forcing)
         Array<OneD, Array<OneD, NekDouble>> wk1(nvel);
         Array<OneD, Array<OneD, NekDouble>> wk2(nvel);
         Array<OneD, Array<OneD, NekDouble>> gradP(nvel);
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             wk1[i]   = Array<OneD, NekDouble>(physTot, 0.0);
             wk2[i]   = Array<OneD, NekDouble>(physTot, 0.0);
@@ -470,7 +470,7 @@ void VCSMapping::v_SolvePressure(const Array<OneD, NekDouble> &Forcing)
             //
             // Calculate forcing term for this iteration
             //
-            for (int i = 0; i < nvel; ++i)
+            for (size_t i = 0; i < nvel; ++i)
             {
                 m_pressure->PhysDeriv(MultiRegions::DirCartesianMap[i],
                                       previous_iter, gradP[i]);
@@ -562,13 +562,13 @@ void VCSMapping::v_SolveViscous(
     }
     else
     {
-        int physTot    = m_fields[0]->GetTotPoints();
-        int nvel       = m_nConvectiveFields;
+        size_t physTot = m_fields[0]->GetTotPoints();
+        size_t nvel    = m_nConvectiveFields;
         bool converged = false;     // flag to mark if system converged
-        int s          = 0;         // iteration counter
+        size_t s       = 0;         // iteration counter
         NekDouble error, max_error; // L2 error at current iteration
 
-        int maxIter;
+        size_t maxIter;
         m_session->LoadParameter("MappingMaxIter", maxIter, 5000);
 
         // L2 norm of F
@@ -580,7 +580,7 @@ void VCSMapping::v_SolveViscous(
         Array<OneD, Array<OneD, NekDouble>> previous_iter(nvel);
         // Working space
         Array<OneD, Array<OneD, NekDouble>> wk(nvel);
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             F_corrected[i]   = Array<OneD, NekDouble>(physTot, 0.0);
             previous_iter[i] = Array<OneD, NekDouble>(physTot, 0.0);
@@ -599,7 +599,7 @@ void VCSMapping::v_SolveViscous(
         }
 
         // Calculate L2-norm of F and set initial solution for iteration
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             forcing_L2[i] = m_fields[0]->L2(Forcing[i], wk[0]);
             m_fields[i]->BwdTrans(m_fields[i]->GetCoeffs(), previous_iter[i]);
@@ -622,14 +622,14 @@ void VCSMapping::v_SolveViscous(
             // Calculate L(U)- in this parts all components might be coupled
             if (m_fields[0]->GetWaveSpace())
             {
-                for (int i = 0; i < nvel; ++i)
+                for (size_t i = 0; i < nvel; ++i)
                 {
                     m_fields[0]->HomogeneousBwdTrans(previous_iter[i], wk[i]);
                 }
             }
             else
             {
-                for (int i = 0; i < nvel; ++i)
+                for (size_t i = 0; i < nvel; ++i)
                 {
                     Vmath::Vcopy(physTot, previous_iter[i], 1, wk[i], 1);
                 }
@@ -641,7 +641,7 @@ void VCSMapping::v_SolveViscous(
 
             if (m_fields[0]->GetWaveSpace())
             {
-                for (int i = 0; i < nvel; ++i)
+                for (size_t i = 0; i < nvel; ++i)
                 {
                     m_fields[0]->HomogeneousFwdTrans(F_corrected[i],
                                                      F_corrected[i]);
@@ -649,14 +649,14 @@ void VCSMapping::v_SolveViscous(
             }
             else
             {
-                for (int i = 0; i < nvel; ++i)
+                for (size_t i = 0; i < nvel; ++i)
                 {
                     Vmath::Vcopy(physTot, F_corrected[i], 1, F_corrected[i], 1);
                 }
             }
 
             // Loop velocity components
-            for (int i = 0; i < nvel; ++i)
+            for (size_t i = 0; i < nvel; ++i)
             {
                 // (-alpha*L(U^i) + U^i_jj)
                 Vmath::Smul(physTot, -1.0 * m_viscousRelaxation, F_corrected[i],
@@ -717,7 +717,7 @@ void VCSMapping::ApplyIncNSMappingForcing(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    int physTot = m_fields[0]->GetTotPoints();
+    size_t physTot = m_fields[0]->GetTotPoints();
     Array<OneD, Array<OneD, NekDouble>> vel(m_nConvectiveFields);
     Array<OneD, Array<OneD, NekDouble>> velPhys(m_nConvectiveFields);
     Array<OneD, Array<OneD, NekDouble>> Forcing(m_nConvectiveFields);
@@ -800,8 +800,8 @@ void VCSMapping::MappingAdvectionCorrection(
     const Array<OneD, const Array<OneD, NekDouble>> &velPhys,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    int physTot = m_fields[0]->GetTotPoints();
-    int nvel    = m_nConvectiveFields;
+    size_t physTot = m_fields[0]->GetTotPoints();
+    size_t nvel    = m_nConvectiveFields;
 
     Array<OneD, Array<OneD, NekDouble>> wk(nvel * nvel);
 
@@ -809,10 +809,10 @@ void VCSMapping::MappingAdvectionCorrection(
     m_mapping->ApplyChristoffelContravar(velPhys, wk);
 
     // Calculate correction -U^j*{i,kj}vel(k)
-    for (int i = 0; i < nvel; i++)
+    for (size_t i = 0; i < nvel; i++)
     {
         Vmath::Zero(physTot, outarray[i], 1);
-        for (int j = 0; j < nvel; j++)
+        for (size_t j = 0; j < nvel; j++)
         {
             Vmath::Vvtvp(physTot, wk[i * nvel + j], 1, velPhys[j], 1,
                          outarray[i], 1, outarray[i], 1);
@@ -826,13 +826,13 @@ void VCSMapping::MappingAccelerationCorrection(
     const Array<OneD, const Array<OneD, NekDouble>> &velPhys,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    int physTot = m_fields[0]->GetTotPoints();
-    int nvel    = m_nConvectiveFields;
+    size_t physTot = m_fields[0]->GetTotPoints();
+    size_t nvel    = m_nConvectiveFields;
 
     Array<OneD, Array<OneD, NekDouble>> wk(nvel * nvel);
     Array<OneD, Array<OneD, NekDouble>> tmp(nvel);
     Array<OneD, Array<OneD, NekDouble>> coordVel(nvel);
-    for (int i = 0; i < nvel; i++)
+    for (size_t i = 0; i < nvel; i++)
     {
         tmp[i]      = Array<OneD, NekDouble>(physTot, 0.0);
         coordVel[i] = Array<OneD, NekDouble>(physTot, 0.0);
@@ -843,12 +843,12 @@ void VCSMapping::MappingAccelerationCorrection(
 
     // Calculate first term: U^j u^i,j = U^j (du^i/dx^j + {i,kj}u^k)
     m_mapping->ApplyChristoffelContravar(velPhys, wk);
-    for (int i = 0; i < nvel; i++)
+    for (size_t i = 0; i < nvel; i++)
     {
         Vmath::Zero(physTot, outarray[i], 1);
 
         m_fields[0]->PhysDeriv(velPhys[i], tmp[0], tmp[1]);
-        for (int j = 0; j < nvel; j++)
+        for (size_t j = 0; j < nvel; j++)
         {
             if (j == 2)
             {
@@ -874,7 +874,7 @@ void VCSMapping::MappingAccelerationCorrection(
 
     // Add -u^j U^i,j
     m_mapping->ApplyChristoffelContravar(coordVel, wk);
-    for (int i = 0; i < nvel; i++)
+    for (size_t i = 0; i < nvel; i++)
     {
         if (nvel == 2)
         {
@@ -885,7 +885,7 @@ void VCSMapping::MappingAccelerationCorrection(
             m_fields[0]->PhysDeriv(coordVel[i], tmp[0], tmp[1], tmp[2]);
         }
 
-        for (int j = 0; j < nvel; j++)
+        for (size_t j = 0; j < nvel; j++)
         {
             Vmath::Vadd(physTot, wk[i * nvel + j], 1, tmp[j], 1,
                         wk[i * nvel + j], 1);
@@ -903,8 +903,8 @@ void VCSMapping::MappingAccelerationCorrection(
 void VCSMapping::MappingPressureCorrection(
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    int physTot = m_fields[0]->GetTotPoints();
-    int nvel    = m_nConvectiveFields;
+    size_t physTot = m_fields[0]->GetTotPoints();
+    size_t nvel    = m_nConvectiveFields;
 
     // Calculate g^(ij)p_(,j)
     m_mapping->RaiseIndex(m_gradP, outarray);
@@ -915,12 +915,12 @@ void VCSMapping::MappingPressureCorrection(
     {
         Array<OneD, NekDouble> Jac(physTot, 0.0);
         m_mapping->GetJacobian(Jac);
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             Vmath::Vdiv(physTot, m_gradP[i], 1, Jac, 1, m_gradP[i], 1);
         }
     }
-    for (int i = 0; i < nvel; ++i)
+    for (size_t i = 0; i < nvel; ++i)
     {
         Vmath::Vsub(physTot, m_gradP[i], 1, outarray[i], 1, outarray[i], 1);
     }

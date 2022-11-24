@@ -662,8 +662,6 @@ void FentonKarma::v_Update(
     //  0   u    membrane potential
     //  1   v    v gate
     //  2   w    w gate
-    int n = m_nq;
-    int i = 0;
 
     // Declare pointers
     const NekDouble *u = &inarray[0][0];
@@ -683,7 +681,7 @@ void FentonKarma::v_Update(
 
     double V;
     // Compute rates for each point in domain
-    for (i = 0; i < n; ++i)
+    for (size_t i = 0; i < m_nq; ++i)
     {
         // *u is dimensional
         // V is non-dimensional for what follows
@@ -748,7 +746,7 @@ void FentonKarma::v_SetInitialConditions()
     }
 }
 
-std::string FentonKarma::v_GetCellVarName(unsigned int idx)
+std::string FentonKarma::v_GetCellVarName(size_t idx)
 {
     switch (idx)
     {

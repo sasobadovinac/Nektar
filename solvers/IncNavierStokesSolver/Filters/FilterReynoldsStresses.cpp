@@ -145,19 +145,19 @@ void FilterReynoldsStresses::v_Initialise(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
     const NekDouble &time)
 {
-    int dim          = pFields.size() - 1;
-    int nExtraFields = (dim + 1) * dim / 2;
-    int origFields   = pFields.size();
+    size_t dim          = pFields.size() - 1;
+    size_t nExtraFields = (dim + 1) * dim / 2;
+    size_t origFields   = pFields.size();
 
     // Allocate storage
     m_fields.resize(origFields + nExtraFields);
     m_delta.resize(dim);
 
-    for (int n = 0; n < m_fields.size(); ++n)
+    for (size_t n = 0; n < m_fields.size(); ++n)
     {
         m_fields[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
     }
-    for (int n = 0; n < m_delta.size(); ++n)
+    for (size_t n = 0; n < m_delta.size(); ++n)
     {
         m_delta[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
     }
@@ -168,7 +168,7 @@ void FilterReynoldsStresses::v_Initialise(
     // Update m_fields if using restart file
     if (m_numSamples)
     {
-        for (int j = 0; j < m_fields.size(); ++j)
+        for (size_t j = 0; j < m_fields.size(); ++j)
         {
             pFields[0]->BwdTrans(m_outFields[j], m_fields[j]);
             if (pFields[0]->GetWaveSpace())
@@ -182,11 +182,11 @@ void FilterReynoldsStresses::v_Initialise(
 void FilterReynoldsStresses::v_FillVariablesName(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
 {
-    int dim        = pFields.size() - 1;
-    int origFields = pFields.size();
+    size_t dim        = pFields.size() - 1;
+    size_t origFields = pFields.size();
 
     // Fill name of variables
-    for (int n = 0; n < origFields; ++n)
+    for (size_t n = 0; n < origFields; ++n)
     {
         m_variables.push_back(pFields[n]->GetSession()->GetVariable(n));
     }
@@ -207,9 +207,9 @@ void FilterReynoldsStresses::v_ProcessSample(
 {
     boost::ignore_unused(fieldcoeffs, time);
 
-    int i, j, n;
-    int nq             = pFields[0]->GetTotPoints();
-    int dim            = pFields.size() - 1;
+    size_t i, j, n;
+    size_t nq          = pFields[0]->GetTotPoints();
+    size_t dim         = pFields.size() - 1;
     bool waveSpace     = pFields[0]->GetWaveSpace();
     NekDouble nSamples = (NekDouble)m_numSamples;
 
@@ -283,7 +283,7 @@ void FilterReynoldsStresses::v_PrepareOutput(
 {
     boost::ignore_unused(time);
 
-    int dim = pFields.size() - 1;
+    size_t dim = pFields.size() - 1;
 
     m_fieldMetaData["NumberOfFieldDumps"] =
         boost::lexical_cast<std::string>(m_numSamples);
@@ -293,7 +293,7 @@ void FilterReynoldsStresses::v_PrepareOutput(
     pFields[0]->SetWaveSpace(false);
 
     // Forward transform and put into m_outFields (except pressure)
-    for (int i = 0; i < m_fields.size(); ++i)
+    for (size_t i = 0; i < m_fields.size(); ++i)
     {
         if (i != dim)
         {

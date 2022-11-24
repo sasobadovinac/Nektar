@@ -148,9 +148,9 @@ void Module::ProcessVertices()
 
     m_mesh->m_vertexSet.clear();
 
-    for (int i = 0, vid = 0; i < elmt.size(); ++i)
+    for (size_t i = 0, vid = 0; i < elmt.size(); ++i)
     {
-        for (int j = 0; j < elmt[i]->GetVertexCount(); ++j)
+        for (size_t j = 0; j < elmt[i]->GetVertexCount(); ++j)
         {
             pair<NodeSet::iterator, bool> testIns =
                 m_mesh->m_vertexSet.insert(elmt[i]->GetVertex(j));
@@ -365,7 +365,7 @@ void Module::ProcessFaces(bool ReprocessFaces)
         elmt->SetFaceLink(*it);
 
         // Set edges/vertices
-        for (int j = 0; j < elmt->GetVertexCount(); ++j)
+        for (size_t j = 0; j < elmt->GetVertexCount(); ++j)
         {
             elmt->SetVertex(j, (*it)->m_vertexList[j], false);
             elmt->SetEdge(j, (*it)->m_edgeList[j], false);
@@ -373,7 +373,7 @@ void Module::ProcessFaces(bool ReprocessFaces)
 
         EdgeSet tmp(edgeList.begin(), edgeList.end());
 
-        for (int j = 0; j < elmt->GetEdgeCount(); ++j)
+        for (size_t j = 0; j < elmt->GetEdgeCount(); ++j)
         {
             EdgeSharedPtr e     = elmt->GetEdge(j);
             EdgeSet::iterator f = tmp.find(e);

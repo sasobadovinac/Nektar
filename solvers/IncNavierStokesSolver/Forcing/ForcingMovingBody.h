@@ -113,9 +113,9 @@ private:
 
     void RollOver(Array<OneD, Array<OneD, NekDouble>> &input);
 
-    int m_movingBodyCalls; ///< number of times the movbody have been called
-    int m_np;              ///< number of planes per processors
-    int m_vdim;            ///< vibration dimension
+    size_t m_movingBodyCalls; ///< number of times the movbody have been called
+    size_t m_np;              ///< number of planes per processors
+    size_t m_vdim;            ///< vibration dimension
 
     NekDouble m_structrho;  ///< mass of the cable per unit length
     NekDouble m_structdamp; ///< damping ratio of the cable

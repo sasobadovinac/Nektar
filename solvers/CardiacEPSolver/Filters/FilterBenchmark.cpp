@@ -134,7 +134,8 @@ void FilterBenchmark::v_Update(
     }
 
     // Examine each point in turn
-    for (int i = 0; i < pFields[0]->GetNpoints(); ++i)
+    size_t nPts = pFields[0]->GetNpoints();
+    for (size_t i = 0; i < nPts; ++i)
     {
         if ((m_polarity[i] == -1 &&
              pFields[0]->GetPhys()[i] > m_thresholdValue) ||
@@ -158,7 +159,7 @@ void FilterBenchmark::v_Update(
 
     // Allocate additional storage if any point has as many crossings as
     // current storage permits.
-    int max_idx = Vmath::Vmax(pFields[0]->GetNpoints(), m_idx, 1);
+    size_t max_idx = Vmath::Vmax(pFields[0]->GetNpoints(), m_idx, 1);
     pFields[0]->GetSession()->GetComm()->AllReduce(max_idx,
                                                    LibUtilities::ReduceMax);
     if (m_threshold.size() == max_idx)
@@ -179,7 +180,7 @@ void FilterBenchmark::v_Finalise(
 {
     boost::ignore_unused(time);
 
-    for (int j = 0; j < m_threshold.size() - 1; ++j)
+    for (size_t j = 0; j < m_threshold.size() - 1; ++j)
     {
         std::stringstream vOutputFilename;
         vOutputFilename << m_outputFile << "_" << j << ".fld";
@@ -192,7 +193,7 @@ void FilterBenchmark::v_Finalise(
         pFields[0]->FwdTransLocalElmt(m_threshold[j], vCoeffs);
 
         // copy Data into FieldData and set variable
-        for (int i = 0; i < FieldDef.size(); ++i)
+        for (size_t i = 0; i < FieldDef.size(); ++i)
         {
             // Could do a search here to find correct variable
             FieldDef[i]->m_fields.push_back("m");

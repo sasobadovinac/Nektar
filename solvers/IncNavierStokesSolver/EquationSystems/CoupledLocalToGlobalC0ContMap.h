@@ -50,13 +50,13 @@ public:
         const SpatialDomains::MeshGraphSharedPtr &graph,
         const SpatialDomains::BoundaryConditionsSharedPtr &boundaryConditions,
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-        const MultiRegions::ExpListSharedPtr &pressure, const int nz_loc,
+        const MultiRegions::ExpListSharedPtr &pressure, const size_t nz_loc,
         const bool CheeckForSingularSys = true);
 
     void FindEdgeIdToAddMeanPressure(
-        std::vector<std::map<int, int>> &ReorderedGraphVertId, int &nel,
-        const LocalRegions::ExpansionVector &locExpVector, int &edgeId,
-        int &vertId, int &firstNonDirGraphVertId,
+        std::vector<std::map<int, int>> &ReorderedGraphVertId, size_t &nel,
+        const LocalRegions::ExpansionVector &locExpVector, size_t &edgeId,
+        size_t &vertId, int &firstNonDirGraphVertId,
         std::map<int, int> &IsDirEdgeDof,
         MultiRegions::BottomUpSubStructuredGraphSharedPtr &bottomUpGraph,
         Array<OneD, int> &AddMeanPressureToEdgeId);

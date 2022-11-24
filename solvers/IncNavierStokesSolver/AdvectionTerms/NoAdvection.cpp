@@ -82,8 +82,8 @@ void NoAdvection::v_Advect(
 {
     boost::ignore_unused(nConvectiveFields, advVel, time, pFwd, pBwd);
 
-    int nPointsTot = fields[0]->GetNpoints();
-    for (int i = 0; i < inarray.size(); ++i)
+    size_t nPointsTot = fields[0]->GetNpoints();
+    for (size_t i = 0; i < inarray.size(); ++i)
     {
         Vmath::Zero(nPointsTot, outarray[i], 1);
     }
