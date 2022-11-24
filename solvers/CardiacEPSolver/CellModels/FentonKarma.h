@@ -72,7 +72,7 @@ protected:
 
     virtual void v_SetInitialConditions() override;
 
-    virtual std::string v_GetCellVarName(unsigned int idx) override;
+    virtual std::string v_GetCellVarName(size_t idx) override;
 
 private:
     NekDouble C_m;

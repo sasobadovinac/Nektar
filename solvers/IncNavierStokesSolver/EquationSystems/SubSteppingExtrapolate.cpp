@@ -59,11 +59,11 @@ SubSteppingExtrapolate::SubSteppingExtrapolate(
     m_session->LoadParameter("MinSubSteps", m_minsubsteps, 1);
     m_session->LoadParameter("MaxSubSteps", m_maxsubsteps, 100);
 
-    int dim        = m_fields[0]->GetCoordim(0);
+    size_t dim     = m_fields[0]->GetCoordim(0);
     m_traceNormals = Array<OneD, Array<OneD, NekDouble>>(dim);
 
-    int nTracePts = m_fields[0]->GetTrace()->GetNpoints();
-    for (int i = 0; i < dim; ++i)
+    size_t nTracePts = m_fields[0]->GetTrace()->GetNpoints();
+    for (size_t i = 0; i < dim; ++i)
     {
         m_traceNormals[i] = Array<OneD, NekDouble>(nTracePts);
     }
@@ -87,7 +87,7 @@ void SubSteppingExtrapolate::v_SubSteppingTimeIntegration(
 {
     m_intScheme = IntegrationScheme;
 
-    unsigned int order = IntegrationScheme->GetOrder();
+    size_t order = IntegrationScheme->GetOrder();
 
     // Set to 1 for first step and it will then be increased in
     // time advance routines
@@ -114,15 +114,15 @@ void SubSteppingExtrapolate::v_SubSteppingTimeIntegration(
                 vSubStepIntScheme, vSubStepIntSchemeVariant,
                 vSubStepIntSchemeOrder, std::vector<NekDouble>());
 
-        int nvel = m_velocity.size();
-        int ndim = order + 1;
+        size_t nvel = m_velocity.size();
+        size_t ndim = order + 1;
 
         // Fields for linear/quadratic interpolation
         m_previousVelFields = Array<OneD, Array<OneD, NekDouble>>(ndim * nvel);
         int ntotpts         = m_fields[0]->GetTotPoints();
         m_previousVelFields[0] = Array<OneD, NekDouble>(ndim * nvel * ntotpts);
 
-        for (int i = 1; i < ndim * nvel; ++i)
+        for (size_t i = 1; i < ndim * nvel; ++i)
         {
             m_previousVelFields[i] = m_previousVelFields[i - 1] + ntotpts;
         }
@@ -149,12 +149,12 @@ void SubSteppingExtrapolate::SubStepAdvection(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
-    int i;
-    int nVariables     = inarray.size();
-    int nQuadraturePts = inarray[0].size();
+    size_t i;
+    size_t nVariables     = inarray.size();
+    size_t nQuadraturePts = inarray[0].size();
 
     /// Get the number of coefficients
-    int ncoeffs = m_fields[0]->GetNcoeffs();
+    size_t ncoeffs = m_fields[0]->GetNcoeffs();
 
     /// Define an auxiliary variable to compute the RHS
     Array<OneD, Array<OneD, NekDouble>> WeakAdv(nVariables);
@@ -220,7 +220,7 @@ void SubSteppingExtrapolate::SubStepProjection(
     ASSERTL1(inarray.size() == outarray.size(),
              "Inarray and outarray of different sizes ");
 
-    for (int i = 0; i < inarray.size(); ++i)
+    for (size_t i = 0; i < inarray.size(); ++i)
     {
         Vmath::Vcopy(inarray[i].size(), inarray[i], 1, outarray[i], 1);
     }
@@ -262,12 +262,12 @@ void SubSteppingExtrapolate::v_SubStepSetPressureBCs(
  */
 void SubSteppingExtrapolate::v_SubStepSaveFields(const int nstep)
 {
-    int i, n;
-    int nvel = m_velocity.size();
-    int npts = m_fields[0]->GetTotPoints();
+    size_t i, n;
+    size_t nvel = m_velocity.size();
+    size_t npts = m_fields[0]->GetTotPoints();
 
     // rotate fields
-    int nblocks = m_previousVelFields.size() / nvel;
+    size_t nblocks = m_previousVelFields.size() / nvel;
     Array<OneD, NekDouble> save;
 
     // rotate storage space
@@ -320,7 +320,7 @@ void SubSteppingExtrapolate::v_SubStepAdvance(int nstep, NekDouble time)
     Array<OneD, Array<OneD, NekDouble>> fields;
 
     static int ncalls = 1;
-    int nint          = std::min(ncalls++, m_intSteps);
+    size_t nint       = std::min(ncalls++, m_intSteps);
 
     // this needs to change
     m_comm = m_fields[0]->GetComm()->GetRowComm();
@@ -345,7 +345,7 @@ void SubSteppingExtrapolate::v_SubStepAdvance(int nstep, NekDouble time)
 
     const TripleArray &solutionVector = m_intScheme->GetSolutionVector();
 
-    for (int m = 0; m < nint; ++m)
+    for (size_t m = 0; m < nint; ++m)
     {
         // We need to update the fields held by the m_intScheme
         fields = solutionVector[m];
@@ -375,7 +375,7 @@ void SubSteppingExtrapolate::v_SubStepAdvance(int nstep, NekDouble time)
  */
 NekDouble SubSteppingExtrapolate::GetSubstepTimeStep()
 {
-    int n_element = m_fields[0]->GetExpSize();
+    size_t n_element = m_fields[0]->GetExpSize();
 
     const Array<OneD, int> ExpOrder = m_fields[0]->EvalBasisNumModesMaxPerExp();
 
@@ -385,13 +385,13 @@ NekDouble SubSteppingExtrapolate::GetSubstepTimeStep()
     Array<OneD, NekDouble> stdVelocity(n_element, 0.0);
     Array<OneD, Array<OneD, NekDouble>> velfields(m_velocity.size());
 
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         velfields[i] = m_fields[m_velocity[i]]->UpdatePhys();
     }
     stdVelocity = GetMaxStdVelocity(velfields);
 
-    for (int el = 0; el < n_element; ++el)
+    for (size_t el = 0; el < n_element; ++el)
     {
         tstep[el] =
             m_cflSafetyFactor / (stdVelocity[el] * cLambda *
@@ -412,13 +412,13 @@ void SubSteppingExtrapolate::AddAdvectionPenaltyFlux(
     ASSERTL1(physfield.size() == Outarray.size(),
              "Physfield and outarray are of different dimensions");
 
-    int i;
+    size_t i;
 
     /// Number of trace points
-    int nTracePts = m_fields[0]->GetTrace()->GetNpoints();
+    size_t nTracePts = m_fields[0]->GetTrace()->GetNpoints();
 
     /// Number of spatial dimensions
-    int nDimensions = m_bnd_dim;
+    size_t nDimensions = m_bnd_dim;
 
     /// Forward state array
     Array<OneD, NekDouble> Fwd(3 * nTracePts);
@@ -469,12 +469,12 @@ void SubSteppingExtrapolate::AddAdvectionPenaltyFlux(
 void SubSteppingExtrapolate::SubStepExtrapolateField(
     NekDouble toff, Array<OneD, Array<OneD, NekDouble>> &ExtVel)
 {
-    int npts = m_fields[0]->GetTotPoints();
-    int nvel = m_velocity.size();
-    int i, j;
+    size_t npts = m_fields[0]->GetTotPoints();
+    size_t nvel = m_velocity.size();
+    size_t i, j;
     Array<OneD, NekDouble> l(4);
 
-    int ord = m_intSteps;
+    size_t ord = m_intSteps;
 
     // calculate Lagrange interpolants
     Vmath::Fill(4, 1.0, l, 1);

@@ -55,7 +55,8 @@ void ExpList_WriteVTK(ExpListSharedPtr exp, std::string filename)
 {
     std::ofstream out(filename.c_str());
     exp->WriteVtkHeader(out);
-    for (int i = 0; i < exp->GetExpSize(); ++i)
+    size_t nExp = exp->GetExpSize();
+    for (size_t i = 0; i < nExp; ++i)
     {
         exp->WriteVtkPieceHeader(out, i);
         exp->WriteVtkPieceFooter(out, i);
@@ -146,11 +147,11 @@ NekDouble ExpList_Linf_Error(ExpListSharedPtr exp,
 
 py::tuple ExpList_GetCoords(ExpListSharedPtr exp)
 {
-    int nPhys   = exp->GetNpoints();
-    int coordim = exp->GetCoordim(0);
+    size_t nPhys   = exp->GetNpoints();
+    size_t coordim = exp->GetCoordim(0);
 
     std::vector<Array<OneD, NekDouble>> coords(coordim);
-    for (int i = 0; i < coordim; ++i)
+    for (size_t i = 0; i < coordim; ++i)
     {
         coords[i] = Array<OneD, NekDouble>(nPhys);
     }
@@ -214,11 +215,11 @@ void ExpList_ResetManagers(ExpListSharedPtr exp)
 void ExpList_LoadField(ExpListSharedPtr exp, std::string filename,
                        std::string varName)
 {
-    int nExp = exp->GetExpSize();
+    size_t nExp = exp->GetExpSize();
     Array<OneD, int> elementGIDs(nExp);
 
     // Construct a map from element locations to global IDs
-    for (int i = 0; i < nExp; ++i)
+    for (size_t i = 0; i < nExp; ++i)
     {
         elementGIDs[i] = exp->GetExp(i)->GetGeom()->GetGlobalID();
     }
@@ -235,10 +236,10 @@ void ExpList_LoadField(ExpListSharedPtr exp, std::string filename,
     Vmath::Zero(exp->GetNcoeffs(), exp->UpdateCoeffs(), 1);
 
     // Loop over all the expansions
-    for (int i = 0; i < def.size(); ++i)
+    for (size_t i = 0; i < def.size(); ++i)
     {
         // Find the index of the required field in the expansion segment
-        for (int j = 0; j < def[i]->m_fields.size(); ++j)
+        for (size_t j = 0; j < def[i]->m_fields.size(); ++j)
         {
             if (def[i]->m_fields[j] == varName)
             {

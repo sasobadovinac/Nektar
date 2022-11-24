@@ -139,10 +139,9 @@ public:
      */
     inline int GetTotPoints() const
     {
-        int i;
         int nqtot = 1;
 
-        for (i = 0; i < m_base.size(); ++i)
+        for (size_t i = 0; i < m_base.size(); ++i)
         {
             nqtot *= m_base[i]->GetNumPoints();
         }
@@ -187,10 +186,9 @@ public:
      */
     inline int EvalBasisNumModesMax(void) const
     {
-        int i;
         int returnval = 0;
 
-        for (i = 0; i < m_base.size(); ++i)
+        for (size_t i = 0; i < m_base.size(); ++i)
         {
             returnval = std::max(returnval, m_base[i]->GetNumModes());
         }
@@ -1068,7 +1066,7 @@ public:
     {
         LibUtilities::PointsKeyVector p;
         p.reserve(m_base.size());
-        for (int i = 0; i < m_base.size(); ++i)
+        for (size_t i = 0; i < m_base.size(); ++i)
         {
             p.push_back(m_base[i]->GetPointsKey());
         }
@@ -1311,9 +1309,9 @@ protected:
         const Array<OneD, const NekDouble> &z  = m_base[DIR]->GetZ();
         const Array<OneD, const NekDouble> &bw = m_base[DIR]->GetBaryWeights();
 
-        const auto nquad = z.size();
+        const size_t nquad = z.size();
 
-        for (int i = 0; i < nquad; ++i)
+        for (size_t i = 0; i < nquad; ++i)
         {
             NekDouble xdiff = z[i] - coord;
             NekDouble pval  = physvals[i];

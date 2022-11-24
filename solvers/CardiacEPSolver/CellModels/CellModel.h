@@ -94,19 +94,19 @@ public:
         v_GenerateSummary(s);
     }
 
-    unsigned int GetNumCellVariables()
+    size_t GetNumCellVariables()
     {
         return m_nvar;
     }
 
-    std::string GetCellVarName(unsigned int idx)
+    std::string GetCellVarName(size_t idx)
     {
         return v_GetCellVarName(idx);
     }
 
-    Array<OneD, NekDouble> GetCellSolutionCoeffs(unsigned int idx);
+    Array<OneD, NekDouble> GetCellSolutionCoeffs(size_t idx);
 
-    Array<OneD, NekDouble> GetCellSolution(unsigned int idx);
+    Array<OneD, NekDouble> GetCellSolution(size_t idx);
 
 protected:
     /// Session
@@ -114,13 +114,13 @@ protected:
     /// Transmembrane potential field from PDE system
     MultiRegions::ExpListSharedPtr m_field;
     /// Number of physical points.
-    int m_nq;
+    size_t m_nq;
     /// Number of variables in cell model (inc. transmembrane voltage)
-    int m_nvar;
+    size_t m_nvar;
     /// Timestep for pde model
     NekDouble m_lastTime;
     /// Number of substeps to take
-    int m_substeps;
+    size_t m_substeps;
 
     /// Cell model solution variables
     Array<OneD, Array<OneD, NekDouble>> m_cellSol;
@@ -149,7 +149,7 @@ protected:
 
     virtual void v_GenerateSummary(SummaryList &s) = 0;
 
-    virtual std::string v_GetCellVarName(unsigned int idx)
+    virtual std::string v_GetCellVarName(size_t idx)
     {
         return "Var" + boost::lexical_cast<std::string>(idx);
     }

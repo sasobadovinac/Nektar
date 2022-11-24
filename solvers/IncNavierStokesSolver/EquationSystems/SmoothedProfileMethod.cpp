@@ -80,7 +80,7 @@ void SmoothedProfileMethod::v_InitObject(bool DeclareField)
                               this);
 
     // Number of dims as number of velocity vectors
-    int nvel = m_velocity.size();
+    size_t nvel = m_velocity.size();
 
     // Initialization of correction pressure and shape function
     switch (nvel)
@@ -149,7 +149,7 @@ void SmoothedProfileMethod::v_InitObject(bool DeclareField)
     ReadPhi();
 
     // Allocate the vector 'm_up'
-    int physTot = m_phi->GetTotPoints();
+    size_t physTot = m_phi->GetTotPoints();
     m_velName.push_back("Up");
     if (nvel > 1)
     {
@@ -161,7 +161,7 @@ void SmoothedProfileMethod::v_InitObject(bool DeclareField)
     }
 
     m_up = Array<OneD, Array<OneD, NekDouble>>(nvel);
-    for (int i = 0; i < nvel; ++i)
+    for (size_t i = 0; i < nvel; ++i)
     {
         m_up[i] = Array<OneD, NekDouble>(physTot, 0.0);
     }
@@ -211,7 +211,7 @@ void SmoothedProfileMethod::v_InitObject(bool DeclareField)
 
     // Check if the aeroforces filter is active, negative if inactive
     m_forcesFilter = -1;
-    for (int i = 0; i < m_session->GetFilters().size(); ++i)
+    for (size_t i = 0; i < m_session->GetFilters().size(); ++i)
     {
         if (boost::iequals(m_session->GetFilters()[i].first, "AeroForcesSPM"))
         {
@@ -255,7 +255,7 @@ void SmoothedProfileMethod::v_SolveUnsteadyStokesSystem(
     VelocityCorrectionScheme::SolveUnsteadyStokesSystem(inarray, outarray, time,
                                                         a_iixDt);
 
-    int physTot = m_pressureP->GetNpoints();
+    size_t physTot = m_pressureP->GetNpoints();
 
     /* SPM correction of velocity */
     // Update 'm_phi' and 'm_up' if needed (evaluated at next time step)
@@ -300,8 +300,8 @@ void SmoothedProfileMethod::SetUpCorrectionPressure(
 {
     boost::ignore_unused(fields);
 
-    int physTot = m_fs[0]->GetNpoints();
-    int nvel    = m_velocity.size();
+    size_t physTot = m_fs[0]->GetNpoints();
+    size_t nvel    = m_velocity.size();
 
     // Set boundary conditions
     SetCorrectionPressureBCs();
@@ -310,9 +310,9 @@ void SmoothedProfileMethod::SetUpCorrectionPressure(
     m_fields[m_velocity[0]]->PhysDeriv(eX, m_fs[0]->GetPhys(), Forcing[0]);
 
     // Using 'Forcing[1]' as storage
-    for (int i = 1; i < nvel; ++i)
+    for (size_t i = 1; i < nvel; ++i)
     {
-        int ind = m_velocity[i];
+        size_t ind = m_velocity[i];
         m_fields[ind]->PhysDeriv(DirCartesianMap[i], m_fs[i]->GetPhys(),
                                  Forcing[1]);
         Vmath::Vadd(physTot, Forcing[1], 1, Forcing[0], 1, Forcing[0], 1);
@@ -356,10 +356,10 @@ void SmoothedProfileMethod::SolveCorrectedVelocity(
     Array<OneD, Array<OneD, NekDouble>> &Forcing,
     Array<OneD, Array<OneD, NekDouble>> &fields, NekDouble dt)
 {
-    int physTot = m_phi->GetNpoints();
+    size_t physTot = m_phi->GetNpoints();
 
     // Gradient of p_p
-    int nvel = m_velocity.size();
+    size_t nvel = m_velocity.size();
     if (nvel == 2)
     {
         m_pressureP->PhysDeriv(m_pressureP->GetPhys(), Forcing[0], Forcing[1]);
@@ -371,7 +371,7 @@ void SmoothedProfileMethod::SolveCorrectedVelocity(
     }
 
     // Velocity correction
-    for (int i = 0; i < nvel; ++i)
+    for (size_t i = 0; i < nvel; ++i)
     {
         // Adding -(1-m_phi)*grad(p_p) instead of -grad(p_p) reduces the
         // flux through the walls, but the flow is not incompressible
@@ -401,7 +401,7 @@ void SmoothedProfileMethod::SolveCorrectedVelocity(
  */
 void SmoothedProfileMethod::SetCorrectionPressureBCs()
 {
-    int nvel = m_velocity.size();
+    size_t nvel = m_velocity.size();
     Array<OneD, ExpListSharedPtr> BndExp;
     Array<OneD, SpatialDomains::BoundaryConditionShPtr> BndCond;
 
@@ -410,7 +410,7 @@ void SmoothedProfileMethod::SetCorrectionPressureBCs()
     BndCond = m_pressureP->GetBndConditions();
 
     // For each boundary...
-    for (int b = 0; b < BndExp.size(); ++b)
+    for (size_t b = 0; b < BndExp.size(); ++b)
     {
         // Only for BCs based on the derivative
         if (BndCond[b]->GetBoundaryConditionType() ==
@@ -419,7 +419,7 @@ void SmoothedProfileMethod::SetCorrectionPressureBCs()
         {
             // Calculate f_s values
             Array<OneD, Array<OneD, NekDouble>> f_s(nvel);
-            for (int i = 0; i < nvel; ++i)
+            for (size_t i = 0; i < nvel; ++i)
             {
                 f_s[i] = m_fs[0]->GetBndCondExpansions()[b]->GetPhys();
             }
@@ -482,14 +482,14 @@ void SmoothedProfileMethod::UpdatePhiUp(NekDouble t)
 void SmoothedProfileMethod::UpdateForcing(
     const Array<OneD, const Array<OneD, NekDouble>> &fields, NekDouble dt)
 {
-    int nvel = m_velocity.size();
-    int nq   = m_phi->GetNpoints();
+    size_t nvel = m_velocity.size();
+    size_t nq   = m_phi->GetNpoints();
 
-    for (int i = 0; i < nvel; ++i)
+    for (size_t i = 0; i < nvel; ++i)
     {
         // In homogeneous cases, switch out of wave space
         Array<OneD, NekDouble> tmpField(nq);
-        int ind = m_velocity[i];
+        size_t ind = m_velocity[i];
 
         if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
             m_fields[ind]->GetWaveSpace())

@@ -68,7 +68,7 @@ void CoupledLinearNS::v_InitObject(bool DeclareField)
 {
     IncNavierStokes::v_InitObject(DeclareField);
 
-    int i;
+    size_t i;
     int expdim = m_graph->GetMeshDimension();
 
     // Get Expansion list for orthogonal expansion at p-2
@@ -86,7 +86,7 @@ void CoupledLinearNS::v_InitObject(bool DeclareField)
     // Decide how to declare explist for pressure.
     if (expdim == 2)
     {
-        int nz;
+        size_t nz;
 
         if (m_HomogeneousType == eHomogeneous1D)
         {
@@ -404,9 +404,9 @@ void CoupledLinearNS::SetUpCoupledMatrix(
     CoupledLocalToGlobalC0ContMapSharedPtr &locToGloMap,
     const NekDouble lambda_imag)
 {
-    int n, i, j, k;
-    int nel  = m_fields[m_velocity[0]]->GetNumElmts();
-    int nvel = m_velocity.size();
+    size_t n, i, j, k;
+    size_t nel  = m_fields[m_velocity[0]]->GetNumElmts();
+    size_t nvel = m_velocity.size();
 
     // if Advfield is defined can assume it is an Oseen or LinearNS equation
     bool AddAdvectionTerms =
@@ -420,8 +420,8 @@ void CoupledLinearNS::SetUpCoupledMatrix(
     DNekScalMatSharedPtr loc_mat;
     StdRegions::StdExpansionSharedPtr locExp;
     NekDouble one = 1.0;
-    int nint, nbndry;
-    int rows, cols;
+    size_t nint, nbndry;
+    size_t rows, cols;
     NekDouble zero = 0.0;
     Array<OneD, unsigned int> bmap, imap;
 
@@ -431,7 +431,7 @@ void CoupledLinearNS::SetUpCoupledMatrix(
     Array<OneD, unsigned int> nsize_p(nel);
     Array<OneD, unsigned int> nsize_p_m1(nel);
 
-    int nz_loc;
+    size_t nz_loc;
 
     if (HomogeneousMode) // Homogeneous mode flag
     {
@@ -526,15 +526,15 @@ void CoupledLinearNS::SetUpCoupledMatrix(
         LocalRegions::MatrixKey helmkey(
             StdRegions::eHelmholtz, locExp->DetShapeType(), *locExp, factors);
 
-        int ncoeffs = m_fields[m_velocity[0]]->GetExp(n)->GetNcoeffs();
-        int nphys   = m_fields[m_velocity[0]]->GetExp(n)->GetTotPoints();
-        int nbmap   = bmap.size();
-        int nimap   = imap.size();
+        size_t ncoeffs = m_fields[m_velocity[0]]->GetExp(n)->GetNcoeffs();
+        size_t nphys   = m_fields[m_velocity[0]]->GetExp(n)->GetTotPoints();
+        size_t nbmap   = bmap.size();
+        size_t nimap   = imap.size();
 
         Array<OneD, NekDouble> coeffs(ncoeffs);
         Array<OneD, NekDouble> phys(nphys);
-        int psize  = m_pressure->GetExp(n)->GetNcoeffs();
-        int pqsize = m_pressure->GetExp(n)->GetTotPoints();
+        size_t psize  = m_pressure->GetExp(n)->GetNcoeffs();
+        size_t pqsize = m_pressure->GetExp(n)->GetTotPoints();
 
         Array<OneD, NekDouble> deriv(pqsize);
         Array<OneD, NekDouble> pcoeffs(psize);
@@ -746,14 +746,14 @@ void CoupledLinearNS::SetUpCoupledMatrix(
             // Use ExpList phys array for temporaary storage
             Array<OneD, NekDouble> tmpphys = m_fields[0]->UpdatePhys();
             int phys_offset = m_fields[m_velocity[0]]->GetPhys_Offset(n);
-            int nv;
+            size_t nv;
             int npoints = locExp->GetTotPoints();
 
             // Calculate derivative of base flow
             if (IsLinearNSEquation)
             {
-                int nv1;
-                int cnt     = 0;
+                size_t nv1;
+                size_t cnt  = 0;
                 AdvDeriv[0] = Array<OneD, NekDouble>(nvel * nvel * npoints);
                 for (nv = 0; nv < nvel; ++nv)
                 {
@@ -965,7 +965,7 @@ void CoupledLinearNS::SetUpCoupledMatrix(
                                         AdvDeriv[k * nvel + nv], 1, tmpphys, 1);
                             locExp->IProductWRTBase(tmpphys, coeffs);
 
-                            for (int n1 = 0; n1 < nz_loc; ++n1)
+                            for (size_t n1 = 0; n1 < nz_loc; ++n1)
                             {
                                 for (j = 0; j < nbmap; ++j)
                                 {
@@ -1157,7 +1157,7 @@ void CoupledLinearNS::SetUpCoupledMatrix(
 
                     if (IsLinearNSEquation)
                     {
-                        int n1;
+                        size_t n1;
                         for (nv = 0; nv < nvel; ++nv)
                         {
                             // u'.Grad U terms
@@ -1240,7 +1240,7 @@ void CoupledLinearNS::SetUpCoupledMatrix(
         Array<OneD, NekDouble> Dh_data = Dh->GetPtr();
 
         // Copy matrices into final structures.
-        int n1, n2;
+        size_t n1, n2;
         for (n1 = 0; n1 < nz_loc; ++n1)
         {
             for (i = 0; i < psize - 1; ++i)
@@ -1402,7 +1402,7 @@ void CoupledLinearNS::v_DoInitialise(void)
         case eSteadyOseen:
         {
             Array<OneD, Array<OneD, NekDouble>> AdvField(m_velocity.size());
-            for (int i = 0; i < m_velocity.size(); ++i)
+            for (size_t i = 0; i < m_velocity.size(); ++i)
             {
                 AdvField[i] = Array<OneD, NekDouble>(
                     m_fields[m_velocity[i]]->GetTotPoints(), 0.0);
@@ -1413,7 +1413,7 @@ void CoupledLinearNS::v_DoInitialise(void)
                      "session file.");
 
             std::vector<std::string> fieldStr;
-            for (int i = 0; i < m_velocity.size(); ++i)
+            for (size_t i = 0; i < m_velocity.size(); ++i)
             {
                 fieldStr.push_back(
                     m_boundaryConditions->GetVariable(m_velocity[i]));
@@ -1440,20 +1440,20 @@ void CoupledLinearNS::v_DoInitialise(void)
                          "Restart section must be defined in session file.");
 
                 Array<OneD, Array<OneD, NekDouble>> Restart(m_velocity.size());
-                for (int i = 0; i < m_velocity.size(); ++i)
+                for (size_t i = 0; i < m_velocity.size(); ++i)
                 {
                     Restart[i] = Array<OneD, NekDouble>(
                         m_fields[m_velocity[i]]->GetTotPoints(), 0.0);
                 }
                 std::vector<std::string> fieldStr;
-                for (int i = 0; i < m_velocity.size(); ++i)
+                for (size_t i = 0; i < m_velocity.size(); ++i)
                 {
                     fieldStr.push_back(
                         m_boundaryConditions->GetVariable(m_velocity[i]));
                 }
                 GetFunction("Restart")->Evaluate(fieldStr, Restart);
 
-                for (int i = 0; i < m_velocity.size(); ++i)
+                for (size_t i = 0; i < m_velocity.size(); ++i)
                 {
                     m_fields[m_velocity[i]]->FwdTransLocalElmt(
                         Restart[i], m_fields[m_velocity[i]]->UpdateCoeffs());
@@ -1480,7 +1480,7 @@ void CoupledLinearNS::v_DoInitialise(void)
             SetInitialConditions(0.0);
 
             Array<OneD, Array<OneD, NekDouble>> AdvField(m_velocity.size());
-            for (int i = 0; i < m_velocity.size(); ++i)
+            for (size_t i = 0; i < m_velocity.size(); ++i)
             {
                 AdvField[i] = Array<OneD, NekDouble>(
                     m_fields[m_velocity[i]]->GetTotPoints(), 0.0);
@@ -1491,7 +1491,7 @@ void CoupledLinearNS::v_DoInitialise(void)
                      "session file.");
 
             std::vector<std::string> fieldStr;
-            for (int i = 0; i < m_velocity.size(); ++i)
+            for (size_t i = 0; i < m_velocity.size(); ++i)
             {
                 fieldStr.push_back(
                     m_boundaryConditions->GetVariable(m_velocity[i]));
@@ -1528,7 +1528,7 @@ void CoupledLinearNS::SolveUnsteadyStokesSystem(
 {
     boost::ignore_unused(time);
 
-    int i;
+    size_t i;
     Array<OneD, Array<OneD, NekDouble>> F(m_nConvectiveFields);
     NekDouble lambda = 1.0 / aii_Dt;
     static NekDouble lambda_store;
@@ -1565,8 +1565,8 @@ void CoupledLinearNS::SolveUnsteadyStokesSystem(
 
 void CoupledLinearNS::v_TransCoeffToPhys(void)
 {
-    int nfields = m_fields.size();
-    for (int k = 0; k < nfields; ++k)
+    size_t nfields = m_fields.size();
+    for (size_t k = 0; k < nfields; ++k)
     {
         // Backward Transformation in physical space for time evolution
         m_fields[k]->BwdTrans(m_fields[k]->GetCoeffs(),
@@ -1576,8 +1576,8 @@ void CoupledLinearNS::v_TransCoeffToPhys(void)
 
 void CoupledLinearNS::v_TransPhysToCoeff(void)
 {
-    int nfields = m_fields.size();
-    for (int k = 0; k < nfields; ++k)
+    size_t nfields = m_fields.size();
+    for (size_t k = 0; k < nfields; ++k)
     {
         // Forward Transformation in physical space for time evolution
         m_fields[k]->FwdTransLocalElmt(m_fields[k]->GetPhys(),
@@ -1667,11 +1667,11 @@ bool CoupledLinearNS::v_NegatedOp(void)
 
 void CoupledLinearNS::Solve(void)
 {
-    const unsigned int ncmpt = m_velocity.size();
+    const size_t ncmpt = m_velocity.size();
     Array<OneD, Array<OneD, NekDouble>> forcing_phys(ncmpt);
     Array<OneD, Array<OneD, NekDouble>> forcing(ncmpt);
 
-    for (int i = 0; i < ncmpt; ++i)
+    for (size_t i = 0; i < ncmpt; ++i)
     {
         forcing_phys[i] =
             Array<OneD, NekDouble>(m_fields[m_velocity[0]]->GetNpoints(), 0.0);
@@ -1684,7 +1684,7 @@ void CoupledLinearNS::Solve(void)
         const NekDouble time = 0;
         x->Apply(m_fields, forcing_phys, forcing_phys, time);
     }
-    for (unsigned int i = 0; i < ncmpt; ++i)
+    for (size_t i = 0; i < ncmpt; ++i)
     {
         bool waveSpace = m_fields[m_velocity[i]]->GetWaveSpace();
         m_fields[i]->SetWaveSpace(true);
@@ -1701,7 +1701,7 @@ void CoupledLinearNS::DefineForcingTerm(void)
     m_ForcingTerm_Coeffs =
         Array<OneD, Array<OneD, NekDouble>>(m_velocity.size());
 
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         m_ForcingTerm[i] = Array<OneD, NekDouble>(
             m_fields[m_velocity[i]]->GetTotPoints(), 0.0);
@@ -1712,13 +1712,13 @@ void CoupledLinearNS::DefineForcingTerm(void)
     if (m_session->DefinesFunction("ForcingTerm"))
     {
         std::vector<std::string> fieldStr;
-        for (int i = 0; i < m_velocity.size(); ++i)
+        for (size_t i = 0; i < m_velocity.size(); ++i)
         {
             fieldStr.push_back(
                 m_boundaryConditions->GetVariable(m_velocity[i]));
         }
         GetFunction("ForcingTerm")->Evaluate(fieldStr, m_ForcingTerm);
-        for (int i = 0; i < m_velocity.size(); ++i)
+        for (size_t i = 0; i < m_velocity.size(); ++i)
         {
             m_fields[m_velocity[i]]->FwdTransLocalElmt(m_ForcingTerm[i],
                                                        m_ForcingTerm_Coeffs[i]);
@@ -1744,7 +1744,7 @@ void CoupledLinearNS::SolveSteadyNavierStokes(void)
     Array<OneD, NekDouble> L2_norm(m_velocity.size(), 1.0);
     Array<OneD, NekDouble> Inf_norm(m_velocity.size(), 1.0);
 
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         delta_velocity_Phys[i] = Array<OneD, NekDouble>(
             m_fields[m_velocity[i]]->GetTotPoints(), 1.0);
@@ -1765,7 +1765,7 @@ void CoupledLinearNS::SolveSteadyNavierStokes(void)
         // solution of the .rst file (if Restart=1 in input
         // file)
         {
-            for (int i = 0; i < m_velocity.size(); ++i)
+            for (size_t i = 0; i < m_velocity.size(); ++i)
             {
                 RHS_Coeffs[i] = Array<OneD, NekDouble>(
                     m_fields[m_velocity[i]]->GetNcoeffs(), 0.0);
@@ -1773,7 +1773,7 @@ void CoupledLinearNS::SolveSteadyNavierStokes(void)
                     m_fields[m_velocity[i]]->GetTotPoints(), 0.0);
             }
 
-            for (int i = 0; i < m_velocity.size(); ++i)
+            for (size_t i = 0; i < m_velocity.size(); ++i)
             {
                 m_fields[m_velocity[i]]->BwdTrans(
                     m_fields[m_velocity[i]]->GetCoeffs(), Velocity_Phys[i]);
@@ -1798,14 +1798,14 @@ void CoupledLinearNS::SolveSteadyNavierStokes(void)
             SolveLinearNS(RHS_Coeffs);
         }
 
-        for (int i = 0; i < m_velocity.size(); ++i)
+        for (size_t i = 0; i < m_velocity.size(); ++i)
         {
             m_fields[m_velocity[i]]->BwdTrans(RHS_Coeffs[i], RHS_Phys[i]);
             m_fields[m_velocity[i]]->BwdTrans(
                 m_fields[m_velocity[i]]->GetCoeffs(), delta_velocity_Phys[i]);
         }
 
-        for (int i = 0; i < m_velocity.size(); ++i)
+        for (size_t i = 0; i < m_velocity.size(); ++i)
         {
             Vmath::Vadd(Velocity_Phys[i].size(), Velocity_Phys[i], 1,
                         delta_velocity_Phys[i], 1, Velocity_Phys[i], 1);
@@ -1827,7 +1827,7 @@ void CoupledLinearNS::SolveSteadyNavierStokes(void)
 
     if (m_counter > 1) // We save u:=u+\delta u in u->Coeffs
     {
-        for (int i = 0; i < m_velocity.size(); ++i)
+        for (size_t i = 0; i < m_velocity.size(); ++i)
         {
             m_fields[m_velocity[i]]->FwdTrans(
                 Velocity_Phys[i], m_fields[m_velocity[i]]->UpdateCoeffs());
@@ -1848,7 +1848,7 @@ void CoupledLinearNS::Continuation(void)
 
     cout << "We apply the continuation method: " << endl;
 
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         u_N[i] = Array<OneD, NekDouble>(m_fields[m_velocity[i]]->GetTotPoints(),
                                         0.0);
@@ -1872,7 +1872,7 @@ void CoupledLinearNS::Continuation(void)
     SetUpCoupledMatrix(0.0, u_N, true);
     SolveLinearNS(RHS);
 
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         u_star[i] = Array<OneD, NekDouble>(
             m_fields[m_velocity[i]]->GetTotPoints(), 0.0);
@@ -1893,10 +1893,10 @@ void CoupledLinearNS::Continuation(void)
 void CoupledLinearNS::InfNorm(Array<OneD, Array<OneD, NekDouble>> &inarray,
                               Array<OneD, NekDouble> &outarray)
 {
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         outarray[i] = 0.0;
-        for (int j = 0; j < inarray[i].size(); ++j)
+        for (size_t j = 0; j < inarray[i].size(); ++j)
         {
             if (inarray[i][j] > outarray[i])
             {
@@ -1910,10 +1910,10 @@ void CoupledLinearNS::InfNorm(Array<OneD, Array<OneD, NekDouble>> &inarray,
 void CoupledLinearNS::L2Norm(Array<OneD, Array<OneD, NekDouble>> &inarray,
                              Array<OneD, NekDouble> &outarray)
 {
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         outarray[i] = 0.0;
-        for (int j = 0; j < inarray[i].size(); ++j)
+        for (size_t j = 0; j < inarray[i].size(); ++j)
         {
             outarray[i] += inarray[i][j] * inarray[i][j];
         }
@@ -1932,7 +1932,7 @@ void CoupledLinearNS::EvaluateNewtonRHS(
     Array<OneD, Array<OneD, NekDouble>> ViscTerm(m_velocity.size());
     Array<OneD, Array<OneD, NekDouble>> Forc(m_velocity.size());
 
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         Eval_Adv[i] = Array<OneD, NekDouble>(
             m_fields[m_velocity[i]]->GetTotPoints(), 0.0);
@@ -1956,7 +1956,7 @@ void CoupledLinearNS::EvaluateNewtonRHS(
 
     EvaluateAdvectionTerms(Velocity, Eval_Adv, m_time);
 
-    for (int i = 0; i < m_velocity.size(); ++i)
+    for (size_t i = 0; i < m_velocity.size(); ++i)
     {
         bool waveSpace = m_fields[m_velocity[i]]->GetWaveSpace();
         m_fields[m_velocity[i]]->SetWaveSpace(true);
@@ -1981,7 +1981,6 @@ void CoupledLinearNS::EvaluateNewtonRHS(
 const SpatialDomains::ExpansionInfoMap &CoupledLinearNS::GenPressureExp(
     const SpatialDomains::ExpansionInfoMap &VelExp)
 {
-    int i;
     SpatialDomains::ExpansionInfoMapShPtr returnval;
     returnval =
         MemoryManager<SpatialDomains::ExpansionInfoMap>::AllocateSharedPtr();
@@ -1992,7 +1991,7 @@ const SpatialDomains::ExpansionInfoMap &CoupledLinearNS::GenPressureExp(
     {
         LibUtilities::BasisKeyVector BasisVec;
 
-        for (i = 0; i < expMapIter.second->m_basisKeyVector.size(); ++i)
+        for (size_t i = 0; i < expMapIter.second->m_basisKeyVector.size(); ++i)
         {
             LibUtilities::BasisKey B = expMapIter.second->m_basisKeyVector[i];
             nummodes                 = B.GetNumModes();
@@ -2084,7 +2083,7 @@ const SpatialDomains::ExpansionInfoMap &CoupledLinearNS::GenPressureExp(
 void CoupledLinearNS::SolveLinearNS(
     const Array<OneD, Array<OneD, NekDouble>> &forcing)
 {
-    int i, n;
+    size_t i;
     Array<OneD, MultiRegions::ExpListSharedPtr> vel_fields(m_velocity.size());
     Array<OneD, Array<OneD, NekDouble>> force(m_velocity.size());
 
@@ -2098,7 +2097,7 @@ void CoupledLinearNS::SolveLinearNS(
     if (m_HomogeneousType == eHomogeneous1D)
     {
         int ncoeffsplane = m_fields[m_velocity[0]]->GetPlane(0)->GetNcoeffs();
-        for (n = 0; n < m_npointsZ / 2; ++n)
+        for (int n = 0; n < m_npointsZ / 2; ++n)
         {
             // Get the a Fourier mode of velocity and forcing components.
             for (i = 0; i < m_velocity.size(); ++i)
@@ -2133,10 +2132,10 @@ void CoupledLinearNS::SolveLinearNS(
     Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
     MultiRegions::ExpListSharedPtr &pressure, const int mode)
 {
-    int i, j, k, n, cnt, cnt1;
-    int nbnd, nint, offset;
-    int nvel = m_velocity.size();
-    int nel  = fields[0]->GetNumElmts();
+    size_t i, j, k, n, cnt, cnt1;
+    size_t nbnd, nint, offset;
+    size_t nvel = m_velocity.size();
+    size_t nel  = fields[0]->GetNumElmts();
     Array<OneD, unsigned int> bmap, imap;
 
     Array<OneD, NekDouble> f_bnd(m_mat[mode].m_BCinv->GetRows());
@@ -2144,7 +2143,7 @@ void CoupledLinearNS::SolveLinearNS(
     Array<OneD, NekDouble> f_int(m_mat[mode].m_BCinv->GetColumns());
     NekVector<NekDouble> F_int(f_int.size(), f_int, eWrapper);
 
-    int nz_loc;
+    size_t nz_loc;
     int nplanecoeffs =
         fields[m_velocity[0]]
             ->GetNcoeffs(); // this is fine since we pass the nplane coeff data.
@@ -2210,6 +2209,7 @@ void CoupledLinearNS::SolveLinearNS(
             {
                 const Array<OneD, const NekDouble> bndcoeffs =
                     bndCondExp[i]->GetCoeffs();
+                size_t nCoeffs = (bndCondExp[i])->GetNcoeffs();
 
                 cnt = 0;
                 if (bndConds[i]->GetBoundaryConditionType() ==
@@ -2219,7 +2219,7 @@ void CoupledLinearNS::SolveLinearNS(
                 {
                     if (m_locToGloMap[mode]->GetSignChange())
                     {
-                        for (j = 0; j < (bndCondExp[i])->GetNcoeffs(); j++)
+                        for (j = 0; j < nCoeffs; j++)
                         {
                             forcing[k][n * nplanecoeffs + map[bndcnt + j]] +=
                                 sign[bndcnt + j] * bndcoeffs[j];
@@ -2227,7 +2227,7 @@ void CoupledLinearNS::SolveLinearNS(
                     }
                     else
                     {
-                        for (j = 0; j < (bndCondExp[i])->GetNcoeffs(); j++)
+                        for (j = 0; j < nCoeffs; j++)
                         {
                             forcing[k][n * nplanecoeffs + map[bndcnt + j]] +=
                                 bndcoeffs[j];
@@ -2418,7 +2418,7 @@ void CoupledLinearNS::v_Output(void)
 {
     std::vector<Array<OneD, NekDouble>> fieldcoeffs(m_fields.size() + 1);
     std::vector<std::string> variables(m_fields.size() + 1);
-    int i;
+    size_t i;
 
     for (i = 0; i < m_fields.size(); ++i)
     {

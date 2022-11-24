@@ -92,9 +92,9 @@ public:
 
 protected:
     Array<OneD, MultiRegions::ExpListSharedPtr> m_vessels;
-    int m_nDomains;
-    int m_currentDomain;
-    int m_nVariables;
+    size_t m_nDomains;
+    size_t m_currentDomain;
+    size_t m_nVariables;
     UpwindTypePulse m_upwindTypePulse;
 
     Array<OneD, int> m_fieldPhysOffset;

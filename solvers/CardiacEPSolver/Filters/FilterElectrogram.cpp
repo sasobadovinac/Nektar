@@ -111,8 +111,8 @@ void FilterElectrogram::v_Initialise(
 
     // Read electrogram points
     // Always use dim = 3 to allow electrode to be above surface
-    const int dim = 3;
-    int i         = 0;
+    const size_t dim = 3;
+    size_t i         = 0;
 
     while (!m_electrogramStream.fail())
     {
@@ -134,14 +134,14 @@ void FilterElectrogram::v_Initialise(
         m_outputStream.open(m_outputFile.c_str());
         m_outputStream << "# Electrogram data for variables (:";
 
-        for (i = 0; i < pFields.size(); ++i)
+        for (size_t i = 0; i < pFields.size(); ++i)
         {
             m_outputStream << m_session->GetVariable(i) << ",";
         }
 
         m_outputStream << ") at points:" << endl;
 
-        for (i = 0; i < m_electrogramPoints.size(); ++i)
+        for (size_t i = 0; i < m_electrogramPoints.size(); ++i)
         {
             m_electrogramPoints[i]->GetCoords(gloCoord[0], gloCoord[1],
                                               gloCoord[2]);
@@ -158,8 +158,8 @@ void FilterElectrogram::v_Initialise(
     }
 
     // Compute the distance function for each electrogram point
-    const unsigned int nq   = pFields[0]->GetNpoints();
-    const unsigned int npts = m_electrogramPoints.size();
+    const size_t nq   = pFields[0]->GetNpoints();
+    const size_t npts = m_electrogramPoints.size();
     NekDouble px, py, pz;
     m_grad_R_x = Array<OneD, Array<OneD, NekDouble>>(npts);
     m_grad_R_y = Array<OneD, Array<OneD, NekDouble>>(npts);
@@ -167,7 +167,7 @@ void FilterElectrogram::v_Initialise(
 
     Array<OneD, NekDouble> oneOverR(nq, 0.0);
 
-    for (unsigned int i = 0; i < npts; ++i)
+    for (size_t i = 0; i < npts; ++i)
     {
         m_grad_R_x[i] = Array<OneD, NekDouble>(nq, 0.0);
         m_grad_R_y[i] = Array<OneD, NekDouble>(nq, 0.0);
@@ -211,11 +211,11 @@ void FilterElectrogram::v_Update(
         return;
     }
 
-    const unsigned int nq             = pFields[0]->GetNpoints();
-    const unsigned int npoints        = m_electrogramPoints.size();
+    const size_t nq                   = pFields[0]->GetNpoints();
+    const size_t npoints              = m_electrogramPoints.size();
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
-    unsigned int i = 0;
+    size_t i = 0;
     Array<OneD, NekDouble> e(npoints);
 
     // Compute grad V

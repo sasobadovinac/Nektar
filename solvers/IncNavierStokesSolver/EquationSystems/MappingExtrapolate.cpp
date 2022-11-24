@@ -77,9 +77,9 @@ void MappingExtrapolate::v_CorrectPressureBCs(
 {
     if (m_HBCnumber > 0)
     {
-        int cnt, n;
-        int physTot = m_fields[0]->GetTotPoints();
-        int nvel    = m_fields.size() - 1;
+        size_t cnt, n;
+        size_t physTot = m_fields[0]->GetTotPoints();
+        size_t nvel    = m_fields.size() - 1;
 
         Array<OneD, NekDouble> Vals;
         // Remove previous correction
@@ -87,7 +87,7 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         {
             if (m_PBndConds[n]->GetUserDefined() == "H")
             {
-                int nq = m_PBndExp[n]->GetNcoeffs();
+                size_t nq = m_PBndExp[n]->GetNcoeffs();
                 Vmath::Vsub(nq, &(m_PBndExp[n]->GetCoeffs()[0]), 1,
                             &(m_bcCorrection[cnt]), 1,
                             &(m_PBndExp[n]->UpdateCoeffs()[0]), 1);
@@ -103,7 +103,7 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         Array<OneD, Array<OneD, NekDouble>> gradP(nvel);
         Array<OneD, Array<OneD, NekDouble>> wk(nvel);
         Array<OneD, Array<OneD, NekDouble>> wk2(nvel);
-        for (int i = 0; i < nvel; i++)
+        for (size_t i = 0; i < nvel; i++)
         {
             wk[i]         = Array<OneD, NekDouble>(physTot, 0.0);
             gradP[i]      = Array<OneD, NekDouble>(physTot, 0.0);
@@ -111,7 +111,7 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         }
 
         // Calculate G(p)
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             m_fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[i], pressure,
                                    gradP[i]);
@@ -129,13 +129,13 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         // alpha*J*(G(p))
         if (!m_mapping->HasConstantJacobian())
         {
-            for (int i = 0; i < nvel; ++i)
+            for (size_t i = 0; i < nvel; ++i)
             {
                 Vmath::Vmul(physTot, correction[i], 1, Jac, 1, correction[i],
                             1);
             }
         }
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             Vmath::Smul(physTot, m_pressureRelaxation, correction[i], 1,
                         correction[i], 1);
@@ -143,13 +143,13 @@ void MappingExtrapolate::v_CorrectPressureBCs(
 
         if (m_pressure->GetWaveSpace())
         {
-            for (int i = 0; i < nvel; ++i)
+            for (size_t i = 0; i < nvel; ++i)
             {
                 m_pressure->HomogeneousFwdTrans(correction[i], correction[i]);
             }
         }
         // p_i - alpha*J*div(G(p))
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             Vmath::Vsub(physTot, gradP[i], 1, correction[i], 1, correction[i],
                         1);
@@ -188,11 +188,11 @@ void MappingExtrapolate::v_CorrectPressureBCs(
         }
 
         // Apply new correction
-        for (cnt = n = 0; n < m_PBndConds.size(); ++n)
+        for (size_t cnt = n = 0; n < m_PBndConds.size(); ++n)
         {
             if (m_PBndConds[n]->GetUserDefined() == "H")
             {
-                int nq = m_PBndExp[n]->GetNcoeffs();
+                size_t nq = m_PBndExp[n]->GetNcoeffs();
                 Vmath::Vadd(nq, &(m_PBndExp[n]->GetCoeffs()[0]), 1,
                             &(m_bcCorrection[cnt]), 1,
                             &(m_PBndExp[n]->UpdateCoeffs()[0]), 1);
@@ -212,9 +212,9 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
     }
     else
     {
-        int physTot = m_fields[0]->GetTotPoints();
-        int nvel    = m_fields.size() - 1;
-        int i, n, cnt;
+        size_t physTot = m_fields[0]->GetTotPoints();
+        size_t nvel    = m_fields.size() - 1;
+        size_t i, n, cnt;
 
         Array<OneD, NekDouble> Pvals;
         Array<OneD, NekDouble> Uvals;
@@ -233,18 +233,18 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
         // Temporary variables
         Array<OneD, NekDouble> tmp(physTot, 0.0);
         Array<OneD, NekDouble> tmp2(physTot, 0.0);
-        for (i = 0; i < m_bnd_dim; i++)
+        for (int i = 0; i < m_bnd_dim; i++)
         {
             N_new[i] = Array<OneD, NekDouble>(physTot, 0.0);
         }
-        for (int i = 0; i < nvel; i++)
+        for (i = 0; i < nvel; i++)
         {
             Q_field[i]    = Array<OneD, NekDouble>(physTot, 0.0);
             fields_new[i] = Array<OneD, NekDouble>(physTot, 0.0);
         }
 
         // Multiply convective terms by Jacobian
-        for (i = 0; i < m_bnd_dim; i++)
+        for (int i = 0; i < m_bnd_dim; i++)
         {
             if (m_fields[0]->GetWaveSpace())
             {
@@ -296,7 +296,7 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
         }
 
         // Multiply by Jacobian and convert to wavespace (if necessary)
-        for (i = 0; i < m_bnd_dim; i++)
+        for (int i = 0; i < m_bnd_dim; i++)
         {
             Vmath::Vmul(physTot, Jac, 1, fields_new[i], 1, fields_new[i], 1);
             Vmath::Vmul(physTot, Jac, 1, Q_field[i], 1, Q_field[i], 1);
@@ -314,7 +314,7 @@ void MappingExtrapolate::v_CalcNeumannPressureBCs(
             if (boost::iequals(m_PBndConds[n]->GetUserDefined(), "H"))
             {
                 m_fields[0]->GetBndElmtExpansion(n, BndElmtExp);
-                int nq = BndElmtExp->GetTotPoints();
+                size_t nq = BndElmtExp->GetTotPoints();
 
                 // Obtaining fields on BndElmtExp
                 for (int i = 0; i < m_bnd_dim; i++)

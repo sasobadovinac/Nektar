@@ -108,11 +108,11 @@ void FilterCheckpointCellModel::v_Update(
 
     // copy Data into FieldData and set variable
     std::string varName;
-    for (int j = 1; j < m_cell->GetNumCellVariables(); ++j)
+    for (size_t j = 1; j < m_cell->GetNumCellVariables(); ++j)
     {
         varName = m_cell->GetCellVarName(j);
 
-        for (int i = 0; i < FieldDef.size(); ++i)
+        for (size_t i = 0; i < FieldDef.size(); ++i)
         {
             // Retrieve data from cell model
             Array<OneD, NekDouble> data = m_cell->GetCellSolutionCoeffs(j);

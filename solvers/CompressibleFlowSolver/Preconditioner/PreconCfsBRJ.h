@@ -108,7 +108,7 @@ private:
     template <typename DataType>
     void MinusOffDiag2Rhs(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const int nvariables, const int nCoeffs,
+        const size_t nvariables, const size_t nCoeffs,
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, bool flagUpdateDervFlux,
         Array<OneD, Array<OneD, NekDouble>> &FwdFluxDeriv,
@@ -134,7 +134,7 @@ private:
         mat =
             MemoryManager<SNekBlkMat>::AllocateSharedPtr(nrow, ncol, eDIAGONAL);
         SNekMatSharedPtr loc_matNvar;
-        for (int nelm = 0; nelm < nrow.size(); ++nelm)
+        for (size_t nelm = 0; nelm < nrow.size(); ++nelm)
         {
             int nrowsVars = nrow[nelm];
             int ncolsVars = ncol[nelm];

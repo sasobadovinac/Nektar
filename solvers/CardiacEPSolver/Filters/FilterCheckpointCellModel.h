@@ -85,9 +85,9 @@ protected:
     virtual bool v_IsTimeDependent() override;
 
 private:
-    unsigned int m_index;
-    unsigned int m_outputIndex;
-    unsigned int m_outputFrequency;
+    size_t m_index;
+    size_t m_outputIndex;
+    size_t m_outputFrequency;
     std::string m_outputFile;
     CellModelSharedPtr m_cell;
     LibUtilities::FieldIOSharedPtr m_fld;

@@ -182,7 +182,7 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
     m_fieldsBCToTraceID     = Array<OneD, Array<OneD, int>>(numfields);
     m_fieldsRadiationFactor = Array<OneD, Array<OneD, NekDouble>>(numfields);
 
-    for (i = 0; i < m_fields.size(); ++i)
+    for (size_t i = 0; i < m_fields.size(); ++i)
     {
         bool Set = false;
 
@@ -192,7 +192,7 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
 
         BndConds = m_fields[i]->GetBndConditions();
         BndExp   = m_fields[i]->GetBndCondExpansions();
-        for (int n = 0; n < BndConds.size(); ++n)
+        for (size_t n = 0; n < BndConds.size(); ++n)
         {
             if (boost::iequals(BndConds[n]->GetUserDefined(), "Radiation"))
             {
@@ -230,7 +230,7 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
 
         radpts = 0; // reset to use as a counter
 
-        for (int n = 0; n < BndConds.size(); ++n)
+        for (size_t n = 0; n < BndConds.size(); ++n)
         {
             if (boost::iequals(BndConds[n]->GetUserDefined(), "Radiation"))
             {
@@ -258,9 +258,9 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
     }
 
     // Set up maping for womersley BC - and load variables
-    for (int i = 0; i < m_fields.size(); ++i)
+    for (size_t i = 0; i < m_fields.size(); ++i)
     {
-        for (int n = 0; n < m_fields[i]->GetBndConditions().size(); ++n)
+        for (size_t n = 0; n < m_fields[i]->GetBndConditions().size(); ++n)
         {
             if (boost::istarts_with(
                     m_fields[i]->GetBndConditions()[n]->GetUserDefined(),
@@ -285,10 +285,10 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
     // Check if we have moving reference frame boundary conditions,if so, all
     // velocity vectors at those boundaries should be Drichlet and have a same
     // tag loop over the boundaries
-    for (int n = 0; n < m_fields[0]->GetBndConditions().size(); ++n)
+    for (size_t n = 0; n < m_fields[0]->GetBndConditions().size(); ++n)
     {
         // loop over the velocities
-        for (int i = 0; i < m_velocity.size(); ++i)
+        for (size_t i = 0; i < m_velocity.size(); ++i)
         {
             if (boost::iequals(
                     m_fields[i]->GetBndConditions()[n]->GetUserDefined(),
@@ -296,7 +296,7 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
             {
                 // all velocities must have the same userdefined tag and all
                 // must be Dirichlet
-                for (int j = 0; j < m_velocity.size(); ++j)
+                for (size_t j = 0; j < m_velocity.size(); ++j)
                 {
                     ASSERTL0(m_fields[j]
                                      ->GetBndConditions()[n]
@@ -322,7 +322,7 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
             {
                 // all velocities must have the same userdefined tag and all
                 // must be Dirichlet
-                for (int j = 0; j < m_velocity.size(); ++j)
+                for (size_t j = 0; j < m_velocity.size(); ++j)
                 {
                     ASSERTL0(
                         m_fields[j]
@@ -356,7 +356,7 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
         if (m_fieldMetaDataMap != LibUtilities::NullFieldMetaDataMap)
         {
             std::vector<std::string> vSuffix = {"_x", "_y", "_z"};
-            for (int i = 0; i < 3; ++i)
+            for (size_t i = 0; i < 3; ++i)
             {
                 NekDouble dTheta{0};
                 std::string sTheta = "Theta" + vSuffix[i];
@@ -376,7 +376,7 @@ void IncNavierStokes::v_InitObject(bool DeclareField)
         else
         {
             std::vector<std::string> vSuffix = {"_x", "_y", "_z"};
-            for (int i = 0; i < 3; ++i)
+            for (size_t i = 0; i < 3; ++i)
             {
                 std::string sTheta = "Theta" + vSuffix[i];
                 m_fieldMetaDataMap[sTheta] =
@@ -400,12 +400,11 @@ void IncNavierStokes::EvaluateAdvectionTerms(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
-    int i;
-    int VelDim = m_velocity.size();
+    size_t VelDim = m_velocity.size();
     Array<OneD, Array<OneD, NekDouble>> velocity(VelDim);
 
-    int npoints = m_fields[0]->GetNpoints();
-    for (i = 0; i < VelDim; ++i)
+    size_t npoints = m_fields[0]->GetNpoints();
+    for (size_t i = 0; i < VelDim; ++i)
     {
         velocity[i] = Array<OneD, NekDouble>(npoints);
         Vmath::Vcopy(npoints, inarray[m_velocity[i]], 1, velocity[i], 1);
@@ -424,9 +423,9 @@ void IncNavierStokes::EvaluateAdvectionTerms(
  */
 void IncNavierStokes::SetBoundaryConditions(NekDouble time)
 {
-    int i, n;
+    size_t i, n;
     std::string varName;
-    int nvariables = m_fields.size();
+    size_t nvariables = m_fields.size();
 
     for (i = 0; i < nvariables; ++i)
     {
@@ -460,7 +459,7 @@ void IncNavierStokes::SetBoundaryConditions(NekDouble time)
  */
 void IncNavierStokes::SetRadiationBoundaryForcing(int fieldid)
 {
-    int i, n;
+    size_t i, n;
 
     Array<OneD, const SpatialDomains::BoundaryConditionShPtr> BndConds;
     Array<OneD, MultiRegions::ExpListSharedPtr> BndExp;
@@ -471,10 +470,10 @@ void IncNavierStokes::SetRadiationBoundaryForcing(int fieldid)
     LocalRegions::ExpansionSharedPtr elmt;
     StdRegions::StdExpansionSharedPtr Bc;
 
-    int cnt;
-    int elmtid, nq, offset, boundary;
+    size_t cnt;
+    size_t elmtid, nq, offset, boundary;
     Array<OneD, NekDouble> Bvals, U;
-    int cnt1 = 0;
+    size_t cnt1 = 0;
 
     for (cnt = n = 0; n < BndConds.size(); ++n)
     {
@@ -484,7 +483,8 @@ void IncNavierStokes::SetRadiationBoundaryForcing(int fieldid)
              SpatialDomains::eRobin) &&
             (boost::iequals(type, "Radiation")))
         {
-            for (i = 0; i < BndExp[n]->GetExpSize(); ++i, cnt++)
+            size_t nExp = BndExp[n]->GetExpSize();
+            for (i = 0; i < nExp; ++i, cnt++)
             {
                 elmtid = m_fieldsBCToElmtID[m_velocity[fieldid]][cnt];
                 elmt   = m_fields[fieldid]->GetExp(elmtid);
@@ -531,13 +531,13 @@ void IncNavierStokes::SetZeroNormalVelocity()
     }
     Setup = true;
 
-    int i, n;
+    size_t i, n;
 
     Array<OneD, Array<OneD, const SpatialDomains::BoundaryConditionShPtr>>
         BndConds(m_spacedim);
     Array<OneD, Array<OneD, MultiRegions::ExpListSharedPtr>> BndExp(m_spacedim);
 
-    for (i = 0; i < m_spacedim; ++i)
+    for (int i = 0; i < m_spacedim; ++i)
     {
         BndConds[i] = m_fields[m_velocity[i]]->GetBndConditions();
         BndExp[i]   = m_fields[m_velocity[i]]->GetBndCondExpansions();
@@ -545,13 +545,13 @@ void IncNavierStokes::SetZeroNormalVelocity()
 
     LocalRegions::ExpansionSharedPtr elmt, Bc;
 
-    int cnt;
-    int elmtid, nq, boundary;
+    size_t cnt;
+    size_t elmtid, nq, boundary;
 
     Array<OneD, Array<OneD, NekDouble>> normals;
     Array<OneD, NekDouble> Bphys, Bcoeffs;
 
-    int fldid = m_velocity[0];
+    size_t fldid = m_velocity[0];
 
     for (cnt = n = 0; n < BndConds[0].size(); ++n)
     {
@@ -560,7 +560,8 @@ void IncNavierStokes::SetZeroNormalVelocity()
             (boost::iequals(BndConds[0][n]->GetUserDefined(),
                             "ZeroNormalComponent")))
         {
-            for (i = 0; i < BndExp[0][n]->GetExpSize(); ++i, cnt++)
+            size_t nExp = BndExp[0][n]->GetExpSize();
+            for (i = 0; i < nExp; ++i, cnt++)
             {
                 elmtid   = m_fieldsBCToElmtID[fldid][cnt];
                 elmt     = m_fields[0]->GetExp(elmtid);
@@ -613,9 +614,9 @@ void IncNavierStokes::SetWomersleyBoundary(const int fldid, const int bndid)
 
     WomersleyParamsSharedPtr WomParam = m_womersleyParams[fldid][bndid];
     NekComplexDouble zvel;
-    int i, j, k;
+    size_t i, j, k;
 
-    int M_coeffs = WomParam->m_wom_vel.size();
+    size_t M_coeffs = WomParam->m_wom_vel.size();
 
     NekDouble T           = WomParam->m_period;
     NekDouble axis_normal = WomParam->m_axisnormal[fldid];
@@ -631,10 +632,10 @@ void IncNavierStokes::SetWomersleyBoundary(const int fldid, const int bndid)
     BndCondExp = m_fields[fldid]->GetBndCondExpansions()[bndid];
 
     StdRegions::StdExpansionSharedPtr bc;
-    int cnt = 0;
-    int nfq;
+    size_t cnt = 0;
+    size_t nfq;
     Array<OneD, NekDouble> Bvals;
-    int exp_npts = BndCondExp->GetExpSize();
+    size_t exp_npts = BndCondExp->GetExpSize();
     Array<OneD, NekDouble> wbc(exp_npts, 0.0);
 
     Array<OneD, NekComplexDouble> zt(M_coeffs);
@@ -810,11 +811,11 @@ void IncNavierStokes::SetUpWomersley(const int fldid, const int bndid,
     }
 
     // starting point of precalculation
-    int i, j, k;
+    size_t i, j, k;
     // M fourier coefficients
-    int M_coeffs = m_womersleyParams[fldid][bndid]->m_wom_vel.size();
-    NekDouble R  = m_womersleyParams[fldid][bndid]->m_radius;
-    NekDouble T  = m_womersleyParams[fldid][bndid]->m_period;
+    size_t M_coeffs = m_womersleyParams[fldid][bndid]->m_wom_vel.size();
+    NekDouble R     = m_womersleyParams[fldid][bndid]->m_radius;
+    NekDouble T     = m_womersleyParams[fldid][bndid]->m_period;
     Array<OneD, NekDouble> x0 = m_womersleyParams[fldid][bndid]->m_axispoint;
 
     NekComplexDouble rqR;
@@ -828,11 +829,11 @@ void IncNavierStokes::SetUpWomersley(const int fldid, const int bndid,
     BndCondExp = m_fields[fldid]->GetBndCondExpansions()[bndid];
 
     StdRegions::StdExpansionSharedPtr bc;
-    int cnt = 0;
-    int nfq;
+    size_t cnt = 0;
+    size_t nfq;
     Array<OneD, NekDouble> Bvals;
 
-    int exp_npts = BndCondExp->GetExpSize();
+    size_t exp_npts = BndCondExp->GetExpSize();
     Array<OneD, NekDouble> wbc(exp_npts, 0.0);
 
     // allocate time indepedent variables
@@ -934,7 +935,7 @@ void IncNavierStokes::SetMRFWallBCs(const NekDouble &time)
     Array<OneD, NekDouble> Bphys, Bcoeffs;
 
     // loop over the boundary regions
-    for (int n = 0; n < BndExp[0].size(); ++n)
+    for (size_t n = 0; n < BndExp[0].size(); ++n)
     {
         if (BndConds[0][n]->GetBoundaryConditionType() ==
                 SpatialDomains::eDirichlet &&
@@ -948,13 +949,13 @@ void IncNavierStokes::SetMRFWallBCs(const NekDouble &time)
             Array<OneD, Array<OneD, NekDouble>> velocities(m_velocity.size());
             Array<OneD, Array<OneD, NekDouble>> unitArray(m_velocity.size());
             Array<OneD, Array<OneD, NekDouble>> coords(3);
-            for (int k = 0; k < m_velocity.size(); ++k)
+            for (size_t k = 0; k < m_velocity.size(); ++k)
             {
                 velocities[k] = Array<OneD, NekDouble>(npoints, 0.0);
                 unitArray[k]  = Array<OneD, NekDouble>(npoints, 1.0);
             }
             Array<OneD, NekDouble> tmp(npoints, 0.0);
-            for (int k = 0; k < 3; ++k)
+            for (size_t k = 0; k < 3; ++k)
             {
                 coords[k] = Array<OneD, NekDouble>(npoints, 0.0);
             }
@@ -1054,7 +1055,7 @@ void IncNavierStokes::SetMRFDomainVelBCs(const NekDouble &time)
     Array<OneD, NekDouble> Bphys, Bcoeffs;
 
     // loop over the boundary regions
-    for (int n = 0; n < BndExp[0].size(); ++n)
+    for (size_t n = 0; n < BndExp[0].size(); ++n)
     {
         if (BndConds[0][n]->GetBoundaryConditionType() ==
                 SpatialDomains::eDirichlet &&
@@ -1062,14 +1063,14 @@ void IncNavierStokes::SetMRFDomainVelBCs(const NekDouble &time)
                             "MovingFrameDomainVel")))
         {
             npoints = BndExp[0][n]->GetNpoints();
-            for (int k = 0; k < m_velocity.size(); ++k)
+            for (size_t k = 0; k < m_velocity.size(); ++k)
             {
                 definedVels[k] = Array<OneD, NekDouble>(npoints, 0.0);
                 velocities[k]  = Array<OneD, NekDouble>(npoints, 0.0);
                 unitArray[k]   = Array<OneD, NekDouble>(npoints, 1.0);
             }
             Array<OneD, NekDouble> tmp(npoints, 0.0);
-            for (int k = 0; k < 3; ++k)
+            for (size_t k = 0; k < 3; ++k)
             {
                 coords[k] = Array<OneD, NekDouble>(npoints, 0.0);
             }
@@ -1077,7 +1078,7 @@ void IncNavierStokes::SetMRFDomainVelBCs(const NekDouble &time)
 
             // loop over the velocity fields and compute the boundary
             // condition
-            for (int k = 0; k < m_velocity.size(); ++k)
+            for (size_t k = 0; k < m_velocity.size(); ++k)
             {
                 LibUtilities::Equation condition =
                     std::static_pointer_cast<
@@ -1139,8 +1140,8 @@ Array<OneD, NekDouble> IncNavierStokes::v_GetMaxStdVelocity(
     const NekDouble SpeedSoundFactor)
 {
     boost::ignore_unused(SpeedSoundFactor);
-    int nvel  = m_velocity.size();
-    int nelmt = m_fields[0]->GetExpSize();
+    size_t nvel  = m_velocity.size();
+    size_t nelmt = m_fields[0]->GetExpSize();
 
     Array<OneD, NekDouble> stdVelocity(nelmt, 0.0);
     Array<OneD, Array<OneD, NekDouble>> velfields;
@@ -1149,7 +1150,7 @@ Array<OneD, NekDouble> IncNavierStokes::v_GetMaxStdVelocity(
     {
         velfields = Array<OneD, Array<OneD, NekDouble>>(2);
 
-        for (int i = 0; i < 2; ++i)
+        for (size_t i = 0; i < 2; ++i)
         {
             velfields[i] = m_fields[m_velocity[i]]->UpdatePhys();
         }
@@ -1158,7 +1159,7 @@ Array<OneD, NekDouble> IncNavierStokes::v_GetMaxStdVelocity(
     {
         velfields = Array<OneD, Array<OneD, NekDouble>>(nvel);
 
-        for (int i = 0; i < nvel; ++i)
+        for (size_t i = 0; i < nvel; ++i)
         {
             velfields[i] = m_fields[m_velocity[i]]->UpdatePhys();
         }
@@ -1224,7 +1225,7 @@ void IncNavierStokes::v_GetMovingFrameVelocities(
     ASSERTL0(vFrameVels.size() == m_movingFrameVelsxyz.size(),
              "Arrays have different dimensions, cannot get moving frame "
              "velocities");
-    unsigned int size = m_movingFrameVelsxyz.size();
+    size_t size = m_movingFrameVelsxyz.size();
     Vmath::Vcopy(size, m_movingFrameVelsxyz, 1, vFrameVels, 1);
 }
 
@@ -1243,9 +1244,9 @@ void IncNavierStokes::v_SetMovingFrameProjectionMat(
     ASSERTL0(vProjMat.size2() == m_movingFrameProjMat.size2(),
              "Matrices have different numbers of columns, cannot Set the "
              "moving frame projection matrix");
-    for (int i = 0; i < vProjMat.size1(); ++i)
+    for (size_t i = 0; i < vProjMat.size1(); ++i)
     {
-        for (int j = 0; j < vProjMat.size2(); ++j)
+        for (size_t j = 0; j < vProjMat.size2(); ++j)
         {
             m_movingFrameProjMat(i, j) = vProjMat(i, j);
         }
@@ -1262,9 +1263,9 @@ void IncNavierStokes::v_GetMovingFrameProjectionMat(
              "Matrices have different numbers of columns, cannot Get the "
              "moving frame projection matrix");
 
-    for (int i = 0; i < vProjMat.size1(); ++i)
+    for (size_t i = 0; i < vProjMat.size1(); ++i)
     {
-        for (int j = 0; j < vProjMat.size2(); ++j)
+        for (size_t j = 0; j < vProjMat.size2(); ++j)
         {
             vProjMat(i, j) = m_movingFrameProjMat(i, j);
         }
@@ -1280,7 +1281,7 @@ void IncNavierStokes::v_SetMovingFrameAngles(
 {
     ASSERTL0(vFrameTheta.size() == m_movingFrameTheta.size(),
              "Arrays have different size, cannot set moving frame angles");
-    for (int i = 0; i < vFrameTheta.size(); ++i)
+    for (size_t i = 0; i < vFrameTheta.size(); ++i)
     {
         m_movingFrameTheta[i] = vFrameTheta[i];
     }
@@ -1295,7 +1296,7 @@ void IncNavierStokes::v_GetMovingFrameAngles(
 {
     ASSERTL0(vFrameTheta.size() == m_movingFrameTheta.size(),
              "Arrays have different size, cannot get moving frame angles");
-    for (int i = 0; i < m_movingFrameTheta.size(); ++i)
+    for (size_t i = 0; i < m_movingFrameTheta.size(); ++i)
     {
         vFrameTheta[i] = m_movingFrameTheta[i];
     }
