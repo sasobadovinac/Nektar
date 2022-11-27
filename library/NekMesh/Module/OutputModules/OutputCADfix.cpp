@@ -68,8 +68,14 @@ bool compareT(NodeSharedPtr n1, NodeSharedPtr n2)
 
 void OutputCADfix::Process()
 {
-    m_log(VERBOSE) << "Writing CADfix file '"
-                   << m_config["outfile"].as<string>() << "'" << endl;
+    std::string filename = m_config["outfile"].as<string>();
+    m_log(VERBOSE) << "Writing CADfix file '" << filename << "'" << endl;
+
+    // Check whether file exists.
+    if (!CheckOverwrite(filename))
+    {
+        return;
+    }
 
     m_cad = std::dynamic_pointer_cast<CADSystemCFI>(m_mesh->m_cad);
 
@@ -328,7 +334,7 @@ void OutputCADfix::Process()
                                                   cfiNodes);
     }
 
-    m_model->saveCopy(m_config["outfile"].as<string>());
+    m_model->saveCopy(filename);
 }
 } // namespace NekMesh
 } // namespace Nektar

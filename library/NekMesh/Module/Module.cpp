@@ -70,6 +70,8 @@ InputModule::InputModule(MeshSharedPtr m) : Module(m)
 OutputModule::OutputModule(MeshSharedPtr m) : Module(m)
 {
     m_config["outfile"] = ConfigOption(false, "", "Output filename.");
+    m_config["forceoutput"] =
+        ConfigOption(true, "", "Force-write output even if file exists.");
 }
 
 /**
@@ -77,29 +79,30 @@ OutputModule::OutputModule(MeshSharedPtr m) : Module(m)
  */
 void InputModule::OpenStream()
 {
-    string fname = m_config["infile"].as<string>();
+    string filename = m_config["infile"].as<string>();
 
     // Check to see if filename exists.
-    if (!boost::filesystem::exists(fname))
+    if (!boost::filesystem::exists(filename))
     {
-        m_log(FATAL) << "Unable to read file: '" << fname << "'" << std::endl;
+        m_log(FATAL) << "Unable to read file: '" << filename << "'"
+                     << std::endl;
     }
 
-    if (fname.size() > 3 && fname.substr(fname.size() - 3, 3) == ".gz")
+    if (filename.size() > 3 && filename.substr(filename.size() - 3, 3) == ".gz")
     {
-        m_mshFileStream.open(fname.c_str(), ios_base::in | ios_base::binary);
+        m_mshFileStream.open(filename.c_str(), ios_base::in | ios_base::binary);
         m_mshFile.push(io::gzip_decompressor());
         m_mshFile.push(m_mshFileStream);
     }
     else
     {
-        m_mshFileStream.open(fname.c_str());
+        m_mshFileStream.open(filename.c_str());
         m_mshFile.push(m_mshFileStream);
     }
 
     if (!m_mshFile.good())
     {
-        m_log(FATAL) << "Error opening file: " << fname << endl;
+        m_log(FATAL) << "Error opening file: " << filename << endl;
         abort();
     }
 }
@@ -107,31 +110,76 @@ void InputModule::OpenStream()
 /**
  * @brief Open a file for output.
  */
-void OutputModule::OpenStream()
+bool OutputModule::OpenStream()
 {
-    string fname = m_config["outfile"].as<string>();
+    string filename = m_config["outfile"].as<string>();
+    bool overwrite  = CheckOverwrite(filename);
 
-    if (!boost::filesystem::exists(fname))
+    if (overwrite)
     {
-        m_log(FATAL) << "Unable to read file: '" << fname << "'" << std::endl;
+        if (filename.size() > 3 &&
+            filename.substr(filename.size() - 3, 3) == ".gz")
+        {
+            m_mshFileStream.open(filename.c_str(),
+                                 ios_base::out | ios_base::binary);
+            m_mshFile.push(io::gzip_compressor());
+            m_mshFile.push(m_mshFileStream);
+        }
+        else
+        {
+            m_mshFileStream.open(filename.c_str());
+            m_mshFile.push(m_mshFileStream);
+        }
+
+        if (!m_mshFile.good())
+        {
+            m_log(FATAL) << "Error opening file: '" << filename << "'" << endl;
+        }
     }
 
-    if (fname.size() > 3 && fname.substr(fname.size() - 3, 3) == ".gz")
+    return overwrite;
+}
+
+/**
+ * @brief Check to see whether we would overwrite this file and prompt the user,
+ * unless forceoverwrite option is enabled.
+ *
+ * @param filename   Filename to check.
+ */
+bool OutputModule::CheckOverwrite(const std::string &filename)
+{
+    if (m_config["forceoutput"].beenSet)
     {
-        m_mshFileStream.open(fname.c_str(), ios_base::out | ios_base::binary);
-        m_mshFile.push(io::gzip_compressor());
-        m_mshFile.push(m_mshFileStream);
+        return true;
+    }
+
+    if (!boost::filesystem::exists(filename))
+    {
+        return true;
+    }
+
+    // Assume 'n' in case of non-interactive terminal
+    if (!m_log.IsTty())
+    {
+        return false;
+    }
+
+    std::string answer;
+    m_log(WARNING) << "Did you wish to overwrite " << filename << " (y/n)? "
+                   << std::flush;
+    std::getline(std::cin, answer);
+
+    if (answer.compare("y") == 0)
+    {
+        return true;
     }
     else
     {
-        m_mshFileStream.open(fname.c_str());
-        m_mshFile.push(m_mshFileStream);
+        m_log(WARNING) << "Not writing file '" << filename
+                       << "' because it already exists" << endl;
     }
 
-    if (!m_mshFile.good())
-    {
-        m_log(FATAL) << "Error opening file: '" << fname << "'" << endl;
-    }
+    return false;
 }
 
 /**

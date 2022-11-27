@@ -263,6 +263,8 @@ public:
     /// Registers the default string value of a solver info property.
     LIB_UTILITIES_EXPORT inline static std::string RegisterDefaultSolverInfo(
         const std::string &pName, const std::string &pValue);
+    /// Returns the backups.
+    LIB_UTILITIES_EXPORT bool GetBackups() const;
 
     /* ----GlobalSysSolnInfo ----- */
 
@@ -433,6 +435,8 @@ private:
     bool m_verbose;
     /// Running on a shared filesystem
     bool m_sharedFilesystem;
+    /// Backups
+    bool m_backups = true;
     /// Update optimisation file
     bool m_updateOptFile;
     /// String to enumeration map for Solver Info parameters.

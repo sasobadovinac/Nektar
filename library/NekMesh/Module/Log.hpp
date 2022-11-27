@@ -489,6 +489,14 @@ public:
         return m_level;
     }
 
+    /**
+     * @brief Returns true if the logger is tty-based
+     */
+    bool IsTty()
+    {
+        return m_logOutput->IsTty();
+    }
+
 private:
     /// Log output method.
     std::shared_ptr<LogOutput> m_logOutput;

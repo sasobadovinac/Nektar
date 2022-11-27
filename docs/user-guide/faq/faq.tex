@@ -32,24 +32,19 @@ export DYLD_LIBRARY_PATH=${NEKTAR_HOME}/ThirdParty/dist/lib
 
 Parallel execution of all Nektar++ solvers is available using MPI. To compile
 using MPI, enable the \inlsh{NEKTAR\_USE\_MPI} option in the CMake
-configuration.
-On recent versions of MPI, the solvers can still be run in serial when compiled
-with MPI. More information on Nektar++ compilation options is available in
-Section~\ref{s:installation:source:cmake}.
+configuration. On recent versions of MPI, the solvers can still be run in serial
+when compiled with MPI. More information on Nektar++ compilation options is
+available in Section~\ref{s:installation:source:cmake}.
 
 \textbf{Q. When compiling Nektar++, I receive the following error:}
 
 \begin{lstlisting}[style=BashInputStyle]
-  CMake Error: The following variables are used in this
-project, but they are set  to NOTFOUND.
-  Please set them or make sure they are set and tested
-correctly in the CMake files:
-  NATIVE_BLAS (ADVANCED)
-      linked by target "LibUtilities" in directory
-      /path/to/nektar++/library/LibUtilities
-  NATIVE_LAPACK (ADVANCED)
-      linked by target "LibUtilities" in directory
-      /path/to/nektar++/library/LibUtilities
+  CMake Error: The following variables are used in this project, but they are
+  set to NOTFOUND. Please set them or make sure they are set and tested
+  correctly in the CMake files: NATIVE_BLAS (ADVANCED) linked by target
+  "LibUtilities" in directory /path/to/nektar++/library/LibUtilities
+  NATIVE_LAPACK (ADVANCED) linked by target "LibUtilities" in directory
+  /path/to/nektar++/library/LibUtilities
 \end{lstlisting}
 
 This is caused by one of two problems:
@@ -66,26 +61,25 @@ This is caused by one of two problems:
 
 \textbf{Q. When I compile Nektar++ I receive an error}
 \begin{lstlisting}[style=BashInputStyle]
-error: #error "SEEK_SET is #defined but must not be for 
-the C++ binding of MPI. Include mpi.h before stdio.h"
+  error: #error "SEEK_SET is #defined but must not be for the C++ binding of
+  MPI. Include mpi.h before stdio.h"
 \end{lstlisting}
 
 This can be fixed by including the flags
 \begin{lstlisting}[style=BashInputStyle]
--DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
+  -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX
 \end{lstlisting}
 in the \inltt{CMAKE\_CXX\_FLAGS} option within the \inlsh{ccmake} configuration.
 
 \textbf{Q. After installing Nektar++ on my local HPC cluster, when I run the
-'ctest' command, all the parallel tests fail. Why is this?}
+  'ctest' command, all the parallel tests fail. Why is this?}
 
 The parallel tests are those which include the word \inlsh{parallel} or
-\inlsh{par}.
-On many HPC systems, the MPI binaries used to execute jobs are not available on the
-login nodes, to prevent inadvertent parallel runs outside of the queuing system.
-Consequently, these tests will not execute. To fully test the code, you can
-submit a job to the queuing system using a minimum of two cores, to run the
-\inlsh{ctest} command.
+\inlsh{par}. On many HPC systems, the MPI binaries used to execute jobs are not
+available on the login nodes, to prevent inadvertent parallel runs outside of
+the queuing system. Consequently, these tests will not execute. To fully test
+the code, you can submit a job to the queuing system using a minimum of two
+cores, to run the \inlsh{ctest} command.
 
 \textbf{Q. When running any Nektar++ executable on Windows, I receive an error
 that zlib.dll cannot be found. How do I fix this?}
@@ -107,7 +101,8 @@ to the end, replacing
 \end{itemize}
 
 
-\textbf{Q. When compiling Nektar++ Thirdparty libraries I get an error ``CMake Error: Problem extracting tar''}
+\textbf{Q. When compiling Nektar++ Thirdparty libraries I get an error ``CMake
+  Error: Problem extracting tar''}
 
 Nektar++ tries to download the appropriate ThirdParty
 libraries. However if the download protocols are restricted on your
@@ -135,12 +130,45 @@ should be used.
 \textbf{Q. How can I generate a mesh for use with Nektar++?}
 
 Nektar++ supports a number of mesh input formats. These are converted to the
-Nektar++ native XML format (see Section~\ref{s:xml}) using the
-NekMesh utility (see Section~\ref{s:utilities:nekmesh}. Supported
-formats include:
+Nektar++ native XML format (see Section~\ref{s:xml}) using the NekMesh utility
+(see Section~\ref{s:utilities:nekmesh}. Supported formats include:
 \begin{itemize}
 \item Gmsh (.msh)
 \item Polygon (.ply)
 \item Nektar (.rea)
 \item Semtex (.sem)
+\end{itemize}
+
+\textbf{Q. When running my solver, I see files appearing with {\inltt .bak}
+  extensions. What are these?}
+
+When running a Nektar++ solver, if a checkpoint or field file already exists
+with the same name as that to be written, by default a backup will be created
+where that directory is renamed. For example, if writing a file named
+\inltt{output.fld}, then the existing \inltt{output.fld} will be renamed to
+\inltt{output.bak0.fld}. If the solver were run again, then the
+\inltt{output.fld} this would be renamed to \inltt{output.bak1.fld} to avoid
+overwriting the \inltt{output.bak0.fld} file. This is a deliberate choice to
+avoid accidentally overwriting simulation data.
+
+Both \inlsh{NekMesh} and \inlsh{FieldConvert} utilities will also prevent mesh
+and visualisation files being overwritten by default.
+
+\textbf{Q. How can I disable backup output?}
+
+Backup output is useful but can produce a large number of files, which can be an
+obstruction when developing with Nektar++ or debugging. There are two ways to
+disable backups:
+
+\begin{itemize}
+  \item Pass the command line option \inlsh{--forceoutput} or \inlsh{-f}. This
+    will turn off backup output for Nektar++ solvers, or the \inlsh{NekMesh} and
+    \inlsh{FieldConvert} utilities.
+  \item Set the environment variable \inlsh{NEKTAR\_DISABLE\_BACKUPS}, for
+    example by including the line:
+    \begin{lstlisting}[style=BashInputStyle]
+      export NEKTAR\_DISABLE\_BACKUPS=1
+    \end{lstlisting}
+    While this environment variable exists, it will prevent backups from being
+    written.
 \end{itemize}
