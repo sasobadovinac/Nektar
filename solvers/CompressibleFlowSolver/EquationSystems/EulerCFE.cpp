@@ -83,7 +83,7 @@ void EulerCFE::v_DoDiffusion(const Array<OneD, Array<OneD, NekDouble>> &inarray,
     }
 }
 
-bool EulerCFE::SupportsShockCaptType(const std::string type) const
+bool EulerCFE::v_SupportsShockCaptType(const std::string type) const
 {
     if (type == "NonSmooth" || type == "Off")
     {

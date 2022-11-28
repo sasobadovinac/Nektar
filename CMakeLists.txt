@@ -172,7 +172,7 @@ OPTION(NEKTAR_TEST_ALL "Include full set of regression tests to this build." OFF
 OPTION(NEKTAR_TEST_USE_HOSTFILE "Use a hostfile to explicitly specify number of
 slots." OFF)
 
-OPTION(NEKTAR_ERROR_ON_WARNINGS "Use -Werror to make warnings stop compilation." ON)
+OPTION(NEKTAR_ERROR_ON_WARNINGS "Use -Werror to make warnings stop compilation." OFF)
 MARK_AS_ADVANCED(NEKTAR_ERROR_ON_WARNINGS)
 
 # Meshing utilities and library
@@ -210,12 +210,6 @@ OPTION(NEKTAR_USE_THREAD_SAFETY
 MARK_AS_ADVANCED(NEKTAR_USE_THREAD_SAFETY)
 IF (NEKTAR_USE_THREAD_SAFETY)
     ADD_DEFINITIONS(-DNEKTAR_USE_THREAD_SAFETY)
-ENDIF()
-
-# Disable backups
-OPTION(NEKTAR_DISABLE_BACKUPS "Disable automatic backup file creation" OFF)
-IF (NEKTAR_DISABLE_BACKUPS)
-    ADD_DEFINITIONS(-DNEKTAR_DISABLE_BACKUPS)
 ENDIF()
 
 IF (MSVC)

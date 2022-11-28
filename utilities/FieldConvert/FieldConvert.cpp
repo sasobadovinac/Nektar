@@ -58,56 +58,45 @@ int main(int argc, char *argv[])
 
     // clang-format off
     desc.add_options()
-        ("help,h",
-            "Produce this help message.")
-        ("modules-list,l",
-            "Print the list of available modules.")
+        ("help,h", "Produce this help message.")
+        ("modules-list,l", "Print the list of available modules.")
         ("output-points,n", po::value<int>(),
-            "Output at n equipspaced points along the "
-            "collapsed coordinates (for .dat, .vtu).")
+         "Output at n equipspaced points along the "
+         "collapsed coordinates (for .dat, .vtu).")
         ("output-points-hom-z", po::value<int>(),
-            "Number of planes in the z-direction for output of "
-            "Homogeneous 1D expansion(for .dat, .vtu).")
-        ("error,e",
-            "Write error of fields for regression checking")
-        ("forceoutput,f",
-            "Force the output to be written without any checks")
+         "Number of planes in the z-direction for output of "
+         "Homogeneous 1D expansion(for .dat, .vtu).")
+        ("error,e", "Write error of fields for regression checking")
+        ("forceoutput,f", "Force the output to be written without any checks")
         ("range,r", po::value<string>(),
-            "Define output range i.e. (-r xmin,xmax,ymin,ymax,zmin,zmax) "
-            "in which any vertex is contained.")
-        ("noequispaced",
-            "Do not use equispaced output.")
+         "Define output range i.e. (-r xmin,xmax,ymin,ymax,zmin,zmax) "
+         "in which any vertex is contained.")
+        ("noequispaced", "Do not use equispaced output.")
         ("nparts", po::value<int>(),
-            "Define nparts if running serial problem to mimic "
-            "parallel run with many partitions.")
+         "Define nparts if running serial problem to mimic "
+         "parallel run with many partitions.")
         ("npz", po::value<int>(),
-            "Used to define number of partitions in z for Homogeneous1D "
-            "expansions for parallel runs.")
+         "Used to define number of partitions in z for Homogeneous1D "
+         "expansions for parallel runs.")
         ("onlyshape", po::value<string>(),
-            "Only use element with defined shape type i.e. -onlyshape "
-            " Tetrahedron")
+         "Only use element with defined shape type i.e. -onlyshape "
+         " Tetrahedron")
         ("part-only", po::value<int>(),
-            "Partition into specified npart partitions and exit")
+         "Partition into specified npart partitions and exit")
         ("part-only-overlapping", po::value<int>(),
-            "Partition into specified npart overlapping partitions and exit")
+         "Partition into specified npart overlapping partitions and exit")
         ("modules-opt,p", po::value<string>(),
-            "Print options for a module.")
-        ("module,m", po::value<vector<string> >(),
-            "Specify modules which are to be used.")
-        ("useSessionVariables",
-            "Use variables defined in session for output")
-        ("useSessionExpansion",
-            "Use expansion defined in session.")
-        ("verbose,v",
-            "Enable verbose mode.");
+         "Print options for a module.")
+        ("module,m", po::value<vector<string>>(),
+         "Specify modules which are to be used.")
+        ("useSessionVariables", "Use variables defined in session for output")
+        ("useSessionExpansion", "Use expansion defined in session.")
+        ("verbose,v", "Enable verbose mode.");
     // clang-format on
 
     po::options_description hidden("Hidden options");
-
-    // clang-format off
-    hidden.add_options()
-        ("input-file",   po::value<vector<string> >(), "Input filename");
-    // clang-format on
+    hidden.add_options()("input-file", po::value<vector<string>>(),
+                         "Input filename");
 
     po::options_description cmdline_options;
     cmdline_options.add(hidden).add(desc);
@@ -136,9 +125,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-#ifdef NEKTAR_DISABLE_BACKUPS
-    vm.insert(std::make_pair("forceoutput", po::variable_value()));
-#endif
+    // If NEKTAR_DISABLE_BACKUPS environment variable is set, enable the
+    // forceoutput option.
+    if (std::getenv("NEKTAR_DISABLE_BACKUPS") != nullptr)
+    {
+        vm.insert(std::make_pair("forceoutput", po::variable_value()));
+    }
 
     // Print available modules.
     if (vm.count("modules-list"))

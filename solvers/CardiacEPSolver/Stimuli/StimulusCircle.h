@@ -84,9 +84,9 @@ protected:
     NekDouble m_chiCapMembrane;
 
     virtual void v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
-                          const NekDouble time);
+                          const NekDouble time) override;
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
 private:
     StimulusCirc(const LibUtilities::SessionReaderSharedPtr &pSession,

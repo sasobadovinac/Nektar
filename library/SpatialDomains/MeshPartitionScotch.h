@@ -71,16 +71,16 @@ public:
                         CompositeDescriptor compMap);
     virtual ~MeshPartitionScotch();
 
-private:
-    virtual void PartitionGraphImpl(int &nVerts, int &nVertConds,
-                                    Nektar::Array<Nektar::OneD, int> &xadj,
-                                    Nektar::Array<Nektar::OneD, int> &adjcy,
-                                    Nektar::Array<Nektar::OneD, int> &vertWgt,
-                                    Nektar::Array<Nektar::OneD, int> &vertSize,
-                                    Nektar::Array<Nektar::OneD, int> &edgeWgt,
-                                    int &nparts, int &volume,
-                                    Nektar::Array<Nektar::OneD, int> &part);
+protected:
+    virtual void v_PartitionGraphImpl(
+        int &nVerts, int &nVertConds, Nektar::Array<Nektar::OneD, int> &xadj,
+        Nektar::Array<Nektar::OneD, int> &adjcy,
+        Nektar::Array<Nektar::OneD, int> &vertWgt,
+        Nektar::Array<Nektar::OneD, int> &vertSize,
+        Nektar::Array<Nektar::OneD, int> &edgeWgt, int &nparts, int &volume,
+        Nektar::Array<Nektar::OneD, int> &part) override final;
 
+private:
     void PartGraphVKway(const SCOTCH_Num *const n, const SCOTCH_Num *const xadj,
                         const SCOTCH_Num *const adjncy,
                         const SCOTCH_Num *const vwgt,

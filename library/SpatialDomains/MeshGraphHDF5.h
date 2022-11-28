@@ -52,11 +52,6 @@ public:
     {
     }
 
-    SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
-        std::string &outfilename, bool defaultExp = false,
-        const LibUtilities::FieldMetaDataMap &metadata =
-            LibUtilities::NullFieldMetaDataMap);
-
     virtual ~MeshGraphHDF5()
     {
     }
@@ -69,10 +64,14 @@ public:
     static std::string className, cmdSwitch;
 
 protected:
-    SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        LibUtilities::DomainRangeShPtr rng, bool fillGraph);
-    SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
-        LibUtilities::SessionReaderSharedPtr session);
+    SPATIAL_DOMAINS_EXPORT virtual void v_WriteGeometry(
+        std::string &outfilename, bool defaultExp = false,
+        const LibUtilities::FieldMetaDataMap &metadata =
+            LibUtilities::NullFieldMetaDataMap) override;
+    SPATIAL_DOMAINS_EXPORT virtual void v_ReadGeometry(
+        LibUtilities::DomainRangeShPtr rng, bool fillGraph) override;
+    SPATIAL_DOMAINS_EXPORT virtual void v_PartitionMesh(
+        LibUtilities::SessionReaderSharedPtr session) override;
 
 private:
     void ReadCurveMap(CurveMap &curveMap, std::string dsName,

@@ -31,6 +31,10 @@ is written as one file per process. If \nekpp is compiled with HDF5 support,
 then an alternative option is \inlsh{Hdf5}, which will write one file for all
 processes and can be more efficient for very large-scale parallel jobs.
 
+\lstinline[style=BashInputStyle]{--forceoutput, -f}\\
+\hangindent=1.5cm
+Force checkpoint files and final field files to be written, even when they exist, and disable the creation of any backup files.
+
 \lstinline[style=BashInputStyle]{--npx [int]}\\
 \hangindent=1.5cm
 When using a fully-Fourier expansion, specifies the number of processes to use in the x-coordinate direction.

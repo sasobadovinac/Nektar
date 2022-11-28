@@ -66,7 +66,7 @@ std::string MeshGraphHDF5::className =
     GetMeshGraphFactory().RegisterCreatorFunction("HDF5", MeshGraphHDF5::create,
                                                   "IO with HDF5 geometry");
 
-void MeshGraphHDF5::ReadGeometry(DomainRangeShPtr rng, bool fillGraph)
+void MeshGraphHDF5::v_ReadGeometry(DomainRangeShPtr rng, bool fillGraph)
 {
     m_domainRange = rng;
 
@@ -162,7 +162,8 @@ std::string MeshGraphHDF5::cmdSwitch =
 /**
  * @brief Partition the mesh
  */
-void MeshGraphHDF5::PartitionMesh(LibUtilities::SessionReaderSharedPtr session)
+void MeshGraphHDF5::v_PartitionMesh(
+    LibUtilities::SessionReaderSharedPtr session)
 {
     LibUtilities::Timer all;
     all.Start();
@@ -1516,7 +1517,7 @@ void MeshGraphHDF5::WriteDomain(map<int, CompositeMap> &domain)
     dst->WriteVectorString(doms, ds, tp);
 }
 
-void MeshGraphHDF5::WriteGeometry(
+void MeshGraphHDF5::v_WriteGeometry(
     std::string &outfilename, bool defaultExp,
     const LibUtilities::FieldMetaDataMap &metadata)
 {

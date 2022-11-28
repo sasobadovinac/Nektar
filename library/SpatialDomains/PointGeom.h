@@ -97,8 +97,8 @@ public:
                                                   const PointGeom &y);
 
 protected:
-    virtual void v_GenGeomFactors();
-    virtual PointGeomSharedPtr v_GetVertex(int i) const;
+    virtual void v_GenGeomFactors() override;
+    virtual PointGeomSharedPtr v_GetVertex(int i) const override;
 };
 
 } // namespace SpatialDomains

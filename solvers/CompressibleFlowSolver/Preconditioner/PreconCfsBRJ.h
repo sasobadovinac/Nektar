@@ -67,8 +67,8 @@ public:
                  const LibUtilities::CommSharedPtr &vComm);
     ~PreconCfsBRJ(){};
 
-    virtual bool UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
-                                      const NekDouble dtLambda);
+    virtual bool v_UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
+                                        const NekDouble dtLambda) override;
 
 protected:
     int m_PreconItsStep;
@@ -85,18 +85,18 @@ protected:
 
     PrecType m_PreconMatStorage;
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
 private:
     virtual void v_DoPreconCfs(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput,
-        const bool &flag);
+        const bool &flag) override;
 
     virtual void v_BuildPreconCfs(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
         const Array<OneD, const Array<OneD, NekDouble>> &intmp,
-        const NekDouble time, const NekDouble lambda);
+        const NekDouble time, const NekDouble lambda) override;
 
     template <typename DataType, typename TypeNekBlkMatSharedPtr>
     void PreconBlkDiag(
@@ -108,7 +108,7 @@ private:
     template <typename DataType>
     void MinusOffDiag2Rhs(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const int nvariables, const int nCoeffs,
+        const size_t nvariables, const size_t nCoeffs,
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray, bool flagUpdateDervFlux,
         Array<OneD, Array<OneD, NekDouble>> &FwdFluxDeriv,
@@ -134,7 +134,7 @@ private:
         mat =
             MemoryManager<SNekBlkMat>::AllocateSharedPtr(nrow, ncol, eDIAGONAL);
         SNekMatSharedPtr loc_matNvar;
-        for (int nelm = 0; nelm < nrow.size(); ++nelm)
+        for (size_t nelm = 0; nelm < nrow.size(); ++nelm)
         {
             int nrowsVars = nrow[nelm];
             int ncolsVars = ncol[nelm];

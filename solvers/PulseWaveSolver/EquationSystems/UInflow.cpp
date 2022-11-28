@@ -59,6 +59,8 @@ void UInflow::v_DoBoundary(
     Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
     int offset, int n)
 {
+    boost::ignore_unused(A_0, beta, alpha);
+
     NekDouble u;
     NekDouble A_r;
     NekDouble u_r;

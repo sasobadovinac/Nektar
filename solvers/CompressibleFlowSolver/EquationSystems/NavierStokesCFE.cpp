@@ -159,7 +159,7 @@ void NavierStokesCFE::v_DoDiffusion(
 
     // this should be preallocated
     Array<OneD, Array<OneD, NekDouble>> outarrayDiff(nvariables);
-    for (int i = 0; i < nvariables; ++i)
+    for (size_t i = 0; i < nvariables; ++i)
     {
         outarrayDiff[i] = Array<OneD, NekDouble>(npoints, 0.0);
     }
@@ -189,7 +189,7 @@ void NavierStokesCFE::v_DoDiffusion(
         }
         m_diffusion->Diffuse(nvariables, m_fields, inarray, outarrayDiff,
                              m_bndEvaluateTime, pFwd, pBwd);
-        for (int i = 0; i < nvariables; ++i)
+        for (size_t i = 0; i < nvariables; ++i)
         {
             Vmath::Vadd(npoints, outarrayDiff[i], 1, outarray[i], 1,
                         outarray[i], 1);
@@ -202,7 +202,7 @@ void NavierStokesCFE::v_DoDiffusion(
         Array<OneD, Array<OneD, NekDouble>> inFwd(nvariables - 1);
         Array<OneD, Array<OneD, NekDouble>> inBwd(nvariables - 1);
 
-        for (int i = 0; i < nvariables - 1; ++i)
+        for (size_t i = 0; i < nvariables - 1; ++i)
         {
             inarrayDiff[i] = Array<OneD, NekDouble>{npoints};
             inFwd[i]       = Array<OneD, NekDouble>{nTracePts};
@@ -242,7 +242,7 @@ void NavierStokesCFE::v_DoDiffusion(
         m_diffusion->Diffuse(nvariables, m_fields, inarrayDiff, outarrayDiff,
                              inFwd, inBwd);
 
-        for (int i = 0; i < nvariables; ++i)
+        for (size_t i = 0; i < nvariables; ++i)
         {
             Vmath::Vadd(npoints, outarrayDiff[i], 1, outarray[i], 1,
                         outarray[i], 1);
@@ -352,7 +352,7 @@ void NavierStokesCFE::v_GetViscousFluxVectorDeAlias(
     NekDouble OneDptscale = 2;
     // Get number of points to dealias a cubic non-linearity
     size_t nScalar   = physfield.size();
-    int nPts         = m_fields[0]->Get1DScaledTotPoints(OneDptscale);
+    size_t nPts      = m_fields[0]->Get1DScaledTotPoints(OneDptscale);
     size_t nPts_orig = physfield[0].size();
 
     // Auxiliary variables
@@ -477,19 +477,19 @@ void NavierStokesCFE::SpecialBndTreat(
     Array<OneD, Array<OneD, NekDouble>> &consvar)
 {
     size_t nConvectiveFields = consvar.size();
-    int ndens                = 0;
-    int nengy                = nConvectiveFields - 1;
+    size_t ndens             = 0;
+    size_t nengy             = nConvectiveFields - 1;
 
     Array<OneD, Array<OneD, NekDouble>> bndCons{nConvectiveFields};
     Array<OneD, NekDouble> bndTotEngy;
     Array<OneD, NekDouble> bndPressure;
     Array<OneD, NekDouble> bndRho;
     Array<OneD, NekDouble> bndIntEndy;
-    int nLengthArray = 0;
+    size_t nLengthArray = 0;
 
-    int cnt         = 0;
-    int nBndRegions = m_fields[nengy]->GetBndCondExpansions().size();
-    for (int j = 0; j < nBndRegions; ++j)
+    size_t cnt         = 0;
+    size_t nBndRegions = m_fields[nengy]->GetBndCondExpansions().size();
+    for (size_t j = 0; j < nBndRegions; ++j)
     {
         if (m_fields[nengy]
                 ->GetBndConditions()[j]
@@ -500,7 +500,7 @@ void NavierStokesCFE::SpecialBndTreat(
 
         size_t nBndEdges =
             m_fields[nengy]->GetBndCondExpansions()[j]->GetExpSize();
-        for (int e = 0; e < nBndEdges; ++e)
+        for (size_t e = 0; e < nBndEdges; ++e)
         {
             size_t nBndEdgePts = m_fields[nengy]
                                      ->GetBndCondExpansions()[j]
@@ -517,7 +517,7 @@ void NavierStokesCFE::SpecialBndTreat(
             {
                 if (nBndEdgePts != nLengthArray)
                 {
-                    for (int i = 0; i < nConvectiveFields; ++i)
+                    for (size_t i = 0; i < nConvectiveFields; ++i)
                     {
                         bndCons[i] = Array<OneD, NekDouble>{nBndEdgePts, 0.0};
                     }
@@ -536,7 +536,7 @@ void NavierStokesCFE::SpecialBndTreat(
 
                 Array<OneD, NekDouble> tmp;
 
-                for (int k = 0; k < nConvectiveFields; ++k)
+                for (size_t k = 0; k < nConvectiveFields; ++k)
                 {
                     Vmath::Vcopy(nBndEdgePts, tmp = consvar[k] + id2, 1,
                                  bndCons[k], 1);
@@ -563,7 +563,7 @@ void NavierStokesCFE::SpecialBndTreat(
  * @brief Calculate and return the Symmetric flux in IP method.
  */
 void NavierStokesCFE::GetViscousSymmtrFluxConservVar(
-    const int nDim, const Array<OneD, Array<OneD, NekDouble>> &inaverg,
+    const size_t nDim, const Array<OneD, Array<OneD, NekDouble>> &inaverg,
     const Array<OneD, Array<OneD, NekDouble>> &inarray,
     TensorOfArray3D<NekDouble> &outarray, Array<OneD, int> &nonZeroIndex,
     const Array<OneD, Array<OneD, NekDouble>> &normal)
@@ -571,7 +571,7 @@ void NavierStokesCFE::GetViscousSymmtrFluxConservVar(
     size_t nConvectiveFields = inarray.size();
     size_t nPts              = inaverg[nConvectiveFields - 1].size();
     nonZeroIndex             = Array<OneD, int>{nConvectiveFields - 1, 0};
-    for (int i = 0; i < nConvectiveFields - 1; ++i)
+    for (size_t i = 0; i < nConvectiveFields - 1; ++i)
     {
         nonZeroIndex[i] = i + 1;
     }
@@ -585,14 +585,14 @@ void NavierStokesCFE::GetViscousSymmtrFluxConservVar(
     std::vector<NekDouble> inAvgTmp(nConvectiveFields);
     std::vector<NekDouble> inTmp(nConvectiveFields);
     std::vector<NekDouble> outTmp(nConvectiveFields);
-    for (int d = 0; d < nDim; ++d)
+    for (size_t d = 0; d < nDim; ++d)
     {
-        for (int nderiv = 0; nderiv < nDim; ++nderiv)
+        for (size_t nderiv = 0; nderiv < nDim; ++nderiv)
         {
             for (size_t p = 0; p < nPts; ++p)
             {
                 // rearrenge data
-                for (int f = 0; f < nConvectiveFields; ++f)
+                for (size_t f = 0; f < nConvectiveFields; ++f)
                 {
                     inAvgTmp[f] = inaverg[f][p];
                     inTmp[f]    = inarray[f][p];
@@ -602,7 +602,7 @@ void NavierStokesCFE::GetViscousSymmtrFluxConservVar(
                                                  inAvgTmp.data(), inTmp.data(),
                                                  mu[p], outTmp.data());
 
-                for (int f = 0; f < nConvectiveFields; ++f)
+                for (size_t f = 0; f < nConvectiveFields; ++f)
                 {
                     outarray[d][f][p] += normal[nderiv][p] * outTmp[f];
                 }
@@ -619,10 +619,10 @@ void NavierStokesCFE::v_GetFluxPenalty(
     const Array<OneD, const Array<OneD, NekDouble>> &uBwd,
     Array<OneD, Array<OneD, NekDouble>> &penaltyCoeff)
 {
-    unsigned int nTracePts = uFwd[0].size();
+    size_t nTracePts = uFwd[0].size();
 
     // Compute average temperature
-    unsigned int nVariables = uFwd.size();
+    size_t nVariables = uFwd.size();
     Array<OneD, NekDouble> tAve{nTracePts, 0.0};
     Vmath::Svtsvtp(nTracePts, 0.5, uFwd[nVariables - 1], 1, 0.5,
                    uBwd[nVariables - 1], 1, tAve, 1);
@@ -634,7 +634,7 @@ void NavierStokesCFE::v_GetFluxPenalty(
     GetViscosityAndThermalCondFromTemp(tAve, muAve, tcAve);
 
     // Compute penalty term
-    for (int i = 0; i < nVariables; ++i)
+    for (size_t i = 0; i < nVariables; ++i)
     {
         // Get jump of u variables
         Vmath::Vsub(nTracePts, uFwd[i], 1, uBwd[i], 1, penaltyCoeff[i], 1);
@@ -660,7 +660,7 @@ void NavierStokesCFE::GetViscosityAndThermalCondFromTemp(
     const Array<OneD, NekDouble> &temperature, Array<OneD, NekDouble> &mu,
     Array<OneD, NekDouble> &thermalCond)
 {
-    auto nPts = temperature.size();
+    size_t nPts = temperature.size();
 
     for (size_t p = 0; p < nPts; ++p)
     {
@@ -672,7 +672,7 @@ void NavierStokesCFE::GetViscosityAndThermalCondFromTemp(
     // move this above and add in kernel
     if (m_is_shockCaptPhys)
     {
-        auto nTracePts = m_fields[0]->GetTrace()->GetTotPoints();
+        size_t nTracePts = m_fields[0]->GetTrace()->GetTotPoints();
         if (nPts != nTracePts)
         {
             Vmath::Vadd(nPts, mu, 1, m_varConv->GetAv(), 1, mu, 1);
@@ -708,10 +708,10 @@ void NavierStokesCFE::GetDivCurlSquared(
     const Array<OneD, Array<OneD, NekDouble>> &cnsVarFwd,
     const Array<OneD, Array<OneD, NekDouble>> &cnsVarBwd)
 {
-    auto nDim    = fields[0]->GetCoordim(0);
-    auto nVar    = cnsVar.size();
-    auto nPts    = cnsVar[0].size();
-    auto nPtsTrc = cnsVarFwd[0].size();
+    size_t nDim    = fields[0]->GetCoordim(0);
+    size_t nVar    = cnsVar.size();
+    size_t nPts    = cnsVar[0].size();
+    size_t nPtsTrc = cnsVarFwd[0].size();
 
     // These should be allocated once
     Array<OneD, Array<OneD, NekDouble>> primVar(nVar - 1), primVarFwd(nVar - 1),
@@ -723,7 +723,7 @@ void NavierStokesCFE::GetDivCurlSquared(
         primVarFwd[d] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
         primVarBwd[d] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
     }
-    auto ergLoc        = nVar - 2;
+    size_t ergLoc      = nVar - 2;
     primVar[ergLoc]    = Array<OneD, NekDouble>(nPts, 0.0);
     primVarFwd[ergLoc] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
     primVarBwd[ergLoc] = Array<OneD, NekDouble>(nPtsTrc, 0.0);
@@ -773,8 +773,8 @@ void NavierStokesCFE::GetDivCurlFromDvelT(
     const TensorOfArray3D<NekDouble> &pVarDer, Array<OneD, NekDouble> &div,
     Array<OneD, NekDouble> &curlSquare)
 {
-    auto nDim = pVarDer.size();
-    auto nPts = div.size();
+    size_t nDim = pVarDer.size();
+    size_t nPts = div.size();
 
     // div velocity
     for (size_t p = 0; p < nPts; ++p)
@@ -851,7 +851,7 @@ void NavierStokesCFE::v_ExtraFldOutput(
         const int nCoeffs = m_fields[0]->GetNcoeffs();
         Array<OneD, Array<OneD, NekDouble>> cnsVar(m_fields.size());
 
-        for (int i = 0; i < m_fields.size(); ++i)
+        for (size_t i = 0; i < m_fields.size(); ++i)
         {
             cnsVar[i] = m_fields[i]->GetPhys();
         }
@@ -931,7 +931,7 @@ void NavierStokesCFE::v_ExtraFldOutput(
             Array<OneD, Array<OneD, NekDouble>> cnsVarFwd(m_fields.size()),
                 cnsVarBwd(m_fields.size());
 
-            for (int i = 0; i < m_fields.size(); ++i)
+            for (size_t i = 0; i < m_fields.size(); ++i)
             {
                 cnsVarFwd[i] = Array<OneD, NekDouble>(GetTraceTotPoints());
                 cnsVarBwd[i] = Array<OneD, NekDouble>(GetTraceTotPoints());
@@ -963,7 +963,7 @@ void NavierStokesCFE::v_ExtraFldOutput(
     }
 }
 
-bool NavierStokesCFE::SupportsShockCaptType(const std::string type) const
+bool NavierStokesCFE::v_SupportsShockCaptType(const std::string type) const
 {
     if (type == "NonSmooth" || type == "Physical" || type == "Off")
     {

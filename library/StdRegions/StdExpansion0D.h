@@ -53,7 +53,7 @@ public:
     STD_REGIONS_EXPORT StdExpansion0D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba);
     STD_REGIONS_EXPORT StdExpansion0D(const StdExpansion0D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion0D();
+    STD_REGIONS_EXPORT virtual ~StdExpansion0D() override;
 
     STD_REGIONS_EXPORT void PhysTensorDeriv(
         const Array<OneD, const NekDouble> &inarray,
@@ -62,22 +62,17 @@ public:
 protected:
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coords,
-        const Array<OneD, const NekDouble> &physvals);
+        const Array<OneD, const NekDouble> &physvals) override;
 
 private:
     // Virtual Functions ----------------------------------------
 
-    virtual int v_GetCoordim(void)
+    virtual int v_GetShapeDimension() const override
     {
         return 1;
     }
 
-    virtual int v_GetShapeDimension() const
-    {
-        return 1;
-    }
-
-    virtual int v_GetNtraces() const
+    virtual int v_GetNtraces() const override
     {
         return 0;
     }

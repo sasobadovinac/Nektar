@@ -61,9 +61,11 @@ void RoeSolverSIMD::v_Solve(
     const Array<OneD, const Array<OneD, NekDouble>> &bwd,
     Array<OneD, Array<OneD, NekDouble>> &flux)
 {
-    static auto gamma    = m_params["gamma"]();
-    static auto nVars    = fwd.size();
-    static auto spaceDim = nVars - 2;
+    boost::ignore_unused(nDim);
+
+    static auto gamma      = m_params["gamma"]();
+    static size_t nVars    = fwd.size();
+    static size_t spaceDim = nVars - 2;
 
     // 3D case only so far
     ASSERTL0(spaceDim == 3, "SIMD Roe implemented only for 3D case...");

@@ -142,6 +142,31 @@ include:
   allow_failure: true
   timeout: 15m
 
+.header-format-template: &header-format-template
+  <<: *execution-conditions
+  image: debian:11-slim
+  stage: quality-checks
+  variables:
+    TARGETS: library solvers templates tests utilities
+  script:
+    - cd "$CI_PROJECT_DIR"
+    - source .gitlab-ci/header-format-filename.sh
+    - source .gitlab-ci/header-format-license.sh
+  allow_failure: true
+  timeout: 15m
+
+.xml-format-template: &xml-format-template
+  <<: *execution-conditions
+  image: debian:11-slim
+  stage: quality-checks
+  before_script:
+    - apt-get update && apt-get install -y dos2unix
+  script:
+    - cd "$CI_PROJECT_DIR"
+    - .gitlab-ci/checkformatXMLfile.sh
+  allow_failure: true
+  timeout: 15m
+
 ################################################
 ###################  DEBIAN  ###################
 ################################################
@@ -267,6 +292,14 @@ stretch-full-warnings:
 # CODE FORMATTING
 bullseye-clang-format:
   <<: *clang-format-template
+  needs: []
+
+bullseye-header-format:
+  <<: *header-format-template
+  needs: []
+
+bullseye-xml-format:
+  <<: *xml-format-template
   needs: []
 
 

@@ -144,45 +144,40 @@ public:
         return m_nConvectiveFields;
     }
 
-    Array<OneD, int> &GetVelocity(void)
-    {
-        return m_velocity;
-    }
-
     void AddForcing(const SolverUtils::ForcingSharedPtr &pForce);
 
-    virtual void GetPressure(
+    virtual void v_GetPressure(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         Array<OneD, NekDouble> &pressure) override;
 
-    virtual void GetDensity(
+    virtual void v_GetDensity(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         Array<OneD, NekDouble> &density) override;
 
-    virtual bool HasConstantDensity() override
+    virtual bool v_HasConstantDensity() override
     {
         return true;
     }
 
-    virtual void GetVelocity(
+    virtual void v_GetVelocity(
         const Array<OneD, const Array<OneD, NekDouble>> &physfield,
         Array<OneD, Array<OneD, NekDouble>> &velocity) override;
 
-    virtual void SetMovingFrameVelocities(
+    virtual void v_SetMovingFrameVelocities(
         const Array<OneD, NekDouble> &vFrameVels) override;
-    virtual void GetMovingFrameVelocities(
+    virtual void v_GetMovingFrameVelocities(
         Array<OneD, NekDouble> &vFrameVels) override;
-    virtual void SetMovingFrameAngles(
+    virtual void v_SetMovingFrameAngles(
         const Array<OneD, NekDouble> &vFrameTheta) override;
-    virtual void GetMovingFrameAngles(
+    virtual void v_GetMovingFrameAngles(
         Array<OneD, NekDouble> &vFrameTheta) override;
-    virtual void SetMovingFrameProjectionMat(
+    virtual void v_SetMovingFrameProjectionMat(
         const bnu::matrix<NekDouble> &vProjMat) override;
-    virtual void GetMovingFrameProjectionMat(
+    virtual void v_GetMovingFrameProjectionMat(
         bnu::matrix<NekDouble> &vProjMat) override;
 
-    virtual bool DefinedForcing(const std::string &sForce);
-    virtual void GetPivotPoint(Array<OneD, NekDouble> &vPivotPoint);
+    bool DefinedForcing(const std::string &sForce);
+    void GetPivotPoint(Array<OneD, NekDouble> &vPivotPoint);
 
 protected:
     // pointer to the extrapolation class for sub-stepping and HOPBS

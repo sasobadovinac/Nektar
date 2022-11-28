@@ -102,7 +102,7 @@ void PulseWaveSystem::v_InitObject(bool DeclareField)
         m_graph->GetMeshDimension() == 1,
         "Pulse wave solver only set up for expansion dimension equal to 1");
 
-    int i;
+    size_t i;
     m_nVariables = m_session->GetVariables().size();
 
     m_fields = Array<OneD, MultiRegions::ExpListSharedPtr>(m_nVariables);
@@ -133,7 +133,7 @@ void PulseWaveSystem::v_InitObject(bool DeclareField)
     SpatialDomains::BoundaryConditions Allbcs(m_session, m_graph);
 
     // Set up domains and put geometry to be only one space dimension.
-    int cnt                     = 0;
+    size_t cnt                  = 0;
     bool SetToOneSpaceDimension = true;
 
     if (m_session->DefinesCmdLineArgument("SetToOneSpaceDimension"))
@@ -154,7 +154,7 @@ void PulseWaveSystem::v_InitObject(bool DeclareField)
 
     for (auto &d : m_domOrder)
     {
-        for (int j = 0; j < m_nVariables; ++j)
+        for (size_t j = 0; j < m_nVariables; ++j)
         {
             m_vessels[cnt++] =
                 MemoryManager<MultiRegions::DisContField>::AllocateSharedPtr(
@@ -177,7 +177,7 @@ void PulseWaveSystem::v_InitObject(bool DeclareField)
     }
     m_fieldPhysOffset[m_nDomains] = totphys;
 
-    for (int n = 0; n < m_nVariables; ++n)
+    for (size_t n = 0; n < m_nVariables; ++n)
     {
         Array<OneD, NekDouble> coeffs(totcoeffs, 0.0);
         Array<OneD, NekDouble> phys(totphys, 0.0);
@@ -201,7 +201,7 @@ void PulseWaveSystem::v_InitObject(bool DeclareField)
     }
 
     // If Discontinuous Galerkin determine upwinding method to use
-    for (int i = 0; i < (int)SIZE_UpwindTypePulse; ++i)
+    for (size_t i = 0; i < SIZE_UpwindTypePulse; ++i)
     {
         bool match;
         m_session->MatchSolverInfo("UPWINDTYPEPULSE", UpwindTypeMapPulse[i],
@@ -332,7 +332,7 @@ void PulseWaveSystem::GetCommArray(
     LibUtilities::CommSharedPtr serialComm =
         MemoryManager<LibUtilities::CommSerial>::AllocateSharedPtr(1, &argv);
 
-    int nprocs = m_comm->GetSize();
+    size_t nprocs = m_comm->GetSize();
 
     if (nprocs == 1) // serial case
     {
@@ -346,13 +346,13 @@ void PulseWaveSystem::GetCommArray(
     }
     else // parallel case
     {
-        int rank = m_comm->GetRank();
+        size_t rank = m_comm->GetRank();
 
         // Fill array with domain details
-        int dmax = 0;
+        size_t dmax = 0;
         for (auto &d : m_domain)
         {
-            dmax = (d.first > dmax) ? d.first : dmax;
+            dmax = ((size_t)d.first > dmax) ? d.first : dmax;
         }
         dmax += 1;
 
@@ -371,7 +371,7 @@ void PulseWaveSystem::GetCommArray(
         Array<OneD, bool> DoneCreate(nprocs, false);
 
         // setup communicators for domain partitions greater than 2
-        for (int d = 0; d < dmax; ++d)
+        for (size_t d = 0; d < dmax; ++d)
         {
             // set up communicator for cases where more than 2 procs
             // share domain
@@ -382,7 +382,7 @@ void PulseWaveSystem::GetCommArray(
                 // set flag to 10 if d is on this processors domain
                 for (auto &d1 : m_domain)
                 {
-                    if (d1.first == d)
+                    if ((size_t)d1.first == d)
                     {
                         flag = 10;
                     }
@@ -393,7 +393,7 @@ void PulseWaveSystem::GetCommArray(
                 // set up communicator if domain on this processor
                 for (auto &d1 : m_domain)
                 {
-                    if (d1.first == d)
+                    if ((size_t)d1.first == d)
                     {
                         retval[d] = newcomm;
                     }
@@ -432,8 +432,8 @@ void PulseWaveSystem::GetCommArray(
         }
 
         // find the maximum number of communicator on all processors
-        int nShrProc = SharedProc.size();
-        int commMax  = nShrProc;
+        size_t nShrProc = SharedProc.size();
+        int commMax     = nShrProc;
         m_comm->AllReduce(commMax, LibUtilities::ReduceMax);
 
         // find out processor id of each communicator by adding rank
@@ -457,7 +457,7 @@ void PulseWaveSystem::GetCommArray(
 
         while (search)
         {
-            int dorank = 0; // search index over processors
+            size_t dorank = 0; // search index over processors
             set<int>
                 proclist;   // has proc been identified for a comm at this level
             int flag = 100; // colour for communicators in this search level
@@ -542,13 +542,13 @@ void PulseWaveSystem::GetCommArray(
 
                         if (proclist.count(sharedproc) == 0)
                         {
-                            if (rank == sharedproc)
+                            if ((int)rank == sharedproc)
                             {
                                 // save all communicators on this for
                                 // split comm setup
                                 for (auto &d : SharedProc)
                                 {
-                                    if (d.second == dorank)
+                                    if (d.second == (int)dorank)
                                     {
                                         CreateComm[d.first] = pair<int, int>(
                                             commcall, flag + d.first);
@@ -585,8 +585,7 @@ void PulseWaveSystem::GetCommArray(
             }
 
             // have we found all comms on all processors.
-            int foundallcomms = 0;
-            int i;
+            size_t i;
             for (i = 0; i < nprocs; ++i)
             {
                 if (DoneCreate[i] == false)
@@ -612,18 +611,18 @@ void PulseWaveSystem::GetCommArray(
                  "Have not created communicators for all shared procs");
 
         // determine maxmimum number of CreateComm size
-        int maxCreateComm = CreateComm.size();
+        size_t maxCreateComm = CreateComm.size();
         m_comm->AllReduce(maxCreateComm, LibUtilities::ReduceMax);
 
         // loop over CreateComm list
-        for (int i = 0; i < maxCreateComm; ++i)
+        for (size_t i = 0; i < maxCreateComm; ++i)
         {
             LibUtilities::CommSharedPtr newcomm;
             int flag = 0;
 
             for (auto &d : CreateComm)
             {
-                if (d.second.first == i)
+                if (d.second.first == (int)i)
                 {
                     flag = d.second.second;
                 }
@@ -633,7 +632,7 @@ void PulseWaveSystem::GetCommArray(
 
             for (auto &d : CreateComm)
             {
-                if (d.second.first == i)
+                if (d.second.first == (int)i)
                 {
                     retval[d.first] = newcomm;
                 }
@@ -655,11 +654,11 @@ void PulseWaveSystem::GetCommArray(
 
         if (totShared)
         {
-            int cnt = 0;
+            size_t cnt = 0;
             Array<OneD, NekDouble> numOffset(nprocs, 0.0);
             for (auto &s : SharedProc)
             {
-                if (s.second > rank)
+                if (s.second > (int)rank)
                 {
                     cnt++;
                 }
@@ -669,12 +668,12 @@ void PulseWaveSystem::GetCommArray(
             m_comm->AllReduce(numOffset, LibUtilities::ReduceMax);
 
             // make numShared into a cumulative list
-            for (int i = 1; i < nprocs; ++i)
+            for (size_t i = 1; i < nprocs; ++i)
             {
                 numShared[i] += numShared[i - 1];
                 numOffset[i] += numOffset[i - 1];
             }
-            for (int i = nprocs - 1; i > 0; --i)
+            for (size_t i = nprocs - 1; i > 0; --i)
             {
                 numShared[i] = numShared[i - 1];
                 numOffset[i] = numOffset[i - 1];
@@ -694,16 +693,16 @@ void PulseWaveSystem::GetCommArray(
 
             // define a numbering scheme
             Array<OneD, NekDouble> sharedid(totShared, -1.0);
-            cnt      = 0;
-            int cnt1 = 0;
+            cnt         = 0;
+            size_t cnt1 = 0;
             for (auto &s : SharedProc)
             {
-                if (s.second > rank)
+                if (s.second > (int)rank)
                 {
                     sharedid[numShared[rank] + cnt] = numOffset[rank] + cnt1;
 
                     // find shared proc offset by matching the domain ids.
-                    int j;
+                    size_t j;
                     for (j = 0; j < maxCreateComm; ++j)
                     {
                         if ((numShared[s.second] + j < totShared) &&
@@ -724,7 +723,7 @@ void PulseWaveSystem::GetCommArray(
 
             if (rank == 0)
             {
-                for (int i = 0; i < totShared; ++i)
+                for (size_t i = 0; i < (size_t)totShared; ++i)
                 {
                     ASSERTL1(sharedid[i] != -1.0,
                              "Failed to number shared proc uniquely");
@@ -751,7 +750,7 @@ void PulseWaveSystem::GetCommArray(
             set<int> doneDom;
             NekDouble maxdom = Vmath::Vmax(totShared, shareddom, 1);
             maxdom++;
-            for (int i = 0; i < nShrProc; ++i)
+            for (size_t i = 0; i < nShrProc; ++i)
             {
                 int minId =
                     Vmath::Imin(nShrProc, &sharedid[numShared[rank]], 1);
@@ -785,11 +784,11 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
      * map based around vid and storing the domains that are
      * part of interfaces.
      */
-    for (int omega = 0; omega < m_nDomains; ++omega)
+    for (size_t omega = 0; omega < m_nDomains; ++omega)
     {
-        int vesselID = omega * m_nVariables;
+        size_t vesselID = omega * m_nVariables;
 
-        for (int i = 0; i < (m_vessels[vesselID]->GetBndConditions()).size();
+        for (size_t i = 0; i < (m_vessels[vesselID]->GetBndConditions()).size();
              ++i)
         {
             if (m_vessels[vesselID]->GetBndConditions()[i]->GetUserDefined() ==
@@ -809,9 +808,10 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
                 bool finish = false;
                 // find which elmt, the local vertex and the data
                 // offset of point
-                for (int n = 0; n < m_vessels[vesselID]->GetExpSize(); ++n)
+                size_t nExp = m_vessels[vesselID]->GetExpSize();
+                for (size_t n = 0; n < nExp; ++n)
                 {
-                    for (int p = 0; p < 2; ++p)
+                    for (size_t p = 0; p < 2; ++p)
                     {
 
                         if (m_vessels[vesselID]
@@ -853,7 +853,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
     // Set up comms for parallel cases
     map<int, int> domId;
 
-    int cnt = 0;
+    size_t cnt = 0;
     for (auto &d : m_domain)
     {
         domId[cnt] = d.first;
@@ -870,7 +870,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
     for (auto &v : VidToDomain)
     {
         tmp[cnt] = v.first + 1;
-        for (int i = 0; i < v.second.size(); ++i)
+        for (size_t i = 0; i < v.second.size(); ++i)
         {
             nvid[cnt] += 1.0;
         }
@@ -894,7 +894,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
     {
         if (nvid[cnt] == 3.0)
         {
-            for (int i = 0; i < v.second.size(); ++i)
+            for (size_t i = 0; i < v.second.size(); ++i)
             {
                 // for bifurcations and merging junctions store how
                 // many points at interface are at the beginning or
@@ -920,7 +920,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
         if (nvid[cnt] == 2.0)
         {
             // store the domain id of the two domains
-            for (int i = 0; i < v.second.size(); ++i)
+            for (size_t i = 0; i < v.second.size(); ++i)
             {
                 dom[cnt] =
                     max(dom[cnt], (NekDouble)domId[v.second[i]->m_domain]);
@@ -934,7 +934,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
 
             int val = (nbeg[cnt] == 2.0) ? 0 : 1;
 
-            for (int i = 0; i < v.second.size(); ++i)
+            for (size_t i = 0; i < v.second.size(); ++i)
             {
                 if (v.second[i]->m_elmtVert == val)
                 {
@@ -956,7 +956,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
 
         if (nvid[v] == 2.0) // Vessel jump interface
         {
-            for (int i = 0; i < iter.second.size(); ++i)
+            for (size_t i = 0; i < iter.second.size(); ++i)
             {
                 if (domId[iter.second[i]->m_domain] == dom[v])
                 {
@@ -974,7 +974,7 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
             // Set up Bifurcation information
             int val = (nbeg[v] == 2.0) ? 1 : 0;
 
-            for (int i = 0; i < iter.second.size(); ++i)
+            for (size_t i = 0; i < iter.second.size(); ++i)
             {
                 if (iter.second[i]->m_elmtVert == val)
                 {
@@ -1017,29 +1017,28 @@ void PulseWaveSystem::SetUpDomainInterfaces(void)
     }
 
     cnt = 0;
-    for (int n = 0; n < m_bifurcations.size(); ++n, ++cnt)
+    for (size_t n = 0; n < m_bifurcations.size(); ++n, ++cnt)
     {
-        int vid = m_bifurcations[n][0]->m_vid;
-        for (int i = 0; i < 3; ++i)
+        size_t vid = m_bifurcations[n][0]->m_vid;
+        for (size_t i = 0; i < 3; ++i)
         {
             tmp1[3 * cnt + i] = (NekDouble)(3 * vid + i + 1);
         }
     }
 
-    for (int n = 0; n < m_mergingJcts.size(); ++n, ++cnt)
+    for (size_t n = 0; n < m_mergingJcts.size(); ++n, ++cnt)
     {
-        int vid = m_mergingJcts[n][0]->m_vid;
-        for (int i = 0; i < 3; ++i)
+        size_t vid = m_mergingJcts[n][0]->m_vid;
+        for (size_t i = 0; i < 3; ++i)
         {
-            int offset        = m_mergingJcts[n][i]->m_riemannOrd;
             tmp1[3 * cnt + i] = (NekDouble)(3 * vid + i + 1);
         }
     }
 
-    for (int n = 0; n < m_vesselIntfcs.size(); ++n, ++cnt)
+    for (size_t n = 0; n < m_vesselIntfcs.size(); ++n, ++cnt)
     {
-        int vid = m_vesselIntfcs[n][0]->m_vid;
-        for (int i = 0; i < 3; ++i)
+        size_t vid = m_vesselIntfcs[n][0]->m_vid;
+        for (size_t i = 0; i < 3; ++i)
         {
             tmp1[3 * cnt + i] = (NekDouble)(3 * vid + i + 1);
         }
@@ -1071,11 +1070,11 @@ void PulseWaveSystem::SetUpDomainInterfaceBCs(
         // by one element
         for (auto &compIt : m_domain[d])
         {
-            for (int j = 0; j < compIt.second->m_geomVec.size(); ++j)
+            for (size_t j = 0; j < compIt.second->m_geomVec.size(); ++j)
             {
 
                 // get hold of vids of each segment
-                for (int p = 0; p < 2; ++p)
+                for (size_t p = 0; p < 2; ++p)
                 {
                     SpatialDomains::GeometrySharedPtr vert =
                         compIt.second->m_geomVec[j]->GetVertex(p);
@@ -1100,21 +1099,21 @@ void PulseWaveSystem::SetUpDomainInterfaceBCs(
                  "of a domain (domvids = " +
                      boost::lexical_cast<std::string>(domvids.size()) + ")");
 
-        int nprocs = domComm[d]->GetSize();
+        size_t nprocs = domComm[d]->GetSize();
 
         if (nprocs > 1) // Remove parallel interfaces
         {
-            int rank = domComm[d]->GetRank();
+            size_t rank = domComm[d]->GetRank();
             Array<OneD, int> nvids(nprocs, 0);
             nvids[rank] = domvids.size();
             domComm[d]->AllReduce(nvids, LibUtilities::ReduceSum);
 
-            int totvids = Vmath::Vsum(nprocs, nvids, 1);
+            size_t totvids = Vmath::Vsum(nprocs, nvids, 1);
 
             Array<OneD, int> locids(totvids, -1);
 
-            int cnt = 0;
-            for (int i = 0; i < rank; ++i)
+            size_t cnt = 0;
+            for (size_t i = 0; i < rank; ++i)
             {
                 cnt += nvids[i];
             }
@@ -1128,7 +1127,7 @@ void PulseWaveSystem::SetUpDomainInterfaceBCs(
             domComm[d]->AllReduce(locids, LibUtilities::ReduceMax);
 
             set<int> chkvids;
-            for (int i = 0; i < totvids; ++i)
+            for (size_t i = 0; i < totvids; ++i)
             {
                 if (chkvids.count(locids[i]))
                 {
@@ -1199,7 +1198,7 @@ void PulseWaveSystem::SetUpDomainInterfaceBCs(
                 MemoryManager<SpatialDomains::DirichletBoundaryCondition>::
                     AllocateSharedPtr(m_session, "0", userDefined));
 
-            for (int i = 0; i < variables.size(); ++i)
+            for (size_t i = 0; i < variables.size(); ++i)
             {
                 (*bCondition)[variables[i]] = DirichletInterface;
             }
@@ -1230,7 +1229,7 @@ void PulseWaveSystem::v_DoInitialise()
     int omega = 0;
     for (auto &d : m_domOrder)
     {
-        for (int i = 0; i < 2; ++i)
+        for (size_t i = 0; i < 2; ++i)
         {
             m_fields[i] = m_vessels[m_nVariables * omega + i];
         }
@@ -1245,7 +1244,7 @@ void PulseWaveSystem::v_DoInitialise()
     }
 
     // Reset 2 variables to first vessels
-    for (int i = 0; i < 2; ++i)
+    for (size_t i = 0; i < 2; ++i)
     {
         m_fields[i] = m_vessels[i];
     }
@@ -1270,14 +1269,14 @@ void PulseWaveSystem::v_DoInitialise()
  */
 void PulseWaveSystem::v_DoSolve()
 {
-    NekDouble IntegrationTime = 0.0;
-    int i;
+    // NekDouble IntegrationTime = 0.0;
+    size_t i;
     int n;
     int nchk = 1;
 
     Array<OneD, Array<OneD, NekDouble>> fields(m_nVariables);
 
-    for (int i = 0; i < m_nVariables; ++i)
+    for (i = 0; i < m_nVariables; ++i)
     {
         fields[i] = m_vessels[i]->UpdatePhys();
         m_fields[i]->SetPhysState(false);
@@ -1310,8 +1309,8 @@ void PulseWaveSystem::v_DoSolve()
         {
             for (i = 0; i < m_nVariables; ++i)
             {
-                int cnt = 0;
-                for (int omega = 0; omega < m_nDomains; omega++)
+                size_t cnt = 0;
+                for (size_t omega = 0; omega < m_nDomains; omega++)
                 {
                     m_vessels[omega * m_nVariables + i]->FwdTrans(
                         fields[i] + cnt,
@@ -1325,7 +1324,7 @@ void PulseWaveSystem::v_DoSolve()
     } // end of timeintegration
 
     // Copy Array To Vessel Phys Fields
-    for (int i = 0; i < m_nVariables; ++i)
+    for (size_t i = 0; i < m_nVariables; ++i)
     {
         Vmath::Vcopy(fields[i].size(), fields[i], 1, m_vessels[i]->UpdatePhys(),
                      1);
@@ -1388,12 +1387,12 @@ void PulseWaveSystem::EnforceInterfaceConditions(
     Array<OneD, NekDouble> alphat, alpha(3 * totif, 0.0);
 
     // Bifurcations Data:
-    int cnt = 0;
-    for (int n = 0; n < m_bifurcations.size(); ++n, ++cnt)
+    size_t cnt = 0;
+    for (size_t n = 0; n < m_bifurcations.size(); ++n, ++cnt)
     {
-        for (int i = 0; i < m_bifurcations[n].size(); ++i)
+        for (size_t i = 0; i < m_bifurcations[n].size(); ++i)
         {
-            int l = m_bifurcations[n][i]->m_riemannOrd;
+            size_t l = m_bifurcations[n][i]->m_riemannOrd;
             FillDataFromInterfacePoint(
                 m_bifurcations[n][i], fields, Au[l + 3 * cnt], uu[l + 3 * cnt],
                 beta[l + 3 * cnt], A_0[l + 3 * cnt], alpha[l + 3 * cnt]);
@@ -1401,10 +1400,10 @@ void PulseWaveSystem::EnforceInterfaceConditions(
     }
 
     // Enforce Merging vessles Data:
-    for (int n = 0; n < m_mergingJcts.size(); ++n, ++cnt)
+    for (size_t n = 0; n < m_mergingJcts.size(); ++n, ++cnt)
     {
         // Merged vessel
-        for (int i = 0; i < m_mergingJcts.size(); ++i)
+        for (size_t i = 0; i < m_mergingJcts.size(); ++i)
         {
             int l = m_mergingJcts[n][i]->m_riemannOrd;
             FillDataFromInterfacePoint(
@@ -1414,9 +1413,9 @@ void PulseWaveSystem::EnforceInterfaceConditions(
     }
 
     // Enforce interface junction between two vessesls
-    for (int n = 0; n < m_vesselIntfcs.size(); ++n, ++cnt)
+    for (size_t n = 0; n < m_vesselIntfcs.size(); ++n, ++cnt)
     {
-        for (int i = 0; i < m_vesselIntfcs[n].size(); ++i)
+        for (size_t i = 0; i < m_vesselIntfcs[n].size(); ++i)
         {
             int l = m_vesselIntfcs[n][i]->m_riemannOrd;
             FillDataFromInterfacePoint(
@@ -1434,7 +1433,7 @@ void PulseWaveSystem::EnforceInterfaceConditions(
 
     // Enforce Bifurcations:
     cnt = 0;
-    for (int n = 0; n < m_bifurcations.size(); ++n, ++cnt)
+    for (size_t n = 0; n < m_bifurcations.size(); ++n, ++cnt)
     {
         // Solve the Riemann problem for a bifurcation
         BifurcationRiemann(Aut = Au + 3 * cnt, uut = uu + 3 * cnt,
@@ -1442,7 +1441,7 @@ void PulseWaveSystem::EnforceInterfaceConditions(
                            alphat = alpha + 3 * cnt);
 
         // Store the values into the right positions:
-        for (int i = 0; i < m_bifurcations[n].size(); ++i)
+        for (size_t i = 0; i < m_bifurcations[n].size(); ++i)
         {
             dom   = m_bifurcations[n][i]->m_domain;
             bcpos = m_bifurcations[n][i]->m_bcPosition;
@@ -1457,7 +1456,7 @@ void PulseWaveSystem::EnforceInterfaceConditions(
     }
 
     // Enforce Merging vessles;
-    for (int n = 0; n < m_mergingJcts.size(); ++n, ++cnt)
+    for (size_t n = 0; n < m_mergingJcts.size(); ++n, ++cnt)
     {
         // Solve the Riemann problem for a merging vessel
         MergingRiemann(Aut = Au + 3 * cnt, uut = uu + 3 * cnt,
@@ -1465,7 +1464,7 @@ void PulseWaveSystem::EnforceInterfaceConditions(
                        alphat = alpha + 3 * cnt);
 
         // Store the values into the right positions:
-        for (int i = 0; i < m_mergingJcts[n].size(); ++i)
+        for (size_t i = 0; i < m_mergingJcts[n].size(); ++i)
         {
             int dom   = m_mergingJcts[n][i]->m_domain;
             int bcpos = m_mergingJcts[n][i]->m_bcPosition;
@@ -1480,14 +1479,14 @@ void PulseWaveSystem::EnforceInterfaceConditions(
     }
 
     // Enforce interface junction between two vessesls
-    for (int n = 0; n < m_vesselIntfcs.size(); ++n, ++cnt)
+    for (size_t n = 0; n < m_vesselIntfcs.size(); ++n, ++cnt)
     {
         InterfaceRiemann(Aut = Au + 3 * cnt, uut = uu + 3 * cnt,
                          betat = beta + 3 * cnt, A_0t = A_0 + 3 * cnt,
                          alphat = alpha + 3 * cnt);
 
         // Store the values into the right positions:
-        for (int i = 0; i < m_vesselIntfcs[n].size(); ++i)
+        for (size_t i = 0; i < m_vesselIntfcs[n].size(); ++i)
         {
             int dom   = m_vesselIntfcs[n][i]->m_domain;
             int bcpos = m_vesselIntfcs[n][i]->m_bcPosition;
@@ -1538,7 +1537,7 @@ void PulseWaveSystem::BifurcationRiemann(Array<OneD, NekDouble> &Au,
     m_pressureArea->GetW1(W[0], uu[0], beta[0], Au[0], A_0[0], alpha[0]);
 
     // Backward characteristics
-    for (int i = 1; i < 3; ++i)
+    for (size_t i = 1; i < 3; ++i)
     {
         m_pressureArea->GetW2(W[i], uu[i], beta[i], Au[i], A_0[i], alpha[i]);
     }
@@ -1566,7 +1565,7 @@ void PulseWaveSystem::BifurcationRiemann(Array<OneD, NekDouble> &Au,
          * 6. Continuity of total pressure 2:  rho * Uu_L  * Uu_L  / 2 + p(Au_L)
          * = rho * Uu_R2 * Uu_R2 / 2 + p(Au_R2)
          */
-        for (int i = 0; i < 3; ++i)
+        for (size_t i = 0; i < 3; ++i)
         {
             m_pressureArea->GetPressure(P_Au[i], beta[i], Au[i], A_0[i], 0, 0,
                                         alpha[i]);
@@ -1648,7 +1647,7 @@ void PulseWaveSystem::MergingRiemann(Array<OneD, NekDouble> &Au,
     m_pressureArea->GetW2(W[0], uu[0], beta[0], Au[0], A_0[0], alpha[0]);
 
     // Forward characteristics
-    for (int i = 1; i < 3; ++i)
+    for (size_t i = 1; i < 3; ++i)
     {
         m_pressureArea->GetW1(W[i], uu[i], beta[i], Au[i], A_0[i], alpha[i]);
     }
@@ -1678,7 +1677,7 @@ void PulseWaveSystem::MergingRiemann(Array<OneD, NekDouble> &Au,
          * 6. Continuity of total pressure 2:  rho * Uu_R  * Uu_R  / 2 + p(Au_R)
          * = rho * Uu_L2 * Uu_L2 / 2 + p(Au_L2)
          */
-        for (int i = 0; i < 3; ++i)
+        for (size_t i = 0; i < 3; ++i)
         {
             m_pressureArea->GetPressure(P_Au[i], beta[i], Au[i], A_0[i], 0, 0,
                                         alpha[i]);
@@ -1705,7 +1704,7 @@ void PulseWaveSystem::MergingRiemann(Array<OneD, NekDouble> &Au,
         Multiply(dx, invJ, f);
 
         // Update the solution: x_new = x_old - dx
-        for (int i = 0; i < 3; ++i)
+        for (size_t i = 0; i < 3; ++i)
         {
             uu[i] -= dx[i];
             Au[i] -= dx[i + 3];
@@ -1777,7 +1776,7 @@ void PulseWaveSystem::InterfaceRiemann(Array<OneD, NekDouble> &Au,
          * 4. Continuity of total pressure:  rho * Uu_L * Uu_L / 2 + p(Au_L) =
          *                                   rho * Uu_R * Uu_R / 2 + p(Au_R)
          */
-        for (int i = 0; i < 2; ++i)
+        for (size_t i = 0; i < 2; ++i)
         {
             m_pressureArea->GetPressure(P_Au[i], beta[i], Au[i], A_0[i], 0, 0,
                                         alpha[i]);
@@ -1800,7 +1799,7 @@ void PulseWaveSystem::InterfaceRiemann(Array<OneD, NekDouble> &Au,
         Multiply(dx, invJ, f);
 
         // Update solution: x_new = x_old - dx
-        for (int i = 0; i < 2; ++i)
+        for (size_t i = 0; i < 2; ++i)
         {
             uu[i] -= dx[i];
             Au[i] -= dx[i + 2];
@@ -1858,23 +1857,23 @@ void PulseWaveSystem::WriteVessels(const std::string &outname)
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> FieldDef;
     std::vector<std::string> variables = m_session->GetVariables();
 
-    for (int n = 0; n < m_nDomains; ++n)
+    for (size_t n = 0; n < m_nDomains; ++n)
     {
         m_vessels[n * m_nVariables]->GetFieldDefinitions(FieldDef);
     }
 
     std::vector<std::vector<NekDouble>> FieldData(FieldDef.size());
 
-    int nFieldDefPerDomain = FieldDef.size() / m_nDomains;
-    int cnt;
+    size_t nFieldDefPerDomain = FieldDef.size() / m_nDomains;
+    size_t cnt;
 
     // Copy Data into FieldData and set variable
-    for (int n = 0; n < m_nDomains; ++n)
+    for (size_t n = 0; n < m_nDomains; ++n)
     {
         // Outputs area and velocity
-        for (int j = 0; j < m_nVariables; ++j)
+        for (size_t j = 0; j < m_nVariables; ++j)
         {
-            for (int i = 0; i < nFieldDefPerDomain; ++i)
+            for (size_t i = 0; i < nFieldDefPerDomain; ++i)
             {
                 cnt = n * nFieldDefPerDomain + i;
 
@@ -1891,7 +1890,7 @@ void PulseWaveSystem::WriteVessels(const std::string &outname)
 
         m_vessels[n * m_nVariables]->FwdTransLocalElmt(m_pressure[n], PFwd);
 
-        for (int i = 0; i < nFieldDefPerDomain; ++i)
+        for (size_t i = 0; i < nFieldDefPerDomain; ++i)
         {
             cnt = n * nFieldDefPerDomain + i;
 
@@ -1914,7 +1913,7 @@ void PulseWaveSystem::WriteVessels(const std::string &outname)
             m_vessels[n * m_nVariables]->FwdTransLocalElmt(m_W1[n], W1Fwd);
             m_vessels[n * m_nVariables]->FwdTransLocalElmt(m_W2[n], W2Fwd);
 
-            for (int i = 0; i < nFieldDefPerDomain; ++i)
+            for (size_t i = 0; i < nFieldDefPerDomain; ++i)
             {
                 cnt = n * nFieldDefPerDomain + i;
 
@@ -1951,15 +1950,17 @@ NekDouble PulseWaveSystem::v_L2Error(unsigned int field,
                                      const Array<OneD, NekDouble> &exact,
                                      bool Normalised)
 {
+    boost::ignore_unused(exact);
+
     NekDouble L2error = 0.0;
     NekDouble L2error_dom;
     NekDouble Vol = 0.0;
 
     if (m_NumQuadPointsError == 0)
     {
-        for (int omega = 0; omega < m_nDomains; omega++)
+        for (size_t omega = 0; omega < m_nDomains; omega++)
         {
-            int vesselid = field + omega * m_nVariables;
+            size_t vesselid = field + omega * m_nVariables;
 
             // since exactsoln is passed for just the first field size we need
             // to reset it each domain
@@ -2047,11 +2048,13 @@ NekDouble PulseWaveSystem::v_L2Error(unsigned int field,
 NekDouble PulseWaveSystem::v_LinfError(unsigned int field,
                                        const Array<OneD, NekDouble> &exact)
 {
+    boost::ignore_unused(exact);
+
     NekDouble LinferrorDom, Linferror = -1.0;
 
-    for (int omega = 0; omega < m_nDomains; ++omega)
+    for (size_t omega = 0; omega < m_nDomains; ++omega)
     {
-        int vesselid = field + omega * m_nVariables;
+        size_t vesselid = field + omega * m_nVariables;
 
         // since exactsoln is passed for just the first field size we need
         // to reset it each domain

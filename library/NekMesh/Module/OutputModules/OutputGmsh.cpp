@@ -79,13 +79,17 @@ OutputGmsh::~OutputGmsh()
  */
 void OutputGmsh::Process()
 {
-    m_log(VERBOSE) << "Writing Gmsh file '" << m_config["outfile"].as<string>()
-                   << "'." << endl;
+    std::string filename = m_config["outfile"].as<std::string>();
+    m_log(VERBOSE) << "Writing Gmsh file '" << filename << "'." << endl;
 
     std::unordered_map<int, vector<int>> orderingMap;
 
     // Open the file stream.
-    OpenStream();
+    bool stream_open = OpenStream();
+    if (!stream_open)
+    {
+        return;
+    }
 
     // Write MSH header
     m_mshFile << "$MeshFormat" << endl

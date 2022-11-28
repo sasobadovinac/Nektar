@@ -184,10 +184,10 @@ public:
         LibUtilities::DomainRangeShPtr rng = LibUtilities::NullDomainRangeShPtr,
         bool fillGraph                     = true);
 
-    SPATIAL_DOMAINS_EXPORT virtual void WriteGeometry(
+    SPATIAL_DOMAINS_EXPORT void WriteGeometry(
         std::string &outfilename, bool defaultExp = false,
         const LibUtilities::FieldMetaDataMap &metadata =
-            LibUtilities::NullFieldMetaDataMap) = 0;
+            LibUtilities::NullFieldMetaDataMap);
 
     void Empty(int dim, int space)
     {
@@ -428,15 +428,24 @@ public:
     }
 
     /*an inital read which loads a very light weight data structure*/
-    SPATIAL_DOMAINS_EXPORT virtual void ReadGeometry(
-        LibUtilities::DomainRangeShPtr rng, bool fillGraph) = 0;
-    SPATIAL_DOMAINS_EXPORT virtual void PartitionMesh(
-        LibUtilities::SessionReaderSharedPtr session) = 0;
+    SPATIAL_DOMAINS_EXPORT void ReadGeometry(LibUtilities::DomainRangeShPtr rng,
+                                             bool fillGraph);
+    SPATIAL_DOMAINS_EXPORT void PartitionMesh(
+        LibUtilities::SessionReaderSharedPtr session);
 
     SPATIAL_DOMAINS_EXPORT std::map<int, MeshEntity> CreateMeshEntities();
     SPATIAL_DOMAINS_EXPORT CompositeDescriptor CreateCompositeDescriptor();
 
 protected:
+    SPATIAL_DOMAINS_EXPORT virtual void v_WriteGeometry(
+        std::string &outfilename, bool defaultExp = false,
+        const LibUtilities::FieldMetaDataMap &metadata =
+            LibUtilities::NullFieldMetaDataMap) = 0;
+    SPATIAL_DOMAINS_EXPORT virtual void v_ReadGeometry(
+        LibUtilities::DomainRangeShPtr rng, bool fillGraph) = 0;
+    SPATIAL_DOMAINS_EXPORT virtual void v_PartitionMesh(
+        LibUtilities::SessionReaderSharedPtr session) = 0;
+
     void PopulateFaceToElMap(Geometry3DSharedPtr element, int kNfaces);
     ExpansionInfoMapShPtr SetUpExpansionInfoMap();
     std::string GetCompositeString(CompositeSharedPtr comp);
@@ -484,6 +493,34 @@ typedef std::shared_ptr<MeshGraph> MeshGraphSharedPtr;
 typedef LibUtilities::NekFactory<std::string, MeshGraph> MeshGraphFactory;
 
 SPATIAL_DOMAINS_EXPORT MeshGraphFactory &GetMeshGraphFactory();
+
+/**
+ *
+ */
+inline void MeshGraph::WriteGeometry(
+    std::string &outfilename, bool defaultExp,
+    const LibUtilities::FieldMetaDataMap &metadata)
+{
+    v_WriteGeometry(outfilename, defaultExp, metadata);
+}
+
+/**
+ *
+ */
+inline void MeshGraph::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
+                                    bool fillGraph)
+{
+    v_ReadGeometry(rng, fillGraph);
+}
+
+/**
+ *
+ */
+inline void MeshGraph::PartitionMesh(
+    LibUtilities::SessionReaderSharedPtr session)
+{
+    v_PartitionMesh(session);
+}
 
 /**
  *

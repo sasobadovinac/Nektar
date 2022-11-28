@@ -92,6 +92,8 @@ void NavierStokesAdvection::v_Advect(
     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
     const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
+    boost::ignore_unused(time, pFwd, pBwd);
+
     int nqtot = fields[0]->GetTotPoints();
     ASSERTL1(nConvectiveFields == inarray.size(),
              "Number of convective fields and Inarray are not compatible");

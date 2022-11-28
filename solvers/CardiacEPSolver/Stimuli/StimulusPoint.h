@@ -74,9 +74,9 @@ protected:
     NekDouble m_strength;
 
     virtual void v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
-                          const NekDouble time);
+                          const NekDouble time) override;
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
 private:
     StimulusPoint(const LibUtilities::SessionReaderSharedPtr &pSession,

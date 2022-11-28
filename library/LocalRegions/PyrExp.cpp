@@ -69,10 +69,6 @@ PyrExp::PyrExp(const PyrExp &T)
 {
 }
 
-PyrExp::~PyrExp()
-{
-}
-
 //----------------------------
 // Integration Methods
 //----------------------------
@@ -623,11 +619,6 @@ NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
 //---------------------------------------
 // Helper functions
 //---------------------------------------
-
-int PyrExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
 
 void PyrExp::v_GetTracePhysMap(const int face, Array<OneD, int> &outarray)
 {

@@ -73,8 +73,8 @@ void AverageSolver::v_ArraySolve(
     const Array<OneD, const Array<OneD, NekDouble>> &Bwd,
     Array<OneD, Array<OneD, NekDouble>> &flux)
 {
-    int expDim = Fwd.size() - 2;
-    int i, j;
+    size_t expDim = Fwd.size() - 2;
+    size_t i, j;
 
     for (j = 0; j < Fwd[0].size(); ++j)
     {

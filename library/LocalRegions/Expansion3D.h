@@ -62,9 +62,7 @@ public:
         : Expansion(pGeom), StdExpansion3D(), m_requireNeg()
     {
     }
-    LOCAL_REGIONS_EXPORT virtual ~Expansion3D()
-    {
-    }
+    LOCAL_REGIONS_EXPORT virtual ~Expansion3D() override = default;
 
     LOCAL_REGIONS_EXPORT void SetTraceToGeomOrientation(
         Array<OneD, NekDouble> &inout);
@@ -95,11 +93,11 @@ public:
 
     LOCAL_REGIONS_EXPORT void v_ReOrientTracePhysMap(
         const StdRegions::Orientation orient, Array<OneD, int> &idmap,
-        const int nq0, const int nq1);
+        const int nq0, const int nq1) override;
 
-    void v_NormVectorIProductWRTBase(
+    LOCAL_REGIONS_EXPORT void v_NormVectorIProductWRTBase(
         const Array<OneD, const Array<OneD, NekDouble>> &Fvec,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     LOCAL_REGIONS_EXPORT Array<OneD, unsigned int> GetEdgeInverseBoundaryMap(
         int eid);
@@ -123,35 +121,33 @@ protected:
                            const Array<OneD, const NekDouble> &incoeffs,
                            Array<OneD, ExpansionSharedPtr> &FaceExp,
                            Array<OneD, Array<OneD, NekDouble>> &faceCoeffs,
-                           Array<OneD, NekDouble> &out_d);
-    virtual DNekMatSharedPtr v_GenMatrix(const StdRegions::StdMatrixKey &mkey);
+                           Array<OneD, NekDouble> &out_d) override;
+    virtual DNekMatSharedPtr v_GenMatrix(
+        const StdRegions::StdMatrixKey &mkey) override;
     virtual void v_AddFaceNormBoundaryInt(
         const int face, const ExpansionSharedPtr &FaceExp,
         const Array<OneD, const NekDouble> &Fn,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_AddRobinMassMatrix(
         const int face, const Array<OneD, const NekDouble> &primCoeffs,
-        DNekMatSharedPtr &inoutmat);
+        DNekMatSharedPtr &inoutmat) override;
 
-    virtual StdRegions::Orientation v_GetTraceOrient(int face);
+    virtual StdRegions::Orientation v_GetTraceOrient(int face) override;
 
     virtual void v_GetTracePhysVals(
         const int face, const StdRegions::StdExpansionSharedPtr &FaceExp,
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, StdRegions::Orientation orient);
+        Array<OneD, NekDouble> &outarray,
+        StdRegions::Orientation orient) override;
 
-    virtual void v_GenTraceExp(const int traceid, ExpansionSharedPtr &exp);
+    virtual void v_GenTraceExp(const int traceid,
+                               ExpansionSharedPtr &exp) override;
 
     void GetPhysFaceVarCoeffsFromElement(
         const int face, ExpansionSharedPtr &FaceExp,
         const Array<OneD, const NekDouble> &varcoeff,
         Array<OneD, NekDouble> &outarray);
-
-    virtual Array<OneD, NekDouble> v_GetnFacecdotMF(
-        const int dir, const int face, ExpansionSharedPtr &FaceExp_f,
-        const Array<OneD, const Array<OneD, NekDouble>> &normals,
-        const StdRegions::VarCoeffMap &varcoeffs);
 
     //-----------------------------
     // Low Energy Basis functions
@@ -159,23 +155,28 @@ protected:
 
     LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildTransformationMatrix(
         const DNekScalMatSharedPtr &r_bnd,
-        const StdRegions::MatrixType matrixType);
+        const StdRegions::MatrixType matrixType) override;
 
     LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildInverseTransformationMatrix(
-        const DNekScalMatSharedPtr &transformationmatrix);
+        const DNekScalMatSharedPtr &transformationmatrix) override;
 
     LOCAL_REGIONS_EXPORT virtual DNekMatSharedPtr v_BuildVertexMatrix(
-        const DNekScalMatSharedPtr &r_bnd);
+        const DNekScalMatSharedPtr &r_bnd) override;
 
     LOCAL_REGIONS_EXPORT virtual void v_TraceNormLen(const int traceid,
                                                      NekDouble &h,
-                                                     NekDouble &p);
+                                                     NekDouble &p) override;
 
 private:
     // Do not add members here since it may lead to conflicts.
     // Only use this class for member functions
 
     std::vector<bool> m_requireNeg;
+
+    Array<OneD, NekDouble> GetnFacecdotMF(
+        const int dir, const int face, ExpansionSharedPtr &FaceExp_f,
+        const Array<OneD, const Array<OneD, NekDouble>> &normals,
+        const StdRegions::VarCoeffMap &varcoeffs);
 };
 
 inline SpatialDomains::Geometry3DSharedPtr Expansion3D::GetGeom3D() const

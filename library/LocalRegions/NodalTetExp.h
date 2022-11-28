@@ -46,13 +46,6 @@ namespace LocalRegions
 
 class NodalTetExp : public TetExp
 {
-    //     public:
-    //       NodalTetExp(const StdRegions::Basis &Ba, const StdRegions::Basis
-    //       &Bb,
-    //           const StdRegions::Basis &Bc):
-    //     TetExp(Ba,Bb,Bc)
-    //       {
-    //       }
     /** \brief Constructor using BasisKey class for quadrature
     points and order definition */
     LOCAL_REGIONS_EXPORT NodalTetExp(
@@ -68,7 +61,7 @@ class NodalTetExp : public TetExp
     LOCAL_REGIONS_EXPORT NodalTetExp(const NodalTetExp &T);
 
     /// Destructor
-    LOCAL_REGIONS_EXPORT ~NodalTetExp();
+    LOCAL_REGIONS_EXPORT virtual ~NodalTetExp() override = default;
 
 protected:
 private:

@@ -53,7 +53,7 @@ CompressibleSolver::CompressibleSolver(
 }
 
 CompressibleSolver::CompressibleSolver()
-    : RiemannSolver(), m_idealGas(true), m_pointSolve(true)
+    : RiemannSolver(), m_pointSolve(true), m_idealGas(true)
 {
     m_requiresRotation = true;
 }
@@ -65,14 +65,12 @@ void CompressibleSolver::v_Solve(
 {
     if (m_pointSolve)
     {
-        int expDim     = nDim;
-        int nvariables = Fwd.size();
-
+        size_t expDim = nDim;
         NekDouble rhouf{}, rhovf{};
 
         if (expDim == 1)
         {
-            for (int i = 0; i < Fwd[0].size(); ++i)
+            for (size_t i = 0; i < Fwd[0].size(); ++i)
             {
                 v_PointSolve(Fwd[0][i], Fwd[1][i], 0.0, 0.0, Fwd[2][i],
                              Bwd[0][i], Bwd[1][i], 0.0, 0.0, Bwd[2][i],
@@ -81,7 +79,7 @@ void CompressibleSolver::v_Solve(
         }
         else if (expDim == 2)
         {
-            for (int i = 0; i < Fwd[0].size(); ++i)
+            for (size_t i = 0; i < Fwd[0].size(); ++i)
             {
                 v_PointSolve(Fwd[0][i], Fwd[1][i], Fwd[2][i], 0.0, Fwd[3][i],
                              Bwd[0][i], Bwd[1][i], Bwd[2][i], 0.0, Bwd[3][i],
@@ -91,7 +89,7 @@ void CompressibleSolver::v_Solve(
         }
         else if (expDim == 3)
         {
-            for (int i = 0; i < Fwd[0].size(); ++i)
+            for (size_t i = 0; i < Fwd[0].size(); ++i)
             {
                 v_PointSolve(Fwd[0][i], Fwd[1][i], Fwd[2][i], Fwd[3][i],
                              Fwd[4][i], Bwd[0][i], Bwd[1][i], Bwd[2][i],

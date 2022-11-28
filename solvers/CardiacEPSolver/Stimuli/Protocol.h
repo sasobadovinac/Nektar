@@ -4,6 +4,8 @@
 //
 // For more information, please see: http://www.nektar.info
 //
+// The MIT License
+//
 // Copyright (c) 2006 Division of Applied Mathematics, Brown University (USA),
 // Department of Aeronautics, Imperial College London (UK), and Scientific
 // Computing and Imaging Institute, University of Utah (USA).

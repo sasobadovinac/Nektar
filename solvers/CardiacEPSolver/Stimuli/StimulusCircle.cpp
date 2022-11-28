@@ -166,5 +166,6 @@ void StimulusCirc::v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
  */
 void StimulusCirc::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
+    boost::ignore_unused(s);
 }
 } // namespace Nektar

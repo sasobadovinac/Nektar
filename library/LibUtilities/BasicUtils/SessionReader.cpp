@@ -32,7 +32,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef TIXML_USE_STL
+#ifndef TIXML_USE_STLf
 #define TIXML_USE_STL
 #endif
 
@@ -332,6 +332,12 @@ void SessionReader::InitSession(const std::vector<std::string> &filenames)
     // Verify SOLVERINFO values
     VerifySolverInfo();
 
+    // Disable backups if NEKTAR_DISABLE_BACKUPS is set.
+    if (std::getenv("NEKTAR_DISABLE_BACKUPS") != nullptr)
+    {
+        m_backups = false;
+    }
+
     // In verbose mode, print out parameters and solver info sections
     if (m_verbose && m_comm)
     {
@@ -401,7 +407,7 @@ void SessionReader::TestSharedFilesystem()
 std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
                                                                   char *argv[])
 {
-    // List the publically visible options (listed using --help)
+    // List the publically visible options (listed using --help).
     po::options_description desc("Allowed options");
 
     // clang-format off
@@ -428,15 +434,15 @@ std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
                 ("part-only-overlapping",    po::value<int>(),
                                  "only partition mesh into N overlapping partitions.")
                 ("part-info",    "Output partition information")
-#ifdef NEKTAR_USE_CWIPI
-                ("cwipi",        po::value<std::string>(),
-                                 "set CWIPI name")
-#endif
+                ("forceoutput,f",  "Disables backups files and forces output to be "
+                                 "written without any checks")
                 ("writeoptfile", "write an optimisation file")
                 ("useoptfile",   po::value<std::string>(),
-                                 "use an optimisation file")
-                ;
+                                 "use an optimisation file");
     // clang-format on
+#ifdef NEKTAR_USE_CWIPI
+    desc.add_options()("cwipi", po::value<std::string>(), "set CWIPI name");
+#endif
 
     for (auto &cmdIt : GetCmdLineArgMap())
     {
@@ -459,13 +465,8 @@ std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
     // List hidden options (e.g. session file arguments are not actually
     // specified using the input-file option by the user).
     po::options_description hidden("Hidden options");
-
-    // clang-format off
-            hidden.add_options()
-                    ("input-file", po::value< vector<string> >(),
-                                   "input filename")
-            ;
-    // clang-format on
+    hidden.add_options()("input-file", po::value<vector<string>>(),
+                         "input filename");
 
     // Combine all options for the parser
     po::options_description all("All options");
@@ -530,6 +531,16 @@ std::vector<std::string> SessionReader::ParseCommandLineArguments(int argc,
     else
     {
         m_verbose = false;
+    }
+
+    // Disable backups
+    if (m_cmdLineOptions.count("forceoutput"))
+    {
+        m_backups = false;
+    }
+    else
+    {
+        m_backups = true;
     }
 
     // Enable update optimisation file
@@ -787,6 +798,38 @@ void SessionReader::LoadParameter(const std::string &pName, int &pVar,
 /**
  *
  */
+void SessionReader::LoadParameter(const std::string &pName, size_t &pVar) const
+{
+    std::string vName = boost::to_upper_copy(pName);
+    auto paramIter    = m_parameters.find(vName);
+    ASSERTL0(paramIter != m_parameters.end(),
+             "Required parameter '" + pName + "' not specified in session.");
+    NekDouble param = round(paramIter->second);
+    pVar            = checked_cast<int>(param);
+}
+
+/**
+ *
+ */
+void SessionReader::LoadParameter(const std::string &pName, size_t &pVar,
+                                  const size_t &pDefault) const
+{
+    std::string vName = boost::to_upper_copy(pName);
+    auto paramIter    = m_parameters.find(vName);
+    if (paramIter != m_parameters.end())
+    {
+        NekDouble param = round(paramIter->second);
+        pVar            = checked_cast<int>(param);
+    }
+    else
+    {
+        pVar = pDefault;
+    }
+}
+
+/**
+ *
+ */
 void SessionReader::LoadParameter(const std::string &pName,
                                   NekDouble &pVar) const
 {
@@ -819,6 +862,15 @@ void SessionReader::LoadParameter(const std::string &pName, NekDouble &pVar,
  *
  */
 void SessionReader::SetParameter(const std::string &pName, int &pVar)
+{
+    std::string vName   = boost::to_upper_copy(pName);
+    m_parameters[vName] = pVar;
+}
+
+/**
+ *
+ */
+void SessionReader::SetParameter(const std::string &pName, size_t &pVar)
 {
     std::string vName   = boost::to_upper_copy(pName);
     m_parameters[vName] = pVar;
@@ -1137,6 +1189,14 @@ void SessionReader::SetVariable(const unsigned int &idx, std::string newname)
 std::vector<std::string> SessionReader::GetVariables() const
 {
     return m_variables;
+}
+
+/**
+ *
+ */
+bool SessionReader::GetBackups() const
+{
+    return m_backups;
 }
 
 /**

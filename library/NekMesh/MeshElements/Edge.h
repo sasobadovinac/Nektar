@@ -86,7 +86,7 @@ public:
     }
 
     /// Returns the total number of nodes defining the edge.
-    NEKMESH_EXPORT unsigned int GetNodeCount() const
+    NEKMESH_EXPORT size_t GetNodeCount() const
     {
         return m_edgeNodes.size() + 2;
     }
@@ -95,7 +95,7 @@ public:
         std::vector<NodeSharedPtr> &nodeList) const
     {
         nodeList.push_back(m_n1);
-        for (int k = 0; k < m_edgeNodes.size(); ++k)
+        for (std::size_t k = 0; k < m_edgeNodes.size(); ++k)
         {
             nodeList.push_back(m_edgeNodes[k]);
         }
@@ -114,7 +114,7 @@ public:
                    LibUtilities::PointsType edgeType, int coordDim, int &id);
 
     /// ID of edge.
-    unsigned int m_id;
+    size_t m_id;
     /// First vertex node.
     NodeSharedPtr m_n1;
     /// Second vertex node.
@@ -149,8 +149,8 @@ struct EdgeHash
 {
     std::size_t operator()(EdgeSharedPtr const &p) const
     {
-        const unsigned int id1 = p->m_n1->m_id;
-        const unsigned int id2 = p->m_n2->m_id;
+        const std::size_t id1 = p->m_n1->m_id;
+        const std::size_t id2 = p->m_n2->m_id;
         return id1 < id2 ? hash_combine(id1, id2) : hash_combine(id2, id1);
     }
 };

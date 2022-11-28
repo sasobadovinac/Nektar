@@ -66,7 +66,7 @@ std::string MeshGraphXmlCompressed::className =
         "XmlCompressed", MeshGraphXmlCompressed::create,
         "IO with Xml geometry");
 
-void MeshGraphXmlCompressed::ReadVertices()
+void MeshGraphXmlCompressed::v_ReadVertices()
 {
     // Now read the vertices
     TiXmlElement *element = m_xmlGeom->FirstChildElement("VERTEX");
@@ -203,7 +203,7 @@ void MeshGraphXmlCompressed::ReadVertices()
     }
 }
 
-void MeshGraphXmlCompressed::ReadCurves()
+void MeshGraphXmlCompressed::v_ReadCurves()
 {
     // check to see if any scaling parameters are in
     // attributes and determine these values
@@ -449,7 +449,7 @@ void MeshGraphXmlCompressed::ReadCurves()
     }
 }
 
-void MeshGraphXmlCompressed::ReadEdges()
+void MeshGraphXmlCompressed::v_ReadEdges()
 {
     CurveMap::iterator it;
 
@@ -503,7 +503,7 @@ void MeshGraphXmlCompressed::ReadEdges()
     }
 }
 
-void MeshGraphXmlCompressed::ReadFaces()
+void MeshGraphXmlCompressed::v_ReadFaces()
 {
     /// Look for elements in FACE block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("FACE");
@@ -617,7 +617,7 @@ void MeshGraphXmlCompressed::ReadFaces()
     }
 }
 
-void MeshGraphXmlCompressed::ReadElements1D()
+void MeshGraphXmlCompressed::v_ReadElements1D()
 {
     TiXmlElement *field = NULL;
 
@@ -690,7 +690,7 @@ void MeshGraphXmlCompressed::ReadElements1D()
     }
 }
 
-void MeshGraphXmlCompressed::ReadElements2D()
+void MeshGraphXmlCompressed::v_ReadElements2D()
 {
     /// Look for elements in ELEMENT block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("ELEMENT");
@@ -806,7 +806,7 @@ void MeshGraphXmlCompressed::ReadElements2D()
     }
 }
 
-void MeshGraphXmlCompressed::ReadElements3D()
+void MeshGraphXmlCompressed::v_ReadElements3D()
 {
     /// Look for elements in ELEMENT block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("ELEMENT");
@@ -989,8 +989,8 @@ void MeshGraphXmlCompressed::ReadElements3D()
     }
 }
 
-void MeshGraphXmlCompressed::WriteVertices(TiXmlElement *geomTag,
-                                           PointGeomMap &verts)
+void MeshGraphXmlCompressed::v_WriteVertices(TiXmlElement *geomTag,
+                                             PointGeomMap &verts)
 {
     if (verts.size() == 0)
     {
@@ -1024,8 +1024,8 @@ void MeshGraphXmlCompressed::WriteVertices(TiXmlElement *geomTag,
     geomTag->LinkEndChild(vertTag);
 }
 
-void MeshGraphXmlCompressed::WriteEdges(TiXmlElement *geomTag,
-                                        SegGeomMap &edges)
+void MeshGraphXmlCompressed::v_WriteEdges(TiXmlElement *geomTag,
+                                          SegGeomMap &edges)
 {
     if (edges.size() == 0)
     {
@@ -1068,7 +1068,8 @@ void MeshGraphXmlCompressed::WriteEdges(TiXmlElement *geomTag,
     }
 }
 
-void MeshGraphXmlCompressed::WriteTris(TiXmlElement *faceTag, TriGeomMap &tris)
+void MeshGraphXmlCompressed::v_WriteTris(TiXmlElement *faceTag,
+                                         TriGeomMap &tris)
 {
     if (tris.size() == 0)
     {
@@ -1102,8 +1103,8 @@ void MeshGraphXmlCompressed::WriteTris(TiXmlElement *faceTag, TriGeomMap &tris)
     faceTag->LinkEndChild(x);
 }
 
-void MeshGraphXmlCompressed::WriteQuads(TiXmlElement *faceTag,
-                                        QuadGeomMap &quads)
+void MeshGraphXmlCompressed::v_WriteQuads(TiXmlElement *faceTag,
+                                          QuadGeomMap &quads)
 {
     if (quads.size() == 0)
     {
@@ -1138,7 +1139,8 @@ void MeshGraphXmlCompressed::WriteQuads(TiXmlElement *faceTag,
     faceTag->LinkEndChild(x);
 }
 
-void MeshGraphXmlCompressed::WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs)
+void MeshGraphXmlCompressed::v_WriteHexs(TiXmlElement *elmtTag,
+                                         HexGeomMap &hexs)
 {
     if (hexs.size() == 0)
     {
@@ -1175,8 +1177,8 @@ void MeshGraphXmlCompressed::WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs)
     elmtTag->LinkEndChild(x);
 }
 
-void MeshGraphXmlCompressed::WritePrisms(TiXmlElement *elmtTag,
-                                         PrismGeomMap &pris)
+void MeshGraphXmlCompressed::v_WritePrisms(TiXmlElement *elmtTag,
+                                           PrismGeomMap &pris)
 {
     if (pris.size() == 0)
     {
@@ -1212,7 +1214,8 @@ void MeshGraphXmlCompressed::WritePrisms(TiXmlElement *elmtTag,
     elmtTag->LinkEndChild(x);
 }
 
-void MeshGraphXmlCompressed::WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs)
+void MeshGraphXmlCompressed::v_WritePyrs(TiXmlElement *elmtTag,
+                                         PyrGeomMap &pyrs)
 {
     if (pyrs.size() == 0)
     {
@@ -1248,7 +1251,8 @@ void MeshGraphXmlCompressed::WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs)
     elmtTag->LinkEndChild(x);
 }
 
-void MeshGraphXmlCompressed::WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets)
+void MeshGraphXmlCompressed::v_WriteTets(TiXmlElement *elmtTag,
+                                         TetGeomMap &tets)
 {
     if (tets.size() == 0)
     {
@@ -1283,8 +1287,8 @@ void MeshGraphXmlCompressed::WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets)
     elmtTag->LinkEndChild(x);
 }
 
-void MeshGraphXmlCompressed::WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
-                                         CurveMap &faces)
+void MeshGraphXmlCompressed::v_WriteCurves(TiXmlElement *geomTag,
+                                           CurveMap &edges, CurveMap &faces)
 {
     if (edges.size() == 0 && faces.size() == 0)
     {

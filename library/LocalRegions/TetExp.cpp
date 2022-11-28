@@ -89,13 +89,6 @@ TetExp::TetExp(const TetExp &T)
 {
 }
 
-/**
- * \brief Destructor
- */
-TetExp::~TetExp()
-{
-}
-
 //-----------------------------
 // Integration Methods
 //-----------------------------
@@ -548,11 +541,6 @@ StdRegions::StdExpansionSharedPtr TetExp::v_GetLinStdExp(void) const
 
     return MemoryManager<StdRegions::StdTetExp>::AllocateSharedPtr(bkey0, bkey1,
                                                                    bkey2);
-}
-
-int TetExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
 }
 
 void TetExp::v_ExtractDataToCoeffs(

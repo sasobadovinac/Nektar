@@ -67,7 +67,7 @@ public:
 
     /// Returns the ID of the element (or associated edge or face for
     /// boundary elements).
-    unsigned int GetId() const
+    size_t GetId() const
     {
         if (m_faceLink.get() != 0)
             return m_faceLink->m_id;
@@ -76,7 +76,7 @@ public:
         return m_id;
     }
     /// Returns the expansion dimension of the element.
-    unsigned int GetDim() const
+    size_t GetDim() const
     {
         return m_dim;
     }
@@ -155,17 +155,17 @@ public:
         return m_taglist;
     }
     /// Returns the number of vertices.
-    unsigned int GetVertexCount() const
+    size_t GetVertexCount() const
     {
         return m_vertex.size();
     }
     /// Returns the number of edges.
-    unsigned int GetEdgeCount() const
+    size_t GetEdgeCount() const
     {
         return m_edge.size();
     }
     /// Returns the number of faces.
-    unsigned int GetFaceCount() const
+    size_t GetFaceCount() const
     {
         return m_face.size();
     }
@@ -335,7 +335,7 @@ public:
 
         Node lower(*m_vertex[0]), upper(*m_vertex[0]);
 
-        for (int i = 1; i < m_vertex.size(); ++i)
+        for (size_t i = 1; i < m_vertex.size(); ++i)
         {
             SWAP_NODE(m_vertex[i])
         }
@@ -410,7 +410,7 @@ public:
 
     template <class T> void Print(T &out)
     {
-        int i, j;
+        size_t i, j;
         for (i = 0; i < m_vertex.size(); ++i)
         {
             out << m_vertex[i]->m_x << " " << m_vertex[i]->m_y << " "
@@ -449,9 +449,9 @@ public:
 
 protected:
     /// ID of the element.
-    unsigned int m_id;
+    size_t m_id;
     /// Dimension of the element.
-    unsigned int m_dim;
+    size_t m_dim;
     /// Contains configuration of the element.
     ElmtConfig m_conf;
     /// Tag character describing the element.

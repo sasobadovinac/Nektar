@@ -75,19 +75,19 @@ public:
 protected:
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
-    virtual bool v_IsTimeDependent();
+        const NekDouble &time) override;
+    virtual bool v_IsTimeDependent() override;
 
 private:
-    unsigned int m_index;
-    unsigned int m_outputIndex;
-    unsigned int m_outputFrequency;
+    size_t m_index;
+    size_t m_outputIndex;
+    size_t m_outputFrequency;
     std::string m_outputFile;
     CellModelSharedPtr m_cell;
     LibUtilities::FieldIOSharedPtr m_fld;

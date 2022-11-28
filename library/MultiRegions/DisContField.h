@@ -127,7 +127,7 @@ public:
 protected:
     /// The number of boundary segments on which Dirichlet boundary
     /// conditions are imposed.
-    int m_numDirBndCondExpansions;
+    size_t m_numDirBndCondExpansions;
 
     /**
      * @brief An object which contains the discretised boundary
@@ -402,7 +402,7 @@ void DisContField::v_SetBndCondBwdWeight(const int index, const NekDouble value)
 void DisContField::v_PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
                                      Array<OneD, NekDouble> &Bwd)
 {
-    for (int n = 0; n < m_periodicFwdCopy.size(); ++n)
+    for (size_t n = 0; n < m_periodicFwdCopy.size(); ++n)
     {
         Bwd[m_periodicBwdCopy[n]] = Fwd[m_periodicFwdCopy[n]];
     }

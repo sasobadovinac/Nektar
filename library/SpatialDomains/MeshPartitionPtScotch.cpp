@@ -73,7 +73,7 @@ MeshPartitionPtScotch::~MeshPartitionPtScotch()
 {
 }
 
-void MeshPartitionPtScotch::PartitionGraphImpl(
+void MeshPartitionPtScotch::v_PartitionGraphImpl(
     int &nVerts, int &nVertConds, Array<OneD, int> &xadj,
     Array<OneD, int> &adjcy, Array<OneD, int> &vertWgt,
     Array<OneD, int> &vertSize, Array<OneD, int> &edgeWgt, int &nparts,

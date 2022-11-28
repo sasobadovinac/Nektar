@@ -198,13 +198,14 @@ names. However parameter name cannot start with a numeral. Parameters must be
 defined with \inltt{<PARAMETERS>...</PARAMETERS>}. Parameters play the role of
 constants that may change their values in between of expression evaluations.
 
-\item variables (i.e., \inlsh{x, y, z} and \inlsh{t})
-\item unary minus operator (e.g. \inltt{-x})
-\item binary arithmetic operators \inltt{+, -, *, /, \^{}}
+\item variables (i.e., \inlsh{x}, \inlsh{y}, \inlsh{z} and \inlsh{t})
+\item unary minus operator (e.g. \inlsh{-x})
+\item binary arithmetic operators \inlsh{+}, \inlsh{-}, \inlsh{*}, \inlsh{/}, 
+   \inlsh{\^{}}, \inlsh{\%}
    Powering operator allows using real exponents (it is implemented with
    \inlsh{std::pow()} function)
-\item boolean comparison operations \inlsh{<, <=, >, >=, ==} evaluate their
-sub-expressions to real values 0.0 or 1.0.
+\item boolean comparison operations \inlsh{<}, \inlsh{<=}, \inlsh{>}, \inlsh{>=}, 
+\inlsh{==} evaluate their sub-expressions to real values 0.0 or 1.0.
 \item mathematical functions of one or two arguments:
 \begin{center}
 \begin{tabular}{ll}
@@ -223,6 +224,7 @@ sub-expressions to real values 0.0 or 1.0.
   \texttt{exp(x)}     & exponential $e^x$ \\
   \texttt{fabs(x)}    & absolute value (equivalent to \texttt{abs}) \\
   \texttt{floor(x)}   & rounding down $\lfloor x\rfloor$ \\
+  \texttt{fmod(x,y)}  & floating point modulus operator \\
   \texttt{log(x)}     & logarithm base $e$, $\ln x = \log x$ \\
   \texttt{log10(x)}   & logarithm base 10, $\log_{10} x$ \\
   \texttt{rad(x,y)}   & computes polar coordinate $r=\sqrt{x^2+y^2}$ from $(x,y)$\\

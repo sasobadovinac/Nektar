@@ -24,6 +24,12 @@ v5.3.0
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Add compatiblity patch to solve conflict between flex 2.6.3 and scotch 6.0.4 (!1410)
 - Templating FieldUtils::Interpolator class (!1420)
+- Fix virtual function overrides in StdRegions and LocalRegions classes (!1435)
+- Disable -Werror by default (!1443)
+- Add fmod and modulus operator to interpreter (!1089)
+- Add command line option and environment variable to disable backup field files (!1154)
+- Add override keyword to virtual functions in SpatialDomains (!1448)
+- Add missing override keyword to virtual functions in Collections (!1453)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
@@ -36,9 +42,15 @@ v5.3.0
 - Improve performance of the perconditioner and diffusion operator (!1393)
 - Re-add the SFD test with an updated restart file (!1399)
 - ExtractSurface2DCSF utility is updated to use the boost program option (!1407)
+- Fix a Wuninitialized-const-reference warning (!1449)
+
+**CardiacEPSolver**
+- Fix a shadowed loop counter variable in the benchmark filter (!1436)
+- Update functions in derived classes to be consistent with the base class and add override keyword to virtual functions (!1439)
 
 **IncNavierStokesSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
+- Extended Reynolds Stresses filter to passive scalars (!1430)
 
 **VortexWaveInteractionSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
@@ -51,16 +63,31 @@ exporting in .vtu format (!1386)
 - Add option to refine curves in the same manner as the line refinement functionality (!1298)
 - Add refined curves and refined lines now prompt the octree to subdivide until the desired refined delta is reached (!1298)
 - Fix a segmentation fault with WriteOctree due to missing 'order' parameter (!1418)
+- Fix CADSurfOCE curvature bug where negative curvature values could be returned causing incorrect mesh spacing (!1442)
+- Fix ProjectCAD bug with findAndProject where the projection was missing and variable was passed without reference (!1442)
+- Fix 3d_bl_wing test case for STEP files where the wrong surfaces were selected for the BL (!1442)
+
+**FieldConvert**
+- Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
 - Correct header section of .cpp, .hpp, and .h files (!1426)
 - Linux format .cpp, .hpp, and .h files (!1432)
+- Fix wsign compare warning (!1437)
+- Fix some Woverloaded-virtual warning (!1439)
+- Add missing override keyword to virtual functions in solvers (!1440)
+- Fix some Wunused-variable (!1438)
+- Fix unused parameter warnings in virtual functions (!1441)  
+- Fix a Wreorder warning (!1445)
+- Fix some Wimplicit-fallthrough warnings (!1446)
 
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
+- Add header checking for *.cpp, *.hpp and *.h files to the CI (!1431)
 - Enable packaging for Fedora 36. (!1429)
 - Fix XML files indentation (!1428)
+- Update solvers CMakeList.txt to fix some warnings detection issue (!1447)
 
 **FieldConvert**
 - Fix range option so that it also works with hdf5 (!1414)
@@ -130,6 +157,7 @@ v5.2.0
 **CI**
 - Remove unused build options (!1360)
 - Enable NEKTAR_USE_VTK across full builds and in docker image (!1358)
+- Add XML linting and checking in CI pipeline (!1433)
 
 **Packaging**
 - Fix various issues with debian unstable and centos8 packaging (!1362)

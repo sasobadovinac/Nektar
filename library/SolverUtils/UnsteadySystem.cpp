@@ -286,7 +286,7 @@ void UnsteadySystem::v_DoSolve()
         // Frozen preconditioner checks
         if (!ParallelInTime())
         {
-            if (UpdateTimeStepCheck())
+            if (v_UpdateTimeStepCheck())
             {
                 m_cflSafetyFactor = tmp_cflSafetyFactor;
 

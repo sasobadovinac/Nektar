@@ -500,18 +500,6 @@ void StdTetExp::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
     }
 }
 
-void StdTetExp::v_IProductWRTBase_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nq = GetTotPoints();
-    StdMatrixKey iprodmatkey(eIProductWRTBase, DetShapeType(), *this);
-    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
-
-    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
-}
-
 /**
  * @param   inarray     Function evaluated at physical collocation
  *                      points.
@@ -634,36 +622,6 @@ void StdTetExp::v_IProductWRTDerivBase(
     Array<OneD, NekDouble> &outarray)
 {
     StdTetExp::v_IProductWRTDerivBase_SumFac(dir, inarray, outarray);
-}
-
-void StdTetExp::v_IProductWRTDerivBase_MatOp(
-    const int dir, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    ASSERTL0((dir == 0) || (dir == 1) || (dir == 2),
-             "input dir is out of range");
-
-    int nq           = GetTotPoints();
-    MatrixType mtype = eIProductWRTDerivBase0;
-
-    switch (dir)
-    {
-        case 0:
-            mtype = eIProductWRTDerivBase0;
-            break;
-        case 1:
-            mtype = eIProductWRTDerivBase1;
-            break;
-        case 2:
-            mtype = eIProductWRTDerivBase2;
-            break;
-    }
-
-    StdMatrixKey iprodmatkey(mtype, DetShapeType(), *this);
-    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
-
-    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 /**
@@ -1056,16 +1014,6 @@ int StdTetExp::v_GetTraceIntNcoeffs(const int i) const
     }
 }
 
-int StdTetExp::v_GetTotalTraceIntNcoeffs() const
-{
-    int Pi = m_base[0]->GetNumModes() - 2;
-    int Qi = m_base[1]->GetNumModes() - 2;
-    int Ri = m_base[2]->GetNumModes() - 2;
-
-    return Pi * (2 * Qi - Pi - 1) / 2 + Pi * (2 * Ri - Pi - 1) / 2 +
-           Qi * (2 * Ri - Qi - 1);
-}
-
 int StdTetExp::v_GetTraceNumPoints(const int i) const
 {
     ASSERTL2(i >= 0 && i <= 3, "face id is out of range");
@@ -1195,7 +1143,7 @@ void StdTetExp::v_GetCoords(Array<OneD, NekDouble> &xi_x,
     }
 }
 
-bool StdTetExp::v_IsBoundaryInteriorExpansion()
+bool StdTetExp::v_IsBoundaryInteriorExpansion() const
 {
     return (m_base[0]->GetBasisType() == LibUtilities::eModified_A) &&
            (m_base[1]->GetBasisType() == LibUtilities::eModified_B) &&

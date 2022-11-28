@@ -190,7 +190,7 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> vel,
         StdRegions::VarCoeffMap &varCoeffMap);
 
-    SOLVER_UTILS_EXPORT virtual bool UpdateTimeStepCheck();
+    SOLVER_UTILS_EXPORT virtual bool v_UpdateTimeStepCheck();
 
 private:
     void InitializeSteadyState();
@@ -199,7 +199,7 @@ private:
     bool CheckSteadyState(int step, NekDouble totCPUTime);
 };
 
-inline bool UnsteadySystem::UpdateTimeStepCheck()
+inline bool UnsteadySystem::v_UpdateTimeStepCheck()
 {
     return true;
 }
