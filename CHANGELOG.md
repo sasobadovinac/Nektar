@@ -28,6 +28,7 @@ v5.3.0
 - Add fmod and modulus operator to interpreter (!1089)
 - Add command line option and environment variable to disable backup field files (!1154)
 - Add override keyword to virtual functions in SpatialDomains (!1448)
+- Add missing override keyword to virtual functions in Collections (!1453)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
