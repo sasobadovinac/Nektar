@@ -82,16 +82,16 @@ public:
 
 protected:
     SPATIAL_DOMAINS_EXPORT virtual NekDouble v_GetCoord(
-        const int i, const Array<OneD, const NekDouble> &Lcoord);
+        const int i, const Array<OneD, const NekDouble> &Lcoord) override;
 
-    SPATIAL_DOMAINS_EXPORT virtual void v_GenGeomFactors();
-    SPATIAL_DOMAINS_EXPORT virtual void v_FillGeom();
-    SPATIAL_DOMAINS_EXPORT virtual int v_GetDir(const int faceidx,
-                                                const int facedir) const;
+    SPATIAL_DOMAINS_EXPORT virtual void v_GenGeomFactors() override;
+    SPATIAL_DOMAINS_EXPORT virtual void v_FillGeom() override;
+    SPATIAL_DOMAINS_EXPORT virtual int v_GetDir(
+        const int faceidx, const int facedir) const override;
 
     SPATIAL_DOMAINS_EXPORT virtual void v_Reset(CurveMap &curvedEdges,
-                                                CurveMap &curvedFaces);
-    SPATIAL_DOMAINS_EXPORT virtual void v_Setup();
+                                                CurveMap &curvedFaces) override;
+    SPATIAL_DOMAINS_EXPORT virtual void v_Setup() override;
 
 private:
     void SetUpXmap();

@@ -59,26 +59,31 @@ public:
 
     static std::string className;
 
-private:
-    void ReadVertices();
-    void ReadCurves();
+protected:
+    virtual void v_ReadVertices() override;
+    virtual void v_ReadCurves() override;
 
-    void ReadEdges();
-    void ReadFaces();
+    virtual void v_ReadEdges() override;
+    virtual void v_ReadFaces() override;
 
-    void ReadElements1D();
-    void ReadElements2D();
-    void ReadElements3D();
+    virtual void v_ReadElements1D() override;
+    virtual void v_ReadElements2D() override;
+    virtual void v_ReadElements3D() override;
 
-    void WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts);
-    void WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges);
-    void WriteTris(TiXmlElement *faceTag, TriGeomMap &tris);
-    void WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads);
-    void WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs);
-    void WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris);
-    void WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs);
-    void WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets);
-    void WriteCurves(TiXmlElement *geomTag, CurveMap &edges, CurveMap &faces);
+    virtual void v_WriteVertices(TiXmlElement *geomTag,
+                                 PointGeomMap &verts) override;
+    virtual void v_WriteEdges(TiXmlElement *geomTag,
+                              SegGeomMap &edges) override;
+    virtual void v_WriteTris(TiXmlElement *faceTag, TriGeomMap &tris) override;
+    virtual void v_WriteQuads(TiXmlElement *faceTag,
+                              QuadGeomMap &quads) override;
+    virtual void v_WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs) override;
+    virtual void v_WritePrisms(TiXmlElement *elmtTag,
+                               PrismGeomMap &pris) override;
+    virtual void v_WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs) override;
+    virtual void v_WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets) override;
+    virtual void v_WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
+                               CurveMap &faces) override;
 };
 
 } // namespace SpatialDomains

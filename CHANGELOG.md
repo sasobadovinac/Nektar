@@ -26,6 +26,7 @@ v5.3.0
 - Fix virtual function overrides in StdRegions and LocalRegions classes (!1435)
 - Disable -Werror by default (!1443)
 - Add fmod and modulus operator to interpreter (!1089)
+- Add override keyword to virtual functions in SpatialDomains (!1448)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

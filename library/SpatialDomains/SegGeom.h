@@ -79,16 +79,16 @@ protected:
     SpatialDomains::PointGeomSharedPtr m_verts[kNverts];
     StdRegions::Orientation m_porient[kNverts];
 
-    virtual PointGeomSharedPtr v_GetVertex(const int i) const;
+    virtual PointGeomSharedPtr v_GetVertex(const int i) const override;
     virtual LibUtilities::ShapeType v_GetShapeType() const;
-    virtual void v_GenGeomFactors();
-    virtual void v_FillGeom();
-    virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces);
-    virtual void v_Setup();
+    virtual void v_GenGeomFactors() override;
+    virtual void v_FillGeom() override;
+    virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces) override;
+    virtual void v_Setup() override;
 
-    virtual NekDouble v_GetCoord(const int i,
-                                 const Array<OneD, const NekDouble> &Lcoord);
-    virtual int v_GetNumVerts() const;
+    virtual NekDouble v_GetCoord(
+        const int i, const Array<OneD, const NekDouble> &Lcoord) override;
+    virtual int v_GetNumVerts() const override;
 
 private:
     /// Boolean indicating whether object owns the data
