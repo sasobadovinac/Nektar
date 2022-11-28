@@ -61,9 +61,9 @@ public:
     SPATIAL_DOMAINS_EXPORT static const int kDim = 1;
 
 protected:
-    virtual int v_GetShapeDim() const;
+    virtual int v_GetShapeDim() const override;
     virtual NekDouble v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
-                                     Array<OneD, NekDouble> &Lcoords);
+                                     Array<OneD, NekDouble> &Lcoords) override;
 };
 
 } // namespace SpatialDomains

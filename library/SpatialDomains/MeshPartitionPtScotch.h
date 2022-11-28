@@ -65,15 +65,14 @@ public:
                           CompositeDescriptor compMap);
     virtual ~MeshPartitionPtScotch();
 
-private:
-    virtual void PartitionGraphImpl(int &nVerts, int &nVertConds,
-                                    Nektar::Array<Nektar::OneD, int> &xadj,
-                                    Nektar::Array<Nektar::OneD, int> &adjcy,
-                                    Nektar::Array<Nektar::OneD, int> &vertWgt,
-                                    Nektar::Array<Nektar::OneD, int> &vertSize,
-                                    Nektar::Array<Nektar::OneD, int> &edgeWgt,
-                                    int &nparts, int &volume,
-                                    Nektar::Array<Nektar::OneD, int> &part);
+protected:
+    virtual void v_PartitionGraphImpl(
+        int &nVerts, int &nVertConds, Nektar::Array<Nektar::OneD, int> &xadj,
+        Nektar::Array<Nektar::OneD, int> &adjcy,
+        Nektar::Array<Nektar::OneD, int> &vertWgt,
+        Nektar::Array<Nektar::OneD, int> &vertSize,
+        Nektar::Array<Nektar::OneD, int> &edgeWgt, int &nparts, int &volume,
+        Nektar::Array<Nektar::OneD, int> &part) override final;
 };
 } // namespace SpatialDomains
 } // namespace Nektar

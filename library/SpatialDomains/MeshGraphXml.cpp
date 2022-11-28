@@ -58,7 +58,7 @@ std::string MeshGraphXml::className =
     GetMeshGraphFactory().RegisterCreatorFunction("Xml", MeshGraphXml::create,
                                                   "IO with Xml geometry");
 
-void MeshGraphXml::PartitionMesh(
+void MeshGraphXml::v_PartitionMesh(
     const LibUtilities::SessionReaderSharedPtr session)
 {
     // Get row of comm, or the whole comm if not split
@@ -372,8 +372,8 @@ void MeshGraphXml::PartitionMesh(
     }
 }
 
-void MeshGraphXml::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
-                                bool fillGraph)
+void MeshGraphXml::v_ReadGeometry(LibUtilities::DomainRangeShPtr rng,
+                                  bool fillGraph)
 {
     // Reset member variables.
     m_vertSet.clear();
@@ -440,14 +440,14 @@ void MeshGraphXml::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
     ASSERTL0(m_meshDimension <= m_spaceDimension,
              "Mesh dimension greater than space dimension");
 
-    ReadVertices();
-    ReadCurves();
+    v_ReadVertices();
+    v_ReadCurves();
     if (m_meshDimension >= 2)
     {
-        ReadEdges();
+        v_ReadEdges();
         if (m_meshDimension == 3)
         {
-            ReadFaces();
+            v_ReadFaces();
         }
     }
     ReadElements();
@@ -460,7 +460,7 @@ void MeshGraphXml::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
     }
 }
 
-void MeshGraphXml::ReadVertices()
+void MeshGraphXml::v_ReadVertices()
 {
     // Now read the vertices
     TiXmlElement *element = m_xmlGeom->FirstChildElement("VERTEX");
@@ -621,7 +621,7 @@ void MeshGraphXml::ReadVertices()
     }
 }
 
-void MeshGraphXml::ReadCurves()
+void MeshGraphXml::v_ReadCurves()
 {
     // check to see if any scaling parameters are in
     // attributes and determine these values
@@ -1035,7 +1035,7 @@ void MeshGraphXml::ReadDomain()
     }
 }
 
-void MeshGraphXml::ReadEdges()
+void MeshGraphXml::v_ReadEdges()
 {
     CurveMap::iterator it;
 
@@ -1118,7 +1118,7 @@ void MeshGraphXml::ReadEdges()
     }
 }
 
-void MeshGraphXml::ReadFaces()
+void MeshGraphXml::v_ReadFaces()
 {
     /// Look for elements in FACE block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("FACE");
@@ -1268,18 +1268,18 @@ void MeshGraphXml::ReadElements()
     switch (m_meshDimension)
     {
         case 1:
-            ReadElements1D();
+            v_ReadElements1D();
             break;
         case 2:
-            ReadElements2D();
+            v_ReadElements2D();
             break;
         case 3:
-            ReadElements3D();
+            v_ReadElements3D();
             break;
     }
 }
 
-void MeshGraphXml::ReadElements1D()
+void MeshGraphXml::v_ReadElements1D()
 {
     TiXmlElement *field = NULL;
 
@@ -1357,7 +1357,7 @@ void MeshGraphXml::ReadElements1D()
     }
 }
 
-void MeshGraphXml::ReadElements2D()
+void MeshGraphXml::v_ReadElements2D()
 {
     /// Look for elements in ELEMENT block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("ELEMENT");
@@ -1503,7 +1503,7 @@ void MeshGraphXml::ReadElements2D()
     }
 }
 
-void MeshGraphXml::ReadElements3D()
+void MeshGraphXml::v_ReadElements3D()
 {
     /// Look for elements in ELEMENT block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("ELEMENT");
@@ -2458,7 +2458,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
     return;
 }
 
-void MeshGraphXml::WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts)
+void MeshGraphXml::v_WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts)
 {
     TiXmlElement *vertTag = new TiXmlElement("VERTEX");
 
@@ -2476,7 +2476,7 @@ void MeshGraphXml::WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts)
     geomTag->LinkEndChild(vertTag);
 }
 
-void MeshGraphXml::WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges)
+void MeshGraphXml::v_WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges)
 {
     TiXmlElement *edgeTag =
         new TiXmlElement(m_meshDimension == 1 ? "ELEMENT" : "EDGE");
@@ -2496,7 +2496,7 @@ void MeshGraphXml::WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges)
     geomTag->LinkEndChild(edgeTag);
 }
 
-void MeshGraphXml::WriteTris(TiXmlElement *faceTag, TriGeomMap &tris)
+void MeshGraphXml::v_WriteTris(TiXmlElement *faceTag, TriGeomMap &tris)
 {
     string tag = "T";
 
@@ -2512,7 +2512,7 @@ void MeshGraphXml::WriteTris(TiXmlElement *faceTag, TriGeomMap &tris)
     }
 }
 
-void MeshGraphXml::WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads)
+void MeshGraphXml::v_WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads)
 {
     string tag = "Q";
 
@@ -2529,7 +2529,7 @@ void MeshGraphXml::WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads)
     }
 }
 
-void MeshGraphXml::WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs)
+void MeshGraphXml::v_WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs)
 {
     string tag = "H";
 
@@ -2547,7 +2547,7 @@ void MeshGraphXml::WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs)
     }
 }
 
-void MeshGraphXml::WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris)
+void MeshGraphXml::v_WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris)
 {
     string tag = "R";
 
@@ -2565,7 +2565,7 @@ void MeshGraphXml::WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris)
     }
 }
 
-void MeshGraphXml::WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs)
+void MeshGraphXml::v_WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs)
 {
     string tag = "P";
 
@@ -2582,7 +2582,7 @@ void MeshGraphXml::WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs)
     }
 }
 
-void MeshGraphXml::WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets)
+void MeshGraphXml::v_WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets)
 {
     string tag = "A";
 
@@ -2599,8 +2599,8 @@ void MeshGraphXml::WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets)
     }
 }
 
-void MeshGraphXml::WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
-                               CurveMap &faces)
+void MeshGraphXml::v_WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
+                                 CurveMap &faces)
 {
     TiXmlElement *curveTag = new TiXmlElement("CURVED");
     CurveMap::iterator curveIt;
@@ -2733,8 +2733,9 @@ void MeshGraphXml::WriteDefaultExpansion(TiXmlElement *root)
  * @brief Write out an XML file containing the GEOMETRY block
  * representing this MeshGraph instance inside a NEKTAR tag.
  */
-void MeshGraphXml::WriteGeometry(std::string &outfilename, bool defaultExp,
-                                 const LibUtilities::FieldMetaDataMap &metadata)
+void MeshGraphXml::v_WriteGeometry(
+    std::string &outfilename, bool defaultExp,
+    const LibUtilities::FieldMetaDataMap &metadata)
 {
     // Create empty TinyXML document.
     TiXmlDocument doc;
@@ -2759,29 +2760,29 @@ void MeshGraphXml::WriteGeometry(std::string &outfilename, bool defaultExp,
     geomTag->Clear();
 
     // Write out informatio
-    WriteVertices(geomTag, m_vertSet);
-    WriteEdges(geomTag, m_segGeoms);
+    v_WriteVertices(geomTag, m_vertSet);
+    v_WriteEdges(geomTag, m_segGeoms);
     if (m_meshDimension > 1)
     {
         TiXmlElement *faceTag =
             new TiXmlElement(m_meshDimension == 2 ? "ELEMENT" : "FACE");
 
-        WriteTris(faceTag, m_triGeoms);
-        WriteQuads(faceTag, m_quadGeoms);
+        v_WriteTris(faceTag, m_triGeoms);
+        v_WriteQuads(faceTag, m_quadGeoms);
         geomTag->LinkEndChild(faceTag);
     }
     if (m_meshDimension > 2)
     {
         TiXmlElement *elmtTag = new TiXmlElement("ELEMENT");
 
-        WriteHexs(elmtTag, m_hexGeoms);
-        WritePyrs(elmtTag, m_pyrGeoms);
-        WritePrisms(elmtTag, m_prismGeoms);
-        WriteTets(elmtTag, m_tetGeoms);
+        v_WriteHexs(elmtTag, m_hexGeoms);
+        v_WritePyrs(elmtTag, m_pyrGeoms);
+        v_WritePrisms(elmtTag, m_prismGeoms);
+        v_WriteTets(elmtTag, m_tetGeoms);
 
         geomTag->LinkEndChild(elmtTag);
     }
-    WriteCurves(geomTag, m_curvedEdges, m_curvedFaces);
+    v_WriteCurves(geomTag, m_curvedEdges, m_curvedFaces);
     WriteComposites(geomTag, m_meshComposites, m_compositesLabels);
     WriteDomain(geomTag, m_domain);
 
@@ -3015,25 +3016,25 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
             }
         }
 
-        WriteVertices(geomTag, localVert);
-        WriteEdges(geomTag, localEdge);
+        v_WriteVertices(geomTag, localVert);
+        v_WriteEdges(geomTag, localEdge);
         if (m_meshDimension > 1)
         {
             TiXmlElement *faceTag =
                 new TiXmlElement(m_meshDimension == 2 ? "ELEMENT" : "FACE");
 
-            WriteTris(faceTag, localTri);
-            WriteQuads(faceTag, localQuad);
+            v_WriteTris(faceTag, localTri);
+            v_WriteQuads(faceTag, localQuad);
             geomTag->LinkEndChild(faceTag);
         }
         if (m_meshDimension > 2)
         {
             TiXmlElement *elmtTag = new TiXmlElement("ELEMENT");
 
-            WriteHexs(elmtTag, localHex);
-            WritePyrs(elmtTag, localPyr);
-            WritePrisms(elmtTag, localPrism);
-            WriteTets(elmtTag, localTet);
+            v_WriteHexs(elmtTag, localHex);
+            v_WritePyrs(elmtTag, localPyr);
+            v_WritePrisms(elmtTag, localPrism);
+            v_WriteTets(elmtTag, localTet);
 
             geomTag->LinkEndChild(elmtTag);
         }
@@ -3060,7 +3061,7 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
             }
         }
 
-        WriteCurves(geomTag, localCurveEdge, localCurveFace);
+        v_WriteCurves(geomTag, localCurveEdge, localCurveFace);
 
         CompositeMap localComp;
         std::map<int, std::string> localCompLabels;
