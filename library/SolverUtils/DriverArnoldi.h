@@ -111,14 +111,14 @@ protected:
     void GetUnmaskFunction(
         std::vector<std::vector<LibUtilities::EquationSharedPtr>> &unmaskfun);
 
-    virtual void v_InitObject(std::ostream &out = std::cout);
+    virtual void v_InitObject(std::ostream &out = std::cout) override;
 
-    virtual Array<OneD, NekDouble> v_GetRealEvl(void)
+    virtual Array<OneD, NekDouble> v_GetRealEvl(void) override
     {
         return m_real_evl;
     }
 
-    virtual Array<OneD, NekDouble> v_GetImagEvl(void)
+    virtual Array<OneD, NekDouble> v_GetImagEvl(void) override
     {
         return m_imag_evl;
     }

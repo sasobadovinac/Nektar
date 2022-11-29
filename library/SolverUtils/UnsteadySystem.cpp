@@ -567,7 +567,7 @@ void UnsteadySystem::v_DoSolve()
     // Print for 1D problems
     if (m_spacedim == 1)
     {
-        v_AppendOutput1D(fields);
+        AppendOutput1D(fields);
     }
 }
 
@@ -612,7 +612,7 @@ void UnsteadySystem::v_GenerateSummary(SummaryList &s)
  * Stores the solution in a file for 1D problems only. This method has
  * been implemented to facilitate the post-processing for 1D problems.
  */
-void UnsteadySystem::v_AppendOutput1D(
+void UnsteadySystem::AppendOutput1D(
     Array<OneD, Array<OneD, NekDouble>> &solution1D)
 {
     // Coordinates of the quadrature points in the real physical space

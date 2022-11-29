@@ -78,10 +78,10 @@ protected:
     virtual ~DriverArpack();
 
     /// Virtual function for initialisation implementation.
-    virtual void v_InitObject(std::ostream &out = std::cout);
+    virtual void v_InitObject(std::ostream &out = std::cout) override;
 
     /// Virtual function for solve implementation.
-    virtual void v_Execute(std::ostream &out = std::cout);
+    virtual void v_Execute(std::ostream &out = std::cout) override;
 
     static std::string arpackProblemTypeLookupIds[];
     static std::string arpackProblemTypeDefault;

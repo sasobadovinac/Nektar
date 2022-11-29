@@ -53,7 +53,8 @@ public:
 
     SOLVER_UTILS_EXPORT virtual ~AdvectionSystem();
 
-    SOLVER_UTILS_EXPORT virtual void v_InitObject(bool DeclareField = true);
+    SOLVER_UTILS_EXPORT virtual void v_InitObject(
+        bool DeclareField = true) override;
 
     /// Returns the advection object held by this instance.
     SOLVER_UTILS_EXPORT AdvectionSharedPtr GetAdvObject()
@@ -69,7 +70,7 @@ protected:
     /// Advection term
     SolverUtils::AdvectionSharedPtr m_advObject;
 
-    SOLVER_UTILS_EXPORT virtual bool v_PostIntegrate(int step);
+    SOLVER_UTILS_EXPORT virtual bool v_PostIntegrate(int step) override;
 
     SOLVER_UTILS_EXPORT virtual Array<OneD, NekDouble> v_GetMaxStdVelocity(
         const NekDouble SpeedSoundFactor = 1.0)

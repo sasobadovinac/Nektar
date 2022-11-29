@@ -79,7 +79,7 @@ protected:
      */
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time) final;
+        const NekDouble &time) override final;
 
     /**
      * Performs the integration on the stored composite expansions and outputs
@@ -90,7 +90,7 @@ protected:
      */
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time) final;
+        const NekDouble &time) override final;
 
     /**
      * Closes the output data file
@@ -100,10 +100,10 @@ protected:
      */
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time) final;
+        const NekDouble &time) override final;
 
     /// Returns true as filter depends on time
-    virtual bool v_IsTimeDependent() final;
+    virtual bool v_IsTimeDependent() override final;
 
 private:
     size_t m_index = 0;

@@ -165,7 +165,7 @@ public:
 
     SOLVER_UTILS_EXPORT virtual ~MMFSystem();
 
-    SOLVER_UTILS_EXPORT virtual void v_GenerateSummary(SummaryList &s);
+    SOLVER_UTILS_EXPORT virtual void v_GenerateSummary(SummaryList &s) override;
 
     SOLVER_UTILS_EXPORT void MMFInitObject(
         const Array<OneD, const Array<OneD, NekDouble>> &Anisotropy,

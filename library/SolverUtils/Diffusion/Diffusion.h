@@ -289,8 +289,6 @@ public:
         TensorOfArray3D<NekDouble> &Bwdflux,
         Array<OneD, Array<OneD, NekDouble>> &outarray);
 
-    SOLVER_UTILS_EXPORT void FluxVec(TensorOfArray3D<NekDouble> &fluxvector);
-
     template <typename FuncPointerT, typename ObjectPointerT>
     void SetFluxVector(FuncPointerT func, ObjectPointerT obj)
     {

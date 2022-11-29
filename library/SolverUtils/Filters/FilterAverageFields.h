@@ -71,17 +71,18 @@ protected:
     virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
-        const NekDouble &time);
+        const NekDouble &time) override;
     virtual void v_PrepareOutput(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
-    virtual NekDouble v_GetScale();
-    virtual std::string v_GetFileSuffix()
+        const NekDouble &time) override;
+    virtual NekDouble v_GetScale() override;
+    virtual std::string v_GetFileSuffix() override
     {
         return "_avg";
     }
     virtual void v_FillVariablesName(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields)
+        override
     {
         FilterFieldConvert::v_FillVariablesName(pFields);
     }
