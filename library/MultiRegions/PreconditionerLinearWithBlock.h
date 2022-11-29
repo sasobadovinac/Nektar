@@ -78,12 +78,12 @@ protected:
     PreconditionerSharedPtr m_blockPrecon;
 
 private:
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
+                                    Array<OneD, NekDouble> &pOutput) override;
 
-    virtual void v_BuildPreconditioner();
+    virtual void v_BuildPreconditioner() override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

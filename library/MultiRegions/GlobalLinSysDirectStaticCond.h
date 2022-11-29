@@ -88,13 +88,13 @@ public:
 
 protected:
     virtual void v_AssembleSchurComplement(
-        std::shared_ptr<AssemblyMap> pLocToGloMap);
+        std::shared_ptr<AssemblyMap> pLocToGloMap) override;
     virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
         const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
         const DNekScalBlkMatSharedPtr pSchurCompl,
         const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
         const DNekScalBlkMatSharedPtr pInvD,
-        const std::shared_ptr<AssemblyMap> &l2gMap);
+        const std::shared_ptr<AssemblyMap> &l2gMap) override;
 
 private:
     /// Matrix Storage type for known matrices

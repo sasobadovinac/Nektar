@@ -80,26 +80,30 @@ protected:
     Array<OneD, NekDouble> m_invMultiplicity;
 
 private:
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
-    virtual void v_DoTransformBasisToLowEnergy(Array<OneD, NekDouble> &pInOut);
+    virtual void v_DoTransformBasisToLowEnergy(
+        Array<OneD, NekDouble> &pInOut) override;
 
     virtual void v_DoTransformCoeffsFromLowEnergy(
-        Array<OneD, NekDouble> &pInOut);
+        Array<OneD, NekDouble> &pInOut) override;
 
     virtual void v_DoTransformCoeffsToLowEnergy(
-        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
+        const Array<OneD, NekDouble> &pInput,
+        Array<OneD, NekDouble> &pOutput) override;
 
     virtual void v_DoTransformBasisFromLowEnergy(
-        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
+        const Array<OneD, NekDouble> &pInput,
+        Array<OneD, NekDouble> &pOutput) override;
 
     virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
-        int n, int offset, const std::shared_ptr<DNekScalMat> &loc_mat);
+        int n, int offset,
+        const std::shared_ptr<DNekScalMat> &loc_mat) override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
+                                    Array<OneD, NekDouble> &pOutput) override;
 
-    virtual void v_BuildPreconditioner();
+    virtual void v_BuildPreconditioner() override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

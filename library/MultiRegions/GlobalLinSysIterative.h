@@ -146,7 +146,7 @@ private:
                                      const Array<OneD, const NekDouble> &pInput,
                                      Array<OneD, NekDouble> &pOutput,
                                      const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir);
+                                     const int pNumDir) override;
 
     virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
                                     Array<OneD, NekDouble> &pOutput) = 0;

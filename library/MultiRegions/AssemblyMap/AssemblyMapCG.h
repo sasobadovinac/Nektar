@@ -160,81 +160,84 @@ protected:
     /// Calculate the bandwith of the full matrix system.
     void CalculateFullSystemBandWidth();
 
-    MULTI_REGIONS_EXPORT virtual int v_GetLocalToGlobalMap(const int i) const;
+    MULTI_REGIONS_EXPORT virtual int v_GetLocalToGlobalMap(
+        const int i) const override;
 
     MULTI_REGIONS_EXPORT virtual int v_GetGlobalToUniversalMap(
-        const int i) const;
+        const int i) const override;
 
     MULTI_REGIONS_EXPORT virtual int v_GetGlobalToUniversalMapUnique(
-        const int i) const;
+        const int i) const override;
 
     MULTI_REGIONS_EXPORT virtual const Array<OneD, const int>
-        &v_GetLocalToGlobalMap();
+        &v_GetLocalToGlobalMap() override;
 
     MULTI_REGIONS_EXPORT virtual const Array<OneD, const int>
-        &v_GetGlobalToUniversalMap();
+        &v_GetGlobalToUniversalMap() override;
 
     MULTI_REGIONS_EXPORT virtual const Array<OneD, const int>
-        &v_GetGlobalToUniversalMapUnique();
+        &v_GetGlobalToUniversalMapUnique() override;
 
     MULTI_REGIONS_EXPORT virtual NekDouble v_GetLocalToGlobalSign(
-        const int i) const;
+        const int i) const override;
 
     MULTI_REGIONS_EXPORT virtual const Array<OneD, NekDouble>
-        &v_GetLocalToGlobalSign() const;
+        &v_GetLocalToGlobalSign() const override;
 
     MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(
         const Array<OneD, const NekDouble> &loc, Array<OneD, NekDouble> &global,
-        bool useComm) const;
+        bool useComm) const override;
 
     MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(
         const NekVector<NekDouble> &loc, NekVector<NekDouble> &global,
-        bool useComm) const;
+        bool useComm) const override;
 
     MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(
         const Array<OneD, const NekDouble> &global,
-        Array<OneD, NekDouble> &loc) const;
+        Array<OneD, NekDouble> &loc) const override;
 
     MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(
-        const NekVector<NekDouble> &global, NekVector<NekDouble> &loc) const;
+        const NekVector<NekDouble> &global,
+        NekVector<NekDouble> &loc) const override;
 
     MULTI_REGIONS_EXPORT virtual void v_Assemble(
         const Array<OneD, const NekDouble> &loc,
-        Array<OneD, NekDouble> &global) const;
+        Array<OneD, NekDouble> &global) const override;
 
     MULTI_REGIONS_EXPORT virtual void v_Assemble(
-        const NekVector<NekDouble> &loc, NekVector<NekDouble> &global) const;
+        const NekVector<NekDouble> &loc,
+        NekVector<NekDouble> &global) const override;
 
     MULTI_REGIONS_EXPORT virtual void v_UniversalAssemble(
-        Array<OneD, NekDouble> &pGlobal) const;
+        Array<OneD, NekDouble> &pGlobal) const override;
 
     MULTI_REGIONS_EXPORT virtual void v_UniversalAssemble(
-        NekVector<NekDouble> &pGlobal) const;
+        NekVector<NekDouble> &pGlobal) const override;
 
     MULTI_REGIONS_EXPORT virtual void v_UniversalAssemble(
-        Array<OneD, NekDouble> &pGlobal, int offset) const;
+        Array<OneD, NekDouble> &pGlobal, int offset) const override;
 
-    MULTI_REGIONS_EXPORT virtual int v_GetFullSystemBandWidth() const;
+    MULTI_REGIONS_EXPORT virtual int v_GetFullSystemBandWidth() const override;
 
-    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirVertexModes() const;
+    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirVertexModes() const override;
 
-    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirEdgeModes() const;
+    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirEdgeModes() const override;
 
-    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirFaceModes() const;
+    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirFaceModes() const override;
 
-    MULTI_REGIONS_EXPORT virtual int v_GetNumDirEdges() const;
+    MULTI_REGIONS_EXPORT virtual int v_GetNumDirEdges() const override;
 
-    MULTI_REGIONS_EXPORT virtual int v_GetNumDirFaces() const;
+    MULTI_REGIONS_EXPORT virtual int v_GetNumDirFaces() const override;
 
-    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirEdges() const;
+    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirEdges() const override;
 
-    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirFaces() const;
+    MULTI_REGIONS_EXPORT virtual int v_GetNumNonDirFaces() const override;
 
     MULTI_REGIONS_EXPORT virtual const Array<OneD, const int>
-        &v_GetExtraDirEdges();
+        &v_GetExtraDirEdges() override;
 
     MULTI_REGIONS_EXPORT virtual AssemblyMapSharedPtr v_LinearSpaceMap(
-        const ExpList &locexp, GlobalSysSolnType solnType);
+        const ExpList &locexp, GlobalSysSolnType solnType) override;
 };
 
 } // namespace MultiRegions

@@ -85,7 +85,7 @@ protected:
                                      const Array<OneD, const NekDouble> &pInput,
                                      Array<OneD, NekDouble> &pOutput,
                                      const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir = 0);
+                                     const int pNumDir = 0) override;
 
     void GlobalToLocalNoSign(const Array<OneD, const NekDouble> &global,
                              Array<OneD, NekDouble> &local);
