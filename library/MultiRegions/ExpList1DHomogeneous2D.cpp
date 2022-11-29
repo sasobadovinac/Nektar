@@ -129,10 +129,10 @@ void ExpList1DHomogeneous2D::SetCoeffPhys(void)
     }
 }
 
-void ExpList1DHomogeneous2D::GetCoords(const int eid,
-                                       Array<OneD, NekDouble> &xc0,
-                                       Array<OneD, NekDouble> &xc1,
-                                       Array<OneD, NekDouble> &xc2)
+void ExpList1DHomogeneous2D::v_GetCoords(const int eid,
+                                         Array<OneD, NekDouble> &xc0,
+                                         Array<OneD, NekDouble> &xc1,
+                                         Array<OneD, NekDouble> &xc2)
 {
     boost::ignore_unused(eid);
 

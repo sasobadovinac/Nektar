@@ -69,7 +69,7 @@ public:
                                      const Array<OneD, const NekDouble> &pInput,
                                      Array<OneD, NekDouble> &pOutput,
                                      const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir);
+                                     const int pNumDir) override;
 
 protected:
     /// PETSc matrix object.

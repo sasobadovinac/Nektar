@@ -95,14 +95,14 @@ protected:
 
     /// Assemble the Schur complement matrix.
     virtual void v_AssembleSchurComplement(
-        std::shared_ptr<AssemblyMap> locToGloMap);
+        std::shared_ptr<AssemblyMap> locToGloMap) override;
 
     virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
         const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
         const DNekScalBlkMatSharedPtr pSchurCompl,
         const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
         const DNekScalBlkMatSharedPtr pInvD,
-        const std::shared_ptr<AssemblyMap> &locToGloMap);
+        const std::shared_ptr<AssemblyMap> &locToGloMap) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

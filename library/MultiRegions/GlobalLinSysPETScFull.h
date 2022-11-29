@@ -79,12 +79,13 @@ private:
 
     /// Solve the linear system for given input and output vectors
     /// using a specified local to global map.
-    virtual void v_Solve(
-        const Array<OneD, const NekDouble> &in, Array<OneD, NekDouble> &out,
-        const AssemblyMapSharedPtr &locToGloMap,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+    virtual void v_Solve(const Array<OneD, const NekDouble> &in,
+                         Array<OneD, NekDouble> &out,
+                         const AssemblyMapSharedPtr &locToGloMap,
+                         const Array<OneD, const NekDouble> &dirForcing =
+                             NullNekDouble1DArray) override;
     virtual void v_DoMatrixMultiply(const Array<OneD, const NekDouble> &input,
-                                    Array<OneD, NekDouble> &output);
+                                    Array<OneD, NekDouble> &output) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

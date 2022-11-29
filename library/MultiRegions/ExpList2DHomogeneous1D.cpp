@@ -184,10 +184,10 @@ void ExpList2DHomogeneous1D::SetCoeffPhys(void)
     }
 }
 
-void ExpList2DHomogeneous1D::GetCoords(const int eid,
-                                       Array<OneD, NekDouble> &xc0,
-                                       Array<OneD, NekDouble> &xc1,
-                                       Array<OneD, NekDouble> &xc2)
+void ExpList2DHomogeneous1D::v_GetCoords(const int eid,
+                                         Array<OneD, NekDouble> &xc0,
+                                         Array<OneD, NekDouble> &xc1,
+                                         Array<OneD, NekDouble> &xc2)
 {
     int n, coordim;
     Array<OneD, NekDouble> tmp_xc, xhom;

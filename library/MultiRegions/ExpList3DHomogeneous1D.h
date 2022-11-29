@@ -112,27 +112,27 @@ protected:
     //  virtual functions
     virtual void v_GetCoords(Array<OneD, NekDouble> &coord_0,
                              Array<OneD, NekDouble> &coord_1,
-                             Array<OneD, NekDouble> &coord_2);
+                             Array<OneD, NekDouble> &coord_2) override;
 
-    void v_GetCoords(const int eid, Array<OneD, NekDouble> &xc0,
-                     Array<OneD, NekDouble> &xc1,
-                     Array<OneD, NekDouble> &xc2) final;
+    virtual void v_GetCoords(const int eid, Array<OneD, NekDouble> &xc0,
+                             Array<OneD, NekDouble> &xc1,
+                             Array<OneD, NekDouble> &xc2) override final;
 
     virtual void v_WriteTecplotConnectivity(std::ostream &outfile,
-                                            int expansion);
+                                            int expansion) override;
 
     virtual void v_WriteVtkPieceHeader(std::ostream &outfile, int expansion,
-                                       int istrip);
+                                       int istrip) override;
 
-    virtual NekDouble v_L2(
-        const Array<OneD, const NekDouble> &inarray,
-        const Array<OneD, const NekDouble> &soln = NullNekDouble1DArray);
+    virtual NekDouble v_L2(const Array<OneD, const NekDouble> &inarray,
+                           const Array<OneD, const NekDouble> &soln =
+                               NullNekDouble1DArray) override;
 
-    virtual Array<OneD, const NekDouble> v_HomogeneousEnergy(void);
+    virtual Array<OneD, const NekDouble> v_HomogeneousEnergy(void) override;
 
     virtual void v_GetPeriodicEntities(PeriodicMap &periodicVerts,
                                        PeriodicMap &periodicEdges,
-                                       PeriodicMap &periodicFaces)
+                                       PeriodicMap &periodicFaces) override
     {
         boost::ignore_unused(periodicFaces);
         m_planes[0]->GetPeriodicEntities(periodicVerts, periodicEdges);
