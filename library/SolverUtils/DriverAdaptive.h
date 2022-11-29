@@ -74,10 +74,11 @@ protected:
 
     /// Second-stage initialisation
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
-        std::ostream &out = std::cout);
+        std::ostream &out = std::cout) override;
 
     /// Virtual function for solve implementation.
-    SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
+    SOLVER_UTILS_EXPORT virtual void v_Execute(
+        std::ostream &out = std::cout) override;
 
     SOLVER_UTILS_EXPORT void ReplaceExpansion(
         Array<OneD, MultiRegions::ExpListSharedPtr> &fields,

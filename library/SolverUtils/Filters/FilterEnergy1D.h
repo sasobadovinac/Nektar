@@ -77,14 +77,14 @@ public:
 protected:
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble &time);
+        const NekDouble &time) override;
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble &time);
+        const NekDouble &time) override;
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble &time);
-    virtual bool v_IsTimeDependent();
+        const NekDouble &time) override;
+    virtual bool v_IsTimeDependent() override;
 
 private:
     /// Output file.

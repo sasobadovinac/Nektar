@@ -71,17 +71,17 @@ protected:
     /// Initialises the filter.
     SOLVER_UTILS_EXPORT virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     /// For each point in domain test if solution is below threshold.
     SOLVER_UTILS_EXPORT virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     /// Finalise the filter and write out data.
     SOLVER_UTILS_EXPORT virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
     /// Indicate that this filter is time dependent.
-    SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
+    SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent() override;
 
 private:
     /// Storage for recording when each point in domain drops below threshold.
