@@ -103,4 +103,4 @@
             <E VAR="u" VALUE="exp(-2.0*wavefreq*wavefreq*t)*sin(wavefreq*x)*cos(wavefreq*y)" />
         </FUNCTION>
     </CONDITIONS>
-    /NEKTAR>
+    </NEKTAR>
