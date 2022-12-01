@@ -64,7 +64,7 @@
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"       />
             <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"            />
-	        <I PROPERTY="Driver"                VALUE="Parareal"            />
+            <I PROPERTY="Driver"                VALUE="Parareal"            />
         </SOLVERINFO>
 
         <PARAMETERS>
@@ -74,7 +74,7 @@
             <P> IO_InfoSteps    = 0                </P>
             <P> wavefreq        = PI               </P>
             <P> epsilon         = 1.0              </P>
-            <P> PararealIterMax = 3                </P> 
+            <P> PararealIterMax = 3                </P>
         </PARAMETERS>
 
         <VARIABLES>

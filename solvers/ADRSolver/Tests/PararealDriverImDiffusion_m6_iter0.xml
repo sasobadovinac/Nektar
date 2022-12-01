@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<NEKTAR>  
+<NEKTAR>
     <GEOMETRY DIM="2" SPACE="2">
         <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxtlV1IFFEUx0et/CytzMqs1vzI1NL1IzXT25dmFCHlgm2Qa4X44ENgij4oEpT6UD704oZ9otBL4kuPOkK9hCV+5ou1C2osZLFGUFRgOzP/OTP37tyX/939cc7/zJm590iStr5NP3K73e9k7ZcfKkkh0Mr6foUzkYdCO/tbSwd/1Y1GhNQUp/WtEA+Dtg06fc3hC3JtRevPB6E+4hv0PKU21uv0ysMzV+YXO73EN0Jdsc976iJ8cnPUj9oXHUb8JuhchxrPIif4+HBoYvRVxZ/5Gnj/COib5WdKfnYpjM8fKRmrq7CnTNtNEY+CfqmfbstLnZT/zeY8/n3ZQzwa6v46o3C2uMrzGGi5Mz+wloL6vxmaEaPyoP5vgebM1jgcjnlZrC8WOlkQwI6VIB4H/dyicibyrdD2BYXPB/Ftknn5WV+8osvEtwtcjI+H9ka33L/Z4mMjJdNN31eN/uzg44PqTxD4gGc9sJaI74QOjN9W8svOdj7/Lsv6jP7utvQ3eKIQP5Gr6DjxPdBP6O89G8+TrPztjaP6P3uh5vczbnMR3yfEtz1Rnl9m+j/7oR7E/x3juc3KX5oinmzhb+YHoPr3URHHP1+KwNX7JLma6k8V+F0PX1+awEX/dKgS9TRwPrX7xPA/aHo64/waK8O0dxnxlP+QZbzhnwm14/yhfvLPgurnU63TVq3X0ZUtcPRPz991WOCi/xGofr7xfsk/R+DK/qXNRf65Asf3Sf52i3izf55kXn4Z3x/55wtca1YjvYcCgeP8UP5Cq3iT/1Eo5pN+PokXQT9+YN6H6XfKMJ+IF0Mx/5gYXwK90KDNryqXOj+oP8ewafKr80OuTlLnB/FSbDLt2nx75VHnE/Hj2Ax3a/Mraozjkt6o12Hq/GO31tbM+aVy6MVz2nz7c56rT9I3KQnafMrW5g/5n8DmWtGsOp9G5jgunYRi/gT195Reh5ObT8RPQ9++1+7f693q/Uv+ZyTz8suYHxRfwXOG+514JfTGupqfDWVx+aWzQn6xviohv8j/A0k60k0A</VERTEX>
         <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1ldV2VEEQRYMMluAQHAZ316CDu7u7u2uCu7s7/CcvZz+w17rzctae7uqq7pJbVfX/r1GBNi5Qfk2kTQu0VKDYNZM2L9AWBYpdS8UJtyrgajF2NWL2tRZzXhvZca+20ZLW20W5F+e2F3O/DvLDuR3FvHcnMXad5R9/tWLes4sYu66Kizi6iYmjuxi7HoqLOHqKiaOXGLveUeejj5g8l6PcF7u+0Wqt94vyzvjtr3hYHxDlHXi3gWLeY1CUvqMuBoupxyFi6m2omN+waI3+Hy6/1N0IMfkeKaY+R0XJP35GR0taHxOt1f9jtZ/1cfJL/YwXE8+EKHmkfidG6QvqYZL+J5+TxcQ1JUr+OL9OcbA+NUoeiWua4iBv06PUD/0zQ0z/zBRTX7O0n76qiOmr2WLOm6P99NtcMf02T8x587W/HF0gpg8XijlvkeKjPxeL6d8lioO+XSrGbpn80c/LxditUJz0+Uoxdqvkj/5fLWYurZE/5sJaMXbr5I95sV6M3QbFyRzZKMZuk/wxXzaLmbtb5I+5s1WM3Tb5Yx5tF2O3Q3Eyp3aKsdslf8yv3WLm+R75Y67tFWO3T/6Yd/vF2B1QnMzBg2LsDskf8/GwmO/UEfljbh4VY3dM/pinx8XYnVCczNmTYuxORZm7zNnTYubsGTF2Z6PMXebsOTFz9rwYuwtR5i5z9qKYOXtJjN1lxc/8vSKmTq+Ksbum/yvRejH7G6LMb+59PVqn9RtR7sV8vynmfreizDfue1vM/LgTpZ5577ti6uVelDrhu3JfzHflgRi7h1G+M3xXHonL0cdi7J5EyRf3eBrlnpXosyj3Id7n8sv7vYiSP975pZh6fxWl7snnazHnvYmSR855q3Ooh3dRvrfUz3vtY/1DlPrhe/xRjP9P2s87fxZj9yVKfonnq+Jg/VuUOqxEv0fJI3X3I0peiOunzmH9l+Igv7/FnP9HcZDPv1HyRVz/AHH7YygA</EDGE>
@@ -18,28 +18,28 @@
         </COMPOSITE>
         <DOMAIN> C[1-3] </DOMAIN>
     </GEOMETRY>
-    <EXPANSIONS>     
+    <EXPANSIONS>
         <E COMPOSITE="C[1]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
         <E COMPOSITE="C[2]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
         <E COMPOSITE="C[3]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
     </EXPANSIONS>
     <CONDITIONS>
         <SOLVERINFO>
-            <I PROPERTY="EQTYPE"                VALUE="UnsteadyDiffusion" /> 
-	        <I PROPERTY="Projection"            VALUE="Continuous"        />
-	        <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"     />
-	        <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"          />
-	        <I PROPERTY="Driver"                VALUE="Parareal"          />
+            <I PROPERTY="EQTYPE"                VALUE="UnsteadyDiffusion" />
+            <I PROPERTY="Projection"            VALUE="Continuous"        />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"     />
+            <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"          />
+            <I PROPERTY="Driver"                VALUE="Parareal"          />
         </SOLVERINFO>
 
-	    <PARAMETERS>
+        <PARAMETERS>
             <P> TimeStep        = 0.0001 </P> <!-- Time step -->
-	        <P> NumSteps        = 3200   </P> <!-- Number of time step -->
+            <P> NumSteps        = 3200   </P> <!-- Number of time step -->
             <P> epsilon         = 0.05   </P> <!-- Diffusion coefficent   -->
             <P> IO_InfoSteps    = 0      </P> <!-- Frequency of printing information for the user -->
             <P> IO_CheckSteps   = 0      </P> <!-- Frequency of writing the checkpoints, the results -->
             <P> PararealIterMax = 0      </P> <!-- Max number of Parareal iteration -->
-	    </PARAMETERS>
+        </PARAMETERS>
 
         <!-- setting the variable -->
         <VARIABLES>
