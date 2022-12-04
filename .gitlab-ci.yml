@@ -483,45 +483,6 @@ bionic-full-warnings:
   needs: ["bionic-full-build-and-test"]
 
 
-################################################
-###################  CENTOS  ###################
-################################################
-
-.build-env-centos-template-default: &build-env-centos-template-default
-  <<: *build-env-debian-template-default
-  variables:
-    OS_DISTRO: centos
-
-.build-env-centos-template-full: &build-env-centos-template-full
-  <<: *build-env-centos-template-default
-  stage: build-env-full
-
-centos7-default-build-env:
-  <<: *build-env-centos-template-default
-
-centos7-full-build-env:
-  <<: *build-env-centos-template-full
-  needs: ["centos7-default-build-env"]
-
-centos7-default-build-and-test:
-  <<: *build-and-test-template
-  needs: ["centos7-default-build-env"]
-
-centos7-full-build-and-test:
-  <<: *build-and-test-template
-  needs: ["centos7-full-build-env"]
-
-
-# COMPILER WARNINGS
-centos7-default-warnings:
-  <<: *compiler-warning-template
-  needs: ["centos7-default-build-and-test"]
-
-centos7-full-warnings:
-  <<: *compiler-warning-template
-  needs: ["centos7-full-build-and-test"]
-
-
 # ################################################
 # ####################  OSX  #####################
 # ################################################
