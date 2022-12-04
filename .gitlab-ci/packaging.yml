@@ -141,7 +141,6 @@
   variables:
     GIT_SUBMODULE_STRATEGY: normal
   script:
-    - if [ $image_name = "centos:8" ]; then sed -i -e "s|mirrorlist=|#mirrorlist=|g" -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-Linux-*; fi
     - yum -y upgrade
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
@@ -181,7 +180,6 @@
     needs_powertools: 0
     cmake_exe: cmake
   script:
-    - if [ $image_name = "centos:8" ]; then sed -i -e "s|mirrorlist=|#mirrorlist=|g" -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-Linux-*; fi
     - yum -y upgrade
     - if [ "$needs_epel" -eq 1 ]; then yum install -y epel-release; fi
     - if [ "$needs_powertools" -eq 1 ]; then yum install -y dnf-plugins-core; yum config-manager --set-enabled powertools; fi
@@ -632,78 +630,6 @@ package-ubuntu-bionic-deploy:
 #  dependencies:
 #    - package-ubuntu-xenial-build
 
-
-
-##
-## CentOS 7
-##
-package-centos-7-env:
-  <<: *package-env-build
-
-package-centos-7-build:
-  <<: *package-rpm-build
-  needs: ["package-centos-7-env"]
-  variables:
-    image_name: pkg/centos-7
-    version_file: centos-7.json
-
-package-centos-7-test:
-  <<: *package-rpm-test
-  needs: ["package-centos-7-build"]
-  dependencies:
-    - package-centos-7-build
-  variables:
-    image_name: centos:7
-    needs_epel: 1
-    cmake_exe: cmake3
-
-package-centos-7-deploy-dev:
-  <<: *package-rpm-deploy-dev
-  needs: ["package-centos-7-build", "package-centos-7-test"]
-  dependencies:
-    - package-centos-7-build
-
-package-centos-7-deploy:
-  <<: *package-rpm-deploy
-  needs: ["package-centos-7-build", "package-centos-7-deploy-dev"]
-  dependencies:
-    - package-centos-7-build
-
-##
-## CentOS 8
-##
-package-centos-8-env:
-  <<: *package-env-build
-
-package-centos-8-build:
-  <<: *package-rpm-build
-  needs: ["package-centos-8-env"]
-  variables:
-    image_name: pkg/centos-8
-    version_file: centos-8.json
-
-package-centos-8-test:
-  <<: *package-rpm-test
-  needs: ["package-centos-8-build"]
-  dependencies:
-    - package-centos-8-build
-  variables:
-    image_name: centos:8
-    needs_epel: 1
-    needs_powertools: 1
-    cmake_exe: cmake
-
-package-centos-8-deploy-dev:
-  <<: *package-rpm-deploy-dev
-  needs: ["package-centos-8-build", "package-centos-8-test"]
-  dependencies:
-    - package-centos-8-build
-
-package-centos-8-deploy:
-  <<: *package-rpm-deploy
-  needs: ["package-centos-8-build", "package-centos-8-deploy-dev"]
-  dependencies:
-    - package-centos-8-build
 
 ##
 ## Fedora 35
