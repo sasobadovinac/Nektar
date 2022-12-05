@@ -2,8 +2,8 @@
 <test>
     <description> 2D unsteady DG implicit diffusion, order 1, P=6 </description>
     <executable>ADRSolver</executable>
-    <parameters>--npt 16 PararealDriverImDiffusion_m6_iter0.xml</parameters>
-    <processes>16</processes>
+    <parameters>--npt 8 PararealDriverImDiffusion_m6_iter0.xml</parameters>
+    <processes>8</processes>
     <files>
         <file description="Session File"> PararealDriverImDiffusion_m6_iter0.xml </file>
     </files>

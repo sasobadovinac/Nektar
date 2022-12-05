@@ -2,17 +2,17 @@
 <test>
     <description> 2D unsteady DG implicit diffusion, order 1, P=6 </description>
     <executable>ADRSolver</executable>
-    <parameters>--npt 16 PararealDriverImDiffusion_m6_iter1.xml</parameters>
-    <processes>16</processes>
+    <parameters>--npt 8 PararealDriverImDiffusion_m6_iter1.xml</parameters>
+    <processes>8</processes>
     <files>
         <file description="Session File"> PararealDriverImDiffusion_m6_iter1.xml </file>
     </files>
     <metrics>
         <metric type="L2" id="1">
-            <value variable="u" tolerance="1e-08"> 0.000237197 </value>
+            <value variable="u" tolerance="1e-08"> 0.000235686 </value>
         </metric>
         <metric type="Linf" id="2">
-            <value variable="u" tolerance="1e-08"> 0.000596932 </value>
+            <value variable="u" tolerance="1e-08"> 0.000595980 </value>
         </metric>
     </metrics>
 </test>
