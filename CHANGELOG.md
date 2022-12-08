@@ -90,6 +90,7 @@ exporting in .vtu format (!1386)
 - Enable packaging for Fedora 36. (!1429)
 - Fix XML files indentation (!1428)
 - Update solvers CMakeList.txt to fix some warnings detection issue (!1447)
+- Remove -fpermissive from NektarCommon.cmake (!1460)
 
 **FieldConvert**
 - Fix range option so that it also works with hdf5 (!1414)
