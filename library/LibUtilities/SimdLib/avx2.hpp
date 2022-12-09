@@ -242,6 +242,12 @@ template <typename T> struct avx2Int8
         store(tmp, is_aligned);
         return tmp[i];
     }
+
+    inline scalarType &operator[](size_t i)
+    {
+        scalarType *tmp = reinterpret_cast<scalarType *>(&_data);
+        return tmp[i];
+    }
 };
 
 template <typename T>
@@ -350,6 +356,12 @@ template <typename T> struct avx2Long4
     {
         alignas(alignment) scalarArray tmp;
         store(tmp, is_aligned);
+        return tmp[i];
+    }
+
+    inline scalarType &operator[](size_t i)
+    {
+        scalarType *tmp = reinterpret_cast<scalarType *>(&_data);
         return tmp[i];
     }
 };
@@ -514,6 +526,13 @@ struct avx2Double4
         return tmp[i];
     }
 
+    inline scalarType &operator[](size_t i)
+    {
+        scalarType *tmp = reinterpret_cast<scalarType *>(&_data);
+        return tmp[i];
+    }
+
+    // unary ops
     inline void operator+=(avx2Double4 rhs)
     {
         _data = _mm256_add_pd(_data, rhs._data);

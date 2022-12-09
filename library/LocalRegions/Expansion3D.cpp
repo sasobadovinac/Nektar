@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Expansion3D.cpp
+// File: Expansion3D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -120,7 +120,7 @@ void Expansion3D::AddHDGHelmholtzFaceTerms(
         if (mmf)
         {
             StdRegions::VarCoeffMap Weight;
-            Weight[StdRegions::eVarCoeffMass] = v_GetMFMag(n, varcoeffs);
+            Weight[StdRegions::eVarCoeffMass] = GetMFMag(n, varcoeffs);
 
             MatrixKey invMasskey(StdRegions::eInvMass, DetShapeType(), *this,
                                  StdRegions::NullConstFactorMap, Weight);
@@ -128,7 +128,7 @@ void Expansion3D::AddHDGHelmholtzFaceTerms(
             invMass = *GetLocMatrix(invMasskey);
 
             Array<OneD, NekDouble> ncdotMF_f =
-                v_GetnFacecdotMF(n, face, FaceExp, normals, varcoeffs);
+                GetnFacecdotMF(n, face, FaceExp, normals, varcoeffs);
 
             Vmath::Vmul(nquad_f, ncdotMF_f, 1, facePhys, 1, inval, 1);
         }
@@ -168,9 +168,9 @@ void Expansion3D::AddHDGHelmholtzFaceTerms(
         {
             StdRegions::VarCoeffMap VarCoeffDirDeriv;
             VarCoeffDirDeriv[StdRegions::eVarCoeffMF] =
-                v_GetMF(n, coordim, varcoeffs);
+                GetMF(n, coordim, varcoeffs);
             VarCoeffDirDeriv[StdRegions::eVarCoeffMFDiv] =
-                v_GetMFDiv(n, varcoeffs);
+                GetMFDiv(n, varcoeffs);
 
             MatrixKey Dmatkey(StdRegions::eWeakDirectionalDeriv, DetShapeType(),
                               *this, StdRegions::NullConstFactorMap,
@@ -281,7 +281,7 @@ void Expansion3D::AddNormTraceInt(const int dir,
         if ((x = varcoeffs.find(StdRegions::eVarCoeffMF1x)) != varcoeffs.end())
         {
             Array<OneD, NekDouble> ncdotMF_f =
-                v_GetnFacecdotMF(dir, f, FaceExp[f], normals, varcoeffs);
+                GetnFacecdotMF(dir, f, FaceExp[f], normals, varcoeffs);
 
             Vmath::Vmul(nquad_f, ncdotMF_f, 1, facePhys, 1, facePhys, 1);
         }
@@ -791,9 +791,9 @@ DNekMatSharedPtr Expansion3D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
                 {
                     StdRegions::VarCoeffMap VarCoeffDirDeriv;
                     VarCoeffDirDeriv[StdRegions::eVarCoeffMF] =
-                        v_GetMF(i, coordim, varcoeffs);
+                        GetMF(i, coordim, varcoeffs);
                     VarCoeffDirDeriv[StdRegions::eVarCoeffMFDiv] =
-                        v_GetMFDiv(i, varcoeffs);
+                        GetMFDiv(i, varcoeffs);
 
                     MatrixKey Dmatkey(StdRegions::eWeakDirectionalDeriv,
                                       DetShapeType(), *this,
@@ -804,7 +804,7 @@ DNekMatSharedPtr Expansion3D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
 
                     StdRegions::VarCoeffMap Weight;
                     Weight[StdRegions::eVarCoeffMass] =
-                        v_GetMFMag(i, mkey.GetVarCoeffs());
+                        GetMFMag(i, mkey.GetVarCoeffs());
 
                     MatrixKey invMasskey(StdRegions::eInvMass, DetShapeType(),
                                          *this, StdRegions::NullConstFactorMap,
@@ -1064,9 +1064,9 @@ DNekMatSharedPtr Expansion3D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
             {
                 StdRegions::VarCoeffMap VarCoeffDirDeriv;
                 VarCoeffDirDeriv[StdRegions::eVarCoeffMF] =
-                    v_GetMF(dir, coordim, varcoeffs);
+                    GetMF(dir, coordim, varcoeffs);
                 VarCoeffDirDeriv[StdRegions::eVarCoeffMFDiv] =
-                    v_GetMFDiv(dir, varcoeffs);
+                    GetMFDiv(dir, varcoeffs);
 
                 MatrixKey Dmatkey(
                     StdRegions::eWeakDirectionalDeriv, DetShapeType(), *this,
@@ -1076,7 +1076,7 @@ DNekMatSharedPtr Expansion3D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
 
                 StdRegions::VarCoeffMap Weight;
                 Weight[StdRegions::eVarCoeffMass] =
-                    v_GetMFMag(dir, mkey.GetVarCoeffs());
+                    GetMFMag(dir, mkey.GetVarCoeffs());
 
                 MatrixKey invMasskey(StdRegions::eInvMass, DetShapeType(),
                                      *this, StdRegions::NullConstFactorMap,
@@ -1236,7 +1236,7 @@ DNekMatSharedPtr Expansion3D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
                     if (varcoeffs.find(StdRegions::eVarCoeffMF1x) !=
                         varcoeffs.end())
                     {
-                        Array<OneD, NekDouble> ncdotMF = v_GetnFacecdotMF(
+                        Array<OneD, NekDouble> ncdotMF = GetnFacecdotMF(
                             0, f, FaceExp[f], normals, varcoeffs);
 
                         Vmath::Vmul(nquad_f, ncdotMF, 1, facePhys, 1, work, 1);
@@ -1269,7 +1269,7 @@ DNekMatSharedPtr Expansion3D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
                     if ((varcoeffs.find(StdRegions::eVarCoeffMF1x)) !=
                         varcoeffs.end())
                     {
-                        Array<OneD, NekDouble> ncdotMF = v_GetnFacecdotMF(
+                        Array<OneD, NekDouble> ncdotMF = GetnFacecdotMF(
                             1, f, FaceExp[f], normals, varcoeffs);
 
                         Vmath::Vvtvp(nquad_f, ncdotMF, 1, facePhys, 1, work, 1,
@@ -1303,7 +1303,7 @@ DNekMatSharedPtr Expansion3D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
                     if (varcoeffs.find(StdRegions::eVarCoeffMF1x) !=
                         varcoeffs.end())
                     {
-                        Array<OneD, NekDouble> ncdotMF = v_GetnFacecdotMF(
+                        Array<OneD, NekDouble> ncdotMF = GetnFacecdotMF(
                             2, f, FaceExp[f], normals, varcoeffs);
 
                         Vmath::Vvtvp(nquad_f, ncdotMF, 1, facePhys, 1, work, 1,
@@ -2803,7 +2803,7 @@ void Expansion3D::v_NormVectorIProductWRTBase(
 }
 
 // Compute edgenormal \cdot vector
-Array<OneD, NekDouble> Expansion3D::v_GetnFacecdotMF(
+Array<OneD, NekDouble> Expansion3D::GetnFacecdotMF(
     const int dir, const int face, ExpansionSharedPtr &FaceExp_f,
     const Array<OneD, const Array<OneD, NekDouble>> &normals,
     const StdRegions::VarCoeffMap &varcoeffs)

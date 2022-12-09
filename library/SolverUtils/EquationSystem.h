@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EquationSystem.h
+// File: EquationSystem.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -55,7 +55,7 @@ namespace Nektar
 {
 namespace FieldUtils
 {
-class Interpolator;
+template <typename T> class Interpolator;
 }
 namespace SolverUtils
 {

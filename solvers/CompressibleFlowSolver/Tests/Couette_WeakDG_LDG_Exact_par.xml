@@ -62,8 +62,8 @@
         <DOMAIN> C[0] </DOMAIN>
     </GEOMETRY>
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" FIELDS="rho,rhou,rhov,E" BASISTYPE="GLL_Lagrange,GLL_Lagrange" NUMMODES="4,4" 
-           POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="5,5" />
+        <E COMPOSITE="C[0]" FIELDS="rho,rhou,rhov,E" BASISTYPE="GLL_Lagrange,GLL_Lagrange" NUMMODES="4,4"
+            POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre" NUMPOINTS="5,5" />
     </EXPANSIONS>
 
     <CONDITIONS>
@@ -126,7 +126,7 @@
                 <D VAR="rhou" VALUE="(Gamma / (Gamma-1) * (2 * pc) / (2 * Cp * Twall)) * Uwall" />
                 <D VAR="rhov" VALUE="0" />
                 <D VAR="E"    VALUE="pc / (Gamma - 1) + 0.5 * (Gamma / (Gamma-1) * (2 * pc) / (2 * Cp * Twall)) * (Uwall*Uwall)" />
-            </REGION>      
+            </REGION>
             <REGION REF="3">
                 <P VAR="rho"  VALUE="[1]" />
                 <P VAR="rhou" VALUE="[1]" />
@@ -141,13 +141,13 @@
             <E VAR="rhov" VALUE="0" />
             <E VAR="E"    VALUE="pc / (Gamma - 1) + 0.5 * (Gamma / (Gamma-1) * (2 * pc) / (2 * Cp * Twall + Pr * Uwall * Uwall * y * (1-y))) * (Uwall * Uwall * y * y)" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="rho"  VALUE="Gamma / (Gamma-1) * (2 * pc) / (2 * Cp * Twall + Pr * Uwall * Uwall * y * (1-y))" />
             <E VAR="rhou" VALUE="Gamma / (Gamma-1) * (2 * pc) / (2 * Cp * Twall + Pr * Uwall * Uwall * y * (1-y)) * Uwall * y" />
             <E VAR="rhov" VALUE="0" />
             <E VAR="E"    VALUE="pc / (Gamma - 1) + 0.5 * (Gamma / (Gamma-1) * (2 * pc) / (2 * Cp * Twall + Pr * Uwall * Uwall * y * (1-y))) * (Uwall * Uwall * y * y)" />
         </FUNCTION>
-        
+
     </CONDITIONS>
 </NEKTAR>

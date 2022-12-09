@@ -58,7 +58,7 @@
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyDiffusion"           />
             <I PROPERTY="Projection"            VALUE="DisContinuous"               />
             <I PROPERTY="HOMOGENEOUS"           VALUE="1D"                          />
-             <I PROPERTY="DiffusionAdvancement"  VALUE="Explicit"                   />
+            <I PROPERTY="DiffusionAdvancement"  VALUE="Explicit"                   />
             <I PROPERTY="DiffusionType"         VALUE="LFRSD3DHomogeneous1D"        />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"        />
             <I PROPERTY="UpwindType"            VALUE="Upwind"                      />
@@ -86,18 +86,18 @@
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" USERDEFINEDTYPE="TimeDependent"
-                VALUE="exp(-2.0*wavefreq*wavefreq*t-4*wavefreq*wavefreq*t/LZ/LZ)*sin(wavefreq*(x))*sin(wavefreq*(y))*sin(2*wavefreq/LZ*(z))" />
+                    VALUE="exp(-2.0*wavefreq*wavefreq*t-4*wavefreq*wavefreq*t/LZ/LZ)*sin(wavefreq*(x))*sin(wavefreq*(y))*sin(2*wavefreq/LZ*(z))" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="u"
-            VALUE="sin(wavefreq*(x))*sin(wavefreq*(y))*sin(2*wavefreq/LZ*(z))" />
+                VALUE="sin(wavefreq*(x))*sin(wavefreq*(y))*sin(2*wavefreq/LZ*(z))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="u"
-            VALUE="exp(-2.0*wavefreq*wavefreq*t-4*wavefreq*wavefreq*t/LZ/LZ)*sin(wavefreq*(x))*sin(wavefreq*(y))*sin(2*wavefreq/LZ*(z))" />
+                VALUE="exp(-2.0*wavefreq*wavefreq*t-4*wavefreq*wavefreq*t/LZ/LZ)*sin(wavefreq*(x))*sin(wavefreq*(y))*sin(2*wavefreq/LZ*(z))" />
         </FUNCTION>
 
     </CONDITIONS>

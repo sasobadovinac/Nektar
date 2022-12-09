@@ -96,16 +96,19 @@ protected:
 
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const unsigned int &pNumForcingFields, const TiXmlElement *pForce);
+        const unsigned int &pNumForcingFields,
+        const TiXmlElement *pForce) override;
 
     SOLVER_UTILS_EXPORT virtual void v_Apply(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble &time) override;
     SOLVER_UTILS_EXPORT virtual void v_ApplyCoeff(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble &time);
+        Array<OneD, Array<OneD, NekDouble>> &outarray,
+        const NekDouble &time) override;
 
 private:
     ForcingAbsorption(const LibUtilities::SessionReaderSharedPtr &pSession,

@@ -50,24 +50,25 @@ IdealGasEoS::IdealGasEoS(const LibUtilities::SessionReaderSharedPtr &pSession)
 {
 }
 
-NekDouble IdealGasEoS::GetTemperature(const NekDouble &rho, const NekDouble &e)
+NekDouble IdealGasEoS::v_GetTemperature(const NekDouble &rho,
+                                        const NekDouble &e)
 {
     boost::ignore_unused(rho);
     return GetTemperatureKernel(e);
 }
 
-vec_t IdealGasEoS::GetTemperature(const vec_t &rho, const vec_t &e)
+vec_t IdealGasEoS::v_GetTemperature(const vec_t &rho, const vec_t &e)
 {
     boost::ignore_unused(rho);
     return GetTemperatureKernel(e);
 }
 
-NekDouble IdealGasEoS::GetPressure(const NekDouble &rho, const NekDouble &e)
+NekDouble IdealGasEoS::v_GetPressure(const NekDouble &rho, const NekDouble &e)
 {
     return GetPressureKernel(rho, e);
 }
 
-vec_t IdealGasEoS::GetPressure(const vec_t &rho, const vec_t &e)
+vec_t IdealGasEoS::v_GetPressure(const vec_t &rho, const vec_t &e)
 {
     return GetPressureKernel(rho, e);
 }

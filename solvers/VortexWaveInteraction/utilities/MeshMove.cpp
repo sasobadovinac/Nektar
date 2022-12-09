@@ -1,7 +1,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MoveMeshToCriticalLayer.cpp
+// File: MeshMove.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

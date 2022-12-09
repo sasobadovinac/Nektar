@@ -69,7 +69,7 @@ public:
 protected:
     virtual void v_Apply(Array<OneD, Array<OneD, NekDouble>> &Fwd,
                          Array<OneD, Array<OneD, NekDouble>> &physarray,
-                         const NekDouble &time);
+                         const NekDouble &time) override;
 
 private:
     PressureOutflowNonReflectiveBC(

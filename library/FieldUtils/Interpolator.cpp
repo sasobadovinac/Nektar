@@ -60,9 +60,9 @@ namespace FieldUtils
  * If both expansions use the same mesh, use LibUtilities/Foundations/Interp.h
  * instead.
  */
-void Interpolator::Interpolate(
-    const vector<MultiRegions::ExpListSharedPtr> expInField,
-    vector<MultiRegions::ExpListSharedPtr> &expOutField, NekDouble def_value)
+template <typename T>
+void Interpolator<T>::Interpolate(const T expInField, T &expOutField,
+                                  NekDouble def_value)
 {
     ASSERTL0(expInField.size() == expOutField.size(),
              "number of fields does not match");
@@ -141,9 +141,10 @@ void Interpolator::Interpolate(
  * The interpolation is performed by evaluating the expInField at the points
  * of ptsOutField, so only eNoMethod is supported.
  */
-void Interpolator::Interpolate(
-    const vector<MultiRegions::ExpListSharedPtr> expInField,
-    LibUtilities::PtsFieldSharedPtr &ptsOutField, NekDouble def_value)
+template <typename T>
+void Interpolator<T>::Interpolate(const T expInField,
+                                  LibUtilities::PtsFieldSharedPtr &ptsOutField,
+                                  NekDouble def_value)
 {
     ASSERTL0(expInField.size() == ptsOutField->GetNFields(),
              "number of fields does not match");
@@ -279,9 +280,9 @@ void Interpolator::Interpolate(
  *
  * In and output fields must have the same dimension and number of fields.
  */
-void Interpolator::Interpolate(
-    const LibUtilities::PtsFieldSharedPtr ptsInField,
-    vector<MultiRegions::ExpListSharedPtr> &expOutField)
+template <typename T>
+void Interpolator<T>::Interpolate(
+    const LibUtilities::PtsFieldSharedPtr ptsInField, T &expOutField)
 {
     ASSERTL0(expOutField.size() == ptsInField->GetNFields(),
              "number of fields does not match");
@@ -347,11 +348,15 @@ void Interpolator::Interpolate(
     }
 }
 
-void Interpolator::Interpolate(const LibUtilities::PtsFieldSharedPtr ptsInField,
-                               LibUtilities::PtsFieldSharedPtr &ptsOutField)
+template <typename T>
+void Interpolator<T>::Interpolate(
+    const LibUtilities::PtsFieldSharedPtr ptsInField,
+    LibUtilities::PtsFieldSharedPtr &ptsOutField)
 {
     LibUtilities::Interpolator::Interpolate(ptsInField, ptsOutField);
 }
 
+template class Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>;
+template class Interpolator<Array<OneD, MultiRegions::ExpListSharedPtr>>;
 } // namespace FieldUtils
 } // namespace Nektar

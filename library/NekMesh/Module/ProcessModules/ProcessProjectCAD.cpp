@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.cpp
+//  File: ProcessProjectCAD.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Calculate Jacobians of elements.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -75,7 +75,7 @@ ProcessProjectCAD::~ProcessProjectCAD()
 }
 
 bool ProcessProjectCAD::findAndProject(
-    bgi::rtree<boxI, bgi::quadratic<16>> &rtree, Array<OneD, NekDouble> in,
+    bgi::rtree<boxI, bgi::quadratic<16>> &rtree, Array<OneD, NekDouble> &in,
     int &surf)
 {
     boost::ignore_unused(surf);
@@ -88,6 +88,9 @@ bool ProcessProjectCAD::findAndProject(
     {
         // along a projecting edge the node is too far from any surface boxes
         // this is hardly surprising but rare, return false and linearise
+        m_log(WARNING) << "FindAndProject() - Edge node not in any of the "
+                          "Bounding boxes - THERE WILL BE NO PROJECTION ! "
+                       << endl;
         return false;
     }
 
@@ -108,6 +111,8 @@ bool ProcessProjectCAD::findAndProject(
 
     Array<OneD, NekDouble> uv =
         m_mesh->m_cad->GetSurf(minsurf)->locuv(in, dist);
+
+    in = m_mesh->m_cad->GetSurf(minsurf)->P(uv);
 
     return true;
 }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CFSImplicit.cpp
+// File: CompressibleFlowSystemImplicit.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -1919,7 +1919,7 @@ void CFSImplicit::PointFluxJacobianPoint(const Array<OneD, NekDouble> &Fwd,
     FJacData[4 + nVar4] = c5 + l1;
 }
 
-bool CFSImplicit::UpdateTimeStepCheck()
+bool CFSImplicit::v_UpdateTimeStepCheck()
 {
     bool flag =
         (m_time + m_timestep > m_fintime && m_fintime > 0.0) ||

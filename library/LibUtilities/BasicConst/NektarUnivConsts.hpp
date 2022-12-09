@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NektarUnivConsts.hpp
+// File: NektarUnivConsts.hpp
 //
 // For more information, please see: http://www.nektar.info
 //

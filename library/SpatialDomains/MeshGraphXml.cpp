@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: BoundaryConditions.cpp
+//  File: MeshGraphXml.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -58,7 +58,7 @@ std::string MeshGraphXml::className =
     GetMeshGraphFactory().RegisterCreatorFunction("Xml", MeshGraphXml::create,
                                                   "IO with Xml geometry");
 
-void MeshGraphXml::PartitionMesh(
+void MeshGraphXml::v_PartitionMesh(
     const LibUtilities::SessionReaderSharedPtr session)
 {
     // Get row of comm, or the whole comm if not split
@@ -372,8 +372,8 @@ void MeshGraphXml::PartitionMesh(
     }
 }
 
-void MeshGraphXml::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
-                                bool fillGraph)
+void MeshGraphXml::v_ReadGeometry(LibUtilities::DomainRangeShPtr rng,
+                                  bool fillGraph)
 {
     // Reset member variables.
     m_vertSet.clear();
@@ -440,14 +440,14 @@ void MeshGraphXml::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
     ASSERTL0(m_meshDimension <= m_spaceDimension,
              "Mesh dimension greater than space dimension");
 
-    ReadVertices();
-    ReadCurves();
+    v_ReadVertices();
+    v_ReadCurves();
     if (m_meshDimension >= 2)
     {
-        ReadEdges();
+        v_ReadEdges();
         if (m_meshDimension == 3)
         {
-            ReadFaces();
+            v_ReadFaces();
         }
     }
     ReadElements();
@@ -460,7 +460,7 @@ void MeshGraphXml::ReadGeometry(LibUtilities::DomainRangeShPtr rng,
     }
 }
 
-void MeshGraphXml::ReadVertices()
+void MeshGraphXml::v_ReadVertices()
 {
     // Now read the vertices
     TiXmlElement *element = m_xmlGeom->FirstChildElement("VERTEX");
@@ -621,7 +621,7 @@ void MeshGraphXml::ReadVertices()
     }
 }
 
-void MeshGraphXml::ReadCurves()
+void MeshGraphXml::v_ReadCurves()
 {
     // check to see if any scaling parameters are in
     // attributes and determine these values
@@ -1035,7 +1035,7 @@ void MeshGraphXml::ReadDomain()
     }
 }
 
-void MeshGraphXml::ReadEdges()
+void MeshGraphXml::v_ReadEdges()
 {
     CurveMap::iterator it;
 
@@ -1118,7 +1118,7 @@ void MeshGraphXml::ReadEdges()
     }
 }
 
-void MeshGraphXml::ReadFaces()
+void MeshGraphXml::v_ReadFaces()
 {
     /// Look for elements in FACE block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("FACE");
@@ -1268,18 +1268,18 @@ void MeshGraphXml::ReadElements()
     switch (m_meshDimension)
     {
         case 1:
-            ReadElements1D();
+            v_ReadElements1D();
             break;
         case 2:
-            ReadElements2D();
+            v_ReadElements2D();
             break;
         case 3:
-            ReadElements3D();
+            v_ReadElements3D();
             break;
     }
 }
 
-void MeshGraphXml::ReadElements1D()
+void MeshGraphXml::v_ReadElements1D()
 {
     TiXmlElement *field = NULL;
 
@@ -1357,7 +1357,7 @@ void MeshGraphXml::ReadElements1D()
     }
 }
 
-void MeshGraphXml::ReadElements2D()
+void MeshGraphXml::v_ReadElements2D()
 {
     /// Look for elements in ELEMENT block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("ELEMENT");
@@ -1503,7 +1503,7 @@ void MeshGraphXml::ReadElements2D()
     }
 }
 
-void MeshGraphXml::ReadElements3D()
+void MeshGraphXml::v_ReadElements3D()
 {
     /// Look for elements in ELEMENT block.
     TiXmlElement *field = m_xmlGeom->FirstChildElement("ELEMENT");
@@ -2011,9 +2011,8 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
              (type == 'S' && prevType == 'S'));
 
         ASSERTL0(validSequence,
-                 (std::string("Invalid combination of composite items: ") +
-                  type + " and " + prevType + ".")
-                     .c_str());
+                 std::string("Invalid combination of composite items: ") +
+                     type + " and " + prevType + ".");
 
         switch (type)
         {
@@ -2023,12 +2022,9 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
                 {
                     if (m_vertSet.find(*iter) == m_vertSet.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *iter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown vertex index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown vertex index: " +
+                                     std::to_string(*iter));
                     }
                     else
                     {
@@ -2043,12 +2039,9 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
                 {
                     if (m_segGeoms.find(*iter) == m_segGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *iter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown segment index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown segment index: " +
+                                     std::to_string(*iter));
                     }
                     else
                     {
@@ -2059,15 +2052,13 @@ void MeshGraphXml::ResolveGeomRef1D(const std::string &prevToken,
 
             default:
                 NEKERROR(ErrorUtil::efatal,
-                         (std::string("Unrecognized composite token: ") + token)
-                             .c_str());
+                         "Unrecognized composite token: " + token);
         }
     }
     catch (...)
     {
         NEKERROR(ErrorUtil::efatal,
-                 (std::string("Problem processing composite token: ") + token)
-                     .c_str());
+                 "Problem processing composite token: " + token);
     }
 
     return;
@@ -2115,9 +2106,8 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
               (prevType == 'T' || prevType == 'Q')));
 
         ASSERTL0(validSequence,
-                 (std::string("Invalid combination of composite items: ") +
-                  type + " and " + prevType + ".")
-                     .c_str());
+                 std::string("Invalid combination of composite items: ") +
+                     type + " and " + prevType + ".");
 
         switch (type)
         {
@@ -2127,11 +2117,9 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                 {
                     if (m_segGeoms.find(*seqIter) == m_segGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown edge index: ") + errStr)
-                                     .c_str());
+                                 "Unknown edge index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2147,12 +2135,9 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                 {
                     if (m_triGeoms.count(*seqIter) == 0)
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown triangle index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown triangle index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2173,12 +2158,10 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                 {
                     if (m_quadGeoms.count(*seqIter) == 0)
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown quad index: ") + errStr +
-                                  std::string(" in Composite section"))
-                                     .c_str());
+                        NEKERROR(
+                            ErrorUtil::ewarning,
+                            "Unknown quad index: " + std::to_string(*seqIter) +
+                                " in Composite section");
                     }
                     else
                     {
@@ -2198,12 +2181,9 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
                 {
                     if (*seqIter >= m_vertSet.size())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown vertex index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown vertex index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2214,15 +2194,13 @@ void MeshGraphXml::ResolveGeomRef2D(const std::string &prevToken,
 
             default:
                 NEKERROR(ErrorUtil::efatal,
-                         (std::string("Unrecognized composite token: ") + token)
-                             .c_str());
+                         "Unrecognized composite token: " + token);
         }
     }
     catch (...)
     {
         NEKERROR(ErrorUtil::efatal,
-                 (std::string("Problem processing composite token: ") + token)
-                     .c_str());
+                 "Problem processing composite token: " + token);
     }
 
     return;
@@ -2245,9 +2223,8 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
         std::string::size_type indxBeg = token.find_first_of('[') + 1;
         std::string::size_type indxEnd = token.find_last_of(']') - 1;
 
-        ASSERTL0(
-            indxBeg <= indxEnd,
-            (std::string("Error reading index definition:") + token).c_str());
+        ASSERTL0(indxBeg <= indxEnd,
+                 "Error reading index definition: " + token);
 
         std::string indxStr = token.substr(indxBeg, indxEnd - indxBeg + 1);
 
@@ -2256,9 +2233,7 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
 
         bool err = ParseUtils::GenerateSeqVector(indxStr.c_str(), seqVector);
 
-        ASSERTL0(err,
-                 (std::string("Error reading composite elements: ") + indxStr)
-                     .c_str());
+        ASSERTL0(err, "Error reading composite elements: " + indxStr);
 
         prevTokenStream >> prevType;
 
@@ -2279,9 +2254,8 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
             (prevToken.empty() || (typeMap[type] == typeMap[prevType]));
 
         ASSERTL0(validSequence,
-                 (std::string("Invalid combination of composite items: ") +
-                  type + " and " + prevType + ".")
-                     .c_str());
+                 std::string("Invalid combination of composite items: ") +
+                     type + " and " + prevType + ".");
 
         switch (type)
         {
@@ -2291,12 +2265,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_vertSet.find(*seqIter) == m_vertSet.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown vertex index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown vertex index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2311,11 +2282,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_segGeoms.find(*seqIter) == m_segGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown edge index: ") + errStr)
-                                     .c_str());
+                                 "Unknown edge index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2331,11 +2300,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                     Geometry2DSharedPtr face = GetGeometry2D(*seqIter);
                     if (face == Geometry2DSharedPtr())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown face index: ") + errStr)
-                                     .c_str());
+                                 "Unknown face index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2353,12 +2320,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_triGeoms.find(*seqIter) == m_triGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown triangle index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown triangle index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2377,11 +2341,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_quadGeoms.find(*seqIter) == m_quadGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown quad index: ") + errStr)
-                                     .c_str());
+                                 "Unknown quad index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2401,11 +2363,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_tetGeoms.find(*seqIter) == m_tetGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown tet index: ") + errStr)
-                                     .c_str());
+                                 "Unknown tet index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2425,12 +2385,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_pyrGeoms.find(*seqIter) == m_pyrGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
-                        NEKERROR(
-                            ErrorUtil::ewarning,
-                            (std::string("Unknown pyramid index: ") + errStr)
-                                .c_str());
+                        NEKERROR(ErrorUtil::ewarning,
+                                 "Unknown pyramid index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2450,11 +2407,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_prismGeoms.find(*seqIter) == m_prismGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown prism index: ") + errStr)
-                                     .c_str());
+                                 "Unknown prism index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2474,11 +2429,9 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
                 {
                     if (m_hexGeoms.find(*seqIter) == m_hexGeoms.end())
                     {
-                        char errStr[16] = "";
-                        ::sprintf(errStr, "%d", *seqIter);
                         NEKERROR(ErrorUtil::ewarning,
-                                 (std::string("Unknown hex index: ") + errStr)
-                                     .c_str());
+                                 "Unknown hex index: " +
+                                     std::to_string(*seqIter));
                     }
                     else
                     {
@@ -2493,21 +2446,19 @@ void MeshGraphXml::ResolveGeomRef3D(const std::string &prevToken,
 
             default:
                 NEKERROR(ErrorUtil::efatal,
-                         (std::string("Unrecognized composite token: ") + token)
-                             .c_str());
+                         "Unrecognized composite token: " + token);
         }
     }
     catch (...)
     {
         NEKERROR(ErrorUtil::efatal,
-                 (std::string("Problem processing composite token: ") + token)
-                     .c_str());
+                 "Problem processing composite token: " + token);
     }
 
     return;
 }
 
-void MeshGraphXml::WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts)
+void MeshGraphXml::v_WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts)
 {
     TiXmlElement *vertTag = new TiXmlElement("VERTEX");
 
@@ -2525,7 +2476,7 @@ void MeshGraphXml::WriteVertices(TiXmlElement *geomTag, PointGeomMap &verts)
     geomTag->LinkEndChild(vertTag);
 }
 
-void MeshGraphXml::WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges)
+void MeshGraphXml::v_WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges)
 {
     TiXmlElement *edgeTag =
         new TiXmlElement(m_meshDimension == 1 ? "ELEMENT" : "EDGE");
@@ -2545,7 +2496,7 @@ void MeshGraphXml::WriteEdges(TiXmlElement *geomTag, SegGeomMap &edges)
     geomTag->LinkEndChild(edgeTag);
 }
 
-void MeshGraphXml::WriteTris(TiXmlElement *faceTag, TriGeomMap &tris)
+void MeshGraphXml::v_WriteTris(TiXmlElement *faceTag, TriGeomMap &tris)
 {
     string tag = "T";
 
@@ -2561,7 +2512,7 @@ void MeshGraphXml::WriteTris(TiXmlElement *faceTag, TriGeomMap &tris)
     }
 }
 
-void MeshGraphXml::WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads)
+void MeshGraphXml::v_WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads)
 {
     string tag = "Q";
 
@@ -2578,7 +2529,7 @@ void MeshGraphXml::WriteQuads(TiXmlElement *faceTag, QuadGeomMap &quads)
     }
 }
 
-void MeshGraphXml::WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs)
+void MeshGraphXml::v_WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs)
 {
     string tag = "H";
 
@@ -2596,7 +2547,7 @@ void MeshGraphXml::WriteHexs(TiXmlElement *elmtTag, HexGeomMap &hexs)
     }
 }
 
-void MeshGraphXml::WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris)
+void MeshGraphXml::v_WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris)
 {
     string tag = "R";
 
@@ -2614,7 +2565,7 @@ void MeshGraphXml::WritePrisms(TiXmlElement *elmtTag, PrismGeomMap &pris)
     }
 }
 
-void MeshGraphXml::WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs)
+void MeshGraphXml::v_WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs)
 {
     string tag = "P";
 
@@ -2631,7 +2582,7 @@ void MeshGraphXml::WritePyrs(TiXmlElement *elmtTag, PyrGeomMap &pyrs)
     }
 }
 
-void MeshGraphXml::WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets)
+void MeshGraphXml::v_WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets)
 {
     string tag = "A";
 
@@ -2648,8 +2599,8 @@ void MeshGraphXml::WriteTets(TiXmlElement *elmtTag, TetGeomMap &tets)
     }
 }
 
-void MeshGraphXml::WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
-                               CurveMap &faces)
+void MeshGraphXml::v_WriteCurves(TiXmlElement *geomTag, CurveMap &edges,
+                                 CurveMap &faces)
 {
     TiXmlElement *curveTag = new TiXmlElement("CURVED");
     CurveMap::iterator curveIt;
@@ -2782,8 +2733,9 @@ void MeshGraphXml::WriteDefaultExpansion(TiXmlElement *root)
  * @brief Write out an XML file containing the GEOMETRY block
  * representing this MeshGraph instance inside a NEKTAR tag.
  */
-void MeshGraphXml::WriteGeometry(std::string &outfilename, bool defaultExp,
-                                 const LibUtilities::FieldMetaDataMap &metadata)
+void MeshGraphXml::v_WriteGeometry(
+    std::string &outfilename, bool defaultExp,
+    const LibUtilities::FieldMetaDataMap &metadata)
 {
     // Create empty TinyXML document.
     TiXmlDocument doc;
@@ -2808,29 +2760,29 @@ void MeshGraphXml::WriteGeometry(std::string &outfilename, bool defaultExp,
     geomTag->Clear();
 
     // Write out informatio
-    WriteVertices(geomTag, m_vertSet);
-    WriteEdges(geomTag, m_segGeoms);
+    v_WriteVertices(geomTag, m_vertSet);
+    v_WriteEdges(geomTag, m_segGeoms);
     if (m_meshDimension > 1)
     {
         TiXmlElement *faceTag =
             new TiXmlElement(m_meshDimension == 2 ? "ELEMENT" : "FACE");
 
-        WriteTris(faceTag, m_triGeoms);
-        WriteQuads(faceTag, m_quadGeoms);
+        v_WriteTris(faceTag, m_triGeoms);
+        v_WriteQuads(faceTag, m_quadGeoms);
         geomTag->LinkEndChild(faceTag);
     }
     if (m_meshDimension > 2)
     {
         TiXmlElement *elmtTag = new TiXmlElement("ELEMENT");
 
-        WriteHexs(elmtTag, m_hexGeoms);
-        WritePyrs(elmtTag, m_pyrGeoms);
-        WritePrisms(elmtTag, m_prismGeoms);
-        WriteTets(elmtTag, m_tetGeoms);
+        v_WriteHexs(elmtTag, m_hexGeoms);
+        v_WritePyrs(elmtTag, m_pyrGeoms);
+        v_WritePrisms(elmtTag, m_prismGeoms);
+        v_WriteTets(elmtTag, m_tetGeoms);
 
         geomTag->LinkEndChild(elmtTag);
     }
-    WriteCurves(geomTag, m_curvedEdges, m_curvedFaces);
+    v_WriteCurves(geomTag, m_curvedEdges, m_curvedFaces);
     WriteComposites(geomTag, m_meshComposites, m_compositesLabels);
     WriteDomain(geomTag, m_domain);
 
@@ -3064,25 +3016,25 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
             }
         }
 
-        WriteVertices(geomTag, localVert);
-        WriteEdges(geomTag, localEdge);
+        v_WriteVertices(geomTag, localVert);
+        v_WriteEdges(geomTag, localEdge);
         if (m_meshDimension > 1)
         {
             TiXmlElement *faceTag =
                 new TiXmlElement(m_meshDimension == 2 ? "ELEMENT" : "FACE");
 
-            WriteTris(faceTag, localTri);
-            WriteQuads(faceTag, localQuad);
+            v_WriteTris(faceTag, localTri);
+            v_WriteQuads(faceTag, localQuad);
             geomTag->LinkEndChild(faceTag);
         }
         if (m_meshDimension > 2)
         {
             TiXmlElement *elmtTag = new TiXmlElement("ELEMENT");
 
-            WriteHexs(elmtTag, localHex);
-            WritePyrs(elmtTag, localPyr);
-            WritePrisms(elmtTag, localPrism);
-            WriteTets(elmtTag, localTet);
+            v_WriteHexs(elmtTag, localHex);
+            v_WritePyrs(elmtTag, localPyr);
+            v_WritePrisms(elmtTag, localPrism);
+            v_WriteTets(elmtTag, localTet);
 
             geomTag->LinkEndChild(elmtTag);
         }
@@ -3109,7 +3061,7 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
             }
         }
 
-        WriteCurves(geomTag, localCurveEdge, localCurveFace);
+        v_WriteCurves(geomTag, localCurveEdge, localCurveFace);
 
         CompositeMap localComp;
         std::map<int, std::string> localCompLabels;

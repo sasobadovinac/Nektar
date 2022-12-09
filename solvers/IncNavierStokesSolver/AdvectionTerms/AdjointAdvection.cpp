@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AdjointAdvection.cpp
+// File: AdjointAdvection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -63,6 +63,7 @@ void AdjointAdvection::v_Advect(
     const Array<OneD, Array<OneD, NekDouble>> &pFwd,
     const Array<OneD, Array<OneD, NekDouble>> &pBwd)
 {
+    boost::ignore_unused(pFwd, pBwd);
     ASSERTL1(nConvectiveFields == inarray.size(),
              "Number of convective fields and Inarray are not compatible");
 

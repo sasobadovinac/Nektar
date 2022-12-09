@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterError.h
+// File: FilterError.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,14 +69,14 @@ public:
 protected:
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time) final;
+        const NekDouble &time) override final;
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time) final;
+        const NekDouble &time) override final;
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time) final;
-    virtual bool v_IsTimeDependent() final;
+        const NekDouble &time) override final;
+    virtual bool v_IsTimeDependent() override final;
 
 private:
     size_t m_index = 0;

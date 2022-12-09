@@ -6,6 +6,7 @@ SET(TESTER_SOURCES
   Metric.cpp
   MetricEigenvalue.cpp
   MetricFile.cpp
+  MetricFileExists.cpp
   MetricL2.cpp
   MetricLInf.cpp
   MetricPrecon.cpp
@@ -21,6 +22,7 @@ SET(TESTER_HEADERS
   Metric.h
   MetricEigenvalue.h
   MetricFile.h
+  MetricFileExists.h
   MetricL2.h
   MetricLInf.h
   MetricPrecon.h

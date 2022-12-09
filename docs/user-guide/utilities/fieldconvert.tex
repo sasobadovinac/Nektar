@@ -397,6 +397,7 @@ Specifically, FieldConvert has these additional functionalities
 \item \inltt{combineAvg}: Combine two \nekpp binary output (.chk or .fld) field file containing averages of fields (and
 possibly also Reynolds stresses) into single file;
 \item \inltt{concatenate}: Concatenate a \nekpp binary output (.chk or .fld) field file into single file (deprecated);
+\item \inltt{divergence}: Computes the divergence of the velocity field.
 \item \inltt{dof}: Count the total number of DOF;
 \item \inltt{equispacedoutput}: Write data as equi-spaced output using simplices to represent the data for connecting points;
 \item \inltt{extract}: Extract a boundary field;
@@ -684,14 +685,32 @@ a Paraview or VisIt output.
 %
 %
 %
+\subsection{Calculate divergence: \textit{divergence} module}
+To perform the divergence calculation and obtain an output
+field containing the divergence solution, the user can run
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -m divergence test.xml test.fld test-div.fld
+\end{lstlisting}
+where the file \inltt{test-div.fld} can be processed in a similar
+way as described in section \ref{s:utilities:fieldconvert:sub:convert}.
+%
+%
+%
 \subsection{Compute the gradient of a field: \textit{gradient} module}
-To compute the spatial gradients of all fields one can run the following command
+To compute the spatial gradients of fields one can run the following command
 %
 \begin{lstlisting}[style=BashInputStyle]
-FieldConvert -m gradient test.xml  test.fld  test-grad.fld
+FieldConvert -m gradient:vars=u,v,p:dirs=x,y test.xml  test.fld  test-grad.fld
+\end{lstlisting}
+or
+\begin{lstlisting}[style=BashInputStyle]
+  FieldConvert -m gradient:vars=0,1,2:dirs=0,1 test.xml  test.fld  test-grad.fld
 \end{lstlisting}
 %
-where the file \inltt{file-grad.fld} can be processed in a similar
+where \inltt{vars} specifies the field numbers (starting from 0) or variable names to process and
+\inltt{vars} specifies the spatial directions to compute derivatives. All fields will be
+processed if \inltt{vars} is not set. All spatial directions will be used if \inltt{vars} is not set.
+The output file \inltt{file-grad.fld} can be processed in a similar
 way as described in section \ref{s:utilities:fieldconvert:sub:convert}
 to visualise the result either in Tecplot, Paraview or VisIt.
 %

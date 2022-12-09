@@ -678,8 +678,8 @@ void MeshPartition::PartitionGraph(int nParts, bool overlapping)
             if (m_comm->GetColumnComm()->GetRank() == 0)
             {
                 // Attempt partitioning.
-                PartitionGraphImpl(nLocal, ncon, xadj, adjncy, vwgt, vsize,
-                                   adjwgt, nParts, vol, part);
+                v_PartitionGraphImpl(nLocal, ncon, xadj, adjncy, vwgt, vsize,
+                                     adjwgt, nParts, vol, part);
 
                 // Check the partitioner produced a valid partition and fix if
                 // not.

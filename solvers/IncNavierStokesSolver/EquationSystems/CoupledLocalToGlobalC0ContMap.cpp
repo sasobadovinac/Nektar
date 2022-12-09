@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CoupledLcoalToGlobalC0ContMap.cpp
+// File: CoupledLocalToGlobalC0ContMap.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -31,6 +31,7 @@
 // Description: Wrapper class around the library
 // LocalToGlobalC0ContMap class for use in the Couplied Linearised NS
 // solver.
+//
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <IncNavierStokesSolver/EquationSystems/CoupledLocalToGlobalC0ContMap.h>
@@ -54,33 +55,35 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
     const SpatialDomains::MeshGraphSharedPtr &graph,
     const SpatialDomains::BoundaryConditionsSharedPtr &boundaryConditions,
     const Array<OneD, MultiRegions::ExpListSharedPtr> &fields,
-    const MultiRegions::ExpListSharedPtr &pressure, const int nz_loc,
+    const MultiRegions::ExpListSharedPtr &pressure, const size_t nz_loc,
     const bool CheckforSingularSys)
     : AssemblyMapCG(pSession, fields[0]->GetComm())
 {
-    int i, j, k, n;
-    int cnt = 0, offset = 0;
-    int meshVertId;
-    int meshEdgeId;
-    int bndEdgeCnt;
-    int globalId;
-    int nEdgeCoeffs;
-    int nEdgeInteriorCoeffs;
+    boost::ignore_unused(graph, boundaryConditions);
+
+    size_t i, j, k, n;
+    size_t cnt = 0, offset = 0;
+    size_t meshVertId;
+    size_t meshEdgeId;
+    size_t bndEdgeCnt;
+    size_t globalId;
+    size_t nEdgeCoeffs;
+    size_t nEdgeInteriorCoeffs;
     int firstNonDirGraphVertId;
-    int nLocBndCondDofs    = 0;
-    int nLocDirBndCondDofs = 0;
-    int nExtraDirichlet    = 0;
+    size_t nLocBndCondDofs    = 0;
+    size_t nLocDirBndCondDofs = 0;
+    int nExtraDirichlet       = 0;
     LocalRegions::Expansion2DSharedPtr locExpansion;
     LocalRegions::SegExpSharedPtr bndSegExp;
     LibUtilities::BasisType bType;
     StdRegions::Orientation edgeOrient;
     Array<OneD, unsigned int> edgeInteriorMap;
     Array<OneD, int> edgeInteriorSign;
-    int nvel = fields.size();
+    size_t nvel = fields.size();
 
     const LocalRegions::ExpansionVector &locExpVector = *(fields[0]->GetExp());
     int id, diff;
-    int nel = fields[0]->GetNumElmts();
+    size_t nel = fields[0]->GetNumElmts();
 
     MultiRegions::PeriodicMap periodicVerts;
     MultiRegions::PeriodicMap periodicEdges;
@@ -157,7 +160,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
                 for (auto &mapIt : BndExpVids)
                 {
                     id                         = IsDirVertDof[mapIt.second] + 1;
-                    IsDirVertDof[mapIt.second] = (id > nvel) ? nvel : id;
+                    IsDirVertDof[mapIt.second] = (id > (int)nvel) ? nvel : id;
                 }
             }
             else
@@ -177,11 +180,11 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
                         loc_exp->GetLeftAdjacentElementExp()->GetTraceNormal(
                             loc_exp->GetLeftAdjacentElementTrace());
 
-                    int ndir = locnorm.size();
+                    size_t ndir = locnorm.size();
                     if (i < ndir) // account for Fourier version where n can be
                                   // larger then ndir
                     {
-                        for (int l = 0; l < locnorm[0].size(); ++l)
+                        for (size_t l = 0; l < locnorm[0].size(); ++l)
                         {
                             if (fabs(locnorm[i][l]) > NekConstants::kNekZeroTol)
                             {
@@ -202,7 +205,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
     Array<OneD, map<int, int>> Dofs(2);
 
     Array<OneD, int> AddMeanPressureToEdgeId(nel, -1);
-    int edgeId, vertId;
+    size_t edgeId, vertId;
 
     // special case of singular problem - need to fix one pressure
     // dof to a dirichlet edge. Since we attached pressure dof to
@@ -232,14 +235,14 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
         // more direct way of getting element from spatialDomains
         for (i = 0; i < nel; ++i)
         {
-            for (j = 0; j < locExpVector[i]->GetNverts(); ++j)
+            for (j = 0; j < (size_t)locExpVector[i]->GetNverts(); ++j)
             {
                 edgeId = (locExpVector[i]
                               ->as<LocalRegions::Expansion2D>()
                               ->GetGeom2D())
                              ->GetEid(j);
 
-                if (edgeId == id)
+                if ((int)edgeId == id)
                 {
                     AddMeanPressureToEdgeId[i] = id;
                     break;
@@ -255,7 +258,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
 
     for (i = 0; i < nel; ++i)
     {
-        for (j = 0; j < locExpVector[i]->GetNverts(); ++j)
+        for (j = 0; j < (size_t)locExpVector[i]->GetNverts(); ++j)
         {
             vertId =
                 (locExpVector[i]->as<LocalRegions::Expansion2D>()->GetGeom2D())
@@ -330,7 +333,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
     // pressure dof to a dirichlet edge
     for (i = 0; i < nel; ++i)
     {
-        for (j = 0; j < locExpVector[i]->GetNverts(); ++j)
+        for (j = 0; j < (size_t)locExpVector[i]->GetNverts(); ++j)
         {
             edgeId =
                 (locExpVector[i]->as<LocalRegions::Expansion2D>()->GetGeom2D())
@@ -412,7 +415,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
     {
         locExpansion = locExpVector[i]->as<LocalRegions::Expansion2D>();
 
-        for (j = 0; j < locExpansion->GetNtraces(); ++j)
+        for (j = 0; j < (size_t)locExpansion->GetNtraces(); ++j)
         {
             nEdgeCoeffs = locExpansion->GetTraceNcoeffs(j);
             meshEdgeId  = (locExpansion->GetGeom2D())->GetEid(j);
@@ -623,9 +626,9 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
     m_localToLocalIntMap =
         Array<OneD, int>(m_numLocalCoeffs - m_numLocalBndCoeffs, -1);
 
-    int bndcnt = 0;
-    int intcnt = 0;
-    cnt        = 0;
+    size_t bndcnt = 0;
+    size_t intcnt = 0;
+    cnt           = 0;
     for (i = 0; i < nel; ++i)
     {
         for (j = 0; j < nz_loc * (nvel * locExpVector[i]->NumBndryCoeffs());
@@ -637,7 +640,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
         for (n = 0; n < nz_loc; ++n)
         {
             m_localToLocalBndMap[bndcnt++] = cnt++;
-            for (j = 1; j < pressure->GetExp(i)->GetNcoeffs(); ++j)
+            for (j = 1; j < (size_t)pressure->GetExp(i)->GetNcoeffs(); ++j)
             {
                 m_localToLocalIntMap[intcnt++] = cnt++;
             }
@@ -654,7 +657,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
      * in all other elements.
      */
     cnt = 0;
-    int nv, velnbndry;
+    size_t nv, velnbndry;
     Array<OneD, unsigned int> bmap;
 
     // Loop over all the elements in the domain in shuffled
@@ -676,7 +679,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
         }
 
         // Loop over all edges (and vertices) of element i
-        for (j = 0; j < locExpansion->GetNtraces(); ++j)
+        for (j = 0; j < (size_t)locExpansion->GetNtraces(); ++j)
         {
             nEdgeInteriorCoeffs = locExpansion->GetTraceNcoeffs(j) - 2;
             edgeOrient          = (locExpansion->GetGeom())->GetEorient(j);
@@ -746,7 +749,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
                                                  [AddMeanPressureToEdgeId[i]]) *
                             nvel * nz_loc];
 
-        int psize = pressure->GetExp(i)->GetNcoeffs();
+        size_t psize = pressure->GetExp(i)->GetNcoeffs();
         for (n = 0; n < nz_loc; ++n)
         {
             m_localToGlobalMap[cnt + nz_loc * nvel * velnbndry + n * psize] =
@@ -829,7 +832,7 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
      * same vertex renumbering and fill in a unique interior map.
      */
     cnt = 0;
-    for (i = 0; i < m_numLocalCoeffs; ++i)
+    for (i = 0; i < (size_t)m_numLocalCoeffs; ++i)
     {
         if (m_localToGlobalMap[i] == -1)
         {
@@ -858,7 +861,8 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
             for (i = 0; i < locExpVector.size(); ++i)
             {
                 locExpansion = locExpVector[i]->as<LocalRegions::Expansion2D>();
-                for (j = 0; j < locExpansion->GetNverts(); ++j)
+                size_t nVert = locExpansion->GetNverts();
+                for (j = 0; j < nVert; ++j)
                 {
                     meshEdgeId = (locExpansion->GetGeom2D())->GetEid(j);
                     meshVertId = (locExpansion->GetGeom2D())->GetVid(j);
@@ -891,14 +895,15 @@ CoupledLocalToGlobalC0ContMap::CoupledLocalToGlobalC0ContMap(
 }
 
 void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
-    vector<map<int, int>> &ReorderedGraphVertId, int &nel,
-    const LocalRegions::ExpansionVector &locExpVector, int &edgeId, int &vertId,
-    int &firstNonDirGraphVertId, map<int, int> &IsDirEdgeDof,
+    vector<map<int, int>> &ReorderedGraphVertId, size_t &nel,
+    const LocalRegions::ExpansionVector &locExpVector, size_t &edgeId,
+    size_t &vertId, int &firstNonDirGraphVertId, map<int, int> &IsDirEdgeDof,
     MultiRegions::BottomUpSubStructuredGraphSharedPtr &bottomUpGraph,
     Array<OneD, int> &AddMeanPressureToEdgeId)
 {
+    boost::ignore_unused(vertId);
 
-    int i, j, k;
+    size_t i, j, k;
 
     // Make list of homogeneous graph edges to elmt mappings
     Array<TwoD, int> EdgeIdToElmts(ReorderedGraphVertId[1].size(), 2, -1);
@@ -906,7 +911,8 @@ void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
 
     for (i = 0; i < nel; ++i)
     {
-        for (j = 0; j < locExpVector[i]->GetNverts(); ++j)
+        size_t nVert = locExpVector[i]->GetNverts();
+        for (j = 0; j < nVert; ++j)
         {
             edgeId =
                 (locExpVector[i]->as<LocalRegions::Expansion2D>()->GetGeom2D())
@@ -933,7 +939,7 @@ void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
 
     // Start at second to last level and find edge on boundary
     // to attach element
-    int nlevels = bottomUpGraph->GetNlevels();
+    size_t nlevels = bottomUpGraph->GetNlevels();
 
     // determine a default edge to attach pressure modes to
     // which is part of the inner solve;
@@ -944,8 +950,9 @@ void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
     for (i = 0; i < bndgraphs.size(); ++i)
     {
         int GlobIdOffset = bndgraphs[i]->GetIdOffset();
+        size_t nVert     = bndgraphs[i]->GetNverts();
 
-        for (j = 0; j < bndgraphs[i]->GetNverts(); ++j)
+        for (j = 0; j < nVert; ++j)
         {
             // find edge in graph vert list
             if (HomGraphEdgeIdToEdgeId.count(GlobIdOffset + j) != 0)
@@ -965,7 +972,7 @@ void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
         }
     }
 
-    for (int n = 1; n < nlevels; ++n)
+    for (size_t n = 1; n < nlevels; ++n)
     {
         // produce a map with a key that is the element id
         // that contains which next level patch it belongs to
@@ -978,8 +985,9 @@ void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
         for (i = 0; i < bndgraphs.size(); ++i)
         {
             int GlobIdOffset = bndgraphs[i]->GetIdOffset();
+            size_t nVert     = bndgraphs[i]->GetNverts();
 
-            for (j = 0; j < bndgraphs[i]->GetNverts(); ++j)
+            for (j = 0; j < nVert; ++j)
             {
                 // find edge in graph vert list
                 if (HomGraphEdgeIdToEdgeId.count(GlobIdOffset + j) != 0)
@@ -1008,7 +1016,8 @@ void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
             int GlobIdOffset = intgraphs[i]->GetIdOffset();
             bool SetEdge     = false;
             int elmtid       = 0;
-            for (j = 0; j < intgraphs[i]->GetNverts(); ++j)
+            size_t nVert     = intgraphs[i]->GetNverts();
+            for (j = 0; j < nVert; ++j)
             {
                 // Check to see if graph vert is an edge
                 if (HomGraphEdgeIdToEdgeId.count(GlobIdOffset + j) != 0)
@@ -1070,7 +1079,8 @@ void CoupledLocalToGlobalC0ContMap::FindEdgeIdToAddMeanPressure(
             {
                 if (elmtid == -1) // find an elmtid in patch
                 {
-                    for (j = 0; j < intgraphs[i]->GetNverts(); ++j)
+                    size_t nVert = intgraphs[i]->GetNverts();
+                    for (j = 0; j < nVert; ++j)
                     {
                         if (HomGraphEdgeIdToEdgeId.count(GlobIdOffset + j) != 0)
                         {

@@ -118,7 +118,7 @@ template <typename T> void swap_endian(T &u)
 template <typename T> void swap_endian(std::vector<T> &u)
 {
     size_t vecSize = u.size();
-    for (int i = 0; i < vecSize; ++i)
+    for (size_t i = 0; i < vecSize; ++i)
     {
         swap_endian(u[i]);
     }

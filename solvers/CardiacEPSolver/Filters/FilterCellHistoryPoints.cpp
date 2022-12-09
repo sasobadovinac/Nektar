@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterCellHistoryPoints.cpp
+// File: FilterCellHistoryPoints.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -76,10 +76,10 @@ void FilterCellHistoryPoints::v_Update(
         return;
     }
 
-    int j                             = 0;
-    int k                             = 0;
-    int numPoints                     = m_historyPoints.size();
-    int numFields                     = m_cell->GetNumCellVariables();
+    size_t j                          = 0;
+    size_t k                          = 0;
+    size_t numPoints                  = m_historyPoints.size();
+    size_t numFields                  = m_cell->GetNumCellVariables();
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
     Array<OneD, NekDouble> data(numPoints * numFields, 0.0);
     Array<OneD, NekDouble> gloCoord(3, 0.0);
@@ -136,11 +136,11 @@ void FilterCellHistoryPoints::v_Update(
     {
 
         // Write data values point by point
-        for (k = 0; k < m_historyPoints.size(); ++k)
+        for (size_t k = 0; k < m_historyPoints.size(); ++k)
         {
             m_outputStream.width(8);
             m_outputStream << setprecision(6) << time;
-            for (int j = 0; j < numFields; ++j)
+            for (size_t j = 0; j < numFields; ++j)
             {
                 m_outputStream.width(25);
                 m_outputStream << setprecision(16) << data[k * numFields + j];

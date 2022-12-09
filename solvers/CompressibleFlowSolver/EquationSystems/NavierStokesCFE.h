@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NavierStokesCFE.h
+// File: NavierStokesCFE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -97,7 +97,7 @@ protected:
                     const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
     void GetViscousFluxVectorConservVar(
-        const int nDim, const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        const size_t nDim, const Array<OneD, Array<OneD, NekDouble>> &inarray,
         const TensorOfArray3D<NekDouble> &qfields,
         TensorOfArray3D<NekDouble> &outarray,
         Array<OneD, int> &nonZeroIndex = NullInt1DArray,
@@ -105,7 +105,8 @@ protected:
             NullNekDoubleArrayOfArray);
 
     void GetViscousSymmtrFluxConservVar(
-        const int nSpaceDim, const Array<OneD, Array<OneD, NekDouble>> &inaverg,
+        const size_t nSpaceDim,
+        const Array<OneD, Array<OneD, NekDouble>> &inaverg,
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         TensorOfArray3D<NekDouble> &outarray, Array<OneD, int> &nonZeroIndex,
         const Array<OneD, Array<OneD, NekDouble>> &normals);
@@ -344,7 +345,7 @@ protected:
      */
     template <bool IS_TRACE>
     void GetViscousFluxVectorConservVar(
-        const int nDim, const Array<OneD, Array<OneD, NekDouble>> &inarray,
+        const size_t nDim, const Array<OneD, Array<OneD, NekDouble>> &inarray,
         const TensorOfArray3D<NekDouble> &qfields,
         TensorOfArray3D<NekDouble> &outarray, Array<OneD, int> &nonZeroIndex,
         const Array<OneD, Array<OneD, NekDouble>> &normal)
@@ -394,7 +395,7 @@ protected:
                 }
                 else
                 {
-                    for (int d = 0; d < nDim; ++d)
+                    for (size_t d = 0; d < nDim; ++d)
                     {
                         outArrTmp[f + nConvectiveFields * d] = 0.0;
                     }
@@ -447,16 +448,16 @@ protected:
             // store data
             if (IS_TRACE)
             {
-                for (int f = 0; f < nConvectiveFields; ++f)
+                for (size_t f = 0; f < nConvectiveFields; ++f)
                 {
                     outArrTmp[f].store(&(outarray[0][f][p]), is_not_aligned);
                 }
             }
             else
             {
-                for (int d = 0; d < nDim; ++d)
+                for (size_t d = 0; d < nDim; ++d)
                 {
-                    for (int f = 0; f < nConvectiveFields; ++f)
+                    for (size_t f = 0; f < nConvectiveFields; ++f)
                     {
                         outArrTmp[f + nConvectiveFields * d].store(
                             &(outarray[d][f][p]), is_not_aligned);
@@ -472,7 +473,7 @@ protected:
             std::array<NekDouble, nDimMax> normalTmp;
             std::array<NekDouble, nVarMax * nOutMax> outArrTmp{{}};
             // rearrenge and load data
-            for (int f = 0; f < nConvectiveFields; ++f)
+            for (size_t f = 0; f < nConvectiveFields; ++f)
             {
                 inTmp[f] = inarray[f][p];
                 // zero output vector
@@ -482,7 +483,7 @@ protected:
                 }
                 else
                 {
-                    for (int d = 0; d < nDim; ++d)
+                    for (size_t d = 0; d < nDim; ++d)
                     {
                         outArrTmp[f + nConvectiveFields * d] = 0.0;
                     }
@@ -491,7 +492,7 @@ protected:
 
             if (IS_TRACE)
             {
-                for (int d = 0; d < nDim; ++d)
+                for (size_t d = 0; d < nDim; ++d)
                 {
                     normalTmp[d] = normal[d][p];
                 }
@@ -500,15 +501,15 @@ protected:
             // get viscosity
             NekDouble muS = mu[p];
 
-            for (int nderiv = 0; nderiv < nDim; ++nderiv)
+            for (size_t nderiv = 0; nderiv < nDim; ++nderiv)
             {
                 // rearrenge and load data
-                for (int f = 0; f < nConvectiveFields; ++f)
+                for (size_t f = 0; f < nConvectiveFields; ++f)
                 {
                     qfieldsTmp[f] = qfields[nderiv][f][p];
                 }
 
-                for (int d = 0; d < nDim; ++d)
+                for (size_t d = 0; d < nDim; ++d)
                 {
                     GetViscousFluxBilinearFormKernel(
                         nDim, d, nderiv, inTmp.data(), qfieldsTmp.data(), muS,
@@ -534,16 +535,16 @@ protected:
             // store data
             if (IS_TRACE)
             {
-                for (int f = 0; f < nConvectiveFields; ++f)
+                for (size_t f = 0; f < nConvectiveFields; ++f)
                 {
                     outarray[0][f][p] = outArrTmp[f];
                 }
             }
             else
             {
-                for (int d = 0; d < nDim; ++d)
+                for (size_t d = 0; d < nDim; ++d)
                 {
-                    for (int f = 0; f < nConvectiveFields; ++f)
+                    for (size_t f = 0; f < nConvectiveFields; ++f)
                     {
                         outarray[d][f][p] =
                             outArrTmp[f + nConvectiveFields * d];
@@ -560,7 +561,7 @@ protected:
         }
     }
 
-    virtual bool SupportsShockCaptType(const std::string type) const override;
+    virtual bool v_SupportsShockCaptType(const std::string type) const override;
 };
 
 } // namespace Nektar

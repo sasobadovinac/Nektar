@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterMovingAverage.h
+// File: FilterMovingAverage.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -72,8 +72,8 @@ protected:
     virtual void v_ProcessSample(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
         std::vector<Array<OneD, NekDouble>> &fieldcoeffs,
-        const NekDouble &time);
-    virtual std::string v_GetFileSuffix()
+        const NekDouble &time) override;
+    virtual std::string v_GetFileSuffix() override
     {
         return "_movAvg";
     }

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: ProcessJac.h
+//  File: ProcessProjectCAD.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: Calculate jacobians of elements.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -78,7 +78,7 @@ public:
 
 private:
     bool findAndProject(bgi::rtree<boxI, bgi::quadratic<16>> &rtree,
-                        Array<OneD, NekDouble> in, int &surf);
+                        Array<OneD, NekDouble> &in, int &surf);
 
     bool IsNotValid(std::vector<NekMesh::ElementSharedPtr> &els);
 };

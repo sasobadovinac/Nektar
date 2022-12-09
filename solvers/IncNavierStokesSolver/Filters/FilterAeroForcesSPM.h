@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterAeroForcesSPM.h
+// File: FilterAeroForcesSPM.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -87,17 +87,17 @@ protected:
 
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
 
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
 
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
 
-    virtual bool v_IsTimeDependent();
+    virtual bool v_IsTimeDependent() override;
 
 private:
 };

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSys.h
+// File: GlobalLinSysPETSc.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,7 +69,7 @@ public:
                                      const Array<OneD, const NekDouble> &pInput,
                                      Array<OneD, NekDouble> &pOutput,
                                      const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir);
+                                     const int pNumDir) override;
 
 protected:
     /// PETSc matrix object.

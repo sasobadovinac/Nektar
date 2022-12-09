@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: octree.h
+//  File: Octree.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description: cad object methods.
+//  Description:
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -211,11 +211,6 @@ void Octree::WriteOctree(string nm)
 
     for (int i = 0; i < m_octants.size(); i++)
     {
-        /*if(m_octants[i]->GetLocation() != eOnBoundary)
-        {
-            continue;
-        }*/
-
         vector<NodeSharedPtr> ns(8);
 
         ns[0] = std::shared_ptr<Node>(new Node(0, m_octants[i]->FX(eBack),
@@ -260,7 +255,8 @@ void Octree::WriteOctree(string nm)
 
     ModuleSharedPtr mod =
         GetModuleFactory().CreateInstance(ModuleKey(eOutputModule, "xml"), oct);
-    mod->RegisterConfig("outfile", nm);
+    mod->RegisterConfig("outfile", "octree.xml");
+    mod->RegisterConfig("order", nm);
     mod->ProcessVertices();
     mod->ProcessEdges();
     mod->ProcessFaces();

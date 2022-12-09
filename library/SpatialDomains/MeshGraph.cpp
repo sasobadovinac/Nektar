@@ -597,10 +597,8 @@ void MeshGraph::GetCompositeList(const std::string &compositeStr,
             }
             else
             {
-                char str[64];
-                ::sprintf(str, "%d", *iter);
                 NEKERROR(ErrorUtil::ewarning,
-                         (std::string("Undefined composite: ") + str).c_str());
+                         ("Undefined composite: " + std::to_string(*iter)));
             }
         }
     }

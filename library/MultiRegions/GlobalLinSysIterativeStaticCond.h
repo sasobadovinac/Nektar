@@ -104,19 +104,21 @@ public:
     virtual ~GlobalLinSysIterativeStaticCond();
 
 protected:
-    virtual DNekScalBlkMatSharedPtr v_GetStaticCondBlock(unsigned int n);
+    virtual DNekScalBlkMatSharedPtr v_GetStaticCondBlock(
+        unsigned int n) override;
     virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
         const GlobalLinSysKey &mkey, const std::weak_ptr<ExpList> &pExpList,
         const DNekScalBlkMatSharedPtr pSchurCompl,
         const DNekScalBlkMatSharedPtr pBinvD, const DNekScalBlkMatSharedPtr pC,
         const DNekScalBlkMatSharedPtr pInvD,
-        const std::shared_ptr<AssemblyMap> &locToGloMap);
+        const std::shared_ptr<AssemblyMap> &locToGloMap) override;
 
-    void v_PreSolve(int scLevel, Array<OneD, NekDouble> &F_bnd);
-    virtual void v_BasisFwdTransform(Array<OneD, NekDouble> &pInOut);
-    virtual void v_CoeffsBwdTransform(Array<OneD, NekDouble> &pInOut);
+    virtual void v_PreSolve(int scLevel,
+                            Array<OneD, NekDouble> &F_bnd) override;
+    virtual void v_BasisFwdTransform(Array<OneD, NekDouble> &pInOut) override;
+    virtual void v_CoeffsBwdTransform(Array<OneD, NekDouble> &pInOut) override;
     virtual void v_CoeffsFwdTransform(const Array<OneD, NekDouble> &pInput,
-                                      Array<OneD, NekDouble> &pOutput);
+                                      Array<OneD, NekDouble> &pOutput) override;
 
 private:
     /// Dense storage for block Schur complement matrix
@@ -133,11 +135,11 @@ private:
     static std::string storagedef;
     static std::string storagelookupIds[];
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     /// Assemble the Schur complement matrix.
-    void v_AssembleSchurComplement(
-        const std::shared_ptr<AssemblyMap> locToGloMap);
+    virtual void v_AssembleSchurComplement(
+        const std::shared_ptr<AssemblyMap> locToGloMap) override;
 
     /// Prepares local representation of Schur complement
     /// stored as a sparse block-diagonal matrix.
@@ -145,9 +147,9 @@ private:
 
     /// Perform a Shur-complement matrix multiply operation.
     virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
+                                    Array<OneD, NekDouble> &pOutput) override;
 
-    virtual void v_UniqueMap();
+    virtual void v_UniqueMap() override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

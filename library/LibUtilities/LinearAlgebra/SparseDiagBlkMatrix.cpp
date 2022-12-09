@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: SparseDiagBlkMatrix.hpp
+// File: SparseDiagBlkMatrix.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,8 +29,7 @@
 // DEALINGS IN THE SOFTWARE.
 //
 // Description: Diagonal block sparse matrix class templated by underlying
-// sparse
-//              storage format
+// sparse storage format
 //
 ///////////////////////////////////////////////////////////////////////////////
 

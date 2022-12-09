@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyInviscidBurger.h
+// File: UnsteadyInviscidBurger.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -93,7 +93,7 @@ protected:
     Array<OneD, NekDouble> &GetNormalVelocity();
 
     /// Initialise the object
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
 private:
 };

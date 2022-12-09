@@ -82,7 +82,7 @@ protected:
 
     SPATIAL_DOMAINS_EXPORT virtual NekDouble v_GetLocCoords(
         const Array<OneD, const NekDouble> &coords,
-        Array<OneD, NekDouble> &Lcoords);
+        Array<OneD, NekDouble> &Lcoords) override;
 
     void NewtonIterationForLocCoord(const Array<OneD, const NekDouble> &coords,
                                     const Array<OneD, const NekDouble> &ptsx,
@@ -94,12 +94,12 @@ private:
     //---------------------------------------
     // Helper functions
     //---------------------------------------
-    virtual int v_GetShapeDim() const;
-    virtual PointGeomSharedPtr v_GetVertex(int i) const;
-    virtual Geometry1DSharedPtr v_GetEdge(int i) const;
-    virtual int v_GetNumVerts() const;
-    virtual int v_GetNumEdges() const;
-    virtual StdRegions::Orientation v_GetEorient(const int i) const;
+    virtual int v_GetShapeDim() const override;
+    virtual PointGeomSharedPtr v_GetVertex(int i) const override;
+    virtual Geometry1DSharedPtr v_GetEdge(int i) const override;
+    virtual int v_GetNumVerts() const override;
+    virtual int v_GetNumEdges() const override;
+    virtual StdRegions::Orientation v_GetEorient(const int i) const override;
 };
 
 } // namespace SpatialDomains

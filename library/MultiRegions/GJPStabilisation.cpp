@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GJPStabilisation.cpp
+// File: GJPStabilisation.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Geometry.h
+//  File: Geometry.h
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -244,7 +244,7 @@ protected:
  * @brief Unary function that constructs a hash of a Geometry object, based on
  * the vertex IDs.
  */
-struct GeometryHash : std::unary_function<GeometrySharedPtr, std::size_t>
+struct GeometryHash
 {
     std::size_t operator()(GeometrySharedPtr const &p) const
     {

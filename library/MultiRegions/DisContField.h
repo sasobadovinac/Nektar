@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File DisContField.h
+// File: DisContField.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -127,7 +127,7 @@ public:
 protected:
     /// The number of boundary segments on which Dirichlet boundary
     /// conditions are imposed.
-    int m_numDirBndCondExpansions;
+    size_t m_numDirBndCondExpansions;
 
     /**
      * @brief An object which contains the discretised boundary
@@ -207,52 +207,44 @@ protected:
     void FindPeriodicTraces(const SpatialDomains::BoundaryConditions &bcs,
                             const std::string variable);
 
-    virtual ExpListSharedPtr &v_GetTrace()
-    {
-        if (m_trace == NullExpListSharedPtr)
-        {
-            SetUpDG();
-        }
+    void SetUpDG(const std::string = "DefaultVar",
+                 const Collections::ImplementationType ImpType =
+                     Collections::eNoImpType);
 
-        return m_trace;
-    }
+    bool IsLeftAdjacentTrace(const int n, const int e);
 
-    virtual AssemblyMapDGSharedPtr &v_GetTraceMap(void)
-    {
-        return m_traceMap;
-    }
+    virtual ExpListSharedPtr &v_GetTrace() override;
+
+    virtual AssemblyMapDGSharedPtr &v_GetTraceMap(void) override;
 
     virtual const LocTraceToTraceMapSharedPtr &v_GetLocTraceToTraceMap(
-        void) const
-    {
-        return m_locTraceToTraceMap;
-    }
+        void) const override;
 
-    // Return the internal vector which identifieds if trace
-    // is left adjacent definiing which trace the normal
-    // points otwards from
-    virtual std::vector<bool> &v_GetLeftAdjacentTraces(void);
+    virtual std::vector<bool> &v_GetLeftAdjacentTraces(void) override;
 
     virtual void v_AddTraceIntegral(const Array<OneD, const NekDouble> &Fn,
-                                    Array<OneD, NekDouble> &outarray);
+                                    Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_AddFwdBwdTraceIntegral(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_AddTraceQuadPhysToField(
         const Array<OneD, const NekDouble> &Fwd,
-        const Array<OneD, const NekDouble> &Bwd, Array<OneD, NekDouble> &field);
-    virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray);
+        const Array<OneD, const NekDouble> &Bwd,
+        Array<OneD, NekDouble> &field) override;
+
     virtual void v_ExtractTracePhys(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray);
+                                    Array<OneD, NekDouble> &outarray) override;
+
+    virtual void v_ExtractTracePhys(Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_GetLocTraceFromTracePts(
         const Array<OneD, const NekDouble> &Fwd,
         const Array<OneD, const NekDouble> &Bwd,
         Array<OneD, NekDouble> &locTraceFwd,
-        Array<OneD, NekDouble> &locTraceBwd);
+        Array<OneD, NekDouble> &locTraceBwd) override;
 
 #if 0
             /// Populates the list of boundary condition expansions in multidomain case.
@@ -270,42 +262,33 @@ protected:
     void GenerateFieldBnd1D(SpatialDomains::BoundaryConditions &bcs,
                             const std::string variable);
 
-    virtual std::map<int, RobinBCInfoSharedPtr> v_GetRobinBCInfo();
+    virtual std::map<int, RobinBCInfoSharedPtr> v_GetRobinBCInfo() override;
 
     virtual const Array<OneD, const MultiRegions::ExpListSharedPtr>
-        &v_GetBndCondExpansions()
-    {
-        return m_bndCondExpansions;
-    }
+        &v_GetBndCondExpansions() override;
 
     virtual const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
-        &v_GetBndConditions()
-    {
-        return m_bndConditions;
-    }
+        &v_GetBndConditions() override;
 
-    virtual MultiRegions::ExpListSharedPtr &v_UpdateBndCondExpansion(int i)
-    {
-        return m_bndCondExpansions[i];
-    }
+    virtual MultiRegions::ExpListSharedPtr &v_UpdateBndCondExpansion(
+        int i) override;
 
     virtual Array<OneD, SpatialDomains::BoundaryConditionShPtr>
-        &v_UpdateBndConditions()
-    {
-        return m_bndConditions;
-    }
+        &v_UpdateBndConditions() override;
 
     virtual void v_GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
-                                        Array<OneD, int> &TraceID);
-    virtual void v_GetBndElmtExpansion(int i, std::shared_ptr<ExpList> &result,
-                                       const bool DeclareCoeffPhysArrays);
-    virtual void v_Reset();
+                                        Array<OneD, int> &TraceID) override;
+    virtual void v_GetBndElmtExpansion(
+        int i, std::shared_ptr<ExpList> &result,
+        const bool DeclareCoeffPhysArrays) override;
+
+    virtual void v_Reset() override;
 
     /// Evaluate all boundary conditions at a given time..
     virtual void v_EvaluateBoundaryConditions(
         const NekDouble time = 0.0, const std::string varName = "",
         const NekDouble x2_in = NekConstants::kNekUnsetDouble,
-        const NekDouble x3_in = NekConstants::kNekUnsetDouble);
+        const NekDouble x3_in = NekConstants::kNekUnsetDouble) override;
 
     /// Solve the Helmholtz equation.
     virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
@@ -314,47 +297,43 @@ protected:
                              const StdRegions::VarCoeffMap &varcoeff,
                              const MultiRegions::VarFactorsMap &varfactors,
                              const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing);
+                             const bool PhysSpaceForcing) override;
 
-    inline virtual void v_PeriodicBwdCopy(
-        const Array<OneD, const NekDouble> &Fwd, Array<OneD, NekDouble> &Bwd);
+    virtual void v_PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
+                                   Array<OneD, NekDouble> &Bwd) override;
 
-    virtual void v_FillBwdWithBwdWeight(Array<OneD, NekDouble> &weightave,
-                                        Array<OneD, NekDouble> &weightjmp);
+    virtual void v_FillBwdWithBwdWeight(
+        Array<OneD, NekDouble> &weightave,
+        Array<OneD, NekDouble> &weightjmp) override;
 
-    inline virtual void v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
-                                             Array<OneD, NekDouble> &Bwd);
+    virtual void v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
+                                      Array<OneD, NekDouble> &Bwd) override;
 
     virtual void v_GetFwdBwdTracePhys(const Array<OneD, const NekDouble> &field,
                                       Array<OneD, NekDouble> &Fwd,
                                       Array<OneD, NekDouble> &Bwd,
                                       bool FillBnd          = true,
                                       bool PutFwdInBwdOnBCs = false,
-                                      bool DoExchange       = true);
+                                      bool DoExchange       = true) override;
+
     virtual void v_FillBwdWithBoundCond(const Array<OneD, NekDouble> &Fwd,
                                         Array<OneD, NekDouble> &Bwd,
-                                        bool PutFwdInBwdOnBCs);
+                                        bool PutFwdInBwdOnBCs) override;
 
-    inline virtual const Array<OneD, const NekDouble> &v_GetBndCondBwdWeight();
+    virtual const Array<OneD, const NekDouble> &v_GetBndCondBwdWeight()
+        override;
 
-    inline virtual void v_SetBndCondBwdWeight(const int index,
-                                              const NekDouble value);
+    virtual void v_SetBndCondBwdWeight(const int index,
+                                       const NekDouble value) override;
 
-    void SetUpDG(const std::string = "DefaultVar");
-    bool IsLeftAdjacentTrace(const int n, const int e);
-
-    /**
-     * @brief Obtain a copy of the periodic edges and vertices for this
-     * field.
-     */
     virtual void v_GetPeriodicEntities(PeriodicMap &periodicVerts,
                                        PeriodicMap &periodicEdges,
-                                       PeriodicMap &periodicFaces)
-    {
-        periodicVerts = m_periodicVerts;
-        periodicEdges = m_periodicEdges;
-        periodicFaces = m_periodicFaces;
-    }
+                                       PeriodicMap &periodicFaces) override;
+
+    virtual void v_AddTraceIntegralToOffDiag(
+        const Array<OneD, const NekDouble> &FwdFlux,
+        const Array<OneD, const NekDouble> &BwdFlux,
+        Array<OneD, NekDouble> &outarray) override;
 
 private:
     std::vector<bool> m_negatedFluxNormal;
@@ -363,48 +342,9 @@ private:
         const SpatialDomains::CompositeMap &domain,
         const SpatialDomains::BoundaryConditions &Allbcs,
         const std::string &variable);
-    virtual void v_AddTraceIntegralToOffDiag(
-        const Array<OneD, const NekDouble> &FwdFlux,
-        const Array<OneD, const NekDouble> &BwdFlux,
-        Array<OneD, NekDouble> &outarray);
 };
 
-inline std::vector<bool> &DisContField::v_GetLeftAdjacentTraces(void)
-{
-    return m_leftAdjacentTraces;
-}
-
 typedef std::shared_ptr<DisContField> DisContFieldSharedPtr;
-
-/**
- * Generate the forward or backward state for each trace point.
- * @param   Fwd     Forward state.
- * @param   Bwd     Backward state.
- */
-void DisContField::v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
-                                        Array<OneD, NekDouble> &Bwd)
-{
-    v_GetFwdBwdTracePhys(m_phys, Fwd, Bwd);
-}
-
-const Array<OneD, const NekDouble> &DisContField::v_GetBndCondBwdWeight()
-{
-    return m_bndCondBndWeight;
-}
-
-void DisContField::v_SetBndCondBwdWeight(const int index, const NekDouble value)
-{
-    m_bndCondBndWeight[index] = value;
-}
-
-void DisContField::v_PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
-                                     Array<OneD, NekDouble> &Bwd)
-{
-    for (int n = 0; n < m_periodicFwdCopy.size(); ++n)
-    {
-        Bwd[m_periodicBwdCopy[n]] = Fwd[m_periodicFwdCopy[n]];
-    }
-}
 
 } // namespace MultiRegions
 } // namespace Nektar

@@ -57,7 +57,7 @@ protected:
     virtual void v_PointSolve(NekDouble etaL, NekDouble uL, NekDouble vL,
                               NekDouble dL, NekDouble etaR, NekDouble uR,
                               NekDouble vR, NekDouble dR, NekDouble &etaf,
-                              NekDouble &uf, NekDouble &vf);
+                              NekDouble &uf, NekDouble &vf) override;
 };
 } // namespace Nektar
 

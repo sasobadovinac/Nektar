@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File GlobalLinSys.h
+// File: GlobalLinSysDirect.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -62,7 +62,7 @@ protected:
                                      const Array<OneD, const NekDouble> &pInput,
                                      Array<OneD, NekDouble> &pOutput,
                                      const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir);
+                                     const int pNumDir) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

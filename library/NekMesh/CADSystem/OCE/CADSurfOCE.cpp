@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File: CADSurf.cpp
+//  File: CADSurfOCE.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -174,7 +174,10 @@ NekDouble CADSurfOCE::Curvature(Array<OneD, NekDouble> uv)
         return -1.0;
     }
 
-    return d.MaxCurvature() * 1000.0;
+    NekDouble d1 = abs(d.MaxCurvature());
+    NekDouble d2 = abs(d.MinCurvature());
+
+    return d1 > d2 ? d1 * 1000.0 : d2 * 1000.0;
 }
 
 Array<OneD, NekDouble> CADSurfOCE::P(Array<OneD, NekDouble> uv)

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// File DisContField3DHomogeneous1D.cpp
+// File: DisContField3DHomogeneous1D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -200,6 +200,49 @@ void DisContField3DHomogeneous1D::SetupBoundaryConditions(
     v_EvaluateBoundaryConditions(0.0, variable);
 }
 
+/**
+ * @brief Set up all DG member variables and maps.
+ */
+void DisContField3DHomogeneous1D::SetUpDG()
+{
+    const int nPlanes     = m_planes.size();
+    const int nTracePlane = m_planes[0]->GetTrace()->GetExpSize();
+
+    // Get trace map from first plane.
+    AssemblyMapDGSharedPtr traceMap = m_planes[0]->GetTraceMap();
+    const Array<OneD, const int> &traceBndMap =
+        traceMap->GetBndCondIDToGlobalTraceID();
+    int mapSize = traceBndMap.size();
+
+    // Set up trace boundary map
+    m_traceBndMap = Array<OneD, int>(nPlanes * mapSize);
+
+    int i, n, e, cnt = 0, cnt1 = 0;
+
+    for (i = 0; i < m_bndCondExpansions.size(); ++i)
+    {
+        int nExp      = m_bndCondExpansions[i]->GetExpSize();
+        int nPlaneExp = nExp / nPlanes;
+
+        if (m_bndConditions[i]->GetBoundaryConditionType() ==
+            SpatialDomains::ePeriodic)
+        {
+            continue;
+        }
+
+        for (n = 0; n < nPlanes; ++n)
+        {
+            const int offset = n * nTracePlane;
+            for (e = 0; e < nPlaneExp; ++e)
+            {
+                m_traceBndMap[cnt++] = offset + traceBndMap[cnt1 + e];
+            }
+        }
+
+        cnt1 += nPlaneExp;
+    }
+}
+
 void DisContField3DHomogeneous1D::v_HelmSolve(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
@@ -246,6 +289,311 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
+}
+
+/// @todo Fix in another way considering all the planes
+ExpListSharedPtr &DisContField3DHomogeneous1D::v_GetTrace()
+{
+    return m_trace;
+}
+
+/// @todo Fix in another way considering all the planes
+AssemblyMapDGSharedPtr &DisContField3DHomogeneous1D::v_GetTraceMap()
+{
+    return m_planes[0]->GetTraceMap();
+}
+
+void DisContField3DHomogeneous1D::v_ExtractTracePhys(
+    Array<OneD, NekDouble> &outarray)
+{
+    ASSERTL1(m_physState == true,
+             "Field must be in physical state to extract trace space.");
+
+    v_ExtractTracePhys(m_phys, outarray);
+}
+
+/**
+ * @brief This method extracts the trace (edges in 2D) for each plane
+ * from the field @a inarray and puts the values in @a outarray.
+ *
+ * It assumes the field is C0 continuous so that it can overwrite the
+ * edge data when visited by the two adjacent elements.
+ *
+ * @param inarray   An array containing the 2D data from which we wish
+ *                  to extract the edge data.
+ * @param outarray  The resulting edge information.
+ */
+void DisContField3DHomogeneous1D::v_ExtractTracePhys(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nPoints_plane = m_planes[0]->GetTotPoints();
+    int nTracePts     = m_planes[0]->GetTrace()->GetTotPoints();
+
+    for (int i = 0; i < m_planes.size(); ++i)
+    {
+        Array<OneD, NekDouble> inarray_plane(nPoints_plane, 0.0);
+        Array<OneD, NekDouble> outarray_plane(nPoints_plane, 0.0);
+
+        Vmath::Vcopy(nPoints_plane, &inarray[i * nPoints_plane], 1,
+                     &inarray_plane[0], 1);
+
+        m_planes[i]->ExtractTracePhys(inarray_plane, outarray_plane);
+
+        Vmath::Vcopy(nTracePts, &outarray_plane[0], 1, &outarray[i * nTracePts],
+                     1);
+    }
+}
+
+const Array<OneD, const int> &DisContField3DHomogeneous1D::v_GetTraceBndMap()
+{
+    return m_traceBndMap;
+}
+
+void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
+    int i, std::shared_ptr<ExpList> &result, const bool DeclareCoeffPhysArrays)
+{
+    int n, cnt, nq;
+    int offsetOld, offsetNew;
+
+    std::vector<unsigned int> eIDs;
+    Array<OneD, int> ElmtID, EdgeID;
+    GetBoundaryToElmtMap(ElmtID, EdgeID);
+
+    // Skip other boundary regions
+    for (cnt = n = 0; n < i; ++n)
+    {
+        cnt += m_bndCondExpansions[n]->GetExpSize();
+    }
+
+    // Populate eIDs with information from BoundaryToElmtMap
+    for (n = 0; n < m_bndCondExpansions[i]->GetExpSize(); ++n)
+    {
+        eIDs.push_back(ElmtID[cnt + n]);
+    }
+
+    // Create expansion list
+    // Note: third arguemnt declares phys coeffs that are not
+    // required but currently it is needed to declare the
+    // planes because bool is liked
+    result = MemoryManager<ExpList3DHomogeneous1D>::AllocateSharedPtr(
+        *this, eIDs, true, Collections::eNoCollection);
+
+    // Copy phys and coeffs to new explist
+    if (DeclareCoeffPhysArrays)
+    {
+        Array<OneD, NekDouble> tmp1, tmp2;
+        for (n = 0; n < result->GetExpSize(); ++n)
+        {
+            nq        = GetExp(ElmtID[cnt + n])->GetTotPoints();
+            offsetOld = GetPhys_Offset(ElmtID[cnt + n]);
+            offsetNew = result->GetPhys_Offset(n);
+            Vmath::Vcopy(nq, tmp1 = GetPhys() + offsetOld, 1,
+                         tmp2 = result->UpdatePhys() + offsetNew, 1);
+
+            nq        = GetExp(ElmtID[cnt + n])->GetNcoeffs();
+            offsetOld = GetCoeff_Offset(ElmtID[cnt + n]);
+            offsetNew = result->GetCoeff_Offset(n);
+            Vmath::Vcopy(nq, tmp1 = GetCoeffs() + offsetOld, 1,
+                         tmp2 = result->UpdateCoeffs() + offsetNew, 1);
+        }
+    }
+
+    // Set wavespace value
+    result->SetWaveSpace(GetWaveSpace());
+}
+
+void DisContField3DHomogeneous1D::v_GetBoundaryToElmtMap(
+    Array<OneD, int> &ElmtID, Array<OneD, int> &EdgeID)
+{
+
+    if (m_BCtoElmMap.size() == 0)
+    {
+        Array<OneD, int> ElmtID_tmp;
+        Array<OneD, int> EdgeID_tmp;
+
+        m_planes[0]->GetBoundaryToElmtMap(ElmtID_tmp, EdgeID_tmp);
+        int nel_per_plane = m_planes[0]->GetExpSize();
+        int nplanes       = m_planes.size();
+
+        int MapSize = ElmtID_tmp.size();
+
+        m_BCtoElmMap = Array<OneD, int>(nplanes * MapSize);
+        m_BCtoEdgMap = Array<OneD, int>(nplanes * MapSize);
+
+        // If this mesh (or partition) has no BCs, skip this step
+        if (MapSize > 0)
+        {
+            int i, j, n, cnt;
+            int cntPlane = 0;
+            for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
+            {
+                int planeExpSize =
+                    m_planes[0]->GetBndCondExpansions()[n]->GetExpSize();
+                for (i = 0; i < planeExpSize; ++i, ++cntPlane)
+                {
+                    for (j = 0; j < nplanes; j++)
+                    {
+                        m_BCtoElmMap[cnt + i + j * planeExpSize] =
+                            ElmtID_tmp[cntPlane] + j * nel_per_plane;
+                        m_BCtoEdgMap[cnt + i + j * planeExpSize] =
+                            EdgeID_tmp[cntPlane];
+                    }
+                }
+                cnt += m_bndCondExpansions[n]->GetExpSize();
+            }
+        }
+    }
+    ElmtID = m_BCtoElmMap;
+    EdgeID = m_BCtoEdgMap;
+}
+
+void DisContField3DHomogeneous1D::v_GetBCValues(
+    Array<OneD, NekDouble> &BndVals, const Array<OneD, NekDouble> &TotField,
+    int BndID)
+{
+    LocalRegions::ExpansionSharedPtr elmt;
+    LocalRegions::Expansion1DSharedPtr temp_BC_exp;
+
+    Array<OneD, const NekDouble> tmp_Tot;
+    Array<OneD, NekDouble> tmp_BC;
+
+    int cnt = 0;
+    int pos = 0;
+    int exp_size, exp_size_per_plane, elmtID, boundaryID;
+    int offset, exp_dim;
+
+    for (int k = 0; k < m_planes.size(); k++)
+    {
+        for (int n = 0; n < m_bndConditions.size(); ++n)
+        {
+            exp_size           = m_bndCondExpansions[n]->GetExpSize();
+            exp_size_per_plane = exp_size / m_planes.size();
+
+            for (int i = 0; i < exp_size_per_plane; i++)
+            {
+                if (n == BndID)
+                {
+                    elmtID     = m_BCtoElmMap[cnt];
+                    boundaryID = m_BCtoEdgMap[cnt];
+                    exp_dim    = m_bndCondExpansions[n]
+                                  ->GetExp(i + k * exp_size_per_plane)
+                                  ->GetTotPoints();
+                    offset = GetPhys_Offset(elmtID);
+                    elmt   = GetExp(elmtID);
+                    temp_BC_exp =
+                        std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
+                            m_bndCondExpansions[n]->GetExp(
+                                i + k * exp_size_per_plane));
+
+                    elmt->GetTracePhysVals(boundaryID, temp_BC_exp,
+                                           tmp_Tot = TotField + offset,
+                                           tmp_BC  = BndVals + pos);
+                    pos += exp_dim;
+                }
+                cnt++;
+            }
+        }
+    }
+}
+
+void DisContField3DHomogeneous1D::v_NormVectorIProductWRTBase(
+    Array<OneD, const NekDouble> &V1, Array<OneD, const NekDouble> &V2,
+    Array<OneD, NekDouble> &outarray, int BndID)
+{
+    LocalRegions::ExpansionSharedPtr elmt;
+    LocalRegions::Expansion1DSharedPtr temp_BC_exp;
+
+    Array<OneD, NekDouble> tmp_V1;
+    Array<OneD, NekDouble> tmp_V2;
+    Array<OneD, NekDouble> tmp_outarray;
+
+    int cnt = 0;
+    int exp_size, exp_size_per_plane, elmtID, Phys_offset, Coef_offset;
+
+    for (int k = 0; k < m_planes.size(); k++)
+    {
+        for (int n = 0; n < m_bndConditions.size(); ++n)
+        {
+            exp_size           = m_bndCondExpansions[n]->GetExpSize();
+            exp_size_per_plane = exp_size / m_planes.size();
+
+            for (int i = 0; i < exp_size_per_plane; i++)
+            {
+                if (n == BndID)
+                {
+                    elmtID = m_BCtoElmMap[cnt];
+
+                    Phys_offset = m_bndCondExpansions[n]->GetPhys_Offset(
+                        i + k * exp_size_per_plane);
+                    Coef_offset = m_bndCondExpansions[n]->GetCoeff_Offset(
+                        i + k * exp_size_per_plane);
+
+                    elmt = GetExp(elmtID);
+                    temp_BC_exp =
+                        std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
+                            m_bndCondExpansions[n]->GetExp(
+                                i + k * exp_size_per_plane));
+
+                    temp_BC_exp->NormVectorIProductWRTBase(
+                        tmp_V1 = V1 + Phys_offset, tmp_V2 = V2 + Phys_offset,
+                        tmp_outarray = outarray + Coef_offset);
+                }
+                cnt++;
+            }
+        }
+    }
+}
+
+/**
+ */
+void DisContField3DHomogeneous1D::v_GetBoundaryNormals(
+    int i, Array<OneD, Array<OneD, NekDouble>> &normals)
+{
+    int expdim  = GetCoordim(0);
+    int coordim = 3;
+    Array<OneD, NekDouble> tmp;
+    LocalRegions::ExpansionSharedPtr elmt;
+
+    Array<OneD, int> ElmtID, EdgeID;
+    GetBoundaryToElmtMap(ElmtID, EdgeID);
+
+    // Initialise result
+    normals = Array<OneD, Array<OneD, NekDouble>>(coordim);
+    for (int j = 0; j < coordim; ++j)
+    {
+        normals[j] = Array<OneD, NekDouble>(
+            GetBndCondExpansions()[i]->GetTotPoints(), 0.0);
+    }
+
+    // Skip other boundary regions
+    int cnt = 0;
+    for (int n = 0; n < i; ++n)
+    {
+        cnt += GetBndCondExpansions()[n]->GetExpSize();
+    }
+
+    int offset;
+    for (int n = 0; n < GetBndCondExpansions()[i]->GetExpSize(); ++n)
+    {
+        offset = GetBndCondExpansions()[i]->GetPhys_Offset(n);
+        int nq = GetBndCondExpansions()[i]->GetExp(n)->GetTotPoints();
+
+        elmt = GetExp(ElmtID[cnt + n]);
+        const Array<OneD, const Array<OneD, NekDouble>> normalsElmt =
+            elmt->GetTraceNormal(EdgeID[cnt + n]);
+        // Copy to result
+        for (int j = 0; j < expdim; ++j)
+        {
+            Vmath::Vcopy(nq, normalsElmt[j], 1, tmp = normals[j] + offset, 1);
+        }
+    }
+}
+
+std::map<int, RobinBCInfoSharedPtr> DisContField3DHomogeneous1D::
+    v_GetRobinBCInfo()
+{
+    return std::map<int, RobinBCInfoSharedPtr>();
 }
 
 void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
@@ -379,341 +727,34 @@ void DisContField3DHomogeneous1D::v_EvaluateBoundaryConditions(
     }
 }
 
+const Array<OneD, const MultiRegions::ExpListSharedPtr>
+    &DisContField3DHomogeneous1D::v_GetBndCondExpansions(void)
+{
+    return m_bndCondExpansions;
+}
+
+const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+    &DisContField3DHomogeneous1D::v_GetBndConditions()
+{
+    return m_bndConditions;
+}
+
 std::shared_ptr<ExpList> &DisContField3DHomogeneous1D::v_UpdateBndCondExpansion(
     int i)
 {
-    return UpdateBndCondExpansion(i);
+    return m_bndCondExpansions[i];
 }
 
 Array<OneD, SpatialDomains::BoundaryConditionShPtr>
     &DisContField3DHomogeneous1D::v_UpdateBndConditions()
 {
-    return UpdateBndConditions();
+    return m_bndConditions;
 }
 
-void DisContField3DHomogeneous1D::GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
-                                                       Array<OneD, int> &EdgeID)
+void DisContField3DHomogeneous1D::v_SetBndCondBwdWeight(const int index,
+                                                        const NekDouble value)
 {
-
-    if (m_BCtoElmMap.size() == 0)
-    {
-        Array<OneD, int> ElmtID_tmp;
-        Array<OneD, int> EdgeID_tmp;
-
-        m_planes[0]->GetBoundaryToElmtMap(ElmtID_tmp, EdgeID_tmp);
-        int nel_per_plane = m_planes[0]->GetExpSize();
-        int nplanes       = m_planes.size();
-
-        int MapSize = ElmtID_tmp.size();
-
-        m_BCtoElmMap = Array<OneD, int>(nplanes * MapSize);
-        m_BCtoEdgMap = Array<OneD, int>(nplanes * MapSize);
-
-        // If this mesh (or partition) has no BCs, skip this step
-        if (MapSize > 0)
-        {
-            int i, j, n, cnt;
-            int cntPlane = 0;
-            for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
-            {
-                int planeExpSize =
-                    m_planes[0]->GetBndCondExpansions()[n]->GetExpSize();
-                for (i = 0; i < planeExpSize; ++i, ++cntPlane)
-                {
-                    for (j = 0; j < nplanes; j++)
-                    {
-                        m_BCtoElmMap[cnt + i + j * planeExpSize] =
-                            ElmtID_tmp[cntPlane] + j * nel_per_plane;
-                        m_BCtoEdgMap[cnt + i + j * planeExpSize] =
-                            EdgeID_tmp[cntPlane];
-                    }
-                }
-                cnt += m_bndCondExpansions[n]->GetExpSize();
-            }
-        }
-    }
-    ElmtID = m_BCtoElmMap;
-    EdgeID = m_BCtoEdgMap;
-}
-
-void DisContField3DHomogeneous1D::v_GetBndElmtExpansion(
-    int i, std::shared_ptr<ExpList> &result, const bool DeclareCoeffPhysArrays)
-{
-    int n, cnt, nq;
-    int offsetOld, offsetNew;
-
-    std::vector<unsigned int> eIDs;
-    Array<OneD, int> ElmtID, EdgeID;
-    GetBoundaryToElmtMap(ElmtID, EdgeID);
-
-    // Skip other boundary regions
-    for (cnt = n = 0; n < i; ++n)
-    {
-        cnt += m_bndCondExpansions[n]->GetExpSize();
-    }
-
-    // Populate eIDs with information from BoundaryToElmtMap
-    for (n = 0; n < m_bndCondExpansions[i]->GetExpSize(); ++n)
-    {
-        eIDs.push_back(ElmtID[cnt + n]);
-    }
-
-    // Create expansion list
-    // Note: third arguemnt declares phys coeffs that are not
-    // required but currently it is needed to declare the
-    // planes because bool is liked
-    result = MemoryManager<ExpList3DHomogeneous1D>::AllocateSharedPtr(
-        *this, eIDs, true, Collections::eNoCollection);
-
-    // Copy phys and coeffs to new explist
-    if (DeclareCoeffPhysArrays)
-    {
-        Array<OneD, NekDouble> tmp1, tmp2;
-        for (n = 0; n < result->GetExpSize(); ++n)
-        {
-            nq        = GetExp(ElmtID[cnt + n])->GetTotPoints();
-            offsetOld = GetPhys_Offset(ElmtID[cnt + n]);
-            offsetNew = result->GetPhys_Offset(n);
-            Vmath::Vcopy(nq, tmp1 = GetPhys() + offsetOld, 1,
-                         tmp2 = result->UpdatePhys() + offsetNew, 1);
-
-            nq        = GetExp(ElmtID[cnt + n])->GetNcoeffs();
-            offsetOld = GetCoeff_Offset(ElmtID[cnt + n]);
-            offsetNew = result->GetCoeff_Offset(n);
-            Vmath::Vcopy(nq, tmp1 = GetCoeffs() + offsetOld, 1,
-                         tmp2 = result->UpdateCoeffs() + offsetNew, 1);
-        }
-    }
-
-    // Set wavespace value
-    result->SetWaveSpace(GetWaveSpace());
-}
-
-void DisContField3DHomogeneous1D::GetBCValues(
-    Array<OneD, NekDouble> &BndVals, const Array<OneD, NekDouble> &TotField,
-    int BndID)
-{
-    LocalRegions::ExpansionSharedPtr elmt;
-    LocalRegions::Expansion1DSharedPtr temp_BC_exp;
-
-    Array<OneD, const NekDouble> tmp_Tot;
-    Array<OneD, NekDouble> tmp_BC;
-
-    int cnt = 0;
-    int pos = 0;
-    int exp_size, exp_size_per_plane, elmtID, boundaryID;
-    int offset, exp_dim;
-
-    for (int k = 0; k < m_planes.size(); k++)
-    {
-        for (int n = 0; n < m_bndConditions.size(); ++n)
-        {
-            exp_size           = m_bndCondExpansions[n]->GetExpSize();
-            exp_size_per_plane = exp_size / m_planes.size();
-
-            for (int i = 0; i < exp_size_per_plane; i++)
-            {
-                if (n == BndID)
-                {
-                    elmtID     = m_BCtoElmMap[cnt];
-                    boundaryID = m_BCtoEdgMap[cnt];
-                    exp_dim    = m_bndCondExpansions[n]
-                                  ->GetExp(i + k * exp_size_per_plane)
-                                  ->GetTotPoints();
-                    offset = GetPhys_Offset(elmtID);
-                    elmt   = GetExp(elmtID);
-                    temp_BC_exp =
-                        std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
-                            m_bndCondExpansions[n]->GetExp(
-                                i + k * exp_size_per_plane));
-
-                    elmt->GetTracePhysVals(boundaryID, temp_BC_exp,
-                                           tmp_Tot = TotField + offset,
-                                           tmp_BC  = BndVals + pos);
-                    pos += exp_dim;
-                }
-                cnt++;
-            }
-        }
-    }
-}
-
-void DisContField3DHomogeneous1D::NormVectorIProductWRTBase(
-    Array<OneD, const NekDouble> &V1, Array<OneD, const NekDouble> &V2,
-    Array<OneD, NekDouble> &outarray, int BndID)
-{
-    LocalRegions::ExpansionSharedPtr elmt;
-    LocalRegions::Expansion1DSharedPtr temp_BC_exp;
-
-    Array<OneD, NekDouble> tmp_V1;
-    Array<OneD, NekDouble> tmp_V2;
-    Array<OneD, NekDouble> tmp_outarray;
-
-    int cnt = 0;
-    int exp_size, exp_size_per_plane, elmtID, Phys_offset, Coef_offset;
-
-    for (int k = 0; k < m_planes.size(); k++)
-    {
-        for (int n = 0; n < m_bndConditions.size(); ++n)
-        {
-            exp_size           = m_bndCondExpansions[n]->GetExpSize();
-            exp_size_per_plane = exp_size / m_planes.size();
-
-            for (int i = 0; i < exp_size_per_plane; i++)
-            {
-                if (n == BndID)
-                {
-                    elmtID = m_BCtoElmMap[cnt];
-
-                    Phys_offset = m_bndCondExpansions[n]->GetPhys_Offset(
-                        i + k * exp_size_per_plane);
-                    Coef_offset = m_bndCondExpansions[n]->GetCoeff_Offset(
-                        i + k * exp_size_per_plane);
-
-                    elmt = GetExp(elmtID);
-                    temp_BC_exp =
-                        std::dynamic_pointer_cast<LocalRegions::Expansion1D>(
-                            m_bndCondExpansions[n]->GetExp(
-                                i + k * exp_size_per_plane));
-
-                    temp_BC_exp->NormVectorIProductWRTBase(
-                        tmp_V1 = V1 + Phys_offset, tmp_V2 = V2 + Phys_offset,
-                        tmp_outarray = outarray + Coef_offset);
-                }
-                cnt++;
-            }
-        }
-    }
-}
-
-void DisContField3DHomogeneous1D::v_ExtractTracePhys(
-    Array<OneD, NekDouble> &outarray)
-{
-    ASSERTL1(m_physState == true,
-             "Field must be in physical state to extract trace space.");
-
-    v_ExtractTracePhys(m_phys, outarray);
-}
-
-/**
- * @brief This method extracts the trace (edges in 2D) for each plane
- * from the field @a inarray and puts the values in @a outarray.
- *
- * It assumes the field is C0 continuous so that it can overwrite the
- * edge data when visited by the two adjacent elements.
- *
- * @param inarray   An array containing the 2D data from which we wish
- *                  to extract the edge data.
- * @param outarray  The resulting edge information.
- */
-void DisContField3DHomogeneous1D::v_ExtractTracePhys(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nPoints_plane = m_planes[0]->GetTotPoints();
-    int nTracePts     = m_planes[0]->GetTrace()->GetTotPoints();
-
-    for (int i = 0; i < m_planes.size(); ++i)
-    {
-        Array<OneD, NekDouble> inarray_plane(nPoints_plane, 0.0);
-        Array<OneD, NekDouble> outarray_plane(nPoints_plane, 0.0);
-
-        Vmath::Vcopy(nPoints_plane, &inarray[i * nPoints_plane], 1,
-                     &inarray_plane[0], 1);
-
-        m_planes[i]->ExtractTracePhys(inarray_plane, outarray_plane);
-
-        Vmath::Vcopy(nTracePts, &outarray_plane[0], 1, &outarray[i * nTracePts],
-                     1);
-    }
-}
-
-/**
- */
-void DisContField3DHomogeneous1D::v_GetBoundaryNormals(
-    int i, Array<OneD, Array<OneD, NekDouble>> &normals)
-{
-    int expdim  = GetCoordim(0);
-    int coordim = 3;
-    Array<OneD, NekDouble> tmp;
-    LocalRegions::ExpansionSharedPtr elmt;
-
-    Array<OneD, int> ElmtID, EdgeID;
-    GetBoundaryToElmtMap(ElmtID, EdgeID);
-
-    // Initialise result
-    normals = Array<OneD, Array<OneD, NekDouble>>(coordim);
-    for (int j = 0; j < coordim; ++j)
-    {
-        normals[j] = Array<OneD, NekDouble>(
-            GetBndCondExpansions()[i]->GetTotPoints(), 0.0);
-    }
-
-    // Skip other boundary regions
-    int cnt = 0;
-    for (int n = 0; n < i; ++n)
-    {
-        cnt += GetBndCondExpansions()[n]->GetExpSize();
-    }
-
-    int offset;
-    for (int n = 0; n < GetBndCondExpansions()[i]->GetExpSize(); ++n)
-    {
-        offset = GetBndCondExpansions()[i]->GetPhys_Offset(n);
-        int nq = GetBndCondExpansions()[i]->GetExp(n)->GetTotPoints();
-
-        elmt = GetExp(ElmtID[cnt + n]);
-        const Array<OneD, const Array<OneD, NekDouble>> normalsElmt =
-            elmt->GetTraceNormal(EdgeID[cnt + n]);
-        // Copy to result
-        for (int j = 0; j < expdim; ++j)
-        {
-            Vmath::Vcopy(nq, normalsElmt[j], 1, tmp = normals[j] + offset, 1);
-        }
-    }
-}
-
-/**
- * @brief Set up all DG member variables and maps.
- */
-void DisContField3DHomogeneous1D::SetUpDG()
-{
-    const int nPlanes     = m_planes.size();
-    const int nTracePlane = m_planes[0]->GetTrace()->GetExpSize();
-
-    // Get trace map from first plane.
-    AssemblyMapDGSharedPtr traceMap = m_planes[0]->GetTraceMap();
-    const Array<OneD, const int> &traceBndMap =
-        traceMap->GetBndCondIDToGlobalTraceID();
-    int mapSize = traceBndMap.size();
-
-    // Set up trace boundary map
-    m_traceBndMap = Array<OneD, int>(nPlanes * mapSize);
-
-    int i, n, e, cnt = 0, cnt1 = 0;
-
-    for (i = 0; i < m_bndCondExpansions.size(); ++i)
-    {
-        int nExp      = m_bndCondExpansions[i]->GetExpSize();
-        int nPlaneExp = nExp / nPlanes;
-
-        if (m_bndConditions[i]->GetBoundaryConditionType() ==
-            SpatialDomains::ePeriodic)
-        {
-            continue;
-        }
-
-        for (n = 0; n < nPlanes; ++n)
-        {
-            const int offset = n * nTracePlane;
-            for (e = 0; e < nPlaneExp; ++e)
-            {
-                m_traceBndMap[cnt++] = offset + traceBndMap[cnt1 + e];
-            }
-        }
-
-        cnt1 += nPlaneExp;
-    }
+    m_bndCondBndWeight[index] = value;
 }
 } // namespace MultiRegions
 } // namespace Nektar

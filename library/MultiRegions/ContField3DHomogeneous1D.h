@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ContField3DHomogeneous1D.h
+// File: ContField3DHomogeneous1D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -70,19 +70,20 @@ public:
     MULTI_REGIONS_EXPORT virtual ~ContField3DHomogeneous1D();
 
     MULTI_REGIONS_EXPORT virtual void v_SmoothField(
-        Array<OneD, NekDouble> &field);
+        Array<OneD, NekDouble> &field) override;
 
 protected:
 private:
-    virtual void v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray);
+    virtual void v_ImposeDirichletConditions(
+        Array<OneD, NekDouble> &outarray) override;
 
-    virtual void v_FillBndCondFromField();
-    virtual void v_FillBndCondFromField(const int nreg);
+    virtual void v_FillBndCondFromField() override;
+    virtual void v_FillBndCondFromField(const int nreg) override;
     /// Template method virtual forwarded for LocalToGlobal()
-    virtual void v_LocalToGlobal(bool useComm);
+    virtual void v_LocalToGlobal(bool useComm) override;
 
     /// Template method virtual forwarded for GlobalToLocal()
-    virtual void v_GlobalToLocal(void);
+    virtual void v_GlobalToLocal(void) override;
 
     /// Solves the three-dimensional Helmholtz equation, subject to the
     /// boundary conditions specified.
@@ -92,9 +93,9 @@ private:
                              const StdRegions::VarCoeffMap &varcoeff,
                              const MultiRegions::VarFactorsMap &varfactors,
                              const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing);
+                             const bool PhysSpaceForcing) override;
 
-    virtual void v_ClearGlobalLinSysManager(void);
+    virtual void v_ClearGlobalLinSysManager(void) override;
 };
 
 typedef std::shared_ptr<ContField3DHomogeneous1D>

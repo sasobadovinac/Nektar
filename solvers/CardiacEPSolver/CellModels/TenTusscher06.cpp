@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TenTusscher06.cpp
+// File: TenTusscher06.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -145,7 +145,9 @@ void TenTusscher06::v_Update(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, Array<OneD, NekDouble>> &outarray, const NekDouble time)
 {
-    for (unsigned int i = 0; i < m_nq; ++i)
+    boost::ignore_unused(time);
+
+    for (size_t i = 0; i < m_nq; ++i)
     {
         // Inputs:
         // Time units: millisecond

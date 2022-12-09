@@ -17,11 +17,11 @@
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"/>
         </SOLVERINFO>
-            <GLOBALSYSSOLNINFO>
+        <GLOBALSYSSOLNINFO>
             <V VAR="DefaultVar">
                 <I PROPERTY="GlobalSysSoln"   VALUE="PETScStaticCond" />
             </V>
-            </GLOBALSYSSOLNINFO>
+        </GLOBALSYSSOLNINFO>
         <PARAMETERS>
             <P> TimeStep      = 3E-6                </P>
             <P> NumSteps      = 10                  </P>

@@ -34,7 +34,6 @@
 
 #include <iostream>
 #include <string>
-using namespace std;
 
 #include <boost/core/ignore_unused.hpp>
 #include <boost/geometry.hpp>
@@ -49,6 +48,8 @@ using namespace std;
 #include <LibUtilities/BasicUtils/SharedArray.hpp>
 
 #include "ProcessInterpPoints.h"
+
+using namespace std;
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -511,7 +512,7 @@ void ProcessInterpPoints::InterpolateFieldToPts(
 
     int nfields = field0.size();
 
-    Interpolator interp;
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>> interp;
     if (m_f->m_comm->GetRank() == 0)
     {
         interp.SetProgressCallback(&ProcessInterpPoints::PrintProgressbar,

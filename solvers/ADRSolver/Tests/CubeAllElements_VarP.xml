@@ -2,57 +2,57 @@
 <NEKTAR>
     <CONDITIONS>
 
-      <SOLVERINFO>
+        <SOLVERINFO>
             <I PROPERTY="EQTYPE" VALUE="Helmholtz" />
             <I PROPERTY="Projection" VALUE="Continuous" />
-      </SOLVERINFO>
+        </SOLVERINFO>
 
-      <PARAMETERS>
-        <P> Lambda = 1 </P>
-        <P> IterativeSolverTolerance = 1e-8 </P>
-      </PARAMETERS>
+        <PARAMETERS>
+            <P> Lambda = 1 </P>
+            <P> IterativeSolverTolerance = 1e-8 </P>
+        </PARAMETERS>
 
-      <VARIABLES>
-        <V ID="0"> u </V>
-      </VARIABLES>
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
 
-      <BOUNDARYREGIONS>
-        <B ID="0"> C[1]       </B>
-        <B ID="1"> C[2]       </B>
-        <B ID="2"> C[3]       </B>
-        <B ID="3"> C[4]       </B>
-        <B ID="4"> C[5]       </B>
-        <B ID="5"> C[6]       </B>
-      </BOUNDARYREGIONS>
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1]       </B>
+            <B ID="1"> C[2]       </B>
+            <B ID="2"> C[3]       </B>
+            <B ID="3"> C[4]       </B>
+            <B ID="4"> C[5]       </B>
+            <B ID="5"> C[6]       </B>
+        </BOUNDARYREGIONS>
 
-      <BOUNDARYCONDITIONS>
-        <REGION REF="0">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
-        </REGION>
-        <REGION REF="1">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
-        </REGION>
-        <REGION REF="2">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
-        </REGION>
-        <REGION REF="3">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
-        </REGION>
-        <REGION REF="4">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
-        </REGION>
-        <REGION REF="5">
-          <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
-        </REGION>
-      </BOUNDARYCONDITIONS>
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
+            </REGION>
+            <REGION REF="4">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
+            </REGION>
+            <REGION REF="5">
+                <D VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
 
-      <FUNCTION NAME="Forcing">
-        <E VAR="u" VALUE="-(Lambda+PI*PI*6)*cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
-      </FUNCTION>
+        <FUNCTION NAME="Forcing">
+            <E VAR="u" VALUE="-(Lambda+PI*PI*6)*cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
+        </FUNCTION>
 
-      <FUNCTION NAME="ExactSolution">
-        <E VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
-      </FUNCTION>
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="cos(PI*x)*cos(PI*z)*cos(2*PI*y)" />
+        </FUNCTION>
     </CONDITIONS>
 
     <EXPANSIONS>

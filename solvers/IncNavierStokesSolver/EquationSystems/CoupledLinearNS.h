@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CoupledLinearNS.h
+// File: CoupledLinearNS.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -165,7 +165,7 @@ protected:
     CoupledLinearNS(const LibUtilities::SessionReaderSharedPtr &pSesssion,
                     const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject(bool DeclareField = true);
+    virtual void v_InitObject(bool DeclareField = true) override;
 
 private:
     /// Id to identify when single mode is mean mode (i.e. beta=0);
@@ -200,21 +200,21 @@ private:
         CoupledLocalToGlobalC0ContMapSharedPtr &locToGloMap,
         const NekDouble lambda_imag = NekConstants::kNekUnsetDouble);
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
-    virtual void v_DoInitialise(void);
+    virtual void v_DoInitialise(void) override;
 
-    virtual void v_DoSolve(void);
+    virtual void v_DoSolve(void) override;
 
-    virtual bool v_NegatedOp(void);
+    virtual bool v_NegatedOp(void) override;
 
-    virtual void v_TransCoeffToPhys(void);
+    virtual void v_TransCoeffToPhys(void) override;
 
-    virtual void v_TransPhysToCoeff(void);
+    virtual void v_TransPhysToCoeff(void) override;
 
-    virtual void v_Output(void);
+    virtual void v_Output(void) override;
 
-    virtual int v_GetForceDimension(void);
+    virtual int v_GetForceDimension(void) override;
 };
 
 } // namespace Nektar

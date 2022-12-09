@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NodalTriExp.cpp
+// File: NodalTriExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -65,10 +65,6 @@ NodalTriExp::NodalTriExp(const NodalTriExp &T)
     : StdExpansion(T), StdExpansion2D(T), StdRegions::StdNodalTriExp(T),
       Expansion(T), Expansion2D(T), m_matrixManager(T.m_matrixManager),
       m_staticCondMatrixManager(T.m_staticCondMatrixManager)
-{
-}
-
-NodalTriExp::~NodalTriExp()
 {
 }
 

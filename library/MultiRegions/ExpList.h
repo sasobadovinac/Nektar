@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpList.h
+// File: ExpList.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -691,7 +691,7 @@ public:
     /// This function returns the number of elements in the
     /// expansion which may be different for a homogeoenous extended
     /// expansionp.
-    inline int GetNumElmts(void)
+    inline size_t GetNumElmts(void)
     {
         return v_GetNumElmts();
     }
@@ -1260,7 +1260,7 @@ protected:
 
     // Virtual prototypes
 
-    virtual int v_GetNumElmts(void)
+    virtual size_t v_GetNumElmts(void)
     {
         return (*m_exp).size();
     }
@@ -1654,10 +1654,9 @@ inline int ExpList::GetNcoeffs(const int eid) const
  */
 inline int ExpList::EvalBasisNumModesMax() const
 {
-    unsigned int i;
     int returnval = 0;
 
-    for (i = 0; i < (*m_exp).size(); ++i)
+    for (size_t i = 0; i < (*m_exp).size(); ++i)
     {
         returnval = (std::max)(returnval, (*m_exp)[i]->EvalBasisNumModesMax());
     }
@@ -1670,10 +1669,9 @@ inline int ExpList::EvalBasisNumModesMax() const
  */
 inline const Array<OneD, int> ExpList::EvalBasisNumModesMaxPerExp(void) const
 {
-    unsigned int i;
     Array<OneD, int> returnval((*m_exp).size(), 0);
 
-    for (i = 0; i < (*m_exp).size(); ++i)
+    for (size_t i = 0; i < (*m_exp).size(); ++i)
     {
         returnval[i] =
             (std::max)(returnval[i], (*m_exp)[i]->EvalBasisNumModesMax());
@@ -1698,15 +1696,15 @@ inline int ExpList::GetTotPoints(const int eid) const
 inline int ExpList::Get1DScaledTotPoints(const NekDouble scale) const
 {
     int returnval = 0;
-    int cnt;
-    int nbase = (*m_exp)[0]->GetNumBases();
+    size_t cnt;
+    size_t nbase = (*m_exp)[0]->GetNumBases();
 
-    for (int i = 0; i < (*m_exp).size(); ++i)
+    for (size_t i = 0; i < (*m_exp).size(); ++i)
     {
         cnt = 1;
-        for (int j = 0; j < nbase; ++j)
+        for (size_t j = 0; j < nbase; ++j)
         {
-            cnt *= (int)(scale * ((*m_exp)[i]->GetNumPoints(j)));
+            cnt *= scale * ((*m_exp)[i]->GetNumPoints(j));
         }
         returnval += cnt;
     }
@@ -1753,7 +1751,7 @@ inline void ExpList::SetPhys(int i, NekDouble val)
  */
 inline void ExpList::SetPhys(const Array<OneD, const NekDouble> &inarray)
 {
-    ASSERTL0(inarray.size() == m_npoints,
+    ASSERTL0((int)inarray.size() == m_npoints,
              "Input array does not have correct number of elements.");
 
     Vmath::Vcopy(m_npoints, &inarray[0], 1, &m_phys[0], 1);

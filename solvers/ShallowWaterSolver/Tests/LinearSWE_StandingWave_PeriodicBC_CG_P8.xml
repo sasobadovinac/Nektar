@@ -149,7 +149,7 @@
             <B ID="2"> C[3] </B>
             <B ID="3"> C[4] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <P VAR="eta"  VALUE="B[1]" />

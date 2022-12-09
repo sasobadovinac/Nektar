@@ -84,14 +84,16 @@ public:
 protected:
     virtual void v_EvaluatePressureBCs(
         const Array<OneD, const Array<OneD, NekDouble>> &fields,
-        const Array<OneD, const Array<OneD, NekDouble>> &N, NekDouble kinvis);
+        const Array<OneD, const Array<OneD, NekDouble>> &N,
+        NekDouble kinvis) override;
 
-    virtual void v_MountHOPBCs(int HBCdata, NekDouble kinvis,
-                               Array<OneD, NekDouble> &Q,
-                               Array<OneD, const NekDouble> &Advection);
+    virtual void v_MountHOPBCs(
+        int HBCdata, NekDouble kinvis, Array<OneD, NekDouble> &Q,
+        Array<OneD, const NekDouble> &Advection) override;
 
-    virtual void v_AddNormVelOnOBC(const int nbcoeffs, const int nreg,
-                                   Array<OneD, Array<OneD, NekDouble>> &u);
+    virtual void v_AddNormVelOnOBC(
+        const int nbcoeffs, const int nreg,
+        Array<OneD, Array<OneD, NekDouble>> &u) override;
 };
 
 } // namespace Nektar

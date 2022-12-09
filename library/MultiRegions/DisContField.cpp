@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// File DisContField.cpp
+// File: DisContField.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -114,7 +114,7 @@ DisContField::DisContField(const LibUtilities::SessionReaderSharedPtr &pSession,
 
     if (SetUpJustDG)
     {
-        SetUpDG(variable);
+        SetUpDG(variable, ImpType);
     }
     else
     {
@@ -160,7 +160,8 @@ DisContField::DisContField(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * @brief Set up all DG member variables and maps.
  */
-void DisContField::SetUpDG(const std::string variable)
+void DisContField::SetUpDG(const std::string variable,
+                           const Collections::ImplementationType ImpType)
 {
     // Check for multiple calls
     if (m_trace != NullExpListSharedPtr)
@@ -174,7 +175,7 @@ void DisContField::SetUpDG(const std::string variable)
     // Set up trace space
     m_trace = MemoryManager<ExpList>::AllocateSharedPtr(
         m_session, m_bndCondExpansions, m_bndConditions, *m_exp, m_graph,
-        m_comm);
+        m_comm, true, "DefaultVar", ImpType);
 
     PeriodicMap periodicTraces = (m_expType == e1D)   ? m_periodicVerts
                                  : (m_expType == e2D) ? m_periodicEdges
@@ -2800,6 +2801,85 @@ vector<bool> &DisContField::GetNegatedFluxNormal(void)
     return m_negatedFluxNormal;
 }
 
+ExpListSharedPtr &DisContField::v_GetTrace()
+{
+    if (m_trace == NullExpListSharedPtr)
+    {
+        SetUpDG();
+    }
+
+    return m_trace;
+}
+
+AssemblyMapDGSharedPtr &DisContField::v_GetTraceMap(void)
+{
+    return m_traceMap;
+}
+
+const LocTraceToTraceMapSharedPtr &DisContField::v_GetLocTraceToTraceMap(
+    void) const
+{
+    return m_locTraceToTraceMap;
+}
+
+// Return the internal vector which identifieds if trace
+// is left adjacent definiing which trace the normal
+// points otwards from
+std::vector<bool> &DisContField::v_GetLeftAdjacentTraces(void)
+{
+    return m_leftAdjacentTraces;
+}
+
+const Array<OneD, const MultiRegions::ExpListSharedPtr>
+    &DisContField::v_GetBndCondExpansions()
+{
+    return m_bndCondExpansions;
+}
+
+const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+    &DisContField::v_GetBndConditions()
+{
+    return m_bndConditions;
+}
+
+MultiRegions::ExpListSharedPtr &DisContField::v_UpdateBndCondExpansion(int i)
+{
+    return m_bndCondExpansions[i];
+}
+
+Array<OneD, SpatialDomains::BoundaryConditionShPtr>
+    &DisContField::v_UpdateBndConditions()
+{
+    return m_bndConditions;
+}
+
+void DisContField::v_PeriodicBwdCopy(const Array<OneD, const NekDouble> &Fwd,
+                                     Array<OneD, NekDouble> &Bwd)
+{
+    for (int n = 0; n < m_periodicFwdCopy.size(); ++n)
+    {
+        Bwd[m_periodicBwdCopy[n]] = Fwd[m_periodicFwdCopy[n]];
+    }
+}
+
+void DisContField::v_GetFwdBwdTracePhys(Array<OneD, NekDouble> &Fwd,
+                                        Array<OneD, NekDouble> &Bwd)
+{
+    v_GetFwdBwdTracePhys(m_phys, Fwd, Bwd);
+}
+
+/**
+ * @brief Obtain a copy of the periodic edges and vertices for this
+ * field.
+ */
+void DisContField::v_GetPeriodicEntities(PeriodicMap &periodicVerts,
+                                         PeriodicMap &periodicEdges,
+                                         PeriodicMap &periodicFaces)
+{
+    periodicVerts = m_periodicVerts;
+    periodicEdges = m_periodicEdges;
+    periodicFaces = m_periodicFaces;
+}
 /**
  * \brief This method extracts the "forward" and "backward" trace
  * data from the array \a field and puts the data into output
@@ -3000,6 +3080,16 @@ void DisContField::v_FillBwdWithBoundCond(const Array<OneD, NekDouble> &Fwd,
             }
         }
     }
+}
+
+const Array<OneD, const NekDouble> &DisContField::v_GetBndCondBwdWeight()
+{
+    return m_bndCondBndWeight;
+}
+
+void DisContField::v_SetBndCondBwdWeight(const int index, const NekDouble value)
+{
+    m_bndCondBndWeight[index] = value;
 }
 
 void DisContField::v_AddTraceQuadPhysToField(

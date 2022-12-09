@@ -58,7 +58,7 @@
         </BOUNDARYCONDITIONS>
 
         <FUNCTION NAME="InitialConditions">
-           <E VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+            <E VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
             <E VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)"  />
             <E VAR="w" VALUE="0" />
             <E VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />

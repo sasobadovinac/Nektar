@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PreconCfs.h
+// File: PreconCfs.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -72,8 +72,11 @@ public:
 
     inline void InitObject();
 
-    virtual bool UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
-                                      const NekDouble dtLambda);
+    virtual bool v_UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
+                                        const NekDouble dtLambda);
+
+    bool UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
+                              const NekDouble dtLambda);
 
 protected:
     LibUtilities::CommSharedPtr m_Comm;
@@ -113,6 +116,15 @@ typedef std::shared_ptr<PreconCfs> PreconCfsSharedPtr;
 inline void PreconCfs::InitObject()
 {
     v_InitObject();
+}
+
+/**
+ *
+ */
+inline bool PreconCfs::UpdatePreconMatCheck(
+    const Array<OneD, const NekDouble> &res, const NekDouble dtLambda)
+{
+    return v_UpdatePreconMatCheck(res, dtLambda);
 }
 
 /**

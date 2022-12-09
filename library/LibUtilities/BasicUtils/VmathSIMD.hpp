@@ -411,6 +411,64 @@ inline void Vvtvvtp(const size_t n, const T *v, const T *w, const T *x,
     }
 }
 
+/// \brief  vvtvvtm (vector times vector minus vector times vector):
+// z = v*w - x*y
+template <class T, typename = typename std::enable_if<
+                       std::is_floating_point<T>::value>::type>
+inline void Vvtvvtm(const size_t n, const T *v, const T *w, const T *x,
+                    const T *y, T *z)
+{
+    using namespace tinysimd;
+    using vec_t = simd<T>;
+
+    size_t cnt = n;
+    // Vectorized loop
+    while (cnt >= vec_t::width)
+    {
+        // load
+        vec_t vChunk;
+        vChunk.load(v, is_not_aligned);
+        vec_t wChunk;
+        wChunk.load(w, is_not_aligned);
+        vec_t yChunk;
+        yChunk.load(y, is_not_aligned);
+        vec_t xChunk;
+        xChunk.load(x, is_not_aligned);
+
+        // z = v * w + x * y;
+        vec_t z1Chunk = vChunk * wChunk;
+        vec_t z2Chunk = xChunk * yChunk;
+        vec_t zChunk  = z1Chunk - z2Chunk;
+
+        // store
+        zChunk.store(z, is_not_aligned);
+
+        // update pointers
+        v += vec_t::width;
+        w += vec_t::width;
+        x += vec_t::width;
+        y += vec_t::width;
+        z += vec_t::width;
+        cnt -= vec_t::width;
+    }
+
+    // spillover loop
+    while (cnt)
+    {
+        // z = v * w + x * y;
+        T z1 = (*v) * (*w);
+        T z2 = (*x) * (*y);
+        *z   = z1 - z2;
+        // update pointers
+        ++v;
+        ++w;
+        ++x;
+        ++y;
+        ++z;
+        --cnt;
+    }
+}
+
 /// \brief Gather vector z[i] = x[y[i]]
 template <class T, class I,
           typename = typename std::enable_if<std::is_floating_point<T>::value &&

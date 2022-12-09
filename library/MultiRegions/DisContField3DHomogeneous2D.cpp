@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// File DisContField3DHomogeneous2D.cpp
+// File: DisContField3DHomogeneous2D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -255,80 +255,6 @@ void DisContField3DHomogeneous2D::v_HelmSolve(
     }
 }
 
-void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
-    const NekDouble time, const std::string varName, const NekDouble x2_in,
-    const NekDouble x3_in)
-{
-    boost::ignore_unused(x2_in, x3_in);
-    EvaluateBoundaryConditions(time, varName);
-}
-
-const Array<OneD, const std::shared_ptr<ExpList>>
-    &DisContField3DHomogeneous2D::v_GetBndCondExpansions(void)
-{
-    return GetBndCondExpansions();
-}
-
-const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
-    &DisContField3DHomogeneous2D::v_GetBndConditions()
-{
-    return GetBndConditions();
-}
-
-std::shared_ptr<ExpList> &DisContField3DHomogeneous2D::v_UpdateBndCondExpansion(
-    int i)
-{
-    return UpdateBndCondExpansion(i);
-}
-
-Array<OneD, SpatialDomains::BoundaryConditionShPtr>
-    &DisContField3DHomogeneous2D::v_UpdateBndConditions()
-{
-    return UpdateBndConditions();
-}
-
-void DisContField3DHomogeneous2D::GetBoundaryToElmtMap(Array<OneD, int> &ElmtID,
-                                                       Array<OneD, int> &EdgeID)
-{
-    if (m_BCtoElmMap.size() == 0)
-    {
-        Array<OneD, int> ElmtID_tmp;
-        Array<OneD, int> EdgeID_tmp;
-
-        m_lines[0]->GetBoundaryToElmtMap(ElmtID_tmp, EdgeID_tmp);
-        int nel_per_lines = m_lines[0]->GetExpSize();
-        int nlines        = m_lines.size();
-
-        int MapSize = ElmtID_tmp.size();
-
-        m_BCtoElmMap = Array<OneD, int>(nlines * MapSize);
-        m_BCtoEdgMap = Array<OneD, int>(nlines * MapSize);
-        if (MapSize > 0)
-        {
-            int i, j, n, cnt;
-            int cntLine = 0;
-            for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
-            {
-                int lineExpSize =
-                    m_lines[0]->GetBndCondExpansions()[n]->GetExpSize();
-                for (i = 0; i < lineExpSize; ++i, ++cntLine)
-                {
-                    for (j = 0; j < nlines; j++)
-                    {
-                        m_BCtoElmMap[cnt + i + j * lineExpSize] =
-                            ElmtID_tmp[cntLine] + j * nel_per_lines;
-                        m_BCtoEdgMap[cnt + i + j * lineExpSize] =
-                            EdgeID_tmp[cntLine];
-                    }
-                }
-                cnt += m_bndCondExpansions[n]->GetExpSize();
-            }
-        }
-    }
-    ElmtID = m_BCtoElmMap;
-    EdgeID = m_BCtoEdgMap;
-}
-
 void DisContField3DHomogeneous2D::v_GetBndElmtExpansion(
     int i, std::shared_ptr<ExpList> &result, const bool DeclareCoeffPhysArrays)
 {
@@ -379,5 +305,91 @@ void DisContField3DHomogeneous2D::v_GetBndElmtExpansion(
     result->SetWaveSpace(GetWaveSpace());
 }
 
+void DisContField3DHomogeneous2D::v_GetBoundaryToElmtMap(
+    Array<OneD, int> &ElmtID, Array<OneD, int> &EdgeID)
+{
+    if (m_BCtoElmMap.size() == 0)
+    {
+        Array<OneD, int> ElmtID_tmp;
+        Array<OneD, int> EdgeID_tmp;
+
+        m_lines[0]->GetBoundaryToElmtMap(ElmtID_tmp, EdgeID_tmp);
+        int nel_per_lines = m_lines[0]->GetExpSize();
+        int nlines        = m_lines.size();
+
+        int MapSize = ElmtID_tmp.size();
+
+        m_BCtoElmMap = Array<OneD, int>(nlines * MapSize);
+        m_BCtoEdgMap = Array<OneD, int>(nlines * MapSize);
+        if (MapSize > 0)
+        {
+            int i, j, n, cnt;
+            int cntLine = 0;
+            for (cnt = n = 0; n < m_bndCondExpansions.size(); ++n)
+            {
+                int lineExpSize =
+                    m_lines[0]->GetBndCondExpansions()[n]->GetExpSize();
+                for (i = 0; i < lineExpSize; ++i, ++cntLine)
+                {
+                    for (j = 0; j < nlines; j++)
+                    {
+                        m_BCtoElmMap[cnt + i + j * lineExpSize] =
+                            ElmtID_tmp[cntLine] + j * nel_per_lines;
+                        m_BCtoEdgMap[cnt + i + j * lineExpSize] =
+                            EdgeID_tmp[cntLine];
+                    }
+                }
+                cnt += m_bndCondExpansions[n]->GetExpSize();
+            }
+        }
+    }
+    ElmtID = m_BCtoElmMap;
+    EdgeID = m_BCtoEdgMap;
+}
+
+/// @todo Fix Robin BCs for homogeneous case
+std::map<int, RobinBCInfoSharedPtr> DisContField3DHomogeneous2D::
+    v_GetRobinBCInfo()
+{
+    return std::map<int, RobinBCInfoSharedPtr>();
+}
+
+void DisContField3DHomogeneous2D::v_EvaluateBoundaryConditions(
+    const NekDouble time, const std::string varName, const NekDouble x2_in,
+    const NekDouble x3_in)
+{
+    boost::ignore_unused(x2_in, x3_in);
+    EvaluateBoundaryConditions(time, varName);
+}
+
+const Array<OneD, const std::shared_ptr<ExpList>>
+    &DisContField3DHomogeneous2D::v_GetBndCondExpansions(void)
+{
+    return m_bndCondExpansions;
+}
+
+const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
+    &DisContField3DHomogeneous2D::v_GetBndConditions()
+{
+    return m_bndConditions;
+}
+
+std::shared_ptr<ExpList> &DisContField3DHomogeneous2D::v_UpdateBndCondExpansion(
+    int i)
+{
+    return m_bndCondExpansions[i];
+}
+
+Array<OneD, SpatialDomains::BoundaryConditionShPtr>
+    &DisContField3DHomogeneous2D::v_UpdateBndConditions()
+{
+    return m_bndConditions;
+}
+
+void DisContField3DHomogeneous2D::v_SetBndCondBwdWeight(const int index,
+                                                        const NekDouble value)
+{
+    m_bndCondBndWeight[index] = value;
+}
 } // namespace MultiRegions
 } // namespace Nektar

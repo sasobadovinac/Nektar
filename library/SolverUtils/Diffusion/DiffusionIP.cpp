@@ -876,9 +876,9 @@ void DiffusionIP::AddSecondDerivToTrace(
     TensorOfArray3D<NekDouble> &numDerivFwd,
     TensorOfArray3D<NekDouble> &numDerivBwd)
 {
-    Array<OneD, NekDouble> Fwd{nTracePts, 0.0};
-    Array<OneD, NekDouble> Bwd{nTracePts, 0.0};
-    Array<OneD, NekDouble> tmp{nTracePts, 0.0};
+    Array<OneD, NekDouble> Fwd(nTracePts, 0.0);
+    Array<OneD, NekDouble> Bwd(nTracePts, 0.0);
+    std::vector<NekDouble> tmp(nTracePts);
 
     Array<OneD, Array<OneD, NekDouble>> elmt2ndDerv{nDim};
     for (int nd1 = 0; nd1 < nDim; ++nd1)
@@ -896,8 +896,10 @@ void DiffusionIP::AddSecondDerivToTrace(
         qtmp[nd2] = elmt2ndDerv[nd2];
     }
 
-    Vmath::Smul(nTracePts, PenaltyFactor2, m_traceNormDirctnElmtLength, 1, tmp,
-                1);
+    for (int i = 0; i < nTracePts; ++i)
+    {
+        tmp[i] = PenaltyFactor2 * m_traceNormDirctnElmtLength[i];
+    }
     // the derivatives are assumed to be exchangable
     for (int nd1 = 0; nd1 < nDim; ++nd1)
     {
@@ -910,23 +912,24 @@ void DiffusionIP::AddSecondDerivToTrace(
                 Vmath::Zero(nTracePts, Bwd, 1);
                 fields[i]->GetFwdBwdTracePhys(elmt2ndDerv[nd2], Fwd, Bwd, true,
                                               true, false);
-                Vmath::Vmul(nTracePts, tmp, 1, Bwd, 1, Bwd, 1);
-                Vmath::Vvtvp(nTracePts, m_traceNormals[nd2], 1, Bwd, 1,
-                             numDerivBwd[nd1][i], 1, numDerivBwd[nd1][i], 1);
-                Vmath::Vmul(nTracePts, tmp, 1, Fwd, 1, Fwd, 1);
-                Vmath::Vvtvm(nTracePts, m_traceNormals[nd2], 1, Fwd, 1,
-                             numDerivFwd[nd1][i], 1, numDerivFwd[nd1][i], 1);
-                Vmath::Neg(nTracePts, numDerivFwd[nd1][i], 1);
-
+                for (int p = 0; p < nTracePts; ++p)
+                {
+                    Bwd[p] *= tmp[p];
+                    numDerivBwd[nd1][i][p] += m_traceNormals[nd2][p] * Bwd[p];
+                    Fwd[p] *= tmp[p];
+                    numDerivFwd[nd1][i][p] = -(m_traceNormals[nd2][p] * Fwd[p] -
+                                               numDerivFwd[nd1][i][p]);
+                }
                 if (nd2 != nd1)
                 {
-                    Vmath::Vvtvp(nTracePts, m_traceNormals[nd1], 1, Bwd, 1,
-                                 numDerivBwd[nd2][i], 1, numDerivBwd[nd2][i],
-                                 1);
-                    Vmath::Vvtvm(nTracePts, m_traceNormals[nd1], 1, Fwd, 1,
-                                 numDerivFwd[nd2][i], 1, numDerivFwd[nd2][i],
-                                 1);
-                    Vmath::Neg(nTracePts, numDerivFwd[nd2][i], 1);
+                    for (int p = 0; p < nTracePts; ++p)
+                    {
+                        numDerivBwd[nd2][i][p] +=
+                            m_traceNormals[nd1][p] * Bwd[p];
+                        numDerivFwd[nd2][i][p] =
+                            -(m_traceNormals[nd1][p] * Fwd[p] -
+                              numDerivFwd[nd2][i][p]);
+                    }
                 }
             }
         }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Preconditioner.h
+// File: PreconditionerDiagonal.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Preconditioner header
+// Description: PreconditionerDiagonal header
 //
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERDIAGONAL_H
@@ -81,12 +81,12 @@ private:
 
     void StaticCondDiagonalPreconditionerSum(void);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
+                                    Array<OneD, NekDouble> &pOutput) override;
 
-    virtual void v_BuildPreconditioner();
+    virtual void v_BuildPreconditioner() override;
 
     static std::string lookupIds[];
     static std::string def;
@@ -123,12 +123,12 @@ public:
     }
 
 private:
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
+                                    Array<OneD, NekDouble> &pOutput) override;
 
-    virtual void v_BuildPreconditioner();
+    virtual void v_BuildPreconditioner() override;
 
     static std::string lookupIds[];
     static std::string def;

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdExpansion3D.h
+// File: StdExpansion3D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -58,7 +58,7 @@ public:
                                       const LibUtilities::BasisKey &Bb,
                                       const LibUtilities::BasisKey &Bc);
     STD_REGIONS_EXPORT StdExpansion3D(const StdExpansion3D &T);
-    STD_REGIONS_EXPORT virtual ~StdExpansion3D();
+    STD_REGIONS_EXPORT virtual ~StdExpansion3D() override;
 
     // Differentiation
 
@@ -173,11 +173,11 @@ protected:
      */
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coords,
-        const Array<OneD, const NekDouble> &physvals);
+        const Array<OneD, const NekDouble> &physvals) override;
 
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, DNekMatSharedPtr> &I,
-        const Array<OneD, const NekDouble> &physvals);
+        const Array<OneD, const NekDouble> &physvals) override;
 
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,
@@ -197,14 +197,16 @@ protected:
 
     STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp_MatFree(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey);
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override;
 
     STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp_MatFree(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey);
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::StdMatrixKey &mkey) override;
 
     STD_REGIONS_EXPORT virtual NekDouble v_Integral(
-        const Array<OneD, const NekDouble> &inarray);
+        const Array<OneD, const NekDouble> &inarray) override;
 
     STD_REGIONS_EXPORT virtual int v_GetNedges(void) const;
     STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
@@ -215,18 +217,14 @@ protected:
 
     STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
         const int tid, Array<OneD, unsigned int> &maparray,
-        Array<OneD, int> &signarray, Orientation traceOrient, int P, int Q);
+        Array<OneD, int> &signarray, Orientation traceOrient, int P,
+        int Q) override;
 
-    STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(const int dir,
-                                                        DNekMatSharedPtr &mat);
+    STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
+        const int dir, DNekMatSharedPtr &mat) override;
 
 private:
-    virtual int v_GetShapeDimension() const
-    {
-        return 3;
-    }
-
-    virtual int v_GetCoordim(void)
+    virtual int v_GetShapeDimension() const override
     {
         return 3;
     }

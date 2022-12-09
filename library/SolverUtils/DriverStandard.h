@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File AdvectionTerm.h
+// File: DriverStandard.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Driver class for the stability solver
+// Description: Driver class for the standard solver
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -72,10 +72,11 @@ protected:
 
     /// Second-stage initialisation
     SOLVER_UTILS_EXPORT virtual void v_InitObject(
-        std::ostream &out = std::cout);
+        std::ostream &out = std::cout) override;
 
     /// Virtual function for solve implementation.
-    SOLVER_UTILS_EXPORT virtual void v_Execute(std::ostream &out = std::cout);
+    SOLVER_UTILS_EXPORT virtual void v_Execute(
+        std::ostream &out = std::cout) override;
 
     static std::string driverLookupId;
 };
