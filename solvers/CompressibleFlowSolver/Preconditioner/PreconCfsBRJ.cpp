@@ -161,7 +161,6 @@ void PreconCfsBRJ::v_DoPreconCfs(
         bool flagUpdateDervFlux = false;
 
         const size_t nwspTraceDataType = nvariables + 1;
-        NekSingle tmpSingle = 0;
         Array<OneD, Array<OneD, NekSingle>> wspTraceDataType(nwspTraceDataType);
         for (size_t m = 0; m < nwspTraceDataType; m++)
         {
@@ -234,7 +233,6 @@ void PreconCfsBRJ::v_BuildPreconCfs(
 #ifdef SIMD // copy matrix to simd layout
         // load matrix 
         int cnt  = 0;
-        int cnt1 = 0;
         const auto vecwidth = vec_t::width;
 
         alignas(vec_t::alignment) std::array<NekSingle, vec_t::width> tmp;
@@ -321,8 +319,6 @@ void PreconCfsBRJ::PreconBlkDiag(
 
     int nTotElmt = pFields[0]->GetNumElmts();
                                                           
-    unsigned int ncoeffs    = pFields[0]->GetNcoeffs();
-
 #define NTIME  1
     //#define NTIME1 1
 
