@@ -62,22 +62,14 @@ PreconCfsBRJ::PreconCfsBRJ(
     size_t nvariables  = pFields.size();
     m_PreconMatStorage = eDiagonal;
 
-    m_PreconMatVarsSingle = TensorOfArray2D<SNekBlkMatSharedPtr>(nvariables);
+    m_PreconMatVarsSingle = Array<OneD, Array<OneD, SNekBlkMatSharedPtr>>(nvariables);
     for (size_t i = 0; i < nvariables; i++)
     {
         m_PreconMatVarsSingle[i] = Array<OneD, SNekBlkMatSharedPtr>(nvariables);
     }
     AllocatePreconBlkDiagCoeff(pFields, m_PreconMatVarsSingle);
 
-    size_t nelmts = pFields[0]->GetNumElmts();
-    size_t nelmtcoef;
-    Array<OneD, unsigned int> nelmtmatdim(nelmts);
-    for (size_t i = 0; i < nelmts; i++)
-    {
-        nelmtcoef      = pFields[0]->GetExp(i)->GetNcoeffs();
-        nelmtmatdim[i] = nelmtcoef * nvariables;
-    }
-    AllocateNekBlkMatDig(m_PreconMatSingle, nelmtmatdim, nelmtmatdim);
+    AllocateSIMDPreconBlkMatDiag(pFields);
 }
 
 void PreconCfsBRJ::v_InitObject()
@@ -157,7 +149,6 @@ void PreconCfsBRJ::v_DoPreconCfs(
         bool flagUpdateDervFlux = false;
 
         const size_t nwspTraceDataType = nvariables + 1;
-        NekSingle tmpSingle = 0;
         Array<OneD, Array<OneD, NekSingle>> wspTraceDataType(nwspTraceDataType);
         for (size_t m = 0; m < nwspTraceDataType; m++)
         {
@@ -166,7 +157,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
 
         LibUtilities::Timer timer;
         timer.Start();
-        PreconBlkDiag(pFields, rhs, outarray, m_PreconMatSingle, tmpSingle);
+        PreconBlkDiag(pFields, rhs, outarray);
         timer.Stop();
         timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
 
@@ -184,8 +175,7 @@ void PreconCfsBRJ::v_DoPreconCfs(
             timer.AccumulateRegion("PreconCfsBRJ::MinusOffDiag2Rhs", 2);
 
             timer.Start();
-            PreconBlkDiag(pFields, outarray, outTmp, m_PreconMatSingle,
-                          tmpSingle);
+            PreconBlkDiag(pFields, outarray, outTmp);
             timer.Stop();
             timer.AccumulateRegion("PreconCfsBRJ::PreconBlkDiag", 2);
 
@@ -203,8 +193,19 @@ void PreconCfsBRJ::v_BuildPreconCfs(
 
     if (0 < m_PreconItsStep)
     {
+        SNekBlkMatSharedPtr PreconMatSingle;
+        using vec_t    = simd<NekSingle>;
+        int nvariables = pFields.size();
+        int nelmts     = pFields[0]->GetNumElmts();
+        Array<OneD, unsigned int> matdim(nelmts);
+        for (int i = 0; i < nelmts; i++)
+        {
+            matdim[i] = pFields[0]->GetExp(i)->GetNcoeffs() * nvariables;
+        }
+        AllocateNekBlkMatDig(PreconMatSingle, matdim, matdim);
+
         m_operator.DoCalcPreconMatBRJCoeff(
-            intmp, m_PreconMatVarsSingle, m_PreconMatSingle, m_TraceJacSingle,
+            intmp, m_PreconMatVarsSingle, PreconMatSingle, m_TraceJacSingle,
             m_TraceJacDerivSingle, m_TraceJacDerivSignSingle,
             m_TraceJacArraySingle, m_TraceJacDerivArraySingle,
             m_TraceIPSymJacArraySingle);
@@ -212,6 +213,55 @@ void PreconCfsBRJ::v_BuildPreconCfs(
         if (m_verbose && m_root)
         {
             cout << "     ## CalcuPreconMat " << endl;
+        }
+
+        // copy matrix to simd layout
+        // load matrix
+        int cnt             = 0;
+        const auto vecwidth = vec_t::width;
+
+        alignas(vec_t::alignment) std::array<NekSingle, vec_t::width> tmp;
+
+        for (int ne = 0; ne < nelmts; ne++)
+        {
+            const auto nElmtDof = matdim[ne];
+            const auto nblocks  = nElmtDof / vecwidth;
+
+            const NekSingle *mmat =
+                PreconMatSingle->GetBlockPtr(ne, ne)->GetRawPtr();
+            /// Copy array into column major blocks of vector width
+            for (int i1 = 0; i1 < nblocks; ++i1)
+            {
+                for (int j = 0; j < nElmtDof; ++j)
+                {
+                    for (int i = 0; i < vecwidth; ++i)
+                    {
+                        tmp[i] = mmat[j + (i1 * vecwidth + i) * nElmtDof];
+                    }
+                    // store contiguous vec_t array.
+                    m_sBlkDiagMat[cnt++].load(tmp.data());
+                }
+            }
+
+            const auto endwidth = nElmtDof - nblocks * vecwidth;
+
+            // end rows that do not fit into vector widths
+            if (endwidth)
+            {
+                for (int j = 0; j < nElmtDof; ++j)
+                {
+                    for (int i = 0; i < endwidth; ++i)
+                    {
+                        tmp[i] = mmat[j + (nblocks * vecwidth + i) * nElmtDof];
+                    }
+
+                    for (int i = endwidth; i < vecwidth; ++i)
+                    {
+                        tmp[i] = 0.0;
+                    }
+                    m_sBlkDiagMat[cnt++].load(tmp.data());
+                }
+            }
         }
     }
 
@@ -243,59 +293,80 @@ bool PreconCfsBRJ::v_UpdatePreconMatCheck(
     return flag;
 }
 
-template <typename DataType, typename TypeNekBlkMatSharedPtr>
 void PreconCfsBRJ::PreconBlkDiag(
     const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-    const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &outarray,
-    const TypeNekBlkMatSharedPtr &PreconMatVars, const DataType &tmpDataType)
+    const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &outarray)
 {
-    boost::ignore_unused(tmpDataType);
+    unsigned int nvariables = pFields.size();
 
-    size_t nvariables = pFields.size();
-    size_t npoints    = pFields[0]->GetNcoeffs();
-    size_t npointsVar = nvariables * npoints;
-    Array<OneD, DataType> Sinarray(npointsVar);
-    Array<OneD, DataType> Soutarray(npointsVar);
-    NekVector<DataType> tmpVect(npointsVar, Sinarray, eWrapper);
-    NekVector<DataType> outVect(npointsVar, Soutarray, eWrapper);
+    int nTotElmt = pFields[0]->GetNumElmts();
 
-    std::shared_ptr<LocalRegions::ExpansionVector> expvect =
-        pFields[0]->GetExp();
-    size_t nTotElmt = (*expvect).size();
+    using vec_t         = simd<NekSingle>;
+    const auto vecwidth = vec_t::width;
 
-    for (size_t m = 0; m < nvariables; m++)
+    // vectorized matrix multiply
+    std::vector<vec_t, tinysimd::allocator<vec_t>> Sinarray(m_max_nblocks);
+    std::vector<vec_t, tinysimd::allocator<vec_t>> Soutarray(m_max_nElmtDof);
+    // std::vector<vec_t, tinysimd::allocator<vec_t>> tmp;
+
+    alignas(vec_t::alignment) std::array<NekSingle, vec_t::width> tmp;
+
+    for (int ne = 0, cnt = 0, icnt = 0, icnt1 = 0; ne < nTotElmt; ne++)
     {
-        size_t nVarOffset = m * npoints;
-        for (size_t ne = 0; ne < nTotElmt; ne++)
+        const auto nElmtCoef = pFields[0]->GetNcoeffs(ne);
+        const auto nElmtDof  = nElmtCoef * nvariables;
+        const auto nblocks   = (nElmtDof % vecwidth) ? nElmtDof / vecwidth + 1
+                                                     : nElmtDof / vecwidth;
+
+        // gather data into blocks - could probably be done with a
+        // gather call? can be replaced with a gather op when working
+        for (int j = 0; j < nblocks; ++j, icnt += vecwidth)
         {
-            size_t nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
-            size_t nElmtCoef   = pFields[0]->GetNcoeffs(ne);
-            size_t inOffset    = nVarOffset + nCoefOffset;
-            size_t outOffset   = nCoefOffset * nvariables + m * nElmtCoef;
-            for (size_t i = 0; i < nElmtCoef; i++)
+            for (int i = 0; i < vecwidth; ++i)
             {
-                Sinarray[outOffset + i] = DataType(inarray[inOffset + i]);
+                tmp[i] = inarray[m_inputIdx[icnt + i]];
+            }
+
+            Sinarray[j].load(tmp.data());
+        }
+
+        // Do matrix multiply
+        // first block just needs multiplying
+        vec_t in = Sinarray[0];
+        for (int i = 0; i < nElmtDof; ++i)
+        {
+            Soutarray[i] = m_sBlkDiagMat[cnt++] * in;
+        }
+
+        // rest of blocks are multiply add operations;
+        for (int n = 1; n < nblocks; ++n)
+        {
+            in = Sinarray[n];
+            for (int i = 0; i < nElmtDof; ++i)
+            {
+                Soutarray[i].fma(m_sBlkDiagMat[cnt++], in);
             }
         }
-    }
 
-    outVect = (*PreconMatVars) * tmpVect;
-
-    for (size_t m = 0; m < nvariables; m++)
-    {
-        size_t nVarOffset = m * npoints;
-        for (size_t ne = 0; ne < nTotElmt; ne++)
+        // get block aligned index for this expansion
+        NekSingle val;
+        for (int i = 0; i < nElmtDof; ++i)
         {
-            size_t nCoefOffset = pFields[0]->GetCoeff_Offset(ne);
-            size_t nElmtCoef   = pFields[0]->GetNcoeffs(ne);
-            size_t inOffset    = nVarOffset + nCoefOffset;
-            size_t outOffset   = nCoefOffset * nvariables + m * nElmtCoef;
-            for (size_t i = 0; i < nElmtCoef; i++)
+            // Get hold of data
+            Soutarray[i].store(tmp.data());
+
+            // Sum vector width
+            val = tmp[0];
+            for (int j = 1; j < vecwidth; ++j)
             {
-                outarray[inOffset + i] = NekDouble(Soutarray[outOffset + i]);
+                val += tmp[j];
             }
+            // put data into outarray
+            outarray[m_inputIdx[icnt1 + i]] = NekDouble(val);
         }
-    }
+
+        icnt1 += nblocks * vecwidth;
+    } 
 }
 
 template <typename DataType>

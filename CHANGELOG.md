@@ -42,6 +42,7 @@ v5.3.0
 - The Incomplete IP method was made the default method for the IP method (!1377).
 - Improve performance of the perconditioner and diffusion operator (!1393)
 - Re-add the SFD test with an updated restart file (!1399)
+- Improve performance of the block diagonal operator of the preconditioner (!1404)
 - ExtractSurface2DCSF utility is updated to use the boost program option (!1407)
 - Fix a Wuninitialized-const-reference warning (!1449)
 
