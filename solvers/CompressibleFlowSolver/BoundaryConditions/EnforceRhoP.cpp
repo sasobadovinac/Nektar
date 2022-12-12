@@ -43,7 +43,7 @@ namespace Nektar
 {
 
 std::string EnforceRhoP::className = GetCFSBndCondFactory().
-RegisterCreatorFunction("EnforceRhoP",
+RegisterCreatorFunction("EnforceEntropyPressure",
                         EnforceRhoP::create,
                         "Riemann invariant boundary condition, \
                         fixing Rho and P.");

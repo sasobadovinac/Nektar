@@ -43,7 +43,7 @@ namespace Nektar
 {
 
 std::string EnforceSU::className = GetCFSBndCondFactory().
-RegisterCreatorFunction("EnforceSU",
+RegisterCreatorFunction("EnforceEntropyNormalVelocity",
                         EnforceSU::create,
                         "Riemann invariant boundary condition, \
                         fixing S and U.");

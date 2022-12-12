@@ -43,7 +43,7 @@ namespace Nektar
 {
 
 std::string EnforceSH::className = GetCFSBndCondFactory().
-RegisterCreatorFunction("EnforceSH",
+RegisterCreatorFunction("EnforceEntropyTotalEnthalpy",
                         EnforceSH::create,
                         "Riemann invariant boundary condition, \
                         fixing H and S.");
