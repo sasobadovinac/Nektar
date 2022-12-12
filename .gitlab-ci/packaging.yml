@@ -470,38 +470,6 @@ package-debian-buster-deploy:
     - package-debian-buster-build
 
 ##
-## Debian stretch
-##
-package-debian-stretch-env:
-  <<: *package-env-build
-
-package-debian-stretch-build:
-  <<: *package-deb-build
-  needs: ["package-debian-stretch-env"]
-  variables:
-    image_name: pkg/debian-stretch
-
-package-debian-stretch-test:
-  <<: *package-deb-test
-  needs: ["package-debian-stretch-build"]
-  dependencies:
-    - package-debian-stretch-build
-  variables:
-    image_name: debian:stretch
-
-package-debian-stretch-deploy-dev:
-  <<: *package-deb-deploy-dev
-  needs: ["package-debian-stretch-build", "package-debian-stretch-test"]
-  dependencies:
-    - package-debian-stretch-build
-
-package-debian-stretch-deploy:
-  <<: *package-deb-deploy
-  needs: ["package-debian-stretch-build", "package-debian-stretch-deploy-dev"]
-  dependencies:
-    - package-debian-stretch-build
-
-##
 ## Ubuntu jammy
 ##
 package-ubuntu-jammy-env:
@@ -597,38 +565,6 @@ package-ubuntu-bionic-deploy:
   needs: ["package-ubuntu-bionic-build", "package-ubuntu-bionic-deploy-dev"]
   dependencies:
     - package-ubuntu-bionic-build
-
-##
-## Ubuntu xenial
-##
-#package-ubuntu-xenial-env:
-#  <<: *package-env-build
-
-#package-ubuntu-xenial-build:
-#  <<: *package-deb-build
-#  needs: ["package-ubuntu-xenial-env"]
-#  variables:
-#    image_name: pkg/ubuntu-xenial
-
-#package-ubuntu-xenial-test:
-#  <<: *package-deb-test
-#  needs: ["package-ubuntu-xenial-build"]
-#  dependencies:
-#    - package-ubuntu-xenial-build
-#  variables:
-#    image_name: ubuntu:xenial
-
-#package-ubuntu-xenial-deploy-dev:
-#  <<: *package-deb-deploy-dev
-#  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-test"]
-#  dependencies:
-#    - package-ubuntu-xenial-build
-
-#package-ubuntu-xenial-deploy:
-#  <<: *package-deb-deploy
-#  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-deploy-dev"]
-#  dependencies:
-#    - package-ubuntu-xenial-build
 
 
 ##

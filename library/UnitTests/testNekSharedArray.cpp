@@ -681,14 +681,6 @@ BOOST_AUTO_TEST_CASE(Test2DAccessOperator)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TestSharedPtr)
-{
-    std::shared_ptr<double> a(new double[10]);
-    std::shared_ptr<const double> b(a);
-    std::shared_ptr<const double> c;
-    c = a;
-}
-
 BOOST_AUTO_TEST_CASE(Test1DEqualOperator)
 {
     {

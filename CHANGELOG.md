@@ -71,6 +71,7 @@ exporting in .vtu format (!1386)
 
 **FieldConvert**
 - Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
+- Fix range option so that it also works with hdf5 (!1414)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
@@ -87,14 +88,13 @@ exporting in .vtu format (!1386)
 
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)
-- Add header checking for *.cpp, *.hpp and *.h files to the CI (!1431)
+- Add header checking for \*.cpp, \*.hpp and \*.h files to the CI (!1431)
 - Enable packaging for Fedora 36. (!1429)
 - Fix XML files indentation (!1428)
 - Update solvers CMakeList.txt to fix some warnings detection issue (!1447)
 - Remove -fpermissive from NektarCommon.cmake (!1460)
+- Remove old distribution versions, added Fedora 35/36 testing to CI (!1461)
 
-**FieldConvert**
-- Fix range option so that it also works with hdf5 (!1414)
 
 v5.2.0
 ------
