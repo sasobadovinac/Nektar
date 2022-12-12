@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        ModuleType t;
+        ModuleType t = eInputModule;
 
         if (tmp1[0] == "in")
         {

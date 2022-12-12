@@ -56,6 +56,18 @@ include:
   stage: build-env
   image: docker:19.03.6
   timeout: 1h
+  variables:
+    REMOVE_UCX: 0
+  script:
+    - OS_DISTRO=$(echo $CI_JOB_NAME | cut -d- -f 1)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 3)
+    - sed -e "s %%OS_DISTRO%% $OS_DISTRO g" -e "s %%OS_VERSION%% $OS_VERSION g" -e "s %%REGISTRY%% $CI_REGISTRY_IMAGE g" docker/nektar-env/Dockerfile_${OS_DISTRO}_${BUILD_TYPE} > Dockerfile
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - export IMAGE=$CI_REGISTRY_IMAGE:env-${OS_DISTRO}-${OS_VERSION}-${BUILD_TYPE}
+    - docker pull $IMAGE || true
+    - docker build --pull --build-arg REMOVE_UCX=${REMOVE_UCX} -t $IMAGE .
+    - docker push $IMAGE
 
 .build-and-test-template: &build-and-test-template
   <<: *execution-conditions
@@ -64,12 +76,13 @@ include:
   variables:
     GIT_STRATEGY: clone
   script:
-    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 1)
-    - BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - OS_DISTRO=$(echo $CI_JOB_NAME | cut -d- -f 1)
+    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - export CCACHE_DIR=/cache/nektar/$OS_VERSION/
     - export NUM_CPUS=8
     - export CONTAINER_NAME=test-$CI_JOB_ID
-    - export ENV_NAME=env-${OS_VERSION}-${BUILD_TYPE}
+    - export ENV_NAME=env-${OS_DISTRO}-${OS_VERSION}-${BUILD_TYPE}
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:$ENV_NAME
     - sed "s %%BASE_IMAGE%% $CI_REGISTRY_IMAGE:$ENV_NAME g" .gitlab-ci/Dockerfile_add_repo > Dockerfile_tmp
@@ -114,8 +127,8 @@ include:
     WARNING_REGEX: '.*warning[: ].*'
     GIT_STRATEGY: none
   script:
-    - export OS=$(echo $CI_JOB_NAME | cut -d- -f 1)
-    - export BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - export OS=$(echo $CI_JOB_NAME | cut -d- -f 2)
+    - export BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 3)
     - export LOG_FILE="log/${OS}_${BUILD_TYPE}.log"
     - if [ $(grep -c "$WARNING_REGEX" $LOG_FILE) -ne 0 ];
       then
@@ -174,137 +187,100 @@ include:
 .build-env-debian-template-default: &build-env-debian-template-default
   <<: *build-env-template
   stage: build-env-default
-  variables:
-    OS_DISTRO: debian
-    REMOVE_UCX: 0
-  script:
-    - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 1)
-    - BUILD_TYPE=$(echo $CI_JOB_NAME | cut -d- -f 2)
-    - sed -e "s %%OS_VERSION%% $OS_VERSION g" -e "s %%REGISTRY%% $CI_REGISTRY_IMAGE g" docker/nektar-env/Dockerfile_${OS_DISTRO}_${BUILD_TYPE} > Dockerfile
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - export IMAGE=$CI_REGISTRY_IMAGE:env-${OS_VERSION}-${BUILD_TYPE}
-    - docker pull $IMAGE || true
-    - docker build --pull --build-arg REMOVE_UCX=${REMOVE_UCX} -t $IMAGE .
-    - docker push $IMAGE
 
 .build-env-debian-template-full: &build-env-debian-template-full
   <<: *build-env-debian-template-default
   stage: build-env-full
 
-bullseye-default-build-env:
+debian-bullseye-default-build-env:
   <<: *build-env-debian-template-default
 
-bullseye-full-build-env:
+debian-bullseye-full-build-env:
   <<: *build-env-debian-template-full
   variables:
-    OS_DISTRO: debian
     REMOVE_UCX: 1
-  needs: ["bullseye-default-build-env"]
+  needs: ["debian-bullseye-default-build-env"]
 
-buster-default-build-env:
+debian-buster-default-build-env:
   <<: *build-env-debian-template-default
 
-buster-full-build-env:
+debian-buster-full-build-env:
   <<: *build-env-debian-template-full
-  needs: ["buster-default-build-env"]
+  needs: ["debian-buster-default-build-env"]
 
-stretch-default-build-env:
-  <<: *build-env-debian-template-default
-
-stretch-full-build-env:
-  <<: *build-env-debian-template-full
-  needs: ["stretch-default-build-env"]
-
-bullseye-default-build-and-test:
+debian-bullseye-default-build-and-test:
   <<: *build-and-test-template
-  needs: ["bullseye-default-build-env"]
+  needs: ["debian-bullseye-default-build-env"]
 
-bullseye-full-build-and-test:
+debian-bullseye-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["bullseye-full-build-env"]
+  needs: ["debian-bullseye-full-build-env"]
 
-bullseye-full-avx2-build-and-test:
+debian-bullseye-full-avx2-build-and-test:
   <<: *build-and-test-template
-  needs: ["bullseye-full-build-env"]
+  needs: ["debian-bullseye-full-build-env"]
   variables:
     BUILD_SIMD: avx2
   tags:
     - avx2
 
-bullseye-full-avx512-build-and-test:
+debian-bullseye-full-avx512-build-and-test:
   <<: *build-and-test-template
-  needs: ["bullseye-full-build-env"]
+  needs: ["debian-bullseye-full-build-env"]
   variables:
     BUILD_SIMD: avx512
   tags:
     - avx512
 
-buster-default-build-and-test:
+debian-buster-default-build-and-test:
   <<: *build-and-test-template
-  needs: ["buster-default-build-env"]
+  needs: ["debian-buster-default-build-env"]
 
-buster-full-build-and-test:
+debian-buster-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["buster-full-build-env"]
+  needs: ["debian-buster-full-build-env"]
   variables:
-    OS_DISTRO: debian
     GIT_SUBMODULE_STRATEGY: recursive
-
-stretch-default-build-and-test:
-  <<: *build-and-test-template
-  needs: ["stretch-default-build-env"]
-
-stretch-full-build-and-test:
-  <<: *build-and-test-template
-  needs: ["stretch-full-build-env"]
 
 
 # COMPILER WARNINGS
-bullseye-default-warnings:
+debian-bullseye-default-warnings:
   <<: *compiler-warning-template
-  needs: ["bullseye-default-build-and-test"]
+  needs: ["debian-bullseye-default-build-and-test"]
 
-bullseye-full-warnings:
+debian-bullseye-full-warnings:
   <<: *compiler-warning-template
-  needs: ["bullseye-full-build-and-test"]
+  needs: ["debian-bullseye-full-build-and-test"]
 
-bullseye-full-avx2-warnings:
+debian-bullseye-full-avx2-warnings:
   <<: *compiler-warning-template
-  needs: ["bullseye-full-avx2-build-and-test"]
+  needs: ["debian-bullseye-full-avx2-build-and-test"]
 
-buster-default-warnings:
+debian-buster-default-warnings:
   <<: *compiler-warning-template
-  needs: ["buster-default-build-and-test"]
+  needs: ["debian-buster-default-build-and-test"]
 
-buster-full-warnings:
+debian-buster-full-warnings:
   <<: *compiler-warning-template
-  needs: ["buster-full-build-and-test"]
-
-stretch-default-warnings:
-  <<: *compiler-warning-template
-  needs: ["stretch-default-build-and-test"]
-
-stretch-full-warnings:
-  <<: *compiler-warning-template
-  needs: ["stretch-full-build-and-test"]
+  needs: ["debian-buster-full-build-and-test"]
 
 
 # CODE FORMATTING
-bullseye-clang-format:
+debian-bullseye-clang-format:
   <<: *clang-format-template
   needs: []
 
-bullseye-header-format:
+debian-bullseye-header-format:
   <<: *header-format-template
   needs: []
 
-bullseye-xml-format:
+debian-bullseye-xml-format:
   <<: *xml-format-template
   needs: []
 
 
 # DOCUMENTATION
-bullseye-documentation-build-env:
+debian-bullseye-documentation-build-env:
   <<: *execution-conditions
   image: docker:19.03.6
   stage: build-env-full
@@ -315,12 +291,12 @@ bullseye-documentation-build-env:
     - docker pull $IMAGE || true
     - docker build --pull -t $IMAGE .
     - docker push $IMAGE
-  needs: ["bullseye-default-build-env"]
+  needs: ["debian-bullseye-default-build-env"]
 
 .build-documentation-template: &build-documentation-template
   <<: *build-and-test-template
   image: $CI_REGISTRY_IMAGE:env-documentation
-  needs: ["bullseye-documentation-build-env"]
+  needs: ["debian-bullseye-documentation-build-env"]
 
 user-guide-build:
   <<: *build-documentation-template
@@ -364,53 +340,52 @@ tutorials-build:
 ################################################
 
 .build-env-ubuntu-template-default: &build-env-ubuntu-template-default
-  <<: *build-env-debian-template-default
-  variables:
-    OS_DISTRO: ubuntu
+  <<: *build-env-template
+  stage: build-env-default
 
 .build-env-ubuntu-template-full: &build-env-ubuntu-template-full
   <<: *build-env-ubuntu-template-default
   stage: build-env-full
 
-jammy-default-build-env:
+ubuntu-jammy-default-build-env:
   <<: *build-env-ubuntu-template-default
 
-jammy-full-build-env:
+ubuntu-jammy-full-build-env:
   <<: *build-env-ubuntu-template-full
-  needs: ["jammy-default-build-env"]
+  needs: ["ubuntu-jammy-default-build-env"]
 
-focal-default-build-env:
+ubuntu-focal-default-build-env:
   <<: *build-env-ubuntu-template-default
 
-focal-full-build-env:
+ubuntu-focal-full-build-env:
   <<: *build-env-ubuntu-template-full
-  needs: ["focal-default-build-env"]
+  needs: ["ubuntu-focal-default-build-env"]
 
-bionic-default-build-env:
+ubuntu-bionic-default-build-env:
   <<: *build-env-ubuntu-template-default
 
-bionic-full-build-env:
+ubuntu-bionic-full-build-env:
   <<: *build-env-ubuntu-template-full
-  needs: ["bionic-default-build-env"]
+  needs: ["ubuntu-bionic-default-build-env"]
 
-jammy-default-build-and-test:
+ubuntu-jammy-default-build-and-test:
   <<: *build-and-test-template
-  needs: ["jammy-default-build-env"]
+  needs: ["ubuntu-jammy-default-build-env"]
 
-jammy-full-build-and-test:
+ubuntu-jammy-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["jammy-full-build-env"]
+  needs: ["ubuntu-jammy-full-build-env"]
 
-jammy-full-clang14-build-and-test:
+ubuntu-jammy-full-clang14-build-and-test:
   <<: *build-and-test-template
-  needs: ["jammy-full-build-env"]
+  needs: ["ubuntu-jammy-full-build-env"]
   variables:
     BUILD_CC: clang-14
     BUILD_CXX: clang++-14
 
-jammy-full-clang14-avx2-build-and-test:
+ubuntu-jammy-full-clang14-avx2-build-and-test:
   <<: *build-and-test-template
-  needs: ["jammy-full-build-env"]
+  needs: ["ubuntu-jammy-full-build-env"]
   variables:
     BUILD_CC: clang-14
     BUILD_CXX: clang++-14
@@ -418,9 +393,9 @@ jammy-full-clang14-avx2-build-and-test:
   tags:
     - avx2
 
-jammy-full-clang14-avx512-build-and-test:
+ubuntu-jammy-full-clang14-avx512-build-and-test:
   <<: *build-and-test-template
-  needs: ["jammy-full-build-env"]
+  needs: ["ubuntu-jammy-full-build-env"]
   variables:
     BUILD_CC: clang-14
     BUILD_CXX: clang++-14
@@ -428,59 +403,120 @@ jammy-full-clang14-avx512-build-and-test:
   tags:
     - avx512
 
-focal-default-build-and-test:
+ubuntu-focal-default-build-and-test:
   <<: *build-and-test-template
-  needs: ["focal-default-build-env"]
+  needs: ["ubuntu-focal-default-build-env"]
 
-focal-full-build-and-test:
+ubuntu-focal-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["focal-full-build-env"]
+  needs: ["ubuntu-focal-full-build-env"]
 
-bionic-default-build-and-test:
+ubuntu-bionic-default-build-and-test:
   <<: *build-and-test-template
-  needs: ["bionic-default-build-env"]
+  needs: ["ubuntu-bionic-default-build-env"]
 
-bionic-full-build-and-test:
+ubuntu-bionic-full-build-and-test:
   <<: *build-and-test-template
-  needs: ["bionic-full-build-env"]
+  needs: ["ubuntu-bionic-full-build-env"]
 
 
 # COMPILER WARNINGS
-jammy-default-warnings:
+ubuntu-jammy-default-warnings:
   <<: *compiler-warning-template
-  needs: ["jammy-default-build-and-test"]
+  needs: ["ubuntu-jammy-default-build-and-test"]
 
-jammy-full-warnings:
+ubuntu-jammy-full-warnings:
   <<: *compiler-warning-template
-  needs: ["jammy-full-build-and-test"]
+  needs: ["ubuntu-jammy-full-build-and-test"]
 
-jammy-full-clang14-warnings:
+ubuntu-jammy-full-clang14-warnings:
   <<: *compiler-warning-template
-  needs: ["jammy-full-clang14-build-and-test"]
+  needs: ["ubuntu-jammy-full-clang14-build-and-test"]
 
-jammy-full-clang14-avx2-warnings:
+ubuntu-jammy-full-clang14-avx2-warnings:
   <<: *compiler-warning-template
-  needs: ["jammy-full-clang14-avx2-build-and-test"]
+  needs: ["ubuntu-jammy-full-clang14-avx2-build-and-test"]
 
-jammy-full-clang14-avx512-warnings:
+ubuntu-jammy-full-clang14-avx512-warnings:
   <<: *compiler-warning-template
-  needs: ["jammy-full-clang14-avx512-build-and-test"]
+  needs: ["ubuntu-jammy-full-clang14-avx512-build-and-test"]
 
-focal-default-warnings:
+ubuntu-focal-default-warnings:
   <<: *compiler-warning-template
-  needs: ["focal-default-build-and-test"]
+  needs: ["ubuntu-focal-default-build-and-test"]
 
-focal-full-warnings:
+ubuntu-focal-full-warnings:
   <<: *compiler-warning-template
-  needs: ["focal-full-build-and-test"]
+  needs: ["ubuntu-focal-full-build-and-test"]
 
-bionic-default-warnings:
+ubuntu-bionic-default-warnings:
   <<: *compiler-warning-template
-  needs: ["bionic-default-build-and-test"]
+  needs: ["ubuntu-bionic-default-build-and-test"]
 
-bionic-full-warnings:
+ubuntu-bionic-full-warnings:
   <<: *compiler-warning-template
-  needs: ["bionic-full-build-and-test"]
+  needs: ["ubuntu-bionic-full-build-and-test"]
+
+
+################################################
+###################  FEDORA  ###################
+################################################
+
+.build-env-fedora-template-default: &build-env-fedora-template-default
+  <<: *build-env-template
+  stage: build-env-default
+
+.build-env-fedora-template-full: &build-env-fedora-template-full
+  <<: *build-env-fedora-template-default
+  stage: build-env-full
+
+fedora-35-default-build-env:
+  <<: *build-env-fedora-template-default
+
+fedora-35-full-build-env:
+  <<: *build-env-fedora-template-full
+  needs: ["fedora-35-default-build-env"]
+
+fedora-36-default-build-env:
+  <<: *build-env-fedora-template-default
+
+fedora-36-full-build-env:
+  <<: *build-env-fedora-template-full
+  needs: ["fedora-36-default-build-env"]
+
+fedora-35-default-build-and-test:
+  <<: *build-and-test-template
+  needs: ["fedora-35-default-build-env"]
+
+fedora-35-full-build-and-test:
+  <<: *build-and-test-template
+  needs: ["fedora-35-full-build-env"]
+
+fedora-36-default-build-and-test:
+  <<: *build-and-test-template
+  needs: ["fedora-36-default-build-env"]
+
+fedora-36-full-build-and-test:
+  <<: *build-and-test-template
+  needs: ["fedora-36-full-build-env"]
+
+
+# COMPILER WARNINGS
+fedora-35-default-warnings:
+  <<: *compiler-warning-template
+  needs: ["fedora-35-default-build-and-test"]
+
+fedora-35-full-warnings:
+  <<: *compiler-warning-template
+  needs: ["fedora-35-full-build-and-test"]
+
+fedora-36-default-warnings:
+  <<: *compiler-warning-template
+  needs: ["fedora-36-default-build-and-test"]
+
+fedora-36-full-warnings:
+  <<: *compiler-warning-template
+  needs: ["fedora-36-full-build-and-test"]
 
 
 # ################################################

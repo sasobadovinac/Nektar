@@ -677,6 +677,7 @@ bool ProcessWallNormalData::NewtonIterForLocCoordOnBndElmt(
     bool isConverge = false;
 
     F1 = F2 = 2000; // Starting value of Function
+    resid   = sqrt(F1 * F1 + F2 * F2);
     while (cnt++ < iterMax)
     {
         x1map = bndXmap->PhysEvaluate(locCoord, pts[dir1]);
