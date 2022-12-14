@@ -1,0 +1,185 @@
+diff -crB tetgen-1.5-orig/tetgen.cxx tetgen-1.5/tetgen.cxx
+*** tetgen-1.5-orig/tetgen.cxx	Tue Dec 13 21:17:28 2022
+--- tetgen-1.5/tetgen.cxx	Tue Dec 13 21:22:07 2022
+***************
+*** 2436,2442 ****
+    char outmtrfilename[FILENAMESIZE];
+    int i, j;
+  
+!   sprintf(outnodefilename, "%s.node", filebasename);
+    printf("Saving nodes to %s\n", outnodefilename);
+    fout = fopen(outnodefilename, "w");
+    fprintf(fout, "%d  %d  %d  %d\n", numberofpoints, mesh_dim,
+--- 2436,2442 ----
+    char outmtrfilename[FILENAMESIZE];
+    int i, j;
+  
+!   snprintf(outnodefilename, FILENAMESIZE, "%s.node", filebasename);
+    printf("Saving nodes to %s\n", outnodefilename);
+    fout = fopen(outnodefilename, "w");
+    fprintf(fout, "%d  %d  %d  %d\n", numberofpoints, mesh_dim,
+***************
+*** 2462,2468 ****
+  
+    // If the point metrics exist, output them to a .mtr file.
+    if ((numberofpointmtrs > 0) && (pointmtrlist != (REAL *) NULL)) {
+!     sprintf(outmtrfilename, "%s.mtr", filebasename);
+      printf("Saving metrics to %s\n", outmtrfilename);
+      fout = fopen(outmtrfilename, "w");
+      fprintf(fout, "%d  %d\n", numberofpoints, numberofpointmtrs);
+--- 2462,2468 ----
+  
+    // If the point metrics exist, output them to a .mtr file.
+    if ((numberofpointmtrs > 0) && (pointmtrlist != (REAL *) NULL)) {
+!     snprintf(outmtrfilename, FILENAMESIZE, "%s.mtr", filebasename);
+      printf("Saving metrics to %s\n", outmtrfilename);
+      fout = fopen(outmtrfilename, "w");
+      fprintf(fout, "%d  %d\n", numberofpoints, numberofpointmtrs);
+***************
+*** 2488,2494 ****
+    char outelefilename[FILENAMESIZE];
+    int i, j;
+  
+!   sprintf(outelefilename, "%s.ele", filebasename);
+    printf("Saving elements to %s\n", outelefilename);
+    fout = fopen(outelefilename, "w");
+    if (mesh_dim == 3) {
+--- 2488,2494 ----
+    char outelefilename[FILENAMESIZE];
+    int i, j;
+  
+!   snprintf(outelefilename, FILENAMESIZE, "%s.ele", filebasename);
+    printf("Saving elements to %s\n", outelefilename);
+    fout = fopen(outelefilename, "w");
+    if (mesh_dim == 3) {
+***************
+*** 2535,2541 ****
+    char outfacefilename[FILENAMESIZE];
+    int i;
+  
+!   sprintf(outfacefilename, "%s.face", filebasename);
+    printf("Saving faces to %s\n", outfacefilename);
+    fout = fopen(outfacefilename, "w");
+    fprintf(fout, "%d  %d\n", numberoftrifaces, 
+--- 2535,2541 ----
+    char outfacefilename[FILENAMESIZE];
+    int i;
+  
+!   snprintf(outfacefilename, FILENAMESIZE, "%s.face", filebasename);
+    printf("Saving faces to %s\n", outfacefilename);
+    fout = fopen(outfacefilename, "w");
+    fprintf(fout, "%d  %d\n", numberoftrifaces, 
+***************
+*** 2564,2570 ****
+    char outedgefilename[FILENAMESIZE];
+    int i;
+  
+!   sprintf(outedgefilename, "%s.edge", filebasename);
+    printf("Saving edges to %s\n", outedgefilename);
+    fout = fopen(outedgefilename, "w");
+    fprintf(fout, "%d  %d\n", numberofedges, edgemarkerlist != NULL ? 1 : 0);
+--- 2564,2570 ----
+    char outedgefilename[FILENAMESIZE];
+    int i;
+  
+!   snprintf(outedgefilename, FILENAMESIZE, "%s.edge", filebasename);
+    printf("Saving edges to %s\n", outedgefilename);
+    fout = fopen(outedgefilename, "w");
+    fprintf(fout, "%d  %d\n", numberofedges, edgemarkerlist != NULL ? 1 : 0);
+***************
+*** 2592,2598 ****
+    char outneighborfilename[FILENAMESIZE];
+    int i;
+  
+!   sprintf(outneighborfilename, "%s.neigh", filebasename);
+    printf("Saving neighbors to %s\n", outneighborfilename);
+    fout = fopen(outneighborfilename, "w");
+    fprintf(fout, "%d  %d\n", numberoftetrahedra, mesh_dim + 1);
+--- 2592,2598 ----
+    char outneighborfilename[FILENAMESIZE];
+    int i;
+  
+!   snprintf(outneighborfilename, FILENAMESIZE, "%s.neigh", filebasename);
+    printf("Saving neighbors to %s\n", outneighborfilename);
+    fout = fopen(outneighborfilename, "w");
+    fprintf(fout, "%d  %d\n", numberoftetrahedra, mesh_dim + 1);
+***************
+*** 2627,2633 ****
+    char outpolyfilename[FILENAMESIZE];
+    int i, j, k;
+  
+!   sprintf(outpolyfilename, "%s.poly", filebasename);
+    printf("Saving poly to %s\n", outpolyfilename);
+    fout = fopen(outpolyfilename, "w");
+  
+--- 2627,2633 ----
+    char outpolyfilename[FILENAMESIZE];
+    int i, j, k;
+  
+!   snprintf(outpolyfilename, FILENAMESIZE, "%s.poly", filebasename);
+    printf("Saving poly to %s\n", outpolyfilename);
+    fout = fopen(outpolyfilename, "w");
+  
+***************
+*** 2725,2731 ****
+    char outsmeshfilename[FILENAMESIZE];
+    int i, j;
+  
+!   sprintf(outsmeshfilename, "%s.smesh", filebasename);
+    printf("Saving faces to %s\n", outsmeshfilename);
+    fout = fopen(outsmeshfilename, "w");
+  
+--- 2725,2731 ----
+    char outsmeshfilename[FILENAMESIZE];
+    int i, j;
+  
+!   snprintf(outsmeshfilename, FILENAMESIZE, "%s.smesh", filebasename);
+    printf("Saving faces to %s\n", outsmeshfilename);
+    fout = fopen(outsmeshfilename, "w");
+  
+***************
+*** 3533,3539 ****
+      workstring[increment] = '%';
+      workstring[increment + 1] = 'd';
+      workstring[increment + 2] = '\0';
+!     sprintf(outfilename, workstring, meshnumber + 1);
+    }
+    // Additional input file name has the end ".a".
+    strcpy(addinfilename, infilename);
+--- 3533,3539 ----
+      workstring[increment] = '%';
+      workstring[increment + 1] = 'd';
+      workstring[increment + 2] = '\0';
+!     snprintf(outfilename, FILENAMESIZE, workstring, meshnumber + 1);
+    }
+    // Additional input file name has the end ".a".
+    strcpy(addinfilename, infilename);
+***************
+*** 28188,28200 ****
+           shortest, longest);
+    printf("  Smallest asp.ratio: %13.5g   |  Largest asp.ratio: %13.5g\n",
+           smallestratio, biggestratio);
+!   sprintf(sbuf, "%.17g", biggestfaangle);
+    if (strlen(sbuf) > 8) {
+      sbuf[8] = '\0';
+    }
+    printf("  Smallest facangle: %14.5g   |  Largest facangle:       %s\n",
+           smallestfaangle, sbuf);
+!   sprintf(sbuf, "%.17g", biggestdiangle);
+    if (strlen(sbuf) > 8) {
+      sbuf[8] = '\0';
+    }
+--- 28188,28200 ----
+           shortest, longest);
+    printf("  Smallest asp.ratio: %13.5g   |  Largest asp.ratio: %13.5g\n",
+           smallestratio, biggestratio);
+!   snprintf(sbuf, 128, "%.17g", biggestfaangle);
+    if (strlen(sbuf) > 8) {
+      sbuf[8] = '\0';
+    }
+    printf("  Smallest facangle: %14.5g   |  Largest facangle:       %s\n",
+           smallestfaangle, sbuf);
+!   snprintf(sbuf, 128, "%.17g", biggestdiangle);
+    if (strlen(sbuf) > 8) {
+      sbuf[8] = '\0';
+    }

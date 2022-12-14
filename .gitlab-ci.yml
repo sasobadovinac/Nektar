@@ -520,41 +520,65 @@ fedora-36-full-warnings:
 
 
 # ################################################
-# ####################  OSX  #####################
+# ###################  macOS  ####################
 # ################################################
 
-.build-and-test-osx-template: &build-and-test-osx-template
+.build-and-test-macos-template: &build-and-test-macos-template
   <<: *build-and-test-template
   tags:
     - macos
   script:
     - mkdir -p log
-    - export OS_VERSION="osx"
+    - export OS_VERSION="macos"
     - export NUM_CPUS=8
     - bash -x ./.gitlab-ci/build-and-test.sh |
       tee log/${OS_VERSION}_${BUILD_TYPE}.log
 
-
-osx-default-build-and-test:
-  <<: *build-and-test-osx-template
+# Intel runners
+macos-default-intel-build-and-test:
+  <<: *build-and-test-macos-template
   variables:
     BUILD_TYPE: "default"
   needs: []
 
-osx-full-build-and-test:
-  <<: *build-and-test-osx-template
+macos-full-intel-build-and-test:
+  <<: *build-and-test-macos-template
   variables:
     BUILD_TYPE: "full"
   needs: []
 
-
-osx-default-warnings:
+macos-default-intel-warnings:
   <<: *compiler-warning-template
-  needs: ["osx-default-build-and-test"]
+  needs: ["macos-default-intel-build-and-test"]
 
-osx-full-warnings:
+macos-full-intel-warnings:
   <<: *compiler-warning-template
-  needs: ["osx-full-build-and-test"]
+  needs: ["macos-full-intel-build-and-test"]
+
+# ARM runners
+macos-default-arm-build-and-test:
+  <<: *build-and-test-macos-template
+  tags:
+    - macos-arm
+  variables:
+    BUILD_TYPE: "default"
+  needs: []
+
+macos-full-arm-build-and-test:
+  <<: *build-and-test-macos-template
+  tags:
+    - macos-arm
+  variables:
+    BUILD_TYPE: "full"
+  needs: []
+
+macos-default-arm-warnings:
+  <<: *compiler-warning-template
+  needs: ["macos-default-arm-build-and-test"]
+
+macos-full-arm-warnings:
+  <<: *compiler-warning-template
+  needs: ["macos-full-arm-build-and-test"]
 
 
 # ################################################

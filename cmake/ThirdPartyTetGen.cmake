@@ -22,6 +22,15 @@ IF(NEKTAR_USE_MESHGEN)
 
     IF (THIRDPARTY_BUILD_TETGEN)
         INCLUDE(ExternalProject)
+
+        UNSET(PATCH CACHE)
+        FIND_PROGRAM(PATCH patch)
+        IF(NOT PATCH)
+            MESSAGE(FATAL_ERROR
+                "'patch' tool for modifying files not found. Cannot build Tetgen.")
+        ENDIF()
+        MARK_AS_ADVANCED(PATCH)
+
         EXTERNALPROJECT_ADD(
             tetgen-1.5
             PREFIX ${TPSRC}
@@ -33,6 +42,7 @@ IF(NEKTAR_USE_MESHGEN)
             BINARY_DIR ${TPBUILD}/tetgen-1.5
             TMP_DIR ${TPBUILD}/tetgen-1.5-tmp
             INSTALL_DIR ${TPDIST}
+            PATCH_COMMAND ${PATCH} -p1 < ${PROJECT_SOURCE_DIR}/cmake/thirdparty-patches/tetgen-snprintf.patch
             CONFIGURE_COMMAND ${CMAKE_COMMAND}
             -G ${CMAKE_GENERATOR}
             -DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
