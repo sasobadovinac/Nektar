@@ -15,6 +15,12 @@ IF (NEKTAR_USE_PETSC)
     PKG_SEARCH_MODULE(PETSC PETSc IMPORTED_TARGET)
 
     IF (PETSC_FOUND)
+        # Prefer to use absolute paths to avoid separate link directories on
+        # some platforms (e.g. macOS). However not available in all CMake
+        # versions.
+        IF (DEFINED PETSC_LINK_LIBRARIES)
+            SET(PETSC_LIBRARIES ${PETSC_LINK_LIBRARIES} CACHE INTERNAL "")
+        ENDIF()
         MESSAGE(STATUS "Found PETSc ${PETSC_VERSION}: ${PETSC_LIBRARIES}")
         SET(BUILD_PETSC OFF)
     ELSE()

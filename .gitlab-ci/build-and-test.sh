@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-[[ $OS_VERSION != "osx" ]] && ccache -s && ccache -M 5G
+[[ $OS_VERSION != "macos" ]] && ccache -s && ccache -M 5G
 
 if [[ $BUILD_TYPE == "default" ]]; then
     BUILD_OPTS="-DCMAKE_BUILD_TYPE=Release \
@@ -50,6 +50,6 @@ rm -rf build && mkdir -p build && (cd build && cmake -G 'Unix Makefiles' $BUILD_
 exit_code=$?
 if [[ $exit_code -ne 0 ]]
 then
-    [[ $OS_VERSION != "osx" ]] && rm -rf build/dist
+    [[ $OS_VERSION != "macos" ]] && rm -rf build/dist
     exit $exit_code
 fi
