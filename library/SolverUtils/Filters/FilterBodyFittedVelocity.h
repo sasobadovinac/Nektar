@@ -83,6 +83,8 @@ protected:
         eOthers
     };
 
+    std::string  m_bodyFittedCooriateFile;
+
     FilterType   m_filterType;
     ProblemType  m_problemType;
     unsigned int m_spaceDim;

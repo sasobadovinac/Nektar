@@ -111,6 +111,8 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
 {
     ProcessBoundaryExtract::Process(vm);
 
+    std::cout << "running!" << std::endl; //Ganlin
+
     // Get dim to store data
     const int nFields   = m_f->m_variables.size();
     const int nCoordDim = m_f->m_exp[0]->GetCoordim(0);
@@ -253,6 +255,54 @@ void ProcessBodyFittedVelocity::Process(po::variables_map &vm)
         m_f->m_exp[nFields + i]->FwdTrans_IterPerExp(
             vel_bfc[i-1], m_f->m_exp[nFields + i]->UpdateCoeffs());
     }
+
+
+    // Output the bfc to fld and then load in the filters
+    // bfcsDir[i][j][k]
+    //   i - dir vec:   0-main tangential, 1-normal, (2-minor tangential)
+    //   j - component: 0-x, 1-y, (2-z)
+    //   k - point id
+
+    m_f->m_variables.push_back("bfc_dir0_x");
+    m_f->m_variables.push_back("bfc_dir0_y");
+    if (nSpaceDim == 3)
+    {
+        m_f->m_variables.push_back("bfc_dir0_z");
+    }
+    m_f->m_variables.push_back("bfc_dir1_x");
+    m_f->m_variables.push_back("bfc_dir1_y");
+    if (nSpaceDim == 3)
+    {
+        m_f->m_variables.push_back("bfc_dir1_z");
+
+        m_f->m_variables.push_back("bfc_dir2_x");
+        m_f->m_variables.push_back("bfc_dir2_y");
+        m_f->m_variables.push_back("bfc_dir2_z");
+    }
+
+
+    int nAddFields_coord = (nSpaceDim==3) ? 9 : 4;
+    m_f->m_exp.resize(nFields + nAddFields + nAddFields_coord);
+
+    std::cout << "nAddFields_coords = " << nAddFields_coord << std::endl;
+
+    cnt = 0;
+    for (int i=0; i<nSpaceDim; ++i)
+    {
+        for (int j=0; j<nSpaceDim; ++j)
+        {
+
+            m_f->m_exp[nFields + nAddFields + cnt] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+
+            Vmath::Vcopy(npoints, bfcsDir[i][j], 1,
+                     m_f->m_exp[nFields + nAddFields + cnt]->UpdatePhys(), 1);
+            m_f->m_exp[nFields + nAddFields + cnt]->FwdTrans_IterPerExp(
+                        bfcsDir[i][j], m_f->m_exp[nFields + nAddFields + cnt]->UpdateCoeffs());
+
+            ++cnt;
+        }
+    }
+
 
 }
 
