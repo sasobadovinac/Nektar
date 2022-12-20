@@ -62,19 +62,19 @@
 
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
-              <D VAR="u" VALUE="(x^2+y^2)*cos(6*ang(y,x))" />
+                <D VAR="u" VALUE="(x^2+y^2)*cos(6*ang(y,x))" />
             </REGION>
             <REGION REF="1">
-              <D VAR="u" VALUE="(x^2+y^2)*cos(6*ang(y,x))" />
+                <D VAR="u" VALUE="(x^2+y^2)*cos(6*ang(y,x))" />
             </REGION>
             <REGION REF="2">
-              <D VAR="u" VALUE="(x^2+y^2)*cos(6*ang(y,x))" />
+                <D VAR="u" VALUE="(x^2+y^2)*cos(6*ang(y,x))" />
             </REGION>
             <REGION REF="3">
-              <P VAR="u" VALUE="[4]" />
+                <P VAR="u" VALUE="[4]" />
             </REGION>
             <REGION REF="4">
-              <P VAR="u" VALUE="[3]" />
+                <P VAR="u" VALUE="[3]" />
             </REGION>
         </BOUNDARYCONDITIONS>
 
@@ -83,7 +83,7 @@
         </FUNCTION>
 
         <FUNCTION NAME="ExactSolution">
-          <E VAR="u" VALUE="(x^2+y^2)*cos(6*ang(y,x))" />
+            <E VAR="u" VALUE="(x^2+y^2)*cos(6*ang(y,x))" />
         </FUNCTION>
 
     </CONDITIONS>
@@ -94,4 +94,4 @@
         </OPERATOR>
     </COLLECTIONS>
 
-  </NEKTAR>
+</NEKTAR>

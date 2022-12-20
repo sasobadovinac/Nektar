@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CompressibleFlowSystemImplicit.h
+// File: CompressibleFlowSystemImplicit.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -375,7 +375,7 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, DNekMatSharedPtr>> &ElmtJac);
 
-    virtual bool UpdateTimeStepCheck() override;
+    virtual bool v_UpdateTimeStepCheck() override;
 };
 } // namespace Nektar
 #endif

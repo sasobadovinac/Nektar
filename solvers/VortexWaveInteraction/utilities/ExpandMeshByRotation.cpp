@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpandMeshByRotation.cpp
+// File: ExpandMeshByRotation.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

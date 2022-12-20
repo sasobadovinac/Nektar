@@ -65,7 +65,7 @@ namespace abi
 template <typename T, int width> struct default_abi
 {
     using type = typename first_not_void_of<
-        typename sve<T>::type, typename avx512<T, width>::type,
+        typename sve<T, width>::type, typename avx512<T, width>::type,
         typename avx2<T, width>::type, typename sse2<T>::type,
         typename scalar<T>::type>::type;
 

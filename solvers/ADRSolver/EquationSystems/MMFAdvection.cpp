@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// File MMFAdvection.cpp
+// File: MMFAdvection.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -255,9 +255,9 @@ void MMFAdvection::v_DoSolve()
 
     int Ntot, indx;
     // Perform integration in time.
-    Ntot = m_steps / m_checksteps + 1;
+    Ntot = m_checksteps ? m_steps / m_checksteps + 1 : 0;
 
-    Array<OneD, NekDouble> dMass(Ntot);
+    Array<OneD, NekDouble> dMass(Ntot ? Ntot : 1);
 
     Array<OneD, NekDouble> zeta(nq);
     Array<OneD, Array<OneD, NekDouble>> fieldsprimitive(nvariables);
@@ -278,7 +278,8 @@ void MMFAdvection::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
+        if (m_infosteps && !((step + 1) % m_infosteps) &&
+            m_session->GetComm()->GetRank() == 0)
         {
             std::cout << "Steps: " << std::setw(8) << std::left << step + 1
                       << " "
@@ -290,7 +291,7 @@ void MMFAdvection::v_DoSolve()
                       << std::endl;
 
             // Masss = h^*
-            indx = (step + 1) / m_checksteps;
+            indx = m_checksteps ? (step + 1) / m_checksteps : 0;
             dMass[indx] =
                 (m_fields[0]->Integral(fields[0]) - m_Mass0) / m_Mass0;
 

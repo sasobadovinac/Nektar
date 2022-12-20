@@ -103,10 +103,10 @@ public:
 
     /// Returns the total number of nodes (vertices, edge nodes and
     /// face nodes).
-    NEKMESH_EXPORT unsigned int GetNodeCount() const
+    NEKMESH_EXPORT size_t GetNodeCount() const
     {
-        unsigned int n = m_faceNodes.size();
-        for (int i = 0; i < m_edgeList.size(); ++i)
+        std::size_t n = m_faceNodes.size();
+        for (std::size_t i = 0; i < m_edgeList.size(); ++i)
         {
             n += m_edgeList[i]->GetNodeCount();
         }
@@ -130,7 +130,7 @@ public:
     NEKMESH_EXPORT SpatialDomains::Geometry2DSharedPtr GetGeom(int coordDim);
 
     /// ID of the face.
-    unsigned int m_id;
+    size_t m_id;
     /// List of vertex nodes.
     std::vector<NodeSharedPtr> m_vertexList;
     /// List of corresponding edges.
@@ -153,15 +153,15 @@ NEKMESH_EXPORT bool operator==(FaceSharedPtr const &p1,
                                FaceSharedPtr const &p2);
 NEKMESH_EXPORT bool operator<(FaceSharedPtr const &p1, FaceSharedPtr const &p2);
 
-struct FaceHash : std::unary_function<FaceSharedPtr, std::size_t>
+struct FaceHash
 {
     std::size_t operator()(FaceSharedPtr const &p) const
     {
-        unsigned int nVert = p->m_vertexList.size();
-        std::size_t seed   = 0;
-        std::vector<unsigned int> ids(nVert);
+        std::size_t nVert = p->m_vertexList.size();
+        std::size_t seed  = 0;
+        std::vector<std::size_t> ids(nVert);
 
-        for (int i = 0; i < nVert; ++i)
+        for (std::size_t i = 0; i < nVert; ++i)
         {
             ids[i] = p->m_vertexList[i]->m_id;
         }

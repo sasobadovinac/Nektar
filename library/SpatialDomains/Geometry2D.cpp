@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  File:  Geometry2D.cpp
+//  File: Geometry2D.cpp
 //
 //  For more information, please see: http://www.nektar.info/
 //
@@ -28,7 +28,7 @@
 //  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 //
-//  Description:  2D geometry information
+//  Description: 2D geometry information
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,8 +101,8 @@ void Geometry2D::NewtonIterationForLocCoord(
     Array<OneD, DNekMatSharedPtr> I(2);
     Array<OneD, NekDouble> eta(2);
 
-    F1 = F2 = 2000; // Starting value of Function
-    NekDouble resid;
+    F1 = F2         = 2000; // Starting value of Function
+    NekDouble resid = sqrt(F1 * F1 + F2 * F2);
     while (cnt++ < MaxIterations)
     {
         //  evaluate lagrange interpolant at Lcoords

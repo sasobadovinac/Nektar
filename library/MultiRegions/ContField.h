@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ContField.h
+// File: ContField.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -198,28 +198,29 @@ protected:
 
     /// Impose the Dirichlet Boundary Conditions on outarray
     MULTI_REGIONS_EXPORT virtual void v_ImposeDirichletConditions(
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
-    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField();
+    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField() override;
 
-    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(const int nreg);
+    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(
+        const int nreg) override;
 
     /// Gathers the global coefficients \f$\boldsymbol{\hat{u}}_g\f$
     /// from the local coefficients \f$\boldsymbol{\hat{u}}_l\f$.
     MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray, bool useComm);
+        Array<OneD, NekDouble> &outarray, bool useComm) override;
 
-    MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(bool useComm);
+    MULTI_REGIONS_EXPORT virtual void v_LocalToGlobal(bool useComm) override;
 
     /// Scatters from the global coefficients
     /// \f$\boldsymbol{\hat{u}}_g\f$ to the local coefficients
     /// \f$\boldsymbol{\hat{u}}_l\f$.
     MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
-    MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(void);
+    MULTI_REGIONS_EXPORT virtual void v_GlobalToLocal(void) override;
 
     // /// Template method virtual forwarder for FwdTrans().
     // MULTI_REGIONS_EXPORT virtual void v_BwdTrans(
@@ -229,16 +230,16 @@ protected:
     /// Template method virtual forwarder for FwdTrans().
     MULTI_REGIONS_EXPORT virtual void v_FwdTrans(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     /// Template method virtual forwarded for SmoothField().
     MULTI_REGIONS_EXPORT virtual void v_SmoothField(
-        Array<OneD, NekDouble> &field);
+        Array<OneD, NekDouble> &field) override;
 
     /// Template method virtual forwarder for MultiplyByInvMassMatrix().
     MULTI_REGIONS_EXPORT virtual void v_MultiplyByInvMassMatrix(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     /// Solves the two-dimensional Helmholtz equation, subject to the
     /// boundary conditions specified.
@@ -249,7 +250,7 @@ protected:
         const StdRegions::VarCoeffMap &varcoeff,
         const MultiRegions::VarFactorsMap &varfactors,
         const Array<OneD, const NekDouble> &dirForcing,
-        const bool PhysSpaceForcing);
+        const bool PhysSpaceForcing) override;
 
     // Solve the linear advection problem assuming that m_coeffs
     // vector contains an intial estimate for solution
@@ -257,21 +258,23 @@ protected:
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+        const Array<OneD, const NekDouble> &dirForcing =
+            NullNekDouble1DArray) override;
 
     // Solve the linear advection problem assuming that m_coeff
     // vector contains an intial estimate for solution
-    MULTI_REGIONS_EXPORT void v_LinearAdvectionReactionSolve(
+    MULTI_REGIONS_EXPORT virtual void v_LinearAdvectionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
-        const Array<OneD, const NekDouble> &dirForcing = NullNekDouble1DArray);
+        const Array<OneD, const NekDouble> &dirForcing =
+            NullNekDouble1DArray) override;
 
     /// Template method virtual forwarder for GetBndConditions().
     MULTI_REGIONS_EXPORT virtual const Array<
         OneD, const SpatialDomains ::BoundaryConditionShPtr>
-        &v_GetBndConditions();
-    MULTI_REGIONS_EXPORT virtual void v_ClearGlobalLinSysManager(void);
+        &v_GetBndConditions() override;
+    MULTI_REGIONS_EXPORT virtual void v_ClearGlobalLinSysManager(void) override;
 };
 
 typedef std::shared_ptr<ContField> ContFieldSharedPtr;

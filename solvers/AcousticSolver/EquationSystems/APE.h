@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File APE.h
+// File: APE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,17 +69,17 @@ protected:
     APE(const LibUtilities::SessionReaderSharedPtr &pSession,
         const SpatialDomains::MeshGraphSharedPtr &pGraph);
 
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     virtual void v_GetFluxVector(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,
-        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux) override;
 
 private:
     virtual void v_RiemannInvariantBC(
         int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
         Array<OneD, Array<OneD, NekDouble>> &BfFwd,
-        Array<OneD, Array<OneD, NekDouble>> &physarray);
+        Array<OneD, Array<OneD, NekDouble>> &physarray) override;
 };
 } // namespace Nektar
 

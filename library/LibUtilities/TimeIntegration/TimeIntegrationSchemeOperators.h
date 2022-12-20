@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: TimeIntegrationOperators.h
+// File: TimeIntegrationSchemeOperators.h
 //
 // For more information, please see: http://www.nektar.info
 //

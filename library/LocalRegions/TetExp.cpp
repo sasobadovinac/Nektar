@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File TetExp.cpp
+// File: TetExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -86,13 +86,6 @@ TetExp::TetExp(const TetExp &T)
       StdRegions::StdTetExp(T), Expansion(T), Expansion3D(T),
       m_matrixManager(T.m_matrixManager),
       m_staticCondMatrixManager(T.m_staticCondMatrixManager)
-{
-}
-
-/**
- * \brief Destructor
- */
-TetExp::~TetExp()
 {
 }
 
@@ -548,11 +541,6 @@ StdRegions::StdExpansionSharedPtr TetExp::v_GetLinStdExp(void) const
 
     return MemoryManager<StdRegions::StdTetExp>::AllocateSharedPtr(bkey0, bkey1,
                                                                    bkey2);
-}
-
-int TetExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
 }
 
 void TetExp::v_ExtractDataToCoeffs(

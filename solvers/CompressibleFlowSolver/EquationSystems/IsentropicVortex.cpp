@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File IsentropicVortex.cpp
+// File: IsentropicVortex.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

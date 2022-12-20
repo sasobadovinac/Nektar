@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Interpolator.h
+// File: Interpolator.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -47,7 +47,7 @@ namespace FieldUtils
 
 /// A class that contains algorithms for interpolation between pts fields,
 /// expansions and different meshes
-class Interpolator : public LibUtilities::Interpolator
+template <typename T> class Interpolator : public LibUtilities::Interpolator
 {
 public:
     /**
@@ -76,21 +76,17 @@ public:
     }
 
     /// Interpolate from an expansion to an expansion
-    FIELD_UTILS_EXPORT void Interpolate(
-        const std::vector<MultiRegions::ExpListSharedPtr> expInField,
-        std::vector<MultiRegions::ExpListSharedPtr> &expOutField,
-        NekDouble def_value = 0.0);
+    FIELD_UTILS_EXPORT void Interpolate(const T expInField, T &expOutField,
+                                        NekDouble def_value = 0.0);
 
     /// Interpolate from an expansion to a pts field
     FIELD_UTILS_EXPORT void Interpolate(
-        const std::vector<MultiRegions::ExpListSharedPtr> expInField,
-        LibUtilities::PtsFieldSharedPtr &ptsOutField,
+        const T expInField, LibUtilities::PtsFieldSharedPtr &ptsOutField,
         NekDouble def_value = 0.0);
 
     /// Interpolate from a pts field to an expansion
     FIELD_UTILS_EXPORT void Interpolate(
-        const LibUtilities::PtsFieldSharedPtr ptsInField,
-        std::vector<MultiRegions::ExpListSharedPtr> &expOutField);
+        const LibUtilities::PtsFieldSharedPtr ptsInField, T &expOutField);
 
     /// Interpolate from a pts field to a pts field
     FIELD_UTILS_EXPORT void Interpolate(
@@ -99,12 +95,14 @@ public:
 
 protected:
     /// input field
-    std::vector<MultiRegions::ExpListSharedPtr> m_expInField;
+    T m_expInField;
     /// output field
-    std::vector<MultiRegions::ExpListSharedPtr> m_expOutField;
+    T m_expOutField;
 };
 
-typedef std::shared_ptr<Interpolator> InterpolatorSharedPtr;
+typedef std::shared_ptr<
+    Interpolator<std::vector<MultiRegions::ExpListSharedPtr>>>
+    InterpolatorSharedPtr;
 
 } // namespace FieldUtils
 } // namespace Nektar

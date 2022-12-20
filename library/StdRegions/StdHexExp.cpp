@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdHexExp.cpp
+// File: StdHexExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -67,7 +67,7 @@ StdHexExp::~StdHexExp()
 {
 }
 
-bool StdHexExp::v_IsBoundaryInteriorExpansion()
+bool StdHexExp::v_IsBoundaryInteriorExpansion() const
 {
     return (m_base[0]->GetBasisType() == LibUtilities::eModified_A &&
             m_base[1]->GetBasisType() == LibUtilities::eModified_A &&
@@ -347,21 +347,6 @@ void StdHexExp::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
 }
 
 /**
- * Implementation of the local matrix inner product operation.
- */
-void StdHexExp::v_IProductWRTBase_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nq = GetTotPoints();
-    StdMatrixKey iprodmatkey(eIProductWRTBase, DetShapeType(), *this);
-    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
-
-    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
-}
-
-/**
  * Implementation of the sum-factorization inner product operation.
  */
 void StdHexExp::v_IProductWRTBase_SumFac(
@@ -484,36 +469,6 @@ void StdHexExp::v_IProductWRTDerivBase(
     Array<OneD, NekDouble> &outarray)
 {
     StdHexExp::IProductWRTDerivBase_SumFac(dir, inarray, outarray);
-}
-
-void StdHexExp::v_IProductWRTDerivBase_MatOp(
-    const int dir, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    ASSERTL0((dir == 0) || (dir == 1) || (dir == 2),
-             "input dir is out of range");
-
-    int nq           = GetTotPoints();
-    MatrixType mtype = eIProductWRTDerivBase0;
-
-    switch (dir)
-    {
-        case 0:
-            mtype = eIProductWRTDerivBase0;
-            break;
-        case 1:
-            mtype = eIProductWRTDerivBase1;
-            break;
-        case 2:
-            mtype = eIProductWRTDerivBase2;
-            break;
-    }
-
-    StdMatrixKey iprodmatkey(mtype, DetShapeType(), *this);
-    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
-
-    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 void StdHexExp::v_IProductWRTDerivBase_SumFac(
@@ -738,13 +693,6 @@ int StdHexExp::v_GetTraceIntNcoeffs(const int i) const
     {
         return (GetBasisNumModes(1) - 2) * (GetBasisNumModes(2) - 2);
     }
-}
-
-int StdHexExp::v_GetTotalTraceIntNcoeffs() const
-{
-    return 2 * ((GetBasisNumModes(0) - 2) * (GetBasisNumModes(1) - 2) +
-                (GetBasisNumModes(0) - 2) * (GetBasisNumModes(2) - 2) +
-                (GetBasisNumModes(1) - 2) * (GetBasisNumModes(2) - 2));
 }
 
 int StdHexExp::v_GetTraceNumPoints(const int i) const
@@ -2362,27 +2310,6 @@ void StdHexExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                     const StdMatrixKey &mkey)
 {
     StdHexExp::v_HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
-}
-
-void StdHexExp::v_GeneralMatrixOp_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey)
-{
-    DNekMatSharedPtr mat = m_stdMatrixManager[mkey];
-
-    if (inarray.get() == outarray.get())
-    {
-        Array<OneD, NekDouble> tmp(m_ncoeffs);
-        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
-
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, 1.0, mat->GetPtr().get(),
-                    m_ncoeffs, tmp.get(), 1, 0.0, outarray.get(), 1);
-    }
-    else
-    {
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, 1.0, mat->GetPtr().get(),
-                    m_ncoeffs, inarray.get(), 1, 0.0, outarray.get(), 1);
-    }
 }
 
 void StdHexExp::v_MultiplyByStdQuadratureMetric(

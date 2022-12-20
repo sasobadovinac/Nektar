@@ -318,91 +318,91 @@
     </EXPANSIONS>
     <CONDITIONS>
         <SOLVERINFO>
-          <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
-          <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes" />
-          <I PROPERTY="AdvectionForm"         VALUE="Convective" />
-          <I PROPERTY="Projection"            VALUE="Mixed_CG_Discontinuous" />
-          <I PROPERTY="Extrapolation" VALUE="SubStepping"   />
-          <I PROPERTY="TimeIntegrationMethod" VALUE="BDFImplicitOrder1" />
-          <--!I PROPERTY="CollectionOptions" VALUE="AutoTuning" /-->
-          <I PROPERTY="GlobalSysSoln" VALUE="IterativeStaticCond" />
+            <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
+            <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes" />
+            <I PROPERTY="AdvectionForm"         VALUE="Convective" />
+            <I PROPERTY="Projection"            VALUE="Mixed_CG_Discontinuous" />
+            <I PROPERTY="Extrapolation" VALUE="SubStepping"   />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="BDFImplicitOrder1" />
+            <--!I PROPERTY="CollectionOptions" VALUE="AutoTuning" /-->
+            <I PROPERTY="GlobalSysSoln" VALUE="IterativeStaticCond" />
         </SOLVERINFO>
-        
+
         <PARAMETERS>
-          <P> TimeStep      = 0.005        </P>
-          <P> NumSteps      = 10 </P>
-          <P> IO_CheckSteps = 10    </P>
-          <P> IO_InfoSteps  = 1    </P>
-          <P> Kinvis        = 0.025        </P>
-          <P> MinSubSteps   = 4       </P>
+            <P> TimeStep      = 0.005        </P>
+            <P> NumSteps      = 10 </P>
+            <P> IO_CheckSteps = 10    </P>
+            <P> IO_InfoSteps  = 1    </P>
+            <P> Kinvis        = 0.025        </P>
+            <P> MinSubSteps   = 4       </P>
         </PARAMETERS>
-        
+
         <VARIABLES>
-          <V ID="0"> u </V>
-          <V ID="1"> v </V>
-          <V ID="2"> w </V>
-          <V ID="3"> p </V>
+            <V ID="0"> u </V>
+            <V ID="1"> v </V>
+            <V ID="2"> w </V>
+            <V ID="3"> p </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
-          <B ID="0"> C[1] </B>  <!-- Inlet -->
-          <B ID="1"> C[6] </B>    <!-- Outlet -->
-          <B ID="2"> C[2] </B>    <!-- Wall -->
-          <B ID="3"> C[3] </B>    <!-- Wall left -->
-          <B ID="4"> C[4] </B>    <!-- Wall -->
-          <B ID="5"> C[5] </B>    <!-- Wall right -->
+            <B ID="0"> C[1] </B>  <!-- Inlet -->
+            <B ID="1"> C[6] </B>    <!-- Outlet -->
+            <B ID="2"> C[2] </B>    <!-- Wall -->
+            <B ID="3"> C[3] </B>    <!-- Wall left -->
+            <B ID="4"> C[4] </B>    <!-- Wall -->
+            <B ID="5"> C[5] </B>    <!-- Wall right -->
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
-          <REGION REF="0">
-            <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
-            <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
-            <D VAR="w" VALUE="0" />
-            <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
-          </REGION>
-          <REGION REF="1">
-            <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
-            <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
-            <D VAR="w" VALUE="0" />
-            <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
-          </REGION>
-          <REGION REF="2">
-            <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
-            <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
-            <D VAR="w" VALUE="0" />
-            <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-          </REGION>
-          <REGION REF="3">
-            <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
-            <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
-            <D VAR="w" VALUE="0" />
-            <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
-          </REGION>
-          <REGION REF="4">
-            <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
-            <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
-            <D VAR="w" VALUE="0" />
-            <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-          </REGION>
-          <REGION REF="5">
-            <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
-            <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
-            <D VAR="w" VALUE="0" />
-            <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
-          </REGION>
+            <REGION REF="0">
+                <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
+            </REGION>
+            <REGION REF="4">
+                <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="5">
+                <D VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+                <D VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
+                <D VAR="w" VALUE="0" />
+                <D VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
+            </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="ExactSolution">
-          <E VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
-          <E VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
-          <E VAR="w" VALUE="0" />
-          <E VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
+            <E VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+            <E VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
+            <E VAR="w" VALUE="0" />
+            <E VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
         </FUNCTION>
         <FUNCTION NAME="InitialConditions">
-          <E VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
-          <E VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
-          <E VAR="w" VALUE="0" />
-          <E VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
+            <E VAR="u" VALUE="(1-exp(-0.963740544195769*x)*cos(2*PI*y))" />
+            <E VAR="v" VALUE="(-0.963740544195769/(2*PI))*exp(-0.963740544195769*x)*sin(2*PI*y)" />
+            <E VAR="w" VALUE="0" />
+            <E VAR="p" VALUE="0.5*(1-exp(-2*0.963740544195769*x))" />
         </FUNCTION>
     </CONDITIONS>
 </NEKTAR>

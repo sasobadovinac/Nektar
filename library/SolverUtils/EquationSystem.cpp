@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// File EquationSystem.cpp
+// File: EquationSystem.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -1207,13 +1207,8 @@ void EquationSystem::WriteFld(const std::string &outname,
         }
     }
 
-#ifdef NEKTAR_DISABLE_BACKUPS
-    bool backup = false;
-#else
-    bool backup = true;
-#endif
-
-    m_fld->Write(outname, FieldDef, FieldData, fieldMetaDataMap, backup);
+    m_fld->Write(outname, FieldDef, FieldData, fieldMetaDataMap,
+                 m_session->GetBackups());
 }
 
 /**

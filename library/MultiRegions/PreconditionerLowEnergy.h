@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File Preconditioner.h
+// File: PreconditionerLowEnergy.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,7 +28,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Preconditioner header
+// Description: PreconditionerLowEnergy header
 //
 ///////////////////////////////////////////////////////////////////////////////
 #ifndef NEKTAR_LIB_MULTIREGIONS_PRECONDITIONERLOWENERGY_H
@@ -90,16 +90,19 @@ protected:
     // are in R and Rinv
     std::vector<std::pair<int, int>> m_sameBlock;
 
-    virtual void v_DoTransformBasisToLowEnergy(Array<OneD, NekDouble> &pInOut);
+    virtual void v_DoTransformBasisToLowEnergy(
+        Array<OneD, NekDouble> &pInOut) override;
 
     virtual void v_DoTransformCoeffsFromLowEnergy(
-        Array<OneD, NekDouble> &pInOut);
+        Array<OneD, NekDouble> &pInOut) override;
 
     virtual void v_DoTransformBasisFromLowEnergy(
-        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
+        const Array<OneD, NekDouble> &pInput,
+        Array<OneD, NekDouble> &pOutput) override;
 
     virtual void v_DoTransformCoeffsToLowEnergy(
-        const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
+        const Array<OneD, NekDouble> &pInput,
+        Array<OneD, NekDouble> &pOutput) override;
 
 private:
     void SetupBlockTransformationMatrix(void);
@@ -153,15 +156,16 @@ private:
     SpatialDomains::PrismGeomSharedPtr CreateRefPrismGeom(void);
     SpatialDomains::HexGeomSharedPtr CreateRefHexGeom(void);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput);
+                                    Array<OneD, NekDouble> &pOutput) override;
 
-    virtual void v_BuildPreconditioner();
+    virtual void v_BuildPreconditioner() override;
 
     virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
-        int n, int offset, const std::shared_ptr<DNekScalMat> &loc_mat);
+        int n, int offset,
+        const std::shared_ptr<DNekScalMat> &loc_mat) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

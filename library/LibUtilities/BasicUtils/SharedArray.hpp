@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SharedArray.hpp
+// File: SharedArray.hpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -201,6 +201,12 @@ public:
         *m_count += 1;
     }
 
+// Disable use-after-free warning with these two functions as it appears to be
+// incorrectly triggered in GCC 12.2.
+#if __GNUC__ == 12 && __GNUC_MINOR__ == 2
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuse-after-free"
+#endif
     ~Array()
     {
         if (m_count == nullptr)
@@ -224,7 +230,7 @@ public:
             }
 
             delete m_pythonInfo;
-
+            m_pythonInfo = nullptr;
 #else
 
             ArrayDestructionPolicy<DataType>::Destroy(m_data, m_capacity);
@@ -233,6 +239,7 @@ public:
 #endif
 
             delete m_count; // Clean up the memory used for the reference count.
+            m_count = nullptr;
         }
     }
 
@@ -258,12 +265,14 @@ public:
             }
 
             delete m_pythonInfo;
+            m_pythonInfo = nullptr;
 #else
 
             ArrayDestructionPolicy<DataType>::Destroy(m_data, m_capacity);
             MemoryManager<DataType>::RawDeallocate(m_data, m_capacity);
 #endif
             delete m_count; // Clean up the memory used for the reference count.
+            m_count = nullptr;
         }
 
         m_data     = rhs.m_data;
@@ -277,6 +286,9 @@ public:
 #endif
         return *this;
     }
+#if __GNUC__ == 12 && __GNUC_MINOR__ == 2
+#pragma GCC diagnostic pop
+#endif
 
     const_iterator begin() const
     {

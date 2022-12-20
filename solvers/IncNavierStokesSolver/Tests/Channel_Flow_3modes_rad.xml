@@ -37,35 +37,35 @@
         </BOUNDARYREGIONS>
 
         <BOUNDARYCONDITIONS>
-          <REGION REF="0">
-            <D VAR="u" VALUE="0" />
-            <D VAR="v" VALUE="0" />
-            <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-          </REGION>
-          <REGION REF="1">
-            <D VAR="u" VALUE="y*(1-y)" />
-            <D VAR="v" VALUE="0" />
-            <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
-          </REGION>
-          <REGION REF="2">
-            <R VAR="u" USERDEFINEDTYPE="Radiation"  VALUE="0" PRIMCOEFF="1.0/(10*TimeStep)"/>
-            <!N VAR="u"  VALUE="0" />
-            <R VAR="v" USERDEFINEDTYPE="Radiation" VALUE="0" PRIMCOEFF="1.0/(10*TimeStep)"/>
-            <!N VAR="v"  VALUE="0" />
-            <D  VAR="p" VALUE="0" />
-          </REGION>
+            <REGION REF="0">
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" VALUE="y*(1-y)" />
+                <D VAR="v" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />
+            </REGION>
+            <REGION REF="2">
+                <R VAR="u" USERDEFINEDTYPE="Radiation"  VALUE="0" PRIMCOEFF="1.0/(10*TimeStep)"/>
+                <!N VAR="u"  VALUE="0" />
+                <R VAR="v" USERDEFINEDTYPE="Radiation" VALUE="0" PRIMCOEFF="1.0/(10*TimeStep)"/>
+                <!N VAR="v"  VALUE="0" />
+                <D  VAR="p" VALUE="0" />
+            </REGION>
         </BOUNDARYCONDITIONS>
 
         <FUNCTION NAME="InitialConditions">
-          <E VAR="u" VALUE="y*(1-y)" />
-          <E VAR="v" VALUE="0" />
-          <E VAR="p" VALUE="(-2*Kinvis*(x-1))" />
+            <E VAR="u" VALUE="y*(1-y)" />
+            <E VAR="v" VALUE="0" />
+            <E VAR="p" VALUE="(-2*Kinvis*(x-1))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="ExactSolution">
-          <E VAR="u" VALUE="y*(1-y)" />
-          <E VAR="v" VALUE="0" />
-          <E VAR="p" VALUE="-2*Kinvis*(x-1)" />
+            <E VAR="u" VALUE="y*(1-y)" />
+            <E VAR="v" VALUE="0" />
+            <E VAR="p" VALUE="-2*Kinvis*(x-1)" />
         </FUNCTION>
 
     </CONDITIONS>

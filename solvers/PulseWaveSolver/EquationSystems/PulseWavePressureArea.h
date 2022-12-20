@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWavePressureArea.h
+// File: PulseWavePressureArea.h
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<NEKTAR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://www.nektar.info/nektar.xsd">
+
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx9kkdOA0EURMFEk03OySSTTMbknOOCU3AEhMSOu3AGTuI1KyPEgp2FEGxmpuTnEr1pad7Ur+43U1Ly/yoN9kwuffc9lN0hj4HzvTK8T15u87mIV9i8eCXy75/Jp8fsV8SrkCevtv35iMdtv3gN8s9vG6mH+9+I1yJPXmfPH9sNeb09v3gD8omPl9zrT0XEG5Enb7L3j0c8Ye8v3lzwPFf0f7SA8/u3Wq45beD8fu02r+/TAU7/nXZ+LLpfFzj9ddt++ekJdp47XL3g9NNnufz0g7NnwOblZxCcfobsfPkZBqefpO2Xn5ECf/kiP6Pg9DNmufyMg9PPhM3rHClw+pm08+VnCpx+pm2//MwEO3vDNQtOP2nL5WcOnH7mbV5+FsB5zkU7X36WwOln2fbLz0qwc264VsHpJ2O5/KyB08+6zcvPBjj9bNr5uscWOP1s2375CYuYC9cuOP3sWS4/++D0c2Dz8nMITj9Hdr78HIPznie2X35Og53Pw3UGTj/nlsvPBTj9XNq8/FyB08+1nS8/N+D0c2v75eEP0uhSMQAA</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1lGlXzVEYRyORoiQyNVyFhEoyVeg2iKRIA0UTzUVCIxVp0KSv7M3ZL+y1/vfNs/ZvnXvuuWc/50lI+P9zIKIejKiJEZXPIa2HkyL4sJj9jmg965LFrDsqZr+UiO+nivn+sYj9jms9+6aJ2TddzH4ntJ7fyxDzeyfF7Jep9ZzjlJhznBazX5bWc74zYs53Vsx+50Klfzj3eTHnviCmX7KV839yxPRFrnL+Z54Y/zHl/P+LYjznK+deCsT4vKSc+7osxtsV5dxjoRg/V5Vzv0VivF0Llfvn3q+LufcbYjwUK8dHiRgPpcrxdFOMhzLl+LslxkO58liot8V4uKMc33fFeLinnD64L8ZDhXL6o1KMn6pQuX/65oGYvnkoxsMj5fRTtRgPceX0WY0YD7XK6b86MR7qldOXj8WxUBuU069PxHh4qpw+bhTj4Zly+rtJjJ/noXL/9H2zmL5vEePhhXLew0sxHlqV805eifHQppz30y7GQ4dy3lWnGA+vlfPe3ojx0KWcd9gtxsNb5bzPd2L89ITK/fNue8W82z4xHvqV854HxHh4r5x3/kGMh0HlvP8hMR6GlTMXRsR4GFXOvBgT42FcOXNkQoyHSeXMl49i/HwKlftn7kyJ46F+FuNhWjnz6IsYD1+VM6e+ifEwo5z5NSvGw5xy5tq8GA8Lypl3i2I8fFfOHPwhxsOScubjshg/K6Fy/8zNn2Lm5i9xPNRV5czT32I8rClnzq6L8bChnPm7KcbDH+XM5S0xHraVM693xHjYVc4c3xPj4a9y5vu+GD//AMnlVQ0A</EDGE>
+        <ELEMENT>
+            <Q COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx11FdPFGEAheFVUHpfQPrSWXpH6oJSBaXbRcCKgoWiYKMIqCD4l715z4UncW+e5N1k5puTyQQC//4u4EWM+k+Pxkt42f5Xj8FYjLPrqsdjAibafdSTMBlT7H7qqZiG6XZO9QwMYqadWz0Ls/GKnT8HczEPtVuc9XwsQD1nvPVCLLJzJVgPYbFdJ9F6CZZikqlehuWoPZOtV2Alas8U61UYRu2p61ZjDdai9kyzXof1qD3TrTdgI2rPDOtN2IwhDFpvwVbUnpnW27AdtWeW9Q68itoz23ondqH21HvYjT3Yi9ozx3ofRlB75lrvxwHUnnnWr+F11J751gdxCLVngfVhHEHtWWh9FMdQexZZv4HjqD1DOIE38RZqz2LrkziF2rPE+jTOYD+WWp/FOdSeZdbn8TZqz3Lrd/Auas8K6/fwPmrPSusP8CFqT72Hj3ABH6P2DFtfxCXUntXWl/EJas8a60/xGWrPWuvP8QVqzzrrL3EFtWe99Vf4GrVng/VVXEPtqe/PG3yL71B7Nll/j+u4iM3WN3ATtWeL9S38gNqz1fpH3Ebt2WZ9Bz+h9my3/hm/oPbssP4Vv6H21PdxF/dwH7Vnp/UD/I7as8v6IR6h9uy2fow/UHv2WP+Jv1B79lo/wVPUnn3Wf+MZas+I9XP8g9rzL7yMTv4A</Q>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="0"> Q[0-63] </C>
+            <C ID="1"> E[0,25,42,59,76,93,110,127] </C>
+            <C ID="2"> E[128,130,132,134,136,138,140,142] </C>
+            <C ID="3"> E[23,41,58,75,92,109,126,143] </C>
+            <C ID="4"> E[3,6,9,12,15,18,21,24] </C>
+        </COMPOSITE>
+        <DOMAIN> C[0] </DOMAIN>
+    </GEOMETRY>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/feature/parareal-mpi</GitBranch>
+            <GitSHA1>8e18cf72205b25952a30a4638a30894474cb0867</GitSHA1>
+            <Hostname>erc-hpc-comp014</Hostname>
+            <NektarVersion>5.2.0</NektarVersion>
+            <Timestamp>11-Oct-2022 19:16:20</Timestamp>
+        </Provenance>
+        <NekMeshCommandLine>square-quads.msh square-quads-8x8.xml </NekMeshCommandLine>
+    </Metadata>
+
+    <EXPANSIONS>
+        <E COMPOSITE="C[0]" NUMMODES="8" FIELDS="u,v,p" TYPE="MODIFIED"          />
+    </EXPANSIONS>
+
+    <CONDITIONS>
+
+        <SOLVERINFO>
+            <I PROPERTY="SolverType"            VALUE="VelocityCorrectionScheme" />
+            <I PROPERTY="EQTYPE"                VALUE="UnsteadyNavierStokes"     />
+            <I PROPERTY="AdvectionForm"         VALUE="Convective"               />
+            <I PROPERTY="Projection"            VALUE="Galerkin"                 />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1"               />
+        </SOLVERINFO>
+
+        <PARAMETERS>
+            <P> TimeStep = 0.0004       </P>
+            <P> NumSteps = 16000        </P>
+            <P> IO_CheckSteps = 16000   </P>
+            <P> IO_InfoSteps = 16000    </P>
+            <P> Re = 100                </P>
+            <P> Kinvis = 1/Re           </P>
+        </PARAMETERS>
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+            <V ID="1"> v </V>
+            <V ID="2"> p </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[2] </B>
+            <B ID="2"> C[3] </B>
+            <B ID="3"> C[4] </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="-cos(x)*sin(y)*exp(-2*t*Kinvis)" />
+                <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(x)*cos(y)*exp(-2*t*Kinvis)" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0.0" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="-cos(x)*sin(y)*exp(-2*t*Kinvis)" />
+                <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(x)*cos(y)*exp(-2*t*Kinvis)" />
+                <D VAR="p" USERDEFINEDTYPE="TimeDependent" VALUE="-0.25*(cos(2*x)+cos(2*y))*exp(-4*t*Kinvis)" />
+            </REGION>
+            <REGION REF="2">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="-cos(x)*sin(y)*exp(-2*t*Kinvis)" />
+                <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(x)*cos(y)*exp(-2*t*Kinvis)" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0.0" />
+            </REGION>
+            <REGION REF="3">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="-cos(x)*sin(y)*exp(-2*t*Kinvis)" />
+                <D VAR="v" USERDEFINEDTYPE="TimeDependent" VALUE="sin(x)*cos(y)*exp(-2*t*Kinvis)" />
+                <D VAR="p" USERDEFINEDTYPE="TimeDependent" VALUE="-0.25*(cos(2*x)+cos(2*y))*exp(-4*t*Kinvis)" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="-cos(x)*sin(y)" />
+            <E VAR="v" VALUE="sin(x)*cos(y)" />
+            <E VAR="p" VALUE="-0.25*(cos(2*x)+cos(2*y))" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="-cos(x)*sin(y)*exp(-2*Kinvis*t)" />
+            <E VAR="v" VALUE="sin(x)*cos(y)*exp(-2*Kinvis*t)" />
+            <E VAR="p" VALUE="-0.25*(cos(2*x)+cos(2*y))*exp(-4*Kinvis*t)" />
+        </FUNCTION>
+
+    </CONDITIONS>
+
+</NEKTAR>

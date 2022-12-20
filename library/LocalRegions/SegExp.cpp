@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SegExp.cpp
+// File: SegExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -78,13 +78,6 @@ SegExp::SegExp(const SegExp &S)
     : StdExpansion(S), StdExpansion1D(S), StdRegions::StdSegExp(S),
       Expansion(S), Expansion1D(S), m_matrixManager(S.m_matrixManager),
       m_staticCondMatrixManager(S.m_staticCondMatrixManager)
-{
-}
-
-/**
- *
- */
-SegExp::~SegExp()
 {
 }
 
@@ -669,39 +662,6 @@ void SegExp::v_GetVertexPhysVals(const int vertex,
     }
 }
 
-// Add vertex value of the 1D Phys space to outarray.
-void SegExp::v_AddVertexPhysVals(const int vertex, const NekDouble &inarray,
-                                 Array<OneD, NekDouble> &outarray)
-{
-    size_t nquad = m_base[0]->GetNumPoints();
-
-    if (m_base[0]->GetPointsType() != LibUtilities::eGaussGaussLegendre)
-    {
-        switch (vertex)
-        {
-            case 0:
-                outarray[0] += inarray;
-                break;
-            case 1:
-                outarray[nquad - 1] += inarray;
-                break;
-        }
-    }
-    else
-    {
-        StdRegions::ConstFactorMap factors;
-        factors[StdRegions::eFactorGaussVertex] = vertex;
-
-        StdRegions::StdMatrixKey key(StdRegions::eInterpGauss, DetShapeType(),
-                                     *this, factors);
-
-        DNekScalMatSharedPtr mat_gauss = m_matrixManager[key];
-
-        Vmath::Svtvp(nquad, inarray,
-                     mat_gauss->GetOwnedMatrix()->GetPtr().get(), 1,
-                     &outarray[0], 1, &outarray[0], 1);
-    }
-}
 // Get vertex value from the 1D Phys space.
 void SegExp::v_GetTracePhysVals(
     const int edge, const StdRegions::StdExpansionSharedPtr &EdgeExp,
@@ -764,35 +724,10 @@ StdRegions::StdExpansionSharedPtr SegExp::v_GetLinStdExp(void) const
     return MemoryManager<StdRegions::StdSegExp>::AllocateSharedPtr(bkey0);
 }
 
-int SegExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
-
 const Array<OneD, const NekDouble> &SegExp::v_GetPhysNormals(void)
 {
     NEKERROR(ErrorUtil::efatal, "Got to SegExp");
     return NullNekDouble1DArray;
-}
-
-SpatialDomains::GeomType SegExp::v_MetricInfoType()
-{
-    return m_metricinfo->GetGtype();
-}
-
-int SegExp::v_GetNumPoints(const int dir) const
-{
-    return GetNumPoints(dir);
-}
-
-int SegExp::v_GetNcoeffs(void) const
-{
-    return m_ncoeffs;
-}
-
-const LibUtilities::BasisSharedPtr &SegExp::v_GetBasis(int dir) const
-{
-    return GetBasis(dir);
 }
 
 int SegExp::v_NumBndryCoeffs() const

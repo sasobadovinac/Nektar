@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PrismExp.cpp
+// File: PrismExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -70,10 +70,6 @@ PrismExp::PrismExp(const PrismExp &T)
     : StdExpansion(T), StdExpansion3D(T), StdPrismExp(T), Expansion(T),
       Expansion3D(T), m_matrixManager(T.m_matrixManager),
       m_staticCondMatrixManager(T.m_staticCondMatrixManager)
-{
-}
-
-PrismExp::~PrismExp()
 {
 }
 
@@ -539,11 +535,6 @@ NekDouble PrismExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
 //---------------------------------------
 // Helper functions
 //---------------------------------------
-
-int PrismExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
 
 void PrismExp::v_ExtractDataToCoeffs(
     const NekDouble *data, const std::vector<unsigned int> &nummodes,
@@ -1014,29 +1005,6 @@ void PrismExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                    const StdRegions::StdMatrixKey &mkey)
 {
     PrismExp::v_HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
-}
-
-void PrismExp::v_GeneralMatrixOp_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey)
-{
-    DNekScalMatSharedPtr mat = GetLocMatrix(mkey);
-
-    if (inarray.get() == outarray.get())
-    {
-        Array<OneD, NekDouble> tmp(m_ncoeffs);
-        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
-
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    tmp.get(), 1, 0.0, outarray.get(), 1);
-    }
-    else
-    {
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    inarray.get(), 1, 0.0, outarray.get(), 1);
-    }
 }
 
 void PrismExp::v_SVVLaplacianFilter(Array<OneD, NekDouble> &array,

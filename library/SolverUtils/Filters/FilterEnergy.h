@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterEnergy.h
+// File: FilterEnergy.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -68,14 +68,14 @@ public:
 protected:
     SOLVER_UTILS_EXPORT virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble &time);
+        const NekDouble &time) override;
     SOLVER_UTILS_EXPORT virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble &time);
+        const NekDouble &time) override;
     SOLVER_UTILS_EXPORT virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pField,
-        const NekDouble &time);
-    SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent();
+        const NekDouble &time) override;
+    SOLVER_UTILS_EXPORT virtual bool v_IsTimeDependent() override;
 
 private:
     unsigned int m_index;

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File MMFSWE.h
+// File: MMFSWE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -247,29 +247,29 @@ protected:
                         Array<OneD, Array<OneD, NekDouble>> &physarray);
 
     /// Initialise the object
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
-    virtual void v_DoSolve();
+    virtual void v_DoSolve() override;
 
-    virtual void v_DoInitialise();
+    virtual void v_DoInitialise() override;
 
     /// Print Summary
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     virtual void v_SetInitialConditions(const NekDouble initialtime,
                                         bool dumpInitialConditions,
-                                        const int domain);
+                                        const int domain) override;
 
     virtual void v_EvaluateExactSolution(unsigned int field,
                                          Array<OneD, NekDouble> &outfield,
-                                         const NekDouble time);
+                                         const NekDouble time) override;
 
     virtual NekDouble v_L2Error(unsigned int field,
                                 const Array<OneD, NekDouble> &exactsoln,
-                                bool Normalised);
+                                bool Normalised) override;
 
-    virtual NekDouble v_LinfError(unsigned int field,
-                                  const Array<OneD, NekDouble> &exactsoln);
+    virtual NekDouble v_LinfError(
+        unsigned int field, const Array<OneD, NekDouble> &exactsoln) override;
 
 private:
     int m_RossbyDisturbance;

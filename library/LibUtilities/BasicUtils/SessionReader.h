@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SessionReader.h
+// File: SessionReader.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -199,9 +199,16 @@ public:
     /// Load an integer parameter
     LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name,
                                             int &var) const;
+    /// Load an size_t parameter
+    LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name,
+                                            size_t &var) const;
     /// Check for and load an integer parameter.
     LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name, int &var,
                                             const int &def) const;
+    /// Check for and load an size_t parameter.
+    LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name,
+                                            size_t &var,
+                                            const size_t &def) const;
     /// Load a double precision parameter
     LIB_UTILITIES_EXPORT void LoadParameter(const std::string &name,
                                             NekDouble &var) const;
@@ -211,6 +218,9 @@ public:
                                             const NekDouble &def) const;
     /// Set an integer parameter
     LIB_UTILITIES_EXPORT void SetParameter(const std::string &name, int &var);
+    /// Set an size_t parameter
+    LIB_UTILITIES_EXPORT void SetParameter(const std::string &name,
+                                           size_t &var);
     /// Set a double precision parameter
     LIB_UTILITIES_EXPORT void SetParameter(const std::string &name,
                                            NekDouble &var);
@@ -253,6 +263,8 @@ public:
     /// Registers the default string value of a solver info property.
     LIB_UTILITIES_EXPORT inline static std::string RegisterDefaultSolverInfo(
         const std::string &pName, const std::string &pValue);
+    /// Returns the backups.
+    LIB_UTILITIES_EXPORT bool GetBackups() const;
 
     /* ----GlobalSysSolnInfo ----- */
 
@@ -423,6 +435,8 @@ private:
     bool m_verbose;
     /// Running on a shared filesystem
     bool m_sharedFilesystem;
+    /// Backups
+    bool m_backups = true;
     /// Update optimisation file
     bool m_updateOptFile;
     /// String to enumeration map for Solver Info parameters.

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StimulusRect.cpp
+// File: StimulusRect.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -171,5 +171,6 @@ void StimulusRect::v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
  */
 void StimulusRect::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
+    boost::ignore_unused(s);
 }
 } // namespace Nektar

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: testNekSharedArray.h
+// File: testNekSharedArray.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -679,14 +679,6 @@ BOOST_AUTO_TEST_CASE(Test2DAccessOperator)
         a[0][0] = 17.23;
         BOOST_CHECK_EQUAL(a[0][0], 17.23);
     }
-}
-
-BOOST_AUTO_TEST_CASE(TestSharedPtr)
-{
-    std::shared_ptr<double> a(new double[10]);
-    std::shared_ptr<const double> b(a);
-    std::shared_ptr<const double> c;
-    c = a;
 }
 
 BOOST_AUTO_TEST_CASE(Test1DEqualOperator)

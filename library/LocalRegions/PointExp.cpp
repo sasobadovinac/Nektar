@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PointExp.cpp
+// File: PointExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -44,10 +44,6 @@ PointExp::PointExp(const SpatialDomains::PointGeomSharedPtr &geom)
       Expansion(geom), Expansion0D(geom)
 {
     m_ncoeffs = 1;
-}
-
-PointExp::~PointExp(void)
-{
 }
 
 void PointExp::v_GetCoords(Array<OneD, NekDouble> &coords_0,

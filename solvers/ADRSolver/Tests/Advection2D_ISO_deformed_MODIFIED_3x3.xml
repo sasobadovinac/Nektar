@@ -65,9 +65,9 @@
     <EXPANSIONS>
         <E COMPOSITE="C[0]" NUMMODES="11" FIELDS="u" TYPE="MODIFIED" />
     </EXPANSIONS>
-    
+
     <CONDITIONS>
-        
+
         <PARAMETERS>
             <P> FinTime         = 1.0               </P>
             <P> TimeStep        = 0.001             </P>
@@ -77,42 +77,42 @@
             <P> advx            = 1                 </P>
             <P> advy            = 1                 </P>
         </PARAMETERS>
-        
+
         <SOLVERINFO>
             <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="AdvectionType"         VALUE="FRHU"                />
             <I PROPERTY="UpwindType"            VALUE="Upwind"              />
             <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
-        </SOLVERINFO> 
-        
+        </SOLVERINFO>
+
         <VARIABLES>
-            <V ID="0"> u </V> 
+            <V ID="0"> u </V>
         </VARIABLES>
-        
+
         <BOUNDARYREGIONS>
             <B ID="0"> C[1] </B>
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <D VAR="u" VALUE="0" />
             </REGION>
         </BOUNDARYCONDITIONS>
-        
+
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="Vx" VALUE=" 2*PI*y"  />
             <E VAR="Vy" VALUE="-2*PI*x" />
-        </FUNCTION>   
-        
+        </FUNCTION>
+
         <FUNCTION NAME="ExactSolution">
             <E VAR="u" VALUE="exp(-41*( (x+(0.3*cos(2*PI*t)))^2 + (y-(0.3*sin(2*PI*t)))^2 ))" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
             <E VAR="u" VALUE="exp(-41*( (x+(0.3*cos(2*PI*t)))^2 + (y-(0.3*sin(2*PI*t)))^2 ))" />
         </FUNCTION>
-        
+
     </CONDITIONS>
-    
-o</NEKTAR>
+
+</NEKTAR>

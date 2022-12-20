@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File LEE.h
+// File: LEE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -71,19 +71,19 @@ protected:
 
     virtual void v_AddLinTerm(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     virtual void v_GetFluxVector(
         const Array<OneD, Array<OneD, NekDouble>> &physfield,
-        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
+        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux) override;
 
 private:
     virtual void v_RiemannInvariantBC(
         int bcRegion, int cnt, Array<OneD, Array<OneD, NekDouble>> &Fwd,
         Array<OneD, Array<OneD, NekDouble>> &BfFwd,
-        Array<OneD, Array<OneD, NekDouble>> &physarray);
+        Array<OneD, Array<OneD, NekDouble>> &physarray) override;
 };
 } // namespace Nektar
 

@@ -1,85 +1,85 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <NEKTAR>
     <EXPANSIONS>
-      <E COMPOSITE="C[7]" BASISTYPE="Modified_A,Modified_A,Modified_A"
-         POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre,GaussLobattoLegendre"
-         NUMMODES="4,4,4"
-         NUMPOINTS="5,5,5"
-         FIELDS="u" />
+        <E COMPOSITE="C[7]" BASISTYPE="Modified_A,Modified_A,Modified_A"
+            POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre,GaussLobattoLegendre"
+            NUMMODES="4,4,4"
+            NUMPOINTS="5,5,5"
+            FIELDS="u" />
     </EXPANSIONS>
 
     <CONDITIONS>
-      
-    <PARAMETERS>
-      <P> FinTime        = 1.0               </P>
-      <P> TimeStep       = 0.001            </P>
-      <P> NumSteps       = FinTime/TimeStep  </P>
-      <P> IO_CheckSteps  = 200               </P>
-      <P> IO_InfoSteps   = 200                 </P>
-      <P> advx           = 1                 </P>
-      <P> advy           = 0.0               </P>
-      <P> advz           = 0.0                </P>
-      <P> offset         = 0.5                </P>
-    </PARAMETERS>
-    
-    <SOLVERINFO>
-      <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
-      <I PROPERTY="Projection"            VALUE="Continuous"          />
-      <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
-      <I PROPERTY="Projection"            VALUE="Galerkin"            />
-      <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"        />
-      <I PROPERTY="GJPStabilisation"      VALUE="SemiImplicit"        />
-    </SOLVERINFO>
-    
-    <VARIABLES>
-      <V ID="0"> u </V>
-    </VARIABLES>
 
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[1] </B>
-      <B ID="1"> C[3] </B>
-      <B ID="2"> C[2] </B>
-      <B ID="3"> C[4] </B>
-      <B ID="4"> C[5] </B>
-      <B ID="5"> C[6] </B>
-    </BOUNDARYREGIONS>
+        <PARAMETERS>
+            <P> FinTime        = 1.0               </P>
+            <P> TimeStep       = 0.001            </P>
+            <P> NumSteps       = FinTime/TimeStep  </P>
+            <P> IO_CheckSteps  = 200               </P>
+            <P> IO_InfoSteps   = 200                 </P>
+            <P> advx           = 1                 </P>
+            <P> advy           = 0.0               </P>
+            <P> advz           = 0.0                </P>
+            <P> offset         = 0.5                </P>
+        </PARAMETERS>
 
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-        <P VAR="u" VALUE="[2]" />
-      </REGION>
-      <REGION REF="1">
-        <P VAR="u" VALUE="[3]" />
-      </REGION>
-      <REGION REF="2">
-        <P VAR="u" VALUE="[0]" />
-      </REGION>
-      <REGION REF="3">
-        <P VAR="u" VALUE="[1]" />
-      </REGION>
-      <REGION REF="4">
-        <P VAR="u" VALUE="[5]" />
-      </REGION>
-      <REGION REF="5">
-        <P VAR="u" VALUE="[4]" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
+            <I PROPERTY="Projection"            VALUE="Continuous"          />
+            <I PROPERTY="AdvectionType"         VALUE="NonConservative"     />
+            <I PROPERTY="Projection"            VALUE="Galerkin"            />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"        />
+            <I PROPERTY="GJPStabilisation"      VALUE="SemiImplicit"        />
+        </SOLVERINFO>
 
-    <FUNCTION NAME="AdvectionVelocity">
-      <E VAR="Vx" VALUE="1" />
-      <E VAR="Vy" VALUE="1" />
-      <E VAR="Vz" VALUE="1" />
-    </FUNCTION>   
-    
-    <FUNCTION NAME="InitialConditions"> 
-      <E VAR="u" VALUE="exp(-20.0*(x-offset)*(x-offset))*exp(-20.0*(y-offset)*(y-offset))*exp(-20.0*(z-offset)*(z-offset))" /> 
-   </FUNCTION>
-    
-    <FUNCTION NAME="ExactSolution">
-      <E VAR="u" VALUE="exp(-20.0*(x-offset)*(x-offset))*exp(-20.0*(y-offset)*(y-offset))*exp(-20.0*(z-offset)*(z-offset))" /> 
-    </FUNCTION>
-    
-  </CONDITIONS>
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[1] </B>
+            <B ID="1"> C[3] </B>
+            <B ID="2"> C[2] </B>
+            <B ID="3"> C[4] </B>
+            <B ID="4"> C[5] </B>
+            <B ID="5"> C[6] </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <P VAR="u" VALUE="[2]" />
+            </REGION>
+            <REGION REF="1">
+                <P VAR="u" VALUE="[3]" />
+            </REGION>
+            <REGION REF="2">
+                <P VAR="u" VALUE="[0]" />
+            </REGION>
+            <REGION REF="3">
+                <P VAR="u" VALUE="[1]" />
+            </REGION>
+            <REGION REF="4">
+                <P VAR="u" VALUE="[5]" />
+            </REGION>
+            <REGION REF="5">
+                <P VAR="u" VALUE="[4]" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="AdvectionVelocity">
+            <E VAR="Vx" VALUE="1" />
+            <E VAR="Vy" VALUE="1" />
+            <E VAR="Vz" VALUE="1" />
+        </FUNCTION>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="exp(-20.0*(x-offset)*(x-offset))*exp(-20.0*(y-offset)*(y-offset))*exp(-20.0*(z-offset)*(z-offset))" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="exp(-20.0*(x-offset)*(x-offset))*exp(-20.0*(y-offset)*(y-offset))*exp(-20.0*(z-offset)*(z-offset))" />
+        </FUNCTION>
+
+    </CONDITIONS>
 
     <GEOMETRY DIM="3" SPACE="3" >
         <VERTEX XSCALE="1/(2*PI)" YSCALE="1/(2*PI)" ZSCALE="1/(2*PI)">
@@ -206,15 +206,15 @@
             <Q ID="35">52 45 30 53</Q>
         </FACE>
         <ELEMENT>
-          <!--H ID="0">0 1 2 3 4 5 </H!-->
-          <H ID="0">0 2 3 4 1 5 </H>
-          <H ID="1">5 6 7 8 9 10 </H>
-          <H ID="2">11 12 4 13 14 15 </H>
-          <H ID="3">15 16 9 17 18 19 </H>
-          <H ID="4">20 21 22 1 23 24 </H>
-          <H ID="5">24 25 26 6 27 28 </H>
-          <H ID="6">29 30 23 12 31 32 </H>
-          <H ID="7">32 33 27 16 34 35 </H>
+            <!--H ID="0">0 1 2 3 4 5 </H!-->
+            <H ID="0">0 2 3 4 1 5 </H>
+            <H ID="1">5 6 7 8 9 10 </H>
+            <H ID="2">11 12 4 13 14 15 </H>
+            <H ID="3">15 16 9 17 18 19 </H>
+            <H ID="4">20 21 22 1 23 24 </H>
+            <H ID="5">24 25 26 6 27 28 </H>
+            <H ID="6">29 30 23 12 31 32 </H>
+            <H ID="7">32 33 27 16 34 35 </H>
         </ELEMENT>
         <CURVED />
         <COMPOSITE>
@@ -229,14 +229,14 @@
         <DOMAIN> C[7] </DOMAIN>
     </GEOMETRY>
     <Metadata>
-      <Provenance>
-        <GitBranch>refs/heads/master</GitBranch>
-        <GitSHA1>df314e287195e88f7e79550f9ea2654b85a8fe9a</GitSHA1>
-        <Hostname>hurricane</Hostname>
-        <NektarVersion>5.0.0</NektarVersion>
-        <Timestamp>14-Aug-2019 17:21:02</Timestamp>
-      </Provenance>
-      <NekMeshCommandLine>-m peralign:surf1=5:surf2=6:dir=z:orient TGV3d_aligned_oriented.xml TGV3d_aligned_oriented.xml </NekMeshCommandLine>
+        <Provenance>
+            <GitBranch>refs/heads/master</GitBranch>
+            <GitSHA1>df314e287195e88f7e79550f9ea2654b85a8fe9a</GitSHA1>
+            <Hostname>hurricane</Hostname>
+            <NektarVersion>5.0.0</NektarVersion>
+            <Timestamp>14-Aug-2019 17:21:02</Timestamp>
+        </Provenance>
+        <NekMeshCommandLine>-m peralign:surf1=5:surf2=6:dir=z:orient TGV3d_aligned_oriented.xml TGV3d_aligned_oriented.xml </NekMeshCommandLine>
     </Metadata>
-  </NEKTAR>
-  
+</NEKTAR>
+

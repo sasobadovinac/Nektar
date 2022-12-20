@@ -275,7 +275,6 @@ bool OutputFileBase::WriteFile(std::string &filename, po::variables_map &vm)
     {
         if (vm.count("nparts") == 0) // do not do check if --nparts is enabled.
         {
-
             writeFile = 0; // set to zero for reduce all to be correct.
 
             if (comm->TreatAsRankZero())
@@ -289,8 +288,8 @@ bool OutputFileBase::WriteFile(std::string &filename, po::variables_map &vm)
                 }
                 else
                 {
-                    cout << "Not writing file " << filename
-                         << " because it already exists" << endl;
+                    cout << "Not writing file '" << filename
+                         << "' because it already exists" << endl;
                 }
             }
             comm->AllReduce(writeFile, LibUtilities::ReduceSum);

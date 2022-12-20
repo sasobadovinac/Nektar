@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <NEKTAR>
-	<EXPANSIONS>
+    <EXPANSIONS>
         <E COMPOSITE="C[1]" NUMMODES="4" TYPE="MODIFIED" FIELDS="u,v,w,p" />
     </EXPANSIONS>
 
     <CONDITIONS>
-    
-    	<SOLVERINFO>
+
+        <SOLVERINFO>
             <I PROPERTY="SolverType"                    VALUE="VelocityCorrectionScheme"/>
             <I PROPERTY="EQTYPE"                        VALUE="UnsteadyNavierStokes"    />
             <I PROPERTY="AdvectionForm" 				VALUE="Convective"				/>
             <I PROPERTY="Projection"                    VALUE="Galerkin"                />
             <I PROPERTY="TimeIntegrationMethod"         VALUE="IMEXOrder2"              />
             <I PROPERTY="HOMOGENEOUS"                   VALUE="1D"                      />
-       </SOLVERINFO>
-       
+        </SOLVERINFO>
+
         <PARAMETERS>
             <P> TimeStep 		= 0.002		</P>
             <P> NumSteps 		= 100       </P>
@@ -22,32 +22,32 @@
             <P> IO_InfoSteps 	= 1000     	</P>
             <P> Kinvis 			= 1         </P>
             <P> HomModesZ      	= 12     	</P>
-            <P> LZ             	= 1     	</P>            
+            <P> LZ             	= 1     	</P>
             <P> Flowrate 		= 1.0 		</P>
         </PARAMETERS>
-        
-        
+
+
         <VARIABLES>
             <V ID="0">u</V>
             <V ID="1">v</V>
             <V ID="2">w</V>
-            <V ID="3">p</V>        
-		</VARIABLES>
-        
+            <V ID="3">p</V>
+        </VARIABLES>
+
 
         <BOUNDARYREGIONS>
-        	<B ID="0"> C[2]   </B>   <!-- Inflow    -->
-        	<B ID="1"> C[3]   </B>   <!-- Outflow    -->        	
-        	<B ID="2"> C[4]   </B>   <!-- Top    -->
-        	<B ID="3"> C[5]   </B>   <!-- Bottom    -->        	     	
+            <B ID="0"> C[2]   </B>   <!-- Inflow    -->
+            <B ID="1"> C[3]   </B>   <!-- Outflow    -->
+            <B ID="2"> C[4]   </B>   <!-- Top    -->
+            <B ID="3"> C[5]   </B>   <!-- Bottom    -->
         </BOUNDARYREGIONS>
-        
+
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
                 <P VAR="u" VALUE="[1]" />
                 <P VAR="v" VALUE="[1]" />
                 <P VAR="w" VALUE="[1]" />
-                <P VAR="p" VALUE="[1]" /> 
+                <P VAR="p" VALUE="[1]" />
             </REGION>
             <REGION REF="1">
                 <P VAR="u" USERDEFINEDTYPE="Flowrate" VALUE="[0]" />
@@ -66,31 +66,31 @@
                 <D VAR="v" VALUE="0" />
                 <D VAR="w" VALUE="0" />
                 <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" />  // High Order Pressure BC
-            </REGION>            
+            </REGION>
         </BOUNDARYCONDITIONS>
-        
-        
+
+
         <FUNCTION NAME="FlowrateForce">
             <E VAR="ForceX" VALUE="1" />
             <E VAR="ForceY" VALUE="0" />
             <E VAR="ForceZ" VALUE="0" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="InitialConditions">
-        	<E VAR="u" VALUE="0" />
-        	<E VAR="v" VALUE="0" />
-        	<E VAR="w" VALUE="0" />
-        	<E VAR="p" VALUE="0" />        	       
-		</FUNCTION>
-	
-	        <FUNCTION NAME="ExactSolution">
-            <E VAR="u" VALUE="6*y*(1-y)" />
+            <E VAR="u" VALUE="0" />
             <E VAR="v" VALUE="0" />
-            <E VAR="w" VALUE="0" />            
+            <E VAR="w" VALUE="0" />
             <E VAR="p" VALUE="0" />
         </FUNCTION>
-    </CONDITIONS>    
-       
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="6*y*(1-y)" />
+            <E VAR="v" VALUE="0" />
+            <E VAR="w" VALUE="0" />
+            <E VAR="p" VALUE="0" />
+        </FUNCTION>
+    </CONDITIONS>
+
 
     <GEOMETRY DIM="2" SPACE="2">
         <VERTEX>
@@ -262,5 +262,5 @@
         </COMPOSITE>
         <DOMAIN> C[1] </DOMAIN>
     </GEOMETRY>
-   
+
 </NEKTAR>

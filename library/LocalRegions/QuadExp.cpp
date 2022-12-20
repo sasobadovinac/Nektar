@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File QuadExp.cpp
+// File: QuadExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -67,10 +67,6 @@ QuadExp::QuadExp(const QuadExp &T)
     : StdExpansion(T), StdExpansion2D(T), StdQuadExp(T), Expansion(T),
       Expansion2D(T), m_matrixManager(T.m_matrixManager),
       m_staticCondMatrixManager(T.m_staticCondMatrixManager)
-{
-}
-
-QuadExp::~QuadExp()
 {
 }
 
@@ -423,19 +419,6 @@ void QuadExp::v_IProductWRTBase_SumFac(
     }
 }
 
-void QuadExp::v_IProductWRTBase_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nq = GetTotPoints();
-    MatrixKey iprodmatkey(StdRegions::eIProductWRTBase, DetShapeType(), *this);
-    DNekScalMatSharedPtr iprodmat = m_matrixManager[iprodmatkey];
-
-    Blas::Dgemv('N', m_ncoeffs, nq, iprodmat->Scale(),
-                (iprodmat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
-}
-
 void QuadExp::v_IProductWRTDerivBase_SumFac(
     const int dir, const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray)
@@ -502,45 +485,6 @@ void QuadExp::v_AlignVectorToCollapsedDir(
         Vmath::Smul(nqtot, df[2 * dir][0], inarray.get(), 1, tmp1.get(), 1);
         Vmath::Smul(nqtot, df[2 * dir + 1][0], inarray.get(), 1, tmp2.get(), 1);
     }
-}
-
-void QuadExp::v_IProductWRTDerivBase_MatOp(
-    const int dir, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nq                       = GetTotPoints();
-    StdRegions::MatrixType mtype = StdRegions::eIProductWRTDerivBase0;
-
-    switch (dir)
-    {
-        case 0:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase0;
-        }
-        break;
-        case 1:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase1;
-        }
-        break;
-        case 2:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase2;
-        }
-        break;
-        default:
-        {
-            ASSERTL1(false, "input dir is out of range");
-        }
-        break;
-    }
-
-    MatrixKey iprodmatkey(mtype, DetShapeType(), *this);
-    DNekScalMatSharedPtr iprodmat = m_matrixManager[iprodmatkey];
-
-    Blas::Dgemv('N', m_ncoeffs, nq, iprodmat->Scale(),
-                (iprodmat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 void QuadExp::v_NormVectorIProductWRTBase(
@@ -642,71 +586,6 @@ NekDouble QuadExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     return StdQuadExp::v_PhysEvaluate(Lcoord, physvals);
 }
 
-// Get edge values from the 2D Phys space along an edge
-// following a counter clockwise edge convention for definition
-// of edgedir, Note that point distribution is given by QuadExp.
-void QuadExp::v_GetEdgePhysVals(const int edge,
-                                const Array<OneD, const NekDouble> &inarray,
-                                Array<OneD, NekDouble> &outarray)
-{
-    int nquad0 = m_base[0]->GetNumPoints();
-    int nquad1 = m_base[1]->GetNumPoints();
-
-    StdRegions::Orientation edgedir = GetTraceOrient(edge);
-    switch (edge)
-    {
-        case 0:
-            if (edgedir == StdRegions::eForwards)
-            {
-                Vmath::Vcopy(nquad0, &(inarray[0]), 1, &(outarray[0]), 1);
-            }
-            else
-            {
-                Vmath::Vcopy(nquad0, &(inarray[0]) + (nquad0 - 1), -1,
-                             &(outarray[0]), 1);
-            }
-            break;
-        case 1:
-            if (edgedir == StdRegions::eForwards)
-            {
-                Vmath::Vcopy(nquad1, &(inarray[0]) + (nquad0 - 1), nquad0,
-                             &(outarray[0]), 1);
-            }
-            else
-            {
-                Vmath::Vcopy(nquad1, &(inarray[0]) + (nquad0 * nquad1 - 1),
-                             -nquad0, &(outarray[0]), 1);
-            }
-            break;
-        case 2:
-            if (edgedir == StdRegions::eForwards)
-            {
-                Vmath::Vcopy(nquad0, &(inarray[0]) + (nquad0 * nquad1 - 1), -1,
-                             &(outarray[0]), 1);
-            }
-            else
-            {
-                Vmath::Vcopy(nquad0, &(inarray[0]) + nquad0 * (nquad1 - 1), 1,
-                             &(outarray[0]), 1);
-            }
-            break;
-        case 3:
-            if (edgedir == StdRegions::eForwards)
-            {
-                Vmath::Vcopy(nquad1, &(inarray[0]) + nquad0 * (nquad1 - 1),
-                             -nquad0, &(outarray[0]), 1);
-            }
-            else
-            {
-                Vmath::Vcopy(nquad1, &(inarray[0]), nquad0, &(outarray[0]), 1);
-            }
-            break;
-        default:
-            ASSERTL0(false, "edge value (< 3) is out of range");
-            break;
-    }
-}
-
 void QuadExp::v_GetTracePhysVals(
     const int edge, const StdRegions::StdExpansionSharedPtr &EdgeExp,
     const Array<OneD, const NekDouble> &inarray,
@@ -742,7 +621,7 @@ void QuadExp::v_GetTracePhysVals(
     }
     else
     {
-        QuadExp::v_GetEdgeInterpVals(edge, inarray, outarray);
+        QuadExp::GetEdgeInterpVals(edge, inarray, outarray);
     }
 
     // Interpolate if required
@@ -769,9 +648,9 @@ void QuadExp::v_GetTracePhysVals(
     }
 }
 
-void QuadExp::v_GetEdgeInterpVals(const int edge,
-                                  const Array<OneD, const NekDouble> &inarray,
-                                  Array<OneD, NekDouble> &outarray)
+void QuadExp::GetEdgeInterpVals(const int edge,
+                                const Array<OneD, const NekDouble> &inarray,
+                                Array<OneD, NekDouble> &outarray)
 {
     int i;
     int nq0 = m_base[0]->GetNumPoints();
@@ -982,8 +861,8 @@ void QuadExp::v_GetTraceQFactors(const int edge,
                                 &(tmp_gmat1[0]), 1);
                     Vmath::Vmul(nqtot, &(df[3][0]), 1, &jac[0], 1,
                                 &(tmp_gmat3[0]), 1);
-                    QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat1, g1_edge);
-                    QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat3, g3_edge);
+                    QuadExp::GetEdgeInterpVals(edge, tmp_gmat1, g1_edge);
+                    QuadExp::GetEdgeInterpVals(edge, tmp_gmat3, g3_edge);
 
                     for (i = 0; i < nquad0; ++i)
                     {
@@ -997,8 +876,8 @@ void QuadExp::v_GetTraceQFactors(const int edge,
                                 &(tmp_gmat0[0]), 1);
                     Vmath::Vmul(nqtot, &(df[2][0]), 1, &jac[0], 1,
                                 &(tmp_gmat2[0]), 1);
-                    QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat0, g0_edge);
-                    QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat2, g2_edge);
+                    QuadExp::GetEdgeInterpVals(edge, tmp_gmat0, g0_edge);
+                    QuadExp::GetEdgeInterpVals(edge, tmp_gmat2, g2_edge);
 
                     for (i = 0; i < nquad1; ++i)
                     {
@@ -1013,8 +892,8 @@ void QuadExp::v_GetTraceQFactors(const int edge,
                                 &(tmp_gmat1[0]), 1);
                     Vmath::Vmul(nqtot, &(df[3][0]), 1, &jac[0], 1,
                                 &(tmp_gmat3[0]), 1);
-                    QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat1, g1_edge);
-                    QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat3, g3_edge);
+                    QuadExp::GetEdgeInterpVals(edge, tmp_gmat1, g1_edge);
+                    QuadExp::GetEdgeInterpVals(edge, tmp_gmat3, g3_edge);
 
                     for (i = 0; i < nquad0; ++i)
                     {
@@ -1030,8 +909,8 @@ void QuadExp::v_GetTraceQFactors(const int edge,
                                 &(tmp_gmat0[0]), 1);
                     Vmath::Vmul(nqtot, &(df[2][0]), 1, &jac[0], 1,
                                 &(tmp_gmat2[0]), 1);
-                    QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat0, g0_edge);
-                    QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat2, g2_edge);
+                    QuadExp::GetEdgeInterpVals(edge, tmp_gmat0, g0_edge);
+                    QuadExp::GetEdgeInterpVals(edge, tmp_gmat2, g2_edge);
 
                     for (i = 0; i < nquad1; ++i)
                     {
@@ -1274,8 +1153,8 @@ void QuadExp::v_ComputeTraceNormal(const int edge)
                         {
                             Vmath::Vmul(nqtot, &(df[2 * i + 1][0]), 1, &jac[0],
                                         1, &(tmp_gmat[0]), 1);
-                            QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat,
-                                                         tmp_gmat_edge);
+                            QuadExp::GetEdgeInterpVals(edge, tmp_gmat,
+                                                       tmp_gmat_edge);
                             normals[i * nquad0 + j] = -tmp_gmat_edge[j];
                         }
                     }
@@ -1288,8 +1167,8 @@ void QuadExp::v_ComputeTraceNormal(const int edge)
                         {
                             Vmath::Vmul(nqtot, &(df[2 * i][0]), 1, &jac[0], 1,
                                         &(tmp_gmat[0]), 1);
-                            QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat,
-                                                         tmp_gmat_edge);
+                            QuadExp::GetEdgeInterpVals(edge, tmp_gmat,
+                                                       tmp_gmat_edge);
                             normals[i * nquad1 + j] = tmp_gmat_edge[j];
                         }
                     }
@@ -1302,8 +1181,8 @@ void QuadExp::v_ComputeTraceNormal(const int edge)
                         {
                             Vmath::Vmul(nqtot, &(df[2 * i + 1][0]), 1, &jac[0],
                                         1, &(tmp_gmat[0]), 1);
-                            QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat,
-                                                         tmp_gmat_edge);
+                            QuadExp::GetEdgeInterpVals(edge, tmp_gmat,
+                                                       tmp_gmat_edge);
                             normals[i * nquad0 + j] = tmp_gmat_edge[j];
                         }
                     }
@@ -1316,8 +1195,8 @@ void QuadExp::v_ComputeTraceNormal(const int edge)
                         {
                             Vmath::Vmul(nqtot, &(df[2 * i][0]), 1, &jac[0], 1,
                                         &(tmp_gmat[0]), 1);
-                            QuadExp::v_GetEdgeInterpVals(edge, tmp_gmat,
-                                                         tmp_gmat_edge);
+                            QuadExp::GetEdgeInterpVals(edge, tmp_gmat,
+                                                       tmp_gmat_edge);
                             normals[i * nquad1 + j] = -tmp_gmat_edge[j];
                         }
                     }
@@ -1370,16 +1249,6 @@ void QuadExp::v_ComputeTraceNormal(const int edge)
             }
         }
     }
-}
-
-const SpatialDomains::GeomFactorsSharedPtr &QuadExp::v_GetMetricInfo() const
-{
-    return m_metricinfo;
-}
-
-int QuadExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
 }
 
 void QuadExp::v_ExtractDataToCoeffs(
@@ -1477,17 +1346,6 @@ StdRegions::Orientation QuadExp::v_GetTraceOrient(int edge)
     return m_geom->GetEorient(edge);
 }
 
-const LibUtilities::BasisSharedPtr &QuadExp::v_GetBasis(int dir) const
-{
-    ASSERTL1(dir >= 0 && dir <= 1, "input dir is out of range");
-    return m_base[dir];
-}
-
-int QuadExp::v_GetNumPoints(const int dir) const
-{
-    return GetNumPoints(dir);
-}
-
 DNekMatSharedPtr QuadExp::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
 {
     DNekMatSharedPtr returnval;
@@ -1582,30 +1440,6 @@ void QuadExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                   const StdRegions::StdMatrixKey &mkey)
 {
     QuadExp::HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
-}
-
-void QuadExp::v_GeneralMatrixOp_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey)
-{
-    MatrixKey newkey(mkey);
-    DNekScalMatSharedPtr mat = GetLocMatrix(newkey);
-
-    if (inarray.get() == outarray.get())
-    {
-        Array<OneD, NekDouble> tmp(m_ncoeffs);
-        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
-
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    tmp.get(), 1, 0.0, outarray.get(), 1);
-    }
-    else
-    {
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    inarray.get(), 1, 0.0, outarray.get(), 1);
-    }
 }
 
 void QuadExp::v_ReduceOrderCoeffs(int numMin,

@@ -6,6 +6,7 @@ SET(TESTER_SOURCES
   Metric.cpp
   MetricEigenvalue.cpp
   MetricFile.cpp
+  MetricFileExists.cpp
   MetricL2.cpp
   MetricLInf.cpp
   MetricPrecon.cpp
@@ -21,6 +22,7 @@ SET(TESTER_HEADERS
   Metric.h
   MetricEigenvalue.h
   MetricFile.h
+  MetricFileExists.h
   MetricL2.h
   MetricLInf.h
   MetricPrecon.h
@@ -56,11 +58,6 @@ IF( ${CMAKE_SYSTEM} MATCHES "Linux.*")
   SET_PROPERTY(TARGET Tester APPEND_STRING PROPERTY COMPILE_FLAGS " -pthread")
   SET_PROPERTY(TARGET Tester APPEND_STRING PROPERTY LINK_FLAGS " -pthread")
 ENDIF()
-
-IF( ${CMAKE_SYSTEM} MATCHES "Darwin-*")
-  SET_TARGET_PROPERTIES(Tester
-    PROPERTIES LINK_FLAGS "-Wl,-undefined,dynamic_lookup -Wl,-rpath,${Boost_LIBRARY_DIRS}")
-ENDIF( ${CMAKE_SYSTEM} MATCHES "Darwin-*")
 
 SET_TARGET_PROPERTIES(Tester
     PROPERTIES COMPILE_FLAGS "-UNEKTAR_USE_MPI")

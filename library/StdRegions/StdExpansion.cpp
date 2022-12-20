@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdExpansion.cpp
+// File: StdExpansion.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -941,17 +941,6 @@ void StdExpansion::HelmholtzMatrixOp_MatFree_GenericImpl(
     Blas::Daxpy(m_ncoeffs, lambda, tmp, 1, outarray, 1);
 }
 
-void StdExpansion::BwdTrans_MatOp(const Array<OneD, const NekDouble> &inarray,
-                                  Array<OneD, NekDouble> &outarray)
-{
-    int nq = GetTotPoints();
-    StdMatrixKey bwdtransmatkey(eBwdTrans, DetShapeType(), *this);
-    DNekMatSharedPtr bwdtransmat = GetStdMatrix(bwdtransmatkey);
-
-    Blas::Dgemv('N', nq, m_ncoeffs, 1.0, bwdtransmat->GetPtr().get(), nq,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
-}
-
 // VIRTUAL INLINE FUNCTIONS FROM HEADER FILE
 NekDouble StdExpansion::StdPhysEvaluate(
     const Array<OneD, const NekDouble> &Lcoord,
@@ -1054,57 +1043,12 @@ void StdExpansion::v_LocCollapsedToLocCoord(
     NEKERROR(ErrorUtil::efatal, "This function is not defined for this shape");
 }
 
-int StdExpansion::v_GetNtraces() const
-{
-    ASSERTL0(false, "This function is needs defining for this shape");
-    return 0;
-}
-
-int StdExpansion::v_NumBndryCoeffs() const
-{
-    ASSERTL0(false, "This function is needs defining for this shape");
-    return 0;
-}
-
-int StdExpansion::v_NumDGBndryCoeffs() const
-{
-    ASSERTL0(false, "This function is needs defining for this shape");
-    return 0;
-}
-
 const LibUtilities::BasisKey StdExpansion::v_GetTraceBasisKey(const int i,
                                                               const int k) const
 {
     boost::ignore_unused(i, k);
     ASSERTL0(false, "This function is not valid or not defined");
     return LibUtilities::NullBasisKey;
-}
-
-int StdExpansion::v_GetTraceNumPoints(const int i) const
-{
-    boost::ignore_unused(i);
-    ASSERTL0(false, "This function is not valid or not defined");
-    return 0;
-}
-
-int StdExpansion::v_GetTraceNcoeffs(const int i) const
-{
-    boost::ignore_unused(i);
-    ASSERTL0(false, "This function is not valid or not defined");
-    return 0;
-}
-
-int StdExpansion::v_GetTraceIntNcoeffs(const int i) const
-{
-    boost::ignore_unused(i);
-    ASSERTL0(false, "This function is not valid or not defined");
-    return 0;
-}
-
-int StdExpansion::v_GetTotalTraceIntNcoeffs() const
-{
-    ASSERTL0(false, "This function is not valid or not defined");
-    return 0;
 }
 
 LibUtilities::PointsKey StdExpansion::v_GetTracePointsKey(const int i,
@@ -1122,12 +1066,6 @@ const LibUtilities::PointsKey StdExpansion::v_GetNodalPointsKey() const
     return LibUtilities::NullPointsKey;
 }
 
-LibUtilities::ShapeType StdExpansion::v_DetShapeType() const
-{
-    ASSERTL0(false, "This expansion does not have a shape type defined");
-    return LibUtilities::eNoShapeType;
-}
-
 std::shared_ptr<StdExpansion> StdExpansion::v_GetStdExp(void) const
 {
     ASSERTL0(false, "This method is not defined for this expansion");
@@ -1142,13 +1080,7 @@ std::shared_ptr<StdExpansion> StdExpansion::v_GetLinStdExp(void) const
     return returnval;
 }
 
-int StdExpansion::v_GetShapeDimension() const
-{
-    ASSERTL0(false, "This function is not valid or not defined");
-    return 0;
-}
-
-bool StdExpansion::v_IsBoundaryInteriorExpansion()
+bool StdExpansion::v_IsBoundaryInteriorExpansion() const
 {
     ASSERTL0(false, "This function has not been defined for this expansion");
     return false;
@@ -1343,10 +1275,9 @@ void StdExpansion::v_GetCoord(const Array<OneD, const NekDouble> &Lcoord,
     NEKERROR(ErrorUtil::efatal, "Write coordinate definition method");
 }
 
-int StdExpansion::v_GetCoordim(void)
+int StdExpansion::v_GetCoordim() const
 {
-    NEKERROR(ErrorUtil::efatal, "Write method");
-    return -1;
+    return GetShapeDimension();
 }
 
 void StdExpansion::v_GetBoundaryMap(Array<OneD, unsigned int> &outarray)

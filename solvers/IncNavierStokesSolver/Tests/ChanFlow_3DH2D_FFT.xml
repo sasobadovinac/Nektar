@@ -34,13 +34,13 @@
     <CONDITIONS>
 
         <SOLVERINFO>
-          <I PROPERTY="SolverType"  VALUE="VelocityCorrectionScheme"/>
-          <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes"/>
-          <I PROPERTY="AdvectionForm" VALUE="Convective"/>
-          <I PROPERTY="Projection" VALUE="Galerkin"/>
-          <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1"/>
-          <I PROPERTY="HOMOGENEOUS" VALUE="2D"/>
-          <I PROPERTY="USEFFT" VALUE="FFTW"/>
+            <I PROPERTY="SolverType"  VALUE="VelocityCorrectionScheme"/>
+            <I PROPERTY="EQTYPE" VALUE="UnsteadyNavierStokes"/>
+            <I PROPERTY="AdvectionForm" VALUE="Convective"/>
+            <I PROPERTY="Projection" VALUE="Galerkin"/>
+            <I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder1"/>
+            <I PROPERTY="HOMOGENEOUS" VALUE="2D"/>
+            <I PROPERTY="USEFFT" VALUE="FFTW"/>
         </SOLVERINFO>
 
         <PARAMETERS>
@@ -56,10 +56,10 @@
         </PARAMETERS>
 
         <VARIABLES>
-            <V ID="0"> u </V> 
+            <V ID="0"> u </V>
             <V ID="1"> v </V>
-            <V ID="2"> w </V>  
-            <V ID="3"> p </V> 
+            <V ID="2"> w </V>
+            <V ID="3"> p </V>
         </VARIABLES>
 
         <BOUNDARYREGIONS>
@@ -69,16 +69,16 @@
 
         <BOUNDARYCONDITIONS>
             <REGION REF="0">
-              <D VAR="u" VALUE="0" />
-              <D VAR="v" VALUE="0" />
-              <D VAR="w" VALUE="0" />
-              <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"/>            
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
+                <N VAR="p" USERDEFINEDTYPE="H" VALUE="0"/>
             </REGION>
             <REGION REF="1">
-               <D VAR="u" VALUE="0" />
-               <D VAR="v" VALUE="0" />
-               <D VAR="w" VALUE="0" />
-               <D VAR="p" VALUE="0"/> 
+                <D VAR="u" VALUE="0" />
+                <D VAR="v" VALUE="0" />
+                <D VAR="w" VALUE="0" />
+                <D VAR="p" VALUE="0"/>
             </REGION>
         </BOUNDARYCONDITIONS>
 
@@ -88,11 +88,11 @@
             <E VAR="w" VALUE="0" />
             <E VAR="p" VALUE="0" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="BodyForce">
-          <E VAR="u" VALUE="0" />
-          <E VAR="v" VALUE="2*Kinvis" />
-          <E VAR="w" VALUE="0" />
+            <E VAR="u" VALUE="0" />
+            <E VAR="v" VALUE="2*Kinvis" />
+            <E VAR="w" VALUE="0" />
         </FUNCTION>
 
         <FUNCTION NAME="ExactSolution">

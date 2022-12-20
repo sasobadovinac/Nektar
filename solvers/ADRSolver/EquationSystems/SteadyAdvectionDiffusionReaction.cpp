@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SteadAdvectionDiffusionReaction.cpp
+// File: SteadyAdvectionDiffusionReaction.cpp
 //
 // For more information, please see: http://www.nektar.info
 //

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File NavierStokesImplicitCFE.h
+// File: NavierStokesImplicitCFE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -89,7 +89,7 @@ protected:
         const Array<OneD, const Array<OneD, NekDouble>> &pFwd,
         const Array<OneD, const Array<OneD, NekDouble>> &pBwd) override;
 
-    void v_DoDiffusion(
+    virtual void v_DoDiffusion(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
@@ -237,7 +237,8 @@ protected:
                         const Array<OneD, const Array<OneD, NekDouble>> &qfield,
                         DNekMatSharedPtr &OutputMatrix);
 
-    bool SupportsShockCaptType(const std::string type) const override final;
+    virtual bool v_SupportsShockCaptType(
+        const std::string type) const override final;
 };
 } // namespace Nektar
 #endif

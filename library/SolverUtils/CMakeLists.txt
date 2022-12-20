@@ -31,12 +31,14 @@ SET(SOLVER_UTILS_SOURCES
   Filters/FilterEnergy.cpp
   Filters/FilterError.cpp
   Filters/FilterHistoryPoints.cpp
+  Filters/FilterIntegral.cpp
   Filters/FilterMean.cpp
   Filters/FilterModalEnergy.cpp
   Filters/FilterMovingAverage.cpp
   Filters/FilterFieldConvert.cpp
   Filters/FilterThresholdMax.cpp
   Filters/FilterThresholdMin.cpp
+  Filters/FilterBodyFittedVelocity.cpp
   RiemannSolvers/RiemannSolver.cpp
   RiemannSolvers/UpwindSolver.cpp
   RiemannSolvers/UpwindLDGSolver.cpp
@@ -84,12 +86,14 @@ SET(SOLVER_UTILS_HEADERS
   Filters/FilterError.h
   Filters/FilterHistoryPoints.h
   Filters/FilterInterfaces.hpp
+  Filters/FilterIntegral.h
   Filters/FilterMean.h
   Filters/FilterModalEnergy.h
   Filters/FilterMovingAverage.h
   Filters/FilterFieldConvert.h
   Filters/FilterThresholdMax.h
   Filters/FilterThresholdMin.h
+  Filters/FilterBodyFittedVelocity.h
   RiemannSolvers/RiemannSolver.h
   RiemannSolvers/UpwindSolver.h
   RiemannSolvers/UpwindLDGSolver.h

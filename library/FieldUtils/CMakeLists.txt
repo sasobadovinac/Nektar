@@ -52,12 +52,14 @@ SET(FieldUtilsHeaders
     ProcessModules/ProcessScaleInFld.h
     ProcessModules/ProcessStreamFunction.h
     ProcessModules/ProcessSurfDistance.h
+    ProcessModules/ProcessVelocityDivergence.h
     ProcessModules/ProcessVorticity.h
     ProcessModules/ProcessScalGrad.h
     ProcessModules/ProcessMultiShear.h
     ProcessModules/ProcessWSS.h
     ProcessModules/ProcessLocalStabilityAnalysis.h
     ProcessModules/ProcessWallNormalData.h
+    ProcessModules/ProcessBodyFittedVelocity.h
     ProcessModules/ProcessC0Projection.h
     ProcessModules/ProcessQCriterion.h
     ProcessModules/ProcessQualityMetric.h
@@ -114,6 +116,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessPrintFldNorms.cpp
     ProcessModules/ProcessRemoveField.cpp    
     ProcessModules/ProcessScaleInFld.cpp
+    ProcessModules/ProcessVelocityDivergence.cpp
     ProcessModules/ProcessVorticity.cpp
     ProcessModules/ProcessScalGrad.cpp
     ProcessModules/ProcessStreamFunction.cpp
@@ -122,6 +125,7 @@ SET(FieldUtilsSources
     ProcessModules/ProcessWSS.cpp
     ProcessModules/ProcessLocalStabilityAnalysis.cpp
     ProcessModules/ProcessWallNormalData.cpp
+    ProcessModules/ProcessBodyFittedVelocity.cpp
     ProcessModules/ProcessC0Projection.cpp
     ProcessModules/ProcessQCriterion.cpp
     ProcessModules/ProcessQualityMetric.cpp

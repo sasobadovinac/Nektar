@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File FilterMovingBody.h
+// File: FilterMovingBody.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -74,12 +74,13 @@ public:
 
     virtual void v_Initialise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
 
     virtual void v_Update(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time)
+        const NekDouble &time) override
     {
+        boost::ignore_unused(pFields, time);
     }
 
     void UpdateForce(
@@ -94,9 +95,9 @@ public:
 
     virtual void v_Finalise(
         const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
-        const NekDouble &time);
+        const NekDouble &time) override;
 
-    virtual bool v_IsTimeDependent();
+    virtual bool v_IsTimeDependent() override;
 
 private:
     /// ID's of boundary regions where we want the forces
@@ -104,17 +105,17 @@ private:
     /// Determines if a given Boundary Region is in
     /// m_boundaryRegionsIdList
     std::vector<bool> m_boundaryRegionIsInList;
-    unsigned int m_index_f;
-    unsigned int m_index_m;
-    unsigned int m_outputFrequency;
+    size_t m_index_f;
+    size_t m_index_m;
+    size_t m_outputFrequency;
     /// plane to take history point from if using a homogeneous1D
     /// expansion
-    unsigned int m_outputPlane;
+    size_t m_outputPlane;
     bool m_isHomogeneous1D;
     LibUtilities::BasisSharedPtr m_homogeneousBasis;
     std::string m_BoundaryString;
     /// number of planes for homogeneous1D expansion
-    int m_planes;
+    size_t m_planes;
     Array<OneD, std::ofstream> m_outputStream;
     std::string m_outputFile_fce;
     std::string m_outputFile_mot;

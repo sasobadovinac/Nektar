@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpListHomogeneous2D.h
+// File: ExpListHomogeneous2D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -102,14 +102,6 @@ public:
         Array<OneD, NekDouble> &outarray, bool IsForwards, bool Shuff = true,
         bool UnShuff = true);
 
-    inline void HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray,
-                                    bool Shuff = true, bool UnShuff = true);
-
-    inline void HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray,
-                                    bool Shuff = true, bool UnShuff = true);
-
     MULTI_REGIONS_EXPORT void SetPaddingBase(void);
 
     MULTI_REGIONS_EXPORT void PhysDeriv(
@@ -159,73 +151,75 @@ protected:
         Homogeneous2DMatType mattype) const;
 
     //  virtual functions
-    virtual int v_GetNumElmts(void)
+    virtual size_t v_GetNumElmts(void) override
     {
         return m_lines[0]->GetExpSize();
     }
 
     virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD, NekDouble> &outarray);
+                            Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_FwdTransLocalElmt(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD, NekDouble> &outarray);
+                            Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD, NekDouble> &outarray);
+                                   Array<OneD, NekDouble> &outarray) override;
 
     virtual std::vector<LibUtilities::FieldDefinitionsSharedPtr>
-    v_GetFieldDefinitions(void);
+    v_GetFieldDefinitions(void) override;
 
     virtual void v_GetFieldDefinitions(
-        std::vector<LibUtilities::FieldDefinitionsSharedPtr> &fielddef);
+        std::vector<LibUtilities::FieldDefinitionsSharedPtr> &fielddef)
+        override;
 
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
-        std::vector<NekDouble> &fielddata);
+        std::vector<NekDouble> &fielddata) override;
 
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
-        std::vector<NekDouble> &fielddata, Array<OneD, NekDouble> &coeffs);
+        std::vector<NekDouble> &fielddata,
+        Array<OneD, NekDouble> &coeffs) override;
 
     virtual void v_ExtractDataToCoeffs(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
-        Array<OneD, NekDouble> &coeffs);
+        Array<OneD, NekDouble> &coeffs) override;
 
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
-                                     std::string var);
+                                     std::string var) override;
 
     virtual void v_HomogeneousFwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
-        bool UnShuff = true);
+        bool UnShuff = true) override;
 
     virtual void v_HomogeneousBwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
-        bool UnShuff = true);
+        bool UnShuff = true) override;
 
     virtual void v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
                                  const Array<OneD, NekDouble> &inarray2,
-                                 Array<OneD, NekDouble> &outarray);
+                                 Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_DealiasedDotProd(
         const Array<OneD, Array<OneD, NekDouble>> &inarray1,
         const Array<OneD, Array<OneD, NekDouble>> &inarray2,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     virtual void v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
                              Array<OneD, NekDouble> &out_d0,
                              Array<OneD, NekDouble> &out_d1,
-                             Array<OneD, NekDouble> &out_d2);
+                             Array<OneD, NekDouble> &out_d2) override;
 
     virtual void v_PhysDeriv(Direction edir,
                              const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &out_d);
+                             Array<OneD, NekDouble> &out_d) override;
 
 private:
     // Padding operations variables
@@ -235,20 +229,6 @@ private:
     DNekMatSharedPtr MatFwdPAD;
     DNekMatSharedPtr MatBwdPAD;
 };
-
-inline void ExpListHomogeneous2D::HomogeneousFwdTrans(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
-{
-    v_HomogeneousFwdTrans(inarray, outarray, Shuff, UnShuff);
-}
-
-inline void ExpListHomogeneous2D::HomogeneousBwdTrans(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
-{
-    v_HomogeneousBwdTrans(inarray, outarray, Shuff, UnShuff);
-}
 
 } // namespace MultiRegions
 } // namespace Nektar

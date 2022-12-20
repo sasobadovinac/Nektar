@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File CommMpi.cpp
+// File: TerminalOutflow.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -29,7 +29,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: ROuflow class
+// Description: TerminalOutflow class
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -64,6 +64,8 @@ void TerminalOutflow::v_DoBoundary(
     Array<OneD, Array<OneD, NekDouble>> &alpha, const NekDouble time, int omega,
     int offset, int n)
 {
+    boost::ignore_unused(time);
+
     NekDouble A_r;
     NekDouble A_l;
     NekDouble u_r;

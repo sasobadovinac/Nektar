@@ -39,17 +39,17 @@ IF(_SYSTEM_PROCESSOR STREQUAL "x86_64")
         ADD_DEFINITIONS(-DNEKTAR_ENABLE_SIMD_SSE2)
     ENDIF()
 ELSEIF(_SYSTEM_PROCESSOR STREQUAL "aarch64")
-    # OPTION(NEKTAR_ENABLE_SIMD_SVE "Enable sve vector types" OFF)
-    # SET(NEKTAR_SVE_BITS 256 CACHE STRING "sve vector bits")
-    # # Toggleable bits options
-    # SET_PROPERTY(CACHE NEKTAR_SVE_BITS PROPERTY STRINGS "128;256;512;1024;2048")
-    # MARK_AS_ADVANCED(FORCE NEKTAR_ENABLE_SIMD_SVE)
-    # IF (NEKTAR_ENABLE_SIMD_SVE)
-    #     MESSAGE(STATUS "Enabling sve, you might need to clear CMAKE_CXX_FLAGS or add the appriopriate flags")
-    #     ADD_DEFINITIONS(-DNEKTAR_ENABLE_SIMD_SVE)
-    #     SET(CMAKE_CXX_FLAGS "-march=armv8-a+sve -msve-vector-bits=${NEKTAR_SVE_BITS}" CACHE STRING
-    #         "Flags used by the CXX compiler during all build types.")
-    # ENDIF()
+    OPTION(NEKTAR_ENABLE_SIMD_SVE "Enable sve vector types" OFF)
+    SET(NEKTAR_SVE_BITS 256 CACHE STRING "sve vector bits")
+    # Toggleable bits options
+    SET_PROPERTY(CACHE NEKTAR_SVE_BITS PROPERTY STRINGS "128;256;512;1024;2048")
+    MARK_AS_ADVANCED(FORCE NEKTAR_ENABLE_SIMD_SVE)
+    IF (NEKTAR_ENABLE_SIMD_SVE)
+        MESSAGE(STATUS "Enabling sve, you might need to clear CMAKE_CXX_FLAGS or add the appriopriate flags")
+        ADD_DEFINITIONS(-DNEKTAR_ENABLE_SIMD_SVE)
+        SET(CMAKE_CXX_FLAGS "-march=armv8-a+sve -msve-vector-bits=${NEKTAR_SVE_BITS}" CACHE STRING
+            "Flags used by the CXX compiler during all build types.")
+    ENDIF()
 ENDIF()
 
 # Vmath Simd

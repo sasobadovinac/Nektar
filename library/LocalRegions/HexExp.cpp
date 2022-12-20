@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File HexExp.cpp
+// File: HexExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -83,13 +83,6 @@ HexExp::HexExp(const HexExp &T)
     : StdExpansion(T), StdExpansion3D(T), StdHexExp(T), Expansion(T),
       Expansion3D(T), m_matrixManager(T.m_matrixManager),
       m_staticCondMatrixManager(T.m_staticCondMatrixManager)
-{
-}
-
-/**
- * \brief Destructor
- */
-HexExp::~HexExp()
 {
 }
 
@@ -514,45 +507,6 @@ void HexExp::v_AlignVectorToCollapsedDir(
     }
 }
 
-void HexExp::IProductWRTDerivBase_MatOp(
-    const int dir, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nq                       = GetTotPoints();
-    StdRegions::MatrixType mtype = StdRegions::eIProductWRTDerivBase0;
-
-    switch (dir)
-    {
-        case 0:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase0;
-        }
-        break;
-        case 1:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase1;
-        }
-        break;
-        case 2:
-        {
-            mtype = StdRegions::eIProductWRTDerivBase2;
-        }
-        break;
-        default:
-        {
-            ASSERTL1(false, "input dir is out of range");
-        }
-        break;
-    }
-
-    MatrixKey iprodmatkey(mtype, DetShapeType(), *this);
-    DNekScalMatSharedPtr iprodmat = m_matrixManager[iprodmatkey];
-
-    Blas::Dgemv('N', m_ncoeffs, nq, iprodmat->Scale(),
-                (iprodmat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
-}
-
 /**
  *
  * @param dir       Vector direction in which to take the derivative.
@@ -798,16 +752,6 @@ void HexExp::v_ExtractDataToCoeffs(
             ASSERTL0(false, "basis is either not set up or not "
                             "hierarchicial");
     }
-}
-
-bool HexExp::v_GetFaceDGForwards(const int i) const
-{
-    StdRegions::Orientation fo = GetGeom3D()->GetForient(i);
-
-    return fo == StdRegions::eDir1FwdDir1_Dir2FwdDir2 ||
-           fo == StdRegions::eDir1BwdDir1_Dir2BwdDir2 ||
-           fo == StdRegions::eDir1BwdDir2_Dir2FwdDir1 ||
-           fo == StdRegions::eDir1FwdDir2_Dir2BwdDir1;
 }
 
 void HexExp::v_GetTracePhysMap(const int face, Array<OneD, int> &outarray)
@@ -1243,58 +1187,6 @@ void HexExp::v_HelmholtzMatrixOp(const Array<OneD, const NekDouble> &inarray,
                                  const StdRegions::StdMatrixKey &mkey)
 {
     HexExp::v_HelmholtzMatrixOp_MatFree(inarray, outarray, mkey);
-}
-
-void HexExp::v_GeneralMatrixOp_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, const StdRegions::StdMatrixKey &mkey)
-{
-    // int nConsts = mkey.GetNconstants();
-    DNekScalMatSharedPtr mat = GetLocMatrix(mkey);
-
-    //            switch(nConsts)
-    //            {
-    //            case 0:
-    //                {
-    //                    mat = GetLocMatrix(mkey.GetMatrixType());
-    //                }
-    //                break;
-    //            case 1:
-    //                {
-    //                    mat =
-    //                    GetLocMatrix(mkey.GetMatrixType(),mkey.GetConstant(0));
-    //                }
-    //                break;
-    //            case 2:
-    //                {
-    //                    mat =
-    //                    GetLocMatrix(mkey.GetMatrixType(),mkey.GetConstant(0),mkey.GetConstant(1));
-    //                }
-    //                break;
-    //
-    //            default:
-    //                {
-    //                    NEKERROR(ErrorUtil::efatal, "Unknown number of
-    //                    constants");
-    //                }
-    //                break;
-    //            }
-
-    if (inarray.get() == outarray.get())
-    {
-        Array<OneD, NekDouble> tmp(m_ncoeffs);
-        Vmath::Vcopy(m_ncoeffs, inarray.get(), 1, tmp.get(), 1);
-
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    tmp.get(), 1, 0.0, outarray.get(), 1);
-    }
-    else
-    {
-        Blas::Dgemv('N', m_ncoeffs, m_ncoeffs, mat->Scale(),
-                    (mat->GetOwnedMatrix())->GetPtr().get(), m_ncoeffs,
-                    inarray.get(), 1, 0.0, outarray.get(), 1);
-    }
 }
 
 /**

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpList3DHomogeneous2D.cpp
+// File: ExpList3DHomogeneous2D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -204,10 +204,10 @@ void ExpList3DHomogeneous2D::SetCoeffPhys(void)
     }
 }
 
-void ExpList3DHomogeneous2D::GetCoords(const int eid,
-                                       Array<OneD, NekDouble> &xc0,
-                                       Array<OneD, NekDouble> &xc1,
-                                       Array<OneD, NekDouble> &xc2)
+void ExpList3DHomogeneous2D::v_GetCoords(const int eid,
+                                         Array<OneD, NekDouble> &xc0,
+                                         Array<OneD, NekDouble> &xc1,
+                                         Array<OneD, NekDouble> &xc2)
 {
     int n, m, j;
     Array<OneD, NekDouble> tmp_xc;

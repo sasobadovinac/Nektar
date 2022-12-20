@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File  NekLinSysIterGMRES.h
+// File: NekLinSysIterGMRES.h
 //
 // For more information, please see: http://www.nektar.info
 //

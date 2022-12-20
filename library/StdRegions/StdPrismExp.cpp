@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StdPrismExp.cpp
+// File: StdPrismExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -405,21 +405,6 @@ void StdPrismExp::v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
     }
 }
 
-/**
- * Implementation of the local matrix inner product operation.
- */
-void StdPrismExp::v_IProductWRTBase_MatOp(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    int nq = GetTotPoints();
-    StdMatrixKey iprodmatkey(eIProductWRTBase, DetShapeType(), *this);
-    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
-
-    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
-}
-
 void StdPrismExp::v_IProductWRTBase_SumFac(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, bool multiplybyweights)
@@ -516,35 +501,6 @@ void StdPrismExp::v_IProductWRTDerivBase(
     Array<OneD, NekDouble> &outarray)
 {
     v_IProductWRTDerivBase_SumFac(dir, inarray, outarray);
-}
-
-void StdPrismExp::v_IProductWRTDerivBase_MatOp(
-    const int dir, const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray)
-{
-    ASSERTL0(dir >= 0 && dir <= 2, "input dir is out of range");
-
-    int nq           = GetTotPoints();
-    MatrixType mtype = eIProductWRTDerivBase0;
-
-    switch (dir)
-    {
-        case 0:
-            mtype = eIProductWRTDerivBase0;
-            break;
-        case 1:
-            mtype = eIProductWRTDerivBase1;
-            break;
-        case 2:
-            mtype = eIProductWRTDerivBase2;
-            break;
-    }
-
-    StdMatrixKey iprodmatkey(mtype, DetShapeType(), *this);
-    DNekMatSharedPtr iprodmat = GetStdMatrix(iprodmatkey);
-
-    Blas::Dgemv('N', m_ncoeffs, nq, 1.0, iprodmat->GetPtr().get(), m_ncoeffs,
-                inarray.get(), 1, 0.0, outarray.get(), 1);
 }
 
 void StdPrismExp::v_IProductWRTDerivBase_SumFac(
@@ -898,15 +854,6 @@ int StdPrismExp::v_GetTraceIntNcoeffs(const int i) const
     }
 }
 
-int StdPrismExp::v_GetTotalTraceIntNcoeffs() const
-{
-    int Pi = GetBasisNumModes(0) - 2;
-    int Qi = GetBasisNumModes(1) - 2;
-    int Ri = GetBasisNumModes(2) - 2;
-
-    return Pi * Qi + Pi * (2 * Ri - Pi - 1) + 2 * Qi * Ri;
-}
-
 int StdPrismExp::v_GetTraceNumPoints(const int i) const
 {
     ASSERTL2(i >= 0 && i <= 4, "face id is out of range");
@@ -991,7 +938,7 @@ int StdPrismExp::v_CalcNumberOfCoefficients(
     return nmodes;
 }
 
-bool StdPrismExp::v_IsBoundaryInteriorExpansion()
+bool StdPrismExp::v_IsBoundaryInteriorExpansion() const
 {
     return (m_base[0]->GetBasisType() == LibUtilities::eModified_A) &&
            (m_base[1]->GetBasisType() == LibUtilities::eModified_A) &&

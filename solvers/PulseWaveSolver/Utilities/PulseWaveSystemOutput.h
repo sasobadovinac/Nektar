@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PulseWaveSystemOutput.h
+// File: PulseWaveSystemOutput.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -70,7 +70,7 @@ protected:
     PulseWaveSystemOutput(
         const LibUtilities::SessionReaderSharedPtr &m_session);
 
-    virtual void v_InitObject();
+    virtual void v_InitObject(bool DeclareField = true) override;
 
 private:
 };

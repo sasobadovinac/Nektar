@@ -293,10 +293,10 @@
             </REGION>
         </BOUNDARYCONDITIONS>
 
-         <FUNCTION NAME="InitialConditions">
-         <F VAR="u,v" FILE="ChanStability_Coupled.rst" />
+        <FUNCTION NAME="InitialConditions">
+            <F VAR="u,v" FILE="ChanStability_Coupled.rst" />
         </FUNCTION>
-        
+
         <FUNCTION NAME="AdvectionVelocity">
             <E VAR="u" VALUE="1-y*y" />
             <E VAR="v" VALUE="0" />

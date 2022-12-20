@@ -1,4 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
+//
+// File: TestRiemann.cpp
+//
 // For more information, please see: http://www.nektar.info
 //
 // The MIT License
@@ -77,7 +80,8 @@ BOOST_AUTO_TEST_CASE(RoeAlongXconstSolution)
         normals[i] = Array<OneD, NekDouble>(npts);
     }
     riemannSolver.SetVector(
-        "N", [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
+        "N",
+        [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
             return normals;
         });
 
@@ -180,7 +184,8 @@ BOOST_AUTO_TEST_CASE(RoeAlongYconstSolution)
         normals[i] = Array<OneD, NekDouble>(npts);
     }
     riemannSolver.SetVector(
-        "N", [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
+        "N",
+        [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
             return normals;
         });
 
@@ -276,7 +281,8 @@ BOOST_AUTO_TEST_CASE(RoeAlongZconstSolution)
         normals[i] = Array<OneD, NekDouble>(npts);
     }
     riemannSolver.SetVector(
-        "N", [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
+        "N",
+        [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
             return normals;
         });
 
@@ -372,7 +378,8 @@ BOOST_AUTO_TEST_CASE(RoeAlongXdensityJump)
         normals[i] = Array<OneD, NekDouble>(npts);
     }
     riemannSolver.SetVector(
-        "N", [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
+        "N",
+        [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
             return normals;
         });
 

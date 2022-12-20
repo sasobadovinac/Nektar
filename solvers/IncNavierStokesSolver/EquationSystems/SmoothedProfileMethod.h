@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File SmoothedProfileMethod.h
+// File: SmoothedProfileMethod.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -66,9 +66,9 @@ public:
     // Destructor
     virtual ~SmoothedProfileMethod();
 
-    virtual void v_InitObject(bool DeclareField = true);
+    virtual void v_InitObject(bool DeclareField = true) override;
 
-    virtual void v_GenerateSummary(SolverUtils::SummaryList &s);
+    virtual void v_GenerateSummary(SolverUtils::SummaryList &s) override;
 
     // Solves the linear part of the velocity correction scheme incluiding
     // the SPM method calculation for 'fs'

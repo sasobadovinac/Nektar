@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File StimulusCircle.cpp
+// File: StimulusCircle.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -166,5 +166,6 @@ void StimulusCirc::v_Update(Array<OneD, Array<OneD, NekDouble>> &outarray,
  */
 void StimulusCirc::v_GenerateSummary(SolverUtils::SummaryList &s)
 {
+    boost::ignore_unused(s);
 }
 } // namespace Nektar

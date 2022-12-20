@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File PyrExp.cpp
+// File: PyrExp.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -66,10 +66,6 @@ PyrExp::PyrExp(const PyrExp &T)
     : StdExpansion(T), StdExpansion3D(T), StdPyrExp(T), Expansion(T),
       Expansion3D(T), m_matrixManager(T.m_matrixManager),
       m_staticCondMatrixManager(T.m_staticCondMatrixManager)
-{
-}
-
-PyrExp::~PyrExp()
 {
 }
 
@@ -623,11 +619,6 @@ NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
 //---------------------------------------
 // Helper functions
 //---------------------------------------
-
-int PyrExp::v_GetCoordim()
-{
-    return m_geom->GetCoordim();
-}
 
 void PyrExp::v_GetTracePhysMap(const int face, Array<OneD, int> &outarray)
 {

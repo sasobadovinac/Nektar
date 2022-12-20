@@ -278,59 +278,59 @@
         </COMPOSITE>
         <DOMAIN> C[0,1] </DOMAIN>
 
-</GEOMETRY>
+    </GEOMETRY>
 
-<EXPANSIONS>
-  <E COMPOSITE="C[0]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
-  <E COMPOSITE="C[1]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
-  </EXPANSIONS>
+    <EXPANSIONS>
+        <E COMPOSITE="C[0]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
+        <E COMPOSITE="C[1]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
+    </EXPANSIONS>
 
-  <CONDITIONS>
+    <CONDITIONS>
 
-    <PARAMETERS>
-      <P> TimeStep = 0.001                </P>
-      <P> NumSteps = 100              </P>
-      <P> FinTime = NumSteps*TimeStep      </P>
-      <P> IO_CheckSteps = 20         </P>
-      <P> IO_InfoSteps = 20              </P>
-      <P> advx = 1.0                 </P>
-      <P> advy = 1.0                 </P>
-      <P> advz = 0.0                 </P>
-      <P> MMFCircCentreX  = -2.0   </P>
-      <P> MMFCircCentreY  = -2.0   </P>
-    </PARAMETERS>
+        <PARAMETERS>
+            <P> TimeStep = 0.001                </P>
+            <P> NumSteps = 100              </P>
+            <P> FinTime = NumSteps*TimeStep      </P>
+            <P> IO_CheckSteps = 20         </P>
+            <P> IO_InfoSteps = 20              </P>
+            <P> advx = 1.0                 </P>
+            <P> advy = 1.0                 </P>
+            <P> advz = 0.0                 </P>
+            <P> MMFCircCentreX  = -2.0   </P>
+            <P> MMFCircCentreY  = -2.0   </P>
+        </PARAMETERS>
 
-    <SOLVERINFO>
-      <I PROPERTY="EQTYPE" VALUE="MMFAdvection" />
-      <I PROPERTY="Projection" VALUE="DisContinuous" />
-      <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
-      <I PROPERTY="SurfaceType" VALUE="Plane" />
-      <I PROPERTY="TestType" VALUE="TestPlane" />
-      <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->   
-      <I PROPERTY="MMFDir" VALUE="LOCAL" />
-    </SOLVERINFO>  
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE" VALUE="MMFAdvection" />
+            <I PROPERTY="Projection" VALUE="DisContinuous" />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4" />
+            <I PROPERTY="SurfaceType" VALUE="Plane" />
+            <I PROPERTY="TestType" VALUE="TestPlane" />
+            <!-- TangentX, TangentY, TangentXY, TangentZ, TangentCircular, LOCAL-->
+            <I PROPERTY="MMFDir" VALUE="LOCAL" />
+        </SOLVERINFO>
 
-    <VARIABLES>
-      <V ID="0"> u </V> 
-    </VARIABLES>
-    
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[2-3] </B>
-    </BOUNDARYREGIONS>
-    
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-	<N VAR="u" VALUE="0.0" />
-      </REGION> 
-    </BOUNDARYCONDITIONS>
-    
-    <FUNCTION NAME="AdvectionVelocity">
-      <E VAR="Vx" VALUE="1.0" />
-      <E VAR="Vy" VALUE="1.0" />
-      <E VAR="Vz" VALUE="0.0" />
-    </FUNCTION>
-    
-  </CONDITIONS>
-  
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[2-3] </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <N VAR="u" VALUE="0.0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="AdvectionVelocity">
+            <E VAR="Vx" VALUE="1.0" />
+            <E VAR="Vy" VALUE="1.0" />
+            <E VAR="Vz" VALUE="0.0" />
+        </FUNCTION>
+
+    </CONDITIONS>
+
 </NEKTAR>
 

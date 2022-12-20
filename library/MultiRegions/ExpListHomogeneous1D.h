@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File ExpListHomogeneous1D.h
+// File: ExpListHomogeneous1D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -100,14 +100,6 @@ public:
         Array<OneD, NekDouble> &outarray, bool IsForwards, bool Shuff = true,
         bool UnShuff = true);
 
-    inline void HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray,
-                                    bool Shuff = true, bool UnShuff = true);
-
-    inline void HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray,
-                                    Array<OneD, NekDouble> &outarray,
-                                    bool Shuff = true, bool UnShuff = true);
-
     LibUtilities::BasisSharedPtr GetHomogeneousBasis(void)
     {
         return m_homogeneousBasis;
@@ -169,115 +161,119 @@ protected:
     }
 
     //  virtual functions
-    virtual void v_SetHomo1DSpecVanVisc(Array<OneD, NekDouble> visc)
+    virtual void v_SetHomo1DSpecVanVisc(Array<OneD, NekDouble> visc) override
     {
         m_specVanVisc = visc;
     }
 
-    virtual int v_GetNumElmts(void)
+    virtual size_t v_GetNumElmts(void) override
     {
         return m_planes[0]->GetExpSize();
     }
 
-    virtual LibUtilities::BasisSharedPtr v_GetHomogeneousBasis(void)
+    virtual LibUtilities::BasisSharedPtr v_GetHomogeneousBasis(void) override
     {
         return GetHomogeneousBasis();
     }
 
     virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD, NekDouble> &outarray);
+                            Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_FwdTransLocalElmt(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD, NekDouble> &outarray);
+                            Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD, NekDouble> &outarray);
+                                   Array<OneD, NekDouble> &outarray) override;
 
     virtual std::vector<LibUtilities::FieldDefinitionsSharedPtr>
-    v_GetFieldDefinitions(void);
+    v_GetFieldDefinitions(void) override;
 
     virtual void v_GetFieldDefinitions(
-        std::vector<LibUtilities::FieldDefinitionsSharedPtr> &fielddef);
+        std::vector<LibUtilities::FieldDefinitionsSharedPtr> &fielddef)
+        override;
 
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
-        std::vector<NekDouble> &fielddata);
+        std::vector<NekDouble> &fielddata) override;
 
     virtual void v_AppendFieldData(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
-        std::vector<NekDouble> &fielddata, Array<OneD, NekDouble> &coeffs);
+        std::vector<NekDouble> &fielddata,
+        Array<OneD, NekDouble> &coeffs) override;
 
     virtual void v_ExtractDataToCoeffs(
         LibUtilities::FieldDefinitionsSharedPtr &fielddef,
         std::vector<NekDouble> &fielddata, std::string &field,
-        Array<OneD, NekDouble> &coeffs);
+        Array<OneD, NekDouble> &coeffs) override;
 
     virtual void v_ExtractCoeffsToCoeffs(
         const std::shared_ptr<ExpList> &fromExpList,
         const Array<OneD, const NekDouble> &fromCoeffs,
-        Array<OneD, NekDouble> &toCoeffs);
+        Array<OneD, NekDouble> &toCoeffs) override;
 
     virtual void v_WriteVtkPieceData(std::ostream &outfile, int expansion,
-                                     std::string var);
+                                     std::string var) override;
 
-    virtual void v_PhysInterp1DScaled(const NekDouble scale,
-                                      const Array<OneD, NekDouble> &inarray,
-                                      Array<OneD, NekDouble> &outarray);
+    virtual void v_PhysInterp1DScaled(
+        const NekDouble scale, const Array<OneD, NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_PhysGalerkinProjection1DScaled(
         const NekDouble scale, const Array<OneD, NekDouble> &inarray,
-        Array<OneD, NekDouble> &outarray);
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_HomogeneousFwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
-        bool UnShuff = true);
+        bool UnShuff = true) override;
 
     virtual void v_HomogeneousBwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
-        bool UnShuff = true);
+        bool UnShuff = true) override;
 
     virtual void v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
                                  const Array<OneD, NekDouble> &inarray2,
-                                 Array<OneD, NekDouble> &outarray);
+                                 Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_DealiasedDotProd(
         const Array<OneD, Array<OneD, NekDouble>> &inarray1,
         const Array<OneD, Array<OneD, NekDouble>> &inarray2,
-        Array<OneD, Array<OneD, NekDouble>> &outarray);
+        Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 
     virtual void v_PhysDeriv(const Array<OneD, const NekDouble> &inarray,
                              Array<OneD, NekDouble> &out_d0,
                              Array<OneD, NekDouble> &out_d1,
-                             Array<OneD, NekDouble> &out_d2);
+                             Array<OneD, NekDouble> &out_d2) override;
 
     virtual void v_PhysDeriv(Direction edir,
                              const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &out_d);
+                             Array<OneD, NekDouble> &out_d) override;
 
-    virtual LibUtilities::TranspositionSharedPtr v_GetTransposition(void);
+    virtual LibUtilities::TranspositionSharedPtr v_GetTransposition(
+        void) override;
 
-    virtual Array<OneD, const unsigned int> v_GetZIDs(void);
+    virtual Array<OneD, const unsigned int> v_GetZIDs(void) override;
 
-    virtual ExpListSharedPtr &v_GetPlane(int n)
+    virtual ExpListSharedPtr &v_GetPlane(int n) override
     {
         return GetPlane(n);
     }
 
-    virtual NekDouble v_GetHomoLen(void);
+    virtual NekDouble v_GetHomoLen(void) override;
 
-    virtual void v_SetHomoLen(const NekDouble lhom);
+    virtual void v_SetHomoLen(const NekDouble lhom) override;
 
-    NekDouble v_Integral(const Array<OneD, const NekDouble> &inarray);
+    virtual NekDouble v_Integral(
+        const Array<OneD, const NekDouble> &inarray) override;
 
 private:
     // Padding operations variables
@@ -287,20 +283,6 @@ private:
     /// Spectral vanishing Viscosity coefficient for stabilisation
     Array<OneD, NekDouble> m_specVanVisc;
 };
-
-inline void ExpListHomogeneous1D::HomogeneousFwdTrans(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
-{
-    v_HomogeneousFwdTrans(inarray, outarray, Shuff, UnShuff);
-}
-
-inline void ExpListHomogeneous1D::HomogeneousBwdTrans(
-    const Array<OneD, const NekDouble> &inarray,
-    Array<OneD, NekDouble> &outarray, bool Shuff, bool UnShuff)
-{
-    v_HomogeneousBwdTrans(inarray, outarray, Shuff, UnShuff);
-}
 
 } // namespace MultiRegions
 } // namespace Nektar

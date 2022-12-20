@@ -3101,9 +3101,9 @@
     </GEOMETRY>
     <EXPANSIONS>
         <E COMPOSITE="C[17]"
-           NUMMODES="4,4" BASISTYPE="Modified_A,Modified_B"
-	   NUMPOINTS="4,4" POINTSTYPE="PolyEvenlySpaced,PolyEvenlySpaced"
-	   FIELDS="u" />
+            NUMMODES="4,4" BASISTYPE="Modified_A,Modified_B"
+            NUMPOINTS="4,4" POINTSTYPE="PolyEvenlySpaced,PolyEvenlySpaced"
+            FIELDS="u" />
     </EXPANSIONS>
     <CONDITIONS />
 </NEKTAR>

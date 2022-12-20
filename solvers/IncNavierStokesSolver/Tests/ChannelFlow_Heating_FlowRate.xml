@@ -1,124 +1,133 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <NEKTAR>
-  
-  <EXPANSIONS>
-    <E COMPOSITE="C[11]" NUMMODES="3" TYPE="MODIFIED" FIELDS="u,v,teta,p" />
-  </EXPANSIONS>
-  
-  <CONDITIONS>
-    <SOLVERINFO>
-      <I PROPERTY="SolverType"             VALUE="VelocityCorrectionScheme"/> 
-      <I PROPERTY="EQTYPE"                 VALUE="UnsteadyNavierStokes"    />
-      <I PROPERTY="EvolutionOperator"      VALUE="Nonlinear"   />
-      <I PROPERTY="Projection"             VALUE="Galerkin"    />
-      <!--            <I PROPERTY="GlobalSysSoln"                 VALUE="XxtMultiLevelStaticCond" />-->
-    <!--  <I PROPERTY="GlobalSysSoln"  VALUE="DirectMultiLevelStaticCond" /> -->
-      <I PROPERTY="TimeIntegrationMethod"         VALUE="IMEXOrder1" />
-      <I PROPERTY="Driver"                        VALUE="Standard"  />
-      <I PROPERTY="SPECTRALHPDEALIASING"          VALUE="True"      />
-    </SOLVERINFO>
-    
-    <PARAMETERS>
-      <!-- Need to pick Delta t strategically, dont want CFL number to be too large! -->
-      <P> TimeStep       = 1e-2                </P>
-      <!--  Final time -->
-      <P> T              = 1e-4             </P>
-      <P> NumSteps       = 20                </P>
-      <P> IO_CheckSteps  = NumSteps/1          </P>
-      <P> IO_InfoSteps   = 1                   </P>
-      <P> IO_CFLSteps    = 1	             </P>
-      <P> IO_FlowSteps   = 1                  </P>
-      <!-- Reynolds number -->
-      <P> Re             = 1                  </P>
-      <P> Kinvis         = 1/Re                </P>
-      <P> Flowrate      =  2.0/3.0            </P>
-      <!-- Heating parameters  -->
-      <P> alpha         = 3               </P>
-      <P> Ra_uni           = 100              </P>
-      <P> Pr            =0.71              </P> 
-      <!-- SVV parameters -->
-      <P> SVVCutoffRatio = 0.5                 </P>
-      <P> SVVDiffCoeff   = 1                 </P>
-    </PARAMETERS>
-    
-    
-    <VARIABLES>
-      <V ID="0">u</V>
-      <V ID="1">v</V>
-      <V ID="2">teta</V>
-      <V ID="3">p</V>
-    </VARIABLES>
-    
-    <BOUNDARYREGIONS>
-      <B ID="0"> C[7]   </B>   <!-- Top    -->
-      <B ID="1"> C[8]   </B>   <!-- Bottom    -->
-      <B ID="2"> C[9]   </B>   <!-- Inlet    -->
-      <B ID="3"> C[10]   </B>   <!-- Outflow    -->
-    </BOUNDARYREGIONS>
-    
-    <BOUNDARYCONDITIONS>
-      <REGION REF="0">
-        <D VAR="u"    VALUE="0" />
-        <D VAR="v"    VALUE="0" />
-        <D VAR="teta" VALUE="0" />
-	<N VAR="p"    VALUE="0" USERDEFINEDTYPE="H" />
-      </REGION>
-      <REGION REF="1">
-        <D VAR="u"    VALUE="0" />
-        <D VAR="v"    VALUE="0" />
-        <D VAR="teta" VALUE ="1" />
-        <N VAR="p"    VALUE="0" USERDEFINEDTYPE="H" />
-      </REGION>
-      <REGION REF="2">
-        <P VAR="u"    VALUE="[3]" />
-        <P VAR="v"    VALUE="[3]" />
-        <P VAR="teta" VALUE="[3]" />
-	<P VAR="p"    VALUE="[3]" />
-      </REGION>
-      <REGION REF="3">
-        <P VAR="u" USERDEFINEDTYPE="Flowrate" VALUE="[2]" />
-        <P VAR="v"    VALUE="[2]" />
-        <P VAR="teta" VALUE="[2]" />
-        <P VAR="p"    VALUE="[2]" />
-      </REGION>
-    </BOUNDARYCONDITIONS>
-        
-    <FUNCTION NAME="DiffusionCoefficient" >
-      <E VAR="teta" VALUE="Kinvis/Pr" />
-    </FUNCTION>
-    
-    <FUNCTION NAME="FlowrateForce" >
-      <E VAR="ForceX" VALUE="1" />
-      <E VAR="ForceY" VALUE="0" />
-    </FUNCTION>
-    
-    <FUNCTION NAME="BodyForce">
-      <E VAR="u" VALUE="0"  EVARS="u v teta p" />
-      <E VAR="v" VALUE="teta*Ra_uni/Pr" EVARS="u v teta p" />
-      <E VAR="teta" VALUE="0" EVARS="u v teta p"/>
-    </FUNCTION>
-    
-    <FUNCTION NAME="InitialConditions">
-      <E VAR="u" VALUE="(1-y^2)" />
-      <E VAR="v" VALUE="0.0" />
-      <E VAR="teta" VALUE ="0.5*(1-y)" />
-      <E VAR="p"    VALUE="0" />  
-    </FUNCTION>
 
-    <FUNCTION NAME="ExactSolution">
-      <E VAR="u"    VALUE="(1-y^2)" />
-      <E VAR="v"    VALUE="0.0" />
-      <E VAR="teta" VALUE="0.5*(1-y)" />
-      <E VAR="p"    VALUE="0.5*(y*(1-0.5*y) + 1.5)*Ra_uni/Pr" />
-    </FUNCTION>
+    <EXPANSIONS>
+        <E COMPOSITE="C[11]" NUMMODES="3" TYPE="MODIFIED" FIELDS="u,v,teta,p" />
+    </EXPANSIONS>
 
-  </CONDITIONS>
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="SolverType"             VALUE="VelocityCorrectionScheme"/>
+            <I PROPERTY="EQTYPE"                 VALUE="UnsteadyNavierStokes"    />
+            <I PROPERTY="EvolutionOperator"      VALUE="Nonlinear"   />
+            <I PROPERTY="Projection"             VALUE="Galerkin"    />
+            <!--            <I PROPERTY="GlobalSysSoln"                 VALUE="XxtMultiLevelStaticCond" />-->
+            <!--  <I PROPERTY="GlobalSysSoln"  VALUE="DirectMultiLevelStaticCond" /> -->
+            <I PROPERTY="TimeIntegrationMethod"         VALUE="IMEXOrder1" />
+            <I PROPERTY="Driver"                        VALUE="Standard"  />
+            <I PROPERTY="SPECTRALHPDEALIASING"          VALUE="True"      />
+        </SOLVERINFO>
 
-  <FORCING>
-    <FORCE TYPE="Body">
-      <BODYFORCE>BodyForce</BODYFORCE>
-    </FORCE>
-  </FORCING>
+        <PARAMETERS>
+            <!-- Need to pick Delta t strategically, dont want CFL number to be too large! -->
+            <P> TimeStep       = 1e-2                </P>
+            <!--  Final time -->
+            <P> T              = 1e-4             </P>
+            <P> NumSteps       = 20                </P>
+            <P> IO_CheckSteps  = NumSteps/1          </P>
+            <P> IO_InfoSteps   = 1                   </P>
+            <P> IO_CFLSteps    = 1	             </P>
+            <P> IO_FlowSteps   = 1                  </P>
+            <!-- Reynolds number -->
+            <P> Re             = 1                  </P>
+            <P> Kinvis         = 1/Re                </P>
+            <P> Flowrate      =  2.0/3.0            </P>
+            <!-- Heating parameters  -->
+            <P> alpha         = 3               </P>
+            <P> Ra_uni           = 100              </P>
+            <P> Pr            =0.71              </P>
+            <!-- SVV parameters -->
+            <P> SVVCutoffRatio = 0.5                 </P>
+            <P> SVVDiffCoeff   = 1                 </P>
+        </PARAMETERS>
+
+
+        <VARIABLES>
+            <V ID="0">u</V>
+            <V ID="1">v</V>
+            <V ID="2">teta</V>
+            <V ID="3">p</V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[7]   </B>   <!-- Top    -->
+            <B ID="1"> C[8]   </B>   <!-- Bottom    -->
+            <B ID="2"> C[9]   </B>   <!-- Inlet    -->
+            <B ID="3"> C[10]   </B>   <!-- Outflow    -->
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u"    VALUE="0" />
+                <D VAR="v"    VALUE="0" />
+                <D VAR="teta" VALUE="0" />
+                <N VAR="p"    VALUE="0" USERDEFINEDTYPE="H" />
+            </REGION>
+            <REGION REF="1">
+                <D VAR="u"    VALUE="0" />
+                <D VAR="v"    VALUE="0" />
+                <D VAR="teta" VALUE ="1" />
+                <N VAR="p"    VALUE="0" USERDEFINEDTYPE="H" />
+            </REGION>
+            <REGION REF="2">
+                <P VAR="u"    VALUE="[3]" />
+                <P VAR="v"    VALUE="[3]" />
+                <P VAR="teta" VALUE="[3]" />
+                <P VAR="p"    VALUE="[3]" />
+            </REGION>
+            <REGION REF="3">
+                <P VAR="u" USERDEFINEDTYPE="Flowrate" VALUE="[2]" />
+                <P VAR="v"    VALUE="[2]" />
+                <P VAR="teta" VALUE="[2]" />
+                <P VAR="p"    VALUE="[2]" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="DiffusionCoefficient" >
+            <E VAR="teta" VALUE="Kinvis/Pr" />
+        </FUNCTION>
+
+        <FUNCTION NAME="FlowrateForce" >
+            <E VAR="ForceX" VALUE="1" />
+            <E VAR="ForceY" VALUE="0" />
+        </FUNCTION>
+
+        <FUNCTION NAME="BodyForce">
+            <E VAR="u" VALUE="0"  EVARS="u v teta p" />
+            <E VAR="v" VALUE="teta*Ra_uni/Pr" EVARS="u v teta p" />
+            <E VAR="teta" VALUE="0" EVARS="u v teta p"/>
+        </FUNCTION>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="(1-y^2)" />
+            <E VAR="v" VALUE="0.0" />
+            <E VAR="teta" VALUE ="0.5*(1-y)" />
+            <E VAR="p"    VALUE="0" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u"    VALUE="(1-y^2)" />
+            <E VAR="v"    VALUE="0.0" />
+            <E VAR="teta" VALUE="0.5*(1-y)" />
+            <E VAR="p"    VALUE="0.5*(y*(1-0.5*y) + 1.5)*Ra_uni/Pr" />
+        </FUNCTION>
+
+    </CONDITIONS>
+
+    <FORCING>
+        <FORCE TYPE="Body">
+            <BODYFORCE>BodyForce</BODYFORCE>
+        </FORCE>
+    </FORCING>
+
+    <FILTERS>
+        <FILTER TYPE="ReynoldsStresses">
+            <PARAM NAME="OutputFile">Avg_field</PARAM>
+            <PARAM NAME="OutputFrequency">40</PARAM>
+            <PARAM NAME="SampleFrequency">1</PARAM>
+            <PARAM NAME="options">-e</PARAM>
+        </FILTER>
+    </FILTERS>
 
     <GEOMETRY DIM="2" SPACE="2">
         <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxt1UlsTHEAx/Gx77UWRe371tbY2zG1U/vaam1Fa9/XhMRBokIi4kSvriTODkScJBwc3SRODqKJhEgkNTP+/9F+xjs0Mp/85s37vmcmkfjf0Za++/X96wE3E4kuyJhnjzPHl7x3Da/XNGVff5vWu+G+f/fgqYasf0yXsu+Bu+8Z/Hr7vGQy+bng/L1w972D1277u3PfB3ffN/jPJ+2Z41vBvh/uvn/w4qLMx0t+L9gPwN0XBX9Y05w5fhTsB+LuBwXv25Ld/SrYD8bdDwl+6827zPG7YD8Udz8s0emodl+Mux/e2ROV9cncfY4+Irwen7+l+Mjg8flyXxL8Rnh+9FHB4/NRhY/m/utjuL96KfdPH8v98frG0T+Fj6ev1zeBvk+LWnOdok+k73N8En3dTw4e/3/qU4LXhb761OA/Ql99Gn316fTVZ9BXn0lffRZ99dn0ffGhNdcx+hz6vsTn0td9WfD4/Lovp6/7iuDx+XU/j77uk/TV59NXXxC8JfT1/Avp634RfXO/ZxV3UtEX0zf777byf76Evtn9pw6+NHjH35fxHd6/Mnj8fvD8VcHj85v9O7CDp+jrfhl9PX+avn7+6uDx+fX9l9NXX0HflsZH2Y6voq+kr76Kvvpq+upr6HsPX0tf9+voq6+nr15DX31D7BL66hvpq2+i74PJuU5530zf+/gW+j7Et9JX30ZffTt9/Xw76KvvpK++i776bvp6/bX0dV9H3/L+ud+/vO+hr15P3wq8gb7u99LX/b7g8fvX/X766gfoqx+kbxneGDx+P/j5DtHX9z9M35G3c9eZ9yP01ZvoqzfTtwQ/Sl/3x+irH6fvCPwEfd2fpK9+ir76afrqZxL/O9ryfpa++jn66ufpq1+gr36Rvvol+uqX6atfoa9+lb76NfrqfwDCFw4V</VERTEX>

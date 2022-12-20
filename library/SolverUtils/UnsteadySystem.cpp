@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadySystem.cpp
+// File: UnsteadySystem.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -284,7 +284,7 @@ void UnsteadySystem::v_DoSolve()
         // Flag to update AV
         m_CalcPhysicalAV = true;
         // Frozen preconditioner checks
-        if (UpdateTimeStepCheck())
+        if (v_UpdateTimeStepCheck())
         {
             m_cflSafetyFactor = tmp_cflSafetyFactor;
 
@@ -340,7 +340,8 @@ void UnsteadySystem::v_DoSolve()
         cpuTime += elapsed;
 
         // Write out status information
-        if (m_session->GetComm()->GetRank() == 0 && !((step + 1) % m_infosteps))
+        if (m_infosteps && m_session->GetComm()->GetRank() == 0 &&
+            !((step + 1) % m_infosteps))
         {
             cout << "Steps: " << setw(8) << left << step + 1 << " "
                  << "Time: " << setw(12) << left << m_time;
@@ -439,7 +440,7 @@ void UnsteadySystem::v_DoSolve()
             totFilterTime += elapsed;
 
             // Write out individual filter status information
-            if (m_session->GetComm()->GetRank() == 0 &&
+            if (m_filtersInfosteps && m_session->GetComm()->GetRank() == 0 &&
                 !((step + 1) % m_filtersInfosteps) && !m_filters.empty() &&
                 m_session->DefinesCmdLineArgument("verbose"))
             {
@@ -457,7 +458,7 @@ void UnsteadySystem::v_DoSolve()
         }
 
         // Write out overall filter status information
-        if (m_session->GetComm()->GetRank() == 0 &&
+        if (m_filtersInfosteps && m_session->GetComm()->GetRank() == 0 &&
             !((step + 1) % m_filtersInfosteps) && !m_filters.empty())
         {
             stringstream ss;
@@ -566,7 +567,7 @@ void UnsteadySystem::v_DoSolve()
     // Print for 1D problems
     if (m_spacedim == 1)
     {
-        v_AppendOutput1D(fields);
+        AppendOutput1D(fields);
     }
 }
 
@@ -611,7 +612,7 @@ void UnsteadySystem::v_GenerateSummary(SummaryList &s)
  * Stores the solution in a file for 1D problems only. This method has
  * been implemented to facilitate the post-processing for 1D problems.
  */
-void UnsteadySystem::v_AppendOutput1D(
+void UnsteadySystem::AppendOutput1D(
     Array<OneD, Array<OneD, NekDouble>> &solution1D)
 {
     // Coordinates of the quadrature points in the real physical space
@@ -831,7 +832,7 @@ bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
 
     SteadyStateResidual(step, L2);
 
-    if (m_comm->GetRank() == 0 &&
+    if (m_infosteps && m_comm->GetRank() == 0 &&
         (((step + 1) % m_infosteps == 0) || ((step == m_initialStep))))
     {
         // Output time
@@ -855,7 +856,7 @@ bool UnsteadySystem::CheckSteadyState(int step, NekDouble totCPUTime)
     // Calculate maximum L2 error
     NekDouble maxL2 = Vmath::Vmax(nFields, L2, 1);
 
-    if (m_session->DefinesCmdLineArgument("verbose") &&
+    if (m_infosteps && m_session->DefinesCmdLineArgument("verbose") &&
         m_comm->GetRank() == 0 && ((step + 1) % m_infosteps == 0))
     {
         cout << "-- Maximum L^2 residual: " << maxL2 << endl;

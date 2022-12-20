@@ -60,6 +60,27 @@ EquationOfState::EquationOfState(const NekDouble &gamma,
 {
 }
 
+NekDouble EquationOfState::GetTemperature(const NekDouble &rho,
+                                          const NekDouble &e)
+{
+    return v_GetTemperature(rho, e);
+}
+
+vec_t EquationOfState::GetTemperature(const vec_t &rho, const vec_t &e)
+{
+    return v_GetTemperature(rho, e);
+}
+
+NekDouble EquationOfState::GetPressure(const NekDouble &rho, const NekDouble &e)
+{
+    return v_GetPressure(rho, e);
+}
+
+vec_t EquationOfState::GetPressure(const vec_t &rho, const vec_t &e)
+{
+    return v_GetPressure(rho, e);
+}
+
 NekDouble EquationOfState::GetSoundSpeed(const NekDouble &rho,
                                          const NekDouble &e)
 {

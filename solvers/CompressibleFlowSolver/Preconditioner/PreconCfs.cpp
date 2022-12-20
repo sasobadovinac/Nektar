@@ -99,10 +99,11 @@ void PreconCfs::v_BuildPreconCfs(
     NEKERROR(ErrorUtil::efatal, "v_BuildPreconCfs not defined");
 }
 
-bool PreconCfs::UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
-                                     const NekDouble dtLambda)
+bool PreconCfs::v_UpdatePreconMatCheck(const Array<OneD, const NekDouble> &res,
+                                       const NekDouble dtLambda)
 {
-    NEKERROR(ErrorUtil::efatal, "UpdatePreconMatCheck not defined");
+    boost::ignore_unused(res, dtLambda);
+    NEKERROR(ErrorUtil::efatal, "v_UpdatePreconMatCheck not defined");
     return false;
 }
 

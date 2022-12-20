@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File VariableConverter.h
+// File: VariableConverter.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -200,7 +200,7 @@ public:
 protected:
     LibUtilities::SessionReaderSharedPtr m_session;
     EquationOfStateSharedPtr m_eos;
-    int m_spacedim;
+    size_t m_spacedim;
     NekDouble m_pInf;
     NekDouble m_rhoInf;
     NekDouble m_gasConstant;

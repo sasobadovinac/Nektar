@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File EulerImplicitCFE.h
+// File: EulerImplicitCFE.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -69,7 +69,7 @@ protected:
 
     virtual void v_InitObject(bool DeclareFields = true) override;
 
-    void v_DoDiffusion(
+    virtual void v_DoDiffusion(
         const Array<OneD, Array<OneD, NekDouble>> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray,
         const Array<OneD, Array<OneD, NekDouble>> &pFwd,
@@ -80,7 +80,8 @@ protected:
                  "v_DoDiffusion is not implemented for implicit solvers");
     }
 
-    bool SupportsShockCaptType(const std::string type) const override final;
+    virtual bool v_SupportsShockCaptType(
+        const std::string type) const override final;
 };
 } // namespace Nektar
 #endif

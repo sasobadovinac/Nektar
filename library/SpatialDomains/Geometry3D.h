@@ -91,7 +91,7 @@ protected:
 
     SPATIAL_DOMAINS_EXPORT virtual NekDouble v_GetLocCoords(
         const Array<OneD, const NekDouble> &coords,
-        Array<OneD, NekDouble> &Lcoords);
+        Array<OneD, NekDouble> &Lcoords) override;
 
     void NewtonIterationForLocCoord(const Array<OneD, const NekDouble> &coords,
                                     const Array<OneD, const NekDouble> &ptsx,
@@ -100,22 +100,22 @@ protected:
                                     Array<OneD, NekDouble> &Lcoords,
                                     NekDouble &dist);
 
-    virtual void v_FillGeom();
-    virtual NekDouble v_GetCoord(const int i,
-                                 const Array<OneD, const NekDouble> &Lcoord);
+    virtual void v_FillGeom() override;
+    virtual NekDouble v_GetCoord(
+        const int i, const Array<OneD, const NekDouble> &Lcoord) override;
 
     //---------------------------------------
     // Helper functions
     //---------------------------------------
-    virtual int v_GetShapeDim() const;
-    virtual int v_GetNumVerts() const;
-    virtual int v_GetNumEdges() const;
-    virtual int v_GetNumFaces() const;
-    virtual PointGeomSharedPtr v_GetVertex(int i) const;
-    virtual Geometry1DSharedPtr v_GetEdge(int i) const;
-    virtual Geometry2DSharedPtr v_GetFace(int i) const;
-    virtual StdRegions::Orientation v_GetEorient(const int i) const;
-    virtual StdRegions::Orientation v_GetForient(const int i) const;
+    virtual int v_GetShapeDim() const override;
+    virtual int v_GetNumVerts() const override;
+    virtual int v_GetNumEdges() const override;
+    virtual int v_GetNumFaces() const override;
+    virtual PointGeomSharedPtr v_GetVertex(int i) const override;
+    virtual Geometry1DSharedPtr v_GetEdge(int i) const override;
+    virtual Geometry2DSharedPtr v_GetFace(int i) const override;
+    virtual StdRegions::Orientation v_GetEorient(const int i) const override;
+    virtual StdRegions::Orientation v_GetForient(const int i) const override;
 };
 
 } // namespace SpatialDomains

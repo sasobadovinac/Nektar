@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File UnsteadyAdvection.h
+// File: CFLtester.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -172,20 +172,20 @@ protected:
     /// Get the normal velocity
     Array<OneD, NekDouble> &GetNormalVelocity();
 
-    virtual void v_InitObject(bool DeclareFields = true);
+    virtual void v_InitObject(bool DeclareFields = true) override;
 
     void GetFluxVector(const Array<OneD, Array<OneD, NekDouble>> &physfield,
                        Array<OneD, Array<OneD, Array<OneD, NekDouble>>> &flux);
 
-    virtual void v_GenerateSummary(SummaryList &s);
+    virtual void v_GenerateSummary(SummaryList &s) override;
 
 private:
     virtual NekDouble v_GetTimeStep(const Array<OneD, int> ExpOrder,
                                     const Array<OneD, NekDouble> CFL,
-                                    NekDouble timeCFL);
+                                    NekDouble timeCFL) override;
 
     virtual NekDouble v_GetTimeStep(int ExpOrder, NekDouble CFL,
-                                    NekDouble TimeStability);
+                                    NekDouble TimeStability) override;
 
     // Mapping of the real convective field on the standard element.
     // This function gives back the convective filed in the standard

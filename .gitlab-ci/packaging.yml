@@ -141,7 +141,6 @@
   variables:
     GIT_SUBMODULE_STRATEGY: normal
   script:
-    - if [ $image_name = "centos:8" ]; then sed -i -e "s|mirrorlist=|#mirrorlist=|g" -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-Linux-*; fi
     - yum -y upgrade
     - OS_DIST=$(echo $CI_JOB_NAME | cut -d- -f 2)
     - OS_VERSION=$(echo $CI_JOB_NAME | cut -d- -f 3)
@@ -181,7 +180,6 @@
     needs_powertools: 0
     cmake_exe: cmake
   script:
-    - if [ $image_name = "centos:8" ]; then sed -i -e "s|mirrorlist=|#mirrorlist=|g" -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-Linux-*; fi
     - yum -y upgrade
     - if [ "$needs_epel" -eq 1 ]; then yum install -y epel-release; fi
     - if [ "$needs_powertools" -eq 1 ]; then yum install -y dnf-plugins-core; yum config-manager --set-enabled powertools; fi
@@ -472,38 +470,6 @@ package-debian-buster-deploy:
     - package-debian-buster-build
 
 ##
-## Debian stretch
-##
-package-debian-stretch-env:
-  <<: *package-env-build
-
-package-debian-stretch-build:
-  <<: *package-deb-build
-  needs: ["package-debian-stretch-env"]
-  variables:
-    image_name: pkg/debian-stretch
-
-package-debian-stretch-test:
-  <<: *package-deb-test
-  needs: ["package-debian-stretch-build"]
-  dependencies:
-    - package-debian-stretch-build
-  variables:
-    image_name: debian:stretch
-
-package-debian-stretch-deploy-dev:
-  <<: *package-deb-deploy-dev
-  needs: ["package-debian-stretch-build", "package-debian-stretch-test"]
-  dependencies:
-    - package-debian-stretch-build
-
-package-debian-stretch-deploy:
-  <<: *package-deb-deploy
-  needs: ["package-debian-stretch-build", "package-debian-stretch-deploy-dev"]
-  dependencies:
-    - package-debian-stretch-build
-
-##
 ## Ubuntu jammy
 ##
 package-ubuntu-jammy-env:
@@ -600,211 +566,72 @@ package-ubuntu-bionic-deploy:
   dependencies:
     - package-ubuntu-bionic-build
 
-##
-## Ubuntu xenial
-##
-#package-ubuntu-xenial-env:
-#  <<: *package-env-build
 
-#package-ubuntu-xenial-build:
-#  <<: *package-deb-build
-#  needs: ["package-ubuntu-xenial-env"]
-#  variables:
-#    image_name: pkg/ubuntu-xenial
-
-#package-ubuntu-xenial-test:
-#  <<: *package-deb-test
-#  needs: ["package-ubuntu-xenial-build"]
-#  dependencies:
-#    - package-ubuntu-xenial-build
-#  variables:
-#    image_name: ubuntu:xenial
-
-#package-ubuntu-xenial-deploy-dev:
-#  <<: *package-deb-deploy-dev
-#  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-test"]
-#  dependencies:
-#    - package-ubuntu-xenial-build
-
-#package-ubuntu-xenial-deploy:
-#  <<: *package-deb-deploy
-#  needs: ["package-ubuntu-xenial-build", "package-ubuntu-xenial-deploy-dev"]
-#  dependencies:
-#    - package-ubuntu-xenial-build
-
-
-
-##
-## CentOS 7
-##
-package-centos-7-env:
-  <<: *package-env-build
-
-package-centos-7-build:
-  <<: *package-rpm-build
-  needs: ["package-centos-7-env"]
-  variables:
-    image_name: pkg/centos-7
-    version_file: centos-7.json
-
-package-centos-7-test:
-  <<: *package-rpm-test
-  needs: ["package-centos-7-build"]
-  dependencies:
-    - package-centos-7-build
-  variables:
-    image_name: centos:7
-    needs_epel: 1
-    cmake_exe: cmake3
-
-package-centos-7-deploy-dev:
-  <<: *package-rpm-deploy-dev
-  needs: ["package-centos-7-build", "package-centos-7-test"]
-  dependencies:
-    - package-centos-7-build
-
-package-centos-7-deploy:
-  <<: *package-rpm-deploy
-  needs: ["package-centos-7-build", "package-centos-7-deploy-dev"]
-  dependencies:
-    - package-centos-7-build
-
-##
-## CentOS 8
-##
-package-centos-8-env:
-  <<: *package-env-build
-
-package-centos-8-build:
-  <<: *package-rpm-build
-  needs: ["package-centos-8-env"]
-  variables:
-    image_name: pkg/centos-8
-    version_file: centos-8.json
-
-package-centos-8-test:
-  <<: *package-rpm-test
-  needs: ["package-centos-8-build"]
-  dependencies:
-    - package-centos-8-build
-  variables:
-    image_name: centos:8
-    needs_epel: 1
-    needs_powertools: 1
-    cmake_exe: cmake
-
-package-centos-8-deploy-dev:
-  <<: *package-rpm-deploy-dev
-  needs: ["package-centos-8-build", "package-centos-8-test"]
-  dependencies:
-    - package-centos-8-build
-
-package-centos-8-deploy:
-  <<: *package-rpm-deploy
-  needs: ["package-centos-8-build", "package-centos-8-deploy-dev"]
-  dependencies:
-    - package-centos-8-build
-
-##
-## Fedora 33
-##
-#package-fedora-33-env:
-#  <<: *package-env-build
-
-#package-fedora-33-build:
-#  <<: *package-rpm-build
-#  needs: ["package-fedora-33-env"]
-#  variables:
-#    image_name: pkg/fedora-33
-#    version_file: fedora-33.json
-
-#package-fedora-33-test:
-#  <<: *package-rpm-test
-#  needs: ["package-fedora-33-build"]
-#  dependencies:
-#    - package-fedora-33-build
-#  variables:
-#    image_name: fedora:33
-#    cmake_exe: cmake
-
-#package-fedora-33-deploy-dev:
-#  <<: *package-rpm-deploy-dev
-#  needs: ["package-fedora-33-build", "package-fedora-33-test"]
-#  dependencies:
-#    - package-fedora-33-build
-
-#package-fedora-33-deploy:
-#  <<: *package-rpm-deploy
-#  needs: ["package-fedora-33-build", "package-fedora-33-deploy-dev"]
-#  dependencies:
-#    - package-fedora-33-build
-
-##
-## Fedora 34
-##
-#package-fedora-34-env:
-#  <<: *package-env-build
-
-#package-fedora-34-build:
-#  <<: *package-rpm-build
-#  needs: ["package-fedora-34-env"]
-#  variables:
-#    image_name: pkg/fedora-34
-#    version_file: fedora-34.json
-
-#package-fedora-34-test:
-#  <<: *package-rpm-test
-#  needs: ["package-fedora-34-build"]
-#  dependencies:
-#    - package-fedora-34-build
-#  variables:
-#    image_name: fedora:34
-#    cmake_exe: cmake
-
-#package-fedora-34-deploy-dev:
-#  <<: *package-rpm-deploy-dev
-#  needs: ["package-fedora-34-build", "package-fedora-34-test"]
-#  dependencies:
-#    - package-fedora-34-build
-
-#package-fedora-34-deploy:
-#  <<: *package-rpm-deploy
-#  needs: ["package-fedora-34-build", "package-fedora-34-deploy-dev"]
-#  dependencies:
-#    - package-fedora-34-build
-
-  
 ##
 ## Fedora 35
 ##
-#package-fedora-35-env:
-#  <<: *package-env-build
+package-fedora-35-env:
+  <<: *package-env-build
 
-#package-fedora-35-build:
-#  <<: *package-rpm-build
-#  needs: ["package-fedora-35-env"]
-#  variables:
-#    image_name: pkg/fedora-35
-#    version_file: fedora-35.json
+package-fedora-35-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-35-env"]
+  variables:
+    image_name: pkg/fedora-35
+    version_file: fedora-35.json
 
-#package-fedora-35-test:
-#  <<: *package-rpm-test
-#  needs: ["package-fedora-35-build"]
-#  dependencies:
-#    - package-fedora-35-build
-#  variables:
-#    image_name: fedora:35
-#    cmake_exe: cmake
+package-fedora-35-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-35-build"]
+  dependencies:
+    - package-fedora-35-build
+  variables:
+    image_name: fedora:35
+    cmake_exe: cmake
 
-#package-fedora-35-deploy-dev:
-#  <<: *package-rpm-deploy-dev
-#  needs: ["package-fedora-35-build", "package-fedora-35-test"]
-#  dependencies:
-#    - package-fedora-35-build
+package-fedora-35-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-35-build", "package-fedora-35-test"]
+  dependencies:
+    - package-fedora-35-build
 
-#package-fedora-35-deploy:
-#  <<: *package-rpm-deploy
-#  needs: ["package-fedora-35-build", "package-fedora-35-deploy-dev"]
-#  dependencies:
-#    - package-fedora-35-build
+package-fedora-35-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-35-build", "package-fedora-35-deploy-dev"]
+  dependencies:
+    - package-fedora-35-build
+
+##
+## Fedora 36
+##
+package-fedora-36-env:
+  <<: *package-env-build
+
+package-fedora-36-build:
+  <<: *package-rpm-build
+  needs: ["package-fedora-36-env"]
+  variables:
+    image_name: pkg/fedora-36
+    version_file: fedora-36.json
+
+package-fedora-36-test:
+  <<: *package-rpm-test
+  needs: ["package-fedora-36-build"]
+  dependencies:
+    - package-fedora-36-build
+  variables:
+    image_name: fedora:36
+    cmake_exe: cmake
+
+package-fedora-36-deploy-dev:
+  <<: *package-rpm-deploy-dev
+  needs: ["package-fedora-36-build", "package-fedora-36-test"]
+  dependencies:
+    - package-fedora-36-build
+
+package-fedora-36-deploy:
+  <<: *package-rpm-deploy
+  needs: ["package-fedora-36-build", "package-fedora-36-deploy-dev"]
+  dependencies:
+    - package-fedora-36-build
 
