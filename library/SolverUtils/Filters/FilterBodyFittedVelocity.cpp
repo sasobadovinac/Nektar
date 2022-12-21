@@ -118,9 +118,6 @@ FilterBodyFittedVelocity::FilterBodyFittedVelocity(
     }
 
     m_initialized = m_restartFile != "";
-
-    std::cout << "m_filterType = " << m_filterType << std::endl;
-    std::cout << "m_bodyFittedCooriateFile = " << m_bodyFittedCooriateFile << std::endl;
 }
 
 FilterBodyFittedVelocity::~FilterBodyFittedVelocity()
@@ -142,7 +139,6 @@ void FilterBodyFittedVelocity::v_Initialise(
     //   j - component: 0-x, 1-y, (2-z)
     //   k - point id
     const int npoints = pFields[0]->GetTotPoints();
-    //m_distance = Array<OneD, NekDouble>(npoints, 9999); // should be deleted later
     m_bfcsDir  = Array<OneD, Array<OneD, Array<OneD, NekDouble> > >(m_spaceDim);
     for (int i=0; i<m_spaceDim; ++i)
     {
@@ -155,6 +151,8 @@ void FilterBodyFittedVelocity::v_Initialise(
 
 
     // Initialize the body fitted coordinate in the file
+    // m_bfsVars holds the var names for the coordinate system and will be
+    // used to find corresponding field to load from the input file.
     // Ref: FilterFieldConvert.cpp (v_Initialise) & ProcessInterpField.cpp (Process)
     m_bfsVars.resize(m_spaceDim * m_spaceDim); // 4 or 9
     if (m_spaceDim == 2)
@@ -178,7 +176,6 @@ void FilterBodyFittedVelocity::v_Initialise(
     }
 
 
-    std::cout << "Loading the bfc file." << std::endl;
     // Load file
     std::vector<LibUtilities::FieldDefinitionsSharedPtr> fieldDef;
     std::vector<std::vector<NekDouble> > fieldData;
@@ -187,23 +184,20 @@ void FilterBodyFittedVelocity::v_Initialise(
     LibUtilities::FieldIO::CreateForFile(m_session, m_bodyFittedCooriateFile);
     fld->Import(m_bodyFittedCooriateFile, fieldDef, fieldData, fieldMetaData);
 
-    // Get a tmp array to hold the coeffs from the nput file
+    // Get a tmp array to hold the coeffs from the input file
     Array<OneD, NekDouble> tmp_coeffs;
     tmp_coeffs = Array<OneD, NekDouble>(pFields[0]->GetNcoeffs(), 0.0);
 
     // Extract data and convert to physical space
     for (int k=0; k<m_bfsVars.size(); ++k)
     {
-        // In the fieldDef, fieldDef[0] is the quad and fieldDef[1] is the tri region
+        // In the fieldDef, for example fieldDef[0] is the quad and
+        // fieldDef[1] is the tri region
         // Each of fieldDef[i] contains all the fields we expected in an fld
         for (int i = 0; i < fieldData.size(); ++i)
         {
-            //std::cout << "  i = " << i << std::endl;
-            pFields[0]->ExtractDataToCoeffs(
-                fieldDef[i],
-                fieldData[i],
-                m_bfsVars[k],
-                tmp_coeffs);
+            pFields[0]->ExtractDataToCoeffs(fieldDef[i], fieldData[i],
+                                            m_bfsVars[k], tmp_coeffs);
         }
 
         // Bwd transorm the data and put them into m_bfcsDir[][]
@@ -211,50 +205,8 @@ void FilterBodyFittedVelocity::v_Initialise(
         jj = k % m_spaceDim;
         ii = k / m_spaceDim;
 
-        std::cout << "  ii = " << ii << ", jj = " << jj << std::endl;
-
         pFields[0]->BwdTrans(tmp_coeffs, m_bfcsDir[ii][jj]);
-
-
     }
-
-
-
-
-    /*
-    // We change the flag for expansion to DisContField so that the copy
-    // constructor for DisContField will be called in AppendExpList() when
-    // CreateFields() is called. In the constructor of DisContField, the
-    // m_bndCondExpansions will be generated and it is needed in
-    // GenPntwiseBodyFittedCoordSys().
-    // After the body-fitted coordinate system is generated, we set the flags
-    // back so that the following modules will not be influenced. 
-    // *Note: The flag m_declareExpansionAsContField is set true in the base
-    // class (ProcessBoundaryExtract) constructor of ProcessBodyFittedVelocity
-    // class. The ClearField will not change this flag, and it will lead to an
-    // error in dynamic_pointer_cast in m_f->AppendExpList in CreateFields() in
-    // FilterFieldConvert::OutputField. Thus, we explicitly set it false.
-    bool isExpContField    = m_f->m_declareExpansionAsContField;    // save initial status
-    bool isExpDisContField = m_f->m_declareExpansionAsDisContField;
-
-    m_f->m_declareExpansionAsDisContField = true;
-    FilterFieldConvert::CreateFields(pFields); // Generate m_bndCondExpansions
-    
-    ProcessBodyFittedVelocity bfv(m_f);
-    //bfv.GenPntwiseBodyFittedCoordSys(m_wallRefId, m_assistVec, m_distance, m_bfcsDir,
-    //    m_isAngleCheck, m_distTol, 1.0e-12, 1.0e-4, 1.0e-12);
-
-    m_f->m_declareExpansionAsContField    = isExpContField;    // was set true in bfv
-    m_f->m_declareExpansionAsDisContField = isExpDisContField; // was set true aobve
-
-    m_f->ClearField();                         // clear the m_f for output useage
-    */
-    
-    // Update distanceToWall, uvw_bfc in m_outFields
-    // (The restart file does not include them so the values are useless)
-    // With rst file    - default variables are available, other bfs and dist are not correct
-    // Without rst file - everything is zero in m_outFields
-    // Solution - discard the data in restart file, use current data 
 
 
     // Allocate storage
@@ -267,9 +219,6 @@ void FilterBodyFittedVelocity::v_Initialise(
         m_curFieldsVels_Car[n] = Array<OneD, NekDouble>(npoints, 0.0);
         m_curFieldsVels[n]     = Array<OneD, NekDouble>(npoints, 0.0);
         m_outFieldsVels[n]     = Array<OneD, NekDouble>(npoints, 0.0);
-
-        // Re-initialize the coeff
-        //pFields[0]->FwdTransLocalElmt(m_outFieldsVels[n], m_outFields[m_nVars+1+n]);
     }
 
     // m_outFields contains the initialization values
@@ -285,6 +234,13 @@ void FilterBodyFittedVelocity::v_Initialise(
             }
         }
     }
+    else
+    {
+        ASSERTL0(false, "Restart file is expectd. It can be generated by \
+                         FieldConvert in serial. For example: \
+                         FieldConvert -m bodyFittedVelocity:bnd=0:bfcOut=1 \
+                         mesh.xml session.xml baseflow.fld bfvFile.fld");
+    }
 
 }
 
@@ -299,7 +255,8 @@ void FilterBodyFittedVelocity::v_FillVariablesName(
 
     // Check type of problem
     std::vector<std::string> varNames = pFields[0]->GetSession()->GetVariables();
-    if (boost::iequals(varNames[0], "u"))
+    if (boost::iequals(varNames[0], "u") &&
+        boost::iequals(varNames[1], "v"))
     {
         m_problemType = eIncompressible;
         m_spaceDim    = pFields.size() - 1;
@@ -322,7 +279,7 @@ void FilterBodyFittedVelocity::v_FillVariablesName(
     m_nAddFields = 3;
 
     // Fill in the body-fitted velocity names
-    // bfc is for body-fitted coordinate
+    // bfc represents body-fitted coordinate
     m_variables.push_back("distanceToWall");
     m_variables.push_back("u_bfc");
     m_variables.push_back("v_bfc");
@@ -338,21 +295,21 @@ void FilterBodyFittedVelocity::v_FillVariablesName(
     
 }
 
-// For compressible flows, also compute max/min for extra variabless, which can
-// include (u, v, w, p, T. s, a, Mach, sensor, ArtificialVisc), but not sure
-// for variables (divVelSquare, curlVelSquare, Ducros) when Ducros sensor is
-// turned on. Now presume Ducros sensor is turned off.
-// For other cases, including incompressible flows, only compute max/min for
-// variables in pFields.
-// 
-// curFieldsCoeffs is the coeffs     at current time step, size=[*][m_ncoeffs]
-// m_curFieldsPhys is the phys value at current time step, size=[*][m_npoints]
-// m_outFields     is the coeffs     for output fld
-// m_outFieldsPhys is the phys value for output fld
-// PS. curFieldsCoeffs is not set to be a member variable since its size will
-//     be increased by CompressibleFlowSystem::v_ExtraFldOutput to also include
-//     coeffs for extra variables. fieldcoeffs is not used.
 
+
+// m_curFieldsVels_Car is the velocity in Cartesian coordinate system in current step
+// m_curFieldsVels     is the velocity in body-fittd coordinate system in current step
+// m_outFieldsVels     is the velocity in body-fittd coordinate sysetm for output
+// m_outFields         is the coefficients for output
+//
+// Before execusion, the fields are expected to be initialized so that m_outFields and
+// m_outFieldsVels are not empty.
+//
+// *** Note ***
+// In order to get the amplitude field, take the difference of
+// max (perturbed) and max (perturbation-free) for a better result.
+// The difference of max (perturbed) and original (perturbation-free)
+// contains noises for unknown reasons at the moment.
 void FilterBodyFittedVelocity::v_ProcessSample(
     const Array<OneD, const MultiRegions::ExpListSharedPtr> &pFields,
           std::vector<Array<OneD, NekDouble> > &fieldcoeffs,
@@ -377,60 +334,6 @@ void FilterBodyFittedVelocity::v_ProcessSample(
         }
     }
 
-
-    /*if (m_problemType == eCompressible)
-    {
-        std::vector<Array<OneD, NekDouble> > curFieldsCoeffs(m_nFields);
-        std::vector<std::string> tmpVariables;    // dummy vector 
-        for (int n = 0; n < m_nFields; ++n)
-        {
-            curFieldsCoeffs[n] = pFields[n]->GetCoeffs();
-        }
-
-        // Get extra variables, then curFieldsCoeffs.size() == m_nVars
-        auto equ = m_equ.lock();
-        ASSERTL0(equ, "Weak pointer expired");
-        equ->ExtraFldOutput(curFieldsCoeffs, tmpVariables);
-
-        // curFieldsCoeffs and m_outFields has different size
-        // curFieldsCoeffs has conservative and the default variables
-        // m_outFields has (m_nVars+m_nAddFields) variables
-
-        // Updata m_outFieldsPhys and m_curFieldsPhys (vel in Cartesian system) 
-        for (int n = 0; n < m_spaceDim; ++n)
-        {
-            pFields[0]->BwdTrans(curFieldsCoeffs[m_spaceDim+2+n],
-                                 m_curFieldsVels_Car[n]); // cur uvw_Car
-            pFields[0]->BwdTrans(m_outFields[m_nVars+1+n],
-                                 m_outFieldsVels[n]);     // out uvw_bfc
-        }
-
-        // Fill coeffs for other fields
-        for (int n=0; n<m_nVars; ++n)
-        {
-            m_outFields[n] = curFieldsCoeffs[n];
-        }
-    }
-    else
-    {
-        // Updata m_curFieldsPhys and m_outFieldsPhys
-        for (int n = 0; n < m_spaceDim; ++n)
-        {
-            m_curFieldsVels_Car[n] = pFields[n]->GetPhys();
-
-            pFields[0]->BwdTrans(m_outFields[n], m_outFieldsVels[n]);
-            if (pFields[0]->GetWaveSpace())
-            {
-                pFields[0]->HomogeneousBwdTrans(m_outFieldsVels[n], m_outFieldsVels[n]);
-            }          
-        }
-
-        // Fill coeffs for other fields
-        for (int n = 0; n < m_nVars; ++n)
-        {
-            m_outFields[n] = pFields[n]->GetCoeffs();
-        }
-    }*/
 
     // Project the velocity into the body-fitted coordinate system
     int npoints = pFields[0]->GetTotPoints();
@@ -483,7 +386,6 @@ void FilterBodyFittedVelocity::v_ProcessSample(
     }
     
     // Forward transform and put into m_outFields
-    //pFields[0]->FwdTransLocalElmt(m_distance, m_outFields[m_nVars]);
     for (int n = 0; n < m_spaceDim; ++n)
     {
         pFields[0]->FwdTransLocalElmt(m_outFieldsVels[n], m_outFields[m_nVars+1+n]);
