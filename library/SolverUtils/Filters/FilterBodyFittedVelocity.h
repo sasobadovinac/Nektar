@@ -99,7 +99,7 @@ protected:
     //NekDouble m_distTol, m_iterTol, m_dirTol, m_geoTol;
     std::vector<std::string> m_bfsVars;
 
-    Array<OneD, NekDouble> m_distance;
+    //Array<OneD, NekDouble> m_distance;
     Array<OneD, Array<OneD, Array<OneD, NekDouble> > > m_bfcsDir;
     
     std::vector<Array<OneD, NekDouble> > m_curFieldsVels_Car;
@@ -133,7 +133,10 @@ protected:
         {
             return "_original";
         }
-    } 
+    }
+
+private:
+    bool m_initialized; 
     
 };
 }
