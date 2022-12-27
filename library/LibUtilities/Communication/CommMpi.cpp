@@ -465,28 +465,64 @@ CommRequestSharedPtr CommMpi::v_CreateRequest(int num)
  * grid. The row and column to which this process belongs is stored in
  * #m_commRow and #m_commColumn.
  */
-void CommMpi::v_SplitComm(int pRows, int pColumns)
+void CommMpi::v_SplitComm(int pRows, int pColumns, int pTime)
 {
-    ASSERTL0(pRows * pColumns == m_size,
+    ASSERTL0(pRows * pColumns * pTime == m_size,
              "Rows/Columns do not match comm size.");
 
     MPI_Comm newComm;
+    MPI_Comm gridComm;
+    if (pTime == 1)
+    {
+        // There is a bug in OpenMPI 3.1.3. This bug cause some cases to fail in
+        // buster-full-build-and-test. Failed cases are:
+        //
+        // IncNavierStokesSolver_ChanFlow_3DH1D_FlowrateExplicit_MVM_par
+        // IncNavierStokesSolver_ChanFlow_3DH1D_FlowrateExplicit_MVM_par_hybrid
 
-    // Compute row and column in grid.
-    int myCol = m_rank % pColumns;
-    int myRow = (m_rank - myCol) / pColumns;
+        // See: https://github.com/open-mpi/ompi/issues/6522
 
-    // Split Comm into rows - all processes with same myRow are put in
-    // the same communicator. The rank within this communicator is the
-    // column index.
-    MPI_Comm_split(m_comm, myRow, myCol, &newComm);
-    m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
+        // Compute row and column in grid.
+        int myCol = m_rank % pColumns;
+        int myRow = (m_rank - myCol) / pColumns;
 
-    // Split Comm into columns - all processes with same myCol are put
-    // in the same communicator. The rank within this communicator is
-    // the row index.
-    MPI_Comm_split(m_comm, myCol, myRow, &newComm);
-    m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
+        // Split Comm into rows - all processes with same myRow are put in
+        // the same communicator. The rank within this communicator is the
+        // column index.
+        MPI_Comm_split(m_comm, myRow, myCol, &newComm);
+        m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
+
+        // Split Comm into columns - all processes with same myCol are put
+        // in the same communicator. The rank within this communicator is
+        // the row index.
+        MPI_Comm_split(m_comm, myCol, myRow, &newComm);
+        m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
+    }
+    else
+    {
+        constexpr int dims      = 3;
+        const int sizes[dims]   = {pRows, pColumns, pTime};
+        const int periods[dims] = {0, 0, 0};
+        constexpr int reorder   = 1;
+
+        MPI_Cart_create(m_comm, dims, sizes, periods, reorder, &gridComm);
+
+        constexpr int keepRow[dims] = {0, 1, 0};
+        MPI_Cart_sub(gridComm, keepRow, &newComm);
+        m_commRow = std::shared_ptr<Comm>(new CommMpi(newComm));
+
+        constexpr int keepCol[dims] = {1, 0, 0};
+        MPI_Cart_sub(gridComm, keepCol, &newComm);
+        m_commColumn = std::shared_ptr<Comm>(new CommMpi(newComm));
+
+        constexpr int keepTime[dims] = {0, 0, 1};
+        MPI_Cart_sub(gridComm, keepTime, &newComm);
+        m_commTime = std::shared_ptr<Comm>(new CommMpi(newComm));
+
+        constexpr int keepSpace[dims] = {1, 1, 0};
+        MPI_Cart_sub(gridComm, keepSpace, &newComm);
+        m_commSpace = std::shared_ptr<Comm>(new CommMpi(newComm));
+    }
 }
 
 /**

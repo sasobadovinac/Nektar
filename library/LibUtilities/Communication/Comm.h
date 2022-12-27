@@ -159,9 +159,12 @@ public:
 
     LIB_UTILITIES_EXPORT inline CommSharedPtr CommCreateIf(int flag);
 
-    LIB_UTILITIES_EXPORT inline void SplitComm(int pRows, int pColumns);
+    LIB_UTILITIES_EXPORT inline void SplitComm(int pRows, int pColumns,
+                                               int pTime = 1);
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetRowComm();
     LIB_UTILITIES_EXPORT inline CommSharedPtr GetColumnComm();
+    LIB_UTILITIES_EXPORT inline CommSharedPtr GetTimeComm();
+    LIB_UTILITIES_EXPORT inline CommSharedPtr GetSpaceComm();
 
     LIB_UTILITIES_EXPORT inline bool TreatAsRankZero();
     LIB_UTILITIES_EXPORT inline bool IsSerial();
@@ -176,6 +179,8 @@ protected:
     std::string m_type;         ///< Type of communication
     CommSharedPtr m_commRow;    ///< Row communicator
     CommSharedPtr m_commColumn; ///< Column communicator
+    CommSharedPtr m_commTime;
+    CommSharedPtr m_commSpace;
 
     Comm();
 
@@ -245,10 +250,10 @@ protected:
     virtual void v_WaitAll(CommRequestSharedPtr request)           = 0;
     virtual CommRequestSharedPtr v_CreateRequest(int num)          = 0;
 
-    virtual void v_SplitComm(int pRows, int pColumns) = 0;
-    virtual bool v_TreatAsRankZero()                  = 0;
-    virtual bool v_IsSerial()                         = 0;
-    virtual std::tuple<int, int, int> v_GetVersion()  = 0;
+    virtual void v_SplitComm(int pRows, int pColumns, int pTime) = 0;
+    virtual bool v_TreatAsRankZero()                             = 0;
+    virtual bool v_IsSerial()                                    = 0;
+    virtual std::tuple<int, int, int> v_GetVersion()             = 0;
 
     LIB_UTILITIES_EXPORT virtual bool v_RemoveExistingFiles();
     LIB_UTILITIES_EXPORT virtual std::pair<CommSharedPtr, CommSharedPtr>
@@ -696,9 +701,9 @@ inline CommSharedPtr Comm::CommCreateIf(int flag)
  * and creates row and column communicators. By default the communicator
  * is a single row.
  */
-inline void Comm::SplitComm(int pRows, int pColumns)
+inline void Comm::SplitComm(int pRows, int pColumns, int pTime)
 {
-    v_SplitComm(pRows, pColumns);
+    v_SplitComm(pRows, pColumns, pTime);
 }
 
 /**
@@ -729,6 +734,38 @@ inline CommSharedPtr Comm::GetColumnComm()
     else
     {
         return m_commColumn;
+    }
+}
+
+/**
+ * @brief Retrieve the time communicator to which this process
+ * belongs.
+ */
+inline CommSharedPtr Comm::GetTimeComm()
+{
+    if (!m_commTime.get())
+    {
+        return shared_from_this();
+    }
+    else
+    {
+        return m_commTime;
+    }
+}
+
+/**
+ * @brief Retrieve the space communicator to which this process
+ * belongs.
+ */
+inline CommSharedPtr Comm::GetSpaceComm()
+{
+    if (!m_commSpace.get())
+    {
+        return shared_from_this();
+    }
+    else
+    {
+        return m_commSpace;
     }
 }
 

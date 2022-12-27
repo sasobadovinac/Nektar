@@ -98,8 +98,8 @@ const std::string FieldIO::GetFileType(const std::string &filename,
                                        CommSharedPtr comm)
 {
     FieldIOType ioType = eXML;
-    int size           = comm->GetSize();
-    bool root          = comm->TreatAsRankZero();
+    int size           = comm->GetSpaceComm()->GetSize();
+    bool root          = comm->GetSpaceComm()->TreatAsRankZero();
 
     if (size == 1 || root)
     {
@@ -415,15 +415,15 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     // Find the minimum and maximum hash for each process
     std::size_t file_id_max{file_id};
     std::size_t file_id_min{file_id};
-    m_comm->AllReduce(file_id_max, ReduceMax);
-    m_comm->AllReduce(file_id_min, ReduceMin);
+    m_comm->GetSpaceComm()->AllReduce(file_id_max, ReduceMax);
+    m_comm->GetSpaceComm()->AllReduce(file_id_min, ReduceMin);
 
     // Check that each process has the same filename (hash)
     ASSERTL0(file_id_min == file_id_max,
              "All processes do not have the same filename.");
 
-    int nprocs = m_comm->GetSize();
-    bool root  = m_comm->TreatAsRankZero();
+    int nprocs = m_comm->GetSpaceComm()->GetSize();
+    bool root  = m_comm->GetSpaceComm()->TreatAsRankZero();
 
     // Path to output: will be directory if parallel, normal file if
     // serial.
@@ -441,6 +441,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
         while (fs::exists(bakPath))
         {
             bakPath = specPath.parent_path();
+            bakPath += fs::path(bakPath.extension() == ".pit" ? "/" : "");
             bakPath += specPath.stem();
             bakPath += fs::path(".bak" + std::to_string(cnt++));
             bakPath += specPath.extension();
@@ -461,12 +462,12 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     // have propagated through the filesystem
     if (backup)
     {
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
         int exists = 1;
         while (exists && perRank)
         {
             exists = fs::exists(specPath);
-            m_comm->AllReduce(exists, ReduceMax);
+            m_comm->GetSpaceComm()->AllReduce(exists, ReduceMax);
         }
     }
 
@@ -478,7 +479,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     {
         // Guess at filename that might belong to this process.
         boost::format pad("P%1$07d.%2$s");
-        pad % m_comm->GetRank() % GetFileEnding();
+        pad % m_comm->GetSpaceComm()->GetRank() % GetFileEnding();
 
         // Generate full path name
         fs::path poutfile(pad.str());
@@ -486,7 +487,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
     }
 
     // Remove any existing file which is in the way
-    if (m_comm->RemoveExistingFiles() && !backup)
+    if (m_comm->GetSpaceComm()->RemoveExistingFiles() && !backup)
     {
         if (m_sharedFilesystem)
         {
@@ -504,7 +505,7 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
             }
         }
 
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
 
         // Now get rank 0 processor to tidy everything else up.
         if (root || !m_sharedFilesystem)
@@ -522,18 +523,18 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
 
         // wait until rank 0 has removed specPath and the changes
         // have propagated through the filesystem
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
         int exists = 1;
         while (exists && perRank)
         {
             exists = fs::exists(specPath);
-            m_comm->AllReduce(exists, ReduceMax);
+            m_comm->GetSpaceComm()->AllReduce(exists, ReduceMax);
         }
     }
 
     if (root)
     {
-        std::cout << "Writing: " << specPath;
+        std::cout << "Writing: " << specPath << std::endl;
     }
 
     // serial processing just add ending.
@@ -558,14 +559,14 @@ std::string FieldIO::SetUpOutput(const std::string outname, bool perRank,
                      "Filesystem error: " + std::string(e.what()));
         }
 
-        m_comm->Block();
+        m_comm->GetSpaceComm()->Block();
 
         // Sit in a loop and make sure target directory has been created
         int created = 0;
         while (!created)
         {
             created = fs::is_directory(specPath);
-            m_comm->AllReduce(created, ReduceMin);
+            m_comm->GetSpaceComm()->AllReduce(created, ReduceMin);
         }
     }
     else
