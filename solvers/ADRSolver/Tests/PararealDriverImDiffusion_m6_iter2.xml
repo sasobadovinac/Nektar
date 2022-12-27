@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<NEKTAR>
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxtlV1IFFEUx0et/CytzMqs1vzI1NL1IzXT25dmFCHlgm2Qa4X44ENgij4oEpT6UD704oZ9otBL4kuPOkK9hCV+5ou1C2osZLFGUFRgOzP/OTP37tyX/939cc7/zJm590iStr5NP3K73e9k7ZcfKkkh0Mr6foUzkYdCO/tbSwd/1Y1GhNQUp/WtEA+Dtg06fc3hC3JtRevPB6E+4hv0PKU21uv0ysMzV+YXO73EN0Jdsc976iJ8cnPUj9oXHUb8JuhchxrPIif4+HBoYvRVxZ/5Gnj/COib5WdKfnYpjM8fKRmrq7CnTNtNEY+CfqmfbstLnZT/zeY8/n3ZQzwa6v46o3C2uMrzGGi5Mz+wloL6vxmaEaPyoP5vgebM1jgcjnlZrC8WOlkQwI6VIB4H/dyicibyrdD2BYXPB/Ftknn5WV+8osvEtwtcjI+H9ka33L/Z4mMjJdNN31eN/uzg44PqTxD4gGc9sJaI74QOjN9W8svOdj7/Lsv6jP7utvQ3eKIQP5Gr6DjxPdBP6O89G8+TrPztjaP6P3uh5vczbnMR3yfEtz1Rnl9m+j/7oR7E/x3juc3KX5oinmzhb+YHoPr3URHHP1+KwNX7JLma6k8V+F0PX1+awEX/dKgS9TRwPrX7xPA/aHo64/waK8O0dxnxlP+QZbzhnwm14/yhfvLPgurnU63TVq3X0ZUtcPRPz991WOCi/xGofr7xfsk/R+DK/qXNRf65Asf3Sf52i3izf55kXn4Z3x/55wtca1YjvYcCgeP8UP5Cq3iT/1Eo5pN+PokXQT9+YN6H6XfKMJ+IF0Mx/5gYXwK90KDNryqXOj+oP8ewafKr80OuTlLnB/FSbDLt2nx75VHnE/Hj2Ax3a/Mraozjkt6o12Hq/GO31tbM+aVy6MVz2nz7c56rT9I3KQnafMrW5g/5n8DmWtGsOp9G5jgunYRi/gT195Reh5ObT8RPQ9++1+7f693q/Uv+ZyTz8suYHxRfwXOG+514JfTGupqfDWVx+aWzQn6xviohv8j/A0k60k0A</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1ldV2VEEQRYMMluAQHAZ316CDu7u7u2uCu7s7/CcvZz+w17rzctae7uqq7pJbVfX/r1GBNi5Qfk2kTQu0VKDYNZM2L9AWBYpdS8UJtyrgajF2NWL2tRZzXhvZca+20ZLW20W5F+e2F3O/DvLDuR3FvHcnMXad5R9/tWLes4sYu66Kizi6iYmjuxi7HoqLOHqKiaOXGLveUeejj5g8l6PcF7u+0Wqt94vyzvjtr3hYHxDlHXi3gWLeY1CUvqMuBoupxyFi6m2omN+waI3+Hy6/1N0IMfkeKaY+R0XJP35GR0taHxOt1f9jtZ/1cfJL/YwXE8+EKHmkfidG6QvqYZL+J5+TxcQ1JUr+OL9OcbA+NUoeiWua4iBv06PUD/0zQ0z/zBRTX7O0n76qiOmr2WLOm6P99NtcMf02T8x587W/HF0gpg8XijlvkeKjPxeL6d8lioO+XSrGbpn80c/LxditUJz0+Uoxdqvkj/5fLWYurZE/5sJaMXbr5I95sV6M3QbFyRzZKMZuk/wxXzaLmbtb5I+5s1WM3Tb5Yx5tF2O3Q3Eyp3aKsdslf8yv3WLm+R75Y67tFWO3T/6Yd/vF2B1QnMzBg2LsDskf8/GwmO/UEfljbh4VY3dM/pinx8XYnVCczNmTYuxORZm7zNnTYubsGTF2Z6PMXebsOTFz9rwYuwtR5i5z9qKYOXtJjN1lxc/8vSKmTq+Ksbum/yvRejH7G6LMb+59PVqn9RtR7sV8vynmfreizDfue1vM/LgTpZ5577ti6uVelDrhu3JfzHflgRi7h1G+M3xXHonL0cdi7J5EyRf3eBrlnpXosyj3Id7n8sv7vYiSP975pZh6fxWl7snnazHnvYmSR855q3Ooh3dRvrfUz3vtY/1DlPrhe/xRjP9P2s87fxZj9yVKfonnq+Jg/VuUOqxEv0fJI3X3I0peiOunzmH9l+Igv7/FnP9HcZDPv1HyRVz/AHH7YygA</EDGE>
+        <ELEMENT>
+            <T COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxd09lfjVEUh/GEDEmUJEoRDcZSJKFkDEWDYwiXLn1opFAalMxFk1KU/9PN81xY5+b7ec8579p7r9/aSUn/f9Zgcnhei+twffhfCm7AjeG9TbgZU0M9f9+CaWGdreE5Pay7DbeHfWgGZuKOsM8s3InZYV+7MAd3o+fZg7mYh55zL+aH9zxvAXrufeF5f6hbiPblAB4M+7RP5liExWjfzLEES9F+Hgrfu659PRzquY79PoJHQ11zOBb2exzNpSx8X47mdQIrwjrZ4X/2tRLN1X2cRHOyj6ewCp1b5+A0Ok/V6FzYB3OznvPiPq1jjubtnJjbGXSunLMaNEfP4Xl9z3tTgJ7b+2od++U+7bt9cC7tg+c2B+s8w+fYgWexE7uwG89hD/biCzyPL7EP+7EWX+Hr8Hsdvgn7GMALYd1BfIv1OITD2IQXcQRH8Qlewnc4huN4Gd/jBH7AK+i5P+JjvIqf0D4k8Bp+Dvt4ig1h3S9h3ev4Fb+hOd/ASZxC5+FmeM++fsdGNA/r/ED7PI3mOIO3cBBncQ5vh+/n8Sc240JYZxFb8BfaZ+egFc1lCZ2HNlxG5/w33kHvxR9cwUR4Nkfn7C6am3Wd13u4iuboPbmP5vYXvW8P0PtoHfvRHt7zXtuHh2jfl9F5f4Se2xy8J/8AQzlQEQAA</T>
+            <Q COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJxdzstSAQAARuGeoZm2jaGiREoog6TSTRcRueWSpHJ5/52Fszr/5lv9Mye0sV4O81jAHXmBRbzUbxdLeIXX+u3hDZbxVr+weu7wHrcwop4HfNRvXz0VfNLvQD3P+KJfVD2vWMUAHqrnDWv6xdRTx3f94uppYFO/I/V8YAu3MaGeNnb0O1ZPF3v6najnE/v6JdUzwCFu4ql6RvilX0o9Y/zWL62eCf7ol1HPFH8xiGfq+cN//c7VM8O5fln1LHCp3wqstSL2</Q>
+        </ELEMENT>
+        <COMPOSITE>
+            <C ID="1"> T[0-34] </C>
+            <C ID="2"> Q[35-58] </C>
+            <C ID="3"> T[59-93] </C>
+            <C ID="100"> E[46,42,0,43-44] </C>
+            <C ID="200"> E[50,24,60,63,66,69,139,155] </C>
+            <C ID="300"> E[153,148,114,149,151] </C>
+            <C ID="400"> E[48,27,105,107,109,111,136,157] </C>
+        </COMPOSITE>
+        <DOMAIN> C[1-3] </DOMAIN>
+    </GEOMETRY>
+    <EXPANSIONS>
+        <E COMPOSITE="C[1]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[2]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[3]" NUMMODES="6" TYPE="MODIFIED" FIELDS="u" />
+    </EXPANSIONS>
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE"                VALUE="UnsteadyDiffusion" />
+            <I PROPERTY="Projection"            VALUE="Continuous"        />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="BackwardEuler"     />
+            <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"          />
+            <I PROPERTY="Driver"                VALUE="Parareal"          />
+        </SOLVERINFO>
+
+        <PARAMETERS>
+            <P> TimeStep        = 0.0001 </P> <!-- Time step -->
+            <P> NumSteps        = 3200   </P> <!-- Number of time step -->
+            <P> epsilon         = 0.05   </P> <!-- Diffusion coefficent   -->
+            <P> IO_InfoSteps    = 0      </P> <!-- Frequency of printing information for the user -->
+            <P> IO_CheckSteps   = 0      </P> <!-- Frequency of writing the checkpoints, the results -->
+            <P> PararealIterMax = 2      </P> <!-- Max number of Parareal iteration -->
+        </PARAMETERS>
+
+        <!-- setting the variable -->
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <!-- Defining boundary regions -->
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[100,200,300,400] </B>
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <REGION REF="0">
+                <D VAR="u" VALUE="0" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u"  VALUE="sin(2*PI*x)*sin(2*PI*y)" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u"  VALUE="exp(-epsilon*8*PI*PI*t)*sin(2*PI*x)*sin(2*PI*y)" />
+        </FUNCTION>
+    </CONDITIONS>
+</NEKTAR>

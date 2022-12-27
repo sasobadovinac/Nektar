@@ -178,7 +178,7 @@ protected:
     virtual void v_WaitAll(CommRequestSharedPtr request) final;
     virtual CommRequestSharedPtr v_CreateRequest(int num) final;
 
-    virtual void v_SplitComm(int pRows, int pColumns) override;
+    virtual void v_SplitComm(int pRows, int pColumns, int pTime) override;
     virtual CommSharedPtr v_CommCreateIf(int flag) final;
 
     virtual std::pair<CommSharedPtr, CommSharedPtr> v_SplitCommNode() final;

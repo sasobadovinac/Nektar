@@ -159,8 +159,8 @@ protected:
     LIB_UTILITIES_EXPORT virtual CommRequestSharedPtr v_CreateRequest(
         int num) final;
 
-    LIB_UTILITIES_EXPORT virtual void v_SplitComm(int pRows,
-                                                  int pColumns) override;
+    LIB_UTILITIES_EXPORT virtual void v_SplitComm(int pRows, int pColumns,
+                                                  int pTime) override;
     LIB_UTILITIES_EXPORT virtual CommSharedPtr v_CommCreateIf(int flag) final;
 };
 } // namespace LibUtilities

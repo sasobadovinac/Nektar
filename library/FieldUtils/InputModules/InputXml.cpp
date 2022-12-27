@@ -226,7 +226,7 @@ void InputXml::Process(po::variables_map &vm)
         // make sure have pre-partitioned mesh for nparts option
         ASSERTL0(boost::icontains(files[0], "_xml"),
                  "Expect the mesh to have been pre-partitioned when "
-                 " using the\"--nparts\" option. Please use \"--part-only\" "
+                 " using the \"--nparts\" option. Please use \"--part-only\" "
                  "option to prepartition xml file.");
     }
 
