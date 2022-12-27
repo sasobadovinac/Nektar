@@ -60,25 +60,26 @@ public:
     ProcessMapping(FieldSharedPtr f);
     virtual ~ProcessMapping();
 
-    /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    static GlobalMapping::MappingSharedPtr GetMapping(FieldSharedPtr f);
 
-    virtual std::string GetModuleName()
+protected:
+    /// Write mesh to output file.
+    virtual void v_Process(po::variables_map &vm) override;
+
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessMapping";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Applying mapping to field";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eModifyExp;
     }
-
-    static GlobalMapping::MappingSharedPtr GetMapping(FieldSharedPtr f);
 };
 } // namespace FieldUtils
 } // namespace Nektar

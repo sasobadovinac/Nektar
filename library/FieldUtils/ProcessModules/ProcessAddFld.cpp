@@ -73,7 +73,7 @@ ProcessAddFld::~ProcessAddFld()
 {
 }
 
-void ProcessAddFld::Process(po::variables_map &vm)
+void ProcessAddFld::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

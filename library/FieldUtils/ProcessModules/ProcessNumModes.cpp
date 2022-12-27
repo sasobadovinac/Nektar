@@ -61,7 +61,7 @@ ProcessNumModes::~ProcessNumModes()
 {
 }
 
-void ProcessNumModes::Process(po::variables_map &vm)
+void ProcessNumModes::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

@@ -75,7 +75,7 @@ InputDat::~InputDat()
 /**
  *
  */
-void InputDat::Process(po::variables_map &vm)
+void InputDat::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

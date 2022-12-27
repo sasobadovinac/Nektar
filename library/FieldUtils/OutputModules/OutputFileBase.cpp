@@ -58,7 +58,7 @@ OutputFileBase::~OutputFileBase()
 {
 }
 
-void OutputFileBase::Process(po::variables_map &vm)
+void OutputFileBase::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
@@ -69,7 +69,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         ASSERTL0(!m_f->m_writeBndFld, "Boundary can't be obtained from pts.");
         if (WriteFile(filename, vm))
         {
-            OutputFromPts(vm);
+            v_OutputFromPts(vm);
 
             if (vm.count("error"))
             {
@@ -203,7 +203,7 @@ void OutputFileBase::Process(po::variables_map &vm)
                                 m_f->m_exp[nfields + j]->UpdateCoeffs());
                         }
                     }
-                    OutputFromExp(vm);
+                    v_OutputFromExp(vm);
                     // output error for regression checking.
                     if (vm.count("error"))
                     {
@@ -224,7 +224,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         {
             if (WriteFile(filename, vm))
             {
-                OutputFromExp(vm);
+                v_OutputFromExp(vm);
                 // output error for regression checking.
                 if (vm.count("error"))
                 {
@@ -238,7 +238,7 @@ void OutputFileBase::Process(po::variables_map &vm)
         ASSERTL0(!m_f->m_writeBndFld, "Boundary extraction requires xml file.");
         if (WriteFile(filename, vm))
         {
-            OutputFromData(vm);
+            v_OutputFromData(vm);
         }
     }
 }

@@ -59,20 +59,20 @@ public:
     ProcessWallNormalData(FieldSharedPtr f);
     virtual ~ProcessWallNormalData();
 
+protected:
     /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessWallNormalData";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Get the wall-normal data at a given origin.";
     }
 
-protected:
 private:
     int m_spacedim;
 

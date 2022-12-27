@@ -62,7 +62,7 @@ ProcessRemoveField::~ProcessRemoveField(void)
 {
 }
 
-void ProcessRemoveField::Process(po::variables_map &vm)
+void ProcessRemoveField::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

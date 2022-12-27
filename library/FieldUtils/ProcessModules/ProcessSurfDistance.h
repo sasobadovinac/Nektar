@@ -59,15 +59,16 @@ public:
     ProcessSurfDistance(FieldSharedPtr f);
     virtual ~ProcessSurfDistance();
 
+protected:
     /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessSurfDistance";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Calculating distance to surface";
     }

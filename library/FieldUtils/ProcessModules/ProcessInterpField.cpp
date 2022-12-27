@@ -82,7 +82,7 @@ ProcessInterpField::~ProcessInterpField()
 {
 }
 
-void ProcessInterpField::Process(po::variables_map &vm)
+void ProcessInterpField::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

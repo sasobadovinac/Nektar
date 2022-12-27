@@ -257,7 +257,7 @@ void ProcessGrad::ProcessMappingFld(Array<OneD, Array<OneD, NekDouble>> &grad)
     }
 }
 
-void ProcessGrad::Process(po::variables_map &vm)
+void ProcessGrad::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
     ParserOptions(m_selectedVars, m_directions);

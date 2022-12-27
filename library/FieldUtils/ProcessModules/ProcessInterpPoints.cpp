@@ -106,7 +106,7 @@ ProcessInterpPoints::~ProcessInterpPoints()
 {
 }
 
-void ProcessInterpPoints::Process(po::variables_map &vm)
+void ProcessInterpPoints::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

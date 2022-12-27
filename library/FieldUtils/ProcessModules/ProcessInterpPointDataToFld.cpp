@@ -78,7 +78,7 @@ ProcessInterpPointDataToFld::~ProcessInterpPointDataToFld()
 {
 }
 
-void ProcessInterpPointDataToFld::Process(po::variables_map &vm)
+void ProcessInterpPointDataToFld::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

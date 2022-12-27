@@ -72,7 +72,7 @@ ProcessPhiFromFile::~ProcessPhiFromFile()
 /**
  *
  */
-void ProcessPhiFromFile::Process(po::variables_map &vm)
+void ProcessPhiFromFile::v_Process(po::variables_map &vm)
 {
     // Ignore warnings due to 'vm'
     boost::ignore_unused(vm);

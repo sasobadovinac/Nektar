@@ -62,7 +62,7 @@ ProcessVorticity::~ProcessVorticity()
 {
 }
 
-void ProcessVorticity::Process(po::variables_map &vm)
+void ProcessVorticity::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

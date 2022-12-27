@@ -67,7 +67,7 @@ ProcessHalfModeToFourier::~ProcessHalfModeToFourier()
 {
 }
 
-void ProcessHalfModeToFourier::Process(po::variables_map &vm)
+void ProcessHalfModeToFourier::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

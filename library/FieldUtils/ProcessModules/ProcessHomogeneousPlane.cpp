@@ -65,7 +65,7 @@ ProcessHomogeneousPlane::~ProcessHomogeneousPlane()
 {
 }
 
-void ProcessHomogeneousPlane::Process(po::variables_map &vm)
+void ProcessHomogeneousPlane::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

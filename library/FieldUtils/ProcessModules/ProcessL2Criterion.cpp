@@ -127,7 +127,7 @@ void MatSymEVals(NekDouble d1, NekDouble d2, NekDouble d3, NekDouble a,
     }
 }
 
-void ProcessL2Criterion::Process(po::variables_map &vm)
+void ProcessL2Criterion::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

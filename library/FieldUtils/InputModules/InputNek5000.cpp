@@ -80,7 +80,7 @@ InputNek5000::~InputNek5000()
  * This module is adapted from the VisIt visualisation software, which supports
  * a number of Nek5000 inputs.
  */
-void InputNek5000::Process(po::variables_map &vm)
+void InputNek5000::v_Process(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 

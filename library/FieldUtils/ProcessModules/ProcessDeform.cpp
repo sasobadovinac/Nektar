@@ -59,7 +59,7 @@ ProcessDeform::~ProcessDeform()
 {
 }
 
-void ProcessDeform::Process(po::variables_map &vm)
+void ProcessDeform::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

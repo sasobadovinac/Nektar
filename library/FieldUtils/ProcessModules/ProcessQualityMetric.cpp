@@ -67,7 +67,7 @@ ProcessQualityMetric::~ProcessQualityMetric()
 {
 }
 
-void ProcessQualityMetric::Process(po::variables_map &vm)
+void ProcessQualityMetric::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
