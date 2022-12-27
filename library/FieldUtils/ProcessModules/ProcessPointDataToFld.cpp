@@ -70,7 +70,7 @@ ProcessPointDataToFld::~ProcessPointDataToFld()
 {
 }
 
-void ProcessPointDataToFld::Process(po::variables_map &vm)
+void ProcessPointDataToFld::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

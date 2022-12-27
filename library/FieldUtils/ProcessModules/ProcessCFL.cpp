@@ -63,7 +63,7 @@ ProcessCFL::~ProcessCFL()
 {
 }
 
-void ProcessCFL::Process(po::variables_map &vm)
+void ProcessCFL::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

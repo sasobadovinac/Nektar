@@ -59,7 +59,7 @@ ProcessMean::~ProcessMean()
 {
 }
 
-void ProcessMean::Process(po::variables_map &vm)
+void ProcessMean::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

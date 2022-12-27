@@ -75,7 +75,7 @@ InputXml::~InputXml()
 /**
  *
  */
-void InputXml::Process(po::variables_map &vm)
+void InputXml::v_Process(po::variables_map &vm)
 {
     LibUtilities::Timer timerpart;
     if (m_f->m_verbose)

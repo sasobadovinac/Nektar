@@ -190,15 +190,21 @@ public:
     FIELD_UTILS_EXPORT Module(FieldSharedPtr p_f) : m_f(p_f)
     {
     }
-    virtual void Process(po::variables_map &vm) = 0;
-
     virtual ~Module() = default;
 
-    virtual std::string GetModuleName() = 0;
-
-    virtual std::string GetModuleDescription()
+    void Process(po::variables_map &vm)
     {
-        return " ";
+        v_Process(vm);
+    }
+
+    std::string GetModuleName()
+    {
+        return v_GetModuleName();
+    }
+
+    std::string GetModuleDescription()
+    {
+        return v_GetModuleDescription();
     }
 
     const ConfigOption &GetConfigOption(const std::string &key) const
@@ -208,7 +214,10 @@ public:
         return it->second;
     }
 
-    virtual ModulePriority GetModulePriority() = 0;
+    ModulePriority GetModulePriority()
+    {
+        return v_GetModulePriority();
+    }
 
     FIELD_UTILS_EXPORT void RegisterConfig(std::string key,
                                            std::string value = "");
@@ -226,6 +235,29 @@ public:
 
 protected:
     Module(){};
+
+    virtual void v_Process(po::variables_map &vm)
+    {
+        boost::ignore_unused(vm);
+        NEKERROR(ErrorUtil::efatal, "v_Process not coded");
+    }
+
+    virtual std::string v_GetModuleName()
+    {
+        NEKERROR(ErrorUtil::efatal, "v_GetModuleName not coded");
+        return " ";
+    }
+
+    virtual std::string v_GetModuleDescription()
+    {
+        return " ";
+    }
+
+    virtual ModulePriority v_GetModulePriority()
+    {
+        NEKERROR(ErrorUtil::efatal, "v_GetModulePriority not coded");
+        return SIZE_ModulePriority;
+    }
 
     /// List of configuration values.
     std::map<std::string, ConfigOption> m_config;

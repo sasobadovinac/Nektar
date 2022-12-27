@@ -59,9 +59,9 @@ ProcessWSS::~ProcessWSS()
 {
 }
 
-void ProcessWSS::Process(po::variables_map &vm)
+void ProcessWSS::v_Process(po::variables_map &vm)
 {
-    ProcessBoundaryExtract::Process(vm);
+    ProcessBoundaryExtract::v_Process(vm);
 
     int i, j;
     int nfields = m_f->m_variables.size();

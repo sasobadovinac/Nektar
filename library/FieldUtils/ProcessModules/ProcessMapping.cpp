@@ -59,7 +59,7 @@ ProcessMapping::~ProcessMapping()
 {
 }
 
-void ProcessMapping::Process(po::variables_map &vm)
+void ProcessMapping::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

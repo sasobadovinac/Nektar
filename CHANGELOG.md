@@ -25,6 +25,7 @@ v5.3.0
 - Templating FieldUtils::Interpolator class (!1420)
 - Fix virtual function overrides in StdRegions and LocalRegions classes (!1435)
 - Disable -Werror by default (!1443)
+- Add missing override keyword to virtual functions in FieldUtils (!1452)
 - Add override keyword to virtual functions in GlobalMapping and MultiRegions (!1450)
 - Add fmod and modulus operator to interpreter (!1089)
 - Add command line option and environment variable to disable backup field files (!1154)

@@ -59,22 +59,23 @@ public:
     ProcessCreateExp(FieldSharedPtr f);
     virtual ~ProcessCreateExp();
 
+protected:
     /// Write mesh to output file.
-    virtual void Process(po::variables_map &vm);
+    virtual void v_Process(po::variables_map &vm) override;
 
     void LoadFieldData(bool useSessionVariables = false);
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessCreateExp";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Creating m_exp if needed";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eCreateExp;
     }

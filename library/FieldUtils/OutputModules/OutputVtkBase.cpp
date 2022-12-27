@@ -67,7 +67,7 @@ OutputVtkBase::~OutputVtkBase()
 {
 }
 
-void OutputVtkBase::OutputFromPts(po::variables_map &vm)
+void OutputVtkBase::v_OutputFromPts(po::variables_map &vm)
 {
     int i, j;
     LibUtilities::PtsFieldSharedPtr fPts = m_f->m_fieldPts;
@@ -231,7 +231,7 @@ void OutputVtkBase::OutputFromPts(po::variables_map &vm)
     }
 }
 
-void OutputVtkBase::OutputFromExp(po::variables_map &vm)
+void OutputVtkBase::v_OutputFromExp(po::variables_map &vm)
 {
     int i, j;
     // Extract the output filename and extension
@@ -278,13 +278,13 @@ void OutputVtkBase::OutputFromExp(po::variables_map &vm)
     }
 }
 
-void OutputVtkBase::OutputFromData(po::variables_map &vm)
+void OutputVtkBase::v_OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
     NEKERROR(ErrorUtil::efatal, "OutputVtk can't write using only FieldData.");
 }
 
-fs::path OutputVtkBase::GetPath(std::string &filename, po::variables_map &vm)
+fs::path OutputVtkBase::v_GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
@@ -304,8 +304,8 @@ fs::path OutputVtkBase::GetPath(std::string &filename, po::variables_map &vm)
     return fs::path(specPath);
 }
 
-fs::path OutputVtkBase::GetFullOutName(std::string &filename,
-                                       po::variables_map &vm)
+fs::path OutputVtkBase::v_GetFullOutName(std::string &filename,
+                                         po::variables_map &vm)
 {
     int nprocs = m_f->m_comm->GetSize();
 

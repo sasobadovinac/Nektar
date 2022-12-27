@@ -74,7 +74,7 @@ ProcessC0Projection::~ProcessC0Projection()
 {
 }
 
-void ProcessC0Projection::Process(po::variables_map &vm)
+void ProcessC0Projection::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

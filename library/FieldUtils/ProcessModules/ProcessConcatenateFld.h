@@ -58,19 +58,20 @@ public:
     ProcessConcatenateFld(FieldSharedPtr f);
     virtual ~ProcessConcatenateFld();
 
-    virtual void Process(po::variables_map &vm);
+protected:
+    virtual void v_Process(po::variables_map &vm) override;
 
-    virtual std::string GetModuleName()
+    virtual std::string v_GetModuleName() override
     {
         return "ProcessConcatenateFld";
     }
 
-    virtual std::string GetModuleDescription()
+    virtual std::string v_GetModuleDescription() override
     {
         return "Concatenating field file";
     }
 
-    virtual ModulePriority GetModulePriority()
+    virtual ModulePriority v_GetModulePriority() override
     {
         return eModifyFieldData;
     }

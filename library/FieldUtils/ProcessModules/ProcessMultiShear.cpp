@@ -66,7 +66,7 @@ ProcessMultiShear::~ProcessMultiShear()
 {
 }
 
-void ProcessMultiShear::Process(po::variables_map &vm)
+void ProcessMultiShear::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 

@@ -76,7 +76,7 @@ OutputTecplot::~OutputTecplot()
 {
 }
 
-void OutputTecplot::Process(po::variables_map &vm)
+void OutputTecplot::v_Process(po::variables_map &vm)
 {
 
     if (m_config["writemultiplefiles"].as<bool>())
@@ -88,7 +88,7 @@ void OutputTecplot::Process(po::variables_map &vm)
         m_oneOutputFile = (m_f->m_comm->GetSize() > 1);
     }
 
-    OutputFileBase::Process(vm);
+    OutputFileBase::v_Process(vm);
 }
 
 /**
@@ -148,7 +148,7 @@ void WriteStream(std::ostream &outfile, std::vector<T> data)
     }
 }
 
-void OutputTecplot::OutputFromPts(po::variables_map &vm)
+void OutputTecplot::v_OutputFromPts(po::variables_map &vm)
 {
     LibUtilities::PtsFieldSharedPtr fPts = m_f->m_fieldPts;
 
@@ -229,7 +229,7 @@ void OutputTecplot::OutputFromPts(po::variables_map &vm)
     WriteTecplotFile(vm);
 }
 
-void OutputTecplot::OutputFromExp(po::variables_map &vm)
+void OutputTecplot::v_OutputFromExp(po::variables_map &vm)
 {
     m_numBlocks   = 0;
     m_writeHeader = true;
@@ -342,7 +342,7 @@ void OutputTecplot::OutputFromExp(po::variables_map &vm)
     WriteTecplotFile(vm);
 }
 
-void OutputTecplot::OutputFromData(po::variables_map &vm)
+void OutputTecplot::v_OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
@@ -350,7 +350,7 @@ void OutputTecplot::OutputFromData(po::variables_map &vm)
              "OutputTecplot can't write using only FieldData.");
 }
 
-fs::path OutputTecplot::GetPath(std::string &filename, po::variables_map &vm)
+fs::path OutputTecplot::v_GetPath(std::string &filename, po::variables_map &vm)
 {
     boost::ignore_unused(vm);
 
@@ -370,8 +370,8 @@ fs::path OutputTecplot::GetPath(std::string &filename, po::variables_map &vm)
     return fs::path(returnstr);
 }
 
-fs::path OutputTecplot::GetFullOutName(std::string &filename,
-                                       po::variables_map &vm)
+fs::path OutputTecplot::v_GetFullOutName(std::string &filename,
+                                         po::variables_map &vm)
 {
     return GetPath(filename, vm);
 }
@@ -443,8 +443,8 @@ void OutputTecplot::WriteTecplotFile(po::variables_map &vm)
  * @param   outfile   Output file name
  * @param   var       Variables names
  */
-void OutputTecplot::WriteTecplotHeader(std::ofstream &outfile,
-                                       std::vector<std::string> &var)
+void OutputTecplot::v_WriteTecplotHeader(std::ofstream &outfile,
+                                         std::vector<std::string> &var)
 {
     outfile << "Variables = " << var[0];
 
@@ -462,8 +462,8 @@ void OutputTecplot::WriteTecplotHeader(std::ofstream &outfile,
  * @param   outfile   Output file name
  * @param   var       Variables names
  */
-void OutputTecplotBinary::WriteTecplotHeader(std::ofstream &outfile,
-                                             std::vector<std::string> &var)
+void OutputTecplotBinary::v_WriteTecplotHeader(std::ofstream &outfile,
+                                               std::vector<std::string> &var)
 {
     if (m_oneOutputFile && m_f->m_comm->GetRank() > 0)
     {
@@ -498,7 +498,7 @@ void OutputTecplotBinary::WriteTecplotHeader(std::ofstream &outfile,
  * @param   outfile    Output file name.
  * @param   expansion  Expansion that is considered
  */
-void OutputTecplot::WriteTecplotZone(std::ofstream &outfile)
+void OutputTecplot::v_WriteTecplotZone(std::ofstream &outfile)
 {
     bool useDoubles = m_config["double"].as<bool>();
 
@@ -686,7 +686,7 @@ void OutputTecplotBinary::WriteDoubleOrFloat(std::ofstream &outfile,
  * @param   outfile    Output file name.
  * @param   expansion  Expansion that is considered
  */
-void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
+void OutputTecplotBinary::v_WriteTecplotZone(std::ofstream &outfile)
 {
     Array<OneD, NekDouble> fieldMin(m_fields.size());
     Array<OneD, NekDouble> fieldMax(m_fields.size());
@@ -819,7 +819,7 @@ void OutputTecplotBinary::WriteTecplotZone(std::ofstream &outfile)
  *
  * @param   outfile    Output file
  */
-void OutputTecplot::WriteTecplotConnectivity(std::ofstream &outfile)
+void OutputTecplot::v_WriteTecplotConnectivity(std::ofstream &outfile)
 {
     // Ordered data have no connectivity information.
     if (m_zoneType == eOrdered)
@@ -887,7 +887,7 @@ void OutputTecplot::WriteTecplotConnectivity(std::ofstream &outfile)
     }
 }
 
-void OutputTecplotBinary::WriteTecplotConnectivity(std::ofstream &outfile)
+void OutputTecplotBinary::v_WriteTecplotConnectivity(std::ofstream &outfile)
 {
     if (m_oneOutputFile && m_f->m_comm->GetRank() > 0)
     {

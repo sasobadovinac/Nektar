@@ -113,9 +113,9 @@ ProcessDisplacement::~ProcessDisplacement()
 {
 }
 
-void ProcessDisplacement::Process(po::variables_map &vm)
+void ProcessDisplacement::v_Process(po::variables_map &vm)
 {
-    ProcessBoundaryExtract::Process(vm);
+    ProcessBoundaryExtract::v_Process(vm);
     ASSERTL0(!boost::iequals(m_config["bnd"].as<string>(), "All"),
              "ProcessDisplacement needs bnd parameter with a single id.");
 
