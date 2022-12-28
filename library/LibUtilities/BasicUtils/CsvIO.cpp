@@ -271,5 +271,10 @@ void CsvIO::v_ImportFieldData(const std::string inFile,
     ptsField = MemoryManager<PtsField>::AllocateSharedPtr(dim, fieldNames, pts);
 }
 
+std::string CsvIO::v_GetFileEnding() const
+{
+    return "csv";
+}
+
 } // namespace LibUtilities
 } // namespace Nektar

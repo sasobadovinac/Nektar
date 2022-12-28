@@ -46,7 +46,7 @@ namespace LibUtilities
 bool NodalPrismSPI::initPointsManager[] = {PointsManager().RegisterCreator(
     PointsKey(0, eNodalPrismSPI), NodalPrismSPI::Create)};
 
-void NodalPrismSPI::CalculatePoints()
+void NodalPrismSPI::v_CalculatePoints()
 {
     // Allocate the storage for points
     unsigned int numPoints = GetNumPoints();
@@ -77,7 +77,7 @@ void NodalPrismSPI::CalculatePoints()
     }
 }
 
-void NodalPrismSPI::CalculateWeights()
+void NodalPrismSPI::v_CalculateWeights()
 {
     unsigned int numPoints = GetNumPoints();
 
@@ -92,7 +92,7 @@ void NodalPrismSPI::CalculateWeights()
     }
 }
 
-void NodalPrismSPI::CalculateDerivMatrix()
+void NodalPrismSPI::v_CalculateDerivMatrix()
 {
 }
 

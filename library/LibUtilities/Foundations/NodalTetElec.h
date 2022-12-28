@@ -58,7 +58,12 @@ public:
     LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
         const PointsKey &key);
 
-    const MatrixSharedPtrType GetI(const PointsKey &pkey)
+    NodalTetElec(const PointsKey &key) : PointsBaseType(key)
+    {
+    }
+
+protected:
+    virtual const MatrixSharedPtrType v_GetI(const PointsKey &pkey) override
     {
         ASSERTL0(pkey.GetPointsDim() == 3,
                  "NodalTetElec Points can only interp to other 3d "
@@ -68,9 +73,10 @@ public:
         return GetI(x, y, z);
     }
 
-    const MatrixSharedPtrType GetI(const Array<OneD, const NekDouble> &x,
-                                   const Array<OneD, const NekDouble> &y,
-                                   const Array<OneD, const NekDouble> &z)
+    virtual const MatrixSharedPtrType v_GetI(
+        const Array<OneD, const NekDouble> &x,
+        const Array<OneD, const NekDouble> &y,
+        const Array<OneD, const NekDouble> &z) override
     {
         size_t numpoints = x.size();
         unsigned int np  = GetTotNumPoints();
@@ -83,10 +89,6 @@ public:
                                                                       np, d);
     }
 
-    NodalTetElec(const PointsKey &key) : PointsBaseType(key)
-    {
-    }
-
 private:
     static bool initPointsManager[];
 
@@ -96,10 +98,12 @@ private:
     {
     }
 
-    void CalculatePoints();
-    void CalculateWeights();
-    void CalculateDerivMatrix();
     void NodalPointReorder3d();
+
+    virtual void v_CalculatePoints() override;
+    virtual void v_CalculateWeights() override;
+    virtual void v_CalculateDerivMatrix() override;
+
     void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xia,
                                const Array<OneD, const NekDouble> &yia,
                                const Array<OneD, const NekDouble> &zia,

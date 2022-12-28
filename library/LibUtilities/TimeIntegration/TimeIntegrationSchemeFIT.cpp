@@ -98,7 +98,7 @@ FractionalInTimeIntegrationScheme::FractionalInTimeIntegrationScheme(
 /**
  * @brief Worker method to initialize the integration scheme.
  */
-void FractionalInTimeIntegrationScheme::InitializeScheme(
+void FractionalInTimeIntegrationScheme::v_InitializeScheme(
     const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
     const TimeIntegrationSchemeOperators &op)
 
@@ -278,7 +278,7 @@ void FractionalInTimeIntegrationScheme::InitializeScheme(
 /**
  * @brief Worker method that performs the time integration.
  */
-ConstDoubleArray &FractionalInTimeIntegrationScheme::TimeIntegrate(
+ConstDoubleArray &FractionalInTimeIntegrationScheme::v_TimeIntegrate(
     const int timestep, const NekDouble delta_t,
     const TimeIntegrationSchemeOperators &op)
 {
@@ -1065,7 +1065,7 @@ void FractionalInTimeIntegrationScheme::advanceSandbox(
 /**
  * @brief Worker method to print details on the integration scheme
  */
-void FractionalInTimeIntegrationScheme::print(std::ostream &os) const
+void FractionalInTimeIntegrationScheme::v_print(std::ostream &os) const
 {
     os << "Time Integration Scheme: " << GetFullName() << std::endl
        << "       Alpha " << m_alpha << std::endl
@@ -1077,7 +1077,7 @@ void FractionalInTimeIntegrationScheme::print(std::ostream &os) const
        << "             Talbot Parameter: nu " << m_nu << std::endl;
 }
 
-void FractionalInTimeIntegrationScheme::printFull(std::ostream &os) const
+void FractionalInTimeIntegrationScheme::v_printFull(std::ostream &os) const
 {
     os << "Time Integration Scheme: " << GetFullName() << std::endl
        << "       Alpha " << m_alpha << std::endl

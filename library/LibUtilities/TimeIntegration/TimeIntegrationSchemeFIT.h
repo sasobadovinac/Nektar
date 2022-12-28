@@ -79,71 +79,6 @@ public:
 
     static std::string className;
 
-    // Access methods from the base class that are virtual
-    LUE virtual std::string GetName() const
-    {
-        return m_name;
-    }
-
-    LUE virtual std::string GetVariant() const
-    {
-        return m_variant;
-    }
-
-    LUE virtual unsigned int GetOrder() const
-    {
-        return m_order;
-    }
-
-    LUE virtual std::vector<NekDouble> GetFreeParams() const
-    {
-        return m_freeParams;
-    }
-
-    LUE virtual TimeIntegrationSchemeType GetIntegrationSchemeType() const
-    {
-        return m_schemeType;
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
-    LUE unsigned int GetNumIntegrationPhases() const
-    {
-        return 1;
-    }
-
-    /**
-     * \brief Gets the solution vector of the ODE
-     */
-    inline const TripleArray &GetSolutionVector() const
-    {
-        return m_u;
-    }
-
-    /**
-     * \brief Sets the solution vector of the ODE
-     */
-    inline void SetSolutionVector(const int Offset, const DoubleArray &y)
-    {
-        m_u[Offset] = y;
-    }
-
-    // The worker methods from the base class that are virtual
-    LUE virtual void InitializeScheme(const NekDouble deltaT,
-                                      ConstDoubleArray &y_0,
-                                      const NekDouble time,
-                                      const TimeIntegrationSchemeOperators &op);
-
-    LUE virtual ConstDoubleArray &TimeIntegrate(
-        const int timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op);
-
-    LUE virtual void print(std::ostream &os) const;
-    LUE virtual void printFull(std::ostream &os) const;
-
     // Friend classes
     LUE friend std::ostream &operator<<(
         std::ostream &os, const FractionalInTimeIntegrationScheme &rhs);
@@ -152,6 +87,72 @@ public:
         const FractionalInTimeIntegrationSchemeSharedPtr &rhs);
 
 protected:
+    // Access methods from the base class that are virtual
+    LUE virtual std::string v_GetName() const override
+    {
+        return m_name;
+    }
+
+    LUE virtual std::string v_GetVariant() const override
+    {
+        return m_variant;
+    }
+
+    LUE virtual unsigned int v_GetOrder() const override
+    {
+        return m_order;
+    }
+
+    LUE virtual std::vector<NekDouble> v_GetFreeParams() const override
+    {
+        return m_freeParams;
+    }
+
+    LUE virtual TimeIntegrationSchemeType v_GetIntegrationSchemeType()
+        const override
+    {
+        return m_schemeType;
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
+    }
+
+    LUE virtual unsigned int v_GetNumIntegrationPhases() const override
+    {
+        return 1;
+    }
+
+    /**
+     * \brief Gets the solution vector of the ODE
+     */
+    virtual const TripleArray &v_GetSolutionVector() const override
+    {
+        return m_u;
+    }
+
+    /**
+     * \brief Sets the solution vector of the ODE
+     */
+    virtual void v_SetSolutionVector(const int Offset,
+                                     const DoubleArray &y) override
+    {
+        m_u[Offset] = y;
+    }
+
+    // The worker methods from the base class that are virtual
+    LUE virtual void v_InitializeScheme(
+        const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
+        const TimeIntegrationSchemeOperators &op) override;
+
+    LUE virtual ConstDoubleArray &v_TimeIntegrate(
+        const int timestep, const NekDouble delta_t,
+        const TimeIntegrationSchemeOperators &op) override;
+
+    LUE virtual void v_print(std::ostream &os) const override;
+    LUE virtual void v_printFull(std::ostream &os) const override;
+
     struct Instance
     {
         int base;

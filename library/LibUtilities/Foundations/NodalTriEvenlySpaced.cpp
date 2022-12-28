@@ -77,10 +77,10 @@ bool isEdge_2(int i, int j, int npts)
 }
 } // namespace
 
-void NodalTriEvenlySpaced::CalculatePoints()
+void NodalTriEvenlySpaced::v_CalculatePoints()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculatePoints();
+    PointsBaseType::v_CalculatePoints();
 
     // Populate m_points
     unsigned int npts = GetNumPoints();
@@ -102,10 +102,10 @@ void NodalTriEvenlySpaced::CalculatePoints()
         npts - 1, m_points[0], m_points[1]);
 }
 
-void NodalTriEvenlySpaced::CalculateWeights()
+void NodalTriEvenlySpaced::v_CalculateWeights()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculateWeights();
+    PointsBaseType::v_CalculateWeights();
 
     typedef DataType T;
 
@@ -133,11 +133,11 @@ void NodalTriEvenlySpaced::CalculateInterpMatrix(
 
 // ////////////////////////////////////////
 //        CalculateDerivMatrix()
-void NodalTriEvenlySpaced::CalculateDerivMatrix()
+void NodalTriEvenlySpaced::v_CalculateDerivMatrix()
 {
 
     // Allocate the derivative matrix.
-    PointsBaseType::CalculateDerivMatrix();
+    PointsBaseType::v_CalculateDerivMatrix();
 
     m_derivmatrix[0] = m_util->GetDerivMatrix(0);
     m_derivmatrix[1] = m_util->GetDerivMatrix(1);

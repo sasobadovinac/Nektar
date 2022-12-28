@@ -46,7 +46,7 @@ namespace LibUtilities
 bool NodalHexElec::initPointsManager[] = {PointsManager().RegisterCreator(
     PointsKey(0, eNodalHexElec), NodalHexElec::Create)};
 
-void NodalHexElec::CalculatePoints()
+void NodalHexElec::v_CalculatePoints()
 {
     // Allocate the storage for points
     unsigned int numPoints = GetNumPoints();
@@ -74,7 +74,7 @@ void NodalHexElec::CalculatePoints()
     }
 }
 
-void NodalHexElec::CalculateWeights()
+void NodalHexElec::v_CalculateWeights()
 {
     unsigned int numPoints = GetNumPoints();
 
@@ -92,7 +92,7 @@ void NodalHexElec::CalculateWeights()
     }
 }
 
-void NodalHexElec::CalculateDerivMatrix()
+void NodalHexElec::v_CalculateDerivMatrix()
 {
 }
 

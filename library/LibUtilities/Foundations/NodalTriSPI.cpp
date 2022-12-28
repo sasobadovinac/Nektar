@@ -48,7 +48,7 @@ namespace LibUtilities
 bool NodalTriSPI::initPointsManager[] = {PointsManager().RegisterCreator(
     PointsKey(0, eNodalTriSPI), NodalTriSPI::Create)};
 
-void NodalTriSPI::CalculatePoints()
+void NodalTriSPI::v_CalculatePoints()
 {
     // Allocate the storage for points
     unsigned int numPoints = GetNumPoints();
@@ -74,7 +74,7 @@ void NodalTriSPI::CalculatePoints()
     }
 }
 
-void NodalTriSPI::CalculateWeights()
+void NodalTriSPI::v_CalculateWeights()
 {
     unsigned int numPoints = GetNumPoints();
 
@@ -95,7 +95,7 @@ void NodalTriSPI::CalculateWeights()
     }
 }
 
-void NodalTriSPI::CalculateDerivMatrix()
+void NodalTriSPI::v_CalculateDerivMatrix()
 {
 }
 

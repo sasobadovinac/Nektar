@@ -65,7 +65,8 @@ public:
     LIB_UTILITIES_EXPORT static std::shared_ptr<PointsBaseType> Create(
         const PointsKey &key);
 
-    const MatrixSharedPtrType GetI(const PointsKey &pkey)
+protected:
+    virtual const MatrixSharedPtrType v_GetI(const PointsKey &pkey) override
     {
         ASSERTL0(pkey.GetPointsDim() == 2,
                  "Fekete Points can only interp to other 2d "
@@ -75,8 +76,9 @@ public:
         return GetI(x, y);
     }
 
-    const MatrixSharedPtrType GetI(const Array<OneD, const NekDouble> &x,
-                                   const Array<OneD, const NekDouble> &y)
+    virtual const MatrixSharedPtrType v_GetI(
+        const Array<OneD, const NekDouble> &x,
+        const Array<OneD, const NekDouble> &y) override
     {
         size_t numpoints = x.size();
         unsigned int np  = GetTotNumPoints();
@@ -98,10 +100,11 @@ private:
     {
     }
 
-    void CalculatePoints();
-    void CalculateWeights();
-    void CalculateDerivMatrix();
     void NodalPointReorder2d();
+
+    virtual void v_CalculatePoints() override;
+    virtual void v_CalculateWeights() override;
+    virtual void v_CalculateDerivMatrix() override;
 
     void CalculateInterpMatrix(const Array<OneD, const NekDouble> &xi,
                                const Array<OneD, const NekDouble> &yi,

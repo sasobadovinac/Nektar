@@ -75,13 +75,13 @@ public:
     // Distructor
     virtual ~NekFFTW();
 
+protected:
     virtual void v_FFTFwdTrans(Array<OneD, NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray);
+                               Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_FFTBwdTrans(Array<OneD, NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray);
+                               Array<OneD, NekDouble> &outarray) override;
 
-protected:
     Array<OneD, NekDouble>
         m_FFTW_w; // weights to convert arrays form Nektar++ to FFTW format
     Array<OneD, NekDouble>

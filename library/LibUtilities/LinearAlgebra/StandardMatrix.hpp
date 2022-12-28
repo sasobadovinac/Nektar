@@ -528,15 +528,15 @@ private:
 
     LIB_UTILITIES_EXPORT virtual
         typename boost::call_traits<DataType>::value_type
-        v_GetValue(unsigned int row, unsigned int column) const;
+        v_GetValue(unsigned int row, unsigned int column) const override;
 
-    LIB_UTILITIES_EXPORT virtual unsigned int v_GetStorageSize() const;
+    LIB_UTILITIES_EXPORT virtual unsigned int v_GetStorageSize() const override;
 
     // We need to rethink class structure a little.  This shouldn't be
     // necessary.
     LIB_UTILITIES_EXPORT virtual void v_SetValue(
         unsigned int row, unsigned int column,
-        typename boost::call_traits<DataType>::const_reference d);
+        typename boost::call_traits<DataType>::const_reference d) override;
 
     Array<OneD, DataType> m_data;
     PointerWrapper m_wrapperType;

@@ -77,27 +77,54 @@ class TimeIntegrationScheme
 {
 public:
     // Access methods
-    LUE virtual std::string GetFullName() const;
-    LUE virtual std::string GetName() const                  = 0;
-    LUE virtual std::string GetVariant() const               = 0;
-    LUE virtual unsigned int GetOrder() const                = 0;
-    LUE virtual std::vector<NekDouble> GetFreeParams() const = 0;
-
-    LUE virtual TimeIntegrationSchemeType GetIntegrationSchemeType() const = 0;
-
-    LUE virtual NekDouble GetTimeStability() const = 0;
-
-    LUE virtual unsigned int GetNumIntegrationPhases() const = 0;
+    LUE std::string GetFullName() const
+    {
+        return v_GetFullName();
+    }
+    LUE std::string GetName() const
+    {
+        return v_GetName();
+    }
+    LUE std::string GetVariant() const
+    {
+        return v_GetVariant();
+    }
+    LUE unsigned int GetOrder() const
+    {
+        return v_GetOrder();
+    }
+    LUE std::vector<NekDouble> GetFreeParams()
+    {
+        return v_GetFreeParams();
+    }
+    LUE TimeIntegrationSchemeType GetIntegrationSchemeType()
+    {
+        return v_GetIntegrationSchemeType();
+    }
+    LUE NekDouble GetTimeStability() const
+    {
+        return v_GetTimeStability();
+    }
+    LUE unsigned int GetNumIntegrationPhases()
+    {
+        return v_GetNumIntegrationPhases();
+    }
 
     /**
      * \brief Gets the solution vector of the ODE
      */
-    virtual const TripleArray &GetSolutionVector() const = 0;
+    const TripleArray &GetSolutionVector() const
+    {
+        return v_GetSolutionVector();
+    }
 
     /**
      * \brief Sets the solution vector of the ODE
      */
-    virtual void SetSolutionVector(const int Offset, const DoubleArray &y) = 0;
+    void SetSolutionVector(const int Offset, const DoubleArray &y)
+    {
+        v_SetSolutionVector(Offset, y);
+    }
 
     // The worker methods
     /**
@@ -124,16 +151,28 @@ public:
      * level
      *    (which in fact is also embedded in the argument y).
      */
-    LUE virtual void InitializeScheme(
-        const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
-        const TimeIntegrationSchemeOperators &op) = 0;
+    LUE void InitializeScheme(const NekDouble deltaT, ConstDoubleArray &y_0,
+                              const NekDouble time,
+                              const TimeIntegrationSchemeOperators &op)
+    {
+        v_InitializeScheme(deltaT, y_0, time, op);
+    }
 
-    LUE virtual ConstDoubleArray &TimeIntegrate(
+    LUE ConstDoubleArray &TimeIntegrate(
         const int timestep, const NekDouble delta_t,
-        const TimeIntegrationSchemeOperators &op) = 0;
+        const TimeIntegrationSchemeOperators &op)
+    {
+        return v_TimeIntegrate(timestep, delta_t, op);
+    }
 
-    LUE virtual void print(std::ostream &os) const     = 0;
-    LUE virtual void printFull(std::ostream &os) const = 0;
+    LUE void print(std::ostream &os) const
+    {
+        v_print(os);
+    }
+    LUE void printFull(std::ostream &os) const
+    {
+        v_printFull(os);
+    }
 
     // Friend classes
     LUE friend std::ostream &operator<<(std::ostream &os,
@@ -142,6 +181,27 @@ public:
         std::ostream &os, const TimeIntegrationSchemeSharedPtr &rhs);
 
 protected:
+    LUE virtual std::string v_GetFullName() const;
+    LUE virtual std::string v_GetName() const                  = 0;
+    LUE virtual std::string v_GetVariant() const               = 0;
+    LUE virtual unsigned int v_GetOrder() const                = 0;
+    LUE virtual std::vector<NekDouble> v_GetFreeParams() const = 0;
+    LUE virtual TimeIntegrationSchemeType v_GetIntegrationSchemeType()
+        const                                                  = 0;
+    LUE virtual NekDouble v_GetTimeStability() const           = 0;
+    LUE virtual unsigned int v_GetNumIntegrationPhases() const = 0;
+    virtual const TripleArray &v_GetSolutionVector() const     = 0;
+    virtual void v_SetSolutionVector(const int Offset,
+                                     const DoubleArray &y)     = 0;
+    LUE virtual void v_InitializeScheme(
+        const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
+        const TimeIntegrationSchemeOperators &op) = 0;
+    LUE virtual ConstDoubleArray &v_TimeIntegrate(
+        const int timestep, const NekDouble delta_t,
+        const TimeIntegrationSchemeOperators &op)        = 0;
+    LUE virtual void v_print(std::ostream &os) const     = 0;
+    LUE virtual void v_printFull(std::ostream &os) const = 0;
+
     // These methods should never be used directly, only used by child classes.
     LUE TimeIntegrationScheme(std::string variant, unsigned int order,
                               std::vector<NekDouble> freeParams)

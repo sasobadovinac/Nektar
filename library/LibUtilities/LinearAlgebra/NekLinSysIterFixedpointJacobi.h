@@ -73,12 +73,13 @@ public:
     LIB_UTILITIES_EXPORT ~NekLinSysIterFixedpointJacobi();
 
 protected:
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual int v_SolveSystem(const int nGlobal,
                               const Array<OneD, const NekDouble> &pInput,
                               Array<OneD, NekDouble> &pOutput, const int nDir,
-                              const NekDouble tol, const NekDouble factor);
+                              const NekDouble tol,
+                              const NekDouble factor) override;
 
 private:
 };

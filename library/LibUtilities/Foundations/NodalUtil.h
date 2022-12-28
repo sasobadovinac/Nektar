@@ -184,23 +184,23 @@ protected:
     /// Collapsed coordinates \f$ (\eta_1, \eta_2) \f$ of the nodal points.
     Array<OneD, Array<OneD, NekDouble>> m_eta;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
     virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode);
+                                                   const int mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble>> &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi) override
     {
         return MemoryManager<NodalUtilTriangle>::AllocateSharedPtr(
             m_degree, xi[0], xi[1]);
     }
 
-    virtual NekDouble v_ModeZeroIntegral()
+    virtual NekDouble v_ModeZeroIntegral() override
     {
         return 2.0 * sqrt(2.0);
     }
 
-    virtual int v_NumModes()
+    virtual int v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 2) / 2;
     }
@@ -233,23 +233,23 @@ protected:
     /// points.
     Array<OneD, Array<OneD, NekDouble>> m_eta;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
     virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode);
+                                                   const int mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble>> &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi) override
     {
         return MemoryManager<NodalUtilTetrahedron>::AllocateSharedPtr(
             m_degree, xi[0], xi[1], xi[2]);
     }
 
-    virtual NekDouble v_ModeZeroIntegral()
+    virtual NekDouble v_ModeZeroIntegral() override
     {
         return 8.0 * sqrt(2.0) / 3.0;
     }
 
-    virtual int v_NumModes()
+    virtual int v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 2) * (m_degree + 3) / 6;
     }
@@ -281,23 +281,23 @@ protected:
     /// points.
     Array<OneD, Array<OneD, NekDouble>> m_eta;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
     virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode);
+                                                   const int mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble>> &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi) override
     {
         return MemoryManager<NodalUtilPrism>::AllocateSharedPtr(m_degree, xi[0],
                                                                 xi[1], xi[2]);
     }
 
-    virtual NekDouble v_ModeZeroIntegral()
+    virtual NekDouble v_ModeZeroIntegral() override
     {
         return 4.0 * sqrt(2.0);
     }
 
-    virtual int v_NumModes()
+    virtual int v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 1) * (m_degree + 2) / 2;
     }
@@ -321,23 +321,23 @@ protected:
     /// ordering.
     std::vector<std::pair<int, int>> m_ordering;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
     virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode);
+                                                   const int mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble>> &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi) override
     {
         return MemoryManager<NodalUtilQuad>::AllocateSharedPtr(m_degree, xi[0],
                                                                xi[1]);
     }
 
-    virtual NekDouble v_ModeZeroIntegral()
+    virtual NekDouble v_ModeZeroIntegral() override
     {
         return 4.0;
     }
 
-    virtual int v_NumModes()
+    virtual int v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 1);
     }
@@ -364,23 +364,23 @@ protected:
     /// ordering.
     std::vector<Mode> m_ordering;
 
-    virtual NekVector<NekDouble> v_OrthoBasis(const int mode);
+    virtual NekVector<NekDouble> v_OrthoBasis(const int mode) override;
     virtual NekVector<NekDouble> v_OrthoBasisDeriv(const int dir,
-                                                   const int mode);
+                                                   const int mode) override;
 
     virtual std::shared_ptr<NodalUtil> v_CreateUtil(
-        Array<OneD, Array<OneD, NekDouble>> &xi)
+        Array<OneD, Array<OneD, NekDouble>> &xi) override
     {
         return MemoryManager<NodalUtilHex>::AllocateSharedPtr(m_degree, xi[0],
                                                               xi[1], xi[2]);
     }
 
-    virtual NekDouble v_ModeZeroIntegral()
+    virtual NekDouble v_ModeZeroIntegral() override
     {
         return 8.0;
     }
 
-    virtual int v_NumModes()
+    virtual int v_NumModes() override
     {
         return (m_degree + 1) * (m_degree + 1) * (m_degree + 1);
     }

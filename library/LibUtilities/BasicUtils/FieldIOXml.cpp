@@ -673,6 +673,12 @@ DataSourceSharedPtr FieldIOXml::v_ImportFieldMetaData(
     return doc;
 }
 
+/// Returns the class name.
+const std::string &FieldIOXml::v_GetClassName() const
+{
+    return className;
+}
+
 /**
  * @brief Set up field meta data map.
  *

@@ -49,10 +49,10 @@ bool NodalTetElec::initPointsManager[] = {PointsManager().RegisterCreator(
 // ////////////////////////////////////////////////////////
 //  Coordinate the nodal tetrahedron electrostatic points
 
-void NodalTetElec::CalculatePoints()
+void NodalTetElec::v_CalculatePoints()
 {
     // Allocate the storage for points
-    Points<NekDouble>::CalculatePoints();
+    Points<NekDouble>::v_CalculatePoints();
 
     int index = 0, isum = 0;
     const int offset = 5; // offset to match Datafile
@@ -194,10 +194,10 @@ void NodalTetElec::CalculatePoints()
         numPoints - 1, m_points[0], m_points[1], m_points[2]);
 }
 
-void NodalTetElec::CalculateWeights()
+void NodalTetElec::v_CalculateWeights()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculateWeights();
+    PointsBaseType::v_CalculateWeights();
 
     typedef DataType T;
 
@@ -225,10 +225,10 @@ void NodalTetElec::CalculateInterpMatrix(
                  &interp[0], 1);
 }
 
-void NodalTetElec::CalculateDerivMatrix()
+void NodalTetElec::v_CalculateDerivMatrix()
 {
     // Allocate the derivative matrix.
-    PointsBaseType::CalculateDerivMatrix();
+    PointsBaseType::v_CalculateDerivMatrix();
 
     m_derivmatrix[0] = m_util->GetDerivMatrix(0);
     m_derivmatrix[1] = m_util->GetDerivMatrix(1);

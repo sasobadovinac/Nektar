@@ -93,28 +93,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetFullName() const
-    {
-        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
-    }
-
-    LUE virtual std::string GetName() const
-    {
-        return std::string("Euler");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        if (GetVariant() == "Backward")
-        {
-            return 1.0;
-        }
-        else
-        {
-            return 2.784;
-        }
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     std::string variant)
     {
@@ -159,6 +137,29 @@ public:
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetFullName() const override
+    {
+        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
+    }
+
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("Euler");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        if (GetVariant() == "Backward")
+        {
+            return 1.0;
+        }
+        else
+        {
+            return 2.784;
+        }
     }
 
 }; // end class EulerTimeIntegrator
