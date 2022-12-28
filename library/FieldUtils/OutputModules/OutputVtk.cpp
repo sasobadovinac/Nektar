@@ -1595,7 +1595,9 @@ void OutputVtk::WritePVtu(po::variables_map &vm)
 void OutputVtk::v_OutputFromData(po::variables_map &vm)
 {
     boost::ignore_unused(vm);
-    NEKERROR(ErrorUtil::efatal, "OutputVtk can't write using only FieldData.");
+    NEKERROR(ErrorUtil::efatal,
+             "OutputVtk can't write using only FieldData. You may need "
+             "to add a mesh XML file to your input files.");
 }
 
 void OutputVtk::v_OutputFromPts(po::variables_map &vm)
