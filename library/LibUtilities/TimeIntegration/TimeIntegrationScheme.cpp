@@ -50,7 +50,7 @@ TimeIntegrationSchemeFactory &GetTimeIntegrationSchemeFactory()
 }
 
 // Access Methods
-std::string TimeIntegrationScheme::GetFullName() const
+std::string TimeIntegrationScheme::v_GetFullName() const
 {
     return GetName() + GetVariant() + "Order" + std::to_string(GetOrder());
 }

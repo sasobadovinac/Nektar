@@ -46,10 +46,10 @@ namespace LibUtilities
 bool FourierPoints::initPointsManager[] = {PointsManager().RegisterCreator(
     PointsKey(0, eFourierEvenlySpaced), FourierPoints::Create)};
 
-void FourierPoints::CalculatePoints()
+void FourierPoints::v_CalculatePoints()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculatePoints();
+    PointsBaseType::v_CalculatePoints();
 
     unsigned int npts = m_pointsKey.GetNumPoints();
     ASSERTL0(!(npts % 2), "Fourier points need to be of even order");
@@ -68,10 +68,10 @@ void FourierPoints::CalculatePoints()
     }
 }
 
-void FourierPoints::CalculateWeights()
+void FourierPoints::v_CalculateWeights()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculateWeights();
+    PointsBaseType::v_CalculateWeights();
 
     unsigned int npts = m_pointsKey.GetNumPoints();
     if (npts == 1)
@@ -87,10 +87,10 @@ void FourierPoints::CalculateWeights()
     }
 }
 
-void FourierPoints::CalculateDerivMatrix()
+void FourierPoints::v_CalculateDerivMatrix()
 {
     //// Allocate the derivative matrix.
-    Points<NekDouble>::CalculateDerivMatrix();
+    Points<NekDouble>::v_CalculateDerivMatrix();
 
     unsigned int npts = m_pointsKey.GetNumPoints();
 
@@ -139,7 +139,7 @@ std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::CreateMatrix(
     return GetI(numpoints, xpoints);
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::v_GetI(
     const PointsKey &pkey)
 {
     ASSERTL0(pkey.GetPointsDim() == 1,
@@ -148,7 +148,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::GetI(
     return m_InterpManager[pkey];
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
     int numpoints = 1;
@@ -157,7 +157,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::GetI(
     return GetI(numpoints, x);
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> FourierPoints::v_GetI(
     unsigned int numpoints, const Array<OneD, const NekDouble> &x)
 {
     Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);

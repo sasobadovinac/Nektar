@@ -56,12 +56,6 @@ public:
     LIB_UTILITIES_EXPORT std::shared_ptr<NekMatrix<NekDouble>> CreateMatrix(
         const PointsKey &pkey);
 
-    LIB_UTILITIES_EXPORT const MatrixSharedPtrType GetI(const PointsKey &pkey);
-    LIB_UTILITIES_EXPORT const MatrixSharedPtrType
-    GetI(const Array<OneD, const NekDouble> &x);
-    LIB_UTILITIES_EXPORT const MatrixSharedPtrType
-    GetI(unsigned int numpoints, const Array<OneD, const NekDouble> &x);
-
     FourierSingleModePoints(const PointsKey &key) : PointsBaseType(key)
     {
         namespace pl = std::placeholders;
@@ -112,6 +106,14 @@ public:
             std::bind(&FourierSingleModePoints::CreateMatrix, this, pl::_1));
     }
 
+protected:
+    LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
+        const PointsKey &pkey) override;
+    LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
+        const Array<OneD, const NekDouble> &x) override;
+    LIB_UTILITIES_EXPORT virtual const MatrixSharedPtrType v_GetI(
+        unsigned int numpoints, const Array<OneD, const NekDouble> &x) override;
+
 private:
     static bool initPointsManager[];
 
@@ -121,13 +123,14 @@ private:
     /// Copy constructor should not be called.
     FourierSingleModePoints(const FourierSingleModePoints &points);
 
-    void CalculatePoints();
-    void CalculateWeights();
-    void CalculateDerivMatrix();
+    virtual void v_CalculatePoints() override;
+    virtual void v_CalculateWeights() override;
+    virtual void v_CalculateDerivMatrix() override;
 
     void CalculateInterpMatrix(unsigned int npts,
                                const Array<OneD, const NekDouble> &xpoints,
                                Array<OneD, NekDouble> &interp);
+
     NekDouble PeriodicSincFunction(const NekDouble x, const NekDouble h);
 }; // class FourierPoints
 } // namespace LibUtilities

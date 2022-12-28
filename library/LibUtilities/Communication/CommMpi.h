@@ -68,7 +68,7 @@ public:
     }
 
     /// Default destructor
-    inline ~CommRequestMpi() final = default;
+    inline ~CommRequestMpi() override final = default;
 
     inline MPI_Request *GetRequest(int i)
     {
@@ -113,75 +113,80 @@ protected:
     explicit CommMpi(MPI_Comm pComm);
 
     virtual void v_Finalise() override;
-    virtual int v_GetRank() final;
-    virtual void v_Block() final;
-    virtual double v_Wtime() final;
-    virtual bool v_TreatAsRankZero() final;
-    virtual bool v_IsSerial() final;
-    virtual std::tuple<int, int, int> v_GetVersion() final;
-    virtual void v_Send(void *buf, int count, CommDataType dt, int dest) final;
+    virtual int v_GetRank() override final;
+    virtual void v_Block() override final;
+    virtual double v_Wtime() override final;
+    virtual bool v_TreatAsRankZero() override final;
+    virtual bool v_IsSerial() override final;
+    virtual std::tuple<int, int, int> v_GetVersion() override final;
+    virtual void v_Send(void *buf, int count, CommDataType dt,
+                        int dest) override final;
     virtual void v_Recv(void *buf, int count, CommDataType dt,
-                        int source) final;
+                        int source) override final;
     virtual void v_SendRecv(void *sendbuf, int sendcount, CommDataType sendtype,
                             int dest, void *recvbuf, int recvcount,
-                            CommDataType recvtype, int source) final;
+                            CommDataType recvtype, int source) override final;
     virtual void v_SendRecvReplace(void *buf, int count, CommDataType dt,
-                                   int pSendProc, int pRecvProc) final;
+                                   int pSendProc, int pRecvProc) override final;
     virtual void v_AllReduce(void *buf, int count, CommDataType dt,
-                             enum ReduceOperator pOp) final;
+                             enum ReduceOperator pOp) override final;
     virtual void v_AlltoAll(void *sendbuf, int sendcount, CommDataType sendtype,
                             void *recvbuf, int recvcount,
-                            CommDataType recvtype) final;
+                            CommDataType recvtype) override final;
     virtual void v_AlltoAllv(void *sendbuf, int sendcounts[], int sensdispls[],
                              CommDataType sendtype, void *recvbuf,
                              int recvcounts[], int rdispls[],
-                             CommDataType recvtype) final;
+                             CommDataType recvtype) override final;
     virtual void v_AllGather(void *sendbuf, int sendcount,
                              CommDataType sendtype, void *recvbuf,
-                             int recvcount, CommDataType recvtype) final;
+                             int recvcount,
+                             CommDataType recvtype) override final;
     virtual void v_AllGatherv(void *sendbuf, int sendcount,
                               CommDataType sendtype, void *recvbuf,
                               int recvcounts[], int rdispls[],
-                              CommDataType recvtype) final;
+                              CommDataType recvtype) override final;
     virtual void v_AllGatherv(void *recvbuf, int recvcounts[], int rdispls[],
-                              CommDataType recvtype) final;
+                              CommDataType recvtype) override final;
     virtual void v_Bcast(void *buffer, int count, CommDataType dt,
-                         int root) final;
+                         int root) override final;
     virtual void v_Exscan(Array<OneD, unsigned long long> &pData,
                           enum ReduceOperator pOp,
-                          Array<OneD, unsigned long long> &ans) final;
+                          Array<OneD, unsigned long long> &ans) override final;
 
     virtual void v_Gather(void *sendbuf, int sendcount, CommDataType sendtype,
                           void *recvbuf, int recvcount, CommDataType recvtype,
-                          int root) final;
+                          int root) override final;
     virtual void v_Scatter(void *sendbuf, int sendcount, CommDataType sendtype,
                            void *recvbuf, int recvcount, CommDataType recvtype,
-                           int root) final;
+                           int root) override final;
 
     virtual void v_DistGraphCreateAdjacent(int indegree, const int sources[],
                                            const int sourceweights[],
-                                           int reorder) final;
+                                           int reorder) override final;
     virtual void v_NeighborAlltoAllv(void *sendbuf, int sendcounts[],
                                      int sensdispls[], CommDataType sendtype,
                                      void *recvbuf, int recvcounts[],
                                      int rdispls[],
-                                     CommDataType recvtype) final;
+                                     CommDataType recvtype) override final;
     virtual void v_Irsend(void *buf, int count, CommDataType dt, int dest,
-                          CommRequestSharedPtr request, int loc) final;
+                          CommRequestSharedPtr request, int loc) override final;
     virtual void v_SendInit(void *buf, int count, CommDataType dt, int dest,
-                            CommRequestSharedPtr request, int loc) final;
+                            CommRequestSharedPtr request,
+                            int loc) override final;
     virtual void v_Irecv(void *buf, int count, CommDataType dt, int source,
-                         CommRequestSharedPtr request, int loc) final;
+                         CommRequestSharedPtr request, int loc) override final;
     virtual void v_RecvInit(void *buf, int count, CommDataType dt, int source,
-                            CommRequestSharedPtr request, int loc) final;
-    virtual void v_StartAll(CommRequestSharedPtr request) final;
-    virtual void v_WaitAll(CommRequestSharedPtr request) final;
-    virtual CommRequestSharedPtr v_CreateRequest(int num) final;
+                            CommRequestSharedPtr request,
+                            int loc) override final;
+    virtual void v_StartAll(CommRequestSharedPtr request) override final;
+    virtual void v_WaitAll(CommRequestSharedPtr request) override final;
+    virtual CommRequestSharedPtr v_CreateRequest(int num) override final;
 
     virtual void v_SplitComm(int pRows, int pColumns, int pTime) override;
-    virtual CommSharedPtr v_CommCreateIf(int flag) final;
+    virtual CommSharedPtr v_CommCreateIf(int flag) override final;
 
-    virtual std::pair<CommSharedPtr, CommSharedPtr> v_SplitCommNode() final;
+    virtual std::pair<CommSharedPtr, CommSharedPtr> v_SplitCommNode()
+        override final;
 };
 } // namespace LibUtilities
 } // namespace Nektar

@@ -49,10 +49,10 @@ bool BLPoints::initPointsManager[] = {
     PointsManager().RegisterCreator(PointsKey(0, eBoundaryLayerPointsRev),
                                     BLPoints::Create)};
 
-void BLPoints::CalculatePoints()
+void BLPoints::v_CalculatePoints()
 {
     // Allocate the storage for points.
-    PointsBaseType::CalculatePoints();
+    PointsBaseType::v_CalculatePoints();
     unsigned int npts = m_pointsKey.GetNumPoints();
 
     // Derived power coefficient.
@@ -96,14 +96,14 @@ void BLPoints::CalculatePoints()
     }
 }
 
-void BLPoints::CalculateWeights()
+void BLPoints::v_CalculateWeights()
 {
 }
 
-void BLPoints::CalculateDerivMatrix()
+void BLPoints::v_CalculateDerivMatrix()
 {
     //// Allocate the derivative matrix.
-    Points<NekDouble>::CalculateDerivMatrix();
+    Points<NekDouble>::v_CalculateDerivMatrix();
 }
 
 std::shared_ptr<Points<NekDouble>> BLPoints::Create(const PointsKey &key)
@@ -128,7 +128,7 @@ std::shared_ptr<NekMatrix<NekDouble>> BLPoints::CreateMatrix(
     return GetI(numpoints, xpoints);
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::v_GetI(
     const PointsKey &pkey)
 {
     ASSERTL0(pkey.GetPointsDim() == 1,
@@ -137,7 +137,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::GetI(
     return m_InterpManager[pkey];
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
     int numpoints = 1;
@@ -146,7 +146,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::GetI(
     return GetI(numpoints, x);
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> BLPoints::v_GetI(
     unsigned int numpoints, const Array<OneD, const NekDouble> &x)
 {
     Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);

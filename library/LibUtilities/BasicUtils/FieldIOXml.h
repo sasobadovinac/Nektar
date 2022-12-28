@@ -121,8 +121,9 @@ public:
     {
     }
 
+protected:
     /// Add a child node.
-    virtual TagWriterSharedPtr AddChild(const std::string &name)
+    virtual TagWriterSharedPtr v_AddChild(const std::string &name) override
     {
         TiXmlElement *child = new TiXmlElement(name.c_str());
         m_El->LinkEndChild(child);
@@ -130,7 +131,8 @@ public:
     }
 
     /// Set an attribute key/value pair on this tag.
-    virtual void SetAttr(const std::string &key, const std::string &val)
+    virtual void v_SetAttr(const std::string &key,
+                           const std::string &val) override
     {
         if (boost::starts_with(key, "XML_"))
         {
@@ -247,30 +249,27 @@ public:
         std::vector<std::vector<unsigned int>> &elementList,
         FieldMetaDataMap &fieldmetadatamap);
 
+protected:
+    LIB_UTILITIES_EXPORT virtual void v_Write(
+        const std::string &outFile,
+        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
+        std::vector<std::vector<NekDouble>> &fielddata,
+        const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
+        const bool backup                    = false) override;
+
     LIB_UTILITIES_EXPORT void v_Import(
         const std::string &infilename,
         std::vector<FieldDefinitionsSharedPtr> &fielddefs,
         std::vector<std::vector<NekDouble>> &fielddata =
             NullVectorNekDoubleVector,
         FieldMetaDataMap &fieldinfomap     = NullFieldMetaDataMap,
-        const Array<OneD, int> &ElementIDs = NullInt1DArray);
-
-    /// Returns the class name.
-    inline virtual const std::string &GetClassName() const
-    {
-        return className;
-    }
-
-private:
-    LIB_UTILITIES_EXPORT virtual void v_Write(
-        const std::string &outFile,
-        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble>> &fielddata,
-        const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
-        const bool backup                    = false);
+        const Array<OneD, int> &ElementIDs = NullInt1DArray) override;
 
     LIB_UTILITIES_EXPORT virtual DataSourceSharedPtr v_ImportFieldMetaData(
-        const std::string &filename, FieldMetaDataMap &fieldmetadatamap);
+        const std::string &filename,
+        FieldMetaDataMap &fieldmetadatamap) override;
+
+    virtual const std::string &v_GetClassName() const override;
 };
 
 } // namespace LibUtilities

@@ -98,23 +98,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetName() const
-    {
-        return std::string("RungeKutta");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        if (GetOrder() == 4 || GetOrder() == 5)
-        {
-            return 2.784;
-        }
-        else
-        {
-            return 2.0;
-        }
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     std::string variant, unsigned int order,
                                     std::vector<NekDouble> freeParams)
@@ -275,6 +258,24 @@ public:
         phase->m_timeLevelOffset[0] = 0;
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("RungeKutta");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        if (GetOrder() == 4 || GetOrder() == 5)
+        {
+            return 2.784;
+        }
+        else
+        {
+            return 2.0;
+        }
     }
 
 }; // end class RungeKuttaTimeIntegrator

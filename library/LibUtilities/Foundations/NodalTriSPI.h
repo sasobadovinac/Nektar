@@ -69,9 +69,9 @@ private:
     {
     }
 
-    void CalculatePoints();
-    void CalculateWeights();
-    void CalculateDerivMatrix();
+    virtual void v_CalculatePoints() override;
+    virtual void v_CalculateWeights() override;
+    virtual void v_CalculateDerivMatrix() override;
 };
 
 } // namespace LibUtilities

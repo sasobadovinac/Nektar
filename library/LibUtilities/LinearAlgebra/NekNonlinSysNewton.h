@@ -78,24 +78,25 @@ protected:
     NekDouble m_forcingGamma   = 1.0;
     NekDouble m_forcingAlpha   = 0.5 * (1.0 + sqrt(5));
 
-    virtual void v_InitObject();
+    virtual void v_InitObject() override;
 
     virtual int v_SolveSystem(const int nGlobal,
                               const Array<OneD, const NekDouble> &pInput,
                               Array<OneD, NekDouble> &pOutput, const int nDir,
-                              const NekDouble tol, const NekDouble factor);
+                              const NekDouble tol,
+                              const NekDouble factor) override;
 
     virtual bool v_ConvergenceCheck(
         const int nIteration, const Array<OneD, const NekDouble> &Residual,
-        const NekDouble tol);
-    void CalcInexactNewtonForcing(const int &k, NekDouble &resnormOld,
-                                  const NekDouble &resnorm, NekDouble &forcing);
+        const NekDouble tol) override;
 
     virtual void v_SetupNekNonlinSystem(
         const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-        const Array<OneD, const NekDouble> &pSource, const int nDir);
+        const Array<OneD, const NekDouble> &pSource, const int nDir) override;
 
 private:
+    void CalcInexactNewtonForcing(const int &k, NekDouble &resnormOld,
+                                  const NekDouble &resnorm, NekDouble &forcing);
 };
 } // namespace LibUtilities
 } // namespace Nektar

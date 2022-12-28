@@ -187,21 +187,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetFullName() const
-    {
-        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
-    }
-
-    LUE virtual std::string GetName() const
-    {
-        return std::string("IMEX");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     int order)
     {
@@ -287,6 +272,22 @@ public:
         }
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetFullName() const override
+    {
+        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
+    }
+
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("IMEX");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class IMEXTimeIntegrationScheme

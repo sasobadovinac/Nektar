@@ -98,15 +98,16 @@ public:
     {
     }
 
+protected:
     /// Add a child node.
-    TagWriterSharedPtr AddChild(const std::string &name)
+    TagWriterSharedPtr v_AddChild(const std::string &name)
     {
         H5::GroupSharedPtr child = m_Group->CreateGroup(name);
         return TagWriterSharedPtr(new H5TagWriter(child));
     }
 
     /// Set an attribute key/value pair on this tag.
-    void SetAttr(const std::string &key, const std::string &val)
+    void v_SetAttr(const std::string &key, const std::string &val)
     {
         m_Group->SetAttribute(key, val);
     }
@@ -219,11 +220,27 @@ public:
     {
     }
 
-    /// Get class name
-    inline virtual const std::string &GetClassName() const
-    {
-        return className;
-    }
+protected:
+    LIB_UTILITIES_EXPORT virtual void v_Write(
+        const std::string &outFile,
+        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
+        std::vector<std::vector<NekDouble>> &fielddata,
+        const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
+        const bool backup                    = false) override;
+
+    LIB_UTILITIES_EXPORT virtual void v_Import(
+        const std::string &infilename,
+        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
+        std::vector<std::vector<NekDouble>> &fielddata =
+            NullVectorNekDoubleVector,
+        FieldMetaDataMap &fieldinfomap     = NullFieldMetaDataMap,
+        const Array<OneD, int> &ElementIDs = NullInt1DArray) override;
+
+    LIB_UTILITIES_EXPORT virtual DataSourceSharedPtr v_ImportFieldMetaData(
+        const std::string &filename,
+        FieldMetaDataMap &fieldmetadatamap) override;
+
+    virtual const std::string &v_GetClassName() const override;
 
 private:
     struct OffsetHelper
@@ -240,24 +257,6 @@ private:
 
         uint64_t data, order, homy, homz, homs;
     };
-
-    LIB_UTILITIES_EXPORT virtual void v_Write(
-        const std::string &outFile,
-        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble>> &fielddata,
-        const FieldMetaDataMap &fieldinfomap = NullFieldMetaDataMap,
-        const bool backup                    = false);
-
-    LIB_UTILITIES_EXPORT virtual void v_Import(
-        const std::string &infilename,
-        std::vector<FieldDefinitionsSharedPtr> &fielddefs,
-        std::vector<std::vector<NekDouble>> &fielddata =
-            NullVectorNekDoubleVector,
-        FieldMetaDataMap &fieldinfomap     = NullFieldMetaDataMap,
-        const Array<OneD, int> &ElementIDs = NullInt1DArray);
-
-    LIB_UTILITIES_EXPORT virtual DataSourceSharedPtr v_ImportFieldMetaData(
-        const std::string &filename, FieldMetaDataMap &fieldmetadatamap);
 
     LIB_UTILITIES_EXPORT void ImportHDF5FieldMetaData(
         DataSourceSharedPtr dataSource, FieldMetaDataMap &fieldmetadatamap);

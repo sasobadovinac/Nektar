@@ -47,10 +47,10 @@ bool FourierSingleModePoints::initPointsManager[] = {
     PointsManager().RegisterCreator(PointsKey(0, eFourierSingleModeSpaced),
                                     FourierSingleModePoints::Create)};
 
-void FourierSingleModePoints::CalculatePoints()
+void FourierSingleModePoints::v_CalculatePoints()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculatePoints();
+    PointsBaseType::v_CalculatePoints();
     unsigned int npts = m_pointsKey.GetNumPoints();
 
     if (npts == 1)
@@ -68,10 +68,10 @@ void FourierSingleModePoints::CalculatePoints()
     }
 }
 
-void FourierSingleModePoints::CalculateWeights()
+void FourierSingleModePoints::v_CalculateWeights()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculateWeights();
+    PointsBaseType::v_CalculateWeights();
 
     unsigned int npts = m_pointsKey.GetNumPoints();
     // Here I need to insert the weight for the new point distribution
@@ -81,10 +81,10 @@ void FourierSingleModePoints::CalculateWeights()
     }
 }
 
-void FourierSingleModePoints::CalculateDerivMatrix()
+void FourierSingleModePoints::v_CalculateDerivMatrix()
 {
 
-    Points<NekDouble>::CalculateDerivMatrix();
+    Points<NekDouble>::v_CalculateDerivMatrix();
 }
 
 std::shared_ptr<Points<NekDouble>> FourierSingleModePoints::Create(
@@ -110,7 +110,7 @@ std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::CreateMatrix(
     return GetI(numpoints, xpoints);
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::v_GetI(
     const PointsKey &pkey)
 {
     ASSERTL0(pkey.GetPointsDim() == 1,
@@ -119,7 +119,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::GetI(
     return m_InterpManager[pkey];
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::v_GetI(
     const Array<OneD, const NekDouble> &x)
 {
     int numpoints = 1;
@@ -128,7 +128,7 @@ const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::GetI(
     return GetI(numpoints, x);
 }
 
-const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::GetI(
+const std::shared_ptr<NekMatrix<NekDouble>> FourierSingleModePoints::v_GetI(
     unsigned int numpoints, const Array<OneD, const NekDouble> &x)
 {
     Array<OneD, NekDouble> interp(GetNumPoints() * numpoints);

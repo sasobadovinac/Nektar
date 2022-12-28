@@ -71,9 +71,9 @@ private:
     Array<OneD, NekDouble> m_t0, m_t1, m_tw, m_e0, m_ew;
     int m_numtri;
 
-    void CalculatePoints();
-    void CalculateWeights();
-    void CalculateDerivMatrix();
+    virtual void v_CalculatePoints() override;
+    virtual void v_CalculateWeights() override;
+    virtual void v_CalculateDerivMatrix() override;
 };
 } // namespace LibUtilities
 } // namespace Nektar

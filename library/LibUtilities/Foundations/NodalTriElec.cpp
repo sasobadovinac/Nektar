@@ -46,10 +46,10 @@ namespace LibUtilities
 {
 bool NodalTriElec::initPointsManager[] = {PointsManager().RegisterCreator(
     PointsKey(0, eNodalTriElec), NodalTriElec::Create)};
-void NodalTriElec::CalculatePoints()
+void NodalTriElec::v_CalculatePoints()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculatePoints();
+    PointsBaseType::v_CalculatePoints();
 
     int index = 0, isum = 0;
     const int offset = 3; // offset to match Datafile
@@ -134,10 +134,10 @@ void NodalTriElec::CalculatePoints()
     // exit(0);
 }
 
-void NodalTriElec::CalculateWeights()
+void NodalTriElec::v_CalculateWeights()
 {
     // Allocate the storage for points
-    PointsBaseType::CalculateWeights();
+    PointsBaseType::v_CalculateWeights();
 
     typedef DataType T;
 
@@ -146,10 +146,10 @@ void NodalTriElec::CalculateWeights()
     m_weights      = Array<OneD, T>(w.GetRows(), w.GetPtr());
 }
 
-void NodalTriElec::CalculateDerivMatrix()
+void NodalTriElec::v_CalculateDerivMatrix()
 {
     // Allocate the derivative matrix.
-    PointsBaseType::CalculateDerivMatrix();
+    PointsBaseType::v_CalculateDerivMatrix();
 
     m_derivmatrix[0] = m_util->GetDerivMatrix(0);
     m_derivmatrix[1] = m_util->GetDerivMatrix(1);

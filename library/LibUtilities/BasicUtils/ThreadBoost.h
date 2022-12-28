@@ -67,25 +67,27 @@ public:
     ThreadManagerBoost(unsigned int numWorkers);
     /// Shuts down threading.
     virtual ~ThreadManagerBoost();
-    virtual void QueueJobs(std::vector<ThreadJob *> &joblist);
-    virtual void QueueJob(ThreadJob *job);
-    virtual unsigned int GetNumWorkers();
-    virtual unsigned int GetWorkerNum();
-    virtual void SetNumWorkers(const unsigned int num);
-    virtual void SetNumWorkers();
-    virtual unsigned int GetMaxNumWorkers();
-    virtual void Wait();
-    virtual void SetChunkSize(unsigned int chnk);
-    virtual void SetSchedType(SchedType s);
-    virtual bool InThread();
-    virtual void Hold();
-    virtual const std::string &GetType() const;
 
     /// Called by the factory method.
     static ThreadManagerSharedPtr Create(unsigned int numT)
     {
         return std::shared_ptr<ThreadManager>(new ThreadManagerBoost(numT));
     }
+
+protected:
+    virtual void v_QueueJobs(std::vector<ThreadJob *> &joblist) override;
+    virtual void v_QueueJob(ThreadJob *job) override;
+    virtual unsigned int v_GetNumWorkers() override;
+    virtual unsigned int v_GetWorkerNum() override;
+    virtual void v_SetNumWorkers(const unsigned int num) override;
+    virtual void v_SetNumWorkers() override;
+    virtual unsigned int v_GetMaxNumWorkers() override;
+    virtual void v_Wait() override;
+    virtual void v_SetChunkSize(unsigned int chnk) override;
+    virtual void v_SetSchedType(SchedType s) override;
+    virtual bool v_InThread() override;
+    virtual void v_Hold() override;
+    virtual const std::string &v_GetType() const override;
 
 private:
     ThreadManagerBoost();

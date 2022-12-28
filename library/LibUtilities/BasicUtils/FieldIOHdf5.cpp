@@ -1331,6 +1331,12 @@ DataSourceSharedPtr FieldIOHdf5::v_ImportFieldMetaData(
     return ans;
 }
 
+/// Get class name
+const std::string &FieldIOHdf5::v_GetClassName() const
+{
+    return className;
+}
+
 /**
  * @brief Import field metadata from @p dataSource.
  *

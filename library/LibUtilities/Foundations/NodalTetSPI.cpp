@@ -48,7 +48,7 @@ namespace LibUtilities
 bool NodalTetSPI::initPointsManager[] = {PointsManager().RegisterCreator(
     PointsKey(0, eNodalTetSPI), NodalTetSPI::Create)};
 
-void NodalTetSPI::CalculatePoints()
+void NodalTetSPI::v_CalculatePoints()
 {
     // Allocate the storage for points
     unsigned int numPoints = GetNumPoints();
@@ -75,7 +75,7 @@ void NodalTetSPI::CalculatePoints()
     }
 }
 
-void NodalTetSPI::CalculateWeights()
+void NodalTetSPI::v_CalculateWeights()
 {
     unsigned int numPoints = GetNumPoints();
 
@@ -96,7 +96,7 @@ void NodalTetSPI::CalculateWeights()
     }
 }
 
-void NodalTetSPI::CalculateDerivMatrix()
+void NodalTetSPI::v_CalculateDerivMatrix()
 {
 }
 

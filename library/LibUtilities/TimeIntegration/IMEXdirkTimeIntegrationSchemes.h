@@ -106,21 +106,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetFullName() const
-    {
-        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
-    }
-
-    LUE virtual std::string GetName() const
-    {
-        return std::string("IMEX");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     unsigned int order,
                                     std::vector<NekDouble> freeParams)
@@ -438,6 +423,22 @@ public:
         phase->m_B[1][0][3] = -7.0 / 4.0;
 
         // U and V set to 1 when allocated.
+    }
+
+protected:
+    LUE virtual std::string v_GetFullName() const override
+    {
+        return m_integration_phases[m_integration_phases.size() - 1]->m_name;
+    }
+
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("IMEX");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class IMEXdirkTimeIntegrationScheme

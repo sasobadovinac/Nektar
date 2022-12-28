@@ -43,28 +43,28 @@ namespace LibUtilities
 {
 
 // Access Methods
-std::string TimeIntegrationSchemeGLM::GetVariant() const
+std::string TimeIntegrationSchemeGLM::v_GetVariant() const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
     return m_integration_phases[m_integration_phases.size() - 1]->m_variant;
 }
 
-unsigned int TimeIntegrationSchemeGLM::GetOrder() const
+unsigned int TimeIntegrationSchemeGLM::v_GetOrder() const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
     return m_integration_phases[m_integration_phases.size() - 1]->m_order;
 }
 
-std::vector<NekDouble> TimeIntegrationSchemeGLM::GetFreeParams() const
+std::vector<NekDouble> TimeIntegrationSchemeGLM::v_GetFreeParams() const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
 
     return m_integration_phases[m_integration_phases.size() - 1]->m_freeParams;
 }
 
-TimeIntegrationSchemeType TimeIntegrationSchemeGLM::GetIntegrationSchemeType()
+TimeIntegrationSchemeType TimeIntegrationSchemeGLM::v_GetIntegrationSchemeType()
     const
 {
     ASSERTL0(!m_integration_phases.empty(), "No scheme")
@@ -72,7 +72,7 @@ TimeIntegrationSchemeType TimeIntegrationSchemeGLM::GetIntegrationSchemeType()
     return m_integration_phases[m_integration_phases.size() - 1]->m_schemeType;
 }
 
-unsigned int TimeIntegrationSchemeGLM::GetNumIntegrationPhases() const
+unsigned int TimeIntegrationSchemeGLM::v_GetNumIntegrationPhases() const
 {
     return m_integration_phases.size();
 }
@@ -80,7 +80,7 @@ unsigned int TimeIntegrationSchemeGLM::GetNumIntegrationPhases() const
 /**
  * @brief Worker method to initialize the integration scheme.
  */
-void TimeIntegrationSchemeGLM::InitializeScheme(
+void TimeIntegrationSchemeGLM::v_InitializeScheme(
     const NekDouble deltaT, ConstDoubleArray &y_0, const NekDouble time,
     const TimeIntegrationSchemeOperators &op)
 {
@@ -91,7 +91,7 @@ void TimeIntegrationSchemeGLM::InitializeScheme(
 /**
  * @brief Worker method that actually does the time integration.
  */
-ConstDoubleArray &TimeIntegrationSchemeGLM::TimeIntegrate(
+ConstDoubleArray &TimeIntegrationSchemeGLM::v_TimeIntegrate(
     const int timestep, const NekDouble delta_t,
     const TimeIntegrationSchemeOperators &op)
 {
@@ -103,7 +103,7 @@ ConstDoubleArray &TimeIntegrationSchemeGLM::TimeIntegrate(
     return algorithm->TimeIntegrate(delta_t, m_solVector, op);
 }
 
-void TimeIntegrationSchemeGLM::InitializeSecondaryData(
+void TimeIntegrationSchemeGLM::v_InitializeSecondaryData(
     TimeIntegrationAlgorithmGLM *phase, NekDouble deltaT) const
 {
     boost::ignore_unused(phase, deltaT);
@@ -115,7 +115,7 @@ void TimeIntegrationSchemeGLM::InitializeSecondaryData(
 /**
  * @brief Worker method to print details on the integration scheme
  */
-void TimeIntegrationSchemeGLM::print(std::ostream &os) const
+void TimeIntegrationSchemeGLM::v_print(std::ostream &os) const
 {
     os << "Time Integration Scheme: " << GetFullName() << std::endl
        << "        Has " << m_integration_phases.size() << " phase(s)"
@@ -127,7 +127,7 @@ void TimeIntegrationSchemeGLM::print(std::ostream &os) const
     }
 }
 
-void TimeIntegrationSchemeGLM::printFull(std::ostream &os) const
+void TimeIntegrationSchemeGLM::v_printFull(std::ostream &os) const
 {
     os << "Time Integration Scheme: " << GetFullName() << std::endl
        << "        Has " << m_integration_phases.size() << " phase(s)"

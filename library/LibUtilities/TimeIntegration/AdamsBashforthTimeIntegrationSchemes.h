@@ -138,16 +138,6 @@ public:
 
     static std::string className;
 
-    LUE virtual std::string GetName() const
-    {
-        return std::string("AdamsBashforth");
-    }
-
-    LUE virtual NekDouble GetTimeStability() const
-    {
-        return 1.0;
-    }
-
     LUE static void SetupSchemeData(TimeIntegrationAlgorithmGLMSharedPtr &phase,
                                     int order)
     {
@@ -226,6 +216,17 @@ public:
         }
 
         phase->CheckAndVerify();
+    }
+
+protected:
+    LUE virtual std::string v_GetName() const override
+    {
+        return std::string("AdamsBashforth");
+    }
+
+    LUE virtual NekDouble v_GetTimeStability() const override
+    {
+        return 1.0;
     }
 
 }; // end class AdamsBashforthTimeIntegrationScheme
