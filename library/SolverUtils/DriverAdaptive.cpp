@@ -36,6 +36,7 @@
 
 #include <GlobalMapping/Mapping.h>
 #include <LibUtilities/BasicUtils/ParseUtils.h>
+#include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/DriverAdaptive.h>
 #include <StdRegions/StdHexExp.h>
 #include <StdRegions/StdPrismExp.h>
@@ -83,13 +84,13 @@ void DriverAdaptive::v_InitObject(ostream &out)
 
 void DriverAdaptive::v_Execute(ostream &out)
 {
-    time_t starttime, endtime;
+    Nektar::LibUtilities::Timer timer;
     NekDouble CPUtime;
 
     m_equ[0]->PrintSummary(out);
 
     // First run using original order
-    time(&starttime);
+    timer.Start();
     m_equ[0]->DoInitialise();
 
     // Obtain initial time in case a restart was used
@@ -398,13 +399,13 @@ void DriverAdaptive::v_Execute(ostream &out)
         m_equ[0]->DoSolve();
     }
 
-    time(&endtime);
+    timer.Stop();
 
     m_equ[0]->Output();
 
     if (m_comm->GetRank() == 0)
     {
-        CPUtime = difftime(endtime, starttime);
+        CPUtime = timer.Elapsed().count();
         cout << "-------------------------------------------" << endl;
         cout << "Total Computation Time = " << CPUtime << "s" << endl;
         cout << "-------------------------------------------" << endl;
