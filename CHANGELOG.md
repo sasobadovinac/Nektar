@@ -89,6 +89,7 @@ exporting in .vtu format (!1386)
 - Fix a Wreorder warning (!1445)
 - Fix some Wimplicit-fallthrough warnings (!1446)
 - Switch to using pkg-config for finding PETSc (!1454)
+- Use Nektar::LibUtilities::Timer for better accuracy (!1468)
 
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)

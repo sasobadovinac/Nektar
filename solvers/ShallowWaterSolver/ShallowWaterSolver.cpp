@@ -33,6 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <LibUtilities/BasicUtils/SessionReader.h>
+#include <LibUtilities/BasicUtils/Timer.h>
 #include <SolverUtils/EquationSystem.h>
 
 using namespace std;
@@ -48,12 +49,12 @@ int main(int argc, char *argv[])
     SpatialDomains::MeshGraphSharedPtr graph;
     graph = SpatialDomains::MeshGraph::Read(session);
 
-    time_t starttime, endtime;
+    Nektar::LibUtilities::Timer timer;
     NekDouble CPUtime;
     EquationSystemSharedPtr equ;
 
     // Record start time.
-    time(&starttime);
+    timer.Start();
 
     // Create instance of module to solve the equation specified in the session.
     try
@@ -75,8 +76,8 @@ int main(int argc, char *argv[])
     equ->DoSolve();
 
     // Record end time.
-    time(&endtime);
-    CPUtime = (1.0 / 60.0 / 60.0) * difftime(endtime, starttime);
+    timer.Stop();
+    CPUtime = (1.0 / 60.0 / 60.0) * timer.Elapsed().count();
 
     // Write output to .fld file
     equ->Output();
