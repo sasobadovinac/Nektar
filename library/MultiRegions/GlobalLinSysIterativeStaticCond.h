@@ -104,6 +104,18 @@ public:
     virtual ~GlobalLinSysIterativeStaticCond();
 
 protected:
+    virtual void v_InitObject() override;
+
+    /// Assemble the Schur complement matrix.
+    virtual void v_AssembleSchurComplement(
+        const std::shared_ptr<AssemblyMap> locToGloMap) override;
+
+    /// Perform a Shur-complement matrix multiply operation.
+    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput) override;
+
+    virtual void v_UniqueMap() override;
+
     virtual DNekScalBlkMatSharedPtr v_GetStaticCondBlock(
         unsigned int n) override;
     virtual GlobalLinSysStaticCondSharedPtr v_Recurse(
@@ -135,21 +147,9 @@ private:
     static std::string storagedef;
     static std::string storagelookupIds[];
 
-    virtual void v_InitObject() override;
-
-    /// Assemble the Schur complement matrix.
-    virtual void v_AssembleSchurComplement(
-        const std::shared_ptr<AssemblyMap> locToGloMap) override;
-
     /// Prepares local representation of Schur complement
     /// stored as a sparse block-diagonal matrix.
     void PrepareLocalSchurComplement();
-
-    /// Perform a Shur-complement matrix multiply operation.
-    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput) override;
-
-    virtual void v_UniqueMap() override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

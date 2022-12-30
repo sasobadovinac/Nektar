@@ -73,7 +73,6 @@ public:
         Array<OneD, NekDouble> &field) override;
 
 protected:
-private:
     virtual void v_ImposeDirichletConditions(
         Array<OneD, NekDouble> &outarray) override;
 

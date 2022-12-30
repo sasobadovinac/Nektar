@@ -74,8 +74,6 @@ protected:
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals) override;
 
-private:
-    // Virtual Functions ----------------------------------------
     virtual int v_GetShapeDimension() const final override
     {
         return 1;

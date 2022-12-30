@@ -85,7 +85,6 @@ protected:
     virtual void v_FillGeom() override;
     virtual void v_Reset(CurveMap &curvedEdges, CurveMap &curvedFaces) override;
     virtual void v_Setup() override;
-
     virtual NekDouble v_GetCoord(
         const int i, const Array<OneD, const NekDouble> &Lcoord) override;
     virtual int v_GetNumVerts() const override;

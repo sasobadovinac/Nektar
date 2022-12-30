@@ -115,6 +115,16 @@ protected:
 
     virtual void v_UniqueMap() = 0;
 
+    /// Solve the matrix system
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir) override;
+
+    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput) = 0;
+
 private:
     void UpdateKnownSolutions(const int pGlobalBndDofs,
                               const Array<OneD, const NekDouble> &pSolution,
@@ -140,16 +150,6 @@ private:
 
         m_precon->DoPreconditioner(pInput, pOutput);
     }
-
-    /// Solve the matrix system
-    virtual void v_SolveLinearSystem(const int pNumRows,
-                                     const Array<OneD, const NekDouble> &pInput,
-                                     Array<OneD, NekDouble> &pOutput,
-                                     const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir) override;
-
-    virtual void v_DoMatrixMultiply(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput) = 0;
 };
 } // namespace MultiRegions
 } // namespace Nektar

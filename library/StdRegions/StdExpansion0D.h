@@ -64,15 +64,12 @@ protected:
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals) override;
 
-private:
-    // Virtual Functions ----------------------------------------
-
-    virtual int v_GetShapeDimension() const override
+    virtual int v_GetShapeDimension() const override final
     {
         return 1;
     }
 
-    virtual int v_GetNtraces() const override
+    virtual int v_GetNtraces() const override final
     {
         return 0;
     }

@@ -65,12 +65,6 @@ public:
 
     MULTI_REGIONS_EXPORT virtual ~GlobalLinSysPETSc();
 
-    virtual void v_SolveLinearSystem(const int pNumRows,
-                                     const Array<OneD, const NekDouble> &pInput,
-                                     Array<OneD, NekDouble> &pOutput,
-                                     const AssemblyMapSharedPtr &locToGloMap,
-                                     const int pNumDir) override;
-
 protected:
     /// PETSc matrix object.
     Mat m_matrix;
@@ -122,6 +116,12 @@ protected:
     void CalculateReordering(const Array<OneD, const int> &glo2uniMap,
                              const Array<OneD, const int> &glo2unique,
                              const AssemblyMapSharedPtr &pLocToGloMap);
+
+    virtual void v_SolveLinearSystem(const int pNumRows,
+                                     const Array<OneD, const NekDouble> &pInput,
+                                     Array<OneD, NekDouble> &pOutput,
+                                     const AssemblyMapSharedPtr &locToGloMap,
+                                     const int pNumDir) override;
 
     virtual void v_DoMatrixMultiply(const Array<OneD, const NekDouble> &pInput,
                                     Array<OneD, NekDouble> &pOutput) = 0;

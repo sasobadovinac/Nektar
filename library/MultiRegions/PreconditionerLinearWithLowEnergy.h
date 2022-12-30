@@ -79,7 +79,6 @@ protected:
 
     Array<OneD, NekDouble> m_invMultiplicity;
 
-private:
     virtual void v_InitObject() override;
 
     virtual void v_DoTransformBasisToLowEnergy(

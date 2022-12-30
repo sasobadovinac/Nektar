@@ -76,12 +76,6 @@ public:
     virtual ~NekFFTW();
 
 protected:
-    virtual void v_FFTFwdTrans(Array<OneD, NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray) override;
-
-    virtual void v_FFTBwdTrans(Array<OneD, NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray) override;
-
     Array<OneD, NekDouble>
         m_FFTW_w; // weights to convert arrays form Nektar++ to FFTW format
     Array<OneD, NekDouble>
@@ -103,6 +97,12 @@ protected:
     void Reshuffle_FFTW2Nek(Array<OneD, NekDouble> &coef);
 
     void Reshuffle_Nek2FFTW(Array<OneD, NekDouble> &coef);
+
+    virtual void v_FFTFwdTrans(Array<OneD, NekDouble> &inarray,
+                               Array<OneD, NekDouble> &outarray) override;
+
+    virtual void v_FFTBwdTrans(Array<OneD, NekDouble> &inarray,
+                               Array<OneD, NekDouble> &outarray) override;
 
 private:
 };

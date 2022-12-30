@@ -90,6 +90,17 @@ protected:
     // are in R and Rinv
     std::vector<std::pair<int, int>> m_sameBlock;
 
+    virtual void v_InitObject() override;
+
+    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
+                                    Array<OneD, NekDouble> &pOutput) override;
+
+    virtual void v_BuildPreconditioner() override;
+
+    virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
+        int n, int offset,
+        const std::shared_ptr<DNekScalMat> &loc_mat) override;
+
     virtual void v_DoTransformBasisToLowEnergy(
         Array<OneD, NekDouble> &pInOut) override;
 
@@ -155,17 +166,6 @@ private:
     SpatialDomains::PyrGeomSharedPtr CreateRefPyrGeom(void);
     SpatialDomains::PrismGeomSharedPtr CreateRefPrismGeom(void);
     SpatialDomains::HexGeomSharedPtr CreateRefHexGeom(void);
-
-    virtual void v_InitObject() override;
-
-    virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
-                                    Array<OneD, NekDouble> &pOutput) override;
-
-    virtual void v_BuildPreconditioner() override;
-
-    virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
-        int n, int offset,
-        const std::shared_ptr<DNekScalMat> &loc_mat) override;
 };
 } // namespace MultiRegions
 } // namespace Nektar

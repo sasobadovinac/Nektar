@@ -66,9 +66,6 @@ public:
     MULTI_REGIONS_EXPORT virtual ~ContField3DHomogeneous2D();
 
 protected:
-private:
-    Array<OneD, NekDouble> m_contCoeffs;
-
     // virtual functions
 
     virtual void v_ImposeDirichletConditions(
@@ -91,6 +88,9 @@ private:
                              const bool PhysSpaceForcing) override;
 
     virtual void v_ClearGlobalLinSysManager(void) override;
+
+private:
+    Array<OneD, NekDouble> m_contCoeffs;
 };
 
 typedef std::shared_ptr<ContField3DHomogeneous2D>
