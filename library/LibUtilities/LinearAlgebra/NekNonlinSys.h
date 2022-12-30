@@ -56,26 +56,11 @@ LIB_UTILITIES_EXPORT NekNonlinSysFactory &GetNekNonlinSysFactory();
 class NekNonlinSys : public NekSys
 {
 public:
-    friend class MemoryManager<NekNonlinSys>;
-    LIB_UTILITIES_EXPORT static NekNonlinSysSharedPtr CreateInstance(
-        const LibUtilities::SessionReaderSharedPtr &pSession,
-        const LibUtilities::CommSharedPtr &vComm, const int nDimen,
-        const NekSysKey &pKey)
-    {
-        NekNonlinSysSharedPtr p =
-            MemoryManager<NekNonlinSys>::AllocateSharedPtr(pSession, vComm,
-                                                           nDimen, pKey);
-        return p;
-    }
     LIB_UTILITIES_EXPORT NekNonlinSys(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const LibUtilities::CommSharedPtr &vComm, const int nDimen,
         const NekSysKey &pKey);
     LIB_UTILITIES_EXPORT ~NekNonlinSys();
-
-    LIB_UTILITIES_EXPORT virtual void v_SetupNekNonlinSystem(
-        const int nGlobal, const Array<OneD, const NekDouble> &pInput,
-        const Array<OneD, const NekDouble> &pSource, const int nDir);
 
     LIB_UTILITIES_EXPORT const Array<OneD, const NekDouble> &GetRefSolution()
         const
@@ -136,6 +121,13 @@ public:
         return m_NtotLinSysIts;
     }
 
+    LIB_UTILITIES_EXPORT void SetupNekNonlinSystem(
+        const int nGlobal, const Array<OneD, const NekDouble> &pInput,
+        const Array<OneD, const NekDouble> &pSource, const int nDir)
+    {
+        v_SetupNekNonlinSystem(nGlobal, pInput, pSource, nDir);
+    }
+
 protected:
     NekLinSysIterSharedPtr m_linsol;
 
@@ -155,6 +147,10 @@ protected:
     bool m_ResidualUpdated = false;
 
     virtual void v_InitObject();
+
+    LIB_UTILITIES_EXPORT virtual void v_SetupNekNonlinSystem(
+        const int nGlobal, const Array<OneD, const NekDouble> &pInput,
+        const Array<OneD, const NekDouble> &pSource, const int nDir) = 0;
 
 private:
 };

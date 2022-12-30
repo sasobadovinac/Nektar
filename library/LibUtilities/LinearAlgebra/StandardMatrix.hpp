@@ -523,9 +523,6 @@ protected:
 
     LIB_UTILITIES_EXPORT void ResizeDataArrayIfNeeded();
 
-private:
-    LIB_UTILITIES_EXPORT void PerformCopyConstruction(const ThisType &rhs);
-
     LIB_UTILITIES_EXPORT virtual
         typename boost::call_traits<DataType>::value_type
         v_GetValue(unsigned int row, unsigned int column) const override;
@@ -537,6 +534,9 @@ private:
     LIB_UTILITIES_EXPORT virtual void v_SetValue(
         unsigned int row, unsigned int column,
         typename boost::call_traits<DataType>::const_reference d) override;
+
+private:
+    LIB_UTILITIES_EXPORT void PerformCopyConstruction(const ThisType &rhs);
 
     Array<OneD, DataType> m_data;
     PointerWrapper m_wrapperType;

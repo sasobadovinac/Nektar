@@ -201,14 +201,7 @@ public:
     LIB_UTILITIES_EXPORT static std::shared_ptr<ThisType> CreateWrapper(
         const std::shared_ptr<ThisType> &rhs);
 
-private:
-    LIB_UTILITIES_EXPORT static unsigned int GetNumberOfElementsInBlock(
-        unsigned int block, unsigned int totalBlocks,
-        const Array<OneD, unsigned int> &sizes);
-
-    LIB_UTILITIES_EXPORT void Initialize(const unsigned int *rowsPerBlock,
-                                         const unsigned int *columnsPerBlock);
-
+protected:
     LIB_UTILITIES_EXPORT virtual
         typename boost::call_traits<NumberType>::value_type
         v_GetValue(unsigned int row, unsigned int column) const override;
@@ -216,6 +209,14 @@ private:
     LIB_UTILITIES_EXPORT virtual unsigned int v_GetStorageSize() const override;
 
     LIB_UTILITIES_EXPORT virtual void v_Transpose() override;
+
+private:
+    LIB_UTILITIES_EXPORT static unsigned int GetNumberOfElementsInBlock(
+        unsigned int block, unsigned int totalBlocks,
+        const Array<OneD, unsigned int> &sizes);
+
+    LIB_UTILITIES_EXPORT void Initialize(const unsigned int *rowsPerBlock,
+                                         const unsigned int *columnsPerBlock);
 
     Array<OneD, std::shared_ptr<InnerType>> m_data;
     std::shared_ptr<InnerType> m_nullBlockPtr;

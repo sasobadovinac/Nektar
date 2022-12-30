@@ -90,7 +90,6 @@ protected:
                                     Array<OneD, NekDouble> &Lcoords,
                                     NekDouble &dist);
 
-private:
     //---------------------------------------
     // Helper functions
     //---------------------------------------

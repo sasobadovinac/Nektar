@@ -223,8 +223,7 @@ protected:
     STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
         const int dir, DNekMatSharedPtr &mat) override;
 
-private:
-    virtual int v_GetShapeDimension() const override
+    virtual int v_GetShapeDimension() const override final
     {
         return 3;
     }

@@ -124,9 +124,6 @@ protected:
     virtual DNekScalMatSharedPtr v_TransformedSchurCompl(
         int offset, int bndoffset, const std::shared_ptr<DNekScalMat> &loc_mat);
 
-private:
-    void NullPreconditioner(void);
-
     virtual void v_InitObject();
 
     virtual void v_DoPreconditioner(const Array<OneD, NekDouble> &pInput,
@@ -149,6 +146,9 @@ private:
         const Array<OneD, NekDouble> &pInput, Array<OneD, NekDouble> &pOutput);
 
     virtual void v_BuildPreconditioner();
+
+private:
+    void NullPreconditioner(void);
 
     static std::string lookupIds[];
     static std::string def;

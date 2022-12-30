@@ -71,7 +71,7 @@ public:
 
     MULTI_REGIONS_EXPORT virtual ~GlobalLinSysXxtFull();
 
-private:
+protected:
     /// Solve the linear system for given input and output vectors
     /// using a specified local to global map.
     virtual void v_Solve(const Array<OneD, const NekDouble> &in,
@@ -80,6 +80,7 @@ private:
                          const Array<OneD, const NekDouble> &dirForcing =
                              NullNekDouble1DArray) override;
 
+private:
     void CreateMap(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
 
     void AssembleMatrixArrays(const std::shared_ptr<AssemblyMap> &pLocToGloMap);
