@@ -429,6 +429,9 @@ possibly also Reynolds stresses) into single file;
 \item \inltt{phifile}: Computes the $\Phi$ function representing a body defined
   in an \inltt{.stl} file. Useful for the Smoothed Profile Method solver.
 \item \inltt{wallNormalData}: Interpolate values for a set of points in the wall-normal direction (for e.g. extract boundary layer profiles).
+\item inltt{bodyFittedVelocity}: Generate a body-fitted coordinate system and then 
+  project the velocity components from Cartesian coordinate system into the new 
+  coordinate system.
 \end{enumerate}
 The module list above can be seen by running the command
 %
@@ -1414,10 +1417,11 @@ function.
 
 \subsection{Interpolate values for a point array: 
 \textit{wallNormalData} module}
+\label{s:utilities:fieldconvert:sub:wallNormalData}
 To obtain the values of an array of points in the wall-normal direction, such 
 as boundary layer profiles, the user can run:
 \begin{lstlisting}[style=BashInputStyle]
-FieldConvert -m wss:bnd=0:xorig="0.5,0,0":projDir="0,1,0":maxDist=0.1:\
+FieldConvert -m wallNormalData:bnd=0:xorig="0.5,0,0":projDir="0,1,0":maxDist=0.1:\
     distH=0.1:nptsH=0.01:d=0.2 test.xml test.fld test.pts
 \end{lstlisting}
 The option \inltt{bnd} specifies the target boundary region, to which the input 
@@ -1454,6 +1458,49 @@ and save the result in test.pts.
     \includegraphics[width = 0.9 \textwidth]{img/module_wallNormalData.jpg}
     \caption{(a) Project the input point onto the boundary, (b) Array of 
     points to be interpolated.}
+  \end{center}
+\end{figure}
+%
+%
+%
+
+\subsection{Project velocity into body-fitted coordinate system: 
+\textit{bodyFittedVelocity} module}
+\label{s:utilities:fieldconvert:sub:bodyFittedVelocity}
+To obtain the velocity components in the body-fitted coordinate system, the user
+can run:
+\begin{lstlisting}[style=BashInputStyle]
+FieldConvert -m bodyFittedVelocity:bnd=0:assistDir="0,0,1":checkAngle=1:\
+    distTol=1.0e-12:bfcOut=1 mesh.xml session.xml field.fld bfvFile.fld  
+\end{lstlisting}
+The option \inltt{bnd} specifies the reference boundary composite to set up
+the body-fitted coordinate system with the help of vector specified by 
+\inltt{assistDir}. For any point inside the domain, the the body-fitted coordinate 
+system has three directions, i.e. main tangantial direction (0), normal direction
+(1) from the nearest point on the wall to the point , and minor tangential direction
+(2) specified by \inltt{assistDir}. Since the directions 1 and 2 are known, the main
+tangantial direction (0) can be computed by the cross product of them.
+
+In general, when the surface is smooth, \inltt{checkAngle} and \inltt{distTol} is
+not needed to set up the body-fitted coordinate system since they are specially
+designed for geometries with surfarce irregularities, such a step or gap. As shown
+in the following sketch, the presence of a gap in 2D geometry introduces fours
+singular points at the cornors, where the body-fited velocity components will 
+experience significant change, leading to jump in the final fields. Considering 
+the surfaces irregularities are typically small in size, the user can choose to 
+exclude the side wall(s) as reference to set up the body-fitted coordinate system
+by setting boundary id=0,2,4 into one composite while id=1,3 into another. Then only
+the first composte id is specified through \inltt{bnd}. In this way the finaly results
+will be comparable with the results using the clean geometry.
+
+Finally, \inltt{bfcOut} is a bool parameter controls whether the fields for body-fitted 
+coordinate system will be output. This file can be read by the \inltt{BodyFittedVelocity}
+filter to process data. See \ref{filters:BodyFittedVelocity}.
+%
+\begin{figure}[!htbp]
+  \begin{center}
+    \includegraphics[width = 0.9 \textwidth]{img/module_bodyFittedVelocity.png}
+    \caption{Body-fitted coordinate system when the geometry has a gap on the surace.}
   \end{center}
 \end{figure}
 %

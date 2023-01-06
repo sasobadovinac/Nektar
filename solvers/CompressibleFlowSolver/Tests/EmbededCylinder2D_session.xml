@@ -1,0 +1,133 @@
+<!-- Tutorial: 2D cylinder flow -->
+<?xml version="1.0" encoding="utf-8"?>
+<NEKTAR>
+    <EXPANSIONS>
+        <E COMPOSITE="C[100,101]" NUMMODES="3" FIELDS="rho,rhou,rhov,E" TYPE="MODIFIED" />
+    </EXPANSIONS>
+
+    <CONDITIONS>
+        <SOLVERINFO>
+            <I PROPERTY="EQType"                VALUE="EulerCFE"     /> <!--EulerCFE NavierStokesCFE-->
+            <I PROPERTY="Projection"            VALUE="DisContinuous"       />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+            <I PROPERTY="DiffusionType"         VALUE="LDGNS"               />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ForwardEuler"        /> <!-- ClassicalRungeKutta4 -->
+            <I PROPERTY="UpwindType"            VALUE="ExactToro"           /> <!--HLLC-->
+            <I PROPERTY="ProblemType"           VALUE="General"             />
+            <I PROPERTY="EquationOfState"       VALUE="IdealGas"            />
+            <!--<I PROPERTY="ViscosityType"         VALUE="Variable"            />-->
+        </SOLVERINFO>
+        <PARAMETERS>
+            <!--Computational parameters-->
+            <P> TimeStep            = 0.0002		                </P> <!--5e-4-->
+            <P> NumSteps            = 10       			</P>
+            <P> IO_CheckSteps       = 2500         			</P>
+            <P> IO_InfoSteps        = 1            		        </P>
+            <P> IO_CFLSteps         = 200            		        </P>
+            <!-- Fluid properties -->
+            <P> Gamma               = 1.4          			</P>
+            <P> Pr                  = 0.72         			</P>
+            <P> Mach                = 0.3         			</P> <!-- 0.6 -->
+            <P> Re                  = 200.0      			</P>
+            <P> GasConstant         = 1.0/(Gamma*Mach*Mach)		</P>
+            <P> mu                  = 1.0/Re     			</P>
+            <!-- Boundary condition parameters-->
+            <P> rhoInf              = 1.0            			</P>
+            <P> TInf                = 1.0            			</P>
+            <P> pInf                = rhoInf*GasConstant*TInf	        </P>
+            <P> cInf                = sqrt(Gamma*GasConstant*TInf)    </P>
+            <P> uInf	              = Mach*cInf	       		</P>
+            <P> vInf	              = 0.0	       		        </P>
+        </PARAMETERS>
+
+        <VARIABLES>
+            <V ID="0"> rho  </V>
+            <V ID="1"> rhou </V>
+            <V ID="2"> rhov </V>
+            <V ID="3"> E    </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <!-- 1-inflow (left), 2-symmetry (bottom), 3-outflow (right), 4-symmetry (top), 5,6,7,8-wall (cylinder) -->
+            <B ID="0"> C[1-4] </B>  	  <!-- wall     -->
+            <B ID="1"> C[5] </B>  	    <!-- inflow nose -->
+            <B ID="2"> C[9,10,6,7] </B> <!-- inflow side -->
+            <B ID="3"> C[8]   </B>  	  <!-- outflow  -->
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <!-- Wall -->
+            <REGION REF="0">
+                <D VAR="rho"  USERDEFINEDTYPE="Wall" VALUE="0" />
+                <D VAR="rhou" USERDEFINEDTYPE="Wall" VALUE="0" />
+                <D VAR="rhov" USERDEFINEDTYPE="Wall" VALUE="0" />
+                <D VAR="E"    USERDEFINEDTYPE="Wall" VALUE="0" />
+            </REGION>
+            <!-- Inflow nose-->
+            <REGION REF="1">
+
+                <D VAR="rho"  FILE="EmbededCylinder2D_bnd_inflow.bc" />
+                <D VAR="rhou" FILE="EmbededCylinder2D_bnd_inflow.bc" />
+                <D VAR="rhov" FILE="EmbededCylinder2D_bnd_inflow.bc" />
+                <D VAR="E"    FILE="EmbededCylinder2D_bnd_inflow.bc" />
+                <!--
+                    <D VAR="rho"   USERDEFINEDTYPE="EnforceRhoP" FILE="bnd_inflow.bc" />
+                    <D VAR="rhou"  USERDEFINEDTYPE="EnforceRhoP" FILE="bnd_inflow.bc" />
+                    <D VAR="rhov"  USERDEFINEDTYPE="EnforceRhoP" FILE="bnd_inflow.bc" />
+                    <D VAR="E"     USERDEFINEDTYPE="EnforceRhoP" FILE="bnd_inflow.bc" />
+                -->
+            </REGION>
+            <!-- Inflow side-->
+            <REGION REF="2">
+
+                <D VAR="rho"  FILE="EmbededCylinder2D_bnd_inflow.bc" />
+                <D VAR="rhou" FILE="EmbededCylinder2D_bnd_inflow.bc" />
+                <D VAR="rhov" FILE="EmbededCylinder2D_bnd_inflow.bc" />
+                <D VAR="E"    FILE="EmbededCylinder2D_bnd_inflow.bc" />
+                <!--
+                    <D VAR="rho"   USERDEFINEDTYPE="EnforceRhoP" FILE="bnd_inflow.bc" />
+                    <D VAR="rhou"  USERDEFINEDTYPE="EnforceRhoP" FILE="bnd_inflow.bc" />
+                    <D VAR="rhov"  USERDEFINEDTYPE="EnforceRhoP" FILE="bnd_inflow.bc" />
+                    <D VAR="E"     USERDEFINEDTYPE="EnforceRhoP" FILE="bnd_inflow.bc" />
+                -->
+            </REGION>
+
+            <!-- Outflow -->
+            <REGION REF="3">
+                <D VAR="rho"  FILE="EmbededCylinder2D_bnd_outflow.bc" />
+                <D VAR="rhou" FILE="EmbededCylinder2D_bnd_outflow.bc" />
+                <D VAR="rhov" FILE="EmbededCylinder2D_bnd_outflow.bc" />
+                <D VAR="E"    FILE="EmbededCylinder2D_bnd_outflow.bc" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="InitialConditions">
+            <!--
+                <E VAR="rho"  VALUE="rhoInf" />
+                <E VAR="rhou" VALUE="rhoInf*uInf" />
+                <E VAR="rhov" VALUE="rhoInf*vInf" />
+                <E VAR="E"    VALUE="pInf/(Gamma-1) + 0.5*rhoInf*(uInf*uInf + vInf*vInf)" />
+            -->
+
+            <F VAR="rho,rhou,rhov,E" FILE="EmbededCylinder2D_restart_P2.fld" />
+
+        </FUNCTION>
+
+    </CONDITIONS>
+
+    <FILTERS>
+        <FILTER TYPE="BodyFittedVelocity">
+            <PARAM NAME="RestartFile">EmbededCylinder2D_bfc.fld</PARAM>
+            <PARAM NAME="BodyFittedCoordinateFile">EmbededCylinder2D_bfc.fld</PARAM>
+            <PARAM NAME="OutputFile">vel_bfc</PARAM>
+            <PARAM NAME="OutputFrequency">   50     </PARAM>
+            <PARAM NAME="SampleFrequency">   1      </PARAM>
+            <PARAM NAME="OriginalOrMaxOrMin">max    </PARAM>
+            <PARAM NAME="options">  --error </PARAM>
+        </FILTER>
+    </FILTERS>
+
+</NEKTAR>
+
+
+
