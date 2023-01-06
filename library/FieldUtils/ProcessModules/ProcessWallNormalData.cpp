@@ -83,6 +83,9 @@ ProcessWallNormalData::ProcessWallNormalData(FieldSharedPtr f)
                           distribution. d should be in the range (0,inf). d \
                           in (0,0.95] gives controled points; d in (0.95,inf) \
                           gives evenly spaced points");
+
+    // To allow some functions called somewhere else outside Process()
+    m_spacedim = m_f->m_exp[0]->GetCoordim(0) + m_f->m_numHomogeneousDir;
 }
 
 ProcessWallNormalData::~ProcessWallNormalData()
@@ -117,9 +120,8 @@ void ProcessWallNormalData::v_Process(po::variables_map &vm)
     // Get dim to store data
     const int nfields       = m_f->m_variables.size();
     const int nCoordDim     = m_f->m_exp[0]->GetCoordim(0);
-    m_spacedim              = nCoordDim + m_f->m_numHomogeneousDir;
     const int nBndLcoordDim = nCoordDim - 1;
-    const int totVars       = m_spacedim + m_f->m_variables.size();
+    const int totVars       = m_spacedim + nfields;
 
     // Initialize the sampling parameters
     std::vector<NekDouble> xorig, searchDir;

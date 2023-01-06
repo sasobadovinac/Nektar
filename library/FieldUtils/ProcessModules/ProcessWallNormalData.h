@@ -59,6 +59,16 @@ public:
     ProcessWallNormalData(FieldSharedPtr f);
     virtual ~ProcessWallNormalData();
 
+    /**
+     * @brief Get the normals for a given locCoord
+     * @param bndGeom      Pointer to the geometry of the boundary element.
+     * @param locCoord     Iteration results for local coordinates (if inside).
+     * @param normals      Wall normal as the result
+     */
+    void GetNormals(SpatialDomains::GeometrySharedPtr bndGeom,
+                    const Array<OneD, const NekDouble> &locCoord,
+                    Array<OneD, NekDouble> &normals);
+
 protected:
     /// Write mesh to output file.
     virtual void v_Process(po::variables_map &vm) override;
@@ -182,16 +192,6 @@ private:
                               NekDouble &projDist,
                               const NekDouble maxDist = 1.0,
                               const NekDouble iterTol = 1.0e-8);
-
-    /**
-     * @brief Get the normals for a given locCoord
-     * @param bndGeom      Pointer to the geometry of the boundary element.
-     * @param locCoord     Iteration results for local coordinates (if inside).
-     * @param normals      Wall normal as the result
-     */
-    void GetNormals(SpatialDomains::GeometrySharedPtr bndGeom,
-                    const Array<OneD, const NekDouble> &locCoord,
-                    Array<OneD, NekDouble> &normals);
 };
 } // namespace FieldUtils
 } // namespace Nektar
