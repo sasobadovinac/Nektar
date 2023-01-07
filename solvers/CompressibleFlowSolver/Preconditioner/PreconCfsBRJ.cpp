@@ -62,7 +62,8 @@ PreconCfsBRJ::PreconCfsBRJ(
     size_t nvariables  = pFields.size();
     m_PreconMatStorage = eDiagonal;
 
-    m_PreconMatVarsSingle = Array<OneD, Array<OneD, SNekBlkMatSharedPtr>>(nvariables);
+    m_PreconMatVarsSingle =
+        Array<OneD, Array<OneD, SNekBlkMatSharedPtr>>(nvariables);
     for (size_t i = 0; i < nvariables; i++)
     {
         m_PreconMatVarsSingle[i] = Array<OneD, SNekBlkMatSharedPtr>(nvariables);
@@ -366,7 +367,7 @@ void PreconCfsBRJ::PreconBlkDiag(
         }
 
         icnt1 += nblocks * vecwidth;
-    } 
+    }
 }
 
 template <typename DataType>

@@ -78,13 +78,13 @@ protected:
     int m_BRJRelaxParam;
 
     Array<OneD, Array<OneD, SNekBlkMatSharedPtr>> m_PreconMatVarsSingle;
-    
+
     unsigned int m_max_nblocks;
     unsigned int m_max_nElmtDof;
     std::vector<simd<NekSingle>, tinysimd::allocator<simd<NekSingle>>>
         m_sBlkDiagMat;
     std::vector<int> m_inputIdx;
-    
+
     Array<OneD, SNekBlkMatSharedPtr> m_TraceJacSingle;
     TensorOfArray4D<NekSingle> m_TraceJacArraySingle;
     Array<OneD, SNekBlkMatSharedPtr> m_TraceJacDerivSingle;
@@ -109,7 +109,8 @@ private:
 
     void PreconBlkDiag(
         const Array<OneD, MultiRegions::ExpListSharedPtr> &pFields,
-        const Array<OneD, NekDouble> &inarray, Array<OneD, NekDouble> &outarray);
+        const Array<OneD, NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
 
     template <typename DataType>
     void MinusOffDiag2Rhs(
@@ -201,10 +202,10 @@ private:
                         m_inputIdx[cnt1++] = inOffset + i;
                     }
                 }
-		else
-		{
-		     i = 0; 
-		}
+                else
+                {
+                    i = 0;
+                }
 
                 // load up other vectors in variable that fit into vector
                 // width
