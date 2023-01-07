@@ -36,9 +36,8 @@
 
 namespace Nektar
 {
-std::string MetricPyUnitTest::type =
-    GetMetricFactory().RegisterCreatorFunction(
-        "PYUNITTEST", MetricPyUnitTest::create);
+std::string MetricPyUnitTest::type = GetMetricFactory().RegisterCreatorFunction(
+    "PYUNITTEST", MetricPyUnitTest::create);
 
 MetricPyUnitTest::MetricPyUnitTest(TiXmlElement *metric, bool generate)
     : MetricRegex(metric, generate)

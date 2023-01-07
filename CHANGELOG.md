@@ -92,6 +92,7 @@ exporting in .vtu format (!1386)
 - Switch to using pkg-config for finding PETSc (!1454)
 - Use Nektar::LibUtilities::Timer for better accuracy (!1468)
 - Make some virtual functions protected (!1469)
+- Extend clang-format checks to solvers, utilities, tests and templates (!1434)
 
 **CI**
 - Enable packaging for Fedora 35, removed Fedora 33/34 from package builds. (!1424)

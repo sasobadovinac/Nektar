@@ -144,14 +144,15 @@ include:
   stage: quality-checks
   variables:
     CL_F_VER: 11
-    TARGETS: library
+    TARGETS: library solvers templates tests utilities
   before_script:
     - apt-get update && apt-get install -y clang-format-$CL_F_VER git-core
   script:
     - echo `which clang-format-$CL_F_VER`
     - ln -s `which clang-format-$CL_F_VER` /usr/bin/clang-format
     - cd "$CI_PROJECT_DIR"
-    - find $TARGETS -iname "*.cpp" -o -iname "*.h" -o -iname "*.hpp" | xargs clang-format-11 --dry-run -Werror
+    - find $TARGETS -iname "*.cpp" -o -iname "*.h" -o -iname "*.hpp" | 
+      xargs clang-format-11 --dry-run -Werror
   allow_failure: true
   timeout: 15m
 

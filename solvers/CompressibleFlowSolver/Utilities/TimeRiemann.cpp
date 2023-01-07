@@ -99,8 +99,7 @@ int main(int argc, char const *argv[])
         normals[i] = Array<OneD, NekDouble>(npts);
     }
     riemannSolver.SetVector(
-        "N",
-        [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
+        "N", [&normals]() -> const Array<OneD, const Array<OneD, NekDouble>> & {
             return normals;
         });
 
