@@ -599,8 +599,35 @@ win10-default-build-and-test:
     - cmake.exe --build . --target INSTALL --config Debug
     - ctest --output-on-failure -C Debug -j8
   after_script:
-    - Remove-Item -Recurse -Force build
+    # This script identifies any orphan Tester-g processes still running
+    # and terminates them (and their children recursively), to ensure the build
+    # files can then be removed.
+    #
+    # The function Kill-ProcessTree gets all the processes (Get-CimInstance
+    # Win32_Process) and selects those which have $ppid as their parent. It
+    # recursively calls Kill-ProcessTree on them to kill their children. It
+    # finally kills the process itself.
+    #
+    # The script below identifies all orphaned Tester-g processes and calls
+    # Kill-ProcessTree to kill each of them. It then removes the source and
+    # build trees to maximise space on the runner in light of multiple forks.
+    - function Kill-ProcessTree {
+        Param([int]$ppid)
+        Get-CimInstance Win32_Process | Where-Object {
+          $_.ParentProcessId -eq $ppid 
+        } | ForEach-Object { 
+          Kill-ProcessTree $_.ProcessId
+        }
+        Stop-Process -Id $ppid -Force
+      };
+      $tester = Get-Process Tester-g -ErrorAction SilentlyContinue ;
+      if ($tester) {
+        Kill-ProcessTree $tester.Id
+        Sleep 5
+      } ;
+      Remove-Item -Force -Recurse *
   needs: []
+  artifacts:
   timeout: 4h
 
 win10-mpi-default-build-and-test:
@@ -617,8 +644,35 @@ win10-mpi-default-build-and-test:
     - cmake.exe --build . --target INSTALL --config Debug
     - ctest --output-on-failure -C Debug -j8
   after_script:
-    - Remove-Item -Recurse -Force build
+    # This script identifies any orphan Tester-g processes still running
+    # and terminates them (and their children recursively), to ensure the build
+    # files can then be removed.
+    #
+    # The function Kill-ProcessTree gets all the processes (Get-CimInstance
+    # Win32_Process) and selects those which have $ppid as their parent. It
+    # recursively calls Kill-ProcessTree on them to kill their children. It
+    # finally kills the process itself.
+    #
+    # The script below identifies all orphaned Tester-g processes and calls
+    # Kill-ProcessTree to kill each of them. It then removes the source and
+    # build trees to maximise space on the runner in light of multiple forks.
+    - function Kill-ProcessTree {
+        Param([int]$ppid)
+        Get-CimInstance Win32_Process | Where-Object {
+          $_.ParentProcessId -eq $ppid
+        } | ForEach-Object {
+          Kill-ProcessTree $_.ProcessId
+        }
+        Stop-Process -Id $ppid -Force
+      };
+      $tester = Get-Process Tester-g -ErrorAction SilentlyContinue ;
+      if ($tester) {
+        Kill-ProcessTree $tester.Id
+        Sleep 5
+      } ;
+      Remove-Item -Force -Recurse *
   needs: []
+  artifacts:
   timeout: 4h
 
 # ##################################################

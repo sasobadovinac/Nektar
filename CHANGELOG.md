@@ -101,7 +101,8 @@ exporting in .vtu format (!1386)
 - Update solvers CMakeList.txt to fix some warnings detection issue (!1447)
 - Remove -fpermissive from NektarCommon.cmake (!1460)
 - Remove old distribution versions, added Fedora 35/36 testing to CI (!1461)
-
+- Kill orphan Tester-g processes on Windows and remove source tree after build
+(!1471)
 
 v5.2.0
 ------
