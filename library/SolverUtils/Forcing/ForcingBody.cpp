@@ -133,22 +133,24 @@ void ForcingBody::Update(
                 m_session->GetFunction(m_funcName, m_session->GetVariable(i));
             if (!boost::iequals(eqn->GetVlist(), "x y z t"))
             {
-                // Coupled forcing
                 int nq = pFields[0]->GetNpoints();
                 Array<OneD, NekDouble> xc(nq), yc(nq), zc(nq), t(nq, time);
-                std::string varstr                                  = "x y z";
+                pFields[0]->GetCoords(xc, yc, zc);
+                Array<OneD, Array<OneD, NekDouble>> inn_cpy(inarray.size());
                 std::vector<Array<OneD, const NekDouble>> fielddata = {xc, yc,
                                                                        zc, t};
-
                 for (int j = 0; j < m_NumVariable; ++j)
                 {
-                    varstr += " " + m_session->GetVariable(j);
-                    fielddata.push_back(inarray[j]);
+                    inn_cpy[j] = Array<OneD, NekDouble>(nq);
+                    Vmath::Vcopy(nq, inarray[j], 1, inn_cpy[j], 1);
+                    pFields[0]->HomogeneousBwdTrans(inn_cpy[j], inn_cpy[j]);
+                    fielddata.push_back(inn_cpy[j]);
+                    
                 }
-
                 // Evaluate function
                 m_session->GetFunction(m_funcName, m_session->GetVariable(i))
                     ->Evaluate(fielddata, m_Forcing[i]);
+                
                 continue;
             }
         }
