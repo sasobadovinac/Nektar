@@ -104,6 +104,8 @@ exporting in .vtu format (!1386)
 - Remove old distribution versions, added Fedora 35/36 testing to CI (!1461)
 - Kill orphan Tester-g processes on Windows and remove source tree after build
 (!1471)
+- Fixed path issue and warning in the nektar-workbook image (!1470)
+
 
 v5.2.0
 ------
