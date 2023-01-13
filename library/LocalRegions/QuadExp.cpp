@@ -1381,6 +1381,11 @@ DNekScalMatSharedPtr QuadExp::v_GetLocMatrix(const MatrixKey &mkey)
     return m_matrixManager[mkey];
 }
 
+void QuadExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
+}
+
 DNekScalBlkMatSharedPtr QuadExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)
 {
     return m_staticCondMatrixManager[mkey];

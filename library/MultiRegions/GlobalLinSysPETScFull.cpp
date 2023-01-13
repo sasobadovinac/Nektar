@@ -143,10 +143,11 @@ void GlobalLinSysPETScFull::v_Solve(
     Array<OneD, NekDouble> tmp1(nLocDofs);
     Array<OneD, NekDouble> global(nGlobDofs, 0.0);
 
-    expList->GetComm()->GetRowComm()->AllReduce(nDirDofs,
+    int nDirTotal = nDirDofs;
+    expList->GetComm()->GetRowComm()->AllReduce(nDirTotal,
                                                 LibUtilities::ReduceSum);
 
-    if (nDirDofs)
+    if (nDirTotal)
     {
         // calculate the dirichlet forcing
         if (dirForcCalculated)

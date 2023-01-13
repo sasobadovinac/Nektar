@@ -238,7 +238,6 @@ LocalRegions::MatrixKey GlobalLinSys::GetBlockMatrixKey(unsigned int n)
 {
 
     std::shared_ptr<MultiRegions::ExpList> expList = m_expList.lock();
-    int cnt                                        = 0;
 
     LocalRegions::ExpansionSharedPtr vExp = expList->GetExp(n);
 
@@ -286,12 +285,9 @@ LocalRegions::MatrixKey GlobalLinSys::GetBlockMatrixKey(unsigned int n)
     // retrieve variable coefficients
     if (m_linSysKey.GetNVarCoeffs() > 0)
     {
-        cnt = expList->GetPhys_Offset(n);
-
-        for (auto &x : m_linSysKey.GetVarCoeffs())
-        {
-            vVarCoeffMap[x.first] = x.second + cnt;
-        }
+        vVarCoeffMap = StdRegions::RestrictCoeffMap(m_linSysKey.GetVarCoeffs(),
+                                                    expList->GetPhys_Offset(n),
+                                                    vExp->GetTotPoints());
     }
 
     LocalRegions::MatrixKey matkey(m_linSysKey.GetMatrixType(),
@@ -407,6 +403,18 @@ void GlobalLinSys::v_DropStaticCondBlock(unsigned int n)
 {
     LocalRegions::ExpansionSharedPtr vExp = m_expList.lock()->GetExp(n);
     vExp->DropLocStaticCondMatrix(GetBlockMatrixKey(n));
+}
+
+/**
+ * @brief Releases the local block matrix from NekManager
+ * of n-th expansion using the matrix key provided by the #m_linSysKey.
+ *
+ * @param   n           Number of the expansion
+ */
+void GlobalLinSys::v_DropBlock(unsigned int n)
+{
+    LocalRegions::ExpansionSharedPtr vExp = m_expList.lock()->GetExp(n);
+    vExp->DropLocMatrix(GetBlockMatrixKey(n));
 }
 
 void GlobalLinSys::v_InitObject()

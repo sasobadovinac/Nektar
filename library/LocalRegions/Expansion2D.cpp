@@ -857,7 +857,8 @@ void Expansion2D::AddEdgeBoundaryInt(const int edge,
     if ((x = varcoeffs.find(VarCoeff[0])) != varcoeffs.end())
     {
         Array<OneD, NekDouble> work(nquad_e);
-        GetPhysEdgeVarCoeffsFromElement(edge, EdgeExp, x->second, work);
+        GetPhysEdgeVarCoeffsFromElement(edge, EdgeExp, x->second.GetValue(),
+                                        work);
         Vmath::Vmul(nquad_e, work, 1, edgePhys, 1, edgePhys, 1);
     }
 
@@ -945,7 +946,8 @@ void Expansion2D::AddHDGHelmholtzEdgeTerms(
     if ((x = varcoeffs.find(VarCoeff[0])) != varcoeffs.end())
     {
         Array<OneD, NekDouble> work(nquad_e);
-        GetPhysEdgeVarCoeffsFromElement(edge, EdgeExp[edge], x->second, work);
+        GetPhysEdgeVarCoeffsFromElement(edge, EdgeExp[edge],
+                                        x->second.GetValue(), work);
         Vmath::Vmul(nquad_e, work, 1, edgePhys, 1, edgePhys, 1);
     }
 
@@ -1609,7 +1611,7 @@ DNekMatSharedPtr Expansion2D::v_GenMatrix(const StdRegions::StdMatrixKey &mkey)
                     if ((x = varcoeffs.find(VarCoeff[0])) != varcoeffs.end())
                     {
                         GetPhysEdgeVarCoeffsFromElement(
-                            e, EdgeExp[e], x->second, varcoeff_work);
+                            e, EdgeExp[e], x->second.GetValue(), varcoeff_work);
                         Vmath::Vmul(nquad_e, varcoeff_work, 1, edgePhys, 1,
                                     edgePhys, 1);
                     }
@@ -2123,7 +2125,7 @@ Array<OneD, NekDouble> Expansion2D::GetnEdgecdotMF(
     for (int k = 0; k < coordim; k++)
     {
         MFdir = varcoeffs.find(MMFCoeffs[dir * 5 + k]);
-        tmp   = MFdir->second;
+        tmp   = MFdir->second.GetValue();
 
         GetPhysEdgeVarCoeffsFromElement(edge, EdgeExp_e, tmp, tmp_e);
 

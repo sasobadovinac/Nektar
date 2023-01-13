@@ -35,8 +35,9 @@
 #ifndef STDREGIONS_HPP
 #define STDREGIONS_HPP
 
+#include <LibUtilities/BasicUtils/HashUtils.hpp>
 #include <LibUtilities/BasicUtils/ShapeType.hpp>
-#include <LibUtilities/BasicUtils/SharedArray.hpp> // for Array, etc
+#include <LibUtilities/BasicUtils/SharedArray.hpp>
 #include <map>
 
 namespace Nektar
@@ -80,9 +81,11 @@ const char *const ElementTypeMap[] = {
 };
 
 /** @todo we need to tidy up matrix construction approach
- *  probably using a factory type approach                 */
+ *  probably using a factory type approach
+ */
 enum MatrixType
 {
+    eNoMatrixType,
     eMass,
     eMassGJP,
     eInvMass,
@@ -137,7 +140,8 @@ enum MatrixType
     SIZE_MatrixType
 };
 
-const char *const MatrixTypeMap[] = {"Mass",
+const char *const MatrixTypeMap[] = {"NoMatrixType",
+                                     "Mass",
                                      "Mass wiht Diagonal GJP",
                                      "InvMass",
                                      "Laplacian",
@@ -237,8 +241,121 @@ const char *const VarCoeffTypeMap[] = {
     "VarCoeffMF3z",      "VarCoeffMF3Div",    "VarCoeffMF3Mag",
     "VarCoeffMF",        "VarCoeffMFDiv",     "VarCoeffGmat",
     "VarCoeffGJPNormVel"};
-typedef std::map<StdRegions::VarCoeffType, Array<OneD, NekDouble>> VarCoeffMap;
+
+/**
+ * @brief Representation of a variable coefficient.
+ *
+ * Variable coefficients are entries stored inside a #VarCoeffMap which
+ * are defined at each quadrature/solution point within an element. This
+ * class wraps that concept, storing the values in #m_coeffs, but also
+ * stores alongside this a hash of the data in #m_hash. This is then
+ * used within MultiRegions::GlobalMatrixKey to efficiently distinguish
+ * between matrix keys that have variable coefficients defined, but
+ * whose entries are different.
+ *
+ * For that reason the entries here are deliberately protected by const
+ * references; i.e. the entries inside of #m_coeffs should not be
+ * modified in-place, but a new array copied in so that the hash can be
+ * recalculated.
+ */
+struct VarCoeffEntry
+{
+    /// Default constructor.
+    VarCoeffEntry() = default;
+
+    /**
+     * @brief Copy an array of values into this entry.
+     *
+     * Upon copy into #m_coeffs, compute the hash of this entry using
+     * #ComputeHash.
+     *
+     * @param input  Variable coefficients to be defined at each
+     *               solution point.
+     */
+    VarCoeffEntry(const Array<OneD, const NekDouble> &input) : m_coeffs(input)
+    {
+        ComputeHash();
+    }
+
+    /**
+     * @brief Access an entry @p idx within #m_coeffs.
+     *
+     * @param idx  Index of the entry to access.
+     */
+    const NekDouble &operator[](std::size_t idx) const
+    {
+        return m_coeffs[idx];
+    }
+
+    /**
+     * @brief Assignment operator given an array @p rhs.
+     *
+     * Upon copy into #m_coeffs, compute the hash of this entry using
+     * #ComputeHash.
+     *
+     * @param rhs    Variable coefficients to be defined at each
+     *               solution point.
+     */
+    void operator=(const Array<OneD, const NekDouble> &rhs)
+    {
+        m_coeffs = rhs;
+        ComputeHash();
+    }
+
+    /**
+     * @brief Returns a const reference to the coefficients.
+     */
+    const Array<OneD, const NekDouble> &GetValue() const
+    {
+        return m_coeffs;
+    }
+
+    /**
+     * @brief Returns the hash of this entry.
+     */
+    std::size_t GetHash() const
+    {
+        return m_hash;
+    }
+
+protected:
+    /**
+     * @brief Computes the hash of this entry using #hash_range.
+     */
+    void ComputeHash()
+    {
+        if (m_coeffs.size() == 0)
+        {
+            m_hash = 0;
+            return;
+        }
+
+        m_hash = hash_range(m_coeffs.begin(), m_coeffs.end());
+    }
+
+    /// Hash of the entries inside #m_coeffs.
+    std::size_t m_hash = 0;
+
+    /// Storage for the variable coefficient entries.
+    Array<OneD, NekDouble> m_coeffs;
+};
+
+typedef std::map<StdRegions::VarCoeffType, VarCoeffEntry> VarCoeffMap;
 static VarCoeffMap NullVarCoeffMap;
+
+inline VarCoeffMap RestrictCoeffMap(const VarCoeffMap &m, size_t offset,
+                                    size_t cnt)
+{
+    VarCoeffMap ret;
+
+    for (auto &x : m)
+    {
+        ret[x.first] =
+            Array<OneD, NekDouble>(cnt, x.second.GetValue() + offset);
+    }
+
+    return ret;
+}
 
 enum ConstFactorType
 {

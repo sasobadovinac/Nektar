@@ -57,8 +57,9 @@ StdMatrixKey::StdMatrixKey(const MatrixType matrixType,
     int i = 0;
     for (auto &x : varCoeffMap)
     {
-        m_varcoeff_hashes[i] = hash_range(
-            x.second.begin(), x.second.begin() + stdExpansion.GetTotPoints());
+        m_varcoeff_hashes[i] = hash_range(x.second.GetValue().begin(),
+                                          x.second.GetValue().begin() +
+                                              stdExpansion.GetTotPoints());
         hash_combine(m_varcoeff_hashes[i], (int)x.first);
         i++;
     }
@@ -254,7 +255,7 @@ bool operator==(const StdMatrixKey &lhs, const StdMatrixKey &rhs)
             return false;
         }
 
-        if (x.second != y->second)
+        if (x.second.GetValue() != y->second.GetValue())
         {
             return false;
         }

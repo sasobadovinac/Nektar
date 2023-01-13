@@ -164,18 +164,19 @@ void BidomainRoth::v_InitObject(bool DeclareField)
 
                 GetFunction("ExtracellularAnisotropicConductivity")
                     ->Evaluate(aniso_var[i], vTemp_i);
+                Array<OneD, NekDouble> tmp =
+                    m_vardiffe[varCoeffEnum[k]].GetValue();
 
-                Vmath::Vmul(nq, vTemp_i, 1, vTemp_j, 1,
-                            m_vardiffe[varCoeffEnum[k]], 1);
+                Vmath::Vmul(nq, vTemp_i, 1, vTemp_j, 1, tmp, 1);
 
-                Vmath::Smul(nq, o_max - o_min, m_vardiffe[varCoeffEnum[k]], 1,
-                            m_vardiffe[varCoeffEnum[k]], 1);
+                Vmath::Smul(nq, o_max - o_min, tmp, 1, tmp, 1);
 
                 if (i == j)
                 {
-                    Vmath::Sadd(nq, o_min, m_vardiffe[varCoeffEnum[k]], 1,
-                                m_vardiffe[varCoeffEnum[k]], 1);
+                    Vmath::Sadd(nq, o_min, tmp, 1, tmp, 1);
                 }
+
+                m_vardiffe[varCoeffEnum[k]] = tmp;
             }
         }
     }
@@ -234,21 +235,23 @@ void BidomainRoth::v_InitObject(bool DeclareField)
                 GetFunction("IntracellularAnisotropicConductivity")
                     ->Evaluate(aniso_var[i], vTemp_i);
 
-                Vmath::Vmul(nq, vTemp_i, 1, vTemp_j, 1,
-                            m_vardiffi[varCoeffEnum[k]], 1);
+                Array<OneD, NekDouble> tmp =
+                    m_vardiffi[varCoeffEnum[k]].GetValue();
+                Array<OneD, NekDouble> tmp2 =
+                    m_vardiffe[varCoeffEnum[k]].GetValue();
+                Vmath::Vmul(nq, vTemp_i, 1, vTemp_j, 1, tmp, 1);
 
-                Vmath::Smul(nq, o_max - o_min, m_vardiffi[varCoeffEnum[k]], 1,
-                            m_vardiffi[varCoeffEnum[k]], 1);
+                Vmath::Smul(nq, o_max - o_min, tmp, 1, tmp, 1);
 
                 if (i == j)
                 {
-                    Vmath::Sadd(nq, o_min, m_vardiffi[varCoeffEnum[k]], 1,
-                                m_vardiffi[varCoeffEnum[k]], 1);
+                    Vmath::Sadd(nq, o_min, tmp, 1, tmp, 1);
                 }
 
-                Vmath::Vadd(nq, m_vardiffe[varCoeffEnum[k]], 1,
-                            m_vardiffi[varCoeffEnum[k]], 1,
-                            m_vardiffie[varCoeffEnum[k]], 1);
+                Vmath::Vadd(nq, tmp2, 1, tmp, 1, tmp2, 1);
+
+                m_vardiffi[varCoeffEnum[k]] = tmp;
+                m_vardiffe[varCoeffEnum[k]] = tmp2;
 
                 ++k;
             }
@@ -262,15 +265,17 @@ void BidomainRoth::v_InitObject(bool DeclareField)
         for (int i = 0; i < j + 1; ++i)
         {
             // Transform variable coefficient and write out to file.
-            m_fields[0]->FwdTransLocalElmt(m_vardiffi[varCoeffEnum[k]],
-                                           m_fields[0]->UpdateCoeffs());
+            m_fields[0]->FwdTransLocalElmt(
+                m_vardiffi[varCoeffEnum[k]].GetValue(),
+                m_fields[0]->UpdateCoeffs());
             std::stringstream filenamei;
             filenamei << "IConductivity_" << varCoeffString[k] << ".fld";
             WriteFld(filenamei.str());
 
             // Transform variable coefficient and write out to file.
-            m_fields[0]->FwdTransLocalElmt(m_vardiffe[varCoeffEnum[k]],
-                                           m_fields[0]->UpdateCoeffs());
+            m_fields[0]->FwdTransLocalElmt(
+                m_vardiffe[varCoeffEnum[k]].GetValue(),
+                m_fields[0]->UpdateCoeffs());
             std::stringstream filenamee;
             filenamee << "EConductivity_" << varCoeffString[k] << ".fld";
             WriteFld(filenamee.str());
@@ -379,12 +384,12 @@ void BidomainRoth::DoOdeRhs(
     if (m_session->DefinesFunction("IntracellularAnisotropicConductivity") &&
         m_session->DefinesFunction("ExtracellularAnisotropicConductivity"))
     {
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD00], 1, ggrad0, 1,
-                    ggrad0, 1);
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD11], 1, ggrad1, 1,
-                    ggrad1, 1);
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD22], 1, ggrad2, 1,
-                    ggrad2, 1);
+        Vmath::Vmul(nq, &m_vardiffi[StdRegions::eVarCoeffD00][0], 1, &ggrad0[0],
+                    1, &ggrad0[0], 1);
+        Vmath::Vmul(nq, &m_vardiffi[StdRegions::eVarCoeffD11][0], 1, &ggrad1[0],
+                    1, &ggrad1[0], 1);
+        Vmath::Vmul(nq, &m_vardiffi[StdRegions::eVarCoeffD22][0], 1, &ggrad2[0],
+                    1, &ggrad2[0], 1);
     }
     // Add partial derivatives together
     Vmath::Vadd(nq, ggrad0, 1, ggrad1, 1, ggrad, 1);
@@ -410,12 +415,12 @@ void BidomainRoth::DoOdeRhs(
     if (m_session->DefinesFunction("IntracellularAnisotropicConductivity") &&
         m_session->DefinesFunction("ExtracellularAnisotropicConductivity"))
     {
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD00], 1, ggrad0, 1,
-                    ggrad0, 1);
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD11], 1, ggrad1, 1,
-                    ggrad1, 1);
-        Vmath::Vmul(nq, m_vardiffi[StdRegions::eVarCoeffD22], 1, ggrad2, 1,
-                    ggrad2, 1);
+        Vmath::Vmul(nq, &m_vardiffi[StdRegions::eVarCoeffD00][0], 1, &ggrad0[0],
+                    1, &ggrad0[0], 1);
+        Vmath::Vmul(nq, &m_vardiffi[StdRegions::eVarCoeffD11][0], 1, &ggrad1[0],
+                    1, &ggrad1[0], 1);
+        Vmath::Vmul(nq, &m_vardiffi[StdRegions::eVarCoeffD22][0], 1, &ggrad2[0],
+                    1, &ggrad2[0], 1);
     }
     // Add partial derivatives together
     Vmath::Vadd(nq, ggrad0, 1, ggrad1, 1, ggrad, 1);

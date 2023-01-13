@@ -243,7 +243,7 @@ void DisContField3DHomogeneous1D::SetUpDG()
     }
 }
 
-void DisContField3DHomogeneous1D::v_HelmSolve(
+GlobalLinSysKey DisContField3DHomogeneous1D::v_HelmSolve(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
     const StdRegions::VarCoeffMap &varcoeff,
@@ -289,6 +289,7 @@ void DisContField3DHomogeneous1D::v_HelmSolve(
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
+    return NullGlobalLinSysKey;
 }
 
 /// @todo Fix in another way considering all the planes

@@ -97,13 +97,14 @@ protected:
 
     Array<OneD, SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing) override;
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing) override;
 
     virtual void v_GetBndElmtExpansion(
         int i, std::shared_ptr<ExpList> &result,

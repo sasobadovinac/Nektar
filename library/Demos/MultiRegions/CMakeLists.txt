@@ -137,6 +137,7 @@ IF (NEKTAR_USE_MPI)
     ENDIF (NEKTAR_USE_METIS)
 
     IF (NEKTAR_USE_PETSC)
+        ADD_NEKTAR_TEST(Helmholtz2D_CG_P7_Modes_AllBCs_petsc_full_par3)
         ADD_NEKTAR_TEST(Helmholtz2D_CG_P7_Modes_AllBCs_petsc_sc_par3)
         ADD_NEKTAR_TEST(Helmholtz3D_CG_Hex_AllBCs_petsc_sc_par3)
         ADD_NEKTAR_TEST(Helmholtz3D_CG_Hex_AllBCs_petsc_sc_shell_par3)

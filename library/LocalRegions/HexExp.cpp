@@ -1327,6 +1327,11 @@ DNekScalMatSharedPtr HexExp::v_GetLocMatrix(const MatrixKey &mkey)
     return m_matrixManager[mkey];
 }
 
+void HexExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
+}
+
 DNekScalBlkMatSharedPtr HexExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)
 {
     return m_staticCondMatrixManager[mkey];

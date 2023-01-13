@@ -281,6 +281,14 @@ public:
         return value;
     }
 
+    size_t PoolCount(std::string whichPool)
+    {
+        auto x = m_ValueContainerPool.find(whichPool);
+        ASSERTL1(x != m_ValueContainerPool.end(),
+                 "Could not find pool " + whichPool);
+        return x->second->size();
+    }
+
     static void EnableManagement(std::string whichPool = "")
     {
         if (!whichPool.empty())

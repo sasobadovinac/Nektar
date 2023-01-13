@@ -299,6 +299,11 @@ private:
         return m_matrixManager[mkey];
     }
 
+    virtual void v_DropLocMatrix(const MatrixKey &mkey) override
+    {
+        m_matrixManager.DeleteObject(mkey);
+    }
+
     virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
         const MatrixKey &mkey) override
     {

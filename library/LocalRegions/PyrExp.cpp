@@ -1069,6 +1069,11 @@ DNekScalMatSharedPtr PyrExp::v_GetLocMatrix(const MatrixKey &mkey)
     return m_matrixManager[mkey];
 }
 
+void PyrExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
+}
+
 DNekScalBlkMatSharedPtr PyrExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)
 {
     return m_staticCondMatrixManager[mkey];

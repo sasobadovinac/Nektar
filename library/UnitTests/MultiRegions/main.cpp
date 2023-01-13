@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: StdRegions.cpp
+// File: main.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -28,23 +28,11 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 //
-// Description: Python wrapper for StdRegions classes.
+// Description: Unit tests for MultiRegions
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <LibUtilities/Python/NekPyConfig.hpp>
-
-void export_StdExpansion();
-void export_StdMatrixKey();
-void export_StdElements();
-void export_VarCoeffEntry();
-
-BOOST_PYTHON_MODULE(_StdRegions)
-{
-    np::initialize();
-
-    export_StdExpansion();
-    export_StdMatrixKey();
-    export_StdElements();
-    export_VarCoeffEntry();
-}
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_MODULE MultiRegionsUnitTests test
+#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/included/unit_test_framework.hpp>

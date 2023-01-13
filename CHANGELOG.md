@@ -225,6 +225,14 @@ v5.1.0
 - Refactored time integration code using factory pattern (!1034, !1103)
 - Fix WriteStream with empty Array/vector (!1233)
 - Add interpolation at arbitrary point in 3DH1 (!1233)
+  level. Removed GlobalCoeffs functionality (!963, !1159)
+- Add interior penalty method to DG framework (!1101)
+- Add an error filter for the time-evolution of the L2 and Linf errors (!1147)
+- Enable global systems to be generated when using different values of variable
+  coefficients (!1159)
+
+**FieldConvert**
+- Refactored time integration code using factory pattern (!1034)
 - Fix to preprocessor logic for boost with Visual Studio >= 2015 (!1115)
 - Fix type consistency and real comparison in SharedArray.hpp, replaced
   num_elements with size() (!1127, !1137, !1141)

@@ -1043,6 +1043,11 @@ DNekScalMatSharedPtr TetExp::v_GetLocMatrix(const MatrixKey &mkey)
     return m_matrixManager[mkey];
 }
 
+void TetExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
+}
+
 DNekScalBlkMatSharedPtr TetExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)
 {
     return m_staticCondMatrixManager[mkey];

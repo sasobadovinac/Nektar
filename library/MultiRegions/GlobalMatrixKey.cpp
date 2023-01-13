@@ -124,23 +124,22 @@ bool operator<(const GlobalMatrixKey &lhs, const GlobalMatrixKey &rhs)
     {
         return false;
     }
-    //            else
-    //            {
-    //                StdRegions::VarCoeffMap::const_iterator x, y;
-    //                for (x = lhs.m_varCoeffs.begin(), y =
-    //                rhs.m_varCoeffs.begin();
-    //                     x != lhs.m_varCoeffs.end(); ++x, ++y)
-    //                {
-    //                    if (x->second.get() < y->second.get())
-    //                    {
-    //                        return true;
-    //                    }
-    //                    if (x->second.get() > y->second.get())
-    //                    {
-    //                        return false;
-    //                    }
-    //                }
-    //            }
+    else
+    {
+        StdRegions::VarCoeffMap::const_iterator x, y;
+        for (x = lhs.m_varCoeffs.begin(), y = rhs.m_varCoeffs.begin();
+             x != lhs.m_varCoeffs.end(); ++x, ++y)
+        {
+            if (x->second.GetHash() < y->second.GetHash())
+            {
+                return true;
+            }
+            if (x->second.GetHash() > y->second.GetHash())
+            {
+                return false;
+            }
+        }
+    }
 
     if (!rhs.m_locToGloMap.lock().get())
     {
