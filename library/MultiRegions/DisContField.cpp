@@ -3408,13 +3408,12 @@ void DisContField::v_AddFwdBwdTraceIntegral(
     m_locTraceToTraceMap->AddTraceCoeffsToFieldCoeffs(1, Coeffs, outarray);
 }
 
-void DisContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray,
-                               const StdRegions::ConstFactorMap &factors,
-                               const StdRegions::VarCoeffMap &varcoeff,
-                               const MultiRegions::VarFactorsMap &varfactors,
-                               const Array<OneD, const NekDouble> &dirForcing,
-                               const bool PhysSpaceForcing)
+GlobalLinSysKey DisContField::v_HelmSolve(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
     boost::ignore_unused(varfactors, dirForcing);
     int i, n, cnt, nbndry;
@@ -3542,6 +3541,9 @@ void DisContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
 
     //  out =  u_f + u_lam = (*InvHDGHelm)*f + (LamtoU)*Lam
     out = (*InvHDGHelm) * F + (*HDGLamToU) * LocLambda;
+
+    // Return empty GlobalLinSysKey
+    return NullGlobalLinSysKey;
 }
 
 /* \brief This function evaluates the boundary conditions at a certain

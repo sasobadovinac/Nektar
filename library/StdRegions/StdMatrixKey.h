@@ -154,13 +154,17 @@ public:
         ASSERTL1(x != m_varcoeffs.end(),
                  "Variable coefficient not defined: " +
                      std::string(StdRegions::VarCoeffTypeMap[coeff]));
-        return x->second;
+        return x->second.GetValue();
     }
 
     inline const VarCoeffMap GetVarCoeffAsMap(const VarCoeffType &coeff) const
     {
         VarCoeffMap m;
-        m[coeff] = GetVarCoeff(coeff);
+        auto x = m_varcoeffs.find(coeff);
+        ASSERTL1(x != m_varcoeffs.end(),
+                 "Variable coefficient not defined: " +
+                     std::string(StdRegions::VarCoeffTypeMap[coeff]));
+        m[coeff] = x->second;
         return m;
     }
 

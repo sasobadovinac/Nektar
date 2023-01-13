@@ -1078,6 +1078,11 @@ DNekScalMatSharedPtr PrismExp::v_GetLocMatrix(const MatrixKey &mkey)
     return m_matrixManager[mkey];
 }
 
+void PrismExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
+}
+
 DNekScalBlkMatSharedPtr PrismExp::v_GetLocStaticCondMatrix(
     const MatrixKey &mkey)
 {

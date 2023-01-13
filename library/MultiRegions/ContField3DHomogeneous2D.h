@@ -79,13 +79,14 @@ protected:
 
     /// Solves the three-dimensional Helmholtz equation, subject to the
     /// boundary conditions specified.
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing) override;
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing) override;
 
     virtual void v_ClearGlobalLinSysManager(void) override;
 

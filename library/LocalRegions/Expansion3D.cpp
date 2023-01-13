@@ -2834,7 +2834,7 @@ Array<OneD, NekDouble> Expansion3D::GetnFacecdotMF(
     for (int k = 0; k < coordim; k++)
     {
         MFdir = varcoeffs.find(MMFCoeffs[dir * 5 + k]);
-        tmp   = MFdir->second;
+        tmp   = MFdir->second.GetValue();
 
         GetPhysFaceVarCoeffsFromElement(face, FaceExp_f, tmp, tmp_f);
 

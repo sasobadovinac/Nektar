@@ -177,6 +177,7 @@ protected:
         const MatrixKey &mkey) override;
     LOCAL_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
         const MatrixKey &mkey) override;
+    LOCAL_REGIONS_EXPORT void v_DropLocMatrix(const MatrixKey &mkey) override;
     LOCAL_REGIONS_EXPORT void v_DropLocStaticCondMatrix(
         const MatrixKey &mkey) override;
 

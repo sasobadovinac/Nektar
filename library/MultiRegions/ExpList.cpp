@@ -1988,10 +1988,9 @@ const DNekScalBlkMatSharedPtr ExpList::GenBlockMatrix(
         eid = elmt_id[i];
         if (nvarcoeffs > 0)
         {
-            for (auto &x : gkey.GetVarCoeffs())
-            {
-                varcoeffs[x.first] = x.second + m_phys_offset[eid];
-            }
+            varcoeffs = StdRegions::RestrictCoeffMap(
+                gkey.GetVarCoeffs(), m_phys_offset[i],
+                (*m_exp)[i]->GetTotPoints());
         }
 
         LocalRegions::MatrixKey matkey(
@@ -2099,10 +2098,9 @@ void ExpList::GeneralMatrixOp(const GlobalMatrixKey &gkey,
 
             if (nvarcoeffs > 0)
             {
-                for (auto &x : gkey.GetVarCoeffs())
-                {
-                    varcoeffs[x.first] = x.second + m_phys_offset[i];
-                }
+                varcoeffs = StdRegions::RestrictCoeffMap(
+                    gkey.GetVarCoeffs(), m_phys_offset[i],
+                    (*m_exp)[i]->GetTotPoints());
             }
 
             StdRegions::StdMatrixKey mkey(
@@ -2194,10 +2192,9 @@ GlobalMatrixSharedPtr ExpList::GenGlobalMatrix(
         eid = n;
         if (nvarcoeffs > 0)
         {
-            for (auto &x : mkey.GetVarCoeffs())
-            {
-                varcoeffs[x.first] = x.second + m_phys_offset[eid];
-            }
+            varcoeffs = StdRegions::RestrictCoeffMap(
+                mkey.GetVarCoeffs(), m_phys_offset[eid],
+                (*m_exp)[eid]->GetTotPoints());
         }
 
         LocalRegions::MatrixKey matkey(
@@ -2317,10 +2314,9 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
         eid = n;
         if (nvarcoeffs > 0)
         {
-            for (auto &x : mkey.GetVarCoeffs())
-            {
-                varcoeffs[x.first] = x.second + m_phys_offset[eid];
-            }
+            varcoeffs = StdRegions::RestrictCoeffMap(
+                mkey.GetVarCoeffs(), m_phys_offset[eid],
+                (*m_exp)[eid]->GetTotPoints());
         }
 
         LocalRegions::MatrixKey matkey(
@@ -3298,7 +3294,29 @@ Array<OneD, const unsigned int> ExpList::v_GetYIDs(void)
 void ExpList::v_ClearGlobalLinSysManager(void)
 {
     NEKERROR(ErrorUtil::efatal,
-             "This method is not defined or valid for this class type");
+             "ClearGlobalLinSysManager not implemented for ExpList.");
+}
+
+int ExpList::v_GetPoolCount(std::string poolName)
+{
+    boost::ignore_unused(poolName);
+    NEKERROR(ErrorUtil::efatal, "GetPoolCount not implemented for ExpList.");
+    return -1;
+}
+
+void ExpList::v_UnsetGlobalLinSys(GlobalLinSysKey key, bool clearLocalMatrices)
+{
+    boost::ignore_unused(key, clearLocalMatrices);
+    NEKERROR(ErrorUtil::efatal,
+             "UnsetGlobalLinSys not implemented for ExpList.");
+}
+
+LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+    &ExpList::v_GetGlobalLinSysManager(void)
+{
+    NEKERROR(ErrorUtil::efatal,
+             "GetGlobalLinSysManager not implemented for ExpList.");
+    return NullGlobalLinSysManager;
 }
 
 void ExpList::ExtractFileBCs(const std::string &fileName,
@@ -4480,20 +4498,20 @@ void ExpList::v_MultiplyByInvMassMatrix(
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                          Array<OneD, NekDouble> &outarray,
-                          const StdRegions::ConstFactorMap &factors,
-                          const StdRegions::VarCoeffMap &varcoeff,
-                          const MultiRegions::VarFactorsMap &varfactors,
-                          const Array<OneD, const NekDouble> &dirForcing,
-                          const bool PhysSpaceForcing)
+GlobalLinSysKey ExpList::v_HelmSolve(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
     boost::ignore_unused(inarray, outarray, factors, varcoeff, varfactors,
                          dirForcing, PhysSpaceForcing);
     NEKERROR(ErrorUtil::efatal, "HelmSolve not implemented.");
+    return NullGlobalLinSysKey;
 }
 
-void ExpList::v_LinearAdvectionDiffusionReactionSolve(
+GlobalLinSysKey ExpList::v_LinearAdvectionDiffusionReactionSolve(
     const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const NekDouble lambda,
@@ -4501,7 +4519,8 @@ void ExpList::v_LinearAdvectionDiffusionReactionSolve(
 {
     boost::ignore_unused(velocity, inarray, outarray, lambda, dirForcing);
     NEKERROR(ErrorUtil::efatal,
-             "This method is not defined or valid for this class type");
+             "LinearAdvectionDiffusionReactionSolve not implemented.");
+    return NullGlobalLinSysKey;
 }
 
 void ExpList::v_LinearAdvectionReactionSolve(
@@ -5263,6 +5282,27 @@ void ExpList::CreateCollections(Collections::ImplementationType ImpType)
 void ExpList::ClearGlobalLinSysManager(void)
 {
     v_ClearGlobalLinSysManager();
+}
+
+/**
+ * Added for access to the pool count by external code (e.g. UnitTests)
+ * which can't access the static pool across compilation units on
+ * Windows builds.
+ */
+int ExpList::GetPoolCount(std::string poolName)
+{
+    return v_GetPoolCount(poolName);
+}
+
+void ExpList::UnsetGlobalLinSys(GlobalLinSysKey key, bool clearLocalMatrices)
+{
+    v_UnsetGlobalLinSys(key, clearLocalMatrices);
+}
+
+LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+    &ExpList::GetGlobalLinSysManager(void)
+{
+    return v_GetGlobalLinSysManager();
 }
 
 void ExpList::v_PhysInterp1DScaled(const NekDouble scale,

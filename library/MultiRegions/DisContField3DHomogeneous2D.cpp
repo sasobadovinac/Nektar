@@ -204,7 +204,7 @@ void DisContField3DHomogeneous2D::EvaluateBoundaryConditions(
     }
 }
 
-void DisContField3DHomogeneous2D::v_HelmSolve(
+GlobalLinSysKey DisContField3DHomogeneous2D::v_HelmSolve(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
     const StdRegions::VarCoeffMap &varcoeff,
@@ -253,6 +253,7 @@ void DisContField3DHomogeneous2D::v_HelmSolve(
             cnt1 += m_lines[n]->GetNcoeffs();
         }
     }
+    return NullGlobalLinSysKey;
 }
 
 void DisContField3DHomogeneous2D::v_GetBndElmtExpansion(

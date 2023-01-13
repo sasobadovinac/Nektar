@@ -1077,6 +1077,11 @@ DNekScalMatSharedPtr TriExp::v_GetLocMatrix(const MatrixKey &mkey)
     return m_matrixManager[mkey];
 }
 
+void TriExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
+}
+
 DNekScalBlkMatSharedPtr TriExp::v_GetLocStaticCondMatrix(const MatrixKey &mkey)
 {
     return m_staticCondMatrixManager[mkey];

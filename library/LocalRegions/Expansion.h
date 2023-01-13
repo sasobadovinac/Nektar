@@ -85,6 +85,9 @@ public:
     LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr
     GetLocMatrix(const LocalRegions::MatrixKey &mkey);
 
+    LOCAL_REGIONS_EXPORT void DropLocMatrix(
+        const LocalRegions::MatrixKey &mkey);
+
     LOCAL_REGIONS_EXPORT DNekScalMatSharedPtr GetLocMatrix(
         const StdRegions::MatrixType mtype,
         const StdRegions::ConstFactorMap &factors =
@@ -322,6 +325,8 @@ protected:
 
     virtual DNekScalMatSharedPtr v_GetLocMatrix(
         const LocalRegions::MatrixKey &mkey);
+
+    virtual void v_DropLocMatrix(const LocalRegions::MatrixKey &mkey);
 
     virtual DNekMatSharedPtr v_BuildTransformationMatrix(
         const DNekScalMatSharedPtr &r_bnd,

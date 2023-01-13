@@ -804,14 +804,12 @@ void ContField::v_MultiplyByInvMassMatrix(
  * @param   factors    The parameter \f$\lambda\f$ of the Helmholtz
  *                      equation is specified through the factors map
  */
-void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                            Array<OneD, NekDouble> &outarray,
-                            const StdRegions::ConstFactorMap &factors,
-                            const StdRegions::VarCoeffMap &pvarcoeff,
-                            const MultiRegions::VarFactorsMap &varfactors,
-                            const Array<OneD, const NekDouble> &dirForcing,
-                            const bool PhysSpaceForcing)
-
+GlobalLinSysKey ContField::v_HelmSolve(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &pvarcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 {
     int i, j;
 
@@ -888,12 +886,12 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
         BwdTrans(outarray, phys);
         NekDouble scale = -1.0 * factors.find(StdRegions::eFactorGJP)->second;
 
-        m_GJPData->Apply(
-            phys, wsp,
-            pvarcoeff.count(StdRegions::eVarCoeffGJPNormVel)
-                ? pvarcoeff.find(StdRegions::eVarCoeffGJPNormVel)->second
-                : NullNekDouble1DArray,
-            scale);
+        m_GJPData->Apply(phys, wsp,
+                         pvarcoeff.count(StdRegions::eVarCoeffGJPNormVel)
+                             ? pvarcoeff.find(StdRegions::eVarCoeffGJPNormVel)
+                                   ->second.GetValue()
+                             : NullNekDouble1DArray,
+                         scale);
 
         varcoeff.erase(StdRegions::eVarCoeffGJPNormVel);
     }
@@ -901,6 +899,8 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
     GlobalLinSysKey key(mtype, m_locToGloMap, factors, varcoeff, varfactors);
 
     GlobalSolve(key, wsp, outarray, dirForcing);
+
+    return key;
 }
 
 /**
@@ -914,7 +914,7 @@ void ContField::v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
  */
 
 // could combine this with HelmholtzCG.
-void ContField::v_LinearAdvectionDiffusionReactionSolve(
+GlobalLinSysKey ContField::v_LinearAdvectionDiffusionReactionSolve(
     const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const NekDouble lambda,
@@ -980,6 +980,8 @@ void ContField::v_LinearAdvectionDiffusionReactionSolve(
                         m_locToGloMap, factors, varcoeffs);
 
     GlobalSolve(key, wsp, outarray, dirForcing);
+
+    return key;
 }
 
 /**
@@ -1028,6 +1030,39 @@ const Array<OneD, const SpatialDomains::BoundaryConditionShPtr>
 void ContField::v_ClearGlobalLinSysManager(void)
 {
     m_globalLinSysManager.ClearManager("GlobalLinSys");
+}
+
+/**
+ * Get the pool count for the specified poolName
+ */
+int ContField::v_GetPoolCount(std::string poolName)
+{
+    return m_globalLinSysManager.PoolCount(poolName);
+}
+
+/**
+ * Clear all memory for GlobalLinSys
+ * including StaticCond Blocks and LocalMatrix Blocks.
+ * Avoids memory leakage if matrices are updated in time
+ */
+void ContField::v_UnsetGlobalLinSys(GlobalLinSysKey key,
+                                    bool clearLocalMatrices)
+{
+    // Get GlobalLinSys from key
+    GlobalLinSysSharedPtr LinSys = GetGlobalLinSys(key);
+
+    // Loop all expansions
+    for (int n = 0; n < m_exp->size(); ++n)
+    {
+        LinSys->DropStaticCondBlock(n);
+
+        if (clearLocalMatrices)
+        {
+            LinSys->DropBlock(n);
+        }
+    }
+
+    m_globalLinSysManager.DeleteObject(key);
 }
 
 } // namespace MultiRegions

@@ -106,6 +106,7 @@ public:
 
     inline int GetNumBlocks();
     inline DNekScalMatSharedPtr GetBlock(unsigned int n);
+    inline void DropBlock(unsigned int n);
     inline DNekScalBlkMatSharedPtr GetStaticCondBlock(unsigned int n);
     inline void DropStaticCondBlock(unsigned int n);
 
@@ -145,6 +146,7 @@ protected:
 
     virtual int v_GetNumBlocks();
     virtual DNekScalMatSharedPtr v_GetBlock(unsigned int n);
+    virtual void v_DropBlock(unsigned int n);
     virtual DNekScalBlkMatSharedPtr v_GetStaticCondBlock(unsigned int n);
     virtual void v_DropStaticCondBlock(unsigned int n);
 
@@ -209,6 +211,11 @@ inline void GlobalLinSys::Initialise(
 inline DNekScalMatSharedPtr GlobalLinSys::GetBlock(unsigned int n)
 {
     return v_GetBlock(n);
+}
+
+inline void GlobalLinSys::DropBlock(unsigned int n)
+{
+    return v_DropBlock(n);
 }
 
 inline DNekScalBlkMatSharedPtr GlobalLinSys::GetStaticCondBlock(unsigned int n)

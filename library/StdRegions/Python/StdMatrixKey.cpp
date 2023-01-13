@@ -79,7 +79,7 @@ void export_StdMatrixKey()
 
     // Wrapper for variable coefficients map.
     py::class_<VarCoeffMap>("VarCoeffMap")
-        .def(py::map_indexing_suite<VarCoeffMap>());
+        .def(py::map_indexing_suite<VarCoeffMap, true>());
 
     py::class_<StdMatrixKey>("StdMatrixKey", py::no_init)
         .def("__init__",

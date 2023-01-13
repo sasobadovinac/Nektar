@@ -226,7 +226,7 @@ void ContField3DHomogeneous1D::v_SmoothField(Array<OneD, NekDouble> &field)
     }
 }
 
-void ContField3DHomogeneous1D::v_HelmSolve(
+GlobalLinSysKey ContField3DHomogeneous1D::v_HelmSolve(
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
     const StdRegions::VarCoeffMap &varcoeff,
@@ -243,6 +243,8 @@ void ContField3DHomogeneous1D::v_HelmSolve(
     Array<OneD, NekDouble> e_out;
     Array<OneD, NekDouble> fce(inarray.size());
     Array<OneD, const NekDouble> wfce;
+
+    GlobalLinSysKey gkey(NullGlobalLinSysKey); // Default: return Null
 
     // Fourier transform forcing function
     if (m_WaveSpace)
@@ -285,15 +287,17 @@ void ContField3DHomogeneous1D::v_HelmSolve(
             new_factors[StdRegions::eFactorLambda] +=
                 beta * beta * (1 + GetSpecVanVisc(n));
 
-            wfce = (PhysSpaceForcing) ? fce + cnt : fce + cnt1;
-            m_planes[n]->HelmSolve(wfce, e_out = outarray + cnt1, new_factors,
-                                   varcoeff, varfactors, dirForcing,
-                                   PhysSpaceForcing);
+            wfce      = (PhysSpaceForcing) ? fce + cnt : fce + cnt1;
+            auto gkey = m_planes[n]->HelmSolve(
+                wfce, e_out = outarray + cnt1, new_factors, varcoeff,
+                varfactors, dirForcing, PhysSpaceForcing);
         }
 
         cnt += m_planes[n]->GetTotPoints();
         cnt1 += m_planes[n]->GetNcoeffs();
     }
+
+    return gkey;
 }
 
 /**

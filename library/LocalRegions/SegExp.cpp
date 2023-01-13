@@ -1059,6 +1059,11 @@ DNekScalMatSharedPtr SegExp::v_GetLocMatrix(const MatrixKey &mkey)
     return m_matrixManager[mkey];
 }
 
+void SegExp::v_DropLocMatrix(const MatrixKey &mkey)
+{
+    m_matrixManager.DeleteObject(mkey);
+}
+
 DNekMatSharedPtr SegExp::v_CreateStdMatrix(const StdRegions::StdMatrixKey &mkey)
 {
     LibUtilities::BasisKey bkey = m_base[0]->GetBasisKey();

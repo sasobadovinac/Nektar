@@ -3,4 +3,5 @@ ADD_NEKPY_LIBRARY(StdRegions DEPENDS LibUtilities SOURCES
     StdExpansion.cpp
     StdMatrixKey.cpp
     StdElements.cpp
+    VarCoeffEntry.cpp
     )

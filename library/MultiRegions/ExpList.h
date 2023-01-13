@@ -324,7 +324,7 @@ public:
     inline void SmoothField(Array<OneD, NekDouble> &field);
 
     /// Solve helmholtz problem
-    inline void HelmSolve(
+    inline GlobalLinSysKey HelmSolve(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         const StdRegions::ConstFactorMap &factors,
@@ -335,7 +335,7 @@ public:
         const bool PhysSpaceForcing                    = true);
 
     /// Solve Advection Diffusion Reaction
-    inline void LinearAdvectionDiffusionReactionSolve(
+    inline GlobalLinSysKey LinearAdvectionDiffusionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
@@ -1069,6 +1069,13 @@ public:
 
     MULTI_REGIONS_EXPORT void ClearGlobalLinSysManager(void);
 
+    MULTI_REGIONS_EXPORT int GetPoolCount(std::string);
+
+    MULTI_REGIONS_EXPORT void UnsetGlobalLinSys(GlobalLinSysKey, bool);
+
+    MULTI_REGIONS_EXPORT LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+        &GetGlobalLinSysManager(void);
+
     /// Get m_coeffs to elemental value map
     MULTI_REGIONS_EXPORT inline const Array<OneD, const std::pair<int, int>>
         &GetCoeffsToElmt() const;
@@ -1355,15 +1362,16 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
-    virtual void v_HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                             Array<OneD, NekDouble> &outarray,
-                             const StdRegions::ConstFactorMap &factors,
-                             const StdRegions::VarCoeffMap &varcoeff,
-                             const MultiRegions::VarFactorsMap &varfactors,
-                             const Array<OneD, const NekDouble> &dirForcing,
-                             const bool PhysSpaceForcing);
+    virtual GlobalLinSysKey v_HelmSolve(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray,
+        const StdRegions::ConstFactorMap &factors,
+        const StdRegions::VarCoeffMap &varcoeff,
+        const MultiRegions::VarFactorsMap &varfactors,
+        const Array<OneD, const NekDouble> &dirForcing,
+        const bool PhysSpaceForcing);
 
-    virtual void v_LinearAdvectionDiffusionReactionSolve(
+    virtual GlobalLinSysKey v_LinearAdvectionDiffusionReactionSolve(
         const Array<OneD, Array<OneD, NekDouble>> &velocity,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const NekDouble lambda,
@@ -1565,6 +1573,13 @@ protected:
 
     virtual void v_ClearGlobalLinSysManager(void);
 
+    virtual int v_GetPoolCount(std::string);
+
+    virtual void v_UnsetGlobalLinSys(GlobalLinSysKey, bool);
+
+    virtual LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+        &v_GetGlobalLinSysManager(void);
+
     void ExtractFileBCs(const std::string &fileName,
                         LibUtilities::CommSharedPtr comm,
                         const std::string &varName,
@@ -1631,6 +1646,11 @@ private:
 /// An empty ExpList object.
 static ExpList NullExpList;
 static ExpListSharedPtr NullExpListSharedPtr;
+
+// An empty GlobaLinSysManager object
+static LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
+    NullGlobalLinSysManager;
+static GlobalLinSysKey NullGlobalLinSysKey(StdRegions::eNoMatrixType);
 
 // Inline routines follow.
 
@@ -1863,30 +1883,29 @@ inline void ExpList::MultiplyByInvMassMatrix(
 /**
  *
  */
-inline void ExpList::HelmSolve(const Array<OneD, const NekDouble> &inarray,
-                               Array<OneD, NekDouble> &outarray,
-                               const StdRegions::ConstFactorMap &factors,
-                               const StdRegions::VarCoeffMap &varcoeff,
-                               const MultiRegions::VarFactorsMap &varfactors,
-                               const Array<OneD, const NekDouble> &dirForcing,
-                               const bool PhysSpaceForcing)
+inline GlobalLinSysKey ExpList::HelmSolve(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray, const StdRegions::ConstFactorMap &factors,
+    const StdRegions::VarCoeffMap &varcoeff,
+    const MultiRegions::VarFactorsMap &varfactors,
+    const Array<OneD, const NekDouble> &dirForcing, const bool PhysSpaceForcing)
 
 {
-    v_HelmSolve(inarray, outarray, factors, varcoeff, varfactors, dirForcing,
-                PhysSpaceForcing);
+    return v_HelmSolve(inarray, outarray, factors, varcoeff, varfactors,
+                       dirForcing, PhysSpaceForcing);
 }
 
 /**
  *
  */
-inline void ExpList::LinearAdvectionDiffusionReactionSolve(
+inline GlobalLinSysKey ExpList::LinearAdvectionDiffusionReactionSolve(
     const Array<OneD, Array<OneD, NekDouble>> &velocity,
     const Array<OneD, const NekDouble> &inarray,
     Array<OneD, NekDouble> &outarray, const NekDouble lambda,
     const Array<OneD, const NekDouble> &dirForcing)
 {
-    v_LinearAdvectionDiffusionReactionSolve(velocity, inarray, outarray, lambda,
-                                            dirForcing);
+    return v_LinearAdvectionDiffusionReactionSolve(velocity, inarray, outarray,
+                                                   lambda, dirForcing);
 }
 
 inline void ExpList::LinearAdvectionReactionSolve(
