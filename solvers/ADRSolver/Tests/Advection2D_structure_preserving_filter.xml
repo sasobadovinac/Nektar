@@ -656,7 +656,7 @@
       	 <E COMPOSITE="C[0]"
 	    NUMMODES="4,4"
 	 BASISTYPE="Modified_A,Modified_A"
-	 NUMPOINTS="5,5"
+	 NUMPOINTS="10,10"
 	 POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre"
 	 FIELDS="u" />
 
@@ -672,10 +672,10 @@
     <CONDITIONS>
         
         <PARAMETERS>
-          <P> FinTime           = 0.002           </P>
+          <P> FinTime           = 1           </P>
             <P> TimeStep        = 0.001             </P>
             <P> NumSteps        =  FinTime/TimeStep  </P>
-            <P> IO_CheckSteps   = 2000            </P>
+            <P> IO_CheckSteps   = 20            </P>
             <P> IO_InfoSteps    = 2000            </P>
 	    <P> advx            = 1            </P>
 	    <P> advy            = 1            </P>
@@ -689,9 +689,9 @@
 	    <P> cyl_r0          = 0.3            </P>
 	    <P> cyl_x0          = 0            </P> 
 	    <P> cyl_y0          = 0.5            </P> 
-	    <P> slot_left       = 0.475            </P> 
-	    <P> slot_right      = 0.525            </P> 
-	    <P> slot_top        = 0.85            </P> 
+	    <P> slot_left       = -0.05            </P> 
+	    <P> slot_right      = 0.05            </P> 
+	    <P> slot_top        = 0.6            </P> 
 	    
         </PARAMETERS>
         
@@ -730,8 +730,11 @@
         
         </BOUNDARYCONDITIONS>
 	<FUNCTION NAME="AdvectionVelocity">
-          <E VAR="Vx" VALUE="1"  />
-          <E VAR="Vy" VALUE="1" />
+            <E VAR="Vx" VALUE="2*PI*y"  />
+            <E VAR="Vy" VALUE="-2*PI*x" />
+
+          <!-- <E VAR="Vx" VALUE="0.5*(cos(atan2(y-0.5,x-0.5)))"  /> -->
+          <!-- <E VAR="Vy" VALUE="0.5*(sin(atan2(y-0.5,x-0.5)))" /> -->
         </FUNCTION>  
 
 
