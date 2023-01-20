@@ -58,6 +58,7 @@ v5.3.0
 **IncNavierStokesSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 - Extended Reynolds Stresses filter to passive scalars (!1430)
+- Fixed Taylor-Hood expansion for VCSWeakPressure (!1444)
 
 **VortexWaveInteractionSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
