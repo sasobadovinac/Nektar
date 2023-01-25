@@ -379,7 +379,7 @@ template LIB_UTILITIES_EXPORT void Vadd(int n, const Nektar::NekSingle *x,
                                         const int incy, Nektar::NekSingle *z,
                                         const int incz);
 
-/// \brief Add vector y = alpha - x
+/// \brief Add scalar y = alpha + x
 template <class T>
 void Sadd(int n, const T alpha, const T *x, const int incx, T *y,
           const int incy)
@@ -453,7 +453,7 @@ template LIB_UTILITIES_EXPORT void Vsub(int n, const Nektar::NekSingle *x,
                                         const int incy, Nektar::NekSingle *z,
                                         const int incz);
 
-/// \brief Add vector y = alpha - x
+/// \brief Substract vector y = alpha - x
 template <class T>
 void Ssub(int n, const T alpha, const T *x, const int incx, T *y,
           const int incy)
@@ -593,7 +593,7 @@ template LIB_UTILITIES_EXPORT void Vvtvp(
     const Nektar::NekSingle *x, const int incx, const Nektar::NekSingle *y,
     const int incy, Nektar::NekSingle *z, const int incz);
 
-/// \brief vvtvm (vector times vector plus vector): z = w*x - y
+/// \brief vvtvm (vector times vector minus vector): z = w*x - y
 template <class T>
 void Vvtvm(int n, const T *w, const int incw, const T *x, const int incx,
            const T *y, const int incy, T *z, const int incz)
@@ -659,7 +659,7 @@ template LIB_UTILITIES_EXPORT void Svtvp(int n, const Nektar::NekSingle alpha,
                                          const int incy, Nektar::NekSingle *z,
                                          const int incz);
 
-/// \brief  svtvp (scalar times vector plus vector): z = alpha*x - y
+/// \brief  svtvp (scalar times vector minus vector): z = alpha*x - y
 template <class T>
 void Svtvm(int n, const T alpha, const T *x, const int incx, const T *y,
            const int incy, T *z, const int incz)
@@ -745,7 +745,7 @@ template LIB_UTILITIES_EXPORT void Vvtvvtm(int n, const Nektar::NekSingle *v,
                                            int incy, Nektar::NekSingle *z,
                                            int incz);
 
-/// \brief  vvtvvtp (scalar times vector plus scalar times vector):
+/// \brief  svtvvtp (scalar times vector plus scalar times vector):
 // z = alpha*x + beta*y
 template <class T>
 void Svtsvtp(int n, const T alpha, const T *x, int incx, const T beta,
@@ -1096,7 +1096,7 @@ template LIB_UTILITIES_EXPORT int Nnan(int n, const Nektar::NekSingle *x,
                                        const int incx);
 template LIB_UTILITIES_EXPORT int Nnan(int n, const int *x, const int incx);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot (vector times vector): z = w*x
 template <class T> T Dot(int n, const T *w, const T *x)
 {
     T sum = 0;
@@ -1117,7 +1117,7 @@ template LIB_UTILITIES_EXPORT Nektar::NekSingle Dot(int n,
                                                     const Nektar::NekSingle *w,
                                                     const Nektar::NekSingle *x);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot (vector times vector): z = w*x
 template <class T>
 T Dot(int n, const T *w, const int incw, const T *x, const int incx)
 {
@@ -1143,7 +1143,7 @@ template LIB_UTILITIES_EXPORT Nektar::NekSingle Dot(int n,
                                                     const Nektar::NekSingle *x,
                                                     const int incx);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot2 (vector times vector times vector): z = w*x*y
 template <class T> T Dot2(int n, const T *w, const T *x, const int *y)
 {
     T sum = 0;
@@ -1167,7 +1167,7 @@ template LIB_UTILITIES_EXPORT Nektar::NekSingle Dot2(int n,
                                                      const Nektar::NekSingle *x,
                                                      const int *y);
 
-/// \brief  vvtvp (vector times vector times vector): z = w*x*y
+/// \brief  dot2 (vector times vector times vector): z = w*x*y
 template <class T>
 T Dot2(int n, const T *w, const int incw, const T *x, const int incx,
        const int *y, const int incy)
