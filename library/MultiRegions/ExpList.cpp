@@ -1413,9 +1413,9 @@ void ExpList::DivideByQuadratureMetric(
  * @param   outarray        An array of size \f$N_{\mathrm{eof}}\f$
  *                          used to store the result.
  */
-void ExpList::IProductWRTDerivBase(const int dir,
-                                   const Array<OneD, const NekDouble> &inarray,
-                                   Array<OneD, NekDouble> &outarray)
+void ExpList::v_IProductWRTDerivBase(
+    const int dir, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
 {
     int i;
 
@@ -1475,7 +1475,7 @@ void ExpList::IProductWRTDirectionalDerivBase(
  * @param   outarray        An array of size \f$N_{\mathrm{eof}}\f$
  *                          used to store the result.
  */
-void ExpList::IProductWRTDerivBase(
+void ExpList::v_IProductWRTDerivBase(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,
     Array<OneD, NekDouble> &outarray)
 {

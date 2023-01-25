@@ -268,7 +268,7 @@ public:
     /// \f$f(\boldsymbol{x})\f$ with respect to the derivative (in
     /// direction \param dir) of all \em local expansion modes
     /// \f$\phi_n^e(\boldsymbol{x})\f$.
-    MULTI_REGIONS_EXPORT void IProductWRTDerivBase(
+    inline void IProductWRTDerivBase(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
     MULTI_REGIONS_EXPORT void IProductWRTDirectionalDerivBase(
@@ -279,7 +279,7 @@ public:
     /// function \f$f(\boldsymbol{x})\f$ with respect to the
     /// derivative of all \em local expansion modes
     /// \f$\phi_n^e(\boldsymbol{x})\f$.
-    MULTI_REGIONS_EXPORT void IProductWRTDerivBase(
+    inline void IProductWRTDerivBase(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, NekDouble> &outarray);
     /// This function elementally evaluates the forward transformation
@@ -1287,6 +1287,16 @@ protected:
     virtual void v_SmoothField(Array<OneD, NekDouble> &field);
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray);
+
+    // Define ExpList::IProductWRTDerivBase as virtual function
+    virtual void v_IProductWRTDerivBase(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray);
+
+    virtual void v_IProductWRTDerivBase(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, NekDouble> &outarray);
+
     virtual void v_GetCoords(
         Array<OneD, NekDouble> &coord_0,
         Array<OneD, NekDouble> &coord_1 = NullNekDouble1DArray,
@@ -1656,6 +1666,26 @@ inline void ExpList::IProductWRTBase(
 {
     v_IProductWRTBase(inarray, outarray);
 }
+/**
+ *
+ */
+inline void ExpList::IProductWRTDerivBase(
+    const int dir, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    v_IProductWRTDerivBase(dir, inarray, outarray);
+}
+
+/**
+ *
+ */
+inline void ExpList::IProductWRTDerivBase(
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    v_IProductWRTDerivBase(inarray, outarray);
+}
+
 /**
  *
  */
