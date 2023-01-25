@@ -191,6 +191,10 @@ protected:
     virtual void v_IProductWRTBase(const Array<OneD, const NekDouble> &inarray,
                                    Array<OneD, NekDouble> &outarray) override;
 
+    virtual void v_IProductWRTDerivBase(
+        const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+        Array<OneD, NekDouble> &outarray) override;
+
     virtual std::vector<LibUtilities::FieldDefinitionsSharedPtr>
     v_GetFieldDefinitions(void) override;
 

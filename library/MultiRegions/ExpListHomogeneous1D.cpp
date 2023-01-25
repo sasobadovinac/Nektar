@@ -556,6 +556,137 @@ void ExpListHomogeneous1D::v_IProductWRTBase(
 }
 
 /**
+ * Inner product wrt Derivative of the Basis
+ */
+void ExpListHomogeneous1D::v_IProductWRTDerivBase(
+    const Array<OneD, const Array<OneD, NekDouble>> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nT_pts = inarray[0].size(); // number of total points = n. of Fourier
+                                    // points * n. of points per plane (nT_pts)
+
+    int nT_coeffs =
+        outarray
+            .size(); // equal to nT_pts, note that outarray.size() != Ncoeffs
+    int cntPts = 0, cntCoeff = 0;
+
+    int ndim = inarray.size(); // Dimension including homogeneous direction
+                               // (e.g. 3DH1D, ndim=3D)
+    int cdim =
+        GetCoordim(0); // This is the shape dimension (e.g. 3DH1D, cdim=2D)
+
+    Array<OneD, Array<OneD, NekDouble>> tmpIn(ndim);
+    Array<OneD, Array<OneD, NekDouble>> tmpPhys(cdim);
+    Array<OneD, NekDouble> tmp1, tmp2;
+
+    // Check: input in Fourier space
+    if (m_WaveSpace)
+    {
+        for (int i = 0; i < ndim; i++)
+        {
+            tmpIn[i] = inarray[i];
+        }
+    }
+    else
+    {
+        for (int i = 0; i < ndim; i++)
+        {
+            tmpIn[i] = Array<OneD, NekDouble>(nT_pts);
+            HomogeneousFwdTrans(inarray[i], tmpIn[i]);
+        }
+    }
+
+    // Do 2D-IProductWRTDerivBase on each plane
+    // TODO Check ExpList::m_coll_offset_phys does not write out of bounds
+    // within the vector
+    for (int i = 0; i < m_planes.size(); i++)
+    {
+        // Set each vector component to values of i-th plane
+        for (int j = 0; j < cdim; j++)
+        {
+            tmpPhys[j] = tmpIn[j] + cntPts;
+        }
+
+        // Call 2D routine on each plane
+        m_planes[i]->IProductWRTDerivBase(tmpPhys, tmp1 = outarray + cntCoeff);
+
+        cntPts += m_planes[i]->GetTotPoints();
+        cntCoeff += m_planes[i]->GetNcoeffs();
+    }
+
+    // Add homogeneous derivative
+    if (m_homogeneousBasis->GetBasisType() == LibUtilities::eFourier ||
+        m_homogeneousBasis->GetBasisType() ==
+            LibUtilities::eFourierSingleMode ||
+        m_homogeneousBasis->GetBasisType() ==
+            LibUtilities::eFourierHalfModeRe ||
+        m_homogeneousBasis->GetBasisType() == LibUtilities::eFourierHalfModeIm)
+    {
+        // TODO Check that nT_coeffs is correct for HalfMode
+        Array<OneD, NekDouble> tmpHom(nT_coeffs, 0.0);
+
+        NekDouble sign = -1.0;
+        NekDouble beta;
+        cntPts = 0, cntCoeff = 0; // Zero offset counter
+
+        // Half Modes
+        if (m_homogeneousBasis->GetBasisType() ==
+            LibUtilities::eFourierHalfModeRe)
+        {
+            // Do IProduct with 2D basis
+            m_planes[0]->IProductWRTBase(tmpIn[ndim - 1], tmpHom);
+
+            // Add fourier coefficient
+            beta = sign * 2 * M_PI * (m_transposition->GetK(0)) / m_lhom;
+            Vmath::Smul(nT_coeffs, beta, tmpHom, 1, tmpHom, 1);
+        }
+        else if (m_homogeneousBasis->GetBasisType() ==
+                 LibUtilities::eFourierHalfModeIm)
+        {
+            // Do IProduct with 2D basis
+            m_planes[0]->IProductWRTBase(tmpIn[ndim - 1], tmpHom);
+
+            // Add fourier coefficient
+            beta = -sign * 2 * M_PI * (m_transposition->GetK(0)) / m_lhom;
+            Vmath::Smul(nT_coeffs, beta, tmpHom, 1, tmpHom, 1);
+        }
+        // Fully complex aka general Fourier or FourierSingleMode
+        else
+        {
+            for (int i = 0; i < m_planes.size(); i++)
+            {
+                int ncoeff = m_planes[i]->GetNcoeffs();
+
+                // Do IProduct with 2D basis ie \int_\Omega \phi_{pq}
+                // inarray[ndim]
+                m_planes[i]->IProductWRTBase(tmpIn[ndim - 1] + cntPts,
+                                             tmp1 = tmpHom + cntCoeff);
+
+                // Add fourier coefficient
+                beta = -sign * 2 * M_PI * (m_transposition->GetK(i)) / m_lhom;
+                Vmath::Smul(ncoeff, beta, tmp1 = tmpHom + cntCoeff, 1,
+                            tmp2 = tmpHom + cntCoeff, 1);
+
+                sign = -1.0 * sign;
+
+                cntCoeff += ncoeff;
+            }
+        }
+
+        // Add last term to innerproduct
+        Vmath::Vadd(nT_coeffs, outarray, 1, tmpHom, 1, outarray, 1);
+    }
+    else
+    {
+        NEKERROR(ErrorUtil::efatal,
+                 "The IProductWRTDerivBase routine for one homogeneous "
+                 "direction is not implemented for the homogeneous basis "
+                 "if it is is not of type Fourier "
+                 "or FourierSingleMode/HalfModeRe/HalfModeIm");
+    }
+}
+
+/**
  * Homogeneous transform Bwd/Fwd (MVM and FFT)
  */
 void ExpListHomogeneous1D::Homogeneous1DTrans(
