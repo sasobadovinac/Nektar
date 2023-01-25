@@ -36,6 +36,7 @@ v5.3.0
 - Add missing override keyword to virtual functions in LibUtilities (!1459)
 - Enable ARM macOS runner, fixes for SCOTCH allocation and PETSc detection on macOS (!1462)
 - Add FieldConvert module and filter to project velocity into body-fitted coordinate system (!1467)
+- Fix typos in Vmath and VDmath (!1480)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
