@@ -338,7 +338,7 @@ public:
 
     static std::string className;
 
-}; // end class RungeKutta2TimeIntegrationScheme
+}; // end class ClassicalRungeKutta4TimeIntegrationScheme
 
 class RungeKutta4TimeIntegrationScheme
     : public ClassicalRungeKutta4TimeIntegrationScheme
@@ -352,7 +352,7 @@ public:
 
     static std::string className;
 
-}; // end class RungeKutta2TimeIntegrationScheme
+}; // end class RungeKutta4TimeIntegrationScheme
 
 class RungeKutta5TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
 {
@@ -380,7 +380,7 @@ public:
 
     static std::string className;
 
-}; // end class RungeKutta2TimeIntegrationScheme
+}; // end class RungeKutta5TimeIntegrationScheme
 
 class RungeKutta2_ImprovedEulerTimeIntegrationScheme
     : public RungeKuttaTimeIntegrationScheme
