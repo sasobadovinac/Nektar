@@ -200,10 +200,11 @@ protected:
     MULTI_REGIONS_EXPORT virtual void v_ImposeDirichletConditions(
         Array<OneD, NekDouble> &outarray) override;
 
-    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField() override;
+    MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(
+        const Array<OneD, NekDouble> coeffs) override;
 
     MULTI_REGIONS_EXPORT virtual void v_FillBndCondFromField(
-        const int nreg) override;
+        const int nreg, const Array<OneD, NekDouble> coeffs) override;
 
     /// Gathers the global coefficients \f$\boldsymbol{\hat{u}}_g\f$
     /// from the local coefficients \f$\boldsymbol{\hat{u}}_l\f$.

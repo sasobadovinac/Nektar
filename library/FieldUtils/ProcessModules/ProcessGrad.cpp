@@ -193,8 +193,8 @@ void ProcessGrad::ProcessMappingFld(Array<OneD, Array<OneD, NekDouble>> &grad)
                 vel[i] = Array<OneD, NekDouble>(npoints);
                 if (m_f->m_exp[0]->GetWaveSpace())
                 {
-                    m_f->m_exp[0]->HomogeneousBwdTrans(m_f->m_exp[i]->GetPhys(),
-                                                       vel[i]);
+                    m_f->m_exp[0]->HomogeneousBwdTrans(
+                        npoints, m_f->m_exp[i]->GetPhys(), vel[i]);
                 }
                 else
                 {
@@ -209,7 +209,7 @@ void ProcessGrad::ProcessMappingFld(Array<OneD, Array<OneD, NekDouble>> &grad)
             {
                 for (int i = 0; i < spacedim; ++i)
                 {
-                    m_f->m_exp[0]->HomogeneousFwdTrans(vel[i], vel[i]);
+                    m_f->m_exp[0]->HomogeneousFwdTrans(npoints, vel[i], vel[i]);
                 }
             }
         }
@@ -300,6 +300,7 @@ void ProcessGrad::v_Process(po::variables_map &vm)
     for (int i = 0; i < addfields; ++i)
     {
         m_f->m_exp[nfields + i] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+
         Vmath::Vcopy(npoints, grad[i], 1, m_f->m_exp[nfields + i]->UpdatePhys(),
                      1);
         m_f->m_exp[nfields + i]->FwdTransLocalElmt(

@@ -49,6 +49,7 @@ namespace Nektar
 {
 namespace MultiRegions
 {
+
 /// This class is the abstractio  n of a global discontinuous two-
 /// dimensional spectral/hp element expansion which approximates the
 /// solution of a set of partial differential equations.
@@ -113,9 +114,10 @@ public:
     MULTI_REGIONS_EXPORT std::vector<bool> &GetNegatedFluxNormal(void);
 
     MULTI_REGIONS_EXPORT NekDouble
-    L2_DGDeriv(const int dir, const Array<OneD, const NekDouble> &soln);
-
+    L2_DGDeriv(const int dir, const Array<OneD, const NekDouble> &coeffs,
+               const Array<OneD, const NekDouble> &soln);
     MULTI_REGIONS_EXPORT void EvaluateHDGPostProcessing(
+        const Array<OneD, const NekDouble> &coeffs,
         Array<OneD, NekDouble> &outarray);
 
     MULTI_REGIONS_EXPORT void GetLocTraceToTraceMap(
@@ -128,6 +130,10 @@ protected:
     /// The number of boundary segments on which Dirichlet boundary
     /// conditions are imposed.
     size_t m_numDirBndCondExpansions;
+
+    /// An array which contains the information about the boundary
+    /// condition structure definition on the different boundary regions.
+    Array<OneD, SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
     /**
      * @brief An object which contains the discretised boundary
@@ -143,10 +149,6 @@ protected:
     Array<OneD, MultiRegions::ExpListSharedPtr> m_bndCondExpansions;
 
     Array<OneD, NekDouble> m_bndCondBndWeight;
-
-    /// An array which contains the information about the boundary
-    /// condition on the different boundary regions.
-    Array<OneD, SpatialDomains::BoundaryConditionShPtr> m_bndConditions;
 
     /// Global boundary matrix.
     GlobalLinSysMapShPtr m_globalBndMat;
@@ -246,19 +248,6 @@ protected:
         Array<OneD, NekDouble> &locTraceFwd,
         Array<OneD, NekDouble> &locTraceBwd) override;
 
-#if 0
-            /// Populates the list of boundary condition expansions in multidomain case.
-            void SetMultiDomainBoundaryConditionExpansion(
-                const SpatialDomains::MeshGraphSharedPtr &graph1D,
-                const SpatialDomains::BoundaryConditions &bcs,
-                const std::string variable,
-                Array<OneD, MultiRegions::ExpListSharedPtr>
-                    &bndCondExpansions,
-                Array<OneD, SpatialDomains
-                    ::BoundaryConditionShPtr> &bndConditions,
-                int subdomain);
-#endif
-
     void GenerateFieldBnd1D(SpatialDomains::BoundaryConditions &bcs,
                             const std::string variable);
 
@@ -350,4 +339,4 @@ typedef std::shared_ptr<DisContField> DisContFieldSharedPtr;
 } // namespace MultiRegions
 } // namespace Nektar
 
-#endif // MULTIERGIONS_DISCONTFIELD1D_H
+#endif // NEKTAR_LIBS_MULTIREGIONS_DISCONTFIELD1D_H

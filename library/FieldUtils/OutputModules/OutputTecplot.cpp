@@ -299,6 +299,7 @@ void OutputTecplot::v_OutputFromExp(po::variables_map &vm)
         for (int i = 0; i < m_f->m_variables.size(); ++i)
         {
             m_fields[i + m_coordim] = Array<OneD, NekDouble>(totpoints);
+
             Vmath::Vcopy(m_f->m_exp[0]->GetTotPoints(),
                          m_f->m_exp[i]->UpdatePhys(), 1,
                          m_fields[i + m_coordim], 1);

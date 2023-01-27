@@ -245,7 +245,8 @@ void Extrapolate::CalcOutflowBCs(
             {
                 for (int i = 0; i < m_curl_dim; i++)
                 {
-                    BndElmtExp->HomogeneousBwdTrans(Velocity[i], Velocity[i]);
+                    BndElmtExp->HomogeneousBwdTrans(Velocity[i].size(),
+                                                    Velocity[i], Velocity[i]);
                 }
                 BndElmtExp->SetWaveSpace(false);
             }
@@ -362,7 +363,7 @@ void Extrapolate::CalcOutflowBCs(
 
                 if (m_PBndExp[n]->GetWaveSpace())
                 {
-                    m_PBndExp[n]->HomogeneousFwdTrans(pbc, bndVal);
+                    m_PBndExp[n]->HomogeneousFwdTrans(nqb, pbc, bndVal);
                     m_PBndExp[n]->FwdTrans(bndVal,
                                            m_PBndExp[n]->UpdateCoeffs());
                 }
@@ -378,7 +379,7 @@ void Extrapolate::CalcOutflowBCs(
                 Array<OneD, NekDouble> bndCoeffs(nbcoeffs, 0.0);
                 if (m_PBndExp[n]->GetWaveSpace())
                 {
-                    m_PBndExp[n]->HomogeneousFwdTrans(pbc, bndVal);
+                    m_PBndExp[n]->HomogeneousFwdTrans(nqb, pbc, bndVal);
                     m_PBndExp[n]->IProductWRTBase(bndVal, bndCoeffs);
                 }
                 else
@@ -445,7 +446,7 @@ void Extrapolate::CalcOutflowBCs(
 
                 if (m_houtflow->m_UBndExp[i][n]->GetWaveSpace())
                 {
-                    m_houtflow->m_UBndExp[i][n]->HomogeneousFwdTrans(divU,
+                    m_houtflow->m_UBndExp[i][n]->HomogeneousFwdTrans(nqb, divU,
                                                                      divU);
                 }
 
@@ -473,14 +474,14 @@ void Extrapolate::AddPressureToOutflowBCs(NekDouble kinvis)
             int nqb = m_PBndExp[n]->GetTotPoints();
             int ncb = m_PBndExp[n]->GetNcoeffs();
 
-            m_pressure->FillBndCondFromField(n);
+            m_pressure->FillBndCondFromField(n, m_pressure->GetCoeffs());
             Array<OneD, NekDouble> pbc(nqb);
 
             m_PBndExp[n]->BwdTrans(m_PBndExp[n]->GetCoeffs(), pbc);
 
             if (m_PBndExp[n]->GetWaveSpace())
             {
-                m_PBndExp[n]->HomogeneousBwdTrans(pbc, pbc);
+                m_PBndExp[n]->HomogeneousBwdTrans(nqb, pbc, pbc);
             }
 
             Array<OneD, NekDouble> wk(nqb);
@@ -499,7 +500,8 @@ void Extrapolate::AddPressureToOutflowBCs(NekDouble kinvis)
 
                 if (m_houtflow->m_UBndExp[i][n]->GetWaveSpace())
                 {
-                    m_houtflow->m_UBndExp[i][n]->HomogeneousFwdTrans(wk, wk);
+                    m_houtflow->m_UBndExp[i][n]->HomogeneousFwdTrans(nqb, wk,
+                                                                     wk);
                 }
                 m_houtflow->m_UBndExp[i][n]->IProductWRTBase(wk, wk1);
 

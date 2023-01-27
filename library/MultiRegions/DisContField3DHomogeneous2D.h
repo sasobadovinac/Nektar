@@ -77,10 +77,8 @@ public:
     MULTI_REGIONS_EXPORT void SetupBoundaryConditions(
         const LibUtilities::BasisKey &HomoBasis_y,
         const LibUtilities::BasisKey &HomoBasis_z, const NekDouble lhom_y,
-        const NekDouble lhom_z, SpatialDomains::BoundaryConditions &bcs);
-
-    MULTI_REGIONS_EXPORT void EvaluateBoundaryConditions(
-        const NekDouble time = 0.0, const std::string varName = "");
+        const NekDouble lhom_z, SpatialDomains::BoundaryConditions &bcs,
+        const std::string variable);
 
     /// Storage space for the boundary to element and boundary to trace map.
     /// This member variable is really allocated just in case a boundary

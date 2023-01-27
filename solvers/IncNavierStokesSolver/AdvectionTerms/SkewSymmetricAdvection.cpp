@@ -97,7 +97,7 @@ void SkewSymmetricAdvection::v_Advect(
         if (fields[i]->GetWaveSpace() && !m_SingleMode && !m_HalfMode)
         {
             velocity[i] = Array<OneD, NekDouble>(nqtot, 0.0);
-            fields[i]->HomogeneousBwdTrans(advVel[i], velocity[i]);
+            fields[i]->HomogeneousBwdTrans(nqtot, advVel[i], velocity[i]);
         }
         else
         {
@@ -159,16 +159,22 @@ void SkewSymmetricAdvection::v_Advect(
                 if (m_homogen_dealiasing == true &&
                     fields[0]->GetWaveSpace() == false)
                 {
-                    fields[0]->DealiasedProd(velocity[0], gradV0, gradV0);
-                    fields[0]->DealiasedProd(velocity[1], gradV1, gradV1);
-                    fields[0]->DealiasedProd(velocity[2], gradV2, gradV2);
+                    fields[0]->DealiasedProd(nPointsTot, velocity[0], gradV0,
+                                             gradV0);
+                    fields[0]->DealiasedProd(nPointsTot, velocity[1], gradV1,
+                                             gradV1);
+                    fields[0]->DealiasedProd(nPointsTot, velocity[2], gradV2,
+                                             gradV2);
                     Vmath::Vadd(nPointsTot, gradV0, 1, gradV1, 1, outarray[n],
                                 1);
                     Vmath::Vadd(nPointsTot, gradV2, 1, outarray[n], 1,
                                 outarray[n], 1);
-                    fields[0]->DealiasedProd(inarray[n], velocity[0], gradV0);
-                    fields[0]->DealiasedProd(inarray[n], velocity[1], gradV1);
-                    fields[0]->DealiasedProd(inarray[n], velocity[2], gradV2);
+                    fields[0]->DealiasedProd(nPointsTot, inarray[n],
+                                             velocity[0], gradV0);
+                    fields[0]->DealiasedProd(nPointsTot, inarray[n],
+                                             velocity[1], gradV1);
+                    fields[0]->DealiasedProd(nPointsTot, inarray[n],
+                                             velocity[2], gradV2);
                     fields[0]->PhysDeriv(MultiRegions::DirCartesianMap[0],
                                          gradV0, tmp);
                     Vmath::Vadd(nPointsTot, tmp, 1, outarray[n], 1, outarray[n],
@@ -190,17 +196,17 @@ void SkewSymmetricAdvection::v_Advect(
                     Up = Array<OneD, NekDouble>(nPointsTot);
                     // vector reused to avoid even more memory requirements
                     // names may be misleading
-                    fields[0]->HomogeneousBwdTrans(gradV0, tmp);
+                    fields[0]->HomogeneousBwdTrans(nPointsTot, gradV0, tmp);
                     Vmath::Vmul(nPointsTot, tmp, 1, velocity[0], 1, outarray[n],
                                 1); // + u*du/dx
-                    fields[0]->HomogeneousBwdTrans(gradV1, tmp);
+                    fields[0]->HomogeneousBwdTrans(nPointsTot, gradV1, tmp);
                     Vmath::Vvtvp(nPointsTot, tmp, 1, velocity[1], 1,
                                  outarray[n], 1, outarray[n], 1); // + v*du/dy
-                    fields[0]->HomogeneousBwdTrans(gradV2, tmp);
+                    fields[0]->HomogeneousBwdTrans(nPointsTot, gradV2, tmp);
                     Vmath::Vvtvp(nPointsTot, tmp, 1, velocity[2], 1,
                                  outarray[n], 1, outarray[n], 1); // + w*du/dz
 
-                    fields[0]->HomogeneousBwdTrans(inarray[n], Up);
+                    fields[0]->HomogeneousBwdTrans(nPointsTot, inarray[n], Up);
                     Vmath::Vmul(nPointsTot, Up, 1, velocity[0], 1, gradV0, 1);
                     Vmath::Vmul(nPointsTot, Up, 1, velocity[1], 1, gradV1, 1);
                     Vmath::Vmul(nPointsTot, Up, 1, velocity[2], 1, gradV2, 1);
@@ -221,7 +227,8 @@ void SkewSymmetricAdvection::v_Advect(
                     fields[0]->SetWaveSpace(true);
 
                     Vmath::Smul(nPointsTot, 0.5, outarray[n], 1, tmp, 1);
-                    fields[0]->HomogeneousFwdTrans(tmp, outarray[n]);
+                    fields[0]->HomogeneousFwdTrans(nPointsTot, tmp,
+                                                   outarray[n]);
                 }
                 else if (fields[0]->GetWaveSpace() == false &&
                          m_homogen_dealiasing == false)

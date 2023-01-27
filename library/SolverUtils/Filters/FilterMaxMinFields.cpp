@@ -131,7 +131,8 @@ void FilterMaxMinFields::v_Initialise(
             pFields[nf]->BwdTrans(m_outFields[n], m_outFieldsPhys[n]);
             if (pFields[nf]->GetWaveSpace())
             {
-                pFields[nf]->HomogeneousBwdTrans(m_outFieldsPhys[n],
+                pFields[nf]->HomogeneousBwdTrans(pFields[nf]->GetTotPoints(),
+                                                 m_outFieldsPhys[n],
                                                  m_outFieldsPhys[n]);
             }
         }
@@ -165,7 +166,8 @@ void FilterMaxMinFields::v_ProcessSample(
         pFields[nf]->BwdTrans(fieldcoeffs[n], m_curFieldsPhys[n]);
         if (pFields[nf]->GetWaveSpace())
         {
-            pFields[nf]->HomogeneousBwdTrans(m_curFieldsPhys[n],
+            pFields[nf]->HomogeneousBwdTrans(pFields[nf]->GetTotPoints(),
+                                             m_curFieldsPhys[n],
                                              m_curFieldsPhys[n]);
         }
     }

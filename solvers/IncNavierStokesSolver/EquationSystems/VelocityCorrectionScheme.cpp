@@ -366,7 +366,7 @@ void VelocityCorrectionScheme::SetupFlowrate(NekDouble aii_dt)
         if (m_HomogeneousType == eHomogeneous1D)
         {
             Array<OneD, NekDouble> inTmp2(nqTot);
-            m_fields[i]->HomogeneousFwdTrans(inTmp[i], inTmp2);
+            m_fields[i]->HomogeneousFwdTrans(nqTot, inTmp[i], inTmp2);
             m_fields[i]->SetWaveSpace(true);
             inTmp[i] = inTmp2;
         }

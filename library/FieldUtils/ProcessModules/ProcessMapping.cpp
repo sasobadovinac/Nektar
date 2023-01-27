@@ -105,8 +105,8 @@ void ProcessMapping::v_Process(po::variables_map &vm)
                 vel[i] = Array<OneD, NekDouble>(npoints);
                 if (m_f->m_exp[0]->GetWaveSpace())
                 {
-                    m_f->m_exp[0]->HomogeneousBwdTrans(m_f->m_exp[i]->GetPhys(),
-                                                       vel[i]);
+                    m_f->m_exp[0]->HomogeneousBwdTrans(
+                        npoints, m_f->m_exp[i]->GetPhys(), vel[i]);
                 }
                 else
                 {
@@ -122,7 +122,7 @@ void ProcessMapping::v_Process(po::variables_map &vm)
                 if (m_f->m_exp[0]->GetWaveSpace())
                 {
                     m_f->m_exp[0]->HomogeneousFwdTrans(
-                        vel[i], m_f->m_exp[i]->UpdatePhys());
+                        npoints, vel[i], m_f->m_exp[i]->UpdatePhys());
                 }
                 else
                 {

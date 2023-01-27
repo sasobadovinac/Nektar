@@ -76,8 +76,11 @@ protected:
     virtual void v_ImposeDirichletConditions(
         Array<OneD, NekDouble> &outarray) override;
 
-    virtual void v_FillBndCondFromField() override;
-    virtual void v_FillBndCondFromField(const int nreg) override;
+    virtual void v_FillBndCondFromField(
+        const Array<OneD, NekDouble> coeffs) override;
+    virtual void v_FillBndCondFromField(
+        const int nreg, const Array<OneD, NekDouble> coeffs) override;
+
     /// Template method virtual forwarded for LocalToGlobal()
     virtual void v_LocalToGlobal(bool useComm) override;
 

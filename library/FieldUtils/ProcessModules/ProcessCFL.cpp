@@ -67,11 +67,10 @@ void ProcessCFL::v_Process(po::variables_map &vm)
 {
     m_f->SetUpExp(vm);
 
-    int expdim    = m_f->m_graph->GetMeshDimension();
-    int nelmt     = m_f->m_exp[0]->GetExpSize();
-    int nfields   = m_f->m_variables.size();
-    int addfields = 1;
-    m_spacedim    = expdim;
+    int expdim  = m_f->m_graph->GetMeshDimension();
+    int nelmt   = m_f->m_exp[0]->GetExpSize();
+    int nfields = m_f->m_variables.size();
+    m_spacedim  = expdim;
 
     NekDouble timeStep = m_f->m_session->GetParameter("TimeStep");
     NekDouble cLambda  = 0.2; // Spencer's book
@@ -98,7 +97,14 @@ void ProcessCFL::v_Process(po::variables_map &vm)
     int nstrips;
     m_f->m_session->LoadParameter("Strip_Z", nstrips, 1);
 
-    vector<MultiRegions::ExpListSharedPtr> Exp(nstrips * addfields);
+    MultiRegions::ExpListSharedPtr Exp;
+    // add in new fields
+    for (int s = 0; s < nstrips; ++s)
+    {
+        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        m_f->m_exp.insert(m_f->m_exp.begin() + s * (nfields + 1) + nfields,
+                          Exp);
+    }
 
     for (int s = 0; s < nstrips; ++s) // homogeneous strip varient
     {
@@ -132,21 +138,10 @@ void ProcessCFL::v_Process(po::variables_map &vm)
         }
 
         // temporary store the CFL number field for each strip
-        int n  = s * addfields;
-        Exp[n] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        Vmath::Vcopy(npoints, outfield, 1, Exp[n]->UpdatePhys(), 1);
-        Exp[n]->FwdTransLocalElmt(outfield, Exp[n]->UpdateCoeffs());
-    }
-
-    // update the fields
-    for (int s = 0; s < nstrips; ++s)
-    {
-        for (int i = 0; i < addfields; ++i)
-        {
-            m_f->m_exp.insert(m_f->m_exp.begin() + s * (nfields + addfields) +
-                                  nfields + i,
-                              Exp[s * addfields + i]);
-        }
+        Vmath::Vcopy(npoints, outfield, 1,
+                     m_f->m_exp[s * (nfields + 1) + nfields]->UpdatePhys(), 1);
+        m_f->m_exp[0]->FwdTransLocalElmt(
+            outfield, m_f->m_exp[s * (nfields + 1) + nfields]->UpdateCoeffs());
     }
 }
 

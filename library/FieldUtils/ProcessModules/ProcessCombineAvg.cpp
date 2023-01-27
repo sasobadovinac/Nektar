@@ -183,7 +183,6 @@ void ProcessCombineAvg::v_Process(po::variables_map &vm)
                     m_f->m_exp[j]->UpdatePhys(), 1);
         Vmath::Smul(nq, 1.0 / (na + nb), m_f->m_exp[j]->GetPhys(), 1,
                     m_f->m_exp[j]->UpdatePhys(), 1);
-
         m_f->m_exp[j]->FwdTransLocalElmt(m_f->m_exp[j]->GetPhys(),
                                          m_f->m_exp[j]->UpdateCoeffs());
     }

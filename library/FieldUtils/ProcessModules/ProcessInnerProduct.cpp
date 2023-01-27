@@ -188,18 +188,17 @@ void ProcessInnerProduct::v_Process(po::variables_map &vm)
             for (int j = 0; j < processFields.size(); ++j)
             {
                 int fid = processFields[j];
-
+                Array<OneD, NekDouble> coeffs(m_f->m_exp[fid]->GetNcoeffs());
                 // load new field
                 for (int i = 0; i < allFromField[g]->m_data.size(); ++i)
                 {
                     m_f->m_exp[fid]->ExtractDataToCoeffs(
                         allFromField[g]->m_fielddef[i],
                         allFromField[g]->m_data[i], m_f->m_variables[fid],
-                        m_f->m_exp[fid]->UpdateCoeffs());
+                        coeffs);
                 }
 
-                m_f->m_exp[fid]->BwdTrans(m_f->m_exp[fid]->GetCoeffs(),
-                                          SaveFld[j]);
+                m_f->m_exp[fid]->BwdTrans(coeffs, SaveFld[j]);
             }
 
             // take inner product from this g field with all other above
@@ -228,22 +227,22 @@ NekDouble ProcessInnerProduct::IProduct(
     {
         int fid = processFields[j];
 
+        Array<OneD, NekDouble> coeffs(m_f->m_exp[fid]->GetNcoeffs());
+        Array<OneD, NekDouble> phys(m_f->m_exp[fid]->GetTotPoints());
+
         // load new field
         for (int i = 0; i < fromField->m_data.size(); ++i)
         {
-            m_f->m_exp[fid]->ExtractDataToCoeffs(
-                fromField->m_fielddef[i], fromField->m_data[i],
-                m_f->m_variables[fid], m_f->m_exp[fid]->UpdateCoeffs());
+            m_f->m_exp[fid]->ExtractDataToCoeffs(fromField->m_fielddef[i],
+                                                 fromField->m_data[i],
+                                                 m_f->m_variables[fid], coeffs);
         }
 
-        m_f->m_exp[fid]->BwdTrans(m_f->m_exp[fid]->GetCoeffs(),
-                                  m_f->m_exp[fid]->UpdatePhys());
+        m_f->m_exp[fid]->BwdTrans(coeffs, phys);
 
-        Vmath::Vmul(nphys, SaveFld[j], 1, m_f->m_exp[fid]->GetPhys(), 1,
-                    m_f->m_exp[fid]->UpdatePhys(), 1);
+        Vmath::Vmul(nphys, SaveFld[j], 1, phys, 1, phys, 1);
 
-        NekDouble iprod =
-            m_f->m_exp[fid]->Integral(m_f->m_exp[fid]->UpdatePhys());
+        NekDouble iprod = m_f->m_exp[fid]->Integral(phys);
 
         totiprod += iprod;
     }

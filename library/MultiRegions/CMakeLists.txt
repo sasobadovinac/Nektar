@@ -14,7 +14,7 @@ ExpList.cpp
 ExpListHomogeneous1D.cpp
 ExpListHomogeneous2D.cpp
 ExpList2DHomogeneous1D.cpp
-ExpList1DHomogeneous2D.cpp
+ExpList2DHomogeneous2D.cpp
 ExpList3DHomogeneous1D.cpp
 ExpList3DHomogeneous2D.cpp
 GJPStabilisation.cpp
@@ -47,7 +47,7 @@ ExpList.h
 ExpListHomogeneous1D.h
 ExpListHomogeneous2D.h
 ExpList2DHomogeneous1D.h
-ExpList1DHomogeneous2D.h
+ExpList2DHomogeneous2D.h
 ExpList3DHomogeneous1D.h
 ExpList3DHomogeneous2D.h
 GJPStabilisation.h

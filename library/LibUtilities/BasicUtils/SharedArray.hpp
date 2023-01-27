@@ -618,6 +618,11 @@ public:
     {
     }
 
+    Array(size_type dim1Size, DataType *data, bool WrapArray)
+        : BaseType(dim1Size, data, WrapArray)
+    {
+    }
+
     Array(size_type dim1Size, const Array<OneD, DataType> &rhs)
         : BaseType(dim1Size, rhs)
     {

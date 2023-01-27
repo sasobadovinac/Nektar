@@ -229,7 +229,7 @@ void FilterBodyFittedVelocity::v_Initialise(
                                  m_outFieldsVels[n]);
             if (pFields[0]->GetWaveSpace())
             {
-                pFields[0]->HomogeneousBwdTrans(m_outFieldsVels[n],
+                pFields[0]->HomogeneousBwdTrans(npoints, m_outFieldsVels[n],
                                                 m_outFieldsVels[n]);
             }
         }
@@ -324,7 +324,8 @@ void FilterBodyFittedVelocity::v_ProcessSample(
         pFields[0]->BwdTrans(fieldcoeffs[shift + n], m_curFieldsVels_Car[n]);
         if (pFields[0]->GetWaveSpace())
         {
-            pFields[0]->HomogeneousBwdTrans(m_curFieldsVels_Car[n],
+            pFields[0]->HomogeneousBwdTrans(pFields[0]->GetNpoints(),
+                                            m_curFieldsVels_Car[n],
                                             m_curFieldsVels_Car[n]);
         }
     }

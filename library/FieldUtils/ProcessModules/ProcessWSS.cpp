@@ -91,6 +91,8 @@ void ProcessWSS::v_Process(po::variables_map &vm)
 
     Array<OneD, MultiRegions::ExpListSharedPtr> BndExp(nshear);
     Array<OneD, MultiRegions::ExpListSharedPtr> BndElmtExp(nfields);
+    Array<OneD, Array<OneD, NekDouble>> BndElmtPhys(nfields);
+    Array<OneD, Array<OneD, NekDouble>> BndElmtCoeffs(nfields);
 
     // will resuse nfields expansions to write shear components.
     if (nshear > nfields)
@@ -127,9 +129,14 @@ void ProcessWSS::v_Process(po::variables_map &vm)
             {
                 BndExp[i] = m_f->m_exp[i]->UpdateBndCondExpansion(bnd);
             }
+
+            Array<OneD, int> ElmtID, edgeID;
+            Array<OneD, NekDouble> tmp1, tmp2;
+
             for (i = 0; i < nfields; i++)
             {
                 m_f->m_exp[i]->GetBndElmtExpansion(bnd, BndElmtExp[i]);
+                BndElmtPhys[i] = BndElmtExp[i]->UpdatePhys();
             }
 
             // Get number of points in expansions
@@ -163,12 +170,12 @@ void ProcessWSS::v_Process(po::variables_map &vm)
             }
 
             // Extract Velocities
-            GetVelocity(BndElmtExp, velocity);
+            GetVelocity(BndElmtExp, BndElmtPhys, velocity);
 
             // Extract viscosity coefficients
             NekDouble lambda;
             Array<OneD, NekDouble> mu(nqe, 0.0);
-            GetViscosity(BndElmtExp, mu, lambda);
+            GetViscosity(BndElmtExp, BndElmtPhys, mu, lambda);
 
             // Compute gradients
             for (i = 0; i < m_spacedim; ++i)
@@ -295,6 +302,7 @@ void ProcessWSS::v_Process(po::variables_map &vm)
 
 void ProcessWSS::GetViscosity(
     const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+    const Array<OneD, Array<OneD, NekDouble>> &BndElmtPhys,
     Array<OneD, NekDouble> &mu, NekDouble &lambda)
 {
     NekDouble m_mu;
@@ -351,21 +359,25 @@ void ProcessWSS::GetViscosity(
             Array<OneD, NekDouble> tmp(npoints, 0.0);
             Array<OneD, NekDouble> energy(npoints, 0.0);
             Array<OneD, NekDouble> temperature(npoints, 0.0);
-            Vmath::Vcopy(npoints, exp[m_spacedim + 1]->GetPhys(), 1, energy, 1);
+
+            Vmath::Vcopy(npoints, BndElmtPhys[m_spacedim + 1], 1, energy, 1);
             for (int i = 0; i < m_spacedim; i++)
             {
                 // rhou^2
-                Vmath::Vmul(npoints, exp[i + 1]->GetPhys(), 1,
-                            exp[i + 1]->GetPhys(), 1, tmp, 1);
+                Vmath::Vmul(npoints, BndElmtPhys[i + 1], 1, BndElmtPhys[i + 1],
+                            1, tmp, 1);
                 // rhou^2/rho
-                Vmath::Vdiv(npoints, tmp, 1, exp[0]->GetPhys(), 1, tmp, 1);
+                Vmath::Vdiv(npoints, tmp, 1, BndElmtPhys[0], 1, tmp, 1);
+
                 // 0.5 rhou^2/rho
                 Vmath::Smul(npoints, 0.5, tmp, 1, tmp, 1);
                 // E - 0.5 rhou^2/rho - ...
                 Vmath::Vsub(npoints, energy, 1, tmp, 1, energy, 1);
             }
-            // rhoe/rho
-            Vmath::Vdiv(npoints, energy, 1, exp[0]->GetPhys(), 1, energy, 1);
+
+            // rhou^2/rho
+            Vmath::Vdiv(npoints, energy, 1, BndElmtPhys[0], 1, energy, 1);
+
             // T = e/Cv
             Vmath::Smul(npoints, cv_inv, energy, 1, temperature, 1);
 
@@ -399,6 +411,7 @@ void ProcessWSS::GetViscosity(
 
 void ProcessWSS::GetVelocity(
     const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+    const Array<OneD, Array<OneD, NekDouble>> &BndElmtPhys,
     Array<OneD, Array<OneD, NekDouble>> &vel)
 {
     int npoints = exp[0]->GetNpoints();
@@ -408,7 +421,7 @@ void ProcessWSS::GetVelocity(
         for (int i = 0; i < m_spacedim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-            Vmath::Vcopy(npoints, exp[i]->GetPhys(), 1, vel[i], 1);
+            Vmath::Vcopy(npoints, BndElmtPhys[i], 1, vel[i], 1);
         }
     }
     else if (boost::iequals(m_f->m_variables[0], "rho") &&
@@ -418,7 +431,7 @@ void ProcessWSS::GetVelocity(
         for (int i = 0; i < m_spacedim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-            Vmath::Vdiv(npoints, exp[i + 1]->GetPhys(), 1, exp[0]->GetPhys(), 1,
+            Vmath::Vdiv(npoints, BndElmtPhys[i + 1], 1, BndElmtPhys[0], 1,
                         vel[i], 1);
         }
     }

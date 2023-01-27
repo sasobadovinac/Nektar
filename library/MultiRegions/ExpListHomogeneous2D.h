@@ -98,7 +98,7 @@ public:
     MULTI_REGIONS_EXPORT virtual ~ExpListHomogeneous2D();
 
     MULTI_REGIONS_EXPORT void Homogeneous2DTrans(
-        const Array<OneD, const NekDouble> &inarray,
+        const int npts, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool IsForwards, bool Shuff = true,
         bool UnShuff = true);
 
@@ -163,6 +163,10 @@ protected:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
+    virtual void v_FwdTransBndConstrained(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray) override;
+
     virtual void v_BwdTrans(const Array<OneD, const NekDouble> &inarray,
                             Array<OneD, NekDouble> &outarray) override;
 
@@ -194,21 +198,22 @@ protected:
                                      std::string var) override;
 
     virtual void v_HomogeneousFwdTrans(
-        const Array<OneD, const NekDouble> &inarray,
+        const int npts, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
         bool UnShuff = true) override;
 
     virtual void v_HomogeneousBwdTrans(
-        const Array<OneD, const NekDouble> &inarray,
+        const int npts, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, bool Shuff = true,
         bool UnShuff = true) override;
 
-    virtual void v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+    virtual void v_DealiasedProd(const int num_dofs,
+                                 const Array<OneD, NekDouble> &inarray1,
                                  const Array<OneD, NekDouble> &inarray2,
                                  Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_DealiasedDotProd(
-        const Array<OneD, Array<OneD, NekDouble>> &inarray1,
+        const int num_dofs, const Array<OneD, Array<OneD, NekDouble>> &inarray1,
         const Array<OneD, Array<OneD, NekDouble>> &inarray2,
         Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 

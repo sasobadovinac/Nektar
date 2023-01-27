@@ -93,9 +93,7 @@ namespace MultiRegions
  *
  * The class stores a vector of expansions, \a m_exp, (each derived from
  * StdRegions#StdExpansion) which define the constituent components of
- * the domain. The coefficients from these expansions are concatenated
- * in \a m_coeffs, while the expansion evaluated at the quadrature
- * points is stored in \a m_phys.
+ * the domain.
  */
 
 /**
@@ -119,6 +117,7 @@ ExpList::ExpList(const ExpansionType type)
  */
 ExpList::ExpList(const ExpList &in, const bool DeclareCoeffPhysArrays)
     : std::enable_shared_from_this<ExpList>(in), m_expType(in.m_expType),
+
       m_comm(in.m_comm), m_session(in.m_session), m_graph(in.m_graph),
       m_ncoeffs(in.m_ncoeffs), m_npoints(in.m_npoints), m_physState(false),
       m_exp(in.m_exp), m_collections(in.m_collections),
@@ -166,8 +165,7 @@ ExpList::ExpList(const ExpList &in, const std::vector<unsigned int> &eIDs,
  * constructor fills the list of local expansions
  * \texttt{m_exp} with the proper expansions, calculates the
  * total number of quadrature points \f$x_i\f$ and local
- * expansion coefficients \f$\hat{u}^e_n\f$ and allocates
- * memory for the arrays #m_coeffs and #m_phys.
+ * expansion coefficients \f$\hat{u}^e_n\f$ and
  *
  * @param  pSession    A session within information about expansion
  *
@@ -211,8 +209,7 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
  * expansions \texttt{m_exp} with the proper expansions,
  * calculates the total number of quadrature points
  * \f$\boldsymbol{x}_i\f$ and local expansion coefficients
- * \f$\hat{u}^e_n\f$ and allocates memory for the arrays
- * #m_coeffs and #m_phys.
+ * \f$\hat{u}^e_n\f$.
  *
  * @param  pSession      A session within information about expansion
  * @param expansions     A vector containing information about the
@@ -1082,7 +1079,7 @@ ExpList::ExpList(const LibUtilities::SessionReaderSharedPtr &pSession,
 /**
  * Each expansion (local element) is processed in turn to
  * determine the number of coefficients and physical data
- * points it contributes to the domain. Twoe arrays,
+ * points it contributes to the domain. Two arrays,
  * #m_coeff_offset are #m_phys_offset are also initialised and
  * updated to store the data offsets of each element in the
  * #m_coeffs and #m_phys arrays, and the element id that each
@@ -2296,12 +2293,12 @@ DNekMatSharedPtr ExpList::GenGlobalMatrixFull(
 
             break;
         default: // Assume general matrix - currently only set up
-                 // for full invert
-        {
-            matStorage = eFULL;
-            Gmat = MemoryManager<DNekMat>::AllocateSharedPtr(rows, cols, zero,
-                                                             matStorage);
-        }
+            // for full invert
+            {
+                matStorage = eFULL;
+                Gmat       = MemoryManager<DNekMat>::AllocateSharedPtr(
+                    rows, cols, zero, matStorage);
+            }
     }
 
     // fill global symmetric matrix
@@ -3099,7 +3096,9 @@ void ExpList::v_WriteVtkPieceData(std::ostream &outfile, int expansion,
     outfile << "        <DataArray type=\"Float64\" Name=\"" << var << "\">"
             << endl;
     outfile << "          ";
+
     const Array<OneD, NekDouble> phys = m_phys + m_phys_offset[expansion];
+
     for (i = 0; i < nq; ++i)
     {
         outfile << (fabs(phys[i]) < NekConstants::kNekZeroTol ? 0 : phys[i])
@@ -3319,10 +3318,10 @@ LibUtilities::NekManager<GlobalLinSysKey, GlobalLinSys>
     return NullGlobalLinSysManager;
 }
 
-void ExpList::ExtractFileBCs(const std::string &fileName,
-                             LibUtilities::CommSharedPtr comm,
-                             const std::string &varName,
-                             const std::shared_ptr<ExpList> locExpList)
+void ExpList::ExtractCoeffsFromFile(const std::string &fileName,
+                                    LibUtilities::CommSharedPtr comm,
+                                    const std::string &varName,
+                                    Array<OneD, NekDouble> &coeffs)
 {
     string varString = fileName.substr(0, fileName.find_last_of("."));
     int j, k, len = varString.length();
@@ -3346,9 +3345,8 @@ void ExpList::ExtractFileBCs(const std::string &fileName,
             if (FieldDef[j]->m_fields[k] == varName)
             {
                 // Copy FieldData into locExpList
-                locExpList->ExtractDataToCoeffs(FieldDef[j], FieldData[j],
-                                                FieldDef[j]->m_fields[k],
-                                                locExpList->UpdateCoeffs());
+                ExtractDataToCoeffs(FieldDef[j], FieldData[j],
+                                    FieldDef[j]->m_fields[k], coeffs);
                 found = true;
             }
         }
@@ -3356,7 +3354,6 @@ void ExpList::ExtractFileBCs(const std::string &fileName,
 
     ASSERTL0(found, "Could not find variable '" + varName +
                         "' in file boundary condition " + fileName);
-    locExpList->BwdTrans(locExpList->GetCoeffs(), locExpList->UpdatePhys());
 }
 
 /**
@@ -4534,39 +4531,42 @@ void ExpList::v_LinearAdvectionReactionSolve(
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_HomogeneousFwdTrans(const Array<OneD, const NekDouble> &inarray,
+void ExpList::v_HomogeneousFwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff, bool UnShuff)
 {
-    boost::ignore_unused(inarray, outarray, Shuff, UnShuff);
+    boost::ignore_unused(npts, inarray, outarray, Shuff, UnShuff);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_HomogeneousBwdTrans(const Array<OneD, const NekDouble> &inarray,
+void ExpList::v_HomogeneousBwdTrans(const int npts,
+                                    const Array<OneD, const NekDouble> &inarray,
                                     Array<OneD, NekDouble> &outarray,
                                     bool Shuff, bool UnShuff)
 {
-    boost::ignore_unused(inarray, outarray, Shuff, UnShuff);
+    boost::ignore_unused(npts, inarray, outarray, Shuff, UnShuff);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
-void ExpList::v_DealiasedProd(const Array<OneD, NekDouble> &inarray1,
+void ExpList::v_DealiasedProd(const int npts,
+                              const Array<OneD, NekDouble> &inarray1,
                               const Array<OneD, NekDouble> &inarray2,
                               Array<OneD, NekDouble> &outarray)
 {
-    boost::ignore_unused(inarray1, inarray2, outarray);
+    boost::ignore_unused(npts, inarray1, inarray2, outarray);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
 void ExpList::v_DealiasedDotProd(
-    const Array<OneD, Array<OneD, NekDouble>> &inarray1,
+    const int npts, const Array<OneD, Array<OneD, NekDouble>> &inarray1,
     const Array<OneD, Array<OneD, NekDouble>> &inarray2,
     Array<OneD, Array<OneD, NekDouble>> &outarray)
 {
-    boost::ignore_unused(inarray1, inarray2, outarray);
+    boost::ignore_unused(npts, inarray1, inarray2, outarray);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
@@ -4641,17 +4641,19 @@ void ExpList::v_ImposeDirichletConditions(Array<OneD, NekDouble> &outarray)
 
 /**
  */
-void ExpList::v_FillBndCondFromField()
+void ExpList::v_FillBndCondFromField(const Array<OneD, NekDouble> coeffs)
 {
+    boost::ignore_unused(coeffs);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }
 
 /**
  */
-void ExpList::v_FillBndCondFromField(const int nreg)
+void ExpList::v_FillBndCondFromField(const int nreg,
+                                     const Array<OneD, NekDouble> coeffs)
 {
-    boost::ignore_unused(nreg);
+    boost::ignore_unused(nreg, coeffs);
     NEKERROR(ErrorUtil::efatal,
              "This method is not defined or valid for this class type");
 }

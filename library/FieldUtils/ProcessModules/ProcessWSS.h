@@ -74,9 +74,11 @@ protected:
     }
 
     void GetViscosity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+                      const Array<OneD, Array<OneD, NekDouble>> &BndElmtdPhys,
                       Array<OneD, NekDouble> &mu, NekDouble &lambda);
 
     void GetVelocity(const Array<OneD, MultiRegions::ExpListSharedPtr> exp,
+                     const Array<OneD, Array<OneD, NekDouble>> &BndElmtdPhys,
                      Array<OneD, Array<OneD, NekDouble>> &vel);
 
 private:

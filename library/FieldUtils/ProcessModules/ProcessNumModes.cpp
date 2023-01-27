@@ -97,8 +97,6 @@ void ProcessNumModes::v_Process(po::variables_map &vm)
         outfield[i] = Array<OneD, NekDouble>(npoints);
     }
 
-    MultiRegions::ExpListSharedPtr Exp;
-
     int nExp, nq, offset;
     nExp = m_f->m_exp[0]->GetExpSize();
 
@@ -115,17 +113,27 @@ void ProcessNumModes::v_Process(po::variables_map &vm)
         }
     }
 
+    for (s = 0; s < nstrips; ++s) // homogeneous strip varient
+    {
+        for (i = 0; i < addfields; ++i)
+        {
+            MultiRegions::ExpListSharedPtr Exp =
+                m_f->AppendExpList(m_f->m_numHomogeneousDir);
+            auto it =
+                m_f->m_exp.begin() + s * (nfields + addfields) + nfields + i;
+            m_f->m_exp.insert(it, Exp);
+        }
+    }
+
     for (s = 0; s < nstrips; ++s)
     {
         for (i = 0; i < addfields; ++i)
         {
-            Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-            Vmath::Vcopy(npoints, outfield[i], 1, Exp->UpdatePhys(), 1);
-            Exp->FwdTransLocalElmt(outfield[i], Exp->UpdateCoeffs());
-
-            auto it =
-                m_f->m_exp.begin() + s * (nfields + addfields) + nfields + i;
-            m_f->m_exp.insert(it, Exp);
+            int fid = s * (nfields + addfields) + nfields + i;
+            Vmath::Vcopy(npoints, outfield[i], 1, m_f->m_exp[fid]->UpdatePhys(),
+                         1);
+            m_f->m_exp[fid]->FwdTransLocalElmt(outfield[i],
+                                               m_f->m_exp[fid]->UpdateCoeffs());
         }
     }
 }
