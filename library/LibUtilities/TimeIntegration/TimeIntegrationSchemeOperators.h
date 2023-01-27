@@ -80,7 +80,7 @@ public:
     typedef Array<OneD, FunctorType1> FunctorType1Array;
     typedef Array<OneD, FunctorType2> FunctorType2Array;
 
-    TimeIntegrationSchemeOperators(void) : m_functors1(4), m_functors2(1)
+    TimeIntegrationSchemeOperators(void) : m_functors1(2), m_functors2(1)
     {
     }
 
@@ -93,25 +93,9 @@ public:
     }
 
     template <typename FuncPointerT, typename ObjectPointerT>
-    void DefineOdeExplicitRhs(FuncPointerT func, ObjectPointerT obj)
-    {
-        m_functors1[1] =
-            std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,
-                      std::placeholders::_3);
-    }
-
-    template <typename FuncPointerT, typename ObjectPointerT>
-    void DefineOdeImplicitRhs(FuncPointerT func, ObjectPointerT obj)
-    {
-        m_functors1[2] =
-            std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,
-                      std::placeholders::_3);
-    }
-
-    template <typename FuncPointerT, typename ObjectPointerT>
     void DefineProjection(FuncPointerT func, ObjectPointerT obj)
     {
-        m_functors1[3] =
+        m_functors1[1] =
             std::bind(func, obj, std::placeholders::_1, std::placeholders::_2,
                       std::placeholders::_3);
     }
@@ -132,28 +116,12 @@ public:
         m_functors1[0](inarray, outarray, time);
     }
 
-    inline void DoOdeExplicitRhs(InArrayType &inarray, OutArrayType &outarray,
-                                 const NekDouble time) const
-    {
-        ASSERTL1(m_functors1[1], "OdeExplicitRhs should be defined for this "
-                                 "time integration scheme");
-        m_functors1[1](inarray, outarray, time);
-    }
-
-    inline void DoOdeImplicitRhs(InArrayType &inarray, OutArrayType &outarray,
-                                 const NekDouble time) const
-    {
-        ASSERTL1(m_functors1[2], "OdeImplictRhs should be defined for this "
-                                 "time integration scheme");
-        m_functors1[2](inarray, outarray, time);
-    }
-
     inline void DoProjection(InArrayType &inarray, OutArrayType &outarray,
                              const NekDouble time) const
     {
-        ASSERTL1(m_functors1[3], "Projection operation should be defined for "
+        ASSERTL1(m_functors1[1], "Projection operation should be defined for "
                                  "this time integration scheme");
-        m_functors1[3](inarray, outarray, time);
+        m_functors1[1](inarray, outarray, time);
     }
 
     inline void DoImplicitSolve(InArrayType &inarray, OutArrayType &outarray,

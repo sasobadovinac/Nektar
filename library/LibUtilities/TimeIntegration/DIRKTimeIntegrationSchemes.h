@@ -453,7 +453,7 @@ public:
     }
 
     static std::string className;
-};
+}; // end class DIRKOrder4_ES5TimeIntegrationScheme
 
 } // end namespace LibUtilities
 } // end namespace Nektar
