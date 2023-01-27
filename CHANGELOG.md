@@ -38,6 +38,7 @@ v5.3.0
 - Add FieldConvert module and filter to project velocity into body-fitted coordinate system (!1467)
 - Fix typos in Vmath and VDmath (!1480)
 - Fix minor typo and removed unused functions in LibUtilities/TimeIntegration (!1476) 
+- Fix RK5 time integration scheme (!1482)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

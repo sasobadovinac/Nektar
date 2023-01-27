@@ -142,11 +142,15 @@ public:
                       0.,      0.,      0.,      0.,
                       0.,      0.,      0.,      0.,      0. },
                 // 5th Order - 6 stages
+                // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
+                // Runge-Kutta method for solving ordinary differential
+                // equations." In Proceedings of the 11th WSEAS international
+                // conference on Applied computer science, pp. 129-133. 2011.
                 {  1./4.,
                    1./8.,   1./8.,
-                      0.,      0.,    1./2.,
-                  3./16.,  -3./8.,    3./8.,  9./16.,
-                  -3./7.,   8./7.,    6./7., -12./7.,   8./7. } },
+                      0.,  -1./2.,      1.,
+                  3./16.,      0.,      0.,  9./16.,
+                  -3./7.,   2./7.,  12./7., -12./7.,   8./7. } },
               // Strong Stability Preserving
               { {     0.,      0.,      0.,      0.,      0.,
                       0.,      0.,      0.,      0.,      0.,
@@ -173,40 +177,52 @@ public:
                       0.,      0.,      0.,      0.,
                       0.,      0.,      0.,      0.,      0. },
                 // 5th Order - 6 stages - not used
+                // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
+                // Runge-Kutta method for solving ordinary differential
+                // equations." In Proceedings of the 11th WSEAS international
+                // conference on Applied computer science, pp. 129-133. 2011.
                 {  1./4.,
                    1./8.,   1./8.,
-                      0.,      0.,    1./2.,
-                  3./16.,  -3./8.,    3./8.,  9./16.,
-                  -3./7.,   8./7.,    6./7., -12./7.,   8./7. } } };
+                      0.,  -1./2.,      1.,
+                  3./16.,      0.,      0.,  9./16.,
+                  -3./7.,   2./7.,   12./7., -12./7.,   8./7. } } };
         // clang-format on
 
         // B Coefficients for the final summing.
 
         // clang-format off
-        const NekDouble Bcoefficients[2][6][5] =
-            { { {    0.,       0.,    0.,       0.,      0. },
+        const NekDouble Bcoefficients[2][6][6] =
+            { { {    0.,       0.,    0.,       0.,      0.,      0. },
                 // 1st Order
-                {    1.,       0.,    0.,       0.,      0. },
+                {    1.,       0.,    0.,       0.,      0.,      0. },
                 // 2nd Order - midpoint
-                {    0.,       1.,     0.,      0.,      0. },
+                {    0.,       1.,     0.,      0.,      0.,      0. },
                 // 3rd Order - Ralston's
-                { 2./9.,    3./9.,  4./9.,      0.,      0. },
+                { 2./9.,    3./9.,  4./9.,      0.,      0.,      0. },
                 // 4th Order - Classic
-                { 1./6.,    2./6.,  2./6.,   1./6.,      0. },
+                { 1./6.,    2./6.,  2./6.,   1./6.,      0.,      0. },
                 // 5th Order - 6 stages
-                { 7./90., 32./90., 12./90., 32./90., 7./90. } },
+                // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
+                // Runge-Kutta method for solving ordinary differential
+                // equations." In Proceedings of the 11th WSEAS international
+                // conference on Applied computer science, pp. 129-133. 2011.
+                { 7./90.,      0., 32./90., 12./90., 32./90., 7./90.} },
               // Strong Stability Preserving
-              { {    0.,       0.,     0.,      0.,      0. },
+              { {    0.,       0.,     0.,      0.,      0.,      0. },
                 // 1st Order
-                {    1.,       0.,     0.,      0.,      0. },
+                {    1.,       0.,     0.,      0.,      0.,      0. },
                 // 2nd Order - improved
-                { 1./2.,    1./2.,     0.,      0.,      0. },
+                { 1./2.,    1./2.,     0.,      0.,      0.,      0. },
                 // 3rd Order - strong scaling
-                { 1./6.,    1./6.,  4./6.,      0.,      0. },
+                { 1./6.,    1./6.,  4./6.,      0.,      0.,      0. },
                 // 4th Order - Classic
-                { 1./6.,    2./6.,  2./6.,   1./6.,      0. },
+                { 1./6.,    2./6.,  2./6.,   1./6.,      0.,      0. },
                 // 5th Order - 6 stages
-                { 7./90., 32./90., 12./90., 32./90., 7./90. } } };
+                // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
+                // Runge-Kutta method for solving ordinary differential
+                // equations." In Proceedings of the 11th WSEAS international
+                // conference on Applied computer science, pp. 129-133. 2011.
+                { 7./90.,      0., 32./90., 12./90., 32./90., 7./90. } } };
         // clang-format on
 
         unsigned int index = (variant == "SSP" || variant == "ImprovedEuler");
@@ -247,7 +263,7 @@ public:
         }
 
         // B Coefficients for the finial summing.
-        for (int n = 0; n < phase->m_order; ++n)
+        for (int n = 0; n < phase->m_numstages; ++n)
         {
             phase->m_B[0][0][n] = Bcoefficients[index][phase->m_order][n];
         }
