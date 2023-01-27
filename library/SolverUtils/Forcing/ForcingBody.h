@@ -91,7 +91,10 @@ private:
     std::string m_funcName;
     bool m_hasTimeFcnScaling;
     LibUtilities::EquationSharedPtr m_timeFcnEqn;
+    // Bool for single/half mode
     bool m_transform;
+    // Bool for homogeneous expansions
+    bool homogeneous;
 
     ForcingBody(const LibUtilities::SessionReaderSharedPtr &pSession,
                 const std::weak_ptr<EquationSystem> &pEquation);

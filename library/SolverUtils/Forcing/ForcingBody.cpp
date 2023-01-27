@@ -78,7 +78,7 @@ void ForcingBody::v_InitObject(
     bool singleMode, halfMode;
     m_session->MatchSolverInfo("ModeType", "SingleMode", singleMode, false);
     m_session->MatchSolverInfo("ModeType", "HalfMode", halfMode, false);
-    bool homogeneous = pFields[0]->GetExpType() == MultiRegions::e3DH1D ||
+    homogeneous = pFields[0]->GetExpType() == MultiRegions::e3DH1D ||
                        pFields[0]->GetExpType() == MultiRegions::e3DH2D;
     m_transform = (singleMode || halfMode || homogeneous);
 
@@ -143,7 +143,10 @@ void ForcingBody::Update(
                 {
                     inn_cpy[j] = Array<OneD, NekDouble>(nq);
                     Vmath::Vcopy(nq, inarray[j], 1, inn_cpy[j], 1);
-                    pFields[0]->HomogeneousBwdTrans(inn_cpy[j], inn_cpy[j]);
+                    if (homogeneous)
+                    {
+                        pFields[0]->HomogeneousBwdTrans(inn_cpy[j], inn_cpy[j]);
+                    }
                     fielddata.push_back(inn_cpy[j]);
                     
                 }
