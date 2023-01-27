@@ -148,6 +148,7 @@ void ProcessC0Projection::v_Process(po::variables_map &vm)
 
     string fields = m_config["fields"].as<string>();
     vector<unsigned int> processFields;
+    Array<OneD, NekDouble> tmp;
 
     if (fields.compare("All") == 0)
     {
@@ -179,12 +180,14 @@ void ProcessC0Projection::v_Process(po::variables_map &vm)
         if (JustPerformLocToGloMap)
         {
             int ncoeffs = m_f->m_exp[0]->GetNcoeffs();
+            Array<OneD, NekDouble> Coeffs(ncoeffs);
             Vmath::Vcopy(ncoeffs, m_f->m_exp[processFields[i]]->GetCoeffs(), 1,
-                         C0ProjectExp[processFields[i]]->UpdateCoeffs(), 1);
-            C0ProjectExp[processFields[i]]->LocalToGlobal();
-            C0ProjectExp[processFields[i]]->GlobalToLocal();
-            Vmath::Vcopy(ncoeffs, C0ProjectExp[processFields[i]]->GetCoeffs(),
-                         1, m_f->m_exp[processFields[i]]->UpdateCoeffs(), 1);
+                         Coeffs, 1);
+            C0ProjectExp[processFields[i]]->LocalToGlobal(Coeffs, Coeffs);
+            C0ProjectExp[processFields[i]]->GlobalToLocal(Coeffs, Coeffs);
+
+            Vmath::Vcopy(ncoeffs, Coeffs, 1,
+                         tmp = m_f->m_exp[processFields[i]]->UpdateCoeffs(), 1);
         }
         else
         {
@@ -209,10 +212,8 @@ void ProcessC0Projection::v_Process(po::variables_map &vm)
                 Vmath::Smul(npoints, -lambda,
                             m_f->m_exp[processFields[i]]->GetPhys(), 1, forcing,
                             1);
-
                 Vmath::Zero(ncoeffs,
                             m_f->m_exp[processFields[i]]->UpdateCoeffs(), 1);
-
                 C0ProjectExp[processFields[i]]->HelmSolve(
                     forcing, m_f->m_exp[processFields[i]]->UpdateCoeffs(),
                     factors);
@@ -228,7 +229,7 @@ void ProcessC0Projection::v_Process(po::variables_map &vm)
         }
         C0ProjectExp[processFields[i]]->BwdTrans(
             m_f->m_exp[processFields[i]]->GetCoeffs(),
-            m_f->m_exp[processFields[i]]->UpdatePhys());
+            tmp = m_f->m_exp[processFields[i]]->UpdatePhys());
     }
 }
 } // namespace FieldUtils

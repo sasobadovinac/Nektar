@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: ExpList1DHomogeneous2D.h
+// File: ExpList2DHomogeneous2D.h
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -46,23 +46,23 @@ namespace MultiRegions
 {
 
 // Forward declaration for typedefs
-class ExpList1DHomogeneous2D;
+class ExpList2DHomogeneous2D;
 
-/// Shared pointer to an ExpList1DHomogeneous2D object.
-typedef std::shared_ptr<ExpList1DHomogeneous2D> ExpList1DHomogeneous2DSharedPtr;
-/// Vector of pointers to ExpList1DHomogeneous2D objects.
-typedef std::vector<ExpList1DHomogeneous2DSharedPtr>
-    ExpList1DHomogeneous2DVector;
+/// Shared pointer to an ExpList2DHomogeneous2D object.
+typedef std::shared_ptr<ExpList2DHomogeneous2D> ExpList2DHomogeneous2DSharedPtr;
+/// Vector of pointers to ExpList2DHomogeneous2D objects.
+typedef std::vector<ExpList2DHomogeneous2DSharedPtr>
+    ExpList2DHomogeneous2DVector;
 
 /// Abstraction of a one-dimensional multi-elemental expansion which
 /// is merely a collection of local expansions.
-class ExpList1DHomogeneous2D : public ExpListHomogeneous2D
+class ExpList2DHomogeneous2D : public ExpListHomogeneous2D
 {
 public:
     /// Default constructor.
-    MULTI_REGIONS_EXPORT ExpList1DHomogeneous2D();
+    MULTI_REGIONS_EXPORT ExpList2DHomogeneous2D();
 
-    MULTI_REGIONS_EXPORT ExpList1DHomogeneous2D(
+    MULTI_REGIONS_EXPORT ExpList2DHomogeneous2D(
         const LibUtilities::SessionReaderSharedPtr &pSession,
         const LibUtilities::BasisKey &HomoBasis_y,
         const LibUtilities::BasisKey &HomoBasis_z, const NekDouble lhom_y,
@@ -70,11 +70,11 @@ public:
         const Array<OneD, ExpListSharedPtr> &points);
 
     /// Copy constructor.
-    MULTI_REGIONS_EXPORT ExpList1DHomogeneous2D(
-        const ExpList1DHomogeneous2D &In);
+    MULTI_REGIONS_EXPORT ExpList2DHomogeneous2D(
+        const ExpList2DHomogeneous2D &In);
 
     /// Destructor.
-    MULTI_REGIONS_EXPORT virtual ~ExpList1DHomogeneous2D();
+    MULTI_REGIONS_EXPORT virtual ~ExpList2DHomogeneous2D();
 
     // MULTI_REGIONS_EXPORT void HomoFwdTrans2D(const Array<OneD, const
     // NekDouble> &inarray, Array<OneD, NekDouble> &outarray);
@@ -94,6 +94,18 @@ protected:
     virtual void v_GetCoords(const int eid, Array<OneD, NekDouble> &xc0,
                              Array<OneD, NekDouble> &xc1,
                              Array<OneD, NekDouble> &xc2) override;
+
+    virtual void v_FwdTrans(const Array<OneD, const NekDouble> &inarray,
+                            Array<OneD, NekDouble> &outarray) override;
+
+    virtual void v_FwdTransLocalElmt(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray) override;
+
+    // This is same as fwdtrans for this expansion
+    virtual void v_FwdTransBndConstrained(
+        const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_WriteTecplotZone(std::ostream &outfile,
                                     int expansion) override;

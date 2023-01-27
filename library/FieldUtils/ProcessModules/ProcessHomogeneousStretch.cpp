@@ -99,6 +99,7 @@ void ProcessHomogeneousStretch::v_Process(po::variables_map &vm)
         {
             int n       = s * nfields + i;
             int ncoeffs = m_f->m_exp[n]->GetPlane(0)->GetNcoeffs();
+
             // Loop planes backwards so we can copy in place
             for (int p = nplanes - 1; p > 1; --p)
             {

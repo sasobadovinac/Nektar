@@ -170,6 +170,13 @@ void ProcessL2Criterion::v_Process(po::variables_map &vm)
 
     for (s = 0; s < nstrips; ++s) // homogeneous strip varient
     {
+        Exp     = m_f->AppendExpList(m_f->m_numHomogeneousDir);
+        auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
+        m_f->m_exp.insert(it, Exp);
+    }
+
+    for (s = 0; s < nstrips; ++s) // homogeneous strip varient
+    {
         for (i = 0; i < spacedim; ++i)
         {
             m_f->m_exp[s * nfields + i]->PhysDeriv(
@@ -231,11 +238,10 @@ void ProcessL2Criterion::v_Process(po::variables_map &vm)
                         outfield3);
         }
 
-        Exp = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-        Vmath::Vcopy(npoints, outfield2, 1, Exp->UpdatePhys(), 1);
-        Exp->FwdTransLocalElmt(outfield2, Exp->UpdateCoeffs());
-        auto it = m_f->m_exp.begin() + s * (nfields + 1) + nfields;
-        m_f->m_exp.insert(it, Exp);
+        int fid = s * (nfields + 1) + nfields;
+        Vmath::Vcopy(npoints, outfield2, 1, m_f->m_exp[fid]->UpdatePhys(), 1);
+        m_f->m_exp[fid]->FwdTransLocalElmt(outfield2,
+                                           m_f->m_exp[fid]->UpdateCoeffs());
     }
 }
 } // namespace FieldUtils

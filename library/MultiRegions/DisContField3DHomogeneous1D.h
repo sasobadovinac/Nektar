@@ -196,7 +196,6 @@ protected:
      * \param time The time at which the boundary conditions should be
      * evaluated
      */
-
     virtual void v_EvaluateBoundaryConditions(
         const NekDouble time = 0.0, const std::string varName = "",
         const NekDouble x2_in = NekConstants::kNekUnsetDouble,
@@ -216,11 +215,8 @@ protected:
     virtual void v_SetBndCondBwdWeight(const int index,
                                        const NekDouble value) override;
 };
-
 typedef std::shared_ptr<DisContField3DHomogeneous1D>
     DisContField3DHomogeneous1DSharedPtr;
-
 } // namespace MultiRegions
 } // namespace Nektar
-
-#endif // MULTIERGIONS_DISCONTFIELD3DHOMO1D_H
+#endif

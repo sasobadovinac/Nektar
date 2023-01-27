@@ -215,7 +215,8 @@ void UnsteadySystem::v_DoSolve()
     {
         for (i = 0; i < nfields; ++i)
         {
-            m_fields[i]->HomogeneousFwdTrans(m_fields[i]->GetPhys(),
+            m_fields[i]->HomogeneousFwdTrans(m_fields[i]->GetTotPoints(),
+                                             m_fields[i]->GetPhys(),
                                              m_fields[i]->UpdatePhys());
             m_fields[i]->SetWaveSpace(true);
             m_fields[i]->SetPhysState(false);
@@ -509,7 +510,8 @@ void UnsteadySystem::v_DoSolve()
                     {
                         m_fields[i]->SetWaveSpace(true);
                         m_fields[i]->HomogeneousFwdTrans(
-                            m_fields[i]->GetPhys(), m_fields[i]->UpdatePhys());
+                            m_fields[i]->GetTotPoints(), m_fields[i]->GetPhys(),
+                            m_fields[i]->UpdatePhys());
                         m_fields[i]->SetPhysState(false);
                     }
                 }

@@ -148,6 +148,7 @@ void FilterReynoldsStresses::v_Initialise(
     size_t dim          = pFields.size() - 1;
     size_t nExtraFields = (dim + 1) * dim / 2;
     size_t origFields   = pFields.size();
+    size_t nqtot        = pFields[0]->GetTotPoints();
 
     // Allocate storage
     m_fields.resize(origFields + nExtraFields);
@@ -155,11 +156,11 @@ void FilterReynoldsStresses::v_Initialise(
 
     for (size_t n = 0; n < m_fields.size(); ++n)
     {
-        m_fields[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
+        m_fields[n] = Array<OneD, NekDouble>(nqtot, 0.0);
     }
     for (size_t n = 0; n < m_delta.size(); ++n)
     {
-        m_delta[n] = Array<OneD, NekDouble>(pFields[0]->GetTotPoints(), 0.0);
+        m_delta[n] = Array<OneD, NekDouble>(nqtot, 0.0);
     }
 
     // Initialise output arrays
@@ -173,7 +174,8 @@ void FilterReynoldsStresses::v_Initialise(
             pFields[0]->BwdTrans(m_outFields[j], m_fields[j]);
             if (pFields[0]->GetWaveSpace())
             {
-                pFields[0]->HomogeneousBwdTrans(m_fields[j], m_fields[j]);
+                pFields[0]->HomogeneousBwdTrans(nqtot, m_fields[j],
+                                                m_fields[j]);
             }
         }
     }
@@ -245,7 +247,7 @@ void FilterReynoldsStresses::v_ProcessSample(
     {
         if (waveSpace)
         {
-            pFields[n]->HomogeneousBwdTrans(pFields[n]->GetPhys(), vel);
+            pFields[n]->HomogeneousBwdTrans(nq, pFields[n]->GetPhys(), vel);
         }
         else
         {

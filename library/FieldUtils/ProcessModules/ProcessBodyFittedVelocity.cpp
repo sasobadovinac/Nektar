@@ -865,7 +865,7 @@ void ProcessBodyFittedVelocity::GetVelAndConvertToCartSys(
                 if (m_f->m_exp[0]->GetWaveSpace())
                 {
                     m_f->m_exp[0]->HomogeneousBwdTrans(
-                        m_f->m_exp[var_offset + i]->GetPhys(), vel[i]);
+                       npoints, m_f->m_exp[var_offset + i]->GetPhys(), vel[i]);
                 }
                 else
                 {
@@ -880,7 +880,7 @@ void ProcessBodyFittedVelocity::GetVelAndConvertToCartSys(
             {
                 for (int i = 0; i < spacedim; ++i)
                 {
-                    m_f->m_exp[0]->HomogeneousFwdTrans(vel[i], vel[i]);
+                    m_f->m_exp[0]->HomogeneousFwdTrans(npoints, vel[i], vel[i]);
                 }
             }
         }

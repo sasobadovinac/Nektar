@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// File: ExpList1DHomogeneous2D.cpp
+// File: ExpList2DHomogeneous2D.cpp
 //
 // For more information, please see: http://www.nektar.info
 //
@@ -35,7 +35,7 @@
 
 #include <boost/core/ignore_unused.hpp>
 
-#include <MultiRegions/ExpList1DHomogeneous2D.h>
+#include <MultiRegions/ExpList2DHomogeneous2D.h>
 
 using namespace std;
 
@@ -44,12 +44,12 @@ namespace Nektar
 namespace MultiRegions
 {
 // Forward declaration for typedefs
-ExpList1DHomogeneous2D::ExpList1DHomogeneous2D() : ExpListHomogeneous2D(eNoType)
+ExpList2DHomogeneous2D::ExpList2DHomogeneous2D() : ExpListHomogeneous2D(eNoType)
 {
 }
 
-// Constructor for ExpList1DHomogeneous2D to act as a Explist1D field
-ExpList1DHomogeneous2D::ExpList1DHomogeneous2D(
+// Constructor for ExpList2DHomogeneous2D to act as a Explist1D field
+ExpList2DHomogeneous2D::ExpList2DHomogeneous2D(
     const LibUtilities::SessionReaderSharedPtr &pSession,
     const LibUtilities::BasisKey &HomoBasis_y,
     const LibUtilities::BasisKey &HomoBasis_z, const NekDouble lhom_y,
@@ -74,9 +74,9 @@ ExpList1DHomogeneous2D::ExpList1DHomogeneous2D(
 }
 
 /**
- * @param   In          ExpList1DHomogeneous2D object to copy.
+ * @param   In          ExpList2DHomogeneous2D object to copy.
  */
-ExpList1DHomogeneous2D::ExpList1DHomogeneous2D(const ExpList1DHomogeneous2D &In)
+ExpList2DHomogeneous2D::ExpList2DHomogeneous2D(const ExpList2DHomogeneous2D &In)
     : ExpListHomogeneous2D(In)
 {
     for (int n = 0; n < m_lines.size(); ++n)
@@ -90,11 +90,11 @@ ExpList1DHomogeneous2D::ExpList1DHomogeneous2D(const ExpList1DHomogeneous2D &In)
 /**
  * Destructor
  */
-ExpList1DHomogeneous2D::~ExpList1DHomogeneous2D()
+ExpList2DHomogeneous2D::~ExpList2DHomogeneous2D()
 {
 }
 
-void ExpList1DHomogeneous2D::SetCoeffPhys(void)
+void ExpList2DHomogeneous2D::SetCoeffPhys(void)
 {
     int i, n, cnt;
     int ncoeffs_per_line = m_lines[0]->GetNcoeffs();
@@ -129,7 +129,7 @@ void ExpList1DHomogeneous2D::SetCoeffPhys(void)
     }
 }
 
-void ExpList1DHomogeneous2D::v_GetCoords(const int eid,
+void ExpList2DHomogeneous2D::v_GetCoords(const int eid,
                                          Array<OneD, NekDouble> &xc0,
                                          Array<OneD, NekDouble> &xc1,
                                          Array<OneD, NekDouble> &xc2)
@@ -181,6 +181,33 @@ void ExpList1DHomogeneous2D::v_GetCoords(const int eid,
     }
 }
 
+void ExpList2DHomogeneous2D::v_FwdTrans(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    // just have a point expansion so copy inarray to outarray
+    Vmath::Vcopy(m_npoints, inarray, 1, outarray, 1);
+
+    if (!m_WaveSpace)
+    {
+        HomogeneousFwdTrans(m_npoints, outarray, outarray);
+    }
+}
+
+void ExpList2DHomogeneous2D::v_FwdTransLocalElmt(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    v_FwdTrans(inarray, outarray);
+}
+
+void ExpList2DHomogeneous2D::v_FwdTransBndConstrained(
+    const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    v_FwdTrans(inarray, outarray);
+}
+
 /**
  * The operation calls the 2D plane coordinates through the
  * function ExpList#GetCoords and then evaluated the third
@@ -199,7 +226,7 @@ void ExpList1DHomogeneous2D::v_GetCoords(const int eid,
  *                          coordinate is evaluated using the
  *                          predefined value \a m_lhom
  */
-void ExpList1DHomogeneous2D::v_GetCoords(Array<OneD, NekDouble> &xc0,
+void ExpList2DHomogeneous2D::v_GetCoords(Array<OneD, NekDouble> &xc0,
                                          Array<OneD, NekDouble> &xc1,
                                          Array<OneD, NekDouble> &xc2)
 {
@@ -250,26 +277,11 @@ void ExpList1DHomogeneous2D::v_GetCoords(Array<OneD, NekDouble> &xc0,
 }
 
 /**
- * Perform the 2D Forward transform of a set of points representing a plane of
- * boundary conditions which are merely the collection of the boundary
- * conditions coming from each 1D expansion.
- * @param   inarray    The value of the BC on each point of the y-z homogeneous
- * plane.
- * @param   outarray   The value of the the coefficient of the 2D Fourier
- * expansion
- */
-// void HomoFwdTrans2D(const Array<OneD, const NekDouble> &inarray, Array<OneD,
-// NekDouble> &outarray)
-//{
-
-//}
-
-/**
  * Write Tecplot Files Zone
  * @param   outfile    Output file name.
  * @param   expansion  Expansion that is considered
  */
-void ExpList1DHomogeneous2D::v_WriteTecplotZone(std::ostream &outfile,
+void ExpList2DHomogeneous2D::v_WriteTecplotZone(std::ostream &outfile,
                                                 int expansion)
 {
     int i, j;
@@ -299,7 +311,7 @@ void ExpList1DHomogeneous2D::v_WriteTecplotZone(std::ostream &outfile,
     }
 }
 
-void ExpList1DHomogeneous2D::v_WriteVtkPieceHeader(std::ostream &outfile,
+void ExpList2DHomogeneous2D::v_WriteVtkPieceHeader(std::ostream &outfile,
                                                    int expansion, int istrip)
 {
     boost::ignore_unused(istrip);

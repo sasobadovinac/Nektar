@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
         for (i = 0; i < coordim; ++i)
         {
             Fce->PhysDeriv(i, Fce->GetPhys(), fce);
-            vQError[i] = Exp->L2_DGDeriv(i, fce);
+            vQError[i] = Exp->L2_DGDeriv(i, Exp->GetCoeffs(), fce);
         }
 
         if (vSession->GetComm()->GetRank() == 0)

@@ -172,19 +172,24 @@ void ContField3DHomogeneous1D::v_ImposeDirichletConditions(
     }
 }
 
-void ContField3DHomogeneous1D::v_FillBndCondFromField(void)
+void ContField3DHomogeneous1D::v_FillBndCondFromField(
+    const Array<OneD, NekDouble> coeffs)
 {
+    int numcoeffs_per_plane = m_planes[0]->GetNcoeffs();
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FillBndCondFromField();
+        m_planes[n]->FillBndCondFromField(coeffs + n * numcoeffs_per_plane);
     }
 }
 
-void ContField3DHomogeneous1D::v_FillBndCondFromField(const int nreg)
+void ContField3DHomogeneous1D::v_FillBndCondFromField(
+    const int nreg, const Array<OneD, NekDouble> coeffs)
 {
+    int numcoeffs_per_plane = m_planes[0]->GetNcoeffs();
     for (int n = 0; n < m_planes.size(); ++n)
     {
-        m_planes[n]->FillBndCondFromField(nreg);
+        m_planes[n]->FillBndCondFromField(nreg,
+                                          coeffs + n * numcoeffs_per_plane);
     }
 }
 
@@ -221,7 +226,6 @@ void ContField3DHomogeneous1D::v_SmoothField(Array<OneD, NekDouble> &field)
     for (int n = 0; n < m_planes.size(); ++n)
     {
         m_planes[n]->SmoothField(tmp = field + cnt);
-
         cnt += m_planes[n]->GetTotPoints();
     }
 }
@@ -240,8 +244,9 @@ GlobalLinSysKey ContField3DHomogeneous1D::v_HelmSolve(
     NekDouble beta;
     StdRegions::ConstFactorMap new_factors;
 
+    int npts_fce = PhysSpaceForcing ? m_npoints : m_ncoeffs;
     Array<OneD, NekDouble> e_out;
-    Array<OneD, NekDouble> fce(inarray.size());
+    Array<OneD, NekDouble> fce(npts_fce);
     Array<OneD, const NekDouble> wfce;
 
     GlobalLinSysKey gkey(NullGlobalLinSysKey); // Default: return Null
@@ -253,7 +258,7 @@ GlobalLinSysKey ContField3DHomogeneous1D::v_HelmSolve(
     }
     else
     {
-        HomogeneousFwdTrans(inarray, fce);
+        HomogeneousFwdTrans(npts_fce, inarray, fce);
     }
 
     bool smode = false;

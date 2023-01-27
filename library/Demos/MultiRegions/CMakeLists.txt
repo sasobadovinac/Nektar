@@ -1,40 +1,41 @@
-ADD_NEKTAR_EXECUTABLE(Helmholtz1D
-    COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz1D.cpp)
-ADD_NEKTAR_EXECUTABLE(Helmholtz2D
-    COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz2D.cpp)
-ADD_NEKTAR_EXECUTABLE(Helmholtz3D
-    COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz3D.cpp)
-ADD_NEKTAR_EXECUTABLE(Helmholtz3DHomo1D
-    COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz3DHomo1D.cpp)
-ADD_NEKTAR_EXECUTABLE(Helmholtz3DHomo2D
-    COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz3DHomo2D.cpp)
-ADD_NEKTAR_EXECUTABLE(HDGHelmholtz1D
-    COMPONENT demos DEPENDS MultiRegions SOURCES HDGHelmholtz1D.cpp)
-ADD_NEKTAR_EXECUTABLE(HDGHelmholtz2D
-    COMPONENT demos DEPENDS MultiRegions SOURCES HDGHelmholtz2D.cpp)
-ADD_NEKTAR_EXECUTABLE(HDGHelmholtz3D
-    COMPONENT demos DEPENDS MultiRegions SOURCES HDGHelmholtz3D.cpp)
-ADD_NEKTAR_EXECUTABLE(HDGHelmholtz3DHomo1D
-    COMPONENT demos DEPENDS MultiRegions SOURCES HDGHelmholtz3DHomo1D.cpp)
-ADD_NEKTAR_EXECUTABLE(PostProcHDG2D
-    COMPONENT demos DEPENDS MultiRegions SOURCES PostProcHDG2D.cpp)
-ADD_NEKTAR_EXECUTABLE(PostProcHDG3D
-    COMPONENT demos DEPENDS MultiRegions SOURCES PostProcHDG3D.cpp)
-ADD_NEKTAR_EXECUTABLE(Deriv3DHomo1D_SingleMode
-    COMPONENT demos DEPENDS MultiRegions SOURCES Deriv3DHomo1D_SingleMode.cpp)
-ADD_NEKTAR_EXECUTABLE(Deriv3DHomo1D
-    COMPONENT demos DEPENDS MultiRegions SOURCES Deriv3DHomo1D.cpp)
-ADD_NEKTAR_EXECUTABLE(Deriv3DHomo2D
-    COMPONENT demos DEPENDS MultiRegions SOURCES Deriv3DHomo2D.cpp)
+ ADD_NEKTAR_EXECUTABLE(Helmholtz1D
+     COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz1D.cpp)
+ ADD_NEKTAR_EXECUTABLE(Helmholtz2D
+     COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz2D.cpp)
+ ADD_NEKTAR_EXECUTABLE(Helmholtz3D
+     COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz3D.cpp)
+ ADD_NEKTAR_EXECUTABLE(Helmholtz3DHomo1D
+     COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz3DHomo1D.cpp)
+ ADD_NEKTAR_EXECUTABLE(Helmholtz3DHomo2D
+     COMPONENT demos DEPENDS MultiRegions SOURCES Helmholtz3DHomo2D.cpp)
+ ADD_NEKTAR_EXECUTABLE(HDGHelmholtz1D
+     COMPONENT demos DEPENDS MultiRegions SOURCES HDGHelmholtz1D.cpp)
+ ADD_NEKTAR_EXECUTABLE(HDGHelmholtz2D
+     COMPONENT demos DEPENDS MultiRegions SOURCES HDGHelmholtz2D.cpp)
+ ADD_NEKTAR_EXECUTABLE(HDGHelmholtz3D
+     COMPONENT demos DEPENDS MultiRegions SOURCES HDGHelmholtz3D.cpp)
+ ADD_NEKTAR_EXECUTABLE(HDGHelmholtz3DHomo1D
+     COMPONENT demos DEPENDS MultiRegions SOURCES HDGHelmholtz3DHomo1D.cpp)
+ ADD_NEKTAR_EXECUTABLE(PostProcHDG2D
+     COMPONENT demos DEPENDS MultiRegions SOURCES PostProcHDG2D.cpp)
+ ADD_NEKTAR_EXECUTABLE(PostProcHDG3D
+     COMPONENT demos DEPENDS MultiRegions SOURCES PostProcHDG3D.cpp)
+ ADD_NEKTAR_EXECUTABLE(Deriv3DHomo1D_SingleMode
+     COMPONENT demos DEPENDS MultiRegions SOURCES Deriv3DHomo1D_SingleMode.cpp)
+ ADD_NEKTAR_EXECUTABLE(Deriv3DHomo1D
+     COMPONENT demos DEPENDS MultiRegions SOURCES Deriv3DHomo1D.cpp)
+ ADD_NEKTAR_EXECUTABLE(Deriv3DHomo2D
+     COMPONENT demos DEPENDS MultiRegions SOURCES Deriv3DHomo2D.cpp)
 ADD_NEKTAR_EXECUTABLE(Int3DHomo1D
-    COMPONENT demos DEPENDS MultiRegions SOURCES Int3DHomo1D.cpp)
+     COMPONENT demos DEPENDS MultiRegions SOURCES Int3DHomo1D.cpp)
 ADD_NEKTAR_EXECUTABLE(SteadyAdvectionDiffusionReaction2D
-    COMPONENT demos DEPENDS MultiRegions SOURCES SteadyAdvectionDiffusionReaction2D.cpp)
+     COMPONENT demos DEPENDS MultiRegions SOURCES SteadyAdvectionDiffusionReaction2D.cpp)
 
 # Add ExtraDemos subdirectory.
 IF (IS_DIRECTORY ExtraDemos)
     ADD_SUBDIRECTORY(ExtraDemos)
 ENDIF()
+
 
 ADD_NEKTAR_TEST(Helmholtz1D_CG_P8)
 ADD_NEKTAR_TEST(Helmholtz1D_CG_P8_periodic)

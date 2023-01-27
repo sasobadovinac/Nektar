@@ -284,7 +284,7 @@ void Diffusion3DHomogeneous1D::v_Diffuse(
     {
         for (int j = 0; j < nConvectiveFields; ++j)
         {
-            fields[j]->HomogeneousFwdTrans(inarray[j], tmp);
+            fields[j]->HomogeneousFwdTrans(m_numPoints, inarray[j], tmp);
 
             for (int i = 0; i < m_numPlanes; ++i)
             {
@@ -296,7 +296,7 @@ void Diffusion3DHomogeneous1D::v_Diffuse(
                             &tmp[0] + i * m_numPointsPlane, 1);
             }
 
-            fields[0]->HomogeneousBwdTrans(tmp, tmp);
+            fields[0]->HomogeneousBwdTrans(m_numPoints, tmp, tmp);
 
             Vmath::Vsub(nPointsTot, outarray[j], 1, tmp, 1, outarray[j], 1);
         }

@@ -246,13 +246,11 @@ void ProcessMultiShear::v_Process(po::variables_map &vm)
         Vmath::Vvtvm(npoints, fromField[0]->m_exp[nfields - 2]->GetPhys(), 1,
                      normTemporalMeanVec[2], 1, normCrossDir[0], 1,
                      normCrossDir[0], 1);
-
         Vmath::Vmul(npoints, fromField[0]->m_exp[nfields - 3]->GetPhys(), 1,
                     normTemporalMeanVec[2], 1, normCrossDir[1], 1);
         Vmath::Vvtvm(npoints, fromField[0]->m_exp[nfields - 1]->GetPhys(), 1,
                      normTemporalMeanVec[0], 1, normCrossDir[1], 1,
                      normCrossDir[1], 1);
-
         Vmath::Vmul(npoints, fromField[0]->m_exp[nfields - 2]->GetPhys(), 1,
                     normTemporalMeanVec[0], 1, normCrossDir[2], 1);
         Vmath::Vvtvm(npoints, fromField[0]->m_exp[nfields - 3]->GetPhys(), 1,
@@ -269,11 +267,9 @@ void ProcessMultiShear::v_Process(po::variables_map &vm)
                          normTemporalMeanVec[j], 1, DotProduct, 1, DotProduct,
                          1);
         }
-
         // TAWSS
         Vmath::Vadd(npoints, fromField[i]->m_exp[spacedim]->GetPhys(), 1,
                     outfield[0], 1, outfield[0], 1);
-
         // transWSS
         Vmath::Vmul(npoints, DotProduct, 1, DotProduct, 1, temp, 1);
         Vmath::Vvtvm(npoints, fromField[i]->m_exp[spacedim]->GetPhys(), 1,

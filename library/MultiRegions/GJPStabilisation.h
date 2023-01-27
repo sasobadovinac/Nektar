@@ -104,4 +104,4 @@ private:
 typedef std::shared_ptr<GJPStabilisation> GJPStabilisationSharedPtr;
 } // namespace MultiRegions
 } // namespace Nektar
-#endif
+#endif // GJP

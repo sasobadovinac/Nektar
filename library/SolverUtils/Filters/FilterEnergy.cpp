@@ -179,7 +179,7 @@ void FilterEnergy::v_Update(
     {
         if (m_homogeneous && pFields[i]->GetWaveSpace())
         {
-            pFields[i]->HomogeneousBwdTrans(u[i], u[i]);
+            pFields[i]->HomogeneousBwdTrans(nPoints, u[i], u[i]);
         }
 
         Vmath::Vvtvp(nPoints, u[i], 1, u[i], 1, tmp, 1, tmp, 1);
@@ -195,7 +195,7 @@ void FilterEnergy::v_Update(
     if (m_homogeneous)
     {
         Array<OneD, NekDouble> tmp2(nPoints, 0.0);
-        pFields[0]->HomogeneousFwdTrans(tmp, tmp2);
+        pFields[0]->HomogeneousFwdTrans(nPoints, tmp, tmp2);
         Ek = pFields[0]->GetPlane(0)->Integral(tmp2) * m_homogeneousLength;
     }
     else
@@ -246,7 +246,7 @@ void FilterEnergy::v_Update(
         {
             pFields[i]->SetWaveSpace(waveSpace[i]);
         }
-        pFields[0]->HomogeneousFwdTrans(tmp, tmp);
+        pFields[0]->HomogeneousFwdTrans(nPoints, tmp, tmp);
         Ek = pFields[0]->GetPlane(0)->Integral(tmp) * m_homogeneousLength;
     }
     else

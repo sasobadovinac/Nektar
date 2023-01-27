@@ -290,7 +290,7 @@ void LinearisedAdvection::v_Advect(
         if (fields[i]->GetWaveSpace() && !m_singleMode && !m_halfMode)
         {
             velocity[i] = Array<OneD, NekDouble>(nPointsTot, 0.0);
-            fields[i]->HomogeneousBwdTrans(advVel[i], velocity[i]);
+            fields[i]->HomogeneousBwdTrans(nPointsTot, advVel[i], velocity[i]);
         }
         else
         {
@@ -336,9 +336,12 @@ void LinearisedAdvection::v_Advect(
                 if (m_multipleModes)
                 {
                     // transform gradients into physical Fourier space
-                    fields[i]->HomogeneousBwdTrans(grad[0], grad[0]);
-                    fields[i]->HomogeneousBwdTrans(grad[1], grad[1]);
-                    fields[i]->HomogeneousBwdTrans(grad[2], grad[2]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[0],
+                                                   grad[0]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[1],
+                                                   grad[1]);
+                    fields[i]->HomogeneousBwdTrans(nPointsTot, grad[2],
+                                                   grad[2]);
                 }
             }
             break;
@@ -366,7 +369,8 @@ void LinearisedAdvection::v_Advect(
 
         if (m_multipleModes)
         {
-            fields[i]->HomogeneousFwdTrans(outarray[i], outarray[i]);
+            fields[i]->HomogeneousFwdTrans(nPointsTot, outarray[i],
+                                           outarray[i]);
         }
         Vmath::Neg(nPointsTot, outarray[i], 1);
     }

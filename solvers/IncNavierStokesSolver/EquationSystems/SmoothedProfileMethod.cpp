@@ -494,8 +494,8 @@ void SmoothedProfileMethod::UpdateForcing(
         if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
             m_fields[ind]->GetWaveSpace())
         {
-            m_fields[ind]->HomogeneousBwdTrans(fields[i], tmpField);
-            m_fs[i]->HomogeneousBwdTrans(m_fs[i]->GetPhys(),
+            m_fields[ind]->HomogeneousBwdTrans(nq, fields[i], tmpField);
+            m_fs[i]->HomogeneousBwdTrans(nq, m_fs[i]->GetPhys(),
                                          m_fs[i]->UpdatePhys());
         }
         else
@@ -513,7 +513,7 @@ void SmoothedProfileMethod::UpdateForcing(
         if (m_HomogeneousType != EquationSystem::eNotHomogeneous &&
             m_fields[ind]->GetWaveSpace())
         {
-            m_fs[i]->HomogeneousFwdTrans(m_fs[i]->GetPhys(),
+            m_fs[i]->HomogeneousFwdTrans(nq, m_fs[i]->GetPhys(),
                                          m_fs[i]->UpdatePhys());
         }
     }

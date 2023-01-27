@@ -119,7 +119,18 @@ void ProcessVorticity::v_Process(po::variables_map &vm)
         tmp[i] = Array<OneD, NekDouble>(npoints);
     }
 
-    vector<MultiRegions::ExpListSharedPtr> Exp(nstrips * addfields);
+    // add in new fields
+    for (s = 0; s < nstrips; ++s)
+    {
+        for (i = 0; i < addfields; ++i)
+        {
+            MultiRegions::ExpListSharedPtr Exp =
+                m_f->AppendExpList(m_f->m_numHomogeneousDir);
+            m_f->m_exp.insert(m_f->m_exp.begin() + s * (nfields + addfields) +
+                                  nfields + i,
+                              Exp);
+        }
+    }
 
     // Get mapping
     GlobalMapping::MappingSharedPtr mapping = ProcessMapping::GetMapping(m_f);
@@ -129,7 +140,7 @@ void ProcessVorticity::v_Process(po::variables_map &vm)
         // Get velocity and convert to Cartesian system,
         //      if it is still in transformed system
         Array<OneD, Array<OneD, NekDouble>> vel(m_spacedim);
-        GetVelocity(vel, s);
+        GetVelocity(vel, nfields + addfields, s);
         if (m_f->m_fieldMetaDataMap.count("MappingCartesianVel"))
         {
             if (m_f->m_fieldMetaDataMap["MappingCartesianVel"] == "False")
@@ -139,7 +150,8 @@ void ProcessVorticity::v_Process(po::variables_map &vm)
                 {
                     for (int i = 0; i < m_spacedim; ++i)
                     {
-                        m_f->m_exp[0]->HomogeneousBwdTrans(vel[i], vel[i]);
+                        m_f->m_exp[0]->HomogeneousBwdTrans(npoints, vel[i],
+                                                           vel[i]);
                     }
                 }
                 // Convert velocity to cartesian system
@@ -149,7 +161,8 @@ void ProcessVorticity::v_Process(po::variables_map &vm)
                 {
                     for (int i = 0; i < m_spacedim; ++i)
                     {
-                        m_f->m_exp[0]->HomogeneousFwdTrans(vel[i], vel[i]);
+                        m_f->m_exp[0]->HomogeneousFwdTrans(npoints, vel[i],
+                                                           vel[i]);
                     }
                 }
             }
@@ -199,28 +212,18 @@ void ProcessVorticity::v_Process(po::variables_map &vm)
 
         for (i = 0; i < addfields; ++i)
         {
-            int n  = s * addfields + i;
-            Exp[n] = m_f->AppendExpList(m_f->m_numHomogeneousDir);
-            Vmath::Vcopy(npoints, outfield[i], 1, Exp[n]->UpdatePhys(), 1);
-            Exp[n]->FwdTransLocalElmt(outfield[i], Exp[n]->UpdateCoeffs());
-        }
-    }
-
-    for (s = 0; s < nstrips; ++s)
-    {
-        for (i = 0; i < addfields; ++i)
-        {
-            m_f->m_exp.insert(m_f->m_exp.begin() + s * (nfields + addfields) +
-                                  nfields + i,
-                              Exp[s * addfields + i]);
+            int fid = s * (nfields + addfields) + nfields + i;
+            Vmath::Vcopy(npoints, outfield[i], 1, m_f->m_exp[fid]->UpdatePhys(),
+                         1);
+            m_f->m_exp[fid]->FwdTransLocalElmt(outfield[i],
+                                               m_f->m_exp[fid]->UpdateCoeffs());
         }
     }
 }
 
 void ProcessVorticity::GetVelocity(Array<OneD, Array<OneD, NekDouble>> &vel,
-                                   int strip)
+                                   int totfields, int strip)
 {
-    int nfields = m_f->m_variables.size();
     int npoints = m_f->m_exp[0]->GetNpoints();
     if (boost::iequals(m_f->m_variables[0], "u"))
     {
@@ -228,8 +231,8 @@ void ProcessVorticity::GetVelocity(Array<OneD, Array<OneD, NekDouble>> &vel,
         for (int i = 0; i < m_spacedim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-            Vmath::Vcopy(npoints, m_f->m_exp[strip * nfields + i]->GetPhys(), 1,
-                         vel[i], 1);
+            Vmath::Vcopy(npoints, m_f->m_exp[strip * totfields + i]->GetPhys(),
+                         1, vel[i], 1);
         }
     }
     else if (boost::iequals(m_f->m_variables[0], "rho") &&
@@ -239,9 +242,9 @@ void ProcessVorticity::GetVelocity(Array<OneD, Array<OneD, NekDouble>> &vel,
         for (int i = 0; i < m_spacedim; ++i)
         {
             vel[i] = Array<OneD, NekDouble>(npoints);
-            Vmath::Vdiv(npoints, m_f->m_exp[strip * nfields + i + 1]->GetPhys(),
-                        1, m_f->m_exp[strip * nfields + 0]->GetPhys(), 1,
-                        vel[i], 1);
+            Vmath::Vdiv(
+                npoints, m_f->m_exp[strip * totfields + i + 1]->GetPhys(), 1,
+                m_f->m_exp[strip * totfields + 0]->GetPhys(), 1, vel[i], 1);
         }
     }
     else
