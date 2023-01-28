@@ -34,6 +34,7 @@
 
 #include <IncNavierStokesSolver/AdvectionTerms/LinearisedAdvection.h>
 #include <StdRegions/StdSegExp.h>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -687,10 +688,12 @@ void LinearisedAdvection::DFT(
     size_t nstart = m_start;
     for (size_t i = nstart; i < nstart + m_slices * m_skip; i += m_skip)
     {
-        ImportFldBase(file + std::to_string(i), pFields, (i - nstart) / m_skip);
+        boost::format filename(file);
+        filename % i;
+        ImportFldBase(filename.str(), pFields, (i - nstart) / m_skip);
         if (m_session->GetComm()->GetRank() == 0)
         {
-            cout << "read base flow file " << file + std::to_string(i) << endl;
+            cout << "read base flow file " << filename.str() << endl;
         }
     }
     if (!m_isperiodic)
