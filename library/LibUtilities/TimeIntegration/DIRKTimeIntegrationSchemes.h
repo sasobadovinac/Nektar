@@ -211,6 +211,9 @@ public:
         {
             case 3:
             {
+                // See: Kennedy, Christopher A., and Mark H. Carpenter.
+                // Diagonally implicit Runge-Kutta methods for ordinary
+                // differential equations. A review. No. NF1676L-19716. 2016.
                 ASSERTL0(5 == phase->m_numstages,
                          std::string("DIRKOrder3_ES" +
                                      std::to_string(phase->m_numstages) +
@@ -229,9 +232,9 @@ public:
                 phase->m_A[0][1][0] = lambda;
                 phase->m_A[0][2][0] = 9.0 * (1.0 + ConstSqrt2) / 80.0;
                 phase->m_A[0][3][0] =
-                    (22.0 + 15.0 * ConstSqrt2) / (80.0 * (1 + ConstSqrt2));
+                    (22.0 + 15.0 * ConstSqrt2) / (80.0 * (1.0 + ConstSqrt2));
                 phase->m_A[0][4][0] = (2398.0 + 1205.0 * ConstSqrt2) /
-                                      (2835.0 * (4 + 3.0 * ConstSqrt2));
+                                      (2835.0 * (4.0 + 3.0 * ConstSqrt2));
 
                 phase->m_A[0][1][1] = phase->m_A[0][1][0];
                 phase->m_A[0][2][1] = phase->m_A[0][2][0];
@@ -240,8 +243,8 @@ public:
 
                 phase->m_A[0][2][2] = lambda;
                 phase->m_A[0][3][2] = -7.0 / (40.0 * (1.0 + ConstSqrt2));
-                phase->m_A[0][4][2] = -2374 * (2.0 + ConstSqrt2) /
-                                      (2835.0 * (4.0 + 3.0 * ConstSqrt2));
+                phase->m_A[0][4][2] = -2374.0 * (1.0 + 2.0 * ConstSqrt2) /
+                                      (2835.0 * (5.0 + 3.0 * ConstSqrt2));
 
                 phase->m_A[0][3][3] = lambda;
                 phase->m_A[0][4][3] = 5827.0 / 7560.0;
@@ -258,6 +261,9 @@ public:
 
             case 4:
             {
+                // See: Kennedy, Christopher A., and Mark H. Carpenter.
+                // Diagonally implicit Runge-Kutta methods for ordinary
+                // differential equations. A review. No. NF1676L-19716. 2016.
                 ASSERTL0(6 == phase->m_numstages,
                          std::string("DIRKOrder4_ES" +
                                      std::to_string(phase->m_numstages) +
@@ -279,7 +285,7 @@ public:
                 phase->m_A[0][2][0] = (1.0 - ConstSqrt2) / 8.0;
                 phase->m_A[0][3][0] = (5.0 - 7.0 * ConstSqrt2) / 64.0;
                 phase->m_A[0][4][0] =
-                    (-13796.0 - 54539 * ConstSqrt2) / 125000.0;
+                    (-13796.0 - 54539.0 * ConstSqrt2) / 125000.0;
                 phase->m_A[0][5][0] = (1181.0 - 987.0 * ConstSqrt2) / 13782.0;
 
                 phase->m_A[0][1][1] = phase->m_A[0][1][0];
@@ -306,6 +312,13 @@ public:
                     -15625.0 * (97.0 + 376.0 * ConstSqrt2) / 90749876.0;
 
                 phase->m_A[0][5][5] = lambda;
+
+                phase->m_B[0][0][0] = phase->m_A[0][5][0];
+                phase->m_B[0][0][1] = phase->m_A[0][5][1];
+                phase->m_B[0][0][2] = phase->m_A[0][5][2];
+                phase->m_B[0][0][3] = phase->m_A[0][5][3];
+                phase->m_B[0][0][4] = phase->m_A[0][5][4];
+                phase->m_B[0][0][5] = phase->m_A[0][5][5];
             }
             break;
             default:
@@ -453,7 +466,7 @@ public:
     }
 
     static std::string className;
-}; // end class DIRKOrder4_ES5TimeIntegrationScheme
+}; // end class DIRKOrder4_ES6TimeIntegrationScheme
 
 } // end namespace LibUtilities
 } // end namespace Nektar

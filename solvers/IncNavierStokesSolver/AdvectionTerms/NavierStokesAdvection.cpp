@@ -286,9 +286,9 @@ void NavierStokesAdvection::v_Advect(
             }
             else
             {
-                grad0 = Array<OneD, NekDouble>(nqtot);
-                grad1 = Array<OneD, NekDouble>(nqtot);
-                grad2 = Array<OneD, NekDouble>(nqtot);
+                grad0                      = Array<OneD, NekDouble>(nqtot);
+                grad1                      = Array<OneD, NekDouble>(nqtot);
+                grad2                      = Array<OneD, NekDouble>(nqtot);
                 Array<OneD, NekDouble> tmp = grad2;
                 for (int n = 0; n < nConvectiveFields; ++n)
                 {

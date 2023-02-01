@@ -55,8 +55,8 @@
     </GEOMETRY>
 
     <EXPANSIONS>
-        <E COMPOSITE="C[0]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
-        <E COMPOSITE="C[1]" NUMMODES="6" FIELDS="u" TYPE="MODIFIED" />
+        <E COMPOSITE="C[0]" NUMMODES="12" FIELDS="u" TYPE="MODIFIED" />
+        <E COMPOSITE="C[1]" NUMMODES="12" FIELDS="u" TYPE="MODIFIED" />
     </EXPANSIONS>
 
     <CONDITIONS>
@@ -76,7 +76,7 @@
             <I PROPERTY="Projection"            VALUE="DisContinuous"       />
             <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
             <I PROPERTY="DiffusionAdvancement"  VALUE="Implicit"            />
-            <I PROPERTY="TimeIntegrationMethod" VALUE="DIRKOrder3_ES5"          />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="DIRKOrder4_ES6"          />
         </SOLVERINFO>
 
         <VARIABLES>
