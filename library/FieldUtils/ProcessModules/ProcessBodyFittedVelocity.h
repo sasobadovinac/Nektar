@@ -71,7 +71,7 @@ protected:
 
     virtual std::string v_GetModuleDescription() override
     {
-        return "Get the wall-normal data at a given origin.";
+        return "Get velocity in the body-fitted coordinate system.";
     }
 
 public:
