@@ -600,7 +600,7 @@ NekDouble PyrExp::v_StdPhysEvaluate(
     const Array<OneD, const NekDouble> &physvals)
 {
     // Evaluate point in local coordinates.
-    return StdPyrExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
 }
 
 NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
@@ -613,7 +613,17 @@ NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     // TODO: check GetLocCoords()
     m_geom->GetLocCoords(coord, Lcoord);
 
-    return StdPyrExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion3D::v_PhysEvaluate(Lcoord, physvals);
+}
+
+NekDouble PyrExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                 const Array<OneD, const NekDouble> &inarray,
+                                 std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    Array<OneD, NekDouble> Lcoord(3);
+    ASSERTL0(m_geom, "m_geom not defined");
+    m_geom->GetLocCoords(coord, Lcoord);
+    return StdPyrExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
 }
 
 //---------------------------------------

@@ -141,6 +141,11 @@ protected:
                                                CommRequestSharedPtr request,
                                                int loc) override final;
 
+    LIB_UTILITIES_EXPORT virtual void v_Isend(void *buf, int count,
+                                              CommDataType dt, int dest,
+                                              CommRequestSharedPtr request,
+                                              int loc) final;
+
     LIB_UTILITIES_EXPORT virtual void v_SendInit(void *buf, int count,
                                                  CommDataType dt, int dest,
                                                  CommRequestSharedPtr request,

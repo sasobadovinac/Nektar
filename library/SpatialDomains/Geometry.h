@@ -137,6 +137,7 @@ public:
     // Point lookups
     //---------------------------------------
     SPATIAL_DOMAINS_EXPORT std::array<NekDouble, 6> GetBoundingBox();
+    SPATIAL_DOMAINS_EXPORT void ClearBoundingBox();
 
     SPATIAL_DOMAINS_EXPORT inline bool ContainsPoint(
         const Array<OneD, const NekDouble> &gloCoord, NekDouble tol = 0.0);
@@ -153,8 +154,11 @@ public:
         const int i, const Array<OneD, const NekDouble> &Lcoord);
     SPATIAL_DOMAINS_EXPORT bool MinMaxCheck(
         const Array<OneD, const NekDouble> &gloCoord);
-    SPATIAL_DOMAINS_EXPORT bool ClampLocCoords(Array<OneD, NekDouble> &locCoord,
-                                               NekDouble tol);
+    SPATIAL_DOMAINS_EXPORT bool ClampLocCoords(
+        Array<OneD, NekDouble> &locCoord,
+        NekDouble tol = std::numeric_limits<NekDouble>::epsilon());
+    SPATIAL_DOMAINS_EXPORT inline NekDouble FindDistance(
+        const Array<OneD, const NekDouble> &xs, Array<OneD, NekDouble> &xi);
 
     //---------------------------------------
     // Misc. helper functions
@@ -226,6 +230,8 @@ protected:
                                  const Array<OneD, const NekDouble> &Lcoord);
     virtual NekDouble v_GetLocCoords(const Array<OneD, const NekDouble> &coords,
                                      Array<OneD, NekDouble> &Lcoords);
+    virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                     Array<OneD, NekDouble> &xi);
 
     virtual int v_GetVertexEdgeMap(int i, int j) const;
     virtual int v_GetVertexFaceMap(int i, int j) const;
@@ -543,6 +549,12 @@ inline NekDouble Geometry::GetCoord(const int i,
                                     const Array<OneD, const NekDouble> &Lcoord)
 {
     return v_GetCoord(i, Lcoord);
+}
+
+inline NekDouble Geometry::FindDistance(const Array<OneD, const NekDouble> &xs,
+                                        Array<OneD, NekDouble> &xi)
+{
+    return v_FindDistance(xs, xi);
 }
 
 /**

@@ -172,6 +172,9 @@ typedef std::map<std::string, std::string> MeshMetaDataMap;
 class MeshGraph;
 typedef std::shared_ptr<MeshGraph> MeshGraphSharedPtr;
 
+class Movement;
+typedef std::shared_ptr<Movement> MovementSharedPtr;
+
 /// Base class for a spectral/hp element mesh.
 class MeshGraph
 {
@@ -436,6 +439,11 @@ public:
     SPATIAL_DOMAINS_EXPORT std::map<int, MeshEntity> CreateMeshEntities();
     SPATIAL_DOMAINS_EXPORT CompositeDescriptor CreateCompositeDescriptor();
 
+    SPATIAL_DOMAINS_EXPORT inline MovementSharedPtr &GetMovement()
+    {
+        return m_movement;
+    }
+
 protected:
     SPATIAL_DOMAINS_EXPORT virtual void v_WriteGeometry(
         std::string &outfilename, bool defaultExp = false,
@@ -488,6 +496,7 @@ protected:
 
     struct GeomRTree;
     std::unique_ptr<GeomRTree> m_boundingBoxTree;
+    MovementSharedPtr m_movement = nullptr;
 };
 typedef std::shared_ptr<MeshGraph> MeshGraphSharedPtr;
 typedef LibUtilities::NekFactory<std::string, MeshGraph> MeshGraphFactory;

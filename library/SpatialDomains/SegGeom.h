@@ -88,6 +88,8 @@ protected:
     virtual NekDouble v_GetCoord(
         const int i, const Array<OneD, const NekDouble> &Lcoord) override;
     virtual int v_GetNumVerts() const override;
+    virtual NekDouble v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                     Array<OneD, NekDouble> &xi) override;
 
 private:
     /// Boolean indicating whether object owns the data

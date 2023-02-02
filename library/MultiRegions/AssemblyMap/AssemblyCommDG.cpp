@@ -400,9 +400,18 @@ AssemblyCommDG::AssemblyCommDG(
         std::vector<NekDouble> avg(MPIFuncs.size(), -1);
         bool verbose = locExp.GetSession()->DefinesCmdLineArgument("verbose");
 
-        if (verbose && comm->GetRank() == 0)
+        if (verbose && comm->TreatAsRankZero())
         {
             std::cout << "MPI setup for trace exchange: " << std::endl;
+        }
+
+        // Padding for output
+        int maxStrLen = 0;
+        for (size_t i = 0; i < MPIFuncs.size(); ++i)
+        {
+            maxStrLen = MPIFuncsNames[i].size() > maxStrLen
+                            ? MPIFuncsNames[i].size()
+                            : maxStrLen;
         }
 
         for (size_t i = 0; i < MPIFuncs.size(); ++i)
@@ -410,11 +419,14 @@ AssemblyCommDG::AssemblyCommDG(
             Timing(comm, warmup, numPoints, MPIFuncs[i]);
             std::tie(avg[i], min, max) =
                 Timing(comm, iter, numPoints, MPIFuncs[i]);
-            if (verbose && comm->GetRank() == 0)
+            if (verbose && comm->TreatAsRankZero())
             {
                 std::cout << "  " << MPIFuncsNames[i]
-                          << " times (avg, min, max): " << avg[i] << " " << min
-                          << " " << max << std::endl;
+                          << " times (avg, min, max)"
+                          << std::string(maxStrLen - MPIFuncsNames[i].size(),
+                                         ' ')
+                          << ": " << avg[i] << " " << min << " " << max
+                          << std::endl;
             }
         }
 
@@ -422,7 +434,7 @@ AssemblyCommDG::AssemblyCommDG(
         int fastestMPI = std::distance(
             avg.begin(), std::min_element(avg.begin(), avg.end()));
 
-        if (verbose && comm->GetRank() == 0)
+        if (verbose && comm->TreatAsRankZero())
         {
             std::cout << "  Chosen fastest method: "
                       << MPIFuncsNames[fastestMPI] << std::endl;
@@ -567,7 +579,7 @@ void AssemblyCommDG::InitialiseStructure(
     }
 
     // This creates a list of all geometry of problem dimension - 1
-    // and populates the maxQuad member variable
+    // and populates the maxQuad member variable for AllToAll
     std::vector<int> localEdgeIds;
     for (eid = 0; eid < locExpVector.size(); ++eid)
     {
@@ -586,7 +598,7 @@ void AssemblyCommDG::InitialiseStructure(
         }
     }
 
-    // Find max quadrature points across all processes
+    // Find max quadrature points across all processes for AllToAll method
     comm->AllReduce(m_maxQuad, LibUtilities::ReduceMax);
 
     // Create list of boundary edge IDs
@@ -675,7 +687,6 @@ void AssemblyCommDG::InitialiseStructure(
 
     // Find what edge Ids match with other ranks
     size_t myRank = comm->GetRank();
-    Array<OneD, int> perTraceSend(m_nRanks, 0);
     for (size_t i = 0; i < m_nRanks; ++i)
     {
         if (i == myRank)

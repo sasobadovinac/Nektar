@@ -591,7 +591,7 @@ NekDouble SegExp::v_StdPhysEvaluate(
     const Array<OneD, const NekDouble> &physvals)
 {
     // Evaluate point in local (eta) coordinates.
-    return StdSegExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion1D::v_PhysEvaluate(Lcoord, physvals);
 }
 
 NekDouble SegExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
@@ -602,7 +602,29 @@ NekDouble SegExp::v_PhysEvaluate(const Array<OneD, const NekDouble> &coord,
     ASSERTL0(m_geom, "m_geom not defined");
     m_geom->GetLocCoords(coord, Lcoord);
 
-    return StdSegExp::v_PhysEvaluate(Lcoord, physvals);
+    return StdExpansion1D::v_PhysEvaluate(Lcoord, physvals);
+}
+
+NekDouble SegExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                 const Array<OneD, const NekDouble> &inarray,
+                                 std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    Array<OneD, NekDouble> Lcoord(1);
+    ASSERTL0(m_geom, "m_geom not defined");
+    m_geom->GetLocCoords(coord, Lcoord);
+    return StdSegExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs);
+}
+
+NekDouble SegExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                 const Array<OneD, const NekDouble> &inarray,
+                                 std::array<NekDouble, 3> &firstOrderDerivs,
+                                 std::array<NekDouble, 6> &secondOrderDerivs)
+{
+    Array<OneD, NekDouble> Lcoord(1);
+    ASSERTL0(m_geom, "m_geom not defined");
+    m_geom->GetLocCoords(coord, Lcoord);
+    return StdSegExp::v_PhysEvaluate(Lcoord, inarray, firstOrderDerivs,
+                                     secondOrderDerivs);
 }
 
 void SegExp::v_GetCoord(const Array<OneD, const NekDouble> &Lcoords,

@@ -64,6 +64,7 @@ StdExpansion3D::StdExpansion3D(const StdExpansion3D &T) : StdExpansion(T)
 StdExpansion3D::~StdExpansion3D()
 {
 }
+
 void StdExpansion3D::PhysTensorDeriv(
     const Array<OneD, const NekDouble> &inarray, Array<OneD, NekDouble> &out_dx,
     Array<OneD, NekDouble> &out_dy, Array<OneD, NekDouble> &out_dz)
@@ -276,6 +277,15 @@ NekDouble StdExpansion3D::v_PhysEvaluate(
     value = Blas::Ddot(Qz, interpolatingNodes, 1, &sumFactorization_r[0], 1);
 
     return value;
+}
+
+NekDouble StdExpansion3D::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    boost::ignore_unused(coord, inarray, firstOrderDerivs);
+    return 0;
 }
 
 /**

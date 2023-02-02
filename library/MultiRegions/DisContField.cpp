@@ -213,6 +213,10 @@ void DisContField::SetUpDG(const std::string variable,
     // Set up physical normals
     SetUpPhysNormals();
 
+    // Create interface exchange object
+    m_interfaceMap =
+        MemoryManager<InterfaceMapDG>::AllocateSharedPtr(m_graph, m_trace);
+
     int cnt, n;
 
     // Identify boundary trace
@@ -736,6 +740,7 @@ DisContField::DisContField(const DisContField &In,
             m_globalBndMat       = In.m_globalBndMat;
             m_trace              = In.m_trace;
             m_traceMap           = In.m_traceMap;
+            m_interfaceMap       = In.m_interfaceMap;
             m_locTraceToTraceMap = In.m_locTraceToTraceMap;
             m_periodicVerts      = In.m_periodicVerts;
             m_periodicEdges      = In.m_periodicEdges;
@@ -745,7 +750,7 @@ DisContField::DisContField(const DisContField &In,
             m_boundaryTraces     = In.m_boundaryTraces;
             m_leftAdjacentTraces = In.m_leftAdjacentTraces;
 
-            if (SetUpJustDG == false)
+            if (!SetUpJustDG)
             {
                 // set elmt edges to point to robin bc edges if required
                 int i, cnt = 0;
@@ -2972,6 +2977,11 @@ void DisContField::v_GetFwdBwdTracePhys(
     {
         // Do parallel exchange for forwards/backwards spaces.
         m_traceMap->GetAssemblyCommDG()->PerformExchange(Fwd, Bwd);
+
+        // Do exchange of interface traces (local and parallel)
+        // We may have to split this out into separate local and
+        // parallel for IP method???
+        m_interfaceMap->ExchangeTrace(Fwd, Bwd);
     }
 }
 

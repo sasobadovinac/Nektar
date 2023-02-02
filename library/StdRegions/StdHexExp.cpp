@@ -44,7 +44,6 @@ namespace Nektar
 {
 namespace StdRegions
 {
-
 StdHexExp::StdHexExp()
 {
 }
@@ -1123,6 +1122,13 @@ void StdHexExp::v_GetBoundaryMap(Array<OneD, unsigned int> &outarray)
     }
 
     sort(outarray.get(), outarray.get() + nBndCoeffs);
+}
+
+NekDouble StdHexExp::v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                                    const Array<OneD, const NekDouble> &inarray,
+                                    std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    return BaryTensorDeriv(coord, inarray, firstOrderDerivs);
 }
 
 /**
