@@ -50,6 +50,7 @@ class StdExpansion0D : virtual public StdExpansion
 
 public:
     STD_REGIONS_EXPORT StdExpansion0D();
+
     STD_REGIONS_EXPORT StdExpansion0D(int numcoeffs,
                                       const LibUtilities::BasisKey &Ba);
     STD_REGIONS_EXPORT StdExpansion0D(const StdExpansion0D &T);
@@ -59,10 +60,14 @@ public:
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
 
+    // Virtual Functions ----------------------------------------
 protected:
     STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coords,
         const Array<OneD, const NekDouble> &physvals) override;
+    //    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+    //        const Array<OneD, DNekMatSharedPtr> &I,
+    //        const Array<OneD, const NekDouble> &physvals) override;
 
     virtual int v_GetShapeDimension() const override final
     {

@@ -2679,29 +2679,29 @@ void MeshGraphXml::WriteComposites(TiXmlElement *geomTag, CompositeMap &comps,
 }
 
 void MeshGraphXml::WriteDomain(TiXmlElement *geomTag,
-                               map<int, CompositeMap> &domain)
+                               std::map<int, CompositeMap> &domainMap)
 {
     TiXmlElement *domTag = new TiXmlElement("DOMAIN");
 
-    for (auto &d : domain)
+    vector<unsigned int> idxList;
+    for (auto &domain : domainMap)
     {
-        stringstream domString;
-        if (d.second.size())
-        {
-            domString.clear();
-            TiXmlElement *dtag = new TiXmlElement("D");
-            dtag->SetAttribute("ID", d.first);
+        TiXmlElement *c = new TiXmlElement("D");
+        idxList.clear();
+        stringstream s;
+        s << " "
+          << "C"
+          << "[";
 
-            vector<unsigned int> idxList;
-            for (auto cIt = d.second.begin(); cIt != d.second.end(); ++cIt)
-            {
-                idxList.push_back(cIt->first);
-            }
-            domString << " C[" << ParseUtils::GenerateSeqString(idxList)
-                      << "] ";
-            dtag->LinkEndChild(new TiXmlText(domString.str()));
-            domTag->LinkEndChild(dtag);
+        for (const auto &elem : domain.second)
+        {
+            idxList.push_back(elem.first);
         }
+
+        s << ParseUtils::GenerateSeqString(idxList) << "] ";
+        c->SetAttribute("ID", domain.first);
+        c->LinkEndChild(new TiXmlText(s.str()));
+        domTag->LinkEndChild(c);
     }
 
     geomTag->LinkEndChild(domTag);
@@ -2755,6 +2755,11 @@ void MeshGraphXml::v_WriteGeometry(
     // Update attributes with dimensions.
     geomTag->SetAttribute("DIM", m_meshDimension);
     geomTag->SetAttribute("SPACE", m_spaceDimension);
+
+    if (m_session != nullptr && !m_session->GetComm()->IsSerial())
+    {
+        geomTag->SetAttribute("PARTITION", m_session->GetComm()->GetRank());
+    }
 
     // Clear existing elements.
     geomTag->Clear();
@@ -3092,17 +3097,19 @@ void MeshGraphXml::WriteXMLGeometry(std::string outname,
         WriteComposites(geomTag, localComp, localCompLabels);
 
         map<int, CompositeMap> domain;
-        for (auto &d : m_domain)
+        for (auto &j : localComp)
         {
-            CompositeMap domMap;
-            for (auto &j : localComp)
+            for (auto &dom : m_domain)
             {
-                if (d.second.count(j.first))
+                for (auto &dIt : dom.second)
                 {
-                    domMap[j.first] = j.second;
+                    if (j.first == dIt.first)
+                    {
+                        domain[dom.first][j.first] = j.second;
+                        break;
+                    }
                 }
             }
-            domain[d.first] = domMap;
         }
 
         WriteDomain(geomTag, domain);

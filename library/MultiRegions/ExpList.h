@@ -51,6 +51,7 @@
 #include <MultiRegions/MultiRegions.hpp>
 #include <MultiRegions/MultiRegionsDeclspec.h>
 #include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/Movement/Movement.h>
 #include <tinyxml.h>
 
 namespace Nektar
@@ -654,6 +655,11 @@ public:
     inline LocalRegions::ExpansionSharedPtr &GetExp(int n) const;
 
     /// This function returns (a shared pointer to) the local elemental
+    /// expansion of the \f$n^{\mathrm{th}}\f$ element given a global
+    /// geometry ID.
+    inline LocalRegions::ExpansionSharedPtr &GetExpFromGeomId(int n);
+
+    /// This function returns (a shared pointer to) the local elemental
     /// expansion containing the arbitrary point given by \a gloCoord.
     MULTI_REGIONS_EXPORT LocalRegions::ExpansionSharedPtr &GetExp(
         const Array<OneD, const NekDouble> &gloCoord);
@@ -1012,6 +1018,24 @@ public:
     // is left adjacent definiing which trace the normal
     // points otwards from
     MULTI_REGIONS_EXPORT std::vector<bool> &GetLeftAdjacentTraces(void);
+
+    /// This function returns the map of index inside m_exp to geom id
+    MULTI_REGIONS_EXPORT inline const std::unordered_map<int, int>
+        &GetElmtToExpId(void)
+    {
+        return m_elmtToExpId;
+    }
+
+    /// This function returns the index inside m_exp for a given geom id
+    MULTI_REGIONS_EXPORT inline int GetElmtToExpId(int elmtId)
+    {
+        auto it = m_elmtToExpId.find(elmtId);
+        ASSERTL0(it != m_elmtToExpId.end(), "Global geometry ID " +
+                                                std::to_string(elmtId) +
+                                                " not found in element ID to "
+                                                "expansion ID map.")
+        return it->second;
+    }
 
 protected:
     /// Exapnsion type
@@ -1980,6 +2004,22 @@ inline LocalRegions::ExpansionSharedPtr &ExpList::GetExp(int n) const
 {
     return (*m_exp)[n];
 }
+/**
+ * @param   n               The global id of the element concerned.
+ *
+ * @return  (A shared pointer to) the local expansion of the
+ *          \f$n^{\mathrm{th}}\f$ element.
+ */
+inline LocalRegions::ExpansionSharedPtr &ExpList::GetExpFromGeomId(int n)
+{
+    auto it = m_elmtToExpId.find(n);
+    ASSERTL0(it != m_elmtToExpId.end(), "Global geometry ID " +
+                                            std::to_string(n) +
+                                            " not found in element ID to "
+                                            "expansion ID map.")
+    return (*m_exp)[it->second];
+}
+
 /**
  * @return  (A const shared pointer to) the local expansion vector #m_exp
  */

@@ -170,6 +170,8 @@ protected:
                                      CommDataType recvtype) override final;
     virtual void v_Irsend(void *buf, int count, CommDataType dt, int dest,
                           CommRequestSharedPtr request, int loc) override final;
+    virtual void v_Isend(void *buf, int count, CommDataType dt, int dest,
+                         CommRequestSharedPtr request, int loc) override final;
     virtual void v_SendInit(void *buf, int count, CommDataType dt, int dest,
                             CommRequestSharedPtr request,
                             int loc) override final;

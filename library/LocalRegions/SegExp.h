@@ -135,6 +135,17 @@ protected:
         const Array<OneD, const NekDouble> &coord,
         const Array<OneD, const NekDouble> &physvals) override;
 
+    LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
+
+    LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs,
+        std::array<NekDouble, 6> &secondOrderDerivs) override;
+
     LOCAL_REGIONS_EXPORT virtual void v_GetCoord(
         const Array<OneD, const NekDouble> &Lcoords,
         Array<OneD, NekDouble> &coords) override;
@@ -181,7 +192,7 @@ protected:
         std::vector<LibUtilities::BasisType> &fromType) override;
 
     LOCAL_REGIONS_EXPORT virtual const Array<OneD, const NekDouble>
-        &v_GetPhysNormals(void) override;
+        &v_GetPhysNormals() override;
 
     //-----------------------------
     // Operator creation functions
@@ -217,7 +228,7 @@ protected:
     LOCAL_REGIONS_EXPORT virtual DNekScalBlkMatSharedPtr v_GetLocStaticCondMatrix(
         const MatrixKey &mkey) override;
 
-    LOCAL_REGIONS_EXPORT void v_DropLocStaticCondMatrix(
+    LOCAL_REGIONS_EXPORT virtual void v_DropLocStaticCondMatrix(
         const MatrixKey &mkey) override;
 
 private:
@@ -225,8 +236,6 @@ private:
         m_matrixManager;
     LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess>
         m_staticCondMatrixManager;
-
-    SegExp();
 
     LOCAL_REGIONS_EXPORT void ReverseCoeffsAndSign(
         const Array<OneD, NekDouble> &inarray,

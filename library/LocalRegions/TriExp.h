@@ -114,7 +114,6 @@ protected:
     LOCAL_REGIONS_EXPORT virtual void v_AlignVectorToCollapsedDir(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray) override;
-
     LOCAL_REGIONS_EXPORT virtual void v_IProductWRTDirectionalDerivBase(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
@@ -156,6 +155,10 @@ protected:
     LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coord,
         const Array<OneD, const NekDouble> &physvals) override;
+    LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
     LOCAL_REGIONS_EXPORT virtual void v_GetTracePhysVals(
         const int edge, const StdRegions::StdExpansionSharedPtr &EdgeExp,
         const Array<OneD, const NekDouble> &inarray,
@@ -245,8 +248,6 @@ private:
         m_matrixManager;
     LibUtilities::NekManager<MatrixKey, DNekScalBlkMat, MatrixKey::opLess>
         m_staticCondMatrixManager;
-
-    TriExp();
 };
 
 typedef std::shared_ptr<TriExp> TriExpSharedPtr;

@@ -139,6 +139,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
     ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_AV_Phys_Mod_LDGNS)
     ADD_NEKTAR_TEST(ShockTube_2D_mixedMesh_AV_Phys_Dil_IP_Impl)
     ADD_NEKTAR_TEST(TimeDependentAbsorption)
+    ADD_NEKTAR_TEST(Movement_fixed_couette)
 
     IF (NEKTAR_USE_MPI)
         #ADD_NEKTAR_TEST(Perturbation_M05_square_CBC_par LENGTHY)
@@ -154,6 +155,7 @@ IF( NEKTAR_SOLVER_COMPRESSIBLE_FLOW )
         # disabled as intermittently fails
         #ADD_NEKTAR_TEST(Couette_WeakDG_LDG_Exact_par)
         ADD_NEKTAR_TEST(Couette_WeakDG_IP_MODIFIED_IM_par)
+        ADD_NEKTAR_TEST(Movement_fixed_couette_par)
     ENDIF (NEKTAR_USE_MPI)
 
     IF (NEKTAR_USE_FFTW)

@@ -99,6 +99,31 @@ public:
              const Array<OneD, const NekDouble> &w0,
              const Array<OneD, const NekDouble> &w1);
 
+    // find derivative of u (inarray) at all coords points
+    STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs)
+    {
+        const int nq0 = m_base[0]->GetNumPoints();
+        const int nq1 = m_base[1]->GetNumPoints();
+
+        const NekDouble *ptr = &inarray[0];
+        Array<OneD, NekDouble> deriv0(nq1, 0.0);
+        Array<OneD, NekDouble> phys0(nq1, 0.0);
+
+        for (int j = 0; j < nq1; ++j, ptr += nq0)
+        {
+            phys0[j] =
+                StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
+        }
+        firstOrderDerivs[0] =
+            StdExpansion::BaryEvaluate<1, false>(coord[1], &deriv0[0]);
+
+        return StdExpansion::BaryEvaluate<1, true>(coord[1], &phys0[0],
+                                                   firstOrderDerivs[1]);
+    }
+
     STD_REGIONS_EXPORT void BwdTrans_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,
         const Array<OneD, const NekDouble> &base1,
@@ -144,6 +169,11 @@ protected:
         const Array<OneD, DNekMatSharedPtr> &I,
         const Array<OneD, const NekDouble> &physvals) override;
 
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
+
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,
         const Array<OneD, const NekDouble> &base1,
@@ -184,6 +214,7 @@ protected:
     STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
         const int dir, DNekMatSharedPtr &mat) override;
 
+private:
     virtual int v_GetShapeDimension() const override final
     {
         return 2;

@@ -135,7 +135,7 @@ protected:
 typedef std::shared_ptr<PointExp> PointExpSharedPtr;
 typedef std::vector<PointExpSharedPtr> PointExpVector;
 
-const static Array<OneD, PointExpSharedPtr> NullPointExpSharedPtrArray;
+const static Array<OneD, PointExpSharedPtr> NullPointExpSharedPtrArray{};
 } // namespace LocalRegions
 } // namespace Nektar
 

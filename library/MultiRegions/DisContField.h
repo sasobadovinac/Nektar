@@ -37,6 +37,7 @@
 #define NEKTAR_LIBS_MULTIREGIONS_DISCONTFIELD1D_H
 
 #include <MultiRegions/AssemblyMap/AssemblyMapDG.h>
+#include <MultiRegions/AssemblyMap/InterfaceMapDG.h>
 #include <MultiRegions/AssemblyMap/LocTraceToTraceMap.h>
 #include <MultiRegions/ExpList.h>
 #include <MultiRegions/GlobalLinSys.h>
@@ -149,6 +150,9 @@ protected:
     Array<OneD, MultiRegions::ExpListSharedPtr> m_bndCondExpansions;
 
     Array<OneD, NekDouble> m_bndCondBndWeight;
+
+    /// Interfaces mapping for trace space.
+    InterfaceMapDGSharedPtr m_interfaceMap;
 
     /// Global boundary matrix.
     GlobalLinSysMapShPtr m_globalBndMat;

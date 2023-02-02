@@ -134,6 +134,11 @@ protected:
         const Array<OneD, const NekDouble> &coord,
         const Array<OneD, const NekDouble> &physvals) override;
 
+    LOCAL_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
+
     //---------------------------------------
     // Helper functions
     //---------------------------------------

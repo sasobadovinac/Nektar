@@ -125,7 +125,8 @@ ExpList::ExpList(const ExpList &in, const bool DeclareCoeffPhysArrays)
       m_coll_coeff_offset(in.m_coll_coeff_offset),
       m_coll_phys_offset(in.m_coll_phys_offset),
       m_coeff_offset(in.m_coeff_offset), m_phys_offset(in.m_phys_offset),
-      m_blockMat(in.m_blockMat), m_WaveSpace(false)
+      m_blockMat(in.m_blockMat), m_WaveSpace(false),
+      m_elmtToExpId(in.m_elmtToExpId)
 {
 
     // Set up m_coeffs, m_phys and offset arrays.
@@ -750,6 +751,15 @@ ExpList::ExpList(
     if (m_expType != e0D)
     {
         CreateCollections(ImpType);
+    }
+
+    // Setup element to expansion ID maps for the trace elements
+    // Loop in reverse order so that in case where using a
+    // Homogeneous expansion it sets geometry ids to first part of
+    // m_exp list. Otherwise will set to second (complex) expansion
+    for (int i = (*m_exp).size() - 1; i >= 0; --i)
+    {
+        m_elmtToExpId[(*m_exp)[i]->GetGeom()->GetGlobalID()] = i;
     }
 }
 

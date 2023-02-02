@@ -41,6 +41,10 @@ namespace Nektar
 {
 namespace StdRegions
 {
+StdNodalTetExp::StdNodalTetExp()
+{
+}
+
 StdNodalTetExp::StdNodalTetExp(const LibUtilities::BasisKey &Ba,
                                const LibUtilities::BasisKey &Bb,
                                const LibUtilities::BasisKey &Bc,
@@ -157,7 +161,7 @@ DNekMatSharedPtr StdNodalTetExp::GenNBasisTransMatrix()
             c[0]         = r[j];
             c[1]         = s[j];
             c[2]         = t[j];
-            (*Mat)(j, i) = StdTetExp::v_PhysEvaluate(c, tmp_phys);
+            (*Mat)(j, i) = StdExpansion3D::v_PhysEvaluate(c, tmp_phys);
         }
     }
 

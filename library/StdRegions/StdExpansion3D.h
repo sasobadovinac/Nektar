@@ -179,6 +179,11 @@ protected:
         const Array<OneD, DNekMatSharedPtr> &I,
         const Array<OneD, const NekDouble> &physvals) override;
 
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
+
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFacKernel(
         const Array<OneD, const NekDouble> &base0,
         const Array<OneD, const NekDouble> &base1,
@@ -211,6 +216,61 @@ protected:
     STD_REGIONS_EXPORT virtual int v_GetNedges(void) const;
     STD_REGIONS_EXPORT virtual int v_GetEdgeNcoeffs(const int i) const;
 
+    /**
+     * Performs tensor product evaluation in 3D to evaluate the physical
+     * and derivative values in each direction at input coordinate
+     * @param coord using input physical values at quadrature points
+     * @param inarray. Returns via reference the derivatives.
+
+     * @param coord Global coordinate
+     * @param inarray Phys values
+     * @param out_d0 Return by reference parameter for 0th derivative
+     * @param out_d1 Return by reference parameter for 1st derivative
+     * @param out_d2 Return by reference parameter for 2nd derivative
+     * @return Physical value at @param coord
+     */
+    STD_REGIONS_EXPORT inline NekDouble BaryTensorDeriv(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs)
+    {
+        const int nq0 = m_base[0]->GetNumPoints();
+        const int nq1 = m_base[1]->GetNumPoints();
+        const int nq2 = m_base[2]->GetNumPoints();
+
+        const NekDouble *ptr = &inarray[0];
+        Array<OneD, NekDouble> deriv0(nq1 * nq2, 0.0);
+        Array<OneD, NekDouble> phys0(nq1 * nq2, 0.0);
+        Array<OneD, NekDouble> deriv0phys1(nq1, 0.0);
+        Array<OneD, NekDouble> phys0deriv1(nq1, 0.0);
+        Array<OneD, NekDouble> phys0phys1(nq1, 0.0);
+
+        for (int j = 0; j < nq1 * nq2; ++j, ptr += nq0)
+        {
+            phys0[j] =
+                StdExpansion::BaryEvaluate<0, true>(coord[0], ptr, deriv0[j]);
+        }
+
+        for (int j = 0; j < nq2; ++j)
+        {
+            deriv0phys1[j] = StdExpansion::BaryEvaluate<1, false>(
+                coord[1], &deriv0[j * nq1]);
+        }
+        firstOrderDerivs[0] =
+            StdExpansion::BaryEvaluate<2, false>(coord[2], &deriv0phys1[0]);
+
+        for (int j = 0; j < nq2; ++j)
+        {
+            phys0phys1[j] = StdExpansion::BaryEvaluate<1, true>(
+                coord[1], &phys0[j * nq1], phys0deriv1[j]);
+        }
+        firstOrderDerivs[1] =
+            StdExpansion::BaryEvaluate<2, false>(coord[2], &phys0deriv1[0]);
+
+        return StdExpansion::BaryEvaluate<2, true>(coord[2], &phys0phys1[0],
+                                                   firstOrderDerivs[2]);
+    }
+
     STD_REGIONS_EXPORT virtual void v_GetEdgeInteriorToElementMap(
         const int tid, Array<OneD, unsigned int> &maparray,
         Array<OneD, int> &signarray, Orientation traceOrient = eForwards);
@@ -223,6 +283,7 @@ protected:
     STD_REGIONS_EXPORT virtual void v_GenStdMatBwdDeriv(
         const int dir, DNekMatSharedPtr &mat) override;
 
+private:
     virtual int v_GetShapeDimension() const override final
     {
         return 3;

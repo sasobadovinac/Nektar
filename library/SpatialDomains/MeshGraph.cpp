@@ -47,6 +47,7 @@
 #include <sstream>
 
 #include <SpatialDomains/MeshGraph.h>
+#include <SpatialDomains/Movement/Movement.h>
 
 // These are required for the Write(...) and Import(...) functions.
 #include <boost/archive/iterators/base64_from_binary.hpp>
@@ -199,13 +200,17 @@ void MeshGraph::FillGraph()
         break;
         case 1:
         {
-            for (auto x : m_segGeoms)
+            for (auto &x : m_segGeoms)
             {
                 x.second->Setup();
             }
         }
         break;
     }
+
+    // Populate the movement object
+    m_movement = MemoryManager<SpatialDomains::Movement>::AllocateSharedPtr(
+        m_session, this);
 }
 
 void MeshGraph::FillBoundingBoxTree()
@@ -2542,36 +2547,31 @@ ExpansionInfoMapShPtr MeshGraph::SetUpExpansionInfoMap(void)
 
     for (auto &d : m_domain)
     {
-        for (auto compIter = d.second.begin(); compIter != d.second.end();
-             ++compIter)
+        for (auto &compIter : d.second)
         {
             // regular elements first
-            for (auto x = compIter->second->m_geomVec.begin();
-                 x != compIter->second->m_geomVec.end(); ++x)
+            for (auto &x : compIter.second->m_geomVec)
             {
-                if ((*x)->GetGeomFactors()->GetGtype() !=
+                if (x->GetGeomFactors()->GetGtype() !=
                     SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x,
-                                                                        def);
-                    int id           = (*x)->GetGlobalID();
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x, def);
+                    int id           = x->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
             }
             // deformed elements
-            for (auto x = compIter->second->m_geomVec.begin();
-                 x != compIter->second->m_geomVec.end(); ++x)
+            for (auto &x : compIter.second->m_geomVec)
             {
-                if ((*x)->GetGeomFactors()->GetGtype() ==
+                if (x->GetGeomFactors()->GetGtype() ==
                     SpatialDomains::eDeformed)
                 {
                     LibUtilities::BasisKeyVector def;
                     ExpansionInfoShPtr expansionElementShPtr =
-                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(*x,
-                                                                        def);
-                    int id           = (*x)->GetGlobalID();
+                        MemoryManager<ExpansionInfo>::AllocateSharedPtr(x, def);
+                    int id           = x->GetGlobalID();
                     (*returnval)[id] = expansionElementShPtr;
                 }
             }
@@ -2975,8 +2975,11 @@ void MeshGraph::ReadExpansionInfo()
                     {
                         auto x =
                             expansionMap->find((*geomVecIter)->GetGlobalID());
-                        ASSERTL0(x != expansionMap->end(),
-                                 "Expansion not found!!");
+                        ASSERTL0(
+                            x != expansionMap->end(),
+                            "Expansion " +
+                                std::to_string((*geomVecIter)->GetGlobalID()) +
+                                " not found!!");
                         if (useExpansionType)
                         {
                             (x->second)->m_basisKeyVector =
@@ -3534,10 +3537,9 @@ GeometryLinkSharedPtr MeshGraph::GetElementsFromEdge(Geometry1DSharedPtr edge)
 
     for (auto &d : m_domain)
     {
-        for (auto compIter = d.second.begin(); compIter != d.second.end();
-             ++compIter)
+        for (auto &compIter : d.second)
         {
-            for (auto &geomIter : compIter->second->m_geomVec)
+            for (auto &geomIter : compIter.second->m_geomVec)
             {
                 triGeomShPtr  = std::dynamic_pointer_cast<TriGeom>(geomIter);
                 quadGeomShPtr = std::dynamic_pointer_cast<QuadGeom>(geomIter);
