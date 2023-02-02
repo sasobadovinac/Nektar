@@ -317,7 +317,7 @@ void QuadGeom::v_GenGeomFactors()
             {
                 if (fabs((*m_verts[0])(i) - (*m_verts[1])(i) +
                          (*m_verts[2])(i) - (*m_verts[3])(i)) >
-                    NekConstants::kNekZeroTol)
+                    NekConstants::kGeomFactorsTol)
                 {
                     Gtype = eDeformed;
                     break;

@@ -49,8 +49,8 @@ namespace Nektar
 namespace LocalRegions
 {
 
-class NodalTriExp : virtual public StdRegions::StdNodalTriExp,
-                    virtual public Expansion2D
+class NodalTriExp final : virtual public StdRegions::StdNodalTriExp,
+                          virtual public Expansion2D
 {
 public:
     /** \brief Constructor using BasisKey class for quadrature
@@ -126,6 +126,11 @@ public:
     {
         StdExpansion::MassMatrixOp_MatFree(inarray, outarray, mkey);
     }
+
+    LOCAL_REGIONS_EXPORT NekDouble
+    v_PhysEvaluate(const Array<OneD, NekDouble> &coord,
+                   const Array<OneD, const NekDouble> &inarray,
+                   std::array<NekDouble, 3> &firstOrderDerivs) final;
 
     void LaplacianMatrixOp(const Array<OneD, const NekDouble> &inarray,
                            Array<OneD, NekDouble> &outarray,
@@ -230,7 +235,7 @@ private:
         IProductWRTDerivBase(dir, inarray, outarray);
     }
 
-    virtual void v_StdPhysDeriv(
+    void v_StdPhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override
@@ -238,7 +243,7 @@ private:
         StdTriExp::v_PhysDeriv(inarray, out_d0, out_d1, out_d2);
     }
 
-    virtual void v_PhysDeriv(
+    void v_PhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override
@@ -283,7 +288,6 @@ private:
     virtual NekDouble v_PhysEvaluate(
         const Array<OneD, const NekDouble> &coord,
         const Array<OneD, const NekDouble> &physvals) override
-
     {
         return PhysEvaluate(coord, physvals);
     }
@@ -325,14 +329,14 @@ private:
         IProductWRTBase_SumFac(inarray, outarray);
     }
 
-    virtual void v_IProductWRTDerivBase_SumFac(
+    void v_IProductWRTDerivBase_SumFac(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override
     {
         IProductWRTDerivBase_SumFac(dir, inarray, outarray);
     }
 
-    virtual void v_AlignVectorToCollapsedDir(
+    void v_AlignVectorToCollapsedDir(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, Array<OneD, NekDouble>> &outarray) override;
 

@@ -44,7 +44,6 @@ namespace Nektar
 {
 namespace StdRegions
 {
-
 StdExpansion2D::StdExpansion2D()
 {
 }
@@ -157,6 +156,15 @@ NekDouble StdExpansion2D::v_PhysEvaluate(
     val = Blas::Ddot(nq1, I[1]->GetPtr(), 1, wsp1, 1);
 
     return val;
+}
+
+NekDouble StdExpansion2D::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    boost::ignore_unused(coord, inarray, firstOrderDerivs);
+    return 0;
 }
 
 //////////////////////////////

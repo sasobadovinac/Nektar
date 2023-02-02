@@ -42,7 +42,8 @@ namespace Nektar
 {
 namespace StdRegions
 {
-StdExpansion::StdExpansion(void) : m_elmt_id(0), m_ncoeffs(0)
+/** \brief Default constructor */
+StdExpansion::StdExpansion()
 {
 }
 
@@ -91,6 +92,7 @@ StdExpansion::StdExpansion(const StdExpansion &T)
 {
 }
 
+// Destructor
 StdExpansion::~StdExpansion()
 {
 }
@@ -1232,6 +1234,35 @@ NekDouble StdExpansion::v_PhysEvaluateBasis(
 {
     boost::ignore_unused(coords, mode);
     NEKERROR(ErrorUtil::efatal, "Method does not exist for this shape");
+    return 0;
+}
+
+NekDouble StdExpansion::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    boost::ignore_unused(coord, inarray, firstOrderDerivs);
+    NEKERROR(ErrorUtil::efatal,
+             "PhysEvaluate first order derivative method does not exist"
+             " for this shape type: " +
+                 static_cast<std::string>(
+                     LibUtilities::ShapeTypeMap[DetShapeType()]));
+    return 0;
+}
+
+NekDouble StdExpansion::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs,
+    std::array<NekDouble, 6> &secondOrderDerivs)
+{
+    boost::ignore_unused(coord, inarray, firstOrderDerivs, secondOrderDerivs);
+    NEKERROR(ErrorUtil::efatal,
+             "PhysEvaluate second order derivative method does not exist"
+             " for this shape type: " +
+                 static_cast<std::string>(
+                     LibUtilities::ShapeTypeMap[DetShapeType()]));
     return 0;
 }
 

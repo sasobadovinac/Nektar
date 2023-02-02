@@ -68,7 +68,7 @@ protected:
     //---------------------------------------
     // Differentiation Methods
     //---------------------------------------
-    STD_REGIONS_EXPORT virtual void v_PhysDeriv(
+    STD_REGIONS_EXPORT void v_PhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0, Array<OneD, NekDouble> &out_d1,
         Array<OneD, NekDouble> &out_d2) override;
@@ -86,7 +86,7 @@ protected:
     //---------------------------------------
     // Transforms
     //---------------------------------------
-    STD_REGIONS_EXPORT virtual void v_BwdTrans(
+    STD_REGIONS_EXPORT void v_BwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
     STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFac(
@@ -107,7 +107,7 @@ protected:
     //---------------------------------------
     // Inner product functions
     //---------------------------------------
-    STD_REGIONS_EXPORT virtual void v_IProductWRTBase(
+    STD_REGIONS_EXPORT void v_IProductWRTBase(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
     STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFac(
@@ -148,6 +148,10 @@ protected:
     STD_REGIONS_EXPORT virtual void v_GetTraceNumModes(
         const int fid, int &numModes0, int &numModes1,
         Orientation faceOrient = eDir1FwdDir1_Dir2FwdDir2) override;
+    STD_REGIONS_EXPORT virtual NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override;
 
     //---------------------------------------
     // Helper functions
@@ -198,7 +202,7 @@ protected:
         Array<OneD, int> &signarray,
         const Orientation traceOrient = eDir1FwdDir1_Dir2FwdDir2) override;
 
-    STD_REGIONS_EXPORT virtual void v_GetTraceInteriorToElementMap(
+    STD_REGIONS_EXPORT void v_GetTraceInteriorToElementMap(
         const int tid, Array<OneD, unsigned int> &maparray,
         Array<OneD, int> &signarray,
         const Orientation traceOrient = eDir1FwdDir1_Dir2FwdDir2) override;
@@ -211,7 +215,7 @@ protected:
     STD_REGIONS_EXPORT virtual DNekMatSharedPtr v_CreateStdMatrix(
         const StdMatrixKey &mkey) override;
 
-    STD_REGIONS_EXPORT virtual void v_MultiplyByStdQuadratureMetric(
+    STD_REGIONS_EXPORT void v_MultiplyByStdQuadratureMetric(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
@@ -221,7 +225,7 @@ protected:
     //---------------------------------------
     // Method for applying sensors
     //---------------------------------------
-    STD_REGIONS_EXPORT virtual void v_ReduceOrderCoeffs(
+    STD_REGIONS_EXPORT void v_ReduceOrderCoeffs(
         int numMin, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 

@@ -42,14 +42,8 @@ namespace Nektar
 {
 namespace StdRegions
 {
-
-class StdSegExp;
-typedef std::shared_ptr<StdSegExp> StdSegExpSharedPtr;
-
 /// Class representing a segment element in reference space
-
 /// All interface of this class sits in StdExpansion class
-
 class StdSegExp : virtual public StdExpansion1D
 {
 public:
@@ -73,23 +67,23 @@ protected:
     // Differentiation Methods
     //-----------------------------
 
-    STD_REGIONS_EXPORT virtual void v_PhysDeriv(
+    STD_REGIONS_EXPORT void v_PhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0,
         Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
 
-    STD_REGIONS_EXPORT virtual void v_PhysDeriv(
+    STD_REGIONS_EXPORT void v_PhysDeriv(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT virtual void v_StdPhysDeriv(
+    STD_REGIONS_EXPORT void v_StdPhysDeriv(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &out_d0,
         Array<OneD, NekDouble> &out_d1 = NullNekDouble1DArray,
         Array<OneD, NekDouble> &out_d2 = NullNekDouble1DArray) override;
 
-    STD_REGIONS_EXPORT virtual void v_StdPhysDeriv(
+    STD_REGIONS_EXPORT void v_StdPhysDeriv(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
@@ -97,19 +91,19 @@ protected:
     // Transforms
     //-----------------------------
 
-    STD_REGIONS_EXPORT virtual void v_BwdTrans(
+    STD_REGIONS_EXPORT void v_BwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT virtual void v_FwdTrans(
+    STD_REGIONS_EXPORT void v_FwdTrans(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT virtual void v_BwdTrans_SumFac(
+    STD_REGIONS_EXPORT void v_BwdTrans_SumFac(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT virtual void v_FwdTransBndConstrained(
+    STD_REGIONS_EXPORT void v_FwdTransBndConstrained(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
@@ -117,25 +111,25 @@ protected:
     // Inner product functions
     //----------------------------
 
-    STD_REGIONS_EXPORT virtual void v_IProductWRTBase(
+    STD_REGIONS_EXPORT void v_IProductWRTBase(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT virtual void v_IProductWRTBase(
+    STD_REGIONS_EXPORT void v_IProductWRTBase(
         const Array<OneD, const NekDouble> &base,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, int coll_check) override;
 
-    STD_REGIONS_EXPORT virtual void v_IProductWRTBase_SumFac(
+    STD_REGIONS_EXPORT void v_IProductWRTBase_SumFac(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray,
         bool multiplybyweights = true) override;
 
-    STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase(
+    STD_REGIONS_EXPORT void v_IProductWRTDerivBase(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
-    STD_REGIONS_EXPORT virtual void v_IProductWRTDerivBase_SumFac(
+    STD_REGIONS_EXPORT void v_IProductWRTDerivBase_SumFac(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
@@ -153,11 +147,30 @@ protected:
     STD_REGIONS_EXPORT NekDouble v_PhysEvaluateBasis(
         const Array<OneD, const NekDouble> &coords, int mode) final override;
 
+    STD_REGIONS_EXPORT inline NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs) override
+    {
+        return StdExpansion1D::BaryTensorDeriv(coord, inarray,
+                                               firstOrderDerivs);
+    }
+
+    STD_REGIONS_EXPORT inline NekDouble v_PhysEvaluate(
+        const Array<OneD, NekDouble> &coord,
+        const Array<OneD, const NekDouble> &inarray,
+        std::array<NekDouble, 3> &firstOrderDerivs,
+        std::array<NekDouble, 6> &secondOrderDerivs) override
+    {
+        return StdExpansion1D::BaryTensorDeriv(coord, inarray, firstOrderDerivs,
+                                               secondOrderDerivs);
+    }
+
     STD_REGIONS_EXPORT virtual void v_LaplacianMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey) override;
 
-    STD_REGIONS_EXPORT virtual void v_HelmholtzMatrixOp(
+    STD_REGIONS_EXPORT void v_HelmholtzMatrixOp(
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray, const StdMatrixKey &mkey) override;
 
@@ -231,7 +244,7 @@ protected:
     // Operator evaluation functions
     //---------------------------------------
 
-    STD_REGIONS_EXPORT virtual void v_ReduceOrderCoeffs(
+    STD_REGIONS_EXPORT void v_ReduceOrderCoeffs(
         int numMin, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 
@@ -239,18 +252,19 @@ protected:
         const unsigned int traceid,
         Array<OneD, unsigned int> &maparray) override;
 
-    STD_REGIONS_EXPORT virtual void v_GetElmtTraceToTraceMap(
+    STD_REGIONS_EXPORT void v_GetElmtTraceToTraceMap(
         const unsigned int eid, Array<OneD, unsigned int> &maparray,
         Array<OneD, int> &signarray, Orientation edgeOrient, int P,
         int Q) override;
 
-    STD_REGIONS_EXPORT virtual void v_GetTraceToElementMap(
+    STD_REGIONS_EXPORT void v_GetTraceToElementMap(
         const int tid, Array<OneD, unsigned int> &maparray,
         Array<OneD, int> &signarray, Orientation edgeOrient, int P,
         int Q) override;
 
 private:
 };
+typedef std::shared_ptr<StdSegExp> StdSegExpSharedPtr;
 
 } // namespace StdRegions
 } // namespace Nektar

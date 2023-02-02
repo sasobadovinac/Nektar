@@ -40,7 +40,6 @@ namespace Nektar
 {
 namespace StdRegions
 {
-
 StdExpansion0D::StdExpansion0D()
 {
 }
@@ -87,17 +86,23 @@ NekDouble StdExpansion0D::v_PhysEvaluate(
     const Array<OneD, const NekDouble> &Lcoord,
     const Array<OneD, const NekDouble> &physvals)
 {
-    int nquad = GetTotPoints();
-    NekDouble val;
-    DNekMatSharedPtr I = m_base[0]->GetI(Lcoord);
+    ASSERTL2(Lcoord[0] >= -1 - NekConstants::kNekZeroTol, "Lcoord[0] < -1");
+    ASSERTL2(Lcoord[0] <= 1 + NekConstants::kNekZeroTol, "Lcoord[0] >  1");
 
-    ASSERTL2(Lcoord[0] >= -1, "Lcoord[0] < -1");
-    ASSERTL2(Lcoord[0] <= 1, "Lcoord[0] >  1");
-
-    val = Blas::Ddot(nquad, I->GetPtr(), 1, physvals, 1);
-
-    return val;
+    return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
 }
+
+// NekDouble StdExpansion0D::v_PhysEvaluate(
+//    const Array<OneD, DNekMatSharedPtr> &I,
+//    const Array<OneD, const NekDouble> &physvals)
+//{
+//    NekDouble val;
+//    int nquad = GetTotPoints();
+//
+//    val = Blas::Ddot(nquad, I[0]->GetPtr(), 1, physvals, 1);
+//
+//    return val;
+//}
 
 } // namespace StdRegions
 } // namespace Nektar

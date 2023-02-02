@@ -40,7 +40,6 @@ namespace Nektar
 {
 namespace StdRegions
 {
-
 StdExpansion1D::StdExpansion1D()
 {
 }
@@ -91,6 +90,25 @@ NekDouble StdExpansion1D::v_PhysEvaluate(
     ASSERTL2(Lcoord[0] <= 1 + NekConstants::kNekZeroTol, "Lcoord[0] >  1");
 
     return StdExpansion::BaryEvaluate<0>(Lcoord[0], &physvals[0]);
+}
+
+NekDouble StdExpansion1D::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs)
+{
+    boost::ignore_unused(coord, inarray, firstOrderDerivs);
+    return 0;
+}
+
+NekDouble StdExpansion1D::v_PhysEvaluate(
+    const Array<OneD, NekDouble> &coord,
+    const Array<OneD, const NekDouble> &inarray,
+    std::array<NekDouble, 3> &firstOrderDerivs,
+    std::array<NekDouble, 6> &secondOrderDerivs)
+{
+    boost::ignore_unused(coord, inarray, firstOrderDerivs, secondOrderDerivs);
+    return 0;
 }
 
 } // namespace StdRegions

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<NEKTAR>
+    <GEOMETRY DIM="2" SPACE="2">
+        <VERTEX COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJyF0UsKgCAAhOHe73cH6hTdu037NkHLjhBEOJg/5Ubkc0ZFz/se/jPP91intwfom9kXYqs8wvxpPMa8PPm5X2r57niGvph9OfbLC8wfxkt03b/CfnmNrv7m532ttTod79D1Pz32ywfM65wR8/ILeQk/ugAA</VERTEX>
+        <EDGE COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1jEkOgwAQw9iXsrZA+f9POfmApcwlsiZxUbyvDFmFrENyjfpwG7gT4+v1h4fAY+CPGN+kPr1ZvITEt6qPdxPj3cX4vvKx/4nZH2L2Z/Bd6uP9i/HeYnwPML4C3wAA</EDGE>
+        <ELEMENT>
+            <Q COMPRESSED="B64Z-LittleEndian" BITSIZE="64">eJx1zkkOgDAMQ9FQoMxtme9/UzY/Cyw1myc5UmKz/zQYsK3kHfYYZT/giBPOctfzBVfc5I/nCTMW6bHjgSde0tPzGx988QN8CAFU</Q>
+        </ELEMENT>
+        <COMPOSITE>
+            <!-- periodic edges -->
+            <C ID="401"> E[3,6] </C>      <!-- left -->
+            <C ID="402"> E[18,21] </C>    <!-- right -->
+            <C ID="403"> E[5,15,22] </C>  <!-- top -->
+            <C ID="404"> E[0,7,17] </C>   <!-- bottom -->
+
+            <!-- interface edges -->
+            <C ID="405"> E[1,4] </C>       <!-- left left -->
+            <C ID="406"> E[10,13,16] </C>  <!-- left right -->
+            <C ID="407"> E[8,11,14] </C>   <!-- right left -->
+            <C ID="408"> E[20,23] </C>     <!-- right right -->
+
+            <!-- domains -->
+            <C ID="409"> Q[0,1] </C>    <!-- left -->
+            <C ID="410"> Q[2,3,4] </C>  <!-- middle -->
+            <C ID="411"> Q[5,6] </C>    <!-- right -->
+        </COMPOSITE>
+        <DOMAIN>
+            <D ID="0"> C[409] </D>  <!-- left -->
+            <D ID="1"> C[410] </D>  <!-- middle -->
+            <D ID="2"> C[411] </D>  <!-- right -->
+        </DOMAIN>
+    </GEOMETRY>
+    <Metadata>
+        <Provenance>
+            <GitBranch>refs/heads/feature/Moving-geometry</GitBranch>
+            <GitSHA1>0da604ff7925be2cc18ebc2daf4a4cc377576f7b</GitSHA1>
+            <Hostname>Edwards-MacBook-Pro.local</Hostname>
+            <NektarVersion>4.5.0</NektarVersion>
+            <Timestamp>29-Apr-2019 13:22:52</Timestamp>
+        </Provenance>
+        <NekMeshCommandLine>basic.msh basic.xml:xml:uncompress </NekMeshCommandLine>
+    </Metadata>
+    <EXPANSIONS>
+        <E COMPOSITE="C[409]" NUMMODES="14" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[410]" NUMMODES="12" TYPE="MODIFIED" FIELDS="u" />
+        <E COMPOSITE="C[411]" NUMMODES="13" TYPE="MODIFIED" FIELDS="u" />
+    </EXPANSIONS>
+
+    <MOVEMENT>
+        <ZONES>
+            <FIXED ID="0" DOMAIN="D[0]" />
+            <FIXED ID="1" DOMAIN="D[1]" />
+            <FIXED ID="2" DOMAIN="D[2]" />
+        </ZONES>
+        <INTERFACES>
+            <INTERFACE NAME="Left interface">
+                <LEFT  ID="0" BOUNDARY="C[405]" />
+                <RIGHT ID="1" BOUNDARY="C[406]"  />
+            </INTERFACE>
+            <INTERFACE NAME="Right interface">
+                <LEFT  ID="1" BOUNDARY="C[407]" />
+                <RIGHT ID="2" BOUNDARY="C[408]"  />
+            </INTERFACE>
+        </INTERFACES>
+    </MOVEMENT>
+
+    <CONDITIONS>
+        <PARAMETERS>
+            <P> NumSteps       = 100         </P>
+            <P> TimeStep       = 0.0015     </P>
+            <P> IO_CheckSteps  = 1000000          </P>
+            <P> IO_InfoSteps   = 1000000          </P>
+            <P> advx           = 1          </P>
+            <P> advy           = 1        </P>
+            <P> k              = 2*PI       </P>
+        </PARAMETERS>
+
+        <SOLVERINFO>
+            <I PROPERTY="EQTYPE"                VALUE="UnsteadyAdvection"   />
+            <I PROPERTY="Projection"            VALUE="DisContinuous"       />
+            <I PROPERTY="AdvectionType"         VALUE="WeakDG"              />
+            <I PROPERTY="UpwindType"            VALUE="Upwind"              />
+            <I PROPERTY="TimeIntegrationMethod" VALUE="ClassicalRungeKutta4"/>
+        </SOLVERINFO>
+
+        <VARIABLES>
+            <V ID="0"> u </V>
+        </VARIABLES>
+
+        <BOUNDARYREGIONS>
+            <B ID="0"> C[401] </B> <!-- left -->
+            <B ID="1"> C[402] </B> <!-- right -->
+            <B ID="2"> C[403] </B> <!-- top -->
+            <B ID="3"> C[404] </B> <!-- bottom -->
+        </BOUNDARYREGIONS>
+
+        <BOUNDARYCONDITIONS>
+            <!-- left -->
+            <REGION REF="0">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+            </REGION>
+            <!-- right -->
+            <REGION REF="1">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+            </REGION>
+            <!-- top -->
+            <REGION REF="2">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+            </REGION>
+            <!-- bottom -->
+            <REGION REF="3">
+                <D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+            </REGION>
+        </BOUNDARYCONDITIONS>
+
+        <FUNCTION NAME="InitialConditions">
+            <E VAR="u" VALUE="sin(k*x)*cos(k*y)" />
+        </FUNCTION>
+
+        <FUNCTION NAME="AdvectionVelocity">
+            <E VAR="Vx" VALUE="advx" />
+            <E VAR="Vy" VALUE="advy" />
+        </FUNCTION>
+
+        <FUNCTION NAME="ExactSolution">
+            <E VAR="u" VALUE="sin(k*(x-advx*t))*cos(k*(y-advy*t))" />
+        </FUNCTION>
+
+    </CONDITIONS>
+</NEKTAR>

@@ -273,6 +273,15 @@ bool Geometry::v_ContainsPoint(const Array<OneD, const NekDouble> &gloCoord,
     }
 }
 
+NekDouble Geometry::v_FindDistance(const Array<OneD, const NekDouble> &xs,
+                                   Array<OneD, NekDouble> &xi)
+{
+    boost::ignore_unused(xs, xi);
+    NEKERROR(ErrorUtil::efatal,
+             "This function has not been defined for this geometry");
+    return false;
+}
+
 /**
  * @copydoc Geometry::GetVertexEdgeMap()
  */
@@ -447,8 +456,8 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
     for (int j = 0; j < 3; ++j)
     {
         const NekDouble len = max[j] - min[j];
-        min[j] -= (0.1 + NekConstants::kGeomFactorsTol) * len;
-        max[j] += (0.1 + NekConstants::kGeomFactorsTol) * len;
+        min[j] -= (0.1 * len + NekConstants::kGeomFactorsTol);
+        max[j] += (0.1 * len + NekConstants::kGeomFactorsTol);
     }
 
     // save bounding box
@@ -460,6 +469,11 @@ std::array<NekDouble, 6> Geometry::GetBoundingBox()
     }
     // Return bounding box
     return {{min[0], min[1], min[2], max[0], max[1], max[2]}};
+}
+
+void Geometry::ClearBoundingBox()
+{
+    m_boundingBox = {};
 }
 
 /**
