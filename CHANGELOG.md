@@ -48,6 +48,9 @@ v5.3.0
 - Fix RK5 time integration scheme (!1482)
 - Fix ESDIRK time integration scheme (!1484)
 - Fix IMXGear time-integration scheme for consistent second-order accuracy (!1489)
+- Fix TimeIntegrationDemo.cpp and add ESDIRK tst files to the CI (!1485)
+- Add DIRKOrder1, BDFImplicitOrder3, BDFImplicitOrder4, RungeKutta1, and RungeKutta3 schemes to the register (!1485)
+- Use DIRK (instead of IMEXdirk) schemes for the start-up phase of high-order BDF and AM schemes (!1485).
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

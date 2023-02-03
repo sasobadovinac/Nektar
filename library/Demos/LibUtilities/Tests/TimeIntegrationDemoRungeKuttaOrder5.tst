@@ -2,10 +2,10 @@
 <test>
     <description>Test for time integration schemes</description>
     <executable>TimeIntegrationDemo</executable>
-    <parameters>--dof 100 --timesteps 100 --method RungeKutta --order 5</parameters>
+    <parameters>--dof 200 --timesteps 100 --method RungeKutta --order 5</parameters>
     <metrics>
         <metric type="L2" id="1">
-            <value tolerance="1e-12">6.19886</value>
+            <value tolerance="1e-12">0.00104914</value>
         </metric>
     </metrics>
 </test>

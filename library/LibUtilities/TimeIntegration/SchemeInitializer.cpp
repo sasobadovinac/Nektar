@@ -82,6 +82,8 @@ REGISTER(AdamsMoultonOrder4);
 REGISTER(BDFImplicit);
 REGISTER(BDFImplicitOrder1);
 REGISTER(BDFImplicitOrder2);
+REGISTER(BDFImplicitOrder3);
+REGISTER(BDFImplicitOrder4);
 
 // EulerTimeIntegrationSchemes.h
 REGISTER(Euler);
@@ -101,6 +103,7 @@ REGISTER(CNAB);
 
 // DIRKTimeIntegrationSchemes.h
 REGISTER(DIRK);
+REGISTER(DIRKOrder1);
 REGISTER(DIRKOrder2);
 REGISTER(DIRKOrder3);
 REGISTER(DIRKOrder3_ES5);
@@ -132,9 +135,11 @@ REGISTER(MCNAB);
 
 // RungeKuttaTimeIntegrationSchemes.h
 REGISTER(RungeKutta);
+REGISTER(RungeKutta1);
 REGISTER(RungeKutta2);
 REGISTER(RungeKutta2_ImprovedEuler);
 REGISTER(RungeKutta2_SSP);
+REGISTER(RungeKutta3);
 REGISTER(RungeKutta3_SSP);
 REGISTER(ClassicalRungeKutta4);
 REGISTER(RungeKutta4);

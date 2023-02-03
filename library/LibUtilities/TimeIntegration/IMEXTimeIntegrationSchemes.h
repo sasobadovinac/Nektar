@@ -150,12 +150,13 @@ public:
                 case 4:
                     IMEXdirkTimeIntegrationScheme::SetupSchemeData(
                         m_integration_phases[0], 3,
-                        std::vector<NekDouble>{2, 3});
+                        std::vector<NekDouble>{3, 4});
                     IMEXdirkTimeIntegrationScheme::SetupSchemeData(
                         m_integration_phases[1], 3,
-                        std::vector<NekDouble>{2, 3});
-                    IMEXTimeIntegrationScheme::SetupSchemeData(
-                        m_integration_phases[2], 3);
+                        std::vector<NekDouble>{3, 4});
+                    IMEXdirkTimeIntegrationScheme::SetupSchemeData(
+                        m_integration_phases[2], 3,
+                        std::vector<NekDouble>{3, 4});
                     break;
 
                 default:

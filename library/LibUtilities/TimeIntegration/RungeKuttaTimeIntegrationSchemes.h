@@ -215,9 +215,9 @@ public:
                 { 1./2.,    1./2.,     0.,      0.,      0.,      0. },
                 // 3rd Order - strong scaling
                 { 1./6.,    1./6.,  4./6.,      0.,      0.,      0. },
-                // 4th Order - Classic
+                // 4th Order - Classic - not used
                 { 1./6.,    2./6.,  2./6.,   1./6.,      0.,      0. },
-                // 5th Order - 6 stages
+                // 5th Order - 6 stages - not used
                 // Rabiei, Faranak, and Fudziah Ismail. "Fifth order improved
                 // Runge-Kutta method for solving ordinary differential
                 // equations." In Proceedings of the 11th WSEAS international
@@ -298,6 +298,34 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////
 // Backwards compatibility
+class RungeKutta1TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
+{
+public:
+    RungeKutta1TimeIntegrationScheme(std::string variant, unsigned int order,
+                                     std::vector<NekDouble> freeParams)
+        : RungeKuttaTimeIntegrationScheme("", 1, freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+    }
+
+    static TimeIntegrationSchemeSharedPtr create(
+        std::string variant, unsigned int order,
+        std::vector<NekDouble> freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+
+        TimeIntegrationSchemeSharedPtr p =
+            MemoryManager<RungeKuttaTimeIntegrationScheme>::AllocateSharedPtr(
+                "", 1, freeParams);
+        return p;
+    }
+
+    static std::string className;
+
+}; // end class RungeKutta1TimeIntegrationScheme
+
 class RungeKutta2TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
 {
 public:
@@ -325,6 +353,34 @@ public:
     static std::string className;
 
 }; // end class RungeKutta2TimeIntegrationScheme
+
+class RungeKutta3TimeIntegrationScheme : public RungeKuttaTimeIntegrationScheme
+{
+public:
+    RungeKutta3TimeIntegrationScheme(std::string variant, unsigned int order,
+                                     std::vector<NekDouble> freeParams)
+        : RungeKuttaTimeIntegrationScheme("", 3, freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+    }
+
+    static TimeIntegrationSchemeSharedPtr create(
+        std::string variant, unsigned int order,
+        std::vector<NekDouble> freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+
+        TimeIntegrationSchemeSharedPtr p =
+            MemoryManager<RungeKuttaTimeIntegrationScheme>::AllocateSharedPtr(
+                "", 3, freeParams);
+        return p;
+    }
+
+    static std::string className;
+
+}; // end class RungeKutta3TimeIntegrationScheme
 
 class ClassicalRungeKutta4TimeIntegrationScheme
     : public RungeKuttaTimeIntegrationScheme
