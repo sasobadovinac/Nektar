@@ -114,7 +114,7 @@ void AdjointAdvection::v_Advect(
     }
 
     // Evaluate the linearised advection term
-    for (int i = 0; i < ndim; ++i)
+    for (int i = 0; i < nConvectiveFields; ++i)
     {
         // Calculate gradient
         switch (nDerivs)
@@ -143,35 +143,51 @@ void AdjointAdvection::v_Advect(
             break;
         }
 
-        // Calculate -U_j du'_i/dx_j
-        Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i], 1);
-        for (int j = 1; j < nDerivs; ++j)
+        // Momentum field advection
+        if (i < ndim)
         {
-            Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1, outarray[i],
-                         1, outarray[i], 1);
-        }
-        Vmath::Neg(nPointsTot, outarray[i], 1);
-
-        // Add u'_j U_j/ dx_i
-        int lim = (m_halfMode) ? 2 : ndim;
-        if ((m_halfMode || m_singleMode) && i == 2)
-        {
-            lim = 0;
-        }
-        for (int j = 0; j < lim; ++j)
-        {
-            Vmath::Vvtvp(nPointsTot, m_gradBase[j * nBaseDerivs + i], 1,
-                         velocity[j], 1, outarray[i], 1, outarray[i], 1);
-        }
-        // Add Tprime*Grad_Tbase in u, v equations
-        if (nScalar > 0 && i < ndim)
-        {
-            for (int s = 0; s < nScalar; ++s)
+            // Calculate -U_j du'_i/dx_j
+            Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i], 1);
+            for (int j = 1; j < nDerivs; ++j)
             {
-                Vmath::Vvtvp(nPointsTot,
-                             m_gradBase[(ndim + s) * nBaseDerivs + i], 1,
-                             scalar[s], 1, outarray[i], 1, outarray[i], 1);
+                Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1, outarray[i],
+                             1, outarray[i], 1);
             }
+            Vmath::Neg(nPointsTot, outarray[i], 1);
+
+            // Add u'_j U_j/ dx_i
+            int lim = (m_halfMode) ? 2 : ndim;
+            if ((m_halfMode || m_singleMode) && i == 2)
+            {
+                lim = 0;
+            }
+            for (int j = 0; j < lim; ++j)
+            {
+                Vmath::Vvtvp(nPointsTot, m_gradBase[j * nBaseDerivs + i], 1,
+                             velocity[j], 1, outarray[i], 1, outarray[i], 1);
+            }
+            // Add Tprime*Grad_Tbase in u, v equations
+            if (nScalar > 0 && i < ndim)
+            {
+                for (int s = 0; s < nScalar; ++s)
+                {
+                    Vmath::Vvtvp(nPointsTot,
+                                 m_gradBase[(ndim + s) * nBaseDerivs + i], 1,
+                                 scalar[s], 1, outarray[i], 1, outarray[i], 1);
+                }
+            }
+        }
+        // Scalar Field Advection
+        else 
+        {
+            // Calculate -U_j du'_i/dx_j
+            Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i], 1);
+            for (int j = 1; j < nDerivs; ++j)
+            {
+                Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1, outarray[i],
+                             1, outarray[i], 1);
+            }
+            Vmath::Neg(nPointsTot, outarray[i], 1);
         }
 
         if (m_multipleModes)
