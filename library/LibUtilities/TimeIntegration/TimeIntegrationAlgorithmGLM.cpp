@@ -558,8 +558,9 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         // Calculate the stage derivative based upon the stage value
         if (type == eDiagonallyImplicit)
         {
-            if ((stage == 0) && m_firstStageEqualsOldSolution)
+            if ((stage == 0) && A(0, 0) == 0.0)
             {
+                // Compute explicit residual for ESDIRK scheme
                 op.DoOdeRhs(m_Y, m_F[stage], m_T);
             }
             else

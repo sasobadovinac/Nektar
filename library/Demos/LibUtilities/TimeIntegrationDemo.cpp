@@ -236,9 +236,9 @@ class OneDFiniteDiffAdvDiffSolver : public DemoSolver
 public:
     // constructor based upon the discretisation details
     OneDFiniteDiffAdvDiffSolver(int nVars, int nPoints, int nTimeSteps,
-                                bool test)
+                                bool test, bool advection, bool diffusion)
         : DemoSolver(nVars, nPoints, nTimeSteps, test), m_wavenumber(1.0),
-          m_V(1.0), m_D(0.05)
+          m_V(1.0), m_D(0.05), m_advection(advection), m_diffusion(diffusion)
     {
         m_fileName = std::string("OneDFiniteDiffAdvDiffSolver");
         m_title    = std::string("Finite Difference Solution to the 1D "
@@ -268,6 +268,7 @@ private:
     double m_wavenumber; // wave number
     double m_V;          // advection speed
     double m_D;          // diffusion coefficient
+    bool m_advection, m_diffusion;
 
     void solveTriDiagMatrix(int n, double alpha, double beta,
                             const Array<OneD, const double> &inarray,
@@ -696,12 +697,26 @@ int main(int argc, char *argv[])
     }
     else
     {
-        nVariables = 1;
-        nPoints    = nDoF;
+        nVariables     = 1;
+        nPoints        = nDoF;
+        bool advection = true;
+        bool diffusion = true;
+
+        // For implicit scheme, do not solve for advection
+        if (tiScheme->GetIntegrationSchemeType() == eDiagonallyImplicit ||
+            tiScheme->GetIntegrationSchemeType() == eImplicit)
+        {
+            advection = false;
+        }
+        // For explicit scheme, do not solve for diffusion
+        if (tiScheme->GetIntegrationSchemeType() == eExplicit)
+        {
+            diffusion = false;
+        }
 
         OneDFiniteDiffAdvDiffSolver *tmpSolver =
             new OneDFiniteDiffAdvDiffSolver(nVariables, nPoints, nTimeSteps,
-                                            test);
+                                            test, advection, diffusion);
 
         // After this spatial discretisation, the PDE has actually
         // been reduced (through the method-of-lines) to an ODE. In
@@ -1320,44 +1335,78 @@ void OneDFiniteDiffAdvDiffSolver::EvaluateAdvectionTerm(
     const Array<OneD, const Array<OneD, double>> &inarray,
     Array<OneD, Array<OneD, double>> &outarray, const NekDouble time) const
 {
+    bool centraldiff = true;
     boost::ignore_unused(time);
+    boost::ignore_unused(centraldiff);
 
-    for (int k = 0; k < m_nVars; k++)
+    if (m_advection)
     {
-        // The advection term can be evaluated using central or upwind
-        // differences
-        if (true)
+        for (int k = 0; k < m_nVars; k++)
         {
-            // Note: We are using a periodic boundary condition where
-            // the 1st point and last point are actually the same
-            // point.  This is why the 1st (and last) point in the
-            // output array (index 0 and m_nPoints-1 respectively) are
-            // NOT used for the central differences, and instead the
-            // 2nd point (index 1) and 2nd to last point are used.
+            // The advection term can be evaluated using central or upwind
+            // differences
+            if (centraldiff)
+            {
+                // Note: We are using a periodic boundary condition where
+                // the 1st point and last point are actually the same
+                // point.  This is why the 1st (and last) point in the
+                // output array (index 0 and m_nPoints-1 respectively) are
+                // NOT used for the central differences, and instead the
+                // 2nd point (index 1) and 2nd to last point are used.
 
-            // Central differences:
-            outarray[k][0] = -m_V *
-                             (inarray[k][1] - inarray[k][m_nPoints - 2]) /
-                             (2.0 * m_dx);
+                // Central differences:
+                outarray[k][0] = -m_V *
+                                 (inarray[k][1] - inarray[k][m_nPoints - 2]) /
+                                 (2.0 * m_dx);
+                outarray[k][m_nPoints - 1] = outarray[k][0];
+
+                for (int i = 1; i < m_nPoints - 1; i++)
+                {
+                    outarray[k][i] = -m_V *
+                                     (inarray[k][i + 1] - inarray[k][i - 1]) /
+                                     (2.0 * m_dx);
+                }
+            }
+            else
+            {
+                // upwind differences
+                for (int i = 1; i < m_nPoints; i++)
+                {
+                    outarray[k][i] =
+                        -m_V * (inarray[k][i] - inarray[k][i - 1]) / (m_dx);
+                }
+
+                outarray[k][0] = outarray[k][m_nPoints - 1];
+            }
+        }
+    }
+    else if (m_diffusion)
+    {
+        for (int k = 0; k < m_nVars; k++)
+        {
+            outarray[k][0] = m_D *
+                             (inarray[k][1] - 2.0 * inarray[k][0] +
+                              inarray[k][m_nPoints - 2]) /
+                             (m_dx * m_dx);
             outarray[k][m_nPoints - 1] = outarray[k][0];
 
             for (int i = 1; i < m_nPoints - 1; i++)
             {
-                outarray[k][i] = -m_V *
-                                 (inarray[k][i + 1] - inarray[k][i - 1]) /
-                                 (2.0 * m_dx);
+                outarray[k][i] = m_D *
+                                 (inarray[k][i + 1] - 2.0 * inarray[k][i] +
+                                  inarray[k][i - 1]) /
+                                 (m_dx * m_dx);
             }
         }
-        else
+    }
+    else
+    {
+        for (int k = 0; k < m_nVars; k++)
         {
-            // upwind differences
-            for (int i = 1; i < m_nPoints; i++)
+            for (int i = 0; i < m_nPoints; i++)
             {
-                outarray[k][i] =
-                    -m_V * (inarray[k][i] - inarray[k][i - 1]) / (m_dx);
+                outarray[k][i] = 0.0;
             }
-
-            outarray[k][0] = outarray[k][m_nPoints - 1];
         }
     }
 }
@@ -1396,8 +1445,19 @@ void OneDFiniteDiffAdvDiffSolver::EvaluateExactSolution(
         {
             double x  = m_x0 + i * m_dx;
             double wn = 2.0 * M_PI * m_wavenumber;
-            outarray[k][i] =
-                exp(-m_D * wn * wn * time) * sin(wn * (x - m_V * time));
+            if (m_advection && m_diffusion) // For IMEX
+            {
+                outarray[k][i] =
+                    exp(-m_D * wn * wn * time) * sin(wn * (x - m_V * time));
+            }
+            else if (m_diffusion) // For implicit scheme
+            {
+                outarray[k][i] = exp(-m_D * wn * wn * time) * sin(wn * x);
+            }
+            else if (m_advection) // For explicit scheme
+            {
+                outarray[k][i] = sin(wn * (x - m_V * time));
+            }
         }
     }
 }

@@ -62,9 +62,9 @@ public:
         : TimeIntegrationSchemeGLM(variant, order, freeParams)
     {
         // Currently 2nd and 3rd order are implemented.
-        ASSERTL1(2 <= order && order <= 4,
+        ASSERTL0(1 <= order && order <= 4,
                  "Diagonally Implicit Runge Kutta integration scheme bad order "
-                 "(2-4): " +
+                 "(1-4): " +
                      std::to_string(order));
 
         m_integration_phases    = TimeIntegrationAlgorithmGLMVector(1);
@@ -129,6 +129,16 @@ public:
 
         switch (phase->m_order)
         {
+            case 1:
+            {
+                // One-stage, 1st order, L-stable Diagonally Implicit
+                // Runge Kutta (backward Euler) method:
+
+                phase->m_A[0][0][0] = 1.0;
+
+                phase->m_B[0][0][0] = 1.0;
+            }
+            break;
             case 2:
             {
                 // Two-stage, 2nd order Diagonally Implicit Runge
@@ -353,6 +363,35 @@ protected:
 
 ////////////////////////////////////////////////////////////////////////////////
 // Backwards compatibility
+class DIRKOrder1TimeIntegrationScheme : public DIRKTimeIntegrationScheme
+{
+public:
+    DIRKOrder1TimeIntegrationScheme(std::string variant, unsigned int order,
+                                    std::vector<NekDouble> freeParams)
+        : DIRKTimeIntegrationScheme("", 1, freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+    }
+
+    static TimeIntegrationSchemeSharedPtr create(
+        std::string variant, unsigned int order,
+        std::vector<NekDouble> freeParams)
+    {
+        boost::ignore_unused(variant);
+        boost::ignore_unused(order);
+
+        TimeIntegrationSchemeSharedPtr p =
+            MemoryManager<DIRKTimeIntegrationScheme>::AllocateSharedPtr(
+                "", 1, freeParams);
+
+        return p;
+    }
+
+    static std::string className;
+
+}; // end class DIRKOrder1TimeIntegrationScheme
+
 class DIRKOrder2TimeIntegrationScheme : public DIRKTimeIntegrationScheme
 {
 public:
