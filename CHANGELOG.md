@@ -76,6 +76,7 @@ v5.3.0
 - Extended Reynolds Stresses filter to passive scalars (!1430)
 - Fixed Taylor-Hood expansion for VCSWeakPressure (!1444)
 - Fix filename in LinearisedAdvection (!1479)
+- Added scalar advection terms to AdjointSolver (!1466)
 
 **VortexWaveInteractionSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
