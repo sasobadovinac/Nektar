@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
         "     (MCNAB)\n"
         "  \n"
         "- RungeKutta: 1st-5th order multi-stage Runga-Kutta scheme\n"
-        "- RungeKutta -variant SSP: 1st-4th order multi-stage Runga-Kutta SSP "
+        "- RungeKutta -variant SSP: 1st-3rd order multi-stage Runga-Kutta SSP "
         "scheme\n"
         "- DIRK:1st-4th order multi-stage Diagonally Implicit\n"
         "      Runga-Kutta scheme (DIRK)\n"

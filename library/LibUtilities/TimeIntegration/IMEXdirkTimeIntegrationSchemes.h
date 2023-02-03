@@ -339,7 +339,7 @@ public:
 
         phase->m_A[1][1][0] = glambda;
         phase->m_A[1][2][0] = glambda - 1.0;
-        phase->m_A[1][2][1] = 2.0 * (1 - glambda);
+        phase->m_A[1][2][1] = 2.0 * (1.0 - glambda);
 
         phase->m_B[1][0][1] = 0.5;
         phase->m_B[1][0][2] = 0.5;

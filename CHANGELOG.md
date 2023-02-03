@@ -44,6 +44,7 @@ v5.3.0
 - Fix minor typo and removed unused functions in LibUtilities/TimeIntegration (!1476) 
 - Fix RK5 time integration scheme (!1482)
 - Fix ESDIRK time integration scheme (!1484)
+- Fix IMXGear time-integration scheme for consistent second-order accuracy (!1489)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

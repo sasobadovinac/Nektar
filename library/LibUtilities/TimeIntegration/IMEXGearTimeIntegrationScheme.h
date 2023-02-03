@@ -101,7 +101,7 @@ public:
         phase->m_name =
             std::string("IMEXGearOrder" + std::to_string(phase->m_order));
 
-        phase->m_numsteps  = 3;
+        phase->m_numsteps  = 4;
         phase->m_numstages = 1;
 
         phase->m_A = Array<OneD, Array<TwoD, NekDouble>>(2);
@@ -126,19 +126,23 @@ public:
         phase->m_B[1][2][0] = 1.0;
         phase->m_U[0][0]    = 2.0 * twothirds;
         phase->m_U[0][1]    = -0.5 * twothirds;
-        phase->m_U[0][2]    = twothirds;
+        phase->m_U[0][2]    = 2.0 * twothirds;
+        phase->m_U[0][3]    = -twothirds;
 
         phase->m_V[0][0] = 2.0 * twothirds;
         phase->m_V[0][1] = -0.5 * twothirds;
-        phase->m_V[0][2] = twothirds;
+        phase->m_V[0][2] = 2.0 * twothirds;
+        phase->m_V[0][3] = -twothirds;
         phase->m_V[1][0] = 1.0;
+        phase->m_V[3][2] = 1.0;
 
         phase->m_numMultiStepValues = 2;
-        phase->m_numMultiStepDerivs = 1;
+        phase->m_numMultiStepDerivs = 2;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 1;
         phase->m_timeLevelOffset[2] = 0;
+        phase->m_timeLevelOffset[3] = 1;
 
         phase->CheckAndVerify();
     }
