@@ -556,7 +556,156 @@ void ExpListHomogeneous1D::v_IProductWRTBase(
 }
 
 /**
- * Inner product wrt Derivative of the Basis
+ * Inner product with respect to the derivative of the Basis
+ * including one homogeneous direction.
+ *
+ * This function evaluates \f[\int_\Omega \partial_d \phi \mathbf{a}_d\f],
+ * where \f$\partial_d \phi\f$ is the derivative of the basis function
+ * (including a homogeneous basis) in direction \f$d\f$ and \f$\mathbf{a}_d\f$
+ * is the \f$d\f$-th component of a generic vector \f$\mathbf{a}\f$, which is
+ * fourier decomposed into modes of wavenumber \f$k\f$.
+ *
+ * Assuming a 3DH1D basis, the generic vector \f$\mathbf{a}\f$ is defined as
+ * \f[\mathbf{a}=\sum_k\begin{bmatrix}a_x^k(x,y)\\a_y^k(x,y)\\a_z^k(x,y)\end{bmatrix}e^{i
+ * \beta k z}\f].
+ *
+ */
+void ExpListHomogeneous1D::v_IProductWRTDerivBase(
+    const int dir, const Array<OneD, const NekDouble> &inarray,
+    Array<OneD, NekDouble> &outarray)
+{
+    int nT_pts = inarray.size(); // number of total points = n. of Fourier
+                                 // points * n. of points per plane (nT_pts)
+
+    int nT_coeffs =
+        outarray
+            .size(); // equal to nT_pts, note that outarray.size() != Ncoeffs
+    int cntPts = 0, cntCoeff = 0; // Initialise offset counter
+
+    Array<OneD, NekDouble> tmpIn(nT_pts);
+    Array<OneD, NekDouble> tmp1, tmp2;
+
+    // Check: input in Fourier space
+    if (m_WaveSpace)
+    {
+        tmpIn = inarray;
+    }
+    else
+    {
+        HomogeneousFwdTrans(m_npoints, inarray, tmpIn);
+    }
+
+    // Do 2D-IProductWRTDerivBase on each plane
+    if (dir == 0 || dir == 1)
+    {
+        for (int i = 0; i < m_planes.size(); i++)
+        {
+            // Call 2D routine on each plane
+            m_planes[i]->IProductWRTDerivBase(dir, tmpIn + cntPts,
+                                              tmp1 = outarray + cntCoeff);
+
+            cntPts += m_planes[i]->GetTotPoints();
+            cntCoeff += m_planes[i]->GetNcoeffs();
+        }
+    }
+    // Do homogeneous derivative
+    else if (dir == 2)
+    {
+        if (m_homogeneousBasis->GetBasisType() == LibUtilities::eFourier ||
+            m_homogeneousBasis->GetBasisType() ==
+                LibUtilities::eFourierSingleMode ||
+            m_homogeneousBasis->GetBasisType() ==
+                LibUtilities::eFourierHalfModeRe ||
+            m_homogeneousBasis->GetBasisType() ==
+                LibUtilities::eFourierHalfModeIm)
+        {
+            // TODO Check that nT_coeffs is correct for HalfMode
+            Array<OneD, NekDouble> tmpHom(nT_coeffs, 0.0);
+
+            NekDouble sign = -1.0;
+            NekDouble beta;
+            cntPts = 0, cntCoeff = 0; // Zero offset counter
+
+            // Half Modes
+            if (m_homogeneousBasis->GetBasisType() ==
+                LibUtilities::eFourierHalfModeRe)
+            {
+                // Do IProduct with 2D basis
+                m_planes[0]->IProductWRTBase(tmpIn, tmpHom);
+
+                // Add fourier coefficient
+                beta = sign * 2 * M_PI * (m_transposition->GetK(0)) / m_lhom;
+                Vmath::Smul(nT_coeffs, beta, tmpHom, 1, tmpHom, 1);
+            }
+            else if (m_homogeneousBasis->GetBasisType() ==
+                     LibUtilities::eFourierHalfModeIm)
+            {
+                // Do IProduct with 2D basis
+                m_planes[0]->IProductWRTBase(tmpIn, tmpHom);
+
+                // Add fourier coefficient
+                beta = -sign * 2 * M_PI * (m_transposition->GetK(0)) / m_lhom;
+                Vmath::Smul(nT_coeffs, beta, tmpHom, 1, tmpHom, 1);
+            }
+            // Fully complex (Fourier or FourierSingleMode)
+            else
+            {
+                for (int i = 0; i < m_planes.size(); i++)
+                {
+                    int ncoeff = m_planes[i]->GetNcoeffs();
+
+                    // Do IProduct with 2D basis ie \int_\Omega \phi_{pq}
+                    // inarray[ndim]
+                    m_planes[i]->IProductWRTBase(tmpIn + cntPts,
+                                                 tmp1 = tmpHom + cntCoeff);
+
+                    // Add fourier coefficient
+                    beta =
+                        -sign * 2 * M_PI * (m_transposition->GetK(i)) / m_lhom;
+                    Vmath::Smul(ncoeff, beta, tmp1 = tmpHom + cntCoeff, 1,
+                                tmp2 = tmpHom + cntCoeff, 1);
+
+                    sign = -1.0 * sign;
+
+                    cntCoeff += ncoeff;
+                    cntPts += m_planes[i]->GetTotPoints();
+                }
+            }
+
+            // Add last term to innerproduct
+            Vmath::Vcopy(nT_coeffs, tmpHom, 1, outarray, 1);
+        }
+        else
+        {
+            NEKERROR(ErrorUtil::efatal,
+                     "The IProductWRTDerivBase routine with one homogeneous "
+                     "direction is not implemented for the homogeneous basis "
+                     "if it is is not of type Fourier "
+                     "or FourierSingleMode/HalfModeRe/HalfModeIm");
+        }
+    }
+    else
+    {
+        NEKERROR(
+            ErrorUtil::efatal,
+            "cannot handle direction give to IProductWRTDerivBase operator."
+            "dir != 0, 1 or 2.");
+    }
+}
+
+/**
+ * Inner product with respect to the derivative of the Basis
+ * including one homogeneous direction.
+ *
+ * This function evaluates \f[\int_\Omega \nabla \phi \cdot \mathbf{a}\f],
+ * where \f$\phi\f$ are the basis functions (including a homogeneous basis)
+ * and \f$\mathbf{a}\f$ is a generic vector \f$\mathbf{a}\f$, which is fourier
+ * decomposed into modes of wavenumber \f$k\f$.
+ *
+ * Assuming a 3DH1D basis the generic vector \f$\mathbf{a}\f$ is defined as
+ * \f[\mathbf{a}=\sum_k\begin{bmatrix}a_x^k(x,y)\\a_y^k(x,y)\\a_z^k(x,y)\end{bmatrix}e^{i
+ * \beta k z}\f].
+ *
  */
 void ExpListHomogeneous1D::v_IProductWRTDerivBase(
     const Array<OneD, const Array<OneD, NekDouble>> &inarray,

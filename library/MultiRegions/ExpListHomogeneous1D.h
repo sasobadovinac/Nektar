@@ -192,6 +192,10 @@ protected:
                                    Array<OneD, NekDouble> &outarray) override;
 
     virtual void v_IProductWRTDerivBase(
+        const int dir, const Array<OneD, const NekDouble> &inarray,
+        Array<OneD, NekDouble> &outarray) override;
+
+    virtual void v_IProductWRTDerivBase(
         const Array<OneD, const Array<OneD, NekDouble>> &inarray,
         Array<OneD, NekDouble> &outarray) override;
 

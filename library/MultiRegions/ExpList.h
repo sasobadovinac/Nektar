@@ -271,10 +271,12 @@ public:
     inline void IProductWRTDerivBase(
         const int dir, const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
+
     MULTI_REGIONS_EXPORT void IProductWRTDirectionalDerivBase(
         const Array<OneD, const NekDouble> &direction,
         const Array<OneD, const NekDouble> &inarray,
         Array<OneD, NekDouble> &outarray);
+
     /// This function calculates the inner product of a
     /// function \f$f(\boldsymbol{x})\f$ with respect to the
     /// derivative of all \em local expansion modes
