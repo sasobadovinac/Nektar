@@ -717,7 +717,7 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
     int nT_coeffs =
         outarray
             .size(); // equal to nT_pts, note that outarray.size() != Ncoeffs
-    int cntPts = 0, cntCoeff = 0;
+    int cntPts = 0, cntCoeff = 0; // Initialise offset counter
 
     int ndim = inarray.size(); // Dimension including homogeneous direction
                                // (e.g. 3DH1D, ndim=3D)
@@ -741,7 +741,7 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
         for (int i = 0; i < ndim; i++)
         {
             tmpIn[i] = Array<OneD, NekDouble>(nT_pts);
-            HomogeneousFwdTrans(inarray[i], tmpIn[i]);
+            HomogeneousFwdTrans(m_npoints, inarray[i], tmpIn[i]);
         }
     }
 
@@ -799,7 +799,7 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
             beta = -sign * 2 * M_PI * (m_transposition->GetK(0)) / m_lhom;
             Vmath::Smul(nT_coeffs, beta, tmpHom, 1, tmpHom, 1);
         }
-        // Fully complex aka general Fourier or FourierSingleMode
+        // Fully complex (Fourier or FourierSingleMode)
         else
         {
             for (int i = 0; i < m_planes.size(); i++)
@@ -819,6 +819,7 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
                 sign = -1.0 * sign;
 
                 cntCoeff += ncoeff;
+                cntPts += m_planes[i]->GetTotPoints();
             }
         }
 
@@ -828,7 +829,7 @@ void ExpListHomogeneous1D::v_IProductWRTDerivBase(
     else
     {
         NEKERROR(ErrorUtil::efatal,
-                 "The IProductWRTDerivBase routine for one homogeneous "
+                 "The IProductWRTDerivBase routine with one homogeneous "
                  "direction is not implemented for the homogeneous basis "
                  "if it is is not of type Fourier "
                  "or FourierSingleMode/HalfModeRe/HalfModeIm");
