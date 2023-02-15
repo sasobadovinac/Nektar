@@ -210,6 +210,7 @@ exporting in .vtu format (!1386)
 - Fix range option so that it also works with hdf5 (!1414)
 - Fix halfmodetofourier module with triangles (!1492)
 - Fix the output field names of WSS module of FieldConvert, revert !1352 (!1528)
+- Fixed FieldConvert -m addfld (!1500)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
