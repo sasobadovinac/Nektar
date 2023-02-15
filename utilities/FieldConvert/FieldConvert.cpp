@@ -425,6 +425,13 @@ int main(int argc, char *argv[])
         mod->SetDefaults();
     }
 
+    // Include dummy module to create m_exp
+    module.first  = eProcessModule;
+    module.second = string("createExp");
+    mod = GetModuleFactory().CreateInstance(module, f);
+    modules.push_back(mod);
+    mod->SetDefaults();
+
     // Include equispacedoutput module if needed
     Array<OneD, int> modulesCount(SIZE_ModulePriority, 0);
     for (int i = 0; i < modules.size(); ++i)
