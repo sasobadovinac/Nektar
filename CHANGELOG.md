@@ -97,6 +97,7 @@ exporting in .vtu format (!1386)
 **FieldConvert**
 - Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
 - Fix range option so that it also works with hdf5 (!1414)
+- Fixed FieldConvert -m addfld (!1500)
 
 **Miscellaneous**
 - Updated gitignore to be friendly with CLion IDE (!1405)
