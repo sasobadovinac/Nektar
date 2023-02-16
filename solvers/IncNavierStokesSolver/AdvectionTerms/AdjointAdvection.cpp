@@ -150,11 +150,12 @@ void AdjointAdvection::v_Advect(
         if (i < ndim)
         {
             // Calculate -U_j du'_i/dx_j
-            Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i], 1);
+            Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i],
+                        1);
             for (int j = 1; j < nDerivs; ++j)
             {
-                Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1, outarray[i],
-                             1, outarray[i], 1);
+                Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1,
+                             outarray[i], 1, outarray[i], 1);
             }
             Vmath::Neg(nPointsTot, outarray[i], 1);
 
@@ -181,14 +182,15 @@ void AdjointAdvection::v_Advect(
             }
         }
         // Scalar Field Advection
-        else 
+        else
         {
             // Calculate -U_j du'_i/dx_j
-            Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i], 1);
+            Vmath::Vmul(nPointsTot, grad[0], 1, m_baseflow[0], 1, outarray[i],
+                        1);
             for (int j = 1; j < nDerivs; ++j)
             {
-                Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1, outarray[i],
-                             1, outarray[i], 1);
+                Vmath::Vvtvp(nPointsTot, grad[j], 1, m_baseflow[j], 1,
+                             outarray[i], 1, outarray[i], 1);
             }
             Vmath::Neg(nPointsTot, outarray[i], 1);
         }

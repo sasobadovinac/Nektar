@@ -81,6 +81,9 @@ v5.3.0
 **VortexWaveInteractionSolver**
 - Replaced depricated "sprintf" with "std::to_string" (!1406)
 
+**DummySolver**
+- Fix CWIPI test to use DirectFull for projection of received data (!1502)
+
 **NekMesh**
 - Replace VTK pointers with VTK smart-pointers to avoid memory leaking, when
 exporting in .vtu format (!1386)
