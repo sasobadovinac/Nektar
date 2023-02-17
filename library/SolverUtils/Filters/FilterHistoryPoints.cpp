@@ -308,18 +308,12 @@ void FilterHistoryPoints::v_Initialise(
 {
     ASSERTL0(!m_historyPointStream.fail(), "No history points in stream.");
 
-    m_index       = 0;
-    m_outputIndex = 0;
-    m_historyList.clear();
-
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
 
-    vector<unsigned int> planeIDs;
-    // Read history points
+    // All processes read all the history points
     Array<OneD, NekDouble> gloCoord(3, 0.0);
-    int coordim    = pFields[0]->GetGraph()->GetSpaceDimension();
-    int numHomoDir = m_isHomogeneous1D ? 1 : 0;
-    int spacedim   = coordim + numHomoDir;
+    std::vector<Array<OneD, const NekDouble>> GloCoords;
+    const int coordim = pFields[0]->GetGraph()->GetSpaceDimension();
 
     int i = -1;
     while (GetPoint(gloCoord, ++i))
@@ -342,7 +336,7 @@ void FilterHistoryPoints::v_Initialise(
             }
             if (m_waveSpace)
             {
-                planeIDs.push_back(plane);
+                m_planeIDs.push_back(plane);
             }
             NekDouble Z = (pFields[0]->GetHomogeneousBasis()->GetZ())[plane];
             Z           = (Z + 1) * lhom / 2;
@@ -356,163 +350,113 @@ void FilterHistoryPoints::v_Initialise(
             gloCoord[coordim] = Z;
         }
 
-        SpatialDomains::PointGeomSharedPtr vert =
-            MemoryManager<SpatialDomains::PointGeom>::AllocateSharedPtr(
-                spacedim, i, gloCoord[0], gloCoord[1], gloCoord[2]);
-
-        m_historyPoints.push_back(vert);
-    }
-    Array<OneD, Array<OneD, NekDouble>> pts(spacedim);
-    for (i = 0; i < spacedim; ++i)
-    {
-        pts[i] = Array<OneD, NekDouble>(m_historyPoints.size());
-    }
-    m_planeIDs = Array<OneD, int>(planeIDs.size(), -1);
-    for (i = 0; i < planeIDs.size(); ++i)
-    {
-        m_planeIDs[i] = planeIDs[i];
+        // Save a copy of the global coordinate
+        GloCoords.push_back(
+            Array<OneD, const NekDouble>(gloCoord.size(), gloCoord.data()));
     }
 
-    // Determine the unique process responsible for each history point
-    // For points on a partition boundary, must select a single process
-    int vRank       = vComm->GetRank();
-    int vColumnRank = vComm->GetColumnComm()->GetRank();
-    int vRowRank    = vComm->GetRowComm()->GetRank();
-    int vHP         = m_historyPoints.size();
-    Array<OneD, int> procList(vHP, -1);
-    Array<OneD, int> idList(vHP, -1);
-    Array<OneD, NekDouble> dist(vHP, 1e16);
-    Array<OneD, NekDouble> dist_loc(vHP, 1e16);
-    std::vector<Array<OneD, NekDouble>> LocCoords;
+    // Check which history points this process is responsible for
+    const int vRank       = vComm->GetRank();
+    const int vColumnRank = vComm->GetColumnComm()->GetRank();
+    const int vRowRank    = vComm->GetRowComm()->GetRank();
+    m_historyPointsSize   = GloCoords.size();
+    Array<OneD, int> procList(m_historyPointsSize, -1);
+    Array<OneD, int> idList(m_historyPointsSize, -1);
 
-    // Find the nearest element on this process to which the history
-    // point could belong and note down the distance from the element
-    // and the process ID.
-    for (i = 0; i < vHP; ++i)
+    Array<OneD, NekDouble> locCoord(pFields[0]->GetShapeDimension(), 0.);
+    std::vector<Array<OneD, const NekDouble>> LocCoords;
+
+    // For each history point, find the element that contains it. If no element
+    // is available on this process, idList[i] = -1 and procList[i] = -1
+    for (i = 0; i < m_historyPointsSize; ++i)
     {
-        Array<OneD, NekDouble> locCoords(pFields[0]->GetShapeDimension());
-        m_historyPoints[i]->GetCoords(gloCoord[0], gloCoord[1], gloCoord[2]);
-        for (int j = 0; j < spacedim; ++j)
-        {
-            pts[j][i] = gloCoord[j];
-        }
+        // Create a copy of the global coordinate
+        gloCoord = GloCoords[i];
+
         // Determine the expansion and local coordinates
         if (m_isHomogeneous1D)
         {
             idList[i] = pFields[0]->GetPlane(0)->GetExpIndex(
-                gloCoord, locCoords, NekConstants::kGeomFactorsTol);
+                gloCoord, locCoord, NekConstants::kGeomFactorsTol);
         }
         else
         {
-            idList[i] = pFields[0]->GetExpIndex(gloCoord, locCoords,
+            idList[i] = pFields[0]->GetExpIndex(gloCoord, locCoord,
                                                 NekConstants::kGeomFactorsTol);
         }
 
-        for (int j = 0; j < locCoords.size(); ++j)
+        for (int j = 0; j < locCoord.size(); ++j)
         {
-            locCoords[j] = std::max(locCoords[j], -1.0);
-            locCoords[j] = std::min(locCoords[j], 1.0);
+            locCoord[j] = std::max(locCoord[j], -1.0);
+            locCoord[j] = std::min(locCoord[j], 1.0);
         }
 
-        // Save Local coordinates for later
-        LocCoords.push_back(locCoords);
-
-        // For those points for which a potential nearby element exists
-        // compute the perp. distance from the point to the element and
-        // store in the distances array.
+        // If this process owns an element that contains the history point, we
+        // flag this by updating the corresponding element in procList
         if (idList[i] != -1 && vColumnRank == 0)
         {
-            SpatialDomains::GeometrySharedPtr g =
-                pFields[0]->GetExp(idList[i])->GetGeom();
-            StdRegions::StdExpansionSharedPtr e = g->GetXmap();
-            Array<OneD, NekDouble> coordVals(e->GetTotPoints());
-            dist_loc[i] = 0.0;
-            for (int j = 0; j < g->GetCoordim(); ++j)
-            {
-                e->BwdTrans(g->GetCoeffs(j), coordVals);
-                NekDouble x =
-                    e->PhysEvaluate(locCoords, coordVals) - gloCoord[j];
-                dist_loc[i] += x * x;
-            }
-        }
-    }
-
-    // Reduce distances of points from elements, keeping the smallest
-    // distance.
-    Vmath::Vcopy(vHP, dist_loc, 1, dist, 1);
-    vComm->AllReduce(dist, LibUtilities::ReduceMin);
-
-    // If multiple processes find they are the nearest (e.g. point lies
-    // on a partition boundary, we will choose the process of highest
-    // rank.
-    for (i = 0; i < vHP; ++i)
-    {
-        if (dist_loc[i] == dist[i])
-        {
-            // Set element id to Vid of m_history point for later use
             procList[i] = vRank;
         }
+
+        // Save a copy of the local coordinates
+        LocCoords.push_back(
+            Array<OneD, const NekDouble>(locCoord.size(), locCoord.data()));
     }
 
-    // Reduce process IDs for all history points. The process with
-    // largest rank will handle the history point in the case where the
-    // distance was the same.
+    // Clear list before populating it
+    m_historyList.clear();
+
+    // Share process ranks among all processes. If multiple processes found
+    // that they own a history point, procList will only contain the rank of
+    // the process with the largest rank
     vComm->AllReduce(procList, LibUtilities::ReduceMax);
-
-    // Determine the element in which each history point resides.
-    // If point is not in mesh (on this process), id is -1.
-    for (i = 0; i < vHP; ++i)
+    for (i = 0; i < m_historyPointsSize; ++i)
     {
-        // If point lies on partition boundary, only the proc with max
-        // rank retains possession.
-        if (procList[i] != vRowRank)
+        // If process owns a history point, it saves a reference to its global
+        // and local coordinates. Note that, if multiple processes have found
+        // that they own a history point, which can happen if the point is
+        // located on a partition boundary, only the process with the highest
+        // rank will store the point.
+        if (procList[i] == vRowRank)
         {
-            idList[i] = -1;
-        }
-        else
-        {
-            m_historyPoints[i]->SetGlobalID(idList[i]);
-        }
-
-        // If the current process owns this history point, add it to its
-        // local list of history points.
-        if (idList[i] != -1)
-        {
-            m_historyLocalPointMap[m_historyList.size()] = i;
+            // Note that the reference counting in the Array class prevents the
+            // data stored in GloCoords and LocCoords from being deallocated
+            // when they go out of scope, since m_historyList will increase the
+            // reference counter by 1 when it gets a reference to the data.
             m_historyList.push_back(
-                std::pair<SpatialDomains::PointGeomSharedPtr,
-                          Array<OneD, NekDouble>>(m_historyPoints[i],
-                                                  LocCoords[i]));
+                std::make_tuple(GloCoords[i], LocCoords[i], i, idList[i]));
         }
     }
 
-    // Collate the element ID list across processes and check each
-    // history point is allocated to a process
-    vComm->AllReduce(idList, LibUtilities::ReduceMax);
-    if (vComm->GetRank() == 0)
+    // Root process must have access to all coordinates for writing the file
+    if (vComm->TreatAsRankZero())
     {
-        for (i = 0; i < vHP; ++i)
+        m_historyPoints =
+            Array<OneD, Array<OneD, const NekDouble>>(m_historyPointsSize);
+
+        for (i = 0; i < m_historyPointsSize; ++i)
         {
-            m_historyPoints[i]->GetCoords(gloCoord[0], gloCoord[1],
-                                          gloCoord[2]);
+            // Create a reference to the underlying array. Note that the data
+            // stored in GloCoords won't be deallocated because the Array class
+            // has a reference counter.
+            m_historyPoints[i] = GloCoords[i];
+        }
+    }
+
+    // Check that each history point is allocated to a process
+    if (vComm->TreatAsRankZero())
+    {
+        for (i = 0; i < m_historyPointsSize; ++i)
+        {
+            gloCoord = m_historyPoints[i];
 
             // Write an error if no process owns history point
-            ASSERTL0(idList[i] != -1,
+            ASSERTL0(procList[i] != -1,
                      "History point " +
                          boost::lexical_cast<std::string>(gloCoord[0]) + ", " +
                          boost::lexical_cast<std::string>(gloCoord[1]) + ", " +
                          boost::lexical_cast<std::string>(gloCoord[2]) +
                          " cannot be found in the mesh.");
-
-            // Print a warning if a process owns it but it is not close
-            // enough to the element.
-            if (dist[i] > NekConstants::kGeomFactorsTol)
-            {
-                cout << "Warning: History point " << i << " at (" << gloCoord[0]
-                     << "," << gloCoord[1] << "," << gloCoord[2]
-                     << ") lies a distance of " << sqrt(dist[i])
-                     << " from the manifold." << endl;
-            }
         }
 
         m_session->MatchSolverInfo("Driver", "Adaptive", m_adaptive, false);
@@ -533,24 +477,19 @@ void FilterHistoryPoints::v_Update(
         return;
     }
 
-    int j         = 0;
-    int k         = 0;
-    int numPoints = m_historyPoints.size();
-    int numFields = pFields.size();
-    int coordim   = pFields[0]->GetGraph()->GetSpaceDimension();
+    const int numFields = pFields.size();
+    const int coordim   = pFields[0]->GetGraph()->GetSpaceDimension();
     LibUtilities::CommSharedPtr vComm = pFields[0]->GetComm();
-    Array<OneD, NekDouble> data(numPoints * numFields, 0.0);
+    Array<OneD, NekDouble> data(m_historyPointsSize * numFields, 0.0);
     Array<OneD, NekDouble> physvals;
     Array<OneD, NekDouble> locCoord;
-    int expId;
 
     // Pull out data values field by field
     Array<OneD, NekDouble> gloCoord(3, 0.0);
-    for (j = 0; j < numFields; ++j)
+    for (int j = 0; j < numFields; ++j)
     {
         if (m_isHomogeneous1D)
         {
-            k                                      = 0;
             Array<OneD, const unsigned int> planes = pFields[j]->GetZIDs();
             int nPlanes    = pFields[j]->GetHomogeneousBasis()->GetZ().size();
             NekDouble lHom = pFields[j]->GetHomoLen();
@@ -559,17 +498,17 @@ void FilterHistoryPoints::v_Update(
                 ASSERTL0(pFields[j]->GetWaveSpace(),
                          "HistoryPoints in Homogeneous1D require that solution "
                          "is in wavespace");
-                locCoord = x.second;
-                expId    = x.first->GetGlobalID();
-                x.first->GetCoords(gloCoord[0], gloCoord[1], gloCoord[2]);
+                gloCoord        = std::get<0>(x);
+                locCoord        = std::get<1>(x);
+                const int indx  = std::get<2>(x);
+                const int expId = std::get<3>(x);
 
                 NekDouble value = 0.0;
                 NekDouble BetaT =
                     2. * M_PI * fmod(gloCoord[coordim], lHom) / lHom;
                 for (size_t n = 0; n < planes.size(); ++n)
                 {
-                    if (m_waveSpace &&
-                        planes[n] != m_planeIDs[m_historyLocalPointMap[k]])
+                    if (m_waveSpace && planes[n] != m_planeIDs[indx])
                     {
                         continue;
                     }
@@ -616,17 +555,16 @@ void FilterHistoryPoints::v_Update(
                     }
                 }
                 // store data
-                data[m_historyLocalPointMap[k] * numFields + j] = value;
-                ++k;
+                data[indx * numFields + j] = value;
             }
         }
         else
         {
-            k = 0;
             for (auto &x : m_historyList)
             {
-                locCoord = x.second;
-                expId    = x.first->GetGlobalID();
+                locCoord        = std::get<1>(x);
+                const int indx  = std::get<2>(x);
+                const int expId = std::get<3>(x);
 
                 physvals = pFields[j]->UpdatePhys() +
                            pFields[j]->GetPhys_Offset(expId);
@@ -641,10 +579,9 @@ void FilterHistoryPoints::v_Update(
                 }
 
                 // interpolate point
-                data[m_historyLocalPointMap[k] * numFields + j] =
+                data[indx * numFields + j] =
                     pFields[j]->GetExp(expId)->StdPhysEvaluate(locCoord,
                                                                physvals);
-                ++k;
             }
         }
     }
@@ -652,6 +589,8 @@ void FilterHistoryPoints::v_Update(
     // Exchange history data
     // This could be improved to reduce communication but works for now
     vComm->AllReduce(data, LibUtilities::ReduceSum);
+
+    // TODO: Why not only call this routine if we are rank 0?
     WriteData(vComm->GetRank(), data, numFields, time);
 }
 
@@ -703,8 +642,7 @@ void FilterHistoryPoints::WriteData(const int &rank,
 
             for (int i = 0; i < m_historyPoints.size(); ++i)
             {
-                m_historyPoints[i]->GetCoords(gloCoord[0], gloCoord[1],
-                                              gloCoord[2]);
+                gloCoord = m_historyPoints[i];
 
                 m_outputStream << "# " << boost::format("%6.0f") % i;
                 m_outputStream << " " << boost::format("%25.19e") % gloCoord[0];
