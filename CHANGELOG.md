@@ -101,6 +101,7 @@ exporting in .vtu format (!1386)
 - Changed the BOOLPARAMETERS tag in InputMCF to allow disabling the high order
   surface optimisation with "DisableSurfaceOptimiser" (surface optimisation is
   still enabled by default) (!1455)
+- Fix 3d_bl_wing test case for STEP files - updated to use an improved CAD definition for the NACA aerofoil (!1486)
 
 **FieldConvert**
 - Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
