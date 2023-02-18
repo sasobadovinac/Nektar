@@ -1,37 +1,54 @@
 <NEKTAR>
     <MESHING>
-
         <INFORMATION>
             <I PROPERTY="CADFile"   VALUE="3d_bl_wing.stp" />
             <I PROPERTY="MeshType"  VALUE="3DBndLayer"     />
         </INFORMATION>
 
         <PARAMETERS>
-            <P PARAM="MinDelta" VALUE="0.02" />
-            <P PARAM="MaxDelta" VALUE="0.5"  />
-            <P PARAM="EPS"      VALUE="0.05" />
-            <P PARAM="Order"    VALUE="4"    />
+            <P PARAM="MinDelta" VALUE="0.005" />
+            <P PARAM="MaxDelta" VALUE="0.5"   />
+            <P PARAM="EPS"      VALUE="0.05"  />
+            <P PARAM="Order"    VALUE="4"     />
 
-            <P PARAM="BndLayerSurfaces"  VALUE="4,5,6,7" />
-            <P PARAM="BndLayerThickness"  VALUE="0.03"   />
-            <P PARAM="BndLayerLayers" VALUE="6"          />
-            <P PARAM="BndLayerProgression"   VALUE="1.5" />
+            <P PARAM="BndLayerSurfaces"    VALUE="7,8,9" />
+            <P PARAM="BndLayerThickness"   VALUE="0.02"  />
+            <P PARAM="BndLayerLayers"      VALUE="6"     />
+            <P PARAM="BndLayerProgression" VALUE="1.5"   />
         </PARAMETERS>
-
-        <BOOLPARAMETERS>
-            <P VALUE="SurfOpti" />
-        </BOOLPARAMETERS>
 
         <REFINEMENT>
             <LINE>
-                <X1> 1.2    </X1>
-                <Y1> -0.843 </Y1>
-                <Z1> 0.22   </Z1>
-                <X2> 1.38   </X2>
-                <Y2> -0.843 </Y2>
-                <Z2> 0.194  </Z2>
-                <R>  0.01   </R>
-                <D>  0.002  </D>
+                <X1> 1.3704   </X1>
+                <Y1> 0.194283 </Y1>
+                <Z1> 0.84125  </Z1>
+                <X2> 1.3704   </X2>
+                <Y2> 0.194283 </Y2>
+                <Z2> 0.0      </Z2>
+                <D>  0.01     </D>
+                <R>  0.002    </R>
+            </LINE>
+
+            <LINE>
+                <X1> 1.37093  </X1>
+                <Y1> 0.195795 </Y1>
+                <Z1> 0.84125  </Z1>
+                <X2> 1.3704   </X2>
+                <Y2> 0.192769 </Y2>
+                <Z2> 0.84125  </Z2>
+                <D>  0.0015   </D>
+                <R>  0.0025   </R>
+            </LINE>
+
+            <LINE>
+                <X1> 1.32798  </X1>
+                <Y1> 0.20349  </Y1>
+                <Z1> 0.848756 </Z1>
+                <X2> 1.3704   </X2>
+                <Y2> 0.194283 </Y2>
+                <Z2> 0.84125  </Z2>
+                <D>  0.0025   </D>
+                <R>  0.01     </R>
             </LINE>
         </REFINEMENT>
     </MESHING>
