@@ -922,7 +922,9 @@ Array<OneD, NekDouble> BLMesh::GetNormal(vector<ElementSharedPtr> tris)
 
 void BLMesh::Setup()
 {
-    NekDouble a = 2.0 * (1.0 - m_prog) / (1.0 - pow(m_prog, m_layer + 1));
+    NekDouble a = m_prog == 1.0
+                      ? 1.0 / m_layer
+                      : 2.0 * (1.0 - m_prog) / (1.0 - pow(m_prog, m_layer + 1));
     m_layerT    = Array<OneD, NekDouble>(m_layer);
     m_layerT[0] = a * m_prog * m_bl;
     for (int i = 1; i < m_layer; i++)

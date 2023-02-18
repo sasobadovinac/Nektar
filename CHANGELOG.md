@@ -97,6 +97,10 @@ exporting in .vtu format (!1386)
 - Fix CADSurfOCE curvature bug where negative curvature values could be returned causing incorrect mesh spacing (!1442)
 - Fix ProjectCAD bug with findAndProject where the projection was missing and variable was passed without reference (!1442)
 - Fix 3d_bl_wing test case for STEP files where the wrong surfaces were selected for the BL (!1442)
+- Fix error when setting BL progression to 1.0 due a division by 0 (!1455)
+- Changed the BOOLPARAMETERS tag in InputMCF to allow disabling the high order
+  surface optimisation with "DisableSurfaceOptimiser" (surface optimisation is
+  still enabled by default) (!1455)
 
 **FieldConvert**
 - Add vars and dirs options in the gradient module to specify fields and partial derivative directions (!1415)
