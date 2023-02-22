@@ -42,10 +42,9 @@
 
 #define LUE LIB_UTILITIES_EXPORT
 
+#include <LibUtilities/TimeIntegration/IMEXdirkTimeIntegrationSchemes.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationAlgorithmGLM.h>
 #include <LibUtilities/TimeIntegration/TimeIntegrationSchemeGLM.h>
-
-#include <LibUtilities/TimeIntegration/IMEXdirkTimeIntegrationSchemes.h>
 
 namespace Nektar
 {
@@ -62,20 +61,16 @@ public:
         boost::ignore_unused(variant);
         boost::ignore_unused(order);
 
-        m_integration_phases    = TimeIntegrationAlgorithmGLMVector(3);
+        m_integration_phases    = TimeIntegrationAlgorithmGLMVector(2);
         m_integration_phases[0] = TimeIntegrationAlgorithmGLMSharedPtr(
             new TimeIntegrationAlgorithmGLM(this));
         m_integration_phases[1] = TimeIntegrationAlgorithmGLMSharedPtr(
             new TimeIntegrationAlgorithmGLM(this));
-        m_integration_phases[2] = TimeIntegrationAlgorithmGLMSharedPtr(
-            new TimeIntegrationAlgorithmGLM(this));
 
-        IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-            m_integration_phases[0], 3, {3.0, 4.0}); // dirk 3 4 3
-        IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-            m_integration_phases[1], 3, {3.0, 4.0}); // dirk 3 4 3
+        IMEXdirkTimeIntegrationScheme::SetupSchemeData(m_integration_phases[0],
+                                                       2, {2, 2}); // dirk 2 2 2
         CNABTimeIntegrationScheme::SetupSchemeData(
-            m_integration_phases[2]); // CNAB
+            m_integration_phases[1]); // CNAB
     }
 
     virtual ~CNABTimeIntegrationScheme()
@@ -143,8 +138,9 @@ public:
 
         phase->m_V[3][2] = 1.0;
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 3;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 1;
+        phase->m_numMultiStepDerivs         = 2;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 0;

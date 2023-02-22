@@ -185,8 +185,9 @@ public:
                          "(2,2,2), (2,3,2), (2,3,3), (3,4,3), (4,4,3)");
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 0;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 0;
 
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
@@ -234,8 +235,9 @@ public:
         phase->m_V[0][0] = 1.0;
         phase->m_V[0][1] = 1.0;
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 1;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 1;
 
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;

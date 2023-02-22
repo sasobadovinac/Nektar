@@ -150,6 +150,11 @@ public:
         return m_numMultiStepValues;
     }
 
+    inline unsigned int GetNmultiStepImplicitDerivs() const
+    {
+        return m_numMultiStepImplicitDerivs;
+    }
+
     inline unsigned int GetNmultiStepDerivs() const
     {
         return m_numMultiStepDerivs;
@@ -178,6 +183,10 @@ public:
     unsigned int m_numMultiStepValues{0}; // number of entries in input and
                                           // output vector that correspond
                                           // to VALUES at previous time levels
+    unsigned int m_numMultiStepImplicitDerivs{
+        0}; // number of entries in input and
+            // output vector that correspond
+            // to implicit DERIVATIVES at previous levels
     unsigned int m_numMultiStepDerivs{0}; // number of entries in input and
                                           // output vector that correspond
                                           // to DERIVATIVES at previous levels

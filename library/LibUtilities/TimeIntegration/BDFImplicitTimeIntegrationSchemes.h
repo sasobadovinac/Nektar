@@ -198,8 +198,9 @@ public:
             phase->m_V[n][n - 1] = 1.0;
         }
 
-        phase->m_numMultiStepValues = phase->m_order;
-        phase->m_numMultiStepDerivs = 0;
+        phase->m_numMultiStepValues         = phase->m_order;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 0;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
 
         // For order >= 1 values are needed.

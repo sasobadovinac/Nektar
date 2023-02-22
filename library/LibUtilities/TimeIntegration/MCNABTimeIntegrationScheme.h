@@ -69,9 +69,9 @@ public:
             new TimeIntegrationAlgorithmGLM(this));
 
         IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-            m_integration_phases[0], 3, std::vector<NekDouble>{3, 4});
+            m_integration_phases[0], 2, std::vector<NekDouble>{2, 2});
         IMEXdirkTimeIntegrationScheme::SetupSchemeData(
-            m_integration_phases[1], 3, std::vector<NekDouble>{3, 4});
+            m_integration_phases[1], 2, std::vector<NekDouble>{2, 2});
         MCNABTimeIntegrationScheme::SetupSchemeData(m_integration_phases[2]);
     }
 
@@ -142,8 +142,9 @@ public:
         phase->m_V[2][1] = 1.0;
         phase->m_V[4][3] = 1.0;
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 4;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 2;
+        phase->m_numMultiStepDerivs         = 2;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
         phase->m_timeLevelOffset[1] = 0;
