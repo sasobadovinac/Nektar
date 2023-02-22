@@ -183,8 +183,9 @@ public:
             break;
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 0;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 0;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
@@ -340,8 +341,9 @@ public:
             }
         }
 
-        phase->m_numMultiStepValues = 1;
-        phase->m_numMultiStepDerivs = 0;
+        phase->m_numMultiStepValues         = 1;
+        phase->m_numMultiStepImplicitDerivs = 0;
+        phase->m_numMultiStepDerivs         = 0;
         phase->m_timeLevelOffset = Array<OneD, unsigned int>(phase->m_numsteps);
         phase->m_timeLevelOffset[0] = 0;
 
