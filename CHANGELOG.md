@@ -52,6 +52,7 @@ v5.3.0
 - Add DIRKOrder1, BDFImplicitOrder3, BDFImplicitOrder4, RungeKutta1, and RungeKutta3 schemes to the register (!1485)
 - Use DIRK (instead of IMEXdirk) schemes for the start-up phase of high-order BDF and AM schemes (!1485).
 - Reduced memory usage in the FilterHistoryPoint (!1458)
+- Add missing m_ prefix to member variables in FFTW (!1504)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)

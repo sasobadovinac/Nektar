@@ -81,13 +81,13 @@ protected:
     Array<OneD, NekDouble>
         m_FFTW_w_inv; // weights to convert arrays from FFTW to Nektar++ format
 
-    Array<OneD, NekDouble> phys;
-    Array<OneD, NekDouble> coef;
+    Array<OneD, NekDouble> m_phys;
+    Array<OneD, NekDouble> m_coef;
 
     Array<OneD, NekDouble> m_wsp; // Workspace area for transforms
 
-    fftw_plan plan_backward; // plan to execute a backward FFT in FFTW
-    fftw_plan plan_forward;  // plan to execute a forward FFT in FFTW
+    fftw_plan m_plan_backward; // plan to execute a backward FFT in FFTW
+    fftw_plan m_plan_forward;  // plan to execute a forward FFT in FFTW
     /**
      * Reshuffling routines to put the coefficients in Nektar++/FFTW format.
      * The routines take as an input the number of points N, the vector of
