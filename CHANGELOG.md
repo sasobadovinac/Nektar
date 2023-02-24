@@ -54,6 +54,7 @@ v5.3.0
 - Reduced memory usage in the FilterHistoryPoint (!1458)
 - Remove redundant functor typedef (!1498)
 - Fix CNAB/MCNAB time-integration schemes (!1493)
+- Make some virtual functions protected (!1506)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
