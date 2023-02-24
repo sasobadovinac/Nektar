@@ -55,6 +55,7 @@ v5.3.0
 - Remove redundant functor typedef (!1498)
 - Fix CNAB/MCNAB time-integration schemes (!1493)
 - Add missing m_ prefix to member variables in FFTW (!1504)
+- Make some virtual functions protected (!1506)
 
 **Python**
 - Add wrappers for Interpreter and Equation classes (!1329)
