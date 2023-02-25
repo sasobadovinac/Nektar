@@ -262,17 +262,81 @@ private:
     {
         return m_A[0][i][j];
     }
+    // Overloaded accessor for GLM parameter A; both exponential and
+    // conventional schemes are currently supported
+    inline NekDouble A(const unsigned int k, const unsigned int i,
+                       const unsigned int j) const
+    {
+        if (m_schemeType == eExponential)
+        {
+            // For exponential schemes, the parameter A is specific for
+            // each variable k
+            return m_A_phi[k][i][j];
+        }
+        else
+        {
+            return m_A[0][i][j];
+        }
+    }
     inline NekDouble B(const unsigned int i, const unsigned int j) const
     {
         return m_B[0][i][j];
+    }
+    // Overloaded accessor for GLM parameter B; both exponential and
+    // conventional schemes are currently supported
+    inline NekDouble B(const unsigned int k, const unsigned int i,
+                       const unsigned int j) const
+    {
+        if (m_schemeType == eExponential)
+        {
+            // For exponential schemes, the parameter B is specific for
+            // each variable k
+            return m_B_phi[k][i][j];
+        }
+        else
+        {
+            return m_B[0][i][j];
+        }
     }
     inline NekDouble U(const unsigned int i, const unsigned int j) const
     {
         return m_U[i][j];
     }
+    // Overloaded accessor for GLM parameter U; both exponential and
+    // conventional schemes are currently supported
+    inline NekDouble U(const unsigned int k, const unsigned int i,
+                       const unsigned int j) const
+    {
+        if (m_schemeType == eExponential)
+        {
+            // For exponential schemes, the parameter U is specific for
+            // each variable k
+            return m_U_phi[k][i][j];
+        }
+        else
+        {
+            return m_U[i][j];
+        }
+    }
     inline NekDouble V(const unsigned int i, const unsigned int j) const
     {
         return m_V[i][j];
+    }
+    // Overloaded accessor for GLM parameter V; both exponential and
+    // conventional schemes are currently supported
+    inline NekDouble V(const unsigned int k, const unsigned int i,
+                       const unsigned int j) const
+    {
+        if (m_schemeType == eExponential)
+        {
+            // For exponential schemes, the parameter V is specific for
+            // each variable k
+            return m_V_phi[k][i][j];
+        }
+        else
+        {
+            return m_V[i][j];
+        }
     }
 
     inline NekDouble A_IMEX(const unsigned int i, const unsigned int j) const
