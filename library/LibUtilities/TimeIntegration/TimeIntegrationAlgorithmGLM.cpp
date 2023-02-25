@@ -567,16 +567,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             {
                 for (int k = 0; k < m_nvars; k++)
                 {
-                    if (type == eExponential)
-                    {
-                        Vmath::Smul(m_npoints, deltaT * m_A_phi[k][stage][0],
-                                    m_F[0][k], 1, m_tmp[k], 1);
-                    }
-                    else
-                    {
-                        Vmath::Smul(m_npoints, deltaT * A(stage, 0), m_F[0][k],
-                                    1, m_tmp[k], 1);
-                    }
+                    Vmath::Smul(m_npoints, deltaT * A(k, stage, 0), m_F[0][k],
+                                1, m_tmp[k], 1);
 
                     if (type == eIMEX)
                     {
@@ -593,16 +585,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             {
                 for (int k = 0; k < m_nvars; k++)
                 {
-                    if (type == eExponential)
-                    {
-                        Vmath::Svtvp(m_npoints, deltaT * m_A_phi[k][stage][j],
-                                     m_F[j][k], 1, m_tmp[k], 1, m_tmp[k], 1);
-                    }
-                    else
-                    {
-                        Vmath::Svtvp(m_npoints, deltaT * A(stage, j), m_F[j][k],
-                                     1, m_tmp[k], 1, m_tmp[k], 1);
-                    }
+                    Vmath::Svtvp(m_npoints, deltaT * A(k, stage, j), m_F[j][k],
+                                 1, m_tmp[k], 1, m_tmp[k], 1);
 
                     if (type == eIMEX)
                     {
@@ -620,16 +604,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
             {
                 for (int k = 0; k < m_nvars; k++)
                 {
-                    if (type == eExponential)
-                    {
-                        Vmath::Svtvp(m_npoints, m_U_phi[k][stage][j],
-                                     y_old[j][k], 1, m_tmp[k], 1, m_tmp[k], 1);
-                    }
-                    else
-                    {
-                        Vmath::Svtvp(m_npoints, U(stage, j), y_old[j][k], 1,
-                                     m_tmp[k], 1, m_tmp[k], 1);
-                    }
+                    Vmath::Svtvp(m_npoints, U(k, stage, j), y_old[j][k], 1,
+                                 m_tmp[k], 1, m_tmp[k], 1);
                 }
 
                 m_T += U(stage, j) * t_old[j];
@@ -763,16 +739,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         // 1: the stage derivatives
         for (int k = 0; k < m_nvars; k++)
         {
-            if (type == eExponential)
-            {
-                Vmath::Smul(m_npoints, deltaT * m_B_phi[k][i][0], m_F[0][k], 1,
-                            y_new[i][k], 1);
-            }
-            else
-            {
-                Vmath::Smul(m_npoints, deltaT * B(i, 0), m_F[0][k], 1,
-                            y_new[i][k], 1);
-            }
+            Vmath::Smul(m_npoints, deltaT * B(k, i, 0), m_F[0][k], 1,
+                        y_new[i][k], 1);
 
             if (type == eIMEX)
             {
@@ -790,16 +758,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         {
             for (int k = 0; k < m_nvars; k++)
             {
-                if (type == eExponential)
-                {
-                    Vmath::Svtvp(m_npoints, deltaT * m_B_phi[k][i][j],
-                                 m_F[j][k], 1, y_new[i][k], 1, y_new[i][k], 1);
-                }
-                else
-                {
-                    Vmath::Svtvp(m_npoints, deltaT * B(i, j), m_F[j][k], 1,
-                                 y_new[i][k], 1, y_new[i][k], 1);
-                }
+                Vmath::Svtvp(m_npoints, deltaT * B(k, i, j), m_F[j][k], 1,
+                             y_new[i][k], 1, y_new[i][k], 1);
 
                 if (type == eIMEX)
                 {
@@ -821,16 +781,8 @@ void TimeIntegrationAlgorithmGLM::TimeIntegrate(
         {
             for (int k = 0; k < m_nvars; k++)
             {
-                if (type == eExponential)
-                {
-                    Vmath::Svtvp(m_npoints, m_V_phi[k][i][j], y_old[j][k], 1,
-                                 y_new[i][k], 1, y_new[i][k], 1);
-                }
-                else
-                {
-                    Vmath::Svtvp(m_npoints, V(i, j), y_old[j][k], 1,
-                                 y_new[i][k], 1, y_new[i][k], 1);
-                }
+                Vmath::Svtvp(m_npoints, V(k, i, j), y_old[j][k], 1, y_new[i][k],
+                             1, y_new[i][k], 1);
             }
 
             if (m_numstages != 1 || type != eIMEX)
@@ -1126,7 +1078,7 @@ std::ostream &operator<<(std::ostream &os,
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
-                    os << std::right << rhs.m_A_phi[k][i][j] << " ";
+                    os << std::right << rhs.A(k, i, j) << " ";
                 }
 
                 os << " |";
@@ -1135,7 +1087,7 @@ std::ostream &operator<<(std::ostream &os,
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
-                    os << std::right << rhs.m_U_phi[k][i][j];
+                    os << std::right << rhs.B(k, i, j);
                 }
                 os << std::endl;
             }
@@ -1154,7 +1106,7 @@ std::ostream &operator<<(std::ostream &os,
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
-                    os << std::right << rhs.m_B_phi[k][i][j] << " ";
+                    os << std::right << rhs.B(k, i, j) << " ";
                 }
 
                 os << " |";
@@ -1163,7 +1115,7 @@ std::ostream &operator<<(std::ostream &os,
                 {
                     os.width(oswidth);
                     os.precision(osprecision);
-                    os << std::right << rhs.m_V_phi[k][i][j];
+                    os << std::right << rhs.V(k, i, j);
                 }
                 os << std::endl;
             }
